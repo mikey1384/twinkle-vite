@@ -119,6 +119,7 @@ import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
 import { faGripDotsVertical } from '@fortawesome/pro-solid-svg-icons/faGripDotsVertical';
 import { faGripLines } from '@fortawesome/pro-solid-svg-icons/faGripLines';
+import { faHammer } from '@fortawesome/pro-solid-svg-icons/faHammer';
 import { faLayerGroup } from '@fortawesome/pro-solid-svg-icons/faLayerGroup';
 import { faLevelUp } from '@fortawesome/pro-solid-svg-icons/faLevelUp';
 import { faHeart } from '@fortawesome/pro-solid-svg-icons/faHeart';
@@ -346,6 +347,7 @@ library.add(
   faGlobe,
   faGripDotsVertical,
   faGripLines,
+  faHammer,
   faHandHolding,
   faHeart,
   faHeartSquare,

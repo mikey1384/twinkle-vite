@@ -62,8 +62,12 @@ test('the shared worker indicator does not impersonate either assistant or human
     panelSource,
     /(?:green|orange|#(?:00ff00|ff0000|ffa500))/i
   );
-  assert.match(panelSource, /Extra Build help is shared by Zero and Ciel/);
-  assert.match(panelSource, /`Delegate to \$\{personaName\}`/);
+  assert.match(panelSource, /return 'Open'/);
+  assert.match(panelSource, /return 'Busy'/);
+  assert.match(panelSource, /return 'Closed'/);
+  assert.doesNotMatch(panelSource, /\{status\.statusLabel\}/);
+  assert.match(panelSource, /Want \$\{personaName\} to build something with you/);
+  assert.match(panelSource, /`Start building with \$\{personaName\}`/);
 });
 
 function contrastAgainstWhite(hex: string) {

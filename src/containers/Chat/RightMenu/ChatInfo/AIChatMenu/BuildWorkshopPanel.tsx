@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
+import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 type WorkshopPersona = 'zero' | 'ciel';
@@ -166,6 +167,8 @@ export default function BuildWorkshopPanel({
   if (status.persona !== persona) return null;
 
   const consentVersion = status.consent.version;
+  const stateLabel = workshopStateLabel(status.agentState);
+  const isIdle = !status.job && !relay;
   const joiningDisabled =
     action !== null ||
     !relay ||
@@ -179,12 +182,11 @@ export default function BuildWorkshopPanel({
     <section
       aria-label={`${personaName} Build Workshop`}
       className={css`
-        margin: 1rem 0 0;
-        padding: 1rem;
-        border: 1px solid ${stateColor}55;
-        border-radius: 0.8rem;
-        background: ${isCielChat ? '#fbf9ff' : '#f7fcff'};
-        max-height: min(60vh, 46rem);
+        padding: 1rem 0;
+        border-top: 1px solid var(--ui-border);
+        border-bottom: 1px solid var(--ui-border);
+        background: #fff;
+        max-height: min(50vh, 40rem);
         overflow-y: auto;
         color: #333a4a;
         text-align: left;
@@ -200,14 +202,20 @@ export default function BuildWorkshopPanel({
           gap: 0.8rem;
         `}
       >
-        <strong
+        <h3
           className={css`
-            font-size: 1.3rem;
-            color: #252a38;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            color: #333;
+            font-size: 1.4rem;
+            font-weight: 600;
           `}
         >
+          <Icon icon="hammer" />
           Build Workshop
-        </strong>
+        </h3>
         <span
           className={css`
             display: inline-flex;
@@ -229,47 +237,44 @@ export default function BuildWorkshopPanel({
               flex: none;
             `}
           />
-          {status.statusLabel}
+          {stateLabel}
         </span>
       </header>
 
-      <p className={compactParagraph}>
-        {status.job
-          ? jobStatusText(status.job, personaName)
-          : status.admission === 'accepting'
-            ? `Extra Build help is shared by Zero and Ciel. Tell ${personaName} what you want to build, and ${personaName} will prepare a private relay for your approval.`
-            : `${personaName} can still chat normally, but the shared Build helper is not accepting another job right now.`}
-      </p>
-
-      {sponsor ? (
-        <p className={disclosureClass}>
-          Sponsored by <strong>{sponsorName}</strong>. Only relays covered by
-          your Workshop consent, this Build branch, and its scoped Forum are
-          shared—not your raw chat. Twinkle’s integrity reviewer may inspect
-          that same scoped handoff evidence.
+      {status.job ? (
+        <p className={compactParagraph}>
+          {jobStatusText(status.job, personaName)}
+        </p>
+      ) : isIdle ? (
+        <p className={compactParagraph}>
+          {status.admission === 'accepting'
+            ? `Want ${personaName} to build something with you? Describe your idea right here in chat — a game, an app, anything. ${personaName} will draw up a plan and ask for your go-ahead before starting.`
+            : `The workshop is full right now — you can still chat with ${personaName} as usual. Check back soon!`}
         </p>
       ) : null}
 
-      {status.queue.people.length > 0 ? (
+      {isIdle && status.admission === 'accepting' && sponsor ? (
+        <p className={sponsorCreditClass(isCielChat)}>
+          {`Free for you — ${sponsorName} is sharing their AI to power the workshop.`}
+        </p>
+      ) : null}
+
+      {!isIdle && status.queue.people.length > 0 ? (
         <details className={detailsClass}>
-          <summary>
-            Queue: {status.queue.count} waiting ·{' '}
-            {
-              status.queue.people.filter((person) => person.state !== 'queued')
-                .length
-            }{' '}
-            in progress
-          </summary>
+          <summary>Who's in the workshop ({status.queue.count})</summary>
           <ol className={queueListClass}>
             {status.queue.people.map((person) => (
               <li key={person.jobId}>
                 @{person.username || `user-${person.userId}`} —{' '}
-                {person.state === 'queued' ? 'waiting' : person.state} via{' '}
-                {person.persona === 'ciel'
-                  ? 'Ciel'
-                  : person.persona === 'zero'
-                    ? 'Zero'
-                    : 'assistant'}
+                {person.state === 'queued'
+                  ? 'waiting'
+                  : `building with ${
+                      person.persona === 'ciel'
+                        ? 'Ciel'
+                        : person.persona === 'zero'
+                          ? 'Zero'
+                          : personaName
+                    }`}
               </li>
             ))}
           </ol>
@@ -286,32 +291,32 @@ export default function BuildWorkshopPanel({
           {action === 'cancel'
             ? status.job.status === 'queued'
               ? 'Leaving queue…'
-              : 'Ending Workshop job…'
+              : 'Stopping…'
             : status.job.status === 'queued'
               ? 'Leave queue'
-              : 'End Workshop job'}
+              : 'Stop this job'}
         </button>
       ) : null}
 
       {relay && !status.job ? (
         <div className={consentPanelClass}>
-          <strong>{personaName}’s relay</strong>
+          <strong>{`${personaName}'s plan for you`}</strong>
           <div className={relayClass}>
             <p>{relay.summary}</p>
             {relay.projectTitleHint ? (
               <p>
-                <strong>Project hint:</strong> {relay.projectTitleHint}
+                <strong>Project:</strong> {relay.projectTitleHint}
               </p>
             ) : null}
             {relay.details?.requestedOutcome ? (
               <p>
-                <strong>Requested outcome:</strong>{' '}
+                <strong>What you'll get:</strong>{' '}
                 {relay.details.requestedOutcome}
               </p>
             ) : null}
             {relay.details?.constraints?.length ? (
               <div>
-                <strong>Constraints:</strong>
+                <strong>Keeping in mind:</strong>
                 <ul>
                   {relay.details.constraints.map((constraint, index) => (
                     <li key={`${index}:${constraint}`}>{constraint}</li>
@@ -321,7 +326,7 @@ export default function BuildWorkshopPanel({
             ) : null}
             {relay.details?.acceptanceCriteria?.length ? (
               <div>
-                <strong>Acceptance criteria:</strong>
+                <strong>Done means:</strong>
                 <ul>
                   {relay.details.acceptanceCriteria.map((criterion, index) => (
                     <li key={`${index}:${criterion}`}>{criterion}</li>
@@ -333,7 +338,7 @@ export default function BuildWorkshopPanel({
 
           {status.builds.length > 0 ? (
             <label className={fieldClass}>
-              Project
+              Which project?
               <select
                 value={projectMode === 'new' ? 'new' : String(selectedBuildId)}
                 onChange={(event) => {
@@ -355,7 +360,7 @@ export default function BuildWorkshopPanel({
 
           {projectMode === 'new' ? (
             <label className={fieldClass}>
-              New project name
+              Name your new project
               <input
                 value={newProjectTitle}
                 maxLength={200}
@@ -365,13 +370,28 @@ export default function BuildWorkshopPanel({
             </label>
           ) : null}
 
+          <div className={beforeConsentClass}>
+            <strong>Before you say go</strong>
+            <ul>
+              <li>
+                {`${sponsorName} can see this project, the plan you approve, and its forum — never your private chats with ${personaName}.`}
+              </li>
+              <li>Twinkle's safety reviewers can see the same things.</li>
+              <li>Your username shows in the workshop queue.</li>
+            </ul>
+            <details className={fullDetailsClass}>
+              <summary>Full details</summary>
+              <p>{status.consent.disclosure}</p>
+            </details>
+          </div>
+
           <label className={consentClass}>
             <input
               type="checkbox"
               checked={consentAccepted}
               onChange={(event) => setConsentAccepted(event.target.checked)}
             />
-            <span>I approve this relay. {status.consent.disclosure}</span>
+            <span>I understand what's shared, and I approve this plan.</span>
           </label>
 
           <button
@@ -381,8 +401,8 @@ export default function BuildWorkshopPanel({
             className={primaryButtonClass(stateColor)}
           >
             {action === 'join'
-              ? 'Delegating…'
-              : `Delegate to ${personaName}`}
+              ? 'Starting…'
+              : `Start building with ${personaName}`}
           </button>
         </div>
       ) : null}
@@ -393,7 +413,7 @@ export default function BuildWorkshopPanel({
         to={status.sponsorGuidePath || '/sponsor'}
         className={guideLinkClass}
       >
-        How sponsorship and applications work
+        How the workshop works · what gets shared
       </Link>
     </section>
   );
@@ -420,7 +440,7 @@ export default function BuildWorkshopPanel({
       }
     } catch (error: any) {
       setActionError(
-        error?.message || 'The Workshop queue changed. Try again.'
+        error?.message || 'Something changed in the queue — try again.'
       );
     } finally {
       actionInFlightRef.current = false;
@@ -442,7 +462,7 @@ export default function BuildWorkshopPanel({
       }
     } catch (error: any) {
       setActionError(
-        error?.message || 'The queue changed. Refresh and try again.'
+        error?.message || 'Something changed in the queue — try again.'
       );
     } finally {
       actionInFlightRef.current = false;
@@ -457,31 +477,38 @@ function workshopStateColor(state?: WorkshopStatus['agentState']) {
   return '#626b7b';
 }
 
+function workshopStateLabel(state: WorkshopStatus['agentState']) {
+  if (state === 'build_available') return 'Open';
+  if (state === 'build_working') return 'Busy';
+  return 'Closed';
+}
+
 function jobStatusText(
   job: NonNullable<WorkshopStatus['job']>,
   personaName: string
 ) {
+  const title = job.rootBuild.title || 'your project';
   if (!job.canProgress) {
-    return `The sponsor connection is interrupted. Your project and contribution branch are safe; you can leave this job or wait for duty to resume.`;
+    return `The sponsor's connection dropped. Your project is safe — you can wait for it to come back, or leave the job.`;
   }
   if (job.status === 'queued') {
-    return `You’re${job.queuePosition ? ` #${job.queuePosition}` : ''} in the queue for ${job.rootBuild.title || 'your project'}.`;
+    return `You're in line${job.queuePosition ? ` (#${job.queuePosition})` : ''} for ${title}. ${personaName} will start as soon as it's your turn.`;
   }
   if (job.status === 'waiting_user') {
-    return `${personaName} is waiting for your next message about ${job.rootBuild.title || 'this project'}.`;
+    return `${personaName} is waiting to hear back from you about ${title}.`;
   }
-  return `${personaName} is working on contribution branch #${job.contributionBuild.branchNumber || job.contributionBuild.id} for ${job.rootBuild.title || 'your project'}.`;
+  return `${personaName} is building ${title} right now.`;
 }
 
 const compactParagraph = css`
   margin: 0.8rem 0 0;
 `;
 
-const disclosureClass = css`
+const sponsorCreditClass = (isCielChat: boolean) => css`
   margin: 0.8rem 0 0;
-  padding: 0.7rem;
-  border-left: 0.3rem solid #7c8799;
-  background: #fff;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  background: ${isCielChat ? '#f5f3ff' : '#f0f7ff'};
   color: #4b5363;
 `;
 
@@ -540,11 +567,41 @@ const inputClass = css`
   width: 100%;
   min-width: 0;
   border: 1px solid #bbc2cf;
-  border-radius: 0.45rem;
+  border-radius: 0.5rem;
   background: #fff;
   color: #252a38;
   padding: 0.65rem;
   font: inherit;
+`;
+
+const beforeConsentClass = css`
+  margin-top: 0.9rem;
+  padding: 0.8rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 0.5rem;
+  background: #fff;
+  ul {
+    margin: 0.55rem 0 0;
+    padding-left: 1.6rem;
+    font-size: 1.1rem;
+  }
+  li + li {
+    margin-top: 0.45rem;
+  }
+`;
+
+const fullDetailsClass = css`
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--ui-border);
+  summary {
+    cursor: pointer;
+    font-weight: 650;
+  }
+  p {
+    margin: 0.6rem 0 0;
+    color: #4b5363;
+  }
 `;
 
 const consentClass = css`
@@ -563,10 +620,11 @@ const secondaryButtonClass = css`
   width: 100%;
   margin-top: 0.8rem;
   padding: 0.65rem;
-  border: 1px solid #8b95a5;
+  border: 1px solid var(--ui-border);
   border-radius: 0.5rem;
   background: #fff;
   color: #4a5362;
+  font: inherit;
   cursor: pointer;
   &:disabled {
     cursor: wait;
@@ -582,6 +640,7 @@ const primaryButtonClass = (color: string) => css`
   border-radius: 0.5rem;
   background: ${color};
   color: #fff;
+  font: inherit;
   font-weight: 700;
   cursor: pointer;
   &:disabled {

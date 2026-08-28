@@ -8,13 +8,13 @@ export default function SponsorGuide() {
     <main className={pageClass}>
       <article className={cardClass}>
         <p className={eyebrowClass}>Lumine Build Workshop</p>
-        <h1 className={titleClass}>Sponsor shared Build help</h1>
+        <h1 className={titleClass}>Share Build help through Lumine</h1>
         <p className={leadClass}>
-          Approved sponsors can contribute coding-agent time from their own
-          subscription. That worker becomes shared added-brain capacity that
-          either Zero or Ciel can use. The assistant chosen by the user stays
-          user-facing while Lumine gives the sponsor’s worker only the
-          user-approved relay and assigned project scope.
+          Approved sponsors can share time from a coding agent connected to
+          their own subscription, giving Zero and Ciel extra help for building
+          alongside users. The assistant the user chooses stays in the
+          conversation, while Lumine gives the sponsor's worker only the
+          approved plan, assigned Build branch, and its forum.
         </p>
 
         <section className={sectionClass}>
@@ -51,43 +51,44 @@ export default function SponsorGuide() {
         </section>
 
         <section className={sectionClass}>
-          <h2>Before going on duty</h2>
+          <h2>Before starting a volunteering session</h2>
           <p>
-            Set hard limits for simultaneous jobs, helpers, and daily/weekly
-            work. Lumine enforces the approved ceiling on the server.
+            Choose firm limits for simultaneous jobs, helpers, and daily or
+            weekly work. Lumine enforces the approved ceiling on the server.
           </p>
           <code className={commandClass}>
             npx @stage5/lumine@latest sponsor capacity --concurrency 1 --helpers
             0 --daily-limit 2 --weekly-limit 6
           </code>
-          <p>Then start one shared worker pool in the foreground:</p>
+          <p>Then start your volunteering session in the foreground:</p>
           <code className={commandClass}>
             npx @stage5/lumine@latest sponsor duty start --provider codex
             --model gpt-5.6-sol --effort max
           </code>
           <p>
-            Users choose Zero or Ciel for each request; duty itself is not tied
-            to either assistant. Pause, resume, or stop the shared worker with
-            the corresponding <code>lumine sponsor duty</code> command.
+            Users choose Zero or Ciel for each request; the volunteering
+            session itself is not tied to either assistant. Pause, resume, or
+            stop the shared worker with the corresponding{' '}
+            <code>lumine sponsor duty</code> command.
           </p>
         </section>
 
         <section className={sectionClass}>
-          <h2>What a sponsored run exposes</h2>
+          <h2>What gets shared during a sponsored run</h2>
           <ul>
             <li>
-              The sponsor sees the initial relay and active-job Build follow-ups
-              covered by the user’s explicit Workshop consent, plus the assigned
-              Build branch and scoped Build Forum.
+              The sponsor sees the approved plan and active-job Build follow-up
+              messages covered by the user's explicit Workshop consent, plus
+              the assigned Build branch and its Build Forum.
             </li>
             <li>
               The sponsor does not receive the user’s raw Zero or Ciel chat or
               unrelated account data.
             </li>
             <li>
-              Twinkle’s integrity reviewer may inspect the approved relays,
-              recorded runtime evidence, and canonical artifacts for that
-              handoff, but not the raw assistant chat.
+              Twinkle's safety reviewers may inspect the approved plans,
+              recorded runtime evidence, and canonical artifacts for that job,
+              but not the raw assistant chat.
             </li>
             <li>
               Lumine records requested and provider-resolved model, effort,
@@ -100,18 +101,19 @@ export default function SponsorGuide() {
               merged or published automatically.
             </li>
             <li>
-              The duty queue is shared across Zero and Ciel. Queue membership
-              is public within that visible queue, so other viewers can see
-              queued usernames, selected assistant, and current queue states.
+              The workshop queue is shared across Zero and Ciel. Queue
+              membership is public within that visible queue, so other viewers
+              can see queued usernames, selected assistant, and current queue
+              states.
             </li>
           </ul>
         </section>
 
         <section className={sectionClass}>
-          <h2>Karma and integrity</h2>
+          <h2>Karma and trust</h2>
           <p>
             A unique contribution to another user earns 50 KP only after the
-            daily integrity flow clears it. Self-sponsored testing, retries,
+            Twinkle's daily review confirms it. Self-sponsored testing, retries,
             and helper agents do not earn or multiply the award. Probationary
             work, flagged evidence, and a random sample receive human-reviewed
             checks; dishonest reporting or data misuse can suspend or revoke
