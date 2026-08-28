@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import { css, keyframes } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { BUILD_WORKSHOP_PREVIEW_USER_IDS } from '~/constants/defaultValues';
 
@@ -138,3 +139,21 @@ function subscribeNoop() {
 function getFalse() {
   return false;
 }
+
+const engineerGlowPulse = keyframes`
+  0%, 100% {
+    box-shadow: 0 0 0.5rem 0.15rem rgba(255, 184, 51, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 1.1rem 0.5rem rgba(255, 184, 51, 0.95);
+  }
+`;
+
+// Golden "duty is live — come build!" halo for the engineer avatars.
+export const workshopEngineerGlowClass = css`
+  animation: ${engineerGlowPulse} 1.8s ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    box-shadow: 0 0 0.8rem 0.3rem rgba(255, 184, 51, 0.8);
+  }
+`;

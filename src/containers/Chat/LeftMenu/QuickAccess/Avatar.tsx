@@ -6,7 +6,9 @@ import zeroBuilder from '~/assets/zero-builder.png';
 import ProfilePic from '~/components/ProfilePic';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import useWorkshopEngineerMode from '~/helpers/hooks/useWorkshopEngineerMode';
+import useWorkshopEngineerMode, {
+  workshopEngineerGlowClass
+} from '~/helpers/hooks/useWorkshopEngineerMode';
 import type { ChatQuickAccessPartner } from './types';
 
 export default function QuickAccessAvatar({
@@ -44,13 +46,13 @@ export default function QuickAccessAvatar({
         <img
           src={aiImage}
           alt=""
-          className={css`
+          className={`${css`
             display: block;
             width: 100%;
             height: 100%;
             border-radius: 50%;
             object-fit: cover;
-          `}
+          `}${engineerMode ? ` ${workshopEngineerGlowClass}` : ''}`}
         />
       ) : (
         <ProfilePic

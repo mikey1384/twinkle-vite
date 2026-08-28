@@ -8,7 +8,9 @@ import { ZERO_TWINKLE_ID, ZERO_PFP_URL } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
-import useWorkshopEngineerMode from '~/helpers/hooks/useWorkshopEngineerMode';
+import useWorkshopEngineerMode, {
+  workshopEngineerGlowClass
+} from '~/helpers/hooks/useWorkshopEngineerMode';
 
 export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
   const navigate = useNavigate();
@@ -70,6 +72,7 @@ export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
             src={engineerMode ? zeroBuilder : zero}
             alt=""
             aria-hidden="true"
+            className={engineerMode ? workshopEngineerGlowClass : undefined}
             style={{
               height: '82%',
               aspectRatio: '1',
