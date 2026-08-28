@@ -1,16 +1,31 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { BUILD_WORKSHOP_PREVIEW_USER_IDS } from '~/constants/defaultValues';
 
+type WorkshopPersona = 'zero' | 'ciel';
+
+interface WorkshopStatus {
+  featureVisible?: boolean;
+  agentState?: 'build_available' | 'build_working' | 'chat_only';
+}
+
+type LoadWorkshopStatus = (params: {
+  persona: WorkshopPersona;
+}) => Promise<WorkshopStatus>;
+
 const POLL_MS = 60_000;
+
+// New Workshop duty is shared across both assistants, so one stable persona
+// status is the canonical read for the shared engineer-mode indicator.
+const SHARED_DUTY_STATUS_PERSONA: WorkshopPersona = 'zero';
 
 // Module-level store so every consumer (home buttons, chat quick access)
 // shares one poll of the Workshop duty status instead of polling per mount.
 let dutyLive = false;
 let timer: number | null = null;
 let subscriberCount = 0;
-let fetchStatus: ((params: { persona: 'zero' | 'ciel' }) => Promise<any>) | null =
-  null;
+let statusUserId: number | null = null;
+let fetchStatus: LoadWorkshopStatus | null = null;
 const listeners = new Set<() => void>();
 
 function getSnapshot() {
@@ -22,9 +37,16 @@ function notify() {
 }
 
 async function refresh() {
-  if (!fetchStatus) return;
+  const loadStatus = fetchStatus;
+  const requestUserId = statusUserId;
+  if (!loadStatus || !requestUserId) return;
+
   try {
-    const status = await fetchStatus({ persona: 'zero' });
+    const status = await loadStatus({
+      persona: SHARED_DUTY_STATUS_PERSONA
+    });
+    if (loadStatus !== fetchStatus || requestUserId !== statusUserId) return;
+
     const nextLive = Boolean(
       status?.featureVisible &&
         (status?.agentState === 'build_available' ||
@@ -35,7 +57,7 @@ async function refresh() {
       notify();
     }
   } catch {
-    // Keep the last known value on transient failures.
+    // Keep the last canonical value on transient failures.
   }
 }
 
@@ -49,37 +71,64 @@ function subscribe(listener: () => void) {
   return () => {
     listeners.delete(listener);
     subscriberCount -= 1;
-    if (subscriberCount === 0 && timer !== null) {
-      window.clearInterval(timer);
-      timer = null;
-    }
+    if (subscriberCount !== 0) return;
+
+    if (timer !== null) window.clearInterval(timer);
+    timer = null;
+    fetchStatus = null;
+    statusUserId = null;
+    dutyLive = false;
   };
 }
 
 /**
- * True while the Build Workshop duty is live AND the signed-in user is in the
- * preview rollout. Everyone else always gets false with zero network traffic.
+ * True while shared Build Workshop duty is live AND the signed-in user is in
+ * the preview rollout. Everyone else gets false with zero network traffic.
  */
-export default function useWorkshopEngineerMode() {
+export default function useWorkshopEngineerMode({
+  enabled = true
+}: { enabled?: boolean } = {}) {
   const userId = useKeyContext((v) => v.myState.userId);
   const loadBuildWorkshopStatus = useAppContext(
     (v) => v.requestHelpers.loadBuildWorkshopStatus
-  );
-  const isPreviewUser = BUILD_WORKSHOP_PREVIEW_USER_IDS.has(Number(userId));
+  ) as LoadWorkshopStatus;
+  const canonicalUserId = Number(userId);
+  const shouldSubscribe =
+    enabled && BUILD_WORKSHOP_PREVIEW_USER_IDS.has(canonicalUserId);
 
   useEffect(() => {
-    if (isPreviewUser) {
-      fetchStatus = loadBuildWorkshopStatus;
-    }
-    // Context request helpers are stable and intentionally excluded.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPreviewUser]);
+    if (!shouldSubscribe) return;
 
-  const live = useSyncExternalStore(
-    isPreviewUser ? subscribe : subscribeNoop,
-    isPreviewUser ? getSnapshot : getFalse
+    const sourceChanged =
+      statusUserId !== canonicalUserId ||
+      fetchStatus !== loadBuildWorkshopStatus;
+    statusUserId = canonicalUserId;
+    fetchStatus = loadBuildWorkshopStatus;
+
+    // Mounted consumers survive an in-app account switch. Clear the previous
+    // account's projection and reject its pending response before refreshing.
+    if (sourceChanged && subscriberCount > 0) {
+      if (dutyLive) {
+        dutyLive = false;
+        notify();
+      }
+      void refresh();
+    }
+  }, [canonicalUserId, loadBuildWorkshopStatus, shouldSubscribe]);
+
+  const getCurrentSnapshot = useCallback(
+    () =>
+      shouldSubscribe && statusUserId === canonicalUserId
+        ? getSnapshot()
+        : false,
+    [canonicalUserId, shouldSubscribe]
   );
-  return live;
+
+  return useSyncExternalStore(
+    shouldSubscribe ? subscribe : subscribeNoop,
+    getCurrentSnapshot,
+    getFalse
+  );
 }
 
 function subscribeNoop() {

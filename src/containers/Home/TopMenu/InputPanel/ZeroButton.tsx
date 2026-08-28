@@ -39,6 +39,7 @@ export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
         }}
       >
         <Button
+          aria-label="Chat with Zero"
           style={{
             opacity: chatLoading ? 0.5 : 1,
             ...(chatLoading
@@ -67,7 +68,8 @@ export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
         >
           <img
             src={engineerMode ? zeroBuilder : zero}
-            alt="Zero"
+            alt=""
+            aria-hidden="true"
             style={{
               height: '82%',
               aspectRatio: '1',

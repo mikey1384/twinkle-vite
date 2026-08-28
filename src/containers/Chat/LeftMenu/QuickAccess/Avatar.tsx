@@ -16,7 +16,11 @@ export default function QuickAccessAvatar({
   partner: ChatQuickAccessPartner;
   size?: number | string;
 }) {
-  const engineerMode = useWorkshopEngineerMode();
+  const isWorkshopPersona =
+    partner.id === CIEL_TWINKLE_ID || partner.id === ZERO_TWINKLE_ID;
+  const engineerMode = useWorkshopEngineerMode({
+    enabled: partner.isAi && isWorkshopPersona
+  });
   const aiImage =
     partner.id === CIEL_TWINKLE_ID
       ? engineerMode

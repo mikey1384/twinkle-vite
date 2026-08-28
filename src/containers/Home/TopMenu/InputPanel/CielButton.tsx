@@ -33,6 +33,7 @@ export default function CielButton({ style }: { style?: React.CSSProperties }) {
     <ErrorBoundary componentPath="TopMenu/InputPanel/CielButton">
       <div style={{ position: 'relative', cursor: 'pointer' }}>
         <Button
+          aria-label="Chat with Ciel"
           style={{
             opacity: chatLoading ? 0.5 : 1,
             ...(chatLoading
@@ -61,7 +62,8 @@ export default function CielButton({ style }: { style?: React.CSSProperties }) {
         >
           <img
             src={engineerMode ? cielBuilder : ciel}
-            alt="Ciel"
+            alt=""
+            aria-hidden="true"
             style={{
               height: '82%',
               aspectRatio: '1',
