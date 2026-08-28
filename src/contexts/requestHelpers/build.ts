@@ -497,6 +497,69 @@ export default function buildRequestHelpers({
   }
 
   return {
+    async loadBuildWorkshopStatus({ persona }: { persona: 'zero' | 'ciel' }) {
+      try {
+        const { data } = await request.get(`${URL}/build/workshop/status`, {
+          ...auth(),
+          params: { persona }
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildWorkshopJob({
+      persona,
+      relayId,
+      dutySessionId,
+      sponsorUserId,
+      buildId,
+      newProjectTitle,
+      consentVersion
+    }: {
+      persona: 'zero' | 'ciel';
+      relayId: number;
+      dutySessionId: number;
+      sponsorUserId: number;
+      buildId?: number | null;
+      newProjectTitle?: string | null;
+      consentVersion: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/workshop/jobs`,
+          {
+            persona,
+            relayId,
+            dutySessionId,
+            sponsorUserId,
+            buildId: buildId || null,
+            newProjectTitle: newProjectTitle || null,
+            consentVersion,
+            consentAccepted: true
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async cancelBuildWorkshopJob({ jobId }: { jobId: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/workshop/jobs/${jobId}/cancel`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async requestBuildProjectLimitIncrease({
       buildId,
       files,

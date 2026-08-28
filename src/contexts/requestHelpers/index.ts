@@ -69,6 +69,9 @@ function registerMethods(
 }
 
 registerMethods('build', [
+  'loadBuildWorkshopStatus',
+  'createBuildWorkshopJob',
+  'cancelBuildWorkshopJob',
   'createBuild',
   'loadBuild',
   'loadBuildPublishedVersion',

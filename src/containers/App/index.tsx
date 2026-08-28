@@ -135,6 +135,7 @@ const ChessPuzzleModal = lazyWithRetry(
 const LinkPage = lazyWithRetry(() => import('~/containers/LinkPage'));
 const PlaylistPage = lazyWithRetry(() => import('~/containers/PlaylistPage'));
 const Privacy = lazyWithRetry(() => import('~/containers/Privacy'));
+const SponsorGuide = lazyWithRetry(() => import('~/containers/SponsorGuide'));
 const Redirect = lazyWithRetry(() => import('~/containers/Redirect'));
 const MissionPage = lazyWithRetry(() => import('~/containers/MissionPage'));
 const Mission = lazyWithRetry(() => import('~/containers/Mission'));
@@ -1304,6 +1305,7 @@ export default function App() {
                 <Route path="/reset/*" element={<ResetPassword />} />
                 <Route path="/verify/*" element={<Verify />} />
                 <Route path="/privacy" element={<Privacy />} />
+                <Route path="/sponsor" element={<SponsorGuide />} />
                 <Route path="/users" element={<Home section="people" />} />
                 <Route path="/groups" element={<Home section="group" />} />
                 <Route

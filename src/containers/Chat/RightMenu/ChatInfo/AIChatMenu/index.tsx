@@ -15,6 +15,11 @@ import {
 import { BOOKMARK_VIEWS, BookmarkView } from '~/constants/defaultValues';
 import FilterBar from '~/components/FilterBar';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+
+const BuildWorkshopPanel = lazyWithRetry(() => import('./BuildWorkshopPanel'));
+
+const BUILD_WORKSHOP_PREVIEW_USER_IDS = new Set([554, 263, 5]);
 
 function AIChatMenu({
   bookmarkedMessages,
@@ -42,9 +47,7 @@ function AIChatMenu({
     {
       bookmarkedMessages?: Record<'ai' | 'me', any[]> | any[];
       loadMoreBookmarksShown?:
-        | { ai: boolean; me: boolean }
-        | boolean
-        | undefined;
+        { ai: boolean; me: boolean } | boolean | undefined;
       bookmarksLoaded?: boolean;
     }
   >;
@@ -58,6 +61,10 @@ function AIChatMenu({
     (v) => v.actions.onLoadTopicBookmarks
   );
   const username = useKeyContext((v) => v.myState.username);
+  const currentUserId = useKeyContext((v) => v.myState.userId);
+  const isBuildWorkshopPreviewAccount = BUILD_WORKSHOP_PREVIEW_USER_IDS.has(
+    Number(currentUserId)
+  );
   const currentTopic = useMemo(() => {
     if (!topicId || !topicObj) return null;
     return topicObj?.[topicId] || null;
@@ -83,9 +90,7 @@ function AIChatMenu({
     data: any;
   } | null>(null);
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
-  const aiUsagePolicy = useNotiContext(
-    (v) => v.state.todayStats.aiUsagePolicy
-  );
+  const aiUsagePolicy = useNotiContext((v) => v.state.todayStats.aiUsagePolicy);
   const onSetThinkHardZero = useChatContext(
     (v) => v.actions.onSetThinkHardZero
   );
@@ -110,7 +115,7 @@ function AIChatMenu({
       }
     }
     loadBookmarks();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId, channelId, bookmarksLoaded]);
 
   const aiType = isCielChat ? 'ciel' : 'zero';
@@ -118,15 +123,14 @@ function AIChatMenu({
   const thinkHard =
     thinkHardState[aiType][key] ?? thinkHardState[aiType].global;
   const thinkHardDisabled =
-    !!aiUsagePolicy &&
-    Number(aiUsagePolicy?.energyRemaining || 0) <= 0;
+    !!aiUsagePolicy && Number(aiUsagePolicy?.energyRemaining || 0) <= 0;
 
   return (
     <div
       className={css`
-        height: ${isCallButtonShown
-          ? 'CALC(100% - 11.9rem)'
-          : 'CALC(100% - 5.8rem)'};
+        height: ${
+          isCallButtonShown ? 'CALC(100% - 11.9rem)' : 'CALC(100% - 5.8rem)'
+        };
         width: 100%;
         min-width: 0;
         border-top: 1px solid var(--ui-border);
@@ -139,9 +143,9 @@ function AIChatMenu({
         grid-template-rows: auto 1fr;
         overflow: hidden;
         @media (max-width: ${mobileMaxWidth}) {
-          height: ${isCallButtonShown
-            ? 'CALC(100% - 10.9rem)'
-            : 'CALC(100% - 4.9rem)'};
+          height: ${
+            isCallButtonShown ? 'CALC(100% - 10.9rem)' : 'CALC(100% - 4.9rem)'
+          };
         }
       `}
     >
@@ -160,6 +164,11 @@ function AIChatMenu({
             {username}
           </nav>
         </FilterBar>
+        {isBuildWorkshopPreviewAccount ? (
+          <React.Suspense fallback={null}>
+            <BuildWorkshopPanel channelId={channelId} isCielChat={isCielChat} />
+          </React.Suspense>
+        ) : null}
       </div>
       <div
         className={css`
