@@ -8,12 +8,13 @@ export default function SponsorGuide() {
     <main className={pageClass}>
       <article className={cardClass}>
         <p className={eyebrowClass}>Lumine Build Workshop</p>
-        <h1 className={titleClass}>Sponsor Zero or Ciel’s Build help</h1>
+        <h1 className={titleClass}>Sponsor shared Build help</h1>
         <p className={leadClass}>
           Approved sponsors can contribute coding-agent time from their own
-          subscription. Zero or Ciel stays user-facing while Lumine gives the
-          sponsor’s worker only the user-approved relay and assigned project
-          scope.
+          subscription. That worker becomes shared added-brain capacity that
+          either Zero or Ciel can use. The assistant chosen by the user stays
+          user-facing while Lumine gives the sponsor’s worker only the
+          user-approved relay and assigned project scope.
         </p>
 
         <section className={sectionClass}>
@@ -59,15 +60,15 @@ export default function SponsorGuide() {
             npx @stage5/lumine@latest sponsor capacity --concurrency 1 --helpers
             0 --daily-limit 2 --weekly-limit 6
           </code>
-          <p>Then start one named persona in the foreground:</p>
+          <p>Then start one shared worker pool in the foreground:</p>
           <code className={commandClass}>
-            npx @stage5/lumine@latest sponsor duty start zero --provider codex
+            npx @stage5/lumine@latest sponsor duty start --provider codex
             --model gpt-5.6-sol --effort max
           </code>
           <p>
-            Use <code>ciel</code> instead of <code>zero</code> when assigned to
-            Ciel. Pause, resume, or stop duty with the matching{' '}
-            <code>lumine sponsor duty</code> command.
+            Users choose Zero or Ciel for each request; duty itself is not tied
+            to either assistant. Pause, resume, or stop the shared worker with
+            the corresponding <code>lumine sponsor duty</code> command.
           </p>
         </section>
 
@@ -94,12 +95,14 @@ export default function SponsorGuide() {
               final branch notice.
             </li>
             <li>
-              Work stays on Zero or Ciel’s contribution branch. It is never
+              Work stays on the contribution branch belonging to the Zero or
+              Ciel identity the user selected for that request. It is never
               merged or published automatically.
             </li>
             <li>
-              Queue membership is public within that visible duty queue, so
-              other viewers can see queued usernames and current queue states.
+              The duty queue is shared across Zero and Ciel. Queue membership
+              is public within that visible queue, so other viewers can see
+              queued usernames, selected assistant, and current queue states.
             </li>
           </ul>
         </section>
@@ -107,11 +110,12 @@ export default function SponsorGuide() {
         <section className={sectionClass}>
           <h2>Karma and integrity</h2>
           <p>
-            A unique completed handoff earns 50 KP only after the daily
-            integrity flow clears it. Retries and helper agents do not multiply
-            the award. Probationary work, flagged evidence, and a random sample
-            receive human-reviewed checks; dishonest reporting or data misuse
-            can suspend or revoke sponsorship.
+            A unique contribution to another user earns 50 KP only after the
+            daily integrity flow clears it. Self-sponsored testing, retries,
+            and helper agents do not earn or multiply the award. Probationary
+            work, flagged evidence, and a random sample receive human-reviewed
+            checks; dishonest reporting or data misuse can suspend or revoke
+            sponsorship.
           </p>
         </section>
 

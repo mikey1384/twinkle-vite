@@ -49,15 +49,8 @@ test('only controlled preview accounts mount the Workshop status poller', () => 
   );
 });
 
-test('Zero and Ciel duty indicators do not reuse human presence colors', () => {
-  const indicatorColors = [
-    '#9c2fb2',
-    '#6748c7',
-    '#6e607f',
-    '#1f63c5',
-    '#087e98',
-    '#5d7085'
-  ];
+test('the shared worker indicator does not impersonate either assistant or human presence', () => {
+  const indicatorColors = ['#8d369f', '#4c55b5', '#626b7b'];
   for (const color of indicatorColors) {
     assert.match(panelSource, new RegExp(color));
     assert(
@@ -69,6 +62,8 @@ test('Zero and Ciel duty indicators do not reuse human presence colors', () => {
     panelSource,
     /(?:green|orange|#(?:00ff00|ff0000|ffa500))/i
   );
+  assert.match(panelSource, /Extra Build help is shared by Zero and Ciel/);
+  assert.match(panelSource, /`Delegate to \$\{personaName\}`/);
 });
 
 function contrastAgainstWhite(hex: string) {

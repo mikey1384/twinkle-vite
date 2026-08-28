@@ -43,6 +43,7 @@ interface WorkshopStatus {
       jobId: number;
       userId: number;
       username: string;
+      persona: WorkshopPersona | null;
       state: 'queued' | 'working' | 'waiting';
     }>;
   };
@@ -157,8 +158,8 @@ export default function BuildWorkshopPanel({
       ? `sponsor #${sponsor.userId}`
       : 'the named sponsor';
   const stateColor = useMemo(
-    () => workshopStateColor(persona, status?.agentState),
-    [persona, status?.agentState]
+    () => workshopStateColor(status?.agentState),
+    [status?.agentState]
   );
 
   if (!status?.featureVisible) return null;
@@ -236,8 +237,8 @@ export default function BuildWorkshopPanel({
         {status.job
           ? jobStatusText(status.job, personaName)
           : status.admission === 'accepting'
-            ? `Tell ${personaName} what you want to build in chat. ${personaName} will prepare a private relay before you join.`
-            : `${personaName} can still chat, but sponsored Build work is not accepting another job right now.`}
+            ? `Extra Build help is shared by Zero and Ciel. Tell ${personaName} what you want to build, and ${personaName} will prepare a private relay for your approval.`
+            : `${personaName} can still chat normally, but the shared Build helper is not accepting another job right now.`}
       </p>
 
       {sponsor ? (
@@ -263,7 +264,12 @@ export default function BuildWorkshopPanel({
             {status.queue.people.map((person) => (
               <li key={person.jobId}>
                 @{person.username || `user-${person.userId}`} —{' '}
-                {person.state === 'queued' ? 'waiting' : person.state}
+                {person.state === 'queued' ? 'waiting' : person.state} via{' '}
+                {person.persona === 'ciel'
+                  ? 'Ciel'
+                  : person.persona === 'zero'
+                    ? 'Zero'
+                    : 'assistant'}
               </li>
             ))}
           </ol>
@@ -374,7 +380,9 @@ export default function BuildWorkshopPanel({
             onClick={handleJoin}
             className={primaryButtonClass(stateColor)}
           >
-            {action === 'join' ? 'Joining…' : 'Join Workshop queue'}
+            {action === 'join'
+              ? 'Delegating…'
+              : `Delegate to ${personaName}`}
           </button>
         </div>
       ) : null}
@@ -443,18 +451,10 @@ export default function BuildWorkshopPanel({
   }
 }
 
-function workshopStateColor(
-  persona: WorkshopPersona,
-  state?: WorkshopStatus['agentState']
-) {
-  if (persona === 'ciel') {
-    if (state === 'build_working') return '#9c2fb2';
-    if (state === 'build_available') return '#6748c7';
-    return '#6e607f';
-  }
-  if (state === 'build_working') return '#1f63c5';
-  if (state === 'build_available') return '#087e98';
-  return '#5d7085';
+function workshopStateColor(state?: WorkshopStatus['agentState']) {
+  if (state === 'build_working') return '#8d369f';
+  if (state === 'build_available') return '#4c55b5';
+  return '#626b7b';
 }
 
 function jobStatusText(
