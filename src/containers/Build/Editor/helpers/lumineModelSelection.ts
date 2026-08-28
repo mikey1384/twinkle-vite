@@ -7,8 +7,8 @@ import type {
   BuildLumineThinkLevel
 } from '../ChatPanel/types';
 
-export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'grok-4.6';
-export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'medium';
+export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'gpt-5.6-luna';
+export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'xhigh';
 
 export const LUMINE_MODE_LABELS: Record<BuildLumineMode, string> = {
   light: 'Light',
@@ -22,7 +22,7 @@ const DEFAULT_LUMINE_MODEL_BY_MODE: Record<
   BuildLumineMode,
   BuildLumineModel
 > = {
-  light: 'grok-4.6',
+  light: 'gpt-5.6-luna',
   medium: 'grok-4.6',
   heavy: 'gpt-5.6-sol'
 };
@@ -36,6 +36,14 @@ const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
 ];
 
 const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
+  {
+    model: 'gpt-5.6-luna',
+    mode: 'light',
+    label: 'GPT-5.6 Luna',
+    description: 'Light mode: efficient deep reasoning for everyday builds.',
+    defaultReasoningEffort: 'xhigh',
+    supportedReasoningEfforts: ['xhigh']
+  },
   {
     model: 'grok-4.6',
     mode: 'light',
@@ -93,6 +101,7 @@ const DEFAULT_FALLBACK_LUMINE_MODEL_OPTION =
 
 function isLumineModel(value: unknown): value is BuildLumineModel {
   return (
+    value === 'gpt-5.6-luna' ||
     value === 'grok-4.6' ||
     value === 'grok-4.5' ||
     value === 'gpt-5.6-terra' ||
@@ -266,6 +275,7 @@ export function resolveLumineMode({
   reasoningEffort
 }: Pick<BuildLumineModelPreference, 'model'> &
   Partial<Pick<BuildLumineModelPreference, 'reasoningEffort'>>): BuildLumineMode {
+  if (model === 'gpt-5.6-luna') return 'light';
   if (model === 'grok-4.6') {
     if (reasoningEffort === 'xhigh') return 'heavy';
     if (reasoningEffort === 'high') return 'medium';

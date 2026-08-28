@@ -1085,7 +1085,11 @@ export default function BuildEditor({
       },
       getLatestBuild,
       getLatestChatMessages,
-      getLumineModelSelection: getCurrentLumineModelSelection,
+      // The API policy owns the model default. If no canonical snapshot is
+      // available yet, omit the override and let the API resolve its current
+      // default instead of sending the client's fallback catalog.
+      getLumineModelSelection: () =>
+        getLatestCopilotPolicy() ? getCurrentLumineModelSelection() : null,
       getRuntimeExplorationPlan: () =>
         currentBuildRunView.runtimeExplorationPlan,
       isOwner,
@@ -1876,7 +1880,9 @@ export default function BuildEditor({
           onSave: handleSaveLumineChatVisibility
         }
       : null,
-    lumineModelSelectionControl,
+    lumineModelSelectionControl: copilotPolicy
+      ? lumineModelSelectionControl
+      : null,
     mainUpdateNoticeControl: branchMainUpdateNoticeControl,
     threeUpgradeNoticeControl:
       canEditCurrentBuildProject &&

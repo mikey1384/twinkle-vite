@@ -65,15 +65,15 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /DEFAULT_LUMINE_MODEL[^=]*= 'grok-4\.6'[\s\S]*?DEFAULT_LUMINE_THINK_LEVEL[^=]*= 'medium'/
+    /DEFAULT_LUMINE_MODEL[^=]*= 'gpt-5\.6-luna'[\s\S]*?DEFAULT_LUMINE_THINK_LEVEL[^=]*= 'xhigh'/
   );
   assert.match(
     selectionHelperSource,
-    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'grok-4\.6'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'gpt-5\.6-sol'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-5\.6-luna'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'gpt-5\.6-sol'/m
   );
   assert.match(
     selectionHelperSource,
-    /model: 'grok-4\.6'[\s\S]*?mode: 'light'[\s\S]*?defaultReasoningEffort: 'medium'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'medium'[\s\S]*?defaultReasoningEffort: 'high'[\s\S]*?model: 'gpt-5\.6-sol'[\s\S]*?mode: 'heavy'[\s\S]*?defaultReasoningEffort: 'xhigh'/m
+    /model: 'gpt-5\.6-luna'[\s\S]*?mode: 'light'[\s\S]*?defaultReasoningEffort: 'xhigh'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'light'[\s\S]*?defaultReasoningEffort: 'medium'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'medium'[\s\S]*?defaultReasoningEffort: 'high'[\s\S]*?model: 'gpt-5\.6-sol'[\s\S]*?mode: 'heavy'[\s\S]*?defaultReasoningEffort: 'xhigh'/m
   );
   assert.match(
     selectionHelperSource,
@@ -92,6 +92,96 @@ test('lumine workspace header exposes simple modes with advanced model choices',
     /model: 'claude-opus-5'[\s\S]*?mode: 'heavy'/
   );
   assert.doesNotMatch(headerSource, /gpt-5\.[1-5]|GPT-5\.[1-5]|Think level/i);
+});
+
+test('lumine Light defaults to Luna xhigh while following the served API catalog', async () => {
+  const {
+    DEFAULT_LUMINE_MODEL,
+    DEFAULT_LUMINE_THINK_LEVEL,
+    getLumineSelectionForMode,
+    getSelectableLumineModelOptions,
+    resolveLumineModelSelectionFromPolicy
+  } = await import(
+    '../src/containers/Build/Editor/helpers/lumineModelSelection.ts'
+  );
+
+  assert.equal(DEFAULT_LUMINE_MODEL, 'gpt-5.6-luna');
+  assert.equal(DEFAULT_LUMINE_THINK_LEVEL, 'xhigh');
+  assert.match(
+    buildEditorSource,
+    /getLumineModelSelection:\s*\(\) =>[\s\S]*?getLatestCopilotPolicy\(\)[\s\S]*?getCurrentLumineModelSelection\(\)\s*:\s*null/m
+  );
+  assert.match(
+    buildEditorSource,
+    /lumineModelSelectionControl:\s*copilotPolicy[\s\S]*?\? lumineModelSelectionControl[\s\S]*?: null/m
+  );
+
+  const fallbackOptions = getSelectableLumineModelOptions(null);
+  assert.deepEqual(
+    fallbackOptions
+      .filter((option) => option.mode === 'light')
+      .map((option) => ({
+        model: option.model,
+        defaultReasoningEffort: option.defaultReasoningEffort
+      })),
+    [
+      { model: 'gpt-5.6-luna', defaultReasoningEffort: 'xhigh' },
+      { model: 'grok-4.6', defaultReasoningEffort: 'medium' }
+    ]
+  );
+  assert.deepEqual(
+    getLumineSelectionForMode({
+      mode: 'light',
+      modelOptions: fallbackOptions
+    }),
+    {
+      model: 'gpt-5.6-luna',
+      reasoningEffort: 'xhigh',
+      mode: 'light',
+      source: 'default'
+    }
+  );
+  assert.deepEqual(resolveLumineModelSelectionFromPolicy(null), {
+    model: 'gpt-5.6-luna',
+    reasoningEffort: 'xhigh',
+    mode: 'light',
+    source: 'default'
+  });
+
+  const oldApiPolicy = {
+    lumineModelPreference: {
+      model: 'grok-4.6',
+      reasoningEffort: 'medium',
+      mode: 'light',
+      source: 'default'
+    },
+    lumineModelOptions: [
+      {
+        model: 'grok-4.6',
+        mode: 'light',
+        label: 'Grok 4.6',
+        description: '',
+        defaultReasoningEffort: 'medium',
+        supportedReasoningEfforts: ['medium']
+      }
+    ]
+  };
+  const servedOptions = getSelectableLumineModelOptions(oldApiPolicy);
+  assert.deepEqual(
+    getLumineSelectionForMode({ mode: 'light', modelOptions: servedOptions }),
+    {
+      model: 'grok-4.6',
+      reasoningEffort: 'medium',
+      mode: 'light',
+      source: 'default'
+    }
+  );
+  assert.deepEqual(resolveLumineModelSelectionFromPolicy(oldApiPolicy), {
+    model: 'grok-4.6',
+    reasoningEffort: 'medium',
+    mode: 'light',
+    source: 'default'
+  });
 });
 
 test('lumine retires Grok Heavy while preserving existing users on Heavy', async () => {
