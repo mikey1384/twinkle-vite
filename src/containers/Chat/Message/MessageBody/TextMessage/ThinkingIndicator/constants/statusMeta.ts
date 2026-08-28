@@ -51,6 +51,11 @@ export const STATUS_META = {
     icon: 'clock',
     color: Color.darkBlue()
   },
+  talking_with_lumine: {
+    text: 'Talking with Lumine...',
+    icon: 'comments',
+    color: Color.darkCyan()
+  },
   default: { text: 'Thinking...', icon: 'lightbulb', color: Color.gray() }
 } as const;
 

@@ -102,7 +102,9 @@ export default function ThinkingIndicator({
           z-index: 1;
         `}
       >
-        {isStreamingThoughts && thoughtContent ? (
+        {status !== 'talking_with_lumine' &&
+        isStreamingThoughts &&
+        thoughtContent ? (
           <StreamingThoughtContent
             thoughtContent={thoughtContent}
             scrollRef={scrollRef}

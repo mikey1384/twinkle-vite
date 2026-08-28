@@ -219,6 +219,15 @@ function WorkshopSponsorGuide() {
             stop the shared capacity with the corresponding{' '}
             <code>lumine sponsor duty</code> command.
           </p>
+          <p>
+            For an active job, that same session talks back through Lumine —
+            the added brain Zero or Ciel works with. The agent writes each
+            concise, user-facing progress note deliberately and sends it with{' '}
+            <code>lumine sponsor job update</code>. Twinkle shows that exact
+            note in the chat; hidden reasoning, raw terminal output,
+            credentials, tokens, private paths, and unrelated data must never
+            be sent through this channel.
+          </p>
         </div>
 
         <div className={sponsorCardClass}>

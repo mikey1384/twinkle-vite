@@ -107,6 +107,7 @@ function TextMessage({
       'reading_file',
       'reading',
       'recalling',
+      'talking_with_lumine',
       'retrieving_memory'
     ];
 

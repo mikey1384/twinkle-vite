@@ -27,6 +27,7 @@ import {
   countConfirmedRealtimeMessageArrivals,
   getChatMessageIdentity
 } from './newMessageIndicator';
+import LumineDialoguePhase from './LumineDialoguePhase';
 
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
@@ -809,6 +810,16 @@ export default function DisplayedMessages({
                 color={loadMoreButtonColor}
               />
             )}
+            <LumineDialoguePhase
+              partner={partner}
+              selectedChannelId={selectedChannelId}
+              topicId={
+                selectedTab === 'topic'
+                  ? Number(appliedTopicId || 0) || null
+                  : null
+              }
+              scopeVisible={!isSearchActive && !subchannel?.id}
+            />
             {messages.map((message, index) => {
               return message.id || message.tempMessageId ? (
                 <div
