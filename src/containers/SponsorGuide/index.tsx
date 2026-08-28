@@ -118,9 +118,9 @@ function WorkshopSponsorGuide() {
             raw assistant chat.
           </li>
           <li>
-            Lumine records requested and provider-resolved model, effort,
-            service tier, runtime, usage evidence, helpers, saves, and the
-            final branch notice.
+            Lumine records the declared and agent-reported model, effort,
+            service tier, runtime, session-binding evidence, helpers, saves,
+            and the final branch notice.
           </li>
           <li>
             The workshop queue is shared across Zero and Ciel and is public
@@ -141,8 +141,8 @@ function WorkshopSponsorGuide() {
           If you have a coding-agent subscription of your own, you can share
           time from it and give Zero and Ciel extra hands for building with
           users. The assistant stays in the conversation; Lumine gives your
-          worker only the approved plan, the assigned Build branch, and its
-          forum.
+          live on-duty agent session only the approved plan, the assigned Build
+          branch, and its forum.
         </p>
 
         <div className={sponsorCardClass}>
@@ -188,15 +188,35 @@ function WorkshopSponsorGuide() {
             npx @stage5/lumine@latest sponsor capacity --concurrency 1 --helpers
             0 --daily-limit 2 --weekly-limit 6
           </code>
-          <p>Then start your volunteering session in the foreground:</p>
+          <p>
+            If Lumine reports that the sponsor agreement changed, read it with{' '}
+            <code>lumine sponsor agreement</code> and explicitly renew it with{' '}
+            <code>
+              lumine sponsor agreement accept --accept-agreement
+            </code>
+            .
+          </p>
+          <p>
+            From the Codex or Claude Code session that will personally monitor
+            and do the work, start your volunteering session:
+          </p>
           <code className={commandClass}>
             npx @stage5/lumine@latest sponsor duty start --provider codex
             --model gpt-5.6-sol --effort max
           </code>
+          <p>Then keep that same agent session actively checking for work:</p>
+          <code className={commandClass}>
+            npx @stage5/lumine@latest sponsor duty watch --json
+          </code>
           <p>
             Users choose Zero or Ciel for each request; the volunteering
-            session itself is not tied to either assistant. Pause, resume, or
-            stop the shared worker with the corresponding{' '}
+            session itself is not tied to either assistant. Each watch is
+            intentionally short and must be run again by the same live agent
+            session. If that agent stops checking in, the Workshop closes its
+            availability automatically. Lumine gives an approved assignment
+            and scoped workspace back to that session; it never launches a
+            replacement coding provider in the background. Pause, resume, or
+            stop the shared capacity with the corresponding{' '}
             <code>lumine sponsor duty</code> command.
           </p>
         </div>
