@@ -12,14 +12,16 @@ import {
   useKeyContext,
   useNotiContext
 } from '~/contexts';
-import { BOOKMARK_VIEWS, BookmarkView } from '~/constants/defaultValues';
+import {
+  BOOKMARK_VIEWS,
+  BookmarkView,
+  BUILD_WORKSHOP_PREVIEW_USER_IDS
+} from '~/constants/defaultValues';
 import FilterBar from '~/components/FilterBar';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 
 const BuildWorkshopPanel = lazyWithRetry(() => import('./BuildWorkshopPanel'));
-
-const BUILD_WORKSHOP_PREVIEW_USER_IDS = new Set([554, 263, 5]);
 
 function AIChatMenu({
   bookmarkedMessages,

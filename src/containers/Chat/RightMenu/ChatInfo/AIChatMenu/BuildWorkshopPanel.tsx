@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import Icon from '~/components/Icon';
+import cielBuilder from '~/assets/ciel-builder.png';
+import zeroBuilder from '~/assets/zero-builder.png';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 type WorkshopPersona = 'zero' | 'ciel';
@@ -71,6 +73,21 @@ interface WorkshopStatus {
 
 const STATUS_REFRESH_MS = 5_000;
 
+const PERSONA_THEME = {
+  ciel: {
+    avatar: cielBuilder,
+    accent: '#d6539e',
+    bubbleBg: '#fdf1f8',
+    bubbleBorder: '#f5d3e7'
+  },
+  zero: {
+    avatar: zeroBuilder,
+    accent: '#4c78c9',
+    bubbleBg: '#eff6ff',
+    bubbleBorder: '#d4e4f7'
+  }
+} as const;
+
 export default function BuildWorkshopPanel({
   channelId,
   isCielChat
@@ -80,6 +97,7 @@ export default function BuildWorkshopPanel({
 }) {
   const persona: WorkshopPersona = isCielChat ? 'ciel' : 'zero';
   const personaName = isCielChat ? 'Ciel' : 'Zero';
+  const theme = PERSONA_THEME[persona];
   const userId = useKeyContext((v) => v.myState.userId);
   const loadBuildWorkshopStatus = useAppContext(
     (v) => v.requestHelpers.loadBuildWorkshopStatus
@@ -168,6 +186,7 @@ export default function BuildWorkshopPanel({
 
   const consentVersion = status.consent.version;
   const stateLabel = workshopStateLabel(status.agentState);
+  const statusActive = status.agentState !== 'chat_only';
   const isIdle = !status.job && !relay;
   const joiningDisabled =
     action !== null ||
@@ -177,6 +196,14 @@ export default function BuildWorkshopPanel({
     (projectMode === 'existing'
       ? selectedBuildId <= 0
       : !newProjectTitle.trim());
+
+  const bubbleText = status.job
+    ? jobStatusText(status.job)
+    : relay
+      ? `I put together a plan for you — take a look! If you like it, hit the button and I'll get started.`
+      : status.admission === 'accepting'
+        ? `Want to build something together? Tell me your idea right here in chat — a game, an app, anything. I'll draw up a plan, and once you approve it, I'll get to work!`
+        : `The workshop is full right now — but I'm still here to chat! Check back soon.`;
 
   return (
     <section
@@ -228,34 +255,29 @@ export default function BuildWorkshopPanel({
         >
           <span
             aria-hidden="true"
-            className={css`
-              width: 0.8rem;
-              height: 0.8rem;
-              border-radius: 50%;
-              background: ${stateColor};
-              box-shadow: 0 0 0 0.25rem ${stateColor}22;
-              flex: none;
-            `}
+            className={statusDotClass(stateColor, statusActive)}
           />
           {stateLabel}
         </span>
       </header>
 
-      {status.job ? (
-        <p className={compactParagraph}>
-          {jobStatusText(status.job, personaName)}
-        </p>
-      ) : isIdle ? (
-        <p className={compactParagraph}>
-          {status.admission === 'accepting'
-            ? `Want ${personaName} to build something with you? Describe your idea right here in chat — a game, an app, anything. ${personaName} will draw up a plan and ask for your go-ahead before starting.`
-            : `The workshop is full right now — you can still chat with ${personaName} as usual. Check back soon!`}
-        </p>
-      ) : null}
+      <div className={personaRowClass}>
+        <img
+          src={theme.avatar}
+          alt={`${personaName} wearing a builder cap`}
+          className={avatarClass(theme.accent)}
+        />
+        <div className={bubbleClass(theme.bubbleBg, theme.bubbleBorder)}>
+          {bubbleText}
+        </div>
+      </div>
 
       {isIdle && status.admission === 'accepting' && sponsor ? (
-        <p className={sponsorCreditClass(isCielChat)}>
-          {`Free for you — ${sponsorName} is sharing their AI to power the workshop.`}
+        <p className={sponsorCreditClass}>
+          <Icon icon="bolt" />
+          <span>
+            {`Free for you — ${sponsorName} is sharing their AI to power the workshop`}
+          </span>
         </p>
       ) : null}
 
@@ -398,7 +420,7 @@ export default function BuildWorkshopPanel({
             type="button"
             disabled={joiningDisabled}
             onClick={handleJoin}
-            className={primaryButtonClass(stateColor)}
+            className={primaryButtonClass(theme.accent)}
           >
             {action === 'join'
               ? 'Starting…'
@@ -483,33 +505,101 @@ function workshopStateLabel(state: WorkshopStatus['agentState']) {
   return 'Closed';
 }
 
-function jobStatusText(
-  job: NonNullable<WorkshopStatus['job']>,
-  personaName: string
-) {
+function jobStatusText(job: NonNullable<WorkshopStatus['job']>) {
   const title = job.rootBuild.title || 'your project';
   if (!job.canProgress) {
-    return `The sponsor's connection dropped. Your project is safe — you can wait for it to come back, or leave the job.`;
+    return `My sponsor's connection dropped — your project is safe. We can wait for it to come back, or you can leave the job.`;
   }
   if (job.status === 'queued') {
-    return `You're in line${job.queuePosition ? ` (#${job.queuePosition})` : ''} for ${title}. ${personaName} will start as soon as it's your turn.`;
+    return `You're in line${job.queuePosition ? ` (#${job.queuePosition})` : ''}! I'll start on ${title} the moment it's your turn.`;
   }
   if (job.status === 'waiting_user') {
-    return `${personaName} is waiting to hear back from you about ${title}.`;
+    return `I'm waiting to hear back from you about ${title} — message me when you're ready!`;
   }
-  return `${personaName} is building ${title} right now.`;
+  return `I'm hard at work on ${title} right now!`;
 }
 
-const compactParagraph = css`
-  margin: 0.8rem 0 0;
+const statusDotClass = (color: string, active: boolean) => css`
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: ${color};
+  box-shadow: 0 0 0 0.25rem ${color}22;
+  flex: none;
+  ${active
+    ? // Color-neutral keyframes: the same name is safe to define from both
+      // state colors because the body is identical.
+      `animation: buildWorkshopDotPulse 2.4s ease-in-out infinite;
+       @keyframes buildWorkshopDotPulse {
+         0%, 100% { transform: scale(1); }
+         50% { transform: scale(1.25); }
+       }`
+    : ''}
 `;
 
-const sponsorCreditClass = (isCielChat: boolean) => css`
+const personaRowClass = css`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-top: 1rem;
+`;
+
+const avatarClass = (accent: string) => css`
+  width: 5.6rem;
+  height: 5.6rem;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid ${accent};
+  object-fit: cover;
+  user-select: none;
+`;
+
+const bubbleClass = (bg: string, border: string) => css`
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid ${border};
+  border-radius: 0.9rem;
+  border-top-left-radius: 0.25rem;
+  background: ${bg};
+  color: #3a4152;
+  font-size: 1.15rem;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 1.1rem;
+    left: -0.55rem;
+    border-top: 0.5rem solid transparent;
+    border-bottom: 0.5rem solid transparent;
+    border-right: 0.55rem solid ${border};
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    top: 1.15rem;
+    left: -0.45rem;
+    border-top: 0.45rem solid transparent;
+    border-bottom: 0.45rem solid transparent;
+    border-right: 0.5rem solid ${bg};
+  }
+`;
+
+const sponsorCreditClass = css`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
   margin: 0.8rem 0 0;
   padding: 0.6rem 0.8rem;
   border-radius: 0.5rem;
-  background: ${isCielChat ? '#f5f3ff' : '#f0f7ff'};
-  color: #4b5363;
+  background: #fff8ec;
+  color: #7a5c1f;
+  font-size: 1.1rem;
+  svg {
+    margin-top: 0.25rem;
+    color: #e5a83c;
+    flex: none;
+  }
 `;
 
 const detailsClass = css`
