@@ -495,7 +495,7 @@ export default function BuildWorkshopPanel({
 
 function workshopStateColor(state?: WorkshopStatus['agentState']) {
   if (state === 'build_working') return '#8d369f';
-  if (state === 'build_available') return '#4c55b5';
+  if (state === 'build_available') return '#28962c';
   return '#626b7b';
 }
 
