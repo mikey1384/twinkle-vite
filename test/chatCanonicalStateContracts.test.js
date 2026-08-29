@@ -89,6 +89,23 @@ test('all reaction transports enter one canonical reducer action', () => {
   );
 });
 
+test('reaction read reconciliation never synthesizes a message boundary', () => {
+  const socketSource = readSource(
+    'src/containers/App/Header/hooks/useAPISocket/useChatSocket.ts'
+  );
+  const handlerSource = socketSource.slice(
+    socketSource.indexOf('async function handleChatReactionUpdate'),
+    socketSource.indexOf('function queueChannelUnreadStateResync')
+  );
+  const readReconciliation = handlerSource.match(
+    /const lastReadReconciliation = reactionIsVisibleToViewer[\s\S]*?: null;/
+  )?.[0];
+
+  assert(readReconciliation);
+  assert.match(readReconciliation, /readSource: 'socket_reaction'/);
+  assert.doesNotMatch(readReconciliation, /confirmedMessage/);
+});
+
 test('reaction requests expose pending UI without synthesizing canonical counts', () => {
   const uiConstantsSource = readSource('src/constants/ui.ts');
   const navigationFeedbackSource = readSource(

@@ -753,11 +753,9 @@ export default function useChatSocket({
         ? maybeUpdateLastRead({
             channelId,
             subchannelId,
-            confirmedMessage: {
-              id: update.messageId,
-              channelId,
-              subchannelId
-            },
+            // A reaction envelope proves the mutation, but its target can be
+            // deleted before this write reaches the writer. Only the loaded
+            // canonical message set may supply a durable read boundary.
             readSource: 'socket_reaction'
           })
         : null;
