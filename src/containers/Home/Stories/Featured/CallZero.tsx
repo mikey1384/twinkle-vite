@@ -23,7 +23,7 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 interface AiUsagePolicy {
   hasVerifiedEmail?: boolean;
-  identityType?: 'verified_email' | 'user';
+  identityType?: 'verified_email' | 'separate_verified_email' | 'user';
   isLegacyUnverifiedIdentity?: boolean;
   energyPercent?: number;
   energyRemaining?: number;

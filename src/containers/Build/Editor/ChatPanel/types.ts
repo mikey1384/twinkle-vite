@@ -109,7 +109,7 @@ export interface BuildCopilotPolicy {
     dayIndex: number;
     dayKey: string;
     hasVerifiedEmail?: boolean;
-    identityType?: 'verified_email' | 'user';
+    identityType?: 'verified_email' | 'separate_verified_email' | 'user';
     isLegacyUnverifiedIdentity?: boolean;
     baseEnergyUnitsPerDay?: number;
     energyLimit?: number;
