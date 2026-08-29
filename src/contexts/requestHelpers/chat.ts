@@ -2893,16 +2893,18 @@ export default function chatRequestHelpers({
     },
     async updateChatLastRead({
       channelId,
-      lastReadMessageId
+      lastReadMessageId,
+      readSource
     }: {
       channelId: number;
       lastReadMessageId: number;
+      readSource: string;
     }) {
       if (channelId <= 0) return { success: false };
       try {
         const { data } = await request.post(
           `${URL}/chat/lastRead`,
-          { channelId, lastReadMessageId },
+          { channelId, lastReadMessageId, readSource },
           {
             ...auth(),
             meta: {
@@ -2923,16 +2925,18 @@ export default function chatRequestHelpers({
     async updateSubchannelLastRead({
       channelId,
       subchannelId,
-      lastReadMessageId
+      lastReadMessageId,
+      readSource
     }: {
       channelId: number;
       subchannelId: number;
       lastReadMessageId: number;
+      readSource: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/lastRead/subchannel`,
-          { channelId, subchannelId, lastReadMessageId },
+          { channelId, subchannelId, lastReadMessageId, readSource },
           {
             ...auth(),
             meta: {

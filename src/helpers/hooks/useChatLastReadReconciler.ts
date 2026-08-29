@@ -64,7 +64,12 @@ export default function useChatLastReadReconciler() {
       confirmedMessage
     });
     return reconcileLastRead({
-      request: () => updateChatLastRead({ channelId, lastReadMessageId }),
+      request: () =>
+        updateChatLastRead({
+          channelId,
+          lastReadMessageId,
+          readSource: 'visible_channel_reconciler'
+        }),
       channelId,
       subchannelId: 0
     });
@@ -86,7 +91,8 @@ export default function useChatLastReadReconciler() {
         updateSubchannelLastRead({
           channelId,
           subchannelId,
-          lastReadMessageId
+          lastReadMessageId,
+          readSource: 'visible_subchannel_reconciler'
         }),
       channelId,
       subchannelId

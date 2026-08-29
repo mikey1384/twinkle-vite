@@ -331,11 +331,17 @@ export default function useChatSocket({
     async function maybeUpdateLastRead({
       channelId,
       subchannelId,
-      confirmedMessage
+      confirmedMessage,
+      readSource
     }: {
       channelId: number;
       subchannelId?: number | null;
       confirmedMessage?: unknown;
+      readSource:
+        | 'socket_invitation'
+        | 'socket_message'
+        | 'socket_reaction'
+        | 'socket_subject_change';
     }) {
       const nowSec = Math.floor(Date.now() / 1000);
       const normalizedSubchannelId = Number(subchannelId || 0);
@@ -382,7 +388,11 @@ export default function useChatSocket({
         };
         reconciliations.push(
           reconcileCanonicalLastRead({
-            request: updateChatLastRead({ channelId, lastReadMessageId }),
+            request: updateChatLastRead({
+              channelId,
+              lastReadMessageId,
+              readSource
+            }),
             channelId,
             subchannelId: 0
           })
@@ -401,7 +411,8 @@ export default function useChatSocket({
             request: updateSubchannelLastRead({
               channelId,
               subchannelId: normalizedSubchannelId,
-              lastReadMessageId
+              lastReadMessageId,
+              readSource
             }),
             channelId,
             subchannelId: normalizedSubchannelId
@@ -746,7 +757,8 @@ export default function useChatSocket({
               id: update.messageId,
               channelId,
               subchannelId
-            }
+            },
+            readSource: 'socket_reaction'
           })
         : null;
 
@@ -1079,7 +1091,8 @@ export default function useChatSocket({
             ...message,
             channelId: invitationChannelId,
             subchannelId: invitationSubchannelId
-          }
+          },
+          readSource: 'socket_invitation'
         });
       } else if (Number(message.userId) !== Number(userId)) {
         markUnreadActivity();
@@ -1161,7 +1174,8 @@ export default function useChatSocket({
               ...message,
               channelId,
               subchannelId: 0
-            }
+            },
+            readSource: 'socket_message'
           });
         }
         onReceiveMessage({
@@ -1273,7 +1287,8 @@ export default function useChatSocket({
           void maybeUpdateLastRead({
             channelId: message.channelId,
             subchannelId: message.subchannelId,
-            confirmedMessage: message
+            confirmedMessage: message,
+            readSource: 'socket_message'
           });
         }
         onReceiveMessage({
@@ -1496,7 +1511,8 @@ export default function useChatSocket({
         void maybeUpdateLastRead({
           channelId: message.channelId,
           subchannelId: message.subchannelId,
-          confirmedMessage: message
+          confirmedMessage: message,
+          readSource: 'socket_subject_change'
         });
       } else if (!senderIsUser) {
         markUnreadActivity();

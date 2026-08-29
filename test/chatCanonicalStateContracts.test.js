@@ -211,12 +211,12 @@ test('canonical last-read reconciliation is monotonic across writes, reads, and 
   );
   assert.match(
     requestSource,
-    /async updateChatLastRead\(\{[\s\S]*?lastReadMessageId[\s\S]*?\{ channelId, lastReadMessageId \}/
+    /async updateChatLastRead\(\{[\s\S]*?lastReadMessageId[\s\S]*?\{ channelId, lastReadMessageId, readSource \}/
   );
   assert.match(mainSource, /reconcileChannelLastRead\(selectedChannelId\)/);
   assert.match(
     socketSource,
-    /lastReadMessageId >[\s\S]*?previousMainWrite\?\.lastReadMessageId[\s\S]*?updateChatLastRead\(\{ channelId, lastReadMessageId \}\)/
+    /lastReadMessageId >[\s\S]*?previousMainWrite\?\.lastReadMessageId[\s\S]*?updateChatLastRead\(\{[\s\S]*?channelId,[\s\S]*?lastReadMessageId,[\s\S]*?readSource[\s\S]*?\}\)/
   );
   assert.match(
     reducerSource,

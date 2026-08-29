@@ -160,7 +160,7 @@ test('wake silently validates an authenticated room barrier and broken sessions 
   );
   assert.match(
     loadHandler,
-    /Failed to sync post-load chat state:[\s\S]*?scheduleLoadChatRetry\(\{ fromWriter: true \}\)/
+    /Failed to sync post-load chat state:[\s\S]*?scheduleLoadChatRetry\(\{[\s\S]*?fromWriter: true,[\s\S]*?replaceSelectedProjection/
   );
   assert.match(
     loadHandler,
@@ -229,11 +229,11 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(
     messagesSource,
-    /const expectedActivityRevision =[\s\S]*?getChatProjectionActivityRevision\(selectedChannelId\);[\s\S]*?await loadChatChannel\([\s\S]*?await loadChatSubject\([\s\S]*?getChatProjectionActivityRevision\(selectedChannelId\) !==[\s\S]*?expectedActivityRevision[\s\S]*?Canonical chat activity changed during channel recovery/
+    /const expectedActivityRevision =[\s\S]*?getChatProjectionActivityRevision\(selectedChannelId\);[\s\S]*?await loadChatChannel\([\s\S]*?await loadChatSubject\([\s\S]*?getChatProjectionActivityRevision\(selectedChannelId\) !==[\s\S]*?expectedActivityRevision[\s\S]*?throw new ChatProjectionActivityRaceError/
   );
   assert.match(
     messagesSource,
-    /Failed to recover selected chat channel:[\s\S]*?Math\.min\(1000 \* 2 \*\* retryCount, 10000\)/
+    /shouldEscalateSelectedChannelRecovery\(failedAttempts\)[\s\S]*?requestCanonicalChatRebuild\([\s\S]*?if \(rebuildAccepted\) return;[\s\S]*?Failed to recover selected chat channel:[\s\S]*?Math\.min\(1000 \* 2 \*\* \(failedAttempts - 1\), 10000\)/
   );
   assert.match(
     messagesSource,

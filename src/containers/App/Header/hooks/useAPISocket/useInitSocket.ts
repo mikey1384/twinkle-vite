@@ -60,6 +60,9 @@ import {
   markChatProjectionSocketEvent
 } from '~/helpers/chatUnreadActivity';
 import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
+import {
+  installCanonicalChatRebuildHandler
+} from '~/helpers/chatSelectedChannelRecovery';
 import type { RequestAttemptTiming } from '~/contexts/requestHelpers/axiosInstance';
 
 function dispatchSocketAuthReady(userId?: number | null) {
@@ -451,10 +454,12 @@ export default function useInitSocket({
   const handleLoadChatRef = useRef<
     | (({
         selectedChannelId,
-        fromWriter
+        fromWriter,
+        replaceSelectedProjection
       }: {
         selectedChannelId: number;
         fromWriter?: boolean;
+        replaceSelectedProjection?: boolean;
       }) => Promise<void>)
     | null
   >(null);
@@ -1105,10 +1110,12 @@ export default function useInitSocket({
 
     async function handleLoadChat({
       selectedChannelId,
-      fromWriter = false
+      fromWriter = false,
+      replaceSelectedProjection = false
     }: {
       selectedChannelId: number;
       fromWriter?: boolean;
+      replaceSelectedProjection?: boolean;
     }): Promise<void> {
       if (!userIdRef.current) {
         recordChatBootstrapEvent('chat-bootstrap-skip-no-user', {
@@ -1126,6 +1133,7 @@ export default function useInitSocket({
       const canonicalReadFromWriter =
         fromWriter || didSocketDisconnectRef.current;
       const preserveSelectedProjection = Boolean(
+        !replaceSelectedProjection &&
         canonicalReadFromWriter &&
         chatLoadedRef.current &&
         loadedForUserIdRef.current === bootstrapUserId &&
@@ -1143,10 +1151,14 @@ export default function useInitSocket({
         Number(latestPathIdRef.current) > 0
           ? Number(latestPathIdRef.current)
           : GENERAL_CHAT_PATH_ID;
-      const bootstrapChannelId = hasRoutePathId
-        ? parseChannelPath(routePathId)
-        : selectedChannelId || parseChannelPath(fallbackPathId);
-      const requestedSubchannelPath = hasRoutePathId
+      const bootstrapChannelId = replaceSelectedProjection
+        ? selectedChannelId
+        : hasRoutePathId
+          ? parseChannelPath(routePathId)
+          : selectedChannelId || parseChannelPath(fallbackPathId);
+      const requestedSubchannelPath =
+        hasRoutePathId &&
+        parseChannelPath(routePathId) === bootstrapChannelId
         ? subchannelPathRef.current || ''
         : '';
       const compactGeneralTopics = bootstrapChannelId === GENERAL_CHAT_ID;
@@ -1183,7 +1195,8 @@ export default function useInitSocket({
         latestPathId: latestPathIdRef.current,
         socketConnected: socket.connected,
         fromWriter: canonicalReadFromWriter,
-        preserveSelectedProjection
+        preserveSelectedProjection,
+        replaceSelectedProjection
       });
 
       try {
@@ -1545,7 +1558,8 @@ export default function useInitSocket({
                 // must then upgrade to the writer even if the failed request
                 // itself began as an ordinary replica bootstrap.
                 fromWriter:
-                  canonicalReadFromWriter || didSocketDisconnectRef.current
+                  canonicalReadFromWriter || didSocketDisconnectRef.current,
+                replaceSelectedProjection
               });
             } else {
               recordChatBootstrapEvent(
@@ -1574,7 +1588,10 @@ export default function useInitSocket({
             lastFailedBootstrapIdRef.current = bootstrapId;
             console.error('Failed to sync post-load chat state:', error);
             if (socket.connected) {
-              scheduleLoadChatRetry({ fromWriter: true });
+              scheduleLoadChatRetry({
+                fromWriter: true,
+                replaceSelectedProjection
+              });
             } else {
               recordChatBootstrapEvent(
                 'chat-bootstrap-retry-skipped-disconnected',
@@ -1664,8 +1681,12 @@ export default function useInitSocket({
     bumpLoadChatHandlerVersion();
 
     function scheduleLoadChatRetry({
-      fromWriter = false
-    }: { fromWriter?: boolean } = {}) {
+      fromWriter = false,
+      replaceSelectedProjection = false
+    }: {
+      fromWriter?: boolean;
+      replaceSelectedProjection?: boolean;
+    } = {}) {
       if (
         terminalSocketAuthFailureRef.current ||
         loadChatRetryTimerRef.current ||
@@ -1681,7 +1702,8 @@ export default function useInitSocket({
         delayMs: delay,
         userId: userIdRef.current,
         selectedChannelId: selectedChannelIdRef.current,
-        fromWriter
+        fromWriter,
+        replaceSelectedProjection
       });
       emitAdminTelemetry({
         message: `Retrying chat load in ${Math.round(delay / 1000)}s`
@@ -1727,7 +1749,8 @@ export default function useInitSocket({
         });
         void handleLoadChat({
           selectedChannelId: selectedChannelIdRef.current,
-          fromWriter
+          fromWriter,
+          replaceSelectedProjection
         });
       }, delay);
     }
@@ -1790,6 +1813,43 @@ export default function useInitSocket({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(
+    () =>
+      installCanonicalChatRebuildHandler(
+        ({ channelId, failedAttempts, reason, userId: requestUserId }) => {
+          if (
+            requestUserId !== Number(userIdRef.current || 0) ||
+            channelId !== Number(selectedChannelIdRef.current || 0) ||
+            !socket.connected ||
+            isLoadingChatRef.current ||
+            !handleLoadChatRef.current
+          ) {
+            return false;
+          }
+          recordChatBootstrapEvent(
+            'selected-channel-recovery-escalated-to-bootstrap',
+            {
+              channelId,
+              failedAttempts,
+              reason,
+              userId: requestUserId
+            }
+          );
+          void handleLoadChatRef.current({
+            selectedChannelId: channelId,
+            fromWriter: true,
+            // The full bootstrap already buffers and reconciles confirmed
+            // socket events. Replacing the selected projection through that
+            // path removes the quiet-socket requirement that can otherwise
+            // hold the composer in Catching Up forever on an active channel.
+            replaceSelectedProjection: true
+          });
+          return true;
+        }
+      ),
+    [loadChatHandlerVersion]
+  );
 
   // Inform server of away/visible status and keep the application-level
   // presence heartbeat foreground-only. Socket.IO transport liveness remains

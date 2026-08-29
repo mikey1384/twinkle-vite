@@ -22,6 +22,12 @@ import { isMobile, parseChannelPath } from '~/helpers';
 import { trackEvent } from '~/helpers/analytics';
 import { getChatProjectionActivityRevision } from '~/helpers/chatUnreadActivity';
 import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
+import {
+  ChatProjectionActivityRaceError,
+  requestCanonicalChatRebuild,
+  shouldEscalateSelectedChannelRecovery
+} from '~/helpers/chatSelectedChannelRecovery';
+import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { useNavigate } from 'react-router-dom';
 import {
   useAppContext,
@@ -606,7 +612,7 @@ export default function MessagesContainer({
   useEffect(() => {
     if (!isReloadRequired) return;
     let cancelled = false;
-    let retryCount = 0;
+    let failedAttempts = 0;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     void reload();
 
@@ -649,9 +655,7 @@ export default function MessagesContainer({
           getChatProjectionActivityRevision(selectedChannelId) !==
           expectedActivityRevision
         ) {
-          throw new Error(
-            'Canonical chat activity changed during channel recovery'
-          );
+          throw new ChatProjectionActivityRaceError();
         }
         if (!channelData?.channel?.id) {
           throw new Error(
@@ -713,9 +717,7 @@ export default function MessagesContainer({
           getChatProjectionActivityRevision(selectedChannelId) !==
           expectedActivityRevision
         ) {
-          throw new Error(
-            'Canonical chat activity changed during channel recovery'
-          );
+          throw new ChatProjectionActivityRaceError();
         }
 
         onRecoverSelectedChannel({
@@ -748,6 +750,7 @@ export default function MessagesContainer({
         }
       } catch (error) {
         if (cancelled) return;
+        failedAttempts += 1;
         const status = Number((error as { status?: number })?.status || 0);
         if (
           (status === 403 || status === 404) &&
@@ -764,9 +767,39 @@ export default function MessagesContainer({
           navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
           return;
         }
+        const failureReason =
+          error instanceof ChatProjectionActivityRaceError
+            ? 'projection_activity_race'
+            : 'request_failure';
+        recordChatBootstrapEvent('selected-channel-recovery-failed', {
+          channelId: selectedChannelId,
+          failedAttempts,
+          reason: failureReason,
+          status: status || null,
+          userId
+        });
+        if (shouldEscalateSelectedChannelRecovery(failedAttempts)) {
+          const rebuildAccepted = requestCanonicalChatRebuild({
+            channelId: selectedChannelId,
+            failedAttempts,
+            reason: failureReason,
+            userId
+          });
+          recordChatBootstrapEvent(
+            rebuildAccepted
+              ? 'selected-channel-recovery-rebuild-accepted'
+              : 'selected-channel-recovery-rebuild-unavailable',
+            {
+              channelId: selectedChannelId,
+              failedAttempts,
+              reason: failureReason,
+              userId
+            }
+          );
+          if (rebuildAccepted) return;
+        }
         console.error('Failed to recover selected chat channel:', error);
-        const delay = Math.min(1000 * 2 ** retryCount, 10000);
-        retryCount += 1;
+        const delay = Math.min(1000 * 2 ** (failedAttempts - 1), 10000);
         retryTimer = setTimeout(() => {
           retryTimer = null;
           void reload();
