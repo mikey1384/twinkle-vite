@@ -56,6 +56,11 @@ import {
   getSocketBindRetryDelayMs
 } from '~/helpers/socketRecovery';
 import {
+  clearPresenceContinuity,
+  getPresenceContinuityBindMetadata,
+  recordCanonicalPresenceContinuity
+} from '~/helpers/presenceContinuity';
+import {
   getChatProjectionActivityRevision,
   markChatProjectionSocketEvent
 } from '~/helpers/chatUnreadActivity';
@@ -75,12 +80,16 @@ interface SocketBindPayload {
   profilePicUrl?: string;
   token?: string | null;
   deviceId?: string;
+  presenceSessionId: string;
+  presenceVisible: boolean;
+  presenceContinuityToken?: string;
 }
 
 interface SocketBindResult {
   authError?: boolean;
   bindError?: boolean;
   chatRoomsChanged?: boolean;
+  presenceQualified?: boolean;
 }
 
 function emitSocketBind({
@@ -481,6 +490,7 @@ export default function useInitSocket({
   useEffect(() => {
     if (sessionInterruption) {
       terminalSocketAuthFailureRef.current = true;
+      clearPresenceContinuity();
       stopSocketAuthRecovery();
       return;
     }
@@ -502,6 +512,7 @@ export default function useInitSocket({
     userIdRef.current = userId;
     if (previousUserId === userId) return;
 
+    clearPresenceContinuity();
     clearSocketBindRetryTimer();
     socketBindRetryCountRef.current = 0;
 
@@ -853,6 +864,10 @@ export default function useInitSocket({
     };
     socket.onAny(handleChatProjectionSocketEvent);
     socket.on('online_acknowledged', handleOnlineAcknowledged);
+    socket.on(
+      'presence_continuity_updated',
+      handlePresenceContinuityUpdated
+    );
     socket.on('online_status_changed', handleSelfPresenceDemoted);
     socket.on('away_status_changed', handleSelfAwayDemoted);
     socket.on('connect', handleConnect);
@@ -865,6 +880,10 @@ export default function useInitSocket({
     return function cleanUp() {
       socket.offAny(handleChatProjectionSocketEvent);
       socket.off('online_acknowledged', handleOnlineAcknowledged);
+      socket.off(
+        'presence_continuity_updated',
+        handlePresenceContinuityUpdated
+      );
       socket.off('online_status_changed', handleSelfPresenceDemoted);
       socket.off('away_status_changed', handleSelfAwayDemoted);
       socket.off('connect', handleConnect);
@@ -886,9 +905,29 @@ export default function useInitSocket({
       handleLoadChatRef.current = null;
     };
 
-    function handleOnlineAcknowledged() {
+    function handleOnlineAcknowledged(payload?: {
+      userId?: number;
+      continuityToken?: string;
+      continuityExpiresAt?: number;
+    }) {
+      handlePresenceContinuityUpdated(payload);
       userActionAckedRef.current = true;
       handleStopUserActionCapture();
+    }
+
+    function handlePresenceContinuityUpdated(payload?: {
+      userId?: number;
+      continuityToken?: string;
+      continuityExpiresAt?: number;
+    }) {
+      const acknowledgedUserId = Number(payload?.userId || 0);
+      if (acknowledgedUserId !== Number(userIdRef.current || 0)) return;
+      if (!payload?.continuityToken) return;
+      recordCanonicalPresenceContinuity({
+        expiresAt: Number(payload.continuityExpiresAt || 0),
+        userId: acknowledgedUserId,
+        token: payload.continuityToken
+      });
     }
 
     function handlePlannedServerHandoff(payload?: { planned?: boolean }) {
@@ -2091,7 +2130,8 @@ export default function useInitSocket({
         username: usernameRef.current,
         profilePicUrl: profilePicUrlRef.current,
         token: tokenRead.token,
-        deviceId: getTwinkleDeviceId()
+        deviceId: getTwinkleDeviceId(),
+        ...getPresenceContinuityBindMetadata(bindingUserId)
       },
       onAcknowledged(result) {
         if (
@@ -2156,9 +2196,13 @@ export default function useInitSocket({
         dispatchSocketAuthReady(bindingUserId);
         socket.emit('enter_my_notification_channel', bindingUserId);
         socket.emit('change_busy_status', chatBusyRef.current);
-        userActionAckedRef.current = false;
+        userActionAckedRef.current = result?.presenceQualified === true;
         userActionAttemptsRef.current = 0;
-        handleStartUserActionCapture();
+        if (userActionAckedRef.current) {
+          handleStopUserActionCapture();
+        } else {
+          handleStartUserActionCapture();
+        }
         hydrateOnlinePresence(bindingUserId);
         onBound?.(result);
         if (

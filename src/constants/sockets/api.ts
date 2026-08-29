@@ -3,6 +3,7 @@ import URL from '~/constants/URL';
 import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 import { browserReportsOffline } from '~/helpers/browserNetwork';
 import { clientVersion } from '~/constants/defaultValues';
+import { getPresenceContinuityBindMetadata } from '~/helpers/presenceContinuity';
 
 function buildSocketAuthPayload() {
   const token = getStoredItem('token');
@@ -14,6 +15,7 @@ function buildSocketAuthPayload() {
     username: getStoredItem('username'),
     profilePicUrl: getStoredItem('profilePicUrl'),
     deviceId: getTwinkleDeviceId(),
+    ...getPresenceContinuityBindMetadata(userId),
     clientVersion
   };
 }
