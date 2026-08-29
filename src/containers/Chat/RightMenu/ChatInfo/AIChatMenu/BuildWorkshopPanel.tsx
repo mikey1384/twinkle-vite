@@ -14,6 +14,11 @@ interface WorkshopRelay {
   summary: string;
   projectTitleHint?: string | null;
   details?: {
+    projectIntent?: 'existing' | 'new' | 'unspecified';
+    projectTargetBuildId?: number | null;
+    ownerAccessRequestId?: number | null;
+    sponsorAccessChoice?: 'job_only' | 'team_invite' | 'unspecified';
+    sponsorProjectAccess?: 'workshop' | 'team' | 'owner';
     requestedOutcome?: string | null;
     constraints?: string[];
     acceptanceCriteria?: string[];
@@ -28,16 +33,10 @@ interface WorkshopStatus {
   featureVisible: boolean;
   persona: WorkshopPersona;
   agentState: 'build_available' | 'build_working' | 'chat_only';
-  statusLabel: string;
   admission: 'accepting' | 'full' | 'paused' | 'limited';
   sponsor?: {
     userId: number;
     username?: string | null;
-  } | null;
-  duty?: {
-    id: number;
-    queuedCount: number;
-    inProgressCount: number;
   } | null;
   queue: {
     count: number;
@@ -63,7 +62,13 @@ interface WorkshopStatus {
     canProgress: boolean;
   } | null;
   pendingRelays: WorkshopRelay[];
-  builds: Array<{ id: number; title: string }>;
+  builds: Array<{
+    id: number;
+    title: string;
+    ownerUserId: number;
+    ownerUsername?: string | null;
+    access: 'owner' | 'team';
+  }>;
   consent: {
     version: string;
     disclosure: string;
@@ -163,12 +168,21 @@ export default function BuildWorkshopPanel({
     if (!nextRelayId || relayIdRef.current === nextRelayId) return;
     relayIdRef.current = nextRelayId;
     const firstBuildId = Number(status?.builds?.[0]?.id || 0);
-    setProjectMode(firstBuildId ? 'existing' : 'new');
-    setSelectedBuildId(firstBuildId);
+    const routedBuildId = Number(relay?.details?.projectTargetBuildId || 0);
+    const nextBuildId = routedBuildId || firstBuildId;
+    const wantsNewProject = relay?.details?.projectIntent === 'new';
+    setProjectMode(!wantsNewProject && nextBuildId ? 'existing' : 'new');
+    setSelectedBuildId(nextBuildId);
     setNewProjectTitle(String(relay?.projectTitleHint || ''));
     setConsentAccepted(false);
     setActionError('');
-  }, [relay?.id, relay?.projectTitleHint, status?.builds]);
+  }, [
+    relay?.details?.projectIntent,
+    relay?.details?.projectTargetBuildId,
+    relay?.id,
+    relay?.projectTitleHint,
+    status?.builds
+  ]);
 
   const sponsor = relay?.sponsor || status?.sponsor || null;
   const sponsorName = sponsor?.username
@@ -188,13 +202,26 @@ export default function BuildWorkshopPanel({
   const stateLabel = workshopStateLabel(status.agentState);
   const statusActive = status.agentState !== 'chat_only';
   const isIdle = !status.job && !relay;
+  const projectChoiceBound = Boolean(
+    relay?.details?.projectTargetBuildId ||
+      relay?.details?.projectIntent === 'new'
+  );
+  const boundBuildId = Number(relay?.details?.projectTargetBuildId || 0);
+  const selectedBuildAvailable = status.builds.some(
+    (build) => Number(build.id) === selectedBuildId
+  );
+  const selectedProjectUnavailable = Boolean(
+    projectMode === 'existing' &&
+      selectedBuildId > 0 &&
+      !selectedBuildAvailable
+  );
   const joiningDisabled =
     action !== null ||
     !relay ||
     status.admission !== 'accepting' ||
     !consentAccepted ||
     (projectMode === 'existing'
-      ? selectedBuildId <= 0
+      ? selectedBuildId <= 0 || !selectedBuildAvailable
       : !newProjectTitle.trim());
 
   const bubbleText = status.job
@@ -358,11 +385,12 @@ export default function BuildWorkshopPanel({
             ) : null}
           </div>
 
-          {status.builds.length > 0 ? (
+          {status.builds.length > 0 || boundBuildId > 0 ? (
             <label className={fieldClass}>
               Which project?
               <select
                 value={projectMode === 'new' ? 'new' : String(selectedBuildId)}
+                disabled={projectChoiceBound}
                 onChange={(event) => {
                   const value = event.target.value;
                   setProjectMode(value === 'new' ? 'new' : 'existing');
@@ -370,14 +398,26 @@ export default function BuildWorkshopPanel({
                 }}
                 className={inputClass}
               >
+                {selectedProjectUnavailable ? (
+                  <option value={selectedBuildId}>
+                    Project access changed — ask for a new plan
+                  </option>
+                ) : null}
                 {status.builds.map((build) => (
                   <option key={build.id} value={build.id}>
-                    {build.title}
+                    {workshopBuildOptionLabel(build)}
                   </option>
                 ))}
                 <option value="new">Create a new project</option>
               </select>
             </label>
+          ) : null}
+
+          {selectedProjectUnavailable ? (
+            <p className={projectUnavailableClass}>
+              You no longer have access to the project in this plan. Ask{' '}
+              {personaName} to prepare a new one.
+            </p>
           ) : null}
 
           {projectMode === 'new' ? (
@@ -396,7 +436,11 @@ export default function BuildWorkshopPanel({
             <strong>Before you say go</strong>
             <ul>
               <li>
-                {`${sponsorName} can see this project, the plan you approve, and its forum — never your private chats with ${personaName}.`}
+                {relay.details?.sponsorProjectAccess === 'owner'
+                  ? `${sponsorName} owns this project, so their existing access continues — never your private chats with ${personaName}.`
+                  : relay.details?.sponsorProjectAccess === 'team'
+                    ? `${sponsorName} is on this project's team, so their access continues until the owner removes them — never your private chats with ${personaName}.`
+                    : `${sponsorName} can see this project, the plan you approve, and its forum for this Workshop job — never your private chats with ${personaName}.`}
               </li>
               <li>Twinkle's safety reviewers can see the same things.</li>
               <li>Your username shows in the workshop queue.</li>
@@ -503,6 +547,14 @@ function workshopStateLabel(state: WorkshopStatus['agentState']) {
   if (state === 'build_available') return 'Open';
   if (state === 'build_working') return 'Busy';
   return 'Closed';
+}
+
+function workshopBuildOptionLabel(build: WorkshopStatus['builds'][number]) {
+  if (build.access === 'owner') return `${build.title} — yours`;
+  const ownerName = build.ownerUsername
+    ? `@${build.ownerUsername}`
+    : `owner #${build.ownerUserId}`;
+  return `${build.title} — ${ownerName}'s team`;
 }
 
 function jobStatusText(job: NonNullable<WorkshopStatus['job']>) {
@@ -662,6 +714,12 @@ const inputClass = css`
   color: #252a38;
   padding: 0.65rem;
   font: inherit;
+`;
+
+const projectUnavailableClass = css`
+  margin: 0.55rem 0 0;
+  color: #9b2f4d;
+  font-size: 1.1rem;
 `;
 
 const beforeConsentClass = css`

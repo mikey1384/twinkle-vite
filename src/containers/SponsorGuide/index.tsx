@@ -76,8 +76,9 @@ function WorkshopSponsorGuide() {
               <Icon icon="hammer" /> Watch it get built
             </h3>
             <p>
-              Zero or Ciel builds on your project's own branch. You stay in
-              charge — nothing is merged or published without you.
+              Zero or Ciel builds on a separate contribution branch. Main
+              stays untouched, and the project owner decides whether anything
+              is merged or published.
             </p>
           </div>
         </div>
@@ -98,7 +99,10 @@ function WorkshopSponsorGuide() {
             <ul>
               <li>The plan you approve</li>
               <li>Build follow-up messages you send while the job is active</li>
-              <li>The assigned Build branch and its Build Forum</li>
+              <li>
+                The approved Build project, assigned contribution branch, and
+                its Build Forum
+              </li>
             </ul>
           </div>
           <div className={sharedCardClass('#f3f5fa', '#d3daea')}>
@@ -112,6 +116,13 @@ function WorkshopSponsorGuide() {
           </div>
         </div>
         <ul className={finePrintClass}>
+          <li>
+            If you own the project, you choose one-job access or a normal team
+            invite. If you are a teammate, Zero or Ciel asks the owner
+            privately and you wait for the owner to choose. Team access begins
+            only after the sponsor accepts and lasts until the owner removes
+            it.
+          </li>
           <li>
             Twinkle's safety reviewers may inspect approved plans, recorded
             runtime evidence, and canonical artifacts for a job — but not the
