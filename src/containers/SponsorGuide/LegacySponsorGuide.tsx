@@ -12,9 +12,11 @@ export default function LegacySponsorGuide() {
         <p className={leadClass}>
           Approved sponsors can share time from a coding agent connected to
           their own subscription, giving Zero and Ciel extra help for building
-          alongside users. The assistant the user chooses stays in the
-          conversation, while Lumine gives the sponsor's worker only the
-          approved plan, assigned Build branch, and its forum.
+          alongside users and answering project-grounded questions. The
+          assistant the user chooses stays in the conversation, while Lumine
+          gives the sponsor's worker only the approved plan or question and
+          exact Build workspace. Temporary Workshop access never includes
+          Forum comments.
         </p>
 
         <section className={sectionClass}>
@@ -77,9 +79,14 @@ export default function LegacySponsorGuide() {
           <h2>What gets shared during a sponsored run</h2>
           <ul>
             <li>
-              The sponsor sees the approved plan and active-job Build follow-up
-              messages covered by the user's explicit Workshop consent, plus
-              the assigned Build branch and its Build Forum.
+              The sponsor sees the approved plan or project question and
+              active-job Build follow-up messages covered by the user's
+              explicit Workshop consent, plus the exact Main or branch named
+              there.
+            </li>
+            <li>
+              Forum comments are available only through the sponsor's normal
+              account when they own the project or are an accepted teammate.
             </li>
             <li>
               The sponsor does not receive the user’s raw Zero or Ciel chat or
@@ -92,13 +99,13 @@ export default function LegacySponsorGuide() {
             </li>
             <li>
               Lumine records requested and provider-resolved model, effort,
-              service tier, runtime, usage evidence, helpers, saves, and the
-              final branch notice.
+              service tier, runtime, usage evidence, helpers, restore points,
+              and canonical saves.
             </li>
             <li>
-              Work stays on the contribution branch belonging to the Zero or
-              Ciel identity the user selected for that request. It is never
-              merged or published automatically.
+              Editing is limited to the exact Main or branch owned by the
+              person requesting the work. A restore point is made first, and
+              nothing is published automatically.
             </li>
             <li>
               The workshop queue is shared across Zero and Ciel. Queue
@@ -112,7 +119,7 @@ export default function LegacySponsorGuide() {
         <section className={sectionClass}>
           <h2>Karma and trust</h2>
           <p>
-            A unique contribution to another user earns 50 KP only after the
+            A unique contribution to another user earns 50 KP only after
             Twinkle's daily review confirms it. Self-sponsored testing, retries,
             and helper agents do not earn or multiply the award. Probationary
             work, flagged evidence, and a random sample receive human-reviewed

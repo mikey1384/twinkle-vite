@@ -30,9 +30,10 @@ function WorkshopSponsorGuide() {
           </h1>
           <p className={leadClass}>
             The Build Workshop is where ideas become working games and apps.
-            Tell Zero or Ciel what you want to make, approve their plan, and
-            watch them build it with you — free, powered by community members
-            who share their own AI.
+            Tell Zero or Ciel what you want to make, or ask them about a Lumine
+            project. Approve the plan or question, then work through it
+            together — free, powered by community members who share their own
+            AI.
           </p>
         </div>
         <div className={heroArtClass}>
@@ -53,11 +54,11 @@ function WorkshopSponsorGuide() {
           <div className={stepCardClass}>
             <span className={stepBadgeClass('#4c78c9')}>1</span>
             <h3>
-              <Icon icon="comments" /> Share your idea
+              <Icon icon="comments" /> Share an idea or question
             </h3>
             <p>
-              In your Zero or Ciel chat, describe what you want to build — a
-              game, an app, anything you can imagine.
+              In your Zero or Ciel chat, describe what you want to build, or
+              ask about a project you want to understand better.
             </p>
           </div>
           <div className={stepCardClass}>
@@ -66,8 +67,8 @@ function WorkshopSponsorGuide() {
               <Icon icon="check" /> Approve the plan
             </h3>
             <p>
-              Your assistant drafts a plan just for you. Nothing starts until
-              you read it and say go.
+              Your assistant drafts a plan or a project question just for you.
+              Nothing starts until you read it and say go.
             </p>
           </div>
           <div className={stepCardClass}>
@@ -76,9 +77,9 @@ function WorkshopSponsorGuide() {
               <Icon icon="hammer" /> Watch it get built
             </h3>
             <p>
-              Zero or Ciel builds on a separate contribution branch. Main
-              stays untouched, and the project owner decides whether anything
-              is merged or published.
+              Lumine works only in the Main or branch named in the plan. A
+              restore point is made before an edit, and nothing is published
+              automatically.
             </p>
           </div>
         </div>
@@ -97,11 +98,11 @@ function WorkshopSponsorGuide() {
               <Icon icon="eye" /> Your sponsor can see
             </h3>
             <ul>
-              <li>The plan you approve</li>
+              <li>The plan or project question you approve</li>
               <li>Build follow-up messages you send while the job is active</li>
               <li>
-                The approved Build project, assigned contribution branch, and
-                its Build Forum
+                The exact Main or branch named in the plan. Temporary Workshop
+                access never includes Forum comments.
               </li>
             </ul>
           </div>
@@ -117,11 +118,17 @@ function WorkshopSponsorGuide() {
         </div>
         <ul className={finePrintClass}>
           <li>
-            If you own the project, you choose one-job access or a normal team
-            invite. If you are a teammate, Zero or Ciel asks the owner
-            privately and you wait for the owner to choose. Team access begins
-            only after the sponsor accepts and lasts until the owner removes
-            it.
+            Public projects need no extra owner step for a project question or
+            for work on your own branch. For an unpublished project, the owner
+            chooses one-job access or a normal team invite. If you are a
+            teammate, Zero or Ciel asks the owner privately and tells you to
+            wait for that choice.
+          </li>
+          <li>
+            A sponsor who already owns the project or is an accepted teammate
+            keeps their normal project and Forum access. A new team invite
+            starts that access only after the sponsor accepts and lasts while
+            that team membership remains active.
           </li>
           <li>
             Twinkle's safety reviewers may inspect approved plans, recorded
@@ -130,8 +137,8 @@ function WorkshopSponsorGuide() {
           </li>
           <li>
             Lumine records the declared and agent-reported model, effort,
-            service tier, runtime, session-binding evidence, helpers, saves,
-            and the final branch notice.
+            service tier, runtime, session-binding evidence, helpers, restore
+            point, and canonical saves.
           </li>
           <li>
             The workshop queue is shared across Zero and Ciel and is public
@@ -139,9 +146,8 @@ function WorkshopSponsorGuide() {
             the selected assistant, and current queue states.
           </li>
           <li>
-            Work stays on the contribution branch belonging to the Zero or Ciel
-            identity you selected for that request. It is never merged or
-            published automatically.
+            Editing is limited to the exact Main or branch owned by the person
+            requesting the work. Nothing is published automatically.
           </li>
         </ul>
       </section>
@@ -152,8 +158,9 @@ function WorkshopSponsorGuide() {
           If you have a coding-agent subscription of your own, you can share
           time from it and give Zero and Ciel extra hands for building with
           users. The assistant stays in the conversation; Lumine gives your
-          live on-duty agent session only the approved plan, the assigned Build
-          branch, and its forum.
+          live on-duty agent session only the approved plan and exact Build
+          workspace. Forum comments are available only through your normal
+          owner or accepted-team access.
         </p>
 
         <div className={sponsorCardClass}>
@@ -232,8 +239,9 @@ function WorkshopSponsorGuide() {
           </p>
           <p>
             For an active job, that same session talks back through Lumine —
-            the added brain Zero or Ciel works with. The agent writes each
-            concise, user-facing progress note deliberately and sends it with{' '}
+            the on-duty project collaborator Zero or Ciel talks with. The
+            agent writes each concise, user-facing progress note deliberately
+            and sends it with{' '}
             <code>lumine sponsor job update</code>. Twinkle shows that exact
             note in the chat; hidden reasoning, raw terminal output,
             credentials, tokens, private paths, and unrelated data must never
