@@ -111,6 +111,9 @@ export default function Reading({
 }) {
   const finishedStoryIdRef = useRef(0);
   const activeStoryIdRef = useRef(storyId);
+  // These refs own the in-flight socket projection. Do not synchronize them
+  // back from rendered props: passive effects can lag behind incoming deltas,
+  // roll the projection backward, and make every later startOffset look stale.
   const streamedStoryRef = useRef(story);
   const streamedExplanationRef = useRef(explanation);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -141,14 +144,6 @@ export default function Reading({
     onSetStory,
     userId
   };
-
-  useEffect(() => {
-    streamedStoryRef.current = story;
-  }, [story]);
-
-  useEffect(() => {
-    streamedExplanationRef.current = explanation;
-  }, [explanation]);
 
   useEffect(() => {
     if (!solveObj.isGraded && !isDisabled && userId) {
