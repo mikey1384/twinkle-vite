@@ -12,6 +12,7 @@ interface ChatBootstrapWindow extends Window {
   __chatBootstrapHistory?: ChatBootstrapHistoryEntry[];
   __chatBootstrapLogSeq?: number;
   __chatBootstrapAttemptSeq?: number;
+  __chatSocketBindAttemptSeq?: number;
 }
 
 function getChatBootstrapWindow() {
@@ -26,6 +27,15 @@ export function nextChatBootstrapId() {
     targetWindow.__chatBootstrapAttemptSeq = nextAttemptSeq;
   }
   return `chat-bootstrap-${Date.now()}-${nextAttemptSeq}`;
+}
+
+export function nextChatSocketBindId() {
+  const targetWindow = getChatBootstrapWindow();
+  const nextAttemptSeq = (targetWindow?.__chatSocketBindAttemptSeq || 0) + 1;
+  if (targetWindow) {
+    targetWindow.__chatSocketBindAttemptSeq = nextAttemptSeq;
+  }
+  return `chat-bind-${Date.now()}-${nextAttemptSeq}`;
 }
 
 export function recordChatBootstrapEvent(

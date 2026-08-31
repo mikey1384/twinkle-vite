@@ -24,8 +24,13 @@ import { getChatProjectionActivityRevision } from '~/helpers/chatUnreadActivity'
 import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
 import {
   ChatProjectionActivityRaceError,
+  clearTerminalChatRecovery,
+  getTerminalChatRecoveryState,
+  nextChatRecoveryId,
+  publishTerminalChatRecovery,
   requestCanonicalChatRebuild,
-  shouldEscalateSelectedChannelRecovery
+  shouldEscalateSelectedChannelRecovery,
+  subscribeToTerminalChatRecovery
 } from '~/helpers/chatSelectedChannelRecovery';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { useNavigate } from 'react-router-dom';
@@ -494,8 +499,23 @@ export default function MessagesContainer({
     subchannel?.loaded
   ]);
 
-  const catchUpStatusPending =
-    (reconnecting || isReloadRequired) && !pageLoading;
+  const [, setTerminalChatRecoveryRevision] = useState(0);
+
+  useEffect(
+    () =>
+      subscribeToTerminalChatRecovery(() => {
+        setTerminalChatRecoveryRevision((revision) => revision + 1);
+      }),
+    []
+  );
+
+  const selectedTerminalChatRecovery = getTerminalChatRecoveryState({
+    channelId: selectedChannelId,
+    userId
+  });
+  const chatRecoveryBlocksInteraction =
+    (reconnecting || isReloadRequired) && !selectedTerminalChatRecovery;
+  const catchUpStatusPending = chatRecoveryBlocksInteraction && !pageLoading;
   const [catchUpStatusDelayElapsed, setCatchUpStatusDelayElapsed] =
     useState(false);
 
@@ -523,7 +543,7 @@ export default function MessagesContainer({
         : chessTarget
           ? ' - 24rem - 2px'
           : ''
-  }${catchUpStatusShown ? ' - 4rem' : ''}
+  }${catchUpStatusShown || selectedTerminalChatRecovery ? ' - 4rem' : ''}
     ${
       selectedChannelIsOnCall || selectedChannelIsOnAICall
         ? ` - ${CALL_SCREEN_HEIGHT}`
@@ -611,6 +631,7 @@ export default function MessagesContainer({
 
   useEffect(() => {
     if (!isReloadRequired) return;
+    const recoveryId = nextChatRecoveryId();
     let cancelled = false;
     let failedAttempts = 0;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -621,6 +642,13 @@ export default function MessagesContainer({
       try {
         const expectedActivityRevision =
           getChatProjectionActivityRevision(selectedChannelId);
+        recordChatBootstrapEvent('selected-channel-recovery-request-start', {
+          channelId: selectedChannelId,
+          expectedActivityRevision,
+          failedAttempts,
+          recoveryId,
+          userId
+        });
         const compactGeneralTopics = selectedChannelId === GENERAL_CHAT_ID;
         const channelData = await loadChatChannel({
           channelId: selectedChannelId,
@@ -636,6 +664,7 @@ export default function MessagesContainer({
           // just gated interaction to repair.
           fromWriter: true,
           bounded: true,
+          recoveryId,
           compactGeneralTopics,
           topicIds: compactGeneralTopics
             ? getChatTopicProjectionIds({
@@ -682,7 +711,8 @@ export default function MessagesContainer({
           channelId: canonicalChannelId,
           subchannelId: canonicalSubchannelId || undefined,
           fromWriter: true,
-          bounded: true
+          bounded: true,
+          recoveryId
         });
         const selectedTopicId = Number(
           currentChannel.selectedTopicId ||
@@ -703,7 +733,8 @@ export default function MessagesContainer({
                 channelId: canonicalChannelId,
                 topicId: selectedTopicId,
                 fromWriter: true,
-                bounded: true
+                bounded: true,
+                recoveryId
               })
             : null;
         if (
@@ -730,6 +761,18 @@ export default function MessagesContainer({
                 ...topicData
               }
             : null,
+          userId
+        });
+        recordChatBootstrapEvent('selected-channel-recovery-complete', {
+          channelId: selectedChannelId,
+          expectedActivityRevision,
+          observedActivityRevision:
+            getChatProjectionActivityRevision(selectedChannelId),
+          recoveryId,
+          userId
+        });
+        clearTerminalChatRecovery({
+          channelId: selectedChannelId,
           userId
         });
         for (const member of channelData.channel.members || []) {
@@ -774,6 +817,7 @@ export default function MessagesContainer({
         recordChatBootstrapEvent('selected-channel-recovery-failed', {
           channelId: selectedChannelId,
           failedAttempts,
+          recoveryId,
           reason: failureReason,
           status: status || null,
           userId
@@ -782,6 +826,7 @@ export default function MessagesContainer({
           const rebuildAccepted = requestCanonicalChatRebuild({
             channelId: selectedChannelId,
             failedAttempts,
+            recoveryId,
             reason: failureReason,
             userId
           });
@@ -792,11 +837,21 @@ export default function MessagesContainer({
             {
               channelId: selectedChannelId,
               failedAttempts,
+              recoveryId,
               reason: failureReason,
               userId
             }
           );
           if (rebuildAccepted) return;
+          publishTerminalChatRecovery({
+            channelId: selectedChannelId,
+            failedAttempts,
+            occurredAt: Date.now(),
+            recoveryId,
+            reason: 'canonical_rebuild_unavailable',
+            userId
+          });
+          return;
         }
         console.error('Failed to recover selected chat channel:', error);
         const delay = Math.min(1000 * 2 ** (failedAttempts - 1), 10000);
@@ -1467,7 +1522,7 @@ export default function MessagesContainer({
     pageLoading,
     loadMoreShownAtBottom,
     isLoadingTopicMessages,
-    isReconnecting: reconnecting || isReloadRequired,
+    isReconnecting: chatRecoveryBlocksInteraction,
     isConnecting: !selectedChannelIdAndPathIdNotSynced,
     isLoadingChannel: !currentChannel?.loaded,
     chessTarget,
@@ -1529,7 +1584,7 @@ export default function MessagesContainer({
     isOwnerPostingOnly: currentChannel.isOwnerPostingOnly,
     innerRef: ChatInputRef,
     currentlyStreamingAIMsgId: currentChannel.currentlyStreamingAIMsgId,
-    loading: pageLoading || reconnecting || isReloadRequired,
+    loading: pageLoading || chatRecoveryBlocksInteraction,
     socketConnected,
     isRespondingToSubject: appliedIsRespondingToSubject,
     isTwoPeopleChannel: currentChannel.twoPeople,
@@ -1594,12 +1649,14 @@ export default function MessagesContainer({
       />
       <Content
         catchUpStatusShown={catchUpStatusShown}
+        catchUpTerminalError={!!selectedTerminalChatRecovery}
         containerHeight={containerHeight}
         subchannel={subchannel}
         channelHeaderProps={channelHeaderProps}
         displayedMessagesProps={displayedMessagesProps}
         messageInputKey={selectedChannelId}
         messageInputProps={messageInputProps}
+        onRetryCatchUp={handleRetryChatRecovery}
       />
       <Modals
         boardCountdownObj={boardCountdownObj}
@@ -1691,6 +1748,35 @@ export default function MessagesContainer({
       />
     </ErrorBoundary>
   );
+
+  function handleRetryChatRecovery() {
+    if (!selectedTerminalChatRecovery) return;
+    const recoveryId = nextChatRecoveryId();
+    const rebuildAccepted = requestCanonicalChatRebuild({
+      channelId: selectedChannelId,
+      failedAttempts: selectedTerminalChatRecovery.failedAttempts,
+      recoveryId,
+      reason: 'request_failure',
+      userId
+    });
+    recordChatBootstrapEvent(
+      rebuildAccepted
+        ? 'terminal-chat-recovery-retry-accepted'
+        : 'terminal-chat-recovery-retry-unavailable',
+      {
+        channelId: selectedChannelId,
+        failedAttempts: selectedTerminalChatRecovery.failedAttempts,
+        recoveryId,
+        userId
+      }
+    );
+    if (!rebuildAccepted) return;
+    clearTerminalChatRecovery({
+      channelId: selectedChannelId,
+      recoveryId: selectedTerminalChatRecovery.recoveryId,
+      userId
+    });
+  }
 
   async function loadTopicMessagesAndUpdate(
     messageIdToScrollTo?: number | null

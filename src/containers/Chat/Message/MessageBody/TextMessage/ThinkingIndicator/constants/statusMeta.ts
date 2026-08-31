@@ -52,7 +52,7 @@ export const STATUS_META = {
     color: Color.darkBlue()
   },
   talking_with_lumine: {
-    text: 'Talking with Lumine...',
+    text: 'Using Lumine...',
     icon: 'comments',
     color: Color.darkCyan()
   },

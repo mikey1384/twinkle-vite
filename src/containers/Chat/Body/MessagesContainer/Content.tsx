@@ -6,20 +6,24 @@ import MessageInput from './MessageInput';
 
 export default function Content({
   catchUpStatusShown,
+  catchUpTerminalError,
   containerHeight,
   subchannel,
   channelHeaderProps,
   displayedMessagesProps,
   messageInputKey,
-  messageInputProps
+  messageInputProps,
+  onRetryCatchUp
 }: {
   catchUpStatusShown: boolean;
+  catchUpTerminalError: boolean;
   containerHeight: string;
   subchannel: any;
   channelHeaderProps: ComponentProps<typeof ChannelHeader>;
   displayedMessagesProps: ComponentProps<typeof DisplayedMessages>;
   messageInputKey: number;
   messageInputProps: ComponentProps<typeof MessageInput>;
+  onRetryCatchUp: () => void;
 }) {
   return (
     <>
@@ -67,6 +71,50 @@ export default function Content({
             `}
           >
             Catching up&hellip;
+          </div>
+        )}
+        {catchUpTerminalError && (
+          <div
+            role="alert"
+            className={css`
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.8rem;
+              width: fit-content;
+              max-width: 100%;
+              min-height: 3rem;
+              margin: 0 auto 1rem;
+              padding: 0.5rem 0.8rem 0.5rem 1rem;
+              border: 1px solid var(--ui-border);
+              border-radius: 0.5rem;
+              background: var(--chat-title-bg);
+              color: var(--chat-text);
+              font-size: 1.1rem;
+            `}
+          >
+            <span>
+              Couldn&rsquo;t refresh. You&rsquo;re seeing the last confirmed
+              messages.
+            </span>
+            <button
+              type="button"
+              onClick={onRetryCatchUp}
+              className={css`
+                flex: 0 0 auto;
+                min-height: 2.4rem;
+                padding: 0.3rem 0.8rem;
+                border: 1px solid var(--ui-border);
+                border-radius: 0.5rem;
+                background: var(--chat-bg);
+                color: var(--chat-text);
+                font-size: 1rem;
+                font-weight: 650;
+                cursor: pointer;
+              `}
+            >
+              Retry
+            </button>
           </div>
         )}
         <MessageInput key={messageInputKey} {...messageInputProps} />

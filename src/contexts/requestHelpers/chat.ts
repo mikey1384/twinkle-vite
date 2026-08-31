@@ -13,11 +13,22 @@ import {
   acceptAICardSummonQuotaReadProjection,
   captureAICardSummonQuotaProjectionRequest
 } from '~/helpers/aiCardSummonQuotaProjection';
+import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 
 export default function chatRequestHelpers({
   auth,
   handleError
 }: RequestHelpers) {
+  let chatReadRequestSequence = 0;
+
+  function nextChatReadRequestTelemetry() {
+    chatReadRequestSequence += 1;
+    return {
+      readRequestId: `chat-read-${Date.now()}-${chatReadRequestSequence}`,
+      readRequestSequence: chatReadRequestSequence
+    };
+  }
+
   function getWordMasterBreakPayload(error: any) {
     if (
       error?.response?.status === 423 &&
@@ -1393,20 +1404,24 @@ export default function chatRequestHelpers({
       }
     },
     async loadChat({
+      bootstrapId,
       channelId,
       subchannelPath,
       fromWriter = false,
       bounded = false,
       compactGeneralTopics = false,
       topicIds = [],
+      recoveryId,
       onAttemptTiming
     }: {
+      bootstrapId?: string;
       channelId: number;
       subchannelPath: string;
       fromWriter?: boolean;
       bounded?: boolean;
       compactGeneralTopics?: boolean;
       topicIds?: number[];
+      recoveryId?: string;
       onAttemptTiming?: (timing: RequestAttemptTiming) => void;
     }) {
       const quotaProjectionRequest =
@@ -1420,6 +1435,15 @@ export default function chatRequestHelpers({
           }${topicIds.length ? `&topicIds=${topicIds.join(',')}` : ''}`,
           {
             ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(bootstrapId
+                ? { 'x-twinkle-chat-bootstrap-id': bootstrapId }
+                : {}),
+              ...(recoveryId
+                ? { 'x-twinkle-chat-recovery-id': recoveryId }
+                : {})
+            },
             meta: {
               collapseKey: null,
               // Every full Chat bootstrap gates the entire Chat surface. The
@@ -1460,7 +1484,8 @@ export default function chatRequestHelpers({
       fromWriter,
       bounded = false,
       compactGeneralTopics = false,
-      topicIds = []
+      topicIds = [],
+      recoveryId
     }: {
       channelId: number;
       isForInvitation?: boolean;
@@ -1473,6 +1498,7 @@ export default function chatRequestHelpers({
       bounded?: boolean;
       compactGeneralTopics?: boolean;
       topicIds?: number[];
+      recoveryId?: string;
     }) {
       try {
         const { data } = await request.get(
@@ -1493,6 +1519,12 @@ export default function chatRequestHelpers({
           }${topicIds.length ? `&topicIds=${topicIds.join(',')}` : ''}`,
           {
             ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(recoveryId
+                ? { 'x-twinkle-chat-recovery-id': recoveryId }
+                : {})
+            },
             meta: {
               collapseKey: null,
               priority: compactGeneralTopics ? 'high' : 'normal',
@@ -1783,7 +1815,8 @@ export default function chatRequestHelpers({
       lastMessageId,
       messageIdToScrollTo,
       fromWriter = false,
-      bounded = false
+      bounded = false,
+      recoveryId
     }: {
       channelId: number;
       topicId: number;
@@ -1791,6 +1824,7 @@ export default function chatRequestHelpers({
       messageIdToScrollTo?: number;
       fromWriter?: boolean;
       bounded?: boolean;
+      recoveryId?: string;
     }) {
       try {
         const {
@@ -1811,6 +1845,12 @@ export default function chatRequestHelpers({
           }${fromWriter ? '&fromWriter=1' : ''}`,
           {
             ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(recoveryId
+                ? { 'x-twinkle-chat-recovery-id': recoveryId }
+                : {})
+            },
             meta: {
               allowExtendedTimeout: bounded ? false : true,
               enforceTimeout: bounded,
@@ -1861,12 +1901,14 @@ export default function chatRequestHelpers({
       channelId,
       subchannelId,
       fromWriter = false,
-      bounded = false
+      bounded = false,
+      recoveryId
     }: {
       channelId: number;
       subchannelId?: number;
       fromWriter?: boolean;
       bounded?: boolean;
+      recoveryId?: string;
     }) {
       try {
         const { data } = await request.get(
@@ -1875,6 +1917,12 @@ export default function chatRequestHelpers({
           }${fromWriter ? '&fromWriter=1' : ''}`,
           {
             ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(recoveryId
+                ? { 'x-twinkle-chat-recovery-id': recoveryId }
+                : {})
+            },
             meta: {
               enforceTimeout: bounded,
               allowExtendedTimeout: bounded ? false : undefined,
@@ -2894,17 +2942,34 @@ export default function chatRequestHelpers({
     async updateChatLastRead({
       channelId,
       lastReadMessageId,
-      readSource
+      readSource,
+      visibleMessageCount = 0
     }: {
       channelId: number;
       lastReadMessageId: number;
       readSource: string;
+      visibleMessageCount?: number;
     }) {
       if (channelId <= 0) return { success: false };
+      const readTelemetry = nextChatReadRequestTelemetry();
+      recordChatBootstrapEvent('chat-last-read-request-start', {
+        channelId,
+        lastReadMessageId,
+        readSource,
+        subchannelId: 0,
+        visibleMessageCount,
+        ...readTelemetry
+      });
       try {
         const { data } = await request.post(
           `${URL}/chat/lastRead`,
-          { channelId, lastReadMessageId, readSource },
+          {
+            channelId,
+            lastReadMessageId,
+            readSource,
+            visibleMessageCount,
+            ...readTelemetry
+          },
           {
             ...auth(),
             meta: {
@@ -2914,8 +2979,21 @@ export default function chatRequestHelpers({
             }
           }
         );
+        recordChatBootstrapEvent('chat-last-read-request-complete', {
+          channelId,
+          subchannelId: 0,
+          ...readTelemetry
+        });
         return data;
       } catch (error) {
+        recordChatBootstrapEvent('chat-last-read-request-failed', {
+          channelId,
+          status: Number(
+            (error as { response?: { status?: number } })?.response?.status || 0
+          ),
+          subchannelId: 0,
+          ...readTelemetry
+        });
         return recoverCanonicalChatChannelUnreadState({
           channelId,
           writeError: error
@@ -2926,17 +3004,35 @@ export default function chatRequestHelpers({
       channelId,
       subchannelId,
       lastReadMessageId,
-      readSource
+      readSource,
+      visibleMessageCount = 0
     }: {
       channelId: number;
       subchannelId: number;
       lastReadMessageId: number;
       readSource: string;
+      visibleMessageCount?: number;
     }) {
+      const readTelemetry = nextChatReadRequestTelemetry();
+      recordChatBootstrapEvent('chat-last-read-request-start', {
+        channelId,
+        lastReadMessageId,
+        readSource,
+        subchannelId,
+        visibleMessageCount,
+        ...readTelemetry
+      });
       try {
         const { data } = await request.post(
           `${URL}/chat/lastRead/subchannel`,
-          { channelId, subchannelId, lastReadMessageId, readSource },
+          {
+            channelId,
+            subchannelId,
+            lastReadMessageId,
+            readSource,
+            visibleMessageCount,
+            ...readTelemetry
+          },
           {
             ...auth(),
             meta: {
@@ -2946,8 +3042,21 @@ export default function chatRequestHelpers({
             }
           }
         );
+        recordChatBootstrapEvent('chat-last-read-request-complete', {
+          channelId,
+          subchannelId,
+          ...readTelemetry
+        });
         return data;
       } catch (error) {
+        recordChatBootstrapEvent('chat-last-read-request-failed', {
+          channelId,
+          status: Number(
+            (error as { response?: { status?: number } })?.response?.status || 0
+          ),
+          subchannelId,
+          ...readTelemetry
+        });
         return recoverCanonicalChatChannelUnreadState({
           channelId,
           subchannelId,

@@ -391,7 +391,10 @@ export default function useChatSocket({
             request: updateChatLastRead({
               channelId,
               lastReadMessageId,
-              readSource
+              readSource,
+              visibleMessageCount: Array.isArray(scope?.messageIds)
+                ? scope.messageIds.length
+                : 0
             }),
             channelId,
             subchannelId: 0
@@ -412,7 +415,10 @@ export default function useChatSocket({
               channelId,
               subchannelId: normalizedSubchannelId,
               lastReadMessageId,
-              readSource
+              readSource,
+              visibleMessageCount: Array.isArray(scope?.messageIds)
+                ? scope.messageIds.length
+                : 0
             }),
             channelId,
             subchannelId: normalizedSubchannelId

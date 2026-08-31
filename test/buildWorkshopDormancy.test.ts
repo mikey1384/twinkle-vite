@@ -16,6 +16,10 @@ const menuSource = readFileSync(
   ),
   'utf8'
 );
+const defaultsSource = readFileSync(
+  new URL('../src/constants/defaultValues.ts', import.meta.url),
+  'utf8'
+);
 
 test('Build Workshop contributes no right-menu DOM until the server enables it', () => {
   const dormantGate = panelSource.indexOf(
@@ -29,16 +33,22 @@ test('Build Workshop contributes no right-menu DOM until the server enables it',
   );
   assert.match(menuSource, /<BuildWorkshopPanel[\s\S]*channelId=\{channelId\}/);
   assert.doesNotMatch(menuSource, /sponsorGuidePath|How sponsorship/);
-  assert.match(panelSource, /relay\.details\?\.requestedOutcome/);
-  assert.match(panelSource, /relay\.details\?\.constraints\?\.length/);
-  assert.match(panelSource, /relay\.details\?\.acceptanceCriteria\?\.length/);
+  assert.match(panelSource, /<Icon icon="hammer" \/>/);
+  assert.match(panelSource, /<span>Build Workshop<\/span>/);
+  assert.match(panelSource, /to=\{status\.sponsorGuidePath \|\| '\/sponsor'\}/);
+  assert.doesNotMatch(
+    panelSource,
+    /pendingRelays|createBuildWorkshopJob|cancelBuildWorkshopJob|<button|<input|<details|Before you say go/
+  );
+  assert.doesNotMatch(panelSource, /overflow-y|max-height/);
 });
 
 test('only controlled preview accounts mount the Workshop status poller', () => {
   assert.match(
-    menuSource,
+    defaultsSource,
     /BUILD_WORKSHOP_PREVIEW_USER_IDS = new Set\(\[554, 263, 5\]\)/
   );
+  assert.match(menuSource, /BUILD_WORKSHOP_PREVIEW_USER_IDS\.has/);
   assert.match(
     menuSource,
     /isBuildWorkshopPreviewAccount \? \([\s\S]*?<BuildWorkshopPanel/
@@ -66,8 +76,9 @@ test('the shared worker indicator does not impersonate either assistant or human
   assert.match(panelSource, /return 'Busy'/);
   assert.match(panelSource, /return 'Closed'/);
   assert.doesNotMatch(panelSource, /\{status\.statusLabel\}/);
-  assert.match(panelSource, /Want \$\{personaName\} to build something with you/);
-  assert.match(panelSource, /`Start building with \$\{personaName\}`/);
+  assert.match(panelSource, /const STATUS_REFRESH_MS = 5_000/);
+  assert.match(panelSource, /setStatus\(canonicalStatus\)/);
+  assert.doesNotMatch(panelSource, /setStatus\(\(current|optimistic/i);
 });
 
 function contrastAgainstWhite(hex: string) {

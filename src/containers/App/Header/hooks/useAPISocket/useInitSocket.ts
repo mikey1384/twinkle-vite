@@ -16,6 +16,7 @@ import {
 } from '~/helpers/socketAuthReady';
 import {
   nextChatBootstrapId,
+  nextChatSocketBindId,
   recordChatBootstrapEvent,
   flushChatBootstrapHistory
 } from '~/helpers/chatBootstrapDebug';
@@ -66,15 +67,21 @@ import {
 } from '~/helpers/chatUnreadActivity';
 import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
 import {
-  installCanonicalChatRebuildHandler
+  clearTerminalChatRecovery,
+  installCanonicalChatRebuildHandler,
+  nextChatRecoveryId,
+  publishTerminalChatRecovery
 } from '~/helpers/chatSelectedChannelRecovery';
 import type { RequestAttemptTiming } from '~/contexts/requestHelpers/axiosInstance';
+
+const MAX_CANONICAL_CHAT_BOOTSTRAP_ATTEMPTS = 4;
 
 function dispatchSocketAuthReady(userId?: number | null) {
   markSocketAuthReady(userId);
 }
 
 interface SocketBindPayload {
+  chatBindId: string;
   userId: number;
   username?: string;
   profilePicUrl?: string;
@@ -89,6 +96,8 @@ interface SocketBindResult {
   authError?: boolean;
   bindError?: boolean;
   chatRoomsChanged?: boolean;
+  chatBindId?: string;
+  chatRoomCount?: number;
   presenceQualified?: boolean;
 }
 
@@ -248,6 +257,7 @@ export default function useInitSocket({
   const lastFailedBootstrapIdRef = useRef<string | null>(null);
   const loadChatRetryTimerRef = useRef<number | null>(null);
   const loadChatRetryCountRef = useRef(0);
+  const loadChatRetryRecoveryIdRef = useRef<string | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
   const serverDisconnectReconnectTimerRef = useRef<number | null>(null);
   const plannedServerHandoffAtRef = useRef(0);
@@ -464,11 +474,13 @@ export default function useInitSocket({
     | (({
         selectedChannelId,
         fromWriter,
-        replaceSelectedProjection
+        replaceSelectedProjection,
+        recoveryId
       }: {
         selectedChannelId: number;
         fromWriter?: boolean;
         replaceSelectedProjection?: boolean;
+        recoveryId?: string;
       }) => Promise<void>)
     | null
   >(null);
@@ -482,6 +494,8 @@ export default function useInitSocket({
   const canonicalSessionUserIdRef = useRef(canonicalSessionUserId);
   const usernameRef = useRef(username);
   const profilePicUrlRef = useRef(profilePicUrl);
+  const onSetReconnectingRef = useRef(onSetReconnecting);
+  onSetReconnectingRef.current = onSetReconnecting;
 
   useEffect(() => {
     canonicalSessionUserIdRef.current = canonicalSessionUserId;
@@ -526,6 +540,10 @@ export default function useInitSocket({
     bootstrapStartedAtRef.current = 0;
     lastFailedBootstrapIdRef.current = null;
     loadChatRetryCountRef.current = 0;
+    loadChatRetryRecoveryIdRef.current = null;
+    if (previousUserId) {
+      clearTerminalChatRecovery({ userId: previousUserId });
+    }
     autoLoadDecisionSignatureRef.current = '';
     bootstrapAwaitingBindUserIdRef.current = userId || null;
     if (loadChatRetryTimerRef.current) {
@@ -707,6 +725,7 @@ export default function useInitSocket({
       loadChatRetryTimerRef.current = null;
     }
     loadChatRetryCountRef.current = 0;
+    loadChatRetryRecoveryIdRef.current = null;
   }, [userId]);
 
   useEffect(() => {
@@ -1092,6 +1111,7 @@ export default function useInitSocket({
           loadChatRetryTimerRef.current = null;
         }
         loadChatRetryCountRef.current = 0;
+        loadChatRetryRecoveryIdRef.current = null;
 
         const bindingUserId = userIdRef.current;
         bindSocketToUser({
@@ -1150,11 +1170,13 @@ export default function useInitSocket({
     async function handleLoadChat({
       selectedChannelId,
       fromWriter = false,
-      replaceSelectedProjection = false
+      replaceSelectedProjection = false,
+      recoveryId
     }: {
       selectedChannelId: number;
       fromWriter?: boolean;
       replaceSelectedProjection?: boolean;
+      recoveryId?: string;
     }): Promise<void> {
       if (!userIdRef.current) {
         recordChatBootstrapEvent('chat-bootstrap-skip-no-user', {
@@ -1208,6 +1230,16 @@ export default function useInitSocket({
           })
         : [];
       const bootstrapId = nextChatBootstrapId();
+      const effectiveRecoveryId =
+        recoveryId ||
+        (canonicalReadFromWriter ? nextChatRecoveryId() : undefined);
+      if (
+        effectiveRecoveryId &&
+        loadChatRetryRecoveryIdRef.current !== effectiveRecoveryId
+      ) {
+        loadChatRetryCountRef.current = 0;
+        loadChatRetryRecoveryIdRef.current = effectiveRecoveryId;
+      }
       activeBootstrapIdRef.current = bootstrapId;
       const bootstrapStartedAt = Date.now();
       bootstrapStartedAtRef.current = bootstrapStartedAt;
@@ -1235,7 +1267,8 @@ export default function useInitSocket({
         socketConnected: socket.connected,
         fromWriter: canonicalReadFromWriter,
         preserveSelectedProjection,
-        replaceSelectedProjection
+        replaceSelectedProjection,
+        recoveryId: effectiveRecoveryId || null
       });
 
       try {
@@ -1258,12 +1291,14 @@ export default function useInitSocket({
         });
 
         const data = await loadChat({
+          bootstrapId,
           channelId: bootstrapChannelId,
           subchannelPath: requestedSubchannelPath,
           fromWriter: canonicalReadFromWriter,
           bounded: canonicalReadFromWriter,
           compactGeneralTopics,
           topicIds: bootstrapTopicIds,
+          recoveryId: effectiveRecoveryId,
           onAttemptTiming(timing: RequestAttemptTiming) {
             recordChatBootstrapEvent('chat-bootstrap-request-attempt-timing', {
               bootstrapId,
@@ -1379,7 +1414,7 @@ export default function useInitSocket({
           needsPostBootstrapChannelReconciliation ||
           didSocketDisconnectRef.current
         ) {
-          onSetReconnecting();
+          onSetReconnectingRef.current();
         }
         void handleGetNumberOfUnreadMessages({
           expectedUserId: bootstrapUserId
@@ -1461,6 +1496,7 @@ export default function useInitSocket({
               // confirmed access or messages with a lagging replica page.
               fromWriter: true,
               bounded: true,
+              recoveryId: effectiveRecoveryId,
               compactGeneralTopics: compactRecoveryTopics,
               topicIds: compactRecoveryTopics
                 ? getChatTopicProjectionIds({
@@ -1564,6 +1600,7 @@ export default function useInitSocket({
           code: normalizedError?.code ?? null,
           name: normalizedError?.name ?? null,
           message: normalizedError?.message ?? null,
+          recoveryId: effectiveRecoveryId || null,
           retryCount: loadChatRetryCountRef.current,
           socketConnected: socket.connected
         });
@@ -1598,7 +1635,8 @@ export default function useInitSocket({
                 // itself began as an ordinary replica bootstrap.
                 fromWriter:
                   canonicalReadFromWriter || didSocketDisconnectRef.current,
-                replaceSelectedProjection
+                replaceSelectedProjection,
+                recoveryId: effectiveRecoveryId
               });
             } else {
               recordChatBootstrapEvent(
@@ -1629,7 +1667,8 @@ export default function useInitSocket({
             if (socket.connected) {
               scheduleLoadChatRetry({
                 fromWriter: true,
-                replaceSelectedProjection
+                replaceSelectedProjection,
+                recoveryId: effectiveRecoveryId
               });
             } else {
               recordChatBootstrapEvent(
@@ -1653,7 +1692,12 @@ export default function useInitSocket({
         let shouldFollowWithCanonicalResync = false;
         if (isOwningBootstrap) {
           if (didCompleteChatSync) {
+            clearTerminalChatRecovery({
+              channelId: selectedChannelId,
+              userId: bootstrapUserId
+            });
             loadChatRetryCountRef.current = 0;
+            loadChatRetryRecoveryIdRef.current = null;
             if (loadChatRetryTimerRef.current) {
               clearTimeout(loadChatRetryTimerRef.current);
               loadChatRetryTimerRef.current = null;
@@ -1693,6 +1737,7 @@ export default function useInitSocket({
           bootstrapId,
           didInitChat,
           didCompleteChatSync,
+          recoveryId: effectiveRecoveryId || null,
           isOwningBootstrap,
           isLoadingChat: isLoadingChatRef.current,
           hasRetryTimer: !!loadChatRetryTimerRef.current
@@ -1702,6 +1747,7 @@ export default function useInitSocket({
             'chat-bootstrap-follow-up-after-transport-gap',
             {
               bootstrapId,
+              recoveryId: effectiveRecoveryId || null,
               userId: bootstrapUserId,
               selectedChannelId: selectedChannelIdRef.current,
               bootstrapDisconnectSequence,
@@ -1710,7 +1756,8 @@ export default function useInitSocket({
           );
           void handleLoadChat({
             selectedChannelId: selectedChannelIdRef.current,
-            fromWriter: true
+            fromWriter: true,
+            recoveryId: effectiveRecoveryId
           });
         }
       }
@@ -1721,16 +1768,42 @@ export default function useInitSocket({
 
     function scheduleLoadChatRetry({
       fromWriter = false,
-      replaceSelectedProjection = false
+      replaceSelectedProjection = false,
+      recoveryId
     }: {
       fromWriter?: boolean;
       replaceSelectedProjection?: boolean;
+      recoveryId?: string;
     } = {}) {
       if (
         terminalSocketAuthFailureRef.current ||
         loadChatRetryTimerRef.current ||
         !userIdRef.current
       ) {
+        return;
+      }
+      if (
+        recoveryId &&
+        loadChatRetryCountRef.current >=
+          MAX_CANONICAL_CHAT_BOOTSTRAP_ATTEMPTS - 1
+      ) {
+        const failedAttempts = loadChatRetryCountRef.current + 1;
+        lastFailedBootstrapIdRef.current = null;
+        publishTerminalChatRecovery({
+          channelId: selectedChannelIdRef.current,
+          failedAttempts,
+          occurredAt: Date.now(),
+          recoveryId,
+          reason: 'bootstrap_retry_exhausted',
+          userId: userIdRef.current
+        });
+        onFinishReconnecting();
+        recordChatBootstrapEvent('chat-bootstrap-retry-exhausted', {
+          failedAttempts,
+          recoveryId,
+          selectedChannelId: selectedChannelIdRef.current,
+          userId: userIdRef.current
+        });
         return;
       }
       const delay = Math.min(1000 * 2 ** loadChatRetryCountRef.current, 10000);
@@ -1742,7 +1815,8 @@ export default function useInitSocket({
         userId: userIdRef.current,
         selectedChannelId: selectedChannelIdRef.current,
         fromWriter,
-        replaceSelectedProjection
+        replaceSelectedProjection,
+        recoveryId: recoveryId || null
       });
       emitAdminTelemetry({
         message: `Retrying chat load in ${Math.round(delay / 1000)}s`
@@ -1751,6 +1825,7 @@ export default function useInitSocket({
         loadChatRetryTimerRef.current = null;
         if (!userIdRef.current) {
           loadChatRetryCountRef.current = 0;
+          loadChatRetryRecoveryIdRef.current = null;
           return;
         }
         if (!socket.connected) {
@@ -1773,6 +1848,7 @@ export default function useInitSocket({
           // may have been a reconnect resync over already-loaded chat, whose
           // retry is the only repair path for per-channel unread state.
           loadChatRetryCountRef.current = 0;
+          loadChatRetryRecoveryIdRef.current = null;
           recordChatBootstrapEvent('chat-bootstrap-retry-skipped-loaded', {
             sourceBootstrapId: lastFailedBootstrapIdRef.current,
             userId: userIdRef.current,
@@ -1783,13 +1859,15 @@ export default function useInitSocket({
         recordChatBootstrapEvent('chat-bootstrap-retry-fired', {
           sourceBootstrapId: lastFailedBootstrapIdRef.current,
           retryCount: loadChatRetryCountRef.current,
+          recoveryId: recoveryId || null,
           userId: userIdRef.current,
           selectedChannelId: selectedChannelIdRef.current
         });
         void handleLoadChat({
           selectedChannelId: selectedChannelIdRef.current,
           fromWriter,
-          replaceSelectedProjection
+          replaceSelectedProjection,
+          recoveryId
         });
       }, delay);
     }
@@ -1856,7 +1934,13 @@ export default function useInitSocket({
   useEffect(
     () =>
       installCanonicalChatRebuildHandler(
-        ({ channelId, failedAttempts, reason, userId: requestUserId }) => {
+        ({
+          channelId,
+          failedAttempts,
+          recoveryId,
+          reason,
+          userId: requestUserId
+        }) => {
           if (
             requestUserId !== Number(userIdRef.current || 0) ||
             channelId !== Number(selectedChannelIdRef.current || 0) ||
@@ -1871,10 +1955,12 @@ export default function useInitSocket({
             {
               channelId,
               failedAttempts,
+              recoveryId,
               reason,
               userId: requestUserId
             }
           );
+          onSetReconnectingRef.current();
           void handleLoadChatRef.current({
             selectedChannelId: channelId,
             fromWriter: true,
@@ -1882,7 +1968,8 @@ export default function useInitSocket({
             // socket events. Replacing the selected projection through that
             // path removes the quiet-socket requirement that can otherwise
             // hold the composer in Catching Up forever on an active channel.
-            replaceSelectedProjection: true
+            replaceSelectedProjection: true,
+            recoveryId
           });
           return true;
         }
@@ -2124,8 +2211,15 @@ export default function useInitSocket({
       return;
     }
     const bindAttempt = ++socketBindAttemptRef.current;
+    const chatBindId = nextChatSocketBindId();
+    recordChatBootstrapEvent('socket-bind-start', {
+      chatBindId,
+      socketId: socket.id || null,
+      userId: bindingUserId
+    });
     emitSocketBind({
       payload: {
+        chatBindId,
         userId: bindingUserId,
         username: usernameRef.current,
         profilePicUrl: profilePicUrlRef.current,
@@ -2181,6 +2275,7 @@ export default function useInitSocket({
           // server-disconnect handler start a second reconnect loop.
           handleSocketBindFailure({
             bindingUserId,
+            chatBindId,
             error: new Error('Socket bind credential was unavailable')
           });
           return;
@@ -2193,6 +2288,14 @@ export default function useInitSocket({
         clearSocketBindRetryTimer();
         socketBindRetryCountRef.current = 0;
         boundSocketIdRef.current = socket.id || null;
+        recordChatBootstrapEvent('socket-bind-acknowledged', {
+          chatBindId,
+          acknowledgedChatBindId: result?.chatBindId || null,
+          chatRoomCount: Number(result?.chatRoomCount || 0),
+          chatRoomsChanged: Boolean(result?.chatRoomsChanged),
+          socketId: socket.id || null,
+          userId: bindingUserId
+        });
         dispatchSocketAuthReady(bindingUserId);
         socket.emit('enter_my_notification_channel', bindingUserId);
         socket.emit('change_busy_status', chatBusyRef.current);
@@ -2226,7 +2329,7 @@ export default function useInitSocket({
         ) {
           return;
         }
-        handleSocketBindFailure({ bindingUserId, error });
+        handleSocketBindFailure({ bindingUserId, chatBindId, error });
       }
     });
   }
@@ -2262,9 +2365,11 @@ export default function useInitSocket({
 
   function handleSocketBindFailure({
     bindingUserId,
+    chatBindId,
     error
   }: {
     bindingUserId: number;
+    chatBindId: string;
     error: Error;
   }) {
     if (
@@ -2276,6 +2381,7 @@ export default function useInitSocket({
     clearSocketAuthReady();
     markSocketTransportGap(true);
     recordChatBootstrapEvent('socket-bind-failed', {
+      chatBindId,
       userId: bindingUserId,
       socketConnected: socket.connected,
       error: error.message

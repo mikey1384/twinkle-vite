@@ -509,44 +509,6 @@ export default function buildRequestHelpers({
       }
     },
 
-    async createBuildWorkshopJob({
-      persona,
-      relayId,
-      dutySessionId,
-      sponsorUserId,
-      buildId,
-      newProjectTitle,
-      consentVersion
-    }: {
-      persona: 'zero' | 'ciel';
-      relayId: number;
-      dutySessionId: number;
-      sponsorUserId: number;
-      buildId?: number | null;
-      newProjectTitle?: string | null;
-      consentVersion: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/workshop/jobs`,
-          {
-            persona,
-            relayId,
-            dutySessionId,
-            sponsorUserId,
-            buildId: buildId || null,
-            newProjectTitle: newProjectTitle || null,
-            consentVersion,
-            consentAccepted: true
-          },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
     async cancelBuildWorkshopJob({ jobId }: { jobId: number }) {
       try {
         const { data } = await request.post(

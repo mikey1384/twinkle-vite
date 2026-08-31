@@ -54,6 +54,20 @@ export default function useChatLastReadReconciler() {
     });
   }
 
+  function getVisibleMessageCount({
+    channelId,
+    subchannelId
+  }: {
+    channelId: number;
+    subchannelId: number;
+  }) {
+    const channel = channelsObjRef.current?.[channelId];
+    const scope = subchannelId
+      ? channel?.subchannelObj?.[subchannelId]
+      : channel;
+    return Array.isArray(scope?.messageIds) ? scope.messageIds.length : 0;
+  }
+
   function reconcileChannelLastRead(
     channelId: number,
     confirmedMessage?: unknown
@@ -68,7 +82,11 @@ export default function useChatLastReadReconciler() {
         updateChatLastRead({
           channelId,
           lastReadMessageId,
-          readSource: 'visible_channel_reconciler'
+          readSource: 'visible_channel_reconciler',
+          visibleMessageCount: getVisibleMessageCount({
+            channelId,
+            subchannelId: 0
+          })
         }),
       channelId,
       subchannelId: 0
@@ -92,7 +110,11 @@ export default function useChatLastReadReconciler() {
           channelId,
           subchannelId,
           lastReadMessageId,
-          readSource: 'visible_subchannel_reconciler'
+          readSource: 'visible_subchannel_reconciler',
+          visibleMessageCount: getVisibleMessageCount({
+            channelId,
+            subchannelId
+          })
         }),
       channelId,
       subchannelId

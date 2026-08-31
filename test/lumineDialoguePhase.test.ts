@@ -38,10 +38,10 @@ const thinkingIndicatorSource = readFileSync(
   'utf8'
 );
 
-test('Talking with Lumine is a first-class distinct thinking phase', () => {
+test('Using Lumine is a first-class distinct thinking phase', () => {
   assert.match(
     statusSource,
-    /talking_with_lumine:[\s\S]*?Talking with Lumine\.\.\.[\s\S]*?comments[\s\S]*?Color\.darkCyan\(\)/
+    /talking_with_lumine:[\s\S]*?Using Lumine\.\.\.[\s\S]*?comments[\s\S]*?Color\.darkCyan\(\)/
   );
   assert.match(messagesSource, /<LumineDialoguePhase/);
   assert.match(componentSource, /aria-label="Talking with Lumine"/);

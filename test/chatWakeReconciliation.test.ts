@@ -205,11 +205,11 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   assert.doesNotMatch(pageLoading, /creatingNewDMChannel \|\|\s*reconnecting/);
   assert.match(
     messagesSource,
-    /loading: pageLoading \|\| reconnecting \|\| isReloadRequired/
+    /loading: pageLoading \|\| chatRecoveryBlocksInteraction/
   );
   assert.match(
     messagesSource,
-    /isReconnecting: reconnecting \|\| isReloadRequired/
+    /isReconnecting: chatRecoveryBlocksInteraction/
   );
   assert.match(
     messagesSource,
@@ -279,7 +279,7 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(
     messagesSource,
-    /const catchUpStatusPending =\s*\(reconnecting \|\| isReloadRequired\) && !pageLoading[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?setCatchUpStatusDelayElapsed\(true\)[\s\S]*?CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS[\s\S]*?clearTimeout\(catchUpStatusTimer\)/
+    /const chatRecoveryBlocksInteraction =[\s\S]*?\(reconnecting \|\| isReloadRequired\) && !selectedTerminalChatRecovery;[\s\S]*?const catchUpStatusPending = chatRecoveryBlocksInteraction && !pageLoading[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?setCatchUpStatusDelayElapsed\(true\)[\s\S]*?CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS[\s\S]*?clearTimeout\(catchUpStatusTimer\)/
   );
   assert.match(
     messagesSource,
@@ -287,7 +287,7 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   );
   assert.match(
     messagesSource,
-    /catchUpStatusShown \? ' - 4rem' : ''/
+    /catchUpStatusShown \|\| selectedTerminalChatRecovery \? ' - 4rem' : ''/
   );
   assert.match(
     messageInputLeftButtonsSource,
