@@ -106,6 +106,14 @@ export default function ProfileReducer(
         const profileState = state[profileUsername] || defaultState;
         nextState[profileUsername] = {
           ...profileState,
+          // Noteworthy rows carry requester-specific subject-secret fields.
+          // They must never survive an account switch.
+          notables: {
+            ...profileState.notables,
+            feeds: [],
+            loaded: false,
+            loadMoreButton: false
+          },
           subjects: {
             ...profileState.subjects,
             posts: [],

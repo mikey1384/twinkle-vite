@@ -259,6 +259,7 @@ export default function Home({
         const { results, loadMoreButton } = await loadNotableContent({
           userId: id
         });
+        if (checkUserChange(requestUserId)) return;
         onLoadNotables({ username, feeds: results, loadMoreButton });
       } catch (error) {
         console.error(error);

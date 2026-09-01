@@ -1370,7 +1370,8 @@ export default function contentRequestHelpers({
         const {
           data: { results, loadMoreButton }
         } = await request.get(
-          `${URL}/content/noteworthy?userId=${userId}&lastFeedId=${lastFeedId}`
+          `${URL}/content/noteworthy?userId=${userId}&lastFeedId=${lastFeedId}`,
+          auth()
         );
         return { results, loadMoreButton };
       } catch (error) {
@@ -1382,7 +1383,8 @@ export default function contentRequestHelpers({
         const {
           data: { results, loadMoreButton }
         } = await request.get(
-          `${URL}/content/noteworthy?userId=${userId}&limit=1`
+          `${URL}/content/noteworthy?userId=${userId}&limit=1`,
+          auth()
         );
         return { results, loadMoreButton };
       } catch (error) {

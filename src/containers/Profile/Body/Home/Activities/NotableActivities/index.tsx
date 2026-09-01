@@ -2,7 +2,11 @@ import React, { useMemo, useRef, useState } from 'react';
 import SectionPanel from '~/components/SectionPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import HomeFeedCard from '~/containers/Home/Stories/FeedCard';
-import { useAppContext, useProfileContext } from '~/contexts';
+import {
+  useAppContext,
+  useKeyContext,
+  useProfileContext
+} from '~/contexts';
 
 const notableActivitiesLabel = 'Notable Activities';
 const showMoreLabel = 'Show More';
@@ -27,6 +31,8 @@ export default function NotableActivities({
   const loadMoreNotableContents = useAppContext(
     (v) => v.requestHelpers.loadMoreNotableContents
   );
+  const userId = useKeyContext((v) => v.myState.userId);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onLoadMoreNotables = useProfileContext(
     (v) => v.actions.onLoadMoreNotables
   );
@@ -81,19 +87,24 @@ export default function NotableActivities({
 
   async function handleLoadMoreNotables() {
     if (loadingMoreRef.current) return;
+    const requestUserId = userId;
     loadingMoreRef.current = true;
     setLoadingMore(true);
-    const { results, loadMoreButton } = await loadMoreNotableContents({
-      userId: profile.id,
-      lastFeedId: posts[posts.length - 1].feedId
-    });
-    onLoadMoreNotables({
-      feeds: results,
-      loadMoreButton,
-      username
-    });
-    setLoadingMore(false);
-    loadingMoreRef.current = false;
+    try {
+      const { results, loadMoreButton } = await loadMoreNotableContents({
+        userId: profile.id,
+        lastFeedId: posts[posts.length - 1].feedId
+      });
+      if (checkUserChange(requestUserId)) return;
+      onLoadMoreNotables({
+        feeds: results,
+        loadMoreButton,
+        username
+      });
+    } finally {
+      setLoadingMore(false);
+      loadingMoreRef.current = false;
+    }
   }
 }
 

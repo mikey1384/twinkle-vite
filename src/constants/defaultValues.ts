@@ -1,6 +1,6 @@
 import { Color } from '~/constants/css';
 
-export const clientVersion = '2.1.10';
+export const clientVersion = '2.1.11';
 export const CHAT_AI_GENERATION_RECONCILE_AFTER_MS = 20 * 60 * 1000;
 
 export const BOOKMARK_VIEWS = {
