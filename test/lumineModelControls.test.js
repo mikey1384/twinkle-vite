@@ -42,6 +42,26 @@ const requestHelperIndexSource = readFileSync(
   new URL('../src/contexts/requestHelpers/index.ts', import.meta.url),
   'utf8'
 );
+const defaultValuesSource = readFileSync(
+  new URL('../src/constants/defaultValues.ts', import.meta.url),
+  'utf8'
+);
+
+function assertClientVersionAtLeast(expected) {
+  const versionMatch = defaultValuesSource.match(
+    /clientVersion = '(\d+)\.(\d+)\.(\d+)'/
+  );
+  assert.ok(versionMatch, 'Missing website client version');
+  const actualParts = versionMatch.slice(1).map(Number);
+  const expectedParts = expected.split('.').map(Number);
+  const comparison = actualParts.findIndex(
+    (part, index) => part !== expectedParts[index]
+  );
+  assert.ok(
+    comparison === -1 || actualParts[comparison] > expectedParts[comparison],
+    `Expected website client version ${versionMatch[1]}.${versionMatch[2]}.${versionMatch[3]} to be at least ${expected}`
+  );
+}
 
 test('lumine workspace header exposes simple modes with advanced model choices', () => {
   assert.match(headerSource, /label="Mode"/);
@@ -55,10 +75,9 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   assert.doesNotMatch(headerSource, /\{LUMINE_MODES\.map\(\(mode\) => \(/);
   assert.match(
     selectionHelperSource,
-    /export const LUMINE_MODES[\s\S]*?'light'[\s\S]*?'medium'[\s\S]*?'heavy'/
+    /export const LUMINE_MODES[\s\S]*?'light'[\s\S]*?'medium'[\s\S]*?'heavy'[\s\S]*?'superheavy'/
   );
-  // The Super Heavy tier is retired; Claude Opus 5 at Heavy replaces it.
-  assert.doesNotMatch(selectionHelperSource, /superheavy/);
+  assert.match(selectionHelperSource, /superheavy: 'Super Heavy'/);
   assert.match(
     selectionHelperSource,
     /export function getAvailableLumineModes\([\s\S]*?LUMINE_MODES\.filter\([\s\S]*?modelOptions\.some\(\(option\) => option\.mode === mode\)/m
@@ -69,7 +88,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-5\.6-luna'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'gpt-5\.6-sol'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-5\.6-luna'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'gpt-5\.6-sol'[\s\S]*?superheavy: 'claude-fable-5-1'/m
   );
   assert.match(
     selectionHelperSource,
@@ -90,6 +109,10 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   assert.match(
     selectionHelperSource,
     /model: 'claude-opus-5'[\s\S]*?mode: 'heavy'/
+  );
+  assert.match(
+    selectionHelperSource,
+    /model: 'claude-fable-5-1'[\s\S]*?mode: 'superheavy'[\s\S]*?defaultReasoningEffort: 'xhigh'/
   );
   assert.doesNotMatch(headerSource, /gpt-5\.[1-5]|GPT-5\.[1-5]|Think level/i);
 });
@@ -138,6 +161,27 @@ test('lumine Light defaults to Luna xhigh while following the served API catalog
       model: 'gpt-5.6-luna',
       reasoningEffort: 'xhigh',
       mode: 'light',
+      source: 'default'
+    }
+  );
+  assert.deepEqual(
+    fallbackOptions
+      .filter((option) => option.mode === 'superheavy')
+      .map((option) => ({
+        model: option.model,
+        defaultReasoningEffort: option.defaultReasoningEffort
+      })),
+    [{ model: 'claude-fable-5-1', defaultReasoningEffort: 'xhigh' }]
+  );
+  assert.deepEqual(
+    getLumineSelectionForMode({
+      mode: 'superheavy',
+      modelOptions: fallbackOptions
+    }),
+    {
+      model: 'claude-fable-5-1',
+      reasoningEffort: 'xhigh',
+      mode: 'superheavy',
       source: 'default'
     }
   );
@@ -263,6 +307,82 @@ test('lumine retires Grok Heavy while preserving existing users on Heavy', async
       reasoningEffort: 'xhigh',
       mode: 'heavy',
       source: 'default'
+    }
+  );
+});
+
+test('lumine Super Heavy exposes only Fable 5.1 and migrates retired selections', async () => {
+  assertClientVersionAtLeast('2.1.12');
+  const {
+    getSelectableLumineModelOptions,
+    normalizeLumineModelSelection,
+    resolveLumineModelSelectionFromPolicy
+  } = await import(
+    '../src/containers/Build/Editor/helpers/lumineModelSelection.ts'
+  );
+  const policy = {
+    lumineModelPreference: {
+      model: 'claude-fable-5',
+      reasoningEffort: 'xhigh',
+      mode: 'superheavy',
+      source: 'stored'
+    },
+    lumineModelOptions: [
+      {
+        model: 'claude-fable-5',
+        mode: 'superheavy',
+        label: 'Claude Fable 5',
+        description: '',
+        defaultReasoningEffort: 'xhigh',
+        supportedReasoningEfforts: ['xhigh']
+      },
+      {
+        model: 'gpt-5.6-sol',
+        mode: 'superheavy',
+        label: 'GPT-5.6 Sol',
+        description: '',
+        defaultReasoningEffort: 'max',
+        supportedReasoningEfforts: ['max']
+      },
+      {
+        model: 'claude-fable-5-1',
+        mode: 'superheavy',
+        label: 'Claude Fable 5.1',
+        description: '',
+        defaultReasoningEffort: 'xhigh',
+        supportedReasoningEfforts: ['xhigh']
+      }
+    ]
+  };
+
+  const options = getSelectableLumineModelOptions(policy);
+  assert.deepEqual(
+    options.filter((option) => option.mode === 'superheavy').map(
+      (option) => option.model
+    ),
+    ['claude-fable-5-1']
+  );
+  assert.deepEqual(resolveLumineModelSelectionFromPolicy(policy), {
+    model: 'claude-fable-5-1',
+    reasoningEffort: 'xhigh',
+    mode: 'superheavy',
+    source: 'stored'
+  });
+  assert.deepEqual(
+    normalizeLumineModelSelection({
+      selection: {
+        model: 'gpt-5.6-sol',
+        reasoningEffort: 'max',
+        mode: 'superheavy',
+        source: 'stored'
+      },
+      modelOptions: options
+    }),
+    {
+      model: 'claude-fable-5-1',
+      reasoningEffort: 'xhigh',
+      mode: 'superheavy',
+      source: 'stored'
     }
   );
 });

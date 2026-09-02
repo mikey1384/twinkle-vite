@@ -34,10 +34,18 @@ test('noteworthy requests carry the viewer identity used by secret visibility', 
   assert.match(initialLoadSource, /\/content\/noteworthy[\s\S]*,\s*auth\(\)/);
 });
 
-test('the secret-visibility fix has a unique website client version', () => {
+test('the website stays at or above the first secret-visibility-safe client version', () => {
   const defaultValuesSource = readSource('../src/constants/defaultValues.ts');
+  const versionMatch = defaultValuesSource.match(
+    /clientVersion = '(\d+)\.(\d+)\.(\d+)'/
+  );
 
-  assert.match(defaultValuesSource, /clientVersion = '2\.1\.11'/);
+  assert.ok(versionMatch, 'Missing website client version');
+  const [major, minor, patch] = versionMatch.slice(1).map(Number);
+  assert.ok(
+    major > 2 ||
+      (major === 2 && (minor > 1 || (minor === 1 && patch >= 11)))
+  );
 });
 
 test('viewer changes discard cached noteworthy secret visibility', () => {

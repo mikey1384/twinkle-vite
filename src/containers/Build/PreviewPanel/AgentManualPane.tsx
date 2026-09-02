@@ -172,7 +172,7 @@ const sdkSections: GuideSection[] = [
       'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
       'Use Twinkle.ai.generateObject for classification, routing, grading, and game-state decisions instead of asking chat to return JSON.',
       'generateObject accepts mode as an alias for thinkingMode, and mid as an alias for medium.',
-      'generateObject low uses GPT-5.6 Luna and billable Lite Mode; medium uses Grok 4.6 with normal AI Energy; high uses GPT-5.6 Sol with high AI Energy. Pair high with model: "gpt-5.6-sol" to request Sol/xhigh explicitly; named Sol, Opus 5, and Fable 5 choices require high.',
+      'generateObject low uses GPT-5.6 Luna and billable Lite Mode; medium uses Grok 4.6 with normal AI Energy; high uses GPT-5.6 Sol with high AI Energy. Pair high with model: "gpt-5.6-sol" to request Sol/xhigh explicitly; named Sol, Opus 5, and Fable 5.1 choices require high.',
       'Use systemPrompt to define the app AI personality, tone, role, or response rules.',
       'Image onStatus receives stages such as prompt_ready, in_progress, generating, partial_image, completed, and error; text onStatus receives thinking, completed, or error.',
       'Use status.partialImageB64 for progressive preview UI while the final imageUrl is still generating.',

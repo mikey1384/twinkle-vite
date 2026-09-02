@@ -16,10 +16,15 @@ export type BuildLumineModel =
   | 'claude-sonnet-5'
   | 'gpt-5.6-sol'
   | 'claude-opus-5'
+  | 'claude-fable-5-1'
   // Other legacy stored preferences migrated by the server.
   | 'claude-opus-4-8'
   | 'claude-fable-5';
-export type BuildLumineMode = 'light' | 'medium' | 'heavy';
+export type BuildLumineMode =
+  | 'light'
+  | 'medium'
+  | 'heavy'
+  | 'superheavy';
 export type BuildLumineThinkLevel =
   'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
