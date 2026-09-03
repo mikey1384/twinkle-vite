@@ -46,7 +46,8 @@ test('Build Workshop contributes no right-menu DOM until the server enables it',
   assert.match(panelSource, /Ask me to help build something/);
   assert.match(panelSource, /is sharing their AI to power the workshop/);
   assert.match(panelSource, /Who's in the workshop/);
-  assert.match(panelSource, /state === 'build_available'\) return '#28962c'/);
+  assert.match(panelSource, /state === 'build_available'\) return '#1e7f24'/);
+  assert.match(panelSource, /You're powering the workshop with your own AI/);
   // Only the queue list may scroll; the section itself never becomes a
   // scroll container that squats over the bookmarks below it.
   const sectionStyle = panelSource.slice(
@@ -73,7 +74,9 @@ test('only controlled preview accounts mount the Workshop status poller', () => 
 });
 
 test('the shared worker indicator does not impersonate either assistant or human presence', () => {
-  const indicatorColors = ['#8d369f', '#4c55b5', '#626b7b'];
+  // Open is the confirmed 5db43526a hue (darkened for label contrast), not
+  // the neutral navy the staging refactor briefly reintroduced.
+  const indicatorColors = ['#8d369f', '#1e7f24', '#626b7b'];
   for (const color of indicatorColors) {
     assert.match(panelSource, new RegExp(color));
     assert(

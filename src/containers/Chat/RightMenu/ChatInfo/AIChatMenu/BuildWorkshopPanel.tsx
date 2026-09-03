@@ -213,7 +213,9 @@ export default function BuildWorkshopPanel({
         <p className={sponsorCreditClass}>
           <Icon icon="bolt" />
           <span>
-            {`Free for you — ${sponsorName} is sharing their AI to power the workshop`}
+            {Number(sponsor.userId) === Number(userId)
+              ? `You're powering the workshop with your own AI`
+              : `Free for you — ${sponsorName} is sharing their AI to power the workshop`}
           </span>
         </p>
       ) : null}
@@ -245,8 +247,9 @@ export default function BuildWorkshopPanel({
 
 function workshopStateColor(state?: WorkshopStatus['agentState']) {
   if (state === 'build_working') return '#8d369f';
-  // Open is green (5db43526a); the staging refactor had reverted it to navy.
-  if (state === 'build_available') return '#28962c';
+  // Open uses the confirmed 5db43526a hue, darkened just enough for the
+  // 1rem label to keep 4.5:1 contrast on white.
+  if (state === 'build_available') return '#1e7f24';
   return '#626b7b';
 }
 
