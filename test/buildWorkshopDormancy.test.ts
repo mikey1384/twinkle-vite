@@ -36,11 +36,23 @@ test('Build Workshop contributes no right-menu DOM until the server enables it',
   assert.match(panelSource, /<Icon icon="hammer" \/>/);
   assert.match(panelSource, /<span>Build Workshop<\/span>/);
   assert.match(panelSource, /to=\{status\.sponsorGuidePath \|\| '\/sponsor'\}/);
+  // Consent, staging, and job control live in the chat thread now; the panel
+  // keeps only the persona's invitation, sponsor credit, and queue peek.
   assert.doesNotMatch(
     panelSource,
-    /pendingRelays|createBuildWorkshopJob|cancelBuildWorkshopJob|<button|<input|<details|Before you say go/
+    /pendingRelays|createBuildWorkshopJob|cancelBuildWorkshopJob|<button|<input|Before you say go|consent/
   );
-  assert.doesNotMatch(panelSource, /overflow-y|max-height/);
+  assert.match(panelSource, /wearing a builder cap/);
+  assert.match(panelSource, /Ask me to help build something/);
+  assert.match(panelSource, /is sharing their AI to power the workshop/);
+  assert.match(panelSource, /Who's in the workshop/);
+  // Only the queue list may scroll; the section itself never becomes a
+  // scroll container that squats over the bookmarks below it.
+  const sectionStyle = panelSource.slice(
+    panelSource.indexOf('<section'),
+    panelSource.indexOf('</header>')
+  );
+  assert.doesNotMatch(sectionStyle, /overflow-y|max-height/);
 });
 
 test('only controlled preview accounts mount the Workshop status poller', () => {
