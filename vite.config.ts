@@ -52,7 +52,20 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       viteStaticCopy({
+        // Engines loaded by public/stockfish-worker.js. Stockfish 17.1 lite
+        // single-threaded NNUE is the default (no cross-origin isolation
+        // needed, but it requires wasm SIMD); the Stockfish 10 files stay as
+        // the fallback for browsers without SIMD. Keep names in sync with
+        // the worker.
         targets: [
+          {
+            src: 'node_modules/stockfish/src/stockfish-17.1-lite-single-03e3232.js',
+            dest: ''
+          },
+          {
+            src: 'node_modules/stockfish/src/stockfish-17.1-lite-single-03e3232.wasm',
+            dest: ''
+          },
           {
             src: 'node_modules/stockfish.js/stockfish.wasm.js',
             dest: ''

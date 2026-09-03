@@ -26,6 +26,9 @@ interface EngineResult {
 const VALIDATION_DEPTH = 15;
 const ANALYSIS_DEPTH = 20;
 const ANALYSIS_TIMEOUT = 7000;
+// Cold-cache engine boot downloads ~7 MB of wasm; per-move budgets are far
+// shorter than that, so the first request waits on a separate budget.
+const ENGINE_READY_WAIT_MS = 30000;
 const MAX_ENGINE_RESTARTS = 3;
 
 interface MakeEngineMoveParams {
@@ -95,7 +98,11 @@ export function useChessMove({
       // resolve with a failed result instead of throwing or making callers
       // pre-check readiness.
       if (!workerRef.current || !isReadyRef.current) {
-        const becameReady = await waitForEngineReady(timeoutMs);
+        // Cold-cache engine boot downloads ~7 MB; give the first request a
+        // real chance instead of failing it on a per-move budget.
+        const becameReady = await waitForEngineReady(
+          Math.max(timeoutMs, ENGINE_READY_WAIT_MS)
+        );
         if (!becameReady || !workerRef.current) {
           return { success: false, error: 'Engine not ready' };
         }

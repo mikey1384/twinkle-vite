@@ -4,6 +4,16 @@ interface BuildChessEngineOptions {
   skillLevel: number | null;
   moveTimeMs: number;
   timeoutMs: number;
+  multiPv: number;
+}
+
+interface BuildChessEngineWorkerLine {
+  multipv?: number;
+  move?: string;
+  evaluation?: number | null;
+  mate?: number | null;
+  depth?: number | null;
+  pv?: string[];
 }
 
 interface BuildChessEngineWorkerResult {
@@ -12,7 +22,23 @@ interface BuildChessEngineWorkerResult {
   evaluation?: number;
   depth?: number;
   mate?: number;
+  lines?: BuildChessEngineWorkerLine[];
   error?: string;
+}
+
+// One ranked candidate from a MultiPV search. All lines of one result come
+// from the same search at the same depth, so their evaluations are directly
+// comparable (unlike evaluating each candidate position separately).
+export interface BuildChessEngineLine {
+  rank: number;
+  move: string;
+  from: string;
+  to: string;
+  promotion: string | null;
+  evaluation: number | null;
+  mate: number | null;
+  depth: number | null;
+  pv: string[];
 }
 
 export interface BuildChessEngineResult {
@@ -25,11 +51,13 @@ export interface BuildChessEngineResult {
   evaluation: number | null;
   depth: number | null;
   mate: number | null;
+  lines: BuildChessEngineLine[];
   error: string | null;
   fen: string;
   requestedDepth: number;
   skillLevel: number | null;
   timeoutMs: number;
+  multiPv: number;
   engine: 'stockfish';
 }
 
@@ -40,6 +68,12 @@ const DEFAULT_CHESS_ENGINE_TIMEOUT_MS = 5000;
 const MIN_CHESS_ENGINE_TIMEOUT_MS = 500;
 const MAX_CHESS_ENGINE_TIMEOUT_MS = 60000;
 const CHESS_ENGINE_TIMEOUT_GRACE_MS = 1500;
+// First-load budget: the engine is a ~7 MB wasm download on a cold cache, and
+// a timeout here terminates the worker (aborting the download), so it must
+// cover slow links rather than a warm-cache boot.
+const CHESS_ENGINE_READY_TIMEOUT_MS = 60000;
+const MIN_CHESS_ENGINE_MULTI_PV = 1;
+const MAX_CHESS_ENGINE_MULTI_PV = 10;
 const CHESS_ENGINE_CANCELED_ERROR = 'Chess engine request was canceled';
 
 let chessEngineWorker: Worker | null = null;
@@ -151,7 +185,8 @@ function runBuildChessEvaluation(
           data: {
             fen: options.fen,
             depth: options.depth,
-            moveTimeMs: options.moveTimeMs
+            moveTimeMs: options.moveTimeMs,
+            multiPv: options.multiPv
           }
         });
       })
@@ -189,7 +224,7 @@ function ensureBuildChessEngineReady() {
   chessEngineReadyPromise = readyPromise;
   chessEngineReadyTimeout = window.setTimeout(() => {
     failChessEngineReady(new Error('Chess engine initialization timed out'));
-  }, DEFAULT_CHESS_ENGINE_TIMEOUT_MS);
+  }, CHESS_ENGINE_READY_TIMEOUT_MS);
 
   try {
     chessEngineWorker = new Worker('/stockfish-worker.js');
@@ -331,12 +366,19 @@ function normalizeBuildChessEngineOptions(
     resolveMoveTimeFromSkillLevel(skillLevel)
   );
 
+  const multiPv = clampInteger(
+    options.multiPv,
+    MIN_CHESS_ENGINE_MULTI_PV,
+    MAX_CHESS_ENGINE_MULTI_PV,
+    MIN_CHESS_ENGINE_MULTI_PV
+  );
   return {
     fen,
     depth,
     skillLevel,
     moveTimeMs,
-    timeoutMs: moveTimeMs + CHESS_ENGINE_TIMEOUT_GRACE_MS
+    timeoutMs: moveTimeMs + CHESS_ENGINE_TIMEOUT_GRACE_MS,
+    multiPv
   };
 }
 
@@ -401,13 +443,42 @@ function buildChessEngineResult({
     evaluation: normalizeResultNumber(workerResult.evaluation),
     depth: normalizeResultNumber(workerResult.depth),
     mate: normalizeResultNumber(workerResult.mate),
+    lines: workerResult.success ? normalizeResultLines(workerResult.lines) : [],
     error: workerResult.error || null,
     fen: options.fen,
     requestedDepth: options.depth,
     skillLevel: options.skillLevel,
     timeoutMs: options.moveTimeMs,
+    multiPv: options.multiPv,
     engine: 'stockfish'
   };
+}
+
+function normalizeResultLines(
+  lines: BuildChessEngineWorkerLine[] | undefined
+): BuildChessEngineLine[] {
+  if (!Array.isArray(lines)) return [];
+  return lines
+    .map((line, index) => {
+      const move = String(line?.move || '').trim();
+      if (!move) return null;
+      const pv = Array.isArray(line?.pv)
+        ? line.pv.map((step) => String(step || '').trim()).filter(Boolean)
+        : [move];
+      return {
+        rank: normalizeResultNumber(line?.multipv) ?? index + 1,
+        move,
+        from: move.slice(0, 2),
+        to: move.slice(2, 4),
+        promotion: move.length > 4 ? move.slice(4) : null,
+        evaluation: normalizeResultNumber(line?.evaluation),
+        mate: normalizeResultNumber(line?.mate),
+        depth: normalizeResultNumber(line?.depth),
+        pv
+      };
+    })
+    .filter((line): line is BuildChessEngineLine => line !== null)
+    .sort((a, b) => a.rank - b.rank);
 }
 
 function buildCanceledChessEngineResult(options: BuildChessEngineOptions) {
