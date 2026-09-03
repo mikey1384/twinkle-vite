@@ -245,7 +245,8 @@ export default function BuildWorkshopPanel({
 
 function workshopStateColor(state?: WorkshopStatus['agentState']) {
   if (state === 'build_working') return '#8d369f';
-  if (state === 'build_available') return '#4c55b5';
+  // Open is green (5db43526a); the staging refactor had reverted it to navy.
+  if (state === 'build_available') return '#28962c';
   return '#626b7b';
 }
 

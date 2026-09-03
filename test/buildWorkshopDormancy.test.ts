@@ -46,6 +46,7 @@ test('Build Workshop contributes no right-menu DOM until the server enables it',
   assert.match(panelSource, /Ask me to help build something/);
   assert.match(panelSource, /is sharing their AI to power the workshop/);
   assert.match(panelSource, /Who's in the workshop/);
+  assert.match(panelSource, /state === 'build_available'\) return '#28962c'/);
   // Only the queue list may scroll; the section itself never becomes a
   // scroll container that squats over the bookmarks below it.
   const sectionStyle = panelSource.slice(
