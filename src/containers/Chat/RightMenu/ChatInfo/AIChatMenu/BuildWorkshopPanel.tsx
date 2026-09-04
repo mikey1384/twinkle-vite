@@ -35,6 +35,8 @@ interface WorkshopStatus {
   };
   job?: {
     id: number;
+    // Lumine's latest unanswered question for this user, if any.
+    openQuestion?: { message: string } | null;
   } | null;
   sponsorGuidePath?: string;
 }
@@ -134,7 +136,9 @@ export default function BuildWorkshopPanel({
   const otherAssistant = status.requesterBusyWith === 'ciel' ? 'Ciel' : 'Zero';
   const othersWorking = !hasJob && status.agentState === 'build_working';
   const bubbleText = hasJob
-    ? `I'm with Lumine on this one — I'll keep you posted right here in our chat!`
+    ? status.job?.openQuestion
+      ? `Lumine has a question for you about this job — I've put it in our chat. Answer there and I'll pass it along.`
+      : `I'm with Lumine on this one — I'll keep you posted right here in our chat!`
     : status.requesterBusyWith
       ? `You're already building with ${otherAssistant} right now. Lumine can take one project of yours at a time, so I'll be able to start yours as soon as that one wraps up — still here to chat in the meantime!`
       : accepting
