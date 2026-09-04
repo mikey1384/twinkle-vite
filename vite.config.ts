@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig, loadEnv } from 'vite';
 import { resolve } from 'path';
+import { readFileSync } from 'node:fs';
 import inject from '@rollup/plugin-inject';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
@@ -19,6 +20,10 @@ function getVercelDeploymentAssetOrigin({
   if (!host) return null;
   return `https://${host}`;
 }
+
+const appVersion: string = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+).version;
 
 export default defineConfig(({ command, mode }) => {
   if (command === 'build') {
@@ -103,6 +108,10 @@ export default defineConfig(({ command, mode }) => {
     },
     define: {
       global: 'window',
+      // The client reports this to the API's version check. Deriving it from
+      // package.json keeps one bump per release; a hand-maintained constant
+      // was left behind on 2026-09-04 and made a deploy unidentifiable.
+      __APP_VERSION__: JSON.stringify(appVersion),
       'process.env.NODE_ENV': JSON.stringify(nodeEnv),
       'process.env': {
         NODE_ENV: nodeEnv

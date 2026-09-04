@@ -1,6 +1,9 @@
 import { Color } from '~/constants/css';
 
-export const clientVersion = '2.2.1';
+// Build-time value from package.json (see vite.config.ts). The fallback only
+// applies outside a Vite build, e.g. node tests importing this module.
+export const clientVersion =
+  typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0-dev';
 export const CHAT_AI_GENERATION_RECONCILE_AFTER_MS = 20 * 60 * 1000;
 
 export const BOOKMARK_VIEWS = {

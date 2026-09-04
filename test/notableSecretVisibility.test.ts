@@ -35,12 +35,14 @@ test('noteworthy requests carry the viewer identity used by secret visibility', 
 });
 
 test('the website stays at or above the first secret-visibility-safe client version', () => {
-  const defaultValuesSource = readSource('../src/constants/defaultValues.ts');
-  const versionMatch = defaultValuesSource.match(
-    /clientVersion = '(\d+)\.(\d+)\.(\d+)'/
-  );
+  // clientVersion is injected at build time from package.json (vite.config.ts
+  // `define`), so the package version is the website's client version.
+  const packageVersion = JSON.parse(readSource('../package.json')).version;
+  const versionMatch = String(packageVersion).match(/^(\d+)\.(\d+)\.(\d+)$/);
 
   assert.ok(versionMatch, 'Missing website client version');
+  const defaultValuesSource = readSource('../src/constants/defaultValues.ts');
+  assert.match(defaultValuesSource, /clientVersion =\s*typeof __APP_VERSION__ === 'string' \? __APP_VERSION__/);
   const [major, minor, patch] = versionMatch.slice(1).map(Number);
   assert.ok(
     major > 2 ||
