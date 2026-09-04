@@ -24,12 +24,12 @@ function WorkshopSponsorGuide() {
     <main className={pageClass}>
       <section className={heroClass}>
         <div className={heroTextClass}>
-          <p className={eyebrowClass}>Lumine Build Workshop</p>
+          <p className={eyebrowClass}>Lumine Workshop</p>
           <h1 className={titleClass}>
             Build real projects with Zero&nbsp;and&nbsp;Ciel
           </h1>
           <p className={leadClass}>
-            The Build Workshop is where ideas become working games and apps.
+            The Lumine Workshop is where ideas become working games and apps.
             Tell Zero or Ciel what you want to make, or ask them about a Lumine
             project. Approve the plan or question, then work through it
             together — free, powered by community members who share their own

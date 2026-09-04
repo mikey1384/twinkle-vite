@@ -93,7 +93,7 @@ export default function BuildWorkshopPanel({
         }
       } catch (error) {
         if (!disposed) {
-          console.error('Failed to load Build Workshop status:', error);
+          console.error('Failed to load Lumine Workshop status:', error);
         }
       } finally {
         inFlight = false;
@@ -149,7 +149,7 @@ export default function BuildWorkshopPanel({
 
   return (
     <section
-      aria-label={`${personaName} Build Workshop`}
+      aria-label={`${personaName} Lumine Workshop`}
       className={css`
         padding: 1rem 0;
         border-top: 1px solid var(--ui-border);
@@ -172,7 +172,7 @@ export default function BuildWorkshopPanel({
       >
         <Link
           to={status.sponsorGuidePath || '/sponsor'}
-          aria-label="Learn how the Build Workshop works"
+          aria-label="Learn how the Lumine Workshop works"
           className={css`
             display: inline-flex;
             align-items: center;
@@ -189,7 +189,7 @@ export default function BuildWorkshopPanel({
           `}
         >
           <Icon icon="hammer" />
-          <span>Build Workshop</span>
+          <span>Lumine Workshop</span>
         </Link>
         <span
           className={css`

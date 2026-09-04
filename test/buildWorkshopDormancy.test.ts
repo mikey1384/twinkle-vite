@@ -34,7 +34,10 @@ test('Build Workshop contributes no right-menu DOM until the server enables it',
   assert.match(menuSource, /<BuildWorkshopPanel[\s\S]*channelId=\{channelId\}/);
   assert.doesNotMatch(menuSource, /sponsorGuidePath|How sponsorship/);
   assert.match(panelSource, /<Icon icon="hammer" \/>/);
-  assert.match(panelSource, /<span>Build Workshop<\/span>/);
+  // "Build Workshop" is the Builds page's own workshop; this sponsor-powered
+  // panel is the Lumine Workshop.
+  assert.match(panelSource, /<span>Lumine Workshop<\/span>/);
+  assert.doesNotMatch(panelSource, /<span>Build Workshop<\/span>/);
   assert.match(panelSource, /to=\{status\.sponsorGuidePath \|\| '\/sponsor'\}/);
   // Consent, staging, and job control live in the chat thread now; the panel
   // keeps only the persona's invitation, sponsor credit, and queue peek.
