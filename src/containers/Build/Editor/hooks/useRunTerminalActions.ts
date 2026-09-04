@@ -42,7 +42,7 @@ interface ApplyGenerateCompleteOptions {
   code?: string | null;
   projectFiles?: Array<{ path: string; content?: string }> | null;
   projectFilesHash?: string | null;
-  interruptionReason?: 'tool_limit' | 'energy_depleted' | null;
+  interruptionReason?: 'tool_limit' | 'energy_depleted' | 'energy_budget' | null;
   executionPlan?: BuildExecutionPlan | null;
   followUpPrompt?: BuildFollowUpPrompt | null;
   deferredBuildRequest?: DeferredBuildRequest | null;
@@ -447,7 +447,12 @@ export default function useRunTerminalActions({
     const generatedCodeSuccessfully =
       artifactCode !== null ||
       (Array.isArray(payloadProjectFiles) && payloadProjectFiles.length > 0);
-    const pausedForToolLimit = interruptionReason === 'tool_limit';
+    // A run that stopped at its AI Energy budget must not trigger the
+    // automatic preview check either: that would spend the sliver the model
+    // was told to preserve, or fail immediately on an empty battery.
+    const pausedForToolLimit =
+      interruptionReason === 'tool_limit' ||
+      interruptionReason === 'energy_budget';
     const planWasRefined = Boolean(
       runtimePlanRefined && runtimeExplorationPlan
     );

@@ -40,7 +40,7 @@ interface ApplyGenerateCompleteOptions {
   };
   code?: string | null;
   projectFiles?: Array<{ path: string; content?: string }> | null;
-  interruptionReason?: 'tool_limit' | 'energy_depleted' | null;
+  interruptionReason?: 'tool_limit' | 'energy_depleted' | 'energy_budget' | null;
   executionPlan?: BuildExecutionPlan | null;
   followUpPrompt?: BuildFollowUpPrompt | null;
   deferredBuildRequest?: DeferredBuildRequest | null;

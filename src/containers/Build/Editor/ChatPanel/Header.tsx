@@ -328,6 +328,7 @@ export default function Header({
           {lumineModelSelectionControl ? (
             <LumineModelSelectionSettings
               control={lumineModelSelectionControl}
+              energyRemaining={aiUsagePolicy?.energyRemaining ?? null}
               compact
             />
           ) : null}
@@ -385,6 +386,7 @@ export default function Header({
             {lumineModelSelectionControl ? (
               <LumineModelSelectionSettings
                 control={lumineModelSelectionControl}
+                energyRemaining={aiUsagePolicy?.energyRemaining ?? null}
               />
             ) : null}
             {lumineChatVisibilityControl ? (
@@ -781,9 +783,11 @@ function ProjectLimitNudge({
 
 function LumineModelSelectionSettings({
   control,
+  energyRemaining = null,
   compact = false
 }: {
   control: LumineModelSelectionControl;
+  energyRemaining?: number | null;
   compact?: boolean;
 }) {
   const [advancedShown, setAdvancedShown] = useState(false);
@@ -793,6 +797,14 @@ function LumineModelSelectionSettings({
     control.value.model,
     control.value.mode
   );
+  // Every run is capped at the energy the user has when it starts, so show
+  // up front how much work the selected model can do inside that cap. Both
+  // inputs are canonical server values; this only divides them for display.
+  const energyBudgetHint = getLumineEnergyBudgetHint({
+    energyRemaining,
+    typicalCallEnergyUnits: selectedOption.typicalCallEnergyUnits,
+    modeLabel: LUMINE_MODE_LABELS[selectedOption.mode] || selectedOption.label
+  });
   const advancedModelOptions = getAdvancedLumineModelOptions({
     mode: control.value.mode,
     modelOptions: control.modelOptions
@@ -878,6 +890,20 @@ function LumineModelSelectionSettings({
           `}
         >
           {control.error}
+        </span>
+      ) : null}
+      {!control.error && energyBudgetHint ? (
+        <span
+          className={css`
+            flex-basis: 100%;
+            text-align: right;
+            color: ${energyBudgetHint.tight ? '#b45309' : Color.darkGray()};
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.35;
+          `}
+        >
+          {energyBudgetHint.text}
         </span>
       ) : null}
     </div>
@@ -1325,6 +1351,50 @@ const lumineChatVisibilityOptions: Array<{
     icon: 'users'
   }
 ];
+
+// Mirrors the server's per-run ceiling: a run may spend the remaining
+// energy, and the loop never runs more than 16 model calls.
+const LUMINE_MAX_MODEL_CALLS_PER_RUN = 16;
+
+function getLumineEnergyBudgetHint({
+  energyRemaining,
+  typicalCallEnergyUnits,
+  modeLabel
+}: {
+  energyRemaining: number | null;
+  typicalCallEnergyUnits?: number;
+  modeLabel: string;
+}): { text: string; tight: boolean } | null {
+  if (
+    typeof energyRemaining !== 'number' ||
+    !Number.isFinite(energyRemaining) ||
+    !typicalCallEnergyUnits ||
+    typicalCallEnergyUnits <= 0
+  ) {
+    return null;
+  }
+  if (energyRemaining <= 0) return null;
+  const calls = Math.min(
+    LUMINE_MAX_MODEL_CALLS_PER_RUN,
+    Math.floor(energyRemaining / typicalCallEnergyUnits)
+  );
+  if (calls <= 3) {
+    return {
+      tight: true,
+      text: `At your current energy, ${modeLabel} gets about ${Math.max(calls, 1)} model ${calls === 1 ? 'call' : 'calls'} per run: one small, precise step at a time. Recharge for bigger steps.`
+    };
+  }
+  if (calls <= 7) {
+    return {
+      tight: false,
+      text: `At your current energy, ${modeLabel} gets about ${calls} model calls per run: one focused change at a time.`
+    };
+  }
+  return {
+    tight: false,
+    text: `At your current energy, ${modeLabel} gets about ${calls} model calls per run.`
+  };
+}
 
 function getLumineChatVisibilityOption(value: BuildLumineChatVisibility) {
   return (

@@ -672,7 +672,7 @@ export default function useBuildSocket() {
       projectFiles?: Array<{ path: string; content?: string }> | null;
       projectFilesHash?: string | null;
       interruptionReason?:
-        'tool_limit' | 'energy_depleted' | 'awaiting_approval' | null;
+        'tool_limit' | 'energy_depleted' | 'energy_budget' | 'awaiting_approval' | null;
       executionPlan?: any | null;
       followUpPrompt?: {
         question?: string | null;

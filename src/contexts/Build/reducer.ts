@@ -86,7 +86,7 @@ export interface BuildLiveRunState {
   generating: boolean;
   terminalState?: 'complete' | 'error' | 'stopped' | null;
   stopReason?: 'user' | 'replacement' | null;
-  interruptionReason?: 'tool_limit' | 'energy_depleted' | null;
+  interruptionReason?: 'tool_limit' | 'energy_depleted' | 'energy_budget' | null;
   error: string | null;
   status: string | null;
   assistantStatusSteps: string[];
@@ -305,7 +305,7 @@ export interface BuildLiveRunActionPayload extends BuildLiveRunStreamUpdatePaylo
   persistedAssistantId?: number | null;
   persistedUserId?: number | null;
   createdAt?: number;
-  interruptionReason?: 'tool_limit' | 'energy_depleted' | null;
+  interruptionReason?: 'tool_limit' | 'energy_depleted' | 'energy_budget' | null;
   error?: string;
   preserveAssistantArtifactsOnError?: boolean;
   preserveTransientUserMessage?: boolean;
