@@ -5,6 +5,7 @@ import Icon from '~/components/Icon';
 import cielBuilder from '~/assets/ciel-builder.png';
 import zeroBuilder from '~/assets/zero-builder.png';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { Color } from '~/constants/css';
 
 type WorkshopPersona = 'zero' | 'ciel';
 
@@ -12,7 +13,10 @@ interface WorkshopStatus {
   featureVisible: boolean;
   persona: WorkshopPersona;
   agentState: 'build_available' | 'build_working' | 'chat_only';
-  admission: 'accepting' | 'full' | 'paused' | 'limited';
+  admission: 'accepting' | 'full' | 'paused' | 'limited' | 'busy';
+  // Set when this user's one Workshop seat is taken by a job that runs
+  // through the other assistant.
+  requesterBusyWith?: 'zero' | 'ciel' | null;
   sponsor?: {
     userId: number;
     username?: string | null;
@@ -111,6 +115,7 @@ export default function BuildWorkshopPanel({
   if (status.persona !== persona) return null;
 
   const stateColor = workshopStateColor(status.agentState);
+  const stateLabelColor = workshopStateLabelColor(status.agentState);
   const stateLabel = workshopStateLabel(status.agentState);
   const statusActive = status.agentState !== 'chat_only';
   const hasJob = Boolean(status.job);
@@ -126,13 +131,21 @@ export default function BuildWorkshopPanel({
   // Live job progress is narrated in the chat itself (the "Using Lumine..."
   // indicator and the persona's own messages), so the bubble stays an
   // invitation and never mirrors job state.
+  const otherAssistant = status.requesterBusyWith === 'ciel' ? 'Ciel' : 'Zero';
+  const othersWorking = !hasJob && status.agentState === 'build_working';
   const bubbleText = hasJob
     ? `I'm with Lumine on this one — I'll keep you posted right here in our chat!`
-    : accepting
-      ? `Ask me to help build something or understand a Lumine project. I'll make a plan and get your okay before Lumine looks.`
-      : status.admission === 'paused'
-        ? `The workshop is closed right now — but I'm still here to chat! Check back soon.`
-        : `The workshop is full right now — but I'm still here to chat! Check back soon.`;
+    : status.requesterBusyWith
+      ? `You're already building with ${otherAssistant} right now. Lumine can take one project of yours at a time, so I'll be able to start yours as soon as that one wraps up — still here to chat in the meantime!`
+      : accepting
+        ? othersWorking
+          ? `Lumine is busy with someone else's project right now, but tell me what you need — I'll make a plan, get your okay, and put it next in line.`
+          : `Ask me to help build something or understand a Lumine project. I'll make a plan and get your okay before Lumine looks.`
+        : status.admission === 'paused'
+          ? `The workshop is closed right now — but I'm still here to chat! Check back soon.`
+          : status.admission === 'limited'
+            ? `Lumine has used up today's builds — but I'm still here to chat! Check back tomorrow.`
+            : `The workshop's queue is full right now — but I'm still here to chat! Check back soon.`;
 
   return (
     <section
@@ -184,7 +197,7 @@ export default function BuildWorkshopPanel({
             align-items: center;
             gap: 0.45rem;
             flex: none;
-            color: ${stateColor};
+            color: ${stateLabelColor};
             font-size: 1rem;
             font-weight: 700;
             white-space: nowrap;
@@ -220,9 +233,9 @@ export default function BuildWorkshopPanel({
         </p>
       ) : null}
 
-      {hasJob && queuePeople.length > 0 ? (
+      {(hasJob || status.requesterBusyWith) && queuePeople.length > 0 ? (
         <details className={detailsClass}>
-          <summary>Who's in the workshop ({status.queue.count})</summary>
+          <summary>Who's in the workshop ({queuePeople.length})</summary>
           <ol className={queueListClass}>
             {queuePeople.map((person) => (
               <li key={person.jobId}>
@@ -245,12 +258,19 @@ export default function BuildWorkshopPanel({
   );
 }
 
+// The dot matches the chat status circle (busy = the same red the presence
+// tag uses); the label uses a darker red so 1rem text keeps 4.5:1 on white.
 function workshopStateColor(state?: WorkshopStatus['agentState']) {
-  if (state === 'build_working') return '#8d369f';
+  if (state === 'build_working') return Color.red();
   // Open uses the confirmed 5db43526a hue, darkened just enough for the
   // 1rem label to keep 4.5:1 contrast on white.
   if (state === 'build_available') return '#1e7f24';
   return '#626b7b';
+}
+
+function workshopStateLabelColor(state?: WorkshopStatus['agentState']) {
+  if (state === 'build_working') return '#c62d1f';
+  return workshopStateColor(state);
 }
 
 function workshopStateLabel(state: WorkshopStatus['agentState']) {

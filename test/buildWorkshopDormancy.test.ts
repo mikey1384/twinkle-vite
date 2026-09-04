@@ -48,6 +48,16 @@ test('Build Workshop contributes no right-menu DOM until the server enables it',
   assert.match(panelSource, /Who's in the workshop/);
   assert.match(panelSource, /state === 'build_available'\) return '#1e7f24'/);
   assert.match(panelSource, /You're powering the workshop with your own AI/);
+  // One Workshop seat per user: when the other assistant already has this
+  // user's job, the bubble says so instead of claiming the workshop is full,
+  // and someone else's job only means a short wait, never a closed door.
+  assert.match(panelSource, /You're already building with \$\{otherAssistant\} right now/);
+  assert.match(panelSource, /Lumine is busy with someone else's project right now, but tell me what you need/);
+  assert.match(panelSource, /Lumine has used up today's builds/);
+  assert.match(panelSource, /The workshop's queue is full right now/);
+  assert.doesNotMatch(panelSource, /The workshop is full right now/);
+  // The peek counts everyone listed, not only the people still waiting.
+  assert.match(panelSource, /Who's in the workshop \(\{queuePeople\.length\}\)/);
   // Only the queue list may scroll; the section itself never becomes a
   // scroll container that squats over the bookmarks below it.
   const sectionStyle = panelSource.slice(
@@ -75,8 +85,13 @@ test('only controlled preview accounts mount the Workshop status poller', () => 
 
 test('the shared worker indicator does not impersonate either assistant or human presence', () => {
   // Open is the confirmed 5db43526a hue (darkened for label contrast), not
-  // the neutral navy the staging refactor briefly reintroduced.
-  const indicatorColors = ['#8d369f', '#1e7f24', '#626b7b'];
+  // the neutral navy the staging refactor briefly reintroduced. Busy matches
+  // the chat status circle's red on the dot (Color.red()) and uses a darker
+  // red for the 1rem label so it stays readable.
+  assert.match(panelSource, /state === 'build_working'\) return Color\.red\(\)/);
+  assert.match(panelSource, /state === 'build_working'\) return '#c62d1f'/);
+  assert.match(panelSource, /color: \$\{stateLabelColor\}/);
+  const indicatorColors = ['#c62d1f', '#1e7f24', '#626b7b'];
   for (const color of indicatorColors) {
     assert.match(panelSource, new RegExp(color));
     assert(
