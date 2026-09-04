@@ -279,12 +279,16 @@ function workshopStateLabel(state: WorkshopStatus['agentState']) {
   return 'Closed';
 }
 
+// Same beacon as the chat presence dot (StatusTag): a solid colour inside a
+// white ring with a faint halo of the same colour outside it.
 const statusDotClass = (color: string, active: boolean) => css`
-  width: 0.8rem;
-  height: 0.8rem;
+  width: 1rem;
+  height: 1rem;
   border-radius: 50%;
   background: ${color};
-  box-shadow: 0 0 0 0.25rem ${color}22;
+  border: 2px solid #fff;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, ${color} 45%, transparent);
   flex: none;
   ${active
     ? `animation: buildWorkshopDotPulse 2.4s ease-in-out infinite;
