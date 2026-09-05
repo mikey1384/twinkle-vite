@@ -5406,6 +5406,70 @@ export default function buildRequestHelpers({
       }
     },
 
+    async comparePrivateDbItem({
+      buildId,
+      key,
+      expectedValue,
+      value,
+      operationId,
+      expectedUserId,
+      token
+    }: {
+      buildId: number;
+      key: string;
+      expectedValue: unknown;
+      value: unknown;
+      operationId: string;
+      expectedUserId?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/private-db/compare-and-set`,
+          { key, expectedValue, value, operationId, expectedUserId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async requestBuildArena({
+      buildId,
+      action,
+      payload,
+      token
+    }: {
+      buildId: number;
+      action: 'board' | 'publish' | 'challenge' | 'bouts' | 'get-bout';
+      payload: Record<string, unknown>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/arena/${action}`,
+          payload,
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleContentWriteError(error);
+      }
+    },
+
     async setPrivateDbItem({
       buildId,
       key,

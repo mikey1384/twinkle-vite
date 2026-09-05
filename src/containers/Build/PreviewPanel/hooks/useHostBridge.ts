@@ -3956,6 +3956,44 @@ export function useHostBridge({
             break;
           }
 
+          case 'private-db:compare-and-set': {
+            const token = await ensureBuildApiToken(
+              ['privateDb:write'],
+              previewAuth
+            );
+            response = await requestRefs.comparePrivateDbItemRef.current({
+              buildId: activeBuild.id,
+              key: payload?.key,
+              expectedValue: payload?.expectedValue,
+              value: payload?.value,
+              operationId: payload?.operationId,
+              expectedUserId: payload?.expectedUserId,
+              token
+            });
+            break;
+          }
+
+          case 'arena:board':
+          case 'arena:publish':
+          case 'arena:challenge':
+          case 'arena:bouts':
+          case 'arena:get-bout': {
+            const action = type.slice(6) as
+              'board' | 'publish' | 'challenge' | 'bouts' | 'get-bout';
+            const writing = action === 'publish' || action === 'challenge';
+            const token = await ensureBuildApiToken(
+              [writing ? 'sharedDb:write' : 'sharedDb:read'],
+              previewAuth
+            );
+            response = await requestRefs.requestBuildArenaRef.current({
+              buildId: activeBuild.id,
+              action,
+              payload: payload || {},
+              token
+            });
+            break;
+          }
+
           case 'private-db:get': {
             const privateDbReadToken = await ensureBuildApiToken(
               ['privateDb:read'],

@@ -279,6 +279,12 @@ export default function useAppRequests() {
   const listPrivateDbItems = useAppContext(
     (v) => v.requestHelpers.listPrivateDbItems
   );
+  const comparePrivateDbItem = useAppContext(
+    (v) => v.requestHelpers.comparePrivateDbItem
+  );
+  const requestBuildArena = useAppContext(
+    (v) => v.requestHelpers.requestBuildArena
+  );
   const setPrivateDbItem = useAppContext(
     (v) => v.requestHelpers.setPrivateDbItem
   );
@@ -434,6 +440,8 @@ export default function useAppRequests() {
   const getPrivateDbItemRef = useRef(getPrivateDbItem);
   const listPrivateDbItemsRef = useRef(listPrivateDbItems);
   const setPrivateDbItemRef = useRef(setPrivateDbItem);
+  const comparePrivateDbItemRef = useRef(comparePrivateDbItem);
+  const requestBuildArenaRef = useRef(requestBuildArena);
   const deletePrivateDbItemRef = useRef(deletePrivateDbItem);
   const listBuildRemindersRef = useRef(listBuildReminders);
   const createBuildReminderRef = useRef(createBuildReminder);
@@ -556,6 +564,8 @@ export default function useAppRequests() {
     getPrivateDbItemRef,
     listPrivateDbItemsRef,
     setPrivateDbItemRef,
+    comparePrivateDbItemRef,
+    requestBuildArenaRef,
     deletePrivateDbItemRef,
     listBuildRemindersRef,
     createBuildReminderRef,
