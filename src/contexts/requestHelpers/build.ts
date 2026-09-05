@@ -4754,14 +4754,16 @@ export default function buildRequestHelpers({
 
     async getSharedDbTopics({
       buildId,
-      token
+      token,
+      publicRead = false
     }: {
       buildId: number;
       token?: string;
+      publicRead?: boolean;
     }) {
       try {
         const { data } = await request.post(
-          `${URL}/build/${buildId}/api/shared-db/topics`,
+          `${URL}/build/${buildId}/${publicRead ? 'public-shared-db' : 'api/shared-db'}/topics`,
           {},
           {
             ...auth(),
@@ -4812,7 +4814,8 @@ export default function buildRequestHelpers({
       pageSize,
       cursor,
       order,
-      token
+      token,
+      publicRead = false
     }: {
       buildId: number;
       topicName?: string;
@@ -4822,10 +4825,11 @@ export default function buildRequestHelpers({
       cursor?: { id?: number };
       order?: string;
       token?: string;
+      publicRead?: boolean;
     }) {
       try {
         const { data } = await request.post(
-          `${URL}/build/${buildId}/api/shared-db/entries`,
+          `${URL}/build/${buildId}/${publicRead ? 'public-shared-db' : 'api/shared-db'}/entries`,
           { topicName, topicId, limit, pageSize, cursor, order },
           {
             ...auth(),
@@ -4844,15 +4848,17 @@ export default function buildRequestHelpers({
     async getSharedDbEntriesByIds({
       buildId,
       entryIds,
-      token
+      token,
+      publicRead = false
     }: {
       buildId: number;
       entryIds: number[];
       token?: string;
+      publicRead?: boolean;
     }) {
       try {
         const { data } = await request.post(
-          `${URL}/build/${buildId}/api/shared-db/entries/by-ids`,
+          `${URL}/build/${buildId}/${publicRead ? 'public-shared-db' : 'api/shared-db'}/entries/by-ids`,
           { entryIds },
           {
             ...auth(),

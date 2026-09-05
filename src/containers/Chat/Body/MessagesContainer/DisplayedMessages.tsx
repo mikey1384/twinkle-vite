@@ -811,6 +811,7 @@ export default function DisplayedMessages({
               />
             )}
             <LumineDialoguePhase
+              messages={messages}
               partner={partner}
               selectedChannelId={selectedChannelId}
               topicId={

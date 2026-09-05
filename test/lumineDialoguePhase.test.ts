@@ -81,3 +81,25 @@ test('provider identity never enters the user-facing Lumine transcript', () => {
   assert.doesNotMatch(componentSource, /Claude|Codex|provider|model|effort/);
   assert.doesNotMatch(hookSource, /Claude|Codex|requestedModel|requestedEffort/);
 });
+
+test('auto-minimize observes only confirmed viewer messages in the exact conversation after queuing', async () => {
+  const { latestLumineChatMessage } = await import(
+    '../src/containers/Chat/Body/MessagesContainer/lumineDialogueMessages'
+  );
+  const scope = { requesterUserId: 5, channelId: 20, topicId: null };
+  const base = { userId: 5, channelId: 20, timeStamp: 101 };
+  const messages = [
+    { ...base, id: 12 },
+    { ...base, id: '13' },
+    { ...base, id: 14, timeStamp: 100 },
+    { ...base, id: 15, userId: 7587 },
+    { ...base, id: 16, channelId: 21 },
+    { ...base, id: 17, subjectId: 2 },
+    { ...base, id: 'pending-uuid' },
+    { ...base }
+  ];
+  assert.equal(latestLumineChatMessage(messages, scope, 100), 13);
+  assert.equal(latestLumineChatMessage(messages, { ...scope, topicId: 2 }, 100), 17);
+  assert.equal(latestLumineChatMessage(messages, scope, 102), 0);
+  assert.equal(latestLumineChatMessage([], scope, 100), 0);
+});

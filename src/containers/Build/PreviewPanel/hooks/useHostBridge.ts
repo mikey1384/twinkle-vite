@@ -3538,12 +3538,13 @@ export function useHostBridge({
           }
 
           case 'shared-db:get-topics': {
-            const sharedDbTopicsToken = await ensureBuildApiToken(
-              ['sharedDb:read'],
-              previewAuth
-            );
+            const publicRead = isGuestViewerActive(previewAuth);
+            const sharedDbTopicsToken = publicRead
+              ? undefined
+              : await ensureBuildApiToken(['sharedDb:read'], previewAuth);
             response = await requestRefs.getSharedDbTopicsRef.current({
               buildId: activeBuild.id,
+              publicRead,
               token: sharedDbTopicsToken
             });
             break;
@@ -3563,10 +3564,10 @@ export function useHostBridge({
           }
 
           case 'shared-db:get-entries': {
-            const sharedDbEntriesToken = await ensureBuildApiToken(
-              ['sharedDb:read'],
-              previewAuth
-            );
+            const publicRead = isGuestViewerActive(previewAuth);
+            const sharedDbEntriesToken = publicRead
+              ? undefined
+              : await ensureBuildApiToken(['sharedDb:read'], previewAuth);
             response = await requestRefs.getSharedDbEntriesRef.current({
               buildId: activeBuild.id,
               topicName: payload?.topicName,
@@ -3575,21 +3576,23 @@ export function useHostBridge({
               pageSize: payload?.pageSize,
               cursor: payload?.cursor,
               order: payload?.order || payload?.sort || payload?.direction,
+              publicRead,
               token: sharedDbEntriesToken
             });
             break;
           }
 
           case 'shared-db:get-entries-by-ids': {
-            const sharedDbEntriesByIdsToken = await ensureBuildApiToken(
-              ['sharedDb:read'],
-              previewAuth
-            );
+            const publicRead = isGuestViewerActive(previewAuth);
+            const sharedDbEntriesByIdsToken = publicRead
+              ? undefined
+              : await ensureBuildApiToken(['sharedDb:read'], previewAuth);
             response = await requestRefs.getSharedDbEntriesByIdsRef.current({
               buildId: activeBuild.id,
               entryIds: Array.isArray(payload?.entryIds)
                 ? payload.entryIds
                 : [],
+              publicRead,
               token: sharedDbEntriesByIdsToken
             });
             break;
@@ -4288,6 +4291,12 @@ export function useHostBridge({
           }, 0);
         }
       } catch (error: any) {
+        if (
+          error?.code === 'guest_restricted' &&
+          isGuestViewerActive(previewAuth)
+        ) {
+          previewAuth.setGuestRestrictionBannerVisible(true);
+        }
         if (error?.aiUsagePolicy && typeof error.aiUsagePolicy === 'object') {
           onAiUsagePolicyUpdateRef.current?.(error.aiUsagePolicy);
         }
