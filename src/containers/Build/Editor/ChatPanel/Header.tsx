@@ -75,6 +75,7 @@ const minimizedRowClass = css`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
   min-height: 2.45rem;
 `;
 
@@ -307,6 +308,7 @@ export default function Header({
         variant="inline"
         energyPercent={dailyGenerationUsage}
         energyPolicy={aiUsagePolicy}
+        refillTimeDisplay="popover"
         energySegments={aiUsagePolicy?.energySegments}
         energySegmentsRemaining={aiUsagePolicy?.energySegmentsRemaining}
         resetNeeded={!!generationResetUi}
@@ -324,6 +326,22 @@ export default function Header({
         }
       />
     ) : null;
+  const selectedModelOption = lumineModelSelectionControl
+    ? getLumineModelOption(
+        lumineModelSelectionControl.modelOptions,
+        lumineModelSelectionControl.value.model,
+        lumineModelSelectionControl.value.mode
+      )
+    : null;
+  const compactEnergyBudgetHint = selectedModelOption
+    ? getLumineEnergyBudgetHint({
+        energyRemaining: aiUsagePolicy?.energyRemaining ?? null,
+        typicalCallEnergyUnits: selectedModelOption.typicalCallEnergyUnits,
+        modeLabel:
+          LUMINE_MODE_LABELS[selectedModelOption.mode] ||
+          selectedModelOption.label
+      })
+    : null;
 
   if (minimized) {
     return (
@@ -334,7 +352,6 @@ export default function Header({
               control={lumineModelSelectionControl}
               advancedShown={advancedModelsShown}
               onToggleAdvanced={handleToggleAdvancedModels}
-              energyRemaining={aiUsagePolicy?.energyRemaining ?? null}
               compact
             />
           ) : null}
@@ -347,8 +364,8 @@ export default function Header({
           {energyCard ? (
             <div
               className={css`
-                flex: 1;
-                min-width: 0;
+                flex: 1 1 ${generationResetUi ? '18rem' : '16rem'};
+                min-width: ${generationResetUi ? '18rem' : '16rem'};
               `}
             >
               {energyCard}
@@ -356,6 +373,9 @@ export default function Header({
           ) : null}
           <HeaderMinimizeToggle minimized onToggle={onToggleMinimized} />
         </div>
+        {!lumineModelSelectionControl?.error && compactEnergyBudgetHint && (
+          <LumineEnergyBudgetHint hint={compactEnergyBudgetHint} />
+        )}
         {showProjectLimitNudge ? (
           <ProjectLimitNudge
             approval={projectLimitApproval}
@@ -908,18 +928,7 @@ function LumineModelSelectionSettings({
         </span>
       ) : null}
       {!control.error && energyBudgetHint ? (
-        <span
-          className={css`
-            flex-basis: 100%;
-            text-align: right;
-            color: ${energyBudgetHint.tight ? '#b45309' : Color.darkGray()};
-            font-size: 1rem;
-            font-weight: 700;
-            line-height: 1.35;
-          `}
-        >
-          {energyBudgetHint.text}
-        </span>
+        <LumineEnergyBudgetHint hint={energyBudgetHint} />
       ) : null}
     </div>
   );
@@ -955,6 +964,28 @@ function LumineModelSelectionSettings({
       })
     );
   }
+}
+
+function LumineEnergyBudgetHint({
+  hint
+}: {
+  hint: NonNullable<ReturnType<typeof getLumineEnergyBudgetHint>>;
+}) {
+  return (
+    <span
+      className={css`
+        flex-basis: 100%;
+        min-width: 0;
+        text-align: right;
+        color: ${hint.tight ? '#b45309' : Color.darkGray()};
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.35;
+      `}
+    >
+      {hint.text}
+    </span>
+  );
 }
 
 function LumineSelect({

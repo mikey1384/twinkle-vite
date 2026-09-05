@@ -13,6 +13,7 @@ import RechargeAiEnergyConfirmModal from '~/components/Modals/RechargeAiEnergyCo
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import AiEnergyDashboardModal from '~/components/AiEnergyDashboardModal';
 import AiEnergyRefillNotice from '~/components/AiEnergyRefillNotice';
+import AiEnergyRefillInfoButton from '~/components/AiEnergyRefillInfoButton';
 import {
   getAiEnergyDisplay,
   type AiEnergyDisplayPolicy
@@ -57,6 +58,7 @@ export default function AiEnergyCard({
   energyPercent,
   energyPolicy,
   showRefillTime = true,
+  refillTimeDisplay = 'inline',
   energySegments = 5,
   mode,
   overflowed: _overflowed = false,
@@ -81,6 +83,7 @@ export default function AiEnergyCard({
   energyPercent: number;
   energyPolicy?: AiEnergyDisplayPolicy | null;
   showRefillTime?: boolean;
+  refillTimeDisplay?: 'inline' | 'popover';
   energySegments?: number;
   energySegmentsRemaining?: number;
   mode?: 'full_quality' | 'low_energy';
@@ -313,6 +316,13 @@ export default function AiEnergyCard({
                 </span>
               </span>
             )}
+            {showRefillTime && refillTimeDisplay === 'popover' && (
+              <AiEnergyRefillInfoButton
+                energyPolicy={energyPolicy}
+                onRefresh={handleOpenDashboard}
+                active={portaledUiActive}
+              />
+            )}
           </div>
         ) : (
           <>
@@ -341,7 +351,7 @@ export default function AiEnergyCard({
           </>
         )}
 
-        {showRefillTime && (
+        {showRefillTime && (!isInline || refillTimeDisplay === 'inline') && (
           <AiEnergyRefillNotice
             energyPolicy={energyPolicy}
             onRefresh={handleOpenDashboard}
