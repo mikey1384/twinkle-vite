@@ -35,15 +35,10 @@ assert.match(
 const trayUsageIndex = aiCardsSource.indexOf('className={aiCardControlTrayCls}');
 assert.ok(trayUsageIndex > 0, 'Expected the control tray style to be used.');
 assert.ok(
-  aiCardsSource.indexOf('<AiEnergyCard', trayUsageIndex) > trayUsageIndex,
-  'Expected the recharge control to render inside the tray.'
-);
-assert.ok(
   aiCardsSource.indexOf('<GenerateCardInterface', trayUsageIndex) >
     trayUsageIndex,
   'Expected the summon control to render inside the tray.'
 );
-assert.match(aiCardsSource, /resetNeeded=\{energyDepleted\}/);
 assert.match(aiCardsSource, /energyDepleted=\{energyDepleted\}/);
 assert.match(
   aiCardsSource,

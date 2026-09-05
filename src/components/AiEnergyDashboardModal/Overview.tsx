@@ -109,6 +109,7 @@ export default function Overview({
           }
         />
         <AiEnergyRefillNotice
+          centered
           energyPolicy={energyPolicy}
           onRefresh={onRefreshBalance}
           refreshing={refillRefreshLoading}

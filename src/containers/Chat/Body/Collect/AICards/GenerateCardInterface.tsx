@@ -10,6 +10,7 @@ export default function GenerateCardInterface({
   canGenerateAICard,
   loading,
   onGenerateAICard,
+  onRechargeEnergy,
   posting,
   energyDepleted,
   energyLoading
@@ -18,6 +19,7 @@ export default function GenerateCardInterface({
   canGenerateAICard: boolean;
   loading: boolean;
   onGenerateAICard: () => void;
+  onRechargeEnergy: () => void;
   posting: boolean;
   energyDepleted: boolean;
   energyLoading: boolean;
@@ -45,14 +47,13 @@ export default function GenerateCardInterface({
         <GradientButton
           loading={posting}
           disabled={
-            energyDepleted ||
             energyLoading ||
             loading ||
             !canGenerateAICard ||
             maxSummoned ||
             !!banned?.aiCards
           }
-          onClick={onGenerateAICard}
+          onClick={energyDepleted ? onRechargeEnergy : onGenerateAICard}
           fontSize="1.5rem"
           mobileFontSize="1.1rem"
         >

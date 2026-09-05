@@ -353,6 +353,7 @@ export default function AiEnergyCard({
 
         {showRefillTime && (!isInline || refillTimeDisplay === 'inline') && (
           <AiEnergyRefillNotice
+            centered
             energyPolicy={energyPolicy}
             onRefresh={handleOpenDashboard}
           />

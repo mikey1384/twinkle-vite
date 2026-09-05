@@ -375,7 +375,10 @@ test(
             await panel.innerText(),
             /Next daily refill:.*Sep 6.*7:00 AM GMT\+7/s
           );
-          assert.match(await panel.innerText(), /Refills daily at 00:00 UTC/);
+          assert.doesNotMatch(
+            await panel.innerText(),
+            /Refills daily at 00:00 UTC/
+          );
           const popup = await panel.boundingBox();
           assert.ok(
             popup.width >= Math.min(260, width - 24),

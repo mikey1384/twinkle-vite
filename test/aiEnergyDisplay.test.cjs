@@ -88,7 +88,6 @@ test('every shared Energy card receives the canonical policy, including nested i
     'components/Notification/TodayStats/index.tsx',
     'containers/Chat/Body/MessagesContainer/MessageInput/index.tsx',
     'containers/Home/AIStoriesModal/SuccessModal/index.tsx',
-    'containers/Chat/Body/Collect/AICards/index.tsx',
     'components/Modals/ImageModal/ImageEditModal.tsx',
     'components/Modals/UploadModal/ImageGenerator/index.tsx',
     'components/Modals/UploadModal/ImageGenerator/ImageArea/GeneratedImageDisplay/FollowUpInput.tsx'

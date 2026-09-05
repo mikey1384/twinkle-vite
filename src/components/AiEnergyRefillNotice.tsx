@@ -8,12 +8,14 @@ import {
 
 export default function AiEnergyRefillNotice({
   energyPolicy,
+  centered = false,
   onRefresh,
   refreshing = false,
   refreshError,
   refreshLabel = 'Check balance'
 }: {
   energyPolicy?: AiEnergyDisplayPolicy | null;
+  centered?: boolean;
   onRefresh?: () => void;
   refreshing?: boolean;
   refreshError?: string;
@@ -52,7 +54,10 @@ export default function AiEnergyRefillNotice({
   }, [refillTime]);
 
   return (
-    <div className={noticeCls}>
+    <div
+      className={noticeCls}
+      style={centered ? { textAlign: 'center' } : undefined}
+    >
       {refillTime !== null && (
         <div>
           {refillReached ? 'Scheduled refill: ' : 'Next daily refill: '}
@@ -62,7 +67,6 @@ export default function AiEnergyRefillNotice({
           (your time).
         </div>
       )}
-      <div>Refills daily at 00:00 UTC.</div>
       {refillReached && (
         <div>
           Refill time has passed; this balance is from before the refill.{' '}

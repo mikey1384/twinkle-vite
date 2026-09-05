@@ -14,43 +14,15 @@ import {
 } from '~/contexts';
 import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
-import AiEnergyCard from '~/components/AiEnergyCard';
-import {
-  errorHasActualCommunityFundsBalance,
-  isCommunityFundRechargeAvailable
-} from '~/helpers/aiEnergy';
+import AiEnergyDashboardModal from '~/components/AiEnergyDashboardModal';
+import type { AiEnergyDisplayPolicy } from '~/helpers/aiEnergyDisplay';
 import { trackEvent } from '~/helpers/analytics';
-
-interface AiUsageRequirement {
-  key: string;
-  label: string;
-  done: boolean;
-  current?: number;
-  required?: number;
-}
-
-interface AiUsagePolicy {
-  dayIndex?: number;
-  energyRemaining?: number;
-  energyPercent?: number;
-  energySegments?: number;
-  energySegmentsRemaining?: number;
-  currentMode?: 'full_quality' | 'low_energy';
-  lastUsageOverflowed?: boolean;
-  resetCost?: number;
-  resetPurchasesToday?: number;
-  communityFundRechargeCoinsRemaining?: number;
-  communityFundResetEligibility?: {
-    eligible: boolean;
-    requirements: AiUsageRequirement[];
-  };
-}
 
 const aiCardControlTrayMobileBottomClearance =
   'calc(2rem + env(safe-area-inset-bottom, 0px))';
 
 const aiCardControlTrayCls = css`
-  min-height: 9.5rem;
+  flex-shrink: 0;
   max-height: 45%;
   background: ${Color.inputGray()};
   padding: 1rem;
@@ -75,17 +47,9 @@ export default function AICards({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const canGenerateAICard = useKeyContext((v) => v.myState.canGenerateAICard);
-  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
-  const communityFundsLoaded = useKeyContext(
-    (v) => v.myState.communityFundsLoaded
-  );
   const generateAICard = useAppContext((v) => v.requestHelpers.generateAICard);
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
-  );
-  const purchaseAiEnergyRecharge = useAppContext(
-    (v) => v.requestHelpers.purchaseAiEnergyRecharge
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetCollectType = useAppContext(
@@ -109,17 +73,16 @@ export default function AICards({
   );
   const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
   const globalAiUsagePolicy = useNotiContext(
-    (v) => v.state.todayStats.aiUsagePolicy as AiUsagePolicy | null
+    (v) => v.state.todayStats.aiUsagePolicy as AiEnergyDisplayPolicy | null
   );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
-  const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(
+  const [aiUsagePolicy, setAiUsagePolicy] = useState<AiEnergyDisplayPolicy | null>(
     globalAiUsagePolicy || null
   );
   const [aiUsagePolicyLoading, setAiUsagePolicyLoading] = useState(false);
-  const [aiUsageResetLoading, setAiUsageResetLoading] = useState(false);
-  const [aiUsageResetError, setAiUsageResetError] = useState('');
+  const [energyDashboardShown, setEnergyDashboardShown] = useState(false);
   const navigate = useNavigate();
   const energyDepleted = useMemo(() => {
     return (
@@ -211,51 +174,29 @@ export default function AICards({
         </div>
       )}
       <div className={aiCardControlTrayCls}>
-        {aiUsagePolicy && (
-          <AiEnergyCard
-            variant="inline"
-            className={css`
-              flex-shrink: 0;
-            `}
-            energyPercent={aiUsagePolicy.energyPercent ?? 0}
-            energyPolicy={aiUsagePolicy}
-            energySegments={aiUsagePolicy.energySegments}
-            energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
-            overflowed={aiUsagePolicy.lastUsageOverflowed}
-            resetNeeded={energyDepleted}
-            resetCost={aiUsagePolicy.resetCost || 0}
-            resetPurchaseNumber={(aiUsagePolicy.resetPurchasesToday || 0) + 1}
-            twinkleCoins={twinkleCoins}
-            rechargeLoading={aiUsageResetLoading}
-            rechargeError={aiUsageResetError}
-            onRecharge={() => handlePurchaseAiUsageReset(false)}
-            communityFundsEligible={isCommunityFundRechargeAvailable({
-              aiUsagePolicy,
-              communityFunds,
-              communityFundsKnown: communityFundsLoaded
-            })}
-            communityFundsRequirements={
-              aiUsagePolicy.communityFundResetEligibility?.requirements
-            }
-            onRechargeWithCommunityFunds={
-              aiUsagePolicy.communityFundResetEligibility
-                ? () => handlePurchaseAiUsageReset(true)
-                : undefined
-            }
-          />
-        )}
         <GenerateCardInterface
           canGenerateAICard={!!canGenerateAICard}
           numSummoned={numCardSummonedToday}
           onGenerateAICard={handleGenerateCard}
+          onRechargeEnergy={handleOpenEnergyDashboard}
           posting={isGeneratingAICard}
           loading={loadingAICardChat}
           energyDepleted={energyDepleted}
           energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
         />
       </div>
+      {energyDashboardShown && (
+        <AiEnergyDashboardModal
+          modalLevel={3}
+          onHide={() => setEnergyDashboardShown(false)}
+        />
+      )}
     </div>
   );
+
+  function handleOpenEnergyDashboard() {
+    setEnergyDashboardShown(true);
+  }
 
   function handleFilterClick() {
     onSetCollectType(VOCAB_CHAT_TYPE);
@@ -288,72 +229,14 @@ export default function AICards({
     }
   }
 
-  function applyAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
+  function applyAiUsagePolicy(nextPolicy?: AiEnergyDisplayPolicy | null) {
     if (!nextPolicy) return;
-    setAiUsagePolicy((policy) => ({
-      ...nextPolicy,
-      ...(policy?.communityFundResetEligibility &&
-      !nextPolicy.communityFundResetEligibility &&
-      (!nextPolicy.dayIndex || nextPolicy.dayIndex === policy.dayIndex)
-        ? {
-            communityFundResetEligibility: policy.communityFundResetEligibility
-          }
-        : {})
-    }));
+    setAiUsagePolicy(nextPolicy);
     onUpdateTodayStats({
       newStats: {
         aiUsagePolicy: nextPolicy
       }
     });
-  }
-
-  async function handlePurchaseAiUsageReset(useCommunityFunds = false) {
-    if (aiUsageResetLoading) return;
-    setAiUsageResetLoading(true);
-    setAiUsageResetError('');
-    try {
-      const result = await purchaseAiEnergyRecharge({
-        useCommunityFunds
-      });
-      if (result?.aiUsagePolicy) {
-        applyAiUsagePolicy(result.aiUsagePolicy);
-      }
-      if (typeof result?.newBalance === 'number') {
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: result.newBalance }
-        });
-      }
-      if (typeof result?.communityFunds === 'number') {
-        onSetUserState({
-          userId,
-          newState: { communityFunds: result.communityFunds }
-        });
-      }
-    } catch (error: any) {
-      console.error(error);
-      if (error?.aiUsagePolicy) {
-        applyAiUsagePolicy(error.aiUsagePolicy);
-      }
-      if (
-        typeof error?.currentCommunityFunds === 'number' &&
-        errorHasActualCommunityFundsBalance(error)
-      ) {
-        const normalizedCommunityFunds = Math.max(
-          0,
-          Number(error.currentCommunityFunds || 0)
-        );
-        onSetUserState({
-          userId,
-          newState: { communityFunds: normalizedCommunityFunds }
-        });
-      }
-      setAiUsageResetError(
-        error?.message || 'Unable to recharge Energy right now.'
-      );
-    } finally {
-      setAiUsageResetLoading(false);
-    }
   }
 
   async function handleGenerateCard() {
@@ -364,6 +247,7 @@ export default function AICards({
         typeof policy.energyRemaining === 'number' &&
         policy.energyRemaining <= 0
       ) {
+        handleOpenEnergyDashboard();
         return onSetAICardStatusMessage('Recharge Energy to summon a card.');
       }
       onSetIsGeneratingAICard(true);
