@@ -326,22 +326,6 @@ export default function Header({
         }
       />
     ) : null;
-  const selectedModelOption = lumineModelSelectionControl
-    ? getLumineModelOption(
-        lumineModelSelectionControl.modelOptions,
-        lumineModelSelectionControl.value.model,
-        lumineModelSelectionControl.value.mode
-      )
-    : null;
-  const compactEnergyBudgetHint = selectedModelOption
-    ? getLumineEnergyBudgetHint({
-        energyRemaining: aiUsagePolicy?.energyRemaining ?? null,
-        typicalCallEnergyUnits: selectedModelOption.typicalCallEnergyUnits,
-        modeLabel:
-          LUMINE_MODE_LABELS[selectedModelOption.mode] ||
-          selectedModelOption.label
-      })
-    : null;
 
   if (minimized) {
     return (
@@ -373,9 +357,6 @@ export default function Header({
           ) : null}
           <HeaderMinimizeToggle minimized onToggle={onToggleMinimized} />
         </div>
-        {!lumineModelSelectionControl?.error && compactEnergyBudgetHint && (
-          <LumineEnergyBudgetHint hint={compactEnergyBudgetHint} />
-        )}
         {showProjectLimitNudge ? (
           <ProjectLimitNudge
             approval={projectLimitApproval}
@@ -414,7 +395,6 @@ export default function Header({
                 control={lumineModelSelectionControl}
                 advancedShown={advancedModelsShown}
                 onToggleAdvanced={handleToggleAdvancedModels}
-                energyRemaining={aiUsagePolicy?.energyRemaining ?? null}
               />
             ) : null}
             {lumineChatVisibilityControl ? (
@@ -817,13 +797,11 @@ function LumineModelSelectionSettings({
   control,
   advancedShown,
   onToggleAdvanced,
-  energyRemaining = null,
   compact = false
 }: {
   control: LumineModelSelectionControl;
   advancedShown: boolean;
   onToggleAdvanced: () => void;
-  energyRemaining?: number | null;
   compact?: boolean;
 }) {
   const availableModes = getAvailableLumineModes(control.modelOptions);
@@ -832,14 +810,6 @@ function LumineModelSelectionSettings({
     control.value.model,
     control.value.mode
   );
-  // Every run is capped at the energy the user has when it starts, so show
-  // up front how much work the selected model can do inside that cap. Both
-  // inputs are canonical server values; this only divides them for display.
-  const energyBudgetHint = getLumineEnergyBudgetHint({
-    energyRemaining,
-    typicalCallEnergyUnits: selectedOption.typicalCallEnergyUnits,
-    modeLabel: LUMINE_MODE_LABELS[selectedOption.mode] || selectedOption.label
-  });
   const advancedModelOptions = getAdvancedLumineModelOptions({
     mode: control.value.mode,
     modelOptions: control.modelOptions
@@ -927,9 +897,6 @@ function LumineModelSelectionSettings({
           {control.error}
         </span>
       ) : null}
-      {!control.error && energyBudgetHint ? (
-        <LumineEnergyBudgetHint hint={energyBudgetHint} />
-      ) : null}
     </div>
   );
 
@@ -964,28 +931,6 @@ function LumineModelSelectionSettings({
       })
     );
   }
-}
-
-function LumineEnergyBudgetHint({
-  hint
-}: {
-  hint: NonNullable<ReturnType<typeof getLumineEnergyBudgetHint>>;
-}) {
-  return (
-    <span
-      className={css`
-        flex-basis: 100%;
-        min-width: 0;
-        text-align: right;
-        color: ${hint.tight ? '#b45309' : Color.darkGray()};
-        font-size: 1rem;
-        font-weight: 700;
-        line-height: 1.35;
-      `}
-    >
-      {hint.text}
-    </span>
-  );
 }
 
 function LumineSelect({
@@ -1396,50 +1341,6 @@ const lumineChatVisibilityOptions: Array<{
     icon: 'users'
   }
 ];
-
-// Mirrors the server's per-run ceiling: a run may spend the remaining
-// energy, and the loop never runs more than 16 model calls.
-const LUMINE_MAX_MODEL_CALLS_PER_RUN = 16;
-
-function getLumineEnergyBudgetHint({
-  energyRemaining,
-  typicalCallEnergyUnits,
-  modeLabel
-}: {
-  energyRemaining: number | null;
-  typicalCallEnergyUnits?: number;
-  modeLabel: string;
-}): { text: string; tight: boolean } | null {
-  if (
-    typeof energyRemaining !== 'number' ||
-    !Number.isFinite(energyRemaining) ||
-    !typicalCallEnergyUnits ||
-    typicalCallEnergyUnits <= 0
-  ) {
-    return null;
-  }
-  if (energyRemaining <= 0) return null;
-  const calls = Math.min(
-    LUMINE_MAX_MODEL_CALLS_PER_RUN,
-    Math.floor(energyRemaining / typicalCallEnergyUnits)
-  );
-  if (calls <= 3) {
-    return {
-      tight: true,
-      text: `At your current energy, ${modeLabel} gets about ${Math.max(calls, 1)} model ${calls === 1 ? 'call' : 'calls'} per run: one small, precise step at a time. Recharge for bigger steps.`
-    };
-  }
-  if (calls <= 7) {
-    return {
-      tight: false,
-      text: `At your current energy, ${modeLabel} gets about ${calls} model calls per run: one focused change at a time.`
-    };
-  }
-  return {
-    tight: false,
-    text: `At your current energy, ${modeLabel} gets about ${calls} model calls per run.`
-  };
-}
 
 function getLumineChatVisibilityOption(value: BuildLumineChatVisibility) {
   return (
