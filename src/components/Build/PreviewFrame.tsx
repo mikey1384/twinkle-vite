@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 
 const frameClass = css`
   position: relative;
+  align-self: center;
   min-width: 0;
   overflow: hidden;
   border: 1px solid rgba(20, 35, 60, 0.14);
@@ -14,10 +15,14 @@ const frameClass = css`
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 
   img {
+    position: absolute;
+    top: 1.9rem;
+    left: 0;
     display: block;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: calc(100% - 1.9rem);
+    object-fit: contain;
+    background: #f8fafc;
   }
 `;
 

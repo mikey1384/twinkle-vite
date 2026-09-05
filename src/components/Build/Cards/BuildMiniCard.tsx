@@ -169,6 +169,11 @@ const compactBackgroundClass = css`
   pointer-events: none;
 
   img {
+    /* This image is a decorative backdrop behind the compact embed's text. */
+    top: 0;
+    height: 100%;
+    object-fit: cover;
+    background: transparent;
     opacity: 0.8;
   }
 `;

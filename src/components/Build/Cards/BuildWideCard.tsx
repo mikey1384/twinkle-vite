@@ -496,7 +496,8 @@ const previewClass = css`
     grid-area: preview;
     align-self: start;
     min-height: 0;
-    aspect-ratio: 16 / 9;
+    /* Keep room for both the toolbar and the complete thumbnail on phones. */
+    aspect-ratio: 4 / 3;
   }
 `;
 
