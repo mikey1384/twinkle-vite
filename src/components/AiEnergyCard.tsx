@@ -12,6 +12,11 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import RechargeAiEnergyConfirmModal from '~/components/Modals/RechargeAiEnergyConfirmModal';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import AiEnergyDashboardModal from '~/components/AiEnergyDashboardModal';
+import AiEnergyRefillNotice from '~/components/AiEnergyRefillNotice';
+import {
+  getAiEnergyDisplay,
+  type AiEnergyDisplayPolicy
+} from '~/helpers/aiEnergyDisplay';
 
 interface CommunityFundRequirement {
   key: string;
@@ -50,6 +55,8 @@ const compactInlineEnergyQuery = `(max-width: ${mobileMaxWidth}), (min-width: ${
 
 export default function AiEnergyCard({
   energyPercent,
+  energyPolicy,
+  showRefillTime = true,
   energySegments = 5,
   mode,
   overflowed: _overflowed = false,
@@ -72,6 +79,8 @@ export default function AiEnergyCard({
   portaledUiActive = true
 }: {
   energyPercent: number;
+  energyPolicy?: AiEnergyDisplayPolicy | null;
+  showRefillTime?: boolean;
   energySegments?: number;
   energySegmentsRemaining?: number;
   mode?: 'full_quality' | 'low_energy';
@@ -106,9 +115,8 @@ export default function AiEnergyCard({
     fallback: themeColor || 'logoBlue'
   });
   const segments = Math.max(1, energySegments);
-  const rawPercent = Math.max(0, Math.min(100, energyPercent));
-  const percent = Math.round(rawPercent);
-  const ratio = rawPercent / 100;
+  const energyDisplay = getAiEnergyDisplay(energyPolicy, energyPercent);
+  const ratio = (energyDisplay.percent ?? 0) / 100;
   const visualSegmentFill = ratio * segments;
   const tone = ratio >= 0.6 ? 'green' : ratio >= 0.3 ? 'gold' : 'red';
   const fill = TONE[tone];
@@ -185,32 +193,6 @@ export default function AiEnergyCard({
     setPaidRechargeConfirmShown(false);
   }, [portaledUiActive]);
 
-  function handleOpenDashboard() {
-    if (effectiveChargeAttentionKey && typeof window !== 'undefined') {
-      window.sessionStorage.setItem(
-        CHARGE_CTA_ACK_STORAGE_KEY,
-        effectiveChargeAttentionKey
-      );
-      setAcknowledgedChargeKey(effectiveChargeAttentionKey);
-    }
-    setAiEnergyDashboardModalShown(true);
-  }
-
-  function handlePaidRechargeClick() {
-    if (!onRecharge || rechargeLoading || !hasEnoughCoins) return;
-    if (resetCost > 0) {
-      setPaidRechargeConfirmShown(true);
-      return;
-    }
-    onRecharge();
-  }
-
-  async function handleConfirmPaidRecharge() {
-    if (!onRecharge) return;
-    await onRecharge();
-    setPaidRechargeConfirmShown(false);
-  }
-
   const energyCells = Array.from({ length: segments }).map((_, index) => {
     const fillRatio = Math.max(0, Math.min(1, visualSegmentFill - index));
     const filled = fillRatio > 0;
@@ -264,10 +246,11 @@ export default function AiEnergyCard({
     <div
       className={cellsClass}
       role="meter"
-      aria-valuenow={percent}
+      aria-valuenow={energyDisplay.percent ?? undefined}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-label={`Energy ${percent}%`}
+      aria-label="Energy"
+      aria-valuetext={energyDisplay.label}
     >
       {energyCells}
     </div>
@@ -313,7 +296,7 @@ export default function AiEnergyCard({
               }`}
             >
               {meter}
-              <span className={inlinePercentCls}>{percent}%</span>
+              <span className={inlinePercentCls}>{energyDisplay.label}</span>
             </div>
             {statusLabel && (
               <span
@@ -345,7 +328,7 @@ export default function AiEnergyCard({
               </button>
               <div className={statusCls}>
                 <span className={percentCls} data-tone={tone}>
-                  {percent}%
+                  {energyDisplay.label}
                 </span>
                 {statusLabel && (
                   <span className={modeCls} style={modeBadgeStyle}>
@@ -356,6 +339,13 @@ export default function AiEnergyCard({
             </div>
             {meter}
           </>
+        )}
+
+        {showRefillTime && (
+          <AiEnergyRefillNotice
+            energyPolicy={energyPolicy}
+            onRefresh={handleOpenDashboard}
+          />
         )}
 
         {resetNeeded && (
@@ -438,6 +428,32 @@ export default function AiEnergyCard({
       )}
     </>
   );
+
+  function handleOpenDashboard() {
+    if (effectiveChargeAttentionKey && typeof window !== 'undefined') {
+      window.sessionStorage.setItem(
+        CHARGE_CTA_ACK_STORAGE_KEY,
+        effectiveChargeAttentionKey
+      );
+      setAcknowledgedChargeKey(effectiveChargeAttentionKey);
+    }
+    setAiEnergyDashboardModalShown(true);
+  }
+
+  function handlePaidRechargeClick() {
+    if (!onRecharge || rechargeLoading || !hasEnoughCoins) return;
+    if (resetCost > 0) {
+      setPaidRechargeConfirmShown(true);
+      return;
+    }
+    onRecharge();
+  }
+
+  async function handleConfirmPaidRecharge() {
+    if (!onRecharge) return;
+    await onRecharge();
+    setPaidRechargeConfirmShown(false);
+  }
 }
 
 const cardCls = css`

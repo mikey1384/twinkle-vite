@@ -624,6 +624,7 @@ export default function SuccessModal({
                         margin-top: 1.2rem;
                       `}
                       energyPercent={aiUsagePolicy.energyPercent ?? 0}
+                      energyPolicy={aiUsagePolicy}
                       energySegments={aiUsagePolicy.energySegments}
                       energySegmentsRemaining={
                         aiUsagePolicy.energySegmentsRemaining

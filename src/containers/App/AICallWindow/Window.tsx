@@ -1,5 +1,9 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { css } from '@emotion/css';
+import {
+  getAiEnergyDisplay,
+  type AiEnergyDisplayPolicy
+} from '~/helpers/aiEnergyDisplay';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import ZeroPic from '~/components/ZeroPic';
@@ -10,7 +14,7 @@ interface WindowProps {
   onHangUp: () => void;
 }
 
-interface AiUsagePolicy {
+interface AiUsagePolicy extends AiEnergyDisplayPolicy {
   energyPercent?: number;
   energySegments?: number;
 }
@@ -21,12 +25,12 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
 
-  const todayStats = useNotiContext((v) => v.state.todayStats);
-  const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
+  const aiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats?.aiUsagePolicy
+  ) as AiUsagePolicy | null;
 
-  const batteryLevel = useMemo(() => {
-    return Math.max(0, Math.min(100, aiUsagePolicy?.energyPercent ?? 100));
-  }, [aiUsagePolicy?.energyPercent]);
+  const energyDisplay = getAiEnergyDisplay(aiUsagePolicy);
+  const batteryLevel = energyDisplay.percent ?? 0;
 
   const energySegments = useMemo(() => {
     return Math.max(1, aiUsagePolicy?.energySegments || 5);
@@ -157,7 +161,7 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
               text-align: center;
             `}
           >
-            {batteryLevel}%
+            {energyDisplay.label}
           </div>
         </div>
 

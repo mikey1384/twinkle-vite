@@ -9,7 +9,7 @@ export default function SubjectLink({
   subject,
   theme
 }: {
-  subject: Subject;
+  subject?: Partial<Subject> | null;
   theme?: string;
 }) {
   const { color: contentColor, themeName } = useRoleColor('content', {
@@ -17,6 +17,13 @@ export default function SubjectLink({
     fallback: 'logoBlue'
   });
   const contentColorVar = `var(--role-content-color, ${contentColor})`;
+
+  // Comments on Builds and other non-Subject roots have no target Subject.
+  // Their callers may supply an empty fallback object, which is truthy but
+  // must never become an empty /subjects/undefined navigation target.
+  if (!Number.isSafeInteger(subject?.id) || Number(subject?.id) <= 0) {
+    return null;
+  }
 
   return (
     <ErrorBoundary componentPath="Comments/SubjectLink">
@@ -26,9 +33,9 @@ export default function SubjectLink({
             fontWeight: 'bold',
             color: contentColorVar
           }}
-          to={`/subjects/${subject.id}`}
+          to={`/subjects/${subject?.id}`}
         >
-          {subject.title}
+          {subject?.title}
         </Link>
       </ScopedTheme>
     </ErrorBoundary>

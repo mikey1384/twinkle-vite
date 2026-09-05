@@ -296,6 +296,7 @@ export default function TodayStats({
                 <AiEnergyCard
                   variant="inline"
                   energyPercent={energyPercentValue}
+                  energyPolicy={aiUsagePolicy}
                   energySegments={energySegments}
                   mode={aiUsagePolicy?.currentMode}
                   resetNeeded={energyIsEmpty}

@@ -31,7 +31,7 @@ const DEFAULT_LUMINE_MODEL_BY_MODE: Record<
   light: 'gpt-5.6-luna',
   medium: 'grok-4.6',
   heavy: 'gpt-5.6-sol',
-  superheavy: 'claude-fable-5-1'
+  superheavy: 'gpt-6-astra'
 };
 
 const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
@@ -100,6 +100,14 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     supportedReasoningEfforts: ['high']
   },
   {
+    model: 'gpt-6-astra',
+    mode: 'superheavy',
+    label: 'GPT-6 Astra',
+    description: 'Super Heavy mode: deepest reasoning for the hardest builds.',
+    defaultReasoningEffort: 'xhigh',
+    supportedReasoningEfforts: ['xhigh']
+  },
+  {
     model: 'claude-fable-5-1',
     mode: 'superheavy',
     label: 'Claude Fable 5.1',
@@ -116,6 +124,7 @@ const DEFAULT_FALLBACK_LUMINE_MODEL_OPTION =
 
 function isLumineModel(value: unknown): value is BuildLumineModel {
   return (
+    value === 'gpt-6-astra' ||
     value === 'gpt-5.6-luna' ||
     value === 'grok-4.6' ||
     value === 'grok-4.5' ||
@@ -209,6 +218,7 @@ export function getSelectableLumineModelOptions(
         !(option.model === 'grok-4.6' && option.mode === 'heavy') &&
         !(
           option.mode === 'superheavy' &&
+          option.model !== 'gpt-6-astra' &&
           option.model !== 'claude-fable-5-1'
         )
     );
@@ -230,6 +240,10 @@ export function normalizeLumineModelSelection({
     (option) =>
       option.model === 'claude-fable-5-1' && option.mode === 'superheavy'
   );
+  const superheavyDefault =
+    options.find(
+      (option) => option.model === DEFAULT_LUMINE_MODEL_BY_MODE.superheavy
+    ) || options.find((option) => option.mode === 'superheavy');
   let migratedSelection = selection;
   if (selection?.model === 'claude-fable-5' && hasFable51Option) {
     migratedSelection = {
@@ -241,12 +255,12 @@ export function normalizeLumineModelSelection({
   } else if (
     selection?.model === 'gpt-5.6-sol' &&
     (selection.mode === 'superheavy' || selection.reasoningEffort === 'max') &&
-    hasFable51Option
+    superheavyDefault
   ) {
     migratedSelection = {
       ...selection,
-      model: 'claude-fable-5-1',
-      reasoningEffort: 'xhigh',
+      model: superheavyDefault.model,
+      reasoningEffort: superheavyDefault.defaultReasoningEffort,
       mode: 'superheavy'
     };
   } else if (
@@ -326,7 +340,11 @@ export function resolveLumineMode({
 }: Pick<BuildLumineModelPreference, 'model'> &
   Partial<Pick<BuildLumineModelPreference, 'reasoningEffort'>>): BuildLumineMode {
   if (model === 'gpt-5.6-luna') return 'light';
-  if (model === 'claude-fable-5-1' || model === 'claude-fable-5') {
+  if (
+    model === 'gpt-6-astra' ||
+    model === 'claude-fable-5-1' ||
+    model === 'claude-fable-5'
+  ) {
     return 'superheavy';
   }
   if (model === 'grok-4.6') {

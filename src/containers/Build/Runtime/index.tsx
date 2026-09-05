@@ -2099,6 +2099,8 @@ export default function BuildRuntime({
                     variant="inline"
                     className={runtimeEnergyCardClass}
                     energyPercent={energyPercent}
+                    energyPolicy={aiUsagePolicy}
+                    showRefillTime={false}
                     energySegments={energySegments}
                     portaledUiActive={runtimeIsActive}
                     overflowed={aiUsagePolicy.lastUsageOverflowed}

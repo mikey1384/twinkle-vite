@@ -2,8 +2,12 @@ import React, { useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import { useNotiContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import {
+  getAiEnergyDisplay,
+  type AiEnergyDisplayPolicy
+} from '~/helpers/aiEnergyDisplay';
 
-interface AiUsagePolicy {
+interface AiUsagePolicy extends AiEnergyDisplayPolicy {
   energyPercent?: number;
   energySegments?: number;
 }
@@ -19,12 +23,12 @@ export default function CallScreen({
   };
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const todayStats = useNotiContext((v) => v.state.todayStats);
-  const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
+  const aiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats?.aiUsagePolicy
+  ) as AiUsagePolicy | null;
 
-  const batteryLevel = useMemo(() => {
-    return Math.max(0, Math.min(100, aiUsagePolicy?.energyPercent ?? 100));
-  }, [aiUsagePolicy?.energyPercent]);
+  const energyDisplay = getAiEnergyDisplay(aiUsagePolicy);
+  const batteryLevel = energyDisplay.percent ?? 0;
 
   const energySegments = useMemo(() => {
     return Math.max(1, aiUsagePolicy?.energySegments || 5);
@@ -133,7 +137,7 @@ export default function CallScreen({
             color: #555;
           `}
         >
-          AI Energy: {batteryLevel}%
+          AI Energy: {energyDisplay.label}
         </div>
       </div>
     </div>

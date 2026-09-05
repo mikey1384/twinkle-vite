@@ -14,7 +14,7 @@ import {
 interface Props {
   accentColor: string;
   accentSoft: string;
-  energyPercent: number;
+  energyPercent: number | null;
   energyPercentLabel?: string;
   modeLabel: string;
   segmentLabel?: string;
@@ -33,7 +33,7 @@ export default function BatteryMeter({
   title
 }: Props) {
   const safeSegmentCount = Math.max(1, segments);
-  const safePercent = Math.max(0, Math.min(100, energyPercent));
+  const safePercent = Math.max(0, Math.min(100, energyPercent ?? 0));
   const visualSegmentFill = (safePercent / 100) * safeSegmentCount;
   const hasMeta = !!energyPercentLabel || !!segmentLabel;
   const hasTopRow = !!title || !!modeLabel;
@@ -63,6 +63,12 @@ export default function BatteryMeter({
       )}
       <div
         className={batterySegmentsCls}
+        role="meter"
+        aria-label="AI Energy"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={energyPercent === null ? undefined : safePercent}
+        aria-valuetext={energyPercentLabel}
         style={{
           marginTop: hasTopRow ? undefined : 0,
           gridTemplateColumns: `repeat(${safeSegmentCount}, minmax(0, 1fr))`

@@ -969,6 +969,7 @@ export default function MessageInput({
           }
         `}
         energyPercent={aiUsagePolicy.energyPercent ?? 0}
+        energyPolicy={aiUsagePolicy}
         energySegments={aiUsagePolicy.energySegments}
         energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
         mode={aiUsagePolicy.currentMode}

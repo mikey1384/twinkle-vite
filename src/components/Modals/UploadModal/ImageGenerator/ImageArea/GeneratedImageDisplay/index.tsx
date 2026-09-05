@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { AiEnergyDisplayPolicy } from '~/helpers/aiEnergyDisplay';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -31,6 +32,7 @@ interface GeneratedImageDisplayProps {
   onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
   themeColor?: string;
   energyPercent?: number;
+  energyPolicy?: AiEnergyDisplayPolicy | null;
   energySegments?: number;
   overflowed?: boolean;
   resetNeeded?: boolean;
@@ -75,6 +77,7 @@ export default function GeneratedImageDisplay({
   onFollowUpQualityChange,
   themeColor,
   energyPercent,
+  energyPolicy,
   energySegments,
   overflowed = false,
   resetNeeded = false,
@@ -386,6 +389,7 @@ export default function GeneratedImageDisplay({
           onFollowUpQualityChange={onFollowUpQualityChange}
           themeColor={themeColor}
           energyPercent={energyPercent}
+          energyPolicy={energyPolicy}
           energySegments={energySegments}
           overflowed={overflowed}
           resetNeeded={resetNeeded}

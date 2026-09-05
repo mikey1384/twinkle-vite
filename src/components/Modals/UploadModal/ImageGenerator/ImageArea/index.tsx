@@ -1,4 +1,5 @@
 import React from 'react';
+import type { AiEnergyDisplayPolicy } from '~/helpers/aiEnergyDisplay';
 import { css } from '@emotion/css';
 
 import GeneratedImageDisplay from './GeneratedImageDisplay';
@@ -31,6 +32,7 @@ interface ImageAreaProps {
   onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
   themeColor?: string;
   energyPercent?: number;
+  energyPolicy?: AiEnergyDisplayPolicy | null;
   energySegments?: number;
   overflowed?: boolean;
   resetNeeded?: boolean;
@@ -75,6 +77,7 @@ export default function ImageArea({
   onFollowUpQualityChange,
   themeColor,
   energyPercent,
+  energyPolicy,
   energySegments,
   overflowed = false,
   resetNeeded = false,
@@ -131,6 +134,7 @@ export default function ImageArea({
           onFollowUpQualityChange={onFollowUpQualityChange}
           themeColor={themeColor}
           energyPercent={energyPercent}
+          energyPolicy={energyPolicy}
           energySegments={energySegments}
           overflowed={overflowed}
           resetNeeded={resetNeeded}

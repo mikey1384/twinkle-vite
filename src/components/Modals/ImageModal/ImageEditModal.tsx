@@ -736,6 +736,7 @@ export default function ImageEditModal({
                 margin-bottom: 0.85rem;
               `}
               energyPercent={aiUsagePolicy.energyPercent ?? 0}
+              energyPolicy={aiUsagePolicy}
               energySegments={aiUsagePolicy.energySegments}
               energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
               overflowed={aiUsagePolicy.lastUsageOverflowed}

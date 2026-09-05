@@ -210,6 +210,9 @@ export default function Header({
   onToggleLimitsExpanded,
   onToggleMinimized
 }: HeaderProps) {
+  // Presentation choice belongs to the header, not the selected mode or
+  // either layout branch. Only the explicit Advanced toggle closes it.
+  const [advancedModelsShown, setAdvancedModelsShown] = useState(false);
   const dailyGenerationUsage = useMemo(() => {
     if (!aiUsagePolicy) return null;
     if (typeof aiUsagePolicy.energyPercent === 'number') {
@@ -303,6 +306,7 @@ export default function Header({
       <AiEnergyCard
         variant="inline"
         energyPercent={dailyGenerationUsage}
+        energyPolicy={aiUsagePolicy}
         energySegments={aiUsagePolicy?.energySegments}
         energySegmentsRemaining={aiUsagePolicy?.energySegmentsRemaining}
         resetNeeded={!!generationResetUi}
@@ -328,6 +332,8 @@ export default function Header({
           {lumineModelSelectionControl ? (
             <LumineModelSelectionSettings
               control={lumineModelSelectionControl}
+              advancedShown={advancedModelsShown}
+              onToggleAdvanced={handleToggleAdvancedModels}
               energyRemaining={aiUsagePolicy?.energyRemaining ?? null}
               compact
             />
@@ -386,6 +392,8 @@ export default function Header({
             {lumineModelSelectionControl ? (
               <LumineModelSelectionSettings
                 control={lumineModelSelectionControl}
+                advancedShown={advancedModelsShown}
+                onToggleAdvanced={handleToggleAdvancedModels}
                 energyRemaining={aiUsagePolicy?.energyRemaining ?? null}
               />
             ) : null}
@@ -627,6 +635,10 @@ export default function Header({
       ) : null}
     </div>
   );
+
+  function handleToggleAdvancedModels() {
+    setAdvancedModelsShown((shown) => !shown);
+  }
 }
 
 function ProjectLimitNudge({
@@ -783,14 +795,17 @@ function ProjectLimitNudge({
 
 function LumineModelSelectionSettings({
   control,
+  advancedShown,
+  onToggleAdvanced,
   energyRemaining = null,
   compact = false
 }: {
   control: LumineModelSelectionControl;
+  advancedShown: boolean;
+  onToggleAdvanced: () => void;
   energyRemaining?: number | null;
   compact?: boolean;
 }) {
-  const [advancedShown, setAdvancedShown] = useState(false);
   const availableModes = getAvailableLumineModes(control.modelOptions);
   const selectedOption = getLumineModelOption(
     control.modelOptions,
@@ -842,7 +857,7 @@ function LumineModelSelectionSettings({
           aria-expanded={advancedShown}
           aria-label="Toggle advanced Lumine model choices"
           title="Advanced model choices"
-          onClick={() => setAdvancedShown((shown) => !shown)}
+          onClick={onToggleAdvanced}
           className={css`
             min-height: 2.45rem;
             display: inline-flex;
@@ -914,7 +929,6 @@ function LumineModelSelectionSettings({
   }
 
   function handleModeChange(value: string) {
-    setAdvancedShown(false);
     const nextSelection = getLumineSelectionForMode({
       mode: value as BuildLumineMode,
       modelOptions: control.modelOptions

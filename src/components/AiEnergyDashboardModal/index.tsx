@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import LumineRescueEntry from '~/components/LumineRescueEntry';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
@@ -51,14 +51,15 @@ export default function AiEnergyDashboardModal({
   modalLevel
 }: AiEnergyDashboardModalProps) {
   const navigate = useNavigate();
-  const todayStats = useNotiContext((v) => v.state.todayStats);
+  const liveAiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats?.aiUsagePolicy
+  ) as AiUsagePolicy | null | undefined;
+  const livePolicyRef = useRef(liveAiUsagePolicy);
+  livePolicyRef.current = liveAiUsagePolicy;
+  const mountedRef = useRef(true);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
-  const liveAiUsagePolicy = todayStats?.aiUsagePolicy as
-    | AiUsagePolicy
-    | null
-    | undefined;
   const myId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
@@ -107,6 +108,8 @@ export default function AiEnergyDashboardModal({
   const [chargeLoading, setChargeLoading] = useState(false);
   const [chargeError, setChargeError] = useState('');
   const [paidChargeConfirmShown, setPaidChargeConfirmShown] = useState(false);
+  const [refillRefreshLoading, setRefillRefreshLoading] = useState(false);
+  const [refillRefreshError, setRefillRefreshError] = useState('');
 
   const energyAccentColor = energyAccentRole.getColor();
   const energyAccentSoft = energyAccentRole.getColor(0.1);
@@ -125,10 +128,6 @@ export default function AiEnergyDashboardModal({
   const totalCommunityFunds = Math.max(0, Number(communityFunds || 0));
   const communityFundBalanceKnown =
     communityFundsConfirmed || communityFundsLoaded || totalCommunityFunds > 0;
-  const energyPercentValue =
-    typeof aiUsagePolicy?.energyPercent === 'number'
-      ? Math.max(0, Math.min(100, aiUsagePolicy.energyPercent))
-      : null;
   const energySegments = Math.max(
     1,
     Number(aiUsagePolicy?.energySegments || 5)
@@ -263,14 +262,17 @@ export default function AiEnergyDashboardModal({
 
   useEffect(() => {
     let cancelled = false;
+    mountedRef.current = true;
 
     init();
 
     return () => {
       cancelled = true;
+      mountedRef.current = false;
     };
 
     async function init() {
+      const policyAtRequest = livePolicyRef.current;
       try {
         const [
           fundsResponse,
@@ -310,7 +312,17 @@ export default function AiEnergyDashboardModal({
           ...defaultDonorData,
           ...(donorResponse || {})
         });
-        setAiUsagePolicy(aiUsagePolicyResponse?.aiUsagePolicy || null);
+        // A live usage/recharge event arriving during this read wins over a
+        // potentially older HTTP snapshot. Never roll back the shared balance.
+        if (
+          aiUsagePolicyResponse?.aiUsagePolicy &&
+          livePolicyRef.current === policyAtRequest
+        ) {
+          setAiUsagePolicy(aiUsagePolicyResponse.aiUsagePolicy);
+          onUpdateTodayStats({
+            newStats: { aiUsagePolicy: aiUsagePolicyResponse.aiUsagePolicy }
+          });
+        }
       } catch (error) {
         console.error('Failed to load AI Energy dashboard data:', error);
       } finally {
@@ -447,6 +459,7 @@ export default function AiEnergyDashboardModal({
                 <Overview
                   chargeButtonDisabled={
                     chargeLoading ||
+                    refillRefreshLoading ||
                     (!freeChargeAvailable && availableCoins < rechargeCost)
                   }
                   chargeButtonLoading={chargeLoading}
@@ -460,7 +473,10 @@ export default function AiEnergyDashboardModal({
                   energyAccentColor={energyAccentColor}
                   energyAccentSoft={energyAccentSoft}
                   energyBorderColor={energyAccentBorder}
-                  energyPercentValue={energyPercentValue || 0}
+                  energyPolicy={aiUsagePolicy}
+                  onRefreshBalance={handleRefreshBalance}
+                  refillRefreshLoading={refillRefreshLoading || chargeLoading}
+                  refillRefreshError={refillRefreshError}
                   energySegments={energySegments}
                   heroDescription={overviewDescription}
                 />
@@ -506,7 +522,7 @@ export default function AiEnergyDashboardModal({
                     ? aiUsagePolicy.energyUsed
                     : null
                 }
-                energyPercent={energyPercentValue}
+                energyPolicy={aiUsagePolicy}
               />
             )}
 
@@ -564,13 +580,34 @@ export default function AiEnergyDashboardModal({
     onSetChessPuzzleModalShown(true);
   }
 
+  async function handleRefreshBalance() {
+    if (refillRefreshLoading || chargeLoading) return;
+    const policyAtRequest = livePolicyRef.current;
+    setRefillRefreshLoading(true);
+    setRefillRefreshError('');
+    try {
+      const result = await getAiEnergyPolicy();
+      if (!mountedRef.current || livePolicyRef.current !== policyAtRequest) return;
+      const nextPolicy = result?.aiUsagePolicy;
+      if (!nextPolicy) throw new Error('AI Energy balance was unavailable.');
+      setAiUsagePolicy(nextPolicy);
+      onUpdateTodayStats({ newStats: { aiUsagePolicy: nextPolicy } });
+    } catch (error) {
+      if (!mountedRef.current) return;
+      console.error('Failed to refresh AI Energy:', error);
+      setRefillRefreshError('Could not check your balance. Please try again.');
+    } finally {
+      if (mountedRef.current) setRefillRefreshLoading(false);
+    }
+  }
+
   function handleOpenLumineBuild() {
     onHide();
     navigate('/build');
   }
 
   function handleChargeClick() {
-    if (!energyDepleted || chargeLoading) return;
+    if (!energyDepleted || chargeLoading || refillRefreshLoading) return;
     setChargeError('');
     if (shouldUseCommunityFundsForCharge || rechargeCost <= 0) {
       void handleCharge();
@@ -597,7 +634,7 @@ export default function AiEnergyDashboardModal({
   }
 
   async function handleCharge() {
-    if (!energyDepleted || chargeLoading) return;
+    if (!energyDepleted || chargeLoading || refillRefreshLoading) return;
     setChargeError('');
     setChargeLoading(true);
     try {

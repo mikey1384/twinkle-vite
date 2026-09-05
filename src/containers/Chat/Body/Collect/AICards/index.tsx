@@ -218,6 +218,7 @@ export default function AICards({
               flex-shrink: 0;
             `}
             energyPercent={aiUsagePolicy.energyPercent ?? 0}
+            energyPolicy={aiUsagePolicy}
             energySegments={aiUsagePolicy.energySegments}
             energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
             overflowed={aiUsagePolicy.lastUsageOverflowed}

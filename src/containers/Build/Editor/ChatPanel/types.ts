@@ -8,6 +8,7 @@ import type { BranchMainUpdateNoticeControl } from '../BranchMainUpdateNotice';
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
+  | 'gpt-6-astra'
   | 'gpt-5.6-luna'
   | 'grok-4.6'
   // Legacy stored preference; normalization migrates it to grok-4.6.

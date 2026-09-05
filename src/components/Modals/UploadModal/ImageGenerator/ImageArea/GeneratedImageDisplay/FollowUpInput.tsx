@@ -1,4 +1,5 @@
 import React from 'react';
+import type { AiEnergyDisplayPolicy } from '~/helpers/aiEnergyDisplay';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import ActionButton from '../../ActionButton';
@@ -27,6 +28,7 @@ interface FollowUpInputProps {
   onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
   themeColor?: string;
   energyPercent?: number;
+  energyPolicy?: AiEnergyDisplayPolicy | null;
   energySegments?: number;
   overflowed?: boolean;
   resetNeeded?: boolean;
@@ -55,6 +57,7 @@ export default function FollowUpInput({
   onFollowUpQualityChange,
   themeColor,
   energyPercent,
+  energyPolicy,
   energySegments,
   overflowed = false,
   resetNeeded = false,
@@ -89,6 +92,7 @@ export default function FollowUpInput({
             margin-bottom: 1rem;
           `}
           energyPercent={energyPercent}
+          energyPolicy={energyPolicy}
           energySegments={energySegments}
           overflowed={overflowed}
           resetNeeded={resetNeeded}

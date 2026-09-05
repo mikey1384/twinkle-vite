@@ -20,17 +20,21 @@ import {
   getAiUsageTargetLabel
 } from './helpers';
 import type { AiUsageHistoryEvent } from './types';
+import {
+  getAiEnergyDisplay,
+  type AiEnergyDisplayPolicy
+} from '~/helpers/aiEnergyDisplay';
 
 export default function UsageHistory({
   accentColor,
   accentSoft,
   energyUsedToday,
-  energyPercent
+  energyPolicy
 }: {
   accentColor: string;
   accentSoft: string;
   energyUsedToday: number | null;
-  energyPercent: number | null;
+  energyPolicy: AiEnergyDisplayPolicy | null;
 }) {
   const loadAiUsageHistory = useAppContext(
     (v) => v.requestHelpers.loadAiUsageHistory
@@ -46,10 +50,7 @@ export default function UsageHistory({
     typeof energyUsedToday === 'number' && fullBatteryUnits !== null
       ? formatBatteryUnits(energyUsedToday, fullBatteryUnits)
       : '—';
-  const batteryLeftLabel =
-    typeof energyPercent === 'number'
-      ? `${Math.max(0, Math.min(100, Math.round(energyPercent)))} / 100`
-      : '—';
+  const batteryLeftLabel = getAiEnergyDisplay(energyPolicy).label;
 
   useEffect(() => {
     init();

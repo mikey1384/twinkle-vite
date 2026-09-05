@@ -2,6 +2,11 @@ import React from 'react';
 import BatteryMeter from './BatteryMeter';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
+import AiEnergyRefillNotice from '~/components/AiEnergyRefillNotice';
+import {
+  getAiEnergyDisplay,
+  type AiEnergyDisplayPolicy
+} from '~/helpers/aiEnergyDisplay';
 import {
   batteryChargeActionCls,
   batteryChargeErrorCls,
@@ -18,7 +23,10 @@ interface Props {
   energyAccentColor: string;
   energyAccentSoft: string;
   energyBorderColor: string;
-  energyPercentValue: number;
+  energyPolicy: AiEnergyDisplayPolicy | null;
+  onRefreshBalance: () => void;
+  refillRefreshLoading: boolean;
+  refillRefreshError: string;
   energySegments: number;
   heroDescription: string;
   chargeButtonDisabled: boolean;
@@ -36,7 +44,10 @@ export default function Overview({
   energyAccentColor,
   energyAccentSoft,
   energyBorderColor,
-  energyPercentValue,
+  energyPolicy,
+  onRefreshBalance,
+  refillRefreshLoading,
+  refillRefreshError,
   energySegments,
   heroDescription,
   chargeButtonDisabled,
@@ -49,6 +60,7 @@ export default function Overview({
   chargeError
 }: Props) {
   const energyBoltColor = '#f59e0b';
+  const energyDisplay = getAiEnergyDisplay(energyPolicy);
 
   return (
     <div className={sectionStackCls}>
@@ -71,7 +83,8 @@ export default function Overview({
         <BatteryMeter
           accentColor={energyAccentColor}
           accentSoft={energyAccentSoft}
-          energyPercent={energyPercentValue}
+          energyPercent={energyDisplay.percent}
+          energyPercentLabel={energyDisplay.label}
           modeLabel={currentModeLabel}
           segments={energySegments}
           title={
@@ -94,6 +107,13 @@ export default function Overview({
               AI Energy
             </span>
           }
+        />
+        <AiEnergyRefillNotice
+          energyPolicy={energyPolicy}
+          onRefresh={onRefreshBalance}
+          refreshing={refillRefreshLoading}
+          refreshError={refillRefreshError}
+          refreshLabel="Refresh balance"
         />
         {showChargeButton && (
           <div className={batteryChargeActionCls}>

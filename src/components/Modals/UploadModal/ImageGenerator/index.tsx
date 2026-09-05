@@ -573,6 +573,7 @@ export default function ImageGenerator({
       onFollowUpQualityChange={handleFollowUpQualityChange}
       themeColor={profileTheme}
       energyPercent={aiUsagePolicy?.energyPercent}
+      energyPolicy={aiUsagePolicy}
       energySegments={aiUsagePolicy?.energySegments}
       overflowed={aiUsagePolicy?.lastUsageOverflowed}
       resetNeeded={energyDepleted}
@@ -636,6 +637,7 @@ export default function ImageGenerator({
             align-self: center;
           `}
           energyPercent={aiUsagePolicy.energyPercent ?? 0}
+          energyPolicy={aiUsagePolicy}
           energySegments={aiUsagePolicy.energySegments}
           energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
           overflowed={aiUsagePolicy.lastUsageOverflowed}

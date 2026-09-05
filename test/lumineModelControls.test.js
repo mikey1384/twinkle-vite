@@ -42,24 +42,19 @@ const requestHelperIndexSource = readFileSync(
   new URL('../src/contexts/requestHelpers/index.ts', import.meta.url),
   'utf8'
 );
-const defaultValuesSource = readFileSync(
-  new URL('../src/constants/defaultValues.ts', import.meta.url),
-  'utf8'
-);
 
 function assertClientVersionAtLeast(expected) {
-  const versionMatch = defaultValuesSource.match(
-    /clientVersion = '(\d+)\.(\d+)\.(\d+)'/
-  );
-  assert.ok(versionMatch, 'Missing website client version');
-  const actualParts = versionMatch.slice(1).map(Number);
+  const { version } = JSON.parse(readFileSync(
+    new URL('../package.json', import.meta.url), 'utf8'
+  ));
+  const actualParts = version.split('.').map(Number);
   const expectedParts = expected.split('.').map(Number);
   const comparison = actualParts.findIndex(
     (part, index) => part !== expectedParts[index]
   );
   assert.ok(
     comparison === -1 || actualParts[comparison] > expectedParts[comparison],
-    `Expected website client version ${versionMatch[1]}.${versionMatch[2]}.${versionMatch[3]} to be at least ${expected}`
+    `Expected website client version ${version} to be at least ${expected}`
   );
 }
 
@@ -88,7 +83,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-5\.6-luna'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'gpt-5\.6-sol'[\s\S]*?superheavy: 'claude-fable-5-1'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-5\.6-luna'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'gpt-5\.6-sol'[\s\S]*?superheavy: 'gpt-6-astra'/m
   );
   assert.match(
     selectionHelperSource,
@@ -171,7 +166,10 @@ test('lumine Light defaults to Luna xhigh while following the served API catalog
         model: option.model,
         defaultReasoningEffort: option.defaultReasoningEffort
       })),
-    [{ model: 'claude-fable-5-1', defaultReasoningEffort: 'xhigh' }]
+    [
+      { model: 'gpt-6-astra', defaultReasoningEffort: 'xhigh' },
+      { model: 'claude-fable-5-1', defaultReasoningEffort: 'xhigh' }
+    ]
   );
   assert.deepEqual(
     getLumineSelectionForMode({
@@ -179,7 +177,7 @@ test('lumine Light defaults to Luna xhigh while following the served API catalog
       modelOptions: fallbackOptions
     }),
     {
-      model: 'claude-fable-5-1',
+      model: 'gpt-6-astra',
       reasoningEffort: 'xhigh',
       mode: 'superheavy',
       source: 'default'
@@ -311,7 +309,7 @@ test('lumine retires Grok Heavy while preserving existing users on Heavy', async
   );
 });
 
-test('lumine Super Heavy exposes only Fable 5.1 and migrates retired selections', async () => {
+test('lumine Super Heavy follows an older API catalog and migrates retired selections', async () => {
   assertClientVersionAtLeast('2.1.12');
   const {
     getSelectableLumineModelOptions,
@@ -425,4 +423,26 @@ test('build generate socket payload carries current model and think level', () =
     useRunStartActionsSource,
     /lumineReasoningEffort:\s*lumineModelSelection\?\.reasoningEffort/
   );
+});
+
+test('lumine preserves the canonical Astra selection and keeps Fable 5.1 available', async () => {
+  const {
+    getSelectableLumineModelOptions,
+    normalizeLumineModelSelection,
+    resolveLumineModelSelectionFromPolicy
+  } = await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
+  const options = getSelectableLumineModelOptions(null);
+  const selection = {
+    model: 'gpt-6-astra', reasoningEffort: 'xhigh', mode: 'superheavy', source: 'stored'
+  };
+  assert.deepEqual(resolveLumineModelSelectionFromPolicy({
+    lumineModelOptions: options, lumineModelPreference: selection
+  }), selection);
+  assert.equal(normalizeLumineModelSelection({
+    selection: { model: 'gpt-5.6-sol', reasoningEffort: 'max', source: 'stored' },
+    modelOptions: options
+  }).model, 'gpt-6-astra');
+  assert.equal(normalizeLumineModelSelection({
+    selection: { model: 'claude-fable-5', source: 'stored' }, modelOptions: options
+  }).model, 'claude-fable-5-1');
 });

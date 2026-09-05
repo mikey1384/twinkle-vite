@@ -1,6 +1,10 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import ZeroPic from '~/components/ZeroPic';
 import { css } from '@emotion/css';
+import {
+  getAiEnergyDisplay,
+  type AiEnergyDisplayPolicy
+} from '~/helpers/aiEnergyDisplay';
 import { socket } from '~/constants/sockets/api';
 import {
   useAppContext,
@@ -13,7 +17,6 @@ import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import {
   buildTodayStatsFromResponse,
-  buildTodayStatsForNextDay,
   checkMicrophoneAccess,
   toValidNextDayTimeStamp
 } from '~/helpers';
@@ -21,7 +24,7 @@ import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
-interface AiUsagePolicy {
+interface AiUsagePolicy extends AiEnergyDisplayPolicy {
   hasVerifiedEmail?: boolean;
   identityType?: 'verified_email' | 'separate_verified_email' | 'user';
   isLegacyUnverifiedIdentity?: boolean;
@@ -231,8 +234,12 @@ export default function CallZero({
   const onHydrateTodayStats = useNotiContext(
     (v) => v.actions.onHydrateTodayStats
   );
-  const todayStats = useNotiContext((v) => v.state.todayStats);
-  const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
+  const aiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats?.aiUsagePolicy
+  ) as AiUsagePolicy | null;
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
@@ -243,9 +250,8 @@ export default function CallZero({
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
 
-  const batteryLevel = useMemo(() => {
-    return Math.max(0, Math.min(100, aiUsagePolicy?.energyPercent ?? 100));
-  }, [aiUsagePolicy?.energyPercent]);
+  const energyDisplay = getAiEnergyDisplay(aiUsagePolicy);
+  const batteryLevel = energyDisplay.percent ?? 0;
 
   const energySegments = useMemo(() => {
     return Math.max(1, aiUsagePolicy?.energySegments || 5);
@@ -698,7 +704,7 @@ export default function CallZero({
                 font-size: 1.1rem;
               `}
             >
-              AI Energy: {batteryLevel}%
+              AI Energy: {energyDisplay.label}
             </div>
           </div>
         </div>
@@ -740,9 +746,9 @@ export default function CallZero({
       console.error('Failed to resolve next day timestamp for call rollover');
       return;
     }
-    onHydrateTodayStats({
-      todayStats: buildTodayStatsForNextDay(newNextDayTimeStamp, todayStats)
-    });
+    // The time endpoint confirms only the next boundary, not a refill or
+    // reset daily rewards. Keep the last balance until stats arrive.
+    onUpdateTodayStats({ newStats: { nextDayTimeStamp: newNextDayTimeStamp } });
     if (!userId) return;
     try {
       const todayStatsFromServer = await fetchTodayStats();
