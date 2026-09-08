@@ -3,7 +3,8 @@ import Results from './Results';
 import Loading from '~/components/Loading';
 import StartTopicButton from '../StartTopicButton';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import TopicRequestStatus from '../../TopicRequestStatus';
+import { chatTopicSectionClass } from '../../topicStyles';
 
 export default function Search({
   canAddTopic,
@@ -13,6 +14,7 @@ export default function Search({
   featuredTopicId,
   isOwner,
   isAIChannel,
+  isTwoPeopleChat,
   maxTopicLength,
   onSelectTopic,
   onHide,
@@ -20,6 +22,8 @@ export default function Search({
   pinnedTopicIds,
   searchedTopics,
   searched,
+  searchError,
+  onRetry,
   searchText
 }: {
   canAddTopic: boolean;
@@ -29,6 +33,7 @@ export default function Search({
   featuredTopicId: number;
   isOwner: boolean;
   isAIChannel: boolean;
+  isTwoPeopleChat: boolean;
   maxTopicLength: number;
   onSelectTopic: (id: number) => void;
   onHide: () => void;
@@ -36,6 +41,8 @@ export default function Search({
   pinnedTopicIds: number[];
   searchedTopics: any[];
   searched: boolean;
+  searchError: boolean;
+  onRetry: () => void;
   searchText: string;
 }) {
   const searchTextExceedsMax = useMemo(
@@ -46,7 +53,9 @@ export default function Search({
   return (
     <div style={{ width: '100%', position: 'relative', minHeight: '10rem' }}>
       {!searched ? (
-        <Loading style={{ height: '20rem' }} />
+        <Loading text="Searching topics" innerStyle={{ fontSize: '14px' }} style={{ minHeight: 120 }} />
+      ) : searchError ? (
+        <TopicRequestStatus message="Couldn't search topics. Please try again." onRetry={onRetry} />
       ) : (
         <div
           className={css`
@@ -72,13 +81,11 @@ export default function Search({
                 <p
                   className={css`
                     color: #333;
-                    font-family: 'Helvetica Neue', Arial, sans-serif;
-                    font-size: 2rem;
+                    font-size: max(16px, 1.8rem);
+                    max-width: 100%;
+                    overflow-wrap: anywhere;
                     text-align: center;
                     font-weight: bold;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.7rem;
-                    }
                   `}
                 >{`"${searchText}"`}</p>
                 <div>
@@ -98,12 +105,7 @@ export default function Search({
             `}
           >
             {!!searchedTopics.length && (
-              <h3
-                className={css`
-                  margin-bottom: 2rem;
-                  color: ${Color[displayedThemeColor]()};
-                `}
-              >
+              <h3 className={chatTopicSectionClass}>
                 Search Results
               </h3>
             )}
@@ -113,6 +115,7 @@ export default function Search({
                 currentTopicId={currentTopicId}
                 displayedThemeColor={displayedThemeColor}
                 isAIChannel={isAIChannel}
+                isTwoPeopleChat={isTwoPeopleChat}
                 isOwner={isOwner}
                 featuredTopicId={featuredTopicId}
                 onSelectTopic={onSelectTopic}
@@ -123,7 +126,7 @@ export default function Search({
             ) : (
               <div
                 className={css`
-                  padding: 5rem;
+                  padding: 24px 0;
                   display: flex;
                   flex-direction: column;
                   justify-content: center;
@@ -133,13 +136,11 @@ export default function Search({
                 <p
                   className={css`
                     color: #333;
-                    font-family: 'Helvetica Neue', Arial, sans-serif;
-                    font-size: 2rem;
+                    font-size: max(16px, 1.8rem);
+                    max-width: 100%;
+                    overflow-wrap: anywhere;
                     text-align: center;
                     font-weight: bold;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.7rem;
-                    }
                   `}
                 >
                   {searchTextExceedsMax

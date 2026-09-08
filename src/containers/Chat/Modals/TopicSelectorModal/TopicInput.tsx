@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useId } from 'react';
 import Input from '~/components/Texts/Input';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
+import { charLimit } from '~/constants/defaultValues';
 
 export default function TopicInput({
-  maxTopicLength = 100,
+  maxTopicLength = charLimit.chat.topic,
   topicSearchText,
   onSetTopicSearchText
 }: {
@@ -12,6 +13,8 @@ export default function TopicInput({
   topicSearchText: string;
   onSetTopicSearchText: (text: string) => void;
 }) {
+  const inputId = useId();
+  const tooLong = topicSearchText.length > maxTopicLength;
   return (
     <ErrorBoundary componentPath="MessagesContainer/ChannelHeader/EditSubjectForm">
       <div style={{ width: '100%' }}>
@@ -31,6 +34,10 @@ export default function TopicInput({
         >
           <div style={{ width: '100%' }}>
             <Input
+              id={inputId}
+              aria-label="Search topics or enter a new topic title"
+              aria-describedby={`${inputId}-count`}
+              aria-invalid={tooLong}
               placeholder="Enter Topic..."
               value={topicSearchText}
               onChange={onSetTopicSearchText}
@@ -39,11 +46,16 @@ export default function TopicInput({
         </div>
         <div style={{ background: '#fff' }}>
           <small
+            id={`${inputId}-count`}
             style={{
-              color: topicSearchText.length > maxTopicLength ? 'red' : ''
+              display: 'block',
+              marginTop: 6,
+              fontSize: '13px',
+              color: tooLong ? '#b42318' : '#526176'
             }}
           >
             {topicSearchText.length}/{maxTopicLength} Characters
+            {tooLong && ' — shorten the title to start a new topic.'}
           </small>
         </div>
       </div>

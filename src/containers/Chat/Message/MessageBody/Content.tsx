@@ -415,6 +415,7 @@ export default function Content({
                 parsedSettings?.aiGenerationStatus === 'generating'
               }
               isNotification={isNotification}
+              isOwnMessage={!!myId && myId === userId}
               isSubject={!!isSubject}
               isReloadedSubject={!!isReloadedSubject}
               MessageStyle={MessageStyle}
@@ -444,16 +445,14 @@ export default function Content({
           {!isEditing &&
             isMenuButtonsAllowed &&
             !isDeleteOnlyBuildSuggestion && (
-              <div style={{ marginTop: '2rem', height: '2.5rem' }}>
-                <Reactions
-                  pendingReactionMutations={pendingReactionMutations}
-                  reactions={message.reactions}
-                  reactionsMenuShown={reactionsMenuShown}
-                  onRemoveReaction={handleRemoveReaction}
-                  onAddReaction={handleAddReaction}
-                  theme={displayedThemeColor}
-                />
-              </div>
+              <Reactions
+                pendingReactionMutations={pendingReactionMutations}
+                reactions={message.reactions}
+                reactionsMenuShown={reactionsMenuShown}
+                onRemoveReaction={handleRemoveReaction}
+                onAddReaction={handleAddReaction}
+                theme={displayedThemeColor}
+              />
             )}
         </>
       )}

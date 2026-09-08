@@ -214,12 +214,15 @@ export default function Modals({
       )}
       {buyTopicModalShown && (
         <BuyTopicsModal
+          key={`${userId}:${selectedChannelId}`}
           canChangeSubject={currentChannel.canChangeSubject}
           onDone={async (canChange) => {
-            await editCanChangeTopic({
-              channelId: selectedChannelId,
-              canChangeTopic: canChange
-            });
+            if (canChange !== currentChannel.canChangeSubject) {
+              await editCanChangeTopic({
+                channelId: selectedChannelId,
+                canChangeTopic: canChange
+              });
+            }
             onBuyTopicDone();
           }}
           channelId={selectedChannelId}
@@ -231,6 +234,7 @@ export default function Modals({
       )}
       {settingsModalShown && (
         <SettingsModal
+          key={userId + ':' + selectedChannelId}
           canChangeSubject={currentChannel.canChangeSubject}
           channelName={channelName}
           description={currentChannel.description}
@@ -276,6 +280,7 @@ export default function Modals({
       )}
       {!!selectNewOwnerModalShown && (
         <SelectNewOwnerModal
+          key={userId + ':' + selectedChannelId}
           onHide={onHideSelectNewOwnerModal}
           members={currentChannel.members}
           onSubmit={onSelectNewOwner}

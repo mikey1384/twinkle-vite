@@ -8,10 +8,11 @@ import NoTopicPosted from './NoTopicPosted';
 import LocalContext from '../../Context';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { charLimit } from '~/constants/defaultValues';
+import TopicRequestStatus from '../TopicRequestStatus';
+import { chatTopicActionStyle, chatTopicModalClass, chatTopicSectionClass, chatTopicThemeStyle } from '../topicStyles';
 
-const maxTopicLength = 100;
+const maxTopicLength = charLimit.chat.topic;
 
 export default function TopicSelectorModal({
   channelId,
@@ -56,6 +57,11 @@ export default function TopicSelectorModal({
   const [searchedTopics, setSearchedTopics] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [searchRetryCount, setSearchRetryCount] = useState(0);
+  const [sharedRetryCount, setSharedRetryCount] = useState(0);
   const [myTopicObj, setMyTopicObj] = useState({
     subjects: [],
     loadMoreButton: false,
@@ -69,7 +75,8 @@ export default function TopicSelectorModal({
   const [sharedTopicObj, setSharedTopicObj] = useState({
     subjects: [],
     loadMoreButton: false,
-    loading: false
+    loading: false,
+    error: ''
   });
   const searchVersionRef = useRef(0);
 
@@ -84,21 +91,27 @@ export default function TopicSelectorModal({
   );
 
   useEffect(() => {
+    let ignore = false;
+    setLoaded(false);
+    setLoadError(false);
     handleLoadSubjects();
     async function handleLoadSubjects() {
       try {
         const { mySubjects, allSubjects } = await loadChatSubjects({
           channelId
         });
+        if (ignore) return;
         setMyTopicObj(mySubjects);
         setAllTopicObj(allSubjects);
         setLoaded(true);
       } catch (error: any) {
+        if (ignore) return;
+        setLoadError(true);
         console.error(error.response || error);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => { ignore = true; };
+  }, [channelId, loadChatSubjects, retryCount]);
 
   useEffect(() => {
     let ignore = false;
@@ -107,18 +120,20 @@ export default function TopicSelectorModal({
         setSharedTopicObj({
           subjects: [],
           loadMoreButton: false,
-          loading: false
+          loading: false,
+          error: ''
         });
         return;
       }
-      setSharedTopicObj((prev) => ({ ...prev, loading: true }));
+      setSharedTopicObj((prev) => ({ ...prev, loading: true, error: '' }));
       try {
         const { subjects, loadMoreButton } = await loadOtherUserTopics();
         if (ignore) return;
         setSharedTopicObj({
           subjects,
           loadMoreButton,
-          loading: false
+          loading: false,
+          error: ''
         });
       } catch (error) {
         console.error(error);
@@ -126,7 +141,8 @@ export default function TopicSelectorModal({
         setSharedTopicObj({
           subjects: [],
           loadMoreButton: false,
-          loading: false
+          loading: false,
+          error: "Couldn't load shared topics. Please try again."
         });
       }
     }
@@ -134,11 +150,11 @@ export default function TopicSelectorModal({
     return () => {
       ignore = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, isAIChannel]);
+  }, [channelId, isAIChannel, loadOtherUserTopics, sharedRetryCount]);
 
   useEffect(() => {
     setSearched(false);
+    setSearchError(false);
     const currentSearchVersion = ++searchVersionRef.current;
     const debounceTimeout = setTimeout(async () => {
       setSearchedTopics([]);
@@ -155,6 +171,7 @@ export default function TopicSelectorModal({
           setSearchedTopics([]);
         }
       } catch (error) {
+        if (currentSearchVersion === searchVersionRef.current) setSearchError(true);
         console.error(error);
       } finally {
         if (currentSearchVersion === searchVersionRef.current) {
@@ -163,9 +180,11 @@ export default function TopicSelectorModal({
       }
     }, 500);
 
-    return () => clearTimeout(debounceTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, topicSearchText]);
+    return () => {
+      clearTimeout(debounceTimeout);
+      searchVersionRef.current = currentSearchVersion + 1;
+    };
+  }, [channelId, topicSearchText, searchChatSubject, searchRetryCount]);
 
   useEffect(() => {
     if (!mainSectionShown) {
@@ -179,7 +198,8 @@ export default function TopicSelectorModal({
         !allTopicObj?.subjects?.length &&
         !sharedTopicObj.subjects.length &&
         loaded &&
-        !sharedTopicObj.loading
+        !sharedTopicObj.loading &&
+        !sharedTopicObj.error
       );
     }
     return !allTopicObj?.subjects?.length && loaded;
@@ -188,6 +208,7 @@ export default function TopicSelectorModal({
     isAIChannel,
     loaded,
     sharedTopicObj.loading,
+    sharedTopicObj.error,
     sharedTopicObj.subjects.length
   ]);
 
@@ -201,25 +222,22 @@ export default function TopicSelectorModal({
   return (
     <Modal
       modalKey="TopicSelectorModal"
+      aria-label="Topics"
+      className={chatTopicModalClass}
       isOpen
       onClose={onHide}
       title="Topics"
       size="md"
       footer={
-        <Button variant="ghost" onClick={onHide}>
+        <Button variant="ghost" style={chatTopicActionStyle} onClick={onHide}>
           Close
         </Button>
       }
     >
-      <div style={{ width: '100%' }}>
+      <div style={{ width: '100%', fontSize: '16px', ...chatTopicThemeStyle(displayedThemeColor) }}>
         {loaded && !noTopicPostedYet && (
           <div style={{ width: '100%' }}>
-            <h3
-              className={css`
-                margin-bottom: 1rem;
-                color: ${Color[displayedThemeColor]()};
-              `}
-            >
+            <h3 className={chatTopicSectionClass}>
               Search{canAddTopic ? ' / Start a' : ''} Topic
             </h3>
             <TopicInput
@@ -229,8 +247,11 @@ export default function TopicSelectorModal({
             />
           </div>
         )}
-        {noTopicPostedYet ? (
+        {loadError ? (
+          <TopicRequestStatus message="Couldn't load topics. Please try again." onRetry={() => setRetryCount(count => count + 1)} />
+        ) : noTopicPostedYet ? (
           <NoTopicPosted
+            canAddTopic={canAddTopic}
             channelId={channelId}
             displayedThemeColor={displayedThemeColor}
             onHide={onHide}
@@ -256,6 +277,7 @@ export default function TopicSelectorModal({
             onSetAllTopicObj={setAllTopicObj}
             onSetMyTopicObj={setMyTopicObj}
             onSetSharedTopicObj={setSharedTopicObj}
+            onRetrySharedTopics={() => setSharedRetryCount(count => count + 1)}
             pinnedTopicIds={pinnedTopicIds}
             pathId={pathId}
             onHide={onHide}
@@ -264,11 +286,12 @@ export default function TopicSelectorModal({
           <Search
             canAddTopic={canAddTopic}
             channelId={channelId}
-            currentTopicId={currentTopic.id}
+            currentTopicId={currentTopic?.id || 0}
             displayedThemeColor={displayedThemeColor}
             featuredTopicId={featuredTopic?.id}
             isOwner={isOwner}
             isAIChannel={isAIChannel}
+            isTwoPeopleChat={isTwoPeopleChat}
             maxTopicLength={maxTopicLength}
             searchedTopics={searchedTopics}
             onHide={onHide}
@@ -276,6 +299,8 @@ export default function TopicSelectorModal({
             pinnedTopicIds={pinnedTopicIds}
             pathId={pathId}
             searched={searched}
+            searchError={searchError}
+            onRetry={() => setSearchRetryCount(count => count + 1)}
             searchText={topicSearchText}
           />
         )}
@@ -284,19 +309,7 @@ export default function TopicSelectorModal({
   );
 
   function handleDeleteTopic(topicId: number) {
-    const newAllSubjects = allTopicObj.subjects.filter(
-      (subject: { id: number }) => subject.id !== topicId
-    );
-    setAllTopicObj({
-      ...allTopicObj,
-      subjects: newAllSubjects
-    });
-    const newMySubjects = myTopicObj.subjects.filter(
-      (subject: { id: number }) => subject.id !== topicId
-    );
-    setMyTopicObj({
-      ...myTopicObj,
-      subjects: newMySubjects
-    });
+    setAllTopicObj(prev => ({ ...prev, subjects: prev.subjects.filter((subject: { id: number }) => subject.id !== topicId) }));
+    setMyTopicObj(prev => ({ ...prev, subjects: prev.subjects.filter((subject: { id: number }) => subject.id !== topicId) }));
   }
 }

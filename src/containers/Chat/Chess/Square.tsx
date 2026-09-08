@@ -9,7 +9,12 @@ function Square({
   shade,
   onClick,
   color,
-  style
+  style,
+  label,
+  interactive = false,
+  navigationIndex,
+  tabIndex,
+  onFocus
 }: {
   count?: number;
   className?: string;
@@ -18,13 +23,30 @@ function Square({
   onClick?: () => void;
   color?: string;
   style?: React.CSSProperties;
+  label?: string;
+  interactive?: boolean;
+  navigationIndex?: number;
+  tabIndex?: number;
+  onFocus?: () => void;
 }) {
+  const Element = interactive ? 'button' : 'div';
   return (
-    <div
+    <Element
+      type={interactive ? 'button' : undefined}
+      role={!interactive && label ? 'img' : undefined}
+      aria-label={label}
+      data-chess-index={navigationIndex}
+      tabIndex={tabIndex}
+      onFocus={onFocus}
       className={`${css`
         background-repeat: no-repeat;
         background-position: center;
         font-size: 1.5rem;
+        border: 0;
+        padding: 0;
+        min-width: 0;
+        min-height: 0;
+        appearance: none;
         &.blurred {
           background: ${Color.brownOrange()};
           > img {
@@ -34,8 +56,10 @@ function Square({
         &.highlighted {
           cursor: pointer;
         }
-        &:focus {
-          outline: none;
+        &:focus-visible {
+          outline: 3px solid #334155;
+          outline-offset: -3px;
+          z-index: 1;
         }
         @media (max-width: ${mobileMaxWidth}) {
           font-size: 1.1rem;
@@ -47,8 +71,9 @@ function Square({
       {img && (
         <img
           {...img}
+          alt={label ? '' : img.alt || ''}
           loading="lazy"
-          style={img?.style || {}}
+          style={{ ...img?.style, top: 0, left: 0, height: '100%', objectFit: 'contain' }}
           className={css`
             width: 100%;
           `}
@@ -71,7 +96,7 @@ function Square({
           &times;{count}
         </div>
       )}
-    </div>
+    </Element>
   );
 }
 

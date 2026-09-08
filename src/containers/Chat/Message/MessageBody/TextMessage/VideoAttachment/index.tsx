@@ -40,8 +40,9 @@ function VideoAttachment({
     contentId: messageId
   });
 
-  const [twinkleVideoId, setTwinkleVideoId] = useState(
-    extractVideoIdFromTwinkleVideoUrl(extractedUrl)
+  const twinkleVideoId = useMemo(
+    () => extractVideoIdFromTwinkleVideoUrl(extractedUrl),
+    [extractedUrl]
   );
   const [startingPosition, setStartingPosition] = useState(currentTime);
   const timeAtRef = useRef(startingPosition);
@@ -58,10 +59,6 @@ function VideoAttachment({
   useEffect(() => {
     if (isYouTube) {
       setStartingPosition(currentTime);
-    }
-    const extractedVideoId = extractVideoIdFromTwinkleVideoUrl(extractedUrl);
-    if (extractedVideoId) {
-      setTwinkleVideoId(extractedVideoId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extractedUrl]);
@@ -88,112 +85,102 @@ function VideoAttachment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messageId]);
 
-  if (notFound) return null;
+  if (twinkleVideoId && notFound) return null;
   if (!isYouTube && !twinkleVideoId) return null;
 
   return (
     <div
+      data-chat-attachment="video"
+      data-video-kind={twinkleVideoId ? 'twinkle' : 'youtube'}
       style={{
         position: 'relative',
         ...style
       }}
       className={css`
-        height: 37rem;
-        @media (max-width: ${mobileMaxWidth}) {
-          height: 23rem;
-        }
+        width: 100%;
+        max-width: 66rem;
+        min-width: 0;
       `}
     >
       {userCanEditThis && onHideAttachment && (
-        <Icon
-          style={{
-            right: '1rem',
-            position: 'absolute',
-            cursor: 'pointer',
-            zIndex: 10
-          }}
-          onClick={onHideAttachment}
-          className={css`
-            color: ${Color.darkGray()};
-            font-size: 2rem;
-            &:hover {
-              color: ${Color.black()};
-            }
-          `}
-          icon="times"
-        />
-      )}
-      <div
-        style={{ height: '100%' }}
-        className={css`
-          max-width: 65%;
-          height: 100%;
-          position: relative;
-          @media (max-width: ${mobileMaxWidth}) {
-            width: 100%;
-            max-width: 100%;
-          }
-        `}
-      >
         <div
           className={css`
-            width: 100%;
-            height: 100%;
-            > a {
-              text-decoration: none;
-            }
-            h3 {
-              font-size: 1.4rem;
-            }
-            p {
-              font-size: 1.2rem;
-              margin-top: 1rem;
-            }
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 85%;
-              h3 {
-                font-size: 1.3rem;
-              }
-              p {
-                font-size: 1.1rem;
-              }
-            }
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 0.4rem;
           `}
         >
-          {twinkleVideoId ? (
-            <TwinkleVideo
-              messageId={messageId}
-              onPlay={handlePlay}
-              style={{
-                height: `CALC(100% - ${deviceIsMobile ? '1' : '5'}rem)`
-              }}
-              title={videoTitle}
-              videoId={Number(twinkleVideoId)}
-            />
-          ) : isYouTube ? (
-            <div
-              style={{
-                width: '100%',
-                height: deviceIsMobile ? 'CALC(100% - 2.5rem)' : '100%',
-                paddingTop: deviceIsMobile ? '2.5rem' : 0
-              }}
-            >
-              <VideoPlayer
-                width={deviceIsMobile ? '33rem' : '66rem'}
-                height="100%"
-                src={fetchedVideoCodeFromURL(extractedUrl)}
-                fileType="youtube"
-                customControls={!deviceIsMobile}
-                onPlay={handlePlay}
-                onProgress={(currentTime) => {
-                  timeAtRef.current = currentTime;
-                }}
-                initialTime={startingPosition}
-              />
-            </div>
-          ) : null}
+          <button
+            type="button"
+            aria-label="Hide video attachment"
+            onClick={onHideAttachment}
+            className={css`
+              display: inline-flex;
+              align-items: center;
+              gap: 0.6rem;
+              min-height: 32px;
+              padding: 0.4rem 0.8rem;
+              border: 0;
+              border-radius: 8px;
+              background: transparent;
+              color: #526176;
+              font: inherit;
+              font-size: max(12px, 1.2rem);
+              cursor: pointer;
+              &:hover {
+                background: #f1f5f9;
+                color: ${Color.black()};
+              }
+              &:focus-visible {
+                outline: 2px solid var(--chat-focus-ring, #365b91);
+                outline-offset: 2px;
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                min-height: 44px;
+              }
+            `}
+          >
+            <Icon icon="times" />
+            <span>Hide preview</span>
+          </button>
         </div>
-      </div>
+      )}
+      {twinkleVideoId ? (
+        <TwinkleVideo
+          key={twinkleVideoId}
+          messageId={messageId}
+          onPlay={handlePlay}
+          style={{ width: '100%', minWidth: 0 }}
+          title={videoTitle}
+          videoId={Number(twinkleVideoId)}
+        />
+      ) : (
+        <div
+          data-chat-video-frame
+          className={css`
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border-radius: 10px;
+            background: #0b1220;
+          `}
+        >
+          <VideoPlayer
+            style={{ position: 'absolute', inset: 0 }}
+            width="100%"
+            height="100%"
+            src={fetchedVideoCodeFromURL(extractedUrl)}
+            fileType="youtube"
+            customControls={!deviceIsMobile}
+            onPlay={handlePlay}
+            onProgress={(currentTime) => {
+              timeAtRef.current = currentTime;
+            }}
+            initialTime={startingPosition}
+          />
+        </div>
+      )}
     </div>
   );
 }

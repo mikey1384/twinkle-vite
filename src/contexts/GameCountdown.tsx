@@ -42,7 +42,10 @@ export function useCountdownValue(
   );
 
   useEffect(() => {
-    if (!channelId) return;
+    if (!channelId) {
+      setValue(null);
+      return;
+    }
     setValue(countdownStore.get(channelId, gameType));
     return countdownStore.subscribe(() => {
       setValue(countdownStore.get(channelId, gameType));

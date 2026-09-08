@@ -95,6 +95,7 @@ export default function AddButtons({
     >
       {isTwoPeopleChannel && isTradeButtonShown && !isAIChannel && (
         <Button
+          aria-label="Open trade"
           variant="soft"
           tone="raised"
           disabled={disabled}
@@ -130,6 +131,7 @@ export default function AddButtons({
       />
       {!isAIChannel && (
         <Button
+          aria-label="Attach a video"
           variant="soft"
           tone="raised"
           disabled={disabled}

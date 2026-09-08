@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { limitBrs, processMentionLink } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
+import { chatTextClass, CHAT_TEXT_LINE_HEIGHT } from '../../typography';
 
 export default function Spoiler({ content = '' }: { content: string }) {
   const [spoilerShown, setSpoilerShown] = useState(false);
@@ -42,7 +43,9 @@ export default function Spoiler({ content = '' }: { content: string }) {
             borderRadius: '2px'
           }}
         >
-          <RichText>{finalText}</RichText>
+          <RichText className={chatTextClass} lineHeight={CHAT_TEXT_LINE_HEIGHT}>
+            {finalText}
+          </RichText>
         </div>
       ) : (
         <div

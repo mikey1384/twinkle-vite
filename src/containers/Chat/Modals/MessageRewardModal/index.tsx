@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import RewardReason from './RewardReason';
-import RewardLevelForm from '~/components/Forms/RewardLevelForm';
+import RewardAmountPicker, { rewardLevels } from './RewardAmountPicker';
 import { rewardReasons } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
@@ -17,15 +17,29 @@ export default function MessageRewardModal({
 }: {
   onHide: () => void;
   userToReward: any;
-  onSubmit: (v: { reasonId: number; amount: number }) => void;
+  onSubmit: (v: { reasonId: number; amount: number }) => void | Promise<void>;
 }) {
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const [selectedReasonId, setSelectedReasonId] = useState(0);
   const [rewardAmount, setRewardAmount] = useState(0);
+  const [pending, setPending] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const attempted = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const submitDisabled = useMemo(
     () =>
-      !rewardAmount || !selectedReasonId || rewardAmount * 200 > twinkleCoins,
+      !rewardLevels.includes(rewardAmount) ||
+      !rewardReasons[selectedReasonId] ||
+      !Number.isFinite(twinkleCoins) ||
+      rewardAmount * 200 > twinkleCoins,
     [rewardAmount, selectedReasonId, twinkleCoins]
   );
   const displayedRewardAmount = useMemo(
@@ -34,9 +48,17 @@ export default function MessageRewardModal({
   );
 
   return (
-    <Modal modalKey="MessageRewardModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal
+      modalKey="MessageRewardModal"
+      aria-label={`Reward ${userToReward?.username || 'message author'}`}
+      isOpen
+      onClose={handleClose}
+      hasHeader={false}
+      bodyPadding={0}
+    >
       <LegacyModalLayout>
         <header
+          style={{ fontSize: '20px', overflowWrap: 'anywhere', minWidth: 0 }}
           className={css`
             font-size: 1.5rem;
             font-weight: bold;
@@ -53,7 +75,7 @@ export default function MessageRewardModal({
             >
               <div
                 className={css`
-                  font-size: 2rem;
+                  font-size: 24px;
                   font-weight: bold;
                 `}
               >
@@ -64,7 +86,7 @@ export default function MessageRewardModal({
                   className={css`
                     margin-left: 1rem;
                     color: ${Color.darkerGray()};
-                    font-size: 1.3rem;
+                    font-size: 14px;
                   `}
                 >
                   ({displayedRewardAmount} coins)
@@ -78,23 +100,16 @@ export default function MessageRewardModal({
                   text-align: center;
                   color: red;
                   margin-bottom: 1rem;
-                  font-size: 1.2rem;
+                  font-size: 14px;
                 `}
               >
                 You do not have enough coins to reward this amount.
               </div>
             )}
-            <RewardLevelForm
-              icon="certificate"
-              extendedRewardLevels
+            <RewardAmountPicker
+              disabled={pending || submitted}
               rewardLevel={rewardAmount}
               onSetRewardLevel={setRewardAmount}
-              style={{
-                width: '100%',
-                textAlign: 'center',
-                marginTop: '1.5rem',
-                fontSize: '3rem'
-              }}
             />
           </div>
           <div
@@ -107,33 +122,63 @@ export default function MessageRewardModal({
           >
             {Object.keys(rewardReasons).map((key) => (
               <RewardReason
+                disabled={pending || submitted}
                 key={key}
                 reasonId={Number(key)}
                 selectedReasonId={selectedReasonId}
                 onSelectReasonId={setSelectedReasonId}
-                style={{ marginTop: '1rem' }}
+                style={{
+                  marginTop: '8px',
+                  minHeight: '44px',
+                  fontSize: '14px',
+                  width: '100%',
+                  lineHeight: 1.5
+                }}
               />
             ))}
           </div>
         </main>
-        <footer>
+        <footer style={{ flexWrap: 'wrap' }}>
+          {error && (
+            <p
+              role="alert"
+              style={{
+                width: '100%',
+                margin: 0,
+                fontSize: '16px',
+                lineHeight: 1.5
+              }}
+            >
+              {error}
+            </p>
+          )}
+          {pending && (
+            <p
+              role="status"
+              style={{
+                width: '100%',
+                margin: 0,
+                fontSize: '16px',
+                lineHeight: 1.5
+              }}
+            >
+              Sending reward…
+            </p>
+          )}
           <Button
             variant="ghost"
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
+            style={{ minHeight: '44px', fontSize: '14px' }}
+            onClick={handleClose}
+            disabled={pending}
           >
-            Cancel
+            {submitted ? 'Close' : 'Cancel'}
           </Button>
           <Button
             color={doneColor}
-            disabled={submitDisabled}
-            style={{ marginRight: '0.7rem' }}
-            onClick={() =>
-              onSubmit({
-                reasonId: selectedReasonId,
-                amount: rewardAmount * 200
-              })
-            }
+            disabled={submitDisabled || pending || submitted}
+            loading={pending}
+            style={{ minHeight: '44px', fontSize: '14px' }}
+            onClick={handleSubmit}
           >
             Submit
           </Button>
@@ -141,4 +186,30 @@ export default function MessageRewardModal({
       </LegacyModalLayout>
     </Modal>
   );
+
+  function handleClose() {
+    if (!pending && !(attempted.current && !submitted)) onHide();
+  }
+
+  async function handleSubmit() {
+    if (submitDisabled || attempted.current || !mounted.current) return;
+    attempted.current = true;
+    setPending(true);
+    try {
+      await onSubmit({
+        reasonId: selectedReasonId,
+        amount: rewardAmount * 200
+      });
+    } catch {
+      if (mounted.current)
+        setError(
+          'Could not confirm the reward. It may have been partially processed. Check your coin balance and the chat before sending another reward.'
+        );
+    } finally {
+      if (mounted.current) {
+        setPending(false);
+        setSubmitted(true);
+      }
+    }
+  }
 }

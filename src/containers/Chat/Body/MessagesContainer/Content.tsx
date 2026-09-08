@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import ChannelHeader from './ChannelHeader';
 import DisplayedMessages from './DisplayedMessages';
 import MessageInput from './MessageInput';
+import { chatComposerClass } from '../../containers';
 
 export default function Content({
   catchUpStatusShown,
@@ -41,11 +42,8 @@ export default function Content({
         <DisplayedMessages {...displayedMessagesProps} />
       </div>
       <div
-        style={{
-          background: 'var(--chat-bg)',
-          padding: '1rem',
-          borderTop: '1px solid var(--ui-border)'
-        }}
+        data-chat-composer
+        className={chatComposerClass}
       >
         {catchUpStatusShown && (
           <div

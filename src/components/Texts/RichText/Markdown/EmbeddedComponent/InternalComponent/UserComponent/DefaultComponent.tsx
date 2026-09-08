@@ -9,12 +9,14 @@ import { css } from '@emotion/css';
 
 export default function DefaultComponent({
   isPreview,
+  isChat = false,
   src,
   pageType,
   subPageType,
   profile
 }: {
   isPreview?: boolean;
+  isChat?: boolean;
   src: string;
   pageType?: string;
   subPageType?: string;
@@ -61,6 +63,7 @@ export default function DefaultComponent({
   if (isPreview) {
     return (
       <ProfileEmbedCard
+        isChat={isChat}
         profile={profile}
         heading={heading}
         online={chatStatus[profile.id]?.isOnline}
@@ -71,8 +74,22 @@ export default function DefaultComponent({
 
   return (
     <div
-      onClick={() => navigate(src)}
-      className={css`
+      role={isChat ? 'link' : undefined}
+      tabIndex={isChat ? 0 : undefined}
+      onClick={(event) => {
+        if (isChat) {
+          if ((event.target as HTMLElement).closest('a,button,input,textarea,select')) return;
+          event.stopPropagation();
+        }
+        navigate(src);
+      }}
+      onKeyDown={isChat ? (event) => {
+        if (event.key !== 'Enter' || event.target !== event.currentTarget) return;
+        event.preventDefault();
+        event.stopPropagation();
+        navigate(src);
+      } : undefined}
+      className={`${isChat ? chatProfileClass : ''} ${css`
         .label {
           font-size: 2.2rem;
           color: ${Color.black()};
@@ -92,7 +109,7 @@ export default function DefaultComponent({
             font-size: 1.8rem;
           }
         }
-      `}
+      `}`}
     >
       {heading ? (
         <div
@@ -107,17 +124,17 @@ export default function DefaultComponent({
         </div>
       ) : null}
       <div
-        className={css`
+        className={`profile-attachment__body ${css`
           display: flex;
           align-items: center;
           justify-content: space-between;
           width: 100%;
-        `}
+        `}`}
       >
         <div
-          className={css`
+          className={`profile-attachment__avatar ${css`
             width: 30%;
-          `}
+          `}`}
         >
           <ProfilePic
             style={{ width: '100%' }}
@@ -125,16 +142,18 @@ export default function DefaultComponent({
             profilePicUrl={profile.profilePicUrl || ''}
             online={chatStatus[profile.id]?.isOnline}
             statusShown
+            statusSize={isChat ? 'dot' : undefined}
             large
           />
         </div>
         <div
-          className={css`
+          className={`profile-attachment__details ${css`
             margin-left: 3rem;
             width: CALC(75% - 3rem);
-          `}
+          `}`}
         >
           <UserDetails
+            isChatEmbed={isChat}
             noLink
             small
             unEditable
@@ -150,3 +169,27 @@ export default function DefaultComponent({
     navigate(src);
   }
 }
+
+const chatProfileClass = css`
+  && {
+    container: chatProfileAttachment / inline-size;
+    min-width: 0;
+    padding: 14px;
+    border-color: #dce3ed;
+    border-radius: 14px;
+    .label { color: #334155; font-size: 15px; line-height: 1.5; }
+    .profile-attachment__body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .profile-attachment__avatar { width: 64px; flex-shrink: 0; }
+    .profile-attachment__details { min-width: 0; width: 100%; margin-left: 0; }
+    &:focus-visible { outline: 2px solid #334155; outline-offset: 3px; }
+    @container chatProfileAttachment (min-width: 360px) {
+      .profile-attachment__body { flex-direction: row; align-items: flex-start; }
+      .profile-attachment__details { flex: 1; }
+    }
+  }
+`;

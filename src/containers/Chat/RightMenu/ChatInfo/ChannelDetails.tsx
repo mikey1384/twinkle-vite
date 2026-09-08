@@ -32,7 +32,7 @@ export default function ChannelDetails({
     <div
       style={{
         ...style,
-        marginTop: thumbUrl ? 0 : '1rem'
+        marginTop: 0
       }}
     >
       <div
@@ -40,6 +40,9 @@ export default function ChannelDetails({
         className={css`
           width: 100%;
           line-height: 1.5;
+          border-bottom: 1px solid var(--chat-panel-border, #e2e8f0);
+          border-radius: var(--chat-panel-radius, 14px)
+            var(--chat-panel-radius, 14px) 0 0;
           ${thumbUrl
             ? `
           position: relative;
@@ -60,10 +63,12 @@ export default function ChannelDetails({
           text-shadow: 0 1px 2px rgba(0,0,0,0.9);
           `
             : `
-          padding: 0 1rem 0 1rem;
+          padding: 1.4rem 1.2rem;
+          text-align: left;
           `}
-          font-size: 2.5rem;
-          font-weight: bold;
+          font-size: 2rem;
+          font-weight: 700;
+          color: ${thumbUrl ? '#fff' : '#334155'};
           @media (max-width: ${mobileMaxWidth}) {
             width: 100%;
             font-size: 1.7rem;

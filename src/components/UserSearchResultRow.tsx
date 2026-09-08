@@ -4,11 +4,13 @@ import ProfilePic from '~/components/ProfilePic';
 import { Color } from '~/constants/css';
 
 export default function UserSearchResultRow({
+  chat = false,
   profilePicUrl,
   realName,
   userId,
   username
 }: {
+  chat?: boolean;
   profilePicUrl?: string | null;
   realName?: string | null;
   userId: number;
@@ -28,7 +30,7 @@ export default function UserSearchResultRow({
         userId={userId}
         profilePicUrl={profilePicUrl || undefined}
         preferProvidedProfilePicUrl
-        size="2.4rem"
+        size={chat ? 32 : '2.4rem'}
         style={{ cursor: 'inherit', flex: '0 0 auto' }}
       />
       <span
@@ -45,8 +47,8 @@ export default function UserSearchResultRow({
           className={css`
             min-width: 0;
             overflow: hidden;
-            color: ${Color.darkerGray()};
-            font-size: 1.2rem;
+            color: ${chat ? '#253247' : Color.darkerGray()};
+            font-size: ${chat ? '14px' : '1.2rem'};
             font-weight: 600;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -60,8 +62,8 @@ export default function UserSearchResultRow({
               min-width: 0;
               flex: 1 1 auto;
               overflow: hidden;
-              color: ${Color.darkGray()};
-              font-size: 1.1rem;
+              color: ${chat ? '#526176' : Color.darkGray()};
+              font-size: ${chat ? '13px' : '1.1rem'};
               text-overflow: ellipsis;
               white-space: nowrap;
             `}

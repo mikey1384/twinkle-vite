@@ -107,7 +107,7 @@ export default function SharedPromptBlock({
           <h3 className={titleClass}>{title}</h3>
         )
       ) : null}
-      {meta ? <div className={metaClass}>{meta}</div> : null}
+      {meta ? <div className={cx(metaClass, 'shared-prompt__meta')}>{meta}</div> : null}
       {stats?.length ? (
         <div className={statsClass}>
           {stats.map((stat) =>
@@ -300,7 +300,7 @@ const metaClass = css`
   flex-wrap: wrap;
   gap: 0.5rem;
   color: ${Color.darkGray()};
-  font-size: 1.1rem;
+  font-size: var(--shared-prompt-meta-font-size, 1.1rem);
   font-weight: 700;
   flex-shrink: 0;
 `;

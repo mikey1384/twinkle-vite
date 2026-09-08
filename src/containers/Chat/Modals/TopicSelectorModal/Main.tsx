@@ -3,12 +3,12 @@ import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
-import FilterBar from '~/components/FilterBar';
 import SharedTopicsList from './SharedTopicsList';
-import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import { Content } from '~/types';
+import TopicRequestStatus from '../TopicRequestStatus';
+import { chatTopicActionStyle, chatTopicFiltersClass, chatTopicSectionClass } from '../topicStyles';
 
 function isRenderableTopic(topic: any) {
   return (
@@ -35,6 +35,7 @@ export default function Main({
   onSetMyTopicObj,
   sharedTopicObj,
   onSetSharedTopicObj,
+  onRetrySharedTopics,
   onSelectTopic,
   onDeleteTopic,
   pinnedTopicIds,
@@ -57,6 +58,7 @@ export default function Main({
   onSetMyTopicObj: (v: any) => void;
   sharedTopicObj: any;
   onSetSharedTopicObj: (v: any) => void;
+  onRetrySharedTopics: () => void;
   onSelectTopic: (v: number) => void;
   onDeleteTopic: (v: number) => void;
   pinnedTopicIds: number[];
@@ -86,6 +88,7 @@ export default function Main({
     (v) => v.requestHelpers.loadMoreOtherUserTopics
   );
   const [subjectObj, setSubjectObj] = useState<Record<string, Content>>({});
+  const pagingRef = useRef({ all: false, my: false, shared: false });
   const shouldShowFilterBar = useMemo(() => {
     if (showSharedOnly) {
       return false;
@@ -127,10 +130,6 @@ export default function Main({
     }
   }, [activeTab, hasMyTopics, isAIChannel, showSharedOnly]);
 
-  const effectivePinnedTopicIds = useMemo(
-    () => (pinnedTopicIds || []).filter((id) => !!subjectObj[id]),
-    [pinnedTopicIds, subjectObj]
-  );
   const activeCurrentTopic = useMemo(() => {
     if (!currentTopic?.id) return null;
     const loadedTopic = subjectObj[currentTopic.id];
@@ -150,18 +149,13 @@ export default function Main({
 
   return (
     <div style={{ width: '100%', paddingBottom: '1rem' }}>
-      {!isLoaded && <Loading />}
+      {!isLoaded && <Loading text="Loading topics" innerStyle={{ fontSize: '14px' }} />}
       <div style={{ width: '100%', marginTop: '3rem' }}>
         {!isTwoPeopleChat && (
           <>
             {activeCurrentTopic && activeCurrentTopicId > 0 && (
               <>
-                <h3
-                  style={{
-                    color: Color[displayedThemeColor](),
-                    marginBottom: '1rem'
-                  }}
-                >
+                <h3 className={chatTopicSectionClass}>
                   Current Topic
                 </h3>
                 <TopicItem
@@ -175,7 +169,7 @@ export default function Main({
                   currentTopicId={activeCurrentTopicId}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
-                  pinnedTopicIds={effectivePinnedTopicIds}
+                  pinnedTopicIds={pinnedTopicIds}
                   pathId={pathId}
                   {...(activeCurrentTopic as any)}
                   onEditTopic={({
@@ -203,13 +197,7 @@ export default function Main({
             )}
             {activeFeaturedTopic && activeFeaturedTopicId > 0 && (
               <>
-                <h3
-                  style={{
-                    color: Color[displayedThemeColor](),
-                    marginTop: '3rem',
-                    marginBottom: '1rem'
-                  }}
-                >
+                <h3 className={chatTopicSectionClass}>
                   Featured Topic
                 </h3>
                 <TopicItem
@@ -224,7 +212,7 @@ export default function Main({
                   currentTopicId={activeCurrentTopicId}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
-                  pinnedTopicIds={effectivePinnedTopicIds}
+                  pinnedTopicIds={pinnedTopicIds}
                   pathId={pathId}
                   {...(activeFeaturedTopic as any)}
                   onEditTopic={({
@@ -255,48 +243,39 @@ export default function Main({
         {isLoaded && !showSharedOnly && (
           <>
             {shouldShowFilterBar ? (
-              <FilterBar
-                className={css`
-                  margin-top: 1rem;
-                  font-size: 1.5rem !important;
-                  height: 4.5rem !important;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.1rem !important;
-                    height: 3rem !important;
-                  }
-                `}
+              <div
+                role="group"
+                aria-label="Filter topics"
+                className={chatTopicFiltersClass}
               >
-                <nav
-                  className={activeTab === 'all' ? 'active' : ''}
+                <button
+                  type="button"
+                  aria-pressed={activeTab === 'all'}
                   onClick={() => handleTabSelect('all')}
                 >
                   {hasMyTopics ? 'All Topics' : 'My Topics'}
-                </nav>
+                </button>
                 {hasMyTopics && (
-                  <nav
-                    className={activeTab === 'my' ? 'active' : ''}
+                  <button
+                    type="button"
+                    aria-pressed={activeTab === 'my'}
                     onClick={() => handleTabSelect('my')}
                   >
                     My Topics
-                  </nav>
+                  </button>
                 )}
                 {isAIChannel && (
-                  <nav
-                    className={activeTab === 'shared' ? 'active' : ''}
+                  <button
+                    type="button"
+                    aria-pressed={activeTab === 'shared'}
                     onClick={() => handleTabSelect('shared')}
                   >
                     Shared Topics
-                  </nav>
+                  </button>
                 )}
-              </FilterBar>
+              </div>
             ) : (
-              <h3
-                className={css`
-                  margin-top: 3rem;
-                  margin-bottom: 1rem;
-                  color: ${Color[displayedThemeColor]()};
-                `}
-              >
+              <h3 className={chatTopicSectionClass}>
                 All Topics
               </h3>
             )}
@@ -310,14 +289,14 @@ export default function Main({
                   width: 100%;
                   text-align: center;
                   padding: 3rem 0;
-                  font-size: 1.5rem;
+                  font-size: 16px;
                   > p {
                     margin-top: 1rem;
                   }
                 `}
               >
-                <span>Start the first topic using the text box above</span>
-                <Icon style={{ marginLeft: '1rem' }} icon="arrow-up" />
+                <span>{canAddTopic ? 'Start the first topic using the text box above' : 'No topics have been posted yet.'}</span>
+                {canAddTopic && <Icon style={{ marginLeft: '1rem' }} icon="arrow-up" />}
               </div>
             )}
             {allTopicObj.subjects.map(
@@ -339,7 +318,7 @@ export default function Main({
                   currentTopicId={activeCurrentTopicId}
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
-                  pinnedTopicIds={effectivePinnedTopicIds}
+                  pinnedTopicIds={pinnedTopicIds}
                   pathId={pathId}
                   {...((subjectObj[subject.id] || subject) as any)}
                   onEditTopic={({
@@ -365,10 +344,11 @@ export default function Main({
                 />
               )
             )}
-            {allTopicObj.loadMoreButton && (
+            {allTopicObj.error && <TopicRequestStatus message={allTopicObj.error} onRetry={() => handleLoadMoreTopics(false)} />}
+            {allTopicObj.loadMoreButton && !allTopicObj.error && (
               <LoadMoreButton
                 filled
-                style={{ marginTop: '1rem' }}
+                style={{ ...chatTopicActionStyle, marginTop: '1rem' }}
                 loading={allTopicObj.loading}
                 onClick={() => handleLoadMoreTopics(false)}
               />
@@ -395,7 +375,7 @@ export default function Main({
                   isOwner={isOwner}
                   currentTopicId={activeCurrentTopicId}
                   displayedThemeColor={displayedThemeColor}
-                  pinnedTopicIds={effectivePinnedTopicIds}
+                  pinnedTopicIds={pinnedTopicIds}
                   onSelectTopic={onSelectTopic}
                   pathId={pathId}
                   {...((subjectObj[subject?.id] || subject) as any)}
@@ -422,9 +402,10 @@ export default function Main({
                 />
               )
             )}
-            {myTopicObj.loadMoreButton && (
+            {myTopicObj.error && <TopicRequestStatus message={myTopicObj.error} onRetry={() => handleLoadMoreTopics(true)} />}
+            {myTopicObj.loadMoreButton && !myTopicObj.error && (
               <LoadMoreButton
-                style={{ marginTop: '1rem' }}
+                style={{ ...chatTopicActionStyle, marginTop: '1rem' }}
                 filled
                 loading={myTopicObj.loading}
                 onClick={() => handleLoadMoreTopics(true)}
@@ -441,6 +422,7 @@ export default function Main({
             pathId={pathId}
             onHide={onHide}
             onLoadMore={handleLoadMoreSharedTopics}
+            onRetry={sharedTopicObj.subjects.length ? handleLoadMoreSharedTopics : onRetrySharedTopics}
           />
         )}
       </div>
@@ -465,6 +447,23 @@ export default function Main({
     customInstructions?: string;
     isSharedWithOtherUsers?: boolean;
   }) {
+    // Keep both paginated lists in sync with an acknowledged topic edit.
+    // Otherwise their next page replaces the locally edited label with an old snapshot.
+    const updateList = (prev: any) => ({
+      ...prev,
+      subjects: prev.subjects.map((subject: any) => subject.id === topicId ? {
+        ...subject,
+        content: topicText,
+        settings: {
+          ...subject.settings,
+          isOwnerPostingOnly,
+          ...(typeof customInstructions !== 'undefined' && { customInstructions }),
+          ...(typeof isSharedWithOtherUsers === 'boolean' && { isSharedWithOtherUsers })
+        }
+      } : subject)
+    });
+    onSetAllTopicObj(updateList);
+    onSetMyTopicObj(updateList);
     setSubjectObj((prev) => ({
       ...prev,
       [topicId]: {
@@ -485,62 +484,59 @@ export default function Main({
   }
 
   async function handleLoadMoreTopics(mineOnly: boolean) {
-    if (mineOnly) {
-      onSetMyTopicObj({ ...myTopicObj, loading: true });
-    } else {
-      onSetAllTopicObj({ ...allTopicObj, loading: true });
-    }
-    const targetSubjects = mineOnly
-      ? myTopicObj.subjects
-      : allTopicObj.subjects;
-    const lastSubject = targetSubjects[targetSubjects.length - 1];
-    const { subjects, loadMoreButton } = await loadMoreChatSubjects({
-      channelId,
-      mineOnly,
-      lastSubject
-    });
-
-    const filteredSubjects = subjects.filter(
-      (subject: { id: number }) => subject.id !== currentTopic?.id
-    );
-
-    if (mineOnly) {
-      onSetMyTopicObj({
-        ...myTopicObj,
-        subjects: myTopicObj.subjects.concat(filteredSubjects),
-        loadMoreButton,
-        loading: false
+    const key = mineOnly ? 'my' : 'all';
+    const target = mineOnly ? myTopicObj : allTopicObj;
+    const setTarget = mineOnly ? onSetMyTopicObj : onSetAllTopicObj;
+    if (pagingRef.current[key] || target.loading || !target.subjects.length) return;
+    pagingRef.current[key] = true;
+    setTarget((prev: any) => ({ ...prev, loading: true, error: '' }));
+    try {
+      const { subjects, loadMoreButton } = await loadMoreChatSubjects({
+        channelId, mineOnly, lastSubject: target.subjects[target.subjects.length - 1]
       });
-    } else {
-      onSetAllTopicObj({
-        ...allTopicObj,
-        subjects: allTopicObj.subjects.concat(filteredSubjects),
+      setTarget((prev: any) => ({
+        ...prev,
+        subjects: prev.subjects.concat(subjects.filter((subject: { id: number }) =>
+          subject.id !== currentTopic?.id && !prev.subjects.some((existing: { id: number }) => existing.id === subject.id)
+        )),
         loadMoreButton,
-        loading: false
-      });
+        error: ''
+      }));
+    } catch (error) {
+      console.error(error);
+      setTarget((prev: any) => ({ ...prev, error: "Couldn't load more topics. Please try again." }));
+    } finally {
+      pagingRef.current[key] = false;
+      setTarget((prev: any) => ({ ...prev, loading: false }));
     }
   }
 
   async function handleLoadMoreSharedTopics() {
-    if (!sharedTopicObj.subjects.length || sharedTopicObj.loading) {
+    if (!sharedTopicObj.subjects.length || sharedTopicObj.loading || pagingRef.current.shared) {
       return;
     }
     const lastSubject =
       sharedTopicObj.subjects[sharedTopicObj.subjects.length - 1];
-    onSetSharedTopicObj({ ...sharedTopicObj, loading: true });
+    pagingRef.current.shared = true;
+    onSetSharedTopicObj((prev: any) => ({ ...prev, loading: true, error: '' }));
     try {
       const { subjects, loadMoreButton } = await loadMoreOtherUserTopics({
         lastSubject
       });
-      onSetSharedTopicObj({
-        ...sharedTopicObj,
-        subjects: sharedTopicObj.subjects.concat(subjects),
+      onSetSharedTopicObj((prev: any) => ({
+        ...prev,
+        subjects: prev.subjects.concat(subjects.filter((subject: { id: number }) =>
+          !prev.subjects.some((existing: { id: number }) => existing.id === subject.id)
+        )),
         loadMoreButton,
-        loading: false
-      });
+        error: ''
+      }));
     } catch (error) {
       console.error(error);
-      onSetSharedTopicObj({ ...sharedTopicObj, loading: false });
+      onSetSharedTopicObj((prev: any) => ({ ...prev, error: "Couldn't load more shared topics. Please try again." }));
+    } finally {
+      pagingRef.current.shared = false;
+      onSetSharedTopicObj((prev: any) => ({ ...prev, loading: false }));
     }
   }
 }

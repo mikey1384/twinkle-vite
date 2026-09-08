@@ -1,24 +1,14 @@
-import React, { useRef } from 'react';
+import React, { useId, useRef } from 'react';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { reactionsObj } from '~/constants/defaultValues';
-import { Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { useOutsideClick } from '~/helpers/hooks';
 import Icon from '~/components/Icon';
+import ReactionPicker from './ReactionPicker';
+import { messageControlClass } from './messageControlStyles';
 
 const deviceIsMobile = isMobile(navigator);
-
-const reactions = [
-  'angry',
-  'crying',
-  'surprised',
-  'wave',
-  'laughing',
-  'heart',
-  'thumb'
-];
 
 export default function ReactionButton({
   style,
@@ -32,92 +22,80 @@ export default function ReactionButton({
   reactionsMenuShown: boolean;
 }) {
   const ContainerRef = useRef<HTMLDivElement | null>(null);
+  const TriggerRef = useRef<HTMLButtonElement | null>(null);
+  const pickerId = useId();
+  const userId = useKeyContext(v => v.myState.userId);
 
-  useOutsideClick(
-    ContainerRef,
-    () => onSetReactionsMenuShown(false),
-    { enabled: deviceIsMobile && reactionsMenuShown, closeOnScroll: true }
-  );
+  useOutsideClick(ContainerRef, () => onSetReactionsMenuShown(false), {
+    enabled: reactionsMenuShown,
+    closeOnScroll: false
+  });
 
   return (
     <ErrorBoundary componentPath="Message/ReactionButton">
       <div
         ref={ContainerRef}
-        style={{ display: 'flex', ...style }}
-        onMouseEnter={() =>
-          deviceIsMobile ? {} : onSetReactionsMenuShown(true)
-        }
-        onMouseLeave={() =>
-          deviceIsMobile ? {} : onSetReactionsMenuShown(false)
-        }
+        style={{ position: 'relative', display: 'flex', ...style, zIndex: reactionsMenuShown ? 6000 : undefined }}
+        onMouseEnter={() => {
+          if (!deviceIsMobile) onSetReactionsMenuShown(true);
+        }}
+        onMouseLeave={() => {
+          if (
+            !deviceIsMobile &&
+            !ContainerRef.current?.contains(document.activeElement)
+          ) {
+            onSetReactionsMenuShown(false);
+          }
+        }}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) {
+            onSetReactionsMenuShown(false);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && reactionsMenuShown) {
+            event.preventDefault();
+            event.stopPropagation();
+            onSetReactionsMenuShown(false);
+            TriggerRef.current?.focus();
+          }
+        }}
       >
-        <div
-          style={{
-            zIndex: reactionsMenuShown ? 5000 : 0,
-            display: reactionsMenuShown ? 'flex' : 'none',
-            background: 'rgb(255, 255, 255)',
-            justifyContent: 'space-around',
-            alignItems: 'center',
-            marginRight: '0.5rem',
-            boxShadow: `0 0 1px ${Color.black()}`,
-            outline: 0
-          }}
-          className={css`
-            width: 20rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 16rem;
-            }
-          `}
-        >
-          {reactions.map((reaction) => (
-            <div
-              key={reaction}
-              className={css`
-                cursor: pointer;
-                width: 2rem;
-                height: 2rem;
-                background: url('/img/emojis.png')
-                  ${reactionsObj[reaction].position} / 5100%;
-                transition: all 0.1s ease-in-out;
-                &:hover {
-                  transform: scale(1.5);
-                }
-                @media (max-width: ${mobileMaxWidth}) {
-                  width: 1.7rem;
-                  height: 1.7rem;
-                  &:hover {
-                    transform: none;
-                  }
-                }
-              `}
-              onClick={() => handleReactionClick(reaction)}
-            />
-          ))}
-        </div>
         <Button
-          className="menu-button"
-          style={{
-            zIndex: 5000,
-            padding: '0.5rem 0.7rem',
-            lineHeight: 1
-          }}
+          buttonRef={TriggerRef}
+          aria-label="Add reaction"
+          aria-expanded={reactionsMenuShown}
+          aria-controls={pickerId}
+          className={`menu-button ${messageControlClass}`}
           color="darkerGray"
           variant="solid"
           tone="raised"
-          onClick={() => (deviceIsMobile ? handleReactionBarShown() : {})}
+          onClick={(event) => {
+            event?.stopPropagation();
+            // Preserve desktop hover-to-open. A mouse click keeps it open;
+            // keyboard activation and touch toggle it normally.
+            if (deviceIsMobile || event?.detail === 0) {
+              onSetReactionsMenuShown((shown: boolean) => !shown);
+            } else {
+              onSetReactionsMenuShown(true);
+            }
+          }}
         >
           <Icon icon="thumbs-up" />
         </Button>
+        {reactionsMenuShown && <ReactionPicker
+          key={userId || 'guest'}
+          id={pickerId}
+          userId={userId}
+          anchorRef={ContainerRef}
+          onDismiss={() => onSetReactionsMenuShown(false)}
+          onReact={reaction => {
+            onReactionClick(reaction);
+            onSetReactionsMenuShown(false);
+            TriggerRef.current?.focus();
+          }}
+        />}
       </div>
     </ErrorBoundary>
   );
-
-  function handleReactionBarShown() {
-    onSetReactionsMenuShown((shown: boolean) => !shown);
-  }
-
-  function handleReactionClick(reaction: any) {
-    onReactionClick(reaction);
-    onSetReactionsMenuShown(false);
-  }
 }

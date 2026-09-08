@@ -88,7 +88,11 @@ test('the tab switcher uses shared modal keyboard isolation', () => {
   );
   assert.match(
     modalSource,
-    /function handleDocumentKeyDown[\s\S]*?modalId !== topModalId[\s\S]*?event\.key === 'Tab'[\s\S]*?trapModalFocus\(event, modalRef\.current\)[\s\S]*?addEventListener\('keydown', handleDocumentKeyDown, true\)/
+    /function handleDocumentKeyDown[\s\S]*?modalId !== topModalId[\s\S]*?event\.key === 'Tab'[\s\S]*?trapModalFocus\(event, modalRef\.current\)[\s\S]*?addEventListener\('keydown', handleDocumentKeyDown\)/
+  );
+  assert.match(
+    modalSource,
+    /function handleDocumentKeyDown[\s\S]*?if \(event\.defaultPrevented \|\| event\.isComposing \|\| event\.keyCode === 229\) \{\s*return;/
   );
   assert.doesNotMatch(modalSource, /onKeyDown=\{handleKeyDown\}/);
   assert.match(

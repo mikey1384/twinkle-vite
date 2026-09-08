@@ -10,6 +10,11 @@ type Size = 'sm' | 'md' | 'lg';
 interface ButtonProps {
   'aria-label'?: string;
   'aria-pressed'?: boolean;
+  'aria-expanded'?: boolean;
+  'aria-controls'?: string;
+  'aria-describedby'?: string;
+  'aria-busy'?: boolean;
+  buttonRef?: React.Ref<HTMLButtonElement>;
   className?: string;
   color?: string; // a key in `Color` (e.g. 'logoBlue'); defaults per variant
   disabled?: boolean;
@@ -51,6 +56,11 @@ export default function Button(props: ButtonProps) {
   const {
     'aria-label': ariaLabel,
     'aria-pressed': ariaPressed,
+    'aria-expanded': ariaExpanded,
+    'aria-controls': ariaControls,
+    'aria-describedby': ariaDescribedBy,
+    'aria-busy': ariaBusy,
+    buttonRef,
     className = '',
     color,
     disabled,
@@ -184,8 +194,13 @@ export default function Button(props: ButtonProps) {
   return (
     <button
       type="button"
+      ref={buttonRef}
       aria-label={ariaLabel}
       aria-pressed={ariaPressed}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
+      aria-describedby={ariaDescribedBy}
+      aria-busy={ariaBusy}
       aria-disabled={isDisabled}
       disabled={isDisabled}
       style={style}

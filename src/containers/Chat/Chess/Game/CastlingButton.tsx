@@ -2,7 +2,6 @@ import React from 'react';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { isTablet } from '~/helpers';
 
 const BlackRook = `${cloudFrontURL}/assets/chess/BlackRook.svg`;
 const BlackKing = `${cloudFrontURL}/assets/chess/BlackKing.svg`;
@@ -10,8 +9,6 @@ const BlackKing = `${cloudFrontURL}/assets/chess/BlackKing.svg`;
 const WhiteRook = `${cloudFrontURL}/assets/chess/WhiteRook.svg`;
 const WhiteKing = `${cloudFrontURL}/assets/chess/WhiteKing.svg`;
 
-const deviceIsTablet = isTablet(navigator);
-const boardHeight = deviceIsTablet ? '25vh' : '50vw';
 
 export default function CastlingButton({
   interactable,
@@ -24,11 +21,9 @@ export default function CastlingButton({
   onCastling: (v: string) => void;
   squares: any[];
 }) {
-  const top = 'CALC(100%)';
-  const mobileTop = `CALC(${boardHeight} + 0.5rem)`;
   const castlingBackgroundColor = Color.pink(0.7);
   return myColor === 'white' ? (
-    <>
+    <div style={{ gridArea: 'castling', display: 'flex', justifyContent: 'space-between', gap: 8 }}>
       {interactable &&
         !squares[57].isPiece &&
         !squares[58].isPiece &&
@@ -39,20 +34,27 @@ export default function CastlingButton({
         squares[60].state !== 'check' &&
         squares[60].state !== 'checkmate' &&
         !squares[60].moved && (
-          <div
+          <button
+            type="button"
+            aria-label="Castle queenside"
             className={css`
               cursor: pointer;
-              position: absolute;
+              border: 0;
+              font: inherit;
+              color: inherit;
+              min-height: 32px;
+              appearance: none;
+              &:focus-visible {
+                outline: 3px solid #334155;
+                outline-offset: 2px;
+              }
+              position: relative;
               background: ${castlingBackgroundColor};
-              top: ${top};
-              left: 0;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${tabletMaxWidth}) {
                 font-size: 1.1rem;
-                left: 0;
-                top: ${mobileTop};
               }
             `}
             onClick={() => onCastling('left')}
@@ -85,7 +87,7 @@ export default function CastlingButton({
               alt=""
             />{' '}
             →
-          </div>
+          </button>
         )}
       {interactable &&
         !squares[61].isPiece &&
@@ -96,22 +98,30 @@ export default function CastlingButton({
         squares[60].state !== 'check' &&
         squares[60].state !== 'checkmate' &&
         !squares[60].moved && (
-          <div
+          <button
+            type="button"
+            aria-label="Castle kingside"
             className={css`
               cursor: pointer;
-              position: absolute;
+              border: 0;
+              font: inherit;
+              color: inherit;
+              min-height: 32px;
+              appearance: none;
+              &:focus-visible {
+                outline: 3px solid #334155;
+                outline-offset: 2px;
+              }
+              position: relative;
               background: ${castlingBackgroundColor};
-              top: ${top};
-              right: 0;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${tabletMaxWidth}) {
                 font-size: 1.1rem;
-                left: CALC(100% - 7rem);
-                top: ${mobileTop};
               }
             `}
+            style={{ marginLeft: 'auto' }}
             onClick={() => onCastling('right')}
           >
             ←{' '}
@@ -142,11 +152,11 @@ export default function CastlingButton({
               alt=""
             />{' '}
             →
-          </div>
+          </button>
         )}
-    </>
+    </div>
   ) : (
-    <>
+    <div style={{ gridArea: 'castling', display: 'flex', justifyContent: 'space-between', gap: 8 }}>
       {interactable &&
         !squares[57].isPiece &&
         !squares[58].isPiece &&
@@ -156,20 +166,27 @@ export default function CastlingButton({
         squares[59].state !== 'check' &&
         squares[59].state !== 'checkmate' &&
         !squares[59].moved && (
-          <div
+          <button
+            type="button"
+            aria-label="Castle kingside"
             className={css`
               cursor: pointer;
-              position: absolute;
+              border: 0;
+              font: inherit;
+              color: inherit;
+              min-height: 32px;
+              appearance: none;
+              &:focus-visible {
+                outline: 3px solid #334155;
+                outline-offset: 2px;
+              }
+              position: relative;
               background: ${castlingBackgroundColor};
-              top: ${top};
-              left: 0;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${tabletMaxWidth}) {
                 font-size: 1.1rem;
-                left: 0;
-                top: ${mobileTop};
               }
             `}
             onClick={() => onCastling('left')}
@@ -202,7 +219,7 @@ export default function CastlingButton({
               alt=""
             />{' '}
             →
-          </div>
+          </button>
         )}
       {interactable &&
         !squares[60].isPiece &&
@@ -214,22 +231,30 @@ export default function CastlingButton({
         squares[59].state !== 'check' &&
         squares[59].state !== 'checkmate' &&
         !squares[59].moved && (
-          <div
+          <button
+            type="button"
+            aria-label="Castle queenside"
             className={css`
               cursor: pointer;
-              position: absolute;
+              border: 0;
+              font: inherit;
+              color: inherit;
+              min-height: 32px;
+              appearance: none;
+              &:focus-visible {
+                outline: 3px solid #334155;
+                outline-offset: 2px;
+              }
+              position: relative;
               background: ${castlingBackgroundColor};
-              top: ${top};
-              right: 0;
               display: flex;
               align-items: center;
               padding: 0 0.5rem 0 0.5rem;
               @media (max-width: ${tabletMaxWidth}) {
                 font-size: 1.1rem;
-                left: CALC(100% - 7rem);
-                top: ${mobileTop};
               }
             `}
+            style={{ marginLeft: 'auto' }}
             onClick={() => onCastling('right')}
           >
             ←{' '}
@@ -260,8 +285,8 @@ export default function CastlingButton({
               alt=""
             />{' '}
             →
-          </div>
+          </button>
         )}
-    </>
+    </div>
   );
 }

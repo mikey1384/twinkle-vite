@@ -8,9 +8,15 @@ import TopicSettingsModal from '../TopicSettingsModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
-import { Color } from '~/constants/css';
-import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
+import {
+  chatTopicRowClass,
+  chatTopicTitleClass,
+  chatTopicMetadataClass,
+  chatTopicActionsClass,
+  chatTopicActionStyle,
+  chatTopicThemeStyle
+} from '../topicStyles';
 
 function TopicItem({
   channelId,
@@ -93,6 +99,9 @@ function TopicItem({
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const [deleteConfirmShown, setDeleteConfirmShown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'pin' | 'feature' | null>(null);
+  const [actionError, setActionError] = useState('');
+  const actionPendingRef = useRef(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(0);
 
   const pinButtonShown = useMemo(() => {
@@ -131,24 +140,15 @@ function TopicItem({
   );
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        height: 'auto',
-        alignItems: 'center',
-        width: '100%',
-        ...style
-      }}
-      className={css`
-        padding: 0 1rem;
-        &:hover {
-          background-color: ${Color.highlightGray()};
-        }
-      `}
+    <article
+      data-chat-topic-row="topic"
+      data-current={currentTopicId === id}
+      style={{ ...chatTopicThemeStyle(displayedThemeColor), ...style }}
+      className={chatTopicRowClass}
     >
       <div
         style={{
-          width: '100%',
+          minWidth: 0,
           whiteSpace: 'pre-wrap',
           overflowWrap: 'break-word',
           wordBreak: 'break-word'
@@ -158,105 +158,113 @@ function TopicItem({
           {currentTopicId === id && !hideCurrentLabel && (
             <b
               style={{
-                fontSize: '1.5rem',
-                color: Color[displayedThemeColor]()
+                fontSize: '14px',
+                color: '#334155'
               }}
             >
               Current:{' '}
             </b>
           )}
-          <RichText style={{ fontWeight: 'bold' }}>{content}</RichText>
-          <div>
+          <RichText className={chatTopicTitleClass} style={{ fontWeight: 600 }}>
+            {content}
+          </RichText>
+          <div className={chatTopicMetadataClass}>
             <UsernameText
-              color={Color.darkerGray()}
+              color="#526176"
+              textStyle={{ fontSize: '14px', fontWeight: 600 }}
               user={{
                 id: userId,
                 username: username
               }}
-            />{' '}
+            />
             <small>{displayedTime}</small>
           </div>
         </div>
       </div>
-      {canEditTopic && (
-        <Button
-          color="pink"
-          style={{
-            maxHeight: '3.5rem'
-          }}
-          variant="soft"
-          onClick={() => setIsEditing(true)}
-          disabled={selectButtonDisabled}
-        >
-          <Icon icon="sliders-h" />
-          {(!isFeatured || !isBasicallyOwner || hideFeatureButton) &&
-            currentTopicId === id && (
-              <span style={{ marginLeft: '0.7rem' }}>Settings</span>
-            )}
-        </Button>
-      )}
-      {isBasicallyOwner &&
-        !hideFeatureButton &&
-        (isPinned || pinButtonShown) && (
+      <div data-chat-topic-actions className={chatTopicActionsClass}>
+        {canEditTopic && (
           <Button
-            color="blue"
-            style={{
-              maxHeight: '3.5rem',
-              marginLeft: canEditTopic ? '0.5rem' : 0
-            }}
-            variant={isPinned ? 'solid' : 'soft'}
-            onClick={handlePinTopic}
-            disabled={selectButtonDisabled}
+            aria-label="Topic settings"
+            color="pink"
+            style={chatTopicActionStyle}
+            variant="soft"
+            onClick={() => setIsEditing(true)}
+            disabled={selectButtonDisabled || !!pendingAction}
           >
-            <Icon icon="thumb-tack" />
+            <Icon icon="sliders-h" />
+            {(!isFeatured || !isBasicallyOwner || hideFeatureButton) &&
+              currentTopicId === id && (
+                <span style={{ marginLeft: '0.7rem' }}>Settings</span>
+              )}
           </Button>
         )}
-      {isBasicallyOwner && !hideFeatureButton && (
-        <Button
-          color="gold"
-          style={{
-            maxHeight: '3.5rem',
-            marginLeft: '0.5rem'
-          }}
-          disabledOpacity={1}
-          variant="soft"
-          disabled={isFeatured}
-          onClick={handleUpdateFeaturedTopic}
-        >
-          {isFeatured ? <span>Featured</span> : <Icon icon="star" />}
-        </Button>
-      )}
-      {directDeleteButtonShown && (
-        <Button
-          color="red"
-          style={{
-            maxHeight: '3.5rem',
-            marginLeft: '0.5rem'
-          }}
-          variant="soft"
-          onClick={() => setDeleteConfirmShown(true)}
-          disabled={selectButtonDisabled}
-        >
-          <Icon icon="trash-alt" />
-        </Button>
-      )}
-      {currentTopicId !== id && (
-        <Button
-          color="green"
-          style={{ maxHeight: '3.5rem', marginLeft: '0.5rem' }}
-          variant="soft"
-          onClick={handleSelectTopic}
-          disabled={selectButtonDisabled}
-        >
-          <Icon icon="play" />
-          {(!(isFeatured && isBasicallyOwner) || hideFeatureButton) && (
-            <span style={{ marginLeft: '0.7rem' }}>Go</span>
+        {isBasicallyOwner &&
+          !hideFeatureButton &&
+          (isPinned || pinButtonShown) && (
+            <Button
+              aria-label={isPinned ? 'Unpin topic' : 'Pin topic'}
+              aria-pressed={isPinned}
+              color="blue"
+              style={{ ...chatTopicActionStyle, color: isPinned ? '#fff' : '#334155' }}
+              variant={isPinned ? 'solid' : 'soft'}
+              onClick={handlePinTopic}
+              disabled={selectButtonDisabled || !!pendingAction}
+              loading={pendingAction === 'pin'}
+            >
+              <Icon icon="thumb-tack" />
+            </Button>
           )}
-        </Button>
+        {isBasicallyOwner && !hideFeatureButton && (
+          <Button
+            aria-label={isFeatured ? 'Featured topic' : 'Feature topic'}
+            color="gold"
+            style={chatTopicActionStyle}
+            disabledOpacity={1}
+            variant="soft"
+            disabled={isFeatured || selectButtonDisabled || !!pendingAction}
+            loading={pendingAction === 'feature'}
+            onClick={handleUpdateFeaturedTopic}
+          >
+            {isFeatured ? <span>Featured</span> : <Icon icon="star" />}
+          </Button>
+        )}
+        {directDeleteButtonShown && (
+          <Button
+            aria-label="Delete topic"
+            color="red"
+            style={chatTopicActionStyle}
+            variant="soft"
+            onClick={() => setDeleteConfirmShown(true)}
+            disabled={selectButtonDisabled || !!pendingAction}
+          >
+            <Icon icon="trash-alt" />
+          </Button>
+        )}
+        {currentTopicId !== id && (
+          <Button
+            aria-label="Open topic"
+            color="green"
+            style={chatTopicActionStyle}
+            variant="soft"
+            onClick={handleSelectTopic}
+            disabled={selectButtonDisabled || !!pendingAction}
+          >
+            <Icon icon="play" />
+            {(!(isFeatured && isBasicallyOwner) || hideFeatureButton) && (
+              <span style={{ marginLeft: '0.7rem' }}>Go</span>
+            )}
+          </Button>
+        )}
+      </div>
+      {actionError && (
+        <p role="alert" style={{ gridColumn: '1 / -1', margin: 0, fontSize: '14px', color: '#b42318' }}>
+          {actionError}
+        </p>
       )}
       {isEditing && (
         <TopicSettingsModal
           channelId={channelId}
+          displayedThemeColor={displayedThemeColor}
           topicId={id}
           isOwnerPostingOnly={isOwnerPostingOnly}
           customInstructions={customInstructions}
@@ -282,27 +290,46 @@ function TopicItem({
           onConfirm={handleDeleteTopic}
         />
       )}
-    </div>
+    </article>
   );
 
   async function handleUpdateFeaturedTopic() {
-    if (isFeatured) {
-      return;
-    }
-    const result = await updateFeaturedTopic({ topicId: id, channelId });
-    if (result.isSuccess) {
-      const topic = result.topic;
-      onFeatureTopic({
-        channelId,
-        topic
-      });
+    if (isFeatured || actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setPendingAction('feature');
+    setActionError('');
+    try {
+      const result = await updateFeaturedTopic({ topicId: id, channelId });
+      if (result.isSuccess) {
+        onFeatureTopic({ channelId, topic: result.topic });
+      } else {
+        setActionError("Couldn't feature this topic. Please try again.");
+      }
+    } catch (error) {
+      console.error(error);
+      setActionError("Couldn't feature this topic. Please try again.");
+    } finally {
+      actionPendingRef.current = false;
+      setPendingAction(null);
     }
   }
 
   async function handlePinTopic() {
-    const pinnedTopicIds = await pinChatTopic({ topicId: id, channelId });
-    onPinTopic({ channelId, topicId: id, pinnedTopicIds });
-    socket.emit('pin_topic', { channelId });
+    if (actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setPendingAction('pin');
+    setActionError('');
+    try {
+      const pinnedTopicIds = await pinChatTopic({ topicId: id, channelId });
+      onPinTopic({ channelId, topicId: id, pinnedTopicIds });
+      socket.emit('pin_topic', { channelId });
+    } catch (error) {
+      console.error(error);
+      setActionError("Couldn't update this topic's pin. Please try again.");
+    } finally {
+      actionPendingRef.current = false;
+      setPendingAction(null);
+    }
   }
 
   function handleSelectTopic() {

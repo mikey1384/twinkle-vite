@@ -1,18 +1,20 @@
 import React, { useContext, useCallback, useMemo, useRef } from 'react';
-import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import {
   VOCAB_CHAT_TYPE,
-  AI_CARD_CHAT_TYPE,
-  reactionsObj
+  AI_CARD_CHAT_TYPE
 } from '~/constants/defaultValues';
-import { useNavigate } from 'react-router-dom';
+import ChatReactionEmoji from '~/components/ChatReactionEmoji';
+import { getChatReaction } from '~/constants/chatReactions';
+import { Link, useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { canonicalUnreadBadgeIsShown } from '~/helpers/chatUnreadProjection';
+import { chatChannelRowClass } from '../../containers';
 
 const deletedLabel = 'Deleted';
 
@@ -110,21 +112,16 @@ export default function Channel({
   const lastMessage: {
     [key: string]: any;
   } = useMemo(() => {
-    const lastMessageId = messageIds?.[0];
+    const lastMessageId = Number(messageIds?.[0]) || 0;
     let mostRecentMessage = messagesObj?.[lastMessageId];
+    let mostRecentMessageId = mostRecentMessage ? lastMessageId : 0;
     if (Object.values(subchannelObj).length > 0) {
-      let mostRecentSubchannelMessageId = 0;
       for (const subchannel of Object.values(subchannelObj)) {
-        if (
-          subchannel?.messageIds?.[0] &&
-          Number(subchannel?.messageIds?.[0]) >
-            Number(mostRecentSubchannelMessageId)
-        ) {
-          mostRecentSubchannelMessageId = Number(subchannel?.messageIds?.[0]);
-          if (mostRecentSubchannelMessageId > lastMessageId) {
-            mostRecentMessage =
-              subchannel?.messagesObj?.[mostRecentSubchannelMessageId];
-          }
+        const candidateId = Number(subchannel?.messageIds?.[0]) || 0;
+        const candidate = subchannel?.messagesObj?.[candidateId];
+        if (candidate && candidateId > mostRecentMessageId) {
+          mostRecentMessageId = candidateId;
+          mostRecentMessage = candidate;
         }
       }
     }
@@ -164,7 +161,8 @@ export default function Channel({
     const lastReactionTimeStamp = Number(lastReaction?.timeStamp) || 0;
     const lastReactionUserId =
       typeof lastReaction?.userId === 'number' ? lastReaction.userId : null;
-    const lastReactionType = lastReaction?.reaction;
+    const lastReactionType = typeof lastReaction?.reaction === 'string'
+      ? lastReaction.reaction : '';
 
     if (twoPeople && lastReactionType && lastReactionTimeStamp >= lastMessageTimeStamp) {
       const reactorName =
@@ -176,21 +174,14 @@ export default function Channel({
             : members?.find((member) => member.id === lastReactionUserId)
                 ?.username
           : null;
-      const reactionIconPosition = reactionsObj[lastReactionType]?.position;
+      const reactionDefinition = getChatReaction(lastReactionType);
       return (
         <span>
           {reactorName || 'Someone'} reacted{' '}
-          {reactionIconPosition ? (
-            <span
-              className={css`
-                display: inline-block;
-                width: 1.4rem;
-                height: 1.4rem;
-                background: url('/img/emojis.png') ${reactionIconPosition} /
-                  5100%;
-                vertical-align: text-bottom;
-              `}
-            />
+          {reactionDefinition ? (
+            <span role="img" aria-label={reactionDefinition.label}>
+              <ChatReactionEmoji reaction={lastReactionType} size={18} />
+            </span>
           ) : (
             lastReactionType
           )}
@@ -408,23 +399,15 @@ export default function Channel({
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">
-      <div
-        className={css`
-          @media (min-width: ${desktopMinWidth}) {
-            &:hover {
-              background: ${Color.checkboxAreaGray()};
-            }
-          }
-        `}
-        style={{
-          width: '100%',
-          cursor: 'pointer',
-          padding: '1rem',
-          height: '6.5rem',
-          touchAction: 'manipulation',
-          ...(selected ? { backgroundColor: Color.highlightGray() } : {})
+      <Link
+        className={chatChannelRowClass}
+        to={pathId ? `/chat/${pathId}${lastSubchannelPath ? `/${lastSubchannelPath}` : ''}` : '/chat/new'}
+        aria-current={selected ? 'page' : undefined}
+        onClick={(event) => {
+          if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          handleChannelClick();
         }}
-        onClick={handleChannelClick}
       >
         <div
           style={{
@@ -450,7 +433,7 @@ export default function Channel({
                   color:
                     channelId === 2
                       ? generalChatColor
-                      : !effectiveChannelName && !otherMember
+                      : ChannelName === `(${deletedLabel})`
                       ? Color.lighterGray()
                       : undefined,
                   fontWeight: 'bold',
@@ -462,7 +445,7 @@ export default function Channel({
                 }}
                 className={css`
                   @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.5rem;
+                    font-size: max(14px, 1.5rem);
                   }
                 `}
               >
@@ -471,9 +454,9 @@ export default function Channel({
             </div>
             <div
               className={css`
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.3rem;
-                }
+                color: ${badgeShown ? '#334155' : 'var(--chat-secondary-text, #526176)'};
+                font-size: max(12px, 1.3rem);
+                line-height: 1.5;
               `}
               style={{
                 width: '100%',
@@ -486,13 +469,16 @@ export default function Channel({
           </div>
           {badgeShown && (
             <div
+              role="img"
+              aria-label="Unread messages"
               style={{
                 background: chatUnreadColor,
                 display: 'flex',
                 color: '#fff',
                 fontWeight: 'bold',
-                minWidth: '1.3rem',
-                height: '1.3rem',
+                minWidth: 12,
+                height: 12,
+                outline: '1px solid #64748b',
                 borderRadius: '50%',
                 lineHeight: 1,
                 justifyContent: 'center',
@@ -501,7 +487,7 @@ export default function Channel({
             />
           )}
         </div>
-      </div>
+      </Link>
     </ErrorBoundary>
   );
 }

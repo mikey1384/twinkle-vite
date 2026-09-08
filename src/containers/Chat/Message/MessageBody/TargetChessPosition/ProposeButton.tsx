@@ -13,7 +13,9 @@ export default function ProposeButton({
   style?: React.CSSProperties;
 }) {
   return (
-    <div
+    <button
+      type="button"
+      aria-label={label}
       style={{
         border: `1px solid ${Color.black()}`,
         background: '#fff',
@@ -23,6 +25,16 @@ export default function ProposeButton({
         cursor: pointer;
         opacity: 0.8;
         padding: 1rem;
+        min-height: 44px;
+        max-width: 100%;
+        font: inherit;
+        border-radius: 6px;
+        overflow-wrap: anywhere;
+        text-align: center;
+        &:focus-visible {
+          outline: 3px solid #334155;
+          outline-offset: 2px;
+        }
         color: ${Color.black()};
         &:hover {
           opacity: 1;
@@ -36,16 +48,16 @@ export default function ProposeButton({
     >
       <span
         className={css`
-          font-size: 1.7rem;
+          font-size: 14px;
           font-weight: bold;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.3rem;
+            font-size: 14px;
           }
         `}
       >
         <Icon icon="clock-rotate-left" />
         <span style={{ marginLeft: '1rem' }}>{label}</span>
       </span>
-    </div>
+    </button>
   );
 }

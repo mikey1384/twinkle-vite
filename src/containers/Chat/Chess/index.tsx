@@ -1328,9 +1328,10 @@ export default function Chess({
         boardState?.isRewindRequest &&
         rewindRequestId === messageId && (
           <RewindRequestButton
+            key={`${userId}:${channelId}:${rewindRequestId}`}
             isMyMessage={userId === senderId}
             onCancelRewindRequest={onCancelRewindRequest}
-            onAcceptRewind={() => onAcceptRewind?.(boardState)}
+            onAcceptRewind={onAcceptRewind ? () => onAcceptRewind(boardState) : undefined}
             onDeclineRewind={onDeclineRewind}
             username={senderName}
           />

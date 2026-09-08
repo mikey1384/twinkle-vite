@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Loading from '~/components/Loading';
 import InvalidContent from '../../InvalidContent';
+import EmbedLoadError from '../../EmbedLoadError';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CloneButtons from '~/components/Buttons/CloneButtons';
 import SharedPromptBlock from '~/components/SharedPromptBlock';
@@ -9,7 +10,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import DefaultComponent from '../DefaultComponent';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { getPlainPreviewText } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -33,10 +34,12 @@ interface SharedPrompt {
 
 export default function SharedPromptComponent({
   src,
-  isPreview
+  isPreview,
+  isChat = false
 }: {
   src: string;
   isPreview?: boolean;
+  isChat?: boolean;
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
@@ -46,54 +49,51 @@ export default function SharedPromptComponent({
 
   const promptId = useMemo(() => {
     try {
-      // src is like "/shared-prompts/443" or "/shared-prompts/?promptId=443"
-      const parts = src.split('?');
-      const pathname = parts[0];
-      const search = parts[1] || '';
-
-      if (search) {
-        const params = new URLSearchParams(search);
-        const queryId = params.get('promptId');
-        if (queryId) return queryId;
-      }
-
-      // Fallback to path param: /shared-prompts/123
-      const pathParts = pathname.split('/').filter(Boolean);
-      if (pathParts[0] === 'shared-prompts' && pathParts[1]) {
-        return pathParts[1];
-      }
-      return null;
+      const url = new URL(src, 'https://twinkle.local');
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      const candidate = url.searchParams.get('promptId') ||
+        (pathParts[0] === 'shared-prompts' ? pathParts[1] : undefined);
+      return candidate ? Number(candidate) : null;
     } catch {
-      return null;
+      return NaN;
     }
   }, [src]);
+  const validPromptId = Number.isSafeInteger(promptId) && Number(promptId) > 0;
+  const requestKey = `${userId}:${promptId}`;
 
-  const [prompt, setPrompt] = useState<SharedPrompt | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [notFound, setNotFound] = useState(false);
+  const [loadedPrompt, setLoadedPrompt] = useState<{
+    key: string;
+    data: SharedPrompt;
+  } | null>(null);
+  const [requestState, setRequestState] = useState<{
+    key: string;
+    status: 'loading' | 'ready' | 'error' | 'notFound';
+  } | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const prompt = loadedPrompt?.key === requestKey ? loadedPrompt.data : null;
+  const status = requestState?.key === requestKey ? requestState.status : 'loading';
 
   useEffect(() => {
-    if (!promptId) return;
+    if (!validPromptId) return;
+    let cancelled = false;
+    setRequestState({ key: requestKey, status: 'loading' });
     loadPrompt();
     async function loadPrompt() {
-      setLoading(true);
       try {
         const data = await loadSharedPrompt(Number(promptId));
+        if (cancelled) return;
         if (data?.prompt) {
-          setPrompt(data.prompt);
-        } else {
-          setNotFound(true);
+          setLoadedPrompt({ key: requestKey, data: data.prompt });
         }
+        setRequestState({ key: requestKey, status: data?.prompt ? 'ready' : 'notFound' });
       } catch {
-        setNotFound(true);
-      } finally {
-        setLoading(false);
+        if (!cancelled) setRequestState({ key: requestKey, status: 'error' });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [promptId]);
+    return () => { cancelled = true; };
+  }, [promptId, validPromptId, requestKey, retryAttempt, loadSharedPrompt]);
 
-  if (!promptId) {
+  if (promptId === null) {
     return (
       <DefaultComponent
         linkType="shared-prompts"
@@ -102,20 +102,24 @@ export default function SharedPromptComponent({
       />
     );
   }
+  if (!validPromptId) return <InvalidContent />;
 
   return (
     <ErrorBoundary componentPath="RichText/EmbeddedComponent/InternalComponent/SharedPromptComponent">
-      {loading ? (
-        <Loading />
-      ) : notFound ? (
+      {status === 'error' ? (
+        <EmbedLoadError onRetry={() => setRetryAttempt(value => value + 1)} />
+      ) : status === 'notFound' ? (
         <InvalidContent style={{ marginTop: '2rem' }} />
+      ) : status === 'loading' || !prompt ? (
+        <Loading text="Loading shared prompt" innerStyle={{ fontSize: '14px' }} />
       ) : prompt && isPreview ? (
         <button
           type="button"
-          className={compactSharedPromptClass}
+          className={cx(compactSharedPromptClass, isChat && chatPromptTargetClass)}
           onClick={handlePreviewClick}
         >
           <SharedPromptBlock
+            className={isChat ? chatPromptClass : undefined}
             density="compact"
             stats={[
               {
@@ -139,7 +143,7 @@ export default function SharedPromptComponent({
         </button>
       ) : prompt ? (
         <SharedPromptBlock
-          className={cardClass}
+          className={cx(cardClass, isChat && chatPromptClass)}
           footer={
             userId && prompt.userId !== userId ? (
               <CloneButtons
@@ -247,6 +251,49 @@ const cardClass = css`
 
 const timeClass = css`
   color: ${Color.gray()};
+`;
+
+// The chat copy scale is independent of the older feed's fixed preview slots.
+const chatPromptClass = css`
+  &.shared-prompt-block {
+    --shared-prompt-chip-font-size: 12px;
+    --shared-prompt-chip-badge-size: 20px;
+    --shared-prompt-stat-font-size: 13px;
+    --shared-prompt-title-font-size: 17px;
+    --shared-prompt-meta-font-size: 13px;
+    --shared-prompt-instructions-font-size: 14px;
+    --shared-prompt-instructions-padding: 10px;
+    --shared-prompt-instructions-radius: 8px;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 14px;
+    .shared-prompt__chip, .shared-prompt__stat { color: #465167; }
+    .shared-prompt__chip { line-height: 1.4; }
+    .shared-prompt__stat { line-height: 1.5; }
+    .shared-prompt__meta {
+      color: #526176;
+      small { font-size: 12px; line-height: 1.5; color: #64748b; }
+    }
+    > button {
+      min-height: 44px;
+      line-height: 1.4;
+      &:hover { color: #273449; }
+      &:focus-visible {
+        outline: 2px solid #334155;
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+    }
+  }
+`;
+
+const chatPromptTargetClass = css`
+  border-radius: 14px;
+  &:focus-visible {
+    outline: 2px solid #334155;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 3px #fff;
+  }
 `;
 
 

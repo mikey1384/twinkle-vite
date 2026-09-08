@@ -4,9 +4,11 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CloneSharedTopicButton from './CloneSharedTopicButton';
 import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
-import { Color, borderRadius, liftedBoxShadow } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import moment from 'moment';
+import TopicRequestStatus from '../TopicRequestStatus';
+import { chatTopicActionStyle, chatTopicRowClass, chatTopicTitleClass, chatTopicMetadataClass } from '../topicStyles';
 
 export default function SharedTopicsList({
   channelId,
@@ -15,7 +17,8 @@ export default function SharedTopicsList({
   sharedTopicObj,
   pathId,
   onHide,
-  onLoadMore
+  onLoadMore,
+  onRetry
 }: {
   channelId: number;
   channelName: string;
@@ -24,13 +27,19 @@ export default function SharedTopicsList({
     subjects: any[];
     loading: boolean;
     loadMoreButton: boolean;
+    error?: string;
   };
   pathId: string;
   onHide: () => void;
   onLoadMore: () => void;
+  onRetry: () => void;
 }) {
   if (sharedTopicObj.loading && !sharedTopicObj.subjects.length) {
-    return <Loading style={{ height: '12rem' }} />;
+    return <Loading text="Loading shared topics" innerStyle={{ fontSize: '14px' }} style={{ minHeight: 120 }} />;
+  }
+
+  if (sharedTopicObj.error && !sharedTopicObj.subjects.length) {
+    return <TopicRequestStatus message={sharedTopicObj.error} onRetry={onRetry} />;
   }
 
   if (!sharedTopicObj.subjects.length) {
@@ -40,7 +49,7 @@ export default function SharedTopicsList({
           width: 100%;
           text-align: center;
           padding: 3rem 0;
-          font-size: 1.5rem;
+          font-size: 16px;
           color: ${Color.darkerGray()};
         `}
       >
@@ -57,37 +66,37 @@ export default function SharedTopicsList({
           subject.settings?.customInstructions ||
           '';
         return (
-          <article key={`shared-${subject.id}`} className={cardClass}>
+          <article key={`shared-${subject.id}`} className={chatTopicRowClass} style={{ display: 'block' }}>
             <header
               className={css`
-                display: flex;
-                justify-content: space-between;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
                 align-items: center;
-                margin-bottom: 1rem;
+                gap: 12px;
+                margin-bottom: 12px;
+                @media (max-width: 600px) {
+                  grid-template-columns: minmax(0, 1fr);
+                  > :last-child { justify-self: end; }
+                }
               `}
             >
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <h4
-                  className={css`
-                    margin: 0;
-                    font-size: 1.5rem;
-                    color: ${Color[displayedThemeColor]()};
-                  `}
+                  className={chatTopicTitleClass}
+                  style={{ margin: 0 }}
                 >
                   {subject.content}
                 </h4>
                 <div
-                  className={css`
-                    font-size: 1.2rem;
-                    color: ${Color.darkerGray()};
-                    margin-top: 0.3rem;
-                  `}
+                  className={chatTopicMetadataClass}
                 >
                   <UsernameText
+                    color="#526176"
+                    textStyle={{ fontSize: '14px', fontWeight: 600 }}
                     user={{ id: subject.userId, username: subject?.username }}
                   />
                   {subject.timeStamp && (
-                    <small style={{ marginLeft: '0.5rem' }}>
+                    <small>
                       {moment.unix(subject.timeStamp).fromNow()}
                     </small>
                   )}
@@ -109,6 +118,9 @@ export default function SharedTopicsList({
                   border-radius: ${borderRadius};
                   border: 1px solid ${Color.borderGray()};
                   background: ${Color.highlightGray()};
+                  font-size: 16px;
+                  line-height: 1.6;
+                  overflow-wrap: anywhere;
                 `}
               >
                 <RichText
@@ -124,10 +136,11 @@ export default function SharedTopicsList({
           </article>
         );
       })}
-      {sharedTopicObj.loadMoreButton && (
+      {sharedTopicObj.error && <TopicRequestStatus message={sharedTopicObj.error} onRetry={onRetry} />}
+      {sharedTopicObj.loadMoreButton && !sharedTopicObj.error && (
         <LoadMoreButton
           filled
-          style={{ marginTop: '1rem' }}
+          style={{ ...chatTopicActionStyle, marginTop: '1rem' }}
           loading={sharedTopicObj.loading}
           onClick={onLoadMore}
         />
@@ -135,13 +148,3 @@ export default function SharedTopicsList({
     </div>
   );
 }
-
-const cardClass = css`
-  width: 100%;
-  background: ${Color.white()};
-  border-radius: ${borderRadius};
-  padding: 0.3rem 1rem 1.5rem 1rem;
-  margin-bottom: 1.5rem;
-  box-shadow: ${liftedBoxShadow};
-  border: 1px solid ${Color.borderGray(0.6)};
-`;

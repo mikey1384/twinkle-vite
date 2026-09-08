@@ -28,22 +28,36 @@ export default function TwinkleVideoLink({
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        height: '100%'
+        minWidth: 0
       }}
     >
-      <div
-        style={{ position: 'relative', cursor: 'pointer' }}
+      <button
+        type="button"
+        aria-label={title ? `Watch video: ${title}` : 'Watch video'}
         className={css`
-          background: url(https://img.youtube.com/vi/${videoCode}/mqdefault.jpg);
+          position: relative;
+          display: block;
+          flex-shrink: 0;
+          padding: 0;
+          border: 0;
+          border-radius: 10px;
+          cursor: pointer;
+          background: #0b1220
+            url(https://img.youtube.com/vi/${videoCode}/mqdefault.jpg);
           background-repeat: no-repeat;
           background-position: center;
           background-size: contain;
           width: 100%;
-          height: CALC(100% - 5rem);
+          aspect-ratio: 16 / 9;
+          &:focus-visible {
+            outline: 2px solid var(--chat-focus-ring, #365b91);
+            outline-offset: 3px;
+          }
         `}
         onClick={() => setModalShown(true)}
       >
         <img
+          alt=""
           loading="lazy"
           style={{
             width: '8rem',
@@ -54,20 +68,22 @@ export default function TwinkleVideoLink({
           }}
           src={YouTubeIcon}
         />
-      </div>
+      </button>
       <div
         className={css`
           width: 100%;
           text-align: center;
           margin-top: 1rem;
-          height: 2rem;
         `}
       >
         <h3
           style={{
+            margin: 0,
+            fontSize: 'max(14px, 1.4rem)',
+            lineHeight: 1.5,
             overflow: 'hidden',
             display: '-webkit-box',
-            WebkitLineClamp: 1,
+            WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical'
           }}
         >
@@ -76,7 +92,7 @@ export default function TwinkleVideoLink({
       </div>
       {rewardLevel ? (
         userId ? (
-          <div style={{ marginTop: '1rem' }}>
+          <div>
             <XPBar
               isChat
               rewardLevel={rewardLevel}

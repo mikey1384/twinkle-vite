@@ -33,6 +33,7 @@ import MessageRewardModal from '../../Modals/MessageRewardModal';
 import LocalContext from '../../Context';
 import TransactionDetails from '../../TransactionDetails';
 import { MessageStyle } from '../../Styles';
+import { chatAuthorClass, chatCompactTimestampClass } from '../../typography';
 import ActionButtons from './ActionButtons';
 import Content from './Content';
 import GameOverMessage from './GameOverMessage';
@@ -62,6 +63,7 @@ function MessageBody({
   currentChannel,
   displayedThemeColor,
   groupObjs,
+  groupWithPrevious = false,
   index,
   isAIMessage,
   isCielMessage,
@@ -487,6 +489,11 @@ function MessageBody({
     () => moment.unix(timeStamp).format('lll'),
     [timeStamp]
   );
+  const compactTimeStamp = useMemo(
+    () => moment.unix(timeStamp).format('HH:mm'),
+    [timeStamp]
+  );
+  const isGrouped = groupWithPrevious && !isEditing;
 
   const isCurrentlyStreaming = useMemo(
     () =>
@@ -784,6 +791,11 @@ function MessageBody({
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody">
       <div
+        role="article"
+        aria-label={`Message from ${appliedUsername}`}
+        tabIndex={isMenuButtonsAllowed ? 0 : undefined}
+        data-chat-message
+        data-message-grouped={isGrouped}
         className={css`
           width: 100%;
           display: block;
@@ -792,7 +804,8 @@ function MessageBody({
           .menu-button {
             display: ${highlighted ? 'block' : 'none'};
           }
-          &:hover {
+          &:hover,
+          &:focus-within {
             ${
               isMenuButtonsAllowed
                 ? `background-color: ${Color.whiteGray()};`
@@ -802,56 +815,79 @@ function MessageBody({
               display: block;
             }
           }
-          @media (max-width: ${mobileMaxWidth}) {
-            background-color: #fff;
+          @media (max-width: 1024px), (pointer: coarse) {
             .menu-button {
               display: block;
             }
+          }
+          @media (max-width: ${mobileMaxWidth}) {
+            background-color: #fff;
             &:hover {
               background-color: #fff;
             }
           }
         `}
       >
-        <div className={MessageStyle.container}>
+        <div
+          className={MessageStyle.container}
+          style={
+            isGrouped
+              ? { paddingTop: '0.3rem', paddingBottom: '0.3rem' }
+              : undefined
+          }
+        >
           <div className={MessageStyle.profilePic}>
-            <ProfilePic
-              style={{ width: '100%' }}
-              userId={userId}
-              profilePicUrl={appliedProfilePicUrl}
-            />
+            {isGrouped ? (
+              <span
+                title={displayedTimeStamp}
+                aria-label={displayedTimeStamp}
+                className={chatCompactTimestampClass}
+              >
+                {compactTimeStamp}
+              </span>
+            ) : (
+              <ProfilePic
+                style={{ width: '100%' }}
+                userId={userId}
+                profilePicUrl={appliedProfilePicUrl}
+              />
+            )}
           </div>
           <div
-            className={css`
-              width: CALC(100% - 5vw - 3rem);
-              display: flex;
-              flex-direction: column;
-              margin-left: 2rem;
-              position: relative;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-left: 1rem;
-              }
-            `}
+            className={MessageStyle.content}
+            style={
+              isGrouped && isMenuButtonsAllowed
+                ? { paddingRight: 100, minHeight: 44 }
+                : undefined
+            }
           >
-            <div>
-              <UsernameText
+            {!isGrouped && (
+              <div
                 className={css`
-                  font-size: 1.8rem;
-                  line-height: 1;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.6rem;
-                  }
+                  min-height: ${isMenuButtonsAllowed ? '44px' : '2.4rem'};
+                  display: flex;
+                  align-items: baseline;
+                  flex-wrap: wrap;
+                  column-gap: 0.7rem;
+                  padding-right: ${isMenuButtonsAllowed ? '100px' : 0};
+                  overflow-wrap: anywhere;
                 `}
-                user={{
-                  ...user,
-                  id: userId,
-                  username: appliedUsername
-                }}
-              />{' '}
-              <span className={MessageStyle.timeStamp}>
-                {displayedTimeStamp}
-              </span>
-            </div>
+              >
+                <UsernameText
+                  className={chatAuthorClass}
+                  color="#334155"
+                  textStyle={{ fontWeight: 600 }}
+                  user={{
+                    ...user,
+                    id: userId,
+                    username: appliedUsername
+                  }}
+                />
+                <span className={MessageStyle.timeStamp}>
+                  {displayedTimeStamp}
+                </span>
+              </div>
+            )}
             <Content
               appliedUsername={appliedUsername}
               channelId={channelId}
@@ -949,18 +985,19 @@ function MessageBody({
           </div>
           {messageRewardModalShown && genericActionsAllowed && (
             <MessageRewardModal
+              key={`${message.id}:${userId}`}
               userToReward={{
                 username: appliedUsername,
                 id: userId
               }}
-              onSubmit={({
+              onSubmit={async ({
                 reasonId,
                 amount
               }: {
                 reasonId: number;
                 amount: number;
               }) => {
-                onRewardMessageSubmit({ amount, reasonId, message });
+                await onRewardMessageSubmit({ amount, reasonId, message });
                 setMessageRewardModalShown(false);
               }}
               onHide={() => setMessageRewardModalShown(false)}

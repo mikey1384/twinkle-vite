@@ -30,6 +30,31 @@ export default function Streaks({
       `}
     >
       <FilterBar
+        className={css`
+          > .nav-section > nav {
+            padding: 0;
+            min-width: 0;
+          }
+          > .nav-section > nav > button {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            font-size: 16px;
+            line-height: 1.4;
+            width: 100%;
+            min-height: 44px;
+            padding: 8px;
+            white-space: normal;
+            cursor: pointer;
+          }
+          > .nav-section > nav > button:focus-visible {
+            outline: 2px solid currentColor;
+            outline-offset: -3px;
+            border-radius: 4px;
+          }
+        `}
         style={{
           width: '100%',
           height: '4.5rem',
@@ -37,17 +62,23 @@ export default function Streaks({
           marginBottom: 0
         }}
       >
-        <nav
-          className={streaksTab === 'win' ? 'active' : ''}
-          onClick={() => onSetStreaksTab('win')}
-        >
-          Win Streaks
+        <nav className={streaksTab === 'win' ? 'active' : ''}>
+          <button
+            type="button"
+            aria-pressed={streaksTab === 'win'}
+            onClick={() => onSetStreaksTab('win')}
+          >
+            Win Streaks
+          </button>
         </nav>
-        <nav
-          className={streaksTab === 'double' ? 'active' : ''}
-          onClick={() => onSetStreaksTab('double')}
-        >
-          Double Bonus Streaks
+        <nav className={streaksTab === 'double' ? 'active' : ''}>
+          <button
+            type="button"
+            aria-pressed={streaksTab === 'double'}
+            onClick={() => onSetStreaksTab('double')}
+          >
+            Double Bonus Streaks
+          </button>
         </nav>
       </FilterBar>
       <div

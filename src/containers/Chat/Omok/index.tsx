@@ -76,8 +76,8 @@ const ROW_LABELS = Array.from(
 
 // Inline board sizes using viewport units (like Chess) for consistent sizing
 const inlineBoardSize = deviceIsMobile
-  ? 'clamp(11rem, 50vw, 16rem)'
-  : 'clamp(14rem, 30vw, 22rem)';
+  ? 'clamp(190px, 50vw, 220px)'
+  : 'clamp(190px, 30vw, 220px)';
 
 const containerClass = css`
   position: relative;
@@ -147,13 +147,7 @@ export default function Omok({
   displaySize = 'regular'
 }: OmokProps) {
   const isInline = displaySize === 'inline';
-  const axisSize = isInline
-    ? deviceIsMobile
-      ? '0.95rem'
-      : '1.2rem'
-    : deviceIsMobile
-    ? '1.25rem'
-    : '2rem';
+  const axisSize = isInline || deviceIsMobile ? '16px' : '20px';
   const boardSize = useMemo(() => {
     if (isInline) {
       return inlineBoardSize;
@@ -488,7 +482,7 @@ export default function Omok({
           paddingBottom: isInline ? '0.25rem' : '0.5rem'
         }}
         timerPlacement={
-          isFromModal || isInline ? 'overlay' : 'inline'
+          isFromModal ? 'overlay' : 'inline'
         }
         size={isInline ? 'compact' : 'regular'}
         statusShown={topInfoShown}

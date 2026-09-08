@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SwitchButton from '~/components/Buttons/SwitchButton';
@@ -9,10 +9,18 @@ import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { deriveImprovedInstructionsText } from '~/helpers/improveCustomInstructions';
 import { useDraft } from '~/helpers/hooks';
-import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { charLimit } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import { useKeyContext, useViewContext } from '~/contexts';
+import { chatTopicActionStyle } from '../topicStyles';
+import {
+  topicSettingsActionsClass,
+  topicSettingsHelpClass,
+  topicSettingsLabelClass,
+  topicSettingsSectionClass,
+  topicSettingsSwitchStyle,
+  topicSettingsSwitchLabelStyle
+} from './styles';
 
 export default function AIChatTopicMenu({
   newCustomInstructions,
@@ -20,19 +28,26 @@ export default function AIChatTopicMenu({
   isCustomInstructionsOn,
   topicId,
   topicText,
+  displayedThemeColor,
+  disabled = false,
   onSetCustomInstructions,
   onSetIsCustomInstructionsOn,
-  onSetDeleteDraft
+  onSetDeleteDraft,
+  onBusyChange
 }: {
   newCustomInstructions: string;
   customInstructions: string;
   isCustomInstructionsOn: boolean;
   topicId: number;
   topicText: string;
+  displayedThemeColor: string;
+  disabled?: boolean;
   onSetCustomInstructions: (customInstructions: string) => void;
   onSetIsCustomInstructionsOn: React.Dispatch<React.SetStateAction<boolean>>;
   onSetDeleteDraft?: (deleteFn: () => Promise<void>) => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
+  const inputId = useId();
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
@@ -44,6 +59,7 @@ export default function AIChatTopicMenu({
     null
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   const generateRequestIdRef = useRef<string | null>(null);
   const improveRequestIdRef = useRef<string | null>(null);
   const generatedDraftRef = useRef('');
@@ -55,6 +71,18 @@ export default function AIChatTopicMenu({
   const topicTextRef = useRef(topicText);
   const onSetCustomInstructionsRef = useRef(onSetCustomInstructions);
   onSetCustomInstructionsRef.current = onSetCustomInstructions;
+  const onBusyChangeRef = useRef(onBusyChange);
+  onBusyChangeRef.current = onBusyChange;
+  const busy = generating || improving;
+  const controlsDisabled = disabled || busy;
+
+  useEffect(() => {
+    onBusyChangeRef.current?.(busy);
+  }, [busy]);
+
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
 
   const { savingState, saveDraft, deleteDraft, loadDraft } = useDraft({
     contentType: 'customInstructions',
@@ -91,17 +119,19 @@ export default function AIChatTopicMenu({
   );
 
   useEffect(() => {
+    let ignore = false;
+    setSavedDraftContent(null);
     if (isCustomInstructionsOn && userId) {
       handleCheckForDraft();
     }
     async function handleCheckForDraft() {
       const draft = await loadDraft();
-      if (draft?.content) {
+      if (!ignore && draft?.content) {
         setSavedDraftContent(draft.content);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCustomInstructionsOn, userId]);
+    return () => { ignore = true; };
+  }, [isCustomInstructionsOn, userId, topicId, loadDraft]);
 
   useEffect(() => {
     if (AI_FEATURES_DISABLED) return;
@@ -120,6 +150,7 @@ export default function AIChatTopicMenu({
       if (generateDedupWaitTimeoutRef.current) {
         clearTimeout(generateDedupWaitTimeoutRef.current);
       }
+      onBusyChangeRef.current?.(false);
     };
   }, []);
 
@@ -326,48 +357,31 @@ export default function AIChatTopicMenu({
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TopicSettingsModal/AIChatMenu">
-      <div
-        className={css`
-          margin-top: 0.5rem;
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        `}
-      >
+      <div className={topicSettingsSectionClass}>
         <SwitchButton
           checked={isCustomInstructionsOn}
+          disabled={disabled}
+          ariaLabel="Custom instructions"
+          small={false}
+          theme={displayedThemeColor}
+          style={topicSettingsSwitchStyle}
           onChange={() =>
             onSetIsCustomInstructionsOn(
               (isCustomInstructionsOn) => !isCustomInstructionsOn
             )
           }
-          labelStyle={{
-            fontWeight: 'bold',
-            fontSize: '1.3rem',
-            color: '#333'
-          }}
+          labelStyle={topicSettingsSwitchLabelStyle}
           label="Custom Instructions"
         />
         {isCustomInstructionsOn && (
-          <div
-            className={css`
-              display: flex;
-              margin-top: 2rem;
-            `}
-          >
+          <div className={topicSettingsActionsClass}>
             <Button
               onClick={handleGenerateCustomInstructions}
               color="darkBlue"
               variant="soft"
               tone="raised"
-              disabled={generating || improving}
-              style={{
-                fontSize: '1.1rem',
-                padding: '1rem',
-                marginRight: '1rem'
-              }}
+              disabled={controlsDisabled}
+              style={chatTopicActionStyle}
             >
               {generating ? (
                 <>
@@ -391,11 +405,8 @@ export default function AIChatTopicMenu({
                 color="magenta"
                 variant="soft"
                 tone="raised"
-                disabled={generating || improving}
-                style={{
-                  fontSize: '1.1rem',
-                  padding: '1rem'
-                }}
+                disabled={controlsDisabled || !!commentExceedsCharLimit}
+                style={chatTopicActionStyle}
               >
                 {improving ? (
                   <>
@@ -420,20 +431,17 @@ export default function AIChatTopicMenu({
           </div>
         )}
         {error && (
-          <div
-            className={css`
-              margin-top: 1rem;
-              color: ${Color.red()};
-              font-size: 1.2rem;
-              text-align: center;
-            `}
-          >
+          <div ref={errorRef} tabIndex={-1} role="alert" className={topicSettingsHelpClass} data-error="true">
             {error}
           </div>
         )}
         {isCustomInstructionsOn && (
-          <div style={{ width: '100%', marginTop: '2rem' }}>
+          <div style={{ width: '100%', marginTop: 16 }}>
+            <label htmlFor={inputId} className={topicSettingsLabelClass}>
+              Instructions for this topic
+            </label>
             <Textarea
+              id={inputId}
               innerRef={textareaRef}
               placeholder="Enter instructions..."
               style={{
@@ -441,33 +449,37 @@ export default function AIChatTopicMenu({
                 position: 'relative',
                 minHeight: '5rem'
               }}
-              hasError={!!commentExceedsCharLimit}
-              minRows={3}
+              hasError={!!commentExceedsCharLimit || !newCustomInstructions.trim()}
+              aria-invalid={!!commentExceedsCharLimit || !newCustomInstructions.trim()}
+              aria-describedby={`${inputId}-help`}
+              minRows={5}
               maxRows={10}
               value={newCustomInstructions}
-              disabled={generating || improving}
-              disableAutoResize={generating || improving}
+              disabled={controlsDisabled}
+              disableAutoResize={busy}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+                if (controlsDisabled) return;
                 const value = event.target.value;
                 onSetCustomInstructions(value);
                 saveDraft({ content: value });
               }}
               onKeyUp={handleKeyUp}
             />
-            <div
-              className={css`
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-top: 0.5rem;
-              `}
-            >
+            <p id={`${inputId}-help`} className={topicSettingsHelpClass}
+              data-error={!!commentExceedsCharLimit || !newCustomInstructions.trim()}>
+              {commentExceedsCharLimit
+                ? `Keep instructions within ${charLimit.comment.toLocaleString()} characters. `
+                : !newCustomInstructions.trim() ? 'Add instructions or turn this option off. ' : ''}
+              {newCustomInstructions.length.toLocaleString()} / {charLimit.comment.toLocaleString()} characters
+            </p>
+            <div className={topicSettingsActionsClass} style={{ justifyContent: 'space-between', marginTop: 8 }}>
               {hasDraftToRestore ? (
                 <Button
                   color="orange"
                   variant="ghost"
                   onClick={handleRestoreDraft}
-                  style={{ padding: '0.5rem 1rem', fontSize: '1.1rem' }}
+                  disabled={controlsDisabled}
+                  style={chatTopicActionStyle}
                 >
                   <Icon icon="rotate-left" style={{ marginRight: '0.5rem' }} />
                   Restore draft
@@ -484,12 +496,13 @@ export default function AIChatTopicMenu({
   );
 
   function handleGenerateCustomInstructions() {
-    if (generating) return;
+    if (AI_FEATURES_DISABLED || disabled || generateRequestIdRef.current || improveRequestIdRef.current) return;
     if (generateDedupWaitTimeoutRef.current) {
       clearTimeout(generateDedupWaitTimeoutRef.current);
       generateDedupWaitTimeoutRef.current = null;
     }
     setError('');
+    onBusyChangeRef.current?.(true);
     setGenerating(true);
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     generateRequestIdRef.current = requestId;
@@ -501,10 +514,12 @@ export default function AIChatTopicMenu({
   }
 
   function handleImproveCustomInstructions() {
-    if (improving) return;
+    if (AI_FEATURES_DISABLED || disabled || commentExceedsCharLimit ||
+        generateRequestIdRef.current || improveRequestIdRef.current) return;
     const trimmed = newCustomInstructions.trim();
     if (!trimmed) return;
     setError('');
+    onBusyChangeRef.current?.(true);
     originalInstructionsRef.current = newCustomInstructions;
     setImproving(true);
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -518,16 +533,20 @@ export default function AIChatTopicMenu({
   }
 
   function handleKeyUp(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (controlsDisabled || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
     if (event.key === ' ') {
-      onSetCustomInstructions(addEmoji(event.currentTarget.value));
+      const value = addEmoji(event.currentTarget.value);
+      onSetCustomInstructions(value);
+      saveDraft({ content: value });
     }
   }
 
   function handleRestoreDraft() {
-    if (savedDraftContent) {
+    if (!controlsDisabled && savedDraftContent) {
       onSetCustomInstructions(savedDraftContent);
-
+      saveDraft({ content: savedDraftContent });
       setSavedDraftContent(null);
+      textareaRef.current?.focus();
     }
   }
 }

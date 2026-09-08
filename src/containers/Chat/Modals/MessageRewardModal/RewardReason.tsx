@@ -7,11 +7,13 @@ export default function RewardReason({
   selectedReasonId,
   reasonId,
   onSelectReasonId,
+  disabled = false,
   style
 }: {
   selectedReasonId: number;
   reasonId: number;
   onSelectReasonId: (v: number) => void;
+  disabled?: boolean;
   style: React.CSSProperties;
 }) {
   const reason = rewardReasons[reasonId];
@@ -19,8 +21,12 @@ export default function RewardReason({
 
   return (
     <Button
+      aria-pressed={reasonId === selectedReasonId}
+      disabled={disabled}
       color={reason.color}
-      onClick={() => onSelectReasonId(reasonId)}
+      onClick={() => {
+        if (!disabled) onSelectReasonId(reasonId);
+      }}
       variant={reasonId === selectedReasonId ? 'solid' : 'soft'}
       tone="raised"
       style={style}

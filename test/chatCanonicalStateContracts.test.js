@@ -140,7 +140,7 @@ test('reaction requests expose pending UI without synthesizing canonical counts'
   );
   assert.match(
     reactionsSource,
-    /reactionCount=\{reactionObj\[reaction\]\?\.length \|\| 0\}/
+    /reactionCount=\{reactionObj\.get\(reaction\)\?\.length \|\| 0\}/
   );
   assert.match(reactionSource, /aria-busy=\{isPending\}/);
   assert.match(reactionSource, /icon="spinner"/);
@@ -228,7 +228,7 @@ test('canonical last-read reconciliation is monotonic across writes, reads, and 
   );
   assert.match(
     requestSource,
-    /async updateChatLastRead\(\{[\s\S]*?lastReadMessageId[\s\S]*?\{ channelId, lastReadMessageId, readSource \}/
+    /async updateChatLastRead\(\{[\s\S]*?lastReadMessageId[\s\S]*?await request\.post\(\s*`\$\{URL\}\/chat\/lastRead`,\s*\{\s*channelId,\s*lastReadMessageId,\s*readSource,\s*visibleMessageCount,\s*\.\.\.readTelemetry\s*\}/
   );
   assert.match(mainSource, /reconcileChannelLastRead\(selectedChannelId\)/);
   assert.match(

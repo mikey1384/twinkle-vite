@@ -18,6 +18,7 @@ import { css } from '@emotion/css';
 // source of truth for the profile-card presentation.
 export default function ProfileEmbedCard({
   profile,
+  isChat = false,
   theme,
   heading,
   online,
@@ -27,6 +28,7 @@ export default function ProfileEmbedCard({
   onActivate
 }: {
   profile: any;
+  isChat?: boolean;
   theme?: string;
   heading?: string;
   online?: boolean;
@@ -48,6 +50,7 @@ export default function ProfileEmbedCard({
     <div
       className={[
         profileEmbedCardClass,
+        isChat ? chatProfileEmbedClass : '',
         'profile-embed-card',
         selfBordered ? 'profile-embed-card--bordered' : '',
         fillHeight ? 'profile-embed-card--fill' : ''
@@ -76,7 +79,7 @@ export default function ProfileEmbedCard({
         <div className="profile-embed-card__details">
           <strong className="profile-embed-card__username">{username}</strong>
           <div className="profile-embed-card__title-row">
-            <UserTitle user={profile} className="profile-embed-card__title" />
+            <UserTitle user={profile} readOnly={isChat} className="profile-embed-card__title" />
             {realName ? (
               <span className="profile-embed-card__real-name">{realName}</span>
             ) : null}
@@ -84,15 +87,16 @@ export default function ProfileEmbedCard({
           {profile?.statusMsg ? (
             <div className="profile-embed-card__status">
               <StatusMsg
+                contrastSafe={isChat}
                 statusColor={statusColor}
                 statusMsg={profile.statusMsg}
                 userId={profile.id}
                 style={{
                   marginTop: '0.4rem',
                   padding: '0.55rem 0.7rem',
-                  fontSize: '1.12rem',
-                  lineHeight: 1.28,
-                  maxHeight: '5rem',
+                  fontSize: isChat ? '14px' : '1.12rem',
+                  lineHeight: isChat ? 1.5 : 1.28,
+                  maxHeight: isChat ? undefined : '5rem',
                   overflow: 'hidden',
                   boxShadow: 'none'
                 }}
@@ -115,8 +119,8 @@ export default function ProfileEmbedCard({
                     section={row.section}
                     style={{
                       fontSize: 'inherit',
-                      lineHeight: 1.28,
-                      minHeight: '1.28em'
+                      lineHeight: isChat ? 1.5 : 1.28,
+                      minHeight: isChat ? '1.5em' : '1.28em'
                     }}
                     theme={theme}
                   >
@@ -152,11 +156,13 @@ export default function ProfileEmbedCard({
   );
 
   function handleClick(event: React.MouseEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest('a,button,input,textarea,select')) return;
     event.stopPropagation();
     onActivate?.();
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) return;
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     event.stopPropagation();
@@ -480,5 +486,36 @@ const profileEmbedCardClass = css`
     .profile-embed-card__empty-bio {
       font-size: max(1.35rem, 13.5px);
     }
+  }
+`;
+
+const chatProfileEmbedClass = css`
+  && {
+    min-width: 0;
+    padding: 12px;
+    gap: 10px;
+    border-radius: 14px;
+    .profile-embed-card__heading { font-size: 14px; line-height: 1.5; white-space: normal; color: #334155; }
+    .profile-embed-card__header {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      grid-template-areas: 'avatar details' 'bio bio';
+      gap: 12px;
+      align-items: start;
+      text-align: left;
+    }
+    .profile-embed-card__avatar-wrap { grid-area: avatar; width: 56px; }
+    .profile-embed-card__details { grid-area: details; align-items: flex-start; gap: 6px; text-align: left; }
+    .profile-embed-card__username { font-size: 17px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
+    .profile-embed-card__title-row { justify-content: flex-start; line-height: 1.5; }
+    .profile-embed-card__title, .profile-embed-card__real-name { font-size: 13px; line-height: 1.5; color: #526176; white-space: normal; overflow-wrap: anywhere; }
+    .profile-embed-card__bio-panel { grid-area: bio; display: flex; width: 100%; border: 0; padding: 0; }
+    .profile-embed-card__bio, .profile-embed-card__empty-bio { font-size: 14px; line-height: 1.5; font-weight: 400; }
+    .profile-embed-card__rank-strip { min-height: 36px; gap: 8px; flex-wrap: wrap; padding: 6px 8px; }
+    .profile-embed-card__rank-xp { display: block; font-size: 13px; line-height: 1.5; color: #166534; }
+    .profile-embed-card__rank-xp span { color: #72520d; }
+    .profile-embed-card__rank-strip.top-rank .profile-embed-card__rank-xp { color: #86efac; }
+    .profile-embed-card__rank-strip.top-rank .profile-embed-card__rank-xp span { color: #f5d878; }
+    &:focus-visible { outline: 2px solid #334155; outline-offset: 3px; }
   }
 `;

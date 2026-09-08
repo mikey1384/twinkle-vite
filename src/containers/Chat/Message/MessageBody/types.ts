@@ -6,6 +6,7 @@ export interface MessageBodyProps {
   currentChannel: any;
   displayedThemeColor: string;
   groupObjs: any;
+  groupWithPrevious?: boolean;
   isAIMessage: boolean;
   isCielMessage?: boolean;
   isAICardModalShown: boolean;

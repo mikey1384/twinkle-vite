@@ -46,7 +46,7 @@ export default function TwinkleVideo({
     <ErrorBoundary componentPath="Chat/Message/TextMessage/VideoAttachment/TwinkleVideo">
       <div style={{ position: 'relative', ...style }}>
         {!loaded ? (
-          <Loading style={{ height: '100%' }} />
+          <Loading style={{ width: '100%', aspectRatio: '16 / 9' }} />
         ) : deviceIsMobile ? (
           <TwinkleVideoLink
             rewardLevel={rewardLevel}
@@ -58,7 +58,7 @@ export default function TwinkleVideo({
         ) : (
           <XPVideoPlayer
             isChat
-            style={{ width: '65rem', height: '100%' }}
+            style={{ width: '100%', minWidth: 0 }}
             rewardLevel={rewardLevel}
             videoCode={content}
             videoId={videoId}

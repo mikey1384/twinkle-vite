@@ -15,12 +15,14 @@ export default function UserTitle({
   },
   onTitleModalShown,
   className,
-  style
+  style,
+  readOnly = false
 }: {
   user: User;
   onTitleModalShown?: (shown: boolean) => void;
   style?: React.CSSProperties;
   className?: string;
+  readOnly?: boolean;
 }) {
   const myId = useKeyContext((v) => v.myState.userId);
   const { level } = useUserLevel(user);
@@ -50,11 +52,11 @@ export default function UserTitle({
   return appliedUserTitle ? (
     <div className={className} style={style}>
       <span
-        onClick={handleTitleSelectionModalShown}
+        onClick={readOnly ? undefined : handleTitleSelectionModalShown}
         className={css`
-          cursor: ${user.id === myId ? 'pointer' : 'default'};
+          cursor: ${!readOnly && user.id === myId ? 'pointer' : 'default'};
           &:hover {
-            text-decoration: ${user.id === myId ? 'underline' : 'none'};
+            text-decoration: ${!readOnly && user.id === myId ? 'underline' : 'none'};
           }
         `}
       >

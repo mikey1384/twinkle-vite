@@ -18,7 +18,7 @@ import MainNavs from './MainNavs';
 import AccountMenu from './AccountMenu';
 import useIsAIChat from '../hooks/useIsAIChat';
 
-import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_FALLBACK } from '~/constants/appShell';
 
 import {
@@ -234,6 +234,7 @@ export default function Header({
         className={`notranslate unselectable ${css`
           z-index: 99999;
           position: relative;
+          top: 0;
           font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
           font-size: 1.7rem;
           background: ${headerColor};
@@ -257,10 +258,8 @@ export default function Header({
               display: none;
             }
           }
-          @media (min-width: ${desktopMinWidth}) {
-            top: 0;
-          }
           @media (max-width: ${mobileMaxWidth}) {
+            top: auto;
             bottom: 0;
             box-shadow: none;
             height: var(--mobile-nav-height, 7rem);

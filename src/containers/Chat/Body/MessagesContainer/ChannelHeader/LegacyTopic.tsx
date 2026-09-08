@@ -119,6 +119,7 @@ export default function LegacyTopic({
     <section
       className={css`
         width: 100%;
+        min-width: 0;
         height: 100%;
         display: flex;
         justify-content: space-between;
@@ -127,13 +128,14 @@ export default function LegacyTopic({
         padding-right: ${isEditingTopic ? '0' : '1rem'};
         @media (max-width: ${mobileMaxWidth}) {
           padding-right: 0.5rem;
-          width: ${isEditingTopic ? '100%' : 'CALC(100% - 30px)'};
         }
       `}
     >
       <div
         style={{
           width: '100%',
+          minWidth: 0,
+          flex: '1 1 0',
           flexDirection: 'column'
         }}
       >
@@ -195,7 +197,16 @@ export default function LegacyTopic({
                 : displayedContent}
             </span>
             <FullTextReveal text={displayedContent} show={onHover} />
-            <div style={{ width: '100%' }}>{subjectDetails}</div>
+            <div
+              className={css`
+                width: 100%;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+              `}
+            >
+              {subjectDetails}
+            </div>
           </div>
         )}
       </div>
@@ -203,11 +214,13 @@ export default function LegacyTopic({
         <div
           style={{
             width: '5rem',
+            flex: '0 0 auto',
             display: 'flex',
             justifyContent: 'flex-end'
           }}
         >
           <Button
+            aria-label="Reply to featured topic"
             color={buttonColor}
             hoverColor={buttonHoverColor}
             variant="solid"

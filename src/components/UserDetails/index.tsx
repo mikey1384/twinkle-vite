@@ -29,6 +29,7 @@ const doesNotHaveBioLabel = ' does not have a bio, yet';
 
 export default function UserDetails({
   noLink,
+  isChatEmbed = false,
   identityBadge,
   profile,
   removeStatusMsg,
@@ -40,6 +41,7 @@ export default function UserDetails({
   userId
 }: {
   identityBadge?: React.ReactNode;
+  isChatEmbed?: boolean;
   noLink?: boolean;
   onSetBioEditModalShown?: (v: any) => any;
   profile: any;
@@ -64,28 +66,27 @@ export default function UserDetails({
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [statusSubmitting, setStatusSubmitting] = useState(false);
   useEffect(() => {
-    onSetEditedStatusColor('');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+    if (!unEditable) onSetEditedStatusColor('');
+  }, [userId, unEditable, onSetEditedStatusColor]);
   const StatusInputRef: React.RefObject<any> = useRef(null);
   const { profileFirstRow, profileSecondRow, profileThirdRow } = profile;
   const statusColor = useMemo(() => {
     return (
-      (userId === profile.id
+      (!unEditable && userId === profile.id
         ? editedStatusColor || profile.statusColor
         : profile.statusColor) || 'logoBlue'
     );
-  }, [editedStatusColor, profile.id, profile.statusColor, userId]);
+  }, [editedStatusColor, profile.id, profile.statusColor, userId, unEditable]);
   const noProfile = useMemo(
     () => !profileFirstRow && !profileSecondRow && !profileThirdRow,
     [profileFirstRow, profileSecondRow, profileThirdRow]
   );
   const displayedStatusMsg = useMemo(
     () =>
-      userId === profile.id && editedStatusMsg
+      !unEditable && userId === profile.id && editedStatusMsg
         ? editedStatusMsg
         : profile.statusMsg,
-    [editedStatusMsg, profile.id, profile.statusMsg, userId]
+    [editedStatusMsg, profile.id, profile.statusMsg, userId, unEditable]
   );
   return (
     <ErrorBoundary
@@ -109,10 +110,10 @@ export default function UserDetails({
           onClick={handleReloadProfile}
           style={{
             width: 'auto',
-            fontSize: small ? '3rem' : '3.5rem',
+            fontSize: isChatEmbed ? '20px' : small ? '3rem' : '3.5rem',
             fontWeight: 'bold',
             color: Color.darkerGray(),
-            whiteSpace: 'nowrap',
+            whiteSpace: isChatEmbed ? 'normal' : 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             lineHeight: 1.3,
@@ -137,10 +138,11 @@ export default function UserDetails({
         </Link>
         <div
           style={{
-            fontSize: small ? '1.3rem' : '1.5rem'
+            fontSize: isChatEmbed ? '13px' : small ? '1.3rem' : '1.5rem'
           }}
         >
           <UserTitle
+            readOnly={unEditable}
             user={profile}
             className={`unselectable ${css`
               font-size: ${small ? '1.3rem' : '1.5rem'};
@@ -148,12 +150,12 @@ export default function UserDetails({
               display: inline;
               margin-right: 0.7rem;
               color: ${Color.darkGray()};
-              font-size: 1.5rem;
+              font-size: ${isChatEmbed ? '13px' : '1.5rem'};
             `}`}
           />
           <span
             className={css`
-              color: ${Color.gray()};
+              color: ${isChatEmbed ? '#64748b' : Color.gray()};
             `}
           >
             {profile.realName}
@@ -184,6 +186,8 @@ export default function UserDetails({
       )}
       {(profile.statusMsg || displayedStatusMsg) && (
         <StatusMsg
+          contrastSafe={isChatEmbed}
+          style={isChatEmbed ? { fontSize: '14px', lineHeight: 1.5, padding: '10px', borderRadius: 8, boxShadow: 'none' } : undefined}
           statusColor={statusColor}
           statusMsg={displayedStatusMsg}
           userId={userId || 0}
@@ -224,6 +228,7 @@ export default function UserDetails({
         )}
       {!noProfile && (
         <Bio
+          style={isChatEmbed ? { fontSize: '14px', paddingLeft: 0, marginTop: '12px' } : undefined}
           small={small}
           userId={profile.id}
           firstRow={profileFirstRow}

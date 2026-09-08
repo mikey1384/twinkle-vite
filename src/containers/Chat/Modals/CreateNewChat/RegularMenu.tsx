@@ -1,90 +1,50 @@
-import React, { useMemo, useState } from 'react';
-import ErrorBoundary from '~/components/ErrorBoundary';
+import React, { useId, useState } from 'react';
 import Button from '~/components/Button';
-import Input from '~/components/Texts/Input';
-import SwitchButton from '~/components/Buttons/SwitchButton';
-import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import useChatDialogRequest from '../useChatDialogRequest';
+import { chatFormActionStyle, chatFormClass } from '../chatFormStyles';
 
-const backLabel = 'Back';
-const cancelLabel = 'Cancel';
-const createLabel = 'Create';
-const enterGroupNameLabel = 'Enter Group Name';
-const newGroupLabel = 'New Group';
-const groupNameLabel = 'Group name';
-const youCanChangeThisSettingLaterLabel = 'You can change this setting later';
-
-export default function RegularMenu({
-  creatingChat,
-  onBackClick,
-  onHide,
-  onDone
-}: {
+export default function RegularMenu({ creatingChat, onBackClick, onHide, onDone }: {
   creatingChat: boolean;
   onBackClick?: () => void;
   onHide: () => void;
-  onDone: (v: any) => void;
+  onDone: (value: any) => void | Promise<void>;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const [channelName, setChannelName] = useState('');
   const [isClosed, setIsClosed] = useState(false);
+  const request = useChatDialogRequest(userId);
+  const nameId = useId();
+  const busy = creatingChat || request.busy;
+  const valid = Boolean(channelName.trim()) && channelName.length <= 150;
 
-  const anyoneCanInviteLabel = useMemo(() => {
-    return (
-      <>
-        <span style={{ color: Color.logoBlue() }}>Anyone</span> can invite new
-        members:
-      </>
-    );
-  }, []);
+  return <section className={chatFormClass}>
+    <header><h2>New group</h2><p className="description">Make room for a conversation. Invite people after creating your group.</p></header>
+    <main>
+      <div><label htmlFor={nameId}>Group name</label>
+        <input id={nameId} type="text" autoFocus maxLength={150} value={channelName} disabled={busy}
+          placeholder="Give your group a name" onChange={(event) => setChannelName(event.target.value)}
+          aria-describedby={nameId + '-hint'} />
+        <p id={nameId + '-hint'} className="field-hint">Up to 150 characters.</p>
+      </div>
+      <div className="setting"><label><input type="checkbox" role="switch" checked={!isClosed} disabled={busy}
+        onChange={(event) => setIsClosed(!event.target.checked)} /><span>Anyone can invite new members</span></label>
+        <p className="field-hint">You can change this later in group settings.</p>
+      </div>
+      {request.error && <p ref={request.errorRef} id={request.errorId} className="error" role="alert">{request.error}</p>}
+    </main>
+    <footer>
+      <Button style={chatFormActionStyle} variant="ghost" uppercase={false} disabled={busy} onClick={onBackClick || onHide}>{onBackClick ? 'Back' : 'Cancel'}</Button>
+      <Button style={chatFormActionStyle} variant="soft" tone="raised" uppercase={false} color={doneColor}
+        disabled={!valid} aria-busy={busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={busy ? 'Creating group' : 'Create group'} onClick={handleDone}>{busy ? 'Creating…' : 'Create group'}</Button>
+    </footer>
+  </section>;
 
-  return (
-    <ErrorBoundary componentPath="CreateNewChat/RegularMenu">
-      <header>{newGroupLabel}</header>
-      <main>
-        <div style={{ width: '100%' }}>
-          <div style={{ marginTop: '1.5rem' }}>
-            <h3>{groupNameLabel}</h3>
-            <Input
-              style={{ marginTop: '1rem' }}
-              placeholder={enterGroupNameLabel}
-              maxLength="150"
-              value={channelName}
-              onChange={setChannelName}
-            />
-          </div>
-          <div style={{ marginTop: '1.5rem' }}>
-            <SwitchButton
-              labelStyle={{ fontSize: '1.7rem', fontWeight: 'bold' }}
-              label={anyoneCanInviteLabel}
-              checked={!isClosed}
-              onChange={() => setIsClosed((isClosed) => !isClosed)}
-            />
-            <p>({youCanChangeThisSettingLaterLabel})</p>
-          </div>
-        </div>
-      </main>
-      <footer>
-        <Button
-          style={{ marginRight: '0.7rem' }}
-          variant="ghost"
-          onClick={onBackClick || onHide}
-        >
-          {onBackClick ? backLabel : cancelLabel}
-        </Button>
-        <Button
-          color={doneColor}
-          onClick={handleDone}
-          disabled={creatingChat || !channelName}
-        >
-          {createLabel}
-        </Button>
-      </footer>
-    </ErrorBoundary>
-  );
-
-  function handleDone() {
-    onDone({ userId, channelName, isClosed });
+  async function handleDone() {
+    if (!valid || creatingChat) return;
+    await request.run('Couldn’t create the group. Check your chats before trying again.', async (isCurrent) => {
+      await onDone({ userId, channelName: channelName.trim(), isClosed, canApply: isCurrent });
+    });
   }
 }

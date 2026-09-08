@@ -338,9 +338,14 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
 
       const targetDocument = portalTarget?.ownerDocument ?? document;
       function handleDocumentKeyDown(event: KeyboardEvent) {
+        if (event.defaultPrevented || event.isComposing || event.keyCode === 229) {
+          return;
+        }
         const topModalId = Math.max(...Array.from(openModals));
         if (modalId !== topModalId) return;
         if (event.key === 'Escape' && closeOnEscape) {
+          event.preventDefault();
+          event.stopPropagation();
           onClose();
           return;
         }
@@ -349,36 +354,41 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
         }
       }
 
-      targetDocument.addEventListener('keydown', handleDocumentKeyDown, true);
+      // Let a search field, editor or nested popup consume Escape first.
+      targetDocument.addEventListener('keydown', handleDocumentKeyDown);
       return () =>
         targetDocument.removeEventListener(
           'keydown',
-          handleDocumentKeyDown,
-          true
+          handleDocumentKeyDown
         );
     }, [closeOnEscape, isOpen, onClose, modalId, portalTarget]);
 
     useEffect(() => {
       if (!isOpen) return;
 
-      const previouslyFocusedElement = document.activeElement as HTMLElement;
+      const targetDocument = portalTarget?.ownerDocument ?? document;
+      const targetWindow = targetDocument.defaultView ?? window;
+      const previouslyFocusedElement = targetDocument.activeElement as HTMLElement | null;
       previousActiveElement.current = previouslyFocusedElement;
-      const focusTimer = window.setTimeout(() => {
-        modalRef.current?.focus();
+      const focusTimer = targetWindow.setTimeout(() => {
+        const modal = modalRef.current;
+        if (modal && !modal.contains(targetDocument.activeElement)) {
+          modal.focus();
+        }
         if (allowOverflow && backdropRef.current) {
           backdropRef.current.scrollTop = 0;
         }
       }, 50);
 
       return () => {
-        window.clearTimeout(focusTimer);
+        targetWindow.clearTimeout(focusTimer);
         if (previousActiveElement.current !== previouslyFocusedElement) return;
-        if (previouslyFocusedElement.isConnected) {
+        if (previouslyFocusedElement?.isConnected) {
           previouslyFocusedElement.focus();
         }
         previousActiveElement.current = null;
       };
-    }, [isOpen, allowOverflow]);
+    }, [isOpen, allowOverflow, portalTarget]);
 
     useEffect(() => {
       if (isOpen) {
@@ -666,8 +676,12 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
       </ErrorBoundary>
     );
 
-    // Use portal with unique container if portal root exists, otherwise render inline
-    return portalRoot ? createPortal(modalContent, container) : modalContent;
+    if (portalRoot) return createPortal(modalContent, container);
+    // Wait for the layout effect to attach an available portal container before
+    // mounting children. An inline-to-portal move remounts them and repeats
+    // effects (such as chat instruction generation); a detached portal would
+    // instead give their first layout effects incorrect measurements.
+    return portalTarget || document.getElementById('modal') ? null : modalContent;
   }
 );
 

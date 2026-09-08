@@ -16,6 +16,10 @@ const stoneBaseClass = css`
 `;
 
 interface CellProps {
+  label: string;
+  navigationIndex?: number;
+  tabIndex?: number;
+  onFocus?: () => void;
   value: OmokCellType;
   isLastMove: boolean;
   isWinCell?: boolean;
@@ -24,28 +28,35 @@ interface CellProps {
 }
 
 function OmokCell({
+  label,
+  navigationIndex,
+  tabIndex,
+  onFocus,
   value,
   isLastMove,
   isWinCell,
   canInteract,
   onClick
 }: CellProps) {
-  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (!canInteract) return;
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onClick();
-    }
-  }
+  const Element = canInteract ? 'button' : 'div';
 
   return (
-    <div
-      role={canInteract ? 'button' : 'presentation'}
-      tabIndex={canInteract ? 0 : -1}
+    <Element
+      type={canInteract ? 'button' : undefined}
+      role={canInteract ? undefined : 'img'}
+      aria-label={label}
+      data-omok-index={navigationIndex}
+      tabIndex={tabIndex}
+      onFocus={onFocus}
       className={css`
         width: 100%;
         height: 100%;
         position: relative;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        appearance: none;
+        &:focus-visible { outline: 2px solid #334155; outline-offset: -2px; z-index: 1; }
         touch-action: manipulation;
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
         background: linear-gradient(
@@ -61,21 +72,10 @@ function OmokCell({
         }
       `}
       style={{ cursor: canInteract ? 'pointer' : undefined }}
-      onPointerDown={(e) => {
-        if (canInteract && e.pointerType !== 'mouse') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      onClick={(e) => {
-        if ((e.nativeEvent as PointerEvent).pointerType !== 'touch') {
-          onClick();
-        }
-      }}
-      onKeyDown={handleKeyDown}
+      onClick={onClick}
     >
       {value === 'black' && (
-        <div
+        <span
           className={stoneBaseClass}
           style={{
             background: Color.black(),
@@ -91,7 +91,7 @@ function OmokCell({
         />
       )}
       {value === 'white' && (
-        <div
+        <span
           className={stoneBaseClass}
           style={{
             background: Color.white(),
@@ -106,7 +106,7 @@ function OmokCell({
           }}
         />
       )}
-    </div>
+    </Element>
   );
 }
 

@@ -690,6 +690,7 @@ export function useWordleLabels({
   numGuesses,
   solution,
   wordLevel,
+  wordLevelColor,
   xpRewardAmount,
   username,
   userId,
@@ -700,6 +701,7 @@ export function useWordleLabels({
   numGuesses: number;
   solution: string;
   wordLevel: number;
+  wordLevelColor?: string;
   xpRewardAmount: number;
   username: string;
   userId: number;
@@ -728,18 +730,23 @@ export function useWordleLabels({
   const solutionLabel = useMemo(
     () => (
       <>
-        The word was <b>{solution}</b> (
-        <b
-          style={{
-            color: Color[wordLevelHash[wordLevel]?.color || 'logoBlue']()
-          }}
-        >
-          {wordLevelHash[wordLevel]?.label || ''}
-        </b>{' '}
-        word)
+        The word was <b>{solution}</b>{' '}
+        <span style={{ whiteSpace: 'nowrap' }}>
+          (
+          <b
+            style={{
+              color:
+                wordLevelColor ||
+                Color[wordLevelHash[wordLevel]?.color || 'logoBlue']()
+            }}
+          >
+            {wordLevelHash[wordLevel]?.label || ''}
+          </b>{' '}
+          word)
+        </span>
       </>
     ),
-    [solution, wordLevel]
+    [solution, wordLevel, wordLevelColor]
   );
 
   const guessLabel = useMemo(() => {

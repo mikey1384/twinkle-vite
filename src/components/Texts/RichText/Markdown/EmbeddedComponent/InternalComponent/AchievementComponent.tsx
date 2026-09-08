@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
@@ -6,6 +6,7 @@ import AchievementItem from '~/components/AchievementItem';
 import CompactAchievementCard from './CompactAchievementCard';
 import Loading from '~/components/Loading';
 import InvalidContent from '../InvalidContent';
+import EmbedLoadError from '../EmbedLoadError';
 import { isMobile } from '~/helpers';
 
 const displayIsMobile = isMobile(navigator);
@@ -18,9 +19,11 @@ export default function AchievementComponent({
   isPreview?: boolean;
 }) {
   const navigate = useNavigate();
-  const loadingRef = useRef(false);
-  const [hasError, setHasError] = useState(false);
-  const [attemptedLoad, setAttemptedLoad] = useState(false);
+  const [requestState, setRequestState] = useState<{
+    achievementType: string;
+    status: 'loading' | 'ready' | 'error';
+  } | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
 
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const loadAllAchievements = useAppContext(
@@ -31,8 +34,7 @@ export default function AchievementComponent({
   );
 
   const achievementType = useMemo(() => {
-    const parts = src.split('/');
-    return parts[2]?.split('?')?.[0];
+    return src.split(/[?#]/)[0].split('/')[2];
   }, [src]);
 
   const achievementsLoaded =
@@ -42,32 +44,54 @@ export default function AchievementComponent({
     : null;
 
   useEffect(() => {
-    if (!achievementsLoaded && !loadingRef.current) {
+    let cancelled = false;
+    if (achievementType && !achievementsLoaded) {
       loadDefinitions();
     }
     async function loadDefinitions() {
+      setRequestState({ achievementType, status: 'loading' });
       try {
-        loadingRef.current = true;
         const data = await loadAllAchievements();
-        if (data) {
-          onSetAchievementsObj(data);
+        if (cancelled) return;
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('Achievement definitions are incomplete');
         }
+        onSetAchievementsObj(data);
+        setRequestState({ achievementType, status: 'ready' });
       } catch (_error) {
-        setHasError(true);
-      } finally {
-        loadingRef.current = false;
-        setAttemptedLoad(true);
+        if (!cancelled) setRequestState({ achievementType, status: 'error' });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [achievementsLoaded]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    achievementType,
+    achievementsLoaded,
+    retryAttempt,
+    loadAllAchievements,
+    onSetAchievementsObj
+  ]);
 
-  if (!achievementType || hasError) {
+  if (!achievementType) {
     return <InvalidContent />;
   }
 
-  if (!achievementsLoaded && !attemptedLoad) {
-    return <Loading />;
+  if (!achievementsLoaded) {
+    const status =
+      requestState?.achievementType === achievementType
+        ? requestState.status
+        : 'loading';
+    if (status === 'error') {
+      return (
+        <EmbedLoadError onRetry={() => setRetryAttempt((value) => value + 1)} />
+      );
+    }
+    if (status !== 'ready') {
+      return (
+        <Loading text="Loading achievement" innerStyle={{ fontSize: '14px' }} />
+      );
+    }
   }
 
   if (!achievement) {

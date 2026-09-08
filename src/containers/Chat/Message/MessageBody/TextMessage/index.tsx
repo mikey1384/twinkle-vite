@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -17,6 +17,10 @@ import { isMobile } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 import Spoiler from '../Spoiler';
 import ThinkingIndicator from './ThinkingIndicator';
+import {
+  chatTextClass,
+  CHAT_TEXT_LINE_HEIGHT
+} from '../../../typography';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -33,6 +37,7 @@ function TextMessage({
   isGenerationConfirmed,
   isCurrentlyStreaming,
   isNotification,
+  isOwnMessage = false,
   isReloadedSubject,
   isSubject,
   isAIMessage,
@@ -61,6 +66,7 @@ function TextMessage({
   isGenerationConfirmed?: boolean;
   isCurrentlyStreaming?: boolean;
   isNotification: boolean;
+  isOwnMessage?: boolean;
   isReloadedSubject: boolean;
   isSubject: boolean;
   isAIMessage: boolean;
@@ -162,6 +168,13 @@ function TextMessage({
   }, [displayedThemeColor, isReloadedSubject, isSubject]);
 
   const isSpoiler = useMemo(() => isValidSpoiler(content), [content]);
+  const hasMessageSurface =
+    !isSpoiler &&
+    !isNotification &&
+    !isCallMsg &&
+    !isSubject &&
+    !isReloadedSubject &&
+    (!stringIsEmpty(content) || showFullIndicator);
   const richTextId = useMemo(() => {
     if (messageId) return messageId;
     return uuidv1();
@@ -185,7 +198,21 @@ function TextMessage({
           />
         ) : (
           <>
-            <div className={MessageStyle.messageWrapper}>
+            <div
+              data-message-surface={
+                hasMessageSurface
+                  ? isAIMessage
+                    ? 'ai'
+                    : isOwnMessage
+                    ? 'own'
+                    : 'peer'
+                  : undefined
+              }
+              className={cx(
+                MessageStyle.messageWrapper,
+                hasMessageSurface && MessageStyle.messageSurface
+              )}
+            >
               <div>{Prefix}</div>
               {showFullIndicator ? (
                 <ThinkingIndicator
@@ -201,6 +228,9 @@ function TextMessage({
               ) : stringIsEmpty(content) ? null : (
                 <>
                   <RichText
+                    className={chatTextClass}
+                    lineHeight={CHAT_TEXT_LINE_HEIGHT}
+                    aiActionPlacement="inline"
                     isAIMessage={isAIMessage}
                     isStreaming={isAIMessage && isCurrentlyStreaming}
                     voice={isCielMessage ? 'nova' : ''}
@@ -214,7 +244,7 @@ function TextMessage({
                       marginTop: isSubject ? '0.5rem' : 0,
                       marginBottom: isSubject ? '0.5rem' : 0,
                       color:
-                        isNotification || isCallMsg ? Color.gray() : undefined
+                        isNotification || isCallMsg ? '#64748b' : undefined
                     }}
                   >
                     {(content || '').trimEnd()}
@@ -236,7 +266,7 @@ function TextMessage({
                     background: ${Color.highlightGray()};
                     border: 1px solid ${Color.borderGray()};
                     color: ${Color.gray()};
-                    font-size: 1rem;
+                    font-size: max(11px, 1.1rem);
                     font-style: italic;
                   `}
                   title="This message was edited by a user and is no longer the AI's original response."
@@ -267,7 +297,7 @@ function TextMessage({
           !isSpoiler &&
           !attachmentHidden && (
             <VideoAttachment
-              style={{ marginTop: '2rem' }}
+              style={{ marginTop: '1rem' }}
               messageId={messageId}
               extractedUrl={extractedUrl}
               onHideAttachment={onHideAttachment}

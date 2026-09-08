@@ -7,19 +7,27 @@ import {
 } from '~/contexts';
 import Loading from '~/components/Loading';
 import DefaultComponent from './DefaultComponent';
+import EmbedLoadError from '../../EmbedLoadError';
+import InvalidContent from '../../InvalidContent';
 
 export default function UserComponent({
   src,
-  isPreview
+  isPreview,
+  isChat = false
 }: {
   src: string;
   isPreview?: boolean;
+  isChat?: boolean;
 }) {
-  const parts = src.split('/');
+  const parts = src.split(/[?#]/)[0].split('/');
   const username = parts[2];
   const pageType = parts[3];
   const subPageType = parts[4];
-  const [loading, setLoading] = useState(false);
+  const [requestState, setRequestState] = useState<{
+    username: string;
+    status: 'loading' | 'ready' | 'error';
+  } | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const { notExist, profileId } = useProfileState(username || '');
   const loadProfileViaUsername = useAppContext(
     (v) => v.requestHelpers.loadProfileViaUsername
@@ -31,20 +39,26 @@ export default function UserComponent({
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
 
   useEffect(() => {
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     let retries = 0;
     const maxRetries = 3;
 
-    if (!notExist && !profile.loaded) {
+    if (username && !notExist && !profile.loaded) {
       loadProfile();
     }
 
     async function loadProfile() {
-      setLoading(true);
+      setRequestState({ username, status: 'loading' });
       try {
         const { pageNotExists, user } = await loadProfileViaUsername(username);
+        if (cancelled) return;
         if (pageNotExists) {
-          setLoading(false);
+          setRequestState({ username, status: 'ready' });
           return onUserNotExist(username);
+        }
+        if (!Number.isSafeInteger(Number(user?.id)) || Number(user.id) <= 0) {
+          throw new Error('Profile response is incomplete');
         }
         onSetProfileId({ username, profileId: user.id });
         onSetUserState({
@@ -62,23 +76,48 @@ export default function UserComponent({
           contentType: 'user',
           ...user
         });
-        setLoading(false);
+        setRequestState({ username, status: 'ready' });
       } catch (_error) {
+        if (cancelled) return;
         if (retries < maxRetries) {
           retries++;
-          setTimeout(loadProfile, 500);
+          retryTimer = setTimeout(loadProfile, 500);
         } else {
-          onUserNotExist(username);
-          setLoading(false);
+          // A transport error is not evidence that this username is missing.
+          setRequestState({ username, status: 'error' });
         }
       }
     }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username, notExist, profile.loaded]);
+    return () => {
+      cancelled = true;
+      if (retryTimer !== undefined) clearTimeout(retryTimer);
+    };
+  }, [
+    username, notExist, profile.loaded, retryAttempt, loadProfileViaUsername,
+    onUserNotExist, onSetProfileId, onSetUserState, onInitContent
+  ]);
 
-  if (loading) {
-    return <Loading />;
+  if (!username || notExist) return <InvalidContent />;
+  if (!profile.loaded) {
+    if (requestState?.username === username && requestState.status === 'error') {
+      return <EmbedLoadError onRetry={() => setRetryAttempt(value => value + 1)} />;
+    }
+    return <Loading text="Loading profile" innerStyle={{ fontSize: '14px' }} />;
+  }
+
+  if (isChat) {
+    return (
+      <DefaultComponent
+        isChat
+        isPreview={isPreview}
+        src={src}
+        pageType={pageType}
+        subPageType={subPageType}
+        profile={profile}
+        profileId={profileId}
+      />
+    );
   }
 
   if (pageType === 'watched') {

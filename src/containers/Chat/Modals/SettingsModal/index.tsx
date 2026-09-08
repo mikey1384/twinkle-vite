@@ -1,16 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
-import SelectNewOwnerModal from '../SelectNewOwnerModal';
-import SwitchButton from '~/components/Buttons/SwitchButton';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
-import FullTextReveal from '~/components/Texts/FullTextReveal';
-import Input from '~/components/Texts/Input';
+import SelectNewOwnerModal, { OwnerSelection } from '../SelectNewOwnerModal';
 import Icon from '~/components/Icon';
 import ColorSelector from './ColorSelector';
 import NameChanger from './NameChanger';
 import GroupThumbnail from './GroupThumbnail';
+import PurchaseModal from './PurchaseModal';
+import useDeletedTopicsList from './useDeletedTopicsList';
+import useDeletedTopicAction from './useDeletedTopicAction';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import { buildCanonicalChannelMessagesState } from '../helpers';
 import { cloudFrontURL, priceTable } from '~/constants/defaultValues';
@@ -18,10 +17,10 @@ import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 import { exceedsCharLimit, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { Color, mobileMaxWidth } from '~/constants/css';
-import { User } from '~/types';
+import { Color } from '~/constants/css';
+import useChatDialogRequest from '../useChatDialogRequest';
+import { chatFormActionStyle, chatFormClass, chatFormModalClass } from '../chatFormStyles';
 import { css } from '@emotion/css';
-const changeThemeLabel = 'Change theme';
 
 export default function SettingsModal({
   channelId,
@@ -52,10 +51,10 @@ export default function SettingsModal({
   isClosed: boolean;
   thumbPath: string;
   members: any[];
-  onDone: (v: any) => void;
+  onDone: (v: any) => void | Promise<void>;
   onHide: () => void;
   onlyOwnerCanPost: boolean;
-  onSelectNewOwner: (v: { newOwner: User; andLeave?: boolean }) => void;
+  onSelectNewOwner: (v: OwnerSelection) => void | Promise<void>;
   onScrollToBottom: () => void;
   selectingNewOwner: boolean;
   theme: string;
@@ -91,12 +90,11 @@ export default function SettingsModal({
   const permanentlyDeleteTopic = useAppContext(
     (v) => v.requestHelpers.permanentlyDeleteTopic
   );
-  const [hovered, setHovered] = useState(false);
   const [selectNewOwnerModalShown, setSelectNewOwnerModalShown] =
     useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [editedChannelName, setEditedChannelName] = useState(
-    customChannelNames[channelId] || channelName
+    customChannelNames[channelId] || channelName || ''
   );
   const [editedIsPublic, setEditedIsPublic] = useState(isPublic);
   const [editedDescription, setEditedDescription] = useState(description || '');
@@ -106,7 +104,12 @@ export default function SettingsModal({
   const [editedOnlyOwnerCanPost, setEditedOnlyOwnerCanPost] =
     useState(onlyOwnerCanPost);
   const currentTheme = theme || 'logoBlue';
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const saveRequest = useChatDialogRequest(userId + ':' + channelId);
+  const isSubmitting = saveRequest.busy;
+  const descriptionId = useId();
+  const thumbnailId = useId();
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const uploadedThumbnailRef = useRef<{ uri: string; path: string } | null>(null);
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [themeToPurchase, setThemeToPurchase] = useState('');
   const [currentThumbUrl, setCurrentThumbUrl] = useState<string | null>(
@@ -115,12 +118,30 @@ export default function SettingsModal({
   const [newThumbUri, setNewThumbUri] = useState<string | null>(null);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [deletedTopics, setDeletedTopics] = useState<any[]>([]);
-  const [deletedTopicsLoading, setDeletedTopicsLoading] = useState(false);
+  const deletedTopicsList = useDeletedTopicsList(`${userId}:${channelId}:${userIsChannelOwner}`, () => loadDeletedTopics({ channelId }));
+  const { topics: deletedTopics, loading: deletedTopicsLoading } = deletedTopicsList;
   const [deletedTopicsModalShown, setDeletedTopicsModalShown] = useState(false);
   const [topicActionLoadingId, setTopicActionLoadingId] = useState(0);
+  const topicAction = useDeletedTopicAction(`${userId}:${channelId}:${userIsChannelOwner}:${deletedTopicsModalShown}`);
+  const messagesRef = useRef(currentMessagesObj);
+  messagesRef.current = currentMessagesObj;
   const [permanentDeleteTopic, setPermanentDeleteTopic] = useState<any>(null);
   const imageUrlRef = useRef<string | null>(null);
+  const deletedTopicsHeadingRef = useRef<HTMLHeadingElement>(null);
+  const topicWasBusy = useRef(false);
+  useEffect(() => {
+    const busy = topicAction.busy || deletedTopicsLoading;
+    const finished = topicWasBusy.current && !busy;
+    topicWasBusy.current = busy;
+    const heading = deletedTopicsHeadingRef.current;
+    if (!finished || !deletedTopicsModalShown || permanentDeleteTopic || !heading) return;
+    const doc = heading.ownerDocument;
+    // Native disabled/removed action buttons can send focus to the document.
+    // Repair only lost focus; never interrupt someone who moved to a control.
+    if (doc.activeElement === doc.body || doc.activeElement === doc.documentElement) {
+      heading.focus({ preventScroll: true });
+    }
+  }, [topicAction.busy, deletedTopicsLoading, deletedTopicsModalShown, permanentDeleteTopic]);
 
   const descriptionExceedsCharLimit = useMemo(
     () =>
@@ -138,15 +159,7 @@ export default function SettingsModal({
   );
 
   const disabled = useMemo(() => {
-    const customChannelName = customChannelNames[channelId];
-    let channelNameDidNotChange = editedChannelName === channelName;
-    if (
-      !!customChannelName &&
-      !stringIsEmpty(customChannelName) &&
-      customChannelName !== editedChannelName
-    ) {
-      channelNameDidNotChange = false;
-    }
+    const channelNameDidNotChange = editedChannelName === (customChannelNames[channelId] || channelName || '');
     return (
       (channelNameDidNotChange &&
         (description || '') === editedDescription &&
@@ -157,10 +170,13 @@ export default function SettingsModal({
         currentTheme === selectedTheme &&
         (!thumbPath || currentThumbUrl) &&
         !newThumbUri) ||
-      (userIsChannelOwner && stringIsEmpty(editedChannelName))
+      (userIsChannelOwner && stringIsEmpty(editedChannelName)) ||
+      Boolean(exceedsCharLimit({ contentType: 'group', inputType: 'name', text: editedChannelName })) ||
+      (userIsChannelOwner && Boolean(descriptionExceedsCharLimit))
     );
   }, [
     customChannelNames,
+    descriptionExceedsCharLimit,
     channelId,
     editedChannelName,
     channelName,
@@ -193,374 +209,121 @@ export default function SettingsModal({
   return (
     <Modal
       modalKey="SettingsModal"
-      isOpen={true}
-      onClose={onHide}
-      title="Settings"
+      isOpen
+      aria-label="Channel settings"
+      onClose={() => { if (!saveRequest.pending.current) onHide(); }}
+      hasHeader={false}
+      bodyPadding={0}
+      className={chatFormModalClass}
       size="lg"
       closeOnBackdropClick={false}
+      closeOnEscape={!isSubmitting}
+      showCloseButton={!isSubmitting}
       modalLevel={0}
-      footer={
-        <>
-          <Button
-            variant="ghost"
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
-          >
-            Cancel
-          </Button>
-          <Button
-            loading={isSubmitting}
-            color={doneColor}
-            disabled={disabled}
-            onClick={handleSubmit}
-          >
-            Done
-          </Button>
-        </>
-      }
     >
-      <div
-        className={css`
-          width: 80%;
-          @media (max-width: ${mobileMaxWidth}) {
-            width: 100%;
-          }
-        `}
-      >
-        <div
-          className={css`
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-          `}
-        >
-          <div
-            className={css`
-              flex: 1;
-              margin-right: 1rem;
-            `}
-          >
+      <section className={`${chatFormClass} ${settingsClass}`}>
+        <header>
+          <h2>Channel settings</h2>
+          <p className="description">{userIsChannelOwner
+            ? 'Make this space yours, and choose how the group works.'
+            : 'Give this conversation a name that makes sense to you.'}</p>
+        </header>
+        <main>
+          <div className="identity">
             <NameChanger
               editedChannelName={editedChannelName}
               onSetEditedChannelName={setEditedChannelName}
               userIsChannelOwner={userIsChannelOwner}
               actualChannelName={channelName}
-              usingCustomName={!!customChannelNames[channelId]}
+              usingCustomName={Boolean(customChannelNames[channelId])}
+              disabled={isSubmitting}
             />
+            {userIsChannelOwner && <div>
+              <GroupThumbnail thumbUrl={newThumbUri || currentThumbUrl} disabled={isSubmitting}
+                onClick={() => thumbnailInputRef.current?.click()} />
+              <input ref={thumbnailInputRef} id={thumbnailId} type="file" accept="image/*"
+                disabled={isSubmitting} onChange={handleThumbnailChange} style={{ display: 'none' }} />
+              {(currentThumbUrl || newThumbUri) && <Button variant="ghost" uppercase={false}
+                style={{ ...chatFormActionStyle, marginTop: 4, padding: '8px 4px' }}
+                aria-label="Remove group picture" disabled={isSubmitting}
+                onClick={() => {
+                  if (newThumbUri) setNewThumbUri(null);
+                  else setCurrentThumbUrl(null);
+                }}><Icon icon="times" /> Remove</Button>}
+            </div>}
           </div>
-          <div>
-            {userIsChannelOwner && (
-              <GroupThumbnail
-                thumbUrl={newThumbUri || currentThumbUrl}
-                onClick={() =>
-                  document.getElementById('thumbnail-input')?.click()
-                }
-                style={{
-                  width: '150px',
-                  height: '150px'
-                }}
-              />
-            )}
-            <input
-              id="thumbnail-input"
-              type="file"
-              accept="image/*"
-              onChange={handleThumbnailChange}
-              className={css`
-                display: none;
-              `}
-            />
-            {userIsChannelOwner &&
-              (currentThumbUrl || newThumbUri) &&
-              !isSubmitting && (
-                <div
-                  style={{
-                    width: '100%',
-                    marginTop: '1rem',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div
-                    className={css`
-                      margin-left: 1rem;
-                      color: ${Color.darkerGray()};
-                      cursor: pointer;
-                      font-weight: bold;
-                      &:hover {
-                        text-decoration: underline;
-                      }
-                    `}
-                    onClick={() => {
-                      if (newThumbUri) {
-                        setNewThumbUri(null);
-                      } else {
-                        setCurrentThumbUrl(null);
-                      }
-                    }}
-                  >
-                    <Icon icon="times" />
-                    <span style={{ marginLeft: '0.7rem' }}>Remove</span>
-                  </div>
-                </div>
-              )}
-          </div>
-        </div>
-        {userIsChannelOwner && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <Input
-              style={{
-                marginTop: '0.5rem',
-                width: '100%'
-              }}
-              hasError={!!descriptionExceedsCharLimit}
-              autoFocus
-              placeholder="Enter group description..."
-              value={editedDescription}
-              errorMessage="Description exceeds character limit"
-              onChange={setEditedDescription}
-            />
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                marginTop: '1.5rem'
-              }}
-            >
-              <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
-                Public Group:
+          {userIsChannelOwner && <>
+            <div>
+              <label htmlFor={descriptionId}>Group description</label>
+              <textarea id={descriptionId} rows={3} value={editedDescription} disabled={isSubmitting}
+                placeholder="What’s this group about?" aria-invalid={Boolean(descriptionExceedsCharLimit)}
+                aria-describedby={descriptionId + '-hint'}
+                onChange={event => setEditedDescription(event.target.value)} />
+              <p id={descriptionId + '-hint'} className={descriptionExceedsCharLimit ? 'error' : 'field-hint'}
+                role={descriptionExceedsCharLimit ? 'alert' : undefined}>
+                {descriptionExceedsCharLimit ? 'Description exceeds the character limit.' : 'Help members understand the purpose of the group.'}
               </p>
-              <SwitchButton
-                style={{ marginLeft: '1rem' }}
-                checked={editedIsPublic}
-                onChange={() => setEditedIsPublic((isPublic) => !isPublic)}
-              />
             </div>
-          </div>
-        )}
-        {userIsChannelOwner && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginTop: '1.5rem'
-            }}
-          >
-            <p
-              style={{
-                fontWeight: 'bold',
-                fontSize: '1.7rem',
-                opacity: editedIsPublic ? 0.3 : 1
-              }}
-            >
-              <span style={{ color: Color.logoBlue() }}>Anyone</span> can invite
-              new members:
-            </p>
-            <SwitchButton
-              style={{ marginLeft: '1rem' }}
-              disabled={editedIsPublic}
-              checked={!editedIsClosed || editedIsPublic}
-              onChange={() => setEditedIsClosed((isClosed) => !isClosed)}
-            />
-          </div>
-        )}
-        {userIsChannelOwner && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginTop: '1.5rem'
-            }}
-          >
-            <p
-              style={{
-                fontWeight: 'bold',
-                fontSize: '1.7rem'
-              }}
-            >
-              Only the owner can post messages on Main
-            </p>
-            <SwitchButton
-              style={{ marginLeft: '1rem' }}
-              checked={!!editedOnlyOwnerCanPost}
-              onChange={() => setEditedOnlyOwnerCanPost((prev) => !prev)}
-            />
-          </div>
-        )}
-        {userIsChannelOwner && (
-          <div
-            style={{
-              marginTop: '1.5rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <p
-                style={{
-                  fontWeight: 'bold',
-                  fontSize: '1.7rem',
-                  opacity: canChangeSubject ? 1 : 0.3
-                }}
-              >
-                <span style={{ color: Color.logoBlue() }}>Anyone</span> can add
-                topics:
-              </p>
-              <SwitchButton
-                disabled={!canChangeSubject}
-                style={{ marginLeft: '1rem' }}
-                checked={editedCanChangeSubject === 'all'}
-                onChange={() =>
-                  setEditedCanChangeSubject((prevValue) =>
-                    !prevValue || prevValue === 'all' ? 'owner' : 'all'
-                  )
-                }
-              />
-            </div>
-            {!canChangeSubject && (
-              <div>
-                <Button
-                  onClick={() =>
-                    insufficientFunds ? null : setConfirmModalShown(true)
-                  }
-                  variant="solid"
-                  tone="raised"
-                  onMouseEnter={() => setHovered(true)}
-                  onMouseLeave={() => setHovered(false)}
-                  color="logoBlue"
-                  style={{
-                    fontSize: '1.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: insufficientFunds ? Color.logoBlue(0.2) : '',
-                    cursor: insufficientFunds ? 'default' : 'pointer',
-                    boxShadow: insufficientFunds ? 'none' : '',
-                    borderColor: insufficientFunds ? Color.logoBlue(0.2) : '',
-                    outline: insufficientFunds ? 'none' : ''
-                  }}
-                >
-                  <Icon size="lg" icon="coins" />
-                  <span style={{ marginLeft: '0.5rem' }}>Buy</span>
-                </Button>
-                {insufficientFunds && hovered && (
-                  <FullTextReveal
-                    show
-                    direction="left"
-                    style={{ color: '#000', marginTop: '0.5rem' }}
-                    text={`You need ${
-                      priceTable.chatSubject - twinkleCoins
-                    } more Twinkle Coins`}
-                  />
-                )}
+            <section aria-label="Group permissions" className="permission-settings">
+              <h3>How the group works</h3>
+              <div className="setting">
+                <label><input type="checkbox" role="switch" checked={Boolean(editedIsPublic)} disabled={isSubmitting}
+                  onChange={event => setEditedIsPublic(event.target.checked)} />Public group</label>
               </div>
-            )}
-          </div>
-        )}
-        {userIsChannelOwner && (
-          <div
-            style={{
-              width: '100%',
-              marginTop: '2rem',
-              justifyContent: 'space-between',
-              display: 'flex'
-            }}
-          >
-            <div
-              style={{
-                width: '50%',
-                fontWeight: 'bold',
-                fontSize: '1.7rem'
-              }}
-            >
-              {changeThemeLabel}:
-            </div>
-            <ColorSelector
-              colors={[
-                'green',
-                'orange',
-                'red',
-                'rose',
-                'pink',
-                'purple',
-                'darkBlue',
-                'logoBlue'
-              ]}
-              unlocked={unlockedThemes}
-              onSetColor={handleSetColor}
-              selectedColor={selectedTheme}
-              style={{
-                marginTop: '1rem',
-                height: 'auto',
-                justifyContent: 'flex-end'
-              }}
-            />
-          </div>
-        )}
-        {userIsChannelOwner && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'row'
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                marginTop: '2rem'
-              }}
-            >
-              <Button
-                onClick={() => setSelectNewOwnerModalShown(true)}
-                variant="solid"
-                tone="raised"
-                disabled={isSubmitting}
-              >
-                Change Owner
-              </Button>
-            </div>
-          </div>
-        )}
-        {userIsChannelOwner && (
-          <div
-            className={css`
-              margin-top: 2rem;
-              border-top: 1px solid ${Color.borderGray()};
-              padding-top: 1.5rem;
-              padding-bottom: 1.5rem;
-              display: flex;
-              justify-content: flex-end;
-            `}
-          >
-            <Button
-              variant="soft"
-              disabled={deletedTopicsLoading || isSubmitting}
-              loading={deletedTopicsLoading}
-              onClick={handleOpenDeletedTopics}
-              style={{ fontSize: '1.2rem' }}
-            >
-              <Icon icon="undo" />
-              <span style={{ marginLeft: '0.7rem' }}>Deleted Topics</span>
-            </Button>
-          </div>
-        )}
-      </div>
+              <div className="setting">
+                <label><input type="checkbox" role="switch" checked={!editedIsClosed || editedIsPublic}
+                  disabled={isSubmitting || editedIsPublic}
+                  onChange={event => setEditedIsClosed(!event.target.checked)} />Anyone can invite members</label>
+                {editedIsPublic && <p className="field-hint">Public groups always allow new members to join.</p>}
+              </div>
+              <div className="setting">
+                <label><input type="checkbox" role="switch" checked={Boolean(editedOnlyOwnerCanPost)} disabled={isSubmitting}
+                  onChange={event => setEditedOnlyOwnerCanPost(event.target.checked)} />Only the owner can post on Main</label>
+              </div>
+              <div className="setting">
+                <label><input type="checkbox" role="switch" checked={editedCanChangeSubject === 'all'} disabled={isSubmitting || !canChangeSubject}
+                  onChange={event => setEditedCanChangeSubject(event.target.checked ? 'all' : 'owner')} />Anyone can add topics</label>
+                {!canChangeSubject && <>
+                  <Button onClick={() => setConfirmModalShown(true)} variant="soft" uppercase={false}
+                    style={chatFormActionStyle} color="logoBlue" disabled={isSubmitting || insufficientFunds}>
+                    <Icon icon="coins" /> Enable topics · {priceTable.chatSubject} coins
+                  </Button>
+                  {insufficientFunds && <p className="field-hint">You need {priceTable.chatSubject - twinkleCoins} more Twinkle Coins.</p>}
+                </>}
+              </div>
+            </section>
+            <section aria-label="Channel appearance">
+              <h3>Channel color</h3>
+              <ColorSelector colors={['green', 'orange', 'red', 'rose', 'pink', 'purple', 'darkBlue', 'logoBlue']}
+                unlocked={unlockedThemes || []} onSetColor={handleSetColor} selectedColor={selectedTheme} disabled={isSubmitting} />
+            </section>
+            <section aria-label="Channel management" className="management-actions">
+              <Button onClick={() => setSelectNewOwnerModalShown(true)} variant="soft" uppercase={false}
+                style={chatFormActionStyle} disabled={isSubmitting}>Change owner</Button>
+              <Button variant="ghost" uppercase={false} style={chatFormActionStyle}
+                disabled={deletedTopicsLoading || isSubmitting} loading={deletedTopicsLoading}
+                onClick={handleOpenDeletedTopics}><Icon icon="undo" /> Deleted topics</Button>
+            </section>
+          </>}
+          {saveRequest.error && <p ref={saveRequest.errorRef} id={saveRequest.errorId} role="alert" className="error">{saveRequest.error}</p>}
+        </main>
+        <footer>
+          <Button variant="ghost" uppercase={false} style={chatFormActionStyle} disabled={isSubmitting} onClick={onHide}>Cancel</Button>
+          <Button variant="soft" tone="raised" uppercase={false} style={chatFormActionStyle} color={doneColor}
+            disabled={disabled} aria-busy={isSubmitting} aria-label={isSubmitting ? 'Saving channel settings' : 'Save channel settings'}
+            aria-describedby={saveRequest.error ? saveRequest.errorId : undefined}
+            onClick={handleSubmit}>{isSubmitting ? 'Saving…' : 'Save changes'}</Button>
+        </footer>
+      </section>
       {selectNewOwnerModalShown && (
         <SelectNewOwnerModal
           loading={selectingNewOwner}
           modalOverModal
           onHide={() => setSelectNewOwnerModalShown(false)}
           members={members}
-          onSubmit={({ newOwner }) => {
-            onSelectNewOwner({ newOwner });
-            onHide();
+          onSubmit={async (selection) => {
+            await onSelectNewOwner(selection);
+            if (selection.canApply?.() !== false) onHide();
           }}
           isClass={isClass}
           channelId={channelId}
@@ -570,14 +333,22 @@ export default function SettingsModal({
         <Modal
           modalKey="DeletedTopicsModal"
           isOpen
-          onClose={() => setDeletedTopicsModalShown(false)}
+          onClose={handleCloseDeletedTopics}
+          aria-label="Deleted topics"
+          closeOnEscape={!topicAction.busy}
+          showCloseButton={!topicAction.busy}
+          closeOnBackdropClick={false}
           title="Deleted Topics"
+          header={<h2 ref={deletedTopicsHeadingRef} tabIndex={-1} style={{ margin: 0, fontSize: 20, lineHeight: 1.3 }}>Deleted topics</h2>}
           size="md"
           modalLevel={1}
           footer={
             <Button
               variant="ghost"
-              onClick={() => setDeletedTopicsModalShown(false)}
+              uppercase={false}
+              disabled={topicAction.busy}
+              style={chatFormActionStyle}
+              onClick={handleCloseDeletedTopics}
             >
               Close
             </Button>
@@ -588,8 +359,19 @@ export default function SettingsModal({
               width: 100%;
             `}
           >
+            {!permanentDeleteTopic && topicAction.error && <div style={{ fontSize: 16 }}>
+              <p role="alert">{topicAction.confirmed ? 'Topic restored, but the view couldn’t update. Retry updating without restoring again.' : topicAction.error}</p>
+              <Button variant="soft" color="logoBlue" style={chatFormActionStyle} uppercase={false} disabled={topicAction.busy}
+                onClick={() => handleRestoreTopic(topicActionLoadingId)}>{topicAction.confirmed ? 'Retry updating' : 'Retry restore'}</Button>
+            </div>}
             {deletedTopicsLoading ? (
               <Loading style={{ height: '12rem' }} />
+            ) : deletedTopicsList.error ? (
+              <div style={{ padding: '20px 0', fontSize: 16 }}>
+                <p role="alert">{deletedTopicsList.error}</p>
+                <Button variant="soft" uppercase={false} style={chatFormActionStyle}
+                  onClick={handleLoadDeletedTopics}>Retry loading topics</Button>
+              </div>
             ) : deletedTopics.length > 0 ? (
               <div
                 className={css`
@@ -607,6 +389,10 @@ export default function SettingsModal({
                       justify-content: space-between;
                       gap: 1rem;
                       padding: 0.9rem 0;
+                      @media (max-width: 480px) {
+                        flex-direction: column;
+                        align-items: stretch;
+                      }
                       ${index < deletedTopics.length - 1
                         ? `border-bottom: 1px solid ${Color.borderGray()};`
                         : ''}
@@ -620,16 +406,16 @@ export default function SettingsModal({
                     >
                       <div
                         className={css`
-                          font-size: 1.2rem;
+                          font-size: 16px;
                           font-weight: bold;
-                          overflow-wrap: break-word;
+                          overflow-wrap: anywhere;
                         `}
                       >
                         {topic.content}
                       </div>
                       <div
                         className={css`
-                          font-size: 1.1rem;
+                          font-size: 14px;
                           color: ${Color.darkerGray()};
                           margin-top: 0.2rem;
                         `}
@@ -649,11 +435,12 @@ export default function SettingsModal({
                         color="green"
                         variant="soft"
                         disabled={
-                          isSubmitting || topicActionLoadingId === topic.id
+                          isSubmitting || topicAction.busy || topicAction.confirmed
                         }
-                        loading={topicActionLoadingId === topic.id}
+                        loading={topicAction.busy && topicActionLoadingId === topic.id}
                         onClick={() => handleRestoreTopic(topic.id)}
-                        style={{ fontSize: '1.1rem' }}
+                        uppercase={false}
+                        style={chatFormActionStyle}
                       >
                         <Icon icon="undo" />
                         <span style={{ marginLeft: '0.5rem' }}>Restore</span>
@@ -662,10 +449,12 @@ export default function SettingsModal({
                         color="red"
                         variant="soft"
                         disabled={
-                          isSubmitting || topicActionLoadingId === topic.id
+                          isSubmitting || topicAction.busy || topicAction.confirmed
                         }
                         onClick={() => setPermanentDeleteTopic(topic)}
-                        style={{ fontSize: '1.1rem' }}
+                        aria-label={`Permanently delete topic: ${topic.content}`}
+                        uppercase={false}
+                        style={chatFormActionStyle}
                       >
                         <Icon icon="trash-alt" />
                       </Button>
@@ -689,41 +478,64 @@ export default function SettingsModal({
           </div>
         </Modal>
       )}
-      {confirmModalShown && (
-        <ConfirmModal
-          modalOverModal
+      {userIsChannelOwner && confirmModalShown && (
+        <PurchaseModal
+          key={`${userId}:${channelId}:topics`}
+          scope={`${userId}:${channelId}:topics`}
           onHide={() => setConfirmModalShown(false)}
-          title={`Purchase "Topics" Feature`}
-          description={`Purchase "Topics" Feature for ${priceTable.chatSubject} Twinkle Coins?`}
-          descriptionFontSize="2rem"
-          onConfirm={handlePurchaseSubject}
+          title="Enable topics"
+          description="Unlock topics for this channel. The owner can add topics after purchase."
+          price={priceTable.chatSubject}
+          balance={twinkleCoins}
+          onPurchase={() => buyChatSubject(channelId)}
+          validateReceipt={receipt => Number.isSafeInteger(receipt.topic?.id) && Number(receipt.topic?.id) > 0}
+          onApply={({ coins, topic }) => {
+            onEnableChatSubject({ channelId, topic });
+            onSetUserState({ userId, newState: { twinkleCoins: coins } });
+            setEditedCanChangeSubject('owner');
+            onScrollToBottom();
+          }}
         />
       )}
-      {themeToPurchase && (
-        <ConfirmModal
-          modalOverModal
+      {userIsChannelOwner && themeToPurchase && (
+        <PurchaseModal
+          key={`${userId}:${channelId}:theme:${themeToPurchase}`}
+          scope={`${userId}:${channelId}:theme:${themeToPurchase}`}
           onHide={() => setThemeToPurchase('')}
-          title={`Purchase theme`}
-          description={
-            <div>
-              Purchase{' '}
-              <b style={{ color: Color[themeToPurchase]() }}>this theme</b> for{' '}
-              {priceTable.chatTheme} Twinkle Coins?
-            </div>
-          }
-          descriptionFontSize="2rem"
-          onConfirm={handlePurchaseTheme}
+          title="Unlock channel color"
+          description={<span>
+            <span aria-hidden="true" style={{ display: 'inline-block', width: 16, height: 16, marginRight: 6, borderRadius: '50%', verticalAlign: 'text-bottom', background: Color[themeToPurchase]() }} />
+            Unlock the <strong>{themeToPurchase === 'darkBlue' ? 'dark blue' : themeToPurchase}</strong> color for this channel. Save your settings afterward to apply it.
+          </span>}
+          price={priceTable.chatTheme}
+          balance={twinkleCoins}
+          onPurchase={() => buyChatTheme({ channelId, theme: themeToPurchase })}
+          validateReceipt={receipt => Array.isArray(receipt.unlockedThemes) && receipt.unlockedThemes.every(value => typeof value === 'string') && receipt.unlockedThemes.includes(themeToPurchase)}
+          onApply={({ coins, unlockedThemes: canonicalUnlockedThemes }) => {
+            onSetChannelState({ channelId, newState: { unlockedThemes: canonicalUnlockedThemes } });
+            onSetUserState({ userId, newState: { twinkleCoins: coins } });
+            setSelectedTheme(themeToPurchase);
+          }}
         />
       )}
       {userIsChannelOwner && !!permanentDeleteTopic && (
-        <ConfirmModal
-          modalOverModal
-          onHide={() => setPermanentDeleteTopic(null)}
-          title="Delete Topic Permanently"
-          description={`Permanently delete "${permanentDeleteTopic.content}"?`}
-          descriptionFontSize="1.7rem"
-          onConfirm={handlePermanentlyDeleteTopic}
-        />
+        <Modal isOpen modalLevel={2} aria-label="Permanently delete topic" size="sm"
+          hasHeader={false} bodyPadding={0} className={chatFormModalClass}
+          closeOnBackdropClick={false} closeOnEscape={!topicAction.busy} showCloseButton={!topicAction.busy}
+          onClose={handleClosePermanentDelete}>
+          <section className={chatFormClass}>
+            <header><h2>{topicAction.confirmed ? 'Topic permanently deleted' : 'Permanently delete topic?'}</h2><p className="description">{topicAction.confirmed ? 'The deletion is complete. Update this view to show the latest topics.' : 'This cannot be undone. The topic will no longer be recoverable.'}</p></header>
+            <main><p style={{ overflowWrap: 'anywhere' }}>{permanentDeleteTopic.content}</p>
+              {topicAction.error && <p role="alert" className="error">{topicAction.confirmed ? 'Topic permanently deleted, but the view couldn’t update. Retry updating without deleting again.' : topicAction.error}</p>}
+            </main>
+            <footer><Button variant="ghost" uppercase={false} style={chatFormActionStyle} disabled={topicAction.busy}
+              onClick={handleClosePermanentDelete}>{topicAction.confirmed ? 'Close' : 'Cancel'}</Button>
+              <Button color={topicAction.confirmed ? 'logoBlue' : 'red'} variant="soft" uppercase={false} style={chatFormActionStyle}
+                aria-busy={topicAction.busy} onClick={handlePermanentlyDeleteTopic}>
+                {topicAction.busy ? 'Working…' : topicAction.confirmed ? 'Retry updating' : 'Delete permanently'}
+              </Button></footer>
+          </section>
+        </Modal>
       )}
       {imageEditModalShown && (
         <ImageEditModal
@@ -760,7 +572,7 @@ export default function SettingsModal({
 
   function handleSetColor(color: string) {
     if (
-      unlockedThemes.includes(color) ||
+      (unlockedThemes || []).includes(color) ||
       color === 'green' ||
       color === 'logoBlue'
     ) {
@@ -777,25 +589,34 @@ export default function SettingsModal({
 
   async function handleLoadDeletedTopics() {
     if (!userIsChannelOwner) return;
-    try {
-      setDeletedTopicsLoading(true);
-      const topics = await loadDeletedTopics({ channelId });
-      setDeletedTopics(Array.isArray(topics) ? topics : []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setDeletedTopicsLoading(false);
-    }
+    await deletedTopicsList.reload();
   }
 
-  async function reloadCanonicalChannelTopicState() {
+  function handleCloseDeletedTopics() {
+    if (topicAction.pending.current) return;
+    deletedTopicsList.invalidate();
+    setDeletedTopicsModalShown(false);
+  }
+
+  function handleClosePermanentDelete() {
+    if (topicAction.pending.current) return;
+    setPermanentDeleteTopic(null);
+    // A committed delete with a failed refresh must not become a restore retry.
+    if (topicAction.error) handleCloseDeletedTopics();
+  }
+
+  async function reloadCanonicalChannelTopicState(isCurrent: () => boolean) {
     const data = await loadChatChannel({
       channelId,
       skipUpdateChannelId: true,
       hydrateMessages: true,
       fromWriter: true
     });
-    const canonicalChannel = data?.channel || {};
+    if (!isCurrent()) return;
+    const canonicalChannel = data?.channel;
+    if (!canonicalChannel || Number(canonicalChannel.id) !== channelId || !Array.isArray(canonicalChannel.pinnedTopicIds) || !canonicalChannel.topicObj || typeof canonicalChannel.topicObj !== 'object') {
+      throw new Error('Invalid canonical channel topic state');
+    }
     onSetChannelState({
       channelId,
       newState: {
@@ -806,7 +627,7 @@ export default function SettingsModal({
         ...(Array.isArray(data?.messages)
           ? buildCanonicalChannelMessagesState({
               messages: data.messages,
-              existingMessagesObj: currentMessagesObj,
+              existingMessagesObj: messagesRef.current,
               messagesHydrated: data.messagesHydrated === true
             })
           : {})
@@ -815,101 +636,72 @@ export default function SettingsModal({
   }
 
   async function handleRestoreTopic(topicId: number) {
-    try {
-      setTopicActionLoadingId(topicId);
-      await restoreDeletedTopic({ channelId, topicId });
-      await reloadCanonicalChannelTopicState();
-      await handleLoadDeletedTopics();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setTopicActionLoadingId(0);
-    }
+    if (!userIsChannelOwner || topicAction.pending.current || !topicId) return;
+    setTopicActionLoadingId(topicId);
+    await topicAction.runAction({ id: topicId, kind: 'restore' }, () => restoreDeletedTopic({ channelId, topicId }), async current => {
+      await reloadCanonicalChannelTopicState(current);
+      if (current()) await handleLoadDeletedTopics();
+    });
   }
 
   async function handlePermanentlyDeleteTopic() {
     const topicId = Number(permanentDeleteTopic?.id || 0);
-    if (!topicId) return;
-    try {
-      setTopicActionLoadingId(topicId);
-      await permanentlyDeleteTopic({ channelId, topicId });
-      await reloadCanonicalChannelTopicState();
+    if (!topicId || !userIsChannelOwner || topicAction.pending.current) return;
+    setTopicActionLoadingId(topicId);
+    await topicAction.runAction({ id: topicId, kind: 'delete' }, () => permanentlyDeleteTopic({ channelId, topicId }), async current => {
+      await reloadCanonicalChannelTopicState(current);
+      if (!current()) return;
       await handleLoadDeletedTopics();
-      setPermanentDeleteTopic(null);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setTopicActionLoadingId(0);
-    }
-  }
-
-  async function handlePurchaseSubject() {
-    try {
-      const { coins, topic } = await buyChatSubject(channelId);
-      onEnableChatSubject({ channelId, topic });
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      setEditedCanChangeSubject('owner');
-      onScrollToBottom();
-      setConfirmModalShown(false);
-    } catch (error) {
-      console.error(error);
-      setConfirmModalShown(false);
-    }
-  }
-
-  async function handlePurchaseTheme() {
-    try {
-      const { coins, unlockedThemes: canonicalUnlockedThemes } =
-        await buyChatTheme({
-        channelId,
-        theme: themeToPurchase
-      });
-      onSetChannelState({
-        channelId,
-        newState: { unlockedThemes: canonicalUnlockedThemes }
-      });
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      setThemeToPurchase('');
-    } catch (error) {
-      console.error(error);
-      setThemeToPurchase('');
-    }
+      if (current()) setPermanentDeleteTopic(null);
+    });
   }
 
   async function handleSubmit() {
-    let path = null;
-    setIsSubmitting(true);
-    if (newThumbUri) {
-      path = uuidv1();
-      const file = returnImageFileFromUrl({
-        imageUrl: newThumbUri,
-        fileName: path
-      });
-      const url = await createThumbnailUpload({
-        fileSize: file.size,
-        path
-      });
-      const uploadResponse = await fetch(url.signedRequest, {
-        method: 'PUT',
-        body: file
-      });
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload channel thumbnail');
+    if (disabled) return;
+    await saveRequest.run('Couldn’t save these settings. Your changes are kept. Please try again.', async isCurrent => {
+      let path: string | null = null;
+      if (newThumbUri) {
+        if (uploadedThumbnailRef.current?.uri === newThumbUri) {
+          path = uploadedThumbnailRef.current.path;
+        } else {
+          const uploadId = uuidv1();
+          const file = returnImageFileFromUrl({ imageUrl: newThumbUri, fileName: uploadId });
+          const upload = await createThumbnailUpload({ fileSize: file.size, path: uploadId });
+          if (!isCurrent()) return;
+          const response = await fetch(upload.signedRequest, { method: 'PUT', body: file });
+          if (!response.ok) throw new Error('Failed to upload channel thumbnail');
+          if (!isCurrent()) return;
+          path = upload.path;
+          if (!path) throw new Error('Missing uploaded thumbnail path');
+          uploadedThumbnailRef.current = { uri: newThumbUri, path };
+        }
       }
-      path = url.path;
-    }
-    onDone({
-      editedChannelName:
-        !userIsChannelOwner && editedChannelName === channelName
-          ? null
-          : editedChannelName,
-      editedDescription,
-      editedIsPublic,
-      editedIsClosed,
-      editedOnlyOwnerCanPost,
-      editedCanChangeSubject,
-      editedTheme: selectedTheme,
-      newThumbPath: path || (currentThumbUrl ? thumbPath : null)
+      if (!isCurrent()) return;
+      await onDone({
+        editedChannelName: !userIsChannelOwner && editedChannelName === channelName ? null : editedChannelName,
+        editedDescription,
+        editedIsPublic,
+        editedIsClosed,
+        editedOnlyOwnerCanPost,
+        editedCanChangeSubject,
+        editedTheme: selectedTheme,
+        newThumbPath: path || (currentThumbUrl ? thumbPath : null),
+        canApply: isCurrent
+      });
     });
   }
 }
+
+const settingsClass = css`
+  .identity { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: start; }
+  .permission-settings { display: flex; flex-direction: column; gap: 10px; }
+  h3 { margin: 0 0 10px; font-size: 16px; color: #253247; }
+  .permission-settings h3 { margin-bottom: 0; }
+  .management-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid #dce3ed; }
+  textarea { display: block; width: 100%; min-height: 90px; padding: 10px 12px; border: 1px solid #b8c4d4; border-radius: 10px; background: #fff; color: #253247; font: inherit; font-size: 16px; line-height: 1.5; resize: vertical; scroll-margin-block: 120px 84px; }
+  textarea:focus-visible { outline: 2px solid #334155; outline-offset: 2px; }
+  input:disabled, textarea:disabled { cursor: default; }
+  input[aria-invalid='true'], textarea[aria-invalid='true'] { border-color: #b42338; }
+  .setting label:has(input:disabled) { cursor: default; }
+  @media (max-width: 480px) { .identity { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
+`;

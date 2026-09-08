@@ -7,6 +7,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
 import { useKeyContext } from '~/contexts';
+import { chatComposerInputClass } from '../../../containers';
 
 const enterMessageLabel = 'Enter a message';
 const deviceIsMobileOS = isMobile(navigator);
@@ -132,12 +133,15 @@ export default function InputArea({
       style={{
         position: 'relative',
         width: '100%',
+        minWidth: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
       }}
     >
       <Textarea
+        aria-label="Message"
+        className={chatComposerInputClass}
         disabled={inputDisabled}
         innerRef={innerRef}
         minRows={1}
@@ -173,7 +177,7 @@ export default function InputArea({
     }
     if (isOnlyOwnerPostingTopic && !isMain) {
       if (isTwoPeopleChannel) {
-        if (currentTopic.userId !== userId) {
+        if (currentTopic?.userId !== userId) {
           return `Only ${partner?.username} can post messages on this topic...`;
         }
       } else if (!isOwner) {
@@ -187,6 +191,9 @@ export default function InputArea({
   }
 
   function handleKeyDown(event: any) {
+    // Enter confirms IME text; it must not send the unfinished message.
+    // keyCode 229 also covers composition events without isComposing.
+    if (event.nativeEvent?.isComposing || event.keyCode === 229) return;
     const shiftKeyPressed = event.shiftKey;
     const enterKeyPressed = event.keyCode === 13;
     if (isExceedingCharLimit) return;
@@ -207,6 +214,7 @@ export default function InputArea({
   }
 
   function handleKeyUp(event: any) {
+    if (event.nativeEvent?.isComposing || event.keyCode === 229) return;
     if (event.key === ' ') {
       const text: string = event.target.value || '';
       if (deviceIsMobileOS && text.length > 20000) return;

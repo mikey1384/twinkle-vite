@@ -1,27 +1,27 @@
 import React, {
   memo,
-  useCallback,
   useContext,
   useEffect,
-  useMemo,
+  useId,
   useRef,
   useState
 } from 'react';
 import Tooltip from './Tooltip';
-import UserListModal from '~/components/Modals/UserListModal';
+import PeopleModal from './PeopleModal';
+import useReactionPeople from './useReactionPeople';
 import LocalContext from '../../../Context';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { reactionsObj } from '~/constants/defaultValues';
+import ChatReactionEmoji from '~/components/ChatReactionEmoji';
+import { getChatReaction } from '~/constants/chatReactions';
 import { css } from '@emotion/css';
-import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { isMobile } from '~/helpers';
-import { isEqual } from 'lodash';
+import { useOutsideClick } from '~/helpers/hooks';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import Icon from '~/components/Icon';
 import type { PendingReactionMutation } from './types';
 
 const deviceIsMobile = isMobile(navigator);
-const youLabel = 'You';
 
 function Reaction({
   reaction,
@@ -30,7 +30,6 @@ function Reaction({
   pendingMutation,
   onRemoveReaction,
   onAddReaction,
-  reactionsMenuShown,
   theme
 }: {
   reaction: string;
@@ -47,15 +46,23 @@ function Reaction({
     state: { userObj }
   } = useContext(LocalContext);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
-  const ReactionRef: React.RefObject<any> = useRef(null);
-  const hideTimerRef: React.RefObject<any> = useRef(null);
-  const hideTimerRef2: React.RefObject<any> = useRef(null);
-  const prevReactedUserIdsExcludingMine: React.RefObject<any> = useRef([]);
-  const [loadingOtherUsers, setLoadingOtherUsers] = useState(false);
-  const [tooltipContext, setTooltipContext] = useState(null);
+  const ReactionRef = useRef<HTMLDivElement>(null);
+  const tooltipId = useId();
+  const [tooltipContext, setTooltipContext] = useState<DOMRect | null>(null);
   const [userListModalShown, setUserListModalShown] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  useOutsideClick(ReactionRef, () => setTooltipContext(null), {
+    enabled: Boolean(tooltipContext),
+    closeOnScroll: true
+  });
+  useEffect(() => {
+    if (!tooltipContext) return;
+    const dismiss = () => setTooltipContext(null);
+    window.addEventListener('resize', dismiss);
+    return () => window.removeEventListener('resize', dismiss);
+  }, [tooltipContext]);
   const {
     color: reactionButtonColor,
     getColor: getReactionButtonColor,
@@ -66,112 +73,53 @@ function Reaction({
   });
   const reactionButtonOpacity = reactionButtonToken?.opacity ?? 0.2;
   const isPending = Boolean(pendingMutation);
-  const userReacted = useMemo(
-    () => reactedUserIds.includes(userId),
-    [reactedUserIds, userId]
-  );
-
-  const reactedUserIdsExcludingMine = useMemo(
-    () => reactedUserIds.filter((id) => id !== userId),
-    [reactedUserIds, userId]
-  );
-
-  useEffect(() => {
-    if (
-      !isEqual(
-        prevReactedUserIdsExcludingMine.current,
-        reactedUserIdsExcludingMine
-      )
-    ) {
-      const indexLength = Math.min(reactedUserIdsExcludingMine.length, 2);
-      for (let i = 0; i < indexLength; i++) {
-        handleLoadProfile(reactedUserIdsExcludingMine[i]);
-      }
-      prevReactedUserIdsExcludingMine.current = reactedUserIdsExcludingMine;
-    }
-
-    async function handleLoadProfile(userId: number) {
-      if (!userObj[userId]?.username) {
-        const data = await loadProfile(userId);
-        onSetUserState({
-          userId: userId,
-          newState: { ...data, loaded: true }
-        });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reactedUserIdsExcludingMine]);
-
-  const reactedUsersExcludingMe = useMemo(() => {
-    const users = [];
-    for (const reactedUserId of reactedUserIdsExcludingMine) {
-      if (userObj[reactedUserId]) {
-        users.push(userObj[reactedUserId]);
-      }
-    }
-    return users;
-  }, [reactedUserIdsExcludingMine, userObj]);
-
-  const reactedUsers = useMemo(() => {
-    const users = [];
-    if (userReacted) {
-      users.push({
-        id: userId,
-        username: youLabel,
-        profilePicUrl: profilePicUrl
-      });
-    }
-    users.push(...reactedUsersExcludingMe);
-    return users;
-  }, [userReacted, reactedUsersExcludingMe, userId, profilePicUrl]);
-
-  const truncatedReactedUsers = useMemo(() => {
-    return reactedUsers.slice(0, 2);
-  }, [reactedUsers]);
-
-  useEffect(() => {
-    if (deviceIsMobile) {
-      if (reactionsMenuShown) {
-        const parentElementDimensions =
-          ReactionRef.current?.getBoundingClientRect?.() || {
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0
-          };
-        setTooltipContext(parentElementDimensions);
-        setTimeout(() => setTooltipContext(null), 2000);
-      } else {
-        hideTimerRef.current = setTimeout(() => {
-          setTooltipContext(null);
-        }, 50);
-      }
-    }
-  }, [reactionsMenuShown]);
-
-  const handleShowAllReactedUsers = useCallback(async () => {
-    setTooltipContext(null);
-    setLoadingOtherUsers(true);
-    setUserListModalShown(true);
-    for (const reactedUserId of reactedUserIdsExcludingMine) {
-      if (!userObj[reactedUserId]?.username) {
-        const data = await loadProfile(reactedUserId);
-        onSetUserState({
-          userId: reactedUserId,
-          newState: { ...data, loaded: true }
-        });
-      }
-    }
-    setLoadingOtherUsers(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reactedUserIdsExcludingMine, userObj]);
+  const reactionLabel = getChatReaction(reaction)?.label.toLowerCase() || reaction;
+  const userReacted = reactedUserIds.includes(userId);
+  const { people, loading, failed, retry } = useReactionPeople({
+    userIds: reactedUserIds,
+    viewer: { id: userId, username, profilePicUrl },
+    userObj,
+    loadProfile,
+    onSetUserState,
+    mode: userListModalShown ? 'all' : tooltipContext ? 'preview' : 'closed'
+  });
 
   return (
     <div
       ref={ReactionRef}
+      onMouseEnter={() => { if (!deviceIsMobile) showTooltip(); }}
+      onMouseLeave={() => setTooltipContext(null)}
+      onFocusCapture={() => { if (!userListModalShown) showTooltip(); }}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setTooltipContext(null);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && tooltipContext) {
+          event.preventDefault();
+          event.stopPropagation();
+          setTooltipContext(null);
+        }
+      }}
+      className={css`
+        display: inline-flex;
+        > button {
+          min-height: 32px;
+          min-width: 36px;
+        }
+        @media (max-width: 1024px), (pointer: coarse) {
+          > button {
+            min-height: 44px;
+            min-width: 44px;
+          }
+        }
+        > button:hover:not(:disabled) { box-shadow: inset 0 0 0 999px rgba(15, 23, 42, 0.05); }
+        > button:focus-visible {
+          outline: 2px solid #334155;
+          outline-offset: 2px;
+        }
+      `}
       style={{
-        borderRadius,
-        height: '2.3rem',
+        borderRadius: 999,
         border: `1px solid ${
           userReacted ? reactionButtonColor : Color.borderGray()
         }`,
@@ -183,10 +131,12 @@ function Reaction({
       <button
         type="button"
         aria-busy={isPending}
+        aria-pressed={userReacted}
+        aria-describedby={tooltipContext ? tooltipId : undefined}
         aria-label={
           isPending
-            ? `${pendingMutation === 'add' ? 'Adding' : 'Removing'} ${reaction} reaction`
-            : `${userReacted ? 'Remove' : 'Add'} ${reaction} reaction`
+            ? `${pendingMutation === 'add' ? 'Adding' : 'Removing'} ${reactionLabel} reaction`
+            : `${userReacted ? 'Remove' : 'Add'} ${reactionLabel} reaction`
         }
         disabled={isPending}
         style={{
@@ -194,113 +144,76 @@ function Reaction({
           background: userReacted
             ? getReactionButtonColor(reactionButtonOpacity)
             : 'transparent',
-          borderRadius: innerBorderRadius,
+          borderRadius: '999px 0 0 999px',
           border: 0,
           boxSizing: 'border-box',
-          color: 'inherit',
+          color: Color.darkGray(),
           cursor: isPending ? 'wait' : 'pointer',
           fontFamily: 'inherit',
-          width: '100%',
-          height: '100%',
-          padding: '0 0.5rem',
+          padding: '3px 6px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center'
         }}
-        onMouseEnter={handleSetTooltipContext}
-        onMouseLeave={handleRemoveTooltipContext}
-        onClick={handleClick}
+        onClick={(event) => { event.stopPropagation(); handleClick(); }}
       >
-        <div
-          className={css`
-            width: 1.7rem;
-            height: 1.7rem;
-            background: url('/img/emojis.png')
-              ${reactionsObj[reaction].position} / 5100%;
-          `}
-        />
+        <ChatReactionEmoji reaction={reaction} size={22} />
         {isPending ? (
           <Icon
             icon="spinner"
             pulse
             style={{
               color: getReactionButtonColor(0.55),
-              marginLeft: '0.4rem',
-              fontSize: '1.1rem'
+              marginLeft: 4,
+              fontSize: 13
             }}
           />
-        ) : (
-          <span
-            className="unselectable"
-            style={{
-              marginLeft: '0.3rem',
-              fontSize: '1.3rem'
-            }}
-          >
-            {reactionCount}
-          </span>
-        )}
+        ) : null}
       </button>
-      {tooltipContext && reactedUsers.length > 0 && (
+      <button
+        type="button"
+        aria-label={`See ${reactionCount} ${reactionCount === 1 ? 'person' : 'people'} who reacted with ${reactionLabel}`}
+        aria-haspopup="dialog"
+        aria-describedby={tooltipContext ? tooltipId : undefined}
+        disabled={reactionCount === 0}
+        style={{
+          appearance: 'none', border: 0, borderLeft: `1px solid ${Color.borderGray()}`,
+          borderRadius: '0 999px 999px 0', padding: '3px 8px', fontFamily: 'inherit',
+          fontSize: 13, fontWeight: 600, color: '#334155', background: 'transparent',
+          cursor: reactionCount ? 'pointer' : 'default'
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          setTooltipContext(null);
+          setUserListModalShown(true);
+        }}
+      >{reactionCount}</button>
+      {tooltipContext && reactionCount > 0 && (
         <Tooltip
-          onMouseEnter={() => {
-            clearTimeout(hideTimerRef.current);
-            clearTimeout(hideTimerRef2.current);
-          }}
-          onMouseLeave={() => {
-            hideTimerRef2.current = setTimeout(() => {
-              setTooltipContext(null);
-            }, 300);
-          }}
+          id={tooltipId}
           parentContext={tooltipContext}
-          reactedUserIds={reactedUserIds}
-          displayedReactedUsers={truncatedReactedUsers}
-          onShowAllReactedUsers={handleShowAllReactedUsers}
+          total={reactionCount}
+          displayedReactedUsers={people.slice(0, 2).map((person) => ({ ...person, username: person.id === userId ? 'You' : person.username }))}
+          loading={loading}
         />
       )}
       {userListModalShown && (
-        <UserListModal
-          loading={loadingOtherUsers}
-          title={
-            <div>
-              People who reacted to this with{' '}
-              <span
-                style={{ display: 'inline-block' }}
-                className={css`
-                  width: 2rem;
-                  height: 2rem;
-                  background: url('/img/emojis.png')
-                    ${reactionsObj[reaction].position} / 5100%;
-                `}
-              />
-            </div>
-          }
-          users={reactedUsers}
+        <PeopleModal
+          reaction={reaction}
+          people={people}
+          loading={loading}
+          failed={failed}
+          onRetry={retry}
           onHide={() => setUserListModalShown(false)}
         />
       )}
     </div>
   );
 
-  function handleSetTooltipContext() {
-    if (deviceIsMobile) return;
-    clearTimeout(hideTimerRef.current);
-    clearTimeout(hideTimerRef2.current);
-    const parentElementDimensions =
-      ReactionRef.current?.getBoundingClientRect?.() || {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0
-      };
-    setTooltipContext(parentElementDimensions);
-  }
-
-  function handleRemoveTooltipContext() {
-    if (deviceIsMobile) return;
-    hideTimerRef.current = setTimeout(() => {
-      setTooltipContext(null);
-    }, 200);
+  function showTooltip() {
+    if (reactionCount && ReactionRef.current) {
+      setTooltipContext(ReactionRef.current.getBoundingClientRect());
+    }
   }
 
   function handleClick() {

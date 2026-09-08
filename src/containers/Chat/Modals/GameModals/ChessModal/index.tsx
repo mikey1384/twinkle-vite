@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+  useState
+} from 'react';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -60,6 +66,15 @@ export default function ChessModal({
   socketConnected: boolean;
 }) {
   const [activeTab, setActiveTab] = useState('game');
+  const boardScope = `${myId}:${channelId}`;
+  const [readyBoardScope, setReadyBoardScope] = useState<string | null>(null);
+  const onBoardLoadStateChange = useCallback(
+    (ready: boolean) => {
+      setReadyBoardScope(ready ? boardScope : null);
+    },
+    [boardScope]
+  );
+  const boardReady = activeTab === 'game' && readyBoardScope === boardScope;
   const [message, setMessage] = useState<any>(null);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
@@ -159,10 +174,10 @@ export default function ChessModal({
 
   const latestResultMessageKey =
     latestChessRelevantMessage?.type === 'result'
-      ? latestChessRelevantMessage?.message?.id ??
+      ? (latestChessRelevantMessage?.message?.id ??
         latestChessRelevantMessage?.message?.timeStamp ??
         latestChessRelevantMessage?.message?.content ??
-        null
+        null)
       : null;
 
   const resultMessageActive =
@@ -190,12 +205,12 @@ export default function ChessModal({
     () =>
       Boolean(
         (resultMessageActive && !submitting) ||
-          latestStatusMessage?.gameWinnerId ||
-          latestStatusMessage?.isDraw ||
-          latestStatusMessage?.isAbort ||
-          boardState?.isCheckmate ||
-          boardState?.isStalemate ||
-          boardState?.isDraw
+        latestStatusMessage?.gameWinnerId ||
+        latestStatusMessage?.isDraw ||
+        latestStatusMessage?.isAbort ||
+        boardState?.isCheckmate ||
+        boardState?.isStalemate ||
+        boardState?.isDraw
       ),
     [
       latestStatusMessage?.gameWinnerId,
@@ -261,8 +276,12 @@ export default function ChessModal({
   useEffect(() => {
     setUserMadeLastMove(false);
     setNewChessState(null);
+    setInitialState(null);
+    setMessage(null);
+    setAcknowledgedResultId(null);
+    setReadyBoardScope(null);
     setConfirmModalShown(false);
-  }, []);
+  }, [channelId, myId]);
 
   useEffect(() => {
     const saved = getStoredItem(`tw-chat-chess-theme-${userId}`);
@@ -309,6 +328,7 @@ export default function ChessModal({
         }
         footer={
           <GameModalFooter
+            actionsDisabled={!boardReady || submitting}
             showGameEndButton={gameEndButtonShown}
             showOfferDraw={drawButtonShown}
             showCancelMove={!!newChessState}
@@ -333,7 +353,11 @@ export default function ChessModal({
             }}
             onDone={handleSubmitChessMove}
             doneDisabled={
-              !newChessState || !socketConnected || banned?.chess || submitting
+              !boardReady ||
+              !newChessState ||
+              !socketConnected ||
+              banned?.chess ||
+              submitting
             }
             warningColor={warningColor}
             doneColor={doneColor}
@@ -344,6 +368,7 @@ export default function ChessModal({
           {activeTab === 'game' ? (
             <>
               <Game
+                onLoadStateChange={onBoardLoadStateChange}
                 boardState={boardState}
                 channelId={channelId}
                 gameFinished={gameFinished}
@@ -394,8 +419,8 @@ export default function ChessModal({
             drawOfferPending
               ? acceptDrawLabel
               : isAbortable
-              ? abortChessMatchLabel
-              : resignChessMatchLabel
+                ? abortChessMatchLabel
+                : resignChessMatchLabel
           }
           onConfirm={handleGameOver}
           onHide={() => setConfirmModalShown(false)}
@@ -405,6 +430,7 @@ export default function ChessModal({
   );
 
   async function handleOfferDraw() {
+    if (!boardReady || submittingRef.current || !socketConnected) return;
     const messageId = uuidv1();
     onSubmitMessage({
       messageId,
@@ -422,7 +448,8 @@ export default function ChessModal({
   }
 
   async function handleSubmitChessMove() {
-    if (!newChessState) return;
+    if (!boardReady || !newChessState || !socketConnected || banned?.chess)
+      return;
     if (!submittingRef.current) {
       submittingRef.current = true;
       setSubmitting(true);
@@ -447,6 +474,7 @@ export default function ChessModal({
   }
 
   async function handleGameOver() {
+    if (!boardReady || submittingRef.current || !socketConnected) return;
     await setChessMoveViewTimeStamp({ channelId, message });
     onUpdateLastChessMoveViewerId({
       channelId,
@@ -465,8 +493,8 @@ export default function ChessModal({
       ...(drawOfferPending
         ? { isDraw: true }
         : isAbortable
-        ? { isAbort: true }
-        : { winnerId: opponentId, isResign: true })
+          ? { isAbort: true }
+          : { winnerId: opponentId, isResign: true })
     });
     onScrollToBottom();
     onHide();

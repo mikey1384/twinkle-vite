@@ -1,111 +1,58 @@
-import React, { useMemo } from 'react';
-import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color } from '~/constants/css';
-import { css } from '@emotion/css';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { css } from '@emotion/css';
+import { positionReactionPicker } from '../reactionPickerLayout';
+import type { ReactionPerson } from './useReactionPeople';
 
-export default function Tooltip({
-  parentContext,
-  onMouseEnter,
-  onMouseLeave,
-  displayedReactedUsers,
-  reactedUserIds,
-  onShowAllReactedUsers
-}: {
-  parentContext: any;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-  displayedReactedUsers: any[];
-  reactedUserIds: number[];
-  onShowAllReactedUsers: () => void;
+export default function Tooltip({ id, parentContext, displayedReactedUsers, total, loading }: {
+  id: string;
+  parentContext: DOMRect;
+  displayedReactedUsers: ReactionPerson[];
+  total: number;
+  loading: boolean;
 }) {
-  const { x, y, width, height } = parentContext;
-  const displaysToTheRight = useMemo(() => {
-    return window.innerWidth / 2 - x > 0;
-  }, [x]);
-  const isReversed = useMemo(() => {
-    return window.innerHeight / 2 - y < 0;
-  }, [y]);
-  const otherReactedUserNumber = useMemo(() => {
-    return reactedUserIds.length - displayedReactedUsers.length;
-  }, [displayedReactedUsers, reactedUserIds]);
+  const ref = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ left: 0, top: 0, ready: false });
+  const names = displayedReactedUsers.map((person) => person.username).filter(Boolean);
+  const remaining = Math.max(0, total - names.length);
+  const text = names.length
+    ? `${names.join(names.length === 2 && !remaining ? ' and ' : ', ')}${remaining ? ` and ${remaining} ${remaining === 1 ? 'other' : 'others'}` : ''}`
+    : loading ? 'Loading people…' : `${total} ${total === 1 ? 'person' : 'people'} reacted`;
 
-  const peopleWhoReactedText = useMemo(() => {
-    if (displayedReactedUsers.length === 2 && otherReactedUserNumber === 0) {
-      return `${displayedReactedUsers[0].username} and ${displayedReactedUsers[1].username}`;
-    }
-    return (
-      <>
-        {displayedReactedUsers.map((user) => user.username).join(', ')}
-        {otherReactedUserNumber > 0 ? (
-          <>
-            {', '}
-            <a
-              style={{
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onShowAllReactedUsers();
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onShowAllReactedUsers();
-              }}
-            >
-              and {otherReactedUserNumber} other
-              {otherReactedUserNumber === 1 ? '' : 's'}
-            </a>
-          </>
-        ) : null}
-      </>
-    );
-  }, [displayedReactedUsers, onShowAllReactedUsers, otherReactedUserNumber]);
+  useLayoutEffect(() => {
+    const tooltip = ref.current;
+    if (!tooltip) return;
+    const next = positionReactionPicker(parentContext, {
+      top: 4, left: 4,
+      right: document.documentElement.clientWidth - 4,
+      bottom: document.documentElement.clientHeight - 4
+    }, { width: tooltip.offsetWidth, height: tooltip.offsetHeight + 6 });
+    setPosition({ left: parentContext.left + next.left, top: parentContext.top + next.top + (next.above ? 0 : 6), ready: true });
+  }, [parentContext, text]);
 
   return createPortal(
-    <ErrorBoundary
-      componentPath="Message/Reactions/Tooltip"
-      style={{
-        zIndex: 100_000_000,
-        top: 0,
-        position: 'fixed',
-        pointerEvents: 'none'
-      }}
-    >
-      <div
-        translate="no"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        style={{ pointerEvents: 'auto' }}
-        className={`${css`
-          padding: 0.5rem;
-          font-size: 1.2rem;
-          min-width: ${displayedReactedUsers.length === 1 &&
-          otherReactedUserNumber === 0
-            ? '5rem'
-            : '8rem'};
-          text-align: center;
-          position: absolute;
-          left: ${`${
-            displaysToTheRight ? `${x}px` : `CALC(${x}px + ${width}px)`
-          }`};
-          top: ${isReversed
-            ? `CALC(${y}px - 0.5rem)`
-            : `CALC(${y}px + ${height}px + 0.5rem)`};
-          transform: translate(
-            ${displaysToTheRight ? 0 : '-100%'},
-            ${isReversed ? '-100%' : 0}
-          );
-          border: none;
-          background: #fff;
-          box-shadow: 1px 1px 2px ${Color.black(0.6)};
-        `} notranslate`}
-      >
-        {peopleWhoReactedText}
-      </div>
-    </ErrorBoundary>,
-    document.getElementById('outer-layer') as HTMLElement
+    <div ref={ref} id={id} role="tooltip" translate="no" className={tooltipClass}
+      style={{ left: position.left, top: position.top, visibility: position.ready ? 'visible' : 'hidden' }}>
+      {text}
+    </div>, document.getElementById('outer-layer') || document.body
   );
 }
+
+const tooltipClass = css`
+  position: fixed;
+  z-index: 100000000;
+  pointer-events: none;
+  max-width: min(280px, calc(100vw - 16px));
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid #dce3ed;
+  border-radius: 10px;
+  background: #fff;
+  color: #253247;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 500;
+  text-align: center;
+  overflow-wrap: anywhere;
+`;

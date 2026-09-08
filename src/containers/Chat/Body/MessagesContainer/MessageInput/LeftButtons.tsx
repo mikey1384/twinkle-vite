@@ -166,6 +166,7 @@ export default function LeftButtons({
       {isTwoPeopleChannel ? (
         <>
           <Button
+            aria-label="Open chess game"
             disabled={loading || isChessBanned || isRestrictedChannel}
             variant="soft"
             tone="raised"
@@ -185,6 +186,7 @@ export default function LeftButtons({
             <Icon size="lg" icon={['fas', 'chess']} />
           </Button>
           <Button
+            aria-label="Open Omok game"
             disabled={loading || isChessBanned || isRestrictedChannel}
             variant="soft"
             tone="raised"
@@ -210,6 +212,7 @@ export default function LeftButtons({
         </>
       ) : hasWordleButton ? (
         <Button
+          aria-label="Play Wordle"
           disabled={loading || !nextDayTimeStamp}
           loading={!nextDayTimeStamp}
           variant="soft"
@@ -226,6 +229,7 @@ export default function LeftButtons({
       ) : null}
       {topicId && legacyTopicButtonShown && (
         <Button
+          aria-label="Reply to topic"
           disabled={loading}
           style={{
             marginLeft: isTwoPeopleChannel || hasWordleButton ? '0.5rem' : 0

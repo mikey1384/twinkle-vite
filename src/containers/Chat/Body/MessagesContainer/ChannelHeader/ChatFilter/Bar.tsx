@@ -102,12 +102,17 @@ export default function ChatFilterBar({
   );
 
   return (
-    <ScopedTheme theme={themeName} roles={['chatTopic', 'chatTopicText']}>
+    <ScopedTheme
+      theme={themeName}
+      roles={['chatTopic', 'chatTopicText']}
+      style={{ minWidth: 0, maxWidth: '100%' }}
+    >
       <div
         className={css`
           display: flex;
           flex-direction: column;
-          height: 4rem;
+          min-height: 4rem;
+          min-width: 0;
         `}
       >
         <div
@@ -115,7 +120,9 @@ export default function ChatFilterBar({
             display: flex;
             gap: 1.5rem;
             width: 100%;
-            height: 100%;
+            min-width: 0;
+            height: 4rem;
+            flex: 0 0 auto;
             align-items: center;
             font-size: 1.5rem;
             @media (max-width: ${mobileMaxWidth}) {
@@ -126,6 +133,7 @@ export default function ChatFilterBar({
           <div
             className={css`
               height: 100%;
+              flex: 0 0 auto;
               padding: 0 1.2rem;
               border-radius: ${borderRadius};
               display: flex;
@@ -169,6 +177,8 @@ export default function ChatFilterBar({
           <div
             className={css`
               height: 100%;
+              flex: 1 1 auto;
+              min-width: 0;
               border-radius: ${borderRadius};
               display: flex;
               align-items: center;
@@ -184,6 +194,7 @@ export default function ChatFilterBar({
             <div
               className={css`
                 display: none;
+                flex: 0 0 auto;
                 @media (min-width: ${mobileMaxWidth}) {
                   display: flex;
                 }
@@ -199,6 +210,7 @@ export default function ChatFilterBar({
             {topic && (
               <div
                 ref={topicButtonRef}
+                title={topic}
                 onClick={() => {
                   handleTabClick('topic');
                 }}
@@ -207,6 +219,8 @@ export default function ChatFilterBar({
                   touch-action: manipulation;
                   background: #fff;
                   height: 100%;
+                  min-width: 0;
+                  flex: 1 1 auto;
                   display: flex;
                   align-items: center;
                   ${selectedTab === 'topic'
@@ -229,6 +243,7 @@ export default function ChatFilterBar({
                 <span
                   className={`unselectable ${css`
                     padding: 0.5rem 1.5rem;
+                    min-width: 0;
                     font-weight: bold;
                     white-space: nowrap;
                     overflow: hidden;
@@ -248,6 +263,7 @@ export default function ChatFilterBar({
                   justify-content: center;
                   align-items: center;
                   height: 100%;
+                  flex: 0 0 auto;
                   padding: 0 1.2rem;
                   &:hover {
                     color: #007bff;
@@ -279,6 +295,7 @@ export default function ChatFilterBar({
                   justify-content: center;
                   align-items: center;
                   height: 100%;
+                  min-width: 0;
                   padding: 0 1.2rem;
                   &:hover {
                     color: #007bff;
@@ -291,6 +308,9 @@ export default function ChatFilterBar({
                   className={css`
                     font-weight: bold;
                     margin-left: 1rem;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
                   `}
                 >
                   Enable Topics
@@ -298,6 +318,7 @@ export default function ChatFilterBar({
               </div>
             ) : (
               <div
+                title="Topics Not Enabled"
                 className={css`
                   cursor: not-allowed;
                   display: flex;
@@ -306,10 +327,19 @@ export default function ChatFilterBar({
                   align-items: center;
                   color: #ccc;
                   height: 100%;
+                  min-width: 0;
                   padding: 0 1.2rem;
                 `}
               >
-                Topics Not Enabled
+                <span
+                  className={css`
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                  `}
+                >
+                  Topics Not Enabled
+                </span>
               </div>
             )}
           </div>
@@ -317,6 +347,7 @@ export default function ChatFilterBar({
             ref={searchButtonRef}
             className={css`
               height: 100%;
+              flex: 0 0 auto;
               padding: 0 1.2rem;
               border-radius: ${borderRadius};
               display: flex;

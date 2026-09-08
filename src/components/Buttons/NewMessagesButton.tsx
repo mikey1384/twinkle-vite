@@ -1,7 +1,7 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { css, cx } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
+import { chatScrollButtonClass, chatScrollButtonStyle } from './chatScrollButtonStyles';
 
 export default function NewMessagesButton({
   count,
@@ -16,21 +16,13 @@ export default function NewMessagesButton({
   const label = count > 1 ? `New Messages (${count})` : 'New Message';
   return (
     <button
-      className={css`
-        align-items: center;
-        background-color: ${Color[theme || profileTheme]()};
-        border: none;
+      type="button"
+      style={chatScrollButtonStyle(theme || profileTheme)}
+      className={cx(chatScrollButtonClass, css`
         border-radius: 999px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-        color: #ffffff;
-        cursor: pointer;
-        display: flex;
-        font-family: inherit;
-        font-size: 1.1rem;
-        font-weight: 700;
-        gap: 0.6rem;
-        outline: none;
-        padding: 0.7rem 1.4rem;
+        gap: 8px;
+        padding: 10px 16px;
         transition: all 0.3s ease;
         @keyframes newMessagesPopIn {
           0% {
@@ -54,16 +46,16 @@ export default function NewMessagesButton({
           transform: translateY(0);
         }
         > svg {
-          height: 1.4rem;
-          width: 1.4rem;
+          height: 18px;
+          width: 18px;
         }
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-      `}
+      `)}
       onClick={onClick}
       aria-label={label}
     >
       <svg
+        aria-hidden="true"
+        focusable="false"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="none"

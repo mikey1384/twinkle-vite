@@ -1,32 +1,11 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Icon from '~/components/Icon';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { textIsOverflown, isMobile } from '~/helpers';
 import { useOutsideClick } from '~/helpers/hooks';
-import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { chatSubnavRowClass } from '../../containers';
 
 const deviceIsMobile = isMobile(navigator);
-
-const navStyle = css`
-  color: ${Color.darkerGray()};
-  cursor: pointer;
-  width: 100%;
-  padding: 0.7rem 2.5rem;
-  text-align: left;
-  font-size: 1.4rem;
-  font-family: Helvetica;
-  touch-action: manipulation;
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      background: ${Color.checkboxAreaGray()};
-    }
-  }
-  &.active {
-    color: ${Color.vantaBlack()};
-    background: ${Color.highlightGray()};
-  }
-`;
 
 export default function TopicItem({
   icon,
@@ -42,10 +21,23 @@ export default function TopicItem({
   const [showFullText, setShowFullText] = useState(false);
   const timerRef = useRef<number | null>(null);
   const topicRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+
+  const handleDismiss = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setShowFullText(false);
+  }, []);
+
+  useEffect(() => () => {
+    if (timerRef.current !== null) clearTimeout(timerRef.current);
+  }, []);
 
   const handleInteraction = useCallback(
     (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
+      event: React.MouseEvent<HTMLSpanElement> | React.TouchEvent<HTMLSpanElement>
     ) => {
       if (deviceIsMobile) {
         if (isSelected) {
@@ -66,38 +58,50 @@ export default function TopicItem({
 
   const handleMouseLeave = useCallback(() => {
     if (!deviceIsMobile) {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-      setShowFullText(false);
+      handleDismiss();
     }
-  }, []);
+  }, [handleDismiss]);
 
-  useOutsideClick(topicRef, () => setShowFullText(false), {
+  useOutsideClick(topicRef, handleDismiss, {
     enabled: deviceIsMobile && showFullText,
     closeOnScroll: true
   });
 
   return (
     <div style={{ position: 'relative' }} ref={topicRef}>
-      <nav
+      <button
+        type="button"
+        aria-current={isSelected ? 'page' : undefined}
         style={{ display: 'flex', alignItems: 'center' }}
-        className={`${navStyle} ${isSelected ? 'active' : ''}`}
+        className={`${chatSubnavRowClass} ${isSelected ? 'active' : ''}`}
         onClick={onClick}
+        onFocus={(event) => {
+          if (event.currentTarget.matches(':focus-visible') &&
+              textRef.current && textIsOverflown(textRef.current)) {
+            setShowFullText(true);
+          }
+        }}
+        onBlur={handleDismiss}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && showFullText) {
+            event.stopPropagation();
+            handleDismiss();
+          }
+        }}
       >
         <Icon icon={icon} />
-        <div
+        <span
           style={{
-            width: 'CALC(100% - 1rem)',
+            minWidth: 0,
             marginLeft: '1rem',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexGrow: 1
+            flex: '1 1 0'
           }}
         >
-          <div
+          <span
+            ref={textRef}
             style={{
               width: '100%',
               overflow: 'hidden',
@@ -109,16 +113,21 @@ export default function TopicItem({
             onClick={deviceIsMobile ? handleInteraction : undefined}
           >
             {children}
-          </div>
-        </div>
-      </nav>
+          </span>
+        </span>
+      </button>
       <FullTextReveal
+        anchorRef={topicRef}
+        onDismiss={handleDismiss}
         show={showFullText}
         text={children}
         direction="left"
         style={{
-          fontSize: '1.1rem',
-          width: '70%'
+          fontSize: 'max(14px, 1.4rem)',
+          width: 'max-content',
+          maxWidth: 'min(32rem, calc(100vw - 24px))',
+          maxHeight: 'min(50vh, 24rem)',
+          overflowY: 'auto'
         }}
       />
     </div>

@@ -26,6 +26,7 @@ function Message({
   currentChannel,
   displayedThemeColor,
   groupObjs,
+  groupWithPrevious = false,
   onSetGroupObjs,
   index,
   isAICardModalShown,
@@ -71,6 +72,7 @@ function Message({
   currentChannel: any;
   displayedThemeColor: string;
   groupObjs: any;
+  groupWithPrevious?: boolean;
   onSetGroupObjs: (v: any) => void;
   index: number;
   isAICardModalShown: boolean;
@@ -284,6 +286,7 @@ function Message({
               <LoadingPlaceholder />
             ) : contentShown || isOneOfVisibleMessages ? (
               <MessageBody
+                groupWithPrevious={groupWithPrevious && !isAIMessage}
                 channelId={channelId}
                 isChessCountdownActive={isChessCountdownActive}
                 isOmokCountdownActive={isOmokCountdownActive}

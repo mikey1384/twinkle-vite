@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import BoardSpoiler from '../../BoardSpoiler';
 import { css } from '@emotion/css';
@@ -48,10 +48,9 @@ const rowLabelClass = css`
   font-weight: bold;
   min-height: 0;
   overflow: hidden;
-  font-size: 0.7rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.55rem;
-  }
+  font-size: 10px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 `;
 
 const colLabelClass = css`
@@ -62,10 +61,8 @@ const colLabelClass = css`
   font-weight: bold;
   min-width: 0;
   overflow: hidden;
-  font-size: 0.7rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.55rem;
-  }
+  font-size: 10px;
+  line-height: 1;
 `;
 
 const boardPlaneClass = css`
@@ -138,6 +135,43 @@ function Game({
   winningMap,
   boardToRender
 }: GameProps) {
+  const [activeCell, setActiveCell] = useState(Math.floor(BOARD_SIZE * BOARD_SIZE / 2));
+  const gridRef = useRef<HTMLDivElement>(null);
+  const wasVisible = useRef(boardVisible);
+  useEffect(() => {
+    const revealed = boardVisible && !wasVisible.current;
+    wasVisible.current = boardVisible;
+    const grid = gridRef.current;
+    if (!revealed || !grid) return;
+    const doc = grid.ownerDocument;
+    if (doc.activeElement === doc.body || doc.activeElement === doc.documentElement) {
+      grid.querySelector<HTMLElement>('[data-omok-index][tabindex="0"]')?.focus({ preventScroll: true });
+    }
+  }, [boardVisible]);
+
+  function handleGridKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.altKey || event.metaKey || event.nativeEvent.isComposing) return;
+    const target = (event.target as HTMLElement).closest<HTMLElement>('[data-omok-index]');
+    if (!target || !event.currentTarget.contains(target)) return;
+    const index = Number(target.dataset.omokIndex);
+    if (!Number.isInteger(index) || index < 0 || index >= BOARD_SIZE * BOARD_SIZE) return;
+    const row = Math.floor(index / BOARD_SIZE), col = index % BOARD_SIZE;
+    let next = index;
+    switch (event.key) {
+      case 'ArrowLeft': next = row * BOARD_SIZE + Math.max(0, col - 1); break;
+      case 'ArrowRight': next = row * BOARD_SIZE + Math.min(BOARD_SIZE - 1, col + 1); break;
+      case 'ArrowUp': next = Math.max(0, row - 1) * BOARD_SIZE + col; break;
+      case 'ArrowDown': next = Math.min(BOARD_SIZE - 1, row + 1) * BOARD_SIZE + col; break;
+      case 'Home': next = event.ctrlKey ? 0 : row * BOARD_SIZE; break;
+      case 'End': next = event.ctrlKey ? BOARD_SIZE * BOARD_SIZE - 1 : (row + 1) * BOARD_SIZE - 1; break;
+      default: return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    setActiveCell(next);
+    event.currentTarget.querySelector<HTMLElement>(`[data-omok-index="${next}"]`)?.focus({ preventScroll: true });
+  }
+
   if (loading) {
     return (
       <div className={loadingContainerClass} style={boardSizeStyle}>
@@ -178,6 +212,10 @@ function Game({
         >
           <div
             className={cellsGridClass}
+            ref={gridRef}
+            role="group"
+            aria-label="Omok board. Use arrow keys to explore intersections; Enter or Space selects an empty intersection on your turn."
+            onKeyDown={handleGridKeyDown}
             style={{
               cursor: !interactable && onBoardClick ? 'pointer' : undefined
             }}
@@ -203,6 +241,10 @@ function Game({
                 return (
                   <OmokCell
                     key={`${sourceRow}-${sourceCol}`}
+                    label={`${colLabels[displayCol]}${rowLabels[displayRow]}, ${cell || 'empty'}${isLastMove ? ', last move' : ''}${isWinCell ? ', winning line' : ''}`}
+                    navigationIndex={displayRow * BOARD_SIZE + displayCol}
+                    tabIndex={activeCell === displayRow * BOARD_SIZE + displayCol ? 0 : -1}
+                    onFocus={() => setActiveCell(displayRow * BOARD_SIZE + displayCol)}
                     value={cell}
                     isLastMove={isLastMove}
                     isWinCell={isWinCell}

@@ -73,7 +73,7 @@ export default function Bar({
       top: 0;
       bottom: 0;
       width: ${progressPct}%;
-      background: ${Color[safeLevelColor]()};
+      background: ${Color[safeLevelColor](isChat ? 0.16 : 1)};
       border-radius: 9999px;
       transition: width 0.4s ease;
       @media (max-width: ${mobileMaxWidth}) {
@@ -81,7 +81,7 @@ export default function Bar({
         border-bottom-left-radius: 0;
       }
     `,
-    [progressPct, safeLevelColor]
+    [isChat, progressPct, safeLevelColor]
   );
 
   const labelCls = useMemo(
@@ -101,8 +101,12 @@ export default function Bar({
 
   const labelColor = useMemo(
     () =>
-      started && Math.round(videoProgress) >= 50 ? '#fff' : Color.darkGray(),
-    [started, videoProgress]
+      isChat
+        ? '#334155'
+        : started && Math.round(videoProgress) >= 50
+        ? '#fff'
+        : Color.darkGray(),
+    [isChat, started, videoProgress]
   );
 
   const labelContent = useMemo(() => {
@@ -139,9 +143,9 @@ export default function Bar({
 
   return (
     <ErrorBoundary componentPath="XPVideoPlayer/XPBar/Bar/Inner">
-      <div className={trackCls}>
+      <div className={trackCls} data-video-reward-track>
         <div className={fillCls} />
-        <span className={labelCls} style={{ color: labelColor }}>
+        <span data-video-reward-label className={labelCls} style={{ color: labelColor }}>
           <span key={contentKey}>{labelContent}</span>
         </span>
       </div>

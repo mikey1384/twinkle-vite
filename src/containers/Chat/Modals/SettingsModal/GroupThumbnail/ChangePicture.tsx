@@ -1,42 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
-const changePictureLabel = 'Change Picture';
 
 export default function ChangePicture({ shown }: { shown: boolean }) {
-  const [opacity, setOpacity] = useState(0);
-  useEffect(() => {
-    setOpacity(shown ? 1 : 0);
-  }, [shown]);
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '100%',
-        height: '50%',
-        marginTop: '50%',
-        position: 'absolute',
-        transition: 'background 0.5s',
-        background: Color.black(Math.max(opacity - 0.3, 0))
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          color: Color.white(opacity),
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'column'
-        }}
-      >
-        <Icon icon="camera-alt" size="lg" />
-        <div style={{ fontSize: '1.5rem', marginTop: '0.5rem' }}>
-          {changePictureLabel}
-        </div>
-      </div>
-    </div>
-  );
+  return <span aria-hidden="true" className={overlayClass} data-shown={shown}>
+    <Icon icon="camera-alt" /><span>Change</span>
+  </span>;
 }
+
+const overlayClass = css`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  background: #172033b8;
+  color: #fff;
+  opacity: 0;
+  font-size: 12px;
+  transition: opacity .15s ease;
+  pointer-events: none;
+  &[data-shown='true'] { opacity: 1; }
+  @media (pointer: coarse) { opacity: 1; inset: auto 0 0; padding: 5px; flex-direction: row; }
+  @media (prefers-reduced-motion: reduce) { transition: none; }
+`;

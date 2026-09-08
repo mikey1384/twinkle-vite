@@ -76,7 +76,7 @@ export default function Vocabulary() {
         </span>
       </div>
       {lastFeed?.id && (
-        <div style={{ position: 'absolute' }}>
+        <div style={{ position: 'absolute', left: 0, right: 0 }}>
           <p
             style={{
               whiteSpace: 'nowrap',

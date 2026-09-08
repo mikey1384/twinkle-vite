@@ -15,13 +15,9 @@ import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 export default function Channels({
   currentPathId,
-  onMouseEnter,
-  onMouseLeave,
   style
 }: {
   currentPathId?: string | number;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
   style?: React.CSSProperties;
 }) {
   const ChannelsRef = useRef<HTMLDivElement>(null);
@@ -185,10 +181,16 @@ export default function Channels({
       <div
         ref={ChannelsRef}
         key={selectedChatTab}
+        aria-label="Chat channels"
+        tabIndex={0}
         className={css`
-          overflow: scroll;
+          overflow-y: auto;
+          overflow-x: hidden;
           width: 100%;
           flex: 1;
+          min-height: 0;
+          overscroll-behavior-y: contain;
+          scrollbar-width: thin;
           touch-action: pan-y;
           -webkit-overflow-scrolling: touch;
           @media (max-width: ${mobileMaxWidth}) {
@@ -196,8 +198,6 @@ export default function Channels({
           }
         `}
         style={style}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
       >
         {channelIds
           ?.map((channelId: number) => channelsObj[channelId])

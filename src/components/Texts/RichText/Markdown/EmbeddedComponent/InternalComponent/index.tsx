@@ -87,10 +87,10 @@ export default function InternalComponent({
       );
     }
     if (linkType === 'missions' && contentId) {
-      return <MissionComponent src={src} isPreview={isPreview} />;
+      return <MissionComponent src={src} isPreview={isPreview} isChat={rootType === 'chat'} />;
     }
     if (linkType === 'users') {
-      return <UserComponent src={src} isPreview={isPreview} />;
+      return <UserComponent src={src} isPreview={isPreview} isChat={rootType === 'chat'} />;
     }
     if (
       (linkType === 'ai-cards' ||
@@ -107,7 +107,7 @@ export default function InternalComponent({
       );
     }
     if (linkType === 'shared-prompts') {
-      return <SharedPromptComponent src={src} isPreview={isPreview} />;
+      return <SharedPromptComponent src={src} isPreview={isPreview} isChat={rootType === 'chat'} />;
     }
     if (linkType === 'achievement-unlocks' && contentId) {
       return <AchievementUnlockComponent src={src} isPreview={isPreview} />;

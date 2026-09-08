@@ -9,7 +9,8 @@ import { isMobile } from '~/helpers';
 import { getDesktopNotificationStatus } from '~/helpers/desktopNotifications';
 import { GENERAL_CHAT_ID, MOD_LEVEL } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { chatHeaderClass } from '../../../containers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useToast } from '~/contexts/Toast';
 import LocalContext from '../../../Context';
@@ -344,16 +345,18 @@ export default function ChannelHeader({
   return (
     <ErrorBoundary
       componentPath="MessagesContainer/ChannelHeader/index"
-      className={css`
+      className={cx(chatHeaderClass, css`
         z-index: 50000;
-        position: ${isLegacyTopicShown ? 'relative' : 'absolute'};
-        width: ${isLegacyTopicShown ? '100%' : 'auto'};
-        height: 100%;
+        position: relative;
+        width: 100%;
+        flex: 0 0 auto;
+        max-width: 100%;
+        min-width: 0;
         padding: 1rem;
-        height: 7rem;
+        min-height: 7rem;
+        height: auto;
         display: flex;
         align-items: center;
-        right: ${isLegacyTopicShown ? 0 : '1rem'};
         > section {
           position: relative;
           display: flex;
@@ -364,32 +367,26 @@ export default function ChannelHeader({
             width: CALC(100% - ${level >= MOD_LEVEL ? '13rem' : '3rem'});
           }
         }
-      `}
+      `)}
     >
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
+          alignItems: isLegacyTopicShown ? 'center' : 'flex-start',
           justifyContent: 'space-between',
-          width: '100%'
+          width: '100%',
+          minWidth: 0
         }}
       >
         <div
           className={css`
-            flex-grow: 1;
-            width: ${isLegacyTopicShown
-              ? isEditingTopic
-                ? '100%'
-                : 'CALC(100% - 40px)'
-              : 'auto'};
+            flex: ${isLegacyTopicShown ? '1 1 0' : '1 1 auto'};
+            min-width: 0;
             height: 100%;
             display: inline-block;
             justify-content: space-between;
             align-items: center;
             padding: 0;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: ${isLegacyTopicShown ? 'CALC(100% - 60px)' : 'auto'};
-            }
           `}
         >
           {isLegacyTopicShown ? (
@@ -447,12 +444,12 @@ export default function ChannelHeader({
               height: 100%;
               font-size: 1.3rem;
               display: flex;
+              flex: 0 0 auto;
               justify-content: flex-end;
               align-items: center;
               max-width: ${isLegacyTopicShown ? '15rem' : 'auto'};
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1.2rem;
-                width: ${isLegacyTopicShown ? '10rem' : 'auto'};
               }
             `}
           >

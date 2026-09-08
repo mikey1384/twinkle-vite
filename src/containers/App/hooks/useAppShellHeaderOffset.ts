@@ -7,7 +7,7 @@ import {
   APP_SHELL_KEYBOARD_INSET_STYLE,
   APP_SHELL_TOP_OFFSET_VAR
 } from '~/constants/appShell';
-import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 export default function useAppShellHeaderOffset({
   headerVisible,
@@ -31,7 +31,10 @@ export default function useAppShellHeaderOffset({
     function shouldOffsetDesktopHeader() {
       return (
         headerVisible &&
-        window.matchMedia(`(min-width: ${desktopMinWidth})`).matches
+        // Match the header's default desktop / max-width mobile CSS exactly.
+        // Zoom can produce widths between 767px and 768px; a separate desktop
+        // minimum leaves the visible top header with no reserved space there.
+        !window.matchMedia(`(max-width: ${mobileMaxWidth})`).matches
       );
     }
 

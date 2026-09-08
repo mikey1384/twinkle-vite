@@ -17,6 +17,7 @@ const loadingContainerClass = css`
   box-shadow: 0 0.5rem 2rem ${Color.black(0.08)};
   width: 100%;
   height: 100%;
+  min-height: inherit;
 `;
 
 export default function Game({
@@ -47,8 +48,8 @@ export default function Game({
   const { desktopBoardSize, mobileBoardSize } = useMemo(() => {
     if (size === 'compact') {
       return {
-        desktopBoardSize: '9rem',
-        mobileBoardSize: '8rem'
+        desktopBoardSize: '16rem',
+        mobileBoardSize: 'min(90vw, 14rem)'
       };
     }
     if (size === 'inline') {
@@ -68,12 +69,12 @@ export default function Game({
   return (
     <div
       className={css`
-        width: calc(${desktopBoardSize} + 2rem);
-        height: calc(${desktopBoardSize} + 2.5rem);
+        --chat-chess-board-size: ${desktopBoardSize};
+        width: calc(var(--chat-chess-board-size) + 2rem);
+        min-height: calc(var(--chat-chess-board-size) + 2.5rem);
         position: relative;
         @media (max-width: ${mobileMaxWidth}) {
-          width: calc(${mobileBoardSize} + 2rem);
-          height: calc(${mobileBoardSize} + 2.5rem);
+          --chat-chess-board-size: ${mobileBoardSize};
         }
       `}
     >

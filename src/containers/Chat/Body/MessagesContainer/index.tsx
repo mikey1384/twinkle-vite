@@ -308,6 +308,12 @@ export default function MessagesContainer({
   const [selectingNewOwner, setSelectingNewOwner] = useState(false);
   const leavingRef = useRef(false);
   const selectingNewOwnerRef = useRef(false);
+  const ownerTransferProgressRef = useRef<{
+    key: string;
+    state: any;
+    applied: boolean;
+    relayed: boolean;
+  } | null>(null);
   const MessageToScrollToFromAll = useRef<number | null>(null);
   const MessageToScrollToFromTopic = useRef<number | null>(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
@@ -316,6 +322,9 @@ export default function MessagesContainer({
   selectedChannelIdRef.current = selectedChannelId;
   const userIdRef = useRef(userId);
   userIdRef.current = userId;
+  useEffect(() => {
+    ownerTransferProgressRef.current = null;
+  }, [userId, selectedChannelId]);
   const shouldScrollToBottomRef = useRef(true);
   const visibleMessageIdRef = useRef<number | null>(null);
   const { boardCountdownObj, clearBoardCountdown, setLatestBoardMessageId } =
@@ -1065,7 +1074,8 @@ export default function MessagesContainer({
       editedCanChangeSubject,
       editedOnlyOwnerCanPost,
       editedTheme,
-      newThumbPath
+      newThumbPath,
+      canApply
     }: {
       editedChannelName: string;
       editedDescription: string;
@@ -1075,6 +1085,7 @@ export default function MessagesContainer({
       editedOnlyOwnerCanPost: boolean;
       editedTheme: string;
       newThumbPath: string;
+      canApply?: () => boolean;
     }) => {
       const { channelSettings } = await editChannelSettings({
         channelName: editedChannelName,
@@ -1087,6 +1098,11 @@ export default function MessagesContainer({
         theme: editedTheme,
         newThumbPath
       });
+      if (
+        canApply?.() === false ||
+        selectedChannelIdRef.current !== selectedChannelId ||
+        userIdRef.current !== userId
+      ) return;
       onEditChannelSettings({
         ...channelSettings,
         newThumbPath: channelSettings.thumbPath
@@ -1094,7 +1110,7 @@ export default function MessagesContainer({
       setSettingsModalShown(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedChannelId]
+    [selectedChannelId, userId]
   );
 
   const handleInviteUsersDone = useCallback(
@@ -1102,12 +1118,14 @@ export default function MessagesContainer({
       users,
       message,
       isClass,
-      relayLegacyMembership
+      relayLegacyMembership,
+      canApply
     }: {
       users: any[];
       message?: any;
       isClass: boolean;
       relayLegacyMembership?: boolean;
+      canApply?: () => boolean;
     }) => {
       if (isClass && relayLegacyMembership && message) {
         socket.emit('new_chat_message', {
@@ -1144,6 +1162,7 @@ export default function MessagesContainer({
           recipients: recipientIds,
           origin: selectedChannelId
         });
+        if (canApply?.() === false) return;
         for (let i = 0; i < channels.length; i++) {
           onReceiveMessageOnDifferentChannel({
             message: messages[i],
@@ -1154,18 +1173,23 @@ export default function MessagesContainer({
           });
         }
       }
-      setInviteUsersModalShown(false);
+      if (canApply?.() !== false) setInviteUsersModalShown(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedChannelId]
   );
 
-  const handleLeaveChannel = useCallback(async () => {
+  const handleLeaveChannel = useCallback(async (canApply?: () => boolean) => {
     if (!leavingRef.current) {
       try {
         setIsLeaving(true);
         leavingRef.current = true;
         const leaveState = await leaveChannel(selectedChannelId);
+        if (
+          canApply?.() === false ||
+          selectedChannelIdRef.current !== selectedChannelId ||
+          userIdRef.current !== userId
+        ) return;
         onLeaveChannel({
           channelId: selectedChannelId,
           userId,
@@ -1201,17 +1225,17 @@ export default function MessagesContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profilePicUrl, selectedChannelId, userId, username]);
 
-  const handleLeaveConfirm = useCallback(() => {
+  const handleLeaveConfirm = useCallback(async () => {
     try {
       if (Number(currentChannel.creatorId) === Number(userId)) {
         setLeaveConfirmModalShown(false);
         if (currentChannel.members.length === 1) {
-          handleLeaveChannel();
+          await handleLeaveChannel();
         } else {
           setSelectNewOwnerModalShown(true);
         }
       } else {
-        handleLeaveChannel();
+        await handleLeaveChannel();
       }
     } catch (error) {
       console.error(error);
@@ -1402,25 +1426,46 @@ export default function MessagesContainer({
   );
 
   const handleSelectNewOwner = useCallback(
-    async ({ newOwner, andLeave }: { newOwner: User; andLeave?: boolean }) => {
-      if (selectingNewOwnerRef.current) return;
+    async ({ newOwner, andLeave, canApply, onTransferred }: {
+      newOwner: User;
+      andLeave?: boolean;
+      canApply?: () => boolean;
+      onTransferred?: () => void;
+    }) => {
+      if (selectingNewOwnerRef.current) throw new Error('An ownership change is already pending');
+      const isCurrent = () => canApply?.() !== false &&
+        selectedChannelIdRef.current === selectedChannelId &&
+        userIdRef.current === userId;
+      if (!isCurrent()) return;
       setSelectingNewOwner(true);
       selectingNewOwnerRef.current = true;
       try {
-        const ownerState = await changeChannelOwner({
-          channelId: selectedChannelId,
-          newOwner
-        });
+        const key = [userId, selectedChannelId, newOwner.id].join(':');
+        let progress = ownerTransferProgressRef.current;
+        if (progress?.key !== key) {
+          const state = await changeChannelOwner({ channelId: selectedChannelId, newOwner });
+          if (!isCurrent()) return;
+          if (!state || typeof state !== 'object' || Array.isArray(state)) {
+            throw new Error('Invalid ownership response');
+          }
+          progress = { key, state, applied: false, relayed: false };
+          ownerTransferProgressRef.current = progress;
+        }
+        const ownerState = progress.state;
+        onTransferred?.();
         const canonicalNewOwner = ownerState.newOwner || newOwner;
-        onChangeChannelOwner({
-          channelId: selectedChannelId,
-          creatorId: Number(ownerState.creatorId || canonicalNewOwner.id),
-          message: ownerState.message,
-          newOwner: canonicalNewOwner
-        });
+        if (!progress.applied) {
+          onChangeChannelOwner({
+            channelId: selectedChannelId,
+            creatorId: Number(ownerState.creatorId || canonicalNewOwner.id),
+            message: ownerState.message,
+            newOwner: canonicalNewOwner
+          });
+          progress.applied = true;
+        }
         // Rolling-deploy bridge for an older API response. Current servers
         // broadcast the persisted canonical message themselves.
-        if (!Object.prototype.hasOwnProperty.call(ownerState, 'changed')) {
+        if (!progress.relayed && !Object.prototype.hasOwnProperty.call(ownerState, 'changed')) {
           socket.emit('new_chat_message', {
             message: {
               id: ownerState.messageId,
@@ -1439,17 +1484,16 @@ export default function MessagesContainer({
               pathId: currentChannel.pathId
             }
           });
+          progress.relayed = true;
         }
 
         if (andLeave) {
-          await handleLeaveChannel();
+          await handleLeaveChannel(isCurrent);
         }
-      } catch (error) {
-        console.error(error);
+        if (isCurrent()) ownerTransferProgressRef.current = null;
       } finally {
         setSelectingNewOwner(false);
         selectingNewOwnerRef.current = false;
-        setSelectNewOwnerModalShown(false);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

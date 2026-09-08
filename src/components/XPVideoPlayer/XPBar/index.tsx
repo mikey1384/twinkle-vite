@@ -94,6 +94,7 @@ function XPBar({
   return userId ? (
     <ErrorBoundary componentPath="XPVideoPlayer/XPBar">
       <div
+        data-video-xp-bar={isChat ? 'chat' : undefined}
         className={css`
           display: flex;
           margin-top: 1rem;
@@ -104,6 +105,50 @@ function XPBar({
           gap: 0.75rem;
           overflow: hidden;
           min-width: 0;
+          &[data-video-xp-bar='chat'] {
+            flex-wrap: wrap;
+            gap: 6px;
+            overflow: visible;
+            [data-video-reward-track] {
+              flex: 1 1 240px;
+              width: auto;
+              min-height: 26px;
+              height: auto;
+              border-radius: 999px;
+              border: 1px solid ${Color[xpLevelColor || 'logoBlue'](0.28)};
+            }
+            [data-video-reward-label] {
+              white-space: normal;
+              text-align: center;
+              padding: 3px 8px;
+              font-size: 12px;
+              line-height: 1.4;
+            }
+            [data-video-earned] {
+              min-width: 0;
+              max-width: 100%;
+              height: 26px;
+              margin-left: auto;
+            }
+            [data-video-earned-xp],
+            [data-video-earned-coins] {
+              width: auto;
+              min-width: 40px;
+              padding: 0 8px;
+              font-size: 12px;
+              color: #334155;
+            }
+            [data-video-earned-xp] {
+              background: ${Color[xpLevelColor || 'logoBlue'](0.12)};
+              border-color: ${Color[xpLevelColor || 'logoBlue'](0.25)};
+            }
+            [data-video-earned-coins] {
+              background: ${Color.brownOrange(0.12)};
+              border: 1px solid ${Color.brownOrange(0.25)};
+              border-left: 0;
+              border-radius: 0 999px 999px 0;
+            }
+          }
         `}
       >
         <ErrorBoundary componentPath="XPVideoPlayer/XPBar/Bar/Outer">
@@ -123,6 +168,7 @@ function XPBar({
         <ErrorBoundary componentPath="XPVideoPlayer/XPBar/EarnStatus">
           {rewardLevel ? (
             <div
+              data-video-earned
               className={css`
                 height: 2.7rem;
                 min-width: ${canEarnCoins ? '10rem' : '7rem'};
@@ -143,6 +189,7 @@ function XPBar({
                 `}
               >
                 <div
+                  data-video-earned-xp
                   className={css`
                     height: 100%;
                     width: 100%;
@@ -181,6 +228,7 @@ function XPBar({
               {canEarnCoins && (
                 <div>
                   <div
+                    data-video-earned-coins
                     className={css`
                       height: 100%;
                       position: relative;

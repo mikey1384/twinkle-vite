@@ -73,10 +73,21 @@ function SubChannels({
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
+        aria-label="Subchannels"
+        tabIndex={0}
         className={css`
           margin-top: 1rem;
+          flex: 0 1 auto;
+          min-height: min(8rem, 35%);
           overflow-x: hidden;
+          overflow-y: auto;
+          overscroll-behavior-y: contain;
+          scrollbar-width: thin;
+          &:not(:last-child) {
+            max-height: 45%;
+          }
           a {
+            flex-shrink: 0;
             &:hover {
               text-decoration: none;
             }
@@ -85,20 +96,22 @@ function SubChannels({
             color: ${Color.darkerGray()};
             cursor: pointer;
             width: 100%;
-            padding: 0.7rem 2.5rem;
+            padding: 0.7rem 1rem;
             text-align: left;
             font-size: 1.4rem;
-            font-family: Helvetica;
+            font-family: inherit;
+            border-radius: 8px;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
             @media (hover: hover) and (pointer: fine) {
               &:hover {
-                background: ${Color.checkboxAreaGray()};
+                background: var(--chat-hover-bg, ${Color.checkboxAreaGray()});
               }
             }
             &.active {
-              color: ${Color.vantaBlack()};
-              background: ${Color.highlightGray()};
+              color: #1e293b;
+              font-weight: 600;
+              background: var(--chat-title-bg, ${Color.highlightGray()});
             }
             @media (max-width: ${mobileMaxWidth}) {
               padding: 0.7rem 1rem;
@@ -107,7 +120,8 @@ function SubChannels({
           }
         `}
         style={{
-          border: `1px solid ${borderColor}`,
+          border: `1px solid var(--chat-panel-border, ${borderColor})`,
+          borderRadius: '10px',
           padding: '0.5rem 0',
           marginLeft: '1rem',
           marginRight: '1rem',
@@ -117,6 +131,8 @@ function SubChannels({
         }}
       >
         <Link
+          title="Main (Wordle)"
+          aria-current={!subchannelPath ? 'page' : undefined}
           onClick={() =>
             onUpdateLastSubchannelPath({
               channelId: selectedChannelId,

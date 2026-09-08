@@ -10,6 +10,7 @@ const aiCardsSource = readSource(
 );
 const aiEnergyCardSource = readSource('src/components/AiEnergyCard.tsx');
 const chatMainSource = readSource('src/containers/Chat/Main.tsx');
+const chatContainersSource = readSource('src/containers/Chat/containers.ts');
 const globalStylesSource = readSource('src/styles.css');
 
 const trayClassMatch = aiCardsSource.match(
@@ -85,9 +86,10 @@ assert.match(
 );
 
 assert.match(
-  chatMainSource,
+  chatContainersSource,
   /height: calc\(100% - var\(--mobile-nav-total-height\)\);/
 );
+assert.match(chatMainSource, /className=\{chatWorkspaceClass\}/);
 assert.match(
   globalStylesSource,
   /--mobile-nav-footprint: calc\(\s*var\(--mobile-nav-height, 7rem\) \+ env\(safe-area-inset-bottom, 0px\)\s*\);/

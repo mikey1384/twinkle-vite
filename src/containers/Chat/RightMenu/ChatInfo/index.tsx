@@ -446,7 +446,8 @@ function ChatInfo({
             )}
           </ErrorBoundary>
 
-          {!currentChannel.twoPeople && (
+          {!currentChannel.twoPeople &&
+            !stringIsEmpty(currentChannel.description) && (
             <div
               className={css`
                 padding: 1rem;

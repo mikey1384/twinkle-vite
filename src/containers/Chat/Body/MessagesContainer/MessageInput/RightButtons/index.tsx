@@ -71,6 +71,7 @@ export default function RightButtons({
         }}
       >
         <Button
+          aria-label="Stop AI response"
           color={buttonColor}
           loading={cancellingCurrentMessage}
           variant="solid"

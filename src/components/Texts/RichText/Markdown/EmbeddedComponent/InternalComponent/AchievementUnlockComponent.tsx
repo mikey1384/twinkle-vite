@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
@@ -10,6 +10,7 @@ import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import Loading from '~/components/Loading';
 import InvalidContent from '../InvalidContent';
+import EmbedLoadError from '../EmbedLoadError';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { isMobile } from '~/helpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -25,16 +26,20 @@ export default function AchievementUnlockComponent({
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
-  const [hasError, setHasError] = useState(false);
-  const loadingRef = useRef(false);
+  const [requestState, setRequestState] = useState<{
+    passId: string;
+    userId: number;
+    status: 'loading' | 'ready' | 'error' | 'notFound';
+  } | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
 
   const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
   const linkColor = linkRole.getColor();
 
   const passId = useMemo(() => {
-    const parts = src.split('/');
-    return parts[2]?.split('?')?.[0];
+    return src.split(/[?#]/)[0].split('/')[2];
   }, [src]);
+  const isValidPassId = Number.isSafeInteger(Number(passId)) && Number(passId) > 0;
 
   const contentState = useContentState({
     contentType: 'pass',
@@ -46,40 +51,67 @@ export default function AchievementUnlockComponent({
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
 
   useEffect(() => {
-    if (!loaded && !loadingRef.current && !isNaN(Number(passId))) {
+    let cancelled = false;
+    if (!loaded && isValidPassId) {
       onMount();
     }
     async function onMount() {
+      setRequestState({ passId, userId, status: 'loading' });
       try {
-        loadingRef.current = true;
         const data = await loadContent({
           contentId: Number(passId),
           contentType: 'pass',
           rootType: 'achievement'
         });
+        if (cancelled) return;
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('Achievement unlock is incomplete');
+        }
         if (data.notFound) {
-          return setHasError(true);
+          setRequestState({ passId, userId, status: 'notFound' });
+          return;
         }
         onInitContent({
           ...data,
           contentType: 'pass',
           contentId: Number(passId)
         });
+        setRequestState({ passId, userId, status: 'ready' });
       } catch (_error) {
-        setHasError(true);
-      } finally {
-        loadingRef.current = false;
+        if (!cancelled) setRequestState({ passId, userId, status: 'error' });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, passId, userId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    loaded,
+    passId,
+    userId,
+    isValidPassId,
+    retryAttempt,
+    loadContent,
+    onInitContent
+  ]);
 
-  if (hasError || isNaN(Number(passId))) {
+  if (!isValidPassId) {
     return <InvalidContent />;
   }
 
   if (!loaded) {
-    return <Loading />;
+    const status =
+      requestState?.passId === passId && requestState.userId === userId
+        ? requestState.status
+        : 'loading';
+    if (status === 'notFound') return <InvalidContent />;
+    if (status === 'error') {
+      return (
+        <EmbedLoadError onRetry={() => setRetryAttempt((value) => value + 1)} />
+      );
+    }
+    return (
+      <Loading text="Loading achievement" innerStyle={{ fontSize: '14px' }} />
+    );
   }
 
   if (rootType !== 'achievement' || !rootObj) {

@@ -723,6 +723,7 @@ export default function MessageInput({
             }}
           >
             <Button
+              aria-label="Send message"
               variant="soft"
               tone="raised"
               disabled={

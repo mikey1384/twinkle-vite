@@ -113,6 +113,8 @@ export default function StatusTag({
 
   return showTextTag ? (
     <div
+      role="img"
+      aria-label={label}
       className={css`
         top: 74%;
         left: 70%;
@@ -145,6 +147,8 @@ export default function StatusTag({
     </div>
   ) : (
     <div
+      role="img"
+      aria-label={label}
       style={{
         top: 'var(--profile-status-dot-top, 70%)',
         left: 'var(--profile-status-dot-left, 67%)',

@@ -1,6 +1,4 @@
-import React, { useMemo } from 'react';
-import Input from '~/components/Texts/Input';
-import { Color } from '~/constants/css';
+import React, { useId } from 'react';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
 
 export default function NameChanger({
@@ -8,56 +6,28 @@ export default function NameChanger({
   editedChannelName,
   onSetEditedChannelName,
   usingCustomName,
-  userIsChannelOwner
+  userIsChannelOwner,
+  disabled = false
 }: {
   actualChannelName?: string;
   editedChannelName: string;
-  onSetEditedChannelName: (v: string) => void;
+  onSetEditedChannelName: (value: string) => void;
   usingCustomName: boolean;
   userIsChannelOwner: boolean;
+  disabled?: boolean;
 }) {
-  const nameExceedsCharLimit = useMemo(
-    () =>
-      exceedsCharLimit({
-        contentType: 'group',
-        inputType: 'name',
-        text: editedChannelName
-      }),
-    [editedChannelName]
-  );
-
-  return (
-    <div style={{ width: '100%' }}>
-      {userIsChannelOwner && (
-        <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>Group Name:</p>
-      )}
-      <Input
-        style={{
-          marginTop: '0.5rem',
-          width: '100%'
-        }}
-        hasError={!!nameExceedsCharLimit}
-        autoFocus
-        placeholder={
-          usingCustomName && !userIsChannelOwner
-            ? actualChannelName
-            : 'Enter group name...'
-        }
-        value={editedChannelName}
-        onChange={onSetEditedChannelName}
-        errorMessage="Group name exceeds character limit"
-      />
-      {!userIsChannelOwner && usingCustomName && (
-        <div
-          style={{
-            marginTop: '0.5rem',
-            color: Color.darkerGray(),
-            fontSize: '1.3rem'
-          }}
-        >
-          <b>Actual name:</b> {actualChannelName}
-        </div>
-      )}
-    </div>
-  );
+  const id = useId();
+  const error = exceedsCharLimit({ contentType: 'group', inputType: 'name', text: editedChannelName });
+  return <div style={{ width: '100%', minWidth: 0 }}>
+    <label htmlFor={id}>{userIsChannelOwner ? 'Group name' : 'Your name for this group'}</label>
+    <input id={id} type="text" autoFocus disabled={disabled}
+      placeholder={usingCustomName && !userIsChannelOwner ? actualChannelName : 'Enter group name'}
+      value={editedChannelName} aria-invalid={Boolean(error)} aria-describedby={id + '-hint'}
+      onChange={event => onSetEditedChannelName(event.target.value)} />
+    <p id={id + '-hint'} className={error ? 'error' : 'field-hint'} role={error ? 'alert' : undefined}>
+      {error ? 'Group name exceeds the character limit.' : userIsChannelOwner
+        ? 'This is the name everyone in the group sees.'
+        : <>Only you see this name.{usingCustomName && <> Group name: <strong>{actualChannelName}</strong>.</>}</>}
+    </p>
+  </div>;
 }

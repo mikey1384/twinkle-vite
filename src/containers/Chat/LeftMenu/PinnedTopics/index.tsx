@@ -6,15 +6,13 @@ import LocalContext from '../../Context';
 import { useAppContext } from '~/contexts';
 import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { isMobile, isTablet } from '~/helpers';
 import { resolveColorValue } from '~/theme/resolveColor';
 import { useNavigate, useParams } from 'react-router-dom';
-
-const deviceIsMobile = isMobile(navigator);
-const deviceIsTablet = isTablet(navigator);
-const deviceIsMobileOrTablet = deviceIsMobile || deviceIsTablet;
+import type { TopicNavigation } from '../helpers/topicNavigation';
 
 const buttonStyle = css`
+  flex-shrink: 0;
+  min-height: 36px;
   margin: 1rem 1rem 0.5rem 1rem;
   padding: 0.7rem 2.5rem;
   font-size: 1.4rem;
@@ -31,23 +29,20 @@ const buttonStyle = css`
     }
   }
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
     padding: 0.7rem 1rem;
-    font-size: 1.2rem;
+    font-size: max(14px, 1.2rem);
   }
 `;
 
 function PinnedTopics({
   channelId,
-  featuredTopicId,
+  navigation,
   channelName,
   displayedThemeColor,
   isAIChat,
   isTwoPeopleChat,
   isOwner,
-  isFixed,
-  topicObj,
-  lastTopicId,
-  pinnedTopicIds = [],
   selectedTab,
   selectedTopicId,
   onSetTopicSelectorModalShown,
@@ -55,16 +50,12 @@ function PinnedTopics({
 }: {
   selectedTab: string;
   channelId: number;
-  featuredTopicId: number;
+  navigation: TopicNavigation;
   channelName: string;
   displayedThemeColor: string;
   isAIChat: boolean;
   isTwoPeopleChat: boolean;
   isOwner: boolean;
-  isFixed: boolean;
-  topicObj: Record<string, any>;
-  lastTopicId: number;
-  pinnedTopicIds: number[];
   selectedTopicId: number;
   onSetTopicSelectorModalShown: (v: boolean) => void;
   pathId: string;
@@ -78,63 +69,13 @@ function PinnedTopics({
     (v) => v.requestHelpers.updateLastTopicId
   );
 
-  const { featuredTopic, appliedFeaturedTopicId, pinnedTopics, lastTopic } =
-    useMemo(() => {
-      let featuredTopicResult = null;
-      let appliedFeaturedTopicIdResult = null;
-      let pinnedTopicsResult = [];
-      let lastTopicResult = null;
-
-      if (!featuredTopicId) {
-        const topicObjKeys = Object.keys(topicObj).filter(
-          (key) => key !== 'null'
-        );
-        const lastKey = topicObjKeys[topicObjKeys.length - 1];
-        featuredTopicResult = topicObj?.[lastKey]?.content
-          ? topicObj?.[lastKey]
-          : null;
-      } else {
-        featuredTopicResult = topicObj?.[featuredTopicId] || null;
-      }
-
-      appliedFeaturedTopicIdResult =
-        featuredTopicResult?.subjectId || featuredTopicResult?.id;
-
-      pinnedTopicsResult = (pinnedTopicIds || [])
-        .map((topicId) => topicObj?.[topicId])
-        .filter(
-          (topic) =>
-            !!topic &&
-            (topic?.subjectId || topic?.id) !== appliedFeaturedTopicIdResult
-        );
-
-      if (
-        lastTopicId &&
-        lastTopicId !== appliedFeaturedTopicIdResult &&
-        !(pinnedTopicIds || []).includes(lastTopicId)
-      ) {
-        lastTopicResult = topicObj?.[lastTopicId] || null;
-      }
-
-      return {
-        featuredTopic: featuredTopicResult,
-        appliedFeaturedTopicId: appliedFeaturedTopicIdResult,
-        pinnedTopics: pinnedTopicsResult,
-        lastTopic: lastTopicResult
-      };
-    }, [featuredTopicId, topicObj, pinnedTopicIds, lastTopicId]);
-
-  const additionalTopics = useMemo(() => {
-    if (!topicObj) return [];
-    return Object.values(topicObj).filter((topic) => {
-      const topicId = topic.subjectId || topic.id;
-      return (
-        !(pinnedTopicIds || []).includes(topicId) &&
-        topicId !== appliedFeaturedTopicId &&
-        topicId !== lastTopicId
-      );
-    });
-  }, [appliedFeaturedTopicId, lastTopicId, pinnedTopicIds, topicObj]);
+  const {
+    featuredTopic,
+    appliedFeaturedTopicId,
+    pinnedTopics,
+    lastTopic,
+    additionalTopics
+  } = navigation;
   const borderColor = useMemo(
     () =>
       resolveColorValue(displayedThemeColor, 0.5) ??
@@ -188,15 +129,12 @@ function PinnedTopics({
         className={css`
           margin-top: 1rem;
           width: CALC(100% - 2rem);
-          border: 1px solid ${borderColor};
+          border: 1px solid var(--chat-panel-border, ${borderColor});
+          border-radius: 10px;
           display: flex;
           flex-direction: column;
-          ${isFixed
-            ? `
-            max-height: 15rem;
-            overflow: hidden;
-          `
-            : ''}
+          flex: 1 1 auto;
+          min-height: 0;
         `}
         style={{
           padding: '0.5rem 0',
@@ -206,20 +144,16 @@ function PinnedTopics({
         }}
       >
         <div
+          aria-label="Pinned topics"
+          tabIndex={0}
           className={css`
             width: 100%;
-            ${isFixed
-              ? `
-            flex: 1;
+            flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
-          `
-              : `
-            flex: 0 0 auto;
-            height: auto;
-            ${deviceIsMobileOrTablet ? 'max-height: 20vh;' : ''}
-            overflow-y: ${deviceIsMobileOrTablet ? 'scroll' : 'visible'};
-          `}
+            overflow-x: hidden;
+            overscroll-behavior-y: contain;
+            scrollbar-width: thin;
             transition: height 0.3s ease-in-out;
             a {
               &:hover {
@@ -277,6 +211,7 @@ function PinnedTopics({
         </div>
         {additionalTopics.length > 0 && !isOwner && !isAIChat && (
           <button
+            type="button"
             className={buttonStyle}
             onClick={() => onSetTopicSelectorModalShown(true)}
           >
@@ -285,6 +220,9 @@ function PinnedTopics({
         )}
         {((!isTwoPeopleChat && isOwner) || isAIChat) && (
           <button
+            type="button"
+            aria-label={isAIChat ? 'Manage AI topics' : 'Add a topic'}
+            title={isAIChat ? 'Manage AI topics' : 'Add a topic'}
             className={cx(buttonStyle, aiButtonClass)}
             onClick={handleAddTopicClick}
           >

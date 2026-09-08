@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import Chess from '../../../Chess';
+import Button from '~/components/Button';
+import Loading from '~/components/Loading';
 import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 import { getLatestGameBoundaryMessageId } from '~/containers/Chat/helpers/gameMessageIds';
 
@@ -25,6 +27,7 @@ export default function ChessGame({
   setChessMoveViewTimeStamp,
   userMadeLastMove,
   squareColors,
+  onLoadStateChange,
   interactableOverride
 }: {
   boardState: any;
@@ -47,47 +50,74 @@ export default function ChessGame({
   setChessMoveViewTimeStamp: (v: any) => void;
   userMadeLastMove: boolean;
   squareColors?: { light?: string; dark?: string };
+  onLoadStateChange?: (ready: boolean) => void;
   interactableOverride?: boolean;
 }) {
   const fetchCurrentChessState = useAppContext(
     (v) => v.requestHelpers.fetchCurrentChessState
   );
   const [uploaderId, setUploaderId] = useState(0);
-  const [loaded, setLoaded] = useState(false);
-  const loading: React.RefObject<any> = useRef(null);
+  const scope = `${myId}:${channelId}`;
+  const latestScope = useRef(scope);
+  latestScope.current = scope;
+  const inputs = useRef({
+    onLoadStateChange,
+    currentChannel,
+    onSetUserMadeLastMove,
+    onSetMessage,
+    onSetInitialState
+  });
+  inputs.current = {
+    onLoadStateChange,
+    currentChannel,
+    onSetUserMadeLastMove,
+    onSetMessage,
+    onSetInitialState
+  };
+  const [attempt, setAttempt] = useState(0);
+  const [loadState, setLoadState] = useState({ scope, status: 'loading' });
+  const loaded = loadState.scope === scope && loadState.status === 'loaded';
   useEffect(() => {
-    const maxRetries = 3;
-    const retryDelay = 1000;
-    let success = false;
-
-    init();
-    async function init(attempts = 0) {
+    let active = true;
+    const isCurrent = () => active && latestScope.current === scope;
+    setLoadState({ scope, status: 'loading' });
+    inputs.current.onLoadStateChange?.(false);
+    void (async () => {
       try {
-        loading.current = true;
+        if (!Number.isSafeInteger(channelId) || channelId <= 0)
+          throw Error('Invalid channel');
         const chessMessage = await fetchCurrentChessState({
           channelId,
-          recentChessMessage: currentChannel.recentChessMessage
+          recentChessMessage: inputs.current.currentChannel.recentChessMessage
         });
-        onSetUserMadeLastMove(chessMessage?.userId === myId);
-        onSetMessage(chessMessage);
-        setUploaderId(chessMessage?.userId);
-        onSetInitialState(chessMessage?.chessState);
-        success = true;
-      } catch (error) {
-        console.error('Error fetching chess state:', error);
-        if (attempts < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          return init(attempts + 1);
-        }
-      } finally {
-        if (success || attempts === maxRetries) {
-          loading.current = false;
-          setLoaded(true);
-        }
+        if (!isCurrent()) return;
+        // No stored game is a valid fresh board. A stored message must carry a position.
+        if (
+          chessMessage &&
+          (typeof chessMessage !== 'object' ||
+            !Number.isSafeInteger(chessMessage.id) ||
+            chessMessage.id <= 0 ||
+            !Number.isSafeInteger(chessMessage.userId) ||
+            chessMessage.userId <= 0 ||
+            !chessMessage.chessState ||
+            typeof chessMessage.chessState !== 'object' ||
+            Array.isArray(chessMessage.chessState))
+        )
+          throw Error('Invalid chess state');
+        inputs.current.onSetUserMadeLastMove(chessMessage?.userId === myId);
+        inputs.current.onSetMessage(chessMessage);
+        setUploaderId(chessMessage?.userId || 0);
+        inputs.current.onSetInitialState(chessMessage?.chessState);
+        setLoadState({ scope, status: 'loaded' });
+        inputs.current.onLoadStateChange?.(true);
+      } catch {
+        if (isCurrent()) setLoadState({ scope, status: 'error' });
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [scope, channelId, myId, attempt, fetchCurrentChessState]);
 
   const spoilerOff = useMemo(() => {
     if (isCountdownActive) {
@@ -96,8 +126,7 @@ export default function ChessGame({
 
     const userIsTheLastMoveViewer =
       currentChannel.lastChessMoveViewerId === myId;
-    const isLoadingOrNoInitialState =
-      !loading.current && !initialState?.move?.number;
+    const isLoadingOrNoInitialState = loaded && !initialState?.move?.number;
     const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
       currentChannel,
       'chess'
@@ -115,12 +144,38 @@ export default function ChessGame({
     );
   }, [
     isCountdownActive,
+    loaded,
     initialState?.move?.number,
     currentChannel,
     message?.id,
     myId,
     userMadeLastMove
   ]);
+
+  if (!loaded) {
+    if (loadState.scope === scope && loadState.status === 'error')
+      return (
+        <div
+          style={{
+            padding: '16px',
+            fontSize: '16px',
+            lineHeight: 1.5,
+            textAlign: 'center'
+          }}
+        >
+          <p role="alert">
+            Could not load the chess board. Check the game before trying again.
+          </p>
+          <Button
+            style={{ minHeight: '44px', fontSize: '14px', marginTop: '12px' }}
+            onClick={() => setAttempt((value) => value + 1)}
+          >
+            Try again
+          </Button>
+        </div>
+      );
+    return <Loading />;
+  }
 
   return (
     <Chess

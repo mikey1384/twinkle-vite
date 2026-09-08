@@ -45,8 +45,9 @@ export default function AICards() {
           AI Cards
         </span>
       </div>
-      <div style={{ position: 'absolute' }}>
+      <div style={{ position: 'absolute', left: 0, right: 0 }}>
         <p
+          title={description}
           style={{
             whiteSpace: 'nowrap',
             overflow: 'hidden',

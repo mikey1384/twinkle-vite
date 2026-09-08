@@ -1,158 +1,77 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
-import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
-import TagForm from '~/components/Forms/TagForm';
-import UserSearchResultRow from '~/components/UserSearchResultRow';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { normalizeClassInviteResponse } from '~/helpers/chatGroupMembership';
+import ChatPeoplePicker, { ChatInvitePerson } from './ChatPeoplePicker';
+import useChatDialogRequest from './useChatDialogRequest';
+import { chatFormActionStyle, chatFormClass, chatFormModalClass } from './chatFormStyles';
 
-export default function InviteUsersModal({
-  isOwner,
-  selectedChannelId,
-  onDone,
-  onHide,
-  currentChannel
-}: {
+export default function InviteUsersModal({ isOwner, selectedChannelId, onDone, onHide, currentChannel }: {
   isOwner: boolean;
   currentChannel: any;
-  onDone: (data: any) => void;
+  onDone: (data: any) => void | Promise<void>;
   onHide: () => void;
   selectedChannelId: number;
 }) {
+  const userId = useKeyContext((v) => v.myState.userId);
   const doneColor = useKeyContext((v) => v.theme.done.color);
-  const inviteUsersToChannel = useAppContext(
-    (v) => v.requestHelpers.inviteUsersToChannel
-  );
-  const searchUserToInvite = useAppContext(
-    (v) => v.requestHelpers.searchUserToInvite
-  );
-  const userSearchResults = useChatContext((v) => v.state.userSearchResults);
-  const onClearUserSearchResults = useChatContext(
-    (v) => v.actions.onClearUserSearchResults
-  );
-  const onInviteUsersToChannel = useChatContext(
-    (v) => v.actions.onInviteUsersToChannel
-  );
-  const onSearchUserToInvite = useChatContext(
-    (v) => v.actions.onSearchUserToInvite
-  );
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [inviting, setInviting] = useState(false);
+  const inviteUsersToChannel = useAppContext((v) => v.requestHelpers.inviteUsersToChannel);
+  const onInviteUsersToChannel = useChatContext((v) => v.actions.onInviteUsersToChannel);
+  const [selectedUsers, setSelectedUsers] = useState<ChatInvitePerson[]>([]);
+  const request = useChatDialogRequest(userId + ':' + selectedChannelId);
+  const committed = useRef<any>(null);
+  const membersApplied = useRef(false);
+  const locked = request.busy || Boolean(committed.current);
+  useEffect(() => {
+    setSelectedUsers([]);
+    committed.current = null;
+    membersApplied.current = false;
+  }, [userId, selectedChannelId]);
 
-  return (
-    <Modal
-      modalKey="InviteUsers"
-      isOpen
-      onClose={onHide}
-      hasHeader={false}
-      bodyPadding={0}
-      allowOverflow
-    >
-      <LegacyModalLayout wrapped>
-        <header>Invite people to this channel</header>
-        <main>
-          <TagForm
-            autoFocus
-            title="Invite People"
-            itemLabel="username"
-            searchResults={userSearchResults}
-            filter={(result) =>
-              !currentChannel?.allMemberIds?.includes?.(result.id)
-            }
-            onSearch={(text) =>
-              handleSearchUserToInvite({
-                channelId: selectedChannelId,
-                searchText: text
-              })
-            }
-            onClear={onClearUserSearchResults}
-            onAddItem={onAddUser}
-            onRemoveItem={onRemoveUser}
-            onSubmit={selectedUsers.length > 0 ? handleDone : undefined}
-            renderDropdownLabel={(item) => (
-              <UserSearchResultRow
-                userId={Number(item.id)}
-                username={item.username}
-                realName={item.realName}
-                profilePicUrl={item.profilePicUrl}
-              />
-            )}
-            searchPlaceholder="Search for people you want to chat with"
-            selectedItems={selectedUsers}
-            style={{ width: '80%' }}
-          />
-        </main>
-        <footer>
-          <Button
-            variant="ghost"
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
-          >
-            Cancel
-          </Button>
-          <Button
-            color={doneColor}
-            onClick={handleDone}
-            disabled={selectedUsers.length === 0 || inviting}
-          >
-            Invite
-          </Button>
-        </footer>
-      </LegacyModalLayout>
-    </Modal>
-  );
-
-  function onAddUser(user: any) {
-    setSelectedUsers(selectedUsers.concat(user));
-  }
-
-  function onRemoveUser(userId: number) {
-    setSelectedUsers(
-      selectedUsers.filter((user: { id: number }) => user.id !== userId)
-    );
-  }
+  return <Modal modalKey="InviteUsers" isOpen aria-label="Invite people to this channel"
+    className={chatFormModalClass} showCloseButton={!request.busy}
+    onClose={() => { if (!request.pending.current) onHide(); }}
+    closeOnEscape={!request.busy} closeOnBackdropClick={!request.busy} hasHeader={false} bodyPadding={0}>
+    <section className={chatFormClass}>
+      <header><h2>Invite people</h2><p className="description">{currentChannel?.isClass && isOwner
+        ? 'Choose the people to add to your classroom.'
+        : 'Choose who you’d like to join the conversation.'}</p></header>
+      <main>
+        <ChatPeoplePicker autoFocus key={userId + ':' + selectedChannelId} channelId={selectedChannelId} selected={selectedUsers}
+          onChange={setSelectedUsers} disabled={locked} excludedIds={currentChannel?.allMemberIds || []} />
+        {request.error && <p ref={request.errorRef} id={request.errorId} className="error" role="alert">{request.error}</p>}
+      </main>
+      <footer>
+        <Button style={chatFormActionStyle} variant="ghost" uppercase={false} disabled={request.busy} onClick={onHide}>Cancel</Button>
+        <Button style={chatFormActionStyle} variant="soft" tone="raised" uppercase={false} color={doneColor}
+          disabled={!selectedUsers.length} aria-busy={request.busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={request.busy ? 'Inviting people' : 'Invite selected people'}
+          onClick={handleDone}>{request.busy ? 'Inviting…' : committed.current ? 'Finish' : 'Invite people'}</Button>
+      </footer>
+    </section>
+  </Modal>;
 
   async function handleDone() {
-    if (!inviting) {
-      setInviting(true);
-      if (currentChannel.isClass && isOwner) {
-        const response = await inviteUsersToChannel({
-          selectedUsers,
-          channelId: selectedChannelId
-        });
-        const transition = normalizeClassInviteResponse({
-          response,
-          requestedMembers: selectedUsers
-        });
-        if (transition.changed && transition.message) {
-          onInviteUsersToChannel({
-            selectedUsers: transition.newMembers,
-            message: transition.message
-          });
+    if (!selectedUsers.length) return;
+    await request.run('Couldn’t finish inviting these people. Your selection is kept. Please try again.', async (isCurrent) => {
+      if (currentChannel?.isClass && isOwner) {
+        if (!committed.current) {
+          const response = await inviteUsersToChannel({ selectedUsers, channelId: selectedChannelId });
+          if (!isCurrent()) return;
+          committed.current = normalizeClassInviteResponse({ response, requestedMembers: selectedUsers });
         }
-        onDone({
-          users: transition.newMembers,
-          message: transition.message,
-          isClass: true,
-          relayLegacyMembership: transition.relayLegacyMembership
+        const transition = committed.current;
+        if (!membersApplied.current && transition.changed && transition.message) {
+          onInviteUsersToChannel({ selectedUsers: transition.newMembers, message: transition.message });
+          membersApplied.current = true;
+        }
+        await onDone({
+          users: transition.newMembers, message: transition.message, isClass: true,
+          relayLegacyMembership: transition.relayLegacyMembership, canApply: isCurrent
         });
       } else {
-        onDone({
-          users: selectedUsers
-        });
+        await onDone({ users: selectedUsers, canApply: isCurrent });
       }
-    }
-  }
-
-  async function handleSearchUserToInvite({
-    channelId,
-    searchText
-  }: {
-    channelId: number;
-    searchText: string;
-  }) {
-    const data = await searchUserToInvite({ channelId, searchText });
-    onSearchUserToInvite(data);
+    });
   }
 }

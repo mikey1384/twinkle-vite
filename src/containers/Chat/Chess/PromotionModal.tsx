@@ -47,6 +47,7 @@ export default function PromotionModal({
   return (
     <Modal
       modalKey="PromotionModal"
+      aria-label="Promote pawn"
       isOpen
       size="sm"
       onClose={onHide}
@@ -56,7 +57,7 @@ export default function PromotionModal({
       bodyPadding={0}
     >
       <LegacyModalLayout>
-        <header>Promote Pawn</header>
+        <header style={{ fontSize: 20 }}>Promote Pawn</header>
         <main>
           <div
             className={css`
@@ -64,33 +65,29 @@ export default function PromotionModal({
               flex-direction: column;
               align-items: center;
               justify-content: center;
-              padding: 1rem;
-              min-height: 200px;
-
-              @media (max-width: ${mobileMaxWidth}) {
-                padding: 0.5rem;
-                min-height: 180px;
-              }
+              padding: 8px 0 16px;
+              width: 100%;
             `}
           >
             <p
               className={css`
-                font-size: 1.5rem;
+                font-size: 16px;
+                line-height: 1.5;
+                text-align: center;
               `}
             >
               Choose which piece to promote to:
             </p>
             <div
               className={css`
-                display: flex;
-                margin-top: 1rem;
-                justify-content: center;
-                align-items: center;
-                gap: 1rem;
-
-                @media (max-width: ${mobileMaxWidth}) {
-                  gap: 1rem;
-                  flex-wrap: wrap;
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                margin-top: 16px;
+                gap: 8px;
+                width: 100%;
+                max-width: 360px;
+                @media (max-width: 480px) {
+                  grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
               `}
             >
@@ -98,24 +95,30 @@ export default function PromotionModal({
                 <Button
                   key={type}
                   variant="solid"
+                  aria-label={`Promote to ${type}`}
+                  uppercase={false}
+                  style={{ fontSize: 14, color: color === 'black' ? '#222' : '#fff' }}
                   color={color === 'white' ? 'darkerGray' : 'lighterGray'}
                   onClick={() => onPromote(type)}
                   className={css`
-                    padding: 1rem;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      padding: 0.5rem;
-                    }
+                    flex-direction: column;
+                    gap: 6px;
+                    padding: 10px;
+                    min-height: 76px;
+                    min-width: 0;
+                    font-size: 14px;
                   `}
                 >
                   <img
                     src={icon}
-                    alt={type}
+                    alt=""
                     className={css`
-                      width: 100%;
-                      height: 100%;
+                      width: 36px;
+                      height: 36px;
                       object-fit: contain;
                     `}
                   />
+                  <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
                 </Button>
               ))}
             </div>
@@ -133,7 +136,7 @@ export default function PromotionModal({
           `}
         >
           <Button
-            style={{ marginRight: '0.7rem' }}
+            style={{ minHeight: 44, fontSize: 14 }}
             variant="ghost"
             onClick={onHide}
           >

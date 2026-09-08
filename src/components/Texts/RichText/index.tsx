@@ -13,6 +13,7 @@ import {
   shouldRenderRichTextLiterally
 } from './helpers/renderMode';
 import AIAudioButton from './AIAudioButton';
+import ChatMessageTools from './ChatMessageTools';
 import InvisibleTextContainer, {
   stripMarkdownLinkUrls
 } from './InvisibleTextContainer';
@@ -751,6 +752,7 @@ function RichText({
     >
       <div
         ref={TextRef}
+        data-rich-text-body
         style={
           {
             opacity: contentIsVisible ? 1 : 0,
@@ -966,6 +968,11 @@ function RichText({
         )}
       </div>
       {isAIMessage && !hideDictation && !isStreaming && (
+        contentType === 'chat' ? (
+          <ChatMessageTools text={text} voice={voice}
+            contentKey={`${contentId}-${contentType}-${section}`}
+            audioShown={isAudioButtonShown} />
+        ) : (
         <>
           {aiActionPlacement === 'inline' ? (
             <div
@@ -981,6 +988,7 @@ function RichText({
                 variant="soft"
                 tone="raised"
                 onClick={handleCopyMessage}
+                aria-label={copySuccess ? 'Message copied' : 'Copy message'}
                 style={{
                   padding: '0.5rem 0.7rem',
                   lineHeight: 1
@@ -1012,6 +1020,7 @@ function RichText({
                 variant="soft"
                 tone="raised"
                 onClick={handleCopyMessage}
+                aria-label={copySuccess ? 'Message copied' : 'Copy message'}
                 style={{
                   padding: '0.5rem 0.7rem',
                   lineHeight: 1
@@ -1030,6 +1039,7 @@ function RichText({
             </div>
           )}
         </>
+        )
       )}
     </ErrorBoundary>
   );

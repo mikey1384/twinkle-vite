@@ -2,6 +2,7 @@ import React from 'react';
 import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
 import { useChatContext } from '~/contexts';
+import { css } from '@emotion/css';
 
 export default function Tabs({ style }: { style?: React.CSSProperties }) {
   const favoriteChannelIds = useChatContext((v) => v.state.favoriteChannelIds);
@@ -12,6 +13,17 @@ export default function Tabs({ style }: { style?: React.CSSProperties }) {
 
   return (
     <FilterBar
+      className={css`
+        padding-inline: 0.8rem;
+        > .nav-section {
+          min-width: 0;
+          gap: 0.3rem;
+        }
+        > .nav-section > nav {
+          min-width: 0;
+          padding: 0.8rem 0.6rem;
+        }
+      `}
       style={{
         fontSize: '1.6rem',
         height: '4rem',
@@ -19,27 +31,55 @@ export default function Tabs({ style }: { style?: React.CSSProperties }) {
       }}
     >
       <nav
+        role="button"
+        tabIndex={0}
+        aria-label="All channels"
+        aria-pressed={selectedChatTab === 'home'}
+        title="All channels"
         className={selectedChatTab === 'home' ? 'active' : ''}
         onClick={() => onSelectChatTab('home')}
+        onKeyDown={(event) => handleKeyDown(event, 'home')}
       >
         <Icon icon="home" />
       </nav>
       {favoriteChannelIds.length > 0 && (
         <nav
+          role="button"
+          tabIndex={0}
+          aria-label="Favorite channels"
+          aria-pressed={selectedChatTab === 'favorite'}
+          title="Favorite channels"
           className={selectedChatTab === 'favorite' ? 'active' : ''}
           onClick={() => onSelectChatTab('favorite')}
+          onKeyDown={(event) => handleKeyDown(event, 'favorite')}
         >
           <Icon icon="star" />
         </nav>
       )}
       {classChannelIds.length > 0 && (
         <nav
+          role="button"
+          tabIndex={0}
+          aria-label="Class channels"
+          aria-pressed={selectedChatTab === 'class'}
+          title="Class channels"
           className={selectedChatTab === 'class' ? 'active' : ''}
           onClick={() => onSelectChatTab('class')}
+          onKeyDown={(event) => handleKeyDown(event, 'class')}
         >
           <Icon icon="chalkboard-teacher" />
         </nav>
       )}
     </FilterBar>
   );
+
+  function handleKeyDown(
+    event: React.KeyboardEvent<HTMLElement>,
+    tab: 'home' | 'favorite' | 'class'
+  ) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onSelectChatTab(tab);
+    }
+  }
 }

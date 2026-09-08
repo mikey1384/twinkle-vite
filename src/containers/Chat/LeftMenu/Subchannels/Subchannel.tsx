@@ -41,6 +41,8 @@ export default function Subchannel({
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels/Subchannel">
       <Link
         key={subchannel.id}
+        title={subchannel.label}
+        aria-current={subchannelSelected ? 'page' : undefined}
         to={`/chat/${currentPathId}/${subchannel.path}`}
         onClick={() =>
           onUpdateLastSubchannelPath({

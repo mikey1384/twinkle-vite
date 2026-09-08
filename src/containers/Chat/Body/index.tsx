@@ -4,9 +4,10 @@ import Collect from './Collect';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';
 import { mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { User } from '~/types';
+import { chatPanelClass } from '../containers';
 
 export default function Body({
   channelName,
@@ -48,18 +49,22 @@ export default function Body({
   return (
     <ErrorBoundary componentPath="Chat/Body/index">
       <div
-        className={css`
+        data-chat-panel="conversation"
+        className={cx(chatPanelClass, css`
           height: 100%;
           width: ${isUsingCollectSection ? '62vw' : '66vw'};
-          border-left: 1px solid var(--ui-border);
           padding: 0;
           position: relative;
-          background: #fff;
+          @media (min-width: 768px) {
+            flex: 1 1 0;
+            min-width: 0;
+            width: auto;
+          }
           @media (max-width: ${mobileMaxWidth}) {
             width: ${isUsingCollectSection ? '100vw' : '90vw'};
             touch-action: pan-y;
           }
-        `}
+        `)}
       >
         {isUsingCollectSection ? (
           <Collect

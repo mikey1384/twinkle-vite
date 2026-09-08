@@ -1,13 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
-import FullTextReveal from '~/components/Texts/FullTextReveal';
+import PurchaseModal, {
+  ChatPurchaseReceipt
+} from './SettingsModal/PurchaseModal';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Icon from '~/components/Icon';
 import { priceTable } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function BuyTopicsModal({
@@ -20,7 +21,7 @@ export default function BuyTopicsModal({
   channelId: number;
   channelName?: string;
   canChangeSubject: string;
-  onDone: (v: any) => void;
+  onDone: (v: any) => void | Promise<void>;
   onScrollToBottom: () => void;
   userIsChannelOwner: boolean;
 }) {
@@ -31,12 +32,24 @@ export default function BuyTopicsModal({
   );
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
-  const [hovered, setHovered] = useState(false);
+  const [purchased, setPurchased] = useState(false);
+  const hasTopics = Boolean(canChangeSubject || purchased);
   const [editedCanChangeSubject, setEditedCanChangeSubject] =
     useState(canChangeSubject);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const savingRef = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const insufficientFunds = useMemo(
-    () => twinkleCoins < priceTable.chatSubject,
+    () =>
+      !Number.isFinite(twinkleCoins) || twinkleCoins < priceTable.chatSubject,
     [twinkleCoins]
   );
 
@@ -45,57 +58,97 @@ export default function BuyTopicsModal({
       modalKey="BuyTopicsModal"
       isOpen
       onClose={handleClose}
-      title={`Purchase "Topics" Feature`}
-      size="md"
+      aria-label={hasTopics ? 'Topic permissions' : 'Enable topics'}
+      header={
+        <span style={{ fontSize: '20px', lineHeight: 1.4 }}>
+          {hasTopics ? 'Topic permissions' : 'Enable topics'}
+        </span>
+      }
+      size="sm"
       footer={
-        <Button variant="ghost" onClick={handleClose}>
-          Close
-        </Button>
+        <div style={{ width: '100%', textAlign: 'right' }}>
+          {saveError && (
+            <p role="alert" style={{ fontSize: '16px', lineHeight: 1.5 }}>
+              {saveError}
+            </p>
+          )}
+          <Button
+            variant="ghost"
+            onClick={handleClose}
+            loading={saving}
+            disabled={saving}
+            style={{ minHeight: '44px', fontSize: '14px' }}
+          >
+            {editedCanChangeSubject !== canChangeSubject
+              ? 'Save and close'
+              : 'Close'}
+          </Button>
+        </div>
       }
     >
       <div
         className={css`
-          width: 80%;
-          @media (max-width: ${mobileMaxWidth}) {
+          width: 100%;
+          min-width: 0;
+          padding: 8px;
+          font-size: 16px;
+          line-height: 1.5;
+          p {
+            margin: 0;
+          }
+          .permission-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
             width: 100%;
+          }
+          .permission-row label {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
           }
         `}
       >
         {userIsChannelOwner && (
           <div
             style={{
-              marginTop: '1.5rem',
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
+              flexDirection: 'column',
+              gap: '16px',
+              alignItems: 'stretch'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <p
                 style={{
                   fontWeight: 'bold',
-                  fontSize: '1.7rem',
-                  opacity: canChangeSubject ? 1 : 0.3
+                  fontSize: '16px'
                 }}
               >
                 <span style={{ color: Color.logoBlue() }}>
-                  Topics{canChangeSubject ? ' enabled' : ''}
+                  Topics{hasTopics ? ' enabled' : ''}
                 </span>
               </p>
             </div>
-            {!canChangeSubject ? (
+            {!hasTopics ? (
               <div>
+                <p style={{ marginBottom: '16px' }}>
+                  Organize this channel’s conversations with topics.
+                </p>
                 <Button
+                  disabled={saving || insufficientFunds}
                   onClick={() =>
-                    insufficientFunds ? null : setConfirmModalShown(true)
+                    insufficientFunds || savingRef.current
+                      ? null
+                      : setConfirmModalShown(true)
                   }
                   variant="soft"
                   tone="raised"
-                  onMouseEnter={() => setHovered(true)}
-                  onMouseLeave={() => setHovered(false)}
                   color="logoBlue"
                   style={{
-                    fontSize: '1.2rem',
+                    fontSize: '14px',
+                    minHeight: '44px',
                     display: 'flex',
                     alignItems: 'center',
                     background: insufficientFunds ? Color.logoBlue(0.2) : '',
@@ -108,31 +161,34 @@ export default function BuyTopicsModal({
                   <Icon size="lg" icon="coins" />
                   <span style={{ marginLeft: '0.5rem' }}>Buy</span>
                 </Button>
-                {insufficientFunds && hovered && (
-                  <FullTextReveal
-                    show
-                    direction="left"
-                    style={{ color: '#000', marginTop: '0.5rem' }}
-                    text={`You need ${
-                      priceTable.chatSubject - twinkleCoins
-                    } more Twinkle Coins`}
-                  />
+                <p style={{ fontSize: '14px', lineHeight: 1.5 }}>
+                  {priceTable.chatSubject.toLocaleString()} coins
+                </p>
+                {insufficientFunds && (
+                  <p
+                    role="status"
+                    style={{ fontSize: '14px', lineHeight: 1.5 }}
+                  >
+                    {Number.isFinite(twinkleCoins)
+                      ? `You need ${(priceTable.chatSubject - twinkleCoins).toLocaleString()} more coins.`
+                      : 'Your coin balance is unavailable.'}
+                  </p>
                 )}
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div className="permission-row">
                 <p
                   style={{
                     fontWeight: 'bold',
-                    fontSize: '1.7rem',
-                    opacity: canChangeSubject ? 1 : 0.3
+                    fontSize: '16px'
                   }}
                 >
-                  <span style={{ color: Color.logoBlue() }}>Anyone</span> can
-                  add topics:
+                  Allow anyone to add topics
                 </p>
                 <SwitchButton
-                  style={{ marginLeft: '1rem' }}
+                  disabled={saving}
+                  ariaLabel="Allow anyone to add topics"
+                  style={{ flexShrink: 0 }}
                   checked={editedCanChangeSubject === 'all'}
                   onChange={() =>
                     setEditedCanChangeSubject((prevValue) =>
@@ -146,36 +202,61 @@ export default function BuyTopicsModal({
         )}
       </div>
       {confirmModalShown && (
-        <ConfirmModal
-          modalOverModal
+        <PurchaseModal
+          scope={`${userId}:${channelId}:topics`}
           onHide={() => setConfirmModalShown(false)}
-          title={`Purchase "Topics" Feature`}
-          description={`Purchase "Topics" Feature for ${priceTable.chatSubject} Twinkle Coins?`}
-          descriptionFontSize="2rem"
-          onConfirm={handlePurchaseTopic}
+          title={'Purchase "Topics" Feature'}
+          description="Enable topics for this channel."
+          price={priceTable.chatSubject}
+          balance={Number.isFinite(twinkleCoins) ? twinkleCoins : 0}
+          onPurchase={async () => {
+            if (
+              !userIsChannelOwner ||
+              savingRef.current ||
+              !Number.isSafeInteger(channelId) ||
+              channelId <= 0
+            )
+              throw Error('Purchase unavailable');
+            return buyChatSubject(channelId);
+          }}
+          validateReceipt={(receipt) =>
+            Boolean(
+              receipt.topic &&
+              Number.isSafeInteger(receipt.topic.id) &&
+              receipt.topic.id > 0 &&
+              typeof receipt.topic.content === 'string'
+            )
+          }
+          onApply={handleApplyPurchase}
         />
       )}
     </Modal>
   );
 
-  function handleClose() {
-    onDone(editedCanChangeSubject);
+  async function handleClose() {
+    if (savingRef.current || confirmModalShown || !mounted.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setSaveError('');
+    try {
+      await onDone(editedCanChangeSubject);
+    } catch {
+      if (mounted.current)
+        setSaveError(
+          'Could not save topic permissions. Your selection is still here; try saving again.'
+        );
+    } finally {
+      savingRef.current = false;
+      if (mounted.current) setSaving(false);
+    }
   }
 
-  async function handlePurchaseTopic() {
-    try {
-      const { coins, topic } = await buyChatSubject(channelId);
-      onEnableChatSubject({
-        channelId,
-        topic
-      });
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      setEditedCanChangeSubject('owner');
-      onScrollToBottom();
-      setConfirmModalShown(false);
-    } catch (error) {
-      console.error(error);
-      setConfirmModalShown(false);
-    }
+  function handleApplyPurchase({ coins, topic }: ChatPurchaseReceipt) {
+    if (!mounted.current) return;
+    onEnableChatSubject({ channelId, topic });
+    onSetUserState({ userId, newState: { twinkleCoins: coins } });
+    setEditedCanChangeSubject('owner');
+    setPurchased(true);
+    onScrollToBottom();
   }
 }

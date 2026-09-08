@@ -63,6 +63,7 @@ function FallenPieces({
                   }
                 `}
                 img={fallenPiece.img}
+                label={`${piece.count} captured white ${piece.type}`}
                 count={piece.count}
                 color="white"
               />
@@ -86,6 +87,7 @@ function FallenPieces({
                   }
                 `}
                 img={fallenPiece.img}
+                label={`${piece.count} captured black ${piece.type}`}
                 count={piece.count}
                 color="black"
               />

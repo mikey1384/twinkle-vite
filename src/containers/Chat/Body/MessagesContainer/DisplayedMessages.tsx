@@ -6,12 +6,13 @@ import React, {
   useRef,
   useState
 } from 'react';
-import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
+import GoToBottomButton from '~/components/Buttons/ChatGoToBottomButton';
 import NewMessagesButton from '~/components/Buttons/NewMessagesButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Message from '../../Message';
+import { canGroupChatMessages } from '../../Message/helpers/messageGrouping';
 import LocalContext from '../../Context';
 import { MessageHeights } from '~/constants/state';
 import { v1 as uuidv1 } from 'uuid';
@@ -847,6 +848,10 @@ export default function DisplayedMessages({
                   }}
                 >
                   <Message
+                    groupWithPrevious={
+                      !isSearchActive &&
+                      canGroupChatMessages(messages[index + 1], message)
+                    }
                     nextMessageHasTopic={
                       index !== 0
                         ? !!(

@@ -35,26 +35,40 @@ export default function Reactions({
     return result;
   }, [pendingReactionMutations, reactions]);
   const reactionObj = useMemo(() => {
-    const result: Record<string, ChatReaction[]> = {};
+    const result = new Map<string, ChatReaction[]>();
     for (const reaction of reactions || []) {
-      if (!result[reaction.type]) {
-        result[reaction.type] = [reaction];
+      if (!result.has(reaction.type)) {
+        result.set(reaction.type, [reaction]);
         continue;
       }
-      result[reaction.type].push(reaction);
+      result.get(reaction.type)!.push(reaction);
     }
     return result;
   }, [reactions]);
 
+  if (!reactionList.length) return null;
+
   return (
-    <div style={{ display: 'flex' }}>
+    <div
+      aria-label="Message reactions"
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        rowGap: '0.5rem',
+        marginTop: '0.7rem'
+      }}
+    >
       {reactionList.map((reaction) => (
         <Reaction
           key={reaction}
-          pendingMutation={pendingReactionMutations[reaction]}
+          pendingMutation={
+            Object.prototype.hasOwnProperty.call(pendingReactionMutations, reaction)
+              ? pendingReactionMutations[reaction]
+              : undefined
+          }
           reaction={reaction}
-          reactionCount={reactionObj[reaction]?.length || 0}
-          reactedUserIds={(reactionObj[reaction] || []).map(
+          reactionCount={reactionObj.get(reaction)?.length || 0}
+          reactedUserIds={(reactionObj.get(reaction) || []).map(
             ({ userId }) => userId
           )}
           onRemoveReaction={() => onRemoveReaction(reaction)}

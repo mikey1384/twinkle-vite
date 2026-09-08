@@ -1,14 +1,20 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
-import ButtonGroup from '~/components/Buttons/ButtonGroup';
+import Button from '~/components/Button';
 import moment from 'moment';
-import { Color } from '~/constants/css';
+import DOMPurify from 'dompurify';
 import { useKeyContext } from '~/contexts';
 import { isSupermod } from '~/helpers';
 import { useMyLevel } from '~/helpers/hooks';
 
-const marginHeight = 1;
-const subjectTitleHeight = 24;
+import {
+  chatTopicRowClass,
+  chatTopicTitleClass,
+  chatTopicMetadataClass,
+  chatTopicActionsClass,
+  chatTopicActionStyle,
+  chatTopicThemeStyle
+} from '../topicStyles';
 
 export default function SubjectItem({
   currentSubjectId,
@@ -33,16 +39,24 @@ export default function SubjectItem({
   timeStamp: number;
   userIsOwner?: boolean;
 }) {
-  const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
-  const SubjectTitleRef: React.RefObject<any> = useRef(null);
   const level = useKeyContext((v) => v.myState.level);
   const { canDelete } = useMyLevel();
 
-  useEffect(() => {
-    const numLines = SubjectTitleRef.current.clientHeight / subjectTitleHeight;
-    setMarginBottom(`${numLines * marginHeight}rem`);
-  }, []);
+  // Legacy titles can contain inline HTML. Preserve its formatting and links,
+  // but do not let a title introduce media, controls or its own page styling.
+  const sanitizedTitle = useMemo(
+    () => DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: [
+        'a', 'b', 'br', 'code', 'del', 'em', 'i', 's', 'small', 'span',
+        'strong', 'sub', 'sup', 'u'
+      ],
+      ALLOWED_ATTR: ['href', 'title'],
+      ALLOW_ARIA_ATTR: false,
+      ALLOW_DATA_ATTR: false
+    }),
+    [content]
+  );
 
   const displayedTime = useMemo(
     () => moment.unix(timeStamp).format('lll'),
@@ -89,59 +103,63 @@ export default function SubjectItem({
       setSelectButtonDisabled(true);
       onSelectSubject();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, canDelete, currentSubjectId, id]);
+  }, [
+    level, canDelete, currentSubjectId, id, userIsOwner, onDeleteSubject,
+    onSelectSubject, selectButtonDisabled
+  ]);
 
   return (
-    <div
-      style={{
-        minHeight: '50px',
-        height: 'auto',
-        width: '100%'
-      }}
+    <article
+      data-chat-topic-row="legacy"
+      data-current={currentSubjectId === id}
+      className={chatTopicRowClass}
+      style={chatTopicThemeStyle(displayedThemeColor)}
     >
-      <ButtonGroup
-        style={{ position: 'absolute', right: '1.5rem' }}
-        buttons={buttons}
-      />
       <div
         style={{
-          width: '100%',
+          minWidth: 0,
           whiteSpace: 'pre-wrap',
           overflowWrap: 'break-word',
           wordBreak: 'break-word'
         }}
       >
-        <div ref={SubjectTitleRef} style={{ marginBottom }}>
+        <div>
           {currentSubjectId === id && (
             <b
               style={{
-                fontSize: '1.5rem',
-                color: Color[displayedThemeColor]()
+                fontSize: '14px',
+                color: '#334155'
               }}
             >
               Current:{' '}
             </b>
           )}
           <span
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 'bold'
-            }}
-            dangerouslySetInnerHTML={{ __html: content }}
+            className={chatTopicTitleClass}
+            dangerouslySetInnerHTML={{ __html: sanitizedTitle }}
           />
-          <div>
+          <div className={chatTopicMetadataClass}>
             <UsernameText
-              color={Color.darkerGray()}
+              color="#526176"
+              textStyle={{ fontSize: '14px', fontWeight: 600 }}
               user={{
                 id: userId,
                 username: username
               }}
-            />{' '}
+            />
             <small>{displayedTime}</small>
           </div>
         </div>
       </div>
-    </div>
+      {buttons.length > 0 && (
+        <div data-chat-topic-actions className={chatTopicActionsClass}>
+          {buttons.map((button) => (
+            <Button key={button.label} {...button} style={chatTopicActionStyle}>
+              {button.label}
+            </Button>
+          ))}
+        </div>
+      )}
+    </article>
   );
 }

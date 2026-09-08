@@ -2,11 +2,12 @@ import React, { memo, useContext, useMemo, useRef, useEffect } from 'react';
 import ChatInfo from './ChatInfo';
 import VocabInfo from './VocabInfo';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import LocalContext from '../Context';
 import AICardInfo from './AICardInfo';
+import { chatPanelClass } from '../containers';
 
 function RightMenu({
   channelName,
@@ -53,18 +54,19 @@ function RightMenu({
     <ErrorBoundary componentPath="Chat/RightMenu">
       <div
         ref={MenuRef}
-        className={css`
+        data-chat-panel="details"
+        aria-label="Chat details"
+        className={cx(chatPanelClass, css`
           flex-grow: 1;
           width: 10vw;
           min-width: 0;
           height: 100%;
           position: relative;
-          background: #fff;
-          border-left: 1px solid var(--ui-border);
           display: flex;
           flex-direction: column;
           max-height: 100vh;
           overflow-x: hidden;
+          scrollbar-width: thin;
           overflow-y: ${
             chatType === AI_CARD_CHAT_TYPE
               ? 'hidden'
@@ -78,6 +80,9 @@ function RightMenu({
               ? 'auto'
               : 'touch'
           };
+          @media (min-width: 768px) {
+            flex: 0 0 ${chatType ? '22vw' : '18vw'};
+          }
           @media (max-width: ${mobileMaxWidth}) {
             max-width: ${chatType === VOCAB_CHAT_TYPE ||
             chatType === AI_CARD_CHAT_TYPE
@@ -90,7 +95,7 @@ function RightMenu({
             max-height: none;
             -webkit-overflow-scrolling: auto;
           }
-        `}
+        `)}
       >
         {chatType === AI_CARD_CHAT_TYPE ? <AICardInfo /> : null}
         {chatType === VOCAB_CHAT_TYPE ? (

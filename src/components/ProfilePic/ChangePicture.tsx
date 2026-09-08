@@ -5,6 +5,7 @@ const changePictureLabel = 'Change Picture';
 export default function ChangePicture({ shown }: { shown: boolean }) {
   return (
     <div
+      aria-hidden={!shown}
       style={{
         display: 'flex',
         justifyContent: 'center',

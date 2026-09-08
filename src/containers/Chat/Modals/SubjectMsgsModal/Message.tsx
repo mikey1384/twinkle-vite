@@ -4,7 +4,12 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import RichText from '~/components/Texts/RichText';
 import { MessageStyle } from '../../Styles';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
+import {
+  chatAuthorClass,
+  chatTextClass,
+  CHAT_TEXT_LINE_HEIGHT
+} from '../../typography';
 import moment from 'moment';
 import { css } from '@emotion/css';
 
@@ -51,32 +56,17 @@ export default function Message({
         />
       </div>
       <div
-        className={css`
-          width: CALC(100% - 5vw - 3rem);
-          display: flex;
-          flex-direction: column;
-          margin-left: 2rem;
-          margin-right: 1rem;
-          position: relative;
+        className={`${MessageStyle.content} ${css`
           white-space: pre-wrap;
           overflow-wrap: break-word;
           word-break: break-word;
-          @media (max-width: ${mobileMaxWidth}) {
-            margin-left: 1rem;
-          }
-        `}
+        `}`}
       >
         <div>
           <UsernameText
-            className={css`
-              p {
-                font-size: 1.7rem;
-              }
-              line-height: 1;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.6rem;
-              }
-            `}
+            className={chatAuthorClass}
+            color="#334155"
+            textStyle={{ fontWeight: 600 }}
             user={{
               id: userId,
               username: username
@@ -100,6 +90,8 @@ export default function Message({
         <div>
           <div className={MessageStyle.messageWrapper}>
             <RichText
+              className={chatTextClass}
+              lineHeight={CHAT_TEXT_LINE_HEIGHT}
               style={{
                 color: isReloadedSubject
                   ? Color[displayedThemeColor]()

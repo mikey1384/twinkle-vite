@@ -1,172 +1,91 @@
-import React, { useMemo, useState } from 'react';
-import ErrorBoundary from '~/components/ErrorBoundary';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import Button from '~/components/Button';
-import TagForm from '~/components/Forms/TagForm';
-import Input from '~/components/Texts/Input';
-import UserSearchResultRow from '~/components/UserSearchResultRow';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
-import { mobileMaxWidth } from '~/constants/css';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
-const addMembersOfClassLabel = 'Add members of your class';
-const enterClassNameLabel = 'Enter the name of your class';
-const membersLabel = 'Members';
-const nameLabel = 'Name';
-const newClassroomLabel = 'New Classroom';
+import ChatPeoplePicker, { ChatInvitePerson } from '../../ChatPeoplePicker';
+import useChatDialogRequest from '../../useChatDialogRequest';
+import { chatFormActionStyle, chatFormClass } from '../../chatFormStyles';
 
-export default function ClassroomChatForm({
-  channelId,
-  onBackClick,
-  onHide
-}: {
+export default function ClassroomChatForm({ channelId, onBackClick, onHide, onBusyChange }: {
   channelId?: number;
   onBackClick?: () => void;
   onHide: () => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const navigate = useNavigate();
   const createNewChat = useAppContext((v) => v.requestHelpers.createNewChat);
-  const searchUserToInvite = useAppContext(
-    (v) => v.requestHelpers.searchUserToInvite
-  );
-  const userSearchResults = useChatContext((v) => v.state.userSearchResults);
-  const onClearUserSearchResults = useChatContext(
-    (v) => v.actions.onClearUserSearchResults
-  );
-  const onCreateNewChannel = useChatContext(
-    (v) => v.actions.onCreateNewChannel
-  );
-  const onSearchUserToInvite = useChatContext(
-    (v) => v.actions.onSearchUserToInvite
-  );
+  const onCreateNewChannel = useChatContext((v) => v.actions.onCreateNewChannel);
   const userId = useKeyContext((v) => v.myState.userId);
   const doneColor = useKeyContext((v) => v.theme.done.color);
-  const [creatingChat, setCreatingChat] = useState(false);
   const [channelName, setChannelName] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState<{ id: number }[]>([]);
-  const disabled = useMemo(
-    () =>
-      creatingChat || stringIsEmpty(channelName) || selectedUsers.length === 0,
-    [channelName, creatingChat, selectedUsers.length]
-  );
+  const [selectedUsers, setSelectedUsers] = useState<ChatInvitePerson[]>([]);
+  const request = useChatDialogRequest(userId + ':' + channelId);
+  const committed = useRef<any>(null);
+  useEffect(() => {
+    committed.current = null;
+    setChannelName('');
+    setSelectedUsers([]);
+  }, [userId, channelId]);
+  const nameId = useId();
+  const valid = Boolean(channelName.trim()) && channelName.length <= 150 && selectedUsers.length > 0;
+  const locked = request.busy || Boolean(committed.current);
+  useEffect(() => {
+    onBusyChange?.(request.busy);
+    return () => onBusyChange?.(false);
+  }, [onBusyChange, request.busy]);
 
-  return (
-    <ErrorBoundary componentPath="CreateNewChat/TeacherMenu/ClassroomChatForm">
-      <header>{newClassroomLabel}</header>
-      <main>
-        <div
-          className={css`
-            width: 80%;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
-            }
-          `}
-        >
-          <h3>{nameLabel}</h3>
-          <Input
-            autoFocus
-            style={{ marginTop: '1rem' }}
-            placeholder={enterClassNameLabel}
-            maxLength="150"
-            value={channelName}
-            onChange={setChannelName}
-          />
-        </div>
-        <TagForm
-          title={membersLabel}
-          itemLabel="username"
-          searchResults={userSearchResults}
-          filter={(result) => result.id !== userId}
-          onSearch={(text) =>
-            handleSearchUserToInvite({ channelId, searchText: text })
-          }
-          onClear={onClearUserSearchResults}
-          onAddItem={onAddUser}
-          onRemoveItem={onRemoveUser}
-          renderDropdownLabel={(item) => (
-            <UserSearchResultRow
-              userId={Number(item.id)}
-              username={item.username}
-              realName={item.realName}
-              profilePicUrl={item.profilePicUrl}
-            />
-          )}
-          searchPlaceholder={addMembersOfClassLabel}
-          selectedItems={selectedUsers}
-          style={{ marginTop: '1.5rem' }}
-          className={css`
-            width: 80%;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
-            }
-          `}
-        />
-      </main>
-      <footer>
-        <Button
-          style={{ marginRight: '0.7rem' }}
-          variant="ghost"
-          onClick={onBackClick || onHide}
-        >
-          {onBackClick ? 'Back' : 'Cancel'}
-        </Button>
-        <Button color={doneColor} onClick={handleDone} disabled={disabled}>
-          Create
-        </Button>
-      </footer>
-    </ErrorBoundary>
-  );
-
-  async function handleSearchUserToInvite({
-    channelId,
-    searchText
-  }: {
-    channelId?: number;
-    searchText: string;
-  }) {
-    const data = await searchUserToInvite({ channelId, searchText });
-    onSearchUserToInvite(data);
-  }
-
-  function onAddUser(user: { id: number }) {
-    setSelectedUsers((prevSelectedUsers) => prevSelectedUsers.concat([user]));
-  }
-
-  function onRemoveUser(userId: number) {
-    setSelectedUsers((prevSelectedUsers) =>
-      prevSelectedUsers.filter((user) => user.id !== userId)
-    );
-  }
+  return <section className={chatFormClass}>
+    <header><h2>New classroom</h2><p className="description">Give your class a name and choose its first members.</p></header>
+    <main>
+      <div><label htmlFor={nameId}>Classroom name</label>
+        <input id={nameId} type="text" autoFocus maxLength={150} value={channelName} disabled={locked}
+          placeholder="Enter your class name" onChange={(event) => setChannelName(event.target.value)} />
+        <p className="field-hint">Up to 150 characters. Only you can invite new members.</p>
+      </div>
+      <ChatPeoplePicker channelId={channelId} selected={selectedUsers} onChange={setSelectedUsers} disabled={locked} />
+      {request.error && <p ref={request.errorRef} id={request.errorId} className="error" role="alert">{request.error}</p>}
+    </main>
+    <footer>
+      <Button style={chatFormActionStyle} variant="ghost" uppercase={false} disabled={request.busy} onClick={onBackClick || onHide}>{onBackClick ? 'Back' : 'Cancel'}</Button>
+      <Button style={chatFormActionStyle} variant="soft" tone="raised" uppercase={false} color={doneColor}
+        disabled={!valid} aria-busy={request.busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={request.busy ? 'Creating classroom' : committed.current ? 'Open created classroom' : 'Create classroom'} onClick={handleDone}>
+        {request.busy ? 'Creating…' : committed.current ? 'Open classroom' : 'Create classroom'}
+      </Button>
+    </footer>
+  </section>;
 
   async function handleDone() {
-    setCreatingChat(true);
-    const { message, members, pathId, favoriteState } = await createNewChat({
-      userId,
-      channelName,
-      isClass: true,
-      isClosed: true,
-      selectedUsers
+    if (!valid) return;
+    await request.run('Couldn’t finish opening the classroom. Your selections are kept; check your chats before trying again.', async (isCurrent) => {
+      if (!committed.current) {
+        const response = await createNewChat({
+          userId, channelName: channelName.trim(), isClass: true, isClosed: true, selectedUsers
+        });
+        if (!isCurrent()) return;
+        committed.current = { response, hydrated: false, joined: false, invited: false, navigated: false };
+      }
+      const progress = committed.current;
+      const { message, members, pathId, favoriteState } = progress.response;
+      if (!progress.hydrated) {
+        onCreateNewChannel({ userId, message, isClass: true, isClosed: true, members, pathId, favoriteState });
+        progress.hydrated = true;
+      }
+      if (!progress.joined) {
+        socket.emit('join_chat_group', message.channelId);
+        progress.joined = true;
+      }
+      if (!progress.invited) {
+        socket.emit('send_group_chat_invitation', selectedUsers.map((user) => user.id), {
+          message, isClass: true, isClosed: true, members, pathId
+        });
+        progress.invited = true;
+      }
+      if (!progress.navigated) {
+        navigate('/chat/' + pathId);
+        progress.navigated = true;
+      }
+      onHide();
     });
-    onCreateNewChannel({
-      userId,
-      message,
-      isClass: true,
-      isClosed: true,
-      members,
-      pathId,
-      favoriteState
-    });
-    const users = selectedUsers.map((user) => user.id);
-    socket.emit('join_chat_group', message.channelId);
-    socket.emit('send_group_chat_invitation', users, {
-      message,
-      isClass: true,
-      isClosed: true,
-      members,
-      pathId
-    });
-    navigate(`/chat/${pathId}`);
-    onHide();
   }
 }

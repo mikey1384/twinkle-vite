@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import SubjectItem from './SubjectItem';
 import Loading from '~/components/Loading';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
+import TopicRequestStatus from '../TopicRequestStatus';
+import { chatTopicActionStyle, chatTopicModalClass, chatTopicSectionClass, chatTopicThemeStyle } from '../topicStyles';
 
 export default function SubjectsModal({
   channelId,
@@ -34,57 +35,66 @@ export default function SubjectsModal({
   );
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const pagingRef = useRef({ my: false, all: false });
   const [mySubjects, setMySubjects] = useState({
     subjects: [],
     loadMoreButton: false,
-    loading: false
+    loading: false,
+    error: ''
   });
   const [allSubjects, setAllSubjects] = useState({
     subjects: [],
     loadMoreButton: false,
-    loading: false
+    loading: false,
+    error: ''
   });
 
   useEffect(() => {
+    let ignore = false;
+    setLoaded(false);
+    setLoadError(false);
     handleLoadSubjects();
     async function handleLoadSubjects() {
       try {
         const { mySubjects, allSubjects } = await loadChatSubjects({
           channelId
         });
-        setMySubjects(mySubjects);
-        setAllSubjects(allSubjects);
+        if (ignore) return;
+        setMySubjects({ ...mySubjects, loading: false, error: '' });
+        setAllSubjects({ ...allSubjects, loading: false, error: '' });
         setLoaded(true);
       } catch (error: any) {
+        if (ignore) return;
+        setLoadError(true);
         console.error(error.response || error);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => { ignore = true; };
+  }, [channelId, loadChatSubjects, retryCount]);
 
   return (
     <Modal
       modalKey="SubjectsModal"
+      aria-label="View Topics"
+      className={chatTopicModalClass}
       isOpen
       onClose={onHide}
       title="View Topics"
       size="md"
       footer={
-        <Button variant="ghost" onClick={onHide}>
+        <Button variant="ghost" style={chatTopicActionStyle} onClick={onHide}>
           Close
         </Button>
       }
     >
-      <div style={{ width: '100%' }}>
-        {!loaded && <Loading />}
-        {mySubjects.subjects.length > 0 && (
+      <div style={{ width: '100%', fontSize: '16px', ...chatTopicThemeStyle(displayedThemeColor) }}>
+        {loadError && <TopicRequestStatus message="Couldn't load topics. Please try again." onRetry={() => setRetryCount(count => count + 1)} />}
+        {!loaded && !loadError && <Loading text="Loading topics" innerStyle={{ fontSize: '14px' }} />}
+        {loaded && mySubjects.subjects.length > 0 && (
           <div style={{ width: '100%' }}>
-            <h3
-              style={{
-                color: Color[displayedThemeColor](),
-                marginBottom: '1rem'
-              }}
-            >
+            <h3 className={chatTopicSectionClass}>
               My Topics
             </h3>
             {(mySubjects.subjects || []).map(
@@ -106,8 +116,10 @@ export default function SubjectsModal({
                 />
               )
             )}
-            {mySubjects.loadMoreButton && (
+            {mySubjects.error && <TopicRequestStatus message={mySubjects.error} onRetry={() => handleLoadMoreSubjects(true)} />}
+            {mySubjects.loadMoreButton && !mySubjects.error && (
               <LoadMoreButton
+                style={chatTopicActionStyle}
                 filled
                 loading={mySubjects.loading}
                 onClick={() => handleLoadMoreSubjects(true)}
@@ -123,19 +135,15 @@ export default function SubjectsModal({
               width: '100%'
             }}
           >
-            <h3
-              style={{
-                color: Color[displayedThemeColor]()
-              }}
-            >
+            <h3 className={chatTopicSectionClass}>
               All Topics
             </h3>
           </div>
         )}
         {loaded && allSubjects.subjects.length === 0 && (
-          <div>{`There aren't any subjects here, yet`}</div>
+          <p role="status" style={{ padding: '24px 0', textAlign: 'center' }}>No topics have been posted yet.</p>
         )}
-        {(allSubjects.subjects || []).map(
+        {loaded && (allSubjects.subjects || []).map(
           (subject: {
             id: number;
             content: string;
@@ -155,10 +163,11 @@ export default function SubjectsModal({
             />
           )
         )}
-        {allSubjects.loadMoreButton && (
+        {loaded && allSubjects.error && <TopicRequestStatus message={allSubjects.error} onRetry={() => handleLoadMoreSubjects(false)} />}
+        {loaded && allSubjects.loadMoreButton && !allSubjects.error && (
           <LoadMoreButton
             filled
-            style={{ marginBottom: '1rem' }}
+            style={{ ...chatTopicActionStyle, marginBottom: '1rem' }}
             loading={allSubjects.loading}
             onClick={() => handleLoadMoreSubjects(false)}
           />
@@ -177,50 +186,46 @@ export default function SubjectsModal({
 
   async function handleDeleteSubject(subjectId: number) {
     await deleteChatSubject(subjectId);
-    setMySubjects({
-      ...mySubjects,
-      subjects: mySubjects.subjects.filter(
+    setMySubjects(prev => ({
+      ...prev,
+      subjects: prev.subjects.filter(
         (subject: { id: number }) => subject.id !== subjectId
       )
-    });
-    setAllSubjects({
-      ...allSubjects,
-      subjects: allSubjects.subjects.filter(
+    }));
+    setAllSubjects(prev => ({
+      ...prev,
+      subjects: prev.subjects.filter(
         (subject: { id: number }) => subject.id !== subjectId
       )
-    });
+    }));
     setDeleteTarget(0);
   }
 
   async function handleLoadMoreSubjects(mineOnly: boolean) {
-    if (mineOnly) {
-      setMySubjects({ ...mySubjects, loading: true });
-    } else {
-      setAllSubjects({ ...allSubjects, loading: true });
-    }
-    const targetSubjects = mineOnly
-      ? mySubjects.subjects
-      : allSubjects.subjects;
-    const lastSubject = targetSubjects[targetSubjects.length - 1];
-    const { subjects, loadMoreButton } = await loadMoreChatSubjects({
-      channelId,
-      mineOnly,
-      lastSubject
-    });
-    if (mineOnly) {
-      setMySubjects({
-        ...mySubjects,
-        subjects: mySubjects.subjects.concat(subjects),
-        loadMoreButton,
-        loading: false
+    const key = mineOnly ? 'my' : 'all';
+    const target = mineOnly ? mySubjects : allSubjects;
+    const setTarget = mineOnly ? setMySubjects : setAllSubjects;
+    if (pagingRef.current[key] || target.loading || !target.subjects.length) return;
+    pagingRef.current[key] = true;
+    setTarget(prev => ({ ...prev, loading: true, error: '' }));
+    try {
+      const { subjects, loadMoreButton } = await loadMoreChatSubjects({
+        channelId, mineOnly, lastSubject: target.subjects[target.subjects.length - 1]
       });
-    } else {
-      setAllSubjects({
-        ...allSubjects,
-        subjects: allSubjects.subjects.concat(subjects),
+      setTarget(prev => ({
+        ...prev,
+        subjects: prev.subjects.concat(subjects.filter((subject: { id: number }) =>
+          !prev.subjects.some((existing: { id: number }) => existing.id === subject.id)
+        )),
         loadMoreButton,
-        loading: false
-      });
+        error: ''
+      }));
+    } catch (error) {
+      console.error(error);
+      setTarget(prev => ({ ...prev, error: "Couldn't load more topics. Please try again." }));
+    } finally {
+      pagingRef.current[key] = false;
+      setTarget(prev => ({ ...prev, loading: false }));
     }
   }
 }

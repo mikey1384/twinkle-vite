@@ -1,113 +1,23 @@
 import React from 'react';
-import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
-const cancelLabel = 'Cancel';
-const classroomChatLabel = 'Classroom';
-const regularChatLabel = 'Regular Chat';
-const startNewChatLabel = 'Start a New Chat';
+import { chatFormActionStyle, chatFormClass } from '../../chatFormStyles';
 
-export default function SelectScreen({
-  onHide,
-  onSetSection
-}: {
+export default function SelectScreen({ onHide, onSetSection, focusChoice }: {
   onHide: () => void;
   onSetSection: (section: string) => void;
+  focusChoice?: string;
 }) {
-  return (
-    <ErrorBoundary componentPath="CreateNewChat/TeacherMenu/SelectScreen">
-      <header>{startNewChatLabel}</header>
-      <main>
-        <div
-          style={{
-            display: 'flex',
-            width: '100%',
-            justifyContent: 'center'
-          }}
-        >
-          <div
-            style={{
-              width: '30%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center'
-            }}
-          >
-            <div
-              style={{
-                fontWeight: 'bold',
-                fontSize: '2rem',
-                color: Color.black()
-              }}
-            >
-              {regularChatLabel}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginTop: '1.5rem'
-              }}
-            >
-              <Button
-                variant="soft"
-                tone="raised"
-                style={{ fontSize: '3.5rem', padding: '1.5rem' }}
-                color="blue"
-                onClick={() => onSetSection('regular')}
-              >
-                <Icon icon="comments" />
-              </Button>
-            </div>
-          </div>
-          <div
-            style={{
-              width: '30%',
-              flexDirection: 'column',
-              alignItems: 'center',
-              display: 'flex',
-              marginLeft: '1rem'
-            }}
-          >
-            <div
-              style={{
-                fontWeight: 'bold',
-                fontSize: '2rem',
-                color: Color.black()
-              }}
-            >
-              {classroomChatLabel}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginTop: '1.5rem'
-              }}
-            >
-              <Button
-                variant="soft"
-                tone="raised"
-                style={{ fontSize: '3.5rem', padding: '1.5rem' }}
-                color="pink"
-                onClick={() => onSetSection('classroom')}
-              >
-                <Icon icon="chalkboard-teacher" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide}>
-          {cancelLabel}
-        </Button>
-      </footer>
-    </ErrorBoundary>
-  );
+  return <section className={chatFormClass}>
+    <header><h2>Start a new chat</h2><p className="description">Choose the space that fits your conversation.</p></header>
+    <main><div className="choice-grid">
+      <button type="button" autoFocus={focusChoice === 'regular'} className="choice" onClick={() => onSetSection('regular')}>
+        <Icon icon="comments" /><strong>Regular group</strong><span>A shared space for everyday conversations.</span>
+      </button>
+      <button type="button" autoFocus={focusChoice === 'classroom'} className="choice" onClick={() => onSetSection('classroom')}>
+        <Icon icon="chalkboard-teacher" /><strong>Classroom</strong><span>A class space with members chosen by you.</span>
+      </button>
+    </div></main>
+    <footer><Button style={chatFormActionStyle} variant="ghost" uppercase={false} onClick={onHide}>Cancel</Button></footer>
+  </section>;
 }

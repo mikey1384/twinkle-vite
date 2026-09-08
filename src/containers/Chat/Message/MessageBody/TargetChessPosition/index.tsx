@@ -49,6 +49,9 @@ export default function TargetChessPosition({
         border: `1px solid ${Color.lightGray()}`,
         background: Color.wellGray(),
         display: 'flex',
+        flexDirection: 'column',
+        minWidth: 0,
+        boxSizing: 'border-box',
         justifyContent: 'space-between',
         borderRadius
       }}
@@ -72,11 +75,9 @@ export default function TargetChessPosition({
       />
       <div
         style={{
-          bottom: 0,
-          right: '1rem',
-          position: 'absolute',
           display: 'flex',
-          flexDirection: 'column'
+          justifyContent: 'flex-end',
+          minWidth: 0
         }}
       >
         {!chessState.isRewindRequest &&

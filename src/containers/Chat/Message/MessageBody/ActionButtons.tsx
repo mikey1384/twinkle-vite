@@ -1,13 +1,10 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
-import DropdownButton from '~/components/Buttons/DropdownButton';
+import ActionMenu, { type ChatActionItem } from './ActionMenu';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { BOOKMARK_VIEWS, BookmarkView } from '~/constants/defaultValues';
-import { isMobile } from '~/helpers';
 import ReactionButton from './ReactionButton';
-
-const deviceIsMobile = isMobile(navigator);
 
 const replyLabel = 'Reply';
 const rewardLabel = 'Reward';
@@ -96,18 +93,17 @@ export default function ActionButtons({
   userCanRewardThis,
   userId
 }: Props) {
-  const dropdownButtonRef = useRef(null);
-
   const dropdownMenuItems = useMemo(() => {
-    const result: any[] = [];
+    const result: ChatActionItem[] = [];
     if (isBanned) return result;
 
     if (!isDeleteOnlyBuildSuggestion && !isRestricted) {
       result.push({
+        id: 'reply',
         label: (
           <>
             <Icon icon="reply" />
-            <span style={{ marginLeft: '1rem' }}>{replyLabel}</span>
+            <span>{replyLabel}</span>
           </>
         ),
         onClick: () => {
@@ -130,10 +126,11 @@ export default function ActionButtons({
 
     if (!isDeleteOnlyBuildSuggestion && userCanEditThis) {
       result.push({
+        id: 'edit',
         label: (
           <>
             <Icon icon="pencil-alt" />
-            <span style={{ marginLeft: '1rem' }}>{editLabel}</span>
+            <span>{editLabel}</span>
           </>
         ),
         onClick: () => {
@@ -148,10 +145,12 @@ export default function ActionButtons({
 
     if (userCanDeleteThis) {
       result.push({
+        id: 'remove',
+        tone: 'danger',
         label: (
           <>
             <Icon icon="trash-alt" />
-            <span style={{ marginLeft: '1rem' }}>
+            <span>
               {isDeleteOnlyBuildSuggestion ? deleteLabel : removeLabel}
             </span>
           </>
@@ -169,19 +168,14 @@ export default function ActionButtons({
       !isAIMessage
     ) {
       result.push({
+        id: 'reward',
         label: (
           <>
             <Icon icon="star" />
-            <span style={{ marginLeft: '1rem' }}>{rewardLabel}</span>
+            <span>{rewardLabel}</span>
           </>
         ),
-        style: { color: '#fff', background: Color[rewardColor]() },
-        className: css`
-          opacity: 0.9;
-          &:hover {
-            opacity: 1 !important;
-          }
-        `,
+        accent: Color[rewardColor](),
         onClick: onOpenRewardModal
       });
     }
@@ -191,22 +185,14 @@ export default function ActionButtons({
     if (!isDeleteOnlyBuildSuggestion && canBookmark) {
       const bookmarkView = isAIMessage ? BOOKMARK_VIEWS.AI : BOOKMARK_VIEWS.ME;
       result.push({
+        id: 'bookmark',
         label: (
           <>
             <Icon icon="bookmark" />
-            <span style={{ marginLeft: '1rem' }}>Bookmark</span>
+            <span>Bookmark</span>
           </>
         ),
-        style: {
-          color: '#fff',
-          background: Color[isCielMessage ? 'magenta' : 'logoBlue']()
-        },
-        className: css`
-          opacity: 0.9;
-          &:hover {
-            opacity: 1 !important;
-          }
-        `,
+        accent: Color[isCielMessage ? 'magenta' : 'logoBlue'](),
         onClick: () => onBookmark(messageId, bookmarkView)
       });
     }
@@ -249,6 +235,14 @@ export default function ActionButtons({
     [dropdownMenuItems.length, isCurrentlyStreaming]
   );
 
+  const handleActionMenuShown = useCallback(
+    (shown: boolean) => {
+      onDropdownShown(shown);
+      if (shown) onSetReactionsMenuShown(false);
+    },
+    [onDropdownShown, onSetReactionsMenuShown]
+  );
+
   if (!isMenuButtonsAllowed) {
     return null;
   }
@@ -272,24 +266,15 @@ export default function ActionButtons({
             reactionsMenuShown={reactionsMenuShown}
             onSetReactionsMenuShown={onSetReactionsMenuShown}
             style={{
-              marginRight: dropdownButtonShown ? '0.5rem' : 0
+              marginRight: dropdownButtonShown ? 4 : 0
             }}
           />
         )}
       {dropdownButtonShown && (
-        <DropdownButton
-          variant="solid"
-          tone="raised"
-          buttonStyle={{
-            fontSize: '1.1rem',
-            lineHeight: 1
-          }}
-          className="menu-button"
-          innerRef={dropdownButtonRef}
-          color="darkerGray"
-          icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
-          menuProps={dropdownMenuItems}
-          onDropdownShown={onDropdownShown}
+        <ActionMenu
+          items={dropdownMenuItems}
+          dismissWhen={reactionsMenuShown}
+          onShownChange={handleActionMenuShown}
         />
       )}
     </div>

@@ -1,13 +1,13 @@
-import React, { useContext, useMemo, useRef, useState } from 'react';
-import DropdownButton from '~/components/Buttons/DropdownButton';
-import Icon from '~/components/Icon';import LocalContext from '../../Context';
+import React, { useContext, useMemo, useState } from 'react';
+import ActionMenu from './ActionMenu';
+import Icon from '~/components/Icon';
+import LocalContext from '../../Context';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useWordleLabels } from '~/helpers/hooks';
-import { isMobile } from '~/helpers';
+import { getWordleBannerLevelColor } from '../../constants/wordlePresentation';
 import moment from 'moment';
 
-const deviceIsMobile = isMobile(navigator);
 const replyLabel = 'Reply';
 
 export default function WordleResult({
@@ -33,8 +33,7 @@ export default function WordleResult({
   const {
     actions: { onSetReplyTarget }
   } = useContext(LocalContext);
-  const DropdownButtonRef = useRef(null);
-  const { numGuesses } = wordleResult;
+  const { isSolved, numGuesses } = wordleResult;
 
   const {
     guessLabel,
@@ -44,6 +43,7 @@ export default function WordleResult({
     solutionLabel
   } = useWordleLabels({
     ...wordleResult,
+    wordLevelColor: getWordleBannerLevelColor(wordleResult.wordLevel),
     username,
     userId,
     myId
@@ -56,59 +56,76 @@ export default function WordleResult({
 
   return (
     <div
+      role="article"
+      tabIndex={0}
+      aria-label="Wordle result"
       className={css`
+        border-radius: ${borderRadius};
+        border: 1px solid ${isSolved ? Color.gold(0.55) : Color.gray(0.4)};
+        border-top: 3px solid ${isSolved ? Color.gold() : Color.gray()};
         .menu-button {
           display: ${dropdownShown ? 'block' : 'none'};
         }
-        &:hover {
+        &:hover,
+        &:focus-within {
           .menu-button {
             display: block;
           }
         }
         .reward-amount-label {
-          font-size: ${numGuesses <= 2 ? '2rem' : ''};
+          display: inline-block;
+          white-space: nowrap;
+          color: ${isSolved ? Color.gold() : 'inherit'};
+          font-size: ${numGuesses <= 2 ? '2.6rem' : '2.2rem'};
+          font-weight: 800;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: ${numGuesses <= 2 ? '1.5rem' : ''};
+            font-size: ${numGuesses <= 2
+              ? 'max(22px, 2.3rem)'
+              : 'max(20px, 2rem)'};
           }
         }
-        @media (max-width: ${mobileMaxWidth}) {
+        @media (max-width: 1024px), (pointer: coarse) {
           .menu-button {
             display: block;
           }
         }
       `}
       style={{
-        width: '100%',
+        width: 'calc(100% - 2.4rem)',
         background: Color.darkBlueGray(),
         color: '#fff',
-        marginBottom: '1.5rem',
+        margin: '0.6rem 1.2rem 1rem',
         position: 'relative'
       }}
     >
+      {isSolved && (
+        <Icon
+          icon="trophy"
+          color={Color.gold()}
+          style={{
+            position: 'absolute',
+            top: '1.3rem',
+            left: '1.2rem',
+            fontSize: '2.2rem'
+          }}
+        />
+      )}
       <div
         style={{
           position: 'absolute',
-          top: '-0.5rem',
-          right: '1rem'
+          top: '0.6rem',
+          right: '0.8rem'
         }}
       >
-        <DropdownButton
-          variant="solid"
-          tone="raised"
-          buttonStyle={{
-            fontSize: '1.1rem',
-            lineHeight: 1
-          }}
-          className="menu-button"
-          innerRef={DropdownButtonRef}
-          color="darkerGray"
-          icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
-          menuProps={[
+        <ActionMenu
+          label="Wordle result actions"
+          items={[
             {
+              id: 'reply',
               label: (
                 <>
                   <Icon icon="reply" />
-                  <span style={{ marginLeft: '1rem' }}>{replyLabel}</span>
+                  <span>{replyLabel}</span>
                 </>
               ),
               onClick: () => {
@@ -132,7 +149,7 @@ export default function WordleResult({
               }
             }
           ]}
-          onDropdownShown={setDropdownShown}
+          onShownChange={setDropdownShown}
         />
       </div>
       <div
@@ -142,10 +159,11 @@ export default function WordleResult({
           justify-content: center;
           align-items: center;
           width: 100%;
-          padding: 2rem 1rem;
+          padding: 1.2rem 56px 0.7rem;
           font-size: 1.6rem;
+          text-align: center;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.3rem;
+            font-size: max(14px, 1.4rem);
           }
         `}
       >
@@ -166,43 +184,47 @@ export default function WordleResult({
                 : '2rem'};
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: ${numGuesses === 1
-                  ? '2.3rem'
+                  ? 'max(20px, 2.3rem)'
                   : numGuesses === 2
-                  ? '2rem'
+                  ? 'max(18px, 2rem)'
                   : numGuesses === 3
-                  ? '1.7rem'
-                  : '1.5rem'};
+                  ? 'max(16px, 1.7rem)'
+                  : 'max(15px, 1.5rem)'};
               }
             `}
           >
             {guessLabel}
           </p>
         )}
-        <div style={{ textAlign: 'center' }}>{resultLabel}</div>
+        <div>{resultLabel}</div>
         <p style={{ marginTop: '0.5rem' }}>{solutionLabel}</p>
         {bonusLabel && (
           <p
             style={{
               marginTop: '0.5rem',
               fontWeight: 'bold',
-              color: Color.brownOrange()
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              padding: '0.3rem 1rem',
+              borderRadius: '2rem',
+              fontSize: 'max(11px, 1.2rem)',
+              background: Color.gold(),
+              color: Color.darkBlueGray()
             }}
           >
+            <Icon icon="bolt" />
             {bonusLabel}
           </p>
         )}
       </div>
       <div
         style={{
-          position: 'absolute',
-          bottom: '5px',
-          right: '8px'
+          textAlign: 'right',
+          padding: '0 1.2rem 0.7rem'
         }}
         className={css`
-          font-size: 1.1rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.1rem;
-          }
+          font-size: max(11px, 1.1rem);
         `}
       >
         {displayedTimeStamp}

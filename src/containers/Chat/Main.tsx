@@ -23,10 +23,10 @@ import {
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { aiCardScrollHeight, vocabScrollHeight } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
-import { css } from '@emotion/css';
+import { chatWorkspaceClass } from './containers';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   useAppContext,
@@ -358,6 +358,7 @@ export default function Main({
     null
   );
   const [creatingChat, setCreatingChat] = useState(false);
+  const creatingChatRequest = useRef(false);
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
   const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
   const userIdRef = useRef(userId);
@@ -936,30 +937,39 @@ export default function Main({
     async ({
       userId,
       channelName,
-      isClosed
+      isClosed,
+      canApply
     }: {
       userId: number;
       channelName: string;
       isClosed: boolean;
+      canApply?: () => boolean;
     }) => {
+      if (creatingChatRequest.current) return;
+      creatingChatRequest.current = true;
       setCreatingChat(true);
-      const { message, members, pathId, favoriteState } = await createNewChat({
-        userId,
-        channelName,
-        isClosed
-      });
-      onCreateNewChannel({
-        userId,
-        message,
-        isClosed,
-        members,
-        pathId,
-        favoriteState
-      });
-      socket.emit('join_chat_group', message.channelId);
-      navigate(`/chat/${pathId}`);
-      setCreateNewChatModalShown(false);
-      setCreatingChat(false);
+      try {
+        const { message, members, pathId, favoriteState } = await createNewChat({
+          userId,
+          channelName,
+          isClosed
+        });
+        if (!isMounted.current || Number(userIdRef.current) !== Number(userId) || canApply?.() === false) return;
+        onCreateNewChannel({
+          userId,
+          message,
+          isClosed,
+          members,
+          pathId,
+          favoriteState
+        });
+        socket.emit('join_chat_group', message.channelId);
+        navigate(`/chat/${pathId}`);
+        setCreateNewChatModalShown(false);
+      } finally {
+        creatingChatRequest.current = false;
+        if (isMounted.current) setCreatingChat(false);
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -1106,19 +1116,8 @@ export default function Main({
         {userId ? (
           chatReadyForCurrentUser ? (
             <div
-              className={css`
-                width: 100%;
-                height: 100%;
-                display: flex;
-                font-size: 1.6rem;
-                position: relative;
-                @media (max-width: ${mobileMaxWidth}) {
-                  width: 170vw;
-                  height: calc(100% - var(--mobile-nav-total-height));
-                  /* iOS Safari: allow horizontal pan but don't delay taps */
-                  touch-action: pan-x pan-y;
-                }
-              `}
+              data-chat-workspace
+              className={chatWorkspaceClass}
             >
               {createNewChatModalShown && (
                 <CreateNewChat
