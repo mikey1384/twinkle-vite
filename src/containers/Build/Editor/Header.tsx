@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
@@ -26,6 +26,10 @@ import {
 import RuntimeAssetTransferProgressBar from './RuntimeAssetTransferProgressBar';
 import type { RuntimeAssetTransferProgressPayload } from './helpers/runtimeAssetTransferProgress';
 import ViewAppVersionModal from './ViewAppVersionModal';
+import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
+import RewardApprovalNotice from '~/components/Build/Rewards/RewardApprovalNotice';
+import useRewardStatus from '~/components/Build/Rewards/useRewardStatus';
+import { rewardApprovalPresentation } from '~/components/Build/Rewards/approvalPresentation';
 import {
   BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
   BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
@@ -386,6 +390,8 @@ interface HeaderProps {
     username: string;
     isPublic: boolean;
     code: string | null;
+    currentArtifactVersionId?: number | null;
+    projectFilesHash?: string | null;
     releaseStatus?: {
       state?: string;
       hasPublishedVersion?: boolean;
@@ -443,6 +449,11 @@ interface HeaderProps {
   onOpenCollaborationSettings: () => void;
   onOpenDescriptionModal: () => void;
   onOpenThumbnailModal: () => void;
+  onSaveRewardCode: () => Promise<boolean>;
+  rewardApprovalPrompt: number;
+  hasUnsavedRewardChanges: boolean;
+  rewardsBeingPrepared: boolean;
+  onAskLumineForRewards: (reviewNote: string) => void;
   onTogglePublish: () => void;
   onUnpublish?: () => void;
   onDelete?: () => void;
@@ -679,9 +690,15 @@ export default function Header({
   onOpenCollaborationSettings,
   onOpenDescriptionModal,
   onOpenThumbnailModal,
+  onSaveRewardCode,
+  rewardApprovalPrompt,
+  hasUnsavedRewardChanges,
+  rewardsBeingPrepared,
+  onAskLumineForRewards,
   onTogglePublish,
   onUnpublish
 }: HeaderProps) {
+  const [rewardsOpen, setRewardsOpen] = useState(false);
   const location = useLocation();
   const banned = useKeyContext((v) => v.myState.banned);
   const runtimeBackState = React.useMemo(
@@ -693,6 +710,26 @@ export default function Header({
   );
   const isContributionFork =
     build.contributionStatus && build.contributionStatus !== 'none';
+  const rewardChangeKey = `${build.currentArtifactVersionId}:${build.projectFilesHash}:${build.isPublic}:${hasUnsavedRewardChanges}:${rewardsBeingPrepared}`;
+  const rewardStatus = useRewardStatus(
+    Number(build.id),
+    isOwner && !isContributionFork,
+    rewardChangeKey
+  );
+  const rewardPresentation = rewardStatus.settings
+    ? rewardApprovalPresentation(
+        rewardStatus.settings,
+        hasUnsavedRewardChanges || rewardsBeingPrepared
+      )
+    : null;
+  const rewardsGated = Boolean(
+    rewardStatus.settings?.approvalRequired &&
+    rewardPresentation?.state !== 'approved' &&
+    rewardPresentation?.state !== 'published'
+  );
+  useEffect(() => {
+    if (rewardApprovalPrompt) setRewardsOpen(true);
+  }, [rewardApprovalPrompt]);
   const contributionStatus = normalizeContributionStatus(
     build.contributionStatus
   );
@@ -785,7 +822,12 @@ export default function Header({
   const publishButtonDisabled =
     publishing ||
     (!build.isPublic && !build.code) ||
-    Boolean(build.isPublic && publicAppIsUpToDate);
+    Boolean(
+      build.isPublic &&
+      publicAppIsUpToDate &&
+      !rewardsGated &&
+      !rewardStatus.settings?.canPublish
+    );
 
   function renderSettingsMenu() {
     const items: any[] = [];
@@ -815,6 +857,10 @@ export default function Header({
       });
     }
     if (isOwner && !isContributionFork) {
+      items.push({
+        label: 'XP & Coin rewards',
+        onClick: () => setRewardsOpen(true)
+      });
       items.push({
         label: (
           <>
@@ -1119,7 +1165,9 @@ export default function Header({
         {isOwner && !isContributionFork ? (
           <HeaderActionItem mobileOrder={4}>
             <GameCTAButton
-              onClick={onTogglePublish}
+              onClick={
+                rewardsGated ? () => setRewardsOpen(true) : onTogglePublish
+              }
               disabled={publishButtonDisabled || banned?.build}
               loading={publishing}
               variant="magenta"
@@ -1129,11 +1177,15 @@ export default function Header({
             >
               {publishing
                 ? 'Processing...'
-                : build.isPublic
-                  ? publicAppIsUpToDate
-                    ? 'Up to Date'
-                    : 'Update App'
-                  : 'Publish'}
+                : rewardsGated
+                  ? 'Check approval'
+                  : rewardStatus.settings?.canPublish
+                    ? 'Publish app'
+                    : build.isPublic
+                      ? publicAppIsUpToDate
+                        ? 'Up to Date'
+                        : 'Update App'
+                      : 'Publish'}
             </GameCTAButton>
           </HeaderActionItem>
         ) : null}
@@ -1220,7 +1272,9 @@ export default function Header({
           {isOwner && !isContributionFork ? (
             <div className={mobileButtonRowClass}>
               <GameCTAButton
-                onClick={onTogglePublish}
+                onClick={
+                  rewardsGated ? () => setRewardsOpen(true) : onTogglePublish
+                }
                 disabled={publishButtonDisabled || banned?.build}
                 loading={publishing}
                 variant="magenta"
@@ -1230,11 +1284,15 @@ export default function Header({
               >
                 {publishing
                   ? 'Processing...'
-                  : build.isPublic
-                    ? publicAppIsUpToDate
-                      ? 'Up to Date'
-                      : 'Update App'
-                    : 'Publish'}
+                  : rewardsGated
+                    ? 'Check approval'
+                    : rewardStatus.settings?.canPublish
+                      ? 'Publish app'
+                      : build.isPublic
+                        ? publicAppIsUpToDate
+                          ? 'Up to Date'
+                          : 'Update App'
+                        : 'Publish'}
               </GameCTAButton>
             </div>
           ) : null}
@@ -1250,6 +1308,37 @@ export default function Header({
           ) : null}
         </div>
       ) : null}
+      {isOwner && !isContributionFork && (
+        <RewardApprovalNotice
+          settings={rewardStatus.settings}
+          hasUnsavedChanges={hasUnsavedRewardChanges || rewardsBeingPrepared}
+          checking={rewardStatus.loading}
+          error={rewardStatus.error}
+          onOpen={() => setRewardsOpen(true)}
+        />
+      )}
+      {rewardsOpen && (
+        <RewardSettingsModal
+          buildId={Number(build.id)}
+          onSaveCode={onSaveRewardCode}
+          onPublish={() => {
+            setRewardsOpen(false);
+            onTogglePublish();
+          }}
+          onClose={() => {
+            setRewardsOpen(false);
+            rewardStatus.refresh();
+          }}
+          onAskLumine={(reviewNote) => {
+            setRewardsOpen(false);
+            onAskLumineForRewards(reviewNote);
+          }}
+          onStatusChange={rewardStatus.refresh}
+          hasUnsavedChanges={hasUnsavedRewardChanges}
+          preparing={rewardsBeingPrepared}
+          changeKey={rewardChangeKey}
+        />
+      )}
     </header>
   );
 }

@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import type {
-  Build,
-  BuildCopilotPolicy
-} from '../types';
+import { useAppContext } from '~/contexts';
+import type { RewardSettings } from '~/components/Build/Rewards/types';
+import type { Build, BuildCopilotPolicy } from '../types';
 
 interface BuildEditorLocalRunEventInput {
   kind: 'lifecycle' | 'status' | 'action';
@@ -37,6 +36,10 @@ export default function usePublishing({
   replaceCopilotPolicy,
   unpublishBuild
 }: UseBuildEditorPublishingOptions) {
+  const loadRewardSettings = useAppContext(
+    (v) => v.requestHelpers.loadBuildRewardSettings
+  );
+  const [rewardApprovalPrompt, setRewardApprovalPrompt] = useState(0);
   const [publishing, setPublishing] = useState(false);
 
   async function handlePublish() {
@@ -79,17 +82,12 @@ export default function usePublishing({
         });
         return;
       }
-      if (
-        latestBuild.isPublic &&
-        latestBuild.releaseStatus &&
-        !latestBuild.releaseStatus.hasUnpublishedChanges
-      ) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'publish',
-          message: 'This app is already up to date.',
-          pageFeedbackOnMissingRequestId: true
-        });
+      // Check the saved candidate before spending time/energy on a thumbnail.
+      // The publish endpoint repeats this check under its write lock.
+      const rewards: RewardSettings =
+        await loadRewardSettings(requestedBuildId);
+      if (rewards.approvalRequired && !rewards.canPublish) {
+        setRewardApprovalPrompt((value) => value + 1);
         return;
       }
       let publishTargetBuild = latestBuild;
@@ -124,6 +122,12 @@ export default function usePublishing({
       }
     } catch (error: any) {
       console.error('Failed to publish build:', error);
+      if (
+        (error?.code || error?.response?.data?.code) ===
+        'build_reward_approval_required'
+      ) {
+        setRewardApprovalPrompt((value) => value + 1);
+      }
       if (error?.response?.data?.releaseStatus) {
         const latestBuild = getLatestBuild();
         if (latestBuild) {
@@ -155,7 +159,7 @@ export default function usePublishing({
           ...latestBuild,
           ...result.build,
           releaseStatus: result.build.isPublic
-            ? result.build.releaseStatus ?? latestBuild.releaseStatus ?? null
+            ? (result.build.releaseStatus ?? latestBuild.releaseStatus ?? null)
             : null
         });
         if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
@@ -177,6 +181,7 @@ export default function usePublishing({
   return {
     handlePublish,
     handleUnpublish,
-    publishing
+    publishing,
+    rewardApprovalPrompt
   };
 }

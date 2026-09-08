@@ -69,6 +69,12 @@ function registerMethods(
 }
 
 registerMethods('build', [
+  'loadBuildRewardSettings',
+  'requestBuildRewardReview',
+  'loadBuildRewardReview',
+  'loadBuildRewardReviews',
+  'decideBuildRewardReview',
+  'requestBuildRewards',
   'loadBuildWorkshopStatus',
   'cancelBuildWorkshopJob',
   'createBuild',

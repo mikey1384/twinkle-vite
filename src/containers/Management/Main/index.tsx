@@ -8,6 +8,7 @@ import BannedUsers from './BannedUsers';
 import Achievements from './Achievements';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import WealthData from './WealthData';
+import BuildRewardApprovals from './BuildRewardApprovals';
 
 export default function Main() {
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
@@ -82,6 +83,7 @@ export default function Main() {
       componentPath="Management/Main/index"
       style={{ paddingBottom: '10rem' }}
     >
+      <BuildRewardApprovals />
       <WealthData />
       <Approvals canManage={canManage} />
       {canManage && <Achievements />}

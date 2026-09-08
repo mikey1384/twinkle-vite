@@ -93,6 +93,7 @@ export interface BuildReleaseStatus {
 }
 
 export interface Build {
+  rewardRuntimeGrant?: string | null;
   id: number;
   userId: number;
   username: string;

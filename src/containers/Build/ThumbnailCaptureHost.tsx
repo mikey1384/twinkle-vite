@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Loading from '~/components/Loading';
@@ -33,10 +33,15 @@ function parseOptionalViewerId(value: string | null) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-export default function ThumbnailCaptureHost() {
+export default function ThumbnailCaptureHost({
+  onInitializeSession
+}: {
+  onInitializeSession: () => Promise<boolean>;
+}) {
   const { buildId } = useParams();
   const location = useLocation();
   const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
+  const initializeSessionRef = useRef(onInitializeSession);
   const [authReady, setAuthReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -73,6 +78,10 @@ export default function ThumbnailCaptureHost() {
     const path = String(params.get('previewPath') || '').trim();
     return normalizeAllowedBuildPreviewFrameSrc(path);
   }, [location.search]);
+
+  useEffect(() => {
+    initializeSessionRef.current = onInitializeSession;
+  }, [onInitializeSession]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -136,6 +145,12 @@ export default function ThumbnailCaptureHost() {
           `${location.pathname}${location.search}`
         );
       }
+      // This lazy route can mount after App and the guest socket have already
+      // initialized. Saving a same-tab token does not restart that pipeline;
+      // a later App render would hide us behind its canonical-session gate.
+      // Start App's existing single-flight explicitly. App owns confirmation
+      // and recovery, including if its gate unmounts this capture component.
+      void initializeSessionRef.current();
     }
     setAuthReady(true);
   }, [

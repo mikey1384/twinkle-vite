@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useAppContext } from '~/contexts';
 import {
   ensureBuildApiToken,
   ensureGuestSessionId,
@@ -217,6 +218,9 @@ export function useHostBridge({
   onBuildLiveSafetyHostSessionsChange,
   requestBuildLiveSafetyStopRef
 }: UsePreviewHostBridgeArgs) {
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onSetUserStateRef = useRef(onSetUserState);
+  onSetUserStateRef.current = onSetUserState;
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
   const launchTargetRef = useRef<Record<string, any> | null>(launchTarget);
   const audioMutedRef = useRef(audioMuted);
@@ -4128,6 +4132,34 @@ export function useHostBridge({
               limit: payload?.limit,
               token: remindersDueToken
             });
+            break;
+          }
+
+          case 'rewards:status':
+          case 'rewards:start':
+          case 'rewards:claim': {
+            // Never forward app-supplied grants, versions, recipients or amounts.
+            const runtimeGrant = activeBuild.rewardRuntimeGrant;
+            if (!runtimeOnly || !runtimeGrant || appMcpSessionId) {
+              if (type === 'rewards:status') {
+                response = { mode: 'preview', rules: [], history: [], message: 'Real rewards require the approved published app.' };
+                break;
+              }
+              throw new Error('Drafts and previews cannot award XP or Coins. Open the approved published app.');
+            }
+            const rewardUserId = previewAuth.userIdRef.current;
+            const rewardToken = await ensureBuildApiToken(['rewards:claim'], previewAuth);
+            response = await requestRefs.requestBuildRewardsRef.current({
+              buildId: activeBuild.id, operation: type.slice('rewards:'.length),
+              payload: {ruleId: payload?.ruleId, challengeId: payload?.challengeId, answers: payload?.answers},
+              token: rewardToken, runtimeGrant
+            });
+            if (rewardUserId && previewAuth.userIdRef.current === rewardUserId &&
+                Number.isFinite(response?.balances?.xp) && Number.isFinite(response?.balances?.coins)) {
+              onSetUserStateRef.current({userId: rewardUserId, newState: {
+                twinkleXP: response.balances.xp, twinkleCoins: response.balances.coins
+              }});
+            }
             break;
           }
 
