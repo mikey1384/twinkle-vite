@@ -61,82 +61,72 @@ export default function RightButtons({
     cancelRequest.messageId === currentlyStreamingAIMsgId
   );
 
-  return isCielChannel || isZeroChannel ? (
-    currentlyStreamingAIMsgId ? (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          margin: '0.2rem 0'
-        }}
-      >
-        <Button
-          color={buttonColor}
-          loading={cancellingCurrentMessage}
-          variant="solid"
-          onClick={() => {
-            const request = {
-              messageId: currentlyStreamingAIMsgId,
-              channelId: selectedChannelId
-            };
-            setCancelRequest(request);
+  const showStopButton = Boolean(
+    (isCielChannel || isZeroChannel) && currentlyStreamingAIMsgId
+  );
 
-            cancelAIMessage({
-              AIMessageId: currentlyStreamingAIMsgId
-            }).catch(() => {
-              setCancelRequest((currentRequest) =>
-                currentRequest?.channelId === request.channelId &&
-                currentRequest.messageId === request.messageId
-                  ? null
-                  : currentRequest
-              );
-            });
+  return (
+    <>
+      {showStopButton && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: '0.2rem 0'
           }}
         >
-          <Icon icon="stop" />
-        </Button>
+          <Button
+            aria-label="Stop AI response"
+            color={buttonColor}
+            loading={cancellingCurrentMessage}
+            variant="solid"
+            onClick={() => {
+              const request = {
+                messageId: currentlyStreamingAIMsgId,
+                channelId: selectedChannelId
+              };
+              setCancelRequest(request);
+
+              cancelAIMessage({
+                AIMessageId: currentlyStreamingAIMsgId
+              }).catch(() => {
+                setCancelRequest((currentRequest) =>
+                  currentRequest?.channelId === request.channelId &&
+                  currentRequest.messageId === request.messageId
+                    ? null
+                    : currentRequest
+                );
+              });
+            }}
+          >
+            <Icon icon="stop" />
+          </Button>
+        </div>
+      )}
+      {/* The upload dialog is portalled outside this wrapper. Hide its trigger
+          during a reply without unmounting the dialog or discarding its draft. */}
+      <div style={{ display: showStopButton ? 'none' : 'contents' }}>
+        <DefaultButtons
+          currentTransactionId={currentTransactionId}
+          inputText={inputText}
+          isChatBanned={isChatBanned}
+          isAiUsageBlocked={isAiUsageBlocked}
+          isTradeButtonShown={isTradeButtonShown}
+          isLoading={isLoading || showStopButton}
+          isRestrictedChannel={isRestrictedChannel}
+          isTwoPeopleChannel={isTwoPeopleChannel}
+          isAIChannel={isZeroChannel || isCielChannel}
+          maxSize={maxSize}
+          myId={myId}
+          onSelectVideoButtonClick={onSelectVideoButtonClick}
+          onSetAlertModalShown={onSetAlertModalShown}
+          onSetFileObj={onSetFileObj}
+          onSetTransactionModalShown={onSetTransactionModalShown}
+          onSetUploadModalShown={onSetUploadModalShown}
+          selectedChannelId={selectedChannelId}
+          socketConnected={socketConnected}
+        />
       </div>
-    ) : (
-      <DefaultButtons
-        currentTransactionId={currentTransactionId}
-        inputText={inputText}
-        isChatBanned={isChatBanned}
-        isAiUsageBlocked={isAiUsageBlocked}
-        isTradeButtonShown={isTradeButtonShown}
-        isLoading={isLoading}
-        isRestrictedChannel={isRestrictedChannel}
-        isTwoPeopleChannel={isTwoPeopleChannel}
-        isAIChannel={isZeroChannel || isCielChannel}
-        maxSize={maxSize}
-        myId={myId}
-        onSelectVideoButtonClick={onSelectVideoButtonClick}
-        onSetAlertModalShown={onSetAlertModalShown}
-        onSetFileObj={onSetFileObj}
-        onSetTransactionModalShown={onSetTransactionModalShown}
-        onSetUploadModalShown={onSetUploadModalShown}
-        selectedChannelId={selectedChannelId}
-        socketConnected={socketConnected}
-      />
-    )
-  ) : (
-    <DefaultButtons
-      currentTransactionId={currentTransactionId}
-      inputText={inputText}
-      isChatBanned={isChatBanned}
-      isAiUsageBlocked={isAiUsageBlocked}
-      isTradeButtonShown={isTradeButtonShown}
-      isLoading={isLoading}
-      isRestrictedChannel={isRestrictedChannel}
-      isTwoPeopleChannel={isTwoPeopleChannel}
-      maxSize={maxSize}
-      myId={myId}
-      onSelectVideoButtonClick={onSelectVideoButtonClick}
-      onSetAlertModalShown={onSetAlertModalShown}
-      onSetFileObj={onSetFileObj}
-      onSetTransactionModalShown={onSetTransactionModalShown}
-      onSetUploadModalShown={onSetUploadModalShown}
-      selectedChannelId={selectedChannelId}
-      socketConnected={socketConnected}
-    />
+    </>
   );
 }
