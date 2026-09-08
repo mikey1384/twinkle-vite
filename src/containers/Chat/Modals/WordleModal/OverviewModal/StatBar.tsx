@@ -16,6 +16,13 @@ export default function StatBar({
   style?: React.CSSProperties;
   isGameOver: boolean;
 }) {
+  const count = (value: unknown) =>
+    Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
+  const played = count(stats?.totalGames);
+  const rate = played
+    ? Math.round((Math.min(played, count(stats?.numSuccess)) * 1000) / played) /
+      10
+    : 0;
   return (
     <ErrorBoundary componentPath="WordleModal/OverviewModal/StatBar">
       <div
@@ -40,18 +47,18 @@ export default function StatBar({
           style={{
             display: 'flex',
             justifyContent: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
             marginTop: isGameOver ? '1.2rem' : 0
           }}
         >
-          <StatItem label={TOTAL_TRIES_TEXT} value={stats.totalGames} />
+          <StatItem label={TOTAL_TRIES_TEXT} value={played} />
+          <StatItem label={SUCCESS_RATE_TEXT} value={`${rate}%`} />
           <StatItem
-            label={SUCCESS_RATE_TEXT}
-            value={`${
-              Math.round((stats.numSuccess * 100 * 10) / stats.totalGames) / 10
-            }%`}
+            label={CURRENT_STREAK_TEXT}
+            value={count(stats?.currentStreak)}
           />
-          <StatItem label={CURRENT_STREAK_TEXT} value={stats.currentStreak} />
-          <StatItem label={BEST_STREAK_TEXT} value={stats.bestStreak} />
+          <StatItem label={BEST_STREAK_TEXT} value={count(stats?.bestStreak)} />
         </div>
       </div>
     </ErrorBoundary>

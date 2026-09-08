@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import readWithTimeout from '~/helpers/readWithTimeout';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -44,11 +45,28 @@ export default function UserListModal({
   }>;
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
-  const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const [pendingUser, setPendingUser] = useState<number | null>(null);
+  const [error, setError] = useState('');
+  const pending = useRef(false);
+  const version = useRef(0);
+  const currentUser = useRef(userId);
+  currentUser.current = userId;
+  useEffect(() => {
+    pending.current = false;
+    setPendingUser(null);
+    setError('');
+    return () => {
+      version.current++;
+    };
+  }, [userId]);
+  function close() {
+    version.current++;
+    onHide();
+  }
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -69,7 +87,8 @@ export default function UserListModal({
       modalKey="UserListModal"
       isOpen
       size="sm"
-      onClose={onHide}
+      onClose={close}
+      aria-label={typeof title === 'string' ? title : 'People'}
       modalLevel={modalOverModal ? 2 : undefined}
       hasHeader={false}
       bodyPadding={0}
@@ -77,6 +96,11 @@ export default function UserListModal({
       <LegacyModalLayout>
         <header>{title}</header>
         <main style={{ paddingTop: 0 }}>
+          {error && (
+            <p role="alert" style={{ fontSize: 16, lineHeight: 1.5 }}>
+              {error}
+            </p>
+          )}
           <RoundList>
             {loading ? (
               <Loading />
@@ -107,10 +131,19 @@ export default function UserListModal({
                       background: '#fff',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between'
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      flexWrap: 'wrap'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        minWidth: 0,
+                        flex: '1 1 140px'
+                      }}
+                    >
                       <div>
                         <ProfilePic
                           style={{
@@ -128,7 +161,13 @@ export default function UserListModal({
                           statusShown
                         />
                       </div>
-                      <div style={{ marginLeft: '1rem' }}>
+                      <div
+                        style={{
+                          marginLeft: '1rem',
+                          overflowWrap: 'anywhere',
+                          minWidth: 0
+                        }}
+                      >
                         <b>{user.username}</b>{' '}
                         <span
                           style={{
@@ -143,17 +182,26 @@ export default function UserListModal({
                     {userId && user.id !== userId && (
                       <div style={{ display: 'flex' }}>
                         <Button
+                          aria-label={`View ${user.username}'s profile`}
                           color="logoBlue"
                           variant="solid"
-                          style={{ fontSize: '1.5rem', marginRight: '1rem' }}
+                          style={{
+                            fontSize: 14,
+                            minHeight: 44,
+                            minWidth: 44,
+                            marginRight: 8
+                          }}
                           onClick={() => navigate(`/users/${user.username}`)}
                         >
                           <Icon icon="user" />
                         </Button>
                         <Button
+                          aria-label={`Chat with ${user.username}`}
+                          disabled={pendingUser !== null}
+                          loading={pendingUser === user.id}
                           color="green"
                           variant="solid"
-                          style={{ fontSize: '1.5rem' }}
+                          style={{ fontSize: 14, minHeight: 44, minWidth: 44 }}
                           onClick={() => handleTalkClick(user)}
                         >
                           <Icon icon="comments" />
@@ -175,7 +223,7 @@ export default function UserListModal({
           </RoundList>
         </main>
         <footer>
-          <Button variant="ghost" onClick={onHide}>
+          <Button variant="ghost" onClick={close}>
             Close
           </Button>
         </footer>
@@ -188,17 +236,34 @@ export default function UserListModal({
     username: string;
     profilePicUrl: string;
   }) {
-    if (user.id !== userId) {
-      const { channelId, pathId } = await loadDMChannel({ recipient: user });
+    if (
+      !userId ||
+      user.id === userId ||
+      pending.current ||
+      !Number.isSafeInteger(user.id) ||
+      user.id <= 0
+    )
+      return;
+    pending.current = true;
+    setPendingUser(user.id);
+    setError('');
+    const requestVersion = ++version.current;
+    const isCurrent = () =>
+      version.current === requestVersion && currentUser.current === userId;
+    try {
+      const response: any = await readWithTimeout(() =>
+        loadDMChannel({ recipient: user })
+      );
+      if (!isCurrent()) return;
+      if (
+        !response ||
+        !Number.isSafeInteger(Number(response.channelId)) ||
+        Number(response.channelId) < 0 ||
+        (response.pathId != null && !/^\d+$/.test(String(response.pathId)))
+      )
+        throw new Error('Invalid channel');
+      const { channelId, pathId } = response;
       if (!pathId) {
-        if (!user?.id) {
-          return reportError({
-            componentPath: 'Modals/UserListModal',
-            message: `handleTalkClick: recipient userId is null. recipient: ${JSON.stringify(
-              user
-            )}`
-          });
-        }
         onOpenNewChatTab({
           user: { username, id: userId, profilePicUrl },
           recipient: {
@@ -209,7 +274,16 @@ export default function UserListModal({
         });
         onUpdateSelectedChannelId(channelId);
       }
-      setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
+      navigate(pathId ? `/chat/${pathId}` : `/chat/new`);
+      close();
+    } catch {
+      if (isCurrent())
+        setError('Could not open this chat. Please try the chat button again.');
+    } finally {
+      if (isCurrent()) {
+        pending.current = false;
+        setPendingUser(null);
+      }
     }
   }
 }

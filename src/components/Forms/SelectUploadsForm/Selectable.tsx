@@ -38,13 +38,18 @@ export default function Selectable({
     <ErrorBoundary
       componentPath="SelectUploadsForm/Selectable"
       className={`unselectable ${css`
-        width: 16%;
+        width: calc(33.333% - 8px);
+        min-width: 0;
         @media (max-width: ${mobileMaxWidth}) {
-          width: 32%;
+          width: calc(50% - 8px);
+        }
+        [role='button']:focus-visible {
+          outline: 2px solid currentColor;
+          outline-offset: 2px;
         }
       `}`}
       style={{
-        margin: '0.3%',
+        margin: 4,
         cursor: 'pointer',
         boxShadow: `0 0 5px ${selected ? highlightColor : Color.darkerGray()}`,
         border: selected ? `0.5rem solid ${highlightColor}` : '',
@@ -52,6 +57,25 @@ export default function Selectable({
       }}
     >
       <div
+        role="button"
+        tabIndex={0}
+        aria-pressed={selected}
+        aria-label={`${selected ? 'Deselect' : 'Select'} ${item.title || contentType}`}
+        onKeyDown={(event) => {
+          if (
+            event.target !== event.currentTarget ||
+            event.nativeEvent.isComposing ||
+            event.repeat
+          )
+            return;
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            if (selected) onDeselect(item.id);
+            else onSelect(item.id);
+          }
+        }}
+        onFocus={() => setTitleHovered(true)}
+        onBlur={() => setTitleHovered(false)}
         style={{
           display: 'flex',
           width: '100%',
@@ -84,7 +108,7 @@ export default function Selectable({
         </div>
         <div
           style={{
-            height: '8rem',
+            minHeight: '8rem',
             width: '100%',
             padding: '0 1rem'
           }}
@@ -98,10 +122,15 @@ export default function Selectable({
               style={{
                 marginTop: '1rem',
                 fontWeight: 'bold',
-                whiteSpace: 'nowrap',
+                fontSize: 14,
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
+                whiteSpace: 'normal',
+                overflowWrap: 'anywhere',
                 textOverflow: 'ellipsis',
                 overflow: 'hidden',
-                lineHeight: 'normal'
+                lineHeight: 1.4
               }}
             >
               {item.title}
@@ -113,7 +142,7 @@ export default function Selectable({
               whiteSpace: 'nowrap',
               textOverflow: 'ellipsis',
               overflow: 'hidden',
-              fontSize: '1.3rem',
+              fontSize: 12,
               lineHeight: 2
             }}
           >

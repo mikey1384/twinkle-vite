@@ -200,7 +200,9 @@ export default function SearchInput({
     isComposingRef.current = true;
   }
 
-  function handleCompositionEnd(event: React.CompositionEvent<HTMLInputElement>) {
+  function handleCompositionEnd(
+    event: React.CompositionEvent<HTMLInputElement>
+  ) {
     isComposingRef.current = false;
     const text = renderText(event.currentTarget.value);
     setDraftValue(text);
@@ -208,7 +210,16 @@ export default function SearchInput({
   }
 
   function onKeyDown(event: any) {
-    let index = indexToHighlight;
+    if (
+      isComposingRef.current ||
+      event.nativeEvent?.isComposing ||
+      event.keyCode === 229
+    )
+      return;
+    let index = Math.min(
+      Math.max(0, indexToHighlight),
+      searchResults.length - 1
+    );
     if (searchResults.length > 0) {
       if (event.keyCode === 40) {
         event.preventDefault();

@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
+import Button from '~/components/Button';
+import useScopedRead from '~/helpers/hooks/useScopedRead';
 import FilterBar from '~/components/FilterBar';
 import RankingsListItem from '~/components/RankingsListItem';
 import Loading from '~/components/Loading';
@@ -21,32 +23,29 @@ export default function Rankings({
   const loadWordleRankings = useAppContext(
     (v) => v.requestHelpers.loadWordleRankings
   );
-  const [loading, setLoading] = useState(true);
-  const [allRanks, setAllRanks] = useState([]);
-  const [top30s, setTop30s] = useState([]);
-  const [myRank, setMyRank] = useState(null);
   const myId = useKeyContext((v) => v.myState.userId);
-  const users = useMemo(
-    () => (rankingsTab === 'all' ? allRanks : top30s),
-    [allRanks, rankingsTab, top30s]
+  const { data, loading, error, retry } = useScopedRead(
+    `${myId}:${channelId}`,
+    async () => {
+      const response = await loadWordleRankings(channelId);
+      if (
+        ![response?.all, response?.top30s].every(
+          (rows) =>
+            Array.isArray(rows) &&
+            rows.every(
+              (user) =>
+                Number.isSafeInteger(Number(user?.id)) && Number(user.id) > 0
+            )
+        )
+      )
+        throw new Error('Invalid rankings');
+      return response;
+    }
   );
+  const myRank = data?.myRank;
+  const users = (rankingsTab === 'all' ? data?.all : data?.top30s) || [];
   const desktopPaddingTop = myRank ? '2rem' : '1.2rem';
   const mobilePaddingTop = myRank ? '1.5rem' : '1rem';
-  useEffect(() => {
-    init();
-    async function init() {
-      const {
-        all,
-        top30s,
-        myRank: loadedMyRank
-      } = await loadWordleRankings(channelId);
-      setMyRank(loadedMyRank);
-      setAllRanks(all);
-      setTop30s(top30s);
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const containerClass = css`
     height: calc(100vh - 30rem);
@@ -54,10 +53,38 @@ export default function Rankings({
     display: flex;
     align-items: center;
     flex-direction: column;
+    .nav-section > nav {
+      padding: 0;
+    }
+    .nav-section > nav > button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      width: 100%;
+      min-height: 44px;
+      padding: 8px;
+      cursor: pointer;
+    }
+    button:focus-visible {
+      outline: 2px solid currentColor;
+      outline-offset: -3px;
+    }
   `;
 
   return loading ? (
     <Loading className={containerClass} />
+  ) : error ? (
+    <div className={containerClass} role="alert" style={{ fontSize: 16 }}>
+      <p>Could not load Top Scorers.</p>
+      <Button
+        variant="ghost"
+        style={{ minHeight: 44, fontSize: 14 }}
+        onClick={retry}
+      >
+        Try again
+      </Button>
+    </div>
   ) : (
     <div className={containerClass}>
       {!!myRank && (
@@ -69,17 +96,23 @@ export default function Rankings({
             marginBottom: 0
           }}
         >
-          <nav
-            className={rankingsTab === 'all' ? 'active' : ''}
-            onClick={() => onSetRankingsTab('all')}
-          >
-            {myRankingLabel}
+          <nav className={rankingsTab === 'all' ? 'active' : ''}>
+            <button
+              type="button"
+              aria-pressed={rankingsTab === 'all'}
+              onClick={() => onSetRankingsTab('all')}
+            >
+              {myRankingLabel}
+            </button>
           </nav>
-          <nav
-            className={rankingsTab === 'top30' ? 'active' : ''}
-            onClick={() => onSetRankingsTab('top30')}
-          >
-            {top30Label}
+          <nav className={rankingsTab === 'top30' ? 'active' : ''}>
+            <button
+              type="button"
+              aria-pressed={rankingsTab === 'top30'}
+              onClick={() => onSetRankingsTab('top30')}
+            >
+              {top30Label}
+            </button>
           </nav>
         </FilterBar>
       )}
@@ -89,6 +122,11 @@ export default function Rankings({
         padding={`${desktopPaddingTop} 1rem 3.5rem`}
         mobilePadding={`${mobilePaddingTop} 0.75rem 3rem`}
       >
+        {!users.length && (
+          <p role="status" style={{ fontSize: 16 }}>
+            No scores yet.
+          </p>
+        )}
         {(users || []).map((user: { id: number }) => (
           <RankingsListItem
             small

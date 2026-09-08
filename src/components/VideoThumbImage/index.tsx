@@ -1,4 +1,5 @@
-import React, { memo, useEffect, useMemo, useState } from 'react';
+import React, { memo, useMemo } from 'react';
+import useScopedRead from '~/helpers/hooks/useScopedRead';
 import { useAppContext, useKeyContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import WatchProgressBar from './WatchProgressBar';
@@ -31,31 +32,26 @@ function VideoThumbImage({
     (v) => v.requestHelpers.loadVideoWatchPercentage
   );
   const userId = useKeyContext((v) => v.myState.userId);
-  const [progressBarPercentage, setProgressBarPercentage] = useState(0);
+  const progress = useScopedRead(`${userId}:${videoId}`, async () => {
+    if (!userId || !Number.isSafeInteger(videoId) || Number(videoId) <= 0)
+      return 0;
+    const value = Number(await loadVideoWatchPercentage(videoId));
+    return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+  });
+  const progressBarPercentage = progress.data || 0;
+  const stars = Number.isInteger(rewardLevel)
+    ? Math.max(0, Math.min(5, Number(rewardLevel)))
+    : 0;
 
   const Stars = useMemo(
     () =>
       deviceIsMobile
-        ? `${rewardLevel}-STAR`
-        : [...Array(rewardLevel)].map((elem, index) => (
+        ? `${stars}-STAR`
+        : [...Array(stars)].map((elem, index) => (
             <Icon key={index} style={{ verticalAlign: 0 }} icon="star" />
           )),
-    [rewardLevel]
+    [stars]
   );
-
-  useEffect(() => {
-    init();
-
-    async function init() {
-      if (userId) {
-        const percentage = await loadVideoWatchPercentage(videoId);
-        setProgressBarPercentage(percentage);
-      } else {
-        setProgressBarPercentage(0);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, videoId]);
 
   return (
     <div
@@ -103,7 +99,7 @@ function VideoThumbImage({
             />
           )}
         </div>
-        {!!rewardLevel && (
+        {!!stars && (
           <div
             className={css`
               top: 0;

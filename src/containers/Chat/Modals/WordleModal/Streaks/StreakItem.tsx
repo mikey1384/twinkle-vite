@@ -5,7 +5,8 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { User } from '~/types';import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { User } from '~/types';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import RankBadge from '~/components/RankBadge';
 
 const youLabel = 'You';
@@ -39,10 +40,10 @@ export default function StreakItem({
     return rank === 1
       ? Color.gold()
       : rank === 2
-      ? Color.lighterGray()
-      : rank === 3
-      ? Color.orange()
-      : undefined;
+        ? Color.lighterGray()
+        : rank === 3
+          ? Color.orange()
+          : undefined;
   }, [rank]);
   const textColor = useMemo(
     () => rankColor || (rank <= 10 ? Color.logoBlue() : Color.darkGray()),
@@ -55,17 +56,16 @@ export default function StreakItem({
     return rank <= 5 ? '1.2rem' : '1.1rem';
   }, [rank]);
   const rankBadgeClass = useMemo(
-    () =>
-      css`
-        min-width: 3rem;
-        height: 2.4rem;
-        font-size: ${rankFontSize};
-        @media (max-width: ${mobileMaxWidth}) {
-          min-width: 2.6rem;
-          height: 2.1rem;
-          font-size: ${mobileRankFontSize};
-        }
-      `,
+    () => css`
+      min-width: 3rem;
+      height: 2.4rem;
+      font-size: ${rankFontSize};
+      @media (max-width: ${mobileMaxWidth}) {
+        min-width: 2.6rem;
+        height: 2.1rem;
+        font-size: ${mobileRankFontSize};
+      }
+    `,
     [mobileRankFontSize, rankFontSize]
   );
   const imIncluded = useMemo(() => {
@@ -164,9 +164,7 @@ export default function StreakItem({
               <React.Fragment key={user.id}>
                 <UsernameText
                   displayedName={myId === user.id ? youLabel : ''}
-                  color={
-                    userStreakIsOngoing ? activeColor : Color.darkerGray()
-                  }
+                  color={userStreakIsOngoing ? activeColor : Color.darkerGray()}
                   user={user}
                 />
                 {otherUserNumber === 0 &&
@@ -181,8 +179,15 @@ export default function StreakItem({
           })}
           {otherUserNumber > 0 ? (
             <span>
-              <a
+              <button
+                type="button"
+                aria-label={`See all people with a ${streak} game streak`}
                 style={{
+                  border: 0,
+                  background: 'transparent',
+                  font: 'inherit',
+                  padding: '4px 0',
+                  minHeight: 44,
                   color: linkColor,
                   fontWeight: 'bold',
                   cursor: 'pointer'
@@ -191,7 +196,7 @@ export default function StreakItem({
               >
                 and {otherUserNumber} other
                 {otherUserNumber === 1 ? '' : 's'}
-              </a>
+              </button>
             </span>
           ) : null}
         </div>
