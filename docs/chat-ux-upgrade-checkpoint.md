@@ -11,6 +11,8 @@ older reading notes still need reconciliation and changed sources need rereading
 
 ## Validation on Windows, 2026-09-08
 
+- Final merged production build and production JSX verification: passed. Existing
+  large-chunk and mixed static/dynamic import warnings remain.
 - TypeScript: passed after correcting the topic dialog to use Modal's React-node
   `header` prop instead of its string-only `title` prop.
 - Focused chat/navigation suite: 455 passed, zero failed; browser-suffixed tests
