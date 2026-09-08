@@ -497,6 +497,47 @@ export default function buildRequestHelpers({
   }
 
   return {
+    async loadBuildRewardSettings(buildId: number) {
+      const { data } = await request.get(`${URL}/build/${buildId}/rewards`, auth());
+      return data;
+    },
+    async requestBuildRewardReview(buildId: number) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/rewards/reviews`, {}, getBuildRequestConfig({maxRetries: 0}));
+        return data;
+      } catch (error) {
+        throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not submit reward review.');
+      }
+    },
+    async loadBuildRewardReview(reviewId: number) {
+      const { data } = await request.get(`${URL}/build/reward-reviews/${reviewId}`, auth());
+      return data;
+    },
+    async loadBuildRewardReviews(beforeId?: number) {
+      const { data } = await request.get(`${URL}/build/reward-reviews`, {...auth(), params: {beforeId}});
+      return data;
+    },
+    async decideBuildRewardReview(reviewId: number, decision: string, reason: string) {
+      try {
+        const { data } = await request.post(`${URL}/build/reward-reviews/${reviewId}`, { decision, reason }, getBuildRequestConfig({maxRetries: 0}));
+        return data;
+      } catch (error) {
+        throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not save reward decision.');
+      }
+    },
+    async requestBuildRewards({ buildId, operation, payload, token, runtimeGrant }: {
+      buildId: number; operation: string; payload: unknown; token: string; runtimeGrant: string;
+    }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/api/rewards/${operation}`, payload, {
+          ...getBuildRequestConfig({maxRetries: 0}),
+          headers: {...auth().headers, 'x-build-api-token': token, 'x-build-reward-runtime': runtimeGrant}
+        });
+        return data;
+      } catch (error) {
+        throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not complete reward request.');
+      }
+    },
     async loadBuildWorkshopStatus({ persona }: { persona: 'zero' | 'ciel' }) {
       try {
         const { data } = await request.get(`${URL}/build/workshop/status`, {

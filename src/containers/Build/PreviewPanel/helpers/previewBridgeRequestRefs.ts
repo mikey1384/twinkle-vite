@@ -1,6 +1,7 @@
 import type { AsyncRequestRef } from './previewBridgeAuth';
 
 export interface PreviewHostBridgeRequestRefs {
+  requestBuildRewardsRef: AsyncRequestRef;
   connectBuildAppMcpRuntimeRef: AsyncRequestRef;
   pollBuildAppMcpCallRef: AsyncRequestRef;
   completeBuildAppMcpCallRef: AsyncRequestRef;

@@ -12,6 +12,7 @@ import type {
 } from './ChatPanel/types';
 import CollaborationPanel from './CollaborationPanel';
 import Header from './Header';
+import { rewardHelpMessage } from '~/components/Build/Rewards/approvalPresentation';
 import VersionStartPanel from './VersionStartPanel';
 import ForkHistoryModal from '~/components/Modals/BuildForkHistoryModal';
 import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
@@ -341,6 +342,7 @@ export default function BuildEditor({
     }));
   const [collaborationSettingsModalShown, setCollaborationSettingsModalShown] =
     useState(false);
+  const [rewardDraftDirty, setRewardDraftDirty] = useState(false);
   const [deleteModalShown, setDeleteModalShown] = useState(false);
   const [deleteInProgress, setDeleteInProgress] = useState(false);
   const [threeUpgradeNoticeDismissed, setThreeUpgradeNoticeDismissed] =
@@ -730,8 +732,10 @@ export default function BuildEditor({
     loadBuildContributions,
     mergeBuildContribution,
     mergeBuildContributionIntoMyBranch,
-    onProjectFilesDraftStateChange: (state) =>
-      handleProjectFilesDraftStateChange(state),
+    onProjectFilesDraftStateChange: (state) => {
+      setRewardDraftDirty(Boolean(state.hasUnsavedChanges || state.saving));
+      handleProjectFilesDraftStateChange(state);
+    },
     prepareProjectFilesForContributionAction: (options) =>
       prepareProjectFilesForContributionAction(options),
     replaceBuildContributionIntoMyBranch,
@@ -873,18 +877,19 @@ export default function BuildEditor({
     syncChatMessagesFromServer,
     updateBuildProjectFiles
   });
-  const { handlePublish, handleUnpublish, publishing } = usePublishing({
-    appendLocalRunEvent,
-    applyBuildUpdate,
-    build,
-    canEditCurrentBuildMetadata,
-    ensureBuildThumbnailBeforePublish,
-    ensureProjectFilesPersistedBeforePublish,
-    getLatestBuild,
-    publishBuild,
-    replaceCopilotPolicy,
-    unpublishBuild
-  });
+  const { handlePublish, handleUnpublish, publishing, rewardApprovalPrompt } =
+    usePublishing({
+      appendLocalRunEvent,
+      applyBuildUpdate,
+      build,
+      canEditCurrentBuildMetadata,
+      ensureBuildThumbnailBeforePublish,
+      ensureProjectFilesPersistedBeforePublish,
+      getLatestBuild,
+      publishBuild,
+      replaceCopilotPolicy,
+      unpublishBuild
+    });
   const {
     canManageLumineChatVisibility,
     handleSaveLumineChatVisibility,
@@ -2050,6 +2055,13 @@ export default function BuildEditor({
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
         onOpenDescriptionModal={handleOpenDescriptionModal}
         onOpenThumbnailModal={handleOpenThumbnailModal}
+        onSaveRewardCode={ensureProjectFilesPersistedBeforePublish}
+        rewardApprovalPrompt={rewardApprovalPrompt}
+        hasUnsavedRewardChanges={rewardDraftDirty}
+        rewardsBeingPrepared={currentBuildRunView.generating}
+        onAskLumineForRewards={(reviewNote) =>
+          handleSendMessage(rewardHelpMessage(reviewNote))
+        }
         onTogglePublish={handlePublish}
         onUnpublish={handleUnpublish}
         onDelete={

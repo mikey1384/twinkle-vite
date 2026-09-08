@@ -17,6 +17,9 @@ export default function ActionBlock({
     const normalizedAction = humanizeToken(action);
     const normalizedTarget = humanizeToken(target);
 
+    if (action === 'buildReward') {
+      return 'earned a verified app reward';
+    }
     if (action === 'grammarChallenge' && target === 'grammarbles_question') {
       return 'challenged a Grammarbles question';
     }

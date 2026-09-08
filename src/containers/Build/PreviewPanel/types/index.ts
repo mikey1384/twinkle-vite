@@ -18,6 +18,7 @@ export type {
 } from '../../types/runtimeUploadTypes';
 
 export interface Build {
+  rewardRuntimeGrant?: string | null;
   id: number;
   title: string;
   username: string;
