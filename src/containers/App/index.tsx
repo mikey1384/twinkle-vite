@@ -1290,7 +1290,11 @@ export default function App() {
                 <Route path="/prompts/*" element={<Prompts />} />
                 <Route
                   path="/app-capture/:buildId"
-                  element={<BuildThumbnailCaptureHost />}
+                  element={
+                    <BuildThumbnailCaptureHost
+                      onInitializeSession={handleInit}
+                    />
+                  }
                 />
                 <Route
                   path="/app/:buildId/*"
