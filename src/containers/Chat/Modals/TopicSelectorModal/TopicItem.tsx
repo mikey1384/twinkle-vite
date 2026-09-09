@@ -185,9 +185,9 @@ function TopicItem({
         {canEditTopic && (
           <Button
             aria-label="Topic settings"
-            color="pink"
+            color="darkerGray"
             style={chatTopicActionStyle}
-            variant="soft"
+            variant="ghost"
             onClick={() => setIsEditing(true)}
             disabled={selectButtonDisabled || !!pendingAction}
           >
@@ -204,9 +204,9 @@ function TopicItem({
             <Button
               aria-label={isPinned ? 'Unpin topic' : 'Pin topic'}
               aria-pressed={isPinned}
-              color="blue"
-              style={{ ...chatTopicActionStyle, color: isPinned ? '#fff' : '#334155' }}
-              variant={isPinned ? 'solid' : 'soft'}
+              color="darkerGray"
+              style={chatTopicActionStyle}
+              variant={isPinned ? 'soft' : 'ghost'}
               onClick={handlePinTopic}
               disabled={selectButtonDisabled || !!pendingAction}
               loading={pendingAction === 'pin'}
@@ -217,10 +217,10 @@ function TopicItem({
         {isBasicallyOwner && !hideFeatureButton && (
           <Button
             aria-label={isFeatured ? 'Featured topic' : 'Feature topic'}
-            color="gold"
+            color="darkerGray"
             style={chatTopicActionStyle}
             disabledOpacity={1}
-            variant="soft"
+            variant="ghost"
             disabled={isFeatured || selectButtonDisabled || !!pendingAction}
             loading={pendingAction === 'feature'}
             onClick={handleUpdateFeaturedTopic}
@@ -233,7 +233,7 @@ function TopicItem({
             aria-label="Delete topic"
             color="red"
             style={chatTopicActionStyle}
-            variant="soft"
+            variant="ghost"
             onClick={() => setDeleteConfirmShown(true)}
             disabled={selectButtonDisabled || !!pendingAction}
           >
@@ -243,15 +243,15 @@ function TopicItem({
         {currentTopicId !== id && (
           <Button
             aria-label="Open topic"
-            color="green"
+            color="darkerGray"
             style={chatTopicActionStyle}
-            variant="soft"
+            variant="ghost"
             onClick={handleSelectTopic}
             disabled={selectButtonDisabled || !!pendingAction}
           >
-            <Icon icon="play" />
+            <Icon icon="arrow-right" />
             {(!(isFeatured && isBasicallyOwner) || hideFeatureButton) && (
-              <span style={{ marginLeft: '0.7rem' }}>Go</span>
+              <span style={{ marginLeft: '0.4rem' }}>Open</span>
             )}
           </Button>
         )}

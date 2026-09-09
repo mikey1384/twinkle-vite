@@ -1,8 +1,9 @@
 import React, { useId, useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
 import useChatDialogRequest from '../useChatDialogRequest';
-import { chatFormActionStyle, chatFormClass } from '../chatFormStyles';
+import { chatFormClass } from '../chatFormStyles';
 
 export default function RegularMenu({ creatingChat, onBackClick, onHide, onDone }: {
   creatingChat: boolean;
@@ -34,11 +35,11 @@ export default function RegularMenu({ creatingChat, onBackClick, onHide, onDone 
       </div>
       {request.error && <p ref={request.errorRef} id={request.errorId} className="error" role="alert">{request.error}</p>}
     </main>
-    <footer>
-      <Button style={chatFormActionStyle} variant="ghost" uppercase={false} disabled={busy} onClick={onBackClick || onHide}>{onBackClick ? 'Back' : 'Cancel'}</Button>
-      <Button style={chatFormActionStyle} variant="soft" tone="raised" uppercase={false} color={doneColor}
+    <ModalFooter>
+      <Button variant="ghost" disabled={busy} onClick={onBackClick || onHide}>{onBackClick ? 'Back' : 'Cancel'}</Button>
+      <Button color={doneColor}
         disabled={!valid} aria-busy={busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={busy ? 'Creating group' : 'Create group'} onClick={handleDone}>{busy ? 'Creating…' : 'Create group'}</Button>
-    </footer>
+    </ModalFooter>
   </section>;
 
   async function handleDone() {

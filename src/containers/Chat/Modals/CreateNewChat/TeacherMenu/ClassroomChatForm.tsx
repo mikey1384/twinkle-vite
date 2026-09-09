@@ -1,11 +1,12 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Button from '~/components/Button';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import ChatPeoplePicker, { ChatInvitePerson } from '../../ChatPeoplePicker';
 import useChatDialogRequest from '../../useChatDialogRequest';
-import { chatFormActionStyle, chatFormClass } from '../../chatFormStyles';
+import { chatFormClass } from '../../chatFormStyles';
 
 export default function ClassroomChatForm({ channelId, onBackClick, onHide, onBusyChange }: {
   channelId?: number;
@@ -46,13 +47,13 @@ export default function ClassroomChatForm({ channelId, onBackClick, onHide, onBu
       <ChatPeoplePicker channelId={channelId} selected={selectedUsers} onChange={setSelectedUsers} disabled={locked} />
       {request.error && <p ref={request.errorRef} id={request.errorId} className="error" role="alert">{request.error}</p>}
     </main>
-    <footer>
-      <Button style={chatFormActionStyle} variant="ghost" uppercase={false} disabled={request.busy} onClick={onBackClick || onHide}>{onBackClick ? 'Back' : 'Cancel'}</Button>
-      <Button style={chatFormActionStyle} variant="soft" tone="raised" uppercase={false} color={doneColor}
+    <ModalFooter>
+      <Button variant="ghost" disabled={request.busy} onClick={onBackClick || onHide}>{onBackClick ? 'Back' : 'Cancel'}</Button>
+      <Button color={doneColor}
         disabled={!valid} aria-busy={request.busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={request.busy ? 'Creating classroom' : committed.current ? 'Open created classroom' : 'Create classroom'} onClick={handleDone}>
         {request.busy ? 'Creating…' : committed.current ? 'Open classroom' : 'Create classroom'}
       </Button>
-    </footer>
+    </ModalFooter>
   </section>;
 
   async function handleDone() {

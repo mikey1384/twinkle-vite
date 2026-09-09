@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import useChatDialogRequest from '../useChatDialogRequest';
-import { chatFormActionStyle, chatFormClass, chatFormModalClass } from '../chatFormStyles';
+import { chatFormClass, chatFormModalClass } from '../chatFormStyles';
 
 export interface ChatPurchaseReceipt {
   coins: number;
@@ -73,15 +74,15 @@ export default function PurchaseModal({
           {confirmed ? 'Your purchase was confirmed, but this view couldn’t update. Retry updating without purchasing again.' : request.error}
         </p>}
       </main>
-      <footer>
-        <Button variant="ghost" uppercase={false} style={chatFormActionStyle}
+      <ModalFooter>
+        <Button variant="ghost"
           disabled={request.busy} onClick={close}>{confirmed ? 'Close' : 'Cancel'}</Button>
-        <Button variant="soft" tone="raised" color="logoBlue" uppercase={false} style={chatFormActionStyle}
+        <Button color="logoBlue"
           disabled={insufficientFunds} aria-busy={request.busy}
           aria-describedby={request.error ? request.errorId : undefined} onClick={purchase}>
           {request.busy ? confirmed ? 'Updating…' : 'Purchasing…' : confirmed ? 'Retry updating' : `Buy for ${price.toLocaleString()} coins`}
         </Button>
-      </footer>
+      </ModalFooter>
     </section>
   </Modal>;
 }

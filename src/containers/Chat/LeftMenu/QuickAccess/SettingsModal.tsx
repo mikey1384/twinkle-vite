@@ -3,6 +3,7 @@ import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import SortableListGroup from '~/components/SortableListGroup';
@@ -180,7 +181,7 @@ export default function QuickAccessSettingsModal({
               </p>
             )}
           </main>
-          <footer>
+          <ModalFooter>
             {mode === 'custom' ? (
               <Button
                 variant="ghost"
@@ -207,7 +208,7 @@ export default function QuickAccessSettingsModal({
             >
               Save
             </Button>
-          </footer>
+          </ModalFooter>
         </LegacyModalLayout>
       </Modal>
     </ErrorBoundary>

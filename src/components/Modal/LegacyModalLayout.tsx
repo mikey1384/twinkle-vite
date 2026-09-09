@@ -1,7 +1,8 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { isMobile, isTablet } from '~/helpers';
+import { modalFooterClass } from './Footer';
 
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
@@ -45,22 +46,18 @@ export default function LegacyModalLayout({
       ${wrapped ? '' : 'overflow-y: auto;'}
       flex-grow: 1;
     }
-
-    > footer {
-      padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: ${deviceIsMobile ? '0.75rem' : '1rem'};
-      background-color: ${Color.wellGray(0.3)};
-      border-top: none;
-      flex-shrink: 0;
-    }
   `;
 
   return (
     <div className={`${baseClassName} ${className || ''}`}>
-      {children}
+      {React.Children.map(children, (child) => {
+        if (!React.isValidElement<{ className?: string }>(child) || child.type !== 'footer') {
+          return child;
+        }
+        return React.cloneElement(child, {
+          className: cx(modalFooterClass, child.props.className)
+        });
+      })}
     </div>
   );
 }

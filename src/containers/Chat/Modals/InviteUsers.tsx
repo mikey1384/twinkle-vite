@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { normalizeClassInviteResponse } from '~/helpers/chatGroupMembership';
 import ChatPeoplePicker, { ChatInvitePerson } from './ChatPeoplePicker';
 import useChatDialogRequest from './useChatDialogRequest';
-import { chatFormActionStyle, chatFormClass, chatFormModalClass } from './chatFormStyles';
+import { chatFormClass, chatFormModalClass } from './chatFormStyles';
 
 export default function InviteUsersModal({ isOwner, selectedChannelId, onDone, onHide, currentChannel }: {
   isOwner: boolean;
@@ -42,12 +43,12 @@ export default function InviteUsersModal({ isOwner, selectedChannelId, onDone, o
           onChange={setSelectedUsers} disabled={locked} excludedIds={currentChannel?.allMemberIds || []} />
         {request.error && <p ref={request.errorRef} id={request.errorId} className="error" role="alert">{request.error}</p>}
       </main>
-      <footer>
-        <Button style={chatFormActionStyle} variant="ghost" uppercase={false} disabled={request.busy} onClick={onHide}>Cancel</Button>
-        <Button style={chatFormActionStyle} variant="soft" tone="raised" uppercase={false} color={doneColor}
+      <ModalFooter>
+        <Button variant="ghost" disabled={request.busy} onClick={onHide}>Cancel</Button>
+        <Button color={doneColor}
           disabled={!selectedUsers.length} aria-busy={request.busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={request.busy ? 'Inviting people' : 'Invite selected people'}
           onClick={handleDone}>{request.busy ? 'Inviting…' : committed.current ? 'Finish' : 'Invite people'}</Button>
-      </footer>
+      </ModalFooter>
     </section>
   </Modal>;
 

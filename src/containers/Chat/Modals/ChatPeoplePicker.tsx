@@ -62,7 +62,8 @@ export default function ChatPeoplePicker({ channelId, selected, onChange, disabl
       }
     }, 350);
     return () => { canceled = true; clearTimeout(timer); };
-  }, [channelId, composing, disabled, hasQuery, query, queryKey, search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, composing, disabled, hasQuery, query, queryKey]);
 
   return <section className={pickerClass} aria-label="Choose people">
     <label htmlFor={inputId}>Find people</label>
@@ -105,7 +106,7 @@ export default function ChatPeoplePicker({ channelId, selected, onChange, disabl
 
 const pickerClass = css`
   min-width: 0;
-  ul { list-style: none; margin: 8px 0 0; padding: 4px; max-height: 240px; overflow-y: auto; border: 1px solid #dce3ed; border-radius: 10px; background: #fff; }
+  ul { list-style: none; margin: 8px 0 0; padding: 0; max-height: 240px; overflow-y: auto; }
   li { min-width: 0; }
   button { display: flex; width: 100%; min-height: 48px; align-items: center; gap: 12px; padding: 8px; border: 0; border-radius: 8px; color: #334155; background: #fff; font: inherit; text-align: left; cursor: pointer; }
   button > svg { flex-shrink: 0; }

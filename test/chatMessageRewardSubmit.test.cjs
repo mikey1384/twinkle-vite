@@ -1,6 +1,7 @@
 const {
   assert,
   test,
+  ModalFooter,
   compile,
   driver,
   css,
@@ -78,7 +79,7 @@ test('reward submits once, blocks dismissal pending and prevents unsafe retry af
   await settle();
   t = f.render();
   assert.equal(nodes(t, (n) => n.props?.role === 'alert').length, 1);
-  const footer = nodes(t, n => n.type === 'footer')[0];
+  const footer = nodes(t, n => n.type === ModalFooter)[0];
   assert.equal(nodes(footer, n => n.props?.role === 'alert').length, 1);
   assert.equal(nodes(footer, n => n.props?.children === 'Close').length, 1);
   assert.equal(nodes(footer, n => n.props?.children === 'Cancel').length, 0);

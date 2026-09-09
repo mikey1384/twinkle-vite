@@ -10,7 +10,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { charLimit } from '~/constants/defaultValues';
 import TopicRequestStatus from '../TopicRequestStatus';
-import { chatTopicActionStyle, chatTopicModalClass, chatTopicSectionClass, chatTopicThemeStyle } from '../topicStyles';
+import { chatTopicModalClass, chatTopicSectionClass, chatTopicThemeStyle } from '../topicStyles';
 
 const maxTopicLength = charLimit.chat.topic;
 
@@ -111,7 +111,8 @@ export default function TopicSelectorModal({
       }
     }
     return () => { ignore = true; };
-  }, [channelId, loadChatSubjects, retryCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, retryCount]);
 
   useEffect(() => {
     let ignore = false;
@@ -150,7 +151,8 @@ export default function TopicSelectorModal({
     return () => {
       ignore = true;
     };
-  }, [channelId, isAIChannel, loadOtherUserTopics, sharedRetryCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, isAIChannel, sharedRetryCount]);
 
   useEffect(() => {
     setSearched(false);
@@ -184,7 +186,8 @@ export default function TopicSelectorModal({
       clearTimeout(debounceTimeout);
       searchVersionRef.current = currentSearchVersion + 1;
     };
-  }, [channelId, topicSearchText, searchChatSubject, searchRetryCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, topicSearchText, searchRetryCount]);
 
   useEffect(() => {
     if (!mainSectionShown) {
@@ -229,7 +232,7 @@ export default function TopicSelectorModal({
       title="Topics"
       size="md"
       footer={
-        <Button variant="ghost" style={chatTopicActionStyle} onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       }
@@ -237,7 +240,7 @@ export default function TopicSelectorModal({
       <div style={{ width: '100%', fontSize: '16px', ...chatTopicThemeStyle(displayedThemeColor) }}>
         {loaded && !noTopicPostedYet && (
           <div style={{ width: '100%' }}>
-            <h3 className={chatTopicSectionClass}>
+            <h3 className={chatTopicSectionClass} style={{ marginTop: 0, marginBottom: 8 }}>
               Search{canAddTopic ? ' / Start a' : ''} Topic
             </h3>
             <TopicInput

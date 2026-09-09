@@ -72,7 +72,8 @@ export default function SubjectsModal({
       }
     }
     return () => { ignore = true; };
-  }, [channelId, loadChatSubjects, retryCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, retryCount]);
 
   return (
     <Modal
@@ -84,7 +85,7 @@ export default function SubjectsModal({
       title="View Topics"
       size="md"
       footer={
-        <Button variant="ghost" style={chatTopicActionStyle} onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       }

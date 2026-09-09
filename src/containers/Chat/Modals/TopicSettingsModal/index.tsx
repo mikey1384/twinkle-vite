@@ -9,7 +9,7 @@ import { buildCanonicalChannelMessagesState } from '../helpers';
 import { charLimit } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
-import { chatTopicActionStyle, chatTopicModalClass } from '../topicStyles';
+import { chatTopicActionStyle, chatTopicButtonStyle, chatTopicModalClass } from '../topicStyles';
 import {
   topicSettingsFormClass,
   topicSettingsLabelClass,
@@ -157,33 +157,31 @@ export default function TopicSettingsModal({
       style={{ width: 'min(600px, calc(100vw - 24px))', maxWidth: '100%' }}
       bodyPadding="12px"
       footer={
-        <div style={{ width: '100%' }}>
+        <>
           {actionError && (
             <p ref={errorRef} tabIndex={-1} role="alert" className={topicSettingsHelpClass} data-error="true"
-              style={{ margin: '0 0 12px' }}>
+              style={{ width: '100%', margin: 0 }}>
               {actionError}
             </p>
           )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 8 }}>
-            <Button variant="ghost" style={chatTopicActionStyle}
-              disabled={!!pendingAction} onClick={handleClose}>
-              {deletionNeedsRefresh ? 'Close' : 'Cancel'}
+          <Button variant="ghost"
+            disabled={!!pendingAction} onClick={handleClose}>
+            {deletionNeedsRefresh ? 'Close' : 'Cancel'}
+          </Button>
+          {deletionNeedsRefresh ? (
+            <Button color={displayedThemeColor}
+              style={chatTopicButtonStyle(displayedThemeColor)} loading={pendingAction === 'delete'}
+              disabled={!!pendingAction} onClick={handleDeleteTopic}>
+              Retry refresh
             </Button>
-            {deletionNeedsRefresh ? (
-              <Button variant="soft" color={displayedThemeColor}
-                style={chatTopicActionStyle} loading={pendingAction === 'delete'}
-                disabled={!!pendingAction} onClick={handleDeleteTopic}>
-                Retry refresh
-              </Button>
-            ) : (
-              <Button variant="soft" tone="raised" color={displayedThemeColor}
-                style={chatTopicActionStyle} loading={pendingAction === 'save'}
-                disabled={isSubmitDisabled} onClick={handleSubmit}>
-                {saveNeedsRetry ? 'Retry save' : 'Save'}
-              </Button>
-            )}
-          </div>
-        </div>
+          ) : (
+            <Button color={displayedThemeColor}
+              style={chatTopicButtonStyle(displayedThemeColor)} loading={pendingAction === 'save'}
+              disabled={isSubmitDisabled} onClick={handleSubmit}>
+              {saveNeedsRetry ? 'Retry save' : 'Save'}
+            </Button>
+          )}
+        </>
       }
     >
       <div className={topicSettingsFormClass}>
@@ -265,7 +263,8 @@ export default function TopicSettingsModal({
           <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
             <Button onClick={() => setConfirmModalShown(true)}
               disabled={formDisabled || instructionsBusy}
-              color="red" variant="soft" style={chatTopicActionStyle}>
+              color="red" variant="ghost" uppercase={false}
+              style={{ ...chatTopicActionStyle, color: '#b42318' }}>
               <Icon style={{ marginRight: 8 }} icon="trash-alt" />
               Delete Topic
             </Button>
@@ -287,11 +286,11 @@ export default function TopicSettingsModal({
           onClose={() => { if (!operationRef.current) setConfirmModalShown(false); }}
           footer={
             <>
-              <Button variant="ghost" style={{ ...chatTopicActionStyle, marginRight: 8 }}
+              <Button variant="ghost"
                 disabled={!!pendingAction} onClick={() => setConfirmModalShown(false)}>
                 Cancel
               </Button>
-              <Button color="red" variant="soft" style={chatTopicActionStyle}
+              <Button color="red"
                 disabled={!!pendingAction} loading={pendingAction === 'delete'}
                 onClick={handleDeleteTopic}>
                 Delete Topic

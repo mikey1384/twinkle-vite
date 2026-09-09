@@ -45,6 +45,7 @@ function fixture() {
     react: hooks,
     '~/components/Modal': ({ children, ...props }) => React.createElement('section', { role: 'dialog', 'aria-label': props['aria-label'] }, children),
     '~/components/Modal/LegacyModalLayout': ({ children }) => React.createElement('div', null, children),
+    '~/components/Modal/Footer': ({ children }) => React.createElement('footer', null, children),
     '~/components/Button': Button,
     '~/components/Icon': () => null,
     './Message': ({ id, content }) => React.createElement('p', { 'data-message': id }, content),

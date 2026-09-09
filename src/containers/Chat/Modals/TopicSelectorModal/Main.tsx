@@ -3,12 +3,13 @@ import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
+import FilterBar from '~/components/FilterBar';
 import SharedTopicsList from './SharedTopicsList';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import { Content } from '~/types';
 import TopicRequestStatus from '../TopicRequestStatus';
-import { chatTopicActionStyle, chatTopicFiltersClass, chatTopicSectionClass } from '../topicStyles';
+import { chatTopicActionStyle, chatTopicSectionClass } from '../topicStyles';
 
 function isRenderableTopic(topic: any) {
   return (
@@ -150,7 +151,7 @@ export default function Main({
   return (
     <div style={{ width: '100%', paddingBottom: '1rem' }}>
       {!isLoaded && <Loading text="Loading topics" innerStyle={{ fontSize: '14px' }} />}
-      <div style={{ width: '100%', marginTop: '3rem' }}>
+      <div style={{ width: '100%', marginTop: '1.5rem' }}>
         {!isTwoPeopleChat && (
           <>
             {activeCurrentTopic && activeCurrentTopicId > 0 && (
@@ -246,33 +247,72 @@ export default function Main({
               <div
                 role="group"
                 aria-label="Filter topics"
-                className={chatTopicFiltersClass}
               >
-                <button
-                  type="button"
-                  aria-pressed={activeTab === 'all'}
-                  onClick={() => handleTabSelect('all')}
+                <FilterBar
+                  color={displayedThemeColor}
+                  style={{ margin: '20px 0 8px', fontSize: '14px' }}
+                  className={css`
+                    && > .nav-section > nav {
+                      padding: 0;
+                      min-width: 0;
+                    }
+                    && > .nav-section > nav > button {
+                      width: 100%;
+                      min-height: 44px;
+                      padding: 8px 12px;
+                      border: 0;
+                      background: transparent;
+                      color: inherit;
+                      font: inherit;
+                      cursor: pointer;
+                      &:focus-visible {
+                        outline: 2px solid #64748b;
+                        outline-offset: -2px;
+                      }
+                    }
+                  `}
                 >
-                  {hasMyTopics ? 'All Topics' : 'My Topics'}
-                </button>
-                {hasMyTopics && (
-                  <button
-                    type="button"
-                    aria-pressed={activeTab === 'my'}
-                    onClick={() => handleTabSelect('my')}
+                  <nav
+                    role="presentation"
+                    className={activeTab === 'all' ? 'active' : ''}
                   >
-                    My Topics
-                  </button>
-                )}
-                {isAIChannel && (
-                  <button
-                    type="button"
-                    aria-pressed={activeTab === 'shared'}
-                    onClick={() => handleTabSelect('shared')}
-                  >
-                    Shared Topics
-                  </button>
-                )}
+                    <button
+                      type="button"
+                      aria-pressed={activeTab === 'all'}
+                      onClick={() => handleTabSelect('all')}
+                    >
+                      {hasMyTopics ? 'All Topics' : 'My Topics'}
+                    </button>
+                  </nav>
+                  {hasMyTopics && (
+                    <nav
+                      role="presentation"
+                      className={activeTab === 'my' ? 'active' : ''}
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={activeTab === 'my'}
+                        onClick={() => handleTabSelect('my')}
+                      >
+                        My Topics
+                      </button>
+                    </nav>
+                  )}
+                  {isAIChannel && (
+                    <nav
+                      role="presentation"
+                      className={activeTab === 'shared' ? 'active' : ''}
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={activeTab === 'shared'}
+                        onClick={() => handleTabSelect('shared')}
+                      >
+                        Shared Topics
+                      </button>
+                    </nav>
+                  )}
+                </FilterBar>
               </div>
             ) : (
               <h3 className={chatTopicSectionClass}>

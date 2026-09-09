@@ -95,6 +95,7 @@ function environment() {
   const hook = compile(base + 'useChatDialogRequest.ts', { react }).default;
   const common = {
     react, '~/components/Button': Button, '~/components/Icon': Leaf, '~/components/Modal': Modal,
+    '~/components/Modal/Footer': Leaf,
     '~/components/ErrorBoundary': Leaf, '~/contexts': contexts,
     '../useChatDialogRequest': hook, '../../useChatDialogRequest': hook, './useChatDialogRequest': hook,
     '../chatFormStyles': {}, '../../chatFormStyles': {}, './chatFormStyles': {},

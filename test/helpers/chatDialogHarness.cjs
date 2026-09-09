@@ -5,10 +5,12 @@ const path = require('node:path');
 const { transformSync } = require('esbuild');
 const ts = require('typescript');
 const React = require('react');
+const ModalFooter = ({children, ...props}) => React.createElement('footer', props, children);
 const root = path.resolve(__dirname, '../..');
 const base = 'src/containers/Chat/Modals/';
 const source = file => readFileSync(path.join(root, file), 'utf8');
 function compile(file, deps, globals = {}) {
+  deps = { '~/components/Modal/Footer': ModalFooter, ...deps };
   const module = { exports: {} };
   const code = transformSync(source(file), { loader: 'tsx', format: 'cjs', jsx: 'transform' }).code;
   new Function('require', 'module', 'exports', ...Object.keys(globals), code)(name => {
@@ -74,4 +76,4 @@ function callback(file, name, dependencies) {
   const module = { exports: {} }; new Function('module', ...Object.keys(dependencies), code)(module, ...Object.values(dependencies)); return module.exports;
 }
 
-module.exports = { assert, test, React, root, base, source, compile, driver, css, nodes, find, deferred, settle, callback };
+module.exports = { assert, test, React, ModalFooter, root, base, source, compile, driver, css, nodes, find, deferred, settle, callback };

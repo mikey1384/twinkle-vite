@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -71,46 +72,41 @@ export default function BookmarkModal({
             </RichText>
           </div>
         </main>
-        <footer style={{ justifyContent: 'space-between' }}>
-          <div>
-            {isCurrentlyBookmarked && (
-              <Button
-                loading={removingBookmark}
-                color="red"
-                variant="ghost"
-                onClick={handleRemoveBookmark}
-              >
-                <Icon icon={['far', 'bookmark']} />
-                <span style={{ marginLeft: '1rem' }}>Remove</span>
-              </Button>
-            )}
-          </div>
-          <div style={{ display: 'flex' }}>
-            {!isCurrentlyBookmarked && (
-              <Button
-                style={{ marginRight: '0.7rem' }}
-                loading={addingBookmark}
-                variant="ghost"
-                color={doneColor}
-                onClick={handleAddBookmark}
-              >
-                <Icon icon="bookmark" />
-                <span style={{ marginLeft: '1rem' }}>Bookmark</span>
-              </Button>
-            )}
-            <Button color={successColor} onClick={handleReplyClick}>
-              <Icon icon="comment-alt" />
-              <span style={{ marginLeft: '1rem' }}>Reply</span>
-            </Button>
+        <ModalFooter>
+          {isCurrentlyBookmarked && (
             <Button
-              style={{ marginLeft: '0.7rem' }}
+              loading={removingBookmark}
+              color="red"
               variant="ghost"
-              onClick={onHide}
+              style={{ marginRight: 'auto' }}
+              onClick={handleRemoveBookmark}
             >
-              Close
+              <Icon icon={['far', 'bookmark']} />
+              <span style={{ marginLeft: '1rem' }}>Remove</span>
             </Button>
-          </div>
-        </footer>
+          )}
+          {!isCurrentlyBookmarked && (
+            <Button
+              loading={addingBookmark}
+              variant="ghost"
+              color={doneColor}
+              onClick={handleAddBookmark}
+            >
+              <Icon icon="bookmark" />
+              <span style={{ marginLeft: '1rem' }}>Bookmark</span>
+            </Button>
+          )}
+          <Button color={successColor} onClick={handleReplyClick}>
+            <Icon icon="comment-alt" />
+            <span style={{ marginLeft: '1rem' }}>Reply</span>
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={onHide}
+          >
+            Close
+          </Button>
+        </ModalFooter>
       </LegacyModalLayout>
     </Modal>
   );

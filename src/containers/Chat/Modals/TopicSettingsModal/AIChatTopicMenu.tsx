@@ -377,9 +377,8 @@ export default function AIChatTopicMenu({
           <div className={topicSettingsActionsClass}>
             <Button
               onClick={handleGenerateCustomInstructions}
-              color="darkBlue"
-              variant="soft"
-              tone="raised"
+              color="darkerGray"
+              variant="ghost"
               disabled={controlsDisabled}
               style={chatTopicActionStyle}
             >
@@ -402,9 +401,8 @@ export default function AIChatTopicMenu({
             {newCustomInstructions && (
               <Button
                 onClick={handleImproveCustomInstructions}
-                color="magenta"
-                variant="soft"
-                tone="raised"
+                color="darkerGray"
+                variant="ghost"
                 disabled={controlsDisabled || !!commentExceedsCharLimit}
                 style={chatTopicActionStyle}
               >

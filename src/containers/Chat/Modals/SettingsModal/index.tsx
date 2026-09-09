@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
@@ -307,13 +308,13 @@ export default function SettingsModal({
           </>}
           {saveRequest.error && <p ref={saveRequest.errorRef} id={saveRequest.errorId} role="alert" className="error">{saveRequest.error}</p>}
         </main>
-        <footer>
-          <Button variant="ghost" uppercase={false} style={chatFormActionStyle} disabled={isSubmitting} onClick={onHide}>Cancel</Button>
-          <Button variant="soft" tone="raised" uppercase={false} style={chatFormActionStyle} color={doneColor}
+        <ModalFooter>
+          <Button variant="ghost" disabled={isSubmitting} onClick={onHide}>Cancel</Button>
+          <Button color={doneColor}
             disabled={disabled} aria-busy={isSubmitting} aria-label={isSubmitting ? 'Saving channel settings' : 'Save channel settings'}
             aria-describedby={saveRequest.error ? saveRequest.errorId : undefined}
             onClick={handleSubmit}>{isSubmitting ? 'Saving…' : 'Save changes'}</Button>
-        </footer>
+        </ModalFooter>
       </section>
       {selectNewOwnerModalShown && (
         <SelectNewOwnerModal
@@ -345,9 +346,7 @@ export default function SettingsModal({
           footer={
             <Button
               variant="ghost"
-              uppercase={false}
               disabled={topicAction.busy}
-              style={chatFormActionStyle}
               onClick={handleCloseDeletedTopics}
             >
               Close
@@ -528,12 +527,12 @@ export default function SettingsModal({
             <main><p style={{ overflowWrap: 'anywhere' }}>{permanentDeleteTopic.content}</p>
               {topicAction.error && <p role="alert" className="error">{topicAction.confirmed ? 'Topic permanently deleted, but the view couldn’t update. Retry updating without deleting again.' : topicAction.error}</p>}
             </main>
-            <footer><Button variant="ghost" uppercase={false} style={chatFormActionStyle} disabled={topicAction.busy}
+            <ModalFooter><Button variant="ghost" disabled={topicAction.busy}
               onClick={handleClosePermanentDelete}>{topicAction.confirmed ? 'Close' : 'Cancel'}</Button>
-              <Button color={topicAction.confirmed ? 'logoBlue' : 'red'} variant="soft" uppercase={false} style={chatFormActionStyle}
+              <Button color={topicAction.confirmed ? 'logoBlue' : 'red'}
                 aria-busy={topicAction.busy} onClick={handlePermanentlyDeleteTopic}>
                 {topicAction.busy ? 'Working…' : topicAction.confirmed ? 'Retry updating' : 'Delete permanently'}
-              </Button></footer>
+              </Button></ModalFooter>
           </section>
         </Modal>
       )}

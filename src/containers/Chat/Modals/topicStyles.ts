@@ -16,6 +16,7 @@ export function chatTopicButtonStyle(themeColor: string): CSSProperties {
     return 1.05 / (luminance + 0.05) >= 4.5 ? '#fff' : '#000';
   }
   return {
+    color: 'var(--chat-topic-button-text)',
     '--chat-topic-button-text': readableText(general.bg),
     '--chat-topic-button-hover-text': readableText(general.hoverBg)
   } as CSSProperties;
@@ -34,15 +35,11 @@ export const chatTopicRowClass = css`
   gap: 12px;
   min-width: 0;
   width: 100%;
-  padding: 12px;
-  margin-bottom: 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
-  &[data-current='true'] {
-    background: color-mix(in srgb, var(--chat-topic-accent, #418ceb) 7%, #fff);
-    border-left: 3px solid var(--chat-topic-accent, #418ceb);
-  }
+  padding: 14px 0;
+  margin-bottom: 0;
+  border: 0;
+  border-bottom: 1px solid #e9edf2;
+  background: transparent;
   @media (max-width: 600px) {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
@@ -80,6 +77,13 @@ export const chatTopicActionsClass = css`
   gap: 6px;
   max-width: 280px;
   min-width: 0;
+  > button {
+    border: 0;
+    border-radius: 6px;
+    font-family: inherit;
+    font-weight: 500;
+    text-transform: none;
+  }
   @media (max-width: 600px) {
     max-width: none;
   }
@@ -93,45 +97,11 @@ export const chatTopicActionStyle = {
 };
 
 export const chatTopicSectionClass = css`
-  margin: 20px 0 10px;
-  padding-left: 10px;
-  border-left: 3px solid var(--chat-topic-accent, #418ceb);
-  color: #334155;
-  font-size: max(17px, 1.7rem);
+  margin: 24px 0 4px;
+  color: #64748b;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.5;
-`;
-
-export const chatTopicFiltersClass = css`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 4px;
-  margin: 20px 0 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #f8fafc;
-  button {
-    flex: 1 1 auto;
-    min-height: 44px;
-    padding: 8px 12px;
-    border: 1px solid transparent;
-    border-radius: 7px;
-    background: transparent;
-    color: #526176;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    &[aria-pressed='true'] {
-      border-color: #cbd5e1;
-      background: white;
-      color: #273449;
-      box-shadow: inset 0 -3px var(--chat-topic-accent, #418ceb);
-    }
-    &:hover { background: white; }
-    &:focus-visible { outline: 2px solid #334155; outline-offset: 2px; }
-  }
 `;
 
 export const chatTopicModalClass = css`

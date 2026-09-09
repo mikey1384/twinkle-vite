@@ -53,7 +53,7 @@ const colorsClass = css`
     justify-content: center;
     gap: 6px;
     padding: 8px;
-    border: 1px solid #dce3ed;
+    border: 0;
     border-radius: 10px;
     background: #fff;
     color: #334155;
@@ -71,7 +71,7 @@ const colorsClass = css`
     font-size: 12px;
     text-shadow: 0 1px 2px #0008;
   }
-  button[aria-pressed='true'] { border: 2px solid #334155; background: #f1f5f9; padding: 7px; }
+  button[aria-pressed='true'] { background: #e9edf2; font-weight: 600; }
   button:hover:not(:disabled) { background: #eef2f7; }
   button:disabled { cursor: default; }
   button:disabled > span:first-child { opacity: .5; }

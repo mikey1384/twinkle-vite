@@ -1,4 +1,4 @@
-const { assert, test, base, compile, driver, nodes, find, deferred, settle } = require('./helpers/chatDialogHarness.cjs');
+const { assert, test, base, compile, driver, nodes, find, deferred, settle, ModalFooter } = require('./helpers/chatDialogHarness.cjs');
 const Button = () => null, Modal = () => null, Icon = () => null;
 const buttons = tree => nodes(tree, node => node.type === Button);
 const confirm = tree => buttons(tree).at(-1);
@@ -19,11 +19,11 @@ function environment(initial = {}) {
 }
 const receipt = { coins: 900, unlockedThemes: ['rose'] };
 
-test('purchase confirmation states the exact price, balance, named dialog and 44px actions', () => {
+test('purchase confirmation states the exact price, balance and named dialog with shared footer actions', () => {
   const env = environment(), tree = env.render();
   assert.equal(tree.type, Modal); assert.equal(tree.props['aria-label'], 'Unlock channel color'); assert.equal(tree.props.modalLevel, 2);
   assert.equal(confirm(tree).props.children, 'Buy for 100 coins');
-  assert.equal(confirm(tree).props.style.minHeight, 44);
+  assert.equal(confirm(find(tree, node => node.type === ModalFooter)), confirm(tree));
   assert.equal(env.purchases.length, 0);
   assert.ok(nodes(tree, node => node.type === 'p').some(node => node.props.children === 'Your balance: 1,000 coins'));
 });

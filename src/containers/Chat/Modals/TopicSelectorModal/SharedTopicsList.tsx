@@ -4,7 +4,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CloneSharedTopicButton from './CloneSharedTopicButton';
 import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
-import { Color, borderRadius } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import moment from 'moment';
 import TopicRequestStatus from '../TopicRequestStatus';
@@ -114,10 +114,7 @@ export default function SharedTopicsList({
             {sharedInstructions && (
               <div
                 className={css`
-                  padding: 1rem;
-                  border-radius: ${borderRadius};
-                  border: 1px solid ${Color.borderGray()};
-                  background: ${Color.highlightGray()};
+                  color: #526176;
                   font-size: 16px;
                   line-height: 1.6;
                   overflow-wrap: anywhere;

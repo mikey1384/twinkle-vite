@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import UserSearchResultRow from '~/components/UserSearchResultRow';
@@ -83,7 +84,8 @@ export default function SelectNewOwnerModal({
       }
     }, 350);
     return () => { canceled = true; clearTimeout(timer); };
-  }, [channelId, composing, hasSearch, locked, searchChannelMembers, searchKey, text]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, composing, hasSearch, locked, searchKey, text]);
 
   const error = transferred
     ? andLeave
@@ -152,14 +154,14 @@ export default function SelectNewOwnerModal({
         </p>}
         {request.error && <p ref={request.errorRef} id={request.errorId} className="error" role="alert">{error}</p>}
       </main>
-      <footer>
-        <Button style={chatFormActionStyle} variant="ghost" uppercase={false} disabled={busy}
+      <ModalFooter>
+        <Button variant="ghost" disabled={busy}
           onClick={onHide}>{transferred ? andLeave ? 'Stay in group' : 'Close' : 'Cancel'}</Button>
-        <Button style={chatFormActionStyle} variant="soft" tone="raised" uppercase={false} color={doneColor}
+        <Button color={doneColor}
           disabled={!selected} aria-busy={busy} aria-describedby={request.error ? request.errorId : undefined}
           aria-label={busy ? 'Changing channel ownership' : transferred ? andLeave ? 'Retry leaving group' : 'Finish ownership update' : andLeave ? 'Transfer ownership and leave' : 'Confirm new owner'}
           onClick={handleSubmit}>{busy ? 'Working…' : transferred ? andLeave ? 'Retry leaving' : 'Finish update' : andLeave ? 'Transfer & leave' : 'Change owner'}</Button>
-      </footer>
+      </ModalFooter>
     </section>
   </Modal>;
 
@@ -196,11 +198,9 @@ export default function SelectNewOwnerModal({
 const membersClass = css`
   list-style: none;
   margin: 0;
-  padding: 4px;
+  padding: 0;
   max-height: 280px;
   overflow-y: auto;
-  border: 1px solid #dce3ed;
-  border-radius: 12px;
   &:empty { display: none; }
   li + li { border-top: 1px solid #eef2f7; }
   label {
@@ -224,7 +224,6 @@ const selectionClass = css`
   gap: 4px;
   margin: 0;
   padding: 12px;
-  border: 1px solid #dce3ed;
   border-radius: 10px;
   background: #f8fafc;
   overflow-wrap: anywhere;

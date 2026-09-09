@@ -29,6 +29,7 @@ function fixture(onDone) {
     '~/components/Modal': leaf,
     '~/components/Button': Button,
     './SettingsModal/PurchaseModal': leaf,
+    './chatFormStyles': { chatFormModalClass: '' },
     '~/components/Buttons/SwitchButton': Switch,
     '~/components/Icon': leaf,
     '~/constants/defaultValues': { priceTable: { chatSubject: 1000 } },
@@ -38,7 +39,7 @@ function fixture(onDone) {
       useKeyContext: (fn) => fn(ctx)
     },
     '~/constants/css': {
-      Color: { logoBlue: () => '#123' },
+      Color: { logoBlue: () => '#123', gold: () => '#fc2' },
       mobileMaxWidth: '767px'
     },
     '@emotion/css': { css }
@@ -71,8 +72,8 @@ test('topic purchase wiring validates its receipt and reveals permissions withou
   f.ctx.actions.onEnableChatSubject = (v) => updates.push(v);
   f.ctx.user.actions.onSetUserState = (v) => updates.push(v);
   nodes(
-    f.render(),
-    (n) => n.type === f.Button && n.props.variant === 'soft'
+    f.render().props.footer,
+    (n) => n.type === f.Button && n.props.children === 'Enable topics'
   )[0].props.onClick();
   let t = f.render(),
     purchase = nodes(t, (n) => typeof n.props?.onPurchase === 'function')[0]
@@ -95,7 +96,10 @@ test('topic purchase wiring validates its receipt and reveals permissions withou
   assert.equal(updates[0].topic.id, 4);
   assert.equal(updates[1].newState.twinkleCoins, 9000);
   assert.equal(
-    nodes(t, (n) => n.type === f.Button && n.props.variant === 'soft').length,
+    nodes(
+      t.props.footer,
+      (n) => n.type === f.Button && n.props.children === 'Enable topics'
+    ).length,
     0
   );
   assert.equal(nodes(t, (n) => n.type === f.Switch).length, 1);
@@ -110,8 +114,8 @@ test('topic purchase rechecks ownership and channel validity at confirmation tim
     calls++;
   };
   nodes(
-    f.render(),
-    (n) => n.type === f.Button && n.props.variant === 'soft'
+    f.render().props.footer,
+    (n) => n.type === f.Button && n.props.children === 'Enable topics'
   )[0].props.onClick();
   f.props.userIsChannelOwner = false;
   let purchase = nodes(

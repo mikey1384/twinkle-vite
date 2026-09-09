@@ -1,8 +1,8 @@
 import React from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
 import { cloudFrontURL } from '~/constants/defaultValues';
 
@@ -124,25 +124,14 @@ export default function PromotionModal({
             </div>
           </div>
         </main>
-        <footer
-          className={css`
-            display: flex;
-            justify-content: flex-end;
-            padding: 1rem;
-
-            @media (max-width: ${mobileMaxWidth}) {
-              padding: 0.5rem;
-            }
-          `}
-        >
+        <ModalFooter>
           <Button
-            style={{ minHeight: 44, fontSize: 14 }}
             variant="ghost"
             onClick={onHide}
           >
             Cancel
           </Button>
-        </footer>
+        </ModalFooter>
       </LegacyModalLayout>
     </Modal>
   );

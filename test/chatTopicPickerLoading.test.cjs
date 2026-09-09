@@ -34,6 +34,7 @@ function fixture(kind = 'modern', overrides = {}) {
     react:hooks,'@emotion/css':require('@emotion/css'),
     '~/components/Modal':({children,footer,...rest})=>React.createElement('section',{role:'dialog','aria-label':rest['aria-label']},children,footer),
     '~/components/Button':Button,'~/components/Buttons/LoadMoreButton':LoadMore,
+    '~/components/FilterBar':({children})=>React.createElement('div',null,children),
     '~/components/Loading':({text})=>React.createElement('span',null,text),
     '~/components/Icon':()=>null,'~/components/Modals/ConfirmModal':()=>null,
     '~/contexts':{useAppContext:s=>s({requestHelpers:helpers}),useKeyContext:s=>s({myState:{userId:5}})},

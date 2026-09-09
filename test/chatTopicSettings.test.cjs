@@ -76,7 +76,7 @@ function fixture(kind = 'settings', overrides = {}, options = {}) {
     },
     'react-router-dom': { useNavigate: () => url => navigations.push(url) },
     '../helpers': { buildCanonicalChannelMessagesState: args => { events.push({ name: 'hydrate', args }); return { messageIds: args.messages.map(m => m.id) }; } },
-    '../topicStyles': { chatTopicModalClass: 'topic-modal', chatTopicActionStyle: { minHeight: 44, fontSize: '14px' } },
+    '../topicStyles': { chatTopicModalClass: 'topic-modal', chatTopicActionStyle: { minHeight: 44, fontSize: '14px' }, chatTopicButtonStyle: () => ({}) },
     './styles': new Proxy({}, { get: (_, name) => name.endsWith('Style') ? {} : name }),
     '~/helpers/stringHelpers': { exceedsCharLimit: ({ text }) => text.length > 10000, addEmoji: text => text.replace(':)', '🙂') },
     '~/helpers/improveCustomInstructions': { deriveImprovedInstructionsText: ({ fallbackText }) => fallbackText },
@@ -133,7 +133,6 @@ test('settings label is named and empty/over-limit titles are blocked in both UI
   assert.deepEqual(app.requests, []);
   app.find(input).onChange('x'.repeat(200)); app.render();
   assert.equal(app.button('Save').disabled, false);
-  assert.equal(app.button('Save').style.minHeight, 44);
 });
 
 test('save locks the form, rejects rapid duplicates, and keeps failed edits without navigating', async () => {

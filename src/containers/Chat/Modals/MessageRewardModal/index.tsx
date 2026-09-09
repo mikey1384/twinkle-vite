@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -138,7 +139,7 @@ export default function MessageRewardModal({
             ))}
           </div>
         </main>
-        <footer style={{ flexWrap: 'wrap' }}>
+        <ModalFooter style={{ flexWrap: 'wrap' }}>
           {error && (
             <p
               role="alert"
@@ -182,7 +183,7 @@ export default function MessageRewardModal({
           >
             Submit
           </Button>
-        </footer>
+        </ModalFooter>
       </LegacyModalLayout>
     </Modal>
   );

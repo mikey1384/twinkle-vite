@@ -60,17 +60,7 @@ export default function GameModalFooter({
   const noop = () => {};
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '8px',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        width: '100%',
-        minWidth: 0
-      }}
-    >
+    <>
       {error && (
         <p
           role="alert"
@@ -151,7 +141,7 @@ export default function GameModalFooter({
           Done
         </Button>
       ) : null}
-    </div>
+    </>
   );
 
   async function handleDone() {

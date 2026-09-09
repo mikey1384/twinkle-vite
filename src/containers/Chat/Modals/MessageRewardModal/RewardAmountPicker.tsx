@@ -25,9 +25,9 @@ export default function RewardAmountPicker({
         margin-top: 16px;
         button {
           min-height: 44px;
-          border: 1px solid #cbd5e1;
+          border: 0;
           border-radius: 8px;
-          background: #fff;
+          background: #f8fafc;
           color: #334155;
           padding: 8px;
           font: inherit;
@@ -36,10 +36,11 @@ export default function RewardAmountPicker({
           cursor: pointer;
         }
         button[aria-pressed='true'] {
-          background: #eef2ff;
-          border-color: #334155;
-          box-shadow: inset 0 0 0 1px #334155;
+          background: #e2e8f0;
           font-weight: 700;
+        }
+        button:hover:not(:disabled) {
+          background: #e9edf2;
         }
         button:focus-visible {
           outline: 2px solid #334155;

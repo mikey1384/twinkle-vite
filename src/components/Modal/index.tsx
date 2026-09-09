@@ -17,6 +17,7 @@ import { APP_SHELL_KEYBOARD_INSET_STYLE } from '~/constants/appShell';
 import { isMobile, isTablet } from '~/helpers';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import ModalFooter, { ModalFooterContext } from './Footer';
 
 function safeRender(node: React.ReactNode): React.ReactNode {
   if (isValidElement(node)) return node;
@@ -220,6 +221,11 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
       return el;
     });
     const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
+    const [footerContainer, setFooterContainer] = useState<HTMLDivElement | null>(null);
+    const footerHost = useMemo(
+      () => ({ container: footerContainer, fullscreen: size === 'fullscreen' }),
+      [footerContainer, size]
+    );
 
     const resolvedBodyPadding =
       bodyPadding !== undefined
@@ -647,30 +653,29 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
                     modalKey ? `${modalKey}/children` : 'Modal/children'
                   }
                 >
-                  {children}
+                  <ModalFooterContext.Provider value={footerHost}>
+                    {children}
+                  </ModalFooterContext.Provider>
                 </ErrorBoundary>
               )}
             </div>
 
-            {footer && (
-              <div
-                className={css`
-                  padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
-                  border-top: none;
-                  background-color: ${Color.wellGray(0.3)};
-                  ${size === 'fullscreen'
-                    ? ''
-                    : 'border-radius: 0 0 12px 12px;'}
-                  display: flex;
-                  align-items: center;
-                  justify-content: flex-end;
-                  gap: ${deviceIsMobile ? '0.75rem' : '1rem'};
-                  flex-shrink: 0;
-                `}
-              >
-                {safeRender(footer)}
-              </div>
-            )}
+            <div
+              ref={setFooterContainer}
+              className={css`
+                width: 100%;
+                flex-shrink: 0;
+                &:empty { display: none; }
+              `}
+            >
+              {footer && (
+                <ModalFooterContext.Provider value={null}>
+                  <ModalFooter fullscreen={size === 'fullscreen'}>
+                    {safeRender(footer)}
+                  </ModalFooter>
+                </ModalFooterContext.Provider>
+              )}
+            </div>
           </div>
         </div>
       </ErrorBoundary>

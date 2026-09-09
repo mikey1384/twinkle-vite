@@ -1,7 +1,8 @@
 import React from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { chatFormActionStyle, chatFormClass } from '../../chatFormStyles';
+import { chatFormClass } from '../../chatFormStyles';
 
 export default function SelectScreen({ onHide, onSetSection, focusChoice }: {
   onHide: () => void;
@@ -18,6 +19,6 @@ export default function SelectScreen({ onHide, onSetSection, focusChoice }: {
         <Icon icon="chalkboard-teacher" /><strong>Classroom</strong><span>A class space with members chosen by you.</span>
       </button>
     </div></main>
-    <footer><Button style={chatFormActionStyle} variant="ghost" uppercase={false} onClick={onHide}>Cancel</Button></footer>
+    <ModalFooter><Button variant="ghost" onClick={onHide}>Cancel</Button></ModalFooter>
   </section>;
 }

@@ -48,11 +48,8 @@ export const topicSettingsHelpClass = css`
 export const topicSettingsSectionClass = css`
   width: 100%;
   min-width: 0;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #f8fafc;
-  @media (max-width: 400px) { padding: 12px; }
+  padding: 16px 0 0;
+  border-top: 1px solid #e9edf2;
 `;
 
 export const topicSettingsActionsClass = css`
@@ -62,6 +59,7 @@ export const topicSettingsActionsClass = css`
   justify-content: flex-start;
   gap: 8px;
   margin-top: 16px;
+  > button { border: 0; font-family: inherit; font-weight: 500; text-transform: none; }
   > [aria-live] { color: #526176; font-size: 13px; }
 `;
 

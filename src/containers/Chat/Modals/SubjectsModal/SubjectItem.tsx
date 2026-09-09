@@ -78,22 +78,22 @@ export default function SubjectItem({
       userIsOwner
     ) {
       result.push({
-        color: 'rose',
+        color: 'red',
         opacity: 0.5,
         onClick: onDeleteSubject,
-        variant: 'soft',
-        tone: 'raised',
+        variant: 'ghost',
+        tone: 'flat',
         label: 'Remove'
       });
     }
     if (currentSubjectId !== id) {
       result.push({
-        color: 'green',
+        color: 'darkerGray',
         opacity: 0.5,
         onClick: handleSelectSubject,
         disabled: selectButtonDisabled,
-        variant: 'soft',
-        tone: 'raised',
+        variant: 'ghost',
+        tone: 'flat',
         label: 'Select'
       });
     }

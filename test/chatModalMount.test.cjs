@@ -34,7 +34,8 @@ function initialModalRender({ hasRoot = true, portalTarget } = {}) {
     '~/constants/css': { Color: new Proxy({}, { get: () => () => '#334155' }) },
     '~/constants/appShell': { APP_SHELL_KEYBOARD_INSET_STYLE: '0px' },
     '~/helpers': { isMobile: () => false, isTablet: () => false },
-    '~/components/Icon': () => null, '~/components/ErrorBoundary': ({ children }) => children
+    '~/components/Icon': () => null, '~/components/ErrorBoundary': ({ children }) => children,
+    './Footer': {__esModule: true, default: ({children}) => children, ModalFooterContext: React.createContext(null)}
   };
   const mod = { exports: {} };
   new Function('require', 'module', 'exports', 'document', 'window', 'navigator', transformSync(readFileSync(path.resolve(__dirname, '../src/components/Modal/index.tsx'), 'utf8'), { loader: 'tsx', format: 'cjs', jsx: 'transform' }).code)(

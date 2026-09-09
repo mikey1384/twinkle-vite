@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -6,7 +7,6 @@ import Icon from '~/components/Icon';
 import Message from './Message';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { chatTextClass } from '../../typography';
@@ -32,11 +32,6 @@ export default function SubjectMsgsModal({
     themeName: displayedThemeColor || profileTheme,
     fallback: 'lightBlue'
   });
-  const headerColor = useMemo(() => {
-    const key = displayedThemeColor || profileTheme || 'logoBlue';
-    const fn = Color[key as keyof typeof Color];
-    return fn ? fn() : key;
-  }, [displayedThemeColor, profileTheme]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [requestError, setRequestError] = useState<'initial' | 'more' | null>(null);
@@ -69,7 +64,8 @@ export default function SubjectMsgsModal({
       }
     }
     return () => { requestGeneration.current = generation + 1; };
-  }, [loadChatSubjectMessages, subjectId, retryCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subjectId, retryCount]);
 
   return (
     <Modal
@@ -90,8 +86,6 @@ export default function SubjectMsgsModal({
               flex: 1,
               minWidth: 0,
               margin: 0,
-              paddingLeft: '1.2rem',
-              borderLeft: `3px solid ${headerColor}`,
               color: '#334155',
               fontSize: 'max(18px, 2rem)',
               lineHeight: 1.4,
@@ -166,11 +160,11 @@ export default function SubjectMsgsModal({
             />
           ))}
         </main>
-        <footer>
+        <ModalFooter>
           <Button variant="ghost" style={dialogActionStyle} onClick={onHide}>
             Close
           </Button>
-        </footer>
+        </ModalFooter>
       </LegacyModalLayout>
     </Modal>
   );

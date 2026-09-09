@@ -4,6 +4,7 @@ test('reward reasons expose selection without changing their colors or callback'
  const Button=()=>null;
  const Component=compile('src/containers/Chat/Modals/MessageRewardModal/RewardReason.tsx',{
  react:React,'~/components/Icon':()=>null,'~/components/Button':Button,
+ '~/constants/css':{Color:{green:()=> '#28b62c'}},
  '~/constants/defaultValues':{rewardReasons:{1:{color:'green',icon:'star',message:'Helpful'}}}
  }).default;
  let selected;

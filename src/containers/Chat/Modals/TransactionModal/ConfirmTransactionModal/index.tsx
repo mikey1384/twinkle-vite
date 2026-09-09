@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -151,10 +152,9 @@ export default function ConfirmTransactionModal({
             groupObjs={groupObjs}
           />
         </main>
-        <footer>
+        <ModalFooter>
           <Button
             variant="ghost"
-            style={{ marginRight: '0.7rem' }}
             onClick={onHide}
           >
             {cancelLabel}
@@ -166,7 +166,7 @@ export default function ConfirmTransactionModal({
           >
             {confirmLabel}
           </Button>
-        </footer>
+        </ModalFooter>
       </LegacyModalLayout>
     </Modal>
   );

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -63,11 +64,11 @@ export default function InfoModal({ onHide }: { onHide: () => void }) {
             />
           </div>
         </main>
-        <footer>
+        <ModalFooter>
           <Button color={doneColorKey} onClick={onHide}>
             Okay
           </Button>
-        </footer>
+        </ModalFooter>
       </LegacyModalLayout>
     </Modal>
   );
