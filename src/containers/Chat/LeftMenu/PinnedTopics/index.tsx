@@ -9,6 +9,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { resolveColorValue } from '~/theme/resolveColor';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { TopicNavigation } from '../helpers/topicNavigation';
+import { contextGroupClass } from '../styles';
 
 const buttonStyle = css`
   flex-shrink: 0;
@@ -23,6 +24,14 @@ const buttonStyle = css`
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  @container chat-context (max-width: 180px) {
+    margin: 0.6rem 0.4rem;
+    padding: 0.7rem 0.3rem;
+    font-size: max(13px, 1.3rem);
+  }
+  @media (pointer: coarse) {
+    min-height: 44px;
+  }
   @media (hover: hover) and (pointer: fine) {
     &:hover {
       background: ${Color.highlightGray()};
@@ -126,7 +135,7 @@ function PinnedTopics({
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/PinnedTopics">
       <div
-        className={css`
+        className={cx(css`
           margin-top: 1rem;
           width: CALC(100% - 2rem);
           border: 1px solid var(--chat-panel-border, ${borderColor});
@@ -135,13 +144,10 @@ function PinnedTopics({
           flex-direction: column;
           flex: 1 1 auto;
           min-height: 0;
-        `}
-        style={{
-          padding: '0.5rem 0',
-          marginLeft: '1rem',
-          marginRight: '1rem',
-          marginBottom: 0
-        }}
+          padding: 0.5rem 0;
+          margin-inline: 1rem;
+          margin-bottom: 0;
+        `, contextGroupClass)}
       >
         <div
           aria-label="Pinned topics"
@@ -155,6 +161,10 @@ function PinnedTopics({
             overscroll-behavior-y: contain;
             scrollbar-width: thin;
             transition: height 0.3s ease-in-out;
+            @media (max-width: 1023px) {
+              flex: 0 0 auto;
+              overflow: visible;
+            }
             a {
               &:hover {
                 text-decoration: none;

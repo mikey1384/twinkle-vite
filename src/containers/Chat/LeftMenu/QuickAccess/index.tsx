@@ -40,6 +40,10 @@ export default function ChatQuickAccess() {
           gap: 0.55rem;
           width: 100%;
           margin-top: 1rem;
+          @container chat-channels (max-width: 180px) {
+            flex-wrap: wrap;
+            gap: 0.2rem;
+          }
         `}
       >
         <div
@@ -57,6 +61,12 @@ export default function ChatQuickAccess() {
             touch-action: pan-x;
             scrollbar-width: thin;
             overscroll-behavior-x: contain;
+            @container chat-channels (max-width: 180px) {
+              flex-basis: 100%;
+            }
+            @media (pointer: coarse) {
+              > button { width: 44px; height: 44px; }
+            }
           `}
         >
           {partners.map((partner) => (
@@ -96,9 +106,26 @@ export default function ChatQuickAccess() {
               color: ${Color.logoBlue()};
               border-color: ${Color.logoBlue(0.5)};
             }
+            > span { display: none; }
+            @container chat-channels (max-width: 180px) {
+              width: 100%;
+              min-height: 28px;
+              height: auto;
+              gap: 0.5rem;
+              border: 0;
+              border-radius: 5px;
+              background: transparent;
+              font-size: 12px;
+              > span { display: inline; }
+            }
+            @media (pointer: coarse) {
+              min-width: 44px;
+              min-height: 44px;
+            }
           `}
         >
           <Icon icon="cog" />
+          <span>Shortcuts</span>
         </button>
       </div>
       {settingsShown ? (

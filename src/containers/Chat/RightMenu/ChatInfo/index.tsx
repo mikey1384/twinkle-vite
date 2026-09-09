@@ -69,8 +69,7 @@ function ChatInfo({
   const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
-  const todayStats = useNotiContext((v) => v.state.todayStats);
-  const aiUsagePolicy = todayStats?.aiUsagePolicy;
+  const aiUsagePolicy = useNotiContext((v) => v.state.todayStats?.aiUsagePolicy);
   const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
 
   const {
@@ -429,11 +428,11 @@ function ChatInfo({
             {showMembersLabel && !currentChannel.thumbPath && (
               <div
                 className={css`
-                  color: ${Color[
-                    onlineChannelMembers.length === 1
-                      ? 'darkGray'
-                      : displayedThemeColor
-                  ]()};
+                  color: ${onlineChannelMembers.length === 1
+                    ? Color.darkGray()
+                    : displayedThemeColor === 'gold'
+                    ? Color.green()
+                    : Color[displayedThemeColor]()};
                   font-size: 1.5rem;
                   font-weight: bold;
                   @media (max-width: ${mobileMaxWidth}) {

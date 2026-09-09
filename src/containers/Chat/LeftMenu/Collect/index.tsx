@@ -26,19 +26,39 @@ export default function Collect({
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Collect">
       <div
+        role="button"
+        tabIndex={0}
+        aria-label={displayedCollectType === AI_CARD_CHAT_TYPE ? 'AI Cards' : 'Word Master'}
         style={{
           cursor: 'pointer',
-          padding: '1rem',
           borderBottom: '1px solid var(--ui-border)',
           background:
             aiCardSelected || vocabSelected ? Color.highlightGray() : undefined
         }}
         className={`unselectable ${css`
+          padding: 1rem;
           &:hover {
             background: ${Color.checkboxAreaGray()};
           }
+          &:focus-visible { outline: 2px solid #64748b; outline-offset: -2px; }
+          @container chat-channels (max-width: 180px) {
+            padding: 0.7rem 0.6rem;
+            > div > div:first-child {
+              font-size: 14px;
+              display: flex;
+              align-items: center;
+              > svg { flex-shrink: 0; }
+            }
+            p { font-size: 12px; }
+          }
         `}`}
         onClick={onClick}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onClick();
+          }
+        }}
       >
         {displayedCollectType === AI_CARD_CHAT_TYPE ? (
           <AICards />

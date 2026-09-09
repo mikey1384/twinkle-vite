@@ -3,6 +3,9 @@ import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Link } from 'react-router-dom';
 import { canonicalUnreadBadgeIsShown } from '~/helpers/chatUnreadProjection';
+import { cx } from '@emotion/css';
+import { chatSubnavRowClass } from '../../containers';
+import { contextRowClass } from '../styles';
 
 export default function Subchannel({
   chatUnreadColor,
@@ -42,6 +45,7 @@ export default function Subchannel({
       <Link
         key={subchannel.id}
         title={subchannel.label}
+        className={cx(chatSubnavRowClass, contextRowClass, subchannelSelected && 'active')}
         aria-current={subchannelSelected ? 'page' : undefined}
         to={`/chat/${currentPathId}/${subchannel.path}`}
         onClick={() =>
@@ -51,42 +55,21 @@ export default function Subchannel({
           })
         }
       >
-        <nav
-          style={{
-            display: 'flex',
-            alignItems: 'center'
-          }}
-          className={subchannelSelected ? 'active' : ''}
-        >
           <Icon icon={subchannel.icon} />
-          <div
-            style={{
-              marginLeft: '1rem',
-              display: 'grid',
-              gridTemplateColumns: '1fr auto',
-              alignItems: 'center',
-              gap: '0.5rem',
-              minWidth: 0,
-              flexGrow: 1
-            }}
-          >
-            <div
-              style={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-              }}
-            >
+            <span className="chat-context-label">
               {subchannel.label}
-            </div>
+            </span>
             {badgeShown && (
               <div
+                role="img"
+                aria-label="Unread messages"
                 style={{
                   background: chatUnreadColor,
                   display: 'flex',
                   color: '#fff',
                   fontWeight: 'bold',
                   minWidth: '1.1rem',
+                  flexShrink: 0,
                   height: '1.1rem',
                   borderRadius: '50%',
                   lineHeight: 1,
@@ -95,8 +78,6 @@ export default function Subchannel({
                 }}
               />
             )}
-          </div>
-        </nav>
       </Link>
     </ErrorBoundary>
   );

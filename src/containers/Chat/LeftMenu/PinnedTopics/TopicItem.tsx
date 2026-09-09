@@ -4,6 +4,8 @@ import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { textIsOverflown, isMobile } from '~/helpers';
 import { useOutsideClick } from '~/helpers/hooks';
 import { chatSubnavRowClass } from '../../containers';
+import { cx } from '@emotion/css';
+import { contextRowClass } from '../styles';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -72,8 +74,7 @@ export default function TopicItem({
       <button
         type="button"
         aria-current={isSelected ? 'page' : undefined}
-        style={{ display: 'flex', alignItems: 'center' }}
-        className={`${chatSubnavRowClass} ${isSelected ? 'active' : ''}`}
+        className={cx(chatSubnavRowClass, contextRowClass, isSelected && 'active')}
         onClick={onClick}
         onFocus={(event) => {
           if (event.currentTarget.matches(':focus-visible') &&
@@ -90,31 +91,15 @@ export default function TopicItem({
         }}
       >
         <Icon icon={icon} />
-        <span
-          style={{
-            minWidth: 0,
-            marginLeft: '1rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flex: '1 1 0'
-          }}
-        >
           <span
             ref={textRef}
-            style={{
-              width: '100%',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
+            className="chat-context-label"
             onMouseEnter={deviceIsMobile ? undefined : handleInteraction}
             onMouseLeave={deviceIsMobile ? undefined : handleMouseLeave}
             onClick={deviceIsMobile ? handleInteraction : undefined}
           >
             {children}
           </span>
-        </span>
       </button>
       <FullTextReveal
         anchorRef={topicRef}

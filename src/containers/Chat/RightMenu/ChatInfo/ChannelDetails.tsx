@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useChatContext } from '~/contexts';
 import { isMobile, textIsOverflown } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
@@ -21,7 +21,7 @@ export default function ChannelDetails({
   thumbPath?: string | null;
   subLabel?: React.ReactNode;
 }) {
-  const customChannelNames = useChatContext((v) => v.state.customChannelNames);
+  const customChannelName = useChatContext((v) => v.state.customChannelNames[channelId]);
   const [channelNameHovered, setChannelNameHovered] = useState(false);
   const ChannelNameRef: React.RefObject<any> = useRef(null);
   const thumbUrl = useMemo(
@@ -40,7 +40,6 @@ export default function ChannelDetails({
         className={css`
           width: 100%;
           line-height: 1.5;
-          border-bottom: 1px solid var(--chat-panel-border, #e2e8f0);
           border-radius: var(--chat-panel-radius, 14px)
             var(--chat-panel-radius, 14px) 0 0;
           ${thumbUrl
@@ -63,12 +62,12 @@ export default function ChannelDetails({
           text-shadow: 0 1px 2px rgba(0,0,0,0.9);
           `
             : `
-          padding: 1.4rem 1.2rem;
-          text-align: left;
+          padding: 1rem 1rem 0.25rem;
+          text-align: center;
           `}
-          font-size: 2rem;
+          font-size: ${thumbUrl ? '2rem' : '2.5rem'};
           font-weight: 700;
-          color: ${thumbUrl ? '#fff' : '#334155'};
+          color: ${thumbUrl ? '#fff' : Color.darkerGray()};
           @media (max-width: ${mobileMaxWidth}) {
             width: 100%;
             font-size: 1.7rem;
@@ -89,7 +88,7 @@ export default function ChannelDetails({
           onMouseEnter={handleMouseOver}
           onMouseLeave={() => setChannelNameHovered(false)}
         >
-          {customChannelNames[channelId] || channelName}
+          {customChannelName || channelName}
         </p>
         {thumbUrl && subLabel ? (
           <div
@@ -111,7 +110,7 @@ export default function ChannelDetails({
         style={{ width: '100%', fontSize: '1.5rem' }}
         show={channelNameHovered}
         direction="left"
-        text={customChannelNames[channelId] || channelName || ''}
+        text={customChannelName || channelName || ''}
       />
     </div>
   );

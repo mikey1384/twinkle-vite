@@ -3,11 +3,13 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import Subchannel from './Subchannel';
 import { Link } from 'react-router-dom';
-import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { css, cx } from '@emotion/css';
+import { Color } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
+import { chatSubnavRowClass } from '../../containers';
+import { contextGroupClass, contextRowClass } from '../styles';
 
 function SubChannels({
   currentChannel,
@@ -75,8 +77,14 @@ function SubChannels({
       <div
         aria-label="Subchannels"
         tabIndex={0}
-        className={css`
+        className={cx(css`
           margin-top: 1rem;
+          border: 1px solid var(--chat-panel-border, ${borderColor});
+          border-radius: 10px;
+          padding: 0.5rem 0;
+          margin-inline: 1rem;
+          display: flex;
+          flex-direction: column;
           flex: 0 1 auto;
           min-height: min(8rem, 35%);
           overflow-x: hidden;
@@ -92,46 +100,11 @@ function SubChannels({
               text-decoration: none;
             }
           }
-          nav {
-            color: ${Color.darkerGray()};
-            cursor: pointer;
-            width: 100%;
-            padding: 0.7rem 1rem;
-            text-align: left;
-            font-size: 1.4rem;
-            font-family: inherit;
-            border-radius: 8px;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            @media (hover: hover) and (pointer: fine) {
-              &:hover {
-                background: var(--chat-hover-bg, ${Color.checkboxAreaGray()});
-              }
-            }
-            &.active {
-              color: #1e293b;
-              font-weight: 600;
-              background: var(--chat-title-bg, ${Color.highlightGray()});
-            }
-            @media (max-width: ${mobileMaxWidth}) {
-              padding: 0.7rem 1rem;
-              font-size: 1.2rem;
-            }
-          }
-        `}
-        style={{
-          border: `1px solid var(--chat-panel-border, ${borderColor})`,
-          borderRadius: '10px',
-          padding: '0.5rem 0',
-          marginLeft: '1rem',
-          marginRight: '1rem',
-          marginBottom: 0,
-          display: 'flex',
-          flexDirection: 'column'
-        }}
+        `, contextGroupClass)}
       >
         <Link
           title="Main (Wordle)"
+          className={cx(chatSubnavRowClass, contextRowClass, !subchannelPath && 'active')}
           aria-current={!subchannelPath ? 'page' : undefined}
           onClick={() =>
             onUpdateLastSubchannelPath({
@@ -141,39 +114,21 @@ function SubChannels({
           }
           to={`/chat/${currentPathId}`}
         >
-          <nav
-            style={{ display: 'flex', alignItems: 'center' }}
-            className={!subchannelPath ? 'active' : ''}
-          >
             <Icon icon="home" />
-            <div
-              style={{
-                marginLeft: '1rem',
-                display: 'grid',
-                gridTemplateColumns: '1fr auto',
-                alignItems: 'center',
-                gap: '0.5rem',
-                minWidth: 0,
-                flexGrow: 1
-              }}
-            >
-              <div
-                style={{
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
+              <span className="chat-context-label">
                 Main (Wordle)
-              </div>
+              </span>
               {badgeShown && (
                 <div
+                  role="img"
+                  aria-label="Unread messages"
                   style={{
                     background: chatUnreadColor,
                     display: 'flex',
                     color: '#fff',
                     fontWeight: 'bold',
                     minWidth: '1.1rem',
+                    flexShrink: 0,
                     height: '1.1rem',
                     borderRadius: '50%',
                     lineHeight: 1,
@@ -182,8 +137,6 @@ function SubChannels({
                   }}
                 />
               )}
-            </div>
-          </nav>
         </Link>
         {subchannels.map((subchannel) => {
           return (

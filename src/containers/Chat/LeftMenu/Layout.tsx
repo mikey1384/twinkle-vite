@@ -3,6 +3,10 @@ import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { SPLIT_NAVIGATION_MEDIA_QUERY } from '../constants/layout';
 import { chatPanelClass } from '../containers';
+import ResizeHandle from './ResizeHandle';
+import Shortcuts from './Shortcuts';
+import useNavigationLayout from './hooks/useNavigationLayout';
+import { RESIZE_HANDLE_WIDTH } from './helpers/navigationSizing';
 
 export default function Layout({
   controls,
@@ -15,8 +19,11 @@ export default function Layout({
   channelNavigation?: React.ReactNode;
   channels: React.ReactNode;
 }) {
+  const layout = useNavigationLayout(!!channelNavigation);
   return (
     <div
+      ref={layout.navigationRef}
+      style={layout.style}
       data-chat-navigation
       data-chat-panel="navigation"
       data-has-channel-navigation={!!channelNavigation}
@@ -26,12 +33,8 @@ export default function Layout({
         flex: 0 0 auto;
         height: 100%;
         min-height: 0;
-        width: 16vw;
+        width: calc(var(--chat-channel-width, 200px) + 2px);
         position: relative;
-
-        @media (min-width: 768px) and (max-width: 1023px) {
-          width: 22vw;
-        }
 
         @media (max-width: ${mobileMaxWidth}) {
           width: 40vw;
@@ -42,13 +45,13 @@ export default function Layout({
         @media ${SPLIT_NAVIGATION_MEDIA_QUERY} {
           &[data-has-channel-navigation='true'] {
             display: grid;
-            width: 32vw;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: calc(var(--chat-channel-width, 200px) + var(--chat-context-width, 184px) + ${RESIZE_HANDLE_WIDTH + 2}px);
+            grid-template-columns: var(--chat-channel-width, 200px) ${RESIZE_HANDLE_WIDTH}px var(--chat-context-width, 184px);
             grid-template-rows: minmax(0, auto) auto minmax(11rem, 1fr);
             grid-template-areas:
-              'controls context'
-              'filters context'
-              'channels context';
+              'controls . context'
+              'filters . context'
+              'channels . context';
           }
         }
       `)}
@@ -58,25 +61,20 @@ export default function Layout({
         tabIndex={0}
         className={css`
           grid-area: controls;
+          container: chat-channels / inline-size;
           flex: 0 0 auto;
           min-width: 0;
           min-height: 0;
           position: relative;
-          z-index: 5;
-          @media (max-height: 560px) {
-            flex-shrink: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            overscroll-behavior-y: contain;
-            scrollbar-width: thin;
-          }
+          z-index: 7;
         `}
       >
-        {controls}
+        <Shortcuts>{controls}</Shortcuts>
       </div>
       <div
         className={css`
           grid-area: filters;
+          container: chat-channels / inline-size;
           flex: 0 0 auto;
           min-width: 0;
           position: relative;
@@ -90,6 +88,7 @@ export default function Layout({
           aria-label="Current chat navigation"
           className={css`
             grid-area: context;
+            container: chat-context / inline-size;
             display: flex;
             flex-direction: column;
             flex: 0 1 auto;
@@ -123,17 +122,30 @@ export default function Layout({
                 font-weight: 600;
                 letter-spacing: 0.02em;
               }
+              @container chat-context (max-width: 180px) {
+                padding: 1rem 0.7rem 0.4rem;
+                font-size: 1.1rem;
+              }
             `}
           >
             In this chat
           </div>
           <div
+            aria-label="Subchannels and topics"
+            tabIndex={0}
             className={css`
               display: flex;
               flex-direction: column;
               flex: 1 1 auto;
               min-width: 0;
               min-height: 0;
+              @media (max-width: 1023px) {
+                display: block;
+                overflow-y: auto;
+                overscroll-behavior-y: contain;
+                scrollbar-width: thin;
+                padding-bottom: 1rem;
+              }
             `}
           >
             {channelNavigation}
@@ -143,6 +155,7 @@ export default function Layout({
       <div
         className={css`
           grid-area: channels;
+          container: chat-channels / inline-size;
           display: flex;
           flex-direction: column;
           flex: 1 1 0;
@@ -156,6 +169,31 @@ export default function Layout({
       >
         {channels}
       </div>
+      {layout.resizable ? (
+        <>
+          <ResizeHandle
+            panel="channels"
+            width={layout.widths.channels}
+            maximum={layout.getMaximum('channels')}
+            active={layout.resizingPanel === 'channels'}
+            betweenColumns={layout.split}
+            onPointerDown={layout.onPointerDown}
+            onKeyDown={layout.onKeyDown}
+            onReset={layout.onReset}
+          />
+          {layout.split ? (
+            <ResizeHandle
+              panel="context"
+              width={layout.widths.context}
+              maximum={layout.getMaximum('context')}
+              active={layout.resizingPanel === 'context'}
+              onPointerDown={layout.onPointerDown}
+              onKeyDown={layout.onKeyDown}
+              onReset={layout.onReset}
+            />
+          ) : null}
+        </>
+      ) : null}
     </div>
   );
 }

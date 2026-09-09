@@ -117,6 +117,17 @@ export default function LeftMenu({
                 flex-direction: column;
                 padding: 1rem;
                 border-bottom: 1px solid var(--ui-border);
+                @container chat-channels (max-width: 180px) {
+                  padding: 0.7rem 0.6rem;
+                  > button {
+                    min-height: 36px;
+                    padding: 0.6rem 0.3rem;
+                    font-size: 14px;
+                  }
+                }
+                @media (pointer: coarse) {
+                  > button { min-height: 44px; }
+                }
               `}
             >
               <ChatFlatButton label="New Group" onClick={onNewButtonClick} />
@@ -137,7 +148,6 @@ export default function LeftMenu({
             <ChatSearchBox
               style={{
                 marginTop: '1rem',
-                padding: '0 1rem',
                 zIndex: 5,
                 width: '100%'
               }}

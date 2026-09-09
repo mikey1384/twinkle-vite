@@ -8,6 +8,7 @@ import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { css } from '@emotion/css';
 
 function ChatSearchBox({ style }: { style?: CSSProperties }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
@@ -46,8 +47,22 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/ChatSearchBox">
-      <div style={style}>
+      <div style={style} className={css`
+        padding: 0 1rem;
+        @container chat-channels (max-width: 180px) {
+          padding: 0 0.6rem;
+        }
+      `}>
         <SearchInput
+          className={css`
+            @container chat-channels (max-width: 180px) {
+              && input {
+                font-size: 16px;
+                padding-left: 3rem !important;
+              }
+            }
+          `}
+          inputHeight="max(36px, 4.3rem)"
           placeholder="Search..."
           onChange={handleSearch}
           value={searchText}

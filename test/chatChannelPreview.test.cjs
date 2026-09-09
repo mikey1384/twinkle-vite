@@ -12,7 +12,7 @@ function fixture() {
   const dependencies = {
     react: { ...React, useMemo: fn => fn(), useCallback: fn => fn, useRef: value => ({ current: value }), useContext: () => ({ state: { lastSubchannelPaths: { 7: 'topic' } } }) },
     '~/constants/css': { mobileMaxWidth: '767px', Color: { logoBlue: () => '#418ceb', lighterGray: () => '#aaa' } },
-    '@emotion/css': { css: () => '' },
+    '@emotion/css': { css: () => '', cx: (...classes) => classes.filter(Boolean).join(' ') },
     '~/helpers/stringHelpers': { addCommasToNumber: value => Number(value).toLocaleString('en-US'), stringIsEmpty: value => !value?.trim() },
     '~/contexts': { useKeyContext: fn => fn({ myState: { userId: 1 } }), useAppContext: fn => fn({ requestHelpers: { reportError() {} } }), useChatContext: fn => fn({ actions: { onUpdateSelectedChannelId: id => selected.push(id) } }) },
     '~/constants/defaultValues': { VOCAB_CHAT_TYPE: 'vocabulary', AI_CARD_CHAT_TYPE: 'ai-cards' },

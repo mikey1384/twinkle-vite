@@ -1,6 +1,6 @@
 import React, { useContext, useCallback, useMemo, useRef } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import {
@@ -400,7 +400,14 @@ export default function Channel({
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">
       <Link
-        className={chatChannelRowClass}
+        title={ChannelName}
+        className={cx(chatChannelRowClass, css`
+          @container chat-channels (max-width: 180px) {
+            height: auto;
+            min-height: 56px;
+            padding: 0.8rem 0.6rem;
+          }
+        `)}
         to={pathId ? `/chat/${pathId}${lastSubchannelPath ? `/${lastSubchannelPath}` : ''}` : '/chat/new'}
         aria-current={selected ? 'page' : undefined}
         onClick={(event) => {
@@ -413,14 +420,15 @@ export default function Channel({
           style={{
             display: 'flex',
             height: '100%',
-            justifyContent: 'space-between',
+            gap: '0.8rem',
             alignItems: 'center'
           }}
         >
           <div
             style={{
               display: 'flex',
-              width: badgeShown ? 'calc(100% - 3rem)' : '100%',
+              flex: 1,
+              minWidth: 0,
               height: '100%',
               whiteSpace: 'nowrap',
               flexDirection: 'column',
@@ -440,12 +448,21 @@ export default function Channel({
                   margin: 0,
                   padding: 0,
                   textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                  lineHeight: 'normal'
+                  overflow: 'hidden'
                 }}
                 className={css`
+                  line-height: normal;
                   @media (max-width: ${mobileMaxWidth}) {
                     font-size: max(14px, 1.5rem);
+                  }
+                  @container chat-channels (max-width: 180px) {
+                    font-size: max(14px, 1.4rem);
+                    line-height: 1.3;
+                    white-space: normal;
+                    overflow-wrap: anywhere;
+                    display: -webkit-box;
+                    -webkit-box-orient: vertical;
+                    -webkit-line-clamp: 2;
                   }
                 `}
               >
@@ -476,6 +493,7 @@ export default function Channel({
                 display: 'flex',
                 color: '#fff',
                 fontWeight: 'bold',
+                flexShrink: 0,
                 minWidth: 12,
                 height: 12,
                 outline: '1px solid #64748b',
