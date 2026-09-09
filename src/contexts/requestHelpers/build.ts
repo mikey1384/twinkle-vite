@@ -1,3 +1,7 @@
+import {
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 import axios from 'axios';
 import request from './axiosInstance';
 import URL from '~/constants/URL';
@@ -1589,6 +1593,7 @@ export default function buildRequestHelpers({
       previousResponseId,
       referenceImageB64,
       engine = 'openai',
+      model,
       quality = 'high',
       requestId,
       appMcpInvocation
@@ -1599,7 +1604,8 @@ export default function buildRequestHelpers({
       previousImageId?: string;
       referenceImageB64?: string;
       engine?: 'gemini' | 'openai';
-      quality?: 'low' | 'medium' | 'high';
+      model?: OpenAiImageModel;
+      quality?: AiImageQuality;
       requestId?: string;
       appMcpInvocation?: BuildAppMcpInvocationContext;
     }) {
@@ -1612,6 +1618,7 @@ export default function buildRequestHelpers({
             previousResponseId,
             referenceImageB64,
             engine,
+            model,
             quality,
             requestId,
             ...appMcpInvocation
@@ -1629,6 +1636,7 @@ export default function buildRequestHelpers({
           responseId: data.responseId,
           imageId: data.imageId,
           engine: data.engine,
+          model: data.model,
           quality: data.quality,
           aiUsagePolicy: data.aiUsagePolicy
         };
@@ -1658,6 +1666,7 @@ export default function buildRequestHelpers({
       previousResponseId,
       referenceImageB64,
       engine = 'openai',
+      model,
       quality = 'high',
       requestId,
       requestFingerprint
@@ -1668,7 +1677,8 @@ export default function buildRequestHelpers({
       previousImageId?: string;
       referenceImageB64?: string;
       engine?: 'gemini' | 'openai';
-      quality?: 'low' | 'medium' | 'high';
+      model?: OpenAiImageModel;
+      quality?: AiImageQuality;
       requestId: string;
       requestFingerprint?: string;
     }) {
@@ -1676,13 +1686,14 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/runtime-ai-image/status`,
           requestFingerprint
-            ? { requestId, requestFingerprint, engine, quality }
+            ? { requestId, requestFingerprint, engine, model, quality }
             : {
                 prompt,
                 previousImageId,
                 previousResponseId,
                 referenceImageB64,
                 engine,
+                model,
                 quality,
                 requestId
               },

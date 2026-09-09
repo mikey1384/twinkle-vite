@@ -30,9 +30,12 @@ export function rewardApprovalPresentation(
         'When you publish, we’ll save and check your changes. If you added rewards back, this version will need approval.'
     },
     not_configured: {
-      title: 'Lumine handles the setup',
-      detail:
-        'Tell Lumine how you want people to earn rewards. Lumine will prepare the details for you.'
+      title: settings.approvalRequired
+        ? 'Reward details aren’t ready yet'
+        : 'Lumine handles the setup',
+      detail: settings.approvalRequired
+        ? 'This app uses rewards, but Lumine still needs to prepare the earning rules before you can send it for approval.'
+        : 'Tell Lumine how you want people to earn rewards. Lumine will prepare the details for you.'
     },
     needs_review: {
       title: settings.isUpdate

@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { rewardApprovalPresentation } from './approvalPresentation';
 import type { RewardSettings } from './types';
@@ -43,15 +44,6 @@ export default function RewardApprovalNotice({
         border-radius: 12px;
         color: var(--chat-text);
         font-size: 1.1rem;
-        button {
-          font: inherit;
-          color: #264d9a;
-          background: #fff;
-          border: 1px solid #66768c;
-          border-radius: 7px;
-          padding: 0.45rem 0.8rem;
-          cursor: pointer;
-        }
       `}
     >
       <span role="status">
@@ -69,7 +61,9 @@ export default function RewardApprovalNotice({
           </span>
         )}
       </span>
-      <button onClick={onOpen}>Check status</button>
+      <Button variant="outline" color="logoBlue" size="sm" onClick={onOpen}>
+        Check status
+      </Button>
     </div>
   );
 }

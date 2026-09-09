@@ -1,3 +1,7 @@
+import {
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 import request from './axiosInstance';
 import axios from 'axios';
 import URL from '~/constants/URL';
@@ -128,18 +132,29 @@ export default function userRequestHelpers({
     async updateImageGenerationSettings({
       engine,
       followUpEngine,
+      model,
+      followUpModel,
       quality,
       followUpQuality
     }: {
       engine?: 'gemini' | 'openai';
       followUpEngine?: 'gemini' | 'openai';
-      quality?: 'low' | 'medium' | 'high';
-      followUpQuality?: 'low' | 'medium' | 'high';
+      model?: OpenAiImageModel;
+      followUpModel?: OpenAiImageModel;
+      quality?: AiImageQuality;
+      followUpQuality?: AiImageQuality;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/user/settings/imageGeneration`,
-          { engine, followUpEngine, quality, followUpQuality },
+          {
+            engine,
+            followUpEngine,
+            model,
+            followUpModel,
+            quality,
+            followUpQuality
+          },
           auth()
         );
         return data;

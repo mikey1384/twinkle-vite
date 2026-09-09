@@ -1,7 +1,12 @@
+import {
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 export interface BuildRuntimeImageGenerationConfirmationRequest {
   prompt: string;
+  model?: OpenAiImageModel;
   engine: 'gemini' | 'openai';
-  quality: 'low' | 'medium' | 'high';
+  quality: AiImageQuality;
 }
 
 interface BuildRuntimeImageGenerationUserActivation {
@@ -20,8 +25,7 @@ interface BuildRuntimeImageGenerationAuthorized {
 }
 
 type BuildRuntimeImageGenerationAuthorization =
-  | BuildRuntimeImageGenerationDenied
-  | BuildRuntimeImageGenerationAuthorized;
+  BuildRuntimeImageGenerationDenied | BuildRuntimeImageGenerationAuthorized;
 
 export function authorizeBuildRuntimeImageGenerationUserActivation(
   userActivation: BuildRuntimeImageGenerationUserActivation | null | undefined
@@ -44,9 +48,7 @@ export function createBuildRuntimeImageGenerationController() {
       requestConfirmation
     }: {
       userActivation:
-        | BuildRuntimeImageGenerationUserActivation
-        | null
-        | undefined;
+        BuildRuntimeImageGenerationUserActivation | null | undefined;
       request: BuildRuntimeImageGenerationConfirmationRequest;
       requestConfirmation:
         | ((

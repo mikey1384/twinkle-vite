@@ -42,28 +42,6 @@ export const rewardPanelClass = css`
     min-height: 5rem;
     resize: vertical;
   }
-  button {
-    font: inherit;
-    cursor: pointer;
-    border: 1px solid #66768c;
-    border-radius: 7px;
-    padding: 0.55rem 0.85rem;
-    background: #fff;
-    color: #243653;
-  }
-  button:disabled {
-    opacity: 0.55;
-    cursor: default;
-  }
-  button[data-primary] {
-    background: #264d9a;
-    color: #fff;
-    border-color: #264d9a;
-  }
-  button[data-danger] {
-    color: #a1233c;
-    border-color: #a1233c;
-  }
   pre {
     max-height: 22rem;
     overflow: auto;

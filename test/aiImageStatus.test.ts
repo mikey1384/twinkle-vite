@@ -95,7 +95,7 @@ test('fingerprinted status recovery preserves the requested image engine and qua
     );
     assert.match(
       requestHelpers,
-      /requestFingerprint\s*\? \{ requestId, requestFingerprint, engine, quality \}/,
+      /requestFingerprint\s*\? \{ requestId, requestFingerprint, engine, model, quality \}/,
       `${relativePath} must preserve generation metadata during result recovery`
     );
   }
@@ -384,5 +384,29 @@ test('Build image recovery returns a socket completion that wins the status-poll
   assert.match(
     hostBridge,
     /if \(canonicalResult\) \{[\s\S]*?response = canonicalResult;[\s\S]*?else if \(aiImageStatusTarget\.terminalResponse\)[\s\S]*?response = aiImageStatusTarget\.terminalResponse;/
+  );
+});
+
+test('model-aware fingerprints retain the canonical server field order', async () => {
+  const input = {
+    prompt: 'A moon',
+    engine: 'openai' as const,
+    model: 'gpt-image-2.5-flare' as const,
+    quality: 'max' as const
+  };
+  const expected = createHash('sha256')
+    .update(
+      [input.model, input.engine, input.quality, input.prompt, '', '', ''].join(
+        '\n'
+      )
+    )
+    .digest('hex');
+  assert.equal(await createAIImageRequestFingerprint(input), expected);
+  assert.notEqual(
+    await createAIImageRequestFingerprint({
+      ...input,
+      model: 'gpt-image-2.5-sunburst'
+    }),
+    expected
   );
 });

@@ -1,3 +1,10 @@
+import {
+  isAiImageQuality,
+  isOpenAiImageModel,
+  resolveOpenAiImageModel,
+  supportsImageQuality,
+  type AiImageQuality
+} from '~/helpers/aiImageModels';
 import { useEffect, useRef } from 'react';
 import { useAppContext } from '~/contexts';
 import {
@@ -1406,6 +1413,7 @@ export function useHostBridge({
               responseId: payload.responseId,
               imageId: payload.imageId,
               engine: payload.engine,
+              model: payload.model,
               quality: payload.quality,
               aiUsagePolicy: payload.aiUsagePolicy
             }
@@ -1614,6 +1622,7 @@ export function useHostBridge({
           responseId: response.responseId,
           imageId: response.imageId,
           engine: response.engine,
+          model: response.model,
           quality: response.quality,
           ...(response.aiUsagePolicy
             ? { aiUsagePolicy: response.aiUsagePolicy }
@@ -2324,18 +2333,34 @@ export function useHostBridge({
 
             const selectedImageEngine: 'gemini' | 'openai' =
               payload?.engine === 'gemini' ? 'gemini' : 'openai';
-            const selectedImageQuality: 'low' | 'medium' | 'high' =
-              payload?.quality === 'low' ||
-              payload?.quality === 'medium' ||
-              payload?.quality === 'high'
-                ? payload.quality
-                : 'high';
+            const selectedImageQuality: AiImageQuality =
+              payload?.quality || 'high';
+            const selectedImageModel =
+              selectedImageEngine === 'openai'
+                ? resolveOpenAiImageModel(payload || {})
+                : undefined;
+            if (
+              !isAiImageQuality(selectedImageQuality) ||
+              (selectedImageEngine === 'gemini' &&
+                (selectedImageQuality === 'xhigh' || selectedImageQuality === 'max')) ||
+              (payload?.model != null &&
+                (!isOpenAiImageModel(payload.model) ||
+                  selectedImageEngine !== 'openai')) ||
+              (selectedImageModel &&
+                !supportsImageQuality(selectedImageModel, selectedImageQuality))
+            ) {
+              throw createPreviewBridgeError(
+                'Unsupported image model or quality.',
+                'invalid_image_settings'
+              );
+            }
             const imageAuthorization =
               await imageGenerationController.authorize({
                 userActivation: navigator.userActivation,
                 request: {
                   prompt: String(payload?.prompt || '').trim(),
                   engine: selectedImageEngine,
+                  model: selectedImageModel,
                   quality: selectedImageQuality
                 },
                 requestConfirmation:
@@ -2379,6 +2404,7 @@ export function useHostBridge({
                 previousResponseId: payload?.previousResponseId,
                 referenceImageB64: payload?.referenceImageB64,
                 engine: selectedImageEngine,
+                model: selectedImageModel,
                 quality: selectedImageQuality,
                 requestId: String(payload?.requestId || id),
                 appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)

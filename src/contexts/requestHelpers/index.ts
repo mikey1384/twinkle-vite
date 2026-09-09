@@ -392,6 +392,7 @@ registerMethods('content', [
   'uploadSubject',
   'uploadThumb',
   'generateAIImage',
+  'loadAIImageGenerationEstimate',
   'loadAIImageGenerationStatus',
   'loadAIImageResult',
   'getDailyQuestion',

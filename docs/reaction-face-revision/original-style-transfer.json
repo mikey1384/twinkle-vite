@@ -1,0 +1,18 @@
+{
+  "mode": "built-in image_gen with user-authorized background cleanup",
+  "assets": [
+    {
+      "key": "laughing",
+      "prompt": "Use case: style-transfer. The supplied ORIGINAL laughing emoji is the ONLY reference and is the edit target. Re-render this exact icon at high resolution with smooth glossy 3D/2.5D rounded shading and warm golden-yellow material, keeping its facial geometry, expression, eye direction, head orientation and proportions precisely intact. Do not redesign or reinterpret the face. Keep the same tilted head, tightly shut curved happy eyes, enormous diagonal open mouth, upper white teeth and orange tongue. No tears. Only change rendering from pixelated flat artwork to polished dimensional illustration with restrained upper-left highlight and soft lower-right shading. Preserve original face silhouette and feature positions. One icon on a genuinely transparent RGBA background; no checkerboard, no text, no extra features.",
+      "source": "/Users/mikey/.codex/generated_images/01a083fd-5c52-76a1-b508-252dab449c11/exec-2e94e9a0-7fcf-424e-8abc-152a96bbddec.png",
+      "file": "public/img/chat-reactions/laughing-v2.png"
+    },
+    {
+      "key": "surprised",
+      "prompt": "Use case: style-transfer. The supplied ORIGINAL surprised emoji is the ONLY reference and is the edit target. Re-render this exact icon at high resolution with smooth glossy 3D/2.5D rounded shading and warm golden-yellow material, keeping its facial geometry, expression, eye direction, head orientation and proportions precisely intact. Do not redesign or reinterpret the face. Keep the same three-quarter head pointing right, huge round white eyes positioned toward the right side, the right eye narrower from perspective, the original pupil placement, little raised eyebrows, and the same narrow elongated irregular open mouth far toward the lower right edge. Do NOT substitute centered symmetrical oval eyes, upward-looking pupils or a centered O mouth. Only change rendering from pixelated flat artwork to polished dimensional illustration with restrained upper-left highlight and soft lower-right shading. Preserve original face silhouette and feature positions. One icon on a genuinely transparent RGBA background; no checkerboard, no text, no extra features.",
+      "source": "/Users/mikey/.codex/generated_images/01a083fd-5c52-76a1-b508-252dab449c11/exec-d4dc3a26-00b9-4d2e-a99e-4163c72f7315.png",
+      "file": "public/img/chat-reactions/surprised-v2.png"
+    }
+  ],
+  "status": "Previous attempt; superseded by balanced-style-transfer.json."
+}

@@ -1,3 +1,4 @@
+import { getImageModelLabel } from '~/helpers/aiImageModels';
 import React, {
   useDeferredValue,
   useEffect,
@@ -7,7 +8,7 @@ import React, {
   useState
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useKeyContext, useViewContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
 import { css } from '@emotion/css';
 import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
@@ -710,6 +711,11 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         requestOpenContentConfirmationRef.current = null;
       };
     }, [requestOpenContentConfirm]);
+    const loadImageEstimate = useAppContext(
+      (v) => v.requestHelpers.loadAIImageGenerationEstimate
+    );
+    const loadImageEstimateRef = useRef(loadImageEstimate);
+    loadImageEstimateRef.current = loadImageEstimate;
     const requestBuildImageGenerationConfirmationRef = useRef<
       | ((
           request: BuildRuntimeImageGenerationConfirmationRequest
@@ -717,11 +723,26 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       | null
     >(null);
     useEffect(() => {
-      requestBuildImageGenerationConfirmationRef.current = ({
+      requestBuildImageGenerationConfirmationRef.current = async ({
         prompt,
         engine,
+        model,
         quality
       }) => {
+        let estimatePercent: number | null = null;
+        if (engine === 'openai' && model) {
+          try {
+            const estimate = await loadImageEstimateRef.current({
+              model,
+              quality
+            });
+            if (estimate.fullBatteryUnits > 0 && estimate.energyUnits >= 0)
+              estimatePercent =
+                (estimate.energyUnits / estimate.fullBatteryUnits) * 100;
+          } catch {
+            /* Confirmation can still explain that the estimate is unavailable. */
+          }
+        }
         return requestImageGenerationConfirm({
           title: 'Generate an image with AI Energy?',
           description: (
@@ -734,8 +755,17 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                 <strong>Prompt:</strong> {prompt || '(empty prompt)'}
               </span>
               <span>
-                Provider: {engine === 'gemini' ? 'Gemini' : 'OpenAI'}, {quality}{' '}
-                quality. Each approval authorizes one generation.
+                Model:{' '}
+                {engine === 'gemini'
+                  ? 'Nano Banana'
+                  : getImageModelLabel(model)}
+                {engine === 'openai' ? `, ${quality} quality` : ''}. Each
+                approval authorizes one generation.
+              </span>
+              <span>
+                {estimatePercent !== null
+                  ? `Image estimate: ${estimatePercent < 1 ? '<1' : `~${Math.round(estimatePercent)}`}% of a full battery. Your prompt and reference image use additional energy.`
+                  : 'Final battery spending follows actual image usage.'}
               </span>
             </span>
           ),

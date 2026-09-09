@@ -1,3 +1,7 @@
+import {
+  GPT_IMAGE_2_5_SUNBURST,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 import React, {
   useRef,
   useState,
@@ -84,6 +88,7 @@ interface AiImageGenerationRequest {
   referenceImageB64: string;
   engine: 'openai';
   quality: 'high';
+  model?: OpenAiImageModel;
   requestId: string;
   requestFingerprint?: string;
 }
@@ -1114,6 +1119,7 @@ export default function ImageEditModal({
         prompt: prompt.trim(),
         referenceImageB64: referenceB64,
         engine: 'openai',
+        model: GPT_IMAGE_2_5_SUNBURST,
         quality: 'high',
         requestId
       };

@@ -1,3 +1,8 @@
+import AiImageEstimate from '~/components/AiImageEstimate';
+import {
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 import React from 'react';
 import { css } from '@emotion/css';
 import ActionButton from './ActionButton';
@@ -11,10 +16,12 @@ interface InputSectionProps {
   isGenerating: boolean;
   canAffordGeneration?: boolean;
   energyLoading?: boolean;
+  model: OpenAiImageModel;
+  onModelChange: (model: OpenAiImageModel) => void;
   engine: 'gemini' | 'openai';
   onEngineChange: (engine: 'gemini' | 'openai') => void;
-  quality: 'low' | 'medium' | 'high';
-  onQualityChange: (quality: 'low' | 'medium' | 'high') => void;
+  quality: AiImageQuality;
+  onQualityChange: (quality: AiImageQuality) => void;
   themeColor?: string;
 }
 
@@ -26,6 +33,8 @@ export default function InputSection({
   isGenerating,
   canAffordGeneration = true,
   energyLoading = false,
+  model,
+  onModelChange,
   engine,
   onEngineChange,
   quality,
@@ -91,9 +100,12 @@ export default function InputSection({
               `}
             >
               <select
-                value={engine}
+                aria-label="Image model"
+                value={engine === 'gemini' ? 'gemini' : model}
                 onChange={(e) =>
-                  onEngineChange(e.target.value as 'gemini' | 'openai')
+                  e.target.value === 'gemini'
+                    ? onEngineChange('gemini')
+                    : onModelChange(e.target.value as OpenAiImageModel)
                 }
                 disabled={isGenerating}
                 className={selectClassName}
@@ -102,16 +114,16 @@ export default function InputSection({
                   color: themeRole.getColor()
                 }}
               >
-                <option value="openai">Image 2</option>
+                <option value="gpt-image-2.5-flare">Flare 2.5</option>
+                <option value="gpt-image-2.5-sunburst">Sunburst 2.5</option>
                 <option value="gemini">Nano Banana</option>
               </select>
               {engine === 'openai' && (
                 <select
+                  aria-label="Image quality"
                   value={quality}
                   onChange={(e) =>
-                    onQualityChange(
-                      e.target.value as 'low' | 'medium' | 'high'
-                    )
+                    onQualityChange(e.target.value as AiImageQuality)
                   }
                   disabled={isGenerating}
                   className={selectClassName}
@@ -123,7 +135,12 @@ export default function InputSection({
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
+                  <option value="xhigh">Extra high</option>
+                  <option value="max">Max</option>
                 </select>
+              )}
+              {engine === 'openai' && (
+                <AiImageEstimate model={model} quality={quality} />
               )}
             </span>
           </div>

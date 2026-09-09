@@ -1,0 +1,24 @@
+{
+  "mode": "built-in image_gen",
+  "status": "Applied to local chat assets. User-authorized edge-connected neutral background removal; resized to 160x160 RGBA with transparent padding.",
+  "assets": [
+    {
+      "key": "surprised",
+      "prompt": "Use case: precise-object-edit. Edit target: image 1, the current surprised chat emoji. Image 2 is a before/current comparison reference: copy only the facial expression of the corresponding icon in the TOP old row, not its rendering style. Restore the old surprised expression: two very large white oval eyes, dark pupils looking UPWARD and slightly to the right, raised arched eyebrows, and a small open O mouth slightly toward the right/lower part of face. Exaggerated wide-eyed startled look. NOT small dark dot eyes. Preserve image 1's glossy rounded 2.5D shading, colors, circular head silhouette, highlight direction and clean polished finish. Change only the facial features. One centered icon, square canvas, same relative head size and padding as image 1. Production PNG with genuinely transparent alpha background, no checkerboard, no backdrop, no text, no sheet, no cast shadow. Details must read at 22px.",
+      "source": "/Users/mikey/.codex/generated_images/01a083fd-5c52-76a1-b508-252dab449c11/exec-35b05ec8-a7e5-406e-9c1f-9087c896259c.png",
+      "file": "public/img/chat-reactions/surprised-v2.png"
+    },
+    {
+      "key": "crying",
+      "prompt": "Use case: precise-object-edit. Edit target: image 1, the current crying chat emoji. Image 2 is a before/current comparison reference: copy only the facial expression of the corresponding icon in the TOP old row, not its rendering style. Restore the old gently sad expression: worried eyebrows raised at inner corners, small sorrowful open dark eyes, a small closed downturned mouth, and exactly ONE large blue teardrop on the viewer-left cheek. NOT sobbing, no open wailing mouth, no second tear or tear streams. Preserve image 1's glossy rounded 2.5D shading, colors, circular head silhouette, highlight direction and clean polished finish. Change only the facial features. One centered icon, square canvas, same relative head size and padding as image 1. Production PNG with genuinely transparent alpha background, no checkerboard, no backdrop, no text, no sheet, no cast shadow. Details must read at 22px.",
+      "source": "/Users/mikey/.codex/generated_images/01a083fd-5c52-76a1-b508-252dab449c11/exec-4c4f45fc-1aa6-473e-9003-334fab4e87e0.png",
+      "file": "public/img/chat-reactions/crying-v2.png"
+    },
+    {
+      "key": "angry",
+      "prompt": "Use case: precise-object-edit. Edit target: image 1, the current angry chat emoji. Image 2 is a before/current comparison reference: copy only the facial expression of the corresponding icon in the TOP old row, not its rendering style. Restore the old intense angry expression: large white eye shapes narrowed by sharply downward-slanting dark upper lids/brows, dark pupils glaring forward, small deeply downturned frown, and the original prominent pale four-point comic anger/tension mark outlined in dark brown on the upper forehead. NOT simple dot eyes. Keep red/orange face. Preserve image 1's glossy rounded 2.5D shading, colors, circular head silhouette, highlight direction and clean polished finish. Change only the facial features. One centered icon, square canvas, same relative head size and padding as image 1. Production PNG with genuinely transparent alpha background, no checkerboard, no backdrop, no text, no sheet, no cast shadow. Details must read at 22px.",
+      "source": "/Users/mikey/.codex/generated_images/01a083fd-5c52-76a1-b508-252dab449c11/exec-9ff8c872-5f86-4e3d-b421-7ec3eef78236.png",
+      "file": "public/img/chat-reactions/angry-v2.png"
+    }
+  ]
+}

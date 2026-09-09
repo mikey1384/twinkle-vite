@@ -1,3 +1,7 @@
+import {
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 import React, { useState } from 'react';
 import type { AiEnergyDisplayPolicy } from '~/helpers/aiEnergyDisplay';
 import { css } from '@emotion/css';
@@ -26,10 +30,12 @@ interface GeneratedImageDisplayProps {
   onSetHasBeenEdited: (value: boolean) => void;
   canAffordFollowUp?: boolean;
   energyLoading?: boolean;
+  followUpModel: OpenAiImageModel;
+  onFollowUpModelChange: (model: OpenAiImageModel) => void;
   followUpEngine?: 'gemini' | 'openai';
   onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
-  followUpQuality?: 'low' | 'medium' | 'high';
-  onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
+  followUpQuality?: AiImageQuality;
+  onFollowUpQualityChange: (quality: AiImageQuality) => void;
   themeColor?: string;
   energyPercent?: number;
   energyPolicy?: AiEnergyDisplayPolicy | null;
@@ -71,6 +77,8 @@ export default function GeneratedImageDisplay({
   onSetHasBeenEdited,
   canAffordFollowUp = true,
   energyLoading = false,
+  followUpModel,
+  onFollowUpModelChange,
   followUpEngine = 'gemini',
   onFollowUpEngineChange,
   followUpQuality = 'high',
@@ -383,6 +391,8 @@ export default function GeneratedImageDisplay({
           isFollowUpGenerating={isFollowUpGenerating}
           canAffordFollowUp={canAffordFollowUp}
           energyLoading={energyLoading}
+          followUpModel={followUpModel}
+          onFollowUpModelChange={onFollowUpModelChange}
           followUpEngine={followUpEngine}
           onFollowUpEngineChange={onFollowUpEngineChange}
           followUpQuality={followUpQuality}

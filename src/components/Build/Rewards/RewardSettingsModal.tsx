@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
+import Button from '~/components/Button';
+import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
-import { rewardPanelClass } from './RewardConfigView';
 import { rewardApprovalPresentation } from './approvalPresentation';
 import useRewardStatus from './useRewardStatus';
 
@@ -32,6 +33,7 @@ export default function RewardSettingsModal({
   const {
     settings,
     error: loadError,
+    loading,
     refresh
   } = useRewardStatus(buildId, true, changeKey);
   const [busy, setBusy] = useState(false);
@@ -45,16 +47,58 @@ export default function RewardSettingsModal({
       isOpen
       onClose={onClose}
       title="XP & Coin rewards"
+      footer={
+        settings && presentation ? (
+          <>
+            <Button variant="ghost" disabled={busy || loading} onClick={refresh}>
+              Refresh status
+            </Button>
+            {presentation.state === 'needs_review' && (
+              <Button
+                color="logoBlue"
+                loading={busy}
+                disabled={preparing}
+                onClick={handleSubmit}
+              >
+                {busy ? 'Sending…' : 'Send for review'}
+              </Button>
+            )}
+            {(presentation.state === 'approved' ||
+              (['removed', 'check_changes'].includes(presentation.state) &&
+                (settings.canPublish || hasUnsavedChanges))) && (
+              <Button
+                color="logoBlue"
+                disabled={busy || preparing}
+                onClick={onPublish}
+              >
+                Publish app
+              </Button>
+            )}
+            {['not_configured', 'changes_requested', 'paused'].includes(
+              presentation.state
+            ) && (
+              <Button
+                color="logoBlue"
+                disabled={busy || preparing}
+                onClick={() => onAskLumine(settings.reviewNote)}
+              >
+                Ask Lumine to help
+              </Button>
+            )}
+          </>
+        ) : loadError ? (
+          <Button variant="outline" onClick={refresh}>
+            Try again
+          </Button>
+        ) : undefined
+      }
     >
-      <div
-        className={rewardPanelClass}
-        style={{ padding: '1.2rem', maxHeight: '75vh', overflowY: 'auto' }}
-      >
+      <div className={bodyClass}>
         {(error || loadError) && <p role="alert">{error || loadError}</p>}
         {!settings && !loadError && <p role="status">Checking approval…</p>}
         {settings && presentation && (
           <>
-            <article aria-live="polite">
+            <section aria-live="polite">
               <h3>
                 {preparing
                   ? 'Lumine is working on your update'
@@ -70,14 +114,14 @@ export default function RewardSettingsModal({
                   <strong>Admin’s note:</strong> {settings.reviewNote}
                 </p>
               )}
-            </article>
+            </section>
             {settings.summary.length > 0 && (
               <div>
                 <h3>What people can earn</h3>
                 {settings.summary.map((reward, index) => (
                   <p key={index}>
-                    <strong>{reward.title}</strong> · {reward.xp} XP +{' '}
-                    {reward.coins} Coins
+                    <strong>{reward.title}</strong> · {reward.xp.toLocaleString()} XP +{' '}
+                    {reward.coins.toLocaleString()} Coins
                   </p>
                 ))}
               </div>
@@ -100,45 +144,8 @@ export default function RewardSettingsModal({
                 that keep rewards need a new approval.
               </p>
             )}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.7rem' }}>
-              {presentation.state === 'needs_review' && (
-                <button
-                  data-primary
-                  disabled={busy || preparing}
-                  onClick={handleSubmit}
-                >
-                  {busy ? 'Sending…' : 'Send for review'}
-                </button>
-              )}
-              {(presentation.state === 'approved' ||
-                (['removed', 'check_changes'].includes(presentation.state) &&
-                  (settings.canPublish || hasUnsavedChanges))) && (
-                <button
-                  data-primary
-                  disabled={busy || preparing}
-                  onClick={onPublish}
-                >
-                  Publish app
-                </button>
-              )}
-              {['not_configured', 'changes_requested', 'paused'].includes(
-                presentation.state
-              ) && (
-                <button
-                  data-primary
-                  disabled={busy || preparing}
-                  onClick={() => onAskLumine(settings.reviewNote)}
-                >
-                  Ask Lumine to help
-                </button>
-              )}
-              <button disabled={busy} onClick={refresh}>
-                Refresh status
-              </button>
-            </div>
           </>
         )}
-        {loadError && <button onClick={refresh}>Try again</button>}
       </div>
     </Modal>
   );
@@ -166,3 +173,22 @@ export default function RewardSettingsModal({
     }
   }
 }
+
+const bodyClass = css`
+  display: grid;
+  gap: 1.5rem;
+  color: var(--chat-text);
+  font-size: 1.4rem;
+  line-height: 1.5;
+  p,
+  h3 {
+    margin: 0;
+  }
+  h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.6rem;
+  }
+  [role='alert'] {
+    color: var(--danger-color, #a1233c);
+  }
+`;

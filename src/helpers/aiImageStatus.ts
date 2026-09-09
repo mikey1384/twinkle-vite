@@ -1,4 +1,8 @@
 import {
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
+import {
   browserReportsOffline,
   markBrowserNetworkReachable
 } from './browserNetwork';
@@ -14,7 +18,8 @@ export interface AiImageRequestFingerprintInput {
   previousImageId?: string;
   referenceImageB64?: string;
   engine?: 'gemini' | 'openai';
-  quality?: 'low' | 'medium' | 'high';
+  model?: OpenAiImageModel;
+  quality?: AiImageQuality;
 }
 
 const AI_IMAGE_CANONICAL_STATUS_TIMEOUT_MS = 6 * 60 * 1000;
@@ -28,6 +33,7 @@ export async function createAIImageRequestFingerprint({
   previousImageId,
   referenceImageB64,
   engine = 'openai',
+  model,
   quality = 'high'
 }: AiImageRequestFingerprintInput): Promise<string | null> {
   try {
@@ -35,6 +41,7 @@ export async function createAIImageRequestFingerprint({
       return null;
     }
     const canonicalInput = [
+      ...(model ? [model] : []),
       engine,
       engine === 'openai' ? quality : 'stable',
       prompt || '',

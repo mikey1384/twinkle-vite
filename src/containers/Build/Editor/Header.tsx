@@ -858,7 +858,12 @@ export default function Header({
     }
     if (isOwner && !isContributionFork) {
       items.push({
-        label: 'XP & Coin rewards',
+        label: (
+          <>
+            <Icon icon="coins" />
+            <span style={{ marginLeft: '1rem' }}>XP & Coin rewards</span>
+          </>
+        ),
         onClick: () => setRewardsOpen(true)
       });
       items.push({

@@ -1,3 +1,11 @@
+import {
+  GPT_IMAGE_2_5_FLARE,
+  GPT_IMAGE_2_5_SUNBURST,
+  isImage25Model,
+  isAiImageQuality,
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import {
@@ -47,7 +55,6 @@ interface ImageGeneratorProps {
 }
 
 type AiImageEngine = 'gemini' | 'openai';
-type AiImageQuality = 'low' | 'medium' | 'high';
 
 interface AiImageGenerationRequest {
   prompt: string;
@@ -55,6 +62,7 @@ interface AiImageGenerationRequest {
   previousImageId?: string;
   referenceImageB64?: string;
   engine: AiImageEngine;
+  model?: OpenAiImageModel;
   quality?: AiImageQuality;
   requestId: string;
   requestFingerprint?: string;
@@ -104,6 +112,10 @@ export default function ImageGenerator({
     null
   );
   const [mode, setMode] = useState<'text' | 'draw'>('text');
+  const [model, setModel] = useState<OpenAiImageModel>(GPT_IMAGE_2_5_FLARE);
+  const [followUpModel, setFollowUpModel] = useState<OpenAiImageModel>(
+    GPT_IMAGE_2_5_SUNBURST
+  );
   const [engine, setEngine] = useState<AiImageEngine>('openai');
   const [followUpEngine, setFollowUpEngine] = useState<AiImageEngine>('openai');
   const [quality, setQuality] = useState<AiImageQuality>('high');
@@ -236,6 +248,16 @@ export default function ImageGenerator({
   globalAiUsagePolicyRef.current = globalAiUsagePolicy || null;
 
   useEffect(() => {
+    setModel(
+      isImage25Model(userSettings?.aiImage?.model)
+        ? userSettings.aiImage.model
+        : GPT_IMAGE_2_5_FLARE
+    );
+    setFollowUpModel(
+      isImage25Model(userSettings?.aiImage?.followUpModel)
+        ? userSettings.aiImage.followUpModel
+        : GPT_IMAGE_2_5_SUNBURST
+    );
     setEngine(parseAiImageEngine(userSettings?.aiImage?.engine));
     setFollowUpEngine(
       parseAiImageEngine(
@@ -249,6 +271,8 @@ export default function ImageGenerator({
       )
     );
   }, [
+    userSettings?.aiImage?.model,
+    userSettings?.aiImage?.followUpModel,
     userSettings?.aiImage?.engine,
     userSettings?.aiImage?.followUpEngine,
     userSettings?.aiImage?.quality,
@@ -458,11 +482,15 @@ export default function ImageGenerator({
   useImageHandlerRef.current = handleUseImage;
 
   async function persistImageModelPreference({
+    model: initialModel,
+    followUpModel: nextFollowUpModel,
     engine: initialEngine,
     followUpEngine: followUp,
     quality: initialQuality,
     followUpQuality: followUpImageQuality
   }: {
+    model?: OpenAiImageModel;
+    followUpModel?: OpenAiImageModel;
     engine?: AiImageEngine;
     followUpEngine?: AiImageEngine;
     quality?: AiImageQuality;
@@ -471,6 +499,8 @@ export default function ImageGenerator({
     if (!userId) return;
     try {
       const result = await updateImageGenerationSettings({
+        model: initialModel,
+        followUpModel: nextFollowUpModel,
         engine: initialEngine,
         followUpEngine: followUp,
         quality: initialQuality,
@@ -488,23 +518,42 @@ export default function ImageGenerator({
     }
   }
 
+  function handleModelChange(value: OpenAiImageModel) {
+    if (!userId) {
+      setEngine('openai');
+      setModel(value);
+    }
+    persistImageModelPreference({ engine: 'openai', model: value });
+  }
+
+  function handleFollowUpModelChange(value: OpenAiImageModel) {
+    if (!userId) {
+      setFollowUpEngine('openai');
+      setFollowUpModel(value);
+    }
+    persistImageModelPreference({
+      followUpEngine: 'openai',
+      followUpModel: value
+    });
+  }
+
   function handleEngineChange(value: 'gemini' | 'openai') {
-    setEngine(value);
+    if (!userId) setEngine(value);
     persistImageModelPreference({ engine: value });
   }
 
   function handleFollowUpEngineChange(value: 'gemini' | 'openai') {
-    setFollowUpEngine(value);
+    if (!userId) setFollowUpEngine(value);
     persistImageModelPreference({ followUpEngine: value });
   }
 
   function handleQualityChange(value: AiImageQuality) {
-    setQuality(value);
+    if (!userId) setQuality(value);
     persistImageModelPreference({ quality: value });
   }
 
   function handleFollowUpQualityChange(value: AiImageQuality) {
-    setFollowUpQuality(value);
+    if (!userId) setFollowUpQuality(value);
     persistImageModelPreference({ followUpQuality: value });
   }
 
@@ -567,6 +616,8 @@ export default function ImageGenerator({
       isShowingLoadingState={isShowingLoadingState}
       canAffordFollowUp={canAffordFollowUp}
       energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
+      followUpModel={followUpModel}
+      onFollowUpModelChange={handleFollowUpModelChange}
       followUpEngine={followUpEngine}
       onFollowUpEngineChange={handleFollowUpEngineChange}
       followUpQuality={followUpQuality}
@@ -739,6 +790,8 @@ export default function ImageGenerator({
         canAffordGeneration={canAffordGeneration}
         energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
         engine={engine}
+        model={model}
+        onModelChange={handleModelChange}
         onEngineChange={handleEngineChange}
         quality={quality}
         onQualityChange={handleQualityChange}
@@ -997,6 +1050,7 @@ export default function ImageGenerator({
         prompt: buildGenerationPrompt(prompt.trim()),
         referenceImageB64: referenceB64,
         engine,
+        model: engine === 'openai' ? model : undefined,
         quality: engine === 'openai' ? quality : undefined,
         requestId
       };
@@ -1118,6 +1172,7 @@ export default function ImageGenerator({
         previousImageId: generatedImageId ?? undefined, // Provider file handle, when we have one
         referenceImageB64: referenceB64, // The image itself; the only reference Gemini ever uses
         engine: followUpEngine,
+        model: followUpEngine === 'openai' ? followUpModel : undefined,
         quality: followUpEngine === 'openai' ? followUpQuality : undefined,
         requestId
       };
@@ -1389,7 +1444,5 @@ function parseAiImageEngine(value: unknown): AiImageEngine {
 }
 
 function parseAiImageQuality(value: unknown): AiImageQuality {
-  return value === 'low' || value === 'medium' || value === 'high'
-    ? value
-    : 'high';
+  return isAiImageQuality(value) ? value : 'high';
 }

@@ -1,3 +1,8 @@
+import AiImageEstimate from '~/components/AiImageEstimate';
+import {
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 import React from 'react';
 import type { AiEnergyDisplayPolicy } from '~/helpers/aiEnergyDisplay';
 import { css } from '@emotion/css';
@@ -22,10 +27,12 @@ interface FollowUpInputProps {
   isFollowUpGenerating: boolean;
   canAffordFollowUp?: boolean;
   energyLoading?: boolean;
+  followUpModel: OpenAiImageModel;
+  onFollowUpModelChange: (model: OpenAiImageModel) => void;
   followUpEngine?: 'gemini' | 'openai';
   onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
-  followUpQuality?: 'low' | 'medium' | 'high';
-  onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
+  followUpQuality?: AiImageQuality;
+  onFollowUpQualityChange: (quality: AiImageQuality) => void;
   themeColor?: string;
   energyPercent?: number;
   energyPolicy?: AiEnergyDisplayPolicy | null;
@@ -51,6 +58,8 @@ export default function FollowUpInput({
   isFollowUpGenerating,
   canAffordFollowUp = true,
   energyLoading = false,
+  followUpModel,
+  onFollowUpModelChange,
   followUpEngine = 'gemini',
   onFollowUpEngineChange,
   followUpQuality = 'high',
@@ -114,6 +123,12 @@ export default function FollowUpInput({
           justify-content: space-between;
           align-items: center;
           margin-bottom: 0.75rem;
+          gap: 0.6rem;
+
+          @media (max-width: ${mobileMaxWidth}) {
+            flex-direction: column;
+            align-items: stretch;
+          }
         `}
       >
         <label
@@ -136,9 +151,12 @@ export default function FollowUpInput({
           `}
         >
           <select
-            value={followUpEngine}
+            aria-label="Editing model"
+            value={followUpEngine === 'gemini' ? 'gemini' : followUpModel}
             onChange={(e) =>
-              onFollowUpEngineChange(e.target.value as 'gemini' | 'openai')
+              e.target.value === 'gemini'
+                ? onFollowUpEngineChange('gemini')
+                : onFollowUpModelChange(e.target.value as OpenAiImageModel)
             }
             disabled={isGenerating || isFollowUpGenerating}
             className={selectClassName}
@@ -147,16 +165,16 @@ export default function FollowUpInput({
               color: themeRole.getColor()
             }}
           >
-            <option value="openai">Image 2</option>
+            <option value="gpt-image-2.5-flare">Flare 2.5</option>
+            <option value="gpt-image-2.5-sunburst">Sunburst 2.5</option>
             <option value="gemini">Nano Banana</option>
           </select>
           {followUpEngine === 'openai' && (
             <select
+              aria-label="Editing quality"
               value={followUpQuality}
               onChange={(e) =>
-                onFollowUpQualityChange(
-                  e.target.value as 'low' | 'medium' | 'high'
-                )
+                onFollowUpQualityChange(e.target.value as AiImageQuality)
               }
               disabled={isGenerating || isFollowUpGenerating}
               className={selectClassName}
@@ -168,10 +186,17 @@ export default function FollowUpInput({
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
+              <option value="xhigh">Extra high</option>
+              <option value="max">Max</option>
             </select>
           )}
         </div>
       </div>
+      {followUpEngine === 'openai' && (
+        <div style={{ marginBottom: '0.75rem' }}>
+          <AiImageEstimate model={followUpModel} quality={followUpQuality} />
+        </div>
+      )}
       <div
         className={css`
           display: grid;

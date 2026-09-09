@@ -1,3 +1,7 @@
+import {
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 import React from 'react';
 import type { AiEnergyDisplayPolicy } from '~/helpers/aiEnergyDisplay';
 import { css } from '@emotion/css';
@@ -26,10 +30,12 @@ interface ImageAreaProps {
   canvasHasContent: boolean;
   canAffordFollowUp?: boolean;
   energyLoading?: boolean;
+  followUpModel: OpenAiImageModel;
+  onFollowUpModelChange: (model: OpenAiImageModel) => void;
   followUpEngine?: 'gemini' | 'openai';
   onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
-  followUpQuality?: 'low' | 'medium' | 'high';
-  onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
+  followUpQuality?: AiImageQuality;
+  onFollowUpQualityChange: (quality: AiImageQuality) => void;
   themeColor?: string;
   energyPercent?: number;
   energyPolicy?: AiEnergyDisplayPolicy | null;
@@ -71,6 +77,8 @@ export default function ImageArea({
   onSetHasBeenEdited,
   canAffordFollowUp,
   energyLoading,
+  followUpModel,
+  onFollowUpModelChange,
   followUpEngine = 'gemini',
   onFollowUpEngineChange,
   followUpQuality = 'high',
@@ -128,6 +136,8 @@ export default function ImageArea({
           onSetHasBeenEdited={onSetHasBeenEdited}
           canAffordFollowUp={canAffordFollowUp}
           energyLoading={energyLoading}
+          followUpModel={followUpModel}
+          onFollowUpModelChange={onFollowUpModelChange}
           followUpEngine={followUpEngine}
           onFollowUpEngineChange={onFollowUpEngineChange}
           followUpQuality={followUpQuality}

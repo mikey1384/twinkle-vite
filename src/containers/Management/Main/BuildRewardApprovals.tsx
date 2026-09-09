@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 import {
   rewardPanelClass,
@@ -65,9 +66,9 @@ export default function BuildRewardApprovals() {
         immediately.
       </p>
       {error && <p role="alert">{error}</p>}
-      <button disabled={busy} onClick={handleRefresh}>
+      <Button variant="outline" disabled={busy} onClick={handleRefresh}>
         Refresh requests
-      </button>
+      </Button>
       {!data && !error && <p role="status">Loading requests…</p>}
       {data?.reviews.length === 0 && (
         <p>No pending or approved reward releases.</p>
@@ -79,9 +80,9 @@ export default function BuildRewardApprovals() {
             {review.status} · Request #{review.id} · Saved version{' '}
             {review.sourceVersionId}
           </p>
-          <button disabled={busy} onClick={() => handleSelect(review.id)}>
+          <Button variant="outline" disabled={busy} onClick={() => handleSelect(review.id)}>
             Review code and earning rules
-          </button>
+          </Button>
           {selected?.id === review.id && (
             <div className={rewardPanelClass} style={{ marginTop: '1rem' }}>
               <RewardReviewDetails review={selected} />
@@ -94,32 +95,34 @@ export default function BuildRewardApprovals() {
                   placeholder="Required for rejection or revocation"
                 />
               </label>
-              <div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.7rem' }}>
                 {review.status === 'pending' ? (
                   <>
-                    <button
-                      data-primary
+                    <Button
+                      color="logoBlue"
                       disabled={busy}
                       onClick={() => handleDecision('approve')}
                     >
                       Approve this saved release
-                    </button>{' '}
-                    <button
-                      data-danger
+                    </Button>
+                    <Button
+                      variant="outline"
+                      color="red"
                       disabled={busy || !reason.trim()}
                       onClick={() => handleDecision('reject')}
                     >
                       Reject
-                    </button>
+                    </Button>
                   </>
                 ) : (
-                  <button
-                    data-danger
+                  <Button
+                    variant="outline"
+                      color="red"
                     disabled={busy || !reason.trim()}
                     onClick={() => handleDecision('revoke')}
                   >
                     Revoke approval
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -127,9 +130,9 @@ export default function BuildRewardApprovals() {
         </article>
       ))}
       {data?.nextCursor && (
-        <button disabled={busy} onClick={handleLoadOlder}>
+        <Button variant="outline" disabled={busy} onClick={handleLoadOlder}>
           Load older releases
-        </button>
+        </Button>
       )}
     </section>
   );

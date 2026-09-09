@@ -1,3 +1,7 @@
+import {
+  type AiImageQuality,
+  type OpenAiImageModel
+} from '~/helpers/aiImageModels';
 import request from './axiosInstance';
 import URL from '~/constants/URL';
 import axios from 'axios';
@@ -2428,12 +2432,32 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAIImageGenerationEstimate({
+      model,
+      quality
+    }: {
+      model: OpenAiImageModel;
+      quality: AiImageQuality;
+    }) {
+      const { data } = await request.post(
+        `${URL}/content/image/ai/estimate`,
+        { model, quality },
+        auth()
+      );
+      return data as {
+        model: OpenAiImageModel;
+        quality: AiImageQuality;
+        energyUnits: number;
+        fullBatteryUnits: number;
+      };
+    },
     async generateAIImage({
       prompt,
       previousImageId,
       previousResponseId,
       referenceImageB64,
       engine = 'openai',
+      model,
       quality = 'high',
       requestId
     }: {
@@ -2442,7 +2466,8 @@ export default function contentRequestHelpers({
       previousImageId?: string;
       referenceImageB64?: string;
       engine?: 'gemini' | 'openai';
-      quality?: 'low' | 'medium' | 'high';
+      model?: OpenAiImageModel;
+      quality?: AiImageQuality;
       requestId?: string;
     }) {
       try {
@@ -2454,6 +2479,7 @@ export default function contentRequestHelpers({
             previousResponseId,
             referenceImageB64,
             engine,
+            model,
             quality,
             requestId
           },
@@ -2470,6 +2496,7 @@ export default function contentRequestHelpers({
           responseId: data.responseId,
           imageId: data.imageId,
           engine: data.engine,
+          model: data.model,
           quality: data.quality,
           aiUsagePolicy: data.aiUsagePolicy
         };
@@ -2525,6 +2552,7 @@ export default function contentRequestHelpers({
       previousResponseId,
       referenceImageB64,
       engine = 'openai',
+      model,
       quality = 'high',
       requestId,
       requestFingerprint
@@ -2534,7 +2562,8 @@ export default function contentRequestHelpers({
       previousImageId?: string;
       referenceImageB64?: string;
       engine?: 'gemini' | 'openai';
-      quality?: 'low' | 'medium' | 'high';
+      model?: OpenAiImageModel;
+      quality?: AiImageQuality;
       requestId: string;
       requestFingerprint?: string;
     }) {
@@ -2542,13 +2571,14 @@ export default function contentRequestHelpers({
         const { data } = await request.post(
           `${URL}/content/image/ai/status`,
           requestFingerprint
-            ? { requestId, requestFingerprint, engine, quality }
+            ? { requestId, requestFingerprint, engine, model, quality }
             : {
                 prompt,
                 previousImageId,
                 previousResponseId,
                 referenceImageB64,
                 engine,
+                model,
                 quality,
                 requestId
               },

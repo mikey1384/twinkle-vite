@@ -23,6 +23,8 @@ const BRANCH_THUMBNAIL_CAPTURE_SETTLE_MS = 1600;
 
 const THUMBNAIL_NUDGE_MODEL_LABELS: Record<string, string> = {
   'gpt-image-2': 'GPT Image 2',
+  'gpt-image-2.5-flare': 'GPT Image 2.5 Flare',
+  'gpt-image-2.5-sunburst': 'GPT Image 2.5 Sunburst',
   'gemini-3-pro-image-preview': 'Gemini Image (Nano Banana)'
 };
 
@@ -618,7 +620,7 @@ export default function useMetadata({
         try {
           const result = await generateBuildThumbnail({
             buildId: Number(latestBuild.id || 0),
-            model: 'gpt-image-2',
+            model: 'gpt-image-2.5-flare',
             estimateOnly: true
           });
           const options = Array.isArray(result?.estimate?.options)
