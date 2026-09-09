@@ -22,6 +22,13 @@ Each is a 160 × 160 RGBA PNG under 45 KB.
 The exact prompts and original output locations are in
 [`chat-reaction-art-prompts.json`](./chat-reaction-art-prompts.json).
 
+The later expression revisions are recorded in
+[`balanced-style-transfer.json`](./reaction-face-revision/balanced-style-transfer.json).
+The current contour cleanup for Angry, Eyes, Wave, Clap, Thanks, Fire and Thinking
+is recorded in [`border-cleanup.json`](./reaction-face-revision/border-cleanup.json).
+These revisions replace drawn outer strokes and hard rim lighting with softer
+surface shading while retaining the reaction expressions and gestures.
+
 Built-in imagegen produced one image per reaction. The outputs contained baked
 checkerboard backgrounds, so user-authorized direct pixel cleanup removed the
 edge-connected background and resized the art with transparent padding. Original
