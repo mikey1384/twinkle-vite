@@ -855,23 +855,12 @@ function MessageBody({
           </div>
           <div
             className={MessageStyle.content}
-            style={
-              isGrouped && isMenuButtonsAllowed
-                ? { paddingRight: 100, minHeight: 44 }
-                : undefined
-            }
+            data-grouped-actions={isGrouped && isMenuButtonsAllowed}
           >
             {!isGrouped && (
               <div
-                className={css`
-                  min-height: ${isMenuButtonsAllowed ? '44px' : '2.4rem'};
-                  display: flex;
-                  align-items: baseline;
-                  flex-wrap: wrap;
-                  column-gap: 0.7rem;
-                  padding-right: ${isMenuButtonsAllowed ? '100px' : 0};
-                  overflow-wrap: anywhere;
-                `}
+                className={MessageStyle.authorRow}
+                data-message-actions={isMenuButtonsAllowed}
               >
                 <UsernameText
                   className={chatAuthorClass}

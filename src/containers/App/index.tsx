@@ -1699,7 +1699,8 @@ export default function App() {
     thumbnail,
     isCielChat,
     isZeroChat,
-    onAiUsagePolicyUpdate
+    onAiUsagePolicyUpdate,
+    onUploadProgress
   }: {
     channelId: number;
     content: string;
@@ -1715,6 +1716,7 @@ export default function App() {
     isCielChat: boolean;
     isZeroChat: boolean;
     onAiUsagePolicyUpdate?: (policy?: any) => void;
+    onUploadProgress?: (progress: number) => void;
   }) {
     const currentChannel = channelsObj[channelId];
     if (channelId === 0 && !recipientId) {
@@ -1907,12 +1909,17 @@ export default function App() {
       if (userChanged) {
         return;
       }
+      if (!Number.isFinite(loaded) || !Number.isFinite(total) || total <= 0) {
+        return;
+      }
+      const progress = Math.max(0, Math.min(1, loaded / total));
       onUpdateChatUploadProgress({
         channelId,
         subchannelId,
         path: filePath,
-        progress: loaded / total
+        progress
       });
+      onUploadProgress?.(progress);
     }
   }
 

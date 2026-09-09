@@ -13,7 +13,7 @@ export const chatTextClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     /* The legacy app root is 8px on phones. Keep chat readable without
        changing rem-based spacing throughout the rest of the application. */
-    font-size: max(16px, 1.6rem);
+    font-size: max(15px, 1.5rem);
   }
 `;
 

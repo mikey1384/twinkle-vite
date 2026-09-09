@@ -496,7 +496,6 @@ export default function Channel({
                 flexShrink: 0,
                 minWidth: 12,
                 height: 12,
-                outline: '1px solid #64748b',
                 borderRadius: '50%',
                 lineHeight: 1,
                 justifyContent: 'center',

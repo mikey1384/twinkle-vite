@@ -6,7 +6,7 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-export const modalFooterClass = css`
+export const modalFooterStyles = `
   width: 100%;
   padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
   border-top: none;
@@ -25,6 +25,8 @@ export const modalFooterClass = css`
     > button { font-size: 14px; }
   }
 `;
+
+export const modalFooterClass = css(modalFooterStyles);
 
 export const ModalFooterContext = createContext<{
   container: HTMLDivElement | null;

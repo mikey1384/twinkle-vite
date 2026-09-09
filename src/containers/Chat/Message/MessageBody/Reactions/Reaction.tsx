@@ -14,7 +14,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import ChatReactionEmoji from '~/components/ChatReactionEmoji';
 import { getChatReaction } from '~/constants/chatReactions';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { useOutsideClick } from '~/helpers/hooks';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -101,10 +101,21 @@ function Reaction({
         }
       }}
       className={css`
+        position: relative;
         display: inline-flex;
+        border-radius: 999px;
+        border: 1px solid var(--chat-reaction-border);
+        background: ${Color.targetGray()};
         > button {
           min-height: 32px;
           min-width: 36px;
+          border: 0;
+        }
+        > button:first-of-type {
+          background: var(--chat-reaction-selection);
+        }
+        > button:nth-of-type(2) {
+          border-left: 1px solid ${Color.borderGray()};
         }
         @media (max-width: 1024px), (pointer: coarse) {
           > button {
@@ -117,16 +128,66 @@ function Reaction({
           outline: 2px solid #334155;
           outline-offset: 2px;
         }
+        @media (max-width: ${mobileMaxWidth}) {
+          border: 0;
+          background: transparent;
+          /* Paint a slimmer pill within the full, separate touch targets. */
+          &::before {
+            content: '';
+            position: absolute;
+            inset: 6px 3px;
+            border: 1px solid var(--chat-reaction-border);
+            border-radius: 999px;
+            background: ${Color.targetGray()};
+            pointer-events: none;
+          }
+          > button {
+            position: relative;
+            isolation: isolate;
+          }
+          > button:first-of-type {
+            background: transparent;
+          }
+          > button:nth-of-type(2) {
+            border-left: 0;
+          }
+          > button::before {
+            content: '';
+            position: absolute;
+            inset: 7px 0;
+            pointer-events: none;
+            z-index: -1;
+          }
+          > button:first-of-type::before {
+            left: 4px;
+            border-radius: 999px 0 0 999px;
+            background: var(--chat-reaction-selection);
+          }
+          > button:nth-of-type(2)::before {
+            right: 4px;
+            border-left: 1px solid ${Color.borderGray()};
+            border-radius: 0 999px 999px 0;
+          }
+          > button:hover:not(:disabled) {
+            box-shadow: none;
+          }
+          > button:hover:not(:disabled)::before {
+            box-shadow: inset 0 0 0 999px rgba(15, 23, 42, 0.05);
+          }
+        }
       `}
-      style={{
-        borderRadius: 999,
-        border: `1px solid ${
-          userReacted ? reactionButtonColor : Color.borderGray()
-        }`,
-        background: Color.targetGray(),
-        marginRight: '0.5rem',
-        zIndex: 5000
-      }}
+      style={
+        {
+          '--chat-reaction-border': userReacted
+            ? reactionButtonColor
+            : Color.borderGray(),
+          '--chat-reaction-selection': userReacted
+            ? getReactionButtonColor(reactionButtonOpacity)
+            : 'transparent',
+          marginRight: '0.5rem',
+          zIndex: 5000
+        } as React.CSSProperties
+      }
     >
       <button
         type="button"
@@ -141,9 +202,6 @@ function Reaction({
         disabled={isPending}
         style={{
           appearance: 'none',
-          background: userReacted
-            ? getReactionButtonColor(reactionButtonOpacity)
-            : 'transparent',
           borderRadius: '999px 0 0 999px',
           border: 0,
           boxSizing: 'border-box',
@@ -177,7 +235,7 @@ function Reaction({
         aria-describedby={tooltipContext ? tooltipId : undefined}
         disabled={reactionCount === 0}
         style={{
-          appearance: 'none', border: 0, borderLeft: `1px solid ${Color.borderGray()}`,
+          appearance: 'none',
           borderRadius: '0 999px 999px 0', padding: '3px 8px', fontFamily: 'inherit',
           fontSize: 13, fontWeight: 600, color: '#334155', background: 'transparent',
           cursor: reactionCount ? 'pointer' : 'default'

@@ -1,10 +1,12 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
+import ModalFooter from '~/components/Modal/Footer';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import FileInfo from './FileInfo';
+import UploadProgress from './UploadProgress';
 import Icon from '~/components/Icon';
 import { returnImageFileFromUrl } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -117,6 +119,7 @@ function UploadFileModal({
   const imageAttachmentsRef = useRef<ImageAttachment[]>([]);
   const isMountedRef = useRef(true);
   const [multiImageUploading, setMultiImageUploading] = useState(false);
+  const [fileUploadProgress, setFileUploadProgress] = useState<number | null>(null);
   const [customUploadSubmitting, setCustomUploadSubmitting] = useState(false);
   const customUploadSubmittingRef = useRef(false);
   const [embeddingAttachmentId, setEmbeddingAttachmentId] = useState('');
@@ -312,9 +315,29 @@ function UploadFileModal({
   }, [aiFileNotSupported, imageAttachments.length, isMultiImageMode]);
   const isModalInteractionLocked =
     multiImageUploading || customUploadSubmitting || !!embeddingAttachmentId;
+  const uploadProgress = useMemo(() => {
+    if (!isMultiImageMode || imageAttachments.length <= 1) {
+      return fileUploadProgress;
+    }
+    if (imageAttachments.every((attachment) => attachment.status === 'selected')) {
+      return null;
+    }
+    return (
+      imageAttachments.reduce((total, attachment) => {
+        const progress = Number.isFinite(attachment.progress)
+          ? attachment.progress
+          : 0;
+        return total + Math.max(0, Math.min(1, progress));
+      }, 0) / imageAttachments.length
+    );
+  }, [fileUploadProgress, imageAttachments, isMultiImageMode]);
+  const showUploadProgress =
+    multiImageUploading &&
+    !isCustomUploadMode &&
+    (isMultiImageMode ? imageAttachments.length > 0 : !!selectedFile);
 
   async function handleSubmit() {
-    if (interactionLocked) return;
+    if (interactionLocked || isModalInteractionLocked) return;
 
     if (isCustomUploadMode) {
       if (customUploadSubmittingRef.current) {
@@ -377,6 +400,7 @@ function UploadFileModal({
     }
 
     setMultiImageUploading(true);
+    setFileUploadProgress(null);
     let didClose = false;
     try {
       await uploadHandler({
@@ -388,6 +412,7 @@ function UploadFileModal({
         isCielChat,
         isZeroChat,
         onAiUsagePolicyUpdate,
+        onUploadProgress: handleFileUploadProgress,
         userId,
         recipientId,
         recipientUsername,
@@ -629,7 +654,8 @@ function UploadFileModal({
               />
             )}
           </main>
-          <footer>
+          <ModalFooter>
+            {showUploadProgress && <UploadProgress progress={uploadProgress} />}
             {shouldBlockForAiUnsupportedFile && (
               <div
                 style={{
@@ -654,13 +680,14 @@ function UploadFileModal({
             )}
             <Button
               variant="ghost"
-              style={{ marginRight: '0.7rem' }}
               disabled={isModalInteractionLocked}
               onClick={handleHide}
             >
               Cancel
             </Button>
             <Button
+              loading={isModalInteractionLocked}
+              aria-busy={isModalInteractionLocked}
               disabled={
                 interactionLocked ||
                 (isCustomUploadMode
@@ -683,7 +710,7 @@ function UploadFileModal({
             >
               Upload
             </Button>
-          </footer>
+          </ModalFooter>
         </LegacyModalLayout>
       </Modal>
       {alertModalShown && (
@@ -854,6 +881,7 @@ function UploadFileModal({
     }
 
     setMultiImageUploading(true);
+    setFileUploadProgress(null);
     setMultiImageUploadErrorText('');
     onScrollToBottom();
 
@@ -980,6 +1008,13 @@ function UploadFileModal({
     const isTopicMessage =
       (selectedTab === 'topic' || isRespondingToSubject) && topicId;
 
+    setImageAttachmentsSafely((prev) =>
+      prev.map((item) =>
+        item.id === attachment.id
+          ? { ...item, status: 'uploading', progress: 0, error: '' }
+          : item
+      )
+    );
     try {
       await uploadHandler({
         channelId,
@@ -990,6 +1025,14 @@ function UploadFileModal({
         isCielChat,
         isZeroChat,
         onAiUsagePolicyUpdate,
+        onUploadProgress: (progress: number) => {
+          handleFileUploadProgress(progress);
+          setImageAttachmentsSafely((prev) =>
+            prev.map((item) =>
+              item.id === attachment.id ? { ...item, progress } : item
+            )
+          );
+        },
         userId,
         recipientId,
         recipientUsername,
@@ -999,11 +1042,23 @@ function UploadFileModal({
         thumbnail: ''
       });
     } catch (error: any) {
+      setImageAttachmentsSafely((prev) =>
+        prev.map((item) =>
+          item.id === attachment.id
+            ? { ...item, status: 'error', error: 'upload' }
+            : item
+        )
+      );
       if (error.message === 'ai_file_not_supported') {
         setAiFileNotSupportedSafely(true);
       }
       throw error;
     }
+  }
+
+  function handleFileUploadProgress(progress: number) {
+    if (!isMountedRef.current) return;
+    setFileUploadProgress(progress);
   }
 
   async function uploadImagesForOneMessage(

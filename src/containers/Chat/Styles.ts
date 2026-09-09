@@ -19,11 +19,37 @@ export const MessageStyle = {
     }
   `,
   content: css`
+    --chat-message-actions-width: 100px;
+    --chat-message-actions-height: 44px;
     flex: 1 1 0;
     min-width: 0;
     display: flex;
     flex-direction: column;
     position: relative;
+    &[data-grouped-actions='true'] {
+      padding-right: var(--chat-message-actions-width);
+      min-height: var(--chat-message-actions-height);
+    }
+    @media (max-width: ${mobileMaxWidth}) {
+      /* Two 30px controls, their 4px gap, and 8px clear of the text. */
+      --chat-message-actions-width: 72px;
+      --chat-message-actions-height: 30px;
+    }
+  `,
+  authorRow: css`
+    min-height: 2.4rem;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    column-gap: 0.7rem;
+    overflow-wrap: anywhere;
+    &[data-message-actions='true'] {
+      min-height: var(--chat-message-actions-height);
+      padding-right: var(--chat-message-actions-width);
+    }
+    @media (max-width: ${mobileMaxWidth}) {
+      align-content: center;
+    }
   `,
   messageWrapper: css`
     margin-top: 0.5rem;

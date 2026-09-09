@@ -36,6 +36,8 @@ test('floating chat labels and arrows retain 4.5:1 contrast in every profile pal
   assert.equal(Object.keys(theme.themeRegistry).length,11);
   for(const name of Object.keys(theme.themeRegistry)) {
     const colors=styles.chatScrollButtonStyle(name);
+    assert.equal(colors['--chat-scroll-text'], name === 'gold' ? '#000' : '#fff', name);
+    assert.equal(colors['--chat-scroll-hover-text'], colors['--chat-scroll-text'], name + ' hover');
     for(const [background,foreground] of [['--chat-scroll-bg','--chat-scroll-text'],['--chat-scroll-hover-bg','--chat-scroll-hover-text']]) {
       const values=[luminance(colors[background]),luminance(colors[foreground])].sort((a,b)=>b-a);
       assert.ok((values[0]+0.05)/(values[1]+0.05)>=4.5,`${name}/${background}`);
