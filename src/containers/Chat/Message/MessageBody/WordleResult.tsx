@@ -34,6 +34,7 @@ export default function WordleResult({
     actions: { onSetReplyTarget }
   } = useContext(LocalContext);
   const { isSolved, numGuesses } = wordleResult;
+  const isQuickSolve = isSolved && (numGuesses === 1 || numGuesses === 2);
 
   const {
     guessLabel,
@@ -60,9 +61,10 @@ export default function WordleResult({
       tabIndex={0}
       aria-label="Wordle result"
       className={css`
+        container-type: inline-size;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
         border-radius: ${borderRadius};
-        border: 1px solid ${isSolved ? Color.gold(0.55) : Color.gray(0.4)};
-        border-top: 3px solid ${isSolved ? Color.gold() : Color.gray()};
         .menu-button {
           display: ${dropdownShown ? 'block' : 'none'};
         }
@@ -75,13 +77,10 @@ export default function WordleResult({
         .reward-amount-label {
           display: inline-block;
           white-space: nowrap;
-          color: ${isSolved ? Color.gold() : 'inherit'};
-          font-size: ${numGuesses <= 2 ? '2.6rem' : '2.2rem'};
-          font-weight: 800;
+          color: ${isQuickSolve ? Color.gold() : 'inherit'};
+          font-size: ${isQuickSolve ? '2.6rem' : 'inherit'};
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: ${numGuesses <= 2
-              ? 'max(22px, 2.3rem)'
-              : 'max(20px, 2rem)'};
+            font-size: ${isQuickSolve ? 'max(22px, 2.3rem)' : 'inherit'};
           }
         }
         @media (max-width: 1024px), (pointer: coarse) {
@@ -154,14 +153,18 @@ export default function WordleResult({
       </div>
       <div
         className={css`
+          grid-area: 1 / 1;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
           width: 100%;
-          padding: 1.2rem 56px 0.7rem;
+          padding: max(28px, 2.8rem) 56px;
           font-size: 1.6rem;
           text-align: center;
+          @container (min-width: 720px) {
+            padding-block: 1.4rem;
+          }
           @media (max-width: ${mobileMaxWidth}) {
             font-size: max(14px, 1.4rem);
           }
@@ -196,7 +199,9 @@ export default function WordleResult({
             {guessLabel}
           </p>
         )}
-        <div>{resultLabel}</div>
+        <div style={{ maxWidth: '100%', overflowWrap: 'anywhere' }}>
+          {resultLabel}
+        </div>
         <p style={{ marginTop: '0.5rem' }}>{solutionLabel}</p>
         {bonusLabel && (
           <p
@@ -206,11 +211,7 @@ export default function WordleResult({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.6rem',
-              padding: '0.3rem 1rem',
-              borderRadius: '2rem',
-              fontSize: 'max(11px, 1.2rem)',
-              background: Color.gold(),
-              color: Color.darkBlueGray()
+              color: Color.gold()
             }}
           >
             <Icon icon="bolt" />
@@ -219,11 +220,13 @@ export default function WordleResult({
         )}
       </div>
       <div
-        style={{
-          textAlign: 'right',
-          padding: '0 1.2rem 0.7rem'
-        }}
         className={css`
+          grid-area: 1 / 1;
+          align-self: end;
+          justify-self: end;
+          margin: 0 1.2rem 0.7rem;
+          text-align: right;
+          white-space: nowrap;
           font-size: max(11px, 1.1rem);
         `}
       >

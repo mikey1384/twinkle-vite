@@ -97,20 +97,16 @@ export const chatChannelRowClass = css`
     text-decoration: none;
   }
   position: relative;
-  width: calc(100% - 1rem);
+  width: 100%;
   height: 6.5rem;
-  margin: 0 0.5rem;
-  padding: 1rem 0.8rem;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  padding: 1rem;
+  border: 0;
   cursor: pointer;
   touch-action: manipulation;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 120ms ease;
 
   &[aria-current='page'] {
-    background: var(--chat-title-bg, #edf4ff);
-    border-color: var(--chat-border, #cfdef5);
-    box-shadow: inset 3px 0 0 var(--theme-bg, #418ceb);
+    background: #e8eaed;
   }
   &:focus-visible {
     outline: 2px solid var(--chat-focus-ring, #475569);
@@ -118,10 +114,10 @@ export const chatChannelRowClass = css`
   }
   @media (hover: hover) and (pointer: fine) {
     &:hover {
-      background: var(--chat-hover-bg, #edf2f8);
+      background: #f0f1f3;
     }
     &[aria-current='page']:hover {
-      background: var(--chat-title-bg, #edf4ff);
+      background: #e8eaed;
     }
   }
   @media (prefers-reduced-motion: reduce) {
