@@ -29,8 +29,8 @@ older reading notes still need reconciliation and changed sources need rereading
 ## Remaining work and rollout limits
 
 - The video-picker, Top Scorers, zero-game statistics, keyboard-access,
-  thumbnail-progress and user-list findings are now fixed locally on
-  `chat-ux-upgrade`. See [fixes and verification](chat-ux-audit-fixes.md).
+  thumbnail-progress and user-list fixes were incorporated into `master` on
+  2026-09-09. See [fixes and verification](chat-ux-audit-fixes.md).
 - Full all-theme/device validation and remaining component reads.
 - Reward submission still uses multiple backend writes; UI guards do not make
   the transaction atomic or guarantee idempotency.

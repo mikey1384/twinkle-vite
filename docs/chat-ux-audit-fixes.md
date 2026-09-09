@@ -1,6 +1,7 @@
 # Frontend audit fixes — chat-ux-upgrade
 
-Status: fixed on `chat-ux-upgrade`; these fixes are not merged into master.
+Status: incorporated into `master` on 2026-09-09 at the user's request. The
+`chat-ux-upgrade` branch is being retired after production deployment succeeds.
 
 ## Fixed findings
 
