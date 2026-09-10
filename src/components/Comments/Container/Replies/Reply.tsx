@@ -502,6 +502,7 @@ function Reply({
                       <AiEnergySponsorButton comment={reply} theme={theme} />
                     ) : !replyIsEmpty ? (
                       <RichText
+                        readAloud
                         isAIMessage={
                           uploader?.id === Number(ZERO_TWINKLE_ID) ||
                           uploader?.id === Number(CIEL_TWINKLE_ID)

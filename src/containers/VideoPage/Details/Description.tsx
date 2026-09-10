@@ -10,6 +10,7 @@ const doneLabel = 'Done';
 const noDescriptionLabel = 'No description';
 
 export default function Description({
+  videoId,
   description,
   descriptionExceedsCharLimit,
   determineEditButtonDoneStatus,
@@ -20,6 +21,7 @@ export default function Description({
   onEditCancel,
   onEditFinish
 }: {
+  videoId: number;
   description: string;
   descriptionExceedsCharLimit: (v: string) => any;
   determineEditButtonDoneStatus: () => boolean;
@@ -80,6 +82,11 @@ export default function Description({
         </>
       ) : (
         <RichText
+          contentType="video"
+          contentId={videoId}
+          section="description"
+          readAloud
+          aiActionPlacement="inline"
           style={{
             whiteSpace: 'pre-wrap',
             overflowWrap: 'break-word',

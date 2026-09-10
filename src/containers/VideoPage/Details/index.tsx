@@ -423,6 +423,7 @@ export default function Details({
               `}
             >
               <Description
+                videoId={Number(videoId)}
                 onChange={(event) =>
                   handleDescriptionChange(event.target.value)
                 }

@@ -14,6 +14,7 @@ import {
 } from './helpers/renderMode';
 import AIAudioButton from './AIAudioButton';
 import ChatMessageTools from './ChatMessageTools';
+import { isReadAloudEligible, readAloudText } from './readAloud';
 import InvisibleTextContainer, {
   stripMarkdownLinkUrls
 } from './InvisibleTextContainer';
@@ -313,6 +314,7 @@ function RichText({
   isAIMessage,
   disableImageModal,
   isAudioButtonShown = true,
+  readAloud,
   aiActionPlacement = 'floating',
   compactEmbedPreview,
   subjectPreviewVariant,
@@ -335,6 +337,9 @@ function RichText({
   contentType?: string;
   hideDictation?: boolean;
   isAudioButtonShown?: boolean;
+  // Show the read-aloud speaker for non-bot text (long enough to be worth
+  // reading). Bot messages show it regardless.
+  readAloud?: boolean;
   aiActionPlacement?: 'floating' | 'inline';
   compactEmbedPreview?: boolean;
   subjectPreviewVariant?: RichTextSubjectPreviewVariant;
@@ -356,6 +361,15 @@ function RichText({
   voice?: string;
 }) {
   text = text || '';
+  const readAloudToolsShown =
+    !hideDictation &&
+    !isStreaming &&
+    (isAIMessage || (readAloud && isReadAloudEligible(text)));
+  // Bot messages keep their caller-chosen placement; plain text always gets
+  // the inline row, because the floating row sits on top of a comment's
+  // Like/Reply/share controls.
+  const toolsPlacement = isAIMessage ? aiActionPlacement : 'inline';
+  const spokenText = isAIMessage ? text : readAloudText(text);
   const contentRevision = useMemo(
     () => (isStreaming ? 'streaming' : createStringRevision(String(text))),
     [isStreaming, text]
@@ -967,14 +981,14 @@ function RichText({
           </Button>
         )}
       </div>
-      {isAIMessage && !hideDictation && !isStreaming && (
+      {readAloudToolsShown && (
         contentType === 'chat' ? (
           <ChatMessageTools text={text} voice={voice}
             contentKey={`${contentId}-${contentType}-${section}`}
             audioShown={isAudioButtonShown} />
         ) : (
         <>
-          {aiActionPlacement === 'inline' ? (
+          {toolsPlacement === 'inline' ? (
             <div
               style={{
                 marginTop: '0.7rem',
@@ -984,23 +998,25 @@ function RichText({
                 gap: '0.5rem'
               }}
             >
-              <Button
-                variant="soft"
-                tone="raised"
-                onClick={handleCopyMessage}
-                aria-label={copySuccess ? 'Message copied' : 'Copy message'}
-                style={{
-                  padding: '0.5rem 0.7rem',
-                  lineHeight: 1
-                }}
-                color="darkerGray"
-              >
-                <Icon icon={copySuccess ? 'check' : 'copy'} />
-              </Button>
+              {isAIMessage && (
+                <Button
+                  variant="soft"
+                  tone="raised"
+                  onClick={handleCopyMessage}
+                  aria-label={copySuccess ? 'Message copied' : 'Copy message'}
+                  style={{
+                    padding: '0.5rem 0.7rem',
+                    lineHeight: 1
+                  }}
+                  color="darkerGray"
+                >
+                  <Icon icon={copySuccess ? 'check' : 'copy'} />
+                </Button>
+              )}
               {isAudioButtonShown && (
                 <AIAudioButton
                   contentKey={`${contentId}-${contentType}-${section}`}
-                  text={text}
+                  text={spokenText}
                   voice={voice}
                 />
               )}
@@ -1016,23 +1032,25 @@ function RichText({
                 gap: '0.5rem'
               }}
             >
-              <Button
-                variant="soft"
-                tone="raised"
-                onClick={handleCopyMessage}
-                aria-label={copySuccess ? 'Message copied' : 'Copy message'}
-                style={{
-                  padding: '0.5rem 0.7rem',
-                  lineHeight: 1
-                }}
-                color="darkerGray"
-              >
-                <Icon icon={copySuccess ? 'check' : 'copy'} />
-              </Button>
+              {isAIMessage && (
+                <Button
+                  variant="soft"
+                  tone="raised"
+                  onClick={handleCopyMessage}
+                  aria-label={copySuccess ? 'Message copied' : 'Copy message'}
+                  style={{
+                    padding: '0.5rem 0.7rem',
+                    lineHeight: 1
+                  }}
+                  color="darkerGray"
+                >
+                  <Icon icon={copySuccess ? 'check' : 'copy'} />
+                </Button>
+              )}
               {isAudioButtonShown && (
                 <AIAudioButton
                   contentKey={`${contentId}-${contentType}-${section}`}
-                  text={text}
+                  text={spokenText}
                   voice={voice}
                 />
               )}

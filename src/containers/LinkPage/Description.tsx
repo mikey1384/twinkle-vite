@@ -3,6 +3,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import ShareButton from '~/components/Buttons/ShareButton';
 import RichText from '~/components/Texts/RichText';
+import ReadAloudButton from '~/components/Texts/RichText/ReadAloudButton';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import Input from '~/components/Texts/Input';
@@ -299,11 +300,26 @@ export default function Description({
             </h2>
           )}
         </div>
-        <div>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1rem',
+            flexWrap: 'wrap'
+          }}
+        >
           <small>
             {addedByLabel} <UsernameText user={uploader} /> (
             {timeSince(timeStamp)})
           </small>
+          {!isEditing && (
+            <ReadAloudButton
+              text={description || ''}
+              contentKey={`url-${linkId}-description`}
+            />
+          )}
         </div>
       </div>
       <div

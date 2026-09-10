@@ -464,6 +464,7 @@ export default function TargetContent({
                       ) : (
                         <RichText
                           theme={theme}
+                          readAloud
                           isAIMessage={
                             comment.uploader.id === Number(ZERO_TWINKLE_ID) ||
                             comment.uploader.id === Number(CIEL_TWINKLE_ID)

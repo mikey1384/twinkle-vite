@@ -290,6 +290,7 @@ export default function Content({
         }
         return (
           <RichText
+            readAloud
             isAIMessage={
               uploader?.id === Number(ZERO_TWINKLE_ID) ||
               uploader?.id === Number(CIEL_TWINKLE_ID)
@@ -541,6 +542,7 @@ export default function Content({
               contentId={contentId}
               contentType={contentType}
               section="description"
+              readAloud
               theme={theme}
             >
               {description || ''}
@@ -592,6 +594,7 @@ export default function Content({
               contentId={contentId}
               contentType={contentType}
               section="description"
+              readAloud
               theme={theme}
             >
               {Description}
