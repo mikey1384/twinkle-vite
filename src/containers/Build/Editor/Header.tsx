@@ -453,7 +453,6 @@ interface HeaderProps {
   rewardApprovalPrompt: number;
   hasUnsavedRewardChanges: boolean;
   rewardsBeingPrepared: boolean;
-  onAskLumineForRewards: (reviewNote: string) => void;
   onTogglePublish: () => void;
   onUnpublish?: () => void;
   onDelete?: () => void;
@@ -694,7 +693,6 @@ export default function Header({
   rewardApprovalPrompt,
   hasUnsavedRewardChanges,
   rewardsBeingPrepared,
-  onAskLumineForRewards,
   onTogglePublish,
   onUnpublish
 }: HeaderProps) {
@@ -1334,13 +1332,9 @@ export default function Header({
             setRewardsOpen(false);
             rewardStatus.refresh();
           }}
-          onAskLumine={(reviewNote) => {
-            setRewardsOpen(false);
-            onAskLumineForRewards(reviewNote);
-          }}
           onStatusChange={rewardStatus.refresh}
           hasUnsavedChanges={hasUnsavedRewardChanges}
-          preparing={rewardsBeingPrepared}
+          agentEditing={rewardsBeingPrepared}
           changeKey={rewardChangeKey}
         />
       )}

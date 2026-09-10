@@ -25,6 +25,15 @@ export interface RewardReview {
   reason: string;
   createdAt: number;
   config: RewardConfig;
+  ownerUsername?: string | null;
+  reviewedAt?: number | null;
+  // Reviewer context returned by the single-review load.
+  detectedRuleIds?: string[];
+  isLatest?: boolean;
+  isLive?: boolean;
+  publishedVersionId?: number | null;
+  appLifetime?: { xp: number; coins: number };
+  awarded?: { awards: number; earners: number; xp: number; coins: number };
   events?: Array<{
     actorId: number;
     action: string;
@@ -44,7 +53,6 @@ export interface RewardSettings {
   } | null;
   state:
     | 'removed'
-    | 'not_configured'
     | 'needs_review'
     | 'in_review'
     | 'approved'

@@ -82,7 +82,12 @@ export function RewardConfigSummary({ config }: { config: RewardConfig }) {
           </div>
         ))}
       </div>
-      {config.rules.length === 0 && <p>This release turns rewards off.</p>}
+      {config.rules.length === 0 && (
+        <p>
+          No earning rules yet. The reviewer writes them while approving; a
+          request cannot be approved without at least one rule.
+        </p>
+      )}
       {config.rules.map((rule) => (
         <article key={rule.id}>
           <h4>

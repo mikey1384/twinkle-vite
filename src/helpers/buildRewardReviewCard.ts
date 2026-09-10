@@ -79,7 +79,7 @@ export function formatBuildRewardRulesSummary(
   rules?: BuildRewardReviewRuleSummary[] | null
 ) {
   const { ruleCount, maxXP, maxCoins } = summarizeBuildRewardRules(rules);
-  if (ruleCount === 0) return 'No earning rules';
+  if (ruleCount === 0) return 'Earning rules set by the admin at approval';
   const ruleLabel = `${ruleCount} ${ruleCount === 1 ? 'rule' : 'rules'}`;
   const amounts = [
     maxXP > 0 ? `${formatAmount(maxXP)} XP` : '',

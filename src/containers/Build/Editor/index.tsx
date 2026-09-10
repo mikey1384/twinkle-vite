@@ -12,7 +12,6 @@ import type {
 } from './ChatPanel/types';
 import CollaborationPanel from './CollaborationPanel';
 import Header from './Header';
-import { rewardHelpMessage } from '~/components/Build/Rewards/approvalPresentation';
 import VersionStartPanel from './VersionStartPanel';
 import ForkHistoryModal from '~/components/Modals/BuildForkHistoryModal';
 import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
@@ -2063,9 +2062,6 @@ export default function BuildEditor({
         rewardApprovalPrompt={rewardApprovalPrompt}
         hasUnsavedRewardChanges={rewardDraftDirty}
         rewardsBeingPrepared={currentBuildRunView.generating}
-        onAskLumineForRewards={(reviewNote) =>
-          handleSendMessage(rewardHelpMessage(reviewNote))
-        }
         onTogglePublish={handlePublish}
         onUnpublish={handleUnpublish}
         onDelete={

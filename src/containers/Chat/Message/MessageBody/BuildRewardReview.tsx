@@ -44,6 +44,9 @@ export default function BuildRewardReview({
   const sentByMe = Number(sender.id) === Number(myId);
   const isReviewer = Number(myId) === ADMIN_USER_ID;
   const rulesSummary = formatBuildRewardRulesSummary(review?.rules);
+  // Budgets exist only once the reviewer has written rules; a pending request
+  // carries none, so showing zeros would read as a broken card.
+  const hasRules = Array.isArray(review?.rules) && review.rules.length > 0;
 
   if (!reviewId || !buildId) return null;
 
@@ -151,7 +154,7 @@ export default function BuildRewardReview({
               <>
                 This release of <strong>{title}</strong> was not approved.
                 {sentByMe
-                  ? ' Lumine can help make the changes and send a new version.'
+                  ? ' Read the admin’s note, update your app, save, and send the new version for review.'
                   : ''}
               </>
             ) : status === 'revoked' ? (
@@ -172,16 +175,18 @@ export default function BuildRewardReview({
               <span>{reason}</span>
             </div>
           ) : null}
-          <div className={budgetClass}>
-            <span>
-              Daily budget {formatAmount(budgets.dailyXP)} XP ·{' '}
-              {formatAmount(budgets.dailyCoins)} Coins
-            </span>
-            <span>
-              Lifetime {formatAmount(budgets.lifetimeXP)} XP ·{' '}
-              {formatAmount(budgets.lifetimeCoins)} Coins
-            </span>
-          </div>
+          {hasRules ? (
+            <div className={budgetClass}>
+              <span>
+                Daily budget {formatAmount(budgets.dailyXP)} XP ·{' '}
+                {formatAmount(budgets.dailyCoins)} Coins
+              </span>
+              <span>
+                Lifetime {formatAmount(budgets.lifetimeXP)} XP ·{' '}
+                {formatAmount(budgets.lifetimeCoins)} Coins
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
     </BuildMessageCard>

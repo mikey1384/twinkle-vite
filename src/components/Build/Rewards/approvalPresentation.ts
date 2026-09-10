@@ -1,23 +1,25 @@
 import type { RewardSettings } from './types';
 
-export function rewardHelpMessage(reviewNote: string) {
-  const request =
-    'Please help prepare the XP and Coin rewards for this app and address any admin feedback. Handle the setup for me, then let me know when this version is ready to send for approval.';
-  return reviewNote
-    ? `${request}\n\nAdmin feedback on the rewards proposal:\n${reviewNote}`
-    : request;
-}
-
+// Plain-language status for creators (kids and teens). There is nothing for
+// them or their Lumine to prepare: they save code, send it, and an admin reads
+// the code and decides what the app can pay. Every string here must make sense
+// without knowing rule IDs, budgets or answer keys.
 export function rewardApprovalPresentation(
   settings: RewardSettings,
   hasUnsavedChanges = false
 ) {
+  // An API that predates this client may still report the retired
+  // 'not_configured' state; for the creator that simply means "send it".
+  const serverState: RewardSettings['state'] =
+    (settings.state as string) === 'not_configured'
+      ? 'needs_review'
+      : settings.state;
   const state =
     hasUnsavedChanges && settings.approvalRequired
       ? 'needs_review'
-      : hasUnsavedChanges && settings.state === 'removed'
+      : hasUnsavedChanges && serverState === 'removed'
         ? 'check_changes'
-        : settings.state;
+        : serverState;
   const messages = {
     removed: {
       title: 'No reward approval needed',
@@ -29,30 +31,22 @@ export function rewardApprovalPresentation(
       detail:
         'When you publish, we’ll save and check your changes. If you added rewards back, this version will need approval.'
     },
-    not_configured: {
-      title: settings.approvalRequired
-        ? 'Reward details aren’t ready yet'
-        : 'Lumine handles the setup',
-      detail: settings.approvalRequired
-        ? 'This app uses rewards, but Lumine still needs to prepare the earning rules before you can send it for approval.'
-        : 'Tell Lumine how you want people to earn rewards. Lumine will prepare the details for you.'
-    },
     needs_review: {
       title: settings.isUpdate
         ? 'Your update needs approval'
-        : 'Needs approval',
+        : 'This app needs approval before it can go public',
       detail:
-        'An admin needs to check this version before you can publish it. You can keep building while you wait.'
+        'Apps that give real XP and Coins are checked by a Twinkle admin first. Send this version and the admin will read your code and decide what people can earn. You can keep building while you wait.'
     },
     in_review: {
-      title: 'In review',
+      title: 'Waiting for the admin',
       detail:
-        'Your app is waiting for an admin to check it. If you make more changes, send the new version for review.'
+        'Your app has been sent. The admin will read your code and set the rewards. If you save more changes, you’ll need to send the new version.'
     },
     approved: {
-      title: 'Ready to publish',
+      title: 'Approved · ready to publish',
       detail:
-        'This version is approved! You can publish it when you’re ready. More changes that keep rewards will need another review.'
+        'The admin approved this version and set what people can earn. Publish it when you’re ready. Changes that keep rewards will need another approval.'
     },
     published: {
       title: 'Approved and live',
@@ -60,14 +54,14 @@ export function rewardApprovalPresentation(
         'People can earn rewards in your published app. Updates that keep rewards need approval before they go live.'
     },
     changes_requested: {
-      title: 'A change is needed',
+      title: 'Not approved yet',
       detail:
-        'The admin left a note. Lumine can help you make the changes and get your app ready for another review.'
+        'The admin left a note below. Make the changes, save, and send the new version for review.'
     },
     paused: {
       title: 'Rewards are paused',
       detail:
-        'The admin paused rewards for this version. Lumine can help you prepare an update for review.'
+        'The admin paused rewards for this version and left a note below. Update your app, save, and send it for review again.'
     }
   };
   return { state, ...messages[state] };

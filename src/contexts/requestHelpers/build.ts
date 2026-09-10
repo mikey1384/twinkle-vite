@@ -521,9 +521,9 @@ export default function buildRequestHelpers({
       const { data } = await request.get(`${URL}/build/reward-reviews`, {...auth(), params: {beforeId}});
       return data;
     },
-    async decideBuildRewardReview(reviewId: number, decision: string, reason: string) {
+    async decideBuildRewardReview(reviewId: number, decision: string, reason: string, config?: unknown) {
       try {
-        const { data } = await request.post(`${URL}/build/reward-reviews/${reviewId}`, { decision, reason }, getBuildRequestConfig({maxRetries: 0}));
+        const { data } = await request.post(`${URL}/build/reward-reviews/${reviewId}`, { decision, reason, ...(config === undefined ? {} : { config }) }, getBuildRequestConfig({maxRetries: 0}));
         return data;
       } catch (error) {
         throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not save reward decision.');

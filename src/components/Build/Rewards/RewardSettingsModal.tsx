@@ -6,26 +6,26 @@ import { useAppContext } from '~/contexts';
 import { rewardApprovalPresentation } from './approvalPresentation';
 import useRewardStatus from './useRewardStatus';
 
+// The creator's whole job here is to understand that an admin must approve
+// the app and to press Send (or Cancel). No Lumine run, no setup, no forms.
 export default function RewardSettingsModal({
   buildId,
   onClose,
   onSaveCode,
   onPublish,
-  onAskLumine,
   onStatusChange,
   hasUnsavedChanges = false,
   changeKey = '',
-  preparing = false
+  agentEditing = false
 }: {
   buildId: number;
   onClose: () => void;
   onSaveCode: () => Promise<boolean>;
   onPublish: () => void;
-  onAskLumine: (reviewNote: string) => void;
   onStatusChange?: () => void;
   hasUnsavedChanges?: boolean;
   changeKey?: string;
-  preparing?: boolean;
+  agentEditing?: boolean;
 }) {
   const requestReview = useAppContext(
     (v) => v.requestHelpers.requestBuildRewardReview
@@ -39,8 +39,10 @@ export default function RewardSettingsModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const presentation = settings
-    ? rewardApprovalPresentation(settings, hasUnsavedChanges || preparing)
+    ? rewardApprovalPresentation(settings, hasUnsavedChanges || agentEditing)
     : null;
+  const canSend =
+    presentation?.state === 'needs_review' && !agentEditing && !loading;
   return (
     <Modal
       modalKey="BuildRewardSettings"
@@ -50,6 +52,9 @@ export default function RewardSettingsModal({
       footer={
         settings && presentation ? (
           <>
+            <Button variant="ghost" disabled={busy} onClick={onClose}>
+              {presentation.state === 'needs_review' ? 'Cancel' : 'Close'}
+            </Button>
             <Button variant="ghost" disabled={busy || loading} onClick={refresh}>
               Refresh status
             </Button>
@@ -57,7 +62,7 @@ export default function RewardSettingsModal({
               <Button
                 color="logoBlue"
                 loading={busy}
-                disabled={preparing}
+                disabled={!canSend}
                 onClick={handleSubmit}
               >
                 {busy ? 'Sending…' : 'Send for review'}
@@ -68,21 +73,10 @@ export default function RewardSettingsModal({
                 (settings.canPublish || hasUnsavedChanges))) && (
               <Button
                 color="logoBlue"
-                disabled={busy || preparing}
+                disabled={busy || agentEditing}
                 onClick={onPublish}
               >
                 Publish app
-              </Button>
-            )}
-            {['not_configured', 'changes_requested', 'paused'].includes(
-              presentation.state
-            ) && (
-              <Button
-                color="logoBlue"
-                disabled={busy || preparing}
-                onClick={() => onAskLumine(settings.reviewNote)}
-              >
-                Ask Lumine to help
               </Button>
             )}
           </>
@@ -99,38 +93,48 @@ export default function RewardSettingsModal({
         {settings && presentation && (
           <>
             <section aria-live="polite">
-              <h3>
-                {preparing
-                  ? 'Lumine is working on your update'
-                  : presentation.title}
-              </h3>
-              <p>
-                {preparing
-                  ? 'Wait for Lumine to finish before sending this version for review.'
-                  : presentation.detail}
-              </p>
+              <h3>{presentation.title}</h3>
+              <p>{presentation.detail}</p>
+              {agentEditing && presentation.state === 'needs_review' && (
+                <p style={{ marginTop: '0.8rem' }}>
+                  Lumine is still editing your app. Wait until it finishes,
+                  then send this version for review.
+                </p>
+              )}
               {settings.reviewNote && (
                 <p style={{ marginTop: '0.8rem' }}>
                   <strong>Admin’s note:</strong> {settings.reviewNote}
                 </p>
               )}
             </section>
+            {presentation.state === 'needs_review' && (
+              <div>
+                <h3>What happens next</h3>
+                <ol className={stepsClass}>
+                  <li>Your current code is saved and sent to the admin.</li>
+                  <li>
+                    The admin reads it and decides how much XP and how many
+                    Coins people can earn, and how often.
+                  </li>
+                  <li>
+                    You get the answer right here. If it’s approved, you can
+                    publish.
+                  </li>
+                </ol>
+              </div>
+            )}
             {settings.summary.length > 0 && (
               <div>
                 <h3>What people can earn</h3>
                 {settings.summary.map((reward, index) => (
                   <p key={index}>
-                    <strong>{reward.title}</strong> · {reward.xp.toLocaleString()} XP +{' '}
+                    <strong>{reward.title}</strong> ·{' '}
+                    {reward.xp.toLocaleString()} XP +{' '}
                     {reward.coins.toLocaleString()} Coins
                   </p>
                 ))}
               </div>
             )}
-            {settings.approvalRequired &&
-              settings.configured &&
-              settings.summary.length === 0 && (
-                <p>This update turns rewards off.</p>
-              )}
             {settings.liveActive && presentation.state !== 'published' && (
               <p>
                 {presentation.state === 'removed'
@@ -191,4 +195,10 @@ const bodyClass = css`
   [role='alert'] {
     color: var(--danger-color, #a1233c);
   }
+`;
+const stepsClass = css`
+  margin: 0;
+  padding-left: 2rem;
+  display: grid;
+  gap: 0.4rem;
 `;

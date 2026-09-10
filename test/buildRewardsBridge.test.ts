@@ -2,12 +2,29 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isMutatingPreviewRequestType } from '../src/containers/Build/PreviewPanel/helpers/previewRequestPolicy';
-import { rewardHelpMessage } from '../src/components/Build/Rewards/approvalPresentation';
+import { rewardApprovalPresentation } from '../src/components/Build/Rewards/approvalPresentation';
 
-test('reward help carries the actual admin feedback into the creator’s Lumine request', () => {
-  const note = 'Lower the daily Coin budget to 10 and keep the current rule IDs.';
-  assert.ok(rewardHelpMessage(note).endsWith(`Admin feedback on the rewards proposal:\n${note}`));
-  assert.ok(!rewardHelpMessage('').includes('Admin feedback on the rewards proposal:'));
+// Creators never prepare anything: every state explains itself and points at
+// one action (send, wait, publish, or fix and send again). No Lumine step.
+test('creator-facing reward status never asks the creator or Lumine to prepare rules', () => {
+  const base = {
+    policy: null, approvalRequired: true, configured: true, canSubmit: true,
+    isUpdate: false, liveActive: false, reviewId: null, reviewNote: '',
+    sourceVersionId: 3, summary: [], approvalMatches: false, canPublish: false
+  } as const;
+  for (const state of ['needs_review', 'in_review', 'approved', 'published', 'changes_requested', 'paused'] as const) {
+    const text = JSON.stringify(rewardApprovalPresentation({ ...base, state }));
+    assert.ok(!/prepare|Lumine/i.test(text), `${state}: ${text}`);
+  }
+  const sending = rewardApprovalPresentation({ ...base, state: 'needs_review' });
+  assert.match(sending.detail, /admin will read your code/);
+  // Unsaved edits on an approved version fall back to "needs approval".
+  assert.equal(rewardApprovalPresentation({ ...base, state: 'approved' }, true).state, 'needs_review');
+  // A removed SDK with unsaved edits is checked at publish time, not blocked.
+  assert.equal(
+    rewardApprovalPresentation({ ...base, approvalRequired: false, state: 'removed' }, true).state,
+    'check_changes'
+  );
 });
 
 const source = readFileSync(
