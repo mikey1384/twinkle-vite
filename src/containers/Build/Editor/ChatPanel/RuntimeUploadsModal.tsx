@@ -6,6 +6,7 @@ import ProgressBar from '~/components/ProgressBar';
 import { mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { BuildCopilotPolicy, BuildRuntimeUploadAsset } from './types';
+import ReferenceDocumentsPanel from './ReferenceDocumentsPanel';
 import { formatBytes, formatTokenCount } from './helpers/utils';
 import type {
   BuildAgentAssetCreateOptions,
@@ -13,6 +14,8 @@ import type {
 } from '~/containers/Build/helpers/agentWorkspaceAssets';
 
 interface RuntimeUploadsModalProps {
+  buildId: number;
+  canManageReferenceDocuments: boolean;
   copilotPolicy: BuildCopilotPolicy | null;
   runtimeUploadsModalShown: boolean;
   runtimeUploadAssets: BuildRuntimeUploadAsset[];
@@ -30,6 +33,8 @@ interface RuntimeUploadsModalProps {
 }
 
 export default function RuntimeUploadsModal({
+  buildId,
+  canManageReferenceDocuments,
   copilotPolicy,
   runtimeUploadsModalShown,
   runtimeUploadAssets,
@@ -203,6 +208,12 @@ export default function RuntimeUploadsModal({
         <GeneratedAssetUploadPanel
           onCreateGeneratedRuntimeAsset={onCreateGeneratedRuntimeAsset}
         />
+        {buildId > 0 ? (
+          <ReferenceDocumentsPanel
+            buildId={buildId}
+            canEdit={canManageReferenceDocuments}
+          />
+        ) : null}
         {runtimeUploadsError ? (
           <div
             className={css`

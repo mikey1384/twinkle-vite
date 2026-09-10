@@ -851,6 +851,8 @@ export default function ChatPanel({
         </>
       )}
       <RuntimeUploadsModal
+        buildId={buildId}
+        canManageReferenceDocuments={isOwner}
         copilotPolicy={copilotPolicy}
         runtimeUploadsModalShown={runtimeUploadsModalShown}
         runtimeUploadAssets={runtimeUploadAssets}

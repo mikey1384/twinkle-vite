@@ -69,6 +69,10 @@ interface BuildProjectFileDraftsApi {
     runType: 'copilot' | 'greeting';
   }): Promise<boolean>;
   ensureProjectFilesPersistedBeforePublish(): Promise<boolean>;
+  ensureProjectFilesPersistedForChatImport(): Promise<{
+    success: boolean;
+    error: string;
+  }>;
 }
 
 interface UseBuildProjectFileDraftsOptions {
@@ -153,7 +157,12 @@ export default function useProjectFileDrafts({
         .join('\n---\n');
     }
 
+    let lastPersistErrorMessage = '';
+
     function appendFeedbackEvent(event: BuildProjectFileDraftFeedbackEvent) {
+      if (event.kind === 'lifecycle' && event.phase === 'error') {
+        lastPersistErrorMessage = String(event.message || '').trim();
+      }
       onAppendFeedbackEventRef.current(event);
     }
 
@@ -446,6 +455,30 @@ export default function useProjectFileDrafts({
           saveFailurePrefix: `Unable to start ${runType}: `,
           returnTrueOnEmptyDraft: true
         });
+      },
+
+      async ensureProjectFilesPersistedForChatImport() {
+        lastPersistErrorMessage = '';
+        // Chat imports land in the local draft first. Save them right away so
+        // the chat note about the import is only written once the files are
+        // really in the workspace, and so the limit error (too many lines,
+        // project too large) reaches the user instead of a silent "run did
+        // not start".
+        const success = await ensureProjectFilesPersisted({
+          settleErrorMessage:
+            'Please wait for the current file save to finish, then import again.',
+          draftChangedMessage:
+            'Unable to save the imported files: file drafts kept changing during auto-save. Please stop editing and import again.',
+          initialSaveMessage: 'Saving imported files to the workspace...',
+          retrySaveMessage: 'Draft changed during save. Saving imported files again...',
+          savedMessage: 'Saved imported files.',
+          saveFailurePrefix: '',
+          returnTrueOnEmptyDraft: true
+        });
+        return {
+          success,
+          error: success ? '' : lastPersistErrorMessage
+        };
       },
 
       ensureProjectFilesPersistedBeforePublish() {

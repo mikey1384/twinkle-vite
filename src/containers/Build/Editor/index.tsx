@@ -289,6 +289,7 @@ export default function BuildEditor({
     cleanupBuildChatReferenceUploads,
     createBuildChatAssistantNote,
     createBuildChatReferenceNote,
+    createBuildChatReferenceDocuments,
     createBuildChatUserNote,
     createBuildContributionFork,
     deleteBuild,
@@ -848,6 +849,7 @@ export default function BuildEditor({
   const {
     ensureProjectFilesPersistedBeforePublish,
     ensureProjectFilesPersistedBeforeRun,
+    ensureProjectFilesPersistedForChatImport,
     draftActionPrompt,
     handleApplyRestoredProjectFiles,
     handleProjectFilesDraftStateChange,
@@ -980,6 +982,7 @@ export default function BuildEditor({
     cleanupBuildChatReferenceUploads,
     createBuildChatAssistantNote,
     createBuildChatReferenceNote,
+    createBuildChatReferenceDocuments,
     createBuildChatUserNote,
     getLatestBuild,
     getLatestChatMessages,
@@ -989,6 +992,7 @@ export default function BuildEditor({
       shouldAutoScrollRef.current = true;
       scrollChatToBottom('smooth', { force: true });
     },
+    persistImportedProjectFiles: ensureProjectFilesPersistedForChatImport,
     previewPanelRef,
     replaceChatMessages,
     routeBuildChatUpload,

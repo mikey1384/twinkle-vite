@@ -51,6 +51,9 @@ export default function useRequests() {
   const createBuildChatReferenceNote = useAppContext(
     (v) => v.requestHelpers.createBuildChatReferenceNote
   );
+  const createBuildChatReferenceDocuments = useAppContext(
+    (v) => v.requestHelpers.createBuildChatReferenceDocuments
+  );
   const cleanupBuildChatReferenceUploads = useAppContext(
     (v) => v.requestHelpers.cleanupBuildChatReferenceUploads
   );
@@ -110,6 +113,7 @@ export default function useRequests() {
     cleanupBuildChatReferenceUploads,
     createBuildChatAssistantNote,
     createBuildChatReferenceNote,
+    createBuildChatReferenceDocuments,
     createBuildChatUserNote,
     createBuildContributionFork,
     deleteBuild,

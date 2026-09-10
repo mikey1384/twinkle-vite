@@ -42,6 +42,11 @@ export function buildBuildChatUploadRouteProgressMessage(
         ? 'Uploading your assets...'
         : 'Uploading your asset...';
   }
+  if (route === 'reference_document') {
+    return normalizedFiles.length === 1
+      ? 'Reading your document...'
+      : 'Reading your documents...';
+  }
   if (route === 'chat_reference') {
     if (
       imageFiles.length === normalizedFiles.length &&
@@ -68,7 +73,59 @@ export function buildBuildChatUploadRouteProgressPercent(
   if (route === 'chat_reference') {
     return 20;
   }
+  if (route === 'reference_document') {
+    return 22;
+  }
   return 14;
+}
+
+const REFERENCE_DOCUMENT_EXTENSIONS = [
+  '.pdf',
+  '.docx',
+  '.txt',
+  '.md',
+  '.markdown',
+  '.csv',
+  '.tsv',
+  '.json',
+  '.html',
+  '.htm',
+  '.xml',
+  '.yml',
+  '.yaml',
+  '.rtf'
+];
+
+export function isReferenceDocumentChatFile(file: File) {
+  const mimeType = String(file?.type || '').toLowerCase();
+  if (
+    mimeType === 'application/pdf' ||
+    mimeType ===
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mimeType.startsWith('text/')
+  ) {
+    return true;
+  }
+  const normalizedName = String(file?.name || '').toLowerCase();
+  return REFERENCE_DOCUMENT_EXTENSIONS.some((extension) =>
+    normalizedName.endsWith(extension)
+  );
+}
+
+export function buildImportBlockedByLimitsNote({
+  fileCount,
+  error
+}: {
+  fileCount: number;
+  error?: string;
+}) {
+  const plural = fileCount === 1 ? 'file' : 'files';
+  const reason = String(error || '').trim() || 'the workspace save failed';
+  return `I could not keep the imported ${plural} in the workspace: ${reason} If ${
+    fileCount === 1 ? 'this is' : 'these are'
+  } a book, worksheet, or other source material rather than app code, attach ${
+    fileCount === 1 ? 'it' : 'them'
+  } again and say so — I can read PDF, Word, and long text files as reference documents without any size limit on the app.`;
 }
 
 export function isImageChatReferenceFile(file: File) {

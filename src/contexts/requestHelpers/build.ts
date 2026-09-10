@@ -1149,6 +1149,62 @@ export default function buildRequestHelpers({
       }
     },
 
+    async createBuildChatReferenceDocuments({
+      buildId,
+      messageText,
+      uploads
+    }: {
+      buildId: number;
+      messageText?: string;
+      uploads: Array<{
+        url: string;
+        fileName: string;
+        mimeType?: string | null;
+        sizeBytes?: number | null;
+      }>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/chat/reference-documents`,
+          { messageText, uploads },
+          { ...auth(), timeout: 5 * 60 * 1000 }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildReferenceDocuments({ buildId }: { buildId: number }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/chat/reference-documents`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteBuildReferenceDocument({
+      buildId,
+      documentId
+    }: {
+      buildId: number;
+      documentId: number;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/build/${buildId}/chat/reference-documents/${documentId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async cleanupBuildChatReferenceUploads({
       buildId,
       uploads

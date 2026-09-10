@@ -35,6 +35,7 @@ export type BuildChatUploadRoute =
   | 'project_files_import'
   | 'runtime_asset_upload'
   | 'chat_reference'
+  | 'reference_document'
   | 'clarify';
 
 export interface BuildChatUploadDecision {

@@ -11,9 +11,11 @@ import {
   buildBuildChatUploadRouteProgressMessage,
   buildBuildChatUploadRouteProgressPercent,
   buildBuildChatUploadRoutingMessage,
+  buildImportBlockedByLimitsNote,
   buildImportedProjectFilesNote,
   buildUploadedRuntimeAssetsNote,
-  isImageChatReferenceFile
+  isImageChatReferenceFile,
+  isReferenceDocumentChatFile
 } from '../helpers/chatUploads';
 import type {
   Build,
@@ -42,12 +44,19 @@ interface UseBuildEditorChatUploadsOptions {
   ) => Promise<any>;
   createBuildChatAssistantNote: (options: Record<string, any>) => Promise<any>;
   createBuildChatReferenceNote: (options: Record<string, any>) => Promise<any>;
+  createBuildChatReferenceDocuments: (
+    options: Record<string, any>
+  ) => Promise<any>;
   createBuildChatUserNote: (options: Record<string, any>) => Promise<any>;
   getLatestBuild: () => Build;
   getLatestChatMessages: () => ChatMessage[];
   isOwner: boolean;
   isRunActivityInFlight: () => boolean;
   onForceChatAutoScroll: () => void;
+  persistImportedProjectFiles: () => Promise<{
+    success: boolean;
+    error: string;
+  }>;
   previewPanelRef: RefObject<PreviewPanelHandle | null>;
   replaceChatMessages: (messages: ChatMessage[]) => void;
   routeBuildChatUpload: (options: Record<string, any>) => Promise<any>;
@@ -66,12 +75,14 @@ export default function useChatUploads({
   cleanupBuildChatReferenceUploads,
   createBuildChatAssistantNote,
   createBuildChatReferenceNote,
+  createBuildChatReferenceDocuments,
   createBuildChatUserNote,
   getLatestBuild,
   getLatestChatMessages,
   isOwner,
   isRunActivityInFlight,
   onForceChatAutoScroll,
+  persistImportedProjectFiles,
   previewPanelRef,
   replaceChatMessages,
   routeBuildChatUpload,
@@ -608,6 +619,21 @@ export default function useChatUploads({
           );
           return { handled: true };
         }
+        const persisted = await persistImportedProjectFiles();
+        if (didBuildChatUploadTargetChange()) {
+          return { handled: true };
+        }
+        if (!persisted.success) {
+          await persistBuildChatAssistantNote(
+            buildImportBlockedByLimitsNote({
+              fileCount: Number(result?.importedCount || files.length),
+              error: persisted.error
+            }),
+            { buildId: uploadBuildId }
+          );
+          clearConsumedBuildChatUploadDraft();
+          return { handled: true };
+        }
         const persistedUserNote = await persistBuildChatUploadIntentNote(
           historyUserNoteText,
           {
@@ -680,6 +706,104 @@ export default function useChatUploads({
         if (String(routingMessageText || '').trim()) {
           await persistBuildChatAssistantNote(
             'I uploaded the asset, but the run did not start. Retry your message when ready.',
+            { buildId: uploadBuildId }
+          );
+        }
+        clearConsumedBuildChatUploadDraft();
+        return { handled: true };
+      }
+
+      if (route === 'reference_document') {
+        const documentFiles = files.filter(isReferenceDocumentChatFile);
+        if (documentFiles.length === 0) {
+          clearLocalProgressMessage();
+          await persistBuildChatAssistantNote(
+            'I can read PDF, Word (.docx), text, Markdown, CSV, JSON, and HTML files as reference documents. Attach one of those and I will read it.',
+            { buildId: uploadBuildId }
+          );
+          return { handled: true };
+        }
+        const references = await uploadBuildChatReferenceFiles(
+          documentFiles,
+          uploadBuildId,
+          {
+            onProgress: (progressPercent) => {
+              updateLocalBuildChatMessage(localProgressMessageId, {
+                uploadProgressPercent: progressPercent
+              });
+            }
+          }
+        );
+        const cleanupUploads = references.map((reference) => ({
+          filePath: reference.filePath,
+          storedFileName: reference.storedFileName
+        }));
+        if (didBuildChatUploadTargetChange()) {
+          await cleanupBuildChatReferenceUploadsQuietly(
+            cleanupUploads,
+            uploadBuildId
+          );
+          return { handled: true };
+        }
+        updateLocalBuildChatMessage(localProgressMessageId, {
+          text:
+            documentFiles.length === 1
+              ? 'Reading the text in your document...'
+              : 'Reading the text in your documents...',
+          uploadProgressPercent: 80
+        });
+        let result: any;
+        try {
+          result = await createBuildChatReferenceDocuments({
+            buildId: uploadBuildId,
+            messageText: historyUserNoteText,
+            uploads: references.map((reference, index) => ({
+              url: reference.url,
+              fileName: reference.fileName,
+              mimeType: reference.mimeType || null,
+              sizeBytes: Number(documentFiles[index]?.size || 0) || null
+            }))
+          });
+          if (!result || !Array.isArray(result.documents)) {
+            throw new Error(
+              String(result?.error || 'I could not read those documents.')
+            );
+          }
+        } catch (error) {
+          await cleanupBuildChatReferenceUploadsQuietly(
+            cleanupUploads,
+            uploadBuildId
+          );
+          throw error;
+        }
+        if (result.userMessage) {
+          appendPersistedBuildChatMessage(result.userMessage, {
+            buildId: uploadBuildId
+          });
+        }
+        if (result.assistantMessage) {
+          appendPersistedBuildChatMessage(result.assistantMessage, {
+            buildId: uploadBuildId
+          });
+        }
+        updateLocalBuildChatMessage(localProgressMessageId, {
+          uploadProgressPercent: 94
+        });
+        clearLocalProgressMessage();
+        const readyCount = Number(result.readyCount || 0);
+        if (routingMessageText.trim() && readyCount > 0) {
+          setBuildChatUploadInFlight(false);
+          const started = await sendBuildMessageText(routingMessageText, {
+            existingUserMessageId:
+              Number(result.userMessage?.id || 0) || null,
+            ignoreUploadInFlight: true
+          });
+          if (started) {
+            clearConsumedBuildChatUploadDraft();
+            return { handled: true };
+          }
+          await persistBuildChatAssistantNote(
+            'I saved your documents, but the run did not start. Retry your message when ready.',
             { buildId: uploadBuildId }
           );
         }
