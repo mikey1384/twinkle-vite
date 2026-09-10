@@ -219,6 +219,21 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async createTwinkleInfraCostsCheckoutSession() {
+      try {
+        const { data } = await request.post(
+          `${URL}/billing/twinkle-infra-costs/checkout-session`,
+          {
+            successPath: '/management/payment',
+            cancelPath: '/management/payment'
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async createTwinkleAiCostsPortalSession() {
       try {
         const { data } = await request.post(

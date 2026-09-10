@@ -46,11 +46,49 @@ interface StripeInvoice {
   paid: boolean;
 }
 
+interface InfraCostsPayment {
+  id: number;
+  userId: number;
+  stripeCheckoutSessionId: string;
+  stripePaymentIntentId: string | null;
+  stripeInvoiceId: string | null;
+  invoiceNumber: string;
+  amountTotal: number;
+  currency: string;
+  sessionStatus: string;
+  paymentStatus: string;
+  paid: boolean;
+  processing: boolean;
+  hostedInvoiceUrl: string;
+  invoicePdf: string;
+  receiptUrl: string;
+  paidAt: number | null;
+  failedAt: number | null;
+  createdAt: number | null;
+}
+
+interface InfraCharge {
+  priceId: string;
+  amountCents: number;
+  currency: string;
+  configError: string;
+}
+
 interface PaymentOverview {
   subscriptions: AiCostsSubscription[];
   subscription: AiCostsSubscription | null;
   invoices: StripeInvoice[];
+  infraPayments?: InfraCostsPayment[];
+  infraCharge?: InfraCharge;
 }
+
+interface CheckoutSessionResult {
+  sessionId?: string;
+  url?: string;
+}
+
+// Fallback label only; the real amount comes from the server's resolved charge.
+const INFRA_ONE_TIME_FALLBACK_CENTS = 50000;
 
 interface PaymentToggleResult {
   checkoutRequired?: boolean;
@@ -327,12 +365,16 @@ export default function Payment() {
   const createTwinkleAiCostsPortalSession = useAppContext(
     (v) => v.requestHelpers.createTwinkleAiCostsPortalSession
   );
+  const createTwinkleInfraCostsCheckoutSession = useAppContext(
+    (v) => v.requestHelpers.createTwinkleInfraCostsCheckoutSession
+  );
   const canView = userId === ADMIN_USER_ID;
   const [payment, setPayment] = useState<PaymentOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [infraCheckoutLoading, setInfraCheckoutLoading] = useState(false);
   const [error, setError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
   const checkoutSessionId = getCheckoutSessionId(location.search);
@@ -379,6 +421,16 @@ export default function Payment() {
 
   const subscription = payment?.subscription || null;
   const invoices = payment?.invoices || [];
+  const infraPayments = payment?.infraPayments || [];
+  const paidInfraPayments = infraPayments.filter((item) => item.paid);
+  const lastInfraPayment = paidInfraPayments[0] || null;
+  const latestInfraAttempt = infraPayments[0] || null;
+  const infraCharge = payment?.infraCharge;
+  const infraAmountLabel = formatCurrencyCents(
+    infraCharge?.amountCents || INFRA_ONE_TIME_FALLBACK_CENTS,
+    infraCharge?.currency || 'USD',
+    { wholeUnits: true }
+  );
   const hasStripeCustomer = Boolean(subscription?.stripeCustomerId);
   const paymentActive = Boolean(
     subscription?.active && !subscription.cancelAtPeriodEnd
@@ -395,7 +447,10 @@ export default function Payment() {
       <header className={headerClass}>
         <div>
           <h1>Payment</h1>
-          <p>Twinkle AI Costs subscription, invoices, and Stripe access.</p>
+          <p>
+            Twinkle AI Costs subscription, one-time API &amp; Infrastructure
+            payments, invoices, and Stripe access.
+          </p>
         </div>
         <div className={actionsClass}>
           <Button
@@ -423,7 +478,7 @@ export default function Payment() {
       {error ? <div className={errorClass}>{error}</div> : null}
       {loading ? <Loading /> : null}
 
-      {!loading && !error ? (
+      {!loading && (payment || !error) ? (
         <>
           <section className={switchPanelClass}>
             <div>
@@ -535,6 +590,108 @@ export default function Payment() {
               )}
             </div>
           </section>
+
+          <section className={switchPanelClass}>
+            <div style={{ minWidth: 0 }}>
+              <h2>API &amp; Infrastructure</h2>
+              <p>
+                {getInfraPaymentSummary({
+                  amountLabel: infraAmountLabel,
+                  lastPaid: lastInfraPayment,
+                  latestAttempt: latestInfraAttempt
+                })}
+              </p>
+              {infraCharge?.configError ? (
+                <p style={{ color: Color.redOrange() }}>
+                  Stripe price problem: {infraCharge.configError}
+                </p>
+              ) : null}
+            </div>
+            <Button
+              color="logoBlue"
+              loading={infraCheckoutLoading}
+              disabled={Boolean(infraCharge?.configError)}
+              style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+              onClick={handleInfraCheckout}
+            >
+              <Icon icon="credit-card" />
+              Pay {infraAmountLabel} now
+            </Button>
+          </section>
+
+          <section className={panelClass}>
+            <header>
+              <h2>One-time Payment History</h2>
+            </header>
+            <div>
+              {infraPayments.length === 0 ? (
+                <div className={emptyClass}>No one-time payments yet.</div>
+              ) : (
+                <div className={tableWrapClass}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Invoice</th>
+                        <th>Status</th>
+                        <th>Amount</th>
+                        <th>Paid</th>
+                        <th>Started</th>
+                        <th>Files</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {infraPayments.map((item) => (
+                        <tr key={item.id}>
+                          <td>
+                            {item.invoiceNumber ||
+                              item.stripeInvoiceId ||
+                              item.stripeCheckoutSessionId}
+                          </td>
+                          <td>{formatInfraPaymentStatus(item)}</td>
+                          <td>
+                            {formatCurrencyCents(item.amountTotal, item.currency)}
+                          </td>
+                          <td>{formatDate(item.paidAt)}</td>
+                          <td>{formatDate(item.createdAt)}</td>
+                          <td>
+                            {item.hostedInvoiceUrl ? (
+                              <a
+                                href={item.hostedInvoiceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <Icon icon="external-link-alt" /> Open
+                              </a>
+                            ) : item.receiptUrl ? (
+                              <a
+                                href={item.receiptUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <Icon icon="external-link-alt" /> Receipt
+                              </a>
+                            ) : null}
+                            {item.invoicePdf ? (
+                              <>
+                                {' '}
+                                <a
+                                  href={item.invoicePdf}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <Icon icon="file-pdf" /> PDF
+                                </a>
+                              </>
+                            ) : null}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
         </>
       ) : null}
     </div>
@@ -566,6 +723,28 @@ export default function Payment() {
       setError(toggleError?.message || 'Failed to update payment status');
     } finally {
       setToggleLoading(false);
+    }
+  }
+
+  async function handleInfraCheckout() {
+    setInfraCheckoutLoading(true);
+    setError('');
+    try {
+      const session = (await createTwinkleInfraCostsCheckoutSession()) as
+        | CheckoutSessionResult
+        | undefined;
+      if (session?.url) {
+        window.location.assign(session.url);
+        return;
+      }
+      setError('Checkout session did not include a Stripe URL');
+    } catch (checkoutError: any) {
+      setError(
+        checkoutError?.message ||
+          'Failed to start API & Infrastructure payment'
+      );
+    } finally {
+      setInfraCheckoutLoading(false);
     }
   }
 
@@ -624,6 +803,41 @@ function getSubscriptionSummary(subscription: AiCostsSubscription | null) {
   return 'No active AI service subscription is connected.';
 }
 
+function getInfraPaymentSummary({
+  amountLabel,
+  lastPaid,
+  latestAttempt
+}: {
+  amountLabel: string;
+  lastPaid: InfraCostsPayment | null;
+  latestAttempt: InfraCostsPayment | null;
+}) {
+  const base = `One-time ${amountLabel} payment toward API and infrastructure costs.`;
+  if (latestAttempt && !latestAttempt.paid && latestAttempt.processing) {
+    return `${base} A payment started on ${formatDate(
+      latestAttempt.createdAt
+    )} is still processing.`;
+  }
+  if (latestAttempt && !latestAttempt.paid && latestAttempt.failedAt) {
+    return `${base} The latest attempt on ${formatDate(
+      latestAttempt.failedAt
+    )} failed${lastPaid?.paidAt ? `; last successful payment ${formatDate(lastPaid.paidAt)}` : ''}.`;
+  }
+  if (lastPaid?.paidAt) {
+    return `${base} Last paid on ${formatDate(lastPaid.paidAt)}.`;
+  }
+  return `${base} Charged through Stripe Checkout.`;
+}
+
+function formatInfraPaymentStatus(item: InfraCostsPayment) {
+  if (item.paid) return 'Paid';
+  if (item.processing) return 'Processing';
+  if (item.sessionStatus === 'expired') return 'Expired';
+  if (item.failedAt) return 'Failed';
+  if (item.sessionStatus === 'open') return 'Awaiting payment';
+  return formatInvoiceStatus(item.paymentStatus || item.sessionStatus);
+}
+
 function formatInvoiceStatus(value: unknown) {
   const text = typeof value === 'string' ? value.trim() : '';
   if (!text) return 'None';
@@ -640,13 +854,19 @@ function formatDate(value: unknown) {
   return new Date(timestamp * 1000).toLocaleDateString();
 }
 
-function formatCurrencyCents(amount: unknown, currency: string) {
+function formatCurrencyCents(
+  amount: unknown,
+  currency: string,
+  options: { wholeUnits?: boolean } = {}
+) {
   const numericAmount = Number(amount);
   const normalizedAmount = Number.isFinite(numericAmount) ? numericAmount : 0;
-  const normalizedCurrency = currency || 'USD';
+  const normalizedCurrency = (currency || 'USD').toUpperCase();
+  const wholeUnits = options.wholeUnits && normalizedAmount % 100 === 0;
   return Intl.NumberFormat(undefined, {
     style: 'currency',
-    currency: normalizedCurrency
+    currency: normalizedCurrency,
+    ...(wholeUnits ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {})
   }).format(normalizedAmount / 100);
 }
 

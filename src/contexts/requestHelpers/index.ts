@@ -479,6 +479,7 @@ registerMethods('management', [
   'loadAiCostReportCSV',
   'loadTwinkleAiCostsPaymentOverview',
   'setTwinkleAiCostsPaymentActive',
+  'createTwinkleInfraCostsCheckoutSession',
   'createTwinkleAiCostsPortalSession',
   'loadAiCostRiskGroup',
   'loadAiCostRiskGroupEvents',
