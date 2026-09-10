@@ -49,6 +49,7 @@ import {
 } from '~/helpers/clientUpdate';
 import { loadFreshCanonicalChatGlobalUnreadCount } from '~/helpers/chatGlobalUnreadReconciler';
 import {
+  getFeaturedSubjectsRefreshDelayMs,
   invalidateFeaturedSubjectsRequests,
   loadLatestCanonicalFeaturedSubjects
 } from '~/helpers/featuredSubjects';
@@ -260,6 +261,7 @@ export default function useInitSocket({
   const loadChatRetryRecoveryIdRef = useRef<string | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
   const serverDisconnectReconnectTimerRef = useRef<number | null>(null);
+  const featuredSubjectsRefreshTimerRef = useRef<number | null>(null);
   const plannedServerHandoffAtRef = useRef(0);
   const socketBindRetryTimerRef = useRef<number | null>(null);
   const socketBindRetryCountRef = useRef(0);
@@ -917,6 +919,10 @@ export default function useInitSocket({
         clearTimeout(serverDisconnectReconnectTimerRef.current);
         serverDisconnectReconnectTimerRef.current = null;
       }
+      if (featuredSubjectsRefreshTimerRef.current) {
+        clearTimeout(featuredSubjectsRefreshTimerRef.current);
+        featuredSubjectsRefreshTimerRef.current = null;
+      }
       socketBindAttemptRef.current += 1;
       clearSocketBindRetryTimer();
       socketBindRetryCountRef.current = 0;
@@ -997,11 +1003,22 @@ export default function useInitSocket({
     }
 
     function handleHomeOutdated({
-      featuredSubjects = false
-    }: { featuredSubjects?: boolean } = {}) {
+      featuredSubjects = false,
+      refreshJitterMs
+    }: { featuredSubjects?: boolean; refreshJitterMs?: number } = {}) {
       if (featuredSubjects === true) {
+        // The committed board makes every in-flight Featured read obsolete
+        // right now, but the replacement read is spread across a jitter
+        // window: this event reaches every connected client at the same
+        // moment, and an immediate refetch from all of them stampedes the
+        // writer pool. One pending refresh also absorbs further board changes
+        // that arrive before it fires, since it reads after their commits.
         invalidateFeaturedSubjectsRequests();
-        void refreshFeaturedSubjects();
+        if (featuredSubjectsRefreshTimerRef.current) return;
+        featuredSubjectsRefreshTimerRef.current = window.setTimeout(() => {
+          featuredSubjectsRefreshTimerRef.current = null;
+          void refreshFeaturedSubjects();
+        }, getFeaturedSubjectsRefreshDelayMs(refreshJitterMs));
         return;
       }
       if (displayOrderRef.current !== 'desc') {

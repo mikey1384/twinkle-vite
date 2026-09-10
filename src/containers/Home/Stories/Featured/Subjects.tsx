@@ -59,13 +59,22 @@ export default function FeaturedSubject({
     const requestUserId = userId;
     init();
 
-    async function init() {
+    async function init(attempt = 0) {
       try {
         const subjects = await loadLatestCanonicalFeaturedSubjects({
           load: loadFeaturedSubjects,
           isCurrentOwner: () => !checkUserChange(requestUserId)
         });
-        if (!subjects) return;
+        if (!subjects) {
+          // A Featured change invalidated this first load mid-flight. The
+          // socket refetch is deliberately jittered, so retry once here
+          // rather than leaving the carousel empty for that window.
+          if (attempt < 1 && !checkUserChange(requestUserId)) {
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            return init(attempt + 1);
+          }
+          return;
+        }
         onLoadFeaturedSubjects(subjects);
         onSetFeaturedSubjectsLoaded(true);
       } catch (error) {

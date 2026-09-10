@@ -2,6 +2,30 @@ let featuredSubjectsGeneration = 0;
 let nextFeaturedSubjectsRequestId = 0;
 let latestAppliedFeaturedSubjectsRequestId = 0;
 
+// A Featured board change is broadcast to every connected client at once. If
+// each client refetched immediately, the writer-consistent board read would
+// stampede the API's writer pool. Spread the refetch over a jitter window
+// instead; the server may hint a window per event, and an absent or malformed
+// hint falls back to this default so older servers still fan out safely.
+export const FEATURED_SUBJECTS_REFRESH_JITTER_DEFAULT_MS = 8_000;
+const FEATURED_SUBJECTS_REFRESH_JITTER_MAX_MS = 60_000;
+
+export function getFeaturedSubjectsRefreshDelayMs(
+  refreshJitterMs?: unknown,
+  randomValue = Math.random()
+) {
+  const hintedWindowMs =
+    typeof refreshJitterMs === 'number' &&
+    Number.isFinite(refreshJitterMs) &&
+    refreshJitterMs >= 0
+      ? Math.min(refreshJitterMs, FEATURED_SUBJECTS_REFRESH_JITTER_MAX_MS)
+      : FEATURED_SUBJECTS_REFRESH_JITTER_DEFAULT_MS;
+  const boundedRandomValue = Number.isFinite(randomValue)
+    ? Math.min(Math.max(randomValue, 0), 1)
+    : 0;
+  return Math.floor(boundedRandomValue * hintedWindowMs);
+}
+
 export function getFeaturedSubjectIds(subjects: unknown): number[] {
   if (!Array.isArray(subjects)) return [];
   const seen = new Set<number>();

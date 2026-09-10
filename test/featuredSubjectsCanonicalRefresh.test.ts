@@ -4,7 +4,9 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
+  FEATURED_SUBJECTS_REFRESH_JITTER_DEFAULT_MS,
   getFeaturedSubjectIds,
+  getFeaturedSubjectsRefreshDelayMs,
   invalidateFeaturedSubjectsRequests,
   loadLatestCanonicalFeaturedSubjects,
   resetFeaturedSubjectsRequestsForTests
@@ -183,4 +185,79 @@ test('Featured consumers apply confirmed responses and wait for Explore loads', 
   }
   assert.match(profileHomeSource, /loaded=\{isSubjectsLoaded\}/);
   assert.doesNotMatch(profileHomeSource, /isSubjectsLoading/);
+});
+
+test('a Featured invalidation refetch is spread across the jitter window', () => {
+  // Default window when the server sends no hint (older server).
+  assert.equal(getFeaturedSubjectsRefreshDelayMs(undefined, 0), 0);
+  assert.equal(
+    getFeaturedSubjectsRefreshDelayMs(undefined, 0.5),
+    FEATURED_SUBJECTS_REFRESH_JITTER_DEFAULT_MS / 2
+  );
+  assert.equal(
+    getFeaturedSubjectsRefreshDelayMs(undefined, 1),
+    FEATURED_SUBJECTS_REFRESH_JITTER_DEFAULT_MS
+  );
+  // A server hint sets the window; an explicit 0 means refetch now.
+  assert.equal(getFeaturedSubjectsRefreshDelayMs(20_000, 0.25), 5_000);
+  assert.equal(getFeaturedSubjectsRefreshDelayMs(0, 0.9), 0);
+  // Malformed hints fall back to the default; absurd hints are capped.
+  assert.equal(
+    getFeaturedSubjectsRefreshDelayMs('8000', 1),
+    FEATURED_SUBJECTS_REFRESH_JITTER_DEFAULT_MS
+  );
+  assert.equal(
+    getFeaturedSubjectsRefreshDelayMs(-1, 1),
+    FEATURED_SUBJECTS_REFRESH_JITTER_DEFAULT_MS
+  );
+  assert.equal(
+    getFeaturedSubjectsRefreshDelayMs(Number.NaN, 1),
+    FEATURED_SUBJECTS_REFRESH_JITTER_DEFAULT_MS
+  );
+  assert.equal(getFeaturedSubjectsRefreshDelayMs(10 * 60_000, 1), 60_000);
+  // A broken random source never produces a negative or NaN delay.
+  assert.equal(getFeaturedSubjectsRefreshDelayMs(undefined, Number.NaN), 0);
+  assert.equal(getFeaturedSubjectsRefreshDelayMs(undefined, 7), 8_000);
+  for (let i = 0; i < 50; i += 1) {
+    const delay = getFeaturedSubjectsRefreshDelayMs();
+    assert.ok(
+      delay >= 0 && delay <= FEATURED_SUBJECTS_REFRESH_JITTER_DEFAULT_MS
+    );
+  }
+});
+
+test('the socket handler invalidates immediately, defers the refetch, and coalesces pending refreshes', () => {
+  const handler = source(
+    '../src/containers/App/Header/hooks/useAPISocket/useInitSocket.ts'
+  );
+  const handleHomeOutdated = handler.slice(
+    handler.indexOf('function handleHomeOutdated('),
+    handler.indexOf('async function refreshFeaturedSubjects(')
+  );
+  assert.match(handleHomeOutdated, /refreshJitterMs/);
+  // Invalidation is synchronous so no pre-mutation snapshot can land while
+  // the deferred refetch waits.
+  assert.match(
+    handleHomeOutdated,
+    /invalidateFeaturedSubjectsRequests\(\);\s*if \(featuredSubjectsRefreshTimerRef\.current\) return;/
+  );
+  assert.match(
+    handleHomeOutdated,
+    /window\.setTimeout\([\s\S]*?void refreshFeaturedSubjects\(\);[\s\S]*?getFeaturedSubjectsRefreshDelayMs\(refreshJitterMs\)/
+  );
+  assert.doesNotMatch(
+    handleHomeOutdated,
+    /invalidateFeaturedSubjectsRequests\(\);\s*void refreshFeaturedSubjects\(\);/
+  );
+  // The generic (feed) branch is untouched by the Featured jitter.
+  assert.match(handleHomeOutdated, /onSetFeedsOutdated\(true\)/);
+  assert.doesNotMatch(
+    handleHomeOutdated.slice(handleHomeOutdated.indexOf('onSetFeedsOutdated')),
+    /getFeaturedSubjectsRefreshDelayMs/
+  );
+  // The mount-lifetime socket effect clears the pending timer on unmount.
+  assert.match(
+    handler,
+    /return function cleanUp\(\) \{[\s\S]*?clearTimeout\(featuredSubjectsRefreshTimerRef\.current\)/
+  );
 });
