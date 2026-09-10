@@ -45,6 +45,17 @@ test('each drag limit reserves the other column and the conversation space', () 
   }
 });
 
+test('the default navigation is 169/140 and the previous stored default follows it', () => {
+  assert.deepEqual(DEFAULT_WIDTHS, { channels: 169, context: 140 });
+  // A reset under the old default stored 200/184 explicitly; that is not a customization.
+  assert.deepEqual(readNavigationWidths('{"channels":200,"context":184}'), DEFAULT_WIDTHS);
+  // Any other explicit choice, including one value matching the old default, is kept.
+  assert.deepEqual(readNavigationWidths('{"channels":200,"context":150}'), {
+    channels: 200,
+    context: 150
+  });
+});
+
 test('invalid or obsolete stored preferences cannot collapse or explode the layout', () => {
   for (const stored of ['', '{', 'null', '[]', '{"channels":"220","context":null}']) {
     assert.deepEqual(readNavigationWidths(stored), DEFAULT_WIDTHS);

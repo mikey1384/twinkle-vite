@@ -1,7 +1,12 @@
 export type NavigationPanel = 'channels' | 'context';
 export type NavigationWidths = Record<NavigationPanel, number>;
 
-export const DEFAULT_WIDTHS: NavigationWidths = { channels: 200, context: 184 };
+// Mikey's chosen default (2026-09-10): a narrower navigation gives the
+// conversation column more room while both panels stay readable.
+export const DEFAULT_WIDTHS: NavigationWidths = { channels: 169, context: 140 };
+// Widths the previous default wrote to storage on an explicit reset; a stored
+// value equal to it means "never customized", so it follows the new default.
+const LEGACY_DEFAULT_WIDTHS: NavigationWidths = { channels: 200, context: 184 };
 export const MIN_WIDTHS: NavigationWidths = { channels: 128, context: 112 };
 export const MAX_WIDTHS: NavigationWidths = { channels: 360, context: 320 };
 export const RESIZE_HANDLE_WIDTH = 8;
@@ -20,6 +25,12 @@ export function clampPanelWidth(panel: NavigationPanel, width: number) {
 export function readNavigationWidths(stored: string): NavigationWidths {
   try {
     const value = JSON.parse(stored);
+    if (
+      value?.channels === LEGACY_DEFAULT_WIDTHS.channels &&
+      value?.context === LEGACY_DEFAULT_WIDTHS.context
+    ) {
+      return { ...DEFAULT_WIDTHS };
+    }
     return {
       channels: clampPanelWidth('channels', value?.channels),
       context: clampPanelWidth('context', value?.context)

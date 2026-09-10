@@ -6,7 +6,7 @@ import { chatPanelClass } from '../containers';
 import ResizeHandle from './ResizeHandle';
 import Shortcuts from './Shortcuts';
 import useNavigationLayout from './hooks/useNavigationLayout';
-import { RESIZE_HANDLE_WIDTH } from './helpers/navigationSizing';
+import { DEFAULT_WIDTHS, RESIZE_HANDLE_WIDTH } from './helpers/navigationSizing';
 
 export default function Layout({
   controls,
@@ -33,7 +33,7 @@ export default function Layout({
         flex: 0 0 auto;
         height: 100%;
         min-height: 0;
-        width: calc(var(--chat-channel-width, 200px) + 2px);
+        width: calc(var(--chat-channel-width, ${DEFAULT_WIDTHS.channels}px) + 2px);
         position: relative;
 
         @media (max-width: ${mobileMaxWidth}) {
@@ -45,8 +45,8 @@ export default function Layout({
         @media ${SPLIT_NAVIGATION_MEDIA_QUERY} {
           &[data-has-channel-navigation='true'] {
             display: grid;
-            width: calc(var(--chat-channel-width, 200px) + var(--chat-context-width, 184px) + ${RESIZE_HANDLE_WIDTH + 2}px);
-            grid-template-columns: var(--chat-channel-width, 200px) ${RESIZE_HANDLE_WIDTH}px var(--chat-context-width, 184px);
+            width: calc(var(--chat-channel-width, ${DEFAULT_WIDTHS.channels}px) + var(--chat-context-width, ${DEFAULT_WIDTHS.context}px) + ${RESIZE_HANDLE_WIDTH + 2}px);
+            grid-template-columns: var(--chat-channel-width, ${DEFAULT_WIDTHS.channels}px) ${RESIZE_HANDLE_WIDTH}px var(--chat-context-width, ${DEFAULT_WIDTHS.context}px);
             grid-template-rows: minmax(0, auto) auto minmax(11rem, 1fr);
             grid-template-areas:
               'controls . context'
