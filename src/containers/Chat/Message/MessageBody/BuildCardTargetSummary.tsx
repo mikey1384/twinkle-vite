@@ -3,6 +3,7 @@ import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { parseMessageSettings } from './messageSettings';
+import { formatBuildRewardRulesSummary } from '~/helpers/buildRewardReviewCard';
 
 export interface BuildCardTargetSummaryData {
   icon: string;
@@ -71,6 +72,21 @@ export function getBuildCardTargetSummary(
         request?.title || 'a project'
       )}`,
       detail: details.join(' + ')
+    };
+  }
+  if (rootType === 'buildRewardReview') {
+    const review =
+      parseMessageSettings(message.settings)?.buildRewardReview || {};
+    const buildId = Math.floor(Number(review?.buildId) || 0);
+    const reviewId = Math.floor(Number(review?.reviewId) || 0);
+    if (!buildId || !reviewId) return null;
+    return {
+      icon: 'coins',
+      label: `Sent ${String(
+        review?.title || 'an app'
+      )} for XP & Coin reward review`,
+      detail: formatBuildRewardRulesSummary(review?.rules),
+      thumbUrl: String(review?.thumbnailUrl || '').trim() || undefined
     };
   }
   return null;

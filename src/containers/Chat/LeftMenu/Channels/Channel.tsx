@@ -330,6 +330,11 @@ export default function Channel({
       if (rootType === 'buildProjectLimitRequest') {
         return <span>{messageSender}: requested more project room</span>;
       }
+      if (rootType === 'buildRewardReview') {
+        return (
+          <span>{messageSender}: sent an app for XP & Coin reward review</span>
+        );
+      }
       if (rootType === 'aiCardOffer') {
         return <span>{messageSender}: made an offer on a card</span>;
       }

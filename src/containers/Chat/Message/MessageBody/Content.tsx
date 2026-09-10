@@ -13,6 +13,7 @@ import BuildContributionSubmission from './BuildContributionSubmission';
 import BuildThumbnailSuggestion from './BuildThumbnailSuggestion';
 import BuildContributionInvite from './BuildContributionInvite';
 import BuildProjectLimitRequest from './BuildProjectLimitRequest';
+import BuildRewardReview from './BuildRewardReview';
 import DrawOffer from './DrawOffer';
 import FileAttachment from './FileAttachment';
 import Invitation from './Invitation';
@@ -234,6 +235,16 @@ export default function Content({
       ) : rootType === 'buildProjectLimitRequest' && rootId ? (
         <BuildProjectLimitRequest
           request={parsedSettings?.buildProjectLimitRequest}
+          myId={myId}
+          sender={{
+            id: userId,
+            username: appliedUsername,
+            profileTheme
+          }}
+        />
+      ) : rootType === 'buildRewardReview' && rootId ? (
+        <BuildRewardReview
+          review={parsedSettings?.buildRewardReview}
           myId={myId}
           sender={{
             id: userId,

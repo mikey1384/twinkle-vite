@@ -6,6 +6,7 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   'buildContributionSubmission',
   'buildThumbnailSuggestion',
   'buildProjectLimitRequest',
+  'buildRewardReview',
   'aiCardOffer',
   'cliAdminChatMessage'
 ]);

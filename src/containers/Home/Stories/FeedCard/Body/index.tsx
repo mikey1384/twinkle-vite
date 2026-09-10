@@ -648,9 +648,16 @@ export default function Body({
       subjectAttachmentClass =
         ' home-feed-card__attachment-preview--subject-file';
     }
+    // Non-media files (PDF, docs, ...) get the compact square tile whether
+    // they are a subject's hero or a comment's attachment; otherwise the
+    // comment card stretched to the full column height around a small icon.
+    const fileTileClass =
+      fileType !== 'image' && fileType !== 'video'
+        ? ' home-feed-card__attachment-preview--file-tile'
+        : '';
     return (
       <AttachmentSurface
-        className={`home-feed-card__attachment-preview home-feed-card__attachment-preview--${classNameSuffix}${subjectAttachmentClass}`}
+        className={`home-feed-card__attachment-preview home-feed-card__attachment-preview--${classNameSuffix}${subjectAttachmentClass}${fileTileClass}`}
         source={{ ...source, filePath }}
         sourceContentId={contentId}
         sourceContentType={contentType}
@@ -1154,7 +1161,7 @@ export default function Body({
 function getSubjectMarkdownAttachmentClassName(embed: MarkdownImageEmbed) {
   const mediaClass = shouldAttemptMarkdownImagePreview(embed)
     ? 'home-feed-card__attachment-preview--subject-image home-feed-card__attachment-preview--subject-embed-image'
-    : 'home-feed-card__attachment-preview--subject-file home-feed-card__attachment-preview--subject-embed-file';
+    : 'home-feed-card__attachment-preview--subject-file home-feed-card__attachment-preview--file-tile home-feed-card__attachment-preview--subject-embed-file';
 
   return `home-feed-card__attachment-preview ${mediaClass}`;
 }

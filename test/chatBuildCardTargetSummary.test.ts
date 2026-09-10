@@ -73,3 +73,39 @@ test('malformed and ordinary targets fall back to their original reply text', ()
     assert.equal(getBuildCardTargetSummary(message), null);
   }
 });
+
+test('reward review reply targets carry the app, its rule summary and thumbnail', () => {
+  assert.deepEqual(
+    getBuildCardTargetSummary({
+      rootId: 9,
+      rootType: 'buildRewardReview',
+      settings: JSON.stringify({
+        buildRewardReview: {
+          reviewId: 9,
+          buildId: 11,
+          title: 'Math Lab',
+          thumbnailUrl: 'https://example.test/math-lab.png',
+          rules: [
+            { id: 'angles', title: 'Angles', xp: 500, coins: 20 },
+            { id: 'sums', title: 'Sums', xp: 250, coins: 50 }
+          ]
+        }
+      })
+    }),
+    {
+      icon: 'coins',
+      label: 'Sent Math Lab for XP & Coin reward review',
+      detail: '2 rules · up to 500 XP & 50 Coins each',
+      thumbUrl: 'https://example.test/math-lab.png'
+    }
+  );
+  // Same validity boundary as the card: no review/app id, no summary.
+  assert.equal(
+    getBuildCardTargetSummary({
+      rootId: 9,
+      rootType: 'buildRewardReview',
+      settings: { buildRewardReview: { title: 'Math Lab' } }
+    }),
+    null
+  );
+});

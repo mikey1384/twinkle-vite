@@ -127,8 +127,11 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-standard {
       height: max(19rem, 190px);
     }
+    /* Media-bearing subject sizes: must match the mobile PANEL_HEIGHT_REM
+       values in helpers/sizing.ts (the stacked hero row below needs the extra
+       room). */
     .home-feed-card__panel-preview--size-subject-media {
-      height: max(20rem, 200px);
+      height: max(27rem, 270px);
     }
     .home-feed-card__panel-preview--size-subject-minimal {
       height: max(11rem, 110px);
@@ -143,7 +146,7 @@ export const mobilePreviewStyles = `
       height: var(--home-feed-card-comment-embed-mobile-panel-height, 100%);
     }
     .home-feed-card__panel-preview--size-subject-rich-embed {
-      height: max(32rem, 320px);
+      height: max(36rem, 360px);
     }
     .home-feed-card__panel-preview--size-subject-secret-compact {
       height: max(20rem, 200px);
@@ -155,7 +158,7 @@ export const mobilePreviewStyles = `
       height: max(22rem, 220px);
     }
     .home-feed-card__panel-preview--size-subject-secret-media {
-      height: max(24rem, 240px);
+      height: max(28rem, 280px);
     }
     .home-feed-card__panel-preview--size-subject-tall,
     .home-feed-card__panel-preview--size-tall {
@@ -291,6 +294,84 @@ export const mobilePreviewStyles = `
          blow the thumb up past 60%. Keep the thumb column narrow instead. */
       .home-feed-card__target-url.has-media {
         grid-template-columns: minmax(8.5rem, 34%) minmax(0, 1fr);
+      }
+      /* Phone: a subject's hero attachment stacks as a full-width media row
+         under the copy (the comment card's --with-media-attachment model)
+         instead of the desktop 34% column, where a wide photo shrank to a
+         thin strip inside a tall grey tile beside squeezed text. The copy row
+         is content-sized and the media row takes the rest of the panel's
+         fixed height bucket. A secret box lives inside the copy and the
+         attachment must never sit below the secret, so with-secret cards put
+         the media row FIRST (copy is ordered after it). */
+      .home-feed-card__subject-main--with-attachment {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        align-content: stretch;
+      }
+      .home-feed-card__subject-main--with-attachment
+        > .home-feed-card__subject-copy {
+        height: auto;
+      }
+      .home-feed-card__subject-preview--with-secret
+        .home-feed-card__subject-main--with-attachment {
+        grid-template-rows: minmax(0, 1fr) auto;
+      }
+      .home-feed-card__subject-preview--with-secret
+        .home-feed-card__subject-main--with-attachment
+        > .home-feed-card__subject-copy {
+        order: 1;
+      }
+      /* Every hero kind (image tile, square video tile, square file tile,
+         promoted markdown image) becomes the same full-width row; the
+         desktop square/centered tile rules are undone here. */
+      .home-feed-card__subject-main--with-attachment
+        > .home-feed-card__attachment-preview {
+        align-self: stretch;
+        justify-self: stretch;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        max-height: none;
+        aspect-ratio: auto;
+      }
+      /* ImagePreview writes object-fit inline (SubjectMediaPreview asks for
+         'contain' so the desktop tile letterboxes instead of cropping); the
+         wide, short phone row wants the photo to fill it, so the inline value
+         has to be overridden with !important. */
+      .home-feed-card__subject-main--with-attachment
+        .home-feed-card__attachment-preview--subject-image img,
+      .home-feed-card__subject-main--with-attachment
+        img.home-feed-card__attachment-preview--subject-image {
+        object-fit: cover !important;
+      }
+      /* The file tile's stacked icon/name/extension column needs a tall
+         square; in the short row it reads as the regular horizontal card. */
+      .home-feed-card__subject-main--with-attachment
+        .home-feed-card__attachment-preview--subject-file
+        .home-feed-card__attachment-card {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem 0.9rem;
+        text-align: left;
+      }
+      .home-feed-card__subject-main--with-attachment
+        .home-feed-card__attachment-preview--subject-file
+        .home-feed-card__attachment-card-icon {
+        flex: 0 0 auto;
+        width: 3.8rem;
+        height: 3.8rem;
+        border-radius: 1rem;
+        font-size: 1.75rem;
+      }
+      .home-feed-card__subject-main--with-attachment
+        .home-feed-card__attachment-preview--subject-file
+        .home-feed-card__attachment-card-copy {
+        flex: 1 1 auto;
+        align-items: flex-start;
+        width: auto;
+        text-align: left;
       }
       .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--subject {
         align-self: center;

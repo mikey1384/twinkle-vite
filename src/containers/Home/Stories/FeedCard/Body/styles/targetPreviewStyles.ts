@@ -303,6 +303,15 @@ export const targetPreviewStyles = `
     .home-feed-card__target-subject-description-slot > * {
       max-height: 100%;
     }
+    /* A multi-paragraph description is line-clamped as a whole by RichText's
+       block preview (measured against the slot), so its paragraphs must not
+       also carry the single-paragraph 2-line clamp above. */
+    .home-feed-card__target-subject-description.rich-text--block-preview
+      p:where(:not(.home-feed-card__target-subject-embed-slot p)) {
+      display: block;
+      overflow: visible;
+      -webkit-line-clamp: none;
+    }
     .home-feed-card__target-subject-build-embed-preview {
       box-sizing: border-box;
       align-items: stretch;

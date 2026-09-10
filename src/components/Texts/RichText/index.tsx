@@ -44,6 +44,10 @@ import {
   shouldShowRichTextFully
 } from './helpers/overflow';
 import { createStringRevision } from '~/helpers/stringRevision';
+import {
+  measureBlockPreviewClampLines,
+  richTextPreviewClampLinesVar
+} from './helpers/previewClamp';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 
@@ -631,6 +635,66 @@ function RichText({
     text
   ]);
 
+  useLayoutEffect(() => {
+    const node = TextRef.current;
+    if (!node) return;
+    if (!shouldUseBlockPreviewMaxHeight) {
+      node.style.removeProperty(richTextPreviewClampLinesVar);
+      return;
+    }
+    // The block preview is clamped by -webkit-line-clamp so it always ends on
+    // a line boundary with an ellipsis; measure how many whole lines fit in the
+    // room the root actually has (see helpers/previewClamp) and lower the
+    // clamp to that, starting from the CSS base every time.
+    let cancelled = false;
+    let measuredWidth = -1;
+    const baseMaxLines = Math.max(maxLines, previewMobileMaxLines);
+    const measure = () => {
+      if (cancelled) return;
+      measuredWidth = node.getBoundingClientRect().width;
+      node.style.removeProperty(richTextPreviewClampLinesVar);
+      const cssMaxLines = parseInt(
+        window.getComputedStyle(node).webkitLineClamp,
+        10
+      );
+      const lines = measureBlockPreviewClampLines(
+        node,
+        Number.isFinite(cssMaxLines) && cssMaxLines > 0
+          ? cssMaxLines
+          : baseMaxLines
+      );
+      if (lines !== null) {
+        node.style.setProperty(richTextPreviewClampLinesVar, String(lines));
+      }
+    };
+    measure();
+    let resizeObserver: ResizeObserver | undefined;
+    if (typeof ResizeObserver === 'function') {
+      // Only a width change re-flows the lines; the height changes are our
+      // own clamp taking effect and must not re-trigger a measurement.
+      resizeObserver = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? measuredWidth;
+        if (Math.abs(width - measuredWidth) < 0.5) return;
+        measure();
+      });
+      resizeObserver.observe(node);
+    }
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(measure).catch(() => {});
+    }
+    return () => {
+      cancelled = true;
+      resizeObserver?.disconnect();
+      node.style.removeProperty(richTextPreviewClampLinesVar);
+    };
+  }, [
+    contentRevision,
+    isParsed,
+    maxLines,
+    previewMobileMaxLines,
+    shouldUseBlockPreviewMaxHeight
+  ]);
+
   const appliedLinkColor = useMemo(
     () => (isStatusMsg ? statusMsgLinkColor : linkColor),
     [isStatusMsg, linkColor, statusMsgLinkColor]
@@ -797,12 +861,22 @@ function RichText({
           ${
             shouldUseBlockPreviewMaxHeight
               ? `
+              display: -webkit-box;
+              -webkit-box-orient: vertical;
+              -webkit-line-clamp: var(
+                ${richTextPreviewClampLinesVar},
+                var(--rich-text-preview-max-lines)
+              );
               max-height: ${previewCollapsedMaxHeight};
 
               ${
                 previewMobileMaxLines !== maxLines
                   ? `
                     @media (max-width: ${mobileMaxWidth}) {
+                      -webkit-line-clamp: var(
+                        ${richTextPreviewClampLinesVar},
+                        var(--rich-text-preview-mobile-max-lines)
+                      );
                       max-height: ${previewMobileCollapsedMaxHeight};
                     }
                   `

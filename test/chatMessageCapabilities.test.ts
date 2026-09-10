@@ -37,6 +37,7 @@ test('notification rows and server-issued workflow cards disable generic chat ac
     'buildContributionSubmission',
     'buildThumbnailSuggestion',
     'buildProjectLimitRequest',
+    'buildRewardReview',
     'aiCardOffer',
     'cliAdminChatMessage'
   ]) {

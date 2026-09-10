@@ -82,6 +82,7 @@ test('message preview keeps attachment, spoiler, game, reward and notification w
     [{ gameWinnerId: 1, content: '' }, 'You won the chess match!'],
     [{ rewardAmount: 1234, targetMessage: { username: 'Kai' } }, 'rewarded Kai 1,234 XP'],
     [{ content: '', rootType: 'buildContributionSubmission' }, 'sent changes'],
+    [{ content: '', rootType: 'buildRewardReview' }, 'sent an app for XP &amp; Coin reward review'],
     [{ notificationType: 'owner_change', newOwner: { username: 'Kai' } }, 'transferred ownership to Kai']
   ];
   for (const [message, expected] of cases) assert.ok(markup(app.render({ messagesObj: { 10: { id: 10, userId: 2, username: 'Mina', ...message } } })).includes(expected), expected);

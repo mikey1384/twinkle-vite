@@ -194,12 +194,15 @@ function VideoAttachmentPreview({
       ) : (
         <video src={src} muted playsInline preload="metadata" />
       )}
-      <div className="home-feed-card__video-attachment-play">
+      {/* Rendered as a span on purpose: the wide subject media column fills
+          every nested div (WideSubjectEmbedPreview's
+          `.home-feed-card__target-media-wrap > div > div` helper) to 100% x
+          100%, which turned this badge into a full-tile oval. A span escapes
+          that helper and keeps its own fixed size. No file-name overlay: the
+          stored fileName is the upload's generated name, not a title. */}
+      <span aria-hidden="true" className="home-feed-card__video-attachment-play">
         <Icon icon="play" />
-      </div>
-      {fileName ? (
-        <div className="home-feed-card__video-attachment-title">{fileName}</div>
-      ) : null}
+      </span>
     </div>
   );
 }

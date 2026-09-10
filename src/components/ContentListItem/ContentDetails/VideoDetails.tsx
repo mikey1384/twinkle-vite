@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { getMarkdownPreviewPlainText } from '~/helpers/markdownPreviewText';
 import { Color } from '~/constants/css';
 import { User } from '~/types';
 
@@ -11,6 +12,11 @@ export default function VideoDetails({
   title: string;
   uploader: User;
 }) {
+  const previewText = useMemo(
+    () => getMarkdownPreviewPlainText(description),
+    [description]
+  );
+
   return (
     <>
       <div className="title">
@@ -19,7 +25,9 @@ export default function VideoDetails({
           Uploaded by {uploader.username}
         </small>
       </div>
-      <div className="description">{description}</div>
+      {previewText && (
+        <div className="description">{previewText}</div>
+      )}
     </>
   );
 }

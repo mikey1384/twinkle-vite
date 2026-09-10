@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { getMarkdownPreviewPlainText } from '~/helpers/markdownPreviewText';
 import { Color } from '~/constants/css';
 
 export default function MissionDetails({
@@ -8,6 +9,11 @@ export default function MissionDetails({
   description?: string;
   title: string;
 }) {
+  const previewText = useMemo(
+    () => getMarkdownPreviewPlainText(description),
+    [description]
+  );
+
   return (
     <>
       <div className="title">
@@ -18,9 +24,9 @@ export default function MissionDetails({
           Mission
         </small>
       </div>
-      {description && (
+      {previewText && (
         <div style={{ lineHeight: 1.3 }} className="description">
-          {description}
+          {previewText}
         </div>
       )}
     </>

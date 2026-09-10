@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
+import { parseBuildRewardReviewFocusId } from '~/helpers/buildRewardReviewCard';
 import {
   rewardPanelClass,
   RewardReviewDetails
@@ -8,6 +10,11 @@ import {
 import type { RewardReview } from '~/components/Build/Rewards/types';
 
 export default function BuildRewardApprovals() {
+  const location = useLocation();
+  // /management?rewardReview=<id> (the chat card's button) opens straight on
+  // that review so the reviewer never has to find it in the list.
+  const focusReviewId = parseBuildRewardReviewFocusId(location.search);
+  const focusedReviewIdRef = useRef(0);
   const loadReviews = useAppContext(
     (v) => v.requestHelpers.loadBuildRewardReviews
   );
@@ -46,6 +53,18 @@ export default function BuildRewardApprovals() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    if (
+      !data?.canReview ||
+      !focusReviewId ||
+      focusedReviewIdRef.current === focusReviewId
+    ) {
+      return;
+    }
+    focusedReviewIdRef.current = focusReviewId;
+    focusReview(focusReviewId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.canReview, focusReviewId]);
   const selected = data?.reviews.find((review) => review.id === selectedId);
   if (data && !data.canReview) return null;
   return (
@@ -74,7 +93,7 @@ export default function BuildRewardApprovals() {
         <p>No pending or approved reward releases.</p>
       )}
       {data?.reviews.map((review) => (
-        <article key={review.id}>
+        <article key={review.id} id={`reward-review-${review.id}`}>
           <h3>{review.title || `App ${review.buildId}`}</h3>
           <p>
             {review.status} · Request #{review.id} · Saved version{' '}
@@ -136,6 +155,41 @@ export default function BuildRewardApprovals() {
       )}
     </section>
   );
+  async function focusReview(reviewId: number) {
+    // A decided (rejected/revoked/superseded) review is not in the queue list,
+    // so it is fetched directly and shown at the top rather than reported as
+    // missing.
+    setBusy(true);
+    setError('');
+    setReason('');
+    try {
+      const review = await loadReview(reviewId);
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              reviews: current.reviews.some((r) => r.id === reviewId)
+                ? current.reviews.map((r) =>
+                    r.id === reviewId ? { ...r, ...review } : r
+                  )
+                : [review, ...current.reviews]
+            }
+          : current
+      );
+      setSelectedId(reviewId);
+      requestAnimationFrame(() => {
+        document
+          .getElementById(`reward-review-${reviewId}`)
+          ?.scrollIntoView({ block: 'start' });
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Could not load that review.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   async function handleSelect(reviewId: number) {
     if (selectedId === reviewId) {
       setSelectedId(null);

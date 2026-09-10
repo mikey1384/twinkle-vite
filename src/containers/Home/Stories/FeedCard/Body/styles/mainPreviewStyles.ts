@@ -1,4 +1,4 @@
-import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+import { Color, desktopMinWidth } from '~/constants/css';
 
 export const mainPreviewStyles = `
   .home-feed-card__secret-preview {
@@ -108,44 +108,6 @@ export const mainPreviewStyles = `
     font-family: inherit;
     font-size: inherit;
     min-height: 0;
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    .home-feed-card__subject-description.rich-text--block-preview {
-      display: -webkit-box;
-      max-height: none;
-      overflow: hidden;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: var(--rich-text-preview-mobile-max-lines);
-      text-overflow: ellipsis;
-    }
-    .home-feed-card__subject-description.rich-text--block-preview > p,
-    .home-feed-card__subject-description.rich-text--block-preview > h1,
-    .home-feed-card__subject-description.rich-text--block-preview > h2,
-    .home-feed-card__subject-description.rich-text--block-preview > h3,
-    .home-feed-card__subject-description.rich-text--block-preview > h4,
-    .home-feed-card__subject-description.rich-text--block-preview > h5,
-    .home-feed-card__subject-description.rich-text--block-preview > h6,
-    .home-feed-card__subject-description.rich-text--block-preview > ol,
-    .home-feed-card__subject-description.rich-text--block-preview > ul {
-      display: inline;
-    }
-    .home-feed-card__subject-description.rich-text--block-preview > p + p::before {
-      content: '\\A\\A';
-      white-space: pre;
-    }
-    .home-feed-card__subject-description.rich-text--block-preview > ol,
-    .home-feed-card__subject-description.rich-text--block-preview > ul {
-      padding: 0;
-    }
-    .home-feed-card__subject-description.rich-text--block-preview > ol > li,
-    .home-feed-card__subject-description.rich-text--block-preview > ul > li {
-      display: inline;
-      margin-left: 0;
-    }
-    .home-feed-card__subject-description.rich-text--block-preview > ol > li + li::before,
-    .home-feed-card__subject-description.rich-text--block-preview > ul > li + li::before {
-      content: ' ';
-    }
   }
   .home-feed-card__subject-description
     + .home-feed-card__subject-secret-answer:not(.home-feed-card__subject-secret-answer--locked) {
@@ -266,6 +228,26 @@ export const mainPreviewStyles = `
       .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build
       > * {
       height: 100%;
+    }
+    /* Without a cover there is no app window to show, so the cell becomes a
+       framed thumb card that hugs the chip + title + meta (like the AI-card
+       and subject embeds beside text) instead of an empty 16/10 box. */
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build:has(
+        .compact-embed:not(.has-thumbnail-background)
+      ) {
+      height: auto;
+      aspect-ratio: auto;
+      max-height: 100%;
+      border: 1px solid ${Color.borderGray()};
+      background: #fff;
+    }
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--build:has(
+        .compact-embed:not(.has-thumbnail-background)
+      )
+      > * {
+      height: auto;
     }
     .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card {
       align-items: center;
@@ -677,6 +659,25 @@ export const mainPreviewStyles = `
     border: 0;
     background: transparent;
   }
+  /* The 18rem transparent window is for a build WITH a cover (toolbar +
+     screenshot). Without one the wide card is just a chip, title and meta,
+     so the slot keeps its frame and hugs the card, centered in the leftover
+     like the other content-height embeds. */
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--build:has(
+      .home-feed-card__build-preview.no-preview
+    ) {
+    flex: 0 0 auto;
+    height: auto;
+    max-height: none;
+    border: 1px solid ${Color.borderGray()};
+    background: #fff;
+  }
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--build:has(
+      .home-feed-card__build-preview.no-preview
+    )
+    > * {
+    height: auto;
+  }
   .home-feed-card__subject-embed-preview:has(
       .compact-main-content-embed--ai-story-card:not(
           .compact-main-content-embed--ai-story-has-image
@@ -706,6 +707,34 @@ export const mainPreviewStyles = `
   .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--shared-prompt {
     flex: 0 0 auto;
     margin-block: auto;
+  }
+  /* A nested subject renders the wide subject card, which draws its own frame
+     for the target strip. Here the slot is the frame, so the card inside drops
+     its border and stretches only to its content; the panel is content-sized
+     (subject-comment-embed) and the slot centers in whatever is left. */
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--subject {
+    flex: 0 0 auto;
+    margin-block: auto;
+  }
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--subject
+    > .home-feed-card__target-subject {
+    height: auto;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  /* The target strip clamps a media+reward description to one line because
+     its 13rem panel is fixed; this slot is content-sized, so the nested
+     subject keeps the thumb card's two-line description. */
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--subject
+    .home-feed-card__target-subject.has-media.has-reward
+    .home-feed-card__target-subject-description {
+    -webkit-line-clamp: 2;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--subject:hover {
+      border-color: ${Color.logoBlue(0.34)};
+    }
   }
   .home-feed-card__subject-embed-preview > * {
     box-sizing: border-box;
@@ -888,10 +917,10 @@ export const mainPreviewStyles = `
     background: ${Color.whiteGray()};
     box-shadow: none;
   }
-  /* Subject file attachments render as a centered SQUARE tile (mirrors the
-     square-video treatment below) rather than a card stretched to the full
-     height of the text-matched column. */
-  .home-feed-card__attachment-preview--subject-file {
+  /* File attachments (subject hero or comment attachment) render as a
+     centered SQUARE tile (mirrors the square-video treatment below) rather
+     than a card stretched to the full height of the text-matched column. */
+  .home-feed-card__attachment-preview--file-tile {
     align-self: center;
     aspect-ratio: 1 / 1;
     height: auto;
@@ -910,7 +939,7 @@ export const mainPreviewStyles = `
     border-radius: 0;
     background: transparent;
   }
-  .home-feed-card__attachment-preview--subject-file
+  .home-feed-card__attachment-preview--file-tile
     .home-feed-card__attachment-card {
     display: flex;
     flex-direction: column;
@@ -921,21 +950,21 @@ export const mainPreviewStyles = `
     padding: 1.2rem;
     text-align: center;
   }
-  .home-feed-card__attachment-preview--subject-file
+  .home-feed-card__attachment-preview--file-tile
     .home-feed-card__attachment-card-icon {
     width: 5.6rem;
     height: 5.6rem;
     border-radius: 1.4rem;
     font-size: 2.7rem;
   }
-  .home-feed-card__attachment-preview--subject-file
+  .home-feed-card__attachment-preview--file-tile
     .home-feed-card__attachment-card-copy {
     align-items: center;
     width: 100%;
     gap: 0.24rem;
     text-align: center;
   }
-  .home-feed-card__attachment-preview--subject-file
+  .home-feed-card__attachment-preview--file-tile
     .home-feed-card__attachment-card-copy strong {
     display: block;
     width: 100%;

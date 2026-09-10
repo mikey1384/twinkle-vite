@@ -191,10 +191,13 @@ const PANEL_HEIGHT_REM: Record<
   'rich-embed-compact': { desktop: 21, mobile: 20 },
   secret: { desktop: 12, mobile: 11 },
   standard: { desktop: 20, mobile: 19 },
-  'subject-media': { desktop: 21, mobile: 20 },
+  // Phone: the hero attachment stacks as a full-width media row under a
+  // content-sized copy row (mobilePreviewStyles), so the mobile buckets of
+  // the media-bearing subject sizes leave that row at least ~10rem.
+  'subject-media': { desktop: 21, mobile: 27 },
   'subject-minimal': { desktop: 12, mobile: 11 },
   'subject-comment-embed': { desktop: 29, mobile: 28 },
-  'subject-rich-embed': { desktop: 34, mobile: 32 },
+  'subject-rich-embed': { desktop: 34, mobile: 36 },
   'subject-root': { desktop: 15.5, mobile: 15.5 },
   'subject-root-text': { desktop: 29, mobile: 27 },
   'subject-secret-compact': { desktop: 19, mobile: 20 },
@@ -202,7 +205,7 @@ const PANEL_HEIGHT_REM: Record<
   // only a type-required fallback and is not used for the rendered height.
   'subject-secret-fit': { desktop: 16, mobile: 16 },
   'subject-secret-preview': { desktop: 22.5, mobile: 22 },
-  'subject-secret-media': { desktop: 25, mobile: 24 },
+  'subject-secret-media': { desktop: 25, mobile: 28 },
   'subject-tall': { desktop: 32, mobile: 30 },
   tall: { desktop: 30, mobile: 28 },
   url: { desktop: 25, mobile: 23 }
@@ -1043,6 +1046,15 @@ const FILE_EMBED_PREVIEW_HEIGHT_REM = {
   mobile: 5.1
 };
 
+// Wide subject card (WideSubjectEmbedPreview) in the subject description slot:
+// effort bar, a two-line title, the "Posted by" line and two description lines.
+// The embedded subject is lazy-loaded, so like the 'subject-embed' target this
+// is sized for the common max; the slot hugs the card and centers the leftover.
+const SUBJECT_EMBED_PREVIEW_HEIGHT_REM = {
+  desktop: 15.2,
+  mobile: 17.5
+};
+
 function estimateCommentEmbedBodyHeight(
   content: any,
   axis: FeedCardLayoutAxis,
@@ -1118,7 +1130,9 @@ function estimateCommentEmbedBodyHeight(
       ? AI_STORY_EMBED_PREVIEW_HEIGHT_REM[axis]
       : embedKind === 'file'
         ? FILE_EMBED_PREVIEW_HEIGHT_REM[axis]
-        : COMMENT_EMBED_PREVIEW_HEIGHT_REM[axis];
+        : embedKind === 'subject'
+          ? SUBJECT_EMBED_PREVIEW_HEIGHT_REM[axis]
+          : COMMENT_EMBED_PREVIEW_HEIGHT_REM[axis];
 
   return (
     layout.previewPaddingY +
@@ -1385,10 +1399,10 @@ function hasRichTextEmbed(content: any) {
 // Subject description embeds that render a natural-height card (instead of
 // stretching to fill the panel) get the content-sized 'subject-comment-embed'
 // panel. A fixed 34rem subject-rich-embed panel would leave a large empty gap
-// under compact comments, AI stories, and file rows.
+// under compact comments, AI stories, file rows, and wide subject cards.
 function getSubjectContentSizedEmbedKind(
   content: any
-): 'comment' | 'aiStory' | 'file' | null {
+): 'comment' | 'aiStory' | 'file' | 'subject' | null {
   const embedPreview = getMarkdownImageEmbedPreview(
     String(content?.description || content?.content || '')
   );
@@ -1398,7 +1412,9 @@ function getSubjectContentSizedEmbedKind(
   if (isMarkdownFileEmbed(embedPreview)) return 'file';
   if (embedPreview.type !== 'internal') return null;
   const kind = getInternalEmbedPreviewInfo(embedPreview.src)?.kind;
-  return kind === 'comment' || kind === 'aiStory' ? kind : null;
+  return kind === 'comment' || kind === 'aiStory' || kind === 'subject'
+    ? kind
+    : null;
 }
 
 // Single source of truth for how a subject TARGET preview places its
