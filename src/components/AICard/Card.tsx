@@ -92,6 +92,7 @@ export default function Card({
       finalCard?.engine === 'image-1' ||
       finalCard?.engine === 'image-1.5' ||
       finalCard?.engine === 'image-2' ||
+      finalCard?.engine === 'image-2.5' ||
       // A reveal-in-progress is always an OpenAI image generation, so apply the
       // cover/contain treatment while the preview streams in — before the
       // canonical engine is committed on completion. This avoids letterboxing

@@ -159,6 +159,10 @@ export default function FilterPanel({
             onClick: () => handleSelectEngine('image-2')
           },
           {
+            label: 'image-2.5',
+            onClick: () => handleSelectEngine('image-2.5')
+          },
+          {
             label: 'Nano Banana',
             onClick: () => handleSelectEngine('Nano Banana')
           }
@@ -228,6 +232,7 @@ export default function FilterPanel({
       | 'image-1'
       | 'image-1.5'
       | 'image-2'
+      | 'image-2.5'
       | 'Nano Banana'
   ) {
     onSetFilters((prevFilters: any) => {

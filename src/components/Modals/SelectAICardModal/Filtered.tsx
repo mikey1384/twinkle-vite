@@ -38,6 +38,7 @@ export default function Filtered({
     | 'image-1'
     | 'image-1.5'
     | 'image-2'
+    | 'image-2.5'
     | 'Nano Banana';
   isMystery?: boolean;
   loadFilteredAICards: (v: any) => any;
