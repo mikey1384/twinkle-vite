@@ -133,15 +133,17 @@ export default function LeftMenu({
               <ChatFlatButton label="New Group" onClick={onNewButtonClick} />
               <ChatQuickAccess />
             </div>
-            <Collect
-              aiCardSelected={chatType === AI_CARD_CHAT_TYPE || loadingAICardChat}
-              vocabSelected={chatType === VOCAB_CHAT_TYPE || loadingVocabulary}
-              onClick={() => {
-                if (vocabMatch || aiCardMatch) return null;
-                navigate(`/chat/${collectType || VOCAB_CHAT_TYPE}`);
-              }}
-            />
           </>
+        }
+        collect={
+          <Collect
+            aiCardSelected={chatType === AI_CARD_CHAT_TYPE || loadingAICardChat}
+            vocabSelected={chatType === VOCAB_CHAT_TYPE || loadingVocabulary}
+            onClick={() => {
+              if (vocabMatch || aiCardMatch) return null;
+              navigate(`/chat/${collectType || VOCAB_CHAT_TYPE}`);
+            }}
+          />
         }
         filters={
           <>

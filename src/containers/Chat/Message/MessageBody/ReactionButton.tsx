@@ -6,6 +6,7 @@ import { isMobile } from '~/helpers';
 import { useOutsideClick } from '~/helpers/hooks';
 import Icon from '~/components/Icon';
 import ReactionPicker from './ReactionPicker';
+import usePointerBlurGuard, { focusLeft } from './hooks/usePointerBlurGuard';
 import { messageControlClass } from './messageControlStyles';
 
 const deviceIsMobile = isMobile(navigator);
@@ -25,6 +26,7 @@ export default function ReactionButton({
   const TriggerRef = useRef<HTMLButtonElement | null>(null);
   const pickerId = useId();
   const userId = useKeyContext(v => v.myState.userId);
+  const blurGuard = usePointerBlurGuard();
 
   useOutsideClick(ContainerRef, () => onSetReactionsMenuShown(false), {
     enabled: reactionsMenuShown,
@@ -35,6 +37,7 @@ export default function ReactionButton({
     <ErrorBoundary componentPath="Message/ReactionButton">
       <div
         ref={ContainerRef}
+        {...blurGuard.guardProps}
         style={{ position: 'relative', display: 'flex', ...style, zIndex: reactionsMenuShown ? 6000 : undefined }}
         onMouseEnter={() => {
           if (!deviceIsMobile) onSetReactionsMenuShown(true);
@@ -48,7 +51,7 @@ export default function ReactionButton({
           }
         }}
         onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) {
+          if (focusLeft(event, blurGuard.isPressedInside)) {
             onSetReactionsMenuShown(false);
           }
         }}

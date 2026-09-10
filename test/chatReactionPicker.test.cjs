@@ -7,6 +7,12 @@ const { transformSync } = require('esbuild');
 const registry = { exports: {} };
 new Function('module', 'exports', transformSync(readFileSync(path.resolve(__dirname, '../src/constants/chatReactions.ts'), 'utf8'), {loader:'ts',format:'cjs'}).code)(registry,registry.exports);
 
+function loadModule(file, deps) {
+  const mod = { exports: {} };
+  new Function('require', 'module', 'exports', transformSync(readFileSync(path.resolve(__dirname, file), 'utf8'), { loader: 'ts', format: 'cjs' }).code)(name => { assert.ok(Object.hasOwn(deps, name), name); return deps[name]; }, mod, mod.exports);
+  return mod.exports;
+}
+
 function fixture(mobile = false) {
   const refs = [], reactions = [];
   let cursor = 0, shown = false, tree, outside, userId = 1;
@@ -28,6 +34,7 @@ function fixture(mobile = false) {
     '~/helpers': { isMobile: () => mobile },
     '~/helpers/hooks': { useOutsideClick(ref, close, options) { outside = { ref, close, options }; } }
   };
+  deps['./hooks/usePointerBlurGuard'] = loadModule('../src/containers/Chat/Message/MessageBody/hooks/usePointerBlurGuard.ts', deps);
   const source = readFileSync(path.resolve(__dirname, '../src/containers/Chat/Message/MessageBody/ReactionButton.tsx'), 'utf8');
   const mod = { exports: {} };
   const doc = { activeElement: {} };
@@ -107,4 +114,16 @@ test('picker keeps keyboard focus on mouse leave and dismisses when focus or poi
   app.root.props.onBlur({ currentTarget: { contains: () => false }, relatedTarget: {} }); assert.equal(app.shown, false);
   app.render(true); assert.equal(app.outside.options.enabled, true); assert.equal(app.outside.options.closeOnScroll, false, 'the picker owns focus-aware scroll handling');
   app.outside.close(); assert.equal(app.shown, false); assert.deepEqual(app.reactions, []);
+});
+
+test('a press that starts inside the picker survives the Safari blur that carries no relatedTarget', () => {
+  // Safari never focuses a pressed button, so tapping "Customize quick reactions"
+  // blurs the focused heading with relatedTarget = null. That must not dismiss.
+  const app = fixture(); app.render(true);
+  app.root.props.onPointerDownCapture();
+  app.root.props.onBlur({ currentTarget: { contains: () => false }, relatedTarget: null }); assert.equal(app.shown, true);
+  app.root.props.onClickCapture();
+  app.root.props.onBlur({ currentTarget: { contains: () => false }, relatedTarget: null }); assert.equal(app.shown, false, 'after the press completes, a real focus loss still dismisses');
+  app.render(true); app.root.props.onTouchStartCapture(); app.root.props.onPointerCancelCapture();
+  app.root.props.onBlur({ currentTarget: { contains: () => false }, relatedTarget: null }); assert.equal(app.shown, false, 'a cancelled gesture releases the guard');
 });

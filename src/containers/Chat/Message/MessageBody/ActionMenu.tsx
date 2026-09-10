@@ -9,6 +9,7 @@ import {
   getReactionPickerBounds as getPopoverBounds,
   positionReactionPicker as positionPopover
 } from './reactionPickerLayout';
+import usePointerBlurGuard, { focusLeft } from './hooks/usePointerBlurGuard';
 
 export interface ChatActionItem {
   id: string;
@@ -41,6 +42,7 @@ export default function ActionMenu({
   const focusOnOpen = useRef<'first' | 'last' | null>(null);
   const notifyRef = useRef(onShownChange);
   const [shown, setShown] = useState(false);
+  const blurGuard = usePointerBlurGuard();
   const [position, setPosition] = useState<ReturnType<typeof positionPopover>>();
   notifyRef.current = onShownChange;
 
@@ -98,9 +100,10 @@ export default function ActionMenu({
   return (
     <div
       ref={rootRef}
+      {...blurGuard.guardProps}
       style={{ position: 'relative', display: 'inline-flex' }}
       onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setShown(false);
+        if (focusLeft(event, blurGuard.isPressedInside)) setShown(false);
       }}
       onKeyDown={handleKeyDown}
     >

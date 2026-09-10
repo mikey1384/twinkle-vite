@@ -11,14 +11,21 @@ function load(file, deps, doc = {}) {
   return mod.exports.default;
 }
 const walk = node => React.isValidElement(node) ? [node,...React.Children.toArray(node.props.children).flatMap(walk)] : [];
+function loadModule(file, deps) {
+  const mod = {exports:{}};
+  new Function('require','module','exports', transformSync(readFileSync(path.resolve(__dirname,'..',file),'utf8'), {loader:'ts',format:'cjs'}).code)(name=>{assert.ok(Object.hasOwn(deps,name),name);return deps[name];},mod,mod.exports);
+  return mod.exports;
+}
 function menuFixture() {
   const Button = () => null, refs = [], order = [], doc = {activeElement:null};
   let shown = false, stateCursor = 0, refCursor = 0, tree, outside;
-  const Menu = load(base+'ActionMenu.tsx', {
+  const deps = {
     react:{...React,useEffect(){},useLayoutEffect(){},useId:()=> 'action-options',useState(value){const slot=stateCursor++;return slot===0?[shown,value=>{shown=typeof value==='function'?value(shown):value;order.push(`shown:${shown}`);}]:[value,()=>{}];},useRef(value){return refs[refCursor++] ||= {current:value};}},
     '@emotion/css':require('@emotion/css'),'~/components/Button':Button,'~/components/Icon':()=>null,
     '~/helpers':{isMobile:()=>false},'~/helpers/hooks':{useOutsideClick(ref,close,options){outside={ref,close,options};}},'./reactionPickerLayout':{},'./messageControlStyles':{messageControlClass:'compact-message-control'}
-  },doc);
+  };
+  deps['./hooks/usePointerBlurGuard'] = loadModule(base+'hooks/usePointerBlurGuard.ts', deps);
+  const Menu = load(base+'ActionMenu.tsx', deps, doc);
   return {
     order,doc,refs,
     get shown(){return shown;}, get root(){return tree;}, get nodes(){return walk(tree);},get outside(){return outside;},
@@ -165,4 +172,12 @@ test('Wordle action uses the shared chat popup and preserves its exact reply tar
   const menu=walk(Wordle(props)).find(node=>node.type===Menu);assert.equal(menu.props.label,'Wordle result actions');menu.props.items[0].onClick();
   const target={id:7,wordleResult:props.wordleResult,timeStamp:123,userId:1,username:'Mina'};
   assert.deepEqual(calls,[['target',{channelId:22,target}],['reply',target]]);
+});
+
+test('a press inside the open menu survives a Safari blur with no relatedTarget', () => {
+  const app = menuFixture(); app.render(); app.trigger.props.onClick({detail:0,stopPropagation(){}}); assert.equal(app.shown,true);
+  app.render(); app.root.props.onPointerDownCapture();
+  app.root.props.onBlur({currentTarget:{contains:()=>false},relatedTarget:null}); assert.equal(app.shown,true);
+  app.root.props.onClickCapture();
+  app.root.props.onBlur({currentTarget:{contains:()=>false},relatedTarget:null}); assert.equal(app.shown,false);
 });

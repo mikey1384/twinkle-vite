@@ -10,11 +10,13 @@ import { DEFAULT_WIDTHS, RESIZE_HANDLE_WIDTH } from './helpers/navigationSizing'
 
 export default function Layout({
   controls,
+  collect,
   filters,
   channelNavigation,
   channels
 }: {
   controls: React.ReactNode;
+  collect?: React.ReactNode;
   filters: React.ReactNode;
   channelNavigation?: React.ReactNode;
   channels: React.ReactNode;
@@ -70,6 +72,7 @@ export default function Layout({
         `}
       >
         <Shortcuts>{controls}</Shortcuts>
+        {collect}
       </div>
       <div
         className={css`
