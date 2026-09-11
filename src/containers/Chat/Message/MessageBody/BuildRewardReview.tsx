@@ -37,6 +37,7 @@ export default function BuildRewardReview({
   const buildId = Number(review?.buildId || 0);
   const title = String(review?.title || 'Untitled Build');
   const status = normalizeBuildRewardReviewStatus(review?.status);
+  const closedBySave = status === 'superseded' && Boolean(review?.closedBySave);
   const reason = String(review?.reason || '').trim();
   const thumbnailUrl = String(review?.thumbnailUrl || '').trim();
   const sourceVersionId = Number(review?.sourceVersionId || 0);
@@ -54,7 +55,7 @@ export default function BuildRewardReview({
     <BuildMessageCard
       bannerIcon="coins"
       themeName={sender.profileTheme}
-      bannerText={getBuildRewardReviewBannerText(status)}
+      bannerText={getBuildRewardReviewBannerText(status, closedBySave)}
       title={title}
       chips={
         <>
@@ -87,7 +88,9 @@ export default function BuildRewardReview({
       }
       actions={
         <>
-          {isReviewer ? (
+          {/* A closed request has nothing left to decide, so the reviewer
+              gets no button at all rather than a live-looking one. */}
+          {isReviewer && status !== 'superseded' ? (
             <GameCTAButton
               variant={status === 'pending' ? 'success' : 'neutral'}
               size="md"
@@ -131,9 +134,9 @@ export default function BuildRewardReview({
             {status === 'pending' ? (
               sentByMe ? (
                 <>
-                  You sent <strong>{title}</strong> for XP & Coin reward
-                  review. An admin will check this saved version; you can keep
-                  building while you wait.
+                  You sent <strong>{title}</strong> for XP & Coin reward review.
+                  An admin will check this saved version; you can keep building
+                  while you wait.
                 </>
               ) : (
                 <>
@@ -159,13 +162,23 @@ export default function BuildRewardReview({
               </>
             ) : status === 'revoked' ? (
               <>
-                Reward approval for <strong>{title}</strong> was revoked, so
-                the app no longer awards XP or Coins.
+                Reward approval for <strong>{title}</strong> was revoked, so the
+                app no longer awards XP or Coins.
+              </>
+            ) : closedBySave ? (
+              <>
+                {sentByMe ? 'You' : <strong>{sender.username}</strong>} saved a
+                newer version of <strong>{title}</strong> after sending this
+                request, so it can no longer be published and the request is
+                closed.
+                {sentByMe
+                  ? ' Send the version you want reviewed when it’s ready.'
+                  : ' Nothing to approve; a new request will arrive if the creator sends one.'}
               </>
             ) : (
               <>
-                A newer version of <strong>{title}</strong> was sent for
-                review, so this request is closed.
+                A newer version of <strong>{title}</strong> was sent for review,
+                so this request is closed.
               </>
             )}
           </div>

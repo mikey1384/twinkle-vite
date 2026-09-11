@@ -36,6 +36,12 @@ export function rewardApprovalPresentation(
         ? 'Your update needs approval'
         : 'This app needs approval before it can go public',
       detail:
+        // A pending request closes itself the moment a newer version is
+        // saved (it could never be published), so say so instead of letting
+        // the creator wait for an answer that will never come.
+        (settings.requestClosedBySave
+          ? 'You saved a newer version after sending your last request, so that request was closed. '
+          : '') +
         'Apps that give real XP and Coins are checked by a Twinkle admin first. Send this version and the admin will read your code and decide what people can earn. You can keep building while you wait.'
     },
     in_review: {

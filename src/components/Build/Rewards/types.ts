@@ -30,6 +30,9 @@ export interface RewardReview {
   // Reviewer context returned by the single-review load.
   detectedRuleIds?: string[];
   isLatest?: boolean;
+  // 'superseded' because the creator saved past it (not because a newer
+  // request replaced it). Nothing can be decided on such a review.
+  closedBySave?: boolean;
   isLive?: boolean;
   publishedVersionId?: number | null;
   appLifetime?: { xp: number; coins: number };
@@ -65,6 +68,8 @@ export interface RewardSettings {
   isUpdate: boolean;
   liveActive: boolean;
   reviewId: number | null;
+  // The last request closed itself because a newer version was saved.
+  requestClosedBySave?: boolean;
   reviewNote: string;
   sourceVersionId: number;
   summary: Array<{ title: string; xp: number; coins: number }>;

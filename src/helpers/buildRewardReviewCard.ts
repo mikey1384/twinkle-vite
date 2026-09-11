@@ -3,11 +3,7 @@
 // answer keys are never included); these helpers only phrase it.
 
 export type BuildRewardReviewStatus =
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'superseded'
-  | 'revoked';
+  'pending' | 'approved' | 'rejected' | 'superseded' | 'revoked';
 
 export interface BuildRewardReviewRuleSummary {
   id?: string;
@@ -24,6 +20,9 @@ export interface BuildRewardReviewCardPayload {
   title?: string;
   thumbnailUrl?: string | null;
   status?: BuildRewardReviewStatus | string;
+  // 'superseded' has two causes: the creator sent a newer request, or the
+  // creator saved a newer version (the request can then never be published).
+  closedBySave?: boolean;
   reason?: string;
   sourceVersionId?: number;
   rules?: BuildRewardReviewRuleSummary[];
@@ -90,7 +89,8 @@ export function formatBuildRewardRulesSummary(
 }
 
 export function getBuildRewardReviewBannerText(
-  status: BuildRewardReviewStatus
+  status: BuildRewardReviewStatus,
+  closedBySave = false
 ) {
   switch (status) {
     case 'approved':
@@ -98,7 +98,9 @@ export function getBuildRewardReviewBannerText(
     case 'rejected':
       return 'Reward release declined';
     case 'superseded':
-      return 'Reward review replaced by a newer version';
+      return closedBySave
+        ? 'Reward review closed · a newer version was saved'
+        : 'Reward review replaced by a newer version';
     case 'revoked':
       return 'Reward approval revoked';
     default:
@@ -115,7 +117,7 @@ export function getBuildRewardReviewStatusLabel(
     case 'rejected':
       return 'Declined';
     case 'superseded':
-      return 'Superseded';
+      return 'Closed';
     case 'revoked':
       return 'Revoked';
     default:

@@ -153,17 +153,24 @@ export default function BuildRewardApprovals() {
                   {rulesError && <span role="alert">{rulesError}</span>}
                 </label>
               )}
-              <label>
-                Review note
-                <textarea
-                  maxLength={1000}
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                  placeholder="Required for rejection or revocation; the creator reads it"
-                />
-              </label>
+              {isDecidable(review.status) && (
+                <label>
+                  Review note
+                  <textarea
+                    maxLength={1000}
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                    placeholder="Required for rejection or revocation; the creator reads it"
+                  />
+                </label>
+              )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.7rem' }}>
-                {review.status === 'pending' ? (
+                {!isDecidable(review.status) ? (
+                  <p style={{ margin: 0 }}>
+                    This request is closed ({review.status}). There is nothing
+                    to decide here.
+                  </p>
+                ) : review.status === 'pending' ? (
                   <>
                     <Button
                       color="logoBlue"
@@ -344,6 +351,12 @@ export default function BuildRewardApprovals() {
   }
 }
 
+// Only a pending request can be approved or rejected and only an approval can
+// be revoked; every other status is history and gets no buttons.
+function isDecidable(status: string) {
+  return status === 'pending' || status === 'approved';
+}
+
 // What the code asks for and what this review has done, so the reviewer can
 // judge the request without leaving the page.
 function ReviewerContext({ review }: { review: RewardReview }) {
@@ -352,8 +365,17 @@ function ReviewerContext({ review }: { review: RewardReview }) {
     <div>
       <p>
         <strong>Rule IDs found in the code:</strong>{' '}
-        {ids.length ? ids.map((id) => <code key={id}>{id} </code>) : 'none detected (heuristic scan; read the source)'}
+        {ids.length
+          ? ids.map((id) => <code key={id}>{id} </code>)
+          : 'none detected (heuristic scan; read the source)'}
       </p>
+      {review.closedBySave && (
+        <p role="alert">
+          The creator saved a newer version after sending this request, so this
+          version can never be published. The request closed itself; a new one
+          arrives if the creator sends it.
+        </p>
+      )}
       {review.isLatest === false && (
         <p role="alert">
           A newer request exists for this app. Decide on the latest one.
