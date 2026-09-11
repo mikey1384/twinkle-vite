@@ -1,68 +1,164 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import type { RewardConfig, RewardReview } from './types';
 
+// Reviewer-facing presentation of a reward review. Lives inside the
+// Management page's section panels, so it inherits their accent through
+// `--section-panel-accent` and uses the same type scale as the other tables.
 export const rewardPanelClass = css`
-  color: var(--chat-text);
-  font-size: 1.1rem;
+  color: ${Color.darkerGray()};
+  font-size: 1.4rem;
   line-height: 1.6;
   display: grid;
-  gap: 1rem;
+  gap: 1.4rem;
   min-width: 0;
   p,
   h3,
   h4 {
     margin: 0;
   }
+  h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
   fieldset,
   article {
-    border: 1px solid var(--ui-border, #ccd3df);
-    border-radius: 12px;
-    padding: 1rem;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
     min-width: 0;
+    background: #fff;
+  }
+  article {
+    border-left: 4px solid var(--section-panel-accent, ${Color.logoBlue()});
   }
   label {
     display: grid;
-    gap: 0.3rem;
-    font-size: 1.1rem;
+    gap: 0.5rem;
+    font-size: 1.4rem;
+    font-weight: 700;
   }
   input,
   textarea {
     width: 100%;
     box-sizing: border-box;
-    background: var(--ui-background, #fff);
-    color: inherit;
-    border: 1px solid #9aa6b8;
-    border-radius: 6px;
-    padding: 0.65rem;
+    background: #fff;
+    color: ${Color.darkerGray()};
+    border: 1px solid ${Color.borderGray()};
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
     font: inherit;
+    font-weight: 400;
     min-width: 0;
+    &:focus {
+      outline: none;
+      border-color: var(--section-panel-accent, ${Color.logoBlue()});
+      box-shadow: 0 0 0 3px
+        color-mix(
+          in srgb,
+          var(--section-panel-accent, ${Color.logoBlue()}) 18%,
+          transparent
+        );
+    }
   }
   textarea {
-    min-height: 5rem;
+    min-height: 6rem;
     resize: vertical;
   }
   pre {
-    max-height: 22rem;
+    max-height: 26rem;
     overflow: auto;
-    padding: 1rem;
-    background: #f2f4f8;
-    color: #243653;
-    font-size: 1rem;
+    padding: 1.2rem;
+    border-radius: 8px;
+    background: ${Color.wellGray()};
+    color: ${Color.darkerGray()};
+    font-size: 1.2rem;
+    line-height: 1.5;
+  }
+  code {
+    font-size: 1.25rem;
+  }
+  ol,
+  ul {
+    margin: 0.6rem 0 0;
+    padding-left: 2rem;
+  }
+  li + li {
+    margin-top: 0.3rem;
   }
   [role='alert'] {
-    color: #a1233c;
+    color: ${Color.red()};
+    font-weight: 700;
   }
-  summary {
-    cursor: pointer;
-    overflow-wrap: anywhere;
+  details {
+    border: 1px solid ${Color.borderGray()};
+    border-radius: 10px;
+    padding: 0 1.4rem;
+    background: #fff;
+    &[open] {
+      padding-bottom: 1.2rem;
+    }
+    > summary {
+      cursor: pointer;
+      font-weight: 700;
+      padding: 1rem 0;
+      overflow-wrap: anywhere;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      &::-webkit-details-marker {
+        display: none;
+      }
+      &::before {
+        content: '';
+        width: 0.7rem;
+        height: 0.7rem;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(-45deg);
+        transition: transform 0.15s ease;
+        flex: none;
+      }
+    }
+    &[open] > summary::before {
+      transform: rotate(45deg);
+    }
+    details {
+      margin-top: 0.8rem;
+    }
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.3rem;
   }
 `;
+
 export const rewardGridClass = css`
   display: grid;
   gap: 0.8rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  > div {
+    border: 1px solid ${Color.borderGray()};
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    background: ${Color.wellGray()};
+    display: grid;
+    gap: 0.2rem;
+    > strong {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: ${Color.gray()};
+    }
+    > div {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: ${Color.darkerGray()};
+      font-variant-numeric: tabular-nums;
+    }
+  }
 `;
+
 export const budgetFields = [
   ['dailyXP', 'App XP per day'],
   ['dailyCoins', 'App Coins per day'],
@@ -71,41 +167,71 @@ export const budgetFields = [
   ['lifetimeXP', 'Total XP budget'],
   ['lifetimeCoins', 'Total Coin budget']
 ] as const;
+
 export function RewardConfigSummary({ config }: { config: RewardConfig }) {
   return (
     <div className={rewardPanelClass}>
-      <div className={rewardGridClass}>
-        {budgetFields.map(([key, label]) => (
-          <div key={key}>
-            <strong>{label}</strong>
-            <div>{config[key].toLocaleString()}</div>
-          </div>
-        ))}
-      </div>
+      {/* A first request carries no economy at all; six zero tiles would
+          only look like something is broken. */}
+      {config.rules.length > 0 && (
+        <div className={rewardGridClass}>
+          {budgetFields.map(([key, label]) => (
+            <div key={key}>
+              <strong>{label}</strong>
+              <div>{config[key].toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+      )}
       {config.rules.length === 0 && (
         <p>
-          No earning rules yet. The reviewer writes them while approving; a
-          request cannot be approved without at least one rule.
+          No earning rules yet. You write them while approving; a request cannot
+          be approved without at least one rule.
         </p>
       )}
-      {config.rules.map((rule) => (
-        <article key={rule.id}>
-          <h4>
-            {rule.title} · {rule.xp} XP + {rule.coins} Coins
-          </h4>
-          <p>Rule: {rule.id} · once per learner per Korean calendar day</p>
-          <ol>
-            {rule.questions.map((question, i) => (
-              <li key={i}>
-                {question.prompt} <strong>Answer: {question.answer}</strong>
-              </li>
+      {config.rules.length > COLLAPSE_RULES_ABOVE ? (
+        <details>
+          <summary>{config.rules.length} earning rules</summary>
+          <div className={rulesListClass}>
+            {config.rules.map((rule) => (
+              <RewardRuleCard key={rule.id} rule={rule} />
             ))}
-          </ol>
-        </article>
-      ))}
+          </div>
+        </details>
+      ) : (
+        config.rules.map((rule) => <RewardRuleCard key={rule.id} rule={rule} />)
+      )}
     </div>
   );
 }
+
+// A long economy (Math Lab has 36 rules) folds away so the reviewer reaches
+// the history, the source and the decision without scrolling past it all.
+const COLLAPSE_RULES_ABOVE = 6;
+
+const rulesListClass = css`
+  display: grid;
+  gap: 1rem;
+`;
+
+function RewardRuleCard({ rule }: { rule: RewardConfig['rules'][number] }) {
+  return (
+    <article>
+      <h4>
+        {rule.title} · {rule.xp} XP + {rule.coins} Coins
+      </h4>
+      <p>Rule ID: {rule.id} · once per learner per Korean calendar day</p>
+      <ol>
+        {rule.questions.map((question, i) => (
+          <li key={i}>
+            {question.prompt} <strong>Answer: {question.answer}</strong>
+          </li>
+        ))}
+      </ol>
+    </article>
+  );
+}
+
 export function RewardReviewDetails({ review }: { review: RewardReview }) {
   return (
     <div className={rewardPanelClass}>
@@ -130,7 +256,7 @@ export function RewardReviewDetails({ review }: { review: RewardReview }) {
       <details>
         <summary>
           Saved source · version {review.sourceVersionId} ·{' '}
-          {review.files.length} files
+          {review.files.length} {review.files.length === 1 ? 'file' : 'files'}
         </summary>
         <p>
           Source fingerprint:{' '}

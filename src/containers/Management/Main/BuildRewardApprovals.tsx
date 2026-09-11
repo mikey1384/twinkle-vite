@@ -1,7 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { css } from '@emotion/css';
 import Button from '~/components/Button';
+import ErrorBoundary from '~/components/ErrorBoundary';
+import Icon from '~/components/Icon';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import SectionPanel from '~/components/SectionPanel';
+import Table from '../Table';
 import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { timeSince } from '~/helpers/timeStampHelpers';
 import { parseBuildRewardReviewFocusId } from '~/helpers/buildRewardReviewCard';
 import {
   rewardPanelClass,
@@ -24,12 +33,45 @@ const EMPTY_CONFIG: RewardConfig = {
   rules: []
 };
 
+// The queue pages like the other Management tables: a short first page, then
+// Load More reveals what is already fetched before asking the server for older
+// requests.
+const PAGE_SIZE = 5;
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: 'Waiting for review',
+  approved: 'Approved',
+  rejected: 'Declined',
+  revoked: 'Revoked',
+  superseded: 'Closed'
+};
+
+// Only a pending request can be approved or rejected and only an approval can
+// be revoked; every other status is history and gets no buttons.
+function isDecidable(status: string) {
+  return status === 'pending' || status === 'approved';
+}
+
+function statusColorKey(status: string) {
+  if (status === 'approved') return 'limeGreen';
+  if (status === 'rejected' || status === 'revoked') return 'redOrange';
+  if (status === 'pending') return 'logoBlue';
+  return 'gray';
+}
+
 export default function BuildRewardApprovals() {
   const location = useLocation();
   // /management?rewardReview=<id> (the chat card's button) opens straight on
   // that review so the reviewer never has to find it in the list.
   const focusReviewId = parseBuildRewardReviewFocusId(location.search);
   const focusedReviewIdRef = useRef(0);
+  const detailRef = useRef<HTMLDivElement | null>(null);
+  const { colorKey: tableHeaderColor } = useRoleColor('tableHeader', {
+    fallback: 'logoBlue'
+  });
+  const { colorKey: successColor } = useRoleColor('success', {
+    fallback: 'green'
+  });
   const loadReviews = useAppContext(
     (v) => v.requestHelpers.loadBuildRewardReviews
   );
@@ -46,6 +88,7 @@ export default function BuildRewardApprovals() {
   } | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [numShown, setNumShown] = useState(PAGE_SIZE);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [reason, setReason] = useState('');
   const [rulesText, setRulesText] = useState('');
@@ -53,6 +96,7 @@ export default function BuildRewardApprovals() {
   // Rules typed for a review survive collapsing it or switching to another
   // review; they are dropped only once a decision on that review is saved.
   const [rulesDrafts, setRulesDrafts] = useState<Record<number, string>>({});
+
   useEffect(() => {
     let active = true;
     loadReviews()
@@ -73,6 +117,7 @@ export default function BuildRewardApprovals() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   useEffect(() => {
     if (
       !data?.canReview ||
@@ -85,131 +130,254 @@ export default function BuildRewardApprovals() {
     focusReview(focusReviewId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.canReview, focusReviewId]);
-  const selected = data?.reviews.find((review) => review.id === selectedId);
+
+  const reviews = data?.reviews || [];
+  const selected = reviews.find((review) => review.id === selectedId);
+  const pendingCount = reviews.filter(
+    (review) => review.status === 'pending'
+  ).length;
+  const shownReviews = reviews.slice(0, numShown);
+  const moreLocally = reviews.length > numShown;
+  const loadMoreShown = moreLocally || Boolean(data?.nextCursor);
+
   if (data && !data.canReview) return null;
+
   return (
-    <section
-      className={rewardPanelClass}
-      style={{
-        margin: '2rem 0',
-        padding: '1.5rem',
-        border: '1px solid var(--ui-border)',
-        borderRadius: 12
-      }}
-      aria-label="App reward approvals"
-    >
-      <h2 style={{ margin: 0 }}>App reward approvals</h2>
-      <p>
-        Creators send their saved code; you read it and write the earning rules
-        that get approved with it. Editing the code requires another review.
-        Revoking a live approval stops new awards immediately. The same queue is
-        available as <code>lumine admin reward-review</code>.
-      </p>
-      {error && <p role="alert">{error}</p>}
-      <Button variant="outline" disabled={busy} onClick={handleRefresh}>
-        Refresh requests
-      </Button>
-      {!data && !error && <p role="status">Loading requests…</p>}
-      {data?.reviews.length === 0 && (
-        <p>No pending or approved reward releases.</p>
-      )}
-      {data?.reviews.map((review) => (
-        <article key={review.id} id={`reward-review-${review.id}`}>
-          <h3>{review.title || `App ${review.buildId}`}</h3>
-          <p>
-            {review.status} · Request #{review.id}
-            {review.ownerUsername ? ` · by ${review.ownerUsername}` : ''} ·
-            Saved version {review.sourceVersionId}
-            {review.config.rules.length === 0 ? ' · no earning rules yet' : ''}
-          </p>
+    <ErrorBoundary componentPath="Management/Main/BuildRewardApprovals">
+      <SectionPanel
+        title="App reward approvals"
+        loaded={Boolean(data) || Boolean(error)}
+        isEmpty={Boolean(data) && reviews.length === 0}
+        emptyMessage="No pending or approved reward releases"
+        innerStyle={{ paddingLeft: 0, paddingRight: 0 }}
+        button={
           <Button
-            variant="outline"
+            color="darkerGray"
+            variant="solid"
+            tone="raised"
             disabled={busy}
-            onClick={() => handleSelect(review.id)}
+            onClick={handleRefresh}
           >
-            Review code and earning rules
+            <Icon icon="redo" />
+            <span style={{ marginLeft: '0.7rem' }}>Refresh</span>
           </Button>
-          {selected?.id === review.id && (
-            <div className={rewardPanelClass} style={{ marginTop: '1rem' }}>
-              <ReviewerContext review={selected} />
-              <RewardReviewDetails review={selected} />
-              {review.status === 'pending' && (
-                <label>
-                  Earning rules to approve (JSON). Rule IDs must match the ones
-                  the code starts challenges with.
-                  <textarea
-                    value={rulesText}
-                    spellCheck={false}
-                    style={{ minHeight: '16rem', fontFamily: 'monospace' }}
-                    onChange={(event) => {
-                      setRulesText(event.target.value);
-                      setRulesDrafts((drafts) => ({
-                        ...drafts,
-                        [review.id]: event.target.value
-                      }));
-                      setRulesError('');
+        }
+      >
+        <div className={introClass}>
+          <p>
+            Creators send their saved code. You read it, write the earning
+            rules, and approve both together. Editing the code afterwards needs
+            another review, and revoking a live approval stops new awards
+            immediately.
+          </p>
+          <p>
+            {pendingCount === 0
+              ? 'Nothing is waiting for review.'
+              : `${pendingCount} ${
+                  pendingCount === 1 ? 'request is' : 'requests are'
+                } waiting for review.`}{' '}
+            The same queue is available as{' '}
+            <code>lumine admin reward-review</code>.
+          </p>
+          {error && <p role="alert">{error}</p>}
+        </div>
+        <div className={tableWrapClass}>
+          <Table
+            color={tableHeaderColor}
+            columns={`
+            minmax(16rem, 2fr)
+            minmax(12rem, 1.2fr)
+            minmax(14rem, 1.3fr)
+            minmax(10rem, 1fr)
+            minmax(10rem, 1fr)
+          `}
+          >
+            <thead>
+              <tr>
+                <th>App</th>
+                <th>Creator</th>
+                <th>Status</th>
+                <th>Saved version</th>
+                <th>Sent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shownReviews.map((review) => {
+                const isSelected = selected?.id === review.id;
+                return (
+                  <tr
+                    key={review.id}
+                    aria-selected={isSelected}
+                    onClick={() => handleSelect(review.id)}
+                    className={rowClass}
+                  >
+                    <td className={appCellClass}>
+                      <span className={appTitleClass}>
+                        {review.title || `App ${review.buildId}`}
+                      </span>
+                      <span className={appMetaClass}>
+                        <span className={phoneOnlyClass}>
+                          {review.ownerUsername || `User ${review.ownerId}`} · v
+                          {review.sourceVersionId} ·{' '}
+                        </span>
+                        Request #{review.id}
+                        {review.config.rules.length === 0
+                          ? ' · no earning rules yet'
+                          : ` · ${review.config.rules.length} ${
+                              review.config.rules.length === 1
+                                ? 'rule'
+                                : 'rules'
+                            }`}
+                      </span>
+                    </td>
+                    <td>{review.ownerUsername || `User ${review.ownerId}`}</td>
+                    <td>
+                      <span
+                        className={css`
+                          font-weight: 700;
+                          color: ${Color[
+                          statusColorKey(review.status) as keyof typeof Color
+                        ]()};
+                        `}
+                      >
+                        {STATUS_LABEL[review.status] || review.status}
+                      </span>
+                    </td>
+                    <td>{review.sourceVersionId}</td>
+                    <td>{timeSince(review.createdAt)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        </div>
+        {loadMoreShown && (
+          <div className={loadMoreRowClass}>
+            <LoadMoreButton
+              variant="ghost"
+              loading={busy}
+              style={{ fontSize: '2rem' }}
+              onClick={handleLoadMore}
+            />
+          </div>
+        )}
+        {selected && (
+          <div ref={detailRef} className={detailClass}>
+            <div className={detailHeaderClass}>
+              <div>
+                <h3>{selected.title || `App ${selected.buildId}`}</h3>
+                <p>
+                  Request #{selected.id}
+                  {selected.ownerUsername
+                    ? ` · by ${selected.ownerUsername}`
+                    : ''}
+                  {' · '}
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color:
+                        Color[
+                          statusColorKey(selected.status) as keyof typeof Color
+                        ]()
                     }}
-                  />
-                  {rulesError && <span role="alert">{rulesError}</span>}
-                </label>
-              )}
-              {isDecidable(review.status) && (
+                  >
+                    {STATUS_LABEL[selected.status] || selected.status}
+                  </span>
+                  {' · saved version '}
+                  {selected.sourceVersionId}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                color="darkerGray"
+                disabled={busy}
+                onClick={() => setSelectedId(null)}
+              >
+                <Icon icon="times" />
+                <span style={{ marginLeft: '0.7rem' }}>Close</span>
+              </Button>
+            </div>
+            <ReviewerContext review={selected} />
+            <RewardReviewDetails review={selected} />
+            {isDecidable(selected.status) && (
+              <div className={rewardPanelClass}>
+                {selected.status === 'pending' && (
+                  <label>
+                    Earning rules to approve (JSON)
+                    <span className={hintClass}>
+                      Rule IDs must match the ones the code starts challenges
+                      with.
+                    </span>
+                    <textarea
+                      value={rulesText}
+                      spellCheck={false}
+                      style={{ minHeight: '18rem', fontFamily: 'monospace' }}
+                      onChange={(event) => {
+                        setRulesText(event.target.value);
+                        setRulesDrafts((drafts) => ({
+                          ...drafts,
+                          [selected.id]: event.target.value
+                        }));
+                        setRulesError('');
+                      }}
+                    />
+                    {rulesError && <span role="alert">{rulesError}</span>}
+                  </label>
+                )}
                 <label>
                   Review note
+                  <span className={hintClass}>
+                    Required for rejection or revocation. The creator reads it.
+                  </span>
                   <textarea
                     maxLength={1000}
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
-                    placeholder="Required for rejection or revocation; the creator reads it"
                   />
                 </label>
-              )}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.7rem' }}>
-                {!isDecidable(review.status) ? (
-                  <p style={{ margin: 0 }}>
-                    This request is closed ({review.status}). There is nothing
-                    to decide here.
-                  </p>
-                ) : review.status === 'pending' ? (
-                  <>
-                    <Button
-                      color="logoBlue"
-                      disabled={busy}
-                      onClick={() => handleDecision('approve')}
-                    >
-                      Approve with these rules
-                    </Button>
+                <div className={actionsClass}>
+                  {selected.status === 'pending' ? (
+                    <>
+                      <Button
+                        color={successColor}
+                        variant="solid"
+                        tone="raised"
+                        disabled={busy}
+                        onClick={() => handleDecision('approve')}
+                      >
+                        <Icon icon="check" />
+                        <span style={{ marginLeft: '0.7rem' }}>
+                          Approve with these rules
+                        </span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        color="redOrange"
+                        disabled={busy || !reason.trim()}
+                        onClick={() => handleDecision('reject')}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  ) : (
                     <Button
                       variant="outline"
-                      color="red"
+                      color="redOrange"
                       disabled={busy || !reason.trim()}
-                      onClick={() => handleDecision('reject')}
+                      onClick={() => handleDecision('revoke')}
                     >
-                      Reject
+                      Revoke approval
                     </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    color="red"
-                    disabled={busy || !reason.trim()}
-                    onClick={() => handleDecision('revoke')}
-                  >
-                    Revoke approval
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </article>
-      ))}
-      {data?.nextCursor && (
-        <Button variant="outline" disabled={busy} onClick={handleLoadOlder}>
-          Load older releases
-        </Button>
-      )}
-    </section>
+            )}
+          </div>
+        )}
+      </SectionPanel>
+    </ErrorBoundary>
   );
+
   function openReview(review: RewardReview) {
     setSelectedId(review.id);
     setReason('');
@@ -226,6 +394,13 @@ export default function BuildRewardApprovals() {
         )
     );
   }
+
+  function scrollToDetail() {
+    requestAnimationFrame(() => {
+      detailRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  }
+
   async function focusReview(reviewId: number) {
     // A decided (rejected/revoked/superseded) review is not in the queue list,
     // so it is fetched directly and shown at the top rather than reported as
@@ -247,11 +422,7 @@ export default function BuildRewardApprovals() {
           : current
       );
       openReview(review);
-      requestAnimationFrame(() => {
-        document
-          .getElementById(`reward-review-${reviewId}`)
-          ?.scrollIntoView({ block: 'start' });
-      });
+      scrollToDetail();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Could not load that review.'
@@ -260,7 +431,9 @@ export default function BuildRewardApprovals() {
       setBusy(false);
     }
   }
+
   async function handleSelect(reviewId: number) {
+    if (busy) return;
     if (selectedId === reviewId) {
       setSelectedId(null);
       return;
@@ -280,14 +453,21 @@ export default function BuildRewardApprovals() {
           : current
       );
       openReview(review);
+      scrollToDetail();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load source.');
     } finally {
       setBusy(false);
     }
   }
-  async function handleLoadOlder() {
-    if (!data?.nextCursor || busy) return;
+
+  async function handleLoadMore() {
+    if (busy) return;
+    if (moreLocally) {
+      setNumShown((count) => count + PAGE_SIZE);
+      return;
+    }
+    if (!data?.nextCursor) return;
     setBusy(true);
     setError('');
     try {
@@ -297,6 +477,7 @@ export default function BuildRewardApprovals() {
           ? { ...result, reviews: [...current.reviews, ...result.reviews] }
           : result
       );
+      setNumShown((count) => count + PAGE_SIZE);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Could not load older reviews.'
@@ -305,17 +486,20 @@ export default function BuildRewardApprovals() {
       setBusy(false);
     }
   }
+
   async function handleRefresh() {
     setBusy(true);
     setError('');
     try {
       setData(await loadReviews());
+      setNumShown(PAGE_SIZE);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load reviews.');
     } finally {
       setBusy(false);
     }
   }
+
   async function handleDecision(decision: string) {
     if (!selected || busy) return;
     let config: RewardConfig | undefined;
@@ -351,22 +535,20 @@ export default function BuildRewardApprovals() {
   }
 }
 
-// Only a pending request can be approved or rejected and only an approval can
-// be revoked; every other status is history and gets no buttons.
-function isDecidable(status: string) {
-  return status === 'pending' || status === 'approved';
-}
-
 // What the code asks for and what this review has done, so the reviewer can
 // judge the request without leaving the page.
 function ReviewerContext({ review }: { review: RewardReview }) {
   const ids = review.detectedRuleIds || [];
   return (
-    <div>
+    <div className={rewardPanelClass}>
       <p>
         <strong>Rule IDs found in the code:</strong>{' '}
         {ids.length
-          ? ids.map((id) => <code key={id}>{id} </code>)
+          ? ids.map((id) => (
+              <code key={id} className={ruleIdClass}>
+                {id}
+              </code>
+            ))
           : 'none detected (heuristic scan; read the source)'}
       </p>
       {review.closedBySave && (
@@ -376,13 +558,16 @@ function ReviewerContext({ review }: { review: RewardReview }) {
           arrives if the creator sends it.
         </p>
       )}
+      {!isDecidable(review.status) && !review.closedBySave && (
+        <p>This request is closed. There is nothing to decide here.</p>
+      )}
       {review.isLatest === false && (
         <p role="alert">
           A newer request exists for this app. Decide on the latest one.
         </p>
       )}
       {review.isLive && <p>This is the approval currently paying out.</p>}
-      {review.awarded && (
+      {review.awarded && (review.awarded.awards > 0 || review.isLive) && (
         <p>
           Paid out by this approval: {review.awarded.awards} awards to{' '}
           {review.awarded.earners} people · {review.awarded.xp.toLocaleString()}{' '}
@@ -395,3 +580,162 @@ function ReviewerContext({ review }: { review: RewardReview }) {
     </div>
   );
 }
+
+const introClass = css`
+  padding: 0 1.8rem 1.4rem;
+  color: ${Color.darkerGray()};
+  font-size: 1.4rem;
+  line-height: 1.6;
+  display: grid;
+  gap: 0.6rem;
+  max-width: 78ch;
+  p {
+    margin: 0;
+  }
+  code {
+    font-size: 1.25rem;
+  }
+  [role='alert'] {
+    color: ${Color.red()};
+    font-weight: 700;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0 1.4rem 1.2rem;
+    font-size: 1.3rem;
+  }
+`;
+
+// On phones the five columns cannot fit, so the creator and the saved version
+// fold into the app cell's second line and their columns disappear.
+const tableWrapClass = css`
+  width: 100%;
+  @media (max-width: ${mobileMaxWidth}) {
+    > table {
+      grid-template-columns: minmax(0, 2fr) minmax(11rem, 1fr) minmax(
+          9rem,
+          1fr
+        );
+      th:nth-child(2),
+      th:nth-child(4),
+      td:nth-child(2),
+      td:nth-child(4) {
+        display: none;
+      }
+      th,
+      td {
+        padding-left: 1.4rem;
+        padding-right: 1.4rem;
+      }
+      td {
+        white-space: normal;
+      }
+    }
+  }
+`;
+
+const phoneOnlyClass = css`
+  display: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: inline;
+  }
+`;
+
+const rowClass = css`
+  cursor: pointer;
+  td {
+    display: flex;
+    align-items: center;
+  }
+  &[aria-selected='true'] td {
+    background: ${Color.whitePurple()};
+    box-shadow: inset 0 -2px 0 var(--section-panel-accent, ${Color.logoBlue()});
+  }
+`;
+
+const appCellClass = css`
+  && {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.2rem;
+    white-space: normal;
+  }
+`;
+
+const appTitleClass = css`
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: ${Color.darkerGray()};
+`;
+
+const appMetaClass = css`
+  font-size: 1.2rem;
+  color: ${Color.gray()};
+`;
+
+const loadMoreRowClass = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+  width: 100%;
+`;
+
+// The selected review opens beneath the table in a frame that carries the
+// panel's accent, so the transition from "row in a list" to "thing being
+// judged" is visible without leaving the section.
+const detailClass = css`
+  margin: 2rem 1.8rem 0;
+  padding: 1.6rem 1.8rem;
+  border: 1px solid var(--section-panel-border-color, ${Color.borderGray()});
+  border-top: 4px solid var(--section-panel-accent, ${Color.logoBlue()});
+  border-radius: 12px;
+  background: #fff;
+  display: grid;
+  gap: 1.6rem;
+  scroll-margin-top: 8rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    margin: 1.6rem 1.2rem 0;
+    padding: 1.2rem 1.4rem;
+  }
+`;
+
+const detailHeaderClass = css`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  h3 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: ${Color.darkerGray()};
+  }
+  p {
+    margin: 0.3rem 0 0;
+    font-size: 1.4rem;
+    color: ${Color.darkGray()};
+  }
+`;
+
+const hintClass = css`
+  font-weight: 400;
+  font-size: 1.3rem;
+  color: ${Color.gray()};
+`;
+
+const ruleIdClass = css`
+  display: inline-block;
+  margin-right: 0.6rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 6px;
+  background: ${Color.wellGray()};
+`;
+
+const actionsClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+`;
