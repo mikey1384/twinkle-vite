@@ -14,7 +14,23 @@ export interface CanonicalChatRebuildRequest {
 
 export type TerminalChatRecoveryReason =
   | 'bootstrap_retry_exhausted'
-  | 'canonical_rebuild_unavailable';
+  | 'canonical_rebuild_unavailable'
+  // The composer stayed gated past the wall-clock deadline without any
+  // recovery loop reporting a terminal result (a bind ack that never comes, a
+  // retry timer that cancelled itself, an invalidation cycle). The deadline is
+  // the backstop for every cause source reading cannot tell apart.
+  | 'recovery_deadline_exceeded';
+
+// How long "Catching up" may block the composer before the member gets the
+// last confirmed messages back plus a Retry. Long enough for a slow writer
+// bootstrap on a throttled phone, short enough that nobody stares at a pill
+// for a minute (subject 36629: "sometimes never finishes").
+export const CHAT_CATCH_UP_DEADLINE_MS = 30_000;
+// A Retry tap can land while a bootstrap is still in flight or the socket is
+// mid-reconnect; the rebuild handler refuses those. Re-ask a few times instead
+// of leaving a button that silently does nothing.
+export const CHAT_RECOVERY_RETRY_REQUEUE_MS = 1_500;
+export const CHAT_RECOVERY_RETRY_REQUEUE_LIMIT = 6;
 
 export interface TerminalChatRecoveryState {
   channelId: number;

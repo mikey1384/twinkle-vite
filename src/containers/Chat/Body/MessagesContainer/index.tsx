@@ -23,6 +23,9 @@ import { trackEvent } from '~/helpers/analytics';
 import { getChatProjectionActivityRevision } from '~/helpers/chatUnreadActivity';
 import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
 import {
+  CHAT_CATCH_UP_DEADLINE_MS,
+  CHAT_RECOVERY_RETRY_REQUEUE_LIMIT,
+  CHAT_RECOVERY_RETRY_REQUEUE_MS,
   ChatProjectionActivityRaceError,
   clearTerminalChatRecovery,
   getTerminalChatRecoveryState,
@@ -538,6 +541,59 @@ export default function MessagesContainer({
     }, CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS);
     return () => clearTimeout(catchUpStatusTimer);
   }, [catchUpStatusPending]);
+
+  // Wall-clock backstop. Every recovery loop is meant to end in success or a
+  // terminal state, but a bind acknowledgement that never arrives, a retry
+  // timer that cancels itself, or an invalidation cycle can hold the gate
+  // with nothing left running. Past the deadline the member gets the last
+  // confirmed messages and a Retry; if nothing is in flight, ask for a fresh
+  // canonical rebuild right away so the common case heals without a tap.
+  const retryChatRecoveryTimerRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (retryChatRecoveryTimerRef.current) {
+        clearTimeout(retryChatRecoveryTimerRef.current);
+        retryChatRecoveryTimerRef.current = null;
+      }
+    },
+    []
+  );
+  useEffect(() => {
+    if (!catchUpStatusPending) {
+      return;
+    }
+    const deadlineTimer = window.setTimeout(() => {
+      const recoveryId = nextChatRecoveryId();
+      const rebuildAccepted = requestCanonicalChatRebuild({
+        channelId: selectedChannelId,
+        failedAttempts: 0,
+        recoveryId,
+        reason: 'request_failure',
+        userId
+      });
+      recordChatBootstrapEvent('chat-catch-up-deadline-exceeded', {
+        channelId: selectedChannelId,
+        deadlineMs: CHAT_CATCH_UP_DEADLINE_MS,
+        rebuildAccepted,
+        reconnecting,
+        isReloadRequired,
+        recoveryId,
+        userId
+      });
+      publishTerminalChatRecovery({
+        channelId: selectedChannelId,
+        failedAttempts: 0,
+        occurredAt: Date.now(),
+        recoveryId,
+        reason: 'recovery_deadline_exceeded',
+        userId
+      });
+    }, CHAT_CATCH_UP_DEADLINE_MS);
+    return () => clearTimeout(deadlineTimer);
+    // The deadline measures one continuous gated stretch; re-arming on every
+    // reconnecting/isReloadRequired flip would reset it mid-stall.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catchUpStatusPending, selectedChannelId, userId]);
 
   // Keep the canonical interaction gate immediate, but avoid flashing a
   // transient status pill for a recovery that finishes in under one beat.
@@ -1700,7 +1756,7 @@ export default function MessagesContainer({
         displayedMessagesProps={displayedMessagesProps}
         messageInputKey={selectedChannelId}
         messageInputProps={messageInputProps}
-        onRetryCatchUp={handleRetryChatRecovery}
+        onRetryCatchUp={() => handleRetryChatRecovery()}
       />
       <Modals
         boardCountdownObj={boardCountdownObj}
@@ -1793,8 +1849,12 @@ export default function MessagesContainer({
     </ErrorBoundary>
   );
 
-  function handleRetryChatRecovery() {
+  function handleRetryChatRecovery(requeueCount = 0) {
     if (!selectedTerminalChatRecovery) return;
+    if (retryChatRecoveryTimerRef.current) {
+      clearTimeout(retryChatRecoveryTimerRef.current);
+      retryChatRecoveryTimerRef.current = null;
+    }
     const recoveryId = nextChatRecoveryId();
     const rebuildAccepted = requestCanonicalChatRebuild({
       channelId: selectedChannelId,
@@ -1811,10 +1871,22 @@ export default function MessagesContainer({
         channelId: selectedChannelId,
         failedAttempts: selectedTerminalChatRecovery.failedAttempts,
         recoveryId,
+        requeueCount,
         userId
       }
     );
-    if (!rebuildAccepted) return;
+    if (!rebuildAccepted) {
+      // The handler refuses while a bootstrap is in flight or the socket is
+      // mid-reconnect. Ask again shortly instead of a button that does
+      // nothing; a completed bootstrap clears the terminal state itself.
+      if (requeueCount < CHAT_RECOVERY_RETRY_REQUEUE_LIMIT) {
+        retryChatRecoveryTimerRef.current = window.setTimeout(() => {
+          retryChatRecoveryTimerRef.current = null;
+          handleRetryChatRecovery(requeueCount + 1);
+        }, CHAT_RECOVERY_RETRY_REQUEUE_MS);
+      }
+      return;
+    }
     clearTerminalChatRecovery({
       channelId: selectedChannelId,
       recoveryId: selectedTerminalChatRecovery.recoveryId,

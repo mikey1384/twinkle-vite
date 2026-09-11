@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  CHAT_CATCH_UP_DEADLINE_MS,
+  CHAT_RECOVERY_RETRY_REQUEUE_LIMIT,
   clearTerminalChatRecovery,
   getTerminalChatRecoveryState,
   installCanonicalChatRebuildHandler,
@@ -164,7 +166,41 @@ test('terminal recovery state remains isolated by account and channel', () => {
 
   assert.match(
     messagesSource,
-    /function handleRetryChatRecovery\(\)[\s\S]*?requestCanonicalChatRebuild\([\s\S]*?if \(!rebuildAccepted\) return;[\s\S]*?clearTerminalChatRecovery/
+    /function handleRetryChatRecovery\(requeueCount = 0\)[\s\S]*?requestCanonicalChatRebuild\([\s\S]*?if \(!rebuildAccepted\) \{[\s\S]*?requeueCount < CHAT_RECOVERY_RETRY_REQUEUE_LIMIT[\s\S]*?handleRetryChatRecovery\(requeueCount \+ 1\)[\s\S]*?return;[\s\S]*?clearTerminalChatRecovery/
   );
   assert.doesNotMatch(messagesSource, /setChatRecoveryEpoch/);
+});
+
+// Subject 36629: "Catching up" that never finishes. Every recovery loop is
+// meant to end, but a bind acknowledgement that never arrives, a retry timer
+// that cancels itself, or an invalidation cycle can hold the composer gate
+// with nothing running. The deadline is the backstop for all of them: past it
+// the member gets the last confirmed messages plus Retry, and a fresh rebuild
+// is requested immediately so the common case heals without a tap.
+test('the catch-up gate has a wall-clock deadline that un-gates the composer', () => {
+  const helperSource = readSource('src/helpers/chatSelectedChannelRecovery.ts');
+  assert.match(helperSource, /'recovery_deadline_exceeded'/);
+  assert.ok(
+    CHAT_CATCH_UP_DEADLINE_MS >= 20_000 && CHAT_CATCH_UP_DEADLINE_MS <= 60_000
+  );
+  assert.ok(CHAT_RECOVERY_RETRY_REQUEUE_LIMIT >= 3);
+  const gate = messagesSource.slice(
+    messagesSource.indexOf('const catchUpStatusPending ='),
+    messagesSource.indexOf('const catchUpStatusShown =')
+  );
+  assert.match(
+    gate,
+    /if \(!catchUpStatusPending\) \{[\s\S]*?return;[\s\S]*?window\.setTimeout\([\s\S]*?requestCanonicalChatRebuild\(\{[\s\S]*?publishTerminalChatRecovery\(\{[\s\S]*?reason: 'recovery_deadline_exceeded'[\s\S]*?\}, CHAT_CATCH_UP_DEADLINE_MS\);[\s\S]*?return \(\) => clearTimeout\(deadlineTimer\);/
+  );
+  // The terminal state is what un-gates the composer, so the deadline must
+  // publish it even when the automatic rebuild request is refused.
+  assert.ok(
+    gate.indexOf('requestCanonicalChatRebuild({') <
+      gate.indexOf("reason: 'recovery_deadline_exceeded'")
+  );
+  assert.doesNotMatch(gate, /if \(rebuildAccepted\) return;/);
+  assert.match(
+    messagesSource,
+    /chatRecoveryBlocksInteraction =\s*\(reconnecting \|\| isReloadRequired\) && !selectedTerminalChatRecovery/
+  );
 });
