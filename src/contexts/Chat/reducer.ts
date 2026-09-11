@@ -2611,6 +2611,36 @@ export default function ChatReducer(
         }
       };
     }
+    case 'UPDATE_MESSAGE_SETTINGS': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const prevMessage = prevChannelObj?.messagesObj?.[action.messageId];
+      if (!prevMessage) return state;
+      let prevSettings: Record<string, unknown> = {};
+      try {
+        prevSettings =
+          typeof prevMessage.settings === 'string'
+            ? JSON.parse(prevMessage.settings)
+            : prevMessage.settings || {};
+      } catch {
+        prevSettings = {};
+      }
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            messagesObj: {
+              ...prevChannelObj.messagesObj,
+              [action.messageId]: {
+                ...prevMessage,
+                settings: { ...prevSettings, ...action.settings }
+              }
+            }
+          }
+        }
+      };
+    }
     case 'DELETE_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const deletedMessage = getChannelMessage({

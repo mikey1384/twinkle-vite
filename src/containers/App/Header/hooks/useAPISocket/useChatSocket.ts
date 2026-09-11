@@ -200,6 +200,9 @@ export default function useChatSocket({
   );
   const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
   const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
+  const onUpdateMessageSettings = useChatContext(
+    (v) => v.actions.onUpdateMessageSettings
+  );
   const onAppendAIMessageDelta = useChatContext(
     (v) => v.actions.onAppendAIMessageDelta
   );
@@ -486,6 +489,7 @@ export default function useChatSocket({
     );
     socket.on('chat_message_deleted', handleChatMessageDeleted);
     socket.on('chat_message_edited', onEditMessage);
+    socket.on('build_reward_review_updated', handleBuildRewardReviewUpdated);
     socket.on('chat_attachment_thumbnail_updated', onSetChatAttachmentThumbUrl);
     socket.on('ai_message_delta_streamed', onAppendAIMessageDelta);
     socket.on('chat_reaction_added', handleLegacyChatReactionAdded);
@@ -537,6 +541,7 @@ export default function useChatSocket({
       );
       socket.off('chat_message_deleted', handleChatMessageDeleted);
       socket.off('chat_message_edited', onEditMessage);
+      socket.off('build_reward_review_updated', handleBuildRewardReviewUpdated);
       socket.off(
         'chat_attachment_thumbnail_updated',
         onSetChatAttachmentThumbUrl
@@ -581,6 +586,19 @@ export default function useChatSocket({
     function handleChatNotificationSettingsUpdated(settings: any) {
       if (Number(settings?.userId) !== Number(userId)) return;
       onSetChatNotificationSettings(settings);
+    }
+
+    // A reward review changed (decided on the Management page, or closed by a
+    // newer save); refresh the card in place so it never shows a stale status.
+    function handleBuildRewardReviewUpdated(payload: any) {
+      const channelId = Number(payload?.channelId || 0);
+      const messageId = Number(payload?.messageId || 0);
+      if (!channelId || !messageId || !payload?.review) return;
+      onUpdateMessageSettings({
+        channelId,
+        messageId,
+        settings: { buildRewardReview: payload.review }
+      });
     }
 
     function handleChatMessageDeleted(payload: any) {

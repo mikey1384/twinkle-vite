@@ -694,6 +694,24 @@ export default function ChatActions(dispatch: Dispatch) {
         isAIStreamProjection
       });
     },
+    // Merges server-issued card state (e.g. a reward review decision) into a
+    // message's settings without touching its content.
+    onUpdateMessageSettings({
+      channelId,
+      messageId,
+      settings
+    }: {
+      channelId: number;
+      messageId: number;
+      settings: Record<string, unknown>;
+    }) {
+      return dispatch({
+        type: 'UPDATE_MESSAGE_SETTINGS',
+        channelId,
+        messageId,
+        settings
+      });
+    },
     onAppendAIMessageDelta({
       channelId,
       messageId,
