@@ -6,6 +6,9 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import AppCard from './AppCard';
 import YourAppCard from './YourAppCard';
 import { useEarnHub } from './useEarnHub';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
+import { homePanelClass } from '~/theme/homePanels';
 
 // The Bounties shelf: every approved app that pays real XP or Coins, with
 // what this member has left in each today, and the builder's card at the
@@ -16,6 +19,9 @@ export default function Bounties({
   onOpenStandings: () => void;
 }) {
   const { hub, loading } = useEarnHub('week');
+  const { panelVars, themeName } = useHomePanelVars(0.08, {
+    neutralSurface: true
+  });
   if (!loading && !hub?.apps.length) return null;
   return (
     <ErrorBoundary componentPath="Home/Earn/Bounties">
@@ -38,26 +44,34 @@ export default function Bounties({
           Standings →
         </a>
       </div>
-      {loading && !hub ? (
-        <Loading style={{ height: '12rem' }} />
-      ) : (
-        <div className={shelfClass}>
-          {hub!.apps.map((app) => (
-            <AppCard key={app.buildId} app={app} />
-          ))}
-          <YourAppCard />
-        </div>
-      )}
+      <ScopedTheme
+        theme={themeName}
+        roles={['sectionPanel', 'sectionPanelText']}
+        className={homePanelClass}
+        style={panelVars}
+      >
+        {loading && !hub ? (
+          <Loading style={{ height: '12rem' }} />
+        ) : (
+          <div className={shelfClass}>
+            {hub!.apps.map((app) => (
+              <AppCard key={app.buildId} app={app} />
+            ))}
+            <YourAppCard />
+          </div>
+        )}
+      </ScopedTheme>
     </ErrorBoundary>
   );
 }
 
 const headClass = css`
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 1.2rem;
-  margin-bottom: 1.2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.3rem;
   @media (max-width: ${mobileMaxWidth}) {
     padding: 0 1rem;
   }
@@ -65,8 +79,6 @@ const headClass = css`
 const titleClass = css`
   margin: 0;
   font-size: 2rem;
-  font-weight: 700;
-  color: var(--home-panel-heading, ${Color.darkerGray()});
 `;
 const subClass = css`
   margin: 0.2rem 0 0;
@@ -89,7 +101,8 @@ const shelfClass = css`
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     gap: 1rem;
-    padding: 0 1rem 0.6rem;
+    margin: 0 calc(-1 * var(--home-panel-padding-x, 1.4rem));
+    padding: 0 var(--home-panel-padding-x, 1.4rem) 0.6rem;
     -webkit-overflow-scrolling: touch;
     > * {
       flex: 0 0 78%;
