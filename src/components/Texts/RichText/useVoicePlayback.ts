@@ -26,7 +26,10 @@ export default function useVoicePlayback({ text, voice, contentKey }: {
   const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const onSetAudioKey = useViewContext((v) => v.actions.onSetAudioKey);
   const audioKey = useViewContext((v) => v.state.audioKey);
-  const identity = useMemo(() => JSON.stringify([contentKey, text, voice || '']), [contentKey, text, voice]);
+  // Use assistant identity at the API boundary. The server owns each voice.
+  // Revision also expires any prepared tts-1 clip retained during a hot update.
+  const speechVoice = voice === 'nova' || voice === 'marin' ? 'ciel' : voice;
+  const identity = useMemo(() => JSON.stringify([contentKey, text, speechVoice || '', 'mini-tts-v1']), [contentKey, text, speechVoice]);
   const latestIdentity = useRef(identity);
   latestIdentity.current = identity;
   const mounted = useRef(false);
@@ -128,7 +131,7 @@ export default function useVoicePlayback({ text, voice, contentKey }: {
       player = new Audio(SILENT_AUDIO_DATA_URI);
       pending.current = { intent, player };
       player.play().catch(() => {});
-      const data = await textToSpeech(text, voice);
+      const data = await textToSpeech(text, speechVoice);
       if (!isCurrent()) return;
       if (!(data instanceof Blob || data instanceof ArrayBuffer || ArrayBuffer.isView(data))) {
         throw new Error('Invalid voice response');

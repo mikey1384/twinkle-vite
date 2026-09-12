@@ -1,5 +1,10 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import ZeroPic from '~/components/ZeroPic';
+import CallPartnerChooser from './CallPartnerChooser';
+import {
+  startAiVoiceCall,
+  type HomeCallAssistant
+} from '~/helpers/aiVoiceCall';
 import { css } from '@emotion/css';
 import {
   getAiEnergyDisplay,
@@ -116,23 +121,20 @@ function getReadableTextColor(color: string) {
 }
 
 const callButtonClass = css`
-  position: absolute;
-  top: 50%;
-  right: 1.6rem;
-  transform: translateY(-50%);
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.4rem;
-  padding: 1.9rem 1.2rem;
-  width: 5.2rem;
-  min-height: 20rem;
-  border-radius: 12px;
-  border: 1px solid var(--call-button-border, transparent);
-  background: var(--call-button-bg);
+  gap: 0.8rem;
+  padding: 0.8rem 0.6rem;
+  width: 100%;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
   color: var(--call-button-text, ${Color.white()});
-  box-shadow: var(--call-button-shadow);
+  box-shadow: none;
   cursor: pointer;
   transition:
     transform 0.25s ease,
@@ -148,8 +150,9 @@ const callButtonClass = css`
   overflow: hidden;
 
   .call-button__icon {
-    width: 3.4rem;
-    height: 3.4rem;
+    width: 2.8rem;
+    height: 2.8rem;
+    flex-shrink: 0;
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -162,7 +165,7 @@ const callButtonClass = css`
 
   .call-button__label {
     font-weight: 700;
-    font-size: 1.3rem;
+    font-size: 1.15rem;
     color: inherit;
     writing-mode: vertical-rl;
     text-orientation: mixed;
@@ -175,7 +178,6 @@ const callButtonClass = css`
     background: var(--call-button-bg-hover, var(--call-button-bg));
     border-color: var(--call-button-border-hover, var(--call-button-border));
     box-shadow: var(--call-button-shadow-hover, var(--call-button-shadow));
-    transform: translateY(calc(-50% - 4px));
   }
 
   &:focus-visible {
@@ -193,7 +195,6 @@ const callButtonClass = css`
     border-color: var(--ui-border);
     box-shadow: none;
     color: ${Color.gray()};
-    transform: translateY(-50%);
   }
 
   &[aria-disabled='true'] .call-button__icon {
@@ -208,12 +209,24 @@ const callButtonClass = css`
 export default function CallZero({
   callButtonHovered,
   onSetCallButtonHovered,
-  zeroChannelId,
+  callChannelId,
+  assistantName,
+  onChooseAssistant,
+  onSetCallSetupActive,
+  onSetCallMenuShown,
+  callConnecting,
+  onSetCallConnecting,
   aiCallOngoing
 }: {
   callButtonHovered: boolean;
   onSetCallButtonHovered: (value: boolean) => void;
-  zeroChannelId: number | null;
+  callChannelId: number | null;
+  assistantName: HomeCallAssistant;
+  onChooseAssistant: (assistant: HomeCallAssistant) => void;
+  onSetCallSetupActive: (active: boolean) => void;
+  onSetCallMenuShown: (shown: boolean) => void;
+  callConnecting: boolean;
+  onSetCallConnecting: (connecting: boolean) => void;
   aiCallOngoing: boolean;
 }) {
   const AI_FEATURES_DISABLED = useViewContext(
@@ -243,12 +256,13 @@ export default function CallZero({
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
-  const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
   const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
   const actionRole = useRoleColor('action', { fallback: 'green' });
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
+  const [callError, setCallError] = useState('');
+  const [partnerMenuShown, setPartnerMenuShown] = useState(false);
 
   const energyDisplay = getAiEnergyDisplay(aiUsagePolicy);
   const batteryLevel = energyDisplay.percent ?? 0;
@@ -265,14 +279,15 @@ export default function CallZero({
     if (!userId || aiCallOngoing || aiCallEnding) return false;
     if (!aiFeaturesLoaded) return true;
     if (AI_FEATURES_DISABLED) return false;
-    return !zeroChannelId;
+    return callConnecting || !callChannelId;
   }, [
     AI_FEATURES_DISABLED,
     aiCallEnding,
     aiCallOngoing,
     aiFeaturesLoaded,
     userId,
-    zeroChannelId
+    callChannelId,
+    callConnecting
   ]);
 
   const hasReachedDailyLimit = useMemo(() => {
@@ -285,6 +300,7 @@ export default function CallZero({
   }, [aiUsagePolicy, isAdmin]);
 
   const isCallButtonUnavailable = useMemo(() => {
+    if (aiCallEnding) return true;
     if (aiCallOngoing) return false;
     return (
       (aiFeaturesLoaded && AI_FEATURES_DISABLED) ||
@@ -304,6 +320,7 @@ export default function CallZero({
   const showCallInfoPanel = useMemo(() => {
     return (
       callButtonHovered ||
+      partnerMenuShown ||
       aiCallOngoing ||
       isCallButtonLoading ||
       aiCallEnding ||
@@ -313,6 +330,7 @@ export default function CallZero({
     aiCallEnding,
     aiCallOngoing,
     callButtonHovered,
+    partnerMenuShown,
     hasReachedDailyLimit,
     isCallButtonLoading
   ]);
@@ -413,23 +431,30 @@ export default function CallZero({
     ]
   );
 
-  const initiateCall = useCallback(() => {
-    onSetAICallEnding(false);
-    onSetAICall(zeroChannelId);
-    socket.emit('ai_start_ai_voice_conversation', {
-      channelId: zeroChannelId
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zeroChannelId]);
+  const initiateCall = useCallback(async () => {
+    if (!callChannelId || callConnecting) return;
+    setCallError('');
+    onSetCallConnecting(true);
+    try {
+      await startAiVoiceCall(callChannelId);
+    } catch (error) {
+      setCallError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to start the call. Please try again.'
+      );
+    } finally {
+      onSetCallConnecting(false);
+    }
+  }, [callChannelId, callConnecting, onSetCallConnecting]);
 
   const handleCallButtonClick = useCallback(async () => {
-    if (isCallButtonUnavailable && !aiCallOngoing) {
+    if (aiCallEnding || (isCallButtonUnavailable && !aiCallOngoing)) {
       return;
     }
 
     if (aiCallOngoing) {
       onSetAICallEnding(true);
-      onSetAICall(null);
       socket.emit('ai_end_ai_voice_conversation');
       return;
     }
@@ -438,67 +463,84 @@ export default function CallZero({
       onOpenSigninModal();
       return;
     }
-    const hasAccess = await checkMicrophoneAccess();
-    if (hasAccess) {
-      initiateCall();
-    } else {
-      setMicrophoneModalShown(true);
+    onSetCallSetupActive(true);
+    try {
+      const hasAccess = await checkMicrophoneAccess();
+      if (hasAccess) {
+        await initiateCall();
+        onSetCallSetupActive(false);
+      } else {
+        setMicrophoneModalShown(true);
+      }
+    } catch (error) {
+      onSetCallSetupActive(false);
+      setCallError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to access the microphone.'
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiCallOngoing, isCallButtonUnavailable, userId, initiateCall]);
+  }, [
+    aiCallEnding,
+    aiCallOngoing,
+    isCallButtonUnavailable,
+    userId,
+    initiateCall
+  ]);
 
   const callButtonLabel = useMemo(() => {
+    if (aiCallEnding) return 'Ending...';
     if (aiCallOngoing) {
       return 'Hang Up';
     }
     if (isCallButtonLoading) {
-      return 'Connecting...';
+      return 'Calling...';
     }
     if (aiFeaturesLoaded && AI_FEATURES_DISABLED) {
       return 'Call Unavailable';
     }
-    if (aiCallEnding) {
-      return 'Ending...';
-    }
     if (hasReachedDailyLimit) {
       return 'No Energy';
     }
-    return 'Call Zero';
+    return `Call ${assistantName}`;
   }, [
     AI_FEATURES_DISABLED,
     aiCallEnding,
     aiCallOngoing,
     aiFeaturesLoaded,
     hasReachedDailyLimit,
-    isCallButtonLoading
+    isCallButtonLoading,
+    assistantName
   ]);
   const callButtonIcon = useMemo(
     () =>
-      aiCallOngoing
-        ? 'phone-slash'
-        : aiCallEnding || isCallButtonLoading
-          ? 'spinner'
+      aiCallEnding || isCallButtonLoading
+        ? 'spinner'
+        : aiCallOngoing
+          ? 'phone-slash'
           : 'phone-volume',
     [aiCallEnding, aiCallOngoing, isCallButtonLoading]
   );
   const callButtonAriaLabel = useMemo(() => {
-    if (aiCallOngoing) return 'Hang up the call with Zero';
-    if (isCallButtonLoading) return 'Connecting to Zero';
+    if (aiCallEnding) return `Ending the call with ${assistantName}`;
+    if (aiCallOngoing) return `Hang up the call with ${assistantName}`;
+    if (isCallButtonLoading) return `Connecting to ${assistantName}`;
     if (aiFeaturesLoaded && AI_FEATURES_DISABLED) {
-      return 'Zero voice calls are unavailable.';
+      return `${assistantName} voice calls are unavailable.`;
     }
-    if (aiCallEnding) return 'Ending the previous call with Zero';
     if (hasReachedDailyLimit) {
       return 'AI Energy is empty. Recharge or come back tomorrow.';
     }
-    return 'Call Zero for voice assistance';
+    return `Call ${assistantName} for voice assistance`;
   }, [
     AI_FEATURES_DISABLED,
     aiCallEnding,
     aiCallOngoing,
     aiFeaturesLoaded,
     hasReachedDailyLimit,
-    isCallButtonLoading
+    isCallButtonLoading,
+    assistantName
   ]);
 
   return (
@@ -514,7 +556,17 @@ export default function CallZero({
         overflow: hidden;
         ${aiCallOngoing ? 'opacity: 0.8;' : ''}
       `}
-      onMouseLeave={() => onSetCallButtonHovered(false)}
+      onMouseLeave={() => {
+        if (!partnerMenuShown) onSetCallButtonHovered(false);
+      }}
+      onFocusCapture={() => onSetCallButtonHovered(true)}
+      onBlurCapture={(event) => {
+        if (
+          !partnerMenuShown &&
+          !event.currentTarget.contains(event.relatedTarget as Node)
+        )
+          onSetCallButtonHovered(false);
+      }}
     >
       <div
         className={css`
@@ -590,7 +642,7 @@ export default function CallZero({
                 color: #2c3e50;
               `}
             >
-              Zero: Your AI Friend on Twinkle
+              {assistantName}: Your AI Friend on Twinkle
             </h2>
             <p
               className={css`
@@ -599,7 +651,7 @@ export default function CallZero({
                 margin-bottom: 1rem;
               `}
             >
-              {`Meet Zero—your personal guide to Twinkle. He's here to help you navigate and understand all the features of the website.`}
+              {`${assistantName} can help you navigate Twinkle and understand the features of the website.`}
             </p>
             <p
               className={css`
@@ -607,7 +659,7 @@ export default function CallZero({
                 line-height: 1.6;
               `}
             >
-              {`But that's not all! Zero is also great for language practice (he can speak 100+ languages) and he can even see what's on your screen and answer questions about it!`}
+              {`Practice a language together, or ask ${assistantName} about what's on your Twinkle screen.`}
             </p>
           </>
         )}
@@ -618,7 +670,7 @@ export default function CallZero({
           margin-right: 2rem;
         `}
       >
-        <ZeroPic />
+        <ZeroPic assistant={assistantName} />
       </div>
       {aiCallOngoing && (
         <div
@@ -709,30 +761,83 @@ export default function CallZero({
           </div>
         </div>
       )}
-      <button
-        type="button"
-        className={callButtonClass}
+      {callError && (
+        <p
+          role="alert"
+          className={css`
+            position: absolute;
+            bottom: 0.5rem;
+            left: 1rem;
+            right: 8rem;
+            z-index: 4;
+            padding: 0.5rem;
+            background: white;
+            font-size: 1.1rem;
+            color: ${Color.rose()};
+          `}
+        >
+          {callError}
+        </p>
+      )}
+      <div
         style={callButtonStyle}
-        aria-disabled={isCallButtonUnavailable}
-        onClick={handleCallButtonClick}
         onMouseEnter={() => onSetCallButtonHovered(true)}
-        onMouseLeave={() => onSetCallButtonHovered(false)}
-        onFocus={() => onSetCallButtonHovered(true)}
-        onBlur={() => onSetCallButtonHovered(false)}
-        aria-label={callButtonAriaLabel}
-        title={callButtonAriaLabel}
+        className={css`
+          position: absolute;
+          top: 0.8rem;
+          bottom: 0.8rem;
+          right: 1.4rem;
+          width: 5.6rem;
+          z-index: 3;
+          display: flex;
+          flex-direction: column;
+          border: 1px solid var(--call-button-border, transparent);
+          border-radius: 12px;
+          overflow: hidden;
+          background: var(--call-button-bg);
+          color: var(--call-button-text);
+          box-shadow: var(--call-button-shadow);
+          transition:
+            box-shadow 0.25s ease,
+            background 0.25s ease;
+        `}
       >
-        <span className="call-button__icon">
-          <Icon icon={callButtonIcon} />
-        </span>
-        <span className="call-button__label">{callButtonLabel}</span>
-      </button>
+        <button
+          type="button"
+          className={callButtonClass}
+          aria-disabled={isCallButtonUnavailable}
+          onClick={handleCallButtonClick}
+          aria-label={callButtonAriaLabel}
+          title={callButtonAriaLabel}
+        >
+          <span className="call-button__icon">
+            <Icon icon={callButtonIcon} />
+          </span>
+          <span className="call-button__label">{callButtonLabel}</span>
+        </button>
+        <CallPartnerChooser
+          value={assistantName}
+          disabled={aiCallOngoing || aiCallEnding || callConnecting}
+          onChange={(assistant) => {
+            setCallError('');
+            onChooseAssistant(assistant);
+          }}
+          onOpenChange={(shown) => {
+            setPartnerMenuShown(shown);
+            onSetCallMenuShown(shown);
+            onSetCallButtonHovered(shown);
+          }}
+        />
+      </div>
       <MicrophoneAccessModal
         isShown={microphoneModalShown}
-        onHide={() => setMicrophoneModalShown(false)}
+        onHide={() => {
+          setMicrophoneModalShown(false);
+          onSetCallSetupActive(false);
+        }}
         onSuccess={() => {
           setMicrophoneModalShown(false);
-          initiateCall();
+          void initiateCall().finally(() => onSetCallSetupActive(false));
         }}
       />
     </div>

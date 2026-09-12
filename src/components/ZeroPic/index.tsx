@@ -1,7 +1,14 @@
 import React from 'react';
 import zeroFull from './zero-full.png';
+import cielFull from './ciel-full.png';
 
-export default function ZeroPic({ style }: { style?: React.CSSProperties }) {
+export default function ZeroPic({
+  style,
+  assistant = 'Zero'
+}: {
+  style?: React.CSSProperties;
+  assistant?: 'Zero' | 'Ciel';
+}) {
   return (
     <div
       style={{
@@ -14,7 +21,7 @@ export default function ZeroPic({ style }: { style?: React.CSSProperties }) {
       }}
     >
       <img
-        alt="Thumbnail"
+        alt={assistant}
         loading="lazy"
         style={{
           display: 'block',
@@ -23,7 +30,7 @@ export default function ZeroPic({ style }: { style?: React.CSSProperties }) {
           height: '100%',
           borderRadius: '50%'
         }}
-        src={zeroFull}
+        src={assistant === 'Ciel' ? cielFull : zeroFull}
       />
     </div>
   );

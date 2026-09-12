@@ -31,6 +31,7 @@ import {
 import {
   localStorageKeys,
   ZERO_TWINKLE_ID,
+  CIEL_TWINKLE_ID,
   DEFAULT_PROFILE_THEME
 } from '~/constants/defaultValues';
 import { stripClientUpdateReloadParam } from '~/helpers/clientUpdate';
@@ -401,7 +402,6 @@ export default function App() {
   const onSetChatNotificationSettings = useChatContext(
     (v) => v.actions.onSetChatNotificationSettings
   );
-  const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
@@ -489,6 +489,7 @@ export default function App() {
   const onSetIsZeroCallAvailable = useChatContext(
     (v) => v.actions.onSetIsZeroCallAvailable
   );
+  const onSetCielChannelId = useChatContext((v) => v.actions.onSetCielChannelId);
   const onSetZeroChannelId = useChatContext(
     (v) => v.actions.onSetZeroChannelId
   );
@@ -550,8 +551,8 @@ export default function App() {
   );
 
   const aiCallOngoing = useMemo(
-    () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
-    [aiCallChannelId, zeroChannelId]
+    () => !!aiCallChannelId,
+    [aiCallChannelId]
   );
 
   const usingChat = useMemo(
@@ -687,20 +688,26 @@ export default function App() {
   }, [confirmedAnalyticsUserId, userId]);
 
   useEffect(() => {
-    checkZeroCallAvailability();
-
-    async function checkZeroCallAvailability() {
-      if (userId) {
-        const { pathId, channelId } = await loadDMChannel({
-          recipient: { id: ZERO_TWINKLE_ID },
-          createIfNotExist: true
-        });
-        onSetIsZeroCallAvailable(!!pathId);
-        onSetZeroChannelId(channelId);
-      } else {
-        onSetIsZeroCallAvailable(false);
+    let cancelled = false;
+    onSetIsZeroCallAvailable(false);
+    onSetZeroChannelId(null);
+    onSetCielChannelId(null);
+    if (userId) {
+      for (const recipientId of [ZERO_TWINKLE_ID, CIEL_TWINKLE_ID]) {
+        void loadDMChannel({ recipient: { id: recipientId }, createIfNotExist: true })
+          .then(({ pathId, channelId }: { pathId: string; channelId: number }) => {
+            if (cancelled) return;
+            if (recipientId === ZERO_TWINKLE_ID) {
+              onSetIsZeroCallAvailable(!!pathId);
+              onSetZeroChannelId(channelId);
+            } else {
+              onSetCielChannelId(channelId);
+            }
+          })
+          .catch((error: unknown) => console.error('Unable to load the AI call chat:', error));
       }
     }
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 

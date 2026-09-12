@@ -4128,7 +4128,9 @@ export default function ChatReducer(
           ...action.data.wordsObj
         },
         aiCallChannelId: state.aiCallChannelId,
+        aiCallAssistantName: state.aiCallAssistantName,
         zeroChannelId: state.zeroChannelId,
+        cielChannelId: state.cielChannelId,
         prevUserId: action.userId,
         thinkHard: state.thinkHard
       };
@@ -6265,7 +6267,8 @@ export default function ChatReducer(
     case 'SET_AI_CALL': {
       return {
         ...state,
-        aiCallChannelId: action.channelId
+        aiCallChannelId: action.channelId,
+        aiCallAssistantName: action.channelId ? action.assistantName || null : null
       };
     }
     case 'SET_AI_CALL_ENDING': {
@@ -6970,6 +6973,9 @@ export default function ChatReducer(
         ...state,
         isZeroCallAvailable: action.isAvailable
       };
+    }
+    case 'SET_CIEL_CHANNEL_ID': {
+      return { ...state, cielChannelId: action.channelId };
     }
     case 'SET_ZERO_CHANNEL_ID': {
       return {

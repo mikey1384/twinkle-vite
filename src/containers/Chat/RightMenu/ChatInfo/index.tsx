@@ -1,10 +1,4 @@
-import React, {
-  memo,
-  useCallback,
-  useContext,
-  useMemo,
-  useState
-} from 'react';
+import React, { memo, useCallback, useContext, useMemo, useState } from 'react';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';
 import AIChatMenu from './AIChatMenu';
@@ -22,6 +16,7 @@ import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
 import { checkMicrophoneAccess, objectify } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CallButton from './CallButton';
+import { startAiVoiceCall } from '~/helpers/aiVoiceCall';
 import LocalContext from '../../Context';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -64,12 +59,15 @@ function ChatInfo({
   const banned = useKeyContext((v) => v.myState.banned);
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const [callDisabled, setCallDisabled] = useState(false);
+  const [callConnecting, setCallConnecting] = useState(false);
+  const [callError, setCallError] = useState('');
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
-  const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
-  const aiUsagePolicy = useNotiContext((v) => v.state.todayStats?.aiUsagePolicy);
+  const aiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats?.aiUsagePolicy
+  );
   const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
 
   const {
@@ -134,8 +132,8 @@ function ChatInfo({
     [aiCallChannelId, selectedChannelId]
   );
   const aiCallEndingOnThisChannel = useMemo(
-    () => (isZeroChat || isCielChat) && aiCallEnding && !aiCallOngoing,
-    [aiCallEnding, aiCallOngoing, isZeroChat, isCielChat]
+    () => (isZeroChat || isCielChat) && aiCallEnding,
+    [aiCallEnding, isZeroChat, isCielChat]
   );
 
   const calling = useMemo(() => {
@@ -157,8 +155,7 @@ function ChatInfo({
   const isCallButtonShown = useMemo(() => {
     if (banned?.chat) return false;
     if (AI_FEATURES_DISABLED && (isZeroChat || isCielChat)) return false;
-    const isRegularChat = !(isZeroChat || isCielChat);
-    return (isZeroChat || isRegularChat) && isTwoPeopleConnected;
+    return isTwoPeopleConnected;
   }, [
     banned?.chat,
     AI_FEATURES_DISABLED,
@@ -265,14 +262,25 @@ function ChatInfo({
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
 
-  const initiateCall = useCallback(() => {
+  const initiateCall = useCallback(async () => {
     if (isZeroChat || isCielChat) {
-      onSetAICallEnding(false);
-      onSetAICall(selectedChannelId);
-      socket.emit('ai_start_ai_voice_conversation', {
-        channelId: selectedChannelId,
-        topicId: currentChannel.selectedTab === 'topic' ? topicId : undefined
-      });
+      if (callConnecting) return;
+      setCallConnecting(true);
+      setCallError('');
+      try {
+        await startAiVoiceCall(
+          selectedChannelId,
+          currentChannel.selectedTab === 'topic' ? topicId : undefined
+        );
+      } catch (error) {
+        setCallError(
+          error instanceof Error
+            ? error.message
+            : 'Unable to start the call. Please try again.'
+        );
+      } finally {
+        setCallConnecting(false);
+      }
     } else {
       if (onlineChannelMembers?.length === 1) {
         const messageId = uuidv1();
@@ -313,6 +321,7 @@ function ChatInfo({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    callConnecting,
     isZeroChat,
     isCielChat,
     selectedChannelId,
@@ -329,14 +338,13 @@ function ChatInfo({
     if (AI_FEATURES_DISABLED && (isZeroChat || isCielChat)) {
       return;
     }
-    if (aiCallEndingOnThisChannel) {
+    if (callConnecting || aiCallEndingOnThisChannel) {
       return;
     }
 
     if (callOngoing || aiCallOngoing) {
       if (isZeroChat || isCielChat) {
         onSetAICallEnding(true);
-        onSetAICall(null);
         socket.emit('ai_end_ai_voice_conversation');
       } else {
         if (calling) {
@@ -361,6 +369,8 @@ function ChatInfo({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    AI_FEATURES_DISABLED,
+    callConnecting,
     callOngoing,
     aiCallOngoing,
     aiCallEndingOnThisChannel,
@@ -402,8 +412,10 @@ function ChatInfo({
               <CallButton
                 callOngoing={callOngoing || aiCallOngoing}
                 ending={aiCallEndingOnThisChannel}
+                connecting={callConnecting}
                 disabled={
                   callDisabled ||
+                  callConnecting ||
                   aiCallEndingOnThisChannel ||
                   (!aiCallOngoing && aiEnergyUnavailableAndIsAIChat)
                 }
@@ -411,6 +423,18 @@ function ChatInfo({
               />
             )}
           </ErrorBoundary>
+          {callError && (
+            <p
+              role="alert"
+              style={{
+                fontSize: '1.1rem',
+                padding: '0 1rem',
+                color: Color.rose()
+              }}
+            >
+              {callError}
+            </p>
+          )}
           <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/ChannelDetails">
             <ChannelDetails
               channelId={currentChannel.id}
@@ -428,11 +452,13 @@ function ChatInfo({
             {showMembersLabel && !currentChannel.thumbPath && (
               <div
                 className={css`
-                  color: ${onlineChannelMembers.length === 1
-                    ? Color.darkGray()
-                    : displayedThemeColor === 'gold'
-                    ? Color.green()
-                    : Color[displayedThemeColor]()};
+                  color: ${
+                    onlineChannelMembers.length === 1
+                      ? Color.darkGray()
+                      : displayedThemeColor === 'gold'
+                        ? Color.green()
+                        : Color[displayedThemeColor]()
+                  };
                   font-size: 1.5rem;
                   font-weight: bold;
                   @media (max-width: ${mobileMaxWidth}) {
@@ -447,45 +473,45 @@ function ChatInfo({
 
           {!currentChannel.twoPeople &&
             !stringIsEmpty(currentChannel.description) && (
-            <div
-              className={css`
-                padding: 1rem;
-                margin-top: 0.5rem;
-                font-size: 1.5rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.3rem;
-                }
-              `}
-            >
-              {!stringIsEmpty(currentChannel.description) && (
-                <div
-                  className={css`
-                    padding: 1rem;
-                    background: ${Color.wellGray()};
-                    border-radius: ${borderRadius};
-                    max-height: 20rem;
-                    overflow-y: auto;
-                  `}
-                >
-                  <RichText
+              <div
+                className={css`
+                  padding: 1rem;
+                  margin-top: 0.5rem;
+                  font-size: 1.5rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.3rem;
+                  }
+                `}
+              >
+                {!stringIsEmpty(currentChannel.description) && (
+                  <div
                     className={css`
-                      font-size: 1.3rem;
-                      @media (max-width: ${mobileMaxWidth}) {
-                        font-size: 1.2rem;
-                      }
+                      padding: 1rem;
+                      background: ${Color.wellGray()};
+                      border-radius: ${borderRadius};
+                      max-height: 20rem;
+                      overflow-y: auto;
                     `}
-                    maxLines={5}
-                    readMoreColor={Color.darkGray()}
-                    showMoreButtonStyle={{ fontSize: '1.2rem' }}
-                    isShowMoreButtonCentered
-                    theme={displayedThemeColor}
                   >
-                    {currentChannel.description}
-                  </RichText>
-                </div>
-              )}
-            </div>
-          )}
+                    <RichText
+                      className={css`
+                        font-size: 1.3rem;
+                        @media (max-width: ${mobileMaxWidth}) {
+                          font-size: 1.2rem;
+                        }
+                      `}
+                      maxLines={5}
+                      readMoreColor={Color.darkGray()}
+                      showMoreButtonStyle={{ fontSize: '1.2rem' }}
+                      isShowMoreButtonCentered
+                      theme={displayedThemeColor}
+                    >
+                      {currentChannel.description}
+                    </RichText>
+                  </div>
+                )}
+              </div>
+            )}
         </div>
       </div>
 

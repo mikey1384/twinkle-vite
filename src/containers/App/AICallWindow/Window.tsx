@@ -12,6 +12,8 @@ import { useNotiContext } from '~/contexts';
 interface WindowProps {
   initialPosition: { x: number; y: number };
   onHangUp: () => void;
+  assistantName: 'Zero' | 'Ciel';
+  ending: boolean;
 }
 
 interface AiUsagePolicy extends AiEnergyDisplayPolicy {
@@ -19,7 +21,12 @@ interface AiUsagePolicy extends AiEnergyDisplayPolicy {
   energySegments?: number;
 }
 
-function Window({ initialPosition, onHangUp }: WindowProps) {
+function Window({
+  initialPosition,
+  onHangUp,
+  assistantName,
+  ending
+}: WindowProps) {
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -95,7 +102,7 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
               height: 80px;
             `}
           >
-            <ZeroPic />
+            <ZeroPic assistant={assistantName} />
           </div>
         </div>
 
@@ -167,6 +174,20 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
 
         <div
           onClick={handleHangUpClick}
+          role="button"
+          tabIndex={0}
+          aria-label={
+            ending
+              ? `Ending the call with ${assistantName}`
+              : `Hang up the call with ${assistantName}`
+          }
+          aria-disabled={ending}
+          onKeyDown={(event) => {
+            if (!ending && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault();
+              onHangUp();
+            }
+          }}
           style={{ pointerEvents: 'auto' }}
           className={`hangup-button ${css`
             width: 40px;
@@ -193,8 +214,10 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
               letter-spacing: 1px;
             `}
           >
-            <Icon icon="phone-volume" />
-            <span style={{ marginLeft: '0.7rem' }}>Hang Up</span>
+            <Icon icon={ending ? 'spinner' : 'phone-volume'} />
+            <span style={{ marginLeft: '0.7rem' }}>
+              {ending ? 'Ending...' : 'Hang Up'}
+            </span>
           </span>
         </div>
       </div>

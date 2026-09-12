@@ -93,6 +93,7 @@ function getInitialChatState() {
 
   return {
     aiCallChannelId: null,
+    aiCallAssistantName: null,
     aiCallEnding: false,
     aiCardErrorMessage: '',
     aiCardFeedIds: [],
@@ -199,12 +200,14 @@ function getInitialChatState() {
     wordsObj: {},
     wordLogs: [],
     zeroChannelId: null,
+    cielChannelId: null,
     prevUserId: null
   };
 }
 
 export const initialChatState = {
   aiCallChannelId: null,
+  aiCallAssistantName: null,
   aiCallEnding: false,
   aiCardErrorMessage: '',
   aiCardFeedIds: [],
@@ -312,6 +315,7 @@ export const initialChatState = {
   wordsObj: {},
   wordLogs: [],
   zeroChannelId: null,
+  cielChannelId: null,
   prevUserId: null
 };
 

@@ -9,17 +9,22 @@ interface AICallWindowProps {
 }
 
 export default function AICallWindow({ initialPosition }: AICallWindowProps) {
-  const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
-  const onSetAICallEnding = useChatContext(
-    (v) => v.actions.onSetAICallEnding
-  );
+  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
+  const cielChannelId = useChatContext((v) => v.state.cielChannelId);
+  const assistantName = useChatContext((v) => v.state.aiCallAssistantName);
+  const ending = useChatContext((v) => v.state.aiCallEnding);
+  const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
 
   return ReactDOM.createPortal(
     <Window
       initialPosition={initialPosition}
+      assistantName={
+        assistantName || (aiCallChannelId === cielChannelId ? 'Ciel' : 'Zero')
+      }
+      ending={ending}
       onHangUp={() => {
+        if (ending) return;
         onSetAICallEnding(true);
-        onSetAICall(null);
         socket.emit('ai_end_ai_voice_conversation');
       }}
     />,

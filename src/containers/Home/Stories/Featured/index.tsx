@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FeaturedSubjects from './Subjects';
 import CallZero from './CallZero';
+import useHomeCallAssistant from './useHomeCallAssistant';
 import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import {
@@ -15,42 +16,66 @@ const portraitTabletMediaQuery = `(min-width: ${desktopMinWidth}) and (max-width
 export default function Featured() {
   const userId = useKeyContext((v) => v.myState.userId);
   const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
+  const cielChannelId = useChatContext((v) => v.state.cielChannelId);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
+  const aiCallAssistantName = useChatContext(
+    (v) => v.state.aiCallAssistantName
+  );
   const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
-  const todayStats = useNotiContext((v) => v.state.todayStats);
-  const [callButtonHovered, setCallButtonHovered] = useState(false);
-
-  const aiCallOngoing = useMemo(
-    () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
-    [aiCallChannelId, zeroChannelId]
+  const aiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats?.aiUsagePolicy
   );
-  const isZeroChannelLoading = useMemo(() => {
-    return !!userId && !zeroChannelId && !aiCallOngoing && !aiCallEnding;
-  }, [aiCallEnding, aiCallOngoing, userId, zeroChannelId]);
+  const [callButtonHovered, setCallButtonHovered] = useState(false);
+  const [callMenuShown, setCallMenuShown] = useState(false);
+  const [callConnecting, setCallConnecting] = useState(false);
+  const [callSetupActive, setCallSetupActive] = useState(false);
+  const { assistant: preferredAssistant, chooseAssistant } =
+    useHomeCallAssistant(
+      userId,
+      callButtonHovered ||
+        callMenuShown ||
+        callConnecting ||
+        callSetupActive ||
+        !!aiCallChannelId ||
+        aiCallEnding
+    );
+  const assistantName = aiCallChannelId
+    ? aiCallAssistantName ||
+      (aiCallChannelId === cielChannelId ? 'Ciel' : 'Zero')
+    : preferredAssistant;
+  const callChannelId =
+    assistantName === 'Ciel' ? cielChannelId : zeroChannelId;
+
+  const aiCallOngoing = useMemo(() => !!aiCallChannelId, [aiCallChannelId]);
+  const isCallChannelLoading = useMemo(() => {
+    return (
+      callConnecting ||
+      (!!userId && !callChannelId && !aiCallOngoing && !aiCallEnding)
+    );
+  }, [aiCallEnding, aiCallOngoing, callChannelId, callConnecting, userId]);
   const hasReachedDailyLimit = useMemo(() => {
     if (isAdmin) return false;
-    const aiUsagePolicy = todayStats?.aiUsagePolicy;
     if (!aiUsagePolicy) return false;
-    return (
-      Number(aiUsagePolicy.energyRemaining || 0) <= 0
-    );
-  }, [isAdmin, todayStats?.aiUsagePolicy]);
+    return Number(aiUsagePolicy.energyRemaining || 0) <= 0;
+  }, [isAdmin, aiUsagePolicy]);
 
-  const isZeroInterfaceExpanded = useMemo(() => {
+  const isCallInterfaceExpanded = useMemo(() => {
     return (
       callButtonHovered ||
+      callMenuShown ||
       aiCallOngoing ||
       aiCallEnding ||
-      isZeroChannelLoading ||
+      isCallChannelLoading ||
       hasReachedDailyLimit
     );
   }, [
     aiCallEnding,
     aiCallOngoing,
     callButtonHovered,
+    callMenuShown,
     hasReachedDailyLimit,
-    isZeroChannelLoading
+    isCallChannelLoading
   ]);
 
   return (
@@ -62,9 +87,11 @@ export default function Featured() {
           height: 17rem;
           margin-bottom: 1rem;
           overflow: hidden;
-          ${isZeroInterfaceExpanded
-            ? 'box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 6px 6px rgba(0, 0, 0, 0.1);'
-            : 'box-shadow: none;'}
+          ${
+            isCallInterfaceExpanded
+              ? 'box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 6px 6px rgba(0, 0, 0, 0.1);'
+              : 'box-shadow: none;'
+          }
 
           @media (max-width: ${mobileMaxWidth}) {
             ${userId ? 'height: 17rem;' : 'height: 18rem;'}
@@ -80,9 +107,9 @@ export default function Featured() {
             bottom: 0;
             width: 80%;
             transition: transform 0.5s ease-in-out;
-            transform: ${isZeroInterfaceExpanded
-              ? 'translateX(-100%)'
-              : 'translateX(0)'};
+            transform: ${
+              isCallInterfaceExpanded ? 'translateX(-100%)' : 'translateX(0)'
+            };
 
             @media ${portraitTabletMediaQuery} {
               width: 84%;
@@ -97,19 +124,25 @@ export default function Featured() {
             top: 0;
             right: 0;
             bottom: 0;
-            width: ${isZeroInterfaceExpanded ? '100%' : '25%'};
+            width: ${isCallInterfaceExpanded ? '100%' : '25%'};
             transition: width 0.5s ease-in-out;
             overflow: visible;
 
             @media ${portraitTabletMediaQuery} {
-              width: ${isZeroInterfaceExpanded ? '100%' : '20%'};
+              width: ${isCallInterfaceExpanded ? '100%' : '20%'};
             }
           `}
         >
           <CallZero
             callButtonHovered={callButtonHovered}
             onSetCallButtonHovered={setCallButtonHovered}
-            zeroChannelId={zeroChannelId}
+            callChannelId={callChannelId}
+            assistantName={assistantName}
+            onChooseAssistant={chooseAssistant}
+            onSetCallSetupActive={setCallSetupActive}
+            onSetCallMenuShown={setCallMenuShown}
+            callConnecting={callConnecting}
+            onSetCallConnecting={setCallConnecting}
             aiCallOngoing={aiCallOngoing}
           />
         </div>

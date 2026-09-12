@@ -10,11 +10,13 @@ const endingLabel = 'Ending...';
 export default function CallButton({
   callOngoing,
   ending,
+  connecting = false,
   disabled,
   onCall
 }: {
   callOngoing: boolean;
   ending: boolean;
+  connecting?: boolean;
   disabled: boolean;
   onCall: () => void;
 }) {
@@ -28,12 +30,26 @@ export default function CallButton({
       `}
     >
       <ChatFlatButton
-        label={callOngoing ? hangUpLabel : ending ? endingLabel : callLabel}
+        label={
+          ending
+            ? endingLabel
+            : connecting
+              ? 'Connecting...'
+              : callOngoing
+                ? hangUpLabel
+                : callLabel
+        }
         onClick={onCall}
         buttonColor={buttonColor}
         buttonHoverColor={buttonHoverColor}
         textColor="white"
-        icon={callOngoing ? 'phone-slash' : ending ? 'spinner' : 'phone-volume'}
+        icon={
+          ending || connecting
+            ? 'spinner'
+            : callOngoing
+              ? 'phone-slash'
+              : 'phone-volume'
+        }
         disabled={disabled}
         style={{ padding: '1.2rem' }}
       />

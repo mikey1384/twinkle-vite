@@ -21,6 +21,9 @@ import {
 import { markChatUnreadActivity } from '~/helpers/chatUnreadActivity';
 import { chatRealtimeChannelNeedsCanonicalSummary } from '~/helpers/chatUnreadProjection';
 import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
+import { useToast } from '~/contexts/Toast';
+import { extractAiVoiceScreenHTML } from '~/helpers/aiVoiceScreen';
+import { AiVoicePlayback } from '~/helpers/aiVoicePlayback';
 
 export default function useAISocket({
   activeChatChannelIdRef,
@@ -34,7 +37,9 @@ export default function useAISocket({
   aiCallChannelId: number;
 }) {
   const navigate = useNavigate();
+  const showToast = useToast();
   const userId = useKeyContext((v) => v.myState.userId);
+  const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
@@ -116,17 +121,25 @@ export default function useAISocket({
     (v) => v.actions.onSetSubtitleMergeProgress
   );
 
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const nextStartTimeRef = useRef<number>(0);
+  const voicePlaybackRef = useRef<AiVoicePlayback | null>(null);
+  const lastScreenInformationRef = useRef('');
 
   useEffect(() => {
-    let audioBuffer: any[] | Iterable<number> = [];
-    let startTime = Date.now();
+    lastScreenInformationRef.current = '';
+    if (!aiCallChannelId || aiCallEnding) return;
+    // Keep navigation, scrolling, and modal changes current even before the
+    // next transcript fragment arrives. Unchanged snapshots are not resent.
+    const interval = window.setInterval(sendAIUIInformation, 2_000);
+    return () => window.clearInterval(interval);
+  }, [aiCallChannelId, aiCallEnding]);
+
+  useEffect(() => {
+    let cancelled = false;
     let audioContext: AudioContext | null = null;
     let mediaStream: MediaStream | null = null;
     let audioWorkletNode: AudioWorkletNode | null = null;
 
-    if (aiCallChannelId) {
+    if (aiCallChannelId && !aiCallEnding) {
       navigator.mediaDevices
         .getUserMedia({
           audio: {
@@ -136,14 +149,23 @@ export default function useAISocket({
           }
         })
         .then(async (stream) => {
+          if (cancelled) {
+            stream.getTracks().forEach((track) => track.stop());
+            return;
+          }
           mediaStream = stream;
           audioContext = new AudioContext({ sampleRate: 24000 });
 
           try {
-            await audioContext.audioWorklet.addModule('/js/audio-processor.js');
+            await audioContext.audioWorklet.addModule(
+              '/js/audio-processor.js?v=2'
+            );
           } catch (error) {
-            console.error('Error loading audio processor module:', error);
+            throw new Error('Unable to prepare the microphone.', {
+              cause: error
+            });
           }
+          if (cancelled) return;
 
           const microphoneStream = audioContext.createMediaStreamSource(stream);
           audioWorkletNode = new AudioWorkletNode(
@@ -151,35 +173,37 @@ export default function useAISocket({
             'audio-processor'
           );
 
-          audioWorkletNode.port.onmessage = (event) => {
-            const pcmData = event.data; // Int16Array
-            if (Array.isArray(audioBuffer)) {
-              audioBuffer.push(...pcmData);
-            } else {
-              audioBuffer = Array.from(audioBuffer).concat(pcmData);
-            }
-
-            const elapsedTime = Date.now() - startTime;
-            if (elapsedTime >= 100) {
-              const arrayBuffer = new Int16Array(audioBuffer).buffer;
-
-              const base64Audio = arrayBufferToBase64(arrayBuffer);
-
-              socket.emit('ai_user_audio', base64Audio);
-
-              audioBuffer = [];
-              startTime = Date.now();
-            }
+          audioWorkletNode.port.onmessage = (
+            event: MessageEvent<Int16Array>
+          ) => {
+            if (cancelled || !socket.connected) return;
+            socket.emit(
+              'ai_user_audio',
+              arrayBufferToBase64(event.data.buffer as ArrayBuffer)
+            );
           };
 
           microphoneStream.connect(audioWorkletNode);
+          // The processor's output is silence. Keep it connected so browsers
+          // continue rendering the capture graph while the caller is quiet.
+          audioWorkletNode.connect(audioContext.destination);
+          await audioContext.resume();
         })
         .catch((error) => {
           console.error('Error accessing microphone:', error);
+          if (!cancelled) {
+            mediaStream?.getTracks().forEach((track) => track.stop());
+            showToast({
+              message:
+                'Unable to use your microphone. Check its permission and try the call again.'
+            });
+            socket.emit('ai_end_ai_voice_conversation');
+          }
         });
     }
 
     return () => {
+      cancelled = true;
       if (audioWorkletNode) {
         audioWorkletNode.disconnect();
       }
@@ -190,7 +214,9 @@ export default function useAISocket({
         mediaStream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [aiCallChannelId]);
+    // Context dispatchers are stable and do not belong in dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiCallChannelId, aiCallEnding]);
 
   function arrayBufferToBase64(buffer: ArrayBuffer): string {
     let binary = '';
@@ -203,6 +229,8 @@ export default function useAISocket({
   }
 
   useEffect(() => {
+    socket.on('ai_voice_session_started', handleAIVoiceSessionStarted);
+    socket.on('disconnect', handleAIVoiceSessionEnded);
     socket.on('ai_realtime_audio', handleOpenAIAudio);
     socket.on('ai_realtime_response_stopped', handleAssistantResponseStopped);
     socket.on('ai_realtime_input_received', sendAIUIInformation);
@@ -223,6 +251,8 @@ export default function useAISocket({
     socket.on('ai_file_generated', handleAIFileGenerated);
 
     return function cleanUp() {
+      socket.off('ai_voice_session_started', handleAIVoiceSessionStarted);
+      socket.off('disconnect', handleAIVoiceSessionEnded);
       socket.off('ai_realtime_audio', handleOpenAIAudio);
       socket.off(
         'ai_realtime_response_stopped',
@@ -327,11 +357,8 @@ export default function useAISocket({
     }
 
     function handleAssistantResponseStopped() {
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
-      nextStartTimeRef.current = 0;
+      voicePlaybackRef.current?.stop();
+      voicePlaybackRef.current = null;
     }
 
     function handleAICallMaxDurationReached() {
@@ -340,13 +367,28 @@ export default function useAISocket({
       socket.emit('ai_end_ai_voice_conversation');
     }
 
+    function handleAIVoiceSessionStarted({
+      channelId,
+      assistantName
+    }: {
+      channelId: number;
+      assistantName: 'Zero' | 'Ciel';
+    }) {
+      aiCallChannelIdRef.current = channelId;
+      onSetAICallEnding(false);
+      onSetAICall(channelId, assistantName);
+      sendAIUIInformation();
+    }
+
     function handleAIVoiceSessionEnded() {
+      aiCallChannelIdRef.current = 0;
       handleAssistantResponseStopped();
       onSetAICallEnding(false);
       onSetAICall(null);
     }
 
     function handleOpenAIAudio(base64AudioDelta: string) {
+      if (!aiCallChannelIdRef.current) return;
       if (base64AudioDelta) {
         const audioBuffer = base64ToArrayBuffer(base64AudioDelta);
         if (audioBuffer.byteLength > 0) {
@@ -359,51 +401,17 @@ export default function useAISocket({
       }
     }
 
-    async function playAudioChunk(arrayBuffer: ArrayBuffer) {
+    function playAudioChunk(arrayBuffer: ArrayBuffer) {
       try {
-        if (!audioContextRef.current) {
-          audioContextRef.current = new window.AudioContext({
-            sampleRate: 24000,
+        voicePlaybackRef.current ||= new AiVoicePlayback(
+          new window.AudioContext({
+            sampleRate: 24_000,
             latencyHint: 'interactive'
-          });
-
-          if (audioContextRef.current.state === 'suspended') {
-            await audioContextRef.current.resume();
-          }
-        }
-
-        const audioContext = audioContextRef.current;
-        const decodedAudioBuffer = await createAudioBufferFromPCM(
-          arrayBuffer,
-          audioContext
+          })
         );
-
-        const sourceNode = audioContext.createBufferSource();
-        const gainNode = audioContext.createGain();
-
-        gainNode.gain.value = 2.5;
-
-        sourceNode.buffer = decodedAudioBuffer;
-
-        sourceNode.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        const now = audioContext.currentTime;
-        const duration = decodedAudioBuffer.duration;
-
-        if (now < nextStartTimeRef.current) {
-          sourceNode.start(nextStartTimeRef.current);
-          nextStartTimeRef.current += duration;
-        } else {
-          sourceNode.start(now);
-          nextStartTimeRef.current = now + duration;
-        }
-
-        if (audioContext.state !== 'running') {
-          await audioContext.resume();
-        }
+        voicePlaybackRef.current.enqueue(arrayBuffer);
       } catch (error) {
-        console.error('Error processing audio chunk:', error);
+        console.error('Error processing call audio:', error);
       }
     }
 
@@ -657,13 +665,16 @@ export default function useAISocket({
     }
 
     function handleAIVoiceError({
-      aiUsagePolicy
+      aiUsagePolicy,
+      error
     }: {
       aiUsagePolicy?: any;
+      error?: string;
     } = {}) {
       if (aiUsagePolicy) {
         handleAiUsagePolicyUpdate({ aiUsagePolicy });
       }
+      if (aiCallChannelIdRef.current && error) showToast({ message: error });
       handleAIVoiceSessionEnded();
     }
 
@@ -702,116 +713,25 @@ export default function useAISocket({
 
     if (mainContent) {
       essentialContent += 'MAIN:\n';
-      essentialContent += extractEssentialHTML(mainContent);
+      essentialContent += extractAiVoiceScreenHTML(mainContent);
       essentialContent += '\n';
     }
 
     if (modalContent) {
       essentialContent += 'MODAL:\n';
-      essentialContent += extractEssentialHTML(modalContent);
+      essentialContent += extractAiVoiceScreenHTML(modalContent);
       essentialContent += '\n';
     }
 
     if (outerLayerContent) {
       essentialContent += 'OVERLAY:\n';
-      essentialContent += extractEssentialHTML(outerLayerContent);
+      essentialContent += extractAiVoiceScreenHTML(outerLayerContent);
     }
 
-    socket.emit('ai_ui_information_input', {
-      uiInformation: essentialContent.trim()
-    });
-  }
-
-  function extractEssentialHTML(element: Element) {
-    const clone = element.cloneNode(true) as Element;
-
-    const cleanElement = (el: Element) => {
-      const removeSelectors = [
-        'script',
-        'style',
-        '.hidden',
-        '[style*="display: none"]',
-        '[style*="visibility: hidden"]'
-      ];
-      removeSelectors.forEach((selector) => {
-        el.querySelectorAll(selector).forEach((elem) => elem.remove());
-      });
-
-      const allElements = el.getElementsByTagName('*');
-      for (let i = allElements.length - 1; i >= 0; i--) {
-        const elem = allElements[i];
-        const computedStyle = window.getComputedStyle(elem);
-
-        let layoutInfo = '';
-        if (computedStyle.display === 'flex') {
-          layoutInfo = `[flex ${computedStyle.flexDirection} ${computedStyle.justifyContent}]`;
-        } else if (computedStyle.display === 'grid') {
-          layoutInfo = '[grid]';
-        }
-
-        if (
-          elem.tagName.toLowerCase() === 'svg' &&
-          (elem.hasAttribute('data-icon') || elem.hasAttribute('data-prefix'))
-        ) {
-          const prefix = elem.getAttribute('data-prefix') || 'fas';
-          const iconName = elem.getAttribute('data-icon') || 'unknown';
-          const placeholderText = `[icon ${prefix}-${iconName}]`;
-          const textNode = document.createTextNode(placeholderText);
-
-          elem.parentNode?.insertBefore(textNode, elem);
-          elem.remove();
-          continue;
-        }
-
-        if (elem.tagName.toLowerCase() === 'path') {
-          elem.remove();
-          continue;
-        }
-
-        if (!elem.textContent?.trim() && !hasInteractiveChild(elem)) {
-          elem.remove();
-          continue;
-        }
-
-        if (!isPreservedInteractiveElement(elem)) {
-          if (layoutInfo) {
-            const layoutNode = document.createTextNode(layoutInfo);
-            elem.parentNode?.insertBefore(layoutNode, elem);
-          }
-
-          while (elem.attributes.length > 0) {
-            elem.removeAttribute(elem.attributes[0].name);
-          }
-        }
-      }
-    };
-
-    cleanElement(clone);
-    const finalHTML = clone.innerHTML
-      .replace(/<(article|section|main|aside|header|footer|nav)>/g, '[section]')
-      .replace(
-        /<\/(article|section|main|aside|header|footer|nav)>/g,
-        '[/section]'
-      )
-      .replace(/<(h[1-6])>/g, '[heading]')
-      .replace(/<\/h[1-6]>/g, '[/heading]')
-      .replace(/<(ul|ol)>/g, '[list]')
-      .replace(/<\/(ul|ol)>/g, '[/list]')
-      .replace(/<li>/g, '• ')
-      .replace(/<\/li>/g, '\n')
-      .replace(/<div>/g, '')
-      .replace(/<\/div>/g, '\n')
-      .replace(/<p>/g, '')
-      .replace(/<\/p>/g, '\n')
-      .replace(/<\/?(?:span|strong|em|i|b|small|label)>/g, '')
-      .replace(/<br\s*\/?>/g, '\n')
-      .replace(/\n\s+/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-
-    return finalHTML;
+    const uiInformation = essentialContent.trim();
+    if (uiInformation === lastScreenInformationRef.current) return;
+    lastScreenInformationRef.current = uiInformation;
+    socket.emit('ai_ui_information_input', { uiInformation });
   }
 
   function base64ToArrayBuffer(base64: string): ArrayBuffer {
@@ -822,43 +742,5 @@ export default function useAISocket({
       bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes.buffer;
-  }
-
-  async function createAudioBufferFromPCM(
-    arrayBuffer: ArrayBuffer,
-    audioContext: AudioContext
-  ): Promise<AudioBuffer> {
-    const pcm16Data = new Int16Array(arrayBuffer);
-    const float32Data = new Float32Array(pcm16Data.length);
-
-    for (let i = 0; i < pcm16Data.length; i++) {
-      float32Data[i] = (pcm16Data[i] / 32768) * 1.2;
-    }
-
-    const audioBuffer = audioContext.createBuffer(1, float32Data.length, 24000);
-    audioBuffer.copyToChannel(float32Data, 0);
-    return audioBuffer;
-  }
-
-  function isPreservedInteractiveElement(elem: Element) {
-    const interactiveSelectors = [
-      'button',
-      'input',
-      'textarea',
-      'select',
-      'a[href]'
-    ];
-    return interactiveSelectors.some((selector) => elem.matches(selector));
-  }
-
-  function hasInteractiveChild(elem: Element) {
-    const interactiveSelectors = [
-      'button',
-      'input',
-      'textarea',
-      'select',
-      'a[href]'
-    ];
-    return !!elem.querySelector(interactiveSelectors.join(','));
   }
 }

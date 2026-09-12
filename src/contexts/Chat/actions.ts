@@ -1888,10 +1888,11 @@ export default function ChatActions(dispatch: Dispatch) {
         imCalling
       });
     },
-    onSetAICall(channelId: number) {
+    onSetAICall(channelId: number | null, assistantName?: 'Zero' | 'Ciel') {
       return dispatch({
         type: 'SET_AI_CALL',
-        channelId
+        channelId,
+        assistantName
       });
     },
     onSetAICallEnding(isEnding: boolean) {
@@ -2216,7 +2217,10 @@ export default function ChatActions(dispatch: Dispatch) {
         isAvailable
       });
     },
-    onSetZeroChannelId(channelId: number) {
+    onSetCielChannelId(channelId: number | null) {
+      return dispatch({ type: 'SET_CIEL_CHANNEL_ID', channelId });
+    },
+    onSetZeroChannelId(channelId: number | null) {
       return dispatch({
         type: 'SET_ZERO_CHANNEL_ID',
         channelId
