@@ -143,7 +143,7 @@ export default function ChatFlatButton({
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
     >
-      <Icon icon={icon} />
+      <Icon icon={icon} spin={icon === 'spinner'} />
       <div style={{ marginLeft: '0.5rem' }}>{label}</div>
     </button>
   );

@@ -214,7 +214,7 @@ function Window({
               letter-spacing: 1px;
             `}
           >
-            <Icon icon={ending ? 'spinner' : 'phone-volume'} />
+            <Icon icon={ending ? 'spinner' : 'phone-volume'} spin={ending} />
             <span style={{ marginLeft: '0.7rem' }}>
               {ending ? 'Ending...' : 'Hang Up'}
             </span>

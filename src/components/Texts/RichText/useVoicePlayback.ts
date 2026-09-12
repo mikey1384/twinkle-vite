@@ -30,7 +30,7 @@ export default function useVoicePlayback({ text, voice, contentKey }: {
   // Revision also expires prepared clips from the previous voice configuration.
   const speechVoice = voice === 'nova' || voice === 'marin' ? 'ciel'
     : !voice || voice === 'echo' || voice === 'cedar' ? 'zero' : voice;
-  const identity = useMemo(() => JSON.stringify([contentKey, text, speechVoice, 'cedar-marin-v1']), [contentKey, text, speechVoice]);
+  const identity = useMemo(() => JSON.stringify([contentKey, text, speechVoice, 'echo-marin-v2']), [contentKey, text, speechVoice]);
   const latestIdentity = useRef(identity);
   latestIdentity.current = identity;
   const mounted = useRef(false);
