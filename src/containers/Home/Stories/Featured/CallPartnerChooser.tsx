@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
@@ -21,6 +21,13 @@ export default function CallPartnerChooser({
   const menuRef = useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const open = Boolean(anchor) && !disabled;
+
+  useEffect(() => {
+    if (disabled && anchor) {
+      setAnchor(null);
+      onOpenChange(false);
+    }
+  }, [anchor, disabled, onOpenChange]);
 
   return (
     <>
