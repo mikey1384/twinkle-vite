@@ -76,6 +76,7 @@ registerMethods('build', [
   'decideBuildRewardReview',
   'requestBuildRewards',
   'requestBuildRewardPreview',
+  'loadRewardEarnHub',
   'loadBuildWorkshopStatus',
   'cancelBuildWorkshopJob',
   'createBuild',

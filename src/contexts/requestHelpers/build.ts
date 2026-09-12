@@ -620,6 +620,17 @@ export default function buildRequestHelpers({
         );
       }
     },
+    async loadRewardEarnHub({ period }: { period?: 'day' | 'week' | 'all' } = {}) {
+      try {
+        const { data } = await request.get(`${URL}/build/rewards/earn`, {
+          ...auth(),
+          params: period ? { period } : {}
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadBuildWorkshopStatus({ persona }: { persona: 'zero' | 'ciel' }) {
       try {
         const { data } = await request.get(`${URL}/build/workshop/status`, {
