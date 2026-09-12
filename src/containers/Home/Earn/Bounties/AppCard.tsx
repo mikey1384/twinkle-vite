@@ -14,7 +14,7 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
   const payout = useMemo(() => {
     const xp =
       app.minXP && app.minXP !== app.maxXP
-        ? `${addCommasToNumber(app.minXP)} to ${addCommasToNumber(app.maxXP)} XP`
+        ? `${addCommasToNumber(app.minXP)}–${addCommasToNumber(app.maxXP)} XP`
         : `up to ${addCommasToNumber(app.maxXP)} XP`;
     return app.maxCoins > 0
       ? `${xp} + ${addCommasToNumber(app.maxCoins)} Coins`
@@ -146,10 +146,9 @@ const payPill = css`
   padding: 0.35rem 0.9rem;
   font-size: 1.2rem;
   font-weight: 800;
+  line-height: 1.3;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-align: left;
 `;
 const bodyClass = css`
   display: flex;
