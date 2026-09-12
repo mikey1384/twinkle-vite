@@ -71,6 +71,17 @@ export default function Earn() {
           }
         `}
       >
+        <section data-scroll-anchor-id="home-earn:activity-suggester">
+          <div className={boardHeadClass}>
+            <div>
+              <h2 style={{ fontSize: '2rem', margin: 0 }}>Community</h2>
+              <p className={sectionSubClass}>
+                Earn XP and Karma Points from other members' posts.
+              </p>
+            </div>
+          </div>
+          <ActivitySuggester />
+        </section>
         <section data-scroll-anchor-id="home-earn:bounties">
           <Bounties
             onOpenStandings={() => {
@@ -80,9 +91,6 @@ export default function Earn() {
                 ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
           />
-        </section>
-        <section data-scroll-anchor-id="home-earn:activity-suggester">
-          <ActivitySuggester />
         </section>
         <section
           id="earn-leaderboards"
@@ -158,4 +166,9 @@ const boardTabClass = css`
     outline: 2px solid ${Color.logoBlue()};
     outline-offset: 2px;
   }
+`;
+const sectionSubClass = css`
+  margin: 0.2rem 0 0;
+  font-size: 1.3rem;
+  color: rgba(15, 23, 42, 0.66);
 `;
