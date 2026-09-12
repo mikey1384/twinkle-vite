@@ -62,12 +62,11 @@ export default function StartMenu() {
       <div className={gridClass}>
         {ACTIONS.map((action) => (
           <article key={action.key} className={cardClass}>
-            <div className={bandClass} style={{ background: action.band }}>
-              <Icon icon={action.icon} />
-              <span className={paysClass}>{action.pays}</span>
-            </div>
             <div className={bodyClass}>
-              <div className={labelClass}>{action.pays}</div>
+              <span className={badgeClass} style={{ background: action.band }}>
+                <Icon icon={action.icon} />
+                <span>{action.pays}</span>
+              </span>
               <h3 className={titleClass}>{action.title}</h3>
               <p className={blurbClass}>{action.blurb}</p>
               <Button
@@ -96,7 +95,12 @@ const gridClass = css`
   gap: 1.2rem;
   width: 100%;
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    /* an odd last card takes the whole row instead of sitting alone */
+    > :last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
   }
 `;
 const cardClass = css`
@@ -108,36 +112,16 @@ const cardClass = css`
   overflow: hidden;
   min-width: 0;
 `;
-const labelClass = css`
-  display: none;
-  font-size: 1.15rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-weight: 700;
-  color: rgba(15, 23, 42, 0.66);
-  @media (max-width: ${mobileMaxWidth}) {
-    display: block;
-  }
-`;
-const bandClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
-    display: none;
-  }
-  display: flex;
+const badgeClass = css`
+  align-self: flex-start;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.4rem 1.5rem;
+  gap: 0.6rem;
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
   color: #fff;
-  font-size: 2.2rem;
-`;
-const paysClass = css`
   font-size: 1.2rem;
   font-weight: 800;
-  background: rgba(255, 255, 255, 0.92);
-  color: ${Color.darkerGray()};
-  border-radius: 999px;
-  padding: 0.35rem 0.9rem;
   white-space: nowrap;
 `;
 const bodyClass = css`
@@ -147,8 +131,8 @@ const bodyClass = css`
   padding: 1.3rem 1.5rem 1.5rem;
   flex: 1;
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 1.6rem 1.8rem 1.8rem;
-    gap: 0.6rem;
+    padding: 1.2rem 1.2rem 1.3rem;
+    gap: 0.7rem;
   }
 `;
 const titleClass = css`
@@ -157,8 +141,7 @@ const titleClass = css`
   font-weight: 800;
   color: var(--home-panel-heading, ${Color.darkerGray()});
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 2rem;
-    margin-top: 0.2rem;
+    font-size: 1.6rem;
   }
 `;
 const blurbClass = css`
