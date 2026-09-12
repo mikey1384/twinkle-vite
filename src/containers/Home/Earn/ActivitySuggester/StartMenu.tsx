@@ -15,41 +15,33 @@ const ACTIONS: Array<{
   key: 'subject' | 'recommend' | 'reward';
   icon: string;
   title: string;
-  pays: string;
   blurb: string;
   button: string;
   color: string;
-  band: string;
 }> = [
   {
     key: 'subject',
     icon: 'bolt',
     title: 'Answer Subjects',
-    pays: 'Earns XP',
     blurb: 'Post thoughtful comments on subjects to earn XP.',
     button: 'Answer Subjects',
-    color: 'logoBlue',
-    band: Color.logoBlue()
+    color: 'logoBlue'
   },
   {
     key: 'recommend',
     icon: 'heart',
     title: 'Recommend Posts',
-    pays: 'Earns Karma Points',
     blurb: 'Recommend great posts by other members.',
     button: 'Recommend Posts',
-    color: 'brownOrange',
-    band: Color.brownOrange()
+    color: 'brownOrange'
   },
   {
     key: 'reward',
     icon: 'certificate',
     title: 'Reward Posts',
-    pays: 'Earns Karma Points',
     blurb: 'Reward posts that deserve a little extra.',
     button: 'Reward Posts',
-    color: 'pink',
-    band: Color.pink()
+    color: 'pink'
   }
 ];
 
@@ -63,10 +55,6 @@ export default function StartMenu() {
         {ACTIONS.map((action) => (
           <article key={action.key} className={cardClass}>
             <div className={bodyClass}>
-              <span className={badgeClass} style={{ background: action.band }}>
-                <Icon icon={action.icon} />
-                <span>{action.pays}</span>
-              </span>
               <h3 className={titleClass}>{action.title}</h3>
               <p className={blurbClass}>{action.blurb}</p>
               <Button
@@ -79,7 +67,8 @@ export default function StartMenu() {
                 style={{ marginTop: 'auto' }}
                 onClick={() => onSetTopMenuSectionSection(action.key)}
               >
-                {action.button}
+                <Icon icon={action.icon} />
+                <span>{action.button}</span>
               </Button>
             </div>
           </article>
@@ -111,18 +100,6 @@ const cardClass = css`
   background: rgba(255, 255, 255, 0.94);
   overflow: hidden;
   min-width: 0;
-`;
-const badgeClass = css`
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  border-radius: 999px;
-  padding: 0.45rem 1.1rem;
-  color: #fff;
-  font-size: 1.2rem;
-  font-weight: 800;
-  white-space: nowrap;
 `;
 const bodyClass = css`
   display: flex;
