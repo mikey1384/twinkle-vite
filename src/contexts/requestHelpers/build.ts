@@ -502,56 +502,122 @@ export default function buildRequestHelpers({
 
   return {
     async loadBuildRewardSettings(buildId: number) {
-      const { data } = await request.get(`${URL}/build/${buildId}/rewards`, auth());
+      const { data } = await request.get(
+        `${URL}/build/${buildId}/rewards`,
+        auth()
+      );
       return data;
     },
     async requestBuildRewardReview(buildId: number) {
       try {
-        const { data } = await request.post(`${URL}/build/${buildId}/rewards/reviews`, {}, getBuildRequestConfig({maxRetries: 0}));
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/rewards/reviews`,
+          {},
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
         return data;
       } catch (error) {
-        throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not submit reward review.');
+        throw new Error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : 'Could not submit reward review.'
+        );
       }
     },
     async loadBuildRewardReview(reviewId: number) {
-      const { data } = await request.get(`${URL}/build/reward-reviews/${reviewId}`, auth());
+      const { data } = await request.get(
+        `${URL}/build/reward-reviews/${reviewId}`,
+        auth()
+      );
       return data;
     },
     async loadBuildRewardReviews(beforeId?: number) {
-      const { data } = await request.get(`${URL}/build/reward-reviews`, {...auth(), params: {beforeId}});
+      const { data } = await request.get(`${URL}/build/reward-reviews`, {
+        ...auth(),
+        params: { beforeId }
+      });
       return data;
     },
-    async decideBuildRewardReview(reviewId: number, decision: string, reason: string, config?: unknown) {
+    async decideBuildRewardReview(
+      reviewId: number,
+      decision: string,
+      reason: string,
+      config?: unknown
+    ) {
       try {
-        const { data } = await request.post(`${URL}/build/reward-reviews/${reviewId}`, { decision, reason, ...(config === undefined ? {} : { config }) }, getBuildRequestConfig({maxRetries: 0}));
+        const { data } = await request.post(
+          `${URL}/build/reward-reviews/${reviewId}`,
+          { decision, reason, ...(config === undefined ? {} : { config }) },
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
         return data;
       } catch (error) {
-        throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not save reward decision.');
+        throw new Error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : 'Could not save reward decision.'
+        );
       }
     },
     // Owner draft preview: the app's own rewards.json and question sheet,
     // simulated by the server without paying anything.
-    async requestBuildRewardPreview({ buildId, operation, payload }: {
-      buildId: number; operation: string; payload: unknown;
+    async requestBuildRewardPreview({
+      buildId,
+      operation,
+      payload
+    }: {
+      buildId: number;
+      operation: string;
+      payload: unknown;
     }) {
       try {
-        const { data } = await request.post(`${URL}/build/${buildId}/rewards/preview/${operation}`, payload, getBuildRequestConfig({maxRetries: 0}));
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/rewards/preview/${operation}`,
+          payload,
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
         return data;
       } catch (error) {
-        throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not complete reward preview.');
+        throw new Error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : 'Could not complete reward preview.'
+        );
       }
     },
-    async requestBuildRewards({ buildId, operation, payload, token, runtimeGrant }: {
-      buildId: number; operation: string; payload: unknown; token: string; runtimeGrant: string;
+    async requestBuildRewards({
+      buildId,
+      operation,
+      payload,
+      token,
+      runtimeGrant
+    }: {
+      buildId: number;
+      operation: string;
+      payload: unknown;
+      token: string;
+      runtimeGrant: string;
     }) {
       try {
-        const { data } = await request.post(`${URL}/build/${buildId}/api/rewards/${operation}`, payload, {
-          ...getBuildRequestConfig({maxRetries: 0}),
-          headers: {...auth().headers, 'x-build-api-token': token, 'x-build-reward-runtime': runtimeGrant}
-        });
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/rewards/${operation}`,
+          payload,
+          {
+            ...getBuildRequestConfig({ maxRetries: 0 }),
+            headers: {
+              ...auth().headers,
+              'x-build-api-token': token,
+              'x-build-reward-runtime': runtimeGrant
+            }
+          }
+        );
         return data;
       } catch (error) {
-        throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not complete reward request.');
+        throw new Error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : 'Could not complete reward request.'
+        );
       }
     },
     async loadBuildWorkshopStatus({ persona }: { persona: 'zero' | 'ciel' }) {
@@ -4578,17 +4644,24 @@ export default function buildRequestHelpers({
       buildId,
       title,
       description,
+      attachment,
       token
     }: {
       buildId: number;
       title: string;
       description?: string;
+      // { runtimeFileId } names one of the viewer's Twinkle.files uploads.
+      attachment?: { runtimeFileId?: number; assetId?: number } | null;
       token?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/content/subject/create`,
-          { title, description },
+          {
+            title,
+            description,
+            ...(attachment !== undefined ? { attachment } : {})
+          },
           getBuildApiConfig(token)
         );
         return data;
@@ -4602,18 +4675,26 @@ export default function buildRequestHelpers({
       subjectId,
       title,
       description,
+      attachment,
       token
     }: {
       buildId: number;
       subjectId: number;
       title: string;
       description?: string;
+      // undefined keeps the attachment; null removes it; { runtimeFileId } replaces it.
+      attachment?: { runtimeFileId?: number; assetId?: number } | null;
       token?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/content/subject/edit`,
-          { subjectId, title, description },
+          {
+            subjectId,
+            title,
+            description,
+            ...(attachment !== undefined ? { attachment } : {})
+          },
           getBuildApiConfig(token)
         );
         return data;
@@ -4626,17 +4707,23 @@ export default function buildRequestHelpers({
       buildId,
       subjectId,
       content,
+      attachment,
       token
     }: {
       buildId: number;
       subjectId: number;
       content: string;
+      attachment?: { runtimeFileId?: number; assetId?: number } | null;
       token?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/content/comment/create`,
-          { subjectId, content },
+          {
+            subjectId,
+            content,
+            ...(attachment !== undefined ? { attachment } : {})
+          },
           getBuildApiConfig(token)
         );
         return data;

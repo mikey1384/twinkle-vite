@@ -2342,7 +2342,8 @@ export function useHostBridge({
             if (
               !isAiImageQuality(selectedImageQuality) ||
               (selectedImageEngine === 'gemini' &&
-                (selectedImageQuality === 'xhigh' || selectedImageQuality === 'max')) ||
+                (selectedImageQuality === 'xhigh' ||
+                  selectedImageQuality === 'max')) ||
               (payload?.model != null &&
                 (!isOpenAiImageModel(payload.model) ||
                   selectedImageEngine !== 'openai')) ||
@@ -3416,6 +3417,7 @@ export function useHostBridge({
               buildId: activeBuild.id,
               title: payload?.title,
               description: payload?.description,
+              attachment: payload?.attachment,
               token: contentWriteToken
             });
             break;
@@ -3431,6 +3433,7 @@ export function useHostBridge({
               subjectId: payload?.subjectId,
               title: payload?.title,
               description: payload?.description,
+              attachment: payload?.attachment,
               token: contentWriteToken
             });
             break;
@@ -3445,6 +3448,7 @@ export function useHostBridge({
               buildId: activeBuild.id,
               subjectId: payload?.subjectId,
               content: payload?.content,
+              attachment: payload?.attachment,
               token: contentWriteToken
             });
             break;
@@ -4163,45 +4167,97 @@ export function useHostBridge({
 
           case 'rewards:status':
           case 'rewards:start':
-          case 'rewards:claim': {
+          case 'rewards:claim':
+          case 'rewards:leaderboard': {
             // Never forward app-supplied grants, versions, recipients or amounts.
             const runtimeGrant = activeBuild.rewardRuntimeGrant;
             if (!runtimeOnly || !runtimeGrant || appMcpSessionId) {
               // Drafts: the owner sees their own declaration and question
               // sheet simulated by the server (never paid). Anyone else, or an
               // app with no declaration yet, gets the empty preview.
-              const stub = { mode: 'preview', rules: [], challenges: [], history: [], message: 'Real rewards require the approved published app.' };
+              const stub = {
+                mode: 'preview',
+                rules: [],
+                challenges: [],
+                history: [],
+                message: 'Real rewards require the approved published app.'
+              };
               const preview = requestRefs.requestBuildRewardPreviewRef?.current;
               let previewFailure = '';
               if (preview && !appMcpSessionId) {
                 try {
                   response = await preview({
-                    buildId: activeBuild.id, operation: type.slice('rewards:'.length),
-                    payload: {ruleId: payload?.ruleId, challengeId: payload?.challengeId, answers: payload?.answers, previewAttempts: payload?.previewAttempts}
+                    buildId: activeBuild.id,
+                    operation: type.slice('rewards:'.length),
+                    payload: {
+                      ruleId: payload?.ruleId,
+                      challengeId: payload?.challengeId,
+                      answers: payload?.answers,
+                      previewAttempts: payload?.previewAttempts,
+                      metric: payload?.metric,
+                      period: payload?.period,
+                      limit: payload?.limit
+                    }
                   });
                   break;
                 } catch (previewError) {
-                  previewFailure = previewError instanceof Error ? previewError.message : '';
+                  previewFailure =
+                    previewError instanceof Error ? previewError.message : '';
                 }
               }
               if (type === 'rewards:status') {
                 response = stub;
                 break;
               }
-              throw new Error(previewFailure || 'Drafts and previews cannot award XP or Coins. Open the approved published app.');
+              if (type === 'rewards:leaderboard') {
+                response = {
+                  mode: 'preview',
+                  metric: payload?.metric === 'coins' ? 'coins' : 'xp',
+                  period: payload?.period || 'all',
+                  available: { xp: false, coins: false },
+                  entries: [],
+                  me: null,
+                  message: stub.message
+                };
+                break;
+              }
+              throw new Error(
+                previewFailure ||
+                  'Drafts and previews cannot award XP or Coins. Open the approved published app.'
+              );
             }
             const rewardUserId = previewAuth.userIdRef.current;
-            const rewardToken = await ensureBuildApiToken(['rewards:claim'], previewAuth);
+            const rewardToken = await ensureBuildApiToken(
+              ['rewards:claim'],
+              previewAuth
+            );
             response = await requestRefs.requestBuildRewardsRef.current({
-              buildId: activeBuild.id, operation: type.slice('rewards:'.length),
-              payload: {ruleId: payload?.ruleId, challengeId: payload?.challengeId, answers: payload?.answers},
-              token: rewardToken, runtimeGrant
+              buildId: activeBuild.id,
+              operation: type.slice('rewards:'.length),
+              payload: {
+                ruleId: payload?.ruleId,
+                challengeId: payload?.challengeId,
+                answers: payload?.answers,
+                metric: payload?.metric,
+                period: payload?.period,
+                limit: payload?.limit
+              },
+              token: rewardToken,
+              runtimeGrant
             });
-            if (rewardUserId && previewAuth.userIdRef.current === rewardUserId &&
-                Number.isFinite(response?.balances?.xp) && Number.isFinite(response?.balances?.coins)) {
-              onSetUserStateRef.current({userId: rewardUserId, newState: {
-                twinkleXP: response.balances.xp, twinkleCoins: response.balances.coins
-              }});
+            if (
+              rewardUserId &&
+              previewAuth.userIdRef.current === rewardUserId &&
+              Number.isFinite(response?.balances?.xp) &&
+              Number.isFinite(response?.balances?.coins)
+            ) {
+              onSetUserStateRef.current({
+                userId: rewardUserId,
+                newState: {
+                  twinkleXP: response.balances.xp,
+                  twinkleCoins: response.balances.coins
+                }
+              });
             }
             break;
           }
