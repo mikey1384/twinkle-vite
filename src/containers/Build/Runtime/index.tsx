@@ -49,6 +49,7 @@ import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../constants/runtimeViewSou
 import CommentsDrawer from './CommentsDrawer';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
 import BuildAppNotificationSettingsModal, {
   type BuildAppNotificationPreferences
 } from '~/components/Notification/MainFeeds/NotiItem/BuildAppNotificationSettingsModal';
@@ -808,6 +809,10 @@ export default function BuildRuntime({
   const [loadedRuntimeSource, setLoadedRuntimeSource] =
     useState<BuildRuntimeSource>('published');
   const [publishingRuntimeUpdate, setPublishingRuntimeUpdate] = useState(false);
+  // Set when the last publish attempt was refused for a reason with its own
+  // action here (reward approval): the page offers the action, not raw text.
+  const [publishRuntimeUpdateCode, setPublishRuntimeUpdateCode] = useState('');
+  const [rewardsReviewOpen, setRewardsReviewOpen] = useState(false);
   const [publishRuntimeUpdateError, setPublishRuntimeUpdateError] =
     useState('');
   const [forkingBuild, setForkingBuild] = useState(false);
@@ -1365,6 +1370,7 @@ export default function BuildRuntime({
     const requestedBuildId = build.id;
     setPublishingRuntimeUpdate(true);
     setPublishRuntimeUpdateError('');
+    setPublishRuntimeUpdateCode('');
     try {
       const result = await publishBuild({ buildId: requestedBuildId });
       if (result?.success) {
@@ -1414,6 +1420,7 @@ export default function BuildRuntime({
         setPublishRuntimeUpdateError('');
         return;
       }
+      setPublishRuntimeUpdateCode(String(error?.response?.data?.code || ''));
       setPublishRuntimeUpdateError(
         error?.response?.data?.error ||
           error?.message ||
@@ -2247,7 +2254,19 @@ export default function BuildRuntime({
                       {contributionForkError}
                     </span>
                   ) : null}
-                  {publishRuntimeUpdateError ? (
+                  {publishRuntimeUpdateError &&
+                  publishRuntimeUpdateCode ===
+                    'build_reward_approval_required' ? (
+                    <button
+                      type="button"
+                      className={runtimeActionButtonClass}
+                      onClick={() => setRewardsReviewOpen(true)}
+                      title="This version gives XP or Coins, so an admin approves it before it can go public"
+                    >
+                      <Icon icon="paper-plane" />
+                      <span>Send for review</span>
+                    </button>
+                  ) : publishRuntimeUpdateError ? (
                     <span className={contributionErrorClass}>
                       {publishRuntimeUpdateError}
                     </span>
@@ -2343,6 +2362,21 @@ export default function BuildRuntime({
                 onMessageChange={setCollaborationRequestMessage}
                 onOpenWorkspace={handleOpenCollaborationWorkspace}
                 onSubmitRequest={handleSubmitCollaborationRequest}
+              />
+            ) : null}
+            {rewardsReviewOpen && build?.id ? (
+              <RewardSettingsModal
+                buildId={Number(build.id)}
+                onSaveCode={async () => true}
+                onPublish={() => {
+                  setRewardsReviewOpen(false);
+                  void handleUpdatePublishedApp();
+                }}
+                onClose={() => {
+                  setRewardsReviewOpen(false);
+                  setPublishRuntimeUpdateError('');
+                  setPublishRuntimeUpdateCode('');
+                }}
               />
             ) : null}
             {build?.id ? (
