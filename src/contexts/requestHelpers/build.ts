@@ -529,6 +529,18 @@ export default function buildRequestHelpers({
         throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not save reward decision.');
       }
     },
+    // Owner draft preview: the app's own rewards.json and question sheet,
+    // simulated by the server without paying anything.
+    async requestBuildRewardPreview({ buildId, operation, payload }: {
+      buildId: number; operation: string; payload: unknown;
+    }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/rewards/preview/${operation}`, payload, getBuildRequestConfig({maxRetries: 0}));
+        return data;
+      } catch (error) {
+        throw new Error(axios.isAxiosError(error) ? error.response?.data?.error || error.message : 'Could not complete reward preview.');
+      }
+    },
     async requestBuildRewards({ buildId, operation, payload, token, runtimeGrant }: {
       buildId: number; operation: string; payload: unknown; token: string; runtimeGrant: string;
     }) {

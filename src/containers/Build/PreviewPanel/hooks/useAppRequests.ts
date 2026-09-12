@@ -6,6 +6,9 @@ export default function useAppRequests() {
   const requestBuildRewards = useAppContext((v) => v.requestHelpers.requestBuildRewards);
   const requestBuildRewardsRef = useRef(requestBuildRewards);
   requestBuildRewardsRef.current = requestBuildRewards;
+  const requestBuildRewardPreview = useAppContext((v) => v.requestHelpers.requestBuildRewardPreview);
+  const requestBuildRewardPreviewRef = useRef(requestBuildRewardPreview);
+  requestBuildRewardPreviewRef.current = requestBuildRewardPreview;
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
@@ -479,6 +482,7 @@ export default function useAppRequests() {
 
   const previewRequestRefs = useRef<PreviewHostBridgeRequestRefs>({
     requestBuildRewardsRef,
+    requestBuildRewardPreviewRef,
     connectBuildAppMcpRuntimeRef,
     pollBuildAppMcpCallRef,
     completeBuildAppMcpCallRef,

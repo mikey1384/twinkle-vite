@@ -4167,11 +4167,28 @@ export function useHostBridge({
             // Never forward app-supplied grants, versions, recipients or amounts.
             const runtimeGrant = activeBuild.rewardRuntimeGrant;
             if (!runtimeOnly || !runtimeGrant || appMcpSessionId) {
+              // Drafts: the owner sees their own declaration and question
+              // sheet simulated by the server (never paid). Anyone else, or an
+              // app with no declaration yet, gets the empty preview.
+              const stub = { mode: 'preview', rules: [], challenges: [], history: [], message: 'Real rewards require the approved published app.' };
+              const preview = requestRefs.requestBuildRewardPreviewRef?.current;
+              let previewFailure = '';
+              if (preview && !appMcpSessionId) {
+                try {
+                  response = await preview({
+                    buildId: activeBuild.id, operation: type.slice('rewards:'.length),
+                    payload: {ruleId: payload?.ruleId, challengeId: payload?.challengeId, answers: payload?.answers, previewAttempts: payload?.previewAttempts}
+                  });
+                  break;
+                } catch (previewError) {
+                  previewFailure = previewError instanceof Error ? previewError.message : '';
+                }
+              }
               if (type === 'rewards:status') {
-                response = { mode: 'preview', rules: [], challenges: [], history: [], message: 'Real rewards require the approved published app.' };
+                response = stub;
                 break;
               }
-              throw new Error('Drafts and previews cannot award XP or Coins. Open the approved published app.');
+              throw new Error(previewFailure || 'Drafts and previews cannot award XP or Coins. Open the approved published app.');
             }
             const rewardUserId = previewAuth.userIdRef.current;
             const rewardToken = await ensureBuildApiToken(['rewards:claim'], previewAuth);

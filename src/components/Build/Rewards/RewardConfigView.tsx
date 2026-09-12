@@ -244,6 +244,24 @@ function QuestionList({ questions }: { questions: RewardRule['questions'] }) {
 }
 
 function RewardRuleCard({ rule }: { rule: RewardRule }) {
+  if (rule.verifier === 'completion') {
+    return (
+      <article>
+        <h4>
+          {rule.title} · {rule.xp.toLocaleString()} XP +{' '}
+          {rule.coins.toLocaleString()} Coins
+        </h4>
+        <p>
+          Rule ID: {rule.id} · completion · once per learner per Korean
+          calendar day · pays when the app reports the activity finished at
+          least {(rule.minSeconds || 0).toLocaleString()} seconds after it
+          started. Nothing else is verified: read the code to see when the
+          app starts and claims it, and keep the amount small enough that a
+          player scripting the call would not matter.
+        </p>
+      </article>
+    );
+  }
   const tries =
     rule.maxAttempts === null
       ? 'unlimited tries until Korean midnight'
@@ -266,15 +284,20 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
       <p>
         Rule ID: {rule.id} · once per learner per Korean calendar day · {tries}{' '}
         · {retry}
+        {rule.progression === 'until-earned'
+          ? ' · sets play in order and a set stays up until somebody earns it'
+          : ''}
       </p>
       {rule.sets?.length ? (
         <>
-          {rule.sets.map((set) => (
-            <details key={set.from}>
+          {rule.sets.map((set, index) => (
+            <details key={set.key || set.from || index}>
               <summary>
-                {set.to && set.to !== set.from
-                  ? `${set.from} to ${set.to}`
-                  : set.from}{' '}
+                {rule.progression === 'until-earned'
+                  ? `Set ${index + 1}${set.key ? ` · ${set.key}` : ''}`
+                  : set.to && set.to !== set.from
+                    ? `${set.from} to ${set.to}`
+                    : set.from}{' '}
                 · {set.questions.length}{' '}
                 {set.questions.length === 1 ? 'question' : 'questions'}
               </summary>

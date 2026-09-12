@@ -22,11 +22,18 @@ export interface RewardRule {
   title: string;
   xp: number;
   coins: number;
-  verifier: 'numeric-quiz';
+  // numeric-quiz: server-checked answers. completion: the app reports a
+  // finished activity; the server holds it to minSeconds, once a day, budgets.
+  verifier: 'numeric-quiz' | 'completion';
+  // completion only: seconds that must pass between start and claim.
+  minSeconds?: number;
+  // numeric-quiz only: 'until-earned' plays sets in order and keeps a set up
+  // until somebody has earned it; absent/'dated' serves by calendar day.
+  progression?: 'dated' | 'until-earned';
   // Standing questions, served on any Korean day no dated set covers.
   questions?: RewardQuestion[];
-  // Dated sets (inclusive Korean calendar days); the server serves today's.
-  sets?: Array<{ from: string; to?: string; questions: RewardQuestion[] }>;
+  // Sets: dated (from/to, inclusive Korean days) or ordered (until-earned).
+  sets?: Array<{ from?: string; to?: string; key?: string; questions: RewardQuestion[] }>;
   // Wrong answers allowed per challenge; null = unlimited; absent = 3.
   maxAttempts?: number | null;
   // Share of xp/coins a correct answer pays after a wrong one; absent = full.
@@ -91,6 +98,35 @@ export interface RewardSettings {
   reviewNote: string;
   sourceVersionId: number;
   summary: Array<{ title: string; xp: number; coins: number }>;
+  // What the saved code declares in rewards.json (merged with the question
+  // sheet on file). Null when the code does not use the rewards SDK.
+  declaration?: {
+    declared: boolean;
+    legacy: boolean;
+    ok: boolean;
+    errors: string[];
+    rules: Array<{
+      id: string;
+      title: string;
+      xp: number;
+      coins: number;
+      verifier: 'numeric-quiz' | 'completion';
+      minSeconds?: number;
+      progression?: string;
+      questionSets: number;
+      standingQuestions: number;
+    }>;
+    budgets: {
+      dailyXP: number;
+      dailyCoins: number;
+      userDailyXP: number;
+      userDailyCoins: number;
+      lifetimeXP: number;
+      lifetimeCoins: number;
+      userDailyClaims: number | null;
+    } | null;
+    sheetRuleIds: string[];
+  } | null;
   approvalMatches: boolean;
   canPublish: boolean;
 }
