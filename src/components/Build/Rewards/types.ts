@@ -5,14 +5,32 @@ export interface RewardConfig {
   userDailyCoins: number;
   lifetimeXP: number;
   lifetimeCoins: number;
-  rules: Array<{
-    id: string;
-    title: string;
-    xp: number;
-    coins: number;
-    verifier: 'numeric-quiz';
-    questions: Array<{ prompt: string; answer: number }>;
-  }>;
+  // Receipts one learner may earn per Korean day across all rules.
+  userDailyClaims?: number;
+  rules: Array<RewardRule>;
+}
+export interface RewardQuestion {
+  prompt: string;
+  answer: number;
+  // Shown from the start.
+  hint?: string;
+  // Released to the learner only after their first answer.
+  guide?: unknown;
+}
+export interface RewardRule {
+  id: string;
+  title: string;
+  xp: number;
+  coins: number;
+  verifier: 'numeric-quiz';
+  // Standing questions, served on any Korean day no dated set covers.
+  questions?: RewardQuestion[];
+  // Dated sets (inclusive Korean calendar days); the server serves today's.
+  sets?: Array<{ from: string; to?: string; questions: RewardQuestion[] }>;
+  // Wrong answers allowed per challenge; null = unlimited; absent = 3.
+  maxAttempts?: number | null;
+  // Share of xp/coins a correct answer pays after a wrong one; absent = full.
+  retry?: { xpPercent: number; coinsPercent: number };
 }
 export interface RewardReview {
   id: number;

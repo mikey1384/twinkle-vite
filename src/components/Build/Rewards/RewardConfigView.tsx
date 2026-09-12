@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import type { RewardConfig, RewardReview } from './types';
+import type { RewardConfig, RewardReview, RewardRule } from './types';
 
 // Reviewer-facing presentation of a reward review. Lives inside the
 // Management page's section panels, so it inherits their accent through
@@ -181,6 +181,12 @@ export function RewardConfigSummary({ config }: { config: RewardConfig }) {
               <div>{config[key].toLocaleString()}</div>
             </div>
           ))}
+          {config.userDailyClaims ? (
+            <div>
+              <strong>Bounties per learner per day</strong>
+              <div>{config.userDailyClaims.toLocaleString()}</div>
+            </div>
+          ) : null}
         </div>
       )}
       {config.rules.length === 0 && (
@@ -214,20 +220,81 @@ const rulesListClass = css`
   gap: 1rem;
 `;
 
-function RewardRuleCard({ rule }: { rule: RewardConfig['rules'][number] }) {
+function retryAmount(amount: number, percent: number) {
+  return Math.floor((amount * percent) / 100);
+}
+
+function QuestionList({ questions }: { questions: RewardRule['questions'] }) {
+  return (
+    <ol>
+      {(questions || []).map((question, i) => (
+        <li key={i}>
+          {question.prompt} <strong>Answer: {question.answer}</strong>
+          {question.hint ? <> · Hint: {question.hint}</> : null}
+          {question.guide !== undefined ? (
+            <details>
+              <summary>After-answer guide</summary>
+              <pre>{JSON.stringify(question.guide, null, 2)}</pre>
+            </details>
+          ) : null}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function RewardRuleCard({ rule }: { rule: RewardRule }) {
+  const tries =
+    rule.maxAttempts === null
+      ? 'unlimited tries until Korean midnight'
+      : `${rule.maxAttempts ?? 3} tries`;
+  const retry = rule.retry
+    ? `after a wrong answer pays ${retryAmount(
+        rule.xp,
+        rule.retry.xpPercent
+      ).toLocaleString()} XP + ${retryAmount(
+        rule.coins,
+        rule.retry.coinsPercent
+      ).toLocaleString()} Coins`
+    : 'every correct answer pays the full amounts';
   return (
     <article>
       <h4>
-        {rule.title} · {rule.xp} XP + {rule.coins} Coins
+        {rule.title} · {rule.xp.toLocaleString()} XP +{' '}
+        {rule.coins.toLocaleString()} Coins
       </h4>
-      <p>Rule ID: {rule.id} · once per learner per Korean calendar day</p>
-      <ol>
-        {rule.questions.map((question, i) => (
-          <li key={i}>
-            {question.prompt} <strong>Answer: {question.answer}</strong>
-          </li>
-        ))}
-      </ol>
+      <p>
+        Rule ID: {rule.id} · once per learner per Korean calendar day · {tries}{' '}
+        · {retry}
+      </p>
+      {rule.sets?.length ? (
+        <>
+          {rule.sets.map((set) => (
+            <details key={set.from}>
+              <summary>
+                {set.to && set.to !== set.from
+                  ? `${set.from} to ${set.to}`
+                  : set.from}{' '}
+                · {set.questions.length}{' '}
+                {set.questions.length === 1 ? 'question' : 'questions'}
+              </summary>
+              <QuestionList questions={set.questions} />
+            </details>
+          ))}
+          {rule.questions?.length ? (
+            <details>
+              <summary>Standing questions for days without a set</summary>
+              <QuestionList questions={rule.questions} />
+            </details>
+          ) : (
+            <p>
+              No standing questions: days outside these sets are unavailable.
+            </p>
+          )}
+        </>
+      ) : (
+        <QuestionList questions={rule.questions} />
+      )}
     </article>
   );
 }

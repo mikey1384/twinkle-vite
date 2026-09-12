@@ -4168,7 +4168,7 @@ export function useHostBridge({
             const runtimeGrant = activeBuild.rewardRuntimeGrant;
             if (!runtimeOnly || !runtimeGrant || appMcpSessionId) {
               if (type === 'rewards:status') {
-                response = { mode: 'preview', rules: [], history: [], message: 'Real rewards require the approved published app.' };
+                response = { mode: 'preview', rules: [], challenges: [], history: [], message: 'Real rewards require the approved published app.' };
                 break;
               }
               throw new Error('Drafts and previews cannot award XP or Coins. Open the approved published app.');
