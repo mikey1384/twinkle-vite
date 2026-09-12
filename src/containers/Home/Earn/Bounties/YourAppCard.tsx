@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
-import { Color, borderRadius } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
 // The last card on the shelf is for the member who has not built anything
 // yet: what Twinkle approves, in three lines, and the door into Lumine.
@@ -43,6 +43,9 @@ const cardClass = css`
   border: 2px dashed ${Color.logoBlue(0.45)};
   background: ${Color.logoBlue(0.05)};
   min-width: 0;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.2rem;
+  }
 `;
 const titleClass = css`
   margin: 0;

@@ -97,16 +97,7 @@ const shelfClass = css`
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 1.2rem;
   @media (max-width: ${mobileMaxWidth}) {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    grid-template-columns: 1fr;
     gap: 1rem;
-    margin: 0 calc(-1 * var(--home-panel-padding-x, 1.4rem));
-    padding: 0 var(--home-panel-padding-x, 1.4rem) 0.6rem;
-    -webkit-overflow-scrolling: touch;
-    > * {
-      flex: 0 0 78%;
-      scroll-snap-align: start;
-    }
   }
 `;

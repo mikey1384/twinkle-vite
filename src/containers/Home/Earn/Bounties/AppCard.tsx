@@ -81,6 +81,7 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
         <span className={payPill}>{payout}</span>
       </div>
       <div className={bodyClass}>
+        <div className={payLine}>{payout}</div>
         <h3 className={titleClass}>{app.title}</h3>
         <div className={byClass}>
           by{' '}
@@ -97,6 +98,8 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
         <div className={barClass} role="img" aria-label={status.line}>
           <i style={{ width: `${Math.round(status.ratio * 100)}%` }} />
         </div>
+      </div>
+      <div className={actionsClass}>
         <Button
           color="logoBlue"
           variant="solid"
@@ -104,7 +107,6 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
           shape="pill"
           size="md"
           stretch
-          style={{ marginTop: 'auto' }}
           onClick={() => navigate(`/build/${app.buildId}`)}
         >
           {status.cta}
@@ -122,6 +124,13 @@ const cardClass = css`
   background: rgba(255, 255, 255, 0.94);
   overflow: hidden;
   min-width: 0;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    align-items: start;
+    padding: 1.2rem;
+    gap: 0 1.2rem;
+  }
 `;
 const thumbClass = css`
   position: relative;
@@ -129,9 +138,34 @@ const thumbClass = css`
   background: #101828 center / cover no-repeat;
   display: grid;
   place-items: center;
+  @media (max-width: ${mobileMaxWidth}) {
+    aspect-ratio: 1;
+    border-radius: ${borderRadius};
+  }
+`;
+const actionsClass = css`
+  padding: 0 1.5rem 1.5rem;
+  display: flex;
+  margin-top: auto;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-column: 1 / -1;
+    padding: 1rem 0 0;
+  }
+`;
+const payLine = css`
+  display: none;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #865910;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: block;
+  }
 `;
 const monogram = css`
   font-size: 4rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 3rem;
+  }
   font-weight: 800;
   color: rgba(255, 255, 255, 0.85);
 `;
@@ -149,13 +183,20 @@ const payPill = css`
   line-height: 1.3;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   text-align: left;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: none;
+  }
 `;
 const bodyClass = css`
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  padding: 1.3rem 1.5rem 1.5rem;
+  padding: 1.3rem 1.5rem 0.6rem;
   flex: 1;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0;
+    gap: 0.4rem;
+  }
 `;
 const titleClass = css`
   margin: 0;

@@ -6,6 +6,7 @@ import { useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
+
 // The three community ways to earn, as cards in the same language as the
 // Bounties shelf: a coloured header with the icon, a title, one line, and
 // one pill button. The actions and their flows are the ones the page has
@@ -66,6 +67,7 @@ export default function StartMenu() {
               <span className={paysClass}>{action.pays}</span>
             </div>
             <div className={bodyClass}>
+              <div className={labelClass}>{action.pays}</div>
               <h3 className={titleClass}>{action.title}</h3>
               <p className={blurbClass}>{action.blurb}</p>
               <Button
@@ -106,7 +108,21 @@ const cardClass = css`
   overflow: hidden;
   min-width: 0;
 `;
+const labelClass = css`
+  display: none;
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.66);
+  @media (max-width: ${mobileMaxWidth}) {
+    display: block;
+  }
+`;
 const bandClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    display: none;
+  }
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -130,12 +146,20 @@ const bodyClass = css`
   gap: 0.8rem;
   padding: 1.3rem 1.5rem 1.5rem;
   flex: 1;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.6rem 1.8rem 1.8rem;
+    gap: 0.6rem;
+  }
 `;
 const titleClass = css`
   margin: 0;
   font-size: 1.8rem;
   font-weight: 800;
   color: var(--home-panel-heading, ${Color.darkerGray()});
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 2rem;
+    margin-top: 0.2rem;
+  }
 `;
 const blurbClass = css`
   margin: 0 0 0.6rem;
