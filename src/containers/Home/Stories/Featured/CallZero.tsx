@@ -811,7 +811,7 @@ export default function CallZero({
           title={callButtonAriaLabel}
         >
           <span className="call-button__icon">
-            <Icon icon={callButtonIcon} />
+            <Icon icon={callButtonIcon} spin={callButtonIcon === 'spinner'} />
           </span>
           <span className="call-button__label">{callButtonLabel}</span>
         </button>
