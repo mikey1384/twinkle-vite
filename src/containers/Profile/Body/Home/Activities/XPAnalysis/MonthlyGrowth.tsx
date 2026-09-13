@@ -130,7 +130,6 @@ const grow = keyframes`
 `;
 
 const growthClass = css`
-  background: #f8fafc;
   .month-detail {
     margin-bottom: 3.2rem;
   }
