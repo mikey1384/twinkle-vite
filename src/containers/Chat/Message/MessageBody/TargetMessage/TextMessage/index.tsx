@@ -7,6 +7,10 @@ import Spoiler from '../../Spoiler';
 import BuildCardTargetSummary, {
   getBuildCardTargetSummary
 } from '../../BuildCardTargetSummary';
+import BuildCardTarget, {
+  buildCardRendersContent,
+  isBuildCardTargetMessage
+} from '../../BuildCardTarget';
 import { css } from '@emotion/css';
 import moment from 'moment';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -64,6 +68,13 @@ export default function TextMessage({
     () => getBuildCardTargetSummary(message),
     [message]
   );
+  // A quoted Build card is rendered whole (the same card as the original
+  // message, buttons included) so a reply can bump it; the compact summary
+  // stays as the fallback for a card the full component cannot render.
+  const showFullBuildCard = useMemo(
+    () => !!buildCardSummary && isBuildCardTargetMessage(message),
+    [buildCardSummary, message]
+  );
 
   return (
     <div
@@ -95,7 +106,27 @@ export default function TextMessage({
             {displayedTime}
           </small>
         </section>
-        {buildCardSummary ? (
+        {showFullBuildCard ? (
+          <div style={{ marginTop: '0.7rem' }}>
+            <BuildCardTarget message={message} />
+            {message.content && !buildCardRendersContent(message.rootType) ? (
+              <RichText
+                contentId={message.id}
+                contentType="chat"
+                theme={displayedThemeColor}
+                readMoreHeightFixed
+                style={{ marginTop: '0.7rem' }}
+                className={css`
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.3rem;
+                  }
+                `}
+              >
+                {message.content}
+              </RichText>
+            ) : null}
+          </div>
+        ) : buildCardSummary ? (
           <BuildCardTargetSummary
             summary={buildCardSummary}
             style={{ marginTop: '0.5rem' }}

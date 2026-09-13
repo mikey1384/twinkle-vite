@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  canReplyToChatMessage,
   canUseGenericChatMessageActions,
+  isReplyOnlyBuildCardMessage,
   isSenderDeleteOnlyBuildSuggestionMessage
 } from '../src/helpers/chatMessageCapabilities';
 
@@ -126,7 +128,7 @@ test('the message renderer uses one capability gate for every generic action sur
   );
   assert.match(
     actionButtonsSource,
-    /!isDeleteOnlyBuildSuggestion && userCanEditThis/
+    /!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && userCanEditThis/
   );
   assert.match(
     actionButtonsSource,
@@ -136,4 +138,76 @@ test('the message renderer uses one capability gate for every generic action sur
     actionButtonsSource,
     /!isDeleteOnlyBuildSuggestion &&[\s\S]*?<ReactionButton/
   );
+});
+
+test('Build cards can be replied to (and only replied to) while other notices cannot', () => {
+  for (const rootType of [
+    'buildContributionInvite',
+    'buildCollaborationRequest',
+    'buildContributionSubmission',
+    'buildThumbnailSuggestion',
+    'buildProjectLimitRequest',
+    'buildRewardReview'
+  ]) {
+    assert.equal(canReplyToChatMessage({ rootType }), true);
+    assert.equal(isReplyOnlyBuildCardMessage({ rootType }), true);
+    assert.equal(canReplyToChatMessage({ rootType, isNotification: 1 }), false);
+  }
+  for (const blocked of [
+    { rootType: 'approval' },
+    { rootType: 'modification' },
+    { rootType: 'aiCardOffer' },
+    { rootType: 'cliAdminChatMessage' },
+    { isNotification: true },
+    { isCallMsg: 1 },
+    { transferId: 9 }
+  ]) {
+    assert.equal(canReplyToChatMessage(blocked), false);
+    assert.equal(isReplyOnlyBuildCardMessage(blocked), false);
+  }
+  assert.equal(canReplyToChatMessage({ rootType: 'chat' }), true);
+  assert.equal(isReplyOnlyBuildCardMessage({ rootType: 'chat' }), false);
+});
+
+test('reply-only Build cards expose Reply and nothing else in the message menu', () => {
+  const bodySource = readSource(
+    'src/containers/Chat/Message/MessageBody/index.tsx'
+  );
+  const contentSource = readSource(
+    'src/containers/Chat/Message/MessageBody/Content.tsx'
+  );
+  const actionButtonsSource = readSource(
+    'src/containers/Chat/Message/MessageBody/ActionButtons.tsx'
+  );
+  const targetSource = readSource(
+    'src/containers/Chat/Message/MessageBody/TargetMessage/TextMessage/index.tsx'
+  );
+  assert.match(bodySource, /const canReply = canReplyToChatMessage\(/);
+  assert.match(
+    bodySource,
+    /const isReplyOnlyBuildCard = isReplyOnlyBuildCardMessage\(/
+  );
+  assert.match(
+    bodySource,
+    /\(\(genericActionsAllowed \|\| isDeleteOnlyBuildSuggestion\) \|\|\s*isReplyOnlyBuildCard\)/
+  );
+  assert.match(actionButtonsSource, /if \(canReply && !isRestricted\)/);
+  assert.match(
+    actionButtonsSource,
+    /!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && userCanEditThis/
+  );
+  assert.match(
+    actionButtonsSource,
+    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard &&\s*userCanRewardThis/
+  );
+  assert.match(
+    actionButtonsSource,
+    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard &&\s*!invitePath/
+  );
+  assert.match(
+    contentSource,
+    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard && \(\s*<Reactions/
+  );
+  // The quoted card is the live card, so the bump carries its buttons.
+  assert.match(targetSource, /<BuildCardTarget message=\{message\} \/>/);
 });

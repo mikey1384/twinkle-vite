@@ -52,6 +52,8 @@ import type {
 } from './Reactions/types';
 import {
   canUseGenericChatMessageActions,
+  canReplyToChatMessage,
+  isReplyOnlyBuildCardMessage,
   isSenderDeleteOnlyBuildSuggestionMessage
 } from '~/helpers/chatMessageCapabilities';
 
@@ -204,6 +206,14 @@ function MessageBody({
   const isDeleteOnlyBuildSuggestion = isSenderDeleteOnlyBuildSuggestionMessage({
     message,
     actorUserId: myId
+  });
+  const canReply = canReplyToChatMessage({
+    ...message,
+    isNotification: isNotification || message.isNotification
+  });
+  const isReplyOnlyBuildCard = isReplyOnlyBuildCardMessage({
+    ...message,
+    isNotification: isNotification || message.isNotification
   });
 
   useEffect(() => {
@@ -505,7 +515,8 @@ function MessageBody({
   const isMenuButtonsAllowed = useMemo(
     () =>
       !!messageId &&
-      (genericActionsAllowed || isDeleteOnlyBuildSuggestion) &&
+      ((genericActionsAllowed || isDeleteOnlyBuildSuggestion) ||
+        isReplyOnlyBuildCard) &&
       !isApprovalRequest &&
       !isNotification &&
       !isCallMsg &&
@@ -521,6 +532,7 @@ function MessageBody({
       isDeleteOnlyBuildSuggestion,
       isEditing,
       isNotification,
+      isReplyOnlyBuildCard,
       messageId
     ]
   );
@@ -906,6 +918,7 @@ function MessageBody({
               isLastMsg={isLastMsg}
               isMenuButtonsAllowed={isMenuButtonsAllowed}
               isDeleteOnlyBuildSuggestion={isDeleteOnlyBuildSuggestion}
+              isReplyOnlyBuildCard={isReplyOnlyBuildCard}
               isModificationNotice={isModificationNotice}
               isNotification={isNotification}
               isOmokCountdownActive={isOmokCountdownActive}
@@ -945,6 +958,8 @@ function MessageBody({
               isDrawOffer={isDrawOffer}
               isMenuButtonsAllowed={isMenuButtonsAllowed}
               isDeleteOnlyBuildSuggestion={isDeleteOnlyBuildSuggestion}
+              isReplyOnlyBuildCard={isReplyOnlyBuildCard}
+              canReply={canReply}
               isRestricted={isRestricted}
               message={message}
               messageId={messageId}

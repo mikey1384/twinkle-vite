@@ -53,6 +53,7 @@ interface Props {
   isCielMessage?: boolean;
   isCurrentlyStreaming: boolean;
   isDeleteOnlyBuildSuggestion: boolean;
+  isReplyOnlyBuildCard: boolean;
   isDrawOffer: boolean;
   isEditing: boolean;
   isLastMsg: boolean;
@@ -108,6 +109,7 @@ export default function Content({
   isCielMessage,
   isCurrentlyStreaming,
   isDeleteOnlyBuildSuggestion,
+  isReplyOnlyBuildCard,
   isDrawOffer,
   isEditing,
   isLastMsg,
@@ -455,7 +457,8 @@ export default function Content({
           )}
           {!isEditing &&
             isMenuButtonsAllowed &&
-            !isDeleteOnlyBuildSuggestion && (
+            !isDeleteOnlyBuildSuggestion &&
+            !isReplyOnlyBuildCard && (
               <Reactions
                 pendingReactionMutations={pendingReactionMutations}
                 reactions={message.reactions}

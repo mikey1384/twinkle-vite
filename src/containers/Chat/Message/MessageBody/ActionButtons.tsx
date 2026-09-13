@@ -24,6 +24,8 @@ interface Props {
   isChessMsg: boolean;
   isCurrentlyStreaming: boolean;
   isDeleteOnlyBuildSuggestion: boolean;
+  isReplyOnlyBuildCard: boolean;
+  canReply: boolean;
   isDrawOffer: boolean;
   isMenuButtonsAllowed: boolean;
   isRestricted: boolean;
@@ -65,6 +67,8 @@ export default function ActionButtons({
   isChessMsg,
   isCurrentlyStreaming,
   isDeleteOnlyBuildSuggestion,
+  isReplyOnlyBuildCard,
+  canReply,
   isDrawOffer,
   isMenuButtonsAllowed,
   isRestricted,
@@ -97,7 +101,9 @@ export default function ActionButtons({
     const result: ChatActionItem[] = [];
     if (isBanned) return result;
 
-    if (!isDeleteOnlyBuildSuggestion && !isRestricted) {
+    // Reply is the one action a Build card keeps: quoting it bumps the card
+    // with its live buttons. Everything else stays gated below.
+    if (canReply && !isRestricted) {
       result.push({
         id: 'reply',
         label: (
@@ -124,7 +130,7 @@ export default function ActionButtons({
       });
     }
 
-    if (!isDeleteOnlyBuildSuggestion && userCanEditThis) {
+    if (!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && userCanEditThis) {
       result.push({
         id: 'edit',
         label: (
@@ -163,6 +169,7 @@ export default function ActionButtons({
 
     if (
       !isDeleteOnlyBuildSuggestion &&
+      !isReplyOnlyBuildCard &&
       userCanRewardThis &&
       !rewardAmount &&
       !isAIMessage
@@ -182,7 +189,7 @@ export default function ActionButtons({
 
     const canBookmark =
       isAIChat && (isAIMessage || (!!myId && userId === myId && !!messageId));
-    if (!isDeleteOnlyBuildSuggestion && canBookmark) {
+    if (!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && canBookmark) {
       const bookmarkView = isAIMessage ? BOOKMARK_VIEWS.AI : BOOKMARK_VIEWS.ME;
       result.push({
         id: 'bookmark',
@@ -199,6 +206,7 @@ export default function ActionButtons({
 
     return result;
   }, [
+    canReply,
     currentChannelId,
     fileName,
     filePath,
@@ -207,6 +215,7 @@ export default function ActionButtons({
     isBanned,
     isCielMessage,
     isDeleteOnlyBuildSuggestion,
+    isReplyOnlyBuildCard,
     isRestricted,
     message,
     messageId,
@@ -257,6 +266,7 @@ export default function ActionButtons({
       `}
     >
       {!isDeleteOnlyBuildSuggestion &&
+        !isReplyOnlyBuildCard &&
         !invitePath &&
         !isDrawOffer &&
         !isChessMsg &&
