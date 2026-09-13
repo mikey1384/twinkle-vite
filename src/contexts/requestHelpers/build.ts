@@ -623,7 +623,9 @@ export default function buildRequestHelpers({
     async loadRewardEarnHub({ period }: { period?: 'day' | 'week' | 'all' } = {}) {
       try {
         const { data } = await request.get(`${URL}/build/rewards/earn`, {
-          ...auth(),
+          // The Earn hub shares concurrent reads itself. A return/day-change
+          // refresh must not collapse into a request from before that event.
+          ...getBuildRequestConfig({ collapseKey: null }),
           params: period ? { period } : {}
         });
         return data;

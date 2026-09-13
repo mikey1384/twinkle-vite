@@ -8,7 +8,9 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import type { EarnHubApp } from './useEarnHub';
 
 // One approved app on the shelf: what it pays, who made it, and what this
-// member still has left in it today. The button opens the published app.
+// member still has left in it today. The button opens the published app page
+// (/app/:id) for everyone — including the app's own creator, who would land in
+// the workspace editor if this pointed at /build/:id.
 export default function AppCard({ app }: { app: EarnHubApp }) {
   const navigate = useNavigate();
   const payout = useMemo(() => {
@@ -107,7 +109,7 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
           shape="pill"
           size="md"
           stretch
-          onClick={() => navigate(`/build/${app.buildId}`)}
+          onClick={() => navigate(`/app/${app.buildId}`)}
         >
           {status.cta}
         </Button>
