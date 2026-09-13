@@ -165,11 +165,11 @@ export default function Board({
           aria-label={interactable ? 'Chess board. Use arrow keys to explore squares; Enter or Space selects a piece or destination.' : onBoardClick ? 'Chess board. Use arrow keys to explore squares; Enter or Space opens the board.' : 'Chess board. Use arrow keys to explore squares.'}
           onKeyDown={handleBoardKeyDown}
           style={{
-            margin: '0 auto',
-            width: '100%',
-            height: '100%',
+            position: 'absolute',
+            inset: 0,
             display: 'grid',
-            gridTemplateColumns: 'repeat(8, 1fr)'
+            gridTemplateColumns: 'repeat(8, minmax(0, 1fr))',
+            gridTemplateRows: 'repeat(8, minmax(0, 1fr))'
           }}
         >
           {board}
