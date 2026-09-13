@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import SectionPanel from '~/components/SectionPanel';
-import MonthlyXPBarChart from './MonthlyXPBarChart';
-import AcquisitionPieChart from './AcquisitionPieChart';
+import MonthlyGrowth from './MonthlyGrowth';
+import Sources from './Sources';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Button from '~/components/Button';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
+import { contentClass } from './styles';
+import type { MonthlyXP, XPSource } from './helpers/data';
 const xpAnalysisLabel = 'XP Analysis';
 
 export default function XPAnalysis({
@@ -21,64 +23,76 @@ export default function XPAnalysis({
   const loadXpAcquisition = useAppContext(
     (v) => v.requestHelpers.loadXpAcquisition
   );
-  const [monthlyXPData, setMonthlyXPData] = useState([]);
-  const [xpAcquisitionData, setXpAcquisitionData] = useState([]);
-  const [loaded, setLoaded] = useState(false);
+  const [result, setResult] = useState<{
+    userId: number;
+    monthly: MonthlyXP[];
+    sources: XPSource[];
+  } | null>(null);
+  const [failedUserId, setFailedUserId] = useState<number | null>(null);
+  const [retry, setRetry] = useState(0);
+  const currentResult = result?.userId === userId ? result : null;
+  const failed = failedUserId === userId;
 
   useEffect(() => {
+    let cancelled = false;
+    setResult(null);
+    setFailedUserId(null);
     init();
 
+    return () => {
+      cancelled = true;
+    };
+
     async function init() {
-      if (userId) {
-        await Promise.all([handleLoadXpAcquisition(), handleLoadMonthlyXP()]);
-        setLoaded(true);
+      if (!userId) return;
+      try {
+        const [monthly, sources] = await Promise.all([
+          loadMonthlyXp(userId),
+          loadXpAcquisition(userId)
+        ]);
+        if (!cancelled) setResult({ userId, monthly, sources });
+      } catch (error) {
+        console.error(error);
+        if (!cancelled) setFailedUserId(userId);
       }
     }
-    async function handleLoadXpAcquisition() {
-      const data = await loadXpAcquisition(userId);
-      setXpAcquisitionData(data);
-      return Promise.resolve();
-    }
-    async function handleLoadMonthlyXP() {
-      const data = await loadMonthlyXp(userId);
-      setMonthlyXPData(data);
-      return Promise.resolve();
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, retry]);
 
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Activities/XPAnalysis">
       <SectionPanel
-        elevated
         customColorTheme={selectedTheme}
         title={xpAnalysisLabel}
-        loaded={loaded}
+        loaded={!!currentResult || failed}
         style={style}
       >
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent:
-              xpAcquisitionData.length > 0 ? 'space-between' : 'center'
-          }}
-          className={css`
-            @media (max-width: ${mobileMaxWidth}) {
-              flex-direction: column;
+        {failed ? (
+          <div
+            role="status"
+            className={css`
+              display: flex;
               align-items: center;
-              > div {
-                width: 100% !important;
-                margin-bottom: 2rem;
-              }
-            }
-          `}
-        >
-          <MonthlyXPBarChart data={monthlyXPData} />
-          {xpAcquisitionData.length > 0 && (
-            <AcquisitionPieChart data={xpAcquisitionData} />
-          )}
-        </div>
+              flex-wrap: wrap;
+              gap: 1rem;
+              font-size: 1.4rem;
+            `}
+          >
+            <span>XP activity couldn’t be loaded.</span>
+            <Button
+              variant="soft"
+              color={selectedTheme}
+              onClick={() => setRetry((value) => value + 1)}
+            >
+              Try again
+            </Button>
+          </div>
+        ) : currentResult ? (
+          <div key={userId} className={contentClass}>
+            <MonthlyGrowth data={currentResult.monthly} />
+            <Sources data={currentResult.sources} />
+          </div>
+        ) : null}
       </SectionPanel>
     </ErrorBoundary>
   );
