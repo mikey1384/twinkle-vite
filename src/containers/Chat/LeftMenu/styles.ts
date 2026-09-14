@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { COMPACT_NAVIGATION_WIDTH } from './helpers/navigationSizing';
 
 export const contextGroupClass = css`
   @media (max-width: 1023px) {
-    &, &:not(:last-child) {
+    &,
+    &:not(:last-child) {
       flex: 0 0 auto;
       min-height: 0;
       max-height: none;
@@ -22,7 +24,9 @@ export const contextRowClass = css`
   display: flex;
   align-items: center;
   gap: 1rem;
-  > svg { flex-shrink: 0; }
+  > svg {
+    flex-shrink: 0;
+  }
   .chat-context-label {
     flex: 1;
     min-width: 0;
@@ -45,5 +49,13 @@ export const contextRowClass = css`
   }
   @media (pointer: coarse) {
     min-height: 44px;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    .chat-context-label {
+      display: block;
+      white-space: nowrap;
+      overflow-wrap: normal;
+      -webkit-line-clamp: unset;
+    }
   }
 `;

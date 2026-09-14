@@ -241,10 +241,7 @@ test('keeps mobile build app thumbnails close to square without changing desktop
     userId: 1
   });
   const buildMiniCardSource = readFileSync(
-    path.resolve(
-      __dirname,
-      '../src/components/Build/Cards/BuildMiniCard.tsx'
-    ),
+    path.resolve(__dirname, '../src/components/Build/Cards/BuildMiniCard.tsx'),
     'utf8'
   );
   const mobileStylesSource = readFileSync(
@@ -371,7 +368,7 @@ test('counts blank line breaks before compacting subject descriptions', () => {
       size: sizing.main.size
     }),
     {
-      descriptionMaxLines: 5,
+      descriptionMaxLines: 6,
       secretMaxLines: 0
     }
   );
@@ -755,11 +752,11 @@ test('keeps secret attachments and public media in media-sized subject buckets',
   assert.equal(secretAttachmentSizing.card.bodyHeight, 'max(25rem, 250px)');
   assert.equal(
     secretAttachmentSizing.card.mobileBodyHeight,
-    'max(24rem, 240px)'
+    'max(28rem, 280px)'
   );
   assert.equal(publicMediaSizing.main.size, 'subject-media');
   assert.equal(publicMediaSizing.card.bodyHeight, 'max(21rem, 210px)');
-  assert.equal(publicMediaSizing.card.mobileBodyHeight, 'max(20rem, 200px)');
+  assert.equal(publicMediaSizing.card.mobileBodyHeight, 'max(27rem, 270px)');
 });
 
 test('gives real secret-answer text enough root-subject panel space', () => {
@@ -843,7 +840,7 @@ test('lets long root-subject descriptions use dedicated text-heavy root space', 
       size: sizing.main.size
     }),
     {
-      descriptionMaxLines: 5,
+      descriptionMaxLines: 6,
       secretMaxLines: 1
     }
   );
@@ -896,7 +893,7 @@ test('keeps subject description styling separate from secret styling', () => {
   );
   assert.match(
     bodySource,
-    /const homeFeedPreviewLineHeight = 1\.36;/
+    /const homeFeedPreviewLineHeight = HOME_FEED_MARKDOWN_LINE_HEIGHT;/
   );
   assert.match(
     bodySource,
@@ -953,7 +950,7 @@ test('keeps mobile main and target subject title typography explicit across vari
     /\.home-feed-card__target-subject \.home-feed-card__target-copy > h4 \{([\s\S]*?)\n\s+\}/
   );
   const genericHeadingRule = mobileStylesSource.match(
-    /\n\s+h3 \{([\s\S]*?)\n\s+\}/
+    /\n\s+h3:where\(:not\(\.rich-text--block-preview \*\), \.rich-text-embedded-component \*\) \{([\s\S]*?)\n\s+\}/
   );
 
   assert.ok(mainSubjectTitleRule);
@@ -1340,7 +1337,7 @@ test('promotes opaque subject image endpoints and content-sizes real file embeds
       contentType: 'subject',
       description:
         'Read the attached notes\n\n![Lesson notes](https://cdn.example.com/lesson-notes.pdf)',
-      title: 'Today\'s lesson'
+      title: "Today's lesson"
     },
     userId: 1
   });
@@ -1383,7 +1380,7 @@ test('matches AI card modal coin styling in rich text compact previews', () => {
   );
 });
 
-test('keeps subject AI-card markdown embeds visible in the rich embed layout', () => {
+test('sizes subject AI-card markdown embeds for the card and description', () => {
   const description =
     'Looking forward to the next chapter\n\n![focus](/ai-cards?cardId=1267)';
   const sizing = getFeedCardSizing({
@@ -1422,9 +1419,11 @@ test('keeps subject AI-card markdown embeds visible in the rich embed layout', (
     /\.home-feed-card__subject-preview--with-embed\s+\.home-feed-card__subject-copy\s+\.home-feed-card__subject-text-stack \{([\s\S]*?)\n  \}/
   )?.[1];
 
-  assert.equal(sizing.main.size, 'subject-rich-embed');
+  assert.equal(sizing.main.size, 'subject-comment-embed');
   assert.equal(sizing.flags.hasRichTextEmbed, true);
-  assert.equal(sizing.card.bodyHeight, 'max(34rem, 340px)');
+  assert.equal(sizing.card.bodyHeight, sizing.card.commentEmbedPanelHeight);
+  assert.ok(parseFloat(sizing.card.bodyHeight.slice(4)) < 34);
+  assert.ok(parseFloat(sizing.card.mobileBodyHeight.slice(4)) < 36);
   assert.deepEqual(getMarkdownImageEmbedPreview(description), {
     alt: 'focus',
     src: '/ai-cards?cardId=1267',
@@ -1876,7 +1875,7 @@ test('uses layout-aware answer lines for daily reflection previews', () => {
       maxLines: mediumSizing.main.reflectionAnswerMaxLines,
       size: mediumSizing.main.size
     }),
-    6
+    7
   );
 
   const content = {
@@ -1895,7 +1894,7 @@ test('uses layout-aware answer lines for daily reflection previews', () => {
   assert.equal(sizing.card.desktopHeight, 'calc(max(45.9rem, 459px) + 2px)');
   assert.equal(sizing.card.mobileHeight, 'calc(max(43.75rem, 437.5px) + 2px)');
   assert.equal(sizing.card.placeholderHeight, sizing.card.desktopHeight);
-  assert.equal(sizing.main.reflectionAnswerMaxLines, 12);
+  assert.equal(sizing.main.reflectionAnswerMaxLines, 13);
   assert.equal(
     getDailyReflectionAnswerPreviewMaxLines({
       axis: 'desktop',
@@ -1912,7 +1911,7 @@ test('uses layout-aware answer lines for daily reflection previews', () => {
       maxLines: sizing.main.reflectionAnswerMaxLines,
       size: sizing.main.size
     }),
-    6
+    7
   );
 });
 
@@ -1931,7 +1930,7 @@ test('uses layout-aware description lines for subjects with secret answers', () 
   const sizing = getFeedCardSizing({ content, userId: 1 });
 
   assert.equal(sizing.main.size, 'subject-tall');
-  assert.equal(sizing.main.subjectDescriptionMaxLines, 11);
+  assert.equal(sizing.main.subjectDescriptionMaxLines, 12);
   assert.equal(sizing.card.bodyHeight, 'max(32rem, 320px)');
   assert.equal(sizing.card.desktopHeight, 'calc(max(43.9rem, 439px) + 2px)');
   assert.equal(sizing.card.mobileHeight, 'calc(max(41.75rem, 417.5px) + 2px)');
@@ -2001,7 +2000,7 @@ test('reserves space for long secret answers in subject previews', () => {
       size: sizing.main.size
     }),
     {
-      descriptionMaxLines: 3,
+      descriptionMaxLines: 4,
       secretMaxLines: 3
     }
   );
@@ -2385,7 +2384,7 @@ test('keeps public subject media visible when only the secret answer is hidden',
   assert.equal(sizing.flags.hasAttachment, true);
   assert.equal(sizing.main.size, 'subject-secret-media');
   assert.equal(sizing.card.bodyHeight, 'max(25rem, 250px)');
-  assert.equal(sizing.card.mobileBodyHeight, 'max(24rem, 240px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(28rem, 280px)');
   assert.match(
     sizing.main.className,
     /home-feed-card__panel-preview--size-subject-secret-media/
@@ -2451,8 +2450,8 @@ test('reserves blockquote margins in content-sized locked subjects', () => {
 
   assert.equal(sizing.flags.secretHidden, true);
   assert.equal(sizing.main.size, 'subject-secret-fit');
-  assert.equal(sizing.card.bodyHeight, 'max(29.48rem, 294.8px)');
-  assert.equal(sizing.card.mobileBodyHeight, 'max(29.48rem, 294.8px)');
+  assert.equal(sizing.card.bodyHeight, 'max(28.8rem, 288px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(28.12rem, 281.2px)');
   assert.equal(sizing.card.subjectSecretPanelHeight, sizing.card.bodyHeight);
   assert.equal(
     sizing.card.mobileSubjectSecretPanelHeight,
@@ -2475,8 +2474,8 @@ test('reserves one wrap-safety line for locked subject copy', () => {
 
   assert.equal(sizing.flags.secretHidden, true);
   assert.equal(sizing.main.size, 'subject-secret-fit');
-  assert.equal(sizing.card.bodyHeight, 'max(21.73rem, 217.3px)');
-  assert.equal(sizing.card.mobileBodyHeight, 'max(21.73rem, 217.3px)');
+  assert.equal(sizing.card.bodyHeight, 'max(21.46rem, 214.6px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(21.19rem, 211.9px)');
 });
 
 test('hides target comments when a secret subject locks the feed card', () => {

@@ -113,6 +113,49 @@ test('keeps replacement attachments ahead of promoted description builds', () =>
   assert.equal(result.contentEmbed?.type, 'internal');
 });
 
+test('puts Markdown files beside subject copy without replacing existing media', () => {
+  for (const extension of ['pdf', 'docx', 'zip']) {
+    const description = `Read these notes\n\n![Lesson notes](https://cdn.example.com/lesson.${extension}?download=1)`;
+    const result = getSubjectTargetDescriptionEmbeds({ description });
+    assert.equal(result.contentEmbed, null);
+    assert.equal(result.promotedFileEmbed?.alt, 'Lesson notes');
+    assert.equal(
+      result.promotedFileEmbed?.src,
+      `https://cdn.example.com/lesson.${extension}?download=1`
+    );
+    for (const media of [
+      { filePath: '/drawing.png' },
+      { actualFilePath: '/replacement.png' },
+      { rootId: 42, rootType: 'video', rootObj: { content: 'youtube-code' } },
+      {
+        rootId: 43,
+        rootType: 'url',
+        rootObj: { content: 'https://example.com' }
+      }
+    ]) {
+      const withMedia = getSubjectTargetDescriptionEmbeds({
+        description,
+        ...media
+      });
+      assert.equal(withMedia.promotedFileEmbed, null);
+      assert.equal(withMedia.contentEmbed?.src, result.promotedFileEmbed.src);
+    }
+  }
+});
+
+test('keeps image embeds on their existing preview path', () => {
+  for (const src of [
+    'https://cdn.example.com/art.png',
+    'https://cdn.example.com/opaque-image'
+  ]) {
+    const result = getSubjectTargetDescriptionEmbeds({
+      description: `![Art](${src})`
+    });
+    assert.equal(result.promotedFileEmbed, null);
+    assert.equal(result.contentEmbed?.src, src);
+  }
+});
+
 function loadTypeScriptModule(entryPoint, define) {
   const output = esbuild.buildSync({
     bundle: true,

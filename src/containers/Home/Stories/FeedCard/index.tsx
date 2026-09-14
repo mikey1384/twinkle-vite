@@ -741,7 +741,9 @@ export default function HomeFeedCard({
                   viewCount={viewCount}
                 />
               )}
-              {!showcase && appliedContent.loaded && sizing.card.hasCommentPreview ? (
+              {!showcase &&
+              appliedContent.loaded &&
+              sizing.card.hasCommentPreview ? (
                 <HomeFeedCommentPreview
                   comments={appliedContent.comments}
                   contentType={contentType}
@@ -1585,21 +1587,11 @@ const placeholderClass = css`
   }
 `;
 
+// The wrapper must follow the rendered card so useLazyLoad records wrapped
+// action rows in its measured placeholder height.
 const visiblePanelClass = css`
   box-sizing: border-box;
   width: 100%;
-  height: var(--home-feed-card-height);
-  &.${SHOWCASE_CARD_CLASS} {
-    height: auto;
-  }
-  @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
-    &.home-feed-card--tablet-media-attachment {
-      height: var(--home-feed-card-mobile-height);
-    }
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    height: var(--home-feed-card-mobile-height);
-  }
 `;
 
 const cardClass = css`
@@ -1609,9 +1601,9 @@ const cardClass = css`
   flex-direction: column;
   gap: 0.75rem;
   width: 100%;
-  height: var(--home-feed-card-height);
+  /* Preview slots keep their budgets; the frame can grow with its footer. */
+  height: auto;
   min-height: var(--home-feed-card-height);
-  max-height: var(--home-feed-card-height);
   padding: 1rem 1rem 0.85rem 1.2rem;
   border: 1px solid var(--ui-border);
   border-radius: ${borderRadius};
@@ -1691,9 +1683,7 @@ const cardClass = css`
   }
   @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
     &.home-feed-card--tablet-media-attachment {
-      height: var(--home-feed-card-mobile-height);
       min-height: var(--home-feed-card-mobile-height);
-      max-height: var(--home-feed-card-mobile-height);
       gap: max(0.75rem, 7.5px);
       contain-intrinsic-size: auto var(--home-feed-card-mobile-height);
     }
@@ -1749,10 +1739,8 @@ const cardClass = css`
   }
   .home-feed-card__actions {
     box-sizing: border-box;
-    flex: 0 0 2.95rem;
-    height: 2.95rem;
-    min-height: 0;
-    overflow: hidden;
+    flex: 0 0 auto;
+    min-height: 2.95rem;
   }
   .home-feed-card__comment-preview-slot {
     box-sizing: border-box;
@@ -1776,8 +1764,7 @@ const cardClass = css`
       height: var(--home-feed-card-mobile-body-height);
     }
     &.home-feed-card--tablet-media-attachment .home-feed-card__actions {
-      flex-basis: max(3.1rem, 31px);
-      height: max(3.1rem, 31px);
+      min-height: max(3.1rem, 31px);
     }
     &.home-feed-card--tablet-media-attachment
       .home-feed-card__comment-preview-slot {
@@ -1824,9 +1811,7 @@ const cardClass = css`
     }
   }
   @media (max-width: ${mobileMaxWidth}) {
-    height: var(--home-feed-card-mobile-height);
     min-height: var(--home-feed-card-mobile-height);
-    max-height: var(--home-feed-card-mobile-height);
     gap: max(0.75rem, 7.5px);
     padding: max(0.75rem, 7.5px) 0 max(0.2rem, 2px) 0;
     border-left: 0;
@@ -1853,8 +1838,7 @@ const cardClass = css`
       height: var(--home-feed-card-mobile-body-height);
     }
     .home-feed-card__actions {
-      flex-basis: max(3.1rem, 31px);
-      height: max(3.1rem, 31px);
+      min-height: max(3.1rem, 31px);
     }
     .home-feed-card__comment-preview-slot {
       flex-basis: var(--home-feed-card-mobile-comment-preview-height);

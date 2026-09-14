@@ -111,6 +111,11 @@ const wideSubjectEmbedPreviewClass = css`
     grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 28%);
   }
 
+  &.has-media:has(.home-feed-card__target-file-embed-preview) {
+    --subject-file-preview-size: max(11rem, 110px);
+    grid-template-columns: minmax(0, 1fr) var(--subject-file-preview-size);
+  }
+
   .home-feed-card__target-copy {
     display: flex;
     min-width: 0;
@@ -348,6 +353,43 @@ const wideSubjectEmbedPreviewClass = css`
     line-height: 1;
   }
 
+  /* A Markdown file uses the same attachment tile as an uploaded file. Keep
+     its footprint square and independent of the description's line count. */
+  .home-feed-card__target-media-wrap.home-feed-card__target-file-embed-preview {
+    align-self: center;
+    justify-self: end;
+    width: var(--subject-file-preview-size);
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: 1;
+    border: 0;
+    background: transparent;
+  }
+
+  .home-feed-card__target-file-embed-preview .home-feed-card__attachment-card {
+    gap: 0.4rem;
+    padding: 0.5rem;
+  }
+
+  .home-feed-card__target-file-embed-preview
+    .home-feed-card__attachment-card-icon {
+    flex: 0 0 auto;
+    width: 3.4rem;
+    height: 3.4rem;
+    border-radius: 0.9rem;
+    font-size: 1.8rem;
+  }
+
+  .home-feed-card__target-file-embed-preview
+    .home-feed-card__attachment-card-copy
+    span,
+  .home-feed-card__target-file-embed-preview
+    .home-feed-card__attachment-card-copy
+    strong {
+    font-size: max(1.1rem, 11px);
+  }
+
   .home-feed-card__target-reward-bar {
     flex: 0 0 auto;
     margin-bottom: 0.1rem;
@@ -374,6 +416,10 @@ const wideSubjectEmbedPreviewClass = css`
     border-left: 0;
     border-right: 0;
     border-radius: 0;
+
+    &.has-media:has(.home-feed-card__target-file-embed-preview) {
+      --subject-file-preview-size: max(12.5rem, 100px);
+    }
 
     .home-feed-card__target-copy > h4 {
       min-height: max(2.36rem, 23.6px);

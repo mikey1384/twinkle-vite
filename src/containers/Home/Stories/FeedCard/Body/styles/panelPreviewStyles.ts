@@ -265,7 +265,7 @@ export const panelPreviewStyles = `
       height: max(20rem, 200px);
     }
   }
-  h3 {
+  h3:where(:not(.rich-text--block-preview *), .rich-text-embedded-component *) {
     margin: 0;
     padding-bottom: 0.08em;
     color: ${Color.black()};

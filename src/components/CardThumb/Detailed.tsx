@@ -45,17 +45,22 @@ export default function CardThumb({
       }}
       onClick={onClick}
     >
-      <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.3rem' }}>
+      <div
+        style={{
+          fontFamily: "'Roboto', sans-serif",
+          fontSize: 'var(--card-thumb-font-size, 1.3rem)'
+        }}
+      >
         #{card.id}
       </div>
       <div
         className={`${css`
-          width: 8rem;
-          height: 12rem;
+          width: var(--card-thumb-width, 8rem);
+          height: var(--card-thumb-height, 12rem);
           border-radius: 3px;
           @media (max-width: ${mobileMaxWidth}) {
-            width: 6rem;
-            height: 9.5rem;
+            width: var(--card-thumb-width, 6rem);
+            height: var(--card-thumb-height, 9.5rem);
             border-radius: 2px;
           }
         `}${isTotalMystery ? ` ${totalMysteryBorderClass}` : ''}`}
@@ -67,8 +72,8 @@ export default function CardThumb({
           border: isTotalMystery
             ? '3px solid transparent'
             : cardProps[card.quality]?.includes('glowy') && !card.isBurned
-            ? `3px solid ${borderColor}`
-            : 'none',
+              ? `3px solid ${borderColor}`
+              : 'none',
           position: 'relative'
         }}
       >
@@ -103,7 +108,7 @@ export default function CardThumb({
       {card?.word ? (
         <div
           className={css`
-            width: 8rem;
+            width: var(--card-thumb-width, 8rem);
             display: inline-block;
             margin-top: 0.5rem;
             text-align: center;
@@ -112,11 +117,18 @@ export default function CardThumb({
             white-space: nowrap;
             line-height: 1.2;
             @media (max-width: ${mobileMaxWidth}) {
-              width: 6rem;
+              width: var(--card-thumb-width, 6rem);
             }
           `}
         >
-          <b style={{ color: cardColor, fontSize: '1.3rem' }}>{card.word}</b>
+          <b
+            style={{
+              color: cardColor,
+              fontSize: 'var(--card-thumb-font-size, 1.3rem)'
+            }}
+          >
+            {card.word}
+          </b>
         </div>
       ) : null}
     </div>

@@ -164,7 +164,7 @@ export function AttachmentCard({
       </div>
       <div className="home-feed-card__attachment-card-copy">
         <span>{kindLabel}</span>
-        <strong>{fileName || 'Attached file'}</strong>
+        <strong title={fileName}>{fileName || 'Attached file'}</strong>
         {sizeLabel ? <small>{sizeLabel}</small> : null}
       </div>
       <span className="home-feed-card__attachment-card-extension">
@@ -200,7 +200,10 @@ function VideoAttachmentPreview({
           100%, which turned this badge into a full-tile oval. A span escapes
           that helper and keeps its own fixed size. No file-name overlay: the
           stored fileName is the upload's generated name, not a title. */}
-      <span aria-hidden="true" className="home-feed-card__video-attachment-play">
+      <span
+        aria-hidden="true"
+        className="home-feed-card__video-attachment-play"
+      >
         <Icon icon="play" />
       </span>
     </div>

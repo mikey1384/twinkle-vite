@@ -8,12 +8,14 @@ import Loading from '~/components/Loading';
 import SharedPromptBlock from '~/components/SharedPromptBlock';
 import WideSubjectEmbedPreview from '~/components/Subjects/WideSubjectEmbedPreview';
 import RichText from '~/components/Texts/RichText';
+import { homeFeedMarkdownPreviewClass } from '../helpers/typography';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import {
   AudioWavePreview,
   MarkdownEmbedPreview,
+  SubjectFileEmbedPreview,
   type HomeFeedNestedNavigate,
   getAIStoryDifficultyStyle,
   getAIStoryImageUrl,
@@ -460,6 +462,7 @@ export default function TargetPreview({
         >
           {sharedTopic?.customInstructions ? (
             <RichText
+              className={`${homeFeedMarkdownPreviewClass} home-feed-card__markdown-preview--secondary`}
               contentId={Number(sharedTopic.id || 0)}
               contentType="sharedTopic"
               isPreview
@@ -500,7 +503,7 @@ export default function TargetPreview({
         {answer ? (
           <div className="home-feed-card__target-daily-reflection-answer">
             <RichText
-              className="home-feed-card__target-daily-reflection-answer-text"
+              className={`home-feed-card__target-daily-reflection-answer-text ${homeFeedMarkdownPreviewClass} home-feed-card__markdown-preview--secondary`}
               contentId={Number(reflection.id || 0)}
               contentType="dailyReflection"
               isPreview
@@ -541,17 +544,12 @@ export default function TargetPreview({
   }
 
   function renderTargetSubjectPreview(target: any) {
-    // A content embed left inside the description renders as a block that the
-    // line-clamped description RichText clips to its header. We strip every
-    // embed from the text and promote it to its own slot so it renders in full
-    // and nothing is dropped. Build-without-attachment goes to the media slot
-    // (below); ANY other embed — internal, image, or YouTube — renders in the
-    // content-embed slot via MarkdownEmbedPreview (which handles every type).
-    // The placement logic is shared with target sizing (which budgets extra
-    // height for an occupied content-embed slot) via the sizing helper.
+    // Keep embed placement aligned with nested subject previews and sizing.
+    // Files belong beside the copy; other embeds get their own content slot.
     const {
       contentEmbed: descriptionContentEmbed,
-      promotedBuildEmbed: promotedDescriptionBuildEmbed
+      promotedBuildEmbed: promotedDescriptionBuildEmbed,
+      promotedFileEmbed: promotedDescriptionFileEmbed
     } = getSubjectTargetDescriptionEmbeds(target);
     const descriptionText = removeMarkdownImageEmbeds(
       String(target?.description || '')
@@ -576,13 +574,25 @@ export default function TargetPreview({
         onNavigate={onNavigate}
       />
     ) : null;
+    const descriptionFileEmbedPreview = promotedDescriptionFileEmbed ? (
+      <SubjectFileEmbedPreview embed={promotedDescriptionFileEmbed} />
+    ) : null;
     return (
       <WideSubjectEmbedPreview
         contentId={Number(target.id || 0)}
         descriptionEmbedPreview={descriptionContentEmbedPreview}
         descriptionText={descriptionText}
         hasBuildEmbedMedia={Boolean(descriptionBuildEmbedPreview)}
-        mediaPreview={descriptionBuildEmbedPreview || undefined}
+        maxDescriptionLines={
+          descriptionFileEmbedPreview && Number(target?.rewardLevel || 0) > 0
+            ? 1
+            : 2
+        }
+        mediaPreview={
+          descriptionBuildEmbedPreview ||
+          descriptionFileEmbedPreview ||
+          undefined
+        }
         subject={target}
         theme={theme}
       />

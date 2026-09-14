@@ -62,54 +62,57 @@ export default function LeaderboardList({
   scrollable = true
 }: LeaderboardListProps) {
   const wrapperClass = useMemo(
-    () =>
-      css`
-        height: ${height};
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        min-height: 0;
-        overflow: hidden;
-      `,
-    [height]
+    () => css`
+      height: ${height};
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 0;
+      /* A host-scrolled list must keep its content height. Shrinking this
+           wrapper and clipping overflow makes later ranks unreachable. */
+      flex-shrink: ${scrollable ? 1 : 0};
+      overflow: ${scrollable ? 'hidden' : 'visible'};
+    `,
+    [height, scrollable]
   );
 
   const listClass = useMemo(
-    () =>
-      css`
-        width: ${width};
-        max-width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: ${gap};
-        padding: ${padding};
-        ${scrollable
-          ? `
+    () => css`
+      width: ${width};
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: ${gap};
+      padding: ${padding};
+      ${
+          scrollable
+            ? `
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
         max-height: 100%;
         scrollbar-gutter: stable both-edges;
         overscroll-behavior: contain;`
-          : ''}
+            : ''
+        }
 
+      @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        padding-bottom: calc(${bottomPadding} + env(safe-area-inset-bottom));
+      }
+
+      @media (max-width: ${tabletMaxWidth}) {
+        gap: ${mobileGap};
+        padding: ${mobilePadding};
+        width: ${mobileWidth};
         @supports (padding-bottom: env(safe-area-inset-bottom)) {
-          padding-bottom: calc(${bottomPadding} + env(safe-area-inset-bottom));
+          padding-bottom: calc(
+            ${parsePaddingValue(mobilePadding)} + env(safe-area-inset-bottom)
+          );
         }
-
-        @media (max-width: ${tabletMaxWidth}) {
-          gap: ${mobileGap};
-          padding: ${mobilePadding};
-          width: ${mobileWidth};
-          @supports (padding-bottom: env(safe-area-inset-bottom)) {
-            padding-bottom: calc(
-              ${parsePaddingValue(mobilePadding)} + env(safe-area-inset-bottom)
-            );
-          }
-        }
-      `,
+      }
+    `,
     [
       width,
       gap,

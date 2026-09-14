@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import Chess from '../../../Chess';
+import BoardFrame from '../../../Chess/Game/BoardFrame';
+import BoardWrapper from '../../../BoardWrapper';
 import Button from '~/components/Button';
-import Loading from '~/components/Loading';
 import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 import { getLatestGameBoundaryMessageId } from '~/containers/Chat/helpers/gameMessageIds';
 
@@ -61,6 +62,7 @@ export default function ChessGame({
   const latestScope = useRef(scope);
   latestScope.current = scope;
   const inputs = useRef({
+    fetchCurrentChessState,
     onLoadStateChange,
     currentChannel,
     onSetUserMadeLastMove,
@@ -68,6 +70,7 @@ export default function ChessGame({
     onSetInitialState
   });
   inputs.current = {
+    fetchCurrentChessState,
     onLoadStateChange,
     currentChannel,
     onSetUserMadeLastMove,
@@ -86,7 +89,7 @@ export default function ChessGame({
       try {
         if (!Number.isSafeInteger(channelId) || channelId <= 0)
           throw Error('Invalid channel');
-        const chessMessage = await fetchCurrentChessState({
+        const chessMessage = await inputs.current.fetchCurrentChessState({
           channelId,
           recentChessMessage: inputs.current.currentChannel.recentChessMessage
         });
@@ -117,7 +120,7 @@ export default function ChessGame({
     return () => {
       active = false;
     };
-  }, [scope, channelId, myId, attempt, fetchCurrentChessState]);
+  }, [scope, channelId, myId, attempt]);
 
   const spoilerOff = useMemo(() => {
     if (isCountdownActive) {
@@ -153,28 +156,37 @@ export default function ChessGame({
   ]);
 
   if (!loaded) {
-    if (loadState.scope === scope && loadState.status === 'error')
-      return (
-        <div
-          style={{
-            padding: '16px',
-            fontSize: '16px',
-            lineHeight: 1.5,
-            textAlign: 'center'
-          }}
-        >
-          <p role="alert">
-            Could not load the chess board. Check the game before trying again.
-          </p>
-          <Button
-            style={{ minHeight: '44px', fontSize: '14px', marginTop: '12px' }}
-            onClick={() => setAttempt((value) => value + 1)}
+    const failed = loadState.scope === scope && loadState.status === 'error';
+    return (
+      <BoardWrapper>
+        <BoardFrame loading={!failed}>
+          <div
+            style={{
+              padding: '16px',
+              minHeight: 'inherit',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px',
+              lineHeight: 1.5,
+              textAlign: 'center'
+            }}
           >
-            Try again
-          </Button>
-        </div>
-      );
-    return <Loading />;
+            <p role="alert">
+              Could not load the chess board. Check the game before trying
+              again.
+            </p>
+            <Button
+              style={{ minHeight: '44px', fontSize: '14px', marginTop: '12px' }}
+              onClick={() => setAttempt((value) => value + 1)}
+            >
+              Try again
+            </Button>
+          </div>
+        </BoardFrame>
+      </BoardWrapper>
+    );
   }
 
   return (

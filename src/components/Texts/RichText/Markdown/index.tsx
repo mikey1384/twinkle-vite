@@ -18,6 +18,7 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 import LazyCodeBlockWrapper from './LazyCodeBlockWrapper';
+import MarkdownTable from './Table';
 import {
   protectCurrencyLiteralsOutsideMath,
   restoreCurrencyPlaceholders
@@ -492,48 +493,12 @@ function Markdown({
                     />
                   );
                 }
-                case 'table': {
+                case 'table':
                   return (
-                    <div
-                      className={css`
-                        width: 100%;
-                        display: flex;
-                        overflow-x: auto;
-                      `}
-                    >
-                      <table
-                        style={{ borderCollapse: 'collapse' }}
-                        className={css`
-                          margin-top: 1.5rem;
-                          min-width: 25vw;
-                          width: 85%;
-                          max-width: 100%;
-                          tr {
-                            display: table-row;
-                            width: 100%;
-                          }
-                          th,
-                          td {
-                            text-align: center;
-                            width: 33%;
-                            border: 1px solid var(--ui-border);
-                            padding: 0.5rem;
-                            white-space: nowrap;
-                            &:first-child {
-                              width: 2%;
-                            }
-                          }
-                          td img {
-                            width: 100%;
-                            height: auto;
-                          }
-                        `}
-                      >
-                        {convertToJSX(domNode.children || [])}
-                      </table>
-                    </div>
+                    <MarkdownTable>
+                      {convertToJSX(domNode.children || [])}
+                    </MarkdownTable>
                   );
-                }
                 case 'pre': {
                   const codeNode = domNode.children?.find(
                     (child: any) => child.name === 'code'
@@ -1017,45 +982,7 @@ function Markdown({
                 componentPath={`${componentPath}/convertToJSX/table`}
                 key={key}
               >
-                <div
-                  key={key}
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <table
-                    style={{ borderCollapse: 'collapse' }}
-                    className={css`
-                      margin-top: 1.5rem;
-                      min-width: 25vw;
-                      width: 85%;
-                      max-width: 100%;
-                      tr {
-                        display: table-row;
-                        width: 100%;
-                      }
-                      th,
-                      td {
-                        text-align: center;
-                        width: 33%;
-                        border: 1px solid var(--ui-border);
-                        padding: 0.5rem;
-                        white-space: nowrap;
-                        &:first-child {
-                          width: 2%;
-                        }
-                      }
-                      td img {
-                        width: 100%;
-                        height: auto;
-                      }
-                    `}
-                  >
-                    {children}
-                  </table>
-                </div>
+                <MarkdownTable>{children}</MarkdownTable>
               </ErrorBoundary>
             );
           default: {

@@ -1,24 +1,6 @@
-import React, { useMemo } from 'react';
-import Loading from '~/components/Loading';
+import React from 'react';
 import Board from './Board';
-import { css } from '@emotion/css';
-import { isTablet } from '~/helpers';
-import { mobileMaxWidth, Color, borderRadius } from '~/constants/css';
-
-const deviceIsTablet = isTablet(navigator);
-
-const loadingContainerClass = css`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: ${Color.white(0.95)};
-  border: 1px solid var(--ui-border);
-  border-radius: ${borderRadius};
-  box-shadow: 0 0.5rem 2rem ${Color.black(0.08)};
-  width: 100%;
-  height: 100%;
-  min-height: inherit;
-`;
+import BoardFrame from './BoardFrame';
 
 export default function Game({
   interactable,
@@ -45,44 +27,9 @@ export default function Game({
   onSpoilerClick: () => void;
   size?: 'regular' | 'compact' | 'inline';
 }) {
-  const { desktopBoardSize, mobileBoardSize } = useMemo(() => {
-    if (size === 'compact') {
-      return {
-        desktopBoardSize: '16rem',
-        mobileBoardSize: 'min(90vw, 14rem)'
-      };
-    }
-    if (size === 'inline') {
-      return {
-        desktopBoardSize: deviceIsTablet
-          ? 'clamp(14rem, 40vw, 20rem)'
-          : 'clamp(14rem, 30vw, 22rem)',
-        mobileBoardSize: 'clamp(11rem, 50vw, 16rem)'
-      };
-    }
-    return {
-      desktopBoardSize: deviceIsTablet ? '25vh' : '50vh',
-      mobileBoardSize: '50vw'
-    };
-  }, [size]);
-
   return (
-    <div
-      className={css`
-        --chat-chess-board-size: ${desktopBoardSize};
-        width: calc(var(--chat-chess-board-size) + 2rem);
-        min-height: calc(var(--chat-chess-board-size) + 2.5rem);
-        position: relative;
-        @media (max-width: ${mobileMaxWidth}) {
-          --chat-chess-board-size: ${mobileBoardSize};
-        }
-      `}
-    >
-      {loading ? (
-        <div className={loadingContainerClass}>
-          <Loading />
-        </div>
-      ) : squares.length > 0 ? (
+    <BoardFrame size={size} loading={loading}>
+      {squares.length > 0 ? (
         <Board
           interactable={interactable}
           myColor={myColor}
@@ -96,6 +43,6 @@ export default function Game({
           size={size}
         />
       ) : null}
-    </div>
+    </BoardFrame>
   );
 }

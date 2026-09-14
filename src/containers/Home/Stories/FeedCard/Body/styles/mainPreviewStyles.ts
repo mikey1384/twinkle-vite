@@ -200,9 +200,7 @@ export const mainPreviewStyles = `
       border: 0;
       background: transparent;
     }
-    /* The prompt tile hugs its content, so the slot hugs with it and centers in
-       the leftover space instead of leaving a gap underneath. The slot keeps
-       its own frame — see the subject-embed rule below. */
+    /* The prompt tile hugs its content and centers in the leftover space. */
     .home-feed-card__rich-embed-internal--shared-prompt {
       align-items: center;
       justify-content: center;
@@ -397,6 +395,10 @@ export const mainPreviewStyles = `
     .home-feed-card__rich-embed-preview--with-text
       .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal:not(
         .home-feed-card__rich-embed-internal--comment
+      ),
+    .home-feed-card__rich-embed-preview--with-text
+      .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--comment:not(
+        :has([data-compact-comment-embed])
       ) {
       border: 0;
       background: transparent;
@@ -636,6 +638,12 @@ export const mainPreviewStyles = `
     background: #fff;
     container-type: inline-size;
   }
+  /* Internal cards own their frame, including error replacements. Bare build
+     previews get their slot frame separately below. */
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal {
+    border: 0;
+    background: transparent;
+  }
   .home-feed-card__subject-embed-preview.home-feed-card__rich-file-embed {
     flex: 0 0 auto;
     align-items: center;
@@ -700,18 +708,24 @@ export const mainPreviewStyles = `
     border: 0;
     background: transparent;
   }
-  /* Prompt embeds keep the slot's frame — the same one an image, comment or
-     video embed gets here — and the block inside drops its own so there is a
-     single border. The slot hugs the tile and the leftover height splits above
-     and below it. */
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--ai-card:has(
+      .compact-ai-card-preview, .compact-ai-card-multi
+    ) {
+    flex: 0 0 auto;
+    margin-block: auto;
+  }
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--ai-card
+    .compact-ai-card-preview,
+  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--ai-card
+    .compact-ai-card-multi {
+    height: auto;
+  }
+  /* The slot hugs the prompt tile and centers it in the leftover height. */
   .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--shared-prompt {
     flex: 0 0 auto;
     margin-block: auto;
   }
-  /* A nested subject renders the wide subject card, which draws its own frame
-     for the target strip. Here the slot is the frame, so the card inside drops
-     its border and stretches only to its content; the panel is content-sized
-     (subject-comment-embed) and the slot centers in whatever is left. */
+  /* Nested subjects use the shared wide card's frame and natural height. */
   .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--subject {
     flex: 0 0 auto;
     margin-block: auto;
@@ -720,8 +734,6 @@ export const mainPreviewStyles = `
     > .home-feed-card__target-subject {
     height: auto;
     min-height: 0;
-    border: 0;
-    border-radius: 0;
   }
   /* The target strip clamps a media+reward description to one line because
      its 13rem panel is fixed; this slot is content-sized, so the nested
@@ -732,7 +744,8 @@ export const mainPreviewStyles = `
     -webkit-line-clamp: 2;
   }
   @media (hover: hover) and (pointer: fine) {
-    .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--subject:hover {
+    .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--subject:hover
+      > .home-feed-card__target-subject {
       border-color: ${Color.logoBlue(0.34)};
     }
   }
@@ -811,10 +824,6 @@ export const mainPreviewStyles = `
     .compact-default-internal-embed__description {
     font-size: max(1.38rem, 13.8px);
     line-height: 1.22;
-  }
-  .home-feed-card__subject-embed-preview > button {
-    border: 0;
-    border-radius: 0.9rem;
   }
   .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--ai-card
     .compact-ai-card-preview,

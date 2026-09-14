@@ -183,19 +183,11 @@ const RichTextCss = css`
     }
     .compact-ai-card-multi {
       gap: 0.55rem;
-      min-height: 12rem;
       padding: 0.74rem;
     }
     .compact-ai-card-multi__title {
-      font-size: 1.1rem;
+      font-size: max(1.2rem, 12px);
       line-height: 1.18;
-    }
-    .compact-ai-card-multi__preview {
-      height: 8.9rem;
-    }
-    .compact-ai-card-multi__preview > div {
-      transform: scale(0.68);
-      transform-origin: center;
     }
     .compact-comment-embed--has-media,
     .compact-comment-embed--media-only {
@@ -423,8 +415,7 @@ function RichText({
   const defaultMinHeight = useMemo(
     () =>
       resolveInitialRichTextHeight({
-        cachedState:
-          richTextHeights[`${contentType}-${contentId}`]?.[section],
+        cachedState: richTextHeights[`${contentType}-${contentId}`]?.[section],
         contentRevision,
         isPreview,
         isStreaming
@@ -432,8 +423,10 @@ function RichText({
     [contentRevision, contentType, contentId, isPreview, isStreaming, section]
   );
   const [isParsed, setIsParsed] = useState(false);
-  const [preserveStreamingTextUntilParsed, setPreserveStreamingTextUntilParsed] =
-    useState(Boolean(isStreaming));
+  const [
+    preserveStreamingTextUntilParsed,
+    setPreserveStreamingTextUntilParsed
+  ] = useState(Boolean(isStreaming));
   const TextRef = useRef<any>(null);
   const minHeightRef = useRef(defaultMinHeight);
   const heightContentRevisionRef = useRef<string | null>(
@@ -628,12 +621,7 @@ function RichText({
       return;
     }
     handleMeasureContainerNode(containerNodeRef.current);
-  }, [
-    handleMeasureContainerNode,
-    isPreview,
-    previewCollapsedMaxHeight,
-    text
-  ]);
+  }, [handleMeasureContainerNode, isPreview, previewCollapsedMaxHeight, text]);
 
   useLayoutEffect(() => {
     const node = TextRef.current;
@@ -647,6 +635,7 @@ function RichText({
     // room the root actually has (see helpers/previewClamp) and lower the
     // clamp to that, starting from the CSS base every time.
     let cancelled = false;
+    let animationFrame = 0;
     let measuredWidth = -1;
     const baseMaxLines = Math.max(maxLines, previewMobileMaxLines);
     const measure = () => {
@@ -668,6 +657,13 @@ function RichText({
       }
     };
     measure();
+    const scheduleMeasure = () => {
+      if (cancelled || animationFrame) return;
+      animationFrame = requestAnimationFrame(() => {
+        animationFrame = 0;
+        measure();
+      });
+    };
     let resizeObserver: ResizeObserver | undefined;
     if (typeof ResizeObserver === 'function') {
       // Only a width change re-flows the lines; the height changes are our
@@ -675,21 +671,24 @@ function RichText({
       resizeObserver = new ResizeObserver((entries) => {
         const width = entries[0]?.contentRect.width ?? measuredWidth;
         if (Math.abs(width - measuredWidth) < 0.5) return;
-        measure();
+        scheduleMeasure();
       });
       resizeObserver.observe(node);
     }
     if (typeof document !== 'undefined' && document.fonts?.ready) {
-      document.fonts.ready.then(measure).catch(() => {});
+      document.fonts.ready.then(scheduleMeasure).catch(() => {});
     }
     return () => {
       cancelled = true;
+      if (animationFrame) cancelAnimationFrame(animationFrame);
       resizeObserver?.disconnect();
       node.style.removeProperty(richTextPreviewClampLinesVar);
     };
   }, [
     contentRevision,
+    className,
     isParsed,
+    lineHeight,
     maxLines,
     previewMobileMaxLines,
     shouldUseBlockPreviewMaxHeight
@@ -1055,84 +1054,86 @@ function RichText({
           </Button>
         )}
       </div>
-      {readAloudToolsShown && (
-        contentType === 'chat' ? (
-          <ChatMessageTools text={text} voice={voice}
+      {readAloudToolsShown &&
+        (contentType === 'chat' ? (
+          <ChatMessageTools
+            text={text}
+            voice={voice}
             contentKey={`${contentId}-${contentType}-${section}`}
-            audioShown={isAudioButtonShown} />
+            audioShown={isAudioButtonShown}
+          />
         ) : (
-        <>
-          {toolsPlacement === 'inline' ? (
-            <div
-              style={{
-                marginTop: '0.7rem',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              {isAIMessage && (
-                <Button
-                  variant="soft"
-                  tone="raised"
-                  onClick={handleCopyMessage}
-                  aria-label={copySuccess ? 'Message copied' : 'Copy message'}
-                  style={{
-                    padding: '0.5rem 0.7rem',
-                    lineHeight: 1
-                  }}
-                  color="darkerGray"
-                >
-                  <Icon icon={copySuccess ? 'check' : 'copy'} />
-                </Button>
-              )}
-              {isAudioButtonShown && (
-                <AIAudioButton
-                  contentKey={`${contentId}-${contentType}-${section}`}
-                  text={spokenText}
-                  voice={voice}
-                />
-              )}
-            </div>
-          ) : (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '-3rem',
-                right: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              {isAIMessage && (
-                <Button
-                  variant="soft"
-                  tone="raised"
-                  onClick={handleCopyMessage}
-                  aria-label={copySuccess ? 'Message copied' : 'Copy message'}
-                  style={{
-                    padding: '0.5rem 0.7rem',
-                    lineHeight: 1
-                  }}
-                  color="darkerGray"
-                >
-                  <Icon icon={copySuccess ? 'check' : 'copy'} />
-                </Button>
-              )}
-              {isAudioButtonShown && (
-                <AIAudioButton
-                  contentKey={`${contentId}-${contentType}-${section}`}
-                  text={spokenText}
-                  voice={voice}
-                />
-              )}
-            </div>
-          )}
-        </>
-        )
-      )}
+          <>
+            {toolsPlacement === 'inline' ? (
+              <div
+                style={{
+                  marginTop: '0.7rem',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {isAIMessage && (
+                  <Button
+                    variant="soft"
+                    tone="raised"
+                    onClick={handleCopyMessage}
+                    aria-label={copySuccess ? 'Message copied' : 'Copy message'}
+                    style={{
+                      padding: '0.5rem 0.7rem',
+                      lineHeight: 1
+                    }}
+                    color="darkerGray"
+                  >
+                    <Icon icon={copySuccess ? 'check' : 'copy'} />
+                  </Button>
+                )}
+                {isAudioButtonShown && (
+                  <AIAudioButton
+                    contentKey={`${contentId}-${contentType}-${section}`}
+                    text={spokenText}
+                    voice={voice}
+                  />
+                )}
+              </div>
+            ) : (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '-3rem',
+                  right: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {isAIMessage && (
+                  <Button
+                    variant="soft"
+                    tone="raised"
+                    onClick={handleCopyMessage}
+                    aria-label={copySuccess ? 'Message copied' : 'Copy message'}
+                    style={{
+                      padding: '0.5rem 0.7rem',
+                      lineHeight: 1
+                    }}
+                    color="darkerGray"
+                  >
+                    <Icon icon={copySuccess ? 'check' : 'copy'} />
+                  </Button>
+                )}
+                {isAudioButtonShown && (
+                  <AIAudioButton
+                    contentKey={`${contentId}-${contentType}-${section}`}
+                    text={spokenText}
+                    voice={voice}
+                  />
+                )}
+              </div>
+            )}
+          </>
+        ))}
     </ErrorBoundary>
   );
 

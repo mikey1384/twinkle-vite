@@ -303,6 +303,13 @@ export const targetPreviewStyles = `
     .home-feed-card__target-subject-description-slot > * {
       max-height: 100%;
     }
+    /* RichText owns the total line limit. A second two-line clamp on its
+       paragraph would bypass a one-line target preview and crop the next line. */
+    .home-feed-card__target-subject-description:not(.rich-text--block-preview) > p {
+      display: inline;
+      overflow: visible;
+      -webkit-line-clamp: unset;
+    }
     /* A multi-paragraph description is line-clamped as a whole by RichText's
        block preview (measured against the slot), so its paragraphs must not
        also carry the single-paragraph 2-line clamp above. */

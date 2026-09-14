@@ -26,8 +26,19 @@ export interface EarnHubApp {
   maxXP: number;
   maxCoins: number;
   minXP: number;
-  budgets: { userDailyXP: number; userDailyCoins: number; userDailyClaims: number | null };
-  today: { xp: number; coins: number; claims: number; earnedRules: number; openRules: number; capReached: boolean };
+  budgets: {
+    userDailyXP: number;
+    userDailyCoins: number;
+    userDailyClaims: number | null;
+  };
+  today: {
+    xp: number;
+    coins: number;
+    claims: number;
+    earnedRules: number;
+    openRules: number;
+    capReached: boolean;
+  };
   rules: EarnHubRule[];
 }
 export interface EarnHubEarner {
@@ -53,8 +64,14 @@ export interface EarnHub {
   dayKey: string;
   period: EarnHubPeriod;
   apps: EarnHubApp[];
-  standings: { period: EarnHubPeriod; entries: EarnHubEarner[]; me: EarnHubEarner | null };
+  standings: EarnHubStandings;
   creators: { period: EarnHubPeriod; entries: EarnHubCreator[] };
+}
+export interface EarnHubStandings {
+  period: EarnHubPeriod;
+  entries: EarnHubEarner[];
+  me: EarnHubEarner | null;
+  nextCursor?: string | null;
 }
 
 const requests = new Map<string, Promise<EarnHub | null>>();
@@ -68,7 +85,8 @@ function refreshEarnHub(key: string) {
 }
 
 function refreshVisibleEarnHubs() {
-  if (document.visibilityState === 'hidden' || refreshTimer !== undefined) return;
+  if (document.visibilityState === 'hidden' || refreshTimer !== undefined)
+    return;
   // Returning to a tab can emit focus, pageshow and visibilitychange together.
   refreshTimer = setTimeout(() => {
     refreshTimer = undefined;
@@ -84,10 +102,13 @@ function scheduleNextRewardDay() {
     now.getUTCMonth(),
     now.getUTCDate() + 1
   );
-  dayTimer = setTimeout(() => {
-    refreshVisibleEarnHubs();
-    scheduleNextRewardDay();
-  }, nextDay - now.getTime() + 50);
+  dayTimer = setTimeout(
+    () => {
+      refreshVisibleEarnHubs();
+      scheduleNextRewardDay();
+    },
+    nextDay - now.getTime() + 50
+  );
 }
 
 function subscribeToEarnHub(key: string, refresh: () => void) {

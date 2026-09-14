@@ -2,76 +2,94 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { resolveBlockPreviewClampLines } from '../src/components/Texts/RichText/helpers/previewClamp';
 
-const lineHeight = 25.84;
-const paragraph = (top: number, lines: number) => ({
-  top,
-  height: lines * lineHeight,
-  lineHeight
-});
+const line = (top: number, height = 20) => ({ top, bottom: top + height });
 
-test('content that ends within the budget keeps the base clamp', () => {
+test('content ending within the available space keeps its base clamp', () => {
   assert.equal(
     resolveBlockPreviewClampLines({
-      blocks: [paragraph(0, 3), paragraph(3 * lineHeight + 19, 2)],
-      budget: 10 * lineHeight,
-      maxLines: 10
+      rects: [line(0), line(26), line(71)],
+      budget: 100,
+      maxLines: 5
     }),
     null
   );
   assert.equal(
-    resolveBlockPreviewClampLines({ blocks: [], budget: 100, maxLines: 5 }),
+    resolveBlockPreviewClampLines({
+      rects: [],
+      budget: 100,
+      maxLines: 5
+    }),
     null
   );
 });
 
-test('a paragraph gap that pushes the last line past the budget drops that line', () => {
-  // Ten lines fit by height alone, but the 19px gap between the paragraphs
-  // means only nine whole lines end above the max-height.
-  const lines = resolveBlockPreviewClampLines({
-    blocks: [paragraph(0, 6), paragraph(6 * lineHeight + 19, 20)],
-    budget: 10 * lineHeight,
-    maxLines: 10
-  });
-  assert.equal(lines, 9);
-});
-
-test('a slot shorter than the max-height clamps to the lines the slot shows', () => {
-  // Nested subject description: root max-height allows ~2.5 paragraph lines
-  // (root line-height 30.6 vs paragraph 24.12), so only two whole lines fit.
-  const lines = resolveBlockPreviewClampLines({
-    blocks: [{ top: 0, height: 24.12 * 8, lineHeight: 24.12 }],
-    budget: 61.2,
-    maxLines: 2
-  });
-  assert.equal(lines, 2);
-});
-
-test('an overflow-hidden ancestor budget smaller than the panel is honored', () => {
-  // Mobile 'tall' comment: eleven lines are allowed but the panel ends 4.5px
-  // before the eleventh line, so the clamp lands on line ten.
-  const lines = resolveBlockPreviewClampLines({
-    blocks: [paragraph(0, 30)],
-    budget: 11 * lineHeight - 4.5,
-    maxLines: 11
-  });
-  assert.equal(lines, 10);
-});
-
-test('never clamps below one line or above the base clamp', () => {
+test('list and paragraph gaps reduce the number of complete lines that fit', () => {
   assert.equal(
     resolveBlockPreviewClampLines({
-      blocks: [paragraph(0, 4)],
-      budget: 5,
-      maxLines: 3
+      rects: [line(0), line(26), line(72), line(98), line(144)],
+      budget: 110,
+      maxLines: 5
+    }),
+    3
+  );
+});
+
+test('inline links and emphasis count as one line, including a raised fragment', () => {
+  assert.equal(
+    resolveBlockPreviewClampLines({
+      rects: [line(0), line(0), line(-4, 14), line(26), line(26), line(52)],
+      budget: 60,
+      maxLines: 10
+    }),
+    2
+  );
+});
+
+test('tight line-heights do not merge consecutive lines whose glyphs overlap', () => {
+  assert.equal(
+    resolveBlockPreviewClampLines({
+      rects: [line(0, 22), line(20, 22), line(40, 22)],
+      budget: 50,
+      maxLines: 5
+    }),
+    2
+  );
+});
+
+test('heading and nested prose lines use their actual heights', () => {
+  assert.equal(
+    resolveBlockPreviewClampLines({
+      rects: [line(0, 28), line(40, 18), line(62, 18)],
+      budget: 70,
+      maxLines: 5
+    }),
+    2
+  );
+});
+
+test('honors a smaller ancestor budget and never exceeds the line limit', () => {
+  assert.equal(
+    resolveBlockPreviewClampLines({
+      rects: [line(0), line(26), line(52)],
+      budget: 40,
+      maxLines: 5
     }),
     1
   );
   assert.equal(
     resolveBlockPreviewClampLines({
-      blocks: [{ top: 0, height: 200, lineHeight: 10 }],
-      budget: 120,
-      maxLines: 5
+      rects: [line(0), line(26), line(52), line(78)],
+      budget: 80,
+      maxLines: 2
     }),
-    5
+    2
+  );
+  assert.equal(
+    resolveBlockPreviewClampLines({
+      rects: [line(0)],
+      budget: 5,
+      maxLines: 3
+    }),
+    1
   );
 });

@@ -1,7 +1,10 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
-import { chatScrollButtonClass, chatScrollButtonStyle } from './chatScrollButtonStyles';
+import {
+  chatScrollButtonClass,
+  chatScrollButtonStyle
+} from './chatScrollButtonStyles';
 
 export default function ChatGoToBottomButton({
   theme,
@@ -14,45 +17,48 @@ export default function ChatGoToBottomButton({
   return (
     <button
       type="button"
-      style={chatScrollButtonStyle(theme || profileTheme)}
-      className={cx(chatScrollButtonClass, css`
-        border-radius: 50%;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        height: 44px;
-        padding: 8px;
-        transition: all 0.3s ease;
-        width: 44px;
-        @media (hover: hover) and (pointer: fine) {
-          &:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transform: translateY(-2px);
-          }
-        }
-        &:active {
-          box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
-          transform: translateY(0);
-        }
-        > svg {
-          height: 24px;
-          width: 24px;
-        }
-        @keyframes bounce {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-5px);
-          }
-        }
-        @media (hover: hover) and (pointer: fine) {
-          &:hover {
-            > svg {
-              animation: bounce 0.5s ease infinite;
+      style={chatScrollButtonStyle(theme || profileTheme, 0.6)}
+      className={cx(
+        chatScrollButtonClass,
+        css`
+          border-radius: 50%;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          height: 44px;
+          padding: 8px;
+          transition: all 0.3s ease;
+          width: 44px;
+          @media (hover: hover) and (pointer: fine) {
+            &:hover {
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+              transform: translateY(-2px);
             }
           }
-        }
-      `)}
+          &:active {
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+            transform: translateY(0);
+          }
+          > svg {
+            height: 24px;
+            width: 24px;
+          }
+          @keyframes bounce {
+            0%,
+            100% {
+              transform: translateY(0);
+            }
+            50% {
+              transform: translateY(-5px);
+            }
+          }
+          @media (hover: hover) and (pointer: fine) {
+            &:hover {
+              > svg {
+                animation: bounce 0.5s ease infinite;
+              }
+            }
+          }
+        `
+      )}
       onClick={onClick}
       aria-label="Go to bottom"
     >

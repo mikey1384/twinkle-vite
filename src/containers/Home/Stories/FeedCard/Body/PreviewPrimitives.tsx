@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import WideSubjectEmbedPreview from '~/components/Subjects/WideSubjectEmbedPreview';
+import { AttachmentCard } from '~/components/Subjects/SubjectMediaPreview';
 import FileDownload from '~/components/Texts/RichText/Markdown/EmbeddedComponent/FileDownload';
 import InternalComponent from '~/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent';
 import YouTubeVideo from '~/components/Texts/RichText/Markdown/EmbeddedComponent/YouTubeVideo';
 import { Color } from '~/constants/css';
 import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { getInternalEmbedPreviewInfo } from '~/helpers/aiCardEmbedHelpers';
 import { getEmbedSvgRepairImageUrl } from '~/helpers/embedSvgRepairHelpers';
 import { useContentState } from '~/helpers/hooks';
 import { processInternalLink } from '~/helpers/stringHelpers';
 import {
   getMarkdownEmbedFileInfo,
-  getMarkdownImageEmbedPreview,
+  getSubjectTargetDescriptionEmbeds,
   shouldAttemptMarkdownImagePreview,
   removeMarkdownImageEmbeds,
   type MarkdownImageEmbed
@@ -23,6 +23,26 @@ export type HomeFeedNestedNavigate = (
   path: string,
   sourceElement: HTMLElement | null
 ) => void;
+
+export function SubjectFileEmbedPreview({
+  embed
+}: {
+  embed: MarkdownImageEmbed;
+}) {
+  const { extension, fileName, fileType } = getMarkdownEmbedFileInfo(embed.src);
+  return (
+    <div
+      className="home-feed-card__target-media-wrap home-feed-card__target-file-embed-preview"
+      data-attachment-preview-kind={fileType}
+    >
+      <AttachmentCard
+        extension={extension}
+        fileName={embed.alt || fileName}
+        fileType={fileType}
+      />
+    </div>
+  );
+}
 
 export function MarkdownEmbedPreview({
   className,
@@ -51,7 +71,7 @@ export function MarkdownEmbedPreview({
       (isInternalLink ? replacedLink : embed.src).replace(/<u>|<\/u>/g, '__')
     );
     const internalSrcParts = internalSrc.split('/');
-    const internalLinkType = internalSrcParts[1] || '';
+    const internalLinkType = (internalSrcParts[1] || '').split('?')[0];
     const internalLinkSubType = (internalSrcParts[2] || '').split('?')[0];
     const internalClassName = [
       internalLinkType === 'subjects'
@@ -207,25 +227,11 @@ function HomeFeedWideSubjectEmbedPreview({
         title: fallbackLabel
       };
   const description = String(subject?.description || subject?.content || '');
-  const descriptionEmbed = getMarkdownImageEmbedPreview(description);
-  const descriptionBuildEmbed =
-    descriptionEmbed?.type === 'internal' &&
-    getInternalEmbedPreviewInfo(descriptionEmbed.src)?.kind === 'build'
-      ? descriptionEmbed
-      : null;
-  const shouldPromoteDescriptionBuildEmbed = Boolean(
-    descriptionBuildEmbed && !getContentAttachmentFilePath(subject)
-  );
-  // A content embed left inside the description renders as a block that the
-  // line-clamped description RichText clips to its header. We strip every embed
-  // from the text and promote it to its own slot so it renders in full and
-  // nothing is dropped. Build-without-attachment goes to the media slot (below);
-  // ANY other embed — internal, image, or YouTube — renders in the content-embed
-  // slot via MarkdownEmbedPreview (which handles every type).
-  const descriptionContentEmbed =
-    descriptionEmbed && !shouldPromoteDescriptionBuildEmbed
-      ? descriptionEmbed
-      : null;
+  const {
+    contentEmbed: descriptionContentEmbed,
+    promotedBuildEmbed: descriptionBuildEmbed,
+    promotedFileEmbed: descriptionFileEmbed
+  } = getSubjectTargetDescriptionEmbeds(subject);
   const descriptionText = removeMarkdownImageEmbeds(description);
   const descriptionContentEmbedPreview = descriptionContentEmbed ? (
     <MarkdownEmbedPreview
@@ -237,18 +243,20 @@ function HomeFeedWideSubjectEmbedPreview({
       onNavigate={onNavigate}
     />
   ) : null;
-  const descriptionBuildEmbedPreview =
-    shouldPromoteDescriptionBuildEmbed && descriptionBuildEmbed ? (
-      <MarkdownEmbedPreview
-        className="home-feed-card__target-subject-build-embed-preview"
-        contentId={subjectId}
-        contentType="subject"
-        embed={descriptionBuildEmbed}
-        internalPreviewVariant="compact"
-        onNavigate={onNavigate}
-        theme={theme}
-      />
-    ) : undefined;
+  const descriptionBuildEmbedPreview = descriptionBuildEmbed ? (
+    <MarkdownEmbedPreview
+      className="home-feed-card__target-subject-build-embed-preview"
+      contentId={subjectId}
+      contentType="subject"
+      embed={descriptionBuildEmbed}
+      internalPreviewVariant="compact"
+      onNavigate={onNavigate}
+      theme={theme}
+    />
+  ) : undefined;
+  const descriptionFileEmbedPreview = descriptionFileEmbed ? (
+    <SubjectFileEmbedPreview embed={descriptionFileEmbed} />
+  ) : undefined;
 
   useEffect(() => {
     const requestKey = `${userId || 0}:${subjectId}:subject`;
@@ -290,10 +298,8 @@ function HomeFeedWideSubjectEmbedPreview({
       contentId={subjectId}
       descriptionEmbedPreview={descriptionContentEmbedPreview}
       descriptionText={descriptionText}
-      hasBuildEmbedMedia={Boolean(
-        shouldPromoteDescriptionBuildEmbed && descriptionBuildEmbed
-      )}
-      mediaPreview={descriptionBuildEmbedPreview}
+      hasBuildEmbedMedia={Boolean(descriptionBuildEmbedPreview)}
+      mediaPreview={descriptionBuildEmbedPreview || descriptionFileEmbedPreview}
       subject={subject}
       theme={theme}
     />
@@ -409,10 +415,6 @@ function getSubjectIdFromInternalSrc(src: string) {
   } catch {
     return 0;
   }
-}
-
-function getContentAttachmentFilePath(source: any) {
-  return String(source?.filePath || source?.actualFilePath || '').trim();
 }
 
 function MarkdownImagePreview({

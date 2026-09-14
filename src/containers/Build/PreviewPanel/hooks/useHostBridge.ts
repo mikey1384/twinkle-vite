@@ -4166,6 +4166,7 @@ export function useHostBridge({
           }
 
           case 'rewards:status':
+          case 'rewards:receipt':
           case 'rewards:start':
           case 'rewards:claim':
           case 'rewards:leaderboard': {
@@ -4207,6 +4208,15 @@ export function useHostBridge({
               }
               if (type === 'rewards:status') {
                 response = stub;
+                break;
+              }
+              if (type === 'rewards:receipt') {
+                response = {
+                  mode: 'preview',
+                  status: 'not_found',
+                  receipt: null,
+                  message: stub.message
+                };
                 break;
               }
               if (type === 'rewards:leaderboard') {

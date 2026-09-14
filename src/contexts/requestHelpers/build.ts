@@ -620,7 +620,9 @@ export default function buildRequestHelpers({
         );
       }
     },
-    async loadRewardEarnHub({ period }: { period?: 'day' | 'week' | 'all' } = {}) {
+    async loadRewardEarnHub({
+      period
+    }: { period?: 'day' | 'week' | 'all' } = {}) {
       try {
         const { data } = await request.get(`${URL}/build/rewards/earn`, {
           // The Earn hub shares concurrent reads itself. A return/day-change
@@ -628,6 +630,26 @@ export default function buildRequestHelpers({
           ...getBuildRequestConfig({ collapseKey: null }),
           params: period ? { period } : {}
         });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadRewardEarnStandings({
+      period,
+      cursor
+    }: {
+      period: 'day' | 'week' | 'all';
+      cursor: string;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/rewards/earn/standings`,
+          {
+            ...getBuildRequestConfig({ collapseKey: null }),
+            params: { period, cursor }
+          }
+        );
         return data;
       } catch (error) {
         return handleError(error);

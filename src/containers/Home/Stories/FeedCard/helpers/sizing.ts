@@ -1,6 +1,8 @@
 import { normalizeRootType } from './navigation';
+import { resolveWideSubjectMedia } from '~/components/Subjects/wideSubjectMedia';
 import { isRenderableHomeFeedTargetComment } from './targetComment';
 import {
+  getAICardCollectionEmbedPreviewTitle,
   getInternalEmbedPreviewInfo,
   isAICardEmbedSrc
 } from '~/helpers/aiCardEmbedHelpers';
@@ -10,6 +12,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { isYouTubeVideoUrl } from '~/helpers/youtubeUrlHelpers';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import { HOME_FEED_MARKDOWN_LINE_HEIGHT_REM } from './typography';
 
 export type FeedCardPreviewKind =
   | 'ai-story'
@@ -258,7 +261,7 @@ const CARD_FRAME_REM = {
 };
 const CARD_BORDER_PX = 2;
 const REFLECTION_PREVIEW_LAYOUT_REM = {
-  answerLineHeight: 1.9 * 1.36,
+  answerLineHeight: HOME_FEED_MARKDOWN_LINE_HEIGHT_REM,
   footerMinHeight: 2.35,
   minAnswerLines: 2,
   mobileMasterpieceFooterMinHeight: 4.7,
@@ -283,7 +286,7 @@ const SUBJECT_PREVIEW_LAYOUT_REM = {
   // .home-feed-card__subject-secret-attachment thumbnail height in the
   // --has-attachment grid (side thumbnail next to the secret text).
   attachmentThumbHeight: 5.4,
-  descriptionLineHeight: 1.9 * 1.36,
+  descriptionLineHeight: HOME_FEED_MARKDOWN_LINE_HEIGHT_REM,
   effortHeight: 2.9,
   gap: 0.85,
   // Rendered locked banner: the SecretComment pill's 4.2rem min-height plus
@@ -1039,6 +1042,21 @@ const AI_STORY_EMBED_PREVIEW_HEIGHT_REM = {
   mobile: 15.8
 };
 
+// A single AI card needs room for its thumbnail and clamped details, not the
+// full media panel. Allow for the largest thumbnail, text, and normal padding;
+// the loaded preview hugs its content within this lazy-load reservation.
+const AI_CARD_EMBED_PREVIEW_HEIGHT_REM = {
+  desktop: 20,
+  mobile: 16
+};
+
+// Collection header/action, complete detailed thumbnails (including their
+// words), padding and a horizontal scrollbar. The strip never crops card art.
+const AI_CARD_COLLECTION_PREVIEW_HEIGHT_REM = {
+  desktop: 25,
+  mobile: 23
+};
+
 // The compact RichText file row is content-height rather than a media canvas.
 // This includes the row's border and a small rounding allowance.
 const FILE_EMBED_PREVIEW_HEIGHT_REM = {
@@ -1073,7 +1091,7 @@ function estimateCommentEmbedBodyHeight(
   const descriptionHeight = estimatePreviewDescriptionHeight({
     axis,
     content,
-    descriptionLineHeight: layout.descriptionLineHeight,
+    descriptionLineHeight: layout.descriptionLineHeight[axis],
     descriptionText,
     maxLines: getSubjectNonTallDescriptionMaxLines('subject-comment-embed'),
     wrapSafetyLines: secretHidden ? 1 : 0
@@ -1128,11 +1146,15 @@ function estimateCommentEmbedBodyHeight(
   const embedHeight =
     embedKind === 'aiStory'
       ? AI_STORY_EMBED_PREVIEW_HEIGHT_REM[axis]
-      : embedKind === 'file'
-        ? FILE_EMBED_PREVIEW_HEIGHT_REM[axis]
-        : embedKind === 'subject'
-          ? SUBJECT_EMBED_PREVIEW_HEIGHT_REM[axis]
-          : COMMENT_EMBED_PREVIEW_HEIGHT_REM[axis];
+      : embedKind === 'aiCard'
+        ? AI_CARD_EMBED_PREVIEW_HEIGHT_REM[axis]
+        : embedKind === 'aiCardCollection'
+          ? AI_CARD_COLLECTION_PREVIEW_HEIGHT_REM[axis]
+          : embedKind === 'file'
+            ? FILE_EMBED_PREVIEW_HEIGHT_REM[axis]
+            : embedKind === 'subject'
+              ? SUBJECT_EMBED_PREVIEW_HEIGHT_REM[axis]
+              : COMMENT_EMBED_PREVIEW_HEIGHT_REM[axis];
 
   return (
     layout.previewPaddingY +
@@ -1399,10 +1421,18 @@ function hasRichTextEmbed(content: any) {
 // Subject description embeds that render a natural-height card (instead of
 // stretching to fill the panel) get the content-sized 'subject-comment-embed'
 // panel. A fixed 34rem subject-rich-embed panel would leave a large empty gap
-// under compact comments, AI stories, file rows, and wide subject cards.
+// under compact comments, AI stories, single AI cards, file rows, and subjects;
+// a collection needs its full card strip as well as any locked-secret banner.
 function getSubjectContentSizedEmbedKind(
   content: any
-): 'comment' | 'aiStory' | 'file' | 'subject' | null {
+):
+  | 'comment'
+  | 'aiStory'
+  | 'aiCard'
+  | 'aiCardCollection'
+  | 'file'
+  | 'subject'
+  | null {
   const embedPreview = getMarkdownImageEmbedPreview(
     String(content?.description || content?.content || '')
   );
@@ -1411,33 +1441,48 @@ function getSubjectContentSizedEmbedKind(
   }
   if (isMarkdownFileEmbed(embedPreview)) return 'file';
   if (embedPreview.type !== 'internal') return null;
-  const kind = getInternalEmbedPreviewInfo(embedPreview.src)?.kind;
+  const info = getInternalEmbedPreviewInfo(embedPreview.src);
+  if (info?.kind === 'aiCard' && info.cardId) return 'aiCard';
+  if (getAICardCollectionEmbedPreviewTitle(embedPreview.src)) {
+    return 'aiCardCollection';
+  }
+  const kind = info?.kind;
   return kind === 'comment' || kind === 'aiStory' || kind === 'subject'
     ? kind
     : null;
 }
 
-// Single source of truth for how a subject TARGET preview places its
-// description embed (mirrored by TargetPreview.renderTargetSubjectPreview and
-// by target sizing): a build embed with no attachment is promoted to the media
-// slot; any other markdown embed occupies the content-embed slot below the
-// copy.
+// Shared placement for nested subject previews and target sizing. Files use
+// the attachment column when it is free; an existing attachment/root preview
+// keeps its place and the description file remains accessible below the copy.
 export function getSubjectTargetDescriptionEmbeds(target: any): {
   contentEmbed: MarkdownImageEmbed | null;
   promotedBuildEmbed: MarkdownImageEmbed | null;
+  promotedFileEmbed: MarkdownImageEmbed | null;
 } {
-  const embed = getMarkdownImageEmbedPreview(String(target?.description || ''));
+  const embed = getMarkdownImageEmbedPreview(
+    String(target?.description || target?.content || '')
+  );
   if (!embed) {
-    return { contentEmbed: null, promotedBuildEmbed: null };
+    return {
+      contentEmbed: null,
+      promotedBuildEmbed: null,
+      promotedFileEmbed: null
+    };
   }
   const isBuildEmbed =
     embed.type === 'internal' &&
     getInternalEmbedPreviewInfo(embed.src)?.kind === 'build';
   const promotedBuildEmbed =
     isBuildEmbed && !hasAttachment(target) ? embed : null;
+  const promotedFileEmbed =
+    isMarkdownFileEmbed(embed) && !resolveWideSubjectMedia(target)
+      ? embed
+      : null;
   return {
-    contentEmbed: promotedBuildEmbed ? null : embed,
-    promotedBuildEmbed
+    contentEmbed: promotedBuildEmbed || promotedFileEmbed ? null : embed,
+    promotedBuildEmbed,
+    promotedFileEmbed
   };
 }
 
@@ -1669,7 +1714,7 @@ function estimateSubjectSecretBodyHeight(
   const descriptionHeight = estimatePreviewDescriptionHeight({
     axis,
     content,
-    descriptionLineHeight: layout.descriptionLineHeight,
+    descriptionLineHeight: layout.descriptionLineHeight[axis],
     descriptionText,
     maxLines: getSubjectNonTallDescriptionMaxLines('subject-secret-fit'),
     wrapSafetyLines: secretHidden ? 1 : 0
@@ -1806,9 +1851,7 @@ function hasAttachedRootContent(content: any) {
   );
 }
 
-function getCompactRichTextEmbedSize(
-  content: any
-): FeedCardSize | null {
+function getCompactRichTextEmbedSize(content: any): FeedCardSize | null {
   const embedPreview = getMarkdownImageEmbedPreview(
     String(content?.content || content?.description || '')
   );
@@ -1959,7 +2002,7 @@ function getDailyReflectionAnswerLineBudget({
     PANEL_HEIGHT_REM[size]?.[axis] ?? PANEL_HEIGHT_REM.reflection[axis];
   const availableAnswerHeight = panelHeight - occupiedHeight;
   const answerLines = Math.floor(
-    availableAnswerHeight / layout.answerLineHeight
+    availableAnswerHeight / layout.answerLineHeight[axis]
   );
 
   return Math.max(layout.minAnswerLines, answerLines);
@@ -2242,7 +2285,7 @@ function getSubjectDescriptionLineBudget({
   const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
   const secretAnswerOverflowBuffer =
     axis === 'desktop' && hasDescriptionText && hasSecretAnswer
-      ? layout.descriptionLineHeight * 1.45
+      ? layout.descriptionLineHeight[axis] * 1.45
       : 0;
   const occupiedHeight =
     layout.previewPaddingY +
@@ -2268,7 +2311,7 @@ function getSubjectDescriptionLineBudget({
     PANEL_HEIGHT_REM[size]?.[axis] ?? PANEL_HEIGHT_REM['subject-tall'][axis];
   const availableDescriptionHeight = panelHeight - occupiedHeight;
   const descriptionLines = Math.floor(
-    availableDescriptionHeight / layout.descriptionLineHeight
+    availableDescriptionHeight / layout.descriptionLineHeight[axis]
   );
 
   return Math.min(
@@ -2296,7 +2339,8 @@ function getSubjectDescriptionMaxLineCap({
   return Math.max(
     layout.minDescriptionLines,
     Math.floor(
-      (panelHeight - layout.previewPaddingY) / layout.descriptionLineHeight
+      (panelHeight - layout.previewPaddingY) /
+        layout.descriptionLineHeight[axis]
     )
   );
 }

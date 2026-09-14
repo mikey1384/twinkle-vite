@@ -1,35 +1,23 @@
 import { css } from '@emotion/css';
 import type { CSSProperties } from 'react';
+import { Color } from '~/constants/css';
 import { themeRegistry, type ThemeName } from '~/theme';
 
-function backgroundForWhiteText(background: string) {
-  let channels = background.match(/[\d.]+/g)?.slice(0, 3).map(Number);
-  if (!channels || channels.length !== 3) return '#273449';
-  const maximumLuminance = 1.05 / 4.5 - 0.05;
-  while (luminance(channels) > maximumLuminance) {
-    channels = channels.map(value => Math.floor(value * 0.98));
-  }
-  return `rgb(${channels.join(', ')})`;
-
-  function luminance(values: number[]) {
-    const linear = values.map(value => {
-      const channel = value / 255;
-      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-    });
-    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
-  }
-}
-
-export function chatScrollButtonStyle(theme: string): CSSProperties {
-  const { general } = themeRegistry[theme as ThemeName] || themeRegistry.logoBlue;
-  const isGold = theme === 'gold';
-  // Keep white labels stable between rest and hover. Deepen the theme shade
-  // when needed instead of switching its foreground to black.
-  const text = isGold ? '#000' : '#fff';
+export function chatScrollButtonStyle(
+  theme: string,
+  opacity = 1
+): CSSProperties {
+  const themeName = Object.prototype.hasOwnProperty.call(themeRegistry, theme)
+    ? (theme as ThemeName)
+    : 'logoBlue';
+  const color = Color[themeName];
+  const text = themeName === 'gold' ? '#000' : '#fff';
+  // Preserve the original theme hue: the arrow is translucent at rest,
+  // while the new-message pill and hover state use the solid color.
   return {
-    '--chat-scroll-bg': isGold ? general.bg : backgroundForWhiteText(general.bg),
+    '--chat-scroll-bg': color(opacity),
     '--chat-scroll-text': text,
-    '--chat-scroll-hover-bg': isGold ? general.hoverBg : backgroundForWhiteText(general.hoverBg),
+    '--chat-scroll-hover-bg': color(),
     '--chat-scroll-hover-text': text
   } as CSSProperties;
 }
@@ -62,7 +50,9 @@ export const chatScrollButtonClass = css`
       color: var(--chat-scroll-hover-text);
     }
   }
-  > svg { flex-shrink: 0; }
+  > svg {
+    flex-shrink: 0;
+  }
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 `;

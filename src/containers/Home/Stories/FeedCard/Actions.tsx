@@ -215,6 +215,7 @@ const actionsClass = css`
   padding: 0.05rem 0.2rem 0;
   .home-feed-card__counts {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.62rem;
     min-width: 0;
@@ -229,6 +230,7 @@ const actionsClass = css`
     .home-feed-card__action-button {
       appearance: none;
       display: inline-flex;
+      flex: 0 0 auto;
       align-items: center;
       gap: 0.46rem;
       min-width: 0;
@@ -368,6 +370,7 @@ const actionsClass = css`
     }
   }
   .home-feed-card__open {
+    flex: 0 0 auto;
     appearance: none;
     border: 1px solid ${Color.logoBlue(0.22)};
     border-radius: 0.95rem;

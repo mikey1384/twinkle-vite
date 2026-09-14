@@ -66,6 +66,7 @@ export default function HomeFeedSubjectTargetPreview({
               contentId={subjectId}
               contentType={contentType}
               isPreview
+              lineHeight={1.34}
               maxLines={maxDescriptionLines}
               section="description"
               theme={theme}

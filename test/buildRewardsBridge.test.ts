@@ -8,21 +8,46 @@ import { rewardApprovalPresentation } from '../src/components/Build/Rewards/appr
 // one action (send, wait, publish, or fix and send again). No Lumine step.
 test('creator-facing reward status never asks the creator or Lumine to prepare rules', () => {
   const base = {
-    policy: null, approvalRequired: true, configured: true, canSubmit: true,
-    isUpdate: false, liveActive: false, reviewId: null, reviewNote: '',
-    sourceVersionId: 3, summary: [], approvalMatches: false, canPublish: false
+    policy: null,
+    approvalRequired: true,
+    configured: true,
+    canSubmit: true,
+    isUpdate: false,
+    liveActive: false,
+    reviewId: null,
+    reviewNote: '',
+    sourceVersionId: 3,
+    summary: [],
+    approvalMatches: false,
+    canPublish: false
   } as const;
-  for (const state of ['needs_review', 'in_review', 'approved', 'published', 'changes_requested', 'paused'] as const) {
+  for (const state of [
+    'needs_review',
+    'in_review',
+    'approved',
+    'published',
+    'changes_requested',
+    'paused'
+  ] as const) {
     const text = JSON.stringify(rewardApprovalPresentation({ ...base, state }));
     assert.ok(!/prepare|Lumine/i.test(text), `${state}: ${text}`);
   }
-  const sending = rewardApprovalPresentation({ ...base, state: 'needs_review' });
+  const sending = rewardApprovalPresentation({
+    ...base,
+    state: 'needs_review'
+  });
   assert.match(sending.detail, /admin will read your code/);
   // Unsaved edits on an approved version fall back to "needs approval".
-  assert.equal(rewardApprovalPresentation({ ...base, state: 'approved' }, true).state, 'needs_review');
+  assert.equal(
+    rewardApprovalPresentation({ ...base, state: 'approved' }, true).state,
+    'needs_review'
+  );
   // A removed SDK with unsaved edits is checked at publish time, not blocked.
   assert.equal(
-    rewardApprovalPresentation({ ...base, approvalRequired: false, state: 'removed' }, true).state,
+    rewardApprovalPresentation(
+      { ...base, approvalRequired: false, state: 'removed' },
+      true
+    ).state,
     'check_changes'
   );
 });
@@ -57,7 +82,8 @@ function harness({
   runtimeOnly = true,
   automated = false,
   grant = 'server-published-grant',
-  changeUser = false
+  changeUser = false,
+  result = { awarded: true, balances: { xp: 120, coins: 15 } }
 }: any = {}) {
   const calls: any[] = [],
     balances: any[] = [];
@@ -76,7 +102,7 @@ function harness({
           current: async (request: any) => {
             calls.push(request);
             if (changeUser) auth.userIdRef.current = 3;
-            return { awarded: true, balances: { xp: 120, coins: 15 } };
+            return result;
           }
         }
       },
@@ -92,6 +118,15 @@ test('editor, workspace and automated preview requests cannot reach the award AP
   ]) {
     const h = harness(options);
     assert.equal((await h.invoke('rewards:status')).mode, 'preview');
+    assert.deepEqual(
+      await h.invoke('rewards:receipt', { challengeId: 'old' }),
+      {
+        mode: 'preview',
+        status: 'not_found',
+        receipt: null,
+        message: 'Real rewards require the approved published app.'
+      }
+    );
     await assert.rejects(h.invoke('rewards:start', { ruleId: 'angles' }));
     await assert.rejects(
       h.invoke('rewards:claim', { challengeId: 'fake', answers: [720] })
@@ -115,13 +150,53 @@ test('published bridge uses only the host grant, strips award controls and appli
     {
       buildId: 2460,
       operation: 'claim',
-      payload: { ruleId: undefined, challengeId: 'challenge', answers: [720] },
+      payload: {
+        ruleId: undefined,
+        challengeId: 'challenge',
+        answers: [720],
+        metric: undefined,
+        period: undefined,
+        limit: undefined
+      },
       token: 'scoped-token',
       runtimeGrant: 'server-published-grant'
     }
   ]);
   assert.deepEqual(h.balances, [
     { userId: 2, newState: { twinkleXP: 120, twinkleCoins: 15 } }
+  ]);
+});
+test('receipt recovery forwards the exact challenge and only applies canonical balances', async () => {
+  const result = {
+    mode: 'live',
+    status: 'awarded',
+    receipt: { challengeId: 'old' },
+    balances: { xp: 140, coins: 19 }
+  };
+  const h = harness({ result });
+  assert.deepEqual(
+    await h.invoke('rewards:receipt', {
+      challengeId: 'old',
+      buildId: 7,
+      userId: 99,
+      xp: 9000,
+      runtimeGrant: 'forged'
+    }),
+    result
+  );
+  assert.equal(h.calls[0].operation, 'receipt');
+  assert.equal(h.calls[0].buildId, 2460);
+  assert.equal(h.calls[0].runtimeGrant, 'server-published-grant');
+  assert.deepEqual(h.calls[0].payload, {
+    ruleId: undefined,
+    challengeId: 'old',
+    answers: undefined,
+    metric: undefined,
+    period: undefined,
+    limit: undefined
+  });
+  assert.deepEqual(h.balances, [
+    { userId: 2, newState: { twinkleXP: 140, twinkleCoins: 19 } }
   ]);
 });
 test('a sign-in change during a claim cannot replace the next viewer’s displayed balance', async () => {

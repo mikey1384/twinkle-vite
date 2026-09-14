@@ -87,10 +87,11 @@ export default function ProfilePic({
     [myId, online, statusShown, userId]
   );
 
-  // always show "online" status when user is looking at their own profile. Show "busy" or "away" status too if not.
+  // Keep the self-view online. For others, away takes precedence over busy:
+  // leaving Chat sets busy independently of tab visibility or inactivity.
   const resolvedStatus = useMemo(() => {
     if (myId === userId) return 'online';
-    return isBusy ? 'busy' : isAway ? 'away' : 'online';
+    return isAway ? 'away' : isBusy ? 'busy' : 'online';
   }, [isAway, isBusy, myId, userId]);
 
   useEffect(() => {

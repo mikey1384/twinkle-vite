@@ -7,6 +7,7 @@ import { panelPreviewStyles } from './styles/panelPreviewStyles';
 import { commentPreviewStyles } from './styles/commentPreviewStyles';
 import { skeletonPreviewStyles } from './styles/skeletonPreviewStyles';
 import { targetPreviewStyles } from './styles/targetPreviewStyles';
+import { markdownPreviewStyles } from './styles/markdownPreviewStyles';
 
 export const compactSecretCommentStyle: React.CSSProperties = {
   display: 'inline-flex',
@@ -39,10 +40,11 @@ export const bodyClass = css`
   flex-direction: column;
   gap: 0.85rem;
   width: 100%;
-${panelPreviewStyles}
-${mainPreviewStyles}
+  ${panelPreviewStyles}
+  ${mainPreviewStyles}
 ${targetPreviewStyles}
 ${commentPreviewStyles}
 ${skeletonPreviewStyles}
 ${mobilePreviewStyles}
+${markdownPreviewStyles}
 `;

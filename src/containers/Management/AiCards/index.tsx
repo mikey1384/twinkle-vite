@@ -6,7 +6,6 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { ADMIN_USER_ID, cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { getAICardDisplayEngine } from '~/helpers/aiCardDisplay';
 
 interface ManagedCard {
   id: number;
@@ -20,6 +19,13 @@ interface ManagedCard {
   isBurned: number;
   ownerId: number;
   ownerUsername: string;
+}
+
+interface GenerationPlan {
+  model: string;
+  engine: string;
+  quality: string | null;
+  legacyFallback: boolean;
 }
 
 function resolveImageUrl(imagePath: string) {
@@ -43,12 +49,14 @@ export default function AiCards() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [card, setCard] = useState<ManagedCard | null>(null);
+  const [generation, setGeneration] = useState<GenerationPlan | null>(null);
   const [promptDraft, setPromptDraft] = useState('');
   const [regenerating, setRegenerating] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   const isOwner = userId === ADMIN_USER_ID;
-  const promptDirty = !!card && promptDraft.trim() !== (card.prompt || '').trim();
+  const promptDirty =
+    !!card && promptDraft.trim() !== (card.prompt || '').trim();
 
   if (!isOwner) {
     return (
@@ -64,8 +72,8 @@ export default function AiCards() {
       <div className={headerClass}>
         <h1>AI Card Image</h1>
         <p>
-          Silently re-render an existing card&apos;s image in place. It reuses
-          the card&apos;s original engine, art style, and example sentence — you
+          Silently re-render an existing card&apos;s image in place. The model
+          and quality are shown below. It keeps the art style and sentence; you
           can also edit the sentence below before regenerating. This does not
           post a feed, send a notification, or move the card; it only swaps the
           image. New images are always generated safe-for-work (people stay
@@ -82,6 +90,7 @@ export default function AiCards() {
             value={cardIdInput}
             inputMode="numeric"
             placeholder="e.g. 12345"
+            disabled={loading || regenerating}
             onChange={(event) =>
               setCardIdInput(event.target.value.replace(/[^0-9]/g, ''))
             }
@@ -89,7 +98,12 @@ export default function AiCards() {
               if (event.key === 'Enter') handleLoad();
             }}
           />
-          <Button color="logoBlue" loading={loading} onClick={handleLoad}>
+          <Button
+            color="logoBlue"
+            loading={loading}
+            disabled={regenerating}
+            onClick={handleLoad}
+          >
             Load
           </Button>
         </div>
@@ -113,6 +127,15 @@ export default function AiCards() {
                 </div>
               )}
             </div>
+
+            {generation && (
+              <div className={metaItemClass}>
+                <strong>Regeneration:</strong> {generation.model}
+                {generation.quality ? ` · ${generation.quality} quality` : ''}
+                {generation.legacyFallback &&
+                  ' (current replacement for the legacy engine)'}
+              </div>
+            )}
           </div>
 
           <div className={detailColumnClass}>
@@ -131,8 +154,7 @@ export default function AiCards() {
                 <strong>Style:</strong> {card.style || '—'}
               </span>
               <span className={metaItemClass}>
-                <strong>Engine:</strong>{' '}
-                {getAICardDisplayEngine(card) || '—'}
+                <strong>Engine:</strong> {card.engine || 'Not recorded'}
               </span>
               {Number(card.isBurned) === 1 && (
                 <span className={`${metaItemClass} ${burnedTagClass}`}>
@@ -148,6 +170,7 @@ export default function AiCards() {
               id="ai-card-image-prompt"
               className={promptInputClass}
               value={promptDraft}
+              disabled={regenerating}
               rows={5}
               onChange={(event) => setPromptDraft(event.target.value)}
             />
@@ -164,6 +187,7 @@ export default function AiCards() {
               {promptDirty && (
                 <button
                   className={resetButtonClass}
+                  disabled={regenerating}
                   onClick={() => setPromptDraft(card.prompt || '')}
                 >
                   Reset
@@ -175,7 +199,7 @@ export default function AiCards() {
               <Button
                 color="green"
                 loading={regenerating}
-                disabled={!promptDraft.trim()}
+                disabled={loading || regenerating || !promptDraft.trim()}
                 onClick={handleRegenerate}
               >
                 <Icon icon="sync" />
@@ -189,6 +213,7 @@ export default function AiCards() {
   );
 
   async function handleLoad() {
+    if (loading || regenerating) return;
     const parsed = Number(cardIdInput) || 0;
     if (!parsed) {
       setError('Enter a valid card ID');
@@ -198,11 +223,14 @@ export default function AiCards() {
     setError('');
     setSuccessMessage('');
     try {
-      const { card: loadedCard } = await loadCard(parsed);
+      const { card: loadedCard, generation: loadedGeneration } =
+        await loadCard(parsed);
       setCard(loadedCard);
+      setGeneration(loadedGeneration);
       setPromptDraft(loadedCard?.prompt || '');
     } catch (loadError: any) {
       setCard(null);
+      setGeneration(null);
       setError(
         loadError?.response?.data?.error ||
           loadError?.message ||
@@ -214,7 +242,7 @@ export default function AiCards() {
   }
 
   async function handleRegenerate() {
-    if (!card || !promptDraft.trim()) return;
+    if (!card || !promptDraft.trim() || regenerating || loading) return;
     setRegenerating(true);
     setError('');
     setSuccessMessage('');
@@ -224,15 +252,17 @@ export default function AiCards() {
         prompt: promptDraft
       });
       setCard((prev) =>
-        prev
+        prev && prev.id === card.id
           ? {
               ...prev,
-              imagePath: result.imagePath || prev.imagePath,
-              prompt: result.prompt ?? prev.prompt
+              imagePath: result.imagePath,
+              prompt: result.prompt,
+              engine: result.engine
             }
           : prev
       );
-      setPromptDraft(result.prompt ?? promptDraft);
+      setGeneration(result.generation);
+      setPromptDraft(result.prompt);
       setSuccessMessage(
         result.promptWasEdited
           ? 'New image generated and the edited sentence saved.'

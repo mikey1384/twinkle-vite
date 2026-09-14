@@ -11,7 +11,8 @@ function fixture(fetch) {
   const d = driver(),
     Chess = () => null,
     Button = () => null,
-    Loading = () => null,
+    BoardFrame = () => null,
+    BoardWrapper = () => null,
     writes = [];
   const Component = compile(
     'src/containers/Chat/Modals/GameModals/ChessModal/ChessGame.tsx',
@@ -23,7 +24,8 @@ function fixture(fetch) {
       },
       '../../../Chess': Chess,
       '~/components/Button': Button,
-      '~/components/Loading': Loading,
+      '../../../Chess/Game/BoardFrame': BoardFrame,
+      '../../../BoardWrapper': BoardWrapper,
       '../../../Chess/helpers/theme': {
         getUserChatSquareColors: () => undefined
       },
@@ -46,7 +48,8 @@ function fixture(fetch) {
     writes,
     Chess,
     Button,
-    Loading,
+    BoardFrame,
+    BoardWrapper,
     render: () => d.render(() => Component(props))
   };
 }
@@ -79,12 +82,23 @@ test('failed board load never exposes Chess; explicit retry recovers without aut
     if (++calls === 1) throw Error('offline');
     return valid;
   });
-  assert.equal(f.render().type, f.Loading);
+  const loading = f.render();
+  assert.equal(loading.type, f.BoardWrapper);
+  assert.equal(
+    nodes(loading, (n) => n.type === f.BoardFrame)[0].props.loading,
+    true
+  );
+  assert.equal(nodes(loading, (n) => n.type === f.Chess).length, 0);
   await settle();
   let tree = f.render();
   assert.equal(calls, 1);
   assert.equal(f.writes.length, 0);
   assert.equal(nodes(tree, (n) => n.props?.role === 'alert').length, 1);
+  assert.equal(tree.type, f.BoardWrapper);
+  assert.equal(
+    nodes(tree, (n) => n.type === f.BoardFrame)[0].props.loading,
+    false
+  );
   nodes(tree, (n) => n.type === f.Button)[0].props.onClick();
   f.render();
   await settle();
@@ -108,7 +122,10 @@ test('scope changes and unmount prevent old board results from updating parent s
   await settle();
   assert.equal(f.render().type, f.Chess);
   f.props.myId = 9;
-  assert.equal(f.render().type, f.Loading);
+  assert.equal(
+    nodes(f.render(), (n) => n.type === f.BoardFrame)[0].props.loading,
+    true
+  );
   f.d.dispose();
   await settle();
   assert.equal(f.d.lateUpdates, 0);

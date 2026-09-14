@@ -16,6 +16,10 @@ import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbe
 import CompactEffortStrip from '~/components/Subjects/CompactEffortStrip';
 import { AttachmentSurface } from '~/components/Subjects/SubjectMediaPreview';
 import RichText from '~/components/Texts/RichText';
+import {
+  HOME_FEED_MARKDOWN_LINE_HEIGHT,
+  homeFeedMarkdownPreviewClass
+} from '../helpers/typography';
 import UsernameText from '~/components/Texts/UsernameText';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
@@ -101,7 +105,7 @@ type PreviewCommentMedia =
     };
 
 const primaryPreviewTextClass = 'home-feed-card__primary-preview-text';
-const homeFeedPreviewLineHeight = 1.36;
+const homeFeedPreviewLineHeight = HOME_FEED_MARKDOWN_LINE_HEIGHT;
 const homeFeedPreviewRichTextStyle: React.CSSProperties = {
   lineHeight: homeFeedPreviewLineHeight
 };
@@ -427,7 +431,7 @@ export default function Body({
                 ) : null}
                 {hasDescriptionText ? (
                   <RichText
-                    className={`home-feed-card__subject-description ${primaryPreviewTextClass}`}
+                    className={`home-feed-card__subject-description ${primaryPreviewTextClass} ${homeFeedMarkdownPreviewClass}`}
                     contentId={contentId}
                     contentType={contentType}
                     hideDictation={isContentAIMessage}
@@ -490,7 +494,7 @@ export default function Body({
                 ) : null}
                 {showSecretAnswer && hasSecretAnswerText ? (
                   <RichText
-                    className={`home-feed-card__subject-secret-text ${primaryPreviewTextClass}`}
+                    className={`home-feed-card__subject-secret-text ${primaryPreviewTextClass} ${homeFeedMarkdownPreviewClass}`}
                     contentId={contentId}
                     contentType={contentType}
                     hideDictation={isContentAIMessage}
@@ -602,7 +606,7 @@ export default function Body({
           {title ? <h3 className={primaryPreviewTextClass}>{title}</h3> : null}
           {textWithoutEmbeds ? (
             <RichText
-              className={primaryPreviewTextClass}
+              className={`${primaryPreviewTextClass} ${homeFeedMarkdownPreviewClass}`}
               contentId={contentId}
               contentType={contentType}
               hideDictation={isContentAIMessage}
@@ -702,7 +706,7 @@ export default function Body({
         ) : null}
         {content?.description ? (
           <RichText
-            className={`home-feed-card__reflection-answer ${primaryPreviewTextClass}`}
+            className={`home-feed-card__reflection-answer ${primaryPreviewTextClass} ${homeFeedMarkdownPreviewClass}`}
             contentId={contentId}
             contentType={contentType}
             hideDictation={isContentAIMessage}
@@ -815,7 +819,7 @@ export default function Body({
       >
         {content?.customInstructions ? (
           <RichText
-            className={primaryPreviewTextClass}
+            className={`${primaryPreviewTextClass} ${homeFeedMarkdownPreviewClass}`}
             contentId={contentId}
             contentType={contentType}
             hideDictation={isContentAIMessage}
@@ -1103,7 +1107,7 @@ export default function Body({
             ) : null}
             {text ? (
               <RichText
-                className={primaryPreviewTextClass}
+                className={`${primaryPreviewTextClass} ${homeFeedMarkdownPreviewClass}`}
                 contentId={contentId}
                 contentType={contentType}
                 hideDictation={isContentAIMessage}

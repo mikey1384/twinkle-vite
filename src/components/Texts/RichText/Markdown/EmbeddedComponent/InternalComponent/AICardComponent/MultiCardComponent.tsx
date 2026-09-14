@@ -2,11 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import AICardModal from '~/components/Modals/AICardModal';
 import Loading from '~/components/Loading';
+import Icon from '~/components/Icon';
+import CardStrip from './CardStrip';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { getAICardCollectionPreviewTitle } from '~/helpers/aiCardEmbedHelpers';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 
 export default function MultiCardComponent({
@@ -125,32 +127,30 @@ export default function MultiCardComponent({
     return (
       <div
         className={`${compactMultiCardClass} compact-ai-card-multi`}
-        role="button"
-        tabIndex={0}
+        role="group"
+        aria-label={title || 'AI cards'}
         onClick={handleCompactPreviewOpen}
-        onKeyDown={handleCompactPreviewKeyDown}
       >
-        <div className="compact-ai-card-multi__title">{title}</div>
+        <div className="compact-ai-card-multi__header">
+          <div className="compact-ai-card-multi__title" title={title}>
+            {title}
+          </div>
+          <Link
+            className="compact-ai-card-multi__browse"
+            to={src}
+            onClick={handleCollectionLinkClick}
+          >
+            View all cards <Icon icon="arrow-right" />
+          </Link>
+        </div>
         {loading || !cardIds ? (
           <div className="compact-ai-card-multi__loading">
             <Loading />
           </div>
         ) : cardIds.length > 0 ? (
-          <div
-            className="compact-ai-card-multi__preview"
-            onClick={handleCompactCardStripClick}
-          >
-            <AICardsPreview
-              compact
-              isAICardModalShown={!!selectedCardId}
-              cardIds={cardIds}
-              moreAICardsModalTitle={title}
-              onSetAICardModalCardId={setSelectedCardId}
-              onLoadMoreClick={() => navigate(src)}
-            />
-          </div>
+          <CardStrip cardIds={cardIds} onSelect={setSelectedCardId} />
         ) : (
-          <div className="compact-ai-card-multi__empty">No Cards Found</div>
+          <div className="compact-ai-card-multi__empty">No cards found</div>
         )}
         {selectedCardId && (
           <AICardModal
@@ -232,20 +232,15 @@ export default function MultiCardComponent({
 
   function handleCompactPreviewOpen(event: React.MouseEvent<HTMLElement>) {
     event.stopPropagation();
+    // Modal portals bubble through React even though they are outside this strip.
+    if (!event.currentTarget.contains(event.target as Node)) return;
     navigate(src);
   }
 
-  function handleCompactCardStripClick(event: React.MouseEvent<HTMLElement>) {
-    event.stopPropagation();
-  }
-
-  function handleCompactPreviewKeyDown(
-    event: React.KeyboardEvent<HTMLElement>
+  function handleCollectionLinkClick(
+    event: React.MouseEvent<HTMLAnchorElement>
   ) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
     event.stopPropagation();
-    navigate(src);
   }
 }
 
@@ -253,44 +248,64 @@ const compactMultiCardClass = css`
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
+  gap: 0.8rem;
   width: 100%;
-  height: 100%;
-  min-height: 16rem;
+  min-width: 0;
+  height: auto;
   padding: 1rem;
-  overflow: hidden;
   border: 1px solid ${Color.borderGray()};
-  border-radius: 0.8rem;
+  border-radius: 1rem;
   background: #fff;
   color: ${Color.darkerGray()};
   font: inherit;
-  text-align: center;
+  line-height: 1.3;
+  text-align: left;
   cursor: pointer;
+  .compact-ai-card-multi__header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    min-width: 0;
+  }
   .compact-ai-card-multi__title {
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     overflow: hidden;
     color: ${Color.black()};
-    font-family: 'Roboto', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 900;
-    line-height: 1.2;
+    font-size: max(1.45rem, 14.5px);
+    font-weight: 800;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
-  .compact-ai-card-multi__preview {
-    display: flex;
-    min-width: 0;
-    max-width: 100%;
-    height: 14rem;
+  .compact-ai-card-multi__browse {
+    display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    gap: 0.6rem;
+    min-height: max(4.4rem, 44px);
+    padding: 0.6rem 0.9rem;
+    border: 1px solid ${Color.logoBlue(0.24)};
+    border-radius: 0.85rem;
+    background: ${Color.logoBlue(0.06)};
+    color: ${Color.logoBlue()};
+    font-size: max(1.2rem, 12px);
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-decoration: none;
   }
-  .compact-ai-card-multi__preview > div {
-    max-width: 100%;
+  .compact-ai-card-multi__browse:focus-visible {
+    outline: 2px solid ${Color.logoBlue()};
+    outline-offset: 2px;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .compact-ai-card-multi__browse:hover {
+      background: ${Color.logoBlue(0.12)};
+    }
   }
   .compact-ai-card-multi__loading,
   .compact-ai-card-multi__empty {
@@ -300,7 +315,7 @@ const compactMultiCardClass = css`
     align-items: center;
     justify-content: center;
     color: ${Color.black()};
-    font-size: 1.1rem;
-    font-weight: 900;
+    font-size: 1.3rem;
+    text-align: center;
   }
 `;

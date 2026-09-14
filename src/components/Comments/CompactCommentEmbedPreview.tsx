@@ -6,6 +6,7 @@ import { getAiEnergyPlaceholderName } from '~/components/Comments/AiEnergySponso
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import RichText from '~/components/Texts/RichText';
+import { compactMarkdownPreviewStyles } from '~/components/Texts/RichText/previewTypography';
 import UsernameText from '~/components/Texts/UsernameText';
 import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -150,10 +151,10 @@ export default function CompactCommentEmbedPreview({
             width: isTargetRoot
               ? '5.45rem'
               : isColumn
-              ? '6rem'
-              : isNested
-              ? '3.4rem'
-              : '4.1rem'
+                ? '6rem'
+                : isNested
+                  ? '3.4rem'
+                  : '4.1rem'
           }}
         />
       </div>
@@ -344,7 +345,11 @@ function MarkdownSubjectPreview({
 
   useEffect(() => {
     const requestKey = `${userId || 0}:${contentId}:subject`;
-    if (!contentId || contentState.loaded || loadingRef.current === requestKey) {
+    if (
+      !contentId ||
+      contentState.loaded ||
+      loadingRef.current === requestKey
+    ) {
       return;
     }
     const requestUserId = userId;
@@ -371,7 +376,10 @@ function MarkdownSubjectPreview({
 
   return (
     <div className="compact-comment-embed__media-tile subject">
-      <CompactSubjectEmbedPreview content={previewContent} contentId={contentId} />
+      <CompactSubjectEmbedPreview
+        content={previewContent}
+        contentId={contentId}
+      />
     </div>
   );
 }
@@ -400,19 +408,22 @@ function MarkdownBuildPreview({
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const hasLoadedBuild = Boolean(contentState.loaded && !contentState.notFound);
-  const previewContent =
-    hasLoadedBuild
-      ? contentState
-      : {
-          contentId,
-          contentType: 'build',
-          id: contentId,
-          title: label
-        };
+  const previewContent = hasLoadedBuild
+    ? contentState
+    : {
+        contentId,
+        contentType: 'build',
+        id: contentId,
+        title: label
+      };
 
   useEffect(() => {
     const requestKey = `${userId || 0}:${contentId}:build`;
-    if (!contentId || contentState.loaded || loadingRef.current === requestKey) {
+    if (
+      !contentId ||
+      contentState.loaded ||
+      loadingRef.current === requestKey
+    ) {
       return;
     }
     const requestUserId = userId;
@@ -851,11 +862,14 @@ const compactCommentEmbedPreviewClass = css`
   .compact-comment-embed__media-tile.attachment > div {
     height: 100%;
   }
+  /* Internal cards (including error replacements) own their frame. */
   .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal {
     display: flex;
     align-items: stretch;
     justify-content: stretch;
     padding: 0;
+    border: 0;
+    background: transparent;
   }
   .compact-comment-embed__media-tile.home-feed-card__rich-embed-internal > * {
     width: 100%;
@@ -1137,33 +1151,49 @@ const compactCommentEmbedPreviewClass = css`
     }
   }
   @container (max-width: 28rem) {
-    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column),
-    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column) {
+    &.compact-comment-embed--has-media:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column),
+    &.compact-comment-embed--media-only:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column) {
       grid-template-columns: 4.2rem minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr) auto;
       align-items: stretch;
       gap: 0.55rem 0.7rem;
       padding: 0.6rem;
     }
-    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
+    &.compact-comment-embed--has-media:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
       > .compact-comment-embed__avatar,
-    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
+    &.compact-comment-embed--media-only:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
       > .compact-comment-embed__avatar {
       grid-column: 1;
       grid-row: 2;
       align-self: center;
     }
-    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
+    &.compact-comment-embed--has-media:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
       > .compact-comment-embed__copy,
-    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
+    &.compact-comment-embed--media-only:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
       > .compact-comment-embed__copy {
       grid-column: 2;
       grid-row: 2;
       align-self: center;
     }
-    &.compact-comment-embed--has-media:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
+    &.compact-comment-embed--has-media:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
       > .compact-comment-embed__media,
-    &.compact-comment-embed--media-only:not(.compact-comment-embed--target-root):not(.compact-comment-embed--column)
+    &.compact-comment-embed--media-only:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
       > .compact-comment-embed__media {
       grid-column: 1 / -1;
       grid-row: 1;
@@ -1266,4 +1296,9 @@ const compactCommentEmbedPreviewClass = css`
     justify-self: stretch;
     aspect-ratio: auto;
   }
+
+  /* Media embeds are rendered separately from this text root. */
+  ${compactMarkdownPreviewStyles(
+    '&& > .compact-comment-embed__copy > [data-rich-text-body]'
+  )}
 `;

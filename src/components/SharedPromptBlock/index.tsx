@@ -107,7 +107,9 @@ export default function SharedPromptBlock({
           <h3 className={titleClass}>{title}</h3>
         )
       ) : null}
-      {meta ? <div className={cx(metaClass, 'shared-prompt__meta')}>{meta}</div> : null}
+      {meta ? (
+        <div className={cx(metaClass, 'shared-prompt__meta')}>{meta}</div>
+      ) : null}
       {stats?.length ? (
         <div className={statsClass}>
           {stats.map((stat) =>
@@ -212,18 +214,6 @@ const blockClass = css`
   &.compact:not(.panel) {
     height: auto;
     align-self: flex-start;
-  }
-
-  /* In a post's embed slot the frame belongs to the slot — the same grey
-     border an image, comment or video embed gets there — so the block drops
-     its own rather than drawing a second one. (The target-comment slot is the
-     opposite: it strips its tiles' frames and lets each embed's own card show,
-     so the block keeps its frame there.) */
-  .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--shared-prompt
-    & {
-    border: 0;
-    border-radius: 0;
-    background: transparent;
   }
 `;
 

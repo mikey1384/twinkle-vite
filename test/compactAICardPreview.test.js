@@ -15,10 +15,6 @@ const multiCardSource = readFileSync(
   ),
   'utf8'
 );
-const multiCardPreviewBranch = multiCardSource.slice(
-  multiCardSource.indexOf('  if (isPreview) {'),
-  multiCardSource.indexOf('  return loading ?')
-);
 
 function assertNoSubOneRemText(sourceText, label) {
   for (const match of sourceText.matchAll(/font-size:\s*([0-9.]+)rem/g)) {
@@ -61,43 +57,15 @@ assert.doesNotMatch(
 );
 assertNoSubOneRemText(source, 'CompactPreview');
 
-assert.match(
-  multiCardPreviewBranch,
-  /className={`\$\{compactMultiCardClass} compact-ai-card-multi`}/
-);
-assert.match(multiCardPreviewBranch, /role="button"/);
-assert.match(multiCardPreviewBranch, /onClick={handleCompactPreviewOpen}/);
-assert.match(multiCardPreviewBranch, /onKeyDown={handleCompactPreviewKeyDown}/);
-assert.match(multiCardPreviewBranch, /compact-ai-card-multi__title/);
-assert.match(multiCardPreviewBranch, /compact-ai-card-multi__preview/);
-assert.match(multiCardPreviewBranch, /onClick={handleCompactCardStripClick}/);
-assert.match(multiCardPreviewBranch, /<AICardsPreview/);
-assert.match(multiCardPreviewBranch, /isAICardModalShown={!!selectedCardId}/);
-assert.match(multiCardPreviewBranch, /cardIds={cardIds}/);
-assert.match(multiCardPreviewBranch, /onSetAICardModalCardId={setSelectedCardId}/);
-assert.match(
-  multiCardPreviewBranch,
-  /onLoadMoreClick=\{\(\) => navigate\(src\)\}/
-);
-assert.match(multiCardPreviewBranch, /<AICardModal/);
-assert.match(multiCardSource, /function handleCompactPreviewOpen/);
-assert.match(multiCardSource, /function handleCompactCardStripClick/);
-assert.match(multiCardSource, /function handleCompactPreviewKeyDown/);
-assert.match(multiCardSource, /navigate\(src\);/);
-assert.doesNotMatch(multiCardSource, /handleCompactMoreClick/);
-assert.doesNotMatch(multiCardSource, /CompactThumb/);
-assert.doesNotMatch(
-  multiCardPreviewBranch,
-  /onClick=\{\(\) => setSelectedCardId\(cardId\)\}/
-);
+// Collection navigation, keyboard activation and thumbnail containment are
+// exercised in aiCardCollectionPreview.browser.test.js against the real UI.
 assertNoSubOneRemText(multiCardSource, 'MultiCardComponent');
-assert.match(
-  multiCardSource,
-  /\.compact-ai-card-multi__title \{[\s\S]*font-size: 1\.2rem;/
-);
 assert.match(multiCardSource, /border: 1px solid \$\{Color\.borderGray\(\)\};/);
 assert.doesNotMatch(
-  multiCardSource,
+  multiCardSource.slice(
+    multiCardSource.indexOf('const compactMultiCardClass'),
+    multiCardSource.indexOf('  .compact-ai-card-multi__header')
+  ),
   /border: 1(?:\.5)?px solid \$\{Color\.logoBlue/
 );
 

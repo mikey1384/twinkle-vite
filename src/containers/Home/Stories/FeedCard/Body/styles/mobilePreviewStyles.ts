@@ -511,7 +511,7 @@ export const mobilePreviewStyles = `
         padding: 0.24rem 0.36rem;
         font-size: max(1.02rem, 10.2px);
       }
-    h3 {
+    h3:where(:not(.rich-text--block-preview *), .rich-text-embedded-component *) {
       font-size: 1.5rem;
     }
     .home-feed-card__subject-preview .home-feed-card__subject-title {

@@ -26,7 +26,20 @@ test('Home feed preview RichText computes the standard card line-height in a bro
   }
 
   const bodySource = readFileSync(BODY_SOURCE_URL, 'utf8');
-  assert.match(bodySource, /const homeFeedPreviewLineHeight = 1\.36;/);
+  assert.match(
+    bodySource,
+    /const homeFeedPreviewLineHeight = HOME_FEED_MARKDOWN_LINE_HEIGHT;/
+  );
+  assert.match(
+    readFileSync(
+      new URL(
+        '../src/containers/Home/Stories/FeedCard/helpers/typography.ts',
+        import.meta.url
+      ),
+      'utf8'
+    ),
+    /HOME_FEED_MARKDOWN_LINE_HEIGHT = 1\.36;/
+  );
   assert.match(
     bodySource,
     /const homeFeedPreviewRichTextStyle: React\.CSSProperties = \{\s+lineHeight: homeFeedPreviewLineHeight\s+\};/
