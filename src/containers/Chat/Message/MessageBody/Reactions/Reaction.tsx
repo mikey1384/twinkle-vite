@@ -163,6 +163,10 @@ function Reaction({
             border-radius: 999px 0 0 999px;
             background: var(--chat-reaction-selection);
           }
+          > button:only-of-type::before {
+            right: 4px;
+            border-radius: 999px;
+          }
           > button:nth-of-type(2)::before {
             right: 4px;
             border-left: 1px solid ${Color.borderGray()};
@@ -202,7 +206,7 @@ function Reaction({
         disabled={isPending}
         style={{
           appearance: 'none',
-          borderRadius: '999px 0 0 999px',
+          borderRadius: reactionCount > 0 ? '999px 0 0 999px' : '999px',
           border: 0,
           boxSizing: 'border-box',
           color: Color.darkGray(),
@@ -228,24 +232,28 @@ function Reaction({
           />
         ) : null}
       </button>
-      <button
-        type="button"
-        aria-label={`See ${reactionCount} ${reactionCount === 1 ? 'person' : 'people'} who reacted with ${reactionLabel}`}
-        aria-haspopup="dialog"
-        aria-describedby={tooltipContext ? tooltipId : undefined}
-        disabled={reactionCount === 0}
-        style={{
-          appearance: 'none',
-          borderRadius: '0 999px 999px 0', padding: '3px 8px', fontFamily: 'inherit',
-          fontSize: 13, fontWeight: 600, color: '#334155', background: 'transparent',
-          cursor: reactionCount ? 'pointer' : 'default'
-        }}
-        onClick={(event) => {
-          event.stopPropagation();
-          setTooltipContext(null);
-          setUserListModalShown(true);
-        }}
-      >{reactionCount}</button>
+      {reactionCount > 0 && (
+        <button
+          type="button"
+          aria-label={`See ${reactionCount} ${reactionCount === 1 ? 'person' : 'people'} who reacted with ${reactionLabel}`}
+          aria-haspopup="dialog"
+          aria-describedby={tooltipContext ? tooltipId : undefined}
+          disabled={reactionCount === 0}
+          style={{
+            appearance: 'none',
+            borderRadius: '0 999px 999px 0', padding: '3px 8px', fontFamily: 'inherit',
+            fontSize: 13, fontWeight: 600, color: '#334155', background: 'transparent',
+            cursor: reactionCount ? 'pointer' : 'default'
+          }}
+          onClick={(event) => {
+            event.stopPropagation();
+            setTooltipContext(null);
+            setUserListModalShown(true);
+          }}
+        >
+          {reactionCount}
+        </button>
+      )}
       {tooltipContext && reactionCount > 0 && (
         <Tooltip
           id={tooltipId}
