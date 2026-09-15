@@ -3,7 +3,25 @@
 // answer keys are never included); these helpers only phrase it.
 
 export type BuildRewardReviewStatus =
-  'pending' | 'approved' | 'rejected' | 'superseded' | 'revoked';
+  | 'pending'
+  | 'changes_offered'
+  | 'approved'
+  | 'rejected'
+  | 'superseded'
+  | 'revoked';
+
+export interface BuildRewardReviewProposalSummary {
+  revision?: number;
+  note?: string;
+  offeredAt?: number;
+  changedFiles?: Array<{ path?: string; status?: string }>;
+  diffSummary?: {
+    total?: number;
+    added?: number;
+    updated?: number;
+    deleted?: number;
+  };
+}
 
 export interface BuildRewardReviewRuleSummary {
   id?: string;
@@ -25,6 +43,12 @@ export interface BuildRewardReviewCardPayload {
   closedBySave?: boolean;
   reason?: string;
   sourceVersionId?: number;
+  // Approval publishes: the version that went live, once it did.
+  publishedArtifactVersionId?: number | null;
+  // The creator turned the reviewer's proposed changes down.
+  declinedByCreator?: boolean;
+  // The reviewer's proposed changes, while offered (and after, for history).
+  proposal?: BuildRewardReviewProposalSummary | null;
   rules?: BuildRewardReviewRuleSummary[];
   budgets?: {
     dailyXP?: number;
@@ -41,6 +65,7 @@ export interface BuildRewardReviewCardPayload {
 
 const REVIEW_STATUSES: ReadonlySet<string> = new Set([
   'pending',
+  'changes_offered',
   'approved',
   'rejected',
   'superseded',
@@ -90,13 +115,18 @@ export function formatBuildRewardRulesSummary(
 
 export function getBuildRewardReviewBannerText(
   status: BuildRewardReviewStatus,
-  closedBySave = false
+  closedBySave = false,
+  declinedByCreator = false
 ) {
   switch (status) {
+    case 'changes_offered':
+      return 'The admin suggested changes';
     case 'approved':
       return 'Reward release approved';
     case 'rejected':
-      return 'Reward release declined';
+      return declinedByCreator
+        ? 'Reward review closed · changes declined'
+        : 'Reward release declined';
     case 'superseded':
       return closedBySave
         ? 'Reward review closed · a newer version was saved'
@@ -112,6 +142,8 @@ export function getBuildRewardReviewStatusLabel(
   status: BuildRewardReviewStatus
 ) {
   switch (status) {
+    case 'changes_offered':
+      return 'Waiting for the creator';
     case 'approved':
       return 'Approved';
     case 'rejected':
@@ -142,4 +174,24 @@ export function parseBuildRewardReviewFocusId(search: string) {
   } catch {
     return 0;
   }
+}
+
+// "3 files changed · 1 added" — the proposal chip on the card.
+export function formatBuildRewardProposalSummary(
+  proposal?: BuildRewardReviewProposalSummary | null
+) {
+  const summary = proposal?.diffSummary || {};
+  const total = Math.max(
+    0,
+    Math.floor(
+      Number(summary.total ?? (proposal?.changedFiles || []).length) || 0
+    )
+  );
+  if (total === 0) return 'No file changes';
+  const parts = [
+    `${total} ${total === 1 ? 'file' : 'files'} changed`,
+    summary.added ? `${summary.added} added` : '',
+    summary.deleted ? `${summary.deleted} removed` : ''
+  ].filter(Boolean);
+  return parts.join(' · ');
 }

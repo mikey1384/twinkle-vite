@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  formatBuildRewardProposalSummary,
   formatBuildRewardRulesSummary,
   getBuildRewardReviewBannerText,
   getBuildRewardReviewManagementPath,
@@ -38,8 +39,15 @@ test('rule summary reports the count and the largest per-rule amounts', () => {
 });
 
 test('missing or malformed rules never produce NaN or crash the card', () => {
-  assert.equal(formatBuildRewardRulesSummary(undefined), 'No earning rules');
-  assert.equal(formatBuildRewardRulesSummary([]), 'No earning rules');
+  // A request carries no rules until the reviewer writes them at approval.
+  assert.equal(
+    formatBuildRewardRulesSummary(undefined),
+    'Earning rules set by the admin at approval'
+  );
+  assert.equal(
+    formatBuildRewardRulesSummary([]),
+    'Earning rules set by the admin at approval'
+  );
   assert.deepEqual(
     summarizeBuildRewardRules([
       { xp: 'lots' as unknown as number, coins: null },
@@ -56,6 +64,7 @@ test('missing or malformed rules never produce NaN or crash the card', () => {
 test('status is normalized to the review states the server records', () => {
   for (const status of [
     'pending',
+    'changes_offered',
     'approved',
     'rejected',
     'superseded',
@@ -69,10 +78,30 @@ test('status is normalized to the review states the server records', () => {
     getBuildRewardReviewBannerText('pending'),
     'Sent for XP & Coin reward review'
   );
-  assert.equal(getBuildRewardReviewStatusLabel('pending'), 'Waiting for review');
+  assert.equal(
+    getBuildRewardReviewStatusLabel('pending'),
+    'Waiting for review'
+  );
+  // Older approvals may still be unpublished, and a published app can be hidden later.
   assert.equal(getBuildRewardReviewStatusLabel('approved'), 'Approved');
+  assert.equal(
+    getBuildRewardReviewBannerText('approved'),
+    'Reward release approved'
+  );
+  assert.equal(
+    getBuildRewardReviewStatusLabel('changes_offered'),
+    'Waiting for the creator'
+  );
+  assert.equal(
+    getBuildRewardReviewBannerText('changes_offered'),
+    'The admin suggested changes'
+  );
+  assert.equal(
+    getBuildRewardReviewBannerText('rejected', false, true),
+    'Reward review closed · changes declined'
+  );
   assert.equal(getBuildRewardReviewStatusLabel('rejected'), 'Declined');
-  assert.equal(getBuildRewardReviewStatusLabel('superseded'), 'Superseded');
+  assert.equal(getBuildRewardReviewStatusLabel('superseded'), 'Closed');
   assert.equal(getBuildRewardReviewStatusLabel('revoked'), 'Revoked');
 });
 
@@ -85,4 +114,26 @@ test('the card deep-links to the Management approvals panel on that review', () 
   assert.equal(parseBuildRewardReviewFocusId('?rewardReview=42'), 42);
   assert.equal(parseBuildRewardReviewFocusId('?rewardReview=abc'), 0);
   assert.equal(parseBuildRewardReviewFocusId(''), 0);
+});
+
+test('the proposal chip counts changed files without ever showing contents', () => {
+  assert.equal(formatBuildRewardProposalSummary(null), 'No file changes');
+  assert.equal(
+    formatBuildRewardProposalSummary({
+      diffSummary: { total: 3, added: 1, updated: 2, deleted: 0 }
+    }),
+    '3 files changed · 1 added'
+  );
+  assert.equal(
+    formatBuildRewardProposalSummary({
+      changedFiles: [{ path: '/index.html', status: 'updated' }]
+    }),
+    '1 file changed'
+  );
+  assert.equal(
+    formatBuildRewardProposalSummary({
+      diffSummary: { total: 2, added: 0, updated: 1, deleted: 1 }
+    }),
+    '2 files changed · 1 removed'
+  );
 });

@@ -31,9 +31,7 @@ interface UseBuildRunRecoveryOptions {
   dedupedProcessingRecoveryStatus: string;
   dedupedProcessingReconcileIntervalMs: number;
   getActiveBuildId: () => number;
-  getBuildRunIdentity: (
-    buildId: number
-  ) => SharedBuildRunIdentityState | null;
+  getBuildRunIdentity: (buildId: number) => SharedBuildRunIdentityState | null;
   getCurrentPageRunActivityRequestId: (
     sharedRunState?: SharedBuildRunIdentityState | null
   ) => string;
@@ -103,7 +101,7 @@ export default function useRunRecovery({
       ? 'Stopping...'
       : runOrchestration.isDedupedProcessingInFlight(normalizedRequestId)
         ? dedupedProcessingRecoveryStatus
-        : 'Still working... reconnecting to Lumine.';
+        : 'Checking your request’s status…';
     if (
       String(sharedBuildRun?.requestId || '').trim() === normalizedRequestId &&
       String(sharedBuildRun?.status || '').trim() === nextStatus
@@ -138,9 +136,8 @@ export default function useRunRecovery({
   }
 
   function beginDedupedProcessingRecovery(requestId: string) {
-    const normalizedRequestId = runOrchestration.beginDedupedProcessingRecovery(
-      requestId
-    );
+    const normalizedRequestId =
+      runOrchestration.beginDedupedProcessingRecovery(requestId);
     if (!normalizedRequestId) return;
     reconcileDedupedProcessingRequest(normalizedRequestId);
   }
@@ -202,7 +199,8 @@ export default function useRunRecovery({
   function recoverStalledActiveBuildRun(requestId: string) {
     const normalizedRequestId = String(requestId || '').trim();
     if (!normalizedRequestId) return;
-    const latestSharedRunIdentityState = getBuildRunIdentity(getActiveBuildId());
+    const latestSharedRunIdentityState =
+      getBuildRunIdentity(getActiveBuildId());
     if (
       runOrchestration.isStalledRunRecoveryInFlight() ||
       !hasCurrentPageRunActivity(latestSharedRunIdentityState) ||
@@ -224,9 +222,8 @@ export default function useRunRecovery({
     }
     runOrchestration.beginStalledRunRecovery(now);
     try {
-      const didShowRecoveryStatus = updateSharedStalledRunRecoveryStatus(
-        normalizedRequestId
-      );
+      const didShowRecoveryStatus =
+        updateSharedStalledRunRecoveryStatus(normalizedRequestId);
       if (didShowRecoveryStatus) {
         setMobilePanelTab('lumine');
         scrollChatToBottom();

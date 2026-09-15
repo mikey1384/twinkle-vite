@@ -29,6 +29,8 @@ import ViewAppVersionModal from './ViewAppVersionModal';
 import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
 import RewardApprovalNotice from '~/components/Build/Rewards/RewardApprovalNotice';
 import useRewardStatus from '~/components/Build/Rewards/useRewardStatus';
+import { getBuildRewardReviewManagementPath } from '~/helpers/buildRewardReviewCard';
+import Button from '~/components/Button';
 import { rewardApprovalPresentation } from '~/components/Build/Rewards/approvalPresentation';
 import {
   BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
@@ -415,6 +417,14 @@ interface HeaderProps {
     rootBuildProfilePicUrl?: string | null;
     rootBuildSourceBuildId?: number | null;
     rootBuildTitle?: string | null;
+    // Present on a reviewer's private proposal copy of a submitted app.
+    rewardReviewProposal?: {
+      reviewId: number;
+      rootBuildId: number;
+      rootTitle: string;
+      status: string;
+      offeredAt: number | null;
+    } | null;
   };
   forking: boolean;
   canEditMetadata: boolean;
@@ -450,6 +460,8 @@ interface HeaderProps {
   onOpenDescriptionModal: () => void;
   onOpenThumbnailModal: () => void;
   onSaveRewardCode: () => Promise<boolean>;
+  // Accepting an admin proposal rewrote the saved app on the server.
+  onRewardProposalAccepted?: () => void | Promise<void>;
   rewardApprovalPrompt: number;
   hasUnsavedRewardChanges: boolean;
   rewardsBeingPrepared: boolean;
@@ -691,6 +703,7 @@ export default function Header({
   onOpenThumbnailModal,
   onSaveRewardCode,
   rewardApprovalPrompt,
+  onRewardProposalAccepted,
   hasUnsavedRewardChanges,
   rewardsBeingPrepared,
   onTogglePublish,
@@ -708,6 +721,7 @@ export default function Header({
   );
   const isContributionFork =
     build.contributionStatus && build.contributionStatus !== 'none';
+  const navigate = useNavigate();
   const rewardChangeKey = `${build.currentArtifactVersionId}:${build.projectFilesHash}:${build.isPublic}:${hasUnsavedRewardChanges}:${rewardsBeingPrepared}`;
   const rewardStatus = useRewardStatus(
     Number(build.id),
@@ -1311,6 +1325,33 @@ export default function Header({
           ) : null}
         </div>
       ) : null}
+      {isOwner && build.rewardReviewProposal ? (
+        <div className={proposalNoticeClass} role="status">
+          <span>
+            <strong>Review proposal</strong> · your private copy of{' '}
+            <strong>{build.rewardReviewProposal.rootTitle}</strong>. Edit and
+            save here, then offer these changes to the creator from
+            Management.
+            {build.rewardReviewProposal.status === 'changes_offered'
+              ? ' An offer is already waiting for the creator; offering again replaces it.'
+              : ''}
+          </span>
+          <Button
+            variant="outline"
+            color="logoBlue"
+            size="sm"
+            onClick={() =>
+              navigate(
+                getBuildRewardReviewManagementPath(
+                  build.rewardReviewProposal?.reviewId || 0
+                )
+              )
+            }
+          >
+            Offer to creator
+          </Button>
+        </div>
+      ) : null}
       {isOwner && !isContributionFork && (
         <RewardApprovalNotice
           settings={rewardStatus.settings}
@@ -1333,6 +1374,7 @@ export default function Header({
             rewardStatus.refresh();
           }}
           onStatusChange={rewardStatus.refresh}
+          onAccepted={onRewardProposalAccepted}
           hasUnsavedChanges={hasUnsavedRewardChanges}
           agentEditing={rewardsBeingPrepared}
           changeKey={rewardChangeKey}
@@ -1476,3 +1518,21 @@ function formatContributionStatusLabel(
   if (status === 'merging') return 'Finishing';
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
+
+const proposalNoticeClass = css`
+  grid-column: 1 / -1;
+  flex: 0 0 100%;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 12px;
+  color: #1e3a8a;
+  font-size: 1.1rem;
+`;

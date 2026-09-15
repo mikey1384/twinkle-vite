@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -11,7 +11,11 @@ import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { parseBuildRewardReviewFocusId } from '~/helpers/buildRewardReviewCard';
+import {
+  formatBuildRewardProposalSummary,
+  parseBuildRewardReviewFocusId
+} from '~/helpers/buildRewardReviewCard';
+import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import {
   rewardPanelClass,
   RewardReviewDetails
@@ -40,27 +44,36 @@ const PAGE_SIZE = 5;
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Waiting for review',
-  approved: 'Approved',
+  changes_offered: 'Waiting for the creator',
+  approved: 'Approved · live',
   rejected: 'Declined',
   revoked: 'Revoked',
   superseded: 'Closed'
 };
 
-// Only a pending request can be approved or rejected and only an approval can
-// be revoked; every other status is history and gets no buttons.
+// A pending request (or one whose proposal awaits the creator) can be
+// approved, rejected or given a proposal; only an approval can be revoked;
+// every other status is history and gets no buttons.
 function isDecidable(status: string) {
-  return status === 'pending' || status === 'approved';
+  return (
+    status === 'pending' || status === 'changes_offered' || status === 'approved'
+  );
+}
+
+function isOpenRequest(status: string) {
+  return status === 'pending' || status === 'changes_offered';
 }
 
 function statusColorKey(status: string) {
   if (status === 'approved') return 'limeGreen';
   if (status === 'rejected' || status === 'revoked') return 'redOrange';
-  if (status === 'pending') return 'logoBlue';
+  if (status === 'pending' || status === 'changes_offered') return 'logoBlue';
   return 'gray';
 }
 
 export default function BuildRewardApprovals() {
   const location = useLocation();
+  const navigate = useNavigate();
   // /management?rewardReview=<id> (the chat card's button) opens straight on
   // that review so the reviewer never has to find it in the list.
   const focusReviewId = parseBuildRewardReviewFocusId(location.search);
@@ -81,6 +94,12 @@ export default function BuildRewardApprovals() {
   const decideReview = useAppContext(
     (v) => v.requestHelpers.decideBuildRewardReview
   );
+  const openProposalWorkspace = useAppContext(
+    (v) => v.requestHelpers.openBuildRewardReviewWorkspace
+  );
+  const proposeChanges = useAppContext(
+    (v) => v.requestHelpers.proposeBuildRewardReviewChanges
+  );
   const [data, setData] = useState<{
     canReview: boolean;
     reviews: RewardReview[];
@@ -93,6 +112,7 @@ export default function BuildRewardApprovals() {
   const [reason, setReason] = useState('');
   const [rulesText, setRulesText] = useState('');
   const [rulesError, setRulesError] = useState('');
+  const [proposalError, setProposalError] = useState('');
   // Rules typed for a review survive collapsing it or switching to another
   // review; they are dropped only once a decision on that review is saved.
   const [rulesDrafts, setRulesDrafts] = useState<Record<number, string>>({});
@@ -136,6 +156,9 @@ export default function BuildRewardApprovals() {
   const pendingCount = reviews.filter(
     (review) => review.status === 'pending'
   ).length;
+  const offeredCount = reviews.filter(
+    (review) => review.status === 'changes_offered'
+  ).length;
   const shownReviews = reviews.slice(0, numShown);
   const moreLocally = reviews.length > numShown;
   const loadMoreShown = moreLocally || Boolean(data?.nextCursor);
@@ -166,16 +189,23 @@ export default function BuildRewardApprovals() {
         <div className={introClass}>
           <p>
             Creators send their saved code. You read it, write the earning
-            rules, and approve both together. Editing the code afterwards needs
-            another review, and revoking a live approval stops new awards
-            immediately.
+            rules, and approve both together: approval publishes that exact
+            version immediately. You can also edit a private copy and offer
+            it as the condition of approval; the creator accepts (which
+            publishes your version) or declines. Revoking a live approval
+            stops new awards immediately.
           </p>
           <p>
             {pendingCount === 0
               ? 'Nothing is waiting for review.'
               : `${pendingCount} ${
                   pendingCount === 1 ? 'request is' : 'requests are'
-                } waiting for review.`}{' '}
+                } waiting for review.`}
+            {offeredCount > 0
+              ? ` ${offeredCount} ${
+                  offeredCount === 1 ? 'proposal is' : 'proposals are'
+                } waiting for a creator's answer.`
+              : ''}{' '}
             The same queue is available as{' '}
             <code>lumine admin reward-review</code>.
           </p>
@@ -299,9 +329,70 @@ export default function BuildRewardApprovals() {
             </div>
             <ReviewerContext review={selected} />
             <RewardReviewDetails review={selected} />
+            {isOpenRequest(selected.status) && (
+              <div className={rewardPanelClass}>
+                <h4>Propose changes instead</h4>
+                <p>
+                  Open a private copy of this exact submitted version in your
+                  own workspace, edit it (Lumine included), save, then come
+                  back here and offer it. The creator sees every changed line
+                  and either accepts, which publishes your version with the
+                  rules below, or declines, which closes the request. Nothing
+                  here joins the creator’s team.
+                </p>
+                {selected.proposal ? (
+                  <p>
+                    <strong>Offered:</strong>{' '}
+                    {formatBuildRewardProposalSummary(selected.proposal)}
+                    {selected.proposal.offeredAt
+                      ? ` · ${timeSince(selected.proposal.offeredAt)}`
+                      : ''}
+                    {selected.proposal.changedFiles.length > 0
+                      ? ` · ${selected.proposal.changedFiles
+                          .map((file) => file.path)
+                          .join(', ')}`
+                      : ''}
+                    . Saving new edits in the copy and offering again replaces
+                    it.
+                  </p>
+                ) : null}
+                <div className={actionsClass}>
+                  <Button
+                    variant="outline"
+                    color="logoBlue"
+                    disabled={busy}
+                    onClick={handleOpenProposalWorkspace}
+                  >
+                    <Icon icon="code-branch" />
+                    <span style={{ marginLeft: '0.7rem' }}>
+                      {selected.proposalBuildId
+                        ? 'Open my copy'
+                        : 'Edit a copy to propose changes'}
+                    </span>
+                  </Button>
+                  {selected.proposalBuildId ? (
+                    <Button
+                      color="logoBlue"
+                      variant="solid"
+                      tone="raised"
+                      disabled={busy}
+                      onClick={handlePropose}
+                    >
+                      <Icon icon="paper-plane" />
+                      <span style={{ marginLeft: '0.7rem' }}>
+                        {selected.status === 'changes_offered'
+                          ? 'Offer my latest copy again'
+                          : 'Offer my copy with these rules'}
+                      </span>
+                    </Button>
+                  ) : null}
+                </div>
+                {proposalError && <p role="alert">{proposalError}</p>}
+              </div>
+            )}
             {isDecidable(selected.status) && (
               <div className={rewardPanelClass}>
-                {selected.status === 'pending' && (
+                {isOpenRequest(selected.status) && (
                   <label>
                     Earning rules to approve (JSON)
                     <span className={hintClass}>
@@ -327,7 +418,8 @@ export default function BuildRewardApprovals() {
                 <label>
                   Review note
                   <span className={hintClass}>
-                    Required for rejection or revocation. The creator reads it.
+                    The creator reads it. Required for rejection or
+                    revocation; with a proposal it explains your changes.
                   </span>
                   <textarea
                     maxLength={1000}
@@ -336,7 +428,7 @@ export default function BuildRewardApprovals() {
                   />
                 </label>
                 <div className={actionsClass}>
-                  {selected.status === 'pending' ? (
+                  {isOpenRequest(selected.status) ? (
                     <>
                       <Button
                         color={successColor}
@@ -347,7 +439,9 @@ export default function BuildRewardApprovals() {
                       >
                         <Icon icon="check" />
                         <span style={{ marginLeft: '0.7rem' }}>
-                          Approve with these rules
+                          {selected.status === 'changes_offered'
+                            ? 'Approve as submitted & publish'
+                            : 'Approve & publish'}
                         </span>
                       </Button>
                       <Button
@@ -500,6 +594,84 @@ export default function BuildRewardApprovals() {
     }
   }
 
+  function parseRulesForOffer(): RewardConfig | null {
+    let config: RewardConfig | undefined;
+    try {
+      config = JSON.parse(rulesText);
+    } catch {
+      setRulesError('The earning rules must be valid JSON.');
+      return null;
+    }
+    if (!Array.isArray(config?.rules) || config.rules.length === 0) {
+      setRulesError(
+        'Write at least one earning rule before offering changes. The server refuses a proposal with no rules.'
+      );
+      return null;
+    }
+    return config;
+  }
+
+  async function handleOpenProposalWorkspace() {
+    if (!selected || busy) return;
+    setBusy(true);
+    setProposalError('');
+    try {
+      const result = await openProposalWorkspace(selected.id);
+      const proposalBuildId = Number(result?.buildId || 0);
+      if (!proposalBuildId) throw new Error('No workspace was created.');
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              reviews: current.reviews.map((r) =>
+                r.id === selected.id ? { ...r, proposalBuildId } : r
+              )
+            }
+          : current
+      );
+      navigate(getBuildWorkspacePath({ id: proposalBuildId }));
+    } catch (err) {
+      setProposalError(
+        err instanceof Error
+          ? err.message
+          : 'Could not open the proposal workspace.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handlePropose() {
+    if (!selected || busy) return;
+    const config = parseRulesForOffer();
+    if (!config) return;
+    setBusy(true);
+    setProposalError('');
+    setError('');
+    try {
+      const review = await proposeChanges(selected.id, {
+        config,
+        reason: reason.trim()
+      });
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              reviews: current.reviews.map((r) =>
+                r.id === selected.id ? { ...r, ...review } : r
+              )
+            }
+          : current
+      );
+    } catch (err) {
+      setProposalError(
+        err instanceof Error ? err.message : 'Could not offer these changes.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleDecision(decision: string) {
     if (!selected || busy) return;
     let config: RewardConfig | undefined;
@@ -567,6 +739,22 @@ function ReviewerContext({ review }: { review: RewardReview }) {
         </p>
       )}
       {review.isLive && <p>This is the approval currently paying out.</p>}
+      {review.status === 'changes_offered' && (
+        <p>
+          Your proposed changes are waiting for the creator. They can accept
+          (your version is approved and published) or decline (the request
+          closes). You can still approve or reject the version as submitted.
+        </p>
+      )}
+      {review.status === 'rejected' && review.declinedByCreator && (
+        <p>The creator declined the proposed changes, which closed this request.</p>
+      )}
+      {review.publishedArtifactVersionId && review.status === 'approved' && (
+        <p>
+          Published on approval as artifact version{' '}
+          {review.publishedArtifactVersionId}.
+        </p>
+      )}
       {review.awarded && (review.awarded.awards > 0 || review.isLive) && (
         <p>
           Paid out by this approval: {review.awarded.awards} awards to{' '}

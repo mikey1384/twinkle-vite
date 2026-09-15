@@ -297,7 +297,9 @@ export default function Composer({
             size="md"
             icon="stop"
             style={{ minWidth: '3rem' }}
-          />
+          >
+            Stop
+          </GameCTAButton>
         ) : null}
       </div>
     </div>

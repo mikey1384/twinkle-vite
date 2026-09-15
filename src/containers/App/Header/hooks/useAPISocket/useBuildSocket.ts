@@ -672,7 +672,11 @@ export default function useBuildSocket() {
       projectFiles?: Array<{ path: string; content?: string }> | null;
       projectFilesHash?: string | null;
       interruptionReason?:
-        'tool_limit' | 'energy_depleted' | 'energy_budget' | 'awaiting_approval' | null;
+        | 'tool_limit'
+        | 'energy_depleted'
+        | 'energy_budget'
+        | 'awaiting_approval'
+        | null;
       executionPlan?: any | null;
       followUpPrompt?: {
         question?: string | null;
@@ -825,7 +829,10 @@ export default function useBuildSocket() {
       runMode,
       error,
       requestLimits,
-      lifecycle
+      lifecycle,
+      code,
+      activeRequestId,
+      activeBuildId
     }: {
       requestId?: string;
       buildId?: number | null;
@@ -833,6 +840,9 @@ export default function useBuildSocket() {
       error?: string;
       requestLimits?: any | null;
       lifecycle?: Record<string, any> | null;
+      code?: string;
+      activeRequestId?: string | null;
+      activeBuildId?: number | null;
     }) {
       const resolvedRun = shouldHandleRun(requestId, buildId);
       if (!resolvedRun.shouldHandle || !requestId) return;
@@ -854,6 +864,16 @@ export default function useBuildSocket() {
           ? { lifecycle: lifecycle ?? null }
           : {})
       });
+      if (
+        code === 'lumine_busy_other_project' &&
+        activeRequestId &&
+        Number(activeBuildId) > 0
+      ) {
+        socket.emit('build_resume_run', {
+          buildId: Number(activeBuildId),
+          requestId: activeRequestId
+        });
+      }
     }
 
     function handleGenerateStopped({

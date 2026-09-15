@@ -7,7 +7,9 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { rewardApprovalPresentation } from './approvalPresentation';
 import useRewardStatus from './useRewardStatus';
-import type { RewardSettings } from './types';
+import RewardProposalDiffModal from './RewardProposalDiffModal';
+import RewardProposalEarnings from './RewardProposalEarnings';
+import type { RewardProposalDiff, RewardSettings } from './types';
 
 // The creator's whole job here is to understand that an admin must approve
 // the app and to press Send (or Cancel). No Lumine run, no setup, no forms.
@@ -19,6 +21,7 @@ export default function RewardSettingsModal({
   onSaveCode,
   onPublish,
   onStatusChange,
+  onAccepted,
   hasUnsavedChanges = false,
   changeKey = '',
   agentEditing = false
@@ -28,6 +31,9 @@ export default function RewardSettingsModal({
   onSaveCode: () => Promise<boolean>;
   onPublish: () => void;
   onStatusChange?: () => void;
+  // Accepting the admin's proposed changes replaces the saved app with that
+  // version and publishes it; the caller reloads its copy of the workspace.
+  onAccepted?: () => void | Promise<void>;
   hasUnsavedChanges?: boolean;
   changeKey?: string;
   agentEditing?: boolean;
@@ -35,6 +41,17 @@ export default function RewardSettingsModal({
   const requestReview = useAppContext(
     (v) => v.requestHelpers.requestBuildRewardReview
   );
+  const respondToProposal = useAppContext(
+    (v) => v.requestHelpers.respondToBuildRewardProposal
+  );
+  const loadProposal = useAppContext(
+    (v) => v.requestHelpers.loadBuildRewardProposal
+  );
+  const [diffOpen, setDiffOpen] = useState(false);
+  const [confirmingDecline, setConfirmingDecline] = useState<{
+    reviewId: number;
+    proposalRevision: number;
+  } | null>(null);
   const {
     settings,
     error: loadError,
@@ -66,7 +83,11 @@ export default function RewardSettingsModal({
             <Button variant="ghost" disabled={busy} onClick={onClose}>
               {presentation.state === 'needs_review' ? 'Cancel' : 'Close'}
             </Button>
-            <Button variant="ghost" disabled={busy || loading} onClick={refresh}>
+            <Button
+              variant="ghost"
+              disabled={busy || loading}
+              onClick={refresh}
+            >
               Refresh status
             </Button>
             {presentation.state === 'needs_review' && (
@@ -78,6 +99,58 @@ export default function RewardSettingsModal({
               >
                 {busy ? 'Sending…' : 'Send for review'}
               </Button>
+            )}
+            {presentation.state === 'changes_offered' && !confirmingDecline && (
+              <>
+                <Button
+                  variant="outline"
+                  color="logoBlue"
+                  disabled={busy}
+                  onClick={() => setDiffOpen(true)}
+                >
+                  See the changes
+                </Button>
+                <Button
+                  variant="ghost"
+                  color="redOrange"
+                  disabled={busy}
+                  onClick={() =>
+                    setConfirmingDecline({
+                      reviewId: Number(settings?.reviewId),
+                      proposalRevision: Number(settings?.proposal?.revision)
+                    })
+                  }
+                >
+                  No thanks
+                </Button>
+                <Button
+                  color="logoBlue"
+                  loading={busy}
+                  disabled={busy}
+                  onClick={() => handleAccept()}
+                >
+                  {busy ? 'Publishing…' : 'Accept & go live'}
+                </Button>
+              </>
+            )}
+            {presentation.state === 'changes_offered' && confirmingDecline && (
+              <>
+                <Button
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => setConfirmingDecline(null)}
+                >
+                  Keep thinking
+                </Button>
+                <Button
+                  color="redOrange"
+                  loading={busy}
+                  disabled={busy}
+                  onClick={handleDecline}
+                >
+                  Yes, say no to the changes
+                </Button>
+              </>
             )}
             {(presentation.state === 'approved' ||
               (['removed', 'check_changes'].includes(presentation.state) &&
@@ -103,11 +176,7 @@ export default function RewardSettingsModal({
         {!settings && !loadError && <CheckingSkeleton />}
         {settings && presentation && (
           <>
-            <section
-              className={bandClass}
-              data-tone={tone}
-              aria-live="polite"
-            >
+            <section className={bandClass} data-tone={tone} aria-live="polite">
               <span className={bandIconClass} aria-hidden="true">
                 <Icon icon={iconFor(presentation.state)} />
               </span>
@@ -126,10 +195,66 @@ export default function RewardSettingsModal({
               </div>
             </section>
 
-            {settings.reviewNote && (
+            {settings.reviewNote &&
+              presentation.state !== 'changes_offered' && (
+                <section className={cardClass} data-accent="note">
+                  <h4>Admin’s note</h4>
+                  <p>{settings.reviewNote}</p>
+                </section>
+              )}
+
+            {presentation.state === 'changes_offered' && settings.proposal && (
               <section className={cardClass} data-accent="note">
-                <h4>Admin’s note</h4>
-                <p>{settings.reviewNote}</p>
+                <h4>What the admin changed</h4>
+                <RewardProposalEarnings rewards={settings.proposal.rewards} />
+                {settings.proposal.note ? (
+                  <p className={noteTextClass}>{settings.proposal.note}</p>
+                ) : null}
+                <ul className={fileListClass}>
+                  {settings.proposal.changedFiles.map((file) => (
+                    <li key={file.path}>
+                      <span
+                        className={fileStatusClass}
+                        data-status={file.status}
+                      >
+                        {file.status === 'added'
+                          ? 'new'
+                          : file.status === 'deleted'
+                            ? 'removed'
+                            : 'changed'}
+                      </span>
+                      <code>{file.path}</code>
+                    </li>
+                  ))}
+                </ul>
+                <p className={mutedClass}>
+                  Press <strong>See the changes</strong> to read every line that
+                  is different, side by side with your version.
+                </p>
+                {confirmingDecline ? (
+                  <p role="alert">
+                    Saying no closes this request. Your app stays as it is, and
+                    nothing is published. You can send a new version later.
+                  </p>
+                ) : null}
+              </section>
+            )}
+
+            {presentation.state === 'changes_offered' && (
+              <section className={cardClass}>
+                <h4>What happens next</h4>
+                <ol className={stepperClass}>
+                  <li>
+                    <strong>Accept.</strong> Your app is updated with the
+                    admin’s changes, approved, and goes live right away. Your
+                    workspace will show the new version.
+                  </li>
+                  <li>
+                    <strong>Or say no.</strong> This request is closed and
+                    nothing changes. You can keep building and send a new
+                    version whenever you like.
+                  </li>
+                </ol>
               </section>
             )}
 
@@ -203,17 +328,18 @@ export default function RewardSettingsModal({
                 <h4>What happens next</h4>
                 <ol className={stepperClass}>
                   <li>
-                    <strong>You send it.</strong> Your current code is saved
-                    and sent to the admin.
+                    <strong>You send it.</strong> Your current code is saved and
+                    sent to the admin.
                   </li>
                   <li>
-                    <strong>The admin reads it.</strong> They check what it
-                    asks to pay and decide what people can actually earn, and
-                    how often.
+                    <strong>The admin reads it.</strong> They check what it asks
+                    to pay and decide what people can actually earn, and how
+                    often.
                   </li>
                   <li>
-                    <strong>You get the answer here.</strong> If it’s
-                    approved, you can publish.
+                    <strong>You get the answer here.</strong> If it’s approved,
+                    this version goes live right away. The admin can also
+                    suggest changes for you to accept first.
                   </li>
                 </ol>
               </section>
@@ -256,8 +382,84 @@ export default function RewardSettingsModal({
           </>
         )}
       </div>
+      {diffOpen ? (
+        <RewardProposalDiffModal
+          load={() => loadProposal(buildId) as Promise<RewardProposalDiff>}
+          onClose={() => setDiffOpen(false)}
+          footer={(diff) => (
+            <Button
+              color="logoBlue"
+              loading={busy}
+              disabled={
+                busy ||
+                hasUnsavedChanges ||
+                agentEditing ||
+                diff.status !== 'changes_offered'
+              }
+              onClick={async () => {
+                setDiffOpen(false);
+                await handleAccept(diff);
+              }}
+            >
+              Accept & go live
+            </Button>
+          )}
+        />
+      ) : null}
     </Modal>
   );
+
+  async function handleAccept(diff?: RewardProposalDiff) {
+    if (busy) return;
+    if (hasUnsavedChanges || agentEditing) {
+      setError(
+        'Your app has newer changes. Save them and send the new version for review.'
+      );
+      return;
+    }
+    const offer = {
+      reviewId: Number(diff?.reviewId ?? settings?.reviewId),
+      proposalRevision: Number(
+        diff?.proposalRevision ?? settings?.proposal?.revision
+      )
+    };
+    setBusy(true);
+    setError('');
+    try {
+      await respondToProposal(buildId, 'accept', offer);
+      refresh();
+      onStatusChange?.();
+      await onAccepted?.();
+    } catch (err: any) {
+      setError(
+        err?.message ||
+          'Couldn’t accept the changes right now. Please try again.'
+      );
+      refresh();
+    } finally {
+      setBusy(false);
+      setConfirmingDecline(null);
+    }
+  }
+
+  async function handleDecline() {
+    setBusy(true);
+    setError('');
+    try {
+      if (!confirmingDecline) return;
+      await respondToProposal(buildId, 'decline', confirmingDecline);
+      refresh();
+      onStatusChange?.();
+    } catch (err: any) {
+      setError(
+        err?.message || 'Couldn’t send your answer right now. Please try again.'
+      );
+      refresh();
+    } finally {
+      setBusy(false);
+      setConfirmingDecline(null);
+    }
+  }
 
   async function handleSubmit() {
     setBusy(true);
@@ -290,19 +492,40 @@ function CheckingSkeleton() {
       <div className={bandClass} data-tone="neutral">
         <span className={`${bandIconClass} ${shimmerClass}`} />
         <div className={bandTextClass}>
-          <span className={`${pillClass} ${shimmerClass}`} style={{ width: '9rem' }}>
+          <span
+            className={`${pillClass} ${shimmerClass}`}
+            style={{ width: '9rem' }}
+          >
             &nbsp;
           </span>
-          <span className={shimmerClass} style={{ height: '1.9rem', width: '60%' }} />
-          <span className={shimmerClass} style={{ height: '1.2rem', width: '90%' }} />
-          <span className={shimmerClass} style={{ height: '1.2rem', width: '70%' }} />
+          <span
+            className={shimmerClass}
+            style={{ height: '1.9rem', width: '60%' }}
+          />
+          <span
+            className={shimmerClass}
+            style={{ height: '1.2rem', width: '90%' }}
+          />
+          <span
+            className={shimmerClass}
+            style={{ height: '1.2rem', width: '70%' }}
+          />
         </div>
       </div>
       {[0, 1].map((index) => (
         <div key={index} className={cardClass}>
-          <span className={shimmerClass} style={{ height: '1.4rem', width: '35%' }} />
-          <span className={shimmerClass} style={{ height: '1.1rem', width: '95%' }} />
-          <span className={shimmerClass} style={{ height: '1.1rem', width: '80%' }} />
+          <span
+            className={shimmerClass}
+            style={{ height: '1.4rem', width: '35%' }}
+          />
+          <span
+            className={shimmerClass}
+            style={{ height: '1.1rem', width: '95%' }}
+          />
+          <span
+            className={shimmerClass}
+            style={{ height: '1.1rem', width: '80%' }}
+          />
         </div>
       ))}
       <p className={mutedClass}>Checking approval…</p>
@@ -314,7 +537,7 @@ type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
 function toneFor(state: string): Tone {
   if (state === 'approved' || state === 'published') return 'success';
-  if (state === 'in_review') return 'info';
+  if (state === 'in_review' || state === 'changes_offered') return 'info';
   if (state === 'changes_requested' || state === 'paused') return 'danger';
   if (state === 'needs_review' || state === 'check_changes') return 'warning';
   return 'neutral';
@@ -322,32 +545,38 @@ function toneFor(state: string): Tone {
 
 function pillFor(state: string) {
   return (
-    {
-      removed: 'No approval needed',
-      check_changes: 'Will be checked',
-      needs_review: 'Approval needed',
-      in_review: 'Waiting for the admin',
-      approved: 'Approved',
-      published: 'Live',
-      changes_requested: 'Changes requested',
-      paused: 'Paused'
-    } as Record<string, string>
-  )[state] || 'Status';
+    (
+      {
+        removed: 'No approval needed',
+        check_changes: 'Will be checked',
+        needs_review: 'Approval needed',
+        in_review: 'Waiting for the admin',
+        changes_offered: 'Changes suggested',
+        approved: 'Approved',
+        published: 'Live',
+        changes_requested: 'Changes requested',
+        paused: 'Paused'
+      } as Record<string, string>
+    )[state] || 'Status'
+  );
 }
 
 function iconFor(state: string) {
   return (
-    {
-      removed: 'check-circle',
-      check_changes: 'magnifying-glass',
-      needs_review: 'paper-plane',
-      in_review: 'clock',
-      approved: 'check-circle',
-      published: 'coins',
-      changes_requested: 'comment',
-      paused: 'pause'
-    } as Record<string, any>
-  )[state] || 'coins';
+    (
+      {
+        removed: 'check-circle',
+        check_changes: 'magnifying-glass',
+        needs_review: 'paper-plane',
+        in_review: 'clock',
+        changes_offered: 'code-branch',
+        approved: 'check-circle',
+        published: 'coins',
+        changes_requested: 'comment',
+        paused: 'pause'
+      } as Record<string, any>
+    )[state] || 'coins'
+  );
 }
 
 const bodyClass = css`
@@ -568,6 +797,49 @@ const stepperClass = css`
     &:last-child {
       padding-bottom: 0;
     }
+  }
+`;
+
+const noteTextClass = css`
+  white-space: pre-wrap;
+  color: #1f2937;
+`;
+
+const fileListClass = css`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
+  }
+  code {
+    font-size: 1.2rem;
+    overflow-wrap: anywhere;
+  }
+`;
+
+const fileStatusClass = css`
+  flex: none;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: #fff7ed;
+  color: #c2410c;
+  &[data-status='added'] {
+    background: #f0fdf4;
+    color: #15803d;
+  }
+  &[data-status='deleted'] {
+    background: #fef2f2;
+    color: #b91c1c;
   }
 `;
 

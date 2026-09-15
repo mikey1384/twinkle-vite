@@ -2059,6 +2059,7 @@ export default function BuildEditor({
         onOpenDescriptionModal={handleOpenDescriptionModal}
         onOpenThumbnailModal={handleOpenThumbnailModal}
         onSaveRewardCode={ensureProjectFilesPersistedBeforePublish}
+        onRewardProposalAccepted={handleBuildReloadFromServer}
         rewardApprovalPrompt={rewardApprovalPrompt}
         hasUnsavedRewardChanges={rewardDraftDirty}
         rewardsBeingPrepared={currentBuildRunView.generating}

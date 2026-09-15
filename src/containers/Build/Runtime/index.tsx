@@ -2372,6 +2372,25 @@ export default function BuildRuntime({
                   setRewardsReviewOpen(false);
                   void handleUpdatePublishedApp();
                 }}
+                onAccepted={async () => {
+                  // The accepted version is live now; show it.
+                  setRewardsReviewOpen(false);
+                  try {
+                    const runtimePayload = await loadRuntimeBuild(
+                      Number(build.id),
+                      {
+                        fromWriter: true,
+                        runtimeSource: requestedRuntimeSource
+                      }
+                    );
+                    applyRuntimeBuildPayload(runtimePayload);
+                  } catch (reloadError) {
+                    console.error(
+                      'Accepted proposal published but runtime refresh failed:',
+                      reloadError
+                    );
+                  }
+                }}
                 onClose={() => {
                   setRewardsReviewOpen(false);
                   setPublishRuntimeUpdateError('');

@@ -538,6 +538,77 @@ export default function buildRequestHelpers({
       });
       return data;
     },
+    // Creator side of a reviewer proposal: the comparison and the answer.
+    async loadBuildRewardProposal(buildId: number) {
+      const { data } = await request.get(
+        `${URL}/build/${buildId}/rewards/proposal`,
+        auth()
+      );
+      return data;
+    },
+    async respondToBuildRewardProposal(
+      buildId: number,
+      decision: 'accept' | 'decline',
+      offer: { reviewId: number; proposalRevision: number }
+    ) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/rewards/proposal/${decision}`,
+          offer,
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
+        return data;
+      } catch (error) {
+        throw new Error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : 'Could not answer the proposal.'
+        );
+      }
+    },
+    // Reviewer side: a private editable copy, the offer, and the comparison.
+    async openBuildRewardReviewWorkspace(reviewId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/reward-reviews/${reviewId}/workspace`,
+          {},
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
+        return data;
+      } catch (error) {
+        throw new Error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : 'Could not open the proposal workspace.'
+        );
+      }
+    },
+    async proposeBuildRewardReviewChanges(
+      reviewId: number,
+      { config, reason }: { config: unknown; reason: string }
+    ) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/reward-reviews/${reviewId}/propose`,
+          { config, reason },
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
+        return data;
+      } catch (error) {
+        throw new Error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : 'Could not offer these changes.'
+        );
+      }
+    },
+    async loadBuildRewardReviewProposal(reviewId: number) {
+      const { data } = await request.get(
+        `${URL}/build/reward-reviews/${reviewId}/proposal`,
+        auth()
+      );
+      return data;
+    },
     async decideBuildRewardReview(
       reviewId: number,
       decision: string,

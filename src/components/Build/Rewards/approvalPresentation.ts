@@ -47,7 +47,12 @@ export function rewardApprovalPresentation(
     in_review: {
       title: 'Waiting for the admin',
       detail:
-        'Your app has been sent. The admin will read your code and set the rewards. If you save more changes, you’ll need to send the new version.'
+        'Your app has been sent. The admin will read your code and set the rewards. When it’s approved, this version goes live right away. If you save more changes, you’ll need to send the new version.'
+    },
+    changes_offered: {
+      title: 'The admin suggested some changes',
+      detail:
+        'The admin read your app and changed a few things in it. Look at the changes below. If you accept them, your app is approved and goes live with those changes right away. If you say no, this request is closed and you can send a new version later.'
     },
     approved: {
       title: 'Approved · ready to publish',
@@ -57,12 +62,15 @@ export function rewardApprovalPresentation(
     published: {
       title: 'Approved and live',
       detail:
-        'People can earn rewards in your published app. Updates that keep rewards need approval before they go live.'
+        'The admin approved this version and it went live right away. People can earn rewards in your published app. Updates that keep rewards need approval before they go live.'
     },
     changes_requested: {
-      title: 'Not approved yet',
-      detail:
-        'The admin left a note below. Make the changes, save, and send the new version for review.'
+      title: settings.declinedByCreator
+        ? 'You said no to the admin’s changes'
+        : 'Not approved yet',
+      detail: settings.declinedByCreator
+        ? 'This request is closed because you declined the changes the admin suggested. Your published app (if any) is unchanged. Update your app, save, and send a new version whenever you’re ready.'
+        : 'The admin left a note below. Make the changes, save, and send the new version for review.'
     },
     paused: {
       title: 'Rewards are paused',

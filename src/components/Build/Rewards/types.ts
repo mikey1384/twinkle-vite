@@ -33,11 +33,53 @@ export interface RewardRule {
   // Standing questions, served on any Korean day no dated set covers.
   questions?: RewardQuestion[];
   // Sets: dated (from/to, inclusive Korean days) or ordered (until-earned).
-  sets?: Array<{ from?: string; to?: string; key?: string; questions: RewardQuestion[] }>;
+  sets?: Array<{
+    from?: string;
+    to?: string;
+    key?: string;
+    questions: RewardQuestion[];
+  }>;
   // Wrong answers allowed per challenge; null = unlimited; absent = 3.
   maxAttempts?: number | null;
   // Share of xp/coins a correct answer pays after a wrong one; absent = full.
   retry?: { xpPercent: number; coinsPercent: number };
+}
+export interface RewardProposalEarnings {
+  rules: Array<{ title: string; xp: number; coins: number }>;
+  budgets: { userDailyXP: number; userDailyCoins: number };
+}
+export interface RewardProposalSummary {
+  revision: number;
+  rewards?: RewardProposalEarnings;
+  note: string;
+  offeredAt: number;
+  changedFiles: Array<{
+    path: string;
+    status: 'added' | 'updated' | 'deleted' | string;
+  }>;
+  diffSummary: {
+    total: number;
+    added: number;
+    updated: number;
+    deleted: number;
+  };
+}
+export interface RewardProposalDiff {
+  proposalRevision: number;
+  rewards?: RewardProposalEarnings;
+  reviewId: number;
+  buildId: number;
+  title: string;
+  status: string;
+  note: string;
+  offeredAt: number | null;
+  declinedAt: number | null;
+  files: Array<{
+    path: string;
+    status: 'added' | 'updated' | 'deleted' | string;
+    before: string;
+    after: string;
+  }>;
 }
 export interface RewardReview {
   id: number;
@@ -50,8 +92,26 @@ export interface RewardReview {
   reason: string;
   createdAt: number;
   config: RewardConfig;
+  proposalConfig?: RewardConfig | null;
   ownerUsername?: string | null;
   reviewedAt?: number | null;
+  // Reviewer proposal (2026-09-15): the reviewer's modified copy of the
+  // submitted version, offered as the condition of approval.
+  proposalHash?: string | null;
+  proposalNote?: string;
+  proposalBuildId?: number | null;
+  offeredAt?: number | null;
+  declinedAt?: number | null;
+  declinedByCreator?: boolean;
+  proposal?: RewardProposalSummary | null;
+  proposalFiles?: Array<{ path: string; content: string }> | null;
+  // Approval publishes: the version an approval (or accepted proposal) put live.
+  publishedArtifactVersionId?: number | null;
+  published?: {
+    artifactVersionId: number;
+    version: number;
+    transition: string;
+  } | null;
   // Reviewer context returned by the single-review load.
   detectedRuleIds?: string[];
   isLatest?: boolean;
@@ -83,6 +143,7 @@ export interface RewardSettings {
     | 'removed'
     | 'needs_review'
     | 'in_review'
+    | 'changes_offered'
     | 'approved'
     | 'published'
     | 'changes_requested'
@@ -95,6 +156,12 @@ export interface RewardSettings {
   reviewId: number | null;
   // The last request closed itself because a newer version was saved.
   requestClosedBySave?: boolean;
+  // The creator turned down the reviewer's proposed changes.
+  declinedByCreator?: boolean;
+  // The version the latest approval published (approval publishes).
+  publishedArtifactVersionId?: number | null;
+  // Present while the reviewer's proposed changes wait for the creator.
+  proposal?: RewardProposalSummary | null;
   reviewNote: string;
   sourceVersionId: number;
   summary: Array<{ title: string; xp: number; coins: number }>;

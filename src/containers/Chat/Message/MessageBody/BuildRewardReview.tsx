@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
+import RewardProposalDiffModal from '~/components/Build/Rewards/RewardProposalDiffModal';
+import type { RewardProposalDiff } from '~/components/Build/Rewards/types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { ADMIN_USER_ID } from '~/constants/defaultValues';
+import { useAppContext } from '~/contexts';
 import {
+  formatBuildRewardProposalSummary,
   formatBuildRewardRulesSummary,
   getBuildRewardReviewBannerText,
   getBuildRewardReviewManagementPath,
@@ -33,11 +37,26 @@ export default function BuildRewardReview({
   };
 }) {
   const navigate = useNavigate();
+  const respondToProposal = useAppContext(
+    (v) => v.requestHelpers.respondToBuildRewardProposal
+  );
+  const loadProposal = useAppContext(
+    (v) => v.requestHelpers.loadBuildRewardReviewProposal
+  );
+  const [diffOpen, setDiffOpen] = useState(false);
+  const [confirmingDecline, setConfirmingDecline] = useState<{
+    reviewId: number;
+    proposalRevision: number;
+  } | null>(null);
+  const [answering, setAnswering] = useState<'accept' | 'decline' | ''>('');
+  const [answerError, setAnswerError] = useState('');
   const reviewId = Number(review?.reviewId || 0);
   const buildId = Number(review?.buildId || 0);
   const title = String(review?.title || 'Untitled Build');
   const status = normalizeBuildRewardReviewStatus(review?.status);
   const closedBySave = status === 'superseded' && Boolean(review?.closedBySave);
+  const declinedByCreator = Boolean(review?.declinedByCreator);
+  const proposal = review?.proposal || null;
   const reason = String(review?.reason || '').trim();
   const thumbnailUrl = String(review?.thumbnailUrl || '').trim();
   const sourceVersionId = Number(review?.sourceVersionId || 0);
@@ -55,7 +74,11 @@ export default function BuildRewardReview({
     <BuildMessageCard
       bannerIcon="coins"
       themeName={sender.profileTheme}
-      bannerText={getBuildRewardReviewBannerText(status, closedBySave)}
+      bannerText={getBuildRewardReviewBannerText(
+        status,
+        closedBySave,
+        declinedByCreator
+      )}
       title={title}
       chips={
         <>
@@ -65,13 +88,20 @@ export default function BuildRewardReview({
                 ? 'check-circle'
                 : status === 'pending'
                   ? 'clock'
-                  : 'times-circle'
+                  : status === 'changes_offered'
+                    ? 'code-branch'
+                    : 'times-circle'
             }
             themeName={sender.profileTheme}
-            muted={status !== 'pending'}
+            muted={status !== 'pending' && status !== 'changes_offered'}
           >
             {getBuildRewardReviewStatusLabel(status)}
           </BuildMessageCardChip>
+          {status === 'changes_offered' && proposal ? (
+            <BuildMessageCardChip icon="file" themeName={sender.profileTheme}>
+              {formatBuildRewardProposalSummary(proposal)}
+            </BuildMessageCardChip>
+          ) : null}
           <BuildMessageCardChip icon="coins" themeName={sender.profileTheme}>
             {rulesSummary}
           </BuildMessageCardChip>
@@ -103,6 +133,60 @@ export default function BuildRewardReview({
               {status === 'pending' ? 'Review & approve' : 'Open in Management'}
             </GameCTAButton>
           ) : null}
+          {sentByMe && status === 'changes_offered' && !confirmingDecline ? (
+            <>
+              <GameCTAButton
+                variant="neutral"
+                size="md"
+                icon="code-branch"
+                onClick={() => setDiffOpen(true)}
+              >
+                See the changes
+              </GameCTAButton>
+              <GameCTAButton
+                variant="success"
+                size="md"
+                icon="check"
+                shiny
+                loading={answering === 'accept'}
+                onClick={() => handleAnswer('accept')}
+              >
+                Accept & go live
+              </GameCTAButton>
+              <GameCTAButton
+                variant="neutral"
+                size="md"
+                onClick={() =>
+                  setConfirmingDecline({
+                    reviewId,
+                    proposalRevision: Number(proposal?.revision)
+                  })
+                }
+              >
+                No thanks
+              </GameCTAButton>
+            </>
+          ) : null}
+          {sentByMe && status === 'changes_offered' && confirmingDecline ? (
+            <>
+              <GameCTAButton
+                variant="orange"
+                size="md"
+                icon="exclamation-triangle"
+                loading={answering === 'decline'}
+                onClick={() => handleAnswer('decline')}
+              >
+                Yes, say no to the changes
+              </GameCTAButton>
+              <GameCTAButton
+                variant="neutral"
+                size="md"
+                onClick={() => setConfirmingDecline(null)}
+              >
+                Keep thinking
+              </GameCTAButton>
+            </>
+          ) : null}
           {sentByMe ? (
             <GameCTAButton
               variant="logoBlue"
@@ -116,6 +200,28 @@ export default function BuildRewardReview({
         </>
       }
     >
+      {diffOpen ? (
+        <RewardProposalDiffModal
+          load={() => loadProposal(reviewId) as Promise<RewardProposalDiff>}
+          onClose={() => setDiffOpen(false)}
+          footer={(diff) =>
+            sentByMe && diff.status === 'changes_offered' ? (
+              <GameCTAButton
+                variant="success"
+                size="md"
+                icon="check"
+                loading={answering === 'accept'}
+                onClick={async () => {
+                  setDiffOpen(false);
+                  await handleAnswer('accept', diff);
+                }}
+              >
+                Accept & go live
+              </GameCTAButton>
+            ) : null
+          }
+        />
+      ) : null}
       <div className={appRowClass}>
         {thumbnailUrl ? (
           <img
@@ -147,11 +253,38 @@ export default function BuildRewardReview({
                     : ''}
                 </>
               )
+            ) : status === 'changes_offered' ? (
+              sentByMe ? (
+                <>
+                  The admin read <strong>{title}</strong> and suggested some
+                  changes. Look at them, then accept to go live with those
+                  changes, or say no to close this request.
+                  {confirmingDecline
+                    ? ' Saying no keeps your app exactly as it is and publishes nothing.'
+                    : ''}
+                </>
+              ) : (
+                <>
+                  You offered changes to <strong>{title}</strong>. If{' '}
+                  <strong>{sender.username}</strong> accepts them, the changed
+                  version is approved and published right away.
+                </>
+              )
             ) : status === 'approved' ? (
               <>
-                This saved release of <strong>{title}</strong> is approved.
-                Publishing it turns rewards on; later code changes need another
-                review.
+                This release of <strong>{title}</strong> is approved for
+                rewards.{' '}
+                {Number(review?.publishedArtifactVersionId || 0) > 0
+                  ? 'Approval published this version. '
+                  : ''}
+                Later code changes need another review.
+              </>
+            ) : status === 'rejected' && declinedByCreator ? (
+              <>
+                {sentByMe ? 'You' : <strong>{sender.username}</strong>} said no
+                to the admin’s suggested changes, so this request is closed and
+                nothing was published.
+                {sentByMe ? ' Send a new version whenever you’re ready.' : ''}
               </>
             ) : status === 'rejected' ? (
               <>
@@ -182,10 +315,19 @@ export default function BuildRewardReview({
               </>
             )}
           </div>
-          {reason && (status === 'rejected' || status === 'revoked') ? (
+          {reason &&
+          (status === 'rejected' ||
+            status === 'revoked' ||
+            status === 'changes_offered') ? (
             <div className={reasonClass}>
               <Icon icon="comment" />
               <span>{reason}</span>
+            </div>
+          ) : null}
+          {answerError ? (
+            <div className={reasonClass} role="alert">
+              <Icon icon="exclamation-triangle" />
+              <span>{answerError}</span>
             </div>
           ) : null}
           {hasRules ? (
@@ -204,6 +346,38 @@ export default function BuildRewardReview({
       </div>
     </BuildMessageCard>
   );
+
+  async function handleAnswer(
+    decision: 'accept' | 'decline',
+    diff?: RewardProposalDiff
+  ) {
+    if (answering) return;
+    setAnswering(decision);
+    setAnswerError('');
+    try {
+      // The card itself updates through the server's live review push; the
+      // response is the creator's settings, which this card does not show.
+      await respondToProposal(
+        buildId,
+        decision,
+        decision === 'decline' && confirmingDecline
+          ? confirmingDecline
+          : {
+              reviewId: Number(diff?.reviewId ?? reviewId),
+              proposalRevision: Number(
+                diff?.proposalRevision ?? proposal?.revision
+              )
+            }
+      );
+    } catch (error: any) {
+      setAnswerError(
+        error?.message || 'Couldn’t send your answer right now. Try again.'
+      );
+    } finally {
+      setAnswering('');
+      setConfirmingDecline(null);
+    }
+  }
 }
 
 function formatAmount(value?: number | null) {

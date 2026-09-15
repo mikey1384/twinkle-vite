@@ -17,7 +17,17 @@ export type {
   PreviewRuntimeUploadUsage
 } from '../../types/runtimeUploadTypes';
 
+export interface RewardReviewProposalContext {
+  reviewId: number;
+  rootBuildId: number;
+  rootTitle: string;
+  status: string;
+  offeredAt: number | null;
+}
+
 export interface Build {
+  // Present on a reviewer's private proposal copy of a submitted app.
+  rewardReviewProposal?: RewardReviewProposalContext | null;
   rewardRuntimeGrant?: string | null;
   id: number;
   title: string;
