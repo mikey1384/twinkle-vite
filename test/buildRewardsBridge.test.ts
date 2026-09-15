@@ -208,4 +208,47 @@ test('earning requests use the preview transition write guard', () => {
   assert.equal(isMutatingPreviewRequestType('rewards:start'), true);
   assert.equal(isMutatingPreviewRequestType('rewards:claim'), true);
   assert.equal(isMutatingPreviewRequestType('rewards:status'), false);
+  assert.equal(isMutatingPreviewRequestType('rewards:timeline'), false);
+  assert.equal(isMutatingPreviewRequestType('rewards:archived-problem'), false);
+});
+
+test('archive reads use the current host grant and forward no client clock or permission', async () => {
+  const result = { mode: 'live', entries: [], nextCursor: null };
+  const h = harness({ result });
+  assert.deepEqual(
+    await h.invoke('rewards:timeline', {
+      ruleId: 'e1-daily',
+      cursor: '4',
+      now: 9999999999,
+      runtimeGrant: 'fake'
+    }),
+    result
+  );
+  await h.invoke('rewards:archived-problem', {
+    receiptId: 2,
+    userId: 999,
+    dayKey: '2099-01-01'
+  });
+  assert.equal(h.calls[0].operation, 'timeline');
+  assert.equal(h.calls[0].payload.cursor, '4');
+  assert.equal(h.calls[0].payload.now, undefined);
+  assert.equal(h.calls[0].runtimeGrant, 'server-published-grant');
+  assert.equal(h.calls[1].operation, 'archived-problem');
+  assert.equal(h.calls[1].payload.receiptId, 2);
+  assert.equal(h.calls[1].payload.dayKey, undefined);
+  assert.equal(h.balances.length, 0);
+  for (const options of [
+    { runtimeOnly: false },
+    { grant: null },
+    { automated: true }
+  ]) {
+    const preview = harness(options);
+    assert.equal((await preview.invoke('rewards:timeline')).mode, 'preview');
+    assert.equal(
+      (await preview.invoke('rewards:archived-problem', { receiptId: 2 }))
+        .entry,
+      null
+    );
+    assert.equal(preview.calls.length, 0);
+  }
 });

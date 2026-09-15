@@ -4169,6 +4169,8 @@ export function useHostBridge({
           case 'rewards:receipt':
           case 'rewards:start':
           case 'rewards:claim':
+          case 'rewards:timeline':
+          case 'rewards:archived-problem':
           case 'rewards:leaderboard': {
             // Never forward app-supplied grants, versions, recipients or amounts.
             const runtimeGrant = activeBuild.rewardRuntimeGrant;
@@ -4197,6 +4199,12 @@ export function useHostBridge({
                       previewAttempts: payload?.previewAttempts,
                       metric: payload?.metric,
                       period: payload?.period,
+                      ...(type === 'rewards:timeline'
+                        ? { cursor: payload?.cursor }
+                        : {}),
+                      ...(type === 'rewards:archived-problem'
+                        ? { receiptId: payload?.receiptId }
+                        : {}),
                       limit: payload?.limit
                     }
                   });
@@ -4231,6 +4239,21 @@ export function useHostBridge({
                 };
                 break;
               }
+              if (
+                type === 'rewards:timeline' ||
+                type === 'rewards:archived-problem'
+              ) {
+                response = {
+                  mode: 'preview',
+                  entries: [],
+                  nextCursor: null,
+                  entry: null,
+                  questions: [],
+                  message:
+                    'Solved problems appear after their bounty closes in the published app.'
+                };
+                break;
+              }
               throw new Error(
                 previewFailure ||
                   'Drafts and previews cannot award XP or Coins. Open the approved published app.'
@@ -4250,6 +4273,12 @@ export function useHostBridge({
                 answers: payload?.answers,
                 metric: payload?.metric,
                 period: payload?.period,
+                ...(type === 'rewards:timeline'
+                  ? { cursor: payload?.cursor }
+                  : {}),
+                ...(type === 'rewards:archived-problem'
+                  ? { receiptId: payload?.receiptId }
+                  : {}),
                 limit: payload?.limit
               },
               token: rewardToken,
