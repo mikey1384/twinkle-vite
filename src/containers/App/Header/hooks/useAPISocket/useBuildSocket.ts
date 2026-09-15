@@ -871,7 +871,8 @@ export default function useBuildSocket() {
       ) {
         socket.emit('build_resume_run', {
           buildId: Number(activeBuildId),
-          requestId: activeRequestId
+          requestId: activeRequestId,
+          resumeReason: 'busy_refusal'
         });
       }
     }
