@@ -9,6 +9,7 @@ import ChatQuickAccess from './QuickAccess';
 import ChatFlatButton from '../FlatButton';
 import Layout from './Layout';
 import { getTopicNavigation } from './helpers/topicNavigation';
+import { COMPACT_CONTROLS_MEDIA_QUERY } from '../constants/layout';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 import {
@@ -118,15 +119,29 @@ export default function LeftMenu({
                 padding: 1rem;
                 border-bottom: 1px solid var(--ui-border);
                 @container chat-channels (max-width: 180px) {
+                  /* Narrow panel: the customize gear shares New Group's row
+                     (QuickAccess flattens itself), portraits get their own. */
+                  flex-direction: row;
+                  flex-wrap: wrap;
+                  align-items: center;
+                  gap: 0.6rem 0.2rem;
                   padding: 0.7rem 0.6rem;
                   > button {
+                    flex: 1 1 0;
+                    width: auto;
+                    min-width: 0;
                     min-height: 36px;
                     padding: 0.6rem 0.3rem;
-                    font-size: 14px;
+                    font-size: 13px;
+                    white-space: nowrap;
                   }
                 }
                 @media (pointer: coarse) {
                   > button { min-height: 44px; }
+                }
+                @media ${COMPACT_CONTROLS_MEDIA_QUERY} {
+                  padding-top: 0.5rem;
+                  padding-bottom: 0.5rem;
                 }
               `}
             >

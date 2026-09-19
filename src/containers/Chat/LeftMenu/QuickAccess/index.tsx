@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 import QuickAccessPortrait from './Portrait';
 import QuickAccessSettingsModal from './SettingsModal';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
+import { COMPACT_CONTROLS_MEDIA_QUERY } from '../../constants/layout';
 import type { ChatQuickAccessMode, ChatQuickAccessPartner } from './types';
 
 export default function ChatQuickAccess() {
@@ -41,8 +42,8 @@ export default function ChatQuickAccess() {
           width: 100%;
           margin-top: 1rem;
           @container chat-channels (max-width: 180px) {
-            flex-wrap: wrap;
-            gap: 0.2rem;
+            /* Flatten into the parent row: gear joins New Group, portraits wrap below. */
+            display: contents;
           }
         `}
       >
@@ -62,10 +63,14 @@ export default function ChatQuickAccess() {
             scrollbar-width: thin;
             overscroll-behavior-x: contain;
             @container chat-channels (max-width: 180px) {
-              flex-basis: 100%;
+              order: 1;
+              flex: 1 0 100%;
             }
             @media (pointer: coarse) {
               > button { width: 44px; height: 44px; }
+            }
+            @media ${COMPACT_CONTROLS_MEDIA_QUERY} {
+              padding: 0.2rem 0.15rem;
             }
           `}
         >
@@ -106,26 +111,29 @@ export default function ChatQuickAccess() {
               color: ${Color.logoBlue()};
               border-color: ${Color.logoBlue(0.5)};
             }
-            > span { display: none; }
             @container chat-channels (max-width: 180px) {
-              width: 100%;
-              min-height: 28px;
-              height: auto;
-              gap: 0.5rem;
-              border: 0;
+              /* Sits beside New Group: same height and corners, visually quiet. */
+              width: 36px;
+              height: 36px;
+              border-color: transparent;
               border-radius: 5px;
               background: transparent;
-              font-size: 12px;
-              > span { display: inline; }
+              font-size: 16px;
+              &:hover {
+                border-color: transparent;
+                background: ${Color.highlightGray()};
+              }
             }
             @media (pointer: coarse) {
               min-width: 44px;
               min-height: 44px;
             }
+            @container chat-channels (max-width: 180px) {
+              min-width: 36px;
+            }
           `}
         >
           <Icon icon="cog" />
-          <span>Shortcuts</span>
         </button>
       </div>
       {settingsShown ? (

@@ -4,7 +4,6 @@ import { mobileMaxWidth } from '~/constants/css';
 import { SPLIT_NAVIGATION_MEDIA_QUERY } from '../constants/layout';
 import { chatPanelClass } from '../containers';
 import ResizeHandle from './ResizeHandle';
-import Shortcuts from './Shortcuts';
 import useNavigationLayout from './hooks/useNavigationLayout';
 import {
   DEFAULT_WIDTHS,
@@ -89,7 +88,7 @@ export default function Layout({
           z-index: 7;
         `}
       >
-        <Shortcuts>{controls}</Shortcuts>
+        {controls}
         {collect}
       </div>
       <div
