@@ -21,11 +21,7 @@ export type BuildLumineModel =
   // Other legacy stored preferences migrated by the server.
   | 'claude-opus-4-8'
   | 'claude-fable-5';
-export type BuildLumineMode =
-  | 'light'
-  | 'medium'
-  | 'heavy'
-  | 'superheavy';
+export type BuildLumineMode = 'light' | 'medium' | 'heavy' | 'superheavy';
 export type BuildLumineThinkLevel =
   'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
@@ -230,6 +226,8 @@ export interface BuildFollowUpPrompt {
   question?: string | null;
   suggestedMessage?: string | null;
   sourceMessageId?: number | null;
+  // Yes first switches the build to this lighter Lumine model, then sends.
+  modelSwitch?: { model: string; mode: string; label: string } | null;
 }
 
 export interface BuildPendingToolApprovalModelOption {
@@ -360,6 +358,9 @@ export interface ChatPanelProps {
   onContinueScopedPlan: () => void;
   onCancelScopedPlan: () => void;
   onAcceptFollowUpPrompt: () => void;
+  // A model-switch card's "Just this once": retry on the lighter model
+  // without saving it as the build's Lumine mode.
+  onAcceptFollowUpPromptOnce?: () => void;
   onDismissFollowUpPrompt: () => void;
   onApproveToolRequest?: (modelId: string) => void;
   onDeclineToolRequest?: () => void;

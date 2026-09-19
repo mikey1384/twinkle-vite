@@ -51,6 +51,7 @@ const initialViewState: ViewState = {
   buildAppNavTabIds: null,
   openBuildTab: null,
   buildAppToClose: null,
+  buildAppToPin: null,
   killBuildAppSession: null
 };
 

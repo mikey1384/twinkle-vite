@@ -2,6 +2,11 @@ import React, { useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import ProgressBar from '~/components/ProgressBar';
+import {
+  convertVideoForUpload,
+  needsVideoUploadConversion
+} from '~/helpers/videoUploadConversion';
 import UploadModalContent from './Content';
 
 const useThisImageButtonStyle = {
@@ -43,10 +48,24 @@ export default function UploadModal({
   const useGeneratedImageHandlerRef = useRef<
     (() => void | Promise<void>) | null
   >(null);
+  // A picked MKV is rewrapped as MP4 before the caller ever sees it, so the
+  // name, type and bytes every caller stores are already the playable ones.
+  const [conversion, setConversion] = useState<{
+    fileName: string;
+    progress: number;
+  } | null>(null);
+  const conversionAbortRef = useRef<AbortController | null>(null);
+  const conversionDiscardedRef = useRef(false);
 
   let footerContent: React.ReactNode = null;
 
-  if (selectedOption === 'select') {
+  if (conversion) {
+    footerContent = (
+      <Button variant="ghost" onClick={handleSkipConversion}>
+        Upload the original instead
+      </Button>
+    );
+  } else if (selectedOption === 'select') {
     footerContent = (
       <Button variant="ghost" onClick={handleClose}>
         Cancel
@@ -89,26 +108,48 @@ export default function UploadModal({
         onClose={handleClose}
         title={getModalTitle()}
         size="lg"
-        closeOnBackdropClick={selectedOption === 'select'}
+        closeOnBackdropClick={selectedOption === 'select' && !conversion}
         modalLevel={2}
         preventBodyScroll={false}
         footer={footerContent}
       >
-        <UploadModalContent
-          selectedOption={selectedOption}
-          onFileSelect={handleFileSelection}
-          onFilesSelect={handleFilesSelection}
-          onFileUploadSelect={() => handleChangeOption('upload')}
-          onAIGenerateSelect={() => handleChangeOption('generate')}
-          onGeneratedImage={handleGeneratedImage}
-          onSetSelectedOption={handleChangeOption}
-          onUseImageAvailabilityChange={setCanUseGeneratedImage}
-          onRegisterUseImageHandler={handleRegisterUseImageHandler}
-          accept={accept || '*/*'}
-          multiple={multiple}
-          allowMultipleGenericFileSelection={allowMultipleGenericFileSelection}
-          imageGenerationPurpose={imageGenerationPurpose}
-        />
+        {conversion ? (
+          <div
+            style={{
+              width: '100%',
+              padding: '2rem 1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}
+          >
+            <div style={{ fontSize: '1.7rem', fontWeight: 700 }}>
+              Making this video play on phones
+            </div>
+            <div style={{ fontSize: '1.4rem', lineHeight: 1.5 }}>
+              {conversion.fileName} is an MKV file, which iPhones and iPads
+              cannot play. It is being saved as MP4 on your device first, then
+              it uploads as usual.
+            </div>
+            <ProgressBar progress={Math.round(conversion.progress * 100)} />
+          </div>
+        ) : (
+          <UploadModalContent
+            selectedOption={selectedOption}
+            onFileSelect={handleFileSelection}
+            onFilesSelect={handleFilesSelection}
+            onFileUploadSelect={() => handleChangeOption('upload')}
+            onAIGenerateSelect={() => handleChangeOption('generate')}
+            onGeneratedImage={handleGeneratedImage}
+            onSetSelectedOption={handleChangeOption}
+            onUseImageAvailabilityChange={setCanUseGeneratedImage}
+            onRegisterUseImageHandler={handleRegisterUseImageHandler}
+            accept={accept || '*/*'}
+            multiple={multiple}
+            allowMultipleGenericFileSelection={allowMultipleGenericFileSelection}
+            imageGenerationPurpose={imageGenerationPurpose}
+          />
+        )}
       </Modal>
       {confirmModalShown && (
         <ConfirmModal
@@ -127,6 +168,11 @@ export default function UploadModal({
   );
 
   function handleClose() {
+    if (conversionAbortRef.current) {
+      // Closing mid-conversion means "never mind": nothing is handed on.
+      conversionDiscardedRef.current = true;
+      conversionAbortRef.current.abort();
+    }
     resetUseImageState();
     setSelectedOption('select');
     onHide();
@@ -171,18 +217,57 @@ export default function UploadModal({
     useGeneratedImageHandlerRef.current = null;
   }
 
-  function handleFileSelection(file: File) {
-    onFileSelect(file);
+  async function handleFileSelection(file: File) {
+    const [prepared] = (await prepareFilesForUpload([file])) || [];
+    if (!prepared) return;
+    onFileSelect(prepared);
     handleClose();
   }
 
-  function handleFilesSelection(files: File[]) {
+  async function handleFilesSelection(files: File[]) {
+    const prepared = await prepareFilesForUpload(files);
+    if (!prepared) return;
     if (onFilesSelect) {
-      onFilesSelect(files);
-    } else if (files.length > 0) {
-      onFileSelect(files[0]);
+      onFilesSelect(prepared);
+    } else if (prepared.length > 0) {
+      onFileSelect(prepared[0]);
     }
     handleClose();
+  }
+
+  // Resolves to null when the modal was closed while converting.
+  async function prepareFilesForUpload(files: File[]) {
+    if (!files.some(needsVideoUploadConversion)) return files;
+    conversionDiscardedRef.current = false;
+    const prepared: File[] = [];
+    try {
+      for (const file of files) {
+        if (!needsVideoUploadConversion(file)) {
+          prepared.push(file);
+          continue;
+        }
+        const controller = new AbortController();
+        conversionAbortRef.current = controller;
+        setConversion({ fileName: file.name, progress: 0 });
+        const result = await convertVideoForUpload({
+          file,
+          signal: controller.signal,
+          onProgress: (progress) =>
+            setConversion({ fileName: file.name, progress })
+        });
+        if (conversionDiscardedRef.current) return null;
+        prepared.push(result.file);
+      }
+      return prepared;
+    } finally {
+      conversionAbortRef.current = null;
+      setConversion(null);
+    }
+  }
+
+  // The original still uploads; it just will not play on every device.
+  function handleSkipConversion() {
+    conversionAbortRef.current?.abort();
   }
 
   function handleGeneratedImage(file: File) {

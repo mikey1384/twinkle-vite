@@ -264,6 +264,8 @@ export default function SuccessModal({
   } | null>(null);
   const [loadingVocabSummary, setLoadingVocabSummary] = useState(false);
   const [vocabQuizShown, setVocabQuizShown] = useState(false);
+  const [vocabSummaryReloadKey, setVocabSummaryReloadKey] = useState(0);
+  const vocabQuizHadNoWordsRef = useRef(false);
   const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(
     globalAiUsagePolicy || null
   );
@@ -312,6 +314,10 @@ export default function SuccessModal({
   }, [globalAiUsagePolicy]);
 
   useEffect(() => {
+    vocabQuizHadNoWordsRef.current = false;
+  }, [storyId]);
+
+  useEffect(() => {
     if (!storyId) return;
     let isMounted = true;
     setLoadingVocabSummary(true);
@@ -336,7 +342,7 @@ export default function SuccessModal({
       isMounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storyId]);
+  }, [storyId, vocabSummaryReloadKey]);
 
   useEffect(() => {
     return () => {
@@ -739,12 +745,32 @@ export default function SuccessModal({
       {vocabQuizShown && (
         <VocabQuizModal
           isOpen={vocabQuizShown}
-          onClose={() => setVocabQuizShown(false)}
+          onClose={handleVocabQuizClose}
+          onNoWords={handleVocabQuizNoWords}
           storyId={storyId}
         />
       )}
     </>
   );
+
+  function handleVocabQuizNoWords() {
+    // The quiz start is the server's final word. The summary that lit the
+    // button can disagree with it, so take this answer and don't ask again.
+    vocabQuizHadNoWordsRef.current = true;
+    setVocabSummary((prev) => ({
+      eligibleCount: 0,
+      totalWords: prev?.totalWords || 0
+    }));
+  }
+
+  function handleVocabQuizClose() {
+    setVocabQuizShown(false);
+    // Words collected in the quiz are no longer eligible; recount so the
+    // button doesn't keep offering them.
+    if (!vocabQuizHadNoWordsRef.current) {
+      setVocabSummaryReloadKey((prev) => prev + 1);
+    }
+  }
 
   function handleChange(text: string) {
     setStyleText(text);

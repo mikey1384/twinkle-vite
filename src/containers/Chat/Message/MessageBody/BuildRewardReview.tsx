@@ -333,12 +333,8 @@ export default function BuildRewardReview({
           {hasRules ? (
             <div className={budgetClass}>
               <span>
-                Daily budget {formatAmount(budgets.dailyXP)} XP ·{' '}
-                {formatAmount(budgets.dailyCoins)} Coins
-              </span>
-              <span>
-                Lifetime {formatAmount(budgets.lifetimeXP)} XP ·{' '}
-                {formatAmount(budgets.lifetimeCoins)} Coins
+                Per learner per day {formatAmount(budgets.userDailyXP)} XP ·{' '}
+                {formatAmount(budgets.userDailyCoins)} Coins
               </span>
             </div>
           ) : null}

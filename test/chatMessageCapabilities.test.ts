@@ -151,7 +151,12 @@ test('Build cards can be replied to (and only replied to) while other notices ca
   ]) {
     assert.equal(canReplyToChatMessage({ rootType }), true);
     assert.equal(isReplyOnlyBuildCardMessage({ rootType }), true);
-    assert.equal(canReplyToChatMessage({ rootType, isNotification: 1 }), false);
+    // The reward review card is stored as a notification and stays quotable.
+    assert.equal(canReplyToChatMessage({ rootType, isNotification: 1 }), true);
+    assert.equal(
+      isReplyOnlyBuildCardMessage({ rootType, isNotification: 1 }),
+      true
+    );
   }
   for (const blocked of [
     { rootType: 'approval' },
@@ -191,6 +196,7 @@ test('reply-only Build cards expose Reply and nothing else in the message menu',
     bodySource,
     /\(\(genericActionsAllowed \|\| isDeleteOnlyBuildSuggestion\) \|\|\s*isReplyOnlyBuildCard\)/
   );
+  assert.match(bodySource, /\(!isNotification \|\| isReplyOnlyBuildCard\) &&/);
   assert.match(actionButtonsSource, /if \(canReply && !isRestricted\)/);
   assert.match(
     actionButtonsSource,

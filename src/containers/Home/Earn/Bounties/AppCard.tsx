@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
+import FavoriteButton from '~/components/Build/FavoriteButton';
 import Link from '~/components/Link';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -13,6 +14,12 @@ import type { EarnHubApp } from './useEarnHub';
 // the workspace editor if this pointed at /build/:id.
 export default function AppCard({ app }: { app: EarnHubApp }) {
   const navigate = useNavigate();
+  // Follows the server's answer: the shelf's own value until the member
+  // presses the star, then whatever the favorite request returned.
+  const [favorited, setFavorited] = useState(Boolean(app.isFavorited));
+  useEffect(() => {
+    setFavorited(Boolean(app.isFavorited));
+  }, [app.isFavorited]);
   const payout = useMemo(() => {
     const xp =
       app.minXP && app.minXP !== app.maxXP
@@ -30,8 +37,7 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
         line: `Done for today · +${addCommasToNumber(today.xp)} XP${
           today.coins ? ` + ${addCommasToNumber(today.coins)} Coins` : ''
         }`,
-        ratio: 1,
-        cta: 'Play again'
+        ratio: 1
       };
     }
     if (app.kind === 'completion') {
@@ -40,8 +46,7 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
         line: `${today.earnedRules} of ${rulesCount} cleared today${
           cap ? ` · ${addCommasToNumber(today.xp)} / ${addCommasToNumber(cap)} XP` : ''
         }`,
-        ratio: cap ? Math.min(1, today.xp / cap) : today.earnedRules / Math.max(1, rulesCount),
-        cta: today.earnedRules ? 'Keep going' : 'Play'
+        ratio: cap ? Math.min(1, today.xp / cap) : today.earnedRules / Math.max(1, rulesCount)
       };
     }
     const tried = app.rules.some((rule) => rule.attemptsToday > 0 && !rule.earnedToday);
@@ -50,16 +55,14 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
         line: `Earned today · +${addCommasToNumber(today.xp)} XP${
           today.coins ? ` + ${addCommasToNumber(today.coins)} Coins` : ''
         }`,
-        ratio: 1,
-        cta: 'Open'
+        ratio: 1
       };
     }
     return {
       line: tried
         ? `Today's bounty · tried, not solved yet`
         : `Today's bounty · not tried yet`,
-      ratio: 0,
-      cta: tried ? 'Try again' : app.rules.length > 1 ? "Try today's bounty" : 'Try it'
+      ratio: 0
     };
   }, [app, rulesCount]);
   const subtitle =
@@ -111,8 +114,15 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
           stretch
           onClick={() => navigate(`/app/${app.buildId}`)}
         >
-          {status.cta}
+          Play
         </Button>
+        <FavoriteButton
+          buildId={app.buildId}
+          className={favoriteClass}
+          favorited={favorited}
+          title={app.title}
+          onChange={(change) => setFavorited(change.isFavorited)}
+        />
       </div>
     </article>
   );
@@ -145,9 +155,17 @@ const thumbClass = css`
     border-radius: ${borderRadius};
   }
 `;
+const favoriteClass = css`
+  width: 4rem;
+  height: 4rem;
+  border-radius: 999px;
+  font-size: 1.5rem;
+`;
 const actionsClass = css`
   padding: 0 1.5rem 1.5rem;
   display: flex;
+  align-items: center;
+  gap: 1rem;
   margin-top: auto;
   @media (max-width: ${mobileMaxWidth}) {
     grid-column: 1 / -1;

@@ -12,6 +12,8 @@ export interface NavTabDescriptor {
   key: string;
   to: string;
   imgLabel: string;
+  // An app tab's cover, drawn in place of the icon once it is known.
+  imgSrc?: string;
   label: React.ReactNode;
   kind?: 'pinned' | 'dynamic';
   exactActive?: boolean;
@@ -935,6 +937,7 @@ export default function TabStrip({
           className="desktop"
           to={tab.to}
           imgLabel={tab.imgLabel}
+          imgSrc={tab.imgSrc}
           exactActive={tab.exactActive}
           alert={tab.alert}
           isHome={tab.isHome}
@@ -974,6 +977,7 @@ export default function TabStrip({
           className="desktop"
           to={tab.to}
           imgLabel={tab.imgLabel}
+          imgSrc={tab.imgSrc}
           exactActive={tab.exactActive}
           alert={tab.alert}
           isHome={tab.isHome}

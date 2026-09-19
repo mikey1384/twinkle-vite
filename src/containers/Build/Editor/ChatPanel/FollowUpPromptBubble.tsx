@@ -4,15 +4,28 @@ import { Color } from '~/constants/css';
 
 export default function FollowUpPromptBubble({
   question,
+  yesLabel = 'Yes',
+  onceLabel,
+  noLabel = 'No',
+  busy = false,
   onYes,
+  onOnce,
   onNo,
   onRedirect
 }: {
   question: string;
+  // An action card names what each press does instead of a bare Yes:
+  // "Switch to Heavy" · "Just this once" · "Not now".
+  yesLabel?: string;
+  onceLabel?: string;
+  noLabel?: string;
+  busy?: boolean;
   onYes: () => void;
+  onOnce?: () => void;
   onNo: () => void;
   onRedirect: () => void;
 }) {
+  const onceShown = Boolean(onceLabel && onOnce);
   return (
     <div
       className={css`
@@ -49,6 +62,7 @@ export default function FollowUpPromptBubble({
         <button
           type="button"
           onClick={onYes}
+          disabled={busy}
           className={css`
             border: 1px solid ${Color.green(0.24)};
             background: ${Color.green(0.12)};
@@ -68,10 +82,46 @@ export default function FollowUpPromptBubble({
               background: ${Color.green(0.2)};
               color: ${Color.green()};
             }
+            &:disabled {
+              opacity: 0.6;
+              cursor: default;
+            }
           `}
         >
-          Yes
+          {yesLabel}
         </button>
+        {onceShown ? (
+          <button
+            type="button"
+            onClick={onOnce}
+            disabled={busy}
+            className={css`
+              border: 1px solid ${Color.logoBlue(0.24)};
+              background: ${Color.logoBlue(0.1)};
+              color: ${Color.logoBlue()};
+              border-radius: 999px;
+              padding: 0.5rem 0.9rem;
+              font-size: var(--build-workshop-choice-font-size);
+              font-weight: 800;
+              cursor: pointer;
+              transition:
+                background-color 0.16s ease,
+                border-color 0.16s ease,
+                color 0.16s ease;
+              &:hover,
+              &:focus-visible {
+                border-color: ${Color.logoBlue(0.42)};
+                background: ${Color.logoBlue(0.18)};
+              }
+              &:disabled {
+                opacity: 0.6;
+                cursor: default;
+              }
+            `}
+          >
+            {onceLabel}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={onNo}
@@ -96,34 +146,36 @@ export default function FollowUpPromptBubble({
             }
           `}
         >
-          No
+          {noLabel}
         </button>
-        <button
-          type="button"
-          onClick={onRedirect}
-          className={css`
-            border: 1px solid rgba(217, 119, 6, 0.2);
-            background: rgba(245, 158, 11, 0.11);
-            color: #b45309;
-            border-radius: 999px;
-            padding: 0.5rem 0.9rem;
-            font-size: var(--build-workshop-choice-font-size);
-            font-weight: 800;
-            cursor: pointer;
-            transition:
-              background-color 0.16s ease,
-              border-color 0.16s ease,
-              color 0.16s ease;
-            &:hover,
-            &:focus-visible {
-              border-color: rgba(217, 119, 6, 0.36);
-              background: rgba(245, 158, 11, 0.18);
-              color: #92400e;
-            }
-          `}
-        >
-          No (explain what you want instead)
-        </button>
+        {onceShown ? null : (
+          <button
+            type="button"
+            onClick={onRedirect}
+            className={css`
+              border: 1px solid rgba(217, 119, 6, 0.2);
+              background: rgba(245, 158, 11, 0.11);
+              color: #b45309;
+              border-radius: 999px;
+              padding: 0.5rem 0.9rem;
+              font-size: var(--build-workshop-choice-font-size);
+              font-weight: 800;
+              cursor: pointer;
+              transition:
+                background-color 0.16s ease,
+                border-color 0.16s ease,
+                color 0.16s ease;
+              &:hover,
+              &:focus-visible {
+                border-color: rgba(217, 119, 6, 0.36);
+                background: rgba(245, 158, 11, 0.18);
+                color: #92400e;
+              }
+            `}
+          >
+            No (explain what you want instead)
+          </button>
+        )}
       </div>
     </div>
   );

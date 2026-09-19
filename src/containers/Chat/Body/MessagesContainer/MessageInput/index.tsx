@@ -971,6 +971,9 @@ export default function MessageInput({
         `}
         energyPercent={aiUsagePolicy.energyPercent ?? 0}
         energyPolicy={aiUsagePolicy}
+        // The refill time already shows on Home and in the dashboard the
+        // Energy badge opens; here it only took height from the conversation.
+        showRefillTime={false}
         energySegments={aiUsagePolicy.energySegments}
         energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
         mode={aiUsagePolicy.currentMode}

@@ -1123,6 +1123,19 @@ export default function buildRequestHelpers({
       }
     },
 
+    // Covers for the apps the desktop tab strip has tabs for, in one call.
+    async loadBuildTabThumbnails(buildIds: string[]) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/tab-thumbnails?ids=${buildIds.join(',')}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadBuildThumbnailOptions(buildId: number) {
       try {
         const { data } = await request.get(

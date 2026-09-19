@@ -56,7 +56,9 @@ export function canUseGenericChatMessageActions({
 
 // Build cards can be quoted as reply targets even though they take no generic
 // action: a contributor bumps their own branch suggestion, an owner answers a
-// reward review, and the quoted card re-renders with its live buttons.
+// reward review, and the quoted card re-renders with its live buttons. The
+// notification flag does not take a card out of this set: the reward review
+// card is stored as a notification, and only the server issues these rootTypes.
 const REPLYABLE_BUILD_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   'buildContributionInvite',
   'buildCollaborationRequest',
@@ -74,10 +76,7 @@ export function canReplyToChatMessage(
   message: Parameters<typeof canUseGenericChatMessageActions>[0]
 ) {
   if (canUseGenericChatMessageActions(message)) return true;
-  const isNotificationMessage =
-    message.isNotification === true ||
-    Number(message.isNotification || 0) === 1;
-  return !isNotificationMessage && isReplyableBuildCardRootType(message.rootType);
+  return isReplyableBuildCardRootType(message.rootType);
 }
 
 // A Build card that only supports Reply (plus the sender's Delete): every

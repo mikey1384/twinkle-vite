@@ -1,10 +1,6 @@
 export interface RewardConfig {
-  dailyXP: number;
-  dailyCoins: number;
   userDailyXP: number;
   userDailyCoins: number;
-  lifetimeXP: number;
-  lifetimeCoins: number;
   // Receipts one learner may earn per Korean day across all rules.
   userDailyClaims?: number;
   rules: Array<RewardRule>;
@@ -184,12 +180,8 @@ export interface RewardSettings {
       standingQuestions: number;
     }>;
     budgets: {
-      dailyXP: number;
-      dailyCoins: number;
       userDailyXP: number;
       userDailyCoins: number;
-      lifetimeXP: number;
-      lifetimeCoins: number;
       userDailyClaims: number | null;
     } | null;
     sheetRuleIds: string[];

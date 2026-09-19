@@ -5,7 +5,8 @@ import {
   useAppContext,
   useBuildContext,
   useContentContext,
-  useKeyContext
+  useKeyContext,
+  useViewContext
 } from '~/contexts';
 import { css, cx } from '@emotion/css';
 
@@ -101,7 +102,8 @@ export default function FavoriteButton({
   onStart,
   preventDefault,
   stopPropagation,
-  size = 'md'
+  size = 'md',
+  title: buildTitle
 }: {
   buildId: number;
   className?: string;
@@ -118,6 +120,9 @@ export default function FavoriteButton({
   preventDefault?: boolean;
   size?: 'sm' | 'md' | 'pill';
   stopPropagation?: boolean;
+  // Label for the tab that favoriting pins. Only needed where the build is
+  // not already in the Build context (its stored title is used otherwise).
+  title?: string;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const onOpenSigninModal = useAppContext(
@@ -134,6 +139,12 @@ export default function FavoriteButton({
   );
   const onInvalidateBuildStudioActivityFeeds = useBuildContext(
     (v) => v.actions.onInvalidateBuildStudioActivityFeeds
+  );
+  const knownBuildTitle = useBuildContext(
+    (v) => v.state.buildsById?.[buildId]?.title
+  );
+  const onRequestPinBuildApp = useViewContext(
+    (v) => v.actions.onRequestPinBuildApp
   );
   const [requestLoading, setRequestLoading] = useState(false);
   const buttonLoading = Boolean(loading || requestLoading);
@@ -211,6 +222,15 @@ export default function FavoriteButton({
       // Favorite membership feeds the Favorites/All activity scopes; mark the
       // cached feeds stale so the next look refetches from the server.
       onInvalidateBuildStudioActivityFeeds({ userId: Number(userId) || null });
+      // A new favorite also pins the app's tab. Removing the favorite leaves
+      // the tab alone; unpinning stays the member's own call.
+      if (nextState.isFavorited && requestedFavorited) {
+        onRequestPinBuildApp(
+          String(buildId),
+          String(buildTitle || knownBuildTitle || ''),
+          userId
+        );
+      }
       onChange?.(nextState);
     } catch (error) {
       if (onError) {

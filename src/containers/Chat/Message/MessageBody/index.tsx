@@ -518,7 +518,9 @@ function MessageBody({
       ((genericActionsAllowed || isDeleteOnlyBuildSuggestion) ||
         isReplyOnlyBuildCard) &&
       !isApprovalRequest &&
-      !isNotification &&
+      // The reward review card is stored as a notification but still takes
+      // Reply; every other notification stays menu-less.
+      (!isNotification || isReplyOnlyBuildCard) &&
       !isCallMsg &&
       !isChessMsg &&
       !isEditing &&
@@ -844,7 +846,11 @@ function MessageBody({
           className={MessageStyle.container}
           style={
             isGrouped
-              ? { paddingTop: '0.3rem', paddingBottom: '0.3rem' }
+              ? {
+                  paddingTop: '0.3rem',
+                  // The last message keeps the full gap above the input box.
+                  paddingBottom: isLastMsg ? undefined : '0.3rem'
+                }
               : undefined
           }
         >

@@ -682,6 +682,7 @@ export default function useBuildSocket() {
         question?: string | null;
         suggestedMessage?: string | null;
         sourceMessageId?: number | null;
+        modelSwitch?: { model: string; mode: string; label: string } | null;
       } | null;
       pendingToolApproval?: Record<string, any> | null;
       thumbnailNudge?: { sourceMessageId: number } | null;

@@ -5,9 +5,15 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css, keyframes } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
+import ProgressBar from '~/components/ProgressBar';
+import useEasedProgress from '~/helpers/hooks/useEasedProgress';
 import Questions from './Questions';
 
 const deviceIsMobile = isMobile(navigator);
+// Matches the API's mark for "script written, voices next".
+const SCRIPT_WRITTEN_PROGRESS = 45;
+const WRITING_STEP_EASE_MS = 15000;
+const VOICE_LINE_EASE_MS = 6000;
 
 export default function ListenSection({
   difficulty,
@@ -61,10 +67,20 @@ export default function ListenSection({
   const [isFinished, setIsFinished] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<string>('Loading Story');
   const [dotCount, setDotCount] = useState(0);
+  // Stays false against an API that doesn't report progress, so the screen
+  // keeps its spinner instead of showing a bar stuck at 0%.
+  const [progressReported, setProgressReported] = useState(false);
+  const {
+    progress: loadingProgress,
+    easeTo: easeLoadingProgressTo,
+    reset: resetLoadingProgress
+  } = useEasedProgress();
 
   useEffect(() => {
     if (isDisabled) return;
 
+    setProgressReported(false);
+    resetLoadingProgress();
     loadAudio();
 
     return () => {
@@ -116,15 +132,29 @@ export default function ListenSection({
 
   useEffect(() => {
     socket.on('load_listening_status_updated', handleLoadingStatus);
+    socket.on('load_listening_progress_updated', handleLoadingProgress);
 
     function handleLoadingStatus(status: string) {
       setLoadingStatus(status);
     }
 
+    function handleLoadingProgress({ progress }: { progress: number }) {
+      setProgressReported(true);
+      // Writing steps are one long wait each; voice lines arrive every few
+      // seconds, so they ease over a shorter stretch.
+      easeLoadingProgressTo(
+        progress,
+        progress <= SCRIPT_WRITTEN_PROGRESS
+          ? WRITING_STEP_EASE_MS
+          : VOICE_LINE_EASE_MS
+      );
+    }
+
     return () => {
       socket.off('load_listening_status_updated', handleLoadingStatus);
+      socket.off('load_listening_progress_updated', handleLoadingProgress);
     };
-  }, []);
+  }, [easeLoadingProgressTo]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -361,6 +391,17 @@ export default function ListenSection({
                   {loadingStatus}
                   {'.'.repeat(dotCount)}
                 </div>
+                {progressReported && (
+                  <div
+                    className={css`
+                      width: 32rem;
+                      max-width: 80vw;
+                      margin-top: 2rem;
+                    `}
+                  >
+                    <ProgressBar progress={loadingProgress} />
+                  </div>
+                )}
               </div>
             </div>
           )}

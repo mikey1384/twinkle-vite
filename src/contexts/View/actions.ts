@@ -126,6 +126,20 @@ export default function ViewActions(dispatch: React.Dispatch<ViewAction>) {
         ownerUserId
       });
     },
+    // pass a build id (and its title, for the tab label) to request its tab be
+    // pinned; pass null to clear the request once consumed
+    onRequestPinBuildApp(
+      buildAppId: string | null,
+      title: string = '',
+      ownerUserId: number | string | null = null
+    ) {
+      return dispatch({
+        type: 'SET_BUILD_APP_TO_PIN',
+        buildAppId: buildAppId ?? undefined,
+        title,
+        ownerUserId
+      });
+    },
     // ask the keep-alive host to tear down the running session for this build
     onKillBuildAppSession(buildAppId: string) {
       return dispatch({

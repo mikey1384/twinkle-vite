@@ -21,6 +21,10 @@ import type {
   CurrentBuildRunView,
   MobilePanelTab
 } from '../types';
+import type {
+  BuildLumineModelPreference,
+  LumineModelSelectionControl
+} from '../ChatPanel/types';
 import type { SharedBuildRunIdentityState } from './useRunIdentity';
 
 interface ChatCommandRuntimeFollowUp {
@@ -80,6 +84,7 @@ interface UseChatCommandActionsOptions {
   scrollChatToBottom: (behavior?: ScrollBehavior) => void;
   setDismissedFollowUpPromptKey: (key: string) => void;
   setMobilePanelTab: (tab: MobilePanelTab) => void;
+  lumineModelSelectionControl: LumineModelSelectionControl | null;
   startGeneration: (
     messageText: string,
     options?: {
@@ -87,6 +92,8 @@ interface UseChatCommandActionsOptions {
       promptBinding?: BuildPromptBinding | null;
       messageContext?: string | null;
       existingUserMessageId?: number | null;
+      lumineModelSelection?: BuildLumineModelPreference | null;
+      lumineModelOnce?: boolean;
     }
   ) => Promise<boolean>;
   syncChatMessagesFromServer: (
@@ -113,6 +120,7 @@ export default function useChatCommandActions({
   handlePendingBuildChatUploadMessage,
   isOwner,
   isRunActivityInFlight,
+  lumineModelSelectionControl,
   mergedChatMessages,
   navigate,
   onUpdateBuildRunStatus,
@@ -283,14 +291,57 @@ export default function useChatCommandActions({
     });
   }
 
-  async function handleAcceptFollowUpPrompt() {
+  async function handleAcceptFollowUpPrompt(options?: {
+    keepSavedModel?: boolean;
+  }) {
     if (!isOwner) return;
     const promptBinding = buildFollowUpAcceptPromptBinding(
       currentBuildRunView.followUpPrompt
     );
     if (!promptBinding) return;
+    const modelSwitch = currentBuildRunView.followUpPrompt?.modelSwitch;
+    if (!modelSwitch) {
+      await sendBuildMessageText(promptBinding.suggestedMessage, {
+        promptBinding
+      });
+      return;
+    }
+    // One press. "Switch" saves the lighter mode on the server and retries
+    // on it; "Just this once" retries on it and leaves the saved mode alone.
+    // Either way the run is told the model explicitly: a saved selection
+    // reaches React state only after this handler returns.
+    const option = lumineModelSelectionControl?.modelOptions.find(
+      (candidate) =>
+        candidate.model === modelSwitch.model &&
+        candidate.mode === modelSwitch.mode
+    );
+    if (!option || !lumineModelSelectionControl) {
+      // That mode is not one this user can pick: send as a plain Yes. The run
+      // costs nothing if the current model still cannot afford a round.
+      await sendBuildMessageText(promptBinding.suggestedMessage, {
+        promptBinding
+      });
+      return;
+    }
+    const lumineModelSelection: BuildLumineModelPreference = {
+      model: option.model,
+      mode: option.mode,
+      reasoningEffort: option.defaultReasoningEffort
+    };
+    if (options?.keepSavedModel) {
+      await sendBuildMessageText(promptBinding.suggestedMessage, {
+        promptBinding,
+        lumineModelSelection,
+        lumineModelOnce: true
+      });
+      return;
+    }
+    const saved =
+      await lumineModelSelectionControl.onSave(lumineModelSelection);
+    if (saved === false) return;
     await sendBuildMessageText(promptBinding.suggestedMessage, {
-      promptBinding
+      promptBinding,
+      lumineModelSelection
     });
   }
 
@@ -310,6 +361,8 @@ export default function useChatCommandActions({
       messageContext?: string | null;
       existingUserMessageId?: number | null;
       ignoreUploadInFlight?: boolean;
+      lumineModelSelection?: BuildLumineModelPreference | null;
+      lumineModelOnce?: boolean;
     }
   ) {
     const trimmedMessage = String(messageText || '').trim();

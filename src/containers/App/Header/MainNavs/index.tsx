@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Nav, { navTargetIsActive } from './Nav';
 import TabStrip, { type NavTabDescriptor, type TabMenuItem } from './TabStrip';
 import MobileSideMenuNav from './MobileSideMenuNav';
+import useBuildAppTabThumbnails from './useBuildAppTabThumbnails';
 import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
 import useTabletOrientation from '~/helpers/hooks/useTabletOrientation';
@@ -258,6 +259,10 @@ export default function MainNavs({
   const pageTitle = useViewContext((v) => v.state.pageTitle);
   const openBuildTab = useViewContext((v) => v.state.openBuildTab);
   const buildAppToClose = useViewContext((v) => v.state.buildAppToClose);
+  const buildAppToPin = useViewContext((v) => v.state.buildAppToPin);
+  const onRequestPinBuildApp = useViewContext(
+    (v) => v.actions.onRequestPinBuildApp
+  );
   const mutedBuildAppIds = useViewContext((v) => v.state.mutedBuildAppIds);
   const onSetBuildAppMuted = useViewContext(
     (v) => v.actions.onSetBuildAppMuted
@@ -364,6 +369,15 @@ export default function MainNavs({
       ),
     [customTabs, managementLevel, navScope, userId]
   );
+  // App tabs show the app's cover, favicon-style, in place of the rocket.
+  const buildAppTabIds = useMemo(
+    () =>
+      visibleCustomTabs
+        .map((tab) => getBuildAppIdFromTabTarget(tab.to))
+        .filter((buildAppId): buildAppId is string => !!buildAppId),
+    [visibleCustomTabs]
+  );
+  const buildAppTabThumbnails = useBuildAppTabThumbnails(buildAppTabIds);
   // the DESKTOP dynamic slot: last content page not covered by a custom
   // tab. Kept separate from contentNav/contentPath, which track every
   // content page for the mobile bottom nav — this is what lets the
@@ -1094,6 +1108,35 @@ export default function MainNavs({
     userLoaded
   ]);
 
+  // Favoriting a build asks for its tab to be pinned. Same one-shot shape as
+  // the close request above: it waits here until the nav is ready, then is
+  // consumed and cleared.
+  useEffect(() => {
+    if (!buildAppToPin) return;
+    if (
+      !buildTabIntentBelongsToUser({
+        ownerUserId: buildAppToPin.ownerUserId,
+        userId
+      })
+    ) {
+      onRequestPinBuildApp(null);
+      return;
+    }
+    if (navScope !== userId) return;
+    if (handlePinBuildAppTab(buildAppToPin.buildAppId, buildAppToPin.label)) {
+      onRequestPinBuildApp(null);
+    }
+    // handlers + onRequestPinBuildApp are stable — excluded per repo rule
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    buildAppToPin,
+    navScope,
+    serverNavTabs,
+    sessionStateArrived,
+    userId,
+    userLoaded
+  ]);
+
   useEffect(() => {
     const { section } = getSectionFromPathname(pathname);
     const currentLocation = `${pathname}${search || ''}`;
@@ -1358,6 +1401,7 @@ export default function MainNavs({
             key: customTab.id,
             to: customTab.to,
             imgLabel: customTab.icon,
+            imgSrc: buildAppId ? buildAppTabThumbnails[buildAppId] : undefined,
             exactActive: true,
             label: truncateText({ text: customTab.label, limit: 14 }),
             closable: true,
@@ -1461,6 +1505,7 @@ export default function MainNavs({
     };
   }, [
     minimizedTabKeys,
+    buildAppTabThumbnails,
     buildLinkTarget,
     chatAlertShown,
     chatButtonPath,
@@ -1531,6 +1576,7 @@ export default function MainNavs({
             key: tab.id,
             to: tab.to,
             imgLabel: tab.icon,
+            imgSrc: buildAppId ? buildAppTabThumbnails[buildAppId] : undefined,
             exactActive: true,
             buildAppId: buildAppId || undefined,
             audioMuted: buildAppId
@@ -1542,7 +1588,7 @@ export default function MainNavs({
             minimized: true
           };
         }),
-    [mutedBuildAppIds, visibleCustomTabs]
+    [buildAppTabThumbnails, mutedBuildAppIds, visibleCustomTabs]
   );
 
   useEffect(() => {
@@ -2141,6 +2187,11 @@ export default function MainNavs({
               to={addedTab.to}
               className="mobile"
               imgLabel={addedTab.icon || 'clone'}
+              imgSrc={
+                buildAppTabThumbnails[
+                  getBuildAppIdFromTabTarget(addedTab.to) || ''
+                ]
+              }
               exactActive
             />
           </div>
@@ -2970,6 +3021,35 @@ export default function MainNavs({
         pathname
       );
     }
+  }
+
+  // Pin a build app's tab (creating it if needed) when the app is favorited.
+  // Returns false while the nav isn't ready so the request stays queued. At
+  // the pin cap it quietly does nothing: a favorite must never be answered
+  // with the "too many pinned tabs" alert.
+  function handlePinBuildAppTab(buildId: string, label: string) {
+    const normalizedId = String(buildId || '').trim();
+    if (!normalizedId) return true;
+    if (userId && !navServerReadyRef.current) return false;
+    const base = getNavEditBase();
+    const target = base.customTabs.find(
+      (tab) => getBuildAppIdFromTabTarget(tab.to) === normalizedId
+    );
+    if (target?.pinned) return true;
+    if (base.customTabs.filter((tab) => tab.pinned).length >= MAX_PINNED_TABS) {
+      return true;
+    }
+    if (target) {
+      handleToggleTabPinned(target.id);
+      return true;
+    }
+    handleCaptureTab({
+      to: `/app/${normalizedId}`,
+      icon: 'rocket-launch',
+      label: label || 'App',
+      pinned: true
+    });
+    return true;
   }
 
   // Close a running build app by its build id: find its tab and remove it

@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import Icon from '~/components/Icon';
 import { Link, useLocation } from 'react-router-dom';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
@@ -92,11 +92,25 @@ export function navTargetIsActive({
   return pathname + (search || '') === to;
 }
 
+// An app cover standing in for a tab's icon, favicon-style: a wide cover is
+// centre-cropped to a square about the size of the icon it replaces.
+const NAV_THUMB_STYLE: React.CSSProperties = {
+  width: '2.4rem',
+  height: '2.4rem',
+  flexShrink: 0,
+  objectFit: 'cover',
+  borderRadius: '6px',
+  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.08)',
+  userSelect: 'none',
+  pointerEvents: 'none'
+};
+
 function Nav({
   alert,
   className,
   children,
   imgLabel,
+  imgSrc,
   isHome,
   isUsingChat,
   profileUsername,
@@ -110,6 +124,9 @@ function Nav({
   className?: string;
   children?: React.ReactNode;
   imgLabel?: string;
+  // A small picture drawn in place of the icon (an app tab's cover). The
+  // icon comes back if the picture fails to load.
+  imgSrc?: string;
   isHome?: boolean;
   isUsingChat?: boolean;
   profileUsername?: string;
@@ -186,6 +203,7 @@ function Nav({
   const navigationLoading =
     loadingTarget ===
     getNavigationLocationKey(targetLocation.pathname, targetLocation.search);
+  const [failedImgSrc, setFailedImgSrc] = useState('');
   const onSetProfilesLoaded = useAppContext(
     (v) => v.user.actions.onSetProfilesLoaded
   );
@@ -447,10 +465,22 @@ function Nav({
         draggable={variant === 'tab' ? false : undefined}
         aria-busy={navigationLoading || undefined}
       >
-        <Icon
-          icon={navigationLoading ? 'spinner' : isHome ? 'home' : imgLabel}
-          pulse={navigationLoading || undefined}
-        />
+        {imgSrc && !navigationLoading && failedImgSrc !== imgSrc ? (
+          <img
+            className="nav-thumb"
+            style={NAV_THUMB_STYLE}
+            src={imgSrc}
+            alt=""
+            draggable={false}
+            decoding="async"
+            onError={() => setFailedImgSrc(imgSrc)}
+          />
+        ) : (
+          <Icon
+            icon={navigationLoading ? 'spinner' : isHome ? 'home' : imgLabel}
+            pulse={navigationLoading || undefined}
+          />
+        )}
         {children ? (
           <span
             className="nav-label"

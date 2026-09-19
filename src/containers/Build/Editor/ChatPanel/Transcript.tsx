@@ -32,6 +32,11 @@ interface TranscriptProps {
   chatEndRef: RefObject<HTMLDivElement | null>;
   quickReplyShown?: boolean;
   quickReplyQuestion?: string;
+  quickReplyYesLabel?: string;
+  quickReplyOnceLabel?: string;
+  onQuickReplyOnce?: () => void;
+  quickReplyNoLabel?: string;
+  quickReplyBusy?: boolean;
   onQuickReplyYes?: () => void;
   onQuickReplyNo?: () => void;
   onQuickReplyRedirect?: () => void;
@@ -62,6 +67,11 @@ const Transcript = React.memo(function Transcript({
   chatEndRef,
   quickReplyShown,
   quickReplyQuestion,
+  quickReplyYesLabel,
+  quickReplyOnceLabel,
+  onQuickReplyOnce,
+  quickReplyNoLabel,
+  quickReplyBusy,
   onQuickReplyYes,
   onQuickReplyNo,
   onQuickReplyRedirect,
@@ -181,6 +191,11 @@ const Transcript = React.memo(function Transcript({
         onQuickReplyRedirect ? (
         <FollowUpPromptBubble
           question={quickReplyQuestion || ''}
+          yesLabel={quickReplyYesLabel}
+          onceLabel={quickReplyOnceLabel}
+          onOnce={onQuickReplyOnce}
+          noLabel={quickReplyNoLabel}
+          busy={quickReplyBusy}
           onYes={onQuickReplyYes}
           onNo={onQuickReplyNo}
           onRedirect={onQuickReplyRedirect}

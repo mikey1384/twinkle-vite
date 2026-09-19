@@ -10,6 +10,7 @@ import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import PlayButton, { PLAYER_PLAY_BUTTON_SIZE } from '~/components/PlayButton';
 import VideoControls, { PlayerController } from './VideoControls';
+import UnsupportedVideoNotice from './UnsupportedVideoNotice';
 import { CinemaLevel, getCinemaToggles } from '~/components/CinemaMode';
 
 declare global {
@@ -170,6 +171,9 @@ const VideoPlayer = memo(
     // etc.) — get our custom layers out of the way so YouTube's own fallback UI
     // ("Watch on YouTube" / error) is visible and clickable.
     const [playerError, setPlayerError] = useState(false);
+    // A file video the browser refused outright (MKV on iOS, AVI anywhere). The
+    // player is replaced by a notice instead of a play button that does nothing.
+    const [unsupportedSource, setUnsupportedSource] = useState(false);
 
     // For YouTube the click layer is pointer-events:none (so YouTube's own UI —
     // skip-ad, watch-on-YouTube, prompts — stays clickable), which means nothing
@@ -186,6 +190,7 @@ const VideoPlayer = memo(
     }, [isPlaying]);
 
     useEffect(() => {
+      setUnsupportedSource(false);
       if (props?.fileType === 'youtube') {
         setPlayerError(false);
         initYouTubePlayer();
@@ -505,6 +510,10 @@ const VideoPlayer = memo(
     // pointer sits over the cross-origin iframe, which controls its own cursor.
     const hideCursor = useIdleChrome && !controlsVisible;
 
+    if (unsupportedSource && props?.fileType === 'video') {
+      return <UnsupportedVideoNotice src={props?.src} style={commonProps.style} />;
+    }
+
     if (useCustom) {
       return (
         <div
@@ -525,6 +534,7 @@ const VideoPlayer = memo(
             <video
               className={mediaFillClass}
               src={props?.src}
+              onError={handleNativeVideoError}
               playsInline={props?.playsInline !== false}
               ref={playerRef as React.RefObject<HTMLVideoElement>}
             />
@@ -679,6 +689,7 @@ const VideoPlayer = memo(
         {...commonProps}
         controls
         src={props?.src}
+        onError={handleNativeVideoError}
         ref={playerRef as React.RefObject<HTMLVideoElement>}
       />
     ) : (
@@ -863,6 +874,20 @@ const VideoPlayer = memo(
 
     function handleMediaError(error: unknown) {
       console.error('Error playing media:', error);
+    }
+
+    function handleNativeVideoError(
+      event: React.SyntheticEvent<HTMLVideoElement>
+    ) {
+      // Only "the browser cannot use this source" swaps in the notice; a
+      // network hiccup or decode error mid-playback keeps the player.
+      if (
+        props?.src &&
+        event.currentTarget.error?.code ===
+          MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
+      ) {
+        setUnsupportedSource(true);
+      }
     }
 
     async function initYouTubePlayer() {

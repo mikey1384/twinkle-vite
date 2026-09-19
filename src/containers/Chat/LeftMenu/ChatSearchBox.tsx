@@ -56,9 +56,16 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
         <SearchInput
           className={css`
             @container chat-channels (max-width: 180px) {
+              /* SearchInput sizes its icon with the input text (2.3rem), which
+                 reaches past a 3rem text start. Shrink the icon here so the
+                 narrow panel keeps its text room and still shows a clear gap. */
+              && svg {
+                font-size: 1.6rem;
+                left: 0.9rem;
+              }
               && input {
                 font-size: 16px;
-                padding-left: 3rem !important;
+                padding-left: 3.4rem !important;
               }
             }
           `}

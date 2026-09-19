@@ -203,6 +203,8 @@ export interface BuildFollowUpPrompt {
   question?: string | null;
   suggestedMessage?: string | null;
   sourceMessageId?: number | null;
+  // Yes first switches the build to this lighter Lumine model, then sends.
+  modelSwitch?: { model: string; mode: string; label: string } | null;
 }
 
 export interface BuildPendingToolApproval {

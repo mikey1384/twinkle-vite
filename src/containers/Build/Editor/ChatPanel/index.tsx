@@ -14,6 +14,7 @@ import {
   BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
   BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
 } from '../constants';
+import { LUMINE_MODE_LABELS } from '../helpers/lumineModelSelection';
 import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
 import { buildLumineRuntimeDebugSnapshot } from './helpers/runtimeDebug';
 
@@ -256,6 +257,7 @@ export default function ChatPanel({
   onContinueScopedPlan,
   onCancelScopedPlan,
   onAcceptFollowUpPrompt,
+  onAcceptFollowUpPromptOnce,
   onDismissFollowUpPrompt,
   onApproveToolRequest,
   onDeclineToolRequest,
@@ -498,6 +500,21 @@ export default function ChatPanel({
   const normalizedFollowUpSuggestedMessage = String(
     followUpPrompt?.suggestedMessage || ''
   ).trim();
+  // The label comes from this user's own model options, so the button never
+  // offers a mode they cannot pick.
+  const followUpModelSwitchOption =
+    !showScopedPlanQuickReplies && followUpPrompt?.modelSwitch
+      ? lumineModelSelectionControl?.modelOptions.find(
+          (option) =>
+            option.model === followUpPrompt.modelSwitch?.model &&
+            option.mode === followUpPrompt.modelSwitch?.mode
+        )
+      : null;
+  // Named the way the mode picker names it; the question above the buttons
+  // already says which model that is.
+  const followUpModelSwitchLabel = followUpModelSwitchOption
+    ? LUMINE_MODE_LABELS[followUpModelSwitchOption.mode]
+    : '';
   const showGenericFollowUpQuickReplies =
     isOwner &&
     runMode === 'user' &&
@@ -806,6 +823,26 @@ export default function ChatPanel({
                 showScopedPlanQuickReplies
                   ? normalizedScopedPlanQuestion
                   : normalizedFollowUpQuestion
+              }
+              quickReplyYesLabel={
+                followUpModelSwitchLabel
+                  ? `Switch to ${followUpModelSwitchLabel}`
+                  : undefined
+              }
+              quickReplyOnceLabel={
+                followUpModelSwitchLabel ? 'Just this once' : undefined
+              }
+              onQuickReplyOnce={
+                followUpModelSwitchLabel
+                  ? onAcceptFollowUpPromptOnce
+                  : undefined
+              }
+              quickReplyNoLabel={
+                followUpModelSwitchLabel ? 'Not now' : undefined
+              }
+              quickReplyBusy={
+                Boolean(followUpModelSwitchLabel) &&
+                Boolean(lumineModelSelectionControl?.loading)
               }
               onQuickReplyYes={
                 showScopedPlanQuickReplies

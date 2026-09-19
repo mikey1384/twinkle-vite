@@ -69,6 +69,7 @@ export interface BuildLiveRunFollowUpPrompt {
   question?: string | null;
   suggestedMessage?: string | null;
   sourceMessageId?: number | null;
+  modelSwitch?: { model: string; mode: string; label: string } | null;
 }
 
 export interface BuildLiveRunDeferredRequest {

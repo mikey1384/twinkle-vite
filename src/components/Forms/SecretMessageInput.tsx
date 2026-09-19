@@ -14,6 +14,10 @@ import {
   convertToWebFriendlyFormat
 } from '~/helpers/imageHelpers';
 import {
+  convertVideoForUpload,
+  needsVideoUploadConversion
+} from '~/helpers/videoUploadConversion';
+import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
   returnMaxUploadSize
@@ -50,6 +54,9 @@ export default function SecretMessageInput({
 }) {
   const [onHover, setOnHover] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
+  const [videoConversionProgress, setVideoConversionProgress] = useState<
+    number | null
+  >(null);
   const [draggedFile, setDraggedFile] = useState();
   const FileInputRef: React.RefObject<any> = useRef(null);
   // Track the latest secret text so an embed that lands after an async upload
@@ -187,6 +194,12 @@ export default function SecretMessageInput({
               >
                 <Icon size="lg" icon="upload" />
               </Button>
+              {videoConversionProgress !== null && (
+                <div style={{ fontSize: '1.2rem', marginTop: '0.5rem' }}>
+                  Getting video ready for phones…{' '}
+                  {Math.round(videoConversionProgress * 100)}%
+                </div>
+              )}
               {userId && disabled && (
                 <FullTextReveal
                   style={{
@@ -334,6 +347,24 @@ export default function SecretMessageInput({
         }
       };
       reader.readAsDataURL(fileObj);
+    } else if (needsVideoUploadConversion(fileObj)) {
+      // MKV cannot play on iOS; rewrap it as MP4 before it is attached. A
+      // failed conversion hands back the original file.
+      event.target.value = null;
+      setVideoConversionProgress(0);
+      try {
+        const { file } = await convertVideoForUpload({
+          file: fileObj,
+          onProgress: setVideoConversionProgress
+        });
+        onSetSecretAttachment({
+          file,
+          fileType: getFileInfoFromFileName(file.name).fileType
+        });
+      } finally {
+        setVideoConversionProgress(null);
+      }
+      return;
     } else {
       onSetSecretAttachment({
         file: fileObj,

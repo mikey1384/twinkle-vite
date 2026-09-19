@@ -51,12 +51,8 @@ export interface BuildRewardReviewCardPayload {
   proposal?: BuildRewardReviewProposalSummary | null;
   rules?: BuildRewardReviewRuleSummary[];
   budgets?: {
-    dailyXP?: number;
-    dailyCoins?: number;
     userDailyXP?: number;
     userDailyCoins?: number;
-    lifetimeXP?: number;
-    lifetimeCoins?: number;
   };
   createdAt?: number;
   reviewedAt?: number;

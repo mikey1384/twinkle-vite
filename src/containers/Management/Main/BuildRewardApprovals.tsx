@@ -28,12 +28,8 @@ import type {
 // Creators send code only. The reviewer writes the earning rules here (or via
 // `lumine admin reward-review approve --config`) and approval freezes both.
 const EMPTY_CONFIG: RewardConfig = {
-  dailyXP: 0,
-  dailyCoins: 0,
   userDailyXP: 0,
   userDailyCoins: 0,
-  lifetimeXP: 0,
-  lifetimeCoins: 0,
   rules: []
 };
 

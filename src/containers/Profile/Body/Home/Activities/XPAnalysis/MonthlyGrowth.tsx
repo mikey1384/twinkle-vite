@@ -228,7 +228,8 @@ const growthClass = css`
     display: block;
     position: relative;
     height: 19rem;
-    border-radius: 7px;
+    /* Square on purpose: the tint is a column of the plot area that sits on
+       the baseline and gridlines, so rounded corners read as a floating pill. */
     transition: background 160ms ease;
   }
   .bar {

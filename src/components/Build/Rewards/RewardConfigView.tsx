@@ -160,12 +160,8 @@ export const rewardGridClass = css`
 `;
 
 export const budgetFields = [
-  ['dailyXP', 'App XP per day'],
-  ['dailyCoins', 'App Coins per day'],
   ['userDailyXP', 'XP per learner per day'],
-  ['userDailyCoins', 'Coins per learner per day'],
-  ['lifetimeXP', 'Total XP budget'],
-  ['lifetimeCoins', 'Total Coin budget']
+  ['userDailyCoins', 'Coins per learner per day']
 ] as const;
 
 export function RewardConfigSummary({ config }: { config: RewardConfig }) {

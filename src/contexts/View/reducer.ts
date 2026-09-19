@@ -43,6 +43,15 @@ export interface ViewState {
     buildAppId: string;
     ownerUserId: number | string | null;
   } | null;
+  // one-shot request to pin a build app's tab, posted when the member
+  // favorites that build. MainNavs owns the tabs, so it consumes this and
+  // clears it back to null; user-scoped for the same reason as the close
+  // request above.
+  buildAppToPin: {
+    buildAppId: string;
+    label: string;
+    ownerUserId: number | string | null;
+  } | null;
   // request to tear down a running build app's keep-alive session, identified
   // by build id. Carries a monotonic nonce so the keep-alive host processes
   // each request exactly once (a stale request must not kill a freshly
@@ -76,6 +85,7 @@ export interface ViewAction {
     | 'SET_BUILD_APP_NAV_TAB_IDS'
     | 'SET_OPEN_BUILD_TAB'
     | 'SET_BUILD_APP_TO_CLOSE'
+    | 'SET_BUILD_APP_TO_PIN'
     | 'KILL_BUILD_APP_SESSION';
   key?: string;
   disabled?: boolean;
@@ -240,6 +250,19 @@ export default function ViewReducer(
       return {
         ...state,
         buildAppToClose: next
+      };
+    }
+    case 'SET_BUILD_APP_TO_PIN': {
+      const buildAppId = String(action.buildAppId || '').trim();
+      return {
+        ...state,
+        buildAppToPin: buildAppId
+          ? {
+              buildAppId,
+              label: String(action.title || '').trim(),
+              ownerUserId: action.ownerUserId ?? null
+            }
+          : null
       };
     }
     case 'KILL_BUILD_APP_SESSION': {

@@ -67,6 +67,12 @@ export const MessageStyle = {
       background: color-mix(in srgb, var(--theme-bg, #418ceb) 12%, white);
       border-color: color-mix(in srgb, var(--theme-bg, #418ceb) 30%, #e2e8f0);
     }
+    /* A bubble hugs its text, but embeds like a YouTube player or a content
+       card take their width from the bubble. Hugging them collapses them (the
+       player shrank to just its play icon), so give those bubbles the row. */
+    &:has(.rich-text-embedded-component--fluid) {
+      width: 100%;
+    }
     &[data-message-surface='ai'] {
       width: 100%;
       background: #fff;

@@ -92,6 +92,15 @@ function TextMessage({
     );
   }, [extractedUrl]);
 
+  // Written as ![](link), the video already plays inside the message, so the
+  // separate preview under it would be the same video twice.
+  const videoIsEmbeddedInline = useMemo(() => {
+    if (!isVideoUrl || !extractedUrl) return false;
+    const bareUrl = extractedUrl.replace(/^http:\/\//, '');
+    const embeds = (content || '').match(/!\[[^\]]*\]\([^)\s]+\)/g) || [];
+    return embeds.some((embed) => embed.includes(bareUrl));
+  }, [content, extractedUrl, isVideoUrl]);
+
   const showFullIndicator = useMemo(
     () =>
       isAIMessage &&
@@ -291,6 +300,7 @@ function TextMessage({
           </>
         )}
         {isVideoUrl &&
+          !videoIsEmbeddedInline &&
           extractedUrl &&
           messageId &&
           !isAIMessage &&

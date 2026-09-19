@@ -3,6 +3,10 @@ import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
+// lumine.network serves this same site; visitors arriving through it see the
+// Lumine wordmark instead of Twinkle's.
+const isLumineHost = /(^|\.)lumine\.network$/.test(window.location.hostname);
+
 export default function TwinkleLogo({
   style
 }: {
@@ -61,10 +65,51 @@ export default function TwinkleLogo({
           > .logo-kle {
             color: ${kleColor};
           }
+          > .logo-spark {
+            width: 1.1rem;
+            height: 1.1rem;
+            margin-left: 0.15rem;
+            vertical-align: top;
+            transform: translateY(-0.35rem);
+            color: ${Color.gold()};
+            animation: lumineSparkTwinkle 2.6s ease-in-out infinite;
+          }
+          @keyframes lumineSparkTwinkle {
+            0%,
+            100% {
+              opacity: 0.75;
+              transform: translateY(-0.35rem) scale(0.85) rotate(0deg);
+            }
+            50% {
+              opacity: 1;
+              transform: translateY(-0.35rem) scale(1.15) rotate(18deg);
+            }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            > .logo-spark {
+              animation: none;
+            }
+          }
         `}
       >
-        <span className="logo logo-twin">Twin</span>
-        <span className="logo logo-kle">kle</span>
+        {isLumineHost ? (
+          <>
+            <span className="logo logo-twin">Lumine</span>
+            <svg
+              className="logo logo-spark"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M12 0c1.1 6.6 4.4 10.9 12 12-7.6 1.1-10.9 5.4-12 12-1.1-6.6-4.4-10.9-12-12 7.6-1.1 10.9-5.4 12-12z" />
+            </svg>
+          </>
+        ) : (
+          <>
+            <span className="logo logo-twin">Twin</span>
+            <span className="logo logo-kle">kle</span>
+          </>
+        )}
       </div>
     </div>
   );

@@ -67,13 +67,20 @@ function EmbeddedComponent({
     return { ext: extension, fileNameFromSrc: fileName, fileType };
   }, [src]);
   const shouldAttemptImage = fileType === 'image' || !ext;
+  // Images bring their own size. Every other embed (content cards, YouTube,
+  // file rows) sizes itself from its parent, so a shrink-to-fit parent such as
+  // a chat bubble has to give it real width; this class is how it can tell.
+  const sizesFromParent =
+    isInternalLink ||
+    (isYouTube && !!src) ||
+    !(src && shouldAttemptImage && !errorLoadingImage);
 
   return (
     <div
       ref={embeddedContentRef}
       className={`rich-text-embedded-component${
         isPreview ? ' rich-text-embedded-component--preview' : ''
-      } ${css`
+      }${sizesFromParent ? ' rich-text-embedded-component--fluid' : ''} ${css`
         display: flex;
         justify-content: center;
         align-items: center;

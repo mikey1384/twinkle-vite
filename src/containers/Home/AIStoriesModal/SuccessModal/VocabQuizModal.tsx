@@ -60,10 +60,12 @@ const funFont =
 export default function VocabQuizModal({
   isOpen,
   onClose,
+  onNoWords,
   storyId
 }: {
   isOpen: boolean;
   onClose: () => void;
+  onNoWords?: () => void;
   storyId: number;
 }) {
   const navigate = useNavigate();
@@ -77,6 +79,7 @@ export default function VocabQuizModal({
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [noWords, setNoWords] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [answerResult, setAnswerResult] = useState<any>(null);
@@ -93,6 +96,7 @@ export default function VocabQuizModal({
   const [resultTab, setResultTab] = useState<ResultTab>('all');
 
   const storyIdRef = useRef(storyId);
+  const onNoWordsRef = useRef(onNoWords);
 
   const currentQuestion = questions[currentIndex] || null;
   const isLastQuestion =
@@ -107,6 +111,10 @@ export default function VocabQuizModal({
   }, [storyId]);
 
   useEffect(() => {
+    onNoWordsRef.current = onNoWords;
+  }, [onNoWords]);
+
+  useEffect(() => {
     if (!isOpen) return;
     if (!storyId) {
       setLoadError('Story is unavailable.');
@@ -115,6 +123,7 @@ export default function VocabQuizModal({
 
     setLoading(true);
     setLoadError('');
+    setNoWords(false);
     setQuestions([]);
     setTotalQuestions(0);
     setCurrentIndex(0);
@@ -161,9 +170,18 @@ export default function VocabQuizModal({
       setLoadingNextQuestion(false);
     }
 
-    function handleQuizError(data: { storyId: number; error: string }) {
+    function handleQuizError(data: {
+      storyId: number;
+      code?: string;
+      error: string;
+    }) {
       if (data.storyId !== storyIdRef.current) return;
-      setLoadError(data.error || 'Failed to load quiz');
+      if (data.code === 'no_words') {
+        setNoWords(true);
+        onNoWordsRef.current?.();
+      } else {
+        setLoadError(data.error || 'Failed to load quiz');
+      }
       setLoading(false);
       setLoadingNextQuestion(false);
     }
@@ -191,7 +209,8 @@ export default function VocabQuizModal({
     setStatusTone('neutral');
   }, [currentIndex, isOpen]);
 
-  const waitingForFirstQuestion = !currentQuestion && !loadError && !loading;
+  const waitingForFirstQuestion =
+    !currentQuestion && !loadError && !noWords && !loading;
   const waitingForNextQuestion =
     loadingNextQuestion && currentIndex >= questions.length;
 
@@ -743,10 +762,10 @@ export default function VocabQuizModal({
             `}
           >
             <Icon
-              icon="check-circle"
+              icon="exclamation-circle"
               style={{
                 fontSize: '3rem',
-                color: Color.green(),
+                color: Color.orange(),
                 marginBottom: '1rem'
               }}
             />
@@ -757,7 +776,7 @@ export default function VocabQuizModal({
                 color: ${Color.darkerGray()};
               `}
             >
-              No words to collect
+              Couldn't start the quiz
             </div>
             <div
               className={css`
@@ -766,7 +785,16 @@ export default function VocabQuizModal({
                 margin-top: 0.5rem;
               `}
             >
-              All vocabulary from this story has already been collected
+              {loadError}
+            </div>
+            <div
+              className={css`
+                font-size: 1.2rem;
+                color: ${Color.gray()};
+                margin-top: 0.5rem;
+              `}
+            >
+              Close this and press Collect Words to try again.
             </div>
           </div>
         ) : currentQuestion ? (
@@ -930,7 +958,7 @@ export default function VocabQuizModal({
                 margin-top: 0.5rem;
               `}
             >
-              All vocabulary from this story has already been collected
+              This story has no new words left to collect
             </div>
           </div>
         )}

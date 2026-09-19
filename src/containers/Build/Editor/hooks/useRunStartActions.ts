@@ -232,6 +232,8 @@ export default function useRunStartActions({
       promptBinding?: BuildPromptBinding | null;
       messageContext?: string | null;
       existingUserMessageId?: number | null;
+      lumineModelSelection?: BuildLumineModelPreference | null;
+      lumineModelOnce?: boolean;
     }
   ): Promise<boolean> {
     if (aiFeaturesDisabled) return false;
@@ -281,7 +283,8 @@ export default function useRunStartActions({
         activeBuild.projectFiles || [],
         activeBuild.code || ''
       );
-      const lumineModelSelection = getLumineModelSelection();
+      const lumineModelSelection =
+        options?.lumineModelSelection || getLumineModelSelection();
       setDismissedFollowUpPromptKey('');
       clearLocalFollowUpPrompt();
       runtimeFollowUp.resetRuntimeHealthFollowUpState();
@@ -368,6 +371,9 @@ export default function useRunStartActions({
         lumineModel: lumineModelSelection?.model || undefined,
         lumineReasoningEffort:
           lumineModelSelection?.reasoningEffort || undefined,
+        lumineModelOnce:
+          (options?.lumineModelOnce && Boolean(options?.lumineModelSelection)) ||
+          undefined,
         planAction: options?.planAction || undefined,
         promptBinding: options?.promptBinding || undefined,
         expectedCurrentArtifactVersionId:

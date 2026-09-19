@@ -1131,6 +1131,7 @@ export default function BuildEditor({
   } = useChatCommandActions({
     build,
     buildChatUploadInFlight,
+    lumineModelSelectionControl,
     currentBuildIsContributionFork,
     currentBuildRunView,
     deleteBuildChatMessage,
@@ -1966,7 +1967,9 @@ export default function BuildEditor({
     onSendMessage: handleSendMessage,
     onContinueScopedPlan: handleContinueScopedPlan,
     onCancelScopedPlan: handleCancelScopedPlan,
-    onAcceptFollowUpPrompt: handleAcceptFollowUpPrompt,
+    onAcceptFollowUpPrompt: () => handleAcceptFollowUpPrompt(),
+    onAcceptFollowUpPromptOnce: () =>
+      handleAcceptFollowUpPrompt({ keepSavedModel: true }),
     onDismissFollowUpPrompt: handleDismissFollowUpPrompt,
     onApproveToolRequest: handleApproveToolRequest,
     onDeclineToolRequest: handleDeclineToolRequest,
