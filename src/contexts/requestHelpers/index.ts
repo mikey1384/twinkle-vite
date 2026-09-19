@@ -100,6 +100,7 @@ registerMethods('build', [
   'pollBuildAppMcpCall',
   'completeBuildAppMcpCall',
   'updateBuildMetadata',
+  'loadBuildTabThumbnails',
   'loadBuildThumbnailOptions',
   'uploadBuildThumbnail',
   'captureBuildThumbnailPreview',
