@@ -223,7 +223,7 @@ export default function useOptimisticSave({
         ...message,
         uploaderLevel: level,
         targetSubject: subjectId
-          ? targetSubject || currentChannel?.topicObj[subjectId]
+          ? targetSubject || currentChannel?.topicObj?.[subjectId]
           : null,
         id: messageId
       };

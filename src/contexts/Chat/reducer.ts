@@ -1872,20 +1872,24 @@ export default function ChatReducer(
             ? {
                 [action.channelId]: {
                   ...prevChannelObj,
-                  topicObj: {
-                    ...prevChannelObj?.topicObj,
-                    [action.topicId]: {
-                      ...prevChannelObj?.topicObj[action.topicId],
-                      messageIds: (
-                        prevChannelObj?.topicObj[action.topicId]?.messageIds ||
-                        []
-                      ).map((messageId: number) =>
-                        messageId === action.tempMessageId
-                          ? action.messageId
-                          : messageId
-                      )
-                    }
-                  },
+                  // A freshly created channel has no topicObj until its first
+                  // canonical load, and its first message is sent before that.
+                  topicObj: action.topicId
+                    ? {
+                        ...prevChannelObj.topicObj,
+                        [action.topicId]: {
+                          ...prevChannelObj.topicObj?.[action.topicId],
+                          messageIds: (
+                            prevChannelObj.topicObj?.[action.topicId]
+                              ?.messageIds || []
+                          ).map((messageId: number) =>
+                            messageId === action.tempMessageId
+                              ? action.messageId
+                              : messageId
+                          )
+                        }
+                      }
+                    : prevChannelObj.topicObj,
                   messageIds,
                   messagesObj,
                   ...(subchannelObj ? { subchannelObj } : {})
@@ -5442,7 +5446,9 @@ export default function ChatReducer(
               [action.messageId]: {
                 ...prevChannelObj?.messagesObj?.[action.tempMessageId],
                 ...(action.topicId
-                  ? { targetSubject: prevChannelObj?.topicObj[action.topicId] }
+                  ? {
+                      targetSubject: prevChannelObj?.topicObj?.[action.topicId]
+                    }
                   : {})
               }
             },
