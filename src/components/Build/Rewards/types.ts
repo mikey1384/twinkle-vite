@@ -23,6 +23,8 @@ export interface RewardRule {
   verifier: 'numeric-quiz' | 'completion';
   // completion only: seconds that must pass between start and claim.
   minSeconds?: number;
+  maxLifetimeClaims?: number;
+  completionProof?: 'classic-tower-v1';
   // numeric-quiz only: 'until-earned' plays sets in order and keeps a set up
   // until somebody has earned it; absent/'dated' serves by calendar day.
   progression?: 'dated' | 'until-earned';
@@ -41,7 +43,13 @@ export interface RewardRule {
   retry?: { xpPercent: number; coinsPercent: number };
 }
 export interface RewardProposalEarnings {
-  rules: Array<{ title: string; xp: number; coins: number }>;
+  rules: Array<{
+    title: string;
+    xp: number;
+    coins: number;
+    maxLifetimeClaims?: number;
+    completionProof?: 'classic-tower-v1';
+  }>;
   budgets: { userDailyXP: number; userDailyCoins: number };
 }
 export interface RewardProposalSummary {

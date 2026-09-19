@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Color } from '~/constants/css';
 import {
   addEmoji,
@@ -59,6 +59,16 @@ export default function SecretMessageInput({
   >(null);
   const [draggedFile, setDraggedFile] = useState();
   const FileInputRef: React.RefObject<any> = useRef(null);
+  const videoConversionAbortRef = useRef<AbortController | null>(null);
+  const attachmentSelectionRef = useRef(0);
+  useEffect(() => {
+    return () => {
+      attachmentSelectionRef.current += 1;
+      const controller = videoConversionAbortRef.current;
+      videoConversionAbortRef.current = null;
+      controller?.abort();
+    };
+  }, []);
   // Track the latest secret text so an embed that lands after an async upload
   // appends to the current value instead of a stale closure (matches the
   // textRef/descriptionRef pattern in the sibling inputs).
@@ -161,7 +171,7 @@ export default function SecretMessageInput({
               onDragEnd={() => setDraggedFile(undefined)}
               onDragEmbed={handleDragEmbed}
               onThumbnailLoad={onThumbnailLoad}
-              onClose={() => onSetSecretAttachment(null)}
+              onClose={clearAttachment}
             />
           ) : (
             <div>
@@ -268,15 +278,20 @@ export default function SecretMessageInput({
   }
 
   function clearAttachment() {
+    cancelVideoConversion();
     setDraggedFile(undefined);
     onSetSecretAttachment(null);
   }
 
   async function handleUpload(event: any) {
     const fileObj = event.target.files[0];
+    if (!fileObj) return;
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
     }
+    cancelVideoConversion();
+    const selection = attachmentSelectionRef.current;
+    const isCurrentSelection = () => attachmentSelectionRef.current === selection;
     const { fileType } = getFileInfoFromFileName(fileObj.name);
 
     // Check if image needs conversion (HEIC, TIFF, AVIF, etc.) BEFORE fileType check
@@ -285,6 +300,7 @@ export default function SecretMessageInput({
       try {
         const { file: convertedFile, dataUrl, converted } =
           await convertToWebFriendlyFormat(fileObj);
+        if (!isCurrentSelection()) return;
         if (converted) {
           // Note: We don't re-check size after conversion. The user selected a file
           // within their limit - they shouldn't be penalized if our conversion inflates it.
@@ -297,6 +313,7 @@ export default function SecretMessageInput({
           return;
         }
       } catch (error) {
+        if (!isCurrentSelection()) return;
         console.warn('Image conversion failed:', error);
       }
     }
@@ -304,6 +321,7 @@ export default function SecretMessageInput({
     if (fileType === 'image') {
       const reader = new FileReader();
       reader.onload = (upload: any) => {
+        if (!isCurrentSelection()) return;
         const payload = upload.target.result;
         const extension = fileObj.name.split('.').pop()?.toLowerCase();
         if (extension === 'gif' || extension === 'svg') {
@@ -316,6 +334,7 @@ export default function SecretMessageInput({
           window.loadImage(
             payload,
             function (img) {
+              if (!isCurrentSelection()) return;
               // loadImage returns a canvas on success, or an error on failure
               if (img && typeof img.toDataURL === 'function') {
                 const outputFormat = extension === 'png' ? 'png' : 'jpeg';
@@ -351,18 +370,29 @@ export default function SecretMessageInput({
       // MKV cannot play on iOS; rewrap it as MP4 before it is attached. A
       // failed conversion hands back the original file.
       event.target.value = null;
+      const controller = new AbortController();
+      videoConversionAbortRef.current = controller;
       setVideoConversionProgress(0);
       try {
         const { file } = await convertVideoForUpload({
           file: fileObj,
-          onProgress: setVideoConversionProgress
+          signal: controller.signal,
+          onProgress: (progress) => {
+            if (videoConversionAbortRef.current === controller) {
+              setVideoConversionProgress(progress);
+            }
+          }
         });
+        if (videoConversionAbortRef.current !== controller) return;
         onSetSecretAttachment({
           file,
           fileType: getFileInfoFromFileName(file.name).fileType
         });
       } finally {
-        setVideoConversionProgress(null);
+        if (videoConversionAbortRef.current === controller) {
+          videoConversionAbortRef.current = null;
+          setVideoConversionProgress(null);
+        }
       }
       return;
     } else {
@@ -372,5 +402,13 @@ export default function SecretMessageInput({
       });
     }
     event.target.value = null;
+  }
+
+  function cancelVideoConversion() {
+    attachmentSelectionRef.current += 1;
+    const controller = videoConversionAbortRef.current;
+    videoConversionAbortRef.current = null;
+    controller?.abort();
+    setVideoConversionProgress(null);
   }
 }

@@ -15,6 +15,10 @@ export default function RewardProposalEarnings({
           <li key={index}>
             {rule.title}: {rule.xp.toLocaleString()} XP ·{' '}
             {rule.coins.toLocaleString()} Coins
+            {rule.maxLifetimeClaims
+              ? ` · up to ${rule.maxLifetimeClaims} times per person in total`
+              : ''}
+            {rule.completionProof ? ' · climb checked by Twinkle' : ''}
           </li>
         ))}
       </ul>

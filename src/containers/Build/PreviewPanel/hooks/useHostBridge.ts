@@ -4168,6 +4168,7 @@ export function useHostBridge({
           case 'rewards:status':
           case 'rewards:receipt':
           case 'rewards:start':
+          case 'rewards:progress':
           case 'rewards:claim':
           case 'rewards:timeline':
           case 'rewards:archived-problem':
@@ -4196,6 +4197,15 @@ export function useHostBridge({
                       ruleId: payload?.ruleId,
                       challengeId: payload?.challengeId,
                       answers: payload?.answers,
+                      ...(type === 'rewards:progress'
+                        ? {
+                            frames: payload?.frames,
+                            completionToken: payload?.completionToken
+                          }
+                        : type === 'rewards:claim' &&
+                            payload?.completionToken !== undefined
+                          ? { completionToken: payload.completionToken }
+                          : {}),
                       previewAttempts: payload?.previewAttempts,
                       metric: payload?.metric,
                       period: payload?.period,
@@ -4271,6 +4281,15 @@ export function useHostBridge({
                 ruleId: payload?.ruleId,
                 challengeId: payload?.challengeId,
                 answers: payload?.answers,
+                ...(type === 'rewards:progress'
+                  ? {
+                      frames: payload?.frames,
+                      completionToken: payload?.completionToken
+                    }
+                  : type === 'rewards:claim' &&
+                      payload?.completionToken !== undefined
+                    ? { completionToken: payload.completionToken }
+                    : {}),
                 metric: payload?.metric,
                 period: payload?.period,
                 ...(type === 'rewards:timeline'

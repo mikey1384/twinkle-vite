@@ -248,13 +248,18 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
           {rule.coins.toLocaleString()} Coins
         </h4>
         <p>
-          Rule ID: {rule.id} · completion · once per learner per Korean
-          calendar day · pays when the app reports the activity finished at
-          least {(rule.minSeconds || 0).toLocaleString()} seconds after it
-          started. Nothing else is verified: read the code to see when the
-          app starts and claims it, and keep the amount small enough that a
-          player scripting the call would not matter.
+          Rule ID: {rule.id} · completion · once per learner per day (UTC).
+          Minimum time: {(rule.minSeconds || 0).toLocaleString()} seconds.
+          {rule.completionProof
+            ? ' The server simulates the climb and requires a verified summit finish.'
+            : ' Only elapsed time is verified. Keep amounts small enough to tolerate automated claims.'}
         </p>
+        {rule.maxLifetimeClaims ? (
+          <p>
+            Up to {rule.maxLifetimeClaims} rewards per learner in total,
+            enforced by the server across updates.
+          </p>
+        ) : null}
       </article>
     );
   }
@@ -277,6 +282,9 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
         {rule.title} · {rule.xp.toLocaleString()} XP +{' '}
         {rule.coins.toLocaleString()} Coins
       </h4>
+      {rule.maxLifetimeClaims ? (
+        <p>Up to {rule.maxLifetimeClaims} rewards per learner in total.</p>
+      ) : null}
       <p>
         Rule ID: {rule.id} · once per learner per Korean calendar day · {tries}{' '}
         · {retry}

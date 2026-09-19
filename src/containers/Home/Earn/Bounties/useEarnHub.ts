@@ -23,6 +23,7 @@ export interface EarnHubApp {
   ownerUsername: string | null;
   thumbnailUrl: string | null;
   isFavorited?: boolean;
+  allRewardsCollected?: boolean;
   kind: 'quiz' | 'completion' | 'mixed';
   maxXP: number;
   maxCoins: number;

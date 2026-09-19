@@ -8,6 +8,8 @@
 // cancelled hands back the original file untouched; the player's "can't play on
 // this device" fallback covers whatever still gets uploaded as MKV.
 
+import { readMatroskaTrackTypes } from './matroskaTrackInventory';
+
 const CONVERTIBLE_VIDEO_EXTENSIONS = ['mkv'];
 // Below this size the MP4 index is assembled in memory for a regular
 // fast-start file. Above it the output is fragmented MP4, which streams to the
@@ -15,13 +17,6 @@ const CONVERTIBLE_VIDEO_EXTENSIONS = ['mkv'];
 const IN_MEMORY_FAST_START_MAX_BYTES = 256 * 1024 * 1024;
 const IOS_PLAYABLE_MP4_VIDEO_CODECS = ['avc', 'hevc'];
 const IOS_PLAYABLE_MP4_AUDIO_CODECS = ['aac', 'mp3'];
-const TRACK_LOSS_REASONS = [
-  'unknown_source_codec',
-  'undecodable_source_codec',
-  'no_encodable_target_codec',
-  'cannot_copy',
-  'max_track_count_of_type_reached'
-];
 
 export type VideoUploadConversionResult =
   | { status: 'converted'; file: File }
@@ -61,7 +56,7 @@ export function getAudioTrackConversionOptions(codec: string | null) {
 }
 
 export function isTrackLossReason(reason: string) {
-  return TRACK_LOSS_REASONS.includes(reason);
+  return reason !== 'discarded_by_user';
 }
 
 export async function convertVideoForUpload({
@@ -81,7 +76,24 @@ export async function convertVideoForUpload({
   }
 
   let input: { dispose: () => void } | null = null;
+  let conversion: { cancel: () => Promise<void> } | null = null;
+  let cancellation: Promise<void> | undefined;
+  const release = () => {
+    // Disposing cancels reads even while Conversion.init is still pending.
+    input?.dispose();
+    if (conversion && !cancellation) {
+      cancellation = conversion.cancel().catch(() => {
+        // Cleanup failure must not replace the original-file fallback.
+      });
+    }
+  };
+  signal?.addEventListener('abort', release, { once: true });
   try {
+    const trackTypes = await readMatroskaTrackTypes(file, signal);
+    signal?.throwIfAborted();
+    if (!trackTypes || trackTypes.some((type) => type !== 1 && type !== 2)) {
+      return { status: 'unchanged', file, reason: 'track_loss' };
+    }
     // Loaded on demand: only someone who picks an MKV ever downloads it.
     const {
       ALL_FORMATS,
@@ -92,6 +104,7 @@ export async function convertVideoForUpload({
       Output,
       StreamTarget
     } = await import('mediabunny');
+    signal?.throwIfAborted();
 
     // Blob parts, not byte arrays: the browser owns blob storage and can move it
     // to disk, so a large video does not have to sit in the JS heap twice.
@@ -127,30 +140,30 @@ export async function convertVideoForUpload({
       }),
       target: new StreamTarget(writable)
     });
-    const conversion = await Conversion.init({
+    const prepared = await Conversion.init({
       input: mediaInput,
       output,
       video: (track) => getVideoTrackConversionOptions(track.codec),
       audio: (track) => getAudioTrackConversionOptions(track.codec)
     });
+    conversion = prepared;
+    signal?.throwIfAborted();
 
-    const losesTrack = conversion.discardedTracks.some(({ reason }) =>
+    const losesTrack = prepared.discardedTracks.some(({ reason }) =>
       isTrackLossReason(reason)
     );
-    if (!conversion.isValid || losesTrack) {
+    if (
+      !prepared.isValid ||
+      losesTrack ||
+      new Set(prepared.utilizedTracks).size !== trackTypes.length
+    ) {
       return { status: 'unchanged', file, reason: 'track_loss' };
     }
 
-    conversion.onProgress = (progress) => onProgress?.(progress);
-    const handleAbort = () => {
-      void conversion.cancel();
+    prepared.onProgress = (progress) => {
+      if (!signal?.aborted) onProgress?.(progress);
     };
-    signal?.addEventListener('abort', handleAbort, { once: true });
-    try {
-      await conversion.execute();
-    } finally {
-      signal?.removeEventListener('abort', handleAbort);
-    }
+    await prepared.execute();
     if (signal?.aborted) {
       return { status: 'unchanged', file, reason: 'cancelled' };
     }
@@ -169,6 +182,8 @@ export async function convertVideoForUpload({
     console.error('Video upload conversion failed:', error);
     return { status: 'unchanged', file, reason: 'failed' };
   } finally {
-    input?.dispose();
+    signal?.removeEventListener('abort', release);
+    release();
+    await cancellation;
   }
 }

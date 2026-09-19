@@ -32,6 +32,9 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
   const rulesCount = app.rules.length;
   const status = useMemo(() => {
     const { today } = app;
+    if (app.allRewardsCollected) {
+      return { line: 'All rewards collected · you can keep playing', ratio: 1 };
+    }
     if (today.capReached) {
       return {
         line: `Done for today · +${addCommasToNumber(today.xp)} XP${

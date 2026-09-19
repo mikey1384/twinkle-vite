@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -54,8 +54,18 @@ export default function UploadModal({
     fileName: string;
     progress: number;
   } | null>(null);
-  const conversionAbortRef = useRef<AbortController | null>(null);
-  const conversionDiscardedRef = useRef(false);
+  const conversionSessionRef = useRef<{
+    controller: AbortController | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) setConversion(null);
+    return () => {
+      const session = conversionSessionRef.current;
+      conversionSessionRef.current = null;
+      session?.controller?.abort();
+    };
+  }, [isOpen]);
 
   let footerContent: React.ReactNode = null;
 
@@ -168,11 +178,11 @@ export default function UploadModal({
   );
 
   function handleClose() {
-    if (conversionAbortRef.current) {
-      // Closing mid-conversion means "never mind": nothing is handed on.
-      conversionDiscardedRef.current = true;
-      conversionAbortRef.current.abort();
-    }
+    // Closing mid-conversion means "never mind": nothing is handed on.
+    const session = conversionSessionRef.current;
+    conversionSessionRef.current = null;
+    session?.controller?.abort();
+    setConversion(null);
     resetUseImageState();
     setSelectedOption('select');
     onHide();
@@ -237,8 +247,12 @@ export default function UploadModal({
 
   // Resolves to null when the modal was closed while converting.
   async function prepareFilesForUpload(files: File[]) {
+    const previous = conversionSessionRef.current;
+    conversionSessionRef.current = null;
+    previous?.controller?.abort();
     if (!files.some(needsVideoUploadConversion)) return files;
-    conversionDiscardedRef.current = false;
+    const session: { controller: AbortController | null } = { controller: null };
+    conversionSessionRef.current = session;
     const prepared: File[] = [];
     try {
       for (const file of files) {
@@ -247,27 +261,32 @@ export default function UploadModal({
           continue;
         }
         const controller = new AbortController();
-        conversionAbortRef.current = controller;
+        session.controller = controller;
         setConversion({ fileName: file.name, progress: 0 });
         const result = await convertVideoForUpload({
           file,
           signal: controller.signal,
-          onProgress: (progress) =>
-            setConversion({ fileName: file.name, progress })
+          onProgress: (progress) => {
+            if (conversionSessionRef.current === session) {
+              setConversion({ fileName: file.name, progress });
+            }
+          }
         });
-        if (conversionDiscardedRef.current) return null;
+        if (conversionSessionRef.current !== session) return null;
         prepared.push(result.file);
       }
       return prepared;
     } finally {
-      conversionAbortRef.current = null;
-      setConversion(null);
+      if (conversionSessionRef.current === session) {
+        conversionSessionRef.current = null;
+        setConversion(null);
+      }
     }
   }
 
   // The original still uploads; it just will not play on every device.
   function handleSkipConversion() {
-    conversionAbortRef.current?.abort();
+    conversionSessionRef.current?.controller?.abort();
   }
 
   function handleGeneratedImage(file: File) {

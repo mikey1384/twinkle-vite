@@ -166,6 +166,38 @@ test('published bridge uses only the host grant, strips award controls and appli
     { userId: 2, newState: { twinkleXP: 120, twinkleCoins: 15 } }
   ]);
 });
+
+test('completion progress and claims forward evidence without trusting client identities or wins', async () => {
+  const h = harness({
+    result: { completion: { token: 'confirmed', completed: false } }
+  });
+  const frames = [[0.05, 0, 0, 0, -1, 0, 0, 1]];
+  await h.invoke('rewards:progress', {
+    challengeId: 'challenge',
+    completionToken: 'signed',
+    frames,
+    userId: 99,
+    runtimeGrant: 'forged',
+    won: true,
+    position: { y: 230 }
+  });
+  assert.equal(h.calls[0].runtimeGrant, 'server-published-grant');
+  assert.deepEqual(h.calls[0].payload.frames, frames);
+  assert.equal(h.calls[0].payload.completionToken, 'signed');
+  assert.equal('userId' in h.calls[0].payload, false);
+  assert.equal('won' in h.calls[0].payload, false);
+  assert.equal('position' in h.calls[0].payload, false);
+  assert.equal(h.balances.length, 0);
+  await h.invoke('rewards:claim', {
+    challengeId: 'challenge',
+    completionToken: 'finished'
+  });
+  assert.equal(h.calls[1].payload.completionToken, 'finished');
+  assert.equal(isMutatingPreviewRequestType('rewards:progress'), true);
+  await assert.rejects(
+    harness({ automated: true }).invoke('rewards:progress', { frames })
+  );
+});
 test('receipt recovery forwards the exact challenge and only applies canonical balances', async () => {
   const result = {
     mode: 'live',

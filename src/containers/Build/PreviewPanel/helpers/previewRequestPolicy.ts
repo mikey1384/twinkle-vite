@@ -1,5 +1,6 @@
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'rewards:start',
+  'rewards:progress',
   'rewards:claim',
   'ai:chat',
   'ai:generate-object',
