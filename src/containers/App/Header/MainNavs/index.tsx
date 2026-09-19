@@ -263,12 +263,8 @@ export default function MainNavs({
   const onRequestPinBuildApp = useViewContext(
     (v) => v.actions.onRequestPinBuildApp
   );
-  const mutedBuildAppIds = useViewContext((v) => v.state.mutedBuildAppIds);
   const onSetBuildAppMuted = useViewContext(
     (v) => v.actions.onSetBuildAppMuted
-  );
-  const onToggleBuildAppMuted = useViewContext(
-    (v) => v.actions.onToggleBuildAppMuted
   );
   const onSetBuildAppNavTabIds = useViewContext(
     (v) => v.actions.onSetBuildAppNavTabIds
@@ -1405,10 +1401,7 @@ export default function MainNavs({
             exactActive: true,
             label: truncateText({ text: customTab.label, limit: 14 }),
             closable: true,
-            buildAppId: buildAppId || undefined,
-            audioMuted: buildAppId
-              ? mutedBuildAppIds.includes(buildAppId)
-              : undefined
+            buildAppId: buildAppId || undefined
           };
         } else {
           descriptor = null;
@@ -1517,7 +1510,6 @@ export default function MainNavs({
     lastActivePrimaryKey,
     managementLevel,
     missionLinkTarget,
-    mutedBuildAppIds,
     navScope,
     numNewPosts,
     pathname,
@@ -1579,16 +1571,13 @@ export default function MainNavs({
             imgSrc: buildAppId ? buildAppTabThumbnails[buildAppId] : undefined,
             exactActive: true,
             buildAppId: buildAppId || undefined,
-            audioMuted: buildAppId
-              ? mutedBuildAppIds.includes(buildAppId)
-              : undefined,
             // pinned tabs are ALWAYS icon-only; the full label lives in the
             // tab wrapper's title tooltip. They never expand.
             label: tab.label,
             minimized: true
           };
         }),
-    [buildAppTabThumbnails, mutedBuildAppIds, visibleCustomTabs]
+    [buildAppTabThumbnails, visibleCustomTabs]
   );
 
   useEffect(() => {
@@ -1906,7 +1895,6 @@ export default function MainNavs({
         showMenuHint={!tabMenuDiscovered}
         onMenuOpen={handleMarkTabMenuDiscovered}
         onCloseTab={handleCloseUnpinnedTab}
-        onToggleAudioMuted={handleToggleBuildAppMuted}
         onOpenTabManager={() => setTabSwitcherShownFrom('desktop')}
         isTabletPortrait={isTabletPortrait}
       />
@@ -2271,10 +2259,6 @@ export default function MainNavs({
       return replacement || tab;
     });
     persistNavState({ custom: nextCustomTabs });
-  }
-
-  function handleToggleBuildAppMuted(buildAppId: string) {
-    onToggleBuildAppMuted(buildAppId);
   }
 
   function applyLocalNavState({

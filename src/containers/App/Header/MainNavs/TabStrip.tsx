@@ -23,7 +23,6 @@ export interface NavTabDescriptor {
   isUsingChat?: boolean;
   profileUsername?: string;
   buildAppId?: string;
-  audioMuted?: boolean;
   closable?: boolean;
 }
 
@@ -260,15 +259,6 @@ const actionTabItemClass = css`
   }
 `;
 
-const audioAndCloseTabItemClass = css`
-  a {
-    padding-right: 4.9rem !important;
-  }
-  button[data-tab-audio='true'] {
-    right: 2.45rem;
-  }
-`;
-
 const tabActionButtonClass = css`
   position: absolute;
   right: 0.45rem;
@@ -291,12 +281,6 @@ const tabActionButtonClass = css`
   &:hover {
     background: ${Color.wellGray()};
     color: ${Color.darkerGray()};
-  }
-`;
-
-const audioMuteButtonClass = css`
-  &[data-muted='true'] {
-    color: ${Color.logoBlue()};
   }
 `;
 
@@ -601,7 +585,6 @@ export default function TabStrip({
   showMenuHint,
   onMenuOpen,
   onCloseTab,
-  onToggleAudioMuted,
   onOpenTabManager,
   isTabletPortrait
 }: {
@@ -613,7 +596,6 @@ export default function TabStrip({
   showMenuHint?: boolean;
   onMenuOpen?: () => void;
   onCloseTab?: (key: string) => void;
-  onToggleAudioMuted?: (buildAppId: string) => void;
   onOpenTabManager?: () => void;
   isTabletPortrait?: boolean;
 }) {
@@ -899,14 +881,11 @@ export default function TabStrip({
 
   function renderTab(tab: NavTabDescriptor, index: number, zone: DragZone) {
     const isClosable = Boolean(zone === 'extra' && tab.closable && onCloseTab);
-    const hasTabAction = Boolean(tab.buildAppId || isClosable);
     return (
       <div
         key={tab.key}
         className={`${tabItemClass}${
-          hasTabAction ? ` ${actionTabItemClass}` : ''
-        }${
-          tab.buildAppId && isClosable ? ` ${audioAndCloseTabItemClass}` : ''
+          isClosable ? ` ${actionTabItemClass}` : ''
         }${dragState?.key === tab.key ? ` ${draggingTabClass}` : ''}`}
         style={getTabStyle(index, tab.key, zone)}
         data-tab-manager-neighbor={
@@ -946,7 +925,6 @@ export default function TabStrip({
         >
           {tab.minimized ? null : tab.label}
         </Nav>
-        {renderAudioMuteButton(tab)}
         {isClosable ? renderCloseTabButton(tab) : null}
       </div>
     );
@@ -1040,26 +1018,6 @@ export default function TabStrip({
     setCollapsedTrailingCount((prev) => (prev === trailing ? prev : trailing));
   }
 
-  function renderAudioMuteButton(tab: NavTabDescriptor) {
-    if (!tab.buildAppId || !onToggleAudioMuted) return null;
-    const muted = tab.audioMuted === true;
-    return (
-      <button
-        type="button"
-        className={`${tabActionButtonClass} ${audioMuteButtonClass}`}
-        data-tab-audio="true"
-        data-muted={muted ? 'true' : 'false'}
-        aria-label={muted ? 'Unmute app' : 'Mute app'}
-        title={muted ? 'Unmute app' : 'Mute app'}
-        onPointerDown={handleTabActionPointerDown}
-        onClick={(event) => handleAudioMuteClick(event, tab.buildAppId!)}
-        onContextMenu={handleTabActionContextMenu}
-      >
-        <Icon icon={muted ? 'volume-mute' : 'volume'} />
-      </button>
-    );
-  }
-
   function renderCloseTabButton(tab: NavTabDescriptor) {
     const label = typeof tab.label === 'string' ? tab.label : 'this';
     return (
@@ -1087,15 +1045,6 @@ export default function TabStrip({
     didLongPressRef.current = false;
     event.preventDefault();
     event.stopPropagation();
-  }
-
-  function handleAudioMuteClick(
-    event: React.MouseEvent<HTMLButtonElement>,
-    buildAppId: string
-  ) {
-    event.preventDefault();
-    event.stopPropagation();
-    onToggleAudioMuted?.(buildAppId);
   }
 
   function handleCloseTabClick(
