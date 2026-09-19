@@ -168,6 +168,11 @@ const wideSubjectEmbedPreviewClass = css`
     max-height: 100%;
   }
 
+  /* The thumb card's description reads a step below its title. */
+  .home-feed-card__target-subject-description {
+    font-size: max(1.7rem, 17px);
+  }
+
   .home-feed-card__target-subject-embed-slot {
     flex: 0 0 auto;
     min-height: 0;
@@ -423,8 +428,12 @@ const wideSubjectEmbedPreviewClass = css`
 
     .home-feed-card__target-copy > h4 {
       min-height: max(2.36rem, 23.6px);
-      font-size: 1.9rem;
+      font-size: max(1.8rem, 18px);
       line-height: 1.24;
+    }
+
+    .home-feed-card__target-subject-description {
+      font-size: max(1.6rem, 16px);
     }
   }
 `;

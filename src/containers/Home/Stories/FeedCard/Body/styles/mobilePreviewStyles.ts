@@ -519,8 +519,11 @@ export const mobilePreviewStyles = `
       line-height: 1.24;
     }
     .home-feed-card__target-subject .home-feed-card__target-copy > h4 {
-      font-size: 1.9rem;
+      font-size: max(1.8rem, 18px);
       line-height: 1.24;
+    }
+    .home-feed-card__target-subject-description {
+      font-size: max(1.6rem, 16px);
     }
     .home-feed-card__subject-preview .home-feed-card__subject-secret-answer,
     .home-feed-card__subject-preview .home-feed-card__subject-secret-text,

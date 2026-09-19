@@ -39,8 +39,9 @@ export default function ProfileEmbedCard({
 }) {
   const username = profile?.username || 'Profile';
   const realName = profile?.realName || '';
-  const statusColor =
-    profile?.statusColor || profile?.profileTheme || 'logoBlue';
+  // An unset status color is blue on the profile itself (UserDetails, Intro);
+  // it never follows the profile theme.
+  const statusColor = profile?.statusColor || 'logoBlue';
   const bioRows = getProfileBioRows(profile);
   const rank = Number(profile?.rank || 0);
   const isTopRank = rank > 0 && rank <= 3;

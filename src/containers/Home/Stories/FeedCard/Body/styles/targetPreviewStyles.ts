@@ -303,6 +303,10 @@ export const targetPreviewStyles = `
     .home-feed-card__target-subject-description-slot > * {
       max-height: 100%;
     }
+    /* The thumb card's description reads a step below its title. */
+    .home-feed-card__target-subject-description {
+      font-size: max(1.7rem, 17px);
+    }
     /* RichText owns the total line limit. A second two-line clamp on its
        paragraph would bypass a one-line target preview and crop the next line. */
     .home-feed-card__target-subject-description:not(.rich-text--block-preview) > p {
