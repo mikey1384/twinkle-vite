@@ -307,7 +307,6 @@ export default function BuildEditor({
     mergeBuildContribution,
     mergeBuildContributionIntoMyBranch,
     onSetUserState,
-    publishBuild,
     purchaseBuildGenerationReset,
     requestBuildProjectLimitIncrease,
     replaceBuildContributionIntoMyBranch,
@@ -878,19 +877,24 @@ export default function BuildEditor({
     syncChatMessagesFromServer,
     updateBuildProjectFiles
   });
-  const { handlePublish, handleUnpublish, publishing, rewardApprovalPrompt } =
-    usePublishing({
-      appendLocalRunEvent,
-      applyBuildUpdate,
-      build,
-      canEditCurrentBuildMetadata,
-      ensureBuildThumbnailBeforePublish,
-      ensureProjectFilesPersistedBeforePublish,
-      getLatestBuild,
-      publishBuild,
-      replaceCopilotPolicy,
-      unpublishBuild
-    });
+  const {
+    handlePublish,
+    handleUnpublish,
+    publishing,
+    rewardApprovalPrompt,
+    release
+  } = usePublishing({
+    appendLocalRunEvent,
+    applyBuildUpdate,
+    build,
+    canEditCurrentBuildMetadata,
+    ensureBuildThumbnailBeforePublish,
+    ensureProjectFilesPersistedBeforePublish,
+    hasUnsavedChanges: rewardDraftDirty,
+    getLatestBuild,
+    replaceCopilotPolicy,
+    unpublishBuild
+  });
   const {
     canManageLumineChatVisibility,
     handleSaveLumineChatVisibility,
@@ -2063,6 +2067,7 @@ export default function BuildEditor({
         onOpenThumbnailModal={handleOpenThumbnailModal}
         onSaveRewardCode={ensureProjectFilesPersistedBeforePublish}
         onRewardProposalAccepted={handleBuildReloadFromServer}
+        release={release}
         rewardApprovalPrompt={rewardApprovalPrompt}
         hasUnsavedRewardChanges={rewardDraftDirty}
         rewardsBeingPrepared={currentBuildRunView.generating}

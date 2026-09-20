@@ -59,7 +59,6 @@ export default function useRequests() {
   );
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
-  const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const unpublishBuild = useAppContext((v) => v.requestHelpers.unpublishBuild);
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
   const deleteBuild = useAppContext((v) => v.requestHelpers.deleteBuild);
@@ -132,7 +131,6 @@ export default function useRequests() {
     mergeBuildContribution,
     mergeBuildContributionIntoMyBranch,
     onSetUserState,
-    publishBuild,
     purchaseBuildGenerationReset,
     requestBuildProjectLimitIncrease,
     replaceBuildContributionIntoMyBranch,

@@ -42,7 +42,7 @@ export function rewardApprovalPresentation(
         (settings.requestClosedBySave
           ? 'You saved a newer version after sending your last request, so that request was closed. '
           : '') +
-        'Apps that give real XP and Coins are checked by a Twinkle admin first. Send this version and the admin will read your code and decide what people can earn. You can keep building while you wait.'
+        'Apps that give real XP and Coins are checked by a Twinkle admin first. Press Publish or Update App to request approval. We’ll let you know in chat. You can keep building while you wait.'
     },
     in_review: {
       title: 'Waiting for the admin',

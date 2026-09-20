@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import ReleaseButton from '~/components/Build/ReleaseButton';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
 import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
@@ -28,10 +29,9 @@ import type { RuntimeAssetTransferProgressPayload } from './helpers/runtimeAsset
 import ViewAppVersionModal from './ViewAppVersionModal';
 import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
 import RewardApprovalNotice from '~/components/Build/Rewards/RewardApprovalNotice';
-import useRewardStatus from '~/components/Build/Rewards/useRewardStatus';
+import type { BuildReleaseControl } from '~/components/Build/hooks/useRelease';
 import { getBuildRewardReviewManagementPath } from '~/helpers/buildRewardReviewCard';
 import Button from '~/components/Button';
-import { rewardApprovalPresentation } from '~/components/Build/Rewards/approvalPresentation';
 import {
   BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
   BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
@@ -463,6 +463,7 @@ interface HeaderProps {
   // Accepting an admin proposal rewrote the saved app on the server.
   onRewardProposalAccepted?: () => void | Promise<void>;
   rewardApprovalPrompt: number;
+  release: BuildReleaseControl;
   hasUnsavedRewardChanges: boolean;
   rewardsBeingPrepared: boolean;
   onTogglePublish: () => void;
@@ -703,6 +704,7 @@ export default function Header({
   onOpenThumbnailModal,
   onSaveRewardCode,
   rewardApprovalPrompt,
+  release,
   onRewardProposalAccepted,
   hasUnsavedRewardChanges,
   rewardsBeingPrepared,
@@ -723,22 +725,7 @@ export default function Header({
     build.contributionStatus && build.contributionStatus !== 'none';
   const navigate = useNavigate();
   const rewardChangeKey = `${build.currentArtifactVersionId}:${build.projectFilesHash}:${build.isPublic}:${hasUnsavedRewardChanges}:${rewardsBeingPrepared}`;
-  const rewardStatus = useRewardStatus(
-    Number(build.id),
-    isOwner && !isContributionFork,
-    rewardChangeKey
-  );
-  const rewardPresentation = rewardStatus.settings
-    ? rewardApprovalPresentation(
-        rewardStatus.settings,
-        hasUnsavedRewardChanges || rewardsBeingPrepared
-      )
-    : null;
-  const rewardsGated = Boolean(
-    rewardStatus.settings?.approvalRequired &&
-    rewardPresentation?.state !== 'approved' &&
-    rewardPresentation?.state !== 'published'
-  );
+  const rewardStatus = release.rewardStatus;
   useEffect(() => {
     if (rewardApprovalPrompt) setRewardsOpen(true);
   }, [rewardApprovalPrompt]);
@@ -833,13 +820,10 @@ export default function Header({
   });
   const publishButtonDisabled =
     publishing ||
-    (!build.isPublic && !build.code) ||
-    Boolean(
-      build.isPublic &&
-      publicAppIsUpToDate &&
-      !rewardsGated &&
-      !rewardStatus.settings?.canPublish
-    );
+    (rewardsBeingPrepared &&
+      (rewardStatus.settings?.approvalRequired ?? true)) ||
+    release.action.disabled ||
+    (!build.isPublic && !build.code);
 
   function renderSettingsMenu() {
     const items: any[] = [];
@@ -1181,29 +1165,12 @@ export default function Header({
         ) : null}
         {isOwner && !isContributionFork ? (
           <HeaderActionItem mobileOrder={4}>
-            <GameCTAButton
-              onClick={
-                rewardsGated ? () => setRewardsOpen(true) : onTogglePublish
-              }
-              disabled={publishButtonDisabled || banned?.build}
-              loading={publishing}
-              variant="magenta"
-              size="md"
-              icon="globe"
+            <ReleaseButton
+              release={release}
+              onClick={onTogglePublish}
+              disabled={publishButtonDisabled || Boolean(banned?.build)}
               shiny={publicAppNeedsUpdate}
-            >
-              {publishing
-                ? 'Processing...'
-                : rewardsGated
-                  ? 'Check approval'
-                  : rewardStatus.settings?.canPublish
-                    ? 'Publish app'
-                    : build.isPublic
-                      ? publicAppIsUpToDate
-                        ? 'Up to Date'
-                        : 'Update App'
-                      : 'Publish'}
-            </GameCTAButton>
+            />
           </HeaderActionItem>
         ) : null}
         {showContributionButton ? (
@@ -1288,29 +1255,12 @@ export default function Header({
           ) : null}
           {isOwner && !isContributionFork ? (
             <div className={mobileButtonRowClass}>
-              <GameCTAButton
-                onClick={
-                  rewardsGated ? () => setRewardsOpen(true) : onTogglePublish
-                }
-                disabled={publishButtonDisabled || banned?.build}
-                loading={publishing}
-                variant="magenta"
-                size="md"
-                icon="globe"
+              <ReleaseButton
+                release={release}
+                onClick={onTogglePublish}
+                disabled={publishButtonDisabled || Boolean(banned?.build)}
                 shiny={publicAppNeedsUpdate}
-              >
-                {publishing
-                  ? 'Processing...'
-                  : rewardsGated
-                    ? 'Check approval'
-                    : rewardStatus.settings?.canPublish
-                      ? 'Publish app'
-                      : build.isPublic
-                        ? publicAppIsUpToDate
-                          ? 'Up to Date'
-                          : 'Update App'
-                        : 'Publish'}
-              </GameCTAButton>
+              />
             </div>
           ) : null}
           {contributionActionError ? (
@@ -1330,8 +1280,7 @@ export default function Header({
           <span>
             <strong>Review proposal</strong> · your private copy of{' '}
             <strong>{build.rewardReviewProposal.rootTitle}</strong>. Edit and
-            save here, then offer these changes to the creator from
-            Management.
+            save here, then offer these changes to the creator from Management.
             {build.rewardReviewProposal.status === 'changes_offered'
               ? ' An offer is already waiting for the creator; offering again replaces it.'
               : ''}

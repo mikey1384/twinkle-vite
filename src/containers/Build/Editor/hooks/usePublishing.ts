@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useAppContext } from '~/contexts';
-import type { RewardSettings } from '~/components/Build/Rewards/types';
+import useRelease from '~/components/Build/hooks/useRelease';
 import type { Build, BuildCopilotPolicy } from '../types';
 
 interface BuildEditorLocalRunEventInput {
@@ -19,7 +18,7 @@ interface UseBuildEditorPublishingOptions {
   ensureBuildThumbnailBeforePublish: () => Promise<Build>;
   getLatestBuild: () => Build;
   ensureProjectFilesPersistedBeforePublish: () => Promise<boolean>;
-  publishBuild: (options: Record<string, any>) => Promise<any>;
+  hasUnsavedChanges: boolean;
   replaceCopilotPolicy: (policy: BuildCopilotPolicy | null) => void;
   unpublishBuild: (buildId: number) => Promise<any>;
 }
@@ -32,68 +31,45 @@ export default function usePublishing({
   ensureBuildThumbnailBeforePublish,
   getLatestBuild,
   ensureProjectFilesPersistedBeforePublish,
-  publishBuild,
+  hasUnsavedChanges,
   replaceCopilotPolicy,
   unpublishBuild
 }: UseBuildEditorPublishingOptions) {
-  const loadRewardSettings = useAppContext(
-    (v) => v.requestHelpers.loadBuildRewardSettings
-  );
   const [rewardApprovalPrompt, setRewardApprovalPrompt] = useState(0);
-  const [publishing, setPublishing] = useState(false);
-
-  async function handlePublish() {
-    if (!canEditCurrentBuildMetadata || publishing) return;
-
-    setPublishing(true);
-    try {
-      const requestedBuildId = Number(getLatestBuild()?.id || build.id);
-      if (!Number.isFinite(requestedBuildId) || requestedBuildId <= 0) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'error',
-          message: 'Unable to publish: build not found.',
-          pageFeedbackOnMissingRequestId: true
-        });
-        return;
-      }
-      const projectFilesReady =
-        await ensureProjectFilesPersistedBeforePublish();
-      if (!projectFilesReady) {
-        return;
-      }
+  const [unpublishing, setUnpublishing] = useState(false);
+  const release = useRelease({
+    buildId: Number(build.id),
+    enabled:
+      canEditCurrentBuildMetadata &&
+      (!build.contributionStatus || build.contributionStatus === 'none'),
+    isPublic: Boolean(build.isPublic),
+    hasUnpublishedChanges: build.releaseStatus?.hasUnpublishedChanges,
+    hasUnsavedChanges,
+    busy: unpublishing,
+    changeKey: `${build.currentArtifactVersionId}:${build.projectFilesHash}:${build.isPublic}`,
+    save: async () => {
+      if (unpublishing) return false;
+      if (!(await ensureProjectFilesPersistedBeforePublish())) return false;
       const latestBuild = getLatestBuild();
-      if (!latestBuild || Number(latestBuild.id) !== requestedBuildId) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'error',
-          message:
-            'Build changed before publish. Please retry on the active build.',
-          pageFeedbackOnMissingRequestId: true
-        });
-        return;
+      if (!latestBuild || Number(latestBuild.id) !== Number(build.id)) {
+        throw new Error(
+          'Build changed before publish. Please retry on the active build.'
+        );
       }
-      if (!latestBuild.code) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'error',
-          message: 'Add code before publishing your build.',
-          pageFeedbackOnMissingRequestId: true
-        });
-        return;
+      if (!latestBuild.code)
+        throw new Error('Add code before publishing your build.');
+      return true;
+    },
+    preparePublish: async () => {
+      let latestBuild = getLatestBuild();
+      if (Number(latestBuild.id) !== Number(build.id)) {
+        throw new Error(
+          'Build changed before publish. Please retry on the active build.'
+        );
       }
-      // Check the saved candidate before spending time/energy on a thumbnail.
-      // The publish endpoint repeats this check under its write lock.
-      const rewards: RewardSettings =
-        await loadRewardSettings(requestedBuildId);
-      if (rewards.approvalRequired && !rewards.canPublish) {
-        setRewardApprovalPrompt((value) => value + 1);
-        return;
-      }
-      let publishTargetBuild = latestBuild;
       if (!String(latestBuild.thumbnailUrl || '').trim()) {
         try {
-          publishTargetBuild = await ensureBuildThumbnailBeforePublish();
+          latestBuild = await ensureBuildThumbnailBeforePublish();
         } catch (error: any) {
           console.error('Failed to auto-generate build thumbnail:', error);
           appendLocalRunEvent({
@@ -106,36 +82,23 @@ export default function usePublishing({
           });
         }
       }
-      const result = await publishBuild({
-        buildId: publishTargetBuild.id,
-        thumbnailUrl:
-          String(publishTargetBuild.thumbnailUrl || '').trim() || undefined
-      });
-      if (result?.success && result?.build) {
-        applyBuildUpdate({
-          ...publishTargetBuild,
-          ...result.build
-        });
-        if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
-          replaceCopilotPolicy(result.copilotPolicy || null);
-        }
+      return {
+        thumbnailUrl: String(latestBuild.thumbnailUrl || '').trim() || undefined
+      };
+    },
+    onPublished: (result) => {
+      applyBuildUpdate({ ...getLatestBuild(), ...result.build });
+      if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
+        replaceCopilotPolicy(result.copilotPolicy || null);
       }
-    } catch (error: any) {
-      console.error('Failed to publish build:', error);
-      if (
-        (error?.code || error?.response?.data?.code) ===
-        'build_reward_approval_required'
-      ) {
-        setRewardApprovalPrompt((value) => value + 1);
-      }
+    },
+    onReviewProposal: () => setRewardApprovalPrompt((value) => value + 1),
+    onError: (error) => {
       if (error?.response?.data?.releaseStatus) {
-        const latestBuild = getLatestBuild();
-        if (latestBuild) {
-          applyBuildUpdate({
-            ...latestBuild,
-            releaseStatus: error.response.data.releaseStatus
-          });
-        }
+        applyBuildUpdate({
+          ...getLatestBuild(),
+          releaseStatus: error.response.data.releaseStatus
+        });
       }
       appendLocalRunEvent({
         kind: 'lifecycle',
@@ -143,14 +106,13 @@ export default function usePublishing({
         message: error?.message || 'Unable to publish this build right now.',
         pageFeedbackOnMissingRequestId: true
       });
-    } finally {
-      setPublishing(false);
     }
-  }
+  });
+  const publishing = release.publishing;
 
   async function handleUnpublish() {
     if (!canEditCurrentBuildMetadata || publishing) return;
-    setPublishing(true);
+    setUnpublishing(true);
     try {
       const latestBuild = getLatestBuild();
       const result = await unpublishBuild(latestBuild.id);
@@ -175,11 +137,12 @@ export default function usePublishing({
         pageFeedbackOnMissingRequestId: true
       });
     }
-    setPublishing(false);
+    setUnpublishing(false);
   }
 
   return {
-    handlePublish,
+    handlePublish: release.run,
+    release,
     handleUnpublish,
     publishing,
     rewardApprovalPrompt

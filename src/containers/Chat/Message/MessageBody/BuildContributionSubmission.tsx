@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import ReleaseButton from '~/components/Build/ReleaseButton';
 import ContributionLumineFixPanel, {
   type BuildContributionLumineFix,
   type BuildContributionLumineFixDetails
@@ -14,6 +15,8 @@ import { useAppContext, useChatContext } from '~/contexts';
 import { isCachedCardStateFresher } from '~/helpers/buildCardState';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import { canUpdateAppFromBuildContributionSubmission } from '~/helpers/buildContributionSubmissionHelpers';
+import useRelease from '~/components/Build/hooks/useRelease';
+import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
 import { startBuildContributionLumineFixRecovery } from '~/helpers/buildContributionLumineFixRecovery';
 import { socket } from '~/constants/sockets/api';
 
@@ -150,11 +153,11 @@ export default function BuildContributionSubmission({
   const applyBuildContributionLumineFix = useAppContext(
     (v) => v.requestHelpers.applyBuildContributionLumineFix
   );
-  const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const onUpdateBuildContributionSubmissionState = useChatContext(
     (v) => v.actions.onUpdateBuildContributionSubmissionState
   );
   const [detailsShown, setDetailsShown] = useState(false);
+  const [rewardsReviewOpen, setRewardsReviewOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
   const [confirmingReplace, setConfirmingReplace] = useState(false);
@@ -211,6 +214,16 @@ export default function BuildContributionSubmission({
     isPublic: payload?.isPublic,
     releaseStatus: payload?.releaseStatus,
     status
+  });
+  const release = useRelease({
+    buildId: rootBuildId,
+    enabled: canUpdateApp,
+    isPublic: Boolean(payload?.isPublic),
+    hasUnpublishedChanges: payload?.releaseStatus?.hasUnpublishedChanges,
+    changeKey: JSON.stringify(payload?.releaseStatus || null),
+    onPublished: applyCanonicalSubmissionState,
+    onReviewProposal: () => setRewardsReviewOpen(true),
+    onError: (error) => handleActionError(error, 'Failed to update app')
   });
 
   useEffect(() => {
@@ -379,16 +392,15 @@ export default function BuildContributionSubmission({
             )
           ) : null}
           {canUpdateApp ? (
-            <GameCTAButton
-              variant="magenta"
-              size="md"
-              icon="globe"
+            <ReleaseButton
+              release={release}
               shiny
-              loading={actionLoading === 'update-app'}
-              onClick={handleUpdateApp}
-            >
-              Update App
-            </GameCTAButton>
+              disabled={Boolean(actionLoading)}
+              onClick={() => {
+                setActionError('');
+                void release.run();
+              }}
+            />
           ) : null}
         </>
       }
@@ -494,12 +506,39 @@ export default function BuildContributionSubmission({
         </div>
       ) : null}
 
-      {actionError ? <div className={errorClass}>{actionError}</div> : null}
+      {release.action.notice ? (
+        <div className={ownerLookClass} role="status">
+          {release.action.notice}
+        </div>
+      ) : null}
+      {actionError || release.error ? (
+        <div className={errorClass} role="alert">
+          {actionError || release.error}
+        </div>
+      ) : null}
 
       {confirmingReplace ? (
         <div className={confirmCopyClass}>
           Replace everything in <strong>{title}</strong> with this branch?
         </div>
+      ) : null}
+      {rewardsReviewOpen ? (
+        <RewardSettingsModal
+          buildId={rootBuildId}
+          onSaveCode={async () => true}
+          onPublish={() => {
+            setRewardsReviewOpen(false);
+            void release.run();
+          }}
+          onAccepted={() => {
+            setRewardsReviewOpen(false);
+            release.rewardStatus.refresh();
+          }}
+          onClose={() => {
+            setRewardsReviewOpen(false);
+            release.rewardStatus.refresh();
+          }}
+        />
       ) : null}
     </BuildMessageCard>
   );
@@ -530,7 +569,7 @@ export default function BuildContributionSubmission({
   }
 
   async function handleMerge() {
-    if (actionLoading) return;
+    if (actionLoading || release.publishing) return;
     setActionLoading('merge');
     setActionError('');
     try {
@@ -555,7 +594,7 @@ export default function BuildContributionSubmission({
   }
 
   async function handleReplaceMain() {
-    if (actionLoading) return;
+    if (actionLoading || release.publishing) return;
     setActionLoading('replace-main');
     setActionError('');
     setConfirmingReplace(false);
@@ -576,42 +615,8 @@ export default function BuildContributionSubmission({
     }
   }
 
-  async function handleUpdateApp() {
-    if (actionLoading) return;
-    setActionLoading('update-app');
-    setActionError('');
-    try {
-      const result = await publishBuild({ buildId: rootBuildId });
-      if (!result?.success || !result?.build) {
-        setActionError(result?.error || 'Failed to update app');
-        return;
-      }
-      applyCanonicalSubmissionState(result);
-    } catch (error: any) {
-      const responseData = error?.response?.data || {};
-      if (
-        responseData.code === 'build_release_up_to_date' &&
-        responseData.releaseStatus &&
-        Number(responseData.eventTimeMs || 0) > 0
-      ) {
-        applyCanonicalSubmissionState({
-          build: {
-            id: rootBuildId,
-            isPublic: responseData.releaseStatus.isPublic,
-            releaseStatus: responseData.releaseStatus
-          },
-          eventTimeMs: responseData.eventTimeMs
-        });
-        return;
-      }
-      handleActionError(error, 'Failed to update app');
-    } finally {
-      setActionLoading('');
-    }
-  }
-
   async function handleOpenLumineFix() {
-    if (actionLoading) return;
+    if (actionLoading || release.publishing) return;
     setActionLoading('load-lumine-fix');
     setActionError('');
     try {
@@ -677,7 +682,7 @@ export default function BuildContributionSubmission({
   }
 
   async function handleApplyLumineFix() {
-    if (actionLoading) return;
+    if (actionLoading || release.publishing) return;
     setActionLoading('apply-lumine-fix');
     setActionError('');
     try {

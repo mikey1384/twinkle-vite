@@ -15,6 +15,7 @@ import FavoriteButton from '~/components/Build/FavoriteButton';
 import useTabletOrientation from '~/helpers/hooks/useTabletOrientation';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import ReleaseButton from '~/components/Build/ReleaseButton';
 import ShareButton from '~/components/Buttons/ShareButton';
 import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth } from '~/constants/css';
@@ -50,6 +51,7 @@ import CommentsDrawer from './CommentsDrawer';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
+import useRelease from '~/components/Build/hooks/useRelease';
 import BuildAppNotificationSettingsModal, {
   type BuildAppNotificationPreferences
 } from '~/components/Notification/MainFeeds/NotiItem/BuildAppNotificationSettingsModal';
@@ -82,7 +84,9 @@ function parseRuntimeMountContext(search: string): PreviewMountContext | null {
   return null;
 }
 
-function normalizeBuildLaunchTarget(value: unknown): PreviewLaunchTarget | null {
+function normalizeBuildLaunchTarget(
+  value: unknown
+): PreviewLaunchTarget | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as PreviewLaunchTarget;
 }
@@ -481,8 +485,6 @@ const backButtonClass = css`
   }
 `;
 
-
-
 const notificationSettingsButtonClass = css`
   border: 1px solid var(--ui-border);
   background: rgba(65, 140, 235, 0.08);
@@ -600,6 +602,11 @@ const runtimeActionPurpleClass = css`
     background: rgba(147, 51, 234, 0.18);
     border-color: rgba(147, 51, 234, 0.5);
   }
+`;
+
+const releaseNoticeClass = css`
+  color: var(--chat-text);
+  font-size: 1.1rem;
 `;
 
 const contributionErrorClass = css`
@@ -724,7 +731,6 @@ export default function BuildRuntime({
   const loadBuildAppMcpSession = useAppContext(
     (v) => v.requestHelpers.loadBuildAppMcpSession
   );
-  const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
@@ -808,13 +814,7 @@ export default function BuildRuntime({
   const [build, setBuild] = useState<RuntimeBuild | null>(null);
   const [loadedRuntimeSource, setLoadedRuntimeSource] =
     useState<BuildRuntimeSource>('published');
-  const [publishingRuntimeUpdate, setPublishingRuntimeUpdate] = useState(false);
-  // Set when the last publish attempt was refused for a reason with its own
-  // action here (reward approval): the page offers the action, not raw text.
-  const [publishRuntimeUpdateCode, setPublishRuntimeUpdateCode] = useState('');
   const [rewardsReviewOpen, setRewardsReviewOpen] = useState(false);
-  const [publishRuntimeUpdateError, setPublishRuntimeUpdateError] =
-    useState('');
   const [forkingBuild, setForkingBuild] = useState(false);
   const [openingCollaborationRequest, setOpeningCollaborationRequest] =
     useState(false);
@@ -846,10 +846,8 @@ export default function BuildRuntime({
   >(null);
   const [buildNotificationPreferences, setBuildNotificationPreferences] =
     useState<BuildAppNotificationPreferences | null>(null);
-  const [
-    buildNotificationSettingsShown,
-    setBuildNotificationSettingsShown
-  ] = useState(false);
+  const [buildNotificationSettingsShown, setBuildNotificationSettingsShown] =
+    useState(false);
   const [commentsDrawerShown, setCommentsDrawerShown] = useState(false);
   const [closeConfirmShown, setCloseConfirmShown] = useState(false);
   const [runtimeCommentsLoading, setRuntimeCommentsLoading] = useState(false);
@@ -1078,12 +1076,29 @@ export default function BuildRuntime({
     isBuildOwner &&
     build.releaseStatus?.hasUnpublishedChanges
   );
+  const release = useRelease({
+    buildId: Number(build?.id || 0),
+    enabled: showRuntimePublishUpdateButton,
+    isPublic: Boolean(build?.isPublic),
+    hasUnpublishedChanges: build?.releaseStatus?.hasUnpublishedChanges,
+    changeKey: `${build?.currentArtifactVersionId}:${JSON.stringify(build?.releaseStatus || null)}`,
+    onPublished: handlePublishedAppResult,
+    onReviewProposal: () => setRewardsReviewOpen(true),
+    onError: (error) => {
+      const releaseStatus = error?.response?.data?.releaseStatus;
+      if (releaseStatus) {
+        setBuild((current) =>
+          current ? { ...current, releaseStatus } : current
+        );
+      }
+    }
+  });
   // Favorites belong to the project, not the branch: on a branch preview this
   // is the parent project's id, so the button reflects and toggles the project.
   const runtimeFavoriteBuildId = build ? getBuildFavoriteTargetId(build) : 0;
   const showRuntimeFavoriteButton = Boolean(
     runtimeFavoriteBuildId &&
-      (build?.isPublic || isBuildOwner || collaborationStatus === 'accepted')
+    (build?.isPublic || isBuildOwner || collaborationStatus === 'accepted')
   );
   const showRuntimeActions =
     showWorkspaceButton ||
@@ -1359,76 +1374,32 @@ export default function BuildRuntime({
     }
   }
 
-  async function handleUpdatePublishedApp() {
-    if (
-      !build?.id ||
-      publishingRuntimeUpdate ||
-      !build.releaseStatus?.hasUnpublishedChanges
-    ) {
-      return;
-    }
-    const requestedBuildId = build.id;
-    setPublishingRuntimeUpdate(true);
-    setPublishRuntimeUpdateError('');
-    setPublishRuntimeUpdateCode('');
+  async function handlePublishedAppResult(result: any) {
+    if (!build?.id) return;
     try {
-      const result = await publishBuild({ buildId: requestedBuildId });
-      if (result?.success) {
-        try {
-          const runtimePayload = await loadRuntimeBuild(requestedBuildId, {
-            fromWriter: true,
-            runtimeSource: requestedRuntimeSource
-          });
-          if (applyRuntimeBuildPayload(runtimePayload)) return;
-        } catch (reloadError) {
-          console.error(
-            'Published app updated but runtime refresh failed:',
-            reloadError
-          );
-        }
-        if (result?.build) {
-          setBuild((current) =>
-            current
-              ? {
-                  ...current,
-                  ...result.build,
-                  releaseStatus: result.build.releaseStatus || null
-                }
-              : current
-          );
-        }
-        setPublishRuntimeUpdateError(
-          'App updated, but this page could not refresh the preview.'
-        );
-        return;
-      }
-      setPublishRuntimeUpdateError('Unable to update app right now.');
-    } catch (error: any) {
-      console.error('Failed to update published app:', error);
-      const releaseStatus = error?.response?.data?.releaseStatus;
-      if (releaseStatus) {
-        setBuild((current) =>
-          current
-            ? {
-                ...current,
-                releaseStatus
-              }
-            : current
-        );
-      }
-      if (error?.response?.data?.code === 'build_release_up_to_date') {
-        setPublishRuntimeUpdateError('');
-        return;
-      }
-      setPublishRuntimeUpdateCode(String(error?.response?.data?.code || ''));
-      setPublishRuntimeUpdateError(
-        error?.response?.data?.error ||
-          error?.message ||
-          'Unable to update app right now.'
+      const runtimePayload = await loadRuntimeBuild(build.id, {
+        fromWriter: true,
+        runtimeSource: requestedRuntimeSource
+      });
+      if (applyRuntimeBuildPayload(runtimePayload)) return;
+    } catch (reloadError) {
+      console.error(
+        'Published app updated but runtime refresh failed:',
+        reloadError
       );
-    } finally {
-      setPublishingRuntimeUpdate(false);
     }
+    setBuild((current) =>
+      current && Number(current.id) === Number(result.build.id)
+        ? {
+            ...current,
+            ...result.build,
+            releaseStatus: result.build.releaseStatus || null
+          }
+        : current
+    );
+    throw new Error(
+      'App updated, but this page could not refresh the preview.'
+    );
   }
 
   function handleOpenCollaborationWorkspace() {
@@ -1894,11 +1865,10 @@ export default function BuildRuntime({
 
     async function loadBuildNotificationPreferences() {
       try {
-        const result =
-          await getBuildAppNotificationPreferencesRef.current({
-            buildId: runtimeBuildId,
-            eventKey: runtimeNotificationEventKey
-          });
+        const result = await getBuildAppNotificationPreferencesRef.current({
+          buildId: runtimeBuildId,
+          eventKey: runtimeNotificationEventKey
+        });
         if (!cancelled) {
           setBuildNotificationPreferences(result);
         }
@@ -2143,8 +2113,8 @@ export default function BuildRuntime({
                         compactActions
                           ? undefined
                           : build.isFavorited
-                          ? 'Favorited'
-                          : 'Favorite'
+                            ? 'Favorited'
+                            : 'Favorite'
                       }
                       size={compactActions ? 'md' : 'pill'}
                       onChange={({ buildId, favoritedAt, isFavorited }) => {
@@ -2172,25 +2142,10 @@ export default function BuildRuntime({
                     />
                   ) : null}
                   {showRuntimePublishUpdateButton ? (
-                    <button
-                      type="button"
+                    <ReleaseButton
+                      release={release}
                       className={runtimeActionButtonClass}
-                      onClick={handleUpdatePublishedApp}
-                      disabled={publishingRuntimeUpdate}
-                      title="Update published app"
-                    >
-                      <Icon
-                        icon={
-                          publishingRuntimeUpdate
-                            ? 'spinner'
-                            : 'cloud-upload-alt'
-                        }
-                        pulse={publishingRuntimeUpdate}
-                      />
-                      <span>
-                        {publishingRuntimeUpdate ? 'Updating...' : 'Update App'}
-                      </span>
-                    </button>
+                    />
                   ) : null}
                   {showCollaborationButton ? (
                     <button
@@ -2254,21 +2209,14 @@ export default function BuildRuntime({
                       {contributionForkError}
                     </span>
                   ) : null}
-                  {publishRuntimeUpdateError &&
-                  publishRuntimeUpdateCode ===
-                    'build_reward_approval_required' ? (
-                    <button
-                      type="button"
-                      className={runtimeActionButtonClass}
-                      onClick={() => setRewardsReviewOpen(true)}
-                      title="This version gives XP or Coins, so an admin approves it before it can go public"
-                    >
-                      <Icon icon="paper-plane" />
-                      <span>Send for review</span>
-                    </button>
-                  ) : publishRuntimeUpdateError ? (
-                    <span className={contributionErrorClass}>
-                      {publishRuntimeUpdateError}
+                  {release.action.notice ? (
+                    <span className={releaseNoticeClass} role="status">
+                      {release.action.notice}
+                    </span>
+                  ) : null}
+                  {release.error ? (
+                    <span className={contributionErrorClass} role="alert">
+                      {release.error}
                     </span>
                   ) : null}
                   {runtimeFavoriteError ? (
@@ -2370,7 +2318,7 @@ export default function BuildRuntime({
                 onSaveCode={async () => true}
                 onPublish={() => {
                   setRewardsReviewOpen(false);
-                  void handleUpdatePublishedApp();
+                  void release.run();
                 }}
                 onAccepted={async () => {
                   // The accepted version is live now; show it.
@@ -2393,8 +2341,7 @@ export default function BuildRuntime({
                 }}
                 onClose={() => {
                   setRewardsReviewOpen(false);
-                  setPublishRuntimeUpdateError('');
-                  setPublishRuntimeUpdateCode('');
+                  release.rewardStatus.refresh();
                 }}
               />
             ) : null}
@@ -2457,9 +2404,7 @@ export default function BuildRuntime({
                     ? 'true'
                     : 'false'
                 }
-                aria-hidden={
-                  !(runtimeCommentsAvailable && commentsDrawerShown)
-                }
+                aria-hidden={!(runtimeCommentsAvailable && commentsDrawerShown)}
                 tabIndex={
                   runtimeCommentsAvailable && commentsDrawerShown ? 0 : -1
                 }
