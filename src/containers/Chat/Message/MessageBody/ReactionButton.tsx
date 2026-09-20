@@ -1,4 +1,4 @@
-import React, { useId, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useKeyContext } from '~/contexts';
@@ -24,11 +24,17 @@ export default function ReactionButton({
 }) {
   const ContainerRef = useRef<HTMLDivElement | null>(null);
   const TriggerRef = useRef<HTMLButtonElement | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pickerId = useId();
   const userId = useKeyContext(v => v.myState.userId);
   const blurGuard = usePointerBlurGuard();
 
-  useOutsideClick(ContainerRef, () => onSetReactionsMenuShown(false), {
+  useEffect(() => {
+    if (!reactionsMenuShown) clearTimeout(closeTimerRef.current);
+    return () => clearTimeout(closeTimerRef.current);
+  }, [reactionsMenuShown]);
+
+  useOutsideClick(ContainerRef, dismissPicker, {
     enabled: reactionsMenuShown,
     closeOnScroll: false
   });
@@ -40,6 +46,7 @@ export default function ReactionButton({
         {...blurGuard.guardProps}
         style={{ position: 'relative', display: 'flex', ...style, zIndex: reactionsMenuShown ? 6000 : undefined }}
         onMouseEnter={() => {
+          clearTimeout(closeTimerRef.current);
           if (!deviceIsMobile) onSetReactionsMenuShown(true);
         }}
         onMouseLeave={() => {
@@ -47,19 +54,25 @@ export default function ReactionButton({
             !deviceIsMobile &&
             !ContainerRef.current?.contains(document.activeElement)
           ) {
-            onSetReactionsMenuShown(false);
+            clearTimeout(closeTimerRef.current);
+            // Allow a diagonal path into the picker or a brief pointer overshoot.
+            closeTimerRef.current = setTimeout(() => {
+              if (!ContainerRef.current?.contains(document.activeElement)) {
+                dismissPicker();
+              }
+            }, 200);
           }
         }}
         onBlur={(event) => {
           if (focusLeft(event, blurGuard.isPressedInside)) {
-            onSetReactionsMenuShown(false);
+            dismissPicker();
           }
         }}
         onKeyDown={(event) => {
           if (event.key === 'Escape' && reactionsMenuShown) {
             event.preventDefault();
             event.stopPropagation();
-            onSetReactionsMenuShown(false);
+            dismissPicker();
             TriggerRef.current?.focus();
           }
         }}
@@ -74,6 +87,7 @@ export default function ReactionButton({
           variant="solid"
           tone="raised"
           onClick={(event) => {
+            clearTimeout(closeTimerRef.current);
             event?.stopPropagation();
             // Preserve desktop hover-to-open. A mouse click keeps it open;
             // keyboard activation and touch toggle it normally.
@@ -91,14 +105,19 @@ export default function ReactionButton({
           id={pickerId}
           userId={userId}
           anchorRef={ContainerRef}
-          onDismiss={() => onSetReactionsMenuShown(false)}
+          onDismiss={dismissPicker}
           onReact={reaction => {
             onReactionClick(reaction);
-            onSetReactionsMenuShown(false);
+            dismissPicker();
             TriggerRef.current?.focus();
           }}
         />}
       </div>
     </ErrorBoundary>
   );
+
+  function dismissPicker() {
+    clearTimeout(closeTimerRef.current);
+    onSetReactionsMenuShown(false);
+  }
 }

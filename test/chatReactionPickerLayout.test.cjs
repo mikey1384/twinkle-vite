@@ -7,7 +7,7 @@ const source = readFileSync(path.resolve(__dirname, '../src/containers/Chat/Mess
 const mod = { exports: {} };
 new Function('module', 'exports', 'document', 'getComputedStyle', transformSync(source, {loader:'ts',format:'cjs'}).code)(mod, mod.exports,
   {documentElement:{clientWidth:1000,clientHeight:700}}, element => element.style);
-const { positionReactionPicker: position, getReactionPickerBounds: bounds } = mod.exports;
+const { positionReactionPicker: position, positionReactionPickerBeside: beside, getReactionPickerBounds: bounds } = mod.exports;
 const viewport = {top:120,right:820,bottom:560,left:350}, size = {width:202,height:112};
 
 test('reaction picker flips above the last message and stays within the chat scroller', () => {
@@ -31,6 +31,46 @@ test('a very short message scroller gets a bounded, internally scrollable picker
   const result = position(anchor, {top:140,left:350,right:820,bottom:220}, size);
   assert.equal(result.maxHeight, 66);
   assert.equal(anchor.top + result.top, 144);
+});
+
+test('the reaction picker opens left of its button and extends upward from its bottom edge', () => {
+  const anchor = {top:478,right:760,bottom:508,left:730};
+  const panel = {width:224,height:190};
+  const result = beside(anchor, viewport, panel);
+  assert.equal(result.beside, true);
+  assert.equal(anchor.left + result.left + panel.width, anchor.left - 6);
+  assert.equal(anchor.top + result.top + panel.height, anchor.bottom);
+  assert.ok(anchor.left + result.left >= viewport.left + 4);
+});
+
+test('the side picker stays reachable at the top edge and scrolls inside a short chat', () => {
+  const anchor = {top:130,right:760,bottom:160,left:730};
+  const panel = {width:224,height:190};
+  const top = beside(anchor, viewport, panel);
+  assert.equal(top.beside, true);
+  assert.equal(anchor.top + top.top, viewport.top + 4);
+  assert.ok(anchor.top + top.top < anchor.bottom);
+  const short = beside(anchor, {...viewport,bottom:200}, panel);
+  assert.equal(short.maxHeight, 72);
+  assert.equal(anchor.top + short.top + short.maxHeight, 196);
+});
+
+test('a narrow chat falls back below or above without covering the trigger', () => {
+  const bounds = {top:64,left:0,right:240,bottom:660};
+  const panel = {width:224,height:190};
+  for (const anchor of [
+    {top:70,right:230,bottom:100,left:200},
+    {top:620,right:230,bottom:650,left:200}
+  ]) {
+    const result = beside(anchor, bounds, panel);
+    assert.equal(result.beside, false);
+    assert.equal(result.above, anchor.top === 620);
+    const top = anchor.top + result.top;
+    assert.ok(top >= bounds.top + 4);
+    assert.ok(top + panel.height + 6 <= bounds.bottom - 4);
+    assert.ok(result.above ? top + panel.height + 6 <= anchor.top : top >= anchor.bottom);
+    assert.ok(anchor.left + result.left >= bounds.left + 4);
+  }
 });
 
 test('picker bounds intersect nested clipping ancestors, borders and scrollbars', () => {

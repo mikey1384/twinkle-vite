@@ -128,9 +128,9 @@ function panel(app = environment()) {
   };
 }
 function customize(app) { app.click('More reactions'); app.click('Customize quick reactions'); }
-test('the first page is eight named native choices; More exposes all thirteen without reacting', () => {
+test('the first page is eight named native choices; More exposes the full reaction set without reacting', () => {
   const app = panel(); app.render(); assert.equal(app.choices.length, 8);
-  app.click('More reactions'); assert.equal(app.choices.length, 13);
+  app.click('More reactions'); assert.equal(app.choices.length, registry.chatReactionOptions.length);
   assert.equal(app.heading, 'All reactions'); assert.deepEqual(app.reactions, []);
   for (const { label, key } of registry.chatReactionOptions) {
     const choice = app.button(`React with ${label}`);
@@ -143,7 +143,7 @@ test('a full quick page gives clear feedback instead of silently replacing a rea
   assert.match(app.notice, /Remove one/); assert.equal(app.choices.filter(node => node.props['aria-pressed']).length, 8);
   assert.equal(app.writes.length, 0); assert.deepEqual(app.reactions, []);
 });
-test('all five new reactions can replace existing quick picks in a saved custom order', () => {
+test('expanded reactions can replace existing quick picks in a saved custom order', () => {
   const app = panel(); app.render(); customize(app);
   for (const label of ['Surprised', 'Wave', 'Crying', 'Angry', 'Fire']) app.click(`${label} quick reaction`);
   for (const label of ['Thanks', 'Clap', 'Celebrate', 'Thinking', 'Eyes']) app.click(`${label} quick reaction`);
@@ -151,6 +151,15 @@ test('all five new reactions can replace existing quick picks in a saved custom 
   assert.deepEqual(app.choices.map(node => node.props.title), ['Thumbs up', 'Heart', 'Laughing', 'Thanks', 'Clap', 'Celebrate', 'Thinking', 'Eyes']);
   assert.equal(app.writes.length, 1); assert.deepEqual(app.reactions, []);
   assert.equal(app.heading, 'Quick reactions');
+});
+test('the new expression reactions can be saved as quick picks and survive a reload', () => {
+  const app = panel(); app.render(); customize(app);
+  for (const label of ['Surprised', 'Wave', 'Crying', 'Angry', 'Fire']) app.click(`${label} quick reaction`);
+  for (const label of ['Happy', 'Unimpressed', 'Sad', 'Miserable', 'Panicking']) app.click(`${label} quick reaction`);
+  app.click('Save quick reactions');
+  const expected = ['thumb', 'heart', 'laughing', 'happy', 'unimpressed', 'sad', 'miserable', 'panicking'];
+  assert.deepEqual(environment(app.storage).store.readQuickReactions(1), expected);
+  assert.deepEqual(app.reactions, [], 'customizing must not send a reaction');
 });
 test('cancel and Escape discard drafts and step back through pages before closing', () => {
   const app = panel(); app.render(); customize(app); app.click('Fire quick reaction'); app.click('Cancel customization');

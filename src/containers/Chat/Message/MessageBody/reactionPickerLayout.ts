@@ -34,6 +34,38 @@ export function positionReactionPicker(
   };
 }
 
+export function positionReactionPickerBeside(
+  anchor: Bounds,
+  bounds: Bounds,
+  size: { width: number; height: number }
+) {
+  const gap = 6;
+  const edge = 4;
+  if (anchor.left - bounds.left >= size.width + gap + edge) {
+    const maxHeight = Math.max(0, bounds.bottom - bounds.top - edge * 2);
+    const height = Math.min(size.height, maxHeight);
+    const top = Math.max(
+      bounds.top + edge,
+      Math.min(anchor.bottom, bounds.bottom - edge) - height
+    );
+    return {
+      top: top - anchor.top,
+      left: -size.width - gap,
+      maxHeight,
+      above: false,
+      beside: true
+    };
+  }
+  // Narrow chats retain the vertically fitted picker used by other popovers.
+  return {
+    ...positionReactionPicker(anchor, bounds, {
+      width: size.width,
+      height: size.height + gap
+    }),
+    beside: false
+  };
+}
+
 export function getReactionPickerBounds(element: HTMLElement): Bounds {
   const bounds = {
     top: 0,

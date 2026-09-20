@@ -12,10 +12,10 @@ function load(file, dependencies = {}) {
 }
 const registry = load('src/constants/chatReactions.ts');
 
-test('reaction artwork preserves existing keys and enables the five approved additions safely', () => {
-  assert.deepEqual(registry.chatReactionOptions.map(item=>item.key), ['thumb','heart','laughing','surprised','wave','crying','angry','fire','eyes','thinking','celebrate','clap','thanks']);
+test('reaction artwork preserves existing keys and adds the requested expression scale safely', () => {
+  assert.deepEqual(registry.chatReactionOptions.map(item=>item.key), ['thumb','heart','laughing','surprised','wave','crying','angry','fire','eyes','thinking','celebrate','clap','thanks','happy','unimpressed','sad','miserable','panicking']);
   assert.equal(registry.getChatReaction('fire').fallback,'🔥');
-  assert.deepEqual(registry.chatReactionOptions.slice(8).map(item=>item.fallback), ['👀','🤔','🎉','👏','🙏']);
+  assert.deepEqual(registry.chatReactionOptions.slice(8).map(item=>item.fallback), ['👀','🤔','🎉','👏','🙏','🙂','😒','☹️','😣','😱']);
   for (const unsafe of ['unknown','__proto__','constructor','../../outside']) assert.equal(registry.getChatReaction(unsafe),undefined);
 });
 

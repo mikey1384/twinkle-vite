@@ -13,7 +13,7 @@ import {
   saveQuickReactions,
   subscribeQuickReactions
 } from '~/helpers/quickChatReactions';
-import { getReactionPickerBounds, positionReactionPicker } from './reactionPickerLayout';
+import { getReactionPickerBounds, positionReactionPickerBeside } from './reactionPickerLayout';
 
 type Page = 'quick' | 'all' | 'customize';
 
@@ -30,7 +30,7 @@ export default function ReactionPicker({
   const [quick, setQuick] = useState(() => readQuickReactions(userId));
   const [draft, setDraft] = useState<readonly ChatReactionKey[]>(quick);
   const [notice, setNotice] = useState('');
-  const [position, setPosition] = useState<ReturnType<typeof positionReactionPicker> & { width: number }>();
+  const [position, setPosition] = useState<ReturnType<typeof positionReactionPickerBeside> & { width: number }>();
   const panelRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -57,11 +57,12 @@ export default function ReactionPicker({
     function updatePosition() {
       if (!panel || !anchor) return;
       const bounds = getReactionPickerBounds(anchor);
+      const width = Math.max(58, Math.min(224, bounds.right - bounds.left - 8));
       const next = {
-        ...positionReactionPicker(anchor.getBoundingClientRect(), bounds, {
-          width: panel.offsetWidth, height: panel.scrollHeight + 8
+        ...positionReactionPickerBeside(anchor.getBoundingClientRect(), bounds, {
+          width, height: panel.scrollHeight + 2
         }),
-        width: Math.max(58, Math.min(224, bounds.right - bounds.left - 8))
+        width
       };
       setPosition(previous => previous && Object.keys(next).every(
         key => previous[key as keyof typeof next] === next[key as keyof typeof next]
@@ -96,8 +97,10 @@ export default function ReactionPicker({
       style={{
         top: position?.top ?? '100%', left: position?.left,
         right: position ? undefined : 0,
-        paddingTop: position?.above ? 0 : 6,
-        paddingBottom: position?.above ? 6 : 0
+        paddingTop: position?.beside || position?.above ? 0 : 6,
+        paddingBottom: position?.above ? 6 : 0,
+        // Keep the entire gap hoverable on the way from the trigger to the panel.
+        paddingRight: position?.beside ? 6 : 0
       }}
       onKeyDown={event => {
         if (event.key !== 'Escape' || page === 'quick') return;

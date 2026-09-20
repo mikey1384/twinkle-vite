@@ -1,0 +1,73 @@
+{
+  "mode": "built-in image_gen",
+  "date": "2026-09-20",
+  "conversion": "User-authorized local resizing with macOS sips to 160 × 160 RGBA PNGs, preserving generated transparency and the original source images.",
+  "notes": "Generated with existing Laughing, Crying and Surprised artwork as style references. Original source files preserved. Five additions to the existing chat reaction set.",
+  "assets": [
+    {
+      "key": "happy",
+      "label": "Happy",
+      "fallback": "🙂",
+      "file": "public/img/chat-reactions/happy-v2.png",
+      "source": "/Users/mikey/.codex/generated_images/01a0b8c7-f9b5-7781-93ed-46ac7b92bb1c/exec-fe845ec7-5797-4da5-9951-122f9ffe6895.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: one production chat-reaction PNG for the Twinkle website, displayed at 24–28 CSS pixels.\nInput images: the attached existing Laughing, Crying and Surprised icons are STYLE REFERENCES, not edit targets. Make one new matching member of exactly this family.\nStyle: friendly polished 2.5D emoji, round golden-yellow spherical face, warm amber volume shading along the lower-right, broad soft creamy highlight at upper-left, clean warm dark-brown facial features. Match the references' face size, lighting, rich yellow, soft sculpted surface and simple expressive proportions. Contour is the softly shaded object edge: no drawn black outline, sticker border, halo, or decorative ring.\nComposition: a single complete face centered on a square, filling approximately 92% of the canvas with even transparent padding, no clipping. Keep broad readable details at 24px. No text, letters, labels, watermark, extra symbols, stars, background scene, ground plane or exterior cast shadow.\nOutput: a compact 160 × 160 RGBA PNG with genuine transparent alpha background and clean antialiased edges. Never draw a checkerboard.\nSubject: A genuinely HAPPY smile: relaxed raised cheeks, friendly crescent-shaped smiling eyes, softly arched brows, a broad curved CLOSED smile in warm dark brown. Calm delighted happiness, distinctly different from the existing open-mouth Laughing icon. No teeth, tongue, tears or hands.",
+      "referenceImages": [
+        "public/img/chat-reactions/laughing-v2.png",
+        "public/img/chat-reactions/crying-v2.png",
+        "public/img/chat-reactions/surprised-v2.png"
+      ]
+    },
+    {
+      "key": "unimpressed",
+      "label": "Unimpressed",
+      "fallback": "😒",
+      "file": "public/img/chat-reactions/unimpressed-v2.png",
+      "source": "/Users/mikey/.codex/generated_images/01a0b8c7-f9b5-7781-93ed-46ac7b92bb1c/exec-49067918-e0fa-40d0-84f0-aea7de2598f5.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: one production chat-reaction PNG for the Twinkle website, displayed at 24–28 CSS pixels.\nInput images: the attached existing Laughing, Crying and Surprised icons are STYLE REFERENCES, not edit targets. Make one new matching member of exactly this family.\nStyle: friendly polished 2.5D emoji, round golden-yellow spherical face, warm amber volume shading along the lower-right, broad soft creamy highlight at upper-left, clean warm dark-brown facial features. Match the references' face size, lighting, rich yellow, soft sculpted surface and simple expressive proportions. Contour is the softly shaded object edge: no drawn black outline, sticker border, halo, or decorative ring.\nComposition: a single complete face centered on a square, filling approximately 92% of the canvas with even transparent padding, no clipping. Keep broad readable details at 24px. No text, letters, labels, watermark, extra symbols, stars, background scene, ground plane or exterior cast shadow.\nOutput: a compact 160 × 160 RGBA PNG with genuine transparent alpha background and clean antialiased edges. Never draw a checkerboard.\nSubject: An UNIMPRESSED mildly unhappy face: half-lidded warm brown eyes looking slightly sideways, one subtly raised brow, and a small almost-flat closed mouth with one corner slightly downturned. Dry deadpan disappointment, clearly readable but not angry, not sleepy. No tears or hands.",
+      "referenceImages": [
+        "public/img/chat-reactions/laughing-v2.png",
+        "public/img/chat-reactions/crying-v2.png",
+        "public/img/chat-reactions/surprised-v2.png"
+      ]
+    },
+    {
+      "key": "sad",
+      "label": "Sad",
+      "fallback": "☹️",
+      "file": "public/img/chat-reactions/sad-v2.png",
+      "source": "/Users/mikey/.codex/generated_images/01a0b8c7-f9b5-7781-93ed-46ac7b92bb1c/exec-aaa494a7-397d-466f-8ab6-99bba329e0d8.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: one production chat-reaction PNG for the Twinkle website, displayed at 24–28 CSS pixels.\nInput images: the attached existing Laughing, Crying and Surprised icons are STYLE REFERENCES, not edit targets. Make one new matching member of exactly this family.\nStyle: friendly polished 2.5D emoji, round golden-yellow spherical face, warm amber volume shading along the lower-right, broad soft creamy highlight at upper-left, clean warm dark-brown facial features. Match the references' face size, lighting, rich yellow, soft sculpted surface and simple expressive proportions. Contour is the softly shaded object edge: no drawn black outline, sticker border, halo, or decorative ring.\nComposition: a single complete face centered on a square, filling approximately 92% of the canvas with even transparent padding, no clipping. Keep broad readable details at 24px. No text, letters, labels, watermark, extra symbols, stars, background scene, ground plane or exterior cast shadow.\nOutput: a compact 160 × 160 RGBA PNG with genuine transparent alpha background and clean antialiased edges. Never draw a checkerboard.\nSubject: A SAD face without tears: open warm brown oval eyes looking slightly downward, eyebrows lifted at the inner ends, and a clearly downturned closed frown. Sympathetic disappointment, visibly sadder than Unimpressed but gentler than Misery. No tears, no hands, no anger mark.",
+      "referenceImages": [
+        "public/img/chat-reactions/laughing-v2.png",
+        "public/img/chat-reactions/crying-v2.png",
+        "public/img/chat-reactions/surprised-v2.png"
+      ]
+    },
+    {
+      "key": "miserable",
+      "label": "Miserable",
+      "fallback": "😣",
+      "file": "public/img/chat-reactions/miserable-v2.png",
+      "source": "/Users/mikey/.codex/generated_images/01a0b8c7-f9b5-7781-93ed-46ac7b92bb1c/exec-0c3a19b1-0fc9-44b9-8987-f7b07932437f.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: one production chat-reaction PNG for the Twinkle website, displayed at 24–28 CSS pixels.\nInput images: the attached existing Laughing, Crying and Surprised icons are STYLE REFERENCES, not edit targets. Make one new matching member of exactly this family.\nStyle: friendly polished 2.5D emoji, round golden-yellow spherical face, warm amber volume shading along the lower-right, broad soft creamy highlight at upper-left, clean warm dark-brown facial features. Match the references' face size, lighting, rich yellow, soft sculpted surface and simple expressive proportions. Contour is the softly shaded object edge: no drawn black outline, sticker border, halo, or decorative ring.\nComposition: a single complete face centered on a square, filling approximately 92% of the canvas with even transparent padding, no clipping. Keep broad readable details at 24px. No text, letters, labels, watermark, extra symbols, stars, background scene, ground plane or exterior cast shadow.\nOutput: a compact 160 × 160 RGBA PNG with genuine transparent alpha background and clean antialiased edges. Never draw a checkerboard.\nSubject: A MISERABLE face: eyes squeezed shut into compact distressed bends, raised inner brows and a broad deeply downturned wobbly open frown with a dark-brown mouth interior. Exaggerated comical anguish, much stronger than ordinary sadness; not laughter or rage. Keep its golden-yellow color. No tears, no hands, no anger symbol.",
+      "referenceImages": [
+        "public/img/chat-reactions/laughing-v2.png",
+        "public/img/chat-reactions/crying-v2.png",
+        "public/img/chat-reactions/surprised-v2.png"
+      ]
+    },
+    {
+      "key": "panicking",
+      "label": "Panicking",
+      "fallback": "😱",
+      "file": "public/img/chat-reactions/panicking-v2.png",
+      "source": "/Users/mikey/.codex/generated_images/01a0b8c7-f9b5-7781-93ed-46ac7b92bb1c/exec-7d89aea9-d79b-4933-a993-67842019c329.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: one production chat-reaction PNG for the Twinkle website, displayed at 24–28 CSS pixels.\nInput images: the attached existing Laughing, Crying and Surprised icons are STYLE REFERENCES, not edit targets. Make one new matching member of exactly this family.\nStyle: friendly polished 2.5D emoji, round golden-yellow spherical face, warm amber volume shading along the lower-right, broad soft creamy highlight at upper-left, clean warm dark-brown facial features. Match the references' face size, lighting, rich yellow, soft sculpted surface and simple expressive proportions. Contour is the softly shaded object edge: no drawn black outline, sticker border, halo, or decorative ring.\nComposition: a single complete face centered on a square, filling approximately 92% of the canvas with even transparent padding, no clipping. Keep broad readable details at 24px. No text, letters, labels, watermark, extra symbols, stars, background scene, ground plane or exterior cast shadow.\nOutput: a compact 160 × 160 RGBA PNG with genuine transparent alpha background and clean antialiased edges. Never draw a checkerboard.\nSubject: An exaggerated PANICKING face: very wide white eyes with small brown pupils, high arched brows, a tall open dark-brown oval mouth, and two small rounded golden hands pressed to the cheeks. A little cool blue shading across the upper forehead conveys alarm while the lower face remains golden yellow. Comically overwhelmed, friendly and non-graphic. This is the extreme end of a humorous happy-to-unhappy reaction scale. No scene, disaster, weapons, explosions, text or extra figures.",
+      "referenceImages": [
+        "public/img/chat-reactions/laughing-v2.png",
+        "public/img/chat-reactions/crying-v2.png",
+        "public/img/chat-reactions/surprised-v2.png"
+      ]
+    }
+  ]
+}

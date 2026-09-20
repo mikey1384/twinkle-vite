@@ -814,9 +814,9 @@ function MessageBody({
           width: 100%;
           display: block;
           z-index: ${zIndex};
-          ${highlighted ? `background-color: ${Color.whiteGray()};` : ''}
+          ${highlighted || reactionsMenuShown ? `background-color: ${Color.whiteGray()};` : ''}
           .menu-button {
-            display: ${highlighted ? 'block' : 'none'};
+            display: ${highlighted || reactionsMenuShown ? 'block' : 'none'};
           }
           &:hover,
           &:focus-within {

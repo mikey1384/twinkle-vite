@@ -14,12 +14,13 @@ function loadModule(file, deps) {
 }
 
 function fixture(mobile = false) {
-  const refs = [], reactions = [];
+  const refs = [], reactions = [], cleanups = [], timers = new Map();
+  let now = 0, nextTimerId = 0;
   let cursor = 0, shown = false, tree, outside, userId = 1;
   const Button = () => null;
   const Picker = () => null;
   const deps = {
-    react: { ...React, useId: () => 'reaction-fixture', useLayoutEffect() {}, useState: value => [value, () => {}], useRef(value) { return refs[cursor++] ||= { current: value }; } },
+    react: { ...React, useId: () => 'reaction-fixture', useEffect(effect) { const cleanup = effect(); if (cleanup) cleanups.push(cleanup); }, useLayoutEffect() {}, useState: value => [value, () => {}], useRef(value) { return refs[cursor++] ||= { current: value }; } },
     './reactionPickerLayout': {},
     './ReactionPicker': Picker,
     './messageControlStyles': {messageControlClass:'compact-message-control'},
@@ -38,7 +39,8 @@ function fixture(mobile = false) {
   const source = readFileSync(path.resolve(__dirname, '../src/containers/Chat/Message/MessageBody/ReactionButton.tsx'), 'utf8');
   const mod = { exports: {} };
   const doc = { activeElement: {} };
-  new Function('require', 'module', 'exports', 'navigator', 'document', transformSync(source, { loader: 'tsx', format: 'cjs', jsx: 'transform' }).code)(name => { assert.ok(Object.hasOwn(deps, name), name); return deps[name]; }, mod, mod.exports, {}, doc);
+  new Function('require', 'module', 'exports', 'navigator', 'document', 'setTimeout', 'clearTimeout', transformSync(source, { loader: 'tsx', format: 'cjs', jsx: 'transform' }).code)(name => { assert.ok(Object.hasOwn(deps, name), name); return deps[name]; }, mod, mod.exports, {}, doc,
+    (callback, delay) => { const id = ++nextTimerId; timers.set(id, {callback, at: now + delay}); return id; }, id => timers.delete(id));
   const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
   return {
     reactions, refs,
@@ -49,6 +51,14 @@ function fixture(mobile = false) {
     get trigger() { return walk(tree).find(node => node.type === Button); },
     get picker() { return walk(tree).find(node => node.type === Picker); },
     setUser(value) {userId = value;},
+    advanceTime(ms) {
+      now += ms;
+      for (const [id, timer] of timers) {
+        if (timer.at <= now) { timers.delete(id); timer.callback(); }
+      }
+    },
+    unmount() { cleanups.forEach(cleanup => cleanup()); },
+    get pendingTimers() { return timers.size; },
     render(open = shown) {
       shown = open; cursor = 0;
       tree = mod.exports.default({ reactionsMenuShown: shown, onReactionClick: reaction => reactions.push(reaction), onSetReactionsMenuShown: value => { shown = typeof value === 'function' ? value(shown) : value; } });
@@ -78,7 +88,7 @@ test('choosing any reaction closes the picker and restores its trigger focus', (
   const keys = registry.exports.chatReactionOptions.map(item => item.key);
   keys.forEach(key => { app.render(true); app.picker.props.onReact(key); });
   assert.deepEqual(app.reactions, keys);
-  assert.equal(focused, 13); assert.equal(app.shown, false);
+  assert.equal(focused, keys.length); assert.equal(app.shown, false);
 });
 
 test('account changes remount the picker so customization drafts cannot leak', () => {
@@ -114,6 +124,30 @@ test('picker keeps keyboard focus on mouse leave and dismisses when focus or poi
   app.root.props.onBlur({ currentTarget: { contains: () => false }, relatedTarget: {} }); assert.equal(app.shown, false);
   app.render(true); assert.equal(app.outside.options.enabled, true); assert.equal(app.outside.options.closeOnScroll, false, 'the picker owns focus-aware scroll handling');
   app.outside.close(); assert.equal(app.shown, false); assert.deepEqual(app.reactions, []);
+});
+
+test('a brief diagonal detour stays open, re-entry cancels closing, and leaving still dismisses', () => {
+  const app = fixture(); app.render(true);
+  app.refs[0].current = { contains: () => false };
+  app.root.props.onMouseLeave(); app.advanceTime(100);
+  assert.equal(app.shown, true, 'the picker must survive the gap on a diagonal pointer path');
+  app.root.props.onMouseEnter(); app.advanceTime(300);
+  assert.equal(app.shown, true, 'entering the panel must cancel the pending close');
+  app.root.props.onMouseLeave(); app.advanceTime(200);
+  assert.equal(app.shown, false, 'moving away still closes without an extra click');
+});
+
+test('delayed hover dismissal respects new keyboard focus, outside clicks and unmounting', () => {
+  const app = fixture(); app.render(true);
+  let focusedInside = false;
+  app.refs[0].current = { contains: () => focusedInside };
+  app.root.props.onMouseLeave(); focusedInside = true; app.advanceTime(200);
+  assert.equal(app.shown, true);
+  focusedInside = false; app.root.props.onMouseLeave(); app.outside.close();
+  assert.equal(app.shown, false, 'outside clicks close immediately');
+  assert.equal(app.pendingTimers, 0);
+  app.render(true); app.root.props.onMouseLeave(); app.unmount();
+  assert.equal(app.pendingTimers, 0, 'unmounting must cancel delayed updates');
 });
 
 test('a press that starts inside the picker survives the Safari blur that carries no relatedTarget', () => {
