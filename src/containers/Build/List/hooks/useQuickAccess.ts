@@ -7,7 +7,10 @@ import {
   useAppContext,
   useBuildContext
 } from '~/contexts';
-import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../../constants/runtimeViewSources';
+import {
+  BUILD_TODAY_TOP_VIEW_SOURCE,
+  BUILD_TRENDING_SHOWCASE_VIEW_SOURCE
+} from '../../constants/runtimeViewSources';
 import {
   getCollaboratingBuildListItemTargetPath,
   normalizeBuildQuickAccessMode,
@@ -23,6 +26,10 @@ import {
 import { buildBrowseTabs } from '../constants/tabs';
 import { QUICK_ACCESS_FETCH_LIMIT } from '../QuickAccess';
 import { logoBlueOpenAppButtonStyle } from '../constants/layout';
+import {
+  getBuildDiscoveryRefreshDelay,
+  isBuildDiscoveryCacheCurrent
+} from '../helpers/discovery';
 
 export default function useQuickAccess({
   buildQuickAccessMode,
@@ -99,10 +106,9 @@ export default function useQuickAccess({
       favoriteQuickAccessState?.loaded &&
       favoriteQuickAccessState.userId === normalizedUserId
   );
-  const todayTopViewedLoadedForCurrentUser = Boolean(
-    normalizedUserId &&
-      todayTopViewedState?.loaded &&
-      todayTopViewedState.userId === normalizedUserId
+  const todayTopViewedLoadedForCurrentUser = isBuildDiscoveryCacheCurrent(
+    todayTopViewedState,
+    normalizedUserId
   );
   const recentlyUsedBuilds = recentLoadedForCurrentUser
     ? ((recentQuickAccessState?.builds || []) as QuickAccessBuild[])
@@ -113,6 +119,9 @@ export default function useQuickAccess({
   const todayTopViewedBuild = todayTopViewedLoadedForCurrentUser
     ? ((todayTopViewedState?.build || null) as TodayTopViewedBuild | null)
     : null;
+  const todayTopBuilds = todayTopViewedLoadedForCurrentUser
+    ? ((todayTopViewedState?.builds || []) as TodayTopViewedBuild[])
+    : [];
   const recentlyUsedCursor = recentLoadedForCurrentUser
     ? recentQuickAccessState?.cursor || null
     : null;
@@ -128,12 +137,19 @@ export default function useQuickAccess({
   const [modalMode, setModalMode] = useState<BuildQuickAccessMode | null>(null);
   const [todayTopViewedFailedUserId, setTodayTopViewedFailedUserId] =
     useState<number | null>(null);
+  const [discoveryLoading, setDiscoveryLoading] = useState(false);
+  const [discoveryRefreshKey, setDiscoveryRefreshKey] = useState(0);
+  const [, refreshDiscoveryClock] = useState(0);
+  const discoveryNextDay =
+    todayTopViewedState?.userId === normalizedUserId
+      ? todayTopViewedState?.nextDay
+      : null;
   const loadRef = useRef(0);
   const todayTopViewedLoadRef = useRef(0);
   const todayTopViewedPending = Boolean(
     normalizedUserId &&
       !todayTopViewedLoadedForCurrentUser &&
-      todayTopViewedFailedUserId !== normalizedUserId
+      (discoveryLoading || todayTopViewedFailedUserId !== normalizedUserId)
   );
   const activeBuilds =
     quickAccessMode === 'favorites' ? favoriteBuilds : recentlyUsedBuilds;
@@ -148,34 +164,78 @@ export default function useQuickAccess({
 
   useEffect(() => {
     if (!normalizedUserId) return;
-    const loadId = todayTopViewedLoadRef.current + 1;
-    todayTopViewedLoadRef.current = loadId;
-    setTodayTopViewedFailedUserId(null);
-    handleLoadTodayTopViewedBuild();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let refreshAt = 0;
+    let inFlight = false;
+    void handleLoadTodayTopViewedBuild();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     async function handleLoadTodayTopViewedBuild() {
+      if (inFlight) return;
+      inFlight = true;
+      clearTimeout(timer);
+      const loadId = ++todayTopViewedLoadRef.current;
+      setDiscoveryLoading(true);
+      setTodayTopViewedFailedUserId(null);
       try {
         const data = await loadTodayTopViewedBuild();
         if (todayTopViewedLoadRef.current !== loadId) return;
         setTodayTopViewedFailedUserId(null);
         onSetBuildStudioTodayTopViewedBuild({
           build: normalizeTodayTopViewedBuild(data?.build),
+          builds: (Array.isArray(data?.topBuilds) ? data.topBuilds : [])
+            .map(normalizeTodayTopViewedBuild)
+            .filter(Boolean),
+          nextDay: Number(data?.nextDay) || null,
           userId: normalizedUserId
         });
+        scheduleRefresh(getBuildDiscoveryRefreshDelay(data?.nextDay));
       } catch (err) {
         console.error('Failed to load today top viewed build:', err);
         if (todayTopViewedLoadRef.current === loadId) {
           setTodayTopViewedFailedUserId(normalizedUserId);
+          scheduleRefresh(60 * 1000);
+        }
+      } finally {
+        inFlight = false;
+        if (todayTopViewedLoadRef.current === loadId) {
+          setDiscoveryLoading(false);
+        }
+      }
+    }
+
+    function scheduleRefresh(delay: number) {
+      refreshAt = Date.now() + delay;
+      timer = setTimeout(handleLoadTodayTopViewedBuild, delay);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        refreshDiscoveryClock(Date.now());
+        if (Date.now() >= refreshAt) {
+          void handleLoadTodayTopViewedBuild();
         }
       }
     }
 
     return () => {
       todayTopViewedLoadRef.current += 1;
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
     // loadTodayTopViewedBuild and context actions are stable helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [normalizedUserId]);
+  }, [normalizedUserId, discoveryRefreshKey]);
+
+  useEffect(() => {
+    if (!discoveryNextDay || !Number.isFinite(discoveryNextDay)) return;
+    // Expire displayed data even while a refresh is waiting for the server.
+    const timer = setTimeout(
+      () => refreshDiscoveryClock(Date.now()),
+      Math.max(0, discoveryNextDay - Date.now() + 1)
+    );
+    return () => clearTimeout(timer);
+  }, [discoveryNextDay]);
 
   useEffect(() => {
     setModalMode(null);
@@ -240,12 +300,23 @@ export default function useQuickAccess({
     onModeChange: handleModeChange,
     onOpenBuild: handleOpenBuild,
     onOpenTodayTopViewedBuild: handleOpenTodayTopViewedBuild,
+    onOpenTodayTopBuild: handleOpenTodayTopBuild,
     onShowMore: handleShowMore,
     openButtonStyle,
     quickAccessMode,
+    todayTopBuilds,
     todayTopViewedBuild,
-    todayTopViewedPending
+    todayTopViewedPending,
+    todayTopViewedFailed:
+      normalizedUserId != null &&
+      !todayTopViewedLoadedForCurrentUser &&
+      todayTopViewedFailedUserId === normalizedUserId,
+    onRetryDiscovery: handleRetryDiscovery
   };
+
+  function handleRetryDiscovery() {
+    setDiscoveryRefreshKey((key) => key + 1);
+  }
 
   async function loadQuickAccess({ showLoading = true } = {}) {
     if (!normalizedUserId) return;
@@ -301,8 +372,16 @@ export default function useQuickAccess({
   }
 
   function handleOpenTodayTopViewedBuild(build: TodayTopViewedBuild) {
+    openDiscoveryBuild(build, BUILD_TRENDING_SHOWCASE_VIEW_SOURCE);
+  }
+
+  function handleOpenTodayTopBuild(build: TodayTopViewedBuild) {
+    openDiscoveryBuild(build, BUILD_TODAY_TOP_VIEW_SOURCE);
+  }
+
+  function openDiscoveryBuild(build: TodayTopViewedBuild, viewSource: string) {
     navigate(
-      `/app/${build.id}?viewSource=${BUILD_TRENDING_SHOWCASE_VIEW_SOURCE}`,
+      `/app/${build.id}?viewSource=${viewSource}`,
       {
         state: {
           runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,

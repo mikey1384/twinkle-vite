@@ -378,11 +378,15 @@ export default function BuildList({
     onModeChange: handleQuickAccessModeChange,
     onOpenBuild: handleOpenQuickAccessBuild,
     onOpenTodayTopViewedBuild: handleOpenTodayTopViewedBuild,
+    onOpenTodayTopBuild: handleOpenTodayTopBuild,
     onShowMore: handleShowMoreQuickAccess,
     openButtonStyle: quickAccessOpenButtonStyle,
     quickAccessMode,
+    todayTopBuilds,
     todayTopViewedBuild,
-    todayTopViewedPending
+    todayTopViewedPending,
+    todayTopViewedFailed,
+    onRetryDiscovery: handleRetryDiscovery
   } = useQuickAccess({
     buildQuickAccessMode,
     buildStudio,
@@ -851,6 +855,10 @@ export default function BuildList({
           <Hero
             topViewedBuild={todayTopViewedBuild}
             topViewedPending={todayTopViewedPending}
+            topBuilds={todayTopBuilds}
+            discoveryFailed={todayTopViewedFailed}
+            onRetryDiscovery={handleRetryDiscovery}
+            onOpenTopBuild={handleOpenTodayTopBuild}
             onFavoriteChange={handleBuildFavoriteChange}
             onFavoriteError={handleBuildFavoriteError}
             onFavoriteStart={handleBuildFavoriteStart}

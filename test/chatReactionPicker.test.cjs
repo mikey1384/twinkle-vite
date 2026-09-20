@@ -59,9 +59,9 @@ function fixture(mobile = false) {
     },
     unmount() { cleanups.forEach(cleanup => cleanup()); },
     get pendingTimers() { return timers.size; },
-    render(open = shown) {
+    render(open = shown, props = {}) {
       shown = open; cursor = 0;
-      tree = mod.exports.default({ reactionsMenuShown: shown, onReactionClick: reaction => reactions.push(reaction), onSetReactionsMenuShown: value => { shown = typeof value === 'function' ? value(shown) : value; } });
+      tree = mod.exports.default({ reactionsMenuShown: shown, onReactionClick: reaction => reactions.push(reaction), onSetReactionsMenuShown: value => { shown = typeof value === 'function' ? value(shown) : value; }, ...props });
       return tree;
     }
   };
@@ -116,6 +116,25 @@ test('touch toggles while desktop mouse click preserves hover-to-open behavior',
   touch.render(); touch.trigger.props.onClick({ detail: 1, stopPropagation() {} }); assert.equal(touch.shown, false);
   const desktop = fixture(); desktop.render(); desktop.root.props.onMouseEnter(); assert.equal(desktop.shown, true);
   desktop.render(); desktop.trigger.props.onClick({ detail: 1, stopPropagation() {} }); assert.equal(desktop.shown, true);
+});
+
+test('an open action menu suppresses reaction hover but still allows deliberate activation', () => {
+  for (const [mobile, detail] of [[false, 1], [false, 0], [true, 1]]) {
+    const app = fixture(mobile);
+    app.render(false, { openOnHover: false });
+    app.root.props.onMouseEnter();
+    assert.equal(app.shown, false, 'passing over reactions must not replace the action menu');
+    app.trigger.props.onClick({ detail, stopPropagation() {} });
+    assert.equal(app.shown, true, 'mouse, keyboard and touch can deliberately open reactions');
+  }
+  const app = fixture();
+  app.render(false, { openOnHover: false });
+  app.root.props.onMouseEnter();
+  app.root.props.onMouseLeave();
+  app.advanceTime(250);
+  app.render(false, { openOnHover: true });
+  app.root.props.onMouseEnter();
+  assert.equal(app.shown, true, 'normal hover opening resumes after the action menu closes');
 });
 
 test('picker keeps keyboard focus on mouse leave and dismisses when focus or pointer leaves', () => {

@@ -13,6 +13,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../constants/runtimeViewSources';
 import type { TodayTopViewedBuild } from './types';
+import TodayTopApps from './TodayTopApps';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -25,17 +26,41 @@ const inheritedUsernameTextStyle: React.CSSProperties = {
 const topViewedShowcaseClass = css`
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+  grid-template-columns: minmax(0, 1fr) minmax(9rem, 1fr);
   gap: 1.2rem;
   align-items: center;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 1fr);
+    gap: 0.85rem;
+  }
+`;
+
+const discoveryContainerClass = css`
+  container-type: inline-size;
   margin-top: 1.6rem;
   padding-top: 1.6rem;
   border-top: 1px solid rgba(65, 140, 235, 0.18);
+`;
 
-  @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: minmax(0, 0.82fr) minmax(8.5rem, 1.18fr);
-    gap: 0.85rem;
-    padding-top: 1rem;
+const discoveryGridClass = css`
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(21rem, 1fr);
+  gap: 1.8rem;
+  align-items: start;
+
+  &[data-has-trending='false'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  > :only-child {
+    padding: 0;
+    border: 0;
+  }
+
+  @container (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.3rem;
   }
 `;
 
@@ -143,13 +168,8 @@ const topViewedPreviewLinkClass = css`
 `;
 
 const topViewedShowcasePlaceholderClass = css`
-  display: none;
   pointer-events: none;
   visibility: hidden;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    display: grid;
-  }
 `;
 
 const topViewedPlaceholderButtonClass = css`
@@ -162,6 +182,10 @@ const topViewedPlaceholderButtonClass = css`
 export default function Hero({
   topViewedBuild,
   topViewedPending,
+  topBuilds,
+  discoveryFailed,
+  onRetryDiscovery,
+  onOpenTopBuild,
   onFavoriteChange,
   onFavoriteError,
   onFavoriteStart,
@@ -170,6 +194,10 @@ export default function Hero({
 }: {
   topViewedBuild: TodayTopViewedBuild | null;
   topViewedPending: boolean;
+  topBuilds: TodayTopViewedBuild[];
+  discoveryFailed: boolean;
+  onRetryDiscovery: () => void;
+  onOpenTopBuild: (build: TodayTopViewedBuild) => void;
   onFavoriteChange: (
     build: BuildProjectListItemData,
     change: BuildFavoriteChange
@@ -204,17 +232,31 @@ export default function Hero({
         </GameCTAButton>
       }
     >
-      {topViewedBuild ? (
-        <TodayTopViewedShowcase
-          build={topViewedBuild}
-          onFavoriteChange={onFavoriteChange}
-          onFavoriteError={onFavoriteError}
-          onFavoriteStart={onFavoriteStart}
-          onOpen={onOpenTopViewedBuild}
-        />
-      ) : topViewedPending ? (
-        <TodayTopViewedShowcasePlaceholder />
-      ) : null}
+      <div className={discoveryContainerClass}>
+        <div
+          className={discoveryGridClass}
+          data-has-trending={Boolean(topViewedBuild || topViewedPending)}
+        >
+          {topViewedBuild ? (
+            <TodayTopViewedShowcase
+              build={topViewedBuild}
+              onFavoriteChange={onFavoriteChange}
+              onFavoriteError={onFavoriteError}
+              onFavoriteStart={onFavoriteStart}
+              onOpen={onOpenTopViewedBuild}
+            />
+          ) : topViewedPending ? (
+            <TodayTopViewedShowcasePlaceholder />
+          ) : null}
+          <TodayTopApps
+            builds={topBuilds}
+            pending={topViewedPending}
+            failed={discoveryFailed}
+            onOpen={onOpenTopBuild}
+            onRetry={onRetryDiscovery}
+          />
+        </div>
+      </div>
     </StudioHero>
   );
 }

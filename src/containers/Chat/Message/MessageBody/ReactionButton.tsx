@@ -13,11 +13,13 @@ const deviceIsMobile = isMobile(navigator);
 
 export default function ReactionButton({
   style,
+  openOnHover = true,
   onReactionClick,
   onSetReactionsMenuShown,
   reactionsMenuShown
 }: {
   style?: React.CSSProperties;
+  openOnHover?: boolean;
   onReactionClick: (reaction: string) => void;
   onSetReactionsMenuShown: (v: any) => void;
   reactionsMenuShown: boolean;
@@ -47,7 +49,8 @@ export default function ReactionButton({
         style={{ position: 'relative', display: 'flex', ...style, zIndex: reactionsMenuShown ? 6000 : undefined }}
         onMouseEnter={() => {
           clearTimeout(closeTimerRef.current);
-          if (!deviceIsMobile) onSetReactionsMenuShown(true);
+          // An explicitly opened action menu takes priority over incidental hover.
+          if (!deviceIsMobile && openOnHover) onSetReactionsMenuShown(true);
         }}
         onMouseLeave={() => {
           if (

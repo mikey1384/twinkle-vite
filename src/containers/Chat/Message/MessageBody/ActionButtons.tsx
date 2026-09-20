@@ -14,6 +14,7 @@ const editLabel = 'Edit';
 
 interface Props {
   currentChannelId: number;
+  dropdownShown: boolean;
   fileName: string;
   filePath: string;
   invitePath: string;
@@ -57,6 +58,7 @@ interface Props {
 
 export default function ActionButtons({
   currentChannelId,
+  dropdownShown,
   fileName,
   filePath,
   invitePath,
@@ -272,6 +274,7 @@ export default function ActionButtons({
         !isChessMsg &&
         !isBanned && (
           <ReactionButton
+            openOnHover={!dropdownShown}
             onReactionClick={onAddReaction}
             reactionsMenuShown={reactionsMenuShown}
             onSetReactionsMenuShown={onSetReactionsMenuShown}

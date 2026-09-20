@@ -46,7 +46,7 @@ import type {
   PreviewLaunchTarget,
   PreviewMountContext
 } from '../PreviewPanel/types';
-import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../constants/runtimeViewSources';
+import { normalizeBuildRuntimeViewSource } from '../constants/runtimeViewSources';
 import CommentsDrawer from './CommentsDrawer';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -973,7 +973,7 @@ export default function BuildRuntime({
   ]);
   const runtimeViewSource = useMemo(() => {
     const source = new URLSearchParams(location.search).get('viewSource');
-    return source === BUILD_TRENDING_SHOWCASE_VIEW_SOURCE ? source : '';
+    return normalizeBuildRuntimeViewSource(source);
   }, [location.search]);
   const runtimeMountContext = useMemo(
     () => parseRuntimeMountContext(location.search),

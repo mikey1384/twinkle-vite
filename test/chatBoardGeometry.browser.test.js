@@ -19,11 +19,14 @@ const repo = fileURLToPath(new URL('..', import.meta.url));
 const fixture = `
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faEyeSlash, faTimes, faSpinner } from '@fortawesome/pro-solid-svg-icons';
 import Chess from './src/containers/Chat/Chess/Game';
 import Omok from './src/containers/Chat/Omok/Game';
 import ChessGame from './src/containers/Chat/Modals/GameModals/ChessModal/ChessGame';
 import Modal from './src/components/Modal';
 import ModalContentWrapper from './src/containers/Chat/Modals/GameModals/ModalContentWrapper';
+library.add(faEyeSlash, faTimes, faSpinner);
 const noOp = () => {};
 const position = Array.from({ length: 64 }, () => ({}));
 for (const [index, type, color] of [
@@ -70,17 +73,26 @@ function Fixture() {
 window.fixturePosition = position;
 function ModalFixture() {
   const [ready, setReady] = useState(false);
+  const [initialState, setInitialState] = useState(null);
+  const [message, setMessage] = useState(null);
+  const [userMadeLastMove, setUserMadeLastMove] = useState(false);
+  const [viewerId, setViewerId] = useState(null);
   return <Modal isOpen onClose={noOp} title="Chess" size="lg" animationDuration={0}
     footer={<><button>Close</button><button disabled={!ready}>Done</button></>}>
     <ModalContentWrapper><div id="modal-board">
-      <ChessGame channelId={2} myId={1} opponentId={2} opponentName="Test"
-        currentChannel={{}} onSetUserMadeLastMove={noOp} onSetMessage={noOp}
-        onSetInitialState={noOp} onLoadStateChange={setReady} />
+      <ChessGame channelId={2} myId={1} opponentId={2} opponentName="TONY0814"
+        currentChannel={{lastChessMoveViewerId:viewerId}} initialState={initialState}
+        message={message} userMadeLastMove={userMadeLastMove}
+        onSetUserMadeLastMove={setUserMadeLastMove} onSetMessage={setMessage}
+        onSetInitialState={setInitialState} onLoadStateChange={setReady}
+        setChessMoveViewTimeStamp={async () => {window.revealRequests=(window.revealRequests || 0)+1;}}
+        onUpdateLastChessMoveViewerId={({viewerId}) => setViewerId(viewerId)}
+        onSpoilerClick={noOp} />
     </div></ModalContentWrapper>
   </Modal>;
 }
 createRoot(document.getElementById('root')).render(
-  window.boardFixtureMode === 'modal' ? <ModalFixture /> : <Fixture />
+  ['modal', 'spoiler'].includes(window.boardFixtureMode) ? <ModalFixture /> : <Fixture />
 );
 `;
 
@@ -90,7 +102,6 @@ function compileFixture() {
     '~/helpers': `
       export const isTablet = () => !!window.fixtureTablet;
       export const isMobile = () => window.innerWidth < 768;`,
-    '~/components/Icon': 'export default function Icon() { return null; }',
     '~/components/ErrorBoundary':
       'export default function ErrorBoundary({ children }) { return children; }',
     '~/components/Button': `import React from 'react';
@@ -98,7 +109,8 @@ function compileFixture() {
     '~/contexts': `
       export const useKeyContext = fn => fn({ myState: { profileTheme: 'logoBlue' } });
       const fetchCurrentChessState = () => new Promise((resolve, reject) => {
-        window.finishBoardLoad = () => resolve(null);
+        window.finishBoardLoad = () => resolve(window.boardFixtureMode === 'spoiler'
+          ? {id:20,userId:2,chessState:{move:{number:4}}} : null);
         window.failBoardLoad = () => reject(new Error('offline'));
       });
       export const useAppContext = fn => fn({ requestHelpers: { fetchCurrentChessState } });`,
@@ -112,10 +124,10 @@ function compileFixture() {
       import Game from './src/containers/Chat/Chess/Game';
       import BoardWrapper from './src/containers/Chat/BoardWrapper';
       const noOp = () => {};
-      export default function LoadedChess() {
+      export default function LoadedChess({spoilerOff, onSpoilerClick, opponentName}) {
         return <BoardWrapper><Game loading={false} interactable={false}
-          myColor="black" squares={window.fixturePosition} spoilerOff
-          onClick={noOp} onCastling={noOp} onSpoilerClick={noOp} opponentName="Test" /></BoardWrapper>;
+          myColor="black" squares={window.fixturePosition} spoilerOff={spoilerOff}
+          onClick={noOp} onCastling={noOp} onSpoilerClick={onSpoilerClick} opponentName={opponentName} /></BoardWrapper>;
       }`,
     './CastlingButton': 'export default function Castling() { return null; }',
     '~/constants/defaultValues':
@@ -203,6 +215,123 @@ for (const [name, engine] of [
   ['webkit', webkit],
   ['chromium', chromium]
 ]) {
+  test(
+    `${name}: Chess modal spoiler fills the square board space and centers its warning`,
+    { timeout: 45_000 },
+    async () => {
+      const bundle = await compileFixture();
+      const browser = await engine.launch({ headless: true, timeout: 10_000 });
+      try {
+        for (const [width, tablet] of [
+          [1024, false],
+          [390, false],
+          [820, true]
+        ]) {
+          const page = await browser.newPage({
+            viewport: { width, height: 844 }
+          });
+          page.setDefaultTimeout(5000);
+          const errors = [];
+          page.on('pageerror', (error) => errors.push(error.message));
+          await page.route('**/*', (route) => route.abort());
+          await page.setContent(
+            '<meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div>'
+          );
+          await page.addStyleTag({
+            content: readFileSync(path.join(repo, 'src/styles.css'), 'utf8')
+          });
+          await page.evaluate((tablet) => {
+            window.boardFixtureMode = 'spoiler';
+            window.fixtureTablet = tablet;
+          }, tablet);
+          await page.addScriptTag({ content: bundle.outputFiles[0].text });
+          await page
+            .getByRole('status', { name: 'Loading chess board…' })
+            .waitFor();
+          await page.evaluate(() => window.finishBoardLoad());
+          const spoiler = page.getByRole('button', {
+            name: /TONY0814 made a new chess move/
+          });
+          await spoiler.waitFor();
+          assert.equal(await page.locator('[data-chess-index]').count(), 0);
+          const geometry = await spoiler.evaluate((button) => {
+            const box = button.getBoundingClientRect();
+            const frame =
+              button.parentElement.parentElement.getBoundingClientRect();
+            const modalBoard = document
+              .querySelector('#modal-board')
+              .getBoundingClientRect();
+            const text = button.lastElementChild.getBoundingClientRect();
+            return {
+              width: box.width,
+              height: box.height,
+              centerX: box.x + box.width / 2,
+              centerY: box.y + box.height / 2,
+              frameCenterY: frame.y + frame.height / 2,
+              modalCenterX: modalBoard.x + modalBoard.width / 2,
+              textCenterY: text.y + text.height / 2,
+              overflow: button.scrollHeight - button.clientHeight
+            };
+          });
+          if (process.env.CHAT_BOARD_SCREENSHOTS) {
+            mkdirSync(process.env.CHAT_BOARD_SCREENSHOTS, { recursive: true });
+            await page.screenshot({
+              path: path.join(
+                process.env.CHAT_BOARD_SCREENSHOTS,
+                `${name}-${width}-spoiler.png`
+              )
+            });
+          }
+          const label = `${name} ${width}`;
+          assert.ok(
+            geometry.height >= geometry.width - 1,
+            `${label}: spoiler collapsed to ${geometry.width} × ${geometry.height}`
+          );
+          if (width === 1024) {
+            assert.ok(
+              Math.abs(geometry.height - geometry.width) < 1,
+              `${label}: regular modal spoiler must be square`
+            );
+          }
+          assert.ok(
+            Math.abs(geometry.centerX - geometry.modalCenterX) < 1,
+            `${label}: spoiler must be horizontally centered`
+          );
+          assert.ok(
+            Math.abs(geometry.centerY - geometry.frameCenterY) < 3,
+            `${label}: spoiler must fill its reserved board space`
+          );
+          assert.ok(
+            Math.abs(geometry.textCenterY - geometry.centerY) < 15,
+            `${label}: warning must be vertically centered`
+          );
+          assert.ok(
+            geometry.overflow <= 1,
+            `${label}: the timer warning must remain readable on small boards`
+          );
+          assert.equal(
+            await page.evaluate(() => window.revealRequests || 0),
+            0
+          );
+          await spoiler.click();
+          await page.locator('[data-chess-index="63"]').waitFor();
+          assert.equal(await page.evaluate(() => window.revealRequests), 1);
+          const board = await page
+            .getByRole('group', { name: /^Chess board\./ })
+            .boundingBox();
+          assert.ok(
+            Math.abs(board.width - board.height) < 0.1,
+            `${label}: revealed cells must remain square`
+          );
+          assert.deepEqual(errors, []);
+          await page.close();
+        }
+      } finally {
+        await browser.close();
+      }
+    }
+  );
+
   test(
     `${name}: Chess modal reserves board space during loading, failure and retry`,
     { timeout: 60_000 },

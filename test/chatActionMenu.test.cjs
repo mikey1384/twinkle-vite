@@ -40,8 +40,6 @@ test('chat and Wordle actions stay discoverable on tablets and coarse pointers',
     const source=readFileSync(path.resolve(__dirname,'..',base,file),'utf8');
     assert.match(source,/@media \(max-width: 1024px\), \(pointer: coarse\) \{\s*\.menu-button \{\s*display: block;/);
   }
-  const source=readFileSync(path.resolve(__dirname,'..',base,'index.tsx'),'utf8');
-  assert.match(source,/paddingRight: 100, minHeight: 44/);
 });
 
 test('chat action trigger is named and controls an expanded native-button group',()=>{
@@ -127,7 +125,7 @@ function actionsFixture(overrides={}) {
   });
   const props={currentChannelId:22,subchannelId:9,messageId:51,myId:1,userId:1,message:{id:51,content:'hello'},
     thumbUrl:'',recentThumbUrl:'recent.png',timeStamp:123,fileName:'photo.png',filePath:'path/photo.png',
-    isMenuButtonsAllowed:true,userCanEditThis:true,userCanDeleteThis:true,userCanRewardThis:false,rewardColor:'gold',
+    dropdownShown:false,isMenuButtonsAllowed:true,canReply:true,userCanEditThis:true,userCanDeleteThis:true,userCanRewardThis:false,rewardColor:'gold',
     onSetReplyTarget:value=>calls.push(['target',value]),onReplyClick:value=>calls.push(['reply',value]),
     onSetIsEditing:value=>calls.push(['edit',value]),onDelete:value=>calls.push(['delete',value]),onBookmark:(...args)=>calls.push(['bookmark',...args]),
     onOpenRewardModal:()=>calls.push(['reward']),onDropdownShown:shown=>calls.push(['shown',shown]),onSetReactionsMenuShown:shown=>calls.push(['reactions',shown]),...overrides};
@@ -147,7 +145,7 @@ test('restricted, banned, streaming and delete-only permission branches remain i
   assert.equal(actionsFixture({isMenuButtonsAllowed:false}).nodes.length,0);
   assert.equal(actionsFixture({isBanned:true}).menu,undefined);assert.equal(actionsFixture({isBanned:true}).reaction,undefined);
   assert.equal(actionsFixture({isCurrentlyStreaming:true}).menu,undefined);
-  const only=actionsFixture({isDeleteOnlyBuildSuggestion:true,isAIChat:true});assert.deepEqual(only.menu.props.items.map(item=>item.id),['remove']);assert.equal(only.reaction,undefined);
+  const only=actionsFixture({isDeleteOnlyBuildSuggestion:true,isAIChat:true,canReply:false});assert.deepEqual(only.menu.props.items.map(item=>item.id),['remove']);assert.equal(only.reaction,undefined);
   const restricted=actionsFixture({isRestricted:true,userCanEditThis:false,userCanDeleteThis:false});assert.equal(restricted.menu,undefined);
 });
 

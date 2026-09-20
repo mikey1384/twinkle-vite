@@ -952,6 +952,7 @@ function MessageBody({
             />
             <ActionButtons
               currentChannelId={currentChannel.id}
+              dropdownShown={highlighted}
               fileName={fileName}
               filePath={filePath}
               invitePath={invitePath}

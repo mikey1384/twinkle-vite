@@ -24,6 +24,8 @@ export default function BoardSpoiler({
   const overlayClass = css`
     width: 100%;
     height: auto;
+    /* Keep the board footprint, while allowing long warnings to grow on small screens. */
+    aspect-ratio: 1;
     min-height: 44px;
     font-family: inherit;
     line-height: 1.5;

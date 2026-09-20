@@ -207,6 +207,8 @@ export interface BuildStudioQuickAccessListState {
 
 export interface BuildStudioTodayTopViewedState {
   build: any | null;
+  builds: any[];
+  nextDay: number | null;
   loaded: boolean;
   userId: number | null;
 }
@@ -337,6 +339,7 @@ export interface BuildRuntimeVerifyResult {
 }
 
 export interface BuildStudioActionPayload {
+  nextDay?: number | null;
   section?: BuildStudioSection | string | null;
   activeTab?: BuildStudioTab;
   tab?: BuildStudioTab;
@@ -599,6 +602,8 @@ function createInitialBuildStudioQuickAccessListState(): BuildStudioQuickAccessL
 function createInitialBuildStudioTodayTopViewedState(): BuildStudioTodayTopViewedState {
   return {
     build: null,
+    builds: [],
+    nextDay: null,
     loaded: false,
     userId: null
   };
@@ -2788,17 +2793,23 @@ export default function BuildReducer(
       const buildStudio = getBuildStudioState(state);
       const quickAccess = getBuildStudioQuickAccessState(buildStudio);
       const build = action.buildStudio?.build || null;
+      const builds = Array.isArray(action.buildStudio?.builds)
+        ? action.buildStudio.builds
+        : [];
       return {
         ...state,
-        buildsById: build
-          ? mergeBuildSummaryMap(state.buildsById || {}, build)
-          : state.buildsById,
+        buildsById: mergeBuildSummaryMap(state.buildsById || {}, [
+          ...builds,
+          ...(build ? [build] : [])
+        ]),
         buildStudio: {
           ...buildStudio,
           quickAccess: {
             ...quickAccess,
             todayTopViewed: {
               build,
+              builds,
+              nextDay: Number(action.buildStudio?.nextDay) || null,
               loaded: true,
               userId: normalizeBuildStudioUserId(action.buildStudio?.userId)
             }
@@ -2906,15 +2917,17 @@ export default function BuildReducer(
               buildIds,
               userId
             ),
-            todayTopViewed:
-              todayTopViewedUserMatches &&
-              todayTopViewed.build &&
-              buildIds.has(Number(todayTopViewed.build.id || 0))
-                ? {
-                    ...todayTopViewed,
-                    build: null
-                  }
-                : todayTopViewed
+            todayTopViewed: todayTopViewedUserMatches
+              ? {
+                  ...todayTopViewed,
+                  build: buildIds.has(Number(todayTopViewed.build?.id || 0))
+                    ? null
+                    : todayTopViewed.build,
+                  builds: (todayTopViewed.builds || []).filter(
+                    (build) => !buildIds.has(Number(build.id || 0))
+                  )
+                }
+              : todayTopViewed
           }
         }
       };
