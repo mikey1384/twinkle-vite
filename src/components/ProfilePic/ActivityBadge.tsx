@@ -277,8 +277,10 @@ export default function ActivityBadge({
 
 const badgeClass = css`
   position: absolute;
-  left: -5%;
-  bottom: -5%;
+  /* Center on the circular portrait's lower-left edge at every avatar size. */
+  left: 14.65%;
+  bottom: 14.65%;
+  transform: translate(-50%, 50%);
   z-index: 2;
   width: clamp(1.4rem, 36%, 2.8rem);
   aspect-ratio: 1;
