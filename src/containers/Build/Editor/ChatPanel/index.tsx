@@ -533,6 +533,11 @@ export default function ChatPanel({
   const followUpModelSwitchLabel = followUpModelSwitchOption
     ? LUMINE_MODE_LABELS[followUpModelSwitchOption.mode]
     : '';
+  // Unfinished work names its button by what the press does.
+  const followUpContinuesUnfinishedWork =
+    !showScopedPlanQuickReplies &&
+    !followUpModelSwitchLabel &&
+    followUpPrompt?.mode === 'continue_unfinished_work';
   const showGenericFollowUpQuickReplies =
     isOwner &&
     runMode === 'user' &&
@@ -837,7 +842,9 @@ export default function ChatPanel({
               quickReplyYesLabel={
                 followUpModelSwitchLabel
                   ? `Switch to ${followUpModelSwitchLabel}`
-                  : undefined
+                  : followUpContinuesUnfinishedWork
+                    ? 'Continue'
+                    : undefined
               }
               quickReplyOnceLabel={
                 followUpModelSwitchLabel ? 'Just this once' : undefined
@@ -848,7 +855,9 @@ export default function ChatPanel({
                   : undefined
               }
               quickReplyNoLabel={
-                followUpModelSwitchLabel ? 'Not now' : undefined
+                followUpModelSwitchLabel || followUpContinuesUnfinishedWork
+                  ? 'Not now'
+                  : undefined
               }
               quickReplyBusy={
                 Boolean(followUpModelSwitchLabel) &&

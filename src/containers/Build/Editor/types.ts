@@ -207,6 +207,8 @@ export interface BuildFollowUpPrompt {
   sourceMessageId?: number | null;
   // Yes first switches the build to this lighter Lumine model, then sends.
   modelSwitch?: { model: string; mode: string; label: string } | null;
+  // What kind of next step this is; names the button (Continue vs Yes).
+  mode?: string | null;
 }
 
 export interface BuildPendingToolApproval {

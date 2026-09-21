@@ -27,7 +27,7 @@ import {
   normalizeAICardId
 } from '~/helpers/aiCardCanonicalUpdates';
 import { css } from '@emotion/css';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import Offers from './Offers';
 import { getVisibleOfferGroups } from './Offers/helpers';
@@ -100,6 +100,7 @@ export default function AICardModal({
   onHide: () => any;
 }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { colorKey: linkColorKey } = useRoleColor('link', {
     fallback: 'logoBlue'
   });
@@ -441,13 +442,17 @@ export default function AICardModal({
       footer={
         <>
           {!!card?.hasSummonPost && (
-            <Link
-              to={`/ai-card-summons/${cardId}`}
-              onClick={onHide}
-              style={{ fontSize: '1.2rem', marginRight: 'auto' }}
+            <Button
+              variant="ghost"
+              style={{ marginRight: 'auto' }}
+              onClick={() => {
+                onHide();
+                navigate(`/ai-card-summons/${cardId}`);
+              }}
             >
-              View summon post
-            </Link>
+              <Icon icon="comments" />
+              <span style={{ marginLeft: '0.7rem' }}>Summon post</span>
+            </Button>
           )}
           <ShareButton
             variant="full"

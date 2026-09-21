@@ -8,6 +8,13 @@ import AICardModal from '~/components/Modals/AICardModal';
 import { useChatContext } from '~/contexts';
 import useAICard from '~/helpers/hooks/useAICard';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { qualityProps } from '~/constants/defaultValues';
+import { isTotalMysteryQuality } from '~/components/AICard/totalMysteryGlow';
+
+// A total-mystery card keeps its quality secret until it is revealed.
+function mysteryQualityHidden(card: any) {
+  return isTotalMysteryQuality(card?.quality);
+}
 
 export default function AICardSummonContent({
   card,
@@ -21,11 +28,109 @@ export default function AICardSummonContent({
     () => ({ ...card, ...liveCard }),
     [card, liveCard]
   );
-  const { promptText } = useAICard(displayedCard);
+  const { promptText, cardColor } = useAICard(displayedCard);
+  const quality = mysteryQualityHidden(displayedCard)
+    ? ''
+    : String(displayedCard.quality || '');
   const [modalShown, setModalShown] = useState(false);
   const mystery = !displayedCard.imagePath && !Number(displayedCard.isBurned);
 
   if (!card?.id) return null;
+
+  if (compact) {
+    return (
+      <div
+        className={css`
+          display: flex;
+          align-items: center;
+          gap: 1.6rem;
+          min-width: 0;
+          @media (max-width: ${mobileMaxWidth}) {
+            gap: 1.3rem;
+          }
+        `}
+      >
+        <CardThumb
+          card={displayedCard}
+          style={{ width: '8.4rem', height: '11.8rem', flexShrink: 0 }}
+        />
+        <div
+          className={css`
+            min-width: 0;
+            flex: 1;
+            display: grid;
+            gap: 0.5rem;
+            overflow-wrap: anywhere;
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 0.6rem;
+              font-size: 1.1rem;
+              font-weight: 700;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+              color: ${Color.gray()};
+            `}
+          >
+            <span>AI card #{card.id}</span>
+            {quality && (
+              <span
+                className={css`
+                  padding: 0.2rem 0.7rem;
+                  border-radius: 999px;
+                  letter-spacing: 0.04em;
+                  background: ${Color.highlightGray()};
+                `}
+                style={{ color: qualityProps[quality]?.color }}
+              >
+                {quality}
+              </span>
+            )}
+          </div>
+          <div
+            className={css`
+              font-size: 1.9rem;
+              font-weight: 700;
+              line-height: 1.2;
+            `}
+            style={{ color: mystery ? undefined : cardColor }}
+          >
+            {displayedCard.word}
+          </div>
+          <div
+            className={css`
+              font-size: 1.3rem;
+              line-height: 1.45;
+              color: ${Color.darkerGray()};
+              display: -webkit-box;
+              -webkit-box-orient: vertical;
+              -webkit-line-clamp: 2;
+              overflow: hidden;
+            `}
+          >
+            {mystery
+              ? 'Mystery card · Not revealed yet'
+              : displayedCard.prompt || displayedCard.style}
+          </div>
+          <div
+            className={css`
+              font-size: 1.2rem;
+              color: ${Color.gray()};
+            `}
+          >
+            Summoned by{' '}
+            <b style={{ color: Color.darkerGray() }}>
+              {displayedCard.creator?.username || 'a Twinkle member'}
+            </b>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -33,39 +138,30 @@ export default function AICardSummonContent({
         className={css`
           display: flex;
           align-items: center;
-          gap: ${compact ? '1.4rem' : '3rem'};
+          gap: 3rem;
           min-width: 0;
-          padding: ${compact ? '0' : '1rem 0'};
+          padding: 1rem 0;
           @media (max-width: ${mobileMaxWidth}) {
             gap: 1.2rem;
-            ${!compact && 'flex-direction: column; text-align: center;'}
+            flex-direction: column;
+            text-align: center;
           }
         `}
       >
         <div style={{ flexShrink: 0 }}>
-          {compact ? (
-            <CardThumb
-              card={displayedCard}
-              style={{ width: '8.4rem', height: '11.8rem' }}
-            />
-          ) : (
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label={`View card #${card.id}`}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  setModalShown(true);
-                }
-              }}
-            >
-              <AICard
-                card={displayedCard}
-                onClick={() => setModalShown(true)}
-              />
-            </div>
-          )}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label={`View card #${card.id}`}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setModalShown(true);
+              }
+            }}
+          >
+            <AICard card={displayedCard} onClick={() => setModalShown(true)} />
+          </div>
         </div>
         <div
           style={{ minWidth: 0, overflowWrap: 'anywhere', fontSize: '1.4rem' }}
@@ -79,44 +175,31 @@ export default function AICardSummonContent({
           >
             AI card · #{card.id}
           </div>
-          <div
-            style={{ fontWeight: 700, fontSize: compact ? '1.6rem' : '2rem' }}
-          >
+          <div style={{ fontWeight: 700, fontSize: '2rem' }}>
             {displayedCard.word}
           </div>
-          {compact ? (
-            <div style={{ marginTop: '0.5rem', fontSize: '1.2rem' }}>
-              Summoned by{' '}
-              {displayedCard.creator?.username || 'a Twinkle member'}
-            </div>
-          ) : (
-            <>
-              <div style={{ marginTop: '1.2rem', lineHeight: 1.6 }}>
-                <SanitizedHTML
-                  allowedAttributes={{ b: ['style'] }}
-                  html={promptText || ''}
-                />
-              </div>
-              <div
-                style={{
-                  marginTop: '1rem',
-                  color: Color.darkerGray(),
-                  fontSize: '1.2rem'
-                }}
-              >
-                {mystery
-                  ? 'Mystery card · Not revealed yet'
-                  : displayedCard.style}
-              </div>
-              <Button
-                variant="ghost"
-                style={{ marginTop: '1rem' }}
-                onClick={() => setModalShown(true)}
-              >
-                View card details
-              </Button>
-            </>
-          )}
+          <div style={{ marginTop: '1.2rem', lineHeight: 1.6 }}>
+            <SanitizedHTML
+              allowedAttributes={{ b: ['style'] }}
+              html={promptText || ''}
+            />
+          </div>
+          <div
+            style={{
+              marginTop: '1rem',
+              color: Color.darkerGray(),
+              fontSize: '1.2rem'
+            }}
+          >
+            {mystery ? 'Mystery card · Not revealed yet' : displayedCard.style}
+          </div>
+          <Button
+            variant="ghost"
+            style={{ marginTop: '1rem' }}
+            onClick={() => setModalShown(true)}
+          >
+            View card details
+          </Button>
         </div>
       </div>
       {modalShown && (

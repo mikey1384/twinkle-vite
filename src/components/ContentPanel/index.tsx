@@ -4,7 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Heading from './Heading';
 import Loading from '~/components/Loading';
 import ContentListItem from '~/components/ContentListItem';
-import AICardSummonContent from '~/components/AICardSummonContent';
+import AICardTarget from './AICardTarget';
 import Body from './Body';
 import TargetContent from './TargetContent';
 import Embedly from '~/components/Embedly';
@@ -19,7 +19,7 @@ import { placeholderHeights } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useRecordContentPageView } from '~/helpers/hooks/useRecordContentPageView';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import type { HomeFeedActionIntent } from '~/helpers/homeFeedActionIntent';
 const urlCss = css`
@@ -531,26 +531,13 @@ export default function ContentPanel({
                 {contentType === 'comment' &&
                   appliedRootType === 'aiCard' &&
                   rootObj?.card && (
-                    <Link
-                      to={`/ai-card-summons/${rootObj.id}`}
+                    <AICardTarget
+                      card={rootObj.card}
+                      summonId={rootObj.id}
                       style={{
-                        display: 'block',
-                        padding: '1.5rem',
-                        color: 'inherit'
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
                       }}
-                    >
-                      <AICardSummonContent card={rootObj.card} compact />
-                      <span
-                        style={{
-                          display: 'block',
-                          marginTop: '1rem',
-                          fontSize: '1.2rem',
-                          fontWeight: 700
-                        }}
-                      >
-                        View summon discussion
-                      </span>
-                    </Link>
+                    />
                   )}
                 {contentType === 'comment' &&
                   ['aiStory', 'build', 'video'].includes(appliedRootType) && (
