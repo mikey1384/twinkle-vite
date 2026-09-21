@@ -441,24 +441,25 @@ export default function AICardModal({
       }
       footer={
         <>
-          {!!card?.hasSummonPost && (
-            <Button
-              variant="ghost"
-              style={{ marginRight: 'auto' }}
-              onClick={() => {
-                onHide();
-                navigate(`/ai-card-summons/${cardId}`);
-              }}
-            >
-              <Icon icon="comments" />
-              <span style={{ marginLeft: '0.7rem' }}>Summon post</span>
-            </Button>
-          )}
           <ShareButton
             variant="full"
             buttonVariant="ghost"
             linkPath={`/ai-cards/?cardId=${cardId}`}
           />
+          {/* Opened from the summon post itself, the button would lead nowhere. */}
+          {!!card?.hasSummonPost &&
+            location.pathname !== `/ai-card-summons/${cardId}` && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  onHide();
+                  navigate(`/ai-card-summons/${cardId}`);
+                }}
+              >
+                <Icon icon="comments" />
+                <span style={{ marginLeft: '0.7rem' }}>Summon post</span>
+              </Button>
+            )}
           <div
             className={css`
               font-size: 1.5rem;
