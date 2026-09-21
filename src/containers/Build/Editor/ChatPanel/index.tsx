@@ -15,6 +15,7 @@ import {
   BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
   BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
 } from '../constants';
+import { resolveChatStickToBottom } from '../helpers/chatStickToBottom';
 import { LUMINE_MODE_LABELS } from '../helpers/lumineModelSelection';
 import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
 import { buildLumineRuntimeDebugSnapshot } from './helpers/runtimeDebug';
@@ -323,6 +324,7 @@ export default function ChatPanel({
     stickToBottom: boolean;
   } | null>(null);
   const lumineStickToBottomRef = useRef(true);
+  const lastLumineScrollTopRef = useRef<number | null>(null);
   communicationScrollTopsRef.current = communicationScrollTops;
   onCommunicationScrollChangeRef.current = onCommunicationScrollChange;
   const hasPeoplePanel = Boolean(peoplePanel);
@@ -663,9 +665,14 @@ export default function ChatPanel({
     onChatScroll();
     const container = chatScrollRef.current;
     if (!container) return;
-    const distanceFromBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    const stickToBottom = distanceFromBottom <= LUMINE_BOTTOM_SCROLL_THRESHOLD;
+    const stickToBottom = resolveChatStickToBottom({
+      scrollTop: container.scrollTop,
+      scrollHeight: container.scrollHeight,
+      clientHeight: container.clientHeight,
+      previousScrollTop: lastLumineScrollTopRef.current,
+      threshold: LUMINE_BOTTOM_SCROLL_THRESHOLD
+    });
+    lastLumineScrollTopRef.current = container.scrollTop;
     lumineStickToBottomRef.current = stickToBottom;
     scheduleLumineScrollTopSave(
       stickToBottom ? LUMINE_SCROLL_BOTTOM_SENTINEL : container.scrollTop

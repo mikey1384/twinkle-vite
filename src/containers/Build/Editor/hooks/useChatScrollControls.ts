@@ -1,4 +1,5 @@
-import type { RefObject } from 'react';
+import { useRef, type RefObject } from 'react';
+import { resolveChatStickToBottom } from '../helpers/chatStickToBottom';
 
 interface UseChatScrollControlsOptions {
   chatEndRef: RefObject<HTMLDivElement | null>;
@@ -15,6 +16,8 @@ export default function useChatScrollControls({
   scrollRafRef,
   shouldAutoScrollRef
 }: UseChatScrollControlsOptions) {
+  const lastScrollTopRef = useRef<number | null>(null);
+
   function scrollChatToBottom(
     behavior: ScrollBehavior = 'smooth',
     options?: { force?: boolean }
@@ -41,16 +44,23 @@ export default function useChatScrollControls({
     });
   }
 
-  function isChatNearBottom(threshold = 120) {
-    const container = chatScrollRef.current;
-    if (!container) return true;
-    const distanceFromBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    return distanceFromBottom <= threshold;
-  }
-
   function handleChatScroll() {
-    shouldAutoScrollRef.current = isChatNearBottom();
+    const container = chatScrollRef.current;
+    if (!container) {
+      shouldAutoScrollRef.current = true;
+      return;
+    }
+    shouldAutoScrollRef.current = resolveChatStickToBottom({
+      scrollTop: container.scrollTop,
+      scrollHeight: container.scrollHeight,
+      clientHeight: container.clientHeight,
+      previousScrollTop: lastScrollTopRef.current
+    });
+    lastScrollTopRef.current = container.scrollTop;
+    if (!shouldAutoScrollRef.current && scrollRafRef.current !== null) {
+      cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
+    }
   }
 
   function maybeAutoScrollDuringStream() {
