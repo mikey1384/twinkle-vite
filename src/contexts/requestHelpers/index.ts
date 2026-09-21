@@ -114,6 +114,8 @@ registerMethods('build', [
   'loadBuildReferenceDocuments',
   'deleteBuildReferenceDocument',
   'cleanupBuildChatReferenceUploads',
+  'loadBuildChatReferenceApps',
+  'prepareBuildChatAppReferences',
   'loadMyBuilds',
   'loadCollaboratingBuilds',
   'loadBuildActivity',
@@ -135,6 +137,7 @@ registerMethods('build', [
   'callBuildRuntimeAiImage',
   'loadBuildRuntimeAiImageStatus',
   'callBuildRuntimeAiChatStream',
+  'callBuildRuntimeAiDecision',
   'callBuildRuntimeAiObject',
   'getBuildTwinkleNews',
   'listBuildTwinkleNewsEditions',
@@ -738,7 +741,10 @@ registerMethods('chat', [
   'updateLastTopicId',
   'checkIfAIFileSupported',
   'uploadFileOnChat',
-  'saveChatMessageWithFileAttachment'
+  'saveChatMessageWithFileAttachment',
+  'loadChatPins',
+  'updateChatPin',
+  'loadChatPinContext'
 ]);
 
 registerMethods('user', [

@@ -1,10 +1,11 @@
 {
   "name": "twinkle",
   "private": true,
-  "version": "2.2.57",
+  "version": "2.2.58",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node --test test/requestHelperRegistry.test.js",
     "build": "vite build",
     "postbuild": "npm run verify:prod-jsx",
     "typecheck": "tsc --noEmit -p tsconfig.json",
