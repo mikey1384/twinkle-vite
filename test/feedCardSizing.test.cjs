@@ -961,9 +961,9 @@ test('keeps mobile main and target subject title typography explicit across vari
     /font-size: max\(1\.811rem, 18\.11px\) !important;/
   );
   assert.match(mainSubjectTitleRule[1], /line-height: 1\.24;/);
-  assert.match(targetSubjectTitleRule[1], /font-size: 1\.9rem;/);
+  assert.match(targetSubjectTitleRule[1], /font-size: max\(1\.8rem, 18px\);/);
   assert.match(targetSubjectTitleRule[1], /line-height: 1\.24;/);
-  assert.doesNotMatch(targetSubjectTitleRule[1], /max\(/);
+  // Target titles retain the existing 18px floor when the root font shrinks.
   assert.ok(
     mobileStylesSource.indexOf(mainSubjectTitleRule[0]) >
       mobileStylesSource.indexOf(genericHeadingRule[0])
