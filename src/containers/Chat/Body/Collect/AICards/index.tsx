@@ -175,6 +175,15 @@ export default function AICards({
         </div>
       )}
       <div className={aiCardControlTrayCls}>
+        {aiUsagePolicy && (
+          <AiEnergyCard
+            variant="inline"
+            style={{ flexShrink: 0 }}
+            energyPercent={aiUsagePolicy.energyPercent ?? 0}
+            energyPolicy={aiUsagePolicy}
+            showRefillTime={false}
+          />
+        )}
         <GenerateCardInterface
           canGenerateAICard={!!canGenerateAICard}
           numSummoned={numCardSummonedToday}
@@ -185,15 +194,6 @@ export default function AICards({
           energyDepleted={energyDepleted}
           energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
         />
-        {aiUsagePolicy && (
-          <AiEnergyCard
-            variant="inline"
-            style={{ flexShrink: 0 }}
-            energyPercent={aiUsagePolicy.energyPercent ?? 0}
-            energyPolicy={aiUsagePolicy}
-            showRefillTime={false}
-          />
-        )}
       </div>
       {energyDashboardShown && (
         <AiEnergyDashboardModal

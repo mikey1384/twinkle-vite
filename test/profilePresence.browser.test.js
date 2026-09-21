@@ -18,10 +18,17 @@ const repo = fileURLToPath(new URL('..', import.meta.url));
 const fixture = `
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faBook, faCardsBlank } from '@fortawesome/pro-solid-svg-icons';
 import ProfilePic from './src/components/ProfilePic';
 import MemberListItem from './src/containers/Chat/RightMenu/ChatInfo/Members/MemberListItem';
+import Collect from './src/containers/Chat/Body/Collect';
+import useUserActivity, { userActivityRegistry } from './src/helpers/hooks/useUserActivity';
 import { Color } from './src/constants/css';
+library.add(faBook, faCardsBlank);
+function RouteProbe() { window.fixtureLocation = useLocation(); return null; }
+function ActivityOverlay({activity}) { useUserActivity(activity); return null; }
 function Fixture() {
   const [presence, setPresence] = useState({
     id: 2, username: 'programmer', isOnline: true, isAway: true, isBusy: true
@@ -29,15 +36,24 @@ function Fixture() {
   window.setServerPresence = patch => setPresence(previous => ({...previous, ...patch}));
   window.fixtureChatStatus = {2: presence};
   window.presenceColors = {Away: Color.orange(), Busy: Color.red(), Online: Color.green()};
-  return <MemoryRouter><main>
+  const [collectPage, setCollectPage] = useState(null);
+  const [overlay, setOverlay] = useState(undefined);
+  window.setCollectPage = setCollectPage;
+  window.setActivityOverlay = value => setOverlay(value);
+  window.readRegisteredActivity = () => userActivityRegistry.get(1);
+  return <MemoryRouter><RouteProbe/><main>
     <section id="member"><MemberListItem member={{id: 2, username: 'programmer'}}
       creatorId={0} onlineMemberObj={presence.isOnline ? {2: presence} : {}}/></section>
     <section id="profile"><ProfilePic userId={2} online={presence.isOnline}
       isAway={presence.isAway} isBusy={presence.isBusy} statusShown statusSize="large" size={80}/></section>
     <section id="self"><ProfilePic userId={1} isAway isBusy online statusShown size={40}/></section>
+    {collectPage && <Collect displayedThemeColor="logoBlue" {...collectPage}/>}
+    {overlay !== undefined && <ActivityOverlay activity={overlay}/>}
   </main></MemoryRouter>;
 }
-createRoot(document.getElementById('root')).render(<Fixture/>);
+const root = createRoot(document.getElementById('root'));
+root.render(<Fixture/>);
+window.unmountFixture = () => root.unmount();
 `;
 
 let bundle;
@@ -45,16 +61,21 @@ async function compileFixture() {
   if (bundle) return bundle;
   const stubs = {
     '~/contexts': `
-      export const useAppContext = select => select({user: {state: {userObj: {}}, actions: {}}});
+      export const useAppContext = select => select({user: {state: {userObj: {}}, actions: {
+        onSetCollectType: value => {window.fixtureCollectType = value;}
+      }}});
       export const useKeyContext = select => select({myState: {userId: 1}});
-      export const useChatContext = select => select({state: {chatStatus: window.fixtureChatStatus}, actions: {}});
+      export const useChatContext = select => select({state: {chatStatus: window.fixtureChatStatus}, actions: {
+        onUpdateSelectedChannelId: value => {window.fixtureSelectedChannel = value;}
+      }});
       export const useHomeContext = select => select({actions: {}});
     `,
     '~/helpers':
       'export const isMobile = () => false; export const isPhone = () => false;',
     '~/components/Texts/UsernameText':
       'import React from "react"; export default ({user, ...props}) => <strong {...props}>{user.username}</strong>;',
-    '~/components/Icon': 'export default () => null;',
+    './AICards': 'import React from "react"; export default ({loadingAICardChat}) => <div>{loadingAICardChat ? "Loading AI Cards" : "AI Cards collection"}</div>;',
+    './Vocabulary': 'import React from "react"; export default ({loadingVocabulary}) => <div>{loadingVocabulary ? "Loading Word Master" : "Word Master collection"}</div>;',
     './ChangePicture': 'export default () => null;'
   };
   const result = await build({
@@ -154,6 +175,24 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
               )
             });
           await page.keyboard.press('Escape');
+          for (const [id, title, route] of [
+            ['word-master', 'Word Master', 'vocabulary'],
+            ['ai-cards', 'AI Cards', 'ai-cards']
+          ]) {
+            await setPresence({ activity: { kind: 'game', id, title, thumbnailUrl: null } }, 'Online');
+            const collectionBadge = page.locator(`#profile button[aria-label="Playing ${title}"]`);
+            await collectionBadge.click();
+            assert.equal(await collectionBadge.locator('svg').count(), 1);
+            const openCollection = page.getByRole('button', { name: `Open ${title}`, exact: true });
+            await openCollection.waitFor();
+            if (process.env.PROFILE_PRESENCE_SCREENSHOTS)
+              await page.screenshot({ path: path.join(process.env.PROFILE_PRESENCE_SCREENSHOTS, `${engine}-${width}-${id}.png`) });
+            await openCollection.click();
+            await page.waitForFunction(expected => window.fixtureLocation.pathname === expected, `/chat/${route}`);
+            assert.equal(await page.evaluate(() => window.fixtureCollectType), route);
+            assert.equal(await page.evaluate(() => window.fixtureSelectedChannel), undefined);
+          }
+          await setPresence({ activity: { kind: 'app', id: 2460, title: 'Math Lab' } }, 'Online');
           await setPresence({ isAway: true }, 'Away');
           assert.equal(await badge.count(), 0);
           await setPresence({ isOnline: false, isBusy: true }, null);
@@ -162,7 +201,32 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
             1
           );
         }
+        for (const [id, chatType] of [['word-master', 'vocabulary'], ['ai-cards', 'ai-cards']]) {
+          const collectPage = { chatType, loadingVocabulary: true, loadingAICardChat: true };
+          await page.evaluate(props => window.setCollectPage(props), collectPage);
+          await page.getByText(chatType === 'vocabulary' ? 'Loading Word Master' : 'Loading AI Cards', { exact: true }).waitFor();
+          assert.equal(await page.evaluate(() => window.readRegisteredActivity()), null);
+          await page.evaluate(props => window.setCollectPage({ ...props, loadingVocabulary: false, loadingAICardChat: false }), collectPage);
+          await waitForRegisteredActivity({ kind: 'game', id });
+          await page.evaluate(() => window.setActivityOverlay({ kind: 'game', id: 'chess' }));
+          await waitForRegisteredActivity({ kind: 'game', id: 'chess' });
+          // A refreshed collection beneath the modal must not reclaim priority.
+          await page.evaluate(props => window.setCollectPage(props), collectPage);
+          await page.evaluate(props => window.setCollectPage({ ...props, loadingVocabulary: false, loadingAICardChat: false }), collectPage);
+          await waitForRegisteredActivity({ kind: 'game', id: 'chess' });
+          await page.evaluate(() => window.setActivityOverlay(null));
+          await waitForRegisteredActivity(null);
+          await page.evaluate(() => window.setActivityOverlay(undefined));
+          await waitForRegisteredActivity({ kind: 'game', id });
+          await page.evaluate(() => window.setCollectPage(null));
+          await waitForRegisteredActivity(null);
+        }
+        await page.evaluate(() => window.unmountFixture());
         assert.deepEqual(errors, []);
+
+        async function waitForRegisteredActivity(expected) {
+          await page.waitForFunction(value => JSON.stringify(window.readRegisteredActivity()) === JSON.stringify(value), expected);
+        }
 
         async function setPresence(patch, label) {
           await page.evaluate(

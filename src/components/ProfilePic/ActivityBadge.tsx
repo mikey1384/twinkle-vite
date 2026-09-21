@@ -8,6 +8,7 @@ import React, {
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
+import Icon from '~/components/Icon';
 import {
   useAppContext,
   useChatContext,
@@ -15,8 +16,10 @@ import {
   useKeyContext
 } from '~/contexts';
 import {
+  AI_CARD_CHAT_TYPE,
   GENERAL_CHAT_ID,
-  GENERAL_CHAT_PATH_ID
+  GENERAL_CHAT_PATH_ID,
+  VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import type { UserActivity } from '~/helpers/userActivity';
 
@@ -29,6 +32,9 @@ export default function ActivityBadge({
   const userId = useKeyContext((v) => v.myState.userId);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
+  );
+  const onSetCollectType = useAppContext(
+    (v) => v.user.actions.onSetCollectType
   );
   const onSetWordleModalShown = useChatContext(
     (v) => v.actions.onSetWordleModalShown
@@ -58,6 +64,12 @@ export default function ActivityBadge({
   const chatGame =
     activity.kind === 'game' &&
     (activity.id === 'chess' || activity.id === 'omok');
+  const collectType =
+    activity.kind === 'game' && activity.id === 'word-master'
+      ? VOCAB_CHAT_TYPE
+      : activity.kind === 'game' && activity.id === 'ai-cards'
+        ? AI_CARD_CHAT_TYPE
+        : null;
   const fallback =
     activity.kind === 'app'
       ? '▦'
@@ -66,7 +78,9 @@ export default function ActivityBadge({
           grammarbles: 'G',
           chess: '♟',
           'chess-puzzles': '♟',
-          omok: '●'
+          omok: '●',
+          'word-master': <Icon icon="book" />,
+          'ai-cards': <Icon icon="cards-blank" />
         }[activity.id];
 
   useEffect(() => {
@@ -233,7 +247,7 @@ export default function ActivityBadge({
                   ? 'Open app'
                   : chatGame
                     ? 'Open chat'
-                    : `Play ${activity.title}`}
+                    : `${collectType ? 'Open' : 'Play'} ${activity.title}`}
               </button>
             </div>,
             document.getElementById('outer-layer') || document.body
@@ -260,6 +274,11 @@ export default function ActivityBadge({
     }
     if (!userId) {
       onOpenSigninModal();
+      return;
+    }
+    if (collectType) {
+      onSetCollectType(collectType);
+      navigate(`/chat/${collectType}`);
       return;
     }
     if (activity.id === 'grammarbles') {
@@ -323,6 +342,14 @@ const badgeClass = css`
   &[data-game='omok'] {
     background: #e4bc7c;
     color: #2d3541;
+  }
+  &[data-game='word-master'] {
+    background: #2563eb;
+    color: #fff;
+  }
+  &[data-game='ai-cards'] {
+    background: #7c3aed;
+    color: #fff;
   }
   &:focus-visible {
     outline: 2px solid #3876d3;

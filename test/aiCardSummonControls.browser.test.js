@@ -99,7 +99,7 @@ function ownProcessTree() {
   return [...ids];
 }
 
-test('AI Cards keeps its live battery below summon without refill text, with accessible charging', { timeout: 45000 }, async () => {
+test('AI Cards keeps its live battery above summon without refill text, with accessible charging', { timeout: 45000 }, async () => {
   const result = await compileFixture();
   const output = process.env.AI_CARD_CONTROLS_SCREENSHOTS;
   if (output) mkdirSync(output, { recursive: true });
@@ -130,7 +130,7 @@ test('AI Cards keeps its live battery below summon without refill text, with acc
       const tray = summon.locator('xpath=../../..');
       const trayBox = await tray.boundingBox();
       assert.ok(buttonBox.y + buttonBox.height <= 560);
-      assert.ok(meterBox.y >= buttonBox.y + buttonBox.height, 'battery belongs below the summon button');
+      assert.ok(meterBox.y + meterBox.height <= buttonBox.y, 'battery belongs above the summon button');
       assert.ok(meterBox.y + meterBox.height <= 560, 'battery must stay visible within the chat panel');
       assert.ok(trayBox.height < 120, 'summon and battery remain compact without refill text');
       assert.ok((await page.getByTestId('activity-feed').boundingBox()).height > 390);

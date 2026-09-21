@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import AICard from '~/components/AICard';
-import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { createHomeFeedActionIntent } from '~/helpers/homeFeedActionIntent';
 import UserInfo from './UserInfo';
@@ -69,24 +68,6 @@ export default function SummonActivity({ card }: { card: any }) {
         >
           at {displayedTime}, {displayedDate}
         </div>
-        <Button
-          variant="ghost"
-          style={{ marginTop: '1rem' }}
-          onClick={() =>
-            navigate(`/ai-card-summons/${card.id}`, {
-              state: {
-                homeFeedActionIntent: createHomeFeedActionIntent({
-                  action: 'comment',
-                  contentType: 'aiCard',
-                  contentId: Number(card.id)
-                })
-              }
-            })
-          }
-        >
-          <Icon icon="comment-alt" />
-          <span style={{ marginLeft: '0.6rem' }}>Comment</span>
-        </Button>
       </div>
       <div
         className={css`
@@ -97,6 +78,16 @@ export default function SummonActivity({ card }: { card: any }) {
         `}
       >
         <AICard card={card} onClick={() => navigate(`./?cardId=${card.id}`)} />
+        <button
+          type="button"
+          className={discussCardClass}
+          onClick={handleComment}
+        >
+          <span className="discuss-card-icon" aria-hidden="true">
+            <Icon icon="comment-alt" />
+          </span>
+          <span>Discuss card</span>
+        </button>
       </div>
       <div
         className={css`
@@ -200,4 +191,83 @@ export default function SummonActivity({ card }: { card: any }) {
       </div>
     </div>
   );
+
+  function handleComment() {
+    navigate(`/ai-card-summons/${card.id}`, {
+      state: {
+        homeFeedActionIntent: createHomeFeedActionIntent({
+          action: 'comment',
+          contentType: 'aiCard',
+          contentId: Number(card.id)
+        })
+      }
+    });
+  }
 }
+
+const discussCardClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  width: 100%;
+  max-width: 24rem;
+  min-height: 4.6rem;
+  margin: 1.6rem auto 0;
+  padding: 0.8rem;
+  border: 1px solid ${Color.logoBlue(0.3)};
+  border-radius: 12px;
+  background: ${Color.logoBlue(0.09)};
+  color: #244e7c;
+  box-shadow: 0 2px 0 ${Color.logoBlue(0.12)};
+  font: inherit;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  .discuss-card-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 8px;
+    background: #fff;
+    color: ${Color.logoBlue()};
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: ${Color.logoBlue(0.16)};
+      box-shadow: 0 3px 0 ${Color.logoBlue(0.16)};
+      transform: translateY(-1px);
+    }
+  }
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${Color.logoBlue()};
+    outline-offset: 3px;
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 0.5rem;
+    margin-top: 1.2rem;
+    padding: 0.7rem 0.5rem;
+    font-size: 1.2rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;

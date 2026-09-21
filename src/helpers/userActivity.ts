@@ -1,7 +1,13 @@
 export const USER_ACTIVITY_INPUT_EVENT = 'twinkle-user-activity-input';
 
 export type ActivityGame =
-  'wordle' | 'grammarbles' | 'chess' | 'chess-puzzles' | 'omok';
+  | 'wordle'
+  | 'grammarbles'
+  | 'chess'
+  | 'chess-puzzles'
+  | 'omok'
+  | 'word-master'
+  | 'ai-cards';
 export type UserActivityIntent =
   { kind: 'app'; id: number } | { kind: 'game'; id: ActivityGame };
 export type UserActivity = UserActivityIntent & {
