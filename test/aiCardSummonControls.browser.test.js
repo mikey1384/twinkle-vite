@@ -28,7 +28,7 @@ const view={state:{aiFeaturesDisabled:false,aiDisabledNotice:''}};
 window.summonRequests=0;
 const app={requestHelpers:{
  getAiEnergyPolicy:async()=>({aiUsagePolicy:noti.state.todayStats.aiUsagePolicy}),
- generateAICard:()=>{window.summonRequests++;return new Promise(resolve=>{window.finishSummon=()=>resolve({numCardSummoned:1,coins:100,feed:{},card:{ownerId:7},aiUsagePolicy:fullPolicy})})}
+ generateAICard:()=>{window.summonRequests++;return new Promise(resolve=>{window.finishSummon=()=>resolve({numCardSummoned:1,coins:100,feed:{},card:{ownerId:7},aiUsagePolicy:{...fullPolicy,energyRemaining:0,energyPercent:0}})})}
 },user:{actions:{onSetUserState:()=>{},onSetCollectType:()=>{}}}};
 function useSelected(bag,select){return useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>select(bag))}
 export const useKeyContext=fn=>useSelected(key,fn);
@@ -55,7 +55,7 @@ root.render(<MemoryRouter><AICards displayedThemeColor="logoBlue" loadingAICardC
 window.unmountFixture=()=>root.unmount();
 `;
 
-// Render the actual AI Cards controller, summon button and status display.
+// Render the actual AI Cards controller, summon button, battery and status display.
 // Isolate the unrelated activity feed and shared payment dialog: this checks
 // navigation into charging and canonical policy updates without purchasing.
 async function compileFixture() {
@@ -73,6 +73,9 @@ async function compileFixture() {
           '~/components/Loading': 'import React from "react";export default function Loading(){return <div>Loading</div>}',
           './ActivitiesContainer': 'import React from "react";export default function Activities(){return <div data-testid="activity-feed" style={{flex:1,padding:20}}>Card activity</div>}',
           '~/components/AiEnergyDashboardModal': 'import React from "react";export default function Dashboard({onHide}){return <div role="dialog" aria-label="AI Energy dashboard"><button onClick={onHide}>Close dashboard</button></div>}',
+          '~/components/LumineRescueEntry': 'export default function Rescue(){return null}',
+          '~/components/Modals/RechargeAiEnergyConfirmModal': 'export default function RechargeConfirm(){return null}',
+          '~/theme/hooks/useRoleColor': 'export function useRoleColor(){return {getColor:()=>"#418ceb"}}',
           '~/helpers/analytics': 'export function trackEvent(){}'
         };
         builder.onResolve({ filter: /.*/ }, args => {
@@ -96,7 +99,7 @@ function ownProcessTree() {
   return [...ids];
 }
 
-test('AI Cards has one summon control, with accessible recharge and canonical recovery', { timeout: 45000 }, async () => {
+test('AI Cards keeps its live battery below summon without refill text, with accessible charging', { timeout: 45000 }, async () => {
   const result = await compileFixture();
   const output = process.env.AI_CARD_CONTROLS_SCREENSHOTS;
   if (output) mkdirSync(output, { recursive: true });
@@ -115,21 +118,35 @@ test('AI Cards has one summon control, with accessible recharge and canonical re
       const summon = page.getByRole('button', { name: 'Summon Card', exact: true });
       await summon.waitFor();
       assert.equal(await summon.isEnabled(), true);
-      assert.equal(await page.getByRole('meter').count(), 0);
+      const meter = page.getByRole('meter', { name: 'Energy', exact: true });
+      assert.equal(await meter.count(), 1);
+      assert.equal(await meter.isVisible(), true);
+      assert.equal(await meter.getAttribute('aria-valuenow'), '80');
+      assert.equal(await meter.getAttribute('aria-valuetext'), '80%');
       assert.equal(await page.locator('time').count(), 0);
+      assert.equal(await page.getByText(/Next daily refill|Scheduled refill|your time/).count(), 0);
       const buttonBox = await summon.boundingBox();
+      const meterBox = await meter.boundingBox();
       const tray = summon.locator('xpath=../../..');
       const trayBox = await tray.boundingBox();
       assert.ok(buttonBox.y + buttonBox.height <= 560);
-      assert.ok(trayBox.height < 90, 'removed display must not leave a tall empty tray');
-      assert.ok((await page.getByTestId('activity-feed').boundingBox()).height > 400);
+      assert.ok(meterBox.y >= buttonBox.y + buttonBox.height, 'battery belongs below the summon button');
+      assert.ok(meterBox.y + meterBox.height <= 560, 'battery must stay visible within the chat panel');
+      assert.ok(trayBox.height < 120, 'summon and battery remain compact without refill text');
+      assert.ok((await page.getByTestId('activity-feed').boundingBox()).height > 390);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       if (output) await page.screenshot({ path: path.join(output, `cards-${width}.png`) });
 
+      await page.getByRole('button', { name: 'Open AI Energy dashboard', exact: true }).click();
+      await page.getByRole('dialog', { name: 'AI Energy dashboard', exact: true }).waitFor();
+      assert.equal(await page.evaluate(() => window.summonRequests), 0);
+      await page.getByRole('button', { name: 'Close dashboard' }).click();
       await page.evaluate(() => window.deliverPolicy({ energyRemaining: 0, energyPercent: 0, dayKey: '2026-09-05' }));
       const recharge = page.getByRole('button', { name: 'Recharge Energy', exact: true });
       await recharge.waitFor();
       assert.equal(await recharge.isEnabled(), true);
+      assert.equal(await meter.getAttribute('aria-valuenow'), '0');
+      assert.equal(await meter.getAttribute('aria-valuetext'), '0%');
       await recharge.click();
       await page.getByRole('dialog', { name: 'AI Energy dashboard', exact: true }).waitFor();
       assert.equal(await page.evaluate(() => window.summonRequests), 0);
@@ -138,12 +155,15 @@ test('AI Cards has one summon control, with accessible recharge and canonical re
       await page.evaluate(() => window.deliverPolicy({ energyRemaining: 4553, energyPercent: 0, dayKey: '2026-09-05' }));
       await summon.waitFor();
       assert.equal(await summon.isEnabled(), true, 'a positive canonical remainder may summon even if the rounded percent is zero');
+      assert.equal(await meter.getAttribute('aria-valuetext'), 'Less than 1%');
       await summon.click();
       await page.getByRole('button', { name: 'Summoning...', exact: true }).waitFor();
       assert.equal(await page.getByRole('button', { name: 'Summoning...', exact: true }).isDisabled(), true);
       assert.equal(await page.evaluate(() => window.summonRequests), 1);
+      assert.equal(await meter.getAttribute('aria-valuetext'), 'Less than 1%', 'summoning must not optimistically deduct battery');
       await page.evaluate(() => window.finishSummon());
-      await summon.waitFor();
+      await recharge.waitFor();
+      assert.equal(await meter.getAttribute('aria-valuetext'), '0%', 'battery reflects the summon response');
 
       for (const [restriction, label] of [[{licensed:false}, 'Need License'], [{banned:true}, 'Restricted'], [{maxed:true}, 'Daily Limit Reached']]) {
         await page.evaluate(value => window.setRestrictions(value), restriction);
@@ -153,7 +173,9 @@ test('AI Cards has one summon control, with accessible recharge and canonical re
       }
       await page.evaluate(() => window.setRestrictions({ disabled: true }));
       await page.getByText('AI Card Generation Is Unavailable', { exact: true }).waitFor();
-      assert.equal(await page.getByRole('button').count(), 0);
+      assert.equal(await summon.count(), 0);
+      assert.equal(await recharge.count(), 0);
+      assert.equal(await meter.isVisible(), true);
       await page.evaluate(() => window.unmountFixture());
       await page.close();
     }

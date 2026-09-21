@@ -14,6 +14,7 @@ import {
 } from '~/contexts';
 import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
+import AiEnergyCard from '~/components/AiEnergyCard';
 import AiEnergyDashboardModal from '~/components/AiEnergyDashboardModal';
 import type { AiEnergyDisplayPolicy } from '~/helpers/aiEnergyDisplay';
 import { trackEvent } from '~/helpers/analytics';
@@ -184,6 +185,15 @@ export default function AICards({
           energyDepleted={energyDepleted}
           energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
         />
+        {aiUsagePolicy && (
+          <AiEnergyCard
+            variant="inline"
+            style={{ flexShrink: 0 }}
+            energyPercent={aiUsagePolicy.energyPercent ?? 0}
+            energyPolicy={aiUsagePolicy}
+            showRefillTime={false}
+          />
+        )}
       </div>
       {energyDashboardShown && (
         <AiEnergyDashboardModal
