@@ -13,6 +13,7 @@ export function getNotificationContentTypeLabel({
 }) {
   if (!contentType) return 'content';
   if (contentType === 'aiStory') return 'AI Story';
+  if (contentType === 'aiCard') return 'AI card';
   if (contentType === 'url') return 'link';
   if (contentType === 'user') return 'profile';
   if (contentType === 'xpChange') return DAILY_GOAL_COMPLETION_LABEL;

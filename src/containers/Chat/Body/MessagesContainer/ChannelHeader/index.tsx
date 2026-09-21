@@ -14,6 +14,8 @@ import { chatHeaderClass } from '../../../containers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useToast } from '~/contexts/Toast';
 import LocalContext from '../../../Context';
+import { useChatPins } from '../../../Pins/context';
+import PinsButton from '../../../Pins/PinsButton';
 const deviceIsMobile = isMobile(navigator);
 const addToFavoritesLabel = 'Add to favorites';
 const changeTopicLabel = 'Change Topic';
@@ -63,6 +65,7 @@ export default function ChannelHeader({
   subchannel: any;
   topicSelectorModalShown: boolean;
 }) {
+  const pins = useChatPins();
   const {
     actions: { onLoadChatSubject, onSetIsSearchActive },
     requests: { loadChatSubject },
@@ -335,39 +338,37 @@ export default function ChannelHeader({
       menuProps.length > 0 &&
       !banned?.chat
     );
-  }, [
-    selectedChannelId,
-    currentChannel.id,
-    menuProps.length,
-    banned?.chat
-  ]);
+  }, [selectedChannelId, currentChannel.id, menuProps.length, banned?.chat]);
 
   return (
     <ErrorBoundary
       componentPath="MessagesContainer/ChannelHeader/index"
-      className={cx(chatHeaderClass, css`
-        z-index: 50000;
-        position: relative;
-        width: 100%;
-        flex: 0 0 auto;
-        max-width: 100%;
-        min-width: 0;
-        padding: 1rem;
-        min-height: 7rem;
-        height: auto;
-        display: flex;
-        align-items: center;
-        > section {
+      className={cx(
+        chatHeaderClass,
+        css`
+          z-index: 50000;
           position: relative;
+          width: 100%;
+          flex: 0 0 auto;
+          max-width: 100%;
+          min-width: 0;
+          padding: 1rem;
+          min-height: 7rem;
+          height: auto;
           display: flex;
           align-items: center;
-          flex-direction: column;
-          width: CALC(100% - ${level >= MOD_LEVEL ? '22rem' : '12rem'});
-          @media (max-width: ${mobileMaxWidth}) {
-            width: CALC(100% - ${level >= MOD_LEVEL ? '13rem' : '3rem'});
+          > section {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            width: CALC(100% - ${level >= MOD_LEVEL ? '22rem' : '12rem'});
+            @media (max-width: ${mobileMaxWidth}) {
+              width: CALC(100% - ${level >= MOD_LEVEL ? '13rem' : '3rem'});
+            }
           }
-        }
-      `)}
+        `
+      )}
     >
       <div
         style={{
@@ -425,7 +426,10 @@ export default function ChannelHeader({
               currentTopicIndex={currentChannel.currentTopicIndex}
               featuredTopicId={currentChannel.featuredTopicId}
               onSaveScrollPositionForAll={onSaveScrollPositionForAll}
-              onSearch={onSearch}
+              onSearch={(text) => {
+                pins?.leaveHistory();
+                onSearch(text);
+              }}
               onSetBuyTopicModalShown={onSetBuyTopicModalShown}
               onSetIsSearchActive={onSetIsSearchActive}
               onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
@@ -453,6 +457,7 @@ export default function ChannelHeader({
               }
             `}
           >
+            {!!currentChannel.id && <PinsButton />}
             {menuButtonShown && (
               <DropdownButton
                 variant="solid"

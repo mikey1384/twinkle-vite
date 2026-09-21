@@ -43,6 +43,7 @@ import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
+import { useLumineCommentMenuItem } from '../../LumineCommentContext';
 
 const pinLabel = 'Pin';
 const unpinLabel = 'Unpin';
@@ -201,8 +202,7 @@ export default function SearchedComment({
     subjectHasSecretMessage,
     subjectId
   });
-  const isCommentForASubjectWithSecretMessage =
-    hasSubjectSecretSignal(parent);
+  const isCommentForASubjectWithSecretMessage = hasSubjectSecretSignal(parent);
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(
@@ -244,20 +244,23 @@ export default function SearchedComment({
       parent.uploader?.id === userId,
     [parent.contentType, parent.uploader?.id, userId]
   );
-  const dropdownButtonShown = useMemo(() => {
-    if (isNotification) {
-      return false;
-    }
-    return userCanDeleteThis || userCanEditThis || userIsParentUploader;
-  }, [
-    isNotification,
-    userCanDeleteThis,
-    userCanEditThis,
-    userIsParentUploader
-  ]);
+  const pinSupported =
+    (parent.contentType === 'comment'
+      ? rootContent?.contentType || parent.rootType
+      : parent.contentType) !== 'aiCard';
 
+  const lumineMenuItem = useLumineCommentMenuItem({
+    comment: {
+      ...comment,
+      content: loaded ? content : comment.content,
+      isDeleted
+    },
+    parentComment: comment.targetObj?.comment,
+    rootContent: parent.contentType === 'build' ? parent : rootContent
+  });
   const dropdownMenuItems = useMemo(() => {
     const items = [];
+    if (lumineMenuItem) items.push(lumineMenuItem);
     if (
       userCanEditThis &&
       !isNotification &&
@@ -280,6 +283,7 @@ export default function SearchedComment({
       });
     }
     if (
+      pinSupported &&
       (userIsParentUploader || isAdmin) &&
       !isNotification &&
       !banned?.posting
@@ -311,6 +315,8 @@ export default function SearchedComment({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    lumineMenuItem,
+    pinSupported,
     banned?.posting,
     comment.id,
     isCommentForASubjectWithSecretMessage,
@@ -322,6 +328,7 @@ export default function SearchedComment({
     userIsParentUploader,
     userIsUploader
   ]);
+  const dropdownButtonShown = !isNotification && dropdownMenuItems.length > 0;
 
   const userCanRewardThis = useMemo(
     () =>

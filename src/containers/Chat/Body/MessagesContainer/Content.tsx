@@ -4,6 +4,9 @@ import ChannelHeader from './ChannelHeader';
 import DisplayedMessages from './DisplayedMessages';
 import MessageInput from './MessageInput';
 import { chatComposerClass } from '../../containers';
+import ChatPinsProvider from '../../Pins';
+import { useKeyContext } from '~/contexts';
+import { useChatPins } from '../../Pins/context';
 
 export default function Content({
   catchUpStatusShown,
@@ -26,8 +29,24 @@ export default function Content({
   messageInputProps: ComponentProps<typeof MessageInput>;
   onRetryCatchUp: () => void;
 }) {
+  const userId = useKeyContext((v) => v.myState.userId);
+  const channelId = Number(channelHeaderProps.selectedChannelId || 0);
+  const subchannelId = Number(subchannel?.id || 0);
+  const topicId =
+    channelHeaderProps.currentChannel.selectedTab === 'topic'
+      ? Number(
+          channelHeaderProps.currentChannel.selectedTopicId ||
+            channelHeaderProps.currentChannel.featuredTopicId ||
+            0
+        )
+      : 0;
   return (
-    <>
+    <ChatPinsProvider
+      key={`${userId}:${channelId}`}
+      channelId={channelId}
+      subchannelId={subchannelId}
+      topicId={topicId}
+    >
       <div
         className={css`
           display: flex;
@@ -41,10 +60,7 @@ export default function Content({
         {!subchannel?.isRestricted && <ChannelHeader {...channelHeaderProps} />}
         <DisplayedMessages {...displayedMessagesProps} />
       </div>
-      <div
-        data-chat-composer
-        className={chatComposerClass}
-      >
+      <div data-chat-composer className={chatComposerClass}>
         {catchUpStatusShown && (
           <div
             role="status"
@@ -115,8 +131,21 @@ export default function Content({
             </button>
           </div>
         )}
-        <MessageInput key={messageInputKey} {...messageInputProps} />
+        <PinAwareMessageInput key={messageInputKey} {...messageInputProps} />
       </div>
-    </>
+    </ChatPinsProvider>
+  );
+}
+
+function PinAwareMessageInput(props: ComponentProps<typeof MessageInput>) {
+  const pins = useChatPins();
+  return (
+    <MessageInput
+      {...props}
+      onMessageSubmit={(input) => {
+        pins?.leaveHistory();
+        return props.onMessageSubmit(input);
+      }}
+    />
   );
 }

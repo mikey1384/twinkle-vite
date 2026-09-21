@@ -7,6 +7,7 @@ import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
 import MainProjectButton from '../MainProjectButton';
 import ThreeVendorUpgradeNotice from '../ThreeVendorUpgradeNotice';
 import Composer from './Composer';
+import useAppReferences from './hooks/useAppReferences';
 import Header from './Header';
 import RuntimeUploadsModal from './RuntimeUploadsModal';
 import Transcript from './Transcript';
@@ -252,6 +253,10 @@ export default function ChatPanel({
   chatEndRef,
   onChatScroll,
   draftMessage,
+  draftAppReferences,
+  onDraftAppReferencesChange,
+  draftCommentFeedback,
+  onDraftCommentFeedbackChange,
   onDraftMessageChange,
   onSendMessage,
   onContinueScopedPlan,
@@ -377,6 +382,17 @@ export default function ChatPanel({
     energyDepleted &&
     copilotPolicy?.requestLimits?.firstLumineExchangeAvailable !== true;
   const aiInputDisabled = AI_FEATURES_DISABLED || energyUnavailable;
+  const appReferences = useAppReferences({
+    buildId,
+    draftMessage,
+    disabled: uploadInFlight || aiInputDisabled || !isOwner,
+    apps: draftAppReferences,
+    setApps: onDraftAppReferencesChange,
+    feedback: draftCommentFeedback,
+    setFeedback: onDraftCommentFeedbackChange,
+    onDraftMessageChange,
+    onSendMessage
+  });
   const aiInputDisabledNotice = AI_FEATURES_DISABLED
     ? AI_DISABLED_NOTICE
     : energyUnavailable
@@ -689,19 +705,6 @@ export default function ChatPanel({
     });
   }
 
-  async function handleSubmitMessage() {
-    const messageText = draftMessage.trim();
-    if (!messageText || uploadInFlight || aiInputDisabled) return;
-    try {
-      const didAccept = await Promise.resolve(onSendMessage(messageText));
-      if (didAccept) {
-        onDraftMessageChange('');
-      }
-    } catch (error) {
-      console.error('Failed to send build message:', error);
-    }
-  }
-
   return (
     <div
       className={className ? `${panelClass} ${className}` : panelClass}
@@ -882,7 +885,14 @@ export default function ChatPanel({
             onDraftMessageChange={onDraftMessageChange}
             onOpenBuildChatUpload={onOpenBuildChatUpload}
             onStopGeneration={onStopGeneration}
-            onSubmitMessage={handleSubmitMessage}
+            onSubmitMessage={appReferences.submitMessage}
+            referenceApps={appReferences.apps}
+            onAddReferenceApp={appReferences.addApp}
+            onRemoveReferenceApp={appReferences.removeApp}
+            commentFeedback={draftCommentFeedback}
+            onRemoveCommentFeedback={appReferences.removeFeedback}
+            submitting={appReferences.submitting}
+            submitError={appReferences.error}
             uploadInFlight={uploadInFlight}
           />
         </>

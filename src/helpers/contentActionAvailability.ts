@@ -5,6 +5,7 @@ export interface ContentActionAvailabilityParams {
 }
 
 export const contentPanelNoRewardContentTypes = new Set([
+  'aiCard',
   'aiStory',
   'build',
   'dailyReflection',
@@ -13,9 +14,13 @@ export const contentPanelNoRewardContentTypes = new Set([
   'xpChange'
 ]);
 
-export const homeFeedUnsupportedRecommendContentTypes = new Set(['build']);
+export const homeFeedUnsupportedRecommendContentTypes = new Set([
+  'build',
+  'aiCard'
+]);
 
 const contentPanelCommentLabelContentTypes = new Set([
+  'aiCard',
   'build',
   'pass',
   'sharedTopic',
@@ -124,9 +129,10 @@ export function isContentPanelRewardActionEnabled({
 
 export function isContentPanelRecommendActionEnabled({
   actionsReady = true,
+  contentType,
   secretHidden
 }: ContentActionAvailabilityParams) {
-  return Boolean(actionsReady && !secretHidden);
+  return Boolean(actionsReady && !secretHidden && contentType !== 'aiCard');
 }
 
 export function isHomeFeedRecommendActionSupported(contentType: string) {

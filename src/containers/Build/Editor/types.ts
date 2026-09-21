@@ -7,6 +7,7 @@ import type {
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type { BuildLiveRunState } from '~/contexts/Build/reducer';
 import type { BuildRuntimeExplorationPlan } from '../types/runtimeObservationTypes';
+import type { BuildCommentFeedbackHandoff } from '~/helpers/buildCommentFeedback';
 
 export type MobilePanelTab = 'lumine' | 'preview' | 'versions' | 'people';
 
@@ -22,6 +23,7 @@ export interface PendingBranchThumbnailCapture {
 }
 
 export interface BuildEditorRouteState {
+  commentFeedback?: BuildCommentFeedbackHandoff;
   forumThreadId?: number;
   openForkHistory?: boolean;
   openCollaborationSettings?: boolean;

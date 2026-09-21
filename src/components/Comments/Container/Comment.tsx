@@ -65,6 +65,7 @@ import ScopedTheme from '~/theme/ScopedTheme';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 import { getCommentActionPermissions } from '~/components/Comments/permissions';
 import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
+import { useLumineCommentMenuItem } from '../LumineCommentContext';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';
@@ -227,8 +228,7 @@ function Comment({
     subjectHasSecretMessage,
     subjectId
   });
-  const isCommentForASubjectWithSecretMessage =
-    hasSubjectSecretSignal(parent);
+  const isCommentForASubjectWithSecretMessage = hasSubjectSecretSignal(parent);
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(
@@ -317,8 +317,19 @@ function Comment({
       }
     : undefined;
 
+  const pinSupported =
+    (parent.contentType === 'comment'
+      ? rootContent?.contentType || parent.rootType
+      : parent.contentType) !== 'aiCard';
+
+  const lumineMenuItem = useLumineCommentMenuItem({
+    comment: { ...comment, isDeleted: isDeleted || comment.isDeleted },
+    rootContent: parent.contentType === 'build' ? parent : rootContent,
+    style: compactDropdownMenuItemStyle
+  });
   const dropdownMenuItems = useMemo(() => {
     const items = [];
+    if (lumineMenuItem) items.push(lumineMenuItem);
     if (
       userCanEditThis &&
       (!isCommentForASubjectWithSecretMessage ||
@@ -343,6 +354,7 @@ function Comment({
       });
     }
     if (
+      pinSupported &&
       (userIsParentUploader || userIsRootUploader || isAdmin) &&
       !banned?.posting
     ) {
@@ -377,6 +389,8 @@ function Comment({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    lumineMenuItem,
+    pinSupported,
     banned?.posting,
     comment.id,
     compactDropdownMenuItemStyle,
@@ -584,10 +598,11 @@ function Comment({
                         <a
                           className={css`
                             &:hover {
-                              text-decoration: ${isNotification ||
-                              isDeleteNotification
-                                ? 'none'
-                                : 'underline'};
+                              text-decoration: ${
+                                isNotification || isDeleteNotification
+                                  ? 'none'
+                                  : 'underline'
+                              };
                             }
                           `}
                           style={{
@@ -828,7 +843,9 @@ function Comment({
                                       disableReason={xpButtonDisabled}
                                       style={{ marginLeft: '0.7rem' }}
                                       theme={theme}
-                                      hideLabel={deviceIsTablet || deviceIsMobile}
+                                      hideLabel={
+                                        deviceIsTablet || deviceIsMobile
+                                      }
                                     />
                                   )}
                               </div>

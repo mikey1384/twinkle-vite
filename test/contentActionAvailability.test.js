@@ -44,9 +44,7 @@ const scrollAnchorRestorationSource = readSource(
 const scrollAnchorCoordinatorSource = readSource(
   'src/helpers/scrollAnchorRestorationCoordinator.ts'
 );
-const mainNavSource = readSource(
-  'src/containers/App/Header/MainNavs/Nav.tsx'
-);
+const mainNavSource = readSource('src/containers/App/Header/MainNavs/Nav.tsx');
 const contentPageSource = readSource('src/containers/ContentPage.tsx');
 const linkPageSource = readSource('src/containers/LinkPage/index.tsx');
 const videoPageSource = readSource('src/containers/VideoPage/index.tsx');
@@ -62,14 +60,22 @@ assert.deepEqual(
     actionAvailabilitySource,
     'contentPanelNoRewardContentTypes'
   ).sort(),
-  ['aiStory', 'build', 'dailyReflection', 'pass', 'sharedTopic', 'xpChange']
+  [
+    'aiCard',
+    'aiStory',
+    'build',
+    'dailyReflection',
+    'pass',
+    'sharedTopic',
+    'xpChange'
+  ]
 );
 assert.deepEqual(
   extractSetMembers(
     actionAvailabilitySource,
     'homeFeedUnsupportedRecommendContentTypes'
   ),
-  ['build']
+  ['build', 'aiCard']
 );
 assert.doesNotMatch(actionAvailabilitySource, /NoRecommend/);
 assert.match(
@@ -268,7 +274,10 @@ assert.match(
 assert.match(scrollAnchorRestorationSource, /ignoreSavedAnchor = false/);
 assert.match(scrollAnchorRestorationSource, /activeIgnoredSavedAnchorKeyRef/);
 assert.match(scrollAnchorRestorationSource, /scrollAnchorSavesAreSuppressed/);
-assert.match(scrollAnchorRestorationSource, /scrollAnchorRestoresAreSuppressed/);
+assert.match(
+  scrollAnchorRestorationSource,
+  /scrollAnchorRestoresAreSuppressed/
+);
 assert.match(
   scrollAnchorRestorationSource,
   // The suppressed branch now taints the applied position before bailing.

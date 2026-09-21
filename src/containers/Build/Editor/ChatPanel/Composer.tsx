@@ -7,6 +7,15 @@ import { Color } from '~/constants/css';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import OwnAiCliNotice from './OwnAiCliNotice';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import Icon from '~/components/Icon';
+import AppReferenceChips from './AppReferenceChips';
+import AppReferencePicker from './AppReferencePicker';
+import CommentFeedbackQuotes from './CommentFeedbackQuotes';
+import type { BuildCommentFeedback } from '~/helpers/buildCommentFeedback';
+import {
+  MAX_BUILD_APP_REFERENCES,
+  type BuildAppReference
+} from '../helpers/appReferences';
 
 const nudgePulse = keyframes`
   0% { box-shadow: 0 0 0 0 ${Color.logoBlue(0.55)}; }
@@ -38,6 +47,13 @@ interface ComposerProps {
   onStopGeneration: () => void;
   onSubmitMessage: () => void;
   uploadInFlight: boolean;
+  referenceApps: BuildAppReference[];
+  onAddReferenceApp: (app: BuildAppReference) => void;
+  onRemoveReferenceApp: (id: number) => void;
+  commentFeedback: BuildCommentFeedback[];
+  onRemoveCommentFeedback: (commentId: number) => void;
+  submitting: boolean;
+  submitError: string;
 }
 
 export default function Composer({
@@ -54,7 +70,14 @@ export default function Composer({
   onOpenBuildChatUpload,
   onStopGeneration,
   onSubmitMessage,
-  uploadInFlight
+  uploadInFlight,
+  referenceApps,
+  onAddReferenceApp,
+  onRemoveReferenceApp,
+  commentFeedback,
+  onRemoveCommentFeedback,
+  submitting,
+  submitError
 }: ComposerProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,8 +90,21 @@ export default function Composer({
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
   const spotlightRef = useRef<HTMLDivElement | null>(null);
+  const referenceButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [referencePickerShown, setReferencePickerShown] = useState(false);
   const spotlightActive =
     sayHiNudgeShown && !aiInputDisabled && isOwner && !limitsExpanded;
+
+  useEffect(() => {
+    setReferencePickerShown(false);
+  }, [
+    buildId,
+    aiInputDisabled,
+    isOwner,
+    limitsExpanded,
+    submitting,
+    uploadInFlight
+  ]);
 
   // The spotlight hole is a fixed element whose box-shadow darkens the rest of
   // the viewport. Resize/scroll/visual-viewport boundaries keep it aligned
@@ -127,28 +163,6 @@ export default function Composer({
 
   if (!isOwner || limitsExpanded) {
     return null;
-  }
-
-  function handleDismissSayHiNudge() {
-    if (!sayHiNudgeShown) return;
-    setSayHiNudgeShown(false);
-    const params = new URLSearchParams(location.search);
-    params.delete('sayHi');
-    navigate(
-      {
-        pathname: location.pathname,
-        search: params.toString() ? `?${params.toString()}` : '',
-        hash: location.hash
-      },
-      { replace: true, state: location.state }
-    );
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      onSubmitMessage();
-    }
   }
 
   return (
@@ -230,12 +244,32 @@ export default function Composer({
       ) : null}
       <div
         className={css`
-          display: flex;
-          gap: 0.5rem;
+          padding: 0.75rem;
+          border: 1px solid var(--ui-border);
+          border-radius: 12px;
+          &:focus-within {
+            border-color: var(--theme-border);
+          }
+          ${
+            sayHiNudgeShown && !aiInputDisabled
+              ? `animation: ${nudgePulse} 1.6s ease-out infinite; border-color: ${Color.logoBlue()};`
+              : ''
+          }
         `}
       >
+        <AppReferenceChips
+          apps={referenceApps}
+          disabled={submitting || uploadInFlight}
+          onRemove={onRemoveReferenceApp}
+        />
+        <CommentFeedbackQuotes
+          feedback={commentFeedback}
+          disabled={submitting || uploadInFlight}
+          onRemove={onRemoveCommentFeedback}
+        />
         <textarea
           ref={inputRef}
+          aria-label="Message Lumine"
           value={draftMessage}
           onChange={(e) => {
             handleDismissSayHiNudge();
@@ -246,62 +280,179 @@ export default function Composer({
           placeholder={
             aiInputDisabled
               ? aiInputDisabledNotice
-              : generating
-                ? 'Describe what to change next...'
-                : 'Describe what you want to build...'
+              : commentFeedback.length
+                ? 'Add instructions for Lumine (optional)...'
+                : generating
+                  ? 'Describe what to change next...'
+                  : 'Describe what you want to build...'
           }
-          disabled={aiInputDisabled}
+          disabled={aiInputDisabled || submitting}
           className={css`
-            flex: 1;
-            padding: 0.75rem;
-            border: 1px solid var(--ui-border);
-            border-radius: 10px;
-            ${
-              sayHiNudgeShown && !aiInputDisabled
-                ? `animation: ${nudgePulse} 1.6s ease-out infinite; border-color: ${Color.logoBlue()};`
-                : ''
-            }
+            display: block;
+            width: 100%;
+            padding: 0.25rem 0.25rem 0.75rem;
+            border: 0;
             resize: none;
             font-size: var(--build-workshop-input-font-size);
             font-family: inherit;
-            min-height: 48px;
+            min-height: 64px;
             max-height: 120px;
             background: #fff;
             &:focus {
               outline: none;
-              border-color: var(--theme-border);
             }
           `}
-          rows={1}
+          rows={2}
         />
-        <GameCTAButton
-          onClick={onOpenBuildChatUpload}
-          disabled={aiInputDisabled || generating || uploadInFlight}
-          variant="neutral"
-          size="md"
-          icon="upload"
-          style={{ minWidth: '3rem' }}
-        />
-        <GameCTAButton
-          onClick={onSubmitMessage}
-          disabled={aiInputDisabled || uploadInFlight || !draftMessage.trim()}
-          variant={generating ? 'orange' : 'logoBlue'}
-          size="md"
-          icon="paper-plane"
-          style={{ minWidth: '3rem' }}
-        />
-        {generating ? (
-          <GameCTAButton
-            onClick={onStopGeneration}
-            variant="orange"
-            size="md"
-            icon="stop"
-            style={{ minWidth: '3rem' }}
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+          `}
+        >
+          <button
+            type="button"
+            ref={referenceButtonRef}
+            aria-haspopup="dialog"
+            aria-expanded={referencePickerShown}
+            aria-controls={`build-app-reference-picker-${buildId}`}
+            disabled={
+              aiInputDisabled ||
+              uploadInFlight ||
+              submitting ||
+              referenceApps.length >= MAX_BUILD_APP_REFERENCES
+            }
+            onClick={() => {
+              handleDismissSayHiNudge();
+              setReferencePickerShown(true);
+            }}
+            className={css`
+              display: inline-flex;
+              align-items: center;
+              gap: 0.5rem;
+              padding: 0.6rem 0.3rem;
+              margin-right: auto;
+              border: 0;
+              border-radius: 6px;
+              background: transparent;
+              color: #526985;
+              font-size: 1.1rem;
+              font-weight: 650;
+              cursor: pointer;
+              &:hover:not(:disabled),
+              &[aria-expanded='true'] {
+                color: #2969d6;
+                background: #eef4ff;
+              }
+              &:focus-visible {
+                outline: 2px solid #75a3f6;
+                outline-offset: 2px;
+              }
+              &:disabled {
+                color: #919eaf;
+                cursor: default;
+              }
+            `}
           >
-            Stop
-          </GameCTAButton>
-        ) : null}
+            <Icon icon="layer-group" />
+            {referenceApps.length >= MAX_BUILD_APP_REFERENCES
+              ? '2 apps referenced'
+              : 'Reference an app'}
+          </button>
+          <GameCTAButton
+            onClick={onOpenBuildChatUpload}
+            aria-label="Attach a file"
+            disabled={
+              aiInputDisabled || generating || uploadInFlight || submitting
+            }
+            variant="neutral"
+            size="md"
+            icon="upload"
+            style={{ minWidth: '3rem', padding: '0.6rem 0.75rem' }}
+          />
+          <GameCTAButton
+            onClick={onSubmitMessage}
+            aria-label={generating ? 'Queue message' : 'Send message'}
+            disabled={
+              aiInputDisabled ||
+              uploadInFlight ||
+              submitting ||
+              (!draftMessage.trim() && !commentFeedback.length)
+            }
+            loading={submitting}
+            variant={generating ? 'orange' : 'logoBlue'}
+            size="md"
+            icon="paper-plane"
+            style={{ minWidth: '3rem', padding: '0.6rem 0.75rem' }}
+          />
+          {generating ? (
+            <GameCTAButton
+              onClick={onStopGeneration}
+              aria-label="Stop generation"
+              variant="orange"
+              size="md"
+              icon="stop"
+              style={{ minWidth: '3rem', padding: '0.6rem 0.75rem' }}
+            >
+              Stop
+            </GameCTAButton>
+          ) : null}
+        </div>
       </div>
+      {submitError ? (
+        <p
+          role="alert"
+          className={css`
+            margin: 0.6rem 0 0;
+            font-size: 1.1rem;
+            color: #b43a45;
+          `}
+        >
+          {submitError}
+        </p>
+      ) : null}
+      {referencePickerShown ? (
+        <AppReferencePicker
+          buildId={buildId}
+          anchorRef={referenceButtonRef}
+          selectedApps={referenceApps}
+          onClose={() => setReferencePickerShown(false)}
+          onSelect={(app) => {
+            onAddReferenceApp(app);
+            setReferencePickerShown(false);
+            window.requestAnimationFrame(() => inputRef.current?.focus());
+          }}
+        />
+      ) : null}
     </div>
   );
+
+  function handleDismissSayHiNudge() {
+    if (!sayHiNudgeShown) return;
+    setSayHiNudgeShown(false);
+    const params = new URLSearchParams(location.search);
+    params.delete('sayHi');
+    navigate(
+      {
+        pathname: location.pathname,
+        search: params.toString() ? `?${params.toString()}` : '',
+        hash: location.hash
+      },
+      { replace: true, state: location.state }
+    );
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (
+      e.key === 'Enter' &&
+      !e.shiftKey &&
+      !e.nativeEvent.isComposing &&
+      e.keyCode !== 229
+    ) {
+      e.preventDefault();
+      if (!submitting) onSubmitMessage();
+    }
+  }
 }

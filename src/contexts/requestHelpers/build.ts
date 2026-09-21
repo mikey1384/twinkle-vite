@@ -1424,6 +1424,50 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildChatReferenceApps({
+      buildId,
+      search,
+      cursor,
+      limit = 20
+    }: {
+      buildId: number;
+      search?: string;
+      cursor?: string;
+      limit?: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/chat/reference-apps`,
+          {
+            ...auth(),
+            params: { search, cursor, limit }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async prepareBuildChatAppReferences({
+      buildId,
+      referenceBuildIds
+    }: {
+      buildId: number;
+      referenceBuildIds: number[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/chat/reference-apps/prepare`,
+          { referenceBuildIds },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadMyBuilds({ search }: { search?: string } = {}) {
       try {
         const params: Record<string, any> = {};
@@ -2033,6 +2077,39 @@ export default function buildRequestHelpers({
       } catch (error: any) {
         if (error?.aiUsagePolicy || error?.code) {
           return Promise.reject(error);
+        }
+        return handleError(error);
+      }
+    },
+
+    async callBuildRuntimeAiDecision({
+      buildId,
+      state,
+      questions,
+      appMcpInvocation
+    }: {
+      buildId: number;
+      state: unknown;
+      questions: Record<string, unknown>;
+      appMcpInvocation?: BuildAppMcpInvocationContext;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/runtime-ai-decision`,
+          { state, questions, ...appMcpInvocation },
+          auth()
+        );
+        return data;
+      } catch (error: any) {
+        const response = error?.response;
+        if (response?.data?.code || response?.data?.aiUsagePolicy) {
+          return Promise.reject({
+            status: response.status,
+            message:
+              response.data.error || response.data.message || 'Decision failed',
+            code: response.data.code,
+            aiUsagePolicy: response.data.aiUsagePolicy
+          });
         }
         return handleError(error);
       }

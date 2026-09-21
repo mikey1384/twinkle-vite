@@ -11,6 +11,7 @@ export function getHomeFeedContentPath({
 }) {
   if (contentType === 'url') return `/links/${contentId}`;
   if (contentType === 'aiStory') return `/ai-stories/${contentId}`;
+  if (contentType === 'aiCard') return `/ai-card-summons/${contentId}`;
   if (contentType === 'build') return `/app/${contentId}`;
   if (contentType === 'pass') {
     return rootType === 'achievement'

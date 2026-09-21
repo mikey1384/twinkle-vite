@@ -1,5 +1,8 @@
 import React, { useMemo } from 'react';
 import AICard from '~/components/AICard';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
+import { createHomeFeedActionIntent } from '~/helpers/homeFeedActionIntent';
 import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
 import useAICard from '~/helpers/hooks/useAICard';
@@ -66,6 +69,24 @@ export default function SummonActivity({ card }: { card: any }) {
         >
           at {displayedTime}, {displayedDate}
         </div>
+        <Button
+          variant="ghost"
+          style={{ marginTop: '1rem' }}
+          onClick={() =>
+            navigate(`/ai-card-summons/${card.id}`, {
+              state: {
+                homeFeedActionIntent: createHomeFeedActionIntent({
+                  action: 'comment',
+                  contentType: 'aiCard',
+                  contentId: Number(card.id)
+                })
+              }
+            })
+          }
+        >
+          <Icon icon="comment-alt" />
+          <span style={{ marginLeft: '0.6rem' }}>Comment</span>
+        </Button>
       </div>
       <div
         className={css`
@@ -155,14 +176,14 @@ export default function SummonActivity({ card }: { card: any }) {
                     ? `'Orbitron', 'Roboto Mono', sans-serif`
                     : `'Roboto Mono', monospace`
               };
-              text-transform: ${engine === 'DALL-E 3'
-                ? 'uppercase'
-                : 'none'};
-              letter-spacing: ${isNanoBananaEngine
-                ? '0'
-                : engine === 'DALL-E 3'
-                  ? '0.1em'
-                  : '0.02em'};
+              text-transform: ${engine === 'DALL-E 3' ? 'uppercase' : 'none'};
+              letter-spacing: ${
+                isNanoBananaEngine
+                  ? '0'
+                  : engine === 'DALL-E 3'
+                    ? '0.1em'
+                    : '0.02em'
+              };
               font-weight: ${isNanoBananaEngine ? 800 : 700};
               color: ${Color.darkerGray()};
               margin-top: 0.5rem;

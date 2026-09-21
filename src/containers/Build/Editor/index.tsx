@@ -26,6 +26,10 @@ import useRunIdentity, {
 import useBranches from './hooks/useBranches';
 import useChatSync from './hooks/useChatSync';
 import useChatUploads from './hooks/useChatUploads';
+import {
+  addBuildCommentFeedback,
+  getBuildCommentFeedbackHandoff
+} from '~/helpers/buildCommentFeedback';
 import useGenerationReset from './hooks/useGenerationReset';
 import useLumineModelSelection from './hooks/useLumineModelSelection';
 import useLumineSettings from './hooks/useLumineSettings';
@@ -970,6 +974,10 @@ export default function BuildEditor({
   });
   const {
     buildChatDraftMessage,
+    buildChatDraftApps,
+    setBuildChatDraftApps,
+    buildChatDraftFeedback,
+    setBuildChatDraftFeedback,
     buildChatUploadFileObj,
     buildChatUploadInFlight,
     buildChatUploadModalShown,
@@ -1262,6 +1270,47 @@ export default function BuildEditor({
       }));
     }
   }, [currentBuildRunView.streamingProjectFiles]);
+
+  useEffect(() => {
+    if (!routeState.commentFeedback) return;
+    const feedback = isOwner
+      ? getBuildCommentFeedbackHandoff({
+          value: routeState.commentFeedback,
+          userId,
+          buildId: build.id,
+          rootBuildId: build.contributionRootBuildId
+        })
+      : null;
+    if (feedback) {
+      setBuildChatDraftFeedback((current) =>
+        addBuildCommentFeedback(current, feedback)
+      );
+      setMobilePanelTab('lumine');
+    }
+    // Consume the handoff once. Back must not restore an attachment that the
+    // creator already removed or sent.
+    const nextState = { ...routeState };
+    delete nextState.commentFeedback;
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash
+      },
+      {
+        replace: true,
+        state: Object.keys(nextState).length ? nextState : null
+      }
+    );
+    // Navigation and communication actions use the current route/context.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    build.id,
+    build.contributionRootBuildId,
+    userId,
+    isOwner,
+    routeState.commentFeedback
+  ]);
 
   useEffect(() => {
     didInitialChatScrollRef.current = false;
@@ -1967,6 +2016,10 @@ export default function BuildEditor({
     chatEndRef,
     onChatScroll: handleChatScroll,
     draftMessage: buildChatDraftMessage,
+    draftAppReferences: buildChatDraftApps,
+    onDraftAppReferencesChange: setBuildChatDraftApps,
+    draftCommentFeedback: buildChatDraftFeedback,
+    onDraftCommentFeedbackChange: setBuildChatDraftFeedback,
     onDraftMessageChange: setBuildChatDraftMessage,
     onSendMessage: handleSendMessage,
     onContinueScopedPlan: handleContinueScopedPlan,
@@ -2166,13 +2219,13 @@ export default function BuildEditor({
         thumbnailSaveError={thumbnailSaveError}
         onCaptureThumbnailFromPreview={captureThumbnailFromPreview}
         onCompleteBuildChatUpload={() => {
-          setBuildChatDraftMessage('');
           setBuildChatUploadFileObj(null);
         }}
         onCustomUploadSubmit={({ files, caption }) =>
           startBuildChatUploadProcessing(files, {
             messageText: caption,
-            historyUserNoteText: caption
+            historyUserNoteText: caption,
+            consumeComposerDraft: true
           })
         }
         onHideBuildChatUploadFileModal={() => setBuildChatUploadFileObj(null)}

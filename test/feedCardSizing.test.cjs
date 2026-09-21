@@ -2814,3 +2814,24 @@ function getCssBlock(source, selector) {
 function getCssSelectorClassCount(selector) {
   return (selector.match(/\.[_a-zA-Z0-9-]+/g) || []).length;
 }
+
+test('AI card comments reserve a visible target preview on desktop and mobile', () => {
+  const sizing = getFeedCardSizing({
+    content: {
+      contentType: 'comment',
+      content: 'Love this card!',
+      rootType: 'aiCard',
+      rootId: 42
+    },
+    rootObj: {
+      id: 42,
+      contentType: 'aiCard',
+      card: { id: 42, word: 'wonder' }
+    },
+    userId: 1
+  });
+  assert.equal(sizing.card.hasTarget, true);
+  assert.equal(sizing.target.size, 'standard');
+  assert.notEqual(sizing.target.desktopHeight, '0');
+  assert.notEqual(sizing.target.mobileHeight, '0');
+});

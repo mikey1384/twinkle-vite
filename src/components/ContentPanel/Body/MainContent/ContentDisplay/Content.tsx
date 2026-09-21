@@ -22,6 +22,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import CardThumb from '~/components/CardThumb';
 import Icon from '~/components/Icon';
 import AICardModal from '~/components/Modals/AICardModal';
+import AICardSummonContent from '~/components/AICardSummonContent';
 import AIStoryView from './AIStoryView';
 import BuildContent from './BuildContent';
 import SanitizedHTML from 'react-sanitized-html';
@@ -250,6 +251,8 @@ export default function Content({
 
   const RenderedContent = useMemo(() => {
     switch (contentType) {
+      case 'aiCard':
+        return <AICardSummonContent card={contentObj.card} />;
       case 'comment': {
         const commentForAiEnergySponsor = {
           ...contentObj,

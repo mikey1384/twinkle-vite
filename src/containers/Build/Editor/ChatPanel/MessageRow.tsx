@@ -14,6 +14,8 @@ import {
   ChatPanelRunMode
 } from './types';
 import { isBuildAssistantPlaceholderContent } from './helpers/utils';
+import AppReferenceChips from './AppReferenceChips';
+import { parseBuildAppReferenceMessage } from '../helpers/appReferences';
 
 interface MessageRowProps {
   message: ChatMessage;
@@ -28,7 +30,9 @@ interface MessageRowProps {
   statusStepEntries: BuildStatusStepEntry[];
   activeStreamMessageIds: number[];
   isOwner: boolean;
-  onFixRuntimeObservationMessage: (message: ChatMessage) => Promise<boolean> | boolean;
+  onFixRuntimeObservationMessage: (
+    message: ChatMessage
+  ) => Promise<boolean> | boolean;
   onDeleteMessage: (message: ChatMessage) => void;
 }
 
@@ -75,6 +79,10 @@ export default function MessageRow({
   });
   const contentShown =
     !shouldLazyLoad || isVisible || inView || placeholderHeight <= 0;
+  const userMessage =
+    message.role === 'user'
+      ? parseBuildAppReferenceMessage(message.content)
+      : null;
 
   return (
     <div
@@ -137,19 +145,25 @@ export default function MessageRow({
               max-width: 85%;
               padding: 0.85rem 1.05rem;
               border-radius: 12px;
-              background: ${message.role === 'user'
-                ? 'var(--build-chat-user-bg)'
-                : 'var(--chat-bg)'};
-              color: ${message.role === 'user'
-                ? 'var(--build-chat-user-text)'
-                : 'var(--chat-text)'};
+              background: ${
+                message.role === 'user'
+                  ? 'var(--build-chat-user-bg)'
+                  : 'var(--chat-bg)'
+              };
+              color: ${
+                message.role === 'user'
+                  ? 'var(--build-chat-user-text)'
+                  : 'var(--chat-text)'
+              };
               word-break: break-word;
               font-size: var(--build-workshop-message-font-size);
               line-height: 1.48;
               border: 1px solid
-                ${message.role === 'user'
-                  ? 'var(--build-chat-user-border)'
-                  : 'var(--ui-border)'};
+                ${
+                  message.role === 'user'
+                    ? 'var(--build-chat-user-border)'
+                    : 'var(--ui-border)'
+                };
             `}
           >
             {message.role === 'assistant' ? (
@@ -166,12 +180,15 @@ export default function MessageRow({
                 isStreamingTarget={isStreamingTarget}
               />
             ) : (
-              <RichText
-                maxLines={15}
-                readMoreColor="var(--build-chat-user-text)"
-              >
-                {message.content}
-              </RichText>
+              <>
+                <AppReferenceChips apps={userMessage?.apps || []} />
+                <RichText
+                  maxLines={15}
+                  readMoreColor="var(--build-chat-user-text)"
+                >
+                  {userMessage?.text || ''}
+                </RichText>
+              </>
             )}
           </div>
           <span
@@ -191,9 +208,9 @@ export default function MessageRow({
           className={css`
             width: 100%;
             display: flex;
-            justify-content: ${message.role === 'user'
-              ? 'flex-end'
-              : 'flex-start'};
+            justify-content: ${
+              message.role === 'user' ? 'flex-end' : 'flex-start'
+            };
           `}
         >
           <div

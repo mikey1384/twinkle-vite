@@ -2,11 +2,14 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState
 } from 'react';
 import GoToBottomButton from '~/components/Buttons/ChatGoToBottomButton';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import NewMessagesButton from '~/components/Buttons/NewMessagesButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -29,6 +32,7 @@ import {
   getChatMessageIdentity
 } from './newMessageIndicator';
 import LumineDialoguePhase from './LumineDialoguePhase';
+import { useChatPins } from '../../Pins/context';
 
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
@@ -140,6 +144,7 @@ export default function DisplayedMessages({
   selectedTab: string;
   subchannel: Record<string, any>;
 }) {
+  const pins = useChatPins();
   const navigate = useNavigate();
   const {
     actions: {
@@ -225,6 +230,7 @@ export default function DisplayedMessages({
   }, [currentChannel.featuredTopicId, currentChannel.selectedTopicId]);
 
   const messages = useMemo(() => {
+    if (pins?.history) return pins.history.messages;
     let displayedMessageIds = [];
     if (selectedTab === 'topic') {
       if (isSearchActive) {
@@ -258,6 +264,7 @@ export default function DisplayedMessages({
     }
     return result;
   }, [
+    pins?.history,
     appliedTopicId,
     currentChannel.topicObj,
     messageIds,
@@ -268,6 +275,38 @@ export default function DisplayedMessages({
     isSearchActive,
     searchedMessageIds
   ]);
+
+  const pinJumpKey = pins?.history?.jumpKey;
+  const wasInPinHistory = useRef(false);
+  const pinScrollAnchor = useRef<{ id: number; top: number } | null>(null);
+  useLayoutEffect(() => {
+    const anchor = pinScrollAnchor.current;
+    const container = MessagesRef.current;
+    if (!anchor || !container) return;
+    const target = MessagesDomRef.current[anchor.id];
+    if (target && pins?.history) {
+      container.scrollTop += target.getBoundingClientRect().top - anchor.top;
+    }
+    pinScrollAnchor.current = null;
+  }, [pins?.history, MessagesRef]);
+  useEffect(() => {
+    if (pins?.history) {
+      wasInPinHistory.current = true;
+      const target = MessagesDomRef.current[pins.history.messageId];
+      if (target) {
+        const frame = requestAnimationFrame(() => {
+          target.scrollIntoView({ block: 'center' });
+          target.focus({ preventScroll: true });
+        });
+        return () => cancelAnimationFrame(frame);
+      }
+    } else if (wasInPinHistory.current) {
+      wasInPinHistory.current = false;
+      onScrollToBottom();
+    }
+    // Only a deliberate jump should re-center, not pagination or edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinJumpKey]);
 
   // Count arrivals by diffing the newest edge of the list instead of relying
   // on per-message mount effects: messages that land in the same React commit
@@ -300,6 +339,7 @@ export default function DisplayedMessages({
   }, [messages, unseenMessageScopeKey, userId]);
 
   const loadMoreButtonShown = useMemo(() => {
+    if (pins?.history) return pins.history.hasOlder;
     if (selectedTab === 'topic') {
       return isSearchActive
         ? currentChannel.topicObj?.[appliedTopicId]?.searchedLoadMoreButtonShown
@@ -310,6 +350,7 @@ export default function DisplayedMessages({
     }
     return isSearchActive ? searchedLoadMoreButton : messagesLoadMoreButton;
   }, [
+    pins?.history,
     appliedTopicId,
     currentChannel.topicObj,
     messagesLoadMoreButton,
@@ -346,6 +387,10 @@ export default function DisplayedMessages({
   );
 
   const handleLoadMore = useCallback(async () => {
+    if (pins?.history) {
+      await handleLoadPinHistory('older');
+      return;
+    }
     if (
       !loadMoreButtonShown ||
       loadMoreButtonLock.current ||
@@ -435,6 +480,7 @@ export default function DisplayedMessages({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    pins,
     loadMoreButtonShown,
     messages,
     MessagesRef,
@@ -461,14 +507,12 @@ export default function DisplayedMessages({
         return;
       }
       const topicId = selectedTab === 'topic' ? appliedTopicId : undefined;
-      const {
-        messages: recentMessages,
-        loadMoreShownAtBottom
-      } = await loadMoreRecentTopicMessages({
-        channelId: selectedChannelId,
-        topicId,
-        lastMessageId: messageId
-      });
+      const { messages: recentMessages, loadMoreShownAtBottom } =
+        await loadMoreRecentTopicMessages({
+          channelId: selectedChannelId,
+          topicId,
+          lastMessageId: messageId
+        });
       onLoadMoreRecentTopicMessages({
         channelId: selectedChannelId,
         messages: recentMessages,
@@ -616,7 +660,7 @@ export default function DisplayedMessages({
         handleLoadMore();
       }
 
-      if (loadMoreShownAtBottom && !loadingMoreRecent) {
+      if (!pins?.history && loadMoreShownAtBottom && !loadingMoreRecent) {
         const scrolledToBottom = Math.abs(scrollTop) < 3;
         if (scrolledToBottom) {
           handleLoadMoreRecentMessages();
@@ -658,6 +702,7 @@ export default function DisplayedMessages({
     const prevRef = selectedTab === 'topic' ? prevTopicRef : prevAllRef;
 
     const refJustSet = prevRef === null && currentMessageToScrollTo !== null;
+    if (pins?.history) return;
     if (refJustSet && !tabChanged) return;
 
     if (!currentMessageToScrollTo) return;
@@ -697,6 +742,7 @@ export default function DisplayedMessages({
     MessageToScrollToFromAll,
     MessageToScrollToFromTopic,
     MessagesRef,
+    pins?.history,
     selectedTab,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     messagesObj[MessageToScrollToFromTopic.current]?.isLoaded,
@@ -780,7 +826,17 @@ export default function DisplayedMessages({
                 zIndex: 1000
               }}
             >
-              {unseenMessageCount > 0 ? (
+              {pins?.history ? (
+                <Button
+                  size="sm"
+                  shape="pill"
+                  color={displayedThemeColor || profileTheme}
+                  uppercase={false}
+                  onClick={pins.leaveHistory}
+                >
+                  Back to latest <Icon icon="arrow-down" />
+                </Button>
+              ) : unseenMessageCount > 0 ? (
                 <NewMessagesButton
                   count={unseenMessageCount}
                   theme={displayedThemeColor}
@@ -801,13 +857,22 @@ export default function DisplayedMessages({
                 />
               ) : null}
             </div>
-            {loadMoreShownAtBottom && (
+            {(pins?.history
+              ? pins.history.hasNewer
+              : loadMoreShownAtBottom) && (
               <LoadMoreButton
                 filled
                 disabled={isLoadingTopicMessages}
                 style={{ marginBottom: '1rem', marginTop: '1rem' }}
-                loading={loadingMoreRecent}
-                onClick={handleLoadMoreRecentMessages}
+                label={pins?.history ? 'Newer messages' : undefined}
+                loading={
+                  pins?.history ? pins.historyLoading : loadingMoreRecent
+                }
+                onClick={
+                  pins?.history
+                    ? () => handleLoadPinHistory('newer')
+                    : handleLoadMoreRecentMessages
+                }
                 color={loadMoreButtonColor}
               />
             )}
@@ -820,14 +885,30 @@ export default function DisplayedMessages({
                   ? Number(appliedTopicId || 0) || null
                   : null
               }
-              scopeVisible={!isSearchActive && !subchannel?.id}
+              scopeVisible={
+                !pins?.history && !isSearchActive && !subchannel?.id
+              }
             />
             {messages.map((message, index) => {
               return message.id || message.tempMessageId ? (
                 <div
+                  tabIndex={
+                    pins?.history?.messageId === message.id ? -1 : undefined
+                  }
+                  data-chat-message-id={message.id}
                   aria-disabled={isReconnecting}
                   style={{
                     width: '100%',
+                    background:
+                      pins?.highlightId === message.id
+                        ? 'rgba(65, 140, 235, 0.12)'
+                        : undefined,
+                    boxShadow:
+                      pins?.highlightId === message.id
+                        ? 'inset 3px 0 #418ceb'
+                        : undefined,
+                    outline: 'none',
+                    transition: 'background 0.35s ease, box-shadow 0.35s ease',
                     pointerEvents: isReconnecting ? 'none' : undefined
                   }}
                   onClickCapture={(event) => {
@@ -933,7 +1014,10 @@ export default function DisplayedMessages({
                     <LoadMoreButton
                       filled
                       color={loadMoreButtonColor}
-                      loading={loadingMore}
+                      label={pins?.history ? 'Older messages' : undefined}
+                      loading={
+                        pins?.history ? pins.historyLoading : loadingMore
+                      }
                       onClick={handleLoadMore}
                     />
                   </div>
@@ -950,9 +1034,34 @@ export default function DisplayedMessages({
   function handleReceiveNewMessage() {
     // Counting happens in the messages-diff effect above; this only keeps the
     // view pinned when the user is already at the bottom.
-    if (!MessagesRef.current || scrolledToBottomRef.current) {
+    if (
+      !pins?.history &&
+      (!MessagesRef.current || scrolledToBottomRef.current)
+    ) {
       onScrollToBottom();
     }
+  }
+
+  async function handleLoadPinHistory(direction: 'older' | 'newer') {
+    if (!pins?.history || pins.historyLoading) return;
+    const container = MessagesRef.current;
+    if (container) {
+      const bounds = container.getBoundingClientRect();
+      const visible = pins.history.messages
+        .map((message) => ({
+          id: Number(message.id),
+          bounds: MessagesDomRef.current[message.id]?.getBoundingClientRect()
+        }))
+        .filter(
+          (row) =>
+            row.bounds?.bottom > bounds.top && row.bounds?.top < bounds.bottom
+        )
+        .sort((a, b) => a.bounds.top - b.bounds.top)[0];
+      pinScrollAnchor.current = visible
+        ? { id: visible.id, top: visible.bounds.top }
+        : null;
+    }
+    await pins.loadHistory(direction);
   }
   function handleShowDeleteModal({
     fileName,

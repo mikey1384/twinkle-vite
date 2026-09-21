@@ -1,3 +1,4 @@
+import useUserActivity from '~/helpers/hooks/useUserActivity';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   type Location,
@@ -48,6 +49,7 @@ import type {
 } from '../PreviewPanel/types';
 import { normalizeBuildRuntimeViewSource } from '../constants/runtimeViewSources';
 import CommentsDrawer from './CommentsDrawer';
+import CommentLumineProvider from './CommentLumineProvider';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
@@ -1134,6 +1136,15 @@ export default function BuildRuntime({
     runtimeHostVisible &&
     runtimeIsActive &&
     !(runtimeCommentsAvailable && commentsDrawerShown);
+  useUserActivity(
+    requestedRuntimeSource === 'published' &&
+      !loading &&
+      !error &&
+      runtimeBuildId === numericBuildId
+      ? { kind: 'app', id: runtimeBuildId }
+      : null,
+    { active: runtimeEffectiveHostVisible && !isEmbedded, priority: 0 }
+  );
   const runtimeEffectiveAudioMuted =
     runtimeAudioMuted ||
     !runtimeIsActive ||
@@ -2415,28 +2426,34 @@ export default function BuildRuntime({
             </div>
           </div>
           {runtimeCommentsAvailable ? (
-            <CommentsDrawer
-              active={runtimeIsActive}
-              comments={runtimeComments}
-              error={runtimeCommentsError}
-              loaded={runtimeCommentsLoaded}
-              loading={runtimeCommentsLoading}
-              loadMoreButton={runtimeCommentsLoadMoreButton}
-              parent={runtimeCommentsParent}
-              inputAreaInnerRef={RuntimeCommentInputAreaRef}
+            <CommentLumineProvider
+              build={build}
               userId={userId}
-              visible={commentsDrawerShown}
-              onCommentSubmit={handleRuntimeCommentSubmit}
-              onDelete={handleRuntimeCommentDelete}
-              onEditDone={onEditComment}
-              onLikeClick={onLikeComment}
-              onLoadMoreComments={onLoadMoreComments}
-              onLoadMoreReplies={onLoadMoreReplies}
-              onLoadRepliesOfReply={onLoadRepliesOfReply}
-              onReplySubmit={handleRuntimeReplySubmit}
-              onRetry={handleRetryLoadComments}
-              onRewardCommentEdit={onEditRewardComment}
-            />
+              active={runtimeIsActive}
+            >
+              <CommentsDrawer
+                active={runtimeIsActive}
+                comments={runtimeComments}
+                error={runtimeCommentsError}
+                loaded={runtimeCommentsLoaded}
+                loading={runtimeCommentsLoading}
+                loadMoreButton={runtimeCommentsLoadMoreButton}
+                parent={runtimeCommentsParent}
+                inputAreaInnerRef={RuntimeCommentInputAreaRef}
+                userId={userId}
+                visible={commentsDrawerShown}
+                onCommentSubmit={handleRuntimeCommentSubmit}
+                onDelete={handleRuntimeCommentDelete}
+                onEditDone={onEditComment}
+                onLikeClick={onLikeComment}
+                onLoadMoreComments={onLoadMoreComments}
+                onLoadMoreReplies={onLoadMoreReplies}
+                onLoadRepliesOfReply={onLoadRepliesOfReply}
+                onReplySubmit={handleRuntimeReplySubmit}
+                onRetry={handleRetryLoadComments}
+                onRewardCommentEdit={onEditRewardComment}
+              />
+            </CommentLumineProvider>
           ) : null}
         </div>
       </div>

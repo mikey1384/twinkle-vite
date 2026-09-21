@@ -58,10 +58,9 @@ export default function Layout({
                   var(--chat-context-width, ${DEFAULT_WIDTHS.context}px) +
                   ${RESIZE_HANDLE_WIDTH + 2}px
               );
-              grid-template-columns: var(
-                  --chat-channel-width,
-                  ${DEFAULT_WIDTHS.channels}px
-                ) ${RESIZE_HANDLE_WIDTH}px var(
+              grid-template-columns:
+                var(--chat-channel-width, ${DEFAULT_WIDTHS.channels}px)
+                ${RESIZE_HANDLE_WIDTH}px var(
                   --chat-context-width,
                   ${DEFAULT_WIDTHS.context}px
                 );
@@ -182,6 +181,9 @@ export default function Layout({
                   overscroll-behavior-y: contain;
                   scrollbar-width: thin;
                   padding-bottom: 1rem;
+                }
+                @media (max-width: ${mobileMaxWidth}) {
+                  padding-bottom: 0.4rem;
                 }
               `}
             >

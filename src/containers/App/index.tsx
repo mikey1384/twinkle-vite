@@ -379,10 +379,10 @@ export default function App() {
     awaitingCanonicalSession || Boolean(sessionInterruption);
   const sessionRecoveryRouteAllowed = Boolean(
     sessionInterruption &&
-      (location.pathname === '/reset' ||
-        location.pathname.startsWith('/reset/') ||
-        location.pathname === '/verify' ||
-        location.pathname.startsWith('/verify/'))
+    (location.pathname === '/reset' ||
+      location.pathname.startsWith('/reset/') ||
+      location.pathname === '/verify' ||
+      location.pathname.startsWith('/verify/'))
   );
 
   const prevUserId = useRef(userId);
@@ -489,7 +489,9 @@ export default function App() {
   const onSetIsZeroCallAvailable = useChatContext(
     (v) => v.actions.onSetIsZeroCallAvailable
   );
-  const onSetCielChannelId = useChatContext((v) => v.actions.onSetCielChannelId);
+  const onSetCielChannelId = useChatContext(
+    (v) => v.actions.onSetCielChannelId
+  );
   const onSetZeroChannelId = useChatContext(
     (v) => v.actions.onSetZeroChannelId
   );
@@ -550,10 +552,7 @@ export default function App() {
     [keyContextHelpers, keyContextMyState, themeRoles]
   );
 
-  const aiCallOngoing = useMemo(
-    () => !!aiCallChannelId,
-    [aiCallChannelId]
-  );
+  const aiCallOngoing = useMemo(() => !!aiCallChannelId, [aiCallChannelId]);
 
   const usingChat = useMemo(
     () => getSectionFromPathname(location?.pathname)?.section === 'chat',
@@ -694,20 +693,29 @@ export default function App() {
     onSetCielChannelId(null);
     if (userId) {
       for (const recipientId of [ZERO_TWINKLE_ID, CIEL_TWINKLE_ID]) {
-        void loadDMChannel({ recipient: { id: recipientId }, createIfNotExist: true })
-          .then(({ pathId, channelId }: { pathId: string; channelId: number }) => {
-            if (cancelled) return;
-            if (recipientId === ZERO_TWINKLE_ID) {
-              onSetIsZeroCallAvailable(!!pathId);
-              onSetZeroChannelId(channelId);
-            } else {
-              onSetCielChannelId(channelId);
+        void loadDMChannel({
+          recipient: { id: recipientId },
+          createIfNotExist: true
+        })
+          .then(
+            ({ pathId, channelId }: { pathId: string; channelId: number }) => {
+              if (cancelled) return;
+              if (recipientId === ZERO_TWINKLE_ID) {
+                onSetIsZeroCallAvailable(!!pathId);
+                onSetZeroChannelId(channelId);
+              } else {
+                onSetCielChannelId(channelId);
+              }
             }
-          })
-          .catch((error: unknown) => console.error('Unable to load the AI call chat:', error));
+          )
+          .catch((error: unknown) =>
+            console.error('Unable to load the AI call chat:', error)
+          );
       }
     }
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
@@ -910,9 +918,7 @@ export default function App() {
         // A newer login stores a different credential and survives this event.
         setSessionCredentialUnavailable(false);
         authRef.current = null;
-        onInterruptSession(
-          createSessionInterruption('session_token_invalid')
-        );
+        onInterruptSession(createSessionInterruption('session_token_invalid'));
         return;
       }
 
@@ -1242,6 +1248,10 @@ export default function App() {
             <Suspense fallback={<Loading />}>
               <NavigationRouteReadyObserver />
               <Routes>
+                <Route
+                  path="/ai-card-summons/:contentId"
+                  element={<ContentPage />}
+                />
                 <Route path="/users/:username/*" element={<Profile />} />
                 <Route
                   path="/ai-stories/:contentId"
@@ -1459,18 +1469,16 @@ export default function App() {
             />
           </Suspense>
         )}
-        {isAdmin &&
-          shouldShowAdminTelemetryWindow &&
-          !sessionAccessBlocked && (
-            <Suspense fallback={null}>
-              <AdminTelemetryWindow
-                initialPosition={{
-                  x: Math.max(0, window.innerWidth - 520),
-                  y: 100
-                }}
-              />
-            </Suspense>
-          )}
+        {isAdmin && shouldShowAdminTelemetryWindow && !sessionAccessBlocked && (
+          <Suspense fallback={null}>
+            <AdminTelemetryWindow
+              initialPosition={{
+                x: Math.max(0, window.innerWidth - 520),
+                y: 100
+              }}
+            />
+          </Suspense>
+        )}
       </KeyContext.Provider>
       <Global
         styles={{

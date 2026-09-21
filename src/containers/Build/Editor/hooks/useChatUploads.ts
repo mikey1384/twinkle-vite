@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useAppContext } from '~/contexts';
+import { formatBuildAppReferenceMessage } from '../helpers/appReferences';
+import { formatBuildCommentFeedbackMessage } from '~/helpers/buildCommentFeedback';
+import useChatDraft from './useChatDraft';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { generateFileName } from '~/helpers/stringHelpers';
 import { v1 as uuidv1 } from 'uuid';
@@ -91,7 +95,17 @@ export default function useChatUploads({
   uploadFile,
   userId
 }: UseBuildEditorChatUploadsOptions) {
-  const [buildChatDraftMessage, setBuildChatDraftMessage] = useState('');
+  const prepareBuildChatAppReferences = useAppContext(
+    (v) => v.requestHelpers.prepareBuildChatAppReferences
+  );
+  const {
+    buildChatDraftMessage,
+    setBuildChatDraftMessage,
+    buildChatDraftApps,
+    setBuildChatDraftApps,
+    buildChatDraftFeedback,
+    setBuildChatDraftFeedback
+  } = useChatDraft(userId, build.id);
   const [buildChatUploadModalShown, setBuildChatUploadModalShown] =
     useState(false);
   const [buildChatUploadFileObj, setBuildChatUploadFileObj] = useState<
@@ -104,13 +118,12 @@ export default function useChatUploads({
   const buildChatUploadProgressMessageIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    setBuildChatDraftMessage('');
     setBuildChatUploadModalShown(false);
     setBuildChatUploadFileObj(null);
     setBuildChatUploadInFlight(false);
     pendingBuildChatUploadClarificationRef.current = [];
     buildChatUploadProgressMessageIdRef.current = null;
-  }, [build.id]);
+  }, [build.id, userId]);
 
   async function handlePendingBuildChatUploadMessage(trimmedMessage: string) {
     const pendingBuildChatUploadClarification =
@@ -444,6 +457,7 @@ export default function useChatUploads({
       historyUserNoteText?: string | null;
       resolvingPendingClarification?: boolean;
       localProgressMessageId?: number | null;
+      consumeComposerDraft?: boolean;
     }
   ): Promise<BuildChatFileSelectionResult> {
     if (!isOwner || isRunActivityInFlight() || buildChatUploadInFlight) {
@@ -456,10 +470,10 @@ export default function useChatUploads({
     if (files.length === 0) {
       return { handled: false };
     }
-    const routingMessageText = buildBuildChatUploadRoutingMessage(
+    let routingMessageText = buildBuildChatUploadRoutingMessage(
       options?.messageText ?? buildChatDraftMessage
     );
-    const historyUserNoteText =
+    let historyUserNoteText =
       options &&
       Object.prototype.hasOwnProperty.call(options, 'historyUserNoteText')
         ? options.historyUserNoteText
@@ -479,7 +493,12 @@ export default function useChatUploads({
       currentPendingBuildChatUploadClarification?.intentPersisted
     );
     const consumedComposerDraft =
-      !options || !Object.prototype.hasOwnProperty.call(options, 'messageText');
+      options?.consumeComposerDraft ||
+      !options ||
+      !Object.prototype.hasOwnProperty.call(options, 'messageText');
+    const consumedDraftText = options?.consumeComposerDraft
+      ? (options.messageText ?? buildChatDraftMessage)
+      : buildChatDraftMessage;
 
     function didBuildChatUploadTargetChange() {
       return Number(getLatestBuild()?.id || 0) !== uploadBuildId;
@@ -487,7 +506,18 @@ export default function useChatUploads({
 
     function clearConsumedBuildChatUploadDraft() {
       if (!consumedComposerDraft) return;
-      setBuildChatDraftMessage('');
+      if (didBuildChatUploadTargetChange()) return;
+      setBuildChatDraftMessage((current) =>
+        current === consumedDraftText ? '' : current
+      );
+      setBuildChatDraftApps((current) =>
+        current.filter(
+          (app) => !buildChatDraftApps.some((entry) => entry.id === app.id)
+        )
+      );
+      setBuildChatDraftFeedback((current) =>
+        current.filter((entry) => !buildChatDraftFeedback.includes(entry))
+      );
     }
 
     function clearLocalProgressMessage() {
@@ -547,6 +577,43 @@ export default function useChatUploads({
 
     setBuildChatUploadInFlight(true);
     try {
+      if (consumedComposerDraft && buildChatDraftFeedback.length) {
+        routingMessageText = formatBuildCommentFeedbackMessage(
+          routingMessageText,
+          buildChatDraftFeedback
+        );
+        if (historyUserNoteText != null) {
+          historyUserNoteText = formatBuildCommentFeedbackMessage(
+            historyUserNoteText,
+            buildChatDraftFeedback
+          );
+        }
+      }
+      if (consumedComposerDraft && buildChatDraftApps.length) {
+        const result = await prepareBuildChatAppReferences({
+          buildId: uploadBuildId,
+          referenceBuildIds: buildChatDraftApps.map((app) => app.id)
+        });
+        if (didBuildChatUploadTargetChange()) return { handled: true };
+        if (
+          !Array.isArray(result?.apps) ||
+          result.apps.length !== buildChatDraftApps.length
+        ) {
+          throw new Error(
+            'Could not check your app references. Please try again.'
+          );
+        }
+        routingMessageText = formatBuildAppReferenceMessage(
+          routingMessageText,
+          result.apps
+        );
+        if (historyUserNoteText != null) {
+          historyUserNoteText = formatBuildAppReferenceMessage(
+            historyUserNoteText,
+            result.apps
+          );
+        }
+      }
       const decision = (await routeBuildChatUpload({
         buildId: build.id,
         messageText: routingMessageText,
@@ -631,7 +698,6 @@ export default function useChatUploads({
             }),
             { buildId: uploadBuildId }
           );
-          clearConsumedBuildChatUploadDraft();
           return { handled: true };
         }
         const persistedUserNote = await persistBuildChatUploadIntentNote(
@@ -658,6 +724,7 @@ export default function useChatUploads({
             'I imported the files, but the run did not start. Retry your message when ready.',
             { buildId: uploadBuildId }
           );
+          return { handled: true };
         }
         clearConsumedBuildChatUploadDraft();
         return { handled: true };
@@ -708,6 +775,7 @@ export default function useChatUploads({
             'I uploaded the asset, but the run did not start. Retry your message when ready.',
             { buildId: uploadBuildId }
           );
+          return { handled: true };
         }
         clearConsumedBuildChatUploadDraft();
         return { handled: true };
@@ -794,8 +862,7 @@ export default function useChatUploads({
         if (routingMessageText.trim() && readyCount > 0) {
           setBuildChatUploadInFlight(false);
           const started = await sendBuildMessageText(routingMessageText, {
-            existingUserMessageId:
-              Number(result.userMessage?.id || 0) || null,
+            existingUserMessageId: Number(result.userMessage?.id || 0) || null,
             ignoreUploadInFlight: true
           });
           if (started) {
@@ -806,6 +873,7 @@ export default function useChatUploads({
             'I saved your documents, but the run did not start. Retry your message when ready.',
             { buildId: uploadBuildId }
           );
+          return { handled: true };
         }
         clearConsumedBuildChatUploadDraft();
         return { handled: true };
@@ -970,6 +1038,7 @@ export default function useChatUploads({
       clearConsumedBuildChatUploadDraft();
       return { handled: true };
     } catch (error: any) {
+      if (didBuildChatUploadTargetChange()) return { handled: true };
       console.error('Failed to process build chat upload:', error);
       clearLocalProgressMessage();
       await persistBuildChatAssistantNote(
@@ -979,7 +1048,7 @@ export default function useChatUploads({
       return { handled: true };
     } finally {
       clearLocalProgressMessage();
-      setBuildChatUploadInFlight(false);
+      if (!didBuildChatUploadTargetChange()) setBuildChatUploadInFlight(false);
     }
   }
 
@@ -989,6 +1058,7 @@ export default function useChatUploads({
       messageText?: string;
       historyUserNoteText?: string | null;
       resolvingPendingClarification?: boolean;
+      consumeComposerDraft?: boolean;
     }
   ) {
     if (!isOwner || isRunActivityInFlight() || buildChatUploadInFlight) {
@@ -999,6 +1069,9 @@ export default function useChatUploads({
       : [];
     if (files.length === 0) {
       return false;
+    }
+    if (options?.consumeComposerDraft && options.messageText != null) {
+      setBuildChatDraftMessage(options.messageText);
     }
     const progressMessageId = appendLocalBuildChatAssistantMessage(
       buildBuildChatUploadPendingMessage(files)
@@ -1018,6 +1091,10 @@ export default function useChatUploads({
 
   return {
     buildChatDraftMessage,
+    buildChatDraftApps,
+    setBuildChatDraftApps,
+    buildChatDraftFeedback,
+    setBuildChatDraftFeedback,
     buildChatUploadFileObj,
     buildChatUploadInFlight,
     buildChatUploadModalShown,

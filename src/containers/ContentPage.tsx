@@ -37,6 +37,9 @@ export default function ContentPage() {
     if (rawContentType === 'ai-storie') {
       return { contentType: 'aiStory', rootType: undefined };
     }
+    if (rawContentType === 'ai-card-summon') {
+      return { contentType: 'aiCard', rootType: undefined };
+    }
     if (rawContentType === 'mission-passe') {
       return { contentType: 'pass', rootType: 'mission' };
     }
@@ -296,9 +299,13 @@ export default function ContentPage() {
     window.removeEventListener('wheel', handleHomeFeedNavigationUserScroll, {
       capture: true
     });
-    window.removeEventListener('touchmove', handleHomeFeedNavigationUserScroll, {
-      capture: true
-    });
+    window.removeEventListener(
+      'touchmove',
+      handleHomeFeedNavigationUserScroll,
+      {
+        capture: true
+      }
+    );
     window.removeEventListener('keydown', handleHomeFeedNavigationKeyDown, {
       capture: true
     });

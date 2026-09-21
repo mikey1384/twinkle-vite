@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ChangePicture from './ChangePicture';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import StatusTag from './StatusTag';
+import ActivityBadge from './ActivityBadge';
 import { css, cx } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
@@ -70,6 +71,13 @@ export default function ProfilePic({
     (v) => v.user?.state?.userObj?.[userId]?.profilePicUrl
   );
   const myId = useKeyContext((v) => v.myState.userId);
+  const activity = useChatContext((v) => v.state.chatStatus[userId]?.activity);
+  const activityOnline = useChatContext(
+    (v) => v.state.chatStatus[userId]?.isOnline
+  );
+  const activityAway = useChatContext(
+    (v) => v.state.chatStatus[userId]?.isAway
+  );
   const [hasError, setHasError] = useState(false);
   const [changePictureShown, setChangePictureShown] = useState(false);
   const displayedProfilePicUrl = useMemo(() => {
@@ -183,6 +191,9 @@ export default function ProfilePic({
           size={statusSize}
         />
       )}
+      {activity && activityOnline && !activityAway ? (
+        <ActivityBadge activity={activity} />
+      ) : null}
     </div>
   );
 

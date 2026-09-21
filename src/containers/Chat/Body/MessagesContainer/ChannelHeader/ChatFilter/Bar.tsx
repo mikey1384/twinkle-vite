@@ -127,6 +127,7 @@ export default function ChatFilterBar({
             font-size: 1.5rem;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.2rem;
+              gap: 0.8rem;
             }
           `}
         >
@@ -143,15 +144,20 @@ export default function ChatFilterBar({
               touch-action: manipulation;
               border: 1px solid var(--ui-border);
               box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
-              transition: background 0.18s ease, color 0.18s ease,
-                border-color 0.18s ease, box-shadow 0.18s ease,
+              transition:
+                background 0.18s ease,
+                color 0.18s ease,
+                border-color 0.18s ease,
+                box-shadow 0.18s ease,
                 transform 0.06s ease;
-              ${selectedTab === 'all'
-                ? `background-color: ${chatTopicColorVar};`
-                : ''};
-              ${selectedTab === 'all'
-                ? `color: ${chatTopicTextColorVar};`
-                : ''};
+              ${
+                selectedTab === 'all'
+                  ? `background-color: ${chatTopicColorVar};`
+                  : ''
+              };
+              ${
+                selectedTab === 'all' ? `color: ${chatTopicTextColorVar};` : ''
+              };
               &:hover {
                 color: ${chatTopicTextColorVar};
                 background-color: ${chatTopicColorVar};
@@ -185,7 +191,9 @@ export default function ChatFilterBar({
               background: #fff;
               border: 1px solid var(--ui-border);
               box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
-              transition: box-shadow 0.18s ease, transform 0.06s ease;
+              transition:
+                box-shadow 0.18s ease,
+                transform 0.06s ease;
               @media (max-width: ${mobileMaxWidth}) {
                 border-radius: ${innerBorderRadius};
               }
@@ -223,12 +231,16 @@ export default function ChatFilterBar({
                   flex: 1 1 auto;
                   display: flex;
                   align-items: center;
-                  ${selectedTab === 'topic'
-                    ? `background-color: ${chatTopicColorVar};`
-                    : ''}
-                  ${selectedTab === 'topic'
-                    ? `color: ${chatTopicTextColorVar};`
-                    : ''}
+                  ${
+                    selectedTab === 'topic'
+                      ? `background-color: ${chatTopicColorVar};`
+                      : ''
+                  }
+                  ${
+                    selectedTab === 'topic'
+                      ? `color: ${chatTopicTextColorVar};`
+                      : ''
+                  }
               &:hover {
                     color: ${chatTopicTextColorVar};
                     background-color: ${chatTopicColorVar};
@@ -357,8 +369,11 @@ export default function ChatFilterBar({
               touch-action: manipulation;
               border: 1px solid var(--ui-border);
               box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
-              transition: background 0.18s ease, color 0.18s ease,
-                border-color 0.18s ease, box-shadow 0.18s ease,
+              transition:
+                background 0.18s ease,
+                color 0.18s ease,
+                border-color 0.18s ease,
+                box-shadow 0.18s ease,
                 transform 0.06s ease;
               ${isSearchActive ? `background-color: var(--chat-bg);` : ''};
               ${isSearchActive ? `color: var(--chat-text);` : ''};
@@ -397,8 +412,7 @@ export default function ChatFilterBar({
       updateLastTopicId({
         channelId,
         topicId
-      }).catch(() => {
-      });
+      }).catch(() => {});
       navigate(
         `/chat/${pathId}${
           subchannelPath ? `/${subchannelPath}` : ''

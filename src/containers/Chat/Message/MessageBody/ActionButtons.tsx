@@ -5,6 +5,8 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { BOOKMARK_VIEWS, BookmarkView } from '~/constants/defaultValues';
 import ReactionButton from './ReactionButton';
+import { useChatPins } from '../../Pins/context';
+import { canUseGenericChatMessageActions } from '~/helpers/chatMessageCapabilities';
 
 const replyLabel = 'Reply';
 const rewardLabel = 'Reward';
@@ -99,6 +101,7 @@ export default function ActionButtons({
   userCanRewardThis,
   userId
 }: Props) {
+  const pins = useChatPins();
   const dropdownMenuItems = useMemo(() => {
     const result: ChatActionItem[] = [];
     if (isBanned) return result;
@@ -132,7 +135,41 @@ export default function ActionButtons({
       });
     }
 
-    if (!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && userCanEditThis) {
+    if (
+      pins?.snapshot?.canManage &&
+      Number.isSafeInteger(messageId) &&
+      messageId > 0 &&
+      canUseGenericChatMessageActions(message)
+    ) {
+      const pinned = pins.snapshot.pinnedMessageIds.includes(messageId);
+      result.push({
+        id: 'pin',
+        label: (
+          <>
+            <Icon icon="thumbtack" />
+            <span>
+              {pins.savingId === messageId
+                ? pinned
+                  ? 'Unpinning…'
+                  : 'Pinning…'
+                : pinned
+                  ? 'Unpin message'
+                  : 'Pin message'}
+            </span>
+          </>
+        ),
+        disabled: pins.savingId !== null,
+        onClick: () => {
+          void pins.setPin(messageId, !pinned);
+        }
+      });
+    }
+
+    if (
+      !isDeleteOnlyBuildSuggestion &&
+      !isReplyOnlyBuildCard &&
+      userCanEditThis
+    ) {
       result.push({
         id: 'edit',
         label: (
@@ -208,6 +245,7 @@ export default function ActionButtons({
 
     return result;
   }, [
+    pins,
     canReply,
     currentChannelId,
     fileName,

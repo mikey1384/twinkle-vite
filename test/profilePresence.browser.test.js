@@ -7,10 +7,10 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
 const require = createRequire(import.meta.url);
-const {
-  chromium,
-  webkit
-} = require('/Users/mikey/.npm-packages/lib/node_modules/playwright');
+const { chromium, webkit } = require(
+  process.env.PLAYWRIGHT_MODULE ||
+    '/Users/mikey/.npm-packages/lib/node_modules/playwright'
+);
 const repo = fileURLToPath(new URL('..', import.meta.url));
 
 // Render the actual member row, shared avatar and status badge. Only identity
@@ -18,6 +18,7 @@ const repo = fileURLToPath(new URL('..', import.meta.url));
 const fixture = `
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
 import ProfilePic from './src/components/ProfilePic';
 import MemberListItem from './src/containers/Chat/RightMenu/ChatInfo/Members/MemberListItem';
 import { Color } from './src/constants/css';
@@ -28,13 +29,13 @@ function Fixture() {
   window.setServerPresence = patch => setPresence(previous => ({...previous, ...patch}));
   window.fixtureChatStatus = {2: presence};
   window.presenceColors = {Away: Color.orange(), Busy: Color.red(), Online: Color.green()};
-  return <main>
+  return <MemoryRouter><main>
     <section id="member"><MemberListItem member={{id: 2, username: 'programmer'}}
       creatorId={0} onlineMemberObj={presence.isOnline ? {2: presence} : {}}/></section>
     <section id="profile"><ProfilePic userId={2} online={presence.isOnline}
       isAway={presence.isAway} isBusy={presence.isBusy} statusShown statusSize="large" size={80}/></section>
     <section id="self"><ProfilePic userId={1} isAway isBusy online statusShown size={40}/></section>
-  </main>;
+  </main></MemoryRouter>;
 }
 createRoot(document.getElementById('root')).render(<Fixture/>);
 `;
@@ -44,9 +45,10 @@ async function compileFixture() {
   if (bundle) return bundle;
   const stubs = {
     '~/contexts': `
-      export const useAppContext = select => select({user: {state: {userObj: {}}}});
+      export const useAppContext = select => select({user: {state: {userObj: {}}, actions: {}}});
       export const useKeyContext = select => select({myState: {userId: 1}});
-      export const useChatContext = select => select({state: {chatStatus: window.fixtureChatStatus}});
+      export const useChatContext = select => select({state: {chatStatus: window.fixtureChatStatus}, actions: {}});
+      export const useHomeContext = select => select({actions: {}});
     `,
     '~/helpers':
       'export const isMobile = () => false; export const isPhone = () => false;',
@@ -133,7 +135,27 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
           await setPresence({ isBusy: true }, 'Away');
           await setPresence({ isAway: false }, 'Busy');
           await setPresence({ isBusy: false }, 'Online');
+          await setPresence(
+            { activity: { kind: 'app', id: 2460, title: 'Math Lab' } },
+            'Online'
+          );
+          const badge = page.locator(
+            '#profile button[aria-label="Using Math Lab"]'
+          );
+          await badge.click();
+          await page
+            .getByRole('button', { name: 'Open app', exact: true })
+            .waitFor();
+          if (process.env.PROFILE_PRESENCE_SCREENSHOTS)
+            await page.screenshot({
+              path: path.join(
+                process.env.PROFILE_PRESENCE_SCREENSHOTS,
+                `${engine}-${width}-activity.png`
+              )
+            });
+          await page.keyboard.press('Escape');
           await setPresence({ isAway: true }, 'Away');
+          assert.equal(await badge.count(), 0);
           await setPresence({ isOnline: false, isBusy: true }, null);
           assert.equal(
             await page.locator('#self [aria-label="Online"]').count(),

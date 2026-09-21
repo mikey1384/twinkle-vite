@@ -440,6 +440,15 @@ export default function AICardModal({
       }
       footer={
         <>
+          {!!card?.hasSummonPost && (
+            <Link
+              to={`/ai-card-summons/${cardId}`}
+              onClick={onHide}
+              style={{ fontSize: '1.2rem', marginRight: 'auto' }}
+            >
+              View summon post
+            </Link>
+          )}
           <ShareButton
             variant="full"
             buttonVariant="ghost"
@@ -956,9 +965,7 @@ export default function AICardModal({
         ) {
           return;
         }
-        if (
-          normalizeAICardId(imageStatus?.card?.id) === requestedCardId
-        ) {
+        if (normalizeAICardId(imageStatus?.card?.id) === requestedCardId) {
           canonicalCard = {
             ...canonicalCard,
             ...imageStatus.card

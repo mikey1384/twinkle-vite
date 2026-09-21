@@ -90,6 +90,9 @@ export default function useChatSocket({
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
 
+  const onChangeUserActivity = useChatContext(
+    (v) => v.actions.onChangeUserActivity
+  );
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const quickAccessMode = useChatContext(
     (v) => v.state.quickAccess?.mode || 'automatic'
@@ -101,9 +104,7 @@ export default function useChatSocket({
     (v) => v.state.chatNotificationSettings
   );
   const homeChannelIds = useChatContext((v) => v.state.homeChannelIds);
-  const favoriteChannelIds = useChatContext(
-    (v) => v.state.favoriteChannelIds
-  );
+  const favoriteChannelIds = useChatContext((v) => v.state.favoriteChannelIds);
   const classChannelIds = useChatContext((v) => v.state.classChannelIds);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
 
@@ -479,6 +480,7 @@ export default function useChatSocket({
 
     socket.on('ai_thinking_status_updated', onChangeAIThinkingStatus);
     socket.on('ai_thought_streamed', handleAIThoughtStream);
+    socket.on('user_activity_changed', onChangeUserActivity);
     socket.on('away_status_changed', handleAwayStatusChange);
     socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('channel_settings_changed', onChangeChannelSettings);
@@ -531,6 +533,7 @@ export default function useChatSocket({
       }
       socket.off('ai_thinking_status_updated', onChangeAIThinkingStatus);
       socket.off('ai_thought_streamed', handleAIThoughtStream);
+      socket.off('user_activity_changed', onChangeUserActivity);
       socket.off('away_status_changed', handleAwayStatusChange);
       socket.off('busy_status_changed', handleBusyStatusChange);
       socket.off('channel_settings_changed', onChangeChannelSettings);
@@ -789,8 +792,7 @@ export default function useChatSocket({
         reactorId !== userId &&
         (requiresSidebarResync || update.channelActivity?.changed)
       );
-      const channelSummaryIsNeeded =
-        canonicalUnreadSummaryIsNeeded(channelId);
+      const channelSummaryIsNeeded = canonicalUnreadSummaryIsNeeded(channelId);
       if (unreadProjectionCouldChange && !reactionIsVisibleToViewer) {
         markUnreadActivity();
         queueChannelUnreadStateResync({
@@ -1166,8 +1168,7 @@ export default function useChatSocket({
       const isForCurrentChannel =
         Number(channelId) === activeChatChannelIdRef.current;
       const isMyMessage = Number(message.userId) === Number(userId);
-      const channelSummaryIsNeeded =
-        canonicalUnreadSummaryIsNeeded(channelId);
+      const channelSummaryIsNeeded = canonicalUnreadSummaryIsNeeded(channelId);
       const scopeIsActivelyVisible = Boolean(
         isForCurrentChannel &&
         currentPageVisible &&
@@ -1551,11 +1552,7 @@ export default function useChatSocket({
         });
       }
 
-      if (
-        !senderIsUser &&
-        channelId === GENERAL_CHAT_ID &&
-        !subchannelId
-      ) {
+      if (!senderIsUser && channelId === GENERAL_CHAT_ID && !subchannelId) {
         onNotifyChatSubjectChange(subject);
       }
 

@@ -36,7 +36,7 @@ test('creator-facing reward status never asks the creator or Lumine to prepare r
     ...base,
     state: 'needs_review'
   });
-  assert.match(sending.detail, /admin will read your code/);
+  assert.match(sending.detail, /checked by a Twinkle admin first/);
   // Unsaved edits on an approved version fall back to "needs approval".
   assert.equal(
     rewardApprovalPresentation({ ...base, state: 'approved' }, true).state,

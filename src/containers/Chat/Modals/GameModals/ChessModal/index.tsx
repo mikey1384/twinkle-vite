@@ -1,3 +1,4 @@
+import useUserActivity from '~/helpers/hooks/useUserActivity';
 import React, {
   useCallback,
   useEffect,
@@ -222,6 +223,9 @@ export default function ChessModal({
       resultMessageActive,
       submitting
     ]
+  );
+  useUserActivity(
+    boardReady && !gameFinished ? { kind: 'game', id: 'chess' } : null
   );
 
   const boardMoveNumber = Number(boardState?.move?.number || 0);

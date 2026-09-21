@@ -817,6 +817,9 @@ function getTargetPanelSizing({
   if (normalizedRootType === 'url') {
     return buildTargetSizing('standard', ['url-target']);
   }
+  if (normalizedRootType === 'aiCard') {
+    return buildTargetSizing('standard');
+  }
 
   const standardRootTypes =
     content?.contentType === 'subject'

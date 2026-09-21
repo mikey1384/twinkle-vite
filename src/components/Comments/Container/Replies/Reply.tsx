@@ -51,6 +51,7 @@ import { getCommentActionPermissions } from '~/components/Comments/permissions';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
+import { useLumineCommentMenuItem } from '../../LumineCommentContext';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';
@@ -202,24 +203,6 @@ function Reply({
     return rewards.filter((reward) => reward.rewarderId === userId).length > 0;
   }, [rewards, userId]);
 
-  const dropdownButtonShown = useMemo(() => {
-    if (isDeleteNotification) {
-      return false;
-    }
-    return (
-      userIsParentUploader ||
-      userIsRootUploader ||
-      userCanDeleteThis ||
-      userCanEditThis
-    );
-  }, [
-    isDeleteNotification,
-    userCanDeleteThis,
-    userCanEditThis,
-    userIsParentUploader,
-    userIsRootUploader
-  ]);
-
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
@@ -278,8 +261,20 @@ function Reply({
         padding: '0.35rem'
       }
     : undefined;
+  const pinSupported =
+    (parent.contentType === 'comment'
+      ? rootContent?.contentType || parent.rootType
+      : parent.contentType) !== 'aiCard';
+
+  const lumineMenuItem = useLumineCommentMenuItem({
+    comment: reply,
+    parentComment: comment,
+    rootContent: parent.contentType === 'build' ? parent : rootContent,
+    style: compactDropdownMenuItemStyle
+  });
   const dropdownMenuItems = useMemo(() => {
     const items = [];
+    if (lumineMenuItem) items.push(lumineMenuItem);
     if (userCanEditThis) {
       items.push({
         label: (
@@ -300,6 +295,7 @@ function Reply({
       });
     }
     if (
+      pinSupported &&
       (userIsParentUploader || userIsRootUploader || isAdmin) &&
       !banned?.posting
     ) {
@@ -334,6 +330,8 @@ function Reply({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    lumineMenuItem,
+    pinSupported,
     compactDropdownMenuItemStyle,
     dropdownLabelMarginLeft,
     pinnedCommentId,
@@ -342,6 +340,8 @@ function Reply({
     userCanEditThis,
     userIsParentUploader
   ]);
+  const dropdownButtonShown =
+    !isDeleteNotification && dropdownMenuItems.length > 0;
 
   return !(isDeleteNotification && !reply.numReplies) && !reply.isDeleted ? (
     <ErrorBoundary componentPath="Comments/Replies/Reply">

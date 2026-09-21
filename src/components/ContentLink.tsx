@@ -57,6 +57,8 @@ export default function ContentLink({
       result = '';
     } else if (contentType === 'aiStory') {
       result = 'ai-stories';
+    } else if (contentType === 'aiCard') {
+      result = 'ai-card-summons';
     } else if (contentType === 'url') {
       result = 'links';
     } else if (isPassType) {
@@ -80,8 +82,8 @@ export default function ContentLink({
       contentType === 'user'
         ? username
         : contentType === 'mission'
-        ? rootMissionType || missionType
-        : id;
+          ? rootMissionType || missionType
+          : id;
     return path ? `/${path}` : '';
   }, [contentType, id, isPassType, missionType, rootMissionType, username]);
 

@@ -74,6 +74,7 @@ const contentLabels: Record<string, string> = {
   subjects: 'Subject',
   videos: 'Video',
   'ai-cards': 'AI Card',
+  'ai-card-summons': 'AI Card Summon',
   'ai-stories': 'AI Story',
   'daily-reflections': 'Daily Reflection',
   'mission-passes': 'Mission Pass',
@@ -194,7 +195,7 @@ function iconForContentNav(nav: string) {
     ? 'user-group-crown'
     : nav === 'videos' || nav === 'playlists'
       ? 'film'
-      : nav === 'ai-cards'
+      : nav === 'ai-cards' || nav === 'ai-card-summons'
         ? 'cards-blank'
         : nav === 'ai-stories'
           ? 'book-open'
@@ -925,6 +926,10 @@ export default function MainNavs({
   );
 
   const contentPageMatch = useMemo(() => {
+    const summonPageMatch = matchPath(
+      { path: '/ai-card-summons/:id' },
+      pathname
+    );
     const cardPageMatch = matchPath(
       {
         path: '/ai-cards/:id'
@@ -1005,6 +1010,7 @@ export default function MainNavs({
     );
 
     return (
+      !!summonPageMatch ||
       !!cardPageMatch ||
       !!storyPageMatch ||
       !!subjectPageMatch ||

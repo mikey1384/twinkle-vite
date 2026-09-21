@@ -1,3 +1,4 @@
+import useUserActivity from '~/helpers/hooks/useUserActivity';
 import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Omok from '../../Omok';
@@ -128,10 +129,10 @@ export default function OmokModal({
   ]);
   const latestResultMessageKey =
     latestOmokRelevantMessage?.type === 'result'
-      ? latestOmokRelevantMessage?.message?.id ??
+      ? (latestOmokRelevantMessage?.message?.id ??
         latestOmokRelevantMessage?.message?.timeStamp ??
         latestOmokRelevantMessage?.message?.content ??
-        null
+        null)
       : null;
   const resultMessageActive =
     latestOmokRelevantMessage?.type === 'result' &&
@@ -152,9 +153,9 @@ export default function OmokModal({
       Boolean(
         (resultMessageActive && !submitting) ||
         latestStatusMessage?.gameWinnerId ||
-          latestStatusMessage?.isDraw ||
-          latestStatusMessage?.isAbort ||
-          initialState?.winnerId
+        latestStatusMessage?.isDraw ||
+        latestStatusMessage?.isAbort ||
+        initialState?.winnerId
       ),
     [
       initialState?.winnerId,
@@ -164,6 +165,11 @@ export default function OmokModal({
       resultMessageActive,
       submitting
     ]
+  );
+  useUserActivity(
+    loaded && !howToPlayShown && !gameFinished
+      ? { kind: 'game', id: 'omok' }
+      : null
   );
 
   const userMadeLastMove = useMemo(
@@ -175,7 +181,10 @@ export default function OmokModal({
     if (isCountdownActive) {
       return true;
     }
-    const latestBoardMessageId = getLatestBoardMessageId(currentChannel, 'omok');
+    const latestBoardMessageId = getLatestBoardMessageId(
+      currentChannel,
+      'omok'
+    );
     const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
       currentChannel,
       'omok'
@@ -190,13 +199,7 @@ export default function OmokModal({
     return (
       userMadeLastMove || userIsTheLastMoveViewer || Boolean(isOlderMessage)
     );
-  }, [
-    isCountdownActive,
-    currentChannel,
-    message?.id,
-    myId,
-    userMadeLastMove
-  ]);
+  }, [isCountdownActive, currentChannel, message?.id, myId, userMadeLastMove]);
 
   useEffect(() => {
     if (latestOmokRelevantMessage?.type !== 'result') {

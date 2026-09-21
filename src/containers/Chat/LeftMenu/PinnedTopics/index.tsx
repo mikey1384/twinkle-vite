@@ -38,9 +38,10 @@ const buttonStyle = css`
     }
   }
   @media (max-width: ${mobileMaxWidth}) {
-    min-height: 44px;
-    padding: 0.7rem 1rem;
-    font-size: max(14px, 1.2rem);
+    min-height: 36px;
+    margin: 0.3rem 0.4rem;
+    padding: 0.5rem 0.4rem;
+    font-size: max(12px, 1.2rem);
   }
 `;
 
@@ -135,19 +136,22 @@ function PinnedTopics({
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/PinnedTopics">
       <div
-        className={cx(css`
-          margin-top: 1rem;
-          width: CALC(100% - 2rem);
-          border: 1px solid var(--chat-panel-border, ${borderColor});
-          border-radius: 10px;
-          display: flex;
-          flex-direction: column;
-          flex: 1 1 auto;
-          min-height: 0;
-          padding: 0.5rem 0;
-          margin-inline: 1rem;
-          margin-bottom: 0;
-        `, contextGroupClass)}
+        className={cx(
+          css`
+            margin-top: 1rem;
+            width: CALC(100% - 2rem);
+            border: 1px solid var(--chat-panel-border, ${borderColor});
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: 0.5rem 0;
+            margin-inline: 1rem;
+            margin-bottom: 0;
+          `,
+          contextGroupClass
+        )}
       >
         <div
           aria-label="Pinned topics"

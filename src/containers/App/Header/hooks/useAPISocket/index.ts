@@ -1,3 +1,4 @@
+import useUserActivityReporting from './useUserActivityReporting';
 import { useEffect, useMemo, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import {
@@ -9,10 +10,7 @@ import {
 import { getSectionFromPathname, parseChannelPath } from '~/helpers';
 import { readAuthToken, setStoredItem } from '~/helpers/userDataHelpers';
 import { browserReportsOffline } from '~/helpers/browserNetwork';
-import {
-  AI_CARD_CHAT_TYPE,
-  VOCAB_CHAT_TYPE
-} from '~/constants/defaultValues';
+import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 
 import useAICardSocket from './useAICardSocket';
 import useAISocket from './useAISocket';
@@ -46,6 +44,7 @@ export default function useAPISocket({
   subchannelId: number;
   subchannelPath: string | null;
 }) {
+  useUserActivityReporting();
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
@@ -89,9 +88,7 @@ export default function useAPISocket({
       : null;
   const selectedChatChannelId = Number(selectedChannelId || 0);
   const showingChannelBody =
-    usingChat &&
-    chatType !== VOCAB_CHAT_TYPE &&
-    chatType !== AI_CARD_CHAT_TYPE;
+    usingChat && chatType !== VOCAB_CHAT_TYPE && chatType !== AI_CARD_CHAT_TYPE;
   const activeChatChannelId = !showingChannelBody
     ? null
     : selectedChatChannelId > 0

@@ -18,6 +18,10 @@ export const contextGroupClass = css`
     border: 0;
     padding: 0;
   }
+  @media (max-width: ${mobileMaxWidth}) {
+    margin-top: 0.4rem;
+    padding-block: 0;
+  }
 `;
 
 export const contextRowClass = css`
@@ -51,7 +55,14 @@ export const contextRowClass = css`
     min-height: 44px;
   }
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 36px;
+    gap: 0.5rem;
+    padding: 0.5rem 0.4rem;
+    font-size: max(12px, 1.2rem);
+    line-height: 1.35;
     .chat-context-label {
+      font-size: inherit;
+      line-height: inherit;
       display: block;
       white-space: nowrap;
       overflow-wrap: normal;

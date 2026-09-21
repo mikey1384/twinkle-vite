@@ -1,3 +1,4 @@
+import useUserActivity from '~/helpers/hooks/useUserActivity';
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Game from './Game';
@@ -41,6 +42,11 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [gameState, setGameState] = useState('notStarted');
+  useUserActivity(
+    activeTab === 'game' && gameState === 'started'
+      ? { kind: 'game', id: 'grammarbles' }
+      : null
+  );
   const [questionsReady, setQuestionsReady] = useState(false);
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [hasUnlockedDailyTask, setHasUnlockedDailyTask] = useState(false);
@@ -393,7 +399,8 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             });
             if (dailyTaskStatus) {
               onApplyTodayStatsProgress({
-                newStats: buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus)
+                newStats:
+                  buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus)
               });
             }
           })(),

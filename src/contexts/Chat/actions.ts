@@ -1,3 +1,4 @@
+import type { UserActivity } from '~/helpers/userActivity';
 import { Dispatch } from '~/types';
 import { getConfirmedAICardListingState } from '~/helpers/aiCardCanonicalUpdates';
 import type {
@@ -381,6 +382,13 @@ export default function ChatActions(dispatch: Dispatch) {
         isOnline,
         lastActive
       });
+    },
+    onChangeUserActivity(payload: {
+      userId: number;
+      activity: UserActivity | null;
+      observedAt: number;
+    }) {
+      return dispatch({ type: 'CHANGE_USER_ACTIVITY', ...payload });
     },
     onChangeAwayStatus({
       userId,

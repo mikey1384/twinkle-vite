@@ -1,3 +1,4 @@
+import useUserActivity from '~/helpers/hooks/useUserActivity';
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -54,6 +55,15 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     runIdRef
   } = useChessPuzzle();
 
+  useUserActivity(
+    activeTab === 'game' &&
+      !!puzzle &&
+      !error &&
+      !levelsLoading &&
+      (phase === 'WAIT_USER' || phase === 'SOLUTION' || phase === 'ANALYSIS')
+      ? { kind: 'game', id: 'chess-puzzles' }
+      : null
+  );
   const submittingRef = useRef(false);
   const pendingAttemptResultRef = useRef<PuzzleResult | null>(null);
   const initialPuzzleRequestedRef = useRef(false);

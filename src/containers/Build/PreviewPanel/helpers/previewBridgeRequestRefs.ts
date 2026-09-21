@@ -14,6 +14,7 @@ export interface PreviewHostBridgeRequestRefs {
   loadAIImageResultRef: AsyncRequestRef;
   callBuildRuntimeAiChatStreamRef: AsyncRequestRef;
   callBuildRuntimeAiObjectRef: AsyncRequestRef;
+  callBuildRuntimeAiDecisionRef: AsyncRequestRef;
   getBuildTwinkleNewsRef: AsyncRequestRef;
   listBuildTwinkleNewsEditionsRef: AsyncRequestRef;
   getBuildTwinkleNewsEditionRef: AsyncRequestRef;

@@ -1,3 +1,4 @@
+import { applyUserActivityEvent } from '~/helpers/userActivity';
 import { initialChatState } from '.';
 import {
   defaultChatSubject,
@@ -2307,6 +2308,9 @@ export default function ChatReducer(
                 ...prev,
                 ...(action.member || {}),
                 isOnline,
+                ...(!isOnline
+                  ? { activity: null, activityUpdatedAt: Date.now() }
+                  : {}),
                 isAway: isOnline ? false : prev.isAway,
                 isBusy: isOnline ? false : prev.isBusy,
                 ...(derivedLastActive ? { lastActive: derivedLastActive } : {})
@@ -2315,6 +2319,9 @@ export default function ChatReducer(
                 ...(action.member || {}),
                 id: action.userId,
                 isOnline,
+                ...(!isOnline
+                  ? { activity: null, activityUpdatedAt: Date.now() }
+                  : {}),
                 ...(derivedLastActive ? { lastActive: derivedLastActive } : {})
               }
         )
@@ -2339,6 +2346,18 @@ export default function ChatReducer(
         ...state,
         chatStatus: updatedChatStatus,
         recentOfflineUsers
+      };
+    }
+    case 'CHANGE_USER_ACTIVITY': {
+      const previous = state.chatStatus[action.userId];
+      const next = applyUserActivityEvent(previous, {
+        activity: action.activity,
+        observedAt: action.observedAt
+      });
+      if (next === previous) return state;
+      return {
+        ...state,
+        chatStatus: { ...state.chatStatus, [action.userId]: next }
       };
     }
     case 'CHANGE_AWAY_STATUS': {
@@ -2814,11 +2833,10 @@ export default function ChatReducer(
     }
     case 'CONFIRM_CANONICAL_AI_GENERATION': {
       const prevChannelObj = state.channelsObj[action.channelId];
-      const currentlyStreamingAIMsgId =
-        reconcileCanonicalAiGenerationReceipt({
-          currentMessageId: prevChannelObj?.currentlyStreamingAIMsgId,
-          message: action.message
-        });
+      const currentlyStreamingAIMsgId = reconcileCanonicalAiGenerationReceipt({
+        currentMessageId: prevChannelObj?.currentlyStreamingAIMsgId,
+        message: action.message
+      });
       if (
         currentlyStreamingAIMsgId ===
         (prevChannelObj?.currentlyStreamingAIMsgId ?? null)
@@ -6274,7 +6292,9 @@ export default function ChatReducer(
       return {
         ...state,
         aiCallChannelId: action.channelId,
-        aiCallAssistantName: action.channelId ? action.assistantName || null : null
+        aiCallAssistantName: action.channelId
+          ? action.assistantName || null
+          : null
       };
     }
     case 'SET_AI_CALL_ENDING': {

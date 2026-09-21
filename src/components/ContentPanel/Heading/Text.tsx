@@ -74,7 +74,9 @@ export default function HeadingText({
                   ? SHARED_SYSTEM_PROMPT_LABEL
                   : rootType === 'dailyReflection'
                     ? 'daily reflection'
-                    : rootType;
+                    : rootType === 'aiCard'
+                      ? 'AI card'
+                      : rootType;
   const isSubjectComment =
     contentType === 'comment' &&
     targetObj?.subject &&
@@ -87,6 +89,13 @@ export default function HeadingText({
     return renderCompactFeedHeading();
   }
   switch (contentType) {
+    case 'aiCard':
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} /> summoned
+          an AI card
+        </>
+      );
     case 'video':
       return (
         <>
@@ -256,8 +265,7 @@ export default function HeadingText({
         return (
           <>
             <UsernameText user={buildActor} color={Color[linkColor]()} />{' '}
-            {buildAction}:{' '}
-            {renderBuildContentLink()}{' '}
+            {buildAction}: {renderBuildContentLink()}{' '}
           </>
         );
       }
@@ -392,14 +400,15 @@ export default function HeadingText({
       case 'build':
         return (
           <>
-            {renderCompactUser(feedActivityType ? feedUploader || uploader : uploader)}{' '}
+            {renderCompactUser(
+              feedActivityType ? feedUploader || uploader : uploader
+            )}{' '}
             {renderCompactAction(
               feedActivityType
                 ? getBuildActivityText(feedActivityType)
                 : 'published app'
             )}
-            :{' '}
-            {renderBuildContentLink()}
+            : {renderBuildContentLink()}
           </>
         );
       case 'video':
@@ -418,8 +427,8 @@ export default function HeadingText({
       case 'sharedTopic':
         return (
           <>
-            {renderCompactUser()} {renderCompactAction('created a system prompt')}
-            :{' '}
+            {renderCompactUser()}{' '}
+            {renderCompactAction('created a system prompt')}:{' '}
             {renderCompactContentLink(contentObj, contentType, 'system prompt')}
           </>
         );
@@ -450,7 +459,11 @@ export default function HeadingText({
             <>
               {' '}
               on subject:{' '}
-              {renderCompactContentLink(targetObj.subject, 'subject', 'subject')}
+              {renderCompactContentLink(
+                targetObj.subject,
+                'subject',
+                'subject'
+              )}
             </>
           ) : (
             renderCompactRootContext()
@@ -462,7 +475,8 @@ export default function HeadingText({
     if (rootType === 'user') {
       return (
         <>
-          {renderCompactUser()} {renderCompactAction('posted a profile message')}
+          {renderCompactUser()}{' '}
+          {renderCompactAction('posted a profile message')}
         </>
       );
     }

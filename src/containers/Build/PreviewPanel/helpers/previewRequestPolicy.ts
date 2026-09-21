@@ -4,6 +4,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'rewards:claim',
   'ai:chat',
   'ai:generate-object',
+  'ai:decide',
   'ai:generate-image',
   'app:navigate',
   'app:open-content',

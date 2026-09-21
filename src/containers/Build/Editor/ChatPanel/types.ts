@@ -1,4 +1,6 @@
-import type { ReactNode, RefObject } from 'react';
+import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react';
+import type { BuildAppReference } from '../helpers/appReferences';
+import type { BuildCommentFeedback } from '~/helpers/buildCommentFeedback';
 import type {
   BuildAgentAssetCreateOptions,
   BuildAgentAssetCreateResult
@@ -22,7 +24,8 @@ export type BuildLumineModel =
   // Other legacy stored preferences migrated by the server.
   | 'claude-opus-4-8'
   | 'claude-fable-5';
-export type BuildLumineMode = 'auto' | 'light' | 'medium' | 'heavy' | 'superheavy';
+export type BuildLumineMode =
+  'auto' | 'light' | 'medium' | 'heavy' | 'superheavy';
 export type BuildLumineThinkLevel =
   'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
@@ -354,6 +357,12 @@ export interface ChatPanelProps {
   chatEndRef: RefObject<HTMLDivElement | null>;
   onChatScroll: () => void;
   draftMessage: string;
+  draftAppReferences: BuildAppReference[];
+  onDraftAppReferencesChange: Dispatch<SetStateAction<BuildAppReference[]>>;
+  draftCommentFeedback: BuildCommentFeedback[];
+  onDraftCommentFeedbackChange: Dispatch<
+    SetStateAction<BuildCommentFeedback[]>
+  >;
   onDraftMessageChange: (value: string) => void;
   onSendMessage: (message: string) => Promise<boolean> | boolean;
   onContinueScopedPlan: () => void;

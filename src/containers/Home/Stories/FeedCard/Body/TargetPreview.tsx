@@ -1,4 +1,5 @@
 import React from 'react';
+import AICardSummonContent from '~/components/AICardSummonContent';
 import AchievementItem from '~/components/AchievementItem';
 import { BuildMiniCard } from '~/components/Build/Cards';
 import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
@@ -176,6 +177,12 @@ export default function TargetPreview({
   }
 
   if (!resolvedRootObj?.id || resolvedRootObj?.notFound) return null;
+
+  if (contentType === 'comment' && normalizedRootType === 'aiCard') {
+    return renderRootPanel(
+      <AICardSummonContent card={resolvedRootObj.card} compact />
+    );
+  }
 
   if (contentType === 'comment' && normalizedRootType === 'pass') {
     return renderRootPanel(renderTargetPassPreview(resolvedRootObj));

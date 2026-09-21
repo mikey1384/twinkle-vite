@@ -3,10 +3,14 @@ import { useAppContext } from '~/contexts';
 import type { PreviewHostBridgeRequestRefs } from '../helpers/previewBridgeRequestRefs';
 
 export default function useAppRequests() {
-  const requestBuildRewards = useAppContext((v) => v.requestHelpers.requestBuildRewards);
+  const requestBuildRewards = useAppContext(
+    (v) => v.requestHelpers.requestBuildRewards
+  );
   const requestBuildRewardsRef = useRef(requestBuildRewards);
   requestBuildRewardsRef.current = requestBuildRewards;
-  const requestBuildRewardPreview = useAppContext((v) => v.requestHelpers.requestBuildRewardPreview);
+  const requestBuildRewardPreview = useAppContext(
+    (v) => v.requestHelpers.requestBuildRewardPreview
+  );
   const requestBuildRewardPreviewRef = useRef(requestBuildRewardPreview);
   requestBuildRewardPreviewRef.current = requestBuildRewardPreview;
   const getAiEnergyPolicy = useAppContext(
@@ -47,6 +51,9 @@ export default function useAppRequests() {
   );
   const callBuildRuntimeAiObject = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeAiObject
+  );
+  const callBuildRuntimeAiDecision = useAppContext(
+    (v) => v.requestHelpers.callBuildRuntimeAiDecision
   );
   const getBuildTwinkleNews = useAppContext(
     (v) => v.requestHelpers.getBuildTwinkleNews
@@ -353,6 +360,8 @@ export default function useAppRequests() {
   const loadAIImageResultRef = useRef(loadAIImageResult);
   const callBuildRuntimeAiChatStreamRef = useRef(callBuildRuntimeAiChatStream);
   const callBuildRuntimeAiObjectRef = useRef(callBuildRuntimeAiObject);
+  const callBuildRuntimeAiDecisionRef = useRef(callBuildRuntimeAiDecision);
+  callBuildRuntimeAiDecisionRef.current = callBuildRuntimeAiDecision;
   const getBuildTwinkleNewsRef = useRef(getBuildTwinkleNews);
   const listBuildTwinkleNewsEditionsRef = useRef(listBuildTwinkleNewsEditions);
   const getBuildTwinkleNewsEditionRef = useRef(getBuildTwinkleNewsEdition);
@@ -494,6 +503,7 @@ export default function useAppRequests() {
     loadAIImageResultRef,
     callBuildRuntimeAiChatStreamRef,
     callBuildRuntimeAiObjectRef,
+    callBuildRuntimeAiDecisionRef,
     getBuildTwinkleNewsRef,
     listBuildTwinkleNewsEditionsRef,
     getBuildTwinkleNewsEditionRef,

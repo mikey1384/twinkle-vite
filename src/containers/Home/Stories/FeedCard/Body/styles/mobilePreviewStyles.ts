@@ -538,5 +538,52 @@ export const mobilePreviewStyles = `
     .home-feed-card__target-subject .home-feed-card__target-copy > h4 {
       min-height: max(2.36rem, 23.6px);
     }
+    /* Feed photos need their own space instead of the remainder of a fixed
+       text budget. The frame measures the rendered height for lazy loading.
+       Keep the compact profile showcase's separate height rules intact. */
+    article:not(.home-feed-card--showcase) & {
+      .home-feed-card__panel-preview:has(.home-feed-card__subject-main--with-attachment),
+      .home-feed-card__subject-preview:has(.home-feed-card__subject-main--with-attachment) {
+        height: auto;
+      }
+      .home-feed-card__subject-main--with-attachment {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        gap: 1rem;
+        padding: 0;
+      }
+      .home-feed-card__subject-main--with-attachment > .home-feed-card__subject-copy {
+        display: contents;
+      }
+      .home-feed-card__subject-main--with-attachment .home-feed-card__subject-text-stack {
+        order: 0;
+        flex: 0 0 auto;
+        height: auto;
+      }
+      .home-feed-card__subject-main--with-attachment .home-feed-card__subject-embed-preview {
+        order: 1;
+      }
+      .home-feed-card__subject-main--with-attachment > .home-feed-card__attachment-preview {
+        order: 2;
+        flex: 0 0 auto;
+        height: clamp(max(16rem, 160px), 56.25vw, max(24rem, 240px));
+      }
+      .home-feed-card__subject-main--with-attachment > .home-feed-card__attachment-preview--subject-file {
+        height: auto;
+        min-height: max(8rem, 80px);
+      }
+      .home-feed-card__subject-main--with-attachment .home-feed-card__attachment-preview--subject-image img,
+      .home-feed-card__subject-main--with-attachment img.home-feed-card__attachment-preview--subject-image,
+      .home-feed-card__subject-main--with-attachment .home-feed-card__video-attachment img,
+      .home-feed-card__subject-main--with-attachment .home-feed-card__video-attachment video {
+        object-fit: contain !important;
+      }
+      .home-feed-card__subject-main--with-attachment .home-feed-card__subject-secret-answer {
+        order: 3;
+        flex: 0 0 auto;
+        margin: 0;
+      }
+    }
   }
 `;

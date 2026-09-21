@@ -39,6 +39,7 @@ export const contentSubsectionTitles: Record<string, string> = {
   videos: 'Video',
   'ai-cards': 'AI Card',
   'ai-stories': 'AI Story',
+  'ai-card-summons': 'AI Card Summon',
   'daily-reflections': 'Daily Reflection',
   'mission-passes': 'Mission Pass',
   'achievement-unlocks': 'Achievement',
@@ -74,9 +75,8 @@ function gtagAvailable() {
   return typeof window !== 'undefined' && typeof window.gtag === 'function';
 }
 
-let analyticsCommandGate: ReturnType<
-  typeof createAnalyticsCommandGate
-> | null = null;
+let analyticsCommandGate: ReturnType<typeof createAnalyticsCommandGate> | null =
+  null;
 
 function analyticsAvailable() {
   if (!import.meta.env.PROD) {

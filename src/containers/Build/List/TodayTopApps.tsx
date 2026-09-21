@@ -27,7 +27,7 @@ const headerClass = css`
     align-items: center;
     gap: 0.5rem;
     margin: 0;
-    color: #245eaa;
+    color: var(--chat-text);
     font-size: 1.3rem;
     line-height: 1.4;
     font-weight: 900;

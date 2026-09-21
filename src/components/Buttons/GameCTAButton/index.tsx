@@ -13,7 +13,8 @@ export default function GameCTAButton({
   size = 'md',
   shiny = false,
   toggled = false,
-  loading = false
+  loading = false,
+  'aria-label': ariaLabel
 }: {
   onClick: () => void;
   children?: React.ReactNode;
@@ -34,6 +35,7 @@ export default function GameCTAButton({
   shiny?: boolean;
   toggled?: boolean;
   loading?: boolean;
+  'aria-label'?: string;
 }) {
   const hasLabel = !!(
     children && !(typeof children === 'string' && children.trim().length === 0)
@@ -42,6 +44,7 @@ export default function GameCTAButton({
   const cls = getButtonCls({ variant, size, shiny, toggled });
   return (
     <button
+      aria-label={ariaLabel}
       onClick={onClick}
       className={cls}
       style={style}
@@ -197,13 +200,15 @@ function getButtonCls({
       transform: none;
     }
 
-    ${toggled
-      ? `
+    ${
+      toggled
+        ? `
       background: ${c.active};
       transform: translateY(2px);
       box-shadow: none;
     `
-      : ''}
+        : ''
+    }
 
     &::after {
       content: '';
@@ -212,7 +217,12 @@ function getButtonCls({
       left: -150%;
       width: 50%;
       height: 100%;
-      background: linear-gradient(120deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.12) 100%);
+      background: linear-gradient(
+        120deg,
+        rgba(255, 255, 255, 0.12) 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        rgba(255, 255, 255, 0.12) 100%
+      );
       transform: skewX(-20deg);
       animation: ${shiny ? 'shine 1.8s linear infinite' : 'none'};
       display: ${shiny ? 'block' : 'none'};
@@ -221,8 +231,12 @@ function getButtonCls({
       display: none;
     }
     @keyframes shine {
-      0% { left: -150%; }
-      100% { left: 200%; }
+      0% {
+        left: -150%;
+      }
+      100% {
+        left: 200%;
+      }
     }
 
     @media (max-width: ${tabletMaxWidth}) {

@@ -65,7 +65,7 @@ import { normalizeViewCount } from '~/helpers/viewCount';
 
 const SHOWCASE_CARD_CLASS = 'home-feed-card--showcase';
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
-const HOME_FEED_CARD_LAYOUT_VERSION = 'subject-ai-story-embed-v1';
+const HOME_FEED_CARD_LAYOUT_VERSION = 'subject-mobile-media-v2';
 const HOME_FEED_PRIMARY_TEXT_SELECTOR = '.home-feed-card__primary-preview-text';
 const HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX = 10;
 const HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX = 2;
@@ -1836,6 +1836,13 @@ const cardClass = css`
     .home-feed-card__body {
       flex-basis: var(--home-feed-card-mobile-body-height);
       height: var(--home-feed-card-mobile-body-height);
+    }
+    &:not(.${SHOWCASE_CARD_CLASS})
+      .home-feed-card__body:has(
+        .home-feed-card__subject-main--with-attachment
+      ) {
+      flex-basis: auto;
+      height: auto;
     }
     .home-feed-card__actions {
       min-height: max(3.1rem, 31px);

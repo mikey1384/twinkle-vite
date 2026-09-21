@@ -53,6 +53,7 @@ function Heading({
     displayedFeedActivityType && feedTimeStamp ? feedTimeStamp : timeStamp;
   const headingUser = displayedFeedActivityType ? feedUploader : uploader;
   const timeStampLink = useMemo(() => {
+    if (contentType === 'aiCard') return `/ai-card-summons/${id}`;
     if (contentType === 'pass') {
       const isAchievement = passRootType === 'achievement';
       return isAchievement

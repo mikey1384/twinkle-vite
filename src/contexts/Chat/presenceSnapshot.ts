@@ -1,3 +1,5 @@
+import { activityFromSnapshot } from '~/helpers/userActivity';
+
 // Presence snapshots for the app-wide chatStatus map.
 //
 // Two kinds of snapshot reach the reducer and they are not interchangeable:
@@ -71,6 +73,7 @@ export function applyPresenceSnapshot({
       {
         ...prev,
         ...member,
+        ...activityFromSnapshot(prev, member, requestedAt),
         id: userId,
         isOnline: true,
         ...(typeof member.isAway === 'boolean'
@@ -102,7 +105,12 @@ export function applyPresenceSnapshot({
     // lastActive stays untouched: online_status_changed owns it, and this
     // snapshot carries no timestamp to replace it with.
     mergedStatus[key] = stampPresenceSnapshotEntry(
-      { ...entry, isOnline: false },
+      {
+        ...entry,
+        isOnline: false,
+        activity: null,
+        activityUpdatedAt: requestedAt
+      },
       requestedAt
     );
   }

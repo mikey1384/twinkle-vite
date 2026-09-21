@@ -1,3 +1,4 @@
+import useUserActivity from '~/helpers/hooks/useUserActivity';
 import React, {
   useCallback,
   useEffect,
@@ -81,6 +82,15 @@ export default function WordleModal({
   const [wordleSnapshotStatus, setWordleSnapshotStatus] = useState<
     'loading' | 'ready' | 'error'
   >('loading');
+  useUserActivity(
+    activeTab === 'game' &&
+      wordleSnapshotStatus === 'ready' &&
+      !!solution &&
+      !guesses.includes(solution) &&
+      guesses.length < MAX_GUESSES
+      ? { kind: 'game', id: 'wordle' }
+      : null
+  );
   const [overviewModalShown, setOverviewModalShown] = useState(false);
   const [skipShieldModalShown, setSkipShieldModalShown] = useState(false);
   const [skipShieldChecklist, setSkipShieldChecklist] =
@@ -338,7 +348,9 @@ export default function WordleModal({
     </div>
   );
   const footer =
-    wordleSnapshotStatus === 'ready' ? readyFooter : (
+    wordleSnapshotStatus === 'ready' ? (
+      readyFooter
+    ) : (
       <div
         style={{
           width: '100%',
@@ -401,94 +413,94 @@ export default function WordleModal({
               flexDirection: 'column'
             }}
           >
-          <div ref={filterBarRef}>
-            <FilterBar
-              style={{
-                height: '5rem'
-              }}
-            >
-              <nav
-                className={activeTab === 'game' ? 'active' : ''}
-                onClick={() => setActiveTab('game')}
-              >
-                Wordle
-              </nav>
-              <nav
-                className={activeTab === 'rankings' ? 'active' : ''}
-                onClick={() => setActiveTab('rankings')}
-              >
-                Top Scorers
-              </nav>
-              <nav
-                className={activeTab === 'streaks' ? 'active' : ''}
-                onClick={() => setActiveTab('streaks')}
-              >
-                Top Streaks
-              </nav>
-            </FilterBar>
-          </div>
-
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            {activeTab === 'game' ? (
-              <div ref={gameRef} style={{ width: '100%' }}>
-                <Game
-                  attemptState={attemptState}
-                  isRevealing={isRevealing}
-                  onSetIsRevealing={setIsRevealing}
-                  onSetSubmissionPending={setWordleSubmissionPending}
-                  onRefreshCanonicalState={refreshCanonicalWordleState}
-                  channelName={channelName}
-                  channelId={channelId}
-                  guesses={guesses}
-                  isGameOver={isGameOver}
-                  isGameWon={isGameWon}
-                  isGameLost={isGameLost}
-                  isStrictMode={!!isStrictMode}
-                  nextDayTimeStamp={nextDayTimeStamp}
-                  solution={solution}
-                  onSetOverviewModalShown={setOverviewModalShown}
-                  submissionPending={wordleSubmissionPending}
-                  skipShieldChecklist={skipShieldChecklist}
-                  playAreaRef={playAreaRef}
-                  uiScale={uiScale}
-                />
-              </div>
-            ) : activeTab === 'rankings' ? (
-              <div
+            <div ref={filterBarRef}>
+              <FilterBar
                 style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center'
+                  height: '5rem'
                 }}
               >
-                <Rankings
+                <nav
+                  className={activeTab === 'game' ? 'active' : ''}
+                  onClick={() => setActiveTab('game')}
+                >
+                  Wordle
+                </nav>
+                <nav
+                  className={activeTab === 'rankings' ? 'active' : ''}
+                  onClick={() => setActiveTab('rankings')}
+                >
+                  Top Scorers
+                </nav>
+                <nav
+                  className={activeTab === 'streaks' ? 'active' : ''}
+                  onClick={() => setActiveTab('streaks')}
+                >
+                  Top Streaks
+                </nav>
+              </FilterBar>
+            </div>
+
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+              {activeTab === 'game' ? (
+                <div ref={gameRef} style={{ width: '100%' }}>
+                  <Game
+                    attemptState={attemptState}
+                    isRevealing={isRevealing}
+                    onSetIsRevealing={setIsRevealing}
+                    onSetSubmissionPending={setWordleSubmissionPending}
+                    onRefreshCanonicalState={refreshCanonicalWordleState}
+                    channelName={channelName}
+                    channelId={channelId}
+                    guesses={guesses}
+                    isGameOver={isGameOver}
+                    isGameWon={isGameWon}
+                    isGameLost={isGameLost}
+                    isStrictMode={!!isStrictMode}
+                    nextDayTimeStamp={nextDayTimeStamp}
+                    solution={solution}
+                    onSetOverviewModalShown={setOverviewModalShown}
+                    submissionPending={wordleSubmissionPending}
+                    skipShieldChecklist={skipShieldChecklist}
+                    playAreaRef={playAreaRef}
+                    uiScale={uiScale}
+                  />
+                </div>
+              ) : activeTab === 'rankings' ? (
+                <div
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Rankings
+                    channelId={channelId}
+                    onSetRankingsTab={setRankingsTab}
+                    rankingsTab={rankingsTab}
+                  />
+                </div>
+              ) : (
+                <Streaks
                   channelId={channelId}
-                  onSetRankingsTab={setRankingsTab}
-                  rankingsTab={rankingsTab}
+                  streaksTab={streaksTab}
+                  onSetStreaksTab={setStreaksTab}
+                  theme={theme}
                 />
-              </div>
-            ) : (
-              <Streaks
-                channelId={channelId}
-                streaksTab={streaksTab}
-                onSetStreaksTab={setStreaksTab}
-                theme={theme}
-              />
-            )}
-          </div>
+              )}
+            </div>
           </div>
         )}
         {wordleSnapshotStatus === 'ready' &&
           skipShieldModalShown &&
           skipShieldChecklist && (
-          <SkipShieldModal
-            checklist={skipShieldChecklist}
-            onKeepPlaying={() => setSkipShieldModalShown(false)}
-            onCloseAnyway={() => {
-              setSkipShieldModalShown(false);
-              onHide();
-            }}
-          />
+            <SkipShieldModal
+              checklist={skipShieldChecklist}
+              onKeepPlaying={() => setSkipShieldModalShown(false)}
+              onCloseAnyway={() => {
+                setSkipShieldModalShown(false);
+                onHide();
+              }}
+            />
           )}
         {wordleSnapshotStatus === 'ready' && overviewModalShown && (
           <OverviewModal

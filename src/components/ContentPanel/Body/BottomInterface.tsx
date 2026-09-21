@@ -32,7 +32,13 @@ import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 import { normalizeViewCount } from '~/helpers/viewCount';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
-const nonEditableContentTypes = ['build', 'pass', 'xpChange', 'sharedTopic'];
+const nonEditableContentTypes = [
+  'aiCard',
+  'build',
+  'pass',
+  'xpChange',
+  'sharedTopic'
+];
 
 const bottomInterfaceCSS = css`
   display: flex;
@@ -156,6 +162,7 @@ export default function BottomInterface({
     views
   } = contentObj;
   const sharePath = useMemo(() => {
+    if (contentType === 'aiCard') return `/ai-card-summons/${contentId}`;
     const contentPath =
       contentType === 'build'
         ? `app/${contentId}`
@@ -194,6 +201,7 @@ export default function BottomInterface({
     !targetObj?.comment && hasSubjectSecretSignal(targetObj?.subject);
 
   const userCanDeleteThis = useMemo(() => {
+    if (contentType === 'aiCard') return false;
     if (contentType === 'aiStory') return false;
     if (contentType === 'build') return false;
     if (userId === uploader.id) return true;
@@ -236,6 +244,7 @@ export default function BottomInterface({
   ]);
 
   const userCanEditThis = useMemo(() => {
+    if (contentType === 'aiCard') return false;
     if (contentType === 'aiStory') return false;
     if (contentType === 'build') return false;
     if (contentType === 'dailyReflection') return false;
@@ -371,7 +380,7 @@ export default function BottomInterface({
         className={`${bottomInterfaceCSS}`}
       >
         <div className="left">
-          {!secretHidden && (
+          {!secretHidden && contentType !== 'aiCard' && (
             <LikeButton
               contentType={contentType}
               contentId={contentId}
@@ -441,7 +450,7 @@ export default function BottomInterface({
             />
           ) : null}
         </div>
-        {!secretHidden && (
+        {!secretHidden && contentType !== 'aiCard' && (
           <div
             className={`right ${css`
               position: relative;

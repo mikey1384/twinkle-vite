@@ -14,6 +14,7 @@ import {
   captureAICardSummonQuotaProjectionRequest
 } from '~/helpers/aiCardSummonQuotaProjection';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
+import type { ChatPinScope } from '~/helpers/chatPins';
 
 export default function chatRequestHelpers({
   auth,
@@ -156,6 +157,48 @@ export default function chatRequestHelpers({
   }
 
   return {
+    async loadChatPins(input: ChatPinScope & { beforeId?: number }) {
+      try {
+        const { data } = await request.get(`${URL}/chat/pins`, {
+          ...auth(),
+          params: input
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateChatPin(
+      input: ChatPinScope & { messageId: number; pinned: boolean }
+    ) {
+      try {
+        const { data } = await request.put(`${URL}/chat/pins`, input, auth());
+        return data;
+      } catch (error: any) {
+        if (error?.response?.status === 401) return handleError(error);
+        throw new Error(
+          error?.response?.data?.error ||
+            'Couldn’t update this pin. Please try again.'
+        );
+      }
+    },
+    async loadChatPinContext(
+      input: ChatPinScope & {
+        messageId: number;
+        cursor?: number;
+        direction?: 'older' | 'newer';
+      }
+    ) {
+      try {
+        const { data } = await request.get(`${URL}/chat/pins/context`, {
+          ...auth(),
+          params: input
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async acceptInvitation(channelId: number) {
       try {
         const { data } = await request.post(

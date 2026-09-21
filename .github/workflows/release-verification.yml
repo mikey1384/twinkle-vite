@@ -11,11 +11,12 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22.22.0'
@@ -24,7 +25,38 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Typecheck
         run: NODE_OPTIONS=--max-old-space-size=3072 npm run typecheck
-      - name: Lint the reward bridge
-        run: node_modules/.bin/eslint src/containers/Build/PreviewPanel/hooks/useHostBridge.ts
-      - name: Verify reward bridge behavior
-        run: NODE_OPTIONS=--max-old-space-size=512 node_modules/.bin/tsx --test --test-concurrency=1 test/buildRewardsBridge.test.ts
+      - name: Lint changed website code
+        run: |
+          base=$(git merge-base origin/master HEAD)
+          if [[ "$base" == "$(git rev-parse HEAD)" ]]; then base=HEAD^; fi
+          git diff --name-only -z "$base" HEAD -- 'src/**/*.ts' 'src/**/*.tsx' 'src/**/*.js' | \
+            xargs -0 -r node --max-old-space-size=1024 node_modules/eslint/bin/eslint.js
+      - name: Focused behavior checks
+        run: >-
+          NODE_OPTIONS=--max-old-space-size=768 node_modules/.bin/tsx --test --test-concurrency=1
+          test/buildRewardsBridge.test.ts test/buildAiDecisionBridge.test.cjs
+          test/buildAppReferences.test.ts test/buildCommentFeedback.test.cjs
+          test/chatPins.test.ts test/userActivity.test.ts
+          test/contentActionAvailability.test.js test/feedCardSizing.test.cjs
+      - name: Install isolated browser tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/twinkle-browser-tools" --ignore-scripts --no-audit --no-fund --no-save playwright@1.60.0
+          "$RUNNER_TEMP/twinkle-browser-tools/node_modules/.bin/playwright" install --with-deps chromium webkit
+          echo "PLAYWRIGHT_MODULE=$RUNNER_TEMP/twinkle-browser-tools/node_modules/playwright" >> "$GITHUB_ENV"
+      - name: Render and exercise affected interfaces, serially
+        env:
+          FEED_MEDIA_ARTIFACTS: ${{ runner.temp }}/ui-evidence/feed
+          PROFILE_PRESENCE_SCREENSHOTS: ${{ runner.temp }}/ui-evidence/presence
+          RELEASE_CONTROLS_ARTIFACTS: ${{ runner.temp }}/ui-evidence/controls
+        run: >-
+          NODE_OPTIONS=--max-old-space-size=768 node --test --test-concurrency=1
+          test/homeFeedSubjectMedia.browser.test.js test/profilePresence.browser.test.js
+          test/releaseControls.browser.test.js
+      - name: Retain synthetic UI evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-ui-evidence
+          path: ${{ runner.temp }}/ui-evidence
+          retention-days: 7
+          if-no-files-found: ignore

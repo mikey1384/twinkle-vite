@@ -1,3 +1,4 @@
+import { USER_ACTIVITY_INPUT_EVENT } from '~/helpers/userActivity';
 import {
   isAiImageQuality,
   isOpenAiImageModel,
@@ -1913,6 +1914,19 @@ export function useHostBridge({
         return;
       }
 
+      if (type === 'runtime-user-activity') {
+        // The source window, origin, nonce and current frame were verified above.
+        // The reporter additionally requires this to be the foreground public app.
+        if (runtimeOnly && fromTargetWindow) {
+          window.dispatchEvent(
+            new CustomEvent(USER_ACTIVITY_INPUT_EVENT, {
+              detail: { buildId: activeBuildId }
+            })
+          );
+        }
+        return;
+      }
+
       if (type === 'runtime-observation') {
         handleRuntimeObservationPreviewMessage({
           activeBuildId,
@@ -2190,6 +2204,24 @@ export function useHostBridge({
                 appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
               });
             }
+            if (
+              response?.aiUsagePolicy &&
+              typeof response.aiUsagePolicy === 'object'
+            ) {
+              onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            }
+            break;
+
+          case 'ai:decide':
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+            }
+            response = await requestRefs.callBuildRuntimeAiDecisionRef.current({
+              buildId: activeBuild.id,
+              state: payload.state,
+              questions: payload.questions,
+              appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
+            });
             if (
               response?.aiUsagePolicy &&
               typeof response.aiUsagePolicy === 'object'
