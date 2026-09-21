@@ -8,6 +8,7 @@ import type { BranchMainUpdateNoticeControl } from '../BranchMainUpdateNotice';
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
+  | 'auto'
   | 'gpt-6-astra'
   | 'gpt-5.6-luna'
   | 'grok-4.6'
@@ -21,7 +22,7 @@ export type BuildLumineModel =
   // Other legacy stored preferences migrated by the server.
   | 'claude-opus-4-8'
   | 'claude-fable-5';
-export type BuildLumineMode = 'light' | 'medium' | 'heavy' | 'superheavy';
+export type BuildLumineMode = 'auto' | 'light' | 'medium' | 'heavy' | 'superheavy';
 export type BuildLumineThinkLevel =
   'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 

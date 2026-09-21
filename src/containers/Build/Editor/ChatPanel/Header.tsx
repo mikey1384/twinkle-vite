@@ -840,6 +840,16 @@ function LumineModelSelectionSettings({
           </option>
         ))}
       </LumineSelect>
+      {control.value.mode === 'auto' && !compact ? (
+        <span
+          className={css`
+            font-size: 1rem;
+            color: #475569;
+          `}
+        >
+          Model chosen per request
+        </span>
+      ) : null}
       {hasAdvancedModelOptions ? (
         <button
           type="button"

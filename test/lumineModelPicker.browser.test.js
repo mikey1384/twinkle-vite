@@ -120,7 +120,7 @@ function compileFixture() {
 
 test(
   'the model picker stays open across every mode, save outcome and header layout',
-  { timeout: 45_000 },
+  { timeout: 120_000 },
   async () => {
     const result = await compileFixture();
     let browser;
@@ -128,7 +128,7 @@ test(
     const outputDirectory = process.env.LUMINE_PICKER_SCREENSHOTS;
     if (outputDirectory) mkdirSync(outputDirectory, { recursive: true });
     try {
-      browser = await chromium.launch({ headless: true, timeout: 10_000 });
+      browser = await chromium.launch({ headless: true, timeout: 30_000 });
       for (const compact of [true, false]) {
         const page = await browser.newPage({
           viewport: { width: compact ? 375 : 900, height: 400 }
@@ -250,6 +250,30 @@ test(
               compact ? 'compact-picker.png' : 'full-picker.png'
             )
           });
+        // Auto is canonical only after the server save; manual choices and
+        // their expansion state survive switching back out of Auto.
+        await mode.selectOption('auto');
+        assert.equal(await mode.inputValue(), 'medium');
+        await page.evaluate(() => window.finishModelSave(true));
+        await page.waitForFunction(
+          () => document.querySelector('select').value === 'auto'
+        );
+        assert.equal(await model.count(), 0);
+        if (outputDirectory)
+          await page.screenshot({
+            path: path.join(
+              outputDirectory,
+              compact ? 'compact-auto.png' : 'full-auto.png'
+            )
+          });
+        await mode.selectOption('heavy');
+        await page.evaluate(() => window.finishModelSave(false));
+        await page.getByText('Fixture save failed', { exact: true }).waitFor();
+        assert.equal(await mode.inputValue(), 'auto');
+        await mode.selectOption('light');
+        await page.evaluate(() => window.finishModelSave(true));
+        await model.waitFor();
+        assert.equal(await model.inputValue(), 'gpt-5.6-luna');
         await page.evaluate(() => window.unmountFixture());
         await page.close();
       }

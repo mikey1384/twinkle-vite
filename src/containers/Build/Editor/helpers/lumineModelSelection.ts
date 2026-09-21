@@ -7,10 +7,11 @@ import type {
   BuildLumineThinkLevel
 } from '../ChatPanel/types';
 
-export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'gpt-5.6-luna';
-export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'xhigh';
+export const DEFAULT_LUMINE_MODEL: BuildLumineModel = 'auto';
+export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'medium';
 
 export const LUMINE_MODE_LABELS: Record<BuildLumineMode, string> = {
+  auto: 'Auto',
   light: 'Light',
   medium: 'Medium',
   heavy: 'Heavy',
@@ -18,21 +19,21 @@ export const LUMINE_MODE_LABELS: Record<BuildLumineMode, string> = {
 };
 
 export const LUMINE_MODES: BuildLumineMode[] = [
+  'auto',
   'light',
   'medium',
   'heavy',
   'superheavy'
 ];
 
-const DEFAULT_LUMINE_MODEL_BY_MODE: Record<
-  BuildLumineMode,
-  BuildLumineModel
-> = {
-  light: 'gpt-5.6-luna',
-  medium: 'grok-4.6',
-  heavy: 'gpt-5.6-sol',
-  superheavy: 'gpt-6-astra'
-};
+const DEFAULT_LUMINE_MODEL_BY_MODE: Record<BuildLumineMode, BuildLumineModel> =
+  {
+    auto: 'auto',
+    light: 'gpt-5.6-luna',
+    medium: 'grok-4.6',
+    heavy: 'gpt-5.6-sol',
+    superheavy: 'gpt-6-astra'
+  };
 
 const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
   'low',
@@ -43,6 +44,15 @@ const ALL_LUMINE_THINK_LEVELS: BuildLumineThinkLevel[] = [
 ];
 
 const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
+  {
+    model: 'auto',
+    mode: 'auto',
+    label: 'Auto',
+    description:
+      'Chooses a suitable model for each request, balancing capability and Energy.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
+  },
   {
     model: 'gpt-5.6-luna',
     mode: 'light',
@@ -124,6 +134,7 @@ const DEFAULT_FALLBACK_LUMINE_MODEL_OPTION =
 
 function isLumineModel(value: unknown): value is BuildLumineModel {
   return (
+    value === 'auto' ||
     value === 'gpt-6-astra' ||
     value === 'gpt-5.6-luna' ||
     value === 'grok-4.6' ||
@@ -142,6 +153,7 @@ function isLumineModel(value: unknown): value is BuildLumineModel {
 
 function isLumineMode(value: unknown): value is BuildLumineMode {
   return (
+    value === 'auto' ||
     value === 'light' ||
     value === 'medium' ||
     value === 'heavy' ||
@@ -150,10 +162,7 @@ function isLumineMode(value: unknown): value is BuildLumineMode {
 }
 
 function resolveLegacyLumineOptionMode(
-  option: Pick<
-    BuildLumineModelOption,
-    'model' | 'defaultReasoningEffort'
-  >
+  option: Pick<BuildLumineModelOption, 'model' | 'defaultReasoningEffort'>
 ): BuildLumineMode {
   if (
     option.model === 'gpt-5.6-sol' &&
@@ -293,9 +302,7 @@ export function normalizeLumineModelSelection({
       : undefined) ||
     (requestedSelectionEffort
       ? matchingModelOptions.find((candidate) =>
-          candidate.supportedReasoningEfforts.includes(
-            requestedSelectionEffort
-          )
+          candidate.supportedReasoningEfforts.includes(requestedSelectionEffort)
         )
       : undefined) ||
     matchingModelOptions[0] ||
@@ -338,7 +345,10 @@ export function resolveLumineMode({
   model,
   reasoningEffort
 }: Pick<BuildLumineModelPreference, 'model'> &
-  Partial<Pick<BuildLumineModelPreference, 'reasoningEffort'>>): BuildLumineMode {
+  Partial<
+    Pick<BuildLumineModelPreference, 'reasoningEffort'>
+  >): BuildLumineMode {
+  if (model === 'auto') return 'auto';
   if (model === 'gpt-5.6-luna') return 'light';
   if (
     model === 'gpt-6-astra' ||
@@ -378,8 +388,7 @@ export function getLumineSelectionForMode({
   const preferredOption =
     modelOptions.find(
       (option) => option.model === preferredModel && option.mode === mode
-    ) ||
-    modelOptions.find((option) => option.mode === mode);
+    ) || modelOptions.find((option) => option.mode === mode);
   if (!preferredOption) return null;
 
   return normalizeLumineModelSelection({
@@ -407,7 +416,9 @@ export function getAdvancedLumineModelOptions({
   mode: BuildLumineMode;
   modelOptions: BuildLumineModelOption[];
 }) {
-  return modelOptions.filter((option) => option.mode === mode);
+  return mode === 'auto'
+    ? []
+    : modelOptions.filter((option) => option.mode === mode);
 }
 
 export function resolveLumineModelSelectionFromPolicy(

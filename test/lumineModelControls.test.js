@@ -44,9 +44,9 @@ const requestHelperIndexSource = readFileSync(
 );
 
 function assertClientVersionAtLeast(expected) {
-  const { version } = JSON.parse(readFileSync(
-    new URL('../package.json', import.meta.url), 'utf8'
-  ));
+  const { version } = JSON.parse(
+    readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+  );
   const actualParts = version.split('.').map(Number);
   const expectedParts = expected.split('.').map(Number);
   const comparison = actualParts.findIndex(
@@ -79,7 +79,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /DEFAULT_LUMINE_MODEL[^=]*= 'gpt-5\.6-luna'[\s\S]*?DEFAULT_LUMINE_THINK_LEVEL[^=]*= 'xhigh'/
+    /DEFAULT_LUMINE_MODEL[^=]*= 'auto'[\s\S]*?DEFAULT_LUMINE_THINK_LEVEL[^=]*= 'medium'/
   );
   assert.match(
     selectionHelperSource,
@@ -119,12 +119,11 @@ test('lumine Light defaults to Luna xhigh while following the served API catalog
     getLumineSelectionForMode,
     getSelectableLumineModelOptions,
     resolveLumineModelSelectionFromPolicy
-  } = await import(
-    '../src/containers/Build/Editor/helpers/lumineModelSelection.ts'
-  );
+  } =
+    await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
 
-  assert.equal(DEFAULT_LUMINE_MODEL, 'gpt-5.6-luna');
-  assert.equal(DEFAULT_LUMINE_THINK_LEVEL, 'xhigh');
+  assert.equal(DEFAULT_LUMINE_MODEL, 'auto');
+  assert.equal(DEFAULT_LUMINE_THINK_LEVEL, 'medium');
   assert.match(
     buildEditorSource,
     /getLumineModelSelection:\s*\(\) =>[\s\S]*?getLatestCopilotPolicy\(\)[\s\S]*?getCurrentLumineModelSelection\(\)\s*:\s*null/m
@@ -184,9 +183,9 @@ test('lumine Light defaults to Luna xhigh while following the served API catalog
     }
   );
   assert.deepEqual(resolveLumineModelSelectionFromPolicy(null), {
-    model: 'gpt-5.6-luna',
-    reasoningEffort: 'xhigh',
-    mode: 'light',
+    model: 'auto',
+    reasoningEffort: 'medium',
+    mode: 'auto',
     source: 'default'
   });
 
@@ -231,9 +230,8 @@ test('lumine retires Grok Heavy while preserving existing users on Heavy', async
     getLumineSelectionForMode,
     getSelectableLumineModelOptions,
     resolveLumineModelSelectionFromPolicy
-  } = await import(
-    '../src/containers/Build/Editor/helpers/lumineModelSelection.ts'
-  );
+  } =
+    await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
   const legacyPolicy = {
     lumineModelPreference: {
       model: 'grok-4.6',
@@ -315,9 +313,8 @@ test('lumine Super Heavy follows an older API catalog and migrates retired selec
     getSelectableLumineModelOptions,
     normalizeLumineModelSelection,
     resolveLumineModelSelectionFromPolicy
-  } = await import(
-    '../src/containers/Build/Editor/helpers/lumineModelSelection.ts'
-  );
+  } =
+    await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
   const policy = {
     lumineModelPreference: {
       model: 'claude-fable-5',
@@ -355,9 +352,9 @@ test('lumine Super Heavy follows an older API catalog and migrates retired selec
 
   const options = getSelectableLumineModelOptions(policy);
   assert.deepEqual(
-    options.filter((option) => option.mode === 'superheavy').map(
-      (option) => option.model
-    ),
+    options
+      .filter((option) => option.mode === 'superheavy')
+      .map((option) => option.model),
     ['claude-fable-5-1']
   );
   assert.deepEqual(resolveLumineModelSelectionFromPolicy(policy), {
@@ -430,19 +427,38 @@ test('lumine preserves the canonical Astra selection and keeps Fable 5.1 availab
     getSelectableLumineModelOptions,
     normalizeLumineModelSelection,
     resolveLumineModelSelectionFromPolicy
-  } = await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
+  } =
+    await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
   const options = getSelectableLumineModelOptions(null);
   const selection = {
-    model: 'gpt-6-astra', reasoningEffort: 'xhigh', mode: 'superheavy', source: 'stored'
+    model: 'gpt-6-astra',
+    reasoningEffort: 'xhigh',
+    mode: 'superheavy',
+    source: 'stored'
   };
-  assert.deepEqual(resolveLumineModelSelectionFromPolicy({
-    lumineModelOptions: options, lumineModelPreference: selection
-  }), selection);
-  assert.equal(normalizeLumineModelSelection({
-    selection: { model: 'gpt-5.6-sol', reasoningEffort: 'max', source: 'stored' },
-    modelOptions: options
-  }).model, 'gpt-6-astra');
-  assert.equal(normalizeLumineModelSelection({
-    selection: { model: 'claude-fable-5', source: 'stored' }, modelOptions: options
-  }).model, 'claude-fable-5-1');
+  assert.deepEqual(
+    resolveLumineModelSelectionFromPolicy({
+      lumineModelOptions: options,
+      lumineModelPreference: selection
+    }),
+    selection
+  );
+  assert.equal(
+    normalizeLumineModelSelection({
+      selection: {
+        model: 'gpt-5.6-sol',
+        reasoningEffort: 'max',
+        source: 'stored'
+      },
+      modelOptions: options
+    }).model,
+    'gpt-6-astra'
+  );
+  assert.equal(
+    normalizeLumineModelSelection({
+      selection: { model: 'claude-fable-5', source: 'stored' },
+      modelOptions: options
+    }).model,
+    'claude-fable-5-1'
+  );
 });
