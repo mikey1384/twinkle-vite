@@ -4195,11 +4195,16 @@ export function useHostBridge({
                     operation: type.slice('rewards:'.length),
                     payload: {
                       ruleId: payload?.ruleId,
+                      ...(type === 'rewards:start'
+                        ? { levelIndex: payload?.levelIndex }
+                        : {}),
                       challengeId: payload?.challengeId,
                       answers: payload?.answers,
                       ...(type === 'rewards:progress'
                         ? {
                             frames: payload?.frames,
+                            record: payload?.record,
+                            requestId: payload?.requestId,
                             completionToken: payload?.completionToken
                           }
                         : type === 'rewards:claim' &&
@@ -4218,6 +4223,9 @@ export function useHostBridge({
                       limit: payload?.limit
                     }
                   });
+                  if (response?.aiUsagePolicy) {
+                    onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+                  }
                   break;
                 } catch (previewError) {
                   previewFailure =
@@ -4279,11 +4287,16 @@ export function useHostBridge({
               operation: type.slice('rewards:'.length),
               payload: {
                 ruleId: payload?.ruleId,
+                ...(type === 'rewards:start'
+                  ? { levelIndex: payload?.levelIndex }
+                  : {}),
                 challengeId: payload?.challengeId,
                 answers: payload?.answers,
                 ...(type === 'rewards:progress'
                   ? {
                       frames: payload?.frames,
+                      record: payload?.record,
+                      requestId: payload?.requestId,
                       completionToken: payload?.completionToken
                     }
                   : type === 'rewards:claim' &&
@@ -4303,6 +4316,9 @@ export function useHostBridge({
               token: rewardToken,
               runtimeGrant
             });
+            if (response?.aiUsagePolicy) {
+              onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            }
             if (
               rewardUserId &&
               previewAuth.userIdRef.current === rewardUserId &&
