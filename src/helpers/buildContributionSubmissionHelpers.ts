@@ -1,3 +1,5 @@
+import { isCachedCardStateFresher } from './buildCardState';
+
 interface BuildContributionSubmissionUpdateActionInput {
   isOwner: boolean;
   isPublic?: boolean | number | null;
@@ -81,6 +83,60 @@ export function canUpdateAppFromBuildContributionSubmission({
   );
 }
 
+export function resolveBuildContributionSubmissionPayload({
+  submission,
+  cachedSubmissionState,
+  cachedReleaseState
+}: {
+  submission?: Record<string, any> | null;
+  cachedSubmissionState?: Record<string, any> | null;
+  cachedReleaseState?: Record<string, any> | null;
+}) {
+  const useCachedBranch = isCachedCardStateFresher(
+    cachedSubmissionState,
+    submission
+  );
+  const hasMergeBaseline =
+    Number.isSafeInteger(submission?.submittedAfterMergeId) &&
+    Number(submission?.submittedAfterMergeId) >= 0;
+  const cachedCompletionPredatesSubmission = Boolean(
+    hasMergeBaseline &&
+      cachedSubmissionState?.status === 'merged' &&
+      !cachedSubmissionState?.lumineFix &&
+      cachedSubmissionState?.lastCompletedMerge &&
+      Number(cachedSubmissionState.lastCompletedMerge.id) <=
+        Number(submission?.submittedAfterMergeId)
+  );
+  const branchPayload = useCachedBranch && !cachedCompletionPredatesSubmission
+    ? { ...(submission || {}), ...(cachedSubmissionState || {}) }
+    : { ...(submission || {}) };
+  const completedMerge = branchPayload.lastCompletedMerge;
+  const mergedAfterSubmission = Boolean(
+    completedMerge &&
+      (hasMergeBaseline
+        ? Number(completedMerge.id) > Number(submission?.submittedAfterMergeId)
+        : Number(submission?.createdAt) > 0 &&
+          Number(completedMerge.createdAt) > Number(submission?.createdAt))
+  );
+  // A canonical completed merge settles this message permanently, even when
+  // a newer branch-wide event reopens the branch or starts another repair.
+  // A later submission has its own merge baseline and remains actionable.
+  const settledPayload =
+    branchPayload.status !== 'gone' &&
+    (Number(submission?.submissionMergedAt) > 0 || mergedAfterSubmission)
+      ? {
+          ...branchPayload,
+          status: 'merged',
+          lumineFix: null,
+          submissionMergedAt:
+            Number(submission?.submissionMergedAt) || completedMerge.createdAt
+        }
+      : branchPayload;
+  return isCachedCardStateFresher(cachedReleaseState, submission)
+    ? { ...settledPayload, ...(cachedReleaseState || {}) }
+    : settledPayload;
+}
+
 export function resolveCanonicalBuildContributionSubmissionState({
   contribution,
   current,
@@ -104,10 +160,17 @@ export function resolveCanonicalBuildContributionSubmissionState({
         ? 'merging'
         : 'open'
     : null;
+  const lastCompletedMerge = contribution?.lastCompletedMerge;
+  const advancesCompletedMerge =
+    Number.isSafeInteger(lastCompletedMerge?.id) &&
+    lastCompletedMerge.id > Number(current?.lastCompletedMerge?.id || 0) &&
+    Number.isSafeInteger(lastCompletedMerge.createdAt) &&
+    lastCompletedMerge.createdAt > 0;
   return {
     ...(current || {}),
     ...(status ? { status } : {}),
     ...(lumineFix === undefined ? {} : { lumineFix }),
+    ...(advancesCompletedMerge ? { lastCompletedMerge } : {}),
     __eventTime: eventTimeMs
   };
 }

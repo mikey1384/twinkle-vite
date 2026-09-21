@@ -4,6 +4,7 @@ import {
   applyCanonicalBuildContributionSubmissionUpdate,
   canUpdateAppFromBuildContributionSubmission,
   resolveBuildContributionLumineFixSocketUpdate,
+  resolveBuildContributionSubmissionPayload,
   resolveCanonicalBuildContributionReleaseState,
   resolveCanonicalBuildContributionSubmissionState,
   upsertBuildContributionSubmissionState
@@ -396,5 +397,166 @@ test('a newer reload payload wins over a root release cached in this tab', () =>
   assert.equal(
     isCachedCardStateFresher({ __eventTime: 3_000 }, { eventTimeMs: 4_000 }),
     false
+  );
+});
+
+test('merging then editing a reusable branch keeps the original message completed', () => {
+  const submission = {
+    status: 'open',
+    createdAt: 100,
+    submittedAfterMergeId: 0,
+    eventTimeMs: 100_000
+  };
+  const merged = resolveCanonicalBuildContributionSubmissionState({
+    contribution: {
+      contributionStatus: 'merged',
+      lastCompletedMerge: { id: 41, createdAt: 200 }
+    },
+    lumineFix: null,
+    eventTimeMs: 200_000
+  });
+  const reopened = resolveCanonicalBuildContributionSubmissionState({
+    current: merged,
+    contribution: { contributionStatus: 'draft' },
+    eventTimeMs: 300_000
+  });
+
+  for (const cachedSubmissionState of [merged, reopened]) {
+    const payload = resolveBuildContributionSubmissionPayload({
+      submission,
+      cachedSubmissionState
+    });
+    assert.equal(payload.status, 'merged');
+    assert.equal(payload.submissionMergedAt, 200);
+    assert.equal(payload.lumineFix, null);
+  }
+});
+
+test('a fresh submission on the same branch remains actionable beside an old merged message', () => {
+  const cachedSubmissionState = {
+    status: 'open',
+    lastCompletedMerge: { id: 41, createdAt: 200 },
+    __eventTime: 300_000
+  };
+  const oldPayload = resolveBuildContributionSubmissionPayload({
+    submission: { status: 'open', createdAt: 100, submittedAfterMergeId: 0 },
+    cachedSubmissionState
+  });
+  const newPayload = resolveBuildContributionSubmissionPayload({
+    submission: { status: 'open', createdAt: 200, submittedAfterMergeId: 41 },
+    cachedSubmissionState
+  });
+  assert.equal(oldPayload.status, 'merged');
+  assert.equal(newPayload.status, 'open');
+});
+
+test('a delayed previous-merge response cannot close the next submission', () => {
+  const payload = resolveBuildContributionSubmissionPayload({
+    submission: {
+      status: 'open',
+      createdAt: 200,
+      submittedAfterMergeId: 41,
+      eventTimeMs: 200_010
+    },
+    cachedSubmissionState: {
+      status: 'merged',
+      lastCompletedMerge: { id: 41, createdAt: 200 },
+      __eventTime: 200_020
+    }
+  });
+  assert.equal(payload.status, 'open');
+});
+
+test('a second merge in the same second settles the second submission by identity', () => {
+  const payload = resolveBuildContributionSubmissionPayload({
+    submission: { status: 'open', createdAt: 200, submittedAfterMergeId: 41 },
+    cachedSubmissionState: {
+      status: 'open',
+      lastCompletedMerge: { id: 42, createdAt: 200 },
+      __eventTime: 300_000
+    }
+  });
+  assert.equal(payload.status, 'merged');
+});
+
+test('another parked conflict repair belongs only to the later submission', () => {
+  const fix = { status: 'needs_resolution' };
+  const cachedSubmissionState = {
+    status: 'merging',
+    lastCompletedMerge: { id: 41, createdAt: 200 },
+    lumineFix: fix,
+    __eventTime: 300_000
+  };
+  const previous = resolveBuildContributionSubmissionPayload({
+    submission: { status: 'open', createdAt: 100, submittedAfterMergeId: 0 },
+    cachedSubmissionState
+  });
+  const current = resolveBuildContributionSubmissionPayload({
+    submission: { status: 'open', createdAt: 201, submittedAfterMergeId: 41 },
+    cachedSubmissionState
+  });
+  assert.equal(previous.status, 'merged');
+  assert.equal(previous.lumineFix, null);
+  assert.equal(current.status, 'merging');
+  assert.equal(current.lumineFix, fix);
+});
+
+test('reloaded historical completion survives a newer branch-only recovery response', () => {
+  const payload = resolveBuildContributionSubmissionPayload({
+    submission: {
+      status: 'merged',
+      submissionMergedAt: 200,
+      createdAt: 100,
+      eventTimeMs: 400_000
+    },
+    cachedSubmissionState: { status: 'open', __eventTime: 400_010 }
+  });
+  assert.equal(payload.status, 'merged');
+});
+
+test('legacy submissions use completed history without mistaking same-second sends for acceptance', () => {
+  const cachedSubmissionState = {
+    status: 'open',
+    lastCompletedMerge: { id: 41, createdAt: 200 },
+    __eventTime: 300_000
+  };
+  assert.equal(
+    resolveBuildContributionSubmissionPayload({
+      submission: { status: 'open', createdAt: 100 },
+      cachedSubmissionState
+    }).status,
+    'merged'
+  );
+  assert.equal(
+    resolveBuildContributionSubmissionPayload({
+      submission: { status: 'open', createdAt: 200 },
+      cachedSubmissionState
+    }).status,
+    'open'
+  );
+});
+
+test('settled messages preserve canonical Update App status and removed branches stay unavailable', () => {
+  const submission = {
+    status: 'merged',
+    createdAt: 100,
+    submissionMergedAt: 200,
+    eventTimeMs: 300_000
+  };
+  const payload = resolveBuildContributionSubmissionPayload({
+    submission,
+    cachedSubmissionState: { status: 'open', __eventTime: 400_000 },
+    cachedReleaseState: {
+      isPublic: true,
+      releaseStatus: { hasUnpublishedChanges: true },
+      __eventTime: 400_000
+    }
+  });
+  assert.equal(canUpdateAppFromBuildContributionSubmission({ isOwner: true, ...payload }), true);
+  assert.equal(
+    resolveBuildContributionSubmissionPayload({
+      submission: { ...submission, status: 'gone' }
+    }).status,
+    'gone'
   );
 });

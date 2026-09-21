@@ -12,9 +12,11 @@ import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
 import { Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useAppContext, useChatContext } from '~/contexts';
-import { isCachedCardStateFresher } from '~/helpers/buildCardState';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
-import { canUpdateAppFromBuildContributionSubmission } from '~/helpers/buildContributionSubmissionHelpers';
+import {
+  canUpdateAppFromBuildContributionSubmission,
+  resolveBuildContributionSubmissionPayload
+} from '~/helpers/buildContributionSubmissionHelpers';
 import useRelease from '~/components/Build/hooks/useRelease';
 import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
 import { startBuildContributionLumineFixRecovery } from '~/helpers/buildContributionLumineFixRecovery';
@@ -106,6 +108,9 @@ interface BuildContributionSubmissionPayload {
     deleted?: number;
   };
   revisionHash?: string;
+  submittedAfterMergeId?: number;
+  submissionMergedAt?: number;
+  lastCompletedMerge?: { id: number; createdAt: number } | null;
   status?: BuildContributionSubmissionStatus;
   createdAt?: number;
   ownerLastOpenedBranchAt?: number;
@@ -177,22 +182,15 @@ export default function BuildContributionSubmission({
       ? v.state.buildContributionReleaseByRootBuildId?.[rootBuildId]
       : null
   );
-  // Only when it is actually newer than what the server hydrated. The cache is
-  // keyed by branch, and a branch outlives any one submission: merge an earlier
-  // card, then the contributor saves again and sends a new one, and without this
-  // the fresh 'open' card inherits the old 'merged' entry and hides the very
-  // actions the owner was messaged about.
-  const payload = useMemo(() => {
-    const branchPayload = isCachedCardStateFresher(
-      cachedSubmissionState,
-      submission
-    )
-      ? { ...(submission || {}), ...(cachedSubmissionState || {}) }
-      : { ...(submission || {}) };
-    return isCachedCardStateFresher(cachedReleaseState, submission)
-      ? { ...branchPayload, ...(cachedReleaseState || {}) }
-      : branchPayload;
-  }, [submission, cachedSubmissionState, cachedReleaseState]);
+  const payload = useMemo(
+    () =>
+      resolveBuildContributionSubmissionPayload({
+        submission,
+        cachedSubmissionState,
+        cachedReleaseState
+      }),
+    [submission, cachedSubmissionState, cachedReleaseState]
+  );
   const title = String(payload?.title || 'their project');
   const branchLabel = String(payload?.branchLabel || 'their branch');
   const changedFiles: Array<{ path?: string; status?: ChangedFileStatus }> =
