@@ -1252,7 +1252,8 @@ export default function buildRequestHelpers({
     async routeBuildChatUpload({
       buildId,
       messageText,
-      files
+      files,
+      videoFrameReferences = false
     }: {
       buildId: number;
       messageText?: string;
@@ -1261,13 +1262,15 @@ export default function buildRequestHelpers({
         mimeType?: string | null;
         sizeBytes?: number | null;
       }>;
+      videoFrameReferences?: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/chat/upload-route`,
           {
             messageText,
-            files
+            files,
+            videoFrameReferences
           },
           auth()
         );

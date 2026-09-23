@@ -21,6 +21,11 @@ import {
   isImageChatReferenceFile,
   isReferenceDocumentChatFile
 } from '../helpers/chatUploads';
+import {
+  extractVideoReferenceFrames,
+  getVideoFrameCountPerFile,
+  isVideoChatReferenceFile
+} from '../helpers/videoReferenceFrames';
 import type {
   Build,
   BuildChatFileSelectionResult,
@@ -621,7 +626,9 @@ export default function useChatUploads({
           fileName: file.name,
           mimeType: file.type || null,
           sizeBytes: file.size
-        }))
+        })),
+        // This client turns videos into still frames for chat reference.
+        videoFrameReferences: true
       })) as BuildChatUploadDecision | null;
       if (didBuildChatUploadTargetChange()) {
         return { handled: true };
@@ -880,7 +887,43 @@ export default function useChatUploads({
       }
 
       if (route === 'chat_reference') {
-        const referenceFiles = files.filter(isImageChatReferenceFile);
+        const imageFiles = files.filter(isImageChatReferenceFile);
+        const videoFiles = files.filter(isVideoChatReferenceFile);
+        const framesPerVideo = getVideoFrameCountPerFile({
+          imageCount: imageFiles.length,
+          videoCount: videoFiles.length
+        });
+        const frameFiles: File[] = [];
+        if (videoFiles.length > 0) {
+          // The typed draft stays in the composer on both notes below, so
+          // the user's bug description is never lost.
+          if (framesPerVideo === 0) {
+            clearLocalProgressMessage();
+            await persistBuildChatAssistantNote(
+              'I can look at up to 4 pictures at once, and each video needs at least one. Send the video with fewer images.',
+              { buildId: uploadBuildId }
+            );
+            return { handled: true };
+          }
+          try {
+            for (const videoFile of videoFiles) {
+              frameFiles.push(
+                ...(await extractVideoReferenceFrames(videoFile, framesPerVideo))
+              );
+            }
+          } catch {
+            clearLocalProgressMessage();
+            await persistBuildChatAssistantNote(
+              "I couldn't read frames from that video. Send a few screenshots of what happens, or describe it and I'll take a look.",
+              { buildId: uploadBuildId }
+            );
+            return { handled: true };
+          }
+          if (didBuildChatUploadTargetChange()) {
+            return { handled: true };
+          }
+        }
+        const referenceFiles = [...imageFiles, ...frameFiles];
         if (referenceFiles.length === 0) {
           clearLocalProgressMessage();
           await persistBuildChatAssistantNote(
