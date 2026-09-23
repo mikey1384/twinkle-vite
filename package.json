@@ -1,7 +1,7 @@
 {
   "name": "twinkle",
   "private": true,
-  "version": "2.2.62",
+  "version": "2.2.63",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -74,6 +74,7 @@ import {
   publishTerminalChatRecovery
 } from '~/helpers/chatSelectedChannelRecovery';
 import type { RequestAttemptTiming } from '~/contexts/requestHelpers/axiosInstance';
+import { shouldSkipChatWakeBarrier } from './chatWakeBarrierThrottle';
 
 const MAX_CANONICAL_CHAT_BOOTSTRAP_ATTEMPTS = 4;
 
@@ -269,6 +270,9 @@ export default function useInitSocket({
   const socketAuthValidationInFlightRef = useRef(false);
   const terminalSocketAuthFailureRef = useRef(false);
   const wakeReconcileInFlightRef = useRef(false);
+  const lastChatWakeBarrierRef = useRef<{ socketId: string; at: number } | null>(
+    null
+  );
   const bootstrapAwaitingBindUserIdRef = useRef<number | null>(userId || null);
   const userActionAckedRef = useRef(false);
   const userActionAttemptsRef = useRef(0);
@@ -367,7 +371,10 @@ export default function useInitSocket({
     }
   }
 
-  function requestChatWakeBarrier(reason: 'focus' | 'online' | 'pageshow') {
+  function requestChatWakeBarrier(
+    reason: 'focus' | 'online' | 'pageshow',
+    hiddenForMs = 0
+  ) {
     if (terminalSocketAuthFailureRef.current) return;
     const bindingUserId = Number(userIdRef.current || 0);
     const hasCurrentChatProjection =
@@ -389,6 +396,17 @@ export default function useInitSocket({
       lastFailedBootstrapIdRef.current ||
       loadChatRetryTimerRef.current ||
       wakeReconcileInFlightRef.current
+    ) {
+      return;
+    }
+
+    if (
+      shouldSkipChatWakeBarrier({
+        lastBarrier: lastChatWakeBarrierRef.current,
+        socketId: socket.id,
+        hiddenForMs,
+        now: Date.now()
+      })
     ) {
       return;
     }
@@ -419,6 +437,10 @@ export default function useInitSocket({
         ) {
           return;
         }
+        // Only a completed barrier on this session starts the quiet minute.
+        lastChatWakeBarrierRef.current = expectedSocketId
+          ? { socketId: expectedSocketId, at: Date.now() }
+          : null;
         // Socket.IO preserves packet ordering within one session, and the
         // server reconciles room ids from the writer before acknowledging. A
         // membership delta also requires a writer-backed projection refresh;
@@ -757,8 +779,9 @@ export default function useInitSocket({
         checkFeedsOutdated();
         ensureSocketConnected();
         if (resumedFromHidden) {
+          const hiddenForMs = Date.now() - hiddenAtRef.current;
           hiddenAtRef.current = 0;
-          requestChatWakeBarrier('focus');
+          requestChatWakeBarrier('focus', hiddenForMs);
         }
       } else {
         hiddenAtRef.current = Date.now();
@@ -782,8 +805,12 @@ export default function useInitSocket({
       void checkFeedsOutdated();
       ensureSocketConnected();
       if (resumedFromHidden || event.persisted) {
+        // A page restored from the back/forward cache was frozen entirely.
+        const hiddenForMs = event.persisted
+          ? Number.POSITIVE_INFINITY
+          : Date.now() - hiddenAtRef.current;
         hiddenAtRef.current = 0;
-        requestChatWakeBarrier('pageshow');
+        requestChatWakeBarrier('pageshow', hiddenForMs);
       }
       try {
         const data = await checkVersion();
@@ -808,8 +835,9 @@ export default function useInitSocket({
       void checkFeedsOutdated();
       ensureSocketConnected();
       if (resumedFromHidden) {
+        const hiddenForMs = Date.now() - hiddenAtRef.current;
         hiddenAtRef.current = 0;
-        requestChatWakeBarrier('focus');
+        requestChatWakeBarrier('focus', hiddenForMs);
       }
     };
     const onOnline = () => {
