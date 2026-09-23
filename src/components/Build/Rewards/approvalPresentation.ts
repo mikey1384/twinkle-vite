@@ -1,4 +1,5 @@
 import type { RewardSettings } from './types';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 // Plain-language status for creators (kids and teens). There is nothing for
 // them or their Lumine to prepare: they save code, send it, and an admin reads
@@ -42,7 +43,7 @@ export function rewardApprovalPresentation(
         (settings.requestClosedBySave
           ? 'You saved a newer version after sending your last request, so that request was closed. '
           : '') +
-        'Apps that give real XP and Coins are checked by a Twinkle admin first. Press Publish or Update App to request approval. We’ll let you know in chat. You can keep building while you wait.'
+        `Apps that give real XP and Coins are checked by a ${SITE_NAME} admin first. Press Publish or Update App to request approval. We’ll let you know in chat. You can keep building while you wait.`
     },
     in_review: {
       title: 'Waiting for the admin',

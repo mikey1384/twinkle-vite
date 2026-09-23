@@ -17,11 +17,12 @@ import RewardBoostItem from './RewardBoostItem';
 import { css } from '@emotion/css';
 import HomeSectionHeader from '~/components/HomeSectionHeader';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const changePasswordLabel = 'Change your password';
 const changePasswordDescriptionLabel = 'Change your password anytime you want. This item is free';
 const changeUsernameLabel = 'Change your username';
-const changeUsernameDescriptionLabel = `Unlock this item to change your username anytime you want for ${priceTable.username} Twinkle Coins`;
+const changeUsernameDescriptionLabel = `Unlock this item to change your username anytime you want for ${priceTable.username} ${SITE_NAME} Coins`;
 const moreToComeLabel = 'More to come';
 const settingsLabel = 'Settings';
 

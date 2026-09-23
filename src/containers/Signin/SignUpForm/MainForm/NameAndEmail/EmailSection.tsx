@@ -3,6 +3,7 @@ import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { isValidEmailAddress } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const emailIsNeededInCaseLabel =
   'Email is needed in case you forget your password';
@@ -58,7 +59,7 @@ export default function EmailSection({
         placeholder={
           userType === 'student'
             ? emailIsNeededInCaseLabel
-            : 'Your Twinkle email address'
+            : `Your ${SITE_NAME} email address`
         }
         onChange={(text) => {
           setEmailErrorMsg('');

@@ -2,10 +2,7 @@ import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-
-// lumine.network serves this same site; visitors arriving through it see the
-// Lumine wordmark instead of Twinkle's.
-const isLumineHost = /(^|\.)lumine\.network$/.test(window.location.hostname);
+import { isLumineHost } from '~/constants/siteBrand';
 
 export default function TwinkleLogo({
   style

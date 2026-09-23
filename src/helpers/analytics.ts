@@ -4,6 +4,7 @@ import {
   createAnalyticsCommandGate,
   type AnalyticsCommand
 } from '~/helpers/analyticsCommandGate';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 // GA4 event names sent by the app. Standard GA4 names (sign_up, login,
 // search) are used where they exist so GA's built-in reports pick them up.
@@ -62,13 +63,13 @@ const sectionTitleOverrides: Record<string, string> = {
 // once their data loads.
 export function getBasePageTitle(pathname: string): string {
   const { section, isSubsection } = getSectionFromPathname(pathname) || {};
-  if (!section || section === 'home') return 'Twinkle';
+  if (!section || section === 'home') return SITE_NAME;
   const subsectionTitle = isSubsection ? contentSubsectionTitles[section] : '';
   const displayedSection =
     subsectionTitle || sectionTitleOverrides[section] || section;
   return `${
     subsectionTitle ? displayedSection : capitalize(displayedSection)
-  } | Twinkle`;
+  } | ${SITE_NAME}`;
 }
 
 function gtagAvailable() {

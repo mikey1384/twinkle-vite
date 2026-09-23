@@ -9,6 +9,7 @@ import TaskComplete from '../components/TaskComplete';
 import Checklist from '../SystemPrompt/Checklist';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const layoutClass = css`
   display: grid;
@@ -272,8 +273,8 @@ export default function BuildMission({
                 <>
                   <h2 className={titleClass}>Publish one build</h2>
                   <p className={subtitleClass}>
-                    Publish a build so other Twinkle users and people outside
-                    the website can actually use it. You are at{' '}
+                    Publish a build so other {SITE_NAME} users and people
+                    outside the website can actually use it. You are at{' '}
                     {publishedBuildCount}/{requiredPublishedBuildCount}{' '}
                     published builds.
                   </p>

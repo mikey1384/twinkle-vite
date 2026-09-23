@@ -22,6 +22,7 @@ import { Color } from '~/constants/css';
 import useChatDialogRequest from '../useChatDialogRequest';
 import { chatFormActionStyle, chatFormClass, chatFormModalClass } from '../chatFormStyles';
 import { css } from '@emotion/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function SettingsModal({
   channelId,
@@ -289,7 +290,7 @@ export default function SettingsModal({
                     style={chatFormActionStyle} color="logoBlue" disabled={isSubmitting || insufficientFunds}>
                     <Icon icon="coins" /> Enable topics · {priceTable.chatSubject} coins
                   </Button>
-                  {insufficientFunds && <p className="field-hint">You need {priceTable.chatSubject - twinkleCoins} more Twinkle Coins.</p>}
+                  {insufficientFunds && <p className="field-hint">You need {priceTable.chatSubject - twinkleCoins} more {SITE_NAME} Coins.</p>}
                 </>}
               </div>
             </section>

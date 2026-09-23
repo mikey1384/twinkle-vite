@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 type BrowserKind = 'chrome' | 'edge' | 'safari' | 'firefox' | 'other';
 
@@ -82,7 +83,7 @@ export default function DesktopNotificationsHelpModal({
       >
         <p>
           <Icon icon="bell-slash" style={{ marginRight: '0.7rem' }} />
-          Your browser is currently <b>blocking</b> notifications from Twinkle,
+          Your browser is currently <b>blocking</b> notifications from {SITE_NAME},
           so the switch can{`'`}t be turned on yet. Here{`'`}s how to allow
           them:
         </p>

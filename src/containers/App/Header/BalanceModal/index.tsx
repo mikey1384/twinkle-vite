@@ -11,6 +11,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const errorCheckMode = false;
 
@@ -37,7 +38,7 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
   if (errorCheckMode && userId === ADMIN_USER_ID && !twinkleCoins) {
     reportError({
       componentPath: 'Header/BalanceModal',
-      message: `Twinkle Coins not loaded`
+      message: `${SITE_NAME} Coins not loaded`
     });
   }
 

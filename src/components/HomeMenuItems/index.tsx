@@ -21,6 +21,7 @@ import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import RecentGroupItems from './RecentGroupItems';
 import { useRootTheme } from '~/theme/RootThemeProvider';
+import { SITE_FULL_NAME } from '~/constants/siteBrand';
 
 const peopleLabel = 'People';
 const postsLabel = 'Posts';
@@ -399,7 +400,7 @@ export default function HomeMenuItems({
           }}
         >
           <div>
-            © {year} Twinkle Network ·{' '}
+            © {year} {SITE_FULL_NAME} ·{' '}
             <Link to="/privacy" style={{ color: Color.gray() }}>
               Privacy
             </Link>

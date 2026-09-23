@@ -7,6 +7,7 @@ import { Color } from '~/constants/css';
 import SkipShieldChecklist, {
   type SkipShieldChecklistState
 } from './SkipShieldChecklist';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function SkipShieldModal({
   checklist,
@@ -60,7 +61,8 @@ export default function SkipShieldModal({
             `}
           >
             Totally fine — your streak can stay safe! Skipping just comes with a
-            little side quest now: check out something else on Twinkle today. ✨
+            little side quest now: check out something else on {SITE_NAME}{' '}
+            today. ✨
           </p>
           <SkipShieldChecklist checklist={checklist} />
           <p

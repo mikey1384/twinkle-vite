@@ -3,12 +3,13 @@ import {
   VIBE_OPTIONS,
   type FocusOption
 } from '../../helpers/questionPreferences';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export function getVibeLabel(category: string | null) {
   const normalized =
     category === 'autobiography' ? 'build_project' : category || 'default';
   const option = VIBE_OPTIONS.find((entry) => entry.id === normalized);
-  return option ? option.title : 'Let Twinkle Pick';
+  return option ? option.title : `Let ${SITE_NAME} Pick`;
 }
 
 export function getFocusOptionTitle(
@@ -34,5 +35,5 @@ export function getFocusOptionDescription(
 export function getFocusLabel(focus: string | null, isAdultUser: boolean) {
   const normalized = focus || 'infer';
   const option = FOCUS_OPTIONS.find((entry) => entry.id === normalized);
-  return option ? getFocusOptionTitle(option, isAdultUser) : 'Let Twinkle Pick';
+  return option ? getFocusOptionTitle(option, isAdultUser) : `Let ${SITE_NAME} Pick`;
 }

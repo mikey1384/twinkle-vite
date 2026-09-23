@@ -2,6 +2,7 @@ import React from 'react';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import DeleteModal from '../DeleteModal';
 import type { BuildBranchDeleteTarget } from './types';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function BranchActionModals({
   activeBuildTitle,
@@ -77,8 +78,8 @@ export default function BranchActionModals({
               </p>
               <p>
                 Any {replaceBranchTargetLabel} changes that are not in this
-                branch will be overwritten. Twinkle will use this branch exactly
-                as it is instead of combining the two versions.
+                branch will be overwritten. {SITE_NAME} will use this branch
+                exactly as it is instead of combining the two versions.
               </p>
               {replaceBranchTargetLabel === 'Main' ? (
                 <p>
@@ -115,8 +116,8 @@ export default function BranchActionModals({
               </p>
               <p>
                 Any branch changes that are not in Main will be{' '}
-                <b>permanently discarded</b>. Twinkle will use Main exactly as
-                it is instead of combining the two versions.
+                <b>permanently discarded</b>. {SITE_NAME} will use Main exactly
+                as it is instead of combining the two versions.
               </p>
               <p>Your branch will stay editable after it is reset.</p>
             </div>

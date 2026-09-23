@@ -80,6 +80,7 @@ import useProjectFileUploads from './hooks/useProjectFileUploads';
 import useProjectAssets from './hooks/useProjectAssets';
 import useVersionHistory from './hooks/useVersionHistory';
 import { BUILD_WORKSPACE_COMPACT_MEDIA_QUERY } from '../Editor/constants';
+import { SITE_NAME } from '~/constants/siteBrand';
 const GUEST_RESTRICTION_BANNER_TEXT =
   'Some features were restricted because this app uses user-only data. Sign in to access those parts.';
 
@@ -690,7 +691,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestOpenContentConfirmationRef.current = ({ url }) => {
         const destination = new URL(url);
         return requestOpenContentConfirm({
-          title: 'Open Twinkle content?',
+          title: `Open ${SITE_NAME} content?`,
           description: (
             <span className={openContentDestinationClass}>
               Open{' '}
@@ -795,7 +796,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                 title: 'Allow camera use?',
                 description: 'use your camera to take one photo',
                 detail:
-                  'Nothing starts unless you approve. The photo is saved in your Twinkle file storage so this app can use it. Your browser may also ask for camera permission.',
+                  `Nothing starts unless you approve. The photo is saved in your ${SITE_NAME} file storage so this app can use it. Your browser may also ask for camera permission.`,
                 confirmButtonLabel: 'Take photo'
               }
             : kind === 'clip'
@@ -804,7 +805,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                   description:
                     'use your camera to record one short, camera-only clip',
                   detail:
-                    'Nothing starts unless you approve. The clip is saved in your Twinkle file storage so this app can use it. Your browser may also ask for camera permission. Processing uses Media Energy.',
+                    `Nothing starts unless you approve. The clip is saved in your ${SITE_NAME} file storage so this app can use it. Your browser may also ask for camera permission. Processing uses Media Energy.`,
                   confirmButtonLabel: 'Record clip'
                 }
               : kind === 'clip-upload'
@@ -812,7 +813,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     title: 'Use Media Energy?',
                     description: 'process and save one short video',
                     detail:
-                      'Each approval authorizes one video saved in your Twinkle file storage so this app can use it. Processing uses Media Energy.',
+                      `Each approval authorizes one video saved in your ${SITE_NAME} file storage so this app can use it. Processing uses Media Energy.`,
                     confirmButtonLabel: 'Process video'
                   }
                 : kind === 'live'
@@ -853,7 +854,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                             description:
                               'permanently remove this saved livestream',
                             detail:
-                              'Only the replay creator or app owner can do this. Twinkle will delete the private recording; this cannot be undone.',
+                              `Only the replay creator or app owner can do this. ${SITE_NAME} will delete the private recording; this cannot be undone.`,
                             confirmButtonLabel: 'Remove replay'
                           };
         return requestMediaActionConfirm({

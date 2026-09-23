@@ -16,9 +16,10 @@ import type {
   ChatNotificationPreferences,
   ChatNotificationSettings
 } from '~/types/chat';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const SESSION_STORAGE_ERROR_MESSAGE =
-  'Twinkle could not save your login on this device. Check that browser storage is enabled, then try again.';
+  `${SITE_NAME} could not save your login on this device. Check that browser storage is enabled, then try again.`;
 
 function createSessionPersistenceError(code: string, message: string) {
   const error: any = new Error(message);
@@ -34,7 +35,7 @@ function persistReturnedSessionToken(
   if (typeof token !== 'string' || !token) {
     throw createSessionPersistenceError(
       'auth_session_missing',
-      'Twinkle did not receive a login session. Please try again.'
+      `${SITE_NAME} did not receive a login session. Please try again.`
     );
   }
   if (!persistAuthToken(token, options)) {

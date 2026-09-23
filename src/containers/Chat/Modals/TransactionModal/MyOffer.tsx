@@ -7,6 +7,7 @@ import SelectedGroups from './SelectedGroups';
 import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function MyOffer({
   focusOnMount,
@@ -97,7 +98,7 @@ export default function MyOffer({
               align-items: center;
             `}
           >
-            Twinkle Coins (
+            {SITE_NAME} Coins (
             <Icon
               style={{ color: Color.brownOrange() }}
               icon="coins"

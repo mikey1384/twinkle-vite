@@ -1,0 +1,21 @@
+{
+  "short_name": "Lumine",
+  "name": "Lumine",
+  "icons": [
+    {
+      "src": "lumine-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "lumine-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

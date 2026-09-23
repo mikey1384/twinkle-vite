@@ -5,8 +5,9 @@ import MainForm from './MainForm';
 import StudentOrTeacher from './StudentOrTeacher';
 import SecretPassPhrase from './SecretPassPhrase';
 import { css } from '@emotion/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 const iAlreadyHaveAnAccountLabel = 'I already have an account';
-const letsSetUpYourAccountLabel = `Welcome to Twinkle! Let's set up your account`;
+const letsSetUpYourAccountLabel = `Welcome to ${SITE_NAME}! Let's set up your account`;
 
 export default function SignUpForm({
   branchName,

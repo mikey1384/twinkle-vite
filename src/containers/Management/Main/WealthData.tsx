@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import Table from '../Table';
 import { useAppContext, useManagementContext } from '~/contexts';
 import Icon from '~/components/Icon';import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const userLabel = 'User';
 
@@ -43,7 +44,7 @@ export default function WealthData() {
           <thead>
             <tr>
               <th>{userLabel}</th>
-              <th>Twinkle Coins</th>
+              <th>{SITE_NAME} Coins</th>
               <th>Common Blue</th>
               <th>Common Pink</th>
               <th>Common Orange</th>

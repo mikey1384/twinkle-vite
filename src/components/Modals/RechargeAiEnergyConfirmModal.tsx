@@ -1,6 +1,7 @@
 import React from 'react';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function RechargeAiEnergyConfirmModal({
   cost,
@@ -22,8 +23,11 @@ export default function RechargeAiEnergyConfirmModal({
       title="Recharge AI Energy"
       description={
         <div style={{ textAlign: 'center', lineHeight: 1.45 }}>
-          Spend <b>{addCommasToNumber(cost)} Twinkle Coins</b> to recharge one
-          full AI Energy battery?
+          Spend{' '}
+          <b>
+            {addCommasToNumber(cost)} {SITE_NAME} Coins
+          </b>{' '}
+          to recharge one full AI Energy battery?
         </div>
       }
       descriptionFontSize="1.35rem"

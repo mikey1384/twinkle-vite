@@ -7,6 +7,7 @@ import { priceTable } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function ItemPanel({
   className,
@@ -48,7 +49,7 @@ export default function ItemPanel({
             Requires {addCommasToNumber(requiredKarmaPoints)} KP
           </p>
           <p style={{ fontSize: '1.3rem', marginTop: '0.5rem' }}>
-            {`Unlock this item to change your username anytime you want for ${priceTable.username} Twinkle Coins`}
+            {`Unlock this item to change your username anytime you want for ${priceTable.username} ${SITE_NAME} Coins`}
           </p>
         </>
       )}

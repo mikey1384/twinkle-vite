@@ -3,6 +3,7 @@ import DonorBadge from '~/assets/donor.png';
 import ItemPanel, { AchievementPhase } from './ItemPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useKeyContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function Donor({
   isThumb,
@@ -48,7 +49,10 @@ export default function Donor({
         itemName={title}
         description={description}
         unlockMessage={unlockMessage}
-        requirements={['Get Donor License', 'Donate 10,000,000 Twinkle Coins']}
+        requirements={[
+          'Get Donor License',
+          `Donate 10,000,000 ${SITE_NAME} Coins`
+        ]}
         progressObj={progressObj}
         phases={phases}
         milestones={milestones}

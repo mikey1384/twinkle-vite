@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { priceTable } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const labels: Record<string, string> = {
   green: 'Green', orange: 'Orange', red: 'Red', rose: 'Rose', pink: 'Pink',
@@ -35,7 +36,7 @@ export default function ColorSelector({ unlocked = [], colors, onSetColor, selec
         </button>;
       })}
     </div>
-    <p className="field-hint">Locked colors cost {priceTable.chatTheme} Twinkle Coins each. You’ll confirm before buying.</p>
+    <p className="field-hint">Locked colors cost {priceTable.chatTheme} {SITE_NAME} Coins each. You’ll confirm before buying.</p>
   </div>;
 }
 

@@ -9,6 +9,7 @@ import { useEarnHub } from './useEarnHub';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 import { homePanelClass } from '~/theme/homePanels';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 // The Bounties shelf: every approved app that pays real XP or Coins, with
 // what this member has left in each today, and the builder's card at the
@@ -29,8 +30,8 @@ export default function Bounties({
         <div>
           <h2 className={titleClass}>Bounties</h2>
           <p className={subClass}>
-            Apps built on Twinkle that pay real XP and Coins. Approved by
-            Twinkle, paid by Twinkle.
+            Apps built on {SITE_NAME} that pay real XP and Coins. Approved by
+            {SITE_NAME}, paid by {SITE_NAME}.
           </p>
         </div>
         <a

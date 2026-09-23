@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import { Color, Theme } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { videoRewardHash } from '~/constants/defaultValues';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const boostRewardsFromWatchingXPVideosLabel =
   'Boost rewards from watching XP Videos';
@@ -199,7 +200,7 @@ export default function RewardBoostItem({
     if (!videoRewardHash[rewardBoostLvl]) {
       return '';
     }
-    return `You can now earn (reward level × ${videoRewardHash[rewardBoostLvl].xp}) XP and ${videoRewardHash[rewardBoostLvl].coin} Twinkle Coins per minute while watching XP Videos`;
+    return `You can now earn (reward level × ${videoRewardHash[rewardBoostLvl].xp}) XP and ${videoRewardHash[rewardBoostLvl].coin} ${SITE_NAME} Coins per minute while watching XP Videos`;
   }, [rewardBoostLvl]);
 
   return (

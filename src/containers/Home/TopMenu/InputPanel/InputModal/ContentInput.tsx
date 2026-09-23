@@ -29,6 +29,7 @@ import {
 } from '~/contexts';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { SITE_NAME, SITE_URL_LABEL } from '~/constants/siteBrand';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const enterDescriptionOptionalLabel = `Enter Description (Optional, you don't need to write this)`;
@@ -275,7 +276,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
           <div className={alreadyPostedTextClass}>
             <strong>
               {alreadyPostedByDifferentUser
-                ? 'Already shared on Twinkle'
+                ? `Already shared on ${SITE_NAME}`
                 : 'You already posted this'}
             </strong>
             <span>
@@ -500,7 +501,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
       handleSetContentUrlHelper(
         urlIsValid || stringIsEmpty(text)
           ? ''
-          : `A URL is a website's internet address. Twinkle Website's URL is <a href="https://www.twin-kle.com" target="_blank">www.twin-kle.com</a>. You can find a webpage's URL at the <b>top area of your browser</b>. Copy a URL you want to share and paste it to the box above.`
+          : `A URL is a website's internet address. ${SITE_NAME} Website's URL is <a href="https://${SITE_URL_LABEL}" target="_blank">${SITE_URL_LABEL}</a>. You can find a webpage's URL at the <b>top area of your browser</b>. Copy a URL you want to share and paste it to the box above.`
       );
       handleSetTitle(
         !urlIsValid && !stringIsEmpty(text) && text.length > 3 ? text : title

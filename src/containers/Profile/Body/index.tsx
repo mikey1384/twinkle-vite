@@ -14,6 +14,7 @@ import {
 } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const Home = lazyWithRetry(() => import('./Home'));
 const LikedPosts = lazyWithRetry(() => import('./LikedPosts'));
@@ -77,7 +78,7 @@ export default function Body({
     if (username) {
       onSetPageTitle(
         `${subTitle ? `${subTitle} | ` : ''}${
-          subTitle ? username : `${username} | Twinkle`
+          subTitle ? username : `${username} | ${SITE_NAME}`
         }`
       );
     }

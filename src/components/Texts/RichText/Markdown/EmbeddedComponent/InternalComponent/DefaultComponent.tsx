@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
 import Icon from '~/components/Icon';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 interface DefaultEmbedPreviewConfig {
   accent: string;
@@ -403,7 +404,7 @@ function getDefaultEmbedPreviewConfig({
       return {
         accent: Color.logoBlue(),
         border: Color.logoBlue(0.32),
-        description: 'Open this Twinkle link.',
+        description: `Open this ${SITE_NAME} link.`,
         icon: 'globe',
         kicker: getGenericKicker(linkType),
         softAccent: Color.logoBlue(0.08),
@@ -485,7 +486,7 @@ function getSearchParam(src: string, key: string) {
 }
 
 function getGenericKicker(linkType: string) {
-  if (!linkType) return 'Twinkle';
+  if (!linkType) return SITE_NAME;
   return capitalize(linkType.replace(/-/g, ' '));
 }
 

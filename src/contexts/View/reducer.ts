@@ -2,6 +2,7 @@ import {
   RememberedCinemaLevel,
   normalizeCinemaLevel
 } from '~/constants/cinema';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export interface ViewState {
   pageVisible: boolean;
@@ -104,7 +105,7 @@ export interface ViewAction {
 }
 
 export const AI_DISABLED_NOTICE =
-  "Twinkle's AI features are currently unavailable because our AI service providers have suspended service.";
+  `${SITE_NAME}'s AI features are currently unavailable because our AI service providers have suspended service.`;
 
 function normalizeBuildAppIds(buildAppIds: string[] | null | undefined) {
   if (!Array.isArray(buildAppIds)) return null;

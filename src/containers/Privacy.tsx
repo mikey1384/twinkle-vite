@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { css } from '@emotion/css';
 import { borderRadius } from '~/constants/css';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
+import { SITE_FULL_NAME, SITE_URL_LABEL } from '~/constants/siteBrand';
 
 export default function Privacy() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -74,8 +75,8 @@ export default function Privacy() {
           font-size: 1.1rem;
         `}
       >
-        {`Twinkle Network ("we," "us," or "our") is a personal project created and
-        operated by Mikey Lee. The website, https://www.twin-kle.com (the
+        {`${SITE_FULL_NAME} ("we," "us," or "our") is a personal project created and
+        operated by Mikey Lee. The website, https://${SITE_URL_LABEL} (the
         "Service"), is managed and developed independently by Mikey Lee. Twinkle
         English Academy, a language institution in Korea, supports the Service
         by funding the server, owning the domain, and covering the OpenAI API

@@ -5,9 +5,10 @@ import SectionPanel from '~/components/SectionPanel';
 import LinkGroup from './LinkGroup';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 const addLinkLabel = 'Add Link';
 const allLinksLabel = 'All Links';
-const madeByUsersLabel = 'Made By Twinkle Users';
+const madeByUsersLabel = `Made By ${SITE_NAME} Users`;
 const noUploadedLinksLabel = 'No Uploaded Links';
 const recommendedLabel = 'Recommended';
 

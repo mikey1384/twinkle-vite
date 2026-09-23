@@ -3,7 +3,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import ContentListItem from '~/components/ContentListItem';
 import { useAppContext, useExploreContext } from '~/contexts';
-const madeByUsersLabel = 'Made By Twinkle Users';
+import { SITE_NAME } from '~/constants/siteBrand';
+const madeByUsersLabel = `Made By ${SITE_NAME} Users`;
 const noUserMadeContentLabel = 'No user made content';
 
 export default function MadeByUsers({

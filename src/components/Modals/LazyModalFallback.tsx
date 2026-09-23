@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
 import { reloadForLazyImportRecovery } from '~/helpers/lazyImportHelpers';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const SHOW_FALLBACK_AFTER_MS = 250;
 const TAKING_LONG_MS = 8000;
@@ -74,7 +75,7 @@ export default function LazyModalFallback({
               }}
             >
               This is taking longer than usual. Check your connection, or
-              reload to get the latest version of Twinkle.
+              reload to get the latest version of {SITE_NAME}.
             </p>
             <Button
               color="logoBlue"

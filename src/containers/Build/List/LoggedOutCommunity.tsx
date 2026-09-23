@@ -26,6 +26,7 @@ import {
   buildPageTopGap,
   mobileBottomNavClearance
 } from './constants/layout';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
@@ -204,7 +205,7 @@ export default function LoggedOutCommunity({
         <div>
           <h1 className={heroTitleClass}>Community Builds</h1>
           <p className={heroBodyClass}>
-            Apps published by the Twinkle community. Log in to build your own
+            Apps published by the {SITE_NAME} community. Log in to build your own
             with Lumine.
           </p>
         </div>

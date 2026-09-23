@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import useChatDialogRequest from '../useChatDialogRequest';
 import { chatFormClass, chatFormModalClass } from '../chatFormStyles';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export interface ChatPurchaseReceipt {
   coins: number;
@@ -66,7 +67,7 @@ export default function PurchaseModal({
       <header><h2>{title}</h2><p className="description">{description}</p></header>
       <main>
         <div className="setting">
-          <p style={{ margin: 0, fontSize: 18, fontWeight: 700 }}><Icon icon="coins" /> {price.toLocaleString()} Twinkle Coins</p>
+          <p style={{ margin: 0, fontSize: 18, fontWeight: 700 }}><Icon icon="coins" /> {price.toLocaleString()} {SITE_NAME} Coins</p>
           <p className="field-hint">{confirmed ? 'Purchase confirmed.' : `Your balance: ${balance.toLocaleString()} coins`}</p>
         </div>
         {insufficientFunds && <p role="status" className="field-hint">You need {(price - balance).toLocaleString()} more coins.</p>}

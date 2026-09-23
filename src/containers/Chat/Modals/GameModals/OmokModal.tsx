@@ -12,6 +12,7 @@ import {
   getLatestBoardMessageId,
   getLatestGameBoundaryMessageId
 } from '~/containers/Chat/helpers/gameMessageIds';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 interface OmokModalProps {
   currentChannel: any;
@@ -359,7 +360,7 @@ export default function OmokModal({
           modalKey="OmokModal/HowToPlay"
           isOpen
           size="sm"
-          title="How to Play Twinkle Omok"
+          title={`How to Play ${SITE_NAME} Omok`}
           onClose={() => setHowToPlayShown(false)}
         >
           <div

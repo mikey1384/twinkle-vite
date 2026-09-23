@@ -10,6 +10,11 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// lumine.network serves the same site under its own name and icon.
+const isLumineHost = /(^|\.)lumine\.network$/.test(self.location.hostname);
+const siteName = isLumineHost ? 'Lumine' : 'Twinkle';
+const siteIcon = isLumineHost ? '/lumine-icon-192.png' : '/icon-192.png';
+
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   let payload = {};
@@ -19,10 +24,10 @@ self.addEventListener('push', (event) => {
     return;
   }
   event.waitUntil(
-    self.registration.showNotification(payload.title || 'Twinkle', {
+    self.registration.showNotification(payload.title || siteName, {
       body: payload.body || '',
       tag: payload.tag || 'twinkle-chat',
-      icon: '/icon-192.png',
+      icon: siteIcon,
       // badge must be monochrome with alpha; Android tints it for the status bar
       badge: '/badge.png',
       data: { url: payload.url || '/chat' }

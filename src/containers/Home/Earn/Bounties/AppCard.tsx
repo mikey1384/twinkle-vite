@@ -7,6 +7,7 @@ import Link from '~/components/Link';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import type { EarnHubApp } from './useEarnHub';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 // One approved app on the shelf: what it pays, who made it, and what this
 // member still has left in it today. The button opens the published app page
@@ -98,7 +99,7 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
               {app.ownerUsername}
             </Link>
           ) : (
-            <b>a Twinkle member</b>
+            <b>a {SITE_NAME} member</b>
           )}{' '}
           · {subtitle}
         </div>

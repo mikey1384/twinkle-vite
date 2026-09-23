@@ -1,4 +1,5 @@
 import { socket } from '~/constants/sockets/api';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 let pendingStart: Promise<void> | null = null;
 
@@ -6,7 +7,7 @@ export function startAiVoiceCall(channelId: number, topicId?: number) {
   if (pendingStart) return pendingStart;
   if (!socket.connected) {
     return Promise.reject(
-      new Error('Connecting to Twinkle. Please try again in a moment.')
+      new Error(`Connecting to ${SITE_NAME}. Please try again in a moment.`)
     );
   }
   pendingStart = new Promise<void>((resolve, reject) => {

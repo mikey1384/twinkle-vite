@@ -1,5 +1,6 @@
 import { lazy, type ComponentType } from 'react';
 import { Color } from '~/constants/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const lazyImportRetryDelays = [400, 1200, 2500];
 const LAZY_IMPORT_OVERLAY_ID = 'twinkle-lazy-import-reload-overlay';
@@ -205,7 +206,7 @@ function showLazyImportReloadOverlay() {
       `border-top-color: ${Color.logoBlue()};` +
       `animation: ${LAZY_IMPORT_OVERLAY_ID}-spin 0.8s linear infinite;`;
     const title = document.createElement('div');
-    title.textContent = 'Twinkle has been updated!';
+    title.textContent = `${SITE_NAME} has been updated!`;
     title.style.cssText = 'font-size: 1.7rem; font-weight: bold;';
     const message = document.createElement('div');
     message.textContent = 'Loading the new version...';

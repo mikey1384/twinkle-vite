@@ -6,6 +6,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 interface CliDeviceSession {
   userCode: string;
@@ -93,7 +94,7 @@ export default function CliDeviceAuth() {
         <div className={headerClass}>
           <span className={eyebrowClass}>
             <Icon icon="sparkles" />
-            Twinkle Build
+            {SITE_NAME} Build
           </span>
           <h1 className={titleClass}>Connect Lumine</h1>
           <p className={bodyClass}>

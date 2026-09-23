@@ -27,6 +27,7 @@ import {
   showDesktopNotification,
   unsubscribeFromChatPush
 } from '~/helpers/desktopNotifications';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const deviceIsMobile = isMobile(navigator) || isTablet(navigator);
 const thisDevicePlatform = getThisDevicePushPlatform();
@@ -327,7 +328,7 @@ export default function ChatNotificationsItem({
       <ItemPanel
         itemKey="desktopNotifications"
         itemName="Notification settings"
-        itemDescription="Choose what Twinkle should notify you about on each device."
+        itemDescription={`Choose what ${SITE_NAME} should notify you about on each device.`}
         loading={loading}
       >
         {renderPushStatus()}
@@ -400,7 +401,7 @@ export default function ChatNotificationsItem({
           <div id="advanced-chat-notification-settings">
             <section className={sectionClass}>
               <h3 className={sectionTitleClass}>
-                While Twinkle is in the background
+                While {SITE_NAME} is in the background
               </h3>
               <p className={sectionDescriptionClass}>
                 Another tab is open, or the app is minimized.
@@ -430,7 +431,7 @@ export default function ChatNotificationsItem({
                   </div>
                 </div>
                 <select
-                  aria-label="Group chat notifications while Twinkle is in the background"
+                  aria-label={`Group chat notifications while ${SITE_NAME} is in the background`}
                   className={selectClass}
                   disabled={
                     preferencesLoading ||
@@ -452,7 +453,7 @@ export default function ChatNotificationsItem({
               </div>
               <PreferenceToggleRow
                 checked={Boolean(preferences?.backgroundAiReplies)}
-                description="When Zero or Ciel finishes replying while Twinkle remains connected."
+                description={`When Zero or Ciel finishes replying while ${SITE_NAME} remains connected.`}
                 disabled={
                   preferencesLoading ||
                   Boolean(savingPreference) ||
@@ -468,14 +469,14 @@ export default function ChatNotificationsItem({
             </section>
 
             <section className={sectionClass}>
-              <h3 className={sectionTitleClass}>When Twinkle is closed</h3>
+              <h3 className={sectionTitleClass}>When {SITE_NAME} is closed</h3>
               <p className={sectionDescriptionClass}>
                 These notifications are delivered through background push.
               </p>
               {accountPushSubscribed === false && (
                 <p className={noticeClass}>
                   None of your devices are set up for push yet, so nothing is
-                  delivered while Twinkle is closed no matter how these are set.
+                  delivered while {SITE_NAME} is closed no matter how these are set.
                 </p>
               )}
               <PreferenceToggleRow
@@ -618,7 +619,7 @@ export default function ChatNotificationsItem({
         isOn: false,
         title: 'Push notifications are off',
         description:
-          'No device is set up yet, so Twinkle cannot reach you while it is closed.'
+          `No device is set up yet, so ${SITE_NAME} cannot reach you while it is closed.`
       };
     }
     if (thisDevicePushSubscribed) {
@@ -627,8 +628,8 @@ export default function ChatNotificationsItem({
         title: 'Push notifications are on for this device',
         description:
           localPushSubscribed || deviceSwitchActionable
-            ? 'Twinkle can reach you here even when it is closed. What gets through is set below.'
-            : 'Twinkle reaches this device through the app on your Home Screen, even when it is closed.'
+            ? `${SITE_NAME} can reach you here even when it is closed. What gets through is set below.`
+            : `${SITE_NAME} reaches this device through the app on your Home Screen, even when it is closed.`
       };
     }
     return {
@@ -636,8 +637,8 @@ export default function ChatNotificationsItem({
       title: 'Push notifications are on for another device',
       description:
         deviceIsMobile && deviceIsIos && !deviceSwitchActionable
-          ? 'Twinkle already sends them to a device you set up, but not to this phone. Add Twinkle to your Home Screen to get them here.'
-          : 'Twinkle already sends them to a device you set up, but not to this one yet.'
+          ? `${SITE_NAME} already sends them to a device you set up, but not to this phone. Add ${SITE_NAME} to your Home Screen to get them here.`
+          : `${SITE_NAME} already sends them to a device you set up, but not to this one yet.`
     };
   }
 
@@ -647,8 +648,8 @@ export default function ChatNotificationsItem({
         return 'Notifications are not supported by this browser.';
       }
       return thisDevicePushSubscribed
-        ? 'On through the Twinkle app on your Home Screen. Safari cannot change this — open Twinkle from your Home Screen to turn it off.'
-        : 'Safari cannot show Twinkle notifications on iPhone or iPad. Add Twinkle to your Home Screen, open it from there, and turn notifications on.';
+        ? `On through the ${SITE_NAME} app on your Home Screen. Safari cannot change this — open ${SITE_NAME} from your Home Screen to turn it off.`
+        : `Safari cannot show ${SITE_NAME} notifications on iPhone or iPad. Add ${SITE_NAME} to your Home Screen, open it from there, and turn notifications on.`;
     }
     if (deviceStatus === 'blocked') {
       return 'Notifications are blocked by your browser or device settings.';
@@ -702,7 +703,7 @@ export default function ChatNotificationsItem({
         }
       } catch {
         setError(
-          'Notifications are off on this device, but Twinkle could not finish cleaning up its background push registration.'
+          `Notifications are off on this device, but ${SITE_NAME} could not finish cleaning up its background push registration.`
         );
       } finally {
         setDeviceStatus(disableDesktopNotifications());
@@ -727,12 +728,12 @@ export default function ChatNotificationsItem({
         applyPushSnapshot(chatNotificationSettings);
         if (pushStatus === 'failed') {
           setError(
-            'Notifications are enabled while Twinkle is open, but closed-app push could not be enabled on this device.'
+            `Notifications are enabled while ${SITE_NAME} is open, but closed-app push could not be enabled on this device.`
           );
         }
       }
       showDesktopNotification({
-        title: 'Twinkle notifications are on',
+        title: `${SITE_NAME} notifications are on`,
         body: 'You can choose what notifies you in these settings'
       });
     }

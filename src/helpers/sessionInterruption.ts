@@ -1,3 +1,5 @@
+import { SITE_NAME } from '~/constants/siteBrand';
+
 export type SessionInterruptionCode =
   | 'session_storage_unavailable'
   | 'session_token_missing'
@@ -14,19 +16,17 @@ const SESSION_INTERRUPTION_COPY: Record<
   Omit<SessionInterruption, 'code'>
 > = {
   session_storage_unavailable: {
-    title: 'Twinkle can’t read your saved sign-in',
+    title: `${SITE_NAME} can’t read your saved sign-in`,
     message:
       'Your account is still there. Try again. If this keeps happening, sign in again on this browser.'
   },
   session_token_missing: {
     title: 'This browser no longer has your saved sign-in',
-    message:
-      'Your account is still there. Sign in again to keep using Twinkle on this browser.'
+    message: `Your account is still there. Sign in again to keep using ${SITE_NAME} on this browser.`
   },
   session_token_invalid: {
     title: 'Please sign in again',
-    message:
-      'Twinkle can’t use the sign-in saved in this browser anymore. This often happens after a password change. We signed you out here to keep your account safe. Sign in below with your current password.'
+    message: `${SITE_NAME} can’t use the sign-in saved in this browser anymore. This often happens after a password change. We signed you out here to keep your account safe. Sign in below with your current password.`
   }
 };
 

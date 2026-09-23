@@ -50,6 +50,7 @@ import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 import { enterRoutedTopic } from './topicRoute';
 import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const loadingPromises: { [channelId: string]: any } = {};
 const deviceIsMobile = isMobile(navigator);
@@ -1200,7 +1201,7 @@ export default function Main({
                     color: Color.black(),
                     textShadow: `2px 2px 4px ${Color.darkerGray(0.7)}`
                   }}
-                  text="Loading Twinkle Chat..."
+                  text={`Loading ${SITE_NAME} Chat...`}
                 />
               </div>
             </div>

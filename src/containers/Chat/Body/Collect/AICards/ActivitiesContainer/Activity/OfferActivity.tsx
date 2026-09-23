@@ -4,6 +4,7 @@ import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import CardThumb from '~/components/CardThumb';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function OfferActivity({
   card,
@@ -80,7 +81,7 @@ export default function OfferActivity({
           >
             {addCommasToNumber(offer.price)}
           </b>{' '}
-          Twinkle {offer.price === 1 ? 'Coin' : 'Coins'} for{' '}
+          {SITE_NAME} {offer.price === 1 ? 'Coin' : 'Coins'} for{' '}
           <b
             style={{
               color: Color[offer.isCancelled ? 'lightGray' : 'black']()

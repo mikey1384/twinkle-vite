@@ -18,7 +18,8 @@ import {
   returnMaxUploadSize,
   MOD_LEVEL
 } from '~/constants/defaultValues';
-const fromTwinkleWebsiteLabel = 'from Twinkle Website';
+import { SITE_NAME } from '~/constants/siteBrand';
+const fromTwinkleWebsiteLabel = `from ${SITE_NAME} Website`;
 const videoLabel = 'Video';
 const linkLabel = 'Link';
 const deviceIsMobile = isMobile(navigator);

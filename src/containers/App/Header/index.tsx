@@ -34,6 +34,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const BalanceModal = lazyWithRetry(() => import('./BalanceModal'));
 
@@ -131,13 +132,13 @@ export default function Header({
       (pathname === '/' ? numNewPosts : 0) + numNewNotis + numUnreads;
     if (section === 'chat') {
       if (chatType === VOCAB_CHAT_TYPE) {
-        document.title = `${`Vocabulary | Twinkle`}${
+        document.title = `${`Vocabulary | ${SITE_NAME}`}${
           newNotiNum > 0 ? ' *' : ''
         }`;
       } else if (chatType === AI_CARD_CHAT_TYPE) {
-        document.title = `${`AI Cards | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
+        document.title = `${`AI Cards | ${SITE_NAME}`}${newNotiNum > 0 ? ' *' : ''}`;
       } else {
-        document.title = `${`Chat | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
+        document.title = `${`Chat | ${SITE_NAME}`}${newNotiNum > 0 ? ' *' : ''}`;
       }
     } else if (
       !['chat', 'comments', 'subjects', 'ai-cards'].includes(section) &&

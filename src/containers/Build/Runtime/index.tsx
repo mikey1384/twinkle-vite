@@ -63,6 +63,7 @@ import type {
   RuntimeBuild
 } from './types';
 import { buildRuntimeCommentsAreAvailable } from './helpers/runtimeComments';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 function parseRuntimeMountContext(search: string): PreviewMountContext | null {
   const params = new URLSearchParams(search);
@@ -1039,7 +1040,7 @@ export default function BuildRuntime({
       ? explicitBackLabel
       : canUseHistoryBack
         ? 'Go back'
-        : 'Back to Twinkle';
+        : `Back to ${SITE_NAME}`;
   }, [canUseHistoryBack, explicitBackLabel]);
   const showAiEnergy = !!userId && !!aiUsagePolicy;
   const energyPercent = Math.max(

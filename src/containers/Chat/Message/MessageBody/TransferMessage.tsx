@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useChatContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function TransferMessage({
   myId,
@@ -111,7 +112,7 @@ export default function TransferMessage({
               )}
               for{' '}
               <b style={{ color: Color.black() }}>{addCommasToNumber(price)}</b>{' '}
-              Twinkle {price === 1 ? 'Coin' : 'Coins'}
+              {SITE_NAME} {price === 1 ? 'Coin' : 'Coins'}
             </div>
             <div
               className={css`

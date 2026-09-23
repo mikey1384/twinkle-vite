@@ -1,5 +1,6 @@
 import React from 'react';
 import type { RewardProposalEarnings as Earnings } from './types';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function RewardProposalEarnings({
   rewards
@@ -18,7 +19,7 @@ export default function RewardProposalEarnings({
             {rule.maxLifetimeClaims
               ? ` · up to ${rule.maxLifetimeClaims} times per person in total`
               : ''}
-            {rule.completionProof ? ' · climb checked by Twinkle' : ''}
+            {rule.completionProof ? ` · climb checked by ${SITE_NAME}` : ''}
           </li>
         ))}
       </ul>

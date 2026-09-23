@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function OwnAiCliNotice({ buildId }: { buildId: number }) {
   const [expanded, setExpanded] = useState(false);
@@ -9,9 +10,9 @@ export default function OwnAiCliNotice({ buildId }: { buildId: number }) {
 
   const buildUrl = `${window.location.origin}/build/${buildId}`;
   const prompt = [
-    `I build apps on Twinkle using an AI called Lumine, but I want my own Codex or Claude Code subscription to power Lumine's workspace loop without using Twinkle AI Energy. Please help me set it up from my computer.`,
+    `I build apps on ${SITE_NAME} using an AI called Lumine, but I want my own Codex or Claude Code subscription to power Lumine's workspace loop without using ${SITE_NAME} AI Energy. Please help me set it up from my computer.`,
     '',
-    `1. Ask whether I want to use Codex or Claude Code. If that CLI isn't installed and signed in with my subscription yet, walk me through it. Never ask me to paste a provider token into Twinkle.`,
+    `1. Ask whether I want to use Codex or Claude Code. If that CLI isn't installed and signed in with my subscription yet, walk me through it. Never ask me to paste a provider token into ${SITE_NAME}.`,
     `2. Help me log in to the Lumine CLI by running this in a terminal: npx @stage5/lumine@latest login`,
     `3. Download my project: npx @stage5/lumine@latest pull ${buildUrl}`,
     `4. Open the downloaded folder in the terminal. For each change I request, run one of these commands from that folder:`,
@@ -127,7 +128,7 @@ export default function OwnAiCliNotice({ buildId }: { buildId: number }) {
         `}
       >
         A Codex or Claude Code subscription can power Lumine&apos;s core workspace
-        tools and validation from your computer — no Twinkle AI Energy needed.
+        tools and validation from your computer — no {SITE_NAME} AI Energy needed.
         Lumine saves only after the project passes its checks, and records
         evidence-based feedback about the loop. Copy this setup prompt into
         Claude or ChatGPT:

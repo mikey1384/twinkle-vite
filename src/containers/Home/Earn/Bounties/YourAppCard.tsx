@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 // The last card on the shelf is for the member who has not built anything
 // yet: what Twinkle approves, in three lines, and the door into Lumine.
@@ -12,7 +13,7 @@ export default function YourAppCard() {
     <article className={cardClass}>
       <h3 className={titleClass}>Your app here</h3>
       <p className={leadClass}>
-        Build an app that pays XP. Twinkle approves apps that
+        Build an app that pays XP. {SITE_NAME} approves apps that
       </p>
       <ul className={listClass}>
         <li>take real effort to earn from</li>

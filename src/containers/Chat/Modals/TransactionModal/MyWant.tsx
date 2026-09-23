@@ -7,6 +7,7 @@ import SelectedGroups from './SelectedGroups';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function MyWant({
   coinAmount,
@@ -71,7 +72,7 @@ export default function MyWant({
               align-items: center;
             `}
           >
-            Twinkle Coins (
+            {SITE_NAME} Coins (
             <Icon
               style={{ color: Color.brownOrange() }}
               icon="coins"

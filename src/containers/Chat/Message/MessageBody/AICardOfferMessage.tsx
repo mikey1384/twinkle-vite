@@ -8,6 +8,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useChatContext } from '~/contexts';
 import type { AICardOfferMessagePayload } from '~/helpers/aiCardOfferNotice';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function AICardOfferMessage({
   myId,
@@ -139,7 +140,7 @@ export default function AICardOfferMessage({
                   <b style={{ color: Color.black() }}>
                     {addCommasToNumber(price)}
                   </b>{' '}
-                  Twinkle {price === 1 ? 'Coin' : 'Coins'}
+                  {SITE_NAME} {price === 1 ? 'Coin' : 'Coins'}
                 </div>
                 {status !== 'open' ? (
                   <div

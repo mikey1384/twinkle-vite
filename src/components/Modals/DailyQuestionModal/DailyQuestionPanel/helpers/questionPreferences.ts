@@ -1,8 +1,10 @@
+import { SITE_NAME } from '~/constants/siteBrand';
+
 export const VIBE_OPTIONS = [
   {
     id: 'default',
-    title: 'Let Twinkle Pick',
-    description: 'Let Twinkle pick a balanced question for tomorrow.'
+    title: `Let ${SITE_NAME} Pick`,
+    description: `Let ${SITE_NAME} pick a balanced question for tomorrow.`
   },
   {
     id: 'follow_up',
@@ -55,8 +57,8 @@ export const VIBE_OPTIONS = [
 export const FOCUS_OPTIONS = [
   {
     id: 'infer',
-    title: 'Let Twinkle Pick',
-    description: 'Let Twinkle infer your focus from your recent activity.'
+    title: `Let ${SITE_NAME} Pick`,
+    description: `Let ${SITE_NAME} infer your focus from your recent activity.`
   },
   {
     id: 'dating_partner_search',
@@ -176,7 +178,7 @@ export function getVibeLabel(category: string | null) {
   const normalized =
     category === 'autobiography' ? 'build_project' : category || 'default';
   const option = VIBE_OPTIONS.find((entry) => entry.id === normalized);
-  return option ? option.title : 'Let Twinkle Pick';
+  return option ? option.title : `Let ${SITE_NAME} Pick`;
 }
 
 export function getFocusOptionTitle(
@@ -202,5 +204,5 @@ export function getFocusOptionDescription(
 export function getFocusLabel(focus: string | null, isAdultUser: boolean) {
   const normalized = focus || 'infer';
   const option = FOCUS_OPTIONS.find((entry) => entry.id === normalized);
-  return option ? getFocusOptionTitle(option, isAdultUser) : 'Let Twinkle Pick';
+  return option ? getFocusOptionTitle(option, isAdultUser) : `Let ${SITE_NAME} Pick`;
 }

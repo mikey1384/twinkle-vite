@@ -14,6 +14,7 @@ import {
   getRuntimeIssueLocationText,
   getRuntimePreviewIframeSandbox
 } from './helpers/previewHelpers';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 type PreviewFrameKey = 'primary' | 'secondary';
 
@@ -457,14 +458,14 @@ function BuildLiveHostSafetyControl({
         ? 'Livestream cleanup pending'
         : 'Livestream starting — camera may be on';
   const detail = !session.statusConfirmed
-    ? 'Twinkle has not confirmed that this stream ended. Keep this warning open and retry End.'
+    ? `${SITE_NAME} has not confirmed that this stream ended. Keep this warning open and retry End.`
     : ['ending', 'cleanup_failed'].includes(session.status)
-      ? 'Twinkle is still stopping the provider stream. This warning stays until cleanup is confirmed.'
+      ? `${SITE_NAME} is still stopping the provider stream. This warning stays until cleanup is confirmed.`
       : session.hardEndsAt
-        ? `Twinkle will force-stop it by ${new Date(
+        ? `${SITE_NAME} will force-stop it by ${new Date(
             session.hardEndsAt * 1000
           ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
-        : 'Twinkle will keep this warning visible until the stream is confirmed ended.';
+        : `${SITE_NAME} will keep this warning visible until the stream is confirmed ended.`;
 
   async function stopHostedStream() {
     if (submitting) return;
@@ -475,7 +476,7 @@ function BuildLiveHostSafetyControl({
     } catch (stopError: any) {
       setError(
         stopError?.message ||
-          'Twinkle could not confirm the stream ended. Retry now.'
+          `${SITE_NAME} could not confirm the stream ended. Retry now.`
       );
     } finally {
       setSubmitting(false);

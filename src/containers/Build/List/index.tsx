@@ -60,6 +60,7 @@ import {
   enqueueBuildStudioPreferenceSave,
   getBuildStudioPreferencesKey
 } from '../studioPreferences';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const browseModeFilterWrapClass = css`
   margin-bottom: 1rem;
@@ -812,7 +813,7 @@ export default function BuildList({
           <>
             Let <strong>Lumine, your AI app-building assistant</strong>, turn
             your idea into a working app and help you refine it. When you are
-            ready, you can publish it so other Twinkle users can use it, and
+            ready, you can publish it so other {SITE_NAME} users can use it, and
             even people outside the website.
           </>
         }

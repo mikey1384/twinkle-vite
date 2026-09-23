@@ -6,6 +6,7 @@ import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import { useAppContext, useChatContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function SellModal({
   card,
@@ -116,7 +117,7 @@ export default function SellModal({
                 }}
               >
                 {offerers.length} user{offerers.length === 1 ? '' : 's'} made
-                offer for this card at {displayOfferPrice} Twinkle Coins. You
+                offer for this card at {displayOfferPrice} {SITE_NAME} Coins. You
                 can either accept their offer or list it for sale at a higher
                 price.
               </div>

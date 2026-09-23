@@ -18,10 +18,11 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import useEnsureRankingsLoaded from '~/helpers/hooks/useEnsureRankingsLoaded';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const tapToCollectRewardsLabel = 'Tap to collect all your rewards';
 const yourXPLabel = 'Your XP';
-const yourTwinkleCoinsLabel = 'Your Twinkle Coins';
+const yourTwinkleCoinsLabel = `Your ${SITE_NAME} Coins`;
 
 export default function MainFeeds({
   activeTab,
@@ -302,7 +303,7 @@ export default function MainFeeds({
                   )}
                   {totalCoins > 0 && (
                     <p style={{ fontSize: '1.4rem', marginTop: '0.5rem' }}>
-                      {addCommasToNumber(totalCoins)} Twinkle Coin
+                      {addCommasToNumber(totalCoins)} {SITE_NAME} Coin
                       {totalCoins > 0 ? 's' : ''}
                     </p>
                   )}

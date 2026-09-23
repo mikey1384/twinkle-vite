@@ -10,6 +10,7 @@ import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const currentPasswordLabel = 'Current Password';
 const enterCurrentPasswordLabel = 'Enter your current password';
@@ -330,7 +331,7 @@ export default function ChangePasswordModal({
         ...obj,
         currentPassword: getErrorMessage(
           error,
-          'Your password changed, but Twinkle could not save the new login session. Please sign in again.'
+          `Your password changed, but ${SITE_NAME} could not save the new login session. Please sign in again.`
         )
       }));
       setChanging(false);

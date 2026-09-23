@@ -8,6 +8,7 @@ import zeroBuilderFull from '~/assets/zero-builder-full.png';
 import { mobileMaxWidth } from '~/constants/css';
 import { BUILD_WORKSHOP_PREVIEW_USER_IDS } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function SponsorGuide() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -131,7 +132,7 @@ function WorkshopSponsorGuide() {
             that team membership remains active.
           </li>
           <li>
-            Twinkle's safety reviewers may inspect approved plans, recorded
+            {SITE_NAME}'s safety reviewers may inspect approved plans, recorded
             runtime evidence, and canonical artifacts for a job — but not the
             raw assistant chat.
           </li>
@@ -242,7 +243,7 @@ function WorkshopSponsorGuide() {
             the on-duty project collaborator Zero or Ciel talks with. The
             agent writes each concise, user-facing progress note deliberately
             and sends it with{' '}
-            <code>lumine sponsor job update</code>. Twinkle shows that exact
+            <code>lumine sponsor job update</code>. {SITE_NAME} shows that exact
             note in the chat; hidden reasoning, raw terminal output,
             credentials, tokens, private paths, and unrelated data must never
             be sent through this channel.
@@ -253,7 +254,7 @@ function WorkshopSponsorGuide() {
           <h3>Karma and trust</h3>
           <p>
             A unique contribution to another user earns 50 KP only after
-            Twinkle's daily review confirms it. Self-sponsored testing, retries,
+            {SITE_NAME}'s daily review confirms it. Self-sponsored testing, retries,
             and helper agents do not earn or multiply the award. Probationary
             work, flagged evidence, and a random sample receive human-reviewed
             checks; dishonest reporting or data misuse can suspend or revoke
@@ -263,7 +264,7 @@ function WorkshopSponsorGuide() {
       </section>
 
       <Link to="/" className={backLinkClass}>
-        Back to Twinkle
+        Back to {SITE_NAME}
       </Link>
     </main>
   );

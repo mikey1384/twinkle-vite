@@ -14,6 +14,7 @@ import {
   getRecommendationTargetLabel,
   shouldShowNotificationContentDetail
 } from '../../notificationLabels';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 function NotiMessage({
   actionObj,
@@ -438,7 +439,7 @@ function NotiMessage({
               />
             )}{' '}
             <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
-              You earn {actionObj.amount} Twinkle Coin
+              You earn {actionObj.amount} {SITE_NAME} Coin
               {actionObj.amount > 1 ? 's' : ''}!
             </p>
           </>

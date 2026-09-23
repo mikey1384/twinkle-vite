@@ -4,10 +4,11 @@ import Banner from '~/components/Banner';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 const createDevAccountLabel = 'Create dev account';
 const iForgotMyPasswordLabel = 'I forgot my password';
 const noIDontHaveAnAccountLabel = `No, I don't have an account`;
-const welcomeLabel = 'Welcome to Twinkle. Do you have a Twinkle account?';
+const welcomeLabel = `Welcome to ${SITE_NAME}. Do you have a ${SITE_NAME} account?`;
 const yesIHaveAnAccountLabel = 'Yes, I have an account';
 
 export default function Main({

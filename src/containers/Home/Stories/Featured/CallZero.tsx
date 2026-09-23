@@ -28,6 +28,7 @@ import {
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 interface AiUsagePolicy extends AiEnergyDisplayPolicy {
   hasVerifiedEmail?: boolean;
@@ -642,7 +643,7 @@ export default function CallZero({
                 color: #2c3e50;
               `}
             >
-              {assistantName}: Your AI Friend on Twinkle
+              {assistantName}: Your AI Friend on {SITE_NAME}
             </h2>
             <p
               className={css`
@@ -651,7 +652,7 @@ export default function CallZero({
                 margin-bottom: 1rem;
               `}
             >
-              {`${assistantName} can help you navigate Twinkle and understand the features of the website.`}
+              {`${assistantName} can help you navigate ${SITE_NAME} and understand the features of the website.`}
             </p>
             <p
               className={css`
@@ -659,7 +660,7 @@ export default function CallZero({
                 line-height: 1.6;
               `}
             >
-              {`Practice a language together, or ask ${assistantName} about what's on your Twinkle screen.`}
+              {`Practice a language together, or ask ${assistantName} about what's on your ${SITE_NAME} screen.`}
             </p>
           </>
         )}

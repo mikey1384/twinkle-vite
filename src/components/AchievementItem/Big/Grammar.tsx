@@ -2,6 +2,7 @@ import React from 'react';
 import GrammarBadge from '~/assets/grammar.png';
 import ItemPanel from './ItemPanel';
 import { useKeyContext } from '~/contexts';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function Grammar({
   isThumb,
@@ -35,7 +36,7 @@ export default function Grammar({
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}
-      requirements={['Earn 100,000 Twinkle Coins playing Grammarbles']}
+      requirements={[`Earn 100,000 ${SITE_NAME} Coins playing Grammarbles`]}
       progressObj={progressObj}
       badgeSrc={GrammarBadge}
     />

@@ -22,6 +22,7 @@ import type {
   BuildRuntimeUploadAsset,
   BuildRuntimeUploadUsage
 } from '../types';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function useRuntimeUploads({
   build,
@@ -311,7 +312,7 @@ export default function useRuntimeUploads({
     const fileLabel = asset.originalFileName || asset.fileName || 'this file';
     const confirmed = await requestConfirm({
       title: 'Delete uploaded file',
-      description: `Delete "${fileLabel}" from your Twinkle uploads?`,
+      description: `Delete "${fileLabel}" from your ${SITE_NAME} uploads?`,
       descriptionFontSize: '1.35rem',
       confirmButtonColor: 'red',
       confirmButtonLabel: 'Delete',

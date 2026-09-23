@@ -1,3 +1,5 @@
+import { SITE_NAME } from '~/constants/siteBrand';
+
 export type InternalEmbedPreviewKind =
   | 'achievement'
   | 'aiCard'
@@ -301,7 +303,7 @@ export function getInternalEmbedPreviewInfo(
   return {
     icon: 'globe',
     kind: 'genericInternal',
-    label: 'Twinkle content',
+    label: `${SITE_NAME} content`,
     normalizedSrc
   };
 }
@@ -322,7 +324,7 @@ export function getInternalEmbedCommentLabel(
   if (info.kind === 'url') return 'shared a link';
   if (info.kind === 'video') return 'shared a video';
   if (info.kind === 'achievement') return 'shared an achievement';
-  return 'shared Twinkle content';
+  return `shared ${SITE_NAME} content`;
 }
 
 function getMainContentPreviewInfo({

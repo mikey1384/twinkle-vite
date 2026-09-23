@@ -45,6 +45,7 @@ import {
   getBuildAppAiUsagePolicy,
   sanitizeBuildAppAiUsagePolicyPayload
 } from '../helpers/previewAiUsagePolicy';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export {
   buildEmptyRuntimeObservationState,
@@ -676,7 +677,7 @@ export function useHostBridge({
         });
       }
       throw createPreviewBridgeError(
-        'Twinkle could not show the livestream safety controls, so the stream was cancelled.',
+        `${SITE_NAME} could not show the livestream safety controls, so the stream was cancelled.`,
         'BUILD_LIVE_SAFETY_PRESENTATION_UNAVAILABLE'
       );
     }

@@ -9,6 +9,7 @@ import {
   getRecommendationTargetLabel,
   shouldShowNotificationContentDetail
 } from '../../notificationLabels';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function RewardText({
   actionColor,
@@ -134,7 +135,7 @@ export default function RewardText({
         />
       )}{' '}
       <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
-        You earn {rewardAmount} Twinkle Coin
+        You earn {rewardAmount} {SITE_NAME} Coin
         {rewardAmount > 1 ? 's' : ''}!
       </p>
     </div>

@@ -10,6 +10,7 @@ import useAICard from '~/helpers/hooks/useAICard';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
 import { isTotalMysteryQuality } from '~/components/AICard/totalMysteryGlow';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 // A total-mystery card keeps its quality secret until it is revealed.
 function mysteryQualityHidden(card: any) {
@@ -124,7 +125,7 @@ export default function AICardSummonContent({
           >
             Summoned by{' '}
             <b style={{ color: Color.darkerGray() }}>
-              {displayedCard.creator?.username || 'a Twinkle member'}
+              {displayedCard.creator?.username || `a ${SITE_NAME} member`}
             </b>
           </div>
         </div>

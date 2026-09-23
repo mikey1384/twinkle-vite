@@ -27,6 +27,28 @@
       rel="stylesheet"
     />
     <title>Twinkle</title>
+    <script>
+      // lumine.network serves this same site under its own name. Swap the tab
+      // title, icon, and install manifest before first paint so the tab never
+      // shows Twinkle there (src/constants/siteBrand.ts covers in-app copy).
+      (function () {
+        if (!/(^|\.)lumine\.network$/.test(window.location.hostname)) return;
+        document.title = 'Lumine';
+        var icon = document.querySelector('link[rel="icon"]');
+        if (icon) {
+          icon.setAttribute('type', 'image/svg+xml');
+          icon.setAttribute('href', '/lumine-favicon.svg');
+        }
+        var manifest = document.querySelector('link[rel="manifest"]');
+        if (manifest) manifest.setAttribute('href', '/lumine-manifest.json');
+        var metas = document.querySelectorAll(
+          'meta[property="og:title"], meta[name="twitter:title"]'
+        );
+        for (var i = 0; i < metas.length; i++) {
+          metas[i].setAttribute('content', 'Lumine');
+        }
+      })();
+    </script>
     <script defer src="/js/load-image.all.min.js"></script>
     <!-- Google tag (gtag.js) -->
     <script>

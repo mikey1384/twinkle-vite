@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function AlreadyPosted({
   contentId,
@@ -115,7 +116,7 @@ export default function AlreadyPosted({
       <div className={textBlockClass}>
         <strong>
           {postedByDifferentUser
-            ? 'Already shared on Twinkle'
+            ? `Already shared on ${SITE_NAME}`
             : 'You already posted this'}
         </strong>
         <span>

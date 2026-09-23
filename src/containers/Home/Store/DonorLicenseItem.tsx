@@ -12,6 +12,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ItemPanel from './ItemPanel';
 import { homePanelClass } from '~/theme/homePanels';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function DonorLicenseItem({
   karmaPoints,
@@ -79,7 +80,7 @@ export default function DonorLicenseItem({
         itemDescription={
           <div>
             <p style={{ marginBottom: '1rem' }}>
-              Unlock the ability to donate your Twinkle Coins and work toward
+              Unlock the ability to donate your {SITE_NAME} Coins and work toward
               the{' '}
               <Link to="/achievements" style={{ fontWeight: 'bold' }}>
                 Big Donor
@@ -189,7 +190,7 @@ export default function DonorLicenseItem({
               filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
             `}
           />
-          Donate Twinkle Coins
+          Donate {SITE_NAME} Coins
         </h3>
 
         <div
@@ -366,7 +367,7 @@ export default function DonorLicenseItem({
                 `}
               >
                 You've donated{' '}
-                <strong>{addCommasToNumber(donatedCoins)}</strong> Twinkle Coins
+                <strong>{addCommasToNumber(donatedCoins)}</strong> {SITE_NAME} Coins
                 and achieved the prestigious{' '}
                 <Link to="/achievements" style={{ fontWeight: 'bold' }}>
                   Big Donor
@@ -381,7 +382,7 @@ export default function DonorLicenseItem({
                   font-weight: 600;
                 `}
               >
-                Thank you for your incredible generosity to the Twinkle
+                Thank you for your incredible generosity to the {SITE_NAME}
                 community! 💙
               </p>
             </div>
@@ -395,7 +396,7 @@ export default function DonorLicenseItem({
                   color: ${Color.black()};
                 `}
               >
-                Twinkle Coins donated: {addCommasToNumber(donatedCoins)}
+                {SITE_NAME} Coins donated: {addCommasToNumber(donatedCoins)}
               </h3>
               <ProgressBar progress={progress} />
               <p

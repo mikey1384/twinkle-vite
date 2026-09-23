@@ -2,6 +2,7 @@ import React from 'react';
 import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function PleaseLogIn() {
   const twinRole = useRoleColor('logoTwin', {
@@ -15,7 +16,7 @@ export default function PleaseLogIn() {
 
   return (
     <LoggedOutPrompt
-      title="Twinkle Chat"
+      title={`${SITE_NAME} Chat`}
       body={
         <>
           Chat one-on-one or in groups, share files and videos, join calls, and

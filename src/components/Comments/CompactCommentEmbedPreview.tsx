@@ -26,6 +26,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { css } from '@emotion/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 interface CompactCommentEmbedPreviewProps {
   className?: string;
@@ -637,7 +638,7 @@ function getMarkdownMediaType(
 
 function getMarkdownMediaLabel(embed: MarkdownMediaEmbed) {
   if (embed.type === 'internal') {
-    return embed.internalInfo?.label || 'Twinkle content';
+    return embed.internalInfo?.label || `${SITE_NAME} content`;
   }
   if (embed.type === 'video') return 'Video';
   if (embed.type === 'image') return 'Image';

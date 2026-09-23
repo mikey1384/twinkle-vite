@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function LegacySponsorGuide() {
   return (
@@ -93,7 +94,7 @@ export default function LegacySponsorGuide() {
               unrelated account data.
             </li>
             <li>
-              Twinkle's safety reviewers may inspect the approved plans,
+              {SITE_NAME}'s safety reviewers may inspect the approved plans,
               recorded runtime evidence, and canonical artifacts for that job,
               but not the raw assistant chat.
             </li>
@@ -120,7 +121,7 @@ export default function LegacySponsorGuide() {
           <h2>Karma and trust</h2>
           <p>
             A unique contribution to another user earns 50 KP only after
-            Twinkle's daily review confirms it. Self-sponsored testing, retries,
+            {SITE_NAME}'s daily review confirms it. Self-sponsored testing, retries,
             and helper agents do not earn or multiply the award. Probationary
             work, flagged evidence, and a random sample receive human-reviewed
             checks; dishonest reporting or data misuse can suspend or revoke
@@ -129,7 +130,7 @@ export default function LegacySponsorGuide() {
         </section>
 
         <Link to="/" className={backLinkClass}>
-          Back to Twinkle
+          Back to {SITE_NAME}
         </Link>
       </article>
     </main>

@@ -4,12 +4,13 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const steps = [
-  'Open Twinkle in Safari.',
+  `Open ${SITE_NAME} in Safari.`,
   'Tap the Share button (the square with an arrow pointing up).',
   'Scroll down and tap "Add to Home Screen", then tap "Add".',
-  'Open Twinkle from your Home Screen and turn this switch on.'
+  `Open ${SITE_NAME} from your Home Screen and turn this switch on.`
 ];
 
 export default function AddToHomeScreenModal({
@@ -22,7 +23,7 @@ export default function AddToHomeScreenModal({
       modalKey="AddToHomeScreenModal"
       isOpen
       size="md"
-      title="Add Twinkle to your Home Screen"
+      title={`Add ${SITE_NAME} to your Home Screen`}
       onClose={onHide}
       footer={
         <Button color="logoBlue" variant="solid" onClick={onHide}>

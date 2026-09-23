@@ -5,6 +5,7 @@ import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import CardThumb from '~/components/CardThumb';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function TransferActivity({
   card,
@@ -99,7 +100,7 @@ export default function TransferActivity({
             )}
             for{' '}
             <b style={{ color: Color.black() }}>{addCommasToNumber(price)}</b>{' '}
-            Twinkle {price === 1 ? 'Coin' : 'Coins'}
+            {SITE_NAME} {price === 1 ? 'Coin' : 'Coins'}
           </div>
           <div
             className={css`

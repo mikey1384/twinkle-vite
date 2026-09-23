@@ -29,6 +29,7 @@ import {
   getBuildViewAnalyticsParams,
   type BuildViewAnalyticsPayload
 } from '~/helpers/buildViewAnalytics';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 interface RuntimeSession {
   buildId: number;
@@ -375,8 +376,8 @@ export default function BuildRuntimeKeepAliveHost() {
   useEffect(() => {
     if (!isRuntimeRoute) return;
     document.title = activeSessionLoaded
-      ? `${activeSessionTitle} | Twinkle`
-      : 'Build App | Twinkle';
+      ? `${activeSessionTitle} | ${SITE_NAME}`
+      : `Build App | ${SITE_NAME}`;
   }, [isRuntimeRoute, activeSessionLoaded, activeSessionTitle]);
 
   useEffect(() => {

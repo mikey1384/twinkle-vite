@@ -46,6 +46,7 @@ import type {
   BuildLike,
   CollaborationPanelProps
 } from './types';
+import { SITE_NAME } from '~/constants/siteBrand';
 
 const panelClass = css`
   border-bottom: 1px solid var(--ui-border);
@@ -1029,7 +1030,7 @@ export default function CollaborationPanel({
               </p>
               <p>
                 Any Main changes that are not in this branch will be
-                overwritten. Twinkle will not combine the two versions.
+                overwritten. {SITE_NAME} will not combine the two versions.
               </p>
               <p>The branch will be marked as merged after Main is replaced.</p>
             </div>
