@@ -11,6 +11,7 @@ import ApprovalRequest from './ApprovalRequest';
 import BuildCollaborationRequest from './BuildCollaborationRequest';
 import BuildContributionSubmission from './BuildContributionSubmission';
 import BuildThumbnailSuggestion from './BuildThumbnailSuggestion';
+import BuildTitleSuggestion from './BuildTitleSuggestion';
 import BuildContributionInvite from './BuildContributionInvite';
 import BuildProjectLimitRequest from './BuildProjectLimitRequest';
 import BuildRewardReview from './BuildRewardReview';
@@ -216,6 +217,18 @@ export default function Content({
           content={content}
           messageId={messageId}
           suggestion={parsedSettings?.buildThumbnailSuggestion}
+          myId={myId}
+          sender={{
+            id: userId,
+            username: appliedUsername,
+            profileTheme
+          }}
+        />
+      ) : rootType === 'buildTitleSuggestion' && rootId ? (
+        <BuildTitleSuggestion
+          content={content}
+          messageId={messageId}
+          suggestion={parsedSettings?.buildTitleSuggestion}
           myId={myId}
           sender={{
             id: userId,

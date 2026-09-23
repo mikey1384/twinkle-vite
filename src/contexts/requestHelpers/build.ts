@@ -3291,6 +3291,50 @@ export default function buildRequestHelpers({
       }
     },
 
+    async suggestBuildTitleToOwner({
+      buildId,
+      contributionBuildId,
+      title,
+      note
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      title: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/suggest-title`,
+          { title, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async adoptBuildTitleSuggestion({
+      buildId,
+      contributionBuildId,
+      suggestionMessageId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      suggestionMessageId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/adopt-title`,
+          { suggestionMessageId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async replaceMainWithBuildContribution({
       buildId,
       contributionBuildId,

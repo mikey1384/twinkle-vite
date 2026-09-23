@@ -128,7 +128,7 @@ test('the message renderer uses one capability gate for every generic action sur
   );
   assert.match(
     actionButtonsSource,
-    /!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && userCanEditThis/
+    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard &&\s*userCanEditThis/
   );
   assert.match(
     actionButtonsSource,
@@ -200,7 +200,7 @@ test('reply-only Build cards expose Reply and nothing else in the message menu',
   assert.match(actionButtonsSource, /if \(canReply && !isRestricted\)/);
   assert.match(
     actionButtonsSource,
-    /!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && userCanEditThis/
+    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard &&\s*userCanEditThis/
   );
   assert.match(
     actionButtonsSource,

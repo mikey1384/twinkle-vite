@@ -311,6 +311,10 @@ export default function Channel({
           </span>
         );
       }
+      // The card is the message; a note is optional and secondary.
+      if (rootType === 'buildTitleSuggestion') {
+        return <span>{messageSender}: suggested a new name</span>;
+      }
       if (messageSender && content) {
         const truncatedContent =
           content.startsWith('/spoiler ') || content.startsWith('/secret ')

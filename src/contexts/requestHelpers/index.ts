@@ -192,6 +192,8 @@ registerMethods('build', [
   'notifyBuildOwnerOfContribution',
   'suggestBuildThumbnailToOwner',
   'adoptBuildThumbnailSuggestion',
+  'suggestBuildTitleToOwner',
+  'adoptBuildTitleSuggestion',
   'replaceBuildContributionIntoMyBranch',
   'completeBuildContributionMerge',
   'loadBuildContributionForumThreads',

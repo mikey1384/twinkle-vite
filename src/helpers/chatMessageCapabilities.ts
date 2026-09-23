@@ -5,6 +5,7 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   'buildCollaborationRequest',
   'buildContributionSubmission',
   'buildThumbnailSuggestion',
+  'buildTitleSuggestion',
   'buildProjectLimitRequest',
   'buildRewardReview',
   'aiCardOffer',
@@ -12,7 +13,11 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 const SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES: ReadonlySet<string> =
-  new Set(['buildContributionSubmission', 'buildThumbnailSuggestion']);
+  new Set([
+    'buildContributionSubmission',
+    'buildThumbnailSuggestion',
+    'buildTitleSuggestion'
+  ]);
 
 export function canUseGenericChatMessageActions({
   inviteFrom,
@@ -64,6 +69,7 @@ const REPLYABLE_BUILD_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   'buildCollaborationRequest',
   'buildContributionSubmission',
   'buildThumbnailSuggestion',
+  'buildTitleSuggestion',
   'buildProjectLimitRequest',
   'buildRewardReview'
 ]);

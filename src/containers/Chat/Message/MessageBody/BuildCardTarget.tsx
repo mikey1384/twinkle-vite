@@ -3,6 +3,7 @@ import BuildContributionInvite from './BuildContributionInvite';
 import BuildCollaborationRequest from './BuildCollaborationRequest';
 import BuildContributionSubmission from './BuildContributionSubmission';
 import BuildThumbnailSuggestion from './BuildThumbnailSuggestion';
+import BuildTitleSuggestion from './BuildTitleSuggestion';
 import BuildProjectLimitRequest from './BuildProjectLimitRequest';
 import BuildRewardReview from './BuildRewardReview';
 import { parseMessageSettings } from './messageSettings';
@@ -27,7 +28,8 @@ export function buildCardRendersContent(rootType: unknown) {
     'buildContributionInvite',
     'buildCollaborationRequest',
     'buildContributionSubmission',
-    'buildThumbnailSuggestion'
+    'buildThumbnailSuggestion',
+    'buildTitleSuggestion'
   ].includes(String(rootType || ''));
 }
 
@@ -80,6 +82,17 @@ export default function BuildCardTarget({
         content={content}
         messageId={messageId}
         suggestion={settings?.buildThumbnailSuggestion}
+        myId={myId}
+        sender={sender}
+      />
+    );
+  }
+  if (rootType === 'buildTitleSuggestion') {
+    return (
+      <BuildTitleSuggestion
+        content={content}
+        messageId={messageId}
+        suggestion={settings?.buildTitleSuggestion}
         myId={myId}
         sender={sender}
       />

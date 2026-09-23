@@ -32,6 +32,7 @@ import RewardApprovalNotice from '~/components/Build/Rewards/RewardApprovalNotic
 import type { BuildReleaseControl } from '~/components/Build/hooks/useRelease';
 import { getBuildRewardReviewManagementPath } from '~/helpers/buildRewardReviewCard';
 import Button from '~/components/Button';
+import SuggestTitleModal from './SuggestTitleModal';
 import {
   BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
   BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
@@ -412,6 +413,7 @@ interface HeaderProps {
     contributionBranchNumber?: number | null;
     contributionContributorId?: number | null;
     contributionStatus?: string | null;
+    contributionRootBuildId?: number | null;
     rootBuildUserId?: number | null;
     rootBuildUsername?: string | null;
     rootBuildProfilePicUrl?: string | null;
@@ -712,6 +714,7 @@ export default function Header({
   onUnpublish
 }: HeaderProps) {
   const [rewardsOpen, setRewardsOpen] = useState(false);
+  const [suggestTitleOpen, setSuggestTitleOpen] = useState(false);
   const location = useLocation();
   const banned = useKeyContext((v) => v.myState.banned);
   const runtimeBackState = React.useMemo(
@@ -723,6 +726,13 @@ export default function Header({
   );
   const isContributionFork =
     build.contributionStatus && build.contributionStatus !== 'none';
+  const canSuggestTitle = Boolean(
+    isOwner &&
+      isContributionFork &&
+      Number(build.contributionRootBuildId || 0) > 0 &&
+      Number(build.rootBuildUserId || 0) > 0 &&
+      Number(build.rootBuildUserId || 0) !== Number(build.userId || 0)
+  );
   const navigate = useNavigate();
   const rewardChangeKey = `${build.currentArtifactVersionId}:${build.projectFilesHash}:${build.isPublic}:${hasUnsavedRewardChanges}:${rewardsBeingPrepared}`;
   const rewardStatus = release.rewardStatus;
@@ -838,6 +848,21 @@ export default function Header({
           </>
         ),
         onClick: onOpenDescriptionModal
+      });
+    }
+    // Only the owner can rename the project; a teammate on their own branch
+    // can send them a name to use instead.
+    if (canSuggestTitle) {
+      items.push({
+        label: (
+          <>
+            <Icon icon="pencil-alt" />
+            <span style={{ marginLeft: '1rem', whiteSpace: 'nowrap' }}>
+              Suggest a new name
+            </span>
+          </>
+        ),
+        onClick: () => setSuggestTitleOpen(true)
       });
     }
     if (canEditThumbnail && hasThumbnail) {
@@ -1310,6 +1335,15 @@ export default function Header({
           onOpen={() => setRewardsOpen(true)}
         />
       )}
+      {suggestTitleOpen && canSuggestTitle ? (
+        <SuggestTitleModal
+          rootBuildId={Number(build.contributionRootBuildId || 0)}
+          branchBuildId={Number(build.id || 0)}
+          currentTitle={String(build.rootBuildTitle || '')}
+          ownerUsername={String(build.rootBuildUsername || '')}
+          onHide={() => setSuggestTitleOpen(false)}
+        />
+      ) : null}
       {rewardsOpen && (
         <RewardSettingsModal
           buildId={Number(build.id)}

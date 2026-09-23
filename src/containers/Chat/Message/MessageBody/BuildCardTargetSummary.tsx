@@ -41,6 +41,21 @@ export function getBuildCardTargetSummary(
       thumbUrl
     };
   }
+  if (rootType === 'buildTitleSuggestion') {
+    const suggestion =
+      parseMessageSettings(message.settings)?.buildTitleSuggestion || {};
+    const rootBuildId = Math.floor(Number(suggestion?.rootBuildId) || 0);
+    const branchBuildId = Math.floor(Number(suggestion?.branchBuildId) || 0);
+    const suggestedTitle = String(suggestion?.suggestedTitle || '').trim();
+    if (!rootBuildId || !branchBuildId || !suggestedTitle) return null;
+    return {
+      icon: 'pencil-alt',
+      label: `Suggested a new name for ${String(
+        suggestion?.title || 'a project'
+      )}`,
+      detail: `“${suggestedTitle}”`
+    };
+  }
   if (rootType === 'buildContributionSubmission') {
     const submission =
       parseMessageSettings(message.settings)?.buildContributionSubmission || {};
