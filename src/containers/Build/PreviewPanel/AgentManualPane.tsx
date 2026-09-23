@@ -197,7 +197,8 @@ const sdkSections: GuideSection[] = [
     title: 'Twinkle.minecraft',
     items: [
       'Read-only view of the Twinkle Minecraft server. getWorlds() returns worlds with squaremap tile info (fill {z}, {x}, {y} in map.tileUrlTemplate); getOnlinePlayers() returns players with coordinates; getZero() shows where Zero is and his build in progress; getZeroBuilds({ limit, kind }) lists his recent builds with bounds.',
-      'Limited rollout: apps that are not enabled get 403 with code minecraft_sdk_not_enabled. Poll players and Zero no faster than every 5 seconds; stale: true means a recent cached copy.'
+      'Limited rollout: apps that are not enabled get 403 with code minecraft_sdk_not_enabled. Poll players and Zero no faster than every 5 seconds; stale: true means a recent cached copy.',
+      'Roles (server owner only): getPeople() lists everyone who has joined with their role (visitor, member, builder, moderator), or { canManage: false, people: [] } for other viewers, so hide the feature then; setPlayerRole({ uuid, role }) changes a role in game immediately.'
     ]
   },
   {

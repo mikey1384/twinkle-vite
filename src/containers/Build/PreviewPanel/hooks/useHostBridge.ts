@@ -3402,7 +3402,8 @@ export function useHostBridge({
           case 'minecraft:worlds':
           case 'minecraft:players':
           case 'minecraft:zero':
-          case 'minecraft:zero-builds': {
+          case 'minecraft:zero-builds':
+          case 'minecraft:people': {
             const minecraftToken = await ensureBuildApiToken(
               ['content:read'],
               previewAuth
@@ -3410,7 +3411,11 @@ export function useHostBridge({
             const resource =
               type === 'minecraft:zero-builds'
                 ? 'zero/builds'
-                : type.slice('minecraft:'.length);
+                : (type.slice('minecraft:'.length) as
+                    | 'worlds'
+                    | 'players'
+                    | 'zero'
+                    | 'people');
             response = await requestRefs.getBuildMinecraftDataRef.current({
               buildId: activeBuild.id,
               resource,
@@ -3418,6 +3423,21 @@ export function useHostBridge({
                 type === 'minecraft:zero-builds'
                   ? { limit: payload?.limit, kind: payload?.kind }
                   : {},
+              token: minecraftToken
+            });
+            break;
+          }
+
+          // Owner-only role change (People tab); the API checks who is asking.
+          case 'minecraft:set-role': {
+            const minecraftToken = await ensureBuildApiToken(
+              ['content:write'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildMinecraftDataRef.current({
+              buildId: activeBuild.id,
+              resource: 'people/role',
+              body: { uuid: payload?.uuid, role: payload?.role },
               token: minecraftToken
             });
             break;

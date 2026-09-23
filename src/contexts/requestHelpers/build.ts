@@ -4771,7 +4771,8 @@ export default function buildRequestHelpers({
       }
     },
 
-    // Twinkle.minecraft reads: resource is worlds | players | zero | zero/builds.
+    // Twinkle.minecraft: reads (worlds | players | zero | zero/builds |
+    // people) and the owner-only role change (people/role).
     async getBuildMinecraftData({
       buildId,
       resource,
@@ -4779,7 +4780,13 @@ export default function buildRequestHelpers({
       token
     }: {
       buildId: number;
-      resource: 'worlds' | 'players' | 'zero' | 'zero/builds';
+      resource:
+        | 'worlds'
+        | 'players'
+        | 'zero'
+        | 'zero/builds'
+        | 'people'
+        | 'people/role';
       body?: Record<string, unknown>;
       token?: string;
     }) {
