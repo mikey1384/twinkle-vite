@@ -250,7 +250,11 @@ test('catch-up gates sending without replacing the conversation or draft', () =>
   assert.match(messagesSource, /userIdRef\.current !== userId/);
   assert.match(sendHandler, /if \(loading\) return;/);
   assert.match(messageInputSource, /interactionLocked=\{loading\}/);
-  assert.match(uploadModalSource, /if \(interactionLocked\) return;/);
+  // The guard may combine further locks (e.g. the modal's own busy state).
+  assert.match(
+    uploadModalSource,
+    /if \(interactionLocked(?: \|\| [A-Za-z]+)*\) return;/
+  );
   assert.match(
     uploadModalSource,
     /disabled=\{[\s\S]*?interactionLocked \|\|[\s\S]*?isCustomUploadMode/

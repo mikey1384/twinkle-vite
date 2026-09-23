@@ -68,11 +68,12 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(headerSource, /\{availableModes\.map\(\(mode\) => \(/);
   assert.doesNotMatch(headerSource, /\{LUMINE_MODES\.map\(\(mode\) => \(/);
+  // Three modes plus Auto since 2026-09-23; Super Heavy is gone.
   assert.match(
     selectionHelperSource,
-    /export const LUMINE_MODES[\s\S]*?'light'[\s\S]*?'medium'[\s\S]*?'heavy'[\s\S]*?'superheavy'/
+    /export const LUMINE_MODES[\s\S]*?'auto'[\s\S]*?'light'[\s\S]*?'medium'[\s\S]*?'heavy'\s*\]/
   );
-  assert.match(selectionHelperSource, /superheavy: 'Super Heavy'/);
+  assert.doesNotMatch(selectionHelperSource, /'superheavy'|superheavy:/);
   assert.match(
     selectionHelperSource,
     /export function getAvailableLumineModes\([\s\S]*?LUMINE_MODES\.filter\([\s\S]*?modelOptions\.some\(\(option\) => option\.mode === mode\)/m
@@ -83,11 +84,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-5\.6-luna'[\s\S]*?medium: 'grok-4\.6'[\s\S]*?heavy: 'gpt-5\.6-sol'[\s\S]*?superheavy: 'gpt-6-astra'/m
-  );
-  assert.match(
-    selectionHelperSource,
-    /model: 'gpt-5\.6-luna'[\s\S]*?mode: 'light'[\s\S]*?defaultReasoningEffort: 'xhigh'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'light'[\s\S]*?defaultReasoningEffort: 'medium'[\s\S]*?model: 'grok-4\.6'[\s\S]*?mode: 'medium'[\s\S]*?defaultReasoningEffort: 'high'[\s\S]*?model: 'gpt-5\.6-sol'[\s\S]*?mode: 'heavy'[\s\S]*?defaultReasoningEffort: 'xhigh'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-6-luna'[\s\S]*?medium: 'gpt-6-sol'[\s\S]*?heavy: 'claude-opus-5-5'/m
   );
   assert.match(
     selectionHelperSource,
@@ -97,22 +94,10 @@ test('lumine workspace header exposes simple modes with advanced model choices',
     selectionHelperSource,
     /reasoningEffort:\s*preferredOption\.defaultReasoningEffort/m
   );
-  assert.match(
-    selectionHelperSource,
-    /model: 'claude-sonnet-5'[\s\S]*?mode: 'medium'/
-  );
-  assert.match(
-    selectionHelperSource,
-    /model: 'claude-opus-5'[\s\S]*?mode: 'heavy'/
-  );
-  assert.match(
-    selectionHelperSource,
-    /model: 'claude-fable-5-1'[\s\S]*?mode: 'superheavy'[\s\S]*?defaultReasoningEffort: 'xhigh'/
-  );
   assert.doesNotMatch(headerSource, /gpt-5\.[1-5]|GPT-5\.[1-5]|Think level/i);
 });
 
-test('lumine Light defaults to Luna xhigh while following the served API catalog', async () => {
+test('lumine fallback lineup matches the API: Light Luna medium, Medium Sol low, Heavy Opus 5.5 medium', async () => {
   const {
     DEFAULT_LUMINE_MODEL,
     DEFAULT_LUMINE_THINK_LEVEL,
@@ -135,119 +120,84 @@ test('lumine Light defaults to Luna xhigh while following the served API catalog
 
   const fallbackOptions = getSelectableLumineModelOptions(null);
   assert.deepEqual(
-    fallbackOptions
-      .filter((option) => option.mode === 'light')
-      .map((option) => ({
-        model: option.model,
-        defaultReasoningEffort: option.defaultReasoningEffort
-      })),
+    fallbackOptions.map((option) => [
+      option.model,
+      option.mode,
+      option.defaultReasoningEffort
+    ]),
     [
-      { model: 'gpt-5.6-luna', defaultReasoningEffort: 'xhigh' },
-      { model: 'grok-4.6', defaultReasoningEffort: 'medium' }
+      ['auto', 'auto', 'medium'],
+      ['gpt-6-luna', 'light', 'medium'],
+      ['gpt-6-sol', 'medium', 'low'],
+      ['claude-opus-5-5', 'heavy', 'medium']
     ]
   );
-  assert.deepEqual(
-    getLumineSelectionForMode({
-      mode: 'light',
-      modelOptions: fallbackOptions
-    }),
-    {
-      model: 'gpt-5.6-luna',
-      reasoningEffort: 'xhigh',
-      mode: 'light',
-      source: 'default'
-    }
-  );
-  assert.deepEqual(
-    fallbackOptions
-      .filter((option) => option.mode === 'superheavy')
-      .map((option) => ({
-        model: option.model,
-        defaultReasoningEffort: option.defaultReasoningEffort
-      })),
-    [
-      { model: 'gpt-6-astra', defaultReasoningEffort: 'xhigh' },
-      { model: 'claude-fable-5-1', defaultReasoningEffort: 'xhigh' }
-    ]
-  );
-  assert.deepEqual(
-    getLumineSelectionForMode({
-      mode: 'superheavy',
-      modelOptions: fallbackOptions
-    }),
-    {
-      model: 'gpt-6-astra',
-      reasoningEffort: 'xhigh',
-      mode: 'superheavy',
-      source: 'default'
-    }
-  );
+  for (const [mode, model, reasoningEffort] of [
+    ['light', 'gpt-6-luna', 'medium'],
+    ['medium', 'gpt-6-sol', 'low'],
+    ['heavy', 'claude-opus-5-5', 'medium']
+  ]) {
+    assert.deepEqual(
+      getLumineSelectionForMode({ mode, modelOptions: fallbackOptions }),
+      { model, reasoningEffort, mode, source: 'default' }
+    );
+  }
   assert.deepEqual(resolveLumineModelSelectionFromPolicy(null), {
     model: 'auto',
     reasoningEffort: 'medium',
     mode: 'auto',
     source: 'default'
   });
-
-  const oldApiPolicy = {
-    lumineModelPreference: {
-      model: 'grok-4.6',
-      reasoningEffort: 'medium',
-      mode: 'light',
-      source: 'default'
-    },
-    lumineModelOptions: [
-      {
-        model: 'grok-4.6',
-        mode: 'light',
-        label: 'Grok 4.6',
-        description: '',
-        defaultReasoningEffort: 'medium',
-        supportedReasoningEfforts: ['medium']
-      }
-    ]
-  };
-  const servedOptions = getSelectableLumineModelOptions(oldApiPolicy);
-  assert.deepEqual(
-    getLumineSelectionForMode({ mode: 'light', modelOptions: servedOptions }),
-    {
-      model: 'grok-4.6',
-      reasoningEffort: 'medium',
-      mode: 'light',
-      source: 'default'
-    }
-  );
-  assert.deepEqual(resolveLumineModelSelectionFromPolicy(oldApiPolicy), {
-    model: 'grok-4.6',
-    reasoningEffort: 'medium',
-    mode: 'light',
-    source: 'default'
-  });
 });
 
-test('lumine retires Grok Heavy while preserving existing users on Heavy', async () => {
-  const {
-    getLumineSelectionForMode,
-    getSelectableLumineModelOptions,
-    resolveLumineModelSelectionFromPolicy
-  } =
+test('lumine migrates retired stored choices to their replacement at its own thinking level', async () => {
+  const { getSelectableLumineModelOptions, normalizeLumineModelSelection } =
     await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
-  const legacyPolicy = {
+  const options = getSelectableLumineModelOptions(null);
+  for (const [selection, expected] of [
+    [
+      { model: 'grok-4.6', reasoningEffort: 'xhigh', mode: 'heavy' },
+      { model: 'gpt-6-luna', reasoningEffort: 'medium', mode: 'light' }
+    ],
+    [
+      { model: 'gpt-5.6-luna', reasoningEffort: 'xhigh', mode: 'light' },
+      { model: 'gpt-6-luna', reasoningEffort: 'medium', mode: 'light' }
+    ],
+    [
+      { model: 'gpt-5.6-sol', reasoningEffort: 'max', mode: 'superheavy' },
+      { model: 'gpt-6-sol', reasoningEffort: 'low', mode: 'medium' }
+    ],
+    [
+      { model: 'gpt-6-astra', reasoningEffort: 'xhigh', mode: 'superheavy' },
+      { model: 'claude-opus-5-5', reasoningEffort: 'medium', mode: 'heavy' }
+    ],
+    [
+      { model: 'claude-fable-5', reasoningEffort: 'xhigh' },
+      { model: 'claude-opus-5-5', reasoningEffort: 'medium', mode: 'heavy' }
+    ]
+  ]) {
+    assert.deepEqual(
+      normalizeLumineModelSelection({
+        selection: { ...selection, source: 'stored' },
+        modelOptions: options
+      }),
+      { ...expected, source: 'stored' }
+    );
+  }
+});
+
+test('an older API catalog of retired models and Super Heavy falls back to the current lineup', async () => {
+  assertClientVersionAtLeast('2.2.64');
+  const { getSelectableLumineModelOptions, resolveLumineModelSelectionFromPolicy } =
+    await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
+  const policy = {
     lumineModelPreference: {
-      model: 'grok-4.6',
+      model: 'claude-fable-5-1',
       reasoningEffort: 'xhigh',
-      mode: 'heavy',
+      mode: 'superheavy',
       source: 'stored'
     },
     lumineModelOptions: [
-      {
-        model: 'grok-4.6',
-        mode: 'light',
-        label: 'Grok 4.6',
-        description: '',
-        defaultReasoningEffort: 'medium',
-        supportedReasoningEfforts: ['medium']
-      },
       {
         model: 'grok-4.6',
         mode: 'medium',
@@ -255,89 +205,6 @@ test('lumine retires Grok Heavy while preserving existing users on Heavy', async
         description: '',
         defaultReasoningEffort: 'high',
         supportedReasoningEfforts: ['high']
-      },
-      {
-        model: 'grok-4.6',
-        mode: 'heavy',
-        label: 'Grok 4.6',
-        description: '',
-        defaultReasoningEffort: 'xhigh',
-        supportedReasoningEfforts: ['xhigh']
-      },
-      {
-        model: 'claude-opus-5',
-        mode: 'heavy',
-        label: 'Claude Opus 5',
-        description: '',
-        defaultReasoningEffort: 'high',
-        supportedReasoningEfforts: ['high']
-      },
-      {
-        model: 'gpt-5.6-sol',
-        mode: 'heavy',
-        label: 'GPT-5.6 Sol',
-        description: '',
-        defaultReasoningEffort: 'xhigh',
-        supportedReasoningEfforts: ['xhigh']
-      }
-    ]
-  };
-
-  const options = getSelectableLumineModelOptions(legacyPolicy);
-  assert.equal(
-    options.some(
-      (option) => option.model === 'grok-4.6' && option.mode === 'heavy'
-    ),
-    false
-  );
-  assert.deepEqual(resolveLumineModelSelectionFromPolicy(legacyPolicy), {
-    model: 'gpt-5.6-sol',
-    reasoningEffort: 'xhigh',
-    mode: 'heavy',
-    source: 'stored'
-  });
-  assert.deepEqual(
-    getLumineSelectionForMode({ mode: 'heavy', modelOptions: options }),
-    {
-      model: 'gpt-5.6-sol',
-      reasoningEffort: 'xhigh',
-      mode: 'heavy',
-      source: 'default'
-    }
-  );
-});
-
-test('lumine Super Heavy follows an older API catalog and migrates retired selections', async () => {
-  assertClientVersionAtLeast('2.1.12');
-  const {
-    getSelectableLumineModelOptions,
-    normalizeLumineModelSelection,
-    resolveLumineModelSelectionFromPolicy
-  } =
-    await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
-  const policy = {
-    lumineModelPreference: {
-      model: 'claude-fable-5',
-      reasoningEffort: 'xhigh',
-      mode: 'superheavy',
-      source: 'stored'
-    },
-    lumineModelOptions: [
-      {
-        model: 'claude-fable-5',
-        mode: 'superheavy',
-        label: 'Claude Fable 5',
-        description: '',
-        defaultReasoningEffort: 'xhigh',
-        supportedReasoningEfforts: ['xhigh']
-      },
-      {
-        model: 'gpt-5.6-sol',
-        mode: 'superheavy',
-        label: 'GPT-5.6 Sol',
-        description: '',
-        defaultReasoningEffort: 'max',
-        supportedReasoningEfforts: ['max']
       },
       {
         model: 'claude-fable-5-1',
@@ -349,37 +216,17 @@ test('lumine Super Heavy follows an older API catalog and migrates retired selec
       }
     ]
   };
-
   const options = getSelectableLumineModelOptions(policy);
   assert.deepEqual(
-    options
-      .filter((option) => option.mode === 'superheavy')
-      .map((option) => option.model),
-    ['claude-fable-5-1']
+    options.map((option) => option.mode),
+    ['auto', 'light', 'medium', 'heavy']
   );
   assert.deepEqual(resolveLumineModelSelectionFromPolicy(policy), {
-    model: 'claude-fable-5-1',
-    reasoningEffort: 'xhigh',
-    mode: 'superheavy',
+    model: 'claude-opus-5-5',
+    reasoningEffort: 'medium',
+    mode: 'heavy',
     source: 'stored'
   });
-  assert.deepEqual(
-    normalizeLumineModelSelection({
-      selection: {
-        model: 'gpt-5.6-sol',
-        reasoningEffort: 'max',
-        mode: 'superheavy',
-        source: 'stored'
-      },
-      modelOptions: options
-    }),
-    {
-      model: 'claude-fable-5-1',
-      reasoningEffort: 'xhigh',
-      mode: 'superheavy',
-      source: 'stored'
-    }
-  );
 });
 
 test('lumine model preference saves through the build request helper', () => {
@@ -419,46 +266,5 @@ test('build generate socket payload carries current model and think level', () =
   assert.match(
     useRunStartActionsSource,
     /lumineReasoningEffort:\s*lumineModelSelection\?\.reasoningEffort/
-  );
-});
-
-test('lumine preserves the canonical Astra selection and keeps Fable 5.1 available', async () => {
-  const {
-    getSelectableLumineModelOptions,
-    normalizeLumineModelSelection,
-    resolveLumineModelSelectionFromPolicy
-  } =
-    await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
-  const options = getSelectableLumineModelOptions(null);
-  const selection = {
-    model: 'gpt-6-astra',
-    reasoningEffort: 'xhigh',
-    mode: 'superheavy',
-    source: 'stored'
-  };
-  assert.deepEqual(
-    resolveLumineModelSelectionFromPolicy({
-      lumineModelOptions: options,
-      lumineModelPreference: selection
-    }),
-    selection
-  );
-  assert.equal(
-    normalizeLumineModelSelection({
-      selection: {
-        model: 'gpt-5.6-sol',
-        reasoningEffort: 'max',
-        source: 'stored'
-      },
-      modelOptions: options
-    }).model,
-    'gpt-6-astra'
-  );
-  assert.equal(
-    normalizeLumineModelSelection({
-      selection: { model: 'claude-fable-5', source: 'stored' },
-      modelOptions: options
-    }).model,
-    'claude-fable-5-1'
   );
 });

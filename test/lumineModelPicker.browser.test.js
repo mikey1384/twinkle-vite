@@ -157,7 +157,7 @@ test(
         });
         await toggle.click();
         assert.equal(await model.isVisible(), true);
-        for (const nextMode of ['medium', 'heavy', 'superheavy', 'light']) {
+        for (const nextMode of ['medium', 'heavy', 'light']) {
           const previousMode = await mode.inputValue();
           const previousModel = await model.inputValue();
           await mode.selectOption(nextMode);
@@ -195,21 +195,25 @@ test(
         );
         assert.equal(await mode.inputValue(), 'light');
         const selectedModel = await model.inputValue();
+        // Since 2026-09-23 each mode serves one model; an advanced choice is
+        // exercised only when the served catalog offers a second one.
         const alternative = await model
           .locator('option')
           .evaluateAll(
             (items, selected) =>
-              items.find((item) => item.value !== selected).value,
+              items.find((item) => item.value !== selected)?.value ?? null,
             selectedModel
           );
-        await model.selectOption(alternative);
-        assert.equal(await model.inputValue(), selectedModel);
-        await page.evaluate(() => window.finishModelSave(true));
-        await page.waitForFunction(
-          (expected) =>
-            [...document.querySelectorAll('select')][1].value === expected,
-          alternative
-        );
+        if (alternative) {
+          await model.selectOption(alternative);
+          assert.equal(await model.inputValue(), selectedModel);
+          await page.evaluate(() => window.finishModelSave(true));
+          await page.waitForFunction(
+            (expected) =>
+              [...document.querySelectorAll('select')][1].value === expected,
+            alternative
+          );
+        }
         await page
           .getByRole('button', {
             name: compact ? 'Expand Lumine header' : 'Minimize Lumine header',
@@ -273,7 +277,7 @@ test(
         await mode.selectOption('light');
         await page.evaluate(() => window.finishModelSave(true));
         await model.waitFor();
-        assert.equal(await model.inputValue(), 'gpt-5.6-luna');
+        assert.equal(await model.inputValue(), 'gpt-6-luna');
         await page.evaluate(() => window.unmountFixture());
         await page.close();
       }
