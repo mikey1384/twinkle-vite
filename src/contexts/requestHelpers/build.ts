@@ -2133,7 +2133,7 @@ export default function buildRequestHelpers({
       expectedStructure: Record<string, unknown>;
       thinkingMode?: 'low' | 'medium' | 'mid' | 'high';
       mode?: 'low' | 'medium' | 'mid' | 'high';
-      model?: 'gpt-5.6-sol' | 'claude-opus-5' | 'claude-fable-5-1';
+      model?: 'gpt-6-sol' | 'claude-opus-5-5';
       instructions?: string;
       systemPrompt?: string;
       webSearch?: boolean;

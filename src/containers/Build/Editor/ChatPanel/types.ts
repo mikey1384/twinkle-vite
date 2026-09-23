@@ -11,21 +11,22 @@ export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
   | 'auto'
+  | 'gpt-6-luna'
+  | 'gpt-6-sol'
+  | 'claude-opus-5-5'
+  // Retired stored preferences; normalization maps each to its replacement.
   | 'gpt-6-astra'
   | 'gpt-5.6-luna'
   | 'grok-4.6'
-  // Legacy stored preference; normalization migrates it to grok-4.6.
   | 'grok-4.5'
   | 'gpt-5.6-terra'
   | 'claude-sonnet-5'
   | 'gpt-5.6-sol'
   | 'claude-opus-5'
   | 'claude-fable-5-1'
-  // Other legacy stored preferences migrated by the server.
   | 'claude-opus-4-8'
   | 'claude-fable-5';
-export type BuildLumineMode =
-  'auto' | 'light' | 'medium' | 'heavy' | 'superheavy';
+export type BuildLumineMode = 'auto' | 'light' | 'medium' | 'heavy';
 export type BuildLumineThinkLevel =
   'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
