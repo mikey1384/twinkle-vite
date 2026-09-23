@@ -4772,7 +4772,8 @@ export default function buildRequestHelpers({
     },
 
     // Twinkle.minecraft: reads (worlds | players | zero | zero/builds |
-    // people) and the owner-only role change (people/role).
+    // people | chat | chat/history), web chat sends (chat/send) and the
+    // owner-only writes (people/role, chat/mute).
     async getBuildMinecraftData({
       buildId,
       resource,
@@ -4786,7 +4787,11 @@ export default function buildRequestHelpers({
         | 'zero'
         | 'zero/builds'
         | 'people'
-        | 'people/role';
+        | 'people/role'
+        | 'chat'
+        | 'chat/history'
+        | 'chat/send'
+        | 'chat/mute';
       body?: Record<string, unknown>;
       token?: string;
     }) {

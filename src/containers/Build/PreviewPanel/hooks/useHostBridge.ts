@@ -3428,6 +3428,49 @@ export function useHostBridge({
             break;
           }
 
+          // Web chat with the players on the server: reads ride content:read.
+          case 'minecraft:chat':
+          case 'minecraft:chat-history': {
+            const minecraftToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildMinecraftDataRef.current({
+              buildId: activeBuild.id,
+              resource: type === 'minecraft:chat' ? 'chat' : 'chat/history',
+              body:
+                type === 'minecraft:chat'
+                  ? { since: payload?.since }
+                  : {
+                      before: payload?.before,
+                      limit: payload?.limit,
+                      query: payload?.query,
+                      includeArchived: payload?.includeArchived
+                    },
+              token: minecraftToken
+            });
+            break;
+          }
+
+          // Sending chat and the owner's mute; the API checks who is asking.
+          case 'minecraft:chat-send':
+          case 'minecraft:chat-mute': {
+            const minecraftToken = await ensureBuildApiToken(
+              ['content:write'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildMinecraftDataRef.current({
+              buildId: activeBuild.id,
+              resource: type === 'minecraft:chat-send' ? 'chat/send' : 'chat/mute',
+              body:
+                type === 'minecraft:chat-send'
+                  ? { text: payload?.text }
+                  : { userId: payload?.userId, muted: payload?.muted },
+              token: minecraftToken
+            });
+            break;
+          }
+
           // Owner-only role change (People tab); the API checks who is asking.
           case 'minecraft:set-role': {
             const minecraftToken = await ensureBuildApiToken(
