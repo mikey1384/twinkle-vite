@@ -73,17 +73,17 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     model: 'gpt-6-luna',
     mode: 'light',
     label: 'GPT-6 Luna',
-    description: 'Light mode: efficient deep reasoning for everyday builds.',
-    defaultReasoningEffort: 'xhigh',
-    supportedReasoningEfforts: ['xhigh']
+    description: 'Light mode: quick, efficient reasoning for everyday builds.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
   },
   {
     model: 'gpt-6-sol',
     mode: 'medium',
     label: 'GPT-6 Sol',
     description: 'Medium mode: strong reasoning for complex builds.',
-    defaultReasoningEffort: 'high',
-    supportedReasoningEfforts: ['high']
+    defaultReasoningEffort: 'low',
+    supportedReasoningEfforts: ['low']
   },
   {
     model: 'claude-opus-5-5',
