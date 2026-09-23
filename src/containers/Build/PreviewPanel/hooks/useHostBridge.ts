@@ -3399,6 +3399,30 @@ export function useHostBridge({
             break;
           }
 
+          case 'minecraft:worlds':
+          case 'minecraft:players':
+          case 'minecraft:zero':
+          case 'minecraft:zero-builds': {
+            const minecraftToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            const resource =
+              type === 'minecraft:zero-builds'
+                ? 'zero/builds'
+                : type.slice('minecraft:'.length);
+            response = await requestRefs.getBuildMinecraftDataRef.current({
+              buildId: activeBuild.id,
+              resource,
+              body:
+                type === 'minecraft:zero-builds'
+                  ? { limit: payload?.limit, kind: payload?.kind }
+                  : {},
+              token: minecraftToken
+            });
+            break;
+          }
+
           case 'content:grammarbles:history': {
             const contentGrammarblesToken = await ensureBuildApiToken(
               ['content:read'],

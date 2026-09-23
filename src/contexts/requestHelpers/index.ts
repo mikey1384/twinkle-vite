@@ -242,6 +242,7 @@ registerMethods('build', [
   'getBuildAiStory',
   'listBuildGrammarblesQuestions',
   'getBuildGrammarblesHistory',
+  'getBuildMinecraftData',
   'getBuildSubject',
   'getBuildSubjectComments',
   'listBuildSubjectComments',

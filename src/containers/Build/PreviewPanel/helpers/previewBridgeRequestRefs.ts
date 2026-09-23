@@ -57,6 +57,7 @@ export interface PreviewHostBridgeRequestRefs {
   getBuildAiStoryRef: AsyncRequestRef;
   listBuildGrammarblesQuestionsRef: AsyncRequestRef;
   getBuildGrammarblesHistoryRef: AsyncRequestRef;
+  getBuildMinecraftDataRef: AsyncRequestRef;
   getBuildSubjectRef: AsyncRequestRef;
   getBuildSubjectCommentsRef: AsyncRequestRef;
   listBuildSubjectCommentsRef: AsyncRequestRef;

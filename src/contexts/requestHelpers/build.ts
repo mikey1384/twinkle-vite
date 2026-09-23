@@ -4771,6 +4771,36 @@ export default function buildRequestHelpers({
       }
     },
 
+    // Twinkle.minecraft reads: resource is worlds | players | zero | zero/builds.
+    async getBuildMinecraftData({
+      buildId,
+      resource,
+      body,
+      token
+    }: {
+      buildId: number;
+      resource: 'worlds' | 'players' | 'zero' | 'zero/builds';
+      body?: Record<string, unknown>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/minecraft/${resource}`,
+          body || {},
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async getBuildGrammarblesHistory({
       buildId,
       level,

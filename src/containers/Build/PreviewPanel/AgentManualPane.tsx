@@ -194,6 +194,13 @@ const sdkSections: GuideSection[] = [
     ]
   },
   {
+    title: 'Twinkle.minecraft',
+    items: [
+      'Read-only view of the Twinkle Minecraft server. getWorlds() returns worlds with squaremap tile info (fill {z}, {x}, {y} in map.tileUrlTemplate); getOnlinePlayers() returns players with coordinates; getZero() shows where Zero is and his build in progress; getZeroBuilds({ limit, kind }) lists his recent builds with bounds.',
+      'Limited rollout: apps that are not enabled get 403 with code minecraft_sdk_not_enabled. Poll players and Zero no faster than every 5 seconds; stale: true means a recent cached copy.'
+    ]
+  },
+  {
     title: 'Twinkle.characters',
     items: [
       'await Twinkle.characters.chat({ character: "zero" | "ciel", thinkingMode: "low" | "medium" | "high", message, history, roomContext, scene, instructions, includeWebsiteContext, webSearch, onText, onStatus }) talks to the real Zero or Ciel runtime bridge. Live web search is enabled by default in Medium and High modes; pass webSearch: false to disable it. Lite Mode remains tool-free.',
