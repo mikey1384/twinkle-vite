@@ -94,6 +94,9 @@ interface AiUsagePolicy {
   };
 }
 
+// A Zero/Ciel chat this long without a message counts as quiet.
+const STARTER_QUIET_SECONDS = 6 * 60 * 60;
+
 export default function MessageInput({
   currentTransactionId,
   currentTopic,
@@ -608,7 +611,9 @@ export default function MessageInput({
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
   // Ideas above an empty message box in a Zero/Ciel chat: the latest reply's
-  // own next-step ideas, otherwise a few starters.
+  // own next-step ideas; starters only when the chat has been quiet a while
+  // (they know nothing of the conversation, so right after one they'd be
+  // beside the point).
   const agentSuggestionsEnabled =
     isAIChannel && isWebsiteAgentEnabledFor(Number(myId));
   const latestReplySettings = useChatContext((v) => {
@@ -620,6 +625,16 @@ export default function MessageInput({
       ? latest.settings
       : null;
   });
+  const latestMessageTimeStamp = useChatContext((v) => {
+    if (!agentSuggestionsEnabled) return 0;
+    const channel = v.state.channelsObj?.[selectedChannelId];
+    return Number(
+      channel?.messagesObj?.[channel?.messageIds?.[0]]?.timeStamp || 0
+    );
+  });
+  const chatIsQuiet =
+    !latestMessageTimeStamp ||
+    Date.now() / 1000 - latestMessageTimeStamp > STARTER_QUIET_SECONDS;
   const replyIdeas = useMemo(
     () => readAgentSuggestions(latestReplySettings),
     [latestReplySettings]
@@ -736,7 +751,13 @@ export default function MessageInput({
             aria-hidden={textIsEmpty ? undefined : true}
           >
             <AgentSuggestions
-              ideas={replyIdeas?.length ? replyIdeas : starterIdeas}
+              ideas={
+                replyIdeas?.length
+                  ? replyIdeas
+                  : chatIsQuiet
+                    ? starterIdeas
+                    : []
+              }
               onPick={(idea) => handleSendMsg(idea)}
             />
           </div>

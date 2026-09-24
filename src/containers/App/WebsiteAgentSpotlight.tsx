@@ -7,25 +7,22 @@ import React, {
   useSyncExternalStore
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import {
-  CHAT_ID_BASE_NUMBER,
   CIEL_PFP_URL,
   ZERO_PFP_URL,
   cloudFrontURL
 } from '~/constants/defaultValues';
-import { socket } from '~/constants/sockets/api';
-import { useChatContext } from '~/contexts';
-import StatusDots from '~/components/StatusDots';
-import { latestThoughtLine } from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import {
   WEBSITE_AGENT_UI_ATTRIBUTE,
   countControlsUnder,
   findWebsiteAgentElement,
   isCoveredOnScreen
 } from '~/helpers/websiteAgentPage';
+import AssistantDock from './AssistantDock';
+import { openAssistantDock } from './AssistantDock/dockState';
 
 export type WebsiteAgentSpotlightAction =
   'next' | 'clicked' | 'ended' | 'dismissed' | 'navigated' | 'replaced';
@@ -208,39 +205,20 @@ export default function WebsiteAgentSpotlight() {
     <>
       <SpotlightLayer />
       <PermissionPromptLayer />
-      <WorkingPill />
+      <AssistantDock />
     </>
   );
 }
 
-// Zero or Ciel are doing something on the website for this reply. Between
-// their pointing and asking there can be many quiet seconds on a page that
-// is not the chat; this says they are still on it, and what they are doing.
-let workingAssistant: 'Zero' | 'Ciel' | null = null;
-let workingNotedAt = 0;
-const workingListeners = new Set<() => void>();
-function setWorkingAssistant(next: 'Zero' | 'Ciel' | null) {
-  workingNotedAt = Date.now();
-  if (workingAssistant === next) return;
-  workingAssistant = next;
-  workingListeners.forEach((listener) => listener());
-}
+// Zero or Ciel are doing something on the page for a reply: their floating
+// chat window comes up so the user can keep talking to them here.
 export function noteWebsiteAgentWorking(assistant: 'Zero' | 'Ciel' | null) {
-  if (assistant) setWorkingAssistant(assistant);
+  if (assistant) openAssistantDock(assistant);
 }
 
-// A reply that stops talking to the page for this long is over (the server
-// gives a reply 45 seconds).
-const WORKING_IDLE_MS = 50_000;
-
-function WorkingPill() {
-  const assistant = useSyncExternalStore(
-    (listener) => {
-      workingListeners.add(listener);
-      return () => workingListeners.delete(listener);
-    },
-    () => workingAssistant
-  );
+// A spotlight or permission prompt of theirs is on screen (the chat window
+// steps aside meanwhile).
+export function useWebsiteAgentOverlayActive() {
   const spotlight = useSyncExternalStore(
     (listener) => {
       listeners.add(listener);
@@ -255,139 +233,7 @@ function WorkingPill() {
     },
     () => currentPrompt
   );
-  const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
-  const cielChannelId = useChatContext((v) => v.state.cielChannelId);
-  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [thoughts, setThoughts] = useState('');
-  const channelId = Number(
-    assistant === 'Ciel'
-      ? cielChannelId
-      : assistant === 'Zero'
-        ? zeroChannelId
-        : 0
-  );
-
-  useEffect(() => {
-    setThoughts('');
-    if (!assistant || !channelId) return;
-    function handleThought({
-      channelId: eventChannelId,
-      thoughtContent,
-      isDelta
-    }: any) {
-      if (Number(eventChannelId) !== channelId) return;
-      workingNotedAt = Date.now();
-      // This starts listening partway into the reply, so earlier text is
-      // missing; only the latest line is shown, so the pieces are simply
-      // added on.
-      setThoughts((currentText) =>
-        isDelta
-          ? currentText + String(thoughtContent || '')
-          : String(thoughtContent || '')
-      );
-    }
-    function handleDone(eventChannelId: unknown) {
-      if (Number(eventChannelId) === channelId) setWorkingAssistant(null);
-    }
-    socket.on('ai_thought_streamed', handleThought);
-    socket.on('ai_message_done', handleDone);
-    const timer = window.setInterval(() => {
-      if (Date.now() - workingNotedAt > WORKING_IDLE_MS) {
-        setWorkingAssistant(null);
-      }
-    }, 5_000);
-    return () => {
-      socket.off('ai_thought_streamed', handleThought);
-      socket.off('ai_message_done', handleDone);
-      window.clearInterval(timer);
-    };
-  }, [assistant, channelId]);
-
-  // The chat and Home already show the reply as it is made; in a call they
-  // talk; and a card or prompt of theirs is already on screen.
-  const hidden =
-    !assistant ||
-    !channelId ||
-    !!spotlight ||
-    !!prompt ||
-    !!aiCallChannelId ||
-    location.pathname === '/' ||
-    location.pathname.startsWith('/chat');
-  if (hidden) return null;
-  const step = latestThoughtLine(thoughts);
-
-  return createPortal(
-    <button
-      {...{ [WEBSITE_AGENT_UI_ATTRIBUTE]: '' }}
-      type="button"
-      aria-live="polite"
-      onClick={() =>
-        navigate(`/chat/${Number(CHAT_ID_BASE_NUMBER) + channelId}`)
-      }
-      className={css`
-        position: fixed;
-        z-index: 2147482999;
-        left: 50%;
-        bottom: ${GUTTER * 2}px;
-        @media (max-width: ${mobileMaxWidth}) {
-          bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
-        }
-        transform: translateX(-50%);
-        max-width: min(420px, calc(100vw - ${GUTTER * 2}px));
-        display: flex;
-        align-items: center;
-        gap: 0.8rem;
-        padding: 0.7rem 1.4rem 0.7rem 0.7rem;
-        border-radius: 999px;
-        border: 2px solid ${Color.logoBlue(0.25)};
-        background: #fff;
-        color: ${Color.black()};
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
-        cursor: pointer;
-        text-align: left;
-        animation: ${appear} 0.2s ease-out;
-      `}
-    >
-      <AssistantPicture assistant={assistant} size="3rem" />
-      <span
-        className={css`
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-        `}
-      >
-        <span
-          className={css`
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: ${Color.logoBlue()};
-          `}
-        >
-          {assistant} is working on it
-          <StatusDots color={Color.logoBlue()} small />
-        </span>
-        {step ? (
-          <span
-            className={css`
-              font-size: 1.25rem;
-              color: ${Color.darkGray()};
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            `}
-          >
-            {step}
-          </span>
-        ) : null}
-      </span>
-    </button>,
-    document.body
-  );
+  return !!spotlight || !!prompt;
 }
 
 // Asking the user, on whatever page they are on, to allow a task Zero or

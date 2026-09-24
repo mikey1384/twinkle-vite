@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
-import { socket } from '~/constants/sockets/api';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import {
   CHAT_ID_BASE_NUMBER,
@@ -10,39 +9,14 @@ import {
   cloudFrontURL
 } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
-import RichText from '~/components/Texts/RichText';
-import ThinkingIndicator, {
-  AI_WORKING_STATUSES,
-  latestThoughtLine
-} from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
-import { applyCanonicalTextStreamUpdate } from '~/helpers/canonicalTextStream';
-import AgentSuggestions, {
-  readAgentSuggestions
-} from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
-import WebsiteAgentCard, {
-  isWebsiteAgentCardData,
-  type WebsiteAgentCardData
-} from '~/containers/Chat/Message/MessageBody/WebsiteAgentCard';
+import AgentSuggestions from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
+import AssistantReplyView from '~/containers/App/AssistantDock/AssistantReplyView';
+import useAssistantConversation from '~/containers/App/AssistantDock/useAssistantConversation';
 
 const appear = keyframes`
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 `;
-
-interface Reply {
-  messageId: number | null;
-  text: string;
-  // Streamed reasoning and steps, shown the way the chat shows them.
-  thoughts: string;
-  status: string;
-  thinkingHard: boolean;
-  // The reply's own next-step ideas; null while its card waits for an answer.
-  suggestions: string[] | null;
-  // A question or approval the reply ends on, answered right here.
-  card: WebsiteAgentCardData | null;
-  done: boolean;
-  error: string;
-}
 
 // Talk to the Zero or Ciel chosen beside the call button without leaving
 // Home. It is the same chat room as the chat page; the reply streams here,
@@ -59,38 +33,23 @@ export default function AssistantQuickAsk({
   onEngagedChange: (engaged: boolean) => void;
 }) {
   const navigate = useNavigate();
-  const saveChatMessage = useAppContext(
-    (v) => v.requestHelpers.saveChatMessage
-  );
   const loadWebsiteAgentStarters = useAppContext(
     (v) => v.requestHelpers.loadWebsiteAgentStarters
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const { reply, replying, sending, send, clear } = useAssistantConversation({
+    assistantName,
+    channelId
+  });
   const [starterIdeas, setStarterIdeas] = useState<string[]>([]);
   const [text, setText] = useState('');
-  const [sending, setSending] = useState(false);
-  const [reply, setReply] = useState<Reply | null>(null);
   const [focused, setFocused] = useState(false);
-  const replyRef = useRef<Reply | null>(null);
-  replyRef.current = reply;
   const engaged = focused || !!text.trim() || !!reply;
 
   useEffect(() => {
     onEngagedChange(engaged);
   }, [engaged, onEngagedChange]);
   useEffect(() => () => onEngagedChange(false), [onEngagedChange]);
-
-  // A reply that goes quiet without finishing (a failure the server never
-  // announced) stops holding the box after a while.
-  useEffect(() => {
-    if (!reply || reply.done) return;
-    const timer = window.setTimeout(() => {
-      setReply((current) =>
-        current && !current.done ? { ...current, done: true } : current
-      );
-    }, 90_000);
-    return () => window.clearTimeout(timer);
-  }, [reply, reply?.text, reply?.thoughts, reply?.done]);
 
   // The same ideas the chat shows above an empty message box, so people
   // find out what they can ask for.
@@ -107,160 +66,8 @@ export default function AssistantQuickAsk({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  useEffect(() => {
-    function isThisReply(eventChannelId: unknown, messageId?: unknown) {
-      const current = replyRef.current;
-      return (
-        !!current &&
-        !current.done &&
-        Number(eventChannelId) === channelId &&
-        (messageId == null ||
-          current.messageId == null ||
-          Number(messageId) === current.messageId)
-      );
-    }
-    function handleNewMessage({ message, channelId: eventChannelId }: any) {
-      if (!isThisReply(eventChannelId) || replyRef.current?.messageId) return;
-      setReply((current) =>
-        current ? { ...current, messageId: Number(message?.id) } : current
-      );
-    }
-    function handleDelta({
-      channelId: eventChannelId,
-      messageId,
-      delta,
-      startOffset
-    }: any) {
-      if (!isThisReply(eventChannelId, messageId)) return;
-      setReply((current) =>
-        current
-          ? {
-              ...current,
-              text:
-                typeof startOffset === 'number'
-                  ? current.text.slice(0, startOffset) + delta
-                  : current.text + delta
-            }
-          : current
-      );
-    }
-    function handleEdit({
-      channelId: eventChannelId,
-      messageId,
-      editedMessage,
-      settings
-    }: any) {
-      // Next-step ideas can arrive a moment after the reply is done.
-      const current = replyRef.current;
-      const laterUpdate =
-        !!current?.done &&
-        Number(eventChannelId) === channelId &&
-        current.messageId != null &&
-        Number(messageId) === current.messageId;
-      if (!laterUpdate && !isThisReply(eventChannelId, messageId)) return;
-      if (typeof editedMessage !== 'string') return;
-      setReply((current) =>
-        current
-          ? {
-              ...current,
-              text: editedMessage,
-              suggestions: readAgentSuggestions(settings),
-              card: isWebsiteAgentCardData(settings?.websiteAgentCard)
-                ? settings.websiteAgentCard
-                : null
-            }
-          : current
-      );
-    }
-    function handleThought({
-      channelId: eventChannelId,
-      messageId,
-      thoughtContent,
-      isThinkingHard,
-      isDelta,
-      startOffset
-    }: any) {
-      if (!isThisReply(eventChannelId, messageId)) return;
-      setReply((current) =>
-        current
-          ? {
-              ...current,
-              thinkingHard: !!isThinkingHard,
-              thoughts: applyCanonicalTextStreamUpdate({
-                currentText: current.thoughts,
-                ...(isDelta
-                  ? { delta: thoughtContent, startOffset }
-                  : { snapshot: String(thoughtContent || '') })
-              })
-            }
-          : current
-      );
-    }
-    function handleStatus({
-      channelId: eventChannelId,
-      messageId,
-      status
-    }: any) {
-      if (!isThisReply(eventChannelId, messageId)) return;
-      setReply((current) =>
-        current ? { ...current, status: String(status || '') } : current
-      );
-    }
-    function handleDone(eventChannelId: unknown, messageId?: unknown) {
-      if (!isThisReply(eventChannelId, messageId)) return;
-      setReply((current) =>
-        current ? { ...current, done: true, status: '' } : current
-      );
-    }
-    socket.on('new_ai_message_received', handleNewMessage);
-    socket.on('ai_message_delta_streamed', handleDelta);
-    socket.on('chat_message_edited', handleEdit);
-    socket.on('ai_thought_streamed', handleThought);
-    socket.on('ai_thinking_status_updated', handleStatus);
-    socket.on('ai_message_done', handleDone);
-    return () => {
-      socket.off('new_ai_message_received', handleNewMessage);
-      socket.off('ai_message_delta_streamed', handleDelta);
-      socket.off('chat_message_edited', handleEdit);
-      socket.off('ai_thought_streamed', handleThought);
-      socket.off('ai_thinking_status_updated', handleStatus);
-      socket.off('ai_message_done', handleDone);
-    };
-  }, [channelId]);
-
   async function handleSend(idea?: string) {
-    const content = (idea ?? text).trim();
-    // One question at a time: a new one mid-reply would mix the two replies.
-    const replying = Boolean(replyRef.current && !replyRef.current.done);
-    if (!content || sending || replying) return;
-    setSending(true);
-    setReply({ ...EMPTY_REPLY });
-    try {
-      await saveChatMessage({
-        // The same fields the chat page sends.
-        message: {
-          userId,
-          content,
-          channelId,
-          isNotification: false,
-          subjectId: 0
-        },
-        targetMessageId: null,
-        targetSubject: null,
-        isCielChat: assistantName === 'Ciel',
-        isZeroChat: assistantName === 'Zero',
-        thinkHard: false
-      });
-      setText('');
-    } catch (error: any) {
-      setReply({
-        ...EMPTY_REPLY,
-        done: true,
-        error: error?.message || 'That didn’t send. Try again?'
-      });
-    } finally {
-      setSending(false);
-    }
+    if (await send(idea ?? text)) setText('');
   }
 
   const storedPicture = assistantName === 'Ciel' ? CIEL_PFP_URL : ZERO_PFP_URL;
@@ -337,7 +144,7 @@ export default function AssistantQuickAsk({
         />
         <button
           type="submit"
-          disabled={!text.trim() || sending || Boolean(reply && !reply.done)}
+          disabled={!text.trim() || sending || replying}
           className={css`
             border: none;
             border-radius: 999px;
@@ -369,44 +176,12 @@ export default function AssistantQuickAsk({
             font-size: 1.45rem;
           `}
         >
-          {reply.error ? (
-            <div style={{ color: Color.red() }}>{reply.error}</div>
-          ) : reply.text ? (
-            <RichText
-              isAIMessage
-              isStreaming={!reply.done}
-              contentType="chat"
-              contentId={`home-quick-ask-${reply.messageId || 'new'}`}
-              maxLines={8}
-            >
-              {reply.text.trimEnd()}
-            </RichText>
-          ) : (
-            <ThinkingIndicator
-              status={reply.status || 'thinking'}
-              thoughtContent={reply.thoughts}
-              isStreamingThoughts={!!reply.thoughts || reply.thinkingHard}
-              isThinkingHard={reply.thinkingHard}
-            />
-          )}
-          {reply.text &&
-          !reply.done &&
-          AI_WORKING_STATUSES.includes(reply.status) ? (
-            <ThinkingIndicator
-              status={reply.status}
-              activity={latestThoughtLine(reply.thoughts)}
-              compact
-            />
-          ) : null}
-          {reply.done && reply.card && reply.messageId ? (
-            <WebsiteAgentCard
-              card={reply.card}
-              channelId={channelId}
-              messageId={reply.messageId}
-              messageText={reply.text}
-              onAnswered={(answer) => handleSend(answer)}
-            />
-          ) : null}
+          <AssistantReplyView
+            reply={reply}
+            channelId={channelId}
+            contentKey="home-quick-ask"
+            onAnswer={(answer) => handleSend(answer)}
+          />
           <div
             className={css`
               display: flex;
@@ -417,11 +192,7 @@ export default function AssistantQuickAsk({
             `}
           >
             {reply.done ? (
-              <button
-                type="button"
-                onClick={() => setReply(null)}
-                className={linkButtonClass}
-              >
+              <button type="button" onClick={clear} className={linkButtonClass}>
                 Close
               </button>
             ) : null}
@@ -447,7 +218,9 @@ export default function AssistantQuickAsk({
         >
           <AgentSuggestions
             ideas={
-              reply?.suggestions?.length ? reply.suggestions : starterIdeas
+              // Starters only before a conversation: after a reply they'd
+              // be beside the point.
+              reply ? reply.suggestions || [] : starterIdeas
             }
             onPick={(idea) => handleSend(idea)}
           />
@@ -456,18 +229,6 @@ export default function AssistantQuickAsk({
     </div>
   );
 }
-
-const EMPTY_REPLY: Reply = {
-  messageId: null,
-  text: '',
-  thoughts: '',
-  status: '',
-  thinkingHard: false,
-  suggestions: [],
-  card: null,
-  done: false,
-  error: ''
-};
 
 const linkButtonClass = css`
   border: none;

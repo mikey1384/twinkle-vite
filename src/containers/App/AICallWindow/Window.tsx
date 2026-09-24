@@ -1,13 +1,9 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
-import {
-  getAiEnergyDisplay,
-  type AiEnergyDisplayPolicy
-} from '~/helpers/aiEnergyDisplay';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import ZeroPic from '~/components/ZeroPic';
-import { useNotiContext } from '~/contexts';
+import { EnergyBattery, useDraggableWindow } from './frame';
 
 interface WindowProps {
   initialPosition: { x: number; y: number };
@@ -16,58 +12,18 @@ interface WindowProps {
   ending: boolean;
 }
 
-interface AiUsagePolicy extends AiEnergyDisplayPolicy {
-  energyPercent?: number;
-  energySegments?: number;
-}
-
 function Window({
   initialPosition,
   onHangUp,
   assistantName,
   ending
 }: WindowProps) {
-  const [position, setPosition] = useState(initialPosition);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
-  const windowRef = useRef<HTMLDivElement>(null);
-
-  const aiUsagePolicy = useNotiContext(
-    (v) => v.state.todayStats?.aiUsagePolicy
-  ) as AiUsagePolicy | null;
-
-  const energyDisplay = getAiEnergyDisplay(aiUsagePolicy);
-  const batteryLevel = energyDisplay.percent ?? 0;
-
-  const energySegments = useMemo(() => {
-    return Math.max(1, aiUsagePolicy?.energySegments || 5);
-  }, [aiUsagePolicy?.energySegments]);
-
-  const visualSegmentFill = useMemo(() => {
-    return (batteryLevel / 100) * energySegments;
-  }, [batteryLevel, energySegments]);
+  const { position, windowRef, handleStart, dragLayer } =
+    useDraggableWindow(initialPosition);
 
   return (
     <>
-      {isDragging && (
-        <div
-          className={css`
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            cursor: move;
-            z-index: 1001;
-            background: transparent;
-            touch-action: none;
-          `}
-          onMouseMove={handleMove}
-          onMouseUp={handleEnd}
-          onTouchMove={handleMove}
-          onTouchEnd={handleEnd}
-        />
-      )}
+      {dragLayer}
       <div
         ref={windowRef}
         className={css`
@@ -106,71 +62,7 @@ function Window({
           </div>
         </div>
 
-        <div
-          className={css`
-            width: 20px;
-            margin: 1rem 0.5rem;
-            background-color: #e0e0e0;
-            border-radius: 10px;
-            padding: 3px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            gap: 3px;
-          `}
-        >
-          {Array.from({ length: energySegments }).map((_, index) => {
-            const fillRatio = Math.max(
-              0,
-              Math.min(1, visualSegmentFill - (energySegments - index - 1))
-            );
-            return (
-              <span
-                key={index}
-                className={css`
-                  position: relative;
-                  width: 100%;
-                  flex: 1;
-                  overflow: hidden;
-                  border-radius: 6px;
-                  background-color: rgba(255, 255, 255, 0.65);
-                `}
-              >
-                {fillRatio > 0 && (
-                  <span
-                    className={css`
-                      position: absolute;
-                      right: 0;
-                      bottom: 0;
-                      left: 0;
-                      height: ${fillRatio * 100}%;
-                      border-radius: inherit;
-                      background-color: #4caf50;
-                      transition: height 0.3s ease-in-out;
-                    `}
-                  />
-                )}
-              </span>
-            );
-          })}
-          <div
-            className={css`
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%) rotate(90deg);
-              white-space: nowrap;
-              color: ${batteryLevel < 30 ? '#333' : '#fff'};
-              font-weight: 600;
-              font-size: 1.1rem;
-              width: 80px;
-              text-align: center;
-            `}
-          >
-            {energyDisplay.label}
-          </div>
-        </div>
+        <EnergyBattery />
 
         <div
           onClick={handleHangUpClick}
@@ -223,46 +115,6 @@ function Window({
       </div>
     </>
   );
-
-  function handleStart(e: React.MouseEvent | React.TouchEvent) {
-    if (!(e.target as HTMLElement).closest('.draggable-area')) {
-      return;
-    }
-    e.preventDefault();
-    setIsDragging(true);
-
-    if (windowRef.current) {
-      const rect = windowRef.current.getBoundingClientRect();
-      const clientX =
-        'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-      const clientY =
-        'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-
-      dragOffset.current = {
-        x: clientX - rect.left,
-        y: clientY - rect.top
-      };
-    }
-  }
-
-  function handleMove(e: React.MouseEvent | React.TouchEvent) {
-    if (!isDragging) return;
-    e.preventDefault();
-
-    const clientX =
-      'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY =
-      'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-
-    setPosition({
-      x: clientX - dragOffset.current.x,
-      y: clientY - dragOffset.current.y
-    });
-  }
-
-  function handleEnd() {
-    setIsDragging(false);
-  }
 
   function handleHangUpClick(e: React.MouseEvent) {
     e.stopPropagation();
