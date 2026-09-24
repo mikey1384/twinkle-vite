@@ -199,7 +199,8 @@ const sdkSections: GuideSection[] = [
       'Read-only view of the Twinkle Minecraft server. getWorlds() returns worlds with squaremap tile info (fill {z}, {x}, {y} in map.tileUrlTemplate); getOnlinePlayers() returns players with coordinates; getZero() shows where Zero is and his build in progress; getZeroBuilds({ limit, kind }) lists his recent builds with bounds.',
       'Limited rollout: apps that are not enabled get 403 with code minecraft_sdk_not_enabled. Poll players and Zero no faster than every 5 seconds; stale: true means a recent cached copy.',
       'Roles (server owner only): getPeople() lists everyone who has joined with their role (visitor, member, builder, moderator), or { canManage: false, people: [] } for other viewers, so hide the feature then; setPlayerRole({ uuid, role }) changes a role in game immediately.',
-      'Chat: getChat({ since }) returns live server chat after latestSeq (poll every 2-3 s while visible); getChatHistory({ before, limit, query }) pages older chat; sendChat({ text }) posts into the game as [Web] <username> (signed in, rate-limited); the owner can muteChatUser({ userId, muted }).'
+      'Chat: getChat({ since }) returns live server chat after latestSeq (poll every 2-3 s while visible); getChatHistory({ before, limit, query }) pages older chat; sendChat({ text }) posts into the game as [Web] <username> (signed in, rate-limited); the owner can muteChatUser({ userId, muted }).',
+      "Account links: createLinkCode() gives the viewer a one-time code to type in game as /link CODE; getMyLink() lists their linked Minecraft accounts; unlinkMinecraft({ uuid }) removes one. getPeople() shows each linked player's Twinkle user."
     ]
   },
   {

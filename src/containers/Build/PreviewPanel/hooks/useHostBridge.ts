@@ -3452,6 +3452,36 @@ export function useHostBridge({
             break;
           }
 
+          // Account links: always the signed-in viewer's own account.
+          case 'minecraft:link': {
+            const minecraftToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildMinecraftDataRef.current({
+              buildId: activeBuild.id,
+              resource: 'link',
+              body: {},
+              token: minecraftToken
+            });
+            break;
+          }
+
+          case 'minecraft:link-code':
+          case 'minecraft:link-unlink': {
+            const minecraftToken = await ensureBuildApiToken(
+              ['content:write'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildMinecraftDataRef.current({
+              buildId: activeBuild.id,
+              resource: type === 'minecraft:link-code' ? 'link/code' : 'link/unlink',
+              body: type === 'minecraft:link-code' ? {} : { uuid: payload?.uuid },
+              token: minecraftToken
+            });
+            break;
+          }
+
           // Sending chat and the owner's mute; the API checks who is asking.
           case 'minecraft:chat-send':
           case 'minecraft:chat-mute': {

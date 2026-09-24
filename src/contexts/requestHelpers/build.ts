@@ -4791,7 +4791,10 @@ export default function buildRequestHelpers({
         | 'chat'
         | 'chat/history'
         | 'chat/send'
-        | 'chat/mute';
+        | 'chat/mute'
+        | 'link'
+        | 'link/code'
+        | 'link/unlink';
       body?: Record<string, unknown>;
       token?: string;
     }) {
