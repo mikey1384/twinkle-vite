@@ -200,7 +200,8 @@ const sdkSections: GuideSection[] = [
       'Limited rollout: apps that are not enabled get 403 with code minecraft_sdk_not_enabled. Poll players and Zero no faster than every 5 seconds; stale: true means a recent cached copy.',
       'Roles (server owner only): getPeople() lists everyone who has joined with their role (visitor, member, builder, moderator), or { canManage: false, people: [] } for other viewers, so hide the feature then; setPlayerRole({ uuid, role }) changes a role in game immediately.',
       'Chat: getChat({ since }) returns live server chat after latestSeq (poll every 2-3 s while visible); getChatHistory({ before, limit, query }) pages older chat; sendChat({ text }) posts into the game as [Web] <username> (signed in, rate-limited); the owner can muteChatUser({ userId, muted }).',
-      "Account links: createLinkCode() gives the viewer a one-time code to type in game as /link CODE; getMyLink() lists their linked Minecraft accounts; unlinkMinecraft({ uuid }) removes one. getPeople() shows each linked player's Twinkle user."
+      "Account links: createLinkCode() gives the viewer a one-time code to type in game as /link CODE; getMyLink() lists their linked Minecraft accounts; unlinkMinecraft({ uuid }) removes one. getPeople() shows each linked player's Twinkle user.",
+      'Design studio: getDesigns({ query }) and getDesign({ id }) (3D preview cells) for everyone; the server owner can saveDesign({ ..., parts }), updateDesign, deleteDesign, checkPlacement({ designId, world, x, z, facing }) and buildDesign(...) to have Zero build it, plus stopZero() and undoBuild({ jobId }).'
     ]
   },
   {

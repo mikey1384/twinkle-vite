@@ -4794,7 +4794,16 @@ export default function buildRequestHelpers({
         | 'chat/mute'
         | 'link'
         | 'link/code'
-        | 'link/unlink';
+        | 'link/unlink'
+        | 'designs'
+        | 'design'
+        | 'designs/save'
+        | 'designs/update'
+        | 'designs/delete'
+        | 'placement/check'
+        | 'placement/build'
+        | 'zero/stop'
+        | 'zero/undo';
       body?: Record<string, unknown>;
       token?: string;
     }) {

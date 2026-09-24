@@ -3452,6 +3452,59 @@ export function useHostBridge({
             break;
           }
 
+          // Design studio. Reads (and site checks) ride content:read; the
+          // owner-only writes ask for content:write. The API decides who may.
+          case 'minecraft:designs':
+          case 'minecraft:design':
+          case 'minecraft:placement-check': {
+            const minecraftToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            const resource =
+              type === 'minecraft:designs'
+                ? 'designs'
+                : type === 'minecraft:design'
+                  ? 'design'
+                  : 'placement/check';
+            response = await requestRefs.getBuildMinecraftDataRef.current({
+              buildId: activeBuild.id,
+              resource,
+              body: payload || {},
+              token: minecraftToken
+            });
+            break;
+          }
+
+          case 'minecraft:design-save':
+          case 'minecraft:design-update':
+          case 'minecraft:design-delete':
+          case 'minecraft:placement-build':
+          case 'minecraft:zero-stop':
+          case 'minecraft:zero-undo': {
+            const minecraftToken = await ensureBuildApiToken(
+              ['content:write'],
+              previewAuth
+            );
+            const writeResources = {
+              'minecraft:design-save': 'designs/save',
+              'minecraft:design-update': 'designs/update',
+              'minecraft:design-delete': 'designs/delete',
+              'minecraft:placement-build': 'placement/build',
+              'minecraft:zero-stop': 'zero/stop',
+              'minecraft:zero-undo': 'zero/undo'
+            } as const;
+            const resource =
+              writeResources[type as keyof typeof writeResources];
+            response = await requestRefs.getBuildMinecraftDataRef.current({
+              buildId: activeBuild.id,
+              resource,
+              body: payload || {},
+              token: minecraftToken
+            });
+            break;
+          }
+
           // Account links: always the signed-in viewer's own account.
           case 'minecraft:link': {
             const minecraftToken = await ensureBuildApiToken(
