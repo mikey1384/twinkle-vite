@@ -100,7 +100,8 @@ export default function Questions({
             ? 'complete'
             : conditionPassStatus || null
         }
-      : null
+      : null,
+    { background: true }
   );
 
   const objectiveMessage = useMemo(() => {

@@ -830,7 +830,8 @@ export default function Main({
           chatType: chatType || 'default',
           subchannelPath: subchannelPath || null
         }
-      : null
+      : null,
+    { background: true }
   );
 
   useEffect(() => {

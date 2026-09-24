@@ -47,6 +47,7 @@ import {
 } from './styles';
 import { css } from '@emotion/css';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
+import { WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 import Icon from '~/components/Icon';
 import type { NormalAttemptSubmissionState } from '../normalAttemptSubmission';
 
@@ -641,7 +642,14 @@ export default function Puzzle({
         <ThemeDisplay themes={puzzle?.themes || []} />
 
         <div className={gridCls}>
-          <div className={boardAreaCls}>
+          <div
+            className={boardAreaCls}
+            // The board is what 'chessPuzzle' above reports exactly (its fen);
+            // not in analysis, where the FEN bar's copy button shows too.
+            {...(isReady && phase !== 'ANALYSIS'
+              ? { [WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE]: 'chessPuzzle' }
+              : {})}
+          >
             <PuzzleBoard
               isReady={isReady}
               chessBoardState={chessBoardState}

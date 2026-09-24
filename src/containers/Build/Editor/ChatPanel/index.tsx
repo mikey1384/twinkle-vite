@@ -631,7 +631,8 @@ export default function ChatPanel({
                 }
               : null
         }
-      : null
+      : null,
+    { background: true }
   );
 
   useEffect(() => {

@@ -76,7 +76,8 @@ export default function WordMasterStrikeMeter({
           nextBreak: breakLabel,
           locked: isLocked,
           blocked: isBlocked
-        }
+        },
+    { background: true }
   );
   const countLabel = isPanel ? 'strikes' : 'current strikes';
 

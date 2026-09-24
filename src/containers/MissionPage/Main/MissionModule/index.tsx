@@ -28,12 +28,16 @@ export default function MissionModule({
   style?: React.CSSProperties;
 }) {
   // Which mission the user has open, for Zero and Ciel (never its answers).
-  useAgentScreenState('mission', {
-    id: mission.id,
-    title: mission.title,
-    type: mission.missionType,
-    isRepeating: !!isRepeating
-  });
+  useAgentScreenState(
+    'mission',
+    {
+      id: mission.id,
+      title: mission.title,
+      type: mission.missionType,
+      isRepeating: !!isRepeating
+    },
+    { background: true }
+  );
 
   return (
     <ErrorBoundary componentPath={`MissionModule/${mission.missionType}`}>

@@ -201,7 +201,8 @@ export default function TodayStats({
           dailyBonusButtonShown: isDailyBonusButtonShown,
           aiEnergyPercent: aiUsagePolicy ? energyPercentValue : null
         }
-      : null
+      : null,
+    { background: true }
   );
 
   useEffect(() => {

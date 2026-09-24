@@ -18,6 +18,7 @@ import {
   getActionColor
 } from '~/components/WordMasterBadges';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
+import { WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 
 interface QuizQuestion {
   id: number;
@@ -107,9 +108,8 @@ export default function VocabQuizModal({
       ? answerResult.selectedIndex
       : selectedIndex;
 
-  // Hands Zero and Ciel the vocabulary quiz as shown: the current question and
-  // its choices, the user's pick, and each result once answered, never the
-  // quiz word before the answer is submitted.
+  // Hands Zero and Ciel where the vocabulary quiz is and each result once
+  // answered, never a question or its choices (the user answers alone).
   useAgentScreenState(
     'aiStoryVocabQuiz',
     isOpen
@@ -119,24 +119,10 @@ export default function VocabQuizModal({
           noWords,
           currentIndex,
           totalQuestions,
-          question: currentQuestion
-            ? {
-                text: String(currentQuestion.question || '')
-                  .replace(/<[^>]*>/g, '')
-                  .slice(0, 500),
-                choices: currentQuestion.choices,
-                status: currentQuestion.status || null
-              }
-            : null,
-          selectedIndex: gradedSelectedIndex,
           answerResult: answerResult
             ? {
                 word: answerResult.word || null,
                 isCorrect: !!answerResult.isCorrect,
-                answerIndex:
-                  typeof answerResult.answerIndex === 'number'
-                    ? answerResult.answerIndex
-                    : null,
                 collected: !!answerResult.collected,
                 discovered: !!answerResult.discovered,
                 message: answerResult.message || null
@@ -941,6 +927,8 @@ export default function VocabQuizModal({
             )}
 
             <section
+              // The user's to answer alone: never read by Zero or Ciel.
+              {...{ [WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE]: 'aiStoryVocabQuiz' }}
               className={css`
                 padding: 1.8rem;
                 border-radius: 1.2rem;

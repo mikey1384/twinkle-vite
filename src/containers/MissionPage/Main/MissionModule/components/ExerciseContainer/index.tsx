@@ -75,7 +75,8 @@ export default function ExerciseContainer({
               ? errorMsg.slice(0, 500)
               : null
         }
-      : null
+      : null,
+    { background: true }
   );
 
   const ComponentRef = useRef(null);

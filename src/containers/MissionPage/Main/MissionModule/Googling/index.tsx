@@ -37,16 +37,20 @@ export default function Googling({
 
   // Each question on screen and what the user has typed for it, for Zero and
   // Ciel; the user writes and submits the answers themselves.
-  useAgentScreenState('missionGoogling', {
-    deprecated: isDeprecated,
-    questions: (mission.questions || [])
-      .slice(0, 30)
-      .map((question: { id: number; content?: string }) => ({
-        question: String(question.content || '').slice(0, 500),
-        answer: String(answers[question.id] || '').slice(0, 500),
-        flaggedEmpty: !!hasErrorObj[question.id]
-      }))
-  });
+  useAgentScreenState(
+    'missionGoogling',
+    {
+      deprecated: isDeprecated,
+      questions: (mission.questions || [])
+        .slice(0, 30)
+        .map((question: { id: number; content?: string }) => ({
+          question: String(question.content || '').slice(0, 500),
+          answer: String(answers[question.id] || '').slice(0, 500),
+          flaggedEmpty: !!hasErrorObj[question.id]
+        }))
+    },
+    { background: true }
+  );
 
   useEffect(() => {
     return function onUnmount() {

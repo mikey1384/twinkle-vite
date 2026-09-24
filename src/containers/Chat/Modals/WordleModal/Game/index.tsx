@@ -4,6 +4,7 @@ import Grid from './Grid';
 import Keyboard from './Keyboard';
 import { getGuessStatuses } from './helpers/statuses';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
+import { WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 import Banner from '~/components/Banner';
 import StatusRail from '../StatusRail';
 import {
@@ -193,6 +194,8 @@ export default function Game({
       />
       <div
         ref={playAreaRef}
+        // The board and keyboard are what 'wordle' above reports exactly.
+        {...{ [WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE]: 'wordle' }}
         style={{
           width: '100%',
           display: 'flex',

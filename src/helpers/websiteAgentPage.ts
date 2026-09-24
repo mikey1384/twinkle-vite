@@ -17,6 +17,14 @@ export const WEBSITE_AGENT_NO_PLAY_ATTRIBUTE = 'data-agent-no-play';
 export const WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE = 'data-agent-guide-only';
 // The agent's own spotlight never shows up in what it sees.
 export const WEBSITE_AGENT_UI_ATTRIBUTE = 'data-website-agent-ui';
+// Marks the part of the screen a component already reports exactly in its
+// screenState (a Wordle's board and keyboard): the page read skips it, so
+// Zero and Ciel get that state once, clean, not the tiles' letters too.
+export const WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE = 'data-agent-state-shown';
+// Marks what Zero and Ciel must not help with (an AI Story's text and its
+// questions, which the user reads and answers alone): never read at all.
+export const WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE = 'data-agent-off-limits';
+const SKIPPED_SELECTOR = `[${WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE}], [${WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE}]`;
 const MAX_ELEMENTS = 220;
 const MAX_NAME_CHARS = 90;
 const MAX_TEXT_CHARS = 3500;
@@ -120,11 +128,17 @@ function isInViewport(element: Element) {
 // row, a chart) reads as its label, which says what colours and icons only
 // show; buttons and fields are left out since they are listed on their own.
 const LABELLED_ROLES = new Set(['group', 'img', 'status', 'row', 'meter']);
-function accessibleText(root: Element) {
+function accessibleText(root: Element, maxChars = Infinity) {
   const parts: string[] = [];
+  let length = 0;
   const walk = (node: Node) => {
+    // Enough read: a long feed stops here instead of styling every post.
+    if (length > maxChars) return;
     if (node.nodeType === Node.TEXT_NODE) {
-      if (node.textContent?.trim()) parts.push(node.textContent);
+      if (node.textContent?.trim()) {
+        parts.push(node.textContent);
+        length += node.textContent.length;
+      }
       return;
     }
     if (node.nodeType !== Node.ELEMENT_NODE) return;
@@ -133,9 +147,18 @@ function accessibleText(root: Element) {
     // Wrappers can have no size of their own, so only hidden ones are
     // skipped here.
     if (element.closest(`[${WEBSITE_AGENT_UI_ATTRIBUTE}]`)) return;
+    if (element.matches(SKIPPED_SELECTOR)) return;
     const style = window.getComputedStyle(element);
     if (style.display === 'none' || style.visibility === 'hidden') return;
     if (element.matches(INTERACTIVE_SELECTOR)) return;
+    // A clickable's short text is already its name in the elements list.
+    if (
+      style.cursor === 'pointer' &&
+      isPointerTarget(element) &&
+      ((element as HTMLElement).innerText || '').length <= MAX_NAME_CHARS
+    ) {
+      return;
+    }
     // Pictures that carry meaning (a chess piece, an icon with a name).
     if (element.tagName === 'IMG') {
       const alt = element.getAttribute('alt')?.trim();
@@ -300,9 +323,14 @@ function topOpenWindow() {
 }
 
 export function readWebsiteAgentPage() {
-  const roots = ROOT_SELECTORS.map((selector) =>
-    document.querySelector(selector)
-  ).filter((root): root is Element => !!root);
+  // An open window (a game, a dialog) is all the user can use until it
+  // closes, so only it is read; the page behind it is left out.
+  const openWindow = topOpenWindow();
+  const roots = openWindow
+    ? [openWindow]
+    : ROOT_SELECTORS.map((selector) => document.querySelector(selector)).filter(
+        (root): root is Element => !!root
+      );
   const lines: string[] = [];
   const listed: { line: number; element: Element; name: string }[] = [];
   let refCount = 0;
@@ -315,6 +343,7 @@ export function readWebsiteAgentPage() {
       const interactive =
         element.matches(INTERACTIVE_SELECTOR) || isPointerTarget(element);
       if (!heading && !interactive) continue;
+      if (element.closest(SKIPPED_SELECTOR)) continue;
       if (!isRendered(element)) continue;
       const name = describeName(element);
       if (heading) {
@@ -355,8 +384,8 @@ export function readWebsiteAgentPage() {
         tag === 'a' ? (element as HTMLAnchorElement).getAttribute('href') : '';
       const state = [
         isInViewport(element)
-          ? `in view, ${describeScreenPosition(element.getBoundingClientRect())}`
-          : 'scroll to see',
+          ? describeScreenPosition(element.getBoundingClientRect())
+          : 'offscreen',
         isCoveredOnScreen(element) ? 'covered by something on top' : '',
         (element as HTMLButtonElement).disabled ? 'disabled' : '',
         (element as HTMLInputElement).checked ? 'checked' : ''
@@ -403,28 +432,28 @@ export function readWebsiteAgentPage() {
         : '';
     lines[line] = lines[line].replace(NEAR_SLOT, near ? ` near "${near}"` : '');
   }
-  // An open window (a game, a dialog) sits on top of the page, so its text
-  // (Wordle's letters, a question) comes first. Only the window on top is
-  // read: other windows mounted there (hidden, closing, or underneath) could
-  // otherwise use up the room before it, and Wordle's guesses went unseen.
-  const windowText = collapse(
-    accessibleText(topOpenWindow() || document.createElement('div')),
-    MAX_TEXT_CHARS
-  );
-  const mainText = collapse(
-    (document.querySelector('#react-view') as HTMLElement | null)?.innerText,
-    Math.max(500, MAX_TEXT_CHARS - windowText.length)
-  );
-  const screenState = readAgentScreenState();
+  // With a window open, its text is the page's text (only the window on
+  // top: others mounted there are hidden, closing, or underneath).
+  // Text only: buttons, links and fields are already listed above.
+  const windowText = openWindow
+    ? collapse(accessibleText(openWindow, MAX_TEXT_CHARS), MAX_TEXT_CHARS)
+    : '';
+  const mainView = document.querySelector('#react-view');
+  const mainText =
+    openWindow || !mainView
+      ? ''
+      : collapse(accessibleText(mainView, MAX_TEXT_CHARS), MAX_TEXT_CHARS);
+  const screenState = readAgentScreenState({ windowOpen: !!openWindow });
   return {
+    // Exact state components on screen report (a Wordle's guesses and
+    // colours), first: trust it over reading the page text.
+    ...(screenState ? { screenState } : {}),
     path: `${window.location.pathname}${window.location.search}`,
     title: document.title,
     elements: lines.join('\n'),
     ...(omitted ? { moreElementsNotListed: omitted } : {}),
     ...(windowText ? { openWindowText: windowText } : {}),
-    // Exact state components on screen report (a Wordle's guesses and
-    // colours): trust it over reading the page text.
-    ...(screenState ? { screenState } : {}),
+    ...(openWindow ? { pageBehindWindow: 'left out' } : {}),
     // Counts only, for Zero/Ciel's telemetry: which kind of screen answered
     // and how much of an open window it read.
     diagnostics: {
@@ -433,7 +462,7 @@ export function readWebsiteAgentPage() {
         .length,
       windowTextChars: windowText.length
     },
-    text: mainText
+    ...(mainText ? { text: mainText } : {})
   };
 }
 

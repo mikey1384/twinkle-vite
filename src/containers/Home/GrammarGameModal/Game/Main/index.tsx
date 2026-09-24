@@ -194,23 +194,11 @@ export default function Main({
   }, [questionIds, triggerEffect]);
 
   const currentQuestion = questionObjRef.current?.[questionIds[currentIndex]];
-  // Hands Zero and Ciel the question on screen, its choices, the user's pick
-  // and the grades already earned; never the answer index of a question the
-  // user has not answered yet.
+  // Hands Zero and Ciel where the game is and the grades already earned,
+  // never a question or its choices (the user answers alone).
   useAgentScreenState('grammarblesPlay', {
     questionNumber: currentIndex + 1,
     totalQuestions: questionIds.length,
-    question: currentQuestion
-      ? String(currentQuestion.question || '').slice(0, 500)
-      : null,
-    choices: Array.isArray(currentQuestion?.choices)
-      ? currentQuestion.choices
-          .slice(0, 30)
-          .map((choice: any) => String(choice ?? '').slice(0, 500))
-      : [],
-    selectedChoiceIndex: currentQuestion?.selectedChoiceIndex ?? null,
-    gotWrong,
-    wrongBeforeOnThisQuestion: !!currentQuestion?.wasWrong,
     grades: displayedQuestions
       .slice(0, 30)
       .map((question: any) => question?.score || null),

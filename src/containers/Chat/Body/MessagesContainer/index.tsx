@@ -470,17 +470,21 @@ export default function MessagesContainer({
 
   // The tab and topic shown above this chat, for Zero and Ciel; never the
   // messages themselves or a game board.
-  useAgentScreenState('chatTopic', {
-    channelId: selectedChannelId || null,
-    selectedTab,
-    topicId: appliedTopicId || null,
-    topicTitle: currentlySelectedTopic?.content
-      ? String(currentlySelectedTopic.content).slice(0, 500)
-      : appliedLegacyTopicObj?.content
-        ? String(appliedLegacyTopicObj.content).slice(0, 500)
-        : null,
-    subchannelPath: subchannelPath || null
-  });
+  useAgentScreenState(
+    'chatTopic',
+    {
+      channelId: selectedChannelId || null,
+      selectedTab,
+      topicId: appliedTopicId || null,
+      topicTitle: currentlySelectedTopic?.content
+        ? String(currentlySelectedTopic.content).slice(0, 500)
+        : appliedLegacyTopicObj?.content
+          ? String(appliedLegacyTopicObj.content).slice(0, 500)
+          : null,
+      subchannelPath: subchannelPath || null
+    },
+    { background: true }
+  );
 
   const isAIChannel = useMemo(() => {
     return isZeroChannel || isCielChannel;

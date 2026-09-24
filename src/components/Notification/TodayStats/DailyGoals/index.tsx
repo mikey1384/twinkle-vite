@@ -121,7 +121,8 @@ export default function DailyGoals({
           noticeCollapsed: isRepairNoticeCollapsed,
           repairError: repairError || null
         }
-      : null
+      : null,
+    { background: true }
   );
 
   useEffect(() => {

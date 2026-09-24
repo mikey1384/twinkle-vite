@@ -2,6 +2,7 @@ import React from 'react';
 import ChoiceList from './ChoiceList';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 
 export default function QuestionSlide({
   answerIndex,
@@ -26,6 +27,8 @@ export default function QuestionSlide({
 }) {
   return (
     <div
+      // The user's to answer alone: never read by Zero or Ciel.
+      {...{ [WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE]: 'grammarblesPlay' }}
       className={css`
         width: 100%;
         padding: 0 1rem 3rem 1rem;
