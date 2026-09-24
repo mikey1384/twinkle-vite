@@ -841,7 +841,7 @@ export default function ChatPanel({
               }
               quickReplyYesLabel={
                 followUpModelSwitchLabel
-                  ? `Switch to ${followUpModelSwitchLabel}`
+                  ? `Yes, switch to ${followUpModelSwitchLabel}!`
                   : followUpContinuesUnfinishedWork
                     ? 'Continue'
                     : undefined
@@ -855,9 +855,11 @@ export default function ChatPanel({
                   : undefined
               }
               quickReplyNoLabel={
-                followUpModelSwitchLabel || followUpContinuesUnfinishedWork
-                  ? 'Not now'
-                  : undefined
+                followUpModelSwitchLabel
+                  ? 'No thanks'
+                  : followUpContinuesUnfinishedWork
+                    ? 'Not now'
+                    : undefined
               }
               quickReplyBusy={
                 Boolean(followUpModelSwitchLabel) &&

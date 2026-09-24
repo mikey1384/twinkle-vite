@@ -1,5 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 
 export default function FollowUpPromptBubble({
@@ -15,7 +16,7 @@ export default function FollowUpPromptBubble({
 }: {
   question: string;
   // An action card names what each press does instead of a bare Yes:
-  // "Switch to Heavy" · "Just this once" · "Not now".
+  // "Yes, switch to Medium!" · "Just this once" · "No thanks".
   yesLabel?: string;
   onceLabel?: string;
   noLabel?: string;
@@ -44,12 +45,50 @@ export default function FollowUpPromptBubble({
       `}
     >
       {question ? (
+        // Lumine asks in its own voice, like Zero and Ciel's approval
+        // prompts: most creators are 8-13 and skip bare system questions.
         <div
           className={css`
-            font-weight: 700;
+            display: flex;
+            gap: 0.7rem;
+            align-items: flex-start;
           `}
         >
-          {question}
+          <div
+            aria-hidden
+            className={css`
+              flex-shrink: 0;
+              width: 2.8rem;
+              height: 2.8rem;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: ${Color.logoBlue(0.12)};
+              color: ${Color.logoBlue()};
+              font-size: 1.3rem;
+            `}
+          >
+            <Icon icon="sparkles" />
+          </div>
+          <div>
+            <div
+              className={css`
+                font-weight: 800;
+                font-size: 0.85em;
+                color: ${Color.logoBlue()};
+              `}
+            >
+              Lumine
+            </div>
+            <div
+              className={css`
+                font-weight: 700;
+              `}
+            >
+              {question}
+            </div>
+          </div>
         </div>
       ) : null}
       <div
