@@ -43,6 +43,8 @@ export function startAiVoiceCall(channelId: number, topicId?: number) {
 }
 
 export type HomeCallAssistant = 'Zero' | 'Ciel';
+// Sent when the pick changes (chosen on Home, or by calling one of them).
+export const HOME_CALL_ASSISTANT_EVENT = 'home-call-assistant-changed';
 
 export function getHomeCallAssistant(
   userId: number | null
@@ -66,4 +68,11 @@ export function saveHomeCallAssistant(
   } catch {
     /* The choice still works when browser storage is unavailable. */
   }
+  // The choice travels with the event, so it holds even when storage is
+  // unavailable.
+  window.dispatchEvent(
+    new CustomEvent(HOME_CALL_ASSISTANT_EVENT, {
+      detail: { userId: userId || null, assistant }
+    })
+  );
 }

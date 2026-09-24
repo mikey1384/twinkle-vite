@@ -36,6 +36,7 @@ import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler
 import { useToast } from '~/contexts/Toast';
 import { extractAiVoiceScreenHTML } from '~/helpers/aiVoiceScreen';
 import { AiVoicePlayback } from '~/helpers/aiVoicePlayback';
+import { saveHomeCallAssistant } from '~/helpers/aiVoiceCall';
 
 // This tab, among the user's open tabs and devices (see the website agent's
 // active-tab handling below).
@@ -551,6 +552,11 @@ export default function useAISocket({
       aiCallChannelIdRef.current = channelId;
       onSetAICallEnding(false);
       onSetAICall(channelId, assistantName);
+      // Whoever they call becomes their pick: Home shows them, and read-aloud
+      // uses their voice.
+      if (assistantName === 'Zero' || assistantName === 'Ciel') {
+        saveHomeCallAssistant(userIdRef.current, assistantName);
+      }
       sendAIUIInformation();
     }
 

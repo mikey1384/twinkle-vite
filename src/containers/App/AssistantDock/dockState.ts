@@ -29,3 +29,15 @@ export function subscribeAssistantDock(listener: () => void) {
 export function getAssistantDock() {
   return dockAssistant;
 }
+
+// Which assistant the Home ask box is showing (it shows the conversation on
+// Home, so the window steps aside only for that one).
+let homeAskAssistant: 'Zero' | 'Ciel' | null = null;
+export function setHomeAskAssistant(assistant: 'Zero' | 'Ciel' | null) {
+  if (homeAskAssistant === assistant) return;
+  homeAskAssistant = assistant;
+  listeners.forEach((listener) => listener());
+}
+export function getHomeAskAssistant() {
+  return homeAskAssistant;
+}

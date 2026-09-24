@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  HOME_CALL_ASSISTANT_EVENT,
   getHomeCallAssistant,
   saveHomeCallAssistant,
   type HomeCallAssistant
@@ -41,6 +42,20 @@ export default function useHomeCallAssistant(
       /* Automatic discovery never saves a preferred assistant. */
     }
   }, [selection.assistant, selection.preferred, selection.userId, userId]);
+
+  // A call with one of them (from anywhere) makes them the pick.
+  useEffect(() => {
+    function handleChange(event: Event) {
+      const { userId: changedFor, assistant } =
+        (event as CustomEvent).detail || {};
+      if ((changedFor || null) !== (userId || null)) return;
+      if (assistant !== 'Zero' && assistant !== 'Ciel') return;
+      setSelection({ userId, assistant, preferred: assistant });
+    }
+    window.addEventListener(HOME_CALL_ASSISTANT_EVENT, handleChange);
+    return () =>
+      window.removeEventListener(HOME_CALL_ASSISTANT_EVENT, handleChange);
+  }, [userId]);
 
   useEffect(() => {
     if (paused || selection.preferred || selection.userId !== userId) return;

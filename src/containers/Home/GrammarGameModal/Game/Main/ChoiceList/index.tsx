@@ -47,6 +47,13 @@ export default function ChoiceList({
       if (!shownRef.current) {
         return;
       }
+      // Typing a number in a text box (like Zero or Ciel's chat window) is
+      // not an answer.
+      if (
+        e.target?.closest?.('input, textarea, select, [contenteditable="true"]')
+      ) {
+        return;
+      }
       if (e.key === '1') {
         handleSelect(0);
       } else if (e.key === '2') {

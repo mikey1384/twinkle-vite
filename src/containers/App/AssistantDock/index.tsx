@@ -2,12 +2,12 @@ import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import { useChatContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import Icon from '~/components/Icon';
-import ZeroPic from '~/components/ZeroPic';
+import AssistantFace from '~/components/AssistantFace';
 import { latestThoughtLine } from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import AgentSuggestions from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
 import { WEBSITE_AGENT_UI_ATTRIBUTE } from '~/helpers/websiteAgentPage';
@@ -18,6 +18,7 @@ import { attachAssistantConversationListeners } from './conversationStore';
 import {
   closeAssistantDock,
   getAssistantDock,
+  getHomeAskAssistant,
   subscribeAssistantDock
 } from './dockState';
 import useAssistantConversation from './useAssistantConversation';
@@ -47,7 +48,11 @@ export default function AssistantDock() {
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const overlayActive = useWebsiteAgentOverlayActive();
-  const modalOpen = useModalOpen();
+  const modalOpen = useModalOpen(!!assistant);
+  const homeAskAssistant = useSyncExternalStore(
+    subscribeAssistantDock,
+    getHomeAskAssistant
+  );
   const location = useLocation();
   const channelId = Number(
     assistant === 'Ciel'
@@ -64,7 +69,7 @@ export default function AssistantDock() {
   const conversationOnScreen =
     (location.pathname.startsWith('/chat') &&
       Number(selectedChannelId) === channelId) ||
-    location.pathname === '/';
+    (location.pathname === '/' && homeAskAssistant === assistant);
   const hidden =
     !assistant ||
     !channelId ||
@@ -90,7 +95,11 @@ function DockWindow({
   // and keyboard, opened with a tap.
   const [phone] = useState(() => isMobile(navigator));
   const { position, windowRef, handleStart, dragLayer } = useDraggableWindow({
-    x: Math.max(8, window.innerWidth - WINDOW_WIDTH - 16),
+    // Its real width: narrow screens make it the screen width less 16px.
+    x: Math.max(
+      8,
+      window.innerWidth - Math.min(WINDOW_WIDTH, window.innerWidth - 16) - 8
+    ),
     y: phone ? 8 : 70
   });
   const [expanded, setExpanded] = useState(!phone);
@@ -99,9 +108,12 @@ function DockWindow({
     assistantName: assistant,
     channelId
   });
-  const step = replying ? latestThoughtLine(reply?.thoughts || '') : '';
+  // Steady while they work; the changing step shows once, in the window.
   const status = replying
-    ? step || `${assistant} is working on it…`
+    ? expanded
+      ? `${assistant} is working on it…`
+      : latestThoughtLine(reply?.thoughts || '') ||
+        `${assistant} is working on it…`
     : reply?.text
       ? plainPreview(reply.text)
       : `Talk to ${assistant} here`;
@@ -135,9 +147,6 @@ function DockWindow({
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           overflow: hidden;
           animation: ${appear} 0.2s ease-out;
-          @media (max-width: ${mobileMaxWidth}) {
-            width: calc(100vw - 16px);
-          }
         `}
       >
         <div
@@ -151,20 +160,17 @@ function DockWindow({
           <div
             className={`draggable-area ${css`
               display: flex;
+              min-width: ${phone ? 52 : 76}px;
               align-items: center;
               padding-left: 0.8rem;
               cursor: move;
               touch-action: none;
             `}`}
           >
-            <div
-              className={css`
-                width: ${phone ? 44 : 68}px;
-                height: ${phone ? 44 : 68}px;
-              `}
-            >
-              <ZeroPic assistant={assistant} />
-            </div>
+            <AssistantFace
+              assistant={assistant}
+              size={phone ? '4.4rem' : '6.4rem'}
+            />
           </div>
           <button
             type="button"
@@ -194,7 +200,6 @@ function DockWindow({
               {assistant}
             </span>
             <span
-              aria-live="polite"
               className={css`
                 font-size: 1.25rem;
                 color: ${Color.darkGray()};
@@ -264,10 +269,12 @@ function DockWindow({
                 `}
               >
                 <AssistantReplyView
+                  assistant={assistant}
                   reply={reply}
                   channelId={channelId}
                   contentKey="assistant-dock"
                   maxLines={12}
+                  compactThinking
                   onAnswer={(answer) => handleSend(answer)}
                 />
               </div>
@@ -356,9 +363,10 @@ function plainPreview(text: string) {
 }
 
 // Whether a window (a game, a modal) is open over the page.
-function useModalOpen() {
+function useModalOpen(enabled: boolean) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
+    if (!enabled) return;
     const root = document.getElementById('modal');
     const check = () =>
       setOpen(!!document.querySelector('[aria-modal="true"]'));
@@ -367,7 +375,7 @@ function useModalOpen() {
     const observer = new MutationObserver(check);
     observer.observe(root, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, []);
+  }, [enabled]);
   return open;
 }
 

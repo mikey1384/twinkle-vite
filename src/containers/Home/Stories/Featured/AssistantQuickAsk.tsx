@@ -2,16 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import {
-  CHAT_ID_BASE_NUMBER,
-  CIEL_PFP_URL,
-  ZERO_PFP_URL,
-  cloudFrontURL
-} from '~/constants/defaultValues';
+import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
+import AssistantFace from '~/components/AssistantFace';
 import AgentSuggestions from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
 import AssistantReplyView from '~/containers/App/AssistantDock/AssistantReplyView';
 import useAssistantConversation from '~/containers/App/AssistantDock/useAssistantConversation';
+import { setHomeAskAssistant } from '~/containers/App/AssistantDock/dockState';
 
 const appear = keyframes`
   from { opacity: 0; transform: translateY(4px); }
@@ -50,6 +47,11 @@ export default function AssistantQuickAsk({
     onEngagedChange(engaged);
   }, [engaged, onEngagedChange]);
   useEffect(() => () => onEngagedChange(false), [onEngagedChange]);
+  // The floating window steps aside on Home for the assistant shown here.
+  useEffect(() => {
+    setHomeAskAssistant(assistantName);
+    return () => setHomeAskAssistant(null);
+  }, [assistantName]);
 
   // The same ideas the chat shows above an empty message box, so people
   // find out what they can ask for.
@@ -69,11 +71,6 @@ export default function AssistantQuickAsk({
   async function handleSend(idea?: string) {
     if (await send(idea ?? text)) setText('');
   }
-
-  const storedPicture = assistantName === 'Ciel' ? CIEL_PFP_URL : ZERO_PFP_URL;
-  const picture = storedPicture?.startsWith('/')
-    ? `${cloudFrontURL}${storedPicture}`
-    : storedPicture;
 
   return (
     <div
@@ -106,21 +103,7 @@ export default function AssistantQuickAsk({
           }
         `}
       >
-        {picture ? (
-          <img
-            src={picture}
-            alt=""
-            onError={(event) => {
-              event.currentTarget.style.display = 'none';
-            }}
-            className={css`
-              width: 3rem;
-              height: 3rem;
-              border-radius: 50%;
-              flex-shrink: 0;
-            `}
-          />
-        ) : null}
+        <AssistantFace assistant={assistantName} size="3rem" />
         <input
           value={text}
           onChange={(event) => setText(event.target.value)}
@@ -177,6 +160,7 @@ export default function AssistantQuickAsk({
           `}
         >
           <AssistantReplyView
+            assistant={assistantName}
             reply={reply}
             channelId={channelId}
             contentKey="home-quick-ask"

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { assistantVoice } from '~/helpers/assistantVoice';
 import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
@@ -62,7 +63,11 @@ export default function BookmarkModal({
           <div style={{ height: '100%', width: '100%', padding: '3rem 1rem' }}>
             <RichText
               isAIMessage={isAIMessage}
-              voice={isAIMessage ? (isCielChat ? 'nova' : '') : ''}
+              voice={
+                isAIMessage
+                  ? assistantVoice(isCielChat ? 'Ciel' : 'Zero')
+                  : undefined
+              }
               theme={displayedThemeColor}
               contentType="chat"
               contentId={bookmark.id}

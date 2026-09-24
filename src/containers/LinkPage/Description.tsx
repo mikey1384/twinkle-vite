@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
 import UsernameText from '~/components/Texts/UsernameText';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import ShareButton from '~/components/Buttons/ShareButton';
@@ -318,6 +319,7 @@ export default function Description({
             <ReadAloudButton
               text={description || ''}
               contentKey={`url-${linkId}-description`}
+              voice={assistantVoiceForUserId(uploader?.id)}
             />
           )}
         </div>

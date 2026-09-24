@@ -365,7 +365,12 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
           onClose();
           return;
         }
-        if (event.key === 'Tab' && modalRef.current) {
+        // Zero and Ciel's floating window sits above modals and keeps its
+        // own keyboard focus.
+        const fromAgentWindow = (event.target as Element | null)?.closest?.(
+          '[data-website-agent-ui]'
+        );
+        if (event.key === 'Tab' && modalRef.current && !fromAgentWindow) {
           trapModalFocus(event, modalRef.current);
         }
       }

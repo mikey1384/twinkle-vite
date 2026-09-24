@@ -8,21 +8,28 @@ import ThinkingIndicator, {
 } from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import WebsiteAgentCard from '~/containers/Chat/Message/MessageBody/WebsiteAgentCard';
 import type { AssistantReply } from './conversationStore';
+import { assistantVoice } from '~/helpers/assistantVoice';
 
 // Zero or Ciel's latest reply outside the chat page: the text as it streams,
 // what they are doing meanwhile, and a card it ends on, answered right here.
 export default function AssistantReplyView({
+  assistant,
   reply,
   channelId,
   contentKey,
   maxLines = 8,
+  compactThinking = false,
   onAnswer
 }: {
+  assistant: 'Zero' | 'Ciel';
   reply: AssistantReply;
   channelId: number;
   // Distinguishes this surface's copy of the reply (Home box, dock).
   contentKey: string;
   maxLines?: number;
+  // One steady line (the latest step) instead of the streaming thoughts,
+  // for a small window where a growing box would jump about.
+  compactThinking?: boolean;
   onAnswer: (answer: string) => void;
 }) {
   return (
@@ -36,9 +43,16 @@ export default function AssistantReplyView({
           contentType="chat"
           contentId={`${contentKey}-${reply.messageId || 'new'}`}
           maxLines={maxLines}
+          voice={assistantVoice(assistant)}
         >
           {reply.text.trimEnd()}
         </RichText>
+      ) : reply.done ? null : compactThinking ? (
+        <ThinkingIndicator
+          status={reply.status || 'thinking'}
+          activity={latestThoughtLine(reply.thoughts)}
+          compact
+        />
       ) : (
         <ThinkingIndicator
           status={reply.status || 'thinking'}

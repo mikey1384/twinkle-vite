@@ -11,16 +11,12 @@ import { useLocation } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import {
-  CIEL_PFP_URL,
-  ZERO_PFP_URL,
-  cloudFrontURL
-} from '~/constants/defaultValues';
-import {
   WEBSITE_AGENT_UI_ATTRIBUTE,
   countControlsUnder,
   findWebsiteAgentElement,
   isCoveredOnScreen
 } from '~/helpers/websiteAgentPage';
+import AssistantFace from '~/components/AssistantFace';
 import AssistantDock from './AssistantDock';
 import { openAssistantDock } from './AssistantDock/dockState';
 
@@ -586,7 +582,7 @@ function AssistantLine({
         align-items: flex-start;
       `}
     >
-      <AssistantPicture assistant={assistant} size="3.4rem" />
+      <AssistantFace assistant={assistant} size="3.4rem" />
       <div>
         {assistant ? (
           <div
@@ -602,42 +598,6 @@ function AssistantLine({
         <div>{children}</div>
       </div>
     </div>
-  );
-}
-
-function AssistantPicture({
-  assistant,
-  size
-}: {
-  assistant: 'Zero' | 'Ciel' | null;
-  size: string;
-}) {
-  const storedPicture =
-    assistant === 'Ciel'
-      ? CIEL_PFP_URL
-      : assistant === 'Zero'
-        ? ZERO_PFP_URL
-        : '';
-  // Stored as a path on the image CDN, like other profile pictures.
-  const picture =
-    storedPicture && storedPicture.startsWith('/')
-      ? `${cloudFrontURL}${storedPicture}`
-      : storedPicture;
-  if (!picture) return null;
-  return (
-    <img
-      src={picture}
-      alt=""
-      onError={(event) => {
-        event.currentTarget.style.display = 'none';
-      }}
-      className={css`
-        width: ${size};
-        height: ${size};
-        border-radius: 50%;
-        flex-shrink: 0;
-      `}
-    />
   );
 }
 

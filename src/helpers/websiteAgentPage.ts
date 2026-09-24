@@ -283,6 +283,14 @@ let lastRefNumber = 0;
 // How far a redrawn element may have moved and still count as the same one.
 const REDRAWN_MAX_DISTANCE = 160;
 
+// The window the user sees on top: the last open dialog that is rendered.
+function topOpenWindow() {
+  const open = Array.from(
+    document.querySelectorAll('#modal [aria-modal="true"]')
+  ).filter((element) => isRendered(element));
+  return open[open.length - 1] || null;
+}
+
 export function readWebsiteAgentPage() {
   const roots = ROOT_SELECTORS.map((selector) =>
     document.querySelector(selector)
@@ -378,10 +386,11 @@ export function readWebsiteAgentPage() {
     lines[line] = lines[line].replace(NEAR_SLOT, near ? ` near "${near}"` : '');
   }
   // An open window (a game, a dialog) sits on top of the page, so its text
-  // (Wordle's letters, a question) comes first.
-  const modalRoot = document.querySelector('#modal');
+  // (Wordle's letters, a question) comes first. Only the window on top is
+  // read: other windows mounted there (hidden, closing, or underneath) could
+  // otherwise use up the room before it, and Wordle's guesses went unseen.
   const windowText = collapse(
-    modalRoot ? accessibleText(modalRoot) : '',
+    accessibleText(topOpenWindow() || document.createElement('div')),
     MAX_TEXT_CHARS
   );
   const mainText = collapse(

@@ -1,4 +1,5 @@
 import React, { memo, useMemo } from 'react';
+import { assistantVoice } from '~/helpers/assistantVoice';
 import { css, cx } from '@emotion/css';
 import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';
@@ -232,7 +233,7 @@ function TextMessage({
                     aiActionPlacement="inline"
                     isAIMessage={isAIMessage}
                     isStreaming={isAIMessage && isCurrentlyStreaming}
-                    voice={isCielMessage ? 'nova' : ''}
+                    voice={assistantVoice(isCielMessage ? 'Ciel' : 'Zero')}
                     readMoreHeightFixed
                     contentId={richTextId}
                     contentType="chat"

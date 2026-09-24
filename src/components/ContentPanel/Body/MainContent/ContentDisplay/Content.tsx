@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
 import { borderRadius, Color } from '~/constants/css';
 import {
   cardLevelHash,
@@ -298,7 +299,7 @@ export default function Content({
               uploader?.id === Number(ZERO_TWINKLE_ID) ||
               uploader?.id === Number(CIEL_TWINKLE_ID)
             }
-            voice={uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : ''}
+            voice={assistantVoiceForUserId(uploader?.id)}
             contentId={contentId}
             contentType={contentType}
             section="content"
@@ -546,6 +547,7 @@ export default function Content({
               contentType={contentType}
               section="description"
               readAloud
+              voice={assistantVoiceForUserId(uploader?.id)}
               theme={theme}
             >
               {description || ''}
@@ -598,6 +600,7 @@ export default function Content({
               contentType={contentType}
               section="description"
               readAloud
+              voice={assistantVoiceForUserId(uploader?.id)}
               theme={theme}
             >
               {Description}

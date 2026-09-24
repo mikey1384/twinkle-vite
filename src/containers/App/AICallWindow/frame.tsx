@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import {
   getAiEnergyDisplay,
@@ -42,14 +42,39 @@ export function useDraggableWindow(initialPosition: { x: number; y: number }) {
     }
   }
 
+  // Always reachable: at least the picture stays on screen.
+  function clamp(next: { x: number; y: number }) {
+    const box = windowRef.current?.getBoundingClientRect();
+    const width = box?.width || 0;
+    const height = box?.height || 0;
+    return {
+      x: Math.min(Math.max(0, next.x), Math.max(0, window.innerWidth - width)),
+      y: Math.min(
+        Math.max(0, next.y),
+        Math.max(0, window.innerHeight - Math.min(height, 96))
+      )
+    };
+  }
+
+  useEffect(() => {
+    function handleResize() {
+      setPosition((current) => clamp(current));
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function handleMove(e: React.MouseEvent | React.TouchEvent) {
     if (!isDragging) return;
     e.preventDefault();
     const point = pointFrom(e);
-    setPosition({
-      x: point.x - dragOffset.current.x,
-      y: point.y - dragOffset.current.y
-    });
+    setPosition(
+      clamp({
+        x: point.x - dragOffset.current.x,
+        y: point.y - dragOffset.current.y
+      })
+    );
   }
 
   function handleEnd() {

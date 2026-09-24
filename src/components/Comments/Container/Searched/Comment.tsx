@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -518,9 +519,7 @@ export default function SearchedComment({
                           uploader?.id === Number(ZERO_TWINKLE_ID) ||
                           uploader?.id === Number(CIEL_TWINKLE_ID)
                         }
-                        voice={
-                          uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : ''
-                        }
+                        voice={assistantVoiceForUserId(uploader?.id)}
                         contentType="comment"
                         contentId={commentId}
                         section="pinned"

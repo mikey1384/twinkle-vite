@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
 import { BuildMiniCard } from '~/components/Build/Cards';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
@@ -75,7 +76,7 @@ export default function ContentPreview({
   const isAIMessage =
     uploader?.id === Number(ZERO_TWINKLE_ID) ||
     uploader?.id === Number(CIEL_TWINKLE_ID);
-  const aiVoice = uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : undefined;
+  const aiVoice = assistantVoiceForUserId(uploader?.id);
   const formattedStoryTitle = useMemo(() => {
     const raw = title || topic || '';
     if (!raw) return '';

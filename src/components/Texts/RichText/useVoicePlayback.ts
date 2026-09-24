@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useAppContext, useViewContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
+import { useUserReadAloudVoice } from '~/helpers/assistantVoice';
 import { audioRef, claimAudioIntent, isCurrentAudioIntent } from '~/constants/state';
 
 // Keep at most the shared player's current generated source. Unmounting a
@@ -26,10 +27,15 @@ export default function useVoicePlayback({ text, voice, contentKey }: {
   const textToSpeech = useAppContext((v) => v.requestHelpers.textToSpeech);
   const onSetAudioKey = useViewContext((v) => v.actions.onSetAudioKey);
   const audioKey = useViewContext((v) => v.state.audioKey);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const pickedVoice = useUserReadAloudVoice(userId);
   // Use assistant identity at the API boundary. The server owns each voice.
+  // Text with no assistant of its own (a member's post) is read by the
+  // assistant this user picked on Home or last called.
   // Revision also expires prepared clips from the previous voice configuration.
   const speechVoice = voice === 'nova' || voice === 'marin' ? 'ciel'
-    : !voice || voice === 'echo' || voice === 'cedar' ? 'zero' : voice;
+    : voice === 'echo' || voice === 'cedar' ? 'zero'
+      : !voice ? pickedVoice : voice;
   const identity = useMemo(() => JSON.stringify([contentKey, text, speechVoice, 'echo-marin-v2']), [contentKey, text, speechVoice]);
   const latestIdentity = useRef(identity);
   latestIdentity.current = identity;

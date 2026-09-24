@@ -1,6 +1,6 @@
 import React from 'react';
 import { ZERO_TWINKLE_ID } from '~/constants/defaultValues';
-import ZeroPic from '~/components/ZeroPic';
+import AssistantFace from '~/components/AssistantFace';
 import UsernameText from '~/components/Texts/UsernameText';
 import { useKeyContext } from '~/contexts';
 
@@ -17,9 +17,7 @@ export default function ZeroMessage() {
             flexDirection: 'column'
           }}
         >
-          <div style={{ width: '7rem' }}>
-            <ZeroPic />
-          </div>
+          <AssistantFace assistant="Zero" size="7rem" />
           <UsernameText
             style={{ fontSize: '1.7rem' }}
             user={{

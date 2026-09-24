@@ -22,6 +22,9 @@ export interface AssistantReply {
   // A question or approval the reply ends on, answered right where it shows.
   card: WebsiteAgentCardData | null;
   done: boolean;
+  // Ended by going quiet, not by the server: a later event for the same
+  // message brings it back.
+  timedOut?: boolean;
   error: string;
 }
 
@@ -70,32 +73,56 @@ function isThisReply(
   reply: AssistantReply | null,
   messageId?: unknown
 ): reply is AssistantReply {
+  if (!reply) return false;
+  if (reply.done) {
+    return (
+      !!reply.timedOut &&
+      reply.messageId != null &&
+      Number(messageId) === reply.messageId
+    );
+  }
   return (
-    !!reply &&
-    !reply.done &&
-    (messageId == null ||
-      reply.messageId == null ||
-      Number(messageId) === reply.messageId)
+    messageId == null ||
+    reply.messageId == null ||
+    Number(messageId) === reply.messageId
   );
+}
+
+// A reply that went quiet and speaks again is live again.
+function revived(reply: AssistantReply) {
+  return reply.timedOut ? { ...reply, done: false, timedOut: false } : reply;
 }
 
 function handleNewMessage({ message, channelId }: any) {
   const id = Number(message?.id);
   if (!channelId || !id) return;
-  setAssistantReply(Number(channelId), (current) =>
-    current && !current.done && current.messageId == null
-      ? { ...current, messageId: id }
-      : current?.messageId === id
-        ? current
-        : { ...EMPTY_ASSISTANT_REPLY, messageId: id }
-  );
+  // A message can arrive already written (a Lumine update, say); a reply
+  // being made arrives empty and streams in.
+  const text = typeof message?.content === 'string' ? message.content : '';
+  setAssistantReply(Number(channelId), (current) => {
+    if (current?.messageId === id) return current;
+    const pending = !!current && !current.done && current.messageId == null;
+    if (pending && !text) return { ...current!, messageId: id };
+    // A finished message never takes the slot of the reply the user is
+    // waiting for.
+    if (pending) return current;
+    return {
+      ...EMPTY_ASSISTANT_REPLY,
+      messageId: id,
+      text,
+      suggestions: readAgentSuggestions(message?.settings),
+      card: isWebsiteAgentCardData(message?.settings?.websiteAgentCard)
+        ? message.settings.websiteAgentCard
+        : null
+    };
+  });
 }
 
 function handleDelta({ channelId, messageId, delta, startOffset }: any) {
   setAssistantReply(Number(channelId), (current) =>
     isThisReply(current, messageId)
       ? {
-          ...current,
+          ...revived(current),
           text:
             typeof startOffset === 'number'
               ? current.text.slice(0, startOffset) + delta
@@ -135,7 +162,7 @@ function handleThought({
   setAssistantReply(Number(channelId), (current) =>
     isThisReply(current, messageId)
       ? {
-          ...current,
+          ...revived(current),
           thinkingHard: !!isThinkingHard,
           thoughts: applyCanonicalTextStreamUpdate({
             currentText: current.thoughts,
@@ -151,7 +178,7 @@ function handleThought({
 function handleStatus({ channelId, messageId, status }: any) {
   setAssistantReply(Number(channelId), (current) =>
     isThisReply(current, messageId)
-      ? { ...current, status: String(status || '') }
+      ? { ...revived(current), status: String(status || '') }
       : current
   );
 }
@@ -159,21 +186,27 @@ function handleStatus({ channelId, messageId, status }: any) {
 function handleDone(channelId: unknown, messageId?: unknown) {
   setAssistantReply(Number(channelId), (current) =>
     isThisReply(current, messageId)
-      ? { ...current, done: true, status: '' }
+      ? { ...current, done: true, timedOut: false, status: '' }
       : current
   );
 }
 
 // A reply that goes quiet without finishing (a failure the server never
-// announced) stops holding the conversation after a while.
-const QUIET_REPLY_MS = 90_000;
+// announced) stops holding the conversation after a while: longer than the
+// longest wait for the user (a walkthrough step waits 5 minutes).
+const QUIET_REPLY_MS = 6 * 60_000;
 let quietTimer = 0;
 function checkQuietReplies() {
   const now = Date.now();
   for (const [channelId, reply] of replies) {
     const lastHeard = lastHeardAt.get(channelId) || now;
     if (!reply.done && now - lastHeard > QUIET_REPLY_MS) {
-      setAssistantReply(channelId, { ...reply, done: true, status: '' });
+      setAssistantReply(channelId, {
+        ...reply,
+        done: true,
+        timedOut: true,
+        status: ''
+      });
     }
   }
 }

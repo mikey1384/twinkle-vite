@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState
 } from 'react';
+import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -481,7 +482,7 @@ function Comment({
                           uploader?.id === Number(CIEL_TWINKLE_ID)
                         }
                         voice={
-                          uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : ''
+                          assistantVoiceForUserId(uploader?.id)
                         }
                         contentType="comment"
                         contentId={commentId}
