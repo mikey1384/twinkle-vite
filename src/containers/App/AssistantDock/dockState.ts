@@ -41,3 +41,21 @@ export function setHomeAskAssistant(assistant: 'Zero' | 'Ciel' | null) {
 export function getHomeAskAssistant() {
   return homeAskAssistant;
 }
+
+// Text for Home's ask box, typed there but not sent (a subject in the Post
+// field that is really a question: the user can ask it right away).
+let homeAskPrefill: { text: string; nonce: number } | null = null;
+const prefillListeners = new Set<() => void>();
+export function prefillHomeAsk(text: string) {
+  homeAskPrefill = { text, nonce: Date.now() };
+  prefillListeners.forEach((listener) => listener());
+}
+export function subscribeHomeAskPrefill(listener: () => void) {
+  prefillListeners.add(listener);
+  return () => {
+    prefillListeners.delete(listener);
+  };
+}
+export function getHomeAskPrefill() {
+  return homeAskPrefill;
+}

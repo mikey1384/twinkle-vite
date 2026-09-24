@@ -314,6 +314,7 @@ registerMethods('content', [
   'deleteDraft',
   'addVideoView',
   'checkContentUrl',
+  'decidePostIntent',
   'checkIfHomeOutdated',
   'checkIfUserResponded',
   'checkNumGrammarGamesPlayedToday',

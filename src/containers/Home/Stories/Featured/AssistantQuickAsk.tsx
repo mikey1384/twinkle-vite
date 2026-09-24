@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -8,7 +8,11 @@ import AssistantFace from '~/components/AssistantFace';
 import AgentSuggestions from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
 import AssistantReplyView from '~/containers/App/AssistantDock/AssistantReplyView';
 import useAssistantConversation from '~/containers/App/AssistantDock/useAssistantConversation';
-import { setHomeAskAssistant } from '~/containers/App/AssistantDock/dockState';
+import {
+  getHomeAskPrefill,
+  setHomeAskAssistant,
+  subscribeHomeAskPrefill
+} from '~/containers/App/AssistantDock/dockState';
 
 const appear = keyframes`
   from { opacity: 0; transform: translateY(4px); }
@@ -47,6 +51,15 @@ export default function AssistantQuickAsk({
     onEngagedChange(engaged);
   }, [engaged, onEngagedChange]);
   useEffect(() => () => onEngagedChange(false), [onEngagedChange]);
+  // A question typed into the Post field lands here, ready to send.
+  const prefill = useSyncExternalStore(
+    subscribeHomeAskPrefill,
+    getHomeAskPrefill
+  );
+  useEffect(() => {
+    if (prefill?.text) setText(prefill.text);
+  }, [prefill?.nonce, prefill?.text]);
+
   // The floating window steps aside on Home for the assistant shown here.
   useEffect(() => {
     setHomeAskAssistant(assistantName);
@@ -74,6 +87,7 @@ export default function AssistantQuickAsk({
 
   return (
     <div
+      data-home-ask-box=""
       className={css`
         margin-bottom: 1rem;
         @media (max-width: ${mobileMaxWidth}) {

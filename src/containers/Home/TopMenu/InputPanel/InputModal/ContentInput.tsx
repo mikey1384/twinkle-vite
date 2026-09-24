@@ -1,4 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { takePendingPostLink } from '../postFormPrefill';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -209,6 +210,24 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
     urlExceedsCharLimit,
     urlIsEmpty
   ]);
+
+  // A link typed into Home's Post Something field: handled as if typed
+  // here, keeping the words typed around it as the title (a YouTube video
+  // brings its own).
+  useEffect(() => {
+    const pending = takePendingPostLink();
+    if (!pending) return;
+    handleUrlFieldChange(pending.url);
+    const keepTitle = pending.title && !isValidYoutubeUrl(pending.url);
+    const timer = window.setTimeout(() => {
+      if (keepTitle) handleSetTitle(pending.title);
+      const field = UrlFieldRef.current as HTMLInputElement | null;
+      field?.focus();
+      field?.setSelectionRange?.(field.value.length, field.value.length);
+    }, 350);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     return function saveFormBeforeUnmount() {

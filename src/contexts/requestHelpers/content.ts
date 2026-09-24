@@ -220,6 +220,23 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // What text typed into Home's Post Something field is for (a post, or
+    // a question for Zero/Ciel); null when that can't be decided now, and
+    // the full form opens instead.
+    async decidePostIntent(text: string) {
+      try {
+        const {
+          data: { decision }
+        } = await request.post(
+          `${URL}/content/post-intent`,
+          { text },
+          { ...auth(), timeout: 4000 }
+        );
+        return decision || null;
+      } catch {
+        return null;
+      }
+    },
     async checkContentUrl({
       url,
       videoCode,
