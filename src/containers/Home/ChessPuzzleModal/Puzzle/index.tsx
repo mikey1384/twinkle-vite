@@ -46,6 +46,7 @@ import {
   boardAreaCls
 } from './styles';
 import { css } from '@emotion/css';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import Icon from '~/components/Icon';
 import type { NormalAttemptSubmissionState } from '../normalAttemptSubmission';
 
@@ -577,6 +578,52 @@ export default function Puzzle({
     timeLeft
   });
 
+  // Hands Zero and Ciel the board as shown, the user's moves and the result;
+  // never the puzzle's solution line or hint, and the move review only once
+  // the puzzle is over and the user is looking at it.
+  useAgentScreenState(
+    'chessPuzzle',
+    isReady
+      ? {
+          phase,
+          fen: getDisplayedFen(),
+          playerColor: chessBoardState?.playerColor ?? null,
+          sideToMove: getDisplayedSideToMove(),
+          inCheck: !!chessBoardState?.isCheck,
+          selectedSquare:
+            selectedSquare == null
+              ? null
+              : indexToAlgebraic(
+                  viewToBoard(
+                    selectedSquare,
+                    chessBoardState?.playerColor === 'black'
+                  )
+                ),
+          yourMoves: puzzleState.moveHistory
+            .slice(-30)
+            .map((move: any) => move?.san || move?.uci || null),
+          result: puzzleResult ?? null,
+          themes: (puzzle?.themes || []).slice(0, 30),
+          level: selectedLevel || 1,
+          timeAttack: inTimeAttack
+            ? { timeLeft: timeLeft ?? 0, runResult, solved: promoSolved }
+            : null,
+          promotionStreak: currentStreak,
+          moveReview:
+            phase === 'ANALYSIS'
+              ? moveAnalysisHistory.slice(-30).map((entry) => ({
+                  userMove: entry.userMove,
+                  expectedMove: entry.expectedMove ?? null,
+                  engineSuggestion: entry.engineSuggestion ?? null,
+                  evaluation: entry.evaluation ?? null,
+                  mate: entry.mate ?? null,
+                  isCorrect: entry.isCorrect
+                }))
+              : null
+        }
+      : null
+  );
+
   return (
     <div className={containerCls}>
       <div className={contentAreaCls}>
@@ -911,6 +958,26 @@ export default function Puzzle({
       if (turn === 'w') return 'white';
       if (turn === 'b') return 'black';
     } catch {}
+    return null;
+  }
+
+  // During analysis the board follows the stepped-to position, the same one
+  // the FEN bar under the board shows.
+  function getDisplayedFen() {
+    try {
+      if (phase === 'ANALYSIS' && fenHistory?.[analysisIndex]) {
+        return fenHistory[analysisIndex];
+      }
+      return chessRef.current?.fen?.() || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function getDisplayedSideToMove() {
+    const turn = getDisplayedFen()?.split(' ')[1];
+    if (turn === 'w') return 'white';
+    if (turn === 'b') return 'black';
     return null;
   }
 

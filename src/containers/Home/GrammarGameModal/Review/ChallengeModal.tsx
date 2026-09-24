@@ -12,6 +12,7 @@ import {
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import StreamingThoughtContent from '~/components/StreamingThoughtContent';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 export default function ChallengeModal({
   isOpen,
@@ -82,6 +83,21 @@ export default function ChallengeModal({
       socket.off('grammar_challenge_thought_streamed', handleThoughtStream);
     };
   }, []);
+
+  // Hands Zero and Ciel where the challenge stands (open, running, accepted,
+  // failed); never the streamed reasoning or the ruling before it arrives.
+  useAgentScreenState(
+    'grammarblesChallenge',
+    isOpen
+      ? {
+          questionId,
+          aiUnavailable: !!AI_FEATURES_DISABLED,
+          challenging,
+          accepted,
+          error: challengeError ? String(challengeError).slice(0, 500) : null
+        }
+      : null
+  );
 
   return (
     <Modal

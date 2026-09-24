@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Grid from './Grid';
 import Keyboard from './Keyboard';
+import { getGuessStatuses } from './helpers/statuses';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import Banner from '~/components/Banner';
 import StatusRail from '../StatusRail';
 import {
@@ -111,6 +113,21 @@ export default function Game({
     }
     return 'green';
   }, [alertMessage.status]);
+
+  // What the board shows, exactly, for Zero and Ciel (the answer only once
+  // the game is over and it is on screen).
+  useAgentScreenState('wordle', {
+    guesses: guesses.map((word) => ({
+      word,
+      tiles: getGuessStatuses({ guess: word, solution })
+    })),
+    typing: currentGuess,
+    triesLeft: Math.max(0, MAX_GUESSES - guesses.length),
+    won: !!isGameWon,
+    lost: !!isGameLost,
+    // Shown on screen once the game is over, and only then.
+    ...(isGameWon || isGameLost ? { answer: solution } : {})
+  });
 
   const strictModeSwitchDisabled = useMemo(() => {
     const { isPass } = checkWordleAttemptStrictness({

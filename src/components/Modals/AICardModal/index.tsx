@@ -36,6 +36,7 @@ import ListedMenu from './ListedMenu';
 import AICardDetails from '~/components/AICardDetails';
 import ShareButton from '~/components/Buttons/ShareButton';
 import { waitForSocketAuthReady } from '~/helpers/socketAuthReady';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 type CardImageStage =
   | 'not_started'
@@ -234,6 +235,42 @@ export default function AICardModal({
       'not_started'
     );
   }, [card?.imageGenerationStage, card?.isImageGenerating]);
+
+  // The open card as its modal shows it (word, level, quality, owner, listing,
+  // offers, image status), for Zero and Ciel; a hidden mystery quality stays
+  // the server's "???" and no offerer is named.
+  useAgentScreenState(
+    'aiCard',
+    card?.id
+      ? {
+          id: card.id,
+          word: card.word ? String(card.word).slice(0, 500) : null,
+          level: card.level ?? null,
+          quality: card.quality ?? null,
+          owner: card.owner?.username || null,
+          ownedByYou: userIsOwner,
+          burned: !!card.isBurned,
+          isListed: !!card.isListed,
+          askPrice: card.isListed ? (card.askPrice ?? null) : null,
+          offerCount: visibleOfferGroups.reduce(
+            (count, group) => count + (group.users?.length || 0),
+            0
+          ),
+          topOfferPrice: visibleOfferGroups.length
+            ? Math.max(...visibleOfferGroups.map((group) => group.price))
+            : null,
+          hasImage: !!card.imagePath,
+          imageGeneration: generatingImage
+            ? progressStage
+            : imageGenerationError
+              ? 'error'
+              : null,
+          imageGenerationError: imageGenerationError
+            ? String(imageGenerationError).slice(0, 500)
+            : null
+        }
+      : null
+  );
 
   useEffect(() => {
     // Ensure we are in the notification room to receive stream events

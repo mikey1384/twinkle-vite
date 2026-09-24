@@ -18,6 +18,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import Content from './Content';
 import { DailyRewardModalProps } from './types';
 import {
@@ -359,6 +360,48 @@ export default function DailyRewardModal({
     }
     return Color.darkGray();
   }, [dailyTaskReward]);
+
+  const rewardRevealed = animateReveal || alreadyChecked;
+  const bonusQuestion = bonusQuestions?.[0];
+  // Hands Zero and Ciel the cards on the reel and, once the reveal has shown
+  // them, the chosen card and the coins and XP; never the chosen card or the
+  // amounts before the reveal, nor the bonus answer before it is graded.
+  useAgentScreenState(
+    'dailyReward',
+    loading
+      ? null
+      : {
+          cardIds: cardIds.slice(0, 30),
+          currentCardId: currentCardId || null,
+          revealPressed: isRevealPressed,
+          revealed: rewardRevealed,
+          chosenCardId: rewardRevealed ? chosenCardId || null : null,
+          cardOwned: rewardRevealed && showThirdSentence ? isCardOwned : null,
+          coinEarned: rewardRevealed && showFourthSentence ? coinEarned : null,
+          bonus: showBonusUI
+            ? {
+                loading: bonusLoading,
+                question: bonusQuestion
+                  ? String(bonusQuestion.question || '')
+                      .replace(/<[^>]*>/g, '')
+                      .slice(0, 500)
+                  : null,
+                choices: (bonusQuestion?.choices || [])
+                  .slice(0, 30)
+                  .map((choice: any) => String(choice ?? '').slice(0, 500)),
+                selectedChoiceIndex: bonusSelectedChoiceIndex ?? null,
+                submitting: bonusSubmitting,
+                graded: bonusIsGraded,
+                isCorrect: bonusIsGraded ? bonusIsCorrect : null,
+                correctChoiceIndex:
+                  bonusIsGraded && bonusQuestion
+                    ? bonusQuestion.answerIndex
+                    : null
+              }
+            : null,
+          xpEarned: showBonusSentence ? xpEarned : null
+        }
+  );
 
   return (
     <Content

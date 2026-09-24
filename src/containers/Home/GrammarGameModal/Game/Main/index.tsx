@@ -5,6 +5,7 @@ import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
 import correct from './correct_sound.wav';
 import useLiveGrade from './hooks/useLiveGrade';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 const delay = 1000;
 
@@ -191,6 +192,30 @@ export default function Main({
     return questionIds.map((questionId) => questionObjRef.current[questionId]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionIds, triggerEffect]);
+
+  const currentQuestion = questionObjRef.current?.[questionIds[currentIndex]];
+  // Hands Zero and Ciel the question on screen, its choices, the user's pick
+  // and the grades already earned; never the answer index of a question the
+  // user has not answered yet.
+  useAgentScreenState('grammarblesPlay', {
+    questionNumber: currentIndex + 1,
+    totalQuestions: questionIds.length,
+    question: currentQuestion
+      ? String(currentQuestion.question || '').slice(0, 500)
+      : null,
+    choices: Array.isArray(currentQuestion?.choices)
+      ? currentQuestion.choices
+          .slice(0, 30)
+          .map((choice: any) => String(choice ?? '').slice(0, 500))
+      : [],
+    selectedChoiceIndex: currentQuestion?.selectedChoiceIndex ?? null,
+    gotWrong,
+    wrongBeforeOnThisQuestion: !!currentQuestion?.wasWrong,
+    grades: displayedQuestions
+      .slice(0, 30)
+      .map((question: any) => question?.score || null),
+    finished: isCompleted
+  });
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Main/index">

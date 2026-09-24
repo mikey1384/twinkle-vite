@@ -5,6 +5,7 @@ import { markWebsiteAgentAction } from './websiteAgentAction';
 // ref the agent can point at. Nothing is changed on the page except the
 // data-agent-ref tags, which are replaced on every look.
 
+import { readAgentScreenState } from './websiteAgentScreenState';
 const ROOT_SELECTORS = ['#outer-layer', '#modal', '#react-view'];
 const REF_ATTRIBUTE = 'data-agent-ref';
 // Marks the XP and coin activities (games, the daily question, missions...):
@@ -19,6 +20,7 @@ export const WEBSITE_AGENT_UI_ATTRIBUTE = 'data-website-agent-ui';
 const MAX_ELEMENTS = 220;
 const MAX_NAME_CHARS = 90;
 const MAX_TEXT_CHARS = 3500;
+const TYPED_VALUE_MAX_CHARS = 400;
 
 const INTERACTIVE_SELECTOR = [
   'a[href]',
@@ -134,6 +136,12 @@ function accessibleText(root: Element) {
     const style = window.getComputedStyle(element);
     if (style.display === 'none' || style.visibility === 'hidden') return;
     if (element.matches(INTERACTIVE_SELECTOR)) return;
+    // Pictures that carry meaning (a chess piece, an icon with a name).
+    if (element.tagName === 'IMG') {
+      const alt = element.getAttribute('alt')?.trim();
+      if (alt) parts.push(alt);
+      return;
+    }
     const label = element.getAttribute('aria-label');
     if (label && LABELLED_ROLES.has(element.getAttribute('role') || '')) {
       parts.push(label);
@@ -364,11 +372,21 @@ export function readWebsiteAgentPage() {
           : element.closest(`[${WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE}]`)
             ? ', guide only: the user types and submits'
             : '';
+      // What the user has typed so far (a draft, a guess, a prompt), never
+      // a password or code.
+      const typed =
+        isField && !element.matches(CREDENTIAL_FIELD_SELECTOR)
+          ? collapse(
+              (element as HTMLInputElement).value ??
+                (element as HTMLElement).innerText,
+              TYPED_VALUE_MAX_CHARS
+            )
+          : '';
       listed.push({ line: lines.length, element, name });
       lines.push(
         `[${ref}] ${describeKind(element)} "${name}"${NEAR_SLOT}${
           href ? ` -> ${href}` : ''
-        } (${state}${noPlay})`
+        }${typed ? ` typed "${typed}"` : ''} (${state}${noPlay})`
       );
     }
   }
@@ -397,12 +415,24 @@ export function readWebsiteAgentPage() {
     (document.querySelector('#react-view') as HTMLElement | null)?.innerText,
     Math.max(500, MAX_TEXT_CHARS - windowText.length)
   );
+  const screenState = readAgentScreenState();
   return {
     path: `${window.location.pathname}${window.location.search}`,
     title: document.title,
     elements: lines.join('\n'),
     ...(omitted ? { moreElementsNotListed: omitted } : {}),
     ...(windowText ? { openWindowText: windowText } : {}),
+    // Exact state components on screen report (a Wordle's guesses and
+    // colours): trust it over reading the page text.
+    ...(screenState ? { screenState } : {}),
+    // Counts only, for Zero/Ciel's telemetry: which kind of screen answered
+    // and how much of an open window it read.
+    diagnostics: {
+      phone: /Mobi|iPhone|Android/i.test(navigator.userAgent),
+      openWindows: document.querySelectorAll('#modal [aria-modal="true"]')
+        .length,
+      windowTextChars: windowText.length
+    },
     text: mainText
   };
 }

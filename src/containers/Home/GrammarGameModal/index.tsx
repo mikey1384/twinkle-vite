@@ -17,6 +17,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 const RESULT_SCREEN_MIN_DISPLAY_MS = 3000;
 
@@ -77,6 +78,21 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     return true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionIds, triggerEffect]);
+
+  // Hands Zero and Ciel which Grammarbles screen is open and the grades of a
+  // finished round; the question in play and the review list are published
+  // by their own screens, and no answer key is ever included here.
+  useAgentScreenState('grammarbles', {
+    tab: gameState === 'started' ? 'game' : activeTab,
+    gameState,
+    loading: gameLoading,
+    timesPlayedToday,
+    onStreak: gameState === 'started' ? isOnStreak : false,
+    finishedGrades:
+      activeTab === 'game' && gameState === 'finished'
+        ? (scoreArrayRef.current || []).slice(0, 30)
+        : null
+  });
 
   useEffect(() => {
     window.addEventListener('beforeunload', handleBeforeUnload);

@@ -68,6 +68,7 @@ export default function Content({
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordMasterBreakModal">
       <Modal
         modalKey="WordMasterBreakModal/Main"
+        xpActivity
         isOpen={isOpen}
         onClose={onModalClose}
         title={modalTitle}

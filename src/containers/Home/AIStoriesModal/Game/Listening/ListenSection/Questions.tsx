@@ -6,6 +6,7 @@ import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import { Color, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 export default function Questions({
   isGrading,
@@ -33,6 +34,23 @@ export default function Questions({
   userChoiceObj: any;
 }) {
   const [loadingProgress, setLoadingProgress] = useState(0);
+
+  // Hands Zero and Ciel the questions, choices and picks shown here, plus the
+  // score and correct choices once graded, never the answer key before that.
+  useAgentScreenState('aiStoryQuestions', {
+    loaded: questionsLoaded,
+    graded: !!solveObj?.isGraded,
+    numCorrect: solveObj?.isGraded ? solveObj.numCorrect : null,
+    questions: questions.slice(0, 30).map((question: any) => ({
+      question: String(question.question || '').slice(0, 500),
+      choices: question.choices,
+      selectedIndex:
+        typeof userChoiceObj[question.id] === 'number'
+          ? userChoiceObj[question.id]
+          : null,
+      answerIndex: solveObj?.isGraded ? (question.answerIndex ?? null) : null
+    }))
+  });
 
   useEffect(() => {
     if (!questionsLoaded && loadingProgress < 99) {

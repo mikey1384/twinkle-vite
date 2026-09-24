@@ -3,6 +3,7 @@ import StatusMessage from './StatusMessage';
 import Loading from '~/components/Loading';
 import QuestionCarousel from './QuestionCarousel';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 export default function Questions({
   isRepeating,
@@ -76,6 +77,32 @@ export default function Questions({
   const statusRef: React.RefObject<any> = useRef(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [conditionPassStatus, setConditionPassStatus] = useState('');
+  const currentQuestion = questionObj[currentSlideIndex];
+
+  // The grammar question on screen, its choices, the one the user picked, and
+  // pass/fail once checked, for Zero and Ciel; never the answer key.
+  useAgentScreenState(
+    'missionGrammar',
+    currentQuestion
+      ? {
+          questionNumber: currentSlideIndex + 1,
+          totalQuestions: questionIds.length,
+          question: String(currentQuestion.question || '').slice(0, 500),
+          choices: (currentQuestion.choices || [])
+            .slice(0, 30)
+            .map((choice: { label: string }) =>
+              String(choice.label || '').slice(0, 500)
+            ),
+          selectedChoiceIndex: (currentQuestion.choices || []).findIndex(
+            (choice: { checked: boolean }) => choice.checked
+          ),
+          result: repeatMissionComplete
+            ? 'complete'
+            : conditionPassStatus || null
+        }
+      : null
+  );
+
   const objectiveMessage = useMemo(() => {
     if (questionObj[currentSlideIndex]?.type === 'fill in the blank') {
       return 'Choose the word or phrase that correctly completes the sentence';

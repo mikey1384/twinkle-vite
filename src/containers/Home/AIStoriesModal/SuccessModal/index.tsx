@@ -20,6 +20,7 @@ import {
   isCommunityFundRechargeAvailable
 } from '~/helpers/aiEnergy';
 import { pollCanonicalAIImageStatus } from '~/helpers/aiImageStatus';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 const colorHash: Record<
   number,
@@ -283,6 +284,16 @@ export default function SuccessModal({
   const [callingOpenAITime, setCallingOpenAITime] = useState(0);
 
   const isMountedRef = useRef(true);
+
+  // Hands Zero and Ciel the picture step: the style the user typed, how far
+  // the drawing has got, and whether a picture is showing, never its address.
+  useAgentScreenState('aiStoryImage', {
+    styleText: styleText.slice(0, 500),
+    progressStage,
+    generatingImage,
+    hasImage: !!imageUrl,
+    inputError: inputError || null
+  });
 
   const eligibleVocabCount = useMemo(() => {
     return Number(vocabSummary?.eligibleCount || 0);

@@ -10,6 +10,22 @@ import { useNotiContext } from '~/contexts';
 // and the AI Energy battery. The call window and the chat window (the same
 // window when there is no call) are built from these.
 
+// Movement that makes a press a drag rather than a tap.
+const DRAG_THRESHOLD_PX = 6;
+
+// The click that ends a drag is not a tap on whatever was under the finger.
+function swallowNextClick() {
+  function swallow(event: MouseEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  window.addEventListener('click', swallow, { capture: true, once: true });
+  window.setTimeout(
+    () => window.removeEventListener('click', swallow, { capture: true }),
+    400
+  );
+}
+
 interface AiUsagePolicy extends AiEnergyDisplayPolicy {
   energyPercent?: number;
   energySegments?: number;
@@ -35,23 +51,46 @@ export function useDraggableWindow(initialPosition: { x: number; y: number }) {
     };
   }
 
-  // Only the picture area (.draggable-area) moves the window. Pointer events
-  // on the window itself work the same for a mouse and a finger: a touch's
-  // moves always go to where it started, so a layer laid over the screen
-  // never hears them (phones could not drag).
+  // The handle (.draggable-area; the chat window's whole top bar) moves the
+  // window, the same for a mouse and a finger. A press
+  // that moves a few pixels is a drag, and the tap it would end in (like
+  // the bar's expand toggle) is swallowed; one that doesn't is an ordinary
+  // tap. Buttons marked data-no-drag are never handles.
   function handleStart(e: React.PointerEvent) {
-    if (!(e.target as HTMLElement).closest('.draggable-area')) return;
+    const target = e.target as HTMLElement;
+    if (!target.closest('.draggable-area')) return;
+    if (target.closest('[data-no-drag]')) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    e.preventDefault();
     stopDragging.current?.();
     const rect = windowRef.current?.getBoundingClientRect();
     dragOffset.current = {
       x: e.clientX - (rect?.left || 0),
       y: e.clientY - (rect?.top || 0)
     };
+    const start = { x: e.clientX, y: e.clientY };
     const pointerId = e.pointerId;
+    // The window claims this pointer: every move and the release come
+    // straight here, whatever is under the finger or mouse. Listening on the
+    // page instead lost them over anything that keeps its own events (a
+    // modal like Wordle stops pointer moves, an app's iframe takes them), so
+    // dragging worked only some of the time.
+    const handle = e.currentTarget as HTMLElement;
+    try {
+      handle.setPointerCapture(pointerId);
+    } catch {
+      /* The pointer may already be gone; the drag then just doesn't start. */
+    }
+    let dragging = false;
     function handleMove(event: PointerEvent) {
       if (event.pointerId !== pointerId) return;
+      if (
+        !dragging &&
+        Math.hypot(event.clientX - start.x, event.clientY - start.y) <
+          DRAG_THRESHOLD_PX
+      ) {
+        return;
+      }
+      dragging = true;
       event.preventDefault();
       setPosition(
         clamp({
@@ -61,15 +100,26 @@ export function useDraggableWindow(initialPosition: { x: number; y: number }) {
       );
     }
     function handleEnd(event: PointerEvent) {
-      if (event.pointerId === pointerId) stopDragging.current?.();
+      if (event.pointerId !== pointerId) return;
+      if (dragging) swallowNextClick();
+      stopDragging.current?.();
     }
-    window.addEventListener('pointermove', handleMove, { passive: false });
-    window.addEventListener('pointerup', handleEnd);
-    window.addEventListener('pointercancel', handleEnd);
+    handle.addEventListener('pointermove', handleMove, { passive: false });
+    handle.addEventListener('pointerup', handleEnd);
+    handle.addEventListener('pointercancel', handleEnd);
+    handle.addEventListener('lostpointercapture', handleEnd);
     stopDragging.current = () => {
-      window.removeEventListener('pointermove', handleMove);
-      window.removeEventListener('pointerup', handleEnd);
-      window.removeEventListener('pointercancel', handleEnd);
+      handle.removeEventListener('pointermove', handleMove);
+      handle.removeEventListener('pointerup', handleEnd);
+      handle.removeEventListener('pointercancel', handleEnd);
+      handle.removeEventListener('lostpointercapture', handleEnd);
+      try {
+        if (handle.hasPointerCapture(pointerId)) {
+          handle.releasePointerCapture(pointerId);
+        }
+      } catch {
+        /* Already released. */
+      }
       stopDragging.current = null;
     };
   }

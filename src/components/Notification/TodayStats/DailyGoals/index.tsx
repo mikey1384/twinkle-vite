@@ -15,6 +15,7 @@ import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 const badgeItems = ['W', 'G', 'A'];
 const funFont =
@@ -102,6 +103,26 @@ export default function DailyGoals({
   const collapsedRepairNoticeAccent = streakRepairAvailable
     ? repairNoticeAccent
     : Color.darkGray();
+
+  // Hands Zero and Ciel the streak notice under the daily tasks while it is
+  // shown: the streak at risk or broken, what a repair costs and whether it is
+  // ready, nothing when no notice is on screen.
+  useAgentScreenState(
+    'dailyTaskStreak',
+    streakAtRisk || streakBroken
+      ? {
+          streakAtRisk,
+          streakBroken,
+          repairableStreak,
+          nextStreak,
+          repairCost,
+          repairReady: streakRepairAvailable,
+          hasEnoughCoins,
+          noticeCollapsed: isRepairNoticeCollapsed,
+          repairError: repairError || null
+        }
+      : null
+  );
 
   useEffect(() => {
     timerRef.current = setTimeout(() => {

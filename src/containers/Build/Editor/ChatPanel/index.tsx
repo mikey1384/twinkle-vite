@@ -19,6 +19,7 @@ import { resolveChatStickToBottom } from '../helpers/chatStickToBottom';
 import { LUMINE_MODE_LABELS } from '../helpers/lumineModelSelection';
 import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
 import { buildLumineRuntimeDebugSnapshot } from './helpers/runtimeDebug';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 const panelClass = css`
   display: flex;
@@ -555,6 +556,83 @@ export default function ChatPanel({
     Boolean(thumbnailNudgePrompt) &&
     !showPendingToolApproval &&
     (Boolean(thumbnailNudgePrompt?.busyLabel) || !generating);
+
+  // What the Lumine chat shows right now (run status, its steps, and any
+  // question or approval waiting on the user), for Zero and Ciel; only
+  // prompts this user is shown, never another workspace's.
+  useAgentScreenState(
+    'lumineChat',
+    activeCommunicationMode === 'lumine'
+      ? {
+          buildId,
+          isOwner,
+          runMode,
+          generating,
+          generatingStatus: generatingStatus
+            ? String(generatingStatus).slice(0, 500)
+            : null,
+          currentActivity: currentActivity?.message
+            ? currentActivity.message.slice(0, 500)
+            : null,
+          steps: assistantStatusSteps
+            .map((status) => String(status || '').trim())
+            .filter(Boolean)
+            .slice(-30)
+            .map((status) => status.slice(0, 500)),
+          runError: runError ? String(runError).slice(0, 500) : null,
+          executionPlanStatus: executionPlan?.status || null,
+          energyUnavailable,
+          pendingQuestion: showScopedPlanQuickReplies
+            ? {
+                kind: 'scoped_plan',
+                question: normalizedScopedPlanQuestion.slice(0, 500)
+              }
+            : showGenericFollowUpQuickReplies
+              ? {
+                  kind: followUpPrompt?.mode || 'follow_up',
+                  question: normalizedFollowUpQuestion.slice(0, 500),
+                  suggestedMessage: normalizedFollowUpSuggestedMessage.slice(
+                    0,
+                    500
+                  ),
+                  modelSwitch: followUpModelSwitchLabel || null
+                }
+              : null,
+          pendingToolApproval:
+            showPendingToolApproval && pendingToolApproval
+              ? {
+                  kind: pendingToolApproval.kind,
+                  question: String(pendingToolApproval.question).slice(0, 500),
+                  imagePrompt: String(
+                    pendingToolApproval.imagePrompt || ''
+                  ).slice(0, 500),
+                  options: (pendingToolApproval.modelOptions || [])
+                    .slice(0, 30)
+                    .map((option) => ({
+                      label: option.label,
+                      quality: option.qualityLabel,
+                      speed: option.speedLabel,
+                      batteryCost: option.estimatedBatteryCost
+                    })),
+                  busy: !!toolApprovalBusy
+                }
+              : null,
+          thumbnailPrompt:
+            showThumbnailNudge && thumbnailNudgePrompt
+              ? {
+                  question: String(thumbnailNudgePrompt.question).slice(0, 500),
+                  options: (thumbnailNudgePrompt.options || [])
+                    .slice(0, 30)
+                    .map((option) => ({
+                      label: option.label,
+                      detail: option.detail || null,
+                      disabled: !!option.disabled
+                    }))
+                }
+              : null
+        }
+      : null
+  );
 
   useEffect(() => {
     if (activeCommunicationMode !== 'lumine') return;

@@ -14,6 +14,7 @@ import WriteItYourself from './WriteItYourself';
 import LaunchTheWebsite from './LaunchTheWebsite';
 import SystemPromptMission from './SystemPrompt';
 import BuildMission from './Build';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 export default function MissionModule({
   mission,
@@ -26,6 +27,14 @@ export default function MissionModule({
   onSetMissionState: (v: any) => void;
   style?: React.CSSProperties;
 }) {
+  // Which mission the user has open, for Zero and Ciel (never its answers).
+  useAgentScreenState('mission', {
+    id: mission.id,
+    title: mission.title,
+    type: mission.missionType,
+    isRepeating: !!isRepeating
+  });
+
   return (
     <ErrorBoundary componentPath={`MissionModule/${mission.missionType}`}>
       <div style={{ display: 'flex', flexDirection: 'column', ...style }}>

@@ -25,6 +25,7 @@ import {
 } from '~/constants/defaultValues';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { trackEvent } from '~/helpers/analytics';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import { css } from '@emotion/css';
 
 export default function Vocabulary({
@@ -195,6 +196,29 @@ export default function Vocabulary({
     isCensored,
     maskWordMasterStatus
   ]);
+
+  // Hands Zero and Ciel the Word Master box as shown: the word typed, what the
+  // lookup said about it, and whether a break is blocking collecting, never
+  // the word's status while a break masks it.
+  useAgentScreenState('wordMaster', {
+    inputText: inputText.slice(0, 100),
+    searchedWord:
+      searchedWord && !maskWordMasterStatus
+        ? {
+            word: searchedWord.content || null,
+            notFound: !!searchedWord.notFound,
+            isNew: isNewWord,
+            canHit,
+            alreadyDiscovered: wordIsAlreadyDiscovered,
+            isCensored
+          }
+        : null,
+    statusMessage: statusMessage || null,
+    errorMessage: vocabErrorMessage || null,
+    isSubmitting,
+    breakBlocked: wordMasterBlocked,
+    breakModalShown: wordMasterBreakModalShown
+  });
 
   useEffect(() => {
     const vv = (window as any).visualViewport;

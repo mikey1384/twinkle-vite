@@ -5,6 +5,7 @@ import BreakSection from './BreakSection';
 import Content from './Content';
 import { WordMasterBreakModalProps } from './types';
 import { getBreakAccent } from './helpers/utils';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 export default function WordMasterBreakModal({
   breakStatus,
@@ -200,6 +201,50 @@ export default function WordMasterBreakModal({
   }, [quizStarted, timeRemaining, quiz?.timeRemainingSec]);
   const showReadyCountdown = quizStarted && readyCountdown > 0;
   const showQuizQuestion = quizStarted && readyCountdown === 0;
+
+  // Hands Zero and Ciel the break window as shown: the break, the quiz
+  // question and choices once revealed, the user's pick and the clock, and
+  // the correct choice only after the result arrives, never before.
+  useAgentScreenState(
+    'wordMasterBreak',
+    isOpen
+      ? {
+          status: summaryLabel,
+          breakType: breakType || null,
+          breakIndex,
+          locked: isLocked,
+          requirementComplete: !!requirement?.isComplete,
+          readyCountdown: showReadyCountdown ? readyCountdown : null,
+          quiz: showQuizQuestion
+            ? {
+                currentIndex: quiz?.currentIndex ?? null,
+                totalQuestions:
+                  quiz?.totalQuestions ?? quiz?.questionCount ?? null,
+                question:
+                  typeof quizQuestion?.question === 'string'
+                    ? quizQuestion.question.slice(0, 500)
+                    : null,
+                choices: Array.isArray(quizQuestion?.choices)
+                  ? quizQuestion.choices.slice(0, 10)
+                  : [],
+                selectedIndex,
+                timeRemaining: quizTimeRemaining
+              }
+            : null,
+          quizResult: quizResult
+            ? {
+                isCorrect: !!quizResult.isCorrect,
+                locked: !!quizResult.locked,
+                answerIndex:
+                  typeof quizResult.answerIndex === 'number'
+                    ? quizResult.answerIndex
+                    : null
+              }
+            : null,
+          statusMessage: statusMessage || null
+        }
+      : null
+  );
 
   return (
     <Content

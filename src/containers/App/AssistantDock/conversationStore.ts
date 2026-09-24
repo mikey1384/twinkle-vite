@@ -1,4 +1,5 @@
 import { socket } from '~/constants/sockets/api';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { applyCanonicalTextStreamUpdate } from '~/helpers/canonicalTextStream';
 import { readAgentSuggestions } from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
 import {
@@ -22,6 +23,9 @@ export interface AssistantReply {
   // A question or approval the reply ends on, answered right where it shows.
   card: WebsiteAgentCardData | null;
   done: boolean;
+  // A reply that is a reaction to the user's message instead of words
+  // (a reaction key, like 'thumb').
+  reaction?: string;
   // Ended by going quiet, not by the server: a later event for the same
   // message brings it back.
   timedOut?: boolean;
@@ -191,6 +195,28 @@ function handleDone(channelId: unknown, messageId?: unknown) {
   );
 }
 
+// Zero or Ciel answered with a reaction on the user's message instead of
+// words: the reply they were waiting for is that reaction.
+function handleReaction({ channelId, userId, mutation, reaction }: any) {
+  if (mutation !== 'add' || !reaction) return;
+  if (
+    ![ZERO_TWINKLE_ID, CIEL_TWINKLE_ID].map(Number).includes(Number(userId))
+  ) {
+    return;
+  }
+  setAssistantReply(Number(channelId), (current) =>
+    current && !current.text && !current.error
+      ? {
+          ...current,
+          reaction: String(reaction),
+          done: true,
+          timedOut: false,
+          status: ''
+        }
+      : current
+  );
+}
+
 // A reply that goes quiet without finishing (a failure the server never
 // announced) stops holding the conversation after a while: longer than the
 // longest wait for the user (a walkthrough step waits 5 minutes).
@@ -228,7 +254,8 @@ const EVENTS: [string, (...args: any[]) => void][] = [
   ['chat_message_edited', heard(handleEdit)],
   ['ai_thought_streamed', heard(handleThought)],
   ['ai_thinking_status_updated', heard(handleStatus)],
-  ['ai_message_done', heard(handleDone)]
+  ['ai_message_done', heard(handleDone)],
+  ['chat_reaction_updated', heard(handleReaction)]
 ];
 
 let attachedCount = 0;

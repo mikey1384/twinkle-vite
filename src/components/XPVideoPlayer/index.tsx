@@ -21,6 +21,7 @@ import { isMobile } from '~/helpers';
 import { trackEvent } from '~/helpers/analytics';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const intervalLength = 2000;
@@ -175,7 +176,10 @@ function XPVideoPlayer({
     started,
     timeWatched: prevTimeWatched = 0,
     isEditing,
-    title: videoTitle
+    title: videoTitle,
+    videoProgress = 0,
+    numXpEarned = 0,
+    numCoinsEarned = 0
   } = useContentState({
     contentType: 'video',
     contentId: videoId
@@ -197,6 +201,27 @@ function XPVideoPlayer({
   const [myViewDuration, setMyViewDuration] = useState(0);
   const [currentInitialTime, setCurrentInitialTime] = useState<number | null>(
     null
+  );
+
+  // This video's watch-for-XP status as the XP bar shows it, for Zero and
+  // Ciel, once the user has started it; nothing about other viewers.
+  useAgentScreenState(
+    `xpVideo:${videoId}`,
+    playerActivated || started || playing
+      ? {
+          videoId,
+          title: videoTitle ? String(videoTitle).slice(0, 500) : null,
+          playing,
+          rewardLevel,
+          xpPerMinuteWatched: rewardLevel ? xpRewardAmount : 0,
+          coinsPerMinuteWatched: rewardLevel >= 3 ? coinRewardAmount : 0,
+          nextRewardProgressPercent: videoProgress,
+          xpEarned: numXpEarned,
+          coinsEarned: numCoinsEarned,
+          reachedDailyLimit,
+          reachedMaxWatchDuration
+        }
+      : null
   );
 
   // Cinema is desktop-only and incompatible with the floating mini-player.

@@ -51,6 +51,7 @@ import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 import { enterRoutedTopic } from './topicRoute';
 import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
 import { SITE_NAME } from '~/constants/siteBrand';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 const loadingPromises: { [channelId: string]: any } = {};
 const deviceIsMobile = isMobile(navigator);
@@ -811,6 +812,25 @@ export default function Main({
   const currentChannelName = useMemo(
     () => partner?.username || channelsObj[selectedChannelId]?.channelName,
     [partner, channelsObj, selectedChannelId]
+  );
+
+  // Which chat the user has open (channel, who it is with, which section),
+  // for Zero and Ciel; never message contents or a game board.
+  useAgentScreenState(
+    'chat',
+    selectedChannelId || chatType
+      ? {
+          channelId: selectedChannelId || null,
+          pathId: currentChannel?.pathId ?? null,
+          channelName: currentChannelName
+            ? String(currentChannelName).slice(0, 500)
+            : null,
+          isDirectMessage: !!currentChannel?.twoPeople,
+          isAIChat,
+          chatType: chatType || 'default',
+          subchannelPath: subchannelPath || null
+        }
+      : null
   );
 
   useEffect(() => {

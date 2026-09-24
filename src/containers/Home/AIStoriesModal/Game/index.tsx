@@ -5,6 +5,7 @@ import Reading from './Reading';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import { trackEvent } from '~/helpers/analytics';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 const MAX_READ_ATTEMPTS = 5;
 const MAX_LISTEN_ATTEMPTS = 5;
@@ -99,6 +100,28 @@ export default function Game({
     {}
   );
   const userChoiceObjRef = useRef<Record<number, number>>({});
+  const isReading = gameMode === 'read';
+
+  // Hands Zero and Ciel the story session (level, mode, section, and in
+  // reading mode the topic and a story excerpt), never the answer key, and
+  // never the story or topic in listening mode where hearing it is the test.
+  useAgentScreenState(
+    'aiStory',
+    isGameStarted
+      ? {
+          difficulty,
+          mode: isReading ? 'reading' : 'listening',
+          section: isReading ? displayedSection : null,
+          topic: isReading ? topic || null : null,
+          storyLoaded: isReading ? loadStoryComplete : !!storyId,
+          storyExcerpt: isReading && story ? story.slice(0, 1500) : null,
+          storyLength: isReading ? story.length : null,
+          questionCount: questions.length,
+          graded: !!solveObj?.isGraded,
+          numCorrect: solveObj?.isGraded ? solveObj.numCorrect : null
+        }
+      : { difficulty, section: 'menu', loadingTopic }
+  );
 
   return (
     <div

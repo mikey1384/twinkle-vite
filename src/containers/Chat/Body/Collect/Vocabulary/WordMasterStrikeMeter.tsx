@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { WORD_MASTER_BREAK_INTERVAL } from '~/constants/defaultValues';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 interface WordMasterStrikeMeterProps {
   breakStatus?: {
@@ -61,6 +62,22 @@ export default function WordMasterStrikeMeter({
       : Math.floor(queueCount / breakInterval) + 1;
   const breakLabel = `Break ${nextBreakNumber}`;
   const titleLabel = isPanel ? 'Strikes' : 'Strikes Today';
+
+  // Hands Zero and Ciel the strike meter as shown: strikes so far, how many
+  // make a break, and the break status, nothing the meter does not display.
+  useAgentScreenState(
+    'wordMasterStrikes',
+    isLoading
+      ? { loading: true }
+      : {
+          strikes: currentStrikes,
+          breakInterval,
+          status: statusLabel,
+          nextBreak: breakLabel,
+          locked: isLocked,
+          blocked: isBlocked
+        }
+  );
   const countLabel = isPanel ? 'strikes' : 'current strikes';
 
   return (

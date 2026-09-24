@@ -4,6 +4,7 @@ import { css } from '@emotion/css';
 import { useNotiContext, useAppContext, useKeyContext } from '~/contexts';
 import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import DailyGoals from './DailyGoals';
 import AchievementProgress from './AchievementProgress';
 import TodayXPRankings from './TodayXPRankings';
@@ -181,6 +182,27 @@ export default function TodayStats({
       ].join(':')
     : '';
   const energyButtonLabel = energyIsEmpty ? 'Charge' : 'Open AI Energy';
+
+  // Hands Zero and Ciel today's progress card as shown: XP and Coins earned,
+  // the user's rank, which daily tasks are done and the AI Energy left.
+  useAgentScreenState(
+    'todayProgress',
+    todayStats?.loaded
+      ? {
+          xpEarned: Number(todayStats.xpEarned || 0),
+          coinsEarned: Number(todayStats.coinsEarned || 0),
+          todayRank: myTodayRank,
+          dailyTasksDone: {
+            wordle: (todayStats.achievedDailyGoals || []).includes('W'),
+            grammarbles: (todayStats.achievedDailyGoals || []).includes('G'),
+            aiStory: (todayStats.achievedDailyGoals || []).includes('A')
+          },
+          dailyRewardChecked: isDailyRewardChecked,
+          dailyBonusButtonShown: isDailyBonusButtonShown,
+          aiEnergyPercent: aiUsagePolicy ? energyPercentValue : null
+        }
+      : null
+  );
 
   useEffect(() => {
     let cancelled = false;

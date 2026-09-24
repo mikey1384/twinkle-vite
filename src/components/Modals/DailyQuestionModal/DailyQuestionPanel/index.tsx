@@ -12,6 +12,7 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import {
   DAILY_QUESTION_DRAFT_RESTORED_NOTICE,
   DAILY_QUESTION_DRAFT_SAVED_NOTICE,
@@ -255,6 +256,41 @@ export default function DailyQuestionPanel({
     useState(false);
   const [error, setError] = useState<string | null>(null);
   const responseTooLong = isResponseOverMaxLength(response);
+
+  // Hands Zero and Ciel the Daily Question as shown: the screen, the question
+  // or today's word, how long the answer is, the typing timer, the streak and
+  // the grade once it is shown, never the answer text itself.
+  useAgentScreenState('dailyQuestion', {
+    screen,
+    question: !isKeywordDay && question ? question.slice(0, 500) : null,
+    isSimplified,
+    isKeywordDay,
+    keyword: isKeywordDay ? dayKeyword || null : null,
+    responseLength: response.length,
+    minResponseLength: MIN_RESPONSE_LENGTH,
+    maxResponseLength: MAX_RESPONSE_LENGTH,
+    responseTooLong,
+    inactivityTimer:
+      screen === 'writing' && !isKeywordDay ? inactivityTimer : null,
+    streak: currentStreak,
+    streakAtRisk,
+    streakBroken,
+    streakRepairAvailable,
+    error: error || null,
+    result:
+      screen === 'result' && gradingResult
+        ? {
+            grade: gradingResult.grade,
+            masterpieceType: gradingResult.masterpieceType || null,
+            xpAwarded: gradingResult.xpAwarded,
+            feedback: String(gradingResult.feedback || '').slice(0, 500),
+            streak: gradingResult.streak ?? null,
+            streakMultiplier: gradingResult.streakMultiplier ?? null,
+            usedRepair: !!gradingResult.usedRepair,
+            isShared: gradingResult.isShared
+          }
+        : null
+  });
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isKeywordDayRef = useRef(isKeywordDay);

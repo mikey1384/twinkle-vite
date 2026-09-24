@@ -63,6 +63,7 @@ import {
   getCanonicalAiGenerationStartedAt,
   isCanonicalAiGenerationConfirmed
 } from '~/contexts/Chat/aiGenerationState';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 const deviceIsMobile = isMobile(navigator);
 const CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS = 750;
 
@@ -466,6 +467,20 @@ export default function MessagesContainer({
     }
     return false;
   }, [currentlySelectedTopic, selectedTab]);
+
+  // The tab and topic shown above this chat, for Zero and Ciel; never the
+  // messages themselves or a game board.
+  useAgentScreenState('chatTopic', {
+    channelId: selectedChannelId || null,
+    selectedTab,
+    topicId: appliedTopicId || null,
+    topicTitle: currentlySelectedTopic?.content
+      ? String(currentlySelectedTopic.content).slice(0, 500)
+      : appliedLegacyTopicObj?.content
+        ? String(appliedLegacyTopicObj.content).slice(0, 500)
+        : null,
+    subchannelPath: subchannelPath || null
+  });
 
   const isAIChannel = useMemo(() => {
     return isZeroChannel || isCielChannel;

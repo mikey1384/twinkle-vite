@@ -17,6 +17,7 @@ import {
   WordMasterStatusBadge,
   getActionColor
 } from '~/components/WordMasterBadges';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 interface QuizQuestion {
   id: number;
@@ -105,6 +106,53 @@ export default function VocabQuizModal({
     typeof answerResult?.selectedIndex === 'number'
       ? answerResult.selectedIndex
       : selectedIndex;
+
+  // Hands Zero and Ciel the vocabulary quiz as shown: the current question and
+  // its choices, the user's pick, and each result once answered, never the
+  // quiz word before the answer is submitted.
+  useAgentScreenState(
+    'aiStoryVocabQuiz',
+    isOpen
+      ? {
+          loading,
+          loadError: loadError || null,
+          noWords,
+          currentIndex,
+          totalQuestions,
+          question: currentQuestion
+            ? {
+                text: String(currentQuestion.question || '')
+                  .replace(/<[^>]*>/g, '')
+                  .slice(0, 500),
+                choices: currentQuestion.choices,
+                status: currentQuestion.status || null
+              }
+            : null,
+          selectedIndex: gradedSelectedIndex,
+          answerResult: answerResult
+            ? {
+                word: answerResult.word || null,
+                isCorrect: !!answerResult.isCorrect,
+                answerIndex:
+                  typeof answerResult.answerIndex === 'number'
+                    ? answerResult.answerIndex
+                    : null,
+                collected: !!answerResult.collected,
+                discovered: !!answerResult.discovered,
+                message: answerResult.message || null
+              }
+            : null,
+          statusMessage: statusMessage || null,
+          showResults,
+          quizResults: quizResults.slice(0, 30).map((result) => ({
+            word: result.word,
+            isCorrect: result.isCorrect,
+            collected: result.collected,
+            discovered: result.discovered
+          }))
+        }
+      : null
+  );
 
   useEffect(() => {
     storyIdRef.current = storyId;

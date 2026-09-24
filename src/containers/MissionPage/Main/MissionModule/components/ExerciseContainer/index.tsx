@@ -8,6 +8,7 @@ import useExercises from './hooks/useExercises';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 export default function ExerciseContainer({
   codeObj,
@@ -54,6 +55,28 @@ export default function ExerciseContainer({
       taskType,
       username
     });
+
+  // The exercise the user can see, their own code, and whether it passed, for
+  // Zero and Ciel; never the checks it is graded against.
+  useAgentScreenState(
+    `missionExercise:${taskType}:${exerciseKey}`,
+    prevPassed
+      ? {
+          number: index + 1,
+          title: exercise?.title,
+          code: String(exercise?.code || exercise?.initialCode || '').slice(
+            0,
+            4000
+          ),
+          passed: !!(passed || success),
+          hasError: !!errorMsg,
+          errorMsg:
+            typeof errorMsg === 'string' && errorMsg
+              ? errorMsg.slice(0, 500)
+              : null
+        }
+      : null
+  );
 
   const ComponentRef = useRef(null);
 

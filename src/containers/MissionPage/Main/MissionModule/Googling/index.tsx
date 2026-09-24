@@ -6,6 +6,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 import { Color, borderRadius } from '~/constants/css';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
@@ -33,6 +34,19 @@ export default function Googling({
   const [hasErrorObj, setHasErrorObj] = useState(mission.hasErrorObj || {});
   const hasErrorObjRef = useRef(mission.hasErrorObj || {});
   const QuestionRefs: React.RefObject<any> = useRef({});
+
+  // Each question on screen and what the user has typed for it, for Zero and
+  // Ciel; the user writes and submits the answers themselves.
+  useAgentScreenState('missionGoogling', {
+    deprecated: isDeprecated,
+    questions: (mission.questions || [])
+      .slice(0, 30)
+      .map((question: { id: number; content?: string }) => ({
+        question: String(question.content || '').slice(0, 500),
+        answer: String(answers[question.id] || '').slice(0, 500),
+        flaggedEmpty: !!hasErrorObj[question.id]
+      }))
+  });
 
   useEffect(() => {
     return function onUnmount() {

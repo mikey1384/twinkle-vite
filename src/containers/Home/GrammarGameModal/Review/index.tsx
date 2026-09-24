@@ -9,6 +9,7 @@ import LetterGrade from '../Marble/LetterGrade';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ChallengeModal from './ChallengeModal';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 interface ReviewItem {
   id: number;
@@ -171,6 +172,41 @@ export default function Review() {
       }),
     [items, answerState, challengedQIds, AI_FEATURES_DISABLED]
   );
+
+  // Hands Zero and Ciel the review list as shown: each question, its choices,
+  // the grade it earned and the user's retry; the correct choice and the
+  // explanation only once the screen reveals them, never before.
+  useAgentScreenState('grammarblesReview', {
+    loading,
+    hasMore,
+    challengeOpenForQuestionId: challengeQ?.questionId ?? null,
+    items: items.slice(0, 30).map((it) => {
+      const current = answerState[it.id];
+      const answered = typeof current?.selectedIndex === 'number';
+      const explanationShown =
+        !!it.explanation &&
+        !!it.isChecked &&
+        (answered || !!challengedQIds[it.questionId]);
+      return {
+        questionId: it.questionId,
+        grade: it.grade || null,
+        question: String(it.question || '').slice(0, 500),
+        choices: (it.choices || [])
+          .slice(0, 30)
+          .map((choice) => String(choice ?? '').slice(0, 500)),
+        yourRetryChoiceIndex: answered
+          ? (current?.selectedIndex ?? null)
+          : null,
+        retryResult: answered ? current?.status || null : null,
+        correctChoiceIndex: answered ? it.answerIndex : null,
+        explanation: explanationShown
+          ? String(it.explanation).slice(0, 500)
+          : null,
+        challenged: !!challengedQIds[it.questionId],
+        canChallenge: !it.isChecked && !AI_FEATURES_DISABLED
+      };
+    })
+  });
 
   if (loading) {
     return (

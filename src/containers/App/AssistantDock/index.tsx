@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
+import { getChatReaction } from '~/constants/chatReactions';
 import { useChatContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import Icon from '~/components/Icon';
@@ -116,7 +117,9 @@ function DockWindow({
         `${assistant} is working on it…`
     : reply?.text
       ? plainPreview(reply.text)
-      : `Talk to ${assistant} here`;
+      : reply?.reaction
+        ? `${assistant} reacted ${getChatReaction(reply.reaction)?.fallback || ''}`.trim()
+        : `Talk to ${assistant} here`;
 
   async function handleSend(content?: string) {
     if (await send(content ?? text)) setText('');
@@ -147,23 +150,26 @@ function DockWindow({
           animation: ${appear} 0.2s ease-out;
         `}
       >
+        {/* The whole bar is the handle, like the call window's picture
+            side: drag it anywhere; a tap still opens or hides the chat. */}
         <div
-          className={css`
+          className={`draggable-area ${css`
             display: flex;
             align-items: stretch;
             height: ${phone ? 60 : 96}px;
             flex-shrink: 0;
-          `}
+            touch-action: none;
+            cursor: move;
+            user-select: none;
+          `}`}
         >
           <div
-            className={`draggable-area ${css`
+            className={css`
               display: flex;
               min-width: ${phone ? 52 : 76}px;
               align-items: center;
               padding-left: 0.8rem;
-              cursor: move;
-              touch-action: none;
-            `}`}
+            `}
           >
             <AssistantFace
               assistant={assistant}
@@ -181,7 +187,7 @@ function DockWindow({
               background: none;
               padding: 0 0.6rem;
               text-align: left;
-              cursor: pointer;
+              cursor: inherit;
               display: flex;
               flex-direction: column;
               justify-content: center;
@@ -215,7 +221,9 @@ function DockWindow({
             margin={phone ? '0.5rem 0.3rem' : '0.9rem 0.4rem'}
           />
           <div
+            data-no-drag=""
             className={css`
+              cursor: default;
               display: flex;
               flex-direction: ${phone ? 'row' : 'column'};
               width: ${phone ? 76 : 40}px;

@@ -8,6 +8,7 @@ import ThinkingIndicator, {
 } from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import WebsiteAgentCard from '~/containers/Chat/Message/MessageBody/WebsiteAgentCard';
 import type { AssistantReply } from './conversationStore';
+import ChatReactionEmoji from '~/components/ChatReactionEmoji';
 import { assistantVoice } from '~/helpers/assistantVoice';
 
 // Zero or Ciel's latest reply outside the chat page: the text as it streams,
@@ -47,6 +48,18 @@ export default function AssistantReplyView({
         >
           {reply.text.trimEnd()}
         </RichText>
+      ) : reply.reaction ? (
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: ${Color.darkGray()};
+          `}
+        >
+          <ChatReactionEmoji reaction={reply.reaction} size={30} />
+          <span>{assistant} reacted to your message</span>
+        </div>
       ) : reply.done ? null : compactThinking ? (
         <ThinkingIndicator
           status={reply.status || 'thinking'}
