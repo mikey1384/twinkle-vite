@@ -19,8 +19,15 @@ export default function CompletedRow({
   const statuses = getGuessStatuses({ guess, solution });
   const splitGuess = unicodeSplit(guess);
 
+  // What the colours say, for screen readers and for Zero and Ciel.
+  const label = `Guess: ${splitGuess
+    .map((letter, i) => `${letter} ${STATUS_WORDS[statuses[i]] || ''}`.trim())
+    .join(', ')}`;
+
   return (
     <div
+      role="group"
+      aria-label={label}
       style={{
         display: 'flex',
         justifyContent: 'center',
@@ -42,3 +49,9 @@ export default function CompletedRow({
     </div>
   );
 }
+
+const STATUS_WORDS: Record<string, string> = {
+  correct: 'correct',
+  present: 'in the word but in the wrong spot',
+  absent: 'not in the word'
+};

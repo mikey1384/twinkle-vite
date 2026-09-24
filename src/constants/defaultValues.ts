@@ -29,6 +29,14 @@ export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
 // Build Workshop preview rollout: the server keeps the authoritative gate
 // (BUILD_WORKSHOP_ROLLOUT_USER_IDS); this set only hides the preview UI.
 export const BUILD_WORKSHOP_PREVIEW_USER_IDS = new Set([554, 263, 5]);
+// Zero/Ciel acting on the website, for every signed-in user. The server keeps
+// the authoritative gate (isWebsiteAgentUserId); this only shows the UI.
+// VITE_WEBSITE_AGENT_DISABLED=1 hides it.
+export function isWebsiteAgentEnabledFor(userId: unknown) {
+  if (import.meta.env.VITE_WEBSITE_AGENT_DISABLED === '1') return false;
+  const id = Number(userId);
+  return Number.isSafeInteger(id) && id > 0;
+}
 export const HOME_FEED_PERFORMANCE_FORCE_KEY = 'twinkleHomeFeedPerformance';
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;

@@ -849,6 +849,8 @@ registerMethods('user', [
 ]);
 
 registerMethods('zero', [
+  'decideWebsiteAgentCard',
+  'loadWebsiteAgentStarters',
   'checkWorkshopAvailability',
   'generateVideoSubtitles',
   'splitSubtitles',

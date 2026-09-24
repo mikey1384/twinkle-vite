@@ -292,6 +292,8 @@ export default function Content({
     <>
       <Modal
         modalKey="DailyRewardModal"
+        // The bonus question and the claim are the user's own.
+        xpActivity
         isOpen
         onClose={handleHide}
         title={modalTitle}

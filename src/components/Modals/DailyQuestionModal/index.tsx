@@ -24,6 +24,7 @@ export default function DailyQuestionModal({ onHide }: { onHide: () => void }) {
   return (
     <ErrorBoundary componentPath="DailyQuestion/Modal">
       <Modal
+        xpActivity
         modalKey="DailyQuestionModal"
         isOpen={true}
         allowOverflow

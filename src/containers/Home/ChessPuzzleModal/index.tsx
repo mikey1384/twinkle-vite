@@ -116,6 +116,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal
+      xpActivity
       modalKey="ChessPuzzleModal"
       isOpen={true}
       onClose={handleClose}

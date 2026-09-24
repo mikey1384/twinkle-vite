@@ -3,6 +3,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import FeaturedSubjects from './Subjects';
 import CallZero from './CallZero';
 import useHomeCallAssistant from './useHomeCallAssistant';
+import AssistantQuickAsk from './AssistantQuickAsk';
+import { isWebsiteAgentEnabledFor } from '~/constants/defaultValues';
 import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import {
@@ -30,6 +32,7 @@ export default function Featured() {
   const [callMenuShown, setCallMenuShown] = useState(false);
   const [callConnecting, setCallConnecting] = useState(false);
   const [callSetupActive, setCallSetupActive] = useState(false);
+  const [quickAskEngaged, setQuickAskEngaged] = useState(false);
   const { assistant: preferredAssistant, chooseAssistant } =
     useHomeCallAssistant(
       userId,
@@ -37,6 +40,7 @@ export default function Featured() {
         callMenuShown ||
         callConnecting ||
         callSetupActive ||
+        quickAskEngaged ||
         !!aiCallChannelId ||
         aiCallEnding
     );
@@ -147,6 +151,16 @@ export default function Featured() {
           />
         </div>
       </div>
+      {userId &&
+      callChannelId &&
+      !aiCallOngoing &&
+      isWebsiteAgentEnabledFor(Number(userId)) ? (
+        <AssistantQuickAsk
+          assistantName={assistantName === 'Ciel' ? 'Ciel' : 'Zero'}
+          channelId={Number(callChannelId)}
+          onEngagedChange={setQuickAskEngaged}
+        />
+      ) : null}
     </ErrorBoundary>
   );
 }

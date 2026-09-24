@@ -138,6 +138,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal
+      xpActivity
       modalKey="GrammarGameModal"
       isOpen={true}
       onClose={handleHide}

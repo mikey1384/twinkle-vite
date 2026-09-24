@@ -335,8 +335,14 @@ function XPVideoPlayer({
     );
   }, [uploader?.username]);
 
+  // Watching earns XP, so the user presses play themselves (Zero and Ciel
+  // may take them to the video and point at it).
   return (
-    <ErrorBoundary componentPath="XPVideoPlayer/index" style={style}>
+    <ErrorBoundary
+      componentPath="XPVideoPlayer/index"
+      style={style}
+      data-agent-no-play=""
+    >
       {byUser && !isChat && (
         <div
           className={css`

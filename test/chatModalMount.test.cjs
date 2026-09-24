@@ -24,7 +24,9 @@ function initialModalRender({ hasRoot = true, portalTarget } = {}) {
         return [slots[index], value => { slots[index] = value; }];
       },
       useRef: current => ({ current }), useMemo: fn => fn(), useCallback: fn => fn,
-      useEffect() {}, useLayoutEffect(fn) { layouts.push(fn); }
+      useEffect() {}, useLayoutEffect(fn) { layouts.push(fn); },
+      // Outside an XP activity's modal (XpActivityContext).
+      useContext: () => false
     },
     'react-dom': { createPortal: (children, element) => {
       assert.ok(element.parentNode, 'Children must not mount into a detached container');

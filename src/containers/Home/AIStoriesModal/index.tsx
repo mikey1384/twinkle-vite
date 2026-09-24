@@ -144,6 +144,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   return (
     <ErrorBoundary componentPath="Home/AIStoriesModal">
       <Modal
+        xpActivity
         modalKey="AIStoriesModal"
         isOpen
         onClose={handleHide}

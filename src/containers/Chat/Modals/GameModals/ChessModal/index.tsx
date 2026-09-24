@@ -303,6 +303,7 @@ export default function ChessModal({
   return (
     <ErrorBoundary componentPath="ChessModal">
       <Modal
+        xpActivity
         modalKey="ChessModal"
         isOpen
         onClose={onHide}

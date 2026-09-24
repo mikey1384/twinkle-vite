@@ -27,6 +27,8 @@ import TargetMessage from './TargetMessage';
 import TargetSubject from './TargetSubject';
 import TextMessage from './TextMessage';
 import { parseMessageSettings } from './messageSettings';
+import WebsiteAgentCard, { isWebsiteAgentCardData } from './WebsiteAgentCard';
+import { isWebsiteAgentEnabledFor } from '~/constants/defaultValues';
 import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
 
 interface Props {
@@ -456,6 +458,18 @@ export default function Content({
               userCanEditThis={userCanEditThis}
             />
           )}
+          {isAIMessage &&
+            !isCurrentlyStreaming &&
+            isWebsiteAgentEnabledFor(Number(myId)) &&
+            isWebsiteAgentCardData(parsedSettings?.websiteAgentCard) && (
+              <WebsiteAgentCard
+                card={parsedSettings.websiteAgentCard}
+                channelId={channelId}
+                messageId={messageId}
+                topicId={message.subjectId || null}
+                messageText={content}
+              />
+            )}
           {parsedSettings?.saveFailed && (
             <div
               className={css`

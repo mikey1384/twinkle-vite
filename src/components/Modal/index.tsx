@@ -7,7 +7,9 @@ import React, {
   useState,
   useMemo,
   PropsWithChildren,
-  isValidElement
+  createContext,
+  isValidElement,
+  useContext
 } from 'react';
 import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
@@ -106,6 +108,8 @@ interface ModalProps {
   'aria-labelledby'?: string;
   /** Used for error boundary reporting - identifies which modal threw an error */
   modalKey?: string;
+  /** An XP or coin activity: Zero and Ciel may show it but never act in it. */
+  xpActivity?: boolean;
 }
 
 const sizeMap: Record<ModalSize, { width: string; maxWidth: string }> = {
@@ -201,10 +205,16 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
       'aria-label': ariaLabel,
       'aria-labelledby': ariaLabelledby,
       modalKey,
+      xpActivity = false,
       children
     },
     ref
   ) => {
+    // A window opened from inside an XP activity (a game's success or
+    // challenge window) is part of it: it renders beside the activity in the
+    // DOM, so the mark travels through React instead.
+    const insideXpActivity = useContext(XpActivityContext);
+    const marksXpActivity = xpActivity || insideXpActivity;
     const [isAnimating, setIsAnimating] = useState(false);
     const [shouldRender, setShouldRender] = useState(isOpen);
     const modalRef = useRef<HTMLDivElement>(null);
@@ -510,6 +520,7 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
             aria-modal="true"
             aria-label={ariaLabel}
             aria-labelledby={ariaLabelledby}
+            {...(marksXpActivity ? { 'data-agent-no-play': '' } : {})}
           >
             {hasHeader && (header || title || showCloseButton) && (
               <div
@@ -654,7 +665,9 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
                   }
                 >
                   <ModalFooterContext.Provider value={footerHost}>
-                    {children}
+                    <XpActivityContext.Provider value={marksXpActivity}>
+                      {children}
+                    </XpActivityContext.Provider>
                   </ModalFooterContext.Provider>
                 </ErrorBoundary>
               )}
@@ -691,5 +704,8 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
 );
 
 Modal.displayName = 'Modal';
+
+// Set inside an XP activity's modal (xpActivity), for the windows it opens.
+const XpActivityContext = createContext(false);
 
 export default Modal;

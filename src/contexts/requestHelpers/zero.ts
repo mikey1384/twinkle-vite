@@ -8,6 +8,39 @@ export default function zeroRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
+    async loadWebsiteAgentStarters() {
+      try {
+        const { data } = await request.get(
+          `${URL}/zero/website-agent/starters`,
+          auth()
+        );
+        return Array.isArray(data?.ideas) ? data.ideas : [];
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async decideWebsiteAgentCard({
+      messageId,
+      cardId,
+      approved,
+      choice
+    }: {
+      messageId: number;
+      cardId: string;
+      approved?: boolean;
+      choice?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/zero/website-agent/cards/decide`,
+          { messageId, cardId, approved, choice },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async checkWorkshopAvailability({
       contentId,
       contentType

@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { WEBSITE_AGENT_UI_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 
 export interface ChoicePromptOption {
   key: string;
@@ -62,6 +63,9 @@ export default function ChoicePromptBubble({
   const busy = Boolean(busyLabel);
   return (
     <div
+      // A choice the user makes (approvals, Lumine requests): Zero and Ciel
+      // never see or tap it when acting on the page.
+      {...{ [WEBSITE_AGENT_UI_ATTRIBUTE]: '' }}
       className={css`
         align-self: flex-start;
         max-width: 85%;

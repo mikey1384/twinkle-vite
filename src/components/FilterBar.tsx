@@ -228,7 +228,11 @@ export default function FilterBar({
       style={scopedThemeStyle}
     >
       <div ref={innerRef as any} className={innerClassName}>
-        <div className="nav-section">{children}</div>
+        {/* A row of tabs: Zero and Ciel may switch tabs even inside XP
+            activities (to reach Review or Rankings), never play them. */}
+        <div className="nav-section" data-agent-tabs="">
+          {children}
+        </div>
       </div>
     </ScopedTheme>
   );

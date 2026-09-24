@@ -22,25 +22,29 @@ export default function Main({
         ...style
       }}
     >
-      {mission ? (
-        <Routes>
-          <Route
-            path={`/:taskType`}
-            element={<TaskContainer mission={mission} />}
-          />
-          <Route
-            path="/"
-            element={
-              <MissionContainer
-                mission={mission}
-                onSetMissionState={onSetMissionState}
-              />
-            }
-          />
-        </Routes>
-      ) : (
-        <Loading text="Loading Mission..." />
-      )}
+      {/* Missions earn XP: Zero and Ciel guide every step, but the user
+          types and submits everything themselves. */}
+      <div data-agent-guide-only="" style={{ display: 'contents' }}>
+        {mission ? (
+          <Routes>
+            <Route
+              path={`/:taskType`}
+              element={<TaskContainer mission={mission} />}
+            />
+            <Route
+              path="/"
+              element={
+                <MissionContainer
+                  mission={mission}
+                  onSetMissionState={onSetMissionState}
+                />
+              }
+            />
+          </Routes>
+        ) : (
+          <Loading text="Loading Mission..." />
+        )}
+      </div>
     </ErrorBoundary>
   );
 }

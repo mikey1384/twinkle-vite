@@ -32,8 +32,10 @@ import {
   localStorageKeys,
   ZERO_TWINKLE_ID,
   CIEL_TWINKLE_ID,
-  DEFAULT_PROFILE_THEME
+  DEFAULT_PROFILE_THEME,
+  isWebsiteAgentEnabledFor
 } from '~/constants/defaultValues';
+import WebsiteAgentSpotlight from './WebsiteAgentSpotlight';
 import { stripClientUpdateReloadParam } from '~/helpers/clientUpdate';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
@@ -1459,6 +1461,9 @@ export default function App() {
             background: url('/img/emojis.png');
           `}
         />
+        {isWebsiteAgentEnabledFor(Number(userId)) && !sessionAccessBlocked && (
+          <WebsiteAgentSpotlight />
+        )}
         {aiCallOngoing && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <AICallWindow

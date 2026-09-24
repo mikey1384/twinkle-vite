@@ -9,6 +9,7 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import type {
   RichTextEmbedPreviewMode,
   RichTextSubjectPreviewVariant
@@ -26,6 +27,7 @@ function EmbeddedComponent({
   disableImageModal,
   theme,
   embeddedContentRef,
+  onlyTwinkleImages = false,
   ...commonProps
 }: {
   contentType?: string;
@@ -39,6 +41,8 @@ function EmbeddedComponent({
   disableImageModal?: boolean;
   theme?: string;
   embeddedContentRef?: React.RefObject<HTMLDivElement | null>;
+  // Zero and Ciel's messages: images only from Twinkle's own hosts.
+  onlyTwinkleImages?: boolean;
 }) {
   const { isInternalLink, replacedLink } = useMemo(
     () => processInternalLink(src),
@@ -74,6 +78,18 @@ function EmbeddedComponent({
     isInternalLink ||
     (isYouTube && !!src) ||
     !(src && shouldAttemptImage && !errorLoadingImage);
+
+  // An image from anywhere else could carry what Zero or Ciel read (a
+  // message, a balance) out in its address, so it stays plain text.
+  if (
+    onlyTwinkleImages &&
+    src &&
+    !isInternalLink &&
+    !isYouTube &&
+    !isTwinkleHost(href)
+  ) {
+    return <span>{alt || ''}</span>;
+  }
 
   return (
     <div
@@ -149,3 +165,17 @@ function EmbeddedComponent({
 }
 
 export default memo(EmbeddedComponent);
+
+function isTwinkleHost(url?: string) {
+  try {
+    const { hostname } = new URL(String(url || ''));
+    return (
+      hostname === new URL(cloudFrontURL).hostname ||
+      hostname === 'twin-kle.com' ||
+      hostname.endsWith('.twin-kle.com') ||
+      hostname === window.location.hostname
+    );
+  } catch {
+    return false;
+  }
+}

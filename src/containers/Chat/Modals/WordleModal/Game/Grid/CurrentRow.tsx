@@ -23,6 +23,12 @@ export default function CurrentRow({
   return (
     <div
       className={className}
+      role="group"
+      aria-label={
+        splitGuess.length
+          ? `Typing (not entered yet): ${splitGuess.join(' ')}`
+          : 'Next guess (empty)'
+      }
       style={{
         display: 'flex',
         justifyContent: 'center',

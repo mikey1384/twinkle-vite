@@ -288,6 +288,7 @@ export default function OmokModal({
   return (
     <ErrorBoundary componentPath="Chat/Modals/OmokModal">
       <Modal
+        xpActivity
         modalKey="OmokModal/Main"
         isOpen
         size="lg"
@@ -357,6 +358,7 @@ export default function OmokModal({
       )}
       {howToPlayShown && (
         <Modal
+          xpActivity
           modalKey="OmokModal/HowToPlay"
           isOpen
           size="sm"

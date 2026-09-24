@@ -16,7 +16,10 @@ import {
 import { isMobile } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 import Spoiler from '../Spoiler';
-import ThinkingIndicator from './ThinkingIndicator';
+import ThinkingIndicator, {
+  AI_WORKING_STATUSES,
+  latestThoughtLine
+} from './ThinkingIndicator';
 import {
   chatTextClass,
   CHAT_TEXT_LINE_HEIGHT
@@ -112,25 +115,12 @@ function TextMessage({
   const showCompactIndicator = useMemo(() => {
     if (!isAIMessage || !content) return false;
 
-    // Show compact indicator for tool statuses only (not 'responding' which means text is streaming)
-    const toolStatuses = [
-      'thinking',
-      'thinking_hard',
-      'searching_web',
-      'analyzing_code',
-      'saving_file',
-      'reading_file',
-      'reading',
-      'recalling',
-      'talking_with_lumine',
-      'retrieving_memory'
-    ];
-
-    // 'responding' means text is actively streaming - don't show indicator
+    // Show compact indicator for tool statuses only ('responding' means text
+    // is actively streaming - don't show indicator)
     if (
       !aiThinkingStatus ||
       aiThinkingStatus === 'responding' ||
-      !toolStatuses.includes(aiThinkingStatus)
+      !AI_WORKING_STATUSES.includes(aiThinkingStatus)
     ) {
       return false;
     }
@@ -259,7 +249,11 @@ function TextMessage({
                     {(content || '').trimEnd()}
                   </RichText>
                   {showCompactIndicator && (
-                    <ThinkingIndicator status={aiThinkingStatus} compact />
+                    <ThinkingIndicator
+                      status={aiThinkingStatus}
+                      activity={latestThoughtLine(aiThoughtContent)}
+                      compact
+                    />
                   )}
                 </>
               )}

@@ -311,6 +311,7 @@ function Markdown({
                       alt={unescapeEqualSignAndDash(domNode.attribs?.alt || '')}
                       theme={theme}
                       embeddedContentRef={embeddedContentRef}
+                      onlyTwinkleImages={isAIMessage}
                     />
                   );
                 }
@@ -731,6 +732,7 @@ function Markdown({
                   embedPreviewMode={embedPreviewMode}
                   subjectPreviewVariant={subjectPreviewVariant}
                   embeddedContentRef={embeddedContentRef}
+                  onlyTwinkleImages={isAIMessage}
                   src={unescapeEqualSignAndDash(commonProps?.src || '')}
                   alt={unescapeEqualSignAndDash(commonProps?.alt || '')}
                   theme={theme}

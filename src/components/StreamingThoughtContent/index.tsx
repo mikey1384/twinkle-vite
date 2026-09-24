@@ -8,13 +8,16 @@ interface StreamingThoughtContentProps {
   scrollRef: React.RefObject<HTMLDivElement | null>;
   isThinkingHard?: boolean;
   status?: string;
+  // The heading over the thoughts; Think Hard's by default.
+  label?: string;
 }
 
 export default function StreamingThoughtContent({
   thoughtContent,
   scrollRef,
   isThinkingHard,
-  status
+  status,
+  label = 'Thinking Hard...'
 }: StreamingThoughtContentProps) {
   return (
     <div>
@@ -26,7 +29,7 @@ export default function StreamingThoughtContent({
           margin-bottom: 0.5rem;
         `}
       >
-        Thinking Hard...
+        {label}
       </div>
       <div
         ref={scrollRef}

@@ -14,6 +14,9 @@ export interface ThinkingIndicatorProps {
   isStreamingThoughts?: boolean;
   isThinkingHard?: boolean;
   compact?: boolean;
+  // Compact only: what the assistant is doing right now, in place of the
+  // generic status word.
+  activity?: string;
 }
 
 export default function ThinkingIndicator({
@@ -21,7 +24,8 @@ export default function ThinkingIndicator({
   thoughtContent,
   isStreamingThoughts,
   isThinkingHard,
-  compact
+  compact,
+  activity
 }: ThinkingIndicatorProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useAutoFollow(scrollRef, !!isStreamingThoughts);
@@ -47,9 +51,13 @@ export default function ThinkingIndicator({
             font-size: 1.2rem;
             font-weight: 500;
             color: ${color};
+            max-width: 32rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           `}
         >
-          {text}
+          {activity || text}
         </span>
         {status !== 'thinking_complete' && <StatusDots color={color} small />}
       </div>
@@ -110,6 +118,7 @@ export default function ThinkingIndicator({
             scrollRef={scrollRef}
             isThinkingHard={isThinkingHard}
             status={status}
+            label={isThinkingHard ? undefined : 'Working on it...'}
           />
         ) : (
           <>
@@ -144,3 +153,28 @@ export default function ThinkingIndicator({
     </div>
   );
 }
+
+// The last line of the streamed thoughts: for Zero and Ciel working on the
+// website, the step they are on now.
+export function latestThoughtLine(thoughts?: string) {
+  const lines = String(thoughts || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return lines[lines.length - 1] || '';
+}
+
+// Statuses that mean the assistant is still working after words have
+// appeared ('responding' is the words themselves).
+export const AI_WORKING_STATUSES = [
+  'thinking',
+  'thinking_hard',
+  'searching_web',
+  'analyzing_code',
+  'saving_file',
+  'reading_file',
+  'reading',
+  'recalling',
+  'talking_with_lumine',
+  'retrieving_memory'
+];

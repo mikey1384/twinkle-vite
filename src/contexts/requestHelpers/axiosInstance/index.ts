@@ -1,5 +1,9 @@
 import { AxiosRequestConfig, AxiosResponse, Method } from 'axios';
 import scheduler, { ExtendedAxiosRequestConfig } from './requestScheduler';
+import {
+  WEBSITE_AGENT_ACTION_HEADER,
+  isWebsiteAgentActionActive
+} from '~/helpers/websiteAgentAction';
 
 export type {
   RequestMeta,
@@ -12,6 +16,15 @@ export { RequestScheduler } from './requestScheduler';
 function request<T = any, R = AxiosResponse<T>>(
   config: ExtendedAxiosRequestConfig<T>
 ): Promise<R> {
+  if (isWebsiteAgentActionActive()) {
+    config = {
+      ...config,
+      headers: {
+        ...(config.headers as Record<string, string> | undefined),
+        [WEBSITE_AGENT_ACTION_HEADER]: '1'
+      }
+    };
+  }
   return scheduler.request<T, R>(config);
 }
 

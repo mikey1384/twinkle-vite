@@ -16,14 +16,32 @@ import {
   ZERO_TWINKLE_ID,
   CIEL_PFP_URL,
   CIEL_TWINKLE_ID,
-  CHAT_ID_BASE_NUMBER
+  CHAT_ID_BASE_NUMBER,
+  isWebsiteAgentEnabledFor
 } from '~/constants/defaultValues';
 import { markChatUnreadActivity } from '~/helpers/chatUnreadActivity';
+import {
+  describeWebsiteAgentOverlays,
+  performWebsiteAgentClick,
+  performWebsiteAgentType,
+  readWebsiteAgentPage
+} from '~/helpers/websiteAgentPage';
+import {
+  askWebsiteAgentPermission,
+  noteWebsiteAgentWorking,
+  showWebsiteAgentSpotlight
+} from '~/containers/App/WebsiteAgentSpotlight';
 import { chatRealtimeChannelNeedsCanonicalSummary } from '~/helpers/chatUnreadProjection';
 import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
 import { useToast } from '~/contexts/Toast';
 import { extractAiVoiceScreenHTML } from '~/helpers/aiVoiceScreen';
 import { AiVoicePlayback } from '~/helpers/aiVoicePlayback';
+
+// This tab, among the user's open tabs and devices (see the website agent's
+// active-tab handling below).
+const WEBSITE_AGENT_TAB_ID = `${Date.now().toString(36)}-${Math.random()
+  .toString(36)
+  .slice(2, 10)}`;
 
 export default function useAISocket({
   activeChatChannelIdRef,
@@ -227,6 +245,162 @@ export default function useAISocket({
     }
     return window.btoa(binary);
   }
+
+  function toAgentAssistant(value: unknown) {
+    return value === 'Zero' || value === 'Ciel' ? value : null;
+  }
+
+  // During a call, the assistant learns about its own prompt or spotlight as
+  // soon as it appears, so it can say where to tap.
+  useEffect(() => {
+    function handleAgentUiChange() {
+      if (aiCallChannelIdRef.current) sendAIUIInformation();
+    }
+    window.addEventListener('website-agent-ui-changed', handleAgentUiChange);
+    return () =>
+      window.removeEventListener(
+        'website-agent-ui-changed',
+        handleAgentUiChange
+      );
+  }, []);
+
+  // During a call, Lumine's updates reach the call too: only the job's id is
+  // passed on; the server reads the dialogue itself.
+  useEffect(() => {
+    if (!aiCallChannelId) return;
+    function handleLumineDialogueUpdated(payload: { jobId?: number }) {
+      const jobId = Number(payload?.jobId || 0);
+      if (jobId) socket.emit('ai_call_lumine_update', { jobId });
+    }
+    socket.on('build_workshop_dialogue_updated', handleLumineDialogueUpdated);
+    return () => {
+      socket.off(
+        'build_workshop_dialogue_updated',
+        handleLumineDialogueUpdated
+      );
+    };
+  }, [aiCallChannelId]);
+
+  // Zero and Ciel act in one place: the tab or device the user last used
+  // (each tab reports trusted taps and keys; every tab hears which one it
+  // was). Before any report, only a focused tab answers.
+  const activeAgentTabIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isWebsiteAgentEnabledFor(Number(userId))) return;
+    let lastSentAt = 0;
+    function reportActive(event?: Event) {
+      if (event && !event.isTrusted) return;
+      if (document.visibilityState !== 'visible') return;
+      const now = Date.now();
+      if (now - lastSentAt < 3_000) return;
+      lastSentAt = now;
+      activeAgentTabIdRef.current = WEBSITE_AGENT_TAB_ID;
+      socket.emit('website_agent_active', { tabId: WEBSITE_AGENT_TAB_ID });
+    }
+    function handleActiveTab({ tabId }: { tabId?: string }) {
+      if (typeof tabId === 'string') activeAgentTabIdRef.current = tabId;
+    }
+    // Switching to a tab counts too, so a hidden tab never keeps the role.
+    window.addEventListener('pointerdown', reportActive, true);
+    window.addEventListener('keydown', reportActive, true);
+    window.addEventListener('focus', reportActive);
+    document.addEventListener('visibilitychange', reportActive);
+    socket.on('website_agent_active_tab', handleActiveTab);
+    return () => {
+      window.removeEventListener('pointerdown', reportActive, true);
+      window.removeEventListener('keydown', reportActive, true);
+      window.removeEventListener('focus', reportActive);
+      document.removeEventListener('visibilitychange', reportActive);
+      socket.off('website_agent_active_tab', handleActiveTab);
+    };
+  }, [userId]);
+
+  // Zero or Ciel looking at this user's page, pointing at something, or
+  // taking them somewhere (website agent). Only the tab the user is looking
+  // at answers.
+  useEffect(() => {
+    async function handleWebsiteAgentRequest({
+      requestId,
+      kind,
+      payload
+    }: {
+      requestId?: string;
+      kind?: string;
+      payload?: any;
+    }) {
+      if (!isWebsiteAgentEnabledFor(Number(userId))) return;
+      if (!requestId || document.visibilityState !== 'visible') return;
+      const activeTabId = activeAgentTabIdRef.current;
+      if (
+        activeTabId
+          ? activeTabId !== WEBSITE_AGENT_TAB_ID
+          : !document.hasFocus()
+      ) {
+        return;
+      }
+      if (import.meta.env.DEV) {
+        console.info(`[WebsiteAgent] received ${kind}`);
+      }
+      noteWebsiteAgentWorking(toAgentAssistant(payload?.assistant));
+      let result: unknown;
+      try {
+        if (kind === 'read_page') {
+          result = readWebsiteAgentPage();
+        } else if (kind === 'navigate') {
+          const path = String(payload?.path || '');
+          if (!path.startsWith('/') || path.startsWith('//')) {
+            result = { error: 'Not a page on this site.' };
+          } else {
+            navigate(path);
+            // Give the new page a moment to render before it is read.
+            await new Promise((resolve) => setTimeout(resolve, 900));
+            result = {
+              path: `${window.location.pathname}${window.location.search}`,
+              title: document.title
+            };
+          }
+        } else if (kind === 'click') {
+          result = await performWebsiteAgentClick({
+            ref: String(payload?.ref || ''),
+            effect: payload?.effect === 'change' ? 'change' : 'view'
+          });
+        } else if (kind === 'type') {
+          result = await performWebsiteAgentType({
+            ref: String(payload?.ref || ''),
+            text: String(payload?.text ?? ''),
+            pressEnter: payload?.pressEnter === true
+          });
+        } else if (kind === 'permission') {
+          result = await askWebsiteAgentPermission({
+            summary: String(payload?.summary || ''),
+            details: String(payload?.details || ''),
+            assistant: toAgentAssistant(payload?.assistant)
+          });
+        } else if (kind === 'highlight') {
+          result = await showWebsiteAgentSpotlight({
+            ref: String(payload?.ref || ''),
+            caption: String(payload?.caption || ''),
+            waitForUser: payload?.waitForUser === true,
+            assistant: toAgentAssistant(payload?.assistant)
+          });
+        } else {
+          result = { error: `Unknown request ${kind}.` };
+        }
+      } catch (error: any) {
+        result = { error: String(error?.message || error) };
+      }
+      if (import.meta.env.DEV) {
+        console.info(
+          `[WebsiteAgent] ${kind} ${JSON.stringify(payload || {}).slice(0, 200)} -> ${JSON.stringify(result ?? null).slice(0, 300)}`
+        );
+      }
+      socket.emit('website_agent_browser_response', { requestId, result });
+    }
+    socket.on('website_agent_browser_request', handleWebsiteAgentRequest);
+    return function cleanUp() {
+      socket.off('website_agent_browser_request', handleWebsiteAgentRequest);
+    };
+  }, [navigate, userId]);
 
   useEffect(() => {
     socket.on('ai_voice_session_started', handleAIVoiceSessionStarted);
@@ -726,6 +900,11 @@ export default function useAISocket({
     if (outerLayerContent) {
       essentialContent += 'OVERLAY:\n';
       essentialContent += extractAiVoiceScreenHTML(outerLayerContent);
+    }
+
+    const agentOverlays = describeWebsiteAgentOverlays();
+    if (agentOverlays) {
+      essentialContent += `\nSHOWN BY YOU (the assistant) ON THE SCREEN:\n${agentOverlays}\n`;
     }
 
     const uiInformation = essentialContent.trim();

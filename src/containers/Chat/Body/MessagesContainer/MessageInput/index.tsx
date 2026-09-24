@@ -25,7 +25,10 @@ import {
 import {
   mb,
   returnMaxUploadSize,
-  GENERAL_CHAT_ID
+  GENERAL_CHAT_ID,
+  isWebsiteAgentEnabledFor,
+  ZERO_TWINKLE_ID,
+  CIEL_TWINKLE_ID
 } from '~/constants/defaultValues';
 import {
   useAppContext,
@@ -45,6 +48,8 @@ import RightButtons from './RightButtons';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import AgentSuggestions, { readAgentSuggestions } from './AgentSuggestions';
+import { dismissWebsiteAgentPrompts } from '~/containers/App/WebsiteAgentSpotlight';
 
 const deviceIsMobileOS = isMobile(navigator);
 
@@ -284,6 +289,9 @@ export default function MessageInput({
   const [aiUsagePolicyLoadFailed, setAiUsagePolicyLoadFailed] = useState(false);
   const [aiUsageResetLoading, setAiUsageResetLoading] = useState(false);
   const aiUsagePolicyRef = useRef<AiUsagePolicy | null>(null);
+  // The suggestion row sits with the AI Energy card and is measured with it,
+  // so the message list leaves room for both.
+  const agentSuggestionsRowRef = useRef<HTMLDivElement>(null);
   const aiUsagePolicyCardRef = useRef<HTMLDivElement | null>(null);
   const aiUsagePolicyHeightRef = useRef(0);
   const isAIChannelRef = useRef(false);
@@ -401,9 +409,14 @@ export default function MessageInput({
 
     const policyCard = aiUsagePolicyCardRef.current;
     let observer: ResizeObserver | null = null;
-    if (policyCard && typeof ResizeObserver !== 'undefined') {
+    const suggestionsRow = agentSuggestionsRowRef.current;
+    if (
+      (policyCard || suggestionsRow) &&
+      typeof ResizeObserver !== 'undefined'
+    ) {
       observer = new ResizeObserver(scheduleHeightReport);
-      observer.observe(policyCard);
+      if (policyCard) observer.observe(policyCard);
+      if (suggestionsRow) observer.observe(suggestionsRow);
     }
 
     return () => {
@@ -455,129 +468,137 @@ export default function MessageInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSendMsg = useCallback(async () => {
-    if (loading) return;
-    if (aiInputDisabled) return;
-    if (stringIsEmpty(inputText)) return;
+  // A suggestion tap sends its own text through the same path as typing.
+  const handleSendMsg = useCallback(
+    async (overrideText?: unknown) => {
+      const messageText =
+        typeof overrideText === 'string' ? overrideText : inputText;
+      if (loading) return;
+      if (aiInputDisabled) return;
+      if (stringIsEmpty(messageText)) return;
 
-    if (isAICallOngoing) {
-      // An AI voice call is a Zero/Ciel session — gate it on the aiChat ban
-      // (not banned.chat, which is human chat) before emitting over the socket.
-      if (banned?.aiChat) return;
+      if (isAICallOngoing) {
+        // An AI voice call is a Zero/Ciel session — gate it on the aiChat ban
+        // (not banned.chat, which is human chat) before emitting over the socket.
+        if (banned?.aiChat) return;
+        if (inputCoolingDown.current) {
+          resetCoolingDown(700);
+          return;
+        }
+
+        inputCoolingDown.current = true;
+        socket.emit('ai_call_message_submit', {
+          message: finalizeEmoji(messageText),
+          topicId: selectedTab === 'topic' ? topicId : undefined,
+          channelId: selectedChannelId
+        });
+
+        startCoolingDown(500);
+        handleSetText('');
+        onSetTextAreaHeight(0);
+        return;
+      }
+
+      const currentAiUsagePolicy = aiUsagePolicyRef.current;
+      if (isAIChannelRef.current) {
+        if (!currentAiUsagePolicy) {
+          setAlertModalTitle('AI Energy');
+          setAlertModalContent(
+            'Checking AI Energy. Please try again in a moment.'
+          );
+          setAlertModalShown(true);
+          return;
+        }
+      }
+
       if (inputCoolingDown.current) {
         resetCoolingDown(700);
         return;
       }
 
+      // Lock immediately to prevent race condition with rapid clicks
       inputCoolingDown.current = true;
-      socket.emit('ai_call_message_submit', {
-        message: finalizeEmoji(inputText),
-        topicId: selectedTab === 'topic' ? topicId : undefined,
-        channelId: selectedChannelId
-      });
 
-      startCoolingDown(500);
-      handleSetText('');
-      onSetTextAreaHeight(0);
-      return;
-    }
-
-    const currentAiUsagePolicy = aiUsagePolicyRef.current;
-    if (isAIChannelRef.current) {
-      if (!currentAiUsagePolicy) {
-        setAlertModalTitle('AI Energy');
-        setAlertModalContent(
-          'Checking AI Energy. Please try again in a moment.'
-        );
-        setAlertModalShown(true);
+      if (isExceedingCharLimit) {
+        inputCoolingDown.current = false;
         return;
       }
-    }
 
-    if (inputCoolingDown.current) {
-      resetCoolingDown(700);
-      return;
-    }
-
-    // Lock immediately to prevent race condition with rapid clicks
-    inputCoolingDown.current = true;
-
-    if (isExceedingCharLimit) {
-      inputCoolingDown.current = false;
-      return;
-    }
-
-    if (!socketConnected || isAIActuallyStreaming) {
-      inputCoolingDown.current = false;
-      return;
-    }
-
-    startCoolingDown(500);
-
-    // Human-chat ban only blocks human channels; AI channels use aiChat.
-    if (!isAIChannel && banned?.chat) return;
-    if (isAIChannel && banned?.aiChat) return;
-
-    innerRef.current?.focus();
-
-    const submittedMessage = finalizeEmoji(inputText);
-    try {
-      if (selectedChannelId === 0) {
-        handleSetText('');
-      }
-      await onMessageSubmit({
-        message: submittedMessage,
-        subchannelId,
-        selectedTab,
-        topicId
-      });
-      handleSetText('');
-      onEnterComment({
-        contentType: 'chat',
-        contentId: selectedChannelId,
-        targetKey: subchannelId,
-        text: ''
-      });
-    } catch (error: any) {
-      console.error(error);
-      if (selectedChannelId === 0) {
-        handleSetText(submittedMessage);
-      }
-      if (error?.aiUsagePolicy) {
-        applyConfirmedAiUsagePolicy(error.aiUsagePolicy);
-      }
-      if (error?.code?.startsWith?.('zero_ciel_ai_') || error?.message) {
-        setAlertModalTitle('AI Energy');
-        setAlertModalContent(error?.message || 'Unable to send AI message.');
-        setAlertModalShown(true);
-      }
-    }
-
-    function resetCoolingDown(delay = 500) {
-      clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        setCoolingDown(false);
+      if (!socketConnected || isAIActuallyStreaming) {
         inputCoolingDown.current = false;
-      }, delay);
-    }
+        return;
+      }
 
-    function startCoolingDown(delay = 500) {
-      setCoolingDown(true);
-      inputCoolingDown.current = true;
-      resetCoolingDown(delay);
-    }
+      startCoolingDown(500);
+
+      // Human-chat ban only blocks human channels; AI channels use aiChat.
+      if (!isAIChannel && banned?.chat) return;
+      if (isAIChannel && banned?.aiChat) return;
+
+      innerRef.current?.focus();
+
+      // Sending something new answers any open Zero/Ciel prompt with "not now".
+      if (isAIChannel) dismissWebsiteAgentPrompts();
+      const submittedMessage = finalizeEmoji(messageText);
+      try {
+        if (selectedChannelId === 0) {
+          handleSetText('');
+        }
+        await onMessageSubmit({
+          message: submittedMessage,
+          subchannelId,
+          selectedTab,
+          topicId
+        });
+        handleSetText('');
+        onEnterComment({
+          contentType: 'chat',
+          contentId: selectedChannelId,
+          targetKey: subchannelId,
+          text: ''
+        });
+      } catch (error: any) {
+        console.error(error);
+        if (selectedChannelId === 0) {
+          handleSetText(submittedMessage);
+        }
+        if (error?.aiUsagePolicy) {
+          applyConfirmedAiUsagePolicy(error.aiUsagePolicy);
+        }
+        if (error?.code?.startsWith?.('zero_ciel_ai_') || error?.message) {
+          setAlertModalTitle('AI Energy');
+          setAlertModalContent(error?.message || 'Unable to send AI message.');
+          setAlertModalShown(true);
+        }
+      }
+
+      function resetCoolingDown(delay = 500) {
+        clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
+          setCoolingDown(false);
+          inputCoolingDown.current = false;
+        }, delay);
+      }
+
+      function startCoolingDown(delay = 500) {
+        setCoolingDown(true);
+        inputCoolingDown.current = true;
+        resetCoolingDown(delay);
+      }
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    aiInputDisabled,
-    banned?.chat,
-    banned?.aiChat,
-    selectedChannelId,
-    subchannelId,
-    innerRef,
-    loading,
-    socketConnected,
-    inputText
-  ]);
+    [
+      aiInputDisabled,
+      banned?.chat,
+      banned?.aiChat,
+      selectedChannelId,
+      subchannelId,
+      innerRef,
+      loading,
+      socketConnected,
+      inputText
+    ]
+  );
 
   const hasWordleButton = useMemo(
     () => selectedChannelId === GENERAL_CHAT_ID && !subchannelId,
@@ -585,6 +606,52 @@ export default function MessageInput({
   );
 
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
+
+  // Ideas above an empty message box in a Zero/Ciel chat: the latest reply's
+  // own next-step ideas, otherwise a few starters.
+  const agentSuggestionsEnabled =
+    isAIChannel && isWebsiteAgentEnabledFor(Number(myId));
+  const latestReplySettings = useChatContext((v) => {
+    if (!agentSuggestionsEnabled) return null;
+    const channel = v.state.channelsObj?.[selectedChannelId];
+    const latest = channel?.messagesObj?.[channel?.messageIds?.[0]];
+    return latest &&
+      [ZERO_TWINKLE_ID, CIEL_TWINKLE_ID].includes(Number(latest.userId))
+      ? latest.settings
+      : null;
+  });
+  const replyIdeas = useMemo(
+    () => readAgentSuggestions(latestReplySettings),
+    [latestReplySettings]
+  );
+  const loadWebsiteAgentStarters = useAppContext(
+    (v) => v.requestHelpers.loadWebsiteAgentStarters
+  );
+  const [starterIdeas, setStarterIdeas] = useState<string[]>([]);
+  useEffect(() => {
+    if (!agentSuggestionsEnabled) return;
+    let cancelled = false;
+    Promise.resolve(loadWebsiteAgentStarters?.())
+      .then((ideas) => {
+        if (!cancelled && Array.isArray(ideas)) setStarterIdeas(ideas);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentSuggestionsEnabled, selectedChannelId]);
+  // While typing, the row keeps its place (hidden) so the messages above
+  // don't jump; with no AI Energy a tap could only fail, so it goes.
+  const suggestionsShown =
+    agentSuggestionsEnabled &&
+    replyIdeas !== null &&
+    !aiUsageBlocked &&
+    !isAIActuallyStreaming &&
+    !aiInputDisabled &&
+    !replyTarget &&
+    !chessTarget &&
+    !isRespondingToSubject;
   const isRightButtonsShown = useMemo(() => {
     if (isAICallOngoing) {
       return false;
@@ -662,6 +729,19 @@ export default function MessageInput({
         />
       ) : null}
       {renderAiUsagePolicy()}
+      <div ref={agentSuggestionsRowRef}>
+        {suggestionsShown ? (
+          <div
+            style={textIsEmpty ? undefined : { visibility: 'hidden' }}
+            aria-hidden={textIsEmpty ? undefined : true}
+          >
+            <AgentSuggestions
+              ideas={replyIdeas?.length ? replyIdeas : starterIdeas}
+              onPick={(idea) => handleSendMsg(idea)}
+            />
+          </div>
+        ) : null}
+      </div>
       <div style={{ display: 'flex' }}>
         {!isAIChannel &&
           (isTwoPeopleChannel || hasWordleButton || legacyTopicButtonShown) && (
@@ -1095,6 +1175,11 @@ export default function MessageInput({
         policyCard.getBoundingClientRect().height +
           getPixelValue(marginTop) +
           getPixelValue(marginBottom)
+      );
+    }
+    if (isAIChannel && agentSuggestionsRowRef.current) {
+      height += Math.ceil(
+        agentSuggestionsRowRef.current.getBoundingClientRect().height
       );
     }
     if (height !== aiUsagePolicyHeightRef.current) {
