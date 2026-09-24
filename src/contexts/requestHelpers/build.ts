@@ -4803,11 +4803,16 @@ export default function buildRequestHelpers({
         | 'placement/check'
         | 'placement/build'
         | 'zero/stop'
-        | 'zero/undo';
+        | 'zero/undo'
+        // generic relay (minecraft:read:<route> / minecraft:write:<route>)
+        | (string & {});
       body?: Record<string, unknown>;
       token?: string;
     }) {
       try {
+        if (!/^[a-z][a-z0-9-]*(?:\/[a-z][a-z0-9-]*)?$/.test(resource)) {
+          throw new Error('Unknown Twinkle.minecraft route');
+        }
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/minecraft/${resource}`,
           body || {},

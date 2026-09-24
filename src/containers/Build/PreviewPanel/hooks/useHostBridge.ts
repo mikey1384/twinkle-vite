@@ -4679,8 +4679,27 @@ export function useHostBridge({
             break;
           }
 
-          default:
-            throw new Error(`Unknown request type: ${type}`);
+          default: {
+            // Generic Twinkle.minecraft relay: minecraft:read:<route> and
+            // minecraft:write:<route> go straight to the API's
+            // /api/minecraft/<route> with that scope. The API decides who
+            // may call what, so new SDK methods need no host release.
+            const relay = /^minecraft:(read|write):([a-z][a-z0-9-]*(?:\/[a-z][a-z0-9-]*)?)$/.exec(
+              String(type)
+            );
+            if (!relay) throw new Error(`Unknown request type: ${type}`);
+            const minecraftToken = await ensureBuildApiToken(
+              [relay[1] === 'write' ? 'content:write' : 'content:read'],
+              previewAuth
+            );
+            response = await requestRefs.getBuildMinecraftDataRef.current({
+              buildId: activeBuild.id,
+              resource: relay[2],
+              body: payload || {},
+              token: minecraftToken
+            });
+            break;
+          }
         }
 
         const iframeResponse = sanitizeBuildAppAiUsagePolicyPayload(response);
