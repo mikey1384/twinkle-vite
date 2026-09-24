@@ -17,30 +17,9 @@ interface AiUsagePolicy extends AiEnergyDisplayPolicy {
 
 export function useDraggableWindow(initialPosition: { x: number; y: number }) {
   const [position, setPosition] = useState(initialPosition);
-  const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
-
-  function pointFrom(e: React.MouseEvent | React.TouchEvent) {
-    return 'touches' in e
-      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      : {
-          x: (e as React.MouseEvent).clientX,
-          y: (e as React.MouseEvent).clientY
-        };
-  }
-
-  // Only the picture area (.draggable-area) moves the window.
-  function handleStart(e: React.MouseEvent | React.TouchEvent) {
-    if (!(e.target as HTMLElement).closest('.draggable-area')) return;
-    e.preventDefault();
-    setIsDragging(true);
-    if (windowRef.current) {
-      const rect = windowRef.current.getBoundingClientRect();
-      const point = pointFrom(e);
-      dragOffset.current = { x: point.x - rect.left, y: point.y - rect.top };
-    }
-  }
+  const stopDragging = useRef<(() => void) | null>(null);
 
   // Always reachable: at least the picture stays on screen.
   function clamp(next: { x: number; y: number }) {
@@ -56,53 +35,58 @@ export function useDraggableWindow(initialPosition: { x: number; y: number }) {
     };
   }
 
+  // Only the picture area (.draggable-area) moves the window. Pointer events
+  // on the window itself work the same for a mouse and a finger: a touch's
+  // moves always go to where it started, so a layer laid over the screen
+  // never hears them (phones could not drag).
+  function handleStart(e: React.PointerEvent) {
+    if (!(e.target as HTMLElement).closest('.draggable-area')) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    stopDragging.current?.();
+    const rect = windowRef.current?.getBoundingClientRect();
+    dragOffset.current = {
+      x: e.clientX - (rect?.left || 0),
+      y: e.clientY - (rect?.top || 0)
+    };
+    const pointerId = e.pointerId;
+    function handleMove(event: PointerEvent) {
+      if (event.pointerId !== pointerId) return;
+      event.preventDefault();
+      setPosition(
+        clamp({
+          x: event.clientX - dragOffset.current.x,
+          y: event.clientY - dragOffset.current.y
+        })
+      );
+    }
+    function handleEnd(event: PointerEvent) {
+      if (event.pointerId === pointerId) stopDragging.current?.();
+    }
+    window.addEventListener('pointermove', handleMove, { passive: false });
+    window.addEventListener('pointerup', handleEnd);
+    window.addEventListener('pointercancel', handleEnd);
+    stopDragging.current = () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleEnd);
+      window.removeEventListener('pointercancel', handleEnd);
+      stopDragging.current = null;
+    };
+  }
+
   useEffect(() => {
     function handleResize() {
       setPosition((current) => clamp(current));
     }
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      stopDragging.current?.();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleMove(e: React.MouseEvent | React.TouchEvent) {
-    if (!isDragging) return;
-    e.preventDefault();
-    const point = pointFrom(e);
-    setPosition(
-      clamp({
-        x: point.x - dragOffset.current.x,
-        y: point.y - dragOffset.current.y
-      })
-    );
-  }
-
-  function handleEnd() {
-    setIsDragging(false);
-  }
-
-  // Catches the pointer anywhere on screen while dragging.
-  const dragLayer = isDragging ? (
-    <div
-      className={css`
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        cursor: move;
-        z-index: 2147483003;
-        background: transparent;
-        touch-action: none;
-      `}
-      onMouseMove={handleMove}
-      onMouseUp={handleEnd}
-      onTouchMove={handleMove}
-      onTouchEnd={handleEnd}
-    />
-  ) : null;
-
-  return { position, windowRef, handleStart, dragLayer };
+  return { position, windowRef, handleStart };
 }
 
 export function EnergyBattery({

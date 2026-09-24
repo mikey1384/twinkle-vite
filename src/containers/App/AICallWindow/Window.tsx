@@ -18,12 +18,11 @@ function Window({
   assistantName,
   ending
 }: WindowProps) {
-  const { position, windowRef, handleStart, dragLayer } =
+  const { position, windowRef, handleStart } =
     useDraggableWindow(initialPosition);
 
   return (
     <>
-      {dragLayer}
       <div
         ref={windowRef}
         className={css`
@@ -40,8 +39,7 @@ function Window({
           z-index: 1000;
           touch-action: none;
         `}
-        onMouseDown={handleStart}
-        onTouchStart={handleStart}
+        onPointerDown={handleStart}
       >
         <div
           className={`draggable-area ${css`

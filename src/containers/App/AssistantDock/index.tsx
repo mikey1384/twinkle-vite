@@ -94,7 +94,7 @@ function DockWindow({
   // Phones: a slim bar over the site header, clear of a game's own header
   // and keyboard, opened with a tap.
   const [phone] = useState(() => isMobile(navigator));
-  const { position, windowRef, handleStart, dragLayer } = useDraggableWindow({
+  const { position, windowRef, handleStart } = useDraggableWindow({
     // Its real width: narrow screens make it the screen width less 16px.
     x: Math.max(
       8,
@@ -124,14 +124,12 @@ function DockWindow({
 
   return (
     <>
-      {dragLayer}
       <div
         {...{ [WEBSITE_AGENT_UI_ATTRIBUTE]: '' }}
         ref={windowRef}
         role="dialog"
         aria-label={`Chat with ${assistant}`}
-        onMouseDown={handleStart}
-        onTouchStart={handleStart}
+        onPointerDown={handleStart}
         style={{ top: position.y, left: position.x }}
         className={css`
           position: fixed;
