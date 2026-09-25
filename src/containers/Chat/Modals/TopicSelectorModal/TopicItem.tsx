@@ -8,6 +8,7 @@ import TopicSettingsModal from '../TopicSettingsModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
+import { MAX_PINNED_CHAT_TOPICS } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
 import {
   chatTopicRowClass,
@@ -105,7 +106,7 @@ function TopicItem({
   const SubjectTitleRef: React.RefObject<any> = useRef(0);
 
   const pinButtonShown = useMemo(() => {
-    return (pinnedTopicIds || []).length < 5;
+    return (pinnedTopicIds || []).length < MAX_PINNED_CHAT_TOPICS;
   }, [pinnedTopicIds]);
 
   const displayedTime = useMemo(

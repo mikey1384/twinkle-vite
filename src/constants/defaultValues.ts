@@ -5,6 +5,10 @@ import { Color } from '~/constants/css';
 export const clientVersion =
   typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0-dev';
 export const CHAT_AI_GENERATION_RECONCILE_AFTER_MS = 20 * 60 * 1000;
+// Most topics one chat channel can have pinned; the Pin button hides at this
+// count. Mirror: twinkle-api/constants/chatTopics.ts MAX_PINNED_CHAT_TOPICS,
+// which the server enforces. The repos are separate, so change both.
+export const MAX_PINNED_CHAT_TOPICS = 5;
 
 export const BOOKMARK_VIEWS = {
   AI: 'ai',
