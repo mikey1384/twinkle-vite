@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { TURN_USERNAME, TURN_PASSWORD } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 let peerConstructorPromise: Promise<any> | null = null;
 
@@ -12,6 +11,38 @@ function loadPeerConstructor() {
     );
   }
   return peerConstructorPromise;
+}
+
+// ICE servers for calls: the TURN relay's day-long credentials come from the
+// API (chat/call-relay) and are reused until an hour before they expire. If
+// they can't be loaded, calls still try a direct connection over STUN.
+const STUN_ONLY = [{ urls: 'stun:stun.l.google.com:19302' }];
+let callRelay: { iceServers: any[]; expiresAt: number } | null = null;
+let callRelayPromise: Promise<any[]> | null = null;
+
+function loadIceServers(loadCallRelay: () => Promise<any>) {
+  if (callRelay && callRelay.expiresAt - Date.now() / 1000 > 3600) {
+    return Promise.resolve(callRelay.iceServers);
+  }
+  if (!callRelayPromise) {
+    callRelayPromise = loadCallRelay()
+      .then((data) => {
+        if (!Array.isArray(data?.iceServers)) return STUN_ONLY;
+        callRelay = {
+          iceServers: data.iceServers,
+          expiresAt: Number(data.expiresAt) || 0
+        };
+        return data.iceServers;
+      })
+      .catch((error) => {
+        console.error(error);
+        return STUN_ONLY;
+      })
+      .finally(() => {
+        callRelayPromise = null;
+      });
+  }
+  return callRelayPromise;
 }
 
 function signalPeer(peer: any, signal: any) {
@@ -38,6 +69,9 @@ export default function useCallSocket({
   channelsObj: { [key: string]: any };
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
+  const loadCallRelay = useAppContext((v) => v.requestHelpers.loadCallRelay);
+  const loadCallRelayRef = useRef(loadCallRelay);
+  loadCallRelayRef.current = loadCallRelay;
   const myStream = useChatContext((v) => v.state.myStream);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
 
@@ -259,7 +293,8 @@ export default function useCallSocket({
       }
       if (
         !currentChannelOnCall.id ||
-        (currentChannelOnCall.id === channelId && currentChannelOnCall.imCalling)
+        (currentChannelOnCall.id === channelId &&
+          currentChannelOnCall.imCalling)
       ) {
         if (!currentChannelOnCall.members?.[memberId]) {
           onSetMembersOnCall({ [memberId]: peerId });
@@ -299,8 +334,11 @@ export default function useCallSocket({
     const requestPeerGeneration = peerGenerationRef.current[peerId] || 0;
 
     if (canCreatePeerForCurrentCall({ channelId, initiator })) {
-      void loadPeerConstructor()
-        .then((Peer) => {
+      void Promise.all([
+        loadPeerConstructor(),
+        loadIceServers(() => loadCallRelayRef.current())
+      ])
+        .then(([Peer, iceServers]) => {
           if (
             !isPeerCreationCurrent({
               callGeneration: requestCallGeneration,
@@ -321,18 +359,7 @@ export default function useCallSocket({
           }
 
           const peer = new Peer({
-            config: {
-              iceServers: [
-                {
-                  urls: 'turn:13.230.133.153:3478',
-                  username: TURN_USERNAME as string,
-                  credential: TURN_PASSWORD as string
-                },
-                {
-                  urls: 'stun:stun.l.google.com:19302'
-                }
-              ]
-            },
+            config: { iceServers },
             initiator,
             stream
           });

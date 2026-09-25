@@ -721,6 +721,7 @@ registerMethods('chat', [
   'rewindChessMove',
   'collectVocabulary',
   'getAiEnergyPolicy',
+  'loadCallRelay',
   'loadAiUsageHistory',
   'purchaseAiEnergyRecharge',
   'saveChatMessage',

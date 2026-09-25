@@ -52,8 +52,6 @@ export const cloudFrontURL = `https://${
 export const S3URL = `https://${
   import.meta.env.VITE_AWS_S3_BUCKET_NAME
 }.s3.amazonaws.com`;
-export const TURN_USERNAME = import.meta.env.VITE_TURN_USERNAME;
-export const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
 export const mb = 1000;
 export const mobileFullTextRevealShowDuration = 2000;
 export const returnMissionThumb = (missionType: string): string =>

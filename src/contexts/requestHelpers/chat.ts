@@ -2642,6 +2642,12 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // TURN credentials for a call (a day long); errors go to the caller, which
+    // falls back to a direct connection instead of showing an error
+    async loadCallRelay() {
+      const { data } = await request.get(`${URL}/chat/call-relay`, auth());
+      return data;
+    },
     async getAiEnergyPolicy() {
       try {
         const { data } = await request.get(
