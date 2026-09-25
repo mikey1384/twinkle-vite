@@ -375,6 +375,7 @@ export default function useAISocket({
           result = await askWebsiteAgentPermission({
             summary: String(payload?.summary || ''),
             details: String(payload?.details || ''),
+            confirmLabel: String(payload?.confirmLabel || '').slice(0, 60),
             assistant: toAgentAssistant(payload?.assistant)
           });
         } else if (kind === 'highlight') {

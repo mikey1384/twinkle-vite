@@ -11,7 +11,10 @@ import Button from '~/components/Button';
 import Game from './Game';
 import OverviewModal from './OverviewModal';
 import SkipShieldModal from './SkipShieldModal';
-import type { SkipShieldChecklistState } from './SkipShieldChecklist';
+import {
+  SKIP_SHIELD_CHECKLIST_LABELS,
+  type SkipShieldChecklistState
+} from './SkipShieldChecklist';
 import LumineRescueEntry from '~/components/LumineRescueEntry';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import FilterBar from '~/components/FilterBar';
@@ -32,9 +35,12 @@ import {
 } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import {
+  isSkipShieldChecklistItemDone,
+  isSkipShieldReady,
   normalizeSkipShieldStatus,
   shouldBlockWordleClose
 } from './skipShieldStatus';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import { fetchCanonicalWordleState } from './wordleCanonicalState';
 
 const WORDLE_MODAL_BODY_MIN_HEIGHT =
@@ -95,6 +101,7 @@ export default function WordleModal({
   const [skipShieldModalShown, setSkipShieldModalShown] = useState(false);
   const [skipShieldChecklist, setSkipShieldChecklist] =
     useState<SkipShieldChecklistState | null>(null);
+  const [skipShieldActive, setSkipShieldActive] = useState(false);
   const skipShieldRequestInFlightRef = useRef(false);
   const skipShieldStatusRequestSequenceRef = useRef(0);
   const wordleStateRequestSequenceRef = useRef(0);
@@ -133,10 +140,36 @@ export default function WordleModal({
       return null;
     }
     setSkipShieldChecklist(normalizedStatus.checklist);
+    setSkipShieldActive(normalizedStatus.shieldActive);
     return normalizedStatus;
     // Context request helpers have stable identities by contract.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId]);
+
+  // The skip-protection checklist as shown mid-game, with its labels.
+  useAgentScreenState(
+    'wordleSkipShield',
+    skipShieldChecklist
+      ? {
+          shieldActive: skipShieldActive,
+          todayCovered: skipShieldChecklist.todayCovered,
+          ready: isSkipShieldReady(skipShieldChecklist),
+          checklist: Object.fromEntries(
+            (
+              Object.keys(SKIP_SHIELD_CHECKLIST_LABELS) as Array<
+                keyof typeof SKIP_SHIELD_CHECKLIST_LABELS
+              >
+            ).map((item) => [
+              item,
+              {
+                label: SKIP_SHIELD_CHECKLIST_LABELS[item],
+                done: isSkipShieldChecklistItemDone(skipShieldChecklist, item)
+              }
+            ])
+          )
+        }
+      : null
+  );
 
   useEffect(() => {
     setStreaksTab(isStrictMode ? 'double' : 'win');

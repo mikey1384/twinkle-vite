@@ -33,6 +33,7 @@ import { getDailyRewardPreviewStreak } from '~/helpers';
 import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -100,6 +101,15 @@ export default function TopMenu({
   const userId = useKeyContext((v) => v.myState.userId);
   const isMountedRef = useRef(true);
   const [loadingWordle, setLoadingWordle] = useState(false);
+  // Wordle opens once the chat has loaded, which can take a few seconds:
+  // Zero and Ciel wait for it instead of taking the pause for a failure.
+  useAgentScreenState(
+    'wordleButton',
+    loadingWordle ? { opening: true } : null,
+    {
+      background: true
+    }
+  );
   const { themeRoles } = useThemeTokens({
     intensity: 0.06
   });

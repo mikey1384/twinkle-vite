@@ -16,7 +16,10 @@ import { useSectionPanelVars } from '~/theme/hooks/useSectionPanelVars';
 
 type Focus = 'all' | 'wordle' | 'grammarbles' | 'aiStory';
 type TaskKey = Exclude<Focus, 'all'>;
-const WORDLE_EXCELLENCE_MAX_GUESSES = 4;
+// The API sends each task's targets (guesses, levels) in the daily task
+// status; these are only the fallbacks for an API that predates them.
+const FALLBACK_WORDLE_EXCELLENCE_MAX_GUESSES = 4;
+const FALLBACK_DAILY_TASK_LEVEL_CAP = 5;
 const stackedCompactBoostQuery = `(max-width: ${mobileMaxWidth}), (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) and (orientation: portrait)`;
 type Tone = 'logoBlue' | 'orange' | 'magenta' | 'gold' | 'green' | 'gray';
 
@@ -993,6 +996,9 @@ function buildWordleRow(wordle: any, isLoading = false): BoostRow {
   const failed = !!wordle?.failed;
   const numGuesses = Number(wordle?.numGuesses) || 0;
   const excellenceAchieved = !!wordle?.excellenceQualified;
+  const maxGuesses =
+    Number(wordle?.excellenceMaxGuesses) ||
+    FALLBACK_WORDLE_EXCELLENCE_MAX_GUESSES;
 
   let title = `Solve today's Wordle`;
   if (solved) {
@@ -1001,13 +1007,13 @@ function buildWordleRow(wordle: any, isLoading = false): BoostRow {
     title = 'Wordle ended without a solve';
   }
 
-  let description = `Excellence target: solve in ${WORDLE_EXCELLENCE_MAX_GUESSES} guesses.`;
+  let description = `Excellence target: solve in ${maxGuesses} guesses.`;
   if (excellenceAchieved) {
-    description = `${WORDLE_EXCELLENCE_MAX_GUESSES}-guess excellence secured.`;
+    description = `${maxGuesses}-guess excellence secured.`;
   } else if (solved) {
-    description = `${WORDLE_EXCELLENCE_MAX_GUESSES}-guess excellence missed for today.`;
+    description = `${maxGuesses}-guess excellence missed for today.`;
   } else if (failed) {
-    description = `${WORDLE_EXCELLENCE_MAX_GUESSES}-guess excellence is closed for today.`;
+    description = `${maxGuesses}-guess excellence is closed for today.`;
   }
 
   return {
@@ -1035,6 +1041,8 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
   }
 
   const currentLevel = Math.max(1, Number(grammarbles?.currentLevel) || 1);
+  const levelCap =
+    Number(grammarbles?.levelCap) || FALLBACK_DAILY_TASK_LEVEL_CAP;
   const basicAchieved = !!grammarbles?.basicQualified;
   const excellenceAchieved = !!grammarbles?.excellenceQualified;
   const comparisonScore =
@@ -1051,10 +1059,10 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
   switch (grammarbles?.excellenceMode) {
     case 'baseline':
       description =
-        currentLevel >= 5
+        currentLevel >= levelCap
           ? excellenceAchieved
-            ? 'No prior Lv5 benchmark. Lv5 clear counted as excellence.'
-            : 'No prior Lv5 benchmark. Excellence target: clear all 5 levels.'
+            ? `No prior Lv${levelCap} benchmark. Lv${levelCap} clear counted as excellence.`
+            : `No prior Lv${levelCap} benchmark. Excellence target: clear all ${levelCap} levels.`
           : `No score to beat yet. Excellence target: clear Lv${currentLevel + 1}.`;
       break;
     case 'score-or-next-level':
@@ -1064,8 +1072,8 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
       break;
     case 'total-score':
       description = comparisonScoreLabel
-        ? `Excellence target: beat your most recent Lv5-clear total of ${comparisonScoreLabel}.`
-        : `Excellence target: beat your most recent Lv5-clear total.`;
+        ? `Excellence target: beat your most recent Lv${levelCap}-clear total of ${comparisonScoreLabel}.`
+        : `Excellence target: beat your most recent Lv${levelCap}-clear total.`;
       break;
     case 'score':
       description = comparisonScoreLabel
@@ -1073,12 +1081,12 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
         : "Excellence target: beat yesterday's score benchmark.";
       break;
     case 'next-level':
-      description = `Excellence target: clear Lv${Math.min(currentLevel + 1, 5)}.`;
+      description = `Excellence target: clear Lv${Math.min(currentLevel + 1, levelCap)}.`;
       break;
     case 'all-perfect':
       description = excellenceAchieved
-        ? 'All 5 levels perfect completed.'
-        : 'Excellence target: make all 5 levels perfect.';
+        ? `All ${levelCap} levels perfect completed.`
+        : `Excellence target: make all ${levelCap} levels perfect.`;
       break;
     case 'none':
       title = 'Status unavailable';
@@ -1120,13 +1128,18 @@ function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
   const hasReading = !!aiStory?.hasReadingClearAtCurrentLevel;
   const hasListening = !!aiStory?.hasListeningClearAtCurrentLevel;
   const excellenceAchieved = !!aiStory?.excellenceQualified;
-  const basicRequirementLevel = currentLevel >= 4 ? currentLevel - 1 : currentLevel;
+  const levelCap = Number(aiStory?.levelCap) || FALLBACK_DAILY_TASK_LEVEL_CAP;
+  const basicRequirementLevel =
+    Number(aiStory?.basicRequirementLevel) ||
+    (currentLevel >= 4 ? currentLevel - 1 : currentLevel);
   const basicTargetPhrase =
-    basicRequirementLevel >= 5
+    basicRequirementLevel >= levelCap
       ? `Lv${basicRequirementLevel}`
       : `Lv${basicRequirementLevel} or higher`;
   const excellenceTargetPhrase =
-    currentLevel >= 5 ? `Lv${currentLevel}` : `Lv${currentLevel} or higher`;
+    currentLevel >= levelCap
+      ? `Lv${currentLevel}`
+      : `Lv${currentLevel} or higher`;
 
   let description = `Excellence target: clear both Read and Listen at ${excellenceTargetPhrase}.`;
   if (excellenceAchieved) {

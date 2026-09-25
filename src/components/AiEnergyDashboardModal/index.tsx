@@ -14,6 +14,8 @@ import {
   useNotiContext
 } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { getAiEnergyDisplay } from '~/helpers/aiEnergyDisplay';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import Community from './Community';
 import {
@@ -259,6 +261,40 @@ export default function AiEnergyDashboardModal({
             ? 'Fund too low'
             : `${completedRequirementCount}/${requirementCount} complete`
       : 'Tasks unavailable';
+
+  // The battery, recharge options and sponsored-recharge tasks as shown.
+  useAgentScreenState(
+    'aiEnergy',
+    !loading && aiUsagePolicy
+      ? {
+          section: activeSection,
+          energy: getAiEnergyDisplay(aiUsagePolicy).label,
+          mode: currentModeLabel,
+          status: overviewDescription,
+          resetCost: rechargeCost,
+          rechargeButton: energyDepleted
+            ? { free: freeChargeAvailable, note: chargeButtonMeta }
+            : null,
+          paidRechargeAffordable: availableCoins >= rechargeCost,
+          canUseCommunityFunds: shouldUseCommunityFundsForCharge,
+          community: {
+            eligible: communitySponsoredChargeUnlocked,
+            status: communityStatusLabel,
+            requirements: requirements.map(
+              ({ label, done, current, required }) => ({
+                label,
+                done,
+                current,
+                required
+              })
+            ),
+            dailyCapCoinsLeft: communityRechargeCoinsRemaining,
+            dailyCap: communityRechargeDailyCap,
+            fundBalance: totalCommunityFunds
+          }
+        }
+      : null
+  );
 
   useEffect(() => {
     let cancelled = false;

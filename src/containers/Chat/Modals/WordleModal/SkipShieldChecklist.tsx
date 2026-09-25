@@ -12,6 +12,11 @@ import {
 
 export type { SkipShieldChecklistState } from './skipShieldStatus';
 
+export const SKIP_SHIELD_CHECKLIST_LABELS = {
+  builtWithLumineToday: 'Build something with Lumine today 🤖',
+  triedPeerBuildToday: 'Try an app another member built today 🎮'
+} as const;
+
 export default function SkipShieldChecklist({
   checklist,
   compact = false,
@@ -100,7 +105,7 @@ export default function SkipShieldChecklist({
     >
       <ChecklistRow
         done={builtDone}
-        label="Build something with Lumine today 🤖"
+        label={SKIP_SHIELD_CHECKLIST_LABELS.builtWithLumineToday}
         detail={
           builtDone
             ? 'completed today — new projects and updates both count'
@@ -113,7 +118,7 @@ export default function SkipShieldChecklist({
       />
       <ChecklistRow
         done={triedDone}
-        label="Try an app another member built today 🎮"
+        label={SKIP_SHIELD_CHECKLIST_LABELS.triedPeerBuildToday}
         detail="any app on the Build page counts"
         actionLabel="Explore apps"
         onAction={() => navigate('/build')}

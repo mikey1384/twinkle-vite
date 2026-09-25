@@ -239,6 +239,9 @@ interface PermissionPrompt {
   // Longer text the answer covers (e.g. the exact plan and sharing notice
   // for Lumine), shown below the question.
   details?: string;
+  // The yes button's words, when a plain yes would undersell it (a purchase:
+  // "Yes, spend 20 coins").
+  confirmLabel?: string;
   assistant: 'Zero' | 'Ciel' | null;
   finish(decision: 'allow' | 'deny' | 'replaced'): void;
 }
@@ -260,10 +263,12 @@ export function dismissWebsiteAgentPrompts() {
 export function askWebsiteAgentPermission({
   summary,
   details = '',
+  confirmLabel = '',
   assistant = null
 }: {
   summary: string;
   details?: string;
+  confirmLabel?: string;
   assistant?: 'Zero' | 'Ciel' | null;
 }): Promise<{ decision: 'allow' | 'deny' | 'replaced' }> {
   currentPrompt?.finish('replaced');
@@ -271,6 +276,7 @@ export function askWebsiteAgentPermission({
     const prompt: PermissionPrompt = {
       summary,
       details: details || undefined,
+      confirmLabel: confirmLabel || undefined,
       assistant,
       finish(decision) {
         if (currentPrompt === prompt) setCurrentPrompt(null);
@@ -382,7 +388,7 @@ function PermissionPromptLayer() {
         />
         <SpotlightButton
           primary
-          label="Yes, go ahead!"
+          label={prompt.confirmLabel || 'Yes, go ahead!'}
           onClick={() => prompt.finish('allow')}
         />
       </div>

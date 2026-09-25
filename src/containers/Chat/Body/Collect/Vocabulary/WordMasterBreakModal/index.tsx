@@ -3,7 +3,7 @@ import { socket } from '~/constants/sockets/api';
 import { WORD_MASTER_BREAK_INTERVAL } from '~/constants/defaultValues';
 import BreakSection from './BreakSection';
 import Content from './Content';
-import { WordMasterBreakModalProps } from './types';
+import { SuggestedOmokUser, WordMasterBreakModalProps } from './types';
 import { getBreakAccent } from './helpers/utils';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
@@ -214,6 +214,40 @@ export default function WordMasterBreakModal({
           breakIndex,
           locked: isLocked,
           requirementComplete: !!requirement?.isComplete,
+          // The task rows shown for this break (the quiz is below).
+          requirement:
+            hasActiveBreak && !isLocked && breakType !== 'vocab_quiz'
+              ? {
+                  type: breakType,
+                  wordleDone: requirement.wordleDone,
+                  grammarblesDone: requirement.grammarblesDone,
+                  aiStoryDone: requirement.aiStoryDone,
+                  reflectionDone: requirement.reflectionDone,
+                  currentLevel: requirement.currentLevel,
+                  solvedAtLevel: requirement.solvedAtLevel,
+                  passes: requirement.passes,
+                  ...(breakType === 'pending_moves'
+                    ? {
+                        omokMovesPending:
+                          !!requirement.unansweredOmokMsgChannelId,
+                        firstMoveSent: requirement.hasRecentMoveToActiveUser,
+                        firstMoveRequirementComplete:
+                          requirement.firstMoveRequirementComplete,
+                        hasRecentPlayers: requirement.hasRecentPlayers,
+                        suggestedPlayers: Array.isArray(
+                          requirement.recommendedUsers
+                        )
+                          ? requirement.recommendedUsers.map(
+                              (user: SuggestedOmokUser) => user.username
+                            )
+                          : []
+                      }
+                    : {})
+                }
+              : null,
+          canBypass,
+          bypassCost,
+          rolledPrice,
           readyCountdown: showReadyCountdown ? readyCountdown : null,
           quiz: showQuizQuestion
             ? {

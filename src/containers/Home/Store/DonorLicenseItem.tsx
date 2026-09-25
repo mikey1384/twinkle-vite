@@ -6,13 +6,17 @@ import Link from '~/components/Link';
 import ProgressBar from '~/components/ProgressBar';
 import { css, cx } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { DONOR_ACHIEVEMENT_THRESHOLD } from '~/constants/defaultValues';
+import {
+  DONOR_ACHIEVEMENT_THRESHOLD,
+  karmaPointTable
+} from '~/constants/defaultValues';
 import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ItemPanel from './ItemPanel';
 import { homePanelClass } from '~/theme/homePanels';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 import { SITE_NAME } from '~/constants/siteBrand';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 export default function DonorLicenseItem({
   karmaPoints,
@@ -58,6 +62,28 @@ export default function DonorLicenseItem({
   const achievementCompleted = useMemo(() => {
     return donatedCoins >= DONOR_ACHIEVEMENT_THRESHOLD;
   }, [donatedCoins]);
+
+  // The license and Big Donor progress as the Store shows them.
+  useAgentScreenState(
+    'donorLicense',
+    loading
+      ? null
+      : canDonate
+        ? {
+            canDonate: true,
+            donatedCoins,
+            bigDonor: {
+              threshold: DONOR_ACHIEVEMENT_THRESHOLD,
+              achieved: achievementCompleted
+            }
+          }
+        : {
+            canDonate: false,
+            karmaPoints,
+            karmaRequired: karmaPointTable.donate
+          },
+    { background: true }
+  );
 
   const { panelVars: basePanelVars } = useHomePanelVars(0.08, {
     neutralSurface: true
