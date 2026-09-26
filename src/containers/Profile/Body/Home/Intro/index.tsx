@@ -34,6 +34,7 @@ import {
   getCanonicalProfileGreeting,
   getCanonicalProfileStatus
 } from '~/helpers/profileCanonicalState';
+import { isPresenceHidden } from '~/helpers/hiddenPresence';
 const editLabel = 'Edit';
 const enterMessageForVisitorsLabel = 'Enter a message for your visitors';
 const removeLabel = 'Remove';
@@ -254,8 +255,10 @@ export default function Intro({
               email={email}
               verifiedEmail={verifiedEmail}
               joinDate={joinDate}
-              online={chatStatus[profile.id]?.isOnline}
-              lastActive={lastActive}
+              online={
+                !isPresenceHidden(profile.id) && chatStatus[profile.id]?.isOnline
+              }
+              lastActive={isPresenceHidden(profile.id) ? '' : lastActive}
               profilePicUrl={profilePicUrl}
               userId={id}
               username={username}

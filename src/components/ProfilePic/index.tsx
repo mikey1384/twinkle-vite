@@ -3,6 +3,7 @@ import ChangePicture from './ChangePicture';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
+import { isActivityShown, isPresenceHidden } from '~/helpers/hiddenPresence';
 import StatusTag from './StatusTag';
 import ActivityBadge from './ActivityBadge';
 import { css, cx } from '@emotion/css';
@@ -90,10 +91,20 @@ export default function ProfilePic({
     return profilePicUrl;
   }, [cachedProfilePicUrl, preferProvidedProfilePicUrl, profilePicUrl]);
 
+  // Zero and Ciel never show a status, even to themselves (hiddenPresence.ts)
   const statusTagShown = useMemo(
-    () => Boolean(statusShown && (myId === userId || online)),
+    () =>
+      Boolean(
+        statusShown &&
+          (myId === userId || online) &&
+          !isPresenceHidden(userId)
+      ),
     [myId, online, statusShown, userId]
   );
+  const activityShown = isActivityShown(userId, activity, {
+    isOnline: activityOnline,
+    isAway: activityAway
+  });
 
   // Keep the self-view online. For others, away takes precedence over busy:
   // leaving Chat sets busy independently of tab visibility or inactivity.
@@ -191,9 +202,7 @@ export default function ProfilePic({
           size={statusSize}
         />
       )}
-      {activity && activityOnline && !activityAway ? (
-        <ActivityBadge activity={activity} />
-      ) : null}
+      {activity && activityShown ? <ActivityBadge activity={activity} /> : null}
     </div>
   );
 

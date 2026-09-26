@@ -14,6 +14,10 @@ import { ThemeName } from '~/theme';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import Content from './Content';
 import {
+  getDisplayedPresence,
+  isPresenceHidden
+} from '~/helpers/hiddenPresence';
+import {
   getCanonicalProfilePictureUrl,
   getCanonicalProfileStatus
 } from '~/helpers/profileCanonicalState';
@@ -229,8 +233,10 @@ function ProfilePanel({
     () => !profileLoaded || inView || isVisible,
     [inView, isVisible, profileLoaded]
   );
-  const profileStatus = chatStatus[profileId] || {};
-  const { isOnline = false, isBusy = false, isAway = false } = profileStatus;
+  const { isOnline, isBusy, isAway } = getDisplayedPresence(
+    profileId,
+    chatStatus[profileId]
+  );
   const componentHeight = useMemo(
     () => placeholderHeight || '15rem',
     [placeholderHeight]
@@ -262,7 +268,7 @@ function ProfilePanel({
               isAway={isAway}
               isBusy={isBusy}
               isOnline={isOnline}
-              lastActive={lastActive}
+              lastActive={isPresenceHidden(profileId) ? null : lastActive}
               loadingComments={loadingComments}
               noBio={noBio}
               numMessages={numMessages}

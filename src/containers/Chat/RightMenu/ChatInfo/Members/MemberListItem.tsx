@@ -6,6 +6,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSinceShort } from '~/helpers/timeStampHelpers';
+import { isPresenceHidden } from '~/helpers/hiddenPresence';
 
 const EMPTY_MEMBER_STATE = {};
 
@@ -112,7 +113,9 @@ export default function MemberListItem({
                 username: memberName || member.username || username
               }}
             />
-            {!onlineMemberObj[member.id] && (lastActive || member.lastActive) ? (
+            {!onlineMemberObj[member.id] &&
+            !isPresenceHidden(member.id) &&
+            (lastActive || member.lastActive) ? (
               <small
                 className={css`
                   color: ${Color.gray()};

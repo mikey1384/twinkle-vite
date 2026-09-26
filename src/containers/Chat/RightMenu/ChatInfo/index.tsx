@@ -21,6 +21,7 @@ import LocalContext from '../../Context';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
+import { isPresenceHidden } from '~/helpers/hiddenPresence';
 
 const madeCallLabel = 'made a call';
 const onlineLabel = 'Online';
@@ -170,6 +171,8 @@ function ChatInfo({
       (member) =>
         !!member?.id &&
         member.id !== myId &&
+        // Zero and Ciel are listed with everyone else, never as online
+        !isPresenceHidden(member.id) &&
         (currentChannel?.id === GENERAL_CHAT_ID ||
           allMemberIds?.includes(member.id))
     );
@@ -225,7 +228,7 @@ function ChatInfo({
     const oneDayAgoSec = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
     const seenIds = new Set<number>();
     return (recentOfflineUsers || [])
-      .filter((u: any) => !onlineIds.has(u.id))
+      .filter((u: any) => !onlineIds.has(u.id) && !isPresenceHidden(u.id))
       .filter((u: any) => Number(u.lastActive) >= oneDayAgoSec)
       .filter((u: any) => {
         if (seenIds.has(u.id)) return false;
