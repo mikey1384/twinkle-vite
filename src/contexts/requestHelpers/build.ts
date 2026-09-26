@@ -1959,6 +1959,72 @@ export default function buildRequestHelpers({
       }
     },
 
+    // Twinkle.ai.generateMusic: Lyria music saved to the viewer's Twinkle.files.
+    // Idempotent by requestId: a retry returns the finished song, or
+    // music_in_progress while it is still being made.
+    async callBuildRuntimeAiMusic({
+      buildId,
+      prompt,
+      length = 'full',
+      instrumental = false,
+      requestId,
+      appMcpInvocation
+    }: {
+      buildId: number;
+      prompt: string;
+      length?: 'full' | 'clip';
+      instrumental?: boolean;
+      requestId: string;
+      appMcpInvocation?: BuildAppMcpInvocationContext;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/runtime-ai-music`,
+          { prompt, length, instrumental, requestId, ...appMcpInvocation },
+          {
+            ...auth(),
+            timeout: 540000,
+            meta: { allowExtendedTimeout: true, enforceTimeout: false }
+          }
+        );
+        return data;
+      } catch (error: any) {
+        const errorData = error?.response?.data;
+        return {
+          success: false,
+          reachedServer: Boolean(error?.response),
+          status: error?.response?.status,
+          error:
+            (typeof errorData?.error === 'string' && errorData.error) ||
+            error?.message ||
+            'Music generation failed',
+          code: errorData?.code,
+          aiUsagePolicy: errorData?.aiUsagePolicy
+        };
+      }
+    },
+
+    async loadBuildRuntimeAiMusicEstimate({
+      buildId,
+      length = 'full'
+    }: {
+      buildId: number;
+      length?: 'full' | 'clip';
+    }) {
+      const { data } = await request.post(
+        `${URL}/build/${buildId}/runtime-ai-music/estimate`,
+        { length },
+        auth()
+      );
+      return data as {
+        length: 'full' | 'clip';
+        model: string;
+        label: string;
+        energyUnits: number;
+        fullBatteryUnits: number;
+      };
+    },
+
     async loadBuildRuntimeAiImageStatus({
       buildId,
       prompt,

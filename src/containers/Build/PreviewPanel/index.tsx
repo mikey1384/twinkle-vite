@@ -51,7 +51,10 @@ import type {
   BuildMediaActionConfirmationRequest,
   PreviewOpenContentConfirmationRequest
 } from './types/previewHostBridgeTypes';
-import type { BuildRuntimeImageGenerationConfirmationRequest } from './helpers/buildRuntimeImageGeneration';
+import type {
+  BuildRuntimeImageGenerationConfirmationRequest,
+  BuildRuntimeMusicGenerationConfirmationRequest
+} from './helpers/buildRuntimeImageGeneration';
 import VersionHistoryModal from './VersionHistoryModal';
 import {
   EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS,
@@ -673,6 +676,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestConfirm: requestImageGenerationConfirm
     } = useConfirmModal();
     const {
+      confirmModal: musicGenerationConfirmModal,
+      requestConfirm: requestMusicGenerationConfirm
+    } = useConfirmModal();
+    const {
       confirmModal: mediaActionConfirmModal,
       requestConfirm: requestMediaActionConfirm
     } = useConfirmModal();
@@ -779,6 +786,70 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         requestBuildImageGenerationConfirmationRef.current = null;
       };
     }, [build.title, requestImageGenerationConfirm]);
+    const loadMusicEstimate = useAppContext(
+      (v) => v.requestHelpers.loadBuildRuntimeAiMusicEstimate
+    );
+    const loadMusicEstimateRef = useRef(loadMusicEstimate);
+    loadMusicEstimateRef.current = loadMusicEstimate;
+    const requestBuildMusicGenerationConfirmationRef = useRef<
+      | ((
+          request: BuildRuntimeMusicGenerationConfirmationRequest
+        ) => Promise<boolean>)
+      | null
+    >(null);
+    useEffect(() => {
+      requestBuildMusicGenerationConfirmationRef.current = async ({
+        prompt,
+        length,
+        instrumental
+      }) => {
+        let estimatePercent: number | null = null;
+        let modelLabel = length === 'clip' ? 'Lyria 3 Clip' : 'Lyria 3.5';
+        try {
+          const estimate = await loadMusicEstimateRef.current({
+            buildId: build.id,
+            length
+          });
+          modelLabel = estimate.label || modelLabel;
+          if (estimate.fullBatteryUnits > 0 && estimate.energyUnits >= 0)
+            estimatePercent =
+              (estimate.energyUnits / estimate.fullBatteryUnits) * 100;
+        } catch {
+          /* The confirmation still explains what is being generated. */
+        }
+        return requestMusicGenerationConfirm({
+          title: 'Make music with AI Energy?',
+          description: (
+            <span className={imageGenerationConfirmationClass}>
+              <span>
+                <strong>{build.title || 'This Build app'}</strong> wants to
+                make music using your AI Energy.
+              </span>
+              <span className={imageGenerationPromptClass}>
+                <strong>Music:</strong> {prompt || '(empty description)'}
+              </span>
+              <span>
+                {modelLabel}:{' '}
+                {length === 'clip' ? 'a 30-second clip' : 'a full song'}
+                {instrumental ? ', instrumental' : ''}. The music is saved to
+                your files. Each approval makes one piece.
+              </span>
+              <span>
+                {estimatePercent !== null
+                  ? `Cost: about ${estimatePercent < 1 ? '<1' : Math.round(estimatePercent)}% of a full battery, only if the music is made.`
+                  : 'Battery is used only if the music is made.'}
+              </span>
+            </span>
+          ),
+          descriptionFontSize: '1.1rem',
+          confirmButtonLabel: length === 'clip' ? 'Make clip' : 'Make song',
+          modalOverModal: true
+        });
+      };
+      return () => {
+        requestBuildMusicGenerationConfirmationRef.current = null;
+      };
+    }, [build.id, build.title, requestMusicGenerationConfirm]);
     const requestBuildMediaActionConfirmationRef = useRef<
       | ((request: BuildMediaActionConfirmationRequest) => Promise<boolean>)
       | null
@@ -1279,6 +1350,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       runtimeUploadsSyncRef: onRuntimeUploadsSyncRef,
       onAiUsagePolicyUpdateRef,
       requestBuildImageGenerationConfirmationRef,
+      requestBuildMusicGenerationConfirmationRef,
       requestBuildMediaActionConfirmationRef,
       onBuildLiveSafetyHostSessionsChange: setActiveBuildLiveSafetyHostSessions,
       requestBuildLiveSafetyStopRef,
@@ -1682,6 +1754,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         {projectFileConfirmModal}
         {openContentConfirmModal}
         {imageGenerationConfirmModal}
+        {musicGenerationConfirmModal}
         {mediaActionConfirmModal}
       </div>
     );

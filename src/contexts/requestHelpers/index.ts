@@ -136,6 +136,8 @@ registerMethods('build', [
   'callBuildRuntimeAiChat',
   'callBuildRuntimeAiImage',
   'loadBuildRuntimeAiImageStatus',
+  'callBuildRuntimeAiMusic',
+  'loadBuildRuntimeAiMusicEstimate',
   'callBuildRuntimeAiChatStream',
   'callBuildRuntimeAiDecision',
   'callBuildRuntimeAiObject',

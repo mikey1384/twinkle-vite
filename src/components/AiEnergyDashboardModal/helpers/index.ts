@@ -104,6 +104,7 @@ const AI_USAGE_TARGET_LABELS: Record<string, string> = {
   ai_story_image_generation: 'story image',
   ai_image_generation: 'image',
   ai_image_followup: 'image edit',
+  ai_music_generation: 'music',
   daily_reflection_share: 'reflection',
   chat_topic: 'topic'
 };

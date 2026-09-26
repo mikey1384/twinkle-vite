@@ -40,6 +40,9 @@ export default function useAppRequests() {
   const callBuildRuntimeAiImage = useAppContext(
     (v) => v.requestHelpers.callBuildRuntimeAiImage
   );
+  const callBuildRuntimeAiMusic = useAppContext(
+    (v) => v.requestHelpers.callBuildRuntimeAiMusic
+  );
   const loadBuildRuntimeAiImageStatus = useAppContext(
     (v) => v.requestHelpers.loadBuildRuntimeAiImageStatus
   );
@@ -357,6 +360,7 @@ export default function useAppRequests() {
   const getAiEnergyPolicyRef = useRef(getAiEnergyPolicy);
   const callBuildRuntimeAiChatRef = useRef(callBuildRuntimeAiChat);
   const callBuildRuntimeAiImageRef = useRef(callBuildRuntimeAiImage);
+  const callBuildRuntimeAiMusicRef = useRef(callBuildRuntimeAiMusic);
   const loadBuildRuntimeAiImageStatusRef = useRef(
     loadBuildRuntimeAiImageStatus
   );
@@ -503,6 +507,7 @@ export default function useAppRequests() {
     loadBuildAiPromptsRef,
     callBuildRuntimeAiChatRef,
     callBuildRuntimeAiImageRef,
+    callBuildRuntimeAiMusicRef,
     loadBuildRuntimeAiImageStatusRef,
     loadAIImageResultRef,
     callBuildRuntimeAiChatStreamRef,

@@ -13,7 +13,10 @@ import type {
 } from './index';
 import type { PreviewHostBridgeAuth } from '../helpers/previewBridgeAuth';
 import type { PreviewHostBridgeRequestRefs } from '../helpers/previewBridgeRequestRefs';
-import type { BuildRuntimeImageGenerationConfirmationRequest } from '../helpers/buildRuntimeImageGeneration';
+import type {
+  BuildRuntimeImageGenerationConfirmationRequest,
+  BuildRuntimeMusicGenerationConfirmationRequest
+} from '../helpers/buildRuntimeImageGeneration';
 
 export interface PreviewOpenContentConfirmationRequest {
   url: string;
@@ -102,6 +105,12 @@ export interface UsePreviewHostBridgeArgs {
   requestBuildImageGenerationConfirmationRef: RefObject<
     | ((
         request: BuildRuntimeImageGenerationConfirmationRequest
+      ) => Promise<boolean>)
+    | null
+  >;
+  requestBuildMusicGenerationConfirmationRef: RefObject<
+    | ((
+        request: BuildRuntimeMusicGenerationConfirmationRequest
       ) => Promise<boolean>)
     | null
   >;

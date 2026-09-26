@@ -27,18 +27,22 @@ interface BuildRuntimeImageGenerationAuthorized {
 type BuildRuntimeImageGenerationAuthorization =
   BuildRuntimeImageGenerationDenied | BuildRuntimeImageGenerationAuthorized;
 
-export function authorizeBuildRuntimeImageGenerationUserActivation(
-  userActivation: BuildRuntimeImageGenerationUserActivation | null | undefined
-): BuildRuntimeImageGenerationDenied | null {
-  if (userActivation?.isActive === true) return null;
-  return {
-    authorized: false,
-    code: 'USER_ACTIVATION_REQUIRED',
-    message: 'AI image generation must start from a user action.'
-  };
+// One consented AI generation at a time: it must start from a user action,
+// the host asks the viewer to approve it, and each approval covers exactly
+// one request. Shared by image and music generation.
+interface ConsentedGenerationWording {
+  inProgressCode: string;
+  inProgressMessage: string;
+  unavailableCode: string;
+  unavailableMessage: string;
+  cancelledCode: string;
+  cancelledMessage: string;
+  activationMessage: string;
 }
 
-export function createBuildRuntimeImageGenerationController() {
+function createConsentedGenerationController<Request>(
+  wording: ConsentedGenerationWording
+) {
   let state: 'idle' | 'confirming' | 'generating' = 'idle';
 
   return {
@@ -49,31 +53,33 @@ export function createBuildRuntimeImageGenerationController() {
     }: {
       userActivation:
         BuildRuntimeImageGenerationUserActivation | null | undefined;
-      request: BuildRuntimeImageGenerationConfirmationRequest;
+      request: Request;
       requestConfirmation:
-        | ((
-            request: BuildRuntimeImageGenerationConfirmationRequest
-          ) => Promise<boolean>)
+        | ((request: Request) => Promise<boolean>)
         | null
         | undefined;
     }): Promise<BuildRuntimeImageGenerationAuthorization> {
-      const activationDenied =
-        authorizeBuildRuntimeImageGenerationUserActivation(userActivation);
-      if (activationDenied) return activationDenied;
+      if (userActivation?.isActive !== true) {
+        return {
+          authorized: false,
+          code: 'USER_ACTIVATION_REQUIRED',
+          message: wording.activationMessage
+        };
+      }
 
       if (state !== 'idle') {
         return {
           authorized: false,
-          code: 'ai_image_generation_in_progress',
-          message: 'Another AI image generation is already in progress.'
+          code: wording.inProgressCode,
+          message: wording.inProgressMessage
         };
       }
 
       if (!requestConfirmation) {
         return {
           authorized: false,
-          code: 'IMAGE_GENERATION_CONFIRMATION_UNAVAILABLE',
-          message: 'AI image generation confirmation is unavailable.'
+          code: wording.unavailableCode,
+          message: wording.unavailableMessage
         };
       }
 
@@ -84,8 +90,8 @@ export function createBuildRuntimeImageGenerationController() {
           state = 'idle';
           return {
             authorized: false,
-            code: 'IMAGE_GENERATION_CANCELLED',
-            message: 'AI image generation was cancelled.'
+            code: wording.cancelledCode,
+            message: wording.cancelledMessage
           };
         }
 
@@ -105,4 +111,38 @@ export function createBuildRuntimeImageGenerationController() {
       }
     }
   };
+}
+
+export function createBuildRuntimeImageGenerationController() {
+  return createConsentedGenerationController<BuildRuntimeImageGenerationConfirmationRequest>(
+    {
+      inProgressCode: 'ai_image_generation_in_progress',
+      inProgressMessage: 'Another AI image generation is already in progress.',
+      unavailableCode: 'IMAGE_GENERATION_CONFIRMATION_UNAVAILABLE',
+      unavailableMessage: 'AI image generation confirmation is unavailable.',
+      cancelledCode: 'IMAGE_GENERATION_CANCELLED',
+      cancelledMessage: 'AI image generation was cancelled.',
+      activationMessage: 'AI image generation must start from a user action.'
+    }
+  );
+}
+
+export interface BuildRuntimeMusicGenerationConfirmationRequest {
+  prompt: string;
+  length: 'full' | 'clip';
+  instrumental: boolean;
+}
+
+export function createBuildRuntimeMusicGenerationController() {
+  return createConsentedGenerationController<BuildRuntimeMusicGenerationConfirmationRequest>(
+    {
+      inProgressCode: 'ai_music_generation_in_progress',
+      inProgressMessage: 'Another AI music generation is already in progress.',
+      unavailableCode: 'MUSIC_GENERATION_CONFIRMATION_UNAVAILABLE',
+      unavailableMessage: 'AI music generation confirmation is unavailable.',
+      cancelledCode: 'MUSIC_GENERATION_CANCELLED',
+      cancelledMessage: 'AI music generation was cancelled.',
+      activationMessage: 'AI music generation must start from a user action.'
+    }
+  );
 }

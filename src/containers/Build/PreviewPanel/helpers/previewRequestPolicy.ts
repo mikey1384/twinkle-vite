@@ -6,6 +6,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:generate-object',
   'ai:decide',
   'ai:generate-image',
+  'ai:generate-music',
   'app:navigate',
   'app:open-content',
   'app-tools:register',

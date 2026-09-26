@@ -40,7 +40,10 @@ import {
   authorizeTwinkleContentNavigation,
   createTwinkleContentNavigationConfirmationController
 } from '../helpers/twinkleContentNavigation';
-import { createBuildRuntimeImageGenerationController } from '../helpers/buildRuntimeImageGeneration';
+import {
+  createBuildRuntimeImageGenerationController,
+  createBuildRuntimeMusicGenerationController
+} from '../helpers/buildRuntimeImageGeneration';
 import {
   getBuildAppAiUsagePolicy,
   sanitizeBuildAppAiUsagePolicyPayload
@@ -223,6 +226,7 @@ export function useHostBridge({
   onAiUsagePolicyUpdateRef,
   requestOpenContentConfirmationRef,
   requestBuildImageGenerationConfirmationRef,
+  requestBuildMusicGenerationConfirmationRef,
   requestBuildMediaActionConfirmationRef,
   onBuildLiveSafetyHostSessionsChange,
   requestBuildLiveSafetyStopRef
@@ -251,6 +255,13 @@ export function useHostBridge({
     imageGenerationControllerRef.current ||
     createBuildRuntimeImageGenerationController();
   imageGenerationControllerRef.current = imageGenerationController;
+  const musicGenerationControllerRef = useRef<ReturnType<
+    typeof createBuildRuntimeMusicGenerationController
+  > | null>(null);
+  const musicGenerationController =
+    musicGenerationControllerRef.current ||
+    createBuildRuntimeMusicGenerationController();
+  musicGenerationControllerRef.current = musicGenerationController;
   mountContextRef.current = mountContext;
   launchTargetRef.current = launchTarget;
   audioMutedRef.current = audioMuted;
@@ -2354,6 +2365,80 @@ export function useHostBridge({
               onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
             }
             break;
+
+          case 'ai:generate-music': {
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+              throw createPreviewBridgeError(
+                'Sign in to generate AI music.',
+                'AUTH_REQUIRED'
+              );
+            }
+            const musicRequest = {
+              prompt: String(payload?.prompt || '').trim(),
+              length: (payload?.length === 'clip' ? 'clip' : 'full') as
+                | 'clip'
+                | 'full',
+              instrumental: payload?.instrumental === true
+            };
+            const musicAuthorization = await musicGenerationController.authorize(
+              {
+                userActivation: navigator.userActivation,
+                request: musicRequest,
+                requestConfirmation:
+                  requestBuildMusicGenerationConfirmationRef.current
+              }
+            );
+            if (!musicAuthorization.authorized) {
+              throw createPreviewBridgeError(
+                musicAuthorization.message,
+                musicAuthorization.code
+              );
+            }
+            try {
+              const musicCall = {
+                buildId: activeBuild.id,
+                ...musicRequest,
+                requestId: String(payload?.requestId || id),
+                appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
+              };
+              response =
+                await requestRefs.callBuildRuntimeAiMusicRef.current(musicCall);
+              // The song keeps rendering on the server if this connection
+              // drops or times out; the same requestId returns it when done
+              // (or music_in_progress until then) and is never paid twice.
+              for (
+                let attempt = 0;
+                attempt < 40 &&
+                response?.success === false &&
+                (response.code === 'music_in_progress' ||
+                  !response.reachedServer ||
+                  (!response.code && Number(response.status) >= 502));
+                attempt += 1
+              ) {
+                await new Promise((resolve) => setTimeout(resolve, 8000));
+                response =
+                  await requestRefs.callBuildRuntimeAiMusicRef.current(
+                    musicCall
+                  );
+              }
+            } finally {
+              musicAuthorization.release();
+            }
+            if (
+              response?.aiUsagePolicy &&
+              typeof response.aiUsagePolicy === 'object'
+            ) {
+              onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            }
+            if (response?.success === false) {
+              throw createPreviewBridgeError(
+                response.error || 'Music generation failed',
+                response.code || 'music_generation_failed'
+              );
+            }
+            break;
+          }
 
           case 'ai:generate-image': {
             if (!previewAuth.userIdRef.current) {
@@ -4867,6 +4952,7 @@ export function useHostBridge({
     capabilitySnapshotRef,
     contentNavigationConfirmationController,
     imageGenerationController,
+    musicGenerationController,
     messageTargetFrameRef,
     navigateHostContentRef,
     navigatePreviewFrameRef,
@@ -4882,6 +4968,7 @@ export function useHostBridge({
     runtimeUploadsSyncRef,
     onAiUsagePolicyUpdateRef,
     requestBuildImageGenerationConfirmationRef,
+    requestBuildMusicGenerationConfirmationRef,
     requestBuildMediaActionConfirmationRef,
     requestBuildLiveSafetyStopRef,
     requestOpenContentConfirmationRef,

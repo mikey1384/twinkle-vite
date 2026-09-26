@@ -10,6 +10,7 @@ export interface PreviewHostBridgeRequestRefs {
   loadBuildAiPromptsRef: AsyncRequestRef;
   callBuildRuntimeAiChatRef: AsyncRequestRef;
   callBuildRuntimeAiImageRef: AsyncRequestRef;
+  callBuildRuntimeAiMusicRef: AsyncRequestRef;
   loadBuildRuntimeAiImageStatusRef: AsyncRequestRef;
   loadAIImageResultRef: AsyncRequestRef;
   callBuildRuntimeAiChatStreamRef: AsyncRequestRef;
