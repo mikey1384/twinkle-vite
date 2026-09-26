@@ -17,6 +17,7 @@ import {
 } from '../constants';
 import { resolveChatStickToBottom } from '../helpers/chatStickToBottom';
 import { LUMINE_MODE_LABELS } from '../helpers/lumineModelSelection';
+import { resolveLumineEnergyPreflight } from '../helpers/lumineEnergySteps';
 import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
 import { buildLumineRuntimeDebugSnapshot } from './helpers/runtimeDebug';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
@@ -378,11 +379,22 @@ export default function ChatPanel({
     !!energyPolicy &&
     typeof energyPolicy.energyRemaining === 'number' &&
     energyPolicy.energyRemaining <= 0;
+  // Steps each model can afford before a run starts: with not even one on
+  // any model the composer is disabled, and a model that cannot read and
+  // then edit is offered a lighter one (helpers/lumineEnergySteps.ts).
+  const energyPreflight = resolveLumineEnergyPreflight({
+    modelOptions:
+      lumineModelSelectionControl?.modelOptions ||
+      copilotPolicy?.lumineModelOptions ||
+      [],
+    selection: lumineModelSelectionControl?.value || null,
+    energyRemaining: energyPolicy?.energyRemaining
+  });
   // First-exchange eligibility is global across every build, so only the
   // server policy may keep an empty-battery composer enabled. The current
   // thread is not authoritative for messages sent in another workspace.
   const energyUnavailable =
-    energyDepleted &&
+    (energyDepleted || energyPreflight.noStepAffordable) &&
     copilotPolicy?.requestLimits?.firstLumineExchangeAvailable !== true;
   const aiInputDisabled = AI_FEATURES_DISABLED || energyUnavailable;
   const appReferences = useAppReferences({
@@ -399,8 +411,25 @@ export default function ChatPanel({
   const aiInputDisabledNotice = AI_FEATURES_DISABLED
     ? AI_DISABLED_NOTICE
     : energyUnavailable
-      ? 'Recharge AI Energy to use Lumine.'
+      ? energyDepleted
+        ? 'Recharge AI Energy to use Lumine.'
+        : 'There’s not enough AI Energy left for Lumine to take even one step. Recharge, or come back tomorrow.'
       : '';
+  const tightSelection = energyPreflight.tightSelection;
+  const energyModelSwitch =
+    tightSelection && lumineModelSelectionControl && !aiInputDisabled
+      ? {
+          message: `${LUMINE_MODE_LABELS[tightSelection.current.mode]} mode can do about ${tightSelection.currentSteps} step${tightSelection.currentSteps === 1 ? '' : 's'} with the AI Energy you have left. That usually isn’t enough to change your project. ${LUMINE_MODE_LABELS[tightSelection.lighter.mode]} mode (${tightSelection.lighter.label}) can do about ${tightSelection.lighterSteps}.`,
+          buttonLabel: `Switch to ${LUMINE_MODE_LABELS[tightSelection.lighter.mode]}`,
+          busy: Boolean(lumineModelSelectionControl.loading),
+          onSwitch: () =>
+            lumineModelSelectionControl.onSave({
+              model: tightSelection.lighter.model,
+              mode: tightSelection.lighter.mode,
+              reasoningEffort: tightSelection.lighter.defaultReasoningEffort
+            })
+        }
+      : null;
   const currentActivity = useMemo(() => {
     for (let index = runEvents.length - 1; index >= 0; index -= 1) {
       const event = runEvents[index];
@@ -973,6 +1002,7 @@ export default function ChatPanel({
             AI_FEATURES_DISABLED={AI_FEATURES_DISABLED}
             aiInputDisabled={aiInputDisabled}
             aiInputDisabledNotice={aiInputDisabledNotice}
+            energyModelSwitch={energyModelSwitch}
             buildId={buildId}
             draftMessage={draftMessage}
             generating={generating}

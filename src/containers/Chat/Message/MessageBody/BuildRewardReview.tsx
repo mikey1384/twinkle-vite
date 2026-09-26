@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import RewardProposalDiffModal from '~/components/Build/Rewards/RewardProposalDiffModal';
+import RewardProposalTryButton from '~/components/Build/Rewards/RewardProposalTryButton';
 import type { RewardProposalDiff } from '~/components/Build/Rewards/types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { ADMIN_USER_ID } from '~/constants/defaultValues';
@@ -63,6 +64,10 @@ export default function BuildRewardReview({
   const budgets = review?.budgets || {};
   const sentByMe = Number(sender.id) === Number(myId);
   const isReviewer = Number(myId) === ADMIN_USER_ID;
+  // Both sides of an open offer can play the suggested version first; the
+  // server re-checks that the viewer is the app's owner or the reviewer.
+  const canTryProposal =
+    status === 'changes_offered' && (sentByMe || isReviewer);
   const rulesSummary = formatBuildRewardRulesSummary(review?.rules);
   // Budgets exist only once the reviewer has written rules; a pending request
   // carries none, so showing zeros would read as a broken card.
@@ -120,6 +125,9 @@ export default function BuildRewardReview({
         <>
           {/* A closed request has nothing left to decide, so the reviewer
               gets no button at all rather than a live-looking one. */}
+          {canTryProposal && !confirmingDecline ? (
+            <RewardProposalTryButton reviewId={reviewId} />
+          ) : null}
           {isReviewer && status !== 'superseded' ? (
             <GameCTAButton
               variant={status === 'pending' ? 'success' : 'neutral'}
@@ -257,8 +265,9 @@ export default function BuildRewardReview({
               sentByMe ? (
                 <>
                   The admin read <strong>{title}</strong> and suggested some
-                  changes. Look at them, then accept to go live with those
-                  changes, or say no to close this request.
+                  changes. Try the suggested version and look at the changes,
+                  then accept to go live with them, or say no to close this
+                  request.
                   {confirmingDecline
                     ? ' Saying no keeps your app exactly as it is and publishes nothing.'
                     : ''}

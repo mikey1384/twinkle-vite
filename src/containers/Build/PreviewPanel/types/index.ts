@@ -130,6 +130,9 @@ export interface PreviewPanelProps {
     username: string | null;
     profilePicUrl: string | null;
   } | null;
+  // Running a reward reviewer's suggested version: its in-app rewards are
+  // simulated against that review's offered economy (never paid).
+  rewardProposalReviewId?: number | null;
   onCaptureReadyChange?: (
     ready: boolean,
     payload: { codeSignature: string | null; previewSrc: string | null }

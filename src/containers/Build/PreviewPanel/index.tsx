@@ -167,6 +167,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       mountContext = null,
       launchTarget = null,
       viewerOverride = null,
+      rewardProposalReviewId = null,
       onCaptureReadyChange
     }: PreviewPanelProps,
     ref
@@ -627,7 +628,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       previewRequestRefs,
       restoreBuildArtifactVersionRef,
       uploadBuildRuntimeFilesRef
-    } = useAppRequests();
+    } = useAppRequests({ rewardProposalReviewId });
 
     const buildApiTokenRef = useRef<{
       buildId?: number;

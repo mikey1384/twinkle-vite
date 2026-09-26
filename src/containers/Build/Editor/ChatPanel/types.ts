@@ -44,6 +44,7 @@ export interface BuildLumineModelOption {
   defaultReasoningEffort: BuildLumineThinkLevel;
   supportedReasoningEfforts: BuildLumineThinkLevel[];
   typicalCallEnergyUnits?: number;
+  handoffReserveEnergyUnits?: number;
 }
 
 export interface BuildLumineModelPreference {

@@ -609,6 +609,49 @@ export default function buildRequestHelpers({
       );
       return data;
     },
+    // "Try this version": the owner or the reviewer runs the suggested
+    // snapshot as a preview. The server signs a frame path for this review.
+    async openBuildRewardProposalPreview(reviewId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/reward-reviews/${reviewId}/proposal/preview`,
+          {},
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
+        return data;
+      } catch (error) {
+        throw new Error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : 'Could not open the suggested version.'
+        );
+      }
+    },
+    // Rewards inside that preview: the offered economy, simulated, never paid.
+    async requestBuildRewardProposalRewardPreview({
+      reviewId,
+      operation,
+      payload
+    }: {
+      reviewId: number;
+      operation: string;
+      payload: unknown;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/reward-reviews/${reviewId}/proposal/rewards/${operation}`,
+          payload,
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
+        return data;
+      } catch (error) {
+        throw new Error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error || error.message
+            : 'Could not complete reward preview.'
+        );
+      }
+    },
     async decideBuildRewardReview(
       reviewId: number,
       decision: string,

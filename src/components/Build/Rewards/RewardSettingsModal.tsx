@@ -9,6 +9,7 @@ import { rewardApprovalPresentation } from './approvalPresentation';
 import useRewardStatus from './useRewardStatus';
 import RewardProposalDiffModal from './RewardProposalDiffModal';
 import RewardProposalEarnings from './RewardProposalEarnings';
+import RewardProposalTryButton from './RewardProposalTryButton';
 import type { RewardProposalDiff, RewardSettings } from './types';
 
 // The creator's whole job here is to understand that an admin must approve
@@ -228,9 +229,15 @@ export default function RewardSettingsModal({
                   ))}
                 </ul>
                 <p className={mutedClass}>
-                  Press <strong>See the changes</strong> to read every line that
-                  is different, side by side with your version.
+                  Press <strong>Try this version</strong> to play it first, or{' '}
+                  <strong>See the changes</strong> to read every line that is
+                  different, side by side with your version.
                 </p>
+                <div className={tryRowClass}>
+                  <RewardProposalTryButton
+                    reviewId={Number(settings.reviewId)}
+                  />
+                </div>
                 {confirmingDecline ? (
                   <p role="alert">
                     Saying no closes this request. Your app stays as it is, and
@@ -849,6 +856,13 @@ const problemListClass = css`
   display: grid;
   gap: 0.4rem;
   color: #7f1d1d;
+`;
+
+const tryRowClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
 `;
 
 const mutedClass = css`

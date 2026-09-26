@@ -1192,11 +1192,17 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async cancelGrammarGame() {
+    async cancelGrammarGame({
+      attemptNumber,
+      answeredCount
+    }: {
+      attemptNumber: number;
+      answeredCount: number;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/grammar/cancel`,
-          {},
+          { attemptNumber, answeredCount },
           auth()
         );
         return data;

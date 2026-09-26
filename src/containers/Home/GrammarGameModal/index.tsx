@@ -18,8 +18,23 @@ import {
 } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
+import {
+  countAnsweredGrammarQuestions,
+  resolveGrammarCloseAction
+} from './closeAction';
 
 const RESULT_SCREEN_MIN_DISPLAY_MS = 3000;
+
+interface GrammarResultPayload {
+  attemptNumber: number;
+  scoreArray: string[];
+  questionResults: Array<{
+    questionId: number;
+    isCorrect: boolean;
+    grade?: string;
+    selectedChoiceIndex?: number | null;
+  }>;
+}
 
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -52,6 +67,14 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [hasUnlockedDailyTask, setHasUnlockedDailyTask] = useState(false);
   const attemptNumberRef = useRef<number | null>(null);
+  // Set only from the server's /start answer, so a cancel always names an
+  // attempt this session really started.
+  const startedAttemptNumberRef = useRef<number | null>(null);
+  const startAttemptPromiseRef = useRef<Promise<void> | null>(null);
+  const uploadInFlightRef = useRef(false);
+  const unsavedResultRef = useRef<GrammarResultPayload | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [retryingSave, setRetryingSave] = useState(false);
   const [questionIds, setQuestionIds] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [triggerEffect, setTriggerEffect] = useState(false);
@@ -124,9 +147,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     if (gameState === 'started') {
       setShowConfirm(true);
     } else {
-      if (gameLoading) {
-        cancelGrammarGame().catch(() => {});
-      }
+      // Loading questions starts no attempt, so there is nothing to cancel.
       onUpdateGrammarLoadingStatus('');
       onUpdateGrammarGenerationProgress(null);
       onHide();
@@ -135,14 +156,50 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
 
   async function handleConfirmClose() {
     setShowConfirm(false);
-    try {
-      await cancelGrammarGame();
-    } catch {
-      // ignore
+    if (!startedAttemptNumberRef.current && startAttemptPromiseRef.current) {
+      // A close right after the round began still cancels its attempt.
+      await startAttemptPromiseRef.current;
+    }
+    const closeAction = resolveGrammarCloseAction({
+      uploadInFlight: uploadInFlightRef.current,
+      hasUnsavedResult: !!unsavedResultRef.current,
+      startedAttemptNumber: startedAttemptNumberRef.current,
+      answeredCount: countAnsweredGrammarQuestions(
+        questionIds,
+        questionObjRef.current
+      )
+    });
+    if (closeAction.type === 'resend' && unsavedResultRef.current) {
+      // A finished round is never cancelled; one more try to save it.
+      uploadGrammarGameResult(unsavedResultRef.current).catch(() => {});
+    } else if (closeAction.type === 'cancel') {
+      try {
+        await cancelGrammarGame({
+          attemptNumber: closeAction.attemptNumber,
+          answeredCount: closeAction.answeredCount
+        });
+      } catch {
+        // ignore
+      }
     }
     onUpdateGrammarLoadingStatus('');
     onUpdateGrammarGenerationProgress(null);
     onHide();
+  }
+
+  function getCloseWarning() {
+    if (saveFailed) {
+      return "Your result isn't saved yet. If you close now, we'll try to save it one more time.";
+    }
+    if (unsavedResultRef.current) {
+      return "Your result is still being saved. Closing now won't stop it.";
+    }
+    if (!countAnsweredGrammarQuestions(questionIds, questionObjRef.current)) {
+      return "You haven't answered any questions yet, so closing now won't count against you.";
+    }
+    return hasUnlockedDailyTask
+      ? "If you close now, this level will count as failed for today and you'll miss out on 1,000 coins."
+      : "If you close now, this level will count as failed for today, you'll miss out on 1,000 coins, and you might not be able to complete today's Grammarbles daily task.";
   }
 
   const footer =
@@ -219,6 +276,33 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               triggerEffect={triggerEffect}
             />
           )}
+          {gameState === 'started' && saveFailed && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                marginTop: '2rem',
+                fontSize: '1.7rem',
+                textAlign: 'center'
+              }}
+            >
+              <b>{`Couldn't save your result`}</b>
+              <div style={{ marginTop: '0.5rem', fontSize: '1.5rem' }}>
+                Check your connection and try again.
+              </div>
+              <Button
+                style={{ marginTop: '1.5rem' }}
+                variant="soft"
+                tone="raised"
+                color="logoBlue"
+                loading={retryingSave}
+                onClick={handleRetrySave}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
           {activeTab === 'game' && gameState === 'finished' && (
             <FinishScreen
               timesPlayedToday={timesPlayedToday}
@@ -257,11 +341,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             modalOverModal
             onHide={() => setShowConfirm(false)}
             title="Warning"
-            description={
-              hasUnlockedDailyTask
-                ? "If you close now, you'll miss out on 1,000 coins."
-                : "If you close now, you'll miss out on 1,000 coins and you might not be able to complete today's Grammarbles daily task."
-            }
+            description={getCloseWarning()}
             descriptionFontSize="2rem"
             onConfirm={handleConfirmClose}
             confirmButtonColor="red"
@@ -277,6 +357,10 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     try {
       setGameLoading(true);
       setQuestionsReady(false);
+      startedAttemptNumberRef.current = null;
+      startAttemptPromiseRef.current = null;
+      unsavedResultRef.current = null;
+      setSaveFailed(false);
       onUpdateGrammarGenerationProgress(null);
       onUpdateGrammarLoadingStatus('loading...');
       const {
@@ -318,7 +402,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       if (questions.length) {
         setGameState('started');
         onUpdateGrammarLoadingStatus('');
-        startAttemptInBackground();
+        startAttemptPromiseRef.current = startAttemptInBackground();
       }
     } catch (error) {
       console.error('An error occurred:', error);
@@ -353,6 +437,9 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
         return;
       }
       attemptNumberRef.current = attemptNumber || timesPlayedToday + 1;
+      if (attemptNumber) {
+        startedAttemptNumberRef.current = attemptNumber;
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -363,47 +450,69 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   async function handleGameFinish() {
     let retries = 0;
     const maxRetries = 3;
-    const cooldown = 1000;
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    while (retries < maxRetries) {
-      try {
-        if (scoreArrayRef.current.length !== 10) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          retries++;
-          continue;
-        }
-        const promises = [
-          (async () => {
-            const { dailyTaskStatus, isDuplicate, newXp, newCoins } =
-              await uploadGrammarGameResult({
-                attemptNumber: attemptNumberRef.current || timesPlayedToday + 1,
-                scoreArray: scoreArrayRef.current,
-                questionResults: questionIds
-                  .map((qid) => {
-                    const q = questionObjRef.current?.[qid];
-                    if (!q) return null;
-                    const isCorrect = q?.score === 'S' || q?.score === 'A';
-                    return {
-                      questionId: q?.id || qid,
-                      isCorrect,
-                      grade: q?.score,
-                      selectedChoiceIndex: q?.selectedChoiceIndex
-                    };
-                  })
-                  .filter(Boolean) as Array<{
-                  questionId: number;
-                  isCorrect: boolean;
-                  grade?: string;
-                  selectedChoiceIndex?: number | null;
-                }>
-              });
-            if (isDuplicate) {
-              setCurrentIndex(0);
-              setGameState('finished');
-              return;
-            }
+    while (scoreArrayRef.current.length !== 10 && retries < maxRetries) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      retries++;
+    }
+    if (scoreArrayRef.current.length !== 10) return;
+    await submitGrammarResult(
+      {
+        attemptNumber: attemptNumberRef.current || timesPlayedToday + 1,
+        scoreArray: [...scoreArrayRef.current],
+        questionResults: questionIds
+          .map((qid) => {
+            const q = questionObjRef.current?.[qid];
+            if (!q) return null;
+            const isCorrect = q?.score === 'S' || q?.score === 'A';
+            return {
+              questionId: q?.id || qid,
+              isCorrect,
+              grade: q?.score,
+              selectedChoiceIndex: q?.selectedChoiceIndex
+            };
+          })
+          .filter(Boolean) as GrammarResultPayload['questionResults']
+      },
+      // Minimum time the result screen (e.g. PERFECT) stays up before
+      // advancing, so the celebration is visible without dragging. The
+      // upload runs in parallel; the screen shows for max(upload, this).
+      RESULT_SCREEN_MIN_DISPLAY_MS
+    );
+  }
+
+  async function handleRetrySave() {
+    if (!unsavedResultRef.current || uploadInFlightRef.current) return;
+    setRetryingSave(true);
+    await submitGrammarResult(unsavedResultRef.current, 0);
+    setRetryingSave(false);
+  }
+
+  // Sends a finished round's result, retrying a few times. A POST is never
+  // retried by the request layer, and resending is safe: the server answers
+  // isDuplicate once the attempt has a result. If every try fails, the payload
+  // is kept for the Retry button (or one more try on close) instead of
+  // leaving the round stuck, where closing used to cancel it as a blank fail.
+  async function submitGrammarResult(
+    payload: GrammarResultPayload,
+    minDisplayMs: number
+  ) {
+    const maxRetries = 3;
+    const cooldown = 1000;
+    uploadInFlightRef.current = true;
+    unsavedResultRef.current = payload;
+    const minDisplay = new Promise<void>((resolve) =>
+      setTimeout(resolve, minDisplayMs)
+    );
+    try {
+      for (let retries = 0; retries < maxRetries; retries++) {
+        try {
+          const { dailyTaskStatus, isDuplicate, newXp, newCoins } =
+            await uploadGrammarGameResult(payload);
+          unsavedResultRef.current = null;
+          if (!isDuplicate) {
             const newState: { twinkleXP?: number; twinkleCoins?: number } = {
               twinkleXP: newXp
             };
@@ -420,31 +529,26 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
                   buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus)
               });
             }
-          })(),
-          (async () => {
-            // Minimum time the result screen (e.g. PERFECT) stays up before
-            // advancing, so the celebration is visible without dragging. The
-            // upload runs in parallel; the screen shows for max(upload, this).
-            await new Promise<void>((resolve) =>
-              setTimeout(resolve, RESULT_SCREEN_MIN_DISPLAY_MS)
-            );
-          })()
-        ];
-        await Promise.all(promises);
-        setCurrentIndex(0);
-        setGameState('finished');
-        break;
-      } catch (error) {
-        console.error(
-          `An error occurred: ${error}. Retry ${retries + 1} of ${maxRetries}`
-        );
-        retries++;
-        if (retries < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, cooldown));
-        } else {
-          console.error(`Failed after maximum (${maxRetries}) retries`);
+          }
+          await minDisplay;
+          setSaveFailed(false);
+          setCurrentIndex(0);
+          setGameState('finished');
+          return;
+        } catch (error) {
+          console.error(
+            `An error occurred: ${error}. Retry ${retries + 1} of ${maxRetries}`
+          );
+          if (retries + 1 < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, cooldown));
+          }
         }
       }
+      console.error(`Failed after maximum (${maxRetries}) retries`);
+      await minDisplay;
+      setSaveFailed(true);
+    } finally {
+      uploadInFlightRef.current = false;
     }
   }
 }

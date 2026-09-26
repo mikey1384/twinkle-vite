@@ -2,7 +2,11 @@ import { useRef } from 'react';
 import { useAppContext } from '~/contexts';
 import type { PreviewHostBridgeRequestRefs } from '../helpers/previewBridgeRequestRefs';
 
-export default function useAppRequests() {
+export default function useAppRequests({
+  rewardProposalReviewId = null
+}: {
+  rewardProposalReviewId?: number | null;
+} = {}) {
   const requestBuildRewards = useAppContext(
     (v) => v.requestHelpers.requestBuildRewards
   );
@@ -11,8 +15,31 @@ export default function useAppRequests() {
   const requestBuildRewardPreview = useAppContext(
     (v) => v.requestHelpers.requestBuildRewardPreview
   );
-  const requestBuildRewardPreviewRef = useRef(requestBuildRewardPreview);
-  requestBuildRewardPreviewRef.current = requestBuildRewardPreview;
+  const requestBuildRewardProposalRewardPreview = useAppContext(
+    (v) => v.requestHelpers.requestBuildRewardProposalRewardPreview
+  );
+  // A reviewer's suggested version simulates the economy it was offered
+  // with, not the creator's own draft declaration.
+  const resolvedRequestBuildRewardPreview =
+    Number(rewardProposalReviewId) > 0
+      ? ({
+          operation,
+          payload
+        }: {
+          buildId: number;
+          operation: string;
+          payload: unknown;
+        }) =>
+          requestBuildRewardProposalRewardPreview({
+            reviewId: Number(rewardProposalReviewId),
+            operation,
+            payload
+          })
+      : requestBuildRewardPreview;
+  const requestBuildRewardPreviewRef = useRef(
+    resolvedRequestBuildRewardPreview
+  );
+  requestBuildRewardPreviewRef.current = resolvedRequestBuildRewardPreview;
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );

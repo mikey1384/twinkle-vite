@@ -79,6 +79,8 @@ registerMethods('build', [
   'openBuildRewardReviewWorkspace',
   'proposeBuildRewardReviewChanges',
   'loadBuildRewardReviewProposal',
+  'openBuildRewardProposalPreview',
+  'requestBuildRewardProposalRewardPreview',
   'requestBuildRewards',
   'requestBuildRewardPreview',
   'loadRewardEarnHub',

@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
 import { Color } from '~/constants/css';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
+import Button from '~/components/Button';
 import OwnAiCliNotice from './OwnAiCliNotice';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
@@ -36,6 +37,14 @@ interface ComposerProps {
   AI_FEATURES_DISABLED: boolean;
   aiInputDisabled: boolean;
   aiInputDisabledNotice: string;
+  // The chosen model cannot afford a read step and an edit step with the
+  // Energy left; a lighter model can (helpers/lumineEnergySteps.ts).
+  energyModelSwitch?: {
+    message: string;
+    buttonLabel: string;
+    busy: boolean;
+    onSwitch: () => void;
+  } | null;
   buildId: number;
   draftMessage: string;
   generating: boolean;
@@ -60,6 +69,7 @@ export default function Composer({
   AI_FEATURES_DISABLED,
   aiInputDisabled,
   aiInputDisabledNotice,
+  energyModelSwitch,
   buildId,
   draftMessage,
   generating,
@@ -234,6 +244,41 @@ export default function Composer({
       ) : null}
       {aiInputDisabled && !AI_FEATURES_DISABLED ? (
         <OwnAiCliNotice buildId={buildId} />
+      ) : null}
+      {energyModelSwitch ? (
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            margin-bottom: 0.8rem;
+            padding: 0.9rem 1.1rem;
+            border: 1px solid ${Color.orange(0.45)};
+            border-radius: 12px;
+            background: ${Color.orange(0.08)};
+            font-size: 1.2rem;
+            line-height: 1.4;
+            @media (max-width: 600px) {
+              flex-direction: column;
+              align-items: stretch;
+            }
+          `}
+        >
+          <span
+            className={css`
+              flex: 1;
+            `}
+          >
+            {energyModelSwitch.message}
+          </span>
+          <Button
+            color="orange"
+            loading={energyModelSwitch.busy}
+            onClick={energyModelSwitch.onSwitch}
+          >
+            {energyModelSwitch.buttonLabel}
+          </Button>
+        </div>
       ) : null}
       {aiInputDisabled && !AI_FEATURES_DISABLED ? (
         <LumineRescueEntry

@@ -6,6 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import SectionPanel from '~/components/SectionPanel';
+import RewardProposalTryButton from '~/components/Build/Rewards/RewardProposalTryButton';
 import Table from '../Table';
 import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -353,6 +354,9 @@ export default function BuildRewardApprovals() {
                   </p>
                 ) : null}
                 <div className={actionsClass}>
+                  {selected.status === 'changes_offered' ? (
+                    <RewardProposalTryButton reviewId={selected.id} />
+                  ) : null}
                   <Button
                     variant="outline"
                     color="logoBlue"
