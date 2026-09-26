@@ -2250,6 +2250,7 @@ export function useHostBridge({
               buildId: activeBuild.id,
               prompt: payload.prompt,
               expectedStructure: payload.expectedStructure,
+              images: Array.isArray(payload.images) ? payload.images : undefined,
               thinkingMode: payload.thinkingMode,
               mode: payload.mode,
               model: payload.model,

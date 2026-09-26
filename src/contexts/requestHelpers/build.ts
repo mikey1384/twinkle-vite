@@ -2231,6 +2231,7 @@ export default function buildRequestHelpers({
       buildId,
       prompt,
       expectedStructure,
+      images,
       thinkingMode,
       mode,
       model,
@@ -2243,6 +2244,8 @@ export default function buildRequestHelpers({
       buildId: number;
       prompt: string;
       expectedStructure: Record<string, unknown>;
+      // reference image URLs (Twinkle-hosted uploads; the API checks them)
+      images?: string[];
       thinkingMode?: 'low' | 'medium' | 'mid' | 'high';
       mode?: 'low' | 'medium' | 'mid' | 'high';
       model?: 'gpt-6-sol' | 'claude-opus-5-5';
@@ -2265,6 +2268,7 @@ export default function buildRequestHelpers({
               body: JSON.stringify({
                 prompt,
                 expectedStructure,
+                images,
                 thinkingMode,
                 mode,
                 model,
@@ -2294,6 +2298,7 @@ export default function buildRequestHelpers({
           {
             prompt,
             expectedStructure,
+            images,
             thinkingMode,
             mode,
             model,
