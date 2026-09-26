@@ -4920,7 +4920,8 @@ export default function buildRequestHelpers({
       buildId,
       resource,
       body,
-      token
+      token,
+      publicRead = false
     }: {
       buildId: number;
       resource:
@@ -4950,22 +4951,29 @@ export default function buildRequestHelpers({
         | (string & {});
       body?: Record<string, unknown>;
       token?: string;
+      // a signed-out visitor's play-area read: the public route, no sign-in
+      publicRead?: boolean;
     }) {
       try {
         if (!/^[a-z][a-z0-9-]*(?:\/[a-z][a-z0-9-]*)?$/.test(resource)) {
           throw new Error('Unknown Twinkle.minecraft route');
         }
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/minecraft/${resource}`,
-          body || {},
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
+        const { data } = publicRead
+          ? await request.post(
+              `${URL}/build/${buildId}/public-minecraft/${resource}`,
+              body || {}
+            )
+          : await request.post(
+              `${URL}/build/${buildId}/api/minecraft/${resource}`,
+              body || {},
+              {
+                ...auth(),
+                headers: {
+                  ...auth().headers,
+                  ...(token ? { 'x-build-api-token': token } : {})
+                }
+              }
+            );
         return data;
       } catch (error) {
         return handleError(error);

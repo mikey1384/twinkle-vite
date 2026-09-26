@@ -86,6 +86,7 @@ import {
   resolveAIImageStatusImageUrl,
   shouldRecoverAIImageUnknownOutcome
 } from '~/helpers/aiImageStatus';
+import { isPublicMinecraftRead } from '../helpers/publicMinecraftReads';
 
 interface ActiveAiImageStatusTarget {
   messageId: string;
@@ -4774,15 +4775,25 @@ export function useHostBridge({
               String(type)
             );
             if (!relay) throw new Error(`Unknown request type: ${type}`);
-            const minecraftToken = await ensureBuildApiToken(
-              [relay[1] === 'write' ? 'content:write' : 'content:read'],
-              previewAuth
-            );
+            // Signed-out visitors can play games built on play areas: only the
+            // play-area reads go to the API's public twin (no token, no banner).
+            const publicRead = isPublicMinecraftRead({
+              access: relay[1],
+              route: relay[2],
+              guest: isGuestViewerActive(previewAuth)
+            });
+            const minecraftToken = publicRead
+              ? undefined
+              : await ensureBuildApiToken(
+                  [relay[1] === 'write' ? 'content:write' : 'content:read'],
+                  previewAuth
+                );
             response = await requestRefs.getBuildMinecraftDataRef.current({
               buildId: activeBuild.id,
               resource: relay[2],
               body: payload || {},
-              token: minecraftToken
+              token: minecraftToken,
+              publicRead
             });
             break;
           }
