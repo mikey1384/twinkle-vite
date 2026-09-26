@@ -52,18 +52,26 @@ const bodyClass = css`
 `;
 
 const titleButtonClass = css`
+  display: block;
+  width: 100%;
+  min-width: 0;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--chat-text);
   cursor: pointer;
-  display: -webkit-box;
-  width: 100%;
-  overflow: hidden;
   text-align: left;
   font-size: 1.3rem;
   font-weight: 900;
   line-height: 1.15;
+`;
+
+// The clamp lives on a span: Safari ignores display: -webkit-box on a
+// <button>, so a clamped button grows to the full title and stretches the row.
+const titleTextClass = css`
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 `;
@@ -167,7 +175,7 @@ export default function BuildThumbCard({
           className={titleButtonClass}
           onClick={() => onOpen(build)}
         >
-          {title}
+          <span className={titleTextClass}>{title}</span>
         </button>
         <div className={metaClass}>
           {build.username ? (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
 import { borderRadius } from '~/constants/css';
@@ -19,6 +19,9 @@ interface TabFilterProps<T extends string = string> {
   // Flow tabs onto multiple rows instead of the default single scrollable
   // row. Use in narrow containers where tabs would otherwise be clipped.
   wrap?: boolean;
+  // A rounded, bordered track instead of the flat strip, for tabs that sit
+  // beside pill-shaped buttons.
+  rounded?: boolean;
 }
 
 const defaultTabFilterClass = css`
@@ -120,6 +123,10 @@ const compactTabFilterClass = css`
   }
 `;
 
+// Doubled (&&) so these rules beat FilterBar's own class, which is generated
+// at render time and therefore inserted after this module-level class; at
+// equal specificity FilterBar's padding (larger still on phones) used to win
+// and the mini strip came out nearly twice its intended height.
 const miniTabFilterClass = css`
   --build-tab-accent: var(
     --role-filterActive-color,
@@ -135,18 +142,20 @@ const miniTabFilterClass = css`
     var(--build-tab-accent) 8%,
     transparent
   );
-  margin: 0;
-  border: 0;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 0;
-  padding: 0.25rem 0.35rem;
-  background: #f8fbff;
+  && {
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0;
+    padding: 0.25rem 0.35rem;
+    background: #f8fbff;
+  }
 
-  > .nav-section {
+  && > .nav-section {
     gap: 0.3rem;
   }
 
-  > .nav-section > nav {
+  && > .nav-section > nav {
     min-width: max-content;
     border-bottom: none !important;
     border-radius: 999px;
@@ -156,13 +165,13 @@ const miniTabFilterClass = css`
       color 0.15s ease;
   }
 
-  > .nav-section > nav > a {
+  && > .nav-section > nav > a {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
   }
 
-  > .nav-section > nav.active {
+  && > .nav-section > nav.active {
     background: var(--build-tab-accent-soft);
     color: var(--build-tab-accent) !important;
     box-shadow:
@@ -171,8 +180,19 @@ const miniTabFilterClass = css`
       0 1px 5px rgba(15, 23, 42, 0.08);
   }
 
-  > .nav-section > nav:not(.active):hover {
+  && > .nav-section > nav:not(.active):hover {
     background: var(--build-tab-accent-hover);
+  }
+`;
+
+// Doubled to match the density classes it refines.
+const roundedTabFilterClass = css`
+  && {
+    border: 1px solid var(--ui-border, rgba(65, 140, 235, 0.24));
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 5px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
   }
 `;
 
@@ -194,7 +214,8 @@ export default function TabFilter<T extends string = string>({
   density = 'default',
   onChange,
   tabs,
-  wrap = false
+  wrap = false,
+  rounded = false
 }: TabFilterProps<T>) {
   const isCompact = density === 'compact';
   const isMini = density === 'mini';
@@ -205,7 +226,11 @@ export default function TabFilter<T extends string = string>({
       : defaultTabFilterClass;
   return (
     <FilterBar
-      className={wrap ? `${densityClass} ${wrapTabFilterClass}` : densityClass}
+      className={cx(
+        densityClass,
+        wrap && wrapTabFilterClass,
+        rounded && roundedTabFilterClass
+      )}
       color={color}
       style={{
         margin: 0,

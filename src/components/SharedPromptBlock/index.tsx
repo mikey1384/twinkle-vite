@@ -98,10 +98,11 @@ export default function SharedPromptBlock({
         onTitleClick ? (
           <button
             type="button"
-            className={cx(titleClass, 'clickable')}
+            className={cx(titleButtonClass, 'clickable')}
             onClick={onTitleClick}
           >
-            {title}
+            {/* Safari ignores the line clamp on a <button>; clamp a span. */}
+            <span className={titleClass}>{title}</span>
           </button>
         ) : (
           <h3 className={titleClass}>{title}</h3>
@@ -272,15 +273,30 @@ const titleClass = css`
   -webkit-line-clamp: var(--shared-prompt-title-max-lines, 3);
   overflow: hidden;
 
-  &.clickable {
-    cursor: pointer;
-    &:hover {
-      color: var(--shared-prompt-accent);
-    }
-  }
-
   @media (max-width: ${mobileMaxWidth}) {
     font-size: var(--shared-prompt-title-font-size, 1.6rem);
+  }
+`;
+
+const titleButtonClass = css`
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: ${Color.black()};
+  font: inherit;
+  text-align: left;
+  flex-shrink: 0;
+
+  &.clickable {
+    cursor: pointer;
+    &:hover > span {
+      color: var(--shared-prompt-accent);
+    }
   }
 `;
 

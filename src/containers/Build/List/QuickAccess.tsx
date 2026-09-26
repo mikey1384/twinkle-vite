@@ -67,7 +67,7 @@ const quickAccessFilterWrapClass = css`
 
 const quickAccessHeaderActionsClass = css`
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-end;
   gap: 0.65rem;
   margin-left: auto;
@@ -78,8 +78,9 @@ const quickAccessHeaderActionsClass = css`
   }
 `;
 
+// Stretches to the tab track beside it so the two pills share one height.
 const quickAccessMoreButtonClass = css`
-  height: 2.75rem;
+  min-height: 2.75rem;
   padding: 0 1rem;
   border: 1px solid var(--ui-border, rgba(65, 140, 235, 0.24));
   border-radius: 999px;
@@ -275,12 +276,13 @@ export function BuildQuickAccessStrip({
               activeTab={activeMode}
               color={color}
               density="mini"
+              rounded
               onChange={onModeChange}
               tabs={buildQuickAccessTabs}
             />
           </div>
           {savingMode ? (
-            <Icon icon="spinner" pulse style={{ color: '#1d4ed8' }} />
+            <Icon icon="spinner" pulse style={{ color: '#1d4ed8', alignSelf: 'center' }} />
           ) : null}
           {moreButtonShown ? (
             <button
