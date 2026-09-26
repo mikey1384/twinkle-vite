@@ -7,7 +7,7 @@ import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
-type BuildTitleSuggestionStatus = 'open' | 'applied' | 'gone';
+type BuildTitleSuggestionStatus = 'open' | 'applied' | 'declined' | 'gone';
 
 interface BuildTitleSuggestionPayload {
   rootBuildId?: number;
@@ -53,7 +53,12 @@ export default function BuildTitleSuggestion({
   const adoptBuildTitleSuggestion = useAppContext(
     (v) => v.requestHelpers.adoptBuildTitleSuggestion
   );
+  const declineBuildOwnerSuggestion = useAppContext(
+    (v) => v.requestHelpers.declineBuildOwnerSuggestion
+  );
   const [adoptedTitle, setAdoptedTitle] = useState('');
+  const [declined, setDeclined] = useState(false);
+  const [declining, setDeclining] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
 
@@ -72,11 +77,16 @@ export default function BuildTitleSuggestion({
   }, [rootBuildId]);
   const suggestedTitle = String(suggestion?.suggestedTitle || '').trim();
   const currentTitle = adoptedTitle || String(suggestion?.currentTitle || '');
-  const status: BuildTitleSuggestionStatus = adoptedTitle
-    ? adoptedTitle.trim() === suggestedTitle
+  const storedStatus =
+    (suggestion?.status as BuildTitleSuggestionStatus) || 'open';
+  const status: BuildTitleSuggestionStatus =
+    adoptedTitle && adoptedTitle.trim() === suggestedTitle
       ? 'applied'
-      : 'open'
-    : (suggestion?.status as BuildTitleSuggestionStatus) || 'open';
+      : declined || storedStatus === 'declined'
+        ? 'declined'
+        : adoptedTitle
+          ? 'open'
+          : storedStatus;
   const branchNumber = Math.floor(Number(suggestion?.branchNumber) || 0);
   const isOwner = Number(suggestion?.ownerUserId || 0) === Number(myId);
   const note = String(content || '').trim();
@@ -106,16 +116,28 @@ export default function BuildTitleSuggestion({
       actions={
         <>
           {isOwner && status === 'open' ? (
-            <GameCTAButton
-              variant="success"
-              size="md"
-              icon="check"
-              shiny
-              loading={actionLoading}
-              onClick={handleUseName}
-            >
-              Use this name
-            </GameCTAButton>
+            <>
+              <GameCTAButton
+                variant="success"
+                size="md"
+                icon="check"
+                shiny
+                loading={actionLoading}
+                disabled={declining}
+                onClick={handleUseName}
+              >
+                Use this name
+              </GameCTAButton>
+              <GameCTAButton
+                variant="neutral"
+                size="md"
+                loading={declining}
+                disabled={actionLoading}
+                onClick={handleDecline}
+              >
+                Decline
+              </GameCTAButton>
+            </>
           ) : null}
           <GameCTAButton
             variant="neutral"
@@ -154,6 +176,17 @@ export default function BuildTitleSuggestion({
         </div>
       ) : null}
 
+      {status === 'declined' ? (
+        <div className={mutedClass}>
+          <Icon icon="times" />
+          <span>
+            {isOwner
+              ? 'You declined this name.'
+              : 'The owner declined this name.'}
+          </span>
+        </div>
+      ) : null}
+
       {status === 'gone' ? (
         <div className={mutedClass}>
           <Icon icon="times-circle" />
@@ -164,6 +197,30 @@ export default function BuildTitleSuggestion({
       {actionError ? <div className={errorClass}>{actionError}</div> : null}
     </BuildMessageCard>
   );
+
+  async function handleDecline() {
+    if (declining || actionLoading) return;
+    setDeclining(true);
+    setActionError('');
+    try {
+      const result = await declineBuildOwnerSuggestion({
+        buildId: rootBuildId,
+        contributionBuildId: branchBuildId,
+        suggestionMessageId: messageId
+      });
+      if (!result?.success) {
+        setActionError(result?.error || 'Failed to decline');
+        return;
+      }
+      setDeclined(true);
+    } catch (error: any) {
+      setActionError(
+        error?.response?.data?.error || error?.message || 'Failed to decline'
+      );
+    } finally {
+      setDeclining(false);
+    }
+  }
 
   async function handleUseName() {
     if (actionLoading) return;

@@ -1,19 +1,33 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import FavoriteButton from '~/components/Build/FavoriteButton';
 import Link from '~/components/Link';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 import type { EarnHubApp } from './useEarnHub';
 import { SITE_NAME } from '~/constants/siteBrand';
+import {
+  getAppPayout,
+  getAppStatus,
+  getAppSubtitle,
+  getPlayersLine,
+  newBadgeClass
+} from './appCardHelpers';
 
 // One approved app on the shelf: what it pays, who made it, and what this
 // member still has left in it today. The button opens the published app page
 // (/app/:id) for everyone — including the app's own creator, who would land in
-// the workspace editor if this pointed at /build/:id.
-export default function AppCard({ app }: { app: EarnHubApp }) {
+// the workspace editor if this pointed at /build/:id. When the server ranks
+// the App Store, the card also carries its rank and this week's players; on
+// phones this same card is the compact ranked row.
+export default function AppCard({
+  app,
+  rank
+}: {
+  app: EarnHubApp;
+  rank?: number;
+}) {
   const navigate = useNavigate();
   // Follows the server's answer: the shelf's own value until the member
   // presses the star, then whatever the favorite request returned.
@@ -21,60 +35,11 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
   useEffect(() => {
     setFavorited(Boolean(app.isFavorited));
   }, [app.isFavorited]);
-  const payout = useMemo(() => {
-    const xp =
-      app.minXP && app.minXP !== app.maxXP
-        ? `${addCommasToNumber(app.minXP)}–${addCommasToNumber(app.maxXP)} XP`
-        : `up to ${addCommasToNumber(app.maxXP)} XP`;
-    return app.maxCoins > 0
-      ? `${xp} + ${addCommasToNumber(app.maxCoins)} Coins`
-      : xp;
-  }, [app.maxCoins, app.maxXP, app.minXP]);
-  const rulesCount = app.rules.length;
-  const status = useMemo(() => {
-    const { today } = app;
-    if (app.allRewardsCollected) {
-      return { line: 'All rewards collected · you can keep playing', ratio: 1 };
-    }
-    if (today.capReached) {
-      return {
-        line: `Done for today · +${addCommasToNumber(today.xp)} XP${
-          today.coins ? ` + ${addCommasToNumber(today.coins)} Coins` : ''
-        }`,
-        ratio: 1
-      };
-    }
-    if (app.kind === 'completion') {
-      const cap = app.budgets.userDailyXP;
-      return {
-        line: `${today.earnedRules} of ${rulesCount} cleared today${
-          cap ? ` · ${addCommasToNumber(today.xp)} / ${addCommasToNumber(cap)} XP` : ''
-        }`,
-        ratio: cap ? Math.min(1, today.xp / cap) : today.earnedRules / Math.max(1, rulesCount)
-      };
-    }
-    const tried = app.rules.some((rule) => rule.attemptsToday > 0 && !rule.earnedToday);
-    if (today.earnedRules) {
-      return {
-        line: `Earned today · +${addCommasToNumber(today.xp)} XP${
-          today.coins ? ` + ${addCommasToNumber(today.coins)} Coins` : ''
-        }`,
-        ratio: 1
-      };
-    }
-    return {
-      line: tried
-        ? `Today's bounty · tried, not solved yet`
-        : `Today's bounty · not tried yet`,
-      ratio: 0
-    };
-  }, [app, rulesCount]);
-  const subtitle =
-    app.kind === 'completion'
-      ? `${rulesCount} ${rulesCount === 1 ? 'reward' : 'rewards'}, once a day each`
-      : app.budgets.userDailyClaims === 1
-      ? `one bounty a day, ${rulesCount} ${rulesCount === 1 ? 'level' : 'levels'}`
-      : `${rulesCount} ${rulesCount === 1 ? 'bounty' : 'bounties'}`;
+  const payout = getAppPayout(app);
+  const status = getAppStatus(app);
+  const subtitle = getAppSubtitle(app);
+  const playersLine = rank ? getPlayersLine(app) : '';
+  const isNew = Boolean(rank && app.popularity?.isNew);
   return (
     <article className={cardClass}>
       <div
@@ -87,11 +52,15 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
         aria-hidden
       >
         {!app.thumbnailUrl && <span className={monogram}>{app.title.slice(0, 1)}</span>}
+        {rank ? <span className={rankBadge}>#{rank}</span> : null}
         <span className={payPill}>{payout}</span>
       </div>
       <div className={bodyClass}>
         <div className={payLine}>{payout}</div>
-        <h3 className={titleClass}>{app.title}</h3>
+        <h3 className={titleClass}>
+          {app.title}
+          {isNew && <span className={newBadgeClass}>New</span>}
+        </h3>
         <div className={byClass}>
           by{' '}
           {app.ownerUsername ? (
@@ -103,6 +72,7 @@ export default function AppCard({ app }: { app: EarnHubApp }) {
           )}{' '}
           · {subtitle}
         </div>
+        {playersLine && <div className={playersClass}>{playersLine}</div>}
         <div className={statusClass}>{status.line}</div>
         <div className={barClass} role="img" aria-label={status.line}>
           <i style={{ width: `${Math.round(status.ratio * 100)}%` }} />
@@ -232,6 +202,33 @@ const byClass = css`
   margin-top: -0.4rem;
   font-size: 1.25rem;
   color: rgba(15, 23, 42, 0.66);
+`;
+const rankBadge = css`
+  position: absolute;
+  top: 0.8rem;
+  left: 0.8rem;
+  min-width: 3rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+  @media (max-width: ${mobileMaxWidth}) {
+    top: 0.5rem;
+    left: 0.5rem;
+    min-width: 2.6rem;
+    padding: 0.1rem 0.6rem;
+    font-size: 1.2rem;
+  }
+`;
+const playersClass = css`
+  margin-top: -0.3rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${Color.logoBlue()};
 `;
 const statusClass = css`
   font-size: 1.35rem;

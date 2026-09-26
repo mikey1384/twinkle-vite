@@ -3335,6 +3335,27 @@ export default function buildRequestHelpers({
       }
     },
 
+    async declineBuildOwnerSuggestion({
+      buildId,
+      contributionBuildId,
+      suggestionMessageId
+    }: {
+      buildId: number;
+      contributionBuildId: number;
+      suggestionMessageId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/contributions/${contributionBuildId}/decline-suggestion`,
+          { suggestionMessageId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async replaceMainWithBuildContribution({
       buildId,
       contributionBuildId,

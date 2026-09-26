@@ -8,7 +8,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { isCachedCardStateFresher } from '~/helpers/buildCardState';
 
-type BuildThumbnailSuggestionStatus = 'open' | 'applied' | 'gone';
+type BuildThumbnailSuggestionStatus = 'open' | 'applied' | 'declined' | 'gone';
 
 interface BuildThumbnailSuggestionPayload {
   rootBuildId?: number;
@@ -51,8 +51,13 @@ export default function BuildThumbnailSuggestion({
   const onUpdateBuildThumbnailSuggestionState = useChatContext(
     (v) => v.actions.onUpdateBuildThumbnailSuggestionState
   );
+  const declineBuildOwnerSuggestion = useAppContext(
+    (v) => v.requestHelpers.declineBuildOwnerSuggestion
+  );
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [declined, setDeclined] = useState(false);
+  const [declining, setDeclining] = useState(false);
 
   const rootBuildId = Number(suggestion?.rootBuildId || 0);
   const branchBuildId = Number(suggestion?.branchBuildId || 0);
@@ -90,7 +95,9 @@ export default function BuildThumbnailSuggestion({
             status:
               mySuggestion && adoptedFrom === mySuggestion
                 ? ('applied' as const)
-                : ('open' as const)
+                : base.status === 'declined'
+                  ? ('declined' as const)
+                  : ('open' as const)
           }
         : {})
     };
@@ -100,8 +107,11 @@ export default function BuildThumbnailSuggestion({
   const branchNumber = Math.floor(Number(payload?.branchNumber) || 0);
   const suggestedThumbnailUrl = String(payload?.suggestedThumbnailUrl || '');
   const currentThumbnailUrl = String(payload?.currentThumbnailUrl || '');
-  const status: BuildThumbnailSuggestionStatus =
+  const payloadStatus =
     (payload?.status as BuildThumbnailSuggestionStatus) || 'open';
+  // Declining settles the card unless the image was used after all.
+  const status: BuildThumbnailSuggestionStatus =
+    declined && payloadStatus === 'open' ? 'declined' : payloadStatus;
   const sentByMe = Number(sender.id) === Number(myId);
   const isOwner = Number(payload?.ownerUserId || 0) === Number(myId);
   const note = String(content || '').trim();
@@ -134,16 +144,28 @@ export default function BuildThumbnailSuggestion({
       actions={
         <>
           {isOwner && status === 'open' ? (
-            <GameCTAButton
-              variant="success"
-              size="md"
-              icon="check"
-              shiny
-              loading={actionLoading}
-              onClick={handleUseThumbnail}
-            >
-              Use this thumbnail
-            </GameCTAButton>
+            <>
+              <GameCTAButton
+                variant="success"
+                size="md"
+                icon="check"
+                shiny
+                loading={actionLoading}
+                disabled={declining}
+                onClick={handleUseThumbnail}
+              >
+                Use this thumbnail
+              </GameCTAButton>
+              <GameCTAButton
+                variant="neutral"
+                size="md"
+                loading={declining}
+                disabled={actionLoading}
+                onClick={handleDecline}
+              >
+                Decline
+              </GameCTAButton>
+            </>
           ) : null}
           <GameCTAButton
             variant="neutral"
@@ -206,6 +228,17 @@ export default function BuildThumbnailSuggestion({
         </div>
       ) : null}
 
+      {status === 'declined' ? (
+        <div className={mutedClass}>
+          <Icon icon="times" />
+          <span>
+            {isOwner
+              ? 'You declined this thumbnail.'
+              : 'The owner declined this thumbnail.'}
+          </span>
+        </div>
+      ) : null}
+
       {status === 'gone' ? (
         <div className={mutedClass}>
           <Icon icon="times-circle" />
@@ -230,6 +263,30 @@ export default function BuildThumbnailSuggestion({
 
   function handleOpenProject() {
     navigate(`/build/${rootBuildId}`);
+  }
+
+  async function handleDecline() {
+    if (declining || actionLoading) return;
+    setDeclining(true);
+    setActionError('');
+    try {
+      const result = await declineBuildOwnerSuggestion({
+        buildId: rootBuildId,
+        contributionBuildId: branchBuildId,
+        suggestionMessageId: messageId
+      });
+      if (!result?.success) {
+        setActionError(result?.error || 'Failed to decline');
+        return;
+      }
+      setDeclined(true);
+    } catch (error: any) {
+      setActionError(
+        error?.response?.data?.error || error?.message || 'Failed to decline'
+      );
+    } finally {
+      setDeclining(false);
+    }
   }
 
   async function handleUseThumbnail() {

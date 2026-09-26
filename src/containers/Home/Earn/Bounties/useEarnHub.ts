@@ -42,6 +42,18 @@ export interface EarnHubApp {
     capReached: boolean;
   };
   rules: EarnHubRule[];
+  // Present once the server ranks the shelf; apps then arrive already sorted
+  // by rank. Older servers leave it out and the shelf stays unranked.
+  popularity?: EarnHubAppPopularity;
+}
+export interface EarnHubAppPopularity {
+  rank: number;
+  score: number;
+  playersThisWeek: number;
+  earnersThisWeek: number;
+  favorites: number;
+  isNew: boolean;
+  approvedAt: number;
 }
 export interface EarnHubEarner {
   rank: number;
