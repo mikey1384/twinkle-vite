@@ -50,6 +50,18 @@ test('creator-facing reward status never asks the creator or Lumine to prepare r
     ).state,
     'check_changes'
   );
+  // An app that never had rewards is told how to add them, not that they
+  // were removed, and is never offered a review to send.
+  const never = rewardApprovalPresentation({
+    ...base,
+    approvalRequired: false,
+    canSubmit: false,
+    neverHadRewards: true,
+    state: 'removed'
+  });
+  assert.equal(never.state, 'removed');
+  assert.match(never.title, /doesn’t give XP or Coins/);
+  assert.doesNotMatch(never.detail, /removed|no longer/);
 });
 
 const source = readFileSync(

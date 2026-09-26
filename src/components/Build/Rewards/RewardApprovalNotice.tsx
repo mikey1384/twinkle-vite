@@ -17,11 +17,13 @@ export default function RewardApprovalNotice({
   error: string;
   onOpen: () => void;
 }) {
+  // An app that never used rewards has nothing to report here; the bar is
+  // for apps whose rewards need (or no longer need) approval.
   if (
     !checking &&
     !error &&
     !settings?.approvalRequired &&
-    settings?.state !== 'removed'
+    (settings?.state !== 'removed' || settings.neverHadRewards)
   )
     return null;
   const presentation = settings

@@ -162,6 +162,8 @@ export interface RewardSettings {
   requestClosedBySave?: boolean;
   // The creator turned down the reviewer's proposed changes.
   declinedByCreator?: boolean;
+  // The saved code has no rewards and the app never set any up.
+  neverHadRewards?: boolean;
   // The version the latest approval published (approval publishes).
   publishedArtifactVersionId?: number | null;
   // Present while the reviewer's proposed changes wait for the creator.

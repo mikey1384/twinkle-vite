@@ -517,10 +517,17 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        throw new Error(
-          axios.isAxiosError(error)
-            ? error.response?.data?.error || error.message
-            : 'Could not submit reward review.'
+        throw Object.assign(
+          new Error(
+            axios.isAxiosError(error)
+              ? error.response?.data?.error || error.message
+              : 'Could not submit reward review.'
+          ),
+          {
+            code: axios.isAxiosError(error)
+              ? error.response?.data?.code || null
+              : null
+          }
         );
       }
     },

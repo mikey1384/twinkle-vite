@@ -183,7 +183,11 @@ export default function RewardSettingsModal({
               </span>
               <div className={bandTextClass}>
                 <span className={pillClass} data-tone={tone}>
-                  {pillFor(presentation.state)}
+                  {pillFor(
+                    settings.neverHadRewards && presentation.state === 'removed'
+                      ? 'no_rewards'
+                      : presentation.state
+                  )}
                 </span>
                 <h3>{presentation.title}</h3>
                 <p>{presentation.detail}</p>
@@ -482,10 +486,18 @@ export default function RewardSettingsModal({
       refresh();
       onStatusChange?.();
     } catch (err: any) {
-      setError(
-        err?.message ||
-          'Couldn’t send this version for review. Please try again.'
-      );
+      // "No approval needed" is not a failure: the refreshed status below
+      // says so in plain words.
+      if (err?.code !== 'build_reward_approval_not_needed') {
+        setError(
+          err?.message ||
+            'Couldn’t send this version for review. Please try again.'
+        );
+      }
+      // A refusal usually means the status here is out of date (the saved
+      // code dropped its rewards, or a request is already open). Reload it so
+      // the Send button goes away instead of inviting the same refusal.
+      refresh();
     } finally {
       setBusy(false);
     }
@@ -555,6 +567,7 @@ function pillFor(state: string) {
     (
       {
         removed: 'No approval needed',
+        no_rewards: 'No rewards',
         check_changes: 'Will be checked',
         needs_review: 'Approval needed',
         in_review: 'Waiting for the admin',

@@ -22,15 +22,24 @@ export function rewardApprovalPresentation(
         ? 'check_changes'
         : serverState;
   const messages = {
-    removed: {
-      title: 'No reward approval needed',
-      detail:
-        'This version no longer uses XP or Coin rewards. You can publish it without reward approval. Adding rewards back will need a new review.'
-    },
+    // An app that never used rewards has nothing to send: say what would
+    // change that instead of "removed", which reads like something was lost.
+    removed: settings.neverHadRewards
+      ? {
+          title: 'This app doesn’t give XP or Coins',
+          detail:
+            'Your app works and can be published without any approval. To let players earn XP and Coins, ask Lumine to add XP and Coin rewards to your app. Once that version is saved, this is where you send it to an admin for approval.'
+        }
+      : {
+          title: 'No reward approval needed',
+          detail:
+            'This version no longer uses XP or Coin rewards. You can publish it without reward approval. Adding rewards back will need a new review.'
+        },
     check_changes: {
       title: 'Your changes will be checked',
-      detail:
-        'When you publish, we’ll save and check your changes. If you added rewards back, this version will need approval.'
+      detail: `When you publish, we’ll save and check your changes. If you added ${
+        settings.neverHadRewards ? 'XP or Coin rewards' : 'rewards back'
+      }, this version will need approval.`
     },
     needs_review: {
       title: settings.isUpdate
