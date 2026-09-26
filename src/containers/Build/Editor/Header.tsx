@@ -878,15 +878,19 @@ export default function Header({
       });
     }
     if (isOwner && !isContributionFork) {
-      items.push({
-        label: (
-          <>
-            <Icon icon="coins" />
-            <span style={{ marginLeft: '1rem' }}>XP & Coin rewards</span>
-          </>
-        ),
-        onClick: () => setRewardsOpen(true)
-      });
+      // An app that has never used rewards has no reward status to show; the
+      // item comes back once saved code uses them (and while status loads).
+      if (!rewardStatus.settings?.neverHadRewards) {
+        items.push({
+          label: (
+            <>
+              <Icon icon="coins" />
+              <span style={{ marginLeft: '1rem' }}>XP & Coin rewards</span>
+            </>
+          ),
+          onClick: () => setRewardsOpen(true)
+        });
+      }
       items.push({
         label: (
           <>
