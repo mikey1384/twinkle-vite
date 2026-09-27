@@ -5,6 +5,7 @@ import Comments from '~/components/Comments';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
 import type { Content } from '~/types';
+import { LANDSCAPE_FULLSCREEN_SELECTOR } from './constants/layout';
 
 const RUNTIME_COMMENTS_LOAD_LIMIT = 20;
 
@@ -59,7 +60,20 @@ const commentsDrawerClass = css`
       box-shadow: 0 -0.8rem 2rem rgba(15, 23, 42, 0.08);
       transform: translateY(0);
     }
+  }
 
+  /* Phone landscape: side drawer at every width (see runtimeBodyClass), so undo
+     the narrow-width bottom-sheet edge and slide in from the right instead. */
+  ${LANDSCAPE_FULLSCREEN_SELECTOR} & {
+    border-top: 0;
+    border-left: 1px solid transparent;
+    transform: translateX(0.8rem);
+
+    &[data-visible='true'] {
+      border-left-color: rgba(148, 163, 184, 0.35);
+      box-shadow: -0.8rem 0 2rem rgba(15, 23, 42, 0.08);
+      transform: translateX(0);
+    }
   }
 `;
 
@@ -110,6 +124,11 @@ const commentsDrawerBodyClass = css`
 
   @media (max-width: ${mobileMaxWidth}) {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* the full-screen shell already keeps everything inside the safe area */
+  ${LANDSCAPE_FULLSCREEN_SELECTOR} & {
+    padding-bottom: 1.2rem;
   }
 `;
 

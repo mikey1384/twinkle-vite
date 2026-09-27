@@ -65,6 +65,10 @@ import type {
   RuntimeBuild
 } from './types';
 import { buildRuntimeCommentsAreAvailable } from './helpers/runtimeComments';
+import {
+  LANDSCAPE_FULLSCREEN_ATTR,
+  LANDSCAPE_FULLSCREEN_SELECTOR
+} from './constants/layout';
 import { SITE_NAME } from '~/constants/siteBrand';
 
 function parseRuntimeMountContext(search: string): PreviewMountContext | null {
@@ -165,7 +169,7 @@ const shellClass = css`
   /* Phone landscape: the app owns the whole screen. The iframe cannot read the
      notch / home-indicator insets itself, so keep it inside them here and fill
      the strips black, like a full-screen video. */
-  &[data-landscape-fullscreen='true'] {
+  &${LANDSCAPE_FULLSCREEN_SELECTOR} {
     padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
       env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
     background: #000;
@@ -204,8 +208,13 @@ const headerCollapsibleClass = css`
 const headerHiddenClass = css`
   transform: translateY(-101%);
   pointer-events: none;
-  /* the drop shadow would otherwise still bleed onto the app's top edge */
+  /* Once it has slid away, drop it entirely: its own and its buttons' shadows
+     would otherwise still bleed onto the app's top edge. */
   box-shadow: none;
+  visibility: hidden;
+  transition:
+    transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.26s;
 `;
 
 // Phone landscape with the menus opened over the app: at 768px+ the global nav
@@ -740,6 +749,23 @@ const runtimeBodyClass = css`
     &[data-comments-open='true'] {
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr) var(--runtime-comments-drawer-height);
+    }
+  }
+
+  /* Phone landscape: a bottom sheet would leave the app a ~130px strip, so the
+     drawer comes in from the right at every width and the app keeps its full
+     height beside it. Beats the 760px rule on specificity, not source order. */
+  ${LANDSCAPE_FULLSCREEN_SELECTOR} & {
+    --runtime-comments-drawer-width: max(300px, 42%);
+    grid-template-columns: minmax(0, 1fr) 0rem;
+    grid-template-rows: minmax(0, 1fr);
+    transition: grid-template-columns 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &[data-comments-open='true'] {
+      grid-template-columns: minmax(0, 1fr) var(
+          --runtime-comments-drawer-width
+        );
+      grid-template-rows: minmax(0, 1fr);
     }
   }
 `;
@@ -2112,7 +2138,9 @@ export default function BuildRuntime({
     <ErrorBoundary componentPath="Build/Runtime">
       <div
         className={shellClass}
-        data-landscape-fullscreen={landscapeFullScreen ? 'true' : undefined}
+        {...{
+          [LANDSCAPE_FULLSCREEN_ATTR]: landscapeFullScreen ? 'true' : undefined
+        }}
         style={{ gridTemplateRows: isEmbedded ? '0px 1fr' : undefined }}
       >
         {landscapeFullScreen && !landscapeMenusShown && (
