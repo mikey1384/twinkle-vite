@@ -239,6 +239,19 @@ function QuestionList({ questions }: { questions: RewardRule['questions'] }) {
   );
 }
 
+// Where the Earn page lists it: the section header and the series it shares
+// one row with.
+function RewardRuleGrouping({ rule }: { rule: RewardRule }) {
+  if (!rule.category && !rule.series) return null;
+  return (
+    <p>
+      {rule.category ? `Earn page section: ${rule.category}` : ''}
+      {rule.category && rule.series ? ' · ' : ''}
+      {rule.series ? `Series: ${rule.series} (shown as one row)` : ''}
+    </p>
+  );
+}
+
 function RewardRuleCard({ rule }: { rule: RewardRule }) {
   if (rule.verifier === 'completion') {
     return (
@@ -248,6 +261,7 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
           {rule.coins.toLocaleString()} Coins
         </h4>
         {rule.howTo ? <p>How players earn it: {rule.howTo}</p> : null}
+        <RewardRuleGrouping rule={rule} />
         <p>
           Rule ID: {rule.id} · completion · once per learner per day (UTC).
           Minimum time: {(rule.minSeconds || 0).toLocaleString()} seconds.
@@ -284,6 +298,7 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
         {rule.coins.toLocaleString()} Coins
       </h4>
       {rule.howTo ? <p>How players earn it: {rule.howTo}</p> : null}
+      <RewardRuleGrouping rule={rule} />
       {rule.maxLifetimeClaims ? (
         <p>Up to {rule.maxLifetimeClaims} rewards per learner in total.</p>
       ) : null}

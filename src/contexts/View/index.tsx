@@ -46,6 +46,7 @@ const initialViewState: ViewState = {
   aiFeaturesLoaded: false,
   aiDisabledNotice: AI_DISABLED_NOTICE,
   buildNavHidden: false,
+  buildLandscapeMenusShown: false,
   videoCinemaLevel: 0,
   mutedBuildAppIds: [],
   buildAppNavTabIds: null,

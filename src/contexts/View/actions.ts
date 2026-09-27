@@ -76,6 +76,12 @@ export default function ViewActions(dispatch: React.Dispatch<ViewAction>) {
         hidden
       });
     },
+    onSetBuildLandscapeMenusShown(shown: boolean) {
+      return dispatch({
+        type: 'SET_BUILD_LANDSCAPE_MENUS_SHOWN',
+        shown
+      });
+    },
     onSetVideoCinemaLevel(cinemaLevel: RememberedCinemaLevel) {
       return dispatch({
         type: 'SET_VIDEO_CINEMA_LEVEL',

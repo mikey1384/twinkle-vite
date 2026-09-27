@@ -12,6 +12,10 @@ export interface EarnHubRule {
   // How to earn it, in the player's words (rewards.json); older servers and
   // rules without one leave it out.
   howTo?: string;
+  // The app's section header and repeat-rule key (rewards.json); the rewards
+  // dialog groups by them (rewardGroups.ts). Older servers leave them out.
+  category?: string;
+  series?: string;
   // completion rules: the least time between starting and earning it.
   minSeconds?: number;
   // How many times one member can ever earn it; absent = once every day.

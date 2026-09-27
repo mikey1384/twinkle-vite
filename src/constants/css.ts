@@ -167,3 +167,12 @@ export function lineClamp(lines: number | string) {
 export const mobileMaxWidth = '767px';
 export const tabletMaxWidth = '820px';
 export const desktopMinWidth = '768px';
+// A phone held sideways. Build apps go full screen here (no global nav, no app
+// toolbar) because the bars leave a game only a sliver of the ~390px height.
+// - pointer: coarse keeps desktop browsers out, even when resized short.
+// - max-height 500px: phone landscape heights are 320-430px (less with browser
+//   toolbars); the smallest tablets are 600px+ tall in landscape (iPad mini
+//   744px), so they keep the normal layout.
+// Read it in JS through usePhoneLandscape, never a separate matchMedia string.
+export const phoneLandscapeMediaQuery =
+  '(pointer: coarse) and (orientation: landscape) and (max-height: 500px)';

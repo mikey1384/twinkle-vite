@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { Color, lineClamp } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import type { EarnHubApp, EarnHubRule } from './useEarnHub';
+import { countRewardRows } from './rewardGroups';
 
 // Shared by every App Store card shape (top pick, grid card, ranked row) so
 // the payout, today's status and the popularity line read the same everywhere.
@@ -36,8 +37,17 @@ export function getAppStatus(app: EarnHubApp) {
     const countable = app.rules.filter(
       (rule) => rule.earnedToday || rule.lifetime?.remaining !== 0
     ).length;
+    // With series the card says "12 rewards" while up to 19 can pay today;
+    // "5 of 19" beside it would read as a different list, so say what was
+    // earned and let the XP bar show how far along the day is.
+    const progress =
+      countRewardRows(app.rules) < app.rules.length
+        ? `${today.earnedRules} ${
+            today.earnedRules === 1 ? 'reward' : 'rewards'
+          } earned today`
+        : `${today.earnedRules} of ${countable} cleared today`;
     return {
-      line: `${today.earnedRules} of ${countable} cleared today${
+      line: `${progress}${
         cap
           ? ` · ${addCommasToNumber(today.xp)} / ${addCommasToNumber(cap)} XP`
           : ''
@@ -66,12 +76,16 @@ export function getAppStatus(app: EarnHubApp) {
   };
 }
 
+// Counts rows of the rewards dialog, so a series (Fell a great foe, up to 3
+// a day) is one reward here too; today's status line still counts payouts.
 export function getAppSubtitle(app: EarnHubApp) {
-  const rulesCount = app.rules.length;
+  const rulesCount = countRewardRows(app.rules);
   if (app.kind === 'completion') {
     const noun = `${rulesCount} ${rulesCount === 1 ? 'reward' : 'rewards'}`;
-    return app.rules.some((rule) => rule.maxLifetimeClaims)
-      ? `${noun}, daily and one-time`
+    if (app.rules.some((rule) => rule.maxLifetimeClaims))
+      return `${noun}, daily and one-time`;
+    return rulesCount < app.rules.length
+      ? `${noun}, daily`
       : `${noun}, once a day each`;
   }
   if (app.budgets.userDailyClaims === 1) {
@@ -124,6 +138,45 @@ export function getRuleState(
     return { key: 'collected', label: 'Collected' };
   if (!rule.available) return { key: 'unavailable', label: 'Not open today' };
   return { key: 'open', label: 'Open' };
+}
+
+// One row of the rewards dialog: a single rule, or a series of repeat rules
+// shown once ("Up to 3 a day", "1 of 3 today", the per-item payout).
+export type RewardRowStateKey =
+  'earned' | 'partial' | 'collected' | 'unavailable' | 'open';
+export function getRowState(rules: EarnHubRule[]): {
+  key: RewardRowStateKey;
+  label: string;
+  earned: number;
+} {
+  const states = rules.map(getRuleState);
+  const earned = states.filter((state) => state.key === 'earned').length;
+  if (rules.length === 1) return { ...states[0], earned };
+  const progress = `${earned} of ${rules.length} today`;
+  const open = states.some((state) => state.key === 'open');
+  if (earned)
+    return { key: open ? 'partial' : 'earned', label: progress, earned };
+  if (states.every((state) => state.key === 'collected'))
+    return { key: 'collected', label: 'Collected', earned };
+  if (!open) return { key: 'unavailable', label: 'Not open today', earned };
+  return { key: 'open', label: `Open · ${progress}`, earned };
+}
+
+export function getRowConditions(rules: EarnHubRule[]) {
+  const conditions = getRuleConditions(rules[0]);
+  if (rules.length < 2) return conditions;
+  const daily = conditions.indexOf('Once a day');
+  if (daily >= 0) conditions[daily] = `Up to ${rules.length} a day`;
+  else conditions.unshift(`${rules.length} rewards`);
+  return conditions;
+}
+
+export function getRowPayout(rules: EarnHubRule[]) {
+  const [rule] = rules;
+  if (rules.length > 1) return `${getRulePayout(rule)} each`;
+  return rule.earnedToday
+    ? getRulePayout({ ...rule, ...rule.earnedToday })
+    : getRulePayout(rule);
 }
 
 // "12 players this week"; nothing at all when nobody played, so a quiet app

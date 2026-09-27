@@ -16,7 +16,7 @@ import {
   readReferrals
 } from '~/components/BroughtFriendsBadge/tiers';
 
-const ASHEN_VIGIL_PATH = '/app/2610';
+const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
 const PLAQUE_BG = '#10142a';
 const PLAQUE_RAISED = '#1a2142';
 
@@ -321,7 +321,7 @@ export default function BroughtFriends({
                       />
                       {person.source === 'minecraft'
                         ? 'Minecraft'
-                        : 'Ashen Vigil'}
+                        : 'The Dark Citadel'}
                       {person.joinedAt ? ` · ${timeSince(person.joinedAt)}` : ''}
                     </span>
                   </span>
@@ -348,8 +348,8 @@ export default function BroughtFriends({
         >
           <Icon icon="user-plus" style={{ marginRight: '0.6rem' }} />
           Earned when friends join {SITE_NAME}: play{' '}
-          <Link to={ASHEN_VIGIL_PATH}>Ashen Vigil</Link> with them in a private
-          room, or vouch for them on our Minecraft server (moderators).
+          <Link to={DARK_CITADEL_PRIVATE_ROOM_PATH}>The Dark Citadel</Link> with them
+          in a private room, or vouch for them on our Minecraft server (moderators).
         </div>
       </section>
     </ErrorBoundary>
@@ -532,9 +532,9 @@ function BringAFriendPrompt() {
           >
             Bring a friend to {SITE_NAME}
           </div>
-          Invite a friend who isn&apos;t on {SITE_NAME} yet into a private{' '}
-          <Link to={ASHEN_VIGIL_PATH}>Ashen Vigil</Link> room and play together
-          for 10 minutes, or, if you moderate our Minecraft server, vouch for a
+          Invite a friend who isn&apos;t on {SITE_NAME} yet into a private room in{' '}
+          <Link to={DARK_CITADEL_PRIVATE_ROOM_PATH}>The Dark Citadel</Link> and
+          play together for 10 minutes, or, if you moderate our Minecraft server, vouch for a
           player there. When they join, you earn the {firstTier.name} badge,
           shown here and on your cover.
         </div>

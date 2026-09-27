@@ -103,6 +103,7 @@ import { useRootTheme } from '~/theme/RootThemeProvider';
 import useOrientationReflow from './hooks/useOrientationReflow';
 import useAppShellHeaderOffset from './hooks/useAppShellHeaderOffset';
 import useMobileKeyboardInset from './hooks/useMobileKeyboardInset';
+import usePhoneLandscape from '~/helpers/hooks/usePhoneLandscape';
 import { NavigationRouteReadyObserver } from './navigationFeedback';
 
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -515,6 +516,13 @@ export default function App() {
   const onSetBuildNavHidden = useViewContext(
     (v) => v.actions.onSetBuildNavHidden
   );
+  const buildLandscapeMenusShown = useViewContext(
+    (v) => v.state.buildLandscapeMenusShown
+  );
+  const onSetBuildLandscapeMenusShown = useViewContext(
+    (v) => v.actions.onSetBuildLandscapeMenusShown
+  );
+  const isPhoneLandscape = usePhoneLandscape();
   const buildHeaderCollapsed = !!useAppContext(
     (v) => v.user.state.myState.buildHeaderCollapsed
   );
@@ -594,10 +602,18 @@ export default function App() {
   // usingBuildRuntime but NOT usingFullBuildAppRuntime, so it keeps
   // suppressHeader. Embedded app previews also stay chrome-free inside iframes.
   const showBuildHeader = usingFullBuildAppRuntime;
+  // A phone held sideways always plays build apps full screen: the global nav
+  // is hidden unless the member opens it from the app's floating menu button,
+  // and then it lies OVER the app instead of shrinking it (both shell offsets
+  // stay 0), so the game is not resized just to peek at the menus. Rotating
+  // back restores the normal layout and the saved collapse preference.
+  const buildAppLandscapeFullScreen =
+    usingFullBuildAppRuntime && isPhoneLandscape;
   // the 2nd-level build collapse ALSO hides the global nav (full-screen app)
   const suppressHeader =
     (usingBuildRuntime && !showBuildHeader) ||
-    (showBuildHeader && buildHeaderCollapsed && buildNavHidden);
+    (showBuildHeader && buildHeaderCollapsed && buildNavHidden) ||
+    (buildAppLandscapeFullScreen && !buildLandscapeMenusShown);
   const buildNavHiddenStorageReady = !userId || userSessionLoaded;
   const analyticsPath = getAnalyticsPath(location);
   const analyticsUserIdForSync = getConfirmedAnalyticsUserId({
@@ -652,8 +668,20 @@ export default function App() {
     buildNavHiddenStorageReady,
     usingFullBuildAppRuntime
   ]);
+  useEffect(() => {
+    if (!buildAppLandscapeFullScreen && buildLandscapeMenusShown) {
+      onSetBuildLandscapeMenusShown(false);
+    }
+    // onSetBuildLandscapeMenusShown is a stable context action
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildAppLandscapeFullScreen, buildLandscapeMenusShown]);
+  useEffect(() => {
+    // Any navigation (a nav tab, a deep link inside the app) closes the menus.
+    if (buildLandscapeMenusShown) onSetBuildLandscapeMenusShown(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
   useAppShellHeaderOffset({
-    headerVisible: !suppressHeader,
+    headerVisible: !suppressHeader && !buildAppLandscapeFullScreen,
     routeKey: location.pathname
   });
   useMobileKeyboardInset({ enabled: !usingChat });

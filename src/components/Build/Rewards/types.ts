@@ -18,6 +18,9 @@ export interface RewardRule {
   title: string;
   // How to earn it, in the player's words; shown on the Earn page.
   howTo?: string;
+  // Earn page section header, and the key tying repeat rules into one row.
+  category?: string;
+  series?: string;
   xp: number;
   coins: number;
   // numeric-quiz: server-checked answers. completion: the app reports a

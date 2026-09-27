@@ -6,7 +6,7 @@ import {
   useNavigate,
   useParams
 } from 'react-router-dom';
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
@@ -14,12 +14,14 @@ import Icon from '~/components/Icon';
 import ViewCount from '~/components/ViewCount';
 import FavoriteButton from '~/components/Build/FavoriteButton';
 import useTabletOrientation from '~/helpers/hooks/useTabletOrientation';
+import usePhoneLandscape from '~/helpers/hooks/usePhoneLandscape';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReleaseButton from '~/components/Build/ReleaseButton';
 import ShareButton from '~/components/Buttons/ShareButton';
 import UsernameText from '~/components/Texts/UsernameText';
-import { mobileMaxWidth } from '~/constants/css';
+import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+import { APP_SHELL_HEADER_OFFSET_FALLBACK } from '~/constants/appShell';
 import { getBuildFavoriteTargetId } from '~/helpers/buildProjectHelpers';
 import {
   BUILD_RUNTIME_SOURCE_QUERY_PARAM,
@@ -150,6 +152,7 @@ function getBuildAppTabTarget({
 const RUNTIME_COMMENTS_LOAD_LIMIT = 20;
 
 const shellClass = css`
+  position: relative;
   width: 100%;
   min-width: 0;
   min-height: 0;
@@ -158,6 +161,15 @@ const shellClass = css`
   grid-template-rows: auto 1fr;
   overflow: hidden;
   background: #fff;
+
+  /* Phone landscape: the app owns the whole screen. The iframe cannot read the
+     notch / home-indicator insets itself, so keep it inside them here and fill
+     the strips black, like a full-screen video. */
+  &[data-landscape-fullscreen='true'] {
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+      env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    background: #000;
+  }
 `;
 
 const headerClass = css`
@@ -192,6 +204,86 @@ const headerCollapsibleClass = css`
 const headerHiddenClass = css`
   transform: translateY(-101%);
   pointer-events: none;
+  /* the drop shadow would otherwise still bleed onto the app's top edge */
+  box-shadow: none;
+`;
+
+// Phone landscape with the menus opened over the app: at 768px+ the global nav
+// is a TOP bar, so the toolbar sits under it rather than behind it (below that
+// width the nav is a bottom bar and the toolbar keeps the top edge).
+const headerUnderGlobalNavClass = css`
+  @media (min-width: ${desktopMinWidth}) {
+    top: ${APP_SHELL_HEADER_OFFSET_FALLBACK};
+  }
+`;
+
+const landscapeControlFadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+`;
+
+// The only chrome left on a full-screen phone-landscape app: a small see-through
+// button in the top-left corner (inside the safe area) that opens the global
+// nav and the app toolbar over the app. Top-left because games park their
+// interactive corner buttons (pause, settings) top-right far more often, while
+// top-left tends to hold read-only HUD such as the score.
+const landscapeMenuButtonClass = css`
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: calc(env(safe-area-inset-left, 0px) + 8px);
+  z-index: 7;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(15, 23, 42, 0.45);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  animation: ${landscapeControlFadeIn} 0.22s ease-out;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+  &:active {
+    opacity: 1;
+    transform: scale(0.92);
+  }
+`;
+
+// Tap-outside-to-close layer under the opened phone-landscape menus. It also
+// keeps stray taps from reaching the game while the menus cover it.
+const landscapeMenusScrimClass = css`
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.28);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  animation: ${landscapeControlFadeIn} 0.18s ease-out;
 `;
 
 // The toolbar's middle: collapse toggles plus the energy card. It used to be
@@ -776,6 +868,13 @@ export default function BuildRuntime({
   const onSetBuildNavHidden = useViewContext(
     (v) => v.actions.onSetBuildNavHidden
   );
+  const landscapeMenusShown = useViewContext(
+    (v) => v.state.buildLandscapeMenusShown
+  );
+  const onSetBuildLandscapeMenusShown = useViewContext(
+    (v) => v.actions.onSetBuildLandscapeMenusShown
+  );
+  const isPhoneLandscape = usePhoneLandscape();
   const openBuildTab = useViewContext((v) => v.state.openBuildTab);
   const onSetOpenBuildTab = useViewContext((v) => v.actions.onSetOpenBuildTab);
   const onRequestCloseBuildApp = useViewContext(
@@ -926,6 +1025,15 @@ export default function BuildRuntime({
   const isEmbedded = useMemo(() => {
     return new URLSearchParams(location.search).get('embedded') === '1';
   }, [location.search]);
+  // Phone held sideways: the app fills the screen and the toolbar only shows
+  // (over the app) when the member opens it. Matches App's global-nav rule.
+  // Embedded previews are excluded: inside a feed iframe the media query reads
+  // the small iframe box, which can look like a sideways phone.
+  const landscapeFullScreen = !isEmbedded && isPhoneLandscape;
+  const toolbarOverlaid = landscapeFullScreen || headerCollapsed;
+  const toolbarHidden = landscapeFullScreen
+    ? !landscapeMenusShown
+    : headerCollapsed;
   const requestedRuntimeSource = useMemo(
     () => getBuildRuntimeSourceFromSearch(location.search),
     [location.search]
@@ -1228,6 +1336,11 @@ export default function BuildRuntime({
     if (!runtimeCommentsAvailable) return;
     const shouldOpen = !commentsDrawerShown;
     setCommentsDrawerShown(shouldOpen);
+    // The drawer sits beside/below the app, so close the landscape menus that
+    // would otherwise cover it.
+    if (shouldOpen && landscapeFullScreen) {
+      onSetBuildLandscapeMenusShown(false);
+    }
     if (shouldOpen && !runtimeCommentsLoaded) {
       void loadRuntimeComments();
     }
@@ -1999,9 +2112,30 @@ export default function BuildRuntime({
     <ErrorBoundary componentPath="Build/Runtime">
       <div
         className={shellClass}
+        data-landscape-fullscreen={landscapeFullScreen ? 'true' : undefined}
         style={{ gridTemplateRows: isEmbedded ? '0px 1fr' : undefined }}
       >
-        {!isEmbedded && headerCollapsed && (
+        {landscapeFullScreen && !landscapeMenusShown && (
+          <button
+            type="button"
+            className={landscapeMenuButtonClass}
+            onClick={() => onSetBuildLandscapeMenusShown(true)}
+            title="Show menus"
+            aria-label="Show menus"
+          >
+            <Icon icon="bars" />
+          </button>
+        )}
+        {landscapeFullScreen && landscapeMenusShown && (
+          <button
+            type="button"
+            className={landscapeMenusScrimClass}
+            onClick={() => onSetBuildLandscapeMenusShown(false)}
+            title="Back to full screen"
+            aria-label="Back to full screen"
+          />
+        )}
+        {!isEmbedded && headerCollapsed && !landscapeFullScreen && (
           <div className={headerRevealZoneClass}>
             <button
               type="button"
@@ -2021,10 +2155,13 @@ export default function BuildRuntime({
         {!isEmbedded && (
           <div
             className={`${headerClass}${
-              headerCollapsed
-                ? ` ${headerCollapsibleClass} ${headerHiddenClass}`
+              toolbarOverlaid ? ` ${headerCollapsibleClass}` : ''
+            }${toolbarHidden ? ` ${headerHiddenClass}` : ''}${
+              landscapeFullScreen && landscapeMenusShown
+                ? ` ${headerUnderGlobalNavClass}`
                 : ''
             }`}
+            inert={toolbarHidden}
           >
             {/* left: app icon + title + compact inline meta */}
             <div className={headerTitleLineClass}>
@@ -2054,31 +2191,45 @@ export default function BuildRuntime({
             </div>
             {/* centre: collapse toggles + battery, parked in the free space */}
             <div className={headerCenterZoneClass}>
-              <div className={headerToggleClusterClass}>
-                <button
-                  type="button"
-                  className={headerToggleClass}
-                  onClick={() => void handleSetHeaderCollapsed(true)}
-                  disabled={headerCollapsePending}
-                  title="Hide this menu"
-                  aria-label="Hide this menu"
-                >
-                  <Icon
-                    icon={headerCollapsePending ? 'spinner' : 'chevron-up'}
-                    pulse={headerCollapsePending}
-                  />
-                </button>
-                <button
-                  type="button"
-                  className={headerToggleClass}
-                  onClick={() => void handleHideEverything()}
-                  disabled={headerCollapsePending}
-                  title="Hide this menu and the top nav (full screen)"
-                  aria-label="Hide everything (full screen)"
-                >
-                  <Icon icon="angles-up" />
-                </button>
-              </div>
+              {landscapeFullScreen ? (
+                <div className={headerToggleClusterClass}>
+                  <button
+                    type="button"
+                    className={headerToggleClass}
+                    onClick={() => onSetBuildLandscapeMenusShown(false)}
+                    title="Back to full screen"
+                    aria-label="Back to full screen"
+                  >
+                    <Icon icon="chevron-up" />
+                  </button>
+                </div>
+              ) : (
+                <div className={headerToggleClusterClass}>
+                  <button
+                    type="button"
+                    className={headerToggleClass}
+                    onClick={() => void handleSetHeaderCollapsed(true)}
+                    disabled={headerCollapsePending}
+                    title="Hide this menu"
+                    aria-label="Hide this menu"
+                  >
+                    <Icon
+                      icon={headerCollapsePending ? 'spinner' : 'chevron-up'}
+                      pulse={headerCollapsePending}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    className={headerToggleClass}
+                    onClick={() => void handleHideEverything()}
+                    disabled={headerCollapsePending}
+                    title="Hide this menu and the top nav (full screen)"
+                    aria-label="Hide everything (full screen)"
+                  >
+                    <Icon icon="angles-up" />
+                  </button>
+                </div>
+              )}
               {/* Status readout only: an app being played may never touch AI,
                   so the toolbar never pushes a Charge CTA here. Tapping the
                   meter still opens the dashboard, where charging lives. */}

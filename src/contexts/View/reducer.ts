@@ -20,6 +20,9 @@ export interface ViewState {
   aiDisabledNotice: string;
   // desktop build runtime: 2nd-level collapse that also hides the global nav
   buildNavHidden: boolean;
+  // phone landscape build app: the hidden global nav + app toolbar are shown
+  // on top of the full-screen app (session-only, reset on leaving)
+  buildLandscapeMenusShown: boolean;
   // remembered video theater tier for watch surfaces, so the layout survives
   // navigating away from (and back to) a video page. Tier 2 (nav hidden) is
   // deliberately not remembered, hence the narrower type.
@@ -81,6 +84,7 @@ export interface ViewAction {
     | 'SET_PAGE_TITLE'
     | 'SET_PROFILE_NAV'
     | 'SET_BUILD_NAV_HIDDEN'
+    | 'SET_BUILD_LANDSCAPE_MENUS_SHOWN'
     | 'SET_VIDEO_CINEMA_LEVEL'
     | 'SET_BUILD_APP_MUTED'
     | 'SET_BUILD_APP_NAV_TAB_IDS'
@@ -96,6 +100,7 @@ export interface ViewAction {
   nav?: string;
   title?: string;
   hidden?: boolean;
+  shown?: boolean;
   cinemaLevel?: RememberedCinemaLevel;
   buildAppId?: string;
   buildAppIds?: string[] | null;
@@ -194,6 +199,11 @@ export default function ViewReducer(
       return {
         ...state,
         buildNavHidden: !!action.hidden
+      };
+    case 'SET_BUILD_LANDSCAPE_MENUS_SHOWN':
+      return {
+        ...state,
+        buildLandscapeMenusShown: !!action.shown
       };
     case 'SET_VIDEO_CINEMA_LEVEL':
       return {

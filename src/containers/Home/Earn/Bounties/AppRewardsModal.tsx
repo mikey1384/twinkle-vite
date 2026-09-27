@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Modal from '~/components/Modal';
@@ -7,16 +7,19 @@ import Icon from '~/components/Icon';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import type { EarnHubApp } from './useEarnHub';
+import { getRowConditions, getRowPayout, getRowState } from './appCardHelpers';
 import {
-  getRuleConditions,
-  getRulePayout,
-  getRuleState
-} from './appCardHelpers';
+  countRewardRows,
+  groupRewardRules,
+  type RewardRow
+} from './rewardGroups';
 
 // Every reward one app pays, in plain words: what it pays, how to earn it
 // (the app's own howTo from rewards.json), how often, and where this member
 // stands on it today, with the app's daily cap and a fair-play note. Opened
 // from any App Store card; everything shown is the server's Earn hub answer.
+// Long lists read as sections (the app's rule categories) with one row per
+// series of repeat rules (rewardGroups.ts).
 export function AppRewardsButton({
   app,
   className
@@ -25,7 +28,7 @@ export function AppRewardsButton({
   className?: string;
 }) {
   const [shown, setShown] = useState(false);
-  const count = app.rules.length;
+  const count = useMemo(() => countRewardRows(app.rules), [app.rules]);
   if (!count) return null;
   return (
     <>
@@ -51,6 +54,8 @@ export default function AppRewardsModal({
   onHide: () => void;
 }) {
   const navigate = useNavigate();
+  const sectionIdPrefix = useId();
+  const sections = useMemo(() => groupRewardRules(app.rules), [app.rules]);
   const { budgets, today } = app;
   return (
     <Modal
@@ -118,42 +123,25 @@ export default function AppRewardsModal({
             </p>
           </section>
         ) : null}
-        <ol className={listClass}>
-          {app.rules.map((rule) => {
-            const state = getRuleState(rule);
-            return (
-              <li key={rule.id} className={cx(ruleClass, stateClass[state.key])}>
-                <span
-                  className={cx(
-                    markClass,
-                    (state.key === 'earned' || state.key === 'collected') &&
-                      markDoneClass
-                  )}
-                  aria-hidden
-                >
-                  {state.key === 'earned' || state.key === 'collected' ? (
-                    <Icon icon="check" />
-                  ) : null}
-                </span>
-                <div className={ruleMainClass}>
-                  <h4 className={ruleTitleClass}>{rule.title}</h4>
-                  {rule.howTo && <p className={howToClass}>{rule.howTo}</p>}
-                  <ul className={chipsClass} aria-label="Conditions">
-                    {getRuleConditions(rule).map((condition) => (
-                      <li key={condition}>{condition}</li>
-                    ))}
-                    <li className={stateChipClass[state.key]}>{state.label}</li>
-                  </ul>
-                </div>
-                <div className={payClass}>
-                  {rule.earnedToday
-                    ? getRulePayout({ ...rule, ...rule.earnedToday })
-                    : getRulePayout(rule)}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+        {sections.map((section, index) =>
+          section.title ? (
+            <section
+              key={section.title}
+              className={sectionClass}
+              aria-labelledby={`${sectionIdPrefix}-${index}`}
+            >
+              <h3
+                id={`${sectionIdPrefix}-${index}`}
+                className={sectionTitleClass}
+              >
+                {section.title}
+              </h3>
+              <RewardList rows={section.rows} />
+            </section>
+          ) : (
+            <RewardList key="all" rows={section.rows} />
+          )
+        )}
         <aside className={fairClass}>
           <Icon icon="exclamation-triangle" className={fairIconClass} />
           <div>
@@ -167,6 +155,47 @@ export default function AppRewardsModal({
         </aside>
       </div>
     </Modal>
+  );
+}
+
+function RewardList({ rows }: { rows: RewardRow[] }) {
+  return (
+    <ol className={listClass}>
+      {rows.map((row) => {
+        const state = getRowState(row.rules);
+        const [first] = row.rules;
+        const done = state.key === 'earned' || state.key === 'collected';
+        return (
+          <li key={row.key} className={cx(ruleClass, stateClass[state.key])}>
+            <span
+              className={cx(
+                markClass,
+                done && markDoneClass,
+                state.key === 'partial' && markPartialClass
+              )}
+              aria-hidden
+            >
+              {done ? (
+                <Icon icon="check" />
+              ) : state.key === 'partial' ? (
+                state.earned
+              ) : null}
+            </span>
+            <div className={ruleMainClass}>
+              <h4 className={ruleTitleClass}>{first.title}</h4>
+              {first.howTo && <p className={howToClass}>{first.howTo}</p>}
+              <ul className={chipsClass} aria-label="Conditions">
+                {getRowConditions(row.rules).map((condition) => (
+                  <li key={condition}>{condition}</li>
+                ))}
+                <li className={stateChipClass[state.key]}>{state.label}</li>
+              </ul>
+            </div>
+            <div className={payClass}>{getRowPayout(row.rules)}</div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -290,6 +319,18 @@ const fineClass = css`
   font-size: 1.2rem;
   color: ${muted};
 `;
+const sectionClass = css`
+  display: grid;
+  gap: 0.7rem;
+`;
+const sectionTitleClass = css`
+  margin: 0.4rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: ${muted};
+`;
 const listClass = css`
   list-style: none;
   margin: 0;
@@ -322,6 +363,7 @@ const stateClass = {
   unavailable: css`
     background: rgba(15, 23, 42, 0.03);
   `,
+  partial: '',
   open: ''
 };
 const markClass = css`
@@ -337,6 +379,12 @@ const markClass = css`
 const markDoneClass = css`
   border-color: ${Color.green()};
   background: ${Color.green()};
+`;
+const markPartialClass = css`
+  border-color: ${Color.green()};
+  color: #1b6e1e;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 `;
 const ruleMainClass = css`
   min-width: 0;
@@ -390,6 +438,12 @@ const stateChipClass = {
     && {
       color: #6b4b00;
       background: ${Color.gold(0.2)};
+    }
+  `,
+  partial: css`
+    && {
+      background: ${Color.green(0.14)};
+      color: #1b6e1e;
     }
   `,
   open: css`
