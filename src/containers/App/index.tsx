@@ -36,6 +36,7 @@ import {
   isWebsiteAgentEnabledFor
 } from '~/constants/defaultValues';
 import WebsiteAgentSpotlight from './WebsiteAgentSpotlight';
+import MinecraftVouchLink from './MinecraftVouchLink';
 import { stripClientUpdateReloadParam } from '~/helpers/clientUpdate';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
@@ -1481,6 +1482,7 @@ export default function App() {
               <SigninModal onHide={onCloseSigninModal} />
             </Suspense>
           )}
+        {!!userId && !sessionAccessBlocked && <MinecraftVouchLink />}
         {channelOnCall.incomingShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <Incoming />

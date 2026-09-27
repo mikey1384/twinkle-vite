@@ -11,13 +11,16 @@ export default function InvitePass({
   source,
   minecraftName,
   onContinue,
-  onUseQuestion
+  onUseQuestion,
+  onLogIn
 }: {
   inviterName: string;
   source: 'guest' | 'minecraft';
   minecraftName?: string;
   onContinue: () => void;
   onUseQuestion: () => void;
+  // already on Twinkle: log in, then link the Minecraft player instead
+  onLogIn?: () => void;
 }) {
   const fromMinecraft = source === 'minecraft';
   return (
@@ -96,6 +99,39 @@ export default function InvitePass({
       >
         Continue
       </button>
+      {fromMinecraft && onLogIn && (
+        <p
+          className={css`
+            max-width: 46rem;
+            margin: 0.4rem 0 0;
+            padding: 1rem 1.4rem;
+            border-radius: ${borderRadius};
+            background: ${Color.highlightGray()};
+            font-size: 1.4rem;
+            line-height: 1.5;
+            color: ${Color.darkerGray()};
+          `}
+        >
+          <b>Already on {SITE_NAME}?</b> Don't make a second account.{' '}
+          <button
+            type="button"
+            onClick={onLogIn}
+            className={css`
+              padding: 0;
+              background: none;
+              border: none;
+              color: #0077cc;
+              font: inherit;
+              font-weight: 700;
+              text-decoration: underline;
+              cursor: pointer;
+            `}
+          >
+            Log in instead
+          </button>{' '}
+          and link {minecraftName || 'your Minecraft account'} to it.
+        </p>
+      )}
       <button
         type="button"
         onClick={onUseQuestion}

@@ -29,6 +29,8 @@ export interface Build {
   // Present on a reviewer's private proposal copy of a submitted app.
   rewardReviewProposal?: RewardReviewProposalContext | null;
   rewardRuntimeGrant?: string | null;
+  // Twinkle.cardCraft: only the published app of an approved recipe gets one.
+  cardCraftRuntimeGrant?: string | null;
   id: number;
   title: string;
   username: string;

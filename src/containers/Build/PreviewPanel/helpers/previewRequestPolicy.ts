@@ -2,6 +2,8 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'rewards:start',
   'rewards:progress',
   'rewards:claim',
+  'cardCraft:craft',
+  'cardCraft:set-state',
   'ai:chat',
   'ai:generate-object',
   'ai:decide',

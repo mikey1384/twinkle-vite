@@ -6,6 +6,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { queueCanonicalAICardBurnTransition } from '~/helpers/aiCardBurnTransition';
+import type { CardCraftBadge } from '../CraftedBadge';
 
 export default function UnlistedMenu({
   burnXP,
@@ -13,6 +14,7 @@ export default function UnlistedMenu({
   onSetSellModalShown,
   cardLevel,
   cardQuality,
+  craftBadge = null,
   myId,
   myOffer,
   owner,
@@ -25,6 +27,7 @@ export default function UnlistedMenu({
   cardId: number;
   cardLevel: number;
   cardQuality: string;
+  craftBadge?: CardCraftBadge | null;
   myId: number;
   myOffer: any;
   onSetSellModalShown: (v: boolean) => void;
@@ -69,6 +72,7 @@ export default function UnlistedMenu({
           xpNumberColor={xpNumberColor}
           cardLevel={cardLevel}
           cardQuality={cardQuality}
+          craftBadge={craftBadge}
           onSetSellModalShown={onSetSellModalShown}
           onBurnConfirm={handleBurn}
           twinkleCoins={twinkleCoins}

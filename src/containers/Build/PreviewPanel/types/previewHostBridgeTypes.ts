@@ -35,6 +35,15 @@ export interface BuildMediaActionConfirmationRequest {
   saveReplay?: boolean;
 }
 
+// Twinkle.cardCraft.craft: the host asks the player to pick/confirm a card.
+// Resolves with the confirmed card id, or null when the player cancels.
+export interface BuildCardCraftSelectionRequest {
+  mode: 'live' | 'preview';
+  appTitle: string;
+  cardId: number | null;
+  acceptedLevels: number[];
+}
+
 export interface BuildLiveSafetyHostSession {
   sessionId: string;
   status: string;
@@ -116,6 +125,10 @@ export interface UsePreviewHostBridgeArgs {
   >;
   requestBuildMediaActionConfirmationRef: RefObject<
     ((request: BuildMediaActionConfirmationRequest) => Promise<boolean>) | null
+  >;
+  requestCardCraftSelectionRef: RefObject<
+    | ((request: BuildCardCraftSelectionRequest) => Promise<number | null>)
+    | null
   >;
   onBuildLiveSafetyHostSessionsChange: (
     sessions: BuildLiveSafetyHostSession[]

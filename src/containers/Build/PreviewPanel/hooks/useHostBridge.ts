@@ -229,6 +229,7 @@ export function useHostBridge({
   requestBuildImageGenerationConfirmationRef,
   requestBuildMusicGenerationConfirmationRef,
   requestBuildMediaActionConfirmationRef,
+  requestCardCraftSelectionRef,
   onBuildLiveSafetyHostSessionsChange,
   requestBuildLiveSafetyStopRef
 }: UsePreviewHostBridgeArgs) {
@@ -403,6 +404,7 @@ export function useHostBridge({
     } | null = null;
     let appMcpPollTimer = 0;
     let mediaActionConfirmationInProgress = false;
+    let cardCraftSelectionOpen = false;
     const confirmedMediaActionKeys = new WeakMap<Window, Set<string>>();
     const maxConfirmedMediaActionsPerWindow = 100;
     interface ActiveBuildLiveSafetyGrant {
@@ -1020,6 +1022,117 @@ export function useHostBridge({
           })
         );
       }
+    }
+
+    // Twinkle.cardCraft.craft: the app only names a card (or none, for the
+    // picker) and a requestId. Twinkle shows its own pick/confirm screen,
+    // and only the published runtime of an approved recipe crafts for real;
+    // drafts get the owner's stored-nothing preview.
+    async function craftCardThroughHost({
+      activeBuild,
+      payload,
+      runtimeGrant
+    }: {
+      activeBuild: { id: number; title?: string | null };
+      payload: any;
+      runtimeGrant: string | null;
+    }) {
+      if (navigator.userActivation?.isActive !== true) {
+        throw createPreviewBridgeError(
+          'Crafting must start from a tap or click in the app.',
+          'USER_ACTIVATION_REQUIRED'
+        );
+      }
+      if (cardCraftSelectionOpen) {
+        throw createPreviewBridgeError(
+          'The card crafting window is already open.',
+          'card_craft_in_progress'
+        );
+      }
+      const rawCardId = payload?.cardId;
+      const requestedCardId =
+        rawCardId === undefined || rawCardId === null || rawCardId === ''
+          ? null
+          : Number(rawCardId);
+      if (
+        requestedCardId !== null &&
+        (!Number.isSafeInteger(requestedCardId) || requestedCardId <= 0)
+      ) {
+        throw createPreviewBridgeError(
+          'cardId must be an AI Card id.',
+          'card_craft_invalid'
+        );
+      }
+      const readToken = await ensureBuildApiToken(
+        ['cardCraft:read'],
+        previewAuth
+      );
+      const status = await requestRefs.requestBuildCardCraftRef.current({
+        buildId: activeBuild.id,
+        operation: 'status',
+        payload: {},
+        token: readToken,
+        runtimeGrant
+      });
+      if (!status?.available) {
+        const reason = String(status?.reason || 'unavailable');
+        throw createPreviewBridgeError(
+          status?.message ||
+            (reason === 'not_approved'
+              ? 'Card crafting in this app is not approved yet.'
+              : 'Card crafting is not available here.'),
+          reason === 'published_app_required'
+            ? 'card_craft_runtime_required'
+            : `card_craft_${reason}`
+        );
+      }
+      const isLive = status.mode === 'live' && Boolean(runtimeGrant);
+      const selectCard = requestCardCraftSelectionRef.current;
+      if (!selectCard) {
+        throw createPreviewBridgeError(
+          'Card crafting is unavailable right now.',
+          'card_craft_unavailable'
+        );
+      }
+      cardCraftSelectionOpen = true;
+      let cardId: number | null = null;
+      try {
+        cardId = await selectCard({
+          mode: isLive ? 'live' : 'preview',
+          appTitle: String(activeBuild.title || 'This app'),
+          cardId: requestedCardId,
+          acceptedLevels: Array.isArray(status.recipe?.acceptedLevels)
+            ? status.recipe.acceptedLevels
+                .map((level: unknown) => Number(level))
+                .filter((level: number) => level >= 1 && level <= 6)
+            : []
+        });
+      } finally {
+        cardCraftSelectionOpen = false;
+      }
+      if (!cardId) {
+        throw createPreviewBridgeError(
+          'The player did not craft a card.',
+          'card_craft_cancelled'
+        );
+      }
+      if (!isLive) {
+        return requestRefs.requestBuildCardCraftPreviewRef.current({
+          buildId: activeBuild.id,
+          cardId
+        });
+      }
+      const craftToken = await ensureBuildApiToken(
+        ['cardCraft:craft'],
+        previewAuth
+      );
+      return requestRefs.requestBuildCardCraftRef.current({
+        buildId: activeBuild.id,
+        operation: 'craft',
+        payload: { cardId, requestId: payload?.requestId },
+        token: craftToken,
+        runtimeGrant
+      });
     }
 
     requestBuildLiveSafetyStopRef.current = async (
@@ -4471,6 +4584,75 @@ export function useHostBridge({
             break;
           }
 
+          case 'cardCraft:status':
+          case 'cardCraft:list':
+          case 'cardCraft:get':
+          case 'cardCraft:set-state':
+          case 'cardCraft:craft': {
+            const operation = type.slice('cardCraft:'.length);
+            // Only Twinkle's own published-runtime grant is ever sent; the app
+            // never supplies grants, owners, tiers or asset fields.
+            const cardCraftGrant =
+              runtimeOnly && !appMcpSessionId
+                ? activeBuild.cardCraftRuntimeGrant || null
+                : null;
+            if (!previewAuth.userIdRef.current) {
+              if (operation === 'status') {
+                response = {
+                  mode: cardCraftGrant ? 'live' : 'preview',
+                  available: false,
+                  reason: 'sign_in_required',
+                  recipe: null,
+                  message: 'Sign in to craft your AI Cards.'
+                };
+                break;
+              }
+              if (operation === 'list') {
+                response = { assets: [], cursor: null };
+                break;
+              }
+              if (operation === 'get') {
+                response = { asset: null };
+                break;
+              }
+              throw createPreviewBridgeError(
+                'Sign in to craft your AI Cards.',
+                'card_craft_auth'
+              );
+            }
+            if (operation === 'craft') {
+              response = await craftCardThroughHost({
+                activeBuild,
+                payload,
+                runtimeGrant: cardCraftGrant
+              });
+              break;
+            }
+            const cardCraftToken = await ensureBuildApiToken(
+              [operation === 'set-state' ? 'cardCraft:write' : 'cardCraft:read'],
+              previewAuth
+            );
+            response = await requestRefs.requestBuildCardCraftRef.current({
+              buildId: activeBuild.id,
+              operation,
+              payload:
+                operation === 'list'
+                  ? { cursor: payload?.cursor, limit: payload?.limit }
+                  : operation === 'get'
+                    ? { assetId: payload?.assetId, cardId: payload?.cardId }
+                    : operation === 'set-state'
+                      ? {
+                          assetId: payload?.assetId,
+                          state: payload?.state,
+                          expectedRevision: payload?.expectedRevision
+                        }
+                      : {},
+              token: cardCraftToken,
+              runtimeGrant: operation === 'status' ? cardCraftGrant : null
+            });
+            break;
+          }
+
           case 'rewards:status':
           case 'rewards:receipt':
           case 'rewards:start':
@@ -4999,6 +5181,7 @@ export function useHostBridge({
     requestBuildMusicGenerationConfirmationRef,
     requestBuildMediaActionConfirmationRef,
     requestBuildLiveSafetyStopRef,
+    requestCardCraftSelectionRef,
     requestOpenContentConfirmationRef,
     runtimeExplorationPlanRef,
     runtimeOnly,

@@ -40,6 +40,16 @@ export default function useAppRequests({
     resolvedRequestBuildRewardPreview
   );
   requestBuildRewardPreviewRef.current = resolvedRequestBuildRewardPreview;
+  const requestBuildCardCraft = useAppContext(
+    (v) => v.requestHelpers.requestBuildCardCraft
+  );
+  const requestBuildCardCraftRef = useRef(requestBuildCardCraft);
+  requestBuildCardCraftRef.current = requestBuildCardCraft;
+  const requestBuildCardCraftPreview = useAppContext(
+    (v) => v.requestHelpers.requestBuildCardCraftPreview
+  );
+  const requestBuildCardCraftPreviewRef = useRef(requestBuildCardCraftPreview);
+  requestBuildCardCraftPreviewRef.current = requestBuildCardCraftPreview;
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
@@ -531,6 +541,8 @@ export default function useAppRequests({
   const previewRequestRefs = useRef<PreviewHostBridgeRequestRefs>({
     requestBuildRewardsRef,
     requestBuildRewardPreviewRef,
+    requestBuildCardCraftRef,
+    requestBuildCardCraftPreviewRef,
     connectBuildAppMcpRuntimeRef,
     pollBuildAppMcpCallRef,
     completeBuildAppMcpCallRef,

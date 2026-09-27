@@ -1603,6 +1603,24 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // signed in with a Minecraft vouch link: link that player to this account
+    async linkMinecraftInvite(token: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/signup/invite/link`,
+          { token },
+          auth()
+        );
+        return data as
+          | { linked: true; minecraftName: string; inviterName: string }
+          | {
+              linked: false;
+              reason: 'invalid' | 'linked_elsewhere' | 'unavailable';
+            };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async requestGuardianConsent({
       guardianEmail,
       childFirstName,

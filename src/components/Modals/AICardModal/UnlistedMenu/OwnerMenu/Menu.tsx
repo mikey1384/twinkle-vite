@@ -8,6 +8,10 @@ import { cardLevelHash, qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
+import {
+  craftedAssetPlace,
+  type CardCraftBadge
+} from '../../CraftedBadge';
 
 const burnPrice: Record<number, number> = {
   1: 500,
@@ -22,6 +26,7 @@ export default function Menu({
   burnXP,
   cardLevel,
   cardQuality,
+  craftBadge,
   onBurnConfirm,
   onSetSellModalShown,
   twinkleCoins,
@@ -30,6 +35,7 @@ export default function Menu({
   burnXP: number | string;
   cardLevel: number;
   cardQuality: string;
+  craftBadge: CardCraftBadge | null;
   onBurnConfirm: () => void;
   onSetSellModalShown: (v: boolean) => void;
   twinkleCoins: number;
@@ -138,6 +144,12 @@ export default function Menu({
               or use it for future AI Card related features. This action is
               irreversible, so make sure this is what you really want to do
               before proceeding
+              {craftBadge ? (
+                <span className={craftedBurnWarningClass}>
+                  Burning also removes <b>{craftBadge.name}</b> from{' '}
+                  <b>{craftedAssetPlace(craftBadge)}</b> for good.
+                </span>
+              ) : null}
             </span>
           }
           onConfirm={handleBurn}
@@ -156,3 +168,13 @@ export default function Menu({
     }
   }
 }
+
+const craftedBurnWarningClass = css`
+  display: block;
+  margin-top: 1.2rem;
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  background: ${Color.rose(0.08)};
+  color: ${Color.rose()};
+  font-weight: bold;
+`;

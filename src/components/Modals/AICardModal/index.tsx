@@ -32,6 +32,7 @@ import Icon from '~/components/Icon';
 import Offers from './Offers';
 import { getVisibleOfferGroups } from './Offers/helpers';
 import UnlistedMenu from './UnlistedMenu';
+import CraftedBadge, { useCardCraftBadge } from './CraftedBadge';
 import ListedMenu from './ListedMenu';
 import AICardDetails from '~/components/AICardDetails';
 import ShareButton from '~/components/Buttons/ShareButton';
@@ -155,6 +156,7 @@ export default function AICardModal({
     (v) => v.actions.onUpdateTodayStats
   );
   const card = useChatContext((v) => v.state.cardObj[cardId]);
+  const craftBadge = useCardCraftBadge(cardId);
   const [cardNotFound, setCardNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
   const [withdrawOfferModalShown, setWithdrawOfferModalShown] = useState(false);
@@ -580,18 +582,31 @@ export default function AICardModal({
               className={css`
                 grid-column: span 1;
                 grid-row: span 1;
+                display: flex;
+                flex-direction: column;
                 @media (max-width: ${mobileMaxWidth}) {
                   grid-column: 2;
                 }
               `}
             >
+              {/* Fills the column like before; the craft badge (if any)
+                  gets its own space below instead of overflowing it. */}
               <AICardDetails
                 style={{
                   gridColumn: 'span 1',
-                  gridRow: 'span 1'
+                  gridRow: 'span 1',
+                  height: 'auto',
+                  flexGrow: 1
                 }}
                 card={card}
               />
+              {craftBadge ? (
+                <CraftedBadge
+                  badge={craftBadge}
+                  isBurned={!!card.isBurned}
+                  onNavigate={onHide}
+                />
+              ) : null}
             </div>
             <div
               className={css`
@@ -724,6 +739,7 @@ export default function AICardModal({
                             cardId={card.id}
                             cardLevel={card.level}
                             cardQuality={card.quality}
+                            craftBadge={craftBadge}
                             userIsOwner={userIsOwner}
                             myId={userId}
                             myOffer={card.myOffer}

@@ -46,6 +46,7 @@ import type {
   PreviewPanelProps
 } from './types';
 import type {
+  BuildCardCraftSelectionRequest,
   BuildLiveSafetyHostSession,
   BuildLiveSafetyStopRequest,
   BuildMediaActionConfirmationRequest,
@@ -56,6 +57,7 @@ import type {
   BuildRuntimeMusicGenerationConfirmationRequest
 } from './helpers/buildRuntimeImageGeneration';
 import VersionHistoryModal from './VersionHistoryModal';
+import CardCraftModal from './CardCraftModal';
 import {
   EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS,
   PREVIEW_HIDDEN_SUSPEND_DELAY_MS,
@@ -948,6 +950,30 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         requestBuildMediaActionConfirmationRef.current = null;
       };
     }, [build.title, requestMediaActionConfirm]);
+    const [cardCraftSelection, setCardCraftSelection] = useState<
+      | (BuildCardCraftSelectionRequest & {
+          resolve: (cardId: number | null) => void;
+        })
+      | null
+    >(null);
+    const requestCardCraftSelectionRef = useRef<
+      | ((request: BuildCardCraftSelectionRequest) => Promise<number | null>)
+      | null
+    >(null);
+    useEffect(() => {
+      let pending: ((cardId: number | null) => void) | null = null;
+      requestCardCraftSelectionRef.current = (request) =>
+        new Promise<number | null>((resolve) => {
+          pending = resolve;
+          setCardCraftSelection({ ...request, resolve });
+        });
+      return () => {
+        requestCardCraftSelectionRef.current = null;
+        // Leaving the app cancels an open crafting confirmation.
+        pending?.(null);
+        setCardCraftSelection(null);
+      };
+    }, []);
     const {
       areProjectFileMutationsLocked,
       ensureBuildApiTokenForBuild,
@@ -1353,6 +1379,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestBuildImageGenerationConfirmationRef,
       requestBuildMusicGenerationConfirmationRef,
       requestBuildMediaActionConfirmationRef,
+      requestCardCraftSelectionRef,
       onBuildLiveSafetyHostSessionsChange: setActiveBuildLiveSafetyHostSessions,
       requestBuildLiveSafetyStopRef,
       requestOpenContentConfirmationRef
@@ -1757,6 +1784,16 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         {imageGenerationConfirmModal}
         {musicGenerationConfirmModal}
         {mediaActionConfirmModal}
+        {cardCraftSelection ? (
+          <CardCraftModal
+            key={`${cardCraftSelection.mode}:${cardCraftSelection.cardId || 'pick'}`}
+            request={cardCraftSelection}
+            onDone={(cardId) => {
+              cardCraftSelection.resolve(cardId);
+              setCardCraftSelection(null);
+            }}
+          />
+        ) : null}
       </div>
     );
   }

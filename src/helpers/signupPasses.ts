@@ -124,6 +124,22 @@ export function needsGuardianConsent(
   return months <= 14 * 12;
 }
 
+/**
+ * A vouched Minecraft player's link (?mcpass=): kept like any invite and
+ * taken out of the address bar and history (it's personal). Returns true when
+ * the page was opened with one.
+ */
+export function takeMinecraftPassFromUrl() {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get('mcpass');
+  if (!token) return false;
+  url.searchParams.delete('mcpass');
+  window.history.replaceState(window.history.state, '', url.toString());
+  if (!/^[A-Za-z0-9_-]{20,128}$/.test(token)) return false;
+  storeSignupInvite({ token: `m_${token}`, source: 'minecraft' });
+  return true;
+}
+
 /** True once after an invite arrives, so the sign-in window opens on sign-up. */
 export function takeOpenToSignup() {
   const open = openToSignup;

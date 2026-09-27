@@ -55,6 +55,24 @@ export default function buildRequestHelpers({
     };
   }
 
+  function toCardCraftRequestError(error: unknown) {
+    const data = axios.isAxiosError(error) ? error.response?.data : null;
+    const result = new Error(
+      data?.error ||
+        (error instanceof Error
+          ? error.message
+          : 'Could not complete the card crafting request.')
+    ) as Error & { code?: string; status?: number; details?: unknown };
+    if (typeof data?.code === 'string') result.code = data.code;
+    if (axios.isAxiosError(error) && error.response?.status) {
+      result.status = error.response.status;
+    }
+    if (data?.details && typeof data.details === 'object') {
+      result.details = data.details;
+    }
+    return result;
+  }
+
   function getBuildApiConfig(token?: string) {
     return {
       ...auth(),
@@ -740,6 +758,73 @@ export default function buildRequestHelpers({
             : 'Could not complete reward request.'
         );
       }
+    },
+    // Twinkle.cardCraft runtime calls. Errors keep the server's code and
+    // details so the app can tell "already crafted" from "try again".
+    async requestBuildCardCraft({
+      buildId,
+      operation,
+      payload,
+      token,
+      runtimeGrant
+    }: {
+      buildId: number;
+      operation: string;
+      payload: unknown;
+      token: string;
+      runtimeGrant?: string | null;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/card-craft/${operation}`,
+          payload,
+          {
+            ...getBuildRequestConfig({ maxRetries: 0 }),
+            headers: {
+              ...auth().headers,
+              'x-build-api-token': token,
+              ...(runtimeGrant
+                ? { 'x-build-cardcraft-runtime': runtimeGrant }
+                : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        throw toCardCraftRequestError(error);
+      }
+    },
+    // Owner draft dry run: the draft recipe, nothing stored, card untouched.
+    async requestBuildCardCraftPreview({
+      buildId,
+      cardId
+    }: {
+      buildId: number;
+      cardId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/card-craft/preview/craft`,
+          { cardId },
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
+        return data;
+      } catch (error) {
+        throw toCardCraftRequestError(error);
+      }
+    },
+    // "Crafted into …" badges for up to 50 cards in one request.
+    async loadCardCraftBadges(cardIds: number[]) {
+      const ids = Array.from(
+        new Set(
+          cardIds.filter((id) => Number.isSafeInteger(id) && id > 0)
+        )
+      ).slice(0, 50);
+      if (!ids.length) return [];
+      const { data } = await request.get(`${URL}/build/card-crafts/cards`, {
+        params: { ids: ids.join(',') }
+      });
+      return Array.isArray(data?.crafts) ? data.crafts : [];
     },
     async loadRewardEarnHub({
       period

@@ -3,31 +3,31 @@ import { socket } from '~/constants/sockets/api';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useToast } from '~/contexts/Toast';
 import { SITE_NAME } from '~/constants/siteBrand';
-import { storeSignupInvite } from '~/helpers/signupPasses';
+import {
+  storeSignupInvite,
+  takeMinecraftPassFromUrl
+} from '~/helpers/signupPasses';
 
 // Invite passes reach a signed-out visitor two ways (signupPasses.ts): the
 // world relay sends one to a guest after 10 minutes in a private room with a
 // Twinkle user, and a vouched Minecraft player follows a link with ?mcpass=.
 // Either way it's kept here and the sign-up window opens without the question.
+// A member who is already signed in gets "Link <player> to your account"
+// instead (App/MinecraftVouchLink), so nobody makes a second account.
 export default function useSignupInviteSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
+  const sessionLoaded = useAppContext((v) => v.user.state.loaded);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
   const showToast = useToast();
 
   useEffect(() => {
-    if (userId) return;
-    const url = new URL(window.location.href);
-    const token = url.searchParams.get('mcpass');
-    if (!token || !/^[A-Za-z0-9_-]{20,128}$/.test(token)) return;
-    storeSignupInvite({ token: `m_${token}`, source: 'minecraft' });
-    // the link is personal: keep it out of the address bar and history
-    url.searchParams.delete('mcpass');
-    window.history.replaceState(window.history.state, '', url.toString());
-    onOpenSigninModal();
+    // wait for the session: a signed-in member must not be sent to sign-up
+    if (userId || !sessionLoaded) return;
+    if (takeMinecraftPassFromUrl()) onOpenSigninModal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, sessionLoaded]);
 
   useEffect(() => {
     function handleInvitePass(pass: {

@@ -224,6 +224,7 @@ export default function SignUpForm({
               minecraftName={invite.minecraftName}
               onContinue={() => setInviteAccepted(true)}
               onUseQuestion={() => setInvite(null)}
+              onLogIn={onShowLoginForm}
             />
           ) : (
             <SecretPassPhrase
