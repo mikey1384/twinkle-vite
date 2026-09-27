@@ -42,7 +42,7 @@ export default function Bounties({
     <ErrorBoundary componentPath="Home/Earn/Bounties">
       <div className={headClass}>
         <div>
-          <h2 className={titleClass}>App Store</h2>
+          <h2 className={titleClass}>Bounties</h2>
           <p className={subClass}>
             {ranked
               ? `Apps built on ${SITE_NAME} that pay real XP and Coins, most played first.`
