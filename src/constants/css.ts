@@ -154,6 +154,16 @@ export const liftedEffect = {
   borderRadius: borderRadius
 };
 export const innerBorderRadius = '11px';
+// Caps text at `lines` lines with an ellipsis. Put it on a block element, never
+// on a <button> (Safari ignores it there): clamp a span inside the button.
+export function lineClamp(lines: number | string) {
+  return `
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: ${lines};
+    overflow: hidden;
+  `;
+}
 export const mobileMaxWidth = '767px';
 export const tabletMaxWidth = '820px';
 export const desktopMinWidth = '768px';

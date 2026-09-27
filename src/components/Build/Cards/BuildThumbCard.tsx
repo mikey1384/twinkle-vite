@@ -5,6 +5,7 @@ import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
+import { lineClamp } from '~/constants/css';
 import { useBuildCardData } from './useBuildCardData';
 
 const inheritedUsernameTextStyle: React.CSSProperties = {
@@ -69,11 +70,8 @@ const titleButtonClass = css`
 // The clamp lives on a span: Safari ignores display: -webkit-box on a
 // <button>, so a clamped button grows to the full title and stretches the row.
 const titleTextClass = css`
-  display: -webkit-box;
-  overflow: hidden;
   overflow-wrap: anywhere;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  ${lineClamp(2)}
 `;
 
 const metaClass = css`

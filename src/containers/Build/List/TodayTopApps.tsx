@@ -1,5 +1,6 @@
 import React, { useId, useState } from 'react';
 import { css } from '@emotion/css';
+import { lineClamp } from '~/constants/css';
 import Icon from '~/components/Icon';
 import type { TodayTopViewedBuild } from './types';
 import { BUILD_TODAY_TOP_VIEW_SOURCE } from '../constants/runtimeViewSources';
@@ -123,6 +124,7 @@ const copyClass = css`
   strong {
     font-size: 1.25rem;
     overflow-wrap: anywhere;
+    ${lineClamp(2)}
   }
 
   span {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import FavoriteButton from '~/components/Build/FavoriteButton';
@@ -12,7 +12,9 @@ import {
   getAppStatus,
   getAppSubtitle,
   getPlayersLine,
-  newBadgeClass
+  newBadgeClass,
+  appTitleRowClass,
+  appTitleTextClass
 } from './appCardHelpers';
 
 // The App Store's #1 on desktop: the same facts as a shelf card, spanning
@@ -46,8 +48,8 @@ export default function TopPickCard({ app }: { app: EarnHubApp }) {
         </span>
       </div>
       <div className={bodyClass}>
-        <h3 className={titleClass}>
-          {app.title}
+        <h3 className={cx(titleClass, appTitleRowClass)}>
+          <span className={appTitleTextClass}>{app.title}</span>
           {app.popularity?.isNew && <span className={newBadgeClass}>New</span>}
         </h3>
         <div className={byClass}>

@@ -9,7 +9,7 @@ import StudioHero from '~/containers/Build/StudioHero';
 import UsernameText from '~/components/Texts/UsernameText';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
-import { mobileMaxWidth } from '~/constants/css';
+import { lineClamp, mobileMaxWidth } from '~/constants/css';
 import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
 import { BUILD_TRENDING_SHOWCASE_VIEW_SOURCE } from '../constants/runtimeViewSources';
 import type { TodayTopViewedBuild } from './types';
@@ -103,14 +103,11 @@ const topViewedTitleClass = css`
   line-height: 1.1;
   font-family: ${displayFontFamily};
   overflow-wrap: anywhere;
+  ${lineClamp(2)}
 
   @media (max-width: ${mobileMaxWidth}) {
-    display: -webkit-box;
     font-size: 1.3rem;
     min-height: 2.86rem;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
   }
 `;
 

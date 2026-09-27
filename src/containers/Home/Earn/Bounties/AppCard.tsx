@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import FavoriteButton from '~/components/Build/FavoriteButton';
@@ -12,7 +12,9 @@ import {
   getAppStatus,
   getAppSubtitle,
   getPlayersLine,
-  newBadgeClass
+  newBadgeClass,
+  appTitleRowClass,
+  appTitleTextClass
 } from './appCardHelpers';
 
 // One approved app on the shelf: what it pays, who made it, and what this
@@ -57,8 +59,8 @@ export default function AppCard({
       </div>
       <div className={bodyClass}>
         <div className={payLine}>{payout}</div>
-        <h3 className={titleClass}>
-          {app.title}
+        <h3 className={cx(titleClass, appTitleRowClass)}>
+          <span className={appTitleTextClass}>{app.title}</span>
           {isNew && <span className={newBadgeClass}>New</span>}
         </h3>
         <div className={byClass}>

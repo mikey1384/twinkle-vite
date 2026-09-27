@@ -12,7 +12,7 @@ import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
 import UsernameText from '~/components/Texts/UsernameText';
 import { useAppContext, useBuildContext, useKeyContext } from '~/contexts';
-import { mobileMaxWidth } from '~/constants/css';
+import { lineClamp, mobileMaxWidth } from '~/constants/css';
 import {
   formatBuildCollaboratorCount,
   formatBuildForkCount,
@@ -208,6 +208,7 @@ const titleClass = css`
   font-weight: 900;
   line-height: 1.08;
   overflow-wrap: anywhere;
+  ${lineClamp(3)}
 
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.55rem;

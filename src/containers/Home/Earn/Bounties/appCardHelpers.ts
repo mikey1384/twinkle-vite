@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, lineClamp } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import type { EarnHubApp } from './useEarnHub';
 
@@ -83,8 +83,22 @@ export function getPlayersLine(app: EarnHubApp) {
   } this week`;
 }
 
+// The title and its New badge: the title text is capped at two lines so a
+// long title can never push the badge out or stretch the card.
+export const appTitleRowClass = css`
+  display: flex;
+  align-items: center;
+  min-width: 0;
+`;
+export const appTitleTextClass = css`
+  min-width: 0;
+  overflow-wrap: anywhere;
+  ${lineClamp(2)}
+`;
+
 export const newBadgeClass = css`
   display: inline-block;
+  flex-shrink: 0;
   margin-left: 0.6rem;
   padding: 0.1rem 0.7rem;
   border-radius: 999px;

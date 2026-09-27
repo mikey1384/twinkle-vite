@@ -1,7 +1,7 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import { css, cx } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { lineClamp, Color, mobileMaxWidth } from '~/constants/css';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 
 export interface SharedPromptStat {
@@ -268,10 +268,7 @@ const titleClass = css`
   text-align: left;
   overflow-wrap: anywhere;
   flex-shrink: 0;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: var(--shared-prompt-title-max-lines, 3);
-  overflow: hidden;
+  ${lineClamp('var(--shared-prompt-title-max-lines, 3)')}
 
   @media (max-width: ${mobileMaxWidth}) {
     font-size: var(--shared-prompt-title-font-size, 1.6rem);

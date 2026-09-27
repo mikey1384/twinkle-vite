@@ -1,5 +1,6 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
+import { lineClamp } from '~/constants/css';
 import FavoriteButton, {
   type BuildFavoriteChange
 } from '~/components/Build/FavoriteButton';
@@ -221,6 +222,7 @@ const titleClass = css`
   font-weight: 900;
   line-height: 1.12;
   overflow-wrap: anywhere;
+  ${lineClamp(3)}
 `;
 
 const descriptionClass = css`

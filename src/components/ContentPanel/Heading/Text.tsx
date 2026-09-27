@@ -3,6 +3,7 @@ import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
 import UsernameText from '~/components/Texts/UsernameText';
+import { truncateText } from '~/helpers/stringHelpers';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
@@ -562,7 +563,13 @@ export default function HeadingText({
   }
 
   function renderBuildContentLink() {
-    const displayTitle = getBuildDisplayTitle(contentObj);
+    // Mid-sentence, with badges after it: a long title is shortened here
+    // rather than clamped, which could hide the badges. The app card below
+    // the heading shows more of it.
+    const displayTitle = truncateText({
+      text: getBuildDisplayTitle(contentObj),
+      limit: 80
+    });
     return (
       <>
         <ContentLink

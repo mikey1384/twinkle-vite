@@ -1,12 +1,18 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import Link from '~/components/Link';
 import { Color, borderRadius } from '~/constants/css';
 import { SITE_NAME } from '~/constants/siteBrand';
 import type { EarnHubApp } from './useEarnHub';
-import { getAppPayout, getPlayersLine, newBadgeClass } from './appCardHelpers';
+import {
+  getAppPayout,
+  getPlayersLine,
+  newBadgeClass,
+  appTitleRowClass,
+  appTitleTextClass
+} from './appCardHelpers';
 
 // One line of the desktop "See all apps" list: rank, picture, who made it,
 // what it pays and how many played this week. Phones use AppCard rows instead.
@@ -28,8 +34,8 @@ export default function AppRow({ app }: { app: EarnHubApp }) {
         {!app.thumbnailUrl && app.title.slice(0, 1)}
       </div>
       <div className={mainClass}>
-        <div className={titleClass}>
-          {app.title}
+        <div className={cx(titleClass, appTitleRowClass)}>
+          <span className={appTitleTextClass}>{app.title}</span>
           {app.popularity?.isNew && <span className={newBadgeClass}>New</span>}
         </div>
         <div className={byClass}>
