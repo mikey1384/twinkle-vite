@@ -2,7 +2,8 @@ import type {
   BuildLumineChatVisibility,
   BuildLumineModelOption,
   BuildLumineModelPreference,
-  BuildProjectLimitApproval
+  BuildProjectLimitApproval,
+  BuildStorageLimitApproval
 } from './ChatPanel/types';
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type { BuildLiveRunState } from '~/contexts/Build/reducer';
@@ -263,6 +264,7 @@ export interface BuildCopilotPolicy {
     maxRuntimeFileBytes: number;
   };
   projectLimitApproval?: BuildProjectLimitApproval | null;
+  storageLimitApproval?: BuildStorageLimitApproval | null;
   usage: {
     currentProjectBytes: number;
     projectBytesRemaining: number;

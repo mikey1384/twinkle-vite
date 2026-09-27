@@ -176,6 +176,7 @@ registerMethods('build', [
   'createBuildCollaborationRequest',
   'loadBuildCollaborationRequests',
   'requestBuildProjectLimitIncrease',
+  'requestBuildStorageLimitIncrease',
   'reviewBuildProjectLimitRequest',
   'acceptBuildCollaborationRequest',
   'rejectBuildCollaborationRequest',

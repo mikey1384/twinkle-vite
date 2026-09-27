@@ -289,6 +289,7 @@ export default function ChatPanel({
   generationResetError,
   onPurchaseGenerationReset,
   onRequestProjectLimitIncrease,
+  onRequestStorageLimitIncrease,
   onStopGeneration,
   onFixRuntimeObservationMessage,
   onDeleteMessage
@@ -917,6 +918,7 @@ export default function ChatPanel({
             minimized={lumineHeaderMinimized}
             onPurchaseGenerationReset={onPurchaseGenerationReset}
             onRequestProjectLimitIncrease={onRequestProjectLimitIncrease}
+            onRequestStorageLimitIncrease={onRequestStorageLimitIncrease}
             onOpenRuntimeUploadsManager={onOpenRuntimeUploadsManager}
             onToggleLimitsExpanded={handleToggleLimitsExpanded}
             onToggleMinimized={handleToggleMinimized}

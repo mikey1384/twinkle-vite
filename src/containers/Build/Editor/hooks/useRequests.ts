@@ -107,6 +107,9 @@ export default function useRequests() {
   const requestBuildProjectLimitIncrease = useAppContext(
     (v) => v.requestHelpers.requestBuildProjectLimitIncrease
   );
+  const requestBuildStorageLimitIncrease = useAppContext(
+    (v) => v.requestHelpers.requestBuildStorageLimitIncrease
+  );
 
   return {
     cleanupBuildChatReferenceUploads,
@@ -133,6 +136,7 @@ export default function useRequests() {
     onSetUserState,
     purchaseBuildGenerationReset,
     requestBuildProjectLimitIncrease,
+    requestBuildStorageLimitIncrease,
     replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
     resetBuildContributionToMain,

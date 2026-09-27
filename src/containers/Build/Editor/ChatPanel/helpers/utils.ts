@@ -68,6 +68,9 @@ export function formatTokenCount(value: number) {
 
 export function formatBytes(value: number) {
   const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0;
+  if (safeValue >= 1024 * 1024 * 1024) {
+    return `${(safeValue / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
   if (safeValue >= 1024 * 1024) {
     return `${(safeValue / (1024 * 1024)).toFixed(1)} MB`;
   }

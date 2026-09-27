@@ -187,6 +187,7 @@ interface HeaderProps {
     files: boolean;
     size: boolean;
   }) => Promise<void> | void;
+  onRequestStorageLimitIncrease: (requestedBytes: number) => Promise<void> | void;
   onOpenRuntimeUploadsManager: () => void;
   onToggleLimitsExpanded: () => void;
   onToggleMinimized: () => void;
@@ -207,6 +208,7 @@ export default function Header({
   minimized,
   onPurchaseGenerationReset,
   onRequestProjectLimitIncrease,
+  onRequestStorageLimitIncrease,
   onOpenRuntimeUploadsManager,
   onToggleLimitsExpanded,
   onToggleMinimized
@@ -296,6 +298,22 @@ export default function Header({
     sizePressure &&
     projectLimitApproval?.canRequestSize
   );
+  const storageLimitApproval = copilotPolicy?.storageLimitApproval || null;
+  const storagePressure = Boolean(
+    copilotPolicy &&
+    copilotPolicy.usage.runtimeFileStorageBytes >=
+      Math.max(
+        1,
+        Math.floor(copilotPolicy.limits.maxRuntimeFileStorageBytes * 0.8)
+      )
+  );
+  const showStorageLimitNudge = Boolean(
+    storageLimitApproval &&
+    (storageLimitApproval.latestRequest?.status === 'pending' ||
+      (storagePressure &&
+        storageLimitApproval.canRequest &&
+        storageLimitApproval.requestTiers.length > 0))
+  );
   const showProjectLimitNudge =
     Boolean(requestableFiles || requestableSize) ||
     (latestProjectLimitRequest?.status === 'pending' &&
@@ -365,6 +383,12 @@ export default function Header({
             onRequest={onRequestProjectLimitIncrease}
           />
         ) : null}
+        {showStorageLimitNudge ? (
+          <StorageLimitNudge
+            approval={storageLimitApproval}
+            onRequest={onRequestStorageLimitIncrease}
+          />
+        ) : null}
         {visiblePageFeedbackEvents.length > 0 ? (
           <div
             className={css`
@@ -424,6 +448,12 @@ export default function Header({
               requestFiles={requestableFiles}
               requestSize={requestableSize}
               onRequest={onRequestProjectLimitIncrease}
+            />
+          ) : null}
+          {showStorageLimitNudge ? (
+            <StorageLimitNudge
+              approval={storageLimitApproval}
+              onRequest={onRequestStorageLimitIncrease}
             />
           ) : null}
           {limitsExpanded ? (
@@ -780,6 +810,119 @@ function ProjectLimitNudge({
     setRequestError('');
     try {
       await onRequest({ files: selectedFiles, size: selectedSize });
+    } catch (error: any) {
+      setRequestError(
+        error?.responseData?.error ||
+          error?.response?.data?.error ||
+          error?.message ||
+          'Could not send this request. Please try again.'
+      );
+    } finally {
+      setRequesting(false);
+    }
+  }
+}
+
+// Lumine file storage is shared by all of this user's Builds. The creator
+// only taps one button; the next storage step is chosen for them.
+function StorageLimitNudge({
+  approval,
+  onRequest
+}: {
+  approval: BuildCopilotPolicy['storageLimitApproval'];
+  onRequest: (requestedBytes: number) => Promise<void> | void;
+}) {
+  const [requesting, setRequesting] = useState(false);
+  const [requestError, setRequestError] = useState('');
+  const latestRequest = approval?.latestRequest || null;
+  const pending = latestRequest?.status === 'pending';
+  const canApproveDirectly = Boolean(approval?.canApproveDirectly);
+  const nextTierBytes = Number(approval?.requestTiers?.[0] || 0);
+  const pendingBytes = Number(
+    latestRequest?.requestedMaxRuntimeFileStorageBytes || 0
+  );
+  const canSendRequest =
+    nextTierBytes > 0 && (!pending || canApproveDirectly);
+  return (
+    <div
+      className={css`
+        border: 1px solid rgba(65, 140, 235, 0.24);
+        border-radius: 12px;
+        background: rgba(65, 140, 235, 0.08);
+        padding: 0.9rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+      `}
+    >
+      <div
+        className={css`
+          display: flex;
+          align-items: flex-start;
+          gap: 0.65rem;
+          min-width: 16rem;
+          flex: 1 1 18rem;
+        `}
+      >
+        <Icon icon="folder-open" />
+        <div>
+          <div
+            className={css`
+              font-weight: 900;
+              color: var(--chat-text);
+            `}
+          >
+            {pending && !canApproveDirectly
+              ? 'Mikey is reviewing your storage request'
+              : 'Your Lumine file storage is getting full'}
+          </div>
+          <div
+            className={css`
+              margin-top: 0.18rem;
+              color: var(--chat-text);
+              opacity: 0.72;
+              font-size: var(--build-workshop-meta-font-size);
+              line-height: 1.4;
+            `}
+          >
+            {pending && !canApproveDirectly
+              ? `You asked for ${formatBytes(pendingBytes)} of storage for all your Builds. Your uploads keep working with the current space until Mikey approves it.`
+              : canApproveDirectly
+                ? `Approve ${formatBytes(nextTierBytes)} of storage for all your Builds. The change takes effect immediately.`
+                : `Send Mikey a request for ${formatBytes(nextTierBytes)} of storage for all your Builds. Nothing changes until he approves it.`}
+          </div>
+        </div>
+      </div>
+      {canSendRequest ? (
+        <Button color="logoBlue" loading={requesting} onClick={handleRequest}>
+          {canApproveDirectly
+            ? 'Approve more storage'
+            : 'Ask Mikey for more storage'}
+        </Button>
+      ) : null}
+      {requestError ? (
+        <div
+          className={css`
+            flex-basis: 100%;
+            color: ${Color.rose()};
+            font-size: var(--build-workshop-meta-font-size);
+            font-weight: 800;
+          `}
+        >
+          {requestError}
+        </div>
+      ) : null}
+    </div>
+  );
+
+  async function handleRequest() {
+    if (requesting || !nextTierBytes) return;
+    setRequesting(true);
+    setRequestError('');
+    try {
+      await onRequest(nextTierBytes);
     } catch (error: any) {
       setRequestError(
         error?.responseData?.error ||

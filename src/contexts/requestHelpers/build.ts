@@ -906,6 +906,22 @@ export default function buildRequestHelpers({
         return handleBuildCanonicalActionError(error);
       }
     },
+    async requestBuildStorageLimitIncrease({
+      requestedBytes
+    }: {
+      requestedBytes: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/runtime-storage-limit-request`,
+          { requestedBytes },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleBuildCanonicalActionError(error);
+      }
+    },
     async reviewBuildProjectLimitRequest({
       requestId,
       approved

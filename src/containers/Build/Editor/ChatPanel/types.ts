@@ -90,6 +90,29 @@ export interface BuildProjectLimitApproval {
   } | null;
 }
 
+// Lumine file storage is per user across all their Builds; past the default
+// quota Mikey approves more (see the API's runtimeStorageLimitApproval.ts).
+export interface BuildStorageLimitApproval {
+  maxRuntimeFileStorageBytes: number;
+  defaultMaxRuntimeFileStorageBytes?: number;
+  maxApprovableRuntimeFileStorageBytes?: number;
+  hasOverride: boolean;
+  canApproveDirectly?: boolean;
+  canRequest: boolean;
+  requestTiers: number[];
+  runtimeFileStorageBytes?: number;
+  runtimeFileCount?: number;
+  latestRequest?: {
+    requestId: number;
+    status: 'pending' | 'approved' | 'rejected';
+    requestedMaxRuntimeFileStorageBytes: number;
+    approvedMaxRuntimeFileStorageBytes?: number | null;
+    reviewReason?: string;
+    revision?: number;
+    eventTimeMs?: number;
+  } | null;
+}
+
 export interface BuildCopilotPolicy {
   limits: {
     maxProjectBytes: number;
@@ -101,6 +124,7 @@ export interface BuildCopilotPolicy {
     maxRuntimeFileBytes: number;
   };
   projectLimitApproval?: BuildProjectLimitApproval | null;
+  storageLimitApproval?: BuildStorageLimitApproval | null;
   usage: {
     currentProjectBytes: number;
     projectBytesRemaining: number;
@@ -405,6 +429,7 @@ export interface ChatPanelProps {
     files: boolean;
     size: boolean;
   }) => Promise<void> | void;
+  onRequestStorageLimitIncrease: (requestedBytes: number) => Promise<void> | void;
   onStopGeneration: () => void;
   onFixRuntimeObservationMessage: (
     message: ChatMessage

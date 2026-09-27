@@ -92,6 +92,7 @@ import {
   shouldShowStandaloneBuildProjectLumineFix
 } from '~/helpers/branchMainUpdateNotice';
 import {
+  applyRuntimeUploadUsageToCopilotPolicy,
   canEditBuildProject,
   normalizeBuildWorkspaceCommunicationMode
 } from './helpers/branches';
@@ -313,6 +314,7 @@ export default function BuildEditor({
     onSetUserState,
     purchaseBuildGenerationReset,
     requestBuildProjectLimitIncrease,
+    requestBuildStorageLimitIncrease,
     replaceBuildContributionIntoMyBranch,
     replaceMainWithBuildContribution,
     resetBuildContributionToMain,
@@ -1072,6 +1074,31 @@ export default function BuildEditor({
     } catch (error) {
       console.error('Failed to request more project room:', error);
       throw error;
+    }
+  }
+
+  async function handleRequestStorageLimitIncrease(requestedBytes: number) {
+    const result = await requestBuildStorageLimitIncrease({ requestedBytes });
+    const approval = result?.storageLimitApproval;
+    if (!result?.success || !approval) {
+      throw new Error(result?.error || 'Could not send this request');
+    }
+    const currentPolicy = getLatestCopilotPolicy();
+    if (!currentPolicy) return;
+    // Storage is per user: the server returns the canonical limit and usage.
+    const usedBytes = Math.max(0, Number(approval.runtimeFileStorageBytes) || 0);
+    const limitBytes = Math.max(
+      0,
+      Number(approval.maxRuntimeFileStorageBytes) || 0
+    );
+    const nextPolicy = applyRuntimeUploadUsageToCopilotPolicy(currentPolicy, {
+      totalBytes: usedBytes,
+      fileCount: Math.max(0, Number(approval.runtimeFileCount) || 0),
+      maxRuntimeFileStorageBytes: limitBytes,
+      remainingBytes: Math.max(limitBytes - usedBytes, 0)
+    });
+    if (nextPolicy) {
+      replaceCopilotPolicy({ ...nextPolicy, storageLimitApproval: approval });
     }
   }
 
@@ -2050,6 +2077,7 @@ export default function BuildEditor({
     generationResetError,
     onPurchaseGenerationReset: handlePurchaseGenerationReset,
     onRequestProjectLimitIncrease: handleRequestProjectLimitIncrease,
+    onRequestStorageLimitIncrease: handleRequestStorageLimitIncrease,
     onStopGeneration: handleStopGeneration,
     onFixRuntimeObservationMessage: handleFixRuntimeObservationMessage,
     onDeleteMessage: handleDeleteMessage
