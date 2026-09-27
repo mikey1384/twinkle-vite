@@ -2076,8 +2076,6 @@ export default function BuildEditor({
     purchasingGenerationReset,
     generationResetError,
     onPurchaseGenerationReset: handlePurchaseGenerationReset,
-    onRequestProjectLimitIncrease: handleRequestProjectLimitIncrease,
-    onRequestStorageLimitIncrease: handleRequestStorageLimitIncrease,
     onStopGeneration: handleStopGeneration,
     onFixRuntimeObservationMessage: handleFixRuntimeObservationMessage,
     onDeleteMessage: handleDeleteMessage
@@ -2150,6 +2148,11 @@ export default function BuildEditor({
         onRewardProposalAccepted={handleBuildReloadFromServer}
         release={release}
         rewardApprovalPrompt={rewardApprovalPrompt}
+        reviewRequestLimits={{
+          copilotPolicy,
+          onRequestProjectLimitIncrease: handleRequestProjectLimitIncrease,
+          onRequestStorageLimitIncrease: handleRequestStorageLimitIncrease
+        }}
         hasUnsavedRewardChanges={rewardDraftDirty}
         rewardsBeingPrepared={currentBuildRunView.generating}
         onTogglePublish={handlePublish}

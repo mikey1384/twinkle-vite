@@ -589,6 +589,12 @@ const backButtonClass = css`
   }
 `;
 
+// Holds the portaled "Connect AI helper" button; empty (and so invisible)
+// until the app registers tools.
+const appHelperSlotClass = css`
+  display: contents;
+`;
+
 const notificationSettingsButtonClass = css`
   border: 1px solid var(--ui-border);
   background: rgba(65, 140, 235, 0.08);
@@ -1070,6 +1076,17 @@ export default function BuildRuntime({
     ).trim();
     return /^[0-9a-f-]{36}$/i.test(value) ? value : '';
   }, [location.search]);
+  // "Connect AI helper": signed-in viewers of this tab only. Never in an
+  // embedded runtime, a dedicated app-mcp tab, or an app that pays XP/Coins
+  // (the server refuses those too).
+  const [appHelperSlot, setAppHelperSlot] = useState<HTMLElement | null>(
+    null
+  );
+  const appHelperEnabled =
+    !isEmbedded &&
+    !appMcpSessionId &&
+    Boolean(userId) &&
+    !build?.rewardRuntimeGrant;
   const buildAppTabTarget = useMemo(() => {
     if (!build?.id) return '';
     return getBuildAppTabTarget({
@@ -2417,6 +2434,9 @@ export default function BuildRuntime({
                   ) : null}
                 </>
               ) : null}
+              {appHelperEnabled ? (
+                <span className={appHelperSlotClass} ref={setAppHelperSlot} />
+              ) : null}
               <ShareButton
                 variant="compact"
                 buttonVariant="ghost"
@@ -2575,6 +2595,12 @@ export default function BuildRuntime({
                     launchTarget={buildLaunchTarget}
                     capabilitySnapshot={build.capabilitySnapshot || null}
                     appMcpSessionId={appMcpSessionId || null}
+                    appHelperEnabled={appHelperEnabled}
+                    appHelperToolbarSlot={
+                      appHelperEnabled ? appHelperSlot : null
+                    }
+                    appHelperCompact={compactActions}
+                    appHelperHideIdleButton={isMobilePortrait}
                     onAiUsagePolicyUpdate={applyRuntimeAiUsagePolicyUpdate}
                     onReplaceCode={() => {}}
                     onApplyRestoredProjectFiles={() => {}}

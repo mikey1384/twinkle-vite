@@ -74,7 +74,19 @@ import { createIframeFocusController } from '~/helpers/iframeFocus';
 import AgentManualPane from './AgentManualPane';
 import PreviewStage, { BuildLiveHostSafetyControls } from './PreviewStage';
 import ProjectFileInputs from './ProjectFileInputs';
+import { createPortal } from 'react-dom';
 import WorkspaceToolbar from './WorkspaceToolbar';
+import {
+  AppHelperBadge,
+  AppHelperModal,
+  AppHelperToolbarButton
+} from './AppHelperControl';
+import useAppHelperPairing from './hooks/useAppHelperPairing';
+import type {
+  AppHelperBridge,
+  AppHelperEvents,
+  AppHelperRelayState
+} from './types/appHelperTypes';
 import {
   workspaceViewOptions,
   type WorkspaceViewMode
@@ -157,6 +169,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       audioMuted = false,
       capabilitySnapshot = null,
       appMcpSessionId = null,
+      appHelperEnabled = false,
+      appHelperToolbarSlot = null,
+      appHelperCompact = false,
+      appHelperHideIdleButton = false,
       maxProjectFileLines = null,
       onEditableProjectFilesStateChange,
       runtimeExplorationPlan = null,
@@ -1343,9 +1359,38 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       secondaryIframeRef
     ]);
 
+    const appHelperRelayStateRef = useRef<AppHelperRelayState>({
+      announcement: null,
+      paired: null
+    });
+    const appHelperBridgeRef = useRef<AppHelperBridge | null>(null);
+    const appHelperEventsRef = useRef<AppHelperEvents | null>(null);
+    const appHelperSource: 'published' | 'workspace' =
+      runtimeOnly && Number(build.currentArtifactVersionId) > 0
+        ? 'published'
+        : 'workspace';
+    const appHelper = useAppHelperPairing({
+      buildId: Number(build.id),
+      userId: resolvedUserId || null,
+      source: appHelperSource,
+      artifactVersionId:
+        appHelperSource === 'published'
+          ? Number(build.currentArtifactVersionId)
+          : null,
+      enabled:
+        !appMcpSessionId &&
+        (runtimeOnly ? appHelperEnabled && Boolean(appHelperToolbarSlot) : true),
+      relayStateRef: appHelperRelayStateRef,
+      bridgeRef: appHelperBridgeRef,
+      eventsRef: appHelperEventsRef
+    });
+
     useHostBridge({
       runtimeOnly,
       appMcpSessionId,
+      appHelperRelayStateRef,
+      appHelperBridgeRef,
+      appHelperEventsRef,
       buildId: build.id,
       buildIsPublic: build.isPublic,
       isOwner,
@@ -1632,10 +1677,22 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             isOwner={isOwner}
             viewMode={viewMode}
             viewOptions={availableWorkspaceViewOptions}
+            appHelperButton={<AppHelperToolbarButton pairing={appHelper} />}
             onOpenHistory={() => setHistoryOpen(true)}
             onViewModeChange={handleViewModeChange}
           />
         )}
+        {runtimeOnly && appHelperToolbarSlot
+          ? createPortal(
+              <AppHelperToolbarButton
+                pairing={appHelper}
+                compact={appHelperCompact}
+                hideWhenIdle={appHelperHideIdleButton}
+              />,
+              appHelperToolbarSlot
+            )
+          : null}
+        <AppHelperModal pairing={appHelper} />
 
         <div
           className={css`
@@ -1650,6 +1707,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             sessions={activeBuildLiveSafetyHostSessions}
             onStop={handleBuildLiveSafetyStop}
           />
+          <AppHelperBadge pairing={appHelper} />
           {runtimeOnly ? (
             <PreviewStage
               activePreviewFrame={activePreviewFrame}

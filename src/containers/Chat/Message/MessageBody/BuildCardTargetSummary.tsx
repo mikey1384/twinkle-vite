@@ -4,6 +4,11 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { parseMessageSettings } from './messageSettings';
 import { formatBuildRewardRulesSummary } from '~/helpers/buildRewardReviewCard';
+import {
+  BUILD_REVIEW_TYPE_ICONS,
+  BUILD_REVIEW_TYPE_LABELS,
+  type BuildReviewRequestType
+} from '~/helpers/buildReviewRequests';
 
 export interface BuildCardTargetSummaryData {
   icon: string;
@@ -66,6 +71,19 @@ export function getBuildCardTargetSummary(
       icon: 'code-branch',
       label: `Made updates to ${String(submission?.title || 'a project')}`,
       detail: String(submission?.branchLabel || '')
+    };
+  }
+  if (rootType === 'buildReviewRequest') {
+    const request =
+      parseMessageSettings(message.settings)?.buildReviewRequest || {};
+    if (!BUILD_REVIEW_TYPE_LABELS[request?.type as BuildReviewRequestType])
+      return null;
+    return {
+      icon: BUILD_REVIEW_TYPE_ICONS[request.type as BuildReviewRequestType],
+      label: `Asked for ${BUILD_REVIEW_TYPE_LABELS[
+        request.type as BuildReviewRequestType
+      ].toLowerCase()}${request.appTitle ? ` for ${request.appTitle}` : ''}`,
+      detail: String(request.summary || '')
     };
   }
   if (rootType === 'buildProjectLimitRequest') {

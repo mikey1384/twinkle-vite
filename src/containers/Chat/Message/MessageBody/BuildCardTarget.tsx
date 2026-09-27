@@ -6,6 +6,7 @@ import BuildThumbnailSuggestion from './BuildThumbnailSuggestion';
 import BuildTitleSuggestion from './BuildTitleSuggestion';
 import BuildProjectLimitRequest from './BuildProjectLimitRequest';
 import BuildRewardReview from './BuildRewardReview';
+import BuildReviewRequestCard from './BuildReviewRequestCard';
 import { parseMessageSettings } from './messageSettings';
 import { useKeyContext } from '~/contexts';
 import { isReplyableBuildCardRootType } from '~/helpers/chatMessageCapabilities';
@@ -112,6 +113,15 @@ export default function BuildCardTarget({
     return (
       <BuildProjectLimitRequest
         request={settings?.buildProjectLimitRequest}
+        myId={myId}
+        sender={sender}
+      />
+    );
+  }
+  if (rootType === 'buildReviewRequest') {
+    return (
+      <BuildReviewRequestCard
+        request={settings?.buildReviewRequest}
         myId={myId}
         sender={sender}
       />

@@ -28,6 +28,8 @@ export interface RuntimeBuild {
   favoriteBuildId?: number | null;
   favoritedAt?: number | null;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
+  // Present when the published app pays XP/Coins to this viewer.
+  rewardRuntimeGrant?: string | null;
   projectFiles?: Array<{
     id?: number;
     path: string;

@@ -14,6 +14,7 @@ import BuildThumbnailSuggestion from './BuildThumbnailSuggestion';
 import BuildTitleSuggestion from './BuildTitleSuggestion';
 import BuildContributionInvite from './BuildContributionInvite';
 import BuildProjectLimitRequest from './BuildProjectLimitRequest';
+import BuildReviewRequestCard from './BuildReviewRequestCard';
 import BuildRewardReview from './BuildRewardReview';
 import DrawOffer from './DrawOffer';
 import FileAttachment from './FileAttachment';
@@ -252,6 +253,16 @@ export default function Content({
       ) : rootType === 'buildProjectLimitRequest' && rootId ? (
         <BuildProjectLimitRequest
           request={parsedSettings?.buildProjectLimitRequest}
+          myId={myId}
+          sender={{
+            id: userId,
+            username: appliedUsername,
+            profileTheme
+          }}
+        />
+      ) : rootType === 'buildReviewRequest' && rootId ? (
+        <BuildReviewRequestCard
+          request={parsedSettings?.buildReviewRequest}
           myId={myId}
           sender={{
             id: userId,

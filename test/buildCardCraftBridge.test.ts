@@ -37,13 +37,17 @@ const execute = new AsyncFunction(
   'payload',
   'runtimeOnly',
   'appMcpSessionId',
+  'appHelperAttached',
   'activeBuild',
   'ensureBuildApiToken',
   'previewAuth',
   'requestRefs',
   'requestCardCraftSelectionRef',
   'navigator',
-  `function createPreviewBridgeError(message, code) {
+  `function appMcpControlsThisTab() {
+     return Boolean(appMcpSessionId) || Boolean(appHelperAttached);
+   }
+   function createPreviewBridgeError(message, code) {
      const error = new Error(message); error.code = code; return error;
    }
    let cardCraftSelectionOpen = false;
@@ -54,6 +58,7 @@ const execute = new AsyncFunction(
 function harness({
   runtimeOnly = true,
   automated = false,
+  helperAttached = false,
   grant = 'server-cardcraft-grant',
   signedIn = true,
   activated = true,
@@ -73,6 +78,7 @@ function harness({
       payload,
       runtimeOnly,
       automated ? 'app-mcp' : null,
+      helperAttached,
       { id: 2610, title: 'Pet Village', cardCraftRuntimeGrant: grant },
       async (scopes: string[]) => {
         tokens.push(scopes);
@@ -170,7 +176,8 @@ test('drafts, editors and automated sessions never send the grant or craft for r
   for (const options of [
     { runtimeOnly: false },
     { grant: null },
-    { automated: true }
+    { automated: true },
+    { helperAttached: true }
   ]) {
     const h = harness({
       ...options,

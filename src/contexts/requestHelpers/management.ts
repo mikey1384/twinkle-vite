@@ -23,7 +23,106 @@ export default function managementRequestHelpers({
   auth,
   handleError
 }: RequestHelpers) {
+  // Build review requests (XP & Coin rewards, project room, file storage, card
+  // crafting): one queue for Mikey, plus the card crafting creator calls the
+  // workspace notice needs. Errors carry the server's plain message.
+  function reviewRequestError(error: unknown, fallback: string) {
+    return new Error(
+      axios.isAxiosError(error)
+        ? error.response?.data?.error || error.message
+        : fallback
+    );
+  }
+
   return {
+    async loadBuildReviewRequests({
+      status,
+      type,
+      cursor
+    }: {
+      status?: string;
+      type?: string;
+      cursor?: string | null;
+    } = {}) {
+      try {
+        const { data } = await request.get(`${URL}/build/review-requests`, {
+          ...auth(),
+          params: {
+            ...(status ? { status } : {}),
+            ...(type ? { type } : {}),
+            ...(cursor ? { cursor } : {})
+          }
+        });
+        return data;
+      } catch (error) {
+        throw reviewRequestError(error, 'Could not load the review queue.');
+      }
+    },
+    async loadBuildReviewRequest(type: string, id: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/review-requests/${encodeURIComponent(type)}/${id}`,
+          { ...auth(), params: { files: 0 } }
+        );
+        return data;
+      } catch (error) {
+        throw reviewRequestError(error, 'Could not load this request.');
+      }
+    },
+    async decideBuildReviewRequest({
+      type,
+      id,
+      decision,
+      reason,
+      sizeBytes
+    }: {
+      type: string;
+      id: number;
+      decision: 'approve' | 'reject' | 'revoke';
+      reason?: string;
+      sizeBytes?: number | null;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/review-requests/${encodeURIComponent(type)}/${id}`,
+          {
+            decision,
+            reason: reason || '',
+            ...(sizeBytes ? { sizeBytes } : {})
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        throw reviewRequestError(error, 'Could not save this decision.');
+      }
+    },
+    async loadBuildCardCraftSettings(buildId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/cardcraft`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        throw reviewRequestError(
+          error,
+          'Could not check card crafting approval.'
+        );
+      }
+    },
+    async requestBuildCardCraftReview(buildId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/cardcraft/reviews`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        throw reviewRequestError(error, 'Could not send the request.');
+      }
+    },
     async addAccountType(accountType: string) {
       try {
         const { data } = await request.post(

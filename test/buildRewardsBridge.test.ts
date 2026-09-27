@@ -83,16 +83,22 @@ const execute = new AsyncFunction(
   'payload',
   'runtimeOnly',
   'appMcpSessionId',
+  'appHelperAttached',
   'activeBuild',
   'ensureBuildApiToken',
   'previewAuth',
   'requestRefs',
   'onSetUserStateRef',
-  `let response; switch(type) { ${source.slice(start, end)} } return response;`
+  // A paired "Connect AI helper" session counts like a dedicated app-mcp tab.
+  `function appMcpControlsThisTab() {
+     return Boolean(appMcpSessionId) || Boolean(appHelperAttached);
+   }
+   let response; switch(type) { ${source.slice(start, end)} } return response;`
 );
 function harness({
   runtimeOnly = true,
   automated = false,
+  helperAttached = false,
   grant = 'server-published-grant',
   changeUser = false,
   result = { awarded: true, balances: { xp: 120, coins: 15 } }
@@ -106,6 +112,7 @@ function harness({
       payload,
       runtimeOnly,
       automated ? 'app-mcp' : null,
+      helperAttached,
       { id: 2460, rewardRuntimeGrant: grant },
       async () => 'scoped-token',
       auth,
@@ -126,7 +133,8 @@ test('editor, workspace and automated preview requests cannot reach the award AP
   for (const options of [
     { runtimeOnly: false },
     { grant: null },
-    { automated: true }
+    { automated: true },
+    { helperAttached: true }
   ]) {
     const h = harness(options);
     assert.equal((await h.invoke('rewards:status')).mode, 'preview');
@@ -284,7 +292,8 @@ test('archive reads use the current host grant and forward no client clock or pe
   for (const options of [
     { runtimeOnly: false },
     { grant: null },
-    { automated: true }
+    { automated: true },
+    { helperAttached: true }
   ]) {
     const preview = harness(options);
     assert.equal((await preview.invoke('rewards:timeline')).mode, 'preview');

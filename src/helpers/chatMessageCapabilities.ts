@@ -8,6 +8,8 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   'buildTitleSuggestion',
   'buildProjectLimitRequest',
   'buildRewardReview',
+  // Project room, file storage and card crafting requests to Mikey.
+  'buildReviewRequest',
   'aiCardOffer',
   'cliAdminChatMessage',
   // Zero's DM to the owner about a member's chat report.
@@ -73,7 +75,8 @@ const REPLYABLE_BUILD_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   'buildThumbnailSuggestion',
   'buildTitleSuggestion',
   'buildProjectLimitRequest',
-  'buildRewardReview'
+  'buildRewardReview',
+  'buildReviewRequest'
 ]);
 
 export function isReplyableBuildCardRootType(rootType: unknown) {

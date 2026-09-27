@@ -1,4 +1,9 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react';
+import type {
+  Dispatch,
+  MutableRefObject,
+  RefObject,
+  SetStateAction
+} from 'react';
 import type { BuildCapabilitySnapshot } from '../../types/capabilityTypes';
 import type {
   BuildRuntimeExplorationPlan,
@@ -12,6 +17,11 @@ import type {
   PreviewRuntimeUploadsSyncPayload
 } from './index';
 import type { PreviewHostBridgeAuth } from '../helpers/previewBridgeAuth';
+import type {
+  AppHelperBridge,
+  AppHelperEvents,
+  AppHelperRelayState
+} from './appHelperTypes';
 import type { PreviewHostBridgeRequestRefs } from '../helpers/previewBridgeRequestRefs';
 import type {
   BuildRuntimeImageGenerationConfirmationRequest,
@@ -136,4 +146,7 @@ export interface UsePreviewHostBridgeArgs {
   requestBuildLiveSafetyStopRef: RefObject<
     ((request: BuildLiveSafetyStopRequest) => Promise<void>) | null
   >;
+  appHelperRelayStateRef: MutableRefObject<AppHelperRelayState>;
+  appHelperBridgeRef: MutableRefObject<AppHelperBridge | null>;
+  appHelperEventsRef: RefObject<AppHelperEvents | null>;
 }

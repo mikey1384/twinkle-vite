@@ -107,6 +107,13 @@ export interface PreviewPanelProps {
   audioMuted?: boolean;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   appMcpSessionId?: string | null;
+  // "Connect AI helper" in a runtime tab: the host page opts in and gives a
+  // toolbar slot the button portals into. The workspace preview always offers
+  // it (in its own toolbar) when the app registers tools.
+  appHelperEnabled?: boolean;
+  appHelperToolbarSlot?: HTMLElement | null;
+  appHelperCompact?: boolean;
+  appHelperHideIdleButton?: boolean;
   maxProjectFileLines?: number | null;
   onEditableProjectFilesStateChange?: (state: {
     files: Array<{ path: string; content?: string }>;

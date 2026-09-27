@@ -231,7 +231,10 @@ export function useHostBridge({
   requestBuildMediaActionConfirmationRef,
   requestCardCraftSelectionRef,
   onBuildLiveSafetyHostSessionsChange,
-  requestBuildLiveSafetyStopRef
+  requestBuildLiveSafetyStopRef,
+  appHelperRelayStateRef,
+  appHelperBridgeRef,
+  appHelperEventsRef
 }: UsePreviewHostBridgeArgs) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetUserStateRef = useRef(onSetUserState);
@@ -1171,20 +1174,146 @@ export function useHostBridge({
       }
     };
 
+    // A dedicated `lumine app-mcp` tab carries its session in the URL. Any
+    // other tab can be paired with an AI helper ("Connect AI helper"); that
+    // session lives in appHelperRelayStateRef across effect re-runs.
+    const urlAppMcpSessionId = runtimeOnly && appMcpSessionId ? appMcpSessionId : '';
+    function getEffectiveAppMcpSessionId() {
+      return (
+        urlAppMcpSessionId ||
+        appHelperRelayStateRef.current.paired?.sessionId ||
+        ''
+      );
+    }
+    // Rewards and card crafting stay in preview mode while an AI helper is
+    // attached, exactly as in a dedicated app-mcp tab.
+    function appMcpControlsThisTab() {
+      return (
+        Boolean(appMcpSessionId) ||
+        Boolean(appHelperRelayStateRef.current.paired?.attached)
+      );
+    }
+
     function getActiveAppMcpInvocation(sourceWindow: Window) {
+      const sessionId = getEffectiveAppMcpSessionId();
       if (
         !appMcpRuntime ||
         appMcpRuntime.stopped ||
         appMcpRuntime.sourceWindow !== sourceWindow ||
         !appMcpRuntime.activeCallId ||
-        !appMcpSessionId
+        !sessionId
       ) {
         return undefined;
       }
       return {
-        appMcpSessionId,
+        appMcpSessionId: sessionId,
         appMcpCallId: appMcpRuntime.activeCallId
       };
+    }
+
+    async function connectAppMcpRuntime({
+      sessionId,
+      sourceWindow,
+      handlerNames,
+      connectionId: requestedConnectionId
+    }: {
+      sessionId: string;
+      sourceWindow: Window;
+      handlerNames: string[];
+      connectionId?: string;
+    }) {
+      const existingRuntime = appMcpRuntime;
+      const connectionId =
+        requestedConnectionId ||
+        existingRuntime?.connectionId ||
+        crypto.randomUUID();
+      const connected = await requestRefs.connectBuildAppMcpRuntimeRef.current({
+        buildId,
+        sessionId,
+        connectionId,
+        handlerNames
+      });
+      if (existingRuntime && existingRuntime.connectionId === connectionId) {
+        existingRuntime.sourceWindow = sourceWindow;
+        existingRuntime.stopped = false;
+        appMcpRuntime = existingRuntime;
+      } else {
+        if (existingRuntime) existingRuntime.stopped = true;
+        appMcpRuntime = {
+          connectionId,
+          sourceWindow,
+          activeCallId: null,
+          stopped: false
+        };
+      }
+      scheduleAppMcpPoll(0);
+      return { connectionId, session: connected?.session || null };
+    }
+
+    function stopPairedAppMcpRuntime() {
+      if (appMcpRuntime && !urlAppMcpSessionId) {
+        appMcpRuntime.stopped = true;
+        appMcpRuntime = null;
+      }
+      window.clearTimeout(appMcpPollTimer);
+    }
+
+    appHelperBridgeRef.current = {
+      async attach({ sessionId, connectionId }) {
+        if (urlAppMcpSessionId) {
+          throw new Error('This tab is already an app-mcp tab.');
+        }
+        const announcement = appHelperRelayStateRef.current.announcement;
+        if (!announcement) {
+          throw new Error('This app has not offered its tools yet.');
+        }
+        const previous = appHelperRelayStateRef.current.paired;
+        if (previous && previous.sessionId !== sessionId) {
+          stopPairedAppMcpRuntime();
+        }
+        const resolvedConnectionId =
+          connectionId ||
+          (previous?.sessionId === sessionId ? previous.connectionId : '') ||
+          crypto.randomUUID();
+        appHelperRelayStateRef.current.paired = {
+          sessionId,
+          connectionId: resolvedConnectionId,
+          attached: previous?.sessionId === sessionId ? previous.attached : false
+        };
+        try {
+          await connectAppMcpRuntime({
+            sessionId,
+            sourceWindow: announcement.sourceWindow,
+            handlerNames: announcement.handlerNames,
+            connectionId: resolvedConnectionId
+          });
+        } catch (error) {
+          if (appHelperRelayStateRef.current.paired?.sessionId === sessionId) {
+            appHelperRelayStateRef.current.paired = null;
+          }
+          stopPairedAppMcpRuntime();
+          throw error;
+        }
+        return { connectionId: resolvedConnectionId };
+      },
+      detach() {
+        appHelperRelayStateRef.current.paired = null;
+        stopPairedAppMcpRuntime();
+      }
+    };
+    {
+      // The effect restarted (e.g. sign-in state or build changed) while a
+      // helper was paired: keep relaying through the same app window.
+      const resumePaired = appHelperRelayStateRef.current.paired;
+      const resumeAnnouncement = appHelperRelayStateRef.current.announcement;
+      if (!urlAppMcpSessionId && resumePaired && resumeAnnouncement && userId) {
+        void connectAppMcpRuntime({
+          sessionId: resumePaired.sessionId,
+          sourceWindow: resumeAnnouncement.sourceWindow,
+          handlerNames: resumeAnnouncement.handlerNames,
+          connectionId: resumePaired.connectionId
+        }).catch(() => {});
+      }
     }
 
     function scheduleAppMcpPoll(delayMs = 250) {
@@ -1192,9 +1321,15 @@ export function useHostBridge({
       if (!appMcpRuntime || appMcpRuntime.stopped) {
         return;
       }
+      const paired = appHelperRelayStateRef.current.paired;
+      // A pairing code waiting for its helper has nothing to relay yet.
+      const waitingForHelper =
+        !urlAppMcpSessionId && paired && !paired.attached;
       const resolvedDelayMs = appMcpRuntime.activeCallId
         ? Math.max(delayMs, 15_000)
-        : delayMs;
+        : waitingForHelper
+          ? Math.max(delayMs, 1500)
+          : delayMs;
       appMcpPollTimer = window.setTimeout(
         () => void pollAppMcpCall(),
         resolvedDelayMs
@@ -1203,17 +1338,27 @@ export function useHostBridge({
 
     async function pollAppMcpCall() {
       const runtime = appMcpRuntime;
-      if (!runtime || runtime.stopped || !appMcpSessionId) {
+      const sessionId = getEffectiveAppMcpSessionId();
+      if (!runtime || runtime.stopped || !sessionId) {
         return;
       }
       try {
         const payload = await requestRefs.pollBuildAppMcpCallRef.current({
           buildId,
-          sessionId: appMcpSessionId,
+          sessionId,
           connectionId: runtime.connectionId,
           activeCallId: runtime.activeCallId
         });
         if (runtime !== appMcpRuntime || runtime.stopped) return;
+        const paired = appHelperRelayStateRef.current.paired;
+        if (
+          !urlAppMcpSessionId &&
+          paired?.sessionId === sessionId &&
+          payload?.session
+        ) {
+          paired.attached = Boolean(payload.session.helperAttachedAt);
+          appHelperEventsRef.current?.onSessionStatus(payload.session);
+        }
         const call = payload?.call;
         if (!call?.id) {
           scheduleAppMcpPoll(runtime.activeCallId ? 15_000 : 350);
@@ -1241,6 +1386,12 @@ export function useHostBridge({
         if (runtime !== appMcpRuntime || runtime.stopped) return;
         if (Number(error?.status || error?.response?.status) === 404) {
           runtime.stopped = true;
+          const paired = appHelperRelayStateRef.current.paired;
+          if (!urlAppMcpSessionId && paired?.sessionId === sessionId) {
+            // Disconnected from the CLI side, cancelled, or expired.
+            appHelperRelayStateRef.current.paired = null;
+            appHelperEventsRef.current?.onSessionEnded();
+          }
           return;
         }
         scheduleAppMcpPoll(runtime.activeCallId ? 15_000 : 1500);
@@ -2110,8 +2261,56 @@ export function useHostBridge({
 
         switch (type) {
           case 'app-tools:register': {
-            if (!runtimeOnly || !appMcpSessionId) {
-              response = { success: true, active: false, session: null };
+            const handlerNames = Array.isArray(payload?.handlerNames)
+              ? payload.handlerNames
+                  .map(String)
+                  .filter((name: string) => /^[a-z][a-z0-9_]{0,63}$/.test(name))
+                  .slice(0, 64)
+              : [];
+            if (!urlAppMcpSessionId) {
+              // An ordinary tab: remember the offered tools so the viewer can
+              // pair an AI helper, and keep a paired session relaying through
+              // the (possibly reloaded) app window.
+              appHelperRelayStateRef.current.announcement = handlerNames.length
+                ? { sourceWindow, handlerNames }
+                : null;
+              appHelperEventsRef.current?.onToolsAvailableChange(
+                handlerNames.length > 0
+              );
+              const paired = appHelperRelayStateRef.current.paired;
+              if (!paired || !userId || !handlerNames.length) {
+                response = { success: true, active: false, session: null };
+                break;
+              }
+              const staleRuntime = appMcpRuntime;
+              if (
+                staleRuntime?.activeCallId &&
+                staleRuntime.sourceWindow !== sourceWindow
+              ) {
+                // The app reloaded mid-call; that call can never finish.
+                const staleCallId = staleRuntime.activeCallId;
+                staleRuntime.activeCallId = null;
+                void requestRefs.completeBuildAppMcpCallRef
+                  .current({
+                    buildId,
+                    sessionId: paired.sessionId,
+                    callId: staleCallId,
+                    connectionId: staleRuntime.connectionId,
+                    error: 'The app reloaded before this call finished.'
+                  })
+                  .catch(() => {});
+              }
+              const connected = await connectAppMcpRuntime({
+                sessionId: paired.sessionId,
+                sourceWindow,
+                handlerNames,
+                connectionId: paired.connectionId
+              });
+              response = {
+                success: true,
+                active: true,
+                session: connected.session
+              };
               break;
             }
             if (!userId) {
@@ -2120,9 +2319,6 @@ export function useHostBridge({
                 'APP_MCP_SIGN_IN_REQUIRED'
               );
             }
-            const handlerNames = Array.isArray(payload?.handlerNames)
-              ? payload.handlerNames.map(String)
-              : [];
             const existingRuntime = appMcpRuntime;
             if (
               existingRuntime?.activeCallId &&
@@ -2133,32 +2329,15 @@ export function useHostBridge({
                 'APP_MCP_CALL_ACTIVE'
               );
             }
-            const connectionId =
-              existingRuntime?.connectionId || crypto.randomUUID();
-            const connected =
-              await requestRefs.connectBuildAppMcpRuntimeRef.current({
-                buildId,
-                sessionId: appMcpSessionId,
-                connectionId,
-                handlerNames
-              });
-            if (existingRuntime) {
-              existingRuntime.sourceWindow = sourceWindow;
-              existingRuntime.stopped = false;
-              appMcpRuntime = existingRuntime;
-            } else {
-              appMcpRuntime = {
-                connectionId,
-                sourceWindow,
-                activeCallId: null,
-                stopped: false
-              };
-            }
-            scheduleAppMcpPoll(0);
+            const connected = await connectAppMcpRuntime({
+              sessionId: urlAppMcpSessionId,
+              sourceWindow,
+              handlerNames
+            });
             response = {
               success: true,
               active: true,
-              session: connected?.session || null
+              session: connected.session
             };
             break;
           }
@@ -2166,10 +2345,11 @@ export function useHostBridge({
           case 'app-tools:complete': {
             const runtime = appMcpRuntime;
             const callId = String(payload?.callId || '');
+            const completionSessionId = getEffectiveAppMcpSessionId();
             if (
               !runtime ||
               runtime.sourceWindow !== sourceWindow ||
-              !appMcpSessionId ||
+              !completionSessionId ||
               !callId
             ) {
               throw createPreviewBridgeError(
@@ -2179,7 +2359,7 @@ export function useHostBridge({
             }
             await requestRefs.completeBuildAppMcpCallRef.current({
               buildId,
-              sessionId: appMcpSessionId,
+              sessionId: completionSessionId,
               callId,
               connectionId: runtime.connectionId,
               result: payload?.result,
@@ -4593,7 +4773,7 @@ export function useHostBridge({
             // Only Twinkle's own published-runtime grant is ever sent; the app
             // never supplies grants, owners, tiers or asset fields.
             const cardCraftGrant =
-              runtimeOnly && !appMcpSessionId
+              runtimeOnly && !appMcpControlsThisTab()
                 ? activeBuild.cardCraftRuntimeGrant || null
                 : null;
             if (!previewAuth.userIdRef.current) {
@@ -4663,7 +4843,8 @@ export function useHostBridge({
           case 'rewards:leaderboard': {
             // Never forward app-supplied grants, versions, recipients or amounts.
             const runtimeGrant = activeBuild.rewardRuntimeGrant;
-            if (!runtimeOnly || !runtimeGrant || appMcpSessionId) {
+            const appMcpControlled = appMcpControlsThisTab();
+            if (!runtimeOnly || !runtimeGrant || appMcpControlled) {
               // Drafts: the owner sees their own declaration and question
               // sheet simulated by the server (never paid). Anyone else, or an
               // app with no declaration yet, gets the empty preview.
@@ -4676,7 +4857,7 @@ export function useHostBridge({
               };
               const preview = requestRefs.requestBuildRewardPreviewRef?.current;
               let previewFailure = '';
-              if (preview && !appMcpSessionId) {
+              if (preview && !appMcpControlled) {
                 try {
                   response = await preview({
                     buildId: activeBuild.id,
@@ -5103,6 +5284,7 @@ export function useHostBridge({
       window.clearTimeout(appMcpPollTimer);
       window.clearTimeout(buildLiveHostReconcileTimer);
       if (appMcpRuntime) appMcpRuntime.stopped = true;
+      appHelperBridgeRef.current = null;
       window.removeEventListener('message', handleMessage);
       window.removeEventListener(
         TWINKLE_SOCKET_AUTH_READY_EVENT,
@@ -5158,6 +5340,9 @@ export function useHostBridge({
     };
   }, [
     appMcpSessionId,
+    appHelperBridgeRef,
+    appHelperEventsRef,
+    appHelperRelayStateRef,
     buildId,
     capabilitySnapshotRef,
     contentNavigationConfirmationController,

@@ -28,7 +28,9 @@ import RuntimeAssetTransferProgressBar from './RuntimeAssetTransferProgressBar';
 import type { RuntimeAssetTransferProgressPayload } from './helpers/runtimeAssetTransferProgress';
 import ViewAppVersionModal from './ViewAppVersionModal';
 import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
-import RewardApprovalNotice from '~/components/Build/Rewards/RewardApprovalNotice';
+import WorkspaceReviewRequests, {
+  type WorkspaceReviewRequestsProps
+} from '~/components/Build/ReviewRequests/WorkspaceReviewRequests';
 import type { BuildReleaseControl } from '~/components/Build/hooks/useRelease';
 import { getBuildRewardReviewManagementPath } from '~/helpers/buildRewardReviewCard';
 import Button from '~/components/Button';
@@ -465,6 +467,9 @@ interface HeaderProps {
   // Accepting an admin proposal rewrote the saved app on the server.
   onRewardProposalAccepted?: () => void | Promise<void>;
   rewardApprovalPrompt: number;
+  // Project room and file storage unlocks (from the Lumine policy snapshot);
+  // shown in the same review-request notice as rewards and card crafting.
+  reviewRequestLimits?: WorkspaceReviewRequestsProps['limits'];
   release: BuildReleaseControl;
   hasUnsavedRewardChanges: boolean;
   rewardsBeingPrepared: boolean;
@@ -706,6 +711,7 @@ export default function Header({
   onOpenThumbnailModal,
   onSaveRewardCode,
   rewardApprovalPrompt,
+  reviewRequestLimits,
   release,
   onRewardProposalAccepted,
   hasUnsavedRewardChanges,
@@ -1330,15 +1336,20 @@ export default function Header({
           </Button>
         </div>
       ) : null}
-      {isOwner && !isContributionFork && (
-        <RewardApprovalNotice
-          settings={rewardStatus.settings}
-          hasUnsavedChanges={hasUnsavedRewardChanges || rewardsBeingPrepared}
-          checking={rewardStatus.loading}
-          error={rewardStatus.error}
-          onOpen={() => setRewardsOpen(true)}
-        />
-      )}
+      <WorkspaceReviewRequests
+        buildId={Number(build.id)}
+        isCanonicalOwner={Boolean(isOwner && !isContributionFork)}
+        rewards={{
+          settings: rewardStatus.settings,
+          hasUnsavedChanges: hasUnsavedRewardChanges || rewardsBeingPrepared,
+          checking: rewardStatus.loading,
+          error: rewardStatus.error,
+          onOpen: () => setRewardsOpen(true)
+        }}
+        limits={reviewRequestLimits}
+        onSaveBeforeRequest={onSaveRewardCode}
+        hasUnsavedChanges={hasUnsavedRewardChanges}
+      />
       {suggestTitleOpen && canSuggestTitle ? (
         <SuggestTitleModal
           rootBuildId={Number(build.contributionRootBuildId || 0)}

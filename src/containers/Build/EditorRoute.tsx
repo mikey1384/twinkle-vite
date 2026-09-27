@@ -564,7 +564,16 @@ export default function BuildEditorRoute() {
       void refreshProjectLimits({ buildId: canonicalBuildId });
     }
 
+    // Mikey decided a project-room or file-storage request: the limits (and
+    // the workspace's review-request notice) come from the policy snapshot.
+    function refreshAfterReviewDecision(payload: any) {
+      const type = payload?.request?.type;
+      if (type !== 'storage-limit' && type !== 'project-limit') return;
+      void refreshProjectLimits({ buildId: canonicalBuildId });
+    }
+
     socket.on('build_project_limits_updated', refreshProjectLimits);
+    socket.on('build_review_request_updated', refreshAfterReviewDecision);
     socket.on('connect', recoverProjectLimits);
     window.addEventListener('pageshow', recoverProjectLimits);
     window.addEventListener('online', recoverProjectLimits);
@@ -572,6 +581,7 @@ export default function BuildEditorRoute() {
     return () => {
       cancelled = true;
       socket.off('build_project_limits_updated', refreshProjectLimits);
+      socket.off('build_review_request_updated', refreshAfterReviewDecision);
       socket.off('connect', recoverProjectLimits);
       window.removeEventListener('pageshow', recoverProjectLimits);
       window.removeEventListener('online', recoverProjectLimits);

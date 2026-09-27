@@ -161,7 +161,6 @@ function HeaderMinimizeToggle({
 interface HeaderProps {
   copilotPolicy: BuildCopilotPolicy | null;
   aiUsagePolicy: BuildAiUsagePolicy | null;
-  isOwner: boolean;
   lumineChatVisibilityControl?: {
     value: BuildLumineChatVisibility;
     savedValue: BuildLumineChatVisibility;
@@ -183,11 +182,6 @@ interface HeaderProps {
   limitsExpanded: boolean;
   minimized: boolean;
   onPurchaseGenerationReset: () => Promise<void> | void;
-  onRequestProjectLimitIncrease: (selection: {
-    files: boolean;
-    size: boolean;
-  }) => Promise<void> | void;
-  onRequestStorageLimitIncrease: (requestedBytes: number) => Promise<void> | void;
   onOpenRuntimeUploadsManager: () => void;
   onToggleLimitsExpanded: () => void;
   onToggleMinimized: () => void;
@@ -196,7 +190,6 @@ interface HeaderProps {
 export default function Header({
   copilotPolicy,
   aiUsagePolicy,
-  isOwner,
   lumineChatVisibilityControl,
   lumineModelSelectionControl,
   pageFeedbackEvents,
@@ -207,8 +200,6 @@ export default function Header({
   limitsExpanded,
   minimized,
   onPurchaseGenerationReset,
-  onRequestProjectLimitIncrease,
-  onRequestStorageLimitIncrease,
   onOpenRuntimeUploadsManager,
   onToggleLimitsExpanded,
   onToggleMinimized
@@ -274,52 +265,6 @@ export default function Header({
     ].filter(Boolean) as LimitProgressItem[];
   }, [copilotPolicy]);
   const visiblePageFeedbackEvents = pageFeedbackEvents.slice(-3).reverse();
-  const projectLimitApproval = copilotPolicy?.projectLimitApproval || null;
-  const latestProjectLimitRequest = projectLimitApproval?.latestRequest || null;
-  const filePressure = Boolean(
-    copilotPolicy &&
-    copilotPolicy.usage.projectFileCount >=
-      Math.max(1, Math.floor(copilotPolicy.limits.maxFilesPerProject * 0.8))
-  );
-  const sizePressure = Boolean(
-    copilotPolicy &&
-    copilotPolicy.usage.currentProjectBytes >=
-      Math.max(1, Math.floor(copilotPolicy.limits.maxProjectBytes * 0.8))
-  );
-  const requestableFiles = Boolean(
-    isOwner &&
-    !projectLimitApproval?.isInherited &&
-    filePressure &&
-    projectLimitApproval?.canRequestFiles
-  );
-  const requestableSize = Boolean(
-    isOwner &&
-    !projectLimitApproval?.isInherited &&
-    sizePressure &&
-    projectLimitApproval?.canRequestSize
-  );
-  const storageLimitApproval = copilotPolicy?.storageLimitApproval || null;
-  const storagePressure = Boolean(
-    copilotPolicy &&
-    copilotPolicy.usage.runtimeFileStorageBytes >=
-      Math.max(
-        1,
-        Math.floor(copilotPolicy.limits.maxRuntimeFileStorageBytes * 0.8)
-      )
-  );
-  const showStorageLimitNudge = Boolean(
-    storageLimitApproval &&
-    (storageLimitApproval.latestRequest?.status === 'pending' ||
-      (storagePressure &&
-        storageLimitApproval.canRequest &&
-        storageLimitApproval.requestTiers.length > 0))
-  );
-  const showProjectLimitNudge =
-    Boolean(requestableFiles || requestableSize) ||
-    (latestProjectLimitRequest?.status === 'pending' &&
-      isOwner &&
-      !projectLimitApproval?.isInherited);
-
   const energyCard =
     dailyGenerationUsage != null ? (
       <AiEnergyCard
@@ -375,20 +320,6 @@ export default function Header({
           ) : null}
           <HeaderMinimizeToggle minimized onToggle={onToggleMinimized} />
         </div>
-        {showProjectLimitNudge ? (
-          <ProjectLimitNudge
-            approval={projectLimitApproval}
-            requestFiles={requestableFiles}
-            requestSize={requestableSize}
-            onRequest={onRequestProjectLimitIncrease}
-          />
-        ) : null}
-        {showStorageLimitNudge ? (
-          <StorageLimitNudge
-            approval={storageLimitApproval}
-            onRequest={onRequestStorageLimitIncrease}
-          />
-        ) : null}
         {visiblePageFeedbackEvents.length > 0 ? (
           <div
             className={css`
@@ -442,20 +373,6 @@ export default function Header({
           `}
         >
           {energyCard}
-          {showProjectLimitNudge ? (
-            <ProjectLimitNudge
-              approval={projectLimitApproval}
-              requestFiles={requestableFiles}
-              requestSize={requestableSize}
-              onRequest={onRequestProjectLimitIncrease}
-            />
-          ) : null}
-          {showStorageLimitNudge ? (
-            <StorageLimitNudge
-              approval={storageLimitApproval}
-              onRequest={onRequestStorageLimitIncrease}
-            />
-          ) : null}
           {limitsExpanded ? (
             <div
               className={css`
@@ -668,271 +585,6 @@ export default function Header({
 
   function handleToggleAdvancedModels() {
     setAdvancedModelsShown((shown) => !shown);
-  }
-}
-
-function ProjectLimitNudge({
-  approval,
-  requestFiles,
-  requestSize,
-  onRequest
-}: {
-  approval: BuildCopilotPolicy['projectLimitApproval'];
-  requestFiles: boolean;
-  requestSize: boolean;
-  onRequest: (selection: {
-    files: boolean;
-    size: boolean;
-  }) => Promise<void> | void;
-}) {
-  const [requesting, setRequesting] = useState(false);
-  const [requestError, setRequestError] = useState('');
-  const pending = approval?.latestRequest?.status === 'pending';
-  const canApproveDirectly = Boolean(approval?.canApproveDirectly);
-  const addFilesToPendingRequest = Boolean(
-    pending &&
-    requestFiles &&
-    !Number(approval?.latestRequest?.requestedMaxFiles || 0)
-  );
-  const addSizeToPendingRequest = Boolean(
-    pending &&
-    requestSize &&
-    !Number(approval?.latestRequest?.requestedMaxProjectBytes || 0)
-  );
-  const selectedFiles = pending
-    ? canApproveDirectly
-      ? Boolean(
-          approval?.canRequestFiles &&
-          (requestFiles || approval?.latestRequest?.requestedMaxFiles)
-        )
-      : addFilesToPendingRequest
-    : requestFiles;
-  const selectedSize = pending
-    ? canApproveDirectly
-      ? Boolean(
-          approval?.canRequestSize &&
-          (requestSize || approval?.latestRequest?.requestedMaxProjectBytes)
-        )
-      : addSizeToPendingRequest
-    : requestSize;
-  const canSendRequest = Boolean(selectedFiles || selectedSize);
-  const labels = [
-    selectedFiles ? `${approval?.requestedMaxFiles || 500} files` : '',
-    selectedSize
-      ? formatBytes(approval?.requestedMaxProjectBytes || 5 * 1024 * 1024)
-      : ''
-  ].filter(Boolean);
-  return (
-    <div
-      className={css`
-        border: 1px solid rgba(65, 140, 235, 0.24);
-        border-radius: 12px;
-        background: rgba(65, 140, 235, 0.08);
-        padding: 0.9rem 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.8rem;
-        flex-wrap: wrap;
-      `}
-    >
-      <div
-        className={css`
-          display: flex;
-          align-items: flex-start;
-          gap: 0.65rem;
-          min-width: 16rem;
-          flex: 1 1 18rem;
-        `}
-      >
-        <Icon icon="sparkles" />
-        <div>
-          <div
-            className={css`
-              font-weight: 900;
-              color: var(--chat-text);
-            `}
-          >
-            {pending
-              ? canApproveDirectly
-                ? 'This request is ready for your approval'
-                : 'Mikey is reviewing your request'
-              : 'Lumine noticed this project is getting full'}
-          </div>
-          <div
-            className={css`
-              margin-top: 0.18rem;
-              color: var(--chat-text);
-              opacity: 0.72;
-              font-size: var(--build-workshop-meta-font-size);
-              line-height: 1.4;
-            `}
-          >
-            {pending
-              ? canApproveDirectly
-                ? `Approve ${labels.join(' and ')} for this project. The change takes effect immediately.`
-                : canSendRequest
-                  ? `This project is now also nearing ${labels.join(' and ')}. Add it to the same request while Mikey reviews it.`
-                  : 'Your current limits stay in place until Mikey approves the request in chat.'
-              : canApproveDirectly
-                ? `Approve ${labels.join(' and ')} for this project. The change takes effect immediately.`
-                : `Send Mikey a request for ${labels.join(' and ')}. Nothing changes until he approves it.`}
-          </div>
-        </div>
-      </div>
-      {canSendRequest ? (
-        <Button color="logoBlue" loading={requesting} onClick={handleRequest}>
-          {canApproveDirectly
-            ? 'Approve more room'
-            : pending
-              ? 'Add to request'
-              : 'Ask Mikey for more room'}
-        </Button>
-      ) : null}
-      {requestError ? (
-        <div
-          className={css`
-            flex-basis: 100%;
-            color: ${Color.rose()};
-            font-size: var(--build-workshop-meta-font-size);
-            font-weight: 800;
-          `}
-        >
-          {requestError}
-        </div>
-      ) : null}
-    </div>
-  );
-
-  async function handleRequest() {
-    if (requesting) return;
-    setRequesting(true);
-    setRequestError('');
-    try {
-      await onRequest({ files: selectedFiles, size: selectedSize });
-    } catch (error: any) {
-      setRequestError(
-        error?.responseData?.error ||
-          error?.response?.data?.error ||
-          error?.message ||
-          'Could not send this request. Please try again.'
-      );
-    } finally {
-      setRequesting(false);
-    }
-  }
-}
-
-// Lumine file storage is shared by all of this user's Builds. The creator
-// only taps one button; the next storage step is chosen for them.
-function StorageLimitNudge({
-  approval,
-  onRequest
-}: {
-  approval: BuildCopilotPolicy['storageLimitApproval'];
-  onRequest: (requestedBytes: number) => Promise<void> | void;
-}) {
-  const [requesting, setRequesting] = useState(false);
-  const [requestError, setRequestError] = useState('');
-  const latestRequest = approval?.latestRequest || null;
-  const pending = latestRequest?.status === 'pending';
-  const canApproveDirectly = Boolean(approval?.canApproveDirectly);
-  const nextTierBytes = Number(approval?.requestTiers?.[0] || 0);
-  const pendingBytes = Number(
-    latestRequest?.requestedMaxRuntimeFileStorageBytes || 0
-  );
-  const canSendRequest =
-    nextTierBytes > 0 && (!pending || canApproveDirectly);
-  return (
-    <div
-      className={css`
-        border: 1px solid rgba(65, 140, 235, 0.24);
-        border-radius: 12px;
-        background: rgba(65, 140, 235, 0.08);
-        padding: 0.9rem 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.8rem;
-        flex-wrap: wrap;
-      `}
-    >
-      <div
-        className={css`
-          display: flex;
-          align-items: flex-start;
-          gap: 0.65rem;
-          min-width: 16rem;
-          flex: 1 1 18rem;
-        `}
-      >
-        <Icon icon="folder-open" />
-        <div>
-          <div
-            className={css`
-              font-weight: 900;
-              color: var(--chat-text);
-            `}
-          >
-            {pending && !canApproveDirectly
-              ? 'Mikey is reviewing your storage request'
-              : 'Your Lumine file storage is getting full'}
-          </div>
-          <div
-            className={css`
-              margin-top: 0.18rem;
-              color: var(--chat-text);
-              opacity: 0.72;
-              font-size: var(--build-workshop-meta-font-size);
-              line-height: 1.4;
-            `}
-          >
-            {pending && !canApproveDirectly
-              ? `You asked for ${formatBytes(pendingBytes)} of storage for all your Builds. Your uploads keep working with the current space until Mikey approves it.`
-              : canApproveDirectly
-                ? `Approve ${formatBytes(nextTierBytes)} of storage for all your Builds. The change takes effect immediately.`
-                : `Send Mikey a request for ${formatBytes(nextTierBytes)} of storage for all your Builds. Nothing changes until he approves it.`}
-          </div>
-        </div>
-      </div>
-      {canSendRequest ? (
-        <Button color="logoBlue" loading={requesting} onClick={handleRequest}>
-          {canApproveDirectly
-            ? 'Approve more storage'
-            : 'Ask Mikey for more storage'}
-        </Button>
-      ) : null}
-      {requestError ? (
-        <div
-          className={css`
-            flex-basis: 100%;
-            color: ${Color.rose()};
-            font-size: var(--build-workshop-meta-font-size);
-            font-weight: 800;
-          `}
-        >
-          {requestError}
-        </div>
-      ) : null}
-    </div>
-  );
-
-  async function handleRequest() {
-    if (requesting || !nextTierBytes) return;
-    setRequesting(true);
-    setRequestError('');
-    try {
-      await onRequest(nextTierBytes);
-    } catch (error: any) {
-      setRequestError(
-        error?.responseData?.error ||
-          error?.response?.data?.error ||
-          error?.message ||
-          'Could not send this request. Please try again.'
-      );
-    } finally {
-      setRequesting(false);
-    }
   }
 }
 

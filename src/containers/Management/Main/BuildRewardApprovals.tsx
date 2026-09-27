@@ -12,10 +12,17 @@ import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
+import { formatBuildRewardProposalSummary } from '~/helpers/buildRewardReviewCard';
 import {
-  formatBuildRewardProposalSummary,
-  parseBuildRewardReviewFocusId
-} from '~/helpers/buildRewardReviewCard';
+  BUILD_REVIEW_REQUEST_TYPES,
+  BUILD_REVIEW_TYPE_ICONS,
+  BUILD_REVIEW_TYPE_LABELS,
+  type BuildReviewRequestItem,
+  type BuildReviewRequestType,
+  buildReviewStatusLabel,
+  parseBuildReviewRequestFocus
+} from '~/helpers/buildReviewRequests';
+import ReviewRequestDetail from './ReviewRequestDetail';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import {
   rewardPanelClass,
@@ -26,8 +33,11 @@ import type {
   RewardReview
 } from '~/components/Build/Rewards/types';
 
-// Creators send code only. The reviewer writes the earning rules here (or via
-// `lumine admin reward-review approve --config`) and approval freezes both.
+// Every Build unlock a creator asks Mikey for, in one queue: XP & Coin rewards,
+// project room, file storage and card crafting (the API's review-request
+// registry; `lumine admin review` is the same queue). Reward requests keep
+// their source/rules view below: creators send code only, the reviewer writes
+// the earning rules and approval freezes and publishes both.
 const EMPTY_CONFIG: RewardConfig = {
   userDailyXP: 0,
   userDailyCoins: 0,
@@ -47,6 +57,20 @@ const STATUS_LABEL: Record<string, string> = {
   revoked: 'Revoked',
   superseded: 'Closed'
 };
+
+const STATUS_FILTERS: Array<{ value: string; label: string }> = [
+  { value: 'queue', label: 'To do' },
+  { value: 'pending', label: 'Waiting' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Declined' },
+  { value: 'all', label: 'All' }
+];
+
+interface QueueData {
+  canReview: boolean;
+  items: BuildReviewRequestItem[];
+  nextCursor?: string | null;
+}
 
 // A pending request (or one whose proposal awaits the creator) can be
 // approved, rejected or given a proposal; only an approval can be revoked;
@@ -71,10 +95,11 @@ function statusColorKey(status: string) {
 export default function BuildRewardApprovals() {
   const location = useLocation();
   const navigate = useNavigate();
-  // /management?rewardReview=<id> (the chat card's button) opens straight on
-  // that review so the reviewer never has to find it in the list.
-  const focusReviewId = parseBuildRewardReviewFocusId(location.search);
-  const focusedReviewIdRef = useRef(0);
+  // /management?rewardReview=<id> or ?review=<type>:<id> (the chat cards'
+  // buttons) opens straight on that request.
+  const focus = parseBuildReviewRequestFocus(location.search);
+  const focusKey = focus ? `${focus.type}:${focus.id}` : '';
+  const focusedKeyRef = useRef('');
   const detailRef = useRef<HTMLDivElement | null>(null);
   const { colorKey: tableHeaderColor } = useRoleColor('tableHeader', {
     fallback: 'logoBlue'
@@ -82,8 +107,11 @@ export default function BuildRewardApprovals() {
   const { colorKey: successColor } = useRoleColor('success', {
     fallback: 'green'
   });
-  const loadReviews = useAppContext(
-    (v) => v.requestHelpers.loadBuildRewardReviews
+  const loadQueue = useAppContext(
+    (v) => v.requestHelpers.loadBuildReviewRequests
+  );
+  const loadRequest = useAppContext(
+    (v) => v.requestHelpers.loadBuildReviewRequest
   );
   const loadReview = useAppContext(
     (v) => v.requestHelpers.loadBuildRewardReview
@@ -97,15 +125,17 @@ export default function BuildRewardApprovals() {
   const proposeChanges = useAppContext(
     (v) => v.requestHelpers.proposeBuildRewardReviewChanges
   );
-  const [data, setData] = useState<{
-    canReview: boolean;
-    reviews: RewardReview[];
-    nextCursor?: number | null;
-  } | null>(null);
+  const [data, setData] = useState<QueueData | null>(null);
+  const [typeFilter, setTypeFilter] = useState<BuildReviewRequestType | ''>('');
+  const [statusFilter, setStatusFilter] = useState('queue');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [numShown, setNumShown] = useState(PAGE_SIZE);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedRef, setSelectedRef] = useState<string | null>(null);
+  // Full reward reviews (source files, reviewer context) by review id.
+  const [rewardDetails, setRewardDetails] = useState<
+    Record<number, RewardReview>
+  >({});
   const [reason, setReason] = useState('');
   const [rulesText, setRulesText] = useState('');
   const [rulesError, setRulesError] = useState('');
@@ -116,16 +146,13 @@ export default function BuildRewardApprovals() {
 
   useEffect(() => {
     let active = true;
-    loadReviews()
-      .then(
-        (result: {
-          canReview: boolean;
-          reviews: RewardReview[];
-          nextCursor?: number | null;
-        }) => {
-          if (active) setData(result);
-        }
-      )
+    setError('');
+    loadQueue({ status: statusFilter, type: typeFilter || undefined })
+      .then((result: QueueData) => {
+        if (!active) return;
+        setData(result);
+        setNumShown(PAGE_SIZE);
+      })
       .catch((err: Error) => {
         if (active) setError(err.message);
       });
@@ -133,31 +160,29 @@ export default function BuildRewardApprovals() {
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [statusFilter, typeFilter]);
 
   useEffect(() => {
-    if (
-      !data?.canReview ||
-      !focusReviewId ||
-      focusedReviewIdRef.current === focusReviewId
-    ) {
+    if (!data?.canReview || !focus || focusedKeyRef.current === focusKey) {
       return;
     }
-    focusedReviewIdRef.current = focusReviewId;
-    focusReview(focusReviewId);
+    focusedKeyRef.current = focusKey;
+    void focusRequest(focus.type, focus.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.canReview, focusReviewId]);
+  }, [data?.canReview, focusKey]);
 
-  const reviews = data?.reviews || [];
-  const selected = reviews.find((review) => review.id === selectedId);
-  const pendingCount = reviews.filter(
-    (review) => review.status === 'pending'
+  const items = data?.items || [];
+  const selectedItem = items.find((item) => item.ref === selectedRef) || null;
+  const selected: RewardReview | undefined =
+    selectedItem?.type === 'rewards'
+      ? rewardDetails[selectedItem.id] || selectedItem.review
+      : undefined;
+  const pendingCount = items.filter((item) => item.status === 'pending').length;
+  const offeredCount = items.filter(
+    (item) => item.status === 'changes_offered'
   ).length;
-  const offeredCount = reviews.filter(
-    (review) => review.status === 'changes_offered'
-  ).length;
-  const shownReviews = reviews.slice(0, numShown);
-  const moreLocally = reviews.length > numShown;
+  const shownItems = items.slice(0, numShown);
+  const moreLocally = items.length > numShown;
   const loadMoreShown = moreLocally || Boolean(data?.nextCursor);
 
   if (data && !data.canReview) return null;
@@ -165,10 +190,9 @@ export default function BuildRewardApprovals() {
   return (
     <ErrorBoundary componentPath="Management/Main/BuildRewardApprovals">
       <SectionPanel
-        title="App reward approvals"
+        title="Build approvals"
         loaded={Boolean(data) || Boolean(error)}
-        isEmpty={Boolean(data) && reviews.length === 0}
-        emptyMessage="No pending or approved reward releases"
+        isEmpty={false}
         innerStyle={{ paddingLeft: 0, paddingRight: 0 }}
         button={
           <Button
@@ -185,12 +209,14 @@ export default function BuildRewardApprovals() {
       >
         <div className={introClass}>
           <p>
-            Creators send their saved code. You read it, write the earning
-            rules, and approve both together: approval publishes that exact
-            version immediately. You can also edit a private copy and offer
-            it as the condition of approval; the creator accepts (which
-            publishes your version) or declines. Revoking a live approval
-            stops new awards immediately.
+            Everything creators ask you to unlock, in one list: XP & Coin
+            rewards, project room, file storage and card crafting. For
+            rewards, read the saved code, write the earning rules and approve
+            both together: approval publishes that exact version immediately
+            (or edit a private copy and offer it as the condition of
+            approval). Quota unlocks change a limit and never lower one; a
+            card crafting approval makes the recipe work in the published app
+            right away. Revoking a live approval stops it immediately.
           </p>
           <p>
             {pendingCount === 0
@@ -203,11 +229,47 @@ export default function BuildRewardApprovals() {
                   offeredCount === 1 ? 'proposal is' : 'proposals are'
                 } waiting for a creator's answer.`
               : ''}{' '}
-            The same queue is available as{' '}
-            <code>lumine admin reward-review</code>.
+            The same queue is available as <code>lumine admin review</code>.
           </p>
           {error && <p role="alert">{error}</p>}
         </div>
+        <div className={filterRowClass}>
+          <div className={chipRowClass} role="group" aria-label="Request type">
+            {(['', ...BUILD_REVIEW_REQUEST_TYPES] as const).map((type) => (
+              <button
+                key={type || 'all'}
+                type="button"
+                aria-pressed={typeFilter === type}
+                className={chipClass}
+                onClick={() => {
+                  setTypeFilter(type);
+                  setSelectedRef(null);
+                }}
+              >
+                {type ? <Icon icon={BUILD_REVIEW_TYPE_ICONS[type]} /> : null}
+                {type ? BUILD_REVIEW_TYPE_LABELS[type] : 'Everything'}
+              </button>
+            ))}
+          </div>
+          <select
+            aria-label="Status"
+            className={statusSelectClass}
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value);
+              setSelectedRef(null);
+            }}
+          >
+            {STATUS_FILTERS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        {data && items.length === 0 ? (
+          <p className={emptyClass}>Nothing here.</p>
+        ) : null}
         <div className={tableWrapClass}>
           <Table
             color={tableHeaderColor}
@@ -221,57 +283,57 @@ export default function BuildRewardApprovals() {
           >
             <thead>
               <tr>
-                <th>App</th>
+                <th>Request</th>
                 <th>Creator</th>
                 <th>Status</th>
-                <th>Saved version</th>
+                <th>Type</th>
                 <th>Sent</th>
               </tr>
             </thead>
             <tbody>
-              {shownReviews.map((review) => {
-                const isSelected = selected?.id === review.id;
+              {shownItems.map((item) => {
+                const isSelected = selectedRef === item.ref;
                 return (
                   <tr
-                    key={review.id}
+                    key={item.ref}
                     aria-selected={isSelected}
-                    onClick={() => handleSelect(review.id)}
+                    onClick={() => handleSelect(item)}
                     className={rowClass}
                   >
                     <td className={appCellClass}>
                       <span className={appTitleClass}>
-                        {review.title || `App ${review.buildId}`}
+                        <span className={typeBadgeClass}>
+                          <Icon icon={BUILD_REVIEW_TYPE_ICONS[item.type]} />
+                          {BUILD_REVIEW_TYPE_LABELS[item.type]}
+                        </span>{' '}
+                        {item.appTitle ||
+                          (item.type === 'storage-limit'
+                            ? 'All their Builds'
+                            : `App ${item.buildId}`)}
                       </span>
                       <span className={appMetaClass}>
                         <span className={phoneOnlyClass}>
-                          {review.ownerUsername || `User ${review.ownerId}`} · v
-                          {review.sourceVersionId} ·{' '}
+                          {item.requesterUsername || `User ${item.requesterId}`}{' '}
+                          ·{' '}
                         </span>
-                        Request #{review.id}
-                        {review.config.rules.length === 0
-                          ? ' · no earning rules yet'
-                          : ` · ${review.config.rules.length} ${
-                              review.config.rules.length === 1
-                                ? 'rule'
-                                : 'rules'
-                            }`}
+                        #{item.id} · {item.summary}
                       </span>
                     </td>
-                    <td>{review.ownerUsername || `User ${review.ownerId}`}</td>
+                    <td>{item.requesterUsername || `User ${item.requesterId}`}</td>
                     <td>
                       <span
                         className={css`
                           font-weight: 700;
                           color: ${Color[
-                          statusColorKey(review.status) as keyof typeof Color
+                          statusColorKey(item.status) as keyof typeof Color
                         ]()};
                         `}
                       >
-                        {STATUS_LABEL[review.status] || review.status}
+                        {buildReviewStatusLabel(item)}
                       </span>
                     </td>
-                    <td>{review.sourceVersionId}</td>
-                    <td>{timeSince(review.createdAt)}</td>
+                    <td>{BUILD_REVIEW_TYPE_LABELS[item.type]}</td>
+                    <td>{timeSince(item.createdAt)}</td>
                   </tr>
                 );
               })}
@@ -285,6 +347,62 @@ export default function BuildRewardApprovals() {
               loading={busy}
               style={{ fontSize: '2rem' }}
               onClick={handleLoadMore}
+            />
+          </div>
+        )}
+        {selectedItem && selectedItem.type !== 'rewards' && (
+          <div ref={detailRef} className={detailClass}>
+            <div className={detailHeaderClass}>
+              <div>
+                <h3>
+                  {BUILD_REVIEW_TYPE_LABELS[selectedItem.type]} ·{' '}
+                  {selectedItem.appTitle ||
+                    selectedItem.requesterUsername ||
+                    `User ${selectedItem.requesterId}`}
+                </h3>
+                <p>
+                  Request #{selectedItem.id}
+                  {selectedItem.requesterUsername
+                    ? ` · by ${selectedItem.requesterUsername}`
+                    : ''}
+                  {' · '}
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color:
+                        Color[
+                          statusColorKey(selectedItem.status) as keyof typeof Color
+                        ]()
+                    }}
+                  >
+                    {buildReviewStatusLabel(selectedItem)}
+                  </span>
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                color="darkerGray"
+                onClick={() => setSelectedRef(null)}
+              >
+                <Icon icon="times" />
+                <span style={{ marginLeft: '0.7rem' }}>Close</span>
+              </Button>
+            </div>
+            <ReviewRequestDetail
+              key={selectedItem.ref}
+              item={selectedItem}
+              onDecided={(decided) =>
+                setData((current) =>
+                  current
+                    ? {
+                        ...current,
+                        items: current.items.map((entry) =>
+                          entry.ref === decided.ref ? decided : entry
+                        )
+                      }
+                    : current
+                )
+              }
             />
           </div>
         )}
@@ -318,7 +436,7 @@ export default function BuildRewardApprovals() {
                 variant="ghost"
                 color="darkerGray"
                 disabled={busy}
-                onClick={() => setSelectedId(null)}
+                onClick={() => setSelectedRef(null)}
               >
                 <Icon icon="times" />
                 <span style={{ marginLeft: '0.7rem' }}>Close</span>
@@ -473,7 +591,7 @@ export default function BuildRewardApprovals() {
   );
 
   function openReview(review: RewardReview) {
-    setSelectedId(review.id);
+    setSelectedRef(`rewards:${review.id}`);
     setReason('');
     setRulesError('');
     // Resume the reviewer's typed draft if there is one; otherwise start from
@@ -495,58 +613,69 @@ export default function BuildRewardApprovals() {
     });
   }
 
-  async function focusReview(reviewId: number) {
-    // A decided (rejected/revoked/superseded) review is not in the queue list,
-    // so it is fetched directly and shown at the top rather than reported as
-    // missing.
+  function upsertItem(item: BuildReviewRequestItem) {
+    setData((current) =>
+      current
+        ? {
+            ...current,
+            items: current.items.some((entry) => entry.ref === item.ref)
+              ? current.items.map((entry) =>
+                  entry.ref === item.ref ? { ...entry, ...item } : entry
+                )
+              : [item, ...current.items]
+          }
+        : current
+    );
+  }
+
+  async function loadRewardDetail(reviewId: number) {
+    const review: RewardReview = await loadReview(reviewId);
+    setRewardDetails((current) => ({ ...current, [reviewId]: review }));
+    return review;
+  }
+
+  async function focusRequest(type: BuildReviewRequestType, id: number) {
+    // A decided request is not in the default list, so it is fetched
+    // directly and shown at the top rather than reported as missing.
     setBusy(true);
     setError('');
     try {
-      const review = await loadReview(reviewId);
-      setData((current) =>
-        current
-          ? {
-              ...current,
-              reviews: current.reviews.some((r) => r.id === reviewId)
-                ? current.reviews.map((r) =>
-                    r.id === reviewId ? { ...r, ...review } : r
-                  )
-                : [review, ...current.reviews]
-            }
-          : current
-      );
-      openReview(review);
+      const shown = await loadRequest(type, id);
+      if (shown?.item) {
+        upsertItem(
+          type === 'rewards' ? { ...shown.item, review: shown.review } : shown.item
+        );
+      }
+      if (type === 'rewards') {
+        openReview(await loadRewardDetail(id));
+      } else {
+        setSelectedRef(`${type}:${id}`);
+      }
       scrollToDetail();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Could not load that review.'
+        err instanceof Error ? err.message : 'Could not load that request.'
       );
     } finally {
       setBusy(false);
     }
   }
 
-  async function handleSelect(reviewId: number) {
+  async function handleSelect(item: BuildReviewRequestItem) {
     if (busy) return;
-    if (selectedId === reviewId) {
-      setSelectedId(null);
+    if (selectedRef === item.ref) {
+      setSelectedRef(null);
+      return;
+    }
+    if (item.type !== 'rewards') {
+      setSelectedRef(item.ref);
+      scrollToDetail();
       return;
     }
     setBusy(true);
     setError('');
     try {
-      const review = await loadReview(reviewId);
-      setData((current) =>
-        current
-          ? {
-              ...current,
-              reviews: current.reviews.map((r) =>
-                r.id === reviewId ? { ...r, ...review } : r
-              )
-            }
-          : current
-      );
-      openReview(review);
+      openReview(await loadRewardDetail(item.id));
       scrollToDetail();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load source.');
@@ -565,16 +694,20 @@ export default function BuildRewardApprovals() {
     setBusy(true);
     setError('');
     try {
-      const result = await loadReviews(data.nextCursor);
+      const result: QueueData = await loadQueue({
+        status: statusFilter,
+        type: typeFilter || undefined,
+        cursor: data.nextCursor
+      });
       setData((current) =>
         current
-          ? { ...result, reviews: [...current.reviews, ...result.reviews] }
+          ? { ...result, items: [...current.items, ...result.items] }
           : result
       );
       setNumShown((count) => count + PAGE_SIZE);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Could not load older reviews.'
+        err instanceof Error ? err.message : 'Could not load older requests.'
       );
     } finally {
       setBusy(false);
@@ -585,10 +718,13 @@ export default function BuildRewardApprovals() {
     setBusy(true);
     setError('');
     try {
-      setData(await loadReviews());
+      setData(
+        await loadQueue({ status: statusFilter, type: typeFilter || undefined })
+      );
+      setRewardDetails({});
       setNumShown(PAGE_SIZE);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load reviews.');
+      setError(err instanceof Error ? err.message : 'Could not load requests.');
     } finally {
       setBusy(false);
     }
@@ -619,16 +755,10 @@ export default function BuildRewardApprovals() {
       const result = await openProposalWorkspace(selected.id);
       const proposalBuildId = Number(result?.buildId || 0);
       if (!proposalBuildId) throw new Error('No workspace was created.');
-      setData((current) =>
-        current
-          ? {
-              ...current,
-              reviews: current.reviews.map((r) =>
-                r.id === selected.id ? { ...r, proposalBuildId } : r
-              )
-            }
-          : current
-      );
+      setRewardDetails((current) => ({
+        ...current,
+        [selected.id]: { ...selected, proposalBuildId }
+      }));
       navigate(getBuildWorkspacePath({ id: proposalBuildId }));
     } catch (err) {
       setProposalError(
@@ -653,16 +783,11 @@ export default function BuildRewardApprovals() {
         config,
         reason: reason.trim()
       });
-      setData((current) =>
-        current
-          ? {
-              ...current,
-              reviews: current.reviews.map((r) =>
-                r.id === selected.id ? { ...r, ...review } : r
-              )
-            }
-          : current
-      );
+      setRewardDetails((current) => ({
+        ...current,
+        [selected.id]: { ...selected, ...review }
+      }));
+      await handleRefresh();
     } catch (err) {
       setProposalError(
         err instanceof Error ? err.message : 'Could not offer these changes.'
@@ -692,9 +817,10 @@ export default function BuildRewardApprovals() {
     setBusy(true);
     setError('');
     try {
-      setData(await decideReview(selected.id, decision, reason, config));
+      await decideReview(selected.id, decision, reason, config);
       setRulesDrafts(({ [selected.id]: _done, ...rest }) => rest);
-      setSelectedId(null);
+      setSelectedRef(null);
+      await handleRefresh();
       setReason('');
       setRulesText('');
     } catch (err) {
@@ -927,3 +1053,70 @@ const actionsClass = css`
   gap: 0.8rem;
   align-items: center;
 `;
+
+const filterRowClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0 1.8rem 1.2rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0 1.2rem 1rem;
+  }
+`;
+
+const chipRowClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const chipClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid ${Color.borderGray()};
+  background: #fff;
+  color: ${Color.darkerGray()};
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  &[aria-pressed='true'] {
+    background: ${Color.logoBlue()};
+    border-color: ${Color.logoBlue()};
+    color: #fff;
+  }
+`;
+
+const statusSelectClass = css`
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid ${Color.borderGray()};
+  background: #fff;
+`;
+
+const typeBadgeClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-right: 0.3rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: ${Color.logoBlue(0.12)};
+  color: ${Color.logoBlue()};
+  font-size: 1.1rem;
+  font-weight: 800;
+  vertical-align: middle;
+`;
+
+const emptyClass = css`
+  padding: 0 1.8rem 1.2rem;
+  font-size: 1.4rem;
+  color: ${Color.gray()};
+`;
+

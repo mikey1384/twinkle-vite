@@ -498,6 +498,7 @@ export default function useChatSocket({
     socket.on('chat_message_deleted', handleChatMessageDeleted);
     socket.on('chat_message_edited', onEditMessage);
     socket.on('build_reward_review_updated', handleBuildRewardReviewUpdated);
+    socket.on('build_review_request_updated', handleBuildReviewRequestUpdated);
     socket.on('chat_attachment_thumbnail_updated', onSetChatAttachmentThumbUrl);
     socket.on('ai_message_delta_streamed', onAppendAIMessageDelta);
     socket.on('chat_reaction_added', handleLegacyChatReactionAdded);
@@ -551,6 +552,10 @@ export default function useChatSocket({
       socket.off('chat_message_deleted', handleChatMessageDeleted);
       socket.off('chat_message_edited', onEditMessage);
       socket.off('build_reward_review_updated', handleBuildRewardReviewUpdated);
+      socket.off(
+        'build_review_request_updated',
+        handleBuildReviewRequestUpdated
+      );
       socket.off(
         'chat_attachment_thumbnail_updated',
         onSetChatAttachmentThumbUrl
@@ -607,6 +612,18 @@ export default function useChatSocket({
         channelId,
         messageId,
         settings: { buildRewardReview: payload.review }
+      });
+    }
+
+    // A project-room, file-storage or card crafting request card changed.
+    function handleBuildReviewRequestUpdated(payload: any) {
+      const channelId = Number(payload?.channelId || 0);
+      const messageId = Number(payload?.messageId || 0);
+      if (!channelId || !messageId || !payload?.request) return;
+      onUpdateMessageSettings({
+        channelId,
+        messageId,
+        settings: { buildReviewRequest: payload.request }
       });
     }
 

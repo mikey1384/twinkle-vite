@@ -425,11 +425,6 @@ export interface ChatPanelProps {
   purchasingGenerationReset: boolean;
   generationResetError: string;
   onPurchaseGenerationReset: () => Promise<void> | void;
-  onRequestProjectLimitIncrease: (selection: {
-    files: boolean;
-    size: boolean;
-  }) => Promise<void> | void;
-  onRequestStorageLimitIncrease: (requestedBytes: number) => Promise<void> | void;
   onStopGeneration: () => void;
   onFixRuntimeObservationMessage: (
     message: ChatMessage

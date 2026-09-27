@@ -46,10 +46,12 @@ export default function WorkspaceToolbar({
   isOwner,
   viewMode,
   viewOptions,
+  appHelperButton = null,
   onOpenHistory,
   onViewModeChange
 }: {
   isOwner: boolean;
+  appHelperButton?: React.ReactNode;
   viewMode: WorkspaceViewMode;
   viewOptions: ReadonlyArray<{
     value: WorkspaceViewMode;
@@ -66,6 +68,7 @@ export default function WorkspaceToolbar({
         Workspace
       </div>
       <div className={toolbarActionsClass}>
+        {appHelperButton}
         {isOwner ? (
           <GameCTAButton
             variant="purple"

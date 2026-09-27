@@ -40,6 +40,7 @@ test('notification rows and server-issued workflow cards disable generic chat ac
     'buildThumbnailSuggestion',
     'buildProjectLimitRequest',
     'buildRewardReview',
+    'buildReviewRequest',
     'aiCardOffer',
     'cliAdminChatMessage'
   ]) {
@@ -147,7 +148,8 @@ test('Build cards can be replied to (and only replied to) while other notices ca
     'buildContributionSubmission',
     'buildThumbnailSuggestion',
     'buildProjectLimitRequest',
-    'buildRewardReview'
+    'buildRewardReview',
+    'buildReviewRequest'
   ]) {
     assert.equal(canReplyToChatMessage({ rootType }), true);
     assert.equal(isReplyOnlyBuildCardMessage({ rootType }), true);

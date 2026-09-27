@@ -1251,6 +1251,67 @@ export default function buildRequestHelpers({
       }
     },
 
+    // "Connect AI helper": a pairing code bound to this open tab's session.
+    async createBuildAppMcpPairing({
+      buildId,
+      source,
+      artifactVersionId
+    }: {
+      buildId: number;
+      source: 'published' | 'workspace';
+      artifactVersionId?: number | null;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/app-mcp/pairings`,
+          { source, artifactVersionId: artifactVersionId || null },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async setBuildAppMcpAllowEdits({
+      buildId,
+      sessionId,
+      allowEdits
+    }: {
+      buildId: number;
+      sessionId: string;
+      allowEdits: boolean;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/app-mcp/sessions/${sessionId}/permissions`,
+          { allowEdits },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async closeBuildAppMcpSession({
+      buildId,
+      sessionId
+    }: {
+      buildId: number;
+      sessionId: string;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/build/${buildId}/app-mcp/sessions/${sessionId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async updateBuildMetadata({
       buildId,
       title,

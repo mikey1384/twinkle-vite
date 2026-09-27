@@ -104,6 +104,9 @@ registerMethods('build', [
   'connectBuildAppMcpRuntime',
   'pollBuildAppMcpCall',
   'completeBuildAppMcpCall',
+  'createBuildAppMcpPairing',
+  'setBuildAppMcpAllowEdits',
+  'closeBuildAppMcpSession',
   'updateBuildMetadata',
   'loadBuildTabThumbnails',
   'loadBuildThumbnailOptions',
@@ -496,6 +499,11 @@ registerMethods('notification', [
 ]);
 
 registerMethods('management', [
+  'loadBuildReviewRequests',
+  'loadBuildReviewRequest',
+  'decideBuildReviewRequest',
+  'loadBuildCardCraftSettings',
+  'requestBuildCardCraftReview',
   'addAccountType',
   'changeAccountType',
   'loadModerators',
