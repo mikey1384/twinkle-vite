@@ -16,6 +16,8 @@ import { useToast } from '~/contexts/Toast';
 import LocalContext from '../../../Context';
 import { useChatPins } from '../../../Pins/context';
 import PinsButton from '../../../Pins/PinsButton';
+import BlockUserModal from '~/components/ChatSafety/BlockUserModal';
+import useBlockedUsers, { canBlockUser } from '~/helpers/hooks/useBlockedUsers';
 const deviceIsMobile = isMobile(navigator);
 const addToFavoritesLabel = 'Add to favorites';
 const changeTopicLabel = 'Change Topic';
@@ -41,6 +43,7 @@ export default function ChannelHeader({
   onSetSettingsModalShown,
   onSetBuyTopicModalShown,
   onSetTopicSelectorModalShown,
+  partner,
   searchText,
   selectedChannelId,
   subchannel,
@@ -60,6 +63,7 @@ export default function ChannelHeader({
   onSetSettingsModalShown: (arg0: boolean) => void;
   onSetBuyTopicModalShown: (arg0: boolean) => void;
   onSetTopicSelectorModalShown: (arg0: boolean) => void;
+  partner?: { id: number; username: string } | null;
   searchText: string;
   selectedChannelId: number;
   subchannel: any;
@@ -92,6 +96,17 @@ export default function ChannelHeader({
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
   const [subchannelLoading, setSubchannelLoading] = useState(false);
   const [notificationMuteSaving, setNotificationMuteSaving] = useState(false);
+  const [blockModalMode, setBlockModalMode] = useState<
+    'block' | 'unblock' | null
+  >(null);
+  const blockList = useBlockedUsers();
+  const partnerId = Number(partner?.id || 0);
+  const partnerBlockable =
+    !!currentChannel.twoPeople &&
+    !!partner?.username &&
+    blockList.status === 'loaded' &&
+    canBlockUser(blockList, partnerId, userId);
+  const partnerBlocked = partnerBlockable && blockList.blockedIds.has(partnerId);
   // A mute also silences the in-page desktop notifications this browser raises
   // from the chat socket, which need no push subscription. That status lives
   // outside React (browser permission + localStorage), so it is re-read when
@@ -264,6 +279,20 @@ export default function ChannelHeader({
         ),
         onClick: () => onSetHideModalShown(true)
       });
+      // Kept in its own section at the bottom and always confirmed.
+      if (partnerBlockable) {
+        pushSection({
+          label: (
+            <span style={{ color: partnerBlocked ? undefined : '#b42318' }}>
+              <Icon icon="ban" />
+              <span style={{ marginLeft: '1rem' }}>
+                {partnerBlocked ? 'Unblock' : 'Block'} {partner?.username}
+              </span>
+            </span>
+          ),
+          onClick: () => setBlockModalMode(partnerBlocked ? 'unblock' : 'block')
+        });
+      }
       return result;
     }
     if (selectedChannelId === GENERAL_CHAT_ID) {
@@ -327,6 +356,9 @@ export default function ChannelHeader({
     notificationMuteSaving,
     notificationSettings,
     notificationsMuted,
+    partner?.username,
+    partnerBlockable,
+    partnerBlocked,
     selectedChannelId,
     userId
   ]);
@@ -510,6 +542,13 @@ export default function ChannelHeader({
           </div>
         )}
       </div>
+      {blockModalMode && partner?.username && (
+        <BlockUserModal
+          user={{ id: partnerId, username: partner.username }}
+          mode={blockModalMode}
+          onHide={() => setBlockModalMode(null)}
+        />
+      )}
     </ErrorBoundary>
   );
 

@@ -46,6 +46,9 @@ import { normalizeAICardOfferMessagePayload } from '~/helpers/aiCardOfferNotice'
 import type { MessageBodyProps } from './types';
 import useOptimisticSave from './hooks/useOptimisticSave';
 import WordleResult from './WordleResult';
+import BlockedMessageNotice from './BlockedMessageNotice';
+import ReportMessageModal from '~/components/ChatSafety/ReportMessageModal';
+import useBlockedUsers from '~/helpers/hooks/useBlockedUsers';
 import type {
   PendingReactionMutation,
   PendingReactionMutations
@@ -161,6 +164,15 @@ function MessageBody({
   const [visiblePendingReactionMutations, setVisiblePendingReactionMutations] =
     useState<PendingReactionMutations>({});
   const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
+  const [reportModalShown, setReportModalShown] = useState(false);
+  const [blockedMessageRevealed, setBlockedMessageRevealed] = useState(false);
+  const blockList = useBlockedUsers();
+  // In a direct chat you blocked, nothing can be sent either way, so the
+  // message offers no reaction or reply (Report stays).
+  const directChatBlocked =
+    !!currentChannel?.twoPeople &&
+    Number(partner?.id) > 0 &&
+    blockList.blockedIds.has(Number(partner?.id));
   const extractedUrl = useMemo(() => fetchURLFromText(content), [content]);
 
   const {
@@ -211,6 +223,14 @@ function MessageBody({
     ...message,
     isNotification: isNotification || message.isNotification
   });
+  // Any member's message except your own; server-issued cards and notices
+  // are not member speech and take no report.
+  const canReport =
+    !!messageId &&
+    !!myId &&
+    Number(userId) > 0 &&
+    Number(userId) !== Number(myId) &&
+    genericActionsAllowed;
   const isReplyOnlyBuildCard = isReplyOnlyBuildCardMessage({
     ...message,
     isNotification: isNotification || message.isNotification
@@ -678,11 +698,28 @@ function MessageBody({
   }
 
   async function handleAddReaction(reaction: string) {
+    if (directChatBlocked) return;
     await submitReactionMutation({ mutation: 'add', reaction });
   }
 
   async function handleRemoveReaction(reaction: string) {
     await submitReactionMutation({ mutation: 'remove', reaction });
+  }
+
+  // In a group chat, a member you blocked is hidden behind a one-line notice
+  // you can open per message. Direct chats keep their history visible.
+  const hiddenAsBlocked =
+    !blockedMessageRevealed &&
+    !currentChannel?.twoPeople &&
+    !isNotification &&
+    !message.isNotification &&
+    Number(userId) > 0 &&
+    Number(userId) !== Number(myId) &&
+    blockList.blockedIds.has(Number(userId));
+  if (hiddenAsBlocked) {
+    return (
+      <BlockedMessageNotice onShow={() => setBlockedMessageRevealed(true)} />
+    );
   }
 
   if (isTopicPostNotification) {
@@ -966,7 +1003,9 @@ function MessageBody({
               isMenuButtonsAllowed={isMenuButtonsAllowed}
               isDeleteOnlyBuildSuggestion={isDeleteOnlyBuildSuggestion}
               isReplyOnlyBuildCard={isReplyOnlyBuildCard}
-              canReply={canReply}
+              canReply={canReply && !directChatBlocked}
+              canReport={canReport}
+              directChatBlocked={directChatBlocked}
               isRestricted={isRestricted}
               message={message}
               messageId={messageId}
@@ -976,6 +1015,7 @@ function MessageBody({
               onDelete={onDelete}
               onDropdownShown={setHighlighted}
               onOpenRewardModal={() => setMessageRewardModalShown(true)}
+              onOpenReportModal={() => setReportModalShown(true)}
               onReplyClick={onReplyClick}
               onSetIsEditing={onSetIsEditing}
               onSetReactionsMenuShown={setReactionsMenuShown}
@@ -994,6 +1034,13 @@ function MessageBody({
               userId={userId}
             />
           </div>
+          {reportModalShown && canReport && (
+            <ReportMessageModal
+              messageId={messageId}
+              reportedUser={{ id: userId, username: appliedUsername }}
+              onHide={() => setReportModalShown(false)}
+            />
+          )}
           {messageRewardModalShown && genericActionsAllowed && (
             <MessageRewardModal
               key={`${message.id}:${userId}`}

@@ -16,6 +16,7 @@ import {
   appTitleRowClass,
   appTitleTextClass
 } from './appCardHelpers';
+import { AppRewardsButton } from './AppRewardsModal';
 
 // The App Store's #1 on desktop: the same facts as a shelf card, spanning
 // the whole shelf with a bigger picture. Phones never render this (they keep rows).
@@ -74,6 +75,7 @@ export default function TopPickCard({ app }: { app: EarnHubApp }) {
         <div className={barClass} role="img" aria-label={status.line}>
           <i style={{ width: `${Math.round(status.ratio * 100)}%` }} />
         </div>
+        <AppRewardsButton app={app} />
         <div className={actionsClass}>
           <Button
             color="logoBlue"

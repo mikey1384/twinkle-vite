@@ -4882,6 +4882,35 @@ export default function buildRequestHelpers({
       }
     },
 
+    async checkBuildGrammarblesAnswer({
+      buildId,
+      questionId,
+      choiceIndex,
+      token
+    }: {
+      buildId: number;
+      questionId: number;
+      choiceIndex: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/grammarbles/check`,
+          { questionId, choiceIndex },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async listBuildGrammarblesQuestions({
       buildId,
       level,

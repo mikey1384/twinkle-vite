@@ -7,6 +7,8 @@ import { chatComposerClass } from '../../containers';
 import ChatPinsProvider from '../../Pins';
 import { useKeyContext } from '~/contexts';
 import { useChatPins } from '../../Pins/context';
+import BlockedChatNotice from '~/components/ChatSafety/BlockedChatNotice';
+import useBlockedUsers from '~/helpers/hooks/useBlockedUsers';
 
 export default function Content({
   catchUpStatusShown,
@@ -30,6 +32,15 @@ export default function Content({
   onRetryCatchUp: () => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
+  const blockList = useBlockedUsers();
+  const partner = channelHeaderProps.partner;
+  const blockedPartner =
+    channelHeaderProps.currentChannel.twoPeople &&
+    partner?.id &&
+    partner.username &&
+    blockList.blockedIds.has(Number(partner.id))
+      ? { id: Number(partner.id), username: partner.username }
+      : null;
   const channelId = Number(channelHeaderProps.selectedChannelId || 0);
   const subchannelId = Number(subchannel?.id || 0);
   const topicId =
@@ -131,7 +142,14 @@ export default function Content({
             </button>
           </div>
         )}
-        <PinAwareMessageInput key={messageInputKey} {...messageInputProps} />
+        {blockedPartner ? (
+          <BlockedChatNotice
+            user={blockedPartner}
+            onHeightChange={messageInputProps.onHeightChange}
+          />
+        ) : (
+          <PinAwareMessageInput key={messageInputKey} {...messageInputProps} />
+        )}
       </div>
     </ChatPinsProvider>
   );

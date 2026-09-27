@@ -13,6 +13,8 @@ interface MessageToastOptions {
   message: string;
   duration?: number;
   linkTo?: string;
+  // instead of a link: what a tap does (e.g. open the sign-up window)
+  onClick?: () => void;
 }
 
 interface AchievementToastOptions {
@@ -57,9 +59,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   function renderCurrent() {
     if (!current) return null;
-    const goLink = current.linkTo
-      ? () => navigate(current.linkTo as string)
-      : undefined;
+    const goLink =
+      current.kind !== 'achievement' && current.onClick
+        ? current.onClick
+        : current.linkTo
+          ? () => navigate(current.linkTo as string)
+          : undefined;
 
     if (current.kind === 'achievement') {
       return (

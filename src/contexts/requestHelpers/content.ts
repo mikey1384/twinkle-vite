@@ -22,6 +22,35 @@ export default function contentRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
+    // "Ask about Twinkle" on /parents: no account needed. Limit and busy
+    // replies come back as { error } so the page can explain them.
+    async askParentGuide({
+      question,
+      history,
+      lang,
+      visitorId
+    }: {
+      question: string;
+      history: { role: 'user' | 'assistant'; content: string }[];
+      lang: 'ko' | 'en';
+      visitorId: string;
+    }): Promise<{ answer?: string; remainingToday?: number; error?: string }> {
+      try {
+        const { data } = await request.post(`${URL}/parents/ask`, {
+          question,
+          history,
+          lang,
+          visitorId
+        });
+        return data;
+      } catch (error: any) {
+        const status = Number(error?.response?.status || 0);
+        if (status && status !== 401 && status !== 403) {
+          return { error: String(error?.response?.data?.error || 'failed') };
+        }
+        return handleError(error);
+      }
+    },
     async replaceSubjectAttachment({
       subjectId,
       fileName,
@@ -1170,24 +1199,42 @@ export default function contentRequestHelpers({
         };
       }
     },
-    async loadGrammarGame() {
+    // Starts a server-graded round: the server keeps the answer key and
+    // hands out the first question only.
+    async startGrammarSession() {
       try {
-        const {
-          data: {
-            nextDayTimeStamp,
-            questions,
-            maxAttemptNumberReached,
-            alreadyFailedToday,
-            aborted
-          }
-        } = await axios.get(`${URL}/content/game/grammar`, auth());
-        return {
-          nextDayTimeStamp,
-          questions,
-          maxAttemptNumberReached,
-          alreadyFailedToday,
-          aborted
-        };
+        const { data } = await request.post(
+          `${URL}/content/game/grammar/session`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Checks one pick on the server. Resending the same clickId never counts
+    // twice, so a transport failure can be retried safely.
+    async checkGrammarAnswer({
+      sessionId,
+      questionIndex,
+      choiceIndex,
+      clickId,
+      elapsedMs
+    }: {
+      sessionId: number;
+      questionIndex: number;
+      choiceIndex: number;
+      clickId: number;
+      elapsedMs: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/grammar/answer`,
+          { sessionId, questionIndex, choiceIndex, clickId, elapsedMs },
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1203,18 +1250,6 @@ export default function contentRequestHelpers({
         const { data } = await request.post(
           `${URL}/content/game/grammar/cancel`,
           { attemptNumber, answeredCount },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async startGrammarAttempt() {
-      try {
-        const { data } = await request.post(
-          `${URL}/content/game/grammar/start`,
-          {},
           auth()
         );
         return data;
@@ -2221,15 +2256,10 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async uploadGrammarGameResult({
-      attemptNumber,
-      scoreArray,
-      questionResults
-    }: {
-      attemptNumber: number;
-      scoreArray: number[];
-      questionResults?: Array<{ questionId: number; isCorrect: boolean }>;
-    }) {
+    // Ends a round. The server scores it from its own records; the result
+    // (XP, coins, grades) comes back canonical. Resending is safe: a second
+    // finish answers isDuplicate and pays nothing.
+    async finishGrammarSession({ sessionId }: { sessionId: number }) {
       try {
         const {
           data: {
@@ -2240,11 +2270,12 @@ export default function contentRequestHelpers({
             fullClearBonusAmount,
             fullClearBonusBase,
             dailyTaskStatus,
-            dailyTask
+            dailyTask,
+            scoreArray
           }
         } = await request.post(
-          `${URL}/content/game/grammar`,
-          { attemptNumber, scoreArray, questionResults },
+          `${URL}/content/game/grammar/finish`,
+          { sessionId },
           auth()
         );
         return {
@@ -2255,7 +2286,8 @@ export default function contentRequestHelpers({
           fullClearBonusAmount,
           fullClearBonusBase,
           dailyTaskStatus,
-          dailyTask
+          dailyTask,
+          scoreArray
         };
       } catch (error) {
         return handleError(error);

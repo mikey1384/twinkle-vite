@@ -1,12 +1,15 @@
 import React from 'react';
 import Loading from '~/components/Loading';
 import Main from './Main';
+import type { GrammarAnswerCheck } from '../answerCheck';
 
 export default function Game({
   currentIndex,
   isOnStreak,
   questionIds,
   questionObjRef,
+  onCheckAnswer,
+  onSessionLost,
   onGameFinish,
   onSetTriggerEffect,
   onSetCurrentIndex,
@@ -17,6 +20,8 @@ export default function Game({
   isOnStreak: boolean;
   questionIds: any[];
   questionObjRef: React.RefObject<any>;
+  onCheckAnswer: GrammarAnswerCheck;
+  onSessionLost: () => void;
   onGameFinish: any;
   onSetTriggerEffect: any;
   onSetCurrentIndex: any;
@@ -31,6 +36,8 @@ export default function Game({
           questionIds={questionIds}
           questionObjRef={questionObjRef}
           isOnStreak={isOnStreak}
+          onCheckAnswer={onCheckAnswer}
+          onSessionLost={onSessionLost}
           onGameFinish={onGameFinish}
           triggerEffect={triggerEffect}
           onSetTriggerEffect={onSetTriggerEffect}

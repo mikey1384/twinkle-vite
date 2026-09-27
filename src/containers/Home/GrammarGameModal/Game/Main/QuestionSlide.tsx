@@ -9,19 +9,20 @@ export default function QuestionSlide({
   isCompleted,
   question,
   selectedChoiceIndex,
+  pendingChoiceIndex,
   choices,
-  onCorrectAnswer,
-  onSetGotWrong,
+  onSelect,
   gotWrong,
   onCountdownStart
 }: {
-  answerIndex: number;
+  // Unknown until the server confirms a right pick.
+  answerIndex?: number;
   isCompleted?: boolean;
   question: string;
   selectedChoiceIndex: number;
+  pendingChoiceIndex: number | null;
   choices: any[];
-  onCorrectAnswer: () => void;
-  onSetGotWrong: (arg0: number) => void;
+  onSelect: (choiceIndex: number) => void;
   gotWrong: boolean;
   onCountdownStart?: () => void;
 }) {
@@ -66,10 +67,10 @@ export default function QuestionSlide({
             answerIndex={answerIndex}
             isCompleted={isCompleted}
             selectedChoiceIndex={selectedChoiceIndex}
-            onCorrectAnswer={onCorrectAnswer}
-            onSetGotWrong={onSetGotWrong}
-            listItems={choices}
-            questionLength={question.length}
+            pendingChoiceIndex={pendingChoiceIndex}
+            onSelect={onSelect}
+            listItems={choices || []}
+            questionLength={(question || '').length}
             gotWrong={gotWrong}
             onShown={onCountdownStart}
           />

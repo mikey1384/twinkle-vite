@@ -21,6 +21,7 @@ import useChessSocket from './useChessSocket';
 import useCommunitySocket from './useCommunitySocket';
 import useInitSocket from './useInitSocket';
 import useNotiSocket from './useNotiSocket';
+import useSignupInviteSocket from './useSignupInviteSocket';
 import useUserSocket from './useUserSocket';
 
 export default function useAPISocket({
@@ -161,6 +162,7 @@ export default function useAPISocket({
     usingChatRef
   });
   useBuildSocket();
+  useSignupInviteSocket();
   useCallSocket({
     channelsObj,
     selectedChannelId

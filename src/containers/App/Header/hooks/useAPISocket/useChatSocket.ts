@@ -14,6 +14,9 @@ import {
   useHomeContext
 } from '~/contexts';
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
+import useBlockedUsers, {
+  isBlockedByMe
+} from '~/helpers/hooks/useBlockedUsers';
 import { shouldShowBackgroundChatMessageNotification } from '~/helpers/chatNotificationPolicy';
 import {
   createRealtimeChatMessageReplayWindow,
@@ -89,6 +92,9 @@ export default function useChatSocket({
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
+  // Loads the block list for the session so background notifications can
+  // leave out members this user blocked.
+  useBlockedUsers();
 
   const onChangeUserActivity = useChatContext(
     (v) => v.actions.onChangeUserActivity
@@ -1377,6 +1383,8 @@ export default function useChatSocket({
     }) {
       const channelObj =
         channelsObjRef.current?.[message.channelId] || channel || {};
+      // Like push, a blocked member's group messages never notify.
+      if (isBlockedByMe(Number(userId), Number(message.userId))) return;
       if (
         !shouldShowBackgroundChatMessageNotification({
           channel: channelObj,

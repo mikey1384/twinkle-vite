@@ -7,13 +7,16 @@ export default function ListItem({
   index,
   answerIndex,
   selectedChoiceIndex,
+  isPending,
   onSelect,
   isCompleted
 }: {
   listItem: string;
   index: number;
-  answerIndex: number;
+  answerIndex?: number;
   selectedChoiceIndex: number;
+  // Being checked on the server: looks pressed, the same as hovering it.
+  isPending?: boolean;
   onSelect: (arg0: number) => void;
   isCompleted?: boolean;
 }) {
@@ -29,7 +32,7 @@ export default function ListItem({
             ? 'correct '
             : 'wrong '
           : ''
-      }unselectable ${css`
+      }${isPending ? 'pending ' : ''}unselectable ${css`
         padding: 1.1rem 1.25rem;
         width: 100%;
         display: flex;
@@ -43,7 +46,12 @@ export default function ListItem({
           background: ${Color.whiteGray()};
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.045);
         }
-        transition: background 0.15s ease, transform 0.08s ease,
+        &.pending:not(.correct):not(.wrong) {
+          background: ${Color.highlightGray()};
+        }
+        transition:
+          background 0.15s ease,
+          transform 0.08s ease,
           box-shadow 0.15s ease;
         /* Improve mobile tap behavior */
         touch-action: manipulation;

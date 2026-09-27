@@ -22,31 +22,30 @@ import {
   countAnsweredGrammarQuestions,
   resolveGrammarCloseAction
 } from './closeAction';
+import {
+  checkGrammarAnswerWithRetry,
+  type GrammarAnswerCheck
+} from './answerCheck';
 
 const RESULT_SCREEN_MIN_DISPLAY_MS = 3000;
 
+// The server graded every pick and keeps the round's result; finishing only
+// names the session.
 interface GrammarResultPayload {
-  attemptNumber: number;
-  scoreArray: string[];
-  questionResults: Array<{
-    questionId: number;
-    isCorrect: boolean;
-    grade?: string;
-    selectedChoiceIndex?: number | null;
-  }>;
+  sessionId: number;
 }
 
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const [gameLoading, setGameLoading] = useState(false);
-  const uploadGrammarGameResult = useAppContext(
-    (v) => v.requestHelpers.uploadGrammarGameResult
+  const finishGrammarSession = useAppContext(
+    (v) => v.requestHelpers.finishGrammarSession
   );
-  const loadGrammarGame = useAppContext(
-    (v) => v.requestHelpers.loadGrammarGame
+  const startGrammarSession = useAppContext(
+    (v) => v.requestHelpers.startGrammarSession
   );
-  const startAttempt = useAppContext(
-    (v) => v.requestHelpers.startGrammarAttempt
+  const checkGrammarAnswer = useAppContext(
+    (v) => v.requestHelpers.checkGrammarAnswer
   );
   const cancelGrammarGame = useAppContext(
     (v) => v.requestHelpers.cancelGrammarGame
@@ -67,10 +66,13 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [hasUnlockedDailyTask, setHasUnlockedDailyTask] = useState(false);
   const attemptNumberRef = useRef<number | null>(null);
-  // Set only from the server's /start answer, so a cancel always names an
-  // attempt this session really started.
+  // Set only from the server's session answer, so a cancel always names an
+  // attempt this round really started.
   const startedAttemptNumberRef = useRef<number | null>(null);
-  const startAttemptPromiseRef = useRef<Promise<void> | null>(null);
+  const sessionIdRef = useRef<number | null>(null);
+  // Every pick gets its own id; a resend after a dropped connection reuses
+  // it so the server never counts one pick twice.
+  const clickIdRef = useRef(0);
   const uploadInFlightRef = useRef(false);
   const unsavedResultRef = useRef<GrammarResultPayload | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -156,10 +158,6 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
 
   async function handleConfirmClose() {
     setShowConfirm(false);
-    if (!startedAttemptNumberRef.current && startAttemptPromiseRef.current) {
-      // A close right after the round began still cancels its attempt.
-      await startAttemptPromiseRef.current;
-    }
     const closeAction = resolveGrammarCloseAction({
       uploadInFlight: uploadInFlightRef.current,
       hasUnsavedResult: !!unsavedResultRef.current,
@@ -171,7 +169,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     });
     if (closeAction.type === 'resend' && unsavedResultRef.current) {
       // A finished round is never cancelled; one more try to save it.
-      uploadGrammarGameResult(unsavedResultRef.current).catch(() => {});
+      finishGrammarSession(unsavedResultRef.current).catch(() => {});
     } else if (closeAction.type === 'cancel') {
       try {
         await cancelGrammarGame({
@@ -267,6 +265,8 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               isOnStreak={isOnStreak}
               questionIds={questionIds}
               questionObjRef={questionObjRef}
+              onCheckAnswer={handleCheckAnswer}
+              onSessionLost={handleSessionLost}
               onSetTriggerEffect={setTriggerEffect}
               onSetCurrentIndex={setCurrentIndex}
               onSetQuestionObj={(newState: Record<number, any>) => {
@@ -358,24 +358,21 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       setGameLoading(true);
       setQuestionsReady(false);
       startedAttemptNumberRef.current = null;
-      startAttemptPromiseRef.current = null;
+      sessionIdRef.current = null;
+      clickIdRef.current = 0;
       unsavedResultRef.current = null;
       setSaveFailed(false);
       onUpdateGrammarGenerationProgress(null);
       onUpdateGrammarLoadingStatus('loading...');
       const {
-        questions,
-        maxAttemptNumberReached,
-        alreadyFailedToday,
+        sessionId,
         attemptNumber,
-        aborted
-      } = await loadGrammarGame();
+        totalQuestions,
+        question,
+        maxAttemptNumberReached,
+        alreadyFailedToday
+      } = (await startGrammarSession()) || ({} as any);
 
-      if (aborted) {
-        onUpdateGrammarLoadingStatus('');
-        onUpdateGrammarGenerationProgress(null);
-        return;
-      }
       if (maxAttemptNumberReached || alreadyFailedToday) {
         onUpdateGrammarLoadingStatus?.(
           'daily limit reached. come back tomorrow!'
@@ -385,25 +382,33 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
         onUpdateGrammarGenerationProgress(null);
         return;
       }
-      attemptNumberRef.current = attemptNumber || timesPlayedToday + 1;
-      questionObjRef.current = questions.reduce(
-        (prev: Record<number, any>, curr: any, index: number) => {
-          return {
-            ...prev,
-            [index]: {
-              ...curr,
-              selectedChoiceIndex: null
-            }
-          };
-        },
-        {}
-      );
-      setQuestionIds([...Array(questions.length).keys()]);
-      if (questions.length) {
-        setGameState('started');
+      const questionCount = Number(totalQuestions) || 0;
+      if (!sessionId || !question || !questionCount) {
         onUpdateGrammarLoadingStatus('');
-        startAttemptPromiseRef.current = startAttemptInBackground();
+        onUpdateGrammarGenerationProgress(null);
+        return;
       }
+      sessionIdRef.current = sessionId;
+      attemptNumberRef.current = attemptNumber || timesPlayedToday + 1;
+      if (attemptNumber) {
+        startedAttemptNumberRef.current = attemptNumber;
+      }
+      // One slot per question; each is filled when the server hands it out
+      // (the first now, the next one with each right answer).
+      const questionObj: Record<number, any> = {};
+      for (let index = 0; index < questionCount; index++) {
+        questionObj[index] = { selectedChoiceIndex: null };
+      }
+      questionObj[0] = {
+        question: question.question,
+        choices: question.choices,
+        selectedChoiceIndex: null
+      };
+      questionObjRef.current = questionObj;
+      setQuestionIds([...Array(questionCount).keys()]);
+      setGameState('started');
+      onUpdateGrammarLoadingStatus('');
+      onUpdateGrammarGenerationProgress(null);
     } catch (error) {
       console.error('An error occurred:', error);
       onUpdateGrammarLoadingStatus?.('');
@@ -423,59 +428,58 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     setGameState('notStarted');
   }
 
-  async function startAttemptInBackground() {
-    try {
-      const { attemptNumber, maxAttemptNumberReached, alreadyFailedToday } =
-        (await startAttempt()) || ({} as any);
-      if (maxAttemptNumberReached || alreadyFailedToday) {
-        onUpdateGrammarLoadingStatus(
-          'daily limit reached. come back tomorrow!'
-        );
-        setGameState('notStarted');
-        setQuestionIds([]);
-        questionObjRef.current = {};
-        return;
-      }
-      attemptNumberRef.current = attemptNumber || timesPlayedToday + 1;
-      if (attemptNumber) {
-        startedAttemptNumberRef.current = attemptNumber;
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      onUpdateGrammarGenerationProgress(null);
-    }
+  async function handleCheckAnswer({
+    questionIndex,
+    choiceIndex,
+    elapsedMs
+  }: Parameters<GrammarAnswerCheck>[0]) {
+    const sessionId = sessionIdRef.current;
+    if (!sessionId) return { type: 'sessionClosed' as const };
+    clickIdRef.current += 1;
+    const clickId = clickIdRef.current;
+    return checkGrammarAnswerWithRetry({
+      send: () =>
+        checkGrammarAnswer({
+          sessionId,
+          questionIndex,
+          choiceIndex,
+          clickId,
+          elapsedMs
+        })
+    });
+  }
+
+  // The server closed this round (it was reopened elsewhere, or quit). Back
+  // to the start screen, which shows what is still playable today.
+  function handleSessionLost() {
+    sessionIdRef.current = null;
+    startedAttemptNumberRef.current = null;
+    setQuestionsReady(false);
+    setQuestionIds([]);
+    setCurrentIndex(0);
+    questionObjRef.current = {};
+    setGameState('notStarted');
+    onUpdateGrammarLoadingStatus?.('this round ended. please start again.');
   }
 
   async function handleGameFinish() {
     let retries = 0;
     const maxRetries = 3;
+    const questionCount = questionIds.length;
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    while (scoreArrayRef.current.length !== 10 && retries < maxRetries) {
+    while (
+      scoreArrayRef.current.length !== questionCount &&
+      retries < maxRetries
+    ) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       retries++;
     }
-    if (scoreArrayRef.current.length !== 10) return;
+    if (scoreArrayRef.current.length !== questionCount) return;
+    if (!sessionIdRef.current) return;
     await submitGrammarResult(
-      {
-        attemptNumber: attemptNumberRef.current || timesPlayedToday + 1,
-        scoreArray: [...scoreArrayRef.current],
-        questionResults: questionIds
-          .map((qid) => {
-            const q = questionObjRef.current?.[qid];
-            if (!q) return null;
-            const isCorrect = q?.score === 'S' || q?.score === 'A';
-            return {
-              questionId: q?.id || qid,
-              isCorrect,
-              grade: q?.score,
-              selectedChoiceIndex: q?.selectedChoiceIndex
-            };
-          })
-          .filter(Boolean) as GrammarResultPayload['questionResults']
-      },
+      { sessionId: sessionIdRef.current },
       // Minimum time the result screen (e.g. PERFECT) stays up before
       // advancing, so the celebration is visible without dragging. The
       // upload runs in parallel; the screen shows for max(upload, this).
@@ -490,9 +494,9 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     setRetryingSave(false);
   }
 
-  // Sends a finished round's result, retrying a few times. A POST is never
-  // retried by the request layer, and resending is safe: the server answers
-  // isDuplicate once the attempt has a result. If every try fails, the payload
+  // Finishes a graded round, retrying a few times. A POST is never retried
+  // by the request layer, and resending is safe: the server answers
+  // isDuplicate once the round has been paid. If every try fails, the payload
   // is kept for the Retry button (or one more try on close) instead of
   // leaving the round stuck, where closing used to cancel it as a blank fail.
   async function submitGrammarResult(
@@ -509,9 +513,16 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     try {
       for (let retries = 0; retries < maxRetries; retries++) {
         try {
-          const { dailyTaskStatus, isDuplicate, newXp, newCoins } =
-            await uploadGrammarGameResult(payload);
+          const { dailyTaskStatus, isDuplicate, newXp, newCoins, scoreArray } =
+            await finishGrammarSession(payload);
           unsavedResultRef.current = null;
+          if (
+            Array.isArray(scoreArray) &&
+            scoreArray.length === scoreArrayRef.current.length
+          ) {
+            // The server's grades are the result; they match what was shown.
+            scoreArrayRef.current = scoreArray;
+          }
           if (!isDuplicate) {
             const newState: { twinkleXP?: number; twinkleCoins?: number } = {
               twinkleXP: newXp

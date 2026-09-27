@@ -22,6 +22,7 @@ import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
 import { isPresenceHidden } from '~/helpers/hiddenPresence';
+import useBlockedUsers from '~/helpers/hooks/useBlockedUsers';
 
 const madeCallLabel = 'made a call';
 const onlineLabel = 'Online';
@@ -110,6 +111,7 @@ function ChatInfo({
     );
   }, [aiUsagePolicy, isAdmin, isZeroChat, isCielChat]);
 
+  const blockList = useBlockedUsers();
   const allMemberIds = useMemo(() => {
     if (currentChannel?.twoPeople) {
       return (currentChannel?.members || []).map(
@@ -153,12 +155,25 @@ function ChatInfo({
     currentChannel?.id
   ]);
 
+  // A block stops calls both ways (the server refuses them), so a direct
+  // chat with someone you blocked shows no Call button.
+  const partnerBlocked = useMemo(() => {
+    if (!currentChannel?.twoPeople) return false;
+    return (currentChannel?.members || []).some(
+      (member: { id: number }) =>
+        Number(member?.id) !== Number(myId) &&
+        blockList.blockedIds.has(Number(member?.id))
+    );
+  }, [blockList.blockedIds, currentChannel?.members, currentChannel?.twoPeople, myId]);
+
   const isCallButtonShown = useMemo(() => {
     if (banned?.chat) return false;
+    if (partnerBlocked) return false;
     if (AI_FEATURES_DISABLED && (isZeroChat || isCielChat)) return false;
     return isTwoPeopleConnected;
   }, [
     banned?.chat,
+    partnerBlocked,
     AI_FEATURES_DISABLED,
     isZeroChat,
     isCielChat,

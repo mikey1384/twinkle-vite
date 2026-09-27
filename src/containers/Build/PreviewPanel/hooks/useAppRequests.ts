@@ -217,6 +217,9 @@ export default function useAppRequests({
   const getBuildMinecraftData = useAppContext(
     (v) => v.requestHelpers.getBuildMinecraftData
   );
+  const checkBuildGrammarblesAnswer = useAppContext(
+    (v) => v.requestHelpers.checkBuildGrammarblesAnswer
+  );
   const getBuildGrammarblesHistory = useAppContext(
     (v) => v.requestHelpers.getBuildGrammarblesHistory
   );
@@ -450,6 +453,7 @@ export default function useAppRequests({
   const listBuildGrammarblesQuestionsRef = useRef(
     listBuildGrammarblesQuestions
   );
+  const checkBuildGrammarblesAnswerRef = useRef(checkBuildGrammarblesAnswer);
   const getBuildGrammarblesHistoryRef = useRef(getBuildGrammarblesHistory);
   const getBuildMinecraftDataRef = useRef(getBuildMinecraftData);
   const getBuildSubjectRef = useRef(getBuildSubject);
@@ -581,6 +585,7 @@ export default function useAppRequests({
     searchBuildAiStoriesRef,
     getBuildAiStoryRef,
     listBuildGrammarblesQuestionsRef,
+    checkBuildGrammarblesAnswerRef,
     getBuildGrammarblesHistoryRef,
     getBuildMinecraftDataRef,
     getBuildSubjectRef,

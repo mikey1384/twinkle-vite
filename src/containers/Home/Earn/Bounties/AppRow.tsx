@@ -13,6 +13,7 @@ import {
   appTitleRowClass,
   appTitleTextClass
 } from './appCardHelpers';
+import { AppRewardsButton } from './AppRewardsModal';
 
 // One line of the desktop "See all apps" list: rank, picture, who made it,
 // what it pays and how many played this week. Phones use AppCard rows instead.
@@ -55,6 +56,7 @@ export default function AppRow({ app }: { app: EarnHubApp }) {
       <div className={factsClass}>
         <span className={payClass}>{getAppPayout(app)}</span>
         {playersLine && <span className={playersClass}>{playersLine}</span>}
+        <AppRewardsButton app={app} className={rewardsLinkClass} />
       </div>
       <Button
         color="logoBlue"
@@ -117,6 +119,10 @@ const factsClass = css`
   align-items: flex-end;
   gap: 0.2rem;
   text-align: right;
+`;
+const rewardsLinkClass = css`
+  align-self: flex-end;
+  font-size: 1.2rem;
 `;
 const payClass = css`
   font-size: 1.3rem;

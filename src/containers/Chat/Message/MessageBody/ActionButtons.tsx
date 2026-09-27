@@ -29,6 +29,7 @@ interface Props {
   isDeleteOnlyBuildSuggestion: boolean;
   isReplyOnlyBuildCard: boolean;
   canReply: boolean;
+  canReport: boolean;
   isDrawOffer: boolean;
   isMenuButtonsAllowed: boolean;
   isRestricted: boolean;
@@ -40,11 +41,13 @@ interface Props {
   onDelete: (v: any) => void;
   onDropdownShown: (shown: boolean) => void;
   onOpenRewardModal: () => void;
+  onOpenReportModal: () => void;
   onReplyClick: (target: any) => void;
   onSetIsEditing: (v: any) => void;
   onSetReactionsMenuShown: (shown: boolean) => void;
   onSetReplyTarget: (v: any) => void;
   reactionsMenuShown: boolean;
+  directChatBlocked?: boolean;
   recentThumbUrl: string;
   rewardAmount: number;
   rewardColor: string;
@@ -73,6 +76,7 @@ export default function ActionButtons({
   isDeleteOnlyBuildSuggestion,
   isReplyOnlyBuildCard,
   canReply,
+  canReport,
   isDrawOffer,
   isMenuButtonsAllowed,
   isRestricted,
@@ -84,11 +88,13 @@ export default function ActionButtons({
   onDelete,
   onDropdownShown,
   onOpenRewardModal,
+  onOpenReportModal,
   onReplyClick,
   onSetIsEditing,
   onSetReactionsMenuShown,
   onSetReplyTarget,
   reactionsMenuShown,
+  directChatBlocked = false,
   recentThumbUrl,
   rewardAmount,
   rewardColor,
@@ -104,7 +110,8 @@ export default function ActionButtons({
   const pins = useChatPins();
   const dropdownMenuItems = useMemo(() => {
     const result: ChatActionItem[] = [];
-    if (isBanned) return result;
+    // A member banned from chat can still report what they were sent.
+    if (isBanned) return withReport(result);
 
     // Reply is the one action a Build card keeps: quoting it bumps the card
     // with its live buttons. Everything else stays gated below.
@@ -136,6 +143,7 @@ export default function ActionButtons({
     }
 
     if (
+      !directChatBlocked &&
       pins?.snapshot?.canManage &&
       Number.isSafeInteger(messageId) &&
       messageId > 0 &&
@@ -243,10 +251,33 @@ export default function ActionButtons({
       });
     }
 
-    return result;
+    return withReport(result);
+
+    // Report sits last, in its own group, and only opens a dialog: nothing is
+    // sent until a reason is chosen and "Send report" is pressed.
+    function withReport(items: ChatActionItem[]) {
+      if (!canReport) return items;
+      return [
+        ...items,
+        {
+          id: 'report',
+          tone: 'danger' as const,
+          separated: items.length > 0,
+          label: (
+            <>
+              <Icon icon="flag" />
+              <span>Report</span>
+            </>
+          ),
+          onClick: onOpenReportModal
+        }
+      ];
+    }
   }, [
     pins,
+    directChatBlocked,
     canReply,
+    canReport,
     currentChannelId,
     fileName,
     filePath,
@@ -263,6 +294,7 @@ export default function ActionButtons({
     onBookmark,
     onDelete,
     onOpenRewardModal,
+    onOpenReportModal,
     onReplyClick,
     onSetIsEditing,
     onSetReplyTarget,
@@ -310,7 +342,8 @@ export default function ActionButtons({
         !invitePath &&
         !isDrawOffer &&
         !isChessMsg &&
-        !isBanned && (
+        !isBanned &&
+        !directChatBlocked && (
           <ReactionButton
             openOnHover={!dropdownShown}
             onReactionClick={onAddReaction}

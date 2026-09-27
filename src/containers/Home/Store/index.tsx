@@ -4,6 +4,7 @@ import ItemPanel from './ItemPanel';
 import ChangePassword from './ChangePassword';
 import ChangeUsername from './ChangeUsername';
 import ChatNotificationsItem from './ChatNotificationsItem';
+import BlockedUsersItem from './BlockedUsersItem';
 import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
@@ -176,6 +177,7 @@ export default function Store() {
             />
           </div>
           <ChatNotificationsItem loading={!myDataLoaded} />
+          <BlockedUsersItem />
           <div data-scroll-anchor-id="home-settings:change-password">
             <ItemPanel
               itemKey="changePassword"

@@ -16,6 +16,7 @@ import {
   appTitleRowClass,
   appTitleTextClass
 } from './appCardHelpers';
+import { AppRewardsButton } from './AppRewardsModal';
 
 // One approved app on the shelf: what it pays, who made it, and what this
 // member still has left in it today. The button opens the published app page
@@ -79,6 +80,7 @@ export default function AppCard({
         <div className={barClass} role="img" aria-label={status.line}>
           <i style={{ width: `${Math.round(status.ratio * 100)}%` }} />
         </div>
+        <AppRewardsButton app={app} />
       </div>
       <div className={actionsClass}>
         <Button

@@ -531,6 +531,57 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async reportChatMessage({
+      messageId,
+      reason,
+      note
+    }: {
+      messageId: number;
+      reason: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/message/report`,
+          { messageId, reason, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadBlockedUsers() {
+      try {
+        const { data } = await request.get(`${URL}/chat/blocks`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async blockUser(userId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/blocks`,
+          { userId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async unblockUser(userId: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/chat/blocks?userId=${Number(userId)}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async bookmarkChatMessage({
       messageId,
       channelId,

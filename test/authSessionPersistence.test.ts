@@ -576,7 +576,8 @@ test('an interrupted session exposes no cached authenticated identity', () => {
   );
   assert.match(
     signin,
-    /requiresCredentialReentry \? 'login' : 'main'/
+    // credential re-entry still wins; otherwise an invite may open sign-up
+    /requiresCredentialReentry\s*\?\s*'login'\s*:[\s\S]*?takeOpenToSignup\(\)\s*\?\s*'signUp'\s*:\s*'main'/
   );
   assert.match(signin, /sessionInterruption=\{[\s\S]*requiresCredentialReentry/);
   assert.match(

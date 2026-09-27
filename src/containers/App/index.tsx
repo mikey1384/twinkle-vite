@@ -146,6 +146,9 @@ const Management = lazyWithRetry(() => import('~/containers/Management'));
 const Profile = lazyWithRetry(() => import('~/containers/Profile'));
 const ResetPassword = lazyWithRetry(() => import('~/containers/ResetPassword'));
 const Verify = lazyWithRetry(() => import('~/containers/Verify'));
+const GuardianConsentPage = lazyWithRetry(
+  () => import('~/containers/GuardianConsent')
+);
 const VideoPage = lazyWithRetry(() => import('~/containers/VideoPage'));
 const SigninModal = lazyWithRetry(() => import('~/containers/Signin'));
 const MobileMenu = lazyWithRetry(() => import('./MobileMenu'));
@@ -384,7 +387,9 @@ export default function App() {
     (location.pathname === '/reset' ||
       location.pathname.startsWith('/reset/') ||
       location.pathname === '/verify' ||
-      location.pathname.startsWith('/verify/'))
+      location.pathname.startsWith('/verify/') ||
+      // a parent's or guardian's consent page needs no account
+      location.pathname === '/signup/guardian')
   );
 
   const prevUserId = useRef(userId);
@@ -1327,6 +1332,10 @@ export default function App() {
                 <Route path="/management/*" element={<Management />} />
                 <Route path="/reset/*" element={<ResetPassword />} />
                 <Route path="/verify/*" element={<Verify />} />
+                <Route
+                  path="/signup/guardian"
+                  element={<GuardianConsentPage />}
+                />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/sponsor" element={<SponsorGuide />} />
                 <Route path="/users" element={<Home section="people" />} />

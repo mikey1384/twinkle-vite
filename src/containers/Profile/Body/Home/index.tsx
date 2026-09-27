@@ -4,6 +4,7 @@ import Comments from '~/components/Comments';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Intro from './Intro';
+import BroughtFriends from './BroughtFriends';
 import FeaturedSubjects from './Activities/FeaturedSubjects';
 import NotableActivities from './Activities/NotableActivities';
 import XPAnalysis from './Activities/XPAnalysis';
@@ -315,6 +316,7 @@ export default function Home({
             </Button>
           </div>
         )}
+        <BroughtFriends profile={profile} isOwnProfile={isOwnProfile} />
         {sectionOrder.map((sectionKey) => {
           const sectionContent = sectionContentByKey[sectionKey];
           if (!sectionContent) return null;

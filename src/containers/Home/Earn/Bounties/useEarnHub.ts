@@ -9,6 +9,14 @@ export type EarnHubPeriod = 'day' | 'week' | 'all';
 export interface EarnHubRule {
   id: string;
   title: string;
+  // How to earn it, in the player's words (rewards.json); older servers and
+  // rules without one leave it out.
+  howTo?: string;
+  // completion rules: the least time between starting and earning it.
+  minSeconds?: number;
+  // How many times one member can ever earn it; absent = once every day.
+  maxLifetimeClaims?: number;
+  lifetime?: { limit: number; remaining: number };
   xp: number;
   coins: number;
   verifier: 'numeric-quiz' | 'completion';
@@ -40,6 +48,8 @@ export interface EarnHubApp {
     earnedRules: number;
     openRules: number;
     capReached: boolean;
+    // What is still up for grabs here today, within the daily budgets.
+    possible?: { xp: number; coins: number };
   };
   rules: EarnHubRule[];
   // Present once the server ranks the shelf; apps then arrive already sorted

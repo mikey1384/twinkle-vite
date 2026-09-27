@@ -11,6 +11,7 @@ import {
   hasRejectedAuthSessionMarker,
   readAuthToken
 } from '~/helpers/userDataHelpers';
+import { takeOpenToSignup } from '~/helpers/signupPasses';
 
 export default function Signin({ onHide }: { onHide: () => void }) {
   const sessionInterruption = useAppContext(
@@ -21,7 +22,12 @@ export default function Signin({ onHide }: { onHide: () => void }) {
     sessionInterruption?.code === 'session_token_invalid';
   const [username, setUsername] = useState('');
   const [currentPage, setCurrentPage] = useState(() =>
-    requiresCredentialReentry ? 'login' : 'main'
+    requiresCredentialReentry
+      ? 'login'
+      : // an invite was just earned or followed: straight to sign-up
+        takeOpenToSignup()
+        ? 'signUp'
+        : 'main'
   );
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
   const [password, setPassword] = useState('');

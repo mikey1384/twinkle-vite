@@ -17,6 +17,16 @@ import type {
   ChatNotificationSettings
 } from '~/types/chat';
 import { SITE_NAME } from '~/constants/siteBrand';
+import { getEmailTicket, rememberEmailTicket } from '~/helpers/signupPasses';
+
+interface GuardianConsentView {
+  status: 'pending' | 'approved' | 'declined' | 'expired' | 'used';
+  childFirstName: string;
+  inviteSource: 'guest' | 'minecraft';
+  inviterName: string;
+  minecraftName?: string;
+  expiresAt: number;
+}
 
 const SESSION_STORAGE_ERROR_MESSAGE =
   `${SITE_NAME} could not save your login on this device. Check that browser storage is enabled, then try again.`;
@@ -597,6 +607,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadUserReferrals(userId: number) {
+      try {
+        const {
+          data: { referrals }
+        } = await request.get(`${URL}/user/referrals`, {
+          params: { userId }
+        });
+        return referrals;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadRankings() {
       try {
         const {
@@ -1056,6 +1078,11 @@ export default function userRequestHelpers({
       email,
       verifiedEmail,
       password,
+      passphrase,
+      invite,
+      birthYear,
+      birthMonth,
+      guardianConsent,
       userType
     }: {
       branchName: string;
@@ -1066,6 +1093,11 @@ export default function userRequestHelpers({
       email: string;
       verifiedEmail: string;
       password: string;
+      passphrase: string;
+      invite?: string;
+      birthYear?: number;
+      birthMonth?: number;
+      guardianConsent?: { consentId: number; secret: string };
       userType: string;
     }) {
       let data;
@@ -1080,7 +1112,18 @@ export default function userRequestHelpers({
             className,
             email,
             verifiedEmail,
+            // the emailed code's proof, and the invite pass (if any) that
+            // stands in for the sign-up question
+            emailTicket: getEmailTicket(email),
+            invite: invite || undefined,
+            // invited sign-ups: the age answer, and under 14 the guardian's
+            // approved consent
+            birthYear: invite ? birthYear : undefined,
+            birthMonth: invite ? birthMonth : undefined,
+            guardianConsentId: invite ? guardianConsent?.consentId : undefined,
+            guardianConsentSecret: invite ? guardianConsent?.secret : undefined,
             password,
+            passphrase,
             userType
           },
           {
@@ -1508,11 +1551,14 @@ export default function userRequestHelpers({
     }) {
       try {
         const {
-          data: { success }
+          data: { success, emailTicket }
         } = await request.get(
-          `${URL}/user/signup/email/otp?otp=${otp}&email=${email}`,
+          `${URL}/user/signup/email/otp?otp=${encodeURIComponent(
+            otp
+          )}&email=${encodeURIComponent(email)}`,
           auth()
         );
+        if (success) rememberEmailTicket(email, emailTicket);
         return success;
       } catch (error) {
         return handleError(error);
@@ -1535,6 +1581,110 @@ export default function userRequestHelpers({
           auth()
         );
         return { profilePicUrl, userId, username, errorMsg };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async getSignupInvite(token: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/signup/invite?token=${encodeURIComponent(token)}`
+        );
+        return data as {
+          invite: {
+            source: 'guest' | 'minecraft';
+            inviterName: string;
+            minecraftName?: string;
+            expiresAt?: number;
+          } | null;
+          unavailable?: boolean;
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async requestGuardianConsent({
+      guardianEmail,
+      childFirstName,
+      invite,
+      birthYear,
+      birthMonth
+    }: {
+      guardianEmail: string;
+      childFirstName: string;
+      invite: string;
+      birthYear: number;
+      birthMonth: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/signup/guardian-consent`,
+          {
+            guardianEmail,
+            childFirstName,
+            invite,
+            birthYear,
+            birthMonth,
+            // the guardian email leads with Korean for a Korean browser
+            language:
+              (typeof navigator !== 'undefined' && navigator.language) || ''
+          }
+        );
+        return data as {
+          consentId: number;
+          secret: string;
+          guardianEmail: string;
+          expiresAt: number;
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async getGuardianConsentStatus({
+      consentId,
+      secret
+    }: {
+      consentId: number;
+      secret: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/signup/guardian-consent/status`,
+          { consentId, secret }
+        );
+        return data as {
+          status: 'pending' | 'approved' | 'declined' | 'expired' | 'used';
+          expiresAt: number;
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadGuardianConsentReview(token: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/signup/guardian-consent/review?token=${encodeURIComponent(
+            token
+          )}`
+        );
+        return data as { consent: GuardianConsentView | null };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async decideGuardianConsent({
+      token,
+      decision
+    }: {
+      token: string;
+      decision: 'approve' | 'decline';
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/signup/guardian-consent/decision`,
+          { token, decision }
+        );
+        return data as { consent: GuardianConsentView };
       } catch (error) {
         return handleError(error);
       }

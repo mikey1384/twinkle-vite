@@ -246,6 +246,7 @@ registerMethods('build', [
   'searchBuildAiStories',
   'getBuildAiStory',
   'listBuildGrammarblesQuestions',
+  'checkBuildGrammarblesAnswer',
   'getBuildGrammarblesHistory',
   'getBuildMinecraftData',
   'getBuildSubject',
@@ -310,6 +311,7 @@ registerMethods('community', [
 ]);
 
 registerMethods('content', [
+  'askParentGuide',
   'replaceSubjectAttachment',
   'replaceCommentAttachment',
   'addVideoToPlaylists',
@@ -360,9 +362,9 @@ registerMethods('content', [
   'loadAIStoryRankings',
   'generateAIStoryImage',
   'loadAIStoryImageStatus',
-  'loadGrammarGame',
+  'startGrammarSession',
+  'checkGrammarAnswer',
   'cancelGrammarGame',
-  'startGrammarAttempt',
   'loadGrammarRankings',
   'loadGrammarReview',
   'challengeGrammarQuestion',
@@ -409,7 +411,7 @@ registerMethods('content', [
   'uploadContent',
   'uploadFeaturedPlaylists',
   'uploadFeaturedSubjects',
-  'uploadGrammarGameResult',
+  'finishGrammarSession',
   'uploadQuestions',
   'uploadFile',
   'uploadPlaylist',
@@ -610,6 +612,10 @@ registerMethods('mission', [
 
 registerMethods('chat', [
   'acceptInvitation',
+  'blockUser',
+  'loadBlockedUsers',
+  'reportChatMessage',
+  'unblockUser',
   'acceptTrade',
   'burnAICard',
   'buyAICard',
@@ -852,6 +858,12 @@ registerMethods('user', [
   'verifyEmailViaOTP',
   'verifyEmailViaOTPForSignup',
   'verifyEmail',
+  'getSignupInvite',
+  'requestGuardianConsent',
+  'getGuardianConsentStatus',
+  'loadGuardianConsentReview',
+  'decideGuardianConsent',
+  'loadUserReferrals',
   'verifyPassphrase'
 ]);
 

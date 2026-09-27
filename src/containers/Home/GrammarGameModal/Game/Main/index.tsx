@@ -6,12 +6,18 @@ import Loading from '~/components/Loading';
 import correct from './correct_sound.wav';
 import useLiveGrade from './hooks/useLiveGrade';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
+import type {
+  GrammarAnswerCheck,
+  GrammarAnswerResult
+} from '../../answerCheck';
 
 const delay = 1000;
 
 export default function Main({
   currentIndex,
   isOnStreak,
+  onCheckAnswer,
+  onSessionLost,
   onSetQuestionObj,
   onGameFinish,
   onSetCurrentIndex,
@@ -22,6 +28,8 @@ export default function Main({
 }: {
   currentIndex: number;
   isOnStreak: boolean;
+  onCheckAnswer: GrammarAnswerCheck;
+  onSessionLost: () => void;
   onSetQuestionObj: any;
   onSetTriggerEffect: React.Dispatch<React.SetStateAction<boolean>>;
   onGameFinish: any;
@@ -32,6 +40,11 @@ export default function Main({
 }) {
   const [isCompleted, setIsCompleted] = useState(false);
   const [gotWrong, setGotWrong] = useState(false);
+  // The pick being checked on the server; shown pressed until it answers.
+  const [pendingChoiceIndex, setPendingChoiceIndex] = useState<number | null>(
+    null
+  );
+  const checkingRef = useRef(false);
   const isMountedRef = useRef(true);
   const correctSoundRef = useRef<HTMLAudioElement>(null);
   const gotWrongRef = useRef(false);
@@ -43,7 +56,6 @@ export default function Main({
   const rafIdRef = useRef<number | null>(null);
   const baseTimeRef = useRef<number>(10000);
   const displayedPenaltyRef = useRef(0);
-  const liveGradeRef = useRef<string>('');
 
   useEffect(() => {
     if (correctSoundRef.current) {
@@ -72,26 +84,77 @@ export default function Main({
         selectedChoiceIndex={
           questionObjRef.current[questionId]?.selectedChoiceIndex
         }
-        onCorrectAnswer={handleSelectCorrectAnswer}
-        onSetGotWrong={handleSetGotWrong}
+        pendingChoiceIndex={pendingChoiceIndex}
+        onSelect={handleSelectChoice}
         gotWrong={gotWrong}
       />
     ));
 
-    async function handleSelectCorrectAnswer() {
+    // One pick: the server says right or wrong (it holds the answer key).
+    // Picks are ignored while one is being checked, during the red "Wrong!"
+    // flash, and once the question is answered.
+    async function handleSelectChoice(choiceIndex: number) {
+      if (checkingRef.current || loadingRef.current || gotWrongRef.current) {
+        return;
+      }
+      checkingRef.current = true;
+      setPendingChoiceIndex(choiceIndex);
+      // Time since the choices appeared, as this device measured it.
+      const now =
+        typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const elapsedMs = startTimeRef.current
+        ? Math.max(0, Math.floor(now - startTimeRef.current))
+        : 0;
+      const outcome = await onCheckAnswer({
+        questionIndex: currentIndex,
+        choiceIndex,
+        elapsedMs
+      });
+      checkingRef.current = false;
+      if (!isMountedRef.current) return;
+      setPendingChoiceIndex(null);
+      if (outcome.type === 'sessionClosed') {
+        onSessionLost();
+        return;
+      }
+      if (outcome.type === 'failed') return;
+      if (outcome.result.isCorrect) {
+        handleSelectCorrectAnswer(outcome.result);
+      } else {
+        handleSetGotWrong(choiceIndex);
+      }
+    }
+
+    async function handleSelectCorrectAnswer(result: GrammarAnswerResult) {
       if (!loadingRef.current && !gotWrongRef.current) {
         loadingRef.current = true;
-        const score = liveGradeRef.current;
+        const choiceIndex = Number(result.choiceIndex);
+        const nextQuestion = result.nextQuestion;
         onSetQuestionObj({
           ...questionObjRef.current,
           [currentIndex]: {
             ...questionObjRef.current[currentIndex],
-            score,
-            selectedChoiceIndex:
-              questionObjRef.current[currentIndex].answerIndex
-          }
+            score: result.grade,
+            answerIndex: choiceIndex,
+            selectedChoiceIndex: choiceIndex
+          },
+          ...(nextQuestion
+            ? {
+                [nextQuestion.index]: {
+                  ...questionObjRef.current[nextQuestion.index],
+                  question: nextQuestion.question,
+                  choices: nextQuestion.choices,
+                  selectedChoiceIndex: null
+                }
+              }
+            : {})
         });
         onSetTriggerEffect((prev) => !prev);
+        // The pause starts now, alongside the sound, so it matches the pause
+        // the server allows for before the next question's clock starts.
+        const advanceDelay = new Promise((resolve) =>
+          setTimeout(resolve, 1000)
+        );
         if (correctSoundRef.current) {
           try {
             correctSoundRef.current.currentTime = 0;
@@ -102,12 +165,18 @@ export default function Main({
             console.error('Error playing sound:', error);
           }
         }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await advanceDelay;
         if (isMountedRef.current) {
           const nextUnansweredIndex = questionIds.findIndex(
             (id) => !questionObjRef.current[id]?.score
           );
           if (nextUnansweredIndex !== -1) {
+            if (!questionObjRef.current[nextUnansweredIndex]?.question) {
+              // The server always sends the next question with a right
+              // answer; without it the round cannot go on.
+              onSessionLost();
+              return;
+            }
             onSetCurrentIndex(nextUnansweredIndex);
             numWrong.current = 0;
             displayedPenaltyRef.current = 0;
@@ -170,6 +239,9 @@ export default function Main({
   }, [
     currentIndex,
     gotWrong,
+    pendingChoiceIndex,
+    onCheckAnswer,
+    onSessionLost,
     onGameFinish,
     onSetCurrentIndex,
     onSetQuestionObj,
@@ -178,12 +250,12 @@ export default function Main({
     questionObjRef
   ]);
 
+  // The grade itself comes from the server; the clock here is only reported
+  // alongside each pick (the server accepts it within a latency tolerance).
   const { start: startGradeClock, getElapsedMs } = useLiveGrade({
     baseTime: baseTimeRef.current || 10000,
     getWrongCount: () => numWrong.current,
-    onGradeChange: (grade: string) => {
-      liveGradeRef.current = grade;
-    }
+    onGradeChange: () => {}
   });
 
   const displayedQuestions = useMemo(() => {
@@ -193,7 +265,6 @@ export default function Main({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionIds, triggerEffect]);
 
-  const currentQuestion = questionObjRef.current?.[questionIds[currentIndex]];
   // Hands Zero and Ciel where the game is and the grades already earned,
   // never a question or its choices (the user answers alone).
   useAgentScreenState('grammarblesPlay', {

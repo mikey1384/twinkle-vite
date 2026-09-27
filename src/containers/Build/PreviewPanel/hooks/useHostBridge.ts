@@ -3486,6 +3486,22 @@ export function useHostBridge({
             break;
           }
 
+          case 'content:grammarbles:check': {
+            const contentGrammarblesCheckToken = await ensureBuildApiToken(
+              ['content:read'],
+              previewAuth
+            );
+            response = await requestRefs.checkBuildGrammarblesAnswerRef.current(
+              {
+                buildId: activeBuild.id,
+                questionId: payload?.questionId,
+                choiceIndex: payload?.choiceIndex,
+                token: contentGrammarblesCheckToken
+              }
+            );
+            break;
+          }
+
           case 'minecraft:worlds':
           case 'minecraft:players':
           case 'minecraft:zero':

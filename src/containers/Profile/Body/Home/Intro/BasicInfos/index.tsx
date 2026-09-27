@@ -3,6 +3,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import InfoEditForm from './InfoEditForm';
 import PasswordInputModal from './PasswordInputModal';
+import ProfileSafetyMenu from '~/components/ChatSafety/ProfileSafetyMenu';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { processedURL, stringIsEmpty, trimUrl } from '~/helpers/stringHelpers';
@@ -342,20 +343,32 @@ export default function BasicInfos({
         </div>
       ) : null}
       {myId !== userId && (
-        <Button
+        <div
           style={{
             marginTop: '1.5rem',
-            width: 'auto'
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.8rem',
+            maxWidth: '100%'
           }}
-          variant="soft"
-          tone="raised"
-          color={buttonColorKey}
-          hoverColor={buttonHoverColorKey}
-          onClick={handleTalkButtonClick}
         >
-          <Icon icon="comments" />
-          {messageUserLabel}
-        </Button>
+          <Button
+            style={{ width: 'auto' }}
+            variant="soft"
+            tone="raised"
+            color={buttonColorKey}
+            hoverColor={buttonHoverColorKey}
+            onClick={handleTalkButtonClick}
+          >
+            <Icon icon="comments" />
+            {messageUserLabel}
+          </Button>
+          {!!myId && (
+            <ProfileSafetyMenu userId={userId} username={username} />
+          )}
+        </div>
       )}
       {passwordInputModalShown && (
         <PasswordInputModal

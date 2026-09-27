@@ -1634,7 +1634,8 @@ export default function MessagesContainer({
     topicSelectorModalShown,
     subchannel,
     onFavoriteClick: handleFavoriteClick,
-    onSetHideModalShown: setHideModalShown
+    onSetHideModalShown: setHideModalShown,
+    partner
   };
 
   const displayedMessagesProps = {

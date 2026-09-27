@@ -25,9 +25,19 @@ export default function Privacy() {
         border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-          'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
-          'Helvetica Neue', sans-serif;
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          'Roboto',
+          'Oxygen',
+          'Ubuntu',
+          'Cantarell',
+          'Fira Sans',
+          'Droid Sans',
+          'Helvetica Neue',
+          sans-serif;
         color: #333333;
         line-height: 1.6;
 
@@ -66,7 +76,7 @@ export default function Privacy() {
           font-weight: 600;
         `}
       >
-        Last Updated: August 17, 2024
+        Last Updated: September 27, 2026
       </p>
 
       <p
@@ -90,11 +100,15 @@ export default function Privacy() {
           font-size: 1.1rem;
         `}
       >
-        The Service is exclusively accessible to Twinkle English Academy
-        students through a passphrase-protected login. It serves as a
-        communication tool and homework platform for students and teachers. By
-        accessing the Service, users (students and their parents) have provided
-        implicit consent for data collection and use as outlined in this policy.
+        The Service began as a communication tool and homework platform for
+        Twinkle English Academy students and teachers, who join through a
+        passphrase-protected sign-up. People outside the academy can also join,
+        but only by invitation: after playing with a Twinkle user in a private
+        room of one of our apps, or after a moderator of our Minecraft server
+        vouches for them. Every sign-up requires a verified email address. By
+        creating an account and using the Service, users (and, for younger
+        users, their parents or guardians) consent to data collection and use as
+        outlined in this policy.
       </p>
 
       <h2
@@ -138,7 +152,36 @@ export default function Privacy() {
         We may collect personally identifiable information, such as email
         address, first and last name, and Cookies and Usage Data. This data may
         be used to communicate with you about Service updates, educational
-        materials, and activities related to Twinkle English Academy.
+        materials, and activities related to the Service and Twinkle English
+        Academy.
+      </p>
+
+      <h3
+        className={css`
+          font-size: 1.5rem;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          color: #34495e;
+          font-weight: 600;
+        `}
+      >
+        Invitations and Linked Accounts
+      </h3>
+      <p
+        className={css`
+          margin-bottom: 1.25rem;
+          font-size: 1.1rem;
+        `}
+      >
+        {`When you join by invitation, we permanently record who invited you
+        (their account, or for a Minecraft vouch, the voucher's Minecraft
+        account). This keeps invitations accountable and lets us credit
+        inviters, for example with a count on their profile. If you join
+        through a Minecraft vouch, your Minecraft username and account ID are
+        linked to your Twinkle account. While you play our apps as a guest
+        before signing up, we record limited play-session data (a random guest
+        ID, the room, and time played together) to issue invitations and
+        prevent abuse.`}
       </p>
 
       <h3
@@ -202,13 +245,15 @@ export default function Privacy() {
           font-size: 1.1rem;
         `}
       >
-        {`Given that the Service is designed for students, we take special
-        precautions to protect the privacy of users under 13. Although consent
-        for participation is implicitly established by the use of the
-        passphrase-protected platform, we encourage parents and guardians to
-        monitor their children's use of the Service. If we inadvertently collect
-        data from children under 13 without proper safeguards, we will take
-        steps to delete it promptly.`}
+        {`Given that the Service is used by students, we take special
+        precautions to protect the privacy of users under 13. For academy
+        students, consent is established through the passphrase-protected
+        sign-up. Users under 14 who join by invitation need a parent or
+        guardian's consent: we email the parent or guardian, and the account is
+        created only after they approve. We keep a record of that consent. We
+        encourage parents and guardians to monitor their children's use of the
+        Service. If we inadvertently collect data from children under 13
+        without proper safeguards, we will take steps to delete it promptly.`}
       </p>
 
       <h2
@@ -228,11 +273,18 @@ export default function Privacy() {
           font-size: 1.1rem;
         `}
       >
-        The Service includes a chat feature for students and teachers. We
-        monitor this feature to ensure it complies with our guidelines and to
-        maintain a safe environment. Chat data, including messages, timestamps,
-        and user IDs, may be retained temporarily to ensure safety and
-        compliance.
+        {`The Service includes a chat feature for its members. Replies from our AI
+        helpers and the Service's public posts are reviewed every day, and chats
+        between members are reviewed when a member reports them. Your chat
+        history is part of your story on Twinkle, so we keep your messages,
+        when they were sent, and who sent them for as long as your account
+        exists, and you can look back on them years later. You can delete your
+        own messages: a deleted message disappears from the chat for everyone,
+        but it stays in our records. When a message is reported, we keep a copy
+        of it for our safety review. If a report involves a child's safety, we
+        preserve the whole conversation and both members' account records,
+        including anything deleted or edited afterwards, until our review is
+        complete.`}
       </p>
 
       <h3
@@ -253,8 +305,9 @@ export default function Privacy() {
         `}
       >
         Parents are encouraged to oversee their children’s use of the chat
-        feature and can request access to or deletion of their child’s chat
-        data.
+        feature and can request access to or deletion of their child’s chat data
+        by emailing us from the address they used to give consent. We handle
+        each request ourselves.
       </p>
 
       <h3
@@ -274,8 +327,15 @@ export default function Privacy() {
           font-size: 1.1rem;
         `}
       >
-        We may use automated tools to monitor chats for inappropriate content.
-        Users can report any concerns directly within the chat feature.
+        {`Members can report another member's chat message from that message's
+        menu, choosing a reason and optionally adding a note. When a message is
+        reported, we keep a copy of it and of a few messages around it so our
+        team can review it; the reported member is not told about the report.
+        Members can also block another member from that member's profile or
+        from their direct chat. Direct messages between the two then stop in
+        both directions, and the blocked member's messages in group chats are
+        hidden for the member who blocked them. The blocked member is not notified, and a block can
+        be removed at any time, including from Settings.`}
       </p>
 
       <h2
@@ -297,8 +357,10 @@ export default function Privacy() {
       >
         Your data is used to operate and improve the Service, communicate
         updates, and ensure compliance with legal obligations and Service
-        guidelines. Your data may be transferred to servers located in Japan. We
-        take reasonable precautions to protect your data, but no security
+        guidelines. We share information with police or other authorities when
+        the law requires it, or when it is needed to protect a child from
+        serious harm. Your data may be transferred to servers located in Japan.
+        We take reasonable precautions to protect your data, but no security
         measures are foolproof.
       </p>
 
@@ -322,7 +384,9 @@ export default function Privacy() {
         As a user (or parent of a user), you have rights regarding your data:
         access, rectification, erasure, restriction, objection, data
         portability, and withdrawal of consent. Contact us to exercise these
-        rights.
+        rights and we will handle your request ourselves. Information under a
+        child-safety review is kept until that review is complete, where the law
+        allows.
       </p>
 
       <h2

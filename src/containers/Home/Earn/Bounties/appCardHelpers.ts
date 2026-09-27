@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Color, lineClamp } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import type { EarnHubApp } from './useEarnHub';
+import type { EarnHubApp, EarnHubRule } from './useEarnHub';
 
 // Shared by every App Store card shape (top pick, grid card, ranked row) so
 // the payout, today's status and the popularity line read the same everywhere.
@@ -18,7 +18,6 @@ export function getAppPayout(app: EarnHubApp) {
 
 export function getAppStatus(app: EarnHubApp) {
   const { today } = app;
-  const rulesCount = app.rules.length;
   if (app.allRewardsCollected) {
     return { line: 'All rewards collected · you can keep playing', ratio: 1 };
   }
@@ -32,15 +31,20 @@ export function getAppStatus(app: EarnHubApp) {
   }
   if (app.kind === 'completion') {
     const cap = app.budgets.userDailyXP;
+    // A one-time reward already collected on an earlier day can't be
+    // cleared today, so it is not counted as one still to go.
+    const countable = app.rules.filter(
+      (rule) => rule.earnedToday || rule.lifetime?.remaining !== 0
+    ).length;
     return {
-      line: `${today.earnedRules} of ${rulesCount} cleared today${
+      line: `${today.earnedRules} of ${countable} cleared today${
         cap
           ? ` · ${addCommasToNumber(today.xp)} / ${addCommasToNumber(cap)} XP`
           : ''
       }`,
       ratio: cap
         ? Math.min(1, today.xp / cap)
-        : today.earnedRules / Math.max(1, rulesCount)
+        : today.earnedRules / Math.max(1, countable)
     };
   }
   const tried = app.rules.some(
@@ -65,12 +69,61 @@ export function getAppStatus(app: EarnHubApp) {
 export function getAppSubtitle(app: EarnHubApp) {
   const rulesCount = app.rules.length;
   if (app.kind === 'completion') {
-    return `${rulesCount} ${rulesCount === 1 ? 'reward' : 'rewards'}, once a day each`;
+    const noun = `${rulesCount} ${rulesCount === 1 ? 'reward' : 'rewards'}`;
+    return app.rules.some((rule) => rule.maxLifetimeClaims)
+      ? `${noun}, daily and one-time`
+      : `${noun}, once a day each`;
   }
   if (app.budgets.userDailyClaims === 1) {
     return `one bounty a day, ${rulesCount} ${rulesCount === 1 ? 'level' : 'levels'}`;
   }
   return `${rulesCount} ${rulesCount === 1 ? 'bounty' : 'bounties'}`;
+}
+
+// What one rule pays, e.g. "+10,000 XP · +2,000 Coins".
+export function getRulePayout(rule: EarnHubRule) {
+  return [
+    rule.xp ? `+${addCommasToNumber(rule.xp)} XP` : '',
+    rule.coins ? `+${addCommasToNumber(rule.coins)} Coins` : ''
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+// The conditions the server holds a rule to, in plain words: how often it
+// pays and, for longer activities, the least time it takes. Timers under five
+// minutes are only there to stop instant claims and would read as noise.
+export function getRuleConditions(rule: EarnHubRule) {
+  const conditions: string[] = [];
+  const limit = rule.lifetime?.limit ?? rule.maxLifetimeClaims;
+  if (limit === 1) conditions.push('Once per account');
+  else if (limit) {
+    conditions.push(
+      rule.lifetime
+        ? `${rule.lifetime.remaining} of ${limit} left in total`
+        : `Up to ${limit} times in total`
+    );
+  } else conditions.push('Once a day');
+  if (rule.minSeconds && rule.minSeconds >= 300) {
+    const minutes = Math.round(rule.minSeconds / 60);
+    conditions.push(
+      minutes >= 60 && minutes % 60 === 0
+        ? `Takes at least ${minutes / 60} ${minutes === 60 ? 'hour' : 'hours'}`
+        : `Takes at least ${minutes} min`
+    );
+  }
+  return conditions;
+}
+
+// Where this member stands on one rule today.
+export function getRuleState(
+  rule: EarnHubRule
+): { key: 'earned' | 'collected' | 'unavailable' | 'open'; label: string } {
+  if (rule.earnedToday) return { key: 'earned', label: 'Earned today' };
+  if (rule.lifetime?.remaining === 0)
+    return { key: 'collected', label: 'Collected' };
+  if (!rule.available) return { key: 'unavailable', label: 'Not open today' };
+  return { key: 'open', label: 'Open' };
 }
 
 // "12 players this week"; nothing at all when nobody played, so a quiet app

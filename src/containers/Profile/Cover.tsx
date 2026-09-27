@@ -11,6 +11,11 @@ import ShareButton from '~/components/Buttons/ShareButton';
 import UserTitle from '~/components/Texts/UserTitle';
 import AchievementBadges from '~/components/AchievementBadges';
 import ChessLevelBadge from '~/components/ChessLevelBadge';
+import BroughtFriendsBadge from '~/components/BroughtFriendsBadge';
+import {
+  BROUGHT_FRIENDS_ANCHOR_ID,
+  readReferrals
+} from '~/components/BroughtFriendsBadge/tiers';
 import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -41,6 +46,9 @@ export default function Cover({
     (v) => v.state.chatStatus[profileId]
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const loadUserReferrals = useAppContext(
+    (v) => v.requestHelpers.loadUserReferrals
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const {
     profilePicUrl,
@@ -59,11 +67,43 @@ export default function Cover({
   const [themeSubmitting, setThemeSubmitting] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const FileInputRef: React.RefObject<any> = useRef(null);
+  const referrals = readReferrals(profile.referrals);
+  const referralsLoaded = !!referrals;
+  const referralCount = referrals?.count || 0;
+  // a phone cover fits about ten badges at full size beside the picture
+  const coverBadgeCount =
+    (unlockedAchievementIds?.length || 0) + (referralCount > 0 ? 1 : 0);
+  const coverBadgeSize = deviceIsMobile
+    ? coverBadgeCount > 10
+      ? '2rem'
+      : '2.4rem'
+    : '3rem';
 
   useEffect(() => {
     onSelectTheme(profileTheme || 'logoBlue');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    // the profile payload carries referrals; a profile first loaded elsewhere
+    // (a username hover, a popup) doesn't, so ask for them once
+    if (!profileId || referralsLoaded) return;
+    let cancelled = false;
+    loadReferrals();
+    async function loadReferrals() {
+      try {
+        const data = await loadUserReferrals(profileId);
+        if (cancelled || !readReferrals(data)) return;
+        onSetUserState({ userId: profileId, newState: { referrals: data } });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId, referralsLoaded]);
 
   const coverStatusSize = 'medium';
 
@@ -164,8 +204,16 @@ export default function Cover({
                 }
               `}
             >
+              {referralCount > 0 && (
+                <BroughtFriendsBadge
+                  count={referralCount}
+                  thumbSize={coverBadgeSize}
+                  style={{ marginRight: deviceIsMobile ? '0.8rem' : '1rem' }}
+                  onClick={handleBroughtFriendsClick}
+                />
+              )}
               <AchievementBadges
-                thumbSize={deviceIsMobile ? '2.4rem' : '3rem'}
+                thumbSize={coverBadgeSize}
                 unlockedAchievementIds={unlockedAchievementIds}
               />
             </div>
@@ -436,6 +484,12 @@ export default function Cover({
       </ScopedTheme>
     </ErrorBoundary>
   );
+
+  function handleBroughtFriendsClick() {
+    document
+      .getElementById(BROUGHT_FRIENDS_ANCHOR_ID)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 
   function handleColorSelectCancel() {
     onSelectTheme(profileTheme || 'logoBlue');

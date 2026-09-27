@@ -247,6 +247,7 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
           {rule.title} · {rule.xp.toLocaleString()} XP +{' '}
           {rule.coins.toLocaleString()} Coins
         </h4>
+        {rule.howTo ? <p>How players earn it: {rule.howTo}</p> : null}
         <p>
           Rule ID: {rule.id} · completion · once per learner per day (UTC).
           Minimum time: {(rule.minSeconds || 0).toLocaleString()} seconds.
@@ -282,6 +283,7 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
         {rule.title} · {rule.xp.toLocaleString()} XP +{' '}
         {rule.coins.toLocaleString()} Coins
       </h4>
+      {rule.howTo ? <p>How players earn it: {rule.howTo}</p> : null}
       {rule.maxLifetimeClaims ? (
         <p>Up to {rule.maxLifetimeClaims} rewards per learner in total.</p>
       ) : null}

@@ -8,6 +8,7 @@ import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { setAnalyticsUser, trackEvent } from '~/helpers/analytics';
 import { mobileMaxWidth } from '~/constants/css';
+import { clearSignupInvite } from '~/helpers/signupPasses';
 import { css } from '@emotion/css';
 const createMyAccountLabel = 'Create my account!';
 const pages = ['username', 'password', 'name_and_email'];
@@ -45,6 +46,11 @@ export default function MainForm({
   onSetPassword,
   onSetReenteredPassword,
   onSetUsername,
+  passphrase,
+  invite,
+  birthYear,
+  birthMonth,
+  guardianConsent,
   userType
 }: {
   branchName: string;
@@ -72,6 +78,11 @@ export default function MainForm({
   onSetPassword: (password: string) => void;
   onSetReenteredPassword: (password: string) => void;
   onSetUsername: (username: string) => void;
+  passphrase: string;
+  invite?: string;
+  birthYear?: number;
+  birthMonth?: number;
+  guardianConsent?: { consentId: number; secret: string };
   userType: string;
 }) {
   const onSignup = useAppContext((v) => v.user.actions.onSignup);
@@ -262,8 +273,14 @@ export default function MainForm({
         email,
         verifiedEmail,
         password,
+        passphrase,
+        invite,
+        birthYear,
+        birthMonth,
+        guardianConsent,
         userType
       });
+      if (invite) clearSignupInvite();
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });
       setAnalyticsUser(data);

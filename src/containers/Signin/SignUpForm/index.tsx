@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import MainForm from './MainForm';
 import StudentOrTeacher from './StudentOrTeacher';
 import SecretPassPhrase from './SecretPassPhrase';
+import InvitePass from './InvitePass';
+import AgeCheck from './AgeCheck';
+import GuardianConsent from './GuardianConsent';
+import { useAppContext } from '~/contexts';
+import {
+  clearSignupInvite,
+  getGuardianConsent,
+  getSignupInvite,
+  needsGuardianConsent,
+  type SignupInvite
+} from '~/helpers/signupPasses';
 import { css } from '@emotion/css';
 import { SITE_NAME } from '~/constants/siteBrand';
 const iAlreadyHaveAnAccountLabel = 'I already have an account';
@@ -68,6 +79,61 @@ export default function SignUpForm({
 }) {
   const [userType, setUsertype] = useState('');
   const [passphrase, setPassphrase] = useState('');
+  const getInviteView = useAppContext((v) => v.requestHelpers.getSignupInvite);
+  // an invite pass in this browser stands in for the sign-up question
+  const [invite, setInvite] = useState<SignupInvite | null>(null);
+  const [inviteAccepted, setInviteAccepted] = useState(false);
+  // invited sign-ups: when you were born, and under 14 a parent's or
+  // guardian's approval (Mikey, 2026-09-27)
+  const [birth, setBirth] = useState<{
+    birthYear: number;
+    birthMonth: number;
+  } | null>(null);
+  const [guardianConsent, setGuardianConsent] = useState<{
+    consentId: number;
+    secret: string;
+  } | null>(null);
+  const needsConsent =
+    !!birth && needsGuardianConsent(birth.birthYear, birth.birthMonth);
+
+  useEffect(() => {
+    const stored = getSignupInvite();
+    if (!stored) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { invite: view, unavailable } = await getInviteView(stored.token);
+        if (cancelled) return;
+        if (view) {
+          setInvite({ ...stored, ...view });
+          // a guardian was already asked: back to the waiting screen
+          const consent = getGuardianConsent(stored.token);
+          if (consent) {
+            setBirth({
+              birthYear: consent.birthYear,
+              birthMonth: consent.birthMonth
+            });
+            setInviteAccepted(true);
+          }
+        } else if (!unavailable) clearSignupInvite(); // used or expired
+      } catch {
+        // the question still works
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // The server needs the passphrase with the sign-up itself. If the form
+    // came back without it (remounted), ask the question again.
+    if (isPassphraseValid && !passphrase) {
+      onSetIsPassphraseValid(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPassphraseValid, passphrase]);
 
   return (
     <ErrorBoundary componentPath="Signin/SignupForm">
@@ -123,10 +189,42 @@ export default function SignUpForm({
               onSetIsUsernameAvailable={onSetIsUsernameAvailable}
               onSetUsername={onSetUsername}
               onBackToSelection={() => setUsertype('')}
+              passphrase={passphrase}
+              invite={inviteAccepted ? invite?.token : undefined}
+              birthYear={birth?.birthYear}
+              birthMonth={birth?.birthMonth}
+              guardianConsent={guardianConsent || undefined}
               userType={userType}
             />
           ) : isPassphraseValid ? (
             <StudentOrTeacher onSelect={setUsertype} />
+          ) : inviteAccepted && invite && !birth ? (
+            <AgeCheck
+              onBack={() => setInviteAccepted(false)}
+              onContinue={setBirth}
+            />
+          ) : inviteAccepted && invite && birth && needsConsent && !guardianConsent ? (
+            <GuardianConsent
+              inviteToken={invite.token}
+              birthYear={birth.birthYear}
+              birthMonth={birth.birthMonth}
+              initialFirstName={firstname}
+              onChangeBirth={() => setBirth(null)}
+              onApproved={({ consentId, secret, childFirstName }) => {
+                if (!firstname.trim()) onSetFirstname(childFirstName);
+                setGuardianConsent({ consentId, secret });
+              }}
+            />
+          ) : inviteAccepted ? (
+            <StudentOrTeacher onSelect={setUsertype} />
+          ) : invite ? (
+            <InvitePass
+              inviterName={invite.inviterName || ''}
+              source={invite.source || 'guest'}
+              minecraftName={invite.minecraftName}
+              onContinue={() => setInviteAccepted(true)}
+              onUseQuestion={() => setInvite(null)}
+            />
           ) : (
             <SecretPassPhrase
               onSetPassphrase={setPassphrase}

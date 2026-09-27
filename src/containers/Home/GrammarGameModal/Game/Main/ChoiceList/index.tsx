@@ -8,20 +8,20 @@ export default function ChoiceList({
   gotWrong,
   isCompleted,
   listItems,
-  onCorrectAnswer,
-  onSetGotWrong,
+  onSelect,
   onShown,
+  pendingChoiceIndex,
   questionLength = 0,
   selectedChoiceIndex,
   style
 }: {
-  answerIndex: number;
+  answerIndex?: number;
   gotWrong: boolean;
   isCompleted?: boolean;
   listItems: string[];
-  onCorrectAnswer: () => void;
-  onSetGotWrong: (arg0: number) => void;
+  onSelect: (choiceIndex: number) => void;
   onShown?: () => void;
+  pendingChoiceIndex: number | null;
   questionLength: number;
   selectedChoiceIndex: number;
   style: React.CSSProperties;
@@ -29,10 +29,13 @@ export default function ChoiceList({
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
-      setShown(true);
-      onShown?.();
-    }, Math.max(1500, questionLength * 35));
+    setTimeout(
+      () => {
+        setShown(true);
+        onShown?.();
+      },
+      Math.max(1500, questionLength * 35)
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -132,6 +135,7 @@ export default function ChoiceList({
             answerIndex={answerIndex}
             isCompleted={isCompleted}
             selectedChoiceIndex={selectedChoiceIndex}
+            isPending={pendingChoiceIndex === index}
             listItem={listItem}
             onSelect={handleSelect}
             index={index}
@@ -143,11 +147,8 @@ export default function ChoiceList({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   function handleSelect(selectedIndex: number) {
-    if (selectedChoiceIndex === answerIndex) return;
-    if (selectedIndex === answerIndex) {
-      onCorrectAnswer();
-    } else {
-      onSetGotWrong(selectedIndex);
-    }
+    // Answered already; the server decides right or wrong for every pick.
+    if (typeof answerIndex === 'number') return;
+    onSelect(selectedIndex);
   }
 }

@@ -16,6 +16,8 @@ export interface RewardQuestion {
 export interface RewardRule {
   id: string;
   title: string;
+  // How to earn it, in the player's words; shown on the Earn page.
+  howTo?: string;
   xp: number;
   coins: number;
   // numeric-quiz: server-checked answers. completion: the app reports a

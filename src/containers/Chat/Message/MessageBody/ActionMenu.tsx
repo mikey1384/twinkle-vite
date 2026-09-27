@@ -18,6 +18,9 @@ export interface ChatActionItem {
   disabled?: boolean;
   tone?: 'danger';
   accent?: string;
+  // Starts a visually separate group (e.g. Report, kept apart from everyday
+  // actions so it is never pressed by accident).
+  separated?: boolean;
 }
 
 const deviceIsMobile = isMobile(navigator);
@@ -148,6 +151,7 @@ export default function ActionMenu({
                 type="button"
                 disabled={item.disabled}
                 data-tone={item.tone}
+                data-separated={item.separated || undefined}
                 className={optionClass}
                 style={
                   item.accent
@@ -275,6 +279,18 @@ const optionClass = css`
   }
   &[data-tone='danger'] {
     color: #b42318;
+  }
+  &[data-separated] {
+    position: relative;
+    margin-top: 5px;
+    &::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 4px;
+      right: 4px;
+      border-top: 1px solid #dce3ed;
+    }
   }
   &:hover:not(:disabled) {
     background: #eef2f7;

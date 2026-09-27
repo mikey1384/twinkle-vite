@@ -9,7 +9,9 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   'buildProjectLimitRequest',
   'buildRewardReview',
   'aiCardOffer',
-  'cliAdminChatMessage'
+  'cliAdminChatMessage',
+  // Zero's DM to the owner about a member's chat report.
+  'chatMessageReport'
 ]);
 
 const SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES: ReadonlySet<string> =
