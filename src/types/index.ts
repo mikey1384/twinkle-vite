@@ -189,6 +189,14 @@ export interface User {
   canPinPlaylists?: boolean;
   canEditRewardLevel?: boolean;
   canGenerateAICard?: boolean;
+  // own session only: where the user stands on invitation rewards
+  inviteRewardsStatus?:
+    | 'eligible'
+    | 'needs_birthday'
+    | 'pending'
+    | 'adult'
+    | 'rejected'
+    | 'unavailable';
   canReward?: boolean;
   chatType?: string;
   collectType?: string;
