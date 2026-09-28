@@ -295,6 +295,9 @@ export default function Channel({
       if (rootType === 'approval') {
         return <span>{messageSender}: requested approval</span>;
       }
+      if (rootType === 'meetupQuest') {
+        return <span>{messageSender}: meetup quest review</span>;
+      }
       if (transactionId) {
         return (
           <span>

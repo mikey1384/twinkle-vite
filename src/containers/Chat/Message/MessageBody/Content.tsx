@@ -16,6 +16,7 @@ import BuildContributionInvite from './BuildContributionInvite';
 import BuildProjectLimitRequest from './BuildProjectLimitRequest';
 import BuildReviewRequestCard from './BuildReviewRequestCard';
 import BuildRewardReview from './BuildRewardReview';
+import MeetupQuestCard from './MeetupQuestCard';
 import DrawOffer from './DrawOffer';
 import FileAttachment from './FileAttachment';
 import Invitation from './Invitation';
@@ -280,6 +281,8 @@ export default function Content({
             profileTheme
           }}
         />
+      ) : rootType === 'meetupQuest' && rootId ? (
+        <MeetupQuestCard crewId={rootId} username={appliedUsername} />
       ) : invitePath ? (
         <Invitation
           sender={{ id: userId, username: appliedUsername }}

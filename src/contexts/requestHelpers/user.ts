@@ -404,6 +404,185 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // Bridge Builder meetup quest (achievement type 'meetup'):
+    // /achievements/bridge-builder and the admin review controls there.
+    async loadMeetupQuest(crewId?: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest${crewId ? `?crewId=${crewId}` : ''}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMyMeetupQuestSummary() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/me`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startMeetupCrew(branch: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews`,
+          { branch },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async joinMeetupCrew({ crewId, branch }: { crewId: number; branch: string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/join`,
+          { branch },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async leaveMeetupCrew(crewId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/leave`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async removeMeetupCrewMember({
+      crewId,
+      memberId
+    }: {
+      crewId: number;
+      memberId: number;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/user/meetup-quest/crews/${crewId}/members/${memberId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateMyMeetupMembership({
+      crewId,
+      branch,
+      parentOk
+    }: {
+      crewId: number;
+      branch?: string;
+      parentOk?: boolean;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/crews/${crewId}/me`,
+          { branch, parentOk },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setMeetupCrewAdult({
+      crewId,
+      kind,
+      name
+    }: {
+      crewId: number;
+      kind: string;
+      name: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/crews/${crewId}/adult`,
+          { kind, name },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitMeetupPlan({
+      crewId,
+      date,
+      area,
+      activity
+    }: {
+      crewId: number;
+      date: string;
+      area: string;
+      activity: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/plan`,
+          { date, area, activity },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitMeetupVideo({
+      crewId,
+      videoKey
+    }: {
+      crewId: number;
+      videoKey: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/video`,
+          { videoKey },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async reviewMeetupCrew({
+      crewId,
+      action,
+      note,
+      attendedUserIds
+    }: {
+      crewId: number;
+      action: 'approve-plan' | 'send-back' | 'approve';
+      note?: string;
+      attendedUserIds?: number[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/review`,
+          { action, note, attendedUserIds },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMyAchievements() {
       try {
         const { data } = await request.get(`${URL}/user/achievements`, auth());
