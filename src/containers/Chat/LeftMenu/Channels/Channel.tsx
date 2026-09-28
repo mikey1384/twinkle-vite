@@ -298,6 +298,9 @@ export default function Channel({
       if (rootType === 'meetupQuest') {
         return <span>{messageSender}: meetup quest review</span>;
       }
+      if (rootType === 'meetupQuestInvite') {
+        return <span>{messageSender}: invited you to a meetup crew</span>;
+      }
       if (transactionId) {
         return (
           <span>

@@ -9,26 +9,17 @@ import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import CrewBoard from './CrewBoard';
+import CreateCrewModal from './CreateCrewModal';
+import CrewCover from './CrewCover';
+import CrewDirectory from './CrewDirectory';
 import CrewPanel from './CrewPanel';
-import { QuestNote, questHelpClass, questInputClass, questLabelClass } from './StepCard';
-import type { MeetupQuestData } from './types';
+import { BranchChips } from './DirectoryCard';
+import JoinCrewModal from './JoinCrewModal';
+import { QuestNote } from './StepCard';
+import { backLinkClass, pageWidthClass, sectionClass } from './pageStyles';
+import type { CrewInvitation, DirectoryCrew, MeetupQuestData } from './types';
 
 const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
-
-const sectionClass = css`
-  border-radius: 1.4rem;
-  border: 1px solid var(--ui-border);
-  background: #fff;
-  padding: 2rem;
-  margin-top: 2rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 1.4rem 1rem;
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-  }
-`;
 
 const headingClass = css`
   font-size: 1.9rem;
@@ -44,8 +35,27 @@ const bodyTextClass = css`
   margin: 0;
 `;
 
-// Bridge Builder's step-by-step meetup quest (achievement type 'meetup').
-// The achievement's name comes from its data, so a rename is one DB change.
+const wayHeadingClass = css`
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: ${Color.darkGray()};
+  margin: 3rem 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  @media (max-width: ${mobileMaxWidth}) {
+    margin: 2.4rem 1rem 0;
+  }
+`;
+
+interface JoinTarget {
+  crewId: number;
+  crewName: string;
+  inviteId: number;
+}
+
+// Bridge Builder's step-by-step meetup quest (achievement type 'meetup'):
+// your crew, invitations, and the crew directory. The achievement's name
+// comes from its data, so a rename is one DB change.
 export default function BridgeBuilderQuest() {
   const userId = useKeyContext((v) => v.myState.userId);
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
@@ -53,8 +63,12 @@ export default function BridgeBuilderQuest() {
   const loadMyAchievements = useAppContext(
     (v) => v.requestHelpers.loadMyAchievements
   );
-  const startMeetupCrew = useAppContext((v) => v.requestHelpers.startMeetupCrew);
-  const joinMeetupCrew = useAppContext((v) => v.requestHelpers.joinMeetupCrew);
+  const declineMeetupInvite = useAppContext(
+    (v) => v.requestHelpers.declineMeetupInvite
+  );
+  const dismissMeetupNotice = useAppContext(
+    (v) => v.requestHelpers.dismissMeetupNotice
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedCrewId = Number(searchParams.get('crew')) || 0;
   const [data, setData] = useState<MeetupQuestData | null>(null);
@@ -63,11 +77,11 @@ export default function BridgeBuilderQuest() {
     isUnlocked: boolean;
     progressObj?: { label: string; currentValue: number; targetValue: number };
   } | null>(null);
-  const [branch, setBranch] = useState('');
-  const [startBusy, setStartBusy] = useState(false);
-  const [joiningCrewId, setJoiningCrewId] = useState(0);
-  const [entryError, setEntryError] = useState('');
-  const branchInputRef = useRef<HTMLInputElement>(null);
+  const [createShown, setCreateShown] = useState(false);
+  const [joinTarget, setJoinTarget] = useState<JoinTarget | null>(null);
+  const [inviteError, setInviteError] = useState('');
+  const directoryRef = useRef<HTMLDivElement>(null);
+  const myCrewRef = useRef<HTMLDivElement>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -81,6 +95,7 @@ export default function BridgeBuilderQuest() {
   const achievementTitle: string =
     achievementsObj?.meetup?.title || data?.achievementTitle || '';
   const achievementName = achievementTitle || 'this achievement';
+  const myBranch = data?.directory?.myBranch || '';
 
   if (!userId) {
     return (
@@ -100,74 +115,94 @@ export default function BridgeBuilderQuest() {
           padding-bottom: 20rem;
         `}
       >
-        <main
-          className={css`
-            width: 65%;
-            margin-top: 1rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
-              margin-top: 0;
-            }
-          `}
-        >
-          <Link
-            to="/achievements"
-            className={css`
-              display: inline-flex;
-              align-items: center;
-              gap: 0.5rem;
-              font-size: 1.4rem;
-              font-weight: bold;
-              color: ${Color.logoBlue()};
-              @media (max-width: ${mobileMaxWidth}) {
-                margin: 1rem 1rem 0;
-              }
-            `}
-          >
+        <main className={pageWidthClass}>
+          <Link to="/achievements" className={backLinkClass}>
             <Icon icon="arrow-left" /> Achievements
           </Link>
 
-          <section className={sectionClass}>
-            <h1
+          <section className={sectionClass} style={{ padding: 0, overflow: 'hidden' }}>
+            <CrewCover cover="galaxy" height="7rem" rounded="0" />
+            <div
               className={css`
-                font-size: 2.4rem;
-                font-weight: bold;
-                color: ${Color.black()};
-                margin: 0 0 1rem;
+                padding: 1.8rem 2rem 2rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  padding: 1.4rem 1rem;
+                }
               `}
             >
-              {achievementTitle
-                ? `${achievementTitle}: the meetup quest`
-                : 'The meetup quest'}
-            </h1>
-            <p className={bodyTextClass}>
-              Meet up in real life with at least 3 students, each from a
-              different Twinkle branch (for example one from Daechi, one from
-              Busan, one from Mokdong), with a parent or a Twinkle teacher
-              there. Do something together that is really educational and
-              film it. Everyone who showed up unlocks <b>{achievementName}</b>.
-            </p>
-            <p className={bodyTextClass} style={{ marginTop: '0.8rem' }}>
-              The quest goes one step at a time: build your crew, get your
-              parents on board, send your plan, meet and film, then an admin
-              reviews it. Nothing after the plan unlocks until an admin
-              approves it.
-            </p>
-            <div style={{ marginTop: '1.2rem' }}>
-              <QuestNote tone="info">
-                <b>Stay safe:</b> never post an address, a phone number or an
-                exact meeting spot here. Use Twinkle chat to talk with your
-                crew, and let the adult who is coming handle the exact place.
-              </QuestNote>
-            </div>
-            {friendWay?.isUnlocked && (
-              <div style={{ marginTop: '1rem' }}>
-                <QuestNote tone="success">
-                  You already unlocked {achievementName}. You can still join a
-                  crew and help your friends get it too.
+              <h1
+                className={css`
+                  font-size: 2.6rem;
+                  font-weight: bold;
+                  color: ${Color.black()};
+                  margin: 0 0 0.8rem;
+                `}
+              >
+                {achievementTitle
+                  ? `${achievementTitle}: the meetup quest`
+                  : 'The meetup quest'}
+              </h1>
+              <p className={bodyTextClass}>
+                Meet up in real life with at least 3 students, each from a
+                different Twinkle branch (for example one from Daechi, one from
+                Busan, one from Mokdong), with a parent or a Twinkle teacher
+                there. Do something together that is really educational and
+                film it. Everyone who showed up unlocks <b>{achievementName}</b>.
+              </p>
+              <p className={bodyTextClass} style={{ marginTop: '0.6rem' }}>
+                Find or start a crew, get your parents on board, send your
+                plan, meet and film, then an admin reviews it. Nothing after
+                the plan unlocks until an admin approves it.
+              </p>
+              <div
+                className={css`
+                  display: flex;
+                  gap: 0.8rem;
+                  flex-wrap: wrap;
+                  margin-top: 1.4rem;
+                `}
+              >
+                {data && !data.hasActiveCrew && (
+                  <Button color="green" onClick={() => setCreateShown(true)}>
+                    <Icon icon="plus" style={{ marginRight: '0.6rem' }} />
+                    Start a crew
+                  </Button>
+                )}
+                {data?.hasActiveCrew && (
+                  <Button
+                    color="logoBlue"
+                    onClick={() => myCrewRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  >
+                    <Icon icon="users" style={{ marginRight: '0.6rem' }} />
+                    Go to your crew
+                  </Button>
+                )}
+                <Button
+                  variant="soft"
+                  color="logoBlue"
+                  onClick={() => directoryRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  <Icon icon="search" style={{ marginRight: '0.6rem' }} />
+                  Browse crews
+                </Button>
+              </div>
+              <div style={{ marginTop: '1.4rem' }}>
+                <QuestNote tone="info">
+                  <b>Stay safe:</b> never post an address, a phone number or
+                  an exact meeting spot here. Use Twinkle chat to talk with
+                  your crew, and let the adult who is coming handle the exact
+                  place.
                 </QuestNote>
               </div>
-            )}
+              {friendWay?.isUnlocked && (
+                <div style={{ marginTop: '1rem' }}>
+                  <QuestNote tone="success">
+                    You already unlocked {achievementName}. You can still join a
+                    crew and help your friends get it too.
+                  </QuestNote>
+                </div>
+              )}
+            </div>
           </section>
 
           {loadError && (
@@ -176,6 +211,72 @@ export default function BridgeBuilderQuest() {
             </div>
           )}
           {!data && !loadError && <Loading />}
+
+          {data?.notices?.map((notice) => (
+            <div key={`notice-${notice.crewId}`} style={{ marginTop: '1.6rem' }}>
+              <QuestNote tone="info">
+                <div
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 1rem;
+                  `}
+                >
+                  <span>
+                    {notice.kind === 'removed'
+                      ? `You were removed from crew "${notice.crewName}". You can join or start another crew any time.`
+                      : `Your crew "${notice.crewName}" was disbanded by its founder. You can join or start another crew any time.`}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    color="darkGray"
+                    onClick={() => handleDismissNotice(notice.crewId)}
+                  >
+                    OK
+                  </Button>
+                </div>
+              </QuestNote>
+            </div>
+          ))}
+
+          {!!data?.invites?.length && (
+            <section className={sectionClass}>
+              <h2 className={headingClass}>
+                <Icon icon="user-plus" style={{ color: Color.purple() }} /> You&apos;re
+                invited
+              </h2>
+              <div
+                className={css`
+                  display: flex;
+                  flex-direction: column;
+                  gap: 1rem;
+                `}
+              >
+                {data.invites.map((invite) => (
+                  <InvitationCard
+                    key={invite.inviteId}
+                    invite={invite}
+                    hasActiveCrew={data.hasActiveCrew}
+                    onJoin={() =>
+                      setJoinTarget({
+                        crewId: invite.crewId,
+                        crewName: invite.displayName,
+                        inviteId: invite.inviteId
+                      })
+                    }
+                    onDecline={() => handleDecline(invite.inviteId)}
+                  />
+                ))}
+              </div>
+              {inviteError && (
+                <div style={{ marginTop: '1rem' }}>
+                  <QuestNote tone="warning">{inviteError}</QuestNote>
+                </div>
+              )}
+            </section>
+          )}
 
           {data?.reviewQueue && (
             <section className={sectionClass}>
@@ -259,23 +360,9 @@ export default function BridgeBuilderQuest() {
 
           {data && (
             <>
-              <h2
-                className={css`
-                  font-size: 1.6rem;
-                  font-weight: bold;
-                  color: ${Color.darkGray()};
-                  margin: 3rem 0 0;
-                  text-transform: uppercase;
-                  letter-spacing: 0.05em;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    margin: 2.4rem 1rem 0;
-                  }
-                `}
-              >
-                Way 1: the meetup quest
-              </h2>
+              <h2 className={wayHeadingClass}>Way 1: the meetup quest</h2>
               {data.myCrew && (
-                <div style={{ marginTop: '1rem' }}>
+                <div ref={myCrewRef} style={{ marginTop: '1rem' }}>
                   <CrewPanel
                     crew={data.myCrew}
                     achievementTitle={achievementName}
@@ -284,90 +371,43 @@ export default function BridgeBuilderQuest() {
                   />
                 </div>
               )}
-              {!data.hasActiveCrew && (
-                <section className={sectionClass}>
-                  <h2 className={headingClass}>
-                    {data.myCrew ? 'Start or join another crew' : 'Start your crew'}
-                  </h2>
-                  <p className={bodyTextClass}>
-                    Start a crew and invite friends from other branches, or join
-                    one below. You can be in one crew at a time.
-                  </p>
-                  <div style={{ marginTop: '1.2rem' }}>
-                    <label className={questLabelClass} htmlFor="meetup-entry-branch">
-                      Your Twinkle branch
-                    </label>
-                    <div
-                      className={css`
-                        display: flex;
-                        gap: 0.6rem;
-                        flex-wrap: wrap;
-                      `}
-                    >
-                      <input
-                        id="meetup-entry-branch"
-                        ref={branchInputRef}
-                        className={questInputClass}
-                        style={{ flex: '1 1 18rem', width: 'auto' }}
-                        value={branch}
-                        maxLength={40}
-                        placeholder="For example: Daechi"
-                        onChange={(event) => setBranch(event.target.value)}
-                      />
-                      <Button
-                        color="green"
-                        loading={startBusy}
-                        disabled={startBusy || !!joiningCrewId}
-                        onClick={handleStart}
-                      >
-                        <Icon icon="users" style={{ marginRight: '0.5rem' }} />
-                        Start a crew
-                      </Button>
-                    </div>
-                    <div className={questHelpClass}>
-                      Just the branch name. Other members see your username and
-                      branch, nothing else.
-                    </div>
+              <section ref={directoryRef} className={sectionClass}>
+                <div
+                  className={css`
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                    margin-bottom: 1.4rem;
+                  `}
+                >
+                  <div>
+                    <h2 className={headingClass} style={{ margin: 0 }}>
+                      Find a crew
+                    </h2>
+                    <p className={bodyTextClass} style={{ fontSize: '1.3rem' }}>
+                      Crews show usernames, profile pictures and branches.
+                      Plans and videos stay private to each crew.
+                    </p>
                   </div>
-                  {entryError && (
-                    <div style={{ marginTop: '1rem' }}>
-                      <QuestNote tone="warning">{entryError}</QuestNote>
-                    </div>
+                  {!data.hasActiveCrew && (
+                    <Button color="green" onClick={() => setCreateShown(true)}>
+                      <Icon icon="plus" style={{ marginRight: '0.6rem' }} />
+                      Start a crew
+                    </Button>
                   )}
-                </section>
-              )}
-              <section className={sectionClass}>
-                <h2 className={headingClass}>Looking for a crew</h2>
-                <CrewBoard
-                  crews={data.board}
-                  canJoin={!data.hasActiveCrew}
-                  joiningCrewId={joiningCrewId}
-                  onJoin={handleJoin}
+                </div>
+                <CrewDirectory
+                  directory={data.directory}
+                  achievementTitle={achievementTitle}
+                  onJoin={handleDirectoryJoin}
                 />
-                {!data.hasActiveCrew && data.board.length > 0 && (
-                  <div className={questHelpClass} style={{ marginTop: '1rem' }}>
-                    Type your branch above before joining.
-                  </div>
-                )}
               </section>
             </>
           )}
 
-          <h2
-            className={css`
-              font-size: 1.6rem;
-              font-weight: bold;
-              color: ${Color.darkGray()};
-              margin: 3rem 0 0;
-              text-transform: uppercase;
-              letter-spacing: 0.05em;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin: 2.4rem 1rem 0;
-              }
-            `}
-          >
-            Way 2: bring a friend
-          </h2>
+          <h2 className={wayHeadingClass}>Way 2: bring a friend</h2>
           <section className={sectionClass} style={{ marginTop: '1rem' }}>
             <p className={bodyTextClass}>
               Bring a friend who isn&apos;t on Twinkle yet: play{' '}
@@ -404,6 +444,23 @@ export default function BridgeBuilderQuest() {
           </section>
         </main>
       </div>
+      {createShown && (
+        <CreateCrewModal
+          defaultBranch={myBranch}
+          onHide={() => setCreateShown(false)}
+          onCreated={reload}
+        />
+      )}
+      {joinTarget && (
+        <JoinCrewModal
+          crewId={joinTarget.crewId}
+          crewName={joinTarget.crewName}
+          inviteId={joinTarget.inviteId}
+          defaultBranch={myBranch}
+          onHide={() => setJoinTarget(null)}
+          onJoined={reload}
+        />
+      )}
     </ErrorBoundary>
   );
 
@@ -435,44 +492,94 @@ export default function BridgeBuilderQuest() {
     }
   }
 
-  function requireBranch() {
-    if (branch.trim()) return true;
-    setEntryError('Type your Twinkle branch first.');
-    branchInputRef.current?.focus();
-    return false;
+  function handleDirectoryJoin(crew: DirectoryCrew) {
+    setJoinTarget({
+      crewId: crew.crewId,
+      crewName: crew.displayName,
+      inviteId: crew.inviteId
+    });
   }
 
-  async function handleStart() {
-    if (startBusy || !requireBranch()) return;
-    setStartBusy(true);
-    setEntryError('');
+  async function handleDecline(inviteId: number) {
+    setInviteError('');
     try {
-      await startMeetupCrew(branch);
-      setBranch('');
+      await declineMeetupInvite(inviteId);
       await reload();
     } catch (error: any) {
-      setEntryError(error?.message || 'Could not start the crew.');
-    } finally {
-      setStartBusy(false);
+      setInviteError(error?.message || 'Could not decline the invitation.');
     }
   }
 
-  async function handleJoin(crewId: number) {
-    if (joiningCrewId || !requireBranch()) {
-      branchInputRef.current?.scrollIntoView({ block: 'center' });
-      return;
-    }
-    setJoiningCrewId(crewId);
-    setEntryError('');
+  async function handleDismissNotice(crewId: number) {
     try {
-      await joinMeetupCrew({ crewId, branch });
-      setBranch('');
-      await reload();
-    } catch (error: any) {
-      setEntryError(error?.message || 'Could not join the crew.');
-      branchInputRef.current?.scrollIntoView({ block: 'center' });
+      await dismissMeetupNotice(crewId);
     } finally {
-      setJoiningCrewId(0);
+      await reload();
     }
   }
+}
+
+function InvitationCard({
+  invite,
+  hasActiveCrew,
+  onJoin,
+  onDecline
+}: {
+  invite: CrewInvitation;
+  hasActiveCrew: boolean;
+  onJoin: () => void;
+  onDecline: () => void;
+}) {
+  const blocked = hasActiveCrew
+    ? 'Leave your current crew first to join this one.'
+    : invite.canJoin
+    ? ''
+    : invite.closedReason;
+  return (
+    <div
+      className={css`
+        display: flex;
+        gap: 1.2rem;
+        align-items: center;
+        border: 1px solid ${Color.purple(0.35)};
+        background: ${Color.purple(0.04)};
+        border-radius: 1.2rem;
+        padding: 1rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      `}
+    >
+      <div
+        className={css`
+          width: 9rem;
+          flex-shrink: 0;
+          @media (max-width: ${mobileMaxWidth}) {
+            width: 100%;
+          }
+        `}
+      >
+        <CrewCover cover={invite.cover} height="6rem" rounded="0.9rem" />
+      </div>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <span style={{ fontSize: '1.5rem', color: Color.black() }}>
+          <b>{invite.inviterUsername}</b> invited you to crew{' '}
+          <b>&quot;{invite.displayName}&quot;</b>
+        </span>
+        <BranchChips names={invite.branchNames} />
+        {blocked && (
+          <span style={{ fontSize: '1.2rem', color: Color.darkGray() }}>{blocked}</span>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: '0.6rem', flexShrink: 0 }}>
+        <Button color="logoBlue" disabled={!!blocked} onClick={onJoin}>
+          Join
+        </Button>
+        <Button variant="ghost" color="darkGray" onClick={onDecline}>
+          Decline
+        </Button>
+      </div>
+    </div>
+  );
 }

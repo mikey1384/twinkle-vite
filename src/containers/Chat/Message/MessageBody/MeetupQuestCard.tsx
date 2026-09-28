@@ -12,10 +12,13 @@ import { Color, borderRadius } from '~/constants/css';
 // page, or with `lumine admin meetup`.
 export default function MeetupQuestCard({
   crewId,
-  username
+  username,
+  isInvite = false
 }: {
   crewId: number;
   username: string;
+  // rootType 'meetupQuestInvite': a founder invited the recipient
+  isInvite?: boolean;
 }) {
   const navigate = useNavigate();
   const achievementTitle = useAppContext(
@@ -42,16 +45,32 @@ export default function MeetupQuestCard({
         `}
       >
         <Icon icon="users" style={{ color: Color.purple(), marginRight: '0.6rem' }} />
-        <b>{username}</b>&apos;s crew (#{crewId}) sent their{' '}
-        {achievementTitle ? `${achievementTitle} ` : ''}meetup quest for review.
+        {isInvite ? (
+          <>
+            <b>{username}</b> invited you to join their{' '}
+            {achievementTitle ? `${achievementTitle} ` : ''}meetup quest crew.
+          </>
+        ) : (
+          <>
+            <b>{username}</b>&apos;s crew (#{crewId}) sent their{' '}
+            {achievementTitle ? `${achievementTitle} ` : ''}meetup quest for
+            review.
+          </>
+        )}
       </div>
       <div>
         <Button
           size="sm"
           color="purple"
-          onClick={() => navigate(`/achievements/bridge-builder?crew=${crewId}`)}
+          onClick={() =>
+            navigate(
+              isInvite
+                ? `/achievements/bridge-builder/crew/${crewId}`
+                : `/achievements/bridge-builder?crew=${crewId}`
+            )
+          }
         >
-          Open the review
+          {isInvite ? 'See the invitation' : 'Open the review'}
         </Button>
       </div>
     </div>

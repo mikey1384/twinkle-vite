@@ -27,16 +27,36 @@ export interface QuestProgress {
   badges: string[];
 }
 
+export type CrewStage =
+  | 'forming'
+  | 'parents'
+  | 'planning'
+  | 'meeting'
+  | 'filmed'
+  | 'done'
+  | 'closed';
+
+export interface CrewProfile {
+  name: string;
+  displayName: string;
+  about: string;
+  cover: string;
+  isOpen: boolean;
+}
+
 export interface CrewMember {
   userId: number;
   username: string;
+  profilePicUrl?: string;
   branch: string;
   parentOk: boolean;
   isFounder: boolean;
   attended: boolean;
 }
 
-export interface CrewView {
+export interface CrewView extends CrewProfile {
+  stage: CrewStage;
+  invites: { inviteId: number; userId: number; username: string; createdAt: number }[];
   crewId: number;
   founderId: number;
   status: 'active' | 'completed' | 'disbanded';
@@ -91,7 +111,67 @@ export interface ReviewQueueItem {
   updatedAt: number;
 }
 
+export interface DirectoryCrew extends CrewProfile {
+  crewId: number;
+  status: string;
+  stage: CrewStage;
+  hint: string;
+  students: number;
+  branches: number;
+  branchNames: string[];
+  founderUsername: string;
+  members: {
+    userId: number;
+    username: string;
+    profilePicUrl: string;
+    branch: string;
+    isFounder: boolean;
+  }[];
+  createdAt: number;
+  updatedAt: number;
+  completedAt: number;
+  isMine: boolean;
+  joinable: boolean;
+  inviteId: number;
+}
+
+export interface CrewDirectoryData {
+  myBranch: string;
+  hasActiveCrew: boolean;
+  crews: DirectoryCrew[];
+  hall: DirectoryCrew[];
+}
+
+export interface CrewInvitation extends CrewProfile {
+  inviteId: number;
+  crewId: number;
+  inviterUsername: string;
+  branchNames: string[];
+  students: number;
+  canJoin: boolean;
+  closedReason: string;
+  createdAt: number;
+}
+
+export interface CrewNotice {
+  crewId: number;
+  kind: 'removed' | 'disbanded';
+  crewName: string;
+}
+
+export interface PublicCrewPage {
+  crew: DirectoryCrew & {
+    steps: QuestStep[];
+    joinClosedReason: string;
+  };
+  myBranch: string;
+  canSeePrivate: boolean;
+}
+
 export interface MeetupQuestData {
+  directory: CrewDirectoryData;
+  invites: CrewInvitation[];
+  notices: CrewNotice[];
   achievementTitle: string;
   myCrew: CrewView | null;
   hasActiveCrew: boolean;

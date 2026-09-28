@@ -281,8 +281,13 @@ export default function Content({
             profileTheme
           }}
         />
-      ) : rootType === 'meetupQuest' && rootId ? (
-        <MeetupQuestCard crewId={rootId} username={appliedUsername} />
+      ) : (rootType === 'meetupQuest' || rootType === 'meetupQuestInvite') &&
+        rootId ? (
+        <MeetupQuestCard
+          crewId={rootId}
+          username={appliedUsername}
+          isInvite={rootType === 'meetupQuestInvite'}
+        />
       ) : invitePath ? (
         <Invitation
           sender={{ id: userId, username: appliedUsername }}

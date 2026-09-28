@@ -28,7 +28,7 @@ export default function StepTracker({
   progress,
   completed
 }: {
-  progress: QuestProgress;
+  progress: Pick<QuestProgress, 'steps' | 'blocking'>;
   completed: boolean;
 }) {
   return (

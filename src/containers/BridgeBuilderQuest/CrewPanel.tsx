@@ -3,9 +3,13 @@ import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import AdminReview from './AdminReview';
+import CrewCover from './CrewCover';
+import { MemberAvatars } from './DirectoryCard';
+import ManageCrewPanel from './ManageCrewPanel';
 import StepCard, {
   QuestNote,
   questHelpClass,
@@ -35,8 +39,8 @@ export default function CrewPanel({
   onChanged: () => Promise<void>;
 }) {
   const leaveMeetupCrew = useAppContext((v) => v.requestHelpers.leaveMeetupCrew);
-  const removeMeetupCrewMember = useAppContext(
-    (v) => v.requestHelpers.removeMeetupCrewMember
+  const disbandMeetupCrew = useAppContext(
+    (v) => v.requestHelpers.disbandMeetupCrew
   );
   const updateMyMeetupMembership = useAppContext(
     (v) => v.requestHelpers.updateMyMeetupMembership
@@ -63,7 +67,12 @@ export default function CrewPanel({
   const [planDate, setPlanDate] = useState(crew.plan.date || '');
   const [planArea, setPlanArea] = useState(crew.plan.area || '');
   const [planActivity, setPlanActivity] = useState(crew.plan.activity || '');
-  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [manageShown, setManageShown] = useState(false);
+  const [confirmExit, setConfirmExit] = useState<'leave' | 'disband' | null>(null);
+  const [exitError, setExitError] = useState('');
+  const founder = crew.members.find((member) => member.isFounder);
+  // the server hands leadership to the longest-standing other member
+  const nextFounder = crew.members.find((member) => member.userId !== myId);
 
   useEffect(() => {
     setBranch(me?.branch || '');
@@ -93,72 +102,160 @@ export default function CrewPanel({
         }
       `}
     >
+      <CrewCover
+        cover={crew.cover}
+        height="8rem"
+        stage={crew.stage}
+        achievementTitle={achievementTitle}
+        rounded="1rem"
+      />
       <div
         className={css`
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-start;
           gap: 1rem;
           flex-wrap: wrap;
-          margin-bottom: 2rem;
+          margin: 1.2rem 0 0.4rem;
         `}
       >
-        <h2
-          className={css`
-            font-size: 2rem;
-            font-weight: bold;
-            color: ${Color.black()};
-            margin: 0;
-          `}
-        >
-          {viewer.isMember ? 'Your crew' : `Crew #${crew.crewId}`}
-          <span
+        <div style={{ minWidth: 0 }}>
+          <h2
             className={css`
-              font-size: 1.3rem;
-              font-weight: normal;
-              color: ${Color.darkGray()};
-              margin-left: 0.8rem;
+              font-size: 2.1rem;
+              font-weight: bold;
+              color: ${Color.black()};
+              margin: 0;
+              overflow-wrap: anywhere;
             `}
           >
-            #{crew.crewId}
-          </span>
-        </h2>
-        {viewer.isMember && !viewer.frozen && (
-          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-            {confirmLeave ? (
-              <>
-                <span style={{ fontSize: '1.3rem' }}>Leave this crew?</span>
+            {crew.displayName}
+            {viewer.isMember && (
+              <span
+                className={css`
+                  font-size: 1.3rem;
+                  font-weight: normal;
+                  color: ${Color.darkGray()};
+                  margin-left: 0.8rem;
+                `}
+              >
+                your crew
+              </span>
+            )}
+          </h2>
+          <div
+            className={css`
+              font-size: 1.3rem;
+              color: ${Color.darkerGray()};
+              margin-top: 0.3rem;
+            `}
+          >
+            <Icon icon="crown" style={{ color: Color.gold() }} /> Founder:{' '}
+            <b>{founder?.username || '?'}</b>
+            {viewer.isFounder ? ' (you)' : ''}
+            {!crew.isOpen && crew.status === 'active' && (
+              <span style={{ marginLeft: '0.8rem' }}>
+                <Icon icon="lock" /> invite only
+              </span>
+            )}
+          </div>
+        </div>
+        {viewer.isMember && crew.status === 'active' && (
+          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {viewer.isFounder && (
+              <Button
+                size="sm"
+                variant={manageShown ? 'solid' : 'soft'}
+                color="logoBlue"
+                aria-expanded={manageShown}
+                onClick={() => setManageShown((shown) => !shown)}
+              >
+                <Icon icon="gear" style={{ marginRight: '0.5rem' }} />
+                Manage crew
+              </Button>
+            )}
+            {!viewer.frozen &&
+              (viewer.isFounder && crew.members.length === 1 ? (
                 <Button
                   size="sm"
+                  variant="ghost"
                   color="red"
-                  loading={crewAction.busy}
-                  onClick={() => crewAction.run(() => leaveMeetupCrew(crew.crewId))}
+                  onClick={() => setConfirmExit('disband')}
                 >
-                  Leave
+                  <Icon icon="trash-alt" style={{ marginRight: '0.5rem' }} />
+                  Disband crew
                 </Button>
+              ) : (
                 <Button
                   size="sm"
                   variant="ghost"
                   color="darkGray"
-                  onClick={() => setConfirmLeave(false)}
+                  onClick={() => setConfirmExit('leave')}
                 >
-                  Stay
+                  <Icon icon="sign-out-alt" style={{ marginRight: '0.5rem' }} />
+                  Leave crew
                 </Button>
-              </>
-            ) : (
-              <Button
-                size="sm"
-                variant="ghost"
-                color="darkGray"
-                onClick={() => setConfirmLeave(true)}
-              >
-                <Icon icon="sign-out-alt" style={{ marginRight: '0.5rem' }} />
-                Leave crew
-              </Button>
-            )}
+              ))}
           </div>
         )}
       </div>
+      {crew.about && (
+        <p
+          className={css`
+            margin: 0.6rem 0 0;
+            font-size: 1.4rem;
+            color: ${Color.darkerGray()};
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+          `}
+        >
+          {crew.about}
+        </p>
+      )}
+      {viewer.isMember && crew.status === 'active' && (
+        <p className={questHelpClass} style={{ margin: '0.8rem 0 0' }}>
+          {viewer.isFounder
+            ? 'As the founder you can rename the crew, invite or remove members, hand over leadership or disband it (Manage crew). '
+            : `${founder?.username || 'The founder'} leads the crew: they invite and remove members. `}
+          Every member can edit their own branch and parent tick, name the
+          adult, send the plan, upload the video, or leave.
+        </p>
+      )}
+      {manageShown && viewer.isFounder && crew.status === 'active' && (
+        <ManageCrewPanel
+          crew={crew}
+          myId={myId}
+          onChanged={onChanged}
+          onDisbanded={onChanged}
+        />
+      )}
+      {exitError && (
+        <div style={{ marginTop: '1rem' }}>
+          <QuestNote tone="warning">{exitError}</QuestNote>
+        </div>
+      )}
+      {confirmExit && (
+        <ConfirmModal
+          title={
+            confirmExit === 'disband'
+              ? `Disband ${crew.displayName}?`
+              : `Leave ${crew.displayName}?`
+          }
+          descriptionFontSize="1.5rem"
+          description={
+            confirmExit === 'disband'
+              ? "You're the only member, so this closes the crew. You can start or join another one afterwards."
+              : viewer.isFounder && nextFounder
+              ? `${nextFounder.username} becomes the founder when you leave. You can join another crew afterwards.`
+              : 'You can join another crew afterwards. The founder can invite you back.'
+          }
+          confirmButtonColor="red"
+          confirmButtonLabel={confirmExit === 'disband' ? 'Disband' : 'Leave'}
+          onHide={() => setConfirmExit(null)}
+          onConfirm={handleExit}
+        />
+      )}
+      <div style={{ height: '1.6rem' }} />
 
       <StepTracker progress={progress} completed={completed} />
 
@@ -208,6 +305,7 @@ export default function CrewPanel({
                   : Color.extraLightGray(0.5)};
               `}
             >
+              <MemberAvatars members={[member]} size="2.6rem" />
               <UsernameText
                 user={{ id: member.userId, username: member.username }}
               />
@@ -228,27 +326,9 @@ export default function CrewPanel({
                   <Icon icon="crown" style={{ color: Color.gold() }} /> founder
                 </span>
               )}
-              {viewer.isFounder &&
-                !viewer.frozen &&
-                member.userId !== myId && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    color="red"
-                    style={{ marginLeft: 'auto' }}
-                    disabled={crewAction.busy}
-                    onClick={() =>
-                      crewAction.run(() =>
-                        removeMeetupCrewMember({
-                          crewId: crew.crewId,
-                          memberId: member.userId
-                        })
-                      )
-                    }
-                  >
-                    Remove
-                  </Button>
-                )}
+              {member.userId === myId && (
+                <span style={{ fontSize: '1.2rem', color: Color.darkGray() }}>(you)</span>
+              )}
             </li>
           ))}
         </ul>
@@ -588,4 +668,20 @@ export default function CrewPanel({
       </StepCard>
     </div>
   );
+
+  async function handleExit() {
+    const action = confirmExit;
+    setConfirmExit(null);
+    setExitError('');
+    try {
+      if (action === 'disband') {
+        await disbandMeetupCrew(crew.crewId);
+      } else {
+        await leaveMeetupCrew(crew.crewId);
+      }
+      await onChanged();
+    } catch (error: any) {
+      setExitError(error?.message || 'Something went wrong. Please try again.');
+    }
+  }
 }

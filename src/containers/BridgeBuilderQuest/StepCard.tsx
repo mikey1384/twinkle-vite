@@ -7,6 +7,7 @@ import type { QuestStep } from './types';
 
 export const questInputClass = css`
   width: 100%;
+  font-family: inherit;
   padding: 0.8rem 1rem;
   font-size: 1.4rem;
   border-radius: 0.8rem;

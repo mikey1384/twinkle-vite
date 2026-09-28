@@ -15,7 +15,9 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   // Zero's DM to the owner about a member's chat report.
   'chatMessageReport',
   // A meetup quest crew's plan/video sent to admins for review.
-  'meetupQuest'
+  'meetupQuest',
+  // A crew founder's invitation (the invitee's notification).
+  'meetupQuestInvite'
 ]);
 
 const SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES: ReadonlySet<string> =

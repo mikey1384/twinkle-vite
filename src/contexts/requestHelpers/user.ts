@@ -418,6 +418,145 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadMeetupPublicCrew(crewId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/crews/${crewId}/public`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupCrew(crewId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/crews/${crewId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateMeetupCrewProfile({
+      crewId,
+      name,
+      about,
+      cover
+    }: {
+      crewId: number;
+      name?: string;
+      about?: string;
+      cover?: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/crews/${crewId}/profile`,
+          { name, about, cover },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setMeetupCrewOpen({ crewId, isOpen }: { crewId: number; isOpen: boolean }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/crews/${crewId}/open`,
+          { isOpen },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async inviteToMeetupCrew({ crewId, username }: { crewId: number; username: string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/invites`,
+          { username },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async cancelMeetupInvite({ crewId, inviteId }: { crewId: number; inviteId: number }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/user/meetup-quest/crews/${crewId}/invites/${inviteId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async acceptMeetupInvite({ inviteId, branch }: { inviteId: number; branch: string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/invites/${inviteId}/accept`,
+          { branch },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async declineMeetupInvite(inviteId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/invites/${inviteId}/decline`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async makeMeetupCrewFounder({ crewId, userId }: { crewId: number; userId: number }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/crews/${crewId}/founder`,
+          { userId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async disbandMeetupCrew(crewId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/disband`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async dismissMeetupNotice(crewId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/notices/${crewId}/dismiss`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMyMeetupQuestSummary() {
       try {
         const { data } = await request.get(
@@ -429,11 +568,15 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async startMeetupCrew(branch: string) {
+    async startMeetupCrew(
+      params:
+        | string
+        | { branch: string; name?: string; about?: string; cover?: string }
+    ) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/crews`,
-          { branch },
+          typeof params === 'string' ? { branch: params } : params,
           auth()
         );
         return data;
