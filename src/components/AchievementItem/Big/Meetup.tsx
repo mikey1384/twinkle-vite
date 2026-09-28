@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import MeetupBadge from '~/assets/meetup.png';
+import MeetupBadge from '~/assets/bridge-builder.png'; // Bridge Builder (once Face to Face)
 import ItemPanel from './ItemPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';

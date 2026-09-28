@@ -6,7 +6,7 @@ import FounderBadge from '~/assets/founder.png';
 import GoldBadge from '~/assets/gold.png';
 import MissionBadge from '~/assets/mission.png';
 import TeenagerBadge from '~/assets/teenager.png';
-import MeetupBadge from '~/assets/meetup.png';
+import MeetupBadge from '~/assets/bridge-builder.png'; // Bridge Builder (once Face to Face)
 import SummonerBadge from '~/assets/summoner.png';
 import GrammarBadge from '~/assets/grammar.png';
 import MentorBadge from '~/assets/mentor.png';

@@ -3,7 +3,7 @@ import GoldBadge from '~/assets/gold.png';
 import GrammarBadge from '~/assets/grammar.png';
 import DonorBadge from '~/assets/donor.png';
 import MissionBadge from '~/assets/mission.png';
-import MeetupBadge from '~/assets/meetup.png';
+import MeetupBadge from '~/assets/bridge-builder.png'; // Bridge Builder (once Face to Face)
 import MentorBadge from '~/assets/mentor.png';
 import SageBadge from '~/assets/sage.png';
 import FounderBadge from '~/assets/founder.png';
