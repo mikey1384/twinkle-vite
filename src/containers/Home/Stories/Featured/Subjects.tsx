@@ -16,6 +16,7 @@ import {
 } from '~/constants/css';
 import { css } from '@emotion/css';
 import { loadLatestCanonicalFeaturedSubjects } from '~/helpers/featuredSubjects';
+import { trackEvent } from '~/helpers/analytics';
 
 const portraitTabletMediaQuery = `(min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) and (orientation: portrait)`;
 
@@ -162,7 +163,11 @@ export default function FeaturedSubject({
             min-width: 0;
           `}
         >
-          <ContentListItem key={subject.id} contentObj={subject} />
+          <ContentListItem
+            key={subject.id}
+            contentObj={subject}
+            onOpen={handleOpen}
+          />
         </div>
         {featureds.length > 1 && (
           <button
@@ -199,6 +204,16 @@ export default function FeaturedSubject({
       </div>
     </ErrorBoundary>
   ) : null;
+
+  function handleOpen() {
+    trackEvent('featured_click', {
+      content_id: subject.id,
+      content_type: subject.contentType,
+      position: currentFeaturedIndex + 1,
+      board_size: featureds.length,
+      surface: 'home'
+    });
+  }
 
   function handlePrevious() {
     onSetCurrentFeaturedIndex(

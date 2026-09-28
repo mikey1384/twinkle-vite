@@ -13,6 +13,7 @@ import { getDisplayedSubjectRewardLevel } from '~/helpers/rewardLevelRevision';
 
 function ContentListItem({
   onClick,
+  onOpen,
   contentObj,
   contentObj: { id: contentId, contentType },
   expandable,
@@ -25,6 +26,8 @@ function ContentListItem({
   noTopBorderRadius
 }: {
   onClick?: () => void;
+  // Called when the item opens its own page (not when onClick replaces that).
+  onOpen?: () => void;
   contentObj: any;
   expandable?: boolean;
   modalOverModal?: boolean;
@@ -255,6 +258,7 @@ function ContentListItem({
               isFavorited={isFavorited}
               isPublic={isPublic}
               onClick={onClick}
+              onOpen={onOpen}
               question={question}
               rootType={rootContent.contentType}
               expandable={expandable}

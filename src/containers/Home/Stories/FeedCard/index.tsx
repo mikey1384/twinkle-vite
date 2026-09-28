@@ -62,6 +62,7 @@ import {
 } from '~/helpers/homeFeedActionIntent';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { normalizeViewCount } from '~/helpers/viewCount';
+import { trackEvent } from '~/helpers/analytics';
 
 const SHOWCASE_CARD_CLASS = 'home-feed-card--showcase';
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
@@ -944,6 +945,12 @@ export default function HomeFeedCard({
     action?: HomeFeedActionType
   ) {
     saveScrollAnchorForElement(sourceElement, homeFeedAnchorKey);
+    trackEvent('feed_item_open', {
+      content_type: contentType,
+      position: index + 1,
+      action: action || 'open',
+      surface: showcase ? 'profile' : 'home'
+    });
     navigate(contentPath, {
       state: {
         homeFeedNavigation: createHomeFeedNavigationState({

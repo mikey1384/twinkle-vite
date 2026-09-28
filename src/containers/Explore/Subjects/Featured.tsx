@@ -6,6 +6,7 @@ import SelectFeaturedSubjects from '../Modals/SelectFeaturedSubjects';
 import ReorderFeaturedSubjects from '../Modals/ReorderFeaturedSubjects';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
+import { trackEvent } from '~/helpers/analytics';
 
 const featuredLabel = 'Featured';
 const noFeaturedSubjectsLabel = 'No Featured Subjects';
@@ -72,7 +73,7 @@ export default function Featured({
         emptyMessage={noFeaturedSubjectsLabel}
         loaded={loaded}
       >
-        {shownSubjects.map((subject) => (
+        {shownSubjects.map((subject, index) => (
           <div
             key={subject.id}
             data-scroll-anchor-id={`explore-subjects:featured:${subject.id}`}
@@ -82,6 +83,15 @@ export default function Featured({
             <ContentListItem
               style={{ marginBottom: '1rem' }}
               contentObj={subject}
+              onOpen={() =>
+                trackEvent('featured_click', {
+                  content_id: subject.id,
+                  content_type: subject.contentType,
+                  position: index + 1,
+                  board_size: subjects.length,
+                  surface: 'explore'
+                })
+              }
             />
           </div>
         ))}

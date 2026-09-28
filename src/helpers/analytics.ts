@@ -48,6 +48,11 @@ export type AnalyticsEventName =
   | 'sign_up_email_verify'
   | 'guardian_consent_request'
   | 'guardian_consent_decision'
+  // Where people click through from
+  | 'featured_click'
+  | 'feed_item_open'
+  | 'notification_open'
+  | 'earn_app_open'
   // Zero/Ciel voice
   | 'voice_call_start'
   // Reliability (GA4 standard name)

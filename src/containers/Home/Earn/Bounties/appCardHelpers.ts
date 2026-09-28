@@ -3,6 +3,7 @@ import { Color, lineClamp } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import type { EarnHubApp, EarnHubRule } from './useEarnHub';
 import { countRewardRows } from './rewardGroups';
+import { trackEvent } from '~/helpers/analytics';
 
 // Shared by every App Store card shape (top pick, grid card, ranked row) so
 // the payout, today's status and the popularity line read the same everywhere.
@@ -217,3 +218,17 @@ export const newBadgeClass = css`
   text-transform: uppercase;
   letter-spacing: 0.04em;
 `;
+
+// Sent when a Bounties card opens its app, so we can see whether the ranking
+// sends players where it should.
+export function trackBountyAppOpen(
+  app: EarnHubApp,
+  placement: 'top_pick' | 'card' | 'row'
+) {
+  trackEvent('earn_app_open', {
+    build_id: app.buildId,
+    placement,
+    rank: app.popularity?.rank,
+    is_new: app.popularity ? app.popularity.isNew : undefined
+  });
+}

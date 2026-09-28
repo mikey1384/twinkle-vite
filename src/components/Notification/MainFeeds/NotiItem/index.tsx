@@ -9,6 +9,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { resolveColorValue } from '~/theme/resolveColor';
 import Icon from '~/components/Icon';
 import BuildAppNotificationSettingsModal from './BuildAppNotificationSettingsModal';
+import { trackEvent } from '~/helpers/analytics';
 
 const buildAppItemClass = css`
   position: relative;
@@ -163,7 +164,33 @@ function NotiItem({
   function handleBuildAppItemKeyDown(event: React.KeyboardEvent<HTMLElement>) {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
+    if (buildId) trackNotificationOpen('app');
     openBuildAppNotification();
+  }
+
+  // Counts a click that leaves the list: any link inside the message, or the
+  // whole row of a Build app notification. The settings gear doesn't count.
+  function handleItemClickCapture(event: React.MouseEvent<HTMLElement>) {
+    const target = event.target as HTMLElement | null;
+    const link = target?.closest?.('a');
+    if (link) {
+      const path = link.getAttribute('href') || '';
+      trackNotificationOpen(path.split('?')[0].split('/')[1] || 'home');
+      return;
+    }
+    if (isBuildAppNotification && buildId && !target?.closest?.('button')) {
+      trackNotificationOpen('app');
+    }
+  }
+
+  function trackNotificationOpen(destination: string) {
+    trackEvent('notification_open', {
+      notification_type: rewardType
+        ? `reward_${rewardType}`
+        : actionObj.contentType || (isTask ? 'task' : 'other'),
+      destination,
+      is_today: isToday
+    });
   }
 
   function openSettingsModal(event: React.MouseEvent<HTMLButtonElement>) {
@@ -185,6 +212,7 @@ function NotiItem({
           isBuildAppNotification ? buildAppItemClass : ''
         }`}
         key={id}
+        onClickCapture={handleItemClickCapture}
         onClick={isBuildAppNotification ? openBuildAppNotification : undefined}
         onKeyDown={
           isBuildAppNotification ? handleBuildAppItemKeyDown : undefined

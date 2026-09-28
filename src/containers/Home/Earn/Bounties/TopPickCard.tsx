@@ -14,7 +14,8 @@ import {
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
-  appTitleTextClass
+  appTitleTextClass,
+  trackBountyAppOpen
 } from './appCardHelpers';
 import { AppRewardsButton } from './AppRewardsModal';
 
@@ -84,7 +85,10 @@ export default function TopPickCard({ app }: { app: EarnHubApp }) {
             shape="pill"
             size="lg"
             stretch
-            onClick={() => navigate(`/app/${app.buildId}`)}
+            onClick={() => {
+              trackBountyAppOpen(app, 'top_pick');
+              navigate(`/app/${app.buildId}`);
+            }}
           >
             Play
           </Button>

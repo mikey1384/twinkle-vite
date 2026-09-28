@@ -11,7 +11,8 @@ import {
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
-  appTitleTextClass
+  appTitleTextClass,
+  trackBountyAppOpen
 } from './appCardHelpers';
 import { AppRewardsButton } from './AppRewardsModal';
 
@@ -65,7 +66,10 @@ export default function AppRow({ app }: { app: EarnHubApp }) {
         shape="pill"
         size="sm"
         style={{ minWidth: '8rem' }}
-        onClick={() => navigate(`/app/${app.buildId}`)}
+        onClick={() => {
+          trackBountyAppOpen(app, 'row');
+          navigate(`/app/${app.buildId}`);
+        }}
       >
         Play
       </Button>

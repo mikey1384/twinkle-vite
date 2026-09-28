@@ -568,6 +568,7 @@ export default function RootContent({
   isPublic,
   navigate,
   onClick,
+  onOpen,
   question,
   rewardLevel,
   rootContent,
@@ -616,6 +617,7 @@ export default function RootContent({
   modalOverModal?: boolean;
   navigate: (path: string) => void;
   onClick?: () => void;
+  onOpen?: () => void;
   question?: string;
   rewardLevel: number;
   rootContent?: any;
@@ -865,6 +867,7 @@ export default function RootContent({
       return onClick();
     }
     if (selectable) return;
+    onOpen?.();
     navigate(
       `/${
         contentType === 'url'

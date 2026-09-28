@@ -14,7 +14,8 @@ import {
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
-  appTitleTextClass
+  appTitleTextClass,
+  trackBountyAppOpen
 } from './appCardHelpers';
 import { AppRewardsButton } from './AppRewardsModal';
 
@@ -90,7 +91,10 @@ export default function AppCard({
           shape="pill"
           size="md"
           stretch
-          onClick={() => navigate(`/app/${app.buildId}`)}
+          onClick={() => {
+            trackBountyAppOpen(app, 'card');
+            navigate(`/app/${app.buildId}`);
+          }}
         >
           Play
         </Button>
