@@ -557,6 +557,124 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadMeetupStaffSummary() {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/staff`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupDesk(viewAs?: number) {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/desk${viewAs ? `?viewAs=${viewAs}` : ''}`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadCoordinatorApplications(viewAs?: number) {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/coordinator${viewAs ? `?viewAs=${viewAs}` : ''}`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadStaffApplication({ crewId, viewAs }: { crewId: number; viewAs?: number }) {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/coordinator/${crewId}${viewAs ? `?viewAs=${viewAs}` : ''}`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async previewCoordinatorEmail(crewId: number) {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/coordinator/${crewId}/email-preview`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async decideMeetupPlan({
+      crewId,
+      action,
+      note,
+      venue
+    }: {
+      crewId: number;
+      action: 'approve' | 'send-back';
+      note?: string;
+      venue?: unknown;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/desk/crews/${crewId}/decision`,
+          { action, note, venue },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async changeMeetupVenue({ crewId, venue }: { crewId: number; venue: unknown }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/desk/crews/${crewId}/venue`,
+          { venue },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async confirmMeetupSlot({
+      crewId,
+      slotIndex,
+      slot
+    }: {
+      crewId: number;
+      slotIndex?: number;
+      slot?: { date: string; start: string; end: string };
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/coordinator/${crewId}/slot`,
+          { slotIndex, slot },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async addMeetupStaffNote({ crewId, note }: { crewId: number; note: string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/coordinator/${crewId}/notes`,
+          { note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async resendCoordinatorEmail(crewId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/coordinator/${crewId}/resend-email`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMyMeetupQuestSummary() {
       try {
         const { data } = await request.get(

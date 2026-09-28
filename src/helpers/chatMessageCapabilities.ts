@@ -17,7 +17,9 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   // A meetup quest crew's plan/video sent to admins for review.
   'meetupQuest',
   // A crew founder's invitation (the invitee's notification).
-  'meetupQuestInvite'
+  'meetupQuestInvite',
+  // The coordinator's "slot is set up" note to each crew member.
+  'meetupQuestSlot'
 ]);
 
 const SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES: ReadonlySet<string> =

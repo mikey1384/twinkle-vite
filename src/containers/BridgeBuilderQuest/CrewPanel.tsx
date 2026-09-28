@@ -20,6 +20,7 @@ import StepTracker from './StepTracker';
 import VideoUploader from './VideoUploader';
 import useQuestAction from './useQuestAction';
 import type { CrewView, QuestStepKey } from './types';
+import { formatSlot } from './staff/shared';
 
 function localToday() {
   const now = new Date();
@@ -508,7 +509,19 @@ export default function CrewPanel({
                   {crew.plan.note}
                 </QuestNote>
               )}
-            {crew.plan.note && crew.plan.status === 'approved' && (
+            {crew.plan.status === 'approved' && crew.planApprovedBy && (
+              <QuestNote tone="success">
+                Plan approved by <b>{crew.planApprovedBy.username}</b>
+                {crew.plan.note ? (
+                  <>
+                    {' '}
+                    · <b>Note: </b>
+                    {crew.plan.note}
+                  </>
+                ) : null}
+              </QuestNote>
+            )}
+            {crew.plan.note && crew.plan.status === 'approved' && !crew.planApprovedBy && (
               <QuestNote tone="success">
                 <b>Admin note: </b>
                 {crew.plan.note}
@@ -627,6 +640,7 @@ export default function CrewPanel({
       <StepCard step={stepOf('film')}>
         {stepOf('film').state !== 'locked' && (
           <>
+            {crew.plan.status === 'approved' && <VenueNote venue={crew.venue} />}
             {crew.video.note && crew.video.status === 'sent_back' && (
               <QuestNote tone="warning">
                 <b>Note: </b>
@@ -684,4 +698,33 @@ export default function CrewPanel({
       setExitError(error?.message || 'Something went wrong. Please try again.');
     }
   }
+}
+
+// The meetup place/time from the staff: members and staff only.
+function VenueNote({ venue }: { venue: CrewView['venue'] }) {
+  if (!venue || venue.status === 'none' || venue.status === 'cancelled') return null;
+  const slot = venue.confirmedSlot;
+  if (slot) {
+    return (
+      <QuestNote tone="success">
+        <b>Your meetup:</b>{' '}
+        {venue.room ? `${venue.branch} classroom ${venue.room}, ` : ''}
+        {formatSlot(slot)}
+      </QuestNote>
+    );
+  }
+  if (venue.status === 'offered') {
+    return (
+      <QuestNote tone="info">
+        Classroom offered at <b>{venue.branch}</b> ({venue.room}): waiting for
+        the slot to be set up. Offered times: {venue.slots.map(formatSlot).join(' / ')}
+      </QuestNote>
+    );
+  }
+  return (
+    <QuestNote tone="info">
+      No classroom this time: meet somewhere else with your grown-up. Twinkle
+      staff will help confirm the time.
+    </QuestNote>
+  );
 }

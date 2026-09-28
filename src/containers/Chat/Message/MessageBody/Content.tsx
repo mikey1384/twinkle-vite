@@ -281,12 +281,15 @@ export default function Content({
             profileTheme
           }}
         />
-      ) : (rootType === 'meetupQuest' || rootType === 'meetupQuestInvite') &&
+      ) : (rootType === 'meetupQuest' ||
+          rootType === 'meetupQuestInvite' ||
+          rootType === 'meetupQuestSlot') &&
         rootId ? (
         <MeetupQuestCard
           crewId={rootId}
           username={appliedUsername}
           isInvite={rootType === 'meetupQuestInvite'}
+          isSlot={rootType === 'meetupQuestSlot'}
         />
       ) : invitePath ? (
         <Invitation

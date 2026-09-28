@@ -41,7 +41,7 @@ export default function Meetup({
   );
   const [quest, setQuest] = useState<{
     crewId: number;
-    completed?: boolean;
+    completedCount?: number;
     stepNumber?: number;
     stepLabel?: string;
   } | null>(null);
@@ -63,11 +63,13 @@ export default function Meetup({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questShown, userId]);
 
-  const questButtonLabel = !quest?.crewId
-    ? 'Start the meetup quest'
-    : quest.completed
-    ? 'See your crew'
-    : `Open your crew (step ${quest.stepNumber}: ${quest.stepLabel})`;
+  // the quest stays open after the achievement unlocks: members can plan
+  // meetup after meetup
+  const questButtonLabel = quest?.crewId
+    ? `Open your crew (step ${quest.stepNumber}: ${quest.stepLabel})`
+    : quest?.completedCount
+    ? 'Plan another meetup'
+    : 'Start the meetup quest';
   return (
     <ErrorBoundary componentPath="AchievementItems/Big/Meetup">
       <ItemPanel

@@ -191,7 +191,7 @@ export default function DirectoryCard({
               Your crew
             </Button>
           ) : crew.inviteId ? (
-            <Button size="sm" color="purple" stretch onClick={() => onJoin(crew)}>
+            <Button size="sm" color="logoBlue" stretch onClick={() => onJoin(crew)}>
               <Icon icon="user-plus" style={{ marginRight: '0.5rem' }} />
               Accept invite
             </Button>

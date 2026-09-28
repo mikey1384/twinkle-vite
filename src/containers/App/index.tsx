@@ -132,6 +132,12 @@ const BridgeBuilderQuest = lazyWithRetry(
 const BridgeBuilderCrewPage = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/CrewDetailPage')
 );
+const BridgeBuilderHeadmasterDesk = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/staff/HeadmasterDesk')
+);
+const BridgeBuilderCoordinatorDesk = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/staff/CoordinatorDesk')
+);
 const Explore = lazyWithRetry(() => import('~/containers/Explore'));
 const ExploreRedirect = lazyWithRetry(
   () => import('~/containers/Explore/Redirect')
@@ -1386,6 +1392,14 @@ export default function App() {
                 <Route
                   path="/achievements/bridge-builder/crew/:crewId"
                   element={<BridgeBuilderCrewPage />}
+                />
+                <Route
+                  path="/achievements/bridge-builder/desk"
+                  element={<BridgeBuilderHeadmasterDesk />}
+                />
+                <Route
+                  path="/achievements/bridge-builder/coordinator"
+                  element={<BridgeBuilderCoordinatorDesk />}
                 />
                 <Route
                   path="/achievements/:achievementType"

@@ -44,7 +44,8 @@ test('notification rows and server-issued workflow cards disable generic chat ac
     'aiCardOffer',
     'cliAdminChatMessage',
     'meetupQuest',
-    'meetupQuestInvite'
+    'meetupQuestInvite',
+    'meetupQuestSlot'
   ]) {
     assert.equal(canUseGenericChatMessageActions({ rootType }), false);
   }

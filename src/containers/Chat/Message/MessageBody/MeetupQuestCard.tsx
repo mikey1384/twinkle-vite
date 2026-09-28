@@ -13,12 +13,15 @@ import { Color, borderRadius } from '~/constants/css';
 export default function MeetupQuestCard({
   crewId,
   username,
-  isInvite = false
+  isInvite = false,
+  isSlot = false
 }: {
   crewId: number;
   username: string;
   // rootType 'meetupQuestInvite': a founder invited the recipient
   isInvite?: boolean;
+  // rootType 'meetupQuestSlot': the coordinator set up the crew's slot
+  isSlot?: boolean;
 }) {
   const navigate = useNavigate();
   const achievementTitle = useAppContext(
@@ -29,8 +32,8 @@ export default function MeetupQuestCard({
       className={css`
         margin-top: 0.5rem;
         padding: 1.2rem 1.4rem;
-        border: 1px solid ${Color.purple(0.35)};
-        background: ${Color.purple(0.05)};
+        border: 1px solid ${Color.logoBlue(0.35)};
+        background: ${Color.logoBlue(0.05)};
         border-radius: ${borderRadius};
         display: flex;
         flex-direction: column;
@@ -44,8 +47,13 @@ export default function MeetupQuestCard({
           color: ${Color.black()};
         `}
       >
-        <Icon icon="users" style={{ color: Color.purple(), marginRight: '0.6rem' }} />
-        {isInvite ? (
+        <Icon icon="users" style={{ color: Color.logoBlue(), marginRight: '0.6rem' }} />
+        {isSlot ? (
+          <>
+            <b>{username}</b> set up your crew&apos;s meetup slot. See the
+            date, time and place on your crew page.
+          </>
+        ) : isInvite ? (
           <>
             <b>{username}</b> invited you to join their{' '}
             {achievementTitle ? `${achievementTitle} ` : ''}meetup quest crew.
@@ -61,16 +69,16 @@ export default function MeetupQuestCard({
       <div>
         <Button
           size="sm"
-          color="purple"
+          color="logoBlue"
           onClick={() =>
             navigate(
-              isInvite
+              isInvite || isSlot
                 ? `/achievements/bridge-builder/crew/${crewId}`
-                : `/achievements/bridge-builder?crew=${crewId}`
+                : `/achievements/bridge-builder/desk?crew=${crewId}`
             )
           }
         >
-          {isInvite ? 'See the invitation' : 'Open the review'}
+          {isSlot ? 'See your meetup' : isInvite ? 'See the invitation' : 'Open the review'}
         </Button>
       </div>
     </div>

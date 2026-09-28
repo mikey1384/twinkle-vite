@@ -28,16 +28,16 @@ export default function AdminReview({
   return (
     <div
       className={css`
-        border: 2px dashed ${Color.purple(0.5)};
+        border: 2px dashed ${Color.logoBlue(0.5)};
         border-radius: 1rem;
         padding: 1.2rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        background: ${Color.purple(0.04)};
+        background: ${Color.logoBlue(0.04)};
       `}
     >
-      <b style={{ fontSize: '1.4rem', color: Color.purple() }}>
+      <b style={{ fontSize: '1.4rem', color: Color.logoBlue() }}>
         Admin review: {stage === 'plan' ? 'the plan' : 'the video'}
       </b>
       {stage === 'video' && (

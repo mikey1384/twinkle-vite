@@ -13,11 +13,12 @@ import CreateCrewModal from './CreateCrewModal';
 import CrewCover from './CrewCover';
 import CrewDirectory from './CrewDirectory';
 import CrewPanel from './CrewPanel';
-import { BranchChips } from './DirectoryCard';
+import { BranchChips, crewPath } from './DirectoryCard';
 import JoinCrewModal from './JoinCrewModal';
 import { QuestNote } from './StepCard';
 import { backLinkClass, pageWidthClass, sectionClass } from './pageStyles';
-import type { CrewInvitation, DirectoryCrew, MeetupQuestData } from './types';
+import { StaffNav } from './staff/shared';
+import type { CrewInvitation, DirectoryCrew, MeetupQuestData, StaffSummary } from './types';
 
 const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
 
@@ -69,6 +70,10 @@ export default function BridgeBuilderQuest() {
   const dismissMeetupNotice = useAppContext(
     (v) => v.requestHelpers.dismissMeetupNotice
   );
+  const loadMeetupStaffSummary = useAppContext(
+    (v) => v.requestHelpers.loadMeetupStaffSummary
+  );
+  const [staff, setStaff] = useState<StaffSummary | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedCrewId = Number(searchParams.get('crew')) || 0;
   const [data, setData] = useState<MeetupQuestData | null>(null);
@@ -88,6 +93,9 @@ export default function BridgeBuilderQuest() {
     if (!userId) return;
     reload();
     loadFriendWay();
+    loadMeetupStaffSummary()
+      .then((summary: StaffSummary) => setStaff(summary))
+      .catch(() => setStaff(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, requestedCrewId]);
 
@@ -194,11 +202,37 @@ export default function BridgeBuilderQuest() {
                   place.
                 </QuestNote>
               </div>
+              {staff && (staff.canReviewPlans || staff.canCoordinate) && (
+                <div style={{ marginTop: '1.2rem' }}>
+                  <StaffNav summary={staff} />
+                </div>
+              )}
+              {!!data?.myMeetups?.length && (
+                <div
+                  className={css`
+                    margin-top: 1.2rem;
+                    font-size: 1.4rem;
+                    color: ${Color.darkerGray()};
+                  `}
+                >
+                  <b>
+                    <Icon icon="trophy" style={{ color: Color.gold() }} /> Your meetups:{' '}
+                    {data.myMeetups.length}
+                  </b>{' '}
+                  ·{' '}
+                  {data.myMeetups.map((meetup, index) => (
+                    <span key={meetup.crewId}>
+                      {index > 0 ? ', ' : ''}
+                      <Link to={crewPath(meetup.crewId)}>{meetup.displayName}</Link>
+                    </span>
+                  ))}
+                </div>
+              )}
               {friendWay?.isUnlocked && (
                 <div style={{ marginTop: '1rem' }}>
                   <QuestNote tone="success">
-                    You already unlocked {achievementName}. You can still join a
-                    crew and help your friends get it too.
+                    You already unlocked {achievementName}. The quest stays
+                    open: start or join another crew and plan another meetup.
                   </QuestNote>
                 </div>
               )}
@@ -244,7 +278,7 @@ export default function BridgeBuilderQuest() {
           {!!data?.invites?.length && (
             <section className={sectionClass}>
               <h2 className={headingClass}>
-                <Icon icon="user-plus" style={{ color: Color.purple() }} /> You&apos;re
+                <Icon icon="user-plus" style={{ color: Color.logoBlue() }} /> You&apos;re
                 invited
               </h2>
               <div
@@ -281,7 +315,7 @@ export default function BridgeBuilderQuest() {
           {data?.reviewQueue && (
             <section className={sectionClass}>
               <h2 className={headingClass}>
-                <Icon icon="clipboard-check" style={{ color: Color.purple() }} />{' '}
+                <Icon icon="clipboard-check" style={{ color: Color.logoBlue() }} />{' '}
                 Admin: waiting for review
               </h2>
               {data.reviewQueue.length === 0 ? (
@@ -318,7 +352,7 @@ export default function BridgeBuilderQuest() {
                       <Button
                         size="sm"
                         variant="soft"
-                        color="purple"
+                        color="logoBlue"
                         onClick={() => setSearchParams({ crew: String(item.crewId) })}
                       >
                         Review
@@ -541,8 +575,8 @@ function InvitationCard({
         display: flex;
         gap: 1.2rem;
         align-items: center;
-        border: 1px solid ${Color.purple(0.35)};
-        background: ${Color.purple(0.04)};
+        border: 1px solid ${Color.logoBlue(0.35)};
+        background: ${Color.logoBlue(0.04)};
         border-radius: 1.2rem;
         padding: 1rem;
         @media (max-width: ${mobileMaxWidth}) {

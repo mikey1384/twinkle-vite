@@ -54,8 +54,25 @@ export interface CrewMember {
   attended: boolean;
 }
 
+export interface MeetupSlot {
+  date: string;
+  start: string;
+  end: string;
+}
+
+// Visible to the crew and staff only, never on public views.
+export interface CrewVenue {
+  status: 'none' | 'offered' | 'unavailable' | 'set' | 'cancelled';
+  branch: string;
+  room: string;
+  slots: MeetupSlot[];
+  confirmedSlot: MeetupSlot | null;
+}
+
 export interface CrewView extends CrewProfile {
   stage: CrewStage;
+  venue: CrewVenue;
+  planApprovedBy: { userId: number; username: string } | null;
   invites: { inviteId: number; userId: number; username: string; createdAt: number }[];
   crewId: number;
   founderId: number;
@@ -168,7 +185,122 @@ export interface PublicCrewPage {
   canSeePrivate: boolean;
 }
 
+export interface MyMeetup {
+  crewId: number;
+  displayName: string;
+  cover: string;
+  completedAt: number;
+  attended: boolean;
+}
+
+export type CoordinatorStatus =
+  | 'needs_scheduling'
+  | 'scheduled'
+  | 'filmed'
+  | 'done'
+  | 'on_hold';
+
+export interface StaffUser {
+  userId: number;
+  username: string;
+  realName: string;
+}
+
+export interface StaffApplication extends CrewProfile {
+  crewId: number;
+  status: string;
+  stage: CrewStage;
+  coordinatorStatus: CoordinatorStatus;
+  branchNames: string[];
+  members: {
+    userId: number;
+    username: string;
+    realName: string;
+    branch: string;
+    parentOk: boolean;
+    isFounder: boolean;
+    attended: boolean;
+  }[];
+  adult: { kind: string; name: string };
+  plan: {
+    status: ReviewStatus;
+    date: string;
+    area: string;
+    activity: string;
+    note: string;
+    submittedAt: number;
+    reviewedAt: number;
+  };
+  decidedBy: StaffUser | null;
+  venue: CrewVenue;
+  venueSetBy: StaffUser | null;
+  video: { status: ReviewStatus; submittedAt: number };
+  coordinatorEmailedAt: number;
+  completedAt: number;
+  updatedAt: number;
+}
+
+export interface StaffViewer {
+  userId: number;
+  username: string;
+  isAdmin: boolean;
+  isReviewer: boolean;
+  isCoordinator: boolean;
+  canReviewPlans: boolean;
+  canCoordinate: boolean;
+  canAdminister: boolean;
+  preview: boolean;
+}
+
+export interface StaffSummary {
+  canReviewPlans: boolean;
+  canCoordinate: boolean;
+  canAdminister: boolean;
+  plansWaiting: number;
+  needsScheduling: number;
+}
+
+export interface StaffMemberOption extends StaffUser {
+  role: 'reviewer' | 'coordinator';
+}
+
+export interface StaffPageBase {
+  viewer: StaffViewer;
+  viewAsOptions: StaffMemberOption[] | null;
+  summary: StaffSummary;
+  achievementTitle: string;
+}
+
+export interface DeskData extends StaffPageBase {
+  queue: StaffApplication[];
+  decided: StaffApplication[];
+  videosWaiting: StaffApplication[] | null;
+}
+
+export interface CoordinatorData extends StaffPageBase {
+  applications: StaffApplication[];
+  counts: Record<CoordinatorStatus, number>;
+}
+
+export interface StaffEvent {
+  id: number;
+  kind: string;
+  actorId: number;
+  actorUsername: string;
+  detail: any;
+  createdAt: number;
+}
+
+export interface StaffApplicationData {
+  application: StaffApplication;
+  events: StaffEvent[];
+  notes: { id: number; authorId: number; username: string; note: string; createdAt: number }[];
+  headmaster: StaffUser | null;
+  viewer: StaffViewer;
+}
+
 export interface MeetupQuestData {
+  myMeetups?: MyMeetup[];
   directory: CrewDirectoryData;
   invites: CrewInvitation[];
   notices: CrewNotice[];

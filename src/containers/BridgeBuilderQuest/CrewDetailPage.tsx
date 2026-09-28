@@ -127,7 +127,7 @@ export default function CrewDetailPage() {
                     {crew.isMine ? (
                       <QuestNote tone="success">You&apos;re in this crew.</QuestNote>
                     ) : crew.inviteId || crew.joinable ? (
-                      <Button color={crew.inviteId ? 'purple' : 'logoBlue'} onClick={() => setJoinShown(true)}>
+                      <Button color="logoBlue" onClick={() => setJoinShown(true)}>
                         <Icon icon="user-plus" style={{ marginRight: '0.5rem' }} />
                         {crew.inviteId ? 'Accept invite and join' : 'Join this crew'}
                       </Button>
