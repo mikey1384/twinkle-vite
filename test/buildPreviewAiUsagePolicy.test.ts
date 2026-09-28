@@ -75,6 +75,6 @@ test('Build iframe success, stream, socket, and error paths share policy filteri
   );
   assert.match(
     source,
-    /const errorDetails = sanitizeBuildAppAiUsagePolicyPayload\([\s\S]*?rawErrorDetails[\s\S]*?\)/
+    /const errorDetails =\s*sanitizeBuildAppAiUsagePolicyPayload\([\s\S]*?rawErrorDetails[\s\S]*?\)/
   );
 });

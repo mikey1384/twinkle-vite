@@ -77,7 +77,11 @@ test('Build media confirmation copy is mixed-age and discloses saved app-usable 
     start
   );
   const confirmationSource = source.slice(start, end);
-  assert.match(confirmationSource, /saved in your Twinkle file storage/);
+  // The site name is per host since the lumine.network rebrand.
+  assert.match(
+    confirmationSource,
+    /saved in your \$\{SITE_NAME\} file storage/
+  );
   assert.match(confirmationSource, /this app can use it/);
   assert.match(
     confirmationSource,

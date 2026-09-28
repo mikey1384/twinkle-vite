@@ -121,7 +121,9 @@ function actionsFixture(overrides={}) {
     react:{...React,useMemo:fn=>fn(),useCallback:fn=>fn},'@emotion/css':require('@emotion/css'),
     './ActionMenu':Menu,'./ReactionButton':Reactions,'~/components/Icon':()=>null,
     '~/constants/css':{Color:{gold:()=> '#ffca28',magenta:()=> '#e100b4',logoBlue:()=> '#418ceb'}},
-    '~/constants/defaultValues':{BOOKMARK_VIEWS:{AI:'ai',ME:'me'}}
+    '~/constants/defaultValues':{BOOKMARK_VIEWS:{AI:'ai',ME:'me'}},
+    '../../Pins/context':{useChatPins:()=>null},
+    '~/helpers/chatMessageCapabilities':{canUseGenericChatMessageActions:()=>true}
   });
   const props={currentChannelId:22,subchannelId:9,messageId:51,myId:1,userId:1,message:{id:51,content:'hello'},
     thumbUrl:'',recentThumbUrl:'recent.png',timeStamp:123,fileName:'photo.png',filePath:'path/photo.png',
@@ -156,6 +158,17 @@ test('AI/own bookmark views and reward reply targets retain canonical behavior',
   const app=actionsFixture({userId:2,userCanRewardThis:true,userCanEditThis:false,userCanDeleteThis:false});
   assert.deepEqual(app.menu.props.items.map(item=>item.id),['reply','reward']);app.menu.props.items[1].onClick();assert.deepEqual(app.calls,[['reward']]);
   const reward=actionsFixture({rewardAmount:100,targetMessage:{id:8},userCanRewardThis:true});reward.menu.props.items.find(item=>item.id==='reply').onClick();assert.deepEqual(reward.calls[1],['reply',{id:8}]);assert.ok(!reward.menu.props.items.some(item=>item.id==='reward'));
+});
+
+test('Reward sits with the positive actions, far from Report; Remove and Report share the red group',()=>{
+  const app=actionsFixture({userId:2,userCanRewardThis:true,canReport:true});
+  const items=app.menu.props.items;
+  assert.deepEqual(items.map(item=>item.id),['reply','reward','edit','remove','report']);
+  assert.equal(items.find(item=>item.id==='remove').separated,true);
+  assert.equal(items.find(item=>item.id==='report').separated,false);
+  const reportOnly=actionsFixture({userId:2,userCanEditThis:false,userCanDeleteThis:false,canReport:true});
+  assert.deepEqual(reportOnly.menu.props.items.map(item=>item.id),['reply','report']);
+  assert.equal(reportOnly.menu.props.items[1].separated,true);
 });
 
 test('Wordle action uses the shared chat popup and preserves its exact reply target',()=>{
