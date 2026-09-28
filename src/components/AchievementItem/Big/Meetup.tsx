@@ -106,7 +106,7 @@ export default function Meetup({
             )}
           </>,
           <>
-            Bring a friend who isn&apos;t on Twinkle yet: play{' '}
+            Bring 7 friends who aren&apos;t on Twinkle yet: for each one, play{' '}
             <Link
               to={DARK_CITADEL_PRIVATE_ROOM_PATH}
               style={{ fontWeight: 'bold' }}
@@ -115,7 +115,7 @@ export default function Meetup({
             </Link>{' '}
             together for 10 minutes in a private room while they&apos;re a
             guest, and they sign up (or, if you moderate our Minecraft server,
-            vouch for a new player who joins Twinkle)
+            vouch for new players who join Twinkle)
           </>
         ]}
         progressObj={progressObj}
