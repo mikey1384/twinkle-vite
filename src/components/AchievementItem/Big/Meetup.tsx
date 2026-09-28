@@ -12,6 +12,8 @@ const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
 // It replaced the old free-text "let us know" form as the entry point; items
 // already sent through that form stay reviewable in Management.
 export const BRIDGE_BUILDER_QUEST_PATH = '/achievements/bridge-builder';
+// the example stories (containers/BridgeBuilderQuest/Story)
+const BRIDGE_BUILDER_EXAMPLES_PATH = '/bridge-builder/examples';
 
 export default function Meetup({
   isThumb,
@@ -93,7 +95,15 @@ export default function Meetup({
             </Link>{' '}
             walks your crew through it one step at a time
             {questShown && (
-              <div style={{ marginTop: '0.8rem' }}>
+              <div
+                style={{
+                  marginTop: '0.8rem',
+                  display: 'flex',
+                  gap: '0.6rem',
+                  flexWrap: 'wrap',
+                  alignItems: 'center'
+                }}
+              >
                 <Button
                   size="sm"
                   color="logoBlue"
@@ -101,6 +111,15 @@ export default function Meetup({
                 >
                   <Icon icon="users" style={{ marginRight: '0.5rem' }} />
                   {questButtonLabel}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="soft"
+                  color="logoBlue"
+                  onClick={() => navigate(BRIDGE_BUILDER_EXAMPLES_PATH)}
+                >
+                  <Icon icon="wand-magic-sparkles" style={{ marginRight: '0.5rem' }} />
+                  See what a finished meetup looks like
                 </Button>
               </div>
             )}

@@ -283,13 +283,15 @@ export default function Content({
         />
       ) : (rootType === 'meetupQuest' ||
           rootType === 'meetupQuestInvite' ||
-          rootType === 'meetupQuestSlot') &&
+          rootType === 'meetupQuestSlot' ||
+          rootType === 'meetupStory') &&
         rootId ? (
         <MeetupQuestCard
           crewId={rootId}
           username={appliedUsername}
           isInvite={rootType === 'meetupQuestInvite'}
           isSlot={rootType === 'meetupQuestSlot'}
+          isStory={rootType === 'meetupStory'}
         />
       ) : invitePath ? (
         <Invitation

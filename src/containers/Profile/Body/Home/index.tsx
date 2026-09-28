@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Intro from './Intro';
 import BroughtFriends from './BroughtFriends';
+import BridgeStories from './BridgeStories';
 import FeaturedSubjects from './Activities/FeaturedSubjects';
 import NotableActivities from './Activities/NotableActivities';
 import XPAnalysis from './Activities/XPAnalysis';
@@ -317,6 +318,7 @@ export default function Home({
           </div>
         )}
         <BroughtFriends profile={profile} />
+        <BridgeStories profileId={Number(profile.id) || 0} />
         {sectionOrder.map((sectionKey) => {
           const sectionContent = sectionContentByKey[sectionKey];
           if (!sectionContent) return null;

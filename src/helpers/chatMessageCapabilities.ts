@@ -19,7 +19,9 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   // A crew founder's invitation (the invitee's notification).
   'meetupQuestInvite',
   // The coordinator's "slot is set up" note to each crew member.
-  'meetupQuestSlot'
+  'meetupQuestSlot',
+  // A crew's Bridge Builder story sent to the admins for approval.
+  'meetupStory'
 ]);
 
 const SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES: ReadonlySet<string> =

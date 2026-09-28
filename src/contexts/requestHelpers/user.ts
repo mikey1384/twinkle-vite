@@ -863,6 +863,308 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // Bridge Builder story pages (twinkle-api user/routes/meetupStory.ts):
+    // examples, the history hall, story pages, the crew's editor, the
+    // parents' consent page and Mikey's approval.
+    async loadMeetupSampleStories() {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/samples`);
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupSampleStory(slug: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/samples/${encodeURIComponent(slug)}`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupStoryHall(before?: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/stories${before ? `?before=${before}` : ''}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupStoriesOverview() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/stories-overview`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupStory(storyId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/stories/${storyId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadUserMeetupStories(userId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/users/${userId}/stories`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMyMeetupStoryReveals() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/story-reveals`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async markMeetupStoryRevealSeen(storyId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/stories/${storyId}/reveal-seen`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupStoryEditor(crewId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/crews/${crewId}/story`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startMeetupStory(crewId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/story`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveMeetupStory({
+      storyId,
+      patch
+    }: {
+      storyId: number;
+      patch: Record<string, unknown>;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/stories/${storyId}`,
+          { patch },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async addMeetupStoryMedia({
+      storyId,
+      ...input
+    }: {
+      storyId: number;
+      kind: 'photo' | 'clip';
+      key: string;
+      posterKey?: string;
+      width?: number;
+      height?: number;
+      durationSec?: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/stories/${storyId}/media`,
+          input,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateMeetupStoryMedia({
+      storyId,
+      mediaId,
+      ...input
+    }: {
+      storyId: number;
+      mediaId: number;
+      caption?: string;
+      taggedUserIds?: number[];
+      noFaces?: boolean;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/stories/${storyId}/media/${mediaId}`,
+          input,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async removeMeetupStoryMedia({
+      storyId,
+      mediaId
+    }: {
+      storyId: number;
+      mediaId: number;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/user/meetup-quest/stories/${storyId}/media/${mediaId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async reorderMeetupStoryMedia({
+      storyId,
+      mediaIds
+    }: {
+      storyId: number;
+      mediaIds: number[];
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/stories/${storyId}/media-order`,
+          { mediaIds },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setMeetupStoryParentEmail({
+      storyId,
+      userId,
+      email
+    }: {
+      storyId: number;
+      userId: number;
+      email: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/stories/${storyId}/parent-email`,
+          { userId, email },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async requestMeetupStoryConsents(storyId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/stories/${storyId}/consents`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitMeetupStory(storyId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/stories/${storyId}/submit`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async reviewMeetupStory({
+      storyId,
+      action,
+      note,
+      announce
+    }: {
+      storyId: number;
+      action: 'publish' | 'send-back' | 'unpublish';
+      note?: string;
+      announce?: boolean;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/stories/${storyId}/review`,
+          { action, note, announce },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupStoryConsent(token: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/story-consent?token=${encodeURIComponent(token)}`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async decideMeetupStoryConsent({
+      token,
+      decision
+    }: {
+      token: string;
+      decision: 'approve' | 'decline' | 'withdraw';
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/story-consent/decision`,
+          { token, decision }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMyAchievements() {
       try {
         const { data } = await request.get(`${URL}/user/achievements`, auth());

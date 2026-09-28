@@ -487,13 +487,17 @@ const EVENTS: Record<string, { label: string; icon: string; color: string }> = {
   video_submitted: { label: 'Video sent', icon: 'film', color: '#139a9a' },
   video_sent_back: { label: 'Video sent back', icon: 'redo', color: '#e08a00' },
   completed: { label: 'Final review: approved', icon: 'trophy', color: '#e0a800' },
-  disbanded: { label: 'Crew disbanded', icon: 'times', color: '#8a8a8a' }
+  disbanded: { label: 'Crew disbanded', icon: 'times', color: '#8a8a8a' },
+  story_parent_email: { label: 'Parent email added for story photos', icon: 'paper-plane', color: '#418ceb' }
 };
 
 function eventText(event: StaffEvent) {
   const label = EVENTS[event.kind]?.label || event.kind;
   const by = event.actorUsername ? ` by ${event.actorUsername}` : '';
   if (event.kind === 'slot_set' && event.detail?.slot) return `${label}${by}: ${formatSlot(event.detail.slot)}`;
+  if (event.kind === 'story_parent_email' && event.detail) {
+    return `${label}${by}: ${event.detail.username || 'a member'} (${event.detail.email}, ${event.detail.count} of 3)`;
+  }
   if (event.kind === 'email_failed') {
     return `${label}${event.detail?.reason === 'no_recipient' ? ': no coordinator email address is set' : ''}`;
   }

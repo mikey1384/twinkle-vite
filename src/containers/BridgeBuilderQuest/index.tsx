@@ -19,6 +19,9 @@ import { QuestNote } from './StepCard';
 import { backLinkClass, pageWidthClass, sectionClass } from './pageStyles';
 import { StaffNav } from './staff/shared';
 import type { CrewInvitation, DirectoryCrew, MeetupQuestData, StaffSummary } from './types';
+import { AdminStoryQueue, ExampleStoriesRow, StoryHallRow } from './Story/QuestStories';
+import { storyPath } from './Story/storyHelpers';
+import type { StoriesOverview } from './Story/types';
 
 const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
 
@@ -73,7 +76,11 @@ export default function BridgeBuilderQuest() {
   const loadMeetupStaffSummary = useAppContext(
     (v) => v.requestHelpers.loadMeetupStaffSummary
   );
+  const loadMeetupStoriesOverview = useAppContext(
+    (v) => v.requestHelpers.loadMeetupStoriesOverview
+  );
   const [staff, setStaff] = useState<StaffSummary | null>(null);
+  const [stories, setStories] = useState<StoriesOverview | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedCrewId = Number(searchParams.get('crew')) || 0;
   const [data, setData] = useState<MeetupQuestData | null>(null);
@@ -96,6 +103,9 @@ export default function BridgeBuilderQuest() {
     loadMeetupStaffSummary()
       .then((summary: StaffSummary) => setStaff(summary))
       .catch(() => setStaff(null));
+    loadMeetupStoriesOverview()
+      .then((overview: StoriesOverview) => setStories(overview))
+      .catch(() => setStories(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, requestedCrewId]);
 
@@ -220,12 +230,21 @@ export default function BridgeBuilderQuest() {
                     {data.myMeetups.length}
                   </b>{' '}
                   ·{' '}
-                  {data.myMeetups.map((meetup, index) => (
-                    <span key={meetup.crewId}>
-                      {index > 0 ? ', ' : ''}
-                      <Link to={crewPath(meetup.crewId)}>{meetup.displayName}</Link>
-                    </span>
-                  ))}
+                  {data.myMeetups.map((meetup, index) => {
+                    const story = stories?.mine.find((item) => item.crewId === meetup.crewId);
+                    return (
+                      <span key={meetup.crewId}>
+                        {index > 0 ? ', ' : ''}
+                        <Link to={crewPath(meetup.crewId)}>{meetup.displayName}</Link>
+                        {story?.status === 'published' && (
+                          <>
+                            {' '}
+                            (<Link to={storyPath(story.storyId)}>our story</Link>)
+                          </>
+                        )}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
               {friendWay?.isUnlocked && (
@@ -238,6 +257,8 @@ export default function BridgeBuilderQuest() {
               )}
             </div>
           </section>
+
+          {!!stories?.samples?.length && <ExampleStoriesRow samples={stories.samples} />}
 
           {loadError && (
             <div style={{ marginTop: '2rem' }}>
@@ -364,6 +385,8 @@ export default function BridgeBuilderQuest() {
             </section>
           )}
 
+          {stories?.reviewQueue && <AdminStoryQueue queue={stories.reviewQueue} />}
+
           {data?.requestedCrew && (
             <div style={{ marginTop: '2rem' }}>
               <div
@@ -438,6 +461,7 @@ export default function BridgeBuilderQuest() {
                   onJoin={handleDirectoryJoin}
                 />
               </section>
+              {stories && <StoryHallRow hall={stories.hall} />}
             </>
           )}
 

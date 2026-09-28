@@ -18,6 +18,8 @@ import StepCard, {
 } from './StepCard';
 import StepTracker from './StepTracker';
 import VideoUploader from './VideoUploader';
+import StoryEntryCard from './Story/StoryEntryCard';
+import { ExamplesHint } from './Story/QuestStories';
 import useQuestAction from './useQuestAction';
 import type { CrewView, QuestStepKey } from './types';
 import { formatSlot } from './staff/shared';
@@ -273,6 +275,10 @@ export default function CrewPanel({
           </QuestNote>
         </div>
       )}
+      {(viewer.isMember || viewer.isAdmin) &&
+        (completed || (crew.status === 'active' && crew.video.status === 'pending')) && (
+          <StoryEntryCard crewId={crew.crewId} completed={completed} />
+        )}
       {crew.status === 'disbanded' && (
         <div style={{ marginTop: '1.6rem' }}>
           <QuestNote tone="info">This crew was closed.</QuestNote>
@@ -529,6 +535,7 @@ export default function CrewPanel({
             )}
             {planEditable ? (
               <>
+                <ExamplesHint />
                 <div>
                   <label className={questLabelClass} htmlFor="meetup-plan-date">
                     Date
@@ -661,7 +668,10 @@ export default function CrewPanel({
               />
             )}
             {viewer.canSubmitVideo && (
-              <VideoUploader crewId={crew.crewId} onChanged={onChanged} />
+              <>
+                <ExamplesHint text="Wondering what a great meetup looks like?" />
+                <VideoUploader crewId={crew.crewId} onChanged={onChanged} />
+              </>
             )}
           </>
         )}

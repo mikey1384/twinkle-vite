@@ -298,6 +298,9 @@ export default function Channel({
       if (rootType === 'meetupQuest') {
         return <span>{messageSender}: meetup quest review</span>;
       }
+      if (rootType === 'meetupStory') {
+        return <span>{messageSender}: a Bridge Builder story to review</span>;
+      }
       if (rootType === 'meetupQuestSlot') {
         return <span>{messageSender}: set up your meetup slot</span>;
       }

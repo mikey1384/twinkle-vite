@@ -138,6 +138,26 @@ const BridgeBuilderHeadmasterDesk = lazyWithRetry(
 const BridgeBuilderCoordinatorDesk = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/staff/CoordinatorDesk')
 );
+// Bridge Builder story pages, the examples, the hall, the crew's editor and
+// the parents' consent page (containers/BridgeBuilderQuest/Story)
+const BridgeStoryPage = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/Story/StoryPage')
+);
+const BridgeSampleStoryPage = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/Story/SampleStoryPage')
+);
+const BridgeStoryHallPage = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/Story/StoryHallPage')
+);
+const BridgeStoryEditorPage = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/Story/StoryEditorPage')
+);
+const BridgeStoryConsentPage = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/Story/ParentConsentPage')
+);
+const BridgeStoryReveal = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/Story/StoryReveal')
+);
 const Explore = lazyWithRetry(() => import('~/containers/Explore'));
 const ExploreRedirect = lazyWithRetry(
   () => import('~/containers/Explore/Redirect')
@@ -403,7 +423,8 @@ export default function App() {
       location.pathname === '/verify' ||
       location.pathname.startsWith('/verify/') ||
       // a parent's or guardian's consent page needs no account
-      location.pathname === '/signup/guardian')
+      location.pathname === '/signup/guardian' ||
+      location.pathname === '/bridge-builder/consent')
   );
 
   const prevUserId = useRef(userId);
@@ -1394,6 +1415,30 @@ export default function App() {
                   element={<BridgeBuilderCrewPage />}
                 />
                 <Route
+                  path="/achievements/bridge-builder/crew/:crewId/story"
+                  element={<BridgeStoryEditorPage />}
+                />
+                <Route
+                  path="/bridge-builder/stories"
+                  element={<BridgeStoryHallPage mode="hall" />}
+                />
+                <Route
+                  path="/bridge-builder/stories/:storyId"
+                  element={<BridgeStoryPage />}
+                />
+                <Route
+                  path="/bridge-builder/examples"
+                  element={<BridgeStoryHallPage mode="examples" />}
+                />
+                <Route
+                  path="/bridge-builder/examples/:slug"
+                  element={<BridgeSampleStoryPage />}
+                />
+                <Route
+                  path="/bridge-builder/consent"
+                  element={<BridgeStoryConsentPage />}
+                />
+                <Route
                   path="/achievements/bridge-builder/desk"
                   element={<BridgeBuilderHeadmasterDesk />}
                 />
@@ -1511,6 +1556,11 @@ export default function App() {
             </Suspense>
           )}
         {!!userId && !sessionAccessBlocked && <MinecraftVouchLink />}
+        {!!userId && !sessionAccessBlocked && (
+          <Suspense fallback={null}>
+            <BridgeStoryReveal />
+          </Suspense>
+        )}
         {channelOnCall.incomingShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <Incoming />

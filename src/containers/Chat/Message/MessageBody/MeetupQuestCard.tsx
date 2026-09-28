@@ -14,7 +14,8 @@ export default function MeetupQuestCard({
   crewId,
   username,
   isInvite = false,
-  isSlot = false
+  isSlot = false,
+  isStory = false
 }: {
   crewId: number;
   username: string;
@@ -22,6 +23,9 @@ export default function MeetupQuestCard({
   isInvite?: boolean;
   // rootType 'meetupQuestSlot': the coordinator set up the crew's slot
   isSlot?: boolean;
+  // rootType 'meetupStory': a crew sent its Bridge Builder story for the
+  // admins' approval (crewId is then the story id)
+  isStory?: boolean;
 }) {
   const navigate = useNavigate();
   const achievementTitle = useAppContext(
@@ -48,7 +52,13 @@ export default function MeetupQuestCard({
         `}
       >
         <Icon icon="users" style={{ color: Color.logoBlue(), marginRight: '0.6rem' }} />
-        {isSlot ? (
+        {isStory ? (
+          <>
+            <b>{username}</b>&apos;s crew sent their{' '}
+            {achievementTitle ? `${achievementTitle} ` : ''}story for your
+            approval.
+          </>
+        ) : isSlot ? (
           <>
             <b>{username}</b> set up your crew&apos;s meetup slot. See the
             date, time and place on your crew page.
@@ -72,13 +82,21 @@ export default function MeetupQuestCard({
           color="logoBlue"
           onClick={() =>
             navigate(
-              isInvite || isSlot
+              isStory
+                ? `/bridge-builder/stories/${crewId}`
+                : isInvite || isSlot
                 ? `/achievements/bridge-builder/crew/${crewId}`
                 : `/achievements/bridge-builder/desk?crew=${crewId}`
             )
           }
         >
-          {isSlot ? 'See your meetup' : isInvite ? 'See the invitation' : 'Open the review'}
+          {isStory
+            ? 'Review the story'
+            : isSlot
+            ? 'See your meetup'
+            : isInvite
+            ? 'See the invitation'
+            : 'Open the review'}
         </Button>
       </div>
     </div>
