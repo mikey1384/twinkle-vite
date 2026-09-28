@@ -4630,6 +4630,52 @@ export function useHostBridge({
             break;
           }
 
+          // Twinkle.town (Starhaven Life): reads ride sharedDb:read, changes
+          // sharedDb:write; the action name is the route after /api/town/.
+          case 'town:town':
+          case 'town:changes':
+          case 'town:me':
+          case 'town:diary':
+          case 'town:elections':
+          case 'town:housing':
+          case 'town:create':
+          case 'town:priorities':
+          case 'town:directions':
+          case 'town:opt-ins':
+          case 'town:focus':
+          case 'town:civic-card':
+          case 'town:aspiration':
+          case 'town:control-take':
+          case 'town:control-release':
+          case 'town:act':
+          case 'town:proposal':
+          case 'town:vote':
+          case 'town:candidacy':
+          case 'town:housing-claim':
+          case 'town:housing-wait':
+          case 'town:housing-leave': {
+            const action = type.slice('town:'.length);
+            const reading = [
+              'town',
+              'changes',
+              'me',
+              'diary',
+              'elections',
+              'housing'
+            ].includes(action);
+            const token = await ensureBuildApiToken(
+              [reading ? 'sharedDb:read' : 'sharedDb:write'],
+              previewAuth
+            );
+            response = await requestRefs.requestBuildTownRef.current({
+              buildId: activeBuild.id,
+              action,
+              payload: payload || {},
+              token
+            });
+            break;
+          }
+
           case 'private-db:get': {
             const privateDbReadToken = await ensureBuildApiToken(
               ['privateDb:read'],

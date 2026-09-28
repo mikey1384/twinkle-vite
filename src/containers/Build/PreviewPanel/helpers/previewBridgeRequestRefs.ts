@@ -100,6 +100,7 @@ export interface PreviewHostBridgeRequestRefs {
   setPrivateDbItemRef: AsyncRequestRef;
   comparePrivateDbItemRef: AsyncRequestRef;
   requestBuildArenaRef: AsyncRequestRef;
+  requestBuildTownRef: AsyncRequestRef;
   deletePrivateDbItemRef: AsyncRequestRef;
   listBuildRemindersRef: AsyncRequestRef;
   createBuildReminderRef: AsyncRequestRef;
