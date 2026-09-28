@@ -316,7 +316,7 @@ export default function Home({
             </Button>
           </div>
         )}
-        <BroughtFriends profile={profile} isOwnProfile={isOwnProfile} />
+        <BroughtFriends profile={profile} />
         {sectionOrder.map((sectionKey) => {
           const sectionContent = sectionContentByKey[sectionKey];
           if (!sectionContent) return null;

@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Button from '~/components/Button';
-import FormModal from '~/components/AchievementItem/FormModal';
 import { Link } from 'react-router-dom';
-import { useAppContext, useKeyContext } from '~/contexts';
 import { css, keyframes } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { SITE_NAME } from '~/constants/siteBrand';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import {
   BROUGHT_FRIENDS_ANCHOR_ID,
   BROUGHT_FRIENDS_TIERS,
@@ -21,7 +17,6 @@ import {
 } from '~/components/BroughtFriendsBadge/tiers';
 
 const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
-const NUDGE_DISMISS_KEY_PREFIX = 'bring-a-friend-nudge-dismissed:';
 const PLAQUE_BG = '#10142a';
 const PLAQUE_RAISED = '#1a2142';
 
@@ -51,44 +46,14 @@ const SPARKLES = [
 ];
 
 // "Brought N people to Twinkle": the honour plaque at the top of a profile.
-// Nothing on other people's profiles at zero. On your own, a quiet card that
-// follows your invite rewards status (sent by the server with your own
-// session, never your birthday or age): the invite prompt if you can earn
-// invite rewards (approved birthday, under 18), a nudge to add your birthday
-// if none is on file, a note while it is being checked. Grown-ups see nothing
-// (Mikey, 2026-09-28: "dont show this to grownup users. just teenagers and
-// below"), and neither does anyone whose birthday was rejected.
-export default function BroughtFriends({
-  profile,
-  isOwnProfile
-}: {
-  profile: any;
-  isOwnProfile: boolean;
-}) {
-  const myId = useKeyContext((v) => v.myState.userId);
-  const inviteRewardsStatus = useKeyContext(
-    (v) => v.myState.inviteRewardsStatus
-  );
+// Nothing at zero, on anyone's profile, your own included: the invite tip
+// was taken off the profile page (Mikey, 2026-09-28); recruiting is tracked
+// through the Face to Face achievement instead.
+export default function BroughtFriends({ profile }: { profile: any }) {
   const referrals = readReferrals(profile?.referrals);
   if (!referrals) return null;
   const { count, recent } = referrals;
-  if (count <= 0) {
-    if (!isOwnProfile || !myId) return null;
-    if (inviteRewardsStatus === 'eligible') return <BringAFriendPrompt />;
-    if (
-      inviteRewardsStatus === 'needs_birthday' ||
-      inviteRewardsStatus === 'pending'
-    ) {
-      return (
-        <BirthdayNudge
-          key={inviteRewardsStatus}
-          userId={myId}
-          status={inviteRewardsStatus}
-        />
-      );
-    }
-    return null;
-  }
+  if (count <= 0) return null;
   const tier = getBroughtFriendsTier(count);
   if (!tier) return null;
   const next = getNextBroughtFriendsTier(count);
@@ -501,195 +466,5 @@ function TierLadder({ count }: { count: number }) {
         );
       })}
     </ol>
-  );
-}
-
-function BringAFriendPrompt() {
-  const firstTier = BROUGHT_FRIENDS_TIERS[0];
-  return (
-    <PromptCard
-      componentPath="Profile/Body/Home/BroughtFriends/Prompt"
-      title={`Bring a friend to ${SITE_NAME}`}
-    >
-      Invite a friend who isn&apos;t on {SITE_NAME} yet into a private room in{' '}
-      <Link to={DARK_CITADEL_PRIVATE_ROOM_PATH}>The Dark Citadel</Link> and play
-      together for 10 minutes, or, if you moderate our Minecraft server, vouch
-      for a player there. When they join, you earn the {firstTier.name} badge,
-      shown here and on your cover.
-    </PromptCard>
-  );
-}
-
-// The same card, before invite rewards open: no birthday on file yet (add it
-// through the usual birthday check), or one waiting for an admin to check it.
-function BirthdayNudge({
-  userId,
-  status
-}: {
-  userId: number;
-  status: 'needs_birthday' | 'pending';
-}) {
-  const firstTier = BROUGHT_FRIENDS_TIERS[0];
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const checkDobApprovalSubmission = useAppContext(
-    (v) => v.requestHelpers.checkDobApprovalSubmission
-  );
-  const dismissKey = `${NUDGE_DISMISS_KEY_PREFIX}${userId}:${status}`;
-  const [dismissed, setDismissed] = useState(
-    () => getStoredItem(dismissKey) === '1'
-  );
-  const [formShown, setFormShown] = useState(false);
-  if (dismissed) return null;
-
-  return (
-    <>
-      <PromptCard
-        componentPath="Profile/Body/Home/BroughtFriends/BirthdayNudge"
-        title={
-          status === 'pending'
-            ? 'Your birthday is being checked'
-            : 'Add your birthday to unlock invite rewards'
-        }
-        actions={
-          <>
-            {status === 'needs_birthday' && (
-              <Button
-                size="sm"
-                color="logoBlue"
-                onClick={() => setFormShown(true)}
-              >
-                Add birthday
-              </Button>
-            )}
-            <Button size="sm" variant="ghost" onClick={handleDismiss}>
-              Not now
-            </Button>
-          </>
-        }
-      >
-        {status === 'pending' ? (
-          <>
-            Invite rewards open up after that. Then you can bring a friend to{' '}
-            {SITE_NAME} and earn the {firstTier.name} badge.
-          </>
-        ) : (
-          <>
-            Then you can bring a friend who isn&apos;t on {SITE_NAME} yet and
-            earn the {firstTier.name} badge, shown here and on your cover. An
-            admin checks your birthday first.
-          </>
-        )}
-      </PromptCard>
-      {formShown && <FormModal type="dob" onHide={handleFormHide} />}
-    </>
-  );
-
-  function handleDismiss() {
-    setStoredItem(dismissKey, '1');
-    setDismissed(true);
-  }
-
-  async function handleFormHide() {
-    setFormShown(false);
-    // the card follows the server: once the birthday is on file, it's pending
-    try {
-      const { status: submitStatus } = await checkDobApprovalSubmission();
-      if (submitStatus === 'pending') {
-        onSetUserState({
-          userId,
-          newState: { inviteRewardsStatus: 'pending' }
-        });
-      }
-    } catch (error) {
-      console.error('Failed to check the birthday submission:', error);
-    }
-  }
-}
-
-function PromptCard({
-  componentPath,
-  title,
-  children,
-  actions
-}: {
-  componentPath: string;
-  title: string;
-  children: React.ReactNode;
-  actions?: React.ReactNode;
-}) {
-  const firstTier = BROUGHT_FRIENDS_TIERS[0];
-  return (
-    <ErrorBoundary componentPath={componentPath}>
-      <section
-        id={BROUGHT_FRIENDS_ANCHOR_ID}
-        aria-label={title}
-        className={css`
-          display: flex;
-          align-items: center;
-          gap: 1.6rem;
-          margin-bottom: 1.5rem;
-          padding: 1.4rem 2rem;
-          border-radius: ${borderRadius};
-          border: 1px dashed var(--ui-border, ${Color.borderGray()});
-          background: #fff;
-          color: ${Color.darkerGray()};
-          @media (max-width: ${mobileMaxWidth}) {
-            border-radius: 0;
-            border-left: none;
-            border-right: none;
-            padding: 1.4rem 1.6rem;
-          }
-        `}
-      >
-        <img
-          src={firstTier.badgeSrc}
-          alt=""
-          loading="lazy"
-          className={css`
-            width: 5.2rem;
-            height: 5.2rem;
-            flex-shrink: 0;
-            align-self: flex-start;
-            object-fit: contain;
-            filter: grayscale(1);
-            opacity: 0.55;
-          `}
-        />
-        <div
-          className={css`
-            min-width: 0;
-            font-size: 1.4rem;
-            line-height: 1.5;
-            a {
-              font-weight: 700;
-            }
-          `}
-        >
-          <div
-            className={css`
-              font-size: 1.6rem;
-              font-weight: 800;
-              margin-bottom: 0.2rem;
-            `}
-          >
-            {title}
-          </div>
-          {children}
-          {actions && (
-            <div
-              className={css`
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 0.8rem;
-                margin-top: 1rem;
-              `}
-            >
-              {actions}
-            </div>
-          )}
-        </div>
-      </section>
-    </ErrorBoundary>
   );
 }
