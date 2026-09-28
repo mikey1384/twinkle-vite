@@ -62,3 +62,45 @@ test('each host is rewritten to its own page, Lumine first', () => {
   assert.ok(!hostPattern.test('www.twin-kle.com'));
   assert.ok(!hostPattern.test('preview.lumine.app'));
 });
+
+test('only link-preview crawlers are sent to the share-page API', () => {
+  const crawlerRules = vercelConfig.rewrites.filter((rewrite: any) =>
+    String(rewrite.destination).includes('/share-page/')
+  );
+  assert.deepEqual(
+    crawlerRules.map((rewrite: any) => rewrite.destination),
+    [
+      'https://api.twinkle.network/share-page/$1?brand=lumine',
+      'https://api.twinkle.network/share-page/$1?brand=twinkle'
+    ]
+  );
+  // They must come before the page rewrites, which would otherwise win.
+  const firstPageRule = vercelConfig.rewrites.findIndex((rewrite: any) =>
+    String(rewrite.destination).endsWith('.html')
+  );
+  for (const rule of crawlerRules) {
+    assert.ok(vercelConfig.rewrites.indexOf(rule) < firstPageRule);
+  }
+  const userAgent = new RegExp(
+    crawlerRules[1].has.find((h: any) => h.type === 'header').value
+  );
+  for (const crawler of [
+    'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+    'Twitterbot/1.0',
+    'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)',
+    'Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)',
+    'facebookexternalhit/1.1;kakaotalk-scrap/1.0;',
+    'WhatsApp/2.23.20.0 A',
+    'TelegramBot (like TwitterBot)'
+  ]) {
+    assert.ok(userAgent.test(crawler), crawler);
+  }
+  for (const person of [
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/480.0]',
+    'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36 KAKAOTALK 10.8.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+    'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+  ]) {
+    assert.ok(!userAgent.test(person), person);
+  }
+});

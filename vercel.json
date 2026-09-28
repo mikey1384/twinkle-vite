@@ -37,8 +37,29 @@
     {
       "source": "/((?!assets/).*)",
       "has": [
-        { "type": "host", "value": "^(www\\.)?lumine\\.network$" }
+        { "type": "host", "value": "^(www\\.)?lumine\\.network$" },
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|Slackbot|Discordbot|kakaotalk-scrap|LinkedInBot|WhatsApp|TelegramBot|Pinterestbot|redditbot|SkypeUriPreview).*"
+        }
       ],
+      "destination": "https://api.twinkle.network/share-page/$1?brand=lumine"
+    },
+    {
+      "source": "/((?!assets/).*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|Slackbot|Discordbot|kakaotalk-scrap|LinkedInBot|WhatsApp|TelegramBot|Pinterestbot|redditbot|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "https://api.twinkle.network/share-page/$1?brand=twinkle"
+    },
+    {
+      "source": "/((?!assets/).*)",
+      "has": [{ "type": "host", "value": "^(www\\.)?lumine\\.network$" }],
       "destination": "/lumine.html"
     },
     { "source": "/((?!assets/).*)", "destination": "/twinkle.html" }
