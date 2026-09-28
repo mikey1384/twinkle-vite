@@ -8,7 +8,7 @@ import axios from 'axios';
 import { RequestHelpers, type UploadCompletionMeta } from '~/types';
 import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
 import { attemptUpload } from '~/helpers';
-import { trackEvent } from '~/helpers/analytics';
+import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import {
   getLiveObservedAt,
   withFeedRowsObservedAt
@@ -2278,6 +2278,14 @@ export default function contentRequestHelpers({
           { sessionId },
           auth()
         );
+        if (!isDuplicate) {
+          const grades = Array.isArray(scoreArray) ? scoreArray : [];
+          trackEvent('grammarbles_complete', {
+            questions: grades.length,
+            perfect: grades.length > 0 && grades.every((g: any) => g === 'S'),
+            all_levels_cleared: Boolean(allLevelsClearedBonusApplied)
+          });
+        }
         return {
           isDuplicate,
           newXp,
@@ -2445,6 +2453,10 @@ export default function contentRequestHelpers({
           },
           auth()
         );
+        trackEvent('content_post', {
+          content_type: 'subject',
+          parent_content_type: contentType
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -2732,6 +2744,20 @@ export default function contentRequestHelpers({
           { questionId, response, typingMetadata, clientRequestId },
           { ...auth(), timeout: 180000, meta: { enforceTimeout: false } }
         );
+        if (data && !data.error) {
+          trackEvent('daily_reflection_submit', {
+            grade: data.grade || (data.isThoughtful === false ? 'Keyword' : undefined),
+            masterpiece_type: data.masterpieceType || undefined,
+            streak: typeof data.streak === 'number' ? data.streak : undefined,
+            streak_multiplier:
+              typeof data.streakMultiplier === 'number'
+                ? data.streakMultiplier
+                : undefined,
+            xp_awarded:
+              typeof data.xpAwarded === 'number' ? data.xpAwarded : undefined,
+            used_repair: Boolean(data.usedRepair)
+          });
+        }
         return data;
       } catch (error) {
         return handleError(error);
@@ -2777,6 +2803,7 @@ export default function contentRequestHelpers({
 
       try {
         const { data } = await shareRequest();
+        trackEvent('daily_reflection_share', { target: 'public', version });
         return data;
       } catch (error: any) {
         // The API uses responseId as the durable idempotency boundary. If the
@@ -2786,6 +2813,7 @@ export default function contentRequestHelpers({
         if (!error?.response) {
           try {
             const { data } = await shareRequest();
+            trackEvent('daily_reflection_share', { target: 'public', version });
             return data;
           } catch (retryError) {
             return handleError(retryError);
@@ -2834,6 +2862,7 @@ export default function contentRequestHelpers({
           },
           auth()
         );
+        trackEvent('daily_reflection_share', { target, version });
         return data;
       } catch (error) {
         return handleError(error);
@@ -2870,6 +2899,7 @@ export default function contentRequestHelpers({
           {},
           auth()
         );
+        trackCoinSpend('daily_reflection_streak_repair');
         return data;
       } catch (error) {
         return handleError(error);

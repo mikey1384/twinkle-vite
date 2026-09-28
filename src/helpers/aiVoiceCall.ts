@@ -1,5 +1,6 @@
 import { socket } from '~/constants/sockets/api';
 import { SITE_NAME } from '~/constants/siteBrand';
+import { trackEvent } from '~/helpers/analytics';
 
 let pendingStart: Promise<void> | null = null;
 
@@ -32,6 +33,7 @@ export function startAiVoiceCall(channelId: number, topicId?: number) {
               )
             );
           } else {
+            trackEvent('voice_call_start', { has_topic: Boolean(topicId) });
             resolve();
           }
         }

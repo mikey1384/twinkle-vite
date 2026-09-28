@@ -1,5 +1,6 @@
 import request from './axiosInstance';
 import URL from '~/constants/URL';
+import { trackEvent } from '~/helpers/analytics';
 import { RequestHelpers } from '~/types';
 import type {
   TimeAttackStartResponse,
@@ -147,6 +148,7 @@ export default function chessRequestHelpers({
           { attemptId, solved },
           auth()
         );
+        trackEvent('chess_puzzle_complete', { solved: Boolean(solved) });
         return data;
       } catch (error) {
         return handleError(error);

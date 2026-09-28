@@ -5,6 +5,7 @@ import {
 import axios from 'axios';
 import request from './axiosInstance';
 import URL from '~/constants/URL';
+import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
 import { RequestHelpers } from '~/types';
@@ -533,6 +534,7 @@ export default function buildRequestHelpers({
           {},
           getBuildRequestConfig({ maxRetries: 0 })
         );
+        trackEvent('build_reward_review_request', { build_id: Number(buildId) });
         return data;
       } catch (error) {
         throw Object.assign(
@@ -953,6 +955,9 @@ export default function buildRequestHelpers({
           { title, description },
           auth()
         );
+        if (data?.build?.id) {
+          trackEvent('build_create', { build_id: Number(data.build.id) });
+        }
         return data;
       } catch (error: any) {
         if (error?.response?.data?.aiUsagePolicy) {
@@ -2797,6 +2802,7 @@ export default function buildRequestHelpers({
           { thumbnailUrl },
           auth()
         );
+        trackEvent('build_publish', { build_id: Number(buildId) });
         return data;
       } catch (error: any) {
         if (
@@ -2852,6 +2858,7 @@ export default function buildRequestHelpers({
           {},
           auth()
         );
+        trackCoinSpend('build_generation_reset', Number(data?.costCharged) || null);
         return data;
       } catch (error: any) {
         if (
@@ -2961,6 +2968,12 @@ export default function buildRequestHelpers({
           {},
           auth()
         );
+        if (data?.build?.id) {
+          trackEvent('build_fork', {
+            source_build_id: Number(buildId),
+            build_id: Number(data.build.id)
+          });
+        }
         return data;
       } catch (error) {
         return handleError(error);

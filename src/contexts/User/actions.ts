@@ -4,7 +4,7 @@ import {
   localStorageKeys
 } from '~/constants/defaultValues';
 import { removeStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
-import { clearAnalyticsUser } from '~/helpers/analytics';
+import { clearAnalyticsUser, trackEvent } from '~/helpers/analytics';
 import type { SessionInterruption } from '~/helpers/sessionInterruption';
 
 export default function UserActions(dispatch: Dispatch) {
@@ -93,6 +93,7 @@ export default function UserActions(dispatch: Dispatch) {
       });
     },
     onOpenSigninModal() {
+      trackEvent('sign_in_open');
       return dispatch({
         type: 'OPEN_SIGNIN_MODAL'
       });

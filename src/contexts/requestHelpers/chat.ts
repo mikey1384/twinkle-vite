@@ -1,4 +1,5 @@
 import URL from '~/constants/URL';
+import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import { RequestHelpers } from '~/types';
 import request, { type RequestAttemptTiming } from './axiosInstance';
 import axios from 'axios';
@@ -249,6 +250,8 @@ export default function chatRequestHelpers({
           { cardId },
           auth()
         );
+        trackEvent('ai_card_buy', { card_id: Number(cardId) });
+        trackCoinSpend('ai_card');
         return data;
       } catch (error) {
         return handleError(error);
@@ -265,6 +268,7 @@ export default function chatRequestHelpers({
           },
           auth()
         );
+        trackCoinSpend('chat_topic');
         return {
           coins,
           topic
@@ -289,6 +293,7 @@ export default function chatRequestHelpers({
           },
           auth()
         );
+        trackCoinSpend('chat_theme');
         return data;
       } catch (error) {
         return handleError(error);
@@ -1282,6 +1287,7 @@ export default function chatRequestHelpers({
           { cardId, price },
           auth()
         );
+        trackEvent('ai_card_offer', { card_id: Number(cardId), price: Number(price) });
         return data;
       } catch (error) {
         return handleError(error);
@@ -1481,6 +1487,7 @@ export default function chatRequestHelpers({
           { cardId, price },
           auth()
         );
+        trackEvent('ai_card_list', { card_id: Number(cardId), price: Number(price) });
         return data;
       } catch (error) {
         return handleError(error);
@@ -2732,6 +2739,9 @@ export default function chatRequestHelpers({
           { useCommunityFunds },
           auth()
         );
+        if (!useCommunityFunds) {
+          trackCoinSpend('ai_energy_recharge', Number(data?.costCharged) || null);
+        }
         return data;
       } catch (error) {
         return handleChatError(error);
@@ -2944,6 +2954,7 @@ export default function chatRequestHelpers({
           { offerId },
           auth()
         );
+        trackEvent('ai_card_sell', { offer_id: Number(offerId) });
         return data;
       } catch (error) {
         return handleError(error);

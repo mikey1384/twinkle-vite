@@ -82,10 +82,71 @@
         } catch (_error) {
           // Cross-origin embeds have no Twinkle parent analytics owner.
         }
+        // Automated browsers (agent Build reviews, render checks, headless
+        // capture) are not visitors. Headless Chrome reports webdriver.
+        var isAutomatedBrowser = false;
+        try {
+          isAutomatedBrowser =
+            (typeof navigator !== 'undefined' &&
+              (navigator.webdriver === true ||
+                /HeadlessChrome/.test(navigator.userAgent || ''))) ||
+            window.localStorage.getItem('twinkle-analytics-opt-out') === '1';
+        } catch (_error) {
+          // Storage can be blocked; the navigator checks above still ran.
+        }
+        // Every URL GA receives goes through this: secrets in links (password
+        // reset and email tokens, a guardian's consent token, CLI login codes,
+        // invite passes, payment session ids) must never reach Google. Only
+        // known-safe query parameters survive, token path segments become
+        // ':token', the hash is dropped, and an outside referrer keeps only
+        // its origin. src/helpers/analytics.ts uses this for every page view.
+        var SAFE_QUERY_PARAMS = {
+          cardId: 1, choice: 1, crew: 1, embedded: 1, id: 1, lang: 1,
+          mount: 1, mountId: 1, mountType: 1, notificationId: 1, owner: 1,
+          page: 1, previewPath: 1, promptId: 1, q: 1, review: 1,
+          rewardReview: 1, sayHi: 1, sort: 1, subjectId: 1, tab: 1, v: 1,
+          view: 1
+        };
+        var TOKEN_PATH_PREFIXES = ['/reset/password/', '/verify/email/'];
+        window.twinkleAnalyticsUrl = function (input) {
+          var url;
+          try {
+            url = new URL(String(input || '/'), window.location.origin);
+          } catch (_error) {
+            return window.location.origin + '/';
+          }
+          if (url.origin !== window.location.origin) return url.origin + '/';
+          var path = url.pathname;
+          for (var i = 0; i < TOKEN_PATH_PREFIXES.length; i++) {
+            if (path.indexOf(TOKEN_PATH_PREFIXES[i]) === 0) {
+              path = TOKEN_PATH_PREFIXES[i] + ':token';
+            }
+          }
+          path = path
+            .split('/')
+            .map(function (segment) {
+              return segment.length >= 24 && /[.+]/.test(segment)
+                ? ':token'
+                : segment;
+            })
+            .join('/');
+          var kept = [];
+          url.searchParams.forEach(function (value, key) {
+            if (SAFE_QUERY_PARAMS[key] === 1 || /^utm_[a-z_]+$/.test(key)) {
+              kept.push(
+                encodeURIComponent(key) + '=' + encodeURIComponent(value)
+              );
+            }
+          });
+          return (
+            window.location.origin + path + (kept.length ? '?' + kept.join('&') : '')
+          );
+        };
         window.twinkleAnalyticsEnabled =
           isProductionWebsiteHost &&
           !isCaptureBrowser &&
-          !isSameOriginEmbeddedBuildApp;
+          !isSameOriginEmbeddedBuildApp &&
+          !isAutomatedBrowser;
         window.twinkleAnalyticsIdentityReady = true;
         window.twinkleConfigureAnalytics = function () {};
         if (!window.twinkleAnalyticsEnabled) return;
@@ -101,6 +162,12 @@
           if (analyticsConfigured) return;
           analyticsConfigured = true;
           gtag('config', 'G-S5ZDMC9JF8', {
+            // Without this gtag would attach the raw address bar to every
+            // hit; the app then sets the cleaned URL on each page view.
+            page_location: window.twinkleAnalyticsUrl(window.location.href),
+            page_referrer: document.referrer
+              ? window.twinkleAnalyticsUrl(document.referrer)
+              : undefined,
             send_page_view: false,
             allow_google_signals: false,
             allow_ad_personalization_signals: false

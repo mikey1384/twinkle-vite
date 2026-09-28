@@ -8,6 +8,7 @@ import {
   normalizeBuildChatClientMessageId
 } from '../helpers/chatMessages';
 import { normalizeProjectFilesForBuild } from '../helpers/projectFiles';
+import { trackEvent } from '~/helpers/analytics';
 import type {
   Build,
   BuildPlanAction,
@@ -380,6 +381,13 @@ export default function useRunStartActions({
           Number(activeBuild.currentArtifactVersionId || 0) > 0
             ? Number(activeBuild.currentArtifactVersionId)
             : undefined
+      });
+      trackEvent('lumine_request_send', {
+        build_id: Number(activeBuild.id),
+        model: lumineModelSelection?.model || 'default',
+        reasoning_effort: lumineModelSelection?.reasoningEffort || undefined,
+        is_owner: Boolean(isOwner),
+        has_plan_action: Boolean(options?.planAction)
       });
       return true;
     } finally {

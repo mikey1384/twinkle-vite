@@ -30,6 +30,7 @@ import {
 } from '~/helpers';
 import { type SkipShieldChecklistState } from '../SkipShieldChecklist';
 import { normalizeCanonicalWordleState } from '../wordleCanonicalState';
+import { trackEvent } from '~/helpers/analytics';
 
 export default function Game({
   attemptState,
@@ -360,6 +361,16 @@ export default function Game({
       }
 
       applyCanonicalWordleState(canonicalState);
+      if (canonicalState.wordleAttemptState.isCompleted) {
+        trackEvent('wordle_complete', {
+          solved: Boolean(canonicalState.wordleAttemptState.isSolved),
+          guesses: canonicalState.wordleGuesses.length,
+          strict: Boolean(canonicalState.wordleAttemptState.isStrict),
+          word_level: canonicalState.wordleWordLevel,
+          xp_awarded:
+            Number(canonicalState.wordleAttemptState.xpRewardAmount) || 0
+        });
+      }
       setCurrentGuess('');
       if (
         canonicalState.needsReload ||

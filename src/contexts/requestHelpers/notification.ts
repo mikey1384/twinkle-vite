@@ -1,6 +1,7 @@
 import request from './axiosInstance';
 import axios from 'axios';
 import URL from '~/constants/URL';
+import { trackCoinSpend } from '~/helpers/analytics';
 import { RequestHelpers } from '~/types';
 import { clientVersion } from '~/constants/defaultValues';
 import { buildClientVersionCheckUrl } from '~/helpers/clientUpdate';
@@ -265,6 +266,7 @@ export default function notificationRequestHelpers({
           {},
           auth()
         );
+        trackCoinSpend('daily_task_repair');
         return data;
       } catch (error) {
         return handleError(error);
@@ -378,6 +380,7 @@ export default function notificationRequestHelpers({
           {},
           auth()
         );
+        trackCoinSpend('daily_task_streak_repair');
         return data;
       } catch (error) {
         return handleError(error);

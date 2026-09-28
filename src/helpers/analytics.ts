@@ -24,7 +24,34 @@ export type AnalyticsEventName =
   | 'ai_story_complete'
   | 'mission_complete'
   | 'daily_reward_collect'
-  | 'build_view';
+  | 'build_view'
+  // Lumine Build
+  | 'build_create'
+  | 'build_fork'
+  | 'build_publish'
+  | 'build_reward_review_request'
+  | 'lumine_request_send'
+  // Daily habits
+  | 'daily_reflection_submit'
+  | 'daily_reflection_share'
+  | 'wordle_complete'
+  | 'grammarbles_complete'
+  | 'chess_puzzle_complete'
+  // Economy (GA4 standard name) and the AI Card market
+  | 'spend_virtual_currency'
+  | 'ai_card_buy'
+  | 'ai_card_list'
+  | 'ai_card_offer'
+  | 'ai_card_sell'
+  // Sign-up funnel
+  | 'sign_in_open'
+  | 'sign_up_email_verify'
+  | 'guardian_consent_request'
+  | 'guardian_consent_decision'
+  // Zero/Ciel voice
+  | 'voice_call_start'
+  // Reliability (GA4 standard name)
+  | 'exception';
 
 type AnalyticsParams = Record<
   string,
@@ -129,14 +156,39 @@ export function trackPageView({
   // /app-capture is only ever visited by the server's headless thumbnail
   // capture browser — never count it as traffic.
   if (pathname.startsWith('/app-capture')) return;
-  const pageReferrer = referrerPath
-    ? `${window.location.origin}${referrerPath}`
-    : document.referrer;
+  const pageLocation = sanitizeAnalyticsUrl(path);
+  const rawReferrer = referrerPath || document.referrer;
+  const pageReferrer = rawReferrer ? sanitizeAnalyticsUrl(rawReferrer) : '';
+  // Later events on this page inherit these instead of the raw address bar.
+  send('set', {
+    page_location: pageLocation,
+    ...(pageReferrer ? { page_referrer: pageReferrer } : {})
+  });
   send('event', 'page_view', {
-    page_location: `${window.location.origin}${path}`,
-    page_path: pathname,
+    page_location: pageLocation,
+    page_path: new URL(pageLocation).pathname,
     ...(pageReferrer ? { page_referrer: pageReferrer } : {}),
     page_title: getBasePageTitle(pathname)
+  });
+}
+
+// The cleaner lives in index.html (window.twinkleAnalyticsUrl) so the very
+// first gtag config uses it too. Without it, send nothing identifying: the
+// site origin alone.
+export function sanitizeAnalyticsUrl(input: string) {
+  if (typeof window.twinkleAnalyticsUrl === 'function') {
+    return window.twinkleAnalyticsUrl(input);
+  }
+  return `${window.location.origin}/`;
+}
+
+// Coins spent on something, in GA4's standard virtual-currency shape. Pass
+// value only when the server's response states the amount.
+export function trackCoinSpend(itemName: string, value?: number | null) {
+  trackEvent('spend_virtual_currency', {
+    virtual_currency_name: 'Twinkle Coins',
+    item_name: itemName,
+    value: typeof value === 'number' && value > 0 ? value : undefined
   });
 }
 

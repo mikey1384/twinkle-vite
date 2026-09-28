@@ -5,6 +5,7 @@ import {
 import request from './axiosInstance';
 import axios from 'axios';
 import URL from '~/constants/URL';
+import { trackEvent } from '~/helpers/analytics';
 import { clientVersion } from '~/constants/defaultValues';
 import { RequestHelpers } from '~/types';
 import { queryStringForArray } from '~/helpers/stringHelpers';
@@ -1737,7 +1738,10 @@ export default function userRequestHelpers({
           )}&email=${encodeURIComponent(email)}`,
           auth()
         );
-        if (success) rememberEmailTicket(email, emailTicket);
+        if (success) {
+          rememberEmailTicket(email, emailTicket);
+          trackEvent('sign_up_email_verify');
+        }
         return success;
       } catch (error) {
         return handleError(error);
@@ -1827,6 +1831,7 @@ export default function userRequestHelpers({
               (typeof navigator !== 'undefined' && navigator.language) || ''
           }
         );
+        trackEvent('guardian_consent_request');
         return data as {
           consentId: number;
           secret: string;
@@ -1881,6 +1886,7 @@ export default function userRequestHelpers({
           `${URL}/user/signup/guardian-consent/decision`,
           { token, decision }
         );
+        trackEvent('guardian_consent_decision', { decision });
         return data as { consent: GuardianConsentView };
       } catch (error) {
         return handleError(error);

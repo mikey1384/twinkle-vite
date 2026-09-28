@@ -20,7 +20,10 @@ function runAnalyticsBootstrap({
   hostname = 'www.twin-kle.com',
   parentOrigin = 'https://www.twin-kle.com',
   pathname = '/',
-  search = ''
+  search = '',
+  referrer = '',
+  navigatorObject = { webdriver: false, userAgent: 'Mozilla/5.0 Chrome/140' },
+  optedOut = false
 }: {
   cachedUserId?: number;
   embedded?: boolean;
@@ -28,6 +31,9 @@ function runAnalyticsBootstrap({
   parentOrigin?: string;
   pathname?: string;
   search?: string;
+  referrer?: string;
+  navigatorObject?: { webdriver?: boolean; userAgent?: string };
+  optedOut?: boolean;
 } = {}) {
   const appendedScripts: Array<Record<string, unknown>> = [];
   const dataLayer: unknown[] = [];
@@ -35,11 +41,13 @@ function runAnalyticsBootstrap({
     dataLayer,
     localStorage: {
       getItem(key: string) {
+        if (key === 'twinkle-analytics-opt-out') return optedOut ? '1' : null;
         return key === 'userId' && cachedUserId ? String(cachedUserId) : null;
       }
     },
     location: {
       hostname,
+      href: `https://${hostname}${pathname}${search}`,
       origin: `https://${hostname}`,
       pathname,
       search
@@ -52,9 +60,12 @@ function runAnalyticsBootstrap({
     : windowObject;
 
   vm.runInNewContext(analyticsScript, {
+    URL,
     URLSearchParams,
     dataLayer,
+    navigator: navigatorObject,
     document: {
+      referrer,
       createElement() {
         return {};
       },
@@ -72,7 +83,8 @@ function runAnalyticsBootstrap({
     analyticsIdentityReady: windowObject.twinkleAnalyticsIdentityReady,
     appendedScripts,
     dataLayer,
-    configureAnalytics: windowObject.twinkleConfigureAnalytics
+    configureAnalytics: windowObject.twinkleConfigureAnalytics,
+    analyticsUrl: windowObject.twinkleAnalyticsUrl as (input: string) => string
   };
 }
 
@@ -137,4 +149,80 @@ test('the Twinkle parent owns analytics for its embedded app frame', () => {
   assert.equal(twinkleEmbed.appendedScripts.length, 0);
   assert.equal(directVisit.analyticsEnabled, true);
   assert.equal(externalEmbed.analyticsEnabled, true);
+});
+
+test('automated browsers and opted-out devices never load GA', () => {
+  const webdriver = runAnalyticsBootstrap({
+    navigatorObject: { webdriver: true, userAgent: 'Mozilla/5.0 Chrome/140' }
+  });
+  const oldHeadless = runAnalyticsBootstrap({
+    navigatorObject: { userAgent: 'Mozilla/5.0 HeadlessChrome/120' }
+  });
+  const optedOut = runAnalyticsBootstrap({ optedOut: true });
+
+  for (const run of [webdriver, oldHeadless, optedOut]) {
+    assert.equal(run.analyticsEnabled, false);
+    assert.equal(run.appendedScripts.length, 0);
+  }
+});
+
+test('URLs sent to GA never carry secrets from links', () => {
+  const { analyticsUrl } = runAnalyticsBootstrap();
+  const origin = 'https://www.twin-kle.com';
+
+  assert.equal(
+    analyticsUrl('/reset/password/eyJhbGciOiJIUzI1NiJ9+eyJpZCI6NX0+sig'),
+    `${origin}/reset/password/:token`
+  );
+  assert.equal(
+    analyticsUrl('/verify/email/abc.def.ghi'),
+    `${origin}/verify/email/:token`
+  );
+  assert.equal(
+    analyticsUrl('/signup/guardian?token=secret123&choice=decline&lang=ko'),
+    `${origin}/signup/guardian?choice=decline&lang=ko`
+  );
+  assert.equal(analyticsUrl('/cli?code=ABCD-1234'), `${origin}/cli`);
+  assert.equal(
+    analyticsUrl('/?mcpass=Zx81kQwertyuiopasdfghjkl'),
+    `${origin}/`
+  );
+  assert.equal(
+    analyticsUrl('/management/payment?stripeCheckoutSessionId=cs_live_1&session_id=cs_2'),
+    `${origin}/management/payment`
+  );
+  // A future secret parameter is dropped by default (allowlist).
+  assert.equal(analyticsUrl('/subjects/37021?invite=xyz'), `${origin}/subjects/37021`);
+  // Safe parameters, campaign tags and ordinary slugs survive; the hash goes.
+  assert.equal(
+    analyticsUrl(`${origin}/ai-cards?cardId=78491&sort=new&utm_source=kakao#top`),
+    `${origin}/ai-cards?cardId=78491&sort=new&utm_source=kakao`
+  );
+  assert.equal(
+    analyticsUrl('/app/2206/song-144619-full-circle'),
+    `${origin}/app/2206/song-144619-full-circle`
+  );
+  // A long dotted token anywhere in the path is masked.
+  assert.equal(
+    analyticsUrl('/app/2610/join/aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbb'),
+    `${origin}/app/2610/join/:token`
+  );
+  // Outside referrers keep only their origin.
+  assert.equal(
+    analyticsUrl('https://mail.example.com/inbox/123?msg=reset-link'),
+    'https://mail.example.com/'
+  );
+});
+
+test('the first gtag config already uses the cleaned address and referrer', () => {
+  const run = runAnalyticsBootstrap({
+    pathname: '/verify/email/abc.def.ghi',
+    referrer: 'https://mail.example.com/inbox/123'
+  });
+  const config = run.dataLayer.find(
+    (entry: any) => entry && entry[0] === 'config'
+  ) as any;
+  assert.ok(config, 'config was sent');
+  assert.equal(config[2].page_location, 'https://www.twin-kle.com/verify/email/:token');
+  assert.equal(config[2].page_referrer, 'https://mail.example.com/');
 });

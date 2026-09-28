@@ -9,6 +9,7 @@ import {
   reloadForLazyImportRecovery
 } from '~/helpers/lazyImportHelpers';
 import reportDomMutationEvent from '~/helpers/reportDomMutationEvent';
+import { trackEvent } from '~/helpers/analytics';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color } from '~/constants/css';
 
@@ -108,6 +109,7 @@ export default class ErrorBoundary extends Component<
           info: buildErrorInfo(errorInfo)
         });
       }
+      trackBoundaryException(this.props.componentPath, error, 'dom_mutation');
       this.setState({
         hasError: true,
         lastErrorIsLazyImportLoadError: false
@@ -124,6 +126,11 @@ export default class ErrorBoundary extends Component<
       });
     }
 
+    trackBoundaryException(
+      this.props.componentPath,
+      error,
+      lazyImportLoadError ? 'stale_bundle' : 'render'
+    );
     this.setState({
       hasError: true,
       lastErrorIsLazyImportLoadError: lazyImportLoadError
@@ -323,4 +330,21 @@ async function reportError({
   } catch (error) {
     return console.error(error);
   }
+}
+
+// The user is now looking at the error screen. GA gets where it happened and
+// the error class only; messages can quote user content.
+function trackBoundaryException(
+  componentPath: string | undefined,
+  error: Error,
+  kind: 'dom_mutation' | 'stale_bundle' | 'render'
+) {
+  trackEvent('exception', {
+    description: `${componentPath || 'unknown'}: ${error?.name || 'Error'}`.slice(
+      0,
+      100
+    ),
+    fatal: true,
+    error_kind: kind
+  });
 }
