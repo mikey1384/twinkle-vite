@@ -288,7 +288,9 @@ export default function RewardSettingsModal({
                             <small>
                               {rule.verifier === 'completion'
                                 ? 'for finishing it'
-                                : 'for a correct answer'}
+                                : rule.verifier === 'generated-quiz'
+                                  ? 'at the top step, for each correct answer'
+                                  : 'for a correct answer'}
                             </small>
                           </span>
                         </li>

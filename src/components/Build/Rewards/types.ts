@@ -25,7 +25,17 @@ export interface RewardRule {
   coins: number;
   // numeric-quiz: server-checked answers. completion: the app reports a
   // finished activity; the server holds it to minSeconds, once a day, budgets.
-  verifier: 'numeric-quiz' | 'completion';
+  // generated-quiz: questions the server writes into a bank (see `bank`).
+  verifier: 'numeric-quiz' | 'completion' | 'generated-quiz';
+  // generated-quiz only: the difficulty ladder (percent of xp/coins per step,
+  // easiest first, ending at 100), the starting step, the generation brief
+  // and the topics questions are written for.
+  bank?: {
+    steps: number[];
+    startStep?: number;
+    instructions: string;
+    topics: Array<{ key: string; title: string; description: string }>;
+  };
   // completion only: seconds that must pass between start and claim.
   minSeconds?: number;
   maxLifetimeClaims?: number;
@@ -188,7 +198,7 @@ export interface RewardSettings {
       title: string;
       xp: number;
       coins: number;
-      verifier: 'numeric-quiz' | 'completion';
+      verifier: 'numeric-quiz' | 'completion' | 'generated-quiz';
       minSeconds?: number;
       progression?: string;
       questionSets: number;

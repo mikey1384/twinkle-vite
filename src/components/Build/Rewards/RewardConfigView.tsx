@@ -253,6 +253,9 @@ function RewardRuleGrouping({ rule }: { rule: RewardRule }) {
 }
 
 function RewardRuleCard({ rule }: { rule: RewardRule }) {
+  if (rule.verifier === 'generated-quiz' && rule.bank) {
+    return <RewardBankRuleCard rule={rule} bank={rule.bank} />;
+  }
   if (rule.verifier === 'completion') {
     return (
       <article>
@@ -381,5 +384,69 @@ export function RewardReviewDetails({ review }: { review: RewardReview }) {
         ))}
       </details>
     </div>
+  );
+}
+
+// What the reviewer approves for a question-bank rule: the ladder and what
+// each step pays, the topics, and the brief the server writes questions from.
+// Individual questions are never reviewed (Mikey, 2026-09-28).
+function RewardBankRuleCard({
+  rule,
+  bank
+}: {
+  rule: RewardRule;
+  bank: NonNullable<RewardRule['bank']>;
+}) {
+  const tries =
+    rule.maxAttempts === null
+      ? 'unlimited tries until the day ends'
+      : `${rule.maxAttempts ?? 3} tries`;
+  return (
+    <article>
+      <h4>
+        {rule.title} · up to {rule.xp.toLocaleString()} XP +{' '}
+        {rule.coins.toLocaleString()} Coins a question
+      </h4>
+      {rule.howTo ? <p>How players earn it: {rule.howTo}</p> : null}
+      <RewardRuleGrouping rule={rule} />
+      <p>
+        Rule ID: {rule.id} · question bank written by the server (GPT-6 Sol,
+        billed to each learner&apos;s AI Energy) and checked by a second
+        independent solve · many questions a day within the day budgets ·{' '}
+        {tries}
+        {rule.retry
+          ? ` · after a wrong answer pays ${rule.retry.xpPercent}% XP + ${rule.retry.coinsPercent}% Coins of the step`
+          : ''}
+      </p>
+      <p>
+        Ladder (learners start at step {bank.startStep || 1}; two first-try
+        answers climb, two misses step down):
+      </p>
+      <ol>
+        {bank.steps.map((percent, index) => (
+          <li key={index}>
+            Step {index + 1}: {percent}% ·{' '}
+            {retryAmount(rule.xp, percent).toLocaleString()} XP +{' '}
+            {retryAmount(rule.coins, percent).toLocaleString()} Coins
+          </li>
+        ))}
+      </ol>
+      <details>
+        <summary>
+          {bank.topics.length} {bank.topics.length === 1 ? 'topic' : 'topics'}
+        </summary>
+        <ul>
+          {bank.topics.map((topic) => (
+            <li key={topic.key}>
+              <strong>{topic.title}</strong> ({topic.key}): {topic.description}
+            </li>
+          ))}
+        </ul>
+      </details>
+      <details>
+        <summary>Generation brief</summary>
+        <p style={{ whiteSpace: 'pre-wrap' }}>{bank.instructions}</p>
+      </details>
+    </article>
   );
 }

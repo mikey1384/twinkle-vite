@@ -4886,9 +4886,28 @@ export function useHostBridge({
           case 'rewards:claim':
           case 'rewards:timeline':
           case 'rewards:archived-problem':
-          case 'rewards:leaderboard': {
+          case 'rewards:leaderboard':
+          case 'rewards:bank-status':
+          case 'rewards:bank-start':
+          case 'rewards:bank-generate':
+          case 'rewards:bank-progress':
+          case 'rewards:bank-claim':
+          case 'rewards:bank-report': {
             // Never forward app-supplied grants, versions, recipients or amounts.
             const runtimeGrant = activeBuild.rewardRuntimeGrant;
+            // Question-bank requests: which topic, the one answer, a report,
+            // and the request ID the progress bar polls. Amounts and steps
+            // always come from the server.
+            const bankFields = type.startsWith('rewards:bank-')
+              ? {
+                  topicKey: payload?.topicKey,
+                  ...(payload?.skip === true ? { skip: true } : {}),
+                  answer: payload?.answer,
+                  questionId: payload?.questionId,
+                  reason: payload?.reason,
+                  requestId: payload?.requestId
+                }
+              : {};
             const appMcpControlled = appMcpControlsThisTab();
             if (!runtimeOnly || !runtimeGrant || appMcpControlled) {
               // Drafts: the owner sees their own declaration and question
@@ -4910,6 +4929,7 @@ export function useHostBridge({
                     operation: type.slice('rewards:'.length),
                     payload: {
                       ruleId: payload?.ruleId,
+                      ...bankFields,
                       ...(type === 'rewards:start'
                         ? { levelIndex: payload?.levelIndex }
                         : {}),
@@ -5002,6 +5022,7 @@ export function useHostBridge({
               operation: type.slice('rewards:'.length),
               payload: {
                 ruleId: payload?.ruleId,
+                ...bankFields,
                 ...(type === 'rewards:start'
                   ? { levelIndex: payload?.levelIndex }
                   : {}),
