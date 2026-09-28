@@ -803,6 +803,7 @@ registerMethods('user', [
   'loadMyAchievements',
   'loadMeetupQuest',
   'loadMyMeetupQuestSummary',
+  'loadInviteCandidateStatuses',
   'loadMeetupStaffSummary',
   'loadMeetupDesk',
   'loadCoordinatorApplications',

@@ -7,8 +7,9 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import CrewProfileFields from './CrewProfileFields';
+import InviteUserPicker from './InviteUserPicker';
 import { MemberAvatars } from './DirectoryCard';
-import { QuestNote, questHelpClass, questInputClass, questLabelClass } from './StepCard';
+import { QuestNote, questHelpClass, questLabelClass } from './StepCard';
 import useQuestAction from './useQuestAction';
 import type { CrewView } from './types';
 
@@ -62,7 +63,6 @@ export default function ManageCrewPanel({
   const [name, setName] = useState(crew.name);
   const [about, setAbout] = useState(crew.about);
   const [cover, setCover] = useState(crew.cover);
-  const [inviteName, setInviteName] = useState('');
   const [inviteSent, setInviteSent] = useState('');
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
@@ -156,28 +156,12 @@ export default function ManageCrewPanel({
 
       <div className={blockClass}>
         <h4 className={blockTitleClass}>Invite someone</h4>
-        <div className={css`display: flex; gap: 0.6rem;`}>
-          <input
-            aria-label="Username to invite"
-            className={questInputClass}
-            value={inviteName}
-            maxLength={60}
-            placeholder="Their Twinkle username"
-            disabled={frozen || plannedOrReviewed}
-            onChange={(event) => {
-              setInviteName(event.target.value);
-              setInviteSent('');
-            }}
-          />
-          <Button
-            color="logoBlue"
-            loading={inviteAction.busy}
-            disabled={inviteAction.busy || !inviteName.trim() || frozen || plannedOrReviewed}
-            onClick={handleInvite}
-          >
-            Invite
-          </Button>
-        </div>
+        <InviteUserPicker
+          crewId={crew.crewId}
+          disabled={frozen || plannedOrReviewed}
+          busy={inviteAction.busy}
+          onInvite={handleInvite}
+        />
         <span className={questHelpClass}>
           They see an invitation on their page and a message in chat, with
           your crew name and branches.
@@ -339,15 +323,13 @@ export default function ManageCrewPanel({
     </div>
   );
 
-  async function handleInvite() {
-    const username = inviteName.trim();
+  async function handleInvite(user: { id: number; username: string }) {
+    setInviteSent('');
     const ok = await inviteAction.run(() =>
-      inviteToMeetupCrew({ crewId: crew.crewId, username })
+      inviteToMeetupCrew({ crewId: crew.crewId, username: user.username })
     );
-    if (ok) {
-      setInviteName('');
-      setInviteSent(username);
-    }
+    if (ok) setInviteSent(user.username);
+    return ok;
   }
 
   async function handleConfirm() {

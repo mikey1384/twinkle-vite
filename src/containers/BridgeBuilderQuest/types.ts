@@ -216,6 +216,7 @@ export interface StaffApplication extends CrewProfile {
     userId: number;
     username: string;
     realName: string;
+    profilePicUrl?: string;
     branch: string;
     parentOk: boolean;
     isFounder: boolean;
@@ -243,6 +244,8 @@ export interface StaffApplication extends CrewProfile {
 export interface StaffViewer {
   userId: number;
   username: string;
+  realName?: string;
+  profilePicUrl?: string;
   isAdmin: boolean;
   isReviewer: boolean;
   isCoordinator: boolean;
@@ -258,6 +261,8 @@ export interface StaffSummary {
   canAdminister: boolean;
   plansWaiting: number;
   needsScheduling: number;
+  meetupsThisWeek?: number;
+  metThisMonth?: number;
 }
 
 export interface StaffMemberOption extends StaffUser {
@@ -272,6 +277,7 @@ export interface StaffPageBase {
 }
 
 export interface DeskData extends StaffPageBase {
+  coordinator?: StaffUser | null;
   queue: StaffApplication[];
   decided: StaffApplication[];
   videosWaiting: StaffApplication[] | null;

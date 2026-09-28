@@ -1,28 +1,36 @@
-import React from 'react';
-import { css } from '@emotion/css';
+import React, { useEffect, useState } from 'react';
+import { css, keyframes } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import ProfilePic from '~/components/ProfilePic';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import CrewCover from '../CrewCover';
-import { BranchChips } from '../DirectoryCard';
+import CrewCover, { StageBadge } from '../CrewCover';
 import { questHelpClass, questInputClass, questLabelClass } from '../StepCard';
 import type {
   CoordinatorStatus,
   MeetupSlot,
   StaffApplication,
   StaffMemberOption,
+  StaffSummary,
   StaffViewer
 } from '../types';
 
+// ---- Formatting ----
+
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function parseDate(date: string) {
+  const match = String(date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const value = new Date(Date.UTC(+match[1], +match[2] - 1, +match[3]));
+  return { value, month: MONTHS[+match[2] - 1], day: +match[3], weekday: WEEKDAYS[value.getUTCDay()] };
+}
 
 export function formatSlot(slot: MeetupSlot) {
-  const match = slot.date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  const day = match
-    ? WEEKDAYS[new Date(Date.UTC(+match[1], +match[2] - 1, +match[3])).getUTCDay()]
-    : '';
-  return `${day} ${slot.date} · ${slot.start}–${slot.end}`;
+  const parsed = parseDate(slot.date);
+  return `${parsed ? `${parsed.weekday} ` : ''}${slot.date} · ${slot.start}–${slot.end}`;
 }
 
 export function formatTime(seconds: number) {
@@ -36,39 +44,61 @@ export function formatTime(seconds: number) {
   });
 }
 
-export const COORDINATOR_CHIPS: Record<CoordinatorStatus, { label: string; color: string }> = {
-  needs_scheduling: { label: 'Needs scheduling', color: '#e08a00' },
-  scheduled: { label: 'Scheduled', color: '#418ceb' },
-  filmed: { label: 'Met & filmed', color: '#139a9a' },
-  done: { label: 'Done', color: '#28a745' },
-  on_hold: { label: 'On hold', color: '#888888' }
-};
-
-export function CoordinatorChip({ status }: { status: CoordinatorStatus }) {
-  const chip = COORDINATOR_CHIPS[status];
-  return (
-    <span
-      className={css`
-        display: inline-block;
-        padding: 0.2rem 0.9rem;
-        border-radius: 999px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: #fff;
-        background: ${chip.color};
-        white-space: nowrap;
-      `}
-    >
-      {chip.label}
-    </span>
-  );
+export function localToday() {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 }
+
+export function addDays(date: string, days: number) {
+  const parsed = parseDate(date);
+  if (!parsed) return date;
+  return new Date(parsed.value.getTime() + days * 86400_000).toISOString().slice(0, 10);
+}
+
+function firstName(viewer: { realName?: string; username: string }) {
+  return (viewer.realName || '').trim().split(/\s+/)[0] || viewer.username;
+}
+
+function greeting() {
+  const hour = new Date().getHours();
+  return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+}
+
+// ---- Motion (subtle, and off for reduced-motion users) ----
+
+const noMotion = `
+  @media (prefers-reduced-motion: reduce) {
+    animation: none !important;
+    transition: none !important;
+  }
+`;
+
+const riseIn = keyframes`
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+export const liftCardClass = css`
+  border: 1px solid var(--ui-border);
+  border-radius: 1.6rem;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: ${riseIn} 0.35s ease-out;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.8rem 2.2rem rgba(0, 0, 0, 0.09);
+  }
+  ${noMotion}
+`;
 
 export const staffCardClass = css`
   border: 1px solid var(--ui-border);
-  border-radius: 1.2rem;
+  border-radius: 1.6rem;
   background: #fff;
   overflow: hidden;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.04);
 `;
 
 export const staffHeadingClass = css`
@@ -78,8 +108,288 @@ export const staffHeadingClass = css`
   color: ${Color.black()};
 `;
 
-// Admins: "View as" a headmaster or the coordinator. The page then renders
-// that person's own server response; actions are off while previewing.
+export const sectionTitleClass = css`
+  margin: 3rem 0 1.2rem;
+  font-size: 2rem;
+  font-weight: bold;
+  color: ${Color.black()};
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    margin: 2.4rem 0 1rem;
+  }
+`;
+
+export function CountBubble({ count, color = Color.logoBlue() }: { count: number; color?: string }) {
+  return (
+    <span
+      className={css`
+        min-width: 2.6rem;
+        padding: 0.1rem 0.8rem;
+        border-radius: 999px;
+        background: ${color};
+        color: #fff;
+        font-size: 1.3rem;
+        text-align: center;
+      `}
+    >
+      {count}
+    </span>
+  );
+}
+
+// Staff pages keep a gutter on phones (cards are rounded, not full-bleed).
+export const staffMainGutterClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0 1rem;
+    box-sizing: border-box;
+  }
+`;
+
+// ---- Status chips ----
+
+export const COORDINATOR_CHIPS: Record<
+  CoordinatorStatus,
+  { label: string; color: string; icon: string }
+> = {
+  needs_scheduling: { label: 'Needs scheduling', color: '#e08a00', icon: 'clock' },
+  scheduled: { label: 'Scheduled', color: '#418ceb', icon: 'check-circle' },
+  filmed: { label: 'Met & filmed', color: '#139a9a', icon: 'film' },
+  done: { label: 'Done', color: '#28a745', icon: 'trophy' },
+  on_hold: { label: 'On hold', color: '#8a8a8a', icon: 'pause' }
+};
+
+export function CoordinatorChip({ status }: { status: CoordinatorStatus }) {
+  const chip = COORDINATOR_CHIPS[status];
+  return (
+    <span
+      className={css`
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.3rem 1rem;
+        border-radius: 999px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: ${chip.color};
+        background: #fff;
+        border: 1.5px solid ${chip.color};
+        white-space: nowrap;
+      `}
+    >
+      <Icon icon={chip.icon} />
+      {chip.label}
+    </span>
+  );
+}
+
+// ---- Welcome header ----
+
+export interface StatTileData {
+  icon: string;
+  label: string;
+  // the summary line's wording for exactly one ("plan waiting")
+  one?: string;
+  value: number;
+  color: string;
+}
+
+export function WelcomeHeader({
+  viewer,
+  title,
+  lead,
+  stats,
+  summary
+}: {
+  viewer: StaffViewer;
+  title: string;
+  lead: string;
+  stats: StatTileData[];
+  summary: StaffSummary;
+}) {
+  const line = stats
+    .filter((stat) => stat.value > 0)
+    .map((stat) => `${stat.value} ${stat.value === 1 && stat.one ? stat.one : stat.label.toLowerCase()}`)
+    .join(' · ');
+  return (
+    <section
+      className={css`
+        margin-top: 1.4rem;
+        border-radius: 2rem;
+        background: #fff;
+        border: 1px solid var(--ui-border);
+        box-shadow: 0 0.4rem 1.6rem rgba(65, 140, 235, 0.08);
+        overflow: hidden;
+      `}
+    >
+      <div
+        className={css`
+          background: ${Color.logoBlue(0.08)};
+          padding: 2rem 2.2rem 1.6rem;
+          display: flex;
+          gap: 1.6rem;
+          align-items: center;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1.6rem 1.2rem 1.2rem;
+            gap: 1.2rem;
+          }
+        `}
+      >
+        <span
+          className={css`
+            width: 6.4rem;
+            height: 6.4rem;
+            flex-shrink: 0;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 5rem;
+              height: 5rem;
+            }
+          `}
+        >
+          <ProfilePic
+            userId={viewer.userId}
+            profilePicUrl={viewer.profilePicUrl}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </span>
+        <div style={{ minWidth: 0 }}>
+          <div className={css`font-size: 1.3rem; font-weight: bold; color: ${Color.logoBlue()}; text-transform: uppercase; letter-spacing: 0.06em;`}>
+            {title}
+          </div>
+          <h1
+            className={css`
+              margin: 0.2rem 0 0;
+              font-size: 2.6rem;
+              font-weight: bold;
+              color: ${Color.black()};
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 2.1rem;
+              }
+            `}
+          >
+            {greeting()}, {firstName(viewer)} 👋
+          </h1>
+          <p className={css`margin: 0.3rem 0 0; font-size: 1.45rem; color: ${Color.darkerGray()};`}>
+            {line || lead}
+          </p>
+        </div>
+      </div>
+      <div
+        className={css`
+          display: grid;
+          grid-template-columns: repeat(${stats.length}, minmax(0, 1fr));
+          gap: 1rem;
+          padding: 1.4rem 2.2rem 1.6rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            padding: 1.2rem;
+          }
+        `}
+      >
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 1rem;
+              padding: 1rem 1.2rem;
+              border-radius: 1.2rem;
+              background: #fff;
+              border: 1px solid var(--ui-border);
+              transition: transform 0.2s ease;
+              &:hover {
+                transform: translateY(-2px);
+              }
+              ${noMotion}
+            `}
+          >
+            <span
+              className={css`
+                width: 3.8rem;
+                height: 3.8rem;
+                border-radius: 1rem;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.7rem;
+                color: ${stat.color};
+                background: ${stat.color}1f;
+              `}
+            >
+              <Icon icon={stat.icon} />
+            </span>
+            <span style={{ minWidth: 0 }}>
+              <b style={{ display: 'block', fontSize: '2.2rem', lineHeight: 1.1, color: Color.black() }}>
+                {stat.value}
+              </b>
+              <span style={{ fontSize: '1.2rem', color: Color.darkGray() }}>{stat.label}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className={css`padding: 0 2.2rem 1.6rem; @media (max-width: ${mobileMaxWidth}) { padding: 0 1.2rem 1.4rem; }`}>
+        <StaffNav summary={summary} />
+      </div>
+    </section>
+  );
+}
+
+// ---- Staff navigation (quest page + desks) ----
+
+export function StaffNav({
+  summary
+}: {
+  summary: { canReviewPlans: boolean; canCoordinate: boolean; plansWaiting: number; needsScheduling: number };
+}) {
+  const pill = css`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    border: 1.5px solid ${Color.logoBlue(0.5)};
+    background: #fff;
+    font-size: 1.35rem;
+    font-weight: bold;
+    color: ${Color.logoBlue()};
+    transition: background 0.15s ease;
+    &:hover {
+      background: ${Color.logoBlue(0.08)};
+      text-decoration: none;
+    }
+    ${noMotion}
+  `;
+  const badge = (count: number) =>
+    count > 0 ? <CountBubble count={count} color={Color.orange()} /> : null;
+  return (
+    <div className={css`display: flex; gap: 0.8rem; flex-wrap: wrap;`}>
+      {summary.canReviewPlans && (
+        <Link className={pill} to="/achievements/bridge-builder/desk">
+          <Icon icon="clipboard-check" />
+          Headmaster desk
+          {badge(summary.plansWaiting)}
+        </Link>
+      )}
+      {summary.canCoordinate && (
+        <Link className={pill} to="/achievements/bridge-builder/coordinator">
+          <Icon icon="clock" />
+          Coordinator desk
+          {badge(summary.needsScheduling)}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+// ---- View as (admins) ----
+
 export function ViewAsBar({
   viewer,
   options,
@@ -91,6 +401,20 @@ export function ViewAsBar({
   viewAs: number;
   onChange: (userId: number) => void;
 }) {
+  const chip = (active: boolean) => css`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem 0.4rem 0.4rem;
+    border-radius: 999px;
+    border: 1.5px solid ${active ? Color.logoBlue() : 'var(--ui-border)'};
+    background: ${active ? Color.logoBlue(0.1) : '#fff'};
+    color: ${active ? Color.logoBlue() : Color.darkerGray()};
+    font-size: 1.25rem;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+  `;
   return (
     <>
       {options && (
@@ -99,33 +423,33 @@ export function ViewAsBar({
             display: flex;
             align-items: center;
             gap: 0.6rem;
-            flex-wrap: wrap;
             margin-top: 1.2rem;
-            font-size: 1.3rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              margin: 1.2rem 1rem 0;
-            }
+            overflow-x: auto;
+            padding-bottom: 0.3rem;
           `}
         >
-          <b style={{ color: Color.darkGray() }}>View as:</b>
-          <Button
-            size="sm"
-            variant={!viewAs ? 'solid' : 'outline'}
-            color="logoBlue"
-            onClick={() => onChange(0)}
-          >
+          <span style={{ fontSize: '1.25rem', color: Color.darkGray(), whiteSpace: 'nowrap' }}>
+            <Icon icon="eye" /> View as
+          </span>
+          <button type="button" className={chip(!viewAs)} onClick={() => onChange(0)}>
+            <span className={css`width: 2.4rem; height: 2.4rem; border-radius: 50%; background: ${Color.logoBlue(0.15)}; display: inline-flex; align-items: center; justify-content: center;`}>
+              <Icon icon="crown" />
+            </span>
             Admin (you)
-          </Button>
+          </button>
           {options.map((option) => (
-            <Button
+            <button
               key={`${option.userId}-${option.role}`}
-              size="sm"
-              variant={viewAs === option.userId ? 'solid' : 'outline'}
-              color="logoBlue"
+              type="button"
+              aria-pressed={viewAs === option.userId}
+              className={chip(viewAs === option.userId)}
               onClick={() => onChange(option.userId)}
             >
-              {option.role === 'reviewer' ? 'Headmaster' : 'Coordinator'} ({option.username})
-            </Button>
+              <span className={css`width: 2.4rem; height: 2.4rem; border-radius: 50%; overflow: hidden; display: inline-flex;`}>
+                <ProfilePic userId={option.userId} style={{ width: '100%', height: '100%' }} />
+              </span>
+              {option.role === 'reviewer' ? 'Headmaster' : 'Coordinator'} · {option.username}
+            </button>
           ))}
           {options.length === 0 && (
             <span className={questHelpClass}>No headmasters or coordinator are set up yet.</span>
@@ -137,10 +461,10 @@ export function ViewAsBar({
           role="status"
           className={css`
             margin-top: 1rem;
-            padding: 0.8rem 1.2rem;
-            border-radius: 0.8rem;
-            background: ${Color.logoBlue(0.12)};
-            border: 1px solid ${Color.logoBlue(0.4)};
+            padding: 0.9rem 1.2rem;
+            border-radius: 1rem;
+            background: ${Color.logoBlue(0.1)};
+            border: 1px dashed ${Color.logoBlue(0.6)};
             font-size: 1.3rem;
             font-weight: bold;
             color: ${Color.logoBlue()};
@@ -153,75 +477,183 @@ export function ViewAsBar({
   );
 }
 
-export function StaffNav({
-  summary
-}: {
-  summary: { canReviewPlans: boolean; canCoordinate: boolean; plansWaiting: number; needsScheduling: number };
-}) {
-  const badge = (count: number) =>
-    count > 0 ? (
-      <span
-        className={css`
-          margin-left: 0.5rem;
-          padding: 0 0.7rem;
-          border-radius: 999px;
-          background: ${Color.red()};
-          color: #fff;
-          font-size: 1.1rem;
-        `}
-      >
-        {count}
-      </span>
-    ) : null;
-  const linkClass = css`
-    display: inline-flex;
-    align-items: center;
-    font-size: 1.4rem;
-    font-weight: bold;
-    color: ${Color.logoBlue()};
-  `;
+// ---- Building blocks of an application card ----
+
+export function CalendarChip({ date, time }: { date: string; time?: string }) {
+  const parsed = parseDate(date);
+  if (!parsed) return null;
   return (
-    <div
+    <span
+      title={date}
       className={css`
-        display: flex;
-        gap: 1.6rem;
-        flex-wrap: wrap;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 6.2rem;
+        flex-shrink: 0;
+        border-radius: 1rem;
+        overflow: hidden;
+        border: 1px solid var(--ui-border);
+        background: #fff;
+        box-shadow: 0 0.1rem 0.4rem rgba(0, 0, 0, 0.06);
       `}
     >
-      {summary.canReviewPlans && (
-        <Link className={linkClass} to="/achievements/bridge-builder/desk">
-          <Icon icon="clipboard-check" style={{ marginRight: '0.5rem' }} />
-          Headmaster desk{badge(summary.plansWaiting)}
-        </Link>
-      )}
-      {summary.canCoordinate && (
-        <Link className={linkClass} to="/achievements/bridge-builder/coordinator">
-          <Icon icon="clock" style={{ marginRight: '0.5rem' }} />
-          Coordinator desk{badge(summary.needsScheduling)}
-        </Link>
-      )}
-    </div>
+      <span
+        className={css`
+          width: 100%;
+          text-align: center;
+          background: ${Color.logoBlue()};
+          color: #fff;
+          font-size: 1.1rem;
+          font-weight: bold;
+          letter-spacing: 0.08em;
+          padding: 0.15rem 0;
+        `}
+      >
+        {parsed.month.toUpperCase()}
+      </span>
+      <b style={{ fontSize: '2.2rem', lineHeight: 1.2, color: Color.black() }}>{parsed.day}</b>
+      <span style={{ fontSize: '1.1rem', color: Color.darkGray(), padding: '0 0.6rem 0.3rem', whiteSpace: 'nowrap' }}>
+        {time ? `${parsed.weekday} ${time}` : parsed.weekday}
+      </span>
+    </span>
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+export function GrownUpBadge({ adult }: { adult: { kind: string; name: string } }) {
+  if (!adult.kind) return null;
+  const teacher = adult.kind === 'teacher';
+  return (
+    <span
+      className={css`
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.4rem 1.1rem;
+        border-radius: 999px;
+        background: ${Color.green(0.1)};
+        color: ${Color.darkerGray()};
+        font-size: 1.3rem;
+        border: 1px solid ${Color.green(0.35)};
+      `}
+    >
+      <Icon icon={teacher ? 'chalkboard-teacher' : 'user'} style={{ color: Color.green() }} />
+      <span>
+        {teacher ? 'Twinkle teacher' : 'Parent'}: <b>{adult.name}</b>
+      </span>
+    </span>
+  );
+}
+
+export function ActivityQuote({ text }: { text: string }) {
+  if (!text) return null;
+  return (
+    <blockquote
+      className={css`
+        margin: 0;
+        position: relative;
+        padding: 1.2rem 1.4rem 1.2rem 4.2rem;
+        border-radius: 1.2rem;
+        background: ${Color.logoBlue(0.06)};
+        border-left: 4px solid ${Color.logoBlue()};
+        font-size: 1.5rem;
+        line-height: 1.55;
+        color: ${Color.black()};
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      `}
+    >
+      <span
+        aria-hidden
+        className={css`
+          position: absolute;
+          left: 1.3rem;
+          top: 0.4rem;
+          font-size: 3.4rem;
+          font-family: Georgia, serif;
+          color: ${Color.logoBlue(0.6)};
+        `}
+      >
+        “
+      </span>
+      {text}
+    </blockquote>
+  );
+}
+
+export function MemberStrip({ members }: { members: StaffApplication['members'] }) {
   return (
     <div
       className={css`
         display: grid;
-        grid-template-columns: 14rem minmax(0, 1fr);
-        gap: 1rem;
-        font-size: 1.4rem;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid var(--ui-border);
-        @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 1fr;
-          gap: 0.2rem;
-        }
+        grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+        gap: 0.8rem;
       `}
     >
-      <span style={{ color: Color.darkGray(), fontWeight: 'bold' }}>{label}</span>
-      <span style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>{children}</span>
+      {members.map((member) => (
+        <div
+          key={member.userId}
+          className={css`
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.7rem 0.9rem;
+            border-radius: 1.2rem;
+            border: 1px solid var(--ui-border);
+            background: #fff;
+            min-width: 0;
+          `}
+        >
+          <span className={css`position: relative; width: 4rem; height: 4rem; flex-shrink: 0;`}>
+            <span className={css`display: block; width: 100%; height: 100%; border-radius: 50%; overflow: hidden;`}>
+              <ProfilePic userId={member.userId} profilePicUrl={member.profilePicUrl} style={{ width: '100%', height: '100%' }} />
+            </span>
+            <span
+              title={member.parentOk ? 'Parent OK (ticked by the student)' : 'Parent not yet'}
+              className={css`
+                position: absolute;
+                right: -0.3rem;
+                bottom: -0.3rem;
+                width: 1.9rem;
+                height: 1.9rem;
+                border-radius: 50%;
+                border: 2px solid #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+                color: #fff;
+                background: ${member.parentOk ? Color.green() : Color.orange()};
+              `}
+            >
+              <Icon icon={member.parentOk ? 'check' : 'question'} />
+            </span>
+          </span>
+          <span style={{ minWidth: 0 }}>
+            <b style={{ display: 'block', fontSize: '1.4rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {member.username}
+              {member.isFounder ? ' 👑' : ''}
+            </b>
+            <span style={{ display: 'block', fontSize: '1.2rem', color: Color.darkGray(), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {member.realName || '—'}
+            </span>
+            <span
+              className={css`
+                display: inline-block;
+                margin-top: 0.2rem;
+                padding: 0 0.7rem;
+                border-radius: 999px;
+                background: ${Color.logoBlue(0.1)};
+                color: ${Color.darkBlue()};
+                font-size: 1.1rem;
+                font-weight: bold;
+              `}
+            >
+              {member.branch}
+            </span>
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -239,22 +671,33 @@ export function VenueSummary({ application }: { application: StaffApplication })
       ) : (
         'No classroom: the crew meets elsewhere with its grown-up'
       )}
-      {venue.slots.length > 0 && (
-        <span style={{ display: 'block', color: Color.darkerGray() }}>
-          Offered: {venue.slots.map(formatSlot).join(' / ')}
-        </span>
-      )}
-      {venue.confirmedSlot && (
+      {venue.confirmedSlot ? (
         <span style={{ display: 'block', color: Color.green(), fontWeight: 'bold' }}>
           Set up: {formatSlot(venue.confirmedSlot)}
           {application.venueSetBy ? ` (by ${application.venueSetBy.username})` : ''}
         </span>
-      )}
+      ) : venue.slots.length > 0 ? (
+        <span style={{ display: 'block', color: Color.darkerGray() }}>
+          Offered: {venue.slots.map(formatSlot).join(' / ')}
+        </span>
+      ) : null}
     </>
   );
 }
 
-// Everything staff need about one application.
+function InfoLine({ icon, children }: { icon: string; children: React.ReactNode }) {
+  return (
+    <div className={css`display: flex; gap: 0.8rem; align-items: flex-start; font-size: 1.35rem; color: ${Color.darkerGray()};`}>
+      <span className={css`width: 2.4rem; flex-shrink: 0; text-align: center; color: ${Color.logoBlue()};`}>
+        <Icon icon={icon} />
+      </span>
+      <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{children}</span>
+    </div>
+  );
+}
+
+// One application, presented like the student crew cards: cover, avatars,
+// the activity as a quote, the date as a calendar chip.
 export function ApplicationDetails({
   application,
   achievementTitle,
@@ -264,108 +707,246 @@ export function ApplicationDetails({
   achievementTitle: string;
   showDecision?: boolean;
 }) {
+  const decided = showDecision && application.plan.reviewedAt > 0;
   return (
     <div>
-      <CrewCover
-        cover={application.cover}
-        height="6rem"
-        stage={application.stage}
-        achievementTitle={achievementTitle}
-        rounded="0"
-      />
+      <CrewCover cover={application.cover} height="9rem" rounded="0">
+        <div
+          className={css`
+            position: absolute;
+            left: 1.6rem;
+            right: 1.6rem;
+            bottom: 1rem;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+          `}
+        >
+          <span style={{ minWidth: 0 }}>
+            <span
+              className={css`
+                display: block;
+                color: #fff;
+                font-size: 2.2rem;
+                font-weight: bold;
+                text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              `}
+            >
+              {application.displayName}
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '1.2rem' }}>
+              Crew #{application.crewId} · {application.members.length} students ·{' '}
+              {application.branchNames.length} branches
+            </span>
+          </span>
+          <StageBadge stage={application.stage} achievementTitle={achievementTitle} />
+        </div>
+      </CrewCover>
       <div
         className={css`
-          padding: 1.4rem 1.6rem;
+          padding: 1.6rem;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 1.4rem;
           @media (max-width: ${mobileMaxWidth}) {
             padding: 1.2rem 1rem;
           }
         `}
       >
-        <div
-          className={css`
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-          `}
-        >
-          <h3 className={staffHeadingClass}>{application.displayName}</h3>
-          <span style={{ color: Color.darkGray(), fontSize: '1.3rem' }}>#{application.crewId}</span>
-          {application.plan.reviewedAt > 0 && <CoordinatorChip status={application.coordinatorStatus} />}
+        <div className={css`display: flex; gap: 1.4rem; align-items: flex-start;`}>
+          <CalendarChip date={application.plan.date} />
+          <div className={css`display: flex; flex-direction: column; gap: 0.7rem; min-width: 0; flex: 1;`}>
+            <div className={css`display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;`}>
+              {application.plan.reviewedAt > 0 && <CoordinatorChip status={application.coordinatorStatus} />}
+              <GrownUpBadge adult={application.adult} />
+            </div>
+            <InfoLine icon="globe">
+              Meeting around <b>{application.plan.area || '—'}</b>
+            </InfoLine>
+            {application.plan.submittedAt > 0 && (
+              <InfoLine icon="paper-plane">Plan sent {formatTime(application.plan.submittedAt)}</InfoLine>
+            )}
+          </div>
         </div>
-        <BranchChips names={application.branchNames} />
+        <ActivityQuote text={application.plan.activity} />
         <div>
-          <span className={questLabelClass}>Members</span>
+          <span className={questLabelClass}>The crew</span>
+          <MemberStrip members={application.members} />
+          <span className={questHelpClass}>
+            <Icon icon="check" style={{ color: Color.green() }} /> = parent OK, ticked by each student.
+          </span>
+        </div>
+        {decided && (
           <div
             className={css`
-              border: 1px solid var(--ui-border);
-              border-radius: 0.8rem;
-              overflow: hidden;
+              border-radius: 1.2rem;
+              background: ${application.plan.status === 'sent_back' ? Color.orange(0.07) : Color.green(0.07)};
+              padding: 1.1rem 1.3rem;
+              display: flex;
+              flex-direction: column;
+              gap: 0.6rem;
             `}
           >
-            {application.members.map((member) => (
-              <div
-                key={member.userId}
-                className={css`
-                  display: grid;
-                  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto;
-                  gap: 0.8rem;
-                  padding: 0.6rem 0.9rem;
-                  font-size: 1.35rem;
-                  border-bottom: 1px solid var(--ui-border);
-                  &:last-child {
-                    border-bottom: 0;
-                  }
-                `}
-              >
-                <span style={{ overflowWrap: 'anywhere' }}>
-                  <b>{member.username}</b>
-                  {member.realName ? ` · ${member.realName}` : ''}
-                  {member.isFounder ? ' 👑' : ''}
-                </span>
-                <span>{member.branch}</span>
-                <span style={{ color: member.parentOk ? Color.green() : Color.orange() }}>
-                  <Icon icon={member.parentOk ? 'check-circle' : 'exclamation-circle'} />{' '}
-                  {member.parentOk ? 'Parent OK' : 'Parent not yet'}
-                </span>
-              </div>
-            ))}
-          </div>
-          <span className={questHelpClass}>The parent OK is ticked by each student themselves.</span>
-        </div>
-        <div>
-          <Row label="Grown-up coming">
-            {application.adult.kind
-              ? `${application.adult.kind === 'teacher' ? 'Twinkle teacher' : 'Parent'}: ${application.adult.name}`
-              : 'Not named'}
-          </Row>
-          <Row label="Proposed date">{application.plan.date || '—'}</Row>
-          <Row label="General area">{application.plan.area || '—'}</Row>
-          <Row label="Activity">{application.plan.activity || '—'}</Row>
-          {application.plan.submittedAt > 0 && (
-            <Row label="Plan sent">{formatTime(application.plan.submittedAt)}</Row>
-          )}
-          {showDecision && application.plan.reviewedAt > 0 && (
-            <>
-              <Row label="Decision">
-                {application.plan.status === 'sent_back' ? 'Sent back' : 'Approved'}
-                {application.decidedBy ? ` by ${application.decidedBy.username}` : ''} ·{' '}
-                {formatTime(application.plan.reviewedAt)}
-              </Row>
-              {application.plan.note && <Row label="Headmaster note">{application.plan.note}</Row>}
-              <Row label="Classroom">
+            <InfoLine icon={application.plan.status === 'sent_back' ? 'redo' : 'check-circle'}>
+              <b>{application.plan.status === 'sent_back' ? 'Sent back' : 'Approved'}</b>
+              {application.decidedBy ? ` by ${application.decidedBy.username}` : ''} ·{' '}
+              {formatTime(application.plan.reviewedAt)}
+            </InfoLine>
+            {application.plan.note && <InfoLine icon="comment">“{application.plan.note}”</InfoLine>}
+            {application.plan.status !== 'sent_back' && (
+              <InfoLine icon="school">
                 <VenueSummary application={application} />
-              </Row>
-            </>
-          )}
-        </div>
+              </InfoLine>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+// ---- Empty states and celebrations ----
+
+export function EmptyState({ emoji, title, text }: { emoji: string; title: string; text: string }) {
+  return (
+    <div
+      className={css`
+        ${staffCardClass};
+        padding: 3rem 2rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.6rem;
+      `}
+    >
+      <span
+        aria-hidden
+        className={css`
+          width: 9rem;
+          height: 9rem;
+          border-radius: 50%;
+          background: ${Color.logoBlue(0.08)};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 4.4rem;
+          margin-bottom: 0.6rem;
+          animation: ${bob} 3s ease-in-out infinite;
+          ${noMotion}
+        `}
+      >
+        {emoji}
+      </span>
+      <b style={{ fontSize: '1.8rem', color: Color.black() }}>{title}</b>
+      <span style={{ fontSize: '1.4rem', color: Color.darkGray(), maxWidth: '44rem' }}>{text}</span>
+    </div>
+  );
+}
+
+const bob = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+`;
+
+const burst = keyframes`
+  0% { transform: translate(0, 0) scale(0.4) rotate(0deg); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--rot)); opacity: 0; }
+`;
+
+const popIn = keyframes`
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); }
+`;
+
+const CONFETTI_COLORS = ['#418ceb', '#28b62c', '#ffcb32', '#ff8c00', '#ff6b8b', '#139a9a'];
+
+// A small burst of confetti and a message, then it fades away.
+export function Celebration({
+  title,
+  message,
+  onDone,
+  durationMs = 3200
+}: {
+  title: string;
+  message: string;
+  onDone: () => void;
+  durationMs?: number;
+}) {
+  const [pieces] = useState(() =>
+    Array.from({ length: 28 }, (_, index) => {
+      const angle = (index / 28) * Math.PI * 2;
+      const distance = 90 + Math.random() * 90;
+      return {
+        dx: Math.cos(angle) * distance,
+        dy: Math.sin(angle) * distance - 40,
+        rot: Math.round(Math.random() * 540 - 270),
+        color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],
+        round: index % 3 === 0,
+        delay: Math.random() * 0.15
+      };
+    })
+  );
+  useEffect(() => {
+    const timer = setTimeout(onDone, durationMs);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <div
+      role="status"
+      className={css`
+        position: relative;
+        border-radius: 1.6rem;
+        background: ${Color.green(0.1)};
+        border: 1.5px solid ${Color.green(0.5)};
+        padding: 2rem 1.6rem;
+        text-align: center;
+        overflow: hidden;
+        animation: ${popIn} 0.45s ease-out;
+        ${noMotion}
+      `}
+    >
+      <span aria-hidden className={css`position: absolute; left: 50%; top: 45%; width: 0; height: 0;`}>
+        {pieces.map((piece, index) => (
+          <span
+            key={index}
+            style={
+              {
+                '--dx': `${piece.dx}px`,
+                '--dy': `${piece.dy}px`,
+                '--rot': `${piece.rot}deg`,
+                animationDelay: `${piece.delay}s`,
+                background: piece.color
+              } as React.CSSProperties
+            }
+            className={css`
+              position: absolute;
+              width: ${piece.round ? '0.8rem' : '0.7rem'};
+              height: ${piece.round ? '0.8rem' : '1.2rem'};
+              border-radius: ${piece.round ? '50%' : '0.2rem'};
+              animation: ${burst} 1.4s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+              @media (prefers-reduced-motion: reduce) {
+                display: none;
+              }
+            `}
+          />
+        ))}
+      </span>
+      <div style={{ fontSize: '3.6rem' }}>🎉</div>
+      <b style={{ display: 'block', fontSize: '2rem', color: Color.black() }}>{title}</b>
+      <span style={{ fontSize: '1.45rem', color: Color.darkerGray() }}>{message}</span>
+    </div>
+  );
+}
+
+// ---- The classroom offer picker ----
 
 export interface VenueDraft {
   mode: 'later' | 'none' | 'offer';
@@ -375,7 +956,7 @@ export interface VenueDraft {
 }
 
 export function emptyVenueDraft(branch = ''): VenueDraft {
-  return { mode: 'later', branch, room: '', slots: [{ date: '', start: '14:00', end: '16:00' }] };
+  return { mode: 'later', branch, room: '', slots: [] };
 }
 
 export function venueFromDraft(draft: VenueDraft) {
@@ -384,8 +965,32 @@ export function venueFromDraft(draft: VenueDraft) {
   return { mode: 'offer', branch: draft.branch, room: draft.room, slots: draft.slots };
 }
 
-// A headmaster's classroom offer: branch (suggested from the crew's
-// branches) + classroom + one or more slots, or "no classroom".
+const QUICK_TIMES: [string, string, string][] = [
+  ['Morning', '10:00', '12:00'],
+  ['Afternoon', '14:00', '16:00'],
+  ['Late afternoon', '16:00', '18:00']
+];
+
+const choiceChip = (active: boolean) => css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 1.5px solid ${active ? Color.logoBlue() : 'var(--ui-border)'};
+  background: ${active ? Color.logoBlue() : '#fff'};
+  color: ${active ? '#fff' : Color.darkerGray()};
+  font-size: 1.3rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+  ${noMotion}
+`;
+
 export function VenueForm({
   idPrefix,
   draft,
@@ -401,162 +1006,271 @@ export function VenueForm({
   disabled?: boolean;
   onChange: (draft: VenueDraft) => void;
 }) {
-  const modes: [VenueDraft['mode'], string][] = [
-    ...(allowLater ? ([['later', 'No classroom offer']] as [VenueDraft['mode'], string][]) : []),
-    ['offer', 'Offer a classroom'],
-    ['none', 'No classroom available']
+  const [slotDate, setSlotDate] = useState(() => addDays(localToday(), 7));
+  const [slotTime, setSlotTime] = useState<[string, string]>(['14:00', '16:00']);
+  const [otherBranch, setOtherBranch] = useState(
+    !!draft.branch && !branchSuggestions.includes(draft.branch)
+  );
+  const modes: [VenueDraft['mode'], string, string][] = [
+    ...(allowLater ? ([['later', 'No classroom needed', 'users']] as [VenueDraft['mode'], string, string][]) : []),
+    ['offer', 'Offer a classroom', 'school'],
+    ['none', 'No classroom available', 'times']
   ];
+  const nextWeek = Array.from({ length: 14 }, (_, index) => addDays(localToday(), index + 1));
+
   return (
-    <div className={css`display: flex; flex-direction: column; gap: 0.8rem;`}>
-      <div className={css`display: flex; gap: 0.5rem; flex-wrap: wrap;`}>
-        {modes.map(([mode, label]) => (
-          <Button
+    <div className={css`display: flex; flex-direction: column; gap: 1.2rem;`}>
+      <div role="radiogroup" aria-label="Classroom" className={css`display: flex; gap: 0.6rem; flex-wrap: wrap;`}>
+        {modes.map(([mode, label, icon]) => (
+          <button
             key={mode}
-            size="sm"
-            variant={draft.mode === mode ? 'solid' : 'outline'}
-            color="logoBlue"
-            aria-pressed={draft.mode === mode}
+            type="button"
+            role="radio"
+            aria-checked={draft.mode === mode}
             disabled={disabled}
+            className={choiceChip(draft.mode === mode)}
             onClick={() => onChange({ ...draft, mode })}
           >
+            <Icon icon={icon} />
             {label}
-          </Button>
+          </button>
         ))}
       </div>
+      {draft.mode === 'later' && (
+        <span className={questHelpClass}>
+          The crew meets with its grown-up as planned. The coordinator still
+          gets the briefing to help schedule it.
+        </span>
+      )}
       {draft.mode === 'none' && (
         <span className={questHelpClass}>
-          The crew meets elsewhere with its grown-up. The coordinator still gets
-          the briefing to help schedule it.
+          The crew meets elsewhere with its grown-up. The coordinator still
+          gets the briefing to help schedule it.
         </span>
       )}
       {draft.mode === 'offer' && (
-        <>
-          <div
-            className={css`
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 0.8rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                grid-template-columns: 1fr;
-              }
-            `}
-          >
-            <div>
-              <label className={questLabelClass} htmlFor={`${idPrefix}-branch`}>
-                Branch
-              </label>
+        <div
+          className={css`
+            border-radius: 1.4rem;
+            border: 1px solid var(--ui-border);
+            background: #fff;
+            padding: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.3rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 1.1rem;
+            }
+          `}
+        >
+          <div>
+            <span className={questLabelClass}>Which branch?</span>
+            <div className={css`display: flex; gap: 0.5rem; flex-wrap: wrap;`}>
+              {branchSuggestions.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  disabled={disabled}
+                  className={choiceChip(!otherBranch && draft.branch === name)}
+                  onClick={() => {
+                    setOtherBranch(false);
+                    onChange({ ...draft, branch: name });
+                  }}
+                >
+                  <Icon icon="school" />
+                  {name}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={disabled}
+                className={choiceChip(otherBranch)}
+                onClick={() => {
+                  setOtherBranch(true);
+                  onChange({ ...draft, branch: '' });
+                }}
+              >
+                Another branch…
+              </button>
+            </div>
+            {otherBranch && (
               <input
-                id={`${idPrefix}-branch`}
-                list={`${idPrefix}-branches`}
+                aria-label="Branch"
                 className={questInputClass}
+                style={{ marginTop: '0.6rem' }}
                 value={draft.branch}
                 maxLength={40}
+                placeholder="Branch name"
                 disabled={disabled}
                 onChange={(event) => onChange({ ...draft, branch: event.target.value })}
               />
-              <datalist id={`${idPrefix}-branches`}>
-                {branchSuggestions.map((name) => (
-                  <option key={name} value={name} />
-                ))}
-              </datalist>
-            </div>
-            <div>
-              <label className={questLabelClass} htmlFor={`${idPrefix}-room`}>
-                Classroom
-              </label>
-              <input
-                id={`${idPrefix}-room`}
-                className={questInputClass}
-                value={draft.room}
-                maxLength={60}
-                placeholder="For example: Room 302"
-                disabled={disabled}
-                onChange={(event) => onChange({ ...draft, room: event.target.value })}
-              />
-            </div>
+            )}
           </div>
-          <span className={questLabelClass}>Time slots</span>
-          {draft.slots.map((slot, index) => (
-            <div
-              key={index}
-              className={css`
-                display: flex;
-                gap: 0.5rem;
-                align-items: center;
-                flex-wrap: wrap;
-              `}
-            >
-              <input
-                type="date"
-                aria-label="Slot date"
-                className={questInputClass}
-                style={{ width: '15rem' }}
-                value={slot.date}
-                disabled={disabled}
-                onChange={(event) => updateSlot(index, { date: event.target.value })}
-              />
-              <input
-                type="time"
-                aria-label="Start time"
-                className={questInputClass}
-                style={{ width: '10rem' }}
-                value={slot.start}
-                disabled={disabled}
-                onChange={(event) => updateSlot(index, { start: event.target.value })}
-              />
-              <span>–</span>
-              <input
-                type="time"
-                aria-label="End time"
-                className={questInputClass}
-                style={{ width: '10rem' }}
-                value={slot.end}
-                disabled={disabled}
-                onChange={(event) => updateSlot(index, { end: event.target.value })}
-              />
-              {draft.slots.length > 1 && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  color="darkGray"
-                  disabled={disabled}
-                  onClick={() =>
-                    onChange({ ...draft, slots: draft.slots.filter((_, i) => i !== index) })
-                  }
-                >
-                  <Icon icon="times" />
-                </Button>
-              )}
-            </div>
-          ))}
-          {draft.slots.length < 5 && (
-            <div>
-              <Button
-                size="sm"
-                variant="soft"
-                color="logoBlue"
-                disabled={disabled}
-                onClick={() =>
-                  onChange({
-                    ...draft,
-                    slots: [...draft.slots, { date: '', start: '14:00', end: '16:00' }]
-                  })
-                }
+          <div>
+            <label className={questLabelClass} htmlFor={`${idPrefix}-room`}>
+              Classroom
+            </label>
+            <input
+              id={`${idPrefix}-room`}
+              className={questInputClass}
+              value={draft.room}
+              maxLength={60}
+              placeholder="For example: Room 302"
+              disabled={disabled}
+              onChange={(event) => onChange({ ...draft, room: event.target.value })}
+            />
+          </div>
+          <div>
+            <span className={questLabelClass}>Time slots you can offer</span>
+            {draft.slots.length > 0 ? (
+              <div className={css`display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem;`}>
+                {draft.slots.map((slot, index) => (
+                  <span
+                    key={`${slot.date}-${slot.start}-${index}`}
+                    className={css`
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 0.6rem;
+                      padding: 0.4rem 0.5rem 0.4rem 0.4rem;
+                      border-radius: 1.2rem;
+                      background: ${Color.logoBlue(0.08)};
+                      border: 1px solid ${Color.logoBlue(0.3)};
+                      animation: ${popIn} 0.3s ease-out;
+                      ${noMotion}
+                    `}
+                  >
+                    <CalendarChip date={slot.date} time={`${slot.start}–${slot.end}`} />
+                    <button
+                      type="button"
+                      aria-label="Remove this slot"
+                      disabled={disabled}
+                      onClick={() => onChange({ ...draft, slots: draft.slots.filter((_, i) => i !== index) })}
+                      className={css`border: 0; background: none; color: ${Color.darkGray()}; cursor: pointer; font-size: 1.4rem;`}
+                    >
+                      <Icon icon="times" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span className={questHelpClass} style={{ display: 'block', marginBottom: '0.8rem' }}>
+                Pick a day and a time below, then add it. Up to 5 slots.
+              </span>
+            )}
+            {draft.slots.length < 5 && (
+              <div
+                className={css`
+                  border-radius: 1.2rem;
+                  background: ${Color.extraLightGray(0.5)};
+                  padding: 1rem;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.8rem;
+                `}
               >
-                <Icon icon="plus" style={{ marginRight: '0.4rem' }} />
-                Add a slot
-              </Button>
-            </div>
-          )}
-        </>
+                <div
+                  aria-label="Pick a day"
+                  className={css`
+                    display: flex;
+                    gap: 0.5rem;
+                    overflow-x: auto;
+                    padding-bottom: 0.3rem;
+                  `}
+                >
+                  {nextWeek.map((date) => {
+                    const parsed = parseDate(date)!;
+                    const active = slotDate === date;
+                    return (
+                      <button
+                        key={date}
+                        type="button"
+                        disabled={disabled}
+                        aria-pressed={active}
+                        onClick={() => setSlotDate(date)}
+                        className={css`
+                          flex-shrink: 0;
+                          width: 5.2rem;
+                          padding: 0.5rem 0;
+                          border-radius: 1rem;
+                          border: 1.5px solid ${active ? Color.logoBlue() : 'var(--ui-border)'};
+                          background: ${active ? Color.logoBlue() : '#fff'};
+                          color: ${active ? '#fff' : Color.darkerGray()};
+                          cursor: pointer;
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          font-size: 1.1rem;
+                        `}
+                      >
+                        <span>{parsed.weekday}</span>
+                        <b style={{ fontSize: '1.8rem' }}>{parsed.day}</b>
+                        <span>{parsed.month}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className={css`display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;`}>
+                  <input
+                    type="date"
+                    aria-label="Another date"
+                    className={questInputClass}
+                    style={{ width: '15rem' }}
+                    value={slotDate}
+                    disabled={disabled}
+                    onChange={(event) => setSlotDate(event.target.value)}
+                  />
+                  {QUICK_TIMES.map(([label, start, end]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      disabled={disabled}
+                      className={choiceChip(slotTime[0] === start && slotTime[1] === end)}
+                      onClick={() => setSlotTime([start, end])}
+                    >
+                      {label} {start}–{end}
+                    </button>
+                  ))}
+                </div>
+                <div className={css`display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;`}>
+                  <input
+                    type="time"
+                    aria-label="Start time"
+                    className={questInputClass}
+                    style={{ width: '13rem' }}
+                    value={slotTime[0]}
+                    disabled={disabled}
+                    onChange={(event) => setSlotTime([event.target.value, slotTime[1]])}
+                  />
+                  <span>–</span>
+                  <input
+                    type="time"
+                    aria-label="End time"
+                    className={questInputClass}
+                    style={{ width: '13rem' }}
+                    value={slotTime[1]}
+                    disabled={disabled}
+                    onChange={(event) => setSlotTime([slotTime[0], event.target.value])}
+                  />
+                  <Button
+                    size="sm"
+                    color="logoBlue"
+                    disabled={disabled || !slotDate || slotTime[1] <= slotTime[0]}
+                    onClick={() =>
+                      onChange({
+                        ...draft,
+                        slots: [...draft.slots, { date: slotDate, start: slotTime[0], end: slotTime[1] }]
+                      })
+                    }
+                  >
+                    <Icon icon="plus" style={{ marginRight: '0.4rem' }} />
+                    Add this slot
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
-
-  function updateSlot(index: number, patch: Partial<MeetupSlot>) {
-    onChange({
-      ...draft,
-      slots: draft.slots.map((slot, i) => (i === index ? { ...slot, ...patch } : slot))
-    });
-  }
 }

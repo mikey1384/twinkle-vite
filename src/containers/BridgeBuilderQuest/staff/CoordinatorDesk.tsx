@@ -1,42 +1,57 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import Modal from '~/components/Modal';
+import ProfilePic from '~/components/ProfilePic';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import CrewCover from '../CrewCover';
-import { QuestNote, questHelpClass, questInputClass, questLabelClass } from '../StepCard';
+import { QuestNote, questHelpClass, questInputClass } from '../StepCard';
 import { backLinkClass, pageWidthClass } from '../pageStyles';
 import {
   ApplicationDetails,
   COORDINATOR_CHIPS,
+  CalendarChip,
   CoordinatorChip,
-  StaffNav,
-  VenueSummary,
+  CountBubble,
+  EmptyState,
   ViewAsBar,
+  VenueSummary,
+  WelcomeHeader,
+  addDays,
   formatSlot,
   formatTime,
-  staffCardClass,
-  staffHeadingClass
+  liftCardClass,
+  staffMainGutterClass,
+  localToday,
+  sectionTitleClass,
+  staffCardClass
 } from './shared';
 import type {
   CoordinatorData,
   CoordinatorStatus,
+  StaffApplication,
   StaffApplicationData,
   StaffEvent
 } from '../types';
 
-const FILTERS: (CoordinatorStatus | 'all')[] = ['all', 'needs_scheduling', 'scheduled', 'filmed', 'done', 'on_hold'];
+const OTHER_FILTERS: (CoordinatorStatus | 'all')[] = ['all', 'scheduled', 'filmed', 'done', 'on_hold'];
+const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// /achievements/bridge-builder/coordinator — the coordinator's desk: every
-// approved application with a status chip, and the full application view
-// (?crew=) with the timeline, slot setup and staff notes. Her briefing email
-// links straight to the application here.
+const pop = keyframes`
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+`;
+
+// /achievements/bridge-builder/coordinator — the coordinator's desk: this
+// week's meetups, what needs scheduling, every other approved application,
+// and the full application view (?crew=; her briefing email links here).
 export default function CoordinatorDesk() {
   const userId = useKeyContext((v) => v.myState.userId);
   const loadCoordinatorApplications = useAppContext((v) => v.requestHelpers.loadCoordinatorApplications);
@@ -54,13 +69,21 @@ export default function CoordinatorDesk() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, viewAs]);
 
-  const shown = useMemo(
-    () =>
-      (data?.applications || []).filter(
-        (application) => filter === 'all' || application.coordinatorStatus === filter
-      ),
-    [data, filter]
+  const applications = useMemo(() => data?.applications || [], [data]);
+  const needsScheduling = applications.filter((a) => a.coordinatorStatus === 'needs_scheduling');
+  const others = applications.filter(
+    (a) => a.coordinatorStatus !== 'needs_scheduling' && (filter === 'all' || a.coordinatorStatus === filter)
   );
+  const week = useMemo(() => {
+    const today = localToday();
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = addDays(today, index);
+      return {
+        date,
+        meetups: applications.filter((a) => a.venue.confirmedSlot?.date === date && a.status === 'active')
+      };
+    });
+  }, [applications]);
 
   if (!userId) {
     return (
@@ -74,26 +97,36 @@ export default function CoordinatorDesk() {
   return (
     <ErrorBoundary componentPath="BridgeBuilderQuest/CoordinatorDesk">
       <div className={css`width: 100%; display: flex; justify-content: center; padding-bottom: 20rem;`}>
-        <main className={pageWidthClass} style={{ maxWidth: '980px' }}>
+        <main className={`${pageWidthClass} ${staffMainGutterClass}`} style={{ maxWidth: '1000px' }}>
           {crewId ? (
             <button type="button" className={backButtonClass} onClick={() => setParams({ crew: 0 })}>
-              <Icon icon="arrow-left" /> All applications
+              <Icon icon="arrow-left" /> Coordinator desk
             </button>
           ) : (
             <Link to="/achievements/bridge-builder" className={backLinkClass}>
               <Icon icon="arrow-left" /> {title ? `${title} quest` : 'Meetup quest'}
             </Link>
           )}
-          <div className={css`margin-top: 1.4rem; @media (max-width: ${mobileMaxWidth}) { margin: 1.4rem 1rem 0; }`}>
-            <h1 className={css`margin: 0; font-size: 2.6rem; font-weight: bold; color: ${Color.black()};`}>
-              Coordinator desk
-            </h1>
-            <p className={css`margin: 0.4rem 0 0.8rem; font-size: 1.4rem; color: ${Color.darkerGray()};`}>
-              Approved meetup applications. Arrange each one, then record the
-              final slot with &quot;Slot is set up&quot;.
-            </p>
-            {data && <StaffNav summary={data.summary} />}
-          </div>
+          {error && (
+            <div style={{ marginTop: '2rem' }}>
+              <QuestNote tone="warning">{error}</QuestNote>
+            </div>
+          )}
+          {!data && !error && <Loading />}
+          {data && !crewId && (
+            <WelcomeHeader
+              viewer={data.viewer}
+              title="Coordinator desk"
+              lead="Approved meetups land here for you to arrange."
+              summary={data.summary}
+              stats={[
+                { icon: 'clock', label: 'Need scheduling', one: 'needs scheduling', value: data.counts.needs_scheduling || 0, color: '#e08a00' },
+                { icon: 'check-circle', label: 'Meetups this week', one: 'meetup this week', value: data.summary.meetupsThisWeek || 0, color: '#418ceb' },
+                { icon: 'users', label: 'Crews met this month', one: 'crew met this month', value: data.summary.metThisMonth || 0, color: '#28b62c' },
+                { icon: 'trophy', label: 'Done', value: data.counts.done || 0, color: '#139a9a' }
+              ]}
+            />
+          )}
           {data && (
             <ViewAsBar
               viewer={data.viewer}
@@ -102,12 +135,6 @@ export default function CoordinatorDesk() {
               onChange={(id) => setParams({ viewAs: id })}
             />
           )}
-          {error && (
-            <div style={{ marginTop: '2rem' }}>
-              <QuestNote tone="warning">{error}</QuestNote>
-            </div>
-          )}
-          {!data && !error && <Loading />}
           {data && crewId > 0 && (
             <ApplicationView
               crewId={crewId}
@@ -120,22 +147,139 @@ export default function CoordinatorDesk() {
           )}
           {data && !crewId && (
             <>
+              <h2 className={sectionTitleClass}>
+                <Icon icon="clock" style={{ color: Color.logoBlue() }} /> This week
+              </h2>
+              <div
+                className={css`
+                  display: grid;
+                  grid-template-columns: repeat(7, minmax(0, 1fr));
+                  gap: 0.6rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    display: flex;
+                    overflow-x: auto;
+                    padding: 0 0 0.4rem;
+                    scroll-snap-type: x mandatory;
+                  }
+                `}
+              >
+                {week.map((day, index) => {
+                  const date = new Date(`${day.date}T00:00:00`);
+                  const isToday = index === 0;
+                  return (
+                    <div
+                      key={day.date}
+                      className={css`
+                        ${staffCardClass};
+                        min-height: 11rem;
+                        padding: 0.8rem;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.5rem;
+                        border-color: ${isToday ? Color.logoBlue() : 'var(--ui-border)'};
+                        @media (max-width: ${mobileMaxWidth}) {
+                          min-width: 12rem;
+                          scroll-snap-align: start;
+                        }
+                      `}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                        <b style={{ fontSize: '1.8rem', color: isToday ? Color.logoBlue() : Color.black() }}>
+                          {date.getDate()}
+                        </b>
+                        <span style={{ fontSize: '1.2rem', color: Color.darkGray() }}>
+                          {isToday ? 'Today' : WEEKDAY_NAMES[date.getDay()]}
+                        </span>
+                      </div>
+                      {day.meetups.length === 0 ? (
+                        <span style={{ fontSize: '1.15rem', color: Color.gray() }}>—</span>
+                      ) : (
+                        day.meetups.map((meetup) => (
+                          <button
+                            key={meetup.crewId}
+                            type="button"
+                            onClick={() => setParams({ crew: meetup.crewId })}
+                            className={css`
+                              border: 0;
+                              border-radius: 0.8rem;
+                              padding: 0.5rem 0.6rem;
+                              background: ${Color.logoBlue(0.12)};
+                              border-left: 3px solid ${Color.logoBlue()};
+                              text-align: left;
+                              cursor: pointer;
+                              font-size: 1.15rem;
+                              transition: transform 0.15s ease;
+                              &:hover {
+                                transform: translateY(-1px);
+                              }
+                              @media (prefers-reduced-motion: reduce) {
+                                transition: none;
+                              }
+                            `}
+                          >
+                            <b style={{ display: 'block' }}>{meetup.venue.confirmedSlot?.start}</b>
+                            {meetup.displayName}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <h2 className={sectionTitleClass}>
+                <Icon icon="clock" style={{ color: Color.orange() }} /> Needs scheduling
+                <CountBubble count={needsScheduling.length} color={Color.orange()} />
+              </h2>
+              {needsScheduling.length === 0 ? (
+                <EmptyState
+                  emoji="🌤️"
+                  title="All caught up"
+                  text="Nothing needs scheduling right now. When a headmaster approves a plan, you'll get a briefing email and it'll appear here."
+                />
+              ) : (
+                <div
+                  className={css`
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
+                    gap: 1.4rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      grid-template-columns: 1fr;
+                    }
+                  `}
+                >
+                  {needsScheduling.map((application) => (
+                    <SchedulingCard
+                      key={application.crewId}
+                      application={application}
+                      onOpen={() => setParams({ crew: application.crewId })}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <h2 className={sectionTitleClass}>
+                <Icon icon="list" style={{ color: Color.logoBlue() }} /> All applications
+              </h2>
               <div
                 className={css`
                   display: flex;
                   gap: 0.5rem;
                   overflow-x: auto;
-                  margin: 1.8rem 0 1.2rem;
+                  margin-bottom: 1.2rem;
                   padding-bottom: 0.3rem;
                   @media (max-width: ${mobileMaxWidth}) {
-                    margin: 1.6rem 1rem 1rem;
+                    margin: 0 0 1rem;
                   }
                 `}
               >
-                {FILTERS.map((key) => {
+                {OTHER_FILTERS.map((key) => {
                   const active = filter === key;
-                  const label = key === 'all' ? 'All' : COORDINATOR_CHIPS[key].label;
-                  const count = key === 'all' ? data.applications.length : data.counts[key] || 0;
+                  const chip = key === 'all' ? null : COORDINATOR_CHIPS[key];
+                  const count =
+                    key === 'all'
+                      ? applications.length - needsScheduling.length
+                      : data.counts[key] || 0;
                   return (
                     <button
                       key={key}
@@ -143,9 +287,12 @@ export default function CoordinatorDesk() {
                       aria-pressed={active}
                       onClick={() => setFilter(key)}
                       className={css`
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.5rem;
                         padding: 0.5rem 1.2rem;
                         border-radius: 999px;
-                        border: 1px solid ${active ? Color.logoBlue() : 'var(--ui-border)'};
+                        border: 1.5px solid ${active ? Color.logoBlue() : 'var(--ui-border)'};
                         background: ${active ? Color.logoBlue() : '#fff'};
                         color: ${active ? '#fff' : Color.darkerGray()};
                         font-size: 1.25rem;
@@ -154,26 +301,31 @@ export default function CoordinatorDesk() {
                         cursor: pointer;
                       `}
                     >
-                      {label} ({count})
+                      {chip && <Icon icon={chip.icon} />}
+                      {chip ? chip.label : 'All'} ({count})
                     </button>
                   );
                 })}
               </div>
-              {shown.length === 0 ? (
-                <QuestNote tone="info">
-                  {data.applications.length === 0
-                    ? 'No approved applications yet. They appear here as soon as a headmaster approves a plan.'
-                    : 'Nothing with this status.'}
-                </QuestNote>
+              {others.length === 0 ? (
+                <EmptyState
+                  emoji="📚"
+                  title={applications.length ? 'Nothing here' : 'No applications yet'}
+                  text={
+                    applications.length
+                      ? 'No applications with this status.'
+                      : 'Approved meetup plans will show up here as soon as a headmaster approves one.'
+                  }
+                />
               ) : (
                 <div className={css`display: flex; flex-direction: column; gap: 0.8rem;`}>
-                  {shown.map((application) => (
+                  {others.map((application) => (
                     <button
                       key={application.crewId}
                       type="button"
                       onClick={() => setParams({ crew: application.crewId })}
                       className={css`
-                        ${staffCardClass};
+                        ${liftCardClass};
                         display: grid;
                         grid-template-columns: 8rem minmax(0, 1fr) auto;
                         gap: 1.2rem;
@@ -182,17 +334,17 @@ export default function CoordinatorDesk() {
                         text-align: left;
                         cursor: pointer;
                         @media (max-width: ${mobileMaxWidth}) {
-                          grid-template-columns: 5rem minmax(0, 1fr);
+                          grid-template-columns: 6rem minmax(0, 1fr);
                         }
                       `}
                     >
-                      <CrewCover cover={application.cover} height="5.4rem" rounded="0.8rem" />
+                      <CrewCover cover={application.cover} height="5.4rem" rounded="0.9rem" />
                       <span style={{ minWidth: 0 }}>
                         <b style={{ fontSize: '1.5rem', color: Color.black() }}>{application.displayName}</b>
                         <span style={{ display: 'block', fontSize: '1.25rem', color: Color.darkerGray() }}>
-                          {application.branchNames.join(', ')} · proposed {application.plan.date}
+                          {application.branchNames.join(' · ')}
                         </span>
-                        <span style={{ display: 'block', fontSize: '1.25rem', color: Color.darkGray() }}>
+                        <span style={{ display: 'block', fontSize: '1.2rem', color: Color.darkGray() }}>
                           <VenueSummary application={application} />
                         </span>
                       </span>
@@ -234,6 +386,77 @@ export default function CoordinatorDesk() {
   }
 }
 
+function SchedulingCard({
+  application,
+  onOpen
+}: {
+  application: StaffApplication;
+  onOpen: () => void;
+}) {
+  return (
+    <article className={css`${liftCardClass}; display: flex; flex-direction: column;`}>
+      <CrewCover cover={application.cover} height="7rem" rounded="0">
+        <span
+          className={css`
+            position: absolute;
+            left: 1.2rem;
+            bottom: 0.8rem;
+            color: #fff;
+            font-size: 1.9rem;
+            font-weight: bold;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+          `}
+        >
+          {application.displayName}
+        </span>
+      </CrewCover>
+      <div className={css`padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem; flex: 1;`}>
+        <div className={css`display: flex; gap: 1.2rem; align-items: center;`}>
+          <CalendarChip date={application.plan.date} />
+          <div style={{ minWidth: 0, fontSize: '1.3rem', color: Color.darkerGray() }}>
+            <div style={{ display: 'flex', marginBottom: '0.4rem' }}>
+              {application.members.slice(0, 5).map((member, index) => (
+                <span
+                  key={member.userId}
+                  title={member.username}
+                  className={css`
+                    width: 3rem;
+                    height: 3rem;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    border: 2px solid #fff;
+                    margin-left: ${index ? '-0.8rem' : 0};
+                    display: inline-flex;
+                  `}
+                >
+                  <ProfilePic userId={member.userId} profilePicUrl={member.profilePicUrl} style={{ width: '100%', height: '100%' }} />
+                </span>
+              ))}
+            </div>
+            {application.branchNames.join(' · ')}
+            <span style={{ display: 'block' }}>
+              <VenueSummary application={{ ...application, venue: { ...application.venue, slots: [] } }} />
+            </span>
+          </div>
+        </div>
+        {application.venue.slots.length > 0 && (
+          <div className={css`display: flex; gap: 0.5rem; flex-wrap: wrap;`}>
+            {application.venue.slots.map((slot, index) => (
+              <CalendarChip key={index} date={slot.date} time={`${slot.start}–${slot.end}`} />
+            ))}
+          </div>
+        )}
+        <div style={{ marginTop: 'auto' }}>
+          <Button color="logoBlue" stretch onClick={onOpen}>
+            <Icon icon="clock" style={{ marginRight: '0.5rem' }} />
+            Schedule this meetup
+          </Button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 const backButtonClass = css`
   display: inline-flex;
   align-items: center;
@@ -246,29 +469,29 @@ const backButtonClass = css`
   padding: 0;
   cursor: pointer;
   @media (max-width: ${mobileMaxWidth}) {
-    margin: 1rem 1rem 0;
+    margin: 1rem 0 0;
   }
 `;
 
-const EVENT_LABELS: Record<string, string> = {
-  crew_created: 'Crew created',
-  plan_submitted: 'Plan sent for review',
-  plan_approved: 'Plan approved',
-  plan_sent_back: 'Plan sent back',
-  plan_reset: 'Crew changed: plan must be sent again',
-  venue_changed: 'Classroom/slots changed',
-  email_sent: 'Email sent to the coordinator',
-  email_resent: 'Email resent to the coordinator',
-  email_failed: 'Coordinator email failed',
-  slot_set: 'Slot set up',
-  video_submitted: 'Video sent',
-  video_sent_back: 'Video sent back',
-  completed: 'Final review: approved',
-  disbanded: 'Crew disbanded'
+const EVENTS: Record<string, { label: string; icon: string; color: string }> = {
+  crew_created: { label: 'Crew created', icon: 'users', color: '#418ceb' },
+  plan_submitted: { label: 'Plan sent for review', icon: 'paper-plane', color: '#418ceb' },
+  plan_approved: { label: 'Plan approved', icon: 'check-circle', color: '#28b62c' },
+  plan_sent_back: { label: 'Plan sent back', icon: 'redo', color: '#e08a00' },
+  plan_reset: { label: 'Crew changed: plan must be sent again', icon: 'redo', color: '#8a8a8a' },
+  venue_changed: { label: 'Classroom/slots changed', icon: 'school', color: '#418ceb' },
+  email_sent: { label: 'Briefing emailed to the coordinator', icon: 'paper-plane', color: '#139a9a' },
+  email_resent: { label: 'Briefing resent to the coordinator', icon: 'paper-plane', color: '#139a9a' },
+  email_failed: { label: 'Coordinator email failed', icon: 'exclamation-triangle', color: '#e0474c' },
+  slot_set: { label: 'Slot set up', icon: 'clock', color: '#28b62c' },
+  video_submitted: { label: 'Video sent', icon: 'film', color: '#139a9a' },
+  video_sent_back: { label: 'Video sent back', icon: 'redo', color: '#e08a00' },
+  completed: { label: 'Final review: approved', icon: 'trophy', color: '#e0a800' },
+  disbanded: { label: 'Crew disbanded', icon: 'times', color: '#8a8a8a' }
 };
 
 function eventText(event: StaffEvent) {
-  const label = EVENT_LABELS[event.kind] || event.kind;
+  const label = EVENTS[event.kind]?.label || event.kind;
   const by = event.actorUsername ? ` by ${event.actorUsername}` : '';
   if (event.kind === 'slot_set' && event.detail?.slot) return `${label}${by}: ${formatSlot(event.detail.slot)}`;
   if (event.kind === 'email_failed') {
@@ -300,6 +523,7 @@ function ApplicationView({
   const addMeetupStaffNote = useAppContext((v) => v.requestHelpers.addMeetupStaffNote);
   const previewCoordinatorEmail = useAppContext((v) => v.requestHelpers.previewCoordinatorEmail);
   const resendCoordinatorEmail = useAppContext((v) => v.requestHelpers.resendCoordinatorEmail);
+  const myId = useKeyContext((v) => v.myState.userId);
   const [data, setData] = useState<StaffApplicationData | null>(null);
   const [error, setError] = useState('');
   const [choice, setChoice] = useState<number>(0);
@@ -308,6 +532,7 @@ function ApplicationView({
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
   const [message, setMessage] = useState('');
+  const [justSet, setJustSet] = useState(false);
   const [preview, setPreview] = useState<{ subject: string; html: string; text: string; to: string } | null>(null);
 
   useEffect(() => {
@@ -324,78 +549,173 @@ function ApplicationView({
     application.plan.status === 'approved' &&
     application.venue.status !== 'cancelled';
   const useCustom = choice === -1 || offered.length === 0;
+  const confirmed = application.venue.confirmedSlot;
 
   return (
-    <div className={css`display: flex; flex-direction: column; gap: 1.6rem; margin-top: 1.8rem;`}>
+    <div className={css`display: flex; flex-direction: column; gap: 1.8rem; margin-top: 1.8rem;`}>
       <article className={staffCardClass}>
         <ApplicationDetails application={application} achievementTitle={achievementTitle} />
       </article>
 
-      <section className={css`${staffCardClass}; padding: 1.4rem 1.6rem; display: flex; flex-direction: column; gap: 1rem;`}>
-        <h3 className={staffHeadingClass}>Slot setup</h3>
-        {application.venue.confirmedSlot && (
-          <QuestNote tone="success">
-            Set up: <b>{formatSlot(application.venue.confirmedSlot)}</b>
-            {application.venue.room ? ` · ${application.venue.branch} ${application.venue.room}` : ''}
-            {application.venueSetBy ? ` (by ${application.venueSetBy.username})` : ''}
-          </QuestNote>
+      <section
+        className={css`
+          ${staffCardClass};
+          padding: 1.8rem 1.6rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.2rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1.4rem 1rem;
+          }
+        `}
+      >
+        <h3 className={css`margin: 0; font-size: 1.9rem; font-weight: bold; color: ${Color.black()};`}>
+          <Icon icon="clock" style={{ color: Color.logoBlue() }} /> Slot setup
+        </h3>
+        {confirmed && (
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 1.4rem;
+              padding: 1.4rem;
+              border-radius: 1.4rem;
+              background: ${Color.green(0.1)};
+              border: 1.5px solid ${Color.green(0.5)};
+            `}
+          >
+            <span
+              className={css`
+                width: 5rem;
+                height: 5rem;
+                border-radius: 50%;
+                background: ${Color.green()};
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2.4rem;
+                flex-shrink: 0;
+                animation: ${justSet ? pop : 'none'} 0.6s ease-out;
+                @media (prefers-reduced-motion: reduce) {
+                  animation: none;
+                }
+              `}
+            >
+              <Icon icon="check" />
+            </span>
+            <span style={{ minWidth: 0 }}>
+              <b style={{ display: 'block', fontSize: '1.7rem', color: Color.black() }}>
+                {justSet ? 'All set! The crew has been told.' : 'Slot is set up'}
+              </b>
+              <span style={{ fontSize: '1.4rem', color: Color.darkerGray() }}>
+                {formatSlot(confirmed)}
+                {application.venue.room ? ` · ${application.venue.branch} ${application.venue.room}` : ''}
+                {application.venueSetBy ? ` · by ${application.venueSetBy.username}` : ''}
+              </span>
+            </span>
+          </div>
         )}
         {canSetSlot ? (
           <>
-            {offered.length > 0 && (
-              <div role="radiogroup" aria-label="Offered slots" className={css`display: flex; flex-direction: column; gap: 0.4rem;`}>
-                {offered.map((slot, index) => (
-                  <label key={index} className={radioClass}>
-                    <input type="radio" checked={choice === index} disabled={readOnly} onChange={() => setChoice(index)} />
-                    {formatSlot(slot)}
-                  </label>
-                ))}
-                <label className={radioClass}>
-                  <input type="radio" checked={choice === -1} disabled={readOnly} onChange={() => setChoice(-1)} />
-                  A different date or time
-                </label>
-              </div>
-            )}
+            <span style={{ fontSize: '1.4rem', color: Color.darkerGray() }}>
+              {confirmed ? 'Need to change it? Pick again:' : 'Which time did you arrange?'}
+            </span>
+            <div role="radiogroup" aria-label="Slot" className={css`display: flex; gap: 0.8rem; flex-wrap: wrap;`}>
+              {offered.map((slot, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  role="radio"
+                  aria-checked={choice === index}
+                  disabled={readOnly}
+                  onClick={() => setChoice(index)}
+                  className={slotChoiceClass(choice === index)}
+                >
+                  <CalendarChip date={slot.date} time={`${slot.start}–${slot.end}`} />
+                </button>
+              ))}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={useCustom}
+                disabled={readOnly}
+                onClick={() => setChoice(-1)}
+                className={css`
+                  ${slotChoiceClass(useCustom)};
+                  min-width: 12rem;
+                  font-size: 1.3rem;
+                  font-weight: bold;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                <Icon icon="pencil-alt" style={{ marginRight: '0.4rem' }} />
+                {offered.length ? 'A different time' : 'Enter the time'}
+              </button>
+            </div>
             {useCustom && (
               <div className={css`display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;`}>
                 <input type="date" aria-label="Date" className={questInputClass} style={{ width: '15rem' }} value={custom.date} disabled={readOnly} onChange={(event) => setCustom({ ...custom, date: event.target.value })} />
-                <input type="time" aria-label="Start" className={questInputClass} style={{ width: '10rem' }} value={custom.start} disabled={readOnly} onChange={(event) => setCustom({ ...custom, start: event.target.value })} />
+                <input type="time" aria-label="Start" className={questInputClass} style={{ width: '13rem' }} value={custom.start} disabled={readOnly} onChange={(event) => setCustom({ ...custom, start: event.target.value })} />
                 <span>–</span>
-                <input type="time" aria-label="End" className={questInputClass} style={{ width: '10rem' }} value={custom.end} disabled={readOnly} onChange={(event) => setCustom({ ...custom, end: event.target.value })} />
+                <input type="time" aria-label="End" className={questInputClass} style={{ width: '13rem' }} value={custom.end} disabled={readOnly} onChange={(event) => setCustom({ ...custom, end: event.target.value })} />
               </div>
             )}
             <div>
-              <Button color="green" loading={busy} disabled={busy || readOnly} onClick={handleSetSlot}>
-                <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+              <Button color="green" size="lg" loading={busy} disabled={busy || readOnly} onClick={handleSetSlot}>
+                <Icon icon="check" style={{ marginRight: '0.6rem' }} />
                 Slot is set up
               </Button>
-              <div className={questHelpClass}>
-                The crew sees the final slot on its page and gets a message.
-                The actual room booking happens through the academy.
+              <div className={questHelpClass} style={{ marginTop: '0.4rem' }}>
+                The crew sees the final slot on its page and gets a message. The
+                room booking itself happens through the academy.
               </div>
             </div>
           </>
         ) : (
-          <span className={questHelpClass}>
-            {application.venue.status === 'cancelled'
-              ? 'On hold: the crew changed or disbanded after approval.'
-              : 'Nothing to set up right now.'}
-          </span>
+          !confirmed && (
+            <span className={questHelpClass}>
+              {application.venue.status === 'cancelled'
+                ? 'On hold: the crew changed or disbanded after approval.'
+                : 'Nothing to set up right now.'}
+            </span>
+          )
         )}
         {headmaster && (
-          <div style={{ fontSize: '1.35rem' }}>
-            Questions? Contact the approving headmaster:{' '}
-            <Link to={`/users/${headmaster.username}`} style={{ fontWeight: 'bold' }}>
-              {headmaster.username}
-              {headmaster.realName ? ` (${headmaster.realName})` : ''}
-            </Link>{' '}
-            <span className={questHelpClass}>(message them from their profile)</span>
-          </div>
+          <Link
+            to={`/users/${headmaster.username}`}
+            className={css`
+              display: inline-flex;
+              align-items: center;
+              gap: 1rem;
+              align-self: flex-start;
+              padding: 0.6rem 1.2rem 0.6rem 0.6rem;
+              border-radius: 999px;
+              border: 1px solid var(--ui-border);
+              background: #fff;
+              color: ${Color.black()};
+              font-size: 1.35rem;
+              &:hover {
+                text-decoration: none;
+                border-color: ${Color.logoBlue()};
+              }
+            `}
+          >
+            <span className={css`width: 3.2rem; height: 3.2rem; border-radius: 50%; overflow: hidden; display: inline-flex;`}>
+              <ProfilePic userId={headmaster.userId} style={{ width: '100%', height: '100%' }} />
+            </span>
+            <span>
+              Questions? Contact <b>{headmaster.realName || headmaster.username}</b>
+              <span style={{ display: 'block', fontSize: '1.15rem', color: Color.darkGray() }}>
+                The approving headmaster · message from their profile
+              </span>
+            </span>
+          </Link>
         )}
         {message && <QuestNote tone="success">{message}</QuestNote>}
         {actionError && <QuestNote tone="warning">{actionError}</QuestNote>}
         {isAdmin && (
-          <div className={css`display: flex; gap: 0.6rem; flex-wrap: wrap; border-top: 1px dashed var(--ui-border); padding-top: 1rem;`}>
+          <div className={css`display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; border-top: 1px dashed var(--ui-border); padding-top: 1.2rem;`}>
             <Button size="sm" variant="soft" color="logoBlue" disabled={busy} onClick={handlePreview}>
               <Icon icon="eye" style={{ marginRight: '0.4rem' }} />
               Preview email
@@ -411,37 +731,109 @@ function ApplicationView({
         )}
       </section>
 
-      <section className={css`${staffCardClass}; padding: 1.4rem 1.6rem; display: flex; flex-direction: column; gap: 0.9rem;`}>
-        <h3 className={staffHeadingClass}>Staff notes</h3>
-        <span className={questHelpClass}>Only staff see these. The crew never does.</span>
-        {notes.map((item) => (
-          <div key={item.id} className={css`font-size: 1.35rem; border-left: 3px solid ${Color.logoBlue(0.5)}; padding-left: 0.8rem;`}>
-            <b>{item.username || 'staff'}</b>{' '}
-            <span style={{ color: Color.darkGray() }}>{formatTime(item.createdAt)}</span>
-            <div style={{ whiteSpace: 'pre-wrap' }}>{item.note}</div>
+      <div
+        className={css`
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 1.8rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            grid-template-columns: 1fr;
+          }
+        `}
+      >
+        <section className={css`${staffCardClass}; padding: 1.6rem; display: flex; flex-direction: column; gap: 1rem; @media (max-width: ${mobileMaxWidth}) { padding: 1.4rem 1rem; }`}>
+          <h3 className={css`margin: 0; font-size: 1.8rem; font-weight: bold;`}>
+            <Icon icon="comments" style={{ color: Color.logoBlue() }} /> Staff notes
+          </h3>
+          <span className={questHelpClass}>Only staff see these. The crew never does.</span>
+          {notes.length === 0 && (
+            <span style={{ fontSize: '1.35rem', color: Color.darkGray() }}>
+              No notes yet. Jot down calls, bookings or reminders here. ✏️
+            </span>
+          )}
+          {notes.map((item) => {
+            const mine = item.authorId === myId;
+            return (
+              <div key={item.id} className={css`display: flex; gap: 0.8rem; align-items: flex-end; flex-direction: ${mine ? 'row-reverse' : 'row'};`}>
+                <span className={css`width: 3rem; height: 3rem; border-radius: 50%; overflow: hidden; flex-shrink: 0; display: inline-flex;`}>
+                  <ProfilePic userId={item.authorId} style={{ width: '100%', height: '100%' }} />
+                </span>
+                <div
+                  className={css`
+                    max-width: 85%;
+                    padding: 0.8rem 1.1rem;
+                    border-radius: 1.4rem;
+                    border-bottom-${mine ? 'right' : 'left'}-radius: 0.3rem;
+                    background: ${mine ? Color.logoBlue(0.12) : Color.extraLightGray()};
+                    font-size: 1.35rem;
+                    white-space: pre-wrap;
+                    overflow-wrap: anywhere;
+                  `}
+                >
+                  <span style={{ display: 'block', fontSize: '1.15rem', color: Color.darkGray(), marginBottom: '0.2rem' }}>
+                    <b>{item.username || 'staff'}</b> · {formatTime(item.createdAt)}
+                  </span>
+                  {item.note}
+                </div>
+              </div>
+            );
+          })}
+          <div className={css`display: flex; gap: 0.6rem; align-items: flex-end; margin-top: 0.4rem;`}>
+            <textarea
+              aria-label="Add a staff note"
+              className={questInputClass}
+              rows={2}
+              maxLength={2000}
+              value={note}
+              disabled={readOnly}
+              placeholder="Add a note…"
+              onChange={(event) => setNote(event.target.value)}
+            />
+            <Button color="logoBlue" disabled={busy || readOnly || !note.trim()} onClick={handleNote}>
+              <Icon icon="paper-plane" />
+            </Button>
           </div>
-        ))}
-        <label className={questLabelClass} htmlFor={`staff-note-${crewId}`}>Add a note</label>
-        <textarea id={`staff-note-${crewId}`} className={questInputClass} rows={2} maxLength={2000} value={note} disabled={readOnly} onChange={(event) => setNote(event.target.value)} />
-        <div>
-          <Button size="sm" color="logoBlue" disabled={busy || readOnly || !note.trim()} onClick={handleNote}>
-            Save note
-          </Button>
-        </div>
-      </section>
+        </section>
 
-      <section className={css`${staffCardClass}; padding: 1.4rem 1.6rem;`}>
-        <h3 className={staffHeadingClass}>Timeline</h3>
-        <ol className={css`list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem;`}>
-          {events.length === 0 && <li className={questHelpClass}>No events recorded yet.</li>}
-          {events.map((event) => (
-            <li key={event.id} className={css`display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1rem; font-size: 1.3rem; @media (max-width: ${mobileMaxWidth}) { grid-template-columns: 1fr; gap: 0; }`}>
-              <span style={{ color: Color.darkGray() }}>{formatTime(event.createdAt)}</span>
-              <span>{eventText(event)}</span>
-            </li>
-          ))}
-        </ol>
-      </section>
+        <section className={css`${staffCardClass}; padding: 1.6rem; @media (max-width: ${mobileMaxWidth}) { padding: 1.4rem 1rem; }`}>
+          <h3 className={css`margin: 0 0 1.2rem; font-size: 1.8rem; font-weight: bold;`}>
+            <Icon icon="history" style={{ color: Color.logoBlue() }} /> Timeline
+          </h3>
+          {events.length === 0 && <span className={questHelpClass}>No events recorded yet.</span>}
+          <ol className={css`list-style: none; margin: 0; padding: 0; position: relative;`}>
+            {events.map((event, index) => {
+              const style = EVENTS[event.kind] || { icon: 'circle', color: '#8a8a8a' };
+              return (
+                <li key={event.id} className={css`display: flex; gap: 1rem; position: relative; padding-bottom: ${index === events.length - 1 ? 0 : '1.2rem'};`}>
+                  {index < events.length - 1 && (
+                    <span aria-hidden className={css`position: absolute; left: 1.45rem; top: 3rem; bottom: 0; width: 2px; background: var(--ui-border);`} />
+                  )}
+                  <span
+                    className={css`
+                      width: 3rem;
+                      height: 3rem;
+                      border-radius: 50%;
+                      flex-shrink: 0;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 1.3rem;
+                      color: #fff;
+                      background: ${style.color};
+                    `}
+                  >
+                    <Icon icon={style.icon} />
+                  </span>
+                  <span style={{ minWidth: 0, paddingTop: '0.3rem' }}>
+                    <span style={{ display: 'block', fontSize: '1.4rem', color: Color.black() }}>{eventText(event)}</span>
+                    <span style={{ fontSize: '1.15rem', color: Color.darkGray() }}>{formatTime(event.createdAt)}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      </div>
 
       {preview && (
         <Modal modalKey="MeetupCoordinatorEmailPreview" isOpen onClose={() => setPreview(null)} hasHeader title="Email preview (not sent)" size="lg">
@@ -477,36 +869,36 @@ function ApplicationView({
   }
 
   async function run(action: () => Promise<unknown>, done: string) {
-    if (busy || readOnly) return;
+    if (busy || readOnly) return false;
     setBusy(true);
     setActionError('');
     setMessage('');
     try {
       await action();
-      setMessage(done);
+      if (done) setMessage(done);
       await Promise.all([load(), onChanged()]);
+      return true;
     } catch (err: any) {
       setActionError(err?.message || 'Something went wrong.');
+      return false;
     } finally {
       setBusy(false);
     }
   }
 
-  function handleSetSlot() {
-    return run(
-      () =>
-        confirmMeetupSlot(
-          useCustom ? { crewId, slot: custom } : { crewId, slotIndex: choice }
-        ),
-      'Slot is set up. The crew can see it now.'
+  async function handleSetSlot() {
+    const ok = await run(
+      () => confirmMeetupSlot(useCustom ? { crewId, slot: custom } : { crewId, slotIndex: choice }),
+      ''
     );
+    if (ok) setJustSet(true);
   }
 
   function handleNote() {
     return run(async () => {
       await addMeetupStaffNote({ crewId, note });
       setNote('');
-    }, 'Note saved.');
+    }, '');
   }
 
   async function handlePreview() {
@@ -526,10 +918,23 @@ function ApplicationView({
   }
 }
 
-const radioClass = css`
-  display: flex;
+const slotChoiceClass = (active: boolean) => css`
+  display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 1.4rem;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 1.3rem;
+  border: 2px solid ${active ? Color.logoBlue() : 'var(--ui-border)'};
+  background: ${active ? Color.logoBlue(0.08) : '#fff'};
   cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  &:hover {
+    transform: translateY(-1px);
+  }
+  &:disabled {
+    cursor: default;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;

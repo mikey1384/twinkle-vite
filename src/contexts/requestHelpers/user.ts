@@ -675,6 +675,24 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadInviteCandidateStatuses({
+      crewId,
+      userIds
+    }: {
+      crewId: number;
+      userIds: number[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/invite-status`,
+          { userIds },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMyMeetupQuestSummary() {
       try {
         const { data } = await request.get(

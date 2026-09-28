@@ -8,21 +8,34 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import CrewCover from '../CrewCover';
 import { QuestNote, questInputClass, questLabelClass } from '../StepCard';
 import { backLinkClass, pageWidthClass } from '../pageStyles';
 import {
   ApplicationDetails,
-  StaffNav,
-  ViewAsBar,
+  Celebration,
+  CoordinatorChip,
+  CountBubble,
+  EmptyState,
   VenueForm,
+  ViewAsBar,
+  WelcomeHeader,
   emptyVenueDraft,
   formatTime,
-  staffCardClass,
-  staffHeadingClass,
+  liftCardClass,
+  staffMainGutterClass,
+  sectionTitleClass,
   venueFromDraft,
   type VenueDraft
 } from './shared';
-import type { DeskData, StaffApplication } from '../types';
+import type { DeskData, StaffApplication, StaffUser } from '../types';
+
+const SEND_BACK_SUGGESTIONS = [
+  'Please choose a public place, like a library or a museum.',
+  'Please tell us more about what you will learn together.',
+  'Please pick a date when your grown-up can come.',
+  'Please make sure every member has asked a parent.'
+];
 
 // /achievements/bridge-builder/desk — the headmasters' desk: submitted plans
 // (oldest first) with approve / send back and an optional classroom offer,
@@ -62,28 +75,10 @@ export default function HeadmasterDesk() {
   return (
     <ErrorBoundary componentPath="BridgeBuilderQuest/HeadmasterDesk">
       <div className={css`width: 100%; display: flex; justify-content: center; padding-bottom: 20rem;`}>
-        <main className={pageWidthClass} style={{ maxWidth: '980px' }}>
+        <main className={`${pageWidthClass} ${staffMainGutterClass}`} style={{ maxWidth: '1000px' }}>
           <Link to="/achievements/bridge-builder" className={backLinkClass}>
             <Icon icon="arrow-left" /> {title ? `${title} quest` : 'Meetup quest'}
           </Link>
-          <div className={css`margin-top: 1.4rem; @media (max-width: ${mobileMaxWidth}) { margin: 1.4rem 1rem 0; }`}>
-            <h1 className={css`margin: 0; font-size: 2.6rem; font-weight: bold; color: ${Color.black()};`}>
-              Headmaster desk
-            </h1>
-            <p className={css`margin: 0.4rem 0 0.8rem; font-size: 1.4rem; color: ${Color.darkerGray()};`}>
-              Meetup plans waiting for a decision. Approving sends the coordinator a
-              briefing email; you can also offer a classroom and time slots.
-            </p>
-            {data && <StaffNav summary={data.summary} />}
-          </div>
-          {data && (
-            <ViewAsBar
-              viewer={data.viewer}
-              options={data.viewAsOptions}
-              viewAs={viewAs}
-              onChange={(id) => setSearchParams(id ? { viewAs: String(id) } : {})}
-            />
-          )}
           {error && (
             <div style={{ marginTop: '2rem' }}>
               <QuestNote tone="warning">{error}</QuestNote>
@@ -92,18 +87,42 @@ export default function HeadmasterDesk() {
           {!data && !error && <Loading />}
           {data && (
             <>
+              <WelcomeHeader
+                viewer={data.viewer}
+                title="Headmaster desk"
+                lead="Meetup plans from students land here for your decision."
+                summary={data.summary}
+                stats={[
+                  { icon: 'clipboard-check', label: 'Plans waiting', one: 'plan waiting', value: data.summary.plansWaiting, color: '#418ceb' },
+                  { icon: 'clock', label: 'Meetups this week', one: 'meetup this week', value: data.summary.meetupsThisWeek || 0, color: '#28b62c' },
+                  { icon: 'users', label: 'Crews met this month', one: 'crew met this month', value: data.summary.metThisMonth || 0, color: '#e08a00' },
+                  { icon: 'check-circle', label: 'Decided', value: data.decided.length, color: '#139a9a' }
+                ]}
+              />
+              <ViewAsBar
+                viewer={data.viewer}
+                options={data.viewAsOptions}
+                viewAs={viewAs}
+                onChange={(id) => setSearchParams(id ? { viewAs: String(id) } : {})}
+              />
               <h2 className={sectionTitleClass}>
-                Waiting for you <span style={{ color: Color.darkGray() }}>({data.queue.length})</span>
+                <Icon icon="clipboard-check" style={{ color: Color.logoBlue() }} /> Waiting for you
+                <CountBubble count={data.queue.length} />
               </h2>
               {queue.length === 0 ? (
-                <QuestNote tone="info">No plans are waiting right now.</QuestNote>
+                <EmptyState
+                  emoji="☕"
+                  title="No plans waiting"
+                  text="Enjoy your tea. New meetup plans from students will show up here, and you'll get a message in chat."
+                />
               ) : (
-                <div className={css`display: flex; flex-direction: column; gap: 1.6rem;`}>
+                <div className={css`display: flex; flex-direction: column; gap: 2rem;`}>
                   {queue.map((application) => (
                     <PendingPlan
                       key={application.crewId}
                       application={application}
                       achievementTitle={title}
+                      coordinator={data.coordinator || null}
                       readOnly={readOnly}
                       onChanged={reload}
                     />
@@ -112,21 +131,40 @@ export default function HeadmasterDesk() {
               )}
               {data.videosWaiting && data.videosWaiting.length > 0 && (
                 <>
-                  <h2 className={sectionTitleClass}>Videos waiting (admins)</h2>
-                  {data.videosWaiting.map((application) => (
-                    <div key={application.crewId} style={{ fontSize: '1.4rem', marginBottom: '0.4rem' }}>
-                      <Link to={`/achievements/bridge-builder?crew=${application.crewId}`}>
-                        {application.displayName} (#{application.crewId}): review the video
+                  <h2 className={sectionTitleClass}>
+                    <Icon icon="film" style={{ color: Color.logoBlue() }} /> Videos waiting (admins)
+                    <CountBubble count={data.videosWaiting.length} />
+                  </h2>
+                  <div className={css`display: flex; flex-direction: column; gap: 0.8rem;`}>
+                    {data.videosWaiting.map((application) => (
+                      <Link
+                        key={application.crewId}
+                        to={`/achievements/bridge-builder?crew=${application.crewId}`}
+                        className={css`${liftCardClass}; display: flex; align-items: center; gap: 1rem; padding: 0.8rem; color: ${Color.black()};`}
+                      >
+                        <span style={{ width: '6rem' }}>
+                          <CrewCover cover={application.cover} height="4rem" rounded="0.8rem" />
+                        </span>
+                        <b style={{ fontSize: '1.4rem' }}>{application.displayName}</b>
+                        <span style={{ marginLeft: 'auto', fontSize: '1.3rem', color: Color.logoBlue() }}>
+                          Review the video <Icon icon="chevron-right" />
+                        </span>
                       </Link>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </>
               )}
-              <h2 className={sectionTitleClass}>Decided</h2>
+              <h2 className={sectionTitleClass}>
+                <Icon icon="history" style={{ color: Color.logoBlue() }} /> Decided
+              </h2>
               {data.decided.length === 0 ? (
-                <QuestNote tone="info">No decisions yet.</QuestNote>
+                <EmptyState
+                  emoji="🌱"
+                  title="No decisions yet"
+                  text="Plans you approve or send back will be listed here, so you can change a classroom offer later."
+                />
               ) : (
-                <div className={css`display: flex; flex-direction: column; gap: 1.2rem;`}>
+                <div className={css`display: flex; flex-direction: column; gap: 1rem;`}>
                   {data.decided.map((application) => (
                     <DecidedPlan
                       key={application.crewId}
@@ -160,24 +198,16 @@ export default function HeadmasterDesk() {
   }
 }
 
-const sectionTitleClass = css`
-  margin: 2.6rem 0 1rem;
-  font-size: 1.9rem;
-  font-weight: bold;
-  color: ${Color.black()};
-  @media (max-width: ${mobileMaxWidth}) {
-    margin: 2.2rem 1rem 1rem;
-  }
-`;
-
 function PendingPlan({
   application,
   achievementTitle,
+  coordinator,
   readOnly,
   onChanged
 }: {
   application: StaffApplication;
   achievementTitle: string;
+  coordinator: StaffUser | null;
   readOnly: boolean;
   onChanged: () => Promise<void>;
 }) {
@@ -186,92 +216,210 @@ function PendingPlan({
   const [draft, setDraft] = useState<VenueDraft>(() => emptyVenueDraft(application.branchNames[0] || ''));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [done, setDone] = useState('');
+  const [sendBackShown, setSendBackShown] = useState(false);
+  const [celebration, setCelebration] = useState('');
+  const [sentBack, setSentBack] = useState(false);
+  const coordinatorName = coordinator
+    ? (coordinator.realName || '').split(' ')[0] || coordinator.username
+    : 'The coordinator';
+
+  if (celebration) {
+    return (
+      <Celebration
+        title="Plan approved!"
+        message={celebration}
+        onDone={() => {
+          setCelebration('');
+          onChanged();
+        }}
+      />
+    );
+  }
+  if (sentBack) {
+    return (
+      <QuestNote tone="info">
+        Sent back to <b>{application.displayName}</b> with your note. They&apos;ll see it on their crew page.
+      </QuestNote>
+    );
+  }
 
   return (
-    <article className={staffCardClass}>
+    <article className={liftCardClass}>
       <ApplicationDetails application={application} achievementTitle={achievementTitle} />
       <div
         className={css`
           border-top: 1px solid var(--ui-border);
-          padding: 1.4rem 1.6rem;
+          padding: 1.8rem 1.6rem;
           background: ${Color.logoBlue(0.03)};
           display: flex;
           flex-direction: column;
-          gap: 1.1rem;
+          gap: 1.4rem;
           @media (max-width: ${mobileMaxWidth}) {
-            padding: 1.2rem 1rem;
+            padding: 1.4rem 1rem;
           }
         `}
       >
-        <h4 className={staffHeadingClass} style={{ fontSize: '1.6rem' }}>
-          Your decision
-        </h4>
         <div>
-          <span className={questLabelClass}>Classroom (optional)</span>
-          <VenueForm
-            idPrefix={`desk-${application.crewId}`}
-            draft={draft}
-            branchSuggestions={application.branchNames}
-            disabled={readOnly}
-            onChange={setDraft}
-          />
+          <h3 className={css`margin: 0; font-size: 1.8rem; font-weight: bold; color: ${Color.black()};`}>
+            Your decision
+          </h3>
+          <span style={{ fontSize: '1.3rem', color: Color.darkGray() }}>
+            Can the academy offer a classroom? It&apos;s optional.
+          </span>
         </div>
-        <div>
-          <label className={questLabelClass} htmlFor={`desk-note-${application.crewId}`}>
-            Note to the crew (needed to send back)
-          </label>
-          <textarea
-            id={`desk-note-${application.crewId}`}
-            className={questInputClass}
-            rows={2}
-            maxLength={1000}
-            value={note}
-            disabled={readOnly}
-            onChange={(event) => setNote(event.target.value)}
-          />
-        </div>
-        <div className={css`display: flex; gap: 0.6rem; flex-wrap: wrap;`}>
-          <Button color="green" loading={busy} disabled={busy || readOnly} onClick={() => decide('approve')}>
-            <Icon icon="check" style={{ marginRight: '0.5rem' }} />
-            Approve
-          </Button>
-          <Button
-            color="orange"
-            variant="soft"
-            disabled={busy || readOnly}
-            onClick={() => (note.trim() ? decide('send-back') : setError('Write a note so the crew knows what to change.'))}
+        <VenueForm
+          idPrefix={`desk-${application.crewId}`}
+          draft={draft}
+          branchSuggestions={application.branchNames}
+          disabled={readOnly}
+          onChange={setDraft}
+        />
+        {sendBackShown && (
+          <div
+            className={css`
+              border-radius: 1.4rem;
+              background: ${Color.orange(0.07)};
+              border: 1px solid ${Color.orange(0.3)};
+              padding: 1.2rem;
+              display: flex;
+              flex-direction: column;
+              gap: 0.8rem;
+            `}
           >
-            Send back
-          </Button>
+            <label className={questLabelClass} htmlFor={`desk-note-${application.crewId}`}>
+              What should the crew change? Be kind: they&apos;re kids and they&apos;ll read it.
+            </label>
+            <div className={css`display: flex; gap: 0.5rem; flex-wrap: wrap;`}>
+              {SEND_BACK_SUGGESTIONS.map((text) => (
+                <button
+                  key={text}
+                  type="button"
+                  disabled={readOnly}
+                  onClick={() => setNote((current) => (current ? `${current} ${text}` : text))}
+                  className={css`
+                    padding: 0.4rem 1rem;
+                    border-radius: 999px;
+                    border: 1px dashed ${Color.orange(0.6)};
+                    background: #fff;
+                    font-size: 1.2rem;
+                    color: ${Color.darkerGray()};
+                    cursor: pointer;
+                    text-align: left;
+                  `}
+                >
+                  + {text}
+                </button>
+              ))}
+            </div>
+            <textarea
+              id={`desk-note-${application.crewId}`}
+              className={questInputClass}
+              rows={3}
+              maxLength={1000}
+              value={note}
+              disabled={readOnly}
+              placeholder="Great idea! Just one thing…"
+              onChange={(event) => setNote(event.target.value)}
+            />
+          </div>
+        )}
+        {!sendBackShown && (
+          <div>
+            <label className={questLabelClass} htmlFor={`desk-approve-note-${application.crewId}`}>
+              A note for the crew (optional)
+            </label>
+            <input
+              id={`desk-approve-note-${application.crewId}`}
+              className={questInputClass}
+              maxLength={1000}
+              value={note}
+              disabled={readOnly}
+              placeholder="Have a wonderful meetup!"
+              onChange={(event) => setNote(event.target.value)}
+            />
+          </div>
+        )}
+        <div
+          className={css`
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            align-items: center;
+            @media (max-width: ${mobileMaxWidth}) {
+              flex-direction: column;
+              align-items: stretch;
+            }
+          `}
+        >
+          {sendBackShown ? (
+            <>
+              <Button color="orange" size="lg" loading={busy} disabled={busy || readOnly} onClick={handleSendBack}>
+                <Icon icon="paper-plane" style={{ marginRight: '0.6rem' }} />
+                Send back with this note
+              </Button>
+              <Button variant="ghost" color="darkGray" disabled={busy} onClick={() => setSendBackShown(false)}>
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button color="green" size="lg" loading={busy} disabled={busy || readOnly} onClick={handleApprove}>
+                <Icon icon="check" style={{ marginRight: '0.6rem' }} />
+                Approve plan
+              </Button>
+              <Button variant="soft" color="orange" disabled={busy || readOnly} onClick={() => setSendBackShown(true)}>
+                <Icon icon="redo" style={{ marginRight: '0.5rem' }} />
+                Send back
+              </Button>
+            </>
+          )}
         </div>
-        {done && <QuestNote tone="success">{done}</QuestNote>}
         {error && <QuestNote tone="warning">{error}</QuestNote>}
       </div>
     </article>
   );
 
-  async function decide(action: 'approve' | 'send-back') {
+  async function handleApprove() {
     if (busy || readOnly) return;
+    if (draft.mode === 'offer' && (!draft.branch.trim() || !draft.room.trim() || !draft.slots.length)) {
+      setError('For a classroom offer, pick the branch, name the classroom and add at least one slot.');
+      return;
+    }
     setBusy(true);
     setError('');
     try {
       const response = await decideMeetupPlan({
         crewId: application.crewId,
-        action,
+        action: 'approve',
         note,
-        venue: action === 'approve' ? venueFromDraft(draft) : undefined
+        venue: venueFromDraft(draft)
       });
-      setDone(
-        action === 'approve'
-          ? response?.email?.sent
-            ? 'Approved. The coordinator got the briefing email.'
-            : 'Approved.'
-          : 'Sent back to the crew with your note.'
+      setCelebration(
+        response?.email?.sent
+          ? `${coordinatorName} will get the briefing to arrange the meetup.`
+          : `${coordinatorName} will see it on the coordinator desk.`
       );
-      await onChanged();
     } catch (err: any) {
       setError(err?.message || 'Could not save the decision.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSendBack() {
+    if (busy || readOnly) return;
+    if (!note.trim()) {
+      setError('Write a note so the crew knows what to change.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      await decideMeetupPlan({ crewId: application.crewId, action: 'send-back', note });
+      setSentBack(true);
+      setTimeout(onChanged, 2000);
+    } catch (err: any) {
+      setError(err?.message || 'Could not send it back.');
     } finally {
       setBusy(false);
     }
@@ -296,9 +444,7 @@ function DecidedPlan({
     ...emptyVenueDraft(application.venue.branch || application.branchNames[0] || ''),
     mode: application.venue.room ? 'offer' : 'none',
     room: application.venue.room,
-    slots: application.venue.slots.length
-      ? application.venue.slots
-      : emptyVenueDraft().slots
+    slots: application.venue.slots
   }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -309,31 +455,39 @@ function DecidedPlan({
     application.video.status !== 'approved';
 
   return (
-    <article className={staffCardClass}>
+    <article className={liftCardClass}>
       <button
         type="button"
+        aria-expanded={open}
         onClick={() => setOpen((shown) => !shown)}
         className={css`
           width: 100%;
           display: flex;
           align-items: center;
-          gap: 1rem;
-          padding: 1rem 1.4rem;
+          gap: 1.2rem;
+          padding: 0.8rem;
           border: 0;
           background: #fff;
           cursor: pointer;
           text-align: left;
-          font-size: 1.4rem;
-          flex-wrap: wrap;
         `}
       >
-        <Icon icon={open ? 'chevron-down' : 'chevron-right'} />
-        <b>{application.displayName}</b>
-        <span style={{ color: Color.darkGray() }}>
-          {application.plan.status === 'sent_back' ? 'Sent back' : 'Approved'}
-          {application.decidedBy ? ` by ${application.decidedBy.username}` : ''} ·{' '}
-          {formatTime(application.plan.reviewedAt)}
+        <span style={{ width: '7rem', flexShrink: 0 }}>
+          <CrewCover cover={application.cover} height="4.8rem" rounded="0.9rem" />
         </span>
+        <span style={{ minWidth: 0, flex: 1 }}>
+          <b style={{ display: 'block', fontSize: '1.5rem', color: Color.black() }}>{application.displayName}</b>
+          <span style={{ fontSize: '1.25rem', color: Color.darkGray() }}>
+            {application.plan.status === 'sent_back' ? 'Sent back' : 'Approved'}
+            {application.decidedBy ? ` by ${application.decidedBy.username}` : ''} · {formatTime(application.plan.reviewedAt)}
+          </span>
+        </span>
+        {application.plan.status !== 'sent_back' && (
+          <span className={css`@media (max-width: ${mobileMaxWidth}) { display: none; }`}>
+            <CoordinatorChip status={application.coordinatorStatus} />
+          </span>
+        )}
+        <Icon icon={open ? 'chevron-up' : 'chevron-down'} style={{ color: Color.darkGray() }} />
       </button>
       {open && (
         <>
@@ -342,10 +496,10 @@ function DecidedPlan({
             <div
               className={css`
                 border-top: 1px solid var(--ui-border);
-                padding: 1.2rem 1.6rem;
+                padding: 1.4rem 1.6rem;
                 display: flex;
                 flex-direction: column;
-                gap: 0.9rem;
+                gap: 1rem;
               `}
             >
               {editing ? (
@@ -358,7 +512,7 @@ function DecidedPlan({
                     disabled={readOnly}
                     onChange={setDraft}
                   />
-                  <div className={css`display: flex; gap: 0.6rem;`}>
+                  <div className={css`display: flex; gap: 0.6rem; flex-wrap: wrap;`}>
                     <Button color="logoBlue" loading={busy} disabled={busy || readOnly} onClick={handleSave}>
                       Save and tell the coordinator
                     </Button>
@@ -370,6 +524,7 @@ function DecidedPlan({
               ) : (
                 <div>
                   <Button variant="soft" color="logoBlue" size="sm" disabled={readOnly} onClick={() => setEditing(true)}>
+                    <Icon icon="school" style={{ marginRight: '0.5rem' }} />
                     Change classroom or slots
                   </Button>
                 </div>
