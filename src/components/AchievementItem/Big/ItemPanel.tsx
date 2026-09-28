@@ -59,6 +59,7 @@ export default function ItemPanel({
   description,
   unlockMessage,
   requirements = [],
+  anyOf = false,
   badgeSrc,
   milestones,
   progressObj,
@@ -74,6 +75,8 @@ export default function ItemPanel({
   description?: string;
   unlockMessage?: string;
   requirements?: React.ReactNode[];
+  // the requirements are alternative ways (any one unlocks it), not a checklist
+  anyOf?: boolean;
   badgeSrc?: string;
   milestones?: { name: string; completed: boolean }[];
   progressObj?: { label: string; currentValue: number; targetValue: number };
@@ -400,7 +403,9 @@ export default function ItemPanel({
               color: ${Color.black()};
             `}
           >
-            Requirement{requirements.length > 1 ? 's' : ''}
+            {anyOf && requirements.length > 1
+              ? 'Unlock it any one of these ways'
+              : `Requirement${requirements.length > 1 ? 's' : ''}`}
           </h3>
           {requirements.map((requirement, index) => (
             <div
@@ -429,7 +434,7 @@ export default function ItemPanel({
                     margin-right: 0.5rem;
                   `}
                 >
-                  {`${index + 1}.`}
+                  {anyOf ? `Way ${index + 1}:` : `${index + 1}.`}
                 </span>
               ) : (
                 ''
