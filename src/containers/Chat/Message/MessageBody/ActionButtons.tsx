@@ -142,6 +142,46 @@ export default function ActionButtons({
       });
     }
 
+    // Positive actions first (Reward right after Reply), then the red group
+    // (Remove, Report) at the bottom behind a separator, so Reward never
+    // sits next to Report (Mikey, 2026-09-28).
+    if (
+      !isDeleteOnlyBuildSuggestion &&
+      !isReplyOnlyBuildCard &&
+      userCanRewardThis &&
+      !rewardAmount &&
+      !isAIMessage
+    ) {
+      result.push({
+        id: 'reward',
+        label: (
+          <>
+            <Icon icon="star" />
+            <span>{rewardLabel}</span>
+          </>
+        ),
+        accent: Color[rewardColor](),
+        onClick: onOpenRewardModal
+      });
+    }
+
+    const canBookmark =
+      isAIChat && (isAIMessage || (!!myId && userId === myId && !!messageId));
+    if (!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && canBookmark) {
+      const bookmarkView = isAIMessage ? BOOKMARK_VIEWS.AI : BOOKMARK_VIEWS.ME;
+      result.push({
+        id: 'bookmark',
+        label: (
+          <>
+            <Icon icon="bookmark" />
+            <span>Bookmark</span>
+          </>
+        ),
+        accent: Color[isCielMessage ? 'magenta' : 'logoBlue'](),
+        onClick: () => onBookmark(messageId, bookmarkView)
+      });
+    }
+
     if (
       !directChatBlocked &&
       pins?.snapshot?.canManage &&
@@ -200,6 +240,7 @@ export default function ActionButtons({
       result.push({
         id: 'remove',
         tone: 'danger',
+        separated: result.length > 0,
         label: (
           <>
             <Icon icon="trash-alt" />
@@ -214,43 +255,6 @@ export default function ActionButtons({
       });
     }
 
-    if (
-      !isDeleteOnlyBuildSuggestion &&
-      !isReplyOnlyBuildCard &&
-      userCanRewardThis &&
-      !rewardAmount &&
-      !isAIMessage
-    ) {
-      result.push({
-        id: 'reward',
-        label: (
-          <>
-            <Icon icon="star" />
-            <span>{rewardLabel}</span>
-          </>
-        ),
-        accent: Color[rewardColor](),
-        onClick: onOpenRewardModal
-      });
-    }
-
-    const canBookmark =
-      isAIChat && (isAIMessage || (!!myId && userId === myId && !!messageId));
-    if (!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && canBookmark) {
-      const bookmarkView = isAIMessage ? BOOKMARK_VIEWS.AI : BOOKMARK_VIEWS.ME;
-      result.push({
-        id: 'bookmark',
-        label: (
-          <>
-            <Icon icon="bookmark" />
-            <span>Bookmark</span>
-          </>
-        ),
-        accent: Color[isCielMessage ? 'magenta' : 'logoBlue'](),
-        onClick: () => onBookmark(messageId, bookmarkView)
-      });
-    }
-
     return withReport(result);
 
     // Report sits last, in its own group, and only opens a dialog: nothing is
@@ -262,7 +266,9 @@ export default function ActionButtons({
         {
           id: 'report',
           tone: 'danger' as const,
-          separated: items.length > 0,
+          // Joins Remove's red group when it is there; otherwise starts it.
+          separated:
+            items.length > 0 && items[items.length - 1]?.id !== 'remove',
           label: (
             <>
               <Icon icon="flag" />

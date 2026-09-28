@@ -1,3 +1,4 @@
+import { armUpdateIfDeployedBundleNewer } from '~/helpers/clientUpdate';
 import { USER_ACTIVITY_INPUT_EVENT } from '~/helpers/userActivity';
 import {
   isAiImageQuality,
@@ -5220,7 +5221,19 @@ export function useHostBridge({
             const relay = /^minecraft:(read|write):([a-z][a-z0-9-]*(?:\/[a-z][a-z0-9-]*)?)$/.exec(
               String(type)
             );
-            if (!relay) throw new Error(`Unknown request type: ${type}`);
+            if (!relay) {
+              // The SDK only sends types its host was released with, so an
+              // unknown type almost always means this tab is running an older
+              // website than the app's SDK (a tab parked on an app is never
+              // silently reloaded, to keep the app's state). Say how to fix
+              // it, with a code apps can check, and arm the update if a
+              // newer build is deployed.
+              void armUpdateIfDeployedBundleNewer();
+              throw createPreviewBridgeError(
+                `This page needs to be reloaded to use this feature (${String(type)}). Refresh the page and try again.`,
+                'host_update_required'
+              );
+            }
             // Signed-out visitors can play games built on play areas: only the
             // play-area reads go to the API's public twin (no token, no banner).
             const publicRead = isPublicMinecraftRead({
