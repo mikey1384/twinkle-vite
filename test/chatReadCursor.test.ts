@@ -106,3 +106,21 @@ test('an arriving boundary carries canonical scope proof instead of trusting a b
     0
   );
 });
+
+test('a held message (kept for its sender only) is never a read boundary', () => {
+  const heldId = 2 ** 50 + 3;
+  assert.equal(
+    getVisibleChatReadMessageId({
+      channelId: 7,
+      confirmedMessage: { id: heldId, channelId: 7, subchannelId: 0 },
+      subchannelId: 0,
+      visibleMessageIds: [heldId, 102, 101],
+      visibleMessagesObj: {
+        [heldId]: { id: heldId, channelId: 7, subchannelId: 0 },
+        102: { id: 102, channelId: 7, subchannelId: 0 },
+        101: { id: 101, channelId: 7, subchannelId: 0 }
+      }
+    }),
+    102
+  );
+});

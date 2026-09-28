@@ -1,6 +1,14 @@
+// The server keeps a message to someone who blocked its sender for the sender
+// only, with an id from 2^50 up (twinkle-api heldMessages.ts). It is never a
+// real message in the channel, so it is never a read boundary: it would sit
+// above every later real message and hide them from unread counts.
+export const HELD_CHAT_MESSAGE_ID_BASE = 2 ** 50;
+
 function normalizeConfirmedChatMessageId(messageId: unknown) {
   const normalizedMessageId = Number(messageId || 0);
-  return Number.isSafeInteger(normalizedMessageId) && normalizedMessageId > 0
+  return Number.isSafeInteger(normalizedMessageId) &&
+    normalizedMessageId > 0 &&
+    normalizedMessageId < HELD_CHAT_MESSAGE_ID_BASE
     ? normalizedMessageId
     : 0;
 }
