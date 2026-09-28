@@ -34,6 +34,13 @@
       "source": "/build/vendor/(.*)",
       "destination": "https://api.twinkle.network/build/vendor/$1"
     },
-    { "source": "/((?!assets/).*)", "destination": "/" }
+    {
+      "source": "/((?!assets/).*)",
+      "has": [
+        { "type": "host", "value": "^(www\\.)?lumine\\.network$" }
+      ],
+      "destination": "/lumine.html"
+    },
+    { "source": "/((?!assets/).*)", "destination": "/twinkle.html" }
   ]
 }

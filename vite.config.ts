@@ -4,6 +4,8 @@ import { resolve } from 'path';
 import { readFileSync } from 'node:fs';
 import inject from '@rollup/plugin-inject';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import type { Plugin } from 'vite';
+import { buildLumineHtml } from './scripts/hostPages.mjs';
 
 function getVercelDeploymentAssetOrigin({
   command,
@@ -19,6 +21,30 @@ function getVercelDeploymentAssetOrigin({
     .replace(/\/.*$/, '');
   if (!host) return null;
   return `https://${host}`;
+}
+
+// Emits the built index.html as twinkle.html and lumine.html so each host gets
+// its own link-preview tags (see scripts/hostPages.mjs and vercel.json).
+function hostPages(): Plugin {
+  return {
+    name: 'twinkle-host-pages',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const index = bundle['index.html'];
+      if (!index || index.type !== 'asset') {
+        throw new Error('hostPages: the build produced no index.html');
+      }
+      const html = String(index.source);
+      delete bundle['index.html'];
+      this.emitFile({ type: 'asset', fileName: 'twinkle.html', source: html });
+      this.emitFile({
+        type: 'asset',
+        fileName: 'lumine.html',
+        source: buildLumineHtml(html)
+      });
+    }
+  };
 }
 
 const appVersion: string = JSON.parse(
@@ -56,6 +82,7 @@ export default defineConfig(({ command, mode }) => {
       : undefined,
     plugins: [
       react(),
+      hostPages(),
       viteStaticCopy({
         // Engines loaded by public/stockfish-worker.js. Stockfish 17.1 lite
         // single-threaded NNUE is the default (no cross-origin isolation
