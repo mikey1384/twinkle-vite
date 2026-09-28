@@ -11,7 +11,7 @@ const END = '<!-- share-meta:end -->';
 const LUMINE_TITLE = 'Lumine';
 const LUMINE_DESCRIPTION =
   'Build apps and games with AI, and play what others make.';
-const LUMINE_IMAGE = 'https://www.lumine.network/og-image-lumine.png';
+const LUMINE_IMAGE = 'https://www.lumine.network/og-image-lumine.jpg';
 
 export function buildLumineHtml(html) {
   const start = html.search(START);

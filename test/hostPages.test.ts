@@ -20,7 +20,7 @@ function metaContent(html: string, attr: string, key: string) {
 
 test('Twinkle share tags use absolute URLs and a large card', () => {
   const image = metaContent(indexHtml, 'property', 'og:image');
-  assert.match(image || '', /^https:\/\/www\.twin-kle\.com\/.+\.png$/);
+  assert.match(image || '', /^https:\/\/www\.twin-kle\.com\/.+\.jpg$/);
   assert.equal(
     metaContent(indexHtml, 'name', 'twitter:card'),
     'summary_large_image'
@@ -36,7 +36,7 @@ test('lumine.html carries only Lumine branding in its share tags', () => {
   assert.equal(metaContent(lumineHtml, 'property', 'og:title'), 'Lumine');
   assert.match(
     metaContent(lumineHtml, 'property', 'og:image') || '',
-    /^https:\/\/www\.lumine\.network\/.+\.png$/
+    /^https:\/\/www\.lumine\.network\/.+\.jpg$/
   );
   assert.match(lumineHtml, /<title>Lumine<\/title>/);
   assert.match(lumineHtml, /href="\/lumine-favicon\.svg"/);
@@ -102,5 +102,13 @@ test('only link-preview crawlers are sent to the share-page API', () => {
     'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
   ]) {
     assert.ok(!userAgent.test(person), person);
+  }
+});
+
+test('default share cards stay small enough for WhatsApp', async () => {
+  const { statSync } = await import('node:fs');
+  for (const file of ['og-image.jpg', 'og-image-lumine.jpg']) {
+    const size = statSync(new URL(`../public/${file}`, import.meta.url)).size;
+    assert.ok(size < 300_000, `${file} is ${size} bytes`);
   }
 });
