@@ -12,6 +12,7 @@ export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
   | 'auto'
   | 'gpt-6-luna'
+  | 'claude-sonnet-5-5'
   | 'gpt-6-sol'
   | 'claude-opus-5-5'
   // Retired stored preferences; normalization maps each to its replacement.

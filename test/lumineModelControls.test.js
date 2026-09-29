@@ -84,7 +84,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-6-luna'[\s\S]*?medium: 'gpt-6-sol'[\s\S]*?heavy: 'claude-opus-5-5'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-6-luna'[\s\S]*?medium: 'claude-sonnet-5-5'[\s\S]*?heavy: 'claude-opus-5-5'/m
   );
   assert.match(
     selectionHelperSource,
@@ -128,13 +128,15 @@ test('lumine fallback lineup matches the API: Light Luna medium, Medium Sol low,
     [
       ['auto', 'auto', 'medium'],
       ['gpt-6-luna', 'light', 'medium'],
+      ['claude-sonnet-5-5', 'medium', 'medium'],
+      // Medium's second choice; choosing the Medium mode still picks Sonnet.
       ['gpt-6-sol', 'medium', 'low'],
       ['claude-opus-5-5', 'heavy', 'medium']
     ]
   );
   for (const [mode, model, reasoningEffort] of [
     ['light', 'gpt-6-luna', 'medium'],
-    ['medium', 'gpt-6-sol', 'low'],
+    ['medium', 'claude-sonnet-5-5', 'medium'],
     ['heavy', 'claude-opus-5-5', 'medium']
   ]) {
     assert.deepEqual(
@@ -165,8 +167,9 @@ test('lumine migrates retired stored choices to their replacement at its own thi
     ],
     [
       { model: 'gpt-5.6-sol', reasoningEffort: 'max', mode: 'superheavy' },
-      { model: 'gpt-6-sol', reasoningEffort: 'low', mode: 'medium' }
+      { model: 'claude-sonnet-5-5', reasoningEffort: 'medium', mode: 'medium' }
     ],
+
     [
       { model: 'gpt-6-astra', reasoningEffort: 'xhigh', mode: 'superheavy' },
       { model: 'claude-opus-5-5', reasoningEffort: 'medium', mode: 'heavy' }
@@ -219,7 +222,7 @@ test('an older API catalog of retired models and Super Heavy falls back to the c
   const options = getSelectableLumineModelOptions(policy);
   assert.deepEqual(
     options.map((option) => option.mode),
-    ['auto', 'light', 'medium', 'heavy']
+    ['auto', 'light', 'medium', 'medium', 'heavy']
   );
   assert.deepEqual(resolveLumineModelSelectionFromPolicy(policy), {
     model: 'claude-opus-5-5',

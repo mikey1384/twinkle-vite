@@ -28,7 +28,7 @@ const DEFAULT_LUMINE_MODEL_BY_MODE: Record<BuildLumineMode, BuildLumineModel> =
   {
     auto: 'auto',
     light: 'gpt-6-luna',
-    medium: 'gpt-6-sol',
+    medium: 'claude-sonnet-5-5',
     heavy: 'claude-opus-5-5'
   };
 
@@ -41,9 +41,9 @@ const RETIRED_LUMINE_MODEL_REPLACEMENTS: Partial<
   'gpt-5.6-luna': 'gpt-6-luna',
   'grok-4.6': 'gpt-6-luna',
   'grok-4.5': 'gpt-6-luna',
-  'gpt-5.6-terra': 'gpt-6-sol',
-  'gpt-5.6-sol': 'gpt-6-sol',
-  'claude-sonnet-5': 'gpt-6-sol',
+  'gpt-5.6-terra': 'claude-sonnet-5-5',
+  'gpt-5.6-sol': 'claude-sonnet-5-5',
+  'claude-sonnet-5': 'claude-sonnet-5-5',
   'claude-opus-5': 'claude-opus-5-5',
   'claude-opus-4-8': 'claude-opus-5-5',
   'gpt-6-astra': 'claude-opus-5-5',
@@ -78,10 +78,19 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     supportedReasoningEfforts: ['medium']
   },
   {
+    model: 'claude-sonnet-5-5',
+    mode: 'medium',
+    label: 'Claude Sonnet 5.5',
+    description: 'Medium mode: strong reasoning for complex builds.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
+  },
+  {
+    // Medium's second choice (Advanced); Sonnet 5.5 is the default.
     model: 'gpt-6-sol',
     mode: 'medium',
     label: 'GPT-6 Sol',
-    description: 'Medium mode: strong reasoning for complex builds.',
+    description: 'Medium mode, second choice: GPT-6 Sol.',
     defaultReasoningEffort: 'low',
     supportedReasoningEfforts: ['low']
   },
@@ -104,6 +113,7 @@ function isCurrentLumineModel(value: unknown): value is BuildLumineModel {
   return (
     value === 'auto' ||
     value === 'gpt-6-luna' ||
+    value === 'claude-sonnet-5-5' ||
     value === 'gpt-6-sol' ||
     value === 'claude-opus-5-5'
   );
@@ -260,7 +270,9 @@ export function resolveLumineMode({
   if (model === 'auto') return 'auto';
   const currentModel = RETIRED_LUMINE_MODEL_REPLACEMENTS[model] || model;
   if (currentModel === 'gpt-6-luna') return 'light';
-  if (currentModel === 'gpt-6-sol') return 'medium';
+  if (currentModel === 'claude-sonnet-5-5' || currentModel === 'gpt-6-sol') {
+    return 'medium';
+  }
   return 'heavy';
 }
 

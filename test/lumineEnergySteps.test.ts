@@ -26,7 +26,7 @@ const option = (
 const OPTIONS = [
   option('auto', 'auto', 0, 0),
   option('gpt-6-luna', 'light', 3_300, 500),
-  option('gpt-6-sol', 'medium', 41_000, 7_000),
+  option('claude-sonnet-5-5', 'medium', 41_000, 7_000),
   option('claude-opus-5-5', 'heavy', 90_000, 90_000)
 ];
 const heavy = {
@@ -49,7 +49,7 @@ test('a model that cannot read and then edit is offered the heaviest lighter mod
   });
   assert.equal(preflight.noStepAffordable, false);
   assert.equal(preflight.tightSelection?.currentSteps, 1);
-  assert.equal(preflight.tightSelection?.lighter.model, 'gpt-6-sol');
+  assert.equal(preflight.tightSelection?.lighter.model, 'claude-sonnet-5-5');
   assert.equal(preflight.tightSelection?.lighterSteps, 4);
 });
 
