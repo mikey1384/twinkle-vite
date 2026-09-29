@@ -53,6 +53,7 @@ import {
   getAnalyticsPath
 } from '~/helpers/analyticsPageViews';
 import { getConfirmedAnalyticsUserId } from '~/helpers/analyticsIdentity';
+import { startPausingOffscreenAnimations } from '~/helpers/pauseOffscreenAnimations';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import {
@@ -662,6 +663,9 @@ export default function App() {
   useEffect(() => {
     stripClientUpdateReloadParam();
   }, []);
+
+  // Endless decorative animations stop repainting while scrolled out of view.
+  useEffect(() => startPausingOffscreenAnimations(), []);
 
   // A home feed tap opens one of these pages. Fetching their code only after
   // the tap kept the feed on screen for the whole download (~0.7 s of the
