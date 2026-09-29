@@ -180,7 +180,7 @@ export default function ProfilePic({
           src={
             displayedProfilePicUrl && !hasError
               ? `${cloudFrontURL}${displayedProfilePicUrl}`
-              : '/img/default-avatar-2.png'
+              : '/img/default-avatar-3.png'
           }
           onError={() => setHasError(true)}
         />
