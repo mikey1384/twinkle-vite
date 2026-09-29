@@ -122,7 +122,8 @@ const BuildThumbnailCaptureHost = lazyWithRetry(
 );
 const Chat = lazyWithRetry(() => import('~/containers/Chat'));
 const CliDeviceAuth = lazyWithRetry(() => import('~/containers/CliDeviceAuth'));
-const ContentPage = lazyWithRetry(() => import('~/containers/ContentPage'));
+const loadContentPage = () => import('~/containers/ContentPage');
+const ContentPage = lazyWithRetry(loadContentPage);
 const AchievementPage = lazyWithRetry(
   () => import('~/containers/AchievementPage')
 );
@@ -169,7 +170,8 @@ const ChessOptionsModal = lazyWithRetry(
 const ChessPuzzleModal = lazyWithRetry(
   () => import('~/containers/Home/ChessPuzzleModal')
 );
-const LinkPage = lazyWithRetry(() => import('~/containers/LinkPage'));
+const loadLinkPage = () => import('~/containers/LinkPage');
+const LinkPage = lazyWithRetry(loadLinkPage);
 const PlaylistPage = lazyWithRetry(() => import('~/containers/PlaylistPage'));
 const Privacy = lazyWithRetry(() => import('~/containers/Privacy'));
 const SponsorGuide = lazyWithRetry(() => import('~/containers/SponsorGuide'));
@@ -183,7 +185,8 @@ const Verify = lazyWithRetry(() => import('~/containers/Verify'));
 const GuardianConsentPage = lazyWithRetry(
   () => import('~/containers/GuardianConsent')
 );
-const VideoPage = lazyWithRetry(() => import('~/containers/VideoPage'));
+const loadVideoPage = () => import('~/containers/VideoPage');
+const VideoPage = lazyWithRetry(loadVideoPage);
 const SigninModal = lazyWithRetry(() => import('~/containers/Signin'));
 const MobileMenu = lazyWithRetry(() => import('./MobileMenu'));
 const Incoming = lazyWithRetry(() => import('./Stream/Incoming'));
@@ -659,6 +662,37 @@ export default function App() {
   useEffect(() => {
     stripClientUpdateReloadParam();
   }, []);
+
+  // A home feed tap opens one of these pages. Fetching their code only after
+  // the tap kept the feed on screen for the whole download (~0.7 s of the
+  // ~1 s first-tap delay measured on a throttled phone profile, 2026-09-29),
+  // so fetch it once while the home page sits idle. A failed prefetch is
+  // ignored: the real navigation still loads (and retries) the chunk.
+  const feedTargetsPrefetchedRef = useRef(false);
+  useEffect(() => {
+    if (feedTargetsPrefetchedRef.current) return;
+    if (location.pathname !== '/') return;
+    let idleHandle: number | null = null;
+    const timer = window.setTimeout(() => {
+      const prefetch = () => {
+        feedTargetsPrefetchedRef.current = true;
+        for (const load of [loadContentPage, loadLinkPage, loadVideoPage]) {
+          load().catch(() => {});
+        }
+      };
+      if (typeof window.requestIdleCallback === 'function') {
+        idleHandle = window.requestIdleCallback(prefetch, { timeout: 3000 });
+      } else {
+        prefetch();
+      }
+    }, 4000);
+    return () => {
+      window.clearTimeout(timer);
+      if (idleHandle !== null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleHandle);
+      }
+    };
+  }, [location.pathname]);
 
   // A tab left open across the daily reset must roll over on its own: the
   // goals, Collect Rewards and an open Daily Reward modal all belong to the

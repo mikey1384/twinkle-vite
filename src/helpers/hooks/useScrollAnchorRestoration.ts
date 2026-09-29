@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
+import { useNavigationType } from 'react-router-dom';
 import {
   addScrollAnchorExternalSaveListener,
   addScrollAnchorRestoreCancelListener,
@@ -210,6 +211,39 @@ export function useScrollAnchorRestoration({
       removeTopResetListener();
       removeExternalSaveListener();
     };
+  }, [anchorKey]);
+
+  // A forward navigation must not show the previous page's scroll offset.
+  // Route changes run in a transition, so the document keeps the old offset
+  // (e.g. deep in the home feed) when the new page mounts, and the 'top'
+  // initial scroll below only runs once the page's data is ready (and not at
+  // all if restores are suppressed at that moment). Meanwhile the page sat
+  // mid-way or, when shorter than the old offset, clamped to its bottom
+  // (Mikey, 2026-09-29: ~30% of home feed taps opened a post scrolled to the
+  // bottom). Runs after the old page's cleanups (its teardown save already
+  // happened), only when nothing is going to be restored.
+  const navigationType = useNavigationType();
+  useLayoutEffect(() => {
+    if (navigationType === 'POP') return;
+    if (initialScrollType !== 'top') return;
+    if (!appOwnsScrollRestoration()) return;
+    if (!ignoreSavedAnchor && savedScrollAnchors[anchorKey]) return;
+    const scroller = getActiveScroller();
+    const scrollTop = Math.round(getScrollTop(scroller));
+    if (scrollTop <= 0) return;
+    recordScrollDiagnostic({
+      type: 'initial-scroll',
+      anchorKey,
+      scrollTop,
+      itemsReady,
+      reason: initialScrollType,
+      note: 'forward-nav-mount'
+    });
+    applyInitialScroll({ scroller, targetRef: null, type: 'top' });
+    restoreAppliedAtRef.current = nowMs();
+    nonUserScrollTaintedRef.current = false;
+    lastAppliedScrollTopRef.current = getScrollTop(scroller);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchorKey]);
 
   useLayoutEffect(() => {
