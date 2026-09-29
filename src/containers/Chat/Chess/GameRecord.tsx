@@ -8,6 +8,7 @@ interface GameRecordProps {
   channelId: number;
   messageId: number;
   showPgn?: boolean;
+  centered?: boolean;
   style?: React.CSSProperties;
 }
 
@@ -29,6 +30,7 @@ function GameRecordContent({
   channelId,
   messageId,
   showPgn,
+  centered,
   style
 }: GameRecordProps) {
   const fetchChessGameRecord = useAppContext(
@@ -89,8 +91,9 @@ function GameRecordContent({
             className={css`
               display: flex;
               flex-direction: column;
-              align-items: flex-start;
+              align-items: ${centered ? 'center' : 'flex-start'};
               gap: 0.5rem;
+              ${centered ? 'text-align: center;' : ''}
             `}
           >
             {status === 'unfinished' && (

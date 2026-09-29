@@ -1,7 +1,6 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { tabletMaxWidth } from '~/constants/css';
 
 export default function BoardSpoiler({
   revealed,
@@ -38,16 +37,13 @@ export default function BoardSpoiler({
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 1rem;
-    padding: 1.5rem;
+    /* Sized from the board's own width (cqw) so the warning fits inside the
+       board footprint instead of spilling out at narrow widths. */
+    gap: clamp(0.4rem, 3cqw, 1rem);
+    padding: clamp(0.6rem, 4cqw, 1.5rem);
     color: rgba(115, 115, 115, 1);
     box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.08);
-    font-size: 16px;
-    @media (max-width: ${tabletMaxWidth}) {
-      font-size: 14px;
-      padding: 1rem;
-      gap: 0.7rem;
-    }
+    font-size: clamp(10px, 3.4cqw, 16px);
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     transition: transform 150ms ease, box-shadow 200ms ease, border-color 200ms ease;
@@ -68,7 +64,12 @@ export default function BoardSpoiler({
   const gameDisplayEn = gameType === 'omok' ? 'omok' : 'chess';
   const opponentLabelEn = opponentName || 'opponent';
   return (
-    <div style={{ ...style, minHeight: style?.height, height: 'auto' }}>
+    <div
+      className={css`
+        container-type: inline-size;
+      `}
+      style={{ ...style, minHeight: style?.height, height: 'auto' }}
+    >
       <button
         type="button"
         disabled={!onReveal}
@@ -83,7 +84,7 @@ export default function BoardSpoiler({
               ? `${opponentName} made a new ${gameDisplayEn} move.`
               : `New ${gameDisplayEn} move available.`}
           </span>
-          <span style={{ display: 'block', marginBlock: 8 }}>View move</span>
+          <span style={{ display: 'block', marginBlock: '0.5em' }}>View move</span>
           <span style={{ display: 'block' }}>
             {`After viewing ${opponentLabelEn}'s move, you `}
             <b>must</b>

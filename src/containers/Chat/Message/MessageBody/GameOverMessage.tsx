@@ -136,7 +136,8 @@ function GameOverMessage({
             channelId={channelId}
             messageId={messageId}
             showPgn
-            style={{ marginTop: '0.5rem' }}
+            centered
+            style={{ marginTop: '0.75rem', padding: '0 1rem' }}
           />
         ) : null}
       </div>
