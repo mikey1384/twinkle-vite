@@ -542,7 +542,16 @@ export default function DailyRewardModal({
       if (openBonus) {
         setShowBonusUI(true);
       }
-    } catch (error) {
+    } catch (error: any) {
+      // 403 = today's daily goals are not complete. The goals this modal was
+      // opened for belonged to a day that has since ended (a tab left open
+      // across the reset), so that reward is gone: roll over, which closes
+      // this modal and refreshes Today's Progress, instead of offering a
+      // retry that can never succeed.
+      if (error?.status === 403 && !openBonus) {
+        handleCountdownComplete();
+        return;
+      }
       console.error(error);
       if (isComponentMounted.current) {
         setLoadFailed(true);

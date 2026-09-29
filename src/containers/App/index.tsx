@@ -660,6 +660,37 @@ export default function App() {
     stripClientUpdateReloadParam();
   }, []);
 
+  // A tab left open across the daily reset must roll over on its own: the
+  // goals, Collect Rewards and an open Daily Reward modal all belong to the
+  // day that just ended, and the server refuses yesterday's reward. Fires a
+  // moment after the boundary (server clock), re-checking at least hourly so
+  // sleep or clock changes cannot strand it; if the server has not moved on
+  // yet, it tries again a few times.
+  const handleCountdownCompleteRef = useRef(handleCountdownComplete);
+  handleCountdownCompleteRef.current = handleCountdownComplete;
+  useEffect(() => {
+    const nextDayTimeStamp = toValidNextDayTimeStamp(
+      todayStats?.nextDayTimeStamp
+    );
+    if (!nextDayTimeStamp) return;
+    const offset = Number(todayStats?.timeDifference || 0);
+    let rolloverAttempts = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    function schedule(delayMs: number) {
+      timer = setTimeout(check, Math.min(Math.max(delayMs, 1000), 3600000));
+    }
+    function check() {
+      const remaining = (nextDayTimeStamp as number) - (Date.now() + offset);
+      if (remaining > 0) return schedule(remaining + 1500);
+      if (rolloverAttempts >= 5) return;
+      rolloverAttempts += 1;
+      handleCountdownCompleteRef.current();
+      schedule(15000);
+    }
+    schedule(nextDayTimeStamp - (Date.now() + offset) + 1500);
+    return () => clearTimeout(timer);
+  }, [todayStats?.nextDayTimeStamp, todayStats?.timeDifference]);
+
   // On (re)entering a full build app page, restore/persist the "super full
   // screen" preference only when the build toolbar is also collapsed. Embedded
   // app previews are iframe chrome and must not read or overwrite this state.
