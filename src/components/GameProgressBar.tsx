@@ -189,26 +189,42 @@ export default function GameProgressBar({
             borderRadius: clamped >= 99 ? '4px' : '4px 0 0 4px'
           }}
         >
+          {/* The sheen moves by transform only (animating left re-laid out
+              the page every frame). The fill-wide wrapper carries the motion
+              so -20%..115% stays relative to the fill, as before. */}
           <span
             className={css`
               position: absolute;
               top: -30%;
               bottom: -30%;
-              width: 1.6rem;
-              background: rgba(255, 255, 255, 0.34);
-              transform: skewX(-20deg);
+              left: 0;
+              width: 100%;
+              pointer-events: none;
+              will-change: transform;
               animation: gameProgressSheen 1.6s ease-in-out infinite;
               @keyframes gameProgressSheen {
                 0% {
-                  left: -20%;
+                  transform: translateX(-20%);
                 }
                 60%,
                 100% {
-                  left: 115%;
+                  transform: translateX(115%);
                 }
               }
             `}
-          />
+          >
+            <span
+              className={css`
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                width: 1.6rem;
+                background: rgba(255, 255, 255, 0.34);
+                transform: skewX(-20deg);
+              `}
+            />
+          </span>
         </div>
         {MILESTONES.map((milestone) => (
           <span

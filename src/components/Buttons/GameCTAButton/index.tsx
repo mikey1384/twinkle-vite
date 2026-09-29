@@ -210,11 +210,16 @@ function getButtonCls({
         : ''
     }
 
+    /* The sheen moves by transform only. Animating left re-laid out the page
+       on every frame for as long as a shiny button was on screen (several on
+       a signed-in home page), which kept phones busy and warm. Its width is
+       half the button's, so translateX(-300%..400%) is the old
+       left: -150%..200% sweep. */
     &::after {
       content: '';
       position: absolute;
       top: 0;
-      left: -150%;
+      left: 0;
       width: 50%;
       height: 100%;
       background: linear-gradient(
@@ -223,7 +228,9 @@ function getButtonCls({
         rgba(255, 255, 255, 0.35) 50%,
         rgba(255, 255, 255, 0.12) 100%
       );
-      transform: skewX(-20deg);
+      transform: translateX(-300%) skewX(-20deg);
+      will-change: ${shiny ? 'transform' : 'auto'};
+      pointer-events: none;
       animation: ${shiny ? 'shine 1.8s linear infinite' : 'none'};
       display: ${shiny ? 'block' : 'none'};
     }
@@ -232,10 +239,10 @@ function getButtonCls({
     }
     @keyframes shine {
       0% {
-        left: -150%;
+        transform: translateX(-300%) skewX(-20deg);
       }
       100% {
-        left: 200%;
+        transform: translateX(400%) skewX(-20deg);
       }
     }
 

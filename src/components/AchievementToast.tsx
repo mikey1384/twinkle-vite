@@ -35,9 +35,12 @@ const leaveAnim = keyframes`
   100% { opacity: 0; transform: translate(-50%, 24px) scale(0.92); }
 `;
 
+// Transform only (animating left re-laid out the page every frame). The
+// sheen is 55% of the toast's width, so translateX(-273%..364%) is the old
+// left: -150%..200% sweep.
 const shineAnim = keyframes`
-  0% { left: -150%; }
-  100% { left: 200%; }
+  0% { transform: translateX(-273%) skewX(-20deg); }
+  100% { transform: translateX(364%) skewX(-20deg); }
 `;
 
 const badgePop = keyframes`
@@ -174,7 +177,7 @@ export default function AchievementToast({
             content: '';
             position: absolute;
             top: 0;
-            left: -150%;
+            left: 0;
             width: 55%;
             height: 100%;
             background: linear-gradient(
@@ -183,7 +186,8 @@ export default function AchievementToast({
               rgba(255, 255, 255, 0.45) 50%,
               rgba(255, 255, 255, 0.1) 100%
             );
-            transform: skewX(-20deg);
+            transform: translateX(-273%) skewX(-20deg);
+            will-change: transform;
             animation: ${shineAnim} 2.4s linear infinite;
             pointer-events: none;
           }
