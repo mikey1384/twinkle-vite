@@ -410,7 +410,7 @@ function RewardBankRuleCard({
       {rule.howTo ? <p>How players earn it: {rule.howTo}</p> : null}
       <RewardRuleGrouping rule={rule} />
       <p>
-        Rule ID: {rule.id} · question bank written by the server (GPT-6 Sol,
+        Rule ID: {rule.id} · question bank written by the server (GPT-6.1 Sol,
         billed to each learner&apos;s AI Energy) and checked by a second
         independent solve · many questions a day within the day budgets ·{' '}
         {tries}

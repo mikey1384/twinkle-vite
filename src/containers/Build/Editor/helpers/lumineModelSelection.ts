@@ -38,6 +38,7 @@ const DEFAULT_LUMINE_MODEL_BY_MODE: Record<BuildLumineMode, BuildLumineModel> =
 const RETIRED_LUMINE_MODEL_REPLACEMENTS: Partial<
   Record<BuildLumineModel, BuildLumineModel>
 > = {
+  'gpt-6-sol': 'gpt-6.1-sol',
   'gpt-5.6-luna': 'gpt-6-luna',
   'grok-4.6': 'gpt-6-luna',
   'grok-4.5': 'gpt-6-luna',
@@ -87,10 +88,10 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
   },
   {
     // Medium's second choice (Advanced); Sonnet 5.5 is the default.
-    model: 'gpt-6-sol',
+    model: 'gpt-6.1-sol',
     mode: 'medium',
-    label: 'GPT-6 Sol',
-    description: 'Medium mode, second choice: GPT-6 Sol.',
+    label: 'GPT-6.1 Sol',
+    description: 'Medium mode, second choice: GPT-6.1 Sol.',
     defaultReasoningEffort: 'low',
     supportedReasoningEfforts: ['low']
   },
@@ -114,7 +115,7 @@ function isCurrentLumineModel(value: unknown): value is BuildLumineModel {
     value === 'auto' ||
     value === 'gpt-6-luna' ||
     value === 'claude-sonnet-5-5' ||
-    value === 'gpt-6-sol' ||
+    value === 'gpt-6.1-sol' ||
     value === 'claude-opus-5-5'
   );
 }
@@ -270,7 +271,7 @@ export function resolveLumineMode({
   if (model === 'auto') return 'auto';
   const currentModel = RETIRED_LUMINE_MODEL_REPLACEMENTS[model] || model;
   if (currentModel === 'gpt-6-luna') return 'light';
-  if (currentModel === 'claude-sonnet-5-5' || currentModel === 'gpt-6-sol') {
+  if (currentModel === 'claude-sonnet-5-5' || currentModel === 'gpt-6.1-sol') {
     return 'medium';
   }
   return 'heavy';

@@ -2422,7 +2422,7 @@ export default function buildRequestHelpers({
       images?: string[];
       thinkingMode?: 'low' | 'medium' | 'mid' | 'high';
       mode?: 'low' | 'medium' | 'mid' | 'high';
-      model?: 'claude-sonnet-5-5' | 'gpt-6-sol' | 'claude-opus-5-5';
+      model?: 'claude-sonnet-5-5' | 'gpt-6.1-sol' | 'claude-opus-5-5';
       instructions?: string;
       systemPrompt?: string;
       webSearch?: boolean;

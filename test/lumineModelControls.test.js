@@ -130,7 +130,7 @@ test('lumine fallback lineup matches the API: Light Luna medium, Medium Sol low,
       ['gpt-6-luna', 'light', 'medium'],
       ['claude-sonnet-5-5', 'medium', 'medium'],
       // Medium's second choice; choosing the Medium mode still picks Sonnet.
-      ['gpt-6-sol', 'medium', 'low'],
+      ['gpt-6.1-sol', 'medium', 'low'],
       ['claude-opus-5-5', 'heavy', 'medium']
     ]
   );
@@ -157,6 +157,10 @@ test('lumine migrates retired stored choices to their replacement at its own thi
     await import('../src/containers/Build/Editor/helpers/lumineModelSelection.ts');
   const options = getSelectableLumineModelOptions(null);
   for (const [selection, expected] of [
+    [
+      { model: 'gpt-6-sol', reasoningEffort: 'low', mode: 'medium' },
+      { model: 'gpt-6.1-sol', reasoningEffort: 'low', mode: 'medium' }
+    ],
     [
       { model: 'grok-4.6', reasoningEffort: 'xhigh', mode: 'heavy' },
       { model: 'gpt-6-luna', reasoningEffort: 'medium', mode: 'light' }

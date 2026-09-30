@@ -13,9 +13,10 @@ export type BuildLumineModel =
   | 'auto'
   | 'gpt-6-luna'
   | 'claude-sonnet-5-5'
-  | 'gpt-6-sol'
+  | 'gpt-6.1-sol'
   | 'claude-opus-5-5'
   // Retired stored preferences; normalization maps each to its replacement.
+  | 'gpt-6-sol'
   | 'gpt-6-astra'
   | 'gpt-5.6-luna'
   | 'grok-4.6'
