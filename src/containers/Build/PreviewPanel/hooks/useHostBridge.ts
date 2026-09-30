@@ -2662,6 +2662,25 @@ export function useHostBridge({
             }
             break;
 
+          case 'ai:generate-speech':
+          case 'ai:transcribe-audio': {
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+              throw createPreviewBridgeError('Sign in to use AI speech.', 'AUTH_REQUIRED');
+            }
+            response = await requestRefs.callBuildRuntimeAiAudioRef.current({
+              buildId: activeBuild.id,
+              kind: type === 'ai:generate-speech' ? 'speech' : 'transcription',
+              payload: { text: payload.text, voice: payload.voice, language: payload.language,
+                audioBase64: payload.audioBase64, requestId: String(payload.requestId || id) },
+              appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
+            });
+            if (response?.aiUsagePolicy && typeof response.aiUsagePolicy === 'object') {
+              onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            }
+            break;
+          }
+
           case 'ai:generate-music': {
             if (!previewAuth.userIdRef.current) {
               triggerGuestRestriction(previewAuth);

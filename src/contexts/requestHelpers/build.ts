@@ -2176,6 +2176,24 @@ export default function buildRequestHelpers({
       }
     },
 
+    async callBuildRuntimeAiAudio({ buildId, kind, payload, appMcpInvocation }: {
+      buildId: number;
+      kind: 'speech' | 'transcription';
+      payload: { text?: string; voice?: string; language?: string; audioBase64?: string; requestId: string };
+      appMcpInvocation?: BuildAppMcpInvocationContext;
+    }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/runtime-ai-${kind}`,
+          { ...payload, ...appMcpInvocation }, { ...auth(), timeout: 150000 });
+        return data;
+      } catch (error: any) {
+        const data = error?.response?.data;
+        return { success: false, error: data?.error || error?.message || 'Audio request failed',
+          code: data?.code, requestId: data?.requestId, status: error?.response?.status,
+          reachedServer: Boolean(error?.response), aiUsagePolicy: data?.aiUsagePolicy };
+      }
+    },
+
     // Twinkle.ai.generateMusic: Lyria music saved to the viewer's Twinkle.files.
     // Idempotent by requestId: a retry returns the finished song, or
     // music_in_progress while it is still being made.

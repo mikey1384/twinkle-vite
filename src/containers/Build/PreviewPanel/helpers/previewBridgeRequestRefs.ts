@@ -13,6 +13,7 @@ export interface PreviewHostBridgeRequestRefs {
   callBuildRuntimeAiChatRef: AsyncRequestRef;
   callBuildRuntimeAiImageRef: AsyncRequestRef;
   callBuildRuntimeAiMusicRef: AsyncRequestRef;
+  callBuildRuntimeAiAudioRef: AsyncRequestRef;
   loadBuildRuntimeAiImageStatusRef: AsyncRequestRef;
   loadAIImageResultRef: AsyncRequestRef;
   callBuildRuntimeAiChatStreamRef: AsyncRequestRef;
