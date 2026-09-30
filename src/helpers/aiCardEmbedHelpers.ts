@@ -31,6 +31,7 @@ export interface AICardCollectionPreviewTitleFilters {
   engine?: string | null;
   isBuyNow?: string | null;
   isMystery?: string | boolean | null;
+  isTotalMystery?: string | boolean | null;
   owner?: string | null;
   quality?: string | null;
   style?: string | null;
@@ -74,6 +75,7 @@ export function getAICardCollectionEmbedPreviewTitle(src: string) {
     engine: getAICardSearchParam(searchParams, 'engine'),
     isBuyNow: getAICardSearchParam(searchParams, 'isBuyNow'),
     isMystery: getAICardSearchParam(searchParams, 'isMystery'),
+    isTotalMystery: getAICardSearchParam(searchParams, 'isTotalMystery'),
     owner: getAICardSearchParam(searchParams, 'owner'),
     quality: getAICardSearchParam(searchParams, 'quality'),
     style: getAICardSearchParam(searchParams, 'style'),
@@ -87,20 +89,25 @@ export function getAICardCollectionPreviewTitle({
   engine,
   isBuyNow,
   isMystery,
+  isTotalMystery,
   owner,
   quality,
   style,
   word
 }: AICardCollectionPreviewTitleFilters) {
-  const mysteryFilterEnabled = isMystery === true || isMystery === 'true';
+  const totalMysteryFilterEnabled =
+    isTotalMystery === true || isTotalMystery === 'true';
+  const mysteryFilterEnabled =
+    totalMysteryFilterEnabled || isMystery === true || isMystery === 'true';
   const displayedEngine = mysteryFilterEnabled ? '' : engine;
+  const displayedQuality = totalMysteryFilterEnabled ? '' : quality;
   if (
     !color &&
     !displayedEngine &&
     !isBuyNow &&
     !mysteryFilterEnabled &&
     !owner &&
-    !quality &&
+    !displayedQuality &&
     !style &&
     !word
   ) {
@@ -108,20 +115,24 @@ export function getAICardCollectionPreviewTitle({
   }
 
   const cardNoun = Number(cardCount) === 1 ? 'card' : 'cards';
-  const mysteryLabel = mysteryFilterEnabled ? 'mystery ' : '';
+  const mysteryLabel = totalMysteryFilterEnabled
+    ? 'complete mystery '
+    : mysteryFilterEnabled
+      ? 'mystery '
+      : '';
   const titleParts = [];
   if (owner) {
     titleParts.push(`${owner}'s`);
   }
   if (color) {
     titleParts.push(
-      `${color} ${quality ? `${quality} ` : ''}${
+      `${color} ${displayedQuality ? `${displayedQuality} ` : ''}${
         displayedEngine ? `${displayedEngine} ` : ''
       }${mysteryLabel}${cardNoun}`
     );
-  } else if (quality) {
+  } else if (displayedQuality) {
     titleParts.push(
-      `${quality ? `${quality} ` : ''}${
+      `${displayedQuality} ${
         displayedEngine ? `${displayedEngine} ` : ''
       }${mysteryLabel}${cardNoun}`
     );

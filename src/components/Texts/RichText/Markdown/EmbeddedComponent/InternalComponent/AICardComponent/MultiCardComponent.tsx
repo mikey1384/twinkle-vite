@@ -8,6 +8,7 @@ import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { getAICardCollectionPreviewTitle } from '~/helpers/aiCardEmbedHelpers';
+import { normalizeAICardMysteryFilters } from '~/helpers/aiCardSearchFilters';
 import { Link, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 
@@ -15,6 +16,7 @@ export default function MultiCardComponent({
   color,
   isBuyNow,
   isMystery,
+  isTotalMystery,
   engine,
   isPreview,
   quality,
@@ -28,6 +30,7 @@ export default function MultiCardComponent({
   color?: string | null;
   isBuyNow?: string | null;
   isMystery?: string | null;
+  isTotalMystery?: string | null;
   engine?: string | null;
   isPreview?: boolean;
   quality?: string | null;
@@ -38,17 +41,17 @@ export default function MultiCardComponent({
   word?: string | null;
   src: string;
 }) {
-  const mysteryFilterEnabled = isMystery === 'true';
-  const filters = {
+  const filters = normalizeAICardMysteryFilters({
     color,
     isBuyNow,
     isMystery,
-    engine: mysteryFilterEnabled ? null : engine,
+    isTotalMystery,
+    engine,
     quality,
     owner,
     word,
-    style: mysteryFilterEnabled ? null : style
-  };
+    style
+  });
   const { cardIds } = useContentState({
     contentType: rootType,
     contentId: rootId,
@@ -66,6 +69,7 @@ export default function MultiCardComponent({
   );
 
   useEffect(() => {
+    let cancelled = false;
     init();
     async function init() {
       try {
@@ -76,6 +80,7 @@ export default function MultiCardComponent({
           filters,
           limit: 6
         });
+        if (cancelled) return;
         const newCardIds = [];
         for (const card of cards) {
           onUpdateAICard({
@@ -93,11 +98,24 @@ export default function MultiCardComponent({
       } catch (error) {
         console.error(error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color, engine, isBuyNow, isMystery, owner, quality, style, word]);
+  }, [
+    color,
+    engine,
+    isBuyNow,
+    isMystery,
+    isTotalMystery,
+    owner,
+    quality,
+    style,
+    word
+  ]);
 
   const title = useMemo(() => {
     return getAICardCollectionPreviewTitle({
@@ -106,6 +124,7 @@ export default function MultiCardComponent({
       engine,
       isBuyNow,
       isMystery,
+      isTotalMystery,
       owner,
       quality,
       style,
@@ -119,6 +138,7 @@ export default function MultiCardComponent({
     word,
     isBuyNow,
     isMystery,
+    isTotalMystery,
     engine,
     cardIds?.length
   ]);

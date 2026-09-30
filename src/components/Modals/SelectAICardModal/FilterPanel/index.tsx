@@ -14,6 +14,7 @@ import {
   desktopMinWidth
 } from '~/constants/css';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
+import { normalizeAICardMysteryFilters } from '~/helpers/aiCardSearchFilters';
 
 const tabletPickerMaxWidth = '1100px';
 const stackedFilterControlWidth = '24rem';
@@ -51,6 +52,7 @@ export default function FilterPanel({
         <div className={switchRowClass}>
           {renderModelFilter()}
           {renderMysteryFilter()}
+          {renderTotalMysteryFilter()}
         </div>
       </>
     );
@@ -72,6 +74,7 @@ export default function FilterPanel({
           <div className={switchRowClass}>
             {renderModelFilter()}
             {renderMysteryFilter()}
+            {renderTotalMysteryFilter()}
           </div>
         </div>
       </div>
@@ -181,6 +184,18 @@ export default function FilterPanel({
     );
   }
 
+  function renderTotalMysteryFilter() {
+    if (!filters.isMystery) return null;
+
+    return (
+      <SwitchButton
+        checked={Boolean(filters.isTotalMystery)}
+        label="Complete mystery"
+        onChange={handleToggleTotalMystery}
+      />
+    );
+  }
+
   function handleSelectColor(color: string) {
     onSetFilters((prevFilters: any) => ({
       ...prevFilters,
@@ -189,10 +204,14 @@ export default function FilterPanel({
   }
 
   function handleSelectQuality(quality: string) {
-    onSetFilters((prevFilters: any) => ({
-      ...prevFilters,
-      quality
-    }));
+    onSetFilters((prevFilters: any) => {
+      const { isTotalMystery, ...rest } = prevFilters;
+      return {
+        ...rest,
+        ...(quality && quality !== 'any' ? {} : { isTotalMystery }),
+        quality
+      };
+    });
   }
 
   function handleSelectNumber(number: number) {
@@ -210,7 +229,11 @@ export default function FilterPanel({
           style
         };
       }
-      const { isMystery: _unusedMystery, ...rest } = prevFilters;
+      const {
+        isMystery: _unusedMystery,
+        isTotalMystery: _unusedTotalMystery,
+        ...rest
+      } = prevFilters;
       return {
         ...rest,
         style
@@ -236,7 +259,11 @@ export default function FilterPanel({
       | 'Nano Banana'
   ) {
     onSetFilters((prevFilters: any) => {
-      const { isMystery: _unusedMystery, ...rest } = prevFilters;
+      const {
+        isMystery: _unusedMystery,
+        isTotalMystery: _unusedTotalMystery,
+        ...rest
+      } = prevFilters;
       return {
         ...rest,
         engine
@@ -255,12 +282,22 @@ export default function FilterPanel({
     onSetFilters((prevFilters: any) => {
       const {
         isMystery: wasMystery,
+        isTotalMystery: _unusedTotalMystery,
         style: _unusedStyle,
         engine: _unusedEngine,
         ...rest
       } = prevFilters;
       return wasMystery ? rest : { ...rest, isMystery: true };
     });
+  }
+
+  function handleToggleTotalMystery() {
+    onSetFilters((prevFilters: any) =>
+      normalizeAICardMysteryFilters({
+        ...prevFilters,
+        isTotalMystery: !prevFilters.isTotalMystery
+      })
+    );
   }
 }
 

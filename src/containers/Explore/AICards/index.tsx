@@ -21,6 +21,7 @@ import {
 } from '~/contexts';
 import PriceRangeSearch from './PriceRangeSearch';
 import { aiCardSearchFiltersDiffer } from './searchFilterUtils';
+import { normalizeAICardMysteryFilters } from '~/helpers/aiCardSearchFilters';
 
 export default function AICards() {
   const navigate = useNavigate();
@@ -88,17 +89,7 @@ export default function AICards() {
         searchObj.search.isBuyNow =
           searchObj.search.isBuyNow === 'true' ? true : false;
       }
-      if (searchObj.search.isMystery) {
-        searchObj.search.isMystery =
-          searchObj.search.isMystery === 'true' ? true : false;
-        if (searchObj.search.isMystery) {
-          delete searchObj.search.style;
-          delete searchObj.search.engine;
-        } else {
-          delete searchObj.search.isMystery;
-        }
-      }
-      setFilters(searchObj.search);
+      setFilters(normalizeAICardMysteryFilters(searchObj.search));
     } else {
       setFilters({});
     }
@@ -169,6 +160,7 @@ export default function AICards() {
           onSetSelectedFilter={setSelectedFilter}
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
           onMysterySwitchClick={handleMysterySwitchClick}
+          onTotalMysterySwitchClick={handleTotalMysterySwitchClick}
           onCardNumberSearch={handleCardNumberSearch}
         />
         <div
@@ -357,8 +349,24 @@ export default function AICards() {
     const searchParams = new URLSearchParams(search);
     if (filters.isMystery) {
       searchParams.delete('search[isMystery]');
+      searchParams.delete('search[isTotalMystery]');
     } else {
       searchParams.set('search[isMystery]', 'true');
+      searchParams.delete('search[style]');
+      searchParams.delete('search[engine]');
+    }
+    const decodedURL = decodeURIComponent(searchParams.toString());
+    navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
+  }
+
+  function handleTotalMysterySwitchClick() {
+    const searchParams = new URLSearchParams(search);
+    if (filters.isTotalMystery) {
+      searchParams.delete('search[isTotalMystery]');
+    } else {
+      searchParams.set('search[isTotalMystery]', 'true');
+      searchParams.set('search[isMystery]', 'true');
+      searchParams.delete('search[quality]');
       searchParams.delete('search[style]');
       searchParams.delete('search[engine]');
     }

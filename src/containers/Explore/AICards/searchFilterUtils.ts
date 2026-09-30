@@ -10,6 +10,7 @@ const SEARCH_FILTER_FIELDS = [
   'word',
   'isBuyNow',
   'isMystery',
+  'isTotalMystery',
   'engine',
   'minPrice',
   'maxPrice'
@@ -49,6 +50,11 @@ export function findAICardFilterMismatches(
     const reasons: string[] = [];
     if (filters.isMystery && card.imagePath) {
       reasons.push('isMystery search returned a card with imagePath');
+    }
+    if (filters.isTotalMystery && (card.imagePath || card.quality !== '???')) {
+      reasons.push(
+        'isTotalMystery search returned a revealed image or quality'
+      );
     }
     if (filters.quality && card.quality !== filters.quality) {
       reasons.push(`quality is "${card.quality}"`);

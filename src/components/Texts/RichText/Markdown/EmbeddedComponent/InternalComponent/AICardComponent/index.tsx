@@ -21,6 +21,7 @@ export default function AICardComponent({
     const color = params.get('search[color]');
     const isBuyNow = params.get('search[isBuyNow]');
     const isMystery = params.get('search[isMystery]');
+    const isTotalMystery = params.get('search[isTotalMystery]');
     const engine = params.get('search[engine]');
     const cardStyle = params.get('search[style]');
     const quality = params.get('search[quality]');
@@ -31,6 +32,7 @@ export default function AICardComponent({
       color,
       isBuyNow,
       isMystery,
+      isTotalMystery,
       engine,
       quality,
       cardStyle,

@@ -177,6 +177,7 @@ export default function FilterModal({
       quality?: string;
       style?: string;
       isMystery?: boolean;
+      isTotalMystery?: boolean;
       engine?:
         | 'DALL-E 2'
         | 'DALL-E 3'
@@ -203,6 +204,9 @@ export default function FilterModal({
     }
     if (filters.isMystery && !selectedStyle && selectedEngine === 'any') {
       obj.isMystery = true;
+      if (filters.isTotalMystery && selectedQuality === 'any') {
+        obj.isTotalMystery = true;
+      }
     }
     if (selectedEngine !== 'any') {
       obj.engine = selectedEngine;

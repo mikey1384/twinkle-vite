@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import CardItem from './CardItem';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -35,6 +35,16 @@ export default function Main({
   onUpdateAICard: (v: any) => any;
 }) {
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
+  const searchVersionRef = useRef(0);
+  useEffect(() => {
+    searchVersionRef.current += 1;
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+    return () => {
+      searchVersionRef.current += 1;
+    };
+  }, [filters, isBuy]);
   return (
     <div
       style={{
@@ -91,7 +101,7 @@ export default function Main({
           </div>
         </div>
       )}
-      {loadMoreShown && (
+      {loadMoreShown && !loading && (
         <LoadMoreButton
           style={{ marginTop: '1.5em' }}
           loading={loadingMore}
@@ -103,7 +113,10 @@ export default function Main({
   );
 
   async function handleLoadMore() {
+    if (loading || loadingMoreRef.current) return;
+    const searchVersion = searchVersionRef.current;
     const lastCard = cards[cards.length - 1];
+    if (!lastCard) return;
     let lastInteraction, lastPrice, lastId;
     if (filters.isBuyNow) {
       lastPrice = lastCard.askPrice;
@@ -112,22 +125,32 @@ export default function Main({
       lastInteraction = lastCard.lastInteraction;
       lastId = lastCard.id;
     }
+    loadingMoreRef.current = true;
     setLoadingMore(true);
-    const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
-      lastInteraction,
-      lastPrice,
-      lastId,
-      filters,
-      excludeMyCards: isBuy
-    });
-    for (const card of newCards) {
-      onUpdateAICard({ cardId: card.id, newState: card });
+    try {
+      const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
+        lastInteraction,
+        lastPrice,
+        lastId,
+        filters,
+        excludeMyCards: isBuy
+      });
+      if (searchVersion !== searchVersionRef.current) return;
+      for (const card of newCards) {
+        onUpdateAICard({ cardId: card.id, newState: card });
+      }
+      onSetCardIds((prevCardIds: number[]) => [
+        ...prevCardIds,
+        ...newCards.map((card: { id: number }) => card.id)
+      ]);
+      onSetLoadMoreShown(loadMoreShown);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      if (searchVersion === searchVersionRef.current) {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      }
     }
-    onSetCardIds((prevCardIds: number[]) => [
-      ...prevCardIds,
-      ...newCards.map((card: { id: number }) => card.id)
-    ]);
-    onSetLoadMoreShown(loadMoreShown);
-    setLoadingMore(false);
   }
 }

@@ -276,12 +276,14 @@ export default function CardSearchPanel({
   filters,
   onBuyNowSwitchClick,
   onMysterySwitchClick,
+  onTotalMysterySwitchClick,
   onSetSelectedFilter,
   onCardNumberSearch
 }: {
   filters: any;
   onBuyNowSwitchClick: () => any;
   onMysterySwitchClick: () => any;
+  onTotalMysterySwitchClick: () => any;
   onSetSelectedFilter: (filter: string) => any;
   onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
@@ -516,6 +518,14 @@ export default function CardSearchPanel({
             label="Mystery"
             onChange={onMysterySwitchClick}
           />
+          {!!filters.isMystery && (
+            <SwitchButton
+              small={deviceIsMobile}
+              checked={!!filters.isTotalMystery}
+              label="Complete mystery"
+              onChange={onTotalMysterySwitchClick}
+            />
+          )}
         </div>
         {location.search && (
           <ShareButton
@@ -551,6 +561,10 @@ export default function CardSearchPanel({
       searchParams.delete('search[engine]');
       delete obj.style;
       delete obj.engine;
+    }
+    if (obj.isTotalMystery) {
+      searchParams.delete('search[quality]');
+      delete obj.quality;
     }
     if (obj.engine && !obj.isMystery) {
       searchParams.set('search[engine]', obj.engine);

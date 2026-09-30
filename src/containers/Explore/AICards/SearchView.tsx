@@ -103,6 +103,7 @@ export default function SearchView({
     filters?.color,
     filters?.isBuyNow,
     filters?.isMystery,
+    filters?.isTotalMystery,
     filters?.engine,
     filters?.minPrice,
     filters?.maxPrice

@@ -97,6 +97,7 @@ export default function SelectAICardModal({
       filters?.style ||
       filters?.cardId ||
       filters?.isMystery ||
+      filters?.isTotalMystery ||
       filters?.engine
     );
   }, [
@@ -106,6 +107,7 @@ export default function SelectAICardModal({
     filters?.style,
     filters?.cardId,
     filters?.isMystery,
+    filters?.isTotalMystery,
     filters?.engine
   ]);
 
@@ -225,6 +227,7 @@ export default function SelectAICardModal({
             color={filters.color}
             engine={filters.engine}
             isMystery={filters.isMystery}
+            isTotalMystery={filters.isTotalMystery}
             loadFilteredAICards={loadFilteredAICards}
             myId={userId}
             myUsername={username}

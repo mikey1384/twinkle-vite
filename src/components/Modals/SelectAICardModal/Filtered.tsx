@@ -13,6 +13,7 @@ export default function Filtered({
   quality,
   engine,
   isMystery,
+  isTotalMystery,
   cardStyle,
   loadFilteredAICards,
   myId,
@@ -41,6 +42,7 @@ export default function Filtered({
     | 'image-2.5'
     | 'Nano Banana';
   isMystery?: boolean;
+  isTotalMystery?: boolean;
   loadFilteredAICards: (v: any) => any;
   myId: number;
   myUsername: string;
@@ -56,6 +58,7 @@ export default function Filtered({
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
+  const searchVersionRef = useRef(0);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [cardIds, setCardIds] = useState<any[]>([]);
   const cards = cardIds
@@ -70,6 +73,10 @@ export default function Filtered({
     );
 
   useEffect(() => {
+    const searchVersion = ++searchVersionRef.current;
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+    setLoadMoreShown(false);
     init();
     async function init() {
       setLoading(true);
@@ -78,28 +85,46 @@ export default function Filtered({
           filters: {
             owner: aiCardModalType === 'want' ? partnerName : myUsername,
             ...(!color || color === 'any' ? {} : { color }),
-            ...(!quality || quality === 'any' ? {} : { quality }),
+            ...(!quality || quality === 'any' || isTotalMystery
+              ? {}
+              : { quality }),
             ...(!word ? {} : { word }),
             ...(!cardStyle || isMystery ? {} : { style: cardStyle }),
             ...(!cardId ? {} : { cardId }),
             ...(isMystery ? { isMystery: true } : {}),
+            ...(isTotalMystery ? { isTotalMystery: true } : {}),
             ...(engine && !isMystery ? { engine } : {})
           }
         });
+        if (searchVersion !== searchVersionRef.current) return;
         setCardIds(cards.map((card: { id: number }) => card.id));
         for (const card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
         setLoadMoreShown(loadMoreShown);
-        setLoading(false);
       } catch (error) {
         console.error(error);
       } finally {
-        setLoading(false);
+        if (searchVersion === searchVersionRef.current) setLoading(false);
       }
     }
+    return () => {
+      searchVersionRef.current += 1;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardStyle, color, quality, word, cardId, engine, isMystery]);
+  }, [
+    cardStyle,
+    color,
+    quality,
+    word,
+    cardId,
+    engine,
+    isMystery,
+    isTotalMystery,
+    aiCardModalType,
+    partnerName,
+    myUsername
+  ]);
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
@@ -162,6 +187,7 @@ export default function Filtered({
 
   async function handleLoadMore() {
     if (loadingMoreRef.current) return;
+    const searchVersion = searchVersionRef.current;
     const lastCard = cards[cards.length - 1];
     const lastInteraction = lastCard?.lastInteraction;
     const lastId = lastCard?.id;
@@ -178,14 +204,18 @@ export default function Filtered({
         filters: {
           owner: aiCardModalType === 'want' ? partnerName : myUsername,
           ...(!color || color === 'any' ? {} : { color }),
-          ...(!quality || quality === 'any' ? {} : { quality }),
+          ...(!quality || quality === 'any' || isTotalMystery
+            ? {}
+            : { quality }),
           ...(!word ? {} : { word }),
           ...(!cardStyle || isMystery ? {} : { style: cardStyle }),
           ...(!cardId ? {} : { cardId }),
           ...(isMystery ? { isMystery: true } : {}),
+          ...(isTotalMystery ? { isTotalMystery: true } : {}),
           ...(engine && !isMystery ? { engine } : {})
         }
       });
+      if (searchVersion !== searchVersionRef.current) return;
       for (const card of newCards) {
         onUpdateAICard({ cardId: card.id, newState: card });
       }
@@ -210,8 +240,10 @@ export default function Filtered({
     } catch (error) {
       console.error(error);
     } finally {
-      loadingMoreRef.current = false;
-      setLoadingMore(false);
+      if (searchVersion === searchVersionRef.current) {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      }
     }
   }
 }

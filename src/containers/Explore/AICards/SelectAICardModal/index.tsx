@@ -53,6 +53,7 @@ export default function SelectAICardModal({
   );
 
   useEffect(() => {
+    let cancelled = false;
     init();
     async function init() {
       setLoading(true);
@@ -61,18 +62,21 @@ export default function SelectAICardModal({
           filters,
           excludeMyCards: isBuy
         });
+        if (cancelled) return;
         setCardIds(cards.map((card: { id: number }) => card.id));
         for (const card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
         setLoadMoreShown(loadMoreShown);
-        setLoading(false);
       } catch (error) {
         console.error(error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filters?.color,
@@ -81,7 +85,13 @@ export default function SelectAICardModal({
     filters?.style,
     filters?.cardId,
     filters?.isMystery,
-    filters?.engine
+    filters?.isTotalMystery,
+    filters?.engine,
+    filters?.owner,
+    filters?.isBuyNow,
+    filters?.minPrice,
+    filters?.maxPrice,
+    isBuy
   ]);
 
   const cards = useMemo(() => {
