@@ -6,6 +6,12 @@ import {
 } from '~/constants/css';
 
 export const panelPreviewStyles = `
+  /* Targets use their compact natural height and may grow for wrapped names
+     or a listing. Keep the surrounding body flexible so nothing is clipped. */
+  &.home-feed-card__body:has(> .home-feed-card__target-preview--size-ai-card) {
+    flex-basis: auto;
+    height: auto;
+  }
   .home-feed-card__panel-preview,
   .home-feed-card__target-preview {
     position: relative;
@@ -29,6 +35,11 @@ export const panelPreviewStyles = `
   .home-feed-card__target-preview--type-subject {
     border: 0;
     background: transparent;
+  }
+  .home-feed-card__target-preview--type-aiCard {
+    display: flex;
+    align-items: center;
+    padding: 0;
   }
   .home-feed-card__target-preview[data-feed-card-interactive='true'] {
     cursor: pointer;
@@ -207,6 +218,10 @@ export const panelPreviewStyles = `
   }
   .home-feed-card__target-preview--size-build-comment {
     height: max(15.5rem, 155px);
+  }
+  .home-feed-card__target-preview--size-ai-card {
+    height: auto;
+    flex: 0 0 auto;
   }
   /* Prompt target: chip + title + instructions well. Must match
      TARGET_HEIGHT_REM['shared-prompt'] in helpers/sizing.ts — the card frame

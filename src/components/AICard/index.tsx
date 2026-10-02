@@ -19,11 +19,13 @@ const ROTATE_Y_FACTOR = 0.1;
 export default function AICard({
   animateOnMouseLeave,
   card,
+  compact = false,
   detailShown,
   onClick
 }: {
   animateOnMouseLeave?: boolean;
   card: CardType;
+  compact?: boolean;
   detailShown?: boolean;
   onClick?: () => void;
 }) {
@@ -97,6 +99,7 @@ export default function AICard({
       >
         <Card
           card={card}
+          compact={compact}
           bind={bind}
           detailShown={detailShown}
           innerRef={CardRef}

@@ -17,6 +17,7 @@ export default function Card({
   bind,
   card,
   cardStyle,
+  compact = false,
   detailShown,
   innerRef,
   isAnimated,
@@ -26,6 +27,7 @@ export default function Card({
   bind: () => any;
   card: CardType;
   cardStyle: AnimatedProps<React.ComponentPropsWithoutRef<'div'>>['style'];
+  compact?: boolean;
   detailShown?: boolean;
   innerRef: any;
   isAnimated: boolean;
@@ -100,7 +102,7 @@ export default function Card({
       !!finalCard?.imageGenerationInProgress,
     [finalCard?.engine, finalCard?.imageGenerationInProgress]
   );
-  const { cardCss, cardColor, word } = useAICard(finalCard);
+  const { cardCss, cardColor, word } = useAICard(finalCard, compact);
 
   return (
     <div className={cardCss}>
@@ -151,11 +153,11 @@ export default function Card({
             position: relative;
             overflow: hidden;
             width: 100%;
-            height: CALC(100% - 110px);
+            height: ${compact ? '75%' : 'calc(100% - 110px)'};
             display: flex;
             align-items: center;
             @media (max-width: ${mobileMaxWidth}) {
-              height: CALC(100% - 55px);
+              height: ${compact ? '75%' : 'calc(100% - 55px)'};
             }
           `}
         >
@@ -202,31 +204,35 @@ export default function Card({
           {!!finalCard.isBurned && (
             <div
               className={css`
-                font-size: 1.6rem;
+                font-size: ${compact ? '1.1rem' : '1.6rem'};
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.2rem;
+                  font-size: ${compact ? '1.1rem' : '1.2rem'};
                 }
               `}
               style={{
                 width: '100%',
                 background: '#fff',
                 textAlign: 'center',
-                padding: '1rem'
+                padding: compact ? '0.5rem' : '1rem'
               }}
             >
-              <div>
-                <UsernameText
-                  color={Color[userLinkColor]()}
-                  user={{
-                    username: finalCard.owner?.username,
-                    id: finalCard.owner?.id
-                  }}
-                />
-              </div>
-              <div style={{ marginTop: '0.5rem' }}>
-                burned this card and earned
-              </div>
-              <div style={{ marginTop: '0.5rem' }}>
+              {!compact && (
+                <>
+                  <div>
+                    <UsernameText
+                      color={Color[userLinkColor]()}
+                      user={{
+                        username: finalCard.owner?.username,
+                        id: finalCard.owner?.id
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    burned this card and earned
+                  </div>
+                </>
+              )}
+              <div style={compact ? undefined : { marginTop: '0.5rem' }}>
                 <b style={{ color: Color[xpNumberColor]() }}>
                   {addCommasToNumber(burnXP)}
                 </b>{' '}

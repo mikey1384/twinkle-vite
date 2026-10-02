@@ -34,7 +34,7 @@ function totalMysteryGlowShadow(color: string) {
     0 35px 28px -22px rgba(15, 23, 42, 0.35)`;
 }
 
-export default function useAICard(card: any) {
+export default function useAICard(card: any, compact = false) {
   const {
     memoizedCardQuality,
     memoizedQualityProps,
@@ -141,13 +141,13 @@ export default function useAICard(card: any) {
                0 0 7px 2px rgba(255, 255, 255, 0.3),
                0 35px 28px -22px rgba(15, 23, 42, 0.35)`
             : isGlowy
-            ? `0px 0px 7px ${qualityColor},
+              ? `0px 0px 7px ${qualityColor},
                0px 0px 7px ${qualityColor},
                0 0 7px ${qualityColor},
                0 0 7px ${qualityColor},
                0 0 7px 2px rgba(255, 255, 255, 0.3),
                0 35px 28px -22px rgba(15, 23, 42, 0.35)`
-            : `-5px -5px 5px -5px ${cardColor},
+              : `-5px -5px 5px -5px ${cardColor},
                3px 3px 3px -3px ${cardColor},
                -5px -5px 7px -3px transparent,
                5px 5px 7px -3px transparent,
@@ -175,14 +175,14 @@ export default function useAICard(card: any) {
                   0 0 20px 6px ${qualityColor},
                   0 55px 35px -30px rgba(15, 23, 42, 0.5);`
               : isGlowy
-              ? `box-shadow:
+                ? `box-shadow:
                   -20px -20px 30px -25px ${qualityColor},
                   20px 20px 30px -25px ${qualityColor},
                   -7px -7px 10px -5px ${qualityColor},
                   7px 7px 10px -5px ${qualityColor},
                   0 0 13px 4px rgba(255, 255, 255, 0.3),
                   0 55px 35px -30px rgba(15, 23, 42, 0.5);`
-              : `box-shadow:
+                : `box-shadow:
                   -8px -8px 15px -10px ${cardColor},
                   8px 8px 15px -10px ${cardColor},
                   0 45px 30px -25px rgba(0, 0, 0, 0.4);`
@@ -295,7 +295,7 @@ export default function useAICard(card: any) {
           }
         `
             : isSparky
-            ? `
+              ? `
           &:after {
             background-image:
               conic-gradient(
@@ -325,7 +325,7 @@ export default function useAICard(card: any) {
             opacity: 0.75;
           }
         `
-            : ''
+              : ''
         }
 
         &:hover:after {
@@ -360,42 +360,48 @@ export default function useAICard(card: any) {
 
         &.animated {
           transition: none;
-          animation: holoCard 12s ease 0s 1${isTotalMystery ? `, ${totalMysteryGlowAnimation}` : ''};
+          animation: holoCard 12s ease 0s 1
+            ${isTotalMystery ? `, ${totalMysteryGlowAnimation}` : ''};
           &:before {
             transition: none;
             animation: holoGradient 12s ease 0s 1;
           }
           &:after {
             transition: none;
-            animation: holoSparkle 12s ease 0s 1${isPrism ? ', prismShift 12s ease-in-out infinite' : ''};
+            animation: holoSparkle 12s ease 0s 1
+              ${isPrism ? ', prismShift 12s ease-in-out infinite' : ''};
           }
         }
 
-        width: clamp(12.9vw, 32vh, 30vw);
-        height: clamp(20vw, 46vh, 42vw);
+        width: ${compact ? 'var(--ai-card-preview-art-width, 7.5rem)' : 'clamp(12.9vw, 32vh, 30vw)'};
+        height: ${compact ? 'var(--ai-card-preview-art-height, 10.5rem)' : 'clamp(20vw, 46vh, 42vw)'};
         @media (max-width: ${mobileMaxWidth}) {
-          width: clamp(25vw, 16vh, 35vw);
-          height: clamp(30vw, 25vh, 50vw);
+          width: ${compact ? 'var(--ai-card-preview-art-width, 7.5rem)' : 'clamp(25vw, 16vh, 35vw)'};
+          height: ${compact ? 'var(--ai-card-preview-art-height, 10.5rem)' : 'clamp(30vw, 25vh, 50vw)'};
         }
       }
 
       @keyframes holoSparkle {
-        0%, 100% {
+        0%,
+        100% {
           opacity: 0.75;
           background-position: 50% 50%;
           filter: brightness(1.2) contrast(1.25);
         }
-        5%, 8% {
+        5%,
+        8% {
           opacity: 1;
           background-position: 40% 40%;
           filter: brightness(0.8) contrast(1.2);
         }
-        13%, 16% {
+        13%,
+        16% {
           opacity: 0.5;
           background-position: 50% 50%;
           filter: brightness(1.2) contrast(0.8);
         }
-        35%, 38% {
+        35%,
+        38% {
           opacity: 1;
           background-position: 60% 60%;
           filter: brightness(1) contrast(1);
@@ -408,7 +414,8 @@ export default function useAICard(card: any) {
       }
 
       @keyframes gloss {
-        0%, 100% {
+        0%,
+        100% {
           background-position: 0% 50%;
           opacity: 0.4;
         }
@@ -428,21 +435,25 @@ export default function useAICard(card: any) {
       }
 
       @keyframes holoGradient {
-        0%, 100% {
+        0%,
+        100% {
           opacity: 0.5;
           background-position: 50% 50%;
           filter: brightness(0.5) contrast(1);
         }
-        5%, 9% {
+        5%,
+        9% {
           background-position: 100% 100%;
           opacity: 1;
           filter: brightness(0.75) contrast(1.25);
         }
-        13%, 17% {
+        13%,
+        17% {
           background-position: 0% 0%;
           opacity: 0.88;
         }
-        35%, 39% {
+        35%,
+        39% {
           background-position: 100% 100%;
           opacity: 1;
           filter: brightness(0.5) contrast(1);
@@ -455,16 +466,20 @@ export default function useAICard(card: any) {
       }
 
       @keyframes holoCard {
-        0%, 100% {
+        0%,
+        100% {
           transform: rotateZ(0deg) rotateX(0deg) rotateY(0deg);
         }
-        5%, 8% {
+        5%,
+        8% {
           transform: rotateZ(0deg) rotateX(6deg) rotateY(-20deg);
         }
-        13%, 16% {
+        13%,
+        16% {
           transform: rotateZ(0deg) rotateX(-9deg) rotateY(32deg);
         }
-        35%, 38% {
+        35%,
+        38% {
           transform: rotateZ(3deg) rotateX(12deg) rotateY(20deg);
         }
         55% {
@@ -473,11 +488,22 @@ export default function useAICard(card: any) {
       }
 
       @keyframes prismShift {
-        0%, 100% {
-          background-position: 0% 0%, 50% 50%, 50% 50%, 50% 50%, 50% 50%;
+        0%,
+        100% {
+          background-position:
+            0% 0%,
+            50% 50%,
+            50% 50%,
+            50% 50%,
+            50% 50%;
         }
         50% {
-          background-position: 100% 100%, 50% 50%, 50% 50%, 50% 50%, 50% 50%;
+          background-position:
+            100% 100%,
+            50% 50%,
+            50% 50%,
+            50% 50%,
+            50% 50%;
         }
       }
     `

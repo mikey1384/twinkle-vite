@@ -16,6 +16,11 @@ const multiCardSource = readFileSync(
   'utf8'
 );
 
+const detailsSource = readFileSync(
+  new URL('../src/components/AICardDetails.tsx', import.meta.url),
+  'utf8'
+);
+
 function assertNoSubOneRemText(sourceText, label) {
   for (const match of sourceText.matchAll(/font-size:\s*([0-9.]+)rem/g)) {
     const fontSize = Number(match[1]);
@@ -38,10 +43,9 @@ assert.match(
 );
 assert.match(source, /border: 2px solid var\(--compact-ai-card-quality\);/);
 assert.match(
-  source,
-  // The <b> later gained a total-mystery className; the quality-color style
-  // binding this guards is unchanged.
-  /<b[\s\S]{0,200}style=\{qualityColor \? \{ color: qualityColor \} : undefined\}/
+  detailsSource,
+  // Previews share the established details component's quality treatment.
+  /style=\{card.quality \? qualityProps\[card.quality\] : undefined\}/
 );
 assert.match(
   source,

@@ -1,11 +1,9 @@
 import React from 'react';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
-import UsernameText from '~/components/Texts/UsernameText';
+import { BurnValue, CardOwner } from '~/components/AICardMarketDetails';
 import MakeOffer from '../MakeOffer';
 import MyOffer from '../MyOffer';
-import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 export default function NonOwnerMenu({
   burnXP,
@@ -26,14 +24,6 @@ export default function NonOwnerMenu({
   myId: number;
   myOffer: any;
 }) {
-  const { colorKey: userLinkColorKey } = useRoleColor('userLink', {
-    fallback: 'logoBlue'
-  });
-  const userLinkColor =
-    userLinkColorKey && userLinkColorKey in Color
-      ? userLinkColorKey
-      : 'logoBlue';
-
   return (
     <div
       className={css`
@@ -44,45 +34,13 @@ export default function NonOwnerMenu({
         }
       `}
     >
-      <div style={{ width: '100%', textAlign: 'center' }}>
-        <b style={{ color: Color.redOrange() }}>Burn</b> value
-        <div style={{ marginTop: '0.5rem' }}>
-          <b style={{ color: Color[xpNumberColor]() }}>
-            {addCommasToNumber(burnXP)}
-          </b>{' '}
-          <b style={{ color: Color.gold() }}>XP</b>
-        </div>
-        <p
-          className={css`
-            margin-top: 0.5rem;
-            font-size: 1.1rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              margin-top: 0.3rem;
-              font-size: 1.1rem;
-            }
-          `}
-        >
-          (Burning this card yields{' '}
-          <b style={{ color: Color[xpNumberColor]() }}>
-            {addCommasToNumber(burnXP)}
-          </b>{' '}
-          <b style={{ color: Color.gold() }}>XP</b>)
-        </p>
-      </div>
+      <BurnValue
+        burnXP={burnXP}
+        xpNumberColor={xpNumberColor}
+        showExplanation
+      />
       <div style={{ width: '100%', marginTop: '3rem', textAlign: 'center' }}>
-        <div>
-          Owned by
-          <div>
-            <UsernameText
-              onMenuShownChange={onUserMenuShownChange}
-              color={Color[userLinkColor]()}
-              user={{
-                username: owner?.username,
-                id: owner?.id
-              }}
-            />
-          </div>
-        </div>
+        <CardOwner owner={owner} onMenuShownChange={onUserMenuShownChange} />
         {myOffer ? (
           <MyOffer
             className={css`

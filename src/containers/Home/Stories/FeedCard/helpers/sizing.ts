@@ -63,6 +63,7 @@ export type FeedCardSize =
   | 'url';
 
 export type FeedCardTargetSize =
+  | 'ai-card'
   | 'build-comment'
   | 'compact'
   | 'fallback'
@@ -218,6 +219,8 @@ const TARGET_HEIGHT_REM: Record<
   FeedCardTargetSize,
   { desktop: number; mobile: number }
 > = {
+  // Compact AICardPreview minima; actual content can grow for wrapped names.
+  'ai-card': { desktop: 14, mobile: 12 },
   'build-comment': { desktop: 15.5, mobile: 12 },
   compact: { desktop: 8.5, mobile: 8.5 },
   fallback: { desktop: 13, mobile: 12 },
@@ -818,7 +821,7 @@ function getTargetPanelSizing({
     return buildTargetSizing('standard', ['url-target']);
   }
   if (normalizedRootType === 'aiCard') {
-    return buildTargetSizing('standard');
+    return buildTargetSizing('ai-card');
   }
 
   const standardRootTypes =

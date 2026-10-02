@@ -1,6 +1,31 @@
-import { Color, desktopMinWidth } from '~/constants/css';
+import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 
 export const mainPreviewStyles = `
+  /* Card details and the subject title wrap independently in tablet columns.
+     This preview already clamps its prompt, so let the bounded contents size
+     the body instead of clipping them against the estimated feed height. */
+  &.home-feed-card__body:has(
+      > .home-feed-card__panel-preview--size-subject-comment-embed
+      .home-feed-card__subject-embed-preview > .compact-ai-card-preview
+    ) {
+    flex-basis: auto;
+    height: auto;
+    min-height: var(--home-feed-card-body-height);
+    justify-content: center;
+    @media (max-width: ${mobileMaxWidth}) {
+      min-height: var(--home-feed-card-mobile-body-height);
+    }
+
+    > .home-feed-card__panel-preview--size-subject-comment-embed,
+    > .home-feed-card__panel-preview--size-subject-comment-embed
+      .home-feed-card__subject-preview,
+    > .home-feed-card__panel-preview--size-subject-comment-embed
+      .home-feed-card__subject-main,
+    > .home-feed-card__panel-preview--size-subject-comment-embed
+      .home-feed-card__subject-copy {
+      height: auto;
+    }
+  }
   .home-feed-card__secret-preview {
     display: flex;
     align-items: center;
@@ -302,37 +327,26 @@ export const mainPreviewStyles = `
       }
       .home-feed-card__rich-embed-preview--with-text
         .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__header,
+        .ai-card-details__identity,
       .home-feed-card__rich-embed-preview--with-text
         .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__meta,
+        .ai-card-details__meta,
       .home-feed-card__rich-embed-preview--with-text
         .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__quality-line {
+        .ai-card-details__quality {
         justify-content: center;
         text-align: center;
       }
       .home-feed-card__rich-embed-preview--with-text
         .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__prompt,
+        .ai-card-details__prompt,
       .home-feed-card__rich-embed-preview--with-text
         .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__summoned,
+        .ai-card-details__summoned,
       .home-feed-card__rich-embed-preview--with-text
         .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
         .compact-ai-card-preview__stat--listed {
         display: none;
-      }
-      .home-feed-card__rich-embed-preview--with-text
-        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__word {
-        font-size: 1.25rem;
-        line-height: 1.08;
-      }
-      .home-feed-card__rich-embed-preview--with-text
-        .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card
-        .compact-ai-card-preview__quality-line {
-        font-size: 1rem;
       }
       .home-feed-card__rich-embed-preview--with-text
         .home-feed-card__rich-embed-image.home-feed-card__rich-embed-internal--ai-card

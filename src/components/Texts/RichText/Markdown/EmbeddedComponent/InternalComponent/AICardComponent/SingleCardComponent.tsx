@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AICard from '~/components/AICard';
 import Loading from '~/components/Loading';
 import InvalidContent from '../../InvalidContent';
@@ -19,14 +19,15 @@ export default function SingleCardComponent({
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
-  const cardObj = useChatContext((v) => v.state.cardObj);
+  const card = useChatContext(
+    (v) => v.state.cardObj[cardId] as CardType | undefined
+  );
   const [cardModalShown, setCardModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cardNotFound, setCardNotFound] = useState(false);
-  const card = useMemo(() => cardObj[cardId] as CardType, [cardId, cardObj]);
 
   useEffect(() => {
-    if (!cardNotFound && !cardObj[cardId]) {
+    if (!cardNotFound && !card) {
       init();
     }
     async function init() {
@@ -42,20 +43,18 @@ export default function SingleCardComponent({
       }
       setLoading(false);
     }
+    // Request helpers and context actions have stable implementations.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardNotFound, cardId]);
+  }, [cardNotFound, cardId, card]);
 
   return (
     <ErrorBoundary componentPath="RichText/EmbeddedComponent/InternalComponent/AICardComponent/SingleCardComponent">
       {loading || (!cardNotFound && !card) ? (
         <Loading />
-      ) : cardNotFound ? (
+      ) : cardNotFound || !card ? (
         <InvalidContent style={{ marginTop: '2rem' }} />
       ) : isPreview ? (
-        <CompactPreview
-          card={card}
-          onClick={() => setCardModalShown(true)}
-        />
+        <CompactPreview card={card} onClick={() => setCardModalShown(true)} />
       ) : (
         <div
           style={{
@@ -86,7 +85,7 @@ export default function SingleCardComponent({
           </div>
         </div>
       )}
-      {cardModalShown && (
+      {cardModalShown && card && (
         <AICardModal cardId={card.id} onHide={() => setCardModalShown(false)} />
       )}
     </ErrorBoundary>

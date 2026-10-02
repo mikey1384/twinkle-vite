@@ -1357,25 +1357,36 @@ test('matches AI card modal coin styling in rich text compact previews', () => {
     ),
     'utf8'
   );
+  const marketDetailsSource = readFileSync(
+    path.resolve(__dirname, '../src/components/AICardMarketDetails.tsx'),
+    'utf8'
+  );
+  const previewSource = readFileSync(
+    path.resolve(__dirname, '../src/components/AICardPreview.tsx'),
+    'utf8'
+  );
+
+  assert.match(compactPreviewSource, /<AICardPreview/);
+  assert.match(previewSource, /<AICardMarketDetails card=\{card\}/);
 
   assert.match(
-    compactPreviewSource,
+    marketDetailsSource,
     /compact-ai-card-preview__stat compact-ai-card-preview__stat--listed/
   );
   assert.match(
-    compactPreviewSource,
+    marketDetailsSource,
     /<Icon\s+style=\{\{ color: Color\.brownOrange\(\) \}\}\s+icon="coins"\s+\/>/
   );
   assert.match(
-    compactPreviewSource,
+    marketDetailsSource,
     /className="compact-ai-card-preview__coin-price"/
   );
   assert.match(
-    compactPreviewSource,
+    marketDetailsSource,
     /\.compact-ai-card-preview__stat--listed b \{[\s\S]*gap: 0\.5rem;/
   );
   assert.match(
-    compactPreviewSource,
+    marketDetailsSource,
     /\.compact-ai-card-preview__coin-price \{[\s\S]*color: \$\{Color\.darkerGray\(\)\};/
   );
 });
@@ -2831,7 +2842,7 @@ test('AI card comments reserve a visible target preview on desktop and mobile', 
     userId: 1
   });
   assert.equal(sizing.card.hasTarget, true);
-  assert.equal(sizing.target.size, 'standard');
+  assert.equal(sizing.target.size, 'ai-card');
   assert.notEqual(sizing.target.desktopHeight, '0');
   assert.notEqual(sizing.target.mobileHeight, '0');
 });
