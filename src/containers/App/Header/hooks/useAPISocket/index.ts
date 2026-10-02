@@ -1,4 +1,5 @@
 import useUserActivityReporting from './useUserActivityReporting';
+import useUserActivityRefresh from './useUserActivityRefresh';
 import { useEffect, useMemo, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import {
@@ -46,6 +47,7 @@ export default function useAPISocket({
   subchannelPath: string | null;
 }) {
   useUserActivityReporting();
+  useUserActivityRefresh();
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);

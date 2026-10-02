@@ -1,4 +1,5 @@
 export const USER_ACTIVITY_INPUT_EVENT = 'twinkle-user-activity-input';
+export const USER_ACTIVITY_REFRESH_AFTER_MS = 90_000;
 
 export type ActivityGame =
   | 'wordle'
@@ -106,4 +107,21 @@ export function activityFromSnapshot(
     activityObservedAt: member.activityObservedAt,
     activityUpdatedAt: requestedAt
   };
+}
+
+// Active apps renew their activity every 25 seconds. If a cached activity has
+// outlived the server's 75-second lease and 15-second sweep without an update,
+// read canonical presence again instead of treating the cache as live forever.
+export function getNextUserActivityRefreshAt(chatStatus: Record<string, any>) {
+  let nextRefreshAt = 0;
+  for (const entry of Object.values(chatStatus)) {
+    if (!entry?.activity || entry.isOnline !== true) continue;
+    const updatedAt = Number(entry.activityUpdatedAt || 0);
+    const refreshAt =
+      Number.isFinite(updatedAt) && updatedAt > 0
+        ? updatedAt + USER_ACTIVITY_REFRESH_AFTER_MS
+        : 1;
+    if (!nextRefreshAt || refreshAt < nextRefreshAt) nextRefreshAt = refreshAt;
+  }
+  return nextRefreshAt;
 }

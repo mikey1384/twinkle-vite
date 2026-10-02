@@ -12,11 +12,10 @@ import { activityFromSnapshot } from '~/helpers/userActivity';
 // take seconds (the cluster fetch alone allows 16), and online_status_changed
 // broadcasts keep arriving on the same socket meanwhile, so an ack can describe
 // a world that is already out of date. The rule that keeps a snapshot from
-// undoing fresher truth: an entry touched by a presence event after the
-// snapshot was requested is left alone by that snapshot, whether the snapshot
-// would have marked it online or offline. statusUpdatedAt records when an entry
-// last changed from such an event; both stamps come from the same client clock,
-// so there is no skew to reason about.
+// undoing fresher truth: presence flags touched after the snapshot request keep
+// their newer values. Activity has its own freshness stamps, so a busy/away
+// update cannot prevent a snapshot from clearing an older activity cache.
+// statusUpdatedAt and requestedAt both come from the same client clock.
 //
 // Single source of truth: online_status_changed owns lastActive. A snapshot
 // only states who is online; it never overwrites offline timestamps or drops
@@ -67,8 +66,16 @@ export function applyPresenceSnapshot({
   for (const uid of Object.keys(onlineUsers)) {
     const userId = Number(uid);
     const prev = mergedStatus[userId] || {};
-    if (isNewerThanSnapshot(prev, requestedAt)) continue;
     const member = onlineUsers[uid] || {};
+    if (isNewerThanSnapshot(prev, requestedAt)) {
+      if (prev.isOnline !== false) {
+        mergedStatus[userId] = {
+          ...prev,
+          ...activityFromSnapshot(prev, member, requestedAt)
+        };
+      }
+      continue;
+    }
     mergedStatus[userId] = stampPresenceSnapshotEntry(
       {
         ...prev,

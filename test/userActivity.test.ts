@@ -3,6 +3,8 @@ import test from 'node:test';
 import {
   applyUserActivityEvent,
   createUserActivityRegistry,
+  getNextUserActivityRefreshAt,
+  USER_ACTIVITY_REFRESH_AFTER_MS,
   type UserActivity
 } from '../src/helpers/userActivity';
 import { applyPresenceSnapshot } from '../src/contexts/Chat/presenceSnapshot';
@@ -130,4 +132,95 @@ test('newer snapshots refresh or clear badges; old server snapshots preserve kno
   });
   assert.equal(offline[7].isOnline, false);
   assert.equal(offline[7].activity, null);
+});
+
+test('presence changes cannot block a snapshot from clearing an older activity', () => {
+  const previous = {
+    ...applyUserActivityEvent(
+      { id: 7, isOnline: true, isBusy: false },
+      { activity: app, observedAt: 100 },
+      1000
+    ),
+    isBusy: true,
+    statusUpdatedAt: 1100
+  };
+  const next = applyPresenceSnapshot({
+    chatStatus: { 7: previous },
+    onlineUsers: {
+      7: { id: 7, isBusy: false, activity: null, activityObservedAt: 200 }
+    },
+    requestedAt: 1050,
+    reconcileOffline: true
+  })[7];
+  assert.equal(next.activity, null);
+  assert.equal(next.isBusy, true);
+  assert.equal(next.statusUpdatedAt, 1100);
+});
+
+test('a snapshot preserves a newer activity even when presence also changed', () => {
+  const previous = {
+    ...applyUserActivityEvent(
+      { id: 7, isOnline: true, isAway: true },
+      { activity: game, observedAt: 200 },
+      1100
+    ),
+    statusUpdatedAt: 1100
+  };
+  const next = applyPresenceSnapshot({
+    chatStatus: { 7: previous },
+    onlineUsers: {
+      7: { id: 7, isAway: false, activity: null, activityObservedAt: 100 }
+    },
+    requestedAt: 1050,
+    reconcileOffline: true
+  })[7];
+  assert.equal(next.activity, game);
+  assert.equal(next.isAway, true);
+});
+
+test('a snapshot cannot restore an activity after a newer offline event', () => {
+  const previous = {
+    id: 7,
+    isOnline: false,
+    activity: null,
+    statusUpdatedAt: 1100
+  };
+  const next = applyPresenceSnapshot({
+    chatStatus: { 7: previous },
+    onlineUsers: { 7: { id: 7, activity: app, activityObservedAt: 100 } },
+    requestedAt: 1050,
+    reconcileOffline: true
+  })[7];
+  assert.equal(next, previous);
+});
+
+test('activity refresh targets the oldest online activity and moves with fresh canonical data', () => {
+  const chatStatus = {
+    7: { isOnline: true, activity: app, activityUpdatedAt: 1000 },
+    8: { isOnline: true, activity: game, activityUpdatedAt: 2000 },
+    9: { isOnline: false, activity: app, activityUpdatedAt: 1 }
+  };
+  assert.equal(
+    getNextUserActivityRefreshAt(chatStatus),
+    1000 + USER_ACTIVITY_REFRESH_AFTER_MS
+  );
+  assert.equal(
+    getNextUserActivityRefreshAt({
+      ...chatStatus,
+      7: { ...chatStatus[7], activity: null }
+    }),
+    2000 + USER_ACTIVITY_REFRESH_AFTER_MS
+  );
+  assert.equal(
+    getNextUserActivityRefreshAt({ 7: { isOnline: true, activity: app } }),
+    1
+  );
+  assert.equal(
+    getNextUserActivityRefreshAt({ 7: { isOnline: false, activity: app } }),
+    0
+  );
+  assert.equal(
+    getNextUserActivityRefreshAt({ 7: { isOnline: true, activity: null } }),
+    0
+  );
 });
