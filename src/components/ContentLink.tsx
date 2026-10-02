@@ -63,6 +63,8 @@ export default function ContentLink({
       result = 'links';
     } else if (isPassType) {
       result = isAchievementPass ? 'achievement-unlocks' : 'mission-passes';
+    } else if (contentType === 'bounty') {
+      result = 'bounties';
     } else if (contentType === 'xpChange') {
       result = 'daily-rewards';
     } else if (contentType === 'sharedTopic') {

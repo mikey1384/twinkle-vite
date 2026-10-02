@@ -201,6 +201,7 @@ export default function RecommendationInterface({
     return (
       cleanedContent.length > expectedContentLength &&
       contentType !== 'pass' &&
+      contentType !== 'bounty' &&
       contentType !== 'xpChange' &&
       contentType !== 'sharedTopic' &&
       contentType !== 'aiStory' &&
@@ -244,6 +245,7 @@ export default function RecommendationInterface({
       !isPassContent &&
       contentType !== 'aiStory' &&
       contentType !== 'build' &&
+      contentType !== 'bounty' &&
       contentType !== 'xpChange' &&
       contentType !== 'dailyReflection' &&
       contentType !== 'sharedTopic'

@@ -2,12 +2,10 @@ import React from 'react';
 import SanitizedHTML from 'react-sanitized-html';
 import CardThumb from '~/components/CardThumb';
 import Icon from '~/components/Icon';
+import RewardChips, { rewardChipClass } from '~/components/RewardChips';
 import { Color } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
-import {
-  addCommasToNumber,
-  getRenderedTextForVocabQuestions
-} from '~/helpers/stringHelpers';
+import { getRenderedTextForVocabQuestions } from '~/helpers/stringHelpers';
 import {
   formatRewardMultiplier,
   getDailyTaskRewardMultiplier,
@@ -70,26 +68,17 @@ export default function DailyGoalsPreview({
           {dailyGoals?.dailyTaskReward ? (
             <span
               aria-label={`Daily goals reward multiplier x${rewardMultiplierLabel}`}
-              className={`home-feed-card__reward-chip multiplier multiplier--${rewardMultiplierTier}`}
+              className={`${rewardChipClass} home-feed-card__reward-chip multiplier multiplier--${rewardMultiplierTier}`}
             >
               <Icon icon="bolt" />
               {`x${rewardMultiplierLabel}`}
             </span>
           ) : null}
-          {Number(dailyGoals?.xpEarned || 0) > 0 ? (
-            <span className="home-feed-card__reward-chip xp">
-              <span className="home-feed-card__reward-chip-xp-number">
-                {addCommasToNumber(Number(dailyGoals.xpEarned))}
-              </span>
-              <span className="home-feed-card__reward-chip-xp-label">XP</span>
-            </span>
-          ) : null}
-          {Number(dailyGoals?.coinEarned || 0) > 0 ? (
-            <span className="home-feed-card__reward-chip coins">
-              <Icon icon="coins" />
-              {addCommasToNumber(Number(dailyGoals.coinEarned))}
-            </span>
-          ) : null}
+          <RewardChips
+            xp={Number(dailyGoals?.xpEarned)}
+            coins={Number(dailyGoals?.coinEarned)}
+            className="home-feed-card__reward-chip"
+          />
         </div>
         {word ? (
           <h3 style={{ color: Color[levelColor]?.() || Color.logoGreen() }}>

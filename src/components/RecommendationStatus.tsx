@@ -80,6 +80,7 @@ export default function RecommendationStatus({
       contentType !== 'aiStory' &&
       contentType !== 'dailyReflection' &&
       contentType !== 'sharedTopic' &&
+      contentType !== 'bounty' &&
       contentType !== 'xpChange' &&
       ((isSupermod(myRecommendation?.level) &&
         !myRecommendation?.rewardDisabled) ||

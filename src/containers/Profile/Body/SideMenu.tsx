@@ -53,6 +53,8 @@ function getIconForKey(key: string) {
   switch (key) {
     case 'all':
       return 'list';
+    case 'bounty':
+      return 'trophy';
     case 'comment':
       return 'comments';
     case 'dailyReflection':

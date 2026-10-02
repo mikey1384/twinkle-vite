@@ -76,6 +76,7 @@ export const contentSubsectionTitles: Record<string, string> = {
   'daily-reflections': 'Daily Reflection',
   'mission-passes': 'Mission Pass',
   'achievement-unlocks': 'Achievement',
+  bounties: 'Bounty',
   'daily-rewards': 'Daily Goal',
   'shared-prompts': 'Shared Prompt'
 };

@@ -16,6 +16,7 @@ import { HOME_FEED_MARKDOWN_LINE_HEIGHT_REM } from './typography';
 
 export type FeedCardPreviewKind =
   | 'ai-story'
+  | 'bounty'
   | 'build'
   | 'daily-goals'
   | 'fallback'
@@ -31,6 +32,7 @@ export type FeedCardSize =
   | 'attachment-only'
   | 'ai-story-listening'
   | 'ai-story-reading'
+  | 'bounty'
   | 'build'
   | 'compact'
   | 'compact-desktop'
@@ -161,6 +163,7 @@ interface FeedCardSizingParams {
 
 const KNOWN_CONTENT_TYPES = new Set([
   'aiStory',
+  'bounty',
   'build',
   'comment',
   'dailyReflection',
@@ -178,6 +181,7 @@ const PANEL_HEIGHT_REM: Record<
   'attachment-only': { desktop: 12, mobile: 11 },
   'ai-story-listening': { desktop: 18, mobile: 17 },
   'ai-story-reading': { desktop: 20, mobile: 19 },
+  bounty: { desktop: 16, mobile: 18 },
   build: { desktop: 18, mobile: 14 },
   compact: { desktop: 11, mobile: 10 },
   'compact-desktop': { desktop: 11, mobile: 19 },
@@ -725,6 +729,8 @@ function getMainPanelSize({
     return getPlainSubjectPanelSize(content);
   }
 
+  if (kind === 'bounty') return 'bounty';
+
   if (kind === 'build') {
     return 'build';
   }
@@ -835,6 +841,7 @@ function getTargetPanelSizing({
           'sharedTopic',
           'subject',
           'video',
+          'bounty',
           'xpChange'
         ];
 
@@ -1294,6 +1301,8 @@ function getPreviewKind(content: any): FeedCardPreviewKind {
   if (content?.contentType === 'dailyReflection') {
     return 'reflection';
   }
+
+  if (content?.contentType === 'bounty') return 'bounty';
 
   if (content?.contentType === 'xpChange') {
     return 'daily-goals';

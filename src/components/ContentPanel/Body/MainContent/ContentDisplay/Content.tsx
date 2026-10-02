@@ -1,3 +1,4 @@
+import BountyContent from '~/components/BountyContent';
 import React, { useMemo, useState } from 'react';
 import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
 import { borderRadius, Color } from '~/constants/css';
@@ -351,6 +352,8 @@ export default function Content({
             theme={theme}
           />
         );
+      case 'bounty':
+        return <BountyContent bounty={contentObj} theme={theme} />;
       case 'xpChange': {
         const appliedQuestion = getRenderedTextForVocabQuestions(
           bonusQuestion.question,

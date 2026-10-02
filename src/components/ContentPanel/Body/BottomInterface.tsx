@@ -162,6 +162,7 @@ export default function BottomInterface({
     views
   } = contentObj;
   const sharePath = useMemo(() => {
+    if (contentType === 'bounty') return `/bounties/${contentId}`;
     if (contentType === 'aiCard') return `/ai-card-summons/${contentId}`;
     const contentPath =
       contentType === 'build'
@@ -247,7 +248,8 @@ export default function BottomInterface({
     if (contentType === 'aiCard') return false;
     if (contentType === 'aiStory') return false;
     if (contentType === 'build') return false;
-    if (contentType === 'dailyReflection') return false;
+    if (contentType === 'dailyReflection' || contentType === 'bounty')
+      return false;
     if (userId === uploader.id || (canEdit && userLevel > uploader.level)) {
       return (
         !isCommentForSecretSubject ||

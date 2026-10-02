@@ -8,6 +8,7 @@ export const contentPanelNoRewardContentTypes = new Set([
   'aiCard',
   'aiStory',
   'build',
+  'bounty',
   'dailyReflection',
   'pass',
   'sharedTopic',
@@ -20,6 +21,7 @@ export const homeFeedUnsupportedRecommendContentTypes = new Set([
 ]);
 
 const contentPanelCommentLabelContentTypes = new Set([
+  'bounty',
   'aiCard',
   'build',
   'pass',

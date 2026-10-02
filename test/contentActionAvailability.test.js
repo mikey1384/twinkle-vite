@@ -63,6 +63,7 @@ assert.deepEqual(
   [
     'aiCard',
     'aiStory',
+    'bounty',
     'build',
     'dailyReflection',
     'pass',

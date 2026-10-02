@@ -12,6 +12,7 @@ export function getNotificationContentTypeLabel({
   passType?: string;
 }) {
   if (!contentType) return 'content';
+  if (contentType === 'bounty') return 'bounty';
   if (contentType === 'aiStory') return 'AI Story';
   if (contentType === 'aiCard') return 'AI card';
   if (contentType === 'url') return 'link';

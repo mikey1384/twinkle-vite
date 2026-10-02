@@ -12,6 +12,18 @@ export const panelPreviewStyles = `
     flex-basis: auto;
     height: auto;
   }
+  &.home-feed-card__body:has(> .home-feed-card__panel-preview--size-bounty),
+  &.home-feed-card__body:has(> .home-feed-card__target-preview--type-bounty) {
+    flex-basis: auto;
+    height: auto;
+  }
+  .home-feed-card__panel-preview--size-bounty.home-feed-card__panel-preview,
+  .home-feed-card__target-preview--type-bounty.home-feed-card__target-preview {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .home-feed-card__target-preview--type-bounty { padding: 0; }
   .home-feed-card__panel-preview,
   .home-feed-card__target-preview {
     position: relative;

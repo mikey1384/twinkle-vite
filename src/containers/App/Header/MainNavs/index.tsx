@@ -79,6 +79,7 @@ const contentLabels: Record<string, string> = {
   'daily-reflections': 'Daily Reflection',
   'mission-passes': 'Mission Pass',
   'achievement-unlocks': 'Achievement',
+  bounties: 'Bounty',
   'daily-rewards': 'Daily Goal',
   'shared-prompts': 'Shared Prompt',
   management: 'Management'
@@ -205,7 +206,7 @@ function iconForContentNav(nav: string) {
               ? 'bolt'
               : nav === 'missions'
                 ? 'clipboard-check'
-                : nav === 'achievement-unlocks'
+                : nav === 'achievement-unlocks' || nav === 'bounties'
                   ? 'trophy'
                   : nav === 'mission-passes'
                     ? 'check-circle'
@@ -996,6 +997,7 @@ export default function MainNavs({
       },
       pathname
     );
+    const bountyPageMatch = matchPath({ path: '/bounties/:id' }, pathname);
     const dailyRewardPageMatch = matchPath(
       {
         path: '/daily-rewards/:id'
@@ -1022,6 +1024,7 @@ export default function MainNavs({
       !!dailyReflectionPageMatch ||
       !!missionPassPageMatch ||
       !!achievementUnlockPageMatch ||
+      !!bountyPageMatch ||
       !!dailyRewardPageMatch ||
       !!sharedPromptPageMatch
     );

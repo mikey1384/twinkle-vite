@@ -60,6 +60,7 @@ function Heading({
         ? `/achievement-unlocks/${id}`
         : `/mission-passes/${id}`;
     }
+    if (contentType === 'bounty') return `/bounties/${id}`;
     if (contentType === 'xpChange') {
       return `/daily-rewards/${id}`;
     }

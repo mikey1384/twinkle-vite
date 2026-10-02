@@ -1,3 +1,5 @@
+import ContentLink from '~/components/ContentLink';
+import BountyContent from '~/components/BountyContent';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -605,6 +607,25 @@ export default function ContentPanel({
                         marginTop: alignTopWithTarget ?? targetTuckMargin
                       }}
                     />
+                  )}
+                {contentType === 'comment' &&
+                  appliedRootType === 'bounty' &&
+                  rootObj?.id &&
+                  !rootObj.notFound && (
+                    <div
+                      style={{ padding: '1.5rem', borderTop: '1px solid #ddd' }}
+                    >
+                      <BountyContent
+                        bounty={rootObj}
+                        theme={theme || profileTheme}
+                      />
+                      <ContentLink
+                        content={rootObj}
+                        contentType="bounty"
+                        label="Open bounty"
+                        theme={theme || profileTheme}
+                      />
+                    </div>
                   )}
                 {contentType === 'comment' &&
                   appliedRootType === 'xpChange' &&

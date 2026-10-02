@@ -1,3 +1,5 @@
+import BountyContent from '~/components/BountyContent';
+import RewardChips from '~/components/RewardChips';
 import React from 'react';
 import AICardSummonContent from '~/components/AICardSummonContent';
 import AchievementItem from '~/components/AchievementItem';
@@ -177,6 +179,16 @@ export default function TargetPreview({
   }
 
   if (!resolvedRootObj?.id || resolvedRootObj?.notFound) return null;
+
+  if (contentType === 'comment' && normalizedRootType === 'bounty') {
+    return renderRootPanel(
+      <BountyContent
+        bounty={resolvedRootObj}
+        compact
+        theme={theme}
+      />
+    );
+  }
 
   if (contentType === 'comment' && normalizedRootType === 'aiCard') {
     return renderRootPanel(
@@ -427,20 +439,11 @@ export default function TargetPreview({
             <p>{passRootObj.rootMission.title}</p>
           ) : null}
           <div className="home-feed-card__target-reward-row home-feed-card__reward-chips">
-            {passRootObj.xpReward ? (
-              <span className="home-feed-card__reward-chip xp">
-                <span className="home-feed-card__reward-chip-xp-number">
-                  {addCommasToNumber(Number(passRootObj.xpReward))}
-                </span>
-                <span className="home-feed-card__reward-chip-xp-label">XP</span>
-              </span>
-            ) : null}
-            {passRootObj.coinReward ? (
-              <span className="home-feed-card__reward-chip coins">
-                <Icon icon="coins" />
-                {addCommasToNumber(Number(passRootObj.coinReward))}
-              </span>
-            ) : null}
+            <RewardChips
+              xp={Number(passRootObj.xpReward)}
+              coins={Number(passRootObj.coinReward)}
+              className="home-feed-card__reward-chip"
+            />
           </div>
         </div>
       </div>

@@ -1632,6 +1632,10 @@ const cardClass = css`
     outline: 2px solid ${Color.logoBlue(0.45)};
     outline-offset: 2px;
   }
+  /* Earned bounty summaries use their natural height, including wrapped titles. */
+  &:has(.home-feed-card__panel-preview--size-bounty) {
+    min-height: 0;
+  }
   /* Showcase (profile Notable Activities): drop the fixed card/body/panel
      heights so the card hugs its content instead of reserving feed-sized
      space. Scoped to the modifier class — the home feed never matches it. */

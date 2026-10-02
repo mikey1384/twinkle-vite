@@ -1191,7 +1191,6 @@ export const mainPreviewStyles = `
     overflow: hidden;
   }
   .home-feed-card__masterpiece-chip,
-  .home-feed-card__reward-chip,
   .home-feed-card__build-status {
     display: inline-flex;
     align-items: center;
@@ -1273,10 +1272,6 @@ export const mainPreviewStyles = `
     gap: 0.45rem;
     min-width: 0;
   }
-  .home-feed-card__reward-chip {
-    background: ${Color.black(0.05)};
-    color: ${Color.darkGray()};
-  }
   .home-feed-card__reward-chip.multiplier {
     border: 1px solid var(--reward-multiplier-border, transparent);
     background: var(--reward-multiplier-bg, ${Color.black(0.05)});
@@ -1328,21 +1323,6 @@ export const mainPreviewStyles = `
     min-height: 2.18rem;
     padding-inline: 0.78rem;
     font-size: 1.18rem;
-  }
-  .home-feed-card__reward-chip.xp {
-    gap: 0.24rem;
-    border: 1px solid ${Color.logoGreen(0.18)};
-    background: ${Color.logoGreen(0.09)};
-  }
-  .home-feed-card__reward-chip-xp-number {
-    color: ${Color.logoGreen()};
-  }
-  .home-feed-card__reward-chip-xp-label {
-    color: ${Color.gold()};
-  }
-  .home-feed-card__reward-chip.coins {
-    background: ${Color.brownOrange(0.13)};
-    color: ${Color.brownOrange()};
   }
   .home-feed-card__bonus-question {
     color: ${Color.darkerGray()};

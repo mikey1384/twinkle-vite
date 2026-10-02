@@ -143,6 +143,8 @@ export default function Feeds({
     switch (section) {
       case 'all':
         return `${displayName} ${haveOrHas} not posted anything, yet`;
+      case 'bounties':
+        return `${displayName} ${haveOrHas} not earned a bounty yet`;
       case 'ai-stories':
         return `${displayName} ${haveOrHas} not cleared any AI Story, yet`;
       case 'subjects':
@@ -214,6 +216,7 @@ export default function Feeds({
           >
             {[
               { key: 'all', label: 'All' },
+              { key: 'bounty', label: 'Bounties' },
               { key: 'dailyReflection', label: 'Reflections' },
               { key: 'comment', label: 'Comments' },
               { key: 'subject', label: 'Subjects' },
@@ -370,6 +373,7 @@ export default function Feeds({
               style={{ alignSelf: 'flex-start' }}
               menuItems={[
                 { key: 'all', label: 'All' },
+                { key: 'bounty', label: 'Bounties' },
                 { key: 'dailyReflection', label: 'Reflections' },
                 { key: 'comment', label: 'Comments' },
                 { key: 'subject', label: 'Subjects' },
@@ -388,13 +392,15 @@ export default function Feeds({
 
   function handleClickPostsMenu({ item }: { item: string }) {
     const appliedNav = `${
-      item === 'url'
-        ? 'link'
-        : item === 'aiStory'
-          ? 'ai-storie'
-          : item === 'dailyReflection'
-            ? 'reflection'
-            : item
+      item === 'bounty'
+        ? 'bountie'
+        : item === 'url'
+          ? 'link'
+          : item === 'aiStory'
+            ? 'ai-storie'
+            : item === 'dailyReflection'
+              ? 'reflection'
+              : item
     }${item === 'all' ? '' : 's'}`;
     navigate(`/users/${username}/${appliedNav}`);
     if (section === appliedNav) {

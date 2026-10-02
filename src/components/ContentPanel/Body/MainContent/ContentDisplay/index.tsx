@@ -81,7 +81,7 @@ export default function ContentDisplay({
         style={{
           marginTop: contentType === 'subject' && filePath ? '0.5rem' : '1rem',
           padding: '1rem',
-          marginBottom: isEditing
+          marginBottom: isEditing || contentType === 'bounty'
             ? 0
             : contentType !== 'video' && !secretHidden
               ? '1rem'

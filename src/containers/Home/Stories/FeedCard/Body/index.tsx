@@ -1,3 +1,5 @@
+import BountyContent from '~/components/BountyContent';
+import RewardChips from '~/components/RewardChips';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AchievementItem from '~/components/AchievementItem';
 import { BuildMiniCard } from '~/components/Build/Cards';
@@ -221,6 +223,9 @@ export default function Body({
       );
     }
 
+    if (contentType === 'bounty') {
+      return <BountyContent bounty={content} compact theme={theme} />;
+    }
     if (contentType === 'dailyReflection') {
       return renderDailyReflectionPreview();
     }
@@ -912,20 +917,11 @@ export default function Body({
             </p>
           ) : null}
           <div className="home-feed-card__mission-reward-row home-feed-card__reward-chips">
-            {passRootObj.xpReward ? (
-              <span className="home-feed-card__reward-chip xp">
-                <span className="home-feed-card__reward-chip-xp-number">
-                  {addCommasToNumber(Number(passRootObj.xpReward))}
-                </span>
-                <span className="home-feed-card__reward-chip-xp-label">XP</span>
-              </span>
-            ) : null}
-            {passRootObj.coinReward ? (
-              <span className="home-feed-card__reward-chip coins">
-                <Icon icon="coins" />
-                {addCommasToNumber(Number(passRootObj.coinReward))}
-              </span>
-            ) : null}
+            <RewardChips
+              xp={Number(passRootObj.xpReward)}
+              coins={Number(passRootObj.coinReward)}
+              className="home-feed-card__reward-chip"
+            />
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { useProfileState } from '~/helpers/hooks';
 
 const filterTable = {
   all: 'all',
+  bounties: 'bounty',
   ['ai-stories']: 'aiStory',
   comments: 'comment',
   likes: 'like',

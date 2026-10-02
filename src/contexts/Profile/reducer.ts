@@ -61,6 +61,9 @@ export default function ProfileReducer(
       linksByUserLoadMoreButton: false
     },
     posts: {
+      bounties: [],
+      bountiesLoaded: false,
+      bountiesLoadMoreButton: false,
       ['ai-stories']: [],
       all: [],
       allLoaded: false,

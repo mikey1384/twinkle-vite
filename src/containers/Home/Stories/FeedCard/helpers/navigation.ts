@@ -18,6 +18,7 @@ export function getHomeFeedContentPath({
       ? `/achievement-unlocks/${contentId}`
       : `/mission-passes/${contentId}`;
   }
+  if (contentType === 'bounty') return `/bounties/${contentId}`;
   if (contentType === 'xpChange') return `/daily-rewards/${contentId}`;
   if (contentType === 'sharedTopic') return `/shared-prompts/${contentId}`;
   if (contentType === 'dailyReflection') {

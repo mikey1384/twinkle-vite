@@ -1404,6 +1404,7 @@ export default function App() {
                   path="/achievement-unlocks/:contentId"
                   element={<ContentPage />}
                 />
+                <Route path="/bounties/:contentId" element={<ContentPage />} />
                 <Route
                   path="/daily-rewards/:contentId"
                   element={<ContentPage />}

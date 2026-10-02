@@ -3,6 +3,7 @@ const NUMERIC_CONTENT_ROUTE_ROOTS = new Set([
   'ai-stories',
   'comments',
   'daily-reflections',
+  'bounties',
   'daily-rewards',
   'links',
   'mission-passes',

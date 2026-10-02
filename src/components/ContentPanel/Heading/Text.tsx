@@ -254,6 +254,13 @@ export default function HeadingText({
           />{' '}
         </>
       );
+    case 'bounty':
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} /> earned a
+          bounty
+        </>
+      );
     case 'build':
       if (
         feedActivityType === 'buildFork' ||
@@ -396,6 +403,12 @@ export default function HeadingText({
               Level {contentObj.difficulty} Story
             </b>
             : {renderCompactContentLink(contentObj, contentType, 'AI Story')}
+          </>
+        );
+      case 'bounty':
+        return (
+          <>
+            {renderCompactUser()} {renderCompactAction('earned a bounty')}
           </>
         );
       case 'build':

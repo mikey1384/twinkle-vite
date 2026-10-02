@@ -2846,3 +2846,30 @@ test('AI card comments reserve a visible target preview on desktop and mobile', 
   assert.notEqual(sizing.target.desktopHeight, '0');
   assert.notEqual(sizing.target.mobileHeight, '0');
 });
+
+test('bounty stories and their comment targets have a recognized compact layout', () => {
+  const bounty = {
+    id: 19,
+    contentType: 'bounty',
+    title: 'Daily angles',
+    buildTitle: 'Math Lab',
+    xpEarned: 50000,
+    coinEarned: 1000
+  };
+  const main = getFeedCardSizing({ content: bounty, userId: 1 });
+  assert.equal(main.main.kind, 'bounty');
+  assert.equal(main.main.size, 'bounty');
+  const reply = getFeedCardSizing({
+    content: {
+      id: 20,
+      contentType: 'comment',
+      content: 'Well done!',
+      rootType: 'bounty',
+      rootId: 19
+    },
+    rootObj: bounty,
+    userId: 1
+  });
+  assert.equal(reply.card.hasTarget, true);
+  assert.equal(reply.target.size, 'standard');
+});

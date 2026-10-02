@@ -34,6 +34,9 @@ export default function ContentPage() {
       .split('/')[1]
       .slice(0, -1)
       .toLowerCase();
+    if (rawContentType === 'bountie') {
+      return { contentType: 'bounty', rootType: undefined };
+    }
     if (rawContentType === 'ai-storie') {
       return { contentType: 'aiStory', rootType: undefined };
     }
