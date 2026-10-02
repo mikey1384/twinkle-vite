@@ -21,6 +21,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { returnCardBurnXP } from '~/constants/defaultValues';
 import { isTotalMysteryQuality } from '~/components/AICard/totalMysteryGlow';
+import { getAICardDisplayWord } from '~/helpers/aiCardDisplay';
 import {
   getConfirmedAICardImageTerminalState,
   getConfirmedAICardImageState,
@@ -246,7 +247,7 @@ export default function AICardModal({
     card?.id
       ? {
           id: card.id,
-          word: card.word ? String(card.word).slice(0, 500) : null,
+          word: getAICardDisplayWord(card).slice(0, 500) || null,
           level: card.level ?? null,
           quality: card.quality ?? null,
           owner: card.owner?.username || null,

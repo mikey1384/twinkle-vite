@@ -242,10 +242,14 @@ export default function FilterPanel({
   }
 
   function handleSelectWord(word: string) {
-    onSetFilters((prevFilters: any) => ({
-      ...prevFilters,
-      word
-    }));
+    onSetFilters((prevFilters: any) => {
+      const { isTotalMystery, ...rest } = prevFilters;
+      return {
+        ...rest,
+        ...(word ? {} : { isTotalMystery }),
+        word
+      };
+    });
   }
 
   function handleSelectEngine(

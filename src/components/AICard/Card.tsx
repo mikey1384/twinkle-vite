@@ -100,7 +100,7 @@ export default function Card({
       !!finalCard?.imageGenerationInProgress,
     [finalCard?.engine, finalCard?.imageGenerationInProgress]
   );
-  const { cardCss, cardColor } = useAICard(finalCard);
+  const { cardCss, cardColor, word } = useAICard(finalCard);
 
   return (
     <div className={cardCss}>
@@ -259,11 +259,11 @@ export default function Card({
           >
             <div>
               #{finalCard.id}
-              {finalCard.word ? (
+              {word ? (
                 <div style={{ display: 'inline' }}>
                   {' '}
                   <b style={{ color: card.level === 6 ? '#fff' : cardColor }}>
-                    {finalCard.word}
+                    {word}
                   </b>
                 </div>
               ) : null}

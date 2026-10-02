@@ -564,7 +564,9 @@ export default function CardSearchPanel({
     }
     if (obj.isTotalMystery) {
       searchParams.delete('search[quality]');
+      searchParams.delete('search[word]');
       delete obj.quality;
+      delete obj.word;
     }
     if (obj.engine && !obj.isMystery) {
       searchParams.set('search[engine]', obj.engine);

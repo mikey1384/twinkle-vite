@@ -10,6 +10,10 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import SanitizedHTML from 'react-sanitized-html';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CardThumb from '~/components/CardThumb';
+import {
+  getAICardDisplayPrompt,
+  getAICardDisplayWord
+} from '~/helpers/aiCardDisplay';
 
 export default function CardItem({
   isNew,
@@ -36,10 +40,19 @@ export default function CardItem({
     [card?.level]
   );
   const promptText = useMemo(() => {
-    if (card.word) {
-      const prompt = card.prompt || '';
-      const word = card.word || '';
+    const displayCard = {
+      word: card.word,
+      prompt: card.prompt,
+      quality: card.quality,
+      isTotalMystery: card.isTotalMystery,
+      isBurned: card.isBurned,
+      imagePath: card.imagePath
+    };
+    const prompt = getAICardDisplayPrompt(displayCard);
+    const word = getAICardDisplayWord(displayCard);
+    if (word && word !== '???') {
       const wordIndex = prompt.toLowerCase().indexOf(word.toLowerCase());
+      if (wordIndex === -1) return prompt;
       const isCapitalized =
         prompt[wordIndex] !== (prompt[wordIndex] || '').toLowerCase();
       const wordToDisplay = isCapitalized
@@ -53,8 +66,16 @@ export default function CardItem({
         prompt.slice(wordIndex + word.length);
       return promptToDisplay;
     }
-    return card.prompt;
-  }, [card.prompt, card.word, cardDetailObj?.color]);
+    return prompt;
+  }, [
+    card.prompt,
+    card.word,
+    card.quality,
+    card.isTotalMystery,
+    card.isBurned,
+    card.imagePath,
+    cardDetailObj?.color
+  ]);
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/CardItem">
       <div
@@ -117,10 +138,7 @@ export default function CardItem({
                 {offerObj.user.id === userId ? '' : ' received'}
                 <p>
                   {offerObj.user.id === userId ? 'offered ' : ''}
-                  <Icon
-                    style={{ color: Color.brownOrange() }}
-                    icon="coins"
-                  />
+                  <Icon style={{ color: Color.brownOrange() }} icon="coins" />
                   <b
                     style={{ marginLeft: '0.5rem', color: Color.darkerGray() }}
                   >
@@ -161,10 +179,7 @@ export default function CardItem({
                     }
                   `}
                 >
-                  <Icon
-                    style={{ color: Color.brownOrange() }}
-                    icon="coins"
-                  />
+                  <Icon style={{ color: Color.brownOrange() }} icon="coins" />
                   <b
                     style={{ marginLeft: '0.5rem', color: Color.darkerGray() }}
                   >

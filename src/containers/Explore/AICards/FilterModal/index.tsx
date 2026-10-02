@@ -204,7 +204,11 @@ export default function FilterModal({
     }
     if (filters.isMystery && !selectedStyle && selectedEngine === 'any') {
       obj.isMystery = true;
-      if (filters.isTotalMystery && selectedQuality === 'any') {
+      if (
+        filters.isTotalMystery &&
+        selectedQuality === 'any' &&
+        !selectedWord
+      ) {
         obj.isTotalMystery = true;
       }
     }

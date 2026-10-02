@@ -1,4 +1,4 @@
-// Complete mystery is the subset whose artwork and quality are both hidden.
+// Complete mystery is the subset whose artwork, word, and quality are hidden.
 // Hidden facets cannot narrow that search, including when opening a shared URL.
 export function normalizeAICardMysteryFilters(filters: Record<string, any>) {
   const result = { ...filters };
@@ -10,6 +10,7 @@ export function normalizeAICardMysteryFilters(filters: Record<string, any>) {
   if (isTotalMystery) {
     result.isTotalMystery = true;
     delete result.quality;
+    delete result.word;
   } else {
     delete result.isTotalMystery;
   }

@@ -29,7 +29,7 @@ export default function AICardSummonContent({
     () => ({ ...card, ...liveCard }),
     [card, liveCard]
   );
-  const { promptText, cardColor } = useAICard(displayedCard);
+  const { promptText, cardColor, word } = useAICard(displayedCard);
   const quality = mysteryQualityHidden(displayedCard)
     ? ''
     : String(displayedCard.quality || '');
@@ -100,7 +100,7 @@ export default function AICardSummonContent({
             `}
             style={{ color: mystery ? undefined : cardColor }}
           >
-            {displayedCard.word}
+            {word}
           </div>
           <div
             className={css`
@@ -176,9 +176,7 @@ export default function AICardSummonContent({
           >
             AI card · #{card.id}
           </div>
-          <div style={{ fontWeight: 700, fontSize: '2rem' }}>
-            {displayedCard.word}
-          </div>
+          <div style={{ fontWeight: 700, fontSize: '2rem' }}>{word}</div>
           <div style={{ marginTop: '1.2rem', lineHeight: 1.6 }}>
             <SanitizedHTML
               allowedAttributes={{ b: ['style'] }}

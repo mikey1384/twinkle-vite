@@ -5,6 +5,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 import { Card } from '~/types';
+import { getAICardDisplayWord } from '~/helpers/aiCardDisplay';
 import {
   isTotalMysteryQuality,
   totalMysteryBorderClass
@@ -30,6 +31,7 @@ export default function CardThumb({
   xpNumberColor: string;
 }) {
   const isTotalMystery = isTotalMysteryQuality(card.quality) && !card.isBurned;
+  const word = getAICardDisplayWord(card);
 
   return isLoading ? (
     <Loading />
@@ -105,7 +107,7 @@ export default function CardThumb({
           </div>
         )}
       </div>
-      {card?.word ? (
+      {word ? (
         <div
           className={css`
             width: var(--card-thumb-width, 8rem);
@@ -127,7 +129,7 @@ export default function CardThumb({
               fontSize: 'var(--card-thumb-font-size, 1.3rem)'
             }}
           >
-            {card.word}
+            {word}
           </b>
         </div>
       ) : null}

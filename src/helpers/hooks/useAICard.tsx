@@ -13,7 +13,11 @@ import {
   totalMysteryCycleKeyframes,
   TOTAL_MYSTERY_CYCLE_SECONDS
 } from '~/components/AICard/totalMysteryGlow';
-import { getAICardDisplayEngine } from '~/helpers/aiCardDisplay';
+import {
+  getAICardDisplayEngine,
+  getAICardDisplayPrompt,
+  getAICardDisplayWord
+} from '~/helpers/aiCardDisplay';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
@@ -36,6 +40,7 @@ export default function useAICard(card: any) {
     memoizedQualityProps,
     cardColor,
     promptText,
+    word,
     engine
   } = useMemo(() => {
     const mq = cardProps[card?.quality] || [];
@@ -51,9 +56,20 @@ export default function useAICard(card: any) {
         return `<b style="color:${Color[colorStr]?.()}">${matched}</b>`;
       });
     }
-    const finalPromptText = card?.word
-      ? getPromptText(card?.prompt, card?.word, cardObj.color)
-      : card?.prompt || '';
+    const displayCard = {
+      word: card?.word,
+      prompt: card?.prompt,
+      quality: card?.quality,
+      isTotalMystery: card?.isTotalMystery,
+      isBurned: card?.isBurned,
+      imagePath: card?.imagePath
+    };
+    const word = getAICardDisplayWord(displayCard);
+    const prompt = getAICardDisplayPrompt(displayCard);
+    const finalPromptText =
+      word && word !== '???'
+        ? getPromptText(prompt, word, cardObj.color)
+        : prompt;
     const finalEngine = getAICardDisplayEngine({
       engine: card?.engine,
       imagePath: card?.imagePath,
@@ -66,6 +82,7 @@ export default function useAICard(card: any) {
       memoizedQualityProps: mp,
       cardColor: derivedColor,
       promptText: finalPromptText,
+      word,
       engine: finalEngine
     };
   }, [
@@ -75,6 +92,7 @@ export default function useAICard(card: any) {
     card?.word,
     card?.isBurned,
     card?.isMysteryCard,
+    card?.isTotalMystery,
     card?.imagePath,
     card?.engine
   ]);
@@ -101,6 +119,7 @@ export default function useAICard(card: any) {
 
   return {
     promptText,
+    word,
     cardColor,
     engine,
     cardCss: css`

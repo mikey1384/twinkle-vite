@@ -1,3 +1,5 @@
+import { TOTAL_MYSTERY_HIDDEN_WORD } from '../../../helpers/aiCardDisplay';
+
 // Shared logic for the Explore AI Cards filtered search: which filter fields
 // define a search, whether two filter sets describe the same search, and
 // whether a search response actually honors the filters that requested it.
@@ -51,9 +53,16 @@ export function findAICardFilterMismatches(
     if (filters.isMystery && card.imagePath) {
       reasons.push('isMystery search returned a card with imagePath');
     }
-    if (filters.isTotalMystery && (card.imagePath || card.quality !== '???')) {
+    if (
+      filters.isTotalMystery &&
+      (card.imagePath ||
+        card.quality !== '???' ||
+        (card.word &&
+          card.word !== '???' &&
+          card.word !== TOTAL_MYSTERY_HIDDEN_WORD))
+    ) {
       reasons.push(
-        'isTotalMystery search returned a revealed image or quality'
+        'isTotalMystery search returned a revealed image, word, or quality'
       );
     }
     if (filters.quality && card.quality !== filters.quality) {
@@ -96,11 +105,7 @@ export function findAICardFilterMismatches(
         }
       }
     }
-    if (
-      filters.style &&
-      !filters.isMystery &&
-      card.style !== filters.style
-    ) {
+    if (filters.style && !filters.isMystery && card.style !== filters.style) {
       reasons.push(`style is "${card.style}"`);
     }
     if (

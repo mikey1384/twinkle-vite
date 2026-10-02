@@ -10,6 +10,7 @@ import {
   returnCardBurnXP
 } from '~/constants/defaultValues';
 import useAICard from '~/helpers/hooks/useAICard';
+import { getAICardDisplayWord } from '~/helpers/aiCardDisplay';
 import MysteryCardArt from '~/components/AICard/MysteryCardArt';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import {
@@ -39,7 +40,10 @@ export function CompactThumb({
   const ownerName = card.owner?.username;
   const content =
     imageSrc && !card.isBurned ? (
-      <img src={imageSrc} alt={card.word || `AI card ${card.id}`} />
+      <img
+        src={imageSrc}
+        alt={getAICardDisplayWord(card) || `AI card ${card.id}`}
+      />
     ) : !card.isBurned ? (
       <MysteryCardArt level={card.level} />
     ) : (
@@ -120,9 +124,10 @@ export default function CompactPreview({
         cardLevel: Number(card.level || 1),
         cardQuality: card.quality || 'common'
       });
-  const { promptText, engine } = useAICard(card) as {
+  const { promptText, engine, word } = useAICard(card) as {
     promptText?: string;
     engine?: string;
+    word?: string;
   };
   const detailPreview = getCardDetailPreview(card, promptText, engine);
   const promptHtml = String(promptText || '').trim();
@@ -157,7 +162,7 @@ export default function CompactPreview({
           ) : null}
         </div>
         <strong className="compact-ai-card-preview__word">
-          {card.word || 'AI Card'}
+          {word || 'AI Card'}
         </strong>
         {card.quality ? (
           <div className="compact-ai-card-preview__quality-line">

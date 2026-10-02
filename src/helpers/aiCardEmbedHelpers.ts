@@ -101,6 +101,7 @@ export function getAICardCollectionPreviewTitle({
     totalMysteryFilterEnabled || isMystery === true || isMystery === 'true';
   const displayedEngine = mysteryFilterEnabled ? '' : engine;
   const displayedQuality = totalMysteryFilterEnabled ? '' : quality;
+  const displayedWord = totalMysteryFilterEnabled ? '' : word;
   if (
     !color &&
     !displayedEngine &&
@@ -109,7 +110,7 @@ export function getAICardCollectionPreviewTitle({
     !owner &&
     !displayedQuality &&
     !style &&
-    !word
+    !displayedWord
   ) {
     return '';
   }
@@ -144,8 +145,8 @@ export function getAICardCollectionPreviewTitle({
   if (style && !mysteryFilterEnabled) {
     titleParts.push(`with "${style}" art style`);
   }
-  if (word) {
-    titleParts.push(`containing the word "${word}"`);
+  if (displayedWord) {
+    titleParts.push(`containing the word "${displayedWord}"`);
   }
   if (isBuyNow) {
     titleParts.push('you can buy now');
@@ -397,10 +398,14 @@ function parseInternalEmbedSrc(src: string) {
     if (!parts.length) return null;
 
     return {
-      normalizedSrc: pathname.startsWith('/') ? normalizedSrc : `/${normalizedSrc}`,
+      normalizedSrc: pathname.startsWith('/')
+        ? normalizedSrc
+        : `/${normalizedSrc}`,
       parts,
       searchParams: new URLSearchParams(
-        normalizedSrc.includes('?') ? normalizedSrc.split('?')[1].split('#')[0] : ''
+        normalizedSrc.includes('?')
+          ? normalizedSrc.split('?')[1].split('#')[0]
+          : ''
       )
     };
   }

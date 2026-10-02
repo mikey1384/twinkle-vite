@@ -3,6 +3,7 @@ import CardThumb from '~/components/CardThumb';
 import { useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import { getAICardDisplayWord } from '~/helpers/aiCardDisplay';
 
 export default function CardStrip({
   cardIds,
@@ -35,12 +36,13 @@ function PreviewCard({
   onSelect: (cardId: number) => void;
 }) {
   const card = useChatContext((v) => v.state.cardObj[cardId]);
+  const word = getAICardDisplayWord(card);
 
   return (
     <button
       className="compact-ai-card-multi__card"
       type="button"
-      aria-label={`View AI card #${cardId}${card?.word ? `: ${card.word}` : ''}`}
+      aria-label={`View AI card #${cardId}${word ? `: ${word}` : ''}`}
       onClick={handleClick}
     >
       <CardThumb detailed card={card || { id: cardId }} />

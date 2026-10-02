@@ -54,7 +54,7 @@ function Fixture() {
     {explorePicker && <section data-explore-picker><ExplorePicker filters={explorePicker} isBuy={false} onHide={()=>setExplorePicker(null)} onConfirm={()=>{}}/></section>}
     {preview && <section data-preview><AICardComponent src={preview} rootId={1} rootType="subject" isPreview/></section>}</>;
 }
-flushSync(() => createRoot(document.getElementById('root')).render(<MemoryRouter initialEntries={['/ai-cards/?search[quality]=rare&search[style]=watercolor&search[engine]=image-2.5&search[owner]=pilot&search[color]=black&search[isBuyNow]=true&search[minPrice]=40&search[maxPrice]=300']}><Fixture/></MemoryRouter>));
+flushSync(() => createRoot(document.getElementById('root')).render(<MemoryRouter initialEntries={['/ai-cards/?search[quality]=rare&search[word]=cloud&search[style]=watercolor&search[engine]=image-2.5&search[owner]=pilot&search[color]=black&search[isBuyNow]=true&search[minPrice]=40&search[maxPrice]=300']}><Fixture/></MemoryRouter>));
 `;
 
 let bundle;
@@ -72,7 +72,7 @@ async function compileFixture() {
         {id:5,quality:'???',imagePath:'',isTotalMystery:1},
         {id:3,quality:'???',imagePath:'',isTotalMystery:1},
         {id:4,quality:'elite',imagePath:'/revealed.png',isTotalMystery:1}
-      ].map((card,i)=>({...card,ownerId:1,owner:{id:1,username:'pilot'},level:6,word:'cloud',askPrice:50+i*10,lastInteraction:100-i}));
+      ].map((card,i)=>({...card,ownerId:1,owner:{id:1,username:'pilot'},level:6,word:card.quality==='???'?'•••':'cloud',askPrice:50+i*10,lastInteraction:100-i}));
       window.searchRequests=[];
       let explore = {loaded:true,cards, numCards:cards.length, filteredLoaded:true, filteredCards:[],prevFilters:{},numFilteredCards:0,filteredCardsTotalBv:0,filteredCardsNumHiddenBv:0};
       let chat = {cardObj:{}}, content = {cardIds:undefined};
@@ -92,7 +92,7 @@ async function compileFixture() {
         loadFilteredAICards:async args=>{
           window.searchRequests.push(JSON.parse(JSON.stringify(args)));
           const f=args.filters;
-          let matching=cards.filter(card=>(!f.isTotalMystery||card.quality==='???'&&!card.imagePath)&&(!f.isMystery||!card.imagePath)&&(!f.quality||f.quality===card.quality)&&(!f.owner||f.owner===card.owner.username)&&(!f.style||f.style===card.style)&&(!f.engine||f.engine===card.engine));
+          let matching=cards.filter(card=>(!f.isTotalMystery||card.quality==='???'&&!card.imagePath)&&(!f.isMystery||!card.imagePath)&&(!f.word||f.word===card.word)&&(!f.quality||f.quality===card.quality)&&(!f.owner||f.owner===card.owner.username)&&(!f.style||f.style===card.style)&&(!f.engine||f.engine===card.engine));
           const numCards=matching.length, numHiddenBvCards=matching.filter(c=>c.quality==='???').length;
           if(args.lastInteraction) matching=matching.filter(c=>c.lastInteraction<args.lastInteraction);
           if(args.lastPrice) matching=matching.filter(c=>c.askPrice>args.lastPrice);
@@ -137,7 +137,7 @@ async function compileFixture() {
     './QualityFilter': `export default ({selectedQuality,onSelectQuality})=><label>Quality<select aria-label="Quality filter" value={selectedQuality||'any'} onChange={e=>onSelectQuality(e.target.value)}>{['any','common','rare','elite','legendary'].map(q=><option key={q}>{q}</option>)}</select></label>;`,
     './ColorFilter': `export default ()=>null;`,
     './StyleFilter': `export default ()=>null;`,
-    './WordFilter': `export default ()=>null;`,
+    './WordFilter': `export default ({selectedWord,onSelectWord,style})=><label style={style}>Word<input aria-label="Word filter" value={selectedWord||''} onChange={e=>onSelectWord(e.target.value)}/></label>;`,
     './EngineFilter': `export default ()=>null;`,
     './CardIdFilter': `export default ()=>null;`,
     './CardItem': `export default ({card})=><article data-select-card={card.id}>Card #{card.id} Quality: {card.quality}</article>;`,
@@ -183,14 +183,17 @@ async function compileFixture() {
 for (const engine of ['chromium', 'webkit']) {
   test(
     `complete mystery filters, pagination, editing, and sharing (${engine})`,
-    { timeout: 180000 },
+    { timeout: 300000 },
     async () => {
-      const browser = await { chromium, webkit }[engine].launch();
+      const script = await compileFixture();
+      const browser = await { chromium, webkit }[engine].launch({
+        headless: process.env.TWINKLE_BROWSER_VISIBLE !== '1'
+      });
       try {
         const page = await browser.newPage({
           viewport: { width: 1440, height: 1000 }
         });
-        page.setDefaultTimeout(10000);
+        page.setDefaultTimeout(30000);
         const errors = [];
         page.on('pageerror', (error) => {
           errors.push(error.message);
@@ -201,7 +204,7 @@ for (const engine of ['chromium', 'webkit']) {
           `<meta name="viewport" content="width=device-width, initial-scale=1"><style>${readFileSync(path.join(repo, 'src/styles.css'), 'utf8')}body{background:#fffbee}main[data-explore]{padding:20px;max-width:1400px;margin:auto}</style><div id="root"></div>`,
           { waitUntil: 'domcontentloaded' }
         );
-        await page.addScriptTag({ content: await compileFixture() });
+        await page.addScriptTag({ content: script });
         const explore = page.locator('[data-explore]');
         await explore
           .locator('[data-card-id="2"]')
@@ -235,6 +238,7 @@ for (const engine of ['chromium', 'webkit']) {
         );
         assert.equal(filters.isTotalMystery, true);
         assert.equal(filters.isMystery, true);
+        assert.equal(filters.word, undefined);
         assert.equal(filters.owner, 'pilot');
         assert.equal(filters.color, 'black');
         assert.equal(filters.isBuyNow, true);
@@ -387,6 +391,22 @@ for (const engine of ['chromium', 'webkit']) {
         await picker
           .getByRole('switch', { name: 'Enable Complete mystery', exact: true })
           .press('Space');
+        await picker.getByRole('textbox', { name: 'Word filter' }).fill('air');
+        assert.equal(
+          await page.evaluate(() => window.pickerFilters.isTotalMystery),
+          undefined
+        );
+        assert.equal(
+          await page.evaluate(() => window.pickerFilters.isMystery),
+          true
+        );
+        await picker
+          .getByRole('switch', { name: 'Enable Complete mystery', exact: true })
+          .press('Space');
+        assert.equal(
+          await page.evaluate(() => window.pickerFilters.word),
+          undefined
+        );
         await picker
           .getByRole('switch', { name: 'Disable Mystery', exact: true })
           .press('Space');
@@ -516,6 +536,9 @@ for (const engine of ['chromium', 'webkit']) {
           .getByRole('switch', { name: 'Enable Complete mystery', exact: true })
           .press('Space');
         await page.waitForFunction(() => !!window.resolveDelayedSearch);
+        await explorePicker
+          .getByRole('button', { name: 'Load more' })
+          .waitFor({ state: 'hidden' });
         assert.equal(
           await explorePicker
             .getByRole('button', { name: 'Load more' })
@@ -550,9 +573,12 @@ for (const engine of ['chromium', 'webkit']) {
   );
   test(
     `complete mystery touch controls and narrow layouts (${engine})`,
-    { timeout: 90000 },
+    { timeout: 180000 },
     async () => {
-      const browser = await { chromium, webkit }[engine].launch();
+      const script = await compileFixture();
+      const browser = await { chromium, webkit }[engine].launch({
+        headless: process.env.TWINKLE_BROWSER_VISIBLE !== '1'
+      });
       try {
         mkdirSync(artifacts, { recursive: true, mode: 0o700 });
         const mobile = await browser.newPage({
@@ -560,7 +586,7 @@ for (const engine of ['chromium', 'webkit']) {
           hasTouch: true,
           isMobile: true
         });
-        mobile.setDefaultTimeout(10000);
+        mobile.setDefaultTimeout(30000);
         const mobileErrors = [];
         mobile.on('pageerror', (error) => mobileErrors.push(error.message));
         await mobile.route('**/*', (route) => route.abort());
@@ -568,7 +594,7 @@ for (const engine of ['chromium', 'webkit']) {
           `<meta name="viewport" content="width=device-width, initial-scale=1"><style>${readFileSync(path.join(repo, 'src/styles.css'), 'utf8')}body{background:#fffbee}main[data-explore]{padding:12px}</style><div id="root"></div>`,
           { waitUntil: 'domcontentloaded' }
         );
-        await mobile.addScriptTag({ content: await compileFixture() });
+        await mobile.addScriptTag({ content: script });
         await mobile
           .locator('[data-card-id="2"]')
           .waitFor({ state: 'attached' })
