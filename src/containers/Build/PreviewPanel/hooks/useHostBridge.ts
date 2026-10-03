@@ -2673,7 +2673,7 @@ export function useHostBridge({
             response = await requestRefs.callBuildRuntimeAiAudioRef.current({
               buildId: activeBuild.id,
               kind: type === 'ai:generate-speech' ? 'speech' : 'transcription',
-              payload: { text: payload.text, voice: payload.voice, language: payload.language,
+              payload: { text: payload.text, voice: payload.voice, style: payload.style, language: payload.language,
                 audioBase64: payload.audioBase64, requestId: String(payload.requestId || id) },
               appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
             });

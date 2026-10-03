@@ -2179,7 +2179,7 @@ export default function buildRequestHelpers({
     async callBuildRuntimeAiAudio({ buildId, kind, payload, appMcpInvocation }: {
       buildId: number;
       kind: 'speech' | 'transcription';
-      payload: { text?: string; voice?: string; language?: string; audioBase64?: string; requestId: string };
+      payload: { text?: string; voice?: string; style?: string; language?: string; audioBase64?: string; requestId: string };
       appMcpInvocation?: BuildAppMcpInvocationContext;
     }) {
       try {
