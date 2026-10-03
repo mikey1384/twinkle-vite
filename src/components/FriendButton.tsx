@@ -4,7 +4,7 @@ import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
-type FriendState = 'none' | 'requested' | 'incoming' | 'friends';
+export type FriendState = 'none' | 'requested' | 'incoming' | 'friends';
 
 const LABEL: Record<FriendState, string> = {
   none: 'Add friend',
@@ -25,12 +25,18 @@ const statusMemo = new Map<number, { at: number; promise: Promise<any> }>();
 export default function FriendButton({
   userId,
   variant,
-  buttonProps
+  buttonProps,
+  initialState,
+  onChange
 }: {
   userId: number;
   variant: 'panel' | 'popup';
   // the host's own button look (so it matches its neighbours)
   buttonProps?: Record<string, any>;
+  // a list that already knows the state (the Friends page) skips the lookup
+  initialState?: FriendState;
+  // told after an add/remove succeeds (the Friends page re-sorts its lists)
+  onChange?: (state: FriendState) => void;
 }) {
   const myId = useKeyContext((v) => v.myState.userId);
   const loadFriendStatus = useAppContext((v) => v.requestHelpers.loadFriendStatus);
@@ -44,6 +50,10 @@ export default function FriendButton({
 
   useEffect(() => {
     if (!myId || !userId || userId === myId) return;
+    if (initialState) {
+      setStatus({ eligible: true, state: initialState });
+      return;
+    }
     let active = true;
     setStatus(null);
     const memo = statusMemo.get(userId);
@@ -64,7 +74,7 @@ export default function FriendButton({
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myId, userId]);
+  }, [myId, userId, initialState]);
 
   if (!myId || userId === myId || !status?.eligible) return null;
   const state = status.state;
@@ -92,6 +102,7 @@ export default function FriendButton({
           : await removeFriend(userId);
       statusMemo.set(userId, { at: Date.now(), promise: Promise.resolve(next) });
       setStatus(next);
+      if (next?.state) onChange?.(next.state);
     } catch (err: any) {
       // keep the current state and say why (daily limit, not someone you know...)
       setNote(String(err?.message || 'Could not do that.'));

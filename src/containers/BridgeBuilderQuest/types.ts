@@ -98,6 +98,8 @@ export interface CrewView extends CrewProfile {
   plan: {
     status: ReviewStatus;
     date: string;
+    // a home meetup's start ("HH:MM"); '' for a classroom (its slot has the time)
+    time: string;
     area: string;
     activity: string;
     note: string;
@@ -160,7 +162,7 @@ export interface BoardCrew {
 export interface ReviewQueueItem {
   crewId: number;
   status: string;
-  waitingFor: '' | 'plan' | 'video';
+  waitingFor: '' | 'crew' | 'plan' | 'grownUp' | 'video';
   founderUsername: string;
   members: { userId: number; username: string; branch: string }[];
   blocking: string;
@@ -211,7 +213,8 @@ export interface CrewInvitation extends CrewProfile {
 
 export interface CrewNotice {
   crewId: number;
-  kind: 'removed' | 'disbanded';
+  // 'replaced': removed so someone else could come (their parent hadn't said yes)
+  kind: 'removed' | 'replaced' | 'disbanded';
   crewName: string;
 }
 

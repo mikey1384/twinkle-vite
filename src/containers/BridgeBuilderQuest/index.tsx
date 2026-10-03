@@ -349,7 +349,9 @@ export default function BridgeBuilderQuest({
                   `}
                 >
                   <span>
-                    {notice.kind === 'removed'
+                    {notice.kind === 'replaced'
+                      ? `Your parent hadn't said yes to crew "${notice.crewName}" yet, so its founder invited someone else this time. You can join or start another crew any time.`
+                      : notice.kind === 'removed'
                       ? `You were removed from crew "${notice.crewName}". You can join or start another crew any time.`
                       : `Your crew "${notice.crewName}" was disbanded by its founder. You can join or start another crew any time.`}
                   </span>
@@ -634,7 +636,12 @@ export default function BridgeBuilderQuest({
                         >
                           <b>Crew #{item.crewId}</b>
                           <span>
-                            {item.waitingFor === 'video' ? 'Video' : 'Plan'} ·{' '}
+                            {
+                              { crew: 'Crew', plan: 'Plan', grownUp: 'Parents & adult', video: 'Video' }[
+                                item.waitingFor as 'crew' | 'plan' | 'grownUp' | 'video'
+                              ] || 'Plan'
+                            }{' '}
+                            ·{' '}
                             {item.members
                               .map(
                                 (member) =>

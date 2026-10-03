@@ -916,6 +916,14 @@ export default function userRequestHelpers({
       }
     },
     // friends: a simple link between two members (profile button)
+    async loadFriendsOverview() {
+      try {
+        const { data } = await request.get(`${URL}/user/friends`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadFriendStatus(targetId: number) {
       try {
         const { data } = await request.get(`${URL}/user/friends/status`, {
@@ -1006,18 +1014,20 @@ export default function userRequestHelpers({
     async submitMeetupPlan({
       crewId,
       date,
+      time,
       area,
       activity
     }: {
       crewId: number;
       date: string;
+      time?: string;
       area: string;
       activity: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/crews/${crewId}/plan`,
-          { date, area, activity },
+          { date, time, area, activity },
           auth()
         );
         return data;

@@ -837,6 +837,7 @@ registerMethods('user', [
   'setMeetupEmailReview',
   'loadFriendsSwitch',
   'setFriendsSwitch',
+  'loadFriendsOverview',
   'loadFriendStatus',
   'addFriend',
   'removeFriend',

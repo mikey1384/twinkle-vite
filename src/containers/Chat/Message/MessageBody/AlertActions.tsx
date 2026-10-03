@@ -2,11 +2,13 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import Icon from '~/components/Icon';
+import FriendButton from '~/components/FriendButton';
 import { Color } from '~/constants/css';
 import { parseMessageSettings } from './messageSettings';
 
 // Buttons under a server alert (Zero's notices to the owner): the server
-// writes message.settings.alertActions = [{ label, path }] for in-site jumps.
+// writes message.settings.alertActions = [{ label, path }] for in-site jumps;
+// an action with friendUserId is the friend button itself ("Add back").
 export default function AlertActions({ settings }: { settings: unknown }) {
   const actions = parseMessageSettings(settings).alertActions;
   if (!Array.isArray(actions) || !actions.length) return null;
@@ -27,7 +29,16 @@ export default function AlertActions({ settings }: { settings: unknown }) {
         margin-top: 0.8rem;
       `}
     >
-      {valid.map((action: any) => (
+      {valid.map((action: any) =>
+        Number(action.friendUserId) > 0 ? (
+          <span key={`friend-${action.friendUserId}`} style={{ flex: '0 0 auto' }}>
+            <FriendButton
+              userId={Number(action.friendUserId)}
+              variant="panel"
+              buttonProps={{ size: 'sm', shape: 'pill', uppercase: false }}
+            />
+          </span>
+        ) : (
         <Link
           key={action.path + action.label}
           to={action.path}
@@ -51,7 +62,8 @@ export default function AlertActions({ settings }: { settings: unknown }) {
           {action.label}
           <Icon icon="arrow-right" />
         </Link>
-      ))}
+        )
+      )}
     </div>
   );
 }

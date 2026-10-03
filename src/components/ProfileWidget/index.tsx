@@ -293,6 +293,13 @@ export default function ProfileWidget() {
                 <Icon icon="money-bill-trend-up" className="navigation-icon" />
                 <span>Buy Cards</span>
               </div>
+              <div
+                className="navigation-item"
+                onClick={() => navigate('/friends')}
+              >
+                <Icon icon="user-group" className="navigation-icon" />
+                <span>My Friends</span>
+              </div>
             </div>
           ) : null}
           <WelcomeMessage userId={userId} openSigninModal={onOpenSigninModal} />

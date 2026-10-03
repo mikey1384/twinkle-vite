@@ -33,7 +33,8 @@ import { normalizeViewCount } from '~/helpers/viewCount';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
 // what the Ask button calls each kind of content (the server re-reads it as the
-// member; websiteAgent/askedContent.ts accepts exactly these kinds)
+// member; websiteAgent/askedContent.ts). AI cards keep their own controls and
+// get their Ask button in a separate block below.
 const askableContentLabels: Record<string, string> = {
   comment: 'this comment',
   subject: 'this post',
@@ -516,6 +517,14 @@ export default function BottomInterface({
                   }}
                 />
               )}
+          </div>
+        )}
+        {!secretHidden && contentType === 'aiCard' && !!userId && (
+          // an AI card's page keeps its own controls; only Ask joins them
+          <div className="right">
+            <AskAgentButton
+              context={{ kind: 'aiCard', id: contentId, label: 'this AI card' }}
+            />
           </div>
         )}
       </div>

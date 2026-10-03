@@ -105,7 +105,10 @@ export default function CrewPanel({
   const [branch, setBranch] = useState(me?.branch || '');
   const [adultKind, setAdultKind] = useState(crew.adult.kind || 'parent');
   const [adultName, setAdultName] = useState(crew.adult.name || '');
+  // the approved plan decides which grown-ups fit (a home: a parent only)
+  const approvedPlanIsHome = venueFromArea(crew.plan.area || '').mode === 'home';
   const [planDate, setPlanDate] = useState(crew.plan.date || '');
+  const [planTime, setPlanTime] = useState(crew.plan.time || '');
   const initialVenue = venueFromArea(crew.plan.area || '');
   const [planArea, setPlanArea] = useState(initialVenue.rest);
   const [venueMode, setVenueMode] = useState<VenueMode>(initialVenue.mode);
@@ -561,6 +564,26 @@ export default function CrewPanel({
                   onBranch={setVenueBranch}
                   onOther={setPlanArea}
                 />
+                {venueMode === 'home' && (
+                  // a classroom's time comes from the slot staff confirm
+                  <div>
+                    <label className={questLabelClass} htmlFor="meetup-plan-time">
+                      Start time
+                    </label>
+                    <input
+                      id="meetup-plan-time"
+                      type="time"
+                      className={questInputClass}
+                      style={{ maxWidth: '16rem' }}
+                      min="08:00"
+                      max="20:00"
+                      step={900}
+                      value={planTime}
+                      onChange={(event) => setPlanTime(event.target.value)}
+                    />
+                    <div className={questHelpClass}>Daytime, between 8:00 and 20:00.</div>
+                  </div>
+                )}
                 <div>
                   <label
                     className={questLabelClass}
@@ -591,6 +614,7 @@ export default function CrewPanel({
                       planAction.busy ||
                       !viewer.canSubmitPlan ||
                       !planDate ||
+                      (venueMode === 'home' && !planTime) ||
                       planActivity.trim().length < 20 ||
                       !areaForVenue(venueMode, venueBranch, planArea).trim()
                     }
@@ -599,6 +623,7 @@ export default function CrewPanel({
                         submitMeetupPlan({
                           crewId: crew.crewId,
                           date: planDate,
+                          time: venueMode === 'home' ? planTime : '',
                           area: areaForVenue(venueMode, venueBranch, planArea),
                           activity: planActivity
                         })
@@ -627,6 +652,7 @@ export default function CrewPanel({
               >
                 <span>
                   <b>Date:</b> {crew.plan.date}
+                  {crew.plan.time ? ` at ${crew.plan.time}` : ''}
                 </span>
                 <span>
                   <b>Area:</b> {crew.plan.area}
@@ -697,7 +723,7 @@ export default function CrewPanel({
                     ['parent', 'A parent'],
                     ['teacher', 'A Twinkle teacher']
                   ]
-                    .filter(([value]) => value === 'parent' || venueMode !== 'home')
+                    .filter(([value]) => value === 'parent' || !approvedPlanIsHome)
                     .map(([value, label]) => (
                     <Button
                       key={value}

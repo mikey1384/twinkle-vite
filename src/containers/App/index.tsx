@@ -137,6 +137,7 @@ const BridgeBuilderCrewPage = lazyWithRetry(
 const BridgeBuilderOrgAsks = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/OrgAsksPage')
 );
+const Friends = lazyWithRetry(() => import('~/containers/Friends'));
 const BridgeBuilderEmails = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/EmailsReviewPage')
 );
@@ -1498,6 +1499,7 @@ export default function App() {
                   path="/achievements/bridge-builder/emails"
                   element={<BridgeBuilderEmails />}
                 />
+                <Route path="/friends" element={<Friends />} />
                 <Route
                   path="/achievements/bridge-builder/staff"
                   element={<BridgeBuilderQuest view="staff" />}

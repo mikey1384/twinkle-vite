@@ -38,7 +38,7 @@ interface Brief {
   offersPlace: boolean;
   activity: string;
   where: { kind: 'academy' | 'home' | 'other' | 'undecided'; branch: string; room: string; area: string };
-  when: { date: string; slot: { date: string; start: string; end: string } | null };
+  when: { date: string; time?: string; slot: { date: string; start: string; end: string } | null };
   adult: { kind: string; name: string };
   planStatus: string;
   meetupDone: boolean;
@@ -458,12 +458,17 @@ export default function ParentBriefPage() {
                             return brief.where.area || t.whereNone;
                           })()}
                         </span>
-                        {slot && (
+                        {slot ? (
                           <span>
                             <Icon icon="clock" style={{ marginRight: '0.5rem', color: Color.logoBlue() }} />
                             {slot.start}–{slot.end}
                           </span>
-                        )}
+                        ) : brief.when.time ? (
+                          <span>
+                            <Icon icon="clock" style={{ marginRight: '0.5rem', color: Color.logoBlue() }} />
+                            {brief.when.time}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   </div>
