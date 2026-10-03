@@ -74,6 +74,7 @@ export interface UsePreviewHostBridgeArgs {
   isOwner: boolean;
   userId: number | null;
   username: string | null;
+  ageTier: 'kid' | 'teen' | 'adult';
   profilePicUrl: string | null;
   resolvedCapabilitySnapshot: BuildCapabilitySnapshot | null;
   resolvedRuntimeExplorationPlan: BuildRuntimeExplorationPlan | null;

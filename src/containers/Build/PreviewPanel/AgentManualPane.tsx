@@ -298,7 +298,7 @@ const sdkSections: GuideSection[] = [
   {
     title: 'Preview and viewer',
     items: [
-      'Twinkle.viewer.get() returns { id, username, profilePicUrl, isLoggedIn, isOwner, isGuest } for the current viewer.',
+      'Twinkle.viewer.get() returns { id, username, profilePicUrl, isLoggedIn, isOwner, isGuest, ageTier } for the current viewer. ageTier is kid, teen or adult, from the viewer\'s Teenager and Adult achievements; guests and unverified viewers are kid.',
       'Twinkle.viewer.refresh() clears the cache and re-fetches viewer identity.',
       'Every Twinkle-owned profilePicUrl returned by the SDK is an absolute HTTPS URL ready for img src, or null. App-owned JSON fields are not rewritten.',
       'Twinkle.preview.getLayout() returns { mode, viewport, stage, safeInsets, playfield }.',

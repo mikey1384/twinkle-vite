@@ -71,6 +71,10 @@ import {
   type PreviewLifecycleState
 } from './helpers/previewHelpers';
 import { createIframeFocusController } from '~/helpers/iframeFocus';
+import {
+  type BuildViewerAgeTier,
+  resolveViewerAgeTier
+} from './helpers/previewBridgeAuth';
 import AgentManualPane from './AgentManualPane';
 import PreviewStage, { BuildLiveHostSafetyControls } from './PreviewStage';
 import ProjectFileInputs from './ProjectFileInputs';
@@ -297,6 +301,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const userIdRef = useRef<number | null>(null);
     const usernameRef = useRef<string | null>(null);
     const profilePicUrlRef = useRef<string | null>(null);
+    const ageTierRef = useRef<BuildViewerAgeTier>('kid');
     const guestSessionIdRef = useRef<string | null>(null);
 
     const persistedProjectFiles = useMemo(
@@ -617,8 +622,16 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const keyUserId = useKeyContext((v) => v.myState.userId);
     const keyUsername = useKeyContext((v) => v.myState.username);
     const keyProfilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+    const keyUnlockedAchievementIds = useKeyContext(
+      (v) => v.myState.unlockedAchievementIds
+    );
     const resolvedUserId =
       typeof viewerOverride?.id === 'number' ? viewerOverride.id : keyUserId;
+    // Achievements are only known for the signed-in user; a previewed override viewer stays 'kid'.
+    const resolvedAgeTier: BuildViewerAgeTier =
+      keyUserId && resolvedUserId === keyUserId
+        ? resolveViewerAgeTier(keyUnlockedAchievementIds)
+        : 'kid';
     const previewViewerKey = resolvedUserId
       ? `user:${resolvedUserId}`
       : 'guest';
@@ -672,6 +685,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       userIdRef,
       usernameRef,
       profilePicUrlRef,
+      ageTierRef,
       guestSessionIdRef,
       buildApiTokenRef,
       getBuildApiTokenRef,
@@ -682,6 +696,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     userIdRef.current = resolvedUserId || null;
     usernameRef.current = resolvedUsername || null;
     profilePicUrlRef.current = resolvedProfilePicUrl || null;
+    ageTierRef.current = resolvedAgeTier;
     const {
       confirmModal: projectFileConfirmModal,
       requestConfirm: requestProjectFileConfirm
@@ -1396,6 +1411,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       isOwner,
       userId: resolvedUserId || null,
       username: resolvedUsername || null,
+      ageTier: resolvedAgeTier,
       profilePicUrl: resolvedProfilePicUrl || null,
       resolvedCapabilitySnapshot,
       resolvedRuntimeExplorationPlan,

@@ -3,7 +3,11 @@ import type {
   RefObject,
   SetStateAction
 } from 'react';
-import { cloudFrontURL } from '~/constants/defaultValues';
+import {
+  ADULT_ACHIEVEMENT_ID,
+  TEENAGER_ACHIEVEMENT_ID,
+  cloudFrontURL
+} from '~/constants/defaultValues';
 import { toBuildProfilePicUrl } from '~/helpers/buildProfilePicUrl';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import type { Build } from '../types';
@@ -11,6 +15,8 @@ import type { Build } from '../types';
 const GUEST_SESSION_STORAGE_KEY = 'twinkle_build_guest_session_id';
 const GUEST_RESTRICTION_ERROR_MESSAGE =
   'This feature requires signing in because it uses user-only data.';
+
+export type BuildViewerAgeTier = 'kid' | 'teen' | 'adult';
 
 export type AsyncRequestRef = RefObject<(...args: any[]) => Promise<any>>;
 
@@ -28,6 +34,7 @@ export interface PreviewHostBridgeAuth {
   userIdRef: RefObject<number | null>;
   usernameRef: RefObject<string | null>;
   profilePicUrlRef: RefObject<string | null>;
+  ageTierRef: RefObject<BuildViewerAgeTier>;
   guestSessionIdRef: RefObject<string | null>;
   buildApiTokenRef: RefObject<BuildApiTokenState | null>;
   getBuildApiTokenRef: AsyncRequestRef;
@@ -136,7 +143,8 @@ export function getViewerInfo(previewAuth: PreviewHostBridgeAuth) {
       }),
       isLoggedIn: true,
       isOwner: Boolean(previewAuth.isOwnerRef.current),
-      isGuest: false
+      isGuest: false,
+      ageTier: previewAuth.ageTierRef.current || 'kid'
     };
   }
 
@@ -147,7 +155,8 @@ export function getViewerInfo(previewAuth: PreviewHostBridgeAuth) {
       profilePicUrl: null,
       isLoggedIn: false,
       isOwner: false,
-      isGuest: true
+      isGuest: true,
+      ageTier: 'kid' as BuildViewerAgeTier
     };
   }
 
@@ -157,6 +166,16 @@ export function getViewerInfo(previewAuth: PreviewHostBridgeAuth) {
     profilePicUrl: null,
     isLoggedIn: false,
     isOwner: Boolean(previewAuth.isOwnerRef.current),
-    isGuest: false
+    isGuest: false,
+    ageTier: 'kid' as BuildViewerAgeTier
   };
+}
+
+export function resolveViewerAgeTier(
+  unlockedAchievementIds: number[] | undefined
+): BuildViewerAgeTier {
+  const ids = unlockedAchievementIds || [];
+  if (ids.includes(ADULT_ACHIEVEMENT_ID)) return 'adult';
+  if (ids.includes(TEENAGER_ACHIEVEMENT_ID)) return 'teen';
+  return 'kid';
 }
