@@ -6,7 +6,6 @@ import {
   type SetStateAction
 } from 'react';
 import {
-  BUILD_WORKSHOP_PREVIEW_USER_IDS,
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
@@ -66,7 +65,7 @@ export default function useLumineDialogue({
   const shouldLoad = Boolean(
     enabled &&
       persona &&
-      BUILD_WORKSHOP_PREVIEW_USER_IDS.has(canonicalUserId)
+      canonicalUserId > 0
   );
   const [dialogueState, setDialogueState] =
     useState<LumineDialogueState | null>(null);

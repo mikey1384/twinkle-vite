@@ -2,25 +2,12 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import Icon from '~/components/Icon';
-import LegacySponsorGuide from './LegacySponsorGuide';
 import cielBuilderFull from '~/assets/ciel-builder-full.png';
 import zeroBuilderFull from '~/assets/zero-builder-full.png';
 import { mobileMaxWidth } from '~/constants/css';
-import { BUILD_WORKSHOP_PREVIEW_USER_IDS } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
 import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function SponsorGuide() {
-  const userId = useKeyContext((v) => v.myState.userId);
-  // Workshop preview rollout: everyone else keeps the previous page until the
-  // Build Workshop launches publicly.
-  if (!BUILD_WORKSHOP_PREVIEW_USER_IDS.has(Number(userId))) {
-    return <LegacySponsorGuide />;
-  }
-  return <WorkshopSponsorGuide />;
-}
-
-function WorkshopSponsorGuide() {
   return (
     <main className={pageClass}>
       <section className={heroClass}>

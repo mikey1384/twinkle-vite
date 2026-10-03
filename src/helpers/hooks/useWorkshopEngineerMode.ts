@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { BUILD_WORKSHOP_PREVIEW_USER_IDS } from '~/constants/defaultValues';
 
 type WorkshopPersona = 'zero' | 'ciel';
 
@@ -95,7 +94,7 @@ export default function useWorkshopEngineerMode({
   ) as LoadWorkshopStatus;
   const canonicalUserId = Number(userId);
   const shouldSubscribe =
-    enabled && BUILD_WORKSHOP_PREVIEW_USER_IDS.has(canonicalUserId);
+    enabled && canonicalUserId > 0;
 
   useEffect(() => {
     if (!shouldSubscribe) return;

@@ -14,8 +14,7 @@ import {
 } from '~/contexts';
 import {
   BOOKMARK_VIEWS,
-  BookmarkView,
-  BUILD_WORKSHOP_PREVIEW_USER_IDS
+  BookmarkView
 } from '~/constants/defaultValues';
 import FilterBar from '~/components/FilterBar';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
@@ -64,9 +63,8 @@ function AIChatMenu({
   );
   const username = useKeyContext((v) => v.myState.username);
   const currentUserId = useKeyContext((v) => v.myState.userId);
-  const isBuildWorkshopPreviewAccount = BUILD_WORKSHOP_PREVIEW_USER_IDS.has(
-    Number(currentUserId)
-  );
+  // The Workshop is open to every signed-in member; the server holds the gate.
+  const isBuildWorkshopPreviewAccount = Number(currentUserId) > 0;
   const currentTopic = useMemo(() => {
     if (!topicId || !topicObj) return null;
     return topicObj?.[topicId] || null;
