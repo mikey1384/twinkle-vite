@@ -88,8 +88,13 @@ export default function BountyContent({
               uppercase={false}
               onClick={handleTryApp}
             >
-              <span>Try {appTitle}</span>
-              <Icon icon="arrow-right" style={{ marginLeft: '0.7rem' }} />
+              <span className="bounty-content__try-label" title={appTitle}>
+                Try {appTitle}
+              </span>
+              <Icon
+                icon="arrow-right"
+                style={{ flexShrink: 0, marginLeft: '0.7rem' }}
+              />
             </Button>
           )}
         </div>
@@ -209,8 +214,12 @@ const bountyContentClass = css`
     overflow-wrap: anywhere;
   }
 
-  .bounty-content__try span {
+  .bounty-content__try-label {
+    display: -webkit-box;
     min-width: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   &.bounty-content--compact {
