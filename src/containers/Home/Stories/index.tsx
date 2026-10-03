@@ -267,6 +267,43 @@ function getHomeFeedAnchorId(feed: { [key: string]: any } = {}, index: number) {
   return parts.length > 0 ? parts.join('|') : `position:${index}`;
 }
 
+const MIN_BOUNTY_RUN_TO_STACK = 2;
+
+function getBountyStackKey(feed: { [key: string]: any } = {}) {
+  const uploaderId = Number(feed?.uploaderId || 0);
+  return feed?.contentType === 'bounty' && feed?.contentId && uploaderId > 0
+    ? `bounty-${uploaderId}`
+    : '';
+}
+
+/* Consecutive "earned a bounty" cards from one person collapse into one
+   stack. Only the render changes; feed state, paging and anchors stay as is. */
+function getBountyStacks(feeds: any[] = []) {
+  const stacks = new Map<number, { size: number; headKey: string }>();
+  const hidden = new Map<number, string>();
+  let runStart = 0;
+  while (runStart < feeds.length) {
+    const key = getBountyStackKey(feeds[runStart]);
+    let runEnd = runStart + 1;
+    if (key) {
+      while (
+        runEnd < feeds.length &&
+        getBountyStackKey(feeds[runEnd]) === key
+      ) {
+        runEnd++;
+      }
+      const size = runEnd - runStart;
+      if (size >= MIN_BOUNTY_RUN_TO_STACK) {
+        const headKey = `${key}-${feeds[runStart].feedId || feeds[runStart].contentId}`;
+        stacks.set(runStart, { size, headKey });
+        for (let i = runStart + 1; i < runEnd; i++) hidden.set(i, headKey);
+      }
+    }
+    runStart = runEnd;
+  }
+  return { stacks, hidden };
+}
+
 function getHomeFeedAnchorPart(label: string, value: unknown) {
   const normalizedValue =
     value === null || typeof value === 'undefined' ? '' : String(value).trim();
@@ -353,6 +390,67 @@ export default function Stories() {
       display: flex;
       flex-direction: column;
       width: 100%;
+    `,
+    []
+  );
+  const [expandedBountyStacks, setExpandedBountyStacks] = useState<
+    Record<string, boolean>
+  >({});
+  const { stacks: bountyStacks, hidden: hiddenBountyFeeds } = useMemo(
+    () => getBountyStacks(feeds || []),
+    [feeds]
+  );
+  /* The layers sit below the card's bottom edge instead of behind it, so no
+     z-index or stacking context is needed (cards rely on their own z-index
+     to keep menus above the next card). */
+  const bountyStackClass = useMemo(
+    () => css`
+      position: relative;
+      &.stacked {
+        margin-bottom: 1.6rem;
+        &::before,
+        &::after {
+          content: '';
+          position: absolute;
+          height: 0.7rem;
+          border: 1px solid var(--ui-border);
+          border-top: 0;
+          border-radius: 0 0 14px 14px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+          pointer-events: none;
+        }
+        &::before {
+          top: calc(100% - 1px);
+          left: 1.2rem;
+          right: 1.2rem;
+          background: #eef2f8;
+        }
+        &::after {
+          top: calc(100% + 0.7rem - 1px);
+          left: 2.4rem;
+          right: 2.4rem;
+          background: #e2e8f2;
+        }
+      }
+    `,
+    []
+  );
+  const bountyStackToggleClass = useMemo(
+    () => css`
+      display: block;
+      margin: 0.3rem auto 0;
+      padding: 0.5rem 1.4rem;
+      border: 1px solid var(--ui-border);
+      border-radius: 999px;
+      background: #fff;
+      color: inherit;
+      font: inherit;
+      font-size: 1.3rem;
+      font-weight: 600;
+      cursor: pointer;
+      &:hover {
+        background: rgba(0, 0, 0, 0.03);
+      }
     `,
     []
   );
@@ -573,6 +671,14 @@ export default function Stories() {
                     const panelKey = `${category}-${subFilter}-${feed.contentId}-${feed.contentType}-${index}`;
                     const contentKey = `${feed.contentType}-${feed.contentId}`;
                     const feedAnchorId = getHomeFeedAnchorId(feed, index);
+                    const stack = bountyStacks.get(index);
+                    const hiddenUnder = hiddenBountyFeeds.get(index);
+                    if (hiddenUnder && !expandedBountyStacks[hiddenUnder]) {
+                      return null;
+                    }
+                    const stackExpanded = stack
+                      ? !!expandedBountyStacks[stack.headKey]
+                      : false;
                     return feed.contentId ? (
                       <div
                         key={panelKey}
@@ -588,13 +694,48 @@ export default function Stories() {
                         data-scroll-anchor-content-key={contentKey}
                         data-scroll-anchor-group-key={homeFeedAnchorKey}
                       >
-                        <HomeFeedCard
-                          homeFeedAnchorKey={homeFeedAnchorKey}
-                          feedAnchorId={feedAnchorId}
-                          feed={feed}
-                          index={index}
-                          totalCount={feeds?.length || 0}
-                        />
+                        {stack ? (
+                          <div
+                            className={`${bountyStackClass}${
+                              stackExpanded ? '' : ' stacked'
+                            }`}
+                          >
+                            <HomeFeedCard
+                              homeFeedAnchorKey={homeFeedAnchorKey}
+                              feedAnchorId={feedAnchorId}
+                              feed={feed}
+                              index={index}
+                              totalCount={feeds?.length || 0}
+                            />
+                          </div>
+                        ) : (
+                          <HomeFeedCard
+                            homeFeedAnchorKey={homeFeedAnchorKey}
+                            feedAnchorId={feedAnchorId}
+                            feed={feed}
+                            index={index}
+                            totalCount={feeds?.length || 0}
+                          />
+                        )}
+                        {stack ? (
+                          <button
+                            type="button"
+                            className={bountyStackToggleClass}
+                            aria-expanded={stackExpanded}
+                            onClick={() =>
+                              setExpandedBountyStacks((prev) => ({
+                                ...prev,
+                                [stack.headKey]: !prev[stack.headKey]
+                              }))
+                            }
+                          >
+                            {stackExpanded
+                              ? 'Show fewer'
+                              : `+${stack.size - 1} more bount${
+                                  stack.size - 1 === 1 ? 'y' : 'ies'
+                                } earned`}
+                          </button>
+                        ) : null}
                       </div>
                     ) : null;
                   }
