@@ -4907,6 +4907,8 @@ export function useHostBridge({
           case 'rewards:timeline':
           case 'rewards:archived-problem':
           case 'rewards:leaderboard':
+          case 'rewards:challenge-board':
+          case 'rewards:interpret-answer':
           case 'rewards:bank-status':
           case 'rewards:bank-start':
           case 'rewards:bank-generate':
@@ -4955,6 +4957,9 @@ export function useHostBridge({
                         : {}),
                       challengeId: payload?.challengeId,
                       answers: payload?.answers,
+                      ...(type === 'rewards:interpret-answer'
+                        ? { text: payload?.text }
+                        : {}),
                       ...(type === 'rewards:progress'
                         ? {
                             frames: payload?.frames,
@@ -5012,6 +5017,17 @@ export function useHostBridge({
                 };
                 break;
               }
+              if (type === 'rewards:challenge-board') {
+                response = {
+                  mode: 'preview',
+                  puzzles: [],
+                  topSolvers: [],
+                  recentSolves: [],
+                  me: null,
+                  message: stub.message
+                };
+                break;
+              }
               if (
                 type === 'rewards:timeline' ||
                 type === 'rewards:archived-problem'
@@ -5048,6 +5064,9 @@ export function useHostBridge({
                   : {}),
                 challengeId: payload?.challengeId,
                 answers: payload?.answers,
+                ...(type === 'rewards:interpret-answer'
+                  ? { text: payload?.text }
+                  : {}),
                 ...(type === 'rewards:progress'
                   ? {
                       frames: payload?.frames,

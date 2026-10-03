@@ -305,3 +305,28 @@ test('archive reads use the current host grant and forward no client clock or pe
     assert.equal(preview.calls.length, 0);
   }
 });
+
+// Every reward operation an app can call must be in the bridge's explicit list,
+// and the free-form answer text must be forwarded on both the draft-preview and
+// the published-app paths. A missing case silently drops the call in a browser
+// (rewards:challenge-board and rewards:interpret-answer were once absent).
+test('the host bridge forwards the challenge board and answer interpretation', () => {
+  const source = readFileSync(
+    new URL(
+      '../src/containers/Build/PreviewPanel/hooks/useHostBridge.ts',
+      import.meta.url
+    ),
+    'utf8'
+  );
+  for (const type of ['challenge-board', 'interpret-answer', 'leaderboard'])
+    assert.ok(
+      source.includes(`case 'rewards:${type}':`),
+      `rewards:${type} must be handled by the host bridge`
+    );
+  const forwardsText = source.match(
+    /type === 'rewards:interpret-answer'\s*\?\s*\{ text: payload\?\.text \}/g
+  );
+  assert.equal(forwardsText?.length, 2, 'text is forwarded on both request paths');
+  // The draft/unapproved fallback never reaches paid reward code.
+  assert.match(source, /type === 'rewards:challenge-board'\)\s*\{\s*response = \{\s*mode: 'preview'/);
+});
