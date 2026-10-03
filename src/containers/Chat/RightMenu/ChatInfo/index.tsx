@@ -1,3 +1,4 @@
+import CrewTrackerPanel from '../../CrewChat/CrewTrackerPanel';
 import React, { memo, useCallback, useContext, useMemo, useState } from 'react';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';
@@ -538,7 +539,12 @@ function ChatInfo({
           channelId={selectedChannelId}
           creatorId={currentChannel.creatorId}
           isAIChat={isZeroChat || isCielChat}
-          isClass={isClass}
+          isClass={isClass && !currentChannel?.settings?.meetupCrewId}
+          footer={
+            Number(currentChannel?.settings?.meetupCrewId) > 0 ? (
+              <CrewTrackerPanel crewId={Number(currentChannel.settings.meetupCrewId)} />
+            ) : null
+          }
           members={displayedChannelMembers}
           theme={displayedThemeColor}
           loadMoreMembersShown={currentChannel?.loadMoreMembersShown}

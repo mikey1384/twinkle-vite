@@ -9,6 +9,7 @@ import type { UserSearchResult } from '~/components/UserSearchInput';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useSearch } from '~/helpers/hooks';
+import KnownPeopleList from './KnownPeopleList';
 
 type CandidateStatus = 'ok' | 'member' | 'invited' | 'in_crew' | 'hidden';
 type Candidate = UserSearchResult & { crewStatus: CandidateStatus };
@@ -35,6 +36,9 @@ export default function InviteUserPicker({
   onInvite: (user: { id: number; username: string }) => Promise<boolean> | void;
 }) {
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
+  const trackMeetupQuestView = useAppContext(
+    (v) => v.requestHelpers.trackMeetupQuestView
+  );
   const loadInviteCandidateStatuses = useAppContext(
     (v) => v.requestHelpers.loadInviteCandidateStatuses
   );
@@ -54,6 +58,22 @@ export default function InviteUserPicker({
 
   return (
     <div className={css`display: flex; flex-direction: column; gap: 0.6rem;`}>
+      {!picked && (
+        <KnownPeopleList
+          crewId={crewId}
+          selectedIds={[]}
+          onToggle={(person) => {
+            trackMeetupQuestView('known_people_picked');
+            setHint('');
+            setPicked({
+              id: person.id,
+              username: person.username,
+              profilePicUrl: person.profilePicUrl,
+              crewStatus: 'ok'
+            } as Candidate);
+          }}
+        />
+      )}
       {picked ? (
         <div
           className={css`

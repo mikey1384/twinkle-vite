@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import FriendButton from '~/components/FriendButton';
 import Popup from './Popup';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
@@ -488,6 +489,7 @@ export default function UserPopup({
                   </span>
                 </div>
               )}
+              {user.id !== myId && <FriendButton userId={user.id} variant="popup" />}
             </div>
             {userXP && (
               <div

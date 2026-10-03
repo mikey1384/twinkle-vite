@@ -31,10 +31,9 @@ import {
 import type { DeskData, StaffApplication, StaffUser } from '../types';
 
 const SEND_BACK_SUGGESTIONS = [
-  'Please choose a public place, like a library or a museum.',
+  "Please choose a Twinkle classroom or a member's home.",
   'Please tell us more about what you will learn together.',
-  'Please pick a date when your grown-up can come.',
-  'Please make sure every member has asked a parent.'
+  'Please pick another date.'
 ];
 
 // /achievements/bridge-builder/desk — the headmasters' desk: submitted plans
@@ -264,7 +263,7 @@ function PendingPlan({
             Your decision
           </h3>
           <span style={{ fontSize: '1.3rem', color: Color.darkGray() }}>
-            Can the academy offer a classroom? It&apos;s optional.
+            For a classroom plan, offer a classroom and time slots (the crew can only meet in a slot you confirm).
           </span>
         </div>
         <VenueForm

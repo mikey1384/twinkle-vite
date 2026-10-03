@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -69,6 +70,10 @@ export default function ChannelHeader({
   subchannel: any;
   topicSelectorModalShown: boolean;
 }) {
+  const navigate = useNavigate();
+  const trackMeetupQuestView = useAppContext(
+    (v) => v.requestHelpers.trackMeetupQuestView
+  );
   const pins = useChatPins();
   const {
     actions: { onLoadChatSubject, onSetIsSearchActive },
@@ -310,6 +315,24 @@ export default function ChannelHeader({
       return result;
     }
     const channelItems: any[] = [];
+    const crewId = Number(currentChannel.settings?.meetupCrewId || 0);
+    if (crewId > 0) {
+      // a crew's chat follows its crew: people are added, removed and renamed
+      // on the crew page (the server refuses the group controls)
+      pushSection({
+        label: (
+          <>
+            <Icon icon="users" />
+            <span style={{ marginLeft: '1rem' }}>Open crew page</span>
+          </>
+        ),
+        onClick: () => {
+          trackMeetupQuestView('crew_banner_open');
+          navigate(`/achievements/bridge-builder/crew/${crewId}`);
+        }
+      });
+      return result;
+    }
     if (
       !currentChannel.isClosed ||
       Number(currentChannel.creatorId) === Number(userId) ||
@@ -348,6 +371,7 @@ export default function ChannelHeader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentChannel.creatorId,
+    currentChannel.settings?.meetupCrewId,
     currentChannel.isClosed,
     currentChannel.isPublic,
     currentChannel.twoPeople,

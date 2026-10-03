@@ -304,6 +304,12 @@ export default function Channel({
       if (rootType === 'meetupQuestSlot') {
         return <span>{messageSender}: set up your meetup slot</span>;
       }
+      if (rootType === 'meetupBranch') {
+        return <span>{messageSender}: a new branch to check</span>;
+      }
+      if (rootType === 'meetupQuestCrew') {
+        return <span>{messageSender}: started the crew chat</span>;
+      }
       if (rootType === 'meetupQuestInvite') {
         return <span>{messageSender}: invited you to a meetup crew</span>;
       }

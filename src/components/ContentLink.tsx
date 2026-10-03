@@ -67,6 +67,8 @@ export default function ContentLink({
       result = 'bounties';
     } else if (contentType === 'xpChange') {
       result = 'daily-rewards';
+    } else if (contentType === 'meetupQuestStep') {
+      result = 'bridge-steps';
     } else if (contentType === 'sharedTopic') {
       result = 'shared-prompts';
     } else if (contentType === 'dailyReflection') {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Heading from '~/components/ContentPanel/Heading';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import Body, {
   HomeFeedCommentPreview,
   getRenderableHomeFeedPreviewComments
@@ -73,6 +74,34 @@ const HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX = 2;
 const homeFeedCardSizingCache = new Map<string, FeedCardSizing>();
 const homeFeedContentHydrationRequests = new Set<string>();
 
+const askCornerClass = css`
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  z-index: 2;
+  display: inline-flex;
+  @media (max-width: ${mobileMaxWidth}) {
+    top: 1rem;
+    right: 1rem;
+  }
+`;
+
+// Home feed kinds the agent can read (twinkle-api websiteAgent/askedContent.ts)
+const ASK_NOUNS: Record<string, string> = {
+  subject: 'post',
+  comment: 'comment',
+  video: 'video',
+  url: 'link',
+  aiStory: 'AI story',
+  dailyReflection: 'daily reflection',
+  bounty: 'bounty',
+  build: 'app',
+  sharedTopic: 'shared prompt',
+  xpChange: 'daily reward',
+  meetupQuestStep: 'Bridge Builder step',
+  aiCard: 'AI card'
+};
+
 export default function HomeFeedCard({
   feed,
   feedAnchorId,
@@ -94,6 +123,22 @@ export default function HomeFeedCard({
 }) {
   const contentId = Number(feed?.contentId || 0);
   const contentType = String(feed?.contentType || '');
+  // what the Ask Zero/Ciel button attaches; the server re-reads it as the member
+  const askContext = useMemo(() => {
+    const noun =
+      contentType === 'pass'
+        ? feed?.rootType === 'achievement'
+          ? 'achievement unlock'
+          : 'mission pass'
+        : ASK_NOUNS[contentType];
+    if (!noun || !contentId) return null;
+    return {
+      kind: contentType,
+      id: contentId,
+      ...(contentType === 'pass' && feed?.rootType ? { rootType: String(feed.rootType) } : {}),
+      label: `this ${noun}`
+    };
+  }, [contentId, contentType, feed?.rootType]);
   const [VisibilityRef, inView] = useInView();
   const navigate = useNavigate();
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
@@ -684,6 +729,20 @@ export default function HomeFeedCard({
               onPointerMove={handleCardPointerMove}
               onPointerUp={handleCardPointerUp}
             >
+              {!showcase && appliedContent.loaded && askContext && !signInRequired ? (
+                // the card's top-right corner, beside the author line: the
+                // actions row below is already full
+                <span
+                  className={`${askCornerClass} home-feed-card__ask`}
+                  data-feed-card-interactive="true"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <AskAgentButton
+                    context={askContext}
+                    style={{ padding: '0.45rem 0.9rem', fontSize: '1.3rem' }}
+                  />
+                </span>
+              ) : null}
               {showcase ? null : appliedContent.loaded ? (
                 <Heading
                   compactFeed
@@ -1709,6 +1768,14 @@ const cardClass = css`
     height: var(--home-feed-card-heading-height);
     padding: 0.2rem 0.2rem 0.4rem 0.2rem;
     overflow: hidden;
+  }
+  /* room for the Ask corner button, only when it actually shows (it hides
+     itself for members without the agent) */
+  &:has(> .home-feed-card__ask button) > .heading {
+    padding-right: 11.5rem;
+    @media (max-width: ${mobileMaxWidth}) {
+      padding-right: 4.6rem;
+    }
   }
   .heading.compact-feed {
     gap: 0.75rem;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { cx } from '@emotion/css';
 import Button from '~/components/Button';
+import FriendButton from '~/components/FriendButton';
 import Icon from '~/components/Icon';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import MessagesButton from './MessagesButton';
@@ -179,6 +180,20 @@ export default function ActionButtons({
             <Icon icon="comments" color="rgba(255,255,255,0.92)" />
             <span>{chatLabel}</span>
           </Button>
+          <FriendButton
+            userId={profileId}
+            variant="panel"
+            buttonProps={{
+              className: cx(
+                actionButtonClass,
+                profileButtonClass,
+                actionButtonFlexMediumClass
+              ),
+              variant: 'solid',
+              color: 'pink',
+              uppercase: false
+            }}
+          />
           <MessagesButton
             className={cx(
               actionButtonClass,

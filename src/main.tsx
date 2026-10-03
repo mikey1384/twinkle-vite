@@ -207,6 +207,16 @@ import { faUndo } from '@fortawesome/pro-solid-svg-icons/faUndo';
 import { faUnlock } from '@fortawesome/pro-solid-svg-icons/faUnlock';
 import { faUser } from '@fortawesome/pro-solid-svg-icons/faUser';
 import { faUserPlus } from '@fortawesome/pro-solid-svg-icons/faUserPlus';
+import { faCalendarDay } from '@fortawesome/pro-solid-svg-icons/faCalendarDay';
+import { faUserCheck } from '@fortawesome/pro-solid-svg-icons/faUserCheck';
+import { faLocationDot } from '@fortawesome/pro-solid-svg-icons/faLocationDot';
+import { faCircleCheck } from '@fortawesome/pro-solid-svg-icons/faCircleCheck';
+import { faUserShield } from '@fortawesome/pro-solid-svg-icons/faUserShield';
+import { faEnvelope } from '@fortawesome/pro-solid-svg-icons/faEnvelope';
+import { faMapMarkerAlt } from '@fortawesome/pro-solid-svg-icons/faMapMarkerAlt';
+import { faHourglassHalf } from '@fortawesome/pro-solid-svg-icons/faHourglassHalf';
+import { faAddressBook } from '@fortawesome/pro-solid-svg-icons/faAddressBook';
+import { faUserGroup } from '@fortawesome/pro-solid-svg-icons/faUserGroup';
 import { faUserEdit } from '@fortawesome/pro-solid-svg-icons/faUserEdit';
 import { faUpload } from '@fortawesome/pro-solid-svg-icons/faUpload';
 import { faUserGraduate } from '@fortawesome/pro-solid-svg-icons/faUserGraduate';
@@ -439,6 +449,16 @@ library.add(
   faUnlock,
   faUser,
   faUserPlus,
+  faCalendarDay,
+  faUserCheck,
+  faLocationDot,
+  faCircleCheck,
+  faUserShield,
+  faEnvelope,
+  faMapMarkerAlt,
+  faHourglassHalf,
+  faAddressBook,
+  faUserGroup,
   faUserEdit,
   faUserGraduate,
   faUserGroupCrown,

@@ -4,8 +4,13 @@ import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 import CrewCover from './CrewCover';
 import CrewProfileFields from './CrewProfileFields';
+import BranchField from './BranchField';
+import KnownPeopleList, { type KnownPerson } from './KnownPeopleList';
 import { CREW_COVERS } from './covers';
-import { QuestNote, questHelpClass, questInputClass, questLabelClass } from './StepCard';
+import { QuestNote, questHelpClass } from './StepCard';
+
+// a crew holds at most 8 people: the founder plus 7 invited friends
+const MAX_FRIEND_INVITES = 7;
 
 export default function CreateCrewModal({
   defaultBranch,
@@ -17,6 +22,14 @@ export default function CreateCrewModal({
   onCreated: () => Promise<void>;
 }) {
   const startMeetupCrew = useAppContext((v) => v.requestHelpers.startMeetupCrew);
+  const inviteToMeetupCrew = useAppContext(
+    (v) => v.requestHelpers.inviteToMeetupCrew
+  );
+  const trackMeetupQuestView = useAppContext(
+    (v) => v.requestHelpers.trackMeetupQuestView
+  );
+  const [friends, setFriends] = useState<KnownPerson[]>([]);
+  const [done, setDone] = useState(false);
   const [name, setName] = useState('');
   const [about, setAbout] = useState('');
   const [cover, setCover] = useState(
@@ -35,14 +48,22 @@ export default function CreateCrewModal({
       title="Start a crew"
       size="md"
       footer={
-        <>
-          <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
-            Cancel
+        done ? (
+          <Button color="logoBlue" onClick={onHide}>
+            Done
           </Button>
-          <Button color="green" loading={busy} disabled={busy} onClick={handleCreate}>
-            Start the crew
-          </Button>
-        </>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
+              Cancel
+            </Button>
+            <Button color="green" loading={busy} disabled={busy} onClick={handleCreate}>
+              {friends.length
+                ? `Start the crew and invite ${friends.length}`
+                : 'Start the crew'}
+            </Button>
+          </>
+        )
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem', width: '100%' }}>
@@ -61,32 +82,51 @@ export default function CreateCrewModal({
             {name.trim() || 'Your crew'}
           </span>
         </CrewCover>
-        <div>
-          <label className={questLabelClass} htmlFor="create-crew-branch">
-            Your Twinkle branch
-          </label>
-          <input
-            id="create-crew-branch"
-            className={questInputClass}
-            value={branch}
-            maxLength={40}
-            placeholder="For example: Daechi"
-            onChange={(event) => setBranch(event.target.value)}
-          />
-          <div className={questHelpClass}>
-            Other members see your username, profile picture and branch.
+        {!done && (
+          <div>
+            <KnownPeopleList
+              selectedIds={friends.map((friend) => friend.id)}
+              maxSelected={MAX_FRIEND_INVITES}
+              onToggle={(person) => {
+                setFriends((current) => {
+                  if (current.some((friend) => friend.id === person.id)) {
+                    return current.filter((friend) => friend.id !== person.id);
+                  }
+                  trackMeetupQuestView('known_people_picked');
+                  return [...current, person];
+                });
+              }}
+            />
+            <div className={questHelpClass}>
+              Optional. They get an invitation in chat and can say yes or no.
+            </div>
           </div>
-        </div>
-        <CrewProfileFields
-          idPrefix="create-crew"
-          name={name}
-          about={about}
-          cover={cover}
-          onNameChange={setName}
-          onAboutChange={setAbout}
-          onCoverChange={setCover}
+        )}
+        <BranchField
+          id="create-crew-branch"
+          value={branch}
+          onChange={setBranch}
+          help="Other members see your username, profile picture and branch."
         />
-        {error && <QuestNote tone="warning">{error}</QuestNote>}
+        <details>
+          <summary
+            style={{ cursor: 'pointer', fontSize: '1.4rem', fontWeight: 'bold' }}
+          >
+            Name your crew and pick a cover (optional)
+          </summary>
+          <div style={{ marginTop: '1.2rem' }}>
+            <CrewProfileFields
+              idPrefix="create-crew"
+              name={name}
+              about={about}
+              cover={cover}
+              onNameChange={setName}
+              onAboutChange={setAbout}
+              onCoverChange={setCover}
+            />
+          </div>
+        </details>
+        {error && <QuestNote tone={done ? 'info' : 'warning'}>{error}</QuestNote>}
       </div>
     </Modal>
   );
@@ -100,8 +140,24 @@ export default function CreateCrewModal({
     setBusy(true);
     setError('');
     try {
-      await startMeetupCrew({ branch, name, about, cover });
+      const created = await startMeetupCrew({ branch, name, about, cover });
+      const crewId = Number(created?.crew?.crewId || 0);
+      const failed: string[] = [];
+      if (crewId) {
+        for (const friend of friends) {
+          try {
+            await inviteToMeetupCrew({ crewId, username: friend.username });
+          } catch (err: any) {
+            failed.push(`${friend.username}: ${err?.message || 'could not invite'}`);
+          }
+        }
+      }
       await onCreated();
+      if (failed.length) {
+        setDone(true);
+        setError(`Your crew is ready. These invitations did not go out. ${failed.join(' · ')}`);
+        return;
+      }
       onHide();
     } catch (err: any) {
       setError(err?.message || 'Could not start the crew.');

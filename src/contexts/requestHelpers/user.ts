@@ -545,6 +545,14 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // Bridge Builder funnel telemetry; fire-and-forget, never shown to anyone.
+    async trackMeetupQuestView(kind: string) {
+      try {
+        await request.post(`${URL}/user/meetup-quest/track`, { kind }, auth());
+      } catch (_error) {
+        // telemetry never interrupts the page
+      }
+    },
     async dismissMeetupNotice(crewId: number) {
       try {
         const { data } = await request.post(
@@ -675,6 +683,61 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // "People you already know on Twinkle" (the viewer's own chats / comment replies)
+    async loadMeetupKnownPeople(crewId?: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/known-people${crewId ? `?crewId=${crewId}` : ''}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Bridge Builder branch registry: choices for the pickers, and the admin's
+    // review of one branch (the owner alert's card)
+    async loadMeetupBranchChoices() {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/branches`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupBranch(branchId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/branches/${branchId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async reviewMeetupBranch({
+      branchId,
+      action,
+      mergeIntoId,
+      note
+    }: {
+      branchId: number;
+      action: 'official' | 'reject' | 'merge';
+      mergeIntoId?: number;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/branches/${branchId}/review`,
+          { action, mergeIntoId, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadInviteCandidateStatuses({
       crewId,
       userIds
@@ -754,6 +817,145 @@ export default function userRequestHelpers({
       try {
         const { data } = await request.delete(
           `${URL}/user/meetup-quest/crews/${crewId}/members/${memberId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // the crew manager asks a member to correct their branch answer
+    async nudgeMeetupBranch({ crewId, userId }: { crewId: number; userId: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/members/${userId}/nudge-branch`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // the owner reviews parent emails before they go out
+    async loadMeetupEmails() {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/emails`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveMeetupEmail({ id, subject, body }: { id: number; subject: string; body: string }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/emails/${id}`,
+          { subject, body },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async sendMeetupEmail({ id, subject, body }: { id: number; subject: string; body: string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/emails/${id}/send`,
+          { subject, body },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async discardMeetupEmail(id: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/emails/${id}/discard`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setMeetupEmailReview(on: boolean) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/emails/review`,
+          { on },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // the friends kill switch (owner only)
+    async loadFriendsSwitch() {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/friends-switch`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setFriendsSwitch(on: boolean) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/friends-switch`,
+          { on },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // friends: a simple link between two members (profile button)
+    async loadFriendStatus(targetId: number) {
+      try {
+        const { data } = await request.get(`${URL}/user/friends/status`, {
+          ...auth(),
+          params: { targetId }
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async addFriend(targetId: number) {
+      try {
+        const { data } = await request.post(`${URL}/user/friends/${targetId}`, {}, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async removeFriend(targetId: number) {
+      try {
+        const { data } = await request.delete(`${URL}/user/friends/${targetId}`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async replaceMeetupCrewMember({
+      crewId,
+      memberId,
+      username
+    }: {
+      crewId: number;
+      memberId: number;
+      username: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/members/${memberId}/replace`,
+          { username },
           auth()
         );
         return data;
@@ -848,7 +1050,7 @@ export default function userRequestHelpers({
       attendedUserIds
     }: {
       crewId: number;
-      action: 'approve-plan' | 'send-back' | 'approve';
+      action: 'approve-crew' | 'approve-grownup' | 'approve-plan' | 'send-back' | 'approve';
       note?: string;
       attendedUserIds?: number[];
     }) {
@@ -1133,6 +1335,155 @@ export default function userRequestHelpers({
           { action, note, announce },
           auth()
         );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Bridge Builder parent consent: the member's "ask my parent", and the
+    // parent's own page (no account; the link's token is the key)
+    async askMeetupParent({
+      crewId,
+      email,
+      language
+    }: {
+      crewId: number;
+      email?: string;
+      language?: 'ko' | 'en';
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/ask-parent`,
+          { email, language },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // staff answer a parent's question (shown on their page, and emailed)
+    async replyToMeetupParent({
+      crewId,
+      userId,
+      reply
+    }: {
+      crewId: number;
+      userId: number;
+      reply: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/parents/${userId}/reply`,
+          { reply },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // owner-only: things only the Twinkle organization can decide
+    async loadMeetupOrgAsks() {
+      try {
+        const { data } = await request.get(`${URL}/user/meetup-quest/org-asks`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setMeetupOrgAskStatus({
+      slug,
+      status,
+      note
+    }: {
+      slug: string;
+      status: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/org-asks/${encodeURIComponent(slug)}/status`,
+          { status, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveMeetupOrgRecipient(email: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/org-asks/recipient`,
+          { email },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async composeMeetupOrgEmail(slugs: string[]) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/org-asks/compose`,
+          { slugs },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMeetupParentBrief(token: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/parent-brief?token=${encodeURIComponent(token)}`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async decideMeetupParentBrief({
+      token,
+      decision,
+      question,
+      shareContact,
+      guardianChoice,
+      attendingName
+    }: {
+      token: string;
+      decision: 'approve' | 'decline' | 'question';
+      question?: string;
+      shareContact?: boolean;
+      guardianChoice?: 'self' | 'named';
+      attendingName?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/parent-brief/decision`,
+          { token, decision, question, shareContact, guardianChoice, attendingName }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // a crew member reopens the plan to revise it (after parents' suggestions)
+    async reviseMeetupPlan(crewId: number) {
+      try {
+        const { data } = await request.post(`${URL}/user/meetup-quest/crews/${crewId}/plan/revise`, {}, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // a parent suggests a change to the kids' plan (link token, no account)
+    async suggestMeetupPlanChange({ token, body }: { token: string; body: string }) {
+      try {
+        const { data } = await request.post(`${URL}/user/meetup-quest/parent-brief/suggest`, { token, body });
         return data;
       } catch (error) {
         return handleError(error);

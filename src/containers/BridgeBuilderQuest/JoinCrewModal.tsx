@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
-import { QuestNote, questHelpClass, questInputClass, questLabelClass } from './StepCard';
+import BranchField from './BranchField';
+import { QuestNote } from './StepCard';
 
 // Joining asks for your branch: from the directory, or accepting an invite.
 export default function JoinCrewModal({
@@ -46,23 +47,12 @@ export default function JoinCrewModal({
       }
     >
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div>
-          <label className={questLabelClass} htmlFor="join-crew-branch">
-            Your Twinkle branch
-          </label>
-          <input
-            id="join-crew-branch"
-            className={questInputClass}
-            value={branch}
-            maxLength={40}
-            placeholder="For example: Busan"
-            onChange={(event) => setBranch(event.target.value)}
-          />
-          <div className={questHelpClass}>
-            The crew sees your username, profile picture and branch. You can
-            be in one crew at a time.
-          </div>
-        </div>
+        <BranchField
+          id="join-crew-branch"
+          value={branch}
+          onChange={setBranch}
+          help="The crew sees your username, profile picture and branch. You can be in one crew at a time."
+        />
         {error && <QuestNote tone="warning">{error}</QuestNote>}
       </div>
     </Modal>

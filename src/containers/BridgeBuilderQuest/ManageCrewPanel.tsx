@@ -29,7 +29,7 @@ const blockTitleClass = css`
 `;
 
 type Confirm =
-  | { kind: 'remove'; userId: number; username: string }
+  | { kind: 'remove'; userId: number; username: string; parentOk: boolean }
   | { kind: 'founder'; userId: number; username: string }
   | { kind: 'disband' };
 
@@ -148,7 +148,7 @@ export default function ManageCrewPanel({
             ? 'Anyone can find your crew in the directory and join it.'
             : 'Your crew is invite-only: it still shows in the directory, but only people you invite can join.'}
           {plannedOrReviewed
-            ? ' Nobody can join while your plan is being reviewed or after it is approved.'
+            ? ' While your plan is being reviewed or after it is approved, only people you invite can join.'
             : ''}
         </span>
         {openAction.error && <QuestNote tone="warning">{openAction.error}</QuestNote>}
@@ -158,13 +158,16 @@ export default function ManageCrewPanel({
         <h4 className={blockTitleClass}>Invite someone</h4>
         <InviteUserPicker
           crewId={crew.crewId}
-          disabled={frozen || plannedOrReviewed}
+          disabled={frozen}
           busy={inviteAction.busy}
           onInvite={handleInvite}
         />
         <span className={questHelpClass}>
           They see an invitation on their page and a message in chat, with
           your crew name and branches.
+          {plannedOrReviewed
+            ? ' Someone new keeps your plan: staff check their branch and the crew again, and they ask their own parent.'
+            : ''}
         </span>
         {inviteSent && <QuestNote tone="success">Invitation sent to {inviteSent}.</QuestNote>}
         {inviteAction.error && <QuestNote tone="warning">{inviteAction.error}</QuestNote>}
@@ -251,7 +254,7 @@ export default function ManageCrewPanel({
                     color="red"
                     disabled={membersAction.busy || frozen}
                     onClick={() =>
-                      setConfirm({ kind: 'remove', userId: member.userId, username: member.username })
+                      setConfirm({ kind: 'remove', userId: member.userId, username: member.username, parentOk: member.parentOk })
                     }
                   >
                     Remove
@@ -307,7 +310,7 @@ export default function ManageCrewPanel({
           descriptionFontSize="1.5rem"
           description={
             confirm.kind === 'remove'
-              ? `${confirm.username} leaves the crew and can't join it again from the directory (you can still invite them back). They see a note on their page.${plannedOrReviewed ? ' Your plan will need to be sent again.' : ''}`
+              ? `${confirm.username} leaves the crew and can't join it again from the directory (you can still invite them back). They see a note on their page.${plannedOrReviewed && confirm.parentOk ? ' Their parent already said yes, so your plan will need to be sent again.' : ''}`
               : confirm.kind === 'founder'
               ? `${confirm.username} will lead the crew: they can rename it, invite and remove members, and disband it. You stay in the crew as a member.`
               : 'This ends the crew for everyone. Members are notified on their page. It cannot be undone.'

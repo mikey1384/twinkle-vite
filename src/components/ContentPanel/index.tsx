@@ -1,3 +1,4 @@
+import MeetupStepDisplay from './Body/MainContent/ContentDisplay/MeetupStepDisplay';
 import ContentLink from '~/components/ContentLink';
 import BountyContent from '~/components/BountyContent';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -626,6 +627,18 @@ export default function ContentPanel({
                         theme={theme || profileTheme}
                       />
                     </div>
+                  )}
+                {contentType === 'comment' &&
+                  appliedRootType === 'meetupQuestStep' &&
+                  rootObj?.id && (
+                    <MeetupStepDisplay
+                      content={rootObj}
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
+                      }}
+                    />
                   )}
                 {contentType === 'comment' &&
                   appliedRootType === 'xpChange' &&

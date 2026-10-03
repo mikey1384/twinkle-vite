@@ -1,4 +1,9 @@
-import React, { useEffect, useState, useSyncExternalStore } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
@@ -17,10 +22,13 @@ import { EnergyBattery, useDraggableWindow } from '../AICallWindow/frame';
 import AssistantReplyView from './AssistantReplyView';
 import { attachAssistantConversationListeners } from './conversationStore';
 import {
+  clearAssistantAskContext,
   closeAssistantDock,
+  getAssistantAskContext,
   getAssistantDock,
   getHomeAskAssistant,
-  subscribeAssistantDock
+  subscribeAssistantDock,
+  type AssistantAskContext
 } from './dockState';
 import useAssistantConversation from './useAssistantConversation';
 
@@ -36,6 +44,20 @@ const appear = keyframes`
 // along, so the user can keep talking to them while on that screen. It is
 // the call window's other form (same picture, same Energy battery, same
 // place), with the chat in place of the hang-up button.
+// What the old "Ask Zero" window offered, as suggestion bubbles when the
+// member asks about something with text: one tap sends it, with the item
+// attached, and the agent takes it from there.
+const TEXT_KINDS = new Set(['comment', 'subject', 'video', 'url', 'aiStory', 'dailyReflection']);
+const ASK_IDEAS = [
+  'Make it easy to understand',
+  'Rewrite it in your own style',
+  'Rewrite it as a poem',
+  'Rewrite it in K-pop lyrics style',
+  'Rewrite it in Shakespearean style',
+  'Rewrite it in rap style',
+  'Rewrite it in YouTuber style'
+];
+
 export default function AssistantDock() {
   // Replies are followed from their first word, whichever screen the user
   // is on when the window comes up.
@@ -48,6 +70,10 @@ export default function AssistantDock() {
   const cielChannelId = useChatContext((v) => v.state.cielChannelId);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
+  const askContext = useSyncExternalStore(
+    subscribeAssistantDock,
+    getAssistantAskContext
+  );
   const overlayActive = useWebsiteAgentOverlayActive();
   const modalOpen = useModalOpen(!!assistant);
   const homeAskAssistant = useSyncExternalStore(
@@ -76,20 +102,28 @@ export default function AssistantDock() {
     !channelId ||
     !!aiCallChannelId ||
     overlayActive ||
-    (conversationOnScreen && !modalOpen);
+    // asking about something is an explicit act: the window shows even when
+    // this conversation is already on the page, so the chip is seen
+    (conversationOnScreen && !modalOpen && !askContext);
   if (hidden) return null;
   return createPortal(
-    <DockWindow assistant={assistant} channelId={channelId} />,
+    <DockWindow
+      assistant={assistant}
+      channelId={channelId}
+      askContext={askContext}
+    />,
     document.body
   );
 }
 
 function DockWindow({
   assistant,
-  channelId
+  channelId,
+  askContext
 }: {
   assistant: 'Zero' | 'Ciel';
   channelId: number;
+  askContext: AssistantAskContext | null;
 }) {
   const navigate = useNavigate();
   // Phones: a slim bar over the site header, clear of a game's own header
@@ -105,6 +139,13 @@ function DockWindow({
   });
   const [expanded, setExpanded] = useState(!phone);
   const [text, setText] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  // pressing "Ask" on something opens the window ready to type about it
+  useEffect(() => {
+    if (!askContext) return;
+    setExpanded(true);
+    window.setTimeout(() => inputRef.current?.focus(), 50);
+  }, [askContext]);
   const { reply, replying, sending, send } = useAssistantConversation({
     assistantName: assistant,
     channelId
@@ -121,8 +162,17 @@ function DockWindow({
         ? `${assistant} reacted ${getChatReaction(reply.reaction)?.fallback || ''}`.trim()
         : `Talk to ${assistant} here`;
 
+  const askIdeas = askContext && TEXT_KINDS.has(askContext.kind) ? ASK_IDEAS : [];
+
   async function handleSend(content?: string) {
-    if (await send(content ?? text)) setText('');
+    // the context goes with the first message about it, then it is spent
+    const sentContext = askContext;
+    if (await send(content ?? text, sentContext)) {
+      setText('');
+      // only the context this message carried: Ask pressed on something else
+      // while it was sending stays attached
+      if (getAssistantAskContext() === sentContext) clearAssistantAskContext();
+    }
   }
 
   return (
@@ -285,11 +335,54 @@ function DockWindow({
                 />
               </div>
             ) : null}
-            {!replying && !text.trim() && reply?.suggestions?.length ? (
+            {!replying && !text.trim() && askIdeas.length ? (
+              <AgentSuggestions ideas={askIdeas} onPick={(idea) => handleSend(idea)} />
+            ) : !replying && !text.trim() && reply?.suggestions?.length ? (
               <AgentSuggestions
                 ideas={reply.suggestions}
                 onPick={(idea) => handleSend(idea)}
               />
+            ) : null}
+            {askContext ? (
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  gap: 0.6rem;
+                  padding: 0.4rem 0.4rem 0.4rem 0.9rem;
+                  border-radius: 999px;
+                  background: ${Color.logoBlue(0.08)};
+                  font-size: 1.25rem;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                <Icon icon="paperclip" style={{ color: Color.logoBlue() }} />
+                <span
+                  className={css`
+                    flex: 1;
+                    min-width: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  `}
+                >
+                  About {askContext.label}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Don’t attach this"
+                  onClick={clearAssistantAskContext}
+                  className={css`
+                    border: none;
+                    background: none;
+                    cursor: pointer;
+                    color: ${Color.darkGray()};
+                    padding: 0 0.6rem;
+                  `}
+                >
+                  <Icon icon="times" />
+                </button>
+              </div>
             ) : null}
             <form
               onSubmit={(event) => {
@@ -302,6 +395,7 @@ function DockWindow({
               `}
             >
               <input
+                ref={inputRef}
                 value={text}
                 onChange={(event) => setText(event.target.value)}
                 onKeyDown={(event) => {
@@ -312,7 +406,9 @@ function DockWindow({
                     setExpanded(false);
                   }
                 }}
-                placeholder={`Reply to ${assistant}`}
+                placeholder={
+                  askContext ? `Ask ${assistant} about this` : `Reply to ${assistant}`
+                }
                 aria-label={`Message ${assistant}`}
                 maxLength={2000}
                 className={css`
@@ -332,7 +428,7 @@ function DockWindow({
               />
               <button
                 type="submit"
-                disabled={!text.trim() || sending || replying}
+                disabled={(!text.trim() && !askContext) || sending || replying}
                 className={css`
                   border: none;
                   border-radius: 999px;

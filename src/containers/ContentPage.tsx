@@ -52,6 +52,9 @@ export default function ContentPage() {
     if (rawContentType === 'daily-reward') {
       return { contentType: 'xpChange', rootType: undefined };
     }
+    if (rawContentType === 'bridge-step') {
+      return { contentType: 'meetupQuestStep', rootType: undefined };
+    }
     if (rawContentType === 'shared-prompt') {
       return { contentType: 'sharedTopic', rootType: undefined };
     }

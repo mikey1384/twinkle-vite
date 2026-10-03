@@ -18,6 +18,7 @@ import { socket } from '~/constants/sockets/api';
 export default function Members({
   channelId,
   creatorId,
+  footer,
   isAIChat,
   isClass,
   loadMoreMembersShown,
@@ -27,6 +28,8 @@ export default function Members({
 }: {
   channelId: number;
   creatorId: number;
+  // rendered under the member list (a crew chat's path checklist)
+  footer?: React.ReactNode;
   isAIChat: boolean;
   isClass: boolean;
   loadMoreMembersShown: boolean;
@@ -211,6 +214,7 @@ export default function Members({
             }}
           />
         )}
+        {footer}
       </div>
       {membersToRemove && (
         <ConfirmModal

@@ -64,6 +64,9 @@ function Heading({
     if (contentType === 'xpChange') {
       return `/daily-rewards/${id}`;
     }
+    if (contentType === 'meetupQuestStep') {
+      return `/bridge-steps/${id}`;
+    }
     if (contentType === 'sharedTopic') {
       return `/shared-prompts/${id}`;
     }

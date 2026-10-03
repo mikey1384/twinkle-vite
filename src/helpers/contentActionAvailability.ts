@@ -28,7 +28,8 @@ const contentPanelCommentLabelContentTypes = new Set([
   'sharedTopic',
   'url',
   'video',
-  'xpChange'
+  'xpChange',
+  'meetupQuestStep'
 ]);
 
 export function getContentPanelCommentActionLabel(contentType: string) {

@@ -203,6 +203,7 @@ export default function RecommendationInterface({
       contentType !== 'pass' &&
       contentType !== 'bounty' &&
       contentType !== 'xpChange' &&
+      contentType !== 'meetupQuestStep' &&
       contentType !== 'sharedTopic' &&
       contentType !== 'aiStory' &&
       contentType !== 'build' &&
@@ -247,6 +248,7 @@ export default function RecommendationInterface({
       contentType !== 'build' &&
       contentType !== 'bounty' &&
       contentType !== 'xpChange' &&
+      contentType !== 'meetupQuestStep' &&
       contentType !== 'dailyReflection' &&
       contentType !== 'sharedTopic'
     );

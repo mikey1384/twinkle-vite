@@ -17,6 +17,8 @@ import BuildProjectLimitRequest from './BuildProjectLimitRequest';
 import BuildReviewRequestCard from './BuildReviewRequestCard';
 import BuildRewardReview from './BuildRewardReview';
 import MeetupQuestCard from './MeetupQuestCard';
+import CrewChatCard from '../../CrewChat/CrewChatCard';
+import MeetupBranchCard from '../../CrewChat/MeetupBranchCard';
 import DrawOffer from './DrawOffer';
 import FileAttachment from './FileAttachment';
 import Invitation from './Invitation';
@@ -281,6 +283,10 @@ export default function Content({
             profileTheme
           }}
         />
+      ) : rootType === 'meetupBranch' && rootId ? (
+        <MeetupBranchCard branchId={rootId} />
+      ) : rootType === 'meetupQuestCrew' && rootId ? (
+        <CrewChatCard crewId={rootId} />
       ) : (rootType === 'meetupQuest' ||
           rootType === 'meetupQuestInvite' ||
           rootType === 'meetupQuestSlot' ||

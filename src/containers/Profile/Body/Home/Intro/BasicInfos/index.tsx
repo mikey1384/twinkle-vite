@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import Button from '~/components/Button';
+import FriendButton from '~/components/FriendButton';
 import Icon from '~/components/Icon';
 import InfoEditForm from './InfoEditForm';
 import PasswordInputModal from './PasswordInputModal';
@@ -138,14 +139,9 @@ export default function BasicInfos({
 
   const messageUserLabel = useMemo(() => {
     return (
-      <span style={{ marginLeft: '0.7rem' }}>
-        {online ? 'Chat' : 'Message'}
-        <span className="desktop">
-          {online ? ' with' : ''} {username}
-        </span>
-      </span>
+      <span style={{ marginLeft: '0.7rem' }}>{online ? 'Chat' : 'Message'}</span>
     );
-  }, [online, username]);
+  }, [online]);
 
   return (
     <ScopedTheme
@@ -365,6 +361,15 @@ export default function BasicInfos({
             <Icon icon="comments" />
             {messageUserLabel}
           </Button>
+          <FriendButton
+            userId={userId}
+            variant="panel"
+            buttonProps={{
+              style: { width: 'auto' },
+              color: buttonColorKey,
+              hoverColor: buttonHoverColorKey
+            }}
+          />
           {!!myId && (
             <ProfileSafetyMenu userId={userId} username={username} />
           )}

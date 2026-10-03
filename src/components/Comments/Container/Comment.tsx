@@ -31,7 +31,7 @@ import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
-import ZeroButton from '~/components/Buttons/ZeroButton';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import AiEnergySponsorButton, {
   shouldRenderAiEnergySponsorNotice
 } from '~/components/Comments/AiEnergySponsorButton';
@@ -318,10 +318,13 @@ function Comment({
       }
     : undefined;
 
-  const pinSupported =
-    (parent.contentType === 'comment'
+  const commentRootType =
+    parent.contentType === 'comment'
       ? rootContent?.contentType || parent.rootType
-      : parent.contentType) !== 'aiCard';
+      : parent.contentType;
+  const pinSupported = commentRootType !== 'aiCard';
+  // Zero and Ciel never reply on a crew's public milestone card (children)
+  const askZeroSupported = commentRootType !== 'meetupQuestStep';
 
   const lumineMenuItem = useLumineCommentMenuItem({
     comment: { ...comment, isDeleted: isDeleted || comment.isDeleted },
@@ -879,11 +882,13 @@ function Comment({
                                 >
                                   <Icon icon="heart" />
                                 </Button>
-                                {!!userId && !commentIsEmpty && (
-                                  <ZeroButton
-                                    contentId={commentId}
-                                    contentType="comment"
-                                    content={comment.content}
+                                {!!userId && !commentIsEmpty && askZeroSupported && (
+                                  <AskAgentButton
+                                    context={{
+                                      kind: 'comment',
+                                      id: commentId,
+                                      label: 'this comment'
+                                    }}
                                     style={{ marginLeft: '1rem' }}
                                     hideLabel={deviceIsMobile || deviceIsTablet}
                                   />

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { dismissWebsiteAgentPrompts } from '../WebsiteAgentSpotlight';
+import type { AssistantAskContext } from './dockState';
 import {
   EMPTY_ASSISTANT_REPLY,
   attachAssistantConversationListeners,
@@ -32,11 +33,12 @@ export default function useAssistantConversation({
   const replying = !!reply && !reply.done;
 
   const send = useCallback(
-    async (content: string) => {
+    async (content: string, askContext?: AssistantAskContext | null) => {
       const message = content.trim();
       // One question at a time: a new one mid-reply would mix the two replies.
       const current = getAssistantReply(channelId);
-      if (!message || !channelId || sending || (current && !current.done)) {
+      // with something attached the attachment is the question; text is optional
+      if ((!message && !askContext) || !channelId || sending || (current && !current.done)) {
         return false;
       }
       setSending(true);
@@ -51,7 +53,23 @@ export default function useAssistantConversation({
             content: message,
             channelId,
             isNotification: false,
-            subjectId: 0
+            subjectId: 0,
+            // what the member pressed "Ask" on; the server re-reads it as them
+            // and keeps only what it can verify
+            ...(askContext
+              ? {
+                  settings: {
+                    askedAbout: {
+                      kind: askContext.kind,
+                      id: askContext.id,
+                      rootType: askContext.rootType,
+                      label: askContext.label,
+                      path: askContext.path,
+                      excerpt: askContext.excerpt
+                    }
+                  }
+                }
+              : {})
           },
           targetMessageId: null,
           targetSubject: null,

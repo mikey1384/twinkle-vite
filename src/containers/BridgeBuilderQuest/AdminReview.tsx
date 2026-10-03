@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
@@ -7,15 +8,16 @@ import useQuestAction from './useQuestAction';
 import { QuestNote, questInputClass, questLabelClass } from './StepCard';
 import type { CrewView } from './types';
 
-// Admin-only controls on the quest page. The same three decisions exist in
-// the CLI: `lumine admin meetup approve-plan | send-back | approve`.
+
+// Admin-only controls on the quest page. The same decisions exist in the CLI:
+// `lumine admin meetup approve-crew | approve-grownup | approve-plan | send-back | approve`.
 export default function AdminReview({
   crew,
   stage,
   onChanged
 }: {
   crew: CrewView;
-  stage: 'plan' | 'video';
+  stage: 'crew' | 'grownUp' | 'plan' | 'video';
   onChanged: () => Promise<void>;
 }) {
   const reviewMeetupCrew = useAppContext(
@@ -24,6 +26,48 @@ export default function AdminReview({
   const [note, setNote] = useState('');
   const [attended, setAttended] = useState<number[]>([]);
   const { busy, error, setError, run } = useQuestAction(onChanged);
+
+  // The crew step and the grown-up step: one approve button (every step passes
+  // through the owner; nothing to send back, the crew just keeps waiting).
+  if (stage === 'crew' || stage === 'grownUp') {
+    const notYet = stage === 'crew' ? crew.progress.crewAwaitingApproval : crew.progress.grownUpAwaitingApproval;
+    if (!notYet) return null;
+    return (
+      <div
+        className={css`
+          border: 2px dashed ${Color.logoBlue(0.5)};
+          border-radius: 1rem;
+          padding: 1.2rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.8rem;
+          background: ${Color.logoBlue(0.04)};
+        `}
+      >
+        <b style={{ fontSize: '1.4rem', color: Color.logoBlue() }}>
+          Your approval: {stage === 'crew' ? 'the crew' : 'parents and the adult'}
+        </b>
+        <div>
+          <Button
+            color="green"
+            loading={busy}
+            disabled={busy}
+            onClick={() =>
+              run(() =>
+                reviewMeetupCrew({
+                  crewId: crew.crewId,
+                  action: stage === 'crew' ? 'approve-crew' : 'approve-grownup'
+                })
+              )
+            }
+          >
+            {stage === 'crew' ? 'Approve crew' : 'Approve parents and adult'}
+          </Button>
+        </div>
+        {error && <QuestNote tone="warning">{error}</QuestNote>}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -91,6 +135,16 @@ export default function AdminReview({
           flex-wrap: wrap;
         `}
       >
+        {stage === 'plan' && /^twinkle .+ branch classroom$/i.test(crew.plan.area || '') ? (
+          // a classroom plan is approved with its room and times, which only
+          // the headmaster desk picks
+          <Link
+            to="/achievements/bridge-builder/desk"
+            style={{ alignSelf: 'center', fontWeight: 700 }}
+          >
+            Approve at the headmaster desk (pick the room and times) →
+          </Link>
+        ) : (
         <Button
           color="green"
           loading={busy}
@@ -108,6 +162,7 @@ export default function AdminReview({
         >
           {stage === 'plan' ? 'Approve plan' : 'Approve and unlock'}
         </Button>
+        )}
         <Button
           color="orange"
           variant="soft"

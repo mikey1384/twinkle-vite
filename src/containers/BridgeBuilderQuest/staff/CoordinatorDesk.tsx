@@ -1,3 +1,4 @@
+import DateCalendar from '~/components/DateCalendar';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
@@ -659,7 +660,7 @@ function ApplicationView({
             </div>
             {useCustom && (
               <div className={css`display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;`}>
-                <input type="date" aria-label="Date" className={questInputClass} style={{ width: '15rem' }} value={custom.date} disabled={readOnly} onChange={(event) => setCustom({ ...custom, date: event.target.value })} />
+                <DateCalendar value={custom.date} disabled={readOnly} placeholder="Date" onChange={(date) => setCustom({ ...custom, date })} />
                 <input type="time" aria-label="Start" className={questInputClass} style={{ width: '13rem' }} value={custom.start} disabled={readOnly} onChange={(event) => setCustom({ ...custom, start: event.target.value })} />
                 <span>–</span>
                 <input type="time" aria-label="End" className={questInputClass} style={{ width: '13rem' }} value={custom.end} disabled={readOnly} onChange={(event) => setCustom({ ...custom, end: event.target.value })} />

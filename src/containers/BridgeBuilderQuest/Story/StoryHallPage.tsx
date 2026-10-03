@@ -28,12 +28,20 @@ export default function StoryHallPage({ mode }: { mode: 'hall' | 'examples' }) {
   const loadMeetupSampleStories = useAppContext(
     (v) => v.requestHelpers.loadMeetupSampleStories
   );
+  const trackMeetupQuestView = useAppContext(
+    (v) => v.requestHelpers.trackMeetupQuestView
+  );
   const [stories, setStories] = useState<StoryCardData[] | null>(null);
   const [samples, setSamples] = useState<StoryCardData[]>([]);
   const [nextBefore, setNextBefore] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const isHall = mode === 'hall';
+
+  useEffect(() => {
+    if (!isHall && userId) trackMeetupQuestView('examples_page');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHall, userId]);
 
   useEffect(() => {
     loadMeetupSampleStories()

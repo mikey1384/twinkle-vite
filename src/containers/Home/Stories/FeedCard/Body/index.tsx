@@ -54,6 +54,7 @@ import { normalizeRootType } from '../helpers/navigation';
 import { getCommentPreviewPlainText } from '../helpers/commentPreviewText';
 import type { Comment } from '~/types';
 import DailyGoalsPreview from './DailyGoalsPreview';
+import MeetupStepPreview from './MeetupStepPreview';
 import VideoPreview from './VideoPreview';
 import {
   type FeedCardSizing,
@@ -231,6 +232,14 @@ export default function Body({
     }
     if (contentType === 'xpChange') {
       return renderDailyGoalsPreview();
+    }
+    if (contentType === 'meetupQuestStep') {
+      return (
+        <MeetupStepPreview
+          content={content}
+          textClassName={primaryPreviewTextClass}
+        />
+      );
     }
     if (contentType === 'sharedTopic') {
       return renderSharedTopicPreview();

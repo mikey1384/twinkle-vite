@@ -22,18 +22,31 @@ export function assistantVoiceForUserId(userId: unknown) {
   return undefined;
 }
 
-// Everything else is read by the assistant this user picked on Home (or last
-// called); Zero until they pick.
+// The assistant this user picked on Home beside the call button (or last
+// called); Zero until they pick. The one place that answers "which agent is
+// mine": the Ask buttons, the read-aloud voice and the dock all derive from it.
+export function userAssistant(
+  userId: number | null | undefined
+): 'Zero' | 'Ciel' {
+  return getHomeCallAssistant(userId || null) || 'Zero';
+}
+
+// Everything that is not an assistant's own words is read aloud by that
+// assistant.
 export function userReadAloudVoice(userId: number | null | undefined) {
-  return assistantVoice(getHomeCallAssistant(userId || null) || 'Zero');
+  return assistantVoice(userAssistant(userId));
 }
 
 // The same, kept current: a new pick (on Home, or by calling one of them)
-// changes the voice of Listen buttons already on screen.
-export function useUserReadAloudVoice(userId: number | null | undefined) {
+// changes the voice of Listen buttons and the Ask buttons already on screen.
+export function useUserAssistant(userId: number | null | undefined) {
   return useSyncExternalStore(subscribeReadAloudVoice, () =>
-    userReadAloudVoice(userId)
+    userAssistant(userId)
   );
+}
+
+export function useUserReadAloudVoice(userId: number | null | undefined) {
+  return assistantVoice(useUserAssistant(userId));
 }
 
 function subscribeReadAloudVoice(listener: () => void) {

@@ -5,6 +5,7 @@ import Collect from './Collect';
 import Tabs from './Tabs';
 import Subchannels from './Subchannels';
 import PinnedTopics from './PinnedTopics';
+import CrewHubPanel from '../CrewChat/CrewHubPanel';
 import ChatQuickAccess from './QuickAccess';
 import ChatFlatButton from '../FlatButton';
 import Layout from './Layout';
@@ -102,6 +103,12 @@ export default function LeftMenu({
       isAIChat
     ]
   );
+  // a Bridge Builder crew's chat fills the empty "In this chat" column with
+  // the crew hub (server marks the channel in settings.meetupCrewId)
+  const crewHubId =
+    !chatType && selectedChannelId === currentChannel?.id
+      ? Number(currentChannel?.settings?.meetupCrewId || 0)
+      : 0;
   const isTopicMenuAvailable =
     topicNavigation.isVisible &&
     selectedChannelId === currentChannel?.id &&
@@ -173,8 +180,9 @@ export default function LeftMenu({
           </>
         }
         channelNavigation={
-          subchannelsShown || isTopicMenuAvailable ? (
+          crewHubId > 0 || subchannelsShown || isTopicMenuAvailable ? (
             <>
+              {crewHubId > 0 ? <CrewHubPanel crewId={crewHubId} /> : null}
               {subchannelsShown ? (
                 <Subchannels
                   currentChannel={currentChannel}

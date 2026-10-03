@@ -117,7 +117,7 @@ export default function StepTracker({
                 ) : isCurrent ? (
                   <Icon icon={STEP_ICONS[step.key]} />
                 ) : (
-                  <Icon icon="lock" style={{ color: Color.darkGray() }} />
+                  <span style={{ color: Color.darkGray() }}>{step.number}</span>
                 )}
               </span>
               <span
@@ -140,45 +140,6 @@ export default function StepTracker({
           );
         })}
       </ol>
-      <div
-        className={css`
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.6rem;
-          margin-top: 1.6rem;
-          justify-content: center;
-        `}
-      >
-        {progress.steps.map((step) => {
-          const earned = step.state === 'done';
-          return (
-            <span
-              key={step.key}
-              title={earned ? 'Badge earned' : 'Not earned yet'}
-              className={css`
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                padding: 0.4rem 1rem;
-                border-radius: 2rem;
-                font-size: 1.2rem;
-                font-weight: bold;
-                border: 1px solid
-                  ${earned ? Color.gold() : 'var(--ui-border)'};
-                background: ${earned ? Color.gold(0.15) : 'transparent'};
-                color: ${earned ? Color.darkerGray() : Color.gray()};
-                ${earned ? `animation: ${pop} 0.45s ease-out;` : ''}
-              `}
-            >
-              <Icon
-                icon={earned ? 'award' : STEP_ICONS[step.key]}
-                style={{ color: earned ? Color.gold() : Color.gray() }}
-              />
-              {step.badge}
-            </span>
-          );
-        })}
-      </div>
       {!completed && progress.blocking && (
         <div
           role="status"
@@ -186,8 +147,8 @@ export default function StepTracker({
             margin-top: 1.6rem;
             padding: 1.2rem 1.4rem;
             border-radius: 1rem;
-            border-left: 0.5rem solid ${Color.orange()};
-            background: ${Color.orange(0.1)};
+            border-left: 0.5rem solid ${Color.logoBlue()};
+            background: ${Color.logoBlue(0.08)};
             font-size: 1.5rem;
             color: ${Color.black()};
             display: flex;
@@ -196,12 +157,12 @@ export default function StepTracker({
           `}
         >
           <Icon
-            icon="exclamation-circle"
-            style={{ color: Color.orange(), marginTop: '0.3rem' }}
+            icon="arrow-right"
+            style={{ color: Color.logoBlue(), marginTop: '0.3rem' }}
           />
           <div>
-            <b>What&apos;s blocking you: </b>
-            {progress.blocking}
+            <b>{/^Waiting/.test(progress.blocking) ? 'Now: ' : 'Next up: '}</b>
+            {progress.blocking.replace(/^(Next|Waiting):\s*/, '')}
           </div>
         </div>
       )}

@@ -42,6 +42,8 @@ import TopicStartNotification from './TopicStartNotification';
 import TransferMessage from './TransferMessage';
 import AICardOfferMessage from './AICardOfferMessage';
 import { parseMessageSettings } from './messageSettings';
+import AskedAboutChip from './AskedAboutChip';
+import AlertActions from './AlertActions';
 import { normalizeAICardOfferMessagePayload } from '~/helpers/aiCardOfferNotice';
 import type { MessageBodyProps } from './types';
 import useOptimisticSave from './hooks/useOptimisticSave';
@@ -932,6 +934,7 @@ function MessageBody({
                 </span>
               </div>
             )}
+            <AskedAboutChip settings={message?.settings} />
             <Content
               appliedUsername={appliedUsername}
               channelId={channelId}
@@ -987,6 +990,7 @@ function MessageBody({
               userCanEditThis={userCanEditThis}
               userId={userId}
             />
+            <AlertActions settings={message?.settings} />
             <ActionButtons
               currentChannelId={currentChannel.id}
               dropdownShown={highlighted}

@@ -23,7 +23,7 @@ import XPRewardInterface from '~/components/XPRewardInterface';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
-import ZeroButton from '~/components/Buttons/ZeroButton';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import AiEnergySponsorButton, {
   shouldRenderAiEnergySponsorNotice
 } from '~/components/Comments/AiEnergySponsorButton';
@@ -642,11 +642,16 @@ function Reply({
                           >
                             <Icon icon="heart" />
                           </Button>
-                          {!!userId && !replyIsEmpty && (
-                            <ZeroButton
-                              contentId={reply.id}
-                              contentType="comment"
-                              content={reply.content}
+                          {!!userId &&
+                            !replyIsEmpty &&
+                            (rootContent?.contentType || parent.rootType) !==
+                              'meetupQuestStep' && (
+                            <AskAgentButton
+                              context={{
+                                kind: 'comment',
+                                id: reply.id,
+                                label: 'this reply'
+                              }}
                               style={{ marginLeft: '1rem' }}
                               hideLabel={
                                 isMobile(navigator) || isTablet(navigator)

@@ -11,6 +11,7 @@ import ProfilePic from '~/components/ProfilePic';
 import UserPopup from '~/components/UserPopup';
 import UserListModal from '~/components/Modals/UserListModal';
 import ShareButton from '~/components/Buttons/ShareButton';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import { Link } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -284,12 +285,28 @@ export default function ItemPanel({
             top: 1.2rem;
             right: 1.2rem;
             z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
             @media (max-width: ${mobileMaxWidth}) {
               top: 0.8rem;
               right: 0.8rem;
             }
           `}
         >
+          {/* help earning one you do not have yet */}
+          {!isUnlocked && (
+            <AskAgentButton
+              label="How do I earn this?"
+              style={{ padding: '0.4rem 0.9rem' }}
+              context={{
+                kind: 'page',
+                label: `the "${itemName}" achievement`,
+                path: achievementPath,
+                excerpt: description
+              }}
+            />
+          )}
           <ShareButton
             linkPath={achievementPath}
             buttonStyle={{ fontSize: '1.1rem' }}
@@ -315,7 +332,7 @@ export default function ItemPanel({
             grid-area: title;
             font-weight: bold;
             font-size: 2rem;
-            ${shareShown ? 'padding-right: 9rem;' : ''}
+            ${shareShown ? `padding-right: ${isUnlocked ? 9 : 22}rem;` : ''}
             @media (max-width: ${mobileMaxWidth}) {
               padding-right: 0;
             }

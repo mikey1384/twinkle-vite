@@ -11,11 +11,48 @@ function set(next: 'Zero' | 'Ciel' | null) {
   listeners.forEach((listener) => listener());
 }
 
-export function openAssistantDock(assistant: 'Zero' | 'Ciel') {
-  set(assistant);
+// What the member is asking about: set when they press an "Ask Zero/Ciel"
+// button on something (a comment, a post, a page). The dock shows it as a
+// small chip above the message box and sends it with the next message, so the
+// agent knows what "this" means, the way Grok attaches the post on X.
+export interface AssistantAskContext {
+  // what it is: 'comment', 'subject', 'achievement', 'bridgeBuilder', 'page'...
+  kind: string;
+  // the thing's id when it has one
+  id?: number;
+  // a pass's kind ('mission' or 'achievement'), as the feed knows it
+  rootType?: string;
+  // a short name for the chip ("this comment", "the Bridge Builder meetup quest")
+  label: string;
+  // where it lives, for the agent to open or link
+  path?: string;
+  // a short excerpt of its text (the server re-reads the real thing; this is
+  // only a fallback for things with no page of their own)
+  excerpt?: string;
+}
+let askContext: AssistantAskContext | null = null;
+export function getAssistantAskContext() {
+  return askContext;
+}
+export function clearAssistantAskContext() {
+  if (!askContext) return;
+  askContext = null;
+  listeners.forEach((listener) => listener());
+}
+
+export function openAssistantDock(
+  assistant: 'Zero' | 'Ciel',
+  context?: AssistantAskContext | null
+) {
+  if (context !== undefined) askContext = context;
+  const changed = dockAssistant !== assistant;
+  dockAssistant = assistant;
+  // a new context must reach an already-open dock too
+  if (changed || context !== undefined) listeners.forEach((l) => l());
 }
 
 export function closeAssistantDock() {
+  askContext = null;
   set(null);
 }
 

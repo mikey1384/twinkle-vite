@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -74,13 +74,19 @@ export default function StepCard({
 }) {
   const isCurrent = step.state === 'current';
   const isLocked = step.state === 'locked';
+  const isDone = step.state === 'done';
+  // finished steps fold to one line and open on tap; locked ones are hidden
+  // (the step tracker above already shows what comes next)
+  const [open, setOpen] = useState(false);
+  if (isLocked) return null;
+  const bodyShown = !isDone || open;
   return (
     <section
       aria-label={`Step ${step.number}: ${step.label}`}
       className={css`
         border-radius: 1.2rem;
         border: ${isCurrent ? `2px solid ${Color.logoBlue()}` : '1px solid var(--ui-border)'};
-        background: ${isLocked ? Color.extraLightGray(0.6) : '#fff'};
+        background: #fff;
         padding: 1.4rem 1.6rem;
         margin-top: 1.2rem;
         ${isCurrent ? `box-shadow: 0 0.4rem 1.4rem ${Color.logoBlue(0.15)};` : ''}
@@ -90,11 +96,26 @@ export default function StepCard({
       `}
     >
       <header
+        onClick={isDone ? () => setOpen((shown) => !shown) : undefined}
+        role={isDone ? 'button' : undefined}
+        tabIndex={isDone ? 0 : undefined}
+        aria-expanded={isDone ? open : undefined}
+        onKeyDown={
+          isDone
+            ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setOpen((shown) => !shown);
+                }
+              }
+            : undefined
+        }
         className={css`
           display: flex;
           align-items: center;
           gap: 1rem;
           flex-wrap: wrap;
+          cursor: ${isDone ? 'pointer' : 'default'};
         `}
       >
         <span
@@ -120,7 +141,7 @@ export default function StepCard({
           className={css`
             font-size: 1.7rem;
             font-weight: bold;
-            color: ${isLocked ? Color.darkGray() : Color.black()};
+            color: ${Color.black()};
             margin: 0;
           `}
         >
@@ -145,24 +166,26 @@ export default function StepCard({
           `}
         >
           {step.state === 'done'
-            ? 'Done'
-            : isCurrent
-            ? 'Your bottleneck now'
-            : 'Locked'}
+            ? open
+              ? 'Done · hide'
+              : 'Done · tap to open'
+            : step.waiting
+            ? 'Waiting'
+            : 'Do this next'}
         </span>
       </header>
+      {bodyShown && (
       <p
         className={css`
           font-size: 1.4rem;
-          color: ${isLocked ? Color.darkGray() : Color.darkerGray()};
+          color: ${Color.darkerGray()};
           margin: 0.8rem 0 0;
         `}
       >
-        {isLocked
-          ? `Unlocks after step ${step.number - 1}. ${step.detail}`
-          : step.detail}
+        {step.detail}
       </p>
-      {React.Children.toArray(children).length > 0 && (
+      )}
+      {bodyShown && React.Children.toArray(children).length > 0 && (
         <div
           className={css`
             margin-top: 1.2rem;

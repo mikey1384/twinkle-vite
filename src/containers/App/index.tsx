@@ -134,6 +134,12 @@ const BridgeBuilderQuest = lazyWithRetry(
 const BridgeBuilderCrewPage = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/CrewDetailPage')
 );
+const BridgeBuilderOrgAsks = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/OrgAsksPage')
+);
+const BridgeBuilderEmails = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/EmailsReviewPage')
+);
 const BridgeBuilderHeadmasterDesk = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/staff/HeadmasterDesk')
 );
@@ -156,6 +162,9 @@ const BridgeStoryEditorPage = lazyWithRetry(
 );
 const BridgeStoryConsentPage = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/Story/ParentConsentPage')
+);
+const BridgeParentBriefPage = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/Parent/ParentBriefPage')
 );
 const BridgeStoryReveal = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/Story/StoryReveal')
@@ -428,7 +437,8 @@ export default function App() {
       location.pathname.startsWith('/verify/') ||
       // a parent's or guardian's consent page needs no account
       location.pathname === '/signup/guardian' ||
-      location.pathname === '/bridge-builder/consent')
+      location.pathname === '/bridge-builder/consent' ||
+      location.pathname === '/bridge-builder/parent')
   );
 
   const prevUserId = useRef(userId);
@@ -1410,6 +1420,10 @@ export default function App() {
                   element={<ContentPage />}
                 />
                 <Route
+                  path="/bridge-steps/:contentId"
+                  element={<ContentPage />}
+                />
+                <Route
                   path="/shared-prompts/:contentId"
                   element={<ContentPage />}
                 />
@@ -1481,6 +1495,18 @@ export default function App() {
                   element={<BridgeBuilderQuest />}
                 />
                 <Route
+                  path="/achievements/bridge-builder/emails"
+                  element={<BridgeBuilderEmails />}
+                />
+                <Route
+                  path="/achievements/bridge-builder/staff"
+                  element={<BridgeBuilderQuest view="staff" />}
+                />
+                <Route
+                  path="/achievements/bridge-builder/org-asks"
+                  element={<BridgeBuilderOrgAsks />}
+                />
+                <Route
                   path="/achievements/bridge-builder/crew/:crewId"
                   element={<BridgeBuilderCrewPage />}
                 />
@@ -1507,6 +1533,10 @@ export default function App() {
                 <Route
                   path="/bridge-builder/consent"
                   element={<BridgeStoryConsentPage />}
+                />
+                <Route
+                  path="/bridge-builder/parent"
+                  element={<BridgeParentBriefPage />}
                 />
                 <Route
                   path="/achievements/bridge-builder/desk"

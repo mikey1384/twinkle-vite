@@ -1,8 +1,10 @@
+import ParentContactsAdmin from '../Parent/ParentContactsAdmin';
 import React, { useEffect, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import DateCalendar from '~/components/DateCalendar';
 import ProfilePic from '~/components/ProfilePic';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import CrewCover, { StageBadge } from '../CrewCover';
@@ -746,6 +748,24 @@ export function ApplicationDetails({
           <StageBadge stage={application.stage} achievementTitle={achievementTitle} />
         </div>
       </CrewCover>
+      {/* parents asking for this meetup: the demand the hakwon sees */}
+      {(() => {
+        const want = application.parents?.filter((p) => p.status === 'approved').length || 0;
+        return want > 0 ? (
+          <div
+            className={css`
+              padding: 0.8rem 1.6rem;
+              background: ${Color.green(0.1)};
+              color: ${Color.darkerGray()};
+              font-size: 1.45rem;
+              font-weight: 700;
+            `}
+          >
+            <Icon icon="users" style={{ marginRight: '0.6rem', color: Color.green() }} />
+            {want} of {application.members.length} parents want this meetup to happen
+          </div>
+        ) : null;
+      })()}
       <div
         className={css`
           padding: 1.6rem;
@@ -777,9 +797,12 @@ export function ApplicationDetails({
           <span className={questLabelClass}>The crew</span>
           <MemberStrip members={application.members} />
           <span className={questHelpClass}>
-            <Icon icon="check" style={{ color: Color.green() }} /> = parent OK, ticked by each student.
+            <Icon icon="check" style={{ color: Color.green() }} /> = a parent said yes.
           </span>
         </div>
+        {!!application.parents?.length && (
+          <ParentContactsAdmin crewId={application.crewId} contacts={application.parents} />
+        )}
         {decided && (
           <div
             className={css`
@@ -1210,14 +1233,12 @@ export function VenueForm({
                   })}
                 </div>
                 <div className={css`display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;`}>
-                  <input
-                    type="date"
-                    aria-label="Another date"
-                    className={questInputClass}
-                    style={{ width: '15rem' }}
+                  <DateCalendar
                     value={slotDate}
+                    min={localToday()}
                     disabled={disabled}
-                    onChange={(event) => setSlotDate(event.target.value)}
+                    placeholder="Another date"
+                    onChange={setSlotDate}
                   />
                   {QUICK_TIMES.map(([label, start, end]) => (
                     <button

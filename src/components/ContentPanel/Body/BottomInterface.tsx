@@ -5,7 +5,7 @@ import Button from '~/components/Button';
 import Likers from '~/components/Likers';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import RewardButton from '~/components/Buttons/RewardButton';
-import ZeroButton from '~/components/Buttons/ZeroButton';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import ShareButton from '~/components/Buttons/ShareButton';
 import Icon from '~/components/Icon';
 import ViewCount from '~/components/ViewCount';
@@ -32,11 +32,29 @@ import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 import { normalizeViewCount } from '~/helpers/viewCount';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
+// what the Ask button calls each kind of content (the server re-reads it as the
+// member; websiteAgent/askedContent.ts accepts exactly these kinds)
+const askableContentLabels: Record<string, string> = {
+  comment: 'this comment',
+  subject: 'this post',
+  video: 'this video',
+  url: 'this link',
+  aiStory: 'this AI story',
+  dailyReflection: 'this daily reflection',
+  bounty: 'this bounty',
+  build: 'this app',
+  sharedTopic: 'this shared prompt',
+  xpChange: 'this daily reward',
+  meetupQuestStep: 'this Bridge Builder step',
+  pass: 'this pass'
+};
+
 const nonEditableContentTypes = [
   'aiCard',
   'build',
   'pass',
   'xpChange',
+  'meetupQuestStep',
   'sharedTopic'
 ];
 
@@ -431,6 +449,7 @@ export default function BottomInterface({
           {!secretHidden &&
             contentType !== 'pass' &&
             contentType !== 'xpChange' &&
+            contentType !== 'meetupQuestStep' &&
             contentType !== 'sharedTopic' && (
               <ShareButton
                 variant="compact"
@@ -483,9 +502,19 @@ export default function BottomInterface({
               />
             )}
             {!!userId &&
-              contentType === 'comment' &&
-              !stringIsEmpty(contentObj.content) && (
-                <ZeroButton contentId={contentId} contentType={contentType} />
+              askableContentLabels[contentType] &&
+              (contentType !== 'comment' ||
+                !stringIsEmpty(contentObj.content)) && (
+                <AskAgentButton
+                  context={{
+                    kind: contentType,
+                    id: contentId,
+                    ...(contentType === 'pass' && contentObj.rootType
+                      ? { rootType: String(contentObj.rootType) }
+                      : {}),
+                    label: askableContentLabels[contentType]
+                  }}
+                />
               )}
           </div>
         )}

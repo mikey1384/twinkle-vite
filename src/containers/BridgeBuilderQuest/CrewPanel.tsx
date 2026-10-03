@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -7,9 +8,17 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import AdminReview from './AdminReview';
+import BranchField from './BranchField';
+import DateCalendar from '~/components/DateCalendar';
+import AskParentPanel from './Parent/AskParentPanel';
+import ParentContactsAdmin from './Parent/ParentContactsAdmin';
+import PlanVenue, { areaForVenue, venueFromArea, type VenueMode } from './Parent/PlanVenue';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
+import { BranchStatusBadge } from './BranchStatus';
 import CrewCover from './CrewCover';
 import { MemberAvatars } from './DirectoryCard';
 import ManageCrewPanel from './ManageCrewPanel';
+import ReplaceMemberModal from './ReplaceMemberModal';
 import StepCard, {
   QuestNote,
   questHelpClass,
@@ -25,7 +34,11 @@ import type { CrewView, QuestStepKey } from './types';
 import { formatSlot } from './staff/shared';
 
 function localToday() {
-  const now = new Date();
+  return localDateInDays(0);
+}
+
+function localDateInDays(days: number) {
+  const now = new Date(Date.now() + days * 86_400_000);
   const offset = now.getTimezoneOffset() * 60_000;
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
@@ -41,6 +54,25 @@ export default function CrewPanel({
   myId: number;
   onChanged: () => Promise<void>;
 }) {
+  const navigate = useNavigate();
+  const { hash } = useLocation();
+  // alert links end in #grown-up (a parent's question) or #review (a plan or
+  // video waiting for staff): land on that part of the page
+  useEffect(() => {
+    if (hash !== '#grown-up' && hash !== '#review') return;
+    const timer = setTimeout(
+      () =>
+        (hash === '#grown-up'
+          ? document.getElementById('grown-up-step')
+          : document.querySelector('[data-admin-review]')
+        )?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      300
+    );
+    return () => clearTimeout(timer);
+  }, [hash, crew.crewId]);
+  const trackMeetupQuestView = useAppContext(
+    (v) => v.requestHelpers.trackMeetupQuestView
+  );
   const leaveMeetupCrew = useAppContext((v) => v.requestHelpers.leaveMeetupCrew);
   const disbandMeetupCrew = useAppContext(
     (v) => v.requestHelpers.disbandMeetupCrew
@@ -57,9 +89,15 @@ export default function CrewPanel({
   const me = crew.members.find((member) => member.userId === myId);
   const { viewer, progress } = crew;
   const completed = crew.status === 'completed';
-  const stepOf = (key: QuestStepKey) =>
-    progress.steps.find((step) => step.key === key)!;
+  const stepOf = (key: QuestStepKey) => {
+    const step = progress.steps.find((s) => s.key === key)!;
+    return step.state === 'current' && /^Waiting/.test(progress.blocking)
+      ? { ...step, waiting: true }
+      : step;
+  };
 
+  const nudgeMeetupBranch = useAppContext((v) => v.requestHelpers.nudgeMeetupBranch);
+  const reviseMeetupPlan = useAppContext((v) => v.requestHelpers.reviseMeetupPlan);
   const crewAction = useQuestAction(onChanged);
   const grownUpAction = useQuestAction(onChanged);
   const planAction = useQuestAction(onChanged);
@@ -68,10 +106,18 @@ export default function CrewPanel({
   const [adultKind, setAdultKind] = useState(crew.adult.kind || 'parent');
   const [adultName, setAdultName] = useState(crew.adult.name || '');
   const [planDate, setPlanDate] = useState(crew.plan.date || '');
-  const [planArea, setPlanArea] = useState(crew.plan.area || '');
+  const initialVenue = venueFromArea(crew.plan.area || '');
+  const [planArea, setPlanArea] = useState(initialVenue.rest);
+  const [venueMode, setVenueMode] = useState<VenueMode>(initialVenue.mode);
+  // default to the member's own branch when it is a real one
+  const [venueBranch, setVenueBranch] = useState(
+    initialVenue.branch || (me?.branchVerified ? me.branch : '')
+  );
   const [planActivity, setPlanActivity] = useState(crew.plan.activity || '');
   const [manageShown, setManageShown] = useState(false);
   const [confirmExit, setConfirmExit] = useState<'leave' | 'disband' | null>(null);
+  const [confirmRevise, setConfirmRevise] = useState(false);
+  const [replacing, setReplacing] = useState<CrewView['members'][number] | null>(null);
   const [exitError, setExitError] = useState('');
   const founder = crew.members.find((member) => member.isFounder);
   // the server hands leadership to the longest-standing other member
@@ -80,6 +126,35 @@ export default function CrewPanel({
   useEffect(() => {
     setBranch(me?.branch || '');
   }, [me?.branch]);
+
+  // the member's own branch editor; it moves to the top of step 1 as a prompt
+  // while their branch is not a verified Twinkle branch
+  const mustVerifyBranch = !!me && !me.branchVerified;
+  const branchEditor =
+    viewer.isMember && !viewer.detailsLocked ? (
+      <div>
+        <BranchField
+          id="meetup-my-branch"
+          value={branch}
+          onChange={setBranch}
+          placeholder="Your branch's name"
+        />
+        <Button
+          variant="soft"
+          color="logoBlue"
+          style={{ marginTop: '0.8rem' }}
+          disabled={crewAction.busy || !branch.trim() || branch.trim() === me?.branch}
+          onClick={() => {
+            if (mustVerifyBranch) trackMeetupQuestView('branch_verify_pick');
+            crewAction.run(() =>
+              updateMyMeetupMembership({ crewId: crew.crewId, branch })
+            );
+          }}
+        >
+          Save branch
+        </Button>
+      </div>
+    ) : null;
   useEffect(() => {
     setAdultKind(crew.adult.kind || 'parent');
     setAdultName(crew.adult.name || '');
@@ -165,6 +240,30 @@ export default function CrewPanel({
         </div>
         {viewer.isMember && crew.status === 'active' && (
           <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* help with whatever step the crew is on; the server-owned "next
+                up" line tells the agent where they are */}
+            <AskAgentButton
+              label="Help me with this step"
+              context={{
+                kind: 'page',
+                label: `my Bridge Builder crew "${crew.displayName}"`,
+                path: `/achievements/bridge-builder/crew/${crew.crewId}`,
+                excerpt: progress.blocking || 'Every step is done.'
+              }}
+            />
+            {crew.chat && (
+              <Button
+                size="sm"
+                color="logoBlue"
+                onClick={() => {
+                  trackMeetupQuestView('crew_chat_open');
+                  navigate(`/chat/${crew.chat?.pathId}`);
+                }}
+              >
+                <Icon icon="comments" style={{ marginRight: '0.5rem' }} />
+                Open crew chat
+              </Button>
+            )}
             {viewer.isFounder && (
               <Button
                 size="sm"
@@ -215,15 +314,6 @@ export default function CrewPanel({
           {crew.about}
         </p>
       )}
-      {viewer.isMember && crew.status === 'active' && (
-        <p className={questHelpClass} style={{ margin: '0.8rem 0 0' }}>
-          {viewer.isFounder
-            ? 'As the founder you can rename the crew, invite or remove members, hand over leadership or disband it (Manage crew). '
-            : `${founder?.username || 'The founder'} leads the crew: they invite and remove members. `}
-          Every member can edit their own branch and parent tick, name the
-          adult, send the plan, upload the video, or leave.
-        </p>
-      )}
       {manageShown && viewer.isFounder && crew.status === 'active' && (
         <ManageCrewPanel
           crew={crew}
@@ -258,6 +348,27 @@ export default function CrewPanel({
           onConfirm={handleExit}
         />
       )}
+      {replacing && (
+        <ReplaceMemberModal
+          crewId={crew.crewId}
+          member={replacing}
+          onHide={() => setReplacing(null)}
+          onReplaced={onChanged}
+        />
+      )}
+      {confirmRevise && (
+        <ConfirmModal
+          title="Revise the plan?"
+          descriptionFontSize="1.5rem"
+          description="The plan goes back for a new check, and any classroom time is paused. Parents who already said yes will see the new version."
+          confirmButtonLabel="Revise the plan"
+          onHide={() => setConfirmRevise(false)}
+          onConfirm={async () => {
+            setConfirmRevise(false);
+            await planAction.run(() => reviseMeetupPlan(crew.crewId));
+          }}
+        />
+      )}
       <div style={{ height: '1.6rem' }} />
 
       <StepTracker progress={progress} completed={completed} />
@@ -265,8 +376,14 @@ export default function CrewPanel({
       {completed && (
         <div style={{ marginTop: '1.6rem' }}>
           <QuestNote tone="success">
-            Your crew finished the quest! Everyone who showed up unlocked{' '}
-            <b>{achievementTitle}</b>:{' '}
+            Your crew finished the quest
+            {crew.tier ? (
+              <>
+                {' '}
+                at <b>{crew.tier.charAt(0).toUpperCase() + crew.tier.slice(1)}</b> tier
+              </>
+            ) : null}
+            ! Everyone who showed up unlocked <b>{achievementTitle}</b>:{' '}
             {crew.members
               .filter((member) => member.attended)
               .map((member) => member.username)
@@ -286,6 +403,29 @@ export default function CrewPanel({
       )}
 
       <StepCard step={stepOf('crew')}>
+        {!completed && crew.progress.tierHint && (
+          <QuestNote tone="info">{crew.progress.tierHint}</QuestNote>
+        )}
+        {mustVerifyBranch && branchEditor && (
+          <div
+            className={css`
+              padding: 1.2rem 1.4rem;
+              border-radius: 1rem;
+              border: 2px solid ${Color.orange()};
+              background: #fff;
+            `}
+          >
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.4rem' }}>
+              Which Twinkle branch do you go to?
+            </div>
+            <p style={{ fontSize: '1.3rem', color: Color.darkerGray(), margin: '0 0 1rem' }}>
+              {me?.branchStatus === 'pending'
+                ? `"${me.branch}" is not one of our Twinkle branches yet, and staff are checking it. If it was a mistake, pick the exact Twinkle branch you go to.`
+                : 'Pick the exact Twinkle branch you go to. Your crew cannot move on until everyone has an approved branch.'}
+            </p>
+            {branchEditor}
+          </div>
+        )}
         <ul
           className={css`
             list-style: none;
@@ -326,8 +466,9 @@ export default function CrewPanel({
                   font-size: 1.2rem;
                 `}
               >
-                {member.branch}
+                {member.branch || 'no branch yet'}
               </span>
+              <BranchStatusBadge member={member} />
               {member.isFounder && (
                 <span style={{ fontSize: '1.2rem', color: Color.darkGray() }}>
                   <Icon icon="crown" style={{ color: Color.gold() }} /> founder
@@ -336,172 +477,34 @@ export default function CrewPanel({
               {member.userId === myId && (
                 <span style={{ fontSize: '1.2rem', color: Color.darkGray() }}>(you)</span>
               )}
+              {(viewer.isFounder || viewer.isAdmin) &&
+                member.userId !== myId &&
+                !member.branchVerified && (
+                  <Button
+                    size="sm"
+                    color="orange"
+                    disabled={crewAction.busy}
+                    style={{ marginLeft: 'auto' }}
+                    onClick={() =>
+                      crewAction.run(() =>
+                        nudgeMeetupBranch({ crewId: crew.crewId, userId: member.userId })
+                      )
+                    }
+                  >
+                    Nudge to fix branch
+                  </Button>
+                )}
             </li>
           ))}
         </ul>
-        {viewer.isMember && !viewer.detailsLocked && (
-          <div>
-            <label className={questLabelClass} htmlFor="meetup-my-branch">
-              Your Twinkle branch
-            </label>
-            <div style={{ display: 'flex', gap: '0.6rem' }}>
-              <input
-                id="meetup-my-branch"
-                className={questInputClass}
-                value={branch}
-                maxLength={40}
-                placeholder="For example: Daechi"
-                onChange={(event) => setBranch(event.target.value)}
-              />
-              <Button
-                variant="soft"
-                color="logoBlue"
-                disabled={crewAction.busy || !branch.trim() || branch.trim() === me?.branch}
-                onClick={() =>
-                  crewAction.run(() =>
-                    updateMyMeetupMembership({ crewId: crew.crewId, branch })
-                  )
-                }
-              >
-                Save
-              </Button>
-            </div>
+        {!mustVerifyBranch && branchEditor}
+        {viewer.isAdmin && crew.status === 'active' && (
+          <div data-admin-review>
+            <AdminReview crew={crew} stage="crew" onChanged={onChanged} />
           </div>
         )}
         {crewAction.error && (
           <QuestNote tone="warning">{crewAction.error}</QuestNote>
-        )}
-      </StepCard>
-
-      <StepCard step={stepOf('grownUp')}>
-        {stepOf('grownUp').state !== 'locked' && (
-          <>
-            {me && !viewer.frozen && (
-              <label
-                className={css`
-                  display: flex;
-                  align-items: flex-start;
-                  gap: 0.8rem;
-                  font-size: 1.4rem;
-                  cursor: pointer;
-                `}
-              >
-                <input
-                  type="checkbox"
-                  style={{ marginTop: '0.35rem' }}
-                  checked={me.parentOk}
-                  disabled={grownUpAction.busy}
-                  onChange={() =>
-                    grownUpAction.run(() =>
-                      updateMyMeetupMembership({
-                        crewId: crew.crewId,
-                        parentOk: !me.parentOk
-                      })
-                    )
-                  }
-                />
-                <span>
-                  <b>My parent knows about this and said yes</b>
-                  <span className={questHelpClass} style={{ display: 'block' }}>
-                    Only tick this after you really asked. Admins check with
-                    teachers before approving anything.
-                  </span>
-                </span>
-              </label>
-            )}
-            <div
-              className={css`
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.6rem;
-                font-size: 1.3rem;
-              `}
-            >
-              {crew.members.map((member) => (
-                <span
-                  key={member.userId}
-                  style={{
-                    color: member.parentOk ? Color.green() : Color.darkGray()
-                  }}
-                >
-                  <Icon icon={member.parentOk ? 'check-circle' : ['far', 'circle']} />{' '}
-                  {member.username}
-                </span>
-              ))}
-            </div>
-            {viewer.isMember && !viewer.detailsLocked ? (
-              <div>
-                <span className={questLabelClass}>Which adult is coming?</span>
-                <div
-                  className={css`
-                    display: flex;
-                    gap: 0.6rem;
-                    flex-wrap: wrap;
-                    margin-bottom: 0.6rem;
-                  `}
-                >
-                  {[
-                    ['parent', 'A parent'],
-                    ['teacher', 'A Twinkle teacher']
-                  ].map(([value, label]) => (
-                    <Button
-                      key={value}
-                      size="sm"
-                      variant={adultKind === value ? 'solid' : 'outline'}
-                      color="logoBlue"
-                      aria-pressed={adultKind === value}
-                      onClick={() => setAdultKind(value)}
-                    >
-                      {label}
-                    </Button>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: '0.6rem' }}>
-                  <input
-                    className={questInputClass}
-                    value={adultName}
-                    maxLength={80}
-                    placeholder={
-                      adultKind === 'teacher'
-                        ? 'Name and role, for example: Teacher Kim (Daechi)'
-                        : "For example: Minjun's mom"
-                    }
-                    onChange={(event) => setAdultName(event.target.value)}
-                  />
-                  <Button
-                    variant="soft"
-                    color="logoBlue"
-                    disabled={grownUpAction.busy || !adultName.trim()}
-                    onClick={() =>
-                      grownUpAction.run(() =>
-                        setMeetupCrewAdult({
-                          crewId: crew.crewId,
-                          kind: adultKind,
-                          name: adultName
-                        })
-                      )
-                    }
-                  >
-                    Save
-                  </Button>
-                </div>
-                <div className={questHelpClass}>
-                  A name and role only. No phone numbers.
-                </div>
-              </div>
-            ) : crew.adult.kind ? (
-              <div style={{ fontSize: '1.4rem' }}>
-                Adult coming:{' '}
-                <b>
-                  {crew.adult.kind === 'teacher' ? 'Twinkle teacher' : 'Parent'}:{' '}
-                  {crew.adult.name}
-                </b>
-              </div>
-            ) : null}
-            {grownUpAction.error && (
-              <QuestNote tone="warning">{grownUpAction.error}</QuestNote>
-            )}
-          </>
         )}
       </StepCard>
 
@@ -535,39 +538,29 @@ export default function CrewPanel({
             )}
             {planEditable ? (
               <>
+                <ParentSuggestions crew={crew} canRevise={false} onRevise={() => undefined} />
                 <ExamplesHint />
                 <div>
                   <label className={questLabelClass} htmlFor="meetup-plan-date">
                     Date
                   </label>
-                  <input
+                  <DateCalendar
                     id="meetup-plan-date"
-                    type="date"
-                    className={questInputClass}
-                    style={{ maxWidth: '22rem' }}
-                    min={localToday()}
                     value={planDate}
-                    onChange={(event) => setPlanDate(event.target.value)}
+                    min={localToday()}
+                    max={localDateInDays(365)}
+                    placeholder="Pick the meetup date"
+                    onChange={setPlanDate}
                   />
                 </div>
-                <div>
-                  <label className={questLabelClass} htmlFor="meetup-plan-area">
-                    General area
-                  </label>
-                  <input
-                    id="meetup-plan-area"
-                    className={questInputClass}
-                    maxLength={60}
-                    value={planArea}
-                    placeholder="A neighbourhood, for example: Mokdong"
-                    onChange={(event) => setPlanArea(event.target.value)}
-                  />
-                  <div className={questHelpClass}>
-                    Neighbourhood only. Never an address, a building or a phone
-                    number: your crew can share the exact spot with the adult
-                    who is coming.
-                  </div>
-                </div>
+                <PlanVenue
+                  mode={venueMode}
+                  branch={venueBranch}
+                  other={planArea}
+                  onMode={setVenueMode}
+                  onBranch={setVenueBranch}
+                  onOther={setPlanArea}
+                />
                 <div>
                   <label
                     className={questLabelClass}
@@ -581,21 +574,32 @@ export default function CrewPanel({
                     rows={4}
                     maxLength={1000}
                     value={planActivity}
-                    placeholder="For example: visit the science museum and each of us explains one exhibit in English"
+                    placeholder="For example: we each explain one math puzzle in English and build a paper bridge together"
                     onChange={(event) => setPlanActivity(event.target.value)}
                   />
+                  {planActivity.trim().length < 20 && (
+                    <div className={questHelpClass}>
+                      At least 20 letters ({planActivity.trim().length}/20)
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Button
                     color="green"
                     loading={planAction.busy}
-                    disabled={planAction.busy || !viewer.canSubmitPlan}
+                    disabled={
+                      planAction.busy ||
+                      !viewer.canSubmitPlan ||
+                      !planDate ||
+                      planActivity.trim().length < 20 ||
+                      !areaForVenue(venueMode, venueBranch, planArea).trim()
+                    }
                     onClick={() =>
                       planAction.run(() =>
                         submitMeetupPlan({
                           crewId: crew.crewId,
                           date: planDate,
-                          area: planArea,
+                          area: areaForVenue(venueMode, venueBranch, planArea),
                           activity: planActivity
                         })
                       )
@@ -605,7 +609,7 @@ export default function CrewPanel({
                   </Button>
                   {!viewer.canSubmitPlan && (
                     <div className={questHelpClass}>
-                      Finish steps 1 and 2 first.
+                      Staff need to approve your crew first.
                     </div>
                   )}
                 </div>
@@ -638,16 +642,122 @@ export default function CrewPanel({
             {viewer.isAdmin &&
               crew.status === 'active' &&
               crew.plan.status === 'pending' && (
-                <AdminReview crew={crew} stage="plan" onChanged={onChanged} />
+                <div data-admin-review>
+                  <AdminReview crew={crew} stage="plan" onChanged={onChanged} />
+                </div>
               )}
           </>
         )}
       </StepCard>
 
+      <div id="grown-up-step">
+      <StepCard step={stepOf('grownUp')}>
+        {stepOf('grownUp').state !== 'locked' && (
+          <>
+            {viewer.isAdmin && crew.status === 'active' && (
+              <div data-admin-review>
+                <AdminReview crew={crew} stage="grownUp" onChanged={onChanged} />
+              </div>
+            )}
+            <ParentSuggestions crew={crew} canRevise={viewer.isMember && (crew.plan.status === 'approved' || crew.plan.status === 'pending') && crew.video.status !== 'pending' && crew.video.status !== 'approved'} onRevise={() => setConfirmRevise(true)} />
+            {crew.plan.status === 'approved' && (viewer.isMember || viewer.isAdmin) && (
+              <ParentAnswers
+                crew={crew}
+                myId={myId}
+                canReplace={viewer.isFounder && !viewer.frozen}
+                onReplace={setReplacing}
+              />
+            )}
+            {crew.parentContacts ? (
+              <ParentContactsAdmin
+                crewId={crew.crewId}
+                contacts={crew.parentContacts}
+                onChanged={onChanged}
+              />
+            ) : null}
+            {me && !viewer.frozen && viewer.parentConsent && (
+              <AskParentPanel
+                crewId={crew.crewId}
+                state={viewer.parentConsent}
+                onChanged={onChanged}
+              />
+            )}
+            {viewer.isMember && !viewer.detailsLocked ? (
+              <div>
+                <span className={questLabelClass}>Which adult is coming?</span>
+                <div
+                  className={css`
+                    display: flex;
+                    gap: 0.6rem;
+                    flex-wrap: wrap;
+                    margin-bottom: 0.6rem;
+                  `}
+                >
+                  {[
+                    ['parent', 'A parent'],
+                    ['teacher', 'A Twinkle teacher']
+                  ]
+                    .filter(([value]) => value === 'parent' || venueMode !== 'home')
+                    .map(([value, label]) => (
+                    <Button
+                      key={value}
+                      size="sm"
+                      variant={adultKind === value ? 'solid' : 'outline'}
+                      color="logoBlue"
+                      aria-pressed={adultKind === value}
+                      onClick={() => setAdultKind(value)}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <input
+                    className={questInputClass}
+                    style={{ flex: '1 1 20rem' }}
+                    value={adultName}
+                    maxLength={80}
+                    placeholder={
+                      adultKind === 'teacher'
+                        ? 'Name and role, for example: Teacher Kim (Mokdong)'
+                        : "For example: Minjun's mom"
+                    }
+                    onChange={(event) => setAdultName(event.target.value)}
+                  />
+                  <Button
+                    variant="soft"
+                    color="logoBlue"
+                    disabled={grownUpAction.busy || !adultName.trim()}
+                    onClick={() =>
+                      grownUpAction.run(() =>
+                        setMeetupCrewAdult({
+                          crewId: crew.crewId,
+                          kind: adultKind,
+                          name: adultName
+                        })
+                      )
+                    }
+                  >
+                    Save
+                  </Button>
+                </div>
+                <div className={questHelpClass}>
+                  A name and role only.
+                </div>
+              </div>
+            ) : null}
+            {grownUpAction.error && (
+              <QuestNote tone="warning">{grownUpAction.error}</QuestNote>
+            )}
+          </>
+        )}
+      </StepCard>
+      </div>
+
       <StepCard step={stepOf('film')}>
         {stepOf('film').state !== 'locked' && (
           <>
-            {crew.plan.status === 'approved' && <VenueNote venue={crew.venue} />}
+            {crew.plan.status === 'approved' && <VenueNote venue={crew.venue} isHome={venueFromArea(crew.plan.area || '').mode === 'home'} />}
             {crew.video.note && crew.video.status === 'sent_back' && (
               <QuestNote tone="warning">
                 <b>Note: </b>
@@ -669,7 +779,6 @@ export default function CrewPanel({
             )}
             {viewer.canSubmitVideo && (
               <>
-                <ExamplesHint text="Wondering what a great meetup looks like?" />
                 <VideoUploader crewId={crew.crewId} onChanged={onChanged} />
               </>
             )}
@@ -687,7 +796,9 @@ export default function CrewPanel({
         {viewer.isAdmin &&
           crew.status === 'active' &&
           crew.video.status === 'pending' && (
-            <AdminReview crew={crew} stage="video" onChanged={onChanged} />
+            <div data-admin-review>
+              <AdminReview crew={crew} stage="video" onChanged={onChanged} />
+            </div>
           )}
       </StepCard>
     </div>
@@ -710,8 +821,99 @@ export default function CrewPanel({
   }
 }
 
+// Whose parent said yes, so the crew can see who is coming. The founder can
+// replace a member whose parent hasn't said yes (no answer, or a no).
+function ParentAnswers({
+  crew,
+  myId,
+  canReplace,
+  onReplace
+}: {
+  crew: CrewView;
+  myId: number;
+  canReplace: boolean;
+  onReplace: (member: CrewView['members'][number]) => void;
+}) {
+  const waiting = crew.members.filter((member) => !member.parentOk);
+  return (
+    <div>
+      <span className={questLabelClass}>Parents&apos; answers</span>
+      <ul
+        className={css`
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+        `}
+      >
+        {crew.members.map((member) => {
+          const answer = member.parentOk ? 'yes' : member.parentSaidNo ? 'no' : 'waiting';
+          return (
+            <li
+              key={member.userId}
+              className={css`
+                display: flex;
+                align-items: center;
+                gap: 0.8rem;
+                flex-wrap: wrap;
+                font-size: 1.4rem;
+                padding: 0.5rem 0.8rem;
+                border-radius: 0.8rem;
+                background: ${Color.extraLightGray(0.5)};
+              `}
+            >
+              <MemberAvatars members={[member]} size="2.4rem" />
+              <UsernameText user={{ id: member.userId, username: member.username }} />
+              {member.userId === myId && (
+                <span style={{ fontSize: '1.2rem', color: Color.darkGray() }}>(you)</span>
+              )}
+              <span
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  color:
+                    answer === 'yes'
+                      ? Color.green()
+                      : answer === 'no'
+                      ? Color.darkGray()
+                      : Color.orange()
+                }}
+              >
+                {answer === 'yes'
+                  ? 'Parent said yes'
+                  : answer === 'no'
+                  ? "Can't come this time"
+                  : 'No answer yet'}
+              </span>
+              {canReplace && answer !== 'yes' && member.userId !== myId && (
+                <Button
+                  size="sm"
+                  variant="soft"
+                  color="logoBlue"
+                  style={{ marginLeft: 'auto' }}
+                  onClick={() => onReplace(member)}
+                >
+                  Replace
+                </Button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {canReplace && waiting.some((member) => member.userId !== myId) && (
+        <div className={questHelpClass}>
+          If a parent can&apos;t answer, you can invite someone else in their
+          place. Your plan stays the same.
+        </div>
+      )}
+    </div>
+  );
+}
+
 // The meetup place/time from the staff: members and staff only.
-function VenueNote({ venue }: { venue: CrewView['venue'] }) {
+function VenueNote({ venue, isHome }: { venue: CrewView['venue']; isHome: boolean }) {
   if (!venue || venue.status === 'none' || venue.status === 'cancelled') return null;
   const slot = venue.confirmedSlot;
   if (slot) {
@@ -733,8 +935,50 @@ function VenueNote({ venue }: { venue: CrewView['venue'] }) {
   }
   return (
     <QuestNote tone="info">
-      No classroom this time: meet somewhere else with your grown-up. Twinkle
-      staff will help confirm the time.
+      {isHome
+        ? "Meeting at the member's home, with the parent who hosts."
+        : 'Staff are arranging a classroom time. It will show here, and in your crew chat.'}
+    </QuestNote>
+  );
+}
+
+// Parents' suggested changes to the plan: shown in the Grown-up step (with the
+// Revise button) and above the plan form while the kids revise.
+function ParentSuggestions({
+  crew,
+  canRevise,
+  onRevise
+}: {
+  crew: CrewView;
+  canRevise: boolean;
+  onRevise: () => void;
+}) {
+  if (!crew.parentSuggestions?.length) {
+    return canRevise ? (
+      <div>
+        <Button size="sm" color="logoBlue" variant="soft" onClick={onRevise}>
+          Change the plan
+        </Button>
+      </div>
+    ) : null;
+  }
+  return (
+    <QuestNote tone="info">
+      <b>Parents suggested:</b>
+      <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.8rem' }}>
+        {crew.parentSuggestions.map((item) => (
+          <li key={`${item.createdAt}-${item.childUsername}`}>
+            &ldquo;{item.body}&rdquo; ({item.childUsername}&apos;s parent)
+          </li>
+        ))}
+      </ul>
+      {canRevise && (
+        <div style={{ marginTop: '0.8rem' }}>
+          <Button size="sm" color="logoBlue" variant="soft" onClick={onRevise}>
+            Revise the plan
+          </Button>
+        </div>
+      )}
     </QuestNote>
   );
 }

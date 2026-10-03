@@ -41,6 +41,9 @@ export default function Meetup({
   const loadMyMeetupQuestSummary = useAppContext(
     (v) => v.requestHelpers.loadMyMeetupQuestSummary
   );
+  const trackMeetupQuestView = useAppContext(
+    (v) => v.requestHelpers.trackMeetupQuestView
+  );
   const [quest, setQuest] = useState<{
     crewId: number;
     completedCount?: number;
@@ -51,6 +54,7 @@ export default function Meetup({
 
   useEffect(() => {
     if (!questShown || !userId) return;
+    trackMeetupQuestView('card_view');
     let active = true;
     loadMyMeetupQuestSummary()
       .then((summary: any) => {

@@ -70,7 +70,11 @@ export default function CrewDetailPage() {
             </div>
           )}
           {!page && !error && <Loading />}
-          {crew && (
+          {/* members and admins get the full crew card below, which already has
+              the cover, title, steps and members: the public card is only for
+              everyone else (no doubled header) */}
+          {page?.canSeePrivate && !privateCrew && !error && <Loading />}
+          {crew && !page?.canSeePrivate && (
             <section className={sectionClass} style={{ padding: 0, overflow: 'hidden' }}>
               <CrewCover
                 cover={crew.cover}

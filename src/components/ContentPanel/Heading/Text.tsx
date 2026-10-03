@@ -283,6 +283,15 @@ export default function HeadingText({
           an app: {renderBuildContentLink()}{' '}
         </>
       );
+    case 'meetupQuestStep': {
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} />
+          &apos;s Bridge Builder crew <b>{contentObj?.crew?.displayName}</b>{' '}
+          reached a milestone{' '}
+        </>
+      );
+    }
     case 'xpChange': {
       return (
         <>
@@ -436,6 +445,13 @@ export default function HeadingText({
         return (
           <>
             {renderCompactUser()} {renderCompactAction('completed daily goals')}
+          </>
+        );
+      case 'meetupQuestStep':
+        return (
+          <>
+            {renderCompactUser()}{' '}
+            {renderCompactAction('and crew reached a Bridge Builder milestone')}
           </>
         );
       case 'sharedTopic':

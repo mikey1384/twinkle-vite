@@ -11,12 +11,21 @@ export interface QuestStep {
   badge: string;
   state: QuestStepState;
   detail: string;
+  // client-only: the current step is waiting on someone else (staff, parents)
+  waiting?: boolean;
 }
 
 export interface QuestProgress {
   students: number;
   branches: number;
+  branchesToVerify: { userId: number; username: string; branch: string }[];
   branchNames: string[];
+  // the tier these members would earn if all showed up, and how to climb
+  tier: 'bronze' | 'silver' | 'gold' | null;
+  tierHint: string;
+  // the members are ready; only the owner's approval is missing
+  crewAwaitingApproval: boolean;
+  grownUpAwaitingApproval: boolean;
   parentsOk: number;
   adultNamed: boolean;
   crewReady: boolean;
@@ -37,6 +46,8 @@ export type CrewStage =
   | 'closed';
 
 export interface CrewProfile {
+  // bronze | silver | gold once the meetup is approved, '' before
+  tier?: string;
   name: string;
   displayName: string;
   about: string;
@@ -49,7 +60,12 @@ export interface CrewMember {
   username: string;
   profilePicUrl?: string;
   branch: string;
+  // official Twinkle branch (the crew waits for it); status = what staff made of the name
+  branchVerified: boolean;
+  branchStatus: 'official' | 'pending' | 'rejected' | 'none';
   parentOk: boolean;
+  // the parent's latest answer was no (the child sits this meetup out)
+  parentSaidNo?: boolean;
   isFounder: boolean;
   attended: boolean;
 }
@@ -98,12 +114,35 @@ export interface CrewView extends CrewProfile {
   };
   completedAt: number;
   progress: QuestProgress;
+  // the crew's group chat (members and admins only)
+  chat: { channelId: number; pathId: number } | null;
+  // admins only: every parent's answer and contact (never shown to members)
+  // parents' suggested changes to the plan (by the child's username)
+  parentSuggestions?: { childUsername: string; body: string; createdAt: number }[];
+  parentContacts?: {
+    userId: number;
+    childUsername: string;
+    status: string;
+    email: string;
+    verifiedGuardian: boolean;
+    sharesWithParents: boolean;
+    question: string;
+    staffReply: string;
+    staffRepliedAt: number;
+    // the parent said yes and will be the grown-up there themselves
+    // placeholder offers ticked with a yes (who takes each role is decided later)
+    willingGuardian: boolean;
+    offersPlace: boolean;
+    decidedAt: number;
+  }[];
   viewer: {
     isMember: boolean;
     isFounder: boolean;
     isAdmin: boolean;
     detailsLocked: boolean;
     frozen: boolean;
+    // this member's own ask-my-parent state (never an address)
+    parentConsent?: import('./Parent/AskParentPanel').ParentConsentState | null;
     canSubmitPlan: boolean;
     canSubmitVideo: boolean;
   };
@@ -223,6 +262,8 @@ export interface StaffApplication extends CrewProfile {
     attended: boolean;
   }[];
   adult: { kind: string; name: string };
+  // staff only: every parent's answer and contact for this crew
+  parents?: NonNullable<CrewView['parentContacts']>;
   plan: {
     status: ReviewStatus;
     date: string;
@@ -316,4 +357,19 @@ export interface MeetupQuestData {
   requestedCrew: CrewView | null;
   board: BoardCrew[];
   reviewQueue: ReviewQueueItem[] | null;
+  // admins: every live crew and where it is stuck
+  allCrews?: AdminCrewRow[] | null;
+}
+
+export interface AdminCrewRow {
+  crewId: number;
+  displayName: string;
+  status: string;
+  currentStep: QuestStepKey | null;
+  blocking: string;
+  members: { userId: number; username: string; branch: string }[];
+  branchesToVerify: { userId: number; username: string; branch: string }[];
+  parents: { asked: number; approved: number };
+  updatedAt: number;
+  planSubmittedAt: number;
 }
