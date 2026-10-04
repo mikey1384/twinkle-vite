@@ -47,6 +47,35 @@ export function AppRewardsButton({
   );
 }
 
+// What "Ask Zero/Ciel" attaches for one bounty app: the app with its rewards
+// in focus, so the agent explains how to earn them (hints, never answers).
+function rewardsAskContext(app: EarnHubApp) {
+  return {
+    kind: 'build',
+    id: app.buildId,
+    focus: 'rewards' as const,
+    label: `the rewards in "${app.title}"`
+  };
+}
+
+// The compact Ask on every Earn card and row, beside Play: same question as
+// the rewards window's button.
+export function AppAskButton({
+  app,
+  style
+}: {
+  app: EarnHubApp;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <AskAgentButton
+      hideLabel
+      style={{ padding: '0.5rem', ...style }}
+      context={rewardsAskContext(app)}
+    />
+  );
+}
+
 export default function AppRewardsModal({
   app,
   onHide
@@ -75,12 +104,7 @@ export default function AppRewardsModal({
           <AskAgentButton
             label="How do I earn the rewards?"
             onClick={onHide}
-            context={{
-              kind: 'build',
-              id: app.buildId,
-              focus: 'rewards',
-              label: `the rewards in "${app.title}"`
-            }}
+            context={rewardsAskContext(app)}
           />
           <Button
             color="logoBlue"

@@ -17,7 +17,7 @@ import {
   appTitleTextClass,
   trackBountyAppOpen
 } from './appCardHelpers';
-import { AppRewardsButton } from './AppRewardsModal';
+import { AppAskButton, AppRewardsButton } from './AppRewardsModal';
 
 // One approved app on the shelf: what it pays, who made it, and what this
 // member still has left in it today. The button opens the published app page
@@ -98,6 +98,7 @@ export default function AppCard({
         >
           Play
         </Button>
+        <AppAskButton app={app} />
         <FavoriteButton
           buildId={app.buildId}
           className={favoriteClass}

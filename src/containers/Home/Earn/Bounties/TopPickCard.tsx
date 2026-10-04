@@ -17,7 +17,7 @@ import {
   appTitleTextClass,
   trackBountyAppOpen
 } from './appCardHelpers';
-import { AppRewardsButton } from './AppRewardsModal';
+import { AppAskButton, AppRewardsButton } from './AppRewardsModal';
 
 // The App Store's #1 on desktop: the same facts as a shelf card, spanning
 // the whole shelf with a bigger picture. Phones never render this (they keep rows).
@@ -92,6 +92,7 @@ export default function TopPickCard({ app }: { app: EarnHubApp }) {
           >
             Play
           </Button>
+          <AppAskButton app={app} />
           <FavoriteButton
             buildId={app.buildId}
             className={favoriteClass}

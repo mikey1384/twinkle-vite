@@ -14,7 +14,7 @@ import {
   appTitleTextClass,
   trackBountyAppOpen
 } from './appCardHelpers';
-import { AppRewardsButton } from './AppRewardsModal';
+import { AppAskButton, AppRewardsButton } from './AppRewardsModal';
 
 // One line of the desktop "See all apps" list: rank, picture, who made it,
 // what it pays and how many played this week. Phones use AppCard rows instead.
@@ -59,20 +59,23 @@ export default function AppRow({ app }: { app: EarnHubApp }) {
         {playersLine && <span className={playersClass}>{playersLine}</span>}
         <AppRewardsButton app={app} className={rewardsLinkClass} />
       </div>
-      <Button
-        color="logoBlue"
-        variant="solid"
-        tone="flat"
-        shape="pill"
-        size="sm"
-        style={{ minWidth: '8rem' }}
-        onClick={() => {
-          trackBountyAppOpen(app, 'row');
-          navigate(`/app/${app.buildId}`);
-        }}
-      >
-        Play
-      </Button>
+      <div className={actionsClass}>
+        <AppAskButton app={app} />
+        <Button
+          color="logoBlue"
+          variant="solid"
+          tone="flat"
+          shape="pill"
+          size="sm"
+          style={{ minWidth: '8rem' }}
+          onClick={() => {
+            trackBountyAppOpen(app, 'row');
+            navigate(`/app/${app.buildId}`);
+          }}
+        >
+          Play
+        </Button>
+      </div>
     </li>
   );
 }
@@ -86,6 +89,11 @@ const rowClass = css`
   border-radius: ${borderRadius};
   border: 1px solid var(--home-panel-card-border, rgba(148, 163, 184, 0.35));
   background: rgba(255, 255, 255, 0.94);
+`;
+const actionsClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
 `;
 const rankClass = css`
   font-size: 1.8rem;
