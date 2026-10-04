@@ -181,6 +181,35 @@ export interface BuildExecutionPlanChunk {
   summary: string;
   status: 'pending' | 'in_progress' | 'completed' | 'blocked' | 'cancelled';
   chunks: BuildExecutionPlanChunk[];
+  // Roadmap milestones (kind 'big_chunk' in a roadmap plan) also carry:
+  // what the kid can play once it is done, its Energy estimate in days, a
+  // short level-map label and when it was finished.
+  playable?: string | null;
+  energyDays?: number | null;
+  label?: string | null;
+  completedAt?: number | null;
+  // Acceptance criteria (the milestone's "sprint contract"): only the
+  // evaluator flips passes, with evidence. Older plans store plain strings.
+  acceptanceCriteria?: Array<BuildRoadmapCriterion | string> | null;
+  // The latest evaluator grading of this milestone.
+  evaluation?: BuildRoadmapEvaluation | null;
+}
+
+export interface BuildRoadmapCriterion {
+  id?: string | null;
+  text: string;
+  passes?: boolean | null;
+}
+
+export interface BuildRoadmapEvaluation {
+  verdict?: 'PASS' | 'NEEDS_WORK' | string | null;
+  findings?: Array<string | { text?: string | null }> | null;
+  at?: number | null;
+}
+
+export interface BuildRoadmapSmallerOption {
+  label: string;
+  request: string;
 }
 
 export interface BuildExecutionPlan {
@@ -195,6 +224,27 @@ export interface BuildExecutionPlan {
     summary: string;
     question?: string | null;
     chunks: BuildExecutionPlanChunk[];
+    // Roadmap fields (a big request split into playable milestones).
+    kind?: string | null;
+    title?: string | null;
+    energyDays?: number | null;
+    smaller?: BuildRoadmapSmallerOption | null;
+    hardestNote?: string | null;
+    // The latest run's hand-off for the next run / day ("Next: ...").
+    handoffNote?: string | null;
+    // Lumine's assistant message that proposed this roadmap (when sent).
+    proposalMessageId?: number | null;
+    // A typed "stop" on a running plan: Lumine asked to confirm (unix
+    // seconds) in this assistant message; the plan keeps running until the
+    // kid presses Stop build plan (planAction cancel).
+    pendingStopConfirmAt?: number | null;
+    pendingStopConfirmMessageId?: number | null;
+    // Decisions log of re-plans (later milestones changed, with a reason).
+    replans?: Array<{
+      at?: number | null;
+      reason?: string | null;
+      fromMilestoneIndex?: number | null;
+    }> | null;
   };
   currentBigChunkId: string | null;
   currentChunkId: string | null;
@@ -348,7 +398,15 @@ export interface BuildRunEvent {
     | null;
 }
 
-export type BuildPlanAction = 'continue' | 'cancel' | 'pivot';
+export type BuildPlanAction =
+  | 'continue'
+  | 'cancel'
+  | 'pivot'
+  // Roadmap: begin milestone 1, re-plan smaller, or drop the roadmap and
+  // build the original request directly.
+  | 'start'
+  | 'smaller'
+  | 'skip';
 
 export interface BuildScopedPlanContinuePromptBinding {
   kind: 'scoped_plan_continue';

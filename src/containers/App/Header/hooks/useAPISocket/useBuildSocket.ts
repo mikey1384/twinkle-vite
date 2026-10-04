@@ -696,7 +696,8 @@ export default function useBuildSocket() {
       deferredBuildRequest?: {
         message?: string | null;
         messageContext?: string | null;
-        planAction?: 'continue' | 'cancel' | 'pivot' | null;
+        planAction?:
+          'continue' | 'cancel' | 'pivot' | 'start' | 'smaller' | 'skip' | null;
         stopActiveRun?: boolean | null;
         stopRequestId?: string | null;
       } | null;

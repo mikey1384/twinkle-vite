@@ -157,6 +157,9 @@ export interface PreviewPanelHandle {
     content?: string;
   }>;
   rebaseProjectFileDraftBase: (filesHash: string) => void;
+  // Bring the live preview to the front (Preview view) and focus it, e.g.
+  // for "Play it now" after a roadmap milestone.
+  showPreview: () => void;
   captureThumbnail: () => Promise<string>;
   importProjectFilesFromChatUpload: (files: File[]) => Promise<{
     success: boolean;

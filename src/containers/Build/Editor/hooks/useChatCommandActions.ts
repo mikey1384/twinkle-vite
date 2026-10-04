@@ -291,6 +291,28 @@ export default function useChatCommandActions({
     });
   }
 
+  // Roadmap buttons: the visible chat line plus the plan action
+  // (helpers/roadmap.ts resolveRoadmapActionRequest picks both).
+  async function handleRoadmapAction({
+    message,
+    planAction
+  }: {
+    message: string;
+    planAction: BuildPlanAction;
+  }) {
+    if (!isOwner) return;
+    const promptBinding =
+      planAction === 'start' || planAction === 'continue'
+        ? buildScopedPlanContinuePromptBinding(
+            currentBuildRunView.executionPlan
+          )
+        : null;
+    await sendBuildMessageText(message, {
+      planAction,
+      promptBinding
+    });
+  }
+
   async function handleAcceptFollowUpPrompt(options?: {
     keepSavedModel?: boolean;
   }) {
@@ -525,6 +547,7 @@ export default function useChatCommandActions({
     handleAskLumineToUpgradeThreeVendor,
     handleCancelScopedPlan,
     handleContinueScopedPlan,
+    handleRoadmapAction,
     handleDeclineToolRequest,
     handleDeleteMessage,
     handleDismissFollowUpPrompt,

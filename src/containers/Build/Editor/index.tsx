@@ -1160,6 +1160,7 @@ export default function BuildEditor({
     handleAskLumineToUpgradeThreeVendor,
     handleCancelScopedPlan,
     handleContinueScopedPlan,
+    handleRoadmapAction,
     handleDeclineToolRequest,
     handleDeleteMessage,
     handleDismissFollowUpPrompt,
@@ -2051,6 +2052,17 @@ export default function BuildEditor({
     onSendMessage: handleSendMessage,
     onContinueScopedPlan: handleContinueScopedPlan,
     onCancelScopedPlan: handleCancelScopedPlan,
+    onRoadmapAction: handleRoadmapAction,
+    onPlayPreview: handlePlayRoadmapPreview,
+    roadmapPublishControl:
+      canEditCurrentBuildMetadata &&
+      (!build.isPublic || build.releaseStatus?.hasUnpublishedChanges)
+        ? {
+            label: build.isPublic ? 'Update your published game' : 'Publish it',
+            busy: publishing,
+            onPublish: handlePublish
+          }
+        : null,
     onAcceptFollowUpPrompt: () => handleAcceptFollowUpPrompt(),
     onAcceptFollowUpPromptOnce: () =>
       handleAcceptFollowUpPrompt({ keepSavedModel: true }),
@@ -2303,6 +2315,17 @@ export default function BuildEditor({
       {runtimeUploadConfirmModal}
     </div>
   );
+
+  // "Play it now" on a finished roadmap milestone: show the live preview
+  // (the Preview tab on phones) and focus it so keys go to the game.
+  function handlePlayRoadmapPreview() {
+    if (!isDesktopWorkspaceLayout) {
+      setMobilePanelTab('preview');
+    }
+    window.requestAnimationFrame(() => {
+      previewPanelRef.current?.showPreview();
+    });
+  }
 
   function setMobilePanelTab(tab: MobilePanelTab) {
     if (mobilePanelTabIsCommunication(tab)) {

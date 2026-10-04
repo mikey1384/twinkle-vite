@@ -46,6 +46,9 @@ interface TranscriptProps {
   onDeclineToolRequest?: () => void;
   thumbnailNudgePrompt?: BuildThumbnailNudgePrompt | null;
   onThumbnailNudgeSelect?: (key: string) => void;
+  // The roadmap card that belongs at the end of the chat (proposal,
+  // milestone celebration or finished roadmap), already decided upstream.
+  roadmapCard?: React.ReactNode;
   onFixRuntimeObservationMessage: (
     message: ChatMessage
   ) => Promise<boolean> | boolean;
@@ -81,6 +84,7 @@ const Transcript = React.memo(function Transcript({
   onDeclineToolRequest,
   thumbnailNudgePrompt,
   onThumbnailNudgeSelect,
+  roadmapCard,
   onFixRuntimeObservationMessage,
   onDeleteMessage
 }: TranscriptProps) {
@@ -178,6 +182,7 @@ const Transcript = React.memo(function Transcript({
       {runtimeDebugSnapshot ? (
         <RuntimeDebugProjection snapshot={runtimeDebugSnapshot} />
       ) : null}
+      {roadmapCard || null}
       {pendingToolApproval && onApproveToolRequest && onDeclineToolRequest ? (
         <ToolApprovalPromptBubble
           approval={pendingToolApproval}

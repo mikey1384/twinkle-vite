@@ -13,7 +13,9 @@ const STATUS_LABEL_MAP: Record<string, string> = {
   retrieving_memory: 'Remembering',
   saving_file: 'Saving file',
   reading: 'Reading and thinking',
-  recalling: 'Recalling memories'
+  recalling: 'Recalling memories',
+  // Roadmap: Lumine's checker grading a milestone against its criteria.
+  roadmap_check: 'Checking your milestone'
 };
 
 export function isBuildAssistantPlaceholderContent(
@@ -21,8 +23,7 @@ export function isBuildAssistantPlaceholderContent(
 ) {
   const normalizedContent = String(content || '').trim();
   return (
-    !normalizedContent ||
-    normalizedContent === BUILD_ASSISTANT_PLACEHOLDER_TEXT
+    !normalizedContent || normalizedContent === BUILD_ASSISTANT_PLACEHOLDER_TEXT
   );
 }
 

@@ -209,6 +209,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       );
     };
     const [viewMode, setViewMode] = useState<WorkspaceViewMode>('preview');
+    const previewRootRef = useRef<HTMLDivElement | null>(null);
     const onRuntimeObservationChangeRef = useRef(
       onRuntimeObservationChange || null
     );
@@ -526,6 +527,19 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     useImperativeHandle(ref, () => ({
+      showPreview() {
+        setViewMode('preview');
+        window.requestAnimationFrame(() => {
+          const frame = previewRootRef.current?.querySelector('iframe');
+          if (!frame) return;
+          frame.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          try {
+            frame.focus({ preventScroll: true });
+          } catch {
+            frame.focus();
+          }
+        });
+      },
       openProjectFileUploadPicker,
       openProjectFolderImportPicker,
       openProjectAssetUploadPicker,
@@ -1672,6 +1686,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
 
     return (
       <div
+        ref={previewRootRef}
         className={`${runtimeOnly ? runtimePanelClass : panelClass}${className ? ` ${className}` : ''}`}
       >
         <ProjectFileInputs

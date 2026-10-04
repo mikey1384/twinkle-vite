@@ -76,7 +76,14 @@ export interface BuildLiveRunFollowUpPrompt {
 export interface BuildLiveRunDeferredRequest {
   message: string;
   messageContext?: string | null;
-  planAction?: 'continue' | 'cancel' | 'pivot' | null;
+  planAction?:
+    | 'continue'
+    | 'cancel'
+    | 'pivot'
+    | 'start'
+    | 'smaller'
+    | 'skip'
+    | null;
   stopActiveRun?: boolean | null;
   stopRequestId?: string | null;
 }
@@ -1409,7 +1416,10 @@ function normalizeBuildRunDeferredRequest(
   const planAction =
     deferredBuildRequest?.planAction === 'continue' ||
     deferredBuildRequest?.planAction === 'cancel' ||
-    deferredBuildRequest?.planAction === 'pivot'
+    deferredBuildRequest?.planAction === 'pivot' ||
+    deferredBuildRequest?.planAction === 'start' ||
+    deferredBuildRequest?.planAction === 'smaller' ||
+    deferredBuildRequest?.planAction === 'skip'
       ? deferredBuildRequest.planAction
       : null;
   const stopRequestId =

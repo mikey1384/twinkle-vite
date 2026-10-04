@@ -11,6 +11,12 @@ import useAppReferences from './hooks/useAppReferences';
 import Header from './Header';
 import RuntimeUploadsModal from './RuntimeUploadsModal';
 import Transcript from './Transcript';
+import { useRoadmapSurfaces } from './Roadmap';
+import {
+  resolveProposalAnswered,
+  resolveRoadmapCheckActivity,
+  roadmapHidesFollowUp
+} from '../helpers/roadmap';
 import {
   BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
   BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
@@ -264,6 +270,9 @@ export default function ChatPanel({
   onSendMessage,
   onContinueScopedPlan,
   onCancelScopedPlan,
+  onRoadmapAction,
+  onPlayPreview,
+  roadmapPublishControl,
   onAcceptFollowUpPrompt,
   onAcceptFollowUpPromptOnce,
   onDismissFollowUpPrompt,
@@ -430,6 +439,12 @@ export default function ChatPanel({
         }
       : null;
   const currentActivity = useMemo(() => {
+    // The roadmap checker grading a milestone shows in this same line.
+    const roadmapCheck = resolveRoadmapCheckActivity({
+      runEvents,
+      generatingStatus
+    });
+    if (roadmapCheck) return { message: roadmapCheck };
     for (let index = runEvents.length - 1; index >= 0; index -= 1) {
       const event = runEvents[index];
       if (!event) continue;
@@ -455,7 +470,7 @@ export default function ChatPanel({
           ).trim()
         : '';
     return fallbackStatus ? { message: fallbackStatus } : null;
-  }, [assistantStatusSteps, runEvents]);
+  }, [assistantStatusSteps, generatingStatus, runEvents]);
   const statusStepEntries = useMemo(() => {
     const entries = assistantStatusSteps
       .map((status) => String(status || '').trim())
@@ -535,8 +550,38 @@ export default function ChatPanel({
       resetPurchasesToday
     };
   }, [aiUsagePolicy, generating]);
+  // A roadmap shows its own cards and panel (Roadmap/); the generic
+  // scoped-plan Yes/No bubble stays out of its way.
+  const latestUserMessageAt = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index]?.role === 'user') {
+        return Number(messages[index].createdAt) || 0;
+      }
+    }
+    return 0;
+  }, [messages]);
+  const proposalAnswered = useMemo(
+    () =>
+      executionPlan?.status === 'awaiting_confirmation'
+        ? resolveProposalAnswered(messages, executionPlan)
+        : false,
+    [executionPlan, messages]
+  );
+  const roadmap = useRoadmapSurfaces({
+    executionPlan,
+    generating,
+    latestUserMessageAt,
+    proposalAnswered,
+    messages,
+    isOwner,
+    disabled: aiInputDisabled,
+    onSendRoadmapAction: onRoadmapAction,
+    onPlayPreview,
+    publishControl: roadmapPublishControl
+  });
   const showScopedPlanQuickReplies =
     isOwner &&
+    !roadmap.isRoadmap &&
     executionPlan?.status === 'awaiting_confirmation' &&
     !generating &&
     !draftMessage.trim();
@@ -567,8 +612,11 @@ export default function ChatPanel({
     !showScopedPlanQuickReplies &&
     !followUpModelSwitchLabel &&
     followUpPrompt?.mode === 'continue_unfinished_work';
+  // A running or proposed roadmap's own buttons replace the generic
+  // follow-up bubble; the two never show together.
   const showGenericFollowUpQuickReplies =
     isOwner &&
+    !roadmapHidesFollowUp(executionPlan, followUpPrompt) &&
     runMode === 'user' &&
     !showScopedPlanQuickReplies &&
     !generating &&
@@ -609,6 +657,16 @@ export default function ChatPanel({
             .map((status) => status.slice(0, 500)),
           runError: runError ? String(runError).slice(0, 500) : null,
           executionPlanStatus: executionPlan?.status || null,
+          roadmap: roadmap.view
+            ? {
+                title: roadmap.view.title,
+                phase: roadmap.view.phase,
+                milestonesDone: roadmap.view.doneCount,
+                milestones: roadmap.view.total,
+                current: roadmap.view.current?.title || null,
+                energyDaysLeft: roadmap.view.daysLeft
+              }
+            : null,
           energyUnavailable,
           pendingQuestion: showScopedPlanQuickReplies
             ? {
@@ -918,6 +976,7 @@ export default function ChatPanel({
             onToggleLimitsExpanded={handleToggleLimitsExpanded}
             onToggleMinimized={handleToggleMinimized}
           />
+          {roadmap.panelNode}
           <div
             ref={chatScrollRef}
             onScroll={handleLumineScroll}
@@ -991,6 +1050,7 @@ export default function ChatPanel({
                 showThumbnailNudge ? thumbnailNudgePrompt : null
               }
               onThumbnailNudgeSelect={onThumbnailNudgeSelect}
+              roadmapCard={roadmap.transcriptNode}
               onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
               onDeleteMessage={onDeleteMessage}
             />

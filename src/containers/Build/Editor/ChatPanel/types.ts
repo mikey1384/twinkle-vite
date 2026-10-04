@@ -6,6 +6,8 @@ import type {
   BuildAgentAssetCreateResult
 } from '~/containers/Build/helpers/agentWorkspaceAssets';
 import type { BranchMainUpdateNoticeControl } from '../BranchMainUpdateNotice';
+import type { BuildExecutionPlan, BuildPlanAction } from '../types';
+import type { RoadmapPublishControl } from './Roadmap/RoadmapCompleteCard';
 
 export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
@@ -250,10 +252,6 @@ export interface BuildRuntimeUploadAsset {
   createdAt: number;
 }
 
-export interface BuildExecutionPlanSummary {
-  status: 'awaiting_confirmation' | 'running' | 'completed' | 'cancelled';
-}
-
 export interface BuildFollowUpPrompt {
   question?: string | null;
   suggestedMessage?: string | null;
@@ -362,7 +360,7 @@ export interface ChatPanelProps {
   mainUpdateNoticeControl?: MainUpdateNoticeControl | null;
   threeUpgradeNoticeControl?: ThreeUpgradeNoticeControl | null;
   messages: ChatMessage[];
-  executionPlan?: BuildExecutionPlanSummary | null;
+  executionPlan?: BuildExecutionPlan | null;
   scopedPlanQuestion?: string | null;
   followUpPrompt?: BuildFollowUpPrompt | null;
   pendingToolApproval?: BuildPendingToolApproval | null;
@@ -397,6 +395,17 @@ export interface ChatPanelProps {
   onSendMessage: (message: string) => Promise<boolean> | boolean;
   onContinueScopedPlan: () => void;
   onCancelScopedPlan: () => void;
+  // Roadmap buttons (start / keep going / smaller / skip): the chat line the
+  // kid sends and the plan action the server acts on.
+  onRoadmapAction?: (request: {
+    message: string;
+    planAction: BuildPlanAction;
+  }) => void | Promise<unknown>;
+  // "Play it now" after a milestone: bring the live preview to the front.
+  onPlayPreview?: () => void;
+  // Shown on a finished roadmap when the app is not published (or has
+  // unpublished changes).
+  roadmapPublishControl?: RoadmapPublishControl | null;
   onAcceptFollowUpPrompt: () => void;
   // A model-switch card's "Just this once": retry on the lighter model
   // without saving it as the build's Lumine mode.
