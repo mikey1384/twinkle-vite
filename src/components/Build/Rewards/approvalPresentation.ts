@@ -7,7 +7,10 @@ import { SITE_NAME } from '~/constants/siteBrand';
 // without knowing rule IDs, budgets or answer keys.
 export function rewardApprovalPresentation(
   settings: RewardSettings,
-  hasUnsavedChanges = false
+  hasUnsavedChanges = false,
+  // Lumine is generating: its result saves as a new version on its own, which
+  // closes a pending request, so that case keeps the "send again" path.
+  agentEditing = false
 ) {
   // An API that predates this client may still report the retired
   // 'not_configured' state; for the creator that simply means "send it".
@@ -15,8 +18,13 @@ export function rewardApprovalPresentation(
     (settings.state as string) === 'not_configured'
       ? 'needs_review'
       : settings.state;
+  // A request already waiting for the admin stays "waiting" while the
+  // creator (or their agent) edits: telling them to send again reads like
+  // something is wrong. The unsaved-changes note below says what saving does.
+  const waitingWithEdits =
+    hasUnsavedChanges && !agentEditing && serverState === 'in_review';
   const state =
-    hasUnsavedChanges && settings.approvalRequired
+    hasUnsavedChanges && settings.approvalRequired && !waitingWithEdits
       ? 'needs_review'
       : hasUnsavedChanges && serverState === 'removed'
         ? 'check_changes'
@@ -50,14 +58,15 @@ export function rewardApprovalPresentation(
         // saved (it could never be published), so say so instead of letting
         // the creator wait for an answer that will never come.
         (settings.requestClosedBySave
-          ? 'You saved a newer version after sending your last request, so that request was closed. '
+          ? 'You saved a newer version after sending your last request, so that request was closed. That’s normal: the admin reviews one exact version, so send this one when it’s ready. '
           : '') +
         `Apps that give real XP and Coins are checked by a ${SITE_NAME} admin first. Press Publish or Update App to request approval. We’ll let you know in chat. You can keep building while you wait.`
     },
     in_review: {
       title: 'Waiting for the admin',
-      detail:
-        'Your app has been sent. The admin will read your code and set the rewards. When it’s approved, this version goes live right away. If you save more changes, you’ll need to send the new version.'
+      detail: waitingWithEdits
+        ? 'Your app has been sent, and you don’t need to do anything else. You have changes that aren’t saved yet: if you save them, this request closes and you’ll send the new version instead. If you leave them unsaved, the admin reviews the version you already sent.'
+        : 'Your app has been sent, and you don’t need to do anything else. The admin will read your code and set the rewards. When it’s approved, this version goes live right away. If you save more changes, this request closes and you’ll send the new version instead.'
     },
     changes_offered: {
       title: 'The admin suggested some changes',

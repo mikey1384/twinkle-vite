@@ -249,8 +249,10 @@ export default function BuildRewardReview({
               sentByMe ? (
                 <>
                   You sent <strong>{title}</strong> for XP & Coin reward review.
-                  An admin will check this saved version; you can keep building
-                  while you wait.
+                  You don’t need to do anything else: an admin will check this
+                  saved version. You can keep building, but saving new changes
+                  before it’s approved closes this request, and you’d send the
+                  new version instead.
                 </>
               ) : (
                 <>

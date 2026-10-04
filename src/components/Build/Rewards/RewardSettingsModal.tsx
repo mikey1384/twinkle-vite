@@ -62,7 +62,11 @@ export default function RewardSettingsModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const presentation = settings
-    ? rewardApprovalPresentation(settings, hasUnsavedChanges || agentEditing)
+    ? rewardApprovalPresentation(
+        settings,
+        hasUnsavedChanges || agentEditing,
+        agentEditing
+      )
     : null;
   const declaration = settings?.declaration || null;
   const canSend =

@@ -42,6 +42,22 @@ test('creator-facing reward status never asks the creator or Lumine to prepare r
     rewardApprovalPresentation({ ...base, state: 'approved' }, true).state,
     'needs_review'
   );
+  // A request already waiting for the admin stays "waiting" through unsaved
+  // edits (it never asks the creator to send again) and says what saving does.
+  const waitingWithEdits = rewardApprovalPresentation(
+    { ...base, state: 'in_review' },
+    true
+  );
+  assert.equal(waitingWithEdits.state, 'in_review');
+  assert.match(waitingWithEdits.detail, /don’t need to do anything else/);
+  assert.match(waitingWithEdits.detail, /if you save them, this request closes/);
+  // While Lumine is generating, its result saves on its own and closes the
+  // request, so the creator is told to send the new version (not to wait).
+  assert.equal(
+    rewardApprovalPresentation({ ...base, state: 'in_review' }, true, true)
+      .state,
+    'needs_review'
+  );
   // A removed SDK with unsaved edits is checked at publish time, not blocked.
   assert.equal(
     rewardApprovalPresentation(
