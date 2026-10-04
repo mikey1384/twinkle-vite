@@ -1290,7 +1290,17 @@ export default function Main({
         if (isStale()) return;
         onUpdateChatType(null);
 
-        const { isAccessible, isPublic } = await checkChatAccessible(pathId);
+        // Switching topics or subchannels inside the chat that is already open
+        // and loaded needs no access round trip first (it held up every topic
+        // switch by ~250-450ms before the messages were even asked for); the
+        // server still checks access on each read.
+        const insideOpenChat =
+          !isChannelChange &&
+          Boolean(channelsObj[channelId]?.loaded) &&
+          currentSelectedChannelIdRef.current === channelId;
+        const { isAccessible, isPublic } = insideOpenChat
+          ? { isAccessible: true, isPublic: false }
+          : await checkChatAccessible(pathId);
         if (isStale()) return;
 
         if (!isAccessible) {

@@ -144,8 +144,9 @@ export const panelContainerClass = css`
   gap: 1.6rem;
   padding: 2rem 2.3rem;
   border-radius: ${borderRadius};
-  content-visibility: auto;
-  contain-intrinsic-size: 600px;
+  /* No content-visibility here: an unrendered card reported its 600px guess to
+     the lazy-load measurement, and the placeholder then took that wrong size.
+     The lazy placeholder (index.tsx) already keeps off-screen cards cheap. */
   font-size: 1.5rem;
   line-height: 2.3rem;
   position: relative;

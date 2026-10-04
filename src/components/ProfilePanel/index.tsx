@@ -91,7 +91,9 @@ function ProfilePanel({
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
 
-  const [ComponentRef, inView] = useInView();
+  // Mount a screen and a half ahead, so a card is full size before it scrolls
+  // into view (it used to open from a 15rem placeholder on screen: /users jank).
+  const [ComponentRef, inView] = useInView({ rootMargin: '150% 0px' });
   const PanelRef = useRef(null);
   const previousPlaceholderHeight = useMemo(
     () => placeholderHeights[`profile-${profileId}`],
@@ -106,14 +108,18 @@ function ProfilePanel({
     inView,
     PanelRef,
     onSetPlaceholderHeight: (height: number) => {
-      setPlaceholderHeight(height);
-      placeholderHeightRef.current = height;
+      const nextHeight = Math.ceil(Number(height) || 0);
+      if (nextHeight <= 0) return;
+      setPlaceholderHeight(nextHeight);
+      placeholderHeightRef.current = nextHeight;
     }
   });
 
   useEffect(() => {
     return function cleanUp() {
-      placeholderHeights[`profile-${profileId}`] = placeholderHeightRef.current;
+      if (placeholderHeightRef.current > 0) {
+        placeholderHeights[`profile-${profileId}`] = placeholderHeightRef.current;
+      }
     };
   }, [profileId]);
 
@@ -229,9 +235,11 @@ function ProfilePanel({
     () => profileName || profile.username || '',
     [profile.username, profileName]
   );
+  // A card is swapped for a placeholder only once its real height is known,
+  // so the placeholder is always the card's exact size.
   const contentShown = useMemo(
-    () => !profileLoaded || inView || isVisible,
-    [inView, isVisible, profileLoaded]
+    () => !profileLoaded || !placeholderHeight || inView || isVisible,
+    [inView, isVisible, placeholderHeight, profileLoaded]
   );
   const { isOnline, isBusy, isAway } = getDisplayedPresence(
     profileId,

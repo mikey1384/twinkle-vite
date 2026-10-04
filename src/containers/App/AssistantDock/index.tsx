@@ -27,7 +27,6 @@ import {
   getAssistantAskContext,
   getAssistantDockAskedFromItem,
   getAssistantDock,
-  getHomeAskAssistant,
   subscribeAssistantDock,
   type AssistantAskContext
 } from './dockState';
@@ -77,10 +76,6 @@ export default function AssistantDock() {
   );
   const overlayActive = useWebsiteAgentOverlayActive();
   const modalOpen = useModalOpen(!!assistant);
-  const homeAskAssistant = useSyncExternalStore(
-    subscribeAssistantDock,
-    getHomeAskAssistant
-  );
   const askedFromItem = useSyncExternalStore(
     subscribeAssistantDock,
     getAssistantDockAskedFromItem
@@ -95,13 +90,12 @@ export default function AssistantDock() {
   );
 
   // In a call the call window is this window. The chat page open on this
-  // conversation shows it itself, and on Home the ask box does, unless
-  // something (like Wordle) is open over them. A spotlight or prompt of
-  // theirs has the stage meanwhile.
+  // conversation shows it itself, unless something (like Wordle) is open over
+  // it. A spotlight or prompt of theirs has the stage meanwhile. (Home's ask
+  // box shows no conversation: its replies come up here.)
   const conversationOnScreen =
-    (location.pathname.startsWith('/chat') &&
-      Number(selectedChannelId) === channelId) ||
-    (location.pathname === '/' && homeAskAssistant === assistant);
+    location.pathname.startsWith('/chat') &&
+    Number(selectedChannelId) === channelId;
   const hidden =
     !assistant ||
     !channelId ||

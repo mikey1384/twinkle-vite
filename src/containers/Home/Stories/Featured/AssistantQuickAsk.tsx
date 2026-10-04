@@ -1,27 +1,22 @@
 import React, { useEffect, useState, useSyncExternalStore } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { css, keyframes } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
+import { css } from '@emotion/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import AssistantFace from '~/components/AssistantFace';
 import AgentSuggestions from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
-import AssistantReplyView from '~/containers/App/AssistantDock/AssistantReplyView';
 import useAssistantConversation from '~/containers/App/AssistantDock/useAssistantConversation';
 import {
   getHomeAskPrefill,
+  openAssistantDock,
   setHomeAskAssistant,
   subscribeHomeAskPrefill
 } from '~/containers/App/AssistantDock/dockState';
 
-const appear = keyframes`
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
-`;
-
 // Talk to the Zero or Ciel chosen beside the call button without leaving
-// Home. It is the same chat room as the chat page; the reply streams here,
-// and whatever they do on the website happens on the page you are on.
+// Home. It is the same chat room as the chat page. The reply shows in their
+// shared floating window, like every other Ask on the site: Home keeps no
+// conversation card of its own (Mikey 10-04: a reply left parked under the
+// box after talking to them anywhere felt messy).
 export default function AssistantQuickAsk({
   assistantName,
   channelId,
@@ -33,19 +28,18 @@ export default function AssistantQuickAsk({
   // Ciel under the user (the reply listens to this assistant's room).
   onEngagedChange: (engaged: boolean) => void;
 }) {
-  const navigate = useNavigate();
   const loadWebsiteAgentStarters = useAppContext(
     (v) => v.requestHelpers.loadWebsiteAgentStarters
   );
   const userId = useKeyContext((v) => v.myState.userId);
-  const { reply, replying, sending, send, clear } = useAssistantConversation({
+  const { replying, sending, send } = useAssistantConversation({
     assistantName,
     channelId
   });
   const [starterIdeas, setStarterIdeas] = useState<string[]>([]);
   const [text, setText] = useState('');
   const [focused, setFocused] = useState(false);
-  const engaged = focused || !!text.trim() || !!reply;
+  const engaged = focused || !!text.trim() || sending;
 
   useEffect(() => {
     onEngagedChange(engaged);
@@ -59,12 +53,6 @@ export default function AssistantQuickAsk({
   useEffect(() => {
     if (prefill?.text) setText(prefill.text);
   }, [prefill?.nonce, prefill?.text]);
-
-  // The floating window steps aside on Home for the assistant shown here.
-  useEffect(() => {
-    setHomeAskAssistant(assistantName);
-    return () => setHomeAskAssistant(null);
-  }, [assistantName]);
 
   // The same ideas the chat shows above an empty message box, so people
   // find out what they can ask for.
@@ -81,8 +69,16 @@ export default function AssistantQuickAsk({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // Tells the Post box an ask box is here to take a question it reads.
+  useEffect(() => {
+    setHomeAskAssistant(assistantName);
+    return () => setHomeAskAssistant(null);
+  }, [assistantName]);
+
   async function handleSend(idea?: string) {
-    if (await send(idea ?? text)) setText('');
+    if (!(await send(idea ?? text))) return;
+    setText('');
+    openAssistantDock(assistantName);
   }
 
   return (
@@ -161,65 +157,14 @@ export default function AssistantQuickAsk({
           Ask
         </button>
       </form>
-      {reply ? (
-        <div
-          className={css`
-            margin-top: 0.7rem;
-            padding: 1rem 1.2rem;
-            border-radius: ${borderRadius};
-            background: #fff;
-            border: 1px solid var(--ui-border);
-            animation: ${appear} 0.2s ease-out;
-            font-size: 1.45rem;
-          `}
-        >
-          <AssistantReplyView
-            assistant={assistantName}
-            reply={reply}
-            channelId={channelId}
-            contentKey="home-quick-ask"
-            onAnswer={(answer) => handleSend(answer)}
-          />
-          <div
-            className={css`
-              display: flex;
-              justify-content: flex-end;
-              gap: 1rem;
-              margin-top: 0.6rem;
-              font-size: 1.25rem;
-            `}
-          >
-            {reply.done ? (
-              <button type="button" onClick={clear} className={linkButtonClass}>
-                Close
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={() =>
-                navigate(`/chat/${Number(CHAT_ID_BASE_NUMBER) + channelId}`)
-              }
-              className={linkButtonClass}
-            >
-              Open chat
-            </button>
-          </div>
-        </div>
-      ) : null}
-      {!text.trim() &&
-      !sending &&
-      (!reply || (reply.done && reply.suggestions !== null)) ? (
+      {!text.trim() && !sending && !replying ? (
         <div
           className={css`
             margin-top: 0.4rem;
           `}
         >
           <AgentSuggestions
-            ideas={
-              // Starters only before a conversation: after a reply they'd
-              // be beside the point.
-              reply ? reply.suggestions || [] : starterIdeas
-            }
+            ideas={starterIdeas}
             onPick={(idea) => handleSend(idea)}
           />
         </div>
@@ -227,15 +172,3 @@ export default function AssistantQuickAsk({
     </div>
   );
 }
-
-const linkButtonClass = css`
-  border: none;
-  background: none;
-  padding: 0;
-  color: ${Color.logoBlue()};
-  font-weight: 700;
-  cursor: pointer;
-  &:hover {
-    text-decoration: underline;
-  }
-`;

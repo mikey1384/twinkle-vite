@@ -41,8 +41,8 @@ export function clearAssistantAskContext() {
 }
 
 // Pressing Ask on something keeps the window up until the member closes it,
-// even on Home where the ask box shows the same conversation: they asked from
-// a card far down the feed and the reply belongs where they are looking.
+// even on the chat page that shows the same conversation: the reply belongs
+// where they are looking.
 let askedFromItem = false;
 export function getAssistantDockAskedFromItem() {
   return askedFromItem;
@@ -77,8 +77,9 @@ export function getAssistantDock() {
   return dockAssistant;
 }
 
-// Which assistant the Home ask box is showing (it shows the conversation on
-// Home, so the window steps aside only for that one).
+// Which assistant the Home ask box is showing, so the Post box knows it can
+// leave a question there. (The box shows no conversation itself: its replies
+// open in this window like every other Ask.)
 let homeAskAssistant: 'Zero' | 'Ciel' | null = null;
 export function setHomeAskAssistant(assistant: 'Zero' | 'Ciel' | null) {
   if (homeAskAssistant === assistant) return;
