@@ -50,6 +50,8 @@ export default function AskAgentButton({
       <Button
         className={css`
           display: inline-flex;
+          flex-shrink: 0;
+          white-space: nowrap;
         `}
         style={{ padding: '0.7rem 1.1rem', ...style }}
         color={accent}

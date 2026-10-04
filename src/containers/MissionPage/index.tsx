@@ -212,6 +212,7 @@ export default function MissionPage() {
             <div
               className={css`
                 display: flex;
+                flex-shrink: 0;
                 align-items: center;
                 gap: 1rem;
               `}
