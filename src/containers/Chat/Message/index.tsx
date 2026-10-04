@@ -16,6 +16,7 @@ import { useInView } from 'react-intersection-observer';
 import { useAppContext } from '~/contexts';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { MessageHeights } from '~/constants/state';
+import { loadChatMessageInBatch } from './messageLoadBatch';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 function Message({
@@ -135,6 +136,9 @@ function Message({
   const loadChatMessage = useAppContext(
     (v) => v.requestHelpers.loadChatMessage
   );
+  const loadChatMessages = useAppContext(
+    (v) => v.requestHelpers.loadChatMessages
+  );
   const {
     actions: { onSetMessageState }
   } = useContext(LocalContext);
@@ -170,7 +174,11 @@ function Message({
     if (!message?.isLoaded && message?.id && !message?.isNotification) {
       (async function init() {
         try {
-          const data = await loadChatMessage({ messageId: message?.id });
+          const data = await loadChatMessageInBatch({
+            messageId: message?.id,
+            loadBatch: loadChatMessages,
+            loadSingle: loadChatMessage
+          });
           onSetMessageState({
             channelId,
             messageId: message?.id,

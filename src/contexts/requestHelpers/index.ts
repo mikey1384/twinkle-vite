@@ -699,6 +699,7 @@ registerMethods('chat', [
   'loadChat',
   'loadChatChannel',
   'loadChatMessage',
+  'loadChatMessages',
   'loadAICardFeed',
   'loadAICardFeeds',
   'loadBookmarksForTopic',

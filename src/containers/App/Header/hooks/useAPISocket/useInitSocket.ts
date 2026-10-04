@@ -1344,9 +1344,11 @@ export default function useInitSocket({
           compactGeneralTopics,
           topicIds: bootstrapTopicIds,
           recoveryId: effectiveRecoveryId,
-          // the opening chat's messages complete in this reply (no 20 single
-          // requests after the first chat load)
-          hydrateMessages: true,
+          // On the chat page the opening chat's messages complete in this
+          // reply. Elsewhere (most app starts and every phone-wake reconnect)
+          // the server skips that work; if chat is opened later, its messages
+          // complete together in one batch (Message/messageLoadBatch.ts).
+          hydrateMessages: /^\/chat(\/|$)/.test(window.location.pathname),
           onAttemptTiming(timing: RequestAttemptTiming) {
             recordChatBootstrapEvent('chat-bootstrap-request-attempt-timing', {
               bootstrapId,

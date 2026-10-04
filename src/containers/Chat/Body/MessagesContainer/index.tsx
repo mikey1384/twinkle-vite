@@ -64,7 +64,10 @@ import {
   isCanonicalAiGenerationConfirmed
 } from '~/contexts/Chat/aiGenerationState';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
-import { takePrefetchedTopicMessages } from '../../topicPrefetch';
+import {
+  dropPrefetchedTopicMessages,
+  takePrefetchedTopicMessages
+} from '../../topicPrefetch';
 const deviceIsMobile = isMobile(navigator);
 const CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS = 750;
 
@@ -1919,6 +1922,10 @@ export default function MessagesContainer({
     messageIdToScrollTo?: number | null
   ) {
     setIsLoadingTopicMessages(true);
+    // a jump to a message loads its own page; a stale prefetch must not linger
+    if (messageIdToScrollTo) {
+      dropPrefetchedTopicMessages(selectedChannelId, appliedTopicId);
+    }
     try {
       const {
         messages,

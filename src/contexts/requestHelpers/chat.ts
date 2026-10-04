@@ -1650,6 +1650,29 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // Several messages complete in one reply (GET /chat/message/batch); the
+    // ids it could not return come back in missingIds.
+    async loadChatMessages({
+      messageIds,
+      fromWriter = false
+    }: {
+      messageIds: number[];
+      fromWriter?: boolean;
+    }) {
+      try {
+        const queryParams = new URLSearchParams({
+          messageIds: messageIds.join(',')
+        });
+        if (fromWriter) queryParams.set('fromWriter', 'true');
+        const { data } = await request.get(
+          `${URL}/chat/message/batch?${queryParams.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadChatMessage({
       messageId,
       fromWriter = false
