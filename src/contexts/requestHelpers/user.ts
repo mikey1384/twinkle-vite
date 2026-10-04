@@ -1711,7 +1711,8 @@ export default function userRequestHelpers({
     },
     async loadProfile(userId: number) {
       try {
-        const { data } = await request.get(`${URL}/user?userId=${userId}`);
+        // signed in: the profile carries the viewer's friend button state
+        const { data } = await request.get(`${URL}/user?userId=${userId}`, auth());
         return data;
       } catch (error) {
         return handleError(error);
@@ -1722,7 +1723,9 @@ export default function userRequestHelpers({
         const {
           data: { pageNotExists, user }
         } = await request.get(
-          `${URL}/user/username/check?username=${username}`
+          `${URL}/user/username/check?username=${username}`,
+          // signed in: emails follow the viewer (shown to members, both to the owner)
+          auth()
         );
         return { pageNotExists, user };
       } catch (error) {
@@ -1843,7 +1846,9 @@ export default function userRequestHelpers({
                   orderBy ? '&' : '?'
                 }lastUserId=${lastUserId}&lastActive=${lastActive}&lastTwinkleXP=${lastTwinkleXP}`
               : ''
-          }`
+          }`,
+          // signed in: each card carries the viewer's friend button state
+          auth()
         );
         return data;
       } catch (error) {
@@ -2003,10 +2008,15 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async searchUsers(query: string) {
+    // withCards: complete profile cards (the Users page), with the viewer's
+    // friend button state when signed in
+    async searchUsers(query: string, { withCards = false } = {}) {
       try {
         const { data: users } = await axios.get(
-          `${URL}/user/users/search?queryString=${query}`
+          `${URL}/user/users/search?queryString=${query}${
+            withCards ? '&withCards=1' : ''
+          }`,
+          withCards ? auth() : undefined
         );
         return users;
       } catch (error) {
@@ -2025,10 +2035,13 @@ export default function userRequestHelpers({
     },
     async sendVerificationEmail({
       email,
+      which,
       userId,
       isPasswordReset
     }: {
-      email: string;
+      email?: string;
+      // account recovery names the address; the server looks it up
+      which?: 'email' | 'verifiedEmail';
       userId: number;
       isPasswordReset: boolean;
     }) {
@@ -2037,6 +2050,7 @@ export default function userRequestHelpers({
           `${URL}/user/email/verify`,
           {
             email,
+            which,
             userId,
             isPasswordReset
           },

@@ -1,61 +1,41 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import CheckYourEmail from '~/components/CheckYourEmail';
 import SelectEmail from '~/components/SelectEmail';
-import Loading from '~/components/Loading';
 
+// Account recovery is signed out, so the page never has the addresses: the
+// server sends masked hints (emailHint, verifiedEmailHint) and, on Send, looks
+// the chosen address up itself (Mikey 2026-10-04: a hidden email is shown to
+// nobody but its owner).
 export default function EmailExists({
-  email,
-  userId,
-  verifiedEmail
+  emailHint,
+  verifiedEmailHint,
+  userId
 }: {
-  email: string;
+  emailHint?: string;
+  verifiedEmailHint?: string;
   userId: number;
-  verifiedEmail: string;
 }) {
-  const hiddenEmail = useMemo(() => {
-    return hideEmail(email) || '';
-  }, [email]);
-  const hiddenVerifiedEmail = useMemo(() => {
-    return !email || email !== verifiedEmail ? hideEmail(verifiedEmail) : '';
-  }, [email, verifiedEmail]);
-
-  const viableEmail = email || verifiedEmail;
-  const hiddenViableEmail = hiddenEmail || hiddenVerifiedEmail || '';
-
+  if (emailHint && verifiedEmailHint) {
+    return (
+      <div>
+        <SelectEmail
+          email=""
+          hiddenEmail={emailHint}
+          verifiedEmail=""
+          hiddenVerifiedEmail={verifiedEmailHint}
+          userId={userId}
+        />
+      </div>
+    );
+  }
   return (
     <div>
-      {(hiddenEmail && !hiddenVerifiedEmail) ||
-      (!hiddenEmail && hiddenVerifiedEmail) ? (
-        <CheckYourEmail
-          email={viableEmail}
-          hiddenEmail={hiddenViableEmail}
-          userId={userId}
-        />
-      ) : hiddenVerifiedEmail ? (
-        <SelectEmail
-          email={email}
-          hiddenEmail={hiddenEmail}
-          verifiedEmail={verifiedEmail}
-          hiddenVerifiedEmail={hiddenVerifiedEmail}
-          userId={userId}
-        />
-      ) : (
-        <Loading />
-      )}
+      <CheckYourEmail
+        email=""
+        hiddenEmail={emailHint || verifiedEmailHint}
+        which={emailHint ? 'email' : 'verifiedEmail'}
+        userId={userId}
+      />
     </div>
   );
-
-  function hideEmail(email: string) {
-    if (!email) return null;
-    let result = '';
-    const emailAccountNamePart = email.split('@')[0];
-    for (let i = 0; i < email.length; i++) {
-      if (i !== 0 && i < emailAccountNamePart.length) {
-        result += '*';
-        continue;
-      }
-      result += email[i];
-    }
-    return result;
-  }
 }

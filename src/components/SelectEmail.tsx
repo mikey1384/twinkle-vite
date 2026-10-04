@@ -48,12 +48,12 @@ export default function SelectEmail({
             variant="soft"
             tone="raised"
             color="orange"
-            onClick={() => handleSendEmail(email)}
-            disabled={!!emailSent[email]}
+            onClick={() => handleSendEmail('email')}
+            disabled={!!emailSent.email}
           >
             <Icon size="lg" icon="paper-plane" />
             <span style={{ marginLeft: '1rem' }}>
-              {emailSent[email] ? 'Sent' : 'Send'}
+              {emailSent.email ? 'Sent' : 'Send'}
             </span>
           </Button>
         </div>
@@ -66,12 +66,12 @@ export default function SelectEmail({
             variant="soft"
             tone="raised"
             color="orange"
-            onClick={() => handleSendEmail(verifiedEmail)}
-            disabled={!!emailSent[verifiedEmail]}
+            onClick={() => handleSendEmail('verifiedEmail')}
+            disabled={!!emailSent.verifiedEmail}
           >
             <Icon size="lg" icon="paper-plane" />
             <span style={{ marginLeft: '1rem' }}>
-              {emailSent[verifiedEmail] ? 'Sent' : 'Send'}
+              {emailSent.verifiedEmail ? 'Sent' : 'Send'}
             </span>
           </Button>
         </div>
@@ -79,8 +79,15 @@ export default function SelectEmail({
     </div>
   );
 
-  function handleSendEmail(email: string) {
-    sendVerificationEmail({ email, userId, isPasswordReset: true });
-    setEmailSent((obj: any) => ({ ...obj, [email]: true }));
+  // the address when this page has it (your own account); otherwise which one,
+  // and the server looks it up (account recovery only ever has masked hints)
+  function handleSendEmail(which: 'email' | 'verifiedEmail') {
+    const address = which === 'email' ? email : verifiedEmail;
+    sendVerificationEmail({
+      ...(address ? { email: address } : { which }),
+      userId,
+      isPasswordReset: true
+    });
+    setEmailSent((obj: any) => ({ ...obj, [which]: true }));
   }
 }

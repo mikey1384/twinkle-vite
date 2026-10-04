@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import ProfilePanel from '~/components/ProfilePanel';
-import { useProfileHydrator } from '~/components/ProfilePanel/useProfileHydrator';
+import { useApplyUserCards } from '~/components/ProfilePanel/useApplyUserCards';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import PeopleFilterBar from './FilterBar';
@@ -18,10 +18,6 @@ import {
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const searchUsersLabel = 'Search Users';
-const idsOf = (users: unknown) =>
-  Array.isArray(users)
-    ? users.map((user: { id?: number }) => Number(user?.id)).filter((id) => id > 0)
-    : [];
 
 function People() {
   const lastUserIdRef = useRef(null);
@@ -43,7 +39,7 @@ function People() {
   const orderUsersBy = useAppContext((v) => v.user.state.orderUsersBy);
   const searchedProfiles = useAppContext((v) => v.user.state.searchedProfiles);
 
-  const hydrateProfiles = useProfileHydrator();
+  const applyUserCards = useApplyUserCards();
   const userSearchText = useInputContext((v) => v.state.userSearchText);
   const onSetSearchText = useInputContext((v) => v.actions.onSetSearchText);
 
@@ -80,7 +76,7 @@ function People() {
         const data = await loadUsers({
           orderBy: orderUsersBy === RANKING_FILTER_LABEL ? 'twinkleXP' : ''
         });
-        await hydrateProfiles(idsOf(data));
+        applyUserCards(data);
         onLoadUsers(data);
         prevOrderUsersBy.current = orderUsersBy;
       }
@@ -225,8 +221,8 @@ function People() {
 
   async function handleSearchUsers(text: string) {
     try {
-      const users = await searchUsers(text);
-      await hydrateProfiles(idsOf(users));
+      const users = await searchUsers(text, { withCards: true });
+      applyUserCards(users);
       onSearchUsers(users);
     } catch (error) {
       console.error(error);
@@ -250,7 +246,7 @@ function People() {
           profiles.length > 0 ? profiles[profiles.length - 1].twinkleXP : null,
         orderBy: orderUsersBy === RANKING_FILTER_LABEL ? 'twinkleXP' : ''
       });
-      await hydrateProfiles(idsOf(data));
+      applyUserCards(data);
       onLoadMoreUsers(data);
     } catch (error) {
       console.error(error);

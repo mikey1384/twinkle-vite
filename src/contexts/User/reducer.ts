@@ -145,6 +145,7 @@ export default function UserReducer(
     case 'LOGIN':
       return {
         ...state,
+        ...withoutViewerData(state),
         myState: {
           ...initialMyState,
           ...normalizeCommunityFundsState(action.data)
@@ -155,6 +156,7 @@ export default function UserReducer(
     case 'LOGOUT':
       return {
         ...state,
+        ...withoutViewerData(state),
         achievementsObj: state.achievementsObj || {},
         sessionInterruption: null,
         signinModalShown: false,
@@ -434,4 +436,27 @@ export default function UserReducer(
     default:
       return state;
   }
+}
+
+// What one viewer was served about other people (their friend button state,
+// emails shown only to members) must not outlive that viewer's session: on a
+// shared classroom computer the next account would see it. Drops it from every
+// stored profile, and the Users page list (it reloads for whoever is signed in).
+function withoutViewerData(state: any) {
+  const userObj: Record<string, any> = {};
+  for (const [id, user] of Object.entries(state.userObj || {})) {
+    if (!user || typeof user !== 'object') {
+      userObj[id] = user;
+      continue;
+    }
+    const {
+      friendStatus: _friendStatus,
+      email: _email,
+      verifiedEmail: _verifiedEmail,
+      ...rest
+    } = user as Record<string, any>;
+    // reloaded for the next viewer (a profile page refetches only when not loaded)
+    userObj[id] = { ...rest, loaded: false };
+  }
+  return { userObj, profiles: [], profilesLoaded: false, searchedProfiles: [] };
 }

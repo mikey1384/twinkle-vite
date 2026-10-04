@@ -39,7 +39,7 @@ export default function RestoreAccount({
   const headerTitle = useMemo(() => {
     if (section === 'username') return 'No problem! We are here to help';
     if (section === 'email') {
-      if (matchingAccount?.email || matchingAccount?.verifiedEmail) {
+      if (matchingAccount?.emailHint || matchingAccount?.verifiedEmailHint) {
         return `Email confirmation`;
       } else {
         return `No email address found. Ask your Twinkle teacher for help.`;

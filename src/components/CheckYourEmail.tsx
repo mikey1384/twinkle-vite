@@ -4,10 +4,13 @@ import { useAppContext } from '~/contexts';
 export default function CheckYourEmail({
   email,
   hiddenEmail,
+  which,
   userId
 }: {
   email: string;
   hiddenEmail?: string;
+  // without the address (account recovery): which of the account's addresses
+  which?: 'email' | 'verifiedEmail';
   userId: number;
 }) {
   const sendVerificationEmail = useAppContext(
@@ -15,7 +18,7 @@ export default function CheckYourEmail({
   );
   useEffect(() => {
     sendVerificationEmail({
-      email,
+      ...(email ? { email } : { which }),
       userId,
       isPasswordReset: true
     });

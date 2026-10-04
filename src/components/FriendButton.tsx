@@ -13,8 +13,9 @@ const LABEL: Record<FriendState, string> = {
   friends: 'Friends'
 };
 
-// Hovering a username asks for the same person again and again: answers are
-// remembered briefly and a request already in flight is shared.
+// A screen that was not served the status asks once; a request already in
+// flight is shared, and only a real answer is remembered (a failure never
+// becomes "no button").
 const STATUS_TTL_MS = 30_000;
 const statusMemo = new Map<number, { at: number; promise: Promise<any> }>();
 
@@ -22,6 +23,8 @@ const statusMemo = new Map<number, { at: number; promise: Promise<any> }>();
 // shows for people you have already talked with (the server decides). Two
 // people are friends when both added each other. `variant` is the look:
 // 'panel' (profile card) or 'popup' (the hover card on a username).
+// The state comes with the profile itself (friendStatus, served with /user and
+// the Users page's cards), so the button normally asks for nothing.
 export default function FriendButton({
   userId,
   variant,
@@ -42,20 +45,23 @@ export default function FriendButton({
   const loadFriendStatus = useAppContext((v) => v.requestHelpers.loadFriendStatus);
   const addFriend = useAppContext((v) => v.requestHelpers.addFriend);
   const removeFriend = useAppContext((v) => v.requestHelpers.removeFriend);
-  const [status, setStatus] = useState<{ eligible: boolean; state: FriendState } | null>(null);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const served = useAppContext(
+    (v) => v.user.state.userObj[userId]?.friendStatus
+  ) as { eligible: boolean; state: FriendState } | undefined;
+  const [fetched, setFetched] = useState<{ eligible: boolean; state: FriendState } | null>(null);
+  const status = initialState
+    ? { eligible: true, state: initialState }
+    : served || fetched;
   const [busy, setBusy] = useState(false);
   // undoing (cancel a request / unfriend) takes a second tap
   const [confirming, setConfirming] = useState(false);
   const [note, setNote] = useState('');
 
   useEffect(() => {
-    if (!myId || !userId || userId === myId) return;
-    if (initialState) {
-      setStatus({ eligible: true, state: initialState });
-      return;
-    }
+    if (!myId || !userId || userId === myId || initialState || served) return;
     let active = true;
-    setStatus(null);
+    setFetched(null);
     const memo = statusMemo.get(userId);
     const promise =
       memo && Date.now() - memo.at < STATUS_TTL_MS
@@ -67,14 +73,14 @@ export default function FriendButton({
     }
     promise
       .then((data: any) => {
-        if (active) setStatus(data);
+        if (active && data && typeof data.eligible === 'boolean') setFetched(data);
       })
       .catch(() => null);
     return () => {
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myId, userId, initialState]);
+  }, [myId, userId, initialState, Boolean(served)]);
 
   if (!myId || userId === myId || !status?.eligible) return null;
   const state = status.state;
@@ -88,6 +94,26 @@ export default function FriendButton({
   async function handleClick() {
     if (busy) return;
     if ((state === 'friends' || state === 'requested') && !confirming) {
+      // undoing is destructive: confirm against the live state first. A status
+      // served earlier can be stale (they accepted meanwhile), and the second
+      // tap would then end a friendship instead of cancelling a request.
+      setBusy(true);
+      let live = status;
+      try {
+        live = await loadFriendStatus(userId);
+      } catch {
+        live = status;
+      } finally {
+        setBusy(false);
+      }
+      if (live && typeof live.eligible === 'boolean' && live.state !== state) {
+        statusMemo.set(userId, { at: Date.now(), promise: Promise.resolve(live) });
+        setFetched(live);
+        onSetUserState({ userId, newState: { friendStatus: live } });
+        // a list that knew the old state (the Friends page) re-sorts itself
+        onChange?.(live.state);
+        return;
+      }
       setConfirming(true);
       setTimeout(() => setConfirming(false), 3500);
       return;
@@ -101,7 +127,11 @@ export default function FriendButton({
           ? await addFriend(userId)
           : await removeFriend(userId);
       statusMemo.set(userId, { at: Date.now(), promise: Promise.resolve(next) });
-      setStatus(next);
+      setFetched(next);
+      // every panel and hover card showing this person agrees at once
+      if (next && typeof next.eligible === 'boolean') {
+        onSetUserState({ userId, newState: { friendStatus: next } });
+      }
       if (next?.state) onChange?.(next.state);
     } catch (err: any) {
       // keep the current state and say why (daily limit, not someone you know...)

@@ -6,17 +6,17 @@ export default function EmailSection({
   account
 }: {
   account: {
-    email: string;
-    verifiedEmail: string;
+    emailHint?: string;
+    verifiedEmailHint?: string;
     id: number;
   };
 }) {
   return (
     <div>
-      {account?.email || account?.verifiedEmail ? (
+      {account?.emailHint || account?.verifiedEmailHint ? (
         <EmailExists
-          email={account.email}
-          verifiedEmail={account.verifiedEmail}
+          emailHint={account.emailHint}
+          verifiedEmailHint={account.verifiedEmailHint}
           userId={account.id}
         />
       ) : (
