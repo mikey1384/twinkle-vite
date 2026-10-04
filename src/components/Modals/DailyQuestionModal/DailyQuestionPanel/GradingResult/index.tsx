@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { priceTable } from '~/constants/defaultValues';
@@ -19,7 +19,7 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { DEFAULT_REWARD_COLOR, DEFAULT_XP_NUMBER_COLOR } from './constants';
 import GradeOverview from './GradeOverview';
 import Preferences from './Preferences';
-import ResponseSection from './ResponseSection';
+import ResponseSection, { isPolishUnchanged } from './ResponseSection';
 import ShareActions from './ShareActions';
 
 export default function GradingResult({
@@ -175,6 +175,14 @@ export default function GradingResult({
     selection: string;
     price: number;
   } | null>(null);
+
+  // When the polish came back identical to the original, share the original (never label it polished).
+  useEffect(() => {
+    if (isPolishUnchanged(refinedResponse, originalResponse || response)) {
+      setSelectedVersion('original');
+      setAiSelectedVersion('original');
+    }
+  }, [refinedResponse, originalResponse, response]);
 
   async function handleRefine() {
     if (refinedResponse || refining) return;
@@ -506,6 +514,7 @@ export default function GradingResult({
 
       {!showVersionSelector &&
         !showAIVersionSelector &&
+        !isPolishUnchanged(refinedResponse, originalResponse || response) &&
         (canShareToFeedNow || canShareWithZero || canShareWithCiel) && (
           <p
             className={css`
@@ -611,7 +620,12 @@ export default function GradingResult({
     }
 
     setAiShareTarget(target);
-    setAiSelectedVersion(refinedTextForOpen ? 'refined' : 'original');
+    setAiSelectedVersion(
+      refinedTextForOpen &&
+        !isPolishUnchanged(refinedTextForOpen, originalResponse || response)
+        ? 'refined'
+        : 'original'
+    );
     setShowAIVersionSelector(true);
   }
 

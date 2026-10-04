@@ -40,6 +40,8 @@ export default function ResponseSection({
   onRefine: () => void;
   onSelectedVersionChange: (version: 'original' | 'refined') => void;
 }) {
+  // A "polish" identical to what the author typed is not offered or labelled as AI-polished.
+  const polishUnchanged = isPolishUnchanged(refinedResponse, originalResponse || response);
   return (
     <>
       {showVersionSelector && refinedResponse && (
@@ -70,14 +72,17 @@ export default function ResponseSection({
               <Icon icon="pencil-alt" style={{ marginRight: '0.5rem' }} />
               My Original
             </nav>
-            <nav
-              className={selectedVersion === 'refined' ? 'active' : ''}
-              onClick={() => onSelectedVersionChange('refined')}
-            >
-              <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
-              AI Polished
-            </nav>
+            {!polishUnchanged && (
+              <nav
+                className={selectedVersion === 'refined' ? 'active' : ''}
+                onClick={() => onSelectedVersionChange('refined')}
+              >
+                <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
+                AI Polished
+              </nav>
+            )}
           </FilterBar>
+          {polishUnchanged && <PolishUnchangedNote />}
 
           <div
             className={css`
@@ -106,7 +111,7 @@ export default function ResponseSection({
                 white-space: pre-wrap;
               `}
             >
-              {selectedVersion === 'refined'
+              {selectedVersion === 'refined' && !polishUnchanged
                 ? refinedResponse
                 : originalResponse || response}
             </p>
@@ -144,23 +149,28 @@ export default function ResponseSection({
               <Icon icon="pencil-alt" style={{ marginRight: '0.5rem' }} />
               Original (raw)
             </nav>
-            <nav
-              className={aiSelectedVersion === 'refined' ? 'active' : ''}
-              onClick={() => onAiSelectedVersionChange('refined')}
-              style={{ minWidth: '9rem' }}
-            >
-              <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
-              AI‑polished
-            </nav>
-            <nav
-              className={aiSelectedVersion === 'both' ? 'active' : ''}
-              onClick={() => onAiSelectedVersionChange('both')}
-              style={{ minWidth: '9rem' }}
-            >
-              <Icon icon="copy" style={{ marginRight: '0.5rem' }} />
-              Both
-            </nav>
+            {!polishUnchanged && (
+              <nav
+                className={aiSelectedVersion === 'refined' ? 'active' : ''}
+                onClick={() => onAiSelectedVersionChange('refined')}
+                style={{ minWidth: '9rem' }}
+              >
+                <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
+                AI‑polished
+              </nav>
+            )}
+            {!polishUnchanged && (
+              <nav
+                className={aiSelectedVersion === 'both' ? 'active' : ''}
+                onClick={() => onAiSelectedVersionChange('both')}
+                style={{ minWidth: '9rem' }}
+              >
+                <Icon icon="copy" style={{ marginRight: '0.5rem' }} />
+                Both
+              </nav>
+            )}
           </FilterBar>
+          {polishUnchanged && <PolishUnchangedNote />}
 
           <div
             className={css`
@@ -312,7 +322,8 @@ export default function ResponseSection({
               </div>
             )}
 
-            {refinedResponse && (
+            {refinedResponse && polishUnchanged && <PolishUnchangedNote />}
+            {refinedResponse && !polishUnchanged && (
               <div
                 className={css`
                   margin-top: 1rem;
@@ -346,5 +357,31 @@ export default function ResponseSection({
         </details>
       )}
     </>
+  );
+}
+
+export function isPolishUnchanged(
+  refinedResponse: string | null,
+  originalResponse: string
+) {
+  if (!refinedResponse) return false;
+  const normalize = (value: string) => value.replace(/\s+/g, ' ').trim();
+  return normalize(refinedResponse) === normalize(originalResponse);
+}
+
+function PolishUnchangedNote() {
+  return (
+    <p
+      className={css`
+        margin-top: 1rem;
+        font-size: 1.2rem;
+        color: ${Color.darkerGray()};
+        line-height: 1.5;
+      `}
+    >
+      <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
+      The AI polish came back with the same wording as yours, so it will be
+      shared exactly as you wrote it.
+    </p>
   );
 }
