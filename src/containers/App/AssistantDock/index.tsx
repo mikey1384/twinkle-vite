@@ -25,6 +25,7 @@ import {
   clearAssistantAskContext,
   closeAssistantDock,
   getAssistantAskContext,
+  getAssistantDockAskedFromItem,
   getAssistantDock,
   getHomeAskAssistant,
   subscribeAssistantDock,
@@ -80,6 +81,10 @@ export default function AssistantDock() {
     subscribeAssistantDock,
     getHomeAskAssistant
   );
+  const askedFromItem = useSyncExternalStore(
+    subscribeAssistantDock,
+    getAssistantDockAskedFromItem
+  );
   const location = useLocation();
   const channelId = Number(
     assistant === 'Ciel'
@@ -103,8 +108,9 @@ export default function AssistantDock() {
     !!aiCallChannelId ||
     overlayActive ||
     // asking about something is an explicit act: the window shows even when
-    // this conversation is already on the page, so the chip is seen
-    (conversationOnScreen && !modalOpen && !askContext);
+    // this conversation is already on the page, so the chip is seen, and it
+    // stays after sending until they close it, so the reply is seen too
+    (conversationOnScreen && !modalOpen && !askContext && !askedFromItem);
   if (hidden) return null;
   return createPortal(
     <DockWindow

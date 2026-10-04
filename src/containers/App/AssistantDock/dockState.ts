@@ -40,11 +40,20 @@ export function clearAssistantAskContext() {
   listeners.forEach((listener) => listener());
 }
 
+// Pressing Ask on something keeps the window up until the member closes it,
+// even on Home where the ask box shows the same conversation: they asked from
+// a card far down the feed and the reply belongs where they are looking.
+let askedFromItem = false;
+export function getAssistantDockAskedFromItem() {
+  return askedFromItem;
+}
+
 export function openAssistantDock(
   assistant: 'Zero' | 'Ciel',
   context?: AssistantAskContext | null
 ) {
   if (context !== undefined) askContext = context;
+  if (context) askedFromItem = true;
   const changed = dockAssistant !== assistant;
   dockAssistant = assistant;
   // a new context must reach an already-open dock too
@@ -53,6 +62,7 @@ export function openAssistantDock(
 
 export function closeAssistantDock() {
   askContext = null;
+  askedFromItem = false;
   set(null);
 }
 
