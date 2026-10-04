@@ -5,6 +5,9 @@ import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import LinkPreviewImage from '~/components/LinkPreviewImage';
 import RewardChips from '~/components/RewardChips';
+import BountyChallenge, {
+  type BountyChallengeInfo
+} from '~/components/BountyChallenge';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
@@ -24,6 +27,7 @@ export default function BountyContent({
     appAvailable?: boolean | number;
     xpEarned?: number;
     coinEarned?: number;
+    challenge?: BountyChallengeInfo | null;
   };
   compact?: boolean;
   theme?: string;
@@ -68,6 +72,7 @@ export default function BountyContent({
               <span className="bounty-content__unavailable">App unavailable</span>
             </div>
           )}
+          <BountyChallenge challenge={bounty.challenge} compact={compact} />
           <Heading className="bounty-content__title">
             {bounty.title || 'Bounty earned'}
           </Heading>
@@ -246,6 +251,10 @@ const bountyContentClass = css`
     .bounty-content__rewards {
       order: -1;
       justify-content: flex-start;
+    }
+
+    .bounty-challenge {
+      order: -2;
     }
 
     .bounty-content__title {
