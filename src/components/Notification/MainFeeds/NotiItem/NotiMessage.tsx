@@ -4,6 +4,7 @@ import { Color } from '~/constants/css';
 import { Link, useNavigate } from 'react-router-dom';
 import { User } from '~/types';
 import Button from '~/components/Button';
+import FriendButton from '~/components/FriendButton';
 import ContentLink from '~/components/ContentLink';
 import { useAppContext } from '~/contexts';
 import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContributionInviteStatusUpdater';
@@ -645,6 +646,41 @@ function NotiMessage({
             {targetObj.content ? ` (${truncatedTargetObjectText})` : ''}
           </Link>
           {!contentIsEmpty ? <>: "{truncatedActionText}"</> : null}
+        </>
+      );
+    case 'friendRequest':
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            sent you a friend request
+          </span>
+          <span
+            style={{
+              display: 'inline-flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '0.4rem',
+              maxWidth: '100%',
+              marginLeft: '0.8rem',
+              verticalAlign: 'middle'
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <FriendButton
+              userId={targetObj.id}
+              variant="panel"
+              buttonProps={{ size: 'sm', shape: 'pill', uppercase: false }}
+            />
+          </span>
+        </>
+      );
+    case 'friendAccepted':
+      return (
+        <>
+          <span style={{ color: recommendationColorValue, fontWeight: 'bold' }}>
+            accepted your friend request
+          </span>
+          . You are friends now.
         </>
       );
     case 'buildCollaborationRequestAccepted':
