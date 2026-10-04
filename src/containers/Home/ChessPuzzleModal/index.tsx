@@ -55,14 +55,12 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     runIdRef
   } = useChessPuzzle();
 
+  // Playing while the puzzle tab is open, whatever the phase: the result
+  // screen between puzzles and the next puzzle's load used to switch the
+  // activity off and on, so others saw the badge blink every puzzle (Mikey
+  // 10-04). The rankings tab still shows nothing.
   useUserActivity(
-    activeTab === 'game' &&
-      !!puzzle &&
-      !error &&
-      !levelsLoading &&
-      (phase === 'WAIT_USER' || phase === 'SOLUTION' || phase === 'ANALYSIS')
-      ? { kind: 'game', id: 'chess-puzzles' }
-      : null
+    activeTab === 'game' && !error ? { kind: 'game', id: 'chess-puzzles' } : null
   );
   const submittingRef = useRef(false);
   const pendingAttemptResultRef = useRef<PuzzleResult | null>(null);

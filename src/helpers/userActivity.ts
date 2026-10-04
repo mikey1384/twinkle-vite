@@ -1,5 +1,20 @@
 export const USER_ACTIVITY_INPUT_EVENT = 'twinkle-user-activity-input';
 export const USER_ACTIVITY_REFRESH_AFTER_MS = 90_000;
+// An activity that ends waits this long before others hear it: the gap
+// between rounds (a result screen, the next round loading) blinked the badge
+// off and on for everyone (Mikey 2026-10-04, chess puzzles). Starting or
+// switching an activity is reported at once.
+export const USER_ACTIVITY_END_GRACE_MS = 4000;
+export function userActivityReportDelayMs({
+  next,
+  lastReportedKey
+}: {
+  next: unknown;
+  lastReportedKey: string;
+}) {
+  const wasActive = lastReportedKey !== '' && lastReportedKey !== 'null';
+  return !next && wasActive ? USER_ACTIVITY_END_GRACE_MS : 100;
+}
 
 export type ActivityGame =
   | 'wordle'

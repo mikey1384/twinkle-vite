@@ -1,10 +1,14 @@
-import { USER_ACTIVITY_INPUT_EVENT } from '~/helpers/userActivity';
+import {
+  USER_ACTIVITY_INPUT_EVENT,
+  userActivityReportDelayMs
+} from '~/helpers/userActivity';
 import { useEffect } from 'react';
 import { useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import { isSocketAuthReadyForUser } from '~/helpers/socketAuthReady';
 import { userActivityRegistry } from '~/helpers/hooks/useUserActivity';
+
 
 export default function useUserActivityReporting() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -48,8 +52,17 @@ export default function useUserActivityReporting() {
     }
     function changed() {
       clearTimeout(changeTimer);
-      // Route changes can unmount one app and mount the next in one commit.
-      changeTimer = setTimeout(() => report(), 100);
+      // Route changes can unmount one app and mount the next in one commit;
+      // an ending activity waits a few seconds (userActivityReportDelayMs), so
+      // a round's gap never blinks the badge. Leaving the page or the window
+      // still clears it at once (pageHidden, foregroundChanged).
+      changeTimer = setTimeout(
+        () => report(),
+        userActivityReportDelayMs({
+          next: userActivityRegistry.get(userId),
+          lastReportedKey: lastKey
+        })
+      );
     }
     function userInput(event: Event) {
       const activity = userActivityRegistry.get(userId);
