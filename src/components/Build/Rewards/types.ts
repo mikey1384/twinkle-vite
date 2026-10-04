@@ -26,7 +26,9 @@ export interface RewardRule {
   // numeric-quiz: server-checked answers. completion: the app reports a
   // finished activity; the server holds it to minSeconds, once a day, budgets.
   // generated-quiz: questions the server writes into a bank (see `bank`).
-  verifier: 'numeric-quiz' | 'completion' | 'generated-quiz';
+  // archive-rematch: the daily rematch of one retired until-earned puzzle.
+  verifier:
+    'numeric-quiz' | 'completion' | 'generated-quiz' | 'archive-rematch';
   // generated-quiz only: the difficulty ladder (percent of xp/coins per step,
   // easiest first, ending at 100), the starting step, the generation brief
   // and the topics questions are written for.
@@ -55,7 +57,7 @@ export interface RewardRule {
   // Wrong answers allowed per challenge; null = unlimited; absent = 3.
   maxAttempts?: number | null;
   // Share of xp/coins a correct answer pays after a wrong one; absent = full.
-  retry?: { xpPercent: number; coinsPercent: number };
+  retry?: { xpPercent: number; coinsPercent: number; paidAttempts?: number };
 }
 export interface RewardProposalEarnings {
   rules: Array<{
@@ -198,7 +200,8 @@ export interface RewardSettings {
       title: string;
       xp: number;
       coins: number;
-      verifier: 'numeric-quiz' | 'completion' | 'generated-quiz';
+      verifier:
+        'numeric-quiz' | 'completion' | 'generated-quiz' | 'archive-rematch';
       minSeconds?: number;
       progression?: string;
       questionSets: number;

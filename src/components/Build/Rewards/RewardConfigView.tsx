@@ -281,6 +281,49 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
       </article>
     );
   }
+  if (rule.verifier === 'archive-rematch') {
+    const paid = rule.retry?.paidAttempts;
+    return (
+      <article>
+        <h4>
+          {rule.title} · {rule.xp.toLocaleString()} XP +{' '}
+          {rule.coins.toLocaleString()} Coins
+        </h4>
+        {rule.howTo ? <p>How players earn it: {rule.howTo}</p> : null}
+        <RewardRuleGrouping rule={rule} />
+        <p>
+          Rule ID: {rule.id} · daily rematch · each Korean calendar day the
+          server picks one retired puzzle of this app (an until-earned set
+          someone already solved) and checks answers against its approved sheet.
+          Only players who never met that puzzle (no earlier answer, bounty or
+          Vault practice) can be paid, once per day. It does not use the daily
+          bounty count but does count toward the per-learner XP and Coin
+          budgets.
+        </p>
+        <p>
+          {rule.maxAttempts === null
+            ? 'Unlimited tries until Korean midnight'
+            : `${rule.maxAttempts ?? 3} tries`}
+          {rule.retry
+            ? ` · a retry pays ${retryAmount(
+                rule.xp,
+                rule.retry.xpPercent
+              ).toLocaleString()} XP + ${retryAmount(
+                rule.coins,
+                rule.retry.coinsPercent
+              ).toLocaleString()} Coins${
+                paid
+                  ? ` up to attempt ${paid}, later correct answers pay nothing`
+                  : ''
+              }`
+            : ' · every correct answer pays the full amounts'}
+        </p>
+        {rule.maxLifetimeClaims ? (
+          <p>Up to {rule.maxLifetimeClaims} rewards per learner in total.</p>
+        ) : null}
+      </article>
+    );
+  }
   const tries =
     rule.maxAttempts === null
       ? 'unlimited tries until Korean midnight'

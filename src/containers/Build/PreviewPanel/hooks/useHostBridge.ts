@@ -4911,6 +4911,15 @@ export function useHostBridge({
           case 'rewards:leaderboard':
           case 'rewards:challenge-board':
           case 'rewards:interpret-answer':
+          case 'rewards:practice-check':
+          case 'rewards:practice-board':
+          case 'rewards:related-archive':
+          case 'rewards:explanations':
+          case 'rewards:explanation-post':
+          case 'rewards:explanation-vote':
+          case 'rewards:explanation-delete':
+          case 'rewards:rematch':
+          case 'rewards:rematch-claim':
           case 'rewards:bank-status':
           case 'rewards:bank-start':
           case 'rewards:bank-generate':
@@ -4932,6 +4941,35 @@ export function useHostBridge({
                   requestId: payload?.requestId
                 }
               : {};
+            // Puzzle vault (retired puzzles): which receipt, the answer or
+            // typed text, an explanation and its id/vote. Never a rating.
+            const vaultFields =
+              type === 'rewards:practice-check' ||
+              type === 'rewards:rematch-claim'
+                ? {
+                    ...(type === 'rewards:practice-check'
+                      ? { receiptId: payload?.receiptId }
+                      : {}),
+                    ...(payload?.answer !== undefined
+                      ? { answer: payload.answer }
+                      : {}),
+                    ...(Array.isArray(payload?.answers)
+                      ? { answers: payload.answers }
+                      : {}),
+                    ...(payload?.text !== undefined
+                      ? { text: payload.text }
+                      : {})
+                  }
+                : type === 'rewards:related-archive' ||
+                    type === 'rewards:explanations'
+                  ? { receiptId: payload?.receiptId }
+                  : type === 'rewards:explanation-post'
+                    ? { receiptId: payload?.receiptId, text: payload?.text }
+                    : type === 'rewards:explanation-vote'
+                      ? { id: payload?.id, vote: payload?.vote }
+                      : type === 'rewards:explanation-delete'
+                        ? { id: payload?.id }
+                        : {};
             const appMcpControlled = appMcpControlsThisTab();
             if (!runtimeOnly || !runtimeGrant || appMcpControlled) {
               // Drafts: the owner sees their own declaration and question
@@ -4954,6 +4992,7 @@ export function useHostBridge({
                     payload: {
                       ruleId: payload?.ruleId,
                       ...bankFields,
+                      ...vaultFields,
                       ...(type === 'rewards:start'
                         ? { levelIndex: payload?.levelIndex }
                         : {}),
@@ -4980,7 +5019,12 @@ export function useHostBridge({
                         ? { cursor: payload?.cursor }
                         : {}),
                       ...(type === 'rewards:archived-problem'
-                        ? { receiptId: payload?.receiptId }
+                        ? {
+                            receiptId: payload?.receiptId,
+                            ...(payload?.withGuide === true
+                              ? { withGuide: true }
+                              : {})
+                          }
                         : {}),
                       limit: payload?.limit
                     }
@@ -5030,6 +5074,40 @@ export function useHostBridge({
                 };
                 break;
               }
+              if (type === 'rewards:rematch') {
+                response = {
+                  mode: 'preview',
+                  entry: null,
+                  prompt: null,
+                  eligible: false,
+                  attempts: 0,
+                  earned: null,
+                  message: stub.message
+                };
+                break;
+              }
+              if (type === 'rewards:practice-board') {
+                response = {
+                  mode: 'preview',
+                  top: [],
+                  me: null,
+                  hardest: [],
+                  solved: [],
+                  message: stub.message
+                };
+                break;
+              }
+              if (
+                type === 'rewards:related-archive' ||
+                type === 'rewards:explanations'
+              ) {
+                response = {
+                  mode: 'preview',
+                  entries: [],
+                  message: stub.message
+                };
+                break;
+              }
               if (
                 type === 'rewards:timeline' ||
                 type === 'rewards:archived-problem'
@@ -5061,6 +5139,7 @@ export function useHostBridge({
               payload: {
                 ruleId: payload?.ruleId,
                 ...bankFields,
+                ...vaultFields,
                 ...(type === 'rewards:start'
                   ? { levelIndex: payload?.levelIndex }
                   : {}),
@@ -5086,7 +5165,12 @@ export function useHostBridge({
                   ? { cursor: payload?.cursor }
                   : {}),
                 ...(type === 'rewards:archived-problem'
-                  ? { receiptId: payload?.receiptId }
+                  ? {
+                      receiptId: payload?.receiptId,
+                      ...(payload?.withGuide === true
+                        ? { withGuide: true }
+                        : {})
+                    }
                   : {}),
                 limit: payload?.limit
               },

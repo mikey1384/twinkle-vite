@@ -346,3 +346,92 @@ test('the host bridge forwards the challenge board and answer interpretation', (
   // The draft/unapproved fallback never reaches paid reward code.
   assert.match(source, /type === 'rewards:challenge-board'\)\s*\{\s*response = \{\s*mode: 'preview'/);
 });
+
+// Puzzle vault: practice, related puzzles and explanations reach the server
+// with only their own fields, never a client rating, user or clock.
+test('the host bridge forwards puzzle-vault operations with only their fields', async () => {
+  const result = { mode: 'live', entries: [] };
+  const h = harness({ result });
+  await h.invoke('rewards:practice-check', {
+    receiptId: 7,
+    answer: 13,
+    rating: 3000,
+    userId: 9,
+    now: 1
+  });
+  await h.invoke('rewards:practice-check', { receiptId: 7, text: '13 cards' });
+  await h.invoke('rewards:practice-board', { userId: 9 });
+  await h.invoke('rewards:related-archive', { ruleId: 'e1-daily' });
+  await h.invoke('rewards:related-archive', { receiptId: 3 });
+  await h.invoke('rewards:explanations', { receiptId: 3 });
+  await h.invoke('rewards:explanation-post', {
+    receiptId: 3,
+    text: 'Pair the ends',
+    votes: 99
+  });
+  await h.invoke('rewards:explanation-vote', { id: 4, vote: 1, userId: 9 });
+  await h.invoke('rewards:explanation-delete', { id: 4, userId: 9 });
+  await h.invoke('rewards:rematch', { userId: 9 });
+  await h.invoke('rewards:practice-check', { receiptId: 7, answers: [1, 2] });
+  await h.invoke('rewards:rematch-claim', { answers: [3, 4] });
+  await h.invoke('rewards:archived-problem', {
+    receiptId: 7,
+    withGuide: true,
+    userId: 9
+  });
+  await h.invoke('rewards:rematch-claim', {
+    answer: 13,
+    receiptId: 5,
+    xp: 99999
+  });
+  const strip = (payload: any) =>
+    Object.fromEntries(
+      Object.entries(payload).filter(([, value]) => value !== undefined)
+    );
+  assert.deepEqual(
+    h.calls.map((call) => [call.operation, strip(call.payload)]),
+    [
+      ['practice-check', { receiptId: 7, answer: 13 }],
+      ['practice-check', { receiptId: 7, text: '13 cards' }],
+      ['practice-board', {}],
+      ['related-archive', { ruleId: 'e1-daily' }],
+      ['related-archive', { receiptId: 3 }],
+      ['explanations', { receiptId: 3 }],
+      ['explanation-post', { receiptId: 3, text: 'Pair the ends' }],
+      ['explanation-vote', { id: 4, vote: 1 }],
+      ['explanation-delete', { id: 4 }],
+      ['rematch', {}],
+      ['practice-check', { receiptId: 7, answers: [1, 2] }],
+      ['rematch-claim', { answers: [3, 4] }],
+      ['archived-problem', { receiptId: 7, withGuide: true }],
+      ['rematch-claim', { answer: 13 }]
+    ]
+  );
+  assert.ok(
+    h.calls.every((call) => call.runtimeGrant === 'server-published-grant')
+  );
+  for (const type of [
+    'practice-check',
+    'explanation-post',
+    'explanation-vote',
+    'explanation-delete',
+    'rematch-claim'
+  ])
+    assert.equal(isMutatingPreviewRequestType(`rewards:${type}`), true);
+  // Drafts get empty previews for reads and refuse writes, never calling the API.
+  const preview = harness({ runtimeOnly: false });
+  assert.equal(
+    (await preview.invoke('rewards:practice-board')).mode,
+    'preview'
+  );
+  assert.equal((await preview.invoke('rewards:rematch')).eligible, false);
+  await assert.rejects(preview.invoke('rewards:rematch-claim', { answer: 1 }));
+  assert.deepEqual(
+    (await preview.invoke('rewards:explanations', { receiptId: 3 })).entries,
+    []
+  );
+  await assert.rejects(
+    preview.invoke('rewards:explanation-post', { receiptId: 3, text: 'x' })
+  );
+  assert.equal(preview.calls.length, 0);
+});

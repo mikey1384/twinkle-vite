@@ -23,7 +23,8 @@ export interface EarnHubRule {
   lifetime?: { limit: number; remaining: number };
   xp: number;
   coins: number;
-  verifier: 'numeric-quiz' | 'completion' | 'generated-quiz';
+  verifier:
+    'numeric-quiz' | 'completion' | 'generated-quiz' | 'archive-rematch';
   available: boolean;
   earnedToday: { xp: number; coins: number; attempt: number } | null;
   attemptsToday: number;

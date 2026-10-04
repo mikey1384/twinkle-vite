@@ -294,7 +294,9 @@ export default function RewardSettingsModal({
                                 ? 'for finishing it'
                                 : rule.verifier === 'generated-quiz'
                                   ? 'at the top step, for each correct answer'
-                                  : 'for a correct answer'}
+                                  : rule.verifier === 'archive-rematch'
+                                    ? 'for the daily rematch of a retired puzzle'
+                                    : 'for a correct answer'}
                             </small>
                           </span>
                         </li>
