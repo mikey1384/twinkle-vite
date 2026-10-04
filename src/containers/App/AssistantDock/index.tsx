@@ -20,6 +20,7 @@ import { WEBSITE_AGENT_UI_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 import { useWebsiteAgentOverlayActive } from '../WebsiteAgentSpotlight';
 import { EnergyBattery, useDraggableWindow } from '../AICallWindow/frame';
 import AssistantReplyView from './AssistantReplyView';
+import { askIdeasFor } from './askIdeas';
 import { attachAssistantConversationListeners } from './conversationStore';
 import {
   clearAssistantAskContext,
@@ -44,20 +45,6 @@ const appear = keyframes`
 // along, so the user can keep talking to them while on that screen. It is
 // the call window's other form (same picture, same Energy battery, same
 // place), with the chat in place of the hang-up button.
-// What the old "Ask Zero" window offered, as suggestion bubbles when the
-// member asks about something with text: one tap sends it, with the item
-// attached, and the agent takes it from there.
-const TEXT_KINDS = new Set(['comment', 'subject', 'video', 'url', 'aiStory', 'dailyReflection']);
-const ASK_IDEAS = [
-  'Make it easy to understand',
-  'Rewrite it in your own style',
-  'Rewrite it as a poem',
-  'Rewrite it in K-pop lyrics style',
-  'Rewrite it in Shakespearean style',
-  'Rewrite it in rap style',
-  'Rewrite it in YouTuber style'
-];
-
 export default function AssistantDock() {
   // Replies are followed from their first word, whichever screen the user
   // is on when the window comes up.
@@ -162,7 +149,7 @@ function DockWindow({
         ? `${assistant} reacted ${getChatReaction(reply.reaction)?.fallback || ''}`.trim()
         : `Talk to ${assistant} here`;
 
-  const askIdeas = askContext && TEXT_KINDS.has(askContext.kind) ? ASK_IDEAS : [];
+  const askIdeas = askIdeasFor(askContext);
 
   async function handleSend(content?: string) {
     // the context goes with the first message about it, then it is spent

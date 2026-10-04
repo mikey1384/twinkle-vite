@@ -22,13 +22,17 @@ export default function AskAgentButton({
   context,
   style,
   hideLabel,
-  label
+  label,
+  onClick
 }: {
   context: AssistantAskContext;
   style?: React.CSSProperties;
   hideLabel?: boolean;
   // overrides the default "Ask Zero" text (e.g. "Help me plan")
   label?: string;
+  // runs first (e.g. closing the modal the button sits in, so the agent
+  // window is not under it)
+  onClick?: () => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const assistant = useUserAssistant(userId);
@@ -54,7 +58,10 @@ export default function AskAgentButton({
         size="md"
         shape="pill"
         uppercase={false}
-        onClick={() => openAssistantDock(assistant, context)}
+        onClick={() => {
+          onClick?.();
+          openAssistantDock(assistant, context);
+        }}
         aria-label={text}
       >
         <span

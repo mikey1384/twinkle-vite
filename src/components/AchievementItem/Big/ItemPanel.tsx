@@ -300,10 +300,12 @@ export default function ItemPanel({
               label="How do I earn this?"
               style={{ padding: '0.4rem 0.9rem' }}
               context={{
-                kind: 'page',
+                // the server reads the achievement and the member's own
+                // progress toward it
+                kind: 'achievement',
+                id: itemId,
                 label: `the "${itemName}" achievement`,
-                path: achievementPath,
-                excerpt: description
+                path: achievementPath
               }}
             />
           )}

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import ShareButton from '~/components/Buttons/ShareButton';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ViewCount from '~/components/ViewCount';
@@ -547,6 +548,13 @@ export default function Details({
                   gap: '1rem'
                 }}
               >
+                <AskAgentButton
+                  context={{
+                    kind: 'video',
+                    id: Number(videoId),
+                    label: 'this video'
+                  }}
+                />
                 <ShareButton
                   buttonVariant="solid"
                   color="darkerGray"

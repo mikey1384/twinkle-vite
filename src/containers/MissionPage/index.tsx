@@ -3,6 +3,7 @@ import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import GoBack from '~/components/GoBack';
 import ShareButton from '~/components/Buttons/ShareButton';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -208,7 +209,26 @@ export default function MissionPage() {
               to="/missions"
               text="Missions"
             />
-            <ShareButton linkPath={missionSharePath} />
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+              `}
+            >
+              {missionId ? (
+                <AskAgentButton
+                  context={{
+                    kind: 'mission',
+                    id: Number(missionId),
+                    label: mission.title
+                      ? `the "${mission.title}" mission`
+                      : 'this mission'
+                  }}
+                />
+              ) : null}
+              <ShareButton linkPath={missionSharePath} />
+            </div>
           </div>
         </div>
         <div

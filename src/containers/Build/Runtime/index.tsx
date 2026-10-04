@@ -19,6 +19,7 @@ import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReleaseButton from '~/components/Build/ReleaseButton';
 import ShareButton from '~/components/Buttons/ShareButton';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import UsernameText from '~/components/Texts/UsernameText';
 import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_FALLBACK } from '~/constants/appShell';
@@ -2436,6 +2437,27 @@ export default function BuildRuntime({
               ) : null}
               {appHelperEnabled ? (
                 <span className={appHelperSlotClass} ref={setAppHelperSlot} />
+              ) : null}
+              {/* not in embeds or app-tool sessions (like the app helper),
+                  and not on a phone held upright, where the action row
+                  already fills the toolbar */}
+              {build.isPublic &&
+              !isEmbedded &&
+              !appMcpSessionId &&
+              !isMobilePortrait ? (
+                <AskAgentButton
+                  hideLabel
+                  context={{
+                    kind: 'build',
+                    id: Number(build.id),
+                    label: 'this app'
+                  }}
+                  style={{
+                    borderRadius: '999px',
+                    height: '2.65rem',
+                    padding: '0 0.4rem'
+                  }}
+                />
               ) : null}
               <ShareButton
                 variant="compact"

@@ -22,6 +22,8 @@ export interface AssistantAskContext {
   id?: number;
   // a pass's kind ('mission' or 'achievement'), as the feed knows it
   rootType?: string;
+  // an app asked about for its rewards (the Earn page), not to play
+  focus?: 'rewards';
   // a short name for the chip ("this comment", "the Bridge Builder meetup quest")
   label: string;
   // where it lives, for the agent to open or link

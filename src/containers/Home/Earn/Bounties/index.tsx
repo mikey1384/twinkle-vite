@@ -4,6 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import AppCard from './AppCard';
 import AppRow from './AppRow';
 import TopPickCard from './TopPickCard';
@@ -49,16 +50,22 @@ export default function Bounties({
               : `Apps built on ${SITE_NAME} that pay real XP and Coins. Approved by ${SITE_NAME}, paid by ${SITE_NAME}.`}
           </p>
         </div>
-        <a
-          className={linkClass}
-          href="#earn-leaderboards"
-          onClick={(event) => {
-            event.preventDefault();
-            onOpenStandings();
-          }}
-        >
-          Standings →
-        </a>
+        <div className={headActionsClass}>
+          <AskAgentButton
+            label="Which one for me?"
+            context={{ kind: 'page', label: 'Bounties', path: '/earn' }}
+          />
+          <a
+            className={linkClass}
+            href="#earn-leaderboards"
+            onClick={(event) => {
+              event.preventDefault();
+              onOpenStandings();
+            }}
+          >
+            Standings →
+          </a>
+        </div>
       </div>
       <ScopedTheme
         theme={themeName}
@@ -166,6 +173,11 @@ const headClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     padding: 0 1rem;
   }
+`;
+const headActionsClass = css`
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
 `;
 const titleClass = css`
   margin: 0;

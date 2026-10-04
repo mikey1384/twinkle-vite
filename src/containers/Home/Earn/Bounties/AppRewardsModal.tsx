@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import Icon from '~/components/Icon';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -70,6 +71,17 @@ export default function AppRewardsModal({
           <Button variant="ghost" onClick={onHide}>
             Close
           </Button>
+          {/* the agent window opens over the page, so the modal closes */}
+          <AskAgentButton
+            label="How do I earn the rewards?"
+            onClick={onHide}
+            context={{
+              kind: 'build',
+              id: app.buildId,
+              focus: 'rewards',
+              label: `the rewards in "${app.title}"`
+            }}
+          />
           <Button
             color="logoBlue"
             variant="solid"

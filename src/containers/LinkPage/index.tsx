@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import Embedly from '~/components/Embedly';
 import Comments from '~/components/Comments';
 import Subjects from '~/components/Subjects';
@@ -570,6 +571,14 @@ export default function LinkPage() {
                   />
                 </div>
               </div>
+              <AskAgentButton
+                style={{
+                  left: '1rem',
+                  bottom: '0.5rem',
+                  position: 'absolute'
+                }}
+                context={{ kind: 'url', id: linkId, label: 'this link' }}
+              />
               <Button
                 style={{
                   right: '1rem',
