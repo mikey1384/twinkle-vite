@@ -1344,6 +1344,9 @@ export default function useInitSocket({
           compactGeneralTopics,
           topicIds: bootstrapTopicIds,
           recoveryId: effectiveRecoveryId,
+          // the opening chat's messages complete in this reply (no 20 single
+          // requests after the first chat load)
+          hydrateMessages: true,
           onAttemptTiming(timing: RequestAttemptTiming) {
             recordChatBootstrapEvent('chat-bootstrap-request-attempt-timing', {
               bootstrapId,

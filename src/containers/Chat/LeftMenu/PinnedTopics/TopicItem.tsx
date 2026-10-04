@@ -13,11 +13,14 @@ export default function TopicItem({
   icon,
   children,
   onClick,
+  onIntent,
   isSelected
 }: {
   icon: string;
   children: React.ReactNode;
   onClick: () => void;
+  // about to be opened (pointer over, finger down, focus): start loading
+  onIntent?: () => void;
   isSelected: boolean;
 }) {
   const [showFullText, setShowFullText] = useState(false);
@@ -76,7 +79,10 @@ export default function TopicItem({
         aria-current={isSelected ? 'page' : undefined}
         className={cx(chatSubnavRowClass, contextRowClass, isSelected && 'active')}
         onClick={onClick}
+        onPointerEnter={onIntent}
+        onPointerDown={onIntent}
         onFocus={(event) => {
+          onIntent?.();
           if (event.currentTarget.matches(':focus-visible') &&
               textRef.current && textIsOverflown(textRef.current)) {
             setShowFullText(true);

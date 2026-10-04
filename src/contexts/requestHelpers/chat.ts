@@ -1513,6 +1513,7 @@ export default function chatRequestHelpers({
       compactGeneralTopics = false,
       topicIds = [],
       recoveryId,
+      hydrateMessages = false,
       onAttemptTiming
     }: {
       bootstrapId?: string;
@@ -1523,6 +1524,8 @@ export default function chatRequestHelpers({
       compactGeneralTopics?: boolean;
       topicIds?: number[];
       recoveryId?: string;
+      // complete messages, so no message on screen asks for itself again
+      hydrateMessages?: boolean;
       onAttemptTiming?: (timing: RequestAttemptTiming) => void;
     }) {
       const quotaProjectionRequest =
@@ -1533,7 +1536,9 @@ export default function chatRequestHelpers({
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
           }${fromWriter ? '&fromWriter=1' : ''}${
             compactGeneralTopics ? '&compactGeneralTopics=1' : ''
-          }${topicIds.length ? `&topicIds=${topicIds.join(',')}` : ''}`,
+          }${topicIds.length ? `&topicIds=${topicIds.join(',')}` : ''}${
+            hydrateMessages ? '&hydrateMessages=1' : ''
+          }`,
           {
             ...auth(),
             headers: {
@@ -1792,14 +1797,19 @@ export default function chatRequestHelpers({
     },
     async loadSubchannel({
       channelId,
-      subchannelId
+      subchannelId,
+      hydrateMessages = false
     }: {
       channelId: number;
       subchannelId: number;
+      // complete messages, so no message asks for itself again
+      hydrateMessages?: boolean;
     }) {
       try {
         const { data: subchannel } = await request.get(
-          `${URL}/chat/channel/subchannel?channelId=${channelId}&subchannelId=${subchannelId}`,
+          `${URL}/chat/channel/subchannel?channelId=${channelId}&subchannelId=${subchannelId}${
+            hydrateMessages ? '&hydrateMessages=1' : ''
+          }`,
           auth()
         );
         return subchannel;

@@ -3,7 +3,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
 import LocalContext from '../../Context';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
+import { prefetchTopicMessages } from '../../topicPrefetch';
 import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { resolveColorValue } from '~/theme/resolveColor';
@@ -75,6 +76,10 @@ function PinnedTopics({
   const {
     actions: { onSaveScrollPositionForAll }
   } = useContext(LocalContext);
+  const loadTopicMessages = useAppContext(
+    (v) => v.requestHelpers.loadTopicMessages
+  );
+  const channelsObj = useChatContext((v) => v.state.channelsObj);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -187,6 +192,7 @@ function PinnedTopics({
             <TopicItem
               icon="star"
               onClick={() => handleTopicNavClick(appliedFeaturedTopicId)}
+              onIntent={() => handleTopicIntent(appliedFeaturedTopicId)}
               isSelected={
                 selectedTab === 'topic' &&
                 selectedTopicId === appliedFeaturedTopicId
@@ -204,6 +210,7 @@ function PinnedTopics({
                 selectedTopicId === (topic.subjectId || topic.id)
               }
               onClick={() => handleTopicNavClick(topic.subjectId || topic.id)}
+              onIntent={() => handleTopicIntent(topic.subjectId || topic.id)}
             >
               {topic.content}
             </TopicItem>
@@ -213,6 +220,9 @@ function PinnedTopics({
               icon="left-to-line"
               onClick={() =>
                 handleTopicNavClick(lastTopic.subjectId || lastTopic.id)
+              }
+              onIntent={() =>
+                handleTopicIntent(lastTopic.subjectId || lastTopic.id)
               }
               isSelected={
                 selectedTab === 'topic' &&
@@ -261,6 +271,13 @@ function PinnedTopics({
       topicId: 0
     });
     navigate(`/chat/${pathId}${subchannelPath ? `/${subchannelPath}` : ''}`);
+  }
+
+  // start loading a topic not opened yet as soon as it is about to be
+  function handleTopicIntent(topicId: number) {
+    if (selectedTab === 'topic' && selectedTopicId === topicId) return;
+    if (channelsObj?.[channelId]?.topicObj?.[topicId]?.loaded) return;
+    prefetchTopicMessages(loadTopicMessages, { channelId, topicId });
   }
 
   function handleTopicNavClick(topicId: number) {

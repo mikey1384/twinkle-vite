@@ -1367,6 +1367,7 @@ export default function Main({
             const subchannelLoaded = targetSubchannel?.loaded;
             if (!subchannelLoaded) {
               const subchannel = await loadSubchannel({
+                hydrateMessages: true,
                 channelId,
                 subchannelId: targetSubchannelId
               });
@@ -1420,6 +1421,9 @@ export default function Main({
         const data = await loadChatChannel({
           channelId,
           subchannelPath,
+          // complete messages in the same reply: no message on screen then
+          // asks for itself (20 single requests after every chat opened)
+          hydrateMessages: true,
           compactGeneralTopics,
           topicIds: compactGeneralTopics
             ? getChatTopicProjectionIds({

@@ -3550,7 +3550,15 @@ export default function ChatReducer(
       const newMessagesObj = mergeMessagesPreservingNewerReactionState({
         existingMessagesObj:
           state.channelsObj[action.data.currentChannelId]?.messagesObj,
-        serverMessagesObj: action.data.messagesObj
+        // complete messages (hydrateMessages) are marked loaded: none asks for
+        // itself again
+        serverMessagesObj:
+          action.data.messagesHydrated === true
+            ? applyCanonicalChatMessagePage({
+                messages: Object.values(action.data.messagesObj || {}),
+                messagesHydrated: true
+              })
+            : action.data.messagesObj
       });
       if (newMessageIds && newMessageIds.length === 21) {
         newMessageIds.pop();
@@ -6961,9 +6969,20 @@ export default function ChatReducer(
       };
     }
     case 'SET_SUBCHANNEL': {
+      const existingSubchannel =
+        state.channelsObj[action.channelId]?.subchannelObj?.[action.subchannel.id];
       const newSubchannelObj = {
         ...state.channelsObj[action.channelId]?.subchannelObj,
-        [action.subchannel.id]: action.subchannel
+        [action.subchannel.id]: {
+          ...action.subchannel,
+          // complete messages (hydrateMessages) are marked loaded, so none
+          // asks for itself again
+          messagesObj: applyCanonicalChatMessagePage({
+            existingMessagesObj: existingSubchannel?.messagesObj,
+            messages: Object.values(action.subchannel?.messagesObj || {}),
+            messagesHydrated: action.subchannel?.messagesHydrated === true
+          })
+        }
       };
       return {
         ...state,

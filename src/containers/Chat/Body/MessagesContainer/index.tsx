@@ -64,6 +64,7 @@ import {
   isCanonicalAiGenerationConfirmed
 } from '~/contexts/Chat/aiGenerationState';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
+import { takePrefetchedTopicMessages } from '../../topicPrefetch';
 const deviceIsMobile = isMobile(navigator);
 const CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS = 750;
 
@@ -1925,11 +1926,15 @@ export default function MessagesContainer({
         loadMoreShown,
         loadMoreShownAtBottom,
         topicObj
-      } = await loadTopicMessages({
-        messageIdToScrollTo,
-        channelId: selectedChannelId,
-        topicId: appliedTopicId
-      });
+      } =
+        // the first page may already be on its way (topicPrefetch.ts)
+        ((!messageIdToScrollTo &&
+          (await takePrefetchedTopicMessages(selectedChannelId, appliedTopicId))) ||
+          (await loadTopicMessages({
+            messageIdToScrollTo,
+            channelId: selectedChannelId,
+            topicId: appliedTopicId
+          })));
 
       onLoadTopicMessages({
         channelId: selectedChannelId,

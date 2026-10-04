@@ -14,6 +14,7 @@ import NewMessagesButton from '~/components/Buttons/NewMessagesButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
+import MessagesSkeleton from './MessagesSkeleton';
 import Message from '../../Message';
 import { canGroupChatMessages } from '../../Message/helpers/messageGrouping';
 import LocalContext from '../../Context';
@@ -802,7 +803,10 @@ export default function DisplayedMessages({
         }}
         ref={MessagesRef}
       >
-        {pageLoading || isSearching ? (
+        {pageLoading && isLoadingTopicMessages && !isSearching && !isReconnecting ? (
+          // a topic's first page: the shape of messages, not an empty pane
+          <MessagesSkeleton />
+        ) : pageLoading || isSearching ? (
           <div style={{ position: 'absolute', top: '20%', width: '100%' }}>
             <Loading
               text={
