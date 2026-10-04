@@ -424,6 +424,8 @@ export default function CrewPanel({
             <p style={{ fontSize: '1.3rem', color: Color.darkerGray(), margin: '0 0 1rem' }}>
               {me?.branchStatus === 'pending'
                 ? `"${me.branch}" is not one of our Twinkle branches yet, and staff are checking it. If it was a mistake, pick the exact Twinkle branch you go to.`
+                : me?.branchStatus === 'rejected'
+                ? `"${me.branch}" is not a Twinkle branch. Pick the branch you go to from the list, so your crew can move on.`
                 : 'Pick the exact Twinkle branch you go to. Your crew cannot move on until everyone has an approved branch.'}
             </p>
             {branchEditor}

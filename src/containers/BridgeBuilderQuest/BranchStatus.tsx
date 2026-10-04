@@ -13,11 +13,25 @@ export function branchStatusText(member: Pick<CrewMember, 'branch' | 'branchStat
   if (member.branchStatus === 'pending') {
     return `Staff are checking "${member.branch}"`;
   }
+  if (member.branchStatus === 'rejected') {
+    return `"${member.branch}" is not a Twinkle branch: pick the branch you go to`;
+  }
   return 'Needs a Twinkle branch';
 }
 
 export function BranchStatusBadge({ member }: { member: CrewMember }) {
-  const verified = member.branchVerified;
+  // three states: approved; waiting for staff; or not a branch / missing, which
+  // the member has to fix (a rejected name never reads as "being checked")
+  const state = member.branchVerified
+    ? 'verified'
+    : member.branchStatus === 'pending'
+    ? 'checking'
+    : 'fix';
+  const look = {
+    verified: { color: Color.green(), icon: 'circle-check', text: 'verified' },
+    checking: { color: Color.orange(), icon: 'hourglass-half', text: 'to verify' },
+    fix: { color: Color.red(), icon: 'exclamation-circle', text: 'pick a branch' }
+  }[state];
   return (
     <span
       title={branchStatusText(member)}
@@ -27,11 +41,11 @@ export function BranchStatusBadge({ member }: { member: CrewMember }) {
         gap: 0.4rem;
         font-size: 1.15rem;
         font-weight: bold;
-        color: ${verified ? Color.green() : Color.orange()};
+        color: ${look.color};
       `}
     >
-      <Icon icon={verified ? 'circle-check' : 'hourglass-half'} />
-      {verified ? 'verified' : 'to verify'}
+      <Icon icon={look.icon} />
+      {look.text}
     </span>
   );
 }
