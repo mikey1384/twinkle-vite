@@ -5,6 +5,7 @@ import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Icon from '~/components/Icon';
 import Dob from './Dob';
 import Mentor from './Mentor';
+import Meetup from './Meetup';
 import { useAppContext, useManagementContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -50,6 +51,9 @@ export default function ApproveModal({
               <Dob username={target.username} content={target.content} />
             )}
             {target.type === 'mentor' && <Mentor content={target.content} />}
+            {target.type === 'meetup' && (
+              <Meetup username={target.username} content={target.content} />
+            )}
           </div>
           {target.status === 'pending' ? (
             <div
