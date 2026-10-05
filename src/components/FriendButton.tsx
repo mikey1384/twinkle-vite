@@ -136,7 +136,8 @@ export default function FriendButton({
     } catch (err: any) {
       // keep the current state and say why (daily limit, not someone you know...)
       setNote(String(err?.message || 'Could not do that.'));
-      setTimeout(() => setNote(''), 5000);
+      // long enough to read a full sentence (e.g. when the daily limit frees up)
+      setTimeout(() => setNote(''), 8000);
     } finally {
       setBusy(false);
     }
@@ -164,7 +165,17 @@ export default function FriendButton({
         }}
       >
         <Icon icon={icon} />
-        <span style={{ marginLeft: '1rem', fontSize: '1.2rem', color: note ? Color.red() : undefined }}>
+        <span
+          style={{
+            marginLeft: '1rem',
+            fontSize: '1.2rem',
+            color: note ? Color.red() : undefined,
+            // a full-sentence note wraps instead of pushing past the row on phones
+            maxWidth: note ? '18rem' : undefined,
+            whiteSpace: note ? 'normal' : undefined,
+            lineHeight: note ? 1.3 : undefined
+          }}
+        >
           {note || label}
         </span>
       </div>

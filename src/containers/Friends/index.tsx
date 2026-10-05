@@ -202,7 +202,7 @@ function Section({
                   </span>
                 )}
               </Link>
-              <span style={{ flexShrink: 0 }}>
+              <span style={{ flexShrink: 0, maxWidth: '55%' }}>
                 <FriendButton
                   userId={row.id}
                   variant="popup"
