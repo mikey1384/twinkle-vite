@@ -53,6 +53,7 @@ import {
 } from '~/helpers/popupDismissNavigation';
 import { getFeedCardSizing, type FeedCardSizing } from './helpers/sizing';
 import { chooseHomeFeedPreviewComment } from './helpers/previewComments';
+import { suppressGhostTapAfterNavigation } from './helpers/ghostTap';
 import {
   getHomeFeedFinalRewardLevel,
   type HomeFeedActionType
@@ -914,6 +915,9 @@ export default function HomeFeedCard({
       return;
     }
 
+    // the browser's own click for this tap arrives after the content page
+    // has replaced the feed; keep it from pressing whatever is under the finger
+    suppressGhostTapAfterNavigation({ x: event.clientX, y: event.clientY });
     navigateToContentPageFromHomeFeed(event.currentTarget);
   }
 
