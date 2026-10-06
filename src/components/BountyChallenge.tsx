@@ -29,26 +29,25 @@ export default function BountyChallenge({
   if (!challenge || !TIERS[challenge.tier]) return null;
   const tier = TIERS[challenge.tier];
   const { text: headline, says } = tier.headline(challenge);
-  // The facts line never repeats what the headline already says.
+  // The facts line never repeats what the headline already says. It never
+  // shows the solver's own misses (wrong answers, which try it took): a kid
+  // shouldn't have their struggle posted to the feed. Other players' misses
+  // and how long the puzzle stood celebrate the solve, so they stay.
   const facts = [
     says !== 'failers' &&
       challenge.failersBefore > 0 &&
       `${count(challenge.failersBefore, 'player', 'players')} missed it`,
-    challenge.failuresBefore > 0 &&
-      count(challenge.failuresBefore, 'wrong answer', 'wrong answers'),
     says !== 'days' &&
       challenge.daysStanding > 0 &&
       `stood ${count(challenge.daysStanding, 'day', 'days')}`,
-    says !== 'attempt' &&
-      (challenge.attempt > 1
-        ? `solved on try ${challenge.attempt}`
-        : 'solved on the first try'),
+    challenge.attempt === 1 && 'solved on the first try',
     challenge.puzzleRating > 0 &&
       `puzzle rating ${challenge.puzzleRating.toLocaleString('en-US')}`
   ].filter(Boolean) as string[];
   const factLine = facts.join(' · ');
 
   if (challenge.tier === 'solved') {
+    if (!factLine) return null;
     return (
       <p
         className={`${challengeClass} bounty-challenge bounty-challenge--plain${compact ? ' bounty-challenge--compact' : ''}`}
@@ -84,7 +83,7 @@ const TIERS: Record<
     icon: string;
     headline: (c: BountyChallengeInfo) => {
       text: string;
-      says?: 'failers' | 'days' | 'attempt';
+      says?: 'failers' | 'days';
     };
   }
 > = {
@@ -114,7 +113,8 @@ const TIERS: Record<
             says: 'failers'
           }
         : c.attempt >= 5
-          ? { text: `Cracked on try ${c.attempt}`, says: 'attempt' }
+          ? // hard-won by persistence: true, without counting the misses
+            { text: 'Cracked a tough puzzle' }
           : { text: 'Beat a puzzle rated above them' }
   },
   'first-solve': {
