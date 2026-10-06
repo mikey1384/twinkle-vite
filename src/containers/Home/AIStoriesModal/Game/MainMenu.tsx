@@ -24,7 +24,7 @@ const difficultyExplanation: Record<
     reading: [
       'Short, simple sentences and everyday words. ',
       <b key="1">1 question</b>,
-      ' to pass, plus 2 bonus questions.'
+      ' to pass, plus up to 2 bonus questions.'
     ],
     listening: [
       'Zero or Ciel tells a short, simple story with ',
@@ -36,7 +36,7 @@ const difficultyExplanation: Record<
     reading: [
       'Everyday and school topics with common tenses. ',
       <b key="1">2 questions</b>,
-      ' to pass, plus 1 bonus question.'
+      ' to pass, plus up to 1 bonus question.'
     ],
     listening: [
       'A short talk with ',
