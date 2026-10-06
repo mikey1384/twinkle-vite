@@ -4,8 +4,14 @@ import Button from '~/components/Button';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
-import { Color, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import {
+  StoryQuestionLabel,
+  StoryQuestionNote,
+  StoryScoreLine,
+  storyScore
+} from '../../StoryQuestionExtras';
 
 export default function Questions({
   isGrading,
@@ -124,27 +130,39 @@ export default function Questions({
             `}
           >
             {questions.map((question, index) => (
-              <MultipleChoiceQuestion
+              <div
                 key={question.id}
-                isGraded={solveObj.isGraded}
                 style={{
                   marginTop: index === 0 ? 0 : '7rem',
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center'
+                  width: '100%'
                 }}
-                question={<b>{question.question}</b>}
-                choices={question.choices}
-                selectedChoiceIndex={userChoiceObj[question.id]}
-                answerIndex={question.answerIndex}
-                disabled={isGrading}
-                onSelectChoice={(choiceIndex) =>
-                  onSetUserChoiceObj((obj: any) => ({
-                    ...obj,
-                    [question.id]: choiceIndex
-                  }))
-                }
-              />
+              >
+                <MultipleChoiceQuestion
+                  isGraded={solveObj.isGraded}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}
+                  question={
+                    <div>
+                      <StoryQuestionLabel question={question} />
+                      <b>{question.question}</b>
+                    </div>
+                  }
+                  choices={question.choices}
+                  selectedChoiceIndex={userChoiceObj[question.id]}
+                  answerIndex={question.answerIndex}
+                  disabled={isGrading}
+                  onSelectChoice={(choiceIndex) =>
+                    onSetUserChoiceObj((obj: any) => ({
+                      ...obj,
+                      [question.id]: choiceIndex
+                    }))
+                  }
+                />
+                {solveObj.isGraded && <StoryQuestionNote question={question} />}
+              </div>
             ))}
             <div
               style={{
@@ -165,19 +183,7 @@ export default function Questions({
                     paddingBottom: '5rem'
                   }}
                 >
-                  <div
-                    style={{
-                      color:
-                        solveObj.numCorrect === questions.length
-                          ? Color.green()
-                          : '',
-                      fontWeight:
-                        solveObj.numCorrect === questions.length ? 'bold' : ''
-                    }}
-                  >
-                    {solveObj.numCorrect} / {questions.length} correct
-                    {solveObj.numCorrect === questions.length ? '!' : ''}
-                  </div>
+                  <StoryScoreLine solveObj={solveObj} questions={questions} />
                   <div style={{ marginTop: '2rem' }}>
                     <Button
                       variant="solid"
@@ -187,7 +193,7 @@ export default function Questions({
                       Read Again
                     </Button>
                   </div>
-                  {solveObj.numCorrect === questions.length ? (
+                  {storyScore(solveObj, questions).isPassed ? (
                     <div style={{ marginTop: '1rem' }}>
                       <Button
                         variant="solid"

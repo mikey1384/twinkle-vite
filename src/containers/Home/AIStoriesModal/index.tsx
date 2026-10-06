@@ -89,7 +89,14 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [isCloseLocked, setIsCloseLocked] = useState(false);
   const [preservingDailyTask, setPreservingDailyTask] = useState(false);
   const [unavailableActionMessage, setUnavailableActionMessage] = useState('');
-  const [solveObj, setSolveObj] = useState({
+  const [solveObj, setSolveObj] = useState<{
+    numCorrect: number;
+    isGraded: boolean;
+    totalQuestions?: number;
+    bonusCorrect?: number;
+    bonusQuestions?: number;
+    isPassed?: boolean;
+  }>({
     numCorrect: 0,
     isGraded: false
   });
