@@ -106,6 +106,7 @@ import useOrientationReflow from './hooks/useOrientationReflow';
 import useAppShellHeaderOffset from './hooks/useAppShellHeaderOffset';
 import useMobileKeyboardInset from './hooks/useMobileKeyboardInset';
 import usePhoneLandscape from '~/helpers/hooks/usePhoneLandscape';
+import { useOwnerTraceRoute } from '~/helpers/hooks/useOwnerTrace';
 import { NavigationRouteReadyObserver } from './navigationFeedback';
 
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -421,6 +422,7 @@ export default function App() {
     userType,
     username
   } = myState;
+  useOwnerTraceRoute(Number(userId || 0));
   const [sessionCredentialUnavailable, setSessionCredentialUnavailable] =
     useState(() => Boolean(userId && !readAuthToken().token));
   const awaitingCanonicalSession = Boolean(

@@ -3,6 +3,7 @@ import {
   removeStoredItem,
   setStoredItem
 } from '~/helpers/userDataHelpers';
+import { isOwnerTraceActive, recordOwnerTrace } from '~/helpers/ownerTrace';
 
 // Client-side, opt-in diagnostics for the home-feed scroll-anchor restoration.
 // Logging is OFF by default and is a cheap no-op until an admin enables it from
@@ -10,6 +11,10 @@ import {
 // enabled it records save/restore/cancel events into a capped in-memory ring
 // buffer (mirrored to localStorage so the capture survives an iOS tab reload),
 // which Management exports as CSV.
+//
+// For the site owner the events are always recorded and flow into the owner
+// trace (helpers/ownerTrace.ts, read with `lumine admin owner-trace`); the
+// local ring buffer still follows the Management toggle.
 
 const LOGGING_KEY = 'twinkleScrollDiagnosticsLogging';
 const EVENTS_KEY = 'twinkleScrollDiagnosticsEvents';
@@ -64,6 +69,12 @@ export function isScrollDiagnosticsLoggingEnabled() {
   return loggingEnabled;
 }
 
+// Whether anything would keep a diagnostic: the local capture or the owner
+// trace. Callers that do work to build an event check this first.
+export function shouldRecordScrollDiagnostics() {
+  return loggingEnabled || isOwnerTraceActive();
+}
+
 export function setScrollDiagnosticsLoggingEnabled(enabled: boolean) {
   loggingEnabled = enabled;
   if (enabled) {
@@ -76,6 +87,9 @@ export function setScrollDiagnosticsLoggingEnabled(enabled: boolean) {
 export function recordScrollDiagnostic(
   event: Partial<ScrollDiagnosticEvent> & { type: string }
 ) {
+  const ownerTrace = isOwnerTraceActive();
+  if (!loggingEnabled && !ownerTrace) return;
+  if (ownerTrace) recordOwnerTraceScrollDiagnostic(event);
   if (!loggingEnabled) return;
   const entry: ScrollDiagnosticEvent = {
     seq: ++seqCounter,
@@ -121,6 +135,30 @@ export function scrollDiagnosticsToCsv() {
     CSV_COLUMNS.map((column) => toCsvCell(event[column])).join(',')
   );
   return [header, ...rows].join('\n');
+}
+
+function recordOwnerTraceScrollDiagnostic(
+  event: Partial<ScrollDiagnosticEvent> & { type: string }
+) {
+  const data: Record<string, unknown> = { e: event.type };
+  const fields: Array<[string, unknown]> = [
+    ['key', event.anchorKey],
+    ['st', event.scrollTop],
+    ['pid', event.primaryId],
+    ['sid', event.secondaryId],
+    ['sst', event.savedScrollTop],
+    ['so', event.savedOffset],
+    ['cst', event.computedScrollTop],
+    ['try', event.attempt],
+    ['why', event.reason],
+    ['ready', event.itemsReady],
+    ['note', event.note]
+  ];
+  for (const [key, value] of fields) {
+    if (value === '' || value === undefined || value === null) continue;
+    data[key] = typeof value === 'string' ? value.slice(0, 120) : value;
+  }
+  recordOwnerTrace('scroll-anchor', data, event.path);
 }
 
 function toCsvCell(value: ScrollDiagnosticEvent[keyof ScrollDiagnosticEvent]) {

@@ -11,6 +11,8 @@ import React, {
 import {
   useLocation,
   useNavigate,
+  useNavigationType,
+  NavigationType,
   Route,
   Routes,
   type Location
@@ -23,6 +25,7 @@ import {
   hasUnsavedUserWork
 } from '~/helpers/clientUpdate';
 import { useInputContext } from '~/contexts/hooks';
+import { AppNavigationTypeProvider } from '~/helpers/hooks/useAppNavigationType';
 
 export interface ReadyNavigationLocation {
   key: string;
@@ -79,9 +82,14 @@ export function NavigationFeedbackProvider({
   children: React.ReactNode;
 }) {
   const location = useLocation();
+  // Outside this provider's own <Routes location>, so this is the true type;
+  // inside it React Router always reports POP (useAppNavigationType).
+  const navigationType = useNavigationType();
   const navigate = useNavigate();
   const getInputState = useInputContext((v) => v.getInputState);
   const [acceptedLocation, setAcceptedLocation] = useState<Location>(location);
+  const [acceptedNavigationType, setAcceptedNavigationType] =
+    useState<NavigationType>(navigationType);
   const currentLocation = useMemo(
     () => ({
       key: location.key,
@@ -116,7 +124,10 @@ export function NavigationFeedbackProvider({
             hasUnsavedUserWork({ inputState: getInputState?.() })
         }),
       release: (destination) => {
-        if (active) setAcceptedLocation(destination);
+        if (!active) return;
+        setAcceptedLocation(destination);
+        // The type of the navigation that produced this location.
+        setAcceptedNavigationType(navigationType);
       }
     });
     return () => {
@@ -308,9 +319,11 @@ export function NavigationFeedbackProvider({
 
   return (
     <NavigationFeedbackContext.Provider value={feedback}>
-      <Routes location={acceptedLocation}>
-        <Route path="*" element={children} />
-      </Routes>
+      <AppNavigationTypeProvider navigationType={acceptedNavigationType}>
+        <Routes location={acceptedLocation}>
+          <Route path="*" element={children} />
+        </Routes>
+      </AppNavigationTypeProvider>
     </NavigationFeedbackContext.Provider>
   );
 }

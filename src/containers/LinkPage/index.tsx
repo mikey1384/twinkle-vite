@@ -29,6 +29,7 @@ import {
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useRecordContentPageView } from '~/helpers/hooks/useRecordContentPageView';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
+import { useOwnerTraceContentScroll } from '~/helpers/hooks/useOwnerTrace';
 import {
   centerHomeFeedActionIntentTarget,
   clearHomeFeedActionIntentState,
@@ -198,6 +199,11 @@ export default function LinkPage() {
     ignoreSavedAnchor: Boolean(homeFeedNavigationState),
     initialScroll: { type: 'top' },
     itemsReady: pageReady
+  });
+  useOwnerTraceContentScroll({
+    contentType: 'url',
+    contentId: linkId,
+    ready: pageReady
   });
 
   useEffect(() => {

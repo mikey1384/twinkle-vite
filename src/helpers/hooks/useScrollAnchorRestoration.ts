@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
-import { useNavigationType } from 'react-router-dom';
+import { useAppNavigationType } from '~/helpers/hooks/useAppNavigationType';
 import {
   addScrollAnchorExternalSaveListener,
   addScrollAnchorRestoreCancelListener,
@@ -12,6 +12,7 @@ import {
 } from '~/helpers/scrollAnchorRestorationCoordinator';
 import {
   isScrollDiagnosticsLoggingEnabled,
+  shouldRecordScrollDiagnostics,
   recordScrollDiagnostic
 } from '~/helpers/scrollAnchorDiagnostics';
 
@@ -222,7 +223,7 @@ export function useScrollAnchorRestoration({
   // (Mikey, 2026-09-29: ~30% of home feed taps opened a post scrolled to the
   // bottom). Runs after the old page's cleanups (its teardown save already
   // happened), only when nothing is going to be restored.
-  const navigationType = useNavigationType();
+  const navigationType = useAppNavigationType();
   useLayoutEffect(() => {
     if (navigationType === 'POP') return;
     if (initialScrollType !== 'top') return;
@@ -870,7 +871,11 @@ function saveAnchorElement(
 }
 
 function recordAnchorSave(anchorKey: string, note: string) {
-  if (!isScrollDiagnosticsLoggingEnabled()) return;
+  // Routine saves run on every scroll event and frame; only the explicit
+  // element save (a feed card tap) goes to the owner trace, the rest only to
+  // the opt-in local capture. Restore events still carry the saved values.
+  if (note !== 'element' && !isScrollDiagnosticsLoggingEnabled()) return;
+  if (!shouldRecordScrollDiagnostics()) return;
   const saved = savedScrollAnchors[anchorKey];
   if (!saved) return;
   recordScrollDiagnostic({

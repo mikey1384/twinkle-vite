@@ -65,6 +65,12 @@ import {
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { normalizeViewCount } from '~/helpers/viewCount';
 import { trackEvent } from '~/helpers/analytics';
+import {
+  isOwnerTraceActive,
+  noteOwnerTraceTap,
+  recordOwnerTrace,
+  takeOwnerTraceTap
+} from '~/helpers/ownerTrace';
 
 const SHOWCASE_CARD_CLASS = 'home-feed-card--showcase';
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
@@ -835,6 +841,7 @@ export default function HomeFeedCard({
       return;
     }
     if (shouldUseExplicitFeedCardNavigation()) return;
+    noteOwnerTraceTap('click', event.target);
     navigateToContentPageFromHomeFeed(event.currentTarget);
   }
 
@@ -842,6 +849,7 @@ export default function HomeFeedCard({
     event.preventDefault();
     event.stopPropagation();
     if (shouldSuppressPopupDismissNavigation(event.nativeEvent)) return;
+    noteOwnerTraceTap('open-button', event.target);
     navigateToContentPageFromHomeFeed(event.currentTarget);
   }
 
@@ -915,6 +923,7 @@ export default function HomeFeedCard({
       return;
     }
 
+    noteOwnerTraceTap('tap', event.target);
     // the browser's own click for this tap arrives after the content page
     // has replaced the feed; keep it from pressing whatever is under the finger
     suppressGhostTapAfterNavigation({ x: event.clientX, y: event.clientY });
@@ -985,6 +994,7 @@ export default function HomeFeedCard({
     if (action === 'recommend' && (!recommendShown || recommendDisabled)) {
       return;
     }
+    noteOwnerTraceTap('action-button', event.target);
     navigateToContentPageFromHomeFeed(event.currentTarget, action);
   }
 
@@ -1000,6 +1010,7 @@ export default function HomeFeedCard({
       return;
     }
     if (shouldUseExplicitFeedCardNavigation()) return;
+    noteOwnerTraceTap('enter', event.target);
     navigateToContentPageFromHomeFeed(event.currentTarget);
   }
 
@@ -1014,6 +1025,16 @@ export default function HomeFeedCard({
       action: action || 'open',
       surface: showcase ? 'profile' : 'home'
     });
+    if (isOwnerTraceActive()) {
+      recordOwnerTrace('feed-open', {
+        ct: contentType,
+        id: contentId,
+        action: action || 'open',
+        pos: index + 1,
+        surface: showcase ? 'profile' : 'home',
+        ...takeOwnerTraceTap()
+      });
+    }
     navigate(contentPath, {
       state: {
         homeFeedNavigation: createHomeFeedNavigationState({
@@ -1040,6 +1061,16 @@ export default function HomeFeedCard({
   ) {
     if (shouldSuppressPopupDismissNavigation(null)) return;
     saveScrollAnchorForElement(sourceElement, homeFeedAnchorKey);
+    if (isOwnerTraceActive()) {
+      recordOwnerTrace('feed-open', {
+        ct: contentType,
+        id: contentId,
+        action: 'nested',
+        to: path.slice(0, 120),
+        pos: index + 1,
+        el: sourceElement?.tagName.toLowerCase() || ''
+      });
+    }
     navigate(path);
   }
 }

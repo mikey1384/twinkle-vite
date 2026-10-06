@@ -9,6 +9,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
+import { useOwnerTraceContentScroll } from '~/helpers/hooks/useOwnerTrace';
 import {
   clearHomeFeedActionIntentState,
   clearHomeFeedNavigationState,
@@ -120,6 +121,11 @@ export default function ContentPage() {
     ignoreSavedAnchor: Boolean(homeFeedNavigationState),
     initialScroll: { type: 'top' },
     itemsReady: scrollRestoreReady
+  });
+  useOwnerTraceContentScroll({
+    contentType,
+    contentId,
+    ready: scrollRestoreReady
   });
 
   useEffect(() => {

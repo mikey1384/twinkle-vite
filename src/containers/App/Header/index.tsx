@@ -2,7 +2,7 @@ import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 import {
-  isScrollDiagnosticsLoggingEnabled,
+  shouldRecordScrollDiagnostics,
   recordScrollDiagnostic
 } from '~/helpers/scrollAnchorDiagnostics';
 
@@ -194,7 +194,7 @@ export default function Header({
       event: MouseEvent,
       reason: string
     ) {
-      if (!isScrollDiagnosticsLoggingEnabled()) return;
+      if (!shouldRecordScrollDiagnostics()) return;
       const nav = navRef.current;
       if (!nav) return;
       const rect = nav.getBoundingClientRect();
