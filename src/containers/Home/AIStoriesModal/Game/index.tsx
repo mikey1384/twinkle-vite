@@ -116,7 +116,12 @@ export default function Game({
           storyLoaded: isReading ? loadStoryComplete : !!storyId,
           questionCount: questions.length,
           graded: !!solveObj?.isGraded,
-          numCorrect: solveObj?.isGraded ? solveObj.numCorrect : null
+          numCorrect: solveObj?.isGraded ? solveObj.numCorrect : null,
+          // scored questions only; bonus questions never decide the pass
+          scoredQuestionCount: questions.filter((q: any) => !q?.bonus).length,
+          bonusCorrect: solveObj?.isGraded
+            ? (solveObj.bonusCorrect ?? null)
+            : null
         }
       : { difficulty, section: 'menu', loadingTopic }
   );
