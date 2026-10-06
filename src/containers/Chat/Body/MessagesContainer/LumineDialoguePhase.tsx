@@ -7,8 +7,10 @@ import useLumineDialogue, {
   type LumineDialogueState
 } from './hooks/useLumineDialogue';
 import {
+  findLumineJobOutcome,
   latestLumineChatMessage,
-  type LumineChatMessage
+  type LumineChatMessage,
+  type LumineJobOutcome
 } from './lumineDialogueMessages';
 
 export default function LumineDialoguePhase({
@@ -30,21 +32,27 @@ export default function LumineDialoguePhase({
     topicId,
     enabled: scopeVisible
   });
-  return dialogueState ? (
+  // A finished job's transcript stays until the user closes it.
+  const [dismissedJobId, setDismissedJobId] = useState(0);
+  return dialogueState &&
+    !(dialogueState.ended && dialogueState.jobId === dismissedJobId) ? (
     <LumineDialogueContent
       key={`${dialogueState.requesterUserId}:${dialogueState.jobId}`}
       dialogueState={dialogueState}
       messages={messages}
+      onDismiss={() => setDismissedJobId(dialogueState.jobId)}
     />
   ) : null;
 }
 
 export function LumineDialogueContent({
   dialogueState,
-  messages = []
+  messages = [],
+  onDismiss
 }: {
   dialogueState: LumineDialogueState;
   messages?: LumineChatMessage[];
+  onDismiss?: () => void;
 }) {
   const transcriptId = useId();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
@@ -77,7 +85,10 @@ export function LumineDialogueContent({
     transcript.scrollTop = transcript.scrollHeight;
   }, [dialogueState?.jobId, expanded, lastDialogueId]);
 
-  const waitingText = getWaitingText(dialogueState);
+  const outcome = dialogueState.ended
+    ? findLumineJobOutcome(messages, dialogueState.jobId)
+    : null;
+  const waitingText = getWaitingText(dialogueState, outcome);
 
   return (
     <section
@@ -91,93 +102,136 @@ export function LumineDialogueContent({
         background: #fff;
       `}
     >
-      <button
-        type="button"
-        aria-expanded={expanded}
-        aria-controls={transcriptId}
-        aria-label={`${expanded ? 'Minimize' : 'Expand'} Talking with Lumine`}
-        onClick={() => setExpanded((value) => !value)}
+      <div
         className={css`
           display: flex;
           align-items: center;
-          gap: 0.8rem;
-          width: 100%;
-          padding: 0;
-          border: 0;
-          background: transparent;
-          text-align: left;
-          font: inherit;
-          cursor: pointer;
-          &:focus-visible {
-            outline: 2px solid ${Color.darkCyan()};
-            outline-offset: 0.4rem;
-          }
+          gap: 0.6rem;
         `}
       >
-        <span
-          aria-hidden="true"
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={transcriptId}
+          aria-label={`${expanded ? 'Minimize' : 'Expand'} Talking with Lumine`}
+          onClick={() => setExpanded((value) => !value)}
           className={css`
             display: flex;
             align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            flex: 0 0 32px;
-            border-radius: 50%;
-            background: ${Color.darkCyan()};
-            color: #fff;
-            font-size: 1.4rem;
-          `}
-        >
-          <Icon icon="comments" />
-        </span>
-        <span
-          className={css`
-            flex: 1;
-            min-width: 0;
+            gap: 0.8rem;
+            width: 100%;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            font: inherit;
+            cursor: pointer;
+            &:focus-visible {
+              outline: 2px solid ${Color.darkCyan()};
+              outline-offset: 0.4rem;
+            }
           `}
         >
           <span
+            aria-hidden="true"
             className={css`
-              display: block;
-              color: ${Color.darkCyan()};
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 32px;
+              height: 32px;
+              flex: 0 0 32px;
+              border-radius: 50%;
+              background: ${Color.darkCyan()};
+              color: #fff;
               font-size: 1.4rem;
-              font-weight: 650;
             `}
           >
-            Talking with Lumine
+            <Icon icon="comments" />
           </span>
-          {!expanded && (
+          <span
+            className={css`
+              flex: 1;
+              min-width: 0;
+            `}
+          >
             <span
               className={css`
                 display: block;
-                margin-top: 0.2rem;
-                color: ${Color.darkGray()};
-                font-size: 1.1rem;
-                line-height: 1.4;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
+                color: ${Color.darkCyan()};
+                font-size: 1.4rem;
+                font-weight: 650;
               `}
             >
-              {getCompactStatus(dialogueState)}
+              Talking with Lumine
             </span>
+            {(!expanded || dialogueState.ended) && (
+              <span
+                className={css`
+                  display: block;
+                  margin-top: 0.2rem;
+                  color: ${
+                    dialogueState.ended && outcome === 'completed'
+                      ? '#1e7f24'
+                      : Color.darkGray()
+                  };
+                  font-size: 1.1rem;
+                  line-height: 1.4;
+                  overflow: hidden;
+                  white-space: nowrap;
+                  text-overflow: ellipsis;
+                `}
+              >
+                {getCompactStatus(dialogueState, outcome)}
+              </span>
+            )}
+          </span>
+          {dialogueState.canProgress && !dialogueState.ended && (
+            <StatusDots color={Color.darkCyan()} small />
           )}
-        </span>
-        {dialogueState.canProgress && (
-          <StatusDots color={Color.darkCyan()} small />
+          <span
+            aria-hidden="true"
+            className={css`
+              color: ${Color.darkCyan()};
+              font-size: 1.1rem;
+              flex-shrink: 0;
+            `}
+          >
+            <Icon icon={expanded ? 'chevron-up' : 'chevron-down'} />
+          </span>
+        </button>
+        {dialogueState.ended && onDismiss && (
+          <button
+            type="button"
+            aria-label="Close Talking with Lumine"
+            onClick={onDismiss}
+            className={css`
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 32px;
+              height: 32px;
+              flex: 0 0 32px;
+              padding: 0;
+              border: 1px solid var(--ui-border);
+              border-radius: 50%;
+              background: #fff;
+              color: ${Color.darkGray()};
+              font-size: 1.2rem;
+              cursor: pointer;
+              &:hover {
+                color: ${Color.black()};
+              }
+              &:focus-visible {
+                outline: 2px solid ${Color.darkCyan()};
+                outline-offset: 0.2rem;
+              }
+            `}
+          >
+            <Icon icon="times" />
+          </button>
         )}
-        <span
-          aria-hidden="true"
-          className={css`
-            color: ${Color.darkCyan()};
-            font-size: 1.1rem;
-            flex-shrink: 0;
-          `}
-        >
-          <Icon icon={expanded ? 'chevron-up' : 'chevron-down'} />
-        </span>
-      </button>
+      </div>
 
       <div id={transcriptId} hidden={!expanded}>
         <div
@@ -200,9 +254,11 @@ export function LumineDialogueContent({
             <div
               key={entry.id}
               className={css`
-                align-self: ${entry.direction === 'lumine_to_persona'
-                  ? 'flex-end'
-                  : 'flex-start'};
+                align-self: ${
+                  entry.direction === 'lumine_to_persona'
+                    ? 'flex-end'
+                    : 'flex-start'
+                };
                 width: min(92%, 54rem);
               `}
             >
@@ -222,13 +278,17 @@ export function LumineDialogueContent({
                 className={css`
                   padding: 0.85rem 1rem;
                   border: 1px solid
-                    ${entry.direction === 'lumine_to_persona'
-                      ? Color.darkCyan(0.28)
-                      : 'var(--ui-border)'};
+                    ${
+                      entry.direction === 'lumine_to_persona'
+                        ? Color.darkCyan(0.28)
+                        : 'var(--ui-border)'
+                    };
                   border-radius: 0.7rem;
-                  background: ${entry.direction === 'lumine_to_persona'
-                    ? '#edf8f8'
-                    : '#f5f6f8'};
+                  background: ${
+                    entry.direction === 'lumine_to_persona'
+                      ? '#edf8f8'
+                      : '#f5f6f8'
+                  };
                   color: #303640;
                   font-size: 1.1rem;
                   line-height: 1.5;
@@ -244,9 +304,15 @@ export function LumineDialogueContent({
 
         <div
           className={css`
-            color: ${dialogueState.canProgress
-              ? Color.darkCyan()
-              : Color.gray()};
+            color: ${
+              dialogueState.ended
+                ? outcome === 'completed'
+                  ? '#1e7f24'
+                  : Color.darkGray()
+                : dialogueState.canProgress
+                  ? Color.darkCyan()
+                  : Color.gray()
+            };
             font-size: 1.1rem;
             font-weight: 600;
             margin-top: 1rem;
@@ -259,14 +325,34 @@ export function LumineDialogueContent({
   );
 }
 
-function getCompactStatus(state: LumineDialogueState) {
+function getCompactStatus(
+  state: LumineDialogueState,
+  outcome: LumineJobOutcome | null
+) {
+  if (state.ended) {
+    if (outcome === 'completed') return 'Finished · Result is in the chat';
+    if (outcome === 'failed') return 'Stopped · Details are in the chat';
+    return 'No longer active';
+  }
   if (!state.canProgress) return 'Connection paused';
   if (state.jobStatus === 'queued') return 'Queued · You can keep chatting';
   if (state.jobStatus === 'waiting_user') return 'Waiting for your reply';
   return 'Working · You can keep chatting';
 }
 
-function getWaitingText(state: LumineDialogueState) {
+function getWaitingText(
+  state: LumineDialogueState,
+  outcome: LumineJobOutcome | null
+) {
+  if (state.ended) {
+    if (outcome === 'completed') {
+      return `Lumine finished this job. ${state.personaName} shared the result in the chat.`;
+    }
+    if (outcome === 'failed') {
+      return `Lumine couldn’t finish this job. ${state.personaName} explained what happened in the chat.`;
+    }
+    return 'This Lumine job is no longer active. Your project and this conversation are safe.';
+  }
   if (!state.canProgress) {
     return 'Lumine’s connection paused. Your project and this conversation are safe.';
   }

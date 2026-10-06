@@ -1,16 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps -- Context request helpers are stable and must not enter hook dependency arrays. */
-import {
-  useEffect,
-  useState,
-  type Dispatch,
-  type SetStateAction
-} from 'react';
-import {
-  CIEL_TWINKLE_ID,
-  ZERO_TWINKLE_ID
-} from '~/constants/defaultValues';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { isDialogueInScope } from '../lumineDialogueMessages';
 
 type WorkshopPersona = 'zero' | 'ciel';
 type DialogueDirection = 'persona_to_lumine' | 'lumine_to_persona';
@@ -35,6 +28,9 @@ export interface LumineDialogueState {
   jobStatus: string;
   canProgress: boolean;
   dialogue: LumineDialogueEntry[];
+  // The job left the active statuses while this conversation was open: the
+  // last transcript stays (no longer live) until the user closes it.
+  ended?: boolean;
 }
 
 const ACTIVE_JOB_STATUSES = new Set([
@@ -62,11 +58,7 @@ export default function useLumineDialogue({
   );
   const persona = resolvePersona(partnerId);
   const canonicalUserId = Number(userId || 0);
-  const shouldLoad = Boolean(
-    enabled &&
-      persona &&
-      canonicalUserId > 0
-  );
+  const shouldLoad = Boolean(enabled && persona && canonicalUserId > 0);
   const [dialogueState, setDialogueState] =
     useState<LumineDialogueState | null>(null);
 
@@ -79,6 +71,9 @@ export default function useLumineDialogue({
       };
     }
     const activePersona = persona;
+    // A new chat or topic starts empty: the last conversation's panel (live
+    // or ended) never carries over, even if this first load fails.
+    setDialogueState(null);
     void refreshFromServer();
     return () => {
       current = false;
@@ -98,19 +93,14 @@ export default function useLumineDialogue({
             persona: activePersona,
             selectedChannelId,
             topicId
-          })
+          }),
+          { channelId: selectedChannelId, topicId }
         );
       } catch {
         // Preserve the last canonical state through a transient request error.
       }
     }
-  }, [
-    canonicalUserId,
-    persona,
-    selectedChannelId,
-    shouldLoad,
-    topicId
-  ]);
+  }, [canonicalUserId, persona, selectedChannelId, shouldLoad, topicId]);
 
   useEffect(() => {
     if (!shouldLoad || !persona) return;
@@ -129,9 +119,14 @@ export default function useLumineDialogue({
       ) {
         return;
       }
+      const isActive = ACTIVE_JOB_STATUSES.has(nextState.jobStatus);
       replaceCanonicalDialogueState(
         setDialogueState,
-        ACTIVE_JOB_STATUSES.has(nextState.jobStatus) ? nextState : null
+        isActive ? nextState : null,
+        { channelId: selectedChannelId, topicId },
+        // Only this job's own end marks the panel ended: a late event for
+        // an older job in the same chat must not end a live one.
+        isActive ? undefined : nextState.jobId
       );
     }
 
@@ -147,7 +142,8 @@ export default function useLumineDialogue({
               persona: activePersona,
               selectedChannelId,
               topicId
-            })
+            }),
+            { channelId: selectedChannelId, topicId }
           );
         })
         .catch(() => undefined);
@@ -160,16 +156,11 @@ export default function useLumineDialogue({
       socket.off('build_workshop_dialogue_updated', applyCanonicalDialogue);
       socket.off('connect', refreshAfterReconnect);
     };
-  }, [
-    canonicalUserId,
-    persona,
-    selectedChannelId,
-    shouldLoad,
-    topicId
-  ]);
+  }, [canonicalUserId, persona, selectedChannelId, shouldLoad, topicId]);
 
+  const pollJobId = dialogueState?.ended ? 0 : dialogueState?.jobId;
   useEffect(() => {
-    if (!shouldLoad || !persona || !dialogueState?.jobId) return;
+    if (!shouldLoad || !persona || !pollJobId) return;
     const activePersona = persona;
     let current = true;
     const timer = window.setInterval(async () => {
@@ -186,7 +177,8 @@ export default function useLumineDialogue({
             persona: activePersona,
             selectedChannelId,
             topicId
-          })
+          }),
+          { channelId: selectedChannelId, topicId }
         );
       } catch {
         // Preserve the last canonical state through a transient request error.
@@ -198,21 +190,49 @@ export default function useLumineDialogue({
     };
   }, [
     canonicalUserId,
-    dialogueState?.jobId,
+    pollJobId,
     persona,
     selectedChannelId,
     shouldLoad,
     topicId
   ]);
 
-  return shouldLoad ? dialogueState : null;
+  return shouldLoad &&
+    dialogueState &&
+    isDialogueInScope(dialogueState, {
+      channelId: selectedChannelId,
+      topicId
+    })
+    ? dialogueState
+    : null;
 }
 
 function replaceCanonicalDialogueState(
   setDialogueState: Dispatch<SetStateAction<LumineDialogueState | null>>,
-  nextState: LumineDialogueState | null
+  nextState: LumineDialogueState | null,
+  scope: { channelId: number; topicId: number | null },
+  // Set when an event says which job ended (a status load that lists no
+  // job leaves it unset).
+  endedJobId?: number
 ) {
   setDialogueState((currentState) => {
+    if (!nextState) {
+      if (
+        endedJobId !== undefined &&
+        currentState &&
+        currentState.jobId !== endedJobId
+      ) {
+        return currentState;
+      }
+      // The server no longer lists this conversation's job as active: it
+      // finished, failed or was stopped. Keep its transcript, marked ended
+      // (never live), so it does not vanish the moment the work is done.
+      return currentState && isDialogueInScope(currentState, scope)
+        ? currentState.ended
+          ? currentState
+          : { ...currentState, ended: true, canProgress: false }
+        : null;
+    }
     if (
       currentState &&
       nextState &&
@@ -287,9 +307,8 @@ function normalizeDialogueState(value: any): LumineDialogueState | null {
   const dialogue = value.dialogue
     .map(normalizeDialogueEntry)
     .filter(
-      (
-        entry: LumineDialogueEntry | null
-      ): entry is LumineDialogueEntry => !!entry
+      (entry: LumineDialogueEntry | null): entry is LumineDialogueEntry =>
+        !!entry
     );
   return {
     requesterUserId,
@@ -311,8 +330,7 @@ function normalizeDialogueEntry(value: any): LumineDialogueEntry | null {
   if (
     !id ||
     !message ||
-    (direction !== 'persona_to_lumine' &&
-      direction !== 'lumine_to_persona')
+    (direction !== 'persona_to_lumine' && direction !== 'lumine_to_persona')
   ) {
     return null;
   }
