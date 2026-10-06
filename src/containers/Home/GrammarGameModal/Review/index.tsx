@@ -9,6 +9,10 @@ import LetterGrade from '../Marble/LetterGrade';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ChallengeModal from './ChallengeModal';
 import RuleCard, { type ReviewRuleCard } from './RuleCard';
+import {
+  initialKoreanShown,
+  saveKoreanShown
+} from '~/helpers/grammarblesRuleCard';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
@@ -46,6 +50,7 @@ export default function Review() {
   const [challengedQIds, setChallengedQIds] = useState<Record<number, boolean>>(
     {}
   );
+  const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
 
   useEffect(() => {
     if (!initialized.current) {
@@ -109,6 +114,8 @@ export default function Review() {
                       ? (it.choices[current.selectedIndex] ?? null)
                       : null
                   }
+                  koreanShown={koreanShown}
+                  onToggleKorean={handleToggleKorean}
                 />
               )}
             {explanationShown(
@@ -189,7 +196,7 @@ export default function Review() {
           </div>
         );
       }),
-    [items, answerState, challengedQIds, AI_FEATURES_DISABLED]
+    [items, answerState, challengedQIds, AI_FEATURES_DISABLED, koreanShown]
   );
 
   // Hands Zero and Ciel the review list as shown: each question, its choices,
@@ -236,7 +243,8 @@ export default function Review() {
               why: it.ruleCard!.why.slice(0, 500),
               wrongChoiceMistakes: it
                 .ruleCard!.wrongChoices.slice(0, 3)
-                .map((w) => `${w.choice}: ${w.error}`.slice(0, 300))
+                .map((w) => `${w.choice}: ${w.error}`.slice(0, 300)),
+              koreanShown
             }
           : null,
         challenged: !!challengedQIds[it.questionId],
@@ -295,6 +303,13 @@ export default function Review() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleToggleKorean() {
+    setKoreanShown((shown) => {
+      saveKoreanShown(!shown);
+      return !shown;
+    });
+  }
 
   function handleChallengeDone({
     explanation,
