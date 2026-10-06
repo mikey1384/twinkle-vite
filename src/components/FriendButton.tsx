@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -19,8 +19,8 @@ const LABEL: Record<FriendState, string> = {
 const STATUS_TTL_MS = 30_000;
 const statusMemo = new Map<number, { at: number; promise: Promise<any> }>();
 
-// A simple friend link between two members: one button, no feeds. It only
-// shows for people you have already talked with (the server decides). Two
+// A simple friend link between two members: one button, no feeds. It shows on
+// every other member (the server decides; never for bots or someone you blocked). Two
 // people are friends when both added each other. `variant` is the look:
 // 'panel' (profile card) or 'popup' (the hover card on a username).
 // The state comes with the profile itself (friendStatus, served with /user and
@@ -54,9 +54,28 @@ export default function FriendButton({
     ? { eligible: true, state: initialState }
     : served || fetched;
   const [busy, setBusy] = useState(false);
-  // undoing (cancel a request / unfriend) takes a second tap
-  const [confirming, setConfirming] = useState(false);
-  const [note, setNote] = useState('');
+  // "Requested" and "Friends" never undo anything themselves: tapping them shows
+  // a separate small "Cancel request" / "Unfriend" link, and only that link
+  // undoes. Two taps on the same spot can no longer withdraw a request.
+  const [showUndo, setShowUndo] = useState(false);
+  const [note, setNote] = useState<{ text: string; error: boolean } | null>(
+    null
+  );
+  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shownState = initialState || served?.state || fetched?.state;
+
+  // the link belongs to the state it was opened on (another panel or tab can
+  // change it meanwhile)
+  useEffect(() => {
+    setShowUndo(false);
+  }, [shownState]);
+
+  useEffect(
+    () => () => {
+      if (noteTimer.current) clearTimeout(noteTimer.current);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!myId || !userId || userId === myId || initialState || served) return;
@@ -85,100 +104,161 @@ export default function FriendButton({
   if (!myId || userId === myId || !status?.eligible) return null;
   const state = status.state;
   const icon = state === 'friends' ? 'user-check' : state === 'requested' ? 'clock' : 'user-plus';
-  const label = confirming
-    ? state === 'friends'
-      ? 'Unfriend?'
-      : 'Cancel request?'
-    : LABEL[state];
+  const label = LABEL[state];
+  const undoLabel = state === 'friends' ? 'Unfriend' : 'Cancel request';
+  const undoShown = showUndo && (state === 'friends' || state === 'requested');
 
-  async function handleClick() {
+  function showNote(text: string, error: boolean) {
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+    setNote({ text, error });
+    // long enough to read a full sentence (e.g. when the daily limit frees up)
+    noteTimer.current = setTimeout(() => setNote(null), 8000);
+  }
+
+  function applyStatus(next: any) {
+    statusMemo.set(userId, { at: Date.now(), promise: Promise.resolve(next) });
+    setFetched(next);
+    // every panel and hover card showing this person agrees at once
+    if (next && typeof next.eligible === 'boolean') {
+      onSetUserState({ userId, newState: { friendStatus: next } });
+    }
+    // a list that knew the old state (the Friends page) re-sorts itself
+    if (next?.state) onChange?.(next.state);
+  }
+
+  function handleClick() {
     if (busy) return;
-    if ((state === 'friends' || state === 'requested') && !confirming) {
-      // undoing is destructive: confirm against the live state first. A status
-      // served earlier can be stale (they accepted meanwhile), and the second
-      // tap would then end a friendship instead of cancelling a request.
-      setBusy(true);
-      let live = status;
-      try {
-        live = await loadFriendStatus(userId);
-      } catch {
-        live = status;
-      } finally {
-        setBusy(false);
-      }
-      if (live && typeof live.eligible === 'boolean' && live.state !== state) {
-        statusMemo.set(userId, { at: Date.now(), promise: Promise.resolve(live) });
-        setFetched(live);
-        onSetUserState({ userId, newState: { friendStatus: live } });
-        // a list that knew the old state (the Friends page) re-sorts itself
-        onChange?.(live.state);
-        return;
-      }
-      setConfirming(true);
-      setTimeout(() => setConfirming(false), 3500);
+    if (state === 'friends' || state === 'requested') {
+      setShowUndo((shown) => !shown);
       return;
     }
-    setConfirming(false);
-    setNote('');
+    handleAdd();
+  }
+
+  async function handleAdd() {
+    setNote(null);
     setBusy(true);
     try {
-      const next =
-        state === 'none' || state === 'incoming'
-          ? await addFriend(userId)
-          : await removeFriend(userId);
-      statusMemo.set(userId, { at: Date.now(), promise: Promise.resolve(next) });
-      setFetched(next);
-      // every panel and hover card showing this person agrees at once
-      if (next && typeof next.eligible === 'boolean') {
-        onSetUserState({ userId, newState: { friendStatus: next } });
+      const next = await addFriend(userId);
+      applyStatus(next);
+      // the button offered an accept, but they withdrew their request before
+      // this tap, so it became a request: say so rather than leave it puzzling.
+      // Only then: a withdrawn request the member never saw stays private.
+      if (next?.state === 'requested' && state === 'incoming') {
+        showNote(
+          'They withdrew their request, so we sent yours instead.',
+          false
+        );
       }
-      if (next?.state) onChange?.(next.state);
     } catch (err: any) {
-      // keep the current state and say why (daily limit, not someone you know...)
-      setNote(String(err?.message || 'Could not do that.'));
-      // long enough to read a full sentence (e.g. when the daily limit frees up)
-      setTimeout(() => setNote(''), 8000);
+      // keep the current state and say why (daily limit, member not found...)
+      showNote(String(err?.message || 'Could not do that.'), true);
     } finally {
       setBusy(false);
     }
   }
 
+  async function handleUndo() {
+    if (busy) return;
+    setShowUndo(false);
+    setNote(null);
+    setBusy(true);
+    try {
+      // check the live state first: a status served earlier can be stale (they
+      // accepted meanwhile), and this would then end a friendship instead of
+      // cancelling a request
+      const live = await loadFriendStatus(userId).catch(() => null);
+      if (!live || typeof live.eligible !== 'boolean') {
+        showNote('Could not check right now. Try again in a moment.', true);
+        return;
+      }
+      if (live.state !== state) {
+        applyStatus(live);
+        return;
+      }
+      applyStatus(await removeFriend(userId));
+    } catch (err: any) {
+      showNote(String(err?.message || 'Could not do that.'), true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const undoLink = undoShown ? (
+    <span
+      role="button"
+      tabIndex={0}
+      style={{
+        fontSize: '1.2rem',
+        color: Color.darkerGray(),
+        textDecoration: 'underline',
+        cursor: 'pointer',
+        whiteSpace: 'nowrap'
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleUndo();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          handleUndo();
+        }
+      }}
+    >
+      {undoLabel}
+    </span>
+  ) : null;
+  const noteColor = note?.error ? Color.red() : Color.darkerGray();
+
   if (variant === 'popup') {
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        title={note || undefined}
-        style={{
-          color: state === 'friends' ? Color.green() : Color.darkerGray(),
-          cursor: busy ? 'default' : 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0.5rem',
-          flexGrow: 1,
-          justifyContent: 'center',
-          opacity: busy ? 0.6 : 1
-        }}
-        onClick={handleClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') handleClick();
-        }}
-      >
-        <Icon icon={icon} />
-        <span
+      <>
+        <div
+          role="button"
+          tabIndex={0}
+          title={note?.text || undefined}
           style={{
-            marginLeft: '1rem',
-            fontSize: '1.2rem',
-            color: note ? Color.red() : undefined,
-            // a full-sentence note wraps instead of pushing past the row on phones
-            maxWidth: note ? '18rem' : undefined,
-            whiteSpace: note ? 'normal' : undefined,
-            lineHeight: note ? 1.3 : undefined
+            color: state === 'friends' ? Color.green() : Color.darkerGray(),
+            cursor: busy ? 'default' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0.5rem',
+            flexGrow: 1,
+            justifyContent: 'center',
+            opacity: busy ? 0.6 : 1
+          }}
+          onClick={handleClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleClick();
+            }
           }}
         >
-          {note || label}
-        </span>
-      </div>
+          <Icon icon={icon} />
+          <span
+            style={{
+              marginLeft: '1rem',
+              fontSize: '1.2rem',
+              color: note ? noteColor : undefined,
+              // a full-sentence note wraps instead of pushing past the row on phones
+              maxWidth: note ? '18rem' : undefined,
+              whiteSpace: note ? 'normal' : undefined,
+              lineHeight: note ? 1.3 : undefined
+            }}
+          >
+            {note?.text || label}
+          </span>
+        </div>
+        {/* a sibling, never inside the row's own button */}
+        {undoLink && (
+          <span style={{ alignSelf: 'center', padding: '0 0.8rem' }}>
+            {undoLink}
+          </span>
+        )}
+      </>
     );
   }
   return (
@@ -195,7 +275,28 @@ export default function FriendButton({
         <Icon icon={icon} />
         {label}
       </Button>
-      {note && <span style={{ fontSize: '1.2rem', color: Color.red() }}>{note}</span>}
+      {(undoLink || note) && (
+        // its own full-width line under the button row, so the neighbouring
+        // buttons never shift or wrap around it
+        <span
+          style={{
+            display: 'flex',
+            flexBasis: '100%',
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}
+        >
+          {undoLink}
+          {note && (
+            <span style={{ fontSize: '1.2rem', color: noteColor }}>
+              {note.text}
+            </span>
+          )}
+        </span>
+      )}
     </>
   );
 }

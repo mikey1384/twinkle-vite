@@ -94,7 +94,7 @@ export default function Friends() {
                 rows={data.friends}
                 state="friends"
                 onChange={reload}
-                empty="No friends yet. Add someone you've chatted with from their profile or by hovering their username."
+                empty="No friends yet. Add a friend from their profile or by hovering their username."
               />
               {data.outgoing.length > 0 && (
                 <Section title="Requests you sent" rows={data.outgoing} state="requested" onChange={reload} />
