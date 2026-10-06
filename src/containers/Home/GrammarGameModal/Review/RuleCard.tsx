@@ -3,8 +3,10 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { mistakeText } from '~/helpers/grammarblesRuleCard';
 
-// Korean notes (skill name, why, the point's rule) show beside the English
-// when the learner has them on (Mikey 10-06: learning aids may show Korean).
+// Korean notes show under or beside their English line when the learner has
+// them on (Mikey 10-06: learning aids may show Korean, but English stays the
+// main text and Korean is secondary). Every Korean line has its English pair;
+// the skill's Korean-only rule (ruleKo) is therefore not shown.
 export interface ReviewRuleCard {
   skill: string;
   nameEn: string;
@@ -28,7 +30,7 @@ export default function RuleCard({
   koreanShown: boolean;
   onToggleKorean: () => void;
 }) {
-  const hasKorean = !!(card.nameKo || card.whyKo || card.ruleKo);
+  const hasKorean = !!(card.nameKo || card.whyKo);
   const header = (
     <div className={headCls}>
       <div>
@@ -71,11 +73,6 @@ export default function RuleCard({
             <li key={w.choice}>{mistakeText(w)}</li>
           ))}
         </ul>
-      )}
-      {koreanShown && card.ruleKo && (
-        <div className={ruleKoCls}>
-          <span className={labelCls}>규칙</span> {card.ruleKo}
-        </div>
       )}
     </div>
   );
@@ -137,8 +134,9 @@ const headCls = css`
 
 const nameKoCls = css`
   margin-left: 0.6rem;
-  font-weight: 600;
-  color: ${Color.darkerGray()};
+  font-size: 0.85em;
+  font-weight: 500;
+  color: ${Color.gray()};
 `;
 
 const toggleCls = css`
@@ -154,12 +152,7 @@ const toggleCls = css`
 `;
 
 const koCls = css`
-  margin-top: 0.35rem;
-  color: ${Color.darkerGray()};
-`;
-
-const ruleKoCls = css`
-  margin-top: 0.6rem;
-  padding-top: 0.5rem;
-  border-top: 1px dashed var(--ui-border);
+  margin-top: 0.25rem;
+  font-size: 0.88em;
+  color: ${Color.gray()};
 `;
