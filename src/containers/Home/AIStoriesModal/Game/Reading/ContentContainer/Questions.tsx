@@ -114,10 +114,15 @@ export default function Questions({
               flex-direction: column;
               align-items: center;
               justify-content: center;
+              width: 100%;
             `}
           >
             <Loading text={loadingStep} />
-            <ProgressBar progress={loadingProgress} />
+            {/* a fixed slot: inside a centered column a 100%-wide bar would
+                collapse to nothing (same layout as the daily question bar) */}
+            <div style={{ width: '60%', maxWidth: '42rem', minWidth: '20rem' }}>
+              <ProgressBar progress={loadingProgress} />
+            </div>
           </div>
         ) : (
           <div
