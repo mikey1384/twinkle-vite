@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { mistakeText } from '~/helpers/grammarblesRuleCard';
 
 // The API also sends Korean notes (nameKo, ruleKo, whyKo); the card shows
 // English only, because player UI is English-only (Mikey 2026-09-27: Korean
@@ -14,11 +15,21 @@ export interface ReviewRuleCard {
 
 export default function RuleCard({
   card,
+  pointOnly = false,
   pickedChoice
 }: {
   card: ReviewRuleCard;
+  pointOnly?: boolean;
   pickedChoice: string | null;
 }) {
+  if (pointOnly) {
+    return (
+      <div className={cardCls}>
+        <div className={labelCls}>Grammar point</div>
+        <div className={nameCls}>{card.nameEn}</div>
+      </div>
+    );
+  }
   const picked = pickedChoice
     ? card.wrongChoices.find((w) => w.choice === pickedChoice)
     : undefined;
@@ -43,13 +54,6 @@ export default function RuleCard({
       )}
     </div>
   );
-}
-
-// The labels usually quote the choice already ("\"whom\" for a thing"); add
-// it only when they don't, so the note never reads the choice twice.
-function mistakeText(w: { choice: string; error: string }) {
-  const named = w.error.toLowerCase().includes(w.choice.trim().toLowerCase());
-  return named ? w.error : `“${w.choice}”: ${w.error}`;
 }
 
 const cardCls = css`

@@ -100,6 +100,10 @@ export default function Review() {
               typeof current.selectedIndex === 'number' && (
                 <RuleCard
                   card={it.ruleCard}
+                  // An unchecked question's key may still be wrong (the tag
+                  // agrees on the skill, not the key), so it only names the
+                  // point; the reasons wait until the question is checked.
+                  pointOnly={!it.isChecked}
                   pickedChoice={
                     current.status === 'fail'
                       ? (it.choices[current.selectedIndex] ?? null)
@@ -107,26 +111,26 @@ export default function Review() {
                   }
                 />
               )}
-            {(!it.ruleCard || !!challengedQIds[it.questionId]) &&
-              it.explanation &&
-              it.isChecked &&
-              (typeof answerState[it.id]?.selectedIndex === 'number' ||
-                !!challengedQIds[it.questionId]) && (
-                <div
-                  className={css`
-                    margin-top: 0.75rem;
-                    padding: 0.75rem 1rem;
-                    border-left: 4px solid ${Color.logoBlue()};
-                    background: ${Color.wellGray(0.5)};
-                    border-radius: 6px;
-                    color: ${Color.darkerGray()};
-                    font-size: 1.3rem;
-                    white-space: pre-wrap;
-                  `}
-                >
-                  {it.explanation}
-                </div>
-              )}
+            {explanationShown(
+              it,
+              current.selectedIndex,
+              !!challengedQIds[it.questionId]
+            ) && (
+              <div
+                className={css`
+                  margin-top: 0.75rem;
+                  padding: 0.75rem 1rem;
+                  border-left: 4px solid ${Color.logoBlue()};
+                  background: ${Color.wellGray(0.5)};
+                  border-radius: 6px;
+                  color: ${Color.darkerGray()};
+                  font-size: 1.3rem;
+                  white-space: pre-wrap;
+                `}
+              >
+                {it.explanation}
+              </div>
+            )}
             <MultipleChoiceQuestion
               key={it.id}
               question={
@@ -199,12 +203,10 @@ export default function Review() {
       const current = answerState[it.id];
       const answered = typeof current?.selectedIndex === 'number';
       const ruleCardShown =
-        !!it.ruleCard && answered && !challengedQIds[it.questionId];
-      const explanationShown =
-        !ruleCardShown &&
-        !!it.explanation &&
+        !!it.ruleCard &&
         !!it.isChecked &&
-        (answered || !!challengedQIds[it.questionId]);
+        answered &&
+        !challengedQIds[it.questionId];
       return {
         questionId: it.questionId,
         grade: it.grade || null,
@@ -217,15 +219,23 @@ export default function Review() {
           : null,
         retryResult: answered ? current?.status || null : null,
         correctChoiceIndex: answered ? it.answerIndex : null,
-        explanation: explanationShown
+        grammarPoint:
+          it.ruleCard && answered && !challengedQIds[it.questionId]
+            ? it.ruleCard.nameEn
+            : null,
+        explanation: explanationShown(
+          it,
+          current?.selectedIndex,
+          !!challengedQIds[it.questionId]
+        )
           ? String(it.explanation).slice(0, 500)
           : null,
         ruleCard: ruleCardShown
           ? {
               grammarPoint: it.ruleCard!.nameEn,
               why: it.ruleCard!.why.slice(0, 500),
-              wrongChoiceMistakes: it.ruleCard!.wrongChoices
-                .slice(0, 3)
+              wrongChoiceMistakes: it
+                .ruleCard!.wrongChoices.slice(0, 3)
                 .map((w) => `${w.choice}: ${w.error}`.slice(0, 300))
             }
           : null,
@@ -375,3 +385,25 @@ const metaCls = css`
 // Grade badge is centralized as <LetterGrade />
 
 // No correctness badge in review; focus on interactive reveal only
+
+// The question's own checked explanation (it can carry a challenge's "Fix
+// applied" note) stays visible beside a rule card unless it says the same.
+function explanationShown(
+  it: ReviewItem,
+  selectedIndex: number | null | undefined,
+  challenged: boolean
+) {
+  if (!it.explanation || !it.isChecked) return false;
+  if (typeof selectedIndex !== 'number' && !challenged) return false;
+  const cardWhyShown = !!it.ruleCard && !challenged;
+  return (
+    !cardWhyShown || normalize(it.explanation) !== normalize(it.ruleCard!.why)
+  );
+}
+
+function normalize(text: string) {
+  return String(text || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
