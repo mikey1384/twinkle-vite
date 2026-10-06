@@ -49,6 +49,7 @@ import {
 } from '~/helpers';
 import { useContentState, useLazyLoad, useMyLevel } from '~/helpers/hooks';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
+import { seedCommentContentPage } from '~/helpers/contentPageSeed';
 import { borderRadius, Color } from '~/constants/css';
 import {
   getFileInfoFromFileName,
@@ -162,6 +163,9 @@ function Comment({
   );
   const onUpdateCommentPinStatus = useContentContext(
     (v) => v.actions.onUpdateCommentPinStatus
+  );
+  const onSeedContentPage = useContentContext(
+    (v) => v.actions.onSeedContentPage
   );
 
   const {
@@ -1076,6 +1080,7 @@ function Comment({
   function handleTimestampClick(event: React.MouseEvent<HTMLElement>) {
     if (isNotification || isDeleteNotification) return;
     saveScrollAnchorForElement(event.currentTarget);
+    seedCommentContentPage({ comment, onSeedContentPage });
     navigate(`/comments/${comment.id}`);
   }
 

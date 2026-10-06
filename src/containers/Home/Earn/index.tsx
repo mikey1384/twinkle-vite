@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 import ErrorBoundary from '~/components/ErrorBoundary';import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Leaderboards from './Leaderboards';
@@ -86,6 +87,7 @@ export default function Earn() {
           <Bounties
             onOpenStandings={() => {
               setBoardTab('apps');
+              releaseScrollAnchorTopPin();
               document
                 .getElementById('earn-leaderboards')
                 ?.scrollIntoView({ behavior: 'smooth', block: 'start' });

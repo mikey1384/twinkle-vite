@@ -22,8 +22,16 @@ import { clientVersion } from '~/constants/defaultValues';
 import {
   applyClientUpdateAtSafeBoundary,
   gateClientUpdateNavigation,
-  hasUnsavedUserWork
+  hasUnsavedUserWork,
+  type NavigationFreshnessReport
 } from '~/helpers/clientUpdate';
+import {
+  isOwnerTraceActive,
+  noteOwnerNavGate,
+  noteOwnerNavLocation,
+  noteOwnerNavStart,
+  noteOwnerRouteReady
+} from '~/helpers/ownerTrace';
 import { useInputContext } from '~/contexts/hooks';
 import { AppNavigationTypeProvider } from '~/helpers/hooks/useAppNavigationType';
 
@@ -113,15 +121,32 @@ export function NavigationFeedbackProvider({
   // could expose the stale bundle's Suspense/loading UI before the reload.
   // Scoping children through Routes gives every SPA navigation path (Link,
   // navigate(), POP, query, and hash), not only the primary tabs, this gate.
+  const gateMountedRef = useRef(false);
   useEffect(() => {
     let active = true;
+    // Owner trace nav-timing (no-op for everyone else); the first location
+    // is the page load, which page-load covers.
+    const traced = gateMountedRef.current && isOwnerTraceActive();
+    gateMountedRef.current = true;
+    if (traced) {
+      noteOwnerNavLocation(
+        `${location.pathname}${location.search}${location.hash}`,
+        navigationType
+      );
+    }
+    let freshness: NavigationFreshnessReport | null = null;
     void gateClientUpdateNavigation({
       destination: location,
       check: () =>
         applyClientUpdateAtSafeBoundary({
           version: clientVersion,
           hasUnsavedWork: () =>
-            hasUnsavedUserWork({ inputState: getInputState?.() })
+            hasUnsavedUserWork({ inputState: getInputState?.() }),
+          onFreshnessReport: traced
+            ? (report) => {
+                freshness = report;
+              }
+            : undefined
         }),
       release: (destination) => {
         if (!active) return;
@@ -129,6 +154,14 @@ export function NavigationFeedbackProvider({
         // The type of the navigation that produced this location.
         setAcceptedNavigationType(navigationType);
       }
+    }).then((result) => {
+      if (!traced || !active) return;
+      const report = freshness as NavigationFreshnessReport | null;
+      noteOwnerNavGate({
+        probe: report?.outcome,
+        probeMs: report?.waitedMs,
+        result
+      });
     });
     return () => {
       active = false;
@@ -138,6 +171,7 @@ export function NavigationFeedbackProvider({
   }, [location.hash, location.key, location.pathname, location.search]);
 
   const onRouteReady = useCallback((nextLocation: ReadyNavigationLocation) => {
+    noteOwnerRouteReady(`${nextLocation.pathname}${nextLocation.search}`);
     setReadyLocation((current) =>
       navigationLocationsMatch(current, nextLocation) ? current : nextLocation
     );
@@ -197,6 +231,7 @@ export function NavigationFeedbackProvider({
 
         const id = requestIdRef.current + 1;
         requestIdRef.current = id;
+        noteOwnerNavStart('nav');
         setPendingNavigation({
           dispatchState:
             targetLocationKey === currentLocationKey

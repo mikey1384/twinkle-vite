@@ -365,6 +365,25 @@ export default function ContentActions(
         observedAt
       });
     },
+    // Seeds a content page's entry from a copy already on screen so the page
+    // paints it on its first frame; see helpers/contentPageSeed.ts.
+    onSeedContentPage({
+      contentId,
+      contentType,
+      seed
+    }: {
+      contentId: number;
+      contentType: string;
+      seed: Record<string, any>;
+    }) {
+      return dispatch({
+        type: 'SEED_CONTENT_PAGE',
+        contentId: Number(contentId),
+        contentType,
+        seed,
+        seededAt: Date.now()
+      });
+    },
     onSetContentState({
       contentId,
       contentType,

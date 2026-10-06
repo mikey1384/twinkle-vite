@@ -18,6 +18,7 @@ import {
 } from '~/constants/defaultValues';
 
 import URL from '~/constants/URL';
+import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 
 const twinkleDayIndexEpochMs = Date.UTC(2022, 0, 1, 0, 0, 0);
 const msInDay = 86400000;
@@ -597,6 +598,8 @@ export function parseChannelPath(pathId: string | number) {
 
 export function scrollElementToCenter(element: any, adjustment = -50): void {
   if (!element) return;
+  // A deliberate scroll: the post-navigation top pin must not undo it.
+  releaseScrollAnchorTopPin();
   let offsetTop = 0;
   const body: { scrollTop: number; clientHeight: number } = document
     ? ((document.scrollingElement || document.documentElement) as {
@@ -632,6 +635,8 @@ export function scrollElementTo({
   amount: number;
 }): void {
   if (!element) return;
+  // A deliberate scroll: the post-navigation top pin must not undo it.
+  releaseScrollAnchorTopPin();
   let offsetTop = 0;
   const body: { scrollTop: number; clientHeight: number } = document
     ? ((document.scrollingElement || document.documentElement) as {

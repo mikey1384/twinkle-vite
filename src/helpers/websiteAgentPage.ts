@@ -1,4 +1,5 @@
 import { markWebsiteAgentAction } from './websiteAgentAction';
+import { releaseScrollAnchorTopPin } from './scrollAnchorRestorationCoordinator';
 
 // What Zero or Ciel "see" when they look at the user's page: its headings,
 // text, and the things a person could tap or type into, each tagged with a
@@ -613,6 +614,8 @@ export async function performWebsiteAgentClick({
     return { ok: false, error: 'That element is disabled right now.' };
   }
   markWebsiteAgentAction();
+  // A deliberate scroll: the post-navigation top pin must not undo it.
+  releaseScrollAnchorTopPin();
   element.scrollIntoView({ block: 'center' });
   const init = { bubbles: true, cancelable: true, view: window };
   element.dispatchEvent(new PointerEvent('pointerdown', init));
@@ -653,6 +656,7 @@ export async function performWebsiteAgentType({
     };
   }
   markWebsiteAgentAction();
+  releaseScrollAnchorTopPin();
   element.scrollIntoView({ block: 'center' });
   element.focus();
   if (

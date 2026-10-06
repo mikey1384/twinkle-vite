@@ -1,8 +1,10 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAppNavigationType } from '~/helpers/hooks/useAppNavigationType';
 import {
   addScrollAnchorExternalSaveListener,
   addScrollAnchorRestoreCancelListener,
+  addScrollAnchorTopPinReleaseListener,
   addScrollAnchorTopResetListener,
   appOwnsScrollRestoration,
   notifyScrollAnchorExternalSave,
@@ -15,6 +17,13 @@ import {
   shouldRecordScrollDiagnostics,
   recordScrollDiagnostic
 } from '~/helpers/scrollAnchorDiagnostics';
+import {
+  createTopPinNavigationGate,
+  createTopPinWindow,
+  elementIsEditableField,
+  topPinWindowMs,
+  type TopPinWindow
+} from '~/helpers/scrollTopPin';
 
 // An incidental pointer event (iOS momentum from the swipe-to-reveal-nav, or
 // the navigation tap itself) must not cancel an in-flight restore before it has
@@ -60,6 +69,7 @@ type InitialScrollPolicy =
     };
 
 const savedScrollAnchors: Record<string, SavedScrollAnchor> = {};
+const topPinNavigationGate = createTopPinNavigationGate();
 const restoreSaveSuppressionDurationMs = 250;
 const restoreCancelKeys = new Set([
   'ArrowDown',
@@ -104,6 +114,18 @@ export function useScrollAnchorRestoration({
   const nonUserScrollTaintedRef = useRef(false);
   const lastAppliedScrollTopRef = useRef(-1);
   const loggedPendingSkipSignatureRef = useRef('');
+  const topPinRef = useRef<TopPinWindow | null>(null);
+  const forwardNavTopPinKeyRef = useRef('');
+  const arrivedByNavigationRef = useRef(false);
+  // Bundled once so the module-level startTopPinWindow can do the same
+  // programmatic-scroll bookkeeping as the hook's own scrolls.
+  const topPinRefsRef = useRef<TopPinRefs>({
+    topPin: topPinRef,
+    userScrollInputAt: userScrollInputAtRef,
+    restoreAppliedAt: restoreAppliedAtRef,
+    nonUserScrollTainted: nonUserScrollTaintedRef,
+    lastAppliedScrollTop: lastAppliedScrollTopRef
+  });
 
   if (ignoreSavedAnchor) {
     activeIgnoredSavedAnchorKeyRef.current = anchorKey;
@@ -223,15 +245,50 @@ export function useScrollAnchorRestoration({
   // (Mikey, 2026-09-29: ~30% of home feed taps opened a post scrolled to the
   // bottom). Runs after the old page's cleanups (its teardown save already
   // happened), only when nothing is going to be restored.
+  //
+  // Writing 0 is not enough on iOS (document scroller): when the new page first
+  // renders shorter than the old offset, scrollTop already reads a clamped 0
+  // here, yet WebKit re-applies the old offset once the content grows the
+  // document (owner trace 2026-10-06: /comments/335037 opened at 869). So a
+  // forward navigation that will show the top also opens a top pin window
+  // (startTopPinWindow) whether or not anything had to be written. Writing 0
+  // when it already reads 0 is skipped on purpose: the DOM value is unchanged
+  // so WebKit treats it as a no-op, while it would still suppress saves and
+  // log an initial-scroll on every forward navigation.
+  //
+  // Only a real navigation (a new location key) opens the pin; an anchor key
+  // change on the same location (search text keyed anchors) only gets the
+  // one-off top write. The gate is consumed on every key change, POP and
+  // skips included, in its own effect that runs just before this one.
+  const locationKey = useLocation().key;
+  useLayoutEffect(() => {
+    arrivedByNavigationRef.current =
+      initialScrollType === 'top' && topPinNavigationGate.consume(locationKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchorKey]);
   const navigationType = useAppNavigationType();
   useLayoutEffect(() => {
     if (navigationType === 'POP') return;
     if (initialScrollType !== 'top') return;
     if (!appOwnsScrollRestoration()) return;
     if (!ignoreSavedAnchor && savedScrollAnchors[anchorKey]) return;
+    // The restore effect's no-saved-anchor top scroll for this key may start
+    // (or extend) the pin too; a saved-anchor restore never does. No reset on
+    // the early returns above: this effect runs on every key change, so a
+    // value left from an earlier key can never equal the current one.
+    const opensTopPin = arrivedByNavigationRef.current;
+    if (opensTopPin) forwardNavTopPinKeyRef.current = anchorKey;
     const scroller = getActiveScroller();
     const scrollTop = Math.round(getScrollTop(scroller));
-    if (scrollTop <= 0) return;
+    if (scrollTop <= 0) {
+      if (!opensTopPin) return;
+      startTopPinWindow({
+        anchorKey,
+        note: 'forward-nav-mount',
+        refs: topPinRefsRef.current
+      });
+      return;
+    }
     recordScrollDiagnostic({
       type: 'initial-scroll',
       anchorKey,
@@ -244,7 +301,22 @@ export function useScrollAnchorRestoration({
     restoreAppliedAtRef.current = nowMs();
     nonUserScrollTaintedRef.current = false;
     lastAppliedScrollTopRef.current = getScrollTop(scroller);
+    if (!opensTopPin) return;
+    startTopPinWindow({
+      anchorKey,
+      note: 'forward-nav-mount',
+      refs: topPinRefsRef.current
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchorKey]);
+
+  // The pin belongs to one key: a key change or unmount ends it. Reads the
+  // live ref on purpose — the pin open at teardown, not the one at setup.
+  useLayoutEffect(() => {
+    return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      topPinRef.current?.stop('teardown');
+    };
   }, [anchorKey]);
 
   useLayoutEffect(() => {
@@ -469,8 +541,23 @@ export function useScrollAnchorRestoration({
       if (initialScrollType !== 'preserve') {
         markProgrammaticScrollApplied();
       }
+      if (
+        initialScrollType === 'top' &&
+        forwardNavTopPinKeyRef.current === anchorKey
+      ) {
+        startTopPinWindow({
+          anchorKey,
+          note: savedAnchorIsIgnored
+            ? 'saved-anchor-ignored'
+            : 'no-saved-anchor',
+          refs: topPinRefsRef.current
+        });
+      }
       return;
     }
+
+    // Restoring a saved position: a top pin must not drag it back to 0.
+    topPinRef.current?.stop('saved-anchor-restore');
 
     const anchorToRestore = savedAnchor;
     const restoreKey = `${anchorKey}:${anchorToRestore.primaryId || ''}:${
@@ -825,6 +912,162 @@ export function saveScrollAnchorForElement(
   );
   notifyScrollAnchorExternalSave(contentAnchorKey);
   suppressScrollAnchorSaves(restoreSaveSuppressionDurationMs);
+}
+
+interface TopPinRefs {
+  topPin: { current: TopPinWindow | null };
+  userScrollInputAt: { current: number };
+  restoreAppliedAt: { current: number };
+  nonUserScrollTainted: { current: boolean };
+  lastAppliedScrollTop: { current: number };
+}
+
+// Scroll input only. A bare tap (touchstart / pointerdown) does not end the
+// pin: a tap inside the window must not let WebKit's stale offset win later,
+// a tap that does move the page is re-pinned like any non-user offset, and a
+// swipe or momentum scroll always starts with touchmove. Scroll keys are
+// filtered in handleUserInput.
+const topPinUserInputEvents = [
+  'wheel',
+  'touchmove',
+  'keydown',
+  'focusin'
+] as const;
+
+// Never opens while a text field has focus (elementIsEditableField).
+//
+// Opens (or, if one is already open, extends) the post-forward-navigation top
+// pin — see scrollTopPin.ts for why. Only in document-scroller mode (iOS:
+// #App.ios is overflow-y visible), the same scope as the non-user save guard:
+// that is where WebKit re-applies the old document offset, and where
+// touch/wheel/key input coverage is exhaustive; element-scroller scrollbar
+// drags emit no input event, so pinning there could fight a real scroll.
+//
+// While open, a scroll event or a document resize (WebKit can move the offset
+// as the content grows without a timely scroll event) that finds the page
+// off the top puts it back with the hook's normal programmatic-scroll
+// bookkeeping, so the re-pin is neither saved as a user position nor left
+// tainted, and logs a 'top-repin' with the stray offset for the owner trace.
+// It ends for good on touchmove / wheel / scroll-key / focus input, on a
+// deliberate app scroll (releaseScrollAnchorTopPin), after topPinWindowMs
+// without a new top apply, at the hard cap, on a saved-anchor restore, or on
+// key change / unmount.
+function startTopPinWindow({
+  anchorKey,
+  note,
+  refs
+}: {
+  anchorKey: string;
+  note: string;
+  refs: TopPinRefs;
+}) {
+  if (typeof window === 'undefined') return;
+  if (getActiveScroller()) return;
+  if (elementIsEditableField(document.activeElement as HTMLElement | null)) {
+    return;
+  }
+  const existing = refs.topPin.current;
+  if (existing?.isActive()) {
+    existing.extend();
+    return;
+  }
+
+  let expiryTimer = 0;
+  let resizeObserver: ResizeObserver | null = null;
+  let removeReleaseListener: (() => void) | null = null;
+  const pin: TopPinWindow = createTopPinWindow({
+    now: nowMs,
+    readScrollTop: () => getScrollTop(getActiveScroller()),
+    userInputSince: (time) => refs.userScrollInputAt.current >= time,
+    repin(strayScrollTop, trigger, count) {
+      applyInitialScroll({
+        scroller: getActiveScroller(),
+        targetRef: null,
+        type: 'top'
+      });
+      refs.restoreAppliedAt.current = nowMs();
+      refs.nonUserScrollTainted.current = false;
+      refs.lastAppliedScrollTop.current = getScrollTop(getActiveScroller());
+      recordScrollDiagnostic({
+        type: 'top-repin',
+        anchorKey,
+        scrollTop: Math.round(strayScrollTop),
+        reason: trigger,
+        attempt: count,
+        note
+      });
+    },
+    onEnd(reason, repins) {
+      if (expiryTimer) window.clearTimeout(expiryTimer);
+      resizeObserver?.disconnect();
+      removeReleaseListener?.();
+      window.removeEventListener('scroll', handleScroll);
+      for (const eventName of topPinUserInputEvents) {
+        window.removeEventListener(eventName, handleUserInput, {
+          capture: true
+        });
+      }
+      if (refs.topPin.current === pin) refs.topPin.current = null;
+      // Quiet windows (nothing to fight) stay out of the trace.
+      if (repins > 0) {
+        recordScrollDiagnostic({
+          type: 'top-pin-end',
+          anchorKey,
+          scrollTop: Math.round(getScrollTop(getActiveScroller())),
+          attempt: repins,
+          reason
+        });
+      }
+    }
+  });
+  refs.topPin.current = pin;
+
+  function handleScroll() {
+    pin.check('scroll');
+  }
+
+  function handleUserInput(event: Event) {
+    if (event.type === 'keydown') {
+      const keyEvent = event as KeyboardEvent;
+      if (keyEvent.altKey || keyEvent.ctrlKey || keyEvent.metaKey) return;
+      if (!restoreCancelKeys.has(keyEvent.key)) return;
+    }
+    pin.stop('user-input');
+  }
+
+  // Re-checks at the window's end: check() closes an expired window, and an
+  // extended one gets another round (bounded by the hard cap).
+  function scheduleExpiryCheck() {
+    expiryTimer = window.setTimeout(() => {
+      expiryTimer = 0;
+      pin.check('expiry-check');
+      if (pin.isActive()) scheduleExpiryCheck();
+    }, topPinWindowMs + 50);
+  }
+
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  for (const eventName of topPinUserInputEvents) {
+    window.addEventListener(eventName, handleUserInput, {
+      capture: true,
+      passive: true
+    });
+  }
+  removeReleaseListener = addScrollAnchorTopPinReleaseListener(() =>
+    pin.stop('released')
+  );
+  if (typeof ResizeObserver === 'function') {
+    resizeObserver = new ResizeObserver(() => {
+      pin.check('resize');
+    });
+    for (const element of [
+      document.documentElement,
+      document.body,
+      getAppScroller()
+    ]) {
+      if (element) resizeObserver.observe(element);
+    }
+  }
+  scheduleExpiryCheck();
 }
 
 function applyInitialScroll({

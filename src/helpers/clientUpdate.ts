@@ -14,12 +14,62 @@ let reloadInitiated = false;
 let updatePending = false;
 let lastStaleActionErrorAt = 0;
 let lastDeployFreshnessProbeAt = 0;
-let deployFreshnessProbeInFlight: Promise<boolean> | null = null;
+let lastDeployFreshnessProbeFailedAt = 0;
+let deployFreshnessProbeInFlight: InFlightDeployFreshnessProbe | null = null;
 let deployFreshnessProbeGeneration = 0;
 
 const STALE_ACTION_DEBOUNCE_MS = 5000;
 const DEPLOY_FRESHNESS_PROBE_INTERVAL_MS = 10 * 60 * 1000;
 const DEPLOY_FRESHNESS_PROBE_TIMEOUT_MS = 4000;
+// A failed or unusable probe (offline, captive portal, the 4 s abort) is not
+// freshness evidence, so it does not earn the 10 min throttle, but on a weak
+// network every navigation re-probing would re-pay the navigation wait below.
+// One short backoff keeps consecutive taps snappy while a recovered network
+// is re-checked within a minute.
+const DEPLOY_FRESHNESS_PROBE_FAILURE_BACKOFF_MS = 60 * 1000;
+// How long a route navigation holds the current route for the deploy probe.
+// Owner trace 2026-10-06 (iPhone, weak network): three taps took 3.9-4.6 s
+// from tap to page because navigation waited out the probe's 4 s timeout. A
+// healthy probe answers well inside this cap, so a deploy is still applied in
+// the same transition; past it the navigation proceeds and the probe keeps
+// running in the background. If it then finds a newer bundle it arms the
+// pending update, which the NEXT navigation (or a hidden-tab boundary)
+// applies under the same unsaved-work rules.
+export const NAVIGATION_FRESHNESS_WAIT_MS = 500;
+
+export type DeployFreshnessProbeOutcome =
+  // A canonical index.html serves this tab's entry bundle.
+  | 'current'
+  // A newer entry bundle is deployed; the pending update is now armed.
+  | 'armed'
+  // No canonical answer (network error, abort, non-OK or captive document).
+  | 'failed'
+  // A canonical answer arrived within the 10 min interval.
+  | 'throttled'
+  // A probe failed within DEPLOY_FRESHNESS_PROBE_FAILURE_BACKOFF_MS.
+  | 'backoff'
+  // An update is already pending (or reloading); nothing to probe.
+  | 'pending'
+  // Nothing to compare (dev server, no fetch, superseded generation).
+  | 'skipped';
+
+export type NavigationFreshnessOutcome = DeployFreshnessProbeOutcome | 'timeout';
+
+export interface NavigationFreshnessReport {
+  outcome: NavigationFreshnessOutcome;
+  // How long the navigation actually waited for the probe.
+  waitedMs: number;
+}
+
+interface InFlightDeployFreshnessProbe {
+  startedAt: number;
+  promise: Promise<DeployFreshnessProbeOutcome>;
+}
+
+type DeployFreshnessFetcher = (
+  url: string,
+  init?: RequestInit
+) => Promise<{ ok: boolean; text(): Promise<string> }>;
 
 export function buildClientVersionCheckUrl({
   apiUrl,
@@ -119,43 +169,61 @@ export async function armUpdateIfDeployedBundleNewer({
   doc = typeof document === 'undefined' ? null : document
 }: {
   now?: number;
-  fetcher?: (
-    url: string,
-    init?: RequestInit
-  ) => Promise<{ ok: boolean; text(): Promise<string> }>;
+  fetcher?: DeployFreshnessFetcher;
   doc?: { querySelectorAll(selector: string): ArrayLike<any> } | null;
 } = {}): Promise<boolean> {
-  if (updatePending || reloadInitiated) return false;
+  const probe = beginDeployFreshnessProbe({ now, fetcher, doc });
+  const outcome = typeof probe === 'string' ? probe : await probe.promise;
+  return outcome === 'armed';
+}
+
+function beginDeployFreshnessProbe({
+  now,
+  fetcher,
+  doc
+}: {
+  now: number;
+  fetcher?: DeployFreshnessFetcher;
+  doc: { querySelectorAll(selector: string): ArrayLike<any> } | null;
+}): InFlightDeployFreshnessProbe | DeployFreshnessProbeOutcome {
+  if (updatePending || reloadInitiated) return 'pending';
   // A wake/reconnect probe and an immediate navigation commonly overlap on
   // mobile Safari. The navigation must await the canonical answer already in
   // flight; treating a throttled concurrent call as "current" lets the stale
   // route commit before the first probe can arm the update.
   if (deployFreshnessProbeInFlight) return deployFreshnessProbeInFlight;
+  if (
+    now - lastDeployFreshnessProbeFailedAt <
+    DEPLOY_FRESHNESS_PROBE_FAILURE_BACKOFF_MS
+  ) {
+    return 'backoff';
+  }
   if (now - lastDeployFreshnessProbeAt < DEPLOY_FRESHNESS_PROBE_INTERVAL_MS) {
-    return false;
+    return 'throttled';
   }
   const resolvedFetcher =
     fetcher ?? (typeof fetch === 'undefined' ? null : fetch);
-  if (!resolvedFetcher || !doc) return false;
+  if (!resolvedFetcher || !doc) return 'skipped';
   const runningEntries = getRunningEntryScripts(doc);
   // No fingerprinted entry script in this document means a dev server or an
   // unknown layout — there is nothing trustworthy to compare against.
-  if (runningEntries.length === 0) return false;
-  const generation = deployFreshnessProbeGeneration;
-  const probe = probeDeployedEntryScripts({
-    docGeneration: generation,
+  if (runningEntries.length === 0) return 'skipped';
+  const record: InFlightDeployFreshnessProbe = {
+    startedAt: now,
+    promise: Promise.resolve('skipped')
+  };
+  record.promise = probeDeployedEntryScripts({
+    docGeneration: deployFreshnessProbeGeneration,
     fetcher: resolvedFetcher,
     probedAt: now,
     runningEntries
-  });
-  deployFreshnessProbeInFlight = probe;
-  try {
-    return await probe;
-  } finally {
-    if (deployFreshnessProbeInFlight === probe) {
+  }).finally(() => {
+    if (deployFreshnessProbeInFlight === record) {
       deployFreshnessProbeInFlight = null;
     }
-  }
+  });
+  deployFreshnessProbeInFlight = record;
+  return record;
 }
 
 async function probeDeployedEntryScripts({
@@ -165,38 +233,47 @@ async function probeDeployedEntryScripts({
   runningEntries
 }: {
   docGeneration: number;
-  fetcher: (
-    url: string,
-    init?: RequestInit
-  ) => Promise<{ ok: boolean; text(): Promise<string> }>;
+  fetcher: DeployFreshnessFetcher;
   probedAt: number;
   runningEntries: string[];
-}): Promise<boolean> {
+}): Promise<DeployFreshnessProbeOutcome> {
   const controller = new AbortController();
   const timeout = setTimeout(
     () => controller.abort(),
     DEPLOY_FRESHNESS_PROBE_TIMEOUT_MS
   );
+  const fail = (): DeployFreshnessProbeOutcome => {
+    // Test resets and a replacement document start a fresh backoff state.
+    if (docGeneration === deployFreshnessProbeGeneration) {
+      lastDeployFreshnessProbeFailedAt = probedAt;
+    }
+    return 'failed';
+  };
   try {
     const response = await fetcher('/', {
       cache: 'no-store',
       signal: controller.signal
     });
-    if (!response?.ok) return false;
+    if (!response?.ok) return fail();
     const deployedEntries = getDeployedEntryScripts(await response.text());
-    if (deployedEntries.length === 0) return false;
+    if (deployedEntries.length === 0) return fail();
     // Only a well-formed canonical document earns the long probe throttle. A
     // wake-time network failure or captive response is not freshness evidence
-    // and must not suppress the next user-chosen navigation check.
+    // and only earns the short failure backoff.
     lastDeployFreshnessProbeAt = probedAt;
-    if (deployedEntries.join('|') === runningEntries.join('|')) return false;
+    if (docGeneration === deployFreshnessProbeGeneration) {
+      lastDeployFreshnessProbeFailedAt = 0;
+    }
+    if (deployedEntries.join('|') === runningEntries.join('|')) {
+      return 'current';
+    }
     // Test resets and a replacement document invalidate any answer from the
     // prior generation; it must not arm state in the new runtime.
-    if (docGeneration !== deployFreshnessProbeGeneration) return false;
+    if (docGeneration !== deployFreshnessProbeGeneration) return 'skipped';
     markClientUpdatePending();
-    return true;
+    return 'armed';
   } catch {
-    return false;
+    return fail();
   } finally {
     clearTimeout(timeout);
   }
@@ -230,7 +307,9 @@ export async function gateClientUpdateNavigation<T>({
 // arms the update; the next navigation calls this helper and consumes it. If
 // the network is offline, the probe has no canonical deployment evidence and
 // leaves the running client alone. If precious local work exists, the update
-// stays pending for a later safe boundary.
+// stays pending for a later safe boundary. The navigation waits for the probe
+// at most NAVIGATION_FRESHNESS_WAIT_MS; a slower answer arms the update for the
+// next boundary instead of freezing this tap.
 export async function applyClientUpdateAtSafeBoundary({
   version,
   now = Date.now(),
@@ -238,21 +317,28 @@ export async function applyClientUpdateAtSafeBoundary({
   doc = typeof document === 'undefined' ? null : document,
   storage = getSessionStorage(),
   reload = performClientUpdateReload,
-  hasUnsavedWork = () => hasUnsavedUserWork()
+  hasUnsavedWork = () => hasUnsavedUserWork(),
+  waitMs = NAVIGATION_FRESHNESS_WAIT_MS,
+  onFreshnessReport
 }: {
   version: string;
   now?: number;
-  fetcher?: (
-    url: string,
-    init?: RequestInit
-  ) => Promise<{ ok: boolean; text(): Promise<string> }>;
+  fetcher?: DeployFreshnessFetcher;
   doc?: { querySelectorAll(selector: string): ArrayLike<any> } | null;
   storage?: AttemptStorage | null;
   reload?: () => void;
   hasUnsavedWork?: () => boolean;
+  // The navigation wait cap (tests shorten it).
+  waitMs?: number;
+  // Diagnostics only (the owner trace's nav-timing); never throws into the
+  // navigation.
+  onFreshnessReport?: (report: NavigationFreshnessReport) => void;
 }): Promise<'current' | 'deferred' | 'reloading'> {
-  if (!updatePending) {
-    await armUpdateIfDeployedBundleNewer({ now, fetcher, doc });
+  const report = await awaitNavigationFreshness({ now, fetcher, doc, waitMs });
+  try {
+    onFreshnessReport?.(report);
+  } catch {
+    // Diagnostics must never affect navigation.
   }
   if (!updatePending) return 'current';
   if (hasUnsavedWork()) return 'deferred';
@@ -264,6 +350,40 @@ export async function applyClientUpdateAtSafeBoundary({
   })
     ? 'reloading'
     : 'deferred';
+}
+
+// Waits for the deploy probe (a new one, or one already in flight from a
+// wake/focus check) for at most `waitMs` measured from when that probe
+// started, so a second navigation during the same slow probe does not wait
+// again. Past the cap the probe keeps running in the background and arms the
+// pending update if it finds a newer bundle.
+async function awaitNavigationFreshness({
+  now,
+  fetcher,
+  doc,
+  waitMs
+}: {
+  now: number;
+  fetcher?: DeployFreshnessFetcher;
+  doc: { querySelectorAll(selector: string): ArrayLike<any> } | null;
+  waitMs: number;
+}): Promise<NavigationFreshnessReport> {
+  const probe = beginDeployFreshnessProbe({ now, fetcher, doc });
+  if (typeof probe === 'string') return { outcome: probe, waitedMs: 0 };
+  const remainingMs = Math.min(
+    Math.max(waitMs - Math.max(now - probe.startedAt, 0), 0),
+    waitMs
+  );
+  const waitStartedAt = Date.now();
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const outcome = await Promise.race<NavigationFreshnessOutcome>([
+    probe.promise,
+    new Promise<'timeout'>((resolve) => {
+      timer = setTimeout(() => resolve('timeout'), remainingMs);
+    })
+  ]);
+  if (timer !== null) clearTimeout(timer);
+  return { outcome, waitedMs: Date.now() - waitStartedAt };
 }
 
 const ENTRY_SCRIPT_BASENAME_PATTERN = /\/assets\/(index-[\w~-]+\.js)$/;
@@ -584,6 +704,7 @@ export function clearSilentClientUpdateMemory() {
   updatePending = false;
   lastStaleActionErrorAt = 0;
   lastDeployFreshnessProbeAt = 0;
+  lastDeployFreshnessProbeFailedAt = 0;
   deployFreshnessProbeGeneration += 1;
   deployFreshnessProbeInFlight = null;
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
@@ -609,6 +610,7 @@ export default function BuildRewardApprovals() {
 
   function scrollToDetail() {
     requestAnimationFrame(() => {
+      releaseScrollAnchorTopPin();
       detailRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
     });
   }

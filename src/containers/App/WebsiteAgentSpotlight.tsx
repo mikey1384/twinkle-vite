@@ -19,6 +19,7 @@ import {
 import AssistantFace from '~/components/AssistantFace';
 import AssistantDock from './AssistantDock';
 import { openAssistantDock } from './AssistantDock/dockState';
+import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 
 export type WebsiteAgentSpotlightAction =
   'next' | 'clicked' | 'ended' | 'dismissed' | 'navigated' | 'replaced';
@@ -76,7 +77,9 @@ export function showWebsiteAgentSpotlight({
     });
   }
   // Centred first, so a bar fixed to the screen's edge doesn't count as
-  // covering it; whatever still sits on top has to be closed.
+  // covering it; whatever still sits on top has to be closed. Released first
+  // so the post-navigation top pin doesn't undo the centring.
+  releaseScrollAnchorTopPin();
   element.scrollIntoView({ block: 'center' });
   if (isCoveredOnScreen(element)) {
     return Promise.resolve({

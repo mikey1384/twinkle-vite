@@ -4,6 +4,7 @@ import {
   WEBSITE_AGENT_ACTION_HEADER,
   isWebsiteAgentActionActive
 } from '~/helpers/websiteAgentAction';
+import { isOwnerTraceActive, traceOwnerRequest } from '~/helpers/ownerTrace';
 
 export type {
   RequestMeta,
@@ -24,6 +25,12 @@ function request<T = any, R = AxiosResponse<T>>(
         [WEBSITE_AGENT_ACTION_HEADER]: '1'
       }
     };
+  }
+  // Owner trace only: slow requests (a no-op check for everyone else).
+  if (isOwnerTraceActive()) {
+    return traceOwnerRequest(config, (traced) =>
+      scheduler.request<T, R>(traced)
+    );
   }
   return scheduler.request<T, R>(config);
 }

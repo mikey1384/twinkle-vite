@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Heading from '~/components/ContentPanel/Heading';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import Body, {
@@ -16,8 +16,11 @@ import {
   tabletMaxWidth
 } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
-import { useInView } from 'react-intersection-observer';
-import { useNavigate } from 'react-router-dom';
+import { useInViewFlag } from '~/helpers/hooks/useInViewFlag';
+import {
+  RouteNavigateBridge,
+  useStableNavigate
+} from '~/helpers/hooks/useStableNavigate';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import {
   useContentState,
@@ -109,7 +112,12 @@ const ASK_NOUNS: Record<string, string> = {
   aiCard: 'AI card'
 };
 
-export default function HomeFeedCard({
+// Memoized: Stories re-renders for its own state (loading flags, banners) and
+// with parent updates. The props are the feed row and primitives, so an
+// unchanged card skips those passes instead of re-rendering every row.
+export default memo(HomeFeedCard);
+
+function HomeFeedCard({
   feed,
   feedAnchorId,
   homeFeedAnchorKey,
@@ -146,8 +154,10 @@ export default function HomeFeedCard({
       label: `this ${noun}`
     };
   }, [contentId, contentType, feed?.rootType]);
-  const [VisibilityRef, inView] = useInView();
-  const navigate = useNavigate();
+  const [VisibilityRef, inView] = useInViewFlag();
+  // Not the router hook useNavigate: it re-renders every card whenever
+  // <Routes> re-renders (see useStableNavigate).
+  const { navigate, routeNavigateRef } = useStableNavigate();
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const level = useKeyContext((v) => v.myState.level);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -372,10 +382,9 @@ export default function HomeFeedCard({
     onSetPlaceholderHeight: (height: number) => {
       const nextHeight = Math.ceil(Number(height) || 0);
       if (nextHeight <= 0) return;
-      setPlaceholderHeightState({
-        height: nextHeight,
-        key: placeholderHeightKey
-      });
+      setPlaceholderHeightState((prev) =>
+        getNextPlaceholderHeightState(prev, nextHeight, placeholderHeightKey)
+      );
       placeholderHeightRef.current = nextHeight;
     }
   });
@@ -406,10 +415,13 @@ export default function HomeFeedCard({
 
   useEffect(() => {
     placeholderHeightRef.current = previousPlaceholderHeight;
-    setPlaceholderHeightState({
-      height: previousPlaceholderHeight,
-      key: placeholderHeightKey
-    });
+    setPlaceholderHeightState((prev) =>
+      getNextPlaceholderHeightState(
+        prev,
+        previousPlaceholderHeight,
+        placeholderHeightKey
+      )
+    );
   }, [placeholderHeightKey, previousPlaceholderHeight]);
 
   useEffect(() => {
@@ -714,6 +726,7 @@ export default function HomeFeedCard({
         ref={VisibilityRef}
         style={{ position: 'relative', zIndex: totalCount - index }}
       >
+        <RouteNavigateBridge navigateRef={routeNavigateRef} />
         {contentShown ? (
           <div
             ref={PanelRef}
@@ -1073,6 +1086,18 @@ export default function HomeFeedCard({
     }
     navigate(path);
   }
+}
+
+// Keeps the state object when nothing changed: this runs for every card on
+// mount (and on every resize report), and a fresh object re-rendered all of
+// them for no visual change.
+export function getNextPlaceholderHeightState(
+  prev: { height: number; key: string },
+  height: number,
+  key: string
+) {
+  if (prev.height === height && prev.key === key) return prev;
+  return { height, key };
 }
 
 function mergeLoadedFeedContentWithPreviewState({

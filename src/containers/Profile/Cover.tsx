@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';
 import Button from '~/components/Button';
@@ -486,6 +487,7 @@ export default function Cover({
   );
 
   function handleBroughtFriendsClick() {
+    releaseScrollAnchorTopPin();
     document
       .getElementById(BROUGHT_FRIENDS_ANCHOR_ID)
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' });

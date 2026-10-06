@@ -3,6 +3,8 @@ const scrollAnchorRestoreCancelEventName =
   'twinkle-scroll-anchor-restore-cancel';
 const scrollAnchorTopResetEventName = 'twinkle-scroll-anchor-top-reset';
 const scrollAnchorExternalSaveEventName = 'twinkle-scroll-anchor-external-save';
+const scrollAnchorTopPinReleaseEventName =
+  'twinkle-scroll-anchor-top-pin-release';
 
 let scrollAnchorSaveSuppressedUntil = 0;
 let scrollAnchorRestoreSuppressedUntil = 0;
@@ -72,6 +74,27 @@ export function addScrollAnchorExternalSaveListener(
   return () =>
     window.removeEventListener(
       scrollAnchorExternalSaveEventName,
+      eventListener
+    );
+}
+
+// After a forward navigation the hook briefly pins the document at the top
+// against iOS re-applying the previous page's offset (see scrollTopPin.ts).
+// App code that deliberately scrolls the document right after navigating
+// (centering a home feed comment-intent target, the website agent's
+// spotlight) calls this first so the pin lets its scroll stand.
+export function releaseScrollAnchorTopPin() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(scrollAnchorTopPinReleaseEventName));
+}
+
+export function addScrollAnchorTopPinReleaseListener(listener: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  const eventListener = () => listener();
+  window.addEventListener(scrollAnchorTopPinReleaseEventName, eventListener);
+  return () =>
+    window.removeEventListener(
+      scrollAnchorTopPinReleaseEventName,
       eventListener
     );
 }

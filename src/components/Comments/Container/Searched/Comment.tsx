@@ -25,6 +25,7 @@ import { commentContainer } from '../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
+import { seedCommentContentPage } from '~/helpers/contentPageSeed';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
@@ -169,6 +170,9 @@ export default function SearchedComment({
     fallback: 'pink'
   });
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
+  const onSeedContentPage = useContentContext(
+    (v) => v.actions.onSeedContentPage
+  );
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
@@ -714,6 +718,7 @@ export default function SearchedComment({
 
   function handleCommentDetailClick(event: React.MouseEvent<HTMLElement>) {
     saveScrollAnchorForElement(event.currentTarget);
+    seedCommentContentPage({ comment, onSeedContentPage });
     navigate(`/comments/${comment.id}`);
   }
 

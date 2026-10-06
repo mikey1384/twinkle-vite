@@ -34,6 +34,7 @@ import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { mergeLiveCommentState } from '~/helpers/aiEnergySponsorship';
+import { seedCommentContentPage } from '~/helpers/contentPageSeed';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import {
   addCommasToNumber,
@@ -1210,6 +1211,9 @@ export function HomeFeedCommentPreview({
   contentType: string;
   onNavigate: HomeFeedNestedNavigate;
 }) {
+  const onSeedContentPage = useContentContext(
+    (v) => v.actions.onSeedContentPage
+  );
   const comment = getRenderablePreviewComment(comments);
   if (!comment) return null;
 
@@ -1373,6 +1377,9 @@ export function HomeFeedCommentPreview({
     event.stopPropagation();
     const commentId = Number(event.currentTarget.dataset.commentId || 0);
     if (commentId > 0) {
+      if (Number(comment?.id) === commentId) {
+        seedCommentContentPage({ comment, onSeedContentPage });
+      }
       onNavigate(`/comments/${commentId}`, event.currentTarget);
     }
   }

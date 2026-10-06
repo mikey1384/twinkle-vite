@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 import { useManagementContext } from '~/contexts';
 import EditSubtitles from './EditSubtitles';
 import GenerateSubtitles from './GenerateSubtitles';
@@ -241,6 +242,7 @@ export default function Tools() {
         onClick={() => {
           const topPadding = document.getElementById('top-padding');
           if (topPadding) {
+            releaseScrollAnchorTopPin();
             topPadding.scrollIntoView({ behavior: 'smooth' });
           }
         }}

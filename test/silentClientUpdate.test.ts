@@ -1076,7 +1076,7 @@ test('the navigation gate holds the old route until the check resolves and fails
   assert.deepEqual(released, ['/build']);
 });
 
-test('a failed wake probe does not throttle the next canonical navigation check', async () => {
+test('a failed or captive probe backs off briefly instead of re-probing every navigation', async () => {
   clearSilentClientUpdateMemory();
   const runningSrc = 'https://x.vercel.app/assets/index-AAA1.js';
   let failedCalls = 0;
@@ -1091,9 +1091,29 @@ test('a failed wake probe does not throttle the next canonical navigation check'
     }),
     false
   );
+  // Within the 60 s backoff a navigation neither fetches nor waits.
+  const backoffCalls: string[] = [];
+  const reports: unknown[] = [];
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 10_030_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-BBB2.js'), backoffCalls),
+      storage: createStorage(),
+      reload: () => assert.fail('no evidence, no reload'),
+      hasUnsavedWork: () => false,
+      onFreshnessReport: (report) => reports.push(report)
+    }),
+    'current'
+  );
+  assert.deepEqual(reports, [{ outcome: 'backoff', waitedMs: 0 }]);
+  assert.equal(backoffCalls.length, 0);
+  // A failure is still not freshness evidence: after the backoff (well inside
+  // the 10 min success throttle) the next check probes again.
   assert.equal(
     await armUpdateIfDeployedBundleNewer({
-      now: 10_000_001,
+      now: 10_060_001,
       doc: entryDocument([runningSrc]),
       fetcher: fetcherFor(entryHtml('index-BBB2.js'))
     }),
@@ -1101,6 +1121,195 @@ test('a failed wake probe does not throttle the next canonical navigation check'
   );
   assert.equal(failedCalls, 1);
   assert.equal(isClientUpdatePending(), true);
+
+  // A captive-portal document backs off the same way.
+  clearSilentClientUpdateMemory();
+  const captiveCalls: string[] = [];
+  await armUpdateIfDeployedBundleNewer({
+    now: 11_000_000,
+    doc: entryDocument([runningSrc]),
+    fetcher: fetcherFor('<html>captive portal</html>', captiveCalls)
+  });
+  await armUpdateIfDeployedBundleNewer({
+    now: 11_000_500,
+    doc: entryDocument([runningSrc]),
+    fetcher: fetcherFor(entryHtml('index-BBB2.js'), captiveCalls)
+  });
+  assert.equal(captiveCalls.length, 1);
+  assert.equal(isClientUpdatePending(), false);
+  clearSilentClientUpdateMemory();
+});
+
+test('a slow probe releases the navigation at the cap and arms the update for the next one', async () => {
+  clearSilentClientUpdateMemory();
+  const runningSrc = 'https://x.vercel.app/assets/index-AAA1.js';
+  const storage = createStorage();
+  let resolveFetch:
+    | ((value: { ok: boolean; text(): Promise<string> }) => void)
+    | null = null;
+  let fetchCalls = 0;
+  const slowFetcher = () => {
+    fetchCalls += 1;
+    return new Promise<{ ok: boolean; text(): Promise<string> }>((resolve) => {
+      resolveFetch = resolve;
+    });
+  };
+  let reloads = 0;
+  const reload = () => {
+    reloads += 1;
+  };
+  const reports: Array<{ outcome: string; waitedMs: number }> = [];
+  const released: string[] = [];
+
+  // The probe never answers inside the (shortened) cap: the route commits.
+  assert.equal(
+    await gateClientUpdateNavigation({
+      destination: '/comments/1',
+      check: () =>
+        applyClientUpdateAtSafeBoundary({
+          version: '2.0.68',
+          now: 20_000_000,
+          doc: entryDocument([runningSrc]),
+          fetcher: slowFetcher,
+          storage,
+          reload,
+          hasUnsavedWork: () => false,
+          waitMs: 15,
+          onFreshnessReport: (report) => reports.push(report)
+        }),
+      release: (destination) => released.push(destination)
+    }),
+    'current'
+  );
+  assert.deepEqual(released, ['/comments/1']);
+  assert.equal(reports[0].outcome, 'timeout');
+  assert.ok(reports[0].waitedMs < 1000);
+  assert.equal(fetchCalls, 1);
+
+  // A second tap while that same probe is still out does not wait again.
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 20_000_400,
+      doc: entryDocument([runningSrc]),
+      fetcher: slowFetcher,
+      storage,
+      reload,
+      hasUnsavedWork: () => false,
+      waitMs: 15,
+      onFreshnessReport: (report) => reports.push(report)
+    }),
+    'current'
+  );
+  assert.equal(reports[1].outcome, 'timeout');
+  assert.equal(fetchCalls, 1);
+  assert.equal(reloads, 0);
+
+  // The background probe then finds a newer deploy: armed, not applied
+  // mid-route.
+  assert.ok(resolveFetch);
+  resolveFetch({ ok: true, text: async () => entryHtml('index-BBB2.js') });
+  assert.equal(
+    await armUpdateIfDeployedBundleNewer({
+      now: 20_000_500,
+      doc: entryDocument([runningSrc])
+    }),
+    true
+  );
+  assert.equal(isClientUpdatePending(), true);
+  assert.equal(reloads, 0);
+
+  // The next navigation applies the pending update at its boundary without
+  // probing again; unsaved work still defers it.
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 20_001_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: slowFetcher,
+      storage,
+      reload,
+      hasUnsavedWork: () => true,
+      onFreshnessReport: (report) => reports.push(report)
+    }),
+    'deferred'
+  );
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 20_002_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: slowFetcher,
+      storage,
+      reload,
+      hasUnsavedWork: () => false,
+      onFreshnessReport: (report) => reports.push(report)
+    }),
+    'reloading'
+  );
+  assert.deepEqual(reports.slice(2), [
+    { outcome: 'pending', waitedMs: 0 },
+    { outcome: 'pending', waitedMs: 0 }
+  ]);
+  assert.equal(fetchCalls, 1);
+  assert.equal(reloads, 1);
+  clearSilentClientUpdateMemory();
+});
+
+test('a probe that answers inside the cap still applies a deploy in the same navigation', async () => {
+  clearSilentClientUpdateMemory();
+  const runningSrc = 'https://x.vercel.app/assets/index-AAA1.js';
+  const reports: Array<{ outcome: string; waitedMs: number }> = [];
+  let reloads = 0;
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 30_000_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-AAA1.js')),
+      storage: createStorage(),
+      reload: () => {
+        reloads += 1;
+      },
+      hasUnsavedWork: () => false,
+      onFreshnessReport: (report) => reports.push(report)
+    }),
+    'current'
+  );
+  assert.equal(reports[0].outcome, 'current');
+  // Inside the 10 min interval the next navigation is throttled, not probed.
+  await applyClientUpdateAtSafeBoundary({
+    version: '2.0.68',
+    now: 30_060_000,
+    doc: entryDocument([runningSrc]),
+    fetcher: fetcherFor(entryHtml('index-BBB2.js')),
+    storage: createStorage(),
+    reload: () => {
+      reloads += 1;
+    },
+    hasUnsavedWork: () => false,
+    onFreshnessReport: (report) => reports.push(report)
+  });
+  assert.deepEqual(reports[1], { outcome: 'throttled', waitedMs: 0 });
+
+  clearSilentClientUpdateMemory();
+  assert.equal(
+    await applyClientUpdateAtSafeBoundary({
+      version: '2.0.68',
+      now: 31_000_000,
+      doc: entryDocument([runningSrc]),
+      fetcher: fetcherFor(entryHtml('index-BBB2.js')),
+      storage: createStorage(),
+      reload: () => {
+        reloads += 1;
+      },
+      hasUnsavedWork: () => false,
+      onFreshnessReport: (report) => reports.push(report)
+    }),
+    'reloading'
+  );
+  assert.equal(reports[2].outcome, 'armed');
+  assert.equal(reloads, 1);
   clearSilentClientUpdateMemory();
 });
 

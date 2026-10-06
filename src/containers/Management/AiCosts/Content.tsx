@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
@@ -205,6 +206,7 @@ export default function Content({
   }, [selectedBucket?.id, selectedBucket?.label]);
   useEffect(() => {
     if (!selectedAccount?.userId) return;
+    releaseScrollAnchorTopPin();
     accountDetailRef.current?.scrollIntoView({ block: 'start' });
   }, [selectedAccount?.userId]);
   const manualAddSaving =
@@ -1152,6 +1154,7 @@ export default function Content({
   function handleCloseAccountDetails() {
     onCloseAccount();
     window.requestAnimationFrame(() => {
+      releaseScrollAnchorTopPin();
       topAccountsRef.current?.scrollIntoView({ block: 'start' });
     });
   }
@@ -1159,6 +1162,7 @@ export default function Content({
   function handleAccountRowSelect(row: AiCostRow) {
     onAccountSelect(row);
     window.requestAnimationFrame(() => {
+      releaseScrollAnchorTopPin();
       accountDetailRef.current?.scrollIntoView({ block: 'start' });
     });
   }

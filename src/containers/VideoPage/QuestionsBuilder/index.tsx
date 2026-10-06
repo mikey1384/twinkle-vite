@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import QuestionBlock from './QuestionBlock';
@@ -428,10 +429,10 @@ export default function QuestionsBuilder({
           errorMessage: errorObj.message
         }
       });
-      setTimeout(
-        () => QuestionsRef.current[errorObj.questionId || 0].scrollIntoView(),
-        0
-      );
+      setTimeout(() => {
+        releaseScrollAnchorTopPin();
+        QuestionsRef.current[errorObj.questionId || 0].scrollIntoView();
+      }, 0);
       return;
     }
 

@@ -21,6 +21,7 @@ import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useRecordContentPageView } from '~/helpers/hooks/useRecordContentPageView';
+import { contentPageSeedCanRender } from '~/helpers/contentPageSeed';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
@@ -187,6 +188,15 @@ export default function ContentPanel({
     contentType: normalizedRootType,
     contentId: rootId
   });
+  const [mountedAt] = useState(() => Date.now());
+  const seededPreviewShown = contentPageSeedCanRender({
+    contentState,
+    contentType,
+    isContentPage,
+    mountedAt,
+    rootObj
+  });
+  const bodyShown = loaded || seededPreviewShown;
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
@@ -292,9 +302,18 @@ export default function ContentPanel({
     rootType: appliedRootType
   });
 
+  // A content page's panel is the page itself, always at the top of it: it
+  // must not wait for the intersection observer (which reports only after the
+  // first paint) or the page paints empty on mount.
   const contentShown = useMemo(
-    () => alwaysShow || inView || isVisible || started || rootStarted,
-    [alwaysShow, inView, isVisible, rootStarted, started]
+    () =>
+      alwaysShow ||
+      isContentPage ||
+      inView ||
+      isVisible ||
+      started ||
+      rootStarted,
+    [alwaysShow, inView, isContentPage, isVisible, rootStarted, started]
   );
 
   const componentHeight = useMemo(() => {
@@ -302,8 +321,8 @@ export default function ContentPanel({
   }, [placeholderHeight]);
 
   const contentHeight = useMemo(() => {
-    return !loaded ? '15rem' : '';
-  }, [loaded]);
+    return !bodyShown ? '15rem' : '';
+  }, [bodyShown]);
 
   const targetTuckMargin = 'calc(-1rem - 1px)';
   const alignTopWithTarget = targetObj?.comment ? targetTuckMargin : undefined;
@@ -456,8 +475,8 @@ export default function ContentPanel({
                     z-index: 3;
                   `}`}
                 >
-                  {!loaded && <Loading theme={theme || profileTheme} />}
-                  {loaded && (
+                  {!bodyShown && <Loading theme={theme || profileTheme} />}
+                  {bodyShown && (
                     <>
                       <Heading
                         feedActivityType={feedActivityType}

@@ -6,6 +6,7 @@ import {
   buildLiveCommentEntries,
   upsertLiveComments
 } from '~/helpers/liveComments';
+import { mergeContentPageSeed } from '~/helpers/contentPageSeed';
 import { applySpoilerStatusChange } from './spoilerState';
 
 type RewardListUpdater = (rewards: Reward[] | undefined) => Reward[];
@@ -385,6 +386,21 @@ export default function ContentReducer(
           contentId: action.contentId,
           contentType: action.contentType
         }
+      };
+    case 'SEED_CONTENT_PAGE':
+      // A loaded entry is already the full copy; a seed never replaces it.
+      if (prevContentState.loaded) return state;
+      return {
+        ...state,
+        [contentKey]: mergeContentPageSeed({
+          prevContentState: {
+            ...prevContentState,
+            contentId: action.contentId,
+            contentType: action.contentType
+          },
+          seed: action.seed,
+          seededAt: action.seededAt
+        })
       };
     case 'SET_CONTENT_STATE':
       return {
