@@ -5,10 +5,14 @@ import { Color } from '~/constants/css';
 
 export interface BountyChallengeInfo {
   tier: 'legendary' | 'hard-won' | 'first-solve' | 'solved';
-  attempt: number;
+  // Twinkle sends whether it was a first try, never which try it took
+  firstTry?: boolean;
+  // beat a puzzle rated well above them
+  upset?: boolean;
+  // older API payloads (until the server stops sending it)
+  attempt?: number;
   firstSolve: boolean;
   failersBefore: number;
-  failuresBefore: number;
   daysStanding: number;
   puzzleRating: number;
 }
@@ -40,7 +44,8 @@ export default function BountyChallenge({
     says !== 'days' &&
       challenge.daysStanding > 0 &&
       `stood ${count(challenge.daysStanding, 'day', 'days')}`,
-    challenge.attempt === 1 && 'solved on the first try',
+    (challenge.firstTry ?? challenge.attempt === 1) &&
+      'solved on the first try',
     challenge.puzzleRating > 0 &&
       `puzzle rating ${challenge.puzzleRating.toLocaleString('en-US')}`
   ].filter(Boolean) as string[];
@@ -112,10 +117,10 @@ const TIERS: Record<
             text: `${count(c.failersBefore, 'player', 'players')} missed it first`,
             says: 'failers'
           }
-        : c.attempt >= 5
-          ? // hard-won by persistence: true, without counting the misses
-            { text: 'Cracked a tough puzzle' }
-          : { text: 'Beat a puzzle rated above them' }
+        : // proud headlines only, never a count of the solver's misses
+          (c.upset ?? (c.attempt !== undefined && c.attempt < 5))
+          ? { text: 'Beat a puzzle rated above them' }
+          : { text: 'Cracked a tough puzzle' }
   },
   'first-solve': {
     key: 'first',
