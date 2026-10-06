@@ -8,6 +8,11 @@ import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import LetterGrade from '../Marble/LetterGrade';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ChallengeModal from './ChallengeModal';
+import RuleCard, {
+  initialKoreanShown,
+  saveKoreanShown,
+  type ReviewRuleCard
+} from './RuleCard';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
@@ -24,6 +29,7 @@ interface ReviewItem {
   questionRating?: number;
   isChecked?: boolean;
   explanation?: string | null;
+  ruleCard?: ReviewRuleCard | null;
 }
 
 export default function Review() {
@@ -44,6 +50,7 @@ export default function Review() {
   const [challengedQIds, setChallengedQIds] = useState<Record<number, boolean>>(
     {}
   );
+  const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
 
   useEffect(() => {
     if (!initialized.current) {
@@ -93,7 +100,22 @@ export default function Review() {
                 )}
               </div>
             </div>
-            {it.explanation &&
+            {it.ruleCard &&
+              !challengedQIds[it.questionId] &&
+              typeof current.selectedIndex === 'number' && (
+                <RuleCard
+                  card={it.ruleCard}
+                  pickedChoice={
+                    current.status === 'fail'
+                      ? (it.choices[current.selectedIndex] ?? null)
+                      : null
+                  }
+                  koreanShown={koreanShown}
+                  onToggleKorean={handleToggleKorean}
+                />
+              )}
+            {(!it.ruleCard || !!challengedQIds[it.questionId]) &&
+              it.explanation &&
               it.isChecked &&
               (typeof answerState[it.id]?.selectedIndex === 'number' ||
                 !!challengedQIds[it.questionId]) && (
@@ -170,7 +192,7 @@ export default function Review() {
           </div>
         );
       }),
-    [items, answerState, challengedQIds, AI_FEATURES_DISABLED]
+    [items, answerState, challengedQIds, AI_FEATURES_DISABLED, koreanShown]
   );
 
   // Hands Zero and Ciel the review list as shown: each question, its choices,
@@ -183,7 +205,10 @@ export default function Review() {
     items: items.slice(0, 30).map((it) => {
       const current = answerState[it.id];
       const answered = typeof current?.selectedIndex === 'number';
+      const ruleCardShown =
+        !!it.ruleCard && answered && !challengedQIds[it.questionId];
       const explanationShown =
+        !ruleCardShown &&
         !!it.explanation &&
         !!it.isChecked &&
         (answered || !!challengedQIds[it.questionId]);
@@ -201,6 +226,16 @@ export default function Review() {
         correctChoiceIndex: answered ? it.answerIndex : null,
         explanation: explanationShown
           ? String(it.explanation).slice(0, 500)
+          : null,
+        ruleCard: ruleCardShown
+          ? {
+              grammarPoint: it.ruleCard!.nameEn,
+              why: it.ruleCard!.why.slice(0, 500),
+              wrongChoiceMistakes: it.ruleCard!.wrongChoices
+                .slice(0, 3)
+                .map((w) => `${w.choice}: ${w.error}`.slice(0, 300)),
+              koreanShown
+            }
           : null,
         challenged: !!challengedQIds[it.questionId],
         canChallenge: !it.isChecked && !AI_FEATURES_DISABLED
@@ -258,6 +293,13 @@ export default function Review() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleToggleKorean() {
+    setKoreanShown((shown) => {
+      saveKoreanShown(!shown);
+      return !shown;
+    });
+  }
 
   function handleChallengeDone({
     explanation,
