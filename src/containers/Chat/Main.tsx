@@ -49,11 +49,12 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
 import { emitAcceptedChatGroupMembership } from '~/helpers/chatGroupMembership';
 import { enterRoutedTopic } from './topicRoute';
+import { shareInFlight } from './inFlightRequests';
 import { getChatTopicProjectionIds } from '~/helpers/chatTopicProjection';
 import { SITE_NAME } from '~/constants/siteBrand';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
-const loadingPromises: { [channelId: string]: any } = {};
+const loadingPromises: Record<string, Promise<any> | undefined> = {};
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
 
@@ -1271,10 +1272,6 @@ export default function Main({
       subchannelPath || ''
     }-${topicId || ''}`;
 
-    if (loadingPromises[requestKey]) {
-      return loadingPromises[requestKey];
-    }
-
     const isStale = () => {
       const curr = activeParamsRef.current;
       return (
@@ -1285,175 +1282,100 @@ export default function Main({
       );
     };
 
-    loadingPromises[requestKey] = (async () => {
-      try {
-        if (isStale()) return;
-        onUpdateChatType(null);
+    // shareInFlight stores the entry before cleanup can run (an entry that
+    // finishes without awaiting used to stay cached and block re-entering it).
+    return shareInFlight(loadingPromises, requestKey, async () => {
+      if (isStale()) return;
+      onUpdateChatType(null);
 
-        // Switching topics or subchannels inside the chat that is already open
-        // and loaded needs no access round trip first (it held up every topic
-        // switch by ~250-450ms before the messages were even asked for); the
-        // server still checks access on each read.
-        const insideOpenChat =
-          !isChannelChange &&
-          Boolean(channelsObj[channelId]?.loaded) &&
-          currentSelectedChannelIdRef.current === channelId;
-        const { isAccessible, isPublic } = insideOpenChat
-          ? { isAccessible: true, isPublic: false }
-          : await checkChatAccessible(pathId);
-        if (isStale()) return;
+      // Switching topics or subchannels inside the chat that is already open
+      // and loaded needs no access round trip first (it held up every topic
+      // switch by ~250-450ms before the messages were even asked for); the
+      // server still checks access on each read.
+      const insideOpenChat =
+        !isChannelChange &&
+        Boolean(channelsObj[channelId]?.loaded) &&
+        currentSelectedChannelIdRef.current === channelId;
+      const { isAccessible, isPublic } = insideOpenChat
+        ? { isAccessible: true, isPublic: false }
+        : await checkChatAccessible(pathId);
+      if (isStale()) return;
 
-        if (!isAccessible) {
-          if (isPublic) {
-            if (!channelPathIdHash[pathId]) {
-              onUpdateChannelPathIdHash({ channelId, pathId });
-            }
-            const response = await acceptInvitation(channelId);
+      if (!isAccessible) {
+        if (isPublic) {
+          if (!channelPathIdHash[pathId]) {
+            onUpdateChannelPathIdHash({ channelId, pathId });
+          }
+          const response = await acceptInvitation(channelId);
+          if (isStale()) return;
+
+          if (response.channel.id === channelId) {
+            emitAcceptedChatGroupMembership({
+              response,
+              memberId: requestUserId,
+              fallbackMember: {
+                id: requestUserId,
+                username: usernameRef.current,
+                profilePicUrl: profilePicUrlRef.current
+              },
+              socket
+            });
+          }
+        } else {
+          const existingChannel = channelsObj[channelId];
+          const isAIDM =
+            existingChannel?.twoPeople &&
+            existingChannel?.members?.some(
+              (m: { id: number }) =>
+                m.id === ZERO_TWINKLE_ID || m.id === CIEL_TWINKLE_ID
+            );
+          if (!isAIDM) {
+            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+            navigate(
+              `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
+              {
+                replace: true
+              }
+            );
+            return;
+          }
+          // For AI DM channels, don't redirect - they should always be accessible
+        }
+      }
+
+      if (!channelPathIdHash[pathId]) {
+        onUpdateChannelPathIdHash({ channelId, pathId });
+      }
+
+      if (channelsObj[channelId]?.loaded) {
+        if (currentSelectedChannelIdRef.current !== channelId) {
+          onUpdateSelectedChannelId(channelId);
+        }
+
+        if (subchannelPath) {
+          const targetSubchannel = getTargetSubchannel({
+            channelId,
+            subchannelPath
+          });
+          const targetSubchannelId = Number(targetSubchannel?.id || 0);
+          if (!targetSubchannelId) {
+            return;
+          }
+          const subchannelLoaded = targetSubchannel?.loaded;
+          if (!subchannelLoaded) {
+            const subchannel = await loadSubchannel({
+              hydrateMessages: true,
+              channelId,
+              subchannelId: targetSubchannelId
+            });
             if (isStale()) return;
 
-            if (response.channel.id === channelId) {
-              emitAcceptedChatGroupMembership({
-                response,
-                memberId: requestUserId,
-                fallbackMember: {
-                  id: requestUserId,
-                  username: usernameRef.current,
-                  profilePicUrl: profilePicUrlRef.current
-                },
-                socket
-              });
-            }
-          } else {
-            const existingChannel = channelsObj[channelId];
-            const isAIDM =
-              existingChannel?.twoPeople &&
-              existingChannel?.members?.some(
-                (m: { id: number }) =>
-                  m.id === ZERO_TWINKLE_ID || m.id === CIEL_TWINKLE_ID
-              );
-            if (!isAIDM) {
-              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-              navigate(
-                `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
-                {
-                  replace: true
-                }
-              );
-              delete loadingPromises[requestKey];
+            if (subchannel.notFound) {
               return;
             }
-            // For AI DM channels, don't redirect - they should always be accessible
+            onSetSubchannel({ channelId, subchannel });
           }
         }
-
-        if (!channelPathIdHash[pathId]) {
-          onUpdateChannelPathIdHash({ channelId, pathId });
-        }
-
-        if (channelsObj[channelId]?.loaded) {
-          if (currentSelectedChannelIdRef.current !== channelId) {
-            onUpdateSelectedChannelId(channelId);
-          }
-
-          if (subchannelPath) {
-            const targetSubchannel = getTargetSubchannel({
-              channelId,
-              subchannelPath
-            });
-            const targetSubchannelId = Number(targetSubchannel?.id || 0);
-            if (!targetSubchannelId) {
-              return;
-            }
-            const subchannelLoaded = targetSubchannel?.loaded;
-            if (!subchannelLoaded) {
-              const subchannel = await loadSubchannel({
-                hydrateMessages: true,
-                channelId,
-                subchannelId: targetSubchannelId
-              });
-              if (isStale()) return;
-
-              if (subchannel.notFound) {
-                delete loadingPromises[requestKey];
-                return;
-              }
-              onSetSubchannel({ channelId, subchannel });
-            }
-          }
-
-          if (topicId) {
-            const subjectId = Number(topicId);
-            enterRoutedTopic({
-              channelId,
-              topicId: subjectId,
-              onEnterTopic,
-              onSetChannelState,
-              updateLastTopicId
-            });
-          } else {
-            if (
-              isChannelChange &&
-              channelsObj[channelId].lastTopicId &&
-              channelVisited &&
-              channelsObj[channelId].selectedTab === 'topic'
-            ) {
-              const lastTopicId = channelsObj[channelId].lastTopicId;
-              const newPath = `/chat/${pathId}${
-                subchannelPath ? `/${subchannelPath}` : ''
-              }/topic/${lastTopicId}`;
-              navigate(newPath, { replace: true });
-            } else {
-              onSetChannelState({
-                channelId,
-                newState: { selectedTab: 'all', isSearchActive: false }
-              });
-            }
-          }
-
-          if (lastChatPath !== `/${pathId}`) {
-            updateLastChannelId(channelId);
-          }
-          delete loadingPromises[requestKey];
-          return;
-        }
-
-        const compactGeneralTopics = channelId === GENERAL_CHAT_ID;
-        const data = await loadChatChannel({
-          channelId,
-          subchannelPath,
-          // complete messages in the same reply: no message on screen then
-          // asks for itself (20 single requests after every chat opened)
-          hydrateMessages: true,
-          compactGeneralTopics,
-          topicIds: compactGeneralTopics
-            ? getChatTopicProjectionIds({
-                pathname,
-                channel: channelsObj[channelId]
-              })
-            : []
-        });
-        if (isStale()) return;
-
-        const pathIdMismatch =
-          !isNaN(Number(currentPathIdRef.current)) &&
-          data.channel.pathId !== Number(currentPathIdRef.current);
-
-        if (pathIdMismatch || isUsingCollectRef.current) {
-          delete loadingPromises[requestKey];
-          return;
-        }
-
-        onEnterChannelWithId({ data, userId: requestUserId });
-        for (const member of data?.channel?.members || []) {
-          onSetUserState({
-            userId: member.id,
-            newState: member
-          });
-        }
-
-        const hasSubchannels =
-          Object.keys(data?.channel?.subchannelObj || {}).length > 0;
-        const isEnteringSubchannel = subchannelPath && hasSubchannels;
 
         if (topicId) {
           const subjectId = Number(topicId);
@@ -1465,26 +1387,93 @@ export default function Main({
             updateLastTopicId
           });
         } else {
-          onSetChannelState({
-            channelId,
-            newState: { selectedTab: 'all', isSearchActive: false }
-          });
+          if (
+            isChannelChange &&
+            channelsObj[channelId].lastTopicId &&
+            channelVisited &&
+            channelsObj[channelId].selectedTab === 'topic'
+          ) {
+            const lastTopicId = channelsObj[channelId].lastTopicId;
+            const newPath = `/chat/${pathId}${
+              subchannelPath ? `/${subchannelPath}` : ''
+            }/topic/${lastTopicId}`;
+            navigate(newPath, { replace: true });
+          } else {
+            onSetChannelState({
+              channelId,
+              newState: { selectedTab: 'all', isSearchActive: false }
+            });
+          }
         }
 
-        if (isMounted.current) {
-          navigate(
-            `/chat/${data?.channel?.pathId}${
-              isEnteringSubchannel ? `/${subchannelPath}` : ''
-            }${topicId ? `/topic/${topicId}` : ''}`,
-            { replace: true }
-          );
+        if (lastChatPath !== `/${pathId}`) {
+          updateLastChannelId(channelId);
         }
-      } finally {
-        delete loadingPromises[requestKey];
+        return;
       }
-    })();
 
-    return loadingPromises[requestKey];
+      const compactGeneralTopics = channelId === GENERAL_CHAT_ID;
+      const data = await loadChatChannel({
+        channelId,
+        subchannelPath,
+        // complete messages in the same reply: no message on screen then
+        // asks for itself (20 single requests after every chat opened)
+        hydrateMessages: true,
+        compactGeneralTopics,
+        topicIds: compactGeneralTopics
+          ? getChatTopicProjectionIds({
+              pathname,
+              channel: channelsObj[channelId]
+            })
+          : []
+      });
+      if (isStale()) return;
+
+      const pathIdMismatch =
+        !isNaN(Number(currentPathIdRef.current)) &&
+        data.channel.pathId !== Number(currentPathIdRef.current);
+
+      if (pathIdMismatch || isUsingCollectRef.current) {
+        return;
+      }
+
+      onEnterChannelWithId({ data, userId: requestUserId });
+      for (const member of data?.channel?.members || []) {
+        onSetUserState({
+          userId: member.id,
+          newState: member
+        });
+      }
+
+      const hasSubchannels =
+        Object.keys(data?.channel?.subchannelObj || {}).length > 0;
+      const isEnteringSubchannel = subchannelPath && hasSubchannels;
+
+      if (topicId) {
+        const subjectId = Number(topicId);
+        enterRoutedTopic({
+          channelId,
+          topicId: subjectId,
+          onEnterTopic,
+          onSetChannelState,
+          updateLastTopicId
+        });
+      } else {
+        onSetChannelState({
+          channelId,
+          newState: { selectedTab: 'all', isSearchActive: false }
+        });
+      }
+
+      if (isMounted.current) {
+        navigate(
+          `/chat/${data?.channel?.pathId}${
+            isEnteringSubchannel ? `/${subchannelPath}` : ''
+          }${topicId ? `/topic/${topicId}` : ''}`,
+          { replace: true }
+        );
+      }
+    });
   }
 
   function getTargetSubchannel({
