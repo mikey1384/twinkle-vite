@@ -8,6 +8,7 @@ import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function ContentContainer({
+  difficulty,
   displayedSection,
   explanation,
   explanationStreamComplete,
@@ -31,6 +32,7 @@ export default function ContentContainer({
   solveObj,
   userChoiceObj
 }: {
+  difficulty: number;
   displayedSection: string;
   explanation: string;
   explanationStreamComplete: boolean;
@@ -114,6 +116,7 @@ export default function ContentContainer({
             />
           ) : (
             <Questions
+              difficulty={difficulty}
               solveObj={solveObj}
               userChoiceObj={userChoiceObj}
               onSetUserChoiceObj={onSetUserChoiceObj}

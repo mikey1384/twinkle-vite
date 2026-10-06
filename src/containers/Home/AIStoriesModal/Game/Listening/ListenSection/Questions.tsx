@@ -15,6 +15,7 @@ import {
 } from '../../StoryQuestionExtras';
 
 export default function Questions({
+  difficulty,
   isGrading,
   solveObj,
   onGrade,
@@ -27,6 +28,7 @@ export default function Questions({
   userChoiceObj,
   onSetUserChoiceObj
 }: {
+  difficulty: number;
   isGrading: boolean;
   solveObj: any;
   onGrade: () => void;
@@ -43,7 +45,11 @@ export default function Questions({
     progress: loadingProgress,
     step: loadingStep,
     restart: restartLoadingProgress
-  } = useStoryQuestionProgress({ storyId, loaded: questionsLoaded });
+  } = useStoryQuestionProgress({
+    storyId,
+    difficulty,
+    loaded: questionsLoaded
+  });
 
   // Every question must have a selected choice before the attempt can be
   // submitted — an unanswered question would be sent as null and auto-marked

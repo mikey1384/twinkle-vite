@@ -193,6 +193,7 @@ export default function ListenSection({
         }}
       >
         <Questions
+          difficulty={difficulty}
           solveObj={solveObj}
           userChoiceObj={userChoiceObj}
           onSetUserChoiceObj={onSetUserChoiceObj}
