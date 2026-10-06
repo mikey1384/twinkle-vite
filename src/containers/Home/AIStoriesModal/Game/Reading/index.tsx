@@ -398,6 +398,7 @@ export default function Reading({
         </div>
       ) : (
         <ContentContainer
+          difficulty={difficulty}
           displayedSection={displayedSection}
           explanation={explanation}
           explanationStreamComplete={explanationStreamComplete}
