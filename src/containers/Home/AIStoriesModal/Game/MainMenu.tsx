@@ -5,17 +5,17 @@ import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import { useNotiContext } from '~/contexts';
 import { getDailyRewardPreviewStreak } from '~/helpers';
 
-// Level names (Mikey 10-06): what Korean parents already know — AR reading
-// levels for the easier stories, then the exams. "-style" names the kind of
-// reading each level aims at; the levels were never calibrated against those
-// tests, so they never claim a score. The CEFR band each prompt targets
+// Level names (Mikey 10-06/07): what Korean parents already know — AR reading
+// levels for the easier stories, then the exams, with no "-style" suffix. The
+// descriptions say "level" reading, never a score: the levels were not
+// calibrated against those tests. The CEFR band each prompt targets
 // (helpers/english/storyLevels.ts) is noted in the description.
 const levelHash: Record<string, string> = {
-  '1': 'Level 1 (AR 1–2 style)',
-  '2': 'Level 2 (AR 3–5 style)',
-  '3': 'Level 3 (TOEFL Junior–style)',
-  '4': 'Level 4 (TOEFL-style)',
-  '5': 'Level 5 (SAT-style)'
+  '1': 'Level 1 (AR 1–2)',
+  '2': 'Level 2 (AR 3–5)',
+  '3': 'Level 3 (TOEFL Junior)',
+  '4': 'Level 4 (TOEFL)',
+  '5': 'Level 5 (SAT)'
 };
 
 const difficultyExplanation: Record<
@@ -48,38 +48,38 @@ const difficultyExplanation: Record<
   },
   '3': {
     reading: [
-      'Longer passages in the style of ',
+      'Longer passages at ',
       <b key="1">TOEFL Junior</b>,
-      ' reading (about CEFR B1–B2): main idea, details and what the text implies.'
+      ' reading level (about CEFR B1–B2): main idea, details and what the text implies.'
     ],
     listening: [
       'Zero and Ciel discuss a topic with ',
       <b key="2">TOEFL Junior</b>,
-      '–style vocabulary.'
+      ' level vocabulary.'
     ]
   },
   '4': {
     reading: [
-      'Academic passages in the style of ',
+      'Academic passages at ',
       <b key="1">TOEFL</b>,
-      " reading (about CEFR B2–C1), including word meaning in context and the writer's purpose."
+      " reading level (about CEFR B2–C1), including word meaning in context and the writer's purpose."
     ],
     listening: [
       'Academic topics discussed in depth with ',
       <b key="2">TOEFL</b>,
-      '–style vocabulary.'
+      ' level vocabulary.'
     ]
   },
   '5': {
     reading: [
-      'Dense passages in the style of ',
+      'Dense passages at ',
       <b key="1">SAT</b>,
-      ' reading (about CEFR C1 and above), with reasoning left for you to work out.'
+      ' reading level (about CEFR C1 and above), with reasoning left for you to work out.'
     ],
     listening: [
       'Long, in-depth discussions with ',
       <b key="2">SAT</b>,
-      '–style vocabulary.'
+      ' level vocabulary.'
     ]
   }
 };
