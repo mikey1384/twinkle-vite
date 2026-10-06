@@ -257,6 +257,9 @@ export default function Game({
         newCoins,
         isPassed,
         numCorrect,
+        totalQuestions,
+        bonusCorrect,
+        bonusQuestions,
         answers: gradedAnswers,
         dailyTask
       } = await uploadAIStoryAttempt({
@@ -292,8 +295,18 @@ export default function Game({
             if (Number.isInteger(graded?.selectedChoiceIndex)) {
               canonicalChoiceObj[question.id] = graded.selectedChoiceIndex;
             }
+            // v2 stories also reveal each question's skill, explanation and
+            // evidence sentence after grading
             return graded
-              ? { ...question, answerIndex: graded.answerIndex }
+              ? {
+                  ...question,
+                  answerIndex: graded.answerIndex,
+                  ...(graded.skill ? { skill: graded.skill } : {}),
+                  ...(graded.explanation
+                    ? { explanation: graded.explanation }
+                    : {}),
+                  ...(graded.evidence ? { evidence: graded.evidence } : {})
+                }
               : question;
           })
         );
@@ -306,6 +319,10 @@ export default function Game({
       });
       onSetSolveObj({
         numCorrect,
+        totalQuestions,
+        bonusCorrect,
+        bonusQuestions,
+        isPassed: !!isPassed,
         isGraded: true
       });
       if (isPassed) {

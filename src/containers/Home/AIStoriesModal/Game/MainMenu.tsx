@@ -5,12 +5,15 @@ import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import { useNotiContext } from '~/contexts';
 import { getDailyRewardPreviewStreak } from '~/helpers';
 
+// One level table with the API (helpers/english/storyLevels.ts, 10-06): a
+// friendly name for players plus the CEFR band each level targets. The old
+// AR / TOEFL / SAT labels were never calibrated, so they are gone.
 const levelHash: Record<string, string> = {
-  '1': 'Level 1 (AR 1)',
-  '2': 'Level 2 (AR 5)',
-  '3': 'Level 3 (TOEFL JR)',
-  '4': 'Level 4 (TOEFL)',
-  '5': 'Level 5 (SAT)'
+  '1': 'Level 1 · Starter (A1–A2)',
+  '2': 'Level 2 · Explorer (A2–B1)',
+  '3': 'Level 3 · Adventurer (B1–B2)',
+  '4': 'Level 4 · Scholar (B2–C1)',
+  '5': 'Level 5 · Master (C1+)'
 };
 
 const difficultyExplanation: Record<
@@ -19,62 +22,62 @@ const difficultyExplanation: Record<
 > = {
   '1': {
     reading: [
-      'Suitable for beginners with basic reading skills. ',
-      <b key="1">AR 1</b>,
-      ' level passage.'
+      'Short, simple sentences and everyday words. ',
+      <b key="1">1 question</b>,
+      ' to pass, plus 2 bonus questions.'
     ],
     listening: [
-      'Focuses on ',
-      <b key="2">AR 1</b>,
-      ' level vocabulary with simple phrases.'
+      'Zero or Ciel tells a short, simple story with ',
+      <b key="2">everyday words</b>,
+      '.'
     ]
   },
   '2': {
     reading: [
-      'Ideal for intermediate readers. ',
-      <b key="1">AR 5</b>,
-      ' level passage.'
+      'Everyday and school topics with common tenses. ',
+      <b key="1">2 questions</b>,
+      ' to pass, plus 1 bonus question.'
     ],
     listening: [
-      'Includes ',
-      <b key="2">AR 5</b>,
-      ' level vocabulary with everyday conversational phrases.'
+      'A short talk with ',
+      <b key="2">everyday and school words</b>,
+      ' and conversational phrases.'
     ]
   },
   '3': {
     reading: [
-      'Good for advanced readers. Passage for those preparing for ',
-      <b key="1">TOEFL JR</b>,
-      ' with more challenging vocabulary and concepts.'
+      'Longer sentences and some ',
+      <b key="1">abstract ideas</b>,
+      '. Questions ask for the main idea, details and what the text implies.'
     ],
     listening: [
-      'Zero and Ciel use ',
-      <b key="2">TOEFL JR</b>,
-      ' level vocabulary while engaging in nuanced discussions.'
+      'Zero and Ciel discuss a topic with ',
+      <b key="2">more challenging vocabulary</b>,
+      '.'
     ]
   },
   '4': {
     reading: [
-      'Challenging passage for those preparing for ',
-      <b key="1">TOEFL</b>,
-      '. Texts include advanced topics and complex structures.'
+      'Complex sentences and ',
+      <b key="1">academic vocabulary</b>,
+      ". Questions include word meaning in context and the writer's purpose."
     ],
     listening: [
-      'Features academic topics and a variety of discussions. Zero and Ciel engage in nuanced and detailed discussions with ',
-      <b key="2">TOEFL</b>,
-      ' level vocabulary.'
+      'Academic topics with nuanced, detailed discussion and ',
+      <b key="2">advanced vocabulary</b>,
+      '.'
     ]
   },
   '5': {
     reading: [
-      'Very challenging passage meant for ',
-      <b key="1">SAT</b>,
-      ' preparation.'
+      'Dense, ',
+      <b key="1">advanced academic</b>,
+      ' passages with reasoning left for you to work out.'
     ],
     listening: [
-      'Includes in-depth and nuanced discussions on complex topics. Longer dialogues with ',
-      <b key="2">SAT</b>,
-      ' level vocabulary.'
+      'Long, in-depth discussions of complex topics with ',
+      <b key="2">advanced vocabulary</b>,
+      '.'
     ]
   }
 };
