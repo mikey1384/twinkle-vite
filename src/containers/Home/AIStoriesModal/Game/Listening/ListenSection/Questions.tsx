@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import Button from '~/components/Button';
 import GradientButton from '~/components/Buttons/GradientButton';
@@ -6,6 +6,7 @@ import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import useStoryQuestionProgress from '../../useStoryQuestionProgress';
 import {
   StoryQuestionLabel,
   StoryQuestionNote,
@@ -38,18 +39,11 @@ export default function Questions({
   questionsLoadError: boolean;
   userChoiceObj: any;
 }) {
-  const [loadingProgress, setLoadingProgress] = useState(0);
-
-  useEffect(() => {
-    if (!questionsLoaded && loadingProgress < 99) {
-      setTimeout(() => {
-        setLoadingProgress(loadingProgress + 1);
-      }, 500);
-    }
-    if (questionsLoaded) {
-      setLoadingProgress(100);
-    }
-  }, [loadingProgress, questionsLoaded]);
+  const {
+    progress: loadingProgress,
+    step: loadingStep,
+    restart: restartLoadingProgress
+  } = useStoryQuestionProgress({ storyId, loaded: questionsLoaded });
 
   // Every question must have a selected choice before the attempt can be
   // submitted — an unanswered question would be sent as null and auto-marked
@@ -98,7 +92,7 @@ export default function Questions({
             <GradientButton
               style={{ marginTop: '3rem' }}
               onClick={() => {
-                setLoadingProgress(0);
+                restartLoadingProgress();
                 onLoadQuestions(storyId);
               }}
             >
@@ -114,7 +108,7 @@ export default function Questions({
               justify-content: center;
             `}
           >
-            <Loading text="Generating Questions..." />
+            <Loading text={loadingStep} />
             <ProgressBar progress={loadingProgress} />
           </div>
         ) : (

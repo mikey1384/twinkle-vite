@@ -5,15 +5,17 @@ import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import { useNotiContext } from '~/contexts';
 import { getDailyRewardPreviewStreak } from '~/helpers';
 
-// One level table with the API (helpers/english/storyLevels.ts, 10-06): a
-// friendly name for players plus the CEFR band each level targets. The old
-// AR / TOEFL / SAT labels were never calibrated, so they are gone.
+// Level names (Mikey 10-06): what Korean parents already know — AR reading
+// levels for the easier stories, then the exams. "-style" names the kind of
+// reading each level aims at; the levels were never calibrated against those
+// tests, so they never claim a score. The CEFR band each prompt targets
+// (helpers/english/storyLevels.ts) is noted in the description.
 const levelHash: Record<string, string> = {
-  '1': 'Level 1 · Starter (A1–A2)',
-  '2': 'Level 2 · Explorer (A2–B1)',
-  '3': 'Level 3 · Adventurer (B1–B2)',
-  '4': 'Level 4 · Scholar (B2–C1)',
-  '5': 'Level 5 · Master (C1+)'
+  '1': 'Level 1 (AR 1–2 style)',
+  '2': 'Level 2 (AR 3–5 style)',
+  '3': 'Level 3 (TOEFL Junior–style)',
+  '4': 'Level 4 (TOEFL-style)',
+  '5': 'Level 5 (SAT-style)'
 };
 
 const difficultyExplanation: Record<
@@ -22,62 +24,62 @@ const difficultyExplanation: Record<
 > = {
   '1': {
     reading: [
-      'Short, simple sentences and everyday words. ',
-      <b key="1">1 question</b>,
-      ' to pass, plus up to 2 bonus questions.'
+      'Short, simple sentences and everyday words, like an ',
+      <b key="1">AR 1–2</b>,
+      ' book (about CEFR A1–A2). 1 question to pass, plus up to 2 bonus questions.'
     ],
     listening: [
       'Zero or Ciel tells a short, simple story with ',
-      <b key="2">everyday words</b>,
-      '.'
+      <b key="2">AR 1–2</b>,
+      ' level words.'
     ]
   },
   '2': {
     reading: [
-      'Everyday and school topics with common tenses. ',
-      <b key="1">2 questions</b>,
-      ' to pass, plus up to 1 bonus question.'
+      'Everyday and school topics, like an ',
+      <b key="1">AR 3–5</b>,
+      ' book (about CEFR A2–B1). 2 questions to pass, plus up to 1 bonus question.'
     ],
     listening: [
       'A short talk with ',
-      <b key="2">everyday and school words</b>,
-      ' and conversational phrases.'
+      <b key="2">AR 3–5</b>,
+      ' level words and everyday phrases.'
     ]
   },
   '3': {
     reading: [
-      'Longer sentences and some ',
-      <b key="1">abstract ideas</b>,
-      '. Questions ask for the main idea, details and what the text implies.'
+      'Longer passages in the style of ',
+      <b key="1">TOEFL Junior</b>,
+      ' reading (about CEFR B1–B2): main idea, details and what the text implies.'
     ],
     listening: [
       'Zero and Ciel discuss a topic with ',
-      <b key="2">more challenging vocabulary</b>,
-      '.'
+      <b key="2">TOEFL Junior</b>,
+      '–style vocabulary.'
     ]
   },
   '4': {
     reading: [
-      'Complex sentences and ',
-      <b key="1">academic vocabulary</b>,
-      ". Questions include word meaning in context and the writer's purpose."
+      'Academic passages in the style of ',
+      <b key="1">TOEFL</b>,
+      " reading (about CEFR B2–C1), including word meaning in context and the writer's purpose."
     ],
     listening: [
-      'Academic topics with nuanced, detailed discussion and ',
-      <b key="2">advanced vocabulary</b>,
-      '.'
+      'Academic topics discussed in depth with ',
+      <b key="2">TOEFL</b>,
+      '–style vocabulary.'
     ]
   },
   '5': {
     reading: [
-      'Dense, ',
-      <b key="1">advanced academic</b>,
-      ' passages with reasoning left for you to work out.'
+      'Dense passages in the style of ',
+      <b key="1">SAT</b>,
+      ' reading (about CEFR C1 and above), with reasoning left for you to work out.'
     ],
     listening: [
-      'Long, in-depth discussions of complex topics with ',
-      <b key="2">advanced vocabulary</b>,
-      '.'
+      'Long, in-depth discussions with ',
+      <b key="2">SAT</b>,
+      '–style vocabulary.'
     ]
   }
 };
