@@ -71,6 +71,7 @@ export default function MarbleRunScreen({
   const finishRun = useAppContext(
     (v) => v.requestHelpers.finishGrammarQuestRun
   );
+  const loadRun = useAppContext((v) => v.requestHelpers.loadGrammarQuestRun);
   const boss = run.rules.mode === 'boss';
   const [questions, setQuestions] = useState<QuestQuestion[]>(run.questions);
   const [answers, setAnswers] = useState<Record<number, QuestAnswer>>(() =>
@@ -425,26 +426,6 @@ export default function MarbleRunScreen({
                   {((phase === 'review' && answer && !answer.isCorrect) ||
                     (phase === 'bossReview' && answer)) && (
                     <div className={reviewCls}>
-                      {/* Mikey 10-07: a learner who thinks the key is wrong
-                          challenges it right here, beside the explanation.
-                          Bosses run on a clock, so theirs wait for the result. */}
-                      {!boss &&
-                        answer.challenge &&
-                        !answer.challenge.checked && (
-                          <div className={challengeRowCls}>
-                            <span className={challengeAskCls}>
-                              Think the answer key is wrong?
-                            </span>
-                            <button
-                              className={challengeCls}
-                              onClick={() =>
-                                setChallengeId(answer.challenge!.questionId)
-                              }
-                            >
-                              <PixelIcon name="flag" scale={2} /> Challenge
-                            </button>
-                          </div>
-                        )}
                       {answer.ruleCard && (
                         <div className={ruleScrollCls}>
                           <RuleCard
@@ -471,6 +452,21 @@ export default function MarbleRunScreen({
                         </div>
                       ) : (
                         <div className={nextRowCls}>
+                          {/* Mikey 10-07: a learner who thinks the key is
+                              wrong challenges it right here, by Continue (in
+                              this row so the card keeps its height). Bosses
+                              run on a clock, so theirs wait for the result. */}
+                          {answer.challenge && !answer.challenge.checked && (
+                            <button
+                              className={challengeCls}
+                              title="Think the answer key is wrong? Challenge it"
+                              onClick={() =>
+                                setChallengeId(answer.challenge!.questionId)
+                              }
+                            >
+                              <PixelIcon name="flag" scale={2} /> Challenge
+                            </button>
+                          )}
                           <span className={nextNoteCls}>
                             {answer.retry
                               ? 'It comes back later in this run.'
@@ -514,6 +510,9 @@ export default function MarbleRunScreen({
               )
             );
             if (!justified) setChallengeId(null);
+            // the fix moved this run's queued re-asks to the new version on
+            // the server: show their new wording (graded by the new key)
+            else refreshQueued();
           }}
         />
       )}
@@ -640,6 +639,22 @@ export default function MarbleRunScreen({
     } catch {
       finishedRef.current = false;
       setError('Could not save the run. Try again from the map.');
+    }
+  }
+
+  async function refreshQueued() {
+    try {
+      const fresh = await loadRun(run.runId);
+      const byPosition = new Map<number, QuestQuestion>(
+        (fresh?.questions || []).map((q: QuestQuestion) => [q.position, q])
+      );
+      setQuestions((qs) =>
+        qs.map((q) =>
+          answersRef.current[q.position] ? q : byPosition.get(q.position) || q
+        )
+      );
+    } catch {
+      // reopening the run shows the new wording
     }
   }
 
@@ -883,20 +898,13 @@ const cardInnerCls = css`
   }
 `;
 // a long rule card scrolls on its own; choices and Continue stay put
-const challengeRowCls = css`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  margin-bottom: 0.6rem;
-`;
-const challengeAskCls = css`
-  font-weight: 700;
-  font-size: 1.25rem;
-`;
 const challengeCls = css`
   ${challengeButton()}
   flex: none;
+  margin-right: auto;
+  @media (max-height: 520px) and (orientation: landscape) {
+    min-height: 3.4rem;
+  }
   min-height: 4rem;
   padding: 0.3rem 1.2rem;
   font-size: 1.1rem;
@@ -1032,6 +1040,9 @@ const nextRowCls = css`
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 0.6rem;
+  @media (max-height: 520px) and (orientation: landscape) {
+    margin-top: 0.3rem;
+  }
 `;
 const nextNoteCls = css`
   font-size: 1.25rem;
@@ -1045,4 +1056,8 @@ const nextCls = css`
   padding: 0.4rem 1.6rem;
   font-size: 1.2rem;
   text-transform: uppercase;
+  /* phones on their side: the miss card's row stays as short as the chips */
+  @media (max-height: 520px) and (orientation: landscape) {
+    min-height: 3.4rem;
+  }
 `;
