@@ -8,7 +8,6 @@ import type { QuestNode, QuestState, QuestWorld } from './types';
 import AudioToggles from './AudioToggles';
 import GoalsChip from './GoalsChip';
 import { playMusic, stopMusic, OVERWORLD_TRACK } from './MarbleRun/music';
-import QuestMarble from './QuestMarble';
 import PixelIcon from './PixelIcon';
 import {
   GOLD,
@@ -143,12 +142,16 @@ export default function WorldMap({
                   className={cx(
                     nodeCls,
                     big && bigNodeCls,
-                    big && node.unlocked && !node.cleared && bossNodeCls,
-                    !big && node.unlocked && !node.cleared && goldNodeCls,
+                    big && 'gq-big',
+                    // the disc takes its best letter's colour (Mikey 10-07:
+                    // the colours already mean S–F); unplayed stays plain
+                    node.unlocked &&
+                      !node.grade &&
+                      (big ? bossNodeCls : openNodeCls),
+                    node.unlocked && node.grade && GRADE_NODE[node.grade],
+                    node.unlocked && node.grade && 'gq-graded',
                     !node.unlocked && lockedCls,
                     !node.unlocked && 'gq-locked',
-                    node.cleared && clearedCls,
-                    node.cleared && 'gq-cleared',
                     selected?.id === node.id && selectedCls
                   )}
                   style={at}
@@ -160,7 +163,12 @@ export default function WorldMap({
                       ? onPlayNode(node)
                       : onSelectNode(node.id)
                   }
-                  aria-label={node.name}
+                  aria-label={
+                    node.grade
+                      ? `${node.name}, best grade ${node.grade}`
+                      : node.name
+                  }
+                  title={node.grade ? `Best grade ${node.grade}` : undefined}
                 >
                   {node.kind === 'stop' ? (
                     <span className={nodeNumCls}>{node.index}</span>
@@ -173,20 +181,6 @@ export default function WorldMap({
                   )}
                   {node.cleared && (
                     <PixelIcon name="flag" scale={2} className={flagCls} />
-                  )}
-                  {/* the node's marble: its best run's letter, Classic's
-                      S–F (Mikey 10-07); an empty slot until it's played */}
-                  {node.unlocked && (
-                    <span className={nodeMarbleCls}>
-                      {node.grade ? (
-                        <img
-                          src={spriteUri(node.grade)}
-                          alt={`Best grade ${node.grade}`}
-                        />
-                      ) : (
-                        <QuestMarble look="empty" size={18} />
-                      )}
-                    </span>
                   )}
                 </button>
                 {selected?.id === node.id &&
@@ -330,8 +324,9 @@ export default function WorldMap({
   );
 }
 
-// map node discs: gold coin (up next), green (cleared), stone (locked),
-// purple (a boss still standing)
+// map node discs: a played node wears its best letter's colour (Classic's
+// S–F colours); open but unplayed is parchment, a boss not yet fought purple,
+// locked stone
 const disc = (n: number, p: Record<string, string>) =>
   `url("${pixelSvg(discRows(n), p)}")`;
 const GOLD_DISC = {
@@ -341,12 +336,21 @@ const GOLD_DISC = {
   s: '#d18b00',
   g: '#ffffff'
 };
-const GREEN_DISC = {
+const OPEN_DISC = {
   k: INK,
-  l: '#9ff0b8',
-  f: '#3cc16a',
-  s: '#1f8a45',
-  g: '#e9ffef'
+  l: '#ffffff',
+  f: '#f6ecd2',
+  s: '#d9c79c',
+  g: '#ffffff'
+};
+// Classic's grade colours (MarbleRun/marble.ts GRADE), lit and shaded
+const GRADE_DISCS: Record<string, Record<string, string>> = {
+  S: GOLD_DISC,
+  A: { k: INK, l: '#ff8fcb', f: '#df3296', s: '#a3206c', g: '#ffe3f2' },
+  B: { k: INK, l: '#ffc070', f: '#ff8c00', s: '#c06400', g: '#fff1dc' },
+  C: { k: INK, l: '#ffb3d9', f: '#ff69b4', s: '#d1408a', g: '#fff0f7' },
+  D: { k: INK, l: '#a9d4ff', f: '#418ceb', s: '#2a62b0', g: '#eaf4ff' },
+  F: { k: INK, l: '#a7adb6', f: '#7d838d', s: '#5a5f68', g: '#e4e6ea' }
 };
 const STONE_DISC = {
   k: '#3a3f4d',
@@ -565,7 +569,7 @@ const nodeCls = css`
   height: 3.6rem;
   padding: 0;
   border: none;
-  background: ${disc(12, GREEN_DISC)} center / 100% 100% no-repeat;
+  background: ${disc(12, OPEN_DISC)} center / 100% 100% no-repeat;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 0 rgba(26, 20, 38, 0.45));
   cursor: pointer;
@@ -600,9 +604,22 @@ const bigNodeCls = css`
   }
 `;
 
-const goldNodeCls = css`
-  background-image: ${disc(12, GOLD_DISC)};
+const openNodeCls = css`
+  background-image: ${disc(12, OPEN_DISC)};
 `;
+// big (boss) discs use the 15-row art, stops the 12-row
+const GRADE_NODE: Record<string, string> = Object.fromEntries(
+  Object.entries(GRADE_DISCS).map(([grade, p]) => [
+    grade,
+    css`
+      background-image: ${disc(12, p)};
+      &.gq-big {
+        background-image: ${disc(15, p)};
+      }
+      color: #fff;
+    `
+  ])
+);
 
 const bossNodeCls = css`
   background-image: ${disc(15, BOSS_DISC)};
@@ -611,11 +628,6 @@ const bossNodeCls = css`
 const lockedCls = css`
   background-image: ${disc(12, STONE_DISC)};
   color: #4a4f5c;
-`;
-
-const clearedCls = css`
-  background-image: ${disc(12, GREEN_DISC)};
-  color: #fff;
 `;
 
 const selectedCls = css`
@@ -628,7 +640,7 @@ const nodeNumCls = css`
   font-size: 1.2rem;
   line-height: 1;
   color: ${INK};
-  .gq-cleared & {
+  .gq-graded & {
     color: #fff;
     ${inkShadow(1)}
   }
@@ -806,20 +818,6 @@ const pointerCls = css`
   }
 `;
 
-const nodeMarbleCls = css`
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  transform: translateX(-50%);
-  margin-top: 0.1rem;
-  display: flex;
-  pointer-events: none;
-  img {
-    width: 22px;
-    height: 22px;
-    image-rendering: pixelated;
-  }
-`;
 const chipMarbleCls = css`
   width: 18px;
   height: 18px;
