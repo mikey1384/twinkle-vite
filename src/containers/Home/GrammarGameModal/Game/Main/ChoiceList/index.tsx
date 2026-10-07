@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
+import { NEON, flash, press, rgba } from '../../../ClassicArcade/theme';
 
 export default function ChoiceList({
   answerIndex,
@@ -82,48 +83,44 @@ export default function ChoiceList({
         transition: opacity 1s;
         flex-direction: column;
         width: 80%;
-        gap: 0.75rem;
+        gap: 1rem;
         nav {
-          border: 0;
-          border-radius: ${borderRadius};
+          border-radius: 14px;
         }
+        /* right pick: neon green, a one-shot pop */
         .correct {
-          border: 0;
-          background: linear-gradient(
-            to right,
-            ${Color.green(1)} 0%,
-            ${Color.green(0.6)} 50%,
-            ${Color.green(1)} 100%
-          );
-          background-size: 200% auto;
-          background-position: left top;
+          border: 2px solid ${NEON.green};
+          background: linear-gradient(180deg, #13a86a 0%, #0b7a4c 100%);
           font-weight: bold;
           color: #fff;
-          box-shadow: 0 0 0 0 rgba(#5a99d4, 0.5);
-          animation: pulse 1.5s;
+          text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+          box-shadow:
+            0 4px 0 #064a2e,
+            0 0 18px ${rgba(NEON.greenRgb, 0.75)},
+            0 0 40px ${rgba(NEON.greenRgb, 0.3)};
+          animation: ${press} 360ms ease-out;
         }
+        /* wrong pick: a red flash (the list shakes via jiggle) */
         .wrong {
           color: #fff;
-          border: 0;
-          background: ${Color.red()};
-          box-shadow: 0 0 10px ${Color.red()};
+          border: 2px solid ${NEON.red};
+          background: linear-gradient(180deg, #c8203d 0%, #92102a 100%);
+          box-shadow:
+            0 4px 0 #4f0716,
+            0 0 18px ${rgba(NEON.redRgb, 0.75)};
+        }
+        .wrong::after {
+          content: '';
+          position: absolute;
+          inset: -2px;
+          border-radius: inherit;
+          background: rgba(255, 190, 200, 0.9);
+          opacity: 0;
+          animation: ${flash} 420ms ease-out;
+          pointer-events: none;
         }
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
-        }
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 0 0 0 ${Color.green(0.7)};
-            background-position: left top;
-          }
-          70% {
-            box-shadow: 0 0 0 10px ${Color.green(0)};
-            background-position: right center;
-          }
-          100% {
-            box-shadow: 0 0 0 0 ${Color.green(0)};
-            background-position: right center;
-          }
         }
       `}`}
       style={style}

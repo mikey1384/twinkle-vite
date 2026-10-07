@@ -1,14 +1,31 @@
 import useUserActivity from '~/helpers/hooks/useUserActivity';
-import React, { useMemo, useRef, useState, useEffect } from 'react';
-import Modal from '~/components/Modal';
+import React, { Suspense, useMemo, useRef, useState, useEffect } from 'react';
+import { css, cx } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
+import {
+  APP_SHELL_HEADER_OFFSET_STYLE,
+  MOBILE_NAV_FOOTPRINT_STYLE
+} from '~/constants/appShell';
+import {
+  AUDIO_CHOICE_EVENT,
+  isQuestMuted,
+  playQuestSound,
+  setQuestMuted
+} from './Quest/sfx';
+import { setMusicEnabled } from './Quest/MarbleRun/music';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
 import FinishScreen from './FinishScreen';
-import FilterBar from '~/components/FilterBar';
+import GameNav, { type NavLook, type NavTab } from './GameNav';
+import { NavSlotContext } from './navSlot';
 import Button from '~/components/Button';
 import Rankings from './Rankings';
 import Review from './Review';
+import Loading from '~/components/Loading';
+import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+import ModeChooser from './ModeChooser';
+import ClassicArcade from './ClassicArcade';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import {
   useAppContext,
@@ -27,6 +44,10 @@ import {
   type GrammarAnswerCheck
 } from './answerCheck';
 
+// Quest (map, marble-run engine, bosses) loads only when Grammarbles opens
+// in Quest mode, not with every Home page visit.
+const GrammarQuest = lazyWithRetry(() => import('./Quest'));
+
 const RESULT_SCREEN_MIN_DISPLAY_MS = 3000;
 
 // The server graded every pick and keeps the round's result; finishing only
@@ -35,7 +56,7 @@ interface GrammarResultPayload {
   sessionId: number;
 }
 
-export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
+export default function Grammarbles({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const [gameLoading, setGameLoading] = useState(false);
   const finishGrammarSession = useAppContext(
@@ -54,6 +75,8 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
   );
+  // Classic and Quest are two equal games: pick one first (Mikey 10-07)
+  const [mode, setMode] = useState<'choose' | 'classic' | 'quest'>('choose');
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [gameState, setGameState] = useState('notStarted');
@@ -80,7 +103,39 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const [questionIds, setQuestionIds] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [triggerEffect, setTriggerEffect] = useState(false);
+  // sound and music follow the player's account (Mikey 10-07): the saved
+  // choice is applied before any game screen mounts, and every switch is
+  // saved back to the account
+  const accountSettings = useKeyContext((v) => v.myState.settings);
+  const updateGrammarblesSettings = useAppContext(
+    (v) => v.requestHelpers.updateGrammarblesSettings
+  );
+  useState(() => {
+    const saved = readGrammarblesSettings(accountSettings);
+    if (typeof saved.sound === 'boolean')
+      setQuestMuted(!saved.sound, { fromAccount: true });
+    if (typeof saved.music === 'boolean')
+      setMusicEnabled(saved.music, { fromAccount: true });
+    return null;
+  });
+  useEffect(() => {
+    async function handleChoice(e: Event) {
+      const choice = (e as CustomEvent).detail || {};
+      try {
+        const result = await updateGrammarblesSettings(choice);
+        if (result?.settings && userId) {
+          onSetUserState({ userId, newState: { settings: result.settings } });
+        }
+      } catch {
+        // kept on this device; the account catches up on the next switch
+      }
+    }
+    window.addEventListener(AUDIO_CHOICE_EVENT, handleChoice);
+    return () => window.removeEventListener(AUDIO_CHOICE_EVENT, handleChoice);
+  }, [updateGrammarblesSettings, onSetUserState, userId]);
   const [showConfirm, setShowConfirm] = useState(false);
+  // the top bar's status spot, filled by the Quest map (navSlot.ts)
+  const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
   const questionObjRef = useRef<Record<number, any>>({});
   const scoreArrayRef = useRef<string[]>([]);
   const onUpdateGrammarLoadingStatus = useHomeContext(
@@ -132,11 +187,16 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       }
     }
 
-    function handlePopState(e: PopStateEvent) {
+    // Back during a round: this is a page now, so Back would leave it.
+    // A round holds one extra history entry; Back spends it and asks first.
+    function handlePopState() {
       if (gameState === 'started') {
-        e.preventDefault();
+        window.history.pushState({ grammarblesRound: true }, '');
         setShowConfirm(true);
       }
+    }
+    if (gameState === 'started' && !window.history.state?.grammarblesRound) {
+      window.history.pushState({ grammarblesRound: true }, '');
     }
 
     return () => {
@@ -200,117 +260,142 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       : "If you close now, this level will count as failed for today, you'll miss out on 1,000 coins, and you might not be able to complete today's Grammarbles daily task.";
   }
 
-  const footer =
-    gameState !== 'started' ? (
-      <Button variant="ghost" onClick={handleHide}>
-        Close
-      </Button>
-    ) : null;
-
-  return (
-    <Modal
-      xpActivity
-      modalKey="GrammarGameModal"
-      isOpen={true}
-      onClose={handleHide}
-      size="lg"
-      hasHeader={false}
-      closeOnBackdropClick={false}
-      footer={footer}
-      modalLevel={0}
-    >
-      <div style={{ width: '100%' }}>
-        {gameState !== 'started' && (
-          <FilterBar
-            style={{
-              height: '5rem'
-            }}
-          >
-            <nav
-              className={activeTab === 'game' ? 'active' : ''}
-              onClick={() => setActiveTab('game')}
-            >
-              Game
-            </nav>
-            <nav
-              className={activeTab === 'rankings' ? 'active' : ''}
-              onClick={() => setActiveTab('rankings')}
-            >
-              Rankings
-            </nav>
-            <nav
-              className={activeTab === 'review' ? 'active' : ''}
-              onClick={() => setActiveTab('review')}
-            >
-              Review
-            </nav>
-          </FilterBar>
-        )}
-
+  // Grammarbles is its own page (Mikey 10-07: more room than a modal).
+  // A Classic round in progress takes the whole screen, as the modal did, so
+  // the site's links can't pull the player out mid-level.
+  const look: NavLook =
+    gameState === 'started' || mode === 'classic'
+      ? 'classic'
+      : mode === 'quest'
+        ? 'quest'
+        : 'menu';
+  const tabs: NavTab[] =
+    mode === 'classic'
+      ? [
+          { key: 'game', label: 'Game' },
+          { key: 'rankings', label: 'Rankings' },
+          { key: 'review', label: 'Review' }
+        ]
+      : mode === 'quest'
+        ? [
+            { key: 'quest', label: 'Map' },
+            { key: 'questRankings', label: 'Rankings' }
+          ]
+        : [];
+  // Grammarbles is its own page (Mikey 10-07: more room than a modal), and
+  // the page IS the game: its look fills the screen edge to edge, with a top
+  // bar drawn in the same style. A Classic round in progress takes the whole
+  // screen, as the modal did, so the site's links can't pull the player out
+  // mid-level.
+  // the Quest map is one screen, no page scroll (Mikey 10-07)
+  const fitScreen =
+    mode === 'quest' && activeTab === 'quest' && gameState !== 'started';
+  const body = (
+    <div className={cx(pageInnerCls, fitScreen && fitInnerCls)}>
+      {gameState !== 'started' && (
+        <GameNav
+          look={look}
+          tabs={tabs}
+          active={activeTab}
+          onTab={(key) => pickTab(() => setActiveTab(key as any))}
+          onHome={handleHide}
+          onGames={
+            mode !== 'choose'
+              ? () => pickTab(() => setMode('choose'))
+              : undefined
+          }
+          slot={setNavSlot}
+        />
+      )}
+      <NavSlotContext.Provider value={navSlot}>
         <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">
-          {activeTab === 'game' && gameState === 'notStarted' && (
-            <StartScreen
-              loading={gameLoading}
-              timesPlayedToday={timesPlayedToday}
-              onGameStart={handleGameStart}
-              onSetTimesPlayedToday={setTimesPlayedToday}
-              onHide={handleHide}
-              readyToBegin={questionsReady}
-              onSetDailyTaskUnlocked={setHasUnlockedDailyTask}
+          {mode === 'choose' && gameState !== 'started' && (
+            <ModeChooser
+              onPick={(picked) => {
+                setMode(picked);
+                setActiveTab(picked === 'quest' ? 'quest' : 'game');
+              }}
             />
           )}
-          {gameState === 'started' && (
-            <Game
-              currentIndex={currentIndex}
-              isOnStreak={isOnStreak}
-              questionIds={questionIds}
-              questionObjRef={questionObjRef}
-              onCheckAnswer={handleCheckAnswer}
-              onSessionLost={handleSessionLost}
-              onSetTriggerEffect={setTriggerEffect}
-              onSetCurrentIndex={setCurrentIndex}
-              onSetQuestionObj={(newState: Record<number, any>) => {
-                questionObjRef.current = newState;
-              }}
-              onGameFinish={handleGameFinish}
-              triggerEffect={triggerEffect}
-            />
-          )}
-          {gameState === 'started' && saveFailed && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                marginTop: '2rem',
-                fontSize: '1.7rem',
-                textAlign: 'center'
-              }}
-            >
-              <b>{`Couldn't save your result`}</b>
-              <div style={{ marginTop: '0.5rem', fontSize: '1.5rem' }}>
-                Check your connection and try again.
-              </div>
-              <Button
-                style={{ marginTop: '1.5rem' }}
-                variant="soft"
-                tone="raised"
-                color="logoBlue"
-                loading={retryingSave}
-                onClick={handleRetrySave}
-              >
-                Retry
-              </Button>
+          {/* Classic's game tab (start, play, finish) sits on the neon
+              arcade backdrop; only paint, the screens inside are unchanged */}
+          {((mode === 'classic' && activeTab === 'game') ||
+            gameState === 'started') && (
+            <div className={classicBodyCls}>
+              {mode === 'classic' &&
+                activeTab === 'game' &&
+                gameState === 'notStarted' && (
+                  <StartScreen
+                    loading={gameLoading}
+                    timesPlayedToday={timesPlayedToday}
+                    onGameStart={handleGameStart}
+                    onSetTimesPlayedToday={setTimesPlayedToday}
+                    onHide={handleHide}
+                    readyToBegin={questionsReady}
+                    onSetDailyTaskUnlocked={setHasUnlockedDailyTask}
+                  />
+                )}
+              {gameState === 'started' && (
+                <Game
+                  currentIndex={currentIndex}
+                  isOnStreak={isOnStreak}
+                  questionIds={questionIds}
+                  questionObjRef={questionObjRef}
+                  onCheckAnswer={handleCheckAnswer}
+                  onSessionLost={handleSessionLost}
+                  onSetTriggerEffect={setTriggerEffect}
+                  onSetCurrentIndex={setCurrentIndex}
+                  onSetQuestionObj={(newState: Record<number, any>) => {
+                    questionObjRef.current = newState;
+                  }}
+                  onGameFinish={handleGameFinish}
+                  triggerEffect={triggerEffect}
+                />
+              )}
+              {gameState === 'started' && saveFailed && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    marginTop: '2rem',
+                    fontSize: '1.7rem',
+                    textAlign: 'center'
+                  }}
+                >
+                  <b>{`Couldn't save your result`}</b>
+                  <div style={{ marginTop: '0.5rem', fontSize: '1.5rem' }}>
+                    Check your connection and try again.
+                  </div>
+                  <Button
+                    style={{ marginTop: '1.5rem' }}
+                    variant="soft"
+                    tone="raised"
+                    color="logoBlue"
+                    loading={retryingSave}
+                    onClick={handleRetrySave}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              )}
+              {mode === 'classic' &&
+                activeTab === 'game' &&
+                gameState === 'finished' && (
+                  <FinishScreen
+                    timesPlayedToday={timesPlayedToday}
+                    scoreArrayRef={scoreArrayRef}
+                    onBackToStart={handleBackToStart}
+                  />
+                )}
             </div>
           )}
-          {activeTab === 'game' && gameState === 'finished' && (
-            <FinishScreen
-              timesPlayedToday={timesPlayedToday}
-              scoreArrayRef={scoreArrayRef}
-              onBackToStart={handleBackToStart}
-            />
+          {mode === 'quest' && activeTab === 'quest' && (
+            <Suspense fallback={<Loading />}>
+              <GrammarQuest />
+            </Suspense>
           )}
-          {activeTab === 'rankings' && gameState !== 'started' && (
+          {mode === 'quest' && activeTab === 'questRankings' && (
             <div
               style={{
                 width: '100%',
@@ -319,39 +404,82 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               }}
             >
               <Rankings
+                quest
                 onSetRankingsTab={setRankingsTab}
                 rankingsTab={rankingsTab}
               />
             </div>
           )}
-          {activeTab === 'review' && gameState !== 'started' && (
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center'
-              }}
-            >
-              <Review />
-            </div>
-          )}
+          {mode === 'classic' &&
+            activeTab === 'rankings' &&
+            gameState !== 'started' && (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
+              >
+                <Rankings
+                  onSetRankingsTab={setRankingsTab}
+                  rankingsTab={rankingsTab}
+                />
+              </div>
+            )}
+          {mode === 'classic' &&
+            activeTab === 'review' &&
+            gameState !== 'started' && (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
+              >
+                <Review />
+              </div>
+            )}
         </ErrorBoundary>
-        {showConfirm && (
-          <ConfirmModal
-            modalOverModal
-            onHide={() => setShowConfirm(false)}
-            title="Warning"
-            description={getCloseWarning()}
-            descriptionFontSize="2rem"
-            onConfirm={handleConfirmClose}
-            confirmButtonColor="red"
-            confirmButtonLabel="Close anyway"
-            isReverseButtonOrder
-          />
-        )}
-      </div>
-    </Modal>
+      </NavSlotContext.Provider>
+      {showConfirm && (
+        <ConfirmModal
+          onHide={() => setShowConfirm(false)}
+          title="Warning"
+          description={getCloseWarning()}
+          descriptionFontSize="2rem"
+          onConfirm={handleConfirmClose}
+          confirmButtonColor="red"
+          confirmButtonLabel="Close anyway"
+          isReverseButtonOrder
+        />
+      )}
+    </div>
   );
+  return (
+    <div
+      className={cx(
+        pageCls,
+        fitScreen && fitCls,
+        look === 'quest' && questBgCls,
+        look === 'menu' && menuBgCls,
+        gameState === 'started' && focusCls
+      )}
+      // an XP activity: the website agent never plays it for the member
+      data-agent-no-play=""
+    >
+      {look === 'classic' ? (
+        <ClassicArcade fullBleed>{body}</ClassicArcade>
+      ) : (
+        body
+      )}
+    </div>
+  );
+
+  // the tabs click like the game's own buttons
+  function pickTab(go: () => void) {
+    if (!isQuestMuted()) playQuestSound('select');
+    go();
+  }
 
   async function handleGameStart() {
     try {
@@ -562,4 +690,92 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       uploadInFlightRef.current = false;
     }
   }
+}
+
+const pageCls = css`
+  width: 100%;
+  min-height: calc(100vh - ${APP_SHELL_HEADER_OFFSET_STYLE});
+  display: flex;
+  flex-direction: column;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding-bottom: 6rem;
+  }
+`;
+// Quest: the map's own sky, edge to edge
+const questBgCls = css`
+  background:
+    radial-gradient(
+      ellipse at 18% 4%,
+      rgba(255, 255, 255, 0.75) 0,
+      rgba(255, 255, 255, 0) 30%
+    ),
+    linear-gradient(180deg, #a9dcff 0%, #d9f0ff 40%, #f7ecc9 100%);
+`;
+// the game menu: a night arcade between the two covers
+const menuBgCls = css`
+  background:
+    radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      rgba(120, 90, 255, 0.35) 0,
+      rgba(0, 0, 0, 0) 70%
+    ),
+    linear-gradient(180deg, #120e30 0%, #1d1650 55%, #2a1557 100%);
+`;
+// a Classic round in progress: the whole screen, over the site's header
+const focusCls = css`
+  position: fixed;
+  inset: 0;
+  z-index: 2147481000;
+  min-height: 0;
+  overflow-y: auto;
+  background: #070b2e;
+`;
+const pageInnerCls = css`
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.6rem 3rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0 0 2rem;
+  }
+`;
+const fitCls = css`
+  height: calc(100dvh - ${APP_SHELL_HEADER_OFFSET_STYLE});
+  min-height: 0;
+  overflow: hidden;
+  @media (max-width: ${mobileMaxWidth}) {
+    /* phones: the header sits on top, the nav bar at the bottom */
+    height: calc(
+      100dvh - ${APP_SHELL_HEADER_OFFSET_STYLE} - ${MOBILE_NAV_FOOTPRINT_STYLE}
+    );
+    padding-bottom: 0;
+  }
+`;
+const fitInnerCls = css`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 1rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding-bottom: 0.4rem;
+  }
+`;
+const classicBodyCls = css`
+  width: 100%;
+`;
+
+function readGrammarblesSettings(settings: unknown): {
+  sound?: boolean;
+  music?: boolean;
+} {
+  let parsed: any = settings;
+  if (typeof settings === 'string') {
+    try {
+      parsed = JSON.parse(settings);
+    } catch {
+      parsed = null;
+    }
+  }
+  return (parsed && typeof parsed === 'object' && parsed.grammarbles) || {};
 }

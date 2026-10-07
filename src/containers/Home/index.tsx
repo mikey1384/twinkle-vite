@@ -11,7 +11,6 @@ import Store from './Store';
 import Stories from './Stories';
 import LocalContext from './Context';
 import AIStoriesModal from './AIStoriesModal';
-import GrammarGameModal from './GrammarGameModal';
 import DailyQuestionModal from '~/components/Modals/DailyQuestionModal';
 import Achievements from './Achievements';
 import { useHomeContext } from '~/contexts';
@@ -27,17 +26,11 @@ function Home({
   const aiStoriesModalShown = useHomeContext(
     (v) => v.state.aiStoriesModalShown
   );
-  const grammarGameModalShown = useHomeContext(
-    (v) => v.state.grammarGameModalShown
-  );
   const dailyQuestionModalShown = useHomeContext(
     (v) => v.state.dailyQuestionModalShown
   );
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
-  );
-  const onSetGrammarGameModalShown = useHomeContext(
-    (v) => v.actions.onSetGrammarGameModalShown
   );
   const onSetDailyQuestionModalShown = useHomeContext(
     (v) => v.actions.onSetDailyQuestionModalShown
@@ -72,11 +65,6 @@ function Home({
               title="Image is too large (limit: 10mb)"
               content="Please select a smaller image"
               onHide={() => setAlertModalShown(false)}
-            />
-          )}
-          {grammarGameModalShown && (
-            <GrammarGameModal
-              onHide={() => onSetGrammarGameModalShown(false)}
             />
           )}
           {aiStoriesModalShown && (

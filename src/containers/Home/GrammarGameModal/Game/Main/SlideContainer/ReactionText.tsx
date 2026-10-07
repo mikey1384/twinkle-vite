@@ -4,6 +4,12 @@ import { css } from '@emotion/css';
 import { scoreTable, perfectScoreBonus } from '../../../constants';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
+import {
+  PIXEL_FONT,
+  pixelStarCls,
+  pop,
+  twinkle
+} from '../../../ClassicArcade/theme';
 
 export default function ReactionText({ questions }: { questions: any[] }) {
   const perfectRole = useRoleColor('grammarGameScorePerfect', {
@@ -101,8 +107,14 @@ export default function ReactionText({ questions }: { questions: any[] }) {
   });
   const { role, fontSize, text, bling } = reactionObj;
   const baseColor = role?.getColor() || Color.logoBlue();
-  const gradientStart = role?.getColor(1) || baseColor;
-  const gradientMid = role?.getColor(0.5) || Color.logoBlue(0.5);
+  const glowColor = role?.getColor(0.6) || Color.logoBlue(0.6);
+  const isPerfect = totalScore === perfectScore;
+  // Pixel type runs wide: one-word cheers scale to fit the screen, the
+  // longer encouragement lines wrap at a smaller size.
+  const isShout = text.length <= 12;
+  const pixelSize = isShout
+    ? `min(${fontSize}, calc((100vw - 6rem) / ${text.length}))`
+    : '1.5rem';
 
   useChain([opacityRef, effectRef]);
 
@@ -118,7 +130,8 @@ export default function ReactionText({ questions }: { questions: any[] }) {
         justifyContent: 'center',
         alignItems: 'center',
         top: 0,
-        textAlign: 'center'
+        textAlign: 'center',
+        padding: '0 1.5rem'
       }}
     >
       <AnimatedDiv
@@ -129,46 +142,46 @@ export default function ReactionText({ questions }: { questions: any[] }) {
         }}
       >
         <span
-          className={
-            bling
-              ? css`
-                  background-image: linear-gradient(
-                    to left,
-                    ${gradientStart} 0%,
-                    ${gradientMid} 30%,
-                    ${gradientStart} 100%
-                  );
-                  background-clip: text;
-                  color: transparent;
-                  background-size: 500% auto;
-                  background-position: right center;
-                  animation: bling 1.5s ease infinite;
-                  @keyframes bling {
-                    0% {
-                      background-position: 100% 0%;
-                    }
-
-                    50% {
-                      background-position: 10% 10%;
-                    }
-
-                    100% {
-                      background-position: 0% 0%;
-                    }
-                  }
-                `
-              : css`
-                  color: ${baseColor};
-                `
-          }
-          style={{
-            fontSize,
-            fontWeight: 'bold'
-          }}
+          className={css`
+            position: relative;
+            display: inline-block;
+            font-family: ${PIXEL_FONT};
+            line-height: ${isShout ? 1.2 : 1.8};
+            color: ${bling ? '#ffffff' : baseColor};
+            text-shadow:
+              0 0 ${bling ? 6 : 4}px ${baseColor},
+              0 0 ${bling ? 18 : 10}px ${glowColor},
+              ${bling ? `0 0 34px ${glowColor},` : ''} 0 4px 0 #120734;
+            animation: ${pop} 520ms cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+          `}
+          style={{ fontSize: pixelSize }}
         >
+          {isPerfect
+            ? STARS.map((star, i) => (
+                <span
+                  key={i}
+                  aria-hidden
+                  className={css`
+                    ${pixelStarCls(star.color, 4)};
+                    top: ${star.top};
+                    left: ${star.left};
+                    animation: ${twinkle} 0.9s ease-in-out ${star.delay} 3;
+                  `}
+                />
+              ))
+            : null}
           {text}
         </span>
       </AnimatedDiv>
     </div>
   );
 }
+
+// star sparkles around PERFECT
+const STARS = [
+  { top: '-1.4rem', left: '-1.6rem', color: '#ffd54a', delay: '0s' },
+  { top: '-1.8rem', left: '62%', color: '#ffffff', delay: '0.25s' },
+  { top: '110%', left: '18%', color: '#4ff3ff', delay: '0.5s' },
+  { top: '30%', left: '104%', color: '#ffd54a', delay: '0.15s' },
+  { top: '120%', left: '88%', color: '#ff7ae0', delay: '0.4s' }
+];

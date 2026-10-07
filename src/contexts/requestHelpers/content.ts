@@ -1293,6 +1293,88 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // Grammar Quest: every answer is graded on the server one click at a time
+    async loadGrammarQuestRankings() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/quest/rankings`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadGrammarQuestState() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/quest/state`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startGrammarQuestRun(
+      target: { nodeId: string } | { nemesis: true }
+    ) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/quest/run`,
+          target,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadGrammarQuestRun(runId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/quest/run/${runId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async answerGrammarQuestQuestion({
+      runId,
+      position,
+      choiceIndex,
+      responseMs
+    }: {
+      runId: number;
+      position: number;
+      choiceIndex: number;
+      responseMs?: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/quest/run/${runId}/answer`,
+          { position, choiceIndex, responseMs },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async finishGrammarQuestRun(runId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/quest/run/${runId}/finish`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async challengeGrammarQuestion({ questionId }: { questionId: number }) {
       try {
         const { data } = await request.post(

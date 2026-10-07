@@ -1,6 +1,6 @@
 import React from 'react';
 
-import LetterGrade from './LetterGrade';
+import GlassMarble from './GlassMarble';
 
 export default function Marble({
   letterGrade,
@@ -13,7 +13,7 @@ export default function Marble({
 }) {
   return (
     <span style={{ display: 'inline-flex', verticalAlign: 'middle', ...style }}>
-      <LetterGrade letter={letterGrade || ''} size={28} isAllS={isAllS} />
+      <GlassMarble letter={letterGrade || ''} size={28} isAllS={isAllS} />
     </span>
   );
 }

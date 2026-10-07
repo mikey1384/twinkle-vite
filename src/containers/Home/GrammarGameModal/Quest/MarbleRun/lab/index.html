@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Marble Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+<style>
+  body { margin: 0; background: #151a2b; color: #e8ecf6; font: 14px/1.4 -apple-system, sans-serif; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 14px; }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  select, button { font: inherit; padding: 7px 10px; border-radius: 8px; border: 1px solid #3a4466; background: #222a44; color: #fff; }
+  button.ok { background: #2fb862; border-color: #1f9a4c; }
+  button.no { background: #d23a5d; border-color: #b02c4b; }
+  canvas { width: 100%; height: auto; display: block; image-rendering: pixelated; border-radius: 10px; background: #000; }
+  .status { font-family: 'Press Start 2P', monospace; font-size: 10px; margin: 10px 0; color: #b9c3dd; }
+  .info { color: #9aa6c4; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <select id="pick"></select>
+    <button class="ok" id="ok">Right (→)</button>
+    <button class="no" id="no">Wrong (←)</button>
+    <button id="auto">Auto: off</button>
+    <button id="restart">Restart (R)</button>
+    <button id="prev">◀ Prev</button>
+    <button id="next">Next ▶</button>
+  </div>
+  <canvas id="stage" width="960" height="380"></canvas>
+  <div class="status" id="status"></div>
+  <div class="info" id="info"></div>
+</div>
+<script type="module" src="./lab.ts"></script>
+</body>
+</html>

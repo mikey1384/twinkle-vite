@@ -7,15 +7,21 @@ import LeaderboardList from '~/components/LeaderboardList';
 const myRankingLabel = 'My Ranking';
 const top30Label = 'Top 30';
 
+// Classic ranks Grammarbles XP; Quest ranks marble points (clear 1, shiny 2,
+// gold 3 per grammar point).
 export default function Rankings({
   rankingsTab,
-  onSetRankingsTab
+  onSetRankingsTab,
+  quest = false
 }: {
   rankingsTab: string;
   onSetRankingsTab: (arg0: string) => void;
+  quest?: boolean;
 }) {
-  const loadGrammarRankings = useAppContext(
-    (v) => v.requestHelpers.loadGrammarRankings
+  const loadGrammarRankings = useAppContext((v) =>
+    quest
+      ? v.requestHelpers.loadGrammarQuestRankings
+      : v.requestHelpers.loadGrammarRankings
   );
   const [loading, setLoading] = useState(true);
   const [allRanks, setAllRanks] = useState([]);
@@ -87,7 +93,8 @@ export default function Rankings({
             key={user.id}
             user={user}
             myId={myId}
-            target="xpEarned"
+            target={quest ? 'marblePoints' : 'xpEarned'}
+            unitLabel={quest ? 'marble pts' : 'XP'}
             activityContext="grammar"
           />
         ))}

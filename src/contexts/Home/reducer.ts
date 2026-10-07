@@ -207,11 +207,6 @@ export default function HomeReducer(
         ...state,
         previewGroups: action.groups
       };
-    case 'SET_GRAMMAR_GAME_MODAL_SHOWN':
-      return {
-        ...state,
-        grammarGameModalShown: action.shown
-      };
     case 'SET_CHESS_PUZZLE_MODAL_SHOWN':
       return {
         ...state,

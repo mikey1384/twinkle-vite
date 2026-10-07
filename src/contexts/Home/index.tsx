@@ -15,7 +15,6 @@ export const initialHomeState = {
   feedsOutdated: false,
   fileUploadProgress: null,
   aiStoriesModalShown: false,
-  grammarGameModalShown: false,
   chessPuzzleModalShown: false,
   chessOptionsTargetUser: null,
   dailyQuestionModalShown: false,

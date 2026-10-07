@@ -45,9 +45,6 @@ export default function Badge({
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const onSetGrammarGameModalShown = useHomeContext(
-    (v) => v.actions.onSetGrammarGameModalShown
-  );
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );
@@ -132,19 +129,13 @@ export default function Badge({
         handleWordleButtonClick();
         break;
       case 'G': {
-        const wordsInPath = location.pathname.split('/');
-        const isNotHomePage = wordsInPath.some((pathWord) =>
-          notHomePath.includes(pathWord)
-        );
         if (timerIdRef.current) {
           clearTimeout(timerIdRef.current);
           timerIdRef.current = null;
         }
         setLoadingWordle(false);
-        if (isNotHomePage) {
-          navigate('/');
-        }
-        onSetGrammarGameModalShown(true);
+        // Grammarbles is its own page now
+        navigate('/grammarbles');
         setMobileMenuShown(false);
         break;
       }

@@ -1083,6 +1083,33 @@ export default function MainNavs({
     sessionStateArrived
   ]);
 
+  // Grammarbles is its own page (Mikey 10-07): opening it gives it its own
+  // tab, like a Lumine app, so it can be pinned. handleCaptureTab adds a tab
+  // only once per URL; a closed tab comes back the next time it's opened.
+  useEffect(() => {
+    if (pathname !== '/grammarbles') return;
+    if (navScope !== userId) return;
+    if (userId && !navServerReadyRef.current) return;
+    const existing = customTabs.find((tab) => tab.to === '/grammarbles');
+    if (existing && !existing.pinned) rememberExtraTabOpened(existing.id);
+    if (existing) return;
+    handleCaptureTab({
+      to: '/grammarbles',
+      icon: 'spell-check',
+      label: 'Grammarbles',
+      pinned: false
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    pathname,
+    customTabs,
+    navScope,
+    userId,
+    serverNavTabs,
+    userLoaded,
+    sessionStateArrived
+  ]);
+
   // The build runtime's "Close app" button can't reach the tab list directly
   // (MainNavs is unmounted on mobile /app routes), so it posts the build id
   // here; once MainNavs is mounted again it consumes the request and removes

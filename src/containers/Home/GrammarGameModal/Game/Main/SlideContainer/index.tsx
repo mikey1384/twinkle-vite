@@ -3,6 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from './ProgressBar';
 import ReactionText from './ReactionText';
 import { useSpring, animated } from '@react-spring/web';
+import { useGradeColor } from '../../../ClassicArcade/theme';
 
 export default function SlideContainer({
   children,
@@ -42,10 +43,21 @@ export default function SlideContainer({
   }, [isCompleted]);
 
   const AnimatedDiv = animated('div');
+  // Paint only: the right-answer sparks below take the grade's colour.
+  const gradeColor = useGradeColor();
+  const currentGrade = questions?.[selectedIndex]?.score;
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/Game/Main/SlideContainer">
-      <div style={{ width: '100%', position: 'relative' }}>
+      <div
+        style={
+          {
+            width: '100%',
+            position: 'relative',
+            '--cg-grade': currentGrade ? gradeColor(currentGrade) : undefined
+          } as React.CSSProperties
+        }
+      >
         <AnimatedDiv
           style={{
             width: '100%',

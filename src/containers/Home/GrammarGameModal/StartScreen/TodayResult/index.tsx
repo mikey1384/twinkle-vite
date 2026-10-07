@@ -14,9 +14,16 @@ import { isMobile } from '~/helpers';
 import { useChain, useSpring, useSpringRef, animated } from '@react-spring/web';
 import ResultLevelRow from './ResultLevelRow';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import {
+  NEON,
+  PIXEL_FONT,
+  glassPanelCls,
+  pixelStarCls,
+  rgba
+} from '../../ClassicArcade/theme';
 
-const xpFontSize = '1.7rem';
-const mobileXpFontSize = '1.5rem';
+const xpFontSize = '1.8rem';
+const mobileXpFontSize = '1.4rem';
 const coinFontSize = '1.5rem';
 const mobileCoinFontSize = '1.3rem';
 
@@ -30,64 +37,68 @@ export default function TodayResult({ results }: { results: any[] }) {
   });
   const perfectColor = (opacity?: number) =>
     perfectRole.getColor(opacity) || Color.brownOrange(opacity ?? 1);
-  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
-  const xpNumberColor = xpNumberRole.getColor() || Color.logoGreen();
-  const xpLabelColor = Color.gold();
-  const funFont =
-    "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+  // the scoreboard digits glow neon green, the label gold
+  const xpNumberColor = NEON.green;
+  const xpLabelColor = NEON.gold;
   const titleCls = css`
     text-align: center;
-    font-weight: 800;
-    font-size: 2rem;
-    font-family: ${funFont};
-    background-image: linear-gradient(
-      90deg,
-      ${Color.darkGold()} 0%,
-      ${Color.gold()} 50%,
-      ${Color.darkGold()} 100%
-    );
-    background-size: 200% auto;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: resultsShine 4s linear infinite;
-    @keyframes resultsShine {
-      0% {
-        background-position: 200% center;
-      }
-      100% {
-        background-position: 0% center;
-      }
+    font-family: ${PIXEL_FONT};
+    font-size: 1.3rem;
+    line-height: 1.4;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: ${NEON.cyan};
+    text-shadow:
+      0 0 8px ${rgba(NEON.cyanRgb, 0.8)},
+      0 2px 0 #050824;
+    @media (max-width: ${mobileMaxWidth}) {
+      font-size: 1.1rem;
     }
   `;
   const boardCls = css`
+    ${glassPanelCls};
     margin-top: 0.75rem;
     margin-bottom: 3rem;
-    padding: 1.25rem 1.5rem;
-    border-radius: 14px;
-    background: linear-gradient(180deg, #234e3e 0%, #174032 100%);
-    border: 2px solid #174437; /* darker edge */
-    box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.35),
-      inset 0 0 0 2px rgba(255, 255, 255, 0.03), 0 4px 0 #0d1f1d;
-    position: relative;
+    padding: 1.6rem 1.8rem 1.4rem;
     overflow: hidden;
+    /* faint scanlines, like an arcade scoreboard */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.035) 0 1px,
+        transparent 1px 4px
+      );
+      pointer-events: none;
+    }
+    @media (max-width: ${mobileMaxWidth}) {
+      padding: 1.3rem 1.2rem 1.1rem;
+    }
   `;
   const xpValueClass = css`
     display: inline-flex;
     align-items: baseline;
-    gap: 0.35rem;
-    font-weight: 800;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    font-family: ${PIXEL_FONT};
+    font-weight: 400;
+    line-height: 1.3;
     .xp-number {
       color: ${xpNumberColor};
-      letter-spacing: 0.01em;
+      text-shadow:
+        0 0 10px ${rgba(NEON.greenRgb, 0.75)},
+        0 2px 0 #04140c;
       display: inline-flex;
       align-items: baseline;
     }
     .xp-label {
       color: ${xpLabelColor};
-      font-weight: 700;
-      font-size: 1.1rem;
-      letter-spacing: 0.05em;
+      font-size: 1rem;
+      text-shadow: 0 0 6px ${rgba(NEON.goldRgb, 0.7)};
     }
   `;
   const REQUIRED_SCORE = 700;
@@ -284,12 +295,12 @@ export default function TodayResult({ results }: { results: any[] }) {
         levelNumber <= levelsCleared
           ? 'cleared'
           : firstFailedLevel > 0
-          ? levelNumber === firstFailedLevel
-            ? 'failed'
-            : 'locked'
-          : levelNumber === levelsCleared + 1
-          ? 'next'
-          : 'locked';
+            ? levelNumber === firstFailedLevel
+              ? 'failed'
+              : 'locked'
+            : levelNumber === levelsCleared + 1
+              ? 'next'
+              : 'locked';
       return {
         levelNumber,
         status,
@@ -314,13 +325,14 @@ export default function TodayResult({ results }: { results: any[] }) {
         <div className={titleCls}>Today's Score</div>
         <div
           className={css`
+            position: relative;
+            text-align: center;
             font-weight: bold;
             font-size: ${xpFontSize};
-            color: #f8f8f8; /* chalk */
-            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+            color: ${NEON.ink};
             > p {
               font-size: ${coinFontSize};
-              color: #f0e6d6; /* softer chalk */
+              color: ${NEON.inkSoft};
             }
             @media (max-width: ${mobileMaxWidth}) {
               font-size: ${mobileXpFontSize};
@@ -345,11 +357,11 @@ export default function TodayResult({ results }: { results: any[] }) {
                 style={{
                   marginTop: '0.2rem',
                   fontSize: '1.5rem',
-                  color: '#f0e6d6'
+                  color: NEON.inkSoft
                 }}
               >
                 ×{fullClearBonusMultiplier}{' '}
-                <span style={{ color: '#f0e6d6' }}>
+                <span style={{ color: NEON.inkSoft }}>
                   (all five levels cleared)
                 </span>
               </div>
@@ -358,11 +370,13 @@ export default function TodayResult({ results }: { results: any[] }) {
                   style={{
                     marginTop: '0.2rem',
                     fontSize: '1.5rem',
-                    color: '#f0e6d6'
+                    color: NEON.inkSoft
                   }}
                 >
                   ×{allPerfectBonusMultiplier}{' '}
-                  <span style={{ color: '#f0e6d6' }}>(all perfect bonus)</span>
+                  <span style={{ color: NEON.inkSoft }}>
+                    (all perfect bonus)
+                  </span>
                 </div>
               )}
               <div
@@ -431,37 +445,35 @@ export default function TodayResult({ results }: { results: any[] }) {
           style={{
             ...animationEffect,
             ...fadeInStyles,
-            marginBottom: '1rem'
+            marginBottom: '1.5rem',
+            textAlign: 'center'
           }}
         >
           <span
             className={css`
-              font-size: 2.5rem;
-              font-weight: bold;
-              background-image: linear-gradient(
-                to left,
-                ${perfectColor(1)} 0%,
-                ${perfectColor(0.5)} 30%,
-                ${perfectColor(1)} 100%
-              );
-              background-clip: text;
-              color: transparent;
-              background-size: 500% auto;
-              background-position: right center;
-              animation: bling 1.5s ease infinite;
-              @keyframes bling {
-                0% {
-                  background-position: 100% 0%;
-                }
-                50% {
-                  background-position: 10% 10%;
-                }
-                100% {
-                  background-position: 0% 0%;
-                }
+              position: relative;
+              display: inline-block;
+              font-family: ${PIXEL_FONT};
+              font-size: 2.2rem;
+              line-height: 1.4;
+              color: ${NEON.gold};
+              text-shadow:
+                0 0 10px ${perfectColor(0.9)},
+                0 0 24px ${perfectColor(0.5)},
+                0 3px 0 #1a0b3d;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.6rem;
               }
             `}
           >
+            <span
+              className={pixelStarCls(NEON.gold)}
+              style={{ top: '-0.6rem', left: '-1.4rem' }}
+            />
+            <span
+              className={pixelStarCls('#ffffff')}
+              style={{ bottom: '-0.4rem', right: '-1.2rem' }}
+            />
             ALL PERFECT!
           </span>
         </AnimatedDiv>

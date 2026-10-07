@@ -42,9 +42,6 @@ export default function ActivityBadge({
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const onSetGrammarGameModalShown = useHomeContext(
-    (v) => v.actions.onSetGrammarGameModalShown
-  );
   const onSetChessPuzzleModalShown = useHomeContext(
     (v) => v.actions.onSetChessPuzzleModalShown
   );
@@ -282,8 +279,7 @@ export default function ActivityBadge({
       return;
     }
     if (activity.id === 'grammarbles') {
-      onSetGrammarGameModalShown(true);
-      navigate('/');
+      navigate('/grammarbles');
     } else if (activity.id === 'chess-puzzles')
       onSetChessPuzzleModalShown(true);
     else {

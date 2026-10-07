@@ -15,7 +15,8 @@ export default function RankingsListItem({
   user,
   onUsermenuShownChange = () => null,
   activityContext,
-  bordered = false
+  bordered = false,
+  unitLabel = 'XP'
 }: {
   myId: number;
   small?: boolean;
@@ -25,6 +26,8 @@ export default function RankingsListItem({
   onUsermenuShownChange?: (v: boolean) => void;
   activityContext?: string;
   bordered?: boolean;
+  // what the number counts (XP unless a board ranks something else)
+  unitLabel?: React.ReactNode;
 }) {
   const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
     fallback: 'logoGreen'
@@ -186,7 +189,7 @@ export default function RankingsListItem({
         <span style={{ color: getXpNumberColor() }}>
           {addCommasToNumber(user[target] || 0)}
         </span>{' '}
-        <span style={{ color: Color.gold() }}>XP</span>
+        <span style={{ color: Color.gold() }}>{unitLabel}</span>
       </div>
     </div>
   );

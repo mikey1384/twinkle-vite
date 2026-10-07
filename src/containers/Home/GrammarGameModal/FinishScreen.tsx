@@ -1,11 +1,20 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Button from '~/components/Button';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { scoreTable, perfectScoreBonus } from './constants';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { css } from '@emotion/css';
+import Marble from './Marble';
+import {
+  NEON,
+  PIXEL_FONT,
+  glassPanelCls,
+  pixelStarCls,
+  pop,
+  rgba
+} from './ClassicArcade/theme';
 
 const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
 
@@ -50,11 +59,6 @@ export default function FinishScreen({
     if (score === perfectScore) return '2rem';
     if (score > scoreTable.A * 10) return '1.7rem';
     return '1.5rem';
-  }, [score]);
-
-  const scoreFontWeight = useMemo(() => {
-    if (score > scoreTable.A * 10) return 'bold';
-    return 'normal';
   }, [score]);
 
   const numLetterGrades = useMemo(() => {
@@ -133,93 +137,171 @@ export default function FinishScreen({
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/FinishScreen">
       <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
+        className={css`
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 2.5rem 2rem 3rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 2rem 0.75rem 2.5rem;
+          }
+        `}
       >
         <div
-          style={{
-            fontWeight: 'bold',
-            marginTop: '1.5rem',
-            fontSize: '2rem'
-          }}
+          className={css`
+            ${glassPanelCls};
+            width: 100%;
+            max-width: 56rem;
+            padding: 2.4rem 2rem 2.2rem;
+            text-align: center;
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 2rem 1.2rem 1.8rem;
+            }
+          `}
         >
-          Game Result
-        </div>
-        <div style={{ fontSize: '1.7rem', marginTop: '2.5rem' }}>
-          {numLetterGradesArray.map(([letter, num]) => (
-            <div key={letter}>
-              <b
-                style={{
-                  color: Color[letterColor[letter]]()
-                }}
+          <span
+            aria-hidden
+            className={pixelStarCls(NEON.gold)}
+            style={{ top: '1.4rem', left: '1.6rem' }}
+          />
+          <span
+            aria-hidden
+            className={pixelStarCls(NEON.cyan)}
+            style={{ top: '2rem', right: '1.8rem' }}
+          />
+          <div
+            className={css`
+              font-family: ${PIXEL_FONT};
+              font-size: 2rem;
+              line-height: 1.3;
+              text-transform: uppercase;
+              color: ${NEON.cyan};
+              text-shadow:
+                0 0 10px ${rgba(NEON.cyanRgb, 0.8)},
+                0 3px 0 #050824;
+              animation: ${pop} 480ms ease-out both;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.5rem;
+              }
+            `}
+          >
+            Game Result
+          </div>
+          {/* this round's ten marbles, in the order they were won */}
+          <div
+            className={css`
+              display: flex;
+              justify-content: center;
+              flex-wrap: wrap;
+              gap: 0.3rem;
+              margin-top: 2rem;
+              padding: 0.6rem 0.9rem;
+              border-radius: 9999px;
+              background: rgba(8, 10, 40, 0.7);
+              border: 1px solid ${rgba(NEON.violetRgb, 0.45)};
+              box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.5);
+            `}
+          >
+            {(scoreArrayRef.current || []).map((grade, index) => (
+              <Marble key={index} letterGrade={grade} />
+            ))}
+          </div>
+          <div
+            className={css`
+              display: flex;
+              justify-content: center;
+              flex-wrap: wrap;
+              gap: 0.8rem 1.6rem;
+              margin-top: 2rem;
+              font-family: ${PIXEL_FONT};
+              font-size: 1.2rem;
+            `}
+          >
+            {numLetterGradesArray.map(([letter, num]) => (
+              <div
+                key={letter}
+                className={css`
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.6rem;
+                `}
               >
-                {letter}
-              </b>{' '}
-              ×{num}
+                <Marble letterGrade={letter} />
+                <span>×{num}</span>
+              </div>
+            ))}
+          </div>
+          <div
+            className={css`
+              margin-top: 2.2rem;
+              font-size: 1.6rem;
+              line-height: 1.6;
+              color: ${NEON.inkSoft};
+              b {
+                text-shadow: 0 0 6px currentColor;
+              }
+            `}
+          >
+            {isPerfectScore && (
+              <div style={{ color: NEON.ink }}>
+                Perfect score! You get a{' '}
+                <b style={{ color: '#ff7ae0' }}>{perfectScoreBonus}x</b> bonus!
+              </div>
+            )}
+            <div style={{ marginTop: '1rem' }}>
+              {totalScoreEquationText} = {score}
             </div>
-          ))}
+          </div>
+          <div
+            className={css`
+              margin-top: 2.6rem;
+              font-family: ${PIXEL_FONT};
+              line-height: 1.6;
+              color: ${NEON.ink};
+              .xp {
+                color: ${NEON.green};
+                text-shadow:
+                  0 0 10px ${rgba(NEON.greenRgb, 0.75)},
+                  0 2px 0 #04140c;
+              }
+            `}
+            // pixel type runs large; keep the old size steps, a notch down
+            style={{ fontSize: `calc(${scoreFontSize} * 0.8)` }}
+          >
+            You earned <span className="xp">{addCommasToNumber(score)} XP</span>
+          </div>
         </div>
         <div
           style={{
-            marginTop: '2.5rem',
-            marginBottom: '2rem',
-            textAlign: 'center'
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '2.5rem'
           }}
         >
-          {isPerfectScore && (
-            <div>
-              Perfect score! You get a{' '}
-              <b style={{ color: Color.magenta() }}>{perfectScoreBonus}x</b>{' '}
-              bonus!
-            </div>
+          {timesPlayedToday + 1 < 5 ? (
+            <GameCTAButton
+              icon="play"
+              variant="magenta"
+              size="xl"
+              shiny
+              arcade
+              onClick={onBackToStart}
+            >
+              Play Again
+            </GameCTAButton>
+          ) : (
+            <GameCTAButton
+              icon="chart-line"
+              variant="logoBlue"
+              size="xl"
+              arcade
+              onClick={onBackToStart}
+            >
+              {`See Today's Score`}
+            </GameCTAButton>
           )}
-          <div style={{ marginTop: '1rem' }}>
-            {totalScoreEquationText} = {score}
-          </div>
-          <div
-            style={{
-              marginTop: '5rem',
-              fontSize: scoreFontSize,
-              fontWeight: scoreFontWeight
-            }}
-          >
-            You earned {addCommasToNumber(score)} XP
-          </div>
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              marginTop: '3rem'
-            }}
-          >
-            {timesPlayedToday + 1 < 5 ? (
-              <GameCTAButton
-                icon="play"
-                variant="magenta"
-                size="xl"
-                shiny
-                style={{ marginTop: '1rem' }}
-                onClick={onBackToStart}
-              >
-                Play Again
-              </GameCTAButton>
-            ) : (
-              <Button
-                style={{ marginTop: '1rem', fontSize: '1.7rem' }}
-                onClick={onBackToStart}
-                variant="soft"
-                tone="raised"
-                color="logoBlue"
-              >
-                {`See Today's Score`}
-              </Button>
-            )}
-          </div>
         </div>
       </div>
     </ErrorBoundary>

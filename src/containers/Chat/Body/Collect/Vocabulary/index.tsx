@@ -89,9 +89,6 @@ export default function Vocabulary({
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );
-  const onSetGrammarGameModalShown = useHomeContext(
-    (v) => v.actions.onSetGrammarGameModalShown
-  );
   const onSetChessPuzzleModalShown = useHomeContext(
     (v) => v.actions.onSetChessPuzzleModalShown
   );
@@ -354,8 +351,7 @@ export default function Vocabulary({
           }}
           onOpenGrammarGame={() => {
             setWordMasterBreakModalShown(false);
-            navigate('/');
-            onSetGrammarGameModalShown(true);
+            navigate('/grammarbles');
           }}
           onOpenAIStories={() => {
             setWordMasterBreakModalShown(false);

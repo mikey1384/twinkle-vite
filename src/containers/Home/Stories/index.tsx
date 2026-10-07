@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import Banner from '~/components/Banner';
@@ -328,12 +329,10 @@ export default function Stories() {
   const onResetNumNewPosts = useNotiContext(
     (v) => v.actions.onResetNumNewPosts
   );
+  const navigate = useNavigate();
   const onSetNumNewPosts = useNotiContext((v) => v.actions.onSetNumNewPosts);
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
-  );
-  const onSetGrammarGameModalShown = useHomeContext(
-    (v) => v.actions.onSetGrammarGameModalShown
   );
   const onSetDailyQuestionModalShown = useHomeContext(
     (v) => v.actions.onSetDailyQuestionModalShown
@@ -597,7 +596,7 @@ export default function Stories() {
             onSetInputModalShown({ shown: true, modalType })
           }
           onPlayAIStories={() => onSetAIStoriesModalShown(true)}
-          onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
+          onPlayGrammarGame={() => navigate('/grammarbles')}
           onDailyQuestionClick={() => onSetDailyQuestionModalShown(true)}
         />
         <Featured />

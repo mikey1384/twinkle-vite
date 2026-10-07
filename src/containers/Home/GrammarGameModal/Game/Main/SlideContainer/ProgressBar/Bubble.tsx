@@ -23,13 +23,11 @@ export default function Bubble({
       className={`${isOnStreak && isCompleted ? 'waving' : ''}`}
     >
       <div
+        // look (glass marble, pixel letter) comes from ProgressBar's styles
         style={{
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
-          fontWeight: 'bold',
-          color: '#fff',
-          fontSize: '2rem'
+          alignItems: 'center'
         }}
         className={`ball gloss ${
           grade ? `graded${grade}${isOnStreak ? ' streak' : ''}` : ''

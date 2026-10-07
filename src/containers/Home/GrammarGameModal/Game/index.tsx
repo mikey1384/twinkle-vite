@@ -1,4 +1,5 @@
 import React from 'react';
+import { css } from '@emotion/css';
 import Loading from '~/components/Loading';
 import Main from './Main';
 import type { GrammarAnswerCheck } from '../answerCheck';
@@ -29,7 +30,16 @@ export default function Game({
   triggerEffect: boolean;
 }) {
   return (
-    <div style={{ width: '100%', paddingTop: '3.5rem' }}>
+    <div
+      className={css`
+        width: 100%;
+        padding-top: 3.5rem;
+        /* short screens: less headroom so the choices and track fit */
+        @media (max-height: 760px) {
+          padding-top: 1.5rem;
+        }
+      `}
+    >
       {questionIds.length > 0 ? (
         <Main
           currentIndex={currentIndex}

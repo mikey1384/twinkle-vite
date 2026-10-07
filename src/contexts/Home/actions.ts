@@ -214,12 +214,6 @@ export default function HomeActions(dispatch: Dispatch) {
         groups
       });
     },
-    onSetGrammarGameModalShown(shown: boolean) {
-      return dispatch({
-        type: 'SET_GRAMMAR_GAME_MODAL_SHOWN',
-        shown
-      });
-    },
     onUpdateGrammarLoadingStatus(status: string) {
       return dispatch({
         type: 'UPDATE_GRAMMAR_LOADING_STATUS',

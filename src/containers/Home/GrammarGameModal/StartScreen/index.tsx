@@ -16,7 +16,7 @@ import {
   isMobile
 } from '~/helpers';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   scoreTable,
   perfectScoreBonus,
@@ -26,6 +26,8 @@ import {
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import NeonButton from '../ClassicArcade/NeonButton';
+import { LOGO_SRC, NEON, PIXEL_FONT, bob, rgba } from '../ClassicArcade/theme';
 // removed pre-play of correct sound to avoid iOS beeps on start screen
 
 const grammarGameLabel = 'Grammarbles';
@@ -52,8 +54,6 @@ export default function StartScreen({
 }) {
   const [results, setResults] = useState([]);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
-  const failRole = useRoleColor('fail', { fallback: 'black' });
-  const failColorKey = failRole.colorKey;
   const grammarLoadingStatus = useHomeContext(
     (v) => v.state.grammarLoadingStatus
   );
@@ -75,18 +75,6 @@ export default function StartScreen({
   const userId = useKeyContext((v) => v.myState.userId);
   const [dailyTask, setDailyTask] = useState<any>(null);
 
-  const roleS = useRoleColor('grammarGameScoreS', { fallback: 'gold' });
-  const roleA = useRoleColor('grammarGameScoreA', { fallback: 'magenta' });
-  const roleB = useRoleColor('grammarGameScoreB', { fallback: 'orange' });
-  const roleC = useRoleColor('grammarGameScoreC', { fallback: 'pink' });
-  const roleD = useRoleColor('grammarGameScoreD', { fallback: 'logoBlue' });
-  const titlePalette = [
-    roleS.colorKey,
-    roleA.colorKey,
-    roleB.colorKey,
-    roleC.colorKey,
-    roleD.colorKey
-  ];
   const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const xpNumberColor = xpNumberRole.getColor() || Color.logoGreen();
   const xpLabelColor = Color.gold();
@@ -128,10 +116,6 @@ export default function StartScreen({
         return 'gold';
     }
   }, [currentLevel]);
-  const howToVariant = useMemo<Variant>(() => {
-    const candidates: Variant[] = ['orange', 'magenta', 'pink', 'gold'];
-    return candidates.find((v) => v !== startVariant) || 'magenta';
-  }, [startVariant]);
 
   useEffect(() => {
     init();
@@ -151,9 +135,12 @@ export default function StartScreen({
           } = await checkNumGrammarGamesPlayedToday();
           setResults(attemptResults);
           setDailyTask(dailyTaskStatus?.grammarbles || dailyTask || null);
+          // a Grammar Quest run that cleared its stop also unlocks the day's
+          // Grammarbles requirement (Mikey 10-07)
           const dailyTaskUnlocked =
             typeof dailyTaskStatus?.grammarbles?.earnedCoins === 'boolean'
-              ? dailyTaskStatus.grammarbles.earnedCoins
+              ? dailyTaskStatus.grammarbles.earnedCoins ||
+                !!dailyTaskStatus.grammarbles.questCleared
               : earnedCoins;
           if (typeof dailyTaskUnlocked === 'boolean') {
             onSetDailyTaskUnlocked?.(dailyTaskUnlocked);
@@ -259,37 +246,74 @@ export default function StartScreen({
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
       <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '2.5rem'
-        }}
+        className={css`
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 2.5rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1.5rem 0.75rem;
+          }
+        `}
       >
-        <div>
+        <div
+          className={css`
+            max-width: 100%;
+          `}
+        >
           <div
-            style={{
-              textAlign: 'center',
-              fontWeight: 800,
-              fontSize: '3rem',
-              fontFamily: funFont
-            }}
+            className={css`
+              display: flex;
+              justify-content: center;
+            `}
           >
-            <span>
-              {grammarGameLabel.split('').map((ch, idx) => (
-                <span
-                  key={idx}
-                  className={css`
-                    color: ${Color[titlePalette[idx % titlePalette.length]]()};
-                    display: inline-block;
-                    transform: translateY(${(idx % 2) * 1}px);
-                    letter-spacing: 0.5px;
-                  `}
-                >
-                  {ch}
-                </span>
-              ))}
-            </span>
+            <img
+              src={LOGO_SRC}
+              alt={`${grammarGameLabel} Classic`}
+              draggable={false}
+              className={css`
+                display: block;
+                width: 44rem;
+                max-width: 100%;
+                height: auto;
+                /* the crop keeps the cover's sky around it; fade it out */
+                -webkit-mask-image:
+                  linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    #000 7%,
+                    #000 93%,
+                    transparent 100%
+                  ),
+                  linear-gradient(
+                    180deg,
+                    transparent 0%,
+                    #000 16%,
+                    #000 78%,
+                    transparent 96%
+                  );
+                -webkit-mask-composite: source-in;
+                mask-image:
+                  linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    #000 7%,
+                    #000 93%,
+                    transparent 100%
+                  ),
+                  linear-gradient(
+                    180deg,
+                    transparent 0%,
+                    #000 16%,
+                    #000 78%,
+                    transparent 96%
+                  );
+                mask-composite: intersect;
+                filter: drop-shadow(0 0 14px ${rgba(NEON.cyanRgb, 0.35)});
+                animation: ${bob} 3.6s ease-in-out infinite;
+                user-select: none;
+              `}
+            />
           </div>
           <div
             className={css`
@@ -298,13 +322,12 @@ export default function StartScreen({
               margin-top: 1rem;
             `}
           >
-            <GameCTAButton
+            <NeonButton
               icon={showHowToPlay ? 'arrow-left' : 'lightbulb'}
               onClick={() => setShowHowToPlay((s) => !s)}
-              variant={howToVariant}
             >
               {showHowToPlay ? 'Go Back' : 'How to Play'}
-            </GameCTAButton>
+            </NeonButton>
           </div>
           <div
             style={{ marginTop: '3rem', lineHeight: 1.7, textAlign: 'center' }}
@@ -313,9 +336,9 @@ export default function StartScreen({
               <div style={{ fontFamily: funFont }}>
                 <p>Answer 10 fill-in-the-blank grammar questions.</p>
                 <p style={{ marginTop: '1rem' }}>
-                  The <b style={{ color: Color.redOrange() }}>faster</b> you
-                  select the correct choice, the more{' '}
-                  <b style={{ color: Color.darkGold() }}>XP</b> you earn.
+                  The <b style={{ color: '#ff8a65' }}>faster</b> you select the
+                  correct choice, the more{' '}
+                  <b style={{ color: NEON.gold }}>XP</b> you earn.
                 </p>
                 {!deviceIsMobile && (
                   <p style={{ marginTop: '1rem' }}>
@@ -366,20 +389,18 @@ export default function StartScreen({
                   </div>
                   <div style={{ marginTop: '1rem' }}>
                     Perfect score bonus:{' '}
-                    <b style={{ color: Color.purple() }}>
-                      x{perfectScoreBonus}
-                    </b>{' '}
+                    <b style={{ color: NEON.violet }}>x{perfectScoreBonus}</b>{' '}
                     (each game)
                   </div>
                   <div style={{ marginTop: '0.5rem' }}>
                     Clear all 5 levels bonus:{' '}
-                    <b style={{ color: Color.logoBlue() }}>
+                    <b style={{ color: NEON.cyan }}>
                       x{fullClearBonusMultiplier}
                     </b>
                   </div>
                   <div style={{ marginTop: '0.5rem' }}>
                     All 5 levels perfect bonus:{' '}
-                    <b style={{ color: Color.gold() }}>
+                    <b style={{ color: NEON.gold }}>
                       x{allPerfectBonusMultiplier}
                     </b>
                   </div>
@@ -403,7 +424,7 @@ export default function StartScreen({
                           display: 'inline-flex',
                           alignItems: 'baseline',
                           fontWeight: 800,
-                          color: Color.purple()
+                          color: NEON.violet
                         }}
                       >
                         <span>×</span>
@@ -425,9 +446,7 @@ export default function StartScreen({
                         xpLabelColor={xpLabelColor}
                         xpNumberColor={xpNumberColor}
                       />{' '}
-                      <span
-                        style={{ color: Color.logoBlue(), fontWeight: 700 }}
-                      >
+                      <span style={{ color: NEON.cyan, fontWeight: 700 }}>
                         × {fullClearBonusMultiplier}
                       </span>{' '}
                       ={' '}
@@ -444,7 +463,7 @@ export default function StartScreen({
                         xpLabelColor={xpLabelColor}
                         xpNumberColor={xpNumberColor}
                       />{' '}
-                      <span style={{ color: Color.gold(), fontWeight: 700 }}>
+                      <span style={{ color: NEON.gold, fontWeight: 700 }}>
                         × {allPerfectBonusMultiplier}
                       </span>{' '}
                       ={' '}
@@ -463,10 +482,15 @@ export default function StartScreen({
           </div>
         </div>
         <div
-          style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center'
+          }}
         >
           <DailyRewardBoostStrip
             focus="grammarbles"
+            arcade
             streak={dailyRewardPreviewStreak}
             grammarbles={dailyTask}
             loadingStates={{ grammarbles: !loaded }}
@@ -480,14 +504,18 @@ export default function StartScreen({
               display: inline-flex;
               align-items: center;
               justify-content: center;
-              padding: 0.5rem 0.9rem;
+              padding: 0.7rem 1.1rem;
               border-radius: 9999px;
-              font-weight: 800;
-              letter-spacing: 0.3px;
+              font-family: ${PIXEL_FONT};
+              font-size: 1rem;
+              line-height: 1.5;
+              text-align: center;
               color: ${badgeColors.text};
               background: ${badgeColors.bg};
               border: 2px solid ${badgeColors.border};
-              box-shadow: 0 2px 0 ${badgeColors.shadow};
+              box-shadow:
+                0 3px 0 ${badgeColors.shadow},
+                0 0 14px ${badgeColors.bg};
             `}
           >
             {levelsCleared}/5 levels cleared today
@@ -503,6 +531,7 @@ export default function StartScreen({
               variant={startVariant}
               size="xl"
               shiny
+              arcade
             >
               {isGameConcluded ? (
                 nextDayTimeStamp ? (
@@ -527,9 +556,11 @@ export default function StartScreen({
         {grammarLoadingStatus ? (
           <div
             className={css`
-              margin-top: 1rem;
-              font-size: 1.4rem;
-              font-weight: 600;
+              margin-top: 1.2rem;
+              font-family: ${PIXEL_FONT};
+              font-size: 1rem;
+              line-height: 1.7;
+              text-align: center;
               min-height: 2rem;
               display: flex;
               align-items: center;
@@ -537,8 +568,13 @@ export default function StartScreen({
             `}
             style={{
               color: /limit|error|fail/i.test(grammarLoadingStatus)
-                ? Color[failColorKey]()
-                : Color.logoBlue()
+                ? NEON.red
+                : NEON.cyan,
+              textShadow: `0 0 8px ${
+                /limit|error|fail/i.test(grammarLoadingStatus)
+                  ? rgba(NEON.redRgb, 0.6)
+                  : rgba(NEON.cyanRgb, 0.6)
+              }`
             }}
             aria-live="polite"
           >
@@ -558,9 +594,11 @@ export default function StartScreen({
               className={css`
                 width: 60%;
                 max-width: 420px;
-                height: 8px;
+                height: 10px;
                 border-radius: 9999px;
-                background: ${Color.wellGray(0.4)};
+                background: rgba(8, 10, 40, 0.8);
+                border: 1px solid ${rgba(NEON.cyanRgb, 0.45)};
+                box-shadow: 0 0 10px ${rgba(NEON.cyanRgb, 0.3)};
                 overflow: hidden;
               `}
               aria-label="Question generation progress"
@@ -571,9 +609,10 @@ export default function StartScreen({
                   transition: width 250ms ease;
                   background: linear-gradient(
                     90deg,
-                    ${Color.logoBlue()} 0%,
-                    ${Color.darkBlue()} 100%
+                    ${NEON.violet} 0%,
+                    ${NEON.cyan} 100%
                   );
+                  box-shadow: 0 0 8px ${NEON.cyan};
                 `}
                 style={(() => {
                   const current = grammarGenerationProgress?.current || 0;
@@ -627,15 +666,15 @@ function XPValue({
         display: 'inline-flex',
         alignItems: 'baseline',
         gap: '0.35rem',
-        fontWeight: 800,
-        letterSpacing: '0.01em',
+        fontFamily: PIXEL_FONT,
+        fontSize: '0.8em',
         ...style
       }}
     >
       <span
         style={{
           color: xpNumberColor,
-          fontWeight: 800
+          textShadow: `0 0 6px ${xpNumberColor}`
         }}
       >
         {amount}
@@ -643,9 +682,7 @@ function XPValue({
       <span
         style={{
           color: xpLabelColor,
-          fontWeight: 700,
-          fontSize: '1.1rem',
-          letterSpacing: '0.04em'
+          fontSize: '0.9rem'
         }}
       >
         XP

@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8" /><title>Enemy sheet</title>
+<style>body{margin:0;background:#5a8fd0}canvas{display:block;image-rendering:pixelated}</style></head>
+<body><canvas id="c" width="1000" height="760"></canvas>
+<script type="module">
+import '../level/enemies';
+import { enemyKinds, enemyDef } from '../level/enemies/registry';
+import { pixelText } from '../pixel';
+const g = document.getElementById('c').getContext('2d');
+function draw(t) {
+  g.fillStyle = '#7fb6e8'; g.fillRect(0, 0, 1000, 760);
+  enemyKinds().forEach((k, i) => {
+    const x = 20 + (i % 10) * 98, y = 20 + Math.floor(i / 10) * 125;
+    const d = enemyDef(k), f = d.frames[Math.floor(t / (d.frameMs || 220)) % d.frames.length];
+    g.imageSmoothingEnabled = false;
+    g.drawImage(f, x, y + 90 - f.height * 3, f.width * 3, f.height * 3);
+    pixelText(g, k, x + 40, y + 110, 8, '#fff');
+  });
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script></body></html>

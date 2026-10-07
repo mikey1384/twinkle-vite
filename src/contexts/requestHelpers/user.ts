@@ -29,8 +29,7 @@ interface GuardianConsentView {
   expiresAt: number;
 }
 
-const SESSION_STORAGE_ERROR_MESSAGE =
-  `${SITE_NAME} could not save your login on this device. Check that browser storage is enabled, then try again.`;
+const SESSION_STORAGE_ERROR_MESSAGE = `${SITE_NAME} could not save your login on this device. Check that browser storage is enabled, then try again.`;
 
 function createSessionPersistenceError(code: string, message: string) {
   const error: any = new Error(message);
@@ -174,6 +173,24 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async updateGrammarblesSettings({
+      sound,
+      music
+    }: {
+      sound?: boolean;
+      music?: boolean;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/settings/grammarbles`,
+          { sound, music },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateImageEditorSettings({
       color,
       recentColors
@@ -264,10 +281,7 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async resolveLumineRescue(
-      eventType: string,
-      params?: Record<string, any>
-    ) {
+    async resolveLumineRescue(eventType: string, params?: Record<string, any>) {
       try {
         const { data } = await request.post(
           `${URL}/user/lumine-rescue/resolve`,
@@ -279,10 +293,7 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async redeemLumineRescue(
-      eventType: string,
-      params?: Record<string, any>
-    ) {
+    async redeemLumineRescue(eventType: string, params?: Record<string, any>) {
       try {
         const { data } = await request.post(
           `${URL}/user/lumine-rescue/redeem`,
@@ -462,7 +473,13 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async setMeetupCrewOpen({ crewId, isOpen }: { crewId: number; isOpen: boolean }) {
+    async setMeetupCrewOpen({
+      crewId,
+      isOpen
+    }: {
+      crewId: number;
+      isOpen: boolean;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/user/meetup-quest/crews/${crewId}/open`,
@@ -474,7 +491,13 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async inviteToMeetupCrew({ crewId, username }: { crewId: number; username: string }) {
+    async inviteToMeetupCrew({
+      crewId,
+      username
+    }: {
+      crewId: number;
+      username: string;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/crews/${crewId}/invites`,
@@ -486,7 +509,13 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async cancelMeetupInvite({ crewId, inviteId }: { crewId: number; inviteId: number }) {
+    async cancelMeetupInvite({
+      crewId,
+      inviteId
+    }: {
+      crewId: number;
+      inviteId: number;
+    }) {
       try {
         const { data } = await request.delete(
           `${URL}/user/meetup-quest/crews/${crewId}/invites/${inviteId}`,
@@ -497,7 +526,13 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async acceptMeetupInvite({ inviteId, branch }: { inviteId: number; branch: string }) {
+    async acceptMeetupInvite({
+      inviteId,
+      branch
+    }: {
+      inviteId: number;
+      branch: string;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/invites/${inviteId}/accept`,
@@ -521,7 +556,13 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async makeMeetupCrewFounder({ crewId, userId }: { crewId: number; userId: number }) {
+    async makeMeetupCrewFounder({
+      crewId,
+      userId
+    }: {
+      crewId: number;
+      userId: number;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/user/meetup-quest/crews/${crewId}/founder`,
@@ -567,7 +608,10 @@ export default function userRequestHelpers({
     },
     async loadMeetupStaffSummary() {
       try {
-        const { data } = await request.get(`${URL}/user/meetup-quest/staff`, auth());
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/staff`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -575,7 +619,10 @@ export default function userRequestHelpers({
     },
     async loadMeetupDesk(viewAs?: number) {
       try {
-        const { data } = await request.get(`${URL}/user/meetup-quest/desk${viewAs ? `?viewAs=${viewAs}` : ''}`, auth());
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/desk${viewAs ? `?viewAs=${viewAs}` : ''}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -583,15 +630,27 @@ export default function userRequestHelpers({
     },
     async loadCoordinatorApplications(viewAs?: number) {
       try {
-        const { data } = await request.get(`${URL}/user/meetup-quest/coordinator${viewAs ? `?viewAs=${viewAs}` : ''}`, auth());
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/coordinator${viewAs ? `?viewAs=${viewAs}` : ''}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
       }
     },
-    async loadStaffApplication({ crewId, viewAs }: { crewId: number; viewAs?: number }) {
+    async loadStaffApplication({
+      crewId,
+      viewAs
+    }: {
+      crewId: number;
+      viewAs?: number;
+    }) {
       try {
-        const { data } = await request.get(`${URL}/user/meetup-quest/coordinator/${crewId}${viewAs ? `?viewAs=${viewAs}` : ''}`, auth());
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/coordinator/${crewId}${viewAs ? `?viewAs=${viewAs}` : ''}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -599,7 +658,10 @@ export default function userRequestHelpers({
     },
     async previewCoordinatorEmail(crewId: number) {
       try {
-        const { data } = await request.get(`${URL}/user/meetup-quest/coordinator/${crewId}/email-preview`, auth());
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/coordinator/${crewId}/email-preview`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -627,7 +689,13 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async changeMeetupVenue({ crewId, venue }: { crewId: number; venue: unknown }) {
+    async changeMeetupVenue({
+      crewId,
+      venue
+    }: {
+      crewId: number;
+      venue: unknown;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/user/meetup-quest/desk/crews/${crewId}/venue`,
@@ -659,7 +727,13 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async addMeetupStaffNote({ crewId, note }: { crewId: number; note: string }) {
+    async addMeetupStaffNote({
+      crewId,
+      note
+    }: {
+      crewId: number;
+      note: string;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/coordinator/${crewId}/notes`,
@@ -699,7 +773,10 @@ export default function userRequestHelpers({
     // review of one branch (the owner alert's card)
     async loadMeetupBranchChoices() {
       try {
-        const { data } = await request.get(`${URL}/user/meetup-quest/branches`, auth());
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/branches`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -783,7 +860,13 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async joinMeetupCrew({ crewId, branch }: { crewId: number; branch: string }) {
+    async joinMeetupCrew({
+      crewId,
+      branch
+    }: {
+      crewId: number;
+      branch: string;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/crews/${crewId}/join`,
@@ -825,7 +908,13 @@ export default function userRequestHelpers({
       }
     },
     // the crew manager asks a member to correct their branch answer
-    async nudgeMeetupBranch({ crewId, userId }: { crewId: number; userId: number }) {
+    async nudgeMeetupBranch({
+      crewId,
+      userId
+    }: {
+      crewId: number;
+      userId: number;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/crews/${crewId}/members/${userId}/nudge-branch`,
@@ -886,13 +975,24 @@ export default function userRequestHelpers({
     // the owner reviews parent emails before they go out
     async loadMeetupEmails() {
       try {
-        const { data } = await request.get(`${URL}/user/meetup-quest/emails`, auth());
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/emails`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
       }
     },
-    async saveMeetupEmail({ id, subject, body }: { id: number; subject: string; body: string }) {
+    async saveMeetupEmail({
+      id,
+      subject,
+      body
+    }: {
+      id: number;
+      subject: string;
+      body: string;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/user/meetup-quest/emails/${id}`,
@@ -904,7 +1004,15 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async sendMeetupEmail({ id, subject, body }: { id: number; subject: string; body: string }) {
+    async sendMeetupEmail({
+      id,
+      subject,
+      body
+    }: {
+      id: number;
+      subject: string;
+      body: string;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/emails/${id}/send`,
@@ -943,7 +1051,10 @@ export default function userRequestHelpers({
     // the friends kill switch (owner only)
     async loadFriendsSwitch() {
       try {
-        const { data } = await request.get(`${URL}/user/meetup-quest/friends-switch`, auth());
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/friends-switch`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -983,7 +1094,11 @@ export default function userRequestHelpers({
     },
     async addFriend(targetId: number) {
       try {
-        const { data } = await request.post(`${URL}/user/friends/${targetId}`, {}, auth());
+        const { data } = await request.post(
+          `${URL}/user/friends/${targetId}`,
+          {},
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -991,7 +1106,10 @@ export default function userRequestHelpers({
     },
     async removeFriend(targetId: number) {
       try {
-        const { data } = await request.delete(`${URL}/user/friends/${targetId}`, auth());
+        const { data } = await request.delete(
+          `${URL}/user/friends/${targetId}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -1106,7 +1224,12 @@ export default function userRequestHelpers({
       attendedUserIds
     }: {
       crewId: number;
-      action: 'approve-crew' | 'approve-grownup' | 'approve-plan' | 'send-back' | 'approve';
+      action:
+        | 'approve-crew'
+        | 'approve-grownup'
+        | 'approve-plan'
+        | 'send-back'
+        | 'approve';
       note?: string;
       attendedUserIds?: number[];
     }) {
@@ -1442,7 +1565,10 @@ export default function userRequestHelpers({
     // owner-only: things only the Twinkle organization can decide
     async loadMeetupOrgAsks() {
       try {
-        const { data } = await request.get(`${URL}/user/meetup-quest/org-asks`, auth());
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/org-asks`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -1520,7 +1646,14 @@ export default function userRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/parent-brief/decision`,
-          { token, decision, question, shareContact, guardianChoice, attendingName }
+          {
+            token,
+            decision,
+            question,
+            shareContact,
+            guardianChoice,
+            attendingName
+          }
         );
         return data;
       } catch (error) {
@@ -1530,16 +1663,29 @@ export default function userRequestHelpers({
     // a crew member reopens the plan to revise it (after parents' suggestions)
     async reviseMeetupPlan(crewId: number) {
       try {
-        const { data } = await request.post(`${URL}/user/meetup-quest/crews/${crewId}/plan/revise`, {}, auth());
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/plan/revise`,
+          {},
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
       }
     },
     // a parent suggests a change to the kids' plan (link token, no account)
-    async suggestMeetupPlanChange({ token, body }: { token: string; body: string }) {
+    async suggestMeetupPlanChange({
+      token,
+      body
+    }: {
+      token: string;
+      body: string;
+    }) {
       try {
-        const { data } = await request.post(`${URL}/user/meetup-quest/parent-brief/suggest`, { token, body });
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/parent-brief/suggest`,
+          { token, body }
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -1758,7 +1904,10 @@ export default function userRequestHelpers({
     async loadProfile(userId: number) {
       try {
         // signed in: the profile carries the viewer's friend button state
-        const { data } = await request.get(`${URL}/user?userId=${userId}`, auth());
+        const { data } = await request.get(
+          `${URL}/user?userId=${userId}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
