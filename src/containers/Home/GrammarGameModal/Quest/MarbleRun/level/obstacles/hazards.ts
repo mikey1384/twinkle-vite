@@ -194,7 +194,7 @@ registerObstacle('boulder', (b) => {
     waitX,
     pass: {
       dur: 1400,
-      step(k, m, t) {
+      step(k, m, _t) {
         pc.begin(k);
         boulder.respawn = false;
         if (boulder.state !== 'free' || k < 1) boulder.state = 'driven';
@@ -232,7 +232,7 @@ registerObstacle('boulder', (b) => {
     },
     fail: {
       dur: 1500,
-      step(k, m, t) {
+      step(k, m, _t) {
         fc.begin(k);
         boulder.respawn = true;
         boulder.state = 'driven';
@@ -580,7 +580,7 @@ registerObstacle('seesaw', (b) => {
     waitX,
     pass: {
       dur: 1500,
-      step(k, m, t) {
+      step(k, m, _t) {
         pc.begin(k);
         if (k < 0.12) {
           saw.a = PLANK_A1;
@@ -938,7 +938,7 @@ registerObstacle('quicksand', (b) => {
     },
     fail: {
       dur: 2000,
-      step(k, m, t) {
+      step(k, m, _t) {
         fc.begin(k);
         const rest = restOf(m, stuckX);
         const sunk = rest + MR * 0.95;
@@ -1442,7 +1442,7 @@ registerObstacle('spikes', (b) => {
     },
     fail: {
       dur: 1600,
-      step(k, m, t) {
+      step(k, m, _t) {
         fc.begin(k);
         const hitX = s0 + 36;
         const hitY = tipY - MR;

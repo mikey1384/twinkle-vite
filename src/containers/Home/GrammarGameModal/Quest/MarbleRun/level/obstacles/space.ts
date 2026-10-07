@@ -1,5 +1,4 @@
-import { makeSprite, poly, drawSprite, hash2, star, r3, U, H } from '../../pixel';
-import type { Sprite } from '../../pixel';
+import { makeSprite, poly, drawSprite, hash2, star, r3, U, H, type Sprite } from '../../pixel';
 import { MR } from '../../marble';
 import { thump, note, whoosh } from '../../audio';
 import { paletteOf } from '../terrain';

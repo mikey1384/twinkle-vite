@@ -1,5 +1,4 @@
-import { makeSprite, disc, rect, line, poly, eyesX, pxEllipse, r3, U } from '../../pixel';
-import type { Put, Sprite } from '../../pixel';
+import { makeSprite, disc, rect, line, poly, eyesX, pxEllipse, r3, U, type Put, type Sprite } from '../../pixel';
 import { registerBoss } from '../registry';
 import type { BossApi, Pose } from '../types';
 

@@ -1,5 +1,4 @@
-import { makeSprite, rect, disc, line, poly, drawSprite, drawStanding, pxEllipse, r3, U, INK } from '../../pixel';
-import type { Put, Sprite } from '../../pixel';
+import { makeSprite, rect, disc, line, poly, drawSprite, drawStanding, pxEllipse, r3, U, INK, type Put, type Sprite } from '../../pixel';
 import { MR } from '../../marble';
 import { thump, note, whoosh } from '../../audio';
 import type { Builder, Entity, MarbleCtl, RunView } from '../types';

@@ -2,7 +2,7 @@ import { makeSprite, rect, disc, drawSprite, U, INK } from '../../pixel';
 import { MR } from '../../marble';
 import { Enemy, enemyDef } from '../enemies/registry';
 import { thump, note, whoosh } from '../../audio';
-import type { Entity, MarbleCtl, Builder } from '../types';
+import type { Entity, Builder } from '../types';
 import { registerObstacle, ease, easeIn, span } from './registry';
 
 // Ground obstacles for rolling levels: the reference set every other obstacle

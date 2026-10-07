@@ -379,7 +379,7 @@ registerObstacle('door', (b) => {
     waitX,
     pass: {
       dur: 2400,
-      step(k, m, t) {
+      step(k, m, _t) {
         pc.tick(k);
         pc.once('open1', k > 0.04, () => {
           d1.open = true;
@@ -1265,7 +1265,7 @@ registerObstacle('railgap', (b) => {
     },
     fail: {
       dur: 1900,
-      step(k, m, t) {
+      step(k, m, _t) {
         fc.tick(k);
         const stopX = gx - 22;
         if (k < 0.18) {
@@ -1499,7 +1499,7 @@ registerObstacle('bats', (b) => {
     },
     fail: {
       dur: 2100,
-      step(k, m, t) {
+      step(k, m, _t) {
         fc.tick(k);
         bats.tx = m.x;
         bats.ty = m.y;
@@ -1599,7 +1599,7 @@ registerObstacle('loop', (b) => {
     waitX,
     pass: {
       dur: 2400,
-      step(k, m, t) {
+      step(k, m, _t) {
         pc.tick(k);
         if (k < 0.22) {
           m.roll(waitX + (lx - waitX) * easeIn(k / 0.22));

@@ -11,7 +11,7 @@ const pick = document.getElementById('pick') as HTMLSelectElement;
 const statusEl = document.getElementById('status')!;
 const infoEl = document.getElementById('info')!;
 
-type Item = { key: string; label: string };
+interface Item { key: string; label: string }
 const items: Item[] = [];
 let html = '';
 for (let w = 1; w <= 10; w++) {
