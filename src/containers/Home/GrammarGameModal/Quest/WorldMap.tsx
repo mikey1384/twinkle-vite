@@ -281,6 +281,13 @@ export default function WorldMap({
                       ? `Best: ${selected.grade}, ${selected.bestScore}% of answers right.`
                       : `Best: ${selected.grade}, ${selected.bestScore}% of the boss's 700 points.`}
               </div>
+              {selected.freeRematch && (
+                // Mikey 10-08: an upheld challenge earns a full-pay rematch
+                <div className={cx(panelTextCls, rematchCls)}>
+                  Your challenge was upheld: this rematch pays in full and
+                  doesn&apos;t use one of today&apos;s runs.
+                </div>
+              )}
             </div>
             <button
               className={playCls}
@@ -289,9 +296,11 @@ export default function WorldMap({
             >
               {starting
                 ? 'Starting…'
-                : selected.cleared
-                  ? 'Play again'
-                  : 'Play'}
+                : selected.freeRematch
+                  ? 'Free rematch'
+                  : selected.cleared
+                    ? 'Play again'
+                    : 'Play'}
             </button>
           </div>
         )}
@@ -844,6 +853,10 @@ const chipMarbleCls = css`
   width: 18px;
   height: 18px;
   image-rendering: pixelated;
+`;
+const rematchCls = css`
+  font-weight: 700;
+  color: #a3194a;
 `;
 const bestLineCls = css`
   display: flex;

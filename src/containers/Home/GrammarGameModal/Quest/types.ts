@@ -16,6 +16,8 @@ export interface QuestNode {
   bestScore: number | null;
   // the best run's letter, Classic's S–F; null until played
   grade: 'S' | 'A' | 'B' | 'C' | 'D' | 'F' | null;
+  // an upheld challenge on this boss earned a rematch that pays in full
+  freeRematch?: boolean;
   skills?: QuestSkill[];
 }
 
@@ -117,5 +119,6 @@ export interface QuestResult {
   newCoins?: number;
   rewardedRunsLeft?: number;
   replayCut?: boolean; // an early replay: half XP, no Coins
+  freeRematch?: boolean; // a full-pay rematch earned by an upheld challenge
   dailyTaskStatus?: any;
 }

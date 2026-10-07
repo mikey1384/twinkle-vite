@@ -205,12 +205,13 @@ export default function Result({
                 {done ? (
                   <span className={checkedCls}>
                     {/* an upheld challenge forgives a stop's miss (the map's
-                        best grade is recomputed); a boss hit isn't regraded */}
+                        best grade is recomputed); a boss earns a full-pay
+                        rematch instead (its hit isn't regraded) */}
                     {!upheldIds.includes(id)
                       ? 'Checked'
                       : kind === 'stop'
                         ? 'Upheld · miss forgiven'
-                        : 'Upheld'}
+                        : 'Upheld · free rematch on the map'}
                   </span>
                 ) : (
                   <button
