@@ -103,6 +103,7 @@ export default function BuildCardTarget({
     return (
       <BuildContributionSubmission
         content={content}
+        messageId={messageId}
         submission={settings?.buildContributionSubmission}
         myId={myId}
         sender={sender}

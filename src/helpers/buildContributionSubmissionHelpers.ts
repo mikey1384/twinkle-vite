@@ -86,11 +86,13 @@ export function canUpdateAppFromBuildContributionSubmission({
 export function resolveBuildContributionSubmissionPayload({
   submission,
   cachedSubmissionState,
-  cachedReleaseState
+  cachedReleaseState,
+  declined = false
 }: {
   submission?: Record<string, any> | null;
   cachedSubmissionState?: Record<string, any> | null;
   cachedReleaseState?: Record<string, any> | null;
+  declined?: boolean;
 }) {
   const useCachedBranch = isCachedCardStateFresher(
     cachedSubmissionState,
@@ -132,9 +134,17 @@ export function resolveBuildContributionSubmissionPayload({
             Number(submission?.submissionMergedAt) || completedMerge.createdAt
         }
       : branchPayload;
+  // The owner's decline answers this message only. Branch-wide events (the
+  // branch reopening, a repair starting) must not reopen it; only the work
+  // actually landing in a completed merge outranks it, as on the server.
+  const answeredPayload =
+    (declined || submission?.status === 'declined') &&
+    settledPayload.status !== 'merged'
+      ? { ...settledPayload, status: 'declined', lumineFix: null }
+      : settledPayload;
   return isCachedCardStateFresher(cachedReleaseState, submission)
-    ? { ...settledPayload, ...(cachedReleaseState || {}) }
-    : settledPayload;
+    ? { ...answeredPayload, ...(cachedReleaseState || {}) }
+    : answeredPayload;
 }
 
 export function resolveCanonicalBuildContributionSubmissionState({

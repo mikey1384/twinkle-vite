@@ -22,7 +22,12 @@ import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal'
 import { startBuildContributionLumineFixRecovery } from '~/helpers/buildContributionLumineFixRecovery';
 import { socket } from '~/constants/sockets/api';
 
-type BuildContributionSubmissionStatus = 'open' | 'merging' | 'merged' | 'gone';
+type BuildContributionSubmissionStatus =
+  | 'open'
+  | 'merging'
+  | 'merged'
+  | 'gone'
+  | 'declined';
 type ChangedFileStatus = 'added' | 'updated' | 'deleted';
 
 const activeLumineFixStateRequests = new Map<string, Promise<any>>();
@@ -128,12 +133,16 @@ interface BuildContributionSubmissionPayload {
 }
 
 export default function BuildContributionSubmission({
+  channelId,
   content,
+  messageId,
   submission,
   myId,
   sender
 }: {
+  channelId?: number;
   content: string;
+  messageId: number;
   submission?: BuildContributionSubmissionPayload | null;
   myId: number;
   sender: {
@@ -158,6 +167,12 @@ export default function BuildContributionSubmission({
   const applyBuildContributionLumineFix = useAppContext(
     (v) => v.requestHelpers.applyBuildContributionLumineFix
   );
+  const declineBuildOwnerSuggestion = useAppContext(
+    (v) => v.requestHelpers.declineBuildOwnerSuggestion
+  );
+  const onUpdateMessageSettings = useChatContext(
+    (v) => v.actions.onUpdateMessageSettings
+  );
   const onUpdateBuildContributionSubmissionState = useChatContext(
     (v) => v.actions.onUpdateBuildContributionSubmissionState
   );
@@ -166,6 +181,7 @@ export default function BuildContributionSubmission({
   const [actionLoading, setActionLoading] = useState('');
   const [actionError, setActionError] = useState('');
   const [confirmingReplace, setConfirmingReplace] = useState(false);
+  const [declined, setDeclined] = useState(false);
   const [lumineFixDetails, setLumineFixDetails] =
     useState<BuildContributionLumineFixDetails | null>(null);
   const [selectedLumineModel, setSelectedLumineModel] = useState('');
@@ -187,9 +203,10 @@ export default function BuildContributionSubmission({
       resolveBuildContributionSubmissionPayload({
         submission,
         cachedSubmissionState,
-        cachedReleaseState
+        cachedReleaseState,
+        declined
       }),
-    [submission, cachedSubmissionState, cachedReleaseState]
+    [submission, cachedSubmissionState, cachedReleaseState, declined]
   );
   const title = String(payload?.title || 'their project');
   const branchLabel = String(payload?.branchLabel || 'their branch');
@@ -373,6 +390,7 @@ export default function BuildContributionSubmission({
                     icon="code-branch"
                     shiny
                     loading={actionLoading === 'merge'}
+                    disabled={actionLoading === 'decline'}
                     onClick={handleMerge}
                   >
                     Merge
@@ -382,10 +400,22 @@ export default function BuildContributionSubmission({
                   variant="orange"
                   size="md"
                   icon="repeat"
+                  disabled={actionLoading === 'decline'}
                   onClick={() => setConfirmingReplace(true)}
                 >
                   Replace Main
                 </GameCTAButton>
+                {status === 'open' ? (
+                  <GameCTAButton
+                    variant="neutral"
+                    size="md"
+                    loading={actionLoading === 'decline'}
+                    disabled={actionLoading === 'merge'}
+                    onClick={handleDecline}
+                  >
+                    Decline
+                  </GameCTAButton>
+                ) : null}
               </>
             )
           ) : null}
@@ -461,6 +491,17 @@ export default function BuildContributionSubmission({
         </div>
       ) : null}
 
+      {status === 'declined' ? (
+        <div className={ownerLookClass}>
+          <Icon icon="times" />
+          <span>
+            {isOwner
+              ? 'You declined these updates.'
+              : 'The owner declined these updates.'}
+          </span>
+        </div>
+      ) : null}
+
       {status === 'gone' ? (
         <div className={ownerLookClass}>
           <Icon icon="times-circle" />
@@ -482,7 +523,7 @@ export default function BuildContributionSubmission({
         </div>
       ) : null}
 
-      {sentByMe && status !== 'merged' ? (
+      {sentByMe && status !== 'merged' && status !== 'declined' ? (
         <div className={ownerLookClass}>{renderOwnerLookSignal(payload)}</div>
       ) : null}
 
@@ -494,6 +535,7 @@ export default function BuildContributionSubmission({
       {isOwner &&
       status !== 'merged' &&
       status !== 'gone' &&
+      status !== 'declined' &&
       payload?.hasNewerWorkSinceSubmission ? (
         <div className={ownerLookClass}>
           <Icon icon="info-circle" />
@@ -586,6 +628,48 @@ export default function BuildContributionSubmission({
       applyCanonicalSubmissionState(result);
     } catch (error: any) {
       handleActionError(error, 'Failed to merge branch');
+    } finally {
+      setActionLoading('');
+    }
+  }
+
+  // Passing on these updates answers this card only: it settles as declined
+  // for both sides and leaves the owner's suggestions. The branch stays open,
+  // so the teammate can keep working and send it again as a new card.
+  async function handleDecline() {
+    if (actionLoading || release.publishing) return;
+    setActionLoading('decline');
+    setActionError('');
+    try {
+      const result = await declineBuildOwnerSuggestion({
+        buildId: rootBuildId,
+        contributionBuildId: branchBuildId,
+        suggestionMessageId: messageId
+      });
+      if (!result?.success) {
+        setActionError(result?.error || 'Failed to decline');
+        return;
+      }
+      setDeclined(true);
+      // keep it declined in the chat store too, so a remount (channel switch)
+      // before a reload doesn't bring the buttons back
+      if (channelId && submission) {
+        onUpdateMessageSettings({
+          channelId,
+          messageId,
+          settings: {
+            buildContributionSubmission: {
+              ...submission,
+              status: 'declined',
+              declinedAt: result?.declinedAt || Math.floor(Date.now() / 1000)
+            }
+          }
+        });
+      }
+    } catch (error: any) {
+      setActionError(
+        error?.response?.data?.error || error?.message || 'Failed to decline'
+      );
     } finally {
       setActionLoading('');
     }

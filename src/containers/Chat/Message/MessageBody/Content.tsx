@@ -220,6 +220,7 @@ export default function Content({
         />
       ) : rootType === 'buildThumbnailSuggestion' && rootId ? (
         <BuildThumbnailSuggestion
+          channelId={channelId}
           content={content}
           messageId={messageId}
           suggestion={parsedSettings?.buildThumbnailSuggestion}
@@ -232,6 +233,7 @@ export default function Content({
         />
       ) : rootType === 'buildTitleSuggestion' && rootId ? (
         <BuildTitleSuggestion
+          channelId={channelId}
           content={content}
           messageId={messageId}
           suggestion={parsedSettings?.buildTitleSuggestion}
@@ -244,7 +246,9 @@ export default function Content({
         />
       ) : rootType === 'buildContributionSubmission' && rootId ? (
         <BuildContributionSubmission
+          channelId={channelId}
           content={content}
+          messageId={messageId}
           submission={parsedSettings?.buildContributionSubmission}
           myId={myId}
           sender={{

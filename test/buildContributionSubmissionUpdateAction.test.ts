@@ -560,3 +560,64 @@ test('settled messages preserve canonical Update App status and removed branches
     'gone'
   );
 });
+
+test('a declined update card stays declined through branch events until its work is merged', () => {
+  const submission = {
+    status: 'declined',
+    createdAt: 200,
+    submittedAfterMergeId: 41,
+    eventTimeMs: 200_000
+  };
+  const reopened = resolveCanonicalBuildContributionSubmissionState({
+    contribution: { contributionStatus: 'draft' },
+    lumineFix: { status: 'waiting' },
+    eventTimeMs: 300_000
+  });
+  const repairing = resolveCanonicalBuildContributionSubmissionState({
+    current: reopened,
+    contribution: { contributionStatus: 'merging' },
+    eventTimeMs: 350_000
+  });
+  for (const cachedSubmissionState of [null, reopened, repairing]) {
+    const payload = resolveBuildContributionSubmissionPayload({
+      submission,
+      cachedSubmissionState
+    });
+    assert.equal(payload.status, 'declined');
+    assert.equal(payload.lumineFix, null);
+  }
+  // Declined in this tab before any reload: the local answer holds too.
+  assert.equal(
+    resolveBuildContributionSubmissionPayload({
+      submission: { ...submission, status: 'open' },
+      cachedSubmissionState: reopened,
+      declined: true
+    }).status,
+    'declined'
+  );
+  // The owner merged the branch later anyway: the work landed.
+  const merged = resolveCanonicalBuildContributionSubmissionState({
+    current: reopened,
+    contribution: {
+      contributionStatus: 'merged',
+      lastCompletedMerge: { id: 42, createdAt: 400 }
+    },
+    lumineFix: null,
+    eventTimeMs: 400_000
+  });
+  assert.equal(
+    resolveBuildContributionSubmissionPayload({
+      submission,
+      cachedSubmissionState: merged
+    }).status,
+    'merged'
+  );
+  // A newer submission from the same branch is its own open card.
+  assert.equal(
+    resolveBuildContributionSubmissionPayload({
+      submission: { ...submission, status: 'open', createdAt: 500 },
+      cachedSubmissionState: reopened
+    }).status,
+    'open'
+  );
+});

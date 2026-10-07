@@ -5,7 +5,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
 import { Color } from '~/constants/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 
 type BuildTitleSuggestionStatus = 'open' | 'applied' | 'declined' | 'gone';
 
@@ -33,12 +33,14 @@ const TITLE_ADOPTED_EVENT = 'twinkle:build-title-adopted';
 // from the server — on load through the hydrator, after "Use this name" from
 // the project row the endpoint read back.
 export default function BuildTitleSuggestion({
+  channelId,
   content,
   messageId,
   suggestion,
   myId,
   sender
 }: {
+  channelId?: number;
   content: string;
   messageId: number;
   suggestion?: BuildTitleSuggestionPayload | null;
@@ -55,6 +57,9 @@ export default function BuildTitleSuggestion({
   );
   const declineBuildOwnerSuggestion = useAppContext(
     (v) => v.requestHelpers.declineBuildOwnerSuggestion
+  );
+  const onUpdateMessageSettings = useChatContext(
+    (v) => v.actions.onUpdateMessageSettings
   );
   const [adoptedTitle, setAdoptedTitle] = useState('');
   const [declined, setDeclined] = useState(false);
@@ -213,6 +218,21 @@ export default function BuildTitleSuggestion({
         return;
       }
       setDeclined(true);
+      // keep it declined in the chat store too, so a remount (channel switch)
+      // before a reload doesn't bring the buttons back
+      if (channelId && suggestion) {
+        onUpdateMessageSettings({
+          channelId,
+          messageId,
+          settings: {
+            buildTitleSuggestion: {
+              ...suggestion,
+              status: 'declined',
+              declinedAt: result?.declinedAt || Math.floor(Date.now() / 1000)
+            }
+          }
+        });
+      }
     } catch (error: any) {
       setActionError(
         error?.response?.data?.error || error?.message || 'Failed to decline'

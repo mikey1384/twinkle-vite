@@ -28,12 +28,14 @@ interface BuildThumbnailSuggestionPayload {
 }
 
 export default function BuildThumbnailSuggestion({
+  channelId,
   content,
   messageId,
   suggestion,
   myId,
   sender
 }: {
+  channelId?: number;
   content: string;
   messageId: number;
   suggestion?: BuildThumbnailSuggestionPayload | null;
@@ -53,6 +55,9 @@ export default function BuildThumbnailSuggestion({
   );
   const declineBuildOwnerSuggestion = useAppContext(
     (v) => v.requestHelpers.declineBuildOwnerSuggestion
+  );
+  const onUpdateMessageSettings = useChatContext(
+    (v) => v.actions.onUpdateMessageSettings
   );
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
@@ -280,6 +285,21 @@ export default function BuildThumbnailSuggestion({
         return;
       }
       setDeclined(true);
+      // keep it declined in the chat store too, so a remount (channel switch)
+      // before a reload doesn't bring the buttons back
+      if (channelId && suggestion) {
+        onUpdateMessageSettings({
+          channelId,
+          messageId,
+          settings: {
+            buildThumbnailSuggestion: {
+              ...suggestion,
+              status: 'declined',
+              declinedAt: result?.declinedAt || Math.floor(Date.now() / 1000)
+            }
+          }
+        });
+      }
     } catch (error: any) {
       setActionError(
         error?.response?.data?.error || error?.message || 'Failed to decline'
