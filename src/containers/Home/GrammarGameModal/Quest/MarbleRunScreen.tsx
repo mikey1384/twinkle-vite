@@ -468,9 +468,14 @@ export default function MarbleRunScreen({
                             </button>
                           )}
                           <span className={nextNoteCls}>
-                            {answer.retry
-                              ? 'It comes back later in this run.'
-                              : 'That was the last try in this run.'}
+                            {/* an upheld challenge forgives the miss */}
+                            {answer.challenge?.upheld
+                              ? answer.retry
+                                ? "Upheld! This miss doesn't count; the fixed question comes back later."
+                                : "Upheld! This miss doesn't count."
+                              : answer.retry
+                                ? 'It comes back later in this run.'
+                                : 'That was the last try in this run.'}
                           </span>
                           <button
                             className={nextCls}
@@ -504,7 +509,14 @@ export default function MarbleRunScreen({
                 Object.entries(prev).map(([k, a]) => [
                   k,
                   a.challenge?.questionId === challengeId
-                    ? { ...a, challenge: { ...a.challenge, checked: true } }
+                    ? {
+                        ...a,
+                        challenge: {
+                          ...a.challenge,
+                          checked: true,
+                          upheld: justified
+                        }
+                      }
                     : a
                 ])
               )

@@ -37,6 +37,7 @@ export default function Result({
   const [listOpen, setListOpen] = useState(false);
   const [challengeId, setChallengeId] = useState<number | null>(null);
   const [checkedIds, setCheckedIds] = useState<number[]>([]);
+  const [upheldIds, setUpheldIds] = useState<number[]>([]);
   const challengeable = answers
     .filter((a) => a.challenge && !a.challenge.checked && a.questionText)
     .filter(
@@ -202,7 +203,15 @@ export default function Result({
               <div key={id} className={challengeItemCls}>
                 <span className={challengeTextCls}>{a.questionText}</span>
                 {done ? (
-                  <span className={checkedCls}>Checked</span>
+                  <span className={checkedCls}>
+                    {/* an upheld challenge forgives a stop's miss (the map's
+                        best grade is recomputed); a boss hit isn't regraded */}
+                    {!upheldIds.includes(id)
+                      ? 'Checked'
+                      : kind === 'stop'
+                        ? 'Upheld · miss forgiven'
+                        : 'Upheld'}
+                  </span>
                 ) : (
                   <button
                     className={challengeSmallCls}
@@ -238,7 +247,8 @@ export default function Result({
           onClose={() => setChallengeId(null)}
           onAfterSuccess={({ justified }) => {
             setCheckedIds((ids) => [...ids, challengeId]);
-            if (!justified) setChallengeId(null);
+            if (justified) setUpheldIds((ids) => [...ids, challengeId]);
+            else setChallengeId(null);
           }}
         />
       )}

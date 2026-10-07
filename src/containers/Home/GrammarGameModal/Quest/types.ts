@@ -61,7 +61,8 @@ export interface QuestAnswer {
   ruleCard?: ReviewRuleCard | null;
   // a miss (or a boss hit that took wrong clicks) can challenge its question
   // with Classic's Challenge; checked = already reviewed by one
-  challenge?: { questionId: number; checked: boolean } | null;
+  // upheld (client only): the challenge fixed the key and forgave the miss
+  challenge?: { questionId: number; checked: boolean; upheld?: boolean } | null;
   questionText?: string; // added on the client for the result's challenge list
   // a miss (or a boss hit that took wrong clicks): how long its explanation
   // holds Continue before the run moves on
