@@ -468,14 +468,17 @@ export default function MarbleRunScreen({
                             </button>
                           )}
                           <span className={nextNoteCls}>
-                            {/* an upheld challenge forgives the miss */}
-                            {answer.challenge?.upheld
-                              ? answer.retry
-                                ? "Upheld! This miss doesn't count; the fixed question comes back later."
-                                : "Upheld! This miss doesn't count."
-                              : answer.retry
-                                ? 'It comes back later in this run.'
-                                : 'That was the last try in this run.'}
+                            {/* an upheld challenge forgives a practice miss (nemesis misses stay) */}
+                            {answer.challenge?.upheld &&
+                            run.rules.mode !== 'practice'
+                              ? 'Upheld! The answer key is fixed.'
+                              : answer.challenge?.upheld
+                                ? answer.retry
+                                  ? "Upheld! This miss doesn't count; the fixed question comes back later."
+                                  : "Upheld! This miss doesn't count."
+                                : answer.retry
+                                  ? 'It comes back later in this run.'
+                                  : 'That was the last try in this run.'}
                           </span>
                           <button
                             className={nextCls}

@@ -211,7 +211,9 @@ export default function Result({
                       ? 'Checked'
                       : kind === 'stop'
                         ? 'Upheld · miss forgiven'
-                        : 'Upheld · free rematch on the map'}
+                        : boss
+                          ? 'Upheld · free rematch on the map'
+                          : 'Upheld'}
                   </span>
                 ) : (
                   <button
