@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { trackEvent } from '~/helpers/analytics';
+import { relayChatMessage } from '~/helpers/chatMessageSend';
 
 interface Props {
   channelId: number;
@@ -35,7 +36,6 @@ interface Props {
   thinkHardState: any;
   userIsUploader: boolean;
   userId: number;
-  level: number;
 }
 
 export default function useOptimisticSave({
@@ -62,8 +62,7 @@ export default function useOptimisticSave({
   targetSubject,
   thinkHardState,
   userIsUploader,
-  userId,
-  level
+  userId
 }: Props) {
   useEffect(() => {
     if (!message.id && hasChessBoardState) {
@@ -219,26 +218,17 @@ export default function useOptimisticSave({
         topicId: subjectId || 0,
         tempMessageId
       });
-      const messageToSendOverSocket = {
-        ...message,
-        uploaderLevel: level,
-        targetSubject: subjectId
-          ? targetSubject || currentChannel?.topicObj?.[subjectId]
-          : null,
-        id: messageId
-      };
-      delete messageToSendOverSocket.tempMessageId;
-      const channelData = {
-        id: currentChannel.id,
-        channelName: currentChannel.channelName,
-        members: currentChannel.members,
-        twoPeople: currentChannel.twoPeople,
-        pathId: currentChannel.pathId
-      };
       if (!post.isChessMsg) {
-        socket.emit('new_chat_message', {
-          message: messageToSendOverSocket,
-          channel: channelData
+        relayChatMessage({
+          socket,
+          messageId,
+          channelId: post.channelId,
+          onUndelivered: () =>
+            onSetMessageState({
+              channelId,
+              messageId,
+              newState: { relayUndelivered: true }
+            })
         });
       }
     }

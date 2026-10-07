@@ -1,13 +1,28 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import Textarea from '~/components/Texts/Textarea';
-import {
-  addEmoji,
-  exceedsCharLimit,
-  stringIsEmpty
-} from '~/helpers/stringHelpers';
+import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { chatComposerInputClass } from '../../../containers';
+import { css } from '@emotion/css';
+import { Color, borderRadius } from '~/constants/css';
+
+const lengthErrorClass = css`
+  position: absolute;
+  left: 0;
+  right: 1rem;
+  bottom: calc(100% + 0.5rem);
+  z-index: 2;
+  padding: 0.6rem 1rem;
+  border: 1px solid ${Color.red()};
+  border-radius: ${borderRadius};
+  background: #fff;
+  color: ${Color.red()};
+  font-size: 1.3rem;
+  font-weight: bold;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+`;
 
 const enterMessageLabel = 'Enter a message';
 const deviceIsMobileOS = isMobile(navigator);
@@ -29,7 +44,9 @@ export default function InputArea({
   partner,
   onSendMsg,
   onHeightChange,
-  onSetText
+  onSetText,
+  lengthError = null,
+  lengthNotice = lengthError
 }: {
   currentTopic: any;
   forcedDisabled?: boolean;
@@ -51,6 +68,9 @@ export default function InputArea({
   onSendMsg: () => any;
   onHeightChange: (v: number) => any;
   onSetText: (v: string) => any;
+  lengthError?: string | null;
+  // What the inline error shows; may also cover text sent from outside the box.
+  lengthNotice?: string | null;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const lastHeightRef = useRef(0);
@@ -87,13 +107,9 @@ export default function InputArea({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isExceedingCharLimit = useMemo(() => {
-    return !!exceedsCharLimit({
-      inputType: 'message',
-      contentType: 'chat',
-      text: inputText
-    });
-  }, [inputText]);
+  // The parent owns the length rule (characters and UTF-8 bytes) so the
+  // send button, Enter and the inline message agree.
+  const isExceedingCharLimit = !!lengthError;
 
   const inputDisabled = useMemo(() => {
     if (forcedDisabled) return true;
@@ -152,6 +168,10 @@ export default function InputArea({
         onKeyUp={handleKeyUp}
         onDrop={handleDrop}
         hasError={isExceedingCharLimit}
+        aria-invalid={isExceedingCharLimit || undefined}
+        aria-describedby={
+          isExceedingCharLimit ? 'chat-message-length-error' : undefined
+        }
         style={{
           width: 'auto',
           flexGrow: 1,
@@ -162,6 +182,13 @@ export default function InputArea({
               : '1rem'
         }}
       />
+      {lengthNotice && (
+        // Above the box, over the message list: the composer's height is a
+        // fixed budget in MessagesContainer, so a row below would be clipped.
+        <div id="chat-message-length-error" role="alert" className={lengthErrorClass}>
+          {lengthNotice}
+        </div>
+      )}
     </div>
   );
 

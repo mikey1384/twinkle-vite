@@ -1,4 +1,5 @@
 import { Color } from '~/constants/css';
+import { CHAT_MESSAGE_MAX_CHARS } from '~/constants/chatMessageLimits';
 
 // Build-time value from package.json (see vite.config.ts). The fallback only
 // applies outside a Vite build, e.g. node tests importing this module.
@@ -102,7 +103,7 @@ export const charLimit: {
     aiCard: 250,
     subject: 200,
     topic: 200,
-    message: 50000
+    message: CHAT_MESSAGE_MAX_CHARS
   },
   group: {
     description: 1000,

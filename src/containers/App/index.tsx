@@ -41,6 +41,7 @@ import { stripClientUpdateReloadParam } from '~/helpers/clientUpdate';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
+import { relayChatMessage } from '~/helpers/chatMessageSend';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import {
   clearAnalyticsUser,
@@ -475,6 +476,7 @@ export default function App() {
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
   const onSetChessTarget = useChatContext((v) => v.actions.onSetChessTarget);
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
+  const onSetMessageState = useChatContext((v) => v.actions.onSetMessageState);
   const onPostFileUploadStatus = useChatContext(
     (v) => v.actions.onPostFileUploadStatus
   );
@@ -1933,7 +1935,6 @@ export default function App() {
     filePath,
     fileToUpload,
     recipientId,
-    recipientUsername,
     targetMessageId,
     subchannelId,
     topicId,
@@ -2103,20 +2104,20 @@ export default function App() {
         isMyMessage: true
       });
     }
-    if (channelId) {
-      const channelData = {
-        id: channelId,
-        channelName: recipientUsername || currentChannel.channelName,
-        members: currentChannel.members,
-        twoPeople: currentChannel.twoPeople,
-        pathId: currentChannel.pathId
-      };
-      // No client-side flags on the relay payload: the socket server reloads
-      // the canonical message row and discards anything else. "New message"
-      // stamping happens on the receiving client in RECEIVE_MESSAGE.
-      socket.emit('new_chat_message', {
-        message,
-        channel: channelData
+    if (channelId && message?.id) {
+      // Ids only: the socket server reloads the canonical message row and
+      // discards anything else. "New message" stamping happens on the
+      // receiving client in RECEIVE_MESSAGE.
+      relayChatMessage({
+        socket,
+        messageId: message.id,
+        channelId: Number(message.channelId || channelId),
+        onUndelivered: () =>
+          onSetMessageState({
+            channelId: Number(message.channelId || channelId),
+            messageId: message.id,
+            newState: { relayUndelivered: true }
+          })
       });
     }
     if (channel) {

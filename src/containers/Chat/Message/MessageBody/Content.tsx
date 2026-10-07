@@ -512,6 +512,17 @@ export default function Content({
               Message failed to send. Copy it and try again.
             </div>
           )}
+          {message.relayUndelivered && !parsedSettings?.saveFailed && (
+            <div
+              className={css`
+                margin-top: 0.75rem;
+                color: var(--chat-muted-text, #64748b);
+                font-size: 1.2rem;
+              `}
+            >
+              Sent. Others in this chat may not see it until they reload.
+            </div>
+          )}
           {!isEditing &&
             isMenuButtonsAllowed &&
             !isDeleteOnlyBuildSuggestion &&

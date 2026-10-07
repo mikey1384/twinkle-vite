@@ -378,7 +378,6 @@ function MessageBody({
     hasOmokBoardState,
     index,
     isCallMsg,
-    level,
     message,
     onAiUsagePolicyUpdate,
     onOptimisticAiMessageSaveError,

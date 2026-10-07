@@ -17,11 +17,12 @@ import UploadFileModal from '~/components/Modals/UploadFileModal';
 import AlertModal from '~/components/Modals/AlertModal';
 import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
+import { stringIsEmpty, finalizeEmoji } from '~/helpers/stringHelpers';
 import {
-  stringIsEmpty,
-  finalizeEmoji,
-  exceedsCharLimit
-} from '~/helpers/stringHelpers';
+  appendRefusedCallMessage,
+  getChatMessageLengthError,
+  isIngressRejectedAck
+} from '~/helpers/chatMessageSend';
 import {
   mb,
   returnMaxUploadSize,
@@ -440,18 +441,20 @@ export default function MessageInput({
     isAIChannel
   ]);
 
-  const messageExceedsCharLimit = useMemo(() => {
-    const result = exceedsCharLimit({
-      inputType: 'message',
-      contentType: 'chat',
-      text: inputText
-    });
-    return result;
-  }, [inputText]);
+  const messageLengthError = useMemo(
+    () => getChatMessageLengthError(inputText),
+    [inputText]
+  );
 
-  const isExceedingCharLimit = useMemo(() => {
-    return !!messageExceedsCharLimit;
-  }, [messageExceedsCharLimit]);
+  const isExceedingCharLimit = !!messageLengthError;
+  // A suggestion tap sends text that is not in the box; its length error is
+  // shown the same way until the box changes.
+  const [overrideLengthError, setOverrideLengthError] = useState<
+    string | null
+  >(null);
+  useEffect(() => {
+    setOverrideLengthError(null);
+  }, [inputText, selectedChannelId]);
 
   const aiUsageBlocked = useMemo(() => {
     if (!isAIChannel) return false;
@@ -479,6 +482,15 @@ export default function MessageInput({
       if (loading) return;
       if (aiInputDisabled) return;
       if (stringIsEmpty(messageText)) return;
+      // Checked on the text being sent (a suggestion tap overrides the input),
+      // before either path: a voice call sends over the socket directly.
+      const sendLengthError = getChatMessageLengthError(messageText);
+      if (sendLengthError) {
+        if (typeof overrideText === 'string') {
+          setOverrideLengthError(sendLengthError);
+        }
+        return;
+      }
 
       if (isAICallOngoing) {
         // An AI voice call is a Zero/Ciel session — gate it on the aiChat ban
@@ -490,11 +502,53 @@ export default function MessageInput({
         }
 
         inputCoolingDown.current = true;
-        socket.emit('ai_call_message_submit', {
-          message: finalizeEmoji(messageText),
-          topicId: selectedTab === 'topic' ? topicId : undefined,
-          channelId: selectedChannelId
-        });
+        const callMessage = finalizeEmoji(messageText);
+        const callChannelId = selectedChannelId;
+        const callSubchannelId = subchannelId;
+        socket.emit(
+          'ai_call_message_submit',
+          {
+            message: callMessage,
+            topicId: selectedTab === 'topic' ? topicId : undefined,
+            channelId: selectedChannelId
+          },
+          (ack: any) => {
+            // Only a refusal answers this emit (the ingress guard, which then
+            // drops the connection). Give the text back instead of losing it.
+            if (!isIngressRejectedAck(ack)) return;
+            // Never drop text: add the refused message after whatever is in
+            // that chat's box now, in the chat (and subchannel) it was typed in.
+            const stillHere =
+              prevChannelId.current === callChannelId &&
+              prevSubchannelId.current === callSubchannelId;
+            if (stillHere) {
+              handleSetText(
+                appendRefusedCallMessage(textRef.current, callMessage)
+              );
+            } else {
+              const draftKey =
+                'chat' +
+                callChannelId +
+                (callSubchannelId ? `/${callSubchannelId}` : '');
+              onEnterComment({
+                contentType: 'chat',
+                contentId: callChannelId,
+                targetKey: callSubchannelId,
+                text: appendRefusedCallMessage(
+                  getInputStateValue(draftKey)?.text || '',
+                  callMessage
+                )
+              });
+            }
+            setAlertModalTitle('Message not sent');
+            setAlertModalContent(
+              stillHere
+                ? 'Your message could not be sent during the call. It is back in the message box so you can try again.'
+                : 'Your message could not be sent during the call. It was saved in the message box of the chat where you typed it.'
+            );
+            setAlertModalShown(true);
+          }
+        );
 
         startCoolingDown(500);
         handleSetText('');
@@ -814,6 +868,8 @@ export default function MessageInput({
           onSendMsg={handleSendMsg}
           onHeightChange={onHeightChange}
           onSetText={handleSetText}
+          lengthError={messageLengthError}
+          lengthNotice={messageLengthError || overrideLengthError}
         />
         {!aiInputDisabled && !textIsEmpty && isRightButtonsShown && (
           <div
