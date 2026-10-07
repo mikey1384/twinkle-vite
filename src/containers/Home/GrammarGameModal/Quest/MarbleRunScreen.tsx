@@ -586,6 +586,8 @@ export default function MarbleRunScreen({
 
   // the modal behind keeps its own Tab trap; keep focus on this layer
   function handleLayerKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    // the Challenge modal traps Tab itself
+    if (challengeOpenRef.current) return;
     if (e.key !== 'Tab') return;
     const items = Array.from(
       e.currentTarget.querySelectorAll<HTMLElement>(
