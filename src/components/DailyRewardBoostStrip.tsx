@@ -1,5 +1,5 @@
 import React from 'react';
-import { css, cx, keyframes } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import Icon from '~/components/Icon';
 import {
   Color,
@@ -52,7 +52,6 @@ export default function DailyRewardBoostStrip({
   focus = 'all',
   allowCompactToggle = false,
   hideCompactSummaryOnMobile = false,
-  arcade = false,
   style
 }: {
   streak: number;
@@ -63,14 +62,8 @@ export default function DailyRewardBoostStrip({
   focus?: Focus;
   allowCompactToggle?: boolean;
   hideCompactSummaryOnMobile?: boolean;
-  // Optional dark-glass neon look for Grammarbles Classic (full layout).
-  // Off by default: every other caller renders exactly as before.
-  arcade?: boolean;
   style?: React.CSSProperties;
 }) {
-  // returns the plain class untouched unless the arcade look is on
-  const withArcade = (base: string, over: string) =>
-    arcade ? cx(base, over) : base;
   const [showFormula, setShowFormula] = React.useState(false);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const {
@@ -133,7 +126,6 @@ export default function DailyRewardBoostStrip({
     ['--boost-strip-accent-strong' as const]: withAlpha(accentColor, 0.2),
     ['--boost-strip-heading-color' as const]: headerTextColor,
     ['--boost-strip-heading-shadow' as const]: headerTextShadow,
-    ...(arcade ? ARCADE_VARS : {}),
     ...(style || {})
   } as React.CSSProperties;
 
@@ -328,24 +320,21 @@ export default function DailyRewardBoostStrip({
     <ScopedTheme theme={themeName} roles={['sectionPanel', 'sectionPanelText']}>
       <section
         style={panelStyle}
-        className={withArcade(
-          css`
-            position: relative;
-            width: 100%;
-            padding: 1.4rem 1.6rem;
-            border-radius: 1.2rem;
-            background: var(--section-panel-bg, #fff);
-            border: 1px solid var(--section-panel-border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+        className={css`
+          position: relative;
+          width: 100%;
+          padding: 1.4rem 1.6rem;
+          border-radius: 1.2rem;
+          background: var(--section-panel-bg, #fff);
+          border: 1px solid var(--section-panel-border-color);
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
 
-            @media (max-width: ${mobileMaxWidth}) {
-              padding: 1.25rem 1.1rem;
-            }
-          `,
-          arcadeSectionCls
-        )}
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1.25rem 1.1rem;
+          }
+        `}
       >
         {allowCompactToggle && (
           <ViewModeButton
@@ -464,15 +453,12 @@ export default function DailyRewardBoostStrip({
             `}
           >
             <div
-              className={withArcade(
-                css`
-                  font-size: 1.15rem;
-                  color: ${Color.darkGray()};
-                  font-weight: 600;
-                  line-height: 1.5;
-                `,
-                arcadeTextCls
-              )}
+              className={css`
+                font-size: 1.15rem;
+                color: ${Color.darkGray()};
+                font-weight: 600;
+                line-height: 1.5;
+              `}
             >
               {summaryBlurb}
             </div>
@@ -487,32 +473,29 @@ export default function DailyRewardBoostStrip({
                 type="button"
                 aria-label="Show boost formula"
                 onClick={() => setShowFormula((prev) => !prev)}
-                className={withArcade(
-                  css`
-                    flex-shrink: 0;
-                    width: 2rem;
-                    height: 2rem;
-                    border-radius: 999px;
-                    border: 1px solid var(--boost-strip-accent-strong);
-                    background: rgba(255, 255, 255, 0.96);
-                    color: var(--boost-strip-accent);
-                    font-size: 1.1rem;
-                    font-weight: 800;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition:
-                      transform 120ms ease,
-                      border-color 120ms ease;
+                className={css`
+                  flex-shrink: 0;
+                  width: 2rem;
+                  height: 2rem;
+                  border-radius: 999px;
+                  border: 1px solid var(--boost-strip-accent-strong);
+                  background: rgba(255, 255, 255, 0.96);
+                  color: var(--boost-strip-accent);
+                  font-size: 1.1rem;
+                  font-weight: 800;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  transition:
+                    transform 120ms ease,
+                    border-color 120ms ease;
 
-                    &:hover {
-                      transform: translateY(-1px);
-                      border-color: var(--boost-strip-accent);
-                    }
-                  `,
-                  arcadeNoteButtonCls
-                )}
+                  &:hover {
+                    transform: translateY(-1px);
+                    border-color: var(--boost-strip-accent);
+                  }
+                `}
               >
                 !
               </button>
@@ -520,18 +503,15 @@ export default function DailyRewardBoostStrip({
           </div>
           {showFormula && (
             <div
-              className={withArcade(
-                css`
-                  padding: 0.85rem 0.95rem;
-                  border-radius: 0.9rem;
-                  background: rgba(255, 255, 255, 0.96);
-                  border: 1px solid var(--section-panel-border-color);
-                  font-size: 1.1rem;
-                  line-height: 1.5;
-                  color: ${Color.darkGray()};
-                `,
-                arcadeFormulaCls
-              )}
+              className={css`
+                padding: 0.85rem 0.95rem;
+                border-radius: 0.9rem;
+                background: rgba(255, 255, 255, 0.96);
+                border: 1px solid var(--section-panel-border-color);
+                font-size: 1.1rem;
+                line-height: 1.5;
+                color: ${Color.darkGray()};
+              `}
             >
               {`Streak days 0-10 use x2 for Basic and x2 for Excellence. Days 11-20 use x3 for both. Days 21-30 use x4 for both. Every extra 10 streak days adds +1 to both ladders, capped at x10 each. If you hit both conditions ${rewardTimeframe}, your current streak can take the reward as high as x${formatMultiplier(
                 potentialMultiplier
@@ -547,12 +527,7 @@ export default function DailyRewardBoostStrip({
           `}
         >
           {rows.map((row) => (
-            <BoostGuideRow
-              key={row.label}
-              focus={focus}
-              row={row}
-              arcade={arcade}
-            />
+            <BoostGuideRow key={row.label} focus={focus} row={row} />
           ))}
         </div>
       </section>
@@ -812,17 +787,7 @@ function getCompactStatusAriaLabel(row: BoostRow) {
   return `${row.label} not completed yet`;
 }
 
-function BoostGuideRow({
-  row,
-  focus,
-  arcade = false
-}: {
-  row: BoostRow;
-  focus: Focus;
-  arcade?: boolean;
-}) {
-  const withArcade = (base: string, over: string) =>
-    arcade ? cx(base, over) : base;
+function BoostGuideRow({ row, focus }: { row: BoostRow; focus: Focus }) {
   const isFocused = focus !== 'all';
   const showCleared = row.basicAchieved && row.excellenceAchieved;
   const showPartial = row.basicAchieved && !row.excellenceAchieved;
@@ -834,25 +799,22 @@ function BoostGuideRow({
 
   return (
     <div
-      className={withArcade(
-        css`
-          display: flex;
-          justify-content: space-between;
-          gap: 1rem;
-          align-items: center;
-          padding: 0.75rem 0.9rem;
-          margin: -0.15rem -0.2rem;
-          border-radius: 0.9rem;
-          background: ${Color.white()};
-          border: 1px solid ${frameColor};
-          border-left: 3px solid ${borderColor};
+      className={css`
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: center;
+        padding: 0.75rem 0.9rem;
+        margin: -0.15rem -0.2rem;
+        border-radius: 0.9rem;
+        background: ${Color.white()};
+        border: 1px solid ${frameColor};
+        border-left: 3px solid ${borderColor};
 
-          @media (max-width: ${mobileMaxWidth}) {
-            align-items: center;
-          }
-        `,
-        arcadeRowCls
-      )}
+        @media (max-width: ${mobileMaxWidth}) {
+          align-items: center;
+        }
+      `}
     >
       <div
         className={css`
@@ -864,23 +826,15 @@ function BoostGuideRow({
         `}
       >
         <div
-          className={withArcade(
-            css`
-              padding: 0.35rem 0.9rem;
-              border-radius: 999px;
-              background: ${getToneColor(row.tone, 0.12)};
-              color: ${getToneColor(row.tone)};
-              font-size: 1.1rem;
-              font-weight: 800;
-              white-space: nowrap;
-            `,
-            css`
-              background: ${getToneColor(row.tone, 0.16)};
-              border: 1px solid ${getToneColor(row.tone, 0.8)};
-              box-shadow: 0 0 10px ${getToneColor(row.tone, 0.45)};
-              text-shadow: 0 0 6px ${getToneColor(row.tone, 0.6)};
-            `
-          )}
+          className={css`
+            padding: 0.35rem 0.9rem;
+            border-radius: 999px;
+            background: ${getToneColor(row.tone, 0.12)};
+            color: ${getToneColor(row.tone)};
+            font-size: 1.1rem;
+            font-weight: 800;
+            white-space: nowrap;
+          `}
         >
           {row.label}
         </div>
@@ -892,30 +846,20 @@ function BoostGuideRow({
           `}
         >
           <div
-            className={withArcade(
-              css`
-                font-size: 1.3rem;
-                font-weight: 700;
-                color: ${Color.darkerGray()};
-              `,
-              css`
-                color: ${ARCADE.ink};
-              `
-            )}
+            className={css`
+              font-size: 1.3rem;
+              font-weight: 700;
+              color: ${Color.darkerGray()};
+            `}
           >
             {row.title}
           </div>
           <div
-            className={withArcade(
-              css`
-                font-size: 1.18rem;
-                color: ${Color.gray()};
-                line-height: 1.45;
-              `,
-              css`
-                color: ${ARCADE.inkSoft};
-              `
-            )}
+            className={css`
+              font-size: 1.18rem;
+              color: ${Color.gray()};
+              line-height: 1.45;
+            `}
           >
             {row.isLoading ? (
               <span
@@ -959,16 +903,8 @@ function BoostGuideRow({
           }
         `}
       >
-        <ProgressPill
-          achieved={row.basicAchieved}
-          variant="basic"
-          arcade={arcade}
-        />
-        <ProgressPill
-          achieved={row.excellenceAchieved}
-          variant="excellence"
-          arcade={arcade}
-        />
+        <ProgressPill achieved={row.basicAchieved} variant="basic" />
+        <ProgressPill achieved={row.excellenceAchieved} variant="excellence" />
       </div>
     </div>
   );
@@ -976,58 +912,34 @@ function BoostGuideRow({
 
 function ProgressPill({
   achieved,
-  variant,
-  arcade = false
+  variant
 }: {
   achieved: boolean;
   variant: 'basic' | 'excellence';
-  arcade?: boolean;
 }) {
   const isExcellence = variant === 'excellence';
   const label = isExcellence ? 'Excellence' : 'Basic';
   const color = isExcellence ? Color.gold() : Color.green();
   const icon = isExcellence ? 'star' : 'check';
 
-  const baseCls = css`
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.38rem 0.72rem;
-    border-radius: 999px;
-    border: 1px solid
-      ${achieved ? withAlpha(color, 0.48) : withAlpha(color, 0.32)};
-    background: ${achieved ? withAlpha(color, 0.1) : Color.white()};
-    color: ${achieved ? color : Color.darkGray()};
-    font-size: 1.1rem;
-    font-weight: 700;
-    white-space: nowrap;
-    box-shadow: inset 0 0 0 1px
-      ${achieved ? withAlpha(color, 0.08) : withAlpha(color, 0.04)};
-  `;
   return (
     <div
-      className={
-        arcade
-          ? cx(
-              baseCls,
-              css`
-                background: ${
-                  achieved ? withAlpha(color, 0.18) : 'rgba(10, 12, 46, 0.7)'
-                };
-                border-color: ${
-                  achieved ? withAlpha(color, 0.9) : withAlpha(color, 0.45)
-                };
-                color: ${achieved ? color : ARCADE.inkSoft};
-                box-shadow: ${
-                  achieved ? `0 0 10px ${withAlpha(color, 0.5)}` : 'none'
-                };
-                text-shadow: ${
-                  achieved ? `0 0 6px ${withAlpha(color, 0.6)}` : 'none'
-                };
-              `
-            )
-          : baseCls
-      }
+      className={css`
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.38rem 0.72rem;
+        border-radius: 999px;
+        border: 1px solid
+          ${achieved ? withAlpha(color, 0.48) : withAlpha(color, 0.32)};
+        background: ${achieved ? withAlpha(color, 0.1) : Color.white()};
+        color: ${achieved ? color : Color.darkGray()};
+        font-size: 1.1rem;
+        font-weight: 700;
+        white-space: nowrap;
+        box-shadow: inset 0 0 0 1px
+          ${achieved ? withAlpha(color, 0.08) : withAlpha(color, 0.04)};
+      `}
     >
       <Icon
         icon={icon}
@@ -1334,59 +1246,3 @@ export function getBoostStreakMultiplier(streak: any) {
 function formatMultiplier(value: number) {
   return `${Number(value.toFixed(2))}`;
 }
-
-// ---- the optional arcade look (Grammarbles Classic's neon theme)
-const ARCADE = {
-  cyan: '#4ff3ff',
-  cyanRgb: '79, 243, 255',
-  ink: '#eef1ff',
-  inkSoft: '#b9c2ee'
-};
-
-// Accent variables the panel's pieces already read, recoloured neon cyan.
-const ARCADE_VARS = {
-  '--boost-strip-accent': ARCADE.cyan,
-  '--boost-strip-accent-soft': `rgba(${ARCADE.cyanRgb}, 0.07)`,
-  '--boost-strip-accent-muted': `rgba(${ARCADE.cyanRgb}, 0.14)`,
-  '--boost-strip-accent-strong': `rgba(${ARCADE.cyanRgb}, 0.35)`,
-  '--boost-strip-heading-color': ARCADE.cyan,
-  '--boost-strip-heading-shadow': `0 0 8px rgba(${ARCADE.cyanRgb}, 0.7)`,
-  '--section-panel-border-color': `rgba(${ARCADE.cyanRgb}, 0.35)`
-} as React.CSSProperties;
-
-const arcadeSectionCls = css`
-  color: ${ARCADE.ink};
-  background: linear-gradient(
-    180deg,
-    rgba(20, 26, 84, 0.82) 0%,
-    rgba(10, 12, 48, 0.9) 100%
-  );
-  border: 2px solid rgba(${ARCADE.cyanRgb}, 0.55);
-  box-shadow:
-    0 0 18px rgba(${ARCADE.cyanRgb}, 0.25),
-    inset 0 0 24px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-`;
-
-const arcadeTextCls = css`
-  color: ${ARCADE.inkSoft};
-`;
-
-const arcadeNoteButtonCls = css`
-  width: 2.6rem;
-  height: 2.6rem;
-  background: rgba(10, 12, 46, 0.85);
-  border-color: rgba(${ARCADE.cyanRgb}, 0.7);
-  color: ${ARCADE.cyan};
-  box-shadow: 0 0 10px rgba(${ARCADE.cyanRgb}, 0.4);
-  text-shadow: 0 0 6px rgba(${ARCADE.cyanRgb}, 0.8);
-`;
-
-const arcadeFormulaCls = css`
-  background: rgba(8, 10, 40, 0.75);
-  color: ${ARCADE.inkSoft};
-`;
-
-const arcadeRowCls = css`
-  background: rgba(10, 12, 46, 0.6);
-`;

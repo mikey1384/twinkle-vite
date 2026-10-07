@@ -48,6 +48,17 @@ export default function GrammarQuest() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
 
+  // DEV ONLY (compiled out of production): the Fit Lab's sample result
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    import('./MarbleRun/lab/fitPreview').then((m) => {
+      if (m.fitPreviewParam() !== 'quest-result') return;
+      setRun(m.PREVIEW_QUEST_RUN as any);
+      setResult(m.PREVIEW_QUEST_RESULT as any);
+      setResultAnswers(m.PREVIEW_QUEST_ANSWERS as any);
+    });
+  }, []);
+
   useEffect(() => {
     refresh(true);
     // fetch the engine while the map is up, so a run starts at once
@@ -252,13 +263,20 @@ const resumeCls = css`
   font-size: 1.4rem;
   font-weight: 800;
   text-shadow: 1px 1px 0 #1a1426;
+  @media (max-height: 520px) and (orientation: landscape) {
+    flex: none;
+    min-height: 3.4rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
 `;
 const footnoteCls = css`
   ${frame(PARCHMENT, 2)}
   flex: none;
   margin-top: 1rem;
   /* phones: one screen has no room; the stop panel and results say it */
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${mobileMaxWidth}),
+    (max-height: 520px) and (orientation: landscape) {
     display: none;
   }
   padding: 0.4rem 0.8rem;

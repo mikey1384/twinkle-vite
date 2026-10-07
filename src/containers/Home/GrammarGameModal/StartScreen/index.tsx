@@ -3,20 +3,16 @@ import NextDayCountdown from '~/components/NextDayCountdown';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Marble from '../Marble';
 import TodayResult from './TodayResult';
-import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
+import DailyGoals from '../DailyGoals';
 import {
   useAppContext,
   useHomeContext,
   useKeyContext,
   useNotiContext
 } from '~/contexts';
-import {
-  buildTodayStatsPatchFromDailyTaskStatus,
-  getDailyRewardPreviewStreak,
-  isMobile
-} from '~/helpers';
+import { buildTodayStatsPatchFromDailyTaskStatus, isMobile } from '~/helpers';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import {
   scoreTable,
   perfectScoreBonus,
@@ -65,9 +61,6 @@ export default function StartScreen({
   );
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
-  );
-  const dailyRewardPreviewStreak = useNotiContext((v) =>
-    getDailyRewardPreviewStreak(v.state.todayStats)
   );
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
@@ -245,22 +238,10 @@ export default function StartScreen({
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
-      <div
-        className={css`
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 2.5rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            padding: 1.5rem 0.75rem;
-          }
-        `}
-      >
-        <div
-          className={css`
-            max-width: 100%;
-          `}
-        >
+      {/* one screen (Mikey 10-07): wide screens put the logo and the start
+          button beside the level board; phones stack logo, board, button */}
+      <div className={startRootCls}>
+        <div className={topCls}>
           <div
             className={css`
               display: flex;
@@ -273,9 +254,13 @@ export default function StartScreen({
               draggable={false}
               className={css`
                 display: block;
-                width: 44rem;
+                width: auto;
                 max-width: 100%;
-                height: auto;
+                /* sized by the screen's height so the board always fits */
+                height: clamp(6rem, 17vh, 15rem);
+                @media (max-width: 900px), (max-height: 520px) {
+                  height: clamp(4rem, 9vh, 8rem);
+                }
                 /* the crop keeps the cover's sky around it; fade it out */
                 -webkit-mask-image:
                   linear-gradient(
@@ -329,311 +314,299 @@ export default function StartScreen({
               {showHowToPlay ? 'Go Back' : 'How to Play'}
             </NeonButton>
           </div>
-          <div
-            style={{ marginTop: '3rem', lineHeight: 1.7, textAlign: 'center' }}
-          >
-            {showHowToPlay ? (
-              <div style={{ fontFamily: funFont }}>
-                <p>Answer 10 fill-in-the-blank grammar questions.</p>
+        </div>
+        <div className={boardCls}>
+          {showHowToPlay ? (
+            <div style={{ fontFamily: funFont }}>
+              <p>Answer 10 fill-in-the-blank grammar questions.</p>
+              <p style={{ marginTop: '1rem' }}>
+                The <b style={{ color: '#ff8a65' }}>faster</b> you select the
+                correct choice, the more <b style={{ color: NEON.gold }}>XP</b>{' '}
+                you earn.
+              </p>
+              {!deviceIsMobile && (
                 <p style={{ marginTop: '1rem' }}>
-                  The <b style={{ color: '#ff8a65' }}>faster</b> you select the
-                  correct choice, the more{' '}
-                  <b style={{ color: NEON.gold }}>XP</b> you earn.
+                  You can use the <b>1, 2, 3, 4 keys</b> on your <b>keyboard</b>{' '}
+                  or use your mouse to select the choices
                 </p>
-                {!deviceIsMobile && (
-                  <p style={{ marginTop: '1rem' }}>
-                    You can use the <b>1, 2, 3, 4 keys</b> on your{' '}
-                    <b>keyboard</b> or use your mouse to select the choices
-                  </p>
-                )}
-                <div style={{ marginTop: '2rem' }}>
+              )}
+              <div style={{ marginTop: '2rem' }}>
+                <div>
+                  <Marble letterGrade="S" />{' '}
+                  <XPValue
+                    amount={scoreTable.S}
+                    xpLabelColor={xpLabelColor}
+                    xpNumberColor={xpNumberColor}
+                  />
+                  <Marble style={{ marginLeft: '1.5rem' }} letterGrade="A" />{' '}
+                  <XPValue
+                    amount={scoreTable.A}
+                    xpLabelColor={xpLabelColor}
+                    xpNumberColor={xpNumberColor}
+                  />
+                  <Marble style={{ marginLeft: '1.5rem' }} letterGrade="B" />{' '}
+                  <XPValue
+                    amount={scoreTable.B}
+                    xpLabelColor={xpLabelColor}
+                    xpNumberColor={xpNumberColor}
+                  />
+                </div>
+                <div style={{ marginTop: '1rem' }}>
+                  <Marble letterGrade="C" />{' '}
+                  <XPValue
+                    amount={scoreTable.C}
+                    xpLabelColor={xpLabelColor}
+                    xpNumberColor={xpNumberColor}
+                  />
+                  <Marble style={{ marginLeft: '1.5rem' }} letterGrade="D" />{' '}
+                  <XPValue
+                    amount={scoreTable.D}
+                    xpLabelColor={xpLabelColor}
+                    xpNumberColor={xpNumberColor}
+                  />
+                  <Marble style={{ marginLeft: '1.5rem' }} letterGrade="F" />{' '}
+                  <XPValue
+                    amount={scoreTable.F}
+                    xpLabelColor={xpLabelColor}
+                    xpNumberColor={xpNumberColor}
+                  />
+                </div>
+                <div style={{ marginTop: '1rem' }}>
+                  Perfect score bonus:{' '}
+                  <b style={{ color: NEON.violet }}>x{perfectScoreBonus}</b>{' '}
+                  (each game)
+                </div>
+                <div style={{ marginTop: '0.5rem' }}>
+                  Clear all 5 levels bonus:{' '}
+                  <b style={{ color: NEON.cyan }}>
+                    x{fullClearBonusMultiplier}
+                  </b>
+                </div>
+                <div style={{ marginTop: '0.5rem' }}>
+                  All 5 levels perfect bonus:{' '}
+                  <b style={{ color: NEON.gold }}>
+                    x{allPerfectBonusMultiplier}
+                  </b>
+                </div>
+                <div
+                  style={{
+                    marginTop: '0.75rem',
+                    fontSize: '1.3rem',
+                    lineHeight: 1.5
+                  }}
+                >
                   <div>
-                    <Marble letterGrade="S" />{' '}
+                    <span>Daily clear: </span>
                     <XPValue
-                      amount={scoreTable.S}
+                      amount={100}
                       xpLabelColor={xpLabelColor}
                       xpNumberColor={xpNumberColor}
-                    />
-                    <Marble style={{ marginLeft: '1.5rem' }} letterGrade="A" />{' '}
+                    />{' '}
+                    × 10 (questions){' '}
+                    <b
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'baseline',
+                        fontWeight: 800,
+                        color: NEON.violet
+                      }}
+                    >
+                      <span>×</span>
+                      <span style={{ marginLeft: '0.35rem' }}>
+                        {perfectScoreBonus}
+                      </span>
+                    </b>{' '}
+                    × <span>5 (levels)</span> ={' '}
                     <XPValue
-                      amount={scoreTable.A}
-                      xpLabelColor={xpLabelColor}
-                      xpNumberColor={xpNumberColor}
-                    />
-                    <Marble style={{ marginLeft: '1.5rem' }} letterGrade="B" />{' '}
-                    <XPValue
-                      amount={scoreTable.B}
-                      xpLabelColor={xpLabelColor}
-                      xpNumberColor={xpNumberColor}
-                    />
-                  </div>
-                  <div style={{ marginTop: '1rem' }}>
-                    <Marble letterGrade="C" />{' '}
-                    <XPValue
-                      amount={scoreTable.C}
-                      xpLabelColor={xpLabelColor}
-                      xpNumberColor={xpNumberColor}
-                    />
-                    <Marble style={{ marginLeft: '1.5rem' }} letterGrade="D" />{' '}
-                    <XPValue
-                      amount={scoreTable.D}
-                      xpLabelColor={xpLabelColor}
-                      xpNumberColor={xpNumberColor}
-                    />
-                    <Marble style={{ marginLeft: '1.5rem' }} letterGrade="F" />{' '}
-                    <XPValue
-                      amount={scoreTable.F}
+                      amount="50,000"
                       xpLabelColor={xpLabelColor}
                       xpNumberColor={xpNumberColor}
                     />
                   </div>
-                  <div style={{ marginTop: '1rem' }}>
-                    Perfect score bonus:{' '}
-                    <b style={{ color: NEON.violet }}>x{perfectScoreBonus}</b>{' '}
-                    (each game)
+                  <div style={{ marginTop: '0.4rem' }}>
+                    <span>All five levels clear bonus: </span>
+                    <XPValue
+                      amount="50,000"
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />{' '}
+                    <span style={{ color: NEON.cyan, fontWeight: 700 }}>
+                      × {fullClearBonusMultiplier}
+                    </span>{' '}
+                    ={' '}
+                    <XPValue
+                      amount="250,000"
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />
                   </div>
-                  <div style={{ marginTop: '0.5rem' }}>
-                    Clear all 5 levels bonus:{' '}
-                    <b style={{ color: NEON.cyan }}>
-                      x{fullClearBonusMultiplier}
-                    </b>
-                  </div>
-                  <div style={{ marginTop: '0.5rem' }}>
-                    All 5 levels perfect bonus:{' '}
-                    <b style={{ color: NEON.gold }}>
-                      x{allPerfectBonusMultiplier}
-                    </b>
-                  </div>
-                  <div
-                    style={{
-                      marginTop: '0.75rem',
-                      fontSize: '1.3rem',
-                      lineHeight: 1.5
-                    }}
-                  >
-                    <div>
-                      <span>Daily clear: </span>
-                      <XPValue
-                        amount={100}
-                        xpLabelColor={xpLabelColor}
-                        xpNumberColor={xpNumberColor}
-                      />{' '}
-                      × 10 (questions){' '}
-                      <b
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'baseline',
-                          fontWeight: 800,
-                          color: NEON.violet
-                        }}
-                      >
-                        <span>×</span>
-                        <span style={{ marginLeft: '0.35rem' }}>
-                          {perfectScoreBonus}
-                        </span>
-                      </b>{' '}
-                      × <span>5 (levels)</span> ={' '}
-                      <XPValue
-                        amount="50,000"
-                        xpLabelColor={xpLabelColor}
-                        xpNumberColor={xpNumberColor}
-                      />
-                    </div>
-                    <div style={{ marginTop: '0.4rem' }}>
-                      <span>All five levels clear bonus: </span>
-                      <XPValue
-                        amount="50,000"
-                        xpLabelColor={xpLabelColor}
-                        xpNumberColor={xpNumberColor}
-                      />{' '}
-                      <span style={{ color: NEON.cyan, fontWeight: 700 }}>
-                        × {fullClearBonusMultiplier}
-                      </span>{' '}
-                      ={' '}
-                      <XPValue
-                        amount="250,000"
-                        xpLabelColor={xpLabelColor}
-                        xpNumberColor={xpNumberColor}
-                      />
-                    </div>
-                    <div style={{ marginTop: '0.4rem' }}>
-                      <span>All five perfect: </span>
-                      <XPValue
-                        amount="250,000"
-                        xpLabelColor={xpLabelColor}
-                        xpNumberColor={xpNumberColor}
-                      />{' '}
-                      <span style={{ color: NEON.gold, fontWeight: 700 }}>
-                        × {allPerfectBonusMultiplier}
-                      </span>{' '}
-                      ={' '}
-                      <XPValue
-                        amount="5,000,000"
-                        xpLabelColor={xpLabelColor}
-                        xpNumberColor={xpNumberColor}
-                      />
-                    </div>
+                  <div style={{ marginTop: '0.4rem' }}>
+                    <span>All five perfect: </span>
+                    <XPValue
+                      amount="250,000"
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />{' '}
+                    <span style={{ color: NEON.gold, fontWeight: 700 }}>
+                      × {allPerfectBonusMultiplier}
+                    </span>{' '}
+                    ={' '}
+                    <XPValue
+                      amount="5,000,000"
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />
                   </div>
                 </div>
               </div>
-            ) : (
-              <TodayResult results={results || []} />
-            )}
-          </div>
+            </div>
+          ) : (
+            <TodayResult results={results || []} />
+          )}
         </div>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center'
-          }}
-        >
-          <DailyRewardBoostStrip
-            focus="grammarbles"
-            arcade
-            streak={dailyRewardPreviewStreak}
-            grammarbles={dailyTask}
-            loadingStates={{ grammarbles: !loaded }}
-            style={{ marginTop: '2rem', maxWidth: '46rem' }}
-          />
-        </div>
-        {loaded && (
-          <div
-            className={css`
-              margin-top: 2rem;
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              padding: 0.7rem 1.1rem;
-              border-radius: 9999px;
-              font-family: ${PIXEL_FONT};
-              font-size: 1rem;
-              line-height: 1.5;
-              text-align: center;
-              color: ${badgeColors.text};
-              background: ${badgeColors.bg};
-              border: 2px solid ${badgeColors.border};
-              box-shadow:
-                0 3px 0 ${badgeColors.shadow},
-                0 0 14px ${badgeColors.bg};
-            `}
-          >
-            {levelsCleared}/5 levels cleared today
-          </div>
-        )}
-        {!readyToBegin ? (
-          <div style={{ marginTop: '2rem' }}>
-            <GameCTAButton
-              icon={isGameConcluded ? 'clock' : 'play'}
-              onClick={handleStartClick}
-              disabled={!userId || isGameConcluded || loading}
-              loading={loading}
-              variant={startVariant}
-              size="xl"
-              shiny
-              arcade
-            >
-              {isGameConcluded ? (
-                nextDayTimeStamp ? (
-                  <span>
-                    Next game in{' '}
-                    <NextDayCountdown
-                      inline
-                      nextDayTimeStamp={nextDayTimeStamp}
-                    />
-                  </span>
-                ) : (
-                  'Try again later'
-                )
-              ) : userId ? (
-                `Start Level ${currentLevel}`
-              ) : (
-                'Log in to play'
-              )}
-            </GameCTAButton>
-          </div>
-        ) : null}
-        {grammarLoadingStatus ? (
-          <div
-            className={css`
-              margin-top: 1.2rem;
-              font-family: ${PIXEL_FONT};
-              font-size: 1rem;
-              line-height: 1.7;
-              text-align: center;
-              min-height: 2rem;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            `}
-            style={{
-              color: /limit|error|fail/i.test(grammarLoadingStatus)
-                ? NEON.red
-                : NEON.cyan,
-              textShadow: `0 0 8px ${
-                /limit|error|fail/i.test(grammarLoadingStatus)
-                  ? rgba(NEON.redRgb, 0.6)
-                  : rgba(NEON.cyanRgb, 0.6)
-              }`
-            }}
-            aria-live="polite"
-          >
-            {grammarLoadingStatus}
-          </div>
-        ) : grammarGenerationProgress ? (
-          <div
-            className={css`
-              width: 100%;
-              display: flex;
-              justify-content: center;
-              margin-top: 1rem;
-              min-height: 2rem;
-            `}
-          >
+        <div className={actionsCls}>
+          {/* Grammarbles' own Basic / Excellence board: Classic or Quest */}
+          <DailyGoals look="classic" status={dailyTask} />
+          {loaded && (
             <div
               className={css`
-                width: 60%;
-                max-width: 420px;
-                height: 10px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.7rem 1.1rem;
+                /* phones: the level board already shows today's clears */
+                @media (max-width: 900px), (max-height: 520px) {
+                  display: none;
+                }
                 border-radius: 9999px;
-                background: rgba(8, 10, 40, 0.8);
-                border: 1px solid ${rgba(NEON.cyanRgb, 0.45)};
-                box-shadow: 0 0 10px ${rgba(NEON.cyanRgb, 0.3)};
-                overflow: hidden;
+                font-family: ${PIXEL_FONT};
+                font-size: 1rem;
+                line-height: 1.5;
+                text-align: center;
+                color: ${badgeColors.text};
+                background: ${badgeColors.bg};
+                border: 2px solid ${badgeColors.border};
+                box-shadow:
+                  0 3px 0 ${badgeColors.shadow},
+                  0 0 14px ${badgeColors.bg};
               `}
-              aria-label="Question generation progress"
+            >
+              {levelsCleared}/5 levels cleared today
+            </div>
+          )}
+          {!readyToBegin ? (
+            <div>
+              <GameCTAButton
+                icon={isGameConcluded ? 'clock' : 'play'}
+                onClick={handleStartClick}
+                disabled={!userId || isGameConcluded || loading}
+                loading={loading}
+                variant={startVariant}
+                size="xl"
+                shiny
+                arcade
+              >
+                {isGameConcluded ? (
+                  nextDayTimeStamp ? (
+                    <span>
+                      Next game in{' '}
+                      <NextDayCountdown
+                        inline
+                        nextDayTimeStamp={nextDayTimeStamp}
+                      />
+                    </span>
+                  ) : (
+                    'Try again later'
+                  )
+                ) : userId ? (
+                  `Start Level ${currentLevel}`
+                ) : (
+                  'Log in to play'
+                )}
+              </GameCTAButton>
+            </div>
+          ) : null}
+          {grammarLoadingStatus ? (
+            <div
+              className={css`
+                margin-top: 1.2rem;
+                font-family: ${PIXEL_FONT};
+                font-size: 1rem;
+                line-height: 1.7;
+                text-align: center;
+                min-height: 2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              `}
+              style={{
+                color: /limit|error|fail/i.test(grammarLoadingStatus)
+                  ? NEON.red
+                  : NEON.cyan,
+                textShadow: `0 0 8px ${
+                  /limit|error|fail/i.test(grammarLoadingStatus)
+                    ? rgba(NEON.redRgb, 0.6)
+                    : rgba(NEON.cyanRgb, 0.6)
+                }`
+              }}
+              aria-live="polite"
+            >
+              {grammarLoadingStatus}
+            </div>
+          ) : grammarGenerationProgress ? (
+            <div
+              className={css`
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                margin-top: 1rem;
+                min-height: 2rem;
+              `}
             >
               <div
                 className={css`
-                  height: 100%;
-                  transition: width 250ms ease;
-                  background: linear-gradient(
-                    90deg,
-                    ${NEON.violet} 0%,
-                    ${NEON.cyan} 100%
-                  );
-                  box-shadow: 0 0 8px ${NEON.cyan};
+                  width: 60%;
+                  max-width: 420px;
+                  height: 10px;
+                  border-radius: 9999px;
+                  background: rgba(8, 10, 40, 0.8);
+                  border: 1px solid ${rgba(NEON.cyanRgb, 0.45)};
+                  box-shadow: 0 0 10px ${rgba(NEON.cyanRgb, 0.3)};
+                  overflow: hidden;
                 `}
-                style={(() => {
-                  const current = grammarGenerationProgress?.current || 0;
-                  const total = grammarGenerationProgress?.total || 10;
-                  const percent = Math.max(
-                    0,
-                    Math.min(100, Math.round((current / total) * 100))
-                  );
-                  return { width: `${percent}%` };
-                })()}
-              />
+                aria-label="Question generation progress"
+              >
+                <div
+                  className={css`
+                    height: 100%;
+                    transition: width 250ms ease;
+                    background: linear-gradient(
+                      90deg,
+                      ${NEON.violet} 0%,
+                      ${NEON.cyan} 100%
+                    );
+                    box-shadow: 0 0 8px ${NEON.cyan};
+                  `}
+                  style={(() => {
+                    const current = grammarGenerationProgress?.current || 0;
+                    const total = grammarGenerationProgress?.total || 10;
+                    const percent = Math.max(
+                      0,
+                      Math.min(100, Math.round((current / total) * 100))
+                    );
+                    return { width: `${percent}%` };
+                  })()}
+                />
+              </div>
             </div>
-          </div>
-        ) : (
-          <div
-            className={css`
-              margin-top: 1rem;
-              min-height: 2rem;
-            `}
-          />
-        )}
+          ) : (
+            <div
+              className={css`
+                min-height: 2rem;
+              `}
+            />
+          )}
+        </div>
       </div>
     </ErrorBoundary>
   );
@@ -690,3 +663,83 @@ function XPValue({
     </span>
   );
 }
+
+const startRootCls = css`
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    'top board'
+    'actions board';
+  column-gap: 2.4rem;
+  row-gap: 1.2rem;
+  align-items: center;
+  padding: 1.2rem 2rem 1.6rem;
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'top'
+      'board'
+      'actions';
+    row-gap: 0.8rem;
+    padding: 0.6rem 0.8rem 1rem;
+  }
+  /* phones on their side: back to two columns (the board beside) */
+  @media (max-height: 520px) and (orientation: landscape) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'top board'
+      'actions board';
+    column-gap: 1rem;
+    row-gap: 0.4rem;
+    padding: 0.3rem 0.8rem 0.4rem;
+  }
+`;
+const topCls = css`
+  grid-area: top;
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  @media (max-width: 900px), (max-height: 520px) {
+    /* logo and How to Play side by side */
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.8rem;
+    align-self: start;
+  }
+`;
+// the level board (or How to Play), scrolling inside only if a screen is
+// too short even for its compact rows
+const boardCls = css`
+  grid-area: board;
+  align-self: stretch;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.7;
+  text-align: center;
+  > * {
+    flex: none;
+  }
+`;
+const actionsCls = css`
+  grid-area: actions;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  @media (max-width: 900px) {
+    gap: 0.6rem;
+  }
+`;

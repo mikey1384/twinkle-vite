@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fit Lab</title>
+<style>
+  body { margin: 0; background: #151a2b; color: #e8ecf6; font: 13px/1.4 -apple-system, sans-serif; }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 14px; position: sticky; top: 0; background: #151a2b; z-index: 2; }
+  select, button { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid #3a4466; background: #222a44; color: #fff; }
+  .grid { display: flex; flex-wrap: wrap; gap: 14px; padding: 0 14px 40px; align-items: flex-start; }
+  .cell { background: #0d1120; border-radius: 10px; padding: 6px; }
+  .cell h4 { margin: 0 0 4px; font-size: 12px; color: #b9c3dd; }
+  .cell .bad { color: #ff7a90; }
+  .cell .ok { color: #6be29a; }
+  .frame { position: relative; overflow: hidden; background: #000; }
+  .frame iframe { border: 0; transform-origin: 0 0; position: absolute; left: 0; top: 0; background: #fff; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Fit Lab</b>
+  <select id="scenario"></select>
+  <button id="run">Run all sizes</button>
+  <span id="status"></span>
+</div>
+<div class="grid" id="grid"></div>
+<script type="module" src="./fit-lab.ts"></script>
+</body>
+</html>

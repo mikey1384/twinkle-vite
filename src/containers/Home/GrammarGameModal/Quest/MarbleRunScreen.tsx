@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { createPortal } from 'react-dom';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -9,7 +15,7 @@ import {
   saveKoreanShown
 } from '~/helpers/grammarblesRuleCard';
 import Stage from './MarbleRun/Stage';
-import MusicToggle from './MusicToggle';
+import AudioToggles from './AudioToggles';
 import { musicForNode, playMusic, stopMusic } from './MarbleRun/music';
 import { useReadCooldown } from './readCooldown';
 import { PracticeRun } from './MarbleRun/level/runner';
@@ -234,6 +240,61 @@ export default function MarbleRunScreen({
     };
   }, []);
 
+  // the stage is as big as fits next to the progress marbles and the
+  // question card at their full height (the card never gets squeezed),
+  // keeping the stage's 960×380 shape. Short landscape screens put the
+  // stage and the card side by side.
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+  const [stageWidth, setStageWidth] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    const dock = dockRef.current;
+    if (!body || !dock) return;
+    function fit() {
+      if (!body || !dock) return;
+      const style = getComputedStyle(body);
+      const innerW =
+        body.clientWidth -
+        parseFloat(style.paddingLeft) -
+        parseFloat(style.paddingRight);
+      const innerH =
+        body.clientHeight -
+        parseFloat(style.paddingTop) -
+        parseFloat(style.paddingBottom);
+      const ratio = 960 / 380;
+      let width: number;
+      if (style.flexDirection === 'row') {
+        const gap = parseFloat(style.columnGap) || 0;
+        width = Math.min((innerW - gap) * 0.55, innerH * ratio);
+      } else {
+        // the dock's natural height: every child at its content height
+        let need = 0;
+        const dockGap = parseFloat(getComputedStyle(dock).rowGap) || 0;
+        Array.from(dock.children).forEach((child, i) => {
+          const el = child as HTMLElement;
+          need +=
+            el.scrollHeight +
+            (el.offsetHeight - el.clientHeight) +
+            (i ? dockGap : 0);
+        });
+        const gap = parseFloat(style.rowGap) || 0;
+        width = Math.min(innerW, 1320, (innerH - need - gap) * ratio);
+      }
+      setStageWidth(Math.max(160, Math.floor(width)));
+    }
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(body);
+    observer.observe(dock);
+    const mutations = new MutationObserver(fit);
+    mutations.observe(dock, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      mutations.disconnect();
+    };
+  }, []);
+
   const practice = engine instanceof PracticeRun ? engine : null;
   const grade = practice?.grade || null;
   const promotions = grade ? LADDER.indexOf(grade) + 1 : 0;
@@ -250,139 +311,151 @@ export default function MarbleRunScreen({
         <span className={labelCls}>
           {boss ? 'BOSS · THE TEST' : 'PRACTICE'}
         </span>
-        <MusicToggle className={musicToggleCls} />
-        <span className={slotsCls}>
-          {boss
-            ? Array.from({ length: 7 }, (_, i) => {
-                const g = Object.values(answers)
-                  .map((a) => a.grade)
-                  .filter(Boolean)[i] as Grade | undefined;
-                return (
+        <AudioToggles className={audioCls} />
+      </div>
+      {/* the stage, the progress marbles and the question card sit together;
+          the stage takes the size the card leaves (one screen, any device) */}
+      <div className={bodyCls} ref={bodyRef}>
+        <div className={stageFitCls} style={{ width: stageWidth }}>
+          <Stage engine={engine} />
+        </div>
+        <div className={dockCls} ref={dockRef}>
+          <span className={slotsCls}>
+            {boss
+              ? Array.from({ length: 7 }, (_, i) => {
+                  const g = Object.values(answers)
+                    .map((a) => a.grade)
+                    .filter(Boolean)[i] as Grade | undefined;
+                  return (
+                    <span
+                      key={i}
+                      className={cx(slotCls, !g && emptySlotCls)}
+                      style={
+                        g
+                          ? { backgroundImage: `url(${spriteUri(g)})` }
+                          : undefined
+                      }
+                    >
+                      {g || ''}
+                    </span>
+                  );
+                })
+              : LADDER.map((g, i) => (
                   <span
-                    key={i}
-                    className={cx(slotCls, !g && emptySlotCls)}
+                    key={g}
+                    className={cx(slotCls, i >= promotions && emptySlotCls)}
                     style={
-                      g
+                      i < promotions
                         ? { backgroundImage: `url(${spriteUri(g)})` }
                         : undefined
                     }
                   >
-                    {g || ''}
+                    {g}
                   </span>
-                );
-              })
-            : LADDER.map((g, i) => (
-                <span
-                  key={g}
-                  className={cx(slotCls, i >= promotions && emptySlotCls)}
-                  style={
-                    i < promotions
-                      ? { backgroundImage: `url(${spriteUri(g)})` }
-                      : undefined
-                  }
-                >
-                  {g}
-                </span>
-              ))}
-        </span>
-      </div>
-      <div className={stageAreaCls}>
-        <div className={stageFitCls}>
-          <Stage engine={engine} />
-        </div>
-      </div>
-      <div className={cx(cardCls, boss && bossCardCls)}>
-        <div className={cardInnerCls}>
-          {phase === 'finishing' || toFlag || !question ? (
-            <div className={readyCls}>
-              {phase === 'finishing' ? 'SAVING…' : 'TO THE FLAG…'}
+                ))}
+          </span>
+          <div className={cx(cardCls, boss && bossCardCls)}>
+            <div className={cardInnerCls}>
+              {phase === 'finishing' || toFlag || !question ? (
+                <div className={readyCls}>
+                  {phase === 'finishing' ? 'SAVING…' : 'TO THE FLAG…'}
+                </div>
+              ) : boss && phase === 'waiting' ? (
+                <div className={readyCls}>GET READY…</div>
+              ) : (
+                <>
+                  <div className={metaCls}>
+                    {/* just the grammar point: the level shows what a right answer does */}
+                    {boss
+                      ? `Hit ${Math.min(position + 1, 7)} of 7 · ${question.skillName}`
+                      : question.retryOf != null
+                        ? `Again · ${question.skillName}`
+                        : question.skillName}
+                  </div>
+                  <div className={questionCls}>{question.question}</div>
+                  {boss && phase === 'reading' ? null : (
+                    <div className={choicesCls}>
+                      {question.choices.map((choice, i) => {
+                        const picked =
+                          answer?.selectedIndex === i && !answer?.isCorrect;
+                        const right =
+                          answer?.correctIndex === i &&
+                          (answer.isCorrect || !boss);
+                        const crossed =
+                          wrongPicks.includes(i) || (picked && !boss);
+                        return (
+                          <button
+                            key={i}
+                            className={cx(
+                              choiceCls,
+                              boss && bossChoiceCls,
+                              right && rightCls,
+                              crossed && wrongCls
+                            )}
+                            disabled={
+                              phase !== 'asking' || wrongPicks.includes(i)
+                            }
+                            onClick={() => handlePick(i)}
+                          >
+                            <span className={keyCls}>{'ABCD'[i]}</span>
+                            {choice}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {error && <div className={errorCls}>{error}</div>}
+                  {((phase === 'review' && answer && !answer.isCorrect) ||
+                    (phase === 'bossReview' && answer)) && (
+                    <div className={reviewCls}>
+                      {answer.ruleCard && (
+                        <div className={ruleScrollCls}>
+                          <RuleCard
+                            card={answer.ruleCard}
+                            pickedChoice={
+                              question.choices[
+                                boss
+                                  ? (bossMissPick ?? -1)
+                                  : answer.selectedIndex
+                              ] ?? null
+                            }
+                            koreanShown={koreanShown}
+                            onToggleKorean={handleToggleKorean}
+                          />
+                        </div>
+                      )}
+                      {boss ? (
+                        <div className={nextRowCls}>
+                          <span className={nextNoteCls}>
+                            {reading
+                              ? `Next hit in ${secondsLeft}…`
+                              : 'Get ready…'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className={nextRowCls}>
+                          <span className={nextNoteCls}>
+                            {answer.retry
+                              ? 'It comes back later in this run.'
+                              : 'That was the last try in this run.'}
+                          </span>
+                          <button
+                            className={nextCls}
+                            disabled={!ready || reading}
+                            onClick={handleContinue}
+                          >
+                            {reading
+                              ? `Read it · ${secondsLeft}`
+                              : 'Continue (Enter)'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          ) : boss && phase === 'waiting' ? (
-            <div className={readyCls}>GET READY…</div>
-          ) : (
-            <>
-              <div className={metaCls}>
-                {/* just the grammar point: the level shows what a right answer does */}
-                {boss
-                  ? `Hit ${Math.min(position + 1, 7)} of 7 · ${question.skillName}`
-                  : question.retryOf != null
-                    ? `Again · ${question.skillName}`
-                    : question.skillName}
-              </div>
-              <div className={questionCls}>{question.question}</div>
-              {boss && phase === 'reading' ? null : (
-                <div className={choicesCls}>
-                  {question.choices.map((choice, i) => {
-                    const picked =
-                      answer?.selectedIndex === i && !answer?.isCorrect;
-                    const right =
-                      answer?.correctIndex === i && (answer.isCorrect || !boss);
-                    const crossed = wrongPicks.includes(i) || (picked && !boss);
-                    return (
-                      <button
-                        key={i}
-                        className={cx(
-                          choiceCls,
-                          boss && bossChoiceCls,
-                          right && rightCls,
-                          crossed && wrongCls
-                        )}
-                        disabled={phase !== 'asking' || wrongPicks.includes(i)}
-                        onClick={() => handlePick(i)}
-                      >
-                        <span className={keyCls}>{'ABCD'[i]}</span>
-                        {choice}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {error && <div className={errorCls}>{error}</div>}
-              {((phase === 'review' && answer && !answer.isCorrect) ||
-                (phase === 'bossReview' && answer)) && (
-                <div className={reviewCls}>
-                  {answer.ruleCard && (
-                    <div className={ruleScrollCls}>
-                      <RuleCard
-                        card={answer.ruleCard}
-                        pickedChoice={
-                          question.choices[
-                            boss ? (bossMissPick ?? -1) : answer.selectedIndex
-                          ] ?? null
-                        }
-                        koreanShown={koreanShown}
-                        onToggleKorean={handleToggleKorean}
-                      />
-                    </div>
-                  )}
-                  {boss ? (
-                    <div className={nextRowCls}>
-                      <span className={nextNoteCls}>
-                        {reading ? `Next hit in ${secondsLeft}…` : 'Get ready…'}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className={nextRowCls}>
-                      <span className={nextNoteCls}>
-                        {answer.retry
-                          ? 'It comes back later in this run.'
-                          : 'That was the last try in this run.'}
-                      </span>
-                      <button
-                        className={nextCls}
-                        disabled={!ready || reading}
-                        onClick={handleContinue}
-                      >
-                        {reading
-                          ? `Read it · ${secondsLeft}`
-                          : 'Continue (Enter)'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+          </div>
         </div>
       </div>
     </div>,
@@ -539,19 +612,59 @@ const bossCls = css`
     #140d22;
 `;
 // the level keeps 960:380 and fits both the width and the height left over
-const stageAreaCls = css`
+// stage + marbles + card, centered together under the top bar
+const bodyCls = css`
   flex: 1;
   min-height: 0;
-  container-type: size;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.8rem;
+  padding: 0.8rem 1rem 1rem;
   overflow: hidden;
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 0.5rem;
+    padding: 0.5rem 0.4rem 0.6rem;
+  }
+  @media (max-height: 520px) {
+    gap: 0.4rem;
+    padding: 0.3rem 0.6rem 0.4rem;
+  }
+  /* short landscape screens (phones on their side): stage beside the card */
+  @media (max-height: 520px) and (orientation: landscape) {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.8rem;
+  }
+`;
+// the progress marbles and the question card; the card scrolls inside
+// itself only if a screen is too short even for it
+const dockCls = css`
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 1000px;
+  max-height: 100%;
+  @media (max-height: 520px) and (orientation: landscape) {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  @media (max-height: 520px) {
+    gap: 0.3rem;
+  }
+`;
+const audioCls = css`
+  margin-left: auto;
 `;
 const stageFitCls = css`
-  width: 100%;
-  width: min(100cqw, calc(100cqh * 960 / 380));
-  max-width: 980px;
+  flex: none;
+  max-width: 1320px;
   canvas {
     border-radius: 0;
   }
@@ -593,18 +706,36 @@ const labelCls = css`
     font-size: 0.8rem;
   }
 `;
+// the progress marbles on their own row (Mikey 10-07): a dark plate as wide
+// as the card, the marbles centered both ways with room around them
 const slotsCls = css`
+  ${frame(NIGHT, 2)}
+  flex: none;
+  width: 100%;
+  min-height: 5.2rem;
+  padding: 0.8rem 1rem;
   display: flex;
-  gap: 0.4rem;
-  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
   @media (max-width: ${mobileMaxWidth}) {
-    gap: 0.2rem;
+    min-height: 4.4rem;
+    padding: 0.6rem 0.6rem;
+    gap: 0.5rem;
+  }
+  @media (max-height: 520px) {
+    min-height: 3.6rem;
+    padding: 0.4rem 0.6rem;
   }
 `;
 // filled slots show the run's pixel marble (its letter is drawn on it)
 const slotCls = css`
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 24px;
+    height: 24px;
+  }
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
@@ -630,11 +761,11 @@ const emptySlotCls = css`
 // the question card: natural height, pinned under the level
 const cardCls = css`
   ${frame(PARCHMENT, 3)}
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   width: 100%;
   max-width: 980px;
-  margin: 0 auto;
-  max-height: 100%;
   @media (max-width: ${mobileMaxWidth}) {
     ${frame(PARCHMENT, 2)}
   }
@@ -802,8 +933,4 @@ const nextCls = css`
   padding: 0.4rem 1.6rem;
   font-size: 1.2rem;
   text-transform: uppercase;
-`;
-
-const musicToggleCls = css`
-  color: #ffe08a;
 `;

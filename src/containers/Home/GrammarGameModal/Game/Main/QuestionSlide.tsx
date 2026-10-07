@@ -38,6 +38,9 @@ export default function QuestionSlide({
         @media (max-width: ${mobileMaxWidth}) {
           padding-bottom: 1rem;
         }
+        @media (max-height: 520px) and (orientation: landscape) {
+          padding-bottom: 0.4rem;
+        }
       `}
     >
       <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
@@ -100,6 +103,18 @@ export default function QuestionSlide({
               }
               .question-card > h3 {
                 font-size: 1.9rem;
+              }
+            }
+            /* phones on their side: a slim question card */
+            @media (max-height: 520px) and (orientation: landscape) {
+              margin-top: 0.3rem;
+              .question-card {
+                padding: 0.8rem 1.1rem;
+                margin-bottom: 0.6rem;
+              }
+              .question-card > h3 {
+                font-size: 1.6rem;
+                line-height: 1.35;
               }
             }
           `}

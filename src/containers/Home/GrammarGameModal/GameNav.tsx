@@ -73,6 +73,12 @@ const barCls = css`
     gap: 0.5rem;
     padding: 0.8rem 0.8rem 1rem;
   }
+  /* phones on their side: one slim row; the status chips scroll sideways */
+  @media (max-height: 520px) and (orientation: landscape) {
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    padding: 0.4rem 0.6rem 0.5rem;
+  }
 `;
 const tabsCls = css`
   display: flex;
@@ -93,6 +99,15 @@ const slotCls = css`
     /* phones: the chips get their own row, scrolling sideways */
     order: 3;
     flex-basis: 100%;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    order: 0;
+    flex: 1 1 0;
+    flex-basis: auto;
+    min-width: 0;
     justify-content: flex-start;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -118,6 +133,11 @@ const plateCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 0.95rem;
     padding: 0 0.9rem;
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    min-height: 3.4rem;
+    padding: 0 0.7rem;
+    font-size: 0.85rem;
   }
 `;
 const plateOnCls = css`
@@ -149,6 +169,11 @@ const neonCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 0.9rem;
     padding: 0 0.9rem;
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    min-height: 3.4rem;
+    padding: 0 0.7rem;
+    font-size: 0.85rem;
   }
 `;
 const neonOnCls = css`

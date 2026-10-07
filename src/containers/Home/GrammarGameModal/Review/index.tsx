@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
-import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
-import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
+import { css, cx } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
+import NeonButton from '../ClassicArcade/NeonButton';
+import { NEON, PIXEL_FONT, READ_FONT, rgba } from '../ClassicArcade/theme';
 import LetterGrade from '../Marble/LetterGrade';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ChallengeModal from './ChallengeModal';
@@ -13,7 +13,7 @@ import {
   initialKoreanShown,
   saveKoreanShown
 } from '~/helpers/grammarblesRuleCard';
-import ReviewSkeletonList from '~/components/SkeletonLoader';
+import Loading from '~/components/Loading';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 interface ReviewItem {
@@ -122,45 +122,40 @@ export default function Review() {
               it,
               current.selectedIndex,
               !!challengedQIds[it.questionId]
-            ) && (
-              <div
-                className={css`
-                  margin-top: 0.75rem;
-                  padding: 0.75rem 1rem;
-                  border-left: 4px solid ${Color.logoBlue()};
-                  background: ${Color.wellGray(0.5)};
-                  border-radius: 6px;
-                  color: ${Color.darkerGray()};
-                  font-size: 1.3rem;
-                  white-space: pre-wrap;
-                `}
-              >
-                {it.explanation}
-              </div>
-            )}
-            <MultipleChoiceQuestion
-              key={it.id}
-              question={
-                <div className={questionCls} style={{ marginBottom: '0.5rem' }}>
-                  {it.question}
-                </div>
-              }
-              choices={it.choices}
-              isGraded
-              selectedChoiceIndex={current.selectedIndex}
-              answerIndex={it.answerIndex}
-              onSelectChoice={(selectedIndex: number) => {
-                const status =
-                  selectedIndex === it.answerIndex ? 'pass' : 'fail';
-                setAnswerState((prev) => ({
-                  ...prev,
-                  [it.id]: { selectedIndex, status }
-                }));
-              }}
-              conditionPassStatus={current.status}
-              allowReselect={false}
-              style={{ marginTop: '0.5rem' }}
-            />
+            ) && <div className={explanationCls}>{it.explanation}</div>}
+            <div className={questionCls}>{it.question}</div>
+            <div className={choicesCls}>
+              {it.choices.map((choice, i) => {
+                const answered = typeof current.selectedIndex === 'number';
+                const right = answered && i === it.answerIndex;
+                const wrong =
+                  answered &&
+                  i === current.selectedIndex &&
+                  i !== it.answerIndex;
+                return (
+                  <button
+                    key={i}
+                    className={cx(
+                      choiceCls,
+                      right && choiceRightCls,
+                      wrong && choiceWrongCls,
+                      answered && !right && !wrong && choiceDimCls
+                    )}
+                    disabled={answered}
+                    onClick={() => {
+                      const status = i === it.answerIndex ? 'pass' : 'fail';
+                      setAnswerState((prev) => ({
+                        ...prev,
+                        [it.id]: { selectedIndex: i, status }
+                      }));
+                    }}
+                  >
+                    <span className={letterCls}>{'ABCDEFG'[i]}</span>
+                    {choice}
+                  </button>
+                );
+              })}
+            </div>
             {!it.isChecked && (
               <div
                 style={{
@@ -171,6 +166,7 @@ export default function Review() {
               >
                 {AI_FEATURES_DISABLED ? (
                   <GameCTAButton
+                    arcade
                     icon="ban"
                     variant="neutral"
                     size="sm"
@@ -181,6 +177,7 @@ export default function Review() {
                   </GameCTAButton>
                 ) : (
                   <GameCTAButton
+                    arcade
                     icon="exclamation-circle"
                     variant="logoBlue"
                     size="sm"
@@ -256,35 +253,30 @@ export default function Review() {
   if (loading) {
     return (
       <ErrorBoundary componentPath="Earn/GrammarGameModal/Review/Skeleton">
-        <ReviewSkeletonList className={containerCls} />
+        <div className={boardCls}>
+          <Loading />
+        </div>
       </ErrorBoundary>
     );
   }
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/Review">
-      <div className={containerCls}>
-        {QItems}
-        {hasMore && (
-          <LoadMoreButton
-            filled
-            loading={loadingMore}
-            onClick={handleLoadMore}
-          />
-        )}
-        {!items.length && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: Color.gray(),
-              height: '15rem'
-            }}
-          >
-            No solved questions to review yet.
-          </div>
-        )}
+      <div className={boardCls}>
+        <div className={titleCls}>Review</div>
+        <div className={listCls}>
+          {QItems}
+          {hasMore && (
+            <div className={moreCls}>
+              <NeonButton onClick={handleLoadMore}>
+                {loadingMore ? 'Loading…' : 'Load more'}
+              </NeonButton>
+            </div>
+          )}
+          {!items.length && (
+            <div className={emptyCls}>No solved questions to review yet.</div>
+          )}
+        </div>
         {challengeQ && (
           <ChallengeModal
             isOpen={true}
@@ -361,30 +353,130 @@ export default function Review() {
   }
 }
 
-const containerCls = css`
+// Classic's review in the arcade look (Mikey 10-07): a neon glass board
+// filling the page; the list scrolls inside it
+const boardCls = css`
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  max-width: 820px;
-  padding: 1rem 1.5rem;
+  max-width: 82rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 22, 80, 0.75),
+    rgba(10, 10, 46, 0.85)
+  );
+  border: 2px solid ${rgba(NEON.violetRgb, 0.5)};
+  box-shadow:
+    0 0 24px ${rgba(NEON.violetRgb, 0.25)},
+    inset 0 0 30px rgba(0, 0, 0, 0.4);
+  color: ${NEON.ink};
+  font-family: ${READ_FONT};
+`;
+const titleCls = css`
+  padding: 1.1rem 1.4rem 0.6rem;
+  font-family: ${PIXEL_FONT};
+  font-size: 1.5rem;
+  color: ${NEON.cyan};
+  text-shadow: 0 0 10px ${rgba(NEON.cyanRgb, 0.7)};
+`;
+const listCls = css`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.4rem 1.4rem 1.4rem;
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 1rem;
+    padding: 0.4rem 0.8rem 1rem;
   }
 `;
-
 const itemCls = css`
-  background: ${Color.whiteGray()};
-  border: 1px solid var(--ui-border);
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid ${rgba(NEON.violetRgb, 0.35)};
+  padding: 1.1rem 1.3rem;
+  margin-bottom: 1.1rem;
 `;
-
 const questionCls = css`
-  font-size: 1.6rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
+  margin: 0.6rem 0 0.9rem;
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: ${NEON.ink};
 `;
-
-// Deprecated legacy list styles removed (we leverage MissionChoiceList)
+const choicesCls = css`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+  }
+`;
+const choiceCls = css`
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  text-align: left;
+  font: 700 1.55rem ${READ_FONT};
+  color: ${NEON.ink};
+  background: rgba(12, 14, 56, 0.9);
+  border: 2px solid ${rgba(NEON.cyanRgb, 0.45)};
+  cursor: pointer;
+  &:disabled {
+    cursor: default;
+  }
+`;
+const choiceRightCls = css`
+  border-color: ${NEON.green};
+  background: ${rgba(NEON.greenRgb, 0.18)};
+  box-shadow: 0 0 12px ${rgba(NEON.greenRgb, 0.45)};
+`;
+const choiceWrongCls = css`
+  border-color: ${NEON.red};
+  background: ${rgba(NEON.redRgb, 0.18)};
+`;
+const choiceDimCls = css`
+  opacity: 0.55;
+`;
+const letterCls = css`
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font: 1rem ${PIXEL_FONT};
+  color: ${NEON.navy};
+  background: ${NEON.cyan};
+`;
+const explanationCls = css`
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid ${NEON.cyan};
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  color: ${NEON.ink};
+  font-size: 1.4rem;
+  white-space: pre-wrap;
+`;
+const moreCls = css`
+  display: flex;
+  justify-content: center;
+  padding: 0.4rem 0 0.8rem;
+`;
+const emptyCls = css`
+  padding: 4rem 1rem;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: ${NEON.inkSoft};
+`;
 
 const qHeaderCls = css`
   display: flex;
@@ -394,7 +486,7 @@ const qHeaderCls = css`
 
 const metaCls = css`
   font-size: 1.2rem;
-  color: ${Color.darkerGray()};
+  color: ${NEON.inkSoft};
 `;
 
 // Grade badge is centralized as <LetterGrade />

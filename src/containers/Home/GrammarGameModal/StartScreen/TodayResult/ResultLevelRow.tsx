@@ -33,8 +33,13 @@ export default function ResultLevelRow({
     display: grid;
     grid-template-columns: 7.5rem 32rem 9.5rem;
     align-items: center;
+    /* the rows sit centered under the score board (Mikey 10-07) */
+    justify-content: center;
     gap: 1rem;
     margin: 0.7rem 0;
+    @media (max-height: 700px) {
+      margin: 0.45rem 0;
+    }
     @media (max-width: 900px) {
       grid-template-columns: 6.2rem 32rem 9rem;
     }

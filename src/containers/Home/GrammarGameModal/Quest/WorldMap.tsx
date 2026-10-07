@@ -1,12 +1,12 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { NavSlotContext } from '../navSlot';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { WORLD_IMAGES, WORLD_THUMBS, nodePositions } from './layout';
 import type { QuestNode, QuestState, QuestWorld } from './types';
-import { isQuestMuted, playQuestSound, setQuestMuted } from './sfx';
-import MusicToggle from './MusicToggle';
+import AudioToggles from './AudioToggles';
+import GoalsChip from './GoalsChip';
 import { playMusic, stopMusic, OVERWORLD_TRACK } from './MarbleRun/music';
 import QuestMarble, { MARBLE_NAMES, tierLook } from './QuestMarble';
 import PixelIcon from './PixelIcon';
@@ -53,7 +53,6 @@ export default function WorldMap({
   // display only: the node the player is up to pulses gold on the map
   const current = world.nodes.find((n) => n.unlocked && !n.cleared);
   const nemesisDue = state.nemesis.filter((n) => n.due);
-  const [muted, setMuted] = useState(isQuestMuted);
   // phones scroll the wide map sideways: keep the picked stop in view
   const mapAreaRef = useRef<HTMLDivElement>(null);
   const selectedIndex = selected ? world.nodes.indexOf(selected) : -1;
@@ -72,13 +71,6 @@ export default function WorldMap({
     playMusic(OVERWORLD_TRACK);
     return () => stopMusic(0.6);
   }, []);
-
-  function handleToggleSound() {
-    const next = !muted;
-    setQuestMuted(next);
-    setMuted(next);
-    if (!next) playQuestSound('select');
-  }
 
   // the status chips ride in Grammarbles' top bar when it has room for them
   const navSlot = useContext(NavSlotContext);
@@ -113,14 +105,8 @@ export default function WorldMap({
           {state.ruleBook.seen} / {state.ruleBook.total}
         </span>
       </span>
-      <button
-        className={cx(chipCls, soundCls)}
-        onClick={handleToggleSound}
-        aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
-      >
-        <PixelIcon name={muted ? 'soundOff' : 'soundOn'} />
-      </button>
-      <MusicToggle className={cx(chipCls, soundCls)} />
+      <GoalsChip />
+      <AudioToggles />
     </div>
   );
 
@@ -270,6 +256,8 @@ export default function WorldMap({
                 w.id === world.id && 'gq-world-active'
               )}
               disabled={!w.unlocked}
+              title={`${w.id} · ${w.name}`}
+              aria-label={`World ${w.id}: ${w.name}`}
               onClick={() => onSelectWorld(w.id)}
             >
               <div className={worldThumbCls}>
@@ -405,6 +393,10 @@ const chipsCls = css`
     justify-content: flex-start;
     gap: 0.4rem;
   }
+  @media (max-height: 520px) and (orientation: landscape) {
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+  }
 `;
 
 const chipCls = css`
@@ -422,6 +414,11 @@ const chipCls = css`
     font-size: 1.2rem;
     padding: 0 0.6rem;
   }
+  @media (max-height: 520px) and (orientation: landscape) {
+    min-height: 3.4rem;
+    padding: 0 0.5rem;
+    font-size: 1.1rem;
+  }
 `;
 
 const chipNumCls = css`
@@ -430,12 +427,6 @@ const chipNumCls = css`
   font-weight: normal;
   color: #ffd84a;
   ${inkShadow(1)}
-`;
-
-const soundCls = css`
-  min-width: 4.4rem;
-  justify-content: center;
-  cursor: pointer;
 `;
 
 const nemesisCls = css`
@@ -724,6 +715,12 @@ const panelCls = css`
   ${frame(PARCHMENT, 4)}
   flex: none;
   max-height: 55%;
+  /* phones on their side: the stop panel gets the column's height */
+  @media (max-height: 520px) and (orientation: landscape) {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+  }
   overflow-y: auto;
   padding: 0.8rem 1rem;
   display: flex;
@@ -798,6 +795,9 @@ const panelTextCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     display: none;
   }
+  @media (max-height: 520px) and (orientation: landscape) {
+    display: none;
+  }
 `;
 
 const playCls = css`
@@ -818,8 +818,17 @@ const playCls = css`
 `;
 
 // worlds: a scrolling list beside the map; a sideways strip on phones
+// (held upright or on their side)
 const stripCls = css`
   flex: 1;
+  @media (max-height: 520px) and (orientation: landscape) {
+    flex: none;
+    overflow-y: hidden;
+    overflow-x: auto;
+    grid-auto-flow: column;
+    grid-auto-columns: 6.4rem;
+    grid-template-columns: none;
+  }
   min-height: 0;
   overflow-y: auto;
   display: grid;
@@ -849,7 +858,8 @@ const worldTabCls = css`
   > :first-child {
     grid-row: span 2;
   }
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${mobileMaxWidth}),
+    (max-height: 520px) and (orientation: landscape) {
     display: block;
   }
   cursor: pointer;
@@ -877,7 +887,8 @@ const worldThumbCls = css`
   min-height: 4.6rem;
   overflow: hidden;
   border-right: 3px solid ${INK};
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${mobileMaxWidth}),
+    (max-height: 520px) and (orientation: landscape) {
     height: 3.2rem;
     min-height: 0;
     border-right: 0;
@@ -935,6 +946,10 @@ const worldTabNameCls = css`
   .gq-world-locked & {
     color: #c9ced8;
   }
+  /* phones on their side: the strip shows the paintings only */
+  @media (max-height: 520px) and (orientation: landscape) {
+    display: none;
+  }
 `;
 
 const worldTabMetaCls = css`
@@ -947,5 +962,9 @@ const worldTabMetaCls = css`
   }
   .gq-world-locked & {
     color: #aab0bd;
+  }
+  /* phones on their side: the strip shows the paintings only */
+  @media (max-height: 520px) and (orientation: landscape) {
+    display: none;
   }
 `;

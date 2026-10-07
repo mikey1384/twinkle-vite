@@ -90,6 +90,9 @@ export default function ClassicArcade({
           fullBleed
             ? `
           flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
           margin-top: 0;
           border-radius: 0;
           box-shadow: none;
@@ -129,6 +132,11 @@ export default function ClassicArcade({
         className={css`
           position: relative;
           z-index: 1;
+          ${
+            fullBleed
+              ? 'flex: 1; min-height: 0; display: flex; flex-direction: column;'
+              : ''
+          }
         `}
       >
         {children}

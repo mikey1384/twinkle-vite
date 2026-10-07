@@ -38,6 +38,9 @@ export default function Game({
         @media (max-height: 760px) {
           padding-top: 1.5rem;
         }
+        @media (max-height: 520px) and (orientation: landscape) {
+          padding-top: 0.3rem;
+        }
       `}
     >
       {questionIds.length > 0 ? (

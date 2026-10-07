@@ -34,33 +34,51 @@ export default function ModeChooser({
   return (
     <div className={wrapCls}>
       <div className={titleCls}>Pick your Grammarbles game</div>
-      <div className={cardsCls}>
-        {GAMES.map((game, index) => (
-          <button
-            key={game.mode}
-            className={cardCls}
-            aria-label={game.play}
-            // a chime on the pick (Mikey 10-07: no hover sound); the Quest
-            // map's sound switch mutes it
-            onClick={() => {
-              playQuestSound('start', { shift: index * 4 });
-              onPick(game.mode);
-            }}
-          >
-            <div className={coverCls}>
-              <img src={game.cover} alt={game.title} loading="eager" />
-            </div>
-            <div className={lineCls}>{game.line}</div>
-          </button>
-        ))}
+      <div className={fitCls}>
+        <div className={cardsCls}>
+          {GAMES.map((game, index) => (
+            <button
+              key={game.mode}
+              className={cardCls}
+              aria-label={game.play}
+              // a chime on the pick (Mikey 10-07: no hover sound); the Quest
+              // map's sound switch mutes it
+              onClick={() => {
+                playQuestSound('start', { shift: index * 4 });
+                onPick(game.mode);
+              }}
+            >
+              <div className={coverCls}>
+                <img src={game.cover} alt={game.title} loading="eager" />
+              </div>
+              <div className={lineCls}>{game.line}</div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
+// one screen: the covers take the size the page's height allows
 const wrapCls = css`
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  padding: 1.6rem 1.5rem 2.2rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 1.5rem 1.6rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.4rem 1rem 1rem;
+  }
+`;
+const fitCls = css`
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const titleCls = css`
@@ -70,18 +88,29 @@ const titleCls = css`
   /* on the menu's night-arcade backdrop */
   color: #fff;
   text-shadow: 0 2px 12px rgba(120, 90, 255, 0.6);
-  margin-bottom: 2rem;
+  margin-bottom: 1.4rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 2rem;
+    margin-bottom: 0.8rem;
+  }
+  @media (max-height: 520px) {
+    font-size: 1.8rem;
+    margin-bottom: 0.6rem;
+  }
 `;
 
 const cardsCls = css`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2rem;
-  /* a page now (Mikey 10-07): the covers get the room */
-  max-width: 1180px;
-  margin: 0 auto;
+  /* a page now (Mikey 10-07): the covers get the room, as wide as the
+     height allows (a cover is ~16:10, plus its line of text) */
+  width: 100%;
+  max-width: min(1180px, calc((100cqh - 10rem) * 3.2 + 2rem));
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
+    gap: 1rem;
+    max-width: min(560px, calc((50cqh - 9rem) * 1.6));
   }
 `;
 

@@ -138,6 +138,31 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
   const questionObjRef = useRef<Record<number, any>>({});
   const scoreArrayRef = useRef<string[]>([]);
+
+  // DEV ONLY (compiled out of production): ?fitpreview=… opens a Classic or
+  // Quest screen with sample data for the Fit Lab's responsive audit
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    import('./Quest/MarbleRun/lab/fitPreview').then((m) => {
+      const preview = m.fitPreviewParam();
+      if (preview === 'classic-game') {
+        const { ids, objs } = m.previewQuestions();
+        questionObjRef.current = objs;
+        setQuestionIds(ids);
+        setMode('classic');
+        setActiveTab('game');
+        setGameState('started');
+      } else if (preview === 'classic-finish') {
+        scoreArrayRef.current = m.PREVIEW_SCORES;
+        setMode('classic');
+        setActiveTab('game');
+        setGameState('finished');
+      } else if (preview === 'quest-result') {
+        setMode('quest');
+        setActiveTab('quest');
+      }
+    });
+  }, []);
   const onUpdateGrammarLoadingStatus = useHomeContext(
     (v) => v.actions.onUpdateGrammarLoadingStatus
   );
@@ -287,9 +312,9 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
   // bar drawn in the same style. A Classic round in progress takes the whole
   // screen, as the modal did, so the site's links can't pull the player out
   // mid-level.
-  // the Quest map is one screen, no page scroll (Mikey 10-07)
-  const fitScreen =
-    mode === 'quest' && activeTab === 'quest' && gameState !== 'started';
+  // every screen is one screen, no page scroll (Mikey 10-07: every screen
+  // fits, on every device); long lists scroll inside their own panel
+  const fitScreen = gameState !== 'started';
   const body = (
     <div className={cx(pageInnerCls, fitScreen && fitInnerCls)}>
       {gameState !== 'started' && (
@@ -396,13 +421,7 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
             </Suspense>
           )}
           {mode === 'quest' && activeTab === 'questRankings' && (
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center'
-              }}
-            >
+            <div className={fillCls}>
               <Rankings
                 quest
                 onSetRankingsTab={setRankingsTab}
@@ -413,13 +432,7 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
           {mode === 'classic' &&
             activeTab === 'rankings' &&
             gameState !== 'started' && (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center'
-                }}
-              >
+              <div className={fillCls}>
                 <Rankings
                   onSetRankingsTab={setRankingsTab}
                   rankingsTab={rankingsTab}
@@ -429,13 +442,7 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
           {mode === 'classic' &&
             activeTab === 'review' &&
             gameState !== 'started' && (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center'
-                }}
-              >
+              <div className={fillCls}>
                 <Review />
               </div>
             )}
@@ -750,6 +757,14 @@ const fitCls = css`
     );
     padding-bottom: 0;
   }
+  /* phones on their side: the whole screen, over the site's bars (Mikey
+     10-07); the game's own Home button leads out */
+  @media (max-height: 520px) and (orientation: landscape) {
+    position: fixed;
+    inset: 0;
+    z-index: 2147481000;
+    height: 100dvh;
+  }
 `;
 const fitInnerCls = css`
   flex: 1;
@@ -761,8 +776,23 @@ const fitInnerCls = css`
     padding-bottom: 0.4rem;
   }
 `;
-const classicBodyCls = css`
+// a tab's screen fills the space under the top bar
+const fillCls = css`
+  flex: 1;
+  min-height: 0;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0 0.6rem;
+  }
+`;
+const classicBodyCls = css`
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 `;
 
 function readGrammarblesSettings(settings: unknown): {

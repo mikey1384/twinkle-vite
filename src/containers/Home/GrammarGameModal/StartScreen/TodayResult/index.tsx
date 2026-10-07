@@ -57,9 +57,13 @@ export default function TodayResult({ results }: { results: any[] }) {
   `;
   const boardCls = css`
     ${glassPanelCls};
-    margin-top: 0.75rem;
-    margin-bottom: 3rem;
+    margin-bottom: 1.2rem;
     padding: 1.6rem 1.8rem 1.4rem;
+    /* short screens: the start screen is one screen, tighten the board */
+    @media (max-height: 760px) {
+      margin-bottom: 0.8rem;
+      padding: 0.9rem 1.2rem 0.8rem;
+    }
     overflow: hidden;
     /* faint scanlines, like an arcade scoreboard */
     &::before {
@@ -320,7 +324,7 @@ export default function TodayResult({ results }: { results: any[] }) {
   ]);
 
   return (
-    <div style={{ marginBottom: '3rem' }}>
+    <div>
       <div className={boardCls}>
         <div className={titleCls}>Today's Score</div>
         <div

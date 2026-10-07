@@ -122,6 +122,13 @@ export default function ChoiceList({
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
         }
+        /* phones on their side: the four choices in a 2×2 grid */
+        @media (max-height: 520px) and (orientation: landscape) {
+          display: ${shown ? 'grid' : 'none'};
+          grid-template-columns: 1fr 1fr;
+          width: 100%;
+          gap: 0.6rem;
+        }
       `}`}
       style={style}
     >
