@@ -15,6 +15,7 @@ import ParentContactsAdmin from './Parent/ParentContactsAdmin';
 import PlanVenue, { areaForVenue, venueFromArea, type VenueMode } from './Parent/PlanVenue';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import { BranchStatusBadge } from './BranchStatus';
+import { AdminInfoChecks, InfoCheckBadge, MyInfoCheckCard } from './MemberInfoCheck';
 import CrewCover from './CrewCover';
 import { MemberAvatars } from './DirectoryCard';
 import ManageCrewPanel from './ManageCrewPanel';
@@ -431,6 +432,7 @@ export default function CrewPanel({
             {branchEditor}
           </div>
         )}
+        {me && viewer.infoCheck && <MyInfoCheckCard crew={crew} onChanged={onChanged} />}
         <ul
           className={css`
             list-style: none;
@@ -474,6 +476,7 @@ export default function CrewPanel({
                 {member.branch || 'no branch yet'}
               </span>
               <BranchStatusBadge member={member} />
+              <InfoCheckBadge member={member} />
               {member.isFounder && (
                 <span style={{ fontSize: '1.2rem', color: Color.darkGray() }}>
                   <Icon icon="crown" style={{ color: Color.gold() }} /> founder
@@ -508,6 +511,7 @@ export default function CrewPanel({
             <AdminReview crew={crew} stage="crew" onChanged={onChanged} />
           </div>
         )}
+        <AdminInfoChecks crew={crew} onChanged={onChanged} />
         {crewAction.error && (
           <QuestNote tone="warning">{crewAction.error}</QuestNote>
         )}

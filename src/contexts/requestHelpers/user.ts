@@ -837,6 +837,52 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // staff's "who are you" check: admins ask / accept / ask again / withdraw
+    async decideMeetupInfoCheck({
+      crewId,
+      userId,
+      action,
+      note
+    }: {
+      crewId: number;
+      userId: number;
+      action: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/members/${userId}/info-check`,
+          { action, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // the asked member answers: teacher + class, or how they know the crew
+    async answerMeetupInfoCheck({
+      crewId,
+      teacherName,
+      className,
+      relationship
+    }: {
+      crewId: number;
+      teacherName: string;
+      className: string;
+      relationship: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/meetup-quest/crews/${crewId}/me/info`,
+          { teacherName, className, relationship },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // the owner reviews parent emails before they go out
     async loadMeetupEmails() {
       try {

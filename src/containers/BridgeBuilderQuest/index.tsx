@@ -637,8 +637,19 @@ export default function BridgeBuilderQuest({
                           <b>Crew #{item.crewId}</b>
                           <span>
                             {
-                              { crew: 'Crew', plan: 'Plan', grownUp: 'Parents & adult', video: 'Video' }[
-                                item.waitingFor as 'crew' | 'plan' | 'grownUp' | 'video'
+                              {
+                                crew: 'Crew',
+                                plan: 'Plan',
+                                grownUp: 'Parents & adult',
+                                video: 'Video',
+                                memberInfo: "A member's answer"
+                              }[
+                                item.waitingFor as
+                                  | 'crew'
+                                  | 'plan'
+                                  | 'grownUp'
+                                  | 'video'
+                                  | 'memberInfo'
                               ] || 'Plan'
                             }{' '}
                             ·{' '}

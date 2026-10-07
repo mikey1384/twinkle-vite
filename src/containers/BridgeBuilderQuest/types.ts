@@ -19,6 +19,8 @@ export interface QuestProgress {
   students: number;
   branches: number;
   branchesToVerify: { userId: number; username: string; branch: string }[];
+  // members staff asked who they are, until staff accept the answer
+  infoChecks?: { userId: number; username: string; status: 'requested' | 'answered' }[];
   branchNames: string[];
   // the tier these members would earn if all showed up, and how to climb
   tier: 'bronze' | 'silver' | 'gold' | null;
@@ -68,6 +70,27 @@ export interface CrewMember {
   parentSaidNo?: boolean;
   isFounder: boolean;
   attended: boolean;
+  // staff asked this member who they are (MemberInfoCheck.tsx); the crew waits
+  infoCheck?: 'requested' | 'answered' | null;
+}
+
+// Admins only: one "who are you" check and the member's answer (any crew).
+export interface MemberCheckRecord {
+  checkId: number;
+  crewId: number;
+  userId: number;
+  username: string;
+  status: 'requested' | 'answered' | 'accepted' | 'withdrawn' | 'returned';
+  askNote: string;
+  requestedBy: string;
+  requestedAt: number;
+  teacherName: string;
+  className: string;
+  relationship: string;
+  answeredAt: number;
+  reviewedBy: string;
+  reviewedAt: number;
+  staffNote: string;
 }
 
 export interface MeetupSlot {
@@ -121,6 +144,8 @@ export interface CrewView extends CrewProfile {
   // admins only: every parent's answer and contact (never shown to members)
   // parents' suggested changes to the plan (by the child's username)
   parentSuggestions?: { childUsername: string; body: string; createdAt: number }[];
+  // admins only: every "who are you" check on these members, in any crew
+  memberChecks?: MemberCheckRecord[];
   parentContacts?: {
     userId: number;
     childUsername: string;
@@ -145,6 +170,14 @@ export interface CrewView extends CrewProfile {
     frozen: boolean;
     // this member's own ask-my-parent state (never an address)
     parentConsent?: import('./Parent/AskParentPanel').ParentConsentState | null;
+    // what staff asked this member, and their own answer (only theirs)
+    infoCheck?: {
+      status: 'requested' | 'answered';
+      askNote: string;
+      requestedAt: number;
+      answer: { teacherName: string; className: string; relationship: string };
+      answeredAt: number;
+    } | null;
     canSubmitPlan: boolean;
     canSubmitVideo: boolean;
   };
@@ -162,7 +195,7 @@ export interface BoardCrew {
 export interface ReviewQueueItem {
   crewId: number;
   status: string;
-  waitingFor: '' | 'crew' | 'plan' | 'grownUp' | 'video';
+  waitingFor: '' | 'crew' | 'plan' | 'grownUp' | 'video' | 'memberInfo';
   founderUsername: string;
   members: { userId: number; username: string; branch: string }[];
   blocking: string;
