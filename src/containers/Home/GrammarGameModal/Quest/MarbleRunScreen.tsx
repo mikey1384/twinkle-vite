@@ -35,6 +35,7 @@ import {
   NIGHT,
   PARCHMENT,
   PIXEL_FONT,
+  PLATE,
   WOOD,
   button,
   discRows,
@@ -340,19 +341,23 @@ export default function MarbleRunScreen({
                     </span>
                   );
                 })
-              : LADDER.map((g, i) => (
-                  <span
-                    key={g}
-                    className={cx(slotCls, i >= promotions && emptySlotCls)}
-                    style={
-                      i < promotions
-                        ? { backgroundImage: `url(${spriteUri(g)})` }
-                        : undefined
-                    }
-                  >
-                    {g}
+              : // practice counts right answers, not speed (Mikey 10-07:
+                // grade marbles here read like Classic's speed grades)
+                [
+                  <span key="label" className={pipLabelCls}>
+                    Right answers
+                  </span>,
+                  ...LADDER.map((g, i) => (
+                    <span
+                      key={g}
+                      className={cx(pipCls, i < promotions && pipOnCls)}
+                      aria-hidden
+                    />
+                  )),
+                  <span key="count" className={pipLabelCls}>
+                    {promotions}/{LADDER.length}
                   </span>
-                ))}
+                ]}
           </span>
           <div className={cx(cardCls, boss && bossCardCls)}>
             <div className={cardInnerCls}>
@@ -729,6 +734,29 @@ const slotsCls = css`
   }
 `;
 // filled slots show the run's pixel marble (its letter is drawn on it)
+const pipLabelCls = css`
+  font-family: ${PIXEL_FONT};
+  font-size: 1rem;
+  color: #c9bfa3;
+  white-space: nowrap;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 0.85rem;
+  }
+`;
+// a practice stop's progress: one pip per right answer (5 clear the stop)
+const pipCls = css`
+  ${frame(PLATE, 1)}
+  width: 2.2rem;
+  height: 2.2rem;
+  flex: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 1.8rem;
+    height: 1.8rem;
+  }
+`;
+const pipOnCls = css`
+  ${frame(GOLD, 1)}
+`;
 const slotCls = css`
   width: 28px;
   height: 28px;

@@ -8,7 +8,7 @@ import type { QuestNode, QuestState, QuestWorld } from './types';
 import AudioToggles from './AudioToggles';
 import GoalsChip from './GoalsChip';
 import { playMusic, stopMusic, OVERWORLD_TRACK } from './MarbleRun/music';
-import QuestMarble, { MARBLE_NAMES, tierLook } from './QuestMarble';
+import QuestMarble from './QuestMarble';
 import PixelIcon from './PixelIcon';
 import {
   GOLD,
@@ -23,7 +23,8 @@ import {
   discRows,
   frame,
   inkShadow,
-  pixelSvg
+  pixelSvg,
+  spriteUri
 } from './pixelUi';
 
 export default function WorldMap({
@@ -77,11 +78,10 @@ export default function WorldMap({
   const chips = (
     <div className={chipsCls}>
       <span className={chipCls}>
-        <QuestMarble look="gold" size={16} />
+        <img className={chipMarbleCls} src={spriteUri('S')} alt="" />
         <span className={chipNumCls}>
-          {world.goldMarbles} / {world.points}
-        </span>{' '}
-        gold
+          {world.sMarbles} / {world.nodeCount}
+        </span>
       </span>
       <button
         className={cx(chipCls, nemesisCls)}
@@ -152,7 +152,14 @@ export default function WorldMap({
                     selected?.id === node.id && selectedCls
                   )}
                   style={at}
-                  onClick={() => onSelectNode(node.id)}
+                  // a tap picks the stop; a tap on the picked stop plays it
+                  // (Mikey 10-07: a player tapped the stop and "nothing
+                  // happened" — the Play button was off to the side)
+                  onClick={() =>
+                    selected?.id === node.id && node.unlocked && !starting
+                      ? onPlayNode(node)
+                      : onSelectNode(node.id)
+                  }
                   aria-label={node.name}
                 >
                   {node.kind === 'stop' ? (
@@ -167,27 +174,52 @@ export default function WorldMap({
                   {node.cleared && (
                     <PixelIcon name="flag" scale={2} className={flagCls} />
                   )}
-                  {node.kind === 'stop' && node.unlocked && node.skills && (
-                    <span className={nodeMarblesCls}>
-                      {node.skills.map((skill) => (
-                        <QuestMarble
-                          key={skill.code}
-                          look={tierLook(skill.stars)}
-                          size={12}
+                  {/* the node's marble: its best run's letter, Classic's
+                      S–F (Mikey 10-07); an empty slot until it's played */}
+                  {node.unlocked && (
+                    <span className={nodeMarbleCls}>
+                      {node.grade ? (
+                        <img
+                          src={spriteUri(node.grade)}
+                          alt={`Best grade ${node.grade}`}
                         />
-                      ))}
+                      ) : (
+                        <QuestMarble look="empty" size={18} />
+                      )}
                     </span>
                   )}
                 </button>
-                {selected?.id === node.id && (
-                  <span
-                    className={cx(pointerAnchorCls, big && bigPointerCls)}
-                    style={at}
-                    aria-hidden
-                  >
-                    <PixelIcon name="arrow" scale={3} className={pointerCls} />
-                  </span>
-                )}
+                {selected?.id === node.id &&
+                  (node.unlocked ? (
+                    // the picked stop says PLAY right where the finger is
+                    <span
+                      className={cx(playAnchorCls, big && bigPlayAnchorCls)}
+                      style={at}
+                    >
+                      <span className={playCenterCls}>
+                        <button
+                          className={playBubbleCls}
+                          disabled={starting}
+                          onClick={() => onPlayNode(node)}
+                          aria-label={`Play ${node.name}`}
+                        >
+                          {starting ? '…' : '▶ PLAY'}
+                        </button>
+                      </span>
+                    </span>
+                  ) : (
+                    <span
+                      className={cx(pointerAnchorCls, big && bigPointerCls)}
+                      style={at}
+                      aria-hidden
+                    >
+                      <PixelIcon
+                        name="arrow"
+                        scale={3}
+                        className={pointerCls}
+                      />
+                    </span>
+                  ))}
               </React.Fragment>
             );
           })}
@@ -209,11 +241,6 @@ export default function WorldMap({
                 <div className={skillListCls}>
                   {selected.skills.map((s) => (
                     <span key={s.code} className={skillChipCls}>
-                      <QuestMarble
-                        look={tierLook(s.stars)}
-                        size={20}
-                        title={`${MARBLE_NAMES[s.stars] || ''} marble`}
-                      />{' '}
                       {s.nameEn}
                     </span>
                   ))}
@@ -225,10 +252,25 @@ export default function WorldMap({
                     : 'Mixes the whole world. Beat it to open the next one.'}
                 </div>
               )}
-              <div className={panelTextCls}>
-                {selected.unlocked
-                  ? `${selected.bestScore != null ? `Best ${selected.bestScore}%. ` : ''}Right answers polish each point's marble: clear, shiny, then gold.`
-                  : 'Clear the stop before this one to open it.'}
+              <div className={cx(panelTextCls, selected.grade && bestLineCls)}>
+                {selected.grade && (
+                  <img
+                    className={bestMarbleCls}
+                    src={spriteUri(selected.grade)}
+                    alt={selected.grade}
+                  />
+                )}
+                {/* what the best score is, said plainly (Mikey 10-07: the old
+                    lines didn't match how the game works) */}
+                {!selected.unlocked
+                  ? 'Clear the stop before this one to open it.'
+                  : selected.bestScore == null
+                    ? selected.kind === 'stop'
+                      ? 'Get 5 right answers to clear this stop. Fewer misses, better grade.'
+                      : 'Beat the boss: 490 of 700 points, graded on speed.'
+                    : selected.kind === 'stop'
+                      ? `Best: ${selected.grade}, ${selected.bestScore}% of answers right.`
+                      : `Best: ${selected.grade}, ${selected.bestScore}% of the boss's 700 points.`}
               </div>
             </div>
             <button
@@ -278,7 +320,7 @@ export default function WorldMap({
               </div>
               <div className={worldTabMetaCls}>
                 {w.tier}
-                {w.unlocked ? ` · ${w.goldMarbles}/${w.points} gold` : ''}
+                {w.unlocked ? ` · ${w.sMarbles}/${w.nodeCount} S` : ''}
               </div>
             </button>
           ))}
@@ -655,6 +697,71 @@ const bigPulseCls = css`
 `;
 
 // the selected node gets a bobbing pointer above it
+// the PLAY bubble above the picked stop: a gold game button with a tail
+const playAnchorCls = css`
+  position: absolute;
+  z-index: 4;
+  width: 0;
+  height: 0;
+  > span {
+    position: absolute;
+    left: 50%;
+    bottom: 2.4rem;
+    transform: translateX(-50%);
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    > span {
+      bottom: 2rem;
+    }
+  }
+`;
+// centers the bubble (its own transform stays free for the press)
+const playCenterCls = css`
+  display: block;
+`;
+const bigPlayAnchorCls = css`
+  > span {
+    bottom: 3rem;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    > span {
+      bottom: 2.5rem;
+    }
+  }
+`;
+const playBubbleCls = css`
+  ${button(GOLD, '#8a5200')}
+  padding: 0.4rem 1rem;
+  font-family: ${PIXEL_FONT};
+  font-size: 1.1rem;
+  white-space: nowrap;
+  animation: questPlayBob 0.9s ease-in-out infinite alternate;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    margin-left: -6px;
+    border: 6px solid transparent;
+    border-top-color: ${INK};
+    border-bottom: 0;
+  }
+  @keyframes questPlayBob {
+    from {
+      translate: 0 -2px;
+    }
+    to {
+      translate: 0 2px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 0.95rem;
+    padding: 0.35rem 0.8rem;
+  }
+`;
 const pointerAnchorCls = css`
   position: absolute;
   z-index: 3;
@@ -699,16 +806,35 @@ const pointerCls = css`
   }
 `;
 
-const nodeMarblesCls = css`
-  ${frame(PLATE, 1)}
+const nodeMarbleCls = css`
   position: absolute;
   left: 50%;
   top: 100%;
   transform: translateX(-50%);
-  margin-top: 0.2rem;
+  margin-top: 0.1rem;
   display: flex;
-  gap: 1px;
-  padding: 0 1px;
+  pointer-events: none;
+  img {
+    width: 22px;
+    height: 22px;
+    image-rendering: pixelated;
+  }
+`;
+const chipMarbleCls = css`
+  width: 18px;
+  height: 18px;
+  image-rendering: pixelated;
+`;
+const bestLineCls = css`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+`;
+const bestMarbleCls = css`
+  flex: none;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
 `;
 
 const panelCls = css`

@@ -2,36 +2,19 @@ import React from 'react';
 import { css, cx } from '@emotion/css';
 import { discRows, pixelSvg, PIXEL_FONT } from './pixelUi';
 
-// Quest's marbles (Mikey 10-07: Quest must be a Grammarbles game too). Every
-// grammar point is a marble you polish: clear (seen), shiny (solid), gold
-// (mastered). In a run, each question is a marble slot: a right answer fills
-// it, brighter as the combo grows; a miss leaves a dull one.
+// Quest's plain marbles (Mikey 10-07: Quest must be a Grammarbles game too).
+// In a run, each question is a marble slot: a right answer fills it, brighter
+// as the combo grows; a miss leaves a dull one. An unplayed map node shows the
+// empty one; played nodes show Classic's lettered marble (spriteUri).
 
 export type MarbleLook =
   'empty' | 'clear' | 'shiny' | 'hot' | 'gold' | 'dull' | 'locked';
-
-export function tierLook(tier: number | null | undefined): MarbleLook {
-  return tier === 3
-    ? 'gold'
-    : tier === 2
-      ? 'shiny'
-      : tier === 1
-        ? 'clear'
-        : 'empty';
-}
 
 // A run's answer: right answers glow brighter with the combo.
 export function answerLook(isCorrect: boolean, combo: number): MarbleLook {
   if (!isCorrect) return 'dull';
   return combo >= 5 ? 'gold' : combo >= 3 ? 'hot' : 'shiny';
 }
-
-export const MARBLE_NAMES: Record<number, string> = {
-  0: 'not started',
-  1: 'clear',
-  2: 'shiny',
-  3: 'gold'
-};
 
 export default function QuestMarble({
   look,

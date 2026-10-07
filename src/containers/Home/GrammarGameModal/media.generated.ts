@@ -35,7 +35,7 @@ export const GQ_MEDIA: Record<string, string> = {
     'img/arenas/w9-castle.ea771e6c15.webp',
   'img/grammar-quest/arenas/w9-fort.png': 'img/arenas/w9-fort.3a555731ee.webp',
   'img/grammar-quest/classic-bg.jpg': 'img/classic-bg.9416bfe581.webp',
-  'img/grammar-quest/classic-logo.png': 'img/classic-logo.3c6984a0ad.webp',
+  'img/grammar-quest/classic-logo.png': 'img/classic-logo.fc27a77ead.webp',
   'img/grammar-quest/cover-classic.jpg': 'img/cover-classic.697d9920a1.webp',
   'img/grammar-quest/cover-quest.jpg': 'img/cover-quest.582dfe9135.webp',
   'img/grammar-quest/forest-of-clauses.jpg':

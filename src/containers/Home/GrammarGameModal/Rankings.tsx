@@ -11,8 +11,8 @@ import { NEON, READ_FONT, rgba } from './ClassicArcade/theme';
 
 // Grammarbles leaderboards, drawn in each game's look (Mikey 10-07: the old
 // site list didn't fit the games). Classic ranks Grammarbles XP on neon glass;
-// Quest ranks marble points (clear 1, shiny 2, gold 3 per grammar point) on a
-// parchment board. The board fills the page; only its list scrolls.
+// Quest ranks marble points (each stop and boss counts its best letter, S 100
+// to F 10) on a parchment board. The board fills the page; only its list scrolls.
 export default function Rankings({
   rankingsTab,
   onSetRankingsTab,

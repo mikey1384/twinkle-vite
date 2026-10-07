@@ -21,7 +21,7 @@ const GAMES = [
     mode: 'quest' as const,
     cover: gqMedia('img/grammar-quest/cover-quest.jpg'),
     title: 'Quest',
-    line: 'Levels and bosses across ten worlds. Right answers carry your marble from D up to S; forts and castles are the test.',
+    line: 'Levels and bosses across ten worlds. Five right answers clear a stop; forts and castles test your speed.',
     play: 'Play Quest'
   }
 ];

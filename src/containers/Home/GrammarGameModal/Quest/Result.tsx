@@ -35,7 +35,7 @@ export default function Result({
   const headline = perfect
     ? boss
       ? 'Flawless! Every hit landed first try.'
-      : 'Perfect! S without a single miss.'
+      : 'Perfect! Five right answers, not a single miss.'
     : result.cleared
       ? kind === 'castle'
         ? 'Castle cleared! The next world is open.'
@@ -82,7 +82,8 @@ export default function Result({
       <div className={heroCls}>
         <img
           className={heroMarbleCls}
-          src={spriteUri(null, won ? 'happy' : 'strained')}
+          // the letter this run puts on the map (nemesis runs have none)
+          src={spriteUri(result.grade || null, won ? 'happy' : 'strained')}
           width={72}
           height={72}
           alt=""
@@ -158,8 +159,7 @@ export default function Result({
             </span>
             {result.replayCut ? (
               <span className={noRewardCls}>
-                Replay: half XP, no Coins until you beat the Logic Tower
-                castle.
+                Replay: half XP, no Coins until you beat the Logic Tower castle.
               </span>
             ) : boss && !result.cleared ? (
               <span className={noRewardCls}>

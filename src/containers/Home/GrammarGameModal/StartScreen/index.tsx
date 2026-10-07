@@ -261,7 +261,7 @@ export default function StartScreen({
                 @media (max-width: 900px), (max-height: 520px) {
                   height: clamp(4rem, 9vh, 8rem);
                 }
-                /* the crop keeps the cover's sky around it; fade it out */
+                /* the logo sits on dark navy; fade only its very edges into the page */
                 -webkit-mask-image:
                   linear-gradient(
                     90deg,
@@ -273,9 +273,9 @@ export default function StartScreen({
                   linear-gradient(
                     180deg,
                     transparent 0%,
-                    #000 16%,
-                    #000 78%,
-                    transparent 96%
+                    #000 8%,
+                    #000 92%,
+                    transparent 100%
                   );
                 -webkit-mask-composite: source-in;
                 mask-image:
@@ -289,9 +289,9 @@ export default function StartScreen({
                   linear-gradient(
                     180deg,
                     transparent 0%,
-                    #000 16%,
-                    #000 78%,
-                    transparent 96%
+                    #000 8%,
+                    #000 92%,
+                    transparent 100%
                   );
                 mask-composite: intersect;
                 filter: drop-shadow(0 0 14px ${rgba(NEON.cyanRgb, 0.35)});

@@ -4,7 +4,6 @@ export interface QuestSkill {
   code: string;
   nameEn: string;
   nameKo: string | null;
-  stars: number;
 }
 
 export interface QuestNode {
@@ -15,7 +14,8 @@ export interface QuestNode {
   unlocked: boolean;
   cleared: boolean;
   bestScore: number | null;
-  stars: number | null;
+  // the best run's letter, Classic's S–F; null until played
+  grade: 'S' | 'A' | 'B' | 'C' | 'D' | 'F' | null;
   skills?: QuestSkill[];
 }
 
@@ -25,11 +25,8 @@ export interface QuestWorld {
   name: string;
   tier: string;
   unlocked: boolean;
-  stars: number;
-  maxStars: number;
-  marbles: number;
-  goldMarbles: number;
-  points: number;
+  sMarbles: number;
+  nodeCount: number;
   nodes: QuestNode[];
 }
 
@@ -100,6 +97,7 @@ export interface QuestRun {
 export interface QuestResult {
   runId: number;
   score: number;
+  grade?: 'S' | 'A' | 'B' | 'C' | 'D' | 'F' | null;
   cleared: boolean;
   perfect?: boolean;
   rights?: number;

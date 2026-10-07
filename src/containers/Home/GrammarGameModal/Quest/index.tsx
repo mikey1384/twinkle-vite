@@ -133,12 +133,19 @@ export default function GrammarQuest() {
               starting={starting}
             />
             <div className={footnoteCls}>
-              Marbles come only from first-try answers: clear, shiny, then gold
-              when mastered on different days. {state.rewardedRunsLeft} runs
-              with XP and Coins left today
-              {state.replaysPay
-                ? '.'
-                : '; replays of cleared stops and bosses pay half XP and no Coins until you beat the Logic Tower castle.'}
+              {/* the real rules, one idea each (Mikey 10-07) */}
+              <div>
+                <b>Marbles</b> keep each stop&apos;s and boss&apos;s best grade:
+                % right at a stop, % of 700 points at a boss. S 100 · A 90 · B
+                70 · C 50 · D 30 · F below.
+              </div>
+              <div>
+                <b>Today:</b> {state.rewardedRunsLeft} more runs pay XP and
+                Coins
+                {state.replaysPay
+                  ? '.'
+                  : '. Replaying a cleared stop or boss pays half XP and no Coins until you beat the Logic Tower.'}
+              </div>
             </div>
           </>
         )}

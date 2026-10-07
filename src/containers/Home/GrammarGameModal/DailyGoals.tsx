@@ -38,7 +38,8 @@ export default function DailyGoals({
       met: !!status.basicQualified,
       via: status.basicVia as string | null,
       classic: `Clear Lv${level}`,
-      quest: 'A stop at 70%+, or beat a boss'
+      // the map's letters (Mikey 10-07): B = 70%, A = 90%, S = 100%
+      quest: 'B or better on a stop or boss'
     },
     {
       key: 'excellence',
@@ -47,7 +48,7 @@ export default function DailyGoals({
       met: !!status.excellenceQualified,
       via: status.excellenceVia as string | null,
       classic: classicExcellenceTarget(status),
-      quest: 'A stop with no misses, or an A-average boss'
+      quest: 'S on a stop, or A or better on a boss'
     }
   ];
   return (
