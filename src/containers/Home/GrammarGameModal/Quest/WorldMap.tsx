@@ -128,6 +128,9 @@ export default function WorldMap({
             const [x, y] = positions[i];
             const big = node.kind !== 'stop';
             const at = { left: `${x}%`, top: `${y}%` };
+            // a cleared node becomes its letter marble (Mikey 10-07); forts
+            // and castles keep their bigger size
+            const done = node.cleared && node.grade;
             return (
               <React.Fragment key={node.id}>
                 {/* effects sit beside the node so its shadow stays static */}
@@ -149,12 +152,20 @@ export default function WorldMap({
                       !node.grade &&
                       (big ? bossNodeCls : openNodeCls),
                     node.unlocked && node.grade && GRADE_NODE[node.grade],
+                    done && marbleNodeCls,
                     node.unlocked && node.grade && 'gq-graded',
                     !node.unlocked && lockedCls,
                     !node.unlocked && 'gq-locked',
                     selected?.id === node.id && selectedCls
                   )}
-                  style={at}
+                  style={
+                    done
+                      ? {
+                          ...at,
+                          backgroundImage: `url(${spriteUri(node.grade)})`
+                        }
+                      : at
+                  }
                   // a tap picks the stop; a tap on the picked stop plays it
                   // (Mikey 10-07: a player tapped the stop and "nothing
                   // happened" — the Play button was off to the side)
@@ -170,16 +181,20 @@ export default function WorldMap({
                   }
                   title={node.grade ? `Best grade ${node.grade}` : undefined}
                 >
-                  {node.kind === 'stop' ? (
-                    <span className={nodeNumCls}>{node.index}</span>
-                  ) : (
-                    <PixelIcon
-                      name={node.kind === 'fort' ? 'tower' : 'crown'}
-                      scale={2}
-                      className={cx(nodeIconCls, !node.unlocked && greyIconCls)}
-                    />
-                  )}
-                  {node.cleared && (
+                  {!done &&
+                    (node.kind === 'stop' ? (
+                      <span className={nodeNumCls}>{node.index}</span>
+                    ) : (
+                      <PixelIcon
+                        name={node.kind === 'fort' ? 'tower' : 'crown'}
+                        scale={2}
+                        className={cx(
+                          nodeIconCls,
+                          !node.unlocked && greyIconCls
+                        )}
+                      />
+                    ))}
+                  {node.cleared && !done && (
                     <PixelIcon name="flag" scale={2} className={flagCls} />
                   )}
                 </button>
@@ -604,6 +619,13 @@ const bigNodeCls = css`
   }
 `;
 
+// the node drawn as Classic's letter marble (its image set inline)
+const marbleNodeCls = css`
+  && {
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+`;
 const openNodeCls = css`
   background-image: ${disc(12, OPEN_DISC)};
 `;
