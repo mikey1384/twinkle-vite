@@ -94,7 +94,10 @@ export default function MarbleRunScreen({
   const [ready, setReady] = useState(!boss);
   const [error, setError] = useState('');
   // practice: the fifth right answer sends the S marble to the flag
-  const [toFlag, setToFlag] = useState(false);
+  // a stop reopened after its fifth right answer just rolls to the flag
+  const [toFlag, setToFlag] = useState(
+    () => run.rules.mode === 'practice' && (run.rights || 0) >= run.rules.goal
+  );
   const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
   // the question being challenged (Classic's Challenge, opened from a miss)
   const [challengeId, setChallengeId] = useState<number | null>(null);
@@ -376,7 +379,11 @@ export default function MarbleRunScreen({
             <div className={cardInnerCls}>
               {phase === 'finishing' || toFlag || !question ? (
                 <div className={readyCls}>
-                  {phase === 'finishing' ? 'SAVING…' : 'TO THE FLAG…'}
+                  {phase === 'finishing'
+                    ? 'SAVING…'
+                    : boss
+                      ? 'THE LAST HIT…'
+                      : 'TO THE FLAG…'}
                 </div>
               ) : boss && phase === 'waiting' ? (
                 <div className={readyCls}>GET READY…</div>
@@ -430,6 +437,7 @@ export default function MarbleRunScreen({
                         <div className={ruleScrollCls}>
                           <RuleCard
                             card={answer.ruleCard}
+                            look={boss ? 'boss' : 'quest'}
                             pickedChoice={
                               question.choices[
                                 boss
@@ -444,7 +452,7 @@ export default function MarbleRunScreen({
                       )}
                       {boss ? (
                         <div className={nextRowCls}>
-                          <span className={nextNoteCls}>
+                          <span className={cx(nextNoteCls, bossNoteCls)}>
                             {reading
                               ? `Next hit in ${secondsLeft}…`
                               : 'Get ready…'}
@@ -1063,6 +1071,12 @@ const nextNoteCls = css`
   font-size: 1.25rem;
   font-weight: 700;
   opacity: 0.7;
+`;
+// the boss card is dark: its notes read light (Mikey 10-08: "Get ready…"
+// vanished on it)
+const bossNoteCls = css`
+  color: #f3eefc;
+  opacity: 0.85;
 `;
 const nextCls = css`
   ${button(GOLD, '#8a5200')}

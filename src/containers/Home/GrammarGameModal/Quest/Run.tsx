@@ -124,6 +124,7 @@ export default function Run({
           {answer.ruleCard && (
             <RuleCard
               card={answer.ruleCard}
+              look="quest"
               pickedChoice={question.choices[answer.selectedIndex] ?? null}
               koreanShown={koreanShown}
               onToggleKorean={handleToggleKorean}
@@ -146,11 +147,7 @@ export default function Run({
                   : `Finish · ${rightSoFar}/${run.questions.length}`}
             </button>
           ) : (
-            <button
-              className={nextCls}
-              disabled={reading}
-              onClick={handleNext}
-            >
+            <button className={nextCls} disabled={reading} onClick={handleNext}>
               {reading ? `Read it · ${secondsLeft}` : 'Next'}
             </button>
           )}

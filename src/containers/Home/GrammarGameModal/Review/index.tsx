@@ -105,6 +105,7 @@ export default function Review() {
               typeof current.selectedIndex === 'number' && (
                 <RuleCard
                   card={it.ruleCard}
+                  look="classic"
                   // An unchecked question's key may still be wrong (the tag
                   // agrees on the skill, not the key), so it only names the
                   // point; the reasons wait until the question is checked.

@@ -155,7 +155,7 @@ export default function Result({
       <div className={headCls}>{headline}</div>
       <div className={lineCls}>
         {boss
-          ? `${result.points ?? 0} of ${result.passPoints ?? 490} points needed to break the boss`
+          ? `${result.points ?? 0} of ${result.passPoints ?? 490} points needed to defeat the boss`
           : kind === 'nemesis'
             ? `${result.firstTryCorrect} of ${result.size} right on the first try`
             : `${result.rights ?? 0} right · ${result.misses ?? 0} missed${result.misses ? ' (they came back until you got them)' : ''}`}

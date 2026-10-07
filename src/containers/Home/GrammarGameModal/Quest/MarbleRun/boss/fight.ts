@@ -387,7 +387,10 @@ export class BossFight {
       if (since > introMs) {
         this.bossState = 'idle';
         this.nextAttack = t + 1600;
-        this.startQuestion(t);
+        // reopened after the last hit already landed on the server (Mikey
+        // 10-08: the fight sat on "TO THE FLAG…" forever): straight to the end
+        if (this.idx >= BOSS_HITS) this.finish(t);
+        else this.startQuestion(t);
       }
     }
     if (this.hp <= 0 && this.bossState !== 'dying' && !this.gone)
