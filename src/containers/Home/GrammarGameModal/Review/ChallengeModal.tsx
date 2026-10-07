@@ -18,9 +18,12 @@ export default function ChallengeModal({
   isOpen,
   onClose,
   questionId,
-  onAfterSuccess
+  onAfterSuccess,
+  portalTarget
 }: {
   isOpen: boolean;
+  // Quest's run plays on a layer above every modal; the modal opens inside it
+  portalTarget?: HTMLElement;
   onClose: () => void;
   questionId: number;
   onAfterSuccess: (args: {
@@ -103,6 +106,7 @@ export default function ChallengeModal({
     <Modal
       modalKey="ChallengeModal"
       isOpen={isOpen}
+      portalTarget={portalTarget}
       onClose={onClose}
       title={
         AI_FEATURES_DISABLED

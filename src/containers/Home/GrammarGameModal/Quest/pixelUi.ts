@@ -129,6 +129,24 @@ export const ROSE: Palette = {
   f: '#ffd3dd',
   s: '#e8899d'
 };
+// Classic's Challenge in Quest (a miss card and the result list): loud on
+// purpose, so a learner who thinks the key is wrong sees it at once
+export const CHALLENGE: Palette = {
+  k: INK,
+  l: '#ff9ab8',
+  f: '#e5386d',
+  s: '#a3194a'
+};
+export function challengeButton() {
+  return `
+    ${button(CHALLENGE, '#7a1236', '#ffffff')}
+    ${inkShadow(1)}
+    margin-bottom: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  `;
+}
 export const NIGHT: Palette = {
   k: '#0d0816',
   l: '#5b3a7e',

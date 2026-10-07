@@ -10,12 +10,14 @@ import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import RuleCard from '../Review/RuleCard';
+import ChallengeModal from '../Review/ChallengeModal';
 import {
   initialKoreanShown,
   saveKoreanShown
 } from '~/helpers/grammarblesRuleCard';
 import Stage from './MarbleRun/Stage';
 import AudioToggles from './AudioToggles';
+import PixelIcon from './PixelIcon';
 import { musicForNode, playMusic, stopMusic } from './MarbleRun/music';
 import { useReadCooldown } from './readCooldown';
 import { PracticeRun } from './MarbleRun/level/runner';
@@ -38,6 +40,7 @@ import {
   PLATE,
   WOOD,
   button,
+  challengeButton,
   discRows,
   frame,
   inkShadow,
@@ -92,6 +95,11 @@ export default function MarbleRunScreen({
   // practice: the fifth right answer sends the S marble to the flag
   const [toFlag, setToFlag] = useState(false);
   const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
+  // the question being challenged (Classic's Challenge, opened from a miss)
+  const [challengeId, setChallengeId] = useState<number | null>(null);
+  const challengeOpenRef = useRef(false);
+  challengeOpenRef.current = challengeId != null;
+  const layerRef = useRef<HTMLDivElement>(null);
   // boss: the last wrong pick, for the explanation shown after the hit lands
   const [bossMissPick, setBossMissPick] = useState<number | null>(null);
   const shownAt = useRef(0);
@@ -203,6 +211,7 @@ export default function MarbleRunScreen({
     function onKey(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
       if (target && /INPUT|TEXTAREA/.test(target.tagName)) return;
+      if (challengeOpenRef.current) return;
       const n =
         '1234'.indexOf(e.key) + 1 || 'abcd'.indexOf(e.key.toLowerCase()) + 1;
       if (n && phase === 'asking') handlePick(n - 1);
@@ -219,6 +228,8 @@ export default function MarbleRunScreen({
   useEffect(() => {
     function onEscape(e: KeyboardEvent) {
       if (e.key !== 'Escape' || e.defaultPrevented) return;
+      // an open challenge closes first, by its own Escape
+      if (challengeOpenRef.current) return;
       e.preventDefault();
       onQuit();
     }
@@ -304,6 +315,7 @@ export default function MarbleRunScreen({
     <div
       className={cx(wrapCls, boss && bossCls)}
       onKeyDown={handleLayerKeyDown}
+      ref={layerRef}
     >
       <div className={cx(hudCls, boss && bossHudCls)}>
         <button className={quitCls} onClick={onQuit}>
@@ -413,6 +425,26 @@ export default function MarbleRunScreen({
                   {((phase === 'review' && answer && !answer.isCorrect) ||
                     (phase === 'bossReview' && answer)) && (
                     <div className={reviewCls}>
+                      {/* Mikey 10-07: a learner who thinks the key is wrong
+                          challenges it right here, beside the explanation.
+                          Bosses run on a clock, so theirs wait for the result. */}
+                      {!boss &&
+                        answer.challenge &&
+                        !answer.challenge.checked && (
+                          <div className={challengeRowCls}>
+                            <span className={challengeAskCls}>
+                              Think the answer key is wrong?
+                            </span>
+                            <button
+                              className={challengeCls}
+                              onClick={() =>
+                                setChallengeId(answer.challenge!.questionId)
+                              }
+                            >
+                              <PixelIcon name="flag" scale={2} /> Challenge
+                            </button>
+                          </div>
+                        )}
                       {answer.ruleCard && (
                         <div className={ruleScrollCls}>
                           <RuleCard
@@ -463,6 +495,28 @@ export default function MarbleRunScreen({
           </div>
         </div>
       </div>
+      {challengeId != null && layerRef.current && (
+        <ChallengeModal
+          isOpen
+          portalTarget={layerRef.current}
+          questionId={challengeId}
+          onClose={() => setChallengeId(null)}
+          onAfterSuccess={({ justified }) => {
+            // a checked question can't be challenged again: hide its button
+            setAnswers((prev) =>
+              Object.fromEntries(
+                Object.entries(prev).map(([k, a]) => [
+                  k,
+                  a.challenge?.questionId === challengeId
+                    ? { ...a, challenge: { ...a.challenge, checked: true } }
+                    : a
+                ])
+              )
+            );
+            if (!justified) setChallengeId(null);
+          }}
+        />
+      )}
     </div>,
     document.body
   );
@@ -570,7 +624,17 @@ export default function MarbleRunScreen({
     await new Promise((resolve) => setTimeout(resolve, 1400));
     try {
       const result = await finishRun(run.runId);
-      onFinished(result, Object.values(answersRef.current));
+      // the result lists missed questions to challenge, so it needs their text
+      const byPosition = new Map(
+        questions.map((q) => [q.position, q.question])
+      );
+      onFinished(
+        result,
+        Object.values(answersRef.current).map((a) => ({
+          ...a,
+          questionText: byPosition.get(a.position)
+        }))
+      );
     } catch {
       finishedRef.current = false;
       setError('Could not save the run. Try again from the map.');
@@ -817,6 +881,24 @@ const cardInnerCls = css`
   }
 `;
 // a long rule card scrolls on its own; choices and Continue stay put
+const challengeRowCls = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+`;
+const challengeAskCls = css`
+  font-weight: 700;
+  font-size: 1.25rem;
+`;
+const challengeCls = css`
+  ${challengeButton()}
+  flex: none;
+  min-height: 4rem;
+  padding: 0.3rem 1.2rem;
+  font-size: 1.1rem;
+`;
 const ruleScrollCls = css`
   max-height: 26vh;
   max-height: 26dvh;

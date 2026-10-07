@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import type { QuestAnswer, QuestResult } from './types';
 import QuestMarble, { answerLook } from './QuestMarble';
 import PixelIcon from './PixelIcon';
+import ChallengeModal from '../Review/ChallengeModal';
 import {
   BLUE,
   GOLD,
@@ -12,6 +13,7 @@ import {
   PIXEL_FONT,
   TAG,
   button,
+  challengeButton,
   frame,
   inkShadow,
   pixelSvg,
@@ -30,6 +32,19 @@ export default function Result({
   onBackToMap: () => void;
 }) {
   const boss = kind === 'fort' || kind === 'castle';
+  // the run's missed questions, for Classic's Challenge (a boss's misses
+  // can only be challenged here: its clock doesn't stop for one)
+  const [listOpen, setListOpen] = useState(false);
+  const [challengeId, setChallengeId] = useState<number | null>(null);
+  const [checkedIds, setCheckedIds] = useState<number[]>([]);
+  const challengeable = answers
+    .filter((a) => a.challenge && !a.challenge.checked && a.questionText)
+    .filter(
+      (a, i, list) =>
+        list.findIndex(
+          (b) => b.challenge!.questionId === a.challenge!.questionId
+        ) === i
+    );
   // never "perfect" while the boss (or the stop) still stands
   const perfect = !!result.perfect && (result.cleared || kind === 'nemesis');
   const headline = perfect
@@ -178,11 +193,55 @@ export default function Result({
           </span>
         )}
       </div>
+      {listOpen && (
+        <div className={challengeListCls}>
+          {challengeable.map((a) => {
+            const id = a.challenge!.questionId;
+            const done = checkedIds.includes(id);
+            return (
+              <div key={id} className={challengeItemCls}>
+                <span className={challengeTextCls}>{a.questionText}</span>
+                {done ? (
+                  <span className={checkedCls}>Checked</span>
+                ) : (
+                  <button
+                    className={challengeSmallCls}
+                    onClick={() => setChallengeId(id)}
+                  >
+                    <PixelIcon name="flag" scale={2} /> Challenge
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div className={buttonsCls}>
+        {challengeable.length > 0 && (
+          <button
+            className={challengeOpenCls}
+            aria-expanded={listOpen}
+            onClick={() => setListOpen((o) => !o)}
+          >
+            <PixelIcon name="flag" scale={2} /> Challenge a question (
+            {challengeable.length})
+          </button>
+        )}
         <button className={primaryCls} onClick={onBackToMap}>
           Back to map
         </button>
       </div>
+      {challengeId != null && (
+        <ChallengeModal
+          isOpen
+          questionId={challengeId}
+          onClose={() => setChallengeId(null)}
+          onAfterSuccess={({ justified }) => {
+            setCheckedIds((ids) => [...ids, challengeId]);
+            if (!justified) setChallengeId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -482,8 +541,53 @@ const noRewardCls = css`
 `;
 const buttonsCls = css`
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  gap: 1rem;
   margin-top: 1.6rem;
+`;
+const challengeOpenCls = css`
+  ${challengeButton()}
+  min-height: 5.2rem;
+  padding: 0.6rem 1.4rem;
+  font-size: 1.2rem;
+`;
+const challengeListCls = css`
+  ${frame(PARCHMENT, 3)}
+  width: min(100%, 52rem);
+  max-height: 30vh;
+  max-height: 30dvh;
+  overflow-y: auto;
+  margin-top: 1.2rem;
+  padding: 0.6rem 0.8rem;
+`;
+const challengeItemCls = css`
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 0;
+  & + & {
+    border-top: 2px dashed rgba(26, 20, 38, 0.2);
+  }
+`;
+const challengeTextCls = css`
+  flex: 1;
+  min-width: 0;
+  font-size: 1.3rem;
+  color: ${INK};
+  text-align: left;
+`;
+const challengeSmallCls = css`
+  ${challengeButton()}
+  flex: none;
+  padding: 0.3rem 0.9rem;
+  font-size: 1rem;
+`;
+const checkedCls = css`
+  flex: none;
+  font-family: ${PIXEL_FONT};
+  font-size: 1rem;
+  color: #3a7d44;
 `;
 const primaryCls = css`
   ${button(GOLD, '#8a5200')}

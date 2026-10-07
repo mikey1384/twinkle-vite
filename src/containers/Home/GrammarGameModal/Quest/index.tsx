@@ -133,18 +133,19 @@ export default function GrammarQuest() {
               starting={starting}
             />
             <div className={footnoteCls}>
-              {/* the real rules, one idea each (Mikey 10-07) */}
+              {/* the real rules in plain words, one idea each (Mikey 10-07:
+                  the percentages and cutoffs were hard to follow) */}
               <div>
-                <b>Marbles</b> keep each stop&apos;s and boss&apos;s best grade:
-                % right at a stop, % of 700 points at a boss. S 100 · A 90 · B
-                70 · C 50 · D 30 · F below.
+                <b>Grades:</b> each stop and boss shows your best grade. Stops:
+                fewer misses, better grade (no misses = S). Bosses: faster
+                answers, better grade.
               </div>
               <div>
-                <b>Today:</b> {state.rewardedRunsLeft} more runs pay XP and
-                Coins
+                <b>Today:</b> {state.rewardedRunsLeft} more runs earn XP and
+                Coins.
                 {state.replaysPay
-                  ? '.'
-                  : '. Replaying a cleared stop or boss pays half XP and no Coins until you beat the Logic Tower.'}
+                  ? ''
+                  : ' Playing a cleared stop or boss again earns half XP and no Coins.'}
               </div>
             </div>
           </>
