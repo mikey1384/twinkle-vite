@@ -892,6 +892,8 @@ registerMethods('user', [
   'submitMeetupPlan',
   'submitMeetupVideo',
   'reviewMeetupCrew',
+  'decideMeetupInfoCheck',
+  'answerMeetupInfoCheck',
   'loadAchievementsByUserId',
   'loadUsersByAchievementId',
   'loadCoinHistory',
