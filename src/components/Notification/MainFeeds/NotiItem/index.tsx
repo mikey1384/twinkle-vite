@@ -226,6 +226,7 @@ function NotiItem({
             <NotiMessage
               actionColor={actionColor || ''}
               actionObj={actionObj}
+              actorUsername={user?.username}
               infoColor={infoColor || ''}
               isNotification={isNotification || false}
               isTask={isTask || false}

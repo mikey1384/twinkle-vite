@@ -16,10 +16,12 @@ import {
   shouldShowNotificationContentDetail
 } from '../../notificationLabels';
 import { SITE_NAME } from '~/constants/siteBrand';
+import { stripLeadingActorName } from '~/helpers/buildAppNotificationSummary';
 
 function NotiMessage({
   actionObj,
   actionColor,
+  actorUsername,
   infoColor,
   isNotification,
   isTask,
@@ -56,6 +58,8 @@ function NotiMessage({
     userId: number;
   };
   actionColor: string;
+  // the member shown before this message (Build app summaries may repeat it)
+  actorUsername?: string;
   infoColor: string;
   isNotification: boolean;
   isTask: boolean;
@@ -252,7 +256,9 @@ function NotiMessage({
 
   switch (actionObj.contentType) {
     case 'buildApp': {
-      const summary = actionObj.eventSummary || 'sent an update';
+      const summary =
+        stripLeadingActorName(actionObj.eventSummary || '', actorUsername) ||
+        'sent an update';
       const buildTitle = targetObj.content || actionObj.eventLabel || 'Build';
       return (
         <>
