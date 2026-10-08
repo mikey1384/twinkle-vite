@@ -813,7 +813,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               <span>
                 Model:{' '}
                 {engine === 'gemini'
-                  ? 'Nano Banana'
+                  ? 'Nano Banana 2.1'
                   : getImageModelLabel(model)}
                 {engine === 'openai' ? `, ${quality} quality` : ''}. Each
                 approval authorizes one generation.

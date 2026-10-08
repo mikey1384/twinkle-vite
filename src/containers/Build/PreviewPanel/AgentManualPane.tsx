@@ -166,7 +166,7 @@ const sdkSections: GuideSection[] = [
     title: 'Twinkle.ai',
     items: [
       'Do not build prompt-preset selection UIs from Twinkle.ai.listPrompts(); runtime chat uses message, history, and systemPrompt.',
-      'await Twinkle.ai.generateImage({ prompt, referenceImageB64, engine: "openai", model: "gpt-image-2.5-flare", quality: "high", requestId, onStatus }) generates or edits an image.',
+      'await Twinkle.ai.generateImage({ prompt, referenceImageB64, engine: "openai", model: "gpt-image-2.5-flare", quality: "high", requestId, onStatus }) generates or edits an image (engine: "gemini" is Nano Banana 2.1).',
       'await Twinkle.ai.chat({ message, history, systemPrompt, webSearch, onText, onStatus }) generates text with the default Lumine text model and streams accumulated text through onText when provided. Live web search is enabled by default; pass webSearch: false to disable it for the app.',
       'Twinkle.ai.chat history entries must be shaped as { role: "user" | "assistant", content: string }. Do not pass saved message objects shaped as { text } unless you map text to content first.',
       'await Twinkle.ai.generateObject({ prompt, expectedStructure, thinkingMode: "low" | "medium" | "high", model, webSearch }) returns a validated structured JSON object for app decisions. Live web search is enabled by default in Medium and High modes; pass webSearch: false to disable it. Lite Mode remains tool-free.',

@@ -25,7 +25,9 @@ const THUMBNAIL_NUDGE_MODEL_LABELS: Record<string, string> = {
   'gpt-image-2': 'GPT Image 2',
   'gpt-image-2.5-flare': 'GPT Image 2.5 Flare',
   'gpt-image-2.5-sunburst': 'GPT Image 2.5 Sunburst',
-  'gemini-3-pro-image-preview': 'Gemini Image (Nano Banana)'
+  'gemini-nano-banana-2.1': 'Nano Banana 2.1',
+  'gemini-3-pro-image': 'Nano Banana Pro',
+  'gemini-3-pro-image-preview': 'Nano Banana Pro'
 };
 
 function thumbnailNudgeDismissalKey(buildId: number) {

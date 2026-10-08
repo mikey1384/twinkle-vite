@@ -167,7 +167,7 @@ export default function FollowUpInput({
           >
             <option value="gpt-image-2.5-flare">Flare 2.5</option>
             <option value="gpt-image-2.5-sunburst">Sunburst 2.5</option>
-            <option value="gemini">Nano Banana</option>
+            <option value="gemini">Nano Banana 2.1</option>
           </select>
           {followUpEngine === 'openai' && (
             <select

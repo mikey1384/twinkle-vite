@@ -27,7 +27,7 @@ export default function AICardDetails({
   const compact = density !== 'full';
   const target = density === 'target';
   const isNanoBananaEngine =
-    engine === 'Nano Banana' || engine === 'Nano Banana 2';
+    String(engine || '').startsWith('Nano Banana');
 
   const formattedDate = card.timeStamp
     ? new Date(card.timeStamp * 1000).toLocaleDateString('en-US', {
