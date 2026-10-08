@@ -78,9 +78,22 @@ export default function CrewHubPanel({ crewId }: { crewId: number }) {
     headline = 'Staff asked for changes';
     detail = plan.note || '';
   }
-  const grownUp = adult?.name
-    ? `${adult.name} (${adult.kind === 'teacher' ? 'Twinkle teacher' : 'parent'}) is coming`
-    : '';
+  // the server's adultForDisplay: a teacher is "coming" only once they said
+  // yes, a classroom names no person (older APIs: never claim a teacher)
+  const shown = adult?.display;
+  const grownUp = shown
+    ? shown.kind === 'classroom'
+      ? shown.status === 'confirmed' && shown.name
+        ? `Supervised at ${shown.name}`
+        : 'Twinkle arranges the grown-up for classroom meetups'
+      : shown.status === 'waiting'
+        ? `Waiting for ${shown.waitingFor} (Twinkle teacher) to confirm`
+        : shown.name
+          ? `${shown.name} (${shown.kind === 'teacher' ? 'Twinkle teacher' : 'parent'}) is coming`
+          : ''
+    : adult?.kind === 'parent' && adult.name
+      ? `${adult.name} (parent) is coming`
+      : '';
 
   const go = (to: string, kind: 'crew_hub_open' | 'crew_hub_examples') => {
     trackMeetupQuestView(kind);

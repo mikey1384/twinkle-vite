@@ -27,6 +27,7 @@ import StepCard, {
   questLabelClass
 } from './StepCard';
 import StepTracker from './StepTracker';
+import TeacherPicker, { type MeetupTeacher } from './TeacherPicker';
 import VideoUploader from './VideoUploader';
 import StoryEntryCard from './Story/StoryEntryCard';
 import { ExamplesHint } from './Story/QuestStories';
@@ -105,7 +106,13 @@ export default function CrewPanel({
 
   const [branch, setBranch] = useState(me?.branch || '');
   const [adultKind, setAdultKind] = useState(crew.adult.kind || 'parent');
-  const [adultName, setAdultName] = useState(crew.adult.name || '');
+  // a parent's name is typed; a Twinkle teacher is picked from the list
+  const [adultName, setAdultName] = useState(
+    crew.adult.kind === 'teacher' ? '' : crew.adult.name || ''
+  );
+  const [pickedTeacher, setPickedTeacher] = useState<MeetupTeacher | null>(
+    crew.adult.teacher || null
+  );
   // the approved plan decides which grown-ups fit (a home: a parent only)
   const approvedPlanIsHome = venueFromArea(crew.plan.area || '').mode === 'home';
   const [planDate, setPlanDate] = useState(crew.plan.date || '');
@@ -161,8 +168,23 @@ export default function CrewPanel({
     ) : null;
   useEffect(() => {
     setAdultKind(crew.adult.kind || 'parent');
-    setAdultName(crew.adult.name || '');
-  }, [crew.adult.kind, crew.adult.name]);
+    setAdultName(crew.adult.kind === 'teacher' ? '' : crew.adult.name || '');
+    setPickedTeacher(crew.adult.teacher || null);
+    // the saved teacher is a new object on every reload: follow its id
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [crew.adult.kind, crew.adult.name, crew.adult.teacher?.userId]);
+  // the saved teacher whose request went out (saving them again would change
+  // nothing); a teacher saved without a request (a failed send) can be saved
+  // again to send it
+  const savedTeacherId =
+    crew.adult.kind === 'teacher' &&
+    crew.adult.request &&
+    crew.adult.request.teacherUserId === crew.adult.teacher?.userId &&
+    (crew.adult.request.status === 'open' || crew.adult.request.status === 'accepted')
+      ? crew.adult.teacher?.userId || 0
+      : 0;
+  // a Twinkle classroom meetup: the crew names no grown-up (Twinkle arranges it)
+  const classroomGrownUp = crew.adult.display?.kind === 'classroom';
 
   const planEditable =
     viewer.isMember &&
@@ -714,7 +736,7 @@ export default function CrewPanel({
                 onChanged={onChanged}
               />
             )}
-            {viewer.isMember && !viewer.detailsLocked ? (
+            {viewer.isMember && !viewer.detailsLocked && !classroomGrownUp ? (
               <div>
                 <span className={questLabelClass}>Which adult is coming?</span>
                 <div
@@ -743,30 +765,53 @@ export default function CrewPanel({
                     </Button>
                   ))}
                 </div>
-                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-                  <input
-                    className={questInputClass}
-                    style={{ flex: '1 1 20rem' }}
-                    value={adultName}
-                    maxLength={80}
-                    placeholder={
-                      adultKind === 'teacher'
-                        ? 'Name and role, for example: Teacher Kim (Mokdong)'
-                        : "For example: Minjun's mom"
-                    }
-                    onChange={(event) => setAdultName(event.target.value)}
-                  />
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '0.6rem',
+                    flexWrap: 'wrap',
+                    alignItems: 'flex-start'
+                  }}
+                >
+                  {adultKind === 'teacher' ? (
+                    <TeacherPicker
+                      picked={pickedTeacher}
+                      disabled={grownUpAction.busy}
+                      onPick={setPickedTeacher}
+                    />
+                  ) : (
+                    <input
+                      className={questInputClass}
+                      style={{ flex: '1 1 20rem' }}
+                      value={adultName}
+                      maxLength={80}
+                      placeholder="For example: Minjun's mom"
+                      onChange={(event) => setAdultName(event.target.value)}
+                    />
+                  )}
                   <Button
                     variant="soft"
                     color="logoBlue"
-                    disabled={grownUpAction.busy || !adultName.trim()}
+                    disabled={
+                      grownUpAction.busy ||
+                      (adultKind === 'teacher'
+                        ? !pickedTeacher ||
+                          pickedTeacher.userId === savedTeacherId
+                        : !adultName.trim())
+                    }
                     onClick={() =>
                       grownUpAction.run(() =>
-                        setMeetupCrewAdult({
-                          crewId: crew.crewId,
-                          kind: adultKind,
-                          name: adultName
-                        })
+                        adultKind === 'teacher'
+                          ? setMeetupCrewAdult({
+                              crewId: crew.crewId,
+                              kind: 'teacher',
+                              teacherUserId: pickedTeacher?.userId
+                            })
+                          : setMeetupCrewAdult({
+                              crewId: crew.crewId,
+                              kind: adultKind,
+                              name: adultName
+                            })
                       )
                     }
                   >
@@ -774,10 +819,13 @@ export default function CrewPanel({
                   </Button>
                 </div>
                 <div className={questHelpClass}>
-                  A name and role only.
+                  {adultKind === 'teacher'
+                    ? 'Only approved Twinkle teachers are listed. When you save, they get a request in their chat, and they count once they say yes.'
+                    : 'A name and role only.'}
                 </div>
               </div>
             ) : null}
+            <AdultComing adult={crew.adult} />
             {grownUpAction.error && (
               <QuestNote tone="warning">{grownUpAction.error}</QuestNote>
             )}
@@ -945,6 +993,95 @@ function ParentAnswers({
 }
 
 // The meetup place/time from the staff: members and staff only.
+// Who is coming as the grown-up: a picked Twinkle teacher is shown by their
+// username (a link to their profile); a teacher that does not count says why.
+function AdultComing({ adult }: { adult: CrewView['adult'] }) {
+  const shown = adult.display;
+  const rowClass = css`
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 1.35rem;
+    color: ${Color.darkerGray()};
+  `;
+  // a classroom names no person: Twinkle arranges the grown-up, and only the
+  // confirmed classroom is named
+  if (shown?.kind === 'classroom') {
+    return (
+      <QuestNote tone={shown.status === 'confirmed' ? 'success' : 'info'}>
+        <span data-adult-classroom={shown.status}>
+          {shown.status === 'confirmed' && shown.name
+            ? `Supervised at ${shown.name}. Twinkle arranges the grown-up for classroom meetups.`
+            : 'Twinkle arranges the grown-up for classroom meetups. Staff confirm your time slot first.'}
+        </span>
+      </QuestNote>
+    );
+  }
+  // only a teacher who said yes is "coming"
+  if (adult.kind === 'teacher' && adult.teacher && shown?.status === 'confirmed') {
+    return (
+      <div data-adult-coming className={rowClass}>
+        <Icon icon="chalkboard-teacher" style={{ color: Color.logoBlue() }} />
+        <span>Coming:</span>
+        <b>Twinkle teacher</b>
+        <UsernameText
+          user={{ id: adult.teacher.userId, username: adult.teacher.username }}
+        />
+      </div>
+    );
+  }
+  if (
+    adult.kind === 'teacher' &&
+    adult.teacher &&
+    shown?.status === 'waiting' &&
+    !(adult.request && adult.request.teacherUserId === adult.teacher.userId)
+  ) {
+    // saved, but the request never went out (a failed send): say so
+    return (
+      <QuestNote tone="warning">
+        <span data-adult-request-failed>
+          The request to {adult.teacher.username} didn't go out. Press Save to
+          send it again.
+        </span>
+      </QuestNote>
+    );
+  }
+  if (adult.kind === 'teacher' && adult.teacher && shown?.status === 'waiting') {
+    return (
+      <div data-adult-waiting className={rowClass}>
+        <Icon icon="hourglass-half" style={{ color: Color.orange() }} />
+        <span>Waiting for Twinkle teacher</span>
+        <UsernameText
+          user={{ id: adult.teacher.userId, username: adult.teacher.username }}
+        />
+        <span>to confirm. A request is in their chat.</span>
+      </div>
+    );
+  }
+  if (adult.kind === 'teacher' && adult.teacherProblem) {
+    return (
+      <QuestNote tone="warning">
+        {adult.teacherProblem.charAt(0).toUpperCase() +
+          adult.teacherProblem.slice(1)}
+        .
+      </QuestNote>
+    );
+  }
+  // the teacher answered "Not me": the crew picks again
+  if (!adult.kind && adult.request?.status === 'declined') {
+    return (
+      <QuestNote tone="warning">
+        <span data-adult-declined>
+          {adult.request.teacherUsername} can&apos;t come
+          {adult.request.afterYes ? ' after all' : ''}. Pick another grown-up.
+        </span>
+      </QuestNote>
+    );
+  }
+  return null;
+}
+
 function VenueNote({ venue, isHome }: { venue: CrewView['venue']; isHome: boolean }) {
   if (!venue || venue.status === 'none' || venue.status === 'cancelled') return null;
   const slot = venue.confirmedSlot;

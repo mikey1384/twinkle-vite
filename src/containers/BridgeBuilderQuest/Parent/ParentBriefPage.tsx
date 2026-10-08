@@ -39,7 +39,8 @@ interface Brief {
   activity: string;
   where: { kind: 'academy' | 'home' | 'other' | 'undecided'; branch: string; room: string; area: string };
   when: { date: string; time?: string; slot: { date: string; start: string; end: string } | null };
-  adult: { kind: string; name: string };
+  // the server's adultForDisplay: kind 'classroom' | 'teacher' | 'parent' | ''
+  adult: { kind: string; name: string; status?: string; waitingFor?: string };
   planStatus: string;
   meetupDone: boolean;
   otherParents: { childUsername: string; email: string }[];
@@ -60,13 +61,19 @@ const TEXT = {
     planPending: '계획이 아직 확정되지 않았습니다. 확정되면 이 링크에서 볼 수 있습니다.',
     adultHere: '함께하는 어른',
     adultMissing: '다음 단계에서 아이들이 함께하는 어른을 정합니다.',
+    // a classroom names no person: Twinkle arranges the grown-up; only the
+    // confirmed classroom is ever named
+    adultClassroomArranging: '교실 모임의 보호자는 트윈클이 마련합니다.',
+    adultClassroomSet: (_place: string, branch: string) =>
+      `트윈클 ${branch ? `${branch} 지점 ` : ''}교실에서 진행하며, 보호자는 트윈클이 마련합니다.`,
+    adultTeacherWaiting: (name: string) => `트윈클 선생님 ${name}님의 확인을 기다리고 있습니다.`,
     offersTitle: '도와주실 수 있나요? (선택)',
     offerGuardian: '필요하다면 제가 보호자로 함께할 의향이 있습니다',
     offerPlace: '모임 장소로 저희 집을 제공할 의향이 있습니다',
     revising: '아이들이 계획을 고치고 있어요. 바뀐 계획이 나오면 다시 보내 드릴게요.',
     hostNeeded: '이 계획은 한 가정이 집을 내어 주셔야 진행돼요. 가능하시면 체크해 주세요.',
     offersNote: '체크는 의향을 알려 주시는 것일 뿐입니다. 실제로 누가 어떤 역할을 맡을지는 다음 단계에서 정해지고, 필요하면 다시 연락드립니다.',
-    placeAcademy: (branch: string) => `Twinkle ${branch} 지점 교실 (선생님이 함께)`,
+    placeAcademy: (branch: string) => `Twinkle ${branch} 지점 교실 (보호자는 트윈클이 마련)`,
     placeHome: (area: string) => `멤버의 집 · ${area} (보호자가 함께)`,
     who: '누가 오나요',
     parentsAnswered: (yes: number, all: number) => `보호자 ${all}명 중 ${yes}명이 허락했어요`,
@@ -80,7 +87,9 @@ const TEXT = {
     yourChild: '자녀분',
     what: '무엇을 하나요',
     where: '어디서 하나요',
-    whereAcademy: (branch: string, room: string) => `Twinkle ${branch} 지점${room ? ` ${room}` : ''} (선생님이 함께합니다)`,
+    // "a teacher is there" only once staff confirmed the slot
+    whereAcademy: (branch: string, room: string, confirmed: boolean) =>
+      `Twinkle ${branch} 지점${room ? ` ${room}` : ''} (${confirmed ? '선생님이 함께합니다' : '보호자는 트윈클이 마련'})`,
     whereNone: '기본은 Twinkle 지점 교실이고 선생님이 함께합니다. 장소와 시간은 운영진이 정하며, 정해지면 이 링크에서 볼 수 있습니다.',
     when: '언제인가요',
     whenNone: '아직 정해지지 않았습니다. 정해지면 이 링크에서 볼 수 있습니다.',
@@ -133,13 +142,16 @@ const TEXT = {
     planPending: 'The plan is not final yet. You will see it on this link once it is.',
     adultHere: 'Grown-up there',
     adultMissing: 'The kids name the grown-up in the next step.',
+    adultClassroomArranging: 'Twinkle arranges the grown-up for classroom meetups.',
+    adultClassroomSet: (place: string, _branch: string) => `Supervised at ${place}`,
+    adultTeacherWaiting: (name: string) => `Waiting for Twinkle teacher ${name} to confirm.`,
     offersTitle: 'Can you help? (optional)',
     offerGuardian: 'I am willing to be a guardian at this meetup if needed',
     offerPlace: 'I am willing to offer my home as the meeting place',
     revising: 'The kids are changing their plan. We will send you the new version.',
     hostNeeded: 'This plan needs one family to host. Tick if yours can.',
     offersNote: 'Ticking only tells us you are willing. Who actually takes each role is decided in the next step, and we will check with you again if needed.',
-    placeAcademy: (branch: string) => `Twinkle ${branch} branch classroom (a teacher is there)`,
+    placeAcademy: (branch: string) => `Twinkle ${branch} branch classroom (Twinkle arranges the grown-up)`,
     placeHome: (area: string) => `A member's home · ${area} (a parent is there)`,
     who: "Who's coming",
     parentsAnswered: (yes: number, all: number) => `${yes} of ${all} parents said yes`,
@@ -153,7 +165,8 @@ const TEXT = {
     yourChild: 'your child',
     what: 'What they will do',
     where: 'Where',
-    whereAcademy: (branch: string, room: string) => `Twinkle ${branch} branch${room ? `, ${room}` : ''} (a teacher is there)`,
+    whereAcademy: (branch: string, room: string, confirmed: boolean) =>
+      `Twinkle ${branch} branch${room ? `, ${room}` : ''} (${confirmed ? 'a teacher is there' : 'Twinkle arranges the grown-up'})`,
     whereNone: 'By default, a Twinkle branch classroom with a teacher. Staff set the place and time, and you will see it here.',
     when: 'When',
     whenNone: 'Not set yet. You will see it on this link once it is.',
@@ -451,7 +464,7 @@ export default function ParentBriefPage() {
                           {(() => {
                             const rest = brief.where.area.replace(/^home · /i, '');
                             if (brief.where.kind === 'academy' && brief.where.branch) {
-                              return t.whereAcademy(brief.where.branch, brief.where.room);
+                              return t.whereAcademy(brief.where.branch, brief.where.room, !!brief.when.slot);
                             }
                             if (brief.where.kind === 'academy') return t.placeAcademy(rest.replace(/^twinkle | branch classroom$/gi, ''));
                             if (brief.where.kind === 'home') return t.placeHome(rest);
@@ -536,7 +549,7 @@ export default function ParentBriefPage() {
               <div
                 style={{
                   padding: '1.2rem 1.6rem',
-                  background: brief.adult.name ? Color.green(0.07) : Color.orange(0.1),
+                  background: brief.adult.name || brief.adult.kind === 'classroom' ? Color.green(0.07) : Color.orange(0.1),
                   borderTop: '1px solid var(--ui-border)'
                 }}
               >
@@ -545,9 +558,15 @@ export default function ParentBriefPage() {
                   {t.adultHere}
                 </div>
                 <div style={{ fontSize: '1.6rem', fontWeight: 700, marginTop: '0.3rem' }}>
-                  {brief.adult.name
-                    ? `${brief.adult.name} (${brief.adult.kind === 'teacher' ? t.teacher : t.parent})`
-                    : t.adultMissing}
+                  {brief.adult.kind === 'classroom'
+                    ? brief.adult.status === 'confirmed' && brief.adult.name
+                      ? t.adultClassroomSet(brief.adult.name, brief.where.branch)
+                      : t.adultClassroomArranging
+                    : brief.adult.status === 'waiting' && brief.adult.waitingFor
+                      ? t.adultTeacherWaiting(brief.adult.waitingFor)
+                      : brief.adult.name
+                        ? `${brief.adult.name} (${brief.adult.kind === 'teacher' ? t.teacher : t.parent})`
+                        : t.adultMissing}
                 </div>
               </div>
             </section>

@@ -108,6 +108,14 @@ export interface CrewVenue {
   confirmedSlot: MeetupSlot | null;
 }
 
+// what may be said about a crew's grown-up (the API's adultForDisplay)
+export interface MeetupAdultDisplay {
+  kind: 'classroom' | 'teacher' | 'parent' | '';
+  name: string;
+  status: 'named' | 'confirmed' | 'waiting' | 'arranging' | '';
+  waitingFor: string;
+}
+
 export interface CrewView extends CrewProfile {
   stage: CrewStage;
   venue: CrewVenue;
@@ -117,7 +125,32 @@ export interface CrewView extends CrewProfile {
   founderId: number;
   status: 'active' | 'completed' | 'disbanded';
   members: CrewMember[];
-  adult: { kind: string; name: string };
+  adult: {
+    kind: string;
+    name: string;
+    // kind 'teacher': the approved Twinkle teacher picked from the list
+    // (username + picture), null when none is picked or it no longer counts
+    teacher?: { userId: number; username: string; profilePicUrl: string } | null;
+    // what is wrong with a named teacher ('' = nothing)
+    teacherProblem?: string;
+    // when the teacher said "Yes, I'm coming" (0 = not yet)
+    confirmedAt?: number;
+    // what every surface may say about the grown-up (adultForDisplay)
+    display?: MeetupAdultDisplay;
+    // the last request card to a teacher
+    request?: {
+      messageId: number;
+      status: 'open' | 'accepted' | 'declined' | 'replaced' | 'cancelled' | 'plan_changed' | 'released';
+      // declined after a yes; why a yes was released
+      afterYes?: boolean;
+      releasedFor?: string;
+      teacherUserId: number;
+      teacherUsername: string;
+      requesterUsername: string;
+      sentAt: number;
+      answeredAt: number;
+    } | null;
+  };
   plan: {
     status: ReviewStatus;
     date: string;
@@ -297,7 +330,8 @@ export interface StaffApplication extends CrewProfile {
     isFounder: boolean;
     attended: boolean;
   }[];
-  adult: { kind: string; name: string };
+  // the server's adultForDisplay (nobody shown as coming who does not count)
+  adult: { kind: string; name: string; status?: string; waitingFor?: string };
   // staff only: every parent's answer and contact for this crew
   parents?: NonNullable<CrewView['parentContacts']>;
   plan: {

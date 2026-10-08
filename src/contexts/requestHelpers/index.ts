@@ -889,6 +889,8 @@ registerMethods('user', [
   'replaceMeetupCrewMember',
   'updateMyMeetupMembership',
   'setMeetupCrewAdult',
+  'searchMeetupTeachers',
+  'answerMeetupTeacherRequest',
   'submitMeetupPlan',
   'submitMeetupVideo',
   'reviewMeetupCrew',

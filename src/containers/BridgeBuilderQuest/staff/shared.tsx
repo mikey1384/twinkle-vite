@@ -522,9 +522,17 @@ export function CalendarChip({ date, time }: { date: string; time?: string }) {
   );
 }
 
-export function GrownUpBadge({ adult }: { adult: { kind: string; name: string } }) {
+// The server's adultForDisplay: nobody is shown as coming who does not count
+// (a teacher only after they confirmed; a classroom names no person).
+export function GrownUpBadge({
+  adult
+}: {
+  adult: { kind: string; name: string; status?: string; waitingFor?: string };
+}) {
   if (!adult.kind) return null;
   const teacher = adult.kind === 'teacher';
+  const classroom = adult.kind === 'classroom';
+  const waiting = adult.status === 'waiting';
   return (
     <span
       className={css`
@@ -539,9 +547,22 @@ export function GrownUpBadge({ adult }: { adult: { kind: string; name: string } 
         border: 1px solid ${Color.green(0.35)};
       `}
     >
-      <Icon icon={teacher ? 'chalkboard-teacher' : 'user'} style={{ color: Color.green() }} />
+      <Icon
+        icon={teacher || classroom ? 'chalkboard-teacher' : 'user'}
+        style={{ color: waiting ? Color.orange() : Color.green() }}
+      />
       <span>
-        {teacher ? 'Twinkle teacher' : 'Parent'}: <b>{adult.name}</b>
+        {classroom ? (
+          adult.status === 'confirmed' && adult.name ? (
+            <>Supervised at <b>{adult.name}</b></>
+          ) : (
+            'Twinkle arranges the grown-up (classroom)'
+          )
+        ) : waiting ? (
+          <>Waiting for Twinkle teacher <b>{adult.waitingFor}</b> to confirm</>
+        ) : (
+          <>{teacher ? 'Twinkle teacher' : 'Parent'}: <b>{adult.name}</b></>
+        )}
       </span>
     </span>
   );

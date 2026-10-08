@@ -1158,16 +1158,51 @@ export default function userRequestHelpers({
     async setMeetupCrewAdult({
       crewId,
       kind,
-      name
+      name,
+      teacherUserId
     }: {
       crewId: number;
       kind: string;
-      name: string;
+      // a parent: the name as typed
+      name?: string;
+      // a Twinkle teacher: the approved teacher picked from the list (the
+      // server names them by their username)
+      teacherUserId?: number;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/user/meetup-quest/crews/${crewId}/adult`,
-          { kind, name },
+          kind === 'teacher' ? { kind, teacherUserId } : { kind, name },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // the picked teacher's answer on the request card in their chat
+    async answerMeetupTeacherRequest({
+      messageId,
+      answer
+    }: {
+      messageId: number;
+      answer: 'yes' | 'no';
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/teacher-requests/${messageId}/answer`,
+          { answer },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async searchMeetupTeachers(q: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/teachers?q=${encodeURIComponent(q)}`,
           auth()
         );
         return data;

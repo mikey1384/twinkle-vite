@@ -12,6 +12,7 @@ import BuildCollaborationRequest from './BuildCollaborationRequest';
 import BuildContributionSubmission from './BuildContributionSubmission';
 import BuildThumbnailSuggestion from './BuildThumbnailSuggestion';
 import BuildTitleSuggestion from './BuildTitleSuggestion';
+import MeetupTeacherRequest from './MeetupTeacherRequest';
 import BuildContributionInvite from './BuildContributionInvite';
 import BuildProjectLimitRequest from './BuildProjectLimitRequest';
 import BuildReviewRequestCard from './BuildReviewRequestCard';
@@ -237,6 +238,18 @@ export default function Content({
           content={content}
           messageId={messageId}
           suggestion={parsedSettings?.buildTitleSuggestion}
+          myId={myId}
+          sender={{
+            id: userId,
+            username: appliedUsername,
+            profileTheme
+          }}
+        />
+      ) : rootType === 'meetupTeacherRequest' && rootId ? (
+        <MeetupTeacherRequest
+          channelId={channelId}
+          messageId={messageId}
+          request={parsedSettings?.meetupTeacherRequest}
           myId={myId}
           sender={{
             id: userId,

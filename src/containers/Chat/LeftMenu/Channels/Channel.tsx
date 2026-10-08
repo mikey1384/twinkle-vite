@@ -310,6 +310,9 @@ export default function Channel({
       if (rootType === 'meetupQuestCrew') {
         return <span>{messageSender}: started the crew chat</span>;
       }
+      if (rootType === 'meetupTeacherRequest') {
+        return <span>{messageSender}: a meetup grown-up request</span>;
+      }
       if (rootType === 'meetupQuestInvite') {
         return <span>{messageSender}: invited you to a meetup crew</span>;
       }

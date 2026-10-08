@@ -499,6 +499,7 @@ export default function useChatSocket({
     socket.on('chat_message_edited', onEditMessage);
     socket.on('build_reward_review_updated', handleBuildRewardReviewUpdated);
     socket.on('build_review_request_updated', handleBuildReviewRequestUpdated);
+    socket.on('meetup_teacher_request_updated', handleMeetupTeacherRequestUpdated);
     socket.on('chat_attachment_thumbnail_updated', onSetChatAttachmentThumbUrl);
     socket.on('ai_message_delta_streamed', onAppendAIMessageDelta);
     socket.on('chat_reaction_added', handleLegacyChatReactionAdded);
@@ -555,6 +556,10 @@ export default function useChatSocket({
       socket.off(
         'build_review_request_updated',
         handleBuildReviewRequestUpdated
+      );
+      socket.off(
+        'meetup_teacher_request_updated',
+        handleMeetupTeacherRequestUpdated
       );
       socket.off(
         'chat_attachment_thumbnail_updated',
@@ -624,6 +629,19 @@ export default function useChatSocket({
         channelId,
         messageId,
         settings: { buildReviewRequest: payload.request }
+      });
+    }
+
+    // A Bridge Builder teacher request card changed on the server (the crew
+    // moved on, or the other person answered): refresh it in place.
+    function handleMeetupTeacherRequestUpdated(payload: any) {
+      const channelId = Number(payload?.channelId || 0);
+      const messageId = Number(payload?.messageId || 0);
+      if (!channelId || !messageId || !payload?.request) return;
+      onUpdateMessageSettings({
+        channelId,
+        messageId,
+        settings: { meetupTeacherRequest: payload.request }
       });
     }
 
