@@ -85,12 +85,12 @@ export default function MainFeeds({
   const successRole = useRoleColor('success', { fallback: 'green' });
   const alertColor = alertRole.colorKey;
   const successColor = successRole.colorKey;
-  const myRewardStats = useNotiContext((v) =>
-    userId ? v.state?.notiObj?.[userId] : null
+  const totalRewardedTwinkles = useNotiContext((v) =>
+    userId ? v.state?.notiObj?.[userId]?.totalRewardedTwinkles || 0 : 0
   );
-  const totalRewardedTwinkles = myRewardStats?.totalRewardedTwinkles || 0;
-  const totalRewardedTwinkleCoins =
-    myRewardStats?.totalRewardedTwinkleCoins || 0;
+  const totalRewardedTwinkleCoins = useNotiContext((v) =>
+    userId ? v.state?.notiObj?.[userId]?.totalRewardedTwinkleCoins || 0 : 0
+  );
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const onCollectRewards = useNotiContext((v) => v.actions.onCollectRewards);
   const onLoadNotifications = useNotiContext(
@@ -280,73 +280,74 @@ export default function MainFeeds({
             {numNewNotis > 1 ? 's' : ''}
           </Banner>
         )}
-      {activeTab === 'reward' &&
-        !loadingNotifications &&
-        typeof twinkleXP === 'number' && (
-          <ErrorBoundary componentPath="Notification/MainFeeds/RewardNotification">
-            {totalRewardAmount > 0 ? (
-              <GradientButton
-                isFlat
-                loading={collectingReward || typeof twinkleXP !== 'number'}
-                style={{ marginBottom: '1rem', width: '100%' }}
-                fontSize="2.2rem"
-                mobileFontSize="1.7rem"
-                onClick={handleCollectReward}
-              >
-                <div>
-                  <p>{tapToCollectRewardsLabel}</p>
-                  {totalTwinkles > 0 && (
-                    <p style={{ fontSize: '1.4rem', marginTop: '0.5rem' }}>
-                      {twinkleLabel} ({totalTwinkles} * {REWARD_VALUE} ={' '}
-                      {addCommasToNumber(totalTwinkles * REWARD_VALUE)} XP)
-                    </p>
-                  )}
-                  {totalCoins > 0 && (
-                    <p style={{ fontSize: '1.4rem', marginTop: '0.5rem' }}>
-                      {addCommasToNumber(totalCoins)} {SITE_NAME} Coin
-                      {totalCoins > 0 ? 's' : ''}
-                    </p>
-                  )}
+      {/* Pending rewards also drive the tab glow. Keep their collection
+          control visible independently of News/profile loading; the button
+          already waits for the canonical XP balance before enabling. */}
+      {activeTab === 'reward' && (
+        <ErrorBoundary componentPath="Notification/MainFeeds/RewardNotification">
+          {totalRewardAmount > 0 ? (
+            <GradientButton
+              isFlat
+              loading={collectingReward || typeof twinkleXP !== 'number'}
+              style={{ marginBottom: '1rem', width: '100%' }}
+              fontSize="2.2rem"
+              mobileFontSize="1.7rem"
+              onClick={handleCollectReward}
+            >
+              <div>
+                <p>{tapToCollectRewardsLabel}</p>
+                {totalTwinkles > 0 && (
+                  <p style={{ fontSize: '1.4rem', marginTop: '0.5rem' }}>
+                    {twinkleLabel} ({totalTwinkles} * {REWARD_VALUE} ={' '}
+                    {addCommasToNumber(totalTwinkles * REWARD_VALUE)} XP)
+                  </p>
+                )}
+                {totalCoins > 0 && (
+                  <p style={{ fontSize: '1.4rem', marginTop: '0.5rem' }}>
+                    {addCommasToNumber(totalCoins)} {SITE_NAME} Coin
+                    {totalCoins > 0 ? 's' : ''}
+                  </p>
+                )}
+              </div>
+            </GradientButton>
+          ) : totalTwinkles > 0 || totalCoins > 0 ? (
+            <Banner color={successColor} style={{ marginBottom: '1rem' }}>
+              {totalTwinkles > 0 ? (
+                <div style={{ fontSize: '1.7rem' }}>
+                  <p>
+                    {yourXPLabel}: {addCommasToNumber(originalTwinkleXP)} XP{' '}
+                    {'=>'}{' '}
+                    {addCommasToNumber(
+                      originalTwinkleXP + totalTwinkles * REWARD_VALUE
+                    )}{' '}
+                    XP
+                  </p>
+                  <p style={{ fontSize: '1.5rem' }}>
+                    (+ {addCommasToNumber(totalTwinkles * REWARD_VALUE)} XP)
+                  </p>
                 </div>
-              </GradientButton>
-            ) : totalTwinkles > 0 || totalCoins > 0 ? (
-              <Banner color={successColor} style={{ marginBottom: '1rem' }}>
-                {totalTwinkles > 0 ? (
-                  <div style={{ fontSize: '1.7rem' }}>
-                    <p>
-                      {yourXPLabel}: {addCommasToNumber(originalTwinkleXP)} XP{' '}
-                      {'=>'}{' '}
-                      {addCommasToNumber(
-                        originalTwinkleXP + totalTwinkles * REWARD_VALUE
-                      )}{' '}
-                      XP
-                    </p>
-                    <p style={{ fontSize: '1.5rem' }}>
-                      (+ {addCommasToNumber(totalTwinkles * REWARD_VALUE)} XP)
-                    </p>
-                  </div>
-                ) : null}
-                {totalCoins > 0 ? (
-                  <div
-                    style={{
-                      fontSize: '1.7rem',
-                      marginTop: totalTwinkles > 0 ? '1rem' : 0
-                    }}
-                  >
-                    <p>
-                      {yourTwinkleCoinsLabel}:{' '}
-                      {addCommasToNumber(originalTwinkleCoins)} {'=>'}{' '}
-                      {addCommasToNumber(originalTwinkleCoins + totalCoins)}
-                    </p>
-                    <p style={{ fontSize: '1.5rem' }}>
-                      (+ {addCommasToNumber(totalCoins)})
-                    </p>
-                  </div>
-                ) : null}
-              </Banner>
-            ) : null}
-          </ErrorBoundary>
-        )}
+              ) : null}
+              {totalCoins > 0 ? (
+                <div
+                  style={{
+                    fontSize: '1.7rem',
+                    marginTop: totalTwinkles > 0 ? '1rem' : 0
+                  }}
+                >
+                  <p>
+                    {yourTwinkleCoinsLabel}:{' '}
+                    {addCommasToNumber(originalTwinkleCoins)} {'=>'}{' '}
+                    {addCommasToNumber(originalTwinkleCoins + totalCoins)}
+                  </p>
+                  <p style={{ fontSize: '1.5rem' }}>
+                    (+ {addCommasToNumber(totalCoins)})
+                  </p>
+                </div>
+              ) : null}
+            </Banner>
+          ) : null}
+        </ErrorBoundary>
+      )}
       {activeTab === 'reward' && !!userId && typeof twinkleXP === 'number' && (
         <MyRank
           myId={userId}

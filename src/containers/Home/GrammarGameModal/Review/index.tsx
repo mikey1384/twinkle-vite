@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
+import { useAppContext, useViewContext } from '~/contexts';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import NeonButton from '../ClassicArcade/NeonButton';
@@ -8,6 +8,7 @@ import { NEON, PIXEL_FONT, READ_FONT, rgba } from '../ClassicArcade/theme';
 import LetterGrade from '../Marble/LetterGrade';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ChallengeModal from './ChallengeModal';
+import useChallengeReviews from './useChallengeReviews';
 import RuleCard, { type ReviewRuleCard } from './RuleCard';
 import {
   initialKoreanShown,
@@ -39,18 +40,44 @@ export default function Review() {
   const loadGrammarReview = useAppContext(
     (v) => v.requestHelpers.loadGrammarReview
   );
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const userId = useKeyContext((v) => v.myState.userId);
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const initialized = useRef(false);
   const [challengeQ, setChallengeQ] = useState<ReviewItem | null>(null);
-  const [challengedQIds, setChallengedQIds] = useState<Record<number, boolean>>(
-    {}
+  const { reviews } = useChallengeReviews();
+  const challengedQIds = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(reviews)
+          .filter(([, review]) => review.status === 'complete')
+          .map(([id]) => [id, true])
+      ),
+    [reviews]
   );
   const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
+
+  useEffect(() => {
+    setItems((prev) => {
+      if (
+        !prev.some((item) => {
+          const review = reviews[item.questionId];
+          return (
+            review?.status === 'complete' &&
+            (!item.isChecked || item.explanation !== review.result.explanation)
+          );
+        })
+      )
+        return prev;
+      return prev.map((item) => {
+        const review = reviews[item.questionId];
+        return review?.status === 'complete'
+          ? { ...item, isChecked: true, explanation: review.result.explanation }
+          : item;
+      });
+    });
+  }, [reviews, items.length]);
 
   useEffect(() => {
     if (!initialized.current) {
@@ -157,7 +184,7 @@ export default function Review() {
                 );
               })}
             </div>
-            {!it.isChecked && (
+            {(!it.isChecked || reviews[it.questionId]) && (
               <div
                 style={{
                   marginTop: '0.75rem',
@@ -165,7 +192,7 @@ export default function Review() {
                   justifyContent: 'center'
                 }}
               >
-                {AI_FEATURES_DISABLED ? (
+                {AI_FEATURES_DISABLED && !reviews[it.questionId] ? (
                   <GameCTAButton
                     arcade
                     icon="ban"
@@ -186,7 +213,13 @@ export default function Review() {
                       setChallengeQ(it);
                     }}
                   >
-                    Challenge
+                    {reviews[it.questionId]?.status === 'complete'
+                      ? 'View review'
+                      : reviews[it.questionId]?.status === 'pending'
+                        ? 'View progress'
+                        : reviews[it.questionId]
+                          ? 'Review status'
+                          : 'Challenge'}
                   </GameCTAButton>
                 )}
               </div>
@@ -194,7 +227,14 @@ export default function Review() {
           </div>
         );
       }),
-    [items, answerState, challengedQIds, AI_FEATURES_DISABLED, koreanShown]
+    [
+      items,
+      answerState,
+      challengedQIds,
+      AI_FEATURES_DISABLED,
+      koreanShown,
+      reviews
+    ]
   );
 
   // Hands Zero and Ciel the review list as shown: each question, its choices,
@@ -283,14 +323,7 @@ export default function Review() {
             isOpen={true}
             onClose={() => setChallengeQ(null)}
             questionId={challengeQ.questionId}
-            onAfterSuccess={({ explanation, newBalance, justified }) =>
-              handleChallengeDone({
-                explanation,
-                newBalance,
-                justified,
-                challengeQId: challengeQ.questionId
-              })
-            }
+            questionText={challengeQ.question}
           />
         )}
       </div>
@@ -302,38 +335,6 @@ export default function Review() {
       saveKoreanShown(!shown);
       return !shown;
     });
-  }
-
-  function handleChallengeDone({
-    explanation,
-    newBalance,
-    justified,
-    challengeQId
-  }: {
-    explanation: string;
-    newBalance?: number;
-    justified: boolean;
-    challengeQId: number;
-  }) {
-    if (!challengeQId) return;
-    setItems((prev) =>
-      prev.map((p) =>
-        p.questionId === challengeQId
-          ? { ...p, isChecked: true, explanation }
-          : p
-      )
-    );
-    setChallengedQIds((prev) => ({
-      ...prev,
-      [challengeQId]: true
-    }));
-    if (typeof newBalance === 'number') {
-      onSetUserState({
-        userId,
-        newState: { twinkleCoins: newBalance }
-      });
-    }
-    if (!justified) setChallengeQ(null);
   }
 
   async function handleLoadMore() {

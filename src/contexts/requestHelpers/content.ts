@@ -1384,7 +1384,12 @@ export default function contentRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleError(error);
+        return handleError(error).catch((handledError) => {
+          const aiUsagePolicy = (error as any)?.response?.data?.aiUsagePolicy;
+          throw aiUsagePolicy
+            ? { ...handledError, aiUsagePolicy }
+            : handledError;
+        });
       }
     },
     async loadLikedFeeds({

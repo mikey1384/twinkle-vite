@@ -11,6 +11,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import RuleCard from '../Review/RuleCard';
 import ChallengeModal from '../Review/ChallengeModal';
+import useChallengeReviews from '../Review/useChallengeReviews';
 import {
   initialKoreanShown,
   saveKoreanShown
@@ -101,6 +102,8 @@ export default function MarbleRunScreen({
   const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
   // the question being challenged (Classic's Challenge, opened from a miss)
   const [challengeId, setChallengeId] = useState<number | null>(null);
+  const { reviews } = useChallengeReviews();
+  const appliedReviews = useRef(new Set<number>());
   const challengeOpenRef = useRef(false);
   challengeOpenRef.current = challengeId != null;
   const layerRef = useRef<HTMLDivElement>(null);
@@ -121,6 +124,9 @@ export default function MarbleRunScreen({
   const position = shown;
   const question = position >= 0 ? questions[position] : null;
   const answer = question ? answers[question.position] : undefined;
+  const challengeReview = answer?.challenge
+    ? reviews[answer.challenge.questionId]
+    : undefined;
   // a miss's explanation holds Continue for its read time (practice), or
   // holds the next boss hit (the server's clock waits the same time)
   const { reading, secondsLeft } = useReadCooldown(
@@ -131,6 +137,41 @@ export default function MarbleRunScreen({
         : null,
     answer?.readMs
   );
+
+  useEffect(() => {
+    for (const a of Object.values(answers)) {
+      const id = a.challenge?.questionId;
+      const review = id ? reviews[id] : undefined;
+      if (
+        !id ||
+        review?.status !== 'complete' ||
+        appliedReviews.current.has(id)
+      )
+        continue;
+      appliedReviews.current.add(id);
+      setAnswers((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).map(([key, value]) => [
+            key,
+            value.challenge?.questionId === id
+              ? {
+                  ...value,
+                  challenge: {
+                    ...value.challenge,
+                    checked: true,
+                    upheld: review.result.justified
+                  }
+                }
+              : value
+          ])
+        )
+      );
+      // This also runs if the learner closed the review before it finished.
+      if (review.result.justified) void refreshQueued();
+    }
+    // The request helper isn't an effect dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers, reviews]);
 
   const engine = useMemo(() => {
     const [, world, kind, index] =
@@ -464,17 +505,32 @@ export default function MarbleRunScreen({
                               wrong challenges it right here, by Continue (in
                               this row so the card keeps its height). Bosses
                               run on a clock, so theirs wait for the result. */}
-                          {answer.challenge && !answer.challenge.checked && (
-                            <button
-                              className={challengeCls}
-                              title="Think the answer key is wrong? Challenge it"
-                              onClick={() =>
-                                setChallengeId(answer.challenge!.questionId)
-                              }
-                            >
-                              <PixelIcon name="flag" scale={2} /> Challenge
-                            </button>
-                          )}
+                          {answer.challenge &&
+                            (!answer.challenge.checked || challengeReview) && (
+                              <button
+                                className={challengeCls}
+                                title="Think the answer key is wrong? Challenge it"
+                                onClick={() =>
+                                  setChallengeId(answer.challenge!.questionId)
+                                }
+                              >
+                                <PixelIcon
+                                  name={
+                                    challengeReview?.status === 'complete'
+                                      ? 'check'
+                                      : 'flag'
+                                  }
+                                  scale={2}
+                                />{' '}
+                                {challengeReview?.status === 'complete'
+                                  ? 'View review'
+                                  : challengeReview?.status === 'pending'
+                                    ? 'View progress'
+                                    : challengeReview
+                                      ? 'Review status'
+                                      : 'Challenge'}
+                              </button>
+                            )}
                           <span className={nextNoteCls}>
                             {/* an upheld challenge forgives a practice miss (nemesis misses stay) */}
                             {answer.challenge?.upheld &&
@@ -512,31 +568,19 @@ export default function MarbleRunScreen({
           isOpen
           portalTarget={layerRef.current}
           questionId={challengeId}
+          questionText={question?.question}
+          questKind={run.kind}
+          returnLabel="Back to question"
+          continueLabel={ready && !reading ? 'Continue' : undefined}
+          onContinue={
+            ready && !reading
+              ? () => {
+                  setChallengeId(null);
+                  handleContinue();
+                }
+              : undefined
+          }
           onClose={() => setChallengeId(null)}
-          onAfterSuccess={({ justified }) => {
-            // a checked question can't be challenged again: hide its button
-            setAnswers((prev) =>
-              Object.fromEntries(
-                Object.entries(prev).map(([k, a]) => [
-                  k,
-                  a.challenge?.questionId === challengeId
-                    ? {
-                        ...a,
-                        challenge: {
-                          ...a.challenge,
-                          checked: true,
-                          upheld: justified
-                        }
-                      }
-                    : a
-                ])
-              )
-            );
-            if (!justified) setChallengeId(null);
-            // the fix moved this run's queued re-asks to the new version on
-            // the server: show their new wording (graded by the new key)
-            else refreshQueued();
-          }}
         />
       )}
     </div>,
@@ -1059,6 +1103,7 @@ const reviewCls = css`
 `;
 const nextRowCls = css`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 1rem;
@@ -1071,6 +1116,7 @@ const nextNoteCls = css`
   font-size: 1.25rem;
   font-weight: 700;
   opacity: 0.7;
+  flex: 1 1 10rem;
 `;
 // the boss card is dark: its notes read light (Mikey 10-08: "Get ready…"
 // vanished on it)

@@ -5,6 +5,7 @@ import type { QuestAnswer, QuestResult } from './types';
 import QuestMarble, { answerLook } from './QuestMarble';
 import PixelIcon from './PixelIcon';
 import ChallengeModal from '../Review/ChallengeModal';
+import useChallengeReviews from '../Review/useChallengeReviews';
 import {
   BLUE,
   GOLD,
@@ -37,16 +38,23 @@ export default function Result({
   // can only be challenged here: its clock doesn't stop for one)
   const [listOpen, setListOpen] = useState(false);
   const [challengeId, setChallengeId] = useState<number | null>(null);
-  const [checkedIds, setCheckedIds] = useState<number[]>([]);
-  const [upheldIds, setUpheldIds] = useState<number[]>([]);
+  const { reviews } = useChallengeReviews();
   const challengeable = answers
-    .filter((a) => a.challenge && !a.challenge.checked && a.questionText)
+    .filter(
+      (a) =>
+        a.challenge &&
+        a.questionText &&
+        (!a.challenge.checked || reviews[a.challenge.questionId])
+    )
     .filter(
       (a, i, list) =>
         list.findIndex(
           (b) => b.challenge!.questionId === a.challenge!.questionId
         ) === i
     );
+  const allReviewed = challengeable.every(
+    (a) => reviews[a.challenge!.questionId]?.status === 'complete'
+  );
   // never "perfect" while the boss (or the stop) still stands
   const perfect = !!result.perfect && (result.cleared || kind === 'nemesis');
   const headline = perfect
@@ -217,31 +225,39 @@ export default function Result({
         <div className={challengeListCls}>
           {challengeable.map((a) => {
             const id = a.challenge!.questionId;
-            const done = checkedIds.includes(id);
+            const review = reviews[id];
             return (
               <div key={id} className={challengeItemCls}>
-                <span className={challengeTextCls}>{a.questionText}</span>
-                {done ? (
-                  <span className={checkedCls}>
-                    {/* an upheld challenge forgives a stop's miss (the map's
-                        best grade is recomputed); a boss earns a full-pay
-                        rematch instead (its hit isn't regraded) */}
-                    {!upheldIds.includes(id)
-                      ? 'Checked'
-                      : kind === 'stop'
-                        ? 'Upheld · miss forgiven'
-                        : boss
-                          ? 'Upheld · free rematch on the map'
-                          : 'Upheld'}
-                  </span>
-                ) : (
-                  <button
-                    className={challengeSmallCls}
-                    onClick={() => setChallengeId(id)}
-                  >
-                    <PixelIcon name="flag" scale={2} /> Challenge
-                  </button>
-                )}
+                <div className={challengeTextCls}>
+                  {a.questionText}
+                  {review && (
+                    <div className={checkedCls}>
+                      {review.status === 'complete'
+                        ? review.result.justified
+                          ? 'Accepted · question fixed'
+                          : 'Not accepted · answer correct'
+                        : review.status === 'pending'
+                          ? 'Review in progress'
+                          : 'Review interrupted'}
+                    </div>
+                  )}
+                </div>
+                <button
+                  className={review ? reviewSmallCls : challengeSmallCls}
+                  onClick={() => setChallengeId(id)}
+                >
+                  <PixelIcon
+                    name={review?.status === 'complete' ? 'check' : 'flag'}
+                    scale={2}
+                  />{' '}
+                  {review?.status === 'complete'
+                    ? 'View review'
+                    : review?.status === 'pending'
+                      ? 'View progress'
+                      : review
+                        ? 'Review status'
+                        : 'Challenge'}
+                </button>
               </div>
             );
           })}
@@ -254,7 +270,8 @@ export default function Result({
             aria-expanded={listOpen}
             onClick={() => setListOpen((o) => !o)}
           >
-            <PixelIcon name="flag" scale={2} /> Challenge a question (
+            <PixelIcon name={allReviewed ? 'check' : 'flag'} scale={2} />{' '}
+            {allReviewed ? 'View reviews' : 'Review questions'} (
             {challengeable.length})
           </button>
         )}
@@ -266,12 +283,15 @@ export default function Result({
         <ChallengeModal
           isOpen
           questionId={challengeId}
+          questionText={
+            challengeable.find((a) => a.challenge?.questionId === challengeId)
+              ?.questionText
+          }
+          questKind={kind as 'stop' | 'fort' | 'castle' | 'nemesis'}
+          returnLabel="Back to results"
+          continueLabel="Back to map"
+          onContinue={onBackToMap}
           onClose={() => setChallengeId(null)}
-          onAfterSuccess={({ justified }) => {
-            setCheckedIds((ids) => [...ids, challengeId]);
-            if (justified) setUpheldIds((ids) => [...ids, challengeId]);
-            else setChallengeId(null);
-          }}
         />
       )}
     </div>
@@ -608,18 +628,25 @@ const challengeTextCls = css`
   font-size: 1.3rem;
   color: ${INK};
   text-align: left;
+  overflow-wrap: anywhere;
 `;
 const challengeSmallCls = css`
   ${challengeButton()}
   flex: none;
   padding: 0.3rem 0.9rem;
   font-size: 1rem;
+  min-height: 4.4rem;
+  max-width: 14rem;
+`;
+const reviewSmallCls = css`
+  ${challengeSmallCls}
+  ${button(BLUE, '#2a5fb0', '#fff')}
 `;
 const checkedCls = css`
-  flex: none;
-  font-family: ${PIXEL_FONT};
-  font-size: 1rem;
-  color: #3a7d44;
+  margin-top: 0.6rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #425338;
 `;
 const primaryCls = css`
   ${button(GOLD, '#8a5200')}
