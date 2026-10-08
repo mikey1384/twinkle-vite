@@ -144,6 +144,16 @@ export default function MeetupTeacherRequest({
         </>
       }
     >
+      {request.reask ? (
+        <div className={reaskClass} data-teacher-request-reask>
+          <Icon icon="calendar-day" />
+          <span>
+            {isTeacher
+              ? 'Update: the crew changed its plan (new date and place below). Please confirm again.'
+              : `Update: the plan changed, so ${teacherUsername} is asked to confirm the new date and place.`}
+          </span>
+        </div>
+      ) : null}
       <div className={askClass}>
         {isRequester && !isTeacher
           ? `You asked ${teacherUsername} to be the grown-up for crew ${crewName}'s Bridge Builder meetup`
@@ -239,6 +249,19 @@ export default function MeetupTeacherRequest({
     }
   }
 }
+
+const reaskClass = css`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: ${Color.logoBlue(0.08)};
+  color: ${Color.darkerGray()};
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.4;
+`;
 
 const askClass = css`
   color: ${Color.black()};

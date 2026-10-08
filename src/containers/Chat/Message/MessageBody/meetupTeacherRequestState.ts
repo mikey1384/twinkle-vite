@@ -31,6 +31,8 @@ export interface MeetupTeacherRequestPayload {
   afterYes?: boolean;
   // released: why the crew no longer needs them
   releasedFor?: MeetupTeacherReleaseReason;
+  // a fresh card because the plan changed after they were asked
+  reask?: boolean;
 }
 
 const RELEASED_BECAUSE: Record<MeetupTeacherReleaseReason, string> = {
@@ -68,6 +70,13 @@ export function teacherRequestStatusLine({
     return isTeacher
       ? "You said this isn't you."
       : `${teacherUsername} can't come. Pick another grown-up on the crew page.`;
+  }
+  // a yes to an older plan: a fresh card with the new plan asks again (never
+  // "no longer needed": they are still wanted)
+  if (status === 'released' && releasedFor === 'plan_changed') {
+    return isTeacher
+      ? 'The plan changed. Please confirm the new date and place in the new request.'
+      : `The plan changed. A new request with the new plan went to ${teacherUsername}.`;
   }
   if (status === 'released') {
     const because = RELEASED_BECAUSE[releasedFor || 'plan_changed'] || RELEASED_BECAUSE.plan_changed;

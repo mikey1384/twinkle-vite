@@ -25,7 +25,15 @@ test('a released yes, a changed plan and a taken-back yes each say so plainly', 
     'No longer needed: the crew picked another grown-up. Thank you for saying yes!'
   );
   assert.equal(line('released', false, { releasedFor: 'classroom' }), 'No longer needed: the crew is meeting in a Twinkle classroom.');
-  assert.equal(line('released', true, {}), 'No longer needed: the crew changed its plan. Thank you for saying yes!');
+  // a yes to an older plan is asked again, never "no longer needed"
+  assert.equal(
+    line('released', true, { releasedFor: 'plan_changed' }),
+    'The plan changed. Please confirm the new date and place in the new request.'
+  );
+  assert.equal(
+    line('released', false, { releasedFor: 'plan_changed' }),
+    'The plan changed. A new request with the new plan went to teacher6.'
+  );
   assert.equal(line('plan_changed', true), 'The plan changed, so a new request with the new plan replaces this one.');
   assert.equal(line('declined', true, { afterYes: true }), "You said you can't make it after all.");
   assert.equal(
