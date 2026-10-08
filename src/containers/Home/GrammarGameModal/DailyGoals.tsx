@@ -11,7 +11,7 @@ import { GOLD, INK, PARCHMENT, PLATE, frame } from './Quest/pixelUi';
 // Classic's and Quest's — and either one meets it.
 //   Basic: clear today's Classic level, or in Quest clear a stop at 70%+
 //   accuracy or beat a boss (a B average).
-//   Excellence: Classic's target (yesterday's score or the next level), or in
+//   Excellence: Classic's target (your usual score or the next level), or in
 //   Quest clear a stop with no misses or beat a boss with an A average.
 // Quest's route is how well you play, not how far you get (Mikey 10-07).
 export default function DailyGoals({
@@ -38,8 +38,10 @@ export default function DailyGoals({
       met: !!status.basicQualified,
       via: status.basicVia as string | null,
       classic: `Clear Lv${level}`,
-      // the map's letters (Mikey 10-07): B = 70%, A = 90%, S = 100%
-      quest: 'B or better on a stop or boss'
+      // the map's letters (Mikey 10-07): B = 70%, A = 90%, S = 100%; only on
+      // nodes that count today, which the map marks (Mikey 10-08: the bar
+      // rises with the learner, questMap.goalFloor)
+      quest: 'B or better on a stop or boss that counts today'
     },
     {
       key: 'excellence',
@@ -48,7 +50,7 @@ export default function DailyGoals({
       met: !!status.excellenceQualified,
       via: status.excellenceVia as string | null,
       classic: classicExcellenceTarget(status),
-      quest: 'S on a stop, or A or better on a boss'
+      quest: 'S on a stop or A+ on a boss that counts today'
     }
   ];
   return (
@@ -102,9 +104,10 @@ function classicExcellenceTarget(status: any) {
       : '';
   switch (status.excellenceMode) {
     case 'score-or-next-level':
-      return `Beat yesterday's${score} or clear Lv${level + 1}`;
+      // usual = the median of the last 7 days played at this level (Mikey 10-08)
+      return `Beat your usual${score} or clear Lv${level + 1}`;
     case 'total-score':
-      return `Beat your last Lv${cap} total${score}`;
+      return `Beat your usual Lv${cap} total${score}`;
     case 'all-perfect':
       return `All ${cap} levels perfect`;
     case 'score':

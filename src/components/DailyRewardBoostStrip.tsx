@@ -1067,13 +1067,13 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
       break;
     case 'score-or-next-level':
       description = comparisonScoreLabel
-        ? `Excellence target: beat yesterday's Lv${currentLevel} score of ${comparisonScoreLabel}, or clear Lv${currentLevel + 1}.`
-        : `Excellence target: beat yesterday's Lv${currentLevel} score, or clear Lv${currentLevel + 1}.`;
+        ? `Excellence target: beat your usual Lv${currentLevel} score of ${comparisonScoreLabel} (your median over your last 7 days played at this level), or clear Lv${currentLevel + 1}.`
+        : `Excellence target: beat your usual Lv${currentLevel} score, or clear Lv${currentLevel + 1}.`;
       break;
     case 'total-score':
       description = comparisonScoreLabel
-        ? `Excellence target: beat your most recent Lv${levelCap}-clear total of ${comparisonScoreLabel}.`
-        : `Excellence target: beat your most recent Lv${levelCap}-clear total.`;
+        ? `Excellence target: beat your usual Lv${levelCap}-clear total of ${comparisonScoreLabel} (your median over your last 7 days clearing it).`
+        : `Excellence target: beat your usual Lv${levelCap}-clear total.`;
       break;
     case 'score':
       description = comparisonScoreLabel

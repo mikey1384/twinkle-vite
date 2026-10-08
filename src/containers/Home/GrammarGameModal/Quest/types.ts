@@ -18,6 +18,8 @@ export interface QuestNode {
   grade: 'S' | 'A' | 'B' | 'C' | 'D' | 'F' | null;
   // an upheld challenge on this boss earned a rematch that pays in full
   freeRematch?: boolean;
+  // today's goals count only the newest stops and bosses (Mikey 10-08)
+  countsForGoals?: boolean;
   skills?: QuestSkill[];
 }
 
@@ -120,5 +122,6 @@ export interface QuestResult {
   rewardedRunsLeft?: number;
   replayCut?: boolean; // an early replay: half XP, no Coins
   freeRematch?: boolean; // a full-pay rematch earned by an upheld challenge
+  countsForGoals?: boolean; // false: this node is too far back for today's goals
   dailyTaskStatus?: any;
 }

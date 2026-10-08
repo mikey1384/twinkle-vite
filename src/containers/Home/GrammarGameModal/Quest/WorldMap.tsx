@@ -281,6 +281,21 @@ export default function WorldMap({
                       ? `Best: ${selected.grade}, ${selected.bestScore}% of answers right.`
                       : `Best: ${selected.grade}, ${selected.bestScore}% of the boss's 700 points.`}
               </div>
+              {/* Mikey 10-08: today's goals count only newer nodes, and
+                  the bar moves on a step each day you play */}
+              {selected.unlocked &&
+                (selected.countsForGoals === false ? (
+                  <div className={panelTextCls}>
+                    Too far back to count for today&apos;s goals. Play a newer
+                    stop or boss.
+                  </div>
+                ) : (
+                  selected.countsForGoals && (
+                    <div className={panelTextCls}>
+                      Counts for today&apos;s goals.
+                    </div>
+                  )
+                ))}
               {selected.freeRematch && (
                 // Mikey 10-08: an upheld challenge earns a full-pay rematch
                 <div className={cx(panelTextCls, rematchCls)}>

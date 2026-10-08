@@ -32,6 +32,7 @@ export default function Result({
   onBackToMap: () => void;
 }) {
   const boss = kind === 'fort' || kind === 'castle';
+  const goals = result.dailyTaskStatus?.grammarbles;
   // the run's missed questions, for Classic's Challenge (a boss's misses
   // can only be challenged here: its clock doesn't stop for one)
   const [listOpen, setListOpen] = useState(false);
@@ -160,12 +161,30 @@ export default function Result({
             ? `${result.firstTryCorrect} of ${result.size} right on the first try`
             : `${result.rights ?? 0} right · ${result.misses ?? 0} missed${result.misses ? ' (they came back until you got them)' : ''}`}
       </div>
-      {result.cleared && kind !== 'nemesis' && result.dailyTaskStatus && (
-        <div className={cx(lineCls, dailyCls)}>
-          <PixelIcon name="check" scale={3} /> Today&apos;s Grammarbles goal is
-          done
-        </div>
-      )}
+      {result.cleared &&
+        kind !== 'nemesis' &&
+        result.dailyTaskStatus &&
+        (goals?.excellenceQualified ||
+          goals?.basicQualified ||
+          result.countsForGoals === false) && (
+          // which of today's goals stand now (Mikey 10-08: a replay of a
+          // node too far back plays today's Grammarbles but meets no goal)
+          <div className={cx(lineCls, dailyCls)}>
+            {goals?.excellenceQualified ? (
+              <>
+                <PixelIcon name="star" scale={3} /> Today&apos;s Excellence goal
+                is met
+              </>
+            ) : goals?.basicQualified ? (
+              <>
+                <PixelIcon name="check" scale={3} /> Today&apos;s Basic goal is
+                met
+              </>
+            ) : (
+              "Too far back to count for today's goals. Play a newer stop or boss."
+            )}
+          </div>
+        )}
       <div className={rewardCls}>
         {result.xp || result.coins ? (
           <>
