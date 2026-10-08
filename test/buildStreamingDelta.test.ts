@@ -57,3 +57,28 @@ test('Build stream deltas append while canonical snapshots replace', () => {
     'canonical code'
   );
 });
+
+
+test('file patches preserve unchanged files and focus; saved snapshots and deletions replace atomically', () => {
+  const a = { path: '/index.html', content: '<h1>hello</h1>' };
+  const b = { path: '/style.css', content: 'body { color: red; }' };
+  let run = applyBuildRunStreamUpdate(createRun(), {
+    baseProjectFiles: [a, b], projectFiles: [a, b], projectFilesMode: 'snapshot'
+  });
+  run = applyBuildRunStreamUpdate(run, {
+    projectFiles: [{ ...a, content: '<h1>edited</h1>' }], projectFilesMode: 'patch',
+    projectFilesPersisted: false, projectFilesFocusPath: '/index.html'
+  });
+  assert.deepEqual(run.streamingProjectFiles, [{ ...a, content: '<h1>edited</h1>' }, b]);
+  assert.deepEqual(run.baseProjectFiles, [a, b]);
+  assert.equal(run.streamingFocusFilePath, '/index.html');
+  run = applyBuildRunStreamUpdate(run, { projectFiles: [], projectFilesMode: 'patch', projectFilesFocusPath: '/style.css' });
+  assert.equal(run.streamingProjectFiles?.length, 2);
+  assert.equal(run.streamingFocusFilePath, '/style.css');
+  run = applyBuildRunStreamUpdate(run, { projectFiles: [a], projectFilesMode: 'snapshot', projectFilesPersisted: true });
+  assert.deepEqual(run.streamingProjectFiles, [a]);
+  assert.deepEqual(run.baseProjectFiles, [a]);
+  run = applyBuildRunStreamUpdate(run, { projectFiles: [], projectFilesMode: 'snapshot', projectFilesPersisted: true });
+  assert.deepEqual(run.streamingProjectFiles, []);
+  assert.deepEqual(run.baseProjectFiles, []);
+});
