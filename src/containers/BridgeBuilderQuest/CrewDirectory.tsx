@@ -3,6 +3,10 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import {
+  MEETUP_CREW_MAX_MEMBERS,
+  MEETUP_GOLD_MIN_BRANCHES
+} from '~/constants/meetupQuest';
 import CrewCover from './CrewCover';
 import DirectoryCard, { crewPath } from './DirectoryCard';
 import { STAGE_STYLES, stageLabel } from './covers';
@@ -148,13 +152,13 @@ export default function CrewDirectory({
           !crew.isMine &&
           crew.isOpen &&
           (crew.stage === 'forming' || crew.stage === 'parents') &&
-          crew.students < 8)
+          crew.students < MEETUP_CREW_MAX_MEMBERS)
     );
     const mine = myBranch ? branchKey(myBranch) : '';
     const needsYou = mine
       ? joinable.filter(
           (crew) =>
-            crew.branches < 3 &&
+            crew.branches < MEETUP_GOLD_MIN_BRANCHES &&
             !crew.branchNames.some((name) => branchKey(name) === mine)
         )
       : [];

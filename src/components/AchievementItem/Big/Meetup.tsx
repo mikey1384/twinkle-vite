@@ -6,6 +6,13 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
+import {
+  FACE_TO_FACE_RECRUIT_TARGET,
+  MEETUP_CREW_MIN_MEMBERS,
+  MEETUP_GOLD_MIN_BRANCHES,
+  MEETUP_GOLD_MIN_MEMBERS,
+  MEETUP_SILVER_MIN_BRANCHES
+} from '~/constants/meetupQuest';
 
 const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
 // Bridge Builder's step-by-step meetup quest (containers/BridgeBuilderQuest).
@@ -91,13 +98,18 @@ export default function Meetup({
         anyOf
         requirements={[
           <>
-            Meet up in real life with at least 3 students from 3 different
-            Twinkle branches, with a parent or a Twinkle teacher there. Do
+            Meet up in real life with at least {MEETUP_CREW_MIN_MEMBERS}{' '}
+            Twinkle students, with a parent or a Twinkle teacher there. Do
             something educational together and film it: the{' '}
             <Link to={BRIDGE_BUILDER_QUEST_PATH} style={{ fontWeight: 'bold' }}>
               meetup quest
             </Link>{' '}
-            walks your crew through it one step at a time
+            walks your crew through it one step at a time. Your tier comes from
+            who shows up: <b>Bronze</b> {MEETUP_CREW_MIN_MEMBERS}+ students,{' '}
+            <b>Silver</b> {MEETUP_CREW_MIN_MEMBERS}+ students from{' '}
+            {MEETUP_SILVER_MIN_BRANCHES}+ branches, <b>Gold</b>{' '}
+            {MEETUP_GOLD_MIN_MEMBERS}+ students from {MEETUP_GOLD_MIN_BRANCHES}+
+            branches
             {questShown && (
               <div
                 style={{
@@ -129,7 +141,8 @@ export default function Meetup({
             )}
           </>,
           <>
-            Bring 7 friends who aren&apos;t on Twinkle yet: for each one, play{' '}
+            Bring {FACE_TO_FACE_RECRUIT_TARGET} friends who aren&apos;t on
+            Twinkle yet: for each one, play{' '}
             <Link
               to={DARK_CITADEL_PRIVATE_ROOM_PATH}
               style={{ fontWeight: 'bold' }}

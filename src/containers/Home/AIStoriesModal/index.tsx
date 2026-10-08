@@ -12,35 +12,15 @@ import { useAppContext, useNotiContext, useViewContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus, sleep } from '~/helpers';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 
-const rewardTable = {
-  1: {
-    xp: 500,
-    coins: 25
-  },
-  2: {
-    xp: 1000,
-    coins: 50
-  },
-  3: {
-    xp: 2500,
-    coins: 75
-  },
-  4: {
-    xp: 5000,
-    coins: 150
-  },
-  5: {
-    xp: 10000,
-    coins: 200
-  }
-};
-
 interface AIStoryClearFollowUp {
   storyId: number;
   difficulty: number;
   isListening: boolean;
   numQuestions: number;
   imagePath?: string;
+  // what the pass actually paid, as stored by the API (never recomputed here)
+  xpRewardAmount: number;
+  coinRewardAmount: number;
 }
 
 export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
@@ -318,7 +298,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             onHide={handleCloseSuccessModal}
             numQuestions={successModalStory.numQuestions}
             difficulty={successModalStory.difficulty}
-            rewardTable={rewardTable}
+            xpRewardAmount={successModalStory.xpRewardAmount}
+            coinRewardAmount={successModalStory.coinRewardAmount}
             storyId={successModalStory.storyId}
           />
         )}
@@ -437,7 +418,9 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       difficulty: Number(story.difficulty || 1),
       isListening: Boolean(story.isListening),
       numQuestions: Number(story.numQuestions || 0),
-      imagePath: story.imagePath || ''
+      imagePath: story.imagePath || '',
+      xpRewardAmount: Number(story.xpRewardAmount || 0),
+      coinRewardAmount: Number(story.coinRewardAmount || 0)
     };
   }
 

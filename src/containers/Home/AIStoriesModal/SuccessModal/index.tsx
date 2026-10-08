@@ -187,7 +187,8 @@ export default function SuccessModal({
   isListening,
   onHide,
   numQuestions,
-  rewardTable,
+  xpRewardAmount,
+  coinRewardAmount,
   storyId
 }: {
   difficulty: number;
@@ -195,7 +196,9 @@ export default function SuccessModal({
   isListening: boolean;
   onHide: () => void;
   numQuestions: number;
-  rewardTable: any;
+  // what the pass actually paid (the API's stored amounts)
+  xpRewardAmount: number;
+  coinRewardAmount: number;
   storyId: number;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -508,27 +511,31 @@ export default function SuccessModal({
               You answered {numQuestions} out of {numQuestions} question
               {numQuestions === 1 ? '' : 's'} correctly!
             </div>
-            <div
-              style={{
-                marginTop: '1rem',
-                marginBottom: '2rem',
-                fontSize: difficulty > 3 ? '1.7rem' : '1.5rem'
-              }}
-            >
-              You earned{' '}
-              <b style={{ color: Color[xpNumberColorKey]() }}>
-                {addCommasToNumber(
-                  rewardTable[difficulty].xp * (isListening ? 2 : 1)
+            {(xpRewardAmount > 0 || coinRewardAmount > 0) && (
+              <div
+                style={{
+                  marginTop: '1rem',
+                  marginBottom: '2rem',
+                  fontSize: difficulty > 3 ? '1.7rem' : '1.5rem'
+                }}
+              >
+                You earned{' '}
+                {xpRewardAmount > 0 && (
+                  <>
+                    <b style={{ color: Color[xpNumberColorKey]() }}>
+                      {addCommasToNumber(xpRewardAmount)}
+                    </b>{' '}
+                    <b style={{ color: Color.gold() }}>XP</b>
+                  </>
                 )}
-              </b>{' '}
-              <b style={{ color: Color.gold() }}>XP</b> and{' '}
-              <b style={{ color: Color.brownOrange() }}>
-                {addCommasToNumber(
-                  rewardTable[difficulty].coins * (isListening ? 2 : 1)
-                )}{' '}
-                coins
-              </b>
-            </div>
+                {xpRewardAmount > 0 && coinRewardAmount > 0 && ' and '}
+                {coinRewardAmount > 0 && (
+                  <b style={{ color: Color.brownOrange() }}>
+                    {addCommasToNumber(coinRewardAmount)} coins
+                  </b>
+                )}
+              </div>
+            )}
             <div
               style={{
                 marginTop: '2rem',
