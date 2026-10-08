@@ -35,6 +35,21 @@ test('a released yes, a changed plan and a taken-back yes each say so plainly', 
     'The plan changed. A new request with the new plan went to teacher6.'
   );
   assert.equal(line('plan_changed', true), 'The plan changed, so a new request with the new plan replaces this one.');
+  // R4-N1: no fresh card went out, so nothing promises one
+  for (const extra of [{ releasedFor: 'plan_changed', noReask: true }]) {
+    assert.equal(
+      line('released', true, extra),
+      'The plan changed, so this request is closed. The crew will ask again if they still need you.'
+    );
+    assert.equal(
+      line('released', false, extra),
+      "The plan changed. The new request to teacher6 didn't go out: press Save on the crew page to send it."
+    );
+  }
+  assert.equal(
+    line('plan_changed', true, { noReask: true }),
+    'The plan changed, so this request is closed. The crew will ask again if they still need you.'
+  );
   assert.equal(line('declined', true, { afterYes: true }), "You said you can't make it after all.");
   assert.equal(
     line('declined', false, { afterYes: true }),

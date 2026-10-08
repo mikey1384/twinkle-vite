@@ -33,6 +33,9 @@ export interface MeetupTeacherRequestPayload {
   releasedFor?: MeetupTeacherReleaseReason;
   // a fresh card because the plan changed after they were asked
   reask?: boolean;
+  // the plan changed but no fresh card could go out (nobody to send it, a
+  // block, a failure): the card must not promise a new request
+  noReask?: boolean;
 }
 
 const RELEASED_BECAUSE: Record<MeetupTeacherReleaseReason, string> = {
@@ -48,14 +51,22 @@ export function teacherRequestStatusLine({
   isTeacher,
   teacherUsername,
   afterYes = false,
-  releasedFor
+  releasedFor,
+  noReask = false
 }: {
   status: MeetupTeacherRequestStatus;
   isTeacher: boolean;
   teacherUsername: string;
   afterYes?: boolean;
   releasedFor?: MeetupTeacherReleaseReason | '';
+  noReask?: boolean;
 }) {
+  // the plan changed and no new request went out: say only what is true
+  if (noReask && (status === 'plan_changed' || (status === 'released' && releasedFor === 'plan_changed'))) {
+    return isTeacher
+      ? 'The plan changed, so this request is closed. The crew will ask again if they still need you.'
+      : `The plan changed. The new request to ${teacherUsername} didn't go out: press Save on the crew page to send it.`;
+  }
   if (status === 'accepted') {
     return isTeacher
       ? "You said you're coming."

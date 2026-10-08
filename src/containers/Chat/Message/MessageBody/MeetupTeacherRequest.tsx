@@ -70,7 +70,8 @@ export default function MeetupTeacherRequest({
     isTeacher,
     teacherUsername,
     afterYes: answeredAfterYes || !!request.afterYes,
-    releasedFor: request.releasedFor
+    releasedFor: request.releasedFor,
+    noReask: !!request.noReask
   });
 
   return (
