@@ -1,7 +1,11 @@
 import { css } from '@emotion/css';
 import { Color, lineClamp } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import type { EarnHubApp, EarnHubRule } from './useEarnHub';
+import type {
+  EarnRecommendationReason,
+  EarnHubApp,
+  EarnHubRule
+} from './useEarnHub';
 import { countRewardRows } from './rewardGroups';
 import { trackEvent } from '~/helpers/analytics';
 
@@ -131,9 +135,10 @@ export function getRuleConditions(rule: EarnHubRule) {
 }
 
 // Where this member stands on one rule today.
-export function getRuleState(
-  rule: EarnHubRule
-): { key: 'earned' | 'collected' | 'unavailable' | 'open'; label: string } {
+export function getRuleState(rule: EarnHubRule): {
+  key: 'earned' | 'collected' | 'unavailable' | 'open';
+  label: string;
+} {
   if (rule.earnedToday) return { key: 'earned', label: 'Earned today' };
   if (rule.lifetime?.remaining === 0)
     return { key: 'collected', label: 'Collected' };
@@ -223,7 +228,7 @@ export const newBadgeClass = css`
 // sends players where it should.
 export function trackBountyAppOpen(
   app: EarnHubApp,
-  placement: 'top_pick' | 'card' | 'row'
+  placement: 'top_pick' | 'recommended' | 'recent' | 'card' | 'row'
 ) {
   trackEvent('earn_app_open', {
     build_id: app.buildId,
@@ -231,4 +236,22 @@ export function trackBountyAppOpen(
     rank: app.popularity?.rank,
     is_new: app.popularity ? app.popularity.isNew : undefined
   });
+}
+
+// Why an app is recommended to this member, in one line (Mikey 10-08).
+export function recommendationNote(reason: EarnRecommendationReason) {
+  switch (reason.kind) {
+    case 'maker':
+      return reason.maker
+        ? `More from ${reason.maker} · you play ${reason.relatedTitle}`
+        : `From the maker of ${reason.relatedTitle}`;
+    case 'players-like-you':
+      return `Players who earn in ${reason.relatedTitle} earn here too`;
+    case 'new':
+      return 'New this week';
+    case 'loved':
+      return 'Players keep coming back to this one';
+    default:
+      return 'Something new to try today';
+  }
 }

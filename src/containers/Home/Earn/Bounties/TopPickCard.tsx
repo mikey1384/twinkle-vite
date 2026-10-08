@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import FavoriteButton from '~/components/Build/FavoriteButton';
 import Link from '~/components/Link';
@@ -14,15 +13,26 @@ import {
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
-  appTitleTextClass,
-  trackBountyAppOpen
+  appTitleTextClass
 } from './appCardHelpers';
+import { useBountySeen, useOpenBountyApp } from './bountyTracking';
 import { AppAskButton, AppRewardsButton } from './AppRewardsModal';
 
-// The App Store's #1 on desktop: the same facts as a shelf card, spanning
-// the whole shelf with a bigger picture. Phones never render this (they keep rows).
-export default function TopPickCard({ app }: { app: EarnHubApp }) {
-  const navigate = useNavigate();
+// The big card on desktop: the #1 this week, and (Mikey 10-08) the member's
+// "Recommended for you" with why beside it. The same facts as a shelf card
+// with a bigger picture. Phones never render this (they keep rows).
+export default function TopPickCard({
+  app,
+  recommended = false,
+  note
+}: {
+  app: EarnHubApp;
+  recommended?: boolean;
+  note?: string;
+}) {
+  const slot = recommended ? 'recommended' : 'top';
+  const openApp = useOpenBountyApp();
+  const seenRef = useBountySeen(app, slot);
   const [favorited, setFavorited] = useState(Boolean(app.isFavorited));
   useEffect(() => {
     setFavorited(Boolean(app.isFavorited));
@@ -31,7 +41,10 @@ export default function TopPickCard({ app }: { app: EarnHubApp }) {
   const status = getAppStatus(app);
   const playersLine = getPlayersLine(app);
   return (
-    <article className={cardClass}>
+    <article
+      className={cx(cardClass, recommended && recommendedClass)}
+      ref={seenRef as React.Ref<HTMLElement>}
+    >
       <div
         className={thumbClass}
         style={
@@ -45,8 +58,12 @@ export default function TopPickCard({ app }: { app: EarnHubApp }) {
           <span className={monogramClass}>{app.title.slice(0, 1)}</span>
         )}
         <span className={eyebrowClass}>
-          <span className={rankClass}>#{app.popularity?.rank || 1}</span>
-          Top pick this week
+          {recommended ? (
+            <span className={forYouClass}>For you</span>
+          ) : (
+            <span className={rankClass}>#{app.popularity?.rank || 1}</span>
+          )}
+          {recommended ? 'Recommended for you' : 'Top pick this week'}
         </span>
       </div>
       <div className={bodyClass}>
@@ -68,6 +85,7 @@ export default function TopPickCard({ app }: { app: EarnHubApp }) {
           )}{' '}
           · {getAppSubtitle(app)}
         </div>
+        {note && <div className={noteClass}>{note}</div>}
         <div className={pillRowClass}>
           <span className={payPillClass}>{payout}</span>
           {playersLine && <span className={playersClass}>{playersLine}</span>}
@@ -76,7 +94,7 @@ export default function TopPickCard({ app }: { app: EarnHubApp }) {
         <div className={barClass} role="img" aria-label={status.line}>
           <i style={{ width: `${Math.round(status.ratio * 100)}%` }} />
         </div>
-        <AppRewardsButton app={app} />
+        <AppRewardsButton app={app} slot={slot} />
         <div className={actionsClass}>
           <Button
             color="logoBlue"
@@ -85,10 +103,7 @@ export default function TopPickCard({ app }: { app: EarnHubApp }) {
             shape="pill"
             size="lg"
             stretch
-            onClick={() => {
-              trackBountyAppOpen(app, 'top_pick');
-              navigate(`/app/${app.buildId}`);
-            }}
+            onClick={() => openApp(app, slot)}
           >
             Play
           </Button>
@@ -114,6 +129,21 @@ const cardClass = css`
   background: rgba(255, 255, 255, 0.94);
   overflow: hidden;
   margin-bottom: 1.2rem;
+`;
+const recommendedClass = css`
+  border: 2px solid ${Color.logoBlue(0.55)};
+`;
+const forYouClass = css`
+  padding: 0.1rem 0.7rem;
+  border-radius: 999px;
+  background: ${Color.logoBlue()};
+  color: #fff;
+  letter-spacing: 0;
+`;
+const noteClass = css`
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: ${Color.logoBlue()};
 `;
 const thumbClass = css`
   position: relative;

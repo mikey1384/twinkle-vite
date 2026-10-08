@@ -88,6 +88,7 @@ registerMethods('build', [
   'loadCardCraftBadges',
   'loadRewardEarnHub',
   'loadRewardEarnStandings',
+  'recordEarnImpressions',
   'loadBuildWorkshopStatus',
   'cancelBuildWorkshopJob',
   'createBuild',

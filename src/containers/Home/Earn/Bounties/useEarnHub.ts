@@ -89,10 +89,26 @@ export interface EarnHubCreator {
   players: number;
   apps: string[];
 }
+// "Recommended for you" (Mikey 10-08): good apps this member hasn't tried,
+// best first, each with why. Older servers leave it out.
+export type EarnRecommendationReason =
+  | { kind: 'maker'; maker: string | null; relatedTitle: string }
+  | { kind: 'players-like-you'; relatedTitle: string }
+  | { kind: 'new' }
+  | { kind: 'loved' }
+  | { kind: 'try' };
+export interface EarnRecommendation {
+  buildId: number;
+  score: number;
+  reason: EarnRecommendationReason;
+}
 export interface EarnHub {
   dayKey: string;
   period: EarnHubPeriod;
   apps: EarnHubApp[];
+  recommendations?: EarnRecommendation[];
+  // "Jump back in": this member's recently used apps, latest first
+  recentBuildIds?: number[];
   standings: EarnHubStandings;
   creators: { period: EarnHubPeriod; entries: EarnHubCreator[] };
 }

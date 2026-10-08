@@ -1,6 +1,5 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
-import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import Link from '~/components/Link';
 import { Color, borderRadius } from '~/constants/css';
@@ -11,18 +10,19 @@ import {
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
-  appTitleTextClass,
-  trackBountyAppOpen
+  appTitleTextClass
 } from './appCardHelpers';
+import { useBountySeen, useOpenBountyApp } from './bountyTracking';
 import { AppAskButton, AppRewardsButton } from './AppRewardsModal';
 
 // One line of the desktop "See all apps" list: rank, picture, who made it,
 // what it pays and how many played this week. Phones use AppCard rows instead.
 export default function AppRow({ app }: { app: EarnHubApp }) {
-  const navigate = useNavigate();
+  const openApp = useOpenBountyApp();
+  const seenRef = useBountySeen(app, 'row');
   const playersLine = getPlayersLine(app);
   return (
-    <li className={rowClass}>
+    <li className={rowClass} ref={seenRef as React.Ref<HTMLLIElement>}>
       <span className={rankClass}>{app.popularity?.rank ?? ''}</span>
       <div
         className={thumbClass}
@@ -57,7 +57,7 @@ export default function AppRow({ app }: { app: EarnHubApp }) {
       <div className={factsClass}>
         <span className={payClass}>{getAppPayout(app)}</span>
         {playersLine && <span className={playersClass}>{playersLine}</span>}
-        <AppRewardsButton app={app} className={rewardsLinkClass} />
+        <AppRewardsButton app={app} slot="row" className={rewardsLinkClass} />
       </div>
       <div className={actionsClass}>
         <AppAskButton app={app} />
@@ -68,10 +68,7 @@ export default function AppRow({ app }: { app: EarnHubApp }) {
           shape="pill"
           size="sm"
           style={{ minWidth: '8rem' }}
-          onClick={() => {
-            trackBountyAppOpen(app, 'row');
-            navigate(`/app/${app.buildId}`);
-          }}
+          onClick={() => openApp(app, 'row')}
         >
           Play
         </Button>

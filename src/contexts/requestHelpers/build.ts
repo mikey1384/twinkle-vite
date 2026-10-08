@@ -843,6 +843,26 @@ export default function buildRequestHelpers({
         return handleError(error);
       }
     },
+    // What the Bounties shelf showed this member and what they played (the
+    // recommender's signals). Best effort: never interrupts the page.
+    async recordEarnImpressions({
+      seen,
+      played
+    }: {
+      seen?: Array<{ buildId: number; slot: string }>;
+      played?: { buildId: number; slot: string } | null;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/rewards/earn/impressions`,
+          { seen, played },
+          auth()
+        );
+        return data;
+      } catch {
+        return null;
+      }
+    },
     async loadRewardEarnStandings({
       period,
       cursor

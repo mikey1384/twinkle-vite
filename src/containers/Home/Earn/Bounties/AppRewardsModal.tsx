@@ -1,6 +1,5 @@
 import React, { useId, useMemo, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { useNavigate } from 'react-router-dom';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
@@ -9,6 +8,7 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import type { EarnHubApp } from './useEarnHub';
 import { getRowConditions, getRowPayout, getRowState } from './appCardHelpers';
+import { useOpenBountyApp, type BountySlot } from './bountyTracking';
 import {
   countRewardRows,
   groupRewardRules,
@@ -23,10 +23,12 @@ import {
 // series of repeat rules (rewardGroups.ts).
 export function AppRewardsButton({
   app,
-  className
+  className,
+  slot = 'card'
 }: {
   app: EarnHubApp;
   className?: string;
+  slot?: BountySlot;
 }) {
   const [shown, setShown] = useState(false);
   const count = useMemo(() => countRewardRows(app.rules), [app.rules]);
@@ -42,7 +44,9 @@ export function AppRewardsButton({
         {count === 1 ? 'How to earn it' : `See all ${count} rewards`}
         <Icon icon="chevron-right" style={{ marginLeft: '0.5rem' }} />
       </button>
-      {shown && <AppRewardsModal app={app} onHide={() => setShown(false)} />}
+      {shown && (
+        <AppRewardsModal app={app} slot={slot} onHide={() => setShown(false)} />
+      )}
     </>
   );
 }
@@ -78,12 +82,14 @@ export function AppAskButton({
 
 export default function AppRewardsModal({
   app,
+  slot = 'card',
   onHide
 }: {
   app: EarnHubApp;
+  slot?: BountySlot;
   onHide: () => void;
 }) {
-  const navigate = useNavigate();
+  const openApp = useOpenBountyApp();
   const sectionIdPrefix = useId();
   const sections = useMemo(() => groupRewardRules(app.rules), [app.rules]);
   const { budgets, today } = app;
@@ -113,7 +119,7 @@ export default function AppRewardsModal({
             shape="pill"
             onClick={() => {
               onHide();
-              navigate(`/app/${app.buildId}`);
+              openApp(app, slot);
             }}
           >
             Play {app.title}
@@ -129,7 +135,8 @@ export default function AppRewardsModal({
               <span>
                 {today.capReached
                   ? 'Daily cap reached · back tomorrow'
-                  : today.possible && (today.possible.xp || today.possible.coins)
+                  : today.possible &&
+                      (today.possible.xp || today.possible.coins)
                     ? `Still up for grabs: ${[
                         today.possible.xp
                           ? `${addCommasToNumber(today.possible.xp)} XP`
@@ -184,8 +191,8 @@ export default function AppRewardsModal({
             <strong>Play fair</strong>
             <p>
               Rewards are for real play. Collecting them with extra accounts,
-              scripts or bots is against the rules: those rewards are taken
-              back and the account can be banned.
+              scripts or bots is against the rules: those rewards are taken back
+              and the account can be banned.
             </p>
           </div>
         </aside>

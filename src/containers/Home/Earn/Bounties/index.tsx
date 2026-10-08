@@ -9,21 +9,26 @@ import AppCard from './AppCard';
 import AppRow from './AppRow';
 import TopPickCard from './TopPickCard';
 import YourAppCard from './YourAppCard';
+import RecentAppTile from './RecentAppTile';
 import { useEarnHub } from './useEarnHub';
+import { recommendationNote } from './appCardHelpers';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 import { homePanelClass } from '~/theme/homePanels';
 import { SITE_NAME } from '~/constants/siteBrand';
 
-// The App Store: every approved app that pays real XP or Coins, with what
-// this member has left in each today, and the builder's card after the grid.
-// The server sends the apps already ranked by popularity (never re-sorted
-// here). Desktop shows the #1 as a wide top pick, #2-#7 as cards and the rest
-// behind "See all" as ranked rows. Phones keep the stacked row shape: #1-#5,
-// then "See all" for the rest. An older server without popularity gets the
+// Bounties: every approved app that pays real XP or Coins, with what this
+// member has left in each today, and the builder's card after the grid. The
+// server sends the apps already ranked by popularity (never re-sorted here)
+// and this member's "Recommended for you" (Mikey 10-08: good apps they
+// haven't tried, with why). Desktop: two big cards, the #1 this week and the
+// recommendation, then #2-#30 as cards and the rest behind "See all" as
+// ranked rows. Phones keep the stacked row shape: the recommendation first,
+// then #1-#30, then "See all". Above all of it, "Jump back in": the member's
+// recently used apps as small rows (Mikey 10-08), so regulars are one tap away. An older server without popularity gets the
 // plain unranked shelf. Nothing shows until the server lists an approved app.
-const DESKTOP_GRID_END = 7;
-const PHONE_FIRST_ROWS = 5;
+const DESKTOP_GRID_END = 30;
+const PHONE_FIRST_ROWS = 30;
 
 export default function Bounties({
   onOpenStandings
@@ -39,6 +44,15 @@ export default function Bounties({
   if (!loading && !hub?.apps.length) return null;
   const apps = hub?.apps || [];
   const ranked = apps.some((app) => app.popularity);
+  const pick = hub?.recommendations?.[0];
+  const recommended = pick
+    ? apps.find((app) => app.buildId === pick.buildId)
+    : undefined;
+  const note = pick ? recommendationNote(pick.reason) : undefined;
+  // "Jump back in": the member's regulars, one tap away (Mikey 10-08)
+  const recent = (hub?.recentBuildIds || [])
+    .map((buildId) => apps.find((app) => app.buildId === buildId))
+    .filter((app): app is (typeof apps)[number] => !!app);
   return (
     <ErrorBoundary componentPath="Home/Earn/Bounties">
       <div className={headClass}>
@@ -73,6 +87,16 @@ export default function Bounties({
         className={homePanelClass}
         style={panelVars}
       >
+        {recent.length > 0 && (
+          <section className={recentClass} aria-label="Jump back in">
+            <h3 className={recentTitleClass}>Jump back in</h3>
+            <ul className={recentListClass}>
+              {recent.map((app) => (
+                <RecentAppTile key={app.buildId} app={app} />
+              ))}
+            </ul>
+          </section>
+        )}
         {loading && !hub ? (
           <Loading style={{ height: '12rem' }} />
         ) : !ranked ? (
@@ -84,6 +108,14 @@ export default function Bounties({
           </div>
         ) : isPhone ? (
           <div className={shelfClass}>
+            {recommended && (
+              <AppCard
+                app={recommended}
+                slot="recommended"
+                eyebrow="Recommended for you"
+                note={note}
+              />
+            )}
             {(showAll ? apps : apps.slice(0, PHONE_FIRST_ROWS)).map((app) => (
               <AppCard
                 key={app.buildId}
@@ -96,7 +128,14 @@ export default function Bounties({
           </div>
         ) : (
           <>
-            <TopPickCard app={apps[0]} />
+            {recommended ? (
+              <div className={pairClass}>
+                <TopPickCard app={apps[0]} />
+                <TopPickCard app={recommended} recommended note={note} />
+              </div>
+            ) : (
+              <TopPickCard app={apps[0]} />
+            )}
             <div className={shelfClass}>
               {apps.slice(1, DESKTOP_GRID_END).map((app) => (
                 <AppCard
@@ -202,6 +241,35 @@ const shelfClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+`;
+const recentClass = css`
+  margin-bottom: 1.4rem;
+`;
+const recentTitleClass = css`
+  margin: 0 0 0.7rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+`;
+const recentListClass = css`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.8rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+  }
+`;
+// the two big cards side by side; stacked when the panel is narrow
+const pairClass = css`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 1.2rem;
+  > article {
+    margin-bottom: 0;
   }
 `;
 const rowsClass = css`

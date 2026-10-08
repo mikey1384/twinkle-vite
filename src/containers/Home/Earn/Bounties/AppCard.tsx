@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import FavoriteButton from '~/components/Build/FavoriteButton';
 import Link from '~/components/Link';
@@ -14,9 +13,13 @@ import {
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
-  appTitleTextClass,
-  trackBountyAppOpen
+  appTitleTextClass
 } from './appCardHelpers';
+import {
+  useBountySeen,
+  useOpenBountyApp,
+  type BountySlot
+} from './bountyTracking';
 import { AppAskButton, AppRewardsButton } from './AppRewardsModal';
 
 // One approved app on the shelf: what it pays, who made it, and what this
@@ -27,12 +30,20 @@ import { AppAskButton, AppRewardsButton } from './AppRewardsModal';
 // phones this same card is the compact ranked row.
 export default function AppCard({
   app,
-  rank
+  rank,
+  slot = 'card',
+  eyebrow,
+  note
 }: {
   app: EarnHubApp;
   rank?: number;
+  slot?: BountySlot;
+  // phones: the "Recommended for you" card is this row with a label and why
+  eyebrow?: string;
+  note?: string;
 }) {
-  const navigate = useNavigate();
+  const openApp = useOpenBountyApp();
+  const seenRef = useBountySeen(app, slot);
   // Follows the server's answer: the shelf's own value until the member
   // presses the star, then whatever the favorite request returned.
   const [favorited, setFavorited] = useState(Boolean(app.isFavorited));
@@ -45,7 +56,10 @@ export default function AppCard({
   const playersLine = rank ? getPlayersLine(app) : '';
   const isNew = Boolean(rank && app.popularity?.isNew);
   return (
-    <article className={cardClass}>
+    <article
+      className={cx(cardClass, eyebrow && highlightClass)}
+      ref={seenRef as React.Ref<HTMLElement>}
+    >
       <div
         className={thumbClass}
         style={
@@ -55,11 +69,14 @@ export default function AppCard({
         }
         aria-hidden
       >
-        {!app.thumbnailUrl && <span className={monogram}>{app.title.slice(0, 1)}</span>}
+        {!app.thumbnailUrl && (
+          <span className={monogram}>{app.title.slice(0, 1)}</span>
+        )}
         {rank ? <span className={rankBadge}>#{rank}</span> : null}
         <span className={payPill}>{payout}</span>
       </div>
       <div className={bodyClass}>
+        {eyebrow && <div className={eyebrowClass}>{eyebrow}</div>}
         <div className={payLine}>{payout}</div>
         <h3 className={cx(titleClass, appTitleRowClass)}>
           <span className={appTitleTextClass}>{app.title}</span>
@@ -68,7 +85,10 @@ export default function AppCard({
         <div className={byClass}>
           by{' '}
           {app.ownerUsername ? (
-            <Link to={`/users/${app.ownerUsername}`} style={{ fontWeight: 700 }}>
+            <Link
+              to={`/users/${app.ownerUsername}`}
+              style={{ fontWeight: 700 }}
+            >
               {app.ownerUsername}
             </Link>
           ) : (
@@ -76,12 +96,13 @@ export default function AppCard({
           )}{' '}
           · {subtitle}
         </div>
+        {note && <div className={noteClass}>{note}</div>}
         {playersLine && <div className={playersClass}>{playersLine}</div>}
         <div className={statusClass}>{status.line}</div>
         <div className={barClass} role="img" aria-label={status.line}>
           <i style={{ width: `${Math.round(status.ratio * 100)}%` }} />
         </div>
-        <AppRewardsButton app={app} />
+        <AppRewardsButton app={app} slot={slot} />
       </div>
       <div className={actionsClass}>
         <Button
@@ -91,10 +112,7 @@ export default function AppCard({
           shape="pill"
           size="md"
           stretch
-          onClick={() => {
-            trackBountyAppOpen(app, 'card');
-            navigate(`/app/${app.buildId}`);
-          }}
+          onClick={() => openApp(app, slot)}
         >
           Play
         </Button>
@@ -111,6 +129,21 @@ export default function AppCard({
   );
 }
 
+const highlightClass = css`
+  border: 2px solid ${Color.logoBlue(0.55)};
+`;
+const eyebrowClass = css`
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: ${Color.logoBlue()};
+`;
+const noteClass = css`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.78);
+`;
 const cardClass = css`
   display: flex;
   flex-direction: column;
