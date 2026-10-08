@@ -76,9 +76,9 @@ test('file patches preserve unchanged files and focus; saved snapshots and delet
   assert.equal(run.streamingProjectFiles?.length, 2);
   assert.equal(run.streamingFocusFilePath, '/style.css');
   run = applyBuildRunStreamUpdate(run, { projectFiles: [a], projectFilesMode: 'snapshot', projectFilesPersisted: true });
-  assert.deepEqual(run.streamingProjectFiles, [a]);
+  assert.equal(run.streamingProjectFiles, null, 'a saved checkpoint clears the transient overlay');
   assert.deepEqual(run.baseProjectFiles, [a]);
   run = applyBuildRunStreamUpdate(run, { projectFiles: [], projectFilesMode: 'snapshot', projectFilesPersisted: true });
-  assert.deepEqual(run.streamingProjectFiles, []);
+  assert.equal(run.streamingProjectFiles, null);
   assert.deepEqual(run.baseProjectFiles, []);
 });
