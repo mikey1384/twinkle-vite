@@ -1,4 +1,9 @@
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
+  'network:update-agent',
+  'network:ack-inbox',
+  'network:report',
+  'network:remove',
+  'network:moderate',
   'rewards:start',
   'rewards:progress',
   'rewards:claim',

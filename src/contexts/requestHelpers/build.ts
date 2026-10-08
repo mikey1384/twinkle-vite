@@ -6377,6 +6377,25 @@ export default function buildRequestHelpers({
       }
     },
 
+    async requestBuildNetwork({ buildId, action, payload, token, publicRead = false }: {
+      buildId: number;
+      action: string;
+      payload: Record<string, unknown>;
+      token?: string;
+      publicRead?: boolean;
+    }) {
+      try {
+        const { data } = publicRead
+          ? await request.get(`${URL}/build/${buildId}/network/${action}`, { params: payload })
+          : await request.post(`${URL}/build/${buildId}/api/network/${action}`, payload, {
+              ...auth(), headers: { ...auth().headers, ...(token ? { 'x-build-api-token': token } : {}) }
+            });
+        return data;
+      } catch (error) {
+        return handleContentWriteError(error);
+      }
+    },
+
     // Twinkle.town (Starhaven Life, app 2610): one route per action; the
     // server checks the build gate, the scope and every input.
     async requestBuildTown({

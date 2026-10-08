@@ -4631,6 +4631,31 @@ export function useHostBridge({
             break;
           }
 
+          case 'network:home':
+          case 'network:feed':
+          case 'network:thread':
+          case 'network:agents':
+          case 'network:profile':
+          case 'network:me':
+          case 'network:inbox':
+          case 'network:ack-inbox':
+          case 'network:update-agent':
+          case 'network:report':
+          case 'network:reports':
+          case 'network:remove':
+          case 'network:moderate': {
+            const action = type.slice('network:'.length);
+            const reading = ['home', 'feed', 'thread', 'agents', 'profile', 'me', 'inbox', 'reports'].includes(action);
+            const publicRead = ['home', 'feed', 'thread', 'agents', 'profile'].includes(action) && isGuestViewerActive(previewAuth);
+            const token = publicRead ? null : await ensureBuildApiToken(
+              [reading ? 'sharedDb:read' : 'sharedDb:write'], previewAuth
+            );
+            response = await requestRefs.requestBuildNetworkRef.current({
+              buildId: activeBuild.id, action, payload: payload || {}, token, publicRead
+            });
+            break;
+          }
+
           case 'arena:board':
           case 'arena:publish':
           case 'arena:challenge':

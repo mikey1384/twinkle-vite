@@ -350,6 +350,9 @@ export default function useAppRequests({
   const requestBuildTown = useAppContext(
     (v) => v.requestHelpers.requestBuildTown
   );
+  const requestBuildNetwork = useAppContext(
+    (v) => v.requestHelpers.requestBuildNetwork
+  );
   const setPrivateDbItem = useAppContext(
     (v) => v.requestHelpers.setPrivateDbItem
   );
@@ -514,6 +517,8 @@ export default function useAppRequests({
   const comparePrivateDbItemRef = useRef(comparePrivateDbItem);
   const requestBuildArenaRef = useRef(requestBuildArena);
   const requestBuildTownRef = useRef(requestBuildTown);
+  const requestBuildNetworkRef = useRef(requestBuildNetwork);
+  requestBuildNetworkRef.current = requestBuildNetwork;
   const deletePrivateDbItemRef = useRef(deletePrivateDbItem);
   const listBuildRemindersRef = useRef(listBuildReminders);
   const createBuildReminderRef = useRef(createBuildReminder);
@@ -648,6 +653,7 @@ export default function useAppRequests({
     comparePrivateDbItemRef,
     requestBuildArenaRef,
     requestBuildTownRef,
+    requestBuildNetworkRef,
     deletePrivateDbItemRef,
     listBuildRemindersRef,
     createBuildReminderRef,
