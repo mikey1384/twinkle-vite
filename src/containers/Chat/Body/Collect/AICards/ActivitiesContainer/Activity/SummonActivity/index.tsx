@@ -15,7 +15,7 @@ export default function SummonActivity({ card }: { card: any }) {
   const navigate = useNavigate();
   const { promptText, engine } = useAICard(card);
   const isNanoBananaEngine =
-    engine === 'Nano Banana' || engine === 'Nano Banana 2';
+    String(engine || '').startsWith('Nano Banana');
   const displayedTime = useMemo(
     () => moment.unix(card.timeStamp).format('hh:mm a'),
     [card.timeStamp]
