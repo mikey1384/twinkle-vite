@@ -134,6 +134,8 @@ const recommendedClass = css`
   border: 2px solid ${Color.logoBlue(0.55)};
 `;
 const forYouClass = css`
+  flex-shrink: 0;
+  white-space: nowrap;
   padding: 0.1rem 0.7rem;
   border-radius: 999px;
   background: ${Color.logoBlue()};
@@ -160,6 +162,7 @@ const monogramClass = css`
 const bodyClass = css`
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 0.9rem;
   padding: 1.6rem 1.8rem 1.8rem;
   min-width: 0;

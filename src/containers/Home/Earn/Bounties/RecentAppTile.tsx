@@ -79,7 +79,6 @@ const titleClass = css`
 const statusClass = css`
   font-size: 1.2rem;
   color: rgba(15, 23, 42, 0.7);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 `;

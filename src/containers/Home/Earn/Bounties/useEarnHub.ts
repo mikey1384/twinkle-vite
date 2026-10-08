@@ -92,7 +92,7 @@ export interface EarnHubCreator {
 // "Recommended for you" (Mikey 10-08): good apps this member hasn't tried,
 // best first, each with why. Older servers leave it out.
 export type EarnRecommendationReason =
-  | { kind: 'maker'; maker: string | null; relatedTitle: string }
+  | { kind: 'maker'; maker: string | null; relatedTitle: string | null }
   | { kind: 'players-like-you'; relatedTitle: string }
   | { kind: 'new' }
   | { kind: 'loved' }

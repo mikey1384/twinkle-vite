@@ -12,6 +12,7 @@ import YourAppCard from './YourAppCard';
 import RecentAppTile from './RecentAppTile';
 import { useEarnHub } from './useEarnHub';
 import { recommendationNote } from './appCardHelpers';
+import { BountyTrackingProvider } from './bountyTracking';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 import { homePanelClass } from '~/theme/homePanels';
@@ -81,86 +82,88 @@ export default function Bounties({
           </a>
         </div>
       </div>
-      <ScopedTheme
-        theme={themeName}
-        roles={['sectionPanel', 'sectionPanelText']}
-        className={homePanelClass}
-        style={panelVars}
-      >
-        {recent.length > 0 && (
-          <section className={recentClass} aria-label="Jump back in">
-            <h3 className={recentTitleClass}>Jump back in</h3>
-            <ul className={recentListClass}>
-              {recent.map((app) => (
-                <RecentAppTile key={app.buildId} app={app} />
-              ))}
-            </ul>
-          </section>
-        )}
-        {loading && !hub ? (
-          <Loading style={{ height: '12rem' }} />
-        ) : !ranked ? (
-          <div className={shelfClass}>
-            {apps.map((app) => (
-              <AppCard key={app.buildId} app={app} />
-            ))}
-            <YourAppCard />
-          </div>
-        ) : isPhone ? (
-          <div className={shelfClass}>
-            {recommended && (
-              <AppCard
-                app={recommended}
-                slot="recommended"
-                eyebrow="Recommended for you"
-                note={note}
-              />
-            )}
-            {(showAll ? apps : apps.slice(0, PHONE_FIRST_ROWS)).map((app) => (
-              <AppCard
-                key={app.buildId}
-                app={app}
-                rank={app.popularity?.rank}
-              />
-            ))}
-            {apps.length > PHONE_FIRST_ROWS && renderSeeAll()}
-            <YourAppCard />
-          </div>
-        ) : (
-          <>
-            {recommended ? (
-              <div className={pairClass}>
-                <TopPickCard app={apps[0]} />
-                <TopPickCard app={recommended} recommended note={note} />
-              </div>
-            ) : (
-              <TopPickCard app={apps[0]} />
-            )}
+      <BountyTrackingProvider dayKey={hub?.dayKey}>
+        <ScopedTheme
+          theme={themeName}
+          roles={['sectionPanel', 'sectionPanelText']}
+          className={homePanelClass}
+          style={panelVars}
+        >
+          {recent.length > 0 && (
+            <section className={recentClass} aria-label="Jump back in">
+              <h3 className={recentTitleClass}>Jump back in</h3>
+              <ul className={recentListClass}>
+                {recent.map((app) => (
+                  <RecentAppTile key={app.buildId} app={app} />
+                ))}
+              </ul>
+            </section>
+          )}
+          {loading && !hub ? (
+            <Loading style={{ height: '12rem' }} />
+          ) : !ranked ? (
             <div className={shelfClass}>
-              {apps.slice(1, DESKTOP_GRID_END).map((app) => (
+              {apps.map((app) => (
+                <AppCard key={app.buildId} app={app} />
+              ))}
+              <YourAppCard />
+            </div>
+          ) : isPhone ? (
+            <div className={shelfClass}>
+              {recommended && (
+                <AppCard
+                  app={recommended}
+                  slot="recommended"
+                  eyebrow="Recommended for you"
+                  note={note}
+                />
+              )}
+              {(showAll ? apps : apps.slice(0, PHONE_FIRST_ROWS)).map((app) => (
                 <AppCard
                   key={app.buildId}
                   app={app}
                   rank={app.popularity?.rank}
                 />
               ))}
+              {apps.length > PHONE_FIRST_ROWS && renderSeeAll()}
               <YourAppCard />
             </div>
-            {apps.length > DESKTOP_GRID_END && (
-              <>
-                {showAll && (
-                  <ol className={rowsClass}>
-                    {apps.slice(DESKTOP_GRID_END).map((app) => (
-                      <AppRow key={app.buildId} app={app} />
-                    ))}
-                  </ol>
-                )}
-                {renderSeeAll()}
-              </>
-            )}
-          </>
-        )}
-      </ScopedTheme>
+          ) : (
+            <>
+              {recommended ? (
+                <div className={pairClass}>
+                  <TopPickCard app={apps[0]} />
+                  <TopPickCard app={recommended} recommended note={note} />
+                </div>
+              ) : (
+                <TopPickCard app={apps[0]} />
+              )}
+              <div className={shelfClass}>
+                {apps.slice(1, DESKTOP_GRID_END).map((app) => (
+                  <AppCard
+                    key={app.buildId}
+                    app={app}
+                    rank={app.popularity?.rank}
+                  />
+                ))}
+                <YourAppCard />
+              </div>
+              {apps.length > DESKTOP_GRID_END && (
+                <>
+                  {showAll && (
+                    <ol className={rowsClass}>
+                      {apps.slice(DESKTOP_GRID_END).map((app) => (
+                        <AppRow key={app.buildId} app={app} />
+                      ))}
+                    </ol>
+                  )}
+                  {renderSeeAll()}
+                </>
+              )}
+            </>
+          )}
+        </ScopedTheme>
+      </BountyTrackingProvider>
     </ErrorBoundary>
   );
 
@@ -262,10 +265,10 @@ const recentListClass = css`
     grid-template-columns: 1fr;
   }
 `;
-// the two big cards side by side; stacked when the panel is narrow
+// Desktop keeps both featured cards side by side; phones use the row layout.
 const pairClass = css`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.2rem;
   margin-bottom: 1.2rem;
   > article {

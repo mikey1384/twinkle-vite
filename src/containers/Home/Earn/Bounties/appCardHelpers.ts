@@ -242,6 +242,11 @@ export function trackBountyAppOpen(
 export function recommendationNote(reason: EarnRecommendationReason) {
   switch (reason.kind) {
     case 'maker':
+      if (!reason.relatedTitle) {
+        return reason.maker
+          ? `More from ${reason.maker}`
+          : 'More from this maker';
+      }
       return reason.maker
         ? `More from ${reason.maker} · you play ${reason.relatedTitle}`
         : `From the maker of ${reason.relatedTitle}`;
