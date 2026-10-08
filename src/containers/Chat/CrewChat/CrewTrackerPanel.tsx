@@ -7,6 +7,7 @@ import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { STEP_ICONS } from '~/containers/BridgeBuilderQuest/StepTracker';
 import useCrewView from './useCrewView';
+import CrewReviewSummary from './CrewReviewSummary';
 
 // The crew's path as a checklist, in the chat's right sidebar under the
 // member list: what is done, what to do next, what comes after. Server-owned
@@ -130,6 +131,7 @@ export default function CrewTrackerPanel({ crewId }: { crewId: number }) {
           {progress.blocking.replace(/^Next:\s*/, '')}
         </div>
       )}
+      <CrewReviewSummary crew={crew} />
       <Button
         size="sm"
         color="logoBlue"

@@ -6,6 +6,7 @@ import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import useCrewView from './useCrewView';
+import CrewReviewSummary from './CrewReviewSummary';
 
 // The message a crew's chat opens with (rootType 'meetupQuestCrew'): where
 // the crew is on its path, read live from the server. The full checklist sits
@@ -58,6 +59,7 @@ export default function CrewChatCard({ crewId }: { crewId: number }) {
             : ''}
         </div>
       </div>
+      <CrewReviewSummary crew={crew} />
       <Button
         size="sm"
         color="logoBlue"

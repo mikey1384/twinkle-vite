@@ -236,7 +236,9 @@ export function AdminInfoChecks({
       </b>
       <span className={questHelpClass}>
         Asking a member makes the crew wait at this step until you accept their answer
-        (teacher and class, or how they know the crew). Nobody is contacted.
+        (teacher and class, or how they know the crew). The question and answer are
+        visible only to that member and staff. For instructions everyone must see,
+        use “Request changes” above. Nobody outside Twinkle is contacted.
       </span>
       {crew.members.map((member) => {
         const mine = records.filter((r) => r.userId === member.userId);

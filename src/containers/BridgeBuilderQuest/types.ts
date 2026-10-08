@@ -3,6 +3,14 @@
 export type QuestStepKey = 'crew' | 'grownUp' | 'plan' | 'film' | 'review';
 export type QuestStepState = 'done' | 'current' | 'locked';
 export type ReviewStatus = 'none' | 'pending' | 'approved' | 'sent_back';
+export type FeedbackStep = 'crew' | 'grownUp';
+export interface StepReview {
+  status: 'not_ready' | 'pending' | 'changes_requested' | 'approved';
+  note: string;
+  reviewedAt: number;
+  requestedAt: number;
+  canRequestReview: boolean;
+}
 
 export interface QuestStep {
   key: QuestStepKey;
@@ -172,6 +180,7 @@ export interface CrewView extends CrewProfile {
   };
   completedAt: number;
   progress: QuestProgress;
+  reviews?: Record<FeedbackStep, StepReview>;
   // the crew's group chat (members and admins only)
   chat: { channelId: number; pathId: number } | null;
   // admins only: every parent's answer and contact (never shown to members)

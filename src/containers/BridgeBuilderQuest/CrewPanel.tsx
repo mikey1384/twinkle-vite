@@ -8,6 +8,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import AdminReview from './AdminReview';
+import CrewReviewFeedback from './CrewReviewFeedback';
 import BranchField from './BranchField';
 import DateCalendar from '~/components/DateCalendar';
 import AskParentPanel from './Parent/AskParentPanel';
@@ -101,6 +102,11 @@ export default function CrewPanel({
   const nudgeMeetupBranch = useAppContext((v) => v.requestHelpers.nudgeMeetupBranch);
   const reviseMeetupPlan = useAppContext((v) => v.requestHelpers.reviseMeetupPlan);
   const crewAction = useQuestAction(onChanged);
+  const reviewAction = useQuestAction(onChanged);
+  const requestMeetupReview = useAppContext((v) => v.requestHelpers.requestMeetupReview);
+  const feedbackStep = progress.currentStep === 'crew' || progress.currentStep === 'grownUp'
+    ? progress.currentStep : null;
+  const feedback = feedbackStep ? crew.reviews?.[feedbackStep] : null;
   const grownUpAction = useQuestAction(onChanged);
   const planAction = useQuestAction(onChanged);
 
@@ -398,6 +404,18 @@ export default function CrewPanel({
       <div style={{ height: '1.6rem' }} />
 
       <StepTracker progress={progress} completed={completed} />
+      {crew.status === 'active' && feedbackStep && feedback && (
+        <CrewReviewFeedback
+          step={feedbackStep}
+          review={feedback}
+          busy={reviewAction.busy}
+          error={reviewAction.error}
+          onRequestReview={viewer.isMember
+            ? () => reviewAction.run(() => requestMeetupReview({ crewId: crew.crewId, step: feedbackStep }))
+            : undefined}
+          onManageCrew={feedbackStep === 'crew' && viewer.isFounder ? () => setManageShown(true) : undefined}
+        />
+      )}
 
       {completed && (
         <div style={{ marginTop: '1.6rem' }}>

@@ -10,7 +10,7 @@ import type { CrewView } from './types';
 
 
 // Admin-only controls on the quest page. The same decisions exist in the CLI:
-// `lumine admin meetup approve-crew | approve-grownup | approve-plan | send-back | approve`.
+// `lumine admin meetup approve-crew | approve-grownup | request-changes | approve-plan | send-back | approve`.
 export default function AdminReview({
   crew,
   stage,
@@ -27,11 +27,11 @@ export default function AdminReview({
   const [attended, setAttended] = useState<number[]>([]);
   const { busy, error, setError, run } = useQuestAction(onChanged);
 
-  // The crew step and the grown-up step: one approve button (every step passes
-  // through the owner; nothing to send back, the crew just keeps waiting).
+  // Staff may give shared feedback even while a member requirement is open.
+  // Approval still requires the server's readiness check.
   if (stage === 'crew' || stage === 'grownUp') {
-    const notYet = stage === 'crew' ? crew.progress.crewAwaitingApproval : crew.progress.grownUpAwaitingApproval;
-    if (!notYet) return null;
+    if (crew.progress.currentStep !== stage) return null;
+    const canApprove = (stage === 'crew' ? crew.progress.crewAwaitingApproval : crew.progress.grownUpAwaitingApproval) || crew.reviews?.[stage].canRequestReview;
     return (
       <div
         className={css`
@@ -48,10 +48,23 @@ export default function AdminReview({
           Your approval: {stage === 'crew' ? 'the crew' : 'parents and the adult'}
         </b>
         <div>
+          <label className={questLabelClass} htmlFor={`meetup-review-${crew.crewId}-${stage}`}>
+            Changes for the whole crew (every member will see this)
+          </label>
+          <textarea
+            id={`meetup-review-${crew.crewId}-${stage}`}
+            className={questInputClass}
+            rows={3}
+            maxLength={1000}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
           <Button
             color="green"
             loading={busy}
-            disabled={busy}
+            disabled={busy || !canApprove}
             onClick={() =>
               run(() =>
                 reviewMeetupCrew({
@@ -62,6 +75,20 @@ export default function AdminReview({
             }
           >
             {stage === 'crew' ? 'Approve crew' : 'Approve parents and adult'}
+          </Button>
+          <Button
+            color="orange"
+            variant="soft"
+            disabled={busy}
+            onClick={() => {
+              if (!note.trim()) {
+                setError('Write a note so every member knows what to change.');
+                return;
+              }
+              run(() => reviewMeetupCrew({ crewId: crew.crewId, action: 'request-changes', step: stage, note }));
+            }}
+          >
+            Request changes
           </Button>
         </div>
         {error && <QuestNote tone="warning">{error}</QuestNote>}

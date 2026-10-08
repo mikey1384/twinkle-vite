@@ -11,6 +11,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import CrewCover from './CrewCover';
 import CrewPanel from './CrewPanel';
+import useMeetupRefresh from './useMeetupRefresh';
 import { BranchChips, MemberAvatars } from './DirectoryCard';
 import JoinCrewModal from './JoinCrewModal';
 import StepTracker from './StepTracker';
@@ -34,10 +35,12 @@ export default function CrewDetailPage() {
   const [joinShown, setJoinShown] = useState(false);
   const requestIdRef = useRef(0);
   const achievementTitle: string = achievementsObj?.meetup?.title || '';
+  useMeetupRefresh({ enabled: !!userId && !!crewId, channelId: privateCrew?.chat?.channelId, refresh: reload });
 
   useEffect(() => {
     if (!userId || !crewId) return;
     reload();
+    return () => { requestIdRef.current += 1; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, crewId]);
 

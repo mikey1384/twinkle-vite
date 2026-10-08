@@ -14,6 +14,7 @@ import CreateCrewModal from './CreateCrewModal';
 import CrewCover from './CrewCover';
 import CrewDirectory from './CrewDirectory';
 import CrewPanel from './CrewPanel';
+import useMeetupRefresh from './useMeetupRefresh';
 import { BranchChips, crewPath } from './DirectoryCard';
 import AdminCrewBoard from './AdminCrewBoard';
 import JoinCrewModal from './JoinCrewModal';
@@ -103,6 +104,11 @@ export default function BridgeBuilderQuest({
   const directoryRef = useRef<HTMLDivElement>(null);
   const myCrewRef = useRef<HTMLDivElement>(null);
   const requestIdRef = useRef(0);
+  useMeetupRefresh({
+    enabled: !!userId,
+    channelId: (data?.requestedCrew || data?.myCrew)?.chat?.channelId,
+    refresh: reload
+  });
   const trackMeetupQuestView = useAppContext(
     (v) => v.requestHelpers.trackMeetupQuestView
   );
@@ -123,6 +129,7 @@ export default function BridgeBuilderQuest({
     loadMeetupStoriesOverview()
       .then((overview: StoriesOverview) => setStories(overview))
       .catch(() => setStories(null));
+    return () => { requestIdRef.current += 1; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, requestedCrewId]);
 

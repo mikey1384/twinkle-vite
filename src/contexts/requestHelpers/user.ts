@@ -1256,6 +1256,7 @@ export default function userRequestHelpers({
       crewId,
       action,
       note,
+      step,
       attendedUserIds
     }: {
       crewId: number;
@@ -1264,15 +1265,27 @@ export default function userRequestHelpers({
         | 'approve-grownup'
         | 'approve-plan'
         | 'send-back'
+        | 'request-changes'
         | 'approve';
       note?: string;
+      step?: 'crew' | 'grownUp';
       attendedUserIds?: number[];
     }) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/crews/${crewId}/review`,
-          { action, note, attendedUserIds },
+          { action, note, step, attendedUserIds },
           auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async requestMeetupReview({ crewId, step }: { crewId: number; step: 'crew' | 'grownUp' }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/request-review`, { step }, auth()
         );
         return data;
       } catch (error) {
