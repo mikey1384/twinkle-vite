@@ -296,6 +296,7 @@ registerMethods('build', [
   'setPrivateDbItem',
   'comparePrivateDbItem',
   'requestBuildArena',
+  'requestBuildNetwork',
   'requestBuildTown',
   'deletePrivateDbItem',
   'listBuildReminders',
