@@ -37,6 +37,7 @@ import { useToast } from '~/contexts/Toast';
 import { extractAiVoiceScreenHTML } from '~/helpers/aiVoiceScreen';
 import { AiVoicePlayback } from '~/helpers/aiVoicePlayback';
 import { saveHomeCallAssistant } from '~/helpers/aiVoiceCall';
+import { createAiVoiceCaptureSender } from '~/helpers/aiVoiceCaptureSender';
 
 // This tab, among the user's open tabs and devices (see the website agent's
 // active-tab handling below).
@@ -157,6 +158,23 @@ export default function useAISocket({
     let audioContext: AudioContext | null = null;
     let mediaStream: MediaStream | null = null;
     let audioWorkletNode: AudioWorkletNode | null = null;
+    const captureSender = createAiVoiceCaptureSender({
+      send: (pcm) => {
+        if (cancelled || !socket.connected) return;
+        socket.emit(
+          'ai_user_audio',
+          arrayBufferToBase64(pcm.buffer as ArrayBuffer)
+        );
+      },
+      onOverflow: () => {
+        mediaStream?.getTracks().forEach((track) => track.stop());
+        showToast({
+          message:
+            'The microphone fell too far behind. Please start the call again.'
+        });
+        socket.emit('ai_end_ai_voice_conversation');
+      }
+    });
 
     if (aiCallChannelId && !aiCallEnding) {
       navigator.mediaDevices
@@ -196,10 +214,7 @@ export default function useAISocket({
             event: MessageEvent<Int16Array>
           ) => {
             if (cancelled || !socket.connected) return;
-            socket.emit(
-              'ai_user_audio',
-              arrayBufferToBase64(event.data.buffer as ArrayBuffer)
-            );
+            captureSender.enqueue(event.data);
           };
 
           microphoneStream.connect(audioWorkletNode);
@@ -223,6 +238,7 @@ export default function useAISocket({
 
     return () => {
       cancelled = true;
+      captureSender.stop();
       if (audioWorkletNode) {
         audioWorkletNode.disconnect();
       }
