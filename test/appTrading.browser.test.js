@@ -113,7 +113,8 @@ test(
         );
         assert.deepEqual(await page.evaluate(() => window.accepts[0]), {
           channelId: 20,
-          transactionId: 71
+          transactionId: 71,
+          reviewedBuildIds: [21]
         });
         assert.equal(
           await page.evaluate(

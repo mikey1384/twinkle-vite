@@ -214,15 +214,17 @@ export default function chatRequestHelpers({
     },
     async acceptTrade({
       channelId,
-      transactionId
+      transactionId,
+      reviewedBuildIds
     }: {
       channelId: number;
       transactionId: number;
+      reviewedBuildIds?: number[];
     }) {
       try {
         const { data } = await request.put(
           `${URL}/chat/trade/accept`,
-          { channelId, transactionId },
+          { channelId, transactionId, reviewedBuildIds },
           auth()
         );
         return data;

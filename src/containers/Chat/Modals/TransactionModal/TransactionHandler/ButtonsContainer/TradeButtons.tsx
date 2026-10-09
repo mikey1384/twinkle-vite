@@ -226,8 +226,15 @@ export default function TradeButtons({
     setAccepting(true);
     try {
       if (!(await loadReviewedOffer(reviewSnapshot))) return;
+      const { give, receive } = getViewerTradeTerms(reviewSnapshot, myId);
       const { coins, isDisabled, disableReason, responsibleParty } =
-        await acceptTrade({ channelId, transactionId: reviewSnapshot.id });
+        await acceptTrade({
+          channelId,
+          transactionId: reviewSnapshot.id,
+          reviewedBuildIds: [...give.builds, ...receive.builds].map(
+            (build) => build.id
+          )
+        });
       if (isDisabled) {
         setDisableReasonObj({ reason: disableReason, responsibleParty });
         setIsDisabled(true);
