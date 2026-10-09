@@ -7,14 +7,17 @@ import path from 'node:path';
 import { build, stop } from 'esbuild';
 
 const require = createRequire(import.meta.url);
-const {
-  chromium
-} = require('/Users/mikey/.npm-packages/lib/node_modules/playwright');
-const repo = fileURLToPath(new URL('..', import.meta.url));
-const artifacts = path.resolve(
-  repo,
-  '../work/grammarbles-review-music-20261009'
+const { chromium } = require(
+  process.env.PLAYWRIGHT_MODULE ||
+    '/Users/mikey/.npm-packages/lib/node_modules/playwright'
 );
+const repo = fileURLToPath(new URL('..', import.meta.url));
+const artifacts =
+  process.env.GRAMMARBLES_ARTIFACTS ||
+  path.resolve(repo, '../work/grammarbles-review-music-20261009');
+const questionArtifacts =
+  process.env.GRAMMARBLES_QUESTION_ARTIFACTS ||
+  path.resolve(repo, '../work/grammarbles-cloudstar-20261009');
 const base = './src/containers/Home/GrammarGameModal/';
 const contexts = `
 import {useSyncExternalStore} from 'react';
@@ -75,7 +78,7 @@ function Fixture(){const [view,setView]=useState({mode:'music',revision:0});
    window.reviewItem={id,questionId:id,question:question.question,choices:question.choices,answerIndex:0,isChecked:checked,explanation:saved?.explanation,challengeReview:saved};
    setView({mode,revision:view.revision+1});
  };
- if(view.mode==='practice')return <MarbleRunScreen key={view.revision} run={run} onFinished={()=>{}} onQuit={()=>{}}/>;
+ if(view.mode==='practice')return <MarbleRunScreen key={view.revision} run={window.fixtureRun || run} onFinished={()=>{}} onQuit={()=>{}}/>;
  if(view.mode==='results')return <Result key={view.revision} kind="fort" result={{runId:1,score:50,cleared:false,firstTryCorrect:0,size:1,xp:0,coins:0}} answers={[{...window.questAnswer,questionText:question.question}]} onBackToMap={()=>{}}/>;
  if(view.mode==='classic')return <Review key={view.revision}/>;
  return <Quest key={view.revision}/>;
@@ -141,6 +144,239 @@ async function compile() {
     stop();
   }
 }
+
+test(
+  'Quest sentences stay fully visible as questions change and after scrolling a review',
+  { timeout: 120000 },
+  async () => {
+    mkdirSync(questionArtifacts, { recursive: true });
+    const script = await compile();
+    const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+    const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+    const failures = [];
+    let browser;
+    try {
+      browser = await chromium.launch({
+        headless: true,
+        timeout: 30000,
+        args: ['--disable-gpu']
+      });
+      for (const [label, width, height, fontScale = 1] of [
+        ['android-compact', 360, 640],
+        ['android-short', 393, 600],
+        ['android-landscape', 640, 360],
+        ['android-landscape-browser-bars', 568, 280],
+        ['android-large-text', 360, 640, 1.5],
+        ['android-landscape-large-text', 640, 360, 1.5],
+        ['laptop-short', 1280, 600]
+      ]) {
+        const page = await browser.newPage({ viewport: { width, height } });
+        page.setDefaultTimeout(15000);
+        await page.route('**/*', (route) =>
+          route.request().isNavigationRequest()
+            ? route.fulfill({ contentType: 'text/html', body: html })
+            : route.abort()
+        );
+        await page.goto('http://localhost:3000/__grammarbles-question-fixture');
+        if (fontScale !== 1) {
+          await page.addStyleTag({
+            content: `html { font-size: ${(width < 768 ? 8 : 10) * fontScale}px !important; }`
+          });
+        }
+        await page.evaluate(() => {
+          localStorage.setItem('grammarQuestMusic', '0');
+          localStorage.setItem('grammarQuestSound', '0');
+          window.fixtureRun = {
+            runId: 42,
+            nodeId: 'w1s1',
+            kind: 'stop',
+            worldId: 1,
+            rules: { mode: 'practice', goal: 5 },
+            questions: [
+              {
+                position: 0,
+                question: 'She ____ here.',
+                choices: ['lives', 'live', 'living', 'lived'],
+                skill: 'conditionals',
+                skillName: 'Second conditional'
+              },
+              {
+                position: 1,
+                question:
+                  'Choose the option that completes this standard second conditional sentence about an unreal present situation: If I had more experience, _____.',
+                choices: [
+                  'I would apply for the job',
+                  'I will apply for the job',
+                  'I would have applied for the job',
+                  'I apply for the job'
+                ],
+                skill: 'conditionals',
+                skillName: 'Second conditional'
+              },
+              {
+                position: 2,
+                question:
+                  'Rewrite "The argument of the prosecution was compelling" using the singular possessive form of "prosecution": "The _____ argument was compelling."',
+                choices: [
+                  "prosecution's",
+                  "prosecutions'",
+                  "prosecutions's",
+                  "prosecution'"
+                ],
+                skill: 'possessives',
+                skillName: 'Singular possessive'
+              }
+            ]
+          };
+          window.showFixture('practice');
+        });
+        const choices = page
+          .locator('button')
+          .filter({ has: page.locator('span', { hasText: /^A$/ }) });
+        await choices.waitFor();
+        await page.evaluate(() => {
+          window.questAnswer = {
+            position: 0,
+            isCorrect: true,
+            selectedIndex: 0,
+            correctIndex: 0,
+            rights: 1,
+            goal: 5
+          };
+        });
+        await choices.click();
+        const secondText = await page.evaluate(
+          () => window.fixtureRun.questions[1].question
+        );
+        await page.getByText(secondText, { exact: true }).waitFor();
+        await page.waitForTimeout(100);
+        await checkSentence(page, secondText, `${label}-long-question`);
+        await page.evaluate(() => {
+          window.questAnswer = {
+            position: 1,
+            isCorrect: false,
+            selectedIndex: 1,
+            correctIndex: 0,
+            rights: 1,
+            readMs: 1,
+            ruleCard: {
+              skill: 'conditionals',
+              nameEn: 'Second conditional',
+              nameKo: '가정법 과거',
+              why: 'Use would with the base form of the verb for an unreal present situation. '.repeat(
+                8
+              ),
+              whyKo:
+                '현재와 다른 상황을 상상할 때 사용하는 표현입니다. '.repeat(5),
+              wrongChoices: []
+            }
+          };
+        });
+        await page
+          .getByRole('button', {
+            name: 'B I will apply for the job',
+            exact: true
+          })
+          .click();
+        await page
+          .getByRole('button', { name: 'Continue (Enter)', exact: true })
+          .click();
+        const thirdText = await page.evaluate(
+          () => window.fixtureRun.questions[2].question
+        );
+        await page.getByText(thirdText, { exact: true }).waitFor();
+        await page.waitForTimeout(100);
+        await checkSentence(page, thirdText, `${label}-after-review`);
+        await page.close();
+      }
+      assert.deepEqual(
+        failures,
+        [],
+        'the complete sentence must be visible without scrolling at each new question'
+      );
+    } finally {
+      await browser?.close();
+    }
+
+    async function checkSentence(page, text, label) {
+      const geometry = await page
+        .getByText(text, { exact: true })
+        .evaluate((el) => {
+          const rect = el.getBoundingClientRect();
+          let top = 0,
+            bottom = innerHeight,
+            left = 0,
+            right = innerWidth;
+          const scrolls = [];
+          for (
+            let parent = el.parentElement;
+            parent;
+            parent = parent.parentElement
+          ) {
+            const style = getComputedStyle(parent),
+              box = parent.getBoundingClientRect();
+            if (style.overflowY !== 'visible') {
+              top = Math.max(top, box.top + parent.clientTop);
+              bottom = Math.min(
+                bottom,
+                box.top + parent.clientTop + parent.clientHeight
+              );
+            }
+            if (style.overflowX !== 'visible') {
+              left = Math.max(left, box.left + parent.clientLeft);
+              right = Math.min(
+                right,
+                box.left + parent.clientLeft + parent.clientWidth
+              );
+            }
+            if (
+              parent.scrollTop ||
+              parent.scrollHeight > parent.clientHeight + 1
+            )
+              scrolls.push({
+                scrollTop: parent.scrollTop,
+                content: parent.scrollHeight,
+                height: parent.clientHeight
+              });
+          }
+          const clippedControls = [
+            ...document.querySelectorAll('button[aria-label^="Turn "]')
+          ].flatMap((button) => {
+            const box = button.getBoundingClientRect();
+            return box.top < 0 ||
+              box.bottom > innerHeight ||
+              box.left < 0 ||
+              box.right > innerWidth
+              ? [
+                  {
+                    label: button.getAttribute('aria-label'),
+                    top: box.top,
+                    bottom: box.bottom
+                  }
+                ]
+              : [];
+          });
+          return {
+            visible:
+              rect.top >= top - 1 &&
+              rect.bottom <= bottom + 1 &&
+              rect.left >= left - 1 &&
+              rect.right <= right + 1,
+            sentence: { top: rect.top, bottom: rect.bottom },
+            visibleArea: { top, bottom },
+            scrolls,
+            clippedControls
+          };
+        });
+      await page.screenshot({
+        path: path.join(questionArtifacts, `${label}.png`),
+        animations: 'disabled'
+      });
+      if (!geometry.visible || geometry.clippedControls.length)
+        failures.push({ label, ...geometry });
+    }
+  }
+);
 
 test(
   'Quest review decisions, saved music choices, map progression, and distinct world music',

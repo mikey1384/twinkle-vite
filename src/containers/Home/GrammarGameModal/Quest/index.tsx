@@ -143,9 +143,9 @@ export default function GrammarQuest() {
               {/* the real rules in plain words, one idea each (Mikey 10-07:
                   the percentages and cutoffs were hard to follow) */}
               <div>
-                <b>Grades:</b> each stop and boss shows your best grade. Stops:
-                fewer misses, better grade (no misses = S). Bosses: faster
-                answers, better grade.
+                <b>Grades:</b> each stop and boss keeps your best grade, even
+                when you replay. Stops have no timer: fewer misses, better grade
+                (no misses = S). Bosses: faster answers, better grade.
               </div>
               <div>
                 <b>Today:</b> {state.rewardedRunsLeft} more runs earn XP and

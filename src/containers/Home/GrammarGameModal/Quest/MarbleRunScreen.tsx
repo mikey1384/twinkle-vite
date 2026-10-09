@@ -311,7 +311,15 @@ export default function MarbleRunScreen({
   // stage and the card side by side.
   const bodyRef = useRef<HTMLDivElement>(null);
   const dockRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [stageWidth, setStageWidth] = useState<number | undefined>(undefined);
+  // Continue can be below the fold on a small screen or with larger text.
+  // A new question must start at its sentence, not at the review's scroll
+  // position (which can hide the sentence's first lines).
+  useLayoutEffect(() => {
+    if (cardRef.current) cardRef.current.scrollTop = 0;
+  }, [run.runId, question?.position]);
+
   useLayoutEffect(() => {
     const body = bodyRef.current;
     const dock = dockRef.current;
@@ -331,7 +339,8 @@ export default function MarbleRunScreen({
       let width: number;
       if (style.flexDirection === 'row') {
         const gap = parseFloat(style.columnGap) || 0;
-        width = Math.min((innerW - gap) * 0.55, innerH * ratio);
+        // Landscape needs room for the sentence and two columns of answers.
+        width = Math.min((innerW - gap) * 0.4, innerH * ratio);
       } else {
         // the dock's natural height: every child at its content height
         let need = 0;
@@ -353,7 +362,11 @@ export default function MarbleRunScreen({
     observer.observe(body);
     observer.observe(dock);
     const mutations = new MutationObserver(fit);
-    mutations.observe(dock, { childList: true, subtree: true });
+    mutations.observe(dock, {
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
     return () => {
       observer.disconnect();
       mutations.disconnect();
@@ -375,7 +388,7 @@ export default function MarbleRunScreen({
           ← Map
         </button>
         <span className={labelCls}>
-          {boss ? 'BOSS · THE TEST' : 'PRACTICE'}
+          {boss ? 'BOSS · THE TEST' : 'PRACTICE · NO TIMER'}
         </span>
         <AudioToggles className={audioCls} />
       </div>
@@ -424,7 +437,7 @@ export default function MarbleRunScreen({
                   </span>
                 ]}
           </span>
-          <div className={cx(cardCls, boss && bossCardCls)}>
+          <div className={cx(cardCls, boss && bossCardCls)} ref={cardRef}>
             <div className={cardInnerCls}>
               {phase === 'finishing' || toFlag || !question ? (
                 <div className={readyCls}>
@@ -866,9 +879,6 @@ const labelCls = css`
   font-size: 1rem;
   color: #ffd84a;
   ${inkShadow(1)}
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.8rem;
-  }
 `;
 // the progress marbles on their own row (Mikey 10-07): a dark plate as wide
 // as the card, the marbles centered both ways with room around them
@@ -1017,6 +1027,7 @@ const questionCls = css`
   font-size: 2.1rem;
   font-weight: 800;
   line-height: 1.35;
+  overflow-wrap: anywhere;
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.8rem;
   }
@@ -1037,11 +1048,16 @@ const choicesCls = css`
   @media (max-height: 520px) {
     gap: 0.6rem;
   }
+  @media (max-height: 520px) and (orientation: landscape) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  }
 `;
 // Classic's chunky game buttons; bosses switch to red-purple
 const choiceCls = css`
   display: flex;
+  min-width: 0;
   align-items: center;
+  overflow-wrap: anywhere;
   padding: 1.2rem 1.4rem;
   border-radius: 14px;
   border: 2px solid #2f6fd1;
