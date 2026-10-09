@@ -134,7 +134,7 @@ export default function CreateCrewModal({
   async function handleCreate() {
     if (busy) return;
     if (!branch.trim()) {
-      setError('Type your Twinkle branch first.');
+      setError('Choose your Twinkle branch or "Not a Twinkle student" first.');
       return;
     }
     setBusy(true);

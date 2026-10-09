@@ -70,9 +70,9 @@ export interface CrewMember {
   username: string;
   profilePicUrl?: string;
   branch: string;
-  // official Twinkle branch (the crew waits for it); status = what staff made of the name
+  // Non-students have no verified branch; their explicit choice is not_student.
   branchVerified: boolean;
-  branchStatus: 'official' | 'pending' | 'rejected' | 'none';
+  branchStatus: 'official' | 'pending' | 'rejected' | 'none' | 'not_student';
   parentOk: boolean;
   // the parent's latest answer was no (the child sits this meetup out)
   parentSaidNo?: boolean;

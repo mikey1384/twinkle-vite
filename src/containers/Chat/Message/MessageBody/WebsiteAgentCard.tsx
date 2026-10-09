@@ -15,7 +15,8 @@ export interface WebsiteAgentCardData {
   summary?: string;
   method?: string;
   path?: string;
-  status?: 'pending' | 'approved' | 'declined' | 'failed';
+  status?:
+    'pending' | 'processing' | 'approved' | 'declined' | 'failed' | 'closed';
   result?: any;
   kind?: 'request' | 'owner_access';
 }
@@ -61,7 +62,9 @@ export default function WebsiteAgentCard({
     (v) => v.actions.onUpdateMessageSettings
   );
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [error, setError] = useState('');
 
@@ -70,55 +73,10 @@ export default function WebsiteAgentCard({
       ? Boolean(card.answer)
       : card.type === 'lumine'
         ? // A failed tap can be tried again.
-          card.status === 'approved' || card.status === 'declined'
-        : card.status !== 'pending';
-
-  async function handleSelect(key: string) {
-    if (busyLabel || decided) return;
-    setError('');
-    const decision =
-      card.type === 'choice' || card.type === 'lumine'
-        ? { choice: key }
-        : { approved: key === 'approve' };
-    setBusyLabel(
-      card.type === 'approval' && key === 'approve' ? 'Working on it…' : '…'
-    );
-    try {
-      const data = await decideWebsiteAgentCard({
-        messageId,
-        cardId: card.id,
-        ...decision
-      });
-      const nextCard: WebsiteAgentCardData | undefined = data?.card;
-      if (!nextCard) throw new Error('No card returned');
-      onUpdateMessageSettings({
-        channelId,
-        messageId,
-        settings: { websiteAgentCard: nextCard }
-      });
-      if (onAnswered) {
-        onAnswered(describeReply(nextCard));
-        return;
-      }
-      onSubmitMessage({
-        messageId: uuidv1(),
-        message: {
-          userId,
-          username,
-          profilePicUrl,
-          content: describeReply(nextCard),
-          channelId,
-          subjectId: topicId || null
-        },
-        selectedTab: topicId ? 'topic' : 'all',
-        topicId: topicId || null
-      });
-    } catch (err: any) {
-      setError(err?.message || 'Something went wrong. Try again.');
-    } finally {
-      setBusyLabel(null);
-    }
-  }
+          card.status === 'approved' ||
+          card.status === 'declined' ||
+          card.status === 'closed'
+        : card.status !== 'pending' && card.status !== 'processing';
 
   const options =
     card.type === 'choice' || card.type === 'lumine'
@@ -174,6 +132,61 @@ export default function WebsiteAgentCard({
       />
     </div>
   );
+
+  async function handleSelect(key: string) {
+    if (busyLabel || decided) return;
+    setError('');
+    const decision =
+      card.type === 'choice' || card.type === 'lumine'
+        ? { choice: key }
+        : { approved: key === 'approve' };
+    setBusyLabel(
+      card.type === 'approval' && key === 'approve' ? 'Working on it…' : '…'
+    );
+    try {
+      const data = await decideWebsiteAgentCard({
+        messageId,
+        cardId: card.id,
+        ...decision
+      });
+      const nextCard: WebsiteAgentCardData | undefined = data?.card;
+      if (!nextCard) throw new Error('No card returned');
+      onUpdateMessageSettings({
+        channelId,
+        messageId,
+        settings: { websiteAgentCard: nextCard }
+      });
+      // A failed or still-running operation is not the user's completed
+      // answer. Keep its canonical state visible and let them retry here.
+      if (
+        (nextCard.type === 'lumine' || nextCard.type === 'approval') &&
+        nextCard.status !== 'approved' &&
+        nextCard.status !== 'declined'
+      )
+        return;
+      if (onAnswered) {
+        onAnswered(describeReply(nextCard));
+        return;
+      }
+      onSubmitMessage({
+        messageId: uuidv1(),
+        message: {
+          userId,
+          username,
+          profilePicUrl,
+          content: describeReply(nextCard),
+          channelId,
+          subjectId: topicId || null
+        },
+        selectedTab: topicId ? 'topic' : 'all',
+        topicId: topicId || null
+      });
+    } catch (err: any) {
+      setError(err?.message || 'Something went wrong. Try again.');
+    } finally {
+      setBusyLabel(null);
+    }
+  }
 }
 
 function sameWords(a = '', b = '') {
@@ -187,20 +200,30 @@ function sameWords(a = '', b = '') {
 
 // Plain words only: many users are 8 to 13.
 function describeApprovalStatus(card: WebsiteAgentCardData) {
+  if (card.status === 'processing')
+    return 'Still working. You can tap again to check.';
   if (card.status === 'approved') return 'Done!';
   if (card.status === 'declined') return 'Okay, I won’t.';
-  if (card.status === 'failed') return 'Oops, that didn’t work.';
+  if (card.status === 'failed')
+    return typeof card.result?.error === 'string'
+      ? card.result.error
+      : 'Oops, that didn’t work.';
   return undefined;
 }
 
 function describeLumineStatus(card: WebsiteAgentCardData) {
+  if (card.status === 'processing')
+    return 'Still working on your choice. You can tap again to check.';
+  if (card.status === 'closed') return card.result || 'This request has ended.';
   if (card.status === 'failed') {
     return typeof card.result === 'string' && card.result
       ? card.result
       : 'Oops, that didn’t work.';
   }
   if (card.status === 'approved') {
-    return card.kind === 'owner_access' ? 'Thanks, done!' : 'Sent to Lumine!';
+    return card.kind === 'owner_access'
+      ? card.result || 'Access chosen.'
+      : 'Sent to Lumine!';
   }
   if (card.status === 'declined') {
     return card.kind === 'owner_access'

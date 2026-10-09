@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '~/contexts';
+import {
+  MEETUP_CREW_MIN_MEMBERS,
+  MEETUP_NON_STUDENT_BRANCH
+} from '~/constants/meetupQuest';
 import { questHelpClass, questInputClass, questLabelClass } from './StepCard';
 
 interface BranchChoices {
@@ -7,12 +11,11 @@ interface BranchChoices {
   pendingMine: string[];
 }
 
-const keyOf = (value: string) => value.replace(/\s+/g, ' ').trim().toLowerCase();
+const keyOf = (value: string) =>
+  value.replace(/\s+/g, ' ').trim().toLowerCase();
 
-// "Your Twinkle branch": a dropdown of the official branches (staff have
-// checked them), plus "Other" with a text box for a branch that is not listed.
-// A new name waits for staff approval, and the crew's steps wait with it. Used
-// wherever a branch is picked (start, join, edit).
+// Shared by start, join and edit. Non-Twinkle members explicitly opt out of a
+// branch; a new Twinkle branch name still needs the administrator's approval.
 export default function BranchField({
   id,
   value,
@@ -51,67 +54,87 @@ export default function BranchField({
   }, []);
 
   const selectedKey = keyOf(value);
-  const officialKeys = (choices?.official || []).map((branch) => keyOf(branch.name));
+  const notStudent = selectedKey === keyOf(MEETUP_NON_STUDENT_BRANCH);
+  const officialKeys = (choices?.official || []).map((branch) =>
+    keyOf(branch.name)
+  );
   const hasOptions = !!choices?.official.length;
-  // "Other": a branch that is not on the official list; staff approve new names.
+  // Keep the non-student choice available even if the branch list fails to load.
   const otherActive =
-    !hasOptions || othersClicked || (!!selectedKey && !officialKeys.includes(selectedKey));
-  const selectValue = otherActive
-    ? '__other__'
-    : (choices?.official.find((branch) => keyOf(branch.name) === selectedKey)?.name ?? '');
+    !notStudent &&
+    (!hasOptions ||
+      othersClicked ||
+      (!!selectedKey && !officialKeys.includes(selectedKey)));
+  const selectValue = notStudent
+    ? MEETUP_NON_STUDENT_BRANCH
+    : otherActive
+      ? '__other__'
+      : (choices?.official.find((branch) => keyOf(branch.name) === selectedKey)
+          ?.name ?? '');
   return (
     <div>
       <label className={questLabelClass} htmlFor={id}>
         Your Twinkle branch
       </label>
-      {hasOptions && (
-        <select
-          id={id}
-          className={questInputClass}
-          value={selectValue}
-          onChange={(event) => {
-            const next = event.target.value;
-            if (next === '__other__') {
-              setOthersClicked(true);
-              if (officialKeys.includes(selectedKey)) onChange('');
-              return;
-            }
-            setOthersClicked(false);
-            if (next) trackMeetupQuestView('branch_pick_official');
-            onChange(next);
-          }}
-          style={{ marginBottom: otherActive ? '0.7rem' : 0 }}
-        >
-          <option value="">Choose your branch…</option>
-          {choices!.official.map((branch) => (
-            <option key={branch.id} value={branch.name}>
-              {branch.name}
-            </option>
-          ))}
-          <option value="__other__">Other (not listed)</option>
-        </select>
-      )}
+      <select
+        id={id}
+        className={questInputClass}
+        value={selectValue}
+        onChange={(event) => {
+          const next = event.target.value;
+          if (next === '__other__') {
+            setOthersClicked(true);
+            if (notStudent || officialKeys.includes(selectedKey)) onChange('');
+            return;
+          }
+          setOthersClicked(false);
+          if (officialKeys.includes(keyOf(next)))
+            trackMeetupQuestView('branch_pick_official');
+          onChange(next);
+        }}
+        style={{ marginBottom: otherActive ? '0.7rem' : 0 }}
+      >
+        <option value="">Choose your branch…</option>
+        {(choices?.official || []).map((branch) => (
+          <option key={branch.id} value={branch.name}>
+            {branch.name}
+          </option>
+        ))}
+        <option value={MEETUP_NON_STUDENT_BRANCH}>
+          {MEETUP_NON_STUDENT_BRANCH}
+        </option>
+        <option value="__other__">My Twinkle branch is not listed</option>
+      </select>
       {otherActive && (
         <input
-          id={hasOptions ? `${id}-other` : id}
+          id={`${id}-other`}
           aria-label="Your branch's name"
           className={questInputClass}
           value={value}
           maxLength={40}
-          placeholder={placeholder || (hasOptions ? "Your branch's name" : 'Type your branch')}
+          placeholder={
+            placeholder ||
+            (hasOptions ? "Your branch's name" : 'Type your branch')
+          }
           onChange={(event) => onChange(event.target.value)}
           onBlur={() => {
-            if (selectedKey && choices && !officialKeys.includes(selectedKey)) {
+            if (
+              !notStudent &&
+              selectedKey &&
+              choices &&
+              !officialKeys.includes(selectedKey)
+            ) {
               trackMeetupQuestView('branch_typed_other');
             }
           }}
         />
       )}
       <div className={questHelpClass}>
-        {help ||
-          (hasOptions
-            ? 'Pick your branch from the list. If it is not there, choose Other and type its name: staff have to approve a new name before your crew can move on.'
-            : 'Type your branch. Staff have to approve a new branch name before your crew can move on.')}
+        Choose your Twinkle branch or “Not a Twinkle student.” Non-Twinkle
+        members are welcome; each crew needs at least {MEETUP_CREW_MIN_MEMBERS}{' '}
+        Twinkle students.
+        {otherActive && ' The administrator approves new branch names.'}
+        {help && ` ${help}`}
       </div>
     </div>
   );

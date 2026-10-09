@@ -145,8 +145,8 @@ export default function CrewPanel({
   }, [me?.branch]);
 
   // the member's own branch editor; it moves to the top of step 1 as a prompt
-  // while their branch is not a verified Twinkle branch
-  const mustVerifyBranch = !!me && !me.branchVerified;
+  // until they have a verified branch or explicitly choose non-student
+  const mustVerifyBranch = !!me && !me.branchVerified && me.branchStatus !== 'not_student';
   const branchEditor =
     viewer.isMember && !viewer.detailsLocked ? (
       <div>
@@ -464,10 +464,10 @@ export default function CrewPanel({
             </div>
             <p style={{ fontSize: '1.3rem', color: Color.darkerGray(), margin: '0 0 1rem' }}>
               {me?.branchStatus === 'pending'
-                ? `"${me.branch}" is not one of our Twinkle branches yet, and staff are checking it. If it was a mistake, pick the exact Twinkle branch you go to.`
+                ? `The administrator is checking "${me.branch}". You can choose your Twinkle branch or "Not a Twinkle student" below.`
                 : me?.branchStatus === 'rejected'
-                ? `"${me.branch}" is not a Twinkle branch. Pick the branch you go to from the list, so your crew can move on.`
-                : 'Pick the exact Twinkle branch you go to. Your crew cannot move on until everyone has an approved branch.'}
+                ? `"${me.branch}" is not a Twinkle branch. Choose your branch or "Not a Twinkle student" below.`
+                : 'Choose your Twinkle branch or "Not a Twinkle student". Your crew needs at least two Twinkle students; other members are welcome too.'}
             </p>
             {branchEditor}
           </div>
@@ -527,7 +527,7 @@ export default function CrewPanel({
               )}
               {(viewer.isFounder || viewer.isAdmin) &&
                 member.userId !== myId &&
-                !member.branchVerified && (
+                !member.branchVerified && member.branchStatus !== 'not_student' && (
                   <Button
                     size="sm"
                     color="orange"

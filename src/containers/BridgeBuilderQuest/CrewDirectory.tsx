@@ -5,7 +5,8 @@ import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   MEETUP_CREW_MAX_MEMBERS,
-  MEETUP_GOLD_MIN_BRANCHES
+  MEETUP_GOLD_MIN_BRANCHES,
+  MEETUP_NON_STUDENT_BRANCH
 } from '~/constants/meetupQuest';
 import CrewCover from './CrewCover';
 import DirectoryCard, { crewPath } from './DirectoryCard';
@@ -152,9 +153,10 @@ export default function CrewDirectory({
           !crew.isMine &&
           crew.isOpen &&
           (crew.stage === 'forming' || crew.stage === 'parents') &&
-          crew.students < MEETUP_CREW_MAX_MEMBERS)
+          crew.members.length < MEETUP_CREW_MAX_MEMBERS)
     );
-    const mine = myBranch ? branchKey(myBranch) : '';
+    const mine = myBranch && branchKey(myBranch) !== branchKey(MEETUP_NON_STUDENT_BRANCH)
+      ? branchKey(myBranch) : '';
     const needsYou = mine
       ? joinable.filter(
           (crew) =>
