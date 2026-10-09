@@ -1,0 +1,1048 @@
+[
+  {
+    "id": 1,
+    "key": "starter-village",
+    "name": "Starter Village",
+    "tier": "AR 1–2",
+    "nodes": [
+      {
+        "id": "w1s1",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 1,
+        "name": "Articles · Plurals and countability"
+      },
+      {
+        "id": "w1s2",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 2,
+        "name": "Subject–verb agreement"
+      },
+      {
+        "id": "w1s3",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 3,
+        "name": "Tense and aspect"
+      },
+      {
+        "id": "w1s4",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 4,
+        "name": "Prepositions"
+      },
+      {
+        "id": "w1f1",
+        "worldId": 1,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w1s5",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 5,
+        "name": "Questions and word order"
+      },
+      {
+        "id": "w1s6",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 6,
+        "name": "Questions and word order"
+      },
+      {
+        "id": "w1s7",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 7,
+        "name": "Modal verbs"
+      },
+      {
+        "id": "w1s8",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 8,
+        "name": "Pronouns and determiners"
+      },
+      {
+        "id": "w1f2",
+        "worldId": 1,
+        "kind": "fort",
+        "index": 2,
+        "name": "Fort 2"
+      },
+      {
+        "id": "w1s9",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 9,
+        "name": "Sentence patterns and word order · Verb patterns"
+      },
+      {
+        "id": "w1s10",
+        "worldId": 1,
+        "kind": "stop",
+        "index": 10,
+        "name": "Articles · Sentence patterns and word order"
+      },
+      {
+        "id": "w1c",
+        "worldId": 1,
+        "kind": "castle",
+        "index": 1,
+        "name": "Starter Village Castle"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "key": "harbor-town",
+    "name": "Harbor Town",
+    "tier": "AR 3–5",
+    "nodes": [
+      {
+        "id": "w2s1",
+        "worldId": 2,
+        "kind": "stop",
+        "index": 1,
+        "name": "Articles"
+      },
+      {
+        "id": "w2s2",
+        "worldId": 2,
+        "kind": "stop",
+        "index": 2,
+        "name": "Plurals and countability"
+      },
+      {
+        "id": "w2s3",
+        "worldId": 2,
+        "kind": "stop",
+        "index": 3,
+        "name": "Tense and aspect"
+      },
+      {
+        "id": "w2s4",
+        "worldId": 2,
+        "kind": "stop",
+        "index": 4,
+        "name": "Tense and aspect"
+      },
+      {
+        "id": "w2f1",
+        "worldId": 2,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w2s5",
+        "worldId": 2,
+        "kind": "stop",
+        "index": 5,
+        "name": "Prepositions · Conditionals · Verb patterns"
+      },
+      {
+        "id": "w2s6",
+        "worldId": 2,
+        "kind": "stop",
+        "index": 6,
+        "name": "Passive voice · Questions and word order"
+      },
+      {
+        "id": "w2s7",
+        "worldId": 2,
+        "kind": "stop",
+        "index": 7,
+        "name": "Comparison"
+      },
+      {
+        "id": "w2s8",
+        "worldId": 2,
+        "kind": "stop",
+        "index": 8,
+        "name": "Modal verbs · Pronouns and determiners"
+      },
+      {
+        "id": "w2f2",
+        "worldId": 2,
+        "kind": "fort",
+        "index": 2,
+        "name": "Fort 2"
+      },
+      {
+        "id": "w2s9",
+        "worldId": 2,
+        "kind": "stop",
+        "index": 9,
+        "name": "Linking and clauses"
+      },
+      {
+        "id": "w2c",
+        "worldId": 2,
+        "kind": "castle",
+        "index": 1,
+        "name": "Harbor Town Castle"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "key": "windmill-hills",
+    "name": "Windmill Hills",
+    "tier": "AR 3–5",
+    "nodes": [
+      {
+        "id": "w3s1",
+        "worldId": 3,
+        "kind": "stop",
+        "index": 1,
+        "name": "Word forms · Confusable verbs"
+      },
+      {
+        "id": "w3s2",
+        "worldId": 3,
+        "kind": "stop",
+        "index": 2,
+        "name": "Confusable verbs"
+      },
+      {
+        "id": "w3s3",
+        "worldId": 3,
+        "kind": "stop",
+        "index": 3,
+        "name": "Sentence patterns and word order"
+      },
+      {
+        "id": "w3s4",
+        "worldId": 3,
+        "kind": "stop",
+        "index": 4,
+        "name": "Infinitive and gerund uses"
+      },
+      {
+        "id": "w3f1",
+        "worldId": 3,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w3s5",
+        "worldId": 3,
+        "kind": "stop",
+        "index": 5,
+        "name": "Infinitive and gerund uses"
+      },
+      {
+        "id": "w3s6",
+        "worldId": 3,
+        "kind": "stop",
+        "index": 6,
+        "name": "Substitution and ellipsis · Plurals and countability"
+      },
+      {
+        "id": "w3s7",
+        "worldId": 3,
+        "kind": "stop",
+        "index": 7,
+        "name": "Verb patterns · Modal verbs · Linking and clauses"
+      },
+      {
+        "id": "w3s8",
+        "worldId": 3,
+        "kind": "stop",
+        "index": 8,
+        "name": "Prepositions · Linking and clauses · Word forms"
+      },
+      {
+        "id": "w3f2",
+        "worldId": 3,
+        "kind": "fort",
+        "index": 2,
+        "name": "Fort 2"
+      },
+      {
+        "id": "w3c",
+        "worldId": 3,
+        "kind": "castle",
+        "index": 1,
+        "name": "Windmill Hills Castle"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "key": "forest-of-clauses",
+    "name": "Forest of Clauses",
+    "tier": "TOEFL Junior",
+    "nodes": [
+      {
+        "id": "w4s1",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 1,
+        "name": "Articles"
+      },
+      {
+        "id": "w4s2",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 2,
+        "name": "Plurals and countability"
+      },
+      {
+        "id": "w4s3",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 3,
+        "name": "Subject–verb agreement"
+      },
+      {
+        "id": "w4s4",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 4,
+        "name": "Tense and aspect"
+      },
+      {
+        "id": "w4f1",
+        "worldId": 4,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w4s5",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 5,
+        "name": "Tense and aspect"
+      },
+      {
+        "id": "w4s6",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 6,
+        "name": "Prepositions"
+      },
+      {
+        "id": "w4s7",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 7,
+        "name": "Relative clauses"
+      },
+      {
+        "id": "w4s8",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 8,
+        "name": "Relative clauses"
+      },
+      {
+        "id": "w4f2",
+        "worldId": 4,
+        "kind": "fort",
+        "index": 2,
+        "name": "Fort 2"
+      },
+      {
+        "id": "w4s9",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 9,
+        "name": "Conditionals"
+      },
+      {
+        "id": "w4s10",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 10,
+        "name": "Verb patterns"
+      },
+      {
+        "id": "w4s11",
+        "worldId": 4,
+        "kind": "stop",
+        "index": 11,
+        "name": "Verb patterns"
+      },
+      {
+        "id": "w4c",
+        "worldId": 4,
+        "kind": "castle",
+        "index": 1,
+        "name": "Forest of Clauses Castle"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "key": "tense-canyon",
+    "name": "Tense Canyon",
+    "tier": "TOEFL Junior",
+    "nodes": [
+      {
+        "id": "w5s1",
+        "worldId": 5,
+        "kind": "stop",
+        "index": 1,
+        "name": "Passive voice"
+      },
+      {
+        "id": "w5s2",
+        "worldId": 5,
+        "kind": "stop",
+        "index": 2,
+        "name": "Questions and word order"
+      },
+      {
+        "id": "w5s3",
+        "worldId": 5,
+        "kind": "stop",
+        "index": 3,
+        "name": "Comparison · Modal verbs"
+      },
+      {
+        "id": "w5s4",
+        "worldId": 5,
+        "kind": "stop",
+        "index": 4,
+        "name": "Pronouns and determiners"
+      },
+      {
+        "id": "w5f1",
+        "worldId": 5,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w5s5",
+        "worldId": 5,
+        "kind": "stop",
+        "index": 5,
+        "name": "Pronouns and determiners"
+      },
+      {
+        "id": "w5s6",
+        "worldId": 5,
+        "kind": "stop",
+        "index": 6,
+        "name": "Linking and clauses"
+      },
+      {
+        "id": "w5s7",
+        "worldId": 5,
+        "kind": "stop",
+        "index": 7,
+        "name": "Linking and clauses"
+      },
+      {
+        "id": "w5s8",
+        "worldId": 5,
+        "kind": "stop",
+        "index": 8,
+        "name": "Word forms"
+      },
+      {
+        "id": "w5f2",
+        "worldId": 5,
+        "kind": "fort",
+        "index": 2,
+        "name": "Fort 2"
+      },
+      {
+        "id": "w5c",
+        "worldId": 5,
+        "kind": "castle",
+        "index": 1,
+        "name": "Tense Canyon Castle"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "key": "passive-glacier",
+    "name": "Passive Glacier",
+    "tier": "TOEFL Junior",
+    "nodes": [
+      {
+        "id": "w6s1",
+        "worldId": 6,
+        "kind": "stop",
+        "index": 1,
+        "name": "Confusable verbs · Sentence patterns and word order"
+      },
+      {
+        "id": "w6s2",
+        "worldId": 6,
+        "kind": "stop",
+        "index": 2,
+        "name": "Sentence patterns and word order"
+      },
+      {
+        "id": "w6s3",
+        "worldId": 6,
+        "kind": "stop",
+        "index": 3,
+        "name": "Infinitive and gerund uses"
+      },
+      {
+        "id": "w6s4",
+        "worldId": 6,
+        "kind": "stop",
+        "index": 4,
+        "name": "Infinitive and gerund uses"
+      },
+      {
+        "id": "w6f1",
+        "worldId": 6,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w6s5",
+        "worldId": 6,
+        "kind": "stop",
+        "index": 5,
+        "name": "Reported speech"
+      },
+      {
+        "id": "w6s6",
+        "worldId": 6,
+        "kind": "stop",
+        "index": 6,
+        "name": "Wishes and the unreal past · Emphasis, inversion and focus"
+      },
+      {
+        "id": "w6s7",
+        "worldId": 6,
+        "kind": "stop",
+        "index": 7,
+        "name": "Substitution and ellipsis · Comparison"
+      },
+      {
+        "id": "w6s8",
+        "worldId": 6,
+        "kind": "stop",
+        "index": 8,
+        "name": "Pronouns and determiners · Confusable verbs · Plurals and countability"
+      },
+      {
+        "id": "w6f2",
+        "worldId": 6,
+        "kind": "fort",
+        "index": 2,
+        "name": "Fort 2"
+      },
+      {
+        "id": "w6s9",
+        "worldId": 6,
+        "kind": "stop",
+        "index": 9,
+        "name": "Articles · Word forms · Infinitive and gerund uses · Questions and word order"
+      },
+      {
+        "id": "w6c",
+        "worldId": 6,
+        "kind": "castle",
+        "index": 1,
+        "name": "Passive Glacier Castle"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "key": "sky-library",
+    "name": "Sky Library",
+    "tier": "TOEFL",
+    "nodes": [
+      {
+        "id": "w7s1",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 1,
+        "name": "Articles · Subject–verb agreement"
+      },
+      {
+        "id": "w7s2",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 2,
+        "name": "Tense and aspect"
+      },
+      {
+        "id": "w7s3",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 3,
+        "name": "Relative clauses"
+      },
+      {
+        "id": "w7s4",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 4,
+        "name": "Relative clauses · Conditionals · Verb patterns"
+      },
+      {
+        "id": "w7f1",
+        "worldId": 7,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w7s5",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 5,
+        "name": "Passive voice"
+      },
+      {
+        "id": "w7s6",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 6,
+        "name": "Passive voice"
+      },
+      {
+        "id": "w7s7",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 7,
+        "name": "Comparison"
+      },
+      {
+        "id": "w7s8",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 8,
+        "name": "Modal verbs"
+      },
+      {
+        "id": "w7f2",
+        "worldId": 7,
+        "kind": "fort",
+        "index": 2,
+        "name": "Fort 2"
+      },
+      {
+        "id": "w7s9",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 9,
+        "name": "Linking and clauses · Confusable verbs"
+      },
+      {
+        "id": "w7s10",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 10,
+        "name": "Infinitive and gerund uses"
+      },
+      {
+        "id": "w7s11",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 11,
+        "name": "Reported speech"
+      },
+      {
+        "id": "w7s12",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 12,
+        "name": "Wishes and the unreal past"
+      },
+      {
+        "id": "w7f3",
+        "worldId": 7,
+        "kind": "fort",
+        "index": 3,
+        "name": "Fort 3"
+      },
+      {
+        "id": "w7s13",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 13,
+        "name": "Wishes and the unreal past"
+      },
+      {
+        "id": "w7s14",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 14,
+        "name": "Emphasis, inversion and focus"
+      },
+      {
+        "id": "w7s15",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 15,
+        "name": "Substitution and ellipsis · Infinitive and gerund uses · Verb patterns"
+      },
+      {
+        "id": "w7s16",
+        "worldId": 7,
+        "kind": "stop",
+        "index": 16,
+        "name": "Modal verbs · Sentence patterns and word order · Emphasis, inversion and focus · Verb patterns"
+      },
+      {
+        "id": "w7f4",
+        "worldId": 7,
+        "kind": "fort",
+        "index": 4,
+        "name": "Fort 4"
+      },
+      {
+        "id": "w7c",
+        "worldId": 7,
+        "kind": "castle",
+        "index": 1,
+        "name": "Sky Library Castle"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "key": "the-citadel",
+    "name": "The Citadel",
+    "tier": "TOEFL (advanced)",
+    "nodes": [
+      {
+        "id": "w8s1",
+        "worldId": 8,
+        "kind": "stop",
+        "index": 1,
+        "name": "Relative clauses · Conditionals · Modal verbs"
+      },
+      {
+        "id": "w8s2",
+        "worldId": 8,
+        "kind": "stop",
+        "index": 2,
+        "name": "Linking and clauses"
+      },
+      {
+        "id": "w8s3",
+        "worldId": 8,
+        "kind": "stop",
+        "index": 3,
+        "name": "Infinitive and gerund uses · Wishes and the unreal past"
+      },
+      {
+        "id": "w8s4",
+        "worldId": 8,
+        "kind": "stop",
+        "index": 4,
+        "name": "Emphasis, inversion and focus · Substitution and ellipsis"
+      },
+      {
+        "id": "w8f1",
+        "worldId": 8,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w8s5",
+        "worldId": 8,
+        "kind": "stop",
+        "index": 5,
+        "name": "Linking and clauses"
+      },
+      {
+        "id": "w8c",
+        "worldId": 8,
+        "kind": "castle",
+        "index": 1,
+        "name": "The Citadel Castle"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "key": "the-academy",
+    "name": "The Academy",
+    "tier": "SAT",
+    "nodes": [
+      {
+        "id": "w9s1",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 1,
+        "name": "Subject–verb agreement"
+      },
+      {
+        "id": "w9s2",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 2,
+        "name": "Pronouns and determiners"
+      },
+      {
+        "id": "w9s3",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 3,
+        "name": "Pronouns and determiners · Tense and aspect · Conditionals"
+      },
+      {
+        "id": "w9s4",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 4,
+        "name": "Comparison"
+      },
+      {
+        "id": "w9f1",
+        "worldId": 9,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w9s5",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 5,
+        "name": "Punctuation and sentence boundaries"
+      },
+      {
+        "id": "w9s6",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 6,
+        "name": "Punctuation and sentence boundaries"
+      },
+      {
+        "id": "w9s7",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 7,
+        "name": "Punctuation and sentence boundaries"
+      },
+      {
+        "id": "w9s8",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 8,
+        "name": "Punctuation and sentence boundaries"
+      },
+      {
+        "id": "w9f2",
+        "worldId": 9,
+        "kind": "fort",
+        "index": 2,
+        "name": "Fort 2"
+      },
+      {
+        "id": "w9s9",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 9,
+        "name": "Sentence structure and modifiers"
+      },
+      {
+        "id": "w9s10",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 10,
+        "name": "Sentence structure and modifiers"
+      },
+      {
+        "id": "w9s11",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 11,
+        "name": "Expression of ideas (transitions, concision, precision)"
+      },
+      {
+        "id": "w9s12",
+        "worldId": 9,
+        "kind": "stop",
+        "index": 12,
+        "name": "Expression of ideas (transitions, concision, precision)"
+      },
+      {
+        "id": "w9f3",
+        "worldId": 9,
+        "kind": "fort",
+        "index": 3,
+        "name": "Fort 3"
+      },
+      {
+        "id": "w9c",
+        "worldId": 9,
+        "kind": "castle",
+        "index": 1,
+        "name": "The Academy Castle"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "key": "logic-tower",
+    "name": "Logic Tower",
+    "tier": "LSAT",
+    "nodes": [
+      {
+        "id": "w10s1",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 1,
+        "name": "Conditional statements"
+      },
+      {
+        "id": "w10s2",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 2,
+        "name": "Conditional statements"
+      },
+      {
+        "id": "w10s3",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 3,
+        "name": "Conditional statements"
+      },
+      {
+        "id": "w10s4",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 4,
+        "name": "Conditional statements"
+      },
+      {
+        "id": "w10f1",
+        "worldId": 10,
+        "kind": "fort",
+        "index": 1,
+        "name": "Fort 1"
+      },
+      {
+        "id": "w10s5",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 5,
+        "name": "Quantifiers"
+      },
+      {
+        "id": "w10s6",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 6,
+        "name": "Quantifiers"
+      },
+      {
+        "id": "w10s7",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 7,
+        "name": "Quantifiers"
+      },
+      {
+        "id": "w10s8",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 8,
+        "name": "and / or / not"
+      },
+      {
+        "id": "w10f2",
+        "worldId": 10,
+        "kind": "fort",
+        "index": 2,
+        "name": "Fort 2"
+      },
+      {
+        "id": "w10s9",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 9,
+        "name": "Negation and scope"
+      },
+      {
+        "id": "w10s10",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 10,
+        "name": "Negation and scope"
+      },
+      {
+        "id": "w10s11",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 11,
+        "name": "Cause and correlation"
+      },
+      {
+        "id": "w10s12",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 12,
+        "name": "Cause and correlation"
+      },
+      {
+        "id": "w10f3",
+        "worldId": 10,
+        "kind": "fort",
+        "index": 3,
+        "name": "Fort 3"
+      },
+      {
+        "id": "w10s13",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 13,
+        "name": "Certainty and hedges"
+      },
+      {
+        "id": "w10s14",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 14,
+        "name": "Certainty and hedges"
+      },
+      {
+        "id": "w10s15",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 15,
+        "name": "Reading complex sentences"
+      },
+      {
+        "id": "w10s16",
+        "worldId": 10,
+        "kind": "stop",
+        "index": 16,
+        "name": "Reading complex sentences"
+      },
+      {
+        "id": "w10f4",
+        "worldId": 10,
+        "kind": "fort",
+        "index": 4,
+        "name": "Fort 4"
+      },
+      {
+        "id": "w10c",
+        "worldId": 10,
+        "kind": "castle",
+        "index": 1,
+        "name": "Logic Tower Castle"
+      }
+    ]
+  }
+]

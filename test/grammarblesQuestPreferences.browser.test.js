@@ -47,7 +47,9 @@ import MarbleRunScreen from '${base}Quest/MarbleRunScreen';
 import Result from '${base}Quest/Result';
 import Review from '${base}Review';
 import {setMusicEnabled} from '${base}Quest/MarbleRun/music';
-import {QUEST_MAP} from '../twinkle-api/helpers/english/questMap';
+// Snapshot of the public map fields from the API catalog, c6017dfa (2026-10-10).
+// Keep the UI fixture runnable from a standalone website checkout.
+import QUEST_MAP from './test/fixtures/grammarQuestMap.json';
 window.setFixtureMusic=on=>setMusicEnabled(on,{fromAccount:true});
 window.resetAllMaps=()=>{
  window.serverQuestState={worlds:QUEST_MAP.map(w=>({...w,unlocked:true,sMarbles:0,nodeCount:w.nodes.length,nodes:w.nodes.map(n=>({...n,skills:undefined,unlocked:true,cleared:false,countsForGoals:true}))})),nemesis:[],ruleBook:{seen:2,total:20},rewardedRunsLeft:3};
