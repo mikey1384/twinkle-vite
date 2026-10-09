@@ -111,7 +111,7 @@ export default function UsernameText({
         display: 'inline',
         ...(dropdownContext
           ? {}
-          : { overflowX: 'hidden', textOverflow: 'ellipsis' }),
+          : { overflow: 'hidden', textOverflow: 'ellipsis' }),
         position: 'relative',
         ...style
       }}
