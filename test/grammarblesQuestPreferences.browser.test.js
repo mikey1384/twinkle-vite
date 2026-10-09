@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createRequire } from 'node:module';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { build, stop } from 'esbuild';
@@ -19,6 +19,47 @@ const questionArtifacts =
   process.env.GRAMMARBLES_QUESTION_ARTIFACTS ||
   path.resolve(repo, '../work/grammarbles-cloudstar-20261009');
 const base = './src/containers/Home/GrammarGameModal/';
+// Local media is deliberately gitignored. Standalone CI uses the same
+// content-hashed, public CDN assets without downloading/decoding full songs.
+const mediaBase =
+  process.env.GRAMMARBLES_MEDIA_BASE ||
+  'https://d3jvoamd2k4p0s.cloudfront.net/grammar-quest/v1/';
+const mediaCache = new Map();
+async function readMedia(pathname, metadataOnly = false) {
+  const cacheKey = `${metadataOnly}:${pathname}`;
+  if (!mediaCache.has(cacheKey)) {
+    mediaCache.set(cacheKey, readUncachedMedia());
+    async function readUncachedMedia() {
+      const localPath = path.join(repo, 'public', pathname);
+      try {
+        if (metadataOnly) {
+          assert.ok(statSync(localPath).size > 0);
+          return null;
+        }
+        return readFileSync(localPath);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
+      const response = await fetch(
+        new URL(pathname.slice('/gq-media/'.length), mediaBase),
+        {
+          method: metadataOnly ? 'HEAD' : 'GET',
+          signal: AbortSignal.timeout(15000)
+        }
+      );
+      assert.ok(
+        response.ok,
+        `Published Quest asset ${pathname}: ${response.status}`
+      );
+      if (metadataOnly) {
+        assert.ok(Number(response.headers.get('content-length')) > 0);
+        return null;
+      }
+      return Buffer.from(await response.arrayBuffer());
+    }
+  }
+  return mediaCache.get(cacheKey);
+}
 const contexts = `
 import {useSyncExternalStore} from 'react';
 let state = {myState:{userId:7,settings:JSON.parse(localStorage.getItem('fixtureAccount') || '{}')}};
@@ -382,7 +423,7 @@ test(
 
 test(
   'Quest review decisions, saved music choices, map progression, and distinct world music',
-  { timeout: 60000 },
+  { timeout: 120000 },
   async () => {
     mkdirSync(artifacts, { recursive: true });
     const script = await compile();
@@ -458,7 +499,7 @@ test(
               if (url.pathname.endsWith('.mp3')) {
                 musicFiles.push(url.pathname);
                 // Also catch references to a missing local/CDN bundle asset.
-                readFileSync(path.join(repo, 'public', url.pathname));
+                await readMedia(url.pathname, true);
                 const worldId = Number(
                   /\/w(\d+)-/.exec(url.pathname)?.[1] || 99
                 );
@@ -469,7 +510,7 @@ test(
               }
               return route.fulfill({
                 contentType: 'image/webp',
-                body: readFileSync(path.join(repo, 'public', url.pathname))
+                body: await readMedia(url.pathname)
               });
             }
             return await route.abort();
