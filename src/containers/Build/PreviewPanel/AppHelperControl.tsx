@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import { mobileMaxWidth } from '~/constants/css';
+import API_URL from '~/constants/URL';
+import { createAppHelperInvitation } from './helpers/appHelperInvitation';
 import type { AppHelperPairing } from './hooks/useAppHelperPairing';
 
 const pulse = keyframes`
@@ -125,6 +127,8 @@ const editsTagClass = css`
 const bodyClass = css`
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
   gap: 1.4rem;
   color: var(--chat-text, #1f2937);
   font-size: 1.35rem;
@@ -170,13 +174,44 @@ const copyCodeRowClass = css`
 `;
 
 const hintClass = css`
-  margin: 0 0 -0.8rem !important;
   color: #64748b;
   font-size: 1.15rem;
 `;
 
+const detailsClass = css`
+  min-width: 0;
+  summary {
+    color: #6d28d9;
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding-top: 1.2rem;
+  }
+  textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 1rem;
+    padding: 0.8rem;
+    border: 1px solid var(--ui-border, #cbd5e1);
+    border-radius: 0.7rem;
+    background: #f8fafc;
+    color: #334155;
+    font: inherit;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    resize: vertical;
+  }
+`;
+
 const commandClass = css`
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 0.6rem;
   padding: 0.7rem 0.8rem;
@@ -352,7 +387,10 @@ export function AppHelperBadge({ pairing }: { pairing: AppHelperPairing }) {
 export function AppHelperModal({ pairing }: { pairing: AppHelperPairing }) {
   const { state } = pairing;
   const [now, setNow] = useState(() => Date.now());
-  const [copied, setCopied] = useState<'' | 'code' | 'command'>('');
+  const [copied, setCopied] = useState<'' | 'message' | 'code' | 'command'>('');
+  const [copyFailed, setCopyFailed] = useState(false);
+  const [messageShown, setMessageShown] = useState(false);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
   const waiting = state.phase === 'waiting';
 
   useEffect(() => {
@@ -367,8 +405,24 @@ export function AppHelperModal({ pairing }: { pairing: AppHelperPairing }) {
     return () => window.clearTimeout(timer);
   }, [copied]);
 
+  useEffect(() => {
+    setCopied('');
+    setCopyFailed(false);
+    setMessageShown(false);
+  }, [state.code, state.phase]);
+
+  useEffect(() => {
+    if (copyFailed && messageShown) messageRef.current?.focus();
+  }, [copyFailed, messageShown]);
+
   if (!pairing.panelOpen) return null;
-  const command = `lumine app-mcp ${pairing.buildId} --code ${state.code}`;
+  const invitation = createAppHelperInvitation({
+    buildId: pairing.buildId,
+    code: state.code,
+    codeExpiresAt: state.codeExpiresAt,
+    tabUrl: window.location.href,
+    apiUrl: API_URL
+  });
   const attached = state.phase === 'attached';
 
   return (
@@ -432,46 +486,90 @@ export function AppHelperModal({ pairing }: { pairing: AppHelperPairing }) {
         {waiting ? (
           <>
             <p>
-              Let an AI coding helper on your computer (like Claude Code or
-              Codex) see this tab. Give it this code:
+              Copy this message into your AI agent on your computer. It tells
+              your agent how to connect and read this tab.
             </p>
-            <div className={codeRowClass} aria-label={`Code ${state.code}`}>
-              {state.code.split('').map((char, index) => (
-                <span key={index} className={codeCharClass}>
-                  {char}
-                </span>
-              ))}
-            </div>
-            <div className={copyCodeRowClass}>
-              <Button
-                variant="soft"
-                color="purple"
-                size="sm"
-                uppercase={false}
-                onClick={async () => {
-                  if (await copyText(state.code)) setCopied('code');
-                }}
-              >
-                <Icon icon={copied === 'code' ? 'check' : 'copy'} />
-                <span style={{ marginLeft: '0.5rem' }}>
-                  {copied === 'code' ? 'Copied' : 'Copy code'}
-                </span>
-              </Button>
-            </div>
-            <p className={hintClass}>Or run this in your terminal:</p>
-            <div className={commandClass}>
-              <code>{command}</code>
-              <button
-                type="button"
-                className={copyButtonClass}
-                onClick={async () => {
-                  if (await copyText(command)) setCopied('command');
-                }}
-              >
-                <Icon icon={copied === 'command' ? 'check' : 'copy'} />
-                {copied === 'command' ? 'Copied' : 'Copy'}
-              </button>
-            </div>
+            <Button
+              color="purple"
+              uppercase={false}
+              onClick={() => void handleCopy('message', invitation.message)}
+            >
+              <Icon icon={copied === 'message' ? 'check' : 'copy'} />
+              <span style={{ marginLeft: '0.5rem' }}>
+                {copied === 'message'
+                  ? 'Copied — paste into your AI'
+                  : 'Copy instructions for my AI'}
+              </span>
+            </Button>
+            <p className={hintClass}>
+              Keep this Twinkle tab open. Use an AI that can work on your
+              computer. The message includes setup steps if needed.
+            </p>
+            {copyFailed ? (
+              <div className={noticeClass} role="alert">
+                Copy didn’t work in this browser. Select and copy the message
+                below, then paste it into your AI.
+              </div>
+            ) : null}
+            <details
+              className={detailsClass}
+              open={messageShown}
+              onToggle={(event) => setMessageShown(event.currentTarget.open)}
+            >
+              <summary tabIndex={0}>View the message</summary>
+              <textarea
+                ref={messageRef}
+                aria-label="Message for your AI"
+                readOnly
+                rows={8}
+                value={invitation.message}
+                onFocus={(event) => event.currentTarget.select()}
+              />
+            </details>
+            <details className={detailsClass}>
+              <summary tabIndex={0}>Manual connection</summary>
+              <div>
+                <p className={hintClass}>
+                  Use the full message above unless your agent already knows
+                  how to connect with Lumine.
+                </p>
+                <div className={codeRowClass} aria-label={`Code ${state.code}`}>
+                  {state.code.split('').map((char, index) => (
+                    <span key={index} className={codeCharClass}>
+                      {char}
+                    </span>
+                  ))}
+                </div>
+                <div className={copyCodeRowClass}>
+                  <Button
+                    variant="soft"
+                    color="purple"
+                    size="sm"
+                    uppercase={false}
+                    onClick={() => void handleCopy('code', state.code)}
+                  >
+                    <Icon icon={copied === 'code' ? 'check' : 'copy'} />
+                    <span style={{ marginLeft: '0.5rem' }}>
+                      {copied === 'code' ? 'Copied' : 'Copy code only'}
+                    </span>
+                  </Button>
+                </div>
+                <p className={hintClass}>Command for an MCP client:</p>
+                <div className={commandClass}>
+                  <code>{invitation.command}</code>
+                  <button
+                    type="button"
+                    className={copyButtonClass}
+                    onClick={() =>
+                      void handleCopy('command', invitation.command)
+                    }
+                  >
+                    <Icon icon={copied === 'command' ? 'check' : 'copy'} />
+                    {copied === 'command' ? 'Copied' : 'Copy command'}
+                  </button>
+                </div>
+              </div>
+            </details>
             <div className={statusLineClass}>
               <span className={waitDotClass} />
               Waiting for your helper · expires in{' '}
@@ -511,8 +609,8 @@ export function AppHelperModal({ pairing }: { pairing: AppHelperPairing }) {
 
         {state.phase === 'idle' && !state.message ? (
           <p>
-            Let an AI coding helper on your computer (like Claude Code or
-            Codex) see this tab and help you, with your permission.
+            Connect an AI agent on your computer to see this tab and help you.
+            We’ll give you a message to copy into your AI.
           </p>
         ) : null}
 
@@ -524,4 +622,11 @@ export function AppHelperModal({ pairing }: { pairing: AppHelperPairing }) {
       </div>
     </Modal>
   );
+
+  async function handleCopy(kind: 'message' | 'code' | 'command', text: string) {
+    const succeeded = await copyText(text);
+    setCopied(succeeded ? kind : '');
+    setCopyFailed(!succeeded);
+    if (!succeeded) setMessageShown(true);
+  }
 }
