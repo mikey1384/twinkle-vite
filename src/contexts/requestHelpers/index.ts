@@ -899,6 +899,7 @@ registerMethods('user', [
   'reviewMeetupCrew',
   'requestMeetupReview',
   'decideMeetupInfoCheck',
+  'approveMeetupClass',
   'answerMeetupInfoCheck',
   'loadAchievementsByUserId',
   'loadUsersByAchievementId',

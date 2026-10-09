@@ -94,6 +94,12 @@ export interface MemberCheckRecord {
   requestedAt: number;
   teacherName: string;
   className: string;
+  answerBranch?: string;
+  answerRevision?: number;
+  classBranch?: string;
+  canApproveClass?: boolean;
+  classApprovalBlocker?: string;
+  officialClass?: { id: number; name: string } | null;
   relationship: string;
   answeredAt: number;
   reviewedBy: string;
@@ -208,12 +214,15 @@ export interface CrewView extends CrewProfile {
     isMember: boolean;
     isFounder: boolean;
     isAdmin: boolean;
+    canApproveClasses?: boolean;
     detailsLocked: boolean;
     frozen: boolean;
     // this member's own ask-my-parent state (never an address)
     parentConsent?: import('./Parent/AskParentPanel').ParentConsentState | null;
     // what staff asked this member, and their own answer (only theirs)
     infoCheck?: {
+      branch?: string;
+      officialClasses?: { id: number; name: string }[];
       status: 'requested' | 'answered';
       askNote: string;
       requestedAt: number;

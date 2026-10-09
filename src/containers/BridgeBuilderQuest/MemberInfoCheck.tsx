@@ -5,6 +5,7 @@ import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import useQuestAction from './useQuestAction';
+import ClassField from './ClassField';
 import { QuestNote, questHelpClass, questInputClass, questLabelClass } from './StepCard';
 import type { CrewMember, CrewView, MemberCheckRecord } from './types';
 
@@ -15,7 +16,6 @@ import type { CrewMember, CrewView, MemberCheckRecord } from './types';
 // staff's only; the rest of the crew sees that staff are waiting on it.
 
 const TEACHER_MAX = 60;
-const CLASS_MAX = 60;
 const STORY_MIN = 20;
 const STORY_MAX = 600;
 
@@ -68,6 +68,7 @@ export function MyInfoCheckCard({
     setTeacherName(check?.answer.teacherName || '');
     setClassName(check?.answer.className || '');
     setRelationship(check?.answer.relationship || '');
+    setNoClass(!!check?.answer.relationship && !check?.answer.teacherName);
     setEditing(check?.status !== 'answered');
   }, [
     check?.status,
@@ -123,16 +124,13 @@ export function MyInfoCheckCard({
                   onChange={(e) => setTeacherName(e.target.value)}
                 />
               </label>
-              <label className={questLabelClass}>
-                Your class name
-                <input
-                  className={questInputClass}
-                  value={className}
-                  maxLength={CLASS_MAX}
-                  placeholder="e.g. Wednesday Debate"
-                  onChange={(e) => setClassName(e.target.value)}
-                />
-              </label>
+              <ClassField
+                key={check.branch || ''}
+                branch={check.branch || ''}
+                officialClasses={check.officialClasses || []}
+                value={className}
+                onChange={setClassName}
+              />
             </>
           )}
           {noClass && (
@@ -213,6 +211,9 @@ export function AdminInfoChecks({
   const decideMeetupInfoCheck = useAppContext(
     (v) => v.requestHelpers.decideMeetupInfoCheck
   );
+  const approveMeetupClass = useAppContext(
+    (v) => v.requestHelpers.approveMeetupClass
+  );
   const { busy, error, run } = useQuestAction(onChanged);
   const [openFor, setOpenFor] = useState<number | null>(null);
   const [note, setNote] = useState('');
@@ -229,6 +230,7 @@ export function AdminInfoChecks({
         flex-direction: column;
         gap: 1rem;
         background: ${Color.logoBlue(0.04)};
+        overflow-wrap: anywhere;
       `}
     >
       <b style={{ fontSize: '1.4rem', color: Color.logoBlue() }}>
@@ -292,6 +294,39 @@ export function AdminInfoChecks({
                   <AnswerView key={record.checkId} record={record} />
                 ))}
               </details>
+            )}
+            {current?.teacherName && current.className && (
+              <div>
+                {current.officialClass ? (
+                  <span className={questHelpClass}>
+                    {current.officialClass.name} is an official class for {current.classBranch}.
+                  </span>
+                ) : current.canApproveClass && crew.viewer.canApproveClasses ? (
+                  <>
+                    <p className={questHelpClass}>
+                      Add “{current.className}” to the class dropdown for {current.classBranch}?
+                      {' '}This saves the class name; the member’s answer still needs its own review.
+                    </p>
+                    <Button
+                      size="sm"
+                      color="logoBlue"
+                      loading={busy}
+                      disabled={busy}
+                      onClick={() => run(() => approveMeetupClass({
+                        crewId: crew.crewId,
+                        userId: member.userId,
+                        checkId: current.checkId,
+                        answerRevision: current.answerRevision!,
+                        expectedBranch: current.classBranch!
+                      }))}
+                    >
+                      Make class official
+                    </Button>
+                  </>
+                ) : crew.viewer.canApproveClasses && current.classApprovalBlocker ? (
+                  <span className={questHelpClass}>{current.classApprovalBlocker}</span>
+                ) : null}
+              </div>
             )}
             {noteOpen && (
               <label className={questLabelClass}>
@@ -380,6 +415,8 @@ function AnswerView({ record }: { record: MemberCheckRecord }) {
       {record.teacherName && (
         <span>
           <b>Teacher:</b> {record.teacherName} · <b>Class:</b> {record.className}
+          {record.answerBranch && <> · <b>Branch:</b> {record.answerBranch}</>}
+          {!record.answerBranch && record.classBranch && <> · <b>Current branch:</b> {record.classBranch}</>}
         </span>
       )}
       {record.relationship && (

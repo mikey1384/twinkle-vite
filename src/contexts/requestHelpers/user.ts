@@ -949,6 +949,31 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // Mikey approves a class name for this branch, separately from the member.
+    async approveMeetupClass({
+      crewId,
+      userId,
+      checkId,
+      answerRevision,
+      expectedBranch
+    }: {
+      crewId: number;
+      userId: number;
+      checkId: number;
+      answerRevision: number;
+      expectedBranch: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/members/${userId}/official-class`,
+          { checkId, answerRevision, expectedBranch },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // the asked member answers: teacher + class, or how they know the crew
     async answerMeetupInfoCheck({
       crewId,
