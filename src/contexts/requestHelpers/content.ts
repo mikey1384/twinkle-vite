@@ -1386,9 +1386,13 @@ export default function contentRequestHelpers({
       } catch (error) {
         return handleError(error).catch((handledError) => {
           const aiUsagePolicy = (error as any)?.response?.data?.aiUsagePolicy;
-          throw aiUsagePolicy
-            ? { ...handledError, aiUsagePolicy }
-            : handledError;
+          const challengeReview = (error as any)?.response?.data?.challengeReview;
+          if (!aiUsagePolicy && !challengeReview) throw handledError;
+          throw {
+            ...handledError,
+            ...(aiUsagePolicy ? { aiUsagePolicy } : {}),
+            ...(challengeReview ? { challengeReview } : {})
+          };
         });
       }
     },

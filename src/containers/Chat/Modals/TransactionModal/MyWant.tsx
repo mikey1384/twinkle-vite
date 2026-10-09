@@ -10,6 +10,7 @@ import { borderRadius, Color } from '~/constants/css';
 import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function MyWant({
+  children,
   coinAmount,
   style,
   onSetAICardModalCardId,
@@ -23,6 +24,7 @@ export default function MyWant({
   selectedGroupIds,
   groupObjs
 }: {
+  children?: React.ReactNode;
   coinAmount: number;
   style?: React.CSSProperties;
   onSetCoinAmount: (v: any) => any;
@@ -73,11 +75,7 @@ export default function MyWant({
             `}
           >
             {SITE_NAME} Coins (
-            <Icon
-              style={{ color: Color.brownOrange() }}
-              icon="coins"
-            />
-            )
+            <Icon style={{ color: Color.brownOrange() }} icon="coins" />)
           </div>
           <Input
             onChange={handleAmountChange}
@@ -244,6 +242,7 @@ export default function MyWant({
             </div>
           )}
         </div>
+        {children}
       </div>
     </div>
   );

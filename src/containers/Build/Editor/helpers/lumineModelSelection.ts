@@ -27,7 +27,7 @@ export const LUMINE_MODES: BuildLumineMode[] = [
 const DEFAULT_LUMINE_MODEL_BY_MODE: Record<BuildLumineMode, BuildLumineModel> =
   {
     auto: 'auto',
-    light: 'gpt-6-luna',
+    light: 'claude-haiku-5-5',
     medium: 'claude-sonnet-5-5',
     heavy: 'claude-opus-5-5'
   };
@@ -71,10 +71,18 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     supportedReasoningEfforts: ['medium']
   },
   {
+    model: 'claude-haiku-5-5',
+    mode: 'light',
+    label: 'Claude Haiku 5.5',
+    description: 'Light mode: quick, efficient reasoning for everyday builds.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
+  },
+  {
     model: 'gpt-6-luna',
     mode: 'light',
     label: 'GPT-6 Luna',
-    description: 'Light mode: quick, efficient reasoning for everyday builds.',
+    description: 'Light mode, second choice: GPT-6 Luna.',
     defaultReasoningEffort: 'medium',
     supportedReasoningEfforts: ['medium']
   },
@@ -113,6 +121,7 @@ const DEFAULT_FALLBACK_LUMINE_MODEL_OPTION =
 function isCurrentLumineModel(value: unknown): value is BuildLumineModel {
   return (
     value === 'auto' ||
+    value === 'claude-haiku-5-5' ||
     value === 'gpt-6-luna' ||
     value === 'claude-sonnet-5-5' ||
     value === 'gpt-6.1-sol' ||
@@ -270,7 +279,9 @@ export function resolveLumineMode({
   >): BuildLumineMode {
   if (model === 'auto') return 'auto';
   const currentModel = RETIRED_LUMINE_MODEL_REPLACEMENTS[model] || model;
-  if (currentModel === 'gpt-6-luna') return 'light';
+  if (currentModel === 'claude-haiku-5-5' || currentModel === 'gpt-6-luna') {
+    return 'light';
+  }
   if (currentModel === 'claude-sonnet-5-5' || currentModel === 'gpt-6.1-sol') {
     return 'medium';
   }

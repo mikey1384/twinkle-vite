@@ -9,6 +9,11 @@ import LetterGrade from '../Marble/LetterGrade';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ChallengeModal from './ChallengeModal';
 import useChallengeReviews from './useChallengeReviews';
+import {
+  challengeReviewLabel,
+  getSavedChallengeReview,
+  type SavedChallengeReview
+} from './challengeReviews';
 import RuleCard, { type ReviewRuleCard } from './RuleCard';
 import {
   initialKoreanShown,
@@ -30,6 +35,7 @@ interface ReviewItem {
   questionRating?: number;
   isChecked?: boolean;
   explanation?: string | null;
+  challengeReview?: SavedChallengeReview | null;
   ruleCard?: ReviewRuleCard | null;
 }
 
@@ -184,46 +190,47 @@ export default function Review() {
                 );
               })}
             </div>
-            {(!it.isChecked || reviews[it.questionId]) && (
-              <div
-                style={{
-                  marginTop: '0.75rem',
-                  display: 'flex',
-                  justifyContent: 'center'
-                }}
-              >
-                {AI_FEATURES_DISABLED && !reviews[it.questionId] ? (
-                  <GameCTAButton
-                    arcade
-                    icon="ban"
-                    variant="neutral"
-                    size="sm"
-                    onClick={() => {}}
-                    disabled
-                  >
-                    Challenge Unavailable
-                  </GameCTAButton>
-                ) : (
-                  <GameCTAButton
-                    arcade
-                    icon="exclamation-circle"
-                    variant="logoBlue"
-                    size="sm"
-                    onClick={() => {
-                      setChallengeQ(it);
-                    }}
-                  >
-                    {reviews[it.questionId]?.status === 'complete'
-                      ? 'View review'
-                      : reviews[it.questionId]?.status === 'pending'
-                        ? 'View progress'
-                        : reviews[it.questionId]
-                          ? 'Review status'
-                          : 'Challenge'}
-                  </GameCTAButton>
-                )}
-              </div>
-            )}
+            <div
+              style={{
+                marginTop: '0.75rem',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              {AI_FEATURES_DISABLED &&
+              !it.isChecked &&
+              !reviews[it.questionId] ? (
+                <GameCTAButton
+                  arcade
+                  icon="ban"
+                  variant="neutral"
+                  size="sm"
+                  onClick={() => {}}
+                  disabled
+                >
+                  Challenge Unavailable
+                </GameCTAButton>
+              ) : (
+                <GameCTAButton
+                  arcade
+                  icon="exclamation-circle"
+                  variant="logoBlue"
+                  size="sm"
+                  onClick={() => {
+                    setChallengeQ(it);
+                  }}
+                >
+                  {challengeReviewLabel(
+                    reviews[it.questionId],
+                    getSavedChallengeReview(
+                      it.isChecked,
+                      it.challengeReview,
+                      it.explanation
+                    )
+                  )}
+                </GameCTAButton>
+              )}
+            </div>
           </div>
         );
       }),
@@ -324,6 +331,11 @@ export default function Review() {
             onClose={() => setChallengeQ(null)}
             questionId={challengeQ.questionId}
             questionText={challengeQ.question}
+            savedReview={getSavedChallengeReview(
+              challengeQ.isChecked,
+              challengeQ.challengeReview,
+              challengeQ.explanation
+            )}
           />
         )}
       </div>

@@ -7,6 +7,10 @@ import PixelIcon from './PixelIcon';
 import ChallengeModal from '../Review/ChallengeModal';
 import useChallengeReviews from '../Review/useChallengeReviews';
 import {
+  challengeReviewLabel,
+  getSavedChallengeReview
+} from '../Review/challengeReviews';
+import {
   BLUE,
   GOLD,
   INK,
@@ -40,12 +44,7 @@ export default function Result({
   const [challengeId, setChallengeId] = useState<number | null>(null);
   const { reviews } = useChallengeReviews();
   const challengeable = answers
-    .filter(
-      (a) =>
-        a.challenge &&
-        a.questionText &&
-        (!a.challenge.checked || reviews[a.challenge.questionId])
-    )
+    .filter((a) => a.challenge && a.questionText)
     .filter(
       (a, i, list) =>
         list.findIndex(
@@ -53,7 +52,12 @@ export default function Result({
         ) === i
     );
   const allReviewed = challengeable.every(
-    (a) => reviews[a.challenge!.questionId]?.status === 'complete'
+    (a) =>
+      a.challenge!.checked ||
+      reviews[a.challenge!.questionId]?.status === 'complete'
+  );
+  const selectedChallenge = challengeable.find(
+    (a) => a.challenge?.questionId === challengeId
   );
   // never "perfect" while the boss (or the stop) still stands
   const perfect = !!result.perfect && (result.cleared || kind === 'nemesis');
@@ -226,6 +230,10 @@ export default function Result({
           {challengeable.map((a) => {
             const id = a.challenge!.questionId;
             const review = reviews[id];
+            const savedReview = getSavedChallengeReview(
+              a.challenge!.checked,
+              a.challenge!.review
+            );
             return (
               <div key={id} className={challengeItemCls}>
                 <div className={challengeTextCls}>
@@ -243,20 +251,25 @@ export default function Result({
                   )}
                 </div>
                 <button
-                  className={review ? reviewSmallCls : challengeSmallCls}
+                  className={
+                    review || savedReview ? reviewSmallCls : challengeSmallCls
+                  }
+                  title={
+                    savedReview || review?.status === 'complete'
+                      ? 'Read the reviewer’s explanation'
+                      : undefined
+                  }
                   onClick={() => setChallengeId(id)}
                 >
                   <PixelIcon
-                    name={review?.status === 'complete' ? 'check' : 'flag'}
+                    name={
+                      savedReview || review?.status === 'complete'
+                        ? 'check'
+                        : 'flag'
+                    }
                     scale={2}
                   />{' '}
-                  {review?.status === 'complete'
-                    ? 'View review'
-                    : review?.status === 'pending'
-                      ? 'View progress'
-                      : review
-                        ? 'Review status'
-                        : 'Challenge'}
+                  {challengeReviewLabel(review, savedReview)}
                 </button>
               </div>
             );
@@ -283,10 +296,11 @@ export default function Result({
         <ChallengeModal
           isOpen
           questionId={challengeId}
-          questionText={
-            challengeable.find((a) => a.challenge?.questionId === challengeId)
-              ?.questionText
-          }
+          questionText={selectedChallenge?.questionText}
+          savedReview={getSavedChallengeReview(
+            selectedChallenge?.challenge?.checked,
+            selectedChallenge?.challenge?.review
+          )}
           questKind={kind as 'stop' | 'fort' | 'castle' | 'nemesis'}
           returnLabel="Back to results"
           continueLabel="Back to map"

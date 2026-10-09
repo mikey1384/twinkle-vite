@@ -4,10 +4,51 @@ export interface ChallengeResult {
   newBalance?: number;
 }
 
+export interface SavedChallengeReview {
+  outcome: 'accepted' | 'rejected' | null;
+  explanation: string;
+}
+
+// Older API responses still tell us a question is checked. Show that state
+// without offering another paid review or inventing an accepted/rejected verdict.
+export function getSavedChallengeReview(
+  checked: boolean | undefined,
+  savedReview?: SavedChallengeReview | null,
+  explanation?: string | null
+): SavedChallengeReview | null {
+  return checked
+    ? savedReview || { outcome: null, explanation: explanation || '' }
+    : null;
+}
+
+export function challengeReviewLabel(
+  review?: ChallengeReview,
+  savedReview?: SavedChallengeReview | null
+) {
+  savedReview ||= review?.status === 'error' ? review.savedReview : null;
+  const outcome =
+    review?.status === 'complete'
+      ? review.result.justified
+        ? 'accepted'
+        : 'rejected'
+      : savedReview?.outcome;
+  if (outcome === 'accepted') return 'Challenge accepted';
+  if (outcome === 'rejected') return 'Challenge rejected';
+  if (savedReview) return 'Already reviewed';
+  if (review?.status === 'pending') return 'View progress';
+  if (review) return 'Review status';
+  return 'Challenge';
+}
+
 export type ChallengeReview =
   | { status: 'pending'; thought: string }
   | { status: 'complete'; result: ChallengeResult }
-  | { status: 'error'; message: string; canRetry: boolean };
+  | {
+      status: 'error';
+      message: string;
+      canRetry: boolean;
+      savedReview?: SavedChallengeReview;
+    };
 
 type Reviews = Readonly<Record<number, ChallengeReview>>;
 const EMPTY: Reviews = Object.freeze({});
@@ -75,7 +116,10 @@ export function createChallengeReviewStore() {
           // A competing review can fail and release its server lock. Allow an
           // explicit retry; that lock and the checked-question guard prevent
           // duplicate work. Reopening this state never submits automatically.
-          canRetry: error?.status !== 401
+          canRetry: error?.status !== 401 && !error?.challengeReview,
+          ...(error?.challengeReview
+            ? { savedReview: error.challengeReview }
+            : {})
         });
       }
     }

@@ -195,8 +195,14 @@ test(
         );
         assert.equal(await mode.inputValue(), 'light');
         const selectedModel = await model.inputValue();
-        // Since 2026-09-23 each mode serves one model; an advanced choice is
-        // exercised only when the served catalog offers a second one.
+        assert.equal(selectedModel, 'claude-haiku-5-5');
+        assert.deepEqual(await model.locator('option').evaluateAll(
+          items => items.map(item => item.value)
+        ), ['claude-haiku-5-5', 'gpt-6-luna']);
+        if (outputDirectory) await page.screenshot({
+          path: path.join(outputDirectory, compact ? 'compact-light.png' : 'full-light.png')
+        });
+        // Luna remains a manual second choice and waits for the server save.
         const alternative = await model
           .locator('option')
           .evaluateAll(
@@ -277,7 +283,7 @@ test(
         await mode.selectOption('light');
         await page.evaluate(() => window.finishModelSave(true));
         await model.waitFor();
-        assert.equal(await model.inputValue(), 'gpt-6-luna');
+        assert.equal(await model.inputValue(), 'claude-haiku-5-5');
         await page.evaluate(() => window.unmountFixture());
         await page.close();
       }

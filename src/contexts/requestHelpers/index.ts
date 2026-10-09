@@ -716,6 +716,7 @@ registerMethods('chat', [
   'loadSubchannel',
   'loadPublicGroups',
   'loadGroupsForTrade',
+  'loadBuildsForTrade',
   'searchGroups',
   'searchGroupsForTrade',
   'loadTopicMessages',

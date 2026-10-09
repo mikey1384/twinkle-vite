@@ -1,8 +1,11 @@
+import BuildAttribution from '~/components/Build/BuildAttribution';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
-import FavoriteButton, { type BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import FavoriteButton, {
+  type BuildFavoriteChange
+} from '~/components/Build/FavoriteButton';
 import ShareButton from '~/components/Buttons/ShareButton';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
@@ -10,7 +13,6 @@ import RankBadge from '~/components/RankBadge';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
-import UsernameText from '~/components/Texts/UsernameText';
 import { useAppContext, useBuildContext, useKeyContext } from '~/contexts';
 import { lineClamp, mobileMaxWidth } from '~/constants/css';
 import {
@@ -43,12 +45,6 @@ import type {
 } from '../ProjectListItem/types';
 
 const TAGS_OUTDATED_GRACE_SECONDS = 180;
-
-const inheritedUsernameTextStyle: React.CSSProperties = {
-  color: 'inherit',
-  fontSize: 'inherit',
-  fontWeight: 'inherit'
-};
 
 function getBuildOwnerProfileTheme(
   build?: BuildProjectListItemData | Record<string, any> | null
@@ -119,10 +115,10 @@ const wideCardClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: minmax(0, 1fr) minmax(8rem, 42%);
     grid-template-areas:
-      "header preview"
-      "badges preview"
-      "meta meta"
-      "actions actions";
+      'header preview'
+      'badges preview'
+      'meta meta'
+      'actions actions';
     align-items: start;
     gap: 0.7rem 0.75rem;
     padding: 1rem;
@@ -133,29 +129,29 @@ const wideCardClass = css`
 
     &.has-error {
       grid-template-areas:
-        "header preview"
-        "badges preview"
-        "meta meta"
-        "error error"
-        "actions actions";
+        'header preview'
+        'badges preview'
+        'meta meta'
+        'error error'
+        'actions actions';
     }
 
     &.no-preview {
       grid-template-columns: minmax(0, 1fr);
       grid-template-areas:
-        "header"
-        "badges"
-        "meta"
-        "actions";
+        'header'
+        'badges'
+        'meta'
+        'actions';
     }
 
     &.no-preview.has-error {
       grid-template-areas:
-        "header"
-        "badges"
-        "meta"
-        "error"
-        "actions";
+        'header'
+        'badges'
+        'meta'
+        'error'
+        'actions';
     }
   }
 `;
@@ -703,7 +699,8 @@ export default function BuildWideCard({
   const primaryActionTargetsApp =
     Boolean(primaryActionLabel) &&
     isBuildAppTargetPath(primaryActionTo || targetPath, buildId);
-  const openAppAccessAllowed = showOpenAppAction ?? (buildIsPublic || ownerMode);
+  const openAppAccessAllowed =
+    showOpenAppAction ?? (buildIsPublic || ownerMode);
   const openAppActionShown =
     Boolean(buildId) && openAppAccessAllowed && !primaryActionTargetsApp;
   const deleteActionShown = ownerMode && Boolean(onDelete);
@@ -819,17 +816,8 @@ export default function BuildWideCard({
             </div>
             {build.username ? (
               <div className={bylineClass}>
-                By{' '}
                 <span onClick={stopEvent} onKeyDown={stopEvent}>
-                  <UsernameText
-                    color="inherit"
-                    textStyle={inheritedUsernameTextStyle}
-                    user={{
-                      id: Number(build.userId || 0),
-                      username: build.username,
-                      profilePicUrl: build.profilePicUrl || ''
-                    }}
-                  />
+                  <BuildAttribution build={build} />
                 </span>
               </div>
             ) : null}
@@ -857,7 +845,9 @@ export default function BuildWideCard({
                 </span>
               </div>
             )}
-            {description ? <p className={descriptionClass}>{description}</p> : null}
+            {description ? (
+              <p className={descriptionClass}>{description}</p>
+            ) : null}
           </div>
           <div className={badgeRowClass}>
             {/* A payload that omits isPublic must not render as "Private" */}
@@ -869,7 +859,9 @@ export default function BuildWideCard({
             ) : null}
             {relationshipLabels.map((label) =>
               label === 'fork' ? (
-                showForkBadge ? renderForkRelationshipBadge() : null
+                showForkBadge ? (
+                  renderForkRelationshipBadge()
+                ) : null
               ) : (
                 <span key={label} className={badgeClass}>
                   <Icon icon="users" />
@@ -878,7 +870,16 @@ export default function BuildWideCard({
               )
             )}
             {collaborationMode === 'open_source' ? (
-              <span className={cx(badgeClass, css`color: #1d4ed8; background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.32);`)}>
+              <span
+                className={cx(
+                  badgeClass,
+                  css`
+                    color: #1d4ed8;
+                    background: rgba(59, 130, 246, 0.12);
+                    border-color: rgba(59, 130, 246, 0.32);
+                  `
+                )}
+              >
                 <Icon icon="code-branch" />
                 Open Source
               </span>
@@ -887,7 +888,15 @@ export default function BuildWideCard({
             {collaboratorCount > 0 ? (
               <BuildTeamMembersTrigger
                 buildId={buildId}
-                className={cx(badgeClass, 'clickable', css`color: #15803d; background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.32);`)}
+                className={cx(
+                  badgeClass,
+                  'clickable',
+                  css`
+                    color: #15803d;
+                    background: rgba(34, 197, 94, 0.12);
+                    border-color: rgba(34, 197, 94, 0.32);
+                  `
+                )}
               >
                 <Icon icon="users" />
                 {formatBuildCollaboratorCount(collaboratorCount)}
@@ -895,7 +904,14 @@ export default function BuildWideCard({
             ) : null}
             {showUnpublishedChangesBadge ? (
               <span
-                className={cx(badgeClass, css`color: #b45309; background: rgba(245, 158, 11, 0.14); border-color: rgba(245, 158, 11, 0.34);`)}
+                className={cx(
+                  badgeClass,
+                  css`
+                    color: #b45309;
+                    background: rgba(245, 158, 11, 0.14);
+                    border-color: rgba(245, 158, 11, 0.34);
+                  `
+                )}
                 title={formatBuildReleaseStatusTitle(releaseStatus)}
               >
                 <Icon icon="cloud-upload-alt" />
@@ -903,7 +919,16 @@ export default function BuildWideCard({
               </span>
             ) : null}
             {ownerMode && pendingRequestCount > 0 ? (
-              <span className={cx(badgeClass, css`color: #be185d; background: rgba(236, 72, 153, 0.12); border-color: rgba(236, 72, 153, 0.32);`)}>
+              <span
+                className={cx(
+                  badgeClass,
+                  css`
+                    color: #be185d;
+                    background: rgba(236, 72, 153, 0.12);
+                    border-color: rgba(236, 72, 153, 0.32);
+                  `
+                )}
+              >
                 <Icon icon="exclamation-circle" />
                 {pendingRequestCount === 1
                   ? '1 request'
@@ -1043,7 +1068,9 @@ export default function BuildWideCard({
                 preventDefault
                 size="pill"
                 stopPropagation
-                onChange={(change) => onFavoriteChange?.(normalizedBuild, change)}
+                onChange={(change) =>
+                  onFavoriteChange?.(normalizedBuild, change)
+                }
                 onError={handleFavoriteError}
                 onStart={handleFavoriteStart}
               />
@@ -1094,7 +1121,9 @@ export default function BuildWideCard({
           />
         ) : null}
       </article>
-      {collaborationRequestModalShown ? renderCollaborationRequestModal() : null}
+      {collaborationRequestModalShown
+        ? renderCollaborationRequestModal()
+        : null}
     </>
   );
 
@@ -1130,7 +1159,9 @@ export default function BuildWideCard({
     event.stopPropagation();
   }
 
-  function handleAddDescriptionClick(event: React.MouseEvent<HTMLButtonElement>) {
+  function handleAddDescriptionClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
     stopButtonEvent(event);
     if (!normalizedBuild) return;
     onAddDescription?.(normalizedBuild);
@@ -1167,7 +1198,9 @@ export default function BuildWideCard({
     setActionError(getErrorMessage(error, 'Favorite could not be updated.'));
   }
 
-  function handlePrimaryActionClick(event: React.MouseEvent<HTMLButtonElement>) {
+  function handlePrimaryActionClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
     stopButtonEvent(event);
     if (primaryActionTo) {
       navigate(
@@ -1198,7 +1231,9 @@ export default function BuildWideCard({
     navigate(`/app/${buildId}`);
   }
 
-  async function handleForkActionClick(event: React.MouseEvent<HTMLButtonElement>) {
+  async function handleForkActionClick(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
     stopButtonEvent(event);
     if (actionLoading) return;
     if (!userId) {
@@ -1582,10 +1617,7 @@ function isBuildAppTargetPath(targetPath: string, buildId: number) {
   return pathname === `/app/${buildId}`;
 }
 
-function getViewerCollaborationEventPatch(
-  result: any,
-  requestStartedAt = 0
-) {
+function getViewerCollaborationEventPatch(result: any, requestStartedAt = 0) {
   const eventTimeMs = Number(result?.eventTimeMs || requestStartedAt || 0);
   return eventTimeMs > 0 ? { viewerCollaborationEventTimeMs: eventTimeMs } : {};
 }

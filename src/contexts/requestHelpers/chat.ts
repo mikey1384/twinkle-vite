@@ -1287,7 +1287,10 @@ export default function chatRequestHelpers({
           { cardId, price },
           auth()
         );
-        trackEvent('ai_card_offer', { card_id: Number(cardId), price: Number(price) });
+        trackEvent('ai_card_offer', {
+          card_id: Number(cardId),
+          price: Number(price)
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -1487,7 +1490,10 @@ export default function chatRequestHelpers({
           { cardId, price },
           auth()
         );
-        trackEvent('ai_card_list', { card_id: Number(cardId), price: Number(price) });
+        trackEvent('ai_card_list', {
+          card_id: Number(cardId),
+          price: Number(price)
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -1864,6 +1870,27 @@ export default function chatRequestHelpers({
           results,
           loadMoreShown
         };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadBuildsForTrade({
+      partnerId,
+      type,
+      search = '',
+      lastId = 0
+    }: {
+      partnerId: number;
+      type: 'want' | 'offer';
+      search?: string;
+      lastId?: number;
+    }) {
+      try {
+        const { data } = await request.get(`${URL}/chat/trade/builds`, {
+          ...auth(),
+          params: { partnerId, type, search, lastId }
+        });
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -2617,11 +2644,13 @@ export default function chatRequestHelpers({
         coins: number;
         cardIds: number[];
         groupIds: number[];
+        buildIds?: number[];
       };
       offered: {
         coins: number;
         cardIds: number[];
         groupIds: number[];
+        buildIds?: number[];
       };
       targetId: number;
       clientRequestId: string;
@@ -2773,7 +2802,10 @@ export default function chatRequestHelpers({
           auth()
         );
         if (!useCommunityFunds) {
-          trackCoinSpend('ai_energy_recharge', Number(data?.costCharged) || null);
+          trackCoinSpend(
+            'ai_energy_recharge',
+            Number(data?.costCharged) || null
+          );
         }
         return data;
       } catch (error) {

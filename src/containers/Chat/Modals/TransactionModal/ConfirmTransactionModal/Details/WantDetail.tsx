@@ -1,3 +1,4 @@
+import TradeBuilds, { type TradeBuild } from '~/components/Build/TradeBuilds';
 import React from 'react';
 import Icon from '~/components/Icon';
 import AICardsPreview from '~/components/AICardsPreview';
@@ -6,6 +7,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, Color } from '~/constants/css';
 
 export default function WantDetail({
+  builds,
   isAICardModalShown,
   isExpressingInterest,
   cardIds,
@@ -14,6 +16,7 @@ export default function WantDetail({
   onSetAICardModalCardId,
   groupObjs
 }: {
+  builds: TradeBuild[];
   isAICardModalShown: boolean;
   isExpressingInterest: boolean;
   cardIds: number[];
@@ -27,10 +30,7 @@ export default function WantDetail({
   const wantItems = [
     coins > 0 && (
       <div key="coins" style={{ fontWeight: 'bold' }}>
-        <Icon
-          style={{ color: Color.brownOrange() }}
-          icon="coins"
-        />{' '}
+        <Icon style={{ color: Color.brownOrange() }} icon="coins" />{' '}
         <span style={{ color: Color.darkerGray() }}>
           {addCommasToNumber(coins)}
         </span>
@@ -49,7 +49,8 @@ export default function WantDetail({
       <div key="groups" style={{ width: '100%', marginTop: '1rem' }}>
         <SelectedGroups selectedGroups={selectedGroups} isLink />
       </div>
-    )
+    ),
+    builds.length > 0 && <TradeBuilds key="apps" builds={builds} />
   ].filter(Boolean);
 
   return (

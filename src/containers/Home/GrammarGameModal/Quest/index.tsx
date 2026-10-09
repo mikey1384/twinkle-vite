@@ -6,6 +6,8 @@ import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import WorldMap from './WorldMap';
+import MusicChoice from './MusicChoice';
+import { readGrammarblesSettings } from './audioPreferences';
 import Run from './Run';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import Result from './Result';
@@ -39,6 +41,7 @@ export default function GrammarQuest() {
     (v) => v.actions.onApplyTodayStatsProgress
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const accountSettings = useKeyContext((v) => v.myState.settings);
   const [state, setState] = useState<QuestState | null>(null);
   const [worldId, setWorldId] = useState<number | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -65,6 +68,10 @@ export default function GrammarQuest() {
     loadMarbleRun().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (typeof readGrammarblesSettings(accountSettings).music !== 'boolean') {
+    return <MusicChoice />;
+  }
 
   if (!state) {
     return (
@@ -190,6 +197,12 @@ export default function GrammarQuest() {
   function handleFinished(finished: QuestResult, answers: QuestAnswer[]) {
     setResult(finished);
     setResultAnswers(answers);
+    if (finished.cleared) {
+      // A manually picked stop/world must not pin the map to a level that
+      // was just beaten. The refreshed server map selects the next open one.
+      setSelectedNodeId(null);
+      setWorldId(null);
+    }
     // the marble run already played its flag or boss-down sound
     if (run?.kind === 'nemesis') playQuestSound('clear');
     if (

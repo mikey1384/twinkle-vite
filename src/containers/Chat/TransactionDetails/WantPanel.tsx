@@ -1,3 +1,4 @@
+import TradeBuilds, { type TradeBuild } from '~/components/Build/TradeBuilds';
 import React, { useState, useMemo } from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import Icon from '~/components/Icon';
@@ -12,6 +13,7 @@ import { isMobile } from '~/helpers';
 const deviceIsMobile = isMobile(navigator);
 
 export default function WantPanel({
+  builds,
   imOffering,
   isAICardModalShown,
   isOnModal,
@@ -24,6 +26,7 @@ export default function WantPanel({
   showCardDetailsOnThumbClick,
   style
 }: {
+  builds: TradeBuild[];
   imOffering: boolean;
   isAICardModalShown: boolean;
   isOnModal?: boolean;
@@ -63,10 +66,7 @@ export default function WantPanel({
   const wantItems = [
     wantCoins > 0 && (
       <div key="coins">
-        <Icon
-          style={{ color: Color.brownOrange() }}
-          icon="coins"
-        />
+        <Icon style={{ color: Color.brownOrange() }} icon="coins" />
         <span
           style={{
             fontSize: '1.5rem',
@@ -97,9 +97,9 @@ export default function WantPanel({
           className={css`
             display: flex;
             flex-wrap: wrap;
-            justify-content: ${selectedGroups.length === 1
-              ? 'center'
-              : 'space-between'};
+            justify-content: ${
+              selectedGroups.length === 1 ? 'center' : 'space-between'
+            };
             width: 100%;
           `}
         >
@@ -119,7 +119,8 @@ export default function WantPanel({
           )}
         </div>
       </div>
-    )
+    ),
+    builds.length > 0 && <TradeBuilds key="apps" builds={builds} />
   ].filter(Boolean);
 
   return (

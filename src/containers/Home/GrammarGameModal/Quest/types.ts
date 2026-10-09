@@ -1,4 +1,5 @@
 import type { ReviewRuleCard } from '../Review/RuleCard';
+import type { SavedChallengeReview } from '../Review/challengeReviews';
 
 export interface QuestSkill {
   code: string;
@@ -66,7 +67,12 @@ export interface QuestAnswer {
   // a miss (or a boss hit that took wrong clicks) can challenge its question
   // with Classic's Challenge; checked = already reviewed by one
   // upheld (client only): the challenge fixed the key and forgave the miss
-  challenge?: { questionId: number; checked: boolean; upheld?: boolean } | null;
+  challenge?: {
+    questionId: number;
+    checked: boolean;
+    review?: SavedChallengeReview | null;
+    upheld?: boolean;
+  } | null;
   questionText?: string; // added on the client for the result's challenge list
   // a miss (or a boss hit that took wrong clicks): how long its explanation
   // holds Continue before the run moves on

@@ -1,3 +1,6 @@
+import AppTransferModal from '~/components/Build/AppTransferModal';
+import BuildAttribution from '~/components/Build/BuildAttribution';
+import { BUILD_OWNERSHIP_CHANGED } from '~/helpers/buildOwnershipEvents';
 import useUserActivity from '~/helpers/hooks/useUserActivity';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -20,7 +23,6 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReleaseButton from '~/components/Build/ReleaseButton';
 import ShareButton from '~/components/Buttons/ShareButton';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
-import UsernameText from '~/components/Texts/UsernameText';
 import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_FALLBACK } from '~/constants/appShell';
 import { getBuildFavoriteTargetId } from '~/helpers/buildProjectHelpers';
@@ -529,12 +531,6 @@ const runtimeEnergyCardClass = css`
   width: 100%;
 `;
 
-const runtimeCreatorUsernameTextStyle: React.CSSProperties = {
-  color: 'inherit',
-  fontSize: 'inherit',
-  fontWeight: 800
-};
-
 const titleRowClass = css`
   display: flex;
   align-items: center;
@@ -946,6 +942,7 @@ export default function BuildRuntime({
   const [headerCollapsePending, setHeaderCollapsePending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [appTransferShown, setAppTransferShown] = useState(false);
   const [build, setBuild] = useState<RuntimeBuild | null>(null);
   const [loadedRuntimeSource, setLoadedRuntimeSource] =
     useState<BuildRuntimeSource>('published');
@@ -1080,9 +1077,7 @@ export default function BuildRuntime({
   // "Connect AI helper": signed-in viewers of this tab only. Never in an
   // embedded runtime, a dedicated app-mcp tab, or an app that pays XP/Coins
   // (the server refuses those too).
-  const [appHelperSlot, setAppHelperSlot] = useState<HTMLElement | null>(
-    null
-  );
+  const [appHelperSlot, setAppHelperSlot] = useState<HTMLElement | null>(null);
   const appHelperEnabled =
     !isEmbedded &&
     !appMcpSessionId &&
@@ -1983,6 +1978,30 @@ export default function BuildRuntime({
   ]);
 
   useEffect(() => {
+    let cancelled = false;
+    function refresh(event: Event) {
+      if (Number((event as CustomEvent).detail?.buildId) !== numericBuildId)
+        return;
+      void loadRuntimeBuild(numericBuildId, {
+        fromWriter: true,
+        runtimeSource: requestedRuntimeSource
+      })
+        .then((data: any) => {
+          if (!cancelled) applyRuntimeBuildPayload(data);
+        })
+        .catch(() => {
+          if (!cancelled) setError('App ownership changed. Reload to continue.');
+        });
+    }
+    window.addEventListener(BUILD_OWNERSHIP_CHANGED, refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(BUILD_OWNERSHIP_CHANGED, refresh);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [numericBuildId, requestedRuntimeSource]);
+
+  useEffect(() => {
     if (!numericBuildId) return;
     void handleLoad();
 
@@ -2215,16 +2234,7 @@ export default function BuildRuntime({
               <div className={headerTitleStackClass}>
                 <h1 className={titleClass}>{build.title}</h1>
                 <span className={headerMetaInlineClass}>
-                  <span>by</span>
-                  <UsernameText
-                    color="inherit"
-                    textStyle={runtimeCreatorUsernameTextStyle}
-                    user={{
-                      id: build.userId,
-                      username: build.username || '',
-                      profilePicUrl: build.profilePicUrl || ''
-                    }}
-                  />
+                  <BuildAttribution build={build} />
                 </span>
                 <ViewCount
                   className={headerVisitsClass}
@@ -2298,6 +2308,31 @@ export default function BuildRuntime({
             <div className={headerActionsRowClass}>
               {showRuntimeActions ? (
                 <>
+                  {!!userId &&
+                    !build.contributionRootBuildId &&
+                    (!build.contributionStatus ||
+                      build.contributionStatus === 'none') && (
+                      <button
+                        type="button"
+                        className={runtimeActionButtonClass}
+                        onClick={() => setAppTransferShown(true)}
+                        title={
+                          isBuildOwner
+                            ? 'Sell or give app'
+                            : 'Offer a trade for this app'
+                        }
+                        aria-label={
+                          isBuildOwner
+                            ? 'Sell or give app'
+                            : 'Offer a trade for this app'
+                        }
+                      >
+                        <Icon icon="right-left" />
+                        {!compactActions && (
+                          <span>{isBuildOwner ? 'Sell / Give' : 'Trade'}</span>
+                        )}
+                      </button>
+                    )}
                   {showWorkspaceButton ? (
                     <button
                       type="button"
@@ -2545,6 +2580,12 @@ export default function BuildRuntime({
                 onSubmitRequest={handleSubmitCollaborationRequest}
               />
             ) : null}
+            {appTransferShown && (
+              <AppTransferModal
+                build={build}
+                onHide={() => setAppTransferShown(false)}
+              />
+            )}
             {rewardsReviewOpen && build?.id ? (
               <RewardSettingsModal
                 buildId={Number(build.id)}

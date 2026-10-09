@@ -13,6 +13,10 @@ import RuleCard from '../Review/RuleCard';
 import ChallengeModal from '../Review/ChallengeModal';
 import useChallengeReviews from '../Review/useChallengeReviews';
 import {
+  challengeReviewLabel,
+  getSavedChallengeReview
+} from '../Review/challengeReviews';
+import {
   initialKoreanShown,
   saveKoreanShown
 } from '~/helpers/grammarblesRuleCard';
@@ -127,6 +131,10 @@ export default function MarbleRunScreen({
   const challengeReview = answer?.challenge
     ? reviews[answer.challenge.questionId]
     : undefined;
+  const savedReview = getSavedChallengeReview(
+    answer?.challenge?.checked,
+    answer?.challenge?.review
+  );
   // a miss's explanation holds Continue for its read time (practice), or
   // holds the next boss hit (the server's clock waits the same time)
   const { reading, secondsLeft } = useReadCooldown(
@@ -505,32 +513,34 @@ export default function MarbleRunScreen({
                               wrong challenges it right here, by Continue (in
                               this row so the card keeps its height). Bosses
                               run on a clock, so theirs wait for the result. */}
-                          {answer.challenge &&
-                            (!answer.challenge.checked || challengeReview) && (
-                              <button
-                                className={challengeCls}
-                                title="Think the answer key is wrong? Challenge it"
-                                onClick={() =>
-                                  setChallengeId(answer.challenge!.questionId)
+                          {answer.challenge && (
+                            <button
+                              className={challengeCls}
+                              title={
+                                savedReview ||
+                                challengeReview?.status === 'complete'
+                                  ? 'Read the reviewer’s explanation'
+                                  : 'Think the answer key is wrong? Challenge it'
+                              }
+                              onClick={() =>
+                                setChallengeId(answer.challenge!.questionId)
+                              }
+                            >
+                              <PixelIcon
+                                name={
+                                  savedReview ||
+                                  challengeReview?.status === 'complete'
+                                    ? 'check'
+                                    : 'flag'
                                 }
-                              >
-                                <PixelIcon
-                                  name={
-                                    challengeReview?.status === 'complete'
-                                      ? 'check'
-                                      : 'flag'
-                                  }
-                                  scale={2}
-                                />{' '}
-                                {challengeReview?.status === 'complete'
-                                  ? 'View review'
-                                  : challengeReview?.status === 'pending'
-                                    ? 'View progress'
-                                    : challengeReview
-                                      ? 'Review status'
-                                      : 'Challenge'}
-                              </button>
-                            )}
+                                scale={2}
+                              />{' '}
+                              {challengeReviewLabel(
+                                challengeReview,
+                                savedReview
+                              )}
+                            </button>
+                          )}
                           <span className={nextNoteCls}>
                             {/* an upheld challenge forgives a practice miss (nemesis misses stay) */}
                             {answer.challenge?.upheld &&
@@ -569,6 +579,7 @@ export default function MarbleRunScreen({
           portalTarget={layerRef.current}
           questionId={challengeId}
           questionText={question?.question}
+          savedReview={savedReview}
           questKind={run.kind}
           returnLabel="Back to question"
           continueLabel={ready && !reading ? 'Continue' : undefined}

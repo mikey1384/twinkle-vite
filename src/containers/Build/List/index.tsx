@@ -61,6 +61,7 @@ import {
   getBuildStudioPreferencesKey
 } from '../studioPreferences';
 import { SITE_NAME } from '~/constants/siteBrand';
+import { BUILD_OWNERSHIP_CHANGED } from '~/helpers/buildOwnershipEvents';
 
 const browseModeFilterWrapClass = css`
   margin-bottom: 1rem;
@@ -323,8 +324,8 @@ export default function BuildList({
   const initialScrollAnchorKeyRef = useRef('');
   const listInitialScrollRef = useRef<HTMLDivElement | null>(null);
   const [myBuildsLoading, setMyBuildsLoading] = useState(true);
-  // Bumped when the user re-selects the My Builds tab they are already on, so the loader below
-  // refetches. My Builds has no cached `loaded` flag to invalidate the way browse tabs do.
+  // Refresh from the server after a handoff or re-selecting the My Builds tab.
+  // My Builds has no cached `loaded` flag to invalidate the way browse tabs do.
   const [myBuildsReloadKey, setMyBuildsReloadKey] = useState(0);
   const [confirmedMyBuildOwnership, setConfirmedMyBuildOwnership] = useState<{
     userId: number;
@@ -613,6 +614,16 @@ export default function BuildList({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildSearchQuery, buildSearchOwner, buildSearchSort]);
+
+  useEffect(() => {
+    function handleOwnershipChanged() {
+      setMyBuildsReloadKey((key) => key + 1);
+    }
+    window.addEventListener(BUILD_OWNERSHIP_CHANGED, handleOwnershipChanged);
+    return () => {
+      window.removeEventListener(BUILD_OWNERSHIP_CHANGED, handleOwnershipChanged);
+    };
+  }, []);
 
   useEffect(() => {
     if (!normalizedUserId) {

@@ -89,3 +89,20 @@ test('a completed review keeps its result but never updates the next account’s
   f.setUser(7);
   assert.equal(f.useChallengeReviews().reviews[10].status, 'complete');
 });
+
+test('a review completed elsewhere returns its saved explanation without allowing another paid retry', async () => {
+  const f = fixture();
+  const pending = f.useChallengeReviews().startReview(10);
+  const savedReview = { outcome: 'accepted', explanation: 'The earlier challenge fixed an ambiguous choice.' };
+  f.response.reject({ response: { status: 409, data: {
+    error: 'This question has already been checked.', challengeReview: savedReview
+  } } });
+  await pending;
+  assert.deepEqual(f.useChallengeReviews().reviews[10], {
+    status: 'error', message: 'This question has already been checked.',
+    canRetry: false, savedReview
+  });
+  assert.deepEqual(f.balanceUpdates, []);
+  assert.deepEqual(f.energyUpdates, []);
+  assert.equal(f.socket.listenerCount('grammar_challenge_thought_streamed'), 0);
+});

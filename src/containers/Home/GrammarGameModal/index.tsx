@@ -13,6 +13,7 @@ import {
   setQuestMuted
 } from './Quest/sfx';
 import { setMusicEnabled } from './Quest/MarbleRun/music';
+import { readGrammarblesSettings } from './Quest/audioPreferences';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
@@ -132,7 +133,8 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
     }
     window.addEventListener(AUDIO_CHOICE_EVENT, handleChoice);
     return () => window.removeEventListener(AUDIO_CHOICE_EVENT, handleChoice);
-  }, [updateGrammarblesSettings, onSetUserState, userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
   const [showConfirm, setShowConfirm] = useState(false);
   // the top bar's status spot, filled by the Quest map (navSlot.ts)
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
@@ -794,18 +796,3 @@ const classicBodyCls = css`
   display: flex;
   flex-direction: column;
 `;
-
-function readGrammarblesSettings(settings: unknown): {
-  sound?: boolean;
-  music?: boolean;
-} {
-  let parsed: any = settings;
-  if (typeof settings === 'string') {
-    try {
-      parsed = JSON.parse(settings);
-    } catch {
-      parsed = null;
-    }
-  }
-  return (parsed && typeof parsed === 'object' && parsed.grammarbles) || {};
-}

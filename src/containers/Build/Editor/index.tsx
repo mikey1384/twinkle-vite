@@ -1,3 +1,4 @@
+import { BUILD_OWNERSHIP_CHANGED } from '~/helpers/buildOwnershipEvents';
 import React, {
   useEffect,
   useLayoutEffect,
@@ -179,6 +180,7 @@ export default function BuildEditor({
     isOwner && !currentBuildIsContributionFork && canEditBuildProject(build);
   const canEditCurrentBuildThumbnail = isOwner && canEditBuildProject(build);
   const location = useLocation();
+
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
@@ -252,6 +254,16 @@ export default function BuildEditor({
     (v) => v.actions.onClearBuildRuntimeVerifyResult
   );
   const navigate = useNavigate();
+  useEffect(() => {
+    function refreshOwnership(event: Event) {
+      if (Number((event as CustomEvent).detail?.buildId) === Number(build.id)) {
+        navigate(`/app/${build.id}`, { replace: true });
+      }
+    }
+    window.addEventListener(BUILD_OWNERSHIP_CHANGED, refreshOwnership);
+    return () =>
+      window.removeEventListener(BUILD_OWNERSHIP_CHANGED, refreshOwnership);
+  }, [build.id, navigate]);
   const onRemoveBuildStudioMyBuild = useBuildContext(
     (v) => v.actions.onRemoveBuildStudioMyBuild
   );
@@ -1086,7 +1098,10 @@ export default function BuildEditor({
     const currentPolicy = getLatestCopilotPolicy();
     if (!currentPolicy) return;
     // Storage is per user: the server returns the canonical limit and usage.
-    const usedBytes = Math.max(0, Number(approval.runtimeFileStorageBytes) || 0);
+    const usedBytes = Math.max(
+      0,
+      Number(approval.runtimeFileStorageBytes) || 0
+    );
     const limitBytes = Math.max(
       0,
       Number(approval.maxRuntimeFileStorageBytes) || 0

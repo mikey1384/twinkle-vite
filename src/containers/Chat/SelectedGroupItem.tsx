@@ -13,6 +13,8 @@ export default function SelectedGroupItem({
   group,
   onDeselect,
   isLink = false,
+  hideRemoveButton = false,
+  wrapTitle = false,
   style
 }: {
   group: {
@@ -26,6 +28,8 @@ export default function SelectedGroupItem({
   };
   onDeselect?: (groupId: number) => void;
   isLink?: boolean;
+  hideRemoveButton?: boolean;
+  wrapTitle?: boolean;
   style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
@@ -72,13 +76,15 @@ export default function SelectedGroupItem({
         margin-bottom: 1rem;
         ${isLink ? 'cursor: pointer;' : ''}
         ${isShaking ? `animation: ${shakeAnimation} 0.5s ease-in-out;` : ''}
-        ${isLink
-          ? `
+        ${
+          isLink
+            ? `
             &:hover {
               border-color: var(--ui-border-strong);
             }
           `
-          : ''}
+            : ''
+        }
       `}
       style={style}
       onClick={isLink ? handleClick : undefined}
@@ -140,7 +146,8 @@ export default function SelectedGroupItem({
               font-weight: bold;
               color: ${Color.darkerGray()};
               margin-right: 0.5rem;
-              white-space: nowrap;
+              white-space: ${wrapTitle ? 'normal' : 'nowrap'};
+              ${wrapTitle ? 'overflow-wrap: anywhere;' : ''}
               overflow: hidden;
               text-overflow: ellipsis;
             `}
@@ -172,7 +179,7 @@ export default function SelectedGroupItem({
           {group?.allMemberIds?.length === 1 ? 'member' : 'members'}
         </div>
       </div>
-      {!isLink && (
+      {!isLink && !hideRemoveButton && (
         <button
           className={css`
             position: absolute;

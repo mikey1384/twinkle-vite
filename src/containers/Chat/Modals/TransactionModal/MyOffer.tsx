@@ -10,6 +10,7 @@ import { useKeyContext } from '~/contexts';
 import { SITE_NAME } from '~/constants/siteBrand';
 
 export default function MyOffer({
+  children,
   focusOnMount,
   isSelectAICardModalShown,
   coinAmount,
@@ -26,6 +27,7 @@ export default function MyOffer({
   selectedGroupIds,
   groupObjs
 }: {
+  children?: React.ReactNode;
   focusOnMount?: boolean;
   isSelectAICardModalShown?: boolean;
   coinAmount: number;
@@ -72,8 +74,8 @@ export default function MyOffer({
         {selectedOption === 'want'
           ? 'offer'
           : selectedOption === 'send'
-          ? 'want to send'
-          : 'have'}
+            ? 'want to send'
+            : 'have'}
         ...
       </p>
       <div
@@ -99,11 +101,7 @@ export default function MyOffer({
             `}
           >
             {SITE_NAME} Coins (
-            <Icon
-              style={{ color: Color.brownOrange() }}
-              icon="coins"
-            />
-            )
+            <Icon style={{ color: Color.brownOrange() }} icon="coins" />)
           </div>
           <Input
             onChange={handleAmountChange}
@@ -269,6 +267,7 @@ export default function MyOffer({
             </div>
           )}
         </div>
+        {children}
       </div>
     </div>
   );

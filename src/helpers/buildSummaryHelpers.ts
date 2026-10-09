@@ -4,11 +4,7 @@ import type {
 } from '~/helpers/buildProjectHelpers';
 
 export type BuildViewerCollaborationStatus =
-  | 'pending'
-  | 'invited'
-  | 'accepted'
-  | 'rejected'
-  | 'canceled';
+  'pending' | 'invited' | 'accepted' | 'rejected' | 'canceled';
 
 export interface BuildViewerCollaborationRequest {
   id: number;
@@ -26,6 +22,9 @@ export interface BuildSummaryOwner {
 }
 
 export interface BuildSummary {
+  creatorId?: number;
+  creatorUsername?: string;
+  creatorProfilePicUrl?: string | null;
   id: number;
   contentId: number;
   contentType: 'build';
@@ -94,7 +93,10 @@ export function normalizeBuildSummary(
     build.userId ?? build.ownerId ?? uploader.id ?? current?.userId ?? 0
   );
   const username = normalizeText(
-    build.username ?? build.ownerUsername ?? uploader.username ?? current?.username
+    build.username ??
+      build.ownerUsername ??
+      uploader.username ??
+      current?.username
   );
   const profilePicUrl = normalizeText(
     build.profilePicUrl ?? uploader.profilePicUrl ?? current?.profilePicUrl
@@ -118,15 +120,20 @@ export function normalizeBuildSummary(
             build.collaborationRequest ??
             build.request
         )
-      : current?.viewerCollaborationRequest ?? null;
-  const viewerRequestLoaded =
-    Object.prototype.hasOwnProperty.call(build, 'viewerCollaborationRequestLoaded')
-      ? Boolean(build.viewerCollaborationRequestLoaded)
-      : Object.prototype.hasOwnProperty.call(build, 'viewerCollaborationRequest') ||
-          Object.prototype.hasOwnProperty.call(build, 'collaborationRequest') ||
-          Object.prototype.hasOwnProperty.call(build, 'request')
-        ? true
-        : Boolean(current?.viewerCollaborationRequestLoaded);
+      : (current?.viewerCollaborationRequest ?? null);
+  const viewerRequestLoaded = Object.prototype.hasOwnProperty.call(
+    build,
+    'viewerCollaborationRequestLoaded'
+  )
+    ? Boolean(build.viewerCollaborationRequestLoaded)
+    : Object.prototype.hasOwnProperty.call(
+          build,
+          'viewerCollaborationRequest'
+        ) ||
+        Object.prototype.hasOwnProperty.call(build, 'collaborationRequest') ||
+        Object.prototype.hasOwnProperty.call(build, 'request')
+      ? true
+      : Boolean(current?.viewerCollaborationRequestLoaded);
   // Server payloads that carry tag state always pair `tags` with
   // `tagsUpdatedAt` (annotateBuildTags). A tags array WITHOUT it is not tag
   // state — notably Content-context state, where defaultContentState merges
@@ -169,11 +176,15 @@ export function normalizeBuildSummary(
     viewCount: normalizeNonNegativeInteger(
       build.viewCount ?? build.visits ?? current?.viewCount
     ),
-    updatedAt: normalizeNonNegativeInteger(build.updatedAt ?? current?.updatedAt),
+    updatedAt: normalizeNonNegativeInteger(
+      build.updatedAt ?? current?.updatedAt
+    ),
     lastActivityAt: normalizeNullablePositiveInteger(
       build.lastActivityAt ?? current?.lastActivityAt
     ),
-    createdAt: normalizeNonNegativeInteger(build.createdAt ?? current?.createdAt),
+    createdAt: normalizeNonNegativeInteger(
+      build.createdAt ?? current?.createdAt
+    ),
     publishedAt: normalizeNullablePositiveInteger(
       build.publishedAt ?? current?.publishedAt
     ),
@@ -198,23 +209,25 @@ export function normalizeBuildSummary(
       build.contributionStatus === null ||
       typeof build.contributionStatus === 'string'
         ? build.contributionStatus
-        : current?.contributionStatus ?? null,
+        : (current?.contributionStatus ?? null),
     rootBuildUsername:
       build.rootBuildUsername === null ||
       typeof build.rootBuildUsername === 'string'
         ? build.rootBuildUsername
-        : current?.rootBuildUsername ?? null,
+        : (current?.rootBuildUsername ?? null),
     rootBuildSourceBuildId: normalizeNullablePositiveInteger(
       build.rootBuildSourceBuildId ?? current?.rootBuildSourceBuildId
     ),
     rootBuildTitle:
       build.rootBuildTitle === null || typeof build.rootBuildTitle === 'string'
         ? build.rootBuildTitle
-        : current?.rootBuildTitle ?? null,
+        : (current?.rootBuildTitle ?? null),
     collaboratorCount: normalizeNonNegativeInteger(
       build.collaboratorCount ?? current?.collaboratorCount
     ),
-    forkCount: normalizeNonNegativeInteger(build.forkCount ?? current?.forkCount),
+    forkCount: normalizeNonNegativeInteger(
+      build.forkCount ?? current?.forkCount
+    ),
     thumbnailUrl,
     thumbUrl: thumbnailUrl,
     pendingCollaborationRequestCount: normalizeNonNegativeInteger(
@@ -228,7 +241,7 @@ export function normalizeBuildSummary(
     releaseStatus:
       build.releaseStatus && typeof build.releaseStatus === 'object'
         ? (build.releaseStatus as BuildReleaseStatus)
-        : current?.releaseStatus ?? null,
+        : (current?.releaseStatus ?? null),
     isFavorited: normalizeBoolean(build.isFavorited ?? current?.isFavorited),
     favoritedAt: normalizeNullablePositiveInteger(
       getBuildFieldWithCurrentFallback(build, current, 'favoritedAt')
@@ -366,10 +379,7 @@ export function getViewerCollaborationBuildSummaryPatch({
     patch.viewerCollaborationRequestLoaded = true;
     if (requestStatus === 'accepted') {
       patch.hasActiveContributionInvite = true;
-    } else if (
-      requestStatus === 'rejected' ||
-      requestStatus === 'canceled'
-    ) {
+    } else if (requestStatus === 'rejected' || requestStatus === 'canceled') {
       patch.hasActiveContributionInvite = false;
     }
   } else if (
@@ -439,10 +449,7 @@ export function patchBuildSummaryMap(
   const currentViewerEventTime = Number(
     current?.viewerCollaborationEventTimeMs || 0
   );
-  if (
-    nextViewerEventTime > 0 &&
-    currentViewerEventTime > nextViewerEventTime
-  ) {
+  if (nextViewerEventTime > 0 && currentViewerEventTime > nextViewerEventTime) {
     return currentMap;
   }
   const nextBuild = normalizeBuildSummary({ ...(patch || {}), id }, current);

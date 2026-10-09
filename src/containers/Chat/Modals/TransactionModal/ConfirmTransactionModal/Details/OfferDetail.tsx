@@ -1,3 +1,4 @@
+import TradeBuilds, { type TradeBuild } from '~/components/Build/TradeBuilds';
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import AICardsPreview from '~/components/AICardsPreview';
@@ -7,6 +8,7 @@ import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 import { User } from '~/types';
 
 export default function OfferDetail({
+  builds,
   isAICardModalShown,
   isShowing,
   selectedOption,
@@ -17,6 +19,7 @@ export default function OfferDetail({
   partner,
   groupObjs
 }: {
+  builds: TradeBuild[];
   isAICardModalShown: boolean;
   isShowing: boolean;
   selectedOption: string;
@@ -61,10 +64,7 @@ export default function OfferDetail({
   const offerItems = [
     coins > 0 && (
       <div key="coins" style={{ fontWeight: 'bold' }}>
-        <Icon
-          style={{ color: Color.brownOrange() }}
-          icon="coins"
-        />{' '}
+        <Icon style={{ color: Color.brownOrange() }} icon="coins" />{' '}
         <span style={{ color: Color.darkerGray() }}>
           {addCommasToNumber(coins)}
         </span>
@@ -83,7 +83,8 @@ export default function OfferDetail({
       <div key="groups" style={{ width: '100%', marginTop: '1rem' }}>
         <SelectedGroups selectedGroups={selectedGroups} isLink />
       </div>
-    )
+    ),
+    builds.length > 0 && <TradeBuilds key="apps" builds={builds} />
   ].filter(Boolean);
 
   return (

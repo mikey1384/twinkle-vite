@@ -1,6 +1,9 @@
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 
 export interface RuntimeBuild {
+  creatorId?: number;
+  creatorUsername?: string;
+  creatorProfilePicUrl?: string | null;
   id: number;
   userId: number;
   username: string;

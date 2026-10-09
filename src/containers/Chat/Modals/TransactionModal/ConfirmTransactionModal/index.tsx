@@ -1,3 +1,4 @@
+import type { TradeBuild } from '~/components/Build/TradeBuilds';
 import React, { useMemo, useState } from 'react';
 import ModalFooter from '~/components/Modal/Footer';
 import Modal from '~/components/Modal';
@@ -17,6 +18,8 @@ export default function ConfirmTransactionModal({
   selectedOption,
   coinAmountObj,
   onSetAICardModalCardId,
+  offeredBuilds,
+  wantedBuilds,
   offeredCardIds,
   wantedCardIds,
   offeredGroupIds,
@@ -26,10 +29,12 @@ export default function ConfirmTransactionModal({
 }: {
   isAICardModalShown: boolean;
   onHide: () => void;
-  onConfirm: (v: any) => void;
+  onConfirm: (v: any) => Promise<void>;
   selectedOption: string;
   coinAmountObj: any;
   onSetAICardModalCardId: (v: number) => void;
+  offeredBuilds: TradeBuild[];
+  wantedBuilds: TradeBuild[];
   offeredCardIds: number[];
   wantedCardIds: number[];
   offeredGroupIds: number[];
@@ -40,6 +45,7 @@ export default function ConfirmTransactionModal({
   const doneColor = useKeyContext((v) => v.theme.done.color);
 
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const coinOffered = coinAmountObj.offer;
   const coinWanted = coinAmountObj.want;
   const effectiveCoinOffered = useMemo(() => {
@@ -103,6 +109,14 @@ export default function ConfirmTransactionModal({
       return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
     };
 
+    if (offeredBuilds.length)
+      offeredItems.push(
+        `${offeredBuilds.length} app${offeredBuilds.length === 1 ? '' : 's'}`
+      );
+    if (wantedBuilds.length)
+      wantedItems.push(
+        `${wantedBuilds.length} app${wantedBuilds.length === 1 ? '' : 's'}`
+      );
     const offeredString = joinItems(offeredItems);
     const wantedString = joinItems(wantedItems);
 
@@ -121,7 +135,9 @@ export default function ConfirmTransactionModal({
     wantedCardIds?.length,
     offeredGroupIds?.length,
     wantedGroupIds?.length,
-    selectedOption
+    selectedOption,
+    offeredBuilds.length,
+    wantedBuilds.length
   ]);
 
   return (
@@ -139,6 +155,8 @@ export default function ConfirmTransactionModal({
         <header>{title}</header>
         <main>
           <Details
+            offeredBuilds={offeredBuilds}
+            wantedBuilds={wantedBuilds}
             coinsOffered={effectiveCoinOffered}
             coinsWanted={effectiveCoinWanted}
             cardIdsOffered={offeredCardIds}
@@ -151,12 +169,10 @@ export default function ConfirmTransactionModal({
             onSetAICardModalCardId={onSetAICardModalCardId}
             groupObjs={groupObjs}
           />
+          {error && <p role="alert">{error}</p>}
         </main>
         <ModalFooter>
-          <Button
-            variant="ghost"
-            onClick={onHide}
-          >
+          <Button variant="ghost" disabled={submitting} onClick={onHide}>
             {cancelLabel}
           </Button>
           <Button
@@ -171,15 +187,26 @@ export default function ConfirmTransactionModal({
     </Modal>
   );
 
-  function handleConfirm() {
+  async function handleConfirm() {
     setSubmitting(true);
-    onConfirm({
-      coinsWanted: effectiveCoinWanted,
-      coinsOffered: effectiveCoinOffered,
-      offeredCardIds,
-      wantedCardIds,
-      offeredGroupIds,
-      wantedGroupIds
-    });
+    setError('');
+    try {
+      await onConfirm({
+        coinsWanted: effectiveCoinWanted,
+        coinsOffered: effectiveCoinOffered,
+        offeredCardIds,
+        wantedCardIds,
+        offeredGroupIds,
+        wantedGroupIds
+      });
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'This transaction could not be completed. Please try again.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 }

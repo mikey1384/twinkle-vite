@@ -1,3 +1,4 @@
+import type { TradeBuild } from '~/components/Build/TradeBuilds';
 import React, { useMemo } from 'react';
 import Heading from './Heading';
 import Body from './Body';
@@ -5,6 +6,7 @@ import OfferPanel from './OfferPanel';
 import UsernameText from '~/components/Texts/UsernameText';
 
 export default function Send({
+  builds,
   cardIds,
   coins,
   fromId,
@@ -21,6 +23,7 @@ export default function Send({
   groupIds,
   groupObjs
 }: {
+  builds: TradeBuild[];
   cardIds: number[];
   coins: number;
   fromId: number;
@@ -79,6 +82,7 @@ export default function Send({
           imOffering={from.id === myId}
           isAICardModalShown={isAICardModalShown}
           isOnModal={isOnModal}
+          builds={builds}
           offerCardIds={cardIds}
           offerCoins={coins}
           offerGroupIds={groupIds}

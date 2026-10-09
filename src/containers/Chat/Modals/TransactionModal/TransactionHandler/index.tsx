@@ -1,3 +1,5 @@
+import { notifyBuildOwnershipChanged } from '~/helpers/buildOwnershipEvents';
+import { AppOwnershipNotice } from '~/components/Build/TradeBuilds';
 import React, { useEffect, useState, useMemo } from 'react';
 import TransactionDetails from '../../../TransactionDetails';
 import Button from '~/components/Button';
@@ -15,6 +17,7 @@ export default function TransactionHandler({
   onCounterPropose,
   onSetAICardModalCardId,
   onSetPendingTransaction,
+  onRefreshTransaction,
   onSetGroupObjs,
   groupObjs,
   myId,
@@ -28,6 +31,7 @@ export default function TransactionHandler({
   onCounterPropose: (v: any) => any;
   onSetAICardModalCardId: (v: any) => any;
   onSetPendingTransaction: (v: any) => any;
+  onRefreshTransaction: (transaction: any) => void;
   onSetGroupObjs: (v: any) => any;
   groupObjs: any;
   myId: number;
@@ -58,7 +62,8 @@ export default function TransactionHandler({
       transactionDetails?.type === 'trade' &&
       noCoinsOffered &&
       noCardsOffered &&
-      noGroupsOffered
+      noGroupsOffered &&
+      !transactionDetails?.offer.builds?.length
     );
   }, [transactionDetails?.offer, transactionDetails?.type]);
 
@@ -84,7 +89,15 @@ export default function TransactionHandler({
 
     const hasValidGroupOffer = transactionDetails?.offer?.groups?.length > 0;
 
-    return hasValidCardOffer || hasValidGroupOffer;
+    return (
+      hasValidCardOffer ||
+      hasValidGroupOffer ||
+      transactionDetails?.offer?.builds?.some(
+        (build: any) =>
+          !build.unavailable &&
+          Number(build.userId) === Number(transactionDetails.from)
+      )
+    );
   }, [transactionDetails]);
 
   const isTradeOfferValid = useMemo(() => {
@@ -92,7 +105,15 @@ export default function TransactionHandler({
       (card: Card) => !card.isBurned && card.ownerId === transactionDetails?.to
     );
     const hasValidGroupOffer = transactionDetails?.want?.groups?.length > 0;
-    return hasValidCardOffer || hasValidGroupOffer;
+    return (
+      hasValidCardOffer ||
+      hasValidGroupOffer ||
+      transactionDetails?.want?.builds?.some(
+        (build: any) =>
+          !build.unavailable &&
+          Number(build.userId) === Number(transactionDetails.to)
+      )
+    );
   }, [transactionDetails]);
 
   return (
@@ -119,17 +140,33 @@ export default function TransactionHandler({
             style={{ marginTop: '-1rem', width: '100%' }}
           />
         )}
+        {!cancelReason &&
+          (transactionDetails?.offer?.builds?.length > 0 ||
+            transactionDetails?.want?.builds?.length > 0) && (
+            <AppOwnershipNotice />
+          )}
         {!cancelReason && (
           <ButtonsContainer
+            transaction={transactionDetails}
+            groupObjs={groupObjs}
+            onInspectCard={onSetAICardModalCardId}
+            isAICardModalShown={isAICardModalShown}
             isFromMe={isFromMe}
             myId={myId}
             channelId={channelId}
-            onAcceptTrade={onAcceptTrade}
+            onAcceptTrade={() => {
+              notifyBuildOwnershipChanged([
+                ...(transactionDetails?.offer?.buildIds || []),
+                ...(transactionDetails?.want?.buildIds || [])
+              ]);
+              onAcceptTrade(undefined);
+            }}
             onSetCancelReason={setCancelReason}
             transactionId={transactionDetails.id}
             isExpressionOfInterest={isExpressionOfInterest}
             onCounterPropose={onCounterPropose}
             onSetPendingTransaction={onSetPendingTransaction}
+            onRefreshTransaction={onRefreshTransaction}
             onUpdateCurrentTransactionId={onUpdateCurrentTransactionId}
             partner={partner}
             type={transactionDetails.type}

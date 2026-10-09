@@ -39,8 +39,8 @@ export const GQ_MEDIA: Record<string, string> = {
   'img/grammar-quest/cover-classic.jpg': 'img/cover-classic.697d9920a1.webp',
   'img/grammar-quest/cover-quest.jpg': 'img/cover-quest.582dfe9135.webp',
   'img/grammar-quest/forest-of-clauses.jpg':
-    'img/forest-of-clauses.4ae3f621e6.webp',
-  'img/grammar-quest/harbor-town.jpg': 'img/harbor-town.fa1be53393.webp',
+    'img/forest-of-clauses.483459136c.webp',
+  'img/grammar-quest/harbor-town.jpg': 'img/harbor-town.e5cec428e4.webp',
   'img/grammar-quest/levels/w1-firefly-night.png':
     'img/levels/w1-firefly-night.a1762d1c8c.webp',
   'img/grammar-quest/levels/w1-flower-meadow.png':
@@ -250,23 +250,23 @@ export const GQ_MEDIA: Record<string, string> = {
     'img/levels/w9-sports-field.3a69591d9a.webp',
   'img/grammar-quest/logic-tower.jpg': 'img/logic-tower.25b83ae437.webp',
   'img/grammar-quest/passive-glacier.jpg':
-    'img/passive-glacier.40bcadbcfe.webp',
-  'img/grammar-quest/sky-library.jpg': 'img/sky-library.958462b125.webp',
+    'img/passive-glacier.28774b246c.webp',
+  'img/grammar-quest/sky-library.jpg': 'img/sky-library.8101e3732a.webp',
   'img/grammar-quest/starter-village.jpg':
     'img/starter-village.b847035b5f.webp',
   'img/grammar-quest/tense-canyon.jpg': 'img/tense-canyon.ff244fce51.webp',
   'img/grammar-quest/the-academy.jpg': 'img/the-academy.bbd50d902a.webp',
   'img/grammar-quest/the-citadel.jpg': 'img/the-citadel.5555d0aea7.webp',
   'img/grammar-quest/thumbs/forest-of-clauses.jpg':
-    'img/thumbs/forest-of-clauses.4e0c3ca997.webp',
+    'img/thumbs/forest-of-clauses.dc8ebe1b3e.webp',
   'img/grammar-quest/thumbs/harbor-town.jpg':
-    'img/thumbs/harbor-town.c3ca450d8e.webp',
+    'img/thumbs/harbor-town.8144a5a937.webp',
   'img/grammar-quest/thumbs/logic-tower.jpg':
     'img/thumbs/logic-tower.946dd46e20.webp',
   'img/grammar-quest/thumbs/passive-glacier.jpg':
-    'img/thumbs/passive-glacier.7139cd0a7f.webp',
+    'img/thumbs/passive-glacier.e7e21dc943.webp',
   'img/grammar-quest/thumbs/sky-library.jpg':
-    'img/thumbs/sky-library.b63edaee1c.webp',
+    'img/thumbs/sky-library.e3ca73a334.webp',
   'img/grammar-quest/thumbs/starter-village.jpg':
     'img/thumbs/starter-village.59a769fdd2.webp',
   'img/grammar-quest/thumbs/tense-canyon.jpg':
@@ -276,8 +276,8 @@ export const GQ_MEDIA: Record<string, string> = {
   'img/grammar-quest/thumbs/the-citadel.jpg':
     'img/thumbs/the-citadel.f382fe97fd.webp',
   'img/grammar-quest/thumbs/windmill-hills.jpg':
-    'img/thumbs/windmill-hills.cc654fafb4.webp',
-  'img/grammar-quest/windmill-hills.jpg': 'img/windmill-hills.81ecba1c40.webp',
+    'img/thumbs/windmill-hills.08c3ed2baa.webp',
+  'img/grammar-quest/windmill-hills.jpg': 'img/windmill-hills.83d4bfe851.webp',
   'music/grammar-quest/boss-castle.mp3': 'music/boss-castle.7cabeac702.mp3',
   'music/grammar-quest/boss-final.mp3': 'music/boss-final.c1a0341807.mp3',
   'music/grammar-quest/boss-fort.mp3': 'music/boss-fort.411f58bd86.mp3',

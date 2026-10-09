@@ -22,7 +22,8 @@ const DEFAULT_PATH: Point[] = [
   [84, 16]
 ];
 
-// Read off each painting with a percent grid (quest/render/grid, 10-06).
+// Follow each painting's actual path; revised worlds were aligned with
+// the map overlays in work/grammarbles-review-music-20261009.
 export const WORLD_PATHS: Record<string, Point[]> = {
   'starter-village': [
     [18, 92],
@@ -38,42 +39,78 @@ export const WORLD_PATHS: Record<string, Point[]> = {
     [88, 18]
   ],
   'harbor-town': [
-    [18, 94],
-    [22, 78],
-    [30, 66],
-    [40, 56],
-    [50, 46],
-    [57, 38],
-    [66, 34],
-    [74, 28],
-    [82, 22],
-    [86, 16]
+    [40, 94],
+    [29, 88],
+    [18, 81],
+    [13, 74],
+    [17, 67],
+    [23, 60],
+    [31, 55],
+    [38, 49],
+    [45, 45],
+    [51, 40],
+    [56, 37],
+    [67, 35],
+    [73, 31],
+    [78, 26],
+    [84, 22]
   ],
   'windmill-hills': [
-    [20, 94],
-    [26, 80],
-    [30, 66],
-    [40, 58],
-    [52, 54],
-    [60, 46],
-    [64, 40],
-    [74, 38],
-    [84, 32],
-    [90, 24],
-    [89, 17]
+    [38, 94],
+    [27, 89],
+    [23, 86],
+    [23, 83],
+    [28, 79],
+    [37, 76],
+    [45, 72],
+    [50, 70],
+    [49, 67],
+    [46, 64],
+    [51, 61],
+    [59, 58],
+    [67, 56],
+    [68, 53],
+    [62, 50],
+    [56, 48],
+    [57, 46],
+    [64, 45],
+    [70, 44],
+    [76, 42],
+    [82, 38],
+    [87, 35],
+    [88, 33],
+    [84, 30],
+    [81, 28],
+    [82, 27],
+    [85, 25]
   ],
   'forest-of-clauses': [
-    [22, 94],
-    [26, 80],
-    [30, 66],
-    [40, 60],
-    [52, 58],
-    [64, 56],
-    [72, 46],
-    [78, 40],
-    [86, 34],
-    [92, 24],
-    [90, 17]
+    [29, 94],
+    [26, 89],
+    [22, 84],
+    [23, 80],
+    [28, 75],
+    [29, 72],
+    [27, 70],
+    [25, 67],
+    [27, 64],
+    [34, 61],
+    [41, 59],
+    [49, 61],
+    [56, 60],
+    [62, 58],
+    [67, 54],
+    [70, 49],
+    [73, 46],
+    [76, 43],
+    [82, 40],
+    [87, 37],
+    [88, 35],
+    [88, 32],
+    [90, 30],
+    [92, 27],
+    [92, 25],
+    [90, 22]
   ],
   'tense-canyon': [
     [36, 94],
@@ -89,29 +126,59 @@ export const WORLD_PATHS: Record<string, Point[]> = {
     [90, 17]
   ],
   'passive-glacier': [
-    [8, 94],
-    [22, 88],
-    [36, 80],
-    [46, 66],
-    [56, 56],
-    [62, 46],
-    [70, 40],
-    [78, 34],
-    [86, 26],
-    [91, 18]
+    [7, 94],
+    [18, 87],
+    [27, 80],
+    [37, 73],
+    [44, 67],
+    [50, 62],
+    [59, 57],
+    [64, 52],
+    [65, 49],
+    [63, 46],
+    [59, 44],
+    [57, 42],
+    [61, 40],
+    [70, 39],
+    [77, 36],
+    [83, 34],
+    [85, 31],
+    [88, 27],
+    [91, 24]
   ],
   'sky-library': [
-    [10, 94],
-    [16, 80],
-    [22, 66],
-    [34, 74],
-    [44, 72],
-    [48, 56],
-    [56, 46],
-    [64, 42],
-    [74, 38],
-    [82, 32],
-    [88, 22]
+    [28, 94],
+    [21, 89],
+    [12, 85],
+    [10, 81],
+    [10, 77],
+    [14, 72],
+    [21, 68],
+    [22, 65],
+    [20, 62],
+    [20, 61],
+    [27, 61],
+    [32, 58],
+    [39, 59],
+    [44, 56],
+    [49, 55],
+    [55, 54],
+    [62, 58],
+    [68, 59],
+    [73, 59],
+    [74, 55],
+    [74, 52],
+    [77, 49],
+    [80, 47],
+    [81, 44],
+    [79, 41],
+    [77, 38],
+    [76, 35],
+    [78, 33],
+    [80, 36],
+    [84, 33],
+    [83, 30],
+    [84, 25]
   ],
   'the-citadel': [
     [16, 94],
@@ -173,7 +240,9 @@ export const WORLD_THUMBS: Record<string, string> = Object.fromEntries(
   ])
 );
 
-// Spread `count` nodes evenly by distance along the world's path.
+// Spread nodes by distance on the 16:9 painting. A horizontal percentage
+// covers more pixels than a vertical one; equal percent distances crowded
+// nodes together on steep sections of a route.
 export function nodePositions(worldKey: string, count: number): Point[] {
   const path = WORLD_PATHS[worldKey] || DEFAULT_PATH;
   if (count <= 0) return [];
@@ -182,7 +251,7 @@ export function nodePositions(worldKey: string, count: number): Point[] {
   for (let i = 1; i < path.length; i++) {
     const [x1, y1] = path[i - 1];
     const [x2, y2] = path[i];
-    lengths.push(lengths[i - 1] + Math.hypot(x2 - x1, y2 - y1));
+    lengths.push(lengths[i - 1] + Math.hypot((x2 - x1) * (16 / 9), y2 - y1));
   }
   const total = lengths[lengths.length - 1];
   return Array.from({ length: count }, (_, n) => {

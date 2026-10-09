@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
+import ReviewModal from '../../../../Trade/ReviewModal';
+import {
+  getViewerTradeTerms,
+  tradeTermsKey
+} from '../../../../Trade/helpers/terms';
+import { errorClass } from '../../../../Trade/styles';
 import { useAppContext } from '~/contexts';
 import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 
@@ -12,7 +17,13 @@ export default function TradeButtons({
   onAcceptTrade,
   onCounterPropose,
   onWithdrawTransaction,
-  transactionId
+  transactionId,
+  transaction,
+  partnerName,
+  groupObjs,
+  onInspectCard,
+  isAICardModalShown,
+  onRefreshTransaction
 }: {
   channelId: number;
   isDeclining: boolean;
@@ -21,35 +32,56 @@ export default function TradeButtons({
   onCounterPropose: (v: any) => any;
   onWithdrawTransaction: (v: any) => any;
   transactionId: number;
+  transaction: any;
+  partnerName: string;
+  groupObjs: Record<number, any>;
+  onInspectCard: (id: number) => void;
+  isAICardModalShown: boolean;
+  onRefreshTransaction: (transaction: any) => void;
 }) {
   const acceptTrade = useAppContext((v) => v.requestHelpers.acceptTrade);
   const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [reviewSnapshot, setReviewSnapshot] = useState<any>(null);
+  const loadPendingTransaction = useAppContext(
+    (v) => v.requestHelpers.loadPendingTransaction
+  );
   const [accepting, setAccepting] = useState(false);
-  const [checking, setChecking] = useState(false);
-  const [isDisabled, setIsDisabled] = useState(false);
+  const [acceptError, setAcceptError] = useState('');
+  const [checking, setChecking] = useState(true);
+  const [isDisabled, setIsDisabled] = useState(true);
   const [disableReasonObj, setDisableReasonObj] = useState<any>({});
   const checkTransactionPossible = useAppContext(
     (v) => v.requestHelpers.checkTransactionPossible
   );
   useEffect(() => {
-    init();
-    async function init() {
-      setChecking(true);
-      const { disableReason, responsibleParty, isDisabled } =
-        await checkTransactionPossible(transactionId);
-      setIsDisabled(isDisabled);
-      if (isDisabled) {
-        setDisableReasonObj({
-          reason: disableReason,
-          responsibleParty
-        });
-      }
-      setChecking(false);
-    }
+    let cancelled = false;
+    setReviewSnapshot(null);
+    setChecking(true);
+    setIsDisabled(true);
+    setDisableReasonObj({});
+    void checkTransactionPossible(transactionId)
+      .then(({ disableReason, responsibleParty, isDisabled }: any) => {
+        if (cancelled) return;
+        setIsDisabled(isDisabled);
+        setDisableReasonObj(
+          isDisabled ? { reason: disableReason, responsibleParty } : {}
+        );
+      })
+      .catch(() => {
+        if (!cancelled)
+          setAcceptError(
+            'This offer could not be checked. Close and reopen it before accepting.'
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [transactionId]);
 
   const disabledReasonText = useMemo(() => {
     const imResponsible = disableReasonObj.responsibleParty?.id === myId;
@@ -71,6 +103,8 @@ export default function TradeButtons({
         imResponsible ? `burned` : `burned`
       } one or more of the cards included in this proposal`;
     }
+    if (disableReasonObj.reason === 'changed app ownership')
+      return 'An app in this proposal is no longer available from its owner. Start a new proposal.';
     if (disableReasonObj.reason === 'changed group ownership') {
       return `${responsiblePartyLabel} no longer ${
         imResponsible ? `own` : `owns`
@@ -94,12 +128,25 @@ export default function TradeButtons({
     <div
       style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column' }}
     >
+      {acceptError && (
+        <p role="alert" className={errorClass}>
+          {acceptError}
+        </p>
+      )}
       {disabledReasonText && (
         <div style={{ marginTop: '1rem', marginBottom: '2rem' }}>
           {disabledReasonText}
         </div>
       )}
-      <div style={{ display: 'flex', width: '100%', justifyContent: 'center' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          width: '100%',
+          justifyContent: 'center'
+        }}
+      >
         <Button
           onClick={() => onWithdrawTransaction({ cancelReason: 'decline' })}
           loading={isDeclining}
@@ -111,63 +158,92 @@ export default function TradeButtons({
         </Button>
         <Button
           onClick={onCounterPropose}
-          style={{ marginLeft: '1rem' }}
+          disabled={accepting}
           color="pink"
           variant="solid"
         >
           <Icon icon="sparkles" />
-          <span style={{ marginLeft: '0.7rem' }}>Counter</span>
+          <span style={{ marginLeft: '0.7rem' }}>Counteroffer</span>
         </Button>
         <Button
-          style={{ marginLeft: '1rem' }}
           loading={checking || accepting}
-          disabled={isDisabled}
-          onClick={() => setConfirmModalShown(true)}
+          disabled={isDisabled || checking || accepting}
+          onClick={handleReviewClick}
           color="green"
           variant="solid"
         >
           <Icon icon="check" />
-          <span style={{ marginLeft: '0.7rem' }}>Accept</span>
+          <span style={{ marginLeft: '0.7rem' }}>Review & accept</span>
         </Button>
       </div>
-      {confirmModalShown && (
-        <ConfirmModal
-          modalOverModal
-          onHide={() => setConfirmModalShown(false)}
-          title="Accept Trade"
+      {reviewSnapshot && (
+        <ReviewModal
+          review={{
+            mode: 'accept',
+            terms: getViewerTradeTerms(reviewSnapshot, myId)
+          }}
+          partnerName={partnerName}
+          groupObjs={groupObjs}
+          onInspectCard={onInspectCard}
+          isAICardModalShown={isAICardModalShown}
+          onHide={() => setReviewSnapshot(null)}
           onConfirm={handleAcceptClick}
         />
       )}
     </div>
   );
 
+  async function loadReviewedOffer(snapshot: any) {
+    const { transaction: current } = await loadPendingTransaction(channelId);
+    if (
+      !current ||
+      current.isCancelled ||
+      current.isAccepted ||
+      tradeTermsKey(current) !== tradeTermsKey(snapshot)
+    ) {
+      setReviewSnapshot(null);
+      onRefreshTransaction(current);
+      return null;
+    }
+    return current;
+  }
+
+  async function handleReviewClick() {
+    setChecking(true);
+    setAcceptError('');
+    try {
+      const current = await loadReviewedOffer(transaction);
+      if (current) setReviewSnapshot(structuredClone(current));
+    } catch {
+      setAcceptError('The latest offer could not load. Please try again.');
+    } finally {
+      setChecking(false);
+    }
+  }
+
   async function handleAcceptClick() {
+    if (!reviewSnapshot || accepting) return;
     setAccepting(true);
     try {
+      if (!(await loadReviewedOffer(reviewSnapshot))) return;
       const { coins, isDisabled, disableReason, responsibleParty } =
-        await acceptTrade({ channelId, transactionId });
-      if (!isDisabled) {
-        void applyCanonicalCoinsAndReconcile({
-          coins,
-          loadCoins,
-          onSetUserState,
-          userId: myId
-        });
-      }
+        await acceptTrade({ channelId, transactionId: reviewSnapshot.id });
       if (isDisabled) {
-        setDisableReasonObj({
-          reason: disableReason,
-          responsibleParty
-        });
+        setDisableReasonObj({ reason: disableReason, responsibleParty });
         setIsDisabled(true);
+        setReviewSnapshot(null);
         return;
       }
+      void applyCanonicalCoinsAndReconcile({
+        coins,
+        loadCoins,
+        onSetUserState,
+        userId: myId
+      });
+      setReviewSnapshot(null);
       onAcceptTrade();
-    } catch (error) {
-      console.error(error);
     } finally {
       setAccepting(false);
-      setConfirmModalShown(false);
     }
   }
 }

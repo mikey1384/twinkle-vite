@@ -1,18 +1,13 @@
+import BuildAttribution from '~/components/Build/BuildAttribution';
 import React from 'react';
 import { css, cx } from '@emotion/css';
-import FavoriteButton, { type BuildFavoriteChange } from '~/components/Build/FavoriteButton';
+import FavoriteButton, {
+  type BuildFavoriteChange
+} from '~/components/Build/FavoriteButton';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
-import UsernameText from '~/components/Texts/UsernameText';
-import { getBuildUsernameUser } from '~/helpers/buildProjectHelpers';
 import { lineClamp } from '~/constants/css';
 import { useBuildCardData } from './useBuildCardData';
-
-const inheritedUsernameTextStyle: React.CSSProperties = {
-  color: 'inherit',
-  fontSize: 'inherit',
-  fontWeight: 'inherit'
-};
 
 const cardClass = css`
   min-width: 0;
@@ -179,12 +174,7 @@ export default function BuildThumbCard({
           {build.username ? (
             <span>
               <Icon icon="user" />
-              by{' '}
-              <UsernameText
-                color="inherit"
-                textStyle={inheritedUsernameTextStyle}
-                user={getBuildUsernameUser(build)}
-              />
+              <BuildAttribution build={build} />
             </span>
           ) : null}
           {metaLabel ? (

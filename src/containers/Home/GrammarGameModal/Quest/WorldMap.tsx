@@ -7,7 +7,7 @@ import { WORLD_IMAGES, WORLD_THUMBS, nodePositions } from './layout';
 import type { QuestNode, QuestState, QuestWorld } from './types';
 import AudioToggles from './AudioToggles';
 import GoalsChip from './GoalsChip';
-import { playMusic, stopMusic, OVERWORLD_TRACK } from './MarbleRun/music';
+import { musicForWorld, playMusic, stopMusic } from './MarbleRun/music';
 import PixelIcon from './PixelIcon';
 import {
   GOLD,
@@ -65,12 +65,12 @@ export default function WorldMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [world.id, selectedIndex]);
 
-  // the map has its own overworld theme (world themes play in the levels);
-  // leaving the map fades it out
+  // Each map follows its world's theme, including when browsing unlocked
+  // worlds without leaving this screen.
   useEffect(() => {
-    playMusic(OVERWORLD_TRACK);
+    playMusic(musicForWorld(world.id));
     return () => stopMusic(0.6);
-  }, []);
+  }, [world.id]);
 
   // the status chips ride in Grammarbles' top bar when it has room for them
   const navSlot = useContext(NavSlotContext);
@@ -237,6 +237,19 @@ export default function WorldMap({
       <div className={sideCls}>
         {selected && (
           <div className={panelCls}>
+            <button
+              className={playCls}
+              disabled={!selected.unlocked || starting}
+              onClick={() => onPlayNode(selected)}
+            >
+              {starting
+                ? 'Starting…'
+                : selected.freeRematch
+                  ? 'Free rematch'
+                  : selected.cleared
+                    ? 'Play again'
+                    : 'Play'}
+            </button>
             <div className={panelBodyCls}>
               <div className={panelLabelCls}>
                 {selected.kind === 'stop'
@@ -304,19 +317,6 @@ export default function WorldMap({
                 </div>
               )}
             </div>
-            <button
-              className={playCls}
-              disabled={!selected.unlocked || starting}
-              onClick={() => onPlayNode(selected)}
-            >
-              {starting
-                ? 'Starting…'
-                : selected.freeRematch
-                  ? 'Free rematch'
-                  : selected.cleared
-                    ? 'Play again'
-                    : 'Play'}
-            </button>
           </div>
         )}
         <div className={stripCls}>

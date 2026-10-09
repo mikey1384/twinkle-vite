@@ -97,6 +97,9 @@ export interface BuildReleaseStatus {
 }
 
 export interface Build {
+  creatorId?: number;
+  creatorUsername?: string;
+  creatorProfilePicUrl?: string | null;
   rewardRuntimeGrant?: string | null;
   cardCraftRuntimeGrant?: string | null;
   id: number;

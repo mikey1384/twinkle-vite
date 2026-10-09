@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import type { BuildFavoriteChange } from '~/components/Build/FavoriteButton';
 import type { BuildProjectListItemData } from '~/components/Build/ProjectListItem';
 import { socket } from '~/constants/sockets/api';
+import { BUILD_OWNERSHIP_CHANGED } from '~/helpers/buildOwnershipEvents';
 import {
   useAppContext,
   useBuildContext
@@ -257,9 +258,16 @@ export default function useQuickAccess({
   useEffect(() => {
     if (!normalizedUserId) return;
     socket.on('build_deleted', handleSocketBuildDeleted);
+    window.addEventListener(BUILD_OWNERSHIP_CHANGED, handleOwnershipChanged);
     return () => {
       socket.off('build_deleted', handleSocketBuildDeleted);
+      window.removeEventListener(BUILD_OWNERSHIP_CHANGED, handleOwnershipChanged);
     };
+
+    function handleOwnershipChanged() {
+      void loadQuickAccess({ showLoading: false });
+      setDiscoveryRefreshKey((key) => key + 1);
+    }
 
     function handleSocketBuildDeleted({
       buildIds

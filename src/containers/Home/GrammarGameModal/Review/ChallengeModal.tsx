@@ -18,12 +18,14 @@ import {
   frame
 } from '../Quest/pixelUi';
 import useChallengeReviews from './useChallengeReviews';
+import type { SavedChallengeReview } from './challengeReviews';
 
 export default function ChallengeModal({
   isOpen,
   onClose,
   questionId,
   questionText,
+  savedReview,
   questKind,
   returnLabel = 'Back to review',
   continueLabel,
@@ -35,6 +37,7 @@ export default function ChallengeModal({
   onClose: () => void;
   questionId: number;
   questionText?: string;
+  savedReview?: SavedChallengeReview | null;
   questKind?: 'stop' | 'fort' | 'castle' | 'nemesis';
   returnLabel?: string;
   continueLabel?: string;
@@ -45,14 +48,27 @@ export default function ChallengeModal({
   const review = reviews[questionId];
   const pending = review?.status === 'pending';
   const completed = review?.status === 'complete' ? review.result : null;
+  const previous = !completed
+    ? savedReview || (review?.status === 'error' ? review.savedReview : null)
+    : null;
+  const reviewed = completed || previous;
+  const outcome = completed
+    ? completed.justified
+      ? 'accepted'
+      : 'rejected'
+    : previous?.outcome;
   const failure = review?.status === 'error' ? review : null;
   const quest = !!questKind;
   const titleId = useId();
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const title = completed
-    ? completed.justified
-      ? 'Good catch!'
-      : 'The answer checks out'
+  const title = reviewed
+    ? outcome === 'accepted'
+      ? previous
+        ? 'Question corrected'
+        : 'Good catch!'
+      : outcome === 'rejected'
+        ? 'The answer checks out'
+        : 'Already reviewed'
     : pending
       ? 'Checking the question…'
       : failure
@@ -69,25 +85,21 @@ export default function ChallengeModal({
           aiUnavailable: !!aiUnavailable,
           challenging: pending,
           accepted: !!completed?.justified,
-          outcome: completed
-            ? completed.justified
-              ? 'accepted'
-              : 'rejected'
-            : review?.status || 'ready',
-          explanation: completed?.explanation?.slice(0, 1000) || null,
+          outcome: reviewed ? outcome || 'reviewed' : review?.status || 'ready',
+          explanation: reviewed?.explanation?.slice(0, 1000) || null,
           error: failure?.message.slice(0, 500) || null
         }
       : null
   );
 
-  const primaryLabel = completed
+  const primaryLabel = reviewed
     ? continueLabel || returnLabel
     : pending || aiUnavailable || (failure && !failure.canRetry)
       ? returnLabel
       : failure
         ? 'Try review again'
         : 'Start review';
-  const primaryAction = completed
+  const primaryAction = reviewed
     ? onContinue || onClose
     : pending || aiUnavailable || (failure && !failure.canRetry)
       ? onClose
@@ -131,32 +143,44 @@ export default function ChallengeModal({
           <blockquote className={questionCls}>{questionText}</blockquote>
         )}
         <div aria-live="polite" aria-atomic="true">
-          {completed ? (
+          {reviewed ? (
             <>
               <div className={outcomeCls}>
                 <PixelIcon
-                  name={completed.justified ? 'flag' : 'check'}
+                  name={outcome === 'accepted' ? 'flag' : 'check'}
                   scale={3}
                 />
                 <div>
                   <b>
-                    {completed.justified
+                    {outcome === 'accepted'
                       ? 'Challenge accepted · question fixed'
-                      : 'Challenge not accepted'}
+                      : outcome === 'rejected'
+                        ? 'Challenge rejected · answer confirmed'
+                        : 'Already reviewed'}
                   </b>
                   <p>
-                    {completed.justified
-                      ? 'Thanks for helping improve Grammarbles.'
-                      : 'The reviewer found the question and its answer correct. Here’s why.'}
+                    {outcome === 'accepted'
+                      ? previous
+                        ? 'An earlier challenge found a problem, and the question was corrected.'
+                        : 'Thanks for helping improve Grammarbles.'
+                      : outcome === 'rejected'
+                        ? 'The reviewer found the question and its answer correct. Here’s why.'
+                        : 'This question was checked previously. Its saved explanation is below.'}
                   </p>
                 </div>
               </div>
-              {completed.justified &&
+              {previous && (
+                <p className={smallCls}>
+                  Already reviewed questions can’t be challenged again. Reading
+                  this explanation uses no AI Energy.
+                </p>
+              )}
+              {completed?.justified &&
               typeof completed.newBalance === 'number' ? (
                 <div className={rewardCls}>
                   <PixelIcon name="coin" scale={3} /> 50,000 Coins earned
                 </div>
-              ) : !completed.justified ? (
+              ) : completed && !completed.justified ? (
                 <p className={smallCls}>
                   No Coins awarded. The review used AI Energy.
                 </p>
@@ -164,11 +188,11 @@ export default function ChallengeModal({
               <div className={explanationCls}>
                 <h3>Reviewer’s explanation</h3>
                 <p>
-                  {completed.explanation ||
-                    'The review is complete, but no explanation was returned.'}
+                  {reviewed.explanation ||
+                    'No explanation was saved for this earlier review.'}
                 </p>
               </div>
-              {completed.justified && questKind && (
+              {completed?.justified && questKind && (
                 <p className={nextStepCls}>
                   {questKind === 'stop'
                     ? 'In practice, an accepted challenge forgives the miss. Keep going with the corrected question.'

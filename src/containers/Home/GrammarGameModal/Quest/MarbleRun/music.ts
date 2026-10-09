@@ -1,5 +1,5 @@
-// Grammar Quest music (Mikey 10-07): an overworld theme for the map, a long
-// looping level theme per world, and the fort, castle and final boss themes. Each track is an MP3 with an intro that
+// Grammar Quest music: each world has a theme for its map and levels, plus
+// the fort, castle and final boss themes. Each track is an MP3 with an intro that
 // plays once and a body that loops seamlessly (sample-exact loop points from
 // the renderer's manifest). One track plays at a time; switching crossfades.
 // Players can turn music off; the choice is remembered on this device.
@@ -216,13 +216,17 @@ export function musicPosition() {
   };
 }
 
+export function musicForWorld(worldId: number) {
+  return WORLD_TRACKS[worldId - 1] || WORLD_TRACKS[0];
+}
+
 // which track a node plays: its world's theme, or a boss theme
 export function musicForNode(nodeId: string) {
   const m = /^w(\d+)([sfc])/.exec(nodeId);
   if (!m) return 'w1-starter-village';
   if (m[2] === 'f') return 'boss-fort';
   if (m[2] === 'c') return Number(m[1]) === 10 ? 'boss-final' : 'boss-castle';
-  return WORLD_TRACKS[Number(m[1]) - 1] || WORLD_TRACKS[0];
+  return musicForWorld(Number(m[1]));
 }
 
 export const WORLD_TRACKS = [
@@ -238,5 +242,5 @@ export const WORLD_TRACKS = [
   'w10-logic-tower'
 ];
 export const BOSS_TRACKS = ['boss-fort', 'boss-castle', 'boss-final'];
-// the world map's own theme (Mikey 10-07: the overworld has its own song)
+// The original shared map theme remains available in the music lab.
 export const OVERWORLD_TRACK = 'overworld';

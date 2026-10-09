@@ -23,7 +23,7 @@ const profileBuildsSource = readSource(
 );
 
 test('shared Lumine cards use state-neutral attribution and one update date', () => {
-  assert.match(wideCardSource, /\n\s+By\{' '\}/);
+  assert.match(wideCardSource, /<BuildAttribution build=\{build\}/);
   assert.doesNotMatch(wideCardSource, /Published by/);
   assert.match(
     wideCardSource,

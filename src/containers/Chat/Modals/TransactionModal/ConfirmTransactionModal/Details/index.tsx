@@ -1,9 +1,15 @@
+import {
+  AppOwnershipNotice,
+  type TradeBuild
+} from '~/components/Build/TradeBuilds';
 import React from 'react';
 import OfferDetail from './OfferDetail';
 import WantDetail from './WantDetail';
 import { User } from '~/types';
 
 export default function Details({
+  offeredBuilds,
+  wantedBuilds,
   coinsOffered,
   coinsWanted,
   cardIdsOffered,
@@ -16,6 +22,8 @@ export default function Details({
   partner,
   groupObjs
 }: {
+  offeredBuilds: TradeBuild[];
+  wantedBuilds: TradeBuild[];
   coinsOffered: number;
   coinsWanted: number;
   cardIdsOffered: number[];
@@ -33,11 +41,16 @@ export default function Details({
       {selectedOption === 'want' &&
         (!!cardIdsWanted.length ||
           !!coinsWanted ||
-          !!groupIdsWanted.length) && (
+          !!groupIdsWanted.length ||
+          !!wantedBuilds.length) && (
           <WantDetail
+            builds={wantedBuilds}
             isAICardModalShown={isAICardModalShown}
             isExpressingInterest={
-              !cardIdsOffered.length && !coinsOffered && !groupIdsOffered.length
+              !cardIdsOffered.length &&
+              !coinsOffered &&
+              !groupIdsOffered.length &&
+              !offeredBuilds.length
             }
             cardIds={cardIdsWanted}
             groupIds={groupIdsWanted}
@@ -49,11 +62,16 @@ export default function Details({
       {(selectedOption !== 'want' ||
         !!cardIdsOffered.length ||
         !!coinsOffered ||
-        !!groupIdsOffered.length) && (
+        !!groupIdsOffered.length ||
+        !!offeredBuilds.length) && (
         <OfferDetail
+          builds={offeredBuilds}
           isAICardModalShown={isAICardModalShown}
           isShowing={
-            !cardIdsWanted.length && !coinsWanted && !groupIdsWanted.length
+            !cardIdsWanted.length &&
+            !coinsWanted &&
+            !groupIdsWanted.length &&
+            !wantedBuilds.length
           }
           selectedOption={selectedOption}
           cardIds={cardIdsOffered}
@@ -63,6 +81,10 @@ export default function Details({
           onSetAICardModalCardId={onSetAICardModalCardId}
           groupObjs={groupObjs}
         />
+      )}
+      {(offeredBuilds.length > 0 ||
+        (selectedOption === 'want' && wantedBuilds.length > 0)) && (
+        <AppOwnershipNotice />
       )}
       <div
         style={{

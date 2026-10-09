@@ -13,6 +13,7 @@ export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
   | 'auto'
+  | 'claude-haiku-5-5'
   | 'gpt-6-luna'
   | 'claude-sonnet-5-5'
   | 'gpt-6.1-sol'

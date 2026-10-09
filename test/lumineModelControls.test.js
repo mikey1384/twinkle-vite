@@ -84,7 +84,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'gpt-6-luna'[\s\S]*?medium: 'claude-sonnet-5-5'[\s\S]*?heavy: 'claude-opus-5-5'/m
+    /const DEFAULT_LUMINE_MODEL_BY_MODE[\s\S]*?light: 'claude-haiku-5-5'[\s\S]*?medium: 'claude-sonnet-5-5'[\s\S]*?heavy: 'claude-opus-5-5'/m
   );
   assert.match(
     selectionHelperSource,
@@ -97,7 +97,7 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   assert.doesNotMatch(headerSource, /gpt-5\.[1-5]|GPT-5\.[1-5]|Think level/i);
 });
 
-test('lumine fallback lineup matches the API: Light Luna medium, Medium Sol low, Heavy Opus 5.5 medium', async () => {
+test('lumine fallback lineup offers Haiku before Luna and preserves each tier default', async () => {
   const {
     DEFAULT_LUMINE_MODEL,
     DEFAULT_LUMINE_THINK_LEVEL,
@@ -127,6 +127,7 @@ test('lumine fallback lineup matches the API: Light Luna medium, Medium Sol low,
     ]),
     [
       ['auto', 'auto', 'medium'],
+      ['claude-haiku-5-5', 'light', 'medium'],
       ['gpt-6-luna', 'light', 'medium'],
       ['claude-sonnet-5-5', 'medium', 'medium'],
       // Medium's second choice; choosing the Medium mode still picks Sonnet.
@@ -135,7 +136,7 @@ test('lumine fallback lineup matches the API: Light Luna medium, Medium Sol low,
     ]
   );
   for (const [mode, model, reasoningEffort] of [
-    ['light', 'gpt-6-luna', 'medium'],
+    ['light', 'claude-haiku-5-5', 'medium'],
     ['medium', 'claude-sonnet-5-5', 'medium'],
     ['heavy', 'claude-opus-5-5', 'medium']
   ]) {
@@ -226,7 +227,7 @@ test('an older API catalog of retired models and Super Heavy falls back to the c
   const options = getSelectableLumineModelOptions(policy);
   assert.deepEqual(
     options.map((option) => option.mode),
-    ['auto', 'light', 'medium', 'medium', 'heavy']
+    ['auto', 'light', 'light', 'medium', 'medium', 'heavy']
   );
   assert.deepEqual(resolveLumineModelSelectionFromPolicy(policy), {
     model: 'claude-opus-5-5',

@@ -1,3 +1,4 @@
+import type { TradeBuild } from '~/components/Build/TradeBuilds';
 import React, { useMemo } from 'react';
 import OfferPanel from './OfferPanel';
 import WantPanel from './WantPanel';
@@ -8,6 +9,8 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth, Color } from '~/constants/css';
 
 export default function Trade({
+  offerBuilds,
+  wantBuilds,
   isAccepted,
   isOnModal,
   isAICardModalShown,
@@ -30,6 +33,8 @@ export default function Trade({
   fromId,
   groupObjs
 }: {
+  offerBuilds: TradeBuild[];
+  wantBuilds: TradeBuild[];
   isAccepted: boolean;
   isOnModal?: boolean;
   isCurrent: boolean;
@@ -60,8 +65,13 @@ export default function Trade({
   }, [toId, myId, myUsername, partner]);
 
   const isTrade = useMemo(() => {
-    return !!offerCardIds.length || !!offerCoins || !!offerGroupIds.length;
-  }, [offerCardIds, offerCoins, offerGroupIds]);
+    return (
+      !!offerCardIds.length ||
+      !!offerCoins ||
+      !!offerGroupIds.length ||
+      !!offerBuilds.length
+    );
+  }, [offerCardIds, offerCoins, offerGroupIds, offerBuilds.length]);
 
   const cancelReasonText = useMemo(() => {
     if (cancelReason === 'withdraw') {
@@ -107,8 +117,8 @@ export default function Trade({
           {isTrade
             ? `proposed a trade`
             : wantCoins
-            ? `want${from.id === myId ? '' : 's'}`
-            : `${from.id === myId ? 'are' : 'is'} interested in`}
+              ? `want${from.id === myId ? '' : 's'}`
+              : `${from.id === myId ? 'are' : 'is'} interested in`}
         </div>
       </Heading>
       <Body onClick={onClick}>
@@ -118,6 +128,7 @@ export default function Trade({
             imOffering={from.id === myId}
             isOnModal={isOnModal}
             isAICardModalShown={isAICardModalShown}
+            builds={offerBuilds}
             offerCardIds={offerCardIds}
             offerCoins={offerCoins}
             offerGroupIds={offerGroupIds}
@@ -132,6 +143,7 @@ export default function Trade({
           isAICardModalShown={isAICardModalShown}
           isOnModal={isOnModal}
           isTrade={isTrade}
+          builds={wantBuilds}
           wantCardIds={wantCardIds}
           wantCoins={wantCoins}
           wantGroupIds={wantGroupIds}

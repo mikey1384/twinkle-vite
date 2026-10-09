@@ -1,3 +1,7 @@
+import {
+  BUILD_OWNERSHIP_CHANGED,
+  notifyBuildOwnershipChanged
+} from '~/helpers/buildOwnershipEvents';
 import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import {
@@ -69,6 +73,12 @@ export default function useBuildSocket() {
   const onInvalidateBuildStudioBrowseTab = useBuildContext(
     (v) => v.actions.onInvalidateBuildStudioBrowseTab
   );
+  const onRemoveBuildSummary = useBuildContext(
+    (v) => v.actions.onRemoveBuildSummary
+  );
+  const onRemoveBuildWorkspace = useBuildContext(
+    (v) => v.actions.onRemoveBuildWorkspace
+  );
   const onPatchBuildSummary = useBuildContext(
     (v) => v.actions.onPatchBuildSummary
   );
@@ -91,6 +101,33 @@ export default function useBuildSocket() {
     useRef<Record<string, BuildWorkspaceSnapshot>>(buildWorkspaces);
   const userIdRef = useRef(userId);
   const replayedResumeRunStateKeysRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    function invalidate(event: Event) {
+      const buildId = Number((event as CustomEvent).detail?.buildId);
+      if (!buildId) return;
+      onRemoveBuildSummary(buildId);
+      onRemoveBuildWorkspace({ buildId });
+      onInvalidateBuildStudioActivityFeeds({ userId });
+      for (const tab of [
+        'community',
+        'collaborating',
+        'open_source'
+      ] as const) {
+        onInvalidateBuildStudioBrowseTab({ tab, userId });
+      }
+    }
+    function handleOwnershipChanged({ buildId }: { buildId: number }) {
+      notifyBuildOwnershipChanged([buildId]);
+    }
+    window.addEventListener(BUILD_OWNERSHIP_CHANGED, invalidate);
+    socket.on('build_ownership_changed', handleOwnershipChanged);
+    return () => {
+      window.removeEventListener(BUILD_OWNERSHIP_CHANGED, invalidate);
+      socket.off('build_ownership_changed', handleOwnershipChanged);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   useEffect(() => {
     buildRunsRef.current = buildRuns;
