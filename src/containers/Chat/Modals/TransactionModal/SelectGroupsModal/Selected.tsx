@@ -3,17 +3,17 @@ import GroupItem from './GroupItem';
 import { css } from '@emotion/css';
 
 export default function Selected({
-  groups,
+  groupObjs,
   selectedGroupIds,
   onSetSelectedGroupIds
 }: {
-  groups: any[];
+  groupObjs: Record<number, any>;
   selectedGroupIds: number[];
   onSetSelectedGroupIds: (v: number[]) => void;
 }) {
   const selectedGroups = useMemo(
-    () => groups.filter((group) => selectedGroupIds.includes(group.id)),
-    [groups, selectedGroupIds]
+    () => selectedGroupIds.map((id) => groupObjs[id]).filter(Boolean),
+    [groupObjs, selectedGroupIds]
   );
 
   const noGroupsLabel = (
@@ -35,8 +35,8 @@ export default function Selected({
       className={css`
         width: 100%;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.4rem;
         @media (max-width: 768px) {
           grid-template-columns: 1fr;
         }

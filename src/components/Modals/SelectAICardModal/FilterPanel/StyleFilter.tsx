@@ -41,7 +41,7 @@ export default function StyleFilter({
       </div>
       <div className={inputWrapperClass}>
         <SearchInput
-          placeholder="Search word..."
+          placeholder="Search style..."
           style={fullWidthSearchInput ? { width: '100%' } : undefined}
           onChange={handleSearch}
           value={searchText}

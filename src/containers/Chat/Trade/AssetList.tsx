@@ -124,7 +124,7 @@ export default function AssetList({
               hideRemoveButton
               wrapTitle
               onDeselect={() => onRemove?.('group', id)}
-              style={{ width: '100%', marginBottom: 0 }}
+              style={{ width: '100%', marginBottom: 0, border: 0, padding: 0 }}
             />
             {showOwnership && (
               <div className="ownership">
@@ -153,7 +153,7 @@ export default function AssetList({
               </button>
             )}
           </div>
-          <TradeBuilds builds={[build]} />
+          <TradeBuilds builds={[build]} embedded />
           {showOwnership && (
             <div className="ownership">
               App ownership{' '}

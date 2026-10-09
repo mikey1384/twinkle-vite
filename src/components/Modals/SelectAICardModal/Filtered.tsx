@@ -127,7 +127,16 @@ export default function Filtered({
   ]);
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignItems: 'stretch',
+        gap: '1.2rem',
+        width: '100%'
+      }}
+    >
       {loading ? (
         <Loading />
       ) : cards.length ? (
@@ -176,7 +185,7 @@ export default function Filtered({
       )}
       {loadMoreShown && (
         <LoadMoreButton
-          style={{ marginTop: '1.5em' }}
+          style={{ marginTop: '0.8rem' }}
           loading={loadingMore}
           filled
           onClick={handleLoadMore}

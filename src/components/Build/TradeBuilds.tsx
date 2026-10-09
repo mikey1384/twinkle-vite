@@ -28,11 +28,23 @@ const listClass = css`
     padding: 1rem;
     min-width: 0;
   }
+  > div[data-selected='true'] {
+    border-color: var(--ui-border-strong, #94b7e0);
+    background: var(--ui-soft-bg, #f3f7fd);
+  }
+  &[data-embedded='true'] > div {
+    border: 0;
+    padding: 0;
+  }
+  .app-action {
+    flex-shrink: 0;
+  }
   img {
     width: 5rem;
     height: 4rem;
     object-fit: cover;
     border-radius: 0.5rem;
+    flex-shrink: 0;
   }
   .app-title {
     flex: 1;
@@ -52,15 +64,21 @@ const listClass = css`
 
 export default function TradeBuilds({
   builds,
-  onRemove
+  onRemove,
+  renderAction,
+  selectedIds = [],
+  embedded = false
 }: {
   builds: TradeBuild[];
   onRemove?: (id: number) => void;
+  renderAction?: (build: TradeBuild) => React.ReactNode;
+  selectedIds?: number[];
+  embedded?: boolean;
 }) {
   return (
-    <div className={listClass}>
+    <div className={listClass} data-embedded={embedded}>
       {builds.map((build) => (
-        <div key={build.id}>
+        <div key={build.id} data-selected={selectedIds.includes(build.id)}>
           {build.thumbnailUrl ? (
             <img src={build.thumbnailUrl} alt="" />
           ) : (
@@ -86,6 +104,9 @@ export default function TradeBuilds({
               <small>Private app · workspace included</small>
             )}
           </div>
+          {renderAction && (
+            <div className="app-action">{renderAction(build)}</div>
+          )}
           {onRemove && (
             <Button
               variant="ghost"

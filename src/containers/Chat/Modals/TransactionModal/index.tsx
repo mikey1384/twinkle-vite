@@ -19,7 +19,7 @@ import {
   summarizeBundle
 } from '../../Trade/helpers/terms';
 import type { TradeReview, TradeTerms } from '../../Trade/types';
-import { errorClass } from '../../Trade/styles';
+import { errorClass, footerActionsClass } from '../../Trade/styles';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
 import { notifyBuildOwnershipChanged } from '~/helpers/buildOwnershipEvents';
@@ -239,7 +239,6 @@ export default function TransactionModal({
         }
         onClose={childModalShown ? () => {} : onHide}
         closeOnBackdropClick={!childModalShown}
-        allowOverflow
         footer={
           <div style={{ width: '100%' }}>
             {!showHandler && !loading && !loadError && (
@@ -264,13 +263,7 @@ export default function TransactionModal({
                 )}
               </div>
             )}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '1rem'
-              }}
-            >
+            <div className={footerActionsClass}>
               <Button
                 variant="ghost"
                 onClick={childModalShown ? () => {} : onHide}
@@ -364,6 +357,7 @@ export default function TransactionModal({
           )}
           {!!aiCardModalType && (
             <SelectAICardModal
+              allowEmptySelection
               aiCardModalType={aiCardModalType}
               partner={partner}
               currentlySelectedCardIds={selectedCardIdsObj[aiCardModalType]}

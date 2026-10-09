@@ -153,12 +153,7 @@ export default function SelectAICardModal({
       title={headerLabel || 'AI Cards'}
       footer={
         <>
-          <Button
-            variant="ghost"
-            disabled={submitting}
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
-          >
+          <Button variant="ghost" disabled={submitting} onClick={onHide}>
             Cancel
           </Button>
           <Button

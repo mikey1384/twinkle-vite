@@ -20,6 +20,7 @@ export default function AppTransferModal({
   onHide: () => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const isOwner = Number(build.userId) === userId;
   const [partner, setPartner] = useState<UserSearchResult | null>(
     isOwner ? null : { id: build.userId, username: build.username }
@@ -54,7 +55,11 @@ export default function AppTransferModal({
               <Button variant="ghost" onClick={onHide}>
                 Cancel
               </Button>
-              <Button disabled={!partner} onClick={() => setStarted(true)}>
+              <Button
+                color={doneColor}
+                disabled={!partner}
+                onClick={() => setStarted(true)}
+              >
                 Continue
               </Button>
             </>
@@ -64,15 +69,23 @@ export default function AppTransferModal({
             <TradeBuilds builds={[build]} />
             <AppOwnershipNotice />
             <div
-              style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                gap: '1rem',
+                margin: '1.6rem 0'
+              }}
             >
               <Button
+                color={doneColor}
                 variant={mode === 'want' ? 'solid' : 'soft'}
                 onClick={() => setMode('want')}
               >
                 Sell or trade
               </Button>
               <Button
+                color={doneColor}
                 variant={mode === 'send' ? 'solid' : 'soft'}
                 onClick={() => setMode('send')}
               >

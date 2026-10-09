@@ -224,7 +224,8 @@ test(
         // The app-page handoff and chat inventory picker both use the same review.
         await page.evaluate(() => window.openFixture('app'));
         await button(page, 'Give as a gift').click();
-        await button(page, 'Choose Nova').click();
+        await page.getByPlaceholder('Search by username').fill('Nova');
+        await page.getByText('Nova', { exact: true }).click();
         await screenshot(page, `${label}-app-entry`);
         await button(page, 'Continue').click();
         await button(page, 'Review gift').click();
@@ -235,7 +236,7 @@ test(
           .getByRole('region', { name: 'You give', exact: true })
           .getByRole('button', { name: 'Apps', exact: true })
           .click();
-        await button(page, 'Choose Moon Garden').click();
+        await button(page, 'Select Moon Garden').click();
         await button(page, 'Done (1)').click();
         await button(page, 'Show items You keep everything').click();
         await button(page, 'Review showcase').click();
@@ -361,6 +362,195 @@ test(
         );
         assert.deepEqual(errors, []);
         await page.close();
+      }
+    } finally {
+      await browser?.close();
+    }
+  }
+);
+
+test(
+  'trade picker layout audit: full inventories, selected items, long names, pagination and small screens',
+  { timeout: 120000 },
+  async () => {
+    mkdirSync(artifacts, { recursive: true });
+    const html = await createTradePreviewPage();
+    let browser;
+    try {
+      browser = await chromium.launch();
+      for (const [label, width, height] of [
+        ['desktop', 1280, 900],
+        ['tablet', 768, 900],
+        ['mobile', 390, 844],
+        ['small-mobile', 320, 700]
+      ]) {
+        const page = await browser.newPage({ viewport: { width, height } });
+        page.setDefaultTimeout(7000);
+        const errors = [];
+        page.on('pageerror', (error) => errors.push(error.message));
+        await page.route('**/*', (route) =>
+          route.request().url().startsWith('http://localhost:3001')
+            ? route.fulfill({ contentType: 'text/html', body: html })
+            : route.abort()
+        );
+        await page.goto('http://localhost:3001/?view=apps');
+        const modal = dialog(page);
+        await button(modal, 'Select Moon Garden').waitFor();
+        await checkBounds('Done');
+        const rows = modal.locator('[data-selected]');
+        assert.equal(await rows.count(), 5);
+        for (const row of await rows.all()) {
+          const box = await row.boundingBox();
+          const control = await row.getByRole('button').boundingBox();
+          assert.ok(
+            control.x > box.x + box.width / 2,
+            'Selection control stays on the trailing edge of its app row'
+          );
+          assert.ok(
+            Math.abs(control.y + control.height / 2 - box.y - box.height / 2) <
+              2,
+            'App control and details share a vertical center'
+          );
+          assert.ok(
+            control.width < box.width * 0.4,
+            'Selection does not become a detached headline-sized button'
+          );
+          assert.equal(
+            await row.evaluate(
+              (element) => element.scrollWidth > element.clientWidth + 1
+            ),
+            false
+          );
+        }
+        await screenshot(page, `${label}-picker-apps`);
+        await button(modal, 'Select Moon Garden').click();
+        assert.equal(
+          await rows.count(),
+          5,
+          'Selecting does not insert a duplicate list above the results'
+        );
+        await button(modal, 'Load More').scrollIntoViewIfNeeded();
+        const moreBox = await button(modal, 'Load More').boundingBox();
+        const modalBox = await modal.boundingBox();
+        const lastRow = await rows.last().boundingBox();
+        assert.ok(
+          Math.abs(
+            moreBox.x + moreBox.width / 2 - modalBox.x - modalBox.width / 2
+          ) < 2,
+          'Pagination is centered'
+        );
+        assert.ok(
+          moreBox.y - lastRow.y - lastRow.height >= 12,
+          'Pagination has breathing room after the final row'
+        );
+        await screenshot(page, `${label}-picker-pagination`);
+        await button(modal, 'Load More').click();
+        await button(modal, 'Select Private Studio').waitFor();
+        await page.getByPlaceholder('Search apps').fill('Private Studio');
+        await page.waitForFunction(
+          () => document.querySelectorAll('[data-selected]').length === 1
+        );
+        await button(modal, 'Select Private Studio').click();
+        await modal
+          .getByRole('tab', { name: 'Selected (2)', exact: true })
+          .click();
+        assert.equal(await rows.count(), 2);
+        await checkBounds('Done (2)');
+        await screenshot(page, `${label}-picker-selected-apps`);
+        await button(modal, 'Done (2)').click();
+        assert.deepEqual(
+          await page.evaluate(() => window.selectedApps.map((app) => app.id)),
+          [21, 14]
+        );
+
+        await page.evaluate(() => window.openFixture('groups'));
+        await button(modal, 'Select Stargazers Guild').waitFor();
+        await checkBounds('Done');
+        await screenshot(page, `${label}-picker-groups`);
+        await button(modal, 'Select Stargazers Guild').click();
+        await button(modal, 'Load More').click();
+        await button(modal, 'Select Game Studio').click();
+        await page.getByPlaceholder('Search Groups...').fill('Weekend');
+        await button(modal, 'Select Weekend Adventures').click();
+        await modal
+          .locator('nav')
+          .filter({ hasText: /^Selected/ })
+          .click();
+        await button(modal, 'Remove Weekend Adventures').waitFor();
+        assert.equal(
+          await modal.getByRole('button', { name: /^Remove / }).count(),
+          3,
+          'Selected groups include searched and paginated items'
+        );
+        await screenshot(page, `${label}-picker-selected-groups`);
+        await button(modal, 'Done (3)').click();
+        assert.deepEqual(
+          await page.evaluate(() => window.selectedGroups),
+          [90, 85, 84]
+        );
+
+        await page.evaluate(() => window.openFixture('cards'));
+        await button(modal, 'Select card #59').waitFor();
+        await checkBounds('Done');
+        await button(modal, 'Select card #59').scrollIntoViewIfNeeded();
+        assert.ok(
+          (await button(modal, 'Select card #59').boundingBox()).height >= 39,
+          'Card selection remains easy to tap on small screens'
+        );
+        await screenshot(page, `${label}-picker-cards`);
+        await button(modal, 'Select card #59').click();
+        await button(modal, 'Load More').click();
+        await button(modal, 'Select card #42').click();
+        await modal
+          .locator('nav')
+          .filter({ hasText: /^Selected/ })
+          .click();
+        await button(modal, 'Remove card #42').waitFor();
+        const cards = modal.getByRole('button', { name: /^Remove card/ });
+        assert.equal(await cards.count(), 2);
+        await checkBounds('Done');
+        await screenshot(page, `${label}-picker-selected-cards`);
+        await button(modal, 'Done').click();
+        assert.deepEqual(
+          await page.evaluate(() => window.selectedCards),
+          [59, 42]
+        );
+        assert.deepEqual(errors, []);
+        await page.close();
+
+        async function checkBounds(doneLabel) {
+          await modal.evaluate((element) =>
+            Promise.all(
+              element
+                .getAnimations({ subtree: true })
+                .filter(
+                  (animation) =>
+                    animation.effect?.getTiming().iterations !== Infinity
+                )
+                .map((animation) => animation.finished.catch(() => {}))
+            )
+          );
+          const rootBox = await modal.boundingBox();
+          const done = await button(modal, doneLabel).boundingBox();
+          assert.ok(
+            rootBox.x >= -1 &&
+              rootBox.y >= -1 &&
+              rootBox.x + rootBox.width <= width + 1 &&
+              rootBox.y + rootBox.height <= height + 1,
+            'Dialog stays inside the viewport'
+          );
+          assert.ok(
+            done.y + done.height <= height && done.height >= 43,
+            'Footer remains visible with the standard touch target'
+          );
+          assert.equal(
+            await modal.evaluate(
+              (element) => element.scrollWidth > element.clientWidth + 1
+            ),
+            false,
+            'No horizontal overflow'
+          );
+        }
       }
     } finally {
       await browser?.close();

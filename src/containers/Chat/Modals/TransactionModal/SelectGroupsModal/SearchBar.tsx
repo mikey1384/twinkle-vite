@@ -18,7 +18,7 @@ export default function SearchBar({
       value={search}
       onChange={onChange}
       className={css`
-        width: 70%;
+        width: 100%;
         margin-bottom: 1rem;
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;

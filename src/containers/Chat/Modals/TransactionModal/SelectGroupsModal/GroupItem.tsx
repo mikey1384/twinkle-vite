@@ -33,8 +33,21 @@ export default function GroupItem({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`${isSelected || isSelectedTabActive ? 'Remove' : 'Select'} ${group.channelName}`}
+      aria-pressed={!!(isSelected || isSelectedTabActive)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          isSelected || isSelectedTabActive
+            ? onDeselect?.(group.id)
+            : onSelect?.(group.id);
+        }
+      }}
       className={css`
         display: flex;
+        min-width: 0;
         align-items: center;
         padding: 1rem;
         cursor: pointer;
@@ -43,11 +56,13 @@ export default function GroupItem({
           ${isSelected ? Color[profileTheme]() : 'var(--ui-border)'};
         transform: ${isSelected ? 'scale(1.02)' : 'scale(1)'};
         &:hover {
-          ${!noHoverEffect &&
-          `
+          ${
+            !noHoverEffect &&
+            `
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             transform: ${isSelected ? 'scale(1.02)' : 'scale(1.01)'};
-          `}
+          `
+          }
         }
         @keyframes popIn {
           0% {
@@ -110,6 +125,8 @@ export default function GroupItem({
       <div
         className={css`
           flex-grow: 1;
+          min-width: 0;
+          overflow-wrap: anywhere;
           opacity: ${isSelected ? 1 : 0.8};
           transition: opacity 0.2s;
         `}
@@ -118,6 +135,8 @@ export default function GroupItem({
           className={css`
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 0.4rem;
             margin-bottom: 0.3rem;
           `}
         >

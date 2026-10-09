@@ -1,9 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Input from '~/components/Texts/Input';
+import Icon from '~/components/Icon';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import SearchInput from '~/components/Texts/SearchInput';
+import FilterBar from '~/components/FilterBar';
 import TradeBuilds, { type TradeBuild } from '~/components/Build/TradeBuilds';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function SelectBuildsModal({
   partnerId,
@@ -21,7 +25,9 @@ export default function SelectBuildsModal({
   const loadBuildsForTrade = useAppContext(
     (v) => v.requestHelpers.loadBuildsForTrade
   );
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [selection, setSelection] = useState(selected);
+  const [selectedTab, setSelectedTab] = useState(false);
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<TradeBuild[]>([]);
   const [more, setMore] = useState(false);
@@ -31,15 +37,16 @@ export default function SelectBuildsModal({
   useEffect(() => {
     const current = ++sequence.current;
     setLoading(true);
-    const timer = window.setTimeout(() => {
-      void load(0, current);
-    }, 200);
+    setResults([]);
+    setMore(false);
+    const timer = window.setTimeout(() => void load(0, current), 200);
     return () => {
       window.clearTimeout(timer);
       sequence.current = current + 1;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partnerId, search, type]);
+  const visibleBuilds = selectedTab ? selection : results;
 
   return (
     <Modal
@@ -53,61 +60,167 @@ export default function SelectBuildsModal({
           <Button variant="ghost" onClick={onHide}>
             Cancel
           </Button>
-          <Button onClick={() => onDone(selection)}>
+          <Button color={doneColor} onClick={() => onDone(selection)}>
             Done{selection.length ? ` (${selection.length})` : ''}
           </Button>
         </>
       }
     >
-      <div style={{ width: '100%', minWidth: 0 }}>
-        <Input value={search} placeholder="Search apps" onChange={setSearch} />
-        <p style={{ fontSize: '1.2rem' }}>
+      <div
+        className={css`
+          width: 100%;
+          min-width: 0;
+          .picker-hint {
+            margin: 1rem 0 0;
+            color: #617087;
+            font-size: 1.2rem;
+            line-height: 1.6;
+          }
+          .picker-results {
+            min-height: 16rem;
+          }
+          .picker-empty {
+            min-height: 16rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            color: #617087;
+            font-size: 1.4rem;
+          }
+          .picker-pagination {
+            margin-top: 2rem;
+            padding-bottom: 0.4rem;
+          }
+          .picker-select {
+            min-width: 9rem;
+            min-height: 3.6rem;
+          }
+          @media (max-width: 767px) {
+            .picker-select {
+              min-width: 8rem;
+              min-height: 40px;
+            }
+          }
+        `}
+      >
+        <SearchInput
+          value={search}
+          placeholder="Search apps"
+          onChange={setSearch}
+        />
+        <p className="picker-hint">
           {type === 'offer'
             ? 'Choose apps you own.'
-            : 'Choose an app to ask its owner for.'}{' '}
+            : 'Choose apps to ask their owner for.'}{' '}
           Team branches stay with their contributors.
         </p>
-        {selection.length > 0 && (
-          <TradeBuilds
-            builds={selection}
-            onRemove={(id) =>
-              setSelection((current) => current.filter((app) => app.id !== id))
-            }
-          />
-        )}
-        {error && <p role="alert">{error}</p>}
-        <div style={{ display: 'grid', gap: '1rem', marginTop: '1.5rem' }}>
-          {results.map((build) => (
-            <div key={build.id}>
-              <TradeBuilds builds={[build]} />
-              <Button
-                style={{ marginTop: '0.5rem' }}
-                disabled={
-                  selection.some((app) => app.id === build.id) ||
-                  selection.length >= 20
-                }
-                onClick={() => setSelection((current) => [...current, build])}
-              >
-                {selection.some((app) => app.id === build.id)
-                  ? 'Selected'
-                  : `Choose ${build.title}`}
-              </Button>
-            </div>
-          ))}
-        </div>
-        {loading && <p role="status">Loading apps…</p>}
-        {!loading && !error && !results.length && <p>No apps found.</p>}
-        {more && (
-          <Button
-            disabled={loading}
-            onClick={() => void load(results.at(-1)?.id || 0, sequence.current)}
+        <FilterBar style={{ marginBottom: '1.6rem' }}>
+          <nav
+            role="tab"
+            aria-selected={!selectedTab}
+            tabIndex={0}
+            className={selectedTab ? '' : 'active'}
+            onClick={() => setSelectedTab(false)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setSelectedTab(false);
+              }
+            }}
           >
-            Load more
-          </Button>
+            All apps
+          </nav>
+          <nav
+            role="tab"
+            aria-selected={selectedTab}
+            tabIndex={0}
+            className={selectedTab ? 'active' : ''}
+            onClick={() => setSelectedTab(true)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setSelectedTab(true);
+              }
+            }}
+          >
+            Selected{selection.length ? ` (${selection.length})` : ''}
+          </nav>
+        </FilterBar>
+        {error && (
+          <p role="alert" className="picker-hint">
+            {error}
+          </p>
+        )}
+        {selection.length >= 20 && (
+          <p className="picker-hint">
+            20 apps selected. Remove one to choose another.
+          </p>
+        )}
+        <div className="picker-results">
+          <TradeBuilds
+            builds={visibleBuilds}
+            selectedIds={selection.map((app) => app.id)}
+            renderAction={(build) => {
+              const isSelected = selection.some((app) => app.id === build.id);
+              return (
+                <Button
+                  className="picker-select"
+                  color={doneColor}
+                  variant={isSelected ? 'solid' : 'soft'}
+                  uppercase={false}
+                  aria-label={`${isSelected ? 'Remove' : 'Select'} ${build.title}`}
+                  aria-pressed={isSelected}
+                  disabled={!isSelected && selection.length >= 20}
+                  onClick={() => handleToggle(build)}
+                >
+                  {isSelected && (
+                    <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+                  )}
+                  {isSelected ? 'Selected' : 'Select'}
+                </Button>
+              );
+            }}
+          />
+          {!visibleBuilds.length && (
+            <div
+              className="picker-empty"
+              role={loading && !selectedTab ? 'status' : undefined}
+            >
+              {selectedTab
+                ? 'No apps selected yet.'
+                : loading
+                  ? 'Loading apps…'
+                  : error
+                    ? 'Try searching again.'
+                    : 'No apps found.'}
+            </div>
+          )}
+        </div>
+        {!selectedTab && more && (
+          <div className="picker-pagination">
+            <LoadMoreButton
+              loading={loading}
+              onClick={() =>
+                void load(results.at(-1)?.id || 0, sequence.current)
+              }
+            />
+          </div>
         )}
       </div>
     </Modal>
   );
+
+  function handleToggle(build: TradeBuild) {
+    setSelection((current) =>
+      current.some((app) => app.id === build.id)
+        ? current.filter((app) => app.id !== build.id)
+        : current.length < 20
+          ? [...current, build]
+          : current
+    );
+  }
 
   async function load(lastId: number, current: number) {
     setLoading(true);

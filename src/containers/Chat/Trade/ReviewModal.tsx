@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import { AppOwnershipNotice } from '~/components/Build/TradeBuilds';
 import Exchange from './Exchange';
 import { summarizeBundle } from './helpers/terms';
-import { errorClass, noticeClass } from './styles';
+import { errorClass, noticeClass, footerActionsClass } from './styles';
 import type { TradeReview } from './types';
 
 export default function ReviewModal({
@@ -87,14 +87,7 @@ export default function ReviewModal({
               </span>
             )}
           </div>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end',
-              gap: '1rem'
-            }}
-          >
+          <div className={footerActionsClass}>
             <Button
               variant="ghost"
               disabled={submitting || isAICardModalShown}

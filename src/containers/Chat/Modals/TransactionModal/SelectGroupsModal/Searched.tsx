@@ -16,6 +16,7 @@ export default function Searched({
   type,
   partnerId,
   groupObjs,
+  onSetGroupObjs,
   searchedGroups,
   setSearchedGroups,
   searching
@@ -29,6 +30,7 @@ export default function Searched({
   type: string;
   partnerId: number;
   groupObjs: Record<number, any>;
+  onSetGroupObjs: React.Dispatch<React.SetStateAction<Record<number, any>>>;
   searchedGroups: number[];
   setSearchedGroups: React.Dispatch<React.SetStateAction<number[]>>;
   searching: boolean;
@@ -47,7 +49,7 @@ export default function Searched({
       });
       const newGroupIds = results.map((group: { id: number }) => group.id);
       setSearchedGroups((prev) => [...prev, ...newGroupIds]);
-      Object.assign(groupObjs, objectify(results));
+      onSetGroupObjs((previous) => ({ ...previous, ...objectify(results) }));
       onSetLoadMoreShown(loadMoreShown);
     } catch (error) {
       console.error(error);
@@ -83,8 +85,8 @@ export default function Searched({
       className={css`
         width: 100%;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.4rem;
         @media (max-width: 768px) {
           grid-template-columns: 1fr;
         }
@@ -108,7 +110,7 @@ export default function Searched({
       {loadMoreShown && (
         <div
           className={css`
-            margin-top: 0.5rem;
+            margin-top: 1rem;
             grid-column: 1 / -1;
             display: flex;
             justify-content: center;
@@ -119,7 +121,6 @@ export default function Searched({
             loading={loadingMore}
             filled
             onClick={handleLoadMore}
-            style={{ marginTop: '1rem' }}
           />
         </div>
       )}

@@ -1,4 +1,25 @@
 import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
+
+export const footerActionsClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  > button {
+    min-height: 44px;
+    min-width: 44px;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    > button {
+      font-size: 14px;
+    }
+  }
+`;
 
 export const exchangeGrid = css`
   display: grid;

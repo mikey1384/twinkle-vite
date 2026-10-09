@@ -26,7 +26,7 @@ export default function CardItem({
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         flexDirection: 'column',
         padding: '1rem',
         boxShadow: selected ? `0 0 5px ${successColor}` : '',
@@ -34,11 +34,13 @@ export default function CardItem({
         borderRadius
       }}
       className={css`
-        margin: 0.3%;
-        width: 16%;
+        width: calc((100% - 6rem) / 6);
+        min-width: 0;
         @media (max-width: ${mobileMaxWidth}) {
-          margin: 1%;
-          width: 30%;
+          width: calc((100% - 2.4rem) / 3);
+        }
+        .card-selection {
+          min-height: 40px;
         }
       `}
     >
@@ -59,14 +61,18 @@ export default function CardItem({
       </div>
       <div style={{ marginTop: '1rem' }}>
         <Button
+          className="card-selection"
+          aria-label={`${selected ? 'Remove' : 'Select'} card #${card.id}`}
+          aria-pressed={selected}
+          uppercase={false}
           color={selected ? successColor : 'black'}
           variant={selected ? 'solid' : 'soft'}
           tone="raised"
           mobilePadding="0.5rem"
           onClick={selected ? onDeselect : onSelect}
         >
-          <Icon icon="check" />
-          <span style={{ marginLeft: '0.7rem' }}>
+          {selected && <Icon icon="check" />}
+          <span style={{ marginLeft: selected ? '0.7rem' : 0 }}>
             Select{selected ? 'ed' : ''}
           </span>
         </Button>

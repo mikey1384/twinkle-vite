@@ -4,6 +4,7 @@ import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { objectify } from '~/helpers';
 
 export default function Main({
   groups,
@@ -11,6 +12,7 @@ export default function Main({
   loadMoreShown,
   loadGroupsForTrade,
   onSetGroups,
+  onSetGroupObjs,
   onSetLoadMoreShown,
   selectedGroupIds,
   onSetSelectedGroupIds,
@@ -23,6 +25,7 @@ export default function Main({
   loadMoreShown: boolean;
   loadGroupsForTrade: (v: any) => any;
   onSetGroups: (v: any) => void;
+  onSetGroupObjs: React.Dispatch<React.SetStateAction<Record<number, any>>>;
   onSetLoadMoreShown: (v: boolean) => void;
   selectedGroupIds: number[];
   onSetSelectedGroupIds: (v: any) => void;
@@ -59,8 +62,8 @@ export default function Main({
       className={css`
         width: 100%;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.4rem;
         @media (max-width: 768px) {
           grid-template-columns: 1fr;
         }
@@ -84,7 +87,7 @@ export default function Main({
       {loadMoreShown && (
         <div
           className={css`
-            margin-top: 0.5rem;
+            margin-top: 1rem;
             grid-column: 1 / -1;
             display: flex;
             justify-content: center;
@@ -111,6 +114,7 @@ export default function Main({
         lastId: lastGroupId
       });
       onSetGroups((prevGroups: any[]) => [...prevGroups, ...results]);
+      onSetGroupObjs((previous) => ({ ...previous, ...objectify(results) }));
       onSetLoadMoreShown(loadMoreShown);
     } catch (error) {
       console.error(error);
