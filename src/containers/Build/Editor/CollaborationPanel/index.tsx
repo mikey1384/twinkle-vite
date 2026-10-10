@@ -10,6 +10,7 @@ import { useContributionInviteStatusUpdater } from '~/helpers/hooks/useContribut
 import { normalizeBuildCollaborationMode } from '~/helpers/buildProjectHelpers';
 import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
 import BranchSubmitToOwnerPanel from '../BranchSubmitToOwnerPanel';
+import { getBranchSubmitToOwnerTarget } from '~/helpers/branchSubmitToOwnerHelpers';
 import ContributionDetail from './ContributionDetail';
 import Forum from './Forum';
 import OwnerContributionsPanel from './OwnerContributionsPanel';
@@ -1099,32 +1100,18 @@ export default function CollaborationPanel({
   // the branch needs attention (drift, conflicts, errors), and handing work to
   // the owner is exactly what a contributor does on a perfectly healthy branch.
   function renderSubmitToOwnerPanel() {
-    if (!isContributionFork) return null;
-    const isBranchContributor =
-      Number(build.contributionContributorId || 0) === Number(userId || 0);
-    const isRootOwner =
-      Number(build.rootBuildUserId || 0) === Number(userId || 0);
-    if (!isBranchContributor || isRootOwner) return null;
-    // Both halves, the same pair the notify-owner route enforces. The delta
-    // alone is not enough: merging rewrites the branch's base files to the
-    // merged Main file set without touching the branch's own files, so a merged
-    // branch grows a delta again as soon as Main moves on by itself, made up of
-    // Main-only files the branch never deleted. Offering to send that hands the
-    // owner work that is already in, described as deletions.
-    const branchStatus = normalizeContributionStatus(build.contributionStatus);
-    const isBranchOpen =
-      branchStatus !== 'merged' && branchStatus !== 'merging';
+    const target = getBranchSubmitToOwnerTarget({ build, userId });
+    if (!target) return null;
     return (
       <BranchSubmitToOwnerPanel
-        rootBuildId={rootBuildId}
-        branchBuildId={Number(build.id || 0)}
-        hasWorkToSend={
-          isBranchOpen && Boolean(String(build.contributionRevisionHash || ''))
-        }
-        revisionHash={build.contributionRevisionHash}
-        ownerUserId={build.rootBuildUserId}
-        ownerProfilePicUrl={build.rootBuildProfilePicUrl}
-        ownerUsername={build.rootBuildUsername}
+        rootBuildId={target.rootBuildId}
+        branchBuildId={target.branchBuildId}
+        hasWorkToSend={target.hasWorkToSend}
+        revisionHash={target.revisionHash}
+        ownerUserId={target.ownerUserId}
+        ownerProfilePicUrl={target.ownerProfilePicUrl}
+        ownerUsername={target.ownerUsername}
+        submittedAt={target.submittedAt}
       />
     );
   }

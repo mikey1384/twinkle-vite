@@ -343,6 +343,9 @@ export interface ChatPanelProps {
   className?: string;
   workshopScale?: number;
   preferredCommunicationMode?: ChatPanelCommunicationMode;
+  // The open workspace build. On a contribution branch its author gets the
+  // "Send to <owner>" strip above the message box.
+  branchSendToOwnerBuild?: any;
   onCommunicationModeChange?: (mode: ChatPanelCommunicationMode) => void;
   communicationScrollTops?: Partial<Record<ChatPanelCommunicationMode, number>>;
   onCommunicationScrollChange?: (

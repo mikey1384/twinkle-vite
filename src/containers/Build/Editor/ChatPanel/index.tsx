@@ -25,6 +25,7 @@ import { resolveChatStickToBottom } from '../helpers/chatStickToBottom';
 import { LUMINE_MODE_LABELS } from '../helpers/lumineModelSelection';
 import { resolveLumineEnergyPreflight } from '../helpers/lumineEnergySteps';
 import { type ChatPanelCommunicationMode, type ChatPanelProps } from './types';
+import BranchSendToOwnerStrip from './BranchSendToOwnerStrip';
 import { buildLumineRuntimeDebugSnapshot } from './helpers/runtimeDebug';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
@@ -236,6 +237,7 @@ export default function ChatPanel({
   lumineModelSelectionControl,
   mainUpdateNoticeControl,
   threeUpgradeNoticeControl,
+  branchSendToOwnerBuild,
   messages,
   executionPlan,
   scopedPlanQuestion,
@@ -1055,6 +1057,7 @@ export default function ChatPanel({
               onDeleteMessage={onDeleteMessage}
             />
           </div>
+          <BranchSendToOwnerStrip build={branchSendToOwnerBuild} />
           <Composer
             AI_FEATURES_DISABLED={AI_FEATURES_DISABLED}
             aiInputDisabled={aiInputDisabled}

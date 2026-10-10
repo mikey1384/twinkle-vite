@@ -1989,6 +1989,7 @@ export default function BuildEditor({
       ? lumineModelSelectionControl
       : null,
     mainUpdateNoticeControl: branchMainUpdateNoticeControl,
+    branchSendToOwnerBuild: build,
     threeUpgradeNoticeControl:
       canEditCurrentBuildProject &&
       !threeUpgradeNoticeDismissed &&

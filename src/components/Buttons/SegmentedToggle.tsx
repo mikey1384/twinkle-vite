@@ -7,6 +7,8 @@ interface SegmentedToggleOption<Value extends string> {
   label: string;
   icon?: string;
   disabled?: boolean;
+  // A small dot on the tab: something is waiting for the viewer there.
+  attention?: { icon: string; label: string } | null;
 }
 
 interface SegmentedToggleProps<Value extends string> {
@@ -48,7 +50,11 @@ export default function SegmentedToggle<Value extends string>({
             role="tab"
             type="button"
             aria-selected={selected}
-            aria-label={option.label}
+            aria-label={
+              option.attention
+                ? `${option.label} (${option.attention.label})`
+                : option.label
+            }
             tabIndex={selected ? 0 : -1}
             disabled={optionDisabled}
             className={getOptionClass({ selected, size })}
@@ -56,6 +62,11 @@ export default function SegmentedToggle<Value extends string>({
           >
             {option.icon ? <Icon icon={option.icon} /> : null}
             <span>{option.label}</span>
+            {option.attention ? (
+              <span className={attentionDotClass} aria-hidden="true">
+                <Icon icon={option.attention.icon} />
+              </span>
+            ) : null}
           </button>
         );
       })}
@@ -110,6 +121,7 @@ function getOptionClass({
   const hoverTransform = selected ? 'translateY(2px)' : 'translateY(1px)';
 
   return css`
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -155,6 +167,24 @@ function getOptionClass({
     }
   `;
 }
+
+const attentionDotClass = css`
+  position: absolute;
+  top: -0.55rem;
+  right: -0.3rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #418ceb;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.25);
+  pointer-events: none;
+`;
 
 function handleOptionClick<Value extends string>(
   disabled: boolean,

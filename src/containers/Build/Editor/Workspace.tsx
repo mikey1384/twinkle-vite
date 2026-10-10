@@ -22,6 +22,7 @@ import {
   MIN_BUILD_CHAT_PANEL_WIDTH
 } from './constants';
 import type { MobilePanelTab, MobilePanelTabIntent } from './types';
+import useBranchSendToOwner from './useBranchSendToOwner';
 
 const panelShellClass = css`
   display: grid;
@@ -192,15 +193,29 @@ export default function Workspace({
   );
   const mainProjectNavigationShown =
     Boolean(showMainProjectNavigation) && Boolean(onOpenMainProject);
-  const mobilePanelOptions = getMobilePanelOptions({
+  const branchSend = useBranchSendToOwner(chatPanelProps.branchSendToOwnerBuild);
+  const baseMobilePanelOptions = getMobilePanelOptions({
     communicationPanelShown,
     chatPanelProps
   });
-  const activeMobilePanelTab = mobilePanelOptions.some(
+  const activeMobilePanelTab = baseMobilePanelOptions.some(
     (option) => option.value === mobilePanelTab
   )
     ? mobilePanelTab
-    : mobilePanelOptions[0]?.value || 'preview';
+    : baseMobilePanelOptions[0]?.value || 'preview';
+  // Phone shows one panel at a time, so the Send strip under Lumine's reply
+  // is out of sight on the other tabs. A dot on the Lumine tab leads back to
+  // it until the saved work has been sent.
+  const mobilePanelOptions = baseMobilePanelOptions.map((option) =>
+    option.value === 'lumine' &&
+    branchSend.waitingToSend &&
+    activeMobilePanelTab !== 'lumine'
+      ? {
+          ...option,
+          attention: { icon: 'paper-plane', label: 'update ready to send' }
+        }
+      : option
+  );
   const showChatPanel =
     communicationPanelShown &&
     (isDesktopWorkspaceLayout ||

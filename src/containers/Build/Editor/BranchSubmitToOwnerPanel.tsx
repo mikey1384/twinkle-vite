@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { css, cx } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
@@ -8,7 +8,10 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import {
   getBranchSubmitOwnerCopy,
-  getBranchSubmitOwnerPresence
+  getBranchSubmitOwnerPresence,
+  getBranchSubmitReceipt,
+  recordBranchSubmitReceipt,
+  subscribeBranchSubmitReceipts
 } from '~/helpers/branchSubmitToOwnerHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 
@@ -22,7 +25,9 @@ export default function BranchSubmitToOwnerPanel({
   revisionHash,
   ownerUserId,
   ownerProfilePicUrl,
-  ownerUsername
+  ownerUsername,
+  submittedAt = 0,
+  className
 }: {
   rootBuildId: number;
   branchBuildId: number;
@@ -31,6 +36,8 @@ export default function BranchSubmitToOwnerPanel({
   ownerUserId?: number | null;
   ownerProfilePicUrl?: string | null;
   ownerUsername?: string | null;
+  submittedAt?: number;
+  className?: string;
 }) {
   const normalizedOwnerUserId = Number(ownerUserId || 0);
   const ownerChatStatus = useChatContext(
@@ -41,16 +48,17 @@ export default function BranchSubmitToOwnerPanel({
   );
   const [note, setNote] = useState('');
   const [sending, setSending] = useState(false);
-  const [sentAt, setSentAt] = useState(0);
   const [error, setError] = useState('');
+  // "Sent" describes one particular set of changes, so it cannot outlive them:
+  // the receipt is keyed on the work's own identity (branch + revision hash),
+  // which is exactly what changes when there is something new to send. Shared
+  // with the header's send button so both say the same thing.
+  const receiptSentAt = useSyncExternalStore(subscribeBranchSubmitReceipts, () =>
+    getBranchSubmitReceipt({ branchBuildId, revisionHash })
+  );
+  const sentAt = receiptSentAt || submittedAt;
 
-  // "Sent" describes one particular set of changes, so it cannot outlive them.
-  // The panel hides itself by returning null rather than unmounting, so without
-  // this the confirmation survives a save or a reset and claims work was handed
-  // over that never was. Keyed on the work's own identity, which is exactly what
-  // changes when there is something new to send.
   useEffect(() => {
-    setSentAt(0);
     setError('');
   }, [revisionHash, branchBuildId]);
 
@@ -63,7 +71,7 @@ export default function BranchSubmitToOwnerPanel({
   const ownerPresence = getBranchSubmitOwnerPresence(ownerChatStatus);
 
   return (
-    <div className={panelClass} aria-live="polite">
+    <div className={cx(panelClass, className)} aria-live="polite">
       <div className={headingClass}>
         <div className={iconClass} aria-hidden="true">
           <Icon icon="paper-plane" />
@@ -153,7 +161,11 @@ export default function BranchSubmitToOwnerPanel({
         setError('Failed to send your changes.');
         return;
       }
-      setSentAt(canonicalSentAt);
+      recordBranchSubmitReceipt({
+        branchBuildId,
+        revisionHash,
+        sentAt: canonicalSentAt
+      });
       setNote('');
     } catch (err: any) {
       setError(
