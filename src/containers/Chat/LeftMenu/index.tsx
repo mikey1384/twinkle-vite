@@ -9,6 +9,7 @@ import CrewHubPanel from '../CrewChat/CrewHubPanel';
 import ChatQuickAccess from './QuickAccess';
 import ChatFlatButton from '../FlatButton';
 import Layout from './Layout';
+import WorkshopMenuNote, { useWorkshopMenuNote } from './WorkshopMenuNote';
 import { getTopicNavigation } from './helpers/topicNavigation';
 import { COMPACT_CONTROLS_MEDIA_QUERY } from '../constants/layout';
 import { css } from '@emotion/css';
@@ -22,6 +23,7 @@ import { matchPath, useNavigate, useLocation } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 export default function LeftMenu({
+  aiPersona = null,
   channelName,
   currentChannel,
   currentPathId,
@@ -36,6 +38,7 @@ export default function LeftMenu({
   subchannelPath,
   onSetTopicSelectorModalShown
 }: {
+  aiPersona?: 'zero' | 'ciel' | null;
   channelName: string;
   currentChannel: any;
   currentPathId: string | number;
@@ -113,6 +116,11 @@ export default function LeftMenu({
     topicNavigation.isVisible &&
     selectedChannelId === currentChannel?.id &&
     selectedChannelId !== GENERAL_CHAT_ID;
+  // Lumine Workshop help happens in the Zero and Ciel chats, so its one note
+  // sits in their left menu, below the topics.
+  const workshopNote = useWorkshopMenuNote(
+    !chatType && selectedChannelId === currentChannel?.id ? aiPersona : null
+  );
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu">
@@ -180,7 +188,10 @@ export default function LeftMenu({
           </>
         }
         channelNavigation={
-          crewHubId > 0 || subchannelsShown || isTopicMenuAvailable ? (
+          crewHubId > 0 ||
+          subchannelsShown ||
+          isTopicMenuAvailable ||
+          workshopNote ? (
             <>
               {crewHubId > 0 ? <CrewHubPanel crewId={crewHubId} /> : null}
               {subchannelsShown ? (
@@ -208,6 +219,9 @@ export default function LeftMenu({
                   onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
                   pathId={String(currentChannel?.pathId)}
                 />
+              ) : null}
+              {workshopNote ? (
+                <WorkshopMenuNote note={workshopNote} />
               ) : null}
             </>
           ) : null

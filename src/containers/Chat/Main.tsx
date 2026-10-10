@@ -1151,6 +1151,13 @@ export default function Main({
                 />
               )}
               <LeftMenu
+                aiPersona={
+                  partner?.id === CIEL_TWINKLE_ID
+                    ? 'ciel'
+                    : partner?.id === ZERO_TWINKLE_ID
+                      ? 'zero'
+                      : null
+                }
                 channelName={currentChannelName}
                 currentPathId={currentPathId}
                 currentChannel={currentChannel}

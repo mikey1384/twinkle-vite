@@ -149,7 +149,10 @@ function PinnedTopics({
             border-radius: 10px;
             display: flex;
             flex-direction: column;
-            flex: 1 1 auto;
+            /* Only as tall as its topics, so the add/manage button sits right
+               under the last one; with many topics the list scrolls and the
+               button stays in view. */
+            flex: 0 1 auto;
             min-height: 0;
             padding: 0.5rem 0;
             margin-inline: 1rem;
@@ -163,7 +166,7 @@ function PinnedTopics({
           tabIndex={0}
           className={css`
             width: 100%;
-            flex: 1 1 auto;
+            flex: 0 1 auto;
             min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
