@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 import {
   MEETUP_CREW_MIN_MEMBERS,
@@ -16,6 +18,9 @@ const keyOf = (value: string) =>
 
 // Shared by start, join and edit. Non-Twinkle members explicitly opt out of a
 // branch; a new Twinkle branch name still needs the administrator's approval.
+// Former Twinkle students count as Twinkle students, so "Not a Twinkle
+// student" first asks whether they ever were one: a former student picks the
+// branch they went to instead.
 export default function BranchField({
   id,
   value,
@@ -37,6 +42,11 @@ export default function BranchField({
   );
   const [choices, setChoices] = useState<BranchChoices | null>(null);
   const [othersClicked, setOthersClicked] = useState(false);
+  // 'asking': "Not a Twinkle student" was picked and awaits the follow-up;
+  // 'former': they used to be a student and now choose their old branch.
+  const [formerCheck, setFormerCheck] = useState<'asking' | 'former' | null>(
+    null
+  );
 
   useEffect(() => {
     let active = true;
@@ -60,12 +70,15 @@ export default function BranchField({
   );
   const hasOptions = !!choices?.official.length;
   // Keep the non-student choice available even if the branch list fails to load.
+  const asking = formerCheck === 'asking';
   const otherActive =
     !notStudent &&
+    !asking &&
     (!hasOptions ||
       othersClicked ||
       (!!selectedKey && !officialKeys.includes(selectedKey)));
-  const selectValue = notStudent
+  const selectValue =
+    notStudent || asking
     ? MEETUP_NON_STUDENT_BRANCH
     : otherActive
       ? '__other__'
@@ -82,6 +95,15 @@ export default function BranchField({
         value={selectValue}
         onChange={(event) => {
           const next = event.target.value;
+          if (next === MEETUP_NON_STUDENT_BRANCH) {
+            // Nothing is chosen until they answer, so the form cannot be
+            // submitted with the previous branch still set.
+            setOthersClicked(false);
+            setFormerCheck('asking');
+            if (selectedKey) onChange('');
+            return;
+          }
+          setFormerCheck((current) => (current === 'former' ? current : null));
           if (next === '__other__') {
             setOthersClicked(true);
             if (notStudent || officialKeys.includes(selectedKey)) onChange('');
@@ -105,6 +127,41 @@ export default function BranchField({
         </option>
         <option value="__other__">My Twinkle branch is not listed</option>
       </select>
+      {asking && (
+        <div className={formerQuestionClass} role="group" aria-label="Former student check">
+          <strong>Have you ever been a Twinkle student?</strong>
+          <span>Former Twinkle students count as Twinkle students.</span>
+          <div className={formerButtonsClass}>
+            <Button
+              color="logoBlue"
+              variant="soft"
+              onClick={() => {
+                setFormerCheck('former');
+                trackMeetupQuestView('branch_former_student');
+              }}
+            >
+              Yes, I used to be
+            </Button>
+            <Button
+              color="darkerGray"
+              variant="soft"
+              onClick={() => {
+                setFormerCheck(null);
+                trackMeetupQuestView('branch_never_student');
+                onChange(MEETUP_NON_STUDENT_BRANCH);
+              }}
+            >
+              No, never
+            </Button>
+          </div>
+        </div>
+      )}
+      {formerCheck === 'former' && !notStudent && !selectedKey && (
+        <div className={formerNoteClass} role="status">
+          Great, you count as a Twinkle student. Choose the branch you went to
+          above (or “My Twinkle branch is not listed”).
+        </div>
+      )}
       {otherActive && (
         <input
           id={`${id}-other`}
@@ -130,12 +187,49 @@ export default function BranchField({
         />
       )}
       <div className={questHelpClass}>
-        Choose your Twinkle branch or “Not a Twinkle student.” Non-Twinkle
-        members are welcome; each crew needs at least {MEETUP_CREW_MIN_MEMBERS}{' '}
-        Twinkle students.
+        Choose your Twinkle branch or “Not a Twinkle student.” Former students
+        choose the branch they went to. Non-Twinkle members are welcome; each
+        crew needs at least {MEETUP_CREW_MIN_MEMBERS} Twinkle students.
         {otherActive && ' The administrator approves new branch names.'}
         {help && ` ${help}`}
       </div>
     </div>
   );
 }
+
+const formerQuestionClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+  padding: 0.9rem 1rem;
+  border: 2px solid rgba(65, 140, 235, 0.45);
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #172554;
+  font-size: 1.3rem;
+  strong {
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+  span {
+    color: #475569;
+  }
+`;
+
+const formerButtonsClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+`;
+
+const formerNoteClass = css`
+  margin-top: 0.7rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 1.3rem;
+  font-weight: 700;
+`;
