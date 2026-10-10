@@ -806,6 +806,8 @@ export default function contentRequestHelpers({
       filter = 'all',
       order = 'desc',
       orderBy = 'lastInteraction',
+      searchBeforeId,
+      searchText,
       username,
       signal
     }: {
@@ -819,6 +821,10 @@ export default function contentRequestHelpers({
       filter?: string;
       order?: string;
       orderBy?: string;
+      // Only with username: words that must all appear in the member's post.
+      searchText?: string;
+      // Next search page: the nextCursor.searchBeforeId of the previous one.
+      searchBeforeId?: number;
       username?: string;
       signal?: AbortSignal;
     } = {}) {
@@ -830,6 +836,12 @@ export default function contentRequestHelpers({
         });
         if (username) {
           params.set('username', username);
+          if (searchText?.trim()) {
+            params.set('searchText', searchText.trim());
+            if (searchBeforeId) {
+              params.set('searchBeforeId', String(searchBeforeId));
+            }
+          }
         }
         if (isRecommended) {
           params.set('isRecommended', '1');
@@ -871,7 +883,11 @@ export default function contentRequestHelpers({
               : {})
           }
         );
-        return { data: withFeedRowsObservedAt(data, observedAt), filter };
+        return {
+          data: withFeedRowsObservedAt(data, observedAt),
+          filter,
+          searchText: searchText?.trim() || ''
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1405,24 +1421,45 @@ export default function contentRequestHelpers({
       filter = 'all',
       lastFeedId,
       lastTimeStamp,
+      searchBeforeId,
+      searchText,
+      signal,
       username
     }: {
       filter?: string;
       lastFeedId?: number;
       lastTimeStamp?: number;
+      // Words that must all appear in the liked post.
+      searchText?: string;
+      searchBeforeId?: number;
+      signal?: AbortSignal;
       username?: string;
     } = {}) {
       try {
         const observedAt = getLiveObservedAt();
+        const params = new URLSearchParams({
+          filter,
+          username: username || ''
+        });
+        if (lastFeedId) {
+          params.set('lastFeedId', String(lastFeedId));
+          params.set('lastTimeStamp', String(lastTimeStamp));
+        }
+        if (searchText?.trim()) {
+          params.set('searchText', searchText.trim());
+          if (searchBeforeId) {
+            params.set('searchBeforeId', String(searchBeforeId));
+          }
+        }
         const { data } = await request.get(
-          `${URL}/content/feeds/liked?filter=${filter}&username=${username}${
-            lastFeedId
-              ? `&lastFeedId=${lastFeedId}&lastTimeStamp=${lastTimeStamp}`
-              : ''
-          }`,
-          auth()
+          `${URL}/content/feeds/liked?${params.toString()}`,
+          { ...auth(), ...(signal ? { signal } : {}) }
         );
-        return { data: withFeedRowsObservedAt(data, observedAt), filter };
+        return {
+          data: withFeedRowsObservedAt(data, observedAt),
+          filter,
+          searchText: searchText?.trim() || ''
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -1430,25 +1467,46 @@ export default function contentRequestHelpers({
     async loadFeedsByUser({
       lastFeedId,
       lastTimeStamp,
+      searchBeforeId,
+      searchText,
       section = 'all',
+      signal,
       username
     }: {
       lastFeedId?: number;
       lastTimeStamp?: number;
+      // Words that must all appear in the member's post.
+      searchText?: string;
+      searchBeforeId?: number;
       section?: string;
+      signal?: AbortSignal;
       username?: string;
     } = {}) {
       try {
         const observedAt = getLiveObservedAt();
+        const params = new URLSearchParams({
+          section,
+          username: username || ''
+        });
+        if (lastFeedId) {
+          params.set('lastFeedId', String(lastFeedId));
+          params.set('lastTimeStamp', String(lastTimeStamp));
+        }
+        if (searchText?.trim()) {
+          params.set('searchText', searchText.trim());
+          if (searchBeforeId) {
+            params.set('searchBeforeId', String(searchBeforeId));
+          }
+        }
         const { data } = await request.get(
-          `${URL}/content/feeds/byUser?section=${section}&username=${username}${
-            lastFeedId
-              ? `&lastFeedId=${lastFeedId}&lastTimeStamp=${lastTimeStamp}`
-              : ''
-          }`,
-          auth()
+          `${URL}/content/feeds/byUser?${params.toString()}`,
+          { ...auth(), ...(signal ? { signal } : {}) }
         );
-        return { data: withFeedRowsObservedAt(data, observedAt), section };
+        return {
+          data: withFeedRowsObservedAt(data, observedAt),
+          section,
+          searchText: searchText?.trim() || ''
+        };
       } catch (error) {
         return handleError(error);
       }

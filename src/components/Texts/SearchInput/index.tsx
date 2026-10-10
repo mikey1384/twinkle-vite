@@ -160,6 +160,7 @@ export default function SearchInput({
             height: inputHeight || '100%',
             width: '100%',
             paddingLeft: '4.2rem',
+            paddingRight: draftValue ? '4.4rem' : undefined,
             border: 'none',
             background: 'transparent',
             boxShadow: 'none'
@@ -174,6 +175,36 @@ export default function SearchInput({
           onCompositionEnd={handleCompositionEnd}
           onKeyDown={onKeyDown}
         />
+        {draftValue ? (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={handleClearClick}
+            className={css`
+              position: absolute;
+              top: 50%;
+              right: 0;
+              transform: translateY(-50%);
+              width: 4.4rem;
+              height: 4.4rem;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 0;
+              border: none;
+              background: transparent;
+              color: ${Color.gray()};
+              cursor: pointer;
+              &:hover {
+                color: ${Color.darkerGray()};
+              }
+            `}
+          >
+            {/* inline size: panels that restyle the search svg keep it */}
+            <Icon icon="times" style={{ fontSize: '1.4rem' }} />
+          </button>
+        ) : null}
       </div>
       <DropdownList
         anchorRef={SearchInputRef}
@@ -196,6 +227,15 @@ export default function SearchInput({
     }
   }
 
+  function handleClearClick() {
+    setDraftValue('');
+    onChange('');
+    onClear?.();
+    const input =
+      innerRef?.current || SearchInputRef.current?.querySelector('input');
+    input?.focus?.();
+  }
+
   function handleCompositionStart() {
     isComposingRef.current = true;
   }
@@ -216,6 +256,12 @@ export default function SearchInput({
       event.keyCode === 229
     )
       return;
+    if (event.key === 'Escape' && draftValue) {
+      event.preventDefault();
+      event.stopPropagation();
+      handleClearClick();
+      return;
+    }
     let index = Math.min(
       Math.max(0, indexToHighlight),
       searchResults.length - 1

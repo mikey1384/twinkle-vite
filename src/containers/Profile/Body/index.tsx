@@ -181,7 +181,15 @@ export default function Body({
         >
           <Suspense fallback={<Loading />}>
             <Routes>
-              <Route path="/likes" element={<Navigate replace to={`./all`} />} />
+              <Route
+                path="/likes"
+                element={
+                  <Navigate
+                    replace
+                    to={{ pathname: './all', search: location.search }}
+                  />
+                }
+              />
               <Route
                 path="/likes/:section"
                 element={<LikedPosts selectedTheme={selectedTheme} />}

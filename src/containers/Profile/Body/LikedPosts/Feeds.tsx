@@ -5,6 +5,12 @@ import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
 import EmptyStateMessage from '~/components/EmptyStateMessage';
 import SideMenu from '../SideMenu';
+import ProfileFeedSearch, {
+  ProfileFeedSearchNote,
+  getProfileFeedSearchMessage,
+  useProfileFeedSearchResults,
+  useProfileSearchQuery
+} from '../ProfileFeedSearch';
 import HomeFeedCard from '~/containers/Home/Stories/FeedCard';
 import {
   getProfileFeedCardAnchorId,
@@ -43,16 +49,37 @@ export default function Feeds({
   const feedListRef = useRef<HTMLDivElement | null>(null);
   const selectedSection = useRef('all');
   const myUsername = useKeyContext((v) => v.myState.username);
+  const myUserId = useKeyContext((v) => v.myState.userId);
   const loadLikedFeeds = useAppContext((v) => v.requestHelpers.loadLikedFeeds);
   const onLoadLikedPosts = useProfileContext((v) => v.actions.onLoadLikedPosts);
   const onLoadMoreLikedPosts = useProfileContext(
     (v) => v.actions.onLoadMoreLikedPosts
   );
+  const { query, searchSuffix, setQuery } = useProfileSearchQuery();
+  // Searching is for signed-in members.
+  const searchShown = Boolean(myUserId);
+  const searching = searchShown && Boolean(query);
+  const search = useProfileFeedSearchResults({
+    query: searchShown ? query : '',
+    scopeKey: `${username}:likes:${section}`,
+    loadPage: ({ searchText, searchBeforeId, signal }) =>
+      loadLikedFeeds({
+        username,
+        filter: filterTable[section],
+        searchText,
+        searchBeforeId,
+        signal
+      })
+  });
+  const shownFeeds = searching ? search.feeds : feeds;
+  const shownLoadMoreButton = searching
+    ? search.loadMoreButton
+    : loadMoreButton;
 
   useInfiniteScroll({
-    feedsLength: feeds.length,
-    scrollable: feeds.length > 0,
-    onScrollToBottom: handleLoadMoreFeeds
+    feedsLength: shownFeeds.length,
+    scrollable: shownFeeds.length > 0,
+    onScrollToBottom: handleScrollToBottom
   });
 
   useEffect(() => {
@@ -76,15 +103,17 @@ export default function Feeds({
   }, [location.pathname, section, username, loaded, filter, filterTable]);
 
   const loadingShown = useMemo(
-    () => !loaded || loadingFeeds,
-    [loaded, loadingFeeds]
+    () => (searching ? search.loading : !loaded || loadingFeeds),
+    [searching, search.loading, loaded, loadingFeeds]
   );
 
   useScrollAnchorRestoration({
-    anchorKey: `profile:${username}:likes:${section}:${filter || 'all'}`,
+    anchorKey: `profile:${username}:likes:${section}:${filter || 'all'}${
+      searching ? `:search:${query}` : ''
+    }`,
     containerRef: feedListRef,
     initialScroll: { type: 'top' },
-    itemsReady: !loadingShown && feeds.length > 0
+    itemsReady: !loadingShown && shownFeeds.length > 0
   });
 
   const isOwnProfile = myUsername === username;
@@ -109,6 +138,33 @@ export default function Feeds({
         return `${displayName} ${haveOrHas} not liked any daily reflection so far`;
     }
   }, [section, displayName, haveOrHas]);
+  const searchNoun = useMemo(() => {
+    switch (section) {
+      case 'ai-stories':
+        return 'AI Stories';
+      case 'subjects':
+        return 'subjects';
+      case 'comments':
+        return 'comments';
+      case 'links':
+        return 'links';
+      case 'videos':
+        return 'videos';
+      case 'reflections':
+        return 'reflections';
+      default:
+        return 'posts';
+    }
+  }, [section]);
+  const searchPlaceholder = isOwnProfile
+    ? `Search ${searchNoun} you liked...`
+    : `Search ${searchNoun} ${username} liked...`;
+  const emptyMessage = searching
+    ? getProfileFeedSearchMessage({
+        notice: search.notice,
+        noMatchLabel: `No liked ${searchNoun} match "${query}"`
+      })
+    : noFeedLabel;
   const feedListClass = useMemo(
     () => css`
       display: flex;
@@ -185,19 +241,26 @@ export default function Feeds({
               }
             `}
           >
+            {searchShown && (
+              <ProfileFeedSearch
+                placeholder={searchPlaceholder}
+                query={query}
+                onSearch={setQuery}
+              />
+            )}
             {loadingShown ? (
               <Loading
                 theme={selectedTheme}
                 style={{
                   marginTop: '5rem'
                 }}
-                text="Loading..."
+                text={searching ? 'Searching...' : 'Loading...'}
               />
             ) : (
               <>
-                {feeds.length > 0 && (
+                {shownFeeds.length > 0 && (
                   <div ref={feedListRef} className={feedListClass}>
-                    {feeds.map((feed, index) => {
+                    {shownFeeds.map((feed, index) => {
                       const contentKey = getProfileFeedContentKey(feed);
                       const feedAnchorId = getProfileFeedCardAnchorId({
                         feed,
@@ -222,7 +285,7 @@ export default function Feeds({
                             feed={feed}
                             feedAnchorId={feedAnchorId}
                             index={index}
-                            totalCount={feeds.length}
+                            totalCount={shownFeeds.length}
                             theme={selectedTheme}
                           />
                         </div>
@@ -230,27 +293,35 @@ export default function Feeds({
                     })}
                   </div>
                 )}
-                {feeds.length === 0 && (
+                {shownFeeds.length === 0 && (
                   <div style={{ marginTop: '8rem', padding: '0 1rem' }}>
                     <EmptyStateMessage theme={selectedTheme}>
-                      {noFeedLabel}
+                      {emptyMessage}
                     </EmptyStateMessage>
                   </div>
                 )}
               </>
             )}
-            {loadMoreButton && !loadingShown && (
+            {searching && !loadingShown && shownFeeds.length > 0 && (
+              <ProfileFeedSearchNote notice={search.notice} />
+            )}
+            {shownLoadMoreButton && !loadingShown && (
               <LoadMoreButton
                 style={{ marginBottom: '1rem' }}
                 onClick={handleLoadMoreFeeds}
-                loading={loadingMore}
+                label={
+                  searching && search.notice === 'stoppedEarly'
+                    ? 'Search older posts'
+                    : undefined
+                }
+                loading={searching ? search.loadingMore : loadingMore}
                 theme={selectedTheme}
                 filled
               />
             )}
             <div
               className={css`
-                display: ${loadMoreButton ? 'none' : 'block'};
+                display: ${shownLoadMoreButton ? 'none' : 'block'};
                 height: 7rem;
                 @media (max-width: ${mobileMaxWidth}) {
                   display: block;
@@ -288,11 +359,21 @@ export default function Feeds({
             : item === 'dailyReflection'
               ? 'reflection'
               : item
-      }${item === 'all' ? '' : 's'}`
+      }${item === 'all' ? '' : 's'}${searchSuffix}`
     );
   }
 
+  function handleScrollToBottom() {
+    // After a search page that stopped early, timed out or was rate limited,
+    // continuing is the member's choice (the button), not a scroll.
+    if (searching && search.notice) return;
+    return handleLoadMoreFeeds();
+  }
+
   async function handleLoadMoreFeeds() {
+    if (searching) {
+      return search.loadMore();
+    }
     const lastFeedId = feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
     await loadMoreFeeds();
 
