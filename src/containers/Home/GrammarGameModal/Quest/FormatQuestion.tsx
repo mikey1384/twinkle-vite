@@ -114,7 +114,8 @@ export default function FormatQuestion({
   choiceExtra,
   crossed = [],
   revealed = 99,
-  onPick
+  onPick,
+  onRepeat
 }: {
   question: QuestQuestion;
   answer?: QuestAnswer;
@@ -122,6 +123,8 @@ export default function FormatQuestion({
   cls: ChoiceClasses;
   choiceExtra?: string;
   crossed?: number[];
+  // a several-tap answer already crossed out, entered again
+  onRepeat?: () => void;
   // fog: only the first `revealed` choices are out of it yet
   revealed?: number;
   onPick: (index: number) => void;
@@ -135,9 +138,10 @@ export default function FormatQuestion({
         disabled={disabled}
         cls={cls}
         choiceExtra={choiceExtra}
-        attempt={crossed.length}
+        tried={crossed}
         revealed={revealed}
         onPick={onPick}
+        onRepeat={onRepeat}
       />
     );
   }

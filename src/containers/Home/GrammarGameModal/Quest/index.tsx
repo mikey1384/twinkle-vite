@@ -100,6 +100,7 @@ export default function GrammarQuest() {
             result={result}
             answers={resultAnswers}
             kind={run.kind}
+            runId={run.runId}
             onBackToMap={handleBackToMap}
           />
         ) : run && run.rules?.mode !== 'nemesis' ? (

@@ -728,6 +728,9 @@ export default function MarbleRunScreen({
                       crossed={boss ? wrongPicks : undefined}
                       revealed={fogShown}
                       onPick={handlePick}
+                      onRepeat={() =>
+                        setError('Already tried that one. Try another answer.')
+                      }
                     />
                   ) : (
                     <div className={questionCls}>{question.question}</div>
@@ -876,6 +879,11 @@ export default function MarbleRunScreen({
           questionText={answer?.prompt ?? question?.question}
           savedReview={savedReview}
           questKind={run.kind}
+          questRef={
+            question
+              ? { runId: run.runId, position: question.position }
+              : undefined
+          }
           returnLabel="Back to question"
           continueLabel={ready && !reading ? 'Continue' : undefined}
           onContinue={

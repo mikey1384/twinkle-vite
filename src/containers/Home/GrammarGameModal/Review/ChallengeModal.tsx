@@ -27,6 +27,7 @@ export default function ChallengeModal({
   questionText,
   savedReview,
   questKind,
+  questRef,
   returnLabel = 'Back to review',
   continueLabel,
   onContinue,
@@ -39,6 +40,8 @@ export default function ChallengeModal({
   questionText?: string;
   savedReview?: SavedChallengeReview | null;
   questKind?: 'stop' | 'fort' | 'castle' | 'nemesis';
+  // where Quest asked it, so the review sees the question as the learner did
+  questRef?: { runId: number; position: number };
   returnLabel?: string;
   continueLabel?: string;
   onContinue?: () => void;
@@ -104,7 +107,7 @@ export default function ChallengeModal({
     : pending || aiUnavailable || (failure && !failure.canRetry)
       ? onClose
       : () => {
-          void startReview(questionId);
+          void startReview(questionId, questRef);
         };
 
   return (

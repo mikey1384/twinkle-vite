@@ -29,11 +29,13 @@ export default function Result({
   result,
   answers,
   kind,
+  runId,
   onBackToMap
 }: {
   result: QuestResult;
   answers: QuestAnswer[];
   kind: string;
+  runId: number;
   onBackToMap: () => void;
 }) {
   const boss = kind === 'fort' || kind === 'castle';
@@ -311,6 +313,11 @@ export default function Result({
             selectedChallenge?.challenge?.review
           )}
           questKind={kind as 'stop' | 'fort' | 'castle' | 'nemesis'}
+          questRef={
+            selectedChallenge
+              ? { runId, position: selectedChallenge.position }
+              : undefined
+          }
           returnLabel="Back to results"
           continueLabel="Back to map"
           onContinue={onBackToMap}

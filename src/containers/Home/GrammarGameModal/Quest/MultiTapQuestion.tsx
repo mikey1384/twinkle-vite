@@ -33,24 +33,37 @@ export default function MultiTapQuestion({
   disabled,
   cls,
   choiceExtra,
-  attempt = 0,
+  tried = [],
   revealed = 99,
-  onPick
+  onPick,
+  onRepeat
 }: {
   question: QuestQuestion;
   answer?: QuestAnswer;
   disabled: boolean;
   cls: ChoiceClasses;
   choiceExtra?: string;
-  // a boss's wrong tries so far: each one starts the taps over
-  attempt?: number;
+  // a boss's wrong tries so far: each one starts the taps over, and the
+  // same answer again starts them over without sending it (the boss
+  // already crossed it out)
+  tried?: number[];
   // fog: stomp's sentences come out one at a time
   revealed?: number;
   onPick: (index: number) => void;
+  onRepeat?: () => void;
 }) {
   // a fresh set of taps for each question, and again after a wrong try
   const [marks, setMarks] = useState<number[]>([]);
+  const attempt = tried.length;
   useEffect(() => setMarks([]), [question.position, attempt]);
+  function submit(value: number) {
+    if (tried.includes(value)) {
+      setMarks([]);
+      onRepeat?.();
+      return;
+    }
+    onPick(value);
+  }
   const format = question.format;
   const settled = !!answer && answer.correctIndex != null;
   const n =
@@ -65,20 +78,20 @@ export default function MultiTapQuestion({
         : [...marks, i];
       setMarks(next);
       if (next.length === (question.targets || n - 1))
-        onPick(next.reduce((mask, m) => mask | (1 << m), 0));
+        submit(next.reduce((mask, m) => mask | (1 << m), 0));
     } else if (format === 'momentum') {
       // marks: one entry per sentence called, 1 = right, 0 = wrong
       const next = [...marks, i];
       setMarks(next);
       if (next.length === n)
-        onPick(
+        submit(
           next.reduce((mask, call, k) => (call ? mask | (1 << k) : mask), 0)
         );
     } else if (format === 'build') {
       if (marks.includes(i)) return;
       const next = [...marks, i];
       setMarks(next);
-      if (next.length === n) onPick(encodeOrder(next, n));
+      if (next.length === n) submit(encodeOrder(next, n));
     }
   }
 

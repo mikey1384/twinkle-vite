@@ -1400,11 +1400,19 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async challengeGrammarQuestion({ questionId }: { questionId: number }) {
+    async challengeGrammarQuestion({
+      questionId,
+      quest
+    }: {
+      questionId: number;
+      // a Quest question: the run and position it was asked at, so the
+      // review sees it the way the learner did
+      quest?: { runId: number; position: number };
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/grammar/challenge`,
-          { questionId },
+          { questionId, ...(quest ? { quest } : {}) },
           auth()
         );
         return data;

@@ -21,7 +21,10 @@ export default function useChallengeReviews() {
 
   return { reviews, startReview };
 
-  function startReview(questionId: number) {
+  function startReview(
+    questionId: number,
+    quest?: { runId: number; position: number }
+  ) {
     return store.start(userId, questionId, async (onThought) => {
       // A result can arrive after the dialog closes or the learner signs out.
       // Keep its review in the right account, and never replace another
@@ -38,7 +41,7 @@ export default function useChallengeReviews() {
       };
       socket.on('grammar_challenge_thought_streamed', handleThought);
       try {
-        const response = await challengeQuestion({ questionId });
+        const response = await challengeQuestion({ questionId, quest });
         if (isCurrentUser()) {
           if (response.aiUsagePolicy) {
             onUpdateTodayStats({
