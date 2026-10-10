@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -54,6 +54,12 @@ export default function BuildContributionInvite({
   };
 }) {
   const navigate = useNavigate();
+  // One answer at a time: the tapped button spins and both lock until the
+  // server replies, so repeated taps can't send the same answer twice.
+  const [actionPending, setActionPending] = useState<
+    'accept' | 'decline' | null
+  >(null);
+  const actionPendingRef = useRef(false);
   const acceptBuildContributorInvite = useAppContext(
     (v) => v.requestHelpers.acceptBuildContributorInvite
   );
@@ -251,11 +257,19 @@ export default function BuildContributionInvite({
                 size="md"
                 icon="check"
                 shiny
+                loading={actionPending === 'accept'}
+                disabled={Boolean(actionPending)}
                 onClick={handleAccept}
               >
                 Accept
               </GameCTAButton>
-              <GameCTAButton variant="neutral" size="md" onClick={handleDecline}>
+              <GameCTAButton
+                variant="neutral"
+                size="md"
+                loading={actionPending === 'decline'}
+                disabled={Boolean(actionPending)}
+                onClick={handleDecline}
+              >
                 Decline
               </GameCTAButton>
             </>
@@ -302,6 +316,9 @@ export default function BuildContributionInvite({
   );
 
   async function handleAccept() {
+    if (actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setActionPending('accept');
     try {
       const result = await acceptBuildContributorInvite({
         buildId,
@@ -324,10 +341,16 @@ export default function BuildContributionInvite({
     } catch (error: any) {
       if (applyBuildInviteActionState(error)) return;
       console.error('Failed to accept build invite:', error);
+    } finally {
+      actionPendingRef.current = false;
+      setActionPending(null);
     }
   }
 
   async function handleDecline() {
+    if (actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setActionPending('decline');
     try {
       const result = await declineBuildContributorInvite({
         buildId,
@@ -346,6 +369,9 @@ export default function BuildContributionInvite({
     } catch (error: any) {
       if (applyBuildInviteActionState(error)) return;
       console.error('Failed to decline build invite:', error);
+    } finally {
+      actionPendingRef.current = false;
+      setActionPending(null);
     }
   }
 

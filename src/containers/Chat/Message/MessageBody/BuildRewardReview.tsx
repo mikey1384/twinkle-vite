@@ -157,6 +157,7 @@ export default function BuildRewardReview({
                 icon="check"
                 shiny
                 loading={answering === 'accept'}
+                disabled={Boolean(answering)}
                 onClick={() => handleAnswer('accept')}
               >
                 Accept & go live
@@ -164,6 +165,7 @@ export default function BuildRewardReview({
               <GameCTAButton
                 variant="neutral"
                 size="md"
+                disabled={Boolean(answering)}
                 onClick={() =>
                   setConfirmingDecline({
                     reviewId,
@@ -182,6 +184,7 @@ export default function BuildRewardReview({
                 size="md"
                 icon="exclamation-triangle"
                 loading={answering === 'decline'}
+                disabled={Boolean(answering)}
                 onClick={() => handleAnswer('decline')}
               >
                 Yes, say no to the changes
@@ -189,6 +192,7 @@ export default function BuildRewardReview({
               <GameCTAButton
                 variant="neutral"
                 size="md"
+                disabled={Boolean(answering)}
                 onClick={() => setConfirmingDecline(null)}
               >
                 Keep thinking

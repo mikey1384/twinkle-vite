@@ -47,6 +47,8 @@ export default function BuildProjectLimitRequest({
   );
   const [canonicalRequest, setCanonicalRequest] = useState(request || null);
   const [actionLoading, setActionLoading] = useState(false);
+  // which answer is in flight, so its own button spins
+  const [pendingApproved, setPendingApproved] = useState<boolean | null>(null);
   const [actionError, setActionError] = useState('');
   const payload = useMemo(
     () =>
@@ -128,7 +130,8 @@ export default function BuildProjectLimitRequest({
               size="md"
               icon="check"
               shiny
-              loading={actionLoading}
+              loading={actionLoading && pendingApproved === true}
+              disabled={actionLoading}
               onClick={() => handleReview(true)}
             >
               Approve
@@ -139,6 +142,7 @@ export default function BuildProjectLimitRequest({
               variant="neutral"
               size="md"
               icon="times"
+              loading={actionLoading && pendingApproved === false}
               disabled={actionLoading}
               onClick={() => handleReview(false)}
             >
@@ -189,6 +193,7 @@ export default function BuildProjectLimitRequest({
   async function handleReview(approved: boolean) {
     if (actionLoading) return;
     setActionLoading(true);
+    setPendingApproved(approved);
     setActionError('');
     try {
       const result = await reviewRequest({ requestId, approved });
@@ -210,6 +215,7 @@ export default function BuildProjectLimitRequest({
       );
     } finally {
       setActionLoading(false);
+      setPendingApproved(null);
     }
   }
 }

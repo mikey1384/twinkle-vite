@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -48,6 +48,12 @@ export default function BuildCollaborationRequest({
   };
 }) {
   const navigate = useNavigate();
+  // One answer at a time: the tapped button spins and both lock until the
+  // server replies, so repeated taps can't send the same answer twice.
+  const [actionPending, setActionPending] = useState<
+    'accept' | 'reject' | null
+  >(null);
+  const actionPendingRef = useRef(false);
   const acceptBuildCollaborationRequest = useAppContext(
     (v) => v.requestHelpers.acceptBuildCollaborationRequest
   );
@@ -215,11 +221,19 @@ export default function BuildCollaborationRequest({
                 size="md"
                 icon="check"
                 shiny
+                loading={actionPending === 'accept'}
+                disabled={Boolean(actionPending)}
                 onClick={handleAccept}
               >
                 Accept
               </GameCTAButton>
-              <GameCTAButton variant="neutral" size="md" onClick={handleReject}>
+              <GameCTAButton
+                variant="neutral"
+                size="md"
+                loading={actionPending === 'reject'}
+                disabled={Boolean(actionPending)}
+                onClick={handleReject}
+              >
                 Decline
               </GameCTAButton>
             </>
@@ -271,6 +285,9 @@ export default function BuildCollaborationRequest({
   );
 
   async function handleAccept() {
+    if (actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setActionPending('accept');
     try {
       const result = await acceptBuildCollaborationRequest({
         buildId,
@@ -291,10 +308,16 @@ export default function BuildCollaborationRequest({
     } catch (error: any) {
       if (applyBuildRequestActionState(error)) return;
       console.error('Failed to accept build join request:', error);
+    } finally {
+      actionPendingRef.current = false;
+      setActionPending(null);
     }
   }
 
   async function handleReject() {
+    if (actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setActionPending('reject');
     try {
       const result = await rejectBuildCollaborationRequest({
         buildId,
@@ -312,6 +335,9 @@ export default function BuildCollaborationRequest({
     } catch (error: any) {
       if (applyBuildRequestActionState(error)) return;
       console.error('Failed to decline build join request:', error);
+    } finally {
+      actionPendingRef.current = false;
+      setActionPending(null);
     }
   }
 
