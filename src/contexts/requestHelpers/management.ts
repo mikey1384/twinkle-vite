@@ -717,6 +717,55 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    // ranked by the site (twinkle-api notableScoring.ts), Mikey decides
+    async loadNotableSuggestions({
+      archetype,
+      limit = 30
+    }: {
+      archetype?: string | null;
+      limit?: number;
+    } = {}) {
+      try {
+        const params = new URLSearchParams({ limit: String(limit) });
+        if (archetype) params.set('archetype', archetype);
+        const { data } = await request.get(
+          `${URL}/management/notable-users/suggestions?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadNotableReview() {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/notable-users/review`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async dismissNotableSuggestion({
+      userId,
+      note
+    }: {
+      userId: number;
+      note: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/management/notable-users/suggestions/${userId}/dismiss`,
+          { note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addNotableUser(userId: number) {
       try {
         const { data } = await request.post(

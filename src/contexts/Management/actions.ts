@@ -237,7 +237,7 @@ export default function ManagementActions(dispatch: Dispatch) {
         videoUrl
       });
     },
-    onSetNotableUsersView(view: 'overview' | 'roster') {
+    onSetNotableUsersView(view: 'overview' | 'roster' | 'suggested') {
       return dispatch({
         type: 'SET_NOTABLE_USERS_VIEW',
         view

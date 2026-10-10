@@ -18,6 +18,7 @@ import { rangeClass } from '../AiCosts/styles';
 import Table from '../Table';
 import AddNotableUserModal from './AddNotableUserModal';
 import Overview from './Overview';
+import Suggested from './Suggested';
 
 interface NotableUser {
   id: number;
@@ -175,9 +176,16 @@ export default function NotableUsers() {
           >
             Roster
           </button>
+          <button
+            className={view === 'suggested' ? 'active' : ''}
+            onClick={() => onSetNotableUsersView('suggested')}
+          >
+            Suggested
+          </button>
         </div>
       </div>
       {view === 'overview' && <Overview />}
+      {view === 'suggested' && <Suggested onAdd={handleAddUser} />}
       {view === 'roster' && (
         <SectionPanel
           title="Notable Users"
