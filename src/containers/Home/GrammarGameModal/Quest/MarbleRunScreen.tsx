@@ -1049,7 +1049,7 @@ export default function MarbleRunScreen({
 
   async function refreshQueued() {
     try {
-      const fresh = await loadRun(run.runId);
+      const fresh = await loadRun(run.runId, { refresh: true });
       const byPosition = new Map<number, QuestQuestion>(
         (fresh?.questions || []).map((q: QuestQuestion) => [q.position, q])
       );

@@ -1330,10 +1330,15 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadGrammarQuestRun(runId: number) {
+    // refresh: the open screen re-reading its questions (a boss clock keeps
+    // running), not a reopen
+    async loadGrammarQuestRun(
+      runId: number,
+      { refresh = false }: { refresh?: boolean } = {}
+    ) {
       try {
         const { data } = await request.get(
-          `${URL}/content/game/quest/run/${runId}`,
+          `${URL}/content/game/quest/run/${runId}${refresh ? '?refresh=1' : ''}`,
           auth()
         );
         return data;
