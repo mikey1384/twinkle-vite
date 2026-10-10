@@ -8,6 +8,7 @@ import URL from '~/constants/URL';
 import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
+import { toBuildRewardRequestError } from '~/helpers/buildRewardRequestError';
 import { RequestHelpers } from '~/types';
 import {
   readBuildRuntimeAiStream,
@@ -754,11 +755,7 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
-        throw new Error(
-          axios.isAxiosError(error)
-            ? error.response?.data?.error || error.message
-            : 'Could not complete reward request.'
-        );
+        throw toBuildRewardRequestError(error);
       }
     },
     // Twinkle.cardCraft runtime calls. Errors keep the server's code and
