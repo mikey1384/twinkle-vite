@@ -26,6 +26,8 @@ function decodeOrder(value: number, n: number) {
   return sequence;
 }
 const bit = (mask: number, i: number) => !!(mask & (1 << i));
+const capitalized = (text: string) =>
+  text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 
 export default function MultiTapQuestion({
   question,
@@ -239,12 +241,15 @@ export default function MultiTapQuestion({
               // take this chunk (and the ones after it) back
               onClick={() => setMarks(marks.slice(0, k))}
             >
-              {tokens[p]}
+              {/* the pieces don't show the sentence's capital: whichever
+                  piece goes first takes it */}
+              {k === 0 ? capitalized(tokens[p]) : tokens[p]}
             </button>
           ))
         ) : (
           <span className={hintCls}>Tap the pieces in order…</span>
         )}
+        {question.end && <span className={endCls}>{question.end}</span>}
       </div>
       {!settled && (
         <div className={trayCls}>
@@ -351,6 +356,15 @@ const hintCls = css`
   opacity: 0.6;
   font-size: 1.4rem;
 `;
+// Build it's end mark: fixed after the slots, never a piece to place
+const endCls = css`
+  align-self: flex-end;
+  font-weight: 700;
+  font-size: 1.2em;
+  line-height: 1;
+  margin-left: -2px;
+`;
+
 const trayCls = css`
   display: flex;
   flex-wrap: wrap;

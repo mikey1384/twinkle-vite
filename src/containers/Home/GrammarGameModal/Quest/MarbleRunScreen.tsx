@@ -65,6 +65,7 @@ import {
 function turnOf(q: QuestQuestion): BossTurn {
   return {
     baseTimeMs: q.baseTimeMs || 12000,
+    graceMs: q.graceMs || 0,
     revealDelayMs: q.revealDelayMs || 1500,
     telegraphMs: q.telegraphMs,
     attack: q.attack,

@@ -77,6 +77,8 @@ type Phase =
 // one turn as the server hands it out
 export interface BossTurn {
   baseTimeMs: number;
+  // a typed attack's reading allowance: inside the window, not graded
+  graceMs?: number;
   revealDelayMs: number;
   telegraphMs?: number;
   attack?: AttackKind;
@@ -176,6 +178,7 @@ export class BossFight {
   // Classic's reading pause: the question shows alone, then the choices
   // appear and the clock starts (the same pause the server allows for)
   revealMs = 1500;
+  graceMs = 0;
   get revealed() {
     return this.phase === 'question' && this.t >= this.questionAt;
   }
@@ -234,7 +237,7 @@ export class BossFight {
     this.countering = false;
     const g =
       grade ||
-      gradeFor(this.t - this.questionAt + this.wrongPicks * 2000, this.baseMs);
+      this.liveGrade(this.t - this.questionAt + this.wrongPicks * 2000);
     this.answered = g;
     if (g === 'F') {
       missSound();
@@ -526,11 +529,21 @@ export class BossFight {
       this.explode(t);
   }
 
+  // the grade so far: on the time past the turn's reading allowance (the
+  // server grades the same way)
+  private liveGrade(elapsed: number) {
+    return gradeFor(
+      Math.max(0, elapsed - this.graceMs),
+      Math.max(1, this.baseMs - this.graceMs)
+    );
+  }
+
   private startQuestion(t: number) {
     const turn = this.queued;
     this.queued = null;
     if (turn) {
       this.baseMs = turn.baseTimeMs;
+      this.graceMs = turn.graceMs || 0;
       this.revealMs = turn.revealDelayMs;
       this.usedMs = turn.usedMs || 0;
       this.telegraphMs = turn.telegraphMs || 0;
@@ -1092,7 +1105,7 @@ export class BossFight {
     const elapsed = Math.max(0, t - this.questionAt) + this.wrongPicks * 2000;
     const live =
       this.phase === 'question'
-        ? gradeFor(elapsed, this.baseMs)
+        ? this.liveGrade(elapsed)
         : this.answered || 'S';
     const struggling =
       this.phase === 'question' && !this.counter && 'CDF'.includes(live);

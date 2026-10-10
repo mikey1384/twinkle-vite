@@ -64,6 +64,8 @@ export interface QuestQuestion {
   choices: string[];
   // crack: the sentence's words to tap
   tokens?: string[];
+  // build: the end mark shown fixed after the slots (the pieces don't carry it)
+  end?: string;
   // fix: the sentence around the wrong part
   parts?: { before: string; wrong: string; after: string };
   // stomp: how many sentences are wrong
@@ -72,6 +74,7 @@ export interface QuestQuestion {
   skillName: string;
   retryOf?: number; // practice: a missed question asked again
   baseTimeMs?: number; // boss: this question's time limit
+  graceMs?: number; // boss: its reading allowance, inside the limit, not graded
   revealDelayMs?: number; // boss: the telegraph plus Classic's reading pause
   // boss (Mikey 10-10): the attack this hit is (its name shows for
   // telegraphMs first), or a counter: one try on a short clock, no harm
