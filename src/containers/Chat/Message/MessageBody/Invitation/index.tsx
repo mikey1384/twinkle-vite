@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ChannelDetail from './ChannelDetail';
 import Button from '~/components/Button';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { parseChannelPath } from '~/helpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -19,7 +19,7 @@ export default function Invitation({
   invitePath: string;
   channelId: number;
   messageId: number;
-  onAcceptGroupInvitation: (channelId: string) => void;
+  onAcceptGroupInvitation: (channelId: string) => void | Promise<void>;
   sender: {
     id: number;
     username: string;
@@ -27,6 +27,9 @@ export default function Invitation({
   };
 }) {
   const [accepting, setAccepting] = useState(false);
+  // The server's reason when it refuses the card (for example, its sender
+  // has left the group); the button is usable again.
+  const [acceptError, setAcceptError] = useState('');
   const userId = useKeyContext((v) => v.myState.userId);
   const chatInvitationColor = useKeyContext(
     (v) => v.theme.chatInvitation.color
@@ -117,9 +120,23 @@ export default function Invitation({
     }
   }, [invitationChannel, sender.id, userId]);
 
-  const handleAcceptGroupInvitation = useCallback(() => {
+  const handleAcceptGroupInvitation = useCallback(async () => {
     setAccepting(true);
-    onAcceptGroupInvitation(invitePath);
+    setAcceptError('');
+    try {
+      await onAcceptGroupInvitation(invitePath);
+    } catch (error: any) {
+      // The server's own reason for a refusal (4xx); a server or network
+      // failure gets a generic line instead of raw error text.
+      const status = Number(error?.status || 0);
+      setAcceptError(
+        status >= 400 && status < 500 && error?.message
+          ? error.message
+          : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setAccepting(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invitePath]);
 
@@ -130,9 +147,11 @@ export default function Invitation({
   return (
     <div
       className={css`
-        height: ${desktopHeight};
+        height: ${acceptError ? 'auto' : desktopHeight};
+        min-height: ${desktopHeight};
         @media (max-width: ${mobileMaxWidth}) {
-          height: ${mobileHeight};
+          height: ${acceptError ? 'auto' : mobileHeight};
+          min-height: ${mobileHeight};
         }
       `}
     >
@@ -160,6 +179,19 @@ export default function Invitation({
         >
           {alreadyJoined ? alreadyJoinedLabel : acceptGroupInvitationLabel}
         </Button>
+      )}
+      {userId !== sender.id && acceptError && !alreadyJoined && (
+        <div
+          role="alert"
+          className={css`
+            margin-top: 0.7rem;
+            color: ${Color.rose()};
+            font-size: 1.3rem;
+            font-weight: 700;
+          `}
+        >
+          {acceptError}
+        </div>
       )}
     </div>
   );

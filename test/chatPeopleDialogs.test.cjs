@@ -211,6 +211,22 @@ test('ordinary invitation waits for onDone, blocks duplicate Enter/click intents
   button(tree, 'Invite selected people').props.onClick(); assert.equal(calls.length, 2);
 });
 
+test('invitation cards stop at the server cap of 50 people; a teacher adding students has no cap', () => {
+  const many = Array.from({ length: 51 }, (_, i) => ({ id: i + 2, username: `p${i}` }));
+  const env = environment(), calls = [], app = env.mount('InviteUsers.tsx', { selectedChannelId: 7, currentChannel: {}, onDone: data => calls.push(data) });
+  let tree = app.render();
+  find(tree, n => n.type === Picker).props.onChange(many); tree = app.render();
+  assert.equal(button(tree, 'Invite selected people').props.disabled, true);
+  assert.equal(alert(tree).length, 1);
+  button(tree, 'Invite selected people').props.onClick(); assert.equal(calls.length, 0);
+  find(tree, n => n.type === Picker).props.onChange(many.slice(0, 50)); tree = app.render();
+  assert.equal(button(tree, 'Invite selected people').props.disabled, false);
+  assert.equal(alert(tree).length, 0);
+  const teacher = env.mount('InviteUsers.tsx', { selectedChannelId: 7, currentChannel: { isClass: true }, isOwner: true, onDone: () => {} });
+  tree = teacher.render(); find(tree, n => n.type === Picker).props.onChange(many); tree = teacher.render();
+  assert.equal(button(tree, 'Invite selected people').props.disabled, false);
+});
+
 test('class invites keep canonical versus legacy membership contracts and do not repeat an acknowledged request', async () => {
   for (const canonical of [true, false]) {
     const env = environment(), calls = []; let attempt = 0;

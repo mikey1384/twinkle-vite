@@ -8,6 +8,10 @@ import ChatPeoplePicker, { ChatInvitePerson } from './ChatPeoplePicker';
 import useChatDialogRequest from './useChatDialogRequest';
 import { chatFormClass, chatFormModalClass } from './chatFormStyles';
 
+// The server sends at most this many invitation cards per request
+// (POST /chat/invitation); a teacher adding students directly has no cap.
+const MAX_INVITATION_RECIPIENTS = 50;
+
 export default function InviteUsersModal({ isOwner, selectedChannelId, onDone, onHide, currentChannel }: {
   isOwner: boolean;
   currentChannel: any;
@@ -24,6 +28,9 @@ export default function InviteUsersModal({ isOwner, selectedChannelId, onDone, o
   const committed = useRef<any>(null);
   const membersApplied = useRef(false);
   const locked = request.busy || Boolean(committed.current);
+  const overInvitationLimit =
+    !(currentChannel?.isClass && isOwner) &&
+    selectedUsers.length > MAX_INVITATION_RECIPIENTS;
   useEffect(() => {
     setSelectedUsers([]);
     committed.current = null;
@@ -41,19 +48,20 @@ export default function InviteUsersModal({ isOwner, selectedChannelId, onDone, o
       <main>
         <ChatPeoplePicker autoFocus key={userId + ':' + selectedChannelId} channelId={selectedChannelId} selected={selectedUsers}
           onChange={setSelectedUsers} disabled={locked} excludedIds={currentChannel?.allMemberIds || []} />
+        {overInvitationLimit && <p className="error" role="alert">You can invite up to {MAX_INVITATION_RECIPIENTS} people at a time.</p>}
         {request.error && <p ref={request.errorRef} id={request.errorId} className="error" role="alert">{request.error}</p>}
       </main>
       <ModalFooter>
         <Button variant="ghost" disabled={request.busy} onClick={onHide}>Cancel</Button>
         <Button color={doneColor}
-          disabled={!selectedUsers.length} aria-busy={request.busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={request.busy ? 'Inviting people' : 'Invite selected people'}
+          disabled={!selectedUsers.length || overInvitationLimit} aria-busy={request.busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={request.busy ? 'Inviting people' : 'Invite selected people'}
           onClick={handleDone}>{request.busy ? 'Inviting…' : committed.current ? 'Finish' : 'Invite people'}</Button>
       </ModalFooter>
     </section>
   </Modal>;
 
   async function handleDone() {
-    if (!selectedUsers.length) return;
+    if (!selectedUsers.length || overInvitationLimit) return;
     await request.run('Couldn’t finish inviting these people. Your selection is kept. Please try again.', async (isCurrent) => {
       if (currentChannel?.isClass && isOwner) {
         if (!committed.current) {
