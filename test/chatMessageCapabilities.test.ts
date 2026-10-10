@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  CHAT_MESSAGE_KIND_RULES,
+  canReactToChatMessage,
   canReplyToChatMessage,
   canUseGenericChatMessageActions,
-  isReplyOnlyBuildCardMessage,
+  getChatMessageKind,
+  isInteractiveCardMessage,
   isSenderDeleteOnlyBuildSuggestionMessage
 } from '../src/helpers/chatMessageCapabilities';
 
@@ -107,7 +110,7 @@ test('the message renderer uses one capability gate for every generic action sur
   );
   assert.match(
     bodySource,
-    /const genericActionsAllowed = canUseGenericChatMessageActions/
+    /const genericActionsAllowed =\s*canUseGenericChatMessageActions\(capabilityMessage\) && !isInteractiveCard/
   );
   assert.match(
     bodySource,
@@ -117,110 +120,129 @@ test('the message renderer uses one capability gate for every generic action sur
   assert.match(bodySource, /genericActionsAllowed &&[\s\S]*?canReward/);
   assert.match(bodySource, /messageRewardModalShown && genericActionsAllowed/);
   assert.match(
-    contentSource,
-    /!isEditing &&\s*isMenuButtonsAllowed[\s\S]*?<Reactions/
-  );
-  assert.match(
     bodySource,
     /isSenderDeleteOnlyBuildSuggestionMessage\([\s\S]*?actorUserId: myId/
   );
   assert.match(
     bodySource,
-    /\(genericActionsAllowed \|\| isDeleteOnlyBuildSuggestion\)/
-  );
-  assert.match(
-    contentSource,
-    /isMenuButtonsAllowed &&\s*!isDeleteOnlyBuildSuggestion &&[\s\S]*?<Reactions/
-  );
-  assert.match(
-    actionButtonsSource,
-    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard &&\s*userCanEditThis/
+    /\(genericActionsAllowed \|\|\s*isDeleteOnlyBuildSuggestion \|\|\s*isInteractiveCard\)/
   );
   assert.match(
     actionButtonsSource,
     /isDeleteOnlyBuildSuggestion \? deleteLabel : removeLabel/
   );
-  assert.match(
-    actionButtonsSource,
-    /!isDeleteOnlyBuildSuggestion &&[\s\S]*?<ReactionButton/
-  );
-});
-
-test('Build cards can be replied to (and only replied to) while other notices cannot', () => {
-  for (const rootType of [
-    'buildContributionInvite',
-    'buildCollaborationRequest',
-    'buildContributionSubmission',
-    'buildThumbnailSuggestion',
-    'buildProjectLimitRequest',
-    'buildRewardReview',
-    'buildReviewRequest'
-  ]) {
-    assert.equal(canReplyToChatMessage({ rootType }), true);
-    assert.equal(isReplyOnlyBuildCardMessage({ rootType }), true);
-    // The reward review card is stored as a notification and stays quotable.
-    assert.equal(canReplyToChatMessage({ rootType, isNotification: 1 }), true);
-    assert.equal(
-      isReplyOnlyBuildCardMessage({ rootType, isNotification: 1 }),
-      true
-    );
-  }
-  for (const blocked of [
-    { rootType: 'approval' },
-    { rootType: 'modification' },
-    { rootType: 'aiCardOffer' },
-    { rootType: 'cliAdminChatMessage' },
-    { isNotification: true },
-    { isCallMsg: 1 },
-    { transferId: 9 }
-  ]) {
-    assert.equal(canReplyToChatMessage(blocked), false);
-    assert.equal(isReplyOnlyBuildCardMessage(blocked), false);
-  }
-  assert.equal(canReplyToChatMessage({ rootType: 'chat' }), true);
-  assert.equal(isReplyOnlyBuildCardMessage({ rootType: 'chat' }), false);
-});
-
-test('reply-only Build cards expose Reply and nothing else in the message menu', () => {
-  const bodySource = readSource(
-    'src/containers/Chat/Message/MessageBody/index.tsx'
-  );
-  const contentSource = readSource(
-    'src/containers/Chat/Message/MessageBody/Content.tsx'
-  );
-  const actionButtonsSource = readSource(
-    'src/containers/Chat/Message/MessageBody/ActionButtons.tsx'
-  );
-  const targetSource = readSource(
-    'src/containers/Chat/Message/MessageBody/TargetMessage/TextMessage/index.tsx'
-  );
-  assert.match(bodySource, /const canReply = canReplyToChatMessage\(/);
+  // Reply and reactions share one rule (canReplyToChatMessage and
+  // canReactToChatMessage read the same kind table).
   assert.match(
     bodySource,
-    /const isReplyOnlyBuildCard = isReplyOnlyBuildCardMessage\(/
+    /const canReply = canReplyToChatMessage\(capabilityMessage\)/
   );
   assert.match(
     bodySource,
-    /\(\(genericActionsAllowed \|\| isDeleteOnlyBuildSuggestion\) \|\|\s*isReplyOnlyBuildCard\)/
-  );
-  assert.match(bodySource, /\(!isNotification \|\| isReplyOnlyBuildCard\) &&/);
-  assert.match(actionButtonsSource, /if \(canReply && !isRestricted\)/);
-  assert.match(
-    actionButtonsSource,
-    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard &&\s*userCanEditThis/
-  );
-  assert.match(
-    actionButtonsSource,
-    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard &&\s*userCanRewardThis/
-  );
-  assert.match(
-    actionButtonsSource,
-    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard &&\s*!invitePath/
+    /const canReact = canReactToChatMessage\(capabilityMessage\)/
   );
   assert.match(
     contentSource,
-    /!isDeleteOnlyBuildSuggestion &&\s*!isReplyOnlyBuildCard && \(\s*<Reactions/
+    /!isEditing && isMenuButtonsAllowed && canReact && \(\s*<Reactions/
   );
-  // The quoted card is the live card, so the bump carries its buttons.
-  assert.match(targetSource, /<BuildCardTarget message=\{message\} \/>/);
+  assert.match(
+    actionButtonsSource,
+    /\{canReact && !isBanned && !directChatBlocked && \(\s*<ReactionButton/
+  );
+  assert.match(actionButtonsSource, /if \(canReply && !isRestricted\)/);
+  for (const gate of [
+    /!isDeleteOnlyBuildSuggestion &&\s*!isInteractiveCard &&\s*userCanEditThis/,
+    /!isDeleteOnlyBuildSuggestion &&\s*!isInteractiveCard &&\s*userCanRewardThis/,
+    /!isDeleteOnlyBuildSuggestion && !isInteractiveCard && canBookmark/,
+    /!isInteractiveCard &&\s*canUseGenericChatMessageActions\(message\)/
+  ]) {
+    assert.match(actionButtonsSource, gate);
+  }
+});
+
+test('every card that takes a reply takes reactions, and nothing else of the generic menu', () => {
+  const cards = [
+    { rootType: 'buildContributionInvite' },
+    { rootType: 'buildRewardReview', isNotification: 1 },
+    { transactionId: 33301 },
+    { transferId: 9 },
+    { rootType: 'aiCardOffer' },
+    { gameWinnerId: 42, isChessMsg: 1 },
+    { isDraw: 1, isChessMsg: 1 },
+    { isDrawOffer: 1 },
+    { inviteFrom: 4 },
+    { invitePath: '/chat/invitation/abc' },
+    { rootType: 'approval', isNotification: 1 },
+    { rootType: 'modification', isNotification: 1 },
+    { rootType: 'cliAdminChatMessage' },
+    { rootType: 'meetupTeacherRequest' },
+    { rootType: 'meetupQuestInvite', isNotification: 1 },
+    { rootType: 'meetupQuestCrew', isNotification: 1 },
+    { wordleResult: { isSolved: true } }
+  ];
+  for (const card of cards) {
+    assert.equal(canReplyToChatMessage(card), true, JSON.stringify(card));
+    assert.equal(canReactToChatMessage(card), true, JSON.stringify(card));
+    assert.equal(isInteractiveCardMessage(card), true, JSON.stringify(card));
+  }
+  for (const blocked of [
+    { transactionId: 33301, isNotification: 1 },
+    { isNotification: true },
+    { isCallMsg: 1 },
+    { isChessMsg: 1, chessState: { move: {} } },
+    { isChessMsg: 1, omokState: { board: [] }, gameWinnerId: 5 },
+    { rootType: 'chatMessageReport', isNotification: 1 },
+    { rootType: 'meetupBranch', isNotification: 1 }
+  ]) {
+    assert.equal(
+      canReplyToChatMessage(blocked),
+      false,
+      JSON.stringify(blocked)
+    );
+    assert.equal(
+      canReactToChatMessage(blocked),
+      false,
+      JSON.stringify(blocked)
+    );
+    assert.equal(isInteractiveCardMessage(blocked), false);
+  }
+  // A member's own message keeps every action.
+  assert.equal(canReplyToChatMessage({ rootType: 'chat' }), true);
+  assert.equal(isInteractiveCardMessage({ rootType: 'chat' }), false);
+});
+
+test('a plain message kind is exactly a message with generic actions', () => {
+  for (const message of [
+    {},
+    { rootType: 'chat' },
+    { isNotification: '0' },
+    { rewardAmount: 200 }
+  ]) {
+    assert.equal(getChatMessageKind(message), 'message');
+    assert.equal(canUseGenericChatMessageActions(message), true);
+  }
+  for (const [kind, rule] of Object.entries(CHAT_MESSAGE_KIND_RULES)) {
+    if (!rule.interactive) {
+      assert.ok(rule.reason.length > 20, `${kind} needs its reason`);
+    }
+  }
+});
+
+test('a chess Discuss message is the member own message: reply, react and every action', () => {
+  // Sent with the position it talks about (chessState) and no isChessMsg.
+  const discuss = {
+    content: 'why this move?',
+    chessState: { fen: 'x', isDiscussion: true }
+  };
+  assert.equal(getChatMessageKind(discuss), 'message');
+  assert.equal(canUseGenericChatMessageActions(discuss), true);
+  assert.equal(canReplyToChatMessage(discuss), true);
+  assert.equal(canReactToChatMessage(discuss), true);
+  assert.equal(isInteractiveCardMessage(discuss), false);
+  // The board itself stays out.
+  const board = { isChessMsg: 1, chessState: { fen: 'x' } };
+  assert.equal(getChatMessageKind(board), 'chessBoard');
+  assert.equal(canReplyToChatMessage(board), false);
+  // Every generic message takes Reply first, as the API decides.
+  assert.equal(canReplyToChatMessage({ rootType: 'chat' }), true);
 });

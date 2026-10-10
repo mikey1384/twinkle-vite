@@ -6,9 +6,9 @@ import Exchange from '../Trade/Exchange';
 import {
   emptyBundle,
   getViewerTradeTerms,
-  hasTradeAssets,
   normalizeBundle
 } from '../Trade/helpers/terms';
+import { getTradeStatus } from '../Trade/helpers/status';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useChatContext, useKeyContext } from '~/contexts';
@@ -92,29 +92,19 @@ export default function TransactionDetails({
     type === 'show'
       ? { give: normalizeBundle(offer), receive: emptyBundle() }
       : getViewerTradeTerms(transaction, userId);
-  const requestOnly =
-    type === 'trade' && !hasTradeAssets(normalizeBundle(offer));
-  const current = transaction.id === currentTransactionId;
-  const settled = isAccepted || type === 'send';
-  const cancelled = type === 'trade' && isCancelled && !isAccepted;
-  const status =
-    type === 'send'
-      ? isFromMe
-        ? 'Gift sent'
-        : 'Gift received'
-      : isAccepted
-        ? 'Trade completed'
-        : cancelled
-          ? cancelReason === 'withdraw'
-            ? 'Offer withdrawn'
-            : 'Offer declined'
-          : type === 'show'
-            ? 'Showcase'
-            : requestOnly
-              ? 'Trade request'
-              : current
-                ? 'Trade offer'
-                : 'Earlier offer';
+  const {
+    label: status,
+    settled,
+    cancelled,
+    requestOnly
+  } = getTradeStatus({
+    transaction,
+    viewerId: userId,
+    isAccepted: !!isAccepted,
+    isCancelled,
+    cancelReason,
+    isCurrent: transaction.id === currentTransactionId
+  });
   const statusNote =
     type === 'show'
       ? 'Nothing changes owners.'

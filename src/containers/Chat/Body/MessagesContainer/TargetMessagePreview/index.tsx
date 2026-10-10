@@ -1,6 +1,7 @@
 import React from 'react';
 import TargetMessage from './TargetMessage';
 import WordleResult from './WordleResult';
+import { getReplyTargetEntry } from '~/containers/Chat/Message/MessageBody/replyTargetSummary';
 
 export default function TargetMessagePreview({
   onClose,
@@ -8,6 +9,7 @@ export default function TargetMessagePreview({
 }: {
   onClose: () => void;
   replyTarget: {
+    [key: string]: any;
     userId: number;
     username: string;
     timeStamp: number;
@@ -31,7 +33,7 @@ export default function TargetMessagePreview({
         marginBottom: '2px'
       }}
     >
-      {replyTarget.wordleResult ? (
+      {getReplyTargetEntry(replyTarget) === 'wordle' ? (
         <WordleResult
           userId={replyTarget.userId}
           username={replyTarget.username}

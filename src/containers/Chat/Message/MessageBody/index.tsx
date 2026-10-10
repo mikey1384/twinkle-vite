@@ -40,6 +40,7 @@ import GameOverMessage from './GameOverMessage';
 import TopicMessagePreview from './TopicMessagePreview';
 import TopicStartNotification from './TopicStartNotification';
 import TransferMessage from './TransferMessage';
+import Reactions from './Reactions';
 import AICardOfferMessage from './AICardOfferMessage';
 import { parseMessageSettings } from './messageSettings';
 import AskedAboutChip from './AskedAboutChip';
@@ -58,9 +59,11 @@ import type {
 import {
   canUseGenericChatMessageActions,
   canReplyToChatMessage,
-  isReplyOnlyBuildCardMessage,
+  canReactToChatMessage,
+  isInteractiveCardMessage,
   isSenderDeleteOnlyBuildSuggestionMessage
 } from '~/helpers/chatMessageCapabilities';
+import InteractiveCardFrame from './InteractiveCardFrame';
 
 function MessageBody({
   channelId,
@@ -94,7 +97,6 @@ function MessageBody({
     filePath,
     gameWinnerId,
     invitePath,
-    isChessMsg,
     isAbort,
     isDraw,
     isDrawOffer,
@@ -213,18 +215,21 @@ function MessageBody({
   const isAIChat = useMemo(() => {
     return partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID;
   }, [partner?.id]);
-  const genericActionsAllowed = canUseGenericChatMessageActions({
+  const capabilityMessage = {
     ...message,
     isNotification: isNotification || message.isNotification
-  });
+  };
+  // A card (a trade, a game result, a Build card, a notice) takes Reply and
+  // reactions only; a member's own words take every action.
+  const isInteractiveCard = isInteractiveCardMessage(capabilityMessage);
+  const genericActionsAllowed =
+    canUseGenericChatMessageActions(capabilityMessage) && !isInteractiveCard;
   const isDeleteOnlyBuildSuggestion = isSenderDeleteOnlyBuildSuggestionMessage({
     message,
     actorUserId: myId
   });
-  const canReply = canReplyToChatMessage({
-    ...message,
-    isNotification: isNotification || message.isNotification
-  });
+  const canReply = canReplyToChatMessage(capabilityMessage);
+  const canReact = canReactToChatMessage(capabilityMessage);
   // Any member's message except your own; server-issued cards and notices
   // are not member speech and take no report.
   const canReport =
@@ -233,10 +238,6 @@ function MessageBody({
     Number(userId) > 0 &&
     Number(userId) !== Number(myId) &&
     genericActionsAllowed;
-  const isReplyOnlyBuildCard = isReplyOnlyBuildCardMessage({
-    ...message,
-    isNotification: isNotification || message.isNotification
-  });
 
   useEffect(() => {
     if (isLastMsg && isNewMessage && !userIsUploader) {
@@ -533,29 +534,23 @@ function MessageBody({
     [currentChannel?.currentlyStreamingAIMsgId, messageId]
   );
 
+  // Cards stored as notifications (a reward review, an approval request, a
+  // crew invitation) take Reply and reactions through isInteractiveCard;
+  // system lines, call logs and game boards are neither generic nor cards.
   const isMenuButtonsAllowed = useMemo(
     () =>
       !!messageId &&
-      ((genericActionsAllowed || isDeleteOnlyBuildSuggestion) ||
-        isReplyOnlyBuildCard) &&
-      !isApprovalRequest &&
-      // The reward review card is stored as a notification but still takes
-      // Reply; every other notification stays menu-less.
-      (!isNotification || isReplyOnlyBuildCard) &&
-      !isCallMsg &&
-      !isChessMsg &&
+      (genericActionsAllowed ||
+        isDeleteOnlyBuildSuggestion ||
+        isInteractiveCard) &&
       !isEditing &&
       !fileToUpload,
     [
       fileToUpload,
       genericActionsAllowed,
-      isApprovalRequest,
-      isCallMsg,
-      isChessMsg,
       isDeleteOnlyBuildSuggestion,
       isEditing,
-      isNotification,
-      isReplyOnlyBuildCard,
+      isInteractiveCard,
       messageId
     ]
   );
@@ -707,6 +702,79 @@ function MessageBody({
     await submitReactionMutation({ mutation: 'remove', reaction });
   }
 
+  const actionButtons = (
+    <ActionButtons
+      currentChannelId={currentChannel.id}
+      dropdownShown={highlighted}
+      fileName={fileName}
+      filePath={filePath}
+      isAIChat={isAIChat}
+      isAIMessage={isAIMessage}
+      isBanned={isBanned}
+      isCielMessage={isCielMessage}
+      isCurrentlyStreaming={!!isCurrentlyStreaming}
+      isMenuButtonsAllowed={isMenuButtonsAllowed}
+      isDeleteOnlyBuildSuggestion={isDeleteOnlyBuildSuggestion}
+      isInteractiveCard={isInteractiveCard}
+      canReply={canReply && !directChatBlocked}
+      canReact={canReact}
+      canReport={canReport}
+      directChatBlocked={directChatBlocked}
+      isRestricted={isRestricted}
+      message={message}
+      messageId={messageId}
+      myId={myId}
+      onAddReaction={handleAddReaction}
+      onBookmark={handleBookmarkMessage}
+      onDelete={onDelete}
+      onDropdownShown={setHighlighted}
+      onOpenRewardModal={() => setMessageRewardModalShown(true)}
+      onOpenReportModal={() => setReportModalShown(true)}
+      onReplyClick={onReplyClick}
+      onSetIsEditing={onSetIsEditing}
+      onSetReactionsMenuShown={setReactionsMenuShown}
+      onSetReplyTarget={onSetReplyTarget}
+      reactionsMenuShown={reactionsMenuShown}
+      recentThumbUrl={recentThumbUrl}
+      rewardAmount={rewardAmount}
+      rewardColor={rewardColor}
+      subchannelId={subchannelId}
+      targetMessage={targetMessage}
+      thumbUrl={thumbUrl}
+      timeStamp={timeStamp}
+      userCanDeleteThis={userCanDeleteThis}
+      userCanEditThis={userCanEditThis}
+      userCanRewardThis={userCanRewardThis}
+      userId={userId}
+    />
+  );
+  const cardReactions =
+    isMenuButtonsAllowed && canReact ? (
+      <Reactions
+        pendingReactionMutations={visiblePendingReactionMutations}
+        reactions={message.reactions}
+        reactionsMenuShown={reactionsMenuShown}
+        onRemoveReaction={handleRemoveReaction}
+        onAddReaction={handleAddReaction}
+        theme={displayedThemeColor}
+      />
+    ) : null;
+  // A full-width card without an author row gets the message actions and the
+  // reaction row through one frame.
+  function withCardFrame(label: string, card: React.ReactElement) {
+    if (!isMenuButtonsAllowed) return card;
+    return (
+      <InteractiveCardFrame
+        label={label}
+        highlighted={highlighted || reactionsMenuShown}
+        actions={actionButtons}
+        reactions={cardReactions}
+      >
+        {card}
+      </InteractiveCardFrame>
+    );
+  }
+
   // In a group chat, a member you blocked is hidden behind a one-line notice
   // you can open per message. Direct chats keep their history visible.
   const hiddenAsBlocked =
@@ -760,7 +828,8 @@ function MessageBody({
   }
 
   if (transferDetails) {
-    return (
+    return withCardFrame(
+      'AI card sale',
       <TransferMessage
         myId={myId}
         myUsername={myUsername}
@@ -772,7 +841,8 @@ function MessageBody({
   }
 
   if (aiCardOfferDetails) {
-    return (
+    return withCardFrame(
+      'AI card offer',
       <AICardOfferMessage
         myId={myId}
         myUsername={myUsername}
@@ -785,7 +855,8 @@ function MessageBody({
   }
 
   if (transactionDetails) {
-    return (
+    return withCardFrame(
+      'Trade',
       <TransactionDetails
         currentTransactionId={currentChannel.currentTransactionId}
         isAICardModalShown={isAICardModalShown}
@@ -809,7 +880,8 @@ function MessageBody({
   }
 
   if (!chessState && !omokState && (gameWinnerId || isDraw || isAbort)) {
-    return (
+    return withCardFrame(
+      'Game result',
       <GameOverMessage
         channelId={channelId}
         messageId={message.id}
@@ -826,15 +898,13 @@ function MessageBody({
   }
 
   if (wordleResult) {
-    return (
+    return withCardFrame(
+      'Wordle result',
       <WordleResult
         myId={myId}
-        messageId={message.id}
         userId={userId}
         username={appliedUsername}
         wordleResult={wordleResult}
-        onReplyClick={onReplyClick}
-        channelId={currentChannel.id}
         timeStamp={timeStamp}
       />
     );
@@ -962,8 +1032,7 @@ function MessageBody({
               isEditing={isEditing}
               isLastMsg={isLastMsg}
               isMenuButtonsAllowed={isMenuButtonsAllowed}
-              isDeleteOnlyBuildSuggestion={isDeleteOnlyBuildSuggestion}
-              isReplyOnlyBuildCard={isReplyOnlyBuildCard}
+              canReact={canReact}
               isModificationNotice={isModificationNotice}
               isNotification={isNotification}
               isOmokCountdownActive={isOmokCountdownActive}
@@ -990,52 +1059,7 @@ function MessageBody({
               userId={userId}
             />
             <AlertActions settings={message?.settings} />
-            <ActionButtons
-              currentChannelId={currentChannel.id}
-              dropdownShown={highlighted}
-              fileName={fileName}
-              filePath={filePath}
-              invitePath={invitePath}
-              isAIChat={isAIChat}
-              isAIMessage={isAIMessage}
-              isBanned={isBanned}
-              isCielMessage={isCielMessage}
-              isChessMsg={isChessMsg}
-              isCurrentlyStreaming={!!isCurrentlyStreaming}
-              isDrawOffer={isDrawOffer}
-              isMenuButtonsAllowed={isMenuButtonsAllowed}
-              isDeleteOnlyBuildSuggestion={isDeleteOnlyBuildSuggestion}
-              isReplyOnlyBuildCard={isReplyOnlyBuildCard}
-              canReply={canReply && !directChatBlocked}
-              canReport={canReport}
-              directChatBlocked={directChatBlocked}
-              isRestricted={isRestricted}
-              message={message}
-              messageId={messageId}
-              myId={myId}
-              onAddReaction={handleAddReaction}
-              onBookmark={handleBookmarkMessage}
-              onDelete={onDelete}
-              onDropdownShown={setHighlighted}
-              onOpenRewardModal={() => setMessageRewardModalShown(true)}
-              onOpenReportModal={() => setReportModalShown(true)}
-              onReplyClick={onReplyClick}
-              onSetIsEditing={onSetIsEditing}
-              onSetReactionsMenuShown={setReactionsMenuShown}
-              onSetReplyTarget={onSetReplyTarget}
-              reactionsMenuShown={reactionsMenuShown}
-              recentThumbUrl={recentThumbUrl}
-              rewardAmount={rewardAmount}
-              rewardColor={rewardColor}
-              subchannelId={subchannelId}
-              targetMessage={targetMessage}
-              thumbUrl={thumbUrl}
-              timeStamp={timeStamp}
-              userCanDeleteThis={userCanDeleteThis}
-              userCanEditThis={userCanEditThis}
-              userCanRewardThis={userCanRewardThis}
-              userId={userId}
-            />
+            {actionButtons}
           </div>
           {reportModalShown && canReport && (
             <ReportMessageModal

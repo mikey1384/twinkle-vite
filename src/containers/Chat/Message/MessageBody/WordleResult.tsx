@@ -1,38 +1,25 @@
-import React, { useContext, useMemo, useState } from 'react';
-import ActionMenu from './ActionMenu';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
-import LocalContext from '../../Context';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useWordleLabels } from '~/helpers/hooks';
 import { getWordleBannerLevelColor } from '../../constants/wordlePresentation';
 import moment from 'moment';
 
-const replyLabel = 'Reply';
-
+// Its Reply and reaction row come from the shared card frame in MessageBody.
 export default function WordleResult({
-  channelId,
-  messageId,
   username,
   userId,
   myId,
-  onReplyClick,
   wordleResult,
   timeStamp
 }: {
-  channelId: number;
-  messageId: number;
   myId: number;
   userId: number;
   username: string;
-  onReplyClick: (target: any) => void;
   timeStamp: number;
   wordleResult: any;
 }) {
-  const [dropdownShown, setDropdownShown] = useState(false);
-  const {
-    actions: { onSetReplyTarget }
-  } = useContext(LocalContext);
   const { isSolved, numGuesses } = wordleResult;
   const isQuickSolve = isSolved && (numGuesses === 1 || numGuesses === 2);
 
@@ -57,23 +44,12 @@ export default function WordleResult({
 
   return (
     <div
-      role="article"
-      tabIndex={0}
       aria-label="Wordle result"
       className={css`
         container-type: inline-size;
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         border-radius: ${borderRadius};
-        .menu-button {
-          display: ${dropdownShown ? 'block' : 'none'};
-        }
-        &:hover,
-        &:focus-within {
-          .menu-button {
-            display: block;
-          }
-        }
         .reward-amount-label {
           display: inline-block;
           white-space: nowrap;
@@ -81,11 +57,6 @@ export default function WordleResult({
           font-size: ${isQuickSolve ? '2.6rem' : 'inherit'};
           @media (max-width: ${mobileMaxWidth}) {
             font-size: ${isQuickSolve ? 'max(22px, 2.3rem)' : 'inherit'};
-          }
-        }
-        @media (max-width: 1024px), (pointer: coarse) {
-          .menu-button {
-            display: block;
           }
         }
       `}
@@ -109,48 +80,6 @@ export default function WordleResult({
           }}
         />
       )}
-      <div
-        style={{
-          position: 'absolute',
-          top: '0.6rem',
-          right: '0.8rem'
-        }}
-      >
-        <ActionMenu
-          label="Wordle result actions"
-          items={[
-            {
-              id: 'reply',
-              label: (
-                <>
-                  <Icon icon="reply" />
-                  <span>{replyLabel}</span>
-                </>
-              ),
-              onClick: () => {
-                onSetReplyTarget({
-                  channelId,
-                  target: {
-                    id: messageId,
-                    wordleResult,
-                    timeStamp,
-                    userId,
-                    username
-                  }
-                });
-                onReplyClick({
-                  id: messageId,
-                  wordleResult,
-                  timeStamp,
-                  userId,
-                  username
-                });
-              }
-            }
-          ]}
-          onShownChange={setDropdownShown}
-        />
-      </div>
       <div
         className={css`
           grid-area: 1 / 1;

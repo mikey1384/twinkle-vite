@@ -36,7 +36,7 @@ function menuFixture() {
 function event(key) { return {key,preventDefault(){this.prevented=true;},stopPropagation(){this.stopped=true;}}; }
 
 test('chat and Wordle actions stay discoverable on tablets and coarse pointers',()=>{
-  for(const file of ['index.tsx','WordleResult.tsx']) {
+  for(const file of ['index.tsx','InteractiveCardFrame.tsx']) {
     const source=readFileSync(path.resolve(__dirname,'..',base,file),'utf8');
     assert.match(source,/@media \(max-width: 1024px\), \(pointer: coarse\) \{\s*\.menu-button \{\s*display: block;/);
   }
@@ -171,18 +171,14 @@ test('Reward sits with the positive actions, far from Report; Remove and Report 
   assert.equal(reportOnly.menu.props.items[1].separated,true);
 });
 
-test('Wordle action uses the shared chat popup and preserves its exact reply target',()=>{
-  const calls=[],Menu=()=>null;
-  const Wordle=load(base+'WordleResult.tsx',{
-    react:{...React,useContext:()=>({actions:{onSetReplyTarget:value=>calls.push(['target',value])}}),useMemo:fn=>fn(),useState:()=>[false,()=>{}]},
-    './ActionMenu':Menu,'~/components/Icon':()=>null,'../../Context':{},'@emotion/css':require('@emotion/css'),
-    '~/constants/css':{borderRadius:'12px',mobileMaxWidth:'767px',Color:{gold:()=> '#ffca28',gray:()=> '#777',darkBlueGray:()=> '#253247'}},
-    '~/helpers/hooks':{useWordleLabels:()=>({})},'../../constants/wordlePresentation':{getWordleBannerLevelColor:()=> '#75c0ff'},moment:{unix:()=>({format:()=> 'date'})}
-  });
-  const props={channelId:22,messageId:7,userId:1,myId:1,username:'Mina',timeStamp:123,wordleResult:{isSolved:true,numGuesses:1},onReplyClick:target=>calls.push(['reply',target])};
-  const menu=walk(Wordle(props)).find(node=>node.type===Menu);assert.equal(menu.props.label,'Wordle result actions');menu.props.items[0].onClick();
-  const target={id:7,wordleResult:props.wordleResult,timeStamp:123,userId:1,username:'Mina'};
-  assert.deepEqual(calls,[['target',{channelId:22,target}],['reply',target]]);
+test('Wordle results take the shared message actions through the card frame',()=>{
+  const body=readFileSync(path.resolve(__dirname,'..',base,'index.tsx'),'utf8');
+  const wordle=readFileSync(path.resolve(__dirname,'..',base,'WordleResult.tsx'),'utf8');
+  // One menu for every card: Reply (and reactions) come from ActionButtons,
+  // whose reply target is the whole message, wordleResult included.
+  assert.match(body,/return withCardFrame\(\s*'Wordle result',\s*<WordleResult/);
+  assert.match(body,/<InteractiveCardFrame[\s\S]*?actions=\{actionButtons\}[\s\S]*?reactions=\{cardReactions\}/);
+  assert.doesNotMatch(wordle,/ActionMenu|onSetReplyTarget/);
 });
 
 test('a press inside the open menu survives a Safari blur with no relatedTarget', () => {

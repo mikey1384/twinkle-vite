@@ -19,18 +19,16 @@ interface Props {
   dropdownShown: boolean;
   fileName: string;
   filePath: string;
-  invitePath: string;
   isAIChat: boolean;
   isAIMessage: boolean;
   isBanned: boolean;
   isCielMessage?: boolean;
-  isChessMsg: boolean;
   isCurrentlyStreaming: boolean;
   isDeleteOnlyBuildSuggestion: boolean;
-  isReplyOnlyBuildCard: boolean;
+  isInteractiveCard: boolean;
   canReply: boolean;
+  canReact: boolean;
   canReport: boolean;
-  isDrawOffer: boolean;
   isMenuButtonsAllowed: boolean;
   isRestricted: boolean;
   message: any;
@@ -66,18 +64,16 @@ export default function ActionButtons({
   dropdownShown,
   fileName,
   filePath,
-  invitePath,
   isAIChat,
   isAIMessage,
   isBanned,
   isCielMessage,
-  isChessMsg,
   isCurrentlyStreaming,
   isDeleteOnlyBuildSuggestion,
-  isReplyOnlyBuildCard,
+  isInteractiveCard,
   canReply,
+  canReact,
   canReport,
-  isDrawOffer,
   isMenuButtonsAllowed,
   isRestricted,
   message,
@@ -113,8 +109,8 @@ export default function ActionButtons({
     // A member banned from chat can still report what they were sent.
     if (isBanned) return withReport(result);
 
-    // Reply is the one action a Build card keeps: quoting it bumps the card
-    // with its live buttons. Everything else stays gated below.
+    // Reply (with reactions) is what a card keeps: quoting a Build card bumps
+    // it with its live buttons. Everything else stays gated below.
     if (canReply && !isRestricted) {
       result.push({
         id: 'reply',
@@ -147,7 +143,7 @@ export default function ActionButtons({
     // sits next to Report (Mikey, 2026-09-28).
     if (
       !isDeleteOnlyBuildSuggestion &&
-      !isReplyOnlyBuildCard &&
+      !isInteractiveCard &&
       userCanRewardThis &&
       !rewardAmount &&
       !isAIMessage
@@ -167,7 +163,7 @@ export default function ActionButtons({
 
     const canBookmark =
       isAIChat && (isAIMessage || (!!myId && userId === myId && !!messageId));
-    if (!isDeleteOnlyBuildSuggestion && !isReplyOnlyBuildCard && canBookmark) {
+    if (!isDeleteOnlyBuildSuggestion && !isInteractiveCard && canBookmark) {
       const bookmarkView = isAIMessage ? BOOKMARK_VIEWS.AI : BOOKMARK_VIEWS.ME;
       result.push({
         id: 'bookmark',
@@ -187,6 +183,7 @@ export default function ActionButtons({
       pins?.snapshot?.canManage &&
       Number.isSafeInteger(messageId) &&
       messageId > 0 &&
+      !isInteractiveCard &&
       canUseGenericChatMessageActions(message)
     ) {
       const pinned = pins.snapshot.pinnedMessageIds.includes(messageId);
@@ -213,11 +210,7 @@ export default function ActionButtons({
       });
     }
 
-    if (
-      !isDeleteOnlyBuildSuggestion &&
-      !isReplyOnlyBuildCard &&
-      userCanEditThis
-    ) {
+    if (!isDeleteOnlyBuildSuggestion && !isInteractiveCard && userCanEditThis) {
       result.push({
         id: 'edit',
         label: (
@@ -292,7 +285,7 @@ export default function ActionButtons({
     isBanned,
     isCielMessage,
     isDeleteOnlyBuildSuggestion,
-    isReplyOnlyBuildCard,
+    isInteractiveCard,
     isRestricted,
     message,
     messageId,
@@ -343,23 +336,17 @@ export default function ActionButtons({
         display: flex;
       `}
     >
-      {!isDeleteOnlyBuildSuggestion &&
-        !isReplyOnlyBuildCard &&
-        !invitePath &&
-        !isDrawOffer &&
-        !isChessMsg &&
-        !isBanned &&
-        !directChatBlocked && (
-          <ReactionButton
-            openOnHover={!dropdownShown}
-            onReactionClick={onAddReaction}
-            reactionsMenuShown={reactionsMenuShown}
-            onSetReactionsMenuShown={onSetReactionsMenuShown}
-            style={{
-              marginRight: dropdownButtonShown ? 4 : 0
-            }}
-          />
-        )}
+      {canReact && !isBanned && !directChatBlocked && (
+        <ReactionButton
+          openOnHover={!dropdownShown}
+          onReactionClick={onAddReaction}
+          reactionsMenuShown={reactionsMenuShown}
+          onSetReactionsMenuShown={onSetReactionsMenuShown}
+          style={{
+            marginRight: dropdownButtonShown ? 4 : 0
+          }}
+        />
+      )}
       {dropdownButtonShown && (
         <ActionMenu
           items={dropdownMenuItems}

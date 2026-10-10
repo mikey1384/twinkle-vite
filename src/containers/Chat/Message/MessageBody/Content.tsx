@@ -28,7 +28,7 @@ import Reactions from './Reactions';
 import type { PendingReactionMutations } from './Reactions/types';
 import RewardMessage from './RewardMessage';
 import TargetChessPosition from './TargetChessPosition';
-import TargetMessage from './TargetMessage';
+import TargetMessage, { RemovedTargetMessage } from './TargetMessage';
 import TargetSubject from './TargetSubject';
 import TextMessage from './TextMessage';
 import { parseMessageSettings } from './messageSettings';
@@ -60,8 +60,7 @@ interface Props {
   isChessDiscussion: boolean;
   isCielMessage?: boolean;
   isCurrentlyStreaming: boolean;
-  isDeleteOnlyBuildSuggestion: boolean;
-  isReplyOnlyBuildCard: boolean;
+  canReact: boolean;
   isDrawOffer: boolean;
   isEditing: boolean;
   isLastMsg: boolean;
@@ -116,8 +115,7 @@ export default function Content({
   isChessDiscussion,
   isCielMessage,
   isCurrentlyStreaming,
-  isDeleteOnlyBuildSuggestion,
-  isReplyOnlyBuildCard,
+  canReact,
   isDrawOffer,
   isEditing,
   isLastMsg,
@@ -445,14 +443,16 @@ export default function Content({
               <TargetSubject subject={targetSubject} />
             </ErrorBoundary>
           )}
-          {targetMessage && (
+          {targetMessage ? (
             <ErrorBoundary componentPath="Chat/Message/MessageBody/TargetMessage">
               <TargetMessage
                 displayedThemeColor={displayedThemeColor}
                 message={targetMessage}
               />
             </ErrorBoundary>
-          )}
+          ) : targetMessage === null && Number(message.targetMessageId) > 0 ? (
+            <RemovedTargetMessage />
+          ) : null}
           {filePath && fileName && (
             <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment">
               <FileAttachment
@@ -540,20 +540,19 @@ export default function Content({
               Sent. Others in this chat may not see it until they reload.
             </div>
           )}
-          {!isEditing &&
-            isMenuButtonsAllowed &&
-            !isDeleteOnlyBuildSuggestion &&
-            !isReplyOnlyBuildCard && (
-              <Reactions
-                pendingReactionMutations={pendingReactionMutations}
-                reactions={message.reactions}
-                reactionsMenuShown={reactionsMenuShown}
-                onRemoveReaction={handleRemoveReaction}
-                onAddReaction={handleAddReaction}
-                theme={displayedThemeColor}
-              />
-            )}
         </>
+      )}
+      {/* Every message that takes a reply takes reactions too, cards
+          included (one rule: canReactToChatMessage). */}
+      {!isEditing && isMenuButtonsAllowed && canReact && (
+        <Reactions
+          pendingReactionMutations={pendingReactionMutations}
+          reactions={message.reactions}
+          reactionsMenuShown={reactionsMenuShown}
+          onRemoveReaction={handleRemoveReaction}
+          onAddReaction={handleAddReaction}
+          theme={displayedThemeColor}
+        />
       )}
     </div>
   );

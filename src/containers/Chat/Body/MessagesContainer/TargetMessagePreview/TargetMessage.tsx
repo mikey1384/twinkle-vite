@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import FileInfo from './FileInfo';
-import BuildCardTargetSummary, {
-  getBuildCardTargetSummary
-} from '~/containers/Chat/Message/MessageBody/BuildCardTargetSummary';
+import ReplyTargetSummaryView from '~/containers/Chat/Message/MessageBody/ReplyTargetSummaryView';
+import useReplyTargetSummary from '~/containers/Chat/Message/MessageBody/useReplyTargetSummary';
+import { getReplyTargetEntry } from '~/containers/Chat/Message/MessageBody/replyTargetSummary';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -30,10 +30,10 @@ export default function TargetMessage({
     [replyTarget.timeStamp]
   );
 
-  const buildCardSummary = useMemo(
-    () => getBuildCardTargetSummary(replyTarget),
-    [replyTarget]
-  );
+  const targetSummary = useReplyTargetSummary(replyTarget);
+  // A Build card's note is not part of its summary; other cards' summaries
+  // already carry what their text says.
+  const showsOwnContent = getReplyTargetEntry(replyTarget) === 'buildCard';
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
@@ -60,7 +60,7 @@ export default function TargetMessage({
           justifyContent: 'space-between'
         }}
       >
-        <div style={buildCardSummary ? { width: '100%' } : undefined}>
+        <div style={targetSummary ? { width: '100%' } : undefined}>
           <div>
             <p
               style={{
@@ -84,10 +84,12 @@ export default function TargetMessage({
             </span>
           </div>
           <div style={{ marginTop: '0.5rem', paddingBottom: '1rem' }}>
-            {buildCardSummary ? (
-              <BuildCardTargetSummary summary={buildCardSummary}>
-                {replyTarget.content ? <div>{replyTarget.content}</div> : null}
-              </BuildCardTargetSummary>
+            {targetSummary ? (
+              <ReplyTargetSummaryView summary={targetSummary}>
+                {showsOwnContent && replyTarget.content ? (
+                  <div>{replyTarget.content}</div>
+                ) : null}
+              </ReplyTargetSummaryView>
             ) : (
               replyTarget.content || replyTarget.fileName
             )}

@@ -1,4 +1,5 @@
 import { applyUserActivityEvent } from '~/helpers/userActivity';
+import { clearDeletedReplyTargets } from '~/helpers/chatReplyTargetDeletion';
 import { initialChatState } from '.';
 import {
   defaultChatSubject,
@@ -2671,7 +2672,10 @@ export default function ChatReducer(
         messageId: action.messageId,
         subchannelId: action.subchannelId
       });
-      const nextMessagesObj = { ...prevChannelObj?.messagesObj };
+      const nextMessagesObj = clearDeletedReplyTargets(
+        { ...prevChannelObj?.messagesObj },
+        action.messageId
+      );
       delete nextMessagesObj[action.messageId];
       const deletedSubchannelId =
         Number(action.subchannelId || deletedMessage?.subchannelId || 0) ||
@@ -2687,10 +2691,13 @@ export default function ChatReducer(
               ]?.messageIds?.filter(
                 (messageId: number) => messageId !== action.messageId
               ),
-              messagesObj: {
-                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
-                  ?.messagesObj
-              }
+              messagesObj: clearDeletedReplyTargets(
+                {
+                  ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                    ?.messagesObj
+                },
+                action.messageId
+              )
             }
           }
         : prevChannelObj?.subchannelObj;

@@ -4,9 +4,9 @@ import RichText from '~/components/Texts/RichText';
 import VideoThumb from './VideoThumb';
 import FileThumb from './FileThumb';
 import Spoiler from '../../Spoiler';
-import BuildCardTargetSummary, {
-  getBuildCardTargetSummary
-} from '../../BuildCardTargetSummary';
+import ReplyTargetSummaryView from '../../ReplyTargetSummaryView';
+import useReplyTargetSummary from '../../useReplyTargetSummary';
+import { getReplyTargetEntry } from '../../replyTargetSummary';
 import BuildCardTarget, {
   buildCardRendersContent,
   isBuildCardTargetMessage
@@ -64,16 +64,15 @@ export default function TextMessage({
     [message?.timeStamp]
   );
 
-  const buildCardSummary = useMemo(
-    () => getBuildCardTargetSummary(message),
-    [message]
-  );
+  const targetSummary = useReplyTargetSummary(message);
+  const isBuildCard = getReplyTargetEntry(message) === 'buildCard';
   // A quoted Build card is rendered whole (the same card as the original
   // message, buttons included) so a reply can bump it; the compact summary
   // stays as the fallback for a card the full component cannot render.
+  // Every other card is quoted by its compact summary.
   const showFullBuildCard = useMemo(
-    () => !!buildCardSummary && isBuildCardTargetMessage(message),
-    [buildCardSummary, message]
+    () => isBuildCard && !!targetSummary && isBuildCardTargetMessage(message),
+    [isBuildCard, targetSummary, message]
   );
 
   return (
@@ -126,12 +125,12 @@ export default function TextMessage({
               </RichText>
             ) : null}
           </div>
-        ) : buildCardSummary ? (
-          <BuildCardTargetSummary
-            summary={buildCardSummary}
+        ) : targetSummary ? (
+          <ReplyTargetSummaryView
+            summary={targetSummary}
             style={{ marginTop: '0.5rem' }}
           >
-            {message.content ? (
+            {isBuildCard && message.content ? (
               <RichText
                 contentId={message.id}
                 contentType="chat"
@@ -146,9 +145,11 @@ export default function TextMessage({
                 {message.content}
               </RichText>
             ) : null}
-          </BuildCardTargetSummary>
+          </ReplyTargetSummaryView>
         ) : isValidSpoiler(message.content) ? (
-          <Spoiler content={message.content} />
+          <div data-quote-own-click>
+            <Spoiler content={message.content} />
+          </div>
         ) : (
           <RichText
             contentId={message.id}
@@ -168,6 +169,7 @@ export default function TextMessage({
       </div>
       {showVideoThumb && (
         <div
+          data-quote-own-click
           style={{
             width: '25%',
             display: 'flex',
@@ -187,13 +189,15 @@ export default function TextMessage({
         </div>
       )}
       {fileType && message.fileName && (
-        <FileThumb
-          filePath={message.filePath}
-          fileName={message.fileName}
-          fileType={fileType}
-          thumbUrl={message.thumbUrl}
-          messageId={message.id}
-        />
+        <div data-quote-own-click style={{ display: 'contents' }}>
+          <FileThumb
+            filePath={message.filePath}
+            fileName={message.fileName}
+            fileType={fileType}
+            thumbUrl={message.thumbUrl}
+            messageId={message.id}
+          />
+        </div>
       )}
     </div>
   );

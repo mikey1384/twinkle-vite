@@ -230,7 +230,7 @@ test('successive confirmed cancellation deletions cannot resurrect an older gene
   );
   assert.match(
     deleteMessageCase,
-    /const nextMessagesObj = \{ \.\.\.prevChannelObj\?\.messagesObj \};[\s\S]*?delete nextMessagesObj\[action\.messageId\];/
+    /const nextMessagesObj = clearDeletedReplyTargets\(\s*\{ \.\.\.prevChannelObj\?\.messagesObj \},\s*action\.messageId\s*\);[\s\S]*?delete nextMessagesObj\[action\.messageId\];/
   );
   assert.match(
     deleteMessageCase,
