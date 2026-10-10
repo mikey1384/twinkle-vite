@@ -158,12 +158,20 @@ function TagModal({
 
   async function handleSubmit() {
     setPosting(true);
-    await addVideoToPlaylists({
-      videoId,
-      playlistIds: selectedPlaylists.map(
-        (playlist: { id: number }) => playlist.id
-      )
-    });
+    try {
+      await addVideoToPlaylists({
+        videoId,
+        playlistIds: selectedPlaylists.map(
+          (playlist: { id: number }) => playlist.id
+        )
+      });
+    } catch (error) {
+      // Refused or failed: nothing was tagged. Let the member try again
+      // instead of leaving the button spinning.
+      console.error(error);
+      setPosting(false);
+      return;
+    }
     setSearchText('');
     onSubmit(selectedPlaylists);
   }
