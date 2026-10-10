@@ -1,10 +1,11 @@
-// Grammar Quest music: each world has a theme for its map and levels, plus
-// the fort, castle and final boss themes. Each track is an MP3 with an intro that
-// plays once and a body that loops seamlessly (sample-exact loop points from
+// Grammar Quest music: each world has a map song (calm, for exploring the
+// overworld; Mikey 10-10) and a level theme, plus the fort, castle and final
+// boss themes. Each track is an MP3 with an intro that plays once and a body
+// that loops seamlessly (sample-exact loop points from
 // the renderer's manifest). One track plays at a time; switching crossfades.
 // Players can turn music off; the choice is remembered on this device.
 // A decoded track is big (about 35 MB a minute), so only the two most recent
-// stay decoded (the map's theme and the level's), and once nothing has played
+// stay decoded (the map's song and the level's), and once nothing has played
 // for a while they are dropped and the audio device is let go.
 
 import { announceAudioChoice } from '../sfx';
@@ -216,8 +217,15 @@ export function musicPosition() {
   };
 }
 
+// a world's level theme (its stops; forts and castles have boss themes)
 export function musicForWorld(worldId: number) {
   return WORLD_TRACKS[worldId - 1] || WORLD_TRACKS[0];
+}
+
+// a world's map song: its own calmer piece for the overworld, which can quote
+// the level theme but never repeats it (Mikey 10-10)
+export function musicForWorldMap(worldId: number) {
+  return MAP_TRACKS[worldId - 1] || MAP_TRACKS[0];
 }
 
 // which track a node plays: its world's theme, or a boss theme
@@ -240,6 +248,18 @@ export const WORLD_TRACKS = [
   'w8-the-citadel',
   'w9-the-academy',
   'w10-logic-tower'
+];
+export const MAP_TRACKS = [
+  'w1-map-village-green',
+  'w2-map-harbor-lights',
+  'w3-map-turning-sails',
+  'w4-map-lantern-trail',
+  'w5-map-starlit-mesa',
+  'w6-map-snowfield-hush',
+  'w7-map-cloud-pages',
+  'w8-map-stormwatch',
+  'w9-map-campus-stroll',
+  'w10-map-quiet-orbit'
 ];
 export const BOSS_TRACKS = ['boss-fort', 'boss-castle', 'boss-final'];
 // The original shared map theme remains available in the music lab.

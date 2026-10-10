@@ -1,5 +1,5 @@
 // Quest jukebox: listen to every track through the game's own music player.
-import { loadManifest, playMusic, stopMusic, musicPosition, WORLD_TRACKS, BOSS_TRACKS, OVERWORLD_TRACK } from '../music';
+import { loadManifest, playMusic, stopMusic, musicPosition, WORLD_TRACKS, MAP_TRACKS, BOSS_TRACKS, OVERWORLD_TRACK } from '../music';
 
 const NAMES: Record<string, string> = {
   overworld: 'Overworld (map)',
@@ -15,13 +15,17 @@ const nowName = document.getElementById('nowName')!;
 let playing: string | null = null;
 
 const tracks = await loadManifest();
-for (const id of [OVERWORLD_TRACK, ...WORLD_TRACKS, ...BOSS_TRACKS]) {
+// each world's map song sits right before its level theme
+const ORDER = WORLD_TRACKS.flatMap((level, i) => [MAP_TRACKS[i], level]);
+for (const id of [OVERWORLD_TRACK, ...ORDER, ...BOSS_TRACKS]) {
   const meta = tracks[id];
   const row = document.createElement('div');
   row.className = `row${meta ? '' : ' missing'}`;
   row.dataset.id = id;
   const world = WORLD_TRACKS.indexOf(id);
-  row.innerHTML = `<div class="name"><b>${world >= 0 ? `World ${world + 1} · ` : ''}${meta?.title || NAMES[id] || id}</b><span class="meta">${meta ? `${meta.bpm} bpm · intro ${meta.loopStart.toFixed(1)} s + loop ${(meta.loopEnd - meta.loopStart).toFixed(1)} s` : 'not composed yet'}</span></div>`;
+  const map = MAP_TRACKS.indexOf(id);
+  const where = world >= 0 ? `World ${world + 1} level · ` : map >= 0 ? `World ${map + 1} map · ` : '';
+  row.innerHTML = `<div class="name"><b>${where}${meta?.title || NAMES[id] || id}</b><span class="meta">${meta ? `${meta.bpm} bpm · intro ${meta.loopStart.toFixed(1)} s + loop ${(meta.loopEnd - meta.loopStart).toFixed(1)} s` : 'not composed yet'}</span></div>`;
   if (meta) {
     const play = document.createElement('button');
     play.textContent = '▶ Play';

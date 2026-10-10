@@ -8,7 +8,7 @@ import { WORLD_IMAGES, WORLD_THUMBS, nodePositions } from './layout';
 import type { QuestNode, QuestState, QuestWorld } from './types';
 import AudioToggles from './AudioToggles';
 import GoalsChip from './GoalsChip';
-import { musicForWorld, playMusic, stopMusic } from './MarbleRun/music';
+import { musicForWorldMap, playMusic, stopMusic } from './MarbleRun/music';
 import PixelIcon from './PixelIcon';
 import {
   GOLD,
@@ -66,10 +66,10 @@ export default function WorldMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [world.id, selectedIndex]);
 
-  // Each map follows its world's theme, including when browsing unlocked
-  // worlds without leaving this screen.
+  // Each map plays its world's own map song (not the level theme), including
+  // when browsing unlocked worlds without leaving this screen.
   useEffect(() => {
-    playMusic(musicForWorld(world.id));
+    playMusic(musicForWorldMap(world.id));
     return () => stopMusic(0.6);
   }, [world.id]);
 

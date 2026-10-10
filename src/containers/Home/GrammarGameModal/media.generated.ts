@@ -278,30 +278,50 @@ export const GQ_MEDIA: Record<string, string> = {
   'img/grammar-quest/thumbs/windmill-hills.jpg':
     'img/thumbs/windmill-hills.08c3ed2baa.webp',
   'img/grammar-quest/windmill-hills.jpg': 'img/windmill-hills.83d4bfe851.webp',
-  'music/grammar-quest/boss-castle.mp3': 'music/boss-castle.7cabeac702.mp3',
-  'music/grammar-quest/boss-final.mp3': 'music/boss-final.c1a0341807.mp3',
-  'music/grammar-quest/boss-fort.mp3': 'music/boss-fort.411f58bd86.mp3',
-  'music/grammar-quest/overworld.mp3': 'music/overworld.3f8d0127b3.mp3',
+  'music/grammar-quest/boss-castle.mp3': 'music/boss-castle.28d102e3f9.mp3',
+  'music/grammar-quest/boss-final.mp3': 'music/boss-final.a4c713b48d.mp3',
+  'music/grammar-quest/boss-fort.mp3': 'music/boss-fort.5a0a0090c4.mp3',
+  'music/grammar-quest/overworld.mp3': 'music/overworld.4a0442e72f.mp3',
+  'music/grammar-quest/w1-map-village-green.mp3':
+    'music/w1-map-village-green.64ce2abdaa.mp3',
   'music/grammar-quest/w1-starter-village.mp3':
-    'music/w1-starter-village.1f9845b7de.mp3',
+    'music/w1-starter-village.f0211b6de6.mp3',
   'music/grammar-quest/w10-logic-tower.mp3':
-    'music/w10-logic-tower.41c16712ae.mp3',
+    'music/w10-logic-tower.96307d97d1.mp3',
+  'music/grammar-quest/w10-map-quiet-orbit.mp3':
+    'music/w10-map-quiet-orbit.d3d650f98e.mp3',
   'music/grammar-quest/w2-harbor-town.mp3':
-    'music/w2-harbor-town.5fe1ad845a.mp3',
+    'music/w2-harbor-town.126d8fb2ed.mp3',
+  'music/grammar-quest/w2-map-harbor-lights.mp3':
+    'music/w2-map-harbor-lights.ef9e6feca1.mp3',
+  'music/grammar-quest/w3-map-turning-sails.mp3':
+    'music/w3-map-turning-sails.4739b1a3e6.mp3',
   'music/grammar-quest/w3-windmill-hills.mp3':
-    'music/w3-windmill-hills.2118a83a9a.mp3',
+    'music/w3-windmill-hills.2fc8f0185b.mp3',
   'music/grammar-quest/w4-forest-of-clauses.mp3':
-    'music/w4-forest-of-clauses.50849ebdc2.mp3',
+    'music/w4-forest-of-clauses.50a0a752c1.mp3',
+  'music/grammar-quest/w4-map-lantern-trail.mp3':
+    'music/w4-map-lantern-trail.5425d01d54.mp3',
+  'music/grammar-quest/w5-map-starlit-mesa.mp3':
+    'music/w5-map-starlit-mesa.26f9dc49a2.mp3',
   'music/grammar-quest/w5-tense-canyon.mp3':
-    'music/w5-tense-canyon.79dfb5667a.mp3',
+    'music/w5-tense-canyon.4635d464a3.mp3',
+  'music/grammar-quest/w6-map-snowfield-hush.mp3':
+    'music/w6-map-snowfield-hush.c1f5c17519.mp3',
   'music/grammar-quest/w6-passive-glacier.mp3':
-    'music/w6-passive-glacier.f7da3d08c6.mp3',
+    'music/w6-passive-glacier.b4e85cc4d0.mp3',
+  'music/grammar-quest/w7-map-cloud-pages.mp3':
+    'music/w7-map-cloud-pages.1bdd772bb4.mp3',
   'music/grammar-quest/w7-sky-library.mp3':
-    'music/w7-sky-library.a633a37c9b.mp3',
+    'music/w7-sky-library.249fca2847.mp3',
+  'music/grammar-quest/w8-map-stormwatch.mp3':
+    'music/w8-map-stormwatch.b6c9cc3385.mp3',
   'music/grammar-quest/w8-the-citadel.mp3':
-    'music/w8-the-citadel.d47c899431.mp3',
+    'music/w8-the-citadel.35dc27eaa3.mp3',
+  'music/grammar-quest/w9-map-campus-stroll.mp3':
+    'music/w9-map-campus-stroll.b67ef18502.mp3',
   'music/grammar-quest/w9-the-academy.mp3':
-    'music/w9-the-academy.574e591be0.mp3'
+    'music/w9-the-academy.ee6d33ab54.mp3'
 };
 export const GQ_MUSIC: Record<
   string,
@@ -318,25 +338,25 @@ export const GQ_MUSIC: Record<
     id: 'boss-castle',
     title: 'Throne of the Grammar Warden',
     bpm: 164,
-    loopStart: 5.853659,
-    loopEnd: 99.512195,
-    duration: 99.512195
+    loopStart: 5.853651,
+    loopEnd: 99.5122,
+    duration: 99.5122
   },
   'boss-final': {
     id: 'boss-final',
     title: 'The Sovereign of Syntax',
     bpm: 172,
-    loopStart: 5.581395,
-    loopEnd: 139.534884,
-    duration: 139.534884
+    loopStart: 5.581406,
+    loopEnd: 139.534875,
+    duration: 139.534875
   },
   'boss-fort': {
     id: 'boss-fort',
     title: 'Siege at the Grammar Fort',
     bpm: 152,
-    loopStart: 6.315789,
-    loopEnd: 94.736842,
-    duration: 94.736842
+    loopStart: 6.315782,
+    loopEnd: 94.736848,
+    duration: 94.736848
   },
   overworld: {
     id: 'overworld',
@@ -345,6 +365,14 @@ export const GQ_MUSIC: Record<
     loopStart: 4,
     loopEnd: 84,
     duration: 84
+  },
+  'w1-map-village-green': {
+    id: 'w1-map-village-green',
+    title: 'Village Green',
+    bpm: 96,
+    loopStart: 5,
+    loopEnd: 105,
+    duration: 105
   },
   'w1-starter-village': {
     id: 'w1-starter-village',
@@ -358,41 +386,89 @@ export const GQ_MUSIC: Record<
     id: 'w10-logic-tower',
     title: 'Logic Tower',
     bpm: 124,
-    loopStart: 7.741935,
-    loopEnd: 100.645161,
-    duration: 100.645161
+    loopStart: 7.741927,
+    loopEnd: 100.64517,
+    duration: 100.64517
+  },
+  'w10-map-quiet-orbit': {
+    id: 'w10-map-quiet-orbit',
+    title: 'Quiet Orbit',
+    bpm: 90,
+    loopStart: 5.333333,
+    loopEnd: 90.666667,
+    duration: 90.666667
   },
   'w2-harbor-town': {
     id: 'w2-harbor-town',
     title: 'Harbor Town',
-    bpm: 330,
-    loopStart: 4.363636,
-    loopEnd: 82.909091,
-    duration: 82.909091
+    bpm: 165,
+    loopStart: 4.363628,
+    loopEnd: 82.909093,
+    duration: 82.909093
+  },
+  'w2-map-harbor-lights': {
+    id: 'w2-map-harbor-lights',
+    title: 'Harbor Lights',
+    bpm: 84,
+    loopStart: 5.714286,
+    loopEnd: 97.142857,
+    duration: 97.142857
+  },
+  'w3-map-turning-sails': {
+    id: 'w3-map-turning-sails',
+    title: 'Turning Sails',
+    bpm: 92,
+    loopStart: 5.217392,
+    loopEnd: 88.695646,
+    duration: 88.695646
   },
   'w3-windmill-hills': {
     id: 'w3-windmill-hills',
     title: 'Windmill Hills',
     bpm: 152,
-    loopStart: 4.736842,
-    loopEnd: 80.526316,
-    duration: 80.526316
+    loopStart: 4.736848,
+    loopEnd: 80.526327,
+    duration: 80.526327
   },
   'w4-forest-of-clauses': {
     id: 'w4-forest-of-clauses',
     title: 'Forest of Clauses',
     bpm: 104,
-    loopStart: 4.615385,
-    loopEnd: 96.923077,
-    duration: 96.923077
+    loopStart: 4.615374,
+    loopEnd: 96.923084,
+    duration: 96.923084
+  },
+  'w4-map-lantern-trail': {
+    id: 'w4-map-lantern-trail',
+    title: 'Lantern Trail',
+    bpm: 69,
+    loopStart: 5.217392,
+    loopEnd: 88.695646,
+    duration: 88.695646
+  },
+  'w5-map-starlit-mesa': {
+    id: 'w5-map-starlit-mesa',
+    title: 'Starlit Mesa',
+    bpm: 76,
+    loopStart: 6.315782,
+    loopEnd: 107.368413,
+    duration: 107.368413
   },
   'w5-tense-canyon': {
     id: 'w5-tense-canyon',
     title: 'Tense Canyon',
     bpm: 124,
-    loopStart: 7.741935,
-    loopEnd: 100.645161,
-    duration: 100.645161
+    loopStart: 7.741927,
+    loopEnd: 100.64517,
+    duration: 100.64517
+  },
+  'w6-map-snowfield-hush': {
+    id: 'w6-map-snowfield-hush',
+    title: 'Snowfield Hush',
+    bpm: 72,
+    loopStart: 6.666667,
+    loopEnd: 106.666667,
+    duration: 106.666667
   },
   'w6-passive-glacier': {
     id: 'w6-passive-glacier',
@@ -402,6 +478,14 @@ export const GQ_MUSIC: Record<
     loopEnd: 97.5,
     duration: 97.5
   },
+  'w7-map-cloud-pages': {
+    id: 'w7-map-cloud-pages',
+    title: 'Cloud Pages',
+    bpm: 108,
+    loopStart: 6.666667,
+    loopEnd: 86.666667,
+    duration: 86.666667
+  },
   'w7-sky-library': {
     id: 'w7-sky-library',
     title: 'Sky Library',
@@ -410,6 +494,14 @@ export const GQ_MUSIC: Record<
     loopEnd: 104,
     duration: 104
   },
+  'w8-map-stormwatch': {
+    id: 'w8-map-stormwatch',
+    title: 'Stormwatch',
+    bpm: 80,
+    loopStart: 6,
+    loopEnd: 102,
+    duration: 102
+  },
   'w8-the-citadel': {
     id: 'w8-the-citadel',
     title: 'The Citadel',
@@ -417,6 +509,14 @@ export const GQ_MUSIC: Record<
     loopStart: 8.571429,
     loopEnd: 94.285714,
     duration: 94.285714
+  },
+  'w9-map-campus-stroll': {
+    id: 'w9-map-campus-stroll',
+    title: 'Campus Stroll',
+    bpm: 120,
+    loopStart: 6,
+    loopEnd: 90,
+    duration: 90
   },
   'w9-the-academy': {
     id: 'w9-the-academy',

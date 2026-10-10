@@ -854,6 +854,15 @@ test(
           10,
           'all ten maps select distinct playable tracks'
         );
+        assert.deepEqual(
+          musicFiles
+            .slice(mutedFetches)
+            .filter(
+              (file) => !/\/w\d+-map-[a-z-]+\.[0-9a-f]{10}\.mp3$/.test(file)
+            ),
+          [],
+          'every map plays its own map song, never a level theme (Mikey 10-10)'
+        );
         await page
           .getByRole('button', { name: 'Turn music off', exact: true })
           .click();
