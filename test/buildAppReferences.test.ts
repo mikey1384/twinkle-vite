@@ -65,3 +65,31 @@ test('reference bindings stay present when existing upload notes shorten long ca
   assert.deepEqual(parsed.apps, [{ id: 4, title: 'Math Lab' }]);
   assert.ok(parsed.text.startsWith('Long idea.'));
 });
+
+test('picker rows say whose app it is, including open-source apps', async () => {
+  const { describeBuildAppReference } = await import(
+    '../src/containers/Build/Editor/helpers/appReferences'
+  );
+  assert.equal(
+    describeBuildAppReference({ id: 1, title: 'A', relationship: 'own' }),
+    'Your app'
+  );
+  assert.equal(
+    describeBuildAppReference({
+      id: 2,
+      title: 'B',
+      username: 'sky',
+      relationship: 'team'
+    }),
+    'Team app · sky'
+  );
+  assert.equal(
+    describeBuildAppReference({
+      id: 3,
+      title: 'C',
+      username: 'luna',
+      relationship: 'open_source'
+    }),
+    'Open source · luna'
+  );
+});

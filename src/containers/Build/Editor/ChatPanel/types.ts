@@ -279,6 +279,8 @@ export interface BuildPendingToolApproval {
   imagePrompt: string;
   size?: string | null;
   modelOptions: BuildPendingToolApprovalModelOption[];
+  // The site's default image model, preselected so approving is one tap.
+  defaultModelId?: string;
   expiresAt?: number;
 }
 
@@ -309,6 +311,11 @@ export interface LumineChatVisibilityControl {
   onSave: (
     value: BuildLumineChatVisibility
   ) => Promise<boolean | void> | boolean | void;
+  // One-time notice that the chat is shared with the team by default.
+  teamNotice?: string | null;
+  onDismissTeamNotice?: () => void;
+  // The owner has picked a setting at least once (lumineChatVisibilitySetAt).
+  choiceRecorded?: boolean;
 }
 
 export interface LumineModelSelectionControl {

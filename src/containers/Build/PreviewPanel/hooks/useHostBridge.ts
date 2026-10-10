@@ -38,8 +38,7 @@ import type {
 } from '../types/previewHostBridgeTypes';
 import { isMutatingPreviewRequestType } from '../helpers/previewRequestPolicy';
 import {
-  authorizeTwinkleContentNavigation,
-  createTwinkleContentNavigationConfirmationController
+  authorizeTwinkleContentNavigation
 } from '../helpers/twinkleContentNavigation';
 import {
   createBuildRuntimeImageGenerationController,
@@ -227,7 +226,6 @@ export function useHostBridge({
   requestRefs,
   runtimeUploadsSyncRef,
   onAiUsagePolicyUpdateRef,
-  requestOpenContentConfirmationRef,
   requestBuildImageGenerationConfirmationRef,
   requestBuildMusicGenerationConfirmationRef,
   requestBuildMediaActionConfirmationRef,
@@ -247,14 +245,6 @@ export function useHostBridge({
   const launchTargetBroadcastReadyRef = useRef(false);
   const resetWorldSessionsRef = useRef<((reason: string) => void) | null>(null);
   const worldViewerIdentityKeyRef = useRef<string | null>(null);
-  const contentNavigationConfirmationControllerRef = useRef<ReturnType<
-    typeof createTwinkleContentNavigationConfirmationController
-  > | null>(null);
-  const contentNavigationConfirmationController =
-    contentNavigationConfirmationControllerRef.current ||
-    createTwinkleContentNavigationConfirmationController();
-  contentNavigationConfirmationControllerRef.current =
-    contentNavigationConfirmationController;
   const imageGenerationControllerRef = useRef<ReturnType<
     typeof createBuildRuntimeImageGenerationController
   > | null>(null);
@@ -2431,19 +2421,10 @@ export function useHostBridge({
                 navigationDecision.code
               );
             }
-            const confirmationDecision =
-              await contentNavigationConfirmationController.request({
-                requestConfirmation: requestOpenContentConfirmationRef.current,
-                url: navigationDecision.url
-              });
-            if (!confirmationDecision.confirmed) {
-              throw createPreviewBridgeError(
-                confirmationDecision.message,
-                confirmationDecision.code
-              );
-            }
-            pendingHostNavigationUrl = confirmationDecision.url;
-            response = { success: true, url: confirmationDecision.url };
+            // The viewer's own tap on a same-origin Twinkle page is the
+            // consent; no extra "Open content?" modal (Mikey 10-10).
+            pendingHostNavigationUrl = navigationDecision.url;
+            response = { success: true, url: navigationDecision.url };
             break;
           }
 
@@ -5574,7 +5555,6 @@ export function useHostBridge({
     appHelperRelayStateRef,
     buildId,
     capabilitySnapshotRef,
-    contentNavigationConfirmationController,
     imageGenerationController,
     musicGenerationController,
     messageTargetFrameRef,
@@ -5596,7 +5576,6 @@ export function useHostBridge({
     requestBuildMediaActionConfirmationRef,
     requestBuildLiveSafetyStopRef,
     requestCardCraftSelectionRef,
-    requestOpenContentConfirmationRef,
     runtimeExplorationPlanRef,
     runtimeOnly,
     secondaryIframeRef,

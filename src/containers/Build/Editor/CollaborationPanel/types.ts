@@ -43,6 +43,9 @@ export interface BuildLike {
   // the base it was branched from. Empty means a freshly branched or fully
   // merged branch — nothing to hand to the owner.
   contributionRevisionHash?: string | null;
+  // The author's open hand-over to the owner (0 / '' when none is waiting).
+  contributionSubmittedAt?: number | null;
+  contributionSubmittedRevisionHash?: string | null;
   updatedAt?: number | null;
   code?: string | null;
   projectFiles?: BuildProjectFile[] | null;

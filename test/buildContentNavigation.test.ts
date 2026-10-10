@@ -4,7 +4,6 @@ import test from 'node:test';
 
 import {
   authorizeTwinkleContentNavigation,
-  createTwinkleContentNavigationConfirmationController,
   normalizeTwinkleContentNavigationUrl
 } from '../src/containers/Build/PreviewPanel/helpers/twinkleContentNavigation';
 
@@ -46,96 +45,6 @@ test('Build content navigation authorizes only active gestures with valid conten
       userActivation: { isActive: true }
     }),
     { allowed: true, url: `${CURRENT_ORIGIN}/subjects/42` }
-  );
-});
-
-test('Build content navigation requires destination-specific parent confirmation', async () => {
-  const controller = createTwinkleContentNavigationConfirmationController();
-  const url = `${CURRENT_ORIGIN}/subjects/42`;
-
-  assert.deepEqual(
-    await controller.request({
-      requestConfirmation: async (request) => request.url === url,
-      url
-    }),
-    { confirmed: true, url }
-  );
-  assert.deepEqual(
-    await controller.request({
-      requestConfirmation: async () => false,
-      url
-    }),
-    {
-      confirmed: false,
-      code: 'CONTENT_NAVIGATION_CANCELLED',
-      message: 'Content navigation was cancelled'
-    }
-  );
-  assert.deepEqual(
-    await controller.request({ requestConfirmation: null, url }),
-    {
-      confirmed: false,
-      code: 'CONTENT_NAVIGATION_CONFIRMATION_UNAVAILABLE',
-      message: 'Content navigation confirmation is unavailable'
-    }
-  );
-});
-
-test('Build content navigation cannot replace an active confirmation', async () => {
-  const controller = createTwinkleContentNavigationConfirmationController();
-  let resolveFirstConfirmation: ((confirmed: boolean) => void) | null = null;
-  const displayedDestinations: string[] = [];
-  const firstRequest = controller.request({
-    requestConfirmation: ({ url }) => {
-      displayedDestinations.push(url);
-      return new Promise<boolean>((resolve) => {
-        resolveFirstConfirmation = resolve;
-      });
-    },
-    url: `${CURRENT_ORIGIN}/subjects/42`
-  });
-
-  assert.deepEqual(
-    await controller.request({
-      requestConfirmation: async ({ url }) => {
-        displayedDestinations.push(url);
-        return true;
-      },
-      url: `${CURRENT_ORIGIN}/comments/43`
-    }),
-    {
-      confirmed: false,
-      code: 'CONTENT_NAVIGATION_CONFIRMATION_PENDING',
-      message: 'Another content navigation confirmation is already open'
-    }
-  );
-  assert.deepEqual(displayedDestinations, [`${CURRENT_ORIGIN}/subjects/42`]);
-  assert.ok(resolveFirstConfirmation);
-  resolveFirstConfirmation(true);
-  assert.deepEqual(await firstRequest, {
-    confirmed: true,
-    url: `${CURRENT_ORIGIN}/subjects/42`
-  });
-});
-
-test('Build content navigation releases its confirmation lock after callback failure', async () => {
-  const controller = createTwinkleContentNavigationConfirmationController();
-  const url = `${CURRENT_ORIGIN}/subjects/42`;
-  await assert.rejects(
-    controller.request({
-      requestConfirmation: async () => {
-        throw new Error('Confirmation UI failed');
-      },
-      url
-    }),
-    /Confirmation UI failed/
-  );
-  assert.deepEqual(
-    await controller.request({
-      requestConfirmation: async () => true,
-      url
-    }),
-    { confirmed: true, url }
   );
 });
 
@@ -234,7 +143,7 @@ test('Build content navigation accepts canonical public chat deep links', () => 
   }
 });
 
-test('confirmed Build content navigation stays inside the Twinkle SPA', () => {
+test('a tapped Build content link opens inside the Twinkle SPA with no extra modal', () => {
   const previewPanelSource = readSource(
     'src/containers/Build/PreviewPanel/index.tsx'
   );
@@ -254,6 +163,12 @@ test('confirmed Build content navigation stays inside the Twinkle SPA', () => {
     hostBridgeSource,
     /window\.location\.assign\(pendingHostNavigationUrl\)/
   );
+  // Mikey 10-10: the tap plus the same-origin check is enough.
+  assert.match(
+    hostBridgeSource,
+    /case 'app:open-content': \{[\s\S]{0,200}?authorizeTwinkleContentNavigation\([\s\S]{0,600}?pendingHostNavigationUrl = navigationDecision\.url;/m
+  );
+  assert.doesNotMatch(previewPanelSource, /content\?`/);
 });
 
 test('Build content navigation preserves the signed-in origin and strips preview controls', () => {

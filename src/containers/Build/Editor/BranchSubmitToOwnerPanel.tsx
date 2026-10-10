@@ -7,6 +7,7 @@ import Textarea from '~/components/Texts/Textarea';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import {
+  formatBranchSubmitWaitingLine,
   getBranchSubmitOwnerCopy,
   getBranchSubmitOwnerPresence,
   getBranchSubmitReceipt,
@@ -100,8 +101,11 @@ export default function BranchSubmitToOwnerPanel({
         <div className={sentClass} role="status">
           <Icon icon="check" />
           <span>
-            {ownerCopy.sentLabel} {timeSince(sentAt)}. It is ready for review
-            in your chat.
+            {formatBranchSubmitWaitingLine({
+              ownerName: ownerCopy.ownerName,
+              sentAgo: timeSince(sentAt)
+            })}
+            . It is in their chat, ready to review.
           </span>
         </div>
       ) : null}

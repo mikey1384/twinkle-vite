@@ -11,6 +11,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { mobileMaxWidth } from '~/constants/css';
 import {
   MAX_BUILD_APP_REFERENCES,
+  describeBuildAppReference,
   type BuildAppReference
 } from '../helpers/appReferences';
 import useReferenceAppSearch from './hooks/useReferenceAppSearch';
@@ -152,11 +153,11 @@ export default function AppReferencePicker({
           <Icon icon="magnifying-glass" />
           <input
             ref={searchRef}
-            aria-label="Search your apps"
+            aria-label="Search apps"
             type="search"
             value={search}
             onChange={(event) => changeSearch(event.target.value)}
-            placeholder="Search your apps"
+            placeholder="Search apps"
             maxLength={160}
             autoComplete="off"
           />
@@ -179,7 +180,7 @@ export default function AppReferencePicker({
       >
         {loading ? (
           <p className="app-reference-notice" role="status">
-            Loading your apps…
+            Loading apps…
           </p>
         ) : (
           apps.map((app) => {
@@ -192,7 +193,7 @@ export default function AppReferencePicker({
                 disabled={
                   selected || selectedApps.length >= MAX_BUILD_APP_REFERENCES
                 }
-                aria-label={`${app.title}, ${app.relationship === 'own' ? 'your app' : `team app by ${app.username}`}${selected ? ', already added' : ''}`}
+                aria-label={`${app.title}, ${describeBuildAppReference(app)}${selected ? ', already added' : ''}`}
                 onClick={() => onSelect(app)}
               >
                 <span className="app-reference-thumbnail">
@@ -204,11 +205,7 @@ export default function AppReferencePicker({
                 </span>
                 <span className="app-reference-info">
                   <strong>{app.title}</strong>
-                  <span>
-                    {app.relationship === 'own'
-                      ? 'Your app'
-                      : `Team app${app.username ? ` · ${app.username}` : ''}`}
-                  </span>
+                  <span>{describeBuildAppReference(app)}</span>
                 </span>
                 <Icon icon={selected ? 'check' : 'plus'} />
               </button>
@@ -219,7 +216,7 @@ export default function AppReferencePicker({
           <p className="app-reference-notice">
             {search.trim()
               ? 'No matching apps. Try another name.'
-              : 'Your other apps and team apps will appear here.'}
+              : 'Your other apps, team apps and open-source apps will appear here.'}
           </p>
         ) : null}
         {error ? (
@@ -243,7 +240,9 @@ export default function AppReferencePicker({
           />
         ) : null}
       </div>
-      <footer>Your apps and team apps · Up to 2 per message</footer>
+      <footer>
+        Your apps, team apps and open-source apps · Up to 2 per message
+      </footer>
     </dialog>,
     document.body
   );

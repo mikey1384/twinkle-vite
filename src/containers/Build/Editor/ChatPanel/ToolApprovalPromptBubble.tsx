@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import type { BuildPendingToolApproval } from './types';
+import { resolveSelectedModelOption } from './helpers/toolApprovalModel';
 
 function formatBatteryPercent(units: number) {
   const percent = (Number(units) || 0) / 10_000;
@@ -21,10 +22,13 @@ export default function ToolApprovalPromptBubble({
   onApprove: (modelId: string) => void;
   onDecline: () => void;
 }) {
-  const [selectedModelId, setSelectedModelId] = useState<string>('');
-  const selectedOption = approval.modelOptions.find(
-    (option) => option.id === selectedModelId
-  );
+  const [pickedModelId, setPickedModelId] = useState<string>('');
+  const selectedOption = resolveSelectedModelOption({
+    modelOptions: approval.modelOptions,
+    pickedModelId,
+    defaultModelId: approval.defaultModelId
+  });
+  const selectedModelId = selectedOption?.id || '';
 
   return (
     <div
@@ -85,12 +89,13 @@ export default function ToolApprovalPromptBubble({
                 <button
                   key={option.id}
                   type="button"
-                  onClick={() => setSelectedModelId(option.id)}
+                  onClick={() => setPickedModelId(option.id)}
                   className={css`
                     display: flex;
+                    flex-wrap: wrap;
                     align-items: center;
                     justify-content: space-between;
-                    gap: 0.8rem;
+                    gap: 0.3rem 0.8rem;
                     text-align: left;
                     border-radius: 10px;
                     padding: 0.6rem 0.85rem;
@@ -114,6 +119,7 @@ export default function ToolApprovalPromptBubble({
                   <span
                     className={css`
                       font-weight: 800;
+                      white-space: nowrap;
                     `}
                   >
                     {option.label}
@@ -164,7 +170,9 @@ export default function ToolApprovalPromptBubble({
               `}
             >
               {selectedOption
-                ? `Generate with ${selectedOption.label}`
+                ? `Generate with ${selectedOption.label} (${formatBatteryPercent(
+                    selectedOption.estimatedBatteryCost
+                  )} battery)`
                 : 'Choose a model to generate'}
             </button>
             <button

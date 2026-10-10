@@ -83,11 +83,11 @@ test('the branch workspace wires canonical owner identity into the person CTA', 
 
   assert.match(
     collaborationPanelSource,
-    /ownerUserId=\{build\.rootBuildUserId\}/
+    /ownerUserId=\{target\.ownerUserId\}/
   );
   assert.match(
     collaborationPanelSource,
-    /ownerProfilePicUrl=\{build\.rootBuildProfilePicUrl\}/
+    /ownerProfilePicUrl=\{target\.ownerProfilePicUrl\}/
   );
   assert.match(
     submitPanelSource,
@@ -95,4 +95,38 @@ test('the branch workspace wires canonical owner identity into the person CTA', 
   );
   assert.match(submitPanelSource, /<ProfilePic/);
   assert.match(submitPanelSource, /statusShown/);
+});
+
+test('a sent update says when it went and who it is waiting on', async () => {
+  const { formatBranchSubmitWaitingLine } = await import(
+    '../src/helpers/branchSubmitToOwnerHelpers'
+  );
+  assert.equal(
+    formatBranchSubmitWaitingLine({ ownerName: 'Maya', sentAgo: '4 days ago' }),
+    'Sent 4 days ago, waiting for Maya'
+  );
+});
+
+test('the owner identity behind the CTA comes from the canonical build fields', async () => {
+  const { getBranchSubmitToOwnerTarget } = await import(
+    '../src/helpers/branchSubmitToOwnerHelpers'
+  );
+  const target = getBranchSubmitToOwnerTarget({
+    build: {
+      id: 20,
+      contributionStatus: 'draft',
+      contributionContributorId: 8,
+      contributionRootBuildId: 10,
+      contributionRevisionHash: 'rev',
+      contributionSubmittedAt: 1000,
+      contributionSubmittedRevisionHash: 'rev',
+      rootBuildUserId: 7,
+      rootBuildUsername: 'maya',
+      rootBuildProfilePicUrl: '/pic.png'
+    },
+    userId: 8
+  });
+  assert.equal(target?.ownerUserId, 7);
+  assert.equal(target?.ownerProfilePicUrl, '/pic.png');
+  assert.equal(target?.submittedAt, 1000);
 });

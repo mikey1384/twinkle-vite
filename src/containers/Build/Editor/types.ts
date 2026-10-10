@@ -124,6 +124,9 @@ export interface Build {
   canOpenContributionWorkspace?: boolean;
   hasActiveContributionInvite?: boolean;
   lumineChatVisibility?: BuildLumineChatVisibility | 'public';
+  // When the owner last chose a sharing setting (0 = never chosen; the Team
+  // default is in effect).
+  lumineChatVisibilitySetAt?: number | null;
   lumineFixReviewRequired?: boolean | number;
   rootBuildUserId?: number | null;
   rootBuildUsername?: string | null;
@@ -142,6 +145,9 @@ export interface Build {
   // The delta between this branch and the base it was branched from, hashed.
   // Empty means a freshly branched or fully merged branch: no work to hand over.
   contributionRevisionHash?: string | null;
+  // The author's open hand-over to the owner (0 / '' when none is waiting).
+  contributionSubmittedAt?: number | null;
+  contributionSubmittedRevisionHash?: string | null;
   contributionMergedAt?: number | null;
   contributionClosedAt?: number | null;
   contributionMergedByUserId?: number | null;
@@ -280,6 +286,8 @@ export interface BuildPendingToolApproval {
     estimatedUsd: number;
     estimatedBatteryCost: number;
   }>;
+  // The site's default image model, preselected so approving is one tap.
+  defaultModelId?: string;
   expiresAt?: number;
 }
 

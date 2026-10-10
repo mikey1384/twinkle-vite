@@ -5,10 +5,20 @@ export interface BuildAppReference {
   title: string;
   username?: string;
   thumbnailUrl?: string | null;
-  relationship?: 'own' | 'team';
+  relationship?: 'own' | 'team' | 'open_source';
 }
 
 const referenceSection = 'Referenced apps:\n';
+
+// The short label under an app in the picker: whose app it is and why the
+// member can use it.
+export function describeBuildAppReference(app: BuildAppReference) {
+  if (app.relationship === 'own') return 'Your app';
+  const by = app.username ? ` · ${app.username}` : '';
+  return app.relationship === 'open_source'
+    ? `Open source${by}`
+    : `Team app${by}`;
+}
 
 // Ordinary app links keep references attached through the existing queue,
 // retries, persisted transcript and model history without a second payload

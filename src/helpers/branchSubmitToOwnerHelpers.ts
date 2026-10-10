@@ -17,6 +17,19 @@ export function getBranchSubmitOwnerCopy({
   };
 }
 
+// The canonical "sent" line (receipt store or the server's copy for this
+// exact revision): when it went and who it is waiting on, so a quiet owner
+// does not look like nothing happened.
+export function formatBranchSubmitWaitingLine({
+  ownerName,
+  sentAgo
+}: {
+  ownerName: string;
+  sentAgo: string;
+}) {
+  return `Sent ${sentAgo}, waiting for ${ownerName}`;
+}
+
 export function getBranchSubmitOwnerPresence(presence: any) {
   const isOnline = presence?.isOnline === true;
 

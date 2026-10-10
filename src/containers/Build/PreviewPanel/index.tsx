@@ -49,8 +49,7 @@ import type {
   BuildCardCraftSelectionRequest,
   BuildLiveSafetyHostSession,
   BuildLiveSafetyStopRequest,
-  BuildMediaActionConfirmationRequest,
-  PreviewOpenContentConfirmationRequest
+  BuildMediaActionConfirmationRequest
 } from './types/previewHostBridgeTypes';
 import type {
   BuildRuntimeImageGenerationConfirmationRequest,
@@ -122,14 +121,6 @@ const runtimePanelClass = css`
   grid-template-rows: 1fr;
   background: #fff;
   overflow: hidden;
-`;
-
-const openContentDestinationClass = css`
-  max-width: 100%;
-  max-height: 12rem;
-  overflow: auto;
-  overflow-wrap: anywhere;
-  text-align: center;
 `;
 
 const imageGenerationConfirmationClass = css`
@@ -716,10 +707,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestConfirm: requestProjectFileConfirm
     } = useConfirmModal();
     const {
-      confirmModal: openContentConfirmModal,
-      requestConfirm: requestOpenContentConfirm
-    } = useConfirmModal();
-    const {
       confirmModal: imageGenerationConfirmModal,
       requestConfirm: requestImageGenerationConfirm
     } = useConfirmModal();
@@ -738,35 +725,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const requestBuildLiveSafetyStopRef = useRef<
       ((request: BuildLiveSafetyStopRequest) => Promise<void>) | null
     >(null);
-    const requestOpenContentConfirmationRef = useRef<
-      | ((request: PreviewOpenContentConfirmationRequest) => Promise<boolean>)
-      | null
-    >(null);
-    useEffect(() => {
-      requestOpenContentConfirmationRef.current = ({ url }) => {
-        const destination = new URL(url);
-        return requestOpenContentConfirm({
-          title: `Open ${SITE_NAME} content?`,
-          description: (
-            <span className={openContentDestinationClass}>
-              Open{' '}
-              <strong>
-                {destination.pathname}
-                {destination.search}
-                {destination.hash}
-              </strong>
-              ?
-            </span>
-          ),
-          descriptionFontSize: '1.2rem',
-          confirmButtonLabel: 'Open content',
-          modalOverModal: true
-        });
-      };
-      return () => {
-        requestOpenContentConfirmationRef.current = null;
-      };
-    }, [requestOpenContentConfirm]);
     const loadImageEstimate = useAppContext(
       (v) => v.requestHelpers.loadAIImageGenerationEstimate
     );
@@ -1456,8 +1414,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestBuildMediaActionConfirmationRef,
       requestCardCraftSelectionRef,
       onBuildLiveSafetyHostSessionsChange: setActiveBuildLiveSafetyHostSessions,
-      requestBuildLiveSafetyStopRef,
-      requestOpenContentConfirmationRef
+      requestBuildLiveSafetyStopRef
     });
 
     useEffect(() => {
@@ -1869,7 +1826,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           />
         )}
         {projectFileConfirmModal}
-        {openContentConfirmModal}
         {imageGenerationConfirmModal}
         {musicGenerationConfirmModal}
         {mediaActionConfirmModal}

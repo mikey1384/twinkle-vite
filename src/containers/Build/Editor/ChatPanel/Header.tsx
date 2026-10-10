@@ -169,6 +169,9 @@ interface HeaderProps {
     onSave: (
       value: BuildLumineChatVisibility
     ) => Promise<boolean | void> | boolean | void;
+    teamNotice?: string | null;
+    onDismissTeamNotice?: () => void;
+    choiceRecorded?: boolean;
   } | null;
   lumineModelSelectionControl?: LumineModelSelectionControl | null;
   pageFeedbackEvents: BuildRunEvent[];
@@ -320,6 +323,9 @@ export default function Header({
           ) : null}
           <HeaderMinimizeToggle minimized onToggle={onToggleMinimized} />
         </div>
+        {lumineChatVisibilityControl?.teamNotice ? (
+          <LumineChatTeamNotice control={lumineChatVisibilityControl} />
+        ) : null}
         {visiblePageFeedbackEvents.length > 0 ? (
           <div
             className={css`
@@ -360,6 +366,9 @@ export default function Header({
           </div>
         ) : null}
       </div>
+      {lumineChatVisibilityControl?.teamNotice ? (
+        <LumineChatTeamNotice control={lumineChatVisibilityControl} />
+      ) : null}
       {copilotPolicy ? (
         <div
           className={css`
@@ -865,6 +874,73 @@ function LumineSelect({
   );
 }
 
+function LumineChatTeamNotice({
+  control
+}: {
+  control: {
+    teamNotice?: string | null;
+    onDismissTeamNotice?: () => void;
+  };
+}) {
+  return (
+    <div
+      role="status"
+      className={css`
+        margin-top: 0.6rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid rgba(36, 99, 235, 0.25);
+        border-radius: 10px;
+        background: rgba(65, 140, 235, 0.08);
+        color: #1e3a8a;
+        font-size: var(--build-workshop-small-font-size);
+        font-weight: 700;
+        line-height: 1.4;
+      `}
+    >
+      <Icon
+        icon="users"
+        className={css`
+          margin-top: 0.2rem;
+          flex: 0 0 auto;
+        `}
+      />
+      <span
+        className={css`
+          flex: 1 1 auto;
+          min-width: 0;
+        `}
+      >
+        {control.teamNotice}
+      </span>
+      <button
+        type="button"
+        onClick={control.onDismissTeamNotice}
+        className={css`
+          flex: 0 0 auto;
+          border: 0;
+          border-radius: 999px;
+          padding: 0.25rem 0.7rem;
+          background: #fff;
+          color: #1d4ed8;
+          font: inherit;
+          font-weight: 900;
+          cursor: pointer;
+          &:hover,
+          &:focus-visible {
+            background: rgba(65, 140, 235, 0.16);
+            outline: none;
+          }
+        `}
+      >
+        Got it
+      </button>
+    </div>
+  );
+}
+
 function LumineChatVisibilitySettings({
   control,
   compact = false
@@ -877,6 +953,7 @@ function LumineChatVisibilitySettings({
     onSave: (
       value: BuildLumineChatVisibility
     ) => Promise<boolean | void> | boolean | void;
+    choiceRecorded?: boolean;
   };
   compact?: boolean;
 }) {
@@ -885,7 +962,10 @@ function LumineChatVisibilitySettings({
     control.value
   );
   const selectedOption = getLumineChatVisibilityOption(control.value);
-  const changed = draftValue !== control.savedValue;
+  // Until the owner has chosen, saving the default (Team) still counts: it
+  // records the choice and retires the "shared with your team" notice.
+  const changed =
+    draftValue !== control.savedValue || !control.choiceRecorded;
 
   useEffect(() => {
     if (!modalShown) {

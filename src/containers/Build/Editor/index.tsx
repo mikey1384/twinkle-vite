@@ -915,7 +915,10 @@ export default function BuildEditor({
   });
   const {
     canManageLumineChatVisibility,
+    lumineChatVisibilityChoiceRecorded,
+    handleDismissLumineChatTeamNotice,
     handleSaveLumineChatVisibility,
+    lumineChatTeamNotice,
     lumineChatVisibility,
     lumineChatVisibilityError,
     lumineChatVisibilitySettingsShown,
@@ -1982,7 +1985,10 @@ export default function BuildEditor({
           savedValue: savedLumineChatVisibility,
           loading: savingLumineChatVisibility,
           error: lumineChatVisibilityError,
-          onSave: handleSaveLumineChatVisibility
+          onSave: handleSaveLumineChatVisibility,
+          teamNotice: lumineChatTeamNotice,
+          choiceRecorded: lumineChatVisibilityChoiceRecorded,
+          onDismissTeamNotice: handleDismissLumineChatTeamNotice
         }
       : null,
     lumineModelSelectionControl: copilotPolicy

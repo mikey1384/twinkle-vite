@@ -1,4 +1,5 @@
 import React, { useMemo, memo, useState } from 'react';
+import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { Link, useNavigate } from 'react-router-dom';
@@ -50,6 +51,9 @@ function NotiMessage({
     declinedAt?: number;
     eventKey?: string;
     eventLabel?: string;
+    // buildContributionSubmissionReminder: the branch's root and number
+    rootBuildId?: number;
+    branchNumber?: number;
     eventSummary?: string;
     id: number;
     leftAt?: number;
@@ -699,6 +703,33 @@ function NotiMessage({
           <Link
             to={`/build/${targetObj.id}`}
             state={{ openVersionsPanel: true }}
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            Build
+            {targetObj.content ? ` (${truncatedTargetObjectText})` : ''}
+          </Link>
+        </>
+      );
+    case 'buildContributionSubmissionReminder':
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            is still waiting for you to look at their update
+          </span>{' '}
+          to{' '}
+          <Link
+            to={
+              // A since-deleted branch has no row (no branchNumber): open
+              // the project itself instead of a dead branch page.
+              Number(actionObj.branchNumber || 0) > 0
+                ? getBuildWorkspacePath({
+                    id: actionObj.id,
+                    contributionRootBuildId:
+                      actionObj.rootBuildId || targetObj.id,
+                    contributionBranchNumber: actionObj.branchNumber
+                  })
+                : `/build/${targetObj.id}`
+            }
             style={{ color: targetLinkColor, fontWeight: 'bold' }}
           >
             Build

@@ -62,54 +62,6 @@ export function authorizeTwinkleContentNavigation({
   return { allowed: true, url };
 }
 
-export function createTwinkleContentNavigationConfirmationController() {
-  let confirmationPending = false;
-
-  return {
-    async request({
-      requestConfirmation,
-      url
-    }: {
-      requestConfirmation:
-        ((request: { url: string }) => Promise<boolean>) | null | undefined;
-      url: string;
-    }): Promise<
-      | { confirmed: true; url: string }
-      | { confirmed: false; code: string; message: string }
-    > {
-      if (!requestConfirmation) {
-        return {
-          confirmed: false,
-          code: 'CONTENT_NAVIGATION_CONFIRMATION_UNAVAILABLE',
-          message: 'Content navigation confirmation is unavailable'
-        };
-      }
-      if (confirmationPending) {
-        return {
-          confirmed: false,
-          code: 'CONTENT_NAVIGATION_CONFIRMATION_PENDING',
-          message: 'Another content navigation confirmation is already open'
-        };
-      }
-
-      confirmationPending = true;
-      try {
-        const confirmed = await requestConfirmation({ url });
-        if (!confirmed) {
-          return {
-            confirmed: false,
-            code: 'CONTENT_NAVIGATION_CANCELLED',
-            message: 'Content navigation was cancelled'
-          };
-        }
-        return { confirmed: true, url };
-      } finally {
-        confirmationPending = false;
-      }
-    }
-  };
-}
-
 export function normalizeTwinkleContentNavigationUrl({
   currentOrigin,
   target

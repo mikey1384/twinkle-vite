@@ -28,10 +28,6 @@ import type {
   BuildRuntimeMusicGenerationConfirmationRequest
 } from '../helpers/buildRuntimeImageGeneration';
 
-export interface PreviewOpenContentConfirmationRequest {
-  url: string;
-}
-
 export interface BuildMediaActionConfirmationRequest {
   kind:
     | 'photo'
@@ -117,10 +113,6 @@ export interface UsePreviewHostBridgeArgs {
   >;
   onAiUsagePolicyUpdateRef: RefObject<
     ((aiUsagePolicy: Record<string, any>) => void) | null
-  >;
-  requestOpenContentConfirmationRef: RefObject<
-    | ((request: PreviewOpenContentConfirmationRequest) => Promise<boolean>)
-    | null
   >;
   requestBuildImageGenerationConfirmationRef: RefObject<
     | ((

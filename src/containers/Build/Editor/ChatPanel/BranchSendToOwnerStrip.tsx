@@ -6,7 +6,10 @@ import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import ProfilePic from '~/components/ProfilePic';
 import { useChatContext } from '~/contexts';
-import { getBranchSubmitOwnerPresence } from '~/helpers/branchSubmitToOwnerHelpers';
+import {
+  formatBranchSubmitWaitingLine,
+  getBranchSubmitOwnerPresence
+} from '~/helpers/branchSubmitToOwnerHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import BranchSubmitToOwnerPanel from '../BranchSubmitToOwnerPanel';
 import useBranchSendToOwner from '../useBranchSendToOwner';
@@ -33,7 +36,10 @@ export default function BranchSendToOwnerStrip({ build }: { build: any }) {
         <div className={sentLineClass} role="status">
           <Icon icon="check" />
           <span>
-            Sent to {ownerName} · {timeSince(sentAt)}
+            {formatBranchSubmitWaitingLine({
+              ownerName,
+              sentAgo: timeSince(sentAt)
+            })}
           </span>
           <button
             type="button"
