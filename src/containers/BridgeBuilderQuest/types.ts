@@ -107,6 +107,19 @@ export interface MemberCheckRecord {
   staffNote: string;
 }
 
+// Admins only: staff set this member's branch (MemberBranchSetter.tsx), with
+// their private note. Never on a member's view.
+export interface MemberBranchChange {
+  id: number;
+  userId: number;
+  username: string;
+  oldBranch: string;
+  newBranch: string;
+  note: string;
+  actorUsername: string;
+  createdAt: number;
+}
+
 export interface MeetupSlot {
   date: string;
   start: string;
@@ -194,6 +207,8 @@ export interface CrewView extends CrewProfile {
   parentSuggestions?: { childUsername: string; body: string; createdAt: number }[];
   // admins only: every "who are you" check on these members, in any crew
   memberChecks?: MemberCheckRecord[];
+  // admins only: staff's branch corrections on this crew, newest first
+  branchChanges?: MemberBranchChange[];
   parentContacts?: {
     userId: number;
     childUsername: string;

@@ -949,6 +949,30 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // admins set a member's branch (an official branch or "Not a Twinkle
+    // student") with an optional private note
+    async setMeetupMemberBranch({
+      crewId,
+      userId,
+      branch,
+      note
+    }: {
+      crewId: number;
+      userId: number;
+      branch: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/crews/${crewId}/members/${userId}/branch`,
+          { branch, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // Mikey approves a class name for this branch, separately from the member.
     async approveMeetupClass({
       crewId,

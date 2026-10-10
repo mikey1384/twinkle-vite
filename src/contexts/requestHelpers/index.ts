@@ -903,6 +903,7 @@ registerMethods('user', [
   'reviewMeetupCrew',
   'requestMeetupReview',
   'decideMeetupInfoCheck',
+  'setMeetupMemberBranch',
   'approveMeetupClass',
   'answerMeetupInfoCheck',
   'loadAchievementsByUserId',

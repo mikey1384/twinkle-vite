@@ -6,6 +6,7 @@ import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import useQuestAction from './useQuestAction';
 import ClassField from './ClassField';
+import MemberBranchSetter from './MemberBranchSetter';
 import { QuestNote, questHelpClass, questInputClass, questLabelClass } from './StepCard';
 import type { CrewMember, CrewView, MemberCheckRecord } from './types';
 
@@ -278,6 +279,7 @@ export function AdminInfoChecks({
               <span style={{ color: Color.darkGray() }}>{member.branch || 'no branch'}</span>
               <InfoCheckBadge member={member} />
             </div>
+            <MemberBranchSetter crew={crew} member={member} onChanged={onChanged} />
             {open?.status === 'answered' && <AnswerView record={open} />}
             {open?.status === 'requested' && (
               <span style={{ color: Color.darkGray() }}>
