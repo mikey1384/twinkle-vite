@@ -188,6 +188,10 @@ export interface User {
   canEditPlaylists?: boolean;
   canPinPlaylists?: boolean;
   canEditRewardLevel?: boolean;
+  // own session only: may see Deleted (Mod Activities) and Approvals. The API
+  // decides it (approved teacher, staff account type or the admin), never
+  // managementLevel, which 1000 AP alone grants
+  canAccessSensitiveManagement?: boolean;
   canGenerateAICard?: boolean;
   // own session only: where the user stands on invitation rewards
   inviteRewardsStatus?:

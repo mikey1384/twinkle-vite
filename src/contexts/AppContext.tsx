@@ -47,6 +47,7 @@ export const initialMyState = {
   canDelete: false,
   canEdit: false,
   canEditRewardLevel: false,
+  canAccessSensitiveManagement: false,
   canReward: false,
   canEditPlaylists: false,
   canPinPlaylists: false,

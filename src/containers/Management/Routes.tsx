@@ -5,6 +5,8 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
+import InvalidPage from '~/components/InvalidPage';
+import { useKeyContext } from '~/contexts';
 
 const Main = lazyWithRetry(() => import('./Main'));
 const Tools = lazyWithRetry(() => import('./Tools'));
@@ -25,6 +27,9 @@ const AiCards = lazyWithRetry(() => import('./AiCards'));
 
 export default function ManagementRoutes({ className }: { className: string }) {
   const location = useLocation();
+  const canViewModActivities = !!useKeyContext(
+    (v) => v.myState.canAccessSensitiveManagement
+  );
   return (
     <div className={className}>
       <div
@@ -43,7 +48,19 @@ export default function ManagementRoutes({ className }: { className: string }) {
           <Routes>
             <Route path="*" element={<Main />} />
             <Route path="tools" element={<Tools />} />
-            <Route path="mod-activities" element={<ModActivities />} />
+            <Route
+              path="mod-activities"
+              element={
+                canViewModActivities ? (
+                  <ModActivities />
+                ) : (
+                  <InvalidPage
+                    title="For approved teachers and staff only"
+                    text="Deleted posts and messages are only available to approved teachers and staff"
+                  />
+                )
+              }
+            />
             <Route path="notable-users" element={<NotableUsers />} />
             <Route
               path="notable-users/:userId"

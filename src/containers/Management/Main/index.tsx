@@ -13,6 +13,12 @@ import BuildRewardApprovals from './BuildRewardApprovals';
 export default function Main() {
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const canManage = useMemo(() => managementLevel > 2, [managementLevel]);
+  // pending approvals hold children's birthdays and mentor applicants' real
+  // names and emails: approved teachers, staff account types and the admin
+  // only, as the API decides (managementLevel alone comes from AP)
+  const canViewApprovals = !!useKeyContext(
+    (v) => v.myState.canAccessSensitiveManagement
+  );
   const loadAccountTypes = useAppContext(
     (v) => v.requestHelpers.loadAccountTypes
   );
@@ -45,16 +51,21 @@ export default function Main() {
   );
 
   useEffect(() => {
+    if (!canViewApprovals) return;
     initApprovalItems();
+    async function initApprovalItems() {
+      const approvalItems = await loadApprovalItems();
+      onLoadApprovalItems(approvalItems);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canViewApprovals]);
+
+  useEffect(() => {
     initModerators();
     initSupermods();
     initAccountTypes();
     initBannedUsers();
     initWealthData();
-    async function initApprovalItems() {
-      const approvalItems = await loadApprovalItems();
-      onLoadApprovalItems(approvalItems);
-    }
     async function initModerators() {
       const moderators = await loadModerators();
       onLoadModerators(moderators);
@@ -85,7 +96,7 @@ export default function Main() {
     >
       <BuildRewardApprovals />
       <WealthData />
-      <Approvals canManage={canManage} />
+      {canViewApprovals && <Approvals canManage={canManage} />}
       {canManage && <Achievements />}
       <Supermods canManage={canManage} />
       {canManage && <Moderators canManage={canManage} />}

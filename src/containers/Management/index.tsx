@@ -25,6 +25,12 @@ export default function Management() {
   );
   const userId = useKeyContext((v) => v.myState.userId);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
+  // Deleted posts/messages (Mod Activities) and Approvals: approved teachers,
+  // staff account types and the admin only, as the API decides; managementLevel
+  // alone comes from AP (Mikey 10-10)
+  const canViewModActivities = !!useKeyContext(
+    (v) => v.myState.canAccessSensitiveManagement
+  );
   const canViewAiCosts = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
   const canViewNotableUsers = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
   const canViewPayment = userId === ADMIN_USER_ID;
@@ -69,13 +75,15 @@ export default function Management() {
           <Icon icon="sliders-h" />
           <span style={{ marginLeft: '1.1rem' }}>Tools</span>
         </NavLink>
-        <NavLink
-          to="/management/mod-activities"
-          className={(navData) => (navData.isActive ? 'active' : '')}
-        >
-          <Icon icon="clipboard-check" />
-          <span style={{ marginLeft: '1.1rem' }}>Moderation</span>
-        </NavLink>
+        {canViewModActivities && (
+          <NavLink
+            to="/management/mod-activities"
+            className={(navData) => (navData.isActive ? 'active' : '')}
+          >
+            <Icon icon="clipboard-check" />
+            <span style={{ marginLeft: '1.1rem' }}>Moderation</span>
+          </NavLink>
+        )}
         {canViewNotableUsers && (
           <NavLink
             to="/management/notable-users"
@@ -169,14 +177,18 @@ export default function Management() {
         >
           Tools
         </nav>
-        <nav
-          className={
-            location.pathname === `/management/mod-activities` ? 'active' : ''
-          }
-          onClick={() => navigate('/management/mod-activities')}
-        >
-          Mod Activities
-        </nav>
+        {canViewModActivities && (
+          <nav
+            className={
+              location.pathname === `/management/mod-activities`
+                ? 'active'
+                : ''
+            }
+            onClick={() => navigate('/management/mod-activities')}
+          >
+            Mod Activities
+          </nav>
+        )}
         {canViewNotableUsers && (
           <nav
             className={
