@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { NavSlotContext } from '../navSlot';
+import { FORMAT_INFO, GotchaText, MODIFIER_INFO } from './FormatQuestion';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { WORLD_IMAGES, WORLD_THUMBS, nodePositions } from './layout';
@@ -289,11 +290,28 @@ export default function WorldMap({
                   : selected.bestScore == null
                     ? selected.kind === 'stop'
                       ? 'Get 5 right answers to clear this stop. Fewer misses, better grade.'
-                      : 'Beat the boss: 490 of 700 points, graded on speed.'
+                      : 'Beat the boss: deal 490 damage, graded on speed. Watch its attacks; land counters for big hits.'
                     : selected.kind === 'stop'
                       ? `Best: ${selected.grade}, ${selected.bestScore}% of answers right.`
                       : `Best: ${selected.grade}, ${selected.bestScore}% of the boss's 700 points.`}
               </div>
+              {selected.unlocked && (selected.teaches || selected.modifier) && (
+                // the stop's identity: a new question type to learn, or its twist
+                <div className={panelTextCls}>
+                  {selected.teaches && (
+                    <div>
+                      <b>New: {FORMAT_INFO[selected.teaches].name}.</b>{' '}
+                      <GotchaText text={FORMAT_INFO[selected.teaches].how} />
+                    </div>
+                  )}
+                  {selected.modifier && (
+                    <div>
+                      <b>Twist: {MODIFIER_INFO[selected.modifier].name}.</b>{' '}
+                      {MODIFIER_INFO[selected.modifier].how}
+                    </div>
+                  )}
+                </div>
+              )}
               {selected.cleared && (
                 <div className={panelTextCls}>
                   {selected.grade !== 'S'

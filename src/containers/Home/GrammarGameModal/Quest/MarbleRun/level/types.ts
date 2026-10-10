@@ -62,6 +62,8 @@ export interface Builder {
   // an enemy kind from the theme's pool (or the given one)
   enemyKind(prefer?: string): string;
   groundAt(x: number): number | null;
+  // where the marble's centre rests at x (ground, swim lane or sky lane)
+  restY(x: number): number | null;
 }
 
 export type ObstacleMaker = (b: Builder) => Obstacle;
@@ -73,6 +75,8 @@ export interface MarbleCtl {
   t: number;
   mode: Mode;
   fx: Fx;
+  // where the right answer sat among those shown, when the screen knows
+  hint?: number | null;
   // ground height at x (null over a gap) and the marble's resting centre there
   groundAt(x: number): number | null;
   restY(x: number): number | null;

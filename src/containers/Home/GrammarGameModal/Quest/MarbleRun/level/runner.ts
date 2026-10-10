@@ -53,6 +53,23 @@ export function backdropUrl(id: string) {
   return gqMedia(`img/grammar-quest/levels/${id}.png`);
 }
 
+// The chaser (a stop's twist, Mikey 10-10): a gloomy rolling shadow behind
+// the marble. Slow or wrong answers let it gain; caught ends the stop.
+const GLOOM = [0, 1].map((f) =>
+  makeSprite(26, 26, (put) => {
+    disc(put, 13, 13, 12.5, 12.5, '#2b2140', '#1b1528', '#4a3a66');
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + f * 0.4;
+      disc(put, 13 + Math.cos(a) * 12, 13 + Math.sin(a) * 12, 2.2, 2.2, '#2b2140');
+    }
+    // two glowing eyes looking ahead (right)
+    rect(put, 15, 9, 3, 4, '#ff5a7a');
+    rect(put, 20, 9, 3, 4, '#ff5a7a');
+    put(16, 10, '#ffe0e8');
+    put(21, 10, '#ffe0e8');
+  })
+);
+
 export class PracticeRun implements RunView {
   level: Level;
   theme: Theme;
@@ -85,10 +102,16 @@ export class PracticeRun implements RunView {
   hurtUntil = 0;
   cam = 0;
   t = 0;
+  // the stop's twist: fog over the level, or the chaser and how far back it is
+  fog = false;
+  hint: number | null = null;
+  chaser: { gap: number; start: number } | null = null;
+  shownGap = 0;
+  caughtAt = -1;
 
-  constructor(theme: Theme, seed: string, events: PracticeEvents = {}) {
+  constructor(theme: Theme, seed: string, events: PracticeEvents = {}, kinds: Array<string | null> = []) {
     this.theme = theme;
-    this.level = buildLevel(theme, seed);
+    this.level = buildLevel(theme, seed, kinds);
     this.events = events;
     this.weather = new WeatherLayer(theme.weather);
     this.backdrop = loadImage(backdropUrl(theme.id));
@@ -114,6 +137,18 @@ export class PracticeRun implements RunView {
   get mode() {
     return this.theme.mode;
   }
+
+  // the server's word on the chaser after each answer (and on a reopen)
+  setChaser(chaser: { gap: number; start: number } | null) {
+    if (!chaser) return;
+    if (!this.chaser) this.shownGap = chaser.gap;
+    this.chaser = chaser;
+    if (chaser.gap <= 0 && this.caughtAt < 0) this.caughtAt = this.t;
+  }
+  // px behind the marble for a gap (it starts off screen)
+  private chaserBehind(gap: number) {
+    return 70 + gap * 3.2;
+  }
   get marbleX() {
     return this.x;
   }
@@ -135,8 +170,11 @@ export class PracticeRun implements RunView {
 
   // The player answered the current question. Returns false while the
   // marble is busy (the caller keeps the buttons disabled anyway).
-  answer(ok: boolean) {
+  // `hint`: where the right answer sat among those shown (a squad spares
+  // that enemy)
+  answer(ok: boolean, hint: number | null = null) {
     if (this.busy) return false;
+    this.hint = hint;
     if (ok) {
       if (this.grade === 'A' && this.misses === 0) perfectBonus();
       else practiceChime(this.grade ? LADDER.indexOf(this.grade) + 1 : 0);
@@ -183,6 +221,7 @@ export class PracticeRun implements RunView {
     const run = this;
     const lv = this.level;
     return {
+      hint: run.hint,
       get x() {
         return run.x;
       },
@@ -331,10 +370,51 @@ export class PracticeRun implements RunView {
     for (const e of this.level.entities) if (!e.front) e.draw(g, cam, t, this);
     this.drawMarble(g, cam, t);
     for (const e of this.level.entities) if (e.front) e.draw(g, cam, t, this);
+    if (this.chaser) this.drawChaser(g, cam, t);
     this.fx.draw(g, cam);
     this.weather.draw(g, cam, t);
+    if (this.fog) this.drawFog(g, t);
     g.restore();
     this.fx.overlay(g, t, W, H);
+  }
+
+  private drawChaser(g: CanvasRenderingContext2D, cam: number, t: number) {
+    const chaser = this.chaser!;
+    this.shownGap += (Math.max(0, chaser.gap) - this.shownGap) * 0.04;
+    const caught = this.caughtAt >= 0;
+    // caught: it rolls up onto the marble
+    const lunge = caught ? Math.min(1, (t - this.caughtAt) / 500) : 0;
+    const x = this.x - this.chaserBehind(this.shownGap) * (1 - lunge) - MR * lunge;
+    const rest = this.level.restY(x) ?? this.y;
+    const bob = Math.abs(Math.sin(t / 140)) * 4;
+    drawSprite(g, GLOOM[Math.floor(t / 160) % 2], x - cam - 39, rest + MR - 78 - bob, U);
+    if (caught && lunge >= 1 && !this.hidden && t - this.caughtAt < 560) {
+      this.fx.shake(t, 8, 300);
+      this.fx.flash(t, 160, 'rgba(60,20,90,.55)');
+      this.fx.text('CAUGHT!', this.x, this.y - 60, '#ff5a7a', 18);
+      missSound();
+      this.caughtAt -= 1000; // once
+    }
+    // dust it kicks up, faster the closer it is
+    if (Math.random() < 0.3) this.fx.add({ kind: 'dust', x, y: rest + MR - 4, vx: -1, vy: -0.4, life: 0.5, color: '#4a3a66' });
+  }
+
+  // fog rolling over the level: thick ahead (you can't see what's coming),
+  // thin around the marble
+  private drawFog(g: CanvasRenderingContext2D, t: number) {
+    const mx = this.x - this.cam;
+    for (let i = 0; i < 26; i++) {
+      const speed = 0.012 + (i % 5) * 0.004;
+      const x = ((i * 157 + t * speed) % (W + 360)) - 180;
+      const y = 40 + ((i * 71) % 300);
+      const ahead = Math.max(0, Math.min(1, (x - mx - 60) / 260));
+      const alpha = 0.06 + ahead * 0.28;
+      g.globalAlpha = alpha;
+      pxEllipse(g, x, y, 90 + (i % 4) * 26, 26 + (i % 3) * 10, '#eef2f8');
+      g.globalAlpha = alpha * 0.8;
+      pxEllipse(g, x + 50, y - 12, 60, 20, '#ffffff');
+    }
+    g.globalAlpha = 1;
   }
 
   private drawBackdrop(g: CanvasRenderingContext2D, cam: number) {

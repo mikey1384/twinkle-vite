@@ -75,7 +75,9 @@ export default function Result({
         ? 'Nemesis practice done'
         : boss
           ? 'Not yet: the boss is still standing'
-          : 'Not cleared yet';
+          : result.caught
+            ? 'The chaser caught you! Try the stop again.'
+            : 'Not cleared yet';
   // display only: the level-complete banner says the headline in one word
   const banner = perfect
     ? 'PERFECT!'
@@ -138,29 +140,32 @@ export default function Result({
           ))}
       </div>
       <div className={marblesCls}>
-        {answers.map((a, i) => (
-          <span
-            key={a.position}
-            className={popCls}
-            style={{ animationDelay: `${300 + i * 60}ms` }}
-          >
-            {a.grade ? (
-              <img
-                className={spriteCls}
-                src={spriteUri(a.grade, 'happy')}
-                width={24}
-                height={24}
-                alt=""
-                title={a.grade}
-              />
-            ) : (
-              <QuestMarble
-                look={answerLook(a.isCorrect, a.combo || 1)}
-                size={24}
-              />
-            )}
-          </span>
-        ))}
+        {/* counters are bonus, not hits: they show as a line below */}
+        {answers
+          .filter((a) => !a.counter)
+          .map((a, i) => (
+            <span
+              key={a.position}
+              className={popCls}
+              style={{ animationDelay: `${300 + i * 60}ms` }}
+            >
+              {a.grade ? (
+                <img
+                  className={spriteCls}
+                  src={spriteUri(a.grade, 'happy')}
+                  width={24}
+                  height={24}
+                  alt=""
+                  title={a.grade}
+                />
+              ) : (
+                <QuestMarble
+                  look={answerLook(a.isCorrect, a.combo || 1)}
+                  size={24}
+                />
+              )}
+            </span>
+          ))}
       </div>
       <div className={cx(scoreCls, !won && scoreMissCls)}>
         {boss ? `${result.points ?? 0}` : `${result.score}%`}
@@ -168,7 +173,11 @@ export default function Result({
       <div className={headCls}>{headline}</div>
       <div className={lineCls}>
         {boss
-          ? `${result.points ?? 0} of ${result.passPoints ?? 490} points needed to defeat the boss`
+          ? result.counterHits
+            ? // a counter's damage counts toward beating the boss, not
+              // toward the grade (Mikey 10-10)
+              `${result.points ?? 0} points from hits + ${result.counterDamage} from ${result.counterHits === 1 ? 'a counter' : `${result.counterHits} counters`}, against ${result.passPoints ?? 490} health`
+            : `${result.points ?? 0} of ${result.passPoints ?? 490} points needed to defeat the boss`
           : kind === 'nemesis'
             ? `${result.firstTryCorrect} of ${result.size} right on the first try`
             : `${result.rights ?? 0} right · ${result.misses ?? 0} missed${result.misses ? ' (they came back until you got them)' : ''}`}

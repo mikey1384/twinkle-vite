@@ -6,3 +6,4 @@ import './special';
 import './hazards';
 import './water';
 import './ice';
+import './formats';

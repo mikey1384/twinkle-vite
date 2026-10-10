@@ -77,8 +77,9 @@ export function pieceHeight(pc: GroundPiece, x: number): number | null {
 
 // Lays out a level for a theme. The seed (the stop id) varies approach
 // lengths and the stretches between obstacles, so two levels with the same
-// theme still differ.
-export function buildLevel(theme: Theme, seed: string): Level {
+// theme still differ. `kinds` overrides an obstacle slot (Mikey 10-10: each
+// question type has its own obstacle; the server picks the five types).
+export function buildLevel(theme: Theme, seed: string, kinds: Array<string | null> = []): Level {
   const lv = new Level(theme);
   const rand = seeded(seed);
   const b: Builder = {
@@ -106,15 +107,17 @@ export function buildLevel(theme: Theme, seed: string): Level {
       if (!pool.length) return 'beetle';
       return pool[Math.floor(rand() * pool.length)];
     },
-    groundAt: (x: number) => lv.groundAt(x)
+    groundAt: (x: number) => lv.groundAt(x),
+    restY: (x: number) => lv.restY(x)
   };
   b.add(320, 'flat');
-  for (const kind of theme.obstacles) {
+  theme.obstacles.forEach((themeKind, i) => {
+    const kind = kinds[i] || themeKind;
     b.add(190 + Math.round(rand() * 6) * 15, 'flat');
     const make = obstacleMaker(kind) || obstacleMaker('pit')!;
     lv.obstacles.push(make(b));
     connector(b, rand);
-  }
+  });
   b.add(320, 'flat');
   lv.goalX = b.x;
   b.add(1100, 'flat');

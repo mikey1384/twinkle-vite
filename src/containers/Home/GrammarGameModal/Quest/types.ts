@@ -21,6 +21,9 @@ export interface QuestNode {
   freeRematch?: boolean;
   // today's goals count only the newest stops and bosses (Mikey 10-08)
   countsForGoals?: boolean;
+  // the stop's twist, and the question type a teach stop introduces
+  modifier?: 'example' | 'combo' | 'fog' | 'chaser';
+  teaches?: QuestFormat;
   skills?: QuestSkill[];
 }
 
@@ -45,15 +48,36 @@ export interface QuestState {
   openRun: { runId: number; nodeId: string } | null;
 }
 
+// The ways an obstacle asks its question (Mikey 10-10): fill the gap, pick
+// the right road, spot the crack, fix the jammed lock.
+export type QuestFormat =
+  'blank' | 'which' | 'crack' | 'fix' | 'stomp' | 'momentum' | 'build';
+
 export interface QuestQuestion {
   position: number;
+  // practice stops: how this obstacle asks it (absent = blank)
+  format?: QuestFormat;
+  // blank/which: the prompt; crack/fix: the sentence with the mistake in it
   question: string;
+  // blank: four words; which: two whole sentences; fix: three replacements;
+  // crack: none (tap a word instead)
   choices: string[];
+  // crack: the sentence's words to tap
+  tokens?: string[];
+  // fix: the sentence around the wrong part
+  parts?: { before: string; wrong: string; after: string };
+  // stomp: how many sentences are wrong
+  targets?: number;
   skill: string;
   skillName: string;
   retryOf?: number; // practice: a missed question asked again
   baseTimeMs?: number; // boss: this question's time limit
-  revealDelayMs?: number; // boss: Classic's reading pause
+  revealDelayMs?: number; // boss: the telegraph plus Classic's reading pause
+  // boss (Mikey 10-10): the attack this hit is (its name shows for
+  // telegraphMs first), or a counter: one try on a short clock, no harm
+  attack?: 'strike' | 'jab' | 'slam' | 'trap' | 'swarm' | 'barrage' | 'climb';
+  telegraphMs?: number;
+  counter?: boolean;
 }
 
 export interface QuestAnswer {
@@ -81,17 +105,58 @@ export interface QuestAnswer {
   rights?: number;
   goal?: number;
   retry?: QuestQuestion;
+  // practice: the next question, already in the next obstacle's type
+  next?: QuestQuestion;
+  // practice: this miss was queued to be asked again later in the run
+  requeued?: boolean;
+  // a chaser stop: how far behind it is now, and caught (the stop is over)
+  chaser?: { gap: number; start: number };
+  caught?: boolean;
+  // crack: every word of the mistake (correctIndex is the first)
+  correct?: number[];
+  // a miss: the wrong choice the rule card explains
+  pickedText?: string;
+  // crack / fix / build: the bank's own sentence (for a challenge)
+  prompt?: string;
+  // boss: the click limit settled the hit as an F
+  settled?: boolean;
   // boss
   grade?: 'S' | 'A' | 'B' | 'C' | 'D' | 'F' | null;
   gained?: number;
   points?: number;
   passPoints?: number;
   wrong?: number;
+  // boss: the health left after this answer; a counter's outcome
+  hp?: number;
+  counter?: boolean;
+  damage?: number;
+  late?: boolean; // a counter answered right after its window closed
 }
 
 export type QuestRules =
-  | { mode: 'practice'; goal: number }
-  | { mode: 'boss'; hits: number; passPoints: number; timeScale: number }
+  | {
+      mode: 'practice';
+      goal: number;
+      slots?: QuestFormat[];
+      // the stop's twist (Mikey 10-10): a worked example first, a combo
+      // meter, fog or a chaser
+      modifier?: 'example' | 'combo' | 'fog' | 'chaser';
+      example?: {
+        sentence: string;
+        question: string;
+        answer: string;
+        card: ReviewRuleCard;
+      };
+      chaser?: { gap: number; start: number };
+    }
+  | {
+      mode: 'boss';
+      hits: number;
+      passPoints: number;
+      timeScale: number;
+      hp?: number;
+      counterDamage?: number;
+    }
   | { mode: 'nemesis' };
 
 export interface QuestRun {
@@ -107,6 +172,7 @@ export interface QuestRun {
   points?: number;
   wrongPicks?: number[]; // boss resume: choices already clicked wrong on the current hit
   usedMs?: number; // boss resume: time this hit's clock already ran
+  hp?: number; // boss resume: its health left
 }
 
 export interface QuestResult {
@@ -119,6 +185,9 @@ export interface QuestResult {
   misses?: number;
   points?: number;
   passPoints?: number;
+  counterHits?: number; // boss: counters landed (bonus damage and XP)
+  caught?: boolean; // a chaser stop: the chaser caught up
+  counterDamage?: number;
   firstTryCorrect: number;
   size: number;
   xp: number;

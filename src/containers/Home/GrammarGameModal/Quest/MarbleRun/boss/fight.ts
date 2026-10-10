@@ -30,6 +30,12 @@ import {
 import { BossInfo, bossTimeScale } from './catalog';
 import { bossDef, arenaGeometry, arenaUrl } from './registry';
 import type { BossApi, BossDef, BossMove, BossState, Shot } from './types';
+import {
+  ATTACK_KINDS,
+  bossAttack,
+  type AttackKind,
+  type BossAttackPlay
+} from './attacks';
 import './bosses';
 
 // A fort or castle fight: the test (Mikey 10-07). Seven hits graded exactly
@@ -39,6 +45,13 @@ import './bosses';
 // are the damage. The boss's health is the pass mark (70%: 490 of 700).
 // Empty it and the boss is dazed; after the 7th hit it bursts. Health left
 // over: it laughs, and the stop isn't cleared yet.
+// Mikey 10-10 (movesets, phases, counters): every hit is one of the boss's
+// named attacks (attacks.ts), shown first (the telegraph: its name while the
+// boss winds up), then the question, then its own window. Below 2/3 and 1/3
+// health the boss enters its next phase (new attacks on the server, a faster
+// pace and an arena hazard here), and each new phase opens a counter: the
+// boss is open, one harder question on a short clock; right = a big golden
+// hit, a miss just lets it recover. The server sends the health left.
 
 export const BOSS_HITS = 7;
 export const PASS_POINTS = Math.round(BOSS_HITS * 100 * 0.7);
@@ -58,7 +71,21 @@ export interface BossEvents {
   onFinish?(result: { passed: boolean; points: number; grades: Grade[] }): void;
 }
 
-type Phase = 'intro' | 'enter' | 'question' | 'throw' | 'done';
+type Phase =
+  'intro' | 'enter' | 'question' | 'throw' | 'recover' | 'between' | 'done';
+
+// one turn as the server hands it out
+export interface BossTurn {
+  baseTimeMs: number;
+  revealDelayMs: number;
+  telegraphMs?: number;
+  attack?: AttackKind;
+  counter?: boolean;
+  usedMs?: number;
+}
+
+export const bossPhaseOf = (hp: number) =>
+  hp > (PASS_POINTS * 2) / 3 ? 1 : hp > PASS_POINTS / 3 ? 2 : 3;
 
 interface Warning {
   x: number;
@@ -153,11 +180,28 @@ export class BossFight {
     return this.phase === 'question' && this.t >= this.questionAt;
   }
   // pick up a fight reopened after a reload: the hits so far already landed
-  resume(grades: Grade[]) {
+  resume(grades: Grade[], hp?: number) {
     this.grades = grades.slice(0, BOSS_HITS);
     this.idx = this.grades.length;
-    this.hp = PASS_POINTS - this.points;
+    this.hp = hp ?? PASS_POINTS - this.points;
     this.shownHp = Math.max(0, this.hp);
+    this.bossPhase = bossPhaseOf(this.hp);
+  }
+
+  // the turn on screen: its attack, whether it is a counter, its telegraph
+  turnAttack: BossAttackPlay | null = null;
+  counter = false;
+  telegraphMs = 0;
+  telegraphEnd = 0;
+  queued: BossTurn | null = null;
+  // a landed counter's throw (no grade, a golden arc) and its damage
+  countering = false;
+  counterDamage = 0;
+  hpAfter: number | null = null;
+  nextHazard = 0;
+
+  attackName(kind?: AttackKind) {
+    return kind ? bossAttack(this.def, kind).name : '';
   }
 
   get canAnswer() {
@@ -171,18 +215,10 @@ export class BossFight {
   // choices × this boss's scale) and its reading pause
   // usedMs: time this hit's clock already ran before the fight was reopened
   // (the server keeps it), so the ring starts that far down
-  setQuestion({
-    baseTimeMs,
-    revealDelayMs,
-    usedMs = 0
-  }: {
-    baseTimeMs: number;
-    revealDelayMs: number;
-    usedMs?: number;
-  }) {
-    this.baseMs = baseTimeMs;
-    this.revealMs = revealDelayMs;
-    this.usedMs = usedMs;
+  // the next turn starts as soon as the marble is free (now, or after the
+  // current throw)
+  setQuestion(turn: BossTurn) {
+    this.queued = turn;
   }
   usedMs = 0;
   // after a hit that took wrong clicks, the explanation is read before the
@@ -191,9 +227,11 @@ export class BossFight {
 
   // the server's word is final: a graded pick lands even if this frame's
   // own reading pause has not quite run out
-  answerRight(grade?: Grade, holdMs = 0) {
+  answerRight(grade?: Grade, holdMs = 0, hpAfter?: number) {
     if (this.phase !== 'question' || this.answered) return;
     this.holdMs = holdMs;
+    this.hpAfter = hpAfter ?? null;
+    this.countering = false;
     const g =
       grade ||
       gradeFor(this.t - this.questionAt + this.wrongPicks * 2000, this.baseMs);
@@ -212,6 +250,29 @@ export class BossFight {
     this.phaseAt = this.t;
   }
 
+  // a counter's one try: landed (a golden throw for damage) or not (the
+  // boss recovers; nothing else happens)
+  counterResult(hit: boolean, damage: number, hpAfter?: number) {
+    if (this.phase !== 'question' || this.answered || !this.counter) return;
+    this.hpAfter = hpAfter ?? null;
+    this.phaseAt = this.t;
+    if (hit) {
+      this.answered = 'S';
+      this.countering = true;
+      this.counterDamage = damage;
+      this.holdMs = 0;
+      perfectBonus();
+      this.phase = 'throw';
+    } else {
+      this.answered = 'F';
+      this.phase = 'recover';
+      this.bossState = 'laugh';
+      this.laughAt = this.t;
+      note(50, { instrument: 'marimba', level: 0.12 });
+      this.fx.text('NO HARM DONE', this.mx, this.my - 46, '#c9b8ff', 11);
+    }
+  }
+
   answerWrong() {
     if (this.phase !== 'question' || this.answered) return;
     this.wrongPicks++;
@@ -221,7 +282,7 @@ export class BossFight {
   }
 
   statusLine() {
-    return `${this.info.name.toUpperCase()} · HIT ${Math.min(this.idx + 1, BOSS_HITS)}/${BOSS_HITS} · ${this.points}/${PASS_POINTS} · TIME ×${this.timeScale}${this.bossPhase === 2 ? ' · PHASE 2' : ''}`;
+    return `${this.info.name.toUpperCase()} · HIT ${Math.min(this.idx + 1, BOSS_HITS)}/${BOSS_HITS} · HP ${Math.max(0, this.hp)}/${PASS_POINTS} · TIME ×${this.timeScale} · PHASE ${this.bossPhase}${this.counter ? ' · COUNTER' : this.turnAttack ? ` · ${this.turnAttack.name.toUpperCase()}` : ''}`;
   }
 
   // ---- the api handed to boss moves
@@ -241,7 +302,8 @@ export class BossFight {
       marbleX: f.mx,
       marbleY: f.my,
       menace: f.info.menace,
-      phase: f.bossPhase,
+      // moves know two phases: the third plays the second's moves harder
+      phase: Math.min(2, f.bossPhase),
       aim,
       spawn(s) {
         s.born = f.t;
@@ -302,8 +364,10 @@ export class BossFight {
   }
 
   private attack(t: number, aimed: boolean) {
+    // an open boss (a counter) doesn't attack
+    if (this.counter) return;
     const moves = this.def.moves.filter(
-      (m) => !m.phase || m.phase === this.bossPhase
+      (m) => !m.phase || m.phase === Math.min(2, this.bossPhase)
     );
     if (!moves.length) return;
     const total = moves.reduce((s, m) => s + (m.weight || 1), 0);
@@ -316,11 +380,13 @@ export class BossFight {
         break;
       }
     }
+    // this turn's named attack is what the boss keeps throwing
+    if (this.turnAttack) move = this.turnAttack.move;
     this.windAt = t;
     this.bossState = 'wind';
     const pace =
       Math.max(1500, 2900 - this.info.menace * 130) *
-      (this.bossPhase === 2 ? 0.75 : 1);
+      (this.bossPhase === 3 ? 0.65 : this.bossPhase === 2 ? 0.8 : 1);
     this.nextAttack = t + pace * (0.8 + Math.random() * 0.4);
     this.timers.push({
       at: t + (aimed ? Math.min(move.windup, 300) : move.windup),
@@ -389,35 +455,71 @@ export class BossFight {
         this.nextAttack = t + 1600;
         // reopened after the last hit already landed on the server (Mikey
         // 10-08: the fight sat on "TO THE FLAG…" forever): straight to the end
-        if (this.idx >= BOSS_HITS) this.finish(t);
-        else this.startQuestion(t);
+        if (this.queued) this.startQuestion(t);
+        else if (this.idx >= BOSS_HITS) this.finish(t);
+        else this.phase = 'between';
       }
     }
     if (this.hp <= 0 && this.bossState !== 'dying' && !this.gone)
       this.bossState = 'dazed';
     else if (this.bossState === 'hurt' && t - this.hurtAt > 260)
       this.bossState = 'idle';
-    if (this.phase === 'question' && this.hp > 0 && t > this.nextAttack)
-      this.attack(t, false);
-    // phase 2 when health runs low on bigger bosses
     if (
-      this.bossPhase === 1 &&
-      this.info.menace >= 5 &&
+      this.phase === 'question' &&
       this.hp > 0 &&
-      this.hp <= PASS_POINTS * 0.5
-    ) {
-      this.bossPhase = 2;
+      t > this.telegraphEnd &&
+      t > this.nextAttack
+    )
+      this.attack(t, false);
+    // the telegraph: the boss winds up its named attack (or, for a counter,
+    // reels open) while the name shows
+    if (this.phase === 'question' && t < this.telegraphEnd && this.hp > 0)
+      this.bossState = this.counter ? 'dazed' : 'wind';
+    else if (this.counter && this.phase === 'question' && this.hp > 0)
+      this.bossState = 'dazed';
+    // a new phase below 2/3 and 1/3 health (every boss)
+    const next = bossPhaseOf(this.hp);
+    if (this.hp > 0 && next > this.bossPhase) {
+      this.bossPhase = next;
       this.fx.flash(t, 160, 'rgba(255,60,90,.45)');
       this.fx.shake(t, 12, 600);
       this.fx.text(
-        "IT'S ANGRY!",
-        this.pose.x,
+        next === 2 ? "PHASE 2 · IT'S ANGRY!" : 'PHASE 3 · LAST STAND!',
+        this.pose.x - 60,
         this.pose.y - this.pose.h - 30,
         '#ff4d6d',
         16
       );
       thump(1.2);
-      note(40, { instrument: 'pad', level: 0.16, hold: 1 });
+      note(next === 2 ? 40 : 36, { instrument: 'pad', level: 0.16, hold: 1 });
+    }
+    // the last phase's arena hazard: debris falls on warned columns (it
+    // misses, like every move that isn't answering a wrong pick)
+    if (
+      this.bossPhase === 3 &&
+      this.hp > 0 &&
+      this.phase === 'question' &&
+      !this.counter &&
+      t > this.nextHazard
+    ) {
+      this.nextHazard = t + 2600 + Math.random() * 1800;
+      const x = 220 + Math.random() * (W - 520);
+      this.warnings.push({
+        x,
+        at: t,
+        until: t + 900,
+        width: 46,
+        color: '#ff7a3c',
+        kind: 'column',
+        fn: () => {
+          this.fx.shake(t, 4, 160);
+          this.fx.burst('dust', 10, x, this.geo.floorY - 4);
+          this.fx.burst('shard', 8, x, this.geo.floorY - 8, {
+            color: '#8a6a5a'
+          });
+          thump(0.35);
+        }
+      });
     }
     this.shownHp += (Math.max(0, this.hp) - this.shownHp) * 0.12;
     if (this.bossState === 'dying' && !this.gone && t - this.diedAt > 520)
@@ -425,7 +527,18 @@ export class BossFight {
   }
 
   private startQuestion(t: number) {
+    const turn = this.queued;
+    this.queued = null;
+    if (turn) {
+      this.baseMs = turn.baseTimeMs;
+      this.revealMs = turn.revealDelayMs;
+      this.usedMs = turn.usedMs || 0;
+      this.telegraphMs = turn.telegraphMs || 0;
+      this.counter = !!turn.counter;
+      this.turnAttack = turn.attack ? bossAttack(this.def, turn.attack) : null;
+    }
     this.answered = null;
+    this.countering = false;
     this.wrongPicks = 0;
     this.impacted = false;
     this.hidden = false;
@@ -433,6 +546,14 @@ export class BossFight {
     this.turn = 0;
     this.phase = 'enter';
     this.phaseAt = t;
+  }
+
+  // a turn is over: the next one, the end, or wait for the server's next
+  private afterTurn(t: number) {
+    this.my = this.geo.floorY - MR;
+    if (this.queued) this.startQuestion(t);
+    else if (this.idx >= BOSS_HITS) this.finish(t);
+    else this.phase = 'between';
   }
 
   private updateMarble(t: number) {
@@ -446,8 +567,32 @@ export class BossFight {
       this.mx = x;
       if (k >= 1) {
         this.phase = 'question';
-        this.questionAt = t + this.revealMs - this.usedMs;
+        this.telegraphEnd = t + this.telegraphMs;
+        this.questionAt = Math.max(
+          this.telegraphEnd,
+          t + this.revealMs - this.usedMs
+        );
         this.usedMs = 0;
+        this.nextAttack = this.telegraphEnd + 900;
+        this.nextHazard = this.telegraphEnd + 1500;
+        if (this.counter) {
+          this.fx.flash(t, 140, 'rgba(255,203,50,.35)');
+          bossChime(4);
+        } else if (this.turnAttack && this.telegraphMs) {
+          // the named attack fires as its name goes
+          const move = this.turnAttack.move;
+          this.windAt = t;
+          this.timers.push({
+            at: this.telegraphEnd,
+            fn: () => {
+              if (this.phase !== 'question' || this.hp <= 0) return;
+              this.struck = false;
+              move.run(this.api(false));
+              if (this.bossState === 'wind') this.bossState = 'idle';
+            }
+          });
+          whoosh(0.25, 0.4);
+        }
         this.events.onReady?.();
       }
     } else if (this.phase === 'question') {
@@ -477,6 +622,14 @@ export class BossFight {
       this.mx = x;
     } else if (this.phase === 'throw') {
       this.updateThrow(t, since, startX, floor);
+    } else if (this.phase === 'recover') {
+      // a missed counter: the boss shakes it off, nothing else happens
+      if (since > 1100) {
+        if (this.bossState === 'laugh') this.bossState = 'idle';
+        this.afterTurn(t);
+      }
+    } else if (this.phase === 'between' && this.queued) {
+      this.startQuestion(t);
     }
     // dodging: hop over low shots and beams, duck under high ones
     if (this.phase !== 'throw' && this.my >= floor - 1 && !this.hidden) {
@@ -525,7 +678,7 @@ export class BossFight {
       D: [660, 22, 0],
       F: [950, 0, 0]
     };
-    const [dur, h, spins] = ARC[g];
+    const [dur, h, spins] = this.countering ? [420, 190, 3] : ARC[g];
     const wind = 260;
     const fromX = startX - 24;
     // aim at the boss's body; a boss drawn away from its ledge says where it is
@@ -543,12 +696,14 @@ export class BossFight {
       this.turn = spins * Math.PI * 2 * k;
       if (k >= 1) this.impact(t);
     }
-    if (since > 1500 + this.holdMs) {
-      this.grades.push(g);
-      this.idx++;
-      this.my = floor;
-      if (this.idx < BOSS_HITS) this.startQuestion(t);
-      else this.finish(t);
+    if (since > (this.countering ? 1700 : 1500) + this.holdMs) {
+      // a counter is no hit: it leaves no grade
+      if (!this.countering) {
+        this.grades.push(g);
+        this.idx++;
+      }
+      this.countering = false;
+      this.afterTurn(t);
     }
   }
 
@@ -556,19 +711,27 @@ export class BossFight {
     const g = this.answered!;
     this.impacted = true;
     this.hidden = true;
-    const pts = GRADE[g][1];
-    const big = { S: 1, A: 0.8, B: 0.6, C: 0.45, D: 0.35, F: 0.15 }[g];
+    const pts = this.countering ? this.counterDamage : GRADE[g][1];
+    const big = this.countering
+      ? 1.4
+      : { S: 1, A: 0.8, B: 0.6, C: 0.45, D: 0.35, F: 0.15 }[g];
     const before = this.hp;
-    this.hp -= pts;
+    this.hp = this.hpAfter ?? this.hp - pts;
+    this.hpAfter = null;
     this.hurtAt = t;
     if (this.hp > 0) this.bossState = 'hurt';
     this.fx.shake(t, Math.round(4 + big * 12), 140 + big * 260);
-    thump(0.4 + big * 0.8);
+    thump(0.4 + Math.min(1, big) * 0.8);
+    if (this.countering) {
+      this.fx.flash(t, 180, 'rgba(255,203,50,.5)');
+      this.fx.text('COUNTER!', this.mx - 90, this.my + 20, '#ffcb32', 22);
+      this.fx.burst('star', 20, this.mx, this.my, { color: '#ffcb32' });
+    }
     this.fx.text(
       `-${pts}`,
       this.mx,
       this.my - 40,
-      GRADE[g][0],
+      this.countering ? '#ffcb32' : GRADE[g][0],
       g === 'S' ? 22 : 16
     );
     this.fx.burst(
@@ -721,8 +884,9 @@ export class BossFight {
     );
     g.drawImage(this.vignette, 0, 0);
     g.globalAlpha = 1;
-    if (this.bossPhase === 2 && !this.gone) {
-      g.fillStyle = `rgba(160,20,60,${0.1 + Math.sin(t / 260) * 0.05})`;
+    if (this.bossPhase >= 2 && !this.gone) {
+      const base = this.bossPhase === 3 ? 0.17 : 0.1;
+      g.fillStyle = `rgba(160,20,60,${base + Math.sin(t / (this.bossPhase === 3 ? 160 : 260)) * 0.05})`;
       g.fillRect(0, 0, W, H);
     }
   }
@@ -930,7 +1094,8 @@ export class BossFight {
       this.phase === 'question'
         ? gradeFor(elapsed, this.baseMs)
         : this.answered || 'S';
-    const struggling = this.phase === 'question' && 'CDF'.includes(live);
+    const struggling =
+      this.phase === 'question' && !this.counter && 'CDF'.includes(live);
     const air = floor - MR - this.my;
     pxEllipse(
       g,
@@ -940,14 +1105,14 @@ export class BossFight {
       U * 2,
       'rgba(0,0,0,.2)'
     );
-    if (this.phase === 'question')
+    if (this.phase === 'question' && t >= this.telegraphEnd)
       pixelRing(
         g,
         this.mx,
         this.my,
         MR + 9,
         Math.max(0, 1 - elapsed / this.baseMs),
-        GRADE[live][0]
+        this.counter ? '#ffcb32' : GRADE[live][0]
       );
     const filled = this.phase === 'throw';
     const face: Face =
@@ -1005,18 +1170,46 @@ export class BossFight {
     g.fillStyle = '#3a2a52';
     g.fillRect(x, y, w, h);
     const fw = r3((w * this.shownHp) / PASS_POINTS);
-    g.fillStyle = this.bossPhase === 2 ? '#ff2d55' : '#ff4d6d';
+    g.fillStyle =
+      this.bossPhase === 3
+        ? '#ff1f3d'
+        : this.bossPhase === 2
+          ? '#ff2d55'
+          : '#ff4d6d';
     g.fillRect(x, y, fw, h);
     g.fillStyle = '#ff9db0';
     g.fillRect(x, y, fw, U);
-    g.fillStyle = 'rgba(26,20,38,.45)';
-    for (let k = 1; k < BOSS_HITS; k++)
-      g.fillRect(r3(x + (w * k) / BOSS_HITS), y, U, h);
+    // the phase marks at 2/3 and 1/3 health
+    for (const k of [1 / 3, 2 / 3]) {
+      g.fillStyle = INK;
+      g.fillRect(r3(x + w * k) - U, y - U * 2, U * 2, h + U * 4);
+      g.fillStyle = '#ffcb32';
+      g.fillRect(r3(x + w * k) - U, y - U * 2, U * 2, U);
+    }
+    pixelText(
+      g,
+      `HP ${Math.max(0, Math.round(this.shownHp))}`,
+      x + w / 2,
+      y + h - 4,
+      9,
+      '#fff'
+    );
+    if (this.bossPhase > 1 && this.hp > 0)
+      pixelText(
+        g,
+        `PHASE ${this.bossPhase}`,
+        x + w,
+        y - 8,
+        10,
+        '#ff9db0',
+        'right'
+      );
     if (this.hp <= 0 && !this.gone) {
       g.globalAlpha = 0.6 + Math.sin(t / 120) * 0.4;
       pixelText(g, 'DAZED!', x + w, y - 8, 11, '#ffcb32', 'right');
       g.globalAlpha = 1;
     }
+    this.drawTelegraph(g, t);
     // the seven hits so far
     for (let i = 0; i < BOSS_HITS; i++) {
       const gr = this.grades[i];
@@ -1026,6 +1219,66 @@ export class BossFight {
       g.fillStyle = gr ? GRADE[gr][0] : '#3a2a52';
       g.fillRect(cx - 6, H - 27, 12, 12);
     }
+  }
+
+  // the attack's name while the boss winds up; a counter's call to strike
+  private drawTelegraph(g: CanvasRenderingContext2D, t: number) {
+    if (this.phase !== 'question') return;
+    const showing = t < this.telegraphEnd;
+    if (!showing && !this.counter) return;
+    if (!showing) {
+      // the counter's open window: a gold frame and the call, pulsing
+      g.globalAlpha = 0.5 + Math.sin(t / 110) * 0.3;
+      g.fillStyle = '#ffcb32';
+      g.fillRect(0, 0, W, U * 2);
+      g.fillRect(0, H - U * 2, W, U * 2);
+      g.fillRect(0, 0, U * 2, H);
+      g.fillRect(W - U * 2, 0, U * 2, H);
+      g.globalAlpha = 1;
+      pixelText(g, 'COUNTER!', this.mx, this.my - 52, 12, '#ffcb32');
+      return;
+    }
+    const k = (t - (this.telegraphEnd - this.telegraphMs)) / this.telegraphMs;
+    const fade = Math.min(1, k * 6, (1 - k) * 6);
+    const y = H / 2 - 30;
+    g.globalAlpha = fade * 0.75;
+    g.fillStyle = '#000';
+    g.fillRect(0, y - 34, W, 62);
+    g.globalAlpha = fade;
+    const kind = this.turnAttack?.kind;
+    const color = this.counter
+      ? '#ffcb32'
+      : kind
+        ? ATTACK_KINDS[kind].color
+        : '#ff9db0';
+    g.fillStyle = color;
+    g.fillRect(0, y - 34, W, U);
+    g.fillRect(0, y + 27, W, U);
+    // the name slides in from the right
+    const slide = Math.max(0, 1 - k * 5) * 120;
+    pixelText(
+      g,
+      this.counter
+        ? 'COUNTER CHANCE!'
+        : (this.turnAttack?.name || 'ATTACK').toUpperCase(),
+      W / 2 + slide,
+      y,
+      22,
+      color
+    );
+    pixelText(
+      g,
+      this.counter
+        ? 'IT IS OPEN · ONE TRY · NO HARM IF YOU MISS'
+        : kind
+          ? ATTACK_KINDS[kind].tag
+          : '',
+      W / 2 + slide,
+      y + 20,
+      10,
+      '#fff'
+    );
+    g.globalAlpha = 1;
   }
 
   private drawIntro(g: CanvasRenderingContext2D, t: number) {
