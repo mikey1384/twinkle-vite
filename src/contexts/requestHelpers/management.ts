@@ -1148,7 +1148,8 @@ export default function managementRequestHelpers({
     }) {
       try {
         const { data } = await request.get(
-          `${URL}/management/deleted/content?contentId=${contentId}&contentType=${contentType}`
+          `${URL}/management/deleted/content?contentId=${contentId}&contentType=${contentType}`,
+          auth()
         );
         return data;
       } catch (error) {
@@ -1158,7 +1159,8 @@ export default function managementRequestHelpers({
     async loadDeletedMessage(messageId: number) {
       try {
         const { data } = await request.get(
-          `${URL}/management/deleted/message?messageId=${messageId}`
+          `${URL}/management/deleted/message?messageId=${messageId}`,
+          auth()
         );
         return data;
       } catch (error) {

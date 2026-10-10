@@ -25,14 +25,22 @@ export default function ApprovalRequest({
   const [type, setType] = useState('');
   const [content, setContent] = useState(null);
   const [status, setStatus] = useState('');
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     init();
     async function init() {
-      const requestItem = await loadApprovalItemById(requestId);
-      setType(requestItem.type);
-      setContent(requestItem.content);
-      setStatus(requestItem.status);
+      try {
+        const requestItem = await loadApprovalItemById(requestId);
+        setType(requestItem.type);
+        setContent(requestItem.content);
+        setStatus(requestItem.status);
+      } catch (error) {
+        // Not visible to this viewer (or gone): render nothing rather than an
+        // endless spinner.
+        console.error(error);
+        setUnavailable(true);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestId]);
@@ -56,6 +64,8 @@ export default function ApprovalRequest({
       socket.off('approval_result_received', handleApprovalResultReceived);
     };
   });
+
+  if (unavailable) return null;
 
   return (
     <div

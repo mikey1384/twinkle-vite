@@ -15,17 +15,25 @@ export default function ModificationNotice({
     (v) => v.requestHelpers.loadModificationItem
   );
   const [data, setData] = useState<Record<string, any> | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     init();
     async function init() {
-      const item = await loadModificationItem(modificationId);
-      setData({
-        action: item.action,
-        contentId: item.contentId,
-        contentType: item.contentType,
-        isRevoked: item.isRevoked
-      });
+      try {
+        const item = await loadModificationItem(modificationId);
+        setData({
+          action: item.action,
+          contentId: item.contentId,
+          contentType: item.contentType,
+          isRevoked: item.isRevoked
+        });
+      } catch (error) {
+        // The record is not visible to this viewer (or is gone): render
+        // nothing rather than an endless spinner.
+        console.error(error);
+        setUnavailable(true);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modificationId]);
@@ -52,6 +60,8 @@ export default function ModificationNotice({
       );
     };
   });
+
+  if (unavailable) return null;
 
   return (
     <div

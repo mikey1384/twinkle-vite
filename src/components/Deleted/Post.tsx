@@ -87,9 +87,16 @@ export default function DeletedPost({
     init();
     async function init() {
       setLoading(true);
-      const data = await loadDeletedContent({ contentId, contentType });
-      setContentObj(data || {});
-      setLoading(false);
+      try {
+        const data = await loadDeletedContent({ contentId, contentType });
+        setContentObj(data || {});
+      } catch (error) {
+        // Not visible to this viewer (or gone): show the "Deleted" fallback
+        // instead of an endless spinner.
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
