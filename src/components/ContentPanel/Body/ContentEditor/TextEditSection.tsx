@@ -83,7 +83,7 @@ export default function TextEditSection({
           )}
         </div>
       )}
-      {contentType !== 'comment' && (
+      {contentType !== 'comment' && contentType !== 'dailyReflection' && (
         <>
           <Input
             onChange={onTitleChange}
@@ -97,13 +97,22 @@ export default function TextEditSection({
           </small>
         </>
       )}
-      <div style={{ position: 'relative', marginTop: '1rem' }}>
+      <div
+        style={{
+          position: 'relative',
+          marginTop: contentType === 'dailyReflection' ? 0 : '1rem'
+        }}
+      >
         <Textarea
           minRows={4}
           onChange={onTextAreaChange}
           onKeyUp={onTextAreaKeyUp}
           placeholder={
-            edit[contentType === 'comment' ? 'comment' : 'description']
+            edit[
+              contentType === 'comment' || contentType === 'dailyReflection'
+                ? contentType
+                : 'description'
+            ]
           }
           value={contentType === 'comment' ? editedComment : editedDescription}
           style={descriptionExceedsCharLimit?.style}

@@ -24,6 +24,7 @@ import { Color } from '~/constants/css';
 
 const cancelLabel = 'Cancel';
 const doneLabel = 'Done';
+const saveLabel = 'Save';
 
 function ContentEditor({
   comment,
@@ -51,6 +52,7 @@ function ContentEditor({
   title: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const banned = useKeyContext((v) => v.myState.banned);
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColor = useMemo(
@@ -181,6 +183,10 @@ function ContentEditor({
           return true;
         }
         return false;
+      case 'dailyReflection':
+        return (
+          stringIsEmpty(editedDescription) || editedDescription === description
+        );
       case 'subject':
         if (
           editedTitleIsEmpty ||
@@ -241,12 +247,22 @@ function ContentEditor({
         editedTitle: finalizeEmoji(editedTitle)
       };
       setIsEditing(true);
+      setSubmitError('');
       try {
         await onEditContent({ ...post, contentId, contentType });
-      } catch (error) {
-        console.error(error);
-      } finally {
         handleDismiss();
+      } catch (error: any) {
+        console.error(error);
+        if (contentType === 'dailyReflection') {
+          // Keep the editor open with the member's text and say why it was
+          // not saved (too short, too long, no longer shared...).
+          setSubmitError(
+            error?.message || 'Could not save your edit. Please try again.'
+          );
+        } else {
+          handleDismiss();
+        }
+      } finally {
         setIsEditing(false);
       }
     },
@@ -306,6 +322,7 @@ function ContentEditor({
         }}
         onTextAreaChange={(event) => {
           const { value } = event.target;
+          if (submitError) setSubmitError('');
           handleSetInputState({
             ...editForm,
             [contentType === 'comment' ? 'editedComment' : 'editedDescription']:
@@ -339,6 +356,19 @@ function ContentEditor({
           })
         }
       />
+      {submitError ? (
+        <p
+          role="alert"
+          className={css`
+            margin-top: 1rem;
+            color: ${Color.rose()};
+            font-size: 1.3rem;
+            line-height: 1.5;
+          `}
+        >
+          {submitError}
+        </p>
+      ) : null}
       <div
         style={{
           marginTop: '1rem',
@@ -352,7 +382,7 @@ function ContentEditor({
           disabled={editButtonDisabled}
           onClick={handleSubmit}
         >
-          {doneLabel}
+          {contentType === 'dailyReflection' ? saveLabel : doneLabel}
         </Button>
         <Button
           variant="ghost"

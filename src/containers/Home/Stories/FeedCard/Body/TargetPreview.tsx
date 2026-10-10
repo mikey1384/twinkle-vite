@@ -530,6 +530,7 @@ export default function TargetPreview({
           className="home-feed-card__target-reflection-footer"
           density="compact"
           grade={reflection?.grade}
+          isEdited={reflection?.isEdited}
           isRefined={reflection?.isRefined}
           masterpieceType={reflection?.masterpieceType}
           streak={streak}

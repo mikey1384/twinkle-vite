@@ -560,6 +560,7 @@ export default function Content({
             </RichText>
             <DailyReflectionMetaBadges
               grade={contentObj?.grade}
+              isEdited={contentObj?.isEdited}
               isRefined={contentObj?.isRefined}
               masterpieceType={contentObj?.masterpieceType}
               xpAwarded={contentObj?.xpAwarded}

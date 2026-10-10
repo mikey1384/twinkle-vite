@@ -141,6 +141,7 @@ export default function TargetDailyReflectionContent({
         </RichText>
         <DailyReflectionMetaBadges
           grade={dailyReflectionContent.grade}
+          isEdited={dailyReflectionContent.isEdited}
           isRefined={dailyReflectionContent.isRefined}
           masterpieceType={dailyReflectionContent.masterpieceType}
           xpAwarded={dailyReflectionContent.xpAwarded}

@@ -11,6 +11,7 @@ const enterYoutubeUrlLabel = 'Enter YouTube URL';
 
 export const edit = {
   comment: `${enterCommentLabel}...`,
+  dailyReflection: 'Your reflection...',
   description: `${enterDescriptionLabel}... ${optionalLabel}`,
   heading: `${enterHeadingLabel}... ${optionalLabel}`,
   title: `${enterTitleLabel}...`,

@@ -229,7 +229,9 @@ export const mobilePreviewStyles = `
       flex-wrap: nowrap;
     }
     .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress
-      .daily-reflection-meta-badges__refined {
+      .daily-reflection-meta-badges__refined,
+    .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress
+      .daily-reflection-meta-badges__edited {
       grid-column: 2;
       grid-row: 1 / span 2;
       align-self: center;
@@ -243,7 +245,9 @@ export const mobilePreviewStyles = `
       word-break: keep-all;
     }
     .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress
-      .daily-reflection-meta-badges__refined span {
+      .daily-reflection-meta-badges__refined span,
+    .home-feed-card__reflection-footer.daily-reflection-meta-badges--has-masterpiece.daily-reflection-meta-badges--has-progress
+      .daily-reflection-meta-badges__edited span {
       white-space: nowrap;
       word-break: keep-all;
     }

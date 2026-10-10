@@ -444,6 +444,7 @@ registerMethods('content', [
   'recoverDailyQuestionSubmission',
   'shareDailyQuestionResponse',
   'shareDailyQuestionWithAI',
+  'editDailyReflection',
   'refineDailyQuestionResponse',
   'simplifyDailyQuestion',
   'purchaseDailyQuestionRepair',

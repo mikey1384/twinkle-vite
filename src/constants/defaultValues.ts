@@ -128,7 +128,9 @@ export const charLimit: {
     description: 20000
   },
   dailyReflection: {
-    description: 10000
+    // Same as a new Daily Question answer (DailyQuestionPanel MAX_RESPONSE_LENGTH
+    // and the API's DAILY_QUESTION_RESPONSE_MAX_LENGTH); an edit gets the same bound.
+    description: 12000
   },
   rewardComment: 5000,
   statusMsg: 1000,

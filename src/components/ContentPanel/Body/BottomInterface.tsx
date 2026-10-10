@@ -267,8 +267,12 @@ export default function BottomInterface({
     if (contentType === 'aiCard') return false;
     if (contentType === 'aiStory') return false;
     if (contentType === 'build') return false;
-    if (contentType === 'dailyReflection' || contentType === 'bounty')
-      return false;
+    if (contentType === 'bounty') return false;
+    // Only the author edits their own shared reflection (never moderators):
+    // the edit replaces the shown text and is labelled "Edited".
+    if (contentType === 'dailyReflection') {
+      return !!userId && userId === uploader.id;
+    }
     if (userId === uploader.id || (canEdit && userLevel > uploader.level)) {
       return (
         !isCommentForSecretSubject ||

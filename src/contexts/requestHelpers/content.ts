@@ -3035,6 +3035,32 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // The author edits the public text of their own shared reflection. The
+    // server keeps the original record and never re-grades or pays for it.
+    async editDailyReflection({
+      responseId,
+      text
+    }: {
+      responseId: number;
+      text: string;
+    }): Promise<{
+      responseId: number;
+      description: string;
+      editedAt: number;
+      isEdited: boolean;
+      isRefined: boolean;
+    }> {
+      try {
+        const { data } = await request.put(
+          `${URL}/content/daily-question/edit`,
+          { responseId, text },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async refineDailyQuestionResponse({ responseId }: { responseId: number }) {
       try {
         const { data } = await request.post(

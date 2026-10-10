@@ -73,6 +73,9 @@ export default function ContentDisplay({
   onClickSecretAnswer: () => void;
 }) {
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
+  const editDailyReflection = useAppContext(
+    (v) => v.requestHelpers.editDailyReflection
+  );
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
 
   return (
@@ -142,7 +145,22 @@ export default function ContentDisplay({
     </ErrorBoundary>
   );
 
-  async function handleEditContent(params: object) {
+  async function handleEditContent(params: { editedDescription?: string }) {
+    if (contentType === 'dailyReflection') {
+      // Reflections have their own author-only edit route; the canonical
+      // response carries the saved text and its Edited state.
+      const { description, editedAt, isEdited, isRefined } =
+        await editDailyReflection({
+          responseId: contentId,
+          text: params.editedDescription || ''
+        });
+      onEditContent({
+        data: { description, editedAt, isEdited, isRefined },
+        contentType,
+        contentId
+      });
+      return;
+    }
     const data = await editContent(params);
     onEditContent({ data, contentType, contentId });
   }

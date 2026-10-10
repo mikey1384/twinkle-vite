@@ -742,6 +742,7 @@ export default function Body({
             className="home-feed-card__reflection-footer"
             density="compact"
             grade={content?.grade}
+            isEdited={content?.isEdited}
             isRefined={content?.isRefined}
             masterpieceType={content?.masterpieceType}
             streak={content?.streakAtTime}

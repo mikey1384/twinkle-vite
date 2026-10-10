@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import Icon from '~/components/Icon';
 import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
 
 const minorWords = new Set(['and', 'or', 'the', 'a', 'an']);
@@ -62,6 +63,7 @@ export default function DailyReflectionMetaBadges({
   className,
   density = 'full',
   grade,
+  isEdited,
   isRefined,
   masterpieceType,
   streak,
@@ -71,6 +73,9 @@ export default function DailyReflectionMetaBadges({
   className?: string;
   density?: 'compact' | 'full';
   grade?: string | null;
+  // The author edited the shared text: "Edited" replaces "AI-polished"
+  // because the final wording is now theirs.
+  isEdited?: boolean;
   isRefined?: boolean;
   masterpieceType?: string | null;
   streak?: number | null;
@@ -86,7 +91,13 @@ export default function DailyReflectionMetaBadges({
     (typeof streak === 'number' && streak > 0)
   );
 
-  if (!masterpieceLabel && !isRefined && !showProgress) {
+  const textLabel: 'edited' | 'refined' | null = isEdited
+    ? 'edited'
+    : isRefined
+      ? 'refined'
+      : null;
+
+  if (!masterpieceLabel && !textLabel && !showProgress) {
     return null;
   }
 
@@ -96,7 +107,8 @@ export default function DailyReflectionMetaBadges({
     isCompact ? compactRootClass : '',
     masterpieceLabel ? 'daily-reflection-meta-badges--has-masterpiece' : '',
     showProgress ? 'daily-reflection-meta-badges--has-progress' : '',
-    isRefined ? 'daily-reflection-meta-badges--has-refined' : '',
+    textLabel === 'refined' ? 'daily-reflection-meta-badges--has-refined' : '',
+    textLabel === 'edited' ? 'daily-reflection-meta-badges--has-edited' : '',
     className || ''
   ]
     .filter(Boolean)
@@ -124,7 +136,14 @@ export default function DailyReflectionMetaBadges({
           style={{ marginTop: 0 }}
         />
       ) : null}
-      {isRefined ? (
+      {textLabel === 'edited' ? (
+        <span
+          className={`${refinedBadgeClass} daily-reflection-meta-badges__edited`}
+        >
+          <Icon className={refinedIconClass} icon="pencil-alt" />
+          <span style={{ fontStyle: 'italic' }}>Edited</span>
+        </span>
+      ) : textLabel === 'refined' ? (
         <span
           className={`${refinedBadgeClass} daily-reflection-meta-badges__refined`}
         >

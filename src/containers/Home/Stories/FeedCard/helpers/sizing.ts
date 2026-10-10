@@ -504,6 +504,7 @@ export function hasDailyReflectionMetaBadges(content: any) {
   return Boolean(
     content?.grade === 'Masterpiece' ||
     content?.isRefined ||
+    content?.isEdited ||
     Number(content?.xpAwarded || 0) > 0 ||
     Number(content?.streakAtTime || 0) > 0
   );
