@@ -2004,6 +2004,34 @@ export default function buildRequestHelpers({
       }
     },
 
+    // The thumbnail capture host reports what the preview SDK observed while a
+    // Lumine view_preview capture renders, so Lumine sees errors and layout
+    // evidence beside the screenshot. Best effort: a failed report only
+    // leaves the screenshot without that evidence.
+    async reportLuminePreviewCaptureEvidence({
+      buildId,
+      captureId,
+      evidence
+    }: {
+      buildId: number;
+      captureId: string;
+      evidence: {
+        viewport: { mode: 'phone' | 'desktop'; width: number; height: number };
+        observation: unknown;
+      };
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/lumine-preview-capture/${captureId}/evidence`,
+          { evidence },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadBuildProjectFileChangeLogs(
       buildId: number,
       options?: { fromWriter?: boolean; limit?: number }

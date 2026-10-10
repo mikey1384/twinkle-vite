@@ -138,6 +138,7 @@ registerMethods('build', [
   'loadBuildProjectFiles',
   'updateBuildProjectFiles',
   'createBuildPreviewSession',
+  'reportLuminePreviewCaptureEvidence',
   'loadBuildProjectFileChangeLogs',
   'deleteBuild',
   'downloadBuildProjectArchive',
