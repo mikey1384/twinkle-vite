@@ -104,7 +104,7 @@ test(
         await assertPanelsFit(dialog(page), mobile);
         await screenshot(page, `${label}-review`);
         // Inspecting an item must not dismiss the reviewed agreement.
-        await button(dialog(page), 'Inspect card').click();
+        await button(dialog(page), 'View card #41').click();
         await page.getByText('Preview card #41 · Aurora Phoenix').waitFor();
         await button(dialog(page), 'Close modal').click();
         await button(dialog(page), 'Accept trade').click();

@@ -79,7 +79,7 @@ export async function createTradePreviewPage() {
   const stubs = {
     '~/contexts': `
       const actions=new Proxy({}, {get:(target,key)=>target[key] ||= (payload=>{if(key==='onUpdateAICard')window.cards[payload.cardId]={...window.cards[payload.cardId],...payload.newState};})});
-      export const useKeyContext=select=>select({myState:{userId:window.viewer,username:window.viewer===1?'Orbit':'Nova',twinkleCoins:window.serverCoins,profileTheme:'logoBlue'},theme:{done:{color:'logoBlue'},success:{color:'green'}}});
+      export const useKeyContext=select=>select({myState:{userId:window.viewer,username:window.viewer===1?'Orbit':'Nova',twinkleCoins:window.serverCoins,profileTheme:'logoBlue'},theme:new Proxy({done:{color:'logoBlue'},success:{color:'green'}},{get:(t,k)=>t[k]||{color:'logoBlue'}})});
       export const useAppContext=select=>select({requestHelpers:window.requests,user:{state:{userObj:{},myState:{}},actions:{onSetUserState:entry=>window.coinUpdates.push(entry)}}});
       export const useChatContext=select=>select({actions,state:{cardObj:window.cards,acceptedTransactions:{},cancelledTransactions:{},channelPathIdHash:{},chatStatus:{},userOnlineHash:{},userAwayHash:{}}});
       export const useHomeContext=select=>select({state:{},actions});
@@ -105,7 +105,15 @@ export async function createTradePreviewPage() {
       format: 'iife',
       platform: 'browser',
       jsx: 'automatic',
-      alias: { '~': path.join(repo, 'src') },
+      alias: {
+        '~': path.join(repo, 'src'),
+        // as in vite.config.ts (the shared AI card embed uses it)
+        'react-sanitized-html': path.join(
+          repo,
+          'src/shims/react-sanitized-html.tsx'
+        )
+      },
+      loader: { '.webp': 'dataurl', '.gif': 'dataurl', '.png': 'dataurl' },
       define: {
         'import.meta.env': '{}',
         'process.env.NODE_ENV': '"development"'

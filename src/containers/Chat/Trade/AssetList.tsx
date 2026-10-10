@@ -1,5 +1,6 @@
 import React from 'react';
-import CardThumb from '~/components/CardThumb';
+import AICard from '~/components/AICard';
+import AICardPreview from '~/components/AICardPreview';
 import Icon from '~/components/Icon';
 import TradeBuilds from '~/components/Build/TradeBuilds';
 import SelectedGroupItem from '../SelectedGroupItem';
@@ -42,11 +43,21 @@ export default function AssetList({
         const card = bundle.cards?.find((card) => card.id === id) ||
           cardObj[id] || { id };
         const name = getAICardDisplayWord(card) || `AI card #${id}`;
+        // the same card embed the home feed uses (Mikey 10-10: a card drawn
+        // from scratch here looked out of place, and players never see
+        // card levels)
         return (
-          <div className="asset" key={`card-${id}`}>
-            <div className="asset-heading">
-              <b>AI card · #{id}</b>
-              {onRemove && (
+          <div className="asset asset--card" key={`card-${id}`}>
+            <AICardPreview
+              card={card}
+              artwork={<AICard card={card} compact />}
+              summoner={card.creator}
+              density="target"
+              framed={false}
+              onClick={() => onInspectCard(id)}
+            />
+            {onRemove && (
+              <div className="asset-actions">
                 <button
                   className="remove"
                   aria-label={`Remove card ${name}`}
@@ -54,43 +65,8 @@ export default function AssetList({
                 >
                   Remove
                 </button>
-              )}
-            </div>
-            <div className="card-row">
-              <CardThumb
-                detailed
-                card={card}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onInspectCard(id);
-                }}
-                style={
-                  {
-                    '--card-thumb-width': '6rem',
-                    '--card-thumb-height': '8rem',
-                    '--card-thumb-font-size': '1.1rem'
-                  } as React.CSSProperties
-                }
-              />
-              <div className="card-text">
-                <strong>{name}</strong>
-                <p>
-                  {card.quality && card.quality !== '???'
-                    ? `${card.quality.charAt(0).toUpperCase()}${card.quality.slice(1)} · `
-                    : ''}
-                  {card.level ? `Level ${card.level}` : ''}
-                </p>
-                <button
-                  className="inspect"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onInspectCard(id);
-                  }}
-                >
-                  Inspect card
-                </button>
               </div>
-            </div>
+            )}
           </div>
         );
       })}

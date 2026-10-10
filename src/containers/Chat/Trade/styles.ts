@@ -119,31 +119,19 @@ export const assetListClass = css`
   .asset-heading b {
     color: #344359;
   }
-  .card-row {
-    display: flex;
-    align-items: center;
-    gap: 1.4rem;
-    min-width: 0;
-  }
-  .card-text {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    font-size: 1.3rem;
-  }
-  .card-text strong {
-    display: block;
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-  .inspect {
-    background: none;
-    border: 0;
+  .asset--card {
     padding: 0;
-    color: #245bac;
-    text-decoration: underline;
-    font-size: 1.2rem;
-    cursor: pointer;
+    overflow: hidden;
   }
+  .asset-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 1rem 0.8rem;
+  }
+
+
+
+
   .remove {
     border: 0;
     background: #f1f4f8;
