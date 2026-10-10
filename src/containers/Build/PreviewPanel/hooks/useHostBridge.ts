@@ -5000,7 +5000,13 @@ export function useHostBridge({
                       ...bankFields,
                       ...vaultFields,
                       ...(type === 'rewards:start'
-                        ? { levelIndex: payload?.levelIndex }
+                        ? {
+                            levelIndex: payload?.levelIndex,
+                            // listening rules: the song being played
+                            ...(payload?.completionToken !== undefined
+                              ? { completionToken: payload.completionToken }
+                              : {})
+                          }
                         : {}),
                       challengeId: payload?.challengeId,
                       answers: payload?.answers,
@@ -5018,6 +5024,11 @@ export function useHostBridge({
                             payload?.completionToken !== undefined
                           ? { completionToken: payload.completionToken }
                           : {}),
+                      // What the reward was for; the server validates it.
+                      ...(type === 'rewards:claim' &&
+                      payload?.subject !== undefined
+                        ? { subject: payload.subject }
+                        : {}),
                       previewAttempts: payload?.previewAttempts,
                       metric: payload?.metric,
                       period: payload?.period,
@@ -5147,7 +5158,13 @@ export function useHostBridge({
                 ...bankFields,
                 ...vaultFields,
                 ...(type === 'rewards:start'
-                  ? { levelIndex: payload?.levelIndex }
+                  ? {
+                      levelIndex: payload?.levelIndex,
+                      // listening rules: the song being played
+                      ...(payload?.completionToken !== undefined
+                        ? { completionToken: payload.completionToken }
+                        : {})
+                    }
                   : {}),
                 challengeId: payload?.challengeId,
                 answers: payload?.answers,
@@ -5165,6 +5182,10 @@ export function useHostBridge({
                       payload?.completionToken !== undefined
                     ? { completionToken: payload.completionToken }
                     : {}),
+                // What the reward was for; the server validates it.
+                ...(type === 'rewards:claim' && payload?.subject !== undefined
+                  ? { subject: payload.subject }
+                  : {}),
                 metric: payload?.metric,
                 period: payload?.period,
                 ...(type === 'rewards:timeline'

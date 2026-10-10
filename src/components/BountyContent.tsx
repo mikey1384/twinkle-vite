@@ -1,15 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import LinkPreviewImage from '~/components/LinkPreviewImage';
 import RewardChips from '~/components/RewardChips';
+import UsernameText from '~/components/Texts/UsernameText';
 import BountyChallenge, {
   type BountyChallengeInfo
 } from '~/components/BountyChallenge';
+import BountySubjectPlayer from '~/components/BountySubjectPlayer';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import {
+  canPlayBountySubject,
+  getBountySubjectAppPath,
+  getBountySubjectCopy,
+  getBountySubjectPlayerSrc,
+  getBountySubjectSentence,
+  normalizeBountySubject
+} from '~/helpers/bountySubject';
 
 // The feed pairs artwork with a compact summary. The full panel follows the
 // daily-bonus reading order: artwork, accomplishment, earned rewards, app action.
@@ -28,6 +38,10 @@ export default function BountyContent({
     xpEarned?: number;
     coinEarned?: number;
     challenge?: BountyChallengeInfo | null;
+    // what it was for, e.g. the song listened to (server-validated)
+    subject?: unknown;
+    username?: string;
+    uploader?: { username?: string };
   };
   compact?: boolean;
   theme?: string;
@@ -37,12 +51,34 @@ export default function BountyContent({
     themeName: theme,
     fallback: 'logoBlue'
   });
+  const [playerShown, setPlayerShown] = useState(false);
   const appTitle = bounty.buildTitle || 'Lumine app';
   const appAvailable = !!(bounty.appAvailable && bounty.buildId);
-  const artworkClass = `bounty-content__art${bounty.buildThumbnailUrl ? '' : ' bounty-content__art--placeholder'}`;
+  // The server sends a subject only while the app is public (and a song only
+  // while it is still published).
+  const subject = appAvailable ? normalizeBountySubject(bounty.subject) : null;
+  const subjectCopy = subject ? getBountySubjectCopy(subject) : null;
+  const playerSrc =
+    subject && canPlayBountySubject(subject)
+      ? getBountySubjectPlayerSrc(bounty.buildId, subject.path)
+      : '';
+  const appPath = getBountySubjectAppPath(
+    bounty.buildId,
+    subject?.path || null
+  );
+  const playSentence = subject
+    ? getBountySubjectSentence({
+        subject,
+        username: bounty.uploader?.username || bounty.username,
+        xp: Number(bounty.xpEarned),
+        appTitle
+      })
+    : '';
+  const artworkUrl = subject?.imageUrl || bounty.buildThumbnailUrl;
+  const artworkClass = `bounty-content__art${artworkUrl ? '' : ' bounty-content__art--placeholder'}${subject?.imageUrl ? ' bounty-content__art--cover' : ''}`;
   const Heading = compact ? 'h3' : 'h2';
-  const artwork = bounty.buildThumbnailUrl ? (
-    <LinkPreviewImage src={bounty.buildThumbnailUrl} alt="" />
+  const artwork = artworkUrl ? (
+    <LinkPreviewImage src={artworkUrl} alt="" />
   ) : (
     <Icon icon="laptop-code" />
   );
@@ -55,8 +91,11 @@ export default function BountyContent({
         {appAvailable ? (
           <Link
             className={artworkClass}
-            to={`/app/${bounty.buildId}`}
-            aria-label={`Try ${appTitle}`}
+            to={appPath}
+            aria-label={
+              subject ? `Open ${subject.title} in ${appTitle}` : `Try ${appTitle}`
+            }
+            onClick={(event) => event.stopPropagation()}
           >
             {artwork}
           </Link>
@@ -73,9 +112,38 @@ export default function BountyContent({
             </div>
           )}
           <BountyChallenge challenge={bounty.challenge} compact={compact} />
-          <Heading className="bounty-content__title">
-            {bounty.title || 'Bounty earned'}
-          </Heading>
+          {subject && subjectCopy?.lead ? (
+            <Heading className="bounty-content__title" title={playSentence}>
+              {subjectCopy.lead}{' '}
+              <span className="bounty-content__subject-title">
+                {subject.title}
+              </span>
+            </Heading>
+          ) : (
+            <Heading className="bounty-content__title">
+              {bounty.title || 'Bounty earned'}
+            </Heading>
+          )}
+          {subject && (subjectCopy?.byCreator || !subjectCopy?.lead) ? (
+            <div className="bounty-content__subject-meta">
+              {subjectCopy?.byCreator && subject.creator ? (
+                <>
+                  by{' '}
+                  <UsernameText
+                    user={subject.creator}
+                    color={Color.darkerGray()}
+                  />
+                </>
+              ) : (
+                <>
+                  for{' '}
+                  <span className="bounty-content__subject-title">
+                    {subject.title}
+                  </span>
+                </>
+              )}
+            </div>
+          ) : null}
           <div className="bounty-content__rewards" aria-label="Rewards earned">
             {!compact && <span className="bounty-content__earned">Earned</span>}
             <RewardChips
@@ -83,6 +151,21 @@ export default function BountyContent({
               coins={Number(bounty.coinEarned)}
             />
           </div>
+          {playerSrc && !playerShown ? (
+            <Button
+              className="bounty-content__play"
+              color="pink"
+              variant="solid"
+              tone="raised"
+              size={compact ? 'sm' : 'lg'}
+              uppercase={false}
+              aria-label={`Play ${subject?.title}`}
+              onClick={handleShowPlayer}
+            >
+              <Icon icon="play" style={{ flexShrink: 0, marginRight: '0.7rem' }} />
+              <span className="bounty-content__try-label">Play song</span>
+            </Button>
+          ) : null}
           {appAvailable && (
             <Button
               className="bounty-content__try"
@@ -104,8 +187,21 @@ export default function BountyContent({
           )}
         </div>
       </div>
+      {playerSrc && playerShown && subject ? (
+        <BountySubjectPlayer
+          src={playerSrc}
+          title={subject.title}
+          appTitle={appTitle}
+          onClose={() => setPlayerShown(false)}
+        />
+      ) : null}
     </div>
   );
+
+  function handleShowPlayer(event?: React.MouseEvent<HTMLButtonElement>) {
+    event?.stopPropagation();
+    setPlayerShown(true);
+  }
 
   function handleTryApp(event?: React.MouseEvent<HTMLButtonElement>) {
     event?.stopPropagation();
@@ -176,6 +272,35 @@ const bountyContentClass = css`
     text-wrap: balance;
     word-break: keep-all;
     overflow-wrap: anywhere;
+  }
+
+  .bounty-content__subject-title {
+    color: ${Color.logoBlue()};
+  }
+
+  .bounty-content__subject-meta {
+    color: ${Color.darkGray()};
+    font-size: max(1.3rem, 13px);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .bounty-content__art--cover {
+    aspect-ratio: 1 / 1;
+    max-width: 22rem;
+  }
+
+  .bounty-content__art--cover img {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .bounty-content__play {
+    order: 2;
+    width: min(100%, 32rem);
+    min-height: 44px;
+    margin-top: 0.4rem;
+    font-size: max(1.5rem, 15px);
   }
 
   .bounty-content__app {
@@ -266,9 +391,14 @@ const bountyContentClass = css`
       order: 1;
     }
 
-    .bounty-content__try {
+    .bounty-content__try,
+    .bounty-content__play {
       width: 100%;
       font-size: max(1.3rem, 13px);
+    }
+
+    .bounty-content__art--cover {
+      max-width: 16rem;
     }
   }
 

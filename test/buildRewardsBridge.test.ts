@@ -234,6 +234,33 @@ test('completion progress and claims forward evidence without trusting client id
     harness({ automated: true }).invoke('rewards:progress', { frames })
   );
 });
+test('listening starts forward the song, and claims forward the subject for the server to validate', async () => {
+  const h = harness({ result: { completion: { listenSeconds: 23 } } });
+  await h.invoke('rewards:start', {
+    ruleId: 'listen-song',
+    completionToken: '40',
+    userId: 99
+  });
+  assert.equal(h.calls[0].payload.ruleId, 'listen-song');
+  assert.equal(h.calls[0].payload.completionToken, '40');
+  assert.equal('userId' in h.calls[0].payload, false);
+  const subject = { kind: 'song', title: 'Night Drive', path: 'song-40-night-drive' };
+  await h.invoke('rewards:claim', {
+    challengeId: 'challenge',
+    completionToken: '40',
+    subject,
+    xp: 9999,
+    creatorId: 5
+  });
+  assert.deepEqual(h.calls[1].payload.subject, subject);
+  assert.equal('xp' in h.calls[1].payload, false);
+  assert.equal('creatorId' in h.calls[1].payload, false);
+  // a start without a song and a claim without a subject send neither field
+  await h.invoke('rewards:start', { ruleId: 'publish-song' });
+  await h.invoke('rewards:claim', { challengeId: 'c2' });
+  assert.equal('completionToken' in h.calls[2].payload, false);
+  assert.equal('subject' in h.calls[3].payload, false);
+});
 test('receipt recovery forwards the exact challenge and only applies canonical balances', async () => {
   const result = {
     mode: 'live',
