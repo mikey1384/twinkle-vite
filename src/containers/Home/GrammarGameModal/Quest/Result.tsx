@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import type { QuestAnswer, QuestResult } from './types';
 import QuestMarble, { answerLook } from './QuestMarble';
+import { reviewList, withForgiven } from './reviewList';
 import PixelIcon from './PixelIcon';
 import ChallengeModal from '../Review/ChallengeModal';
 import useChallengeReviews from '../Review/useChallengeReviews';
@@ -45,14 +46,8 @@ export default function Result({
   const [listOpen, setListOpen] = useState(false);
   const [challengeId, setChallengeId] = useState<number | null>(null);
   const { reviews } = useChallengeReviews();
-  const challengeable = answers
-    .filter((a) => a.challenge && a.questionText)
-    .filter(
-      (a, i, list) =>
-        list.findIndex(
-          (b) => b.challenge!.questionId === a.challenge!.questionId
-        ) === i
-    );
+  const listed = reviewList(withForgiven(answers, result.answers));
+  const challengeable = listed.filter((a) => a.challenge);
   const allReviewed = challengeable.every(
     (a) =>
       a.challenge!.checked ||
@@ -238,17 +233,27 @@ export default function Result({
       </div>
       {listOpen && (
         <div className={challengeListCls}>
-          {challengeable.map((a) => {
-            const id = a.challenge!.questionId;
-            const review = reviews[id];
+          {listed.map((a) => {
+            const id = a.challenge?.questionId;
+            const review = id ? reviews[id] : undefined;
             const savedReview = getSavedChallengeReview(
-              a.challenge!.checked,
-              a.challenge!.review
+              a.challenge?.checked,
+              a.challenge?.review
             );
             return (
-              <div key={id} className={challengeItemCls}>
+              <div key={a.position} className={challengeItemCls}>
                 <div className={challengeTextCls}>
+                  {a.counter && <span className={counterTagCls}>Counter</span>}
                   {a.questionText}
+                  {a.forgiven && (
+                    // ruled the question's fault after the miss (Mikey 10-11)
+                    <div className={forgivenCls}>
+                      <PixelIcon name="check" scale={2} />{' '}
+                      {boss
+                        ? 'Free rematch earned'
+                        : 'Doesn’t count — the question was at fault'}
+                    </div>
+                  )}
                   {review && (
                     <div className={checkedCls}>
                       {review.status === 'complete'
@@ -261,42 +266,44 @@ export default function Result({
                     </div>
                   )}
                 </div>
-                <button
-                  className={
-                    review || savedReview ? reviewSmallCls : challengeSmallCls
-                  }
-                  title={
-                    savedReview || review?.status === 'complete'
-                      ? 'Read the reviewer’s explanation'
-                      : undefined
-                  }
-                  onClick={() => setChallengeId(id)}
-                >
-                  <PixelIcon
-                    name={
-                      savedReview || review?.status === 'complete'
-                        ? 'check'
-                        : 'flag'
+                {id != null && (
+                  <button
+                    className={
+                      review || savedReview ? reviewSmallCls : challengeSmallCls
                     }
-                    scale={2}
-                  />{' '}
-                  {challengeReviewLabel(review, savedReview)}
-                </button>
+                    title={
+                      savedReview || review?.status === 'complete'
+                        ? 'Read the reviewer’s explanation'
+                        : undefined
+                    }
+                    onClick={() => setChallengeId(id)}
+                  >
+                    <PixelIcon
+                      name={
+                        savedReview || review?.status === 'complete'
+                          ? 'check'
+                          : 'flag'
+                      }
+                      scale={2}
+                    />{' '}
+                    {challengeReviewLabel(review, savedReview)}
+                  </button>
+                )}
               </div>
             );
           })}
         </div>
       )}
       <div className={buttonsCls}>
-        {challengeable.length > 0 && (
+        {listed.length > 0 && (
           <button
             className={challengeOpenCls}
             aria-expanded={listOpen}
             onClick={() => setListOpen((o) => !o)}
           >
             <PixelIcon name={allReviewed ? 'check' : 'flag'} scale={2} />{' '}
-            {allReviewed ? 'View reviews' : 'Review questions'} (
-            {challengeable.length})
+            {allReviewed ? 'View reviews' : 'Review questions'} ({listed.length}
+            )
           </button>
         )}
         <button className={primaryCls} onClick={onBackToMap}>
@@ -671,6 +678,26 @@ const challengeSmallCls = css`
 const reviewSmallCls = css`
   ${challengeSmallCls}
   ${button(BLUE, '#2a5fb0', '#fff')}
+`;
+const counterTagCls = css`
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0 0.4rem;
+  border-radius: 4px;
+  background: #ffcb32;
+  color: ${INK};
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+`;
+const forgivenCls = css`
+  margin-top: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #2f6b2a;
 `;
 const checkedCls = css`
   margin-top: 0.6rem;

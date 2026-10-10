@@ -19,7 +19,8 @@ export default function ConfirmModal({
   confirmButtonLabel = confirmLabel,
   isReverseButtonOrder,
   modalOverModal = false,
-  modalLevel
+  modalLevel,
+  portalTarget
 }: {
   disabled?: boolean;
   description?: any;
@@ -32,6 +33,8 @@ export default function ConfirmModal({
   isReverseButtonOrder?: boolean;
   modalOverModal?: boolean;
   modalLevel?: number;
+  // mount inside this element instead of #modal (a fixed page above it)
+  portalTarget?: HTMLElement;
 }) {
   const { colorKey: doneColorKey } = useRoleColor('done', {
     fallback: 'blue'
@@ -44,6 +47,7 @@ export default function ConfirmModal({
     <Modal
       modalKey="ConfirmModal"
       isOpen
+      portalTarget={portalTarget}
       onClose={onHide}
       hasHeader
       title={title}

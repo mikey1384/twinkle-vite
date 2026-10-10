@@ -36,6 +36,7 @@ export function challengeReviewLabel(
   if (outcome === 'rejected') return 'Challenge rejected';
   if (savedReview) return 'Already reviewed';
   if (review?.status === 'pending') return 'View progress';
+  if (review?.status === 'error' && review.rewritten) return 'Reworded since';
   if (review) return 'Review status';
   return 'Challenge';
 }
@@ -48,6 +49,9 @@ export type ChallengeReview =
       message: string;
       canRetry: boolean;
       savedReview?: SavedChallengeReview;
+      // a Quest miss met on a wording rewritten since: nothing to review,
+      // and the message says why
+      rewritten?: boolean;
     };
 
 type Reviews = Readonly<Record<number, ChallengeReview>>;
@@ -116,10 +120,14 @@ export function createChallengeReviewStore() {
           // A competing review can fail and release its server lock. Allow an
           // explicit retry; that lock and the checked-question guard prevent
           // duplicate work. Reopening this state never submits automatically.
-          canRetry: error?.status !== 401 && !error?.challengeReview,
+          canRetry:
+            error?.status !== 401 &&
+            !error?.challengeReview &&
+            !error?.rewritten,
           ...(error?.challengeReview
             ? { savedReview: error.challengeReview }
-            : {})
+            : {}),
+          ...(error?.rewritten ? { rewritten: true } : {})
         });
       }
     }

@@ -213,7 +213,11 @@ export default function WorldMap({
                           onClick={() => onPlayNode(node)}
                           aria-label={`Play ${node.name}`}
                         >
-                          {starting ? '…' : '▶ PLAY'}
+                          {starting
+                            ? '…'
+                            : node.freeRematch
+                              ? '▶ FREE'
+                              : '▶ PLAY'}
                         </button>
                       </span>
                     </span>
@@ -246,7 +250,9 @@ export default function WorldMap({
               {starting
                 ? 'Starting…'
                 : selected.freeRematch
-                  ? 'Free rematch'
+                  ? selected.kind === 'stop'
+                    ? 'Free replay'
+                    : 'Free rematch'
                   : selected.cleared
                     ? 'Play again'
                     : 'Play'}
@@ -335,10 +341,13 @@ export default function WorldMap({
                   )
                 ))}
               {selected.freeRematch && (
-                // Mikey 10-08: an upheld challenge earns a full-pay rematch
+                // a miss here was the question's fault (an upheld challenge,
+                // a check, or a chaser that caught you only through one):
+                // a full-pay rematch (Mikey 10-08, 10-11)
                 <div className={cx(panelTextCls, rematchCls)}>
-                  Your challenge was upheld: this rematch pays in full and
-                  doesn&apos;t use one of today&apos;s runs.
+                  A question here was at fault, so this{' '}
+                  {selected.kind === 'stop' ? 'replay' : 'rematch'} pays in full
+                  and doesn&apos;t use one of today&apos;s runs.
                 </div>
               )}
             </div>

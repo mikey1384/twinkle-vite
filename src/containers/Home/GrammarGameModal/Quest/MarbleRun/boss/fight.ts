@@ -237,7 +237,9 @@ export class BossFight {
     this.countering = false;
     const g =
       grade ||
-      this.liveGrade(this.t - this.questionAt + this.wrongPicks * 2000);
+      this.liveGrade(
+        (this.lockedAt ?? this.t) - this.questionAt + this.wrongPicks * 2000
+      );
     this.answered = g;
     if (g === 'F') {
       missSound();
@@ -274,6 +276,15 @@ export class BossFight {
       note(50, { instrument: 'marimba', level: 0.12 });
       this.fx.text('NO HARM DONE', this.mx, this.my - 46, '#c9b8ff', 11);
     }
+  }
+
+  // the pick is in and the card shows it right (or a counter's miss) for a
+  // beat before the throw (Mikey 10-11): the clock ring stops where it was
+  // and the boss holds its fire meanwhile
+  lockedAt: number | null = null;
+  lockIn() {
+    if (this.phase !== 'question' || this.answered) return;
+    this.lockedAt = this.t;
   }
 
   answerWrong() {
@@ -470,6 +481,7 @@ export class BossFight {
     if (
       this.phase === 'question' &&
       this.hp > 0 &&
+      this.lockedAt == null &&
       t > this.telegraphEnd &&
       t > this.nextAttack
     )
@@ -503,6 +515,7 @@ export class BossFight {
       this.hp > 0 &&
       this.phase === 'question' &&
       !this.counter &&
+      this.lockedAt == null &&
       t > this.nextHazard
     ) {
       this.nextHazard = t + 2600 + Math.random() * 1800;
@@ -551,6 +564,7 @@ export class BossFight {
       this.turnAttack = turn.attack ? bossAttack(this.def, turn.attack) : null;
     }
     this.answered = null;
+    this.lockedAt = null;
     this.countering = false;
     this.wrongPicks = 0;
     this.impacted = false;
@@ -1102,7 +1116,9 @@ export class BossFight {
   private drawMarble(g: CanvasRenderingContext2D, t: number) {
     if (this.hidden || this.phase === 'intro') return;
     const floor = this.geo.floorY;
-    const elapsed = Math.max(0, t - this.questionAt) + this.wrongPicks * 2000;
+    const elapsed =
+      Math.max(0, (this.lockedAt ?? t) - this.questionAt) +
+      this.wrongPicks * 2000;
     const live =
       this.phase === 'question'
         ? this.liveGrade(elapsed)

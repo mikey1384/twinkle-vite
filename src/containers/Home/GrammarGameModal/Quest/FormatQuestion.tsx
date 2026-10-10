@@ -149,9 +149,13 @@ export default function FormatQuestion({
     !!answer &&
     answer.correctIndex != null &&
     (answer.correct ? answer.correct.includes(i) : answer.correctIndex === i);
+  // a counter right but too late was no wrong pick
   const isPickedWrong = (i: number) =>
     crossed.includes(i) ||
-    (!!answer && !answer.isCorrect && answer.selectedIndex === i);
+    (!!answer &&
+      !answer.isCorrect &&
+      !answer.late &&
+      answer.selectedIndex === i);
 
   if (format === 'crack') {
     return (

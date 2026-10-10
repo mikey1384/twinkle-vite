@@ -28,6 +28,7 @@ import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import ModeChooser from './ModeChooser';
 import ClassicArcade from './ClassicArcade';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import { GamePageContext, fixedPage } from './gamePortal';
 import {
   useAppContext,
   useHomeContext,
@@ -136,6 +137,8 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
   const [showConfirm, setShowConfirm] = useState(false);
+  // its dialogs mount inside the page while it is fixed (gamePortal.ts)
+  const [page, setPage] = useState<HTMLDivElement | null>(null);
   // the top bar's status spot, filled by the Quest map (navSlot.ts)
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
   const questionObjRef = useRef<Record<number, any>>({});
@@ -452,6 +455,7 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
       </NavSlotContext.Provider>
       {showConfirm && (
         <ConfirmModal
+          portalTarget={fixedPage(page)}
           onHide={() => setShowConfirm(false)}
           title="Warning"
           description={getCloseWarning()}
@@ -475,12 +479,15 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
       )}
       // an XP activity: the website agent never plays it for the member
       data-agent-no-play=""
+      ref={setPage}
     >
-      {look === 'classic' ? (
-        <ClassicArcade fullBleed>{body}</ClassicArcade>
-      ) : (
-        body
-      )}
+      <GamePageContext.Provider value={page}>
+        {look === 'classic' ? (
+          <ClassicArcade fullBleed>{body}</ClassicArcade>
+        ) : (
+          body
+        )}
+      </GamePageContext.Provider>
     </div>
   );
 

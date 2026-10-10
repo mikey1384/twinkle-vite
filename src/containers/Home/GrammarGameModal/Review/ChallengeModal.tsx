@@ -18,6 +18,7 @@ import {
   frame
 } from '../Quest/pixelUi';
 import useChallengeReviews from './useChallengeReviews';
+import { useGamePortalTarget } from '../gamePortal';
 import type { SavedChallengeReview } from './challengeReviews';
 
 export default function ChallengeModal({
@@ -47,6 +48,9 @@ export default function ChallengeModal({
   onContinue?: () => void;
 }) {
   const aiUnavailable = useViewContext((v) => v.state.aiFeaturesDisabled);
+  // opened from the Grammarbles page while it sits fixed above #modal
+  // (Review, Result, a nemesis run): mount inside it, or it opens behind
+  const pageTarget = useGamePortalTarget();
   const { reviews, startReview } = useChallengeReviews();
   const review = reviews[questionId];
   const pending = review?.status === 'pending';
@@ -74,11 +78,13 @@ export default function ChallengeModal({
         : 'Already reviewed'
     : pending
       ? 'Checking the question…'
-      : failure
-        ? 'No review result yet'
-        : aiUnavailable
-          ? 'Review unavailable'
-          : 'Think this question is wrong?';
+      : failure?.rewritten
+        ? 'Question reworded'
+        : failure
+          ? 'No review result yet'
+          : aiUnavailable
+            ? 'Review unavailable'
+            : 'Think this question is wrong?';
 
   useAgentScreenState(
     'grammarblesChallenge',
@@ -114,7 +120,7 @@ export default function ChallengeModal({
     <Modal
       modalKey="ChallengeModal"
       isOpen={isOpen}
-      portalTarget={portalTarget}
+      portalTarget={portalTarget ?? pageTarget}
       onClose={onClose}
       hasHeader={false}
       showCloseButton={false}
@@ -226,6 +232,9 @@ export default function ChallengeModal({
                 Keep Grammarbles open so the result can reach you.
               </p>
             </>
+          ) : failure?.rewritten ? (
+            // nothing ran and nothing was charged: the reply says why
+            <p role="alert">{failure.message}</p>
           ) : failure ? (
             <>
               <p role="alert" className={errorCls}>

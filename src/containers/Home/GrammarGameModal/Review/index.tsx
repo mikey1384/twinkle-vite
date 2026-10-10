@@ -20,6 +20,7 @@ import {
   saveKoreanShown
 } from '~/helpers/grammarblesRuleCard';
 import Loading from '~/components/Loading';
+import QuestMisses from './QuestMisses';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 interface ReviewItem {
@@ -63,6 +64,9 @@ export default function Review() {
     [reviews]
   );
   const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
+  // Classic's answered questions, or every Grammar Quest miss
+  const [tab, setTab] = useState<'classic' | 'quest'>('classic');
+  const [questOpened, setQuestOpened] = useState(false);
 
   useEffect(() => {
     setItems((prev) => {
@@ -248,6 +252,7 @@ export default function Review() {
   // the grade it earned and the user's retry; the correct choice and the
   // explanation only once the screen reveals them, never before.
   useAgentScreenState('grammarblesReview', {
+    tab,
     loading,
     hasMore,
     challengeOpenForQuestionId: challengeQ?.questionId ?? null,
@@ -298,33 +303,67 @@ export default function Review() {
     })
   });
 
-  if (loading) {
-    return (
-      <ErrorBoundary componentPath="Earn/GrammarGameModal/Review/Skeleton">
-        <div className={boardCls}>
-          <Loading />
-        </div>
-      </ErrorBoundary>
-    );
-  }
+  const header = (
+    <div className={headerCls}>
+      <div className={titleCls}>Review</div>
+      <div className={tabsCls} role="tablist">
+        {(
+          [
+            ['classic', 'Classic'],
+            ['quest', 'Grammar Quest misses']
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={tab === key}
+            className={cx(tabCls, tab === key && tabOnCls)}
+            onClick={() => {
+              setTab(key);
+              if (key === 'quest') setQuestOpened(true);
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/Review">
       <div className={boardCls}>
-        <div className={titleCls}>Review</div>
-        <div className={listCls}>
-          {QItems}
-          {hasMore && (
-            <div className={moreCls}>
-              <NeonButton onClick={handleLoadMore}>
-                {loadingMore ? 'Loading…' : 'Load more'}
-              </NeonButton>
-            </div>
-          )}
-          {!items.length && (
-            <div className={emptyCls}>No solved questions to review yet.</div>
+        {header}
+        {/* both lists stay mounted once opened (pages and scroll survive a
+            switch); the other one is hidden */}
+        <div className={cx(listCls, tab !== 'classic' && hiddenCls)}>
+          {loading ? (
+            <Loading />
+          ) : (
+            <>
+              {QItems}
+              {hasMore && (
+                <div className={moreCls}>
+                  <NeonButton onClick={handleLoadMore}>
+                    {loadingMore ? 'Loading…' : 'Load more'}
+                  </NeonButton>
+                </div>
+              )}
+              {!items.length && (
+                <div className={emptyCls}>
+                  No solved questions to review yet.
+                </div>
+              )}
+            </>
           )}
         </div>
+        {questOpened && (
+          <div className={cx(listCls, tab !== 'quest' && hiddenCls)}>
+            <ErrorBoundary componentPath="Earn/GrammarGameModal/Review/QuestMisses">
+              <QuestMisses />
+            </ErrorBoundary>
+          </div>
+        )}
         {challengeQ && (
           <ChallengeModal
             isOpen={true}
@@ -390,8 +429,48 @@ const boardCls = css`
   color: ${NEON.ink};
   font-family: ${READ_FONT};
 `;
-const titleCls = css`
+// the title, then Classic or Quest (wraps under it on a phone)
+const headerCls = css`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
   padding: 1.1rem 1.4rem 0.6rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.9rem 0.8rem 0.5rem;
+  }
+`;
+const tabsCls = css`
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+  @media (max-width: ${mobileMaxWidth}) {
+    margin-left: 0;
+    width: 100%;
+  }
+`;
+const tabCls = css`
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 2px solid ${rgba(NEON.cyanRgb, 0.35)};
+  background: rgba(12, 14, 56, 0.9);
+  color: ${NEON.inkSoft};
+  font: 700 1.3rem ${READ_FONT};
+  cursor: pointer;
+`;
+// filled like the top bar's selected tab (GameNav)
+const tabOnCls = css`
+  color: ${NEON.navy};
+  background: ${NEON.cyan};
+  border-color: ${NEON.cyan};
+  box-shadow: 0 0 14px ${rgba(NEON.cyanRgb, 0.7)};
+`;
+const hiddenCls = css`
+  display: none;
+`;
+const titleCls = css`
   font-family: ${PIXEL_FONT};
   font-size: 1.5rem;
   color: ${NEON.cyan};

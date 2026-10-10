@@ -3,6 +3,12 @@ import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import RuleCard from '../Review/RuleCard';
+import ChallengeModal from '../Review/ChallengeModal';
+import useChallengeReviews from '../Review/useChallengeReviews';
+import {
+  challengeReviewLabel,
+  getSavedChallengeReview
+} from '../Review/challengeReviews';
 import {
   initialKoreanShown,
   saveKoreanShown
@@ -13,7 +19,8 @@ import { playQuestSound } from './sfx';
 import { useReadCooldown } from './readCooldown';
 
 // One question at a time, graded by the server per click. A right first try
-// grows the combo; a miss shows the rule card before moving on.
+// grows the combo; a miss shows the rule card before moving on, and can
+// challenge its question like a practice stop's (the Nemesis count stays).
 export default function Run({
   run,
   onFinished,
@@ -37,6 +44,8 @@ export default function Run({
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState('');
   const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const { reviews } = useChallengeReviews();
   const shownAt = useRef(Date.now());
   const firstOpen = useMemo(
     () => run.questions.findIndex((q) => !answers[q.position]),
@@ -47,6 +56,13 @@ export default function Run({
   const answer = question ? answers[question.position] : undefined;
   const allAnswered = firstOpen === -1;
   const rightSoFar = Object.values(answers).filter((a) => a.isCorrect).length;
+  const challenge = answer && !answer.isCorrect ? answer.challenge : null;
+  const challengeReview = challenge ? reviews[challenge.questionId] : undefined;
+  const savedReview = getSavedChallengeReview(
+    challenge?.checked,
+    challenge?.review
+  );
+  const reviewed = !!savedReview || challengeReview?.status === 'complete';
   // a miss's explanation holds Next/Finish for its read time
   const { reading, secondsLeft } = useReadCooldown(
     answer && !answer.isCorrect ? `miss-${position}` : null,
@@ -134,6 +150,19 @@ export default function Run({
       )}
       {answer && (
         <div className={nextRowCls}>
+          {challenge && (
+            <button
+              className={challengeCls}
+              title={
+                reviewed
+                  ? 'Read the reviewer’s explanation'
+                  : 'Think the answer key is wrong? Challenge it'
+              }
+              onClick={() => setChallengeOpen(true)}
+            >
+              {challengeReviewLabel(challengeReview, savedReview)}
+            </button>
+          )}
           {allAnswered ? (
             <button
               className={nextCls}
@@ -152,6 +181,18 @@ export default function Run({
             </button>
           )}
         </div>
+      )}
+      {challengeOpen && challenge && (
+        <ChallengeModal
+          isOpen
+          questionId={challenge.questionId}
+          questionText={answer?.prompt ?? question.question}
+          savedReview={savedReview}
+          questKind="nemesis"
+          questRef={{ runId: run.runId, position: question.position }}
+          returnLabel="Back to question"
+          onClose={() => setChallengeOpen(false)}
+        />
       )}
     </div>
   );
@@ -198,9 +239,15 @@ export default function Run({
     setFinishing(true);
     setError('');
     try {
+      // the result lists missed questions to challenge, so it needs their text
       onFinished(
         await finishRun(run.runId),
-        run.questions.map((q) => answers[q.position]).filter(Boolean)
+        run.questions
+          .filter((q) => answers[q.position])
+          .map((q) => ({
+            ...answers[q.position],
+            questionText: answers[q.position].prompt ?? q.question
+          }))
       );
     } catch {
       setError('Could not save the run. Try again.');
@@ -347,8 +394,24 @@ const missNoteCls = css`
 
 const nextRowCls = css`
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.8rem;
   margin-top: 1.4rem;
+`;
+
+// a miss's Challenge sits left of Next
+const challengeCls = css`
+  margin-right: auto;
+  padding: 0.7rem 1.4rem;
+  border: 2px solid ${Color.rose()};
+  border-radius: 12px;
+  background: ${Color.rose(0.08)};
+  color: ${Color.rose()};
+  font-size: 1.3rem;
+  font-weight: 800;
+  cursor: pointer;
 `;
 
 const nextCls = css`

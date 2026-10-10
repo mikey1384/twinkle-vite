@@ -1336,9 +1336,7 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async startGrammarQuestRun(
-      target: { nodeId: string } | { nemesis: true }
-    ) {
+    async startGrammarQuestRun(target: { nodeId: string } | { nemesis: true }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/quest/run`,
@@ -1388,6 +1386,27 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // every Quest miss, newest first, so one can be challenged any time
+    // after its run (next: the cursor for the page after this one)
+    async loadGrammarQuestMisses({
+      before,
+      limit = 20
+    }: { before?: string | null; limit?: number } = {}) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/quest/misses?${[
+            before ? `before=${encodeURIComponent(before)}` : '',
+            `limit=${limit}`
+          ]
+            .filter(Boolean)
+            .join('&')}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async finishGrammarQuestRun(runId: number) {
       try {
         const { data } = await request.post(
@@ -1419,12 +1438,17 @@ export default function contentRequestHelpers({
       } catch (error) {
         return handleError(error).catch((handledError) => {
           const aiUsagePolicy = (error as any)?.response?.data?.aiUsagePolicy;
-          const challengeReview = (error as any)?.response?.data?.challengeReview;
-          if (!aiUsagePolicy && !challengeReview) throw handledError;
+          const challengeReview = (error as any)?.response?.data
+            ?.challengeReview;
+          // a Quest miss met on a wording rewritten since: the reply says why
+          const rewritten = !!(error as any)?.response?.data?.rewritten;
+          if (!aiUsagePolicy && !challengeReview && !rewritten)
+            throw handledError;
           throw {
             ...handledError,
             ...(aiUsagePolicy ? { aiUsagePolicy } : {}),
-            ...(challengeReview ? { challengeReview } : {})
+            ...(challengeReview ? { challengeReview } : {}),
+            ...(rewritten ? { rewritten } : {})
           };
         });
       }
@@ -2913,7 +2937,9 @@ export default function contentRequestHelpers({
         );
         if (data && !data.error) {
           trackEvent('daily_reflection_submit', {
-            grade: data.grade || (data.isThoughtful === false ? 'Keyword' : undefined),
+            grade:
+              data.grade ||
+              (data.isThoughtful === false ? 'Keyword' : undefined),
             masterpiece_type: data.masterpieceType || undefined,
             streak: typeof data.streak === 'number' ? data.streak : undefined,
             streak_multiplier:

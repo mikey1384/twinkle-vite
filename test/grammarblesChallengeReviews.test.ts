@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  challengeReviewLabel,
   createChallengeReviewStore,
   type ChallengeResult
 } from '../src/containers/Home/GrammarGameModal/Review/challengeReviews';
@@ -107,4 +108,27 @@ test('missing response fields never become a rejected or accepted decision', asy
   const store = createChallengeReviewStore();
   await store.start(7, 10, async () => ({}) as ChallengeResult);
   assert.equal(store.get(7)[10].status, 'error');
+});
+
+test('a Quest miss met on a rewritten wording says why and never retries', async () => {
+  const store = createChallengeReviewStore();
+  let calls = 0;
+  const rewritten = async () => {
+    calls++;
+    throw {
+      status: 409,
+      message: 'This question was reworded after you met it.',
+      rewritten: true
+    };
+  };
+  await store.start(7, 10, rewritten);
+  assert.deepEqual(store.get(7)[10], {
+    status: 'error',
+    message: 'This question was reworded after you met it.',
+    canRetry: false,
+    rewritten: true
+  });
+  assert.equal(challengeReviewLabel(store.get(7)[10]), 'Reworded since');
+  await store.start(7, 10, rewritten);
+  assert.equal(calls, 1);
 });

@@ -17,7 +17,7 @@ import { GotchaText, foggedCls, type ChoiceClasses } from './FormatQuestion';
 export function encodeOrder(sequence: number[], n: number) {
   return sequence.reduce((value, p) => value * n + p, 0);
 }
-function decodeOrder(value: number, n: number) {
+export function decodeOrder(value: number, n: number) {
   const sequence: number[] = [];
   for (let i = 0; i < n; i++) {
     sequence.unshift(value % n);
@@ -26,6 +26,16 @@ function decodeOrder(value: number, n: number) {
   return sequence;
 }
 const bit = (mask: number, i: number) => !!(mask & (1 << i));
+
+// The learner's own answer, shown beside the key once the question settles
+// (a several-tap answer is a whole set of taps, so the key alone would erase
+// it): a miss's taps, or at a boss the last wrong try before the right one.
+// None when a counter's clock ran out.
+export function ownAnswer(answer: QuestAnswer | undefined, tried: number[]) {
+  if (!answer || answer.correctIndex == null) return null;
+  if (answer.isCorrect) return tried.length ? tried[tried.length - 1] : null;
+  return answer.selectedIndex >= 0 ? answer.selectedIndex : null;
+}
 const capitalized = (text: string) =>
   text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 
@@ -68,6 +78,9 @@ export default function MultiTapQuestion({
   }
   const format = question.format;
   const settled = !!answer && answer.correctIndex != null;
+  const own = ownAnswer(answer, tried);
+  // a right answer's earlier try is told apart from the learner's miss
+  const who = answer?.isCorrect ? 'Your last try' : 'You';
   const n =
     format === 'build' ? question.tokens?.length || 0 : question.choices.length;
 
@@ -132,9 +145,8 @@ export default function MultiTapQuestion({
         </div>
         <div className={cx(cls.choices, stackCls)}>
           {question.choices.map((sentence, i) => {
-            const marked =
-              marks.includes(i) ||
-              (settled && !answer!.isCorrect && bit(answer!.selectedIndex, i));
+            // the learner stomped a right one or left a wrong one standing
+            const off = own != null && bit(own, i) !== bit(wrongMask, i);
             return (
               <button
                 key={i}
@@ -142,16 +154,24 @@ export default function MultiTapQuestion({
                   cls.choice,
                   choiceExtra,
                   sentenceCls,
-                  marked && !settled && stompedCls,
+                  marks.includes(i) && !settled && stompedCls,
                   settled && !bit(wrongMask, i) && cls.right,
                   settled && bit(wrongMask, i) && stompedCls,
+                  off && !answer!.isCorrect && cls.wrong,
                   i >= revealed && foggedCls
                 )}
                 disabled={disabled || settled || i >= revealed}
                 onClick={() => tap(i)}
               >
                 <span className={cls.key}>{i + 1}</span>
-                {sentence}
+                <span>
+                  {sentence}
+                  {off && (
+                    <span className={ownTagCls}>
+                      {who} {bit(own!, i) ? 'stomped it' : 'left it standing'}
+                    </span>
+                  )}
+                </span>
               </button>
             );
           })}
@@ -166,20 +186,36 @@ export default function MultiTapQuestion({
     if (settled) {
       return (
         <div className={cx(cls.choices, stackCls)}>
-          {question.choices.map((sentence, i) => (
-            <div
-              key={i}
-              className={cx(
-                cls.choice,
-                choiceExtra,
-                sentenceCls,
-                bit(rightMask, i) ? cls.right : cls.wrong
-              )}
-            >
-              <span className={cls.key}>{bit(rightMask, i) ? '✓' : '✗'}</span>
-              {sentence}
-            </div>
-          ))}
+          {question.choices.map((sentence, i) => {
+            // ✓/✗ is the key; the colour is the learner's call on it (a
+            // miss's wrong call red), or the key's when there was no call
+            const truth = bit(rightMask, i);
+            const off = own != null && bit(own, i) !== truth;
+            const green = answer!.isCorrect || (own == null ? truth : !off);
+            return (
+              <div
+                key={i}
+                className={cx(
+                  cls.choice,
+                  choiceExtra,
+                  sentenceCls,
+                  green ? cls.right : cls.wrong
+                )}
+              >
+                <span className={cls.key}>{truth ? '✓' : '✗'}</span>
+                <span>
+                  {sentence}
+                  {/* a miss shows every call; a right one only its
+                      last try's wrong call */}
+                  {own != null && (off || !answer!.isCorrect) && (
+                    <span className={ownTagCls}>
+                      {who} said {bit(own, i) ? 'Right' : 'Wrong'}
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
         </div>
       );
     }
@@ -223,8 +259,24 @@ export default function MultiTapQuestion({
   // build
   const tokens = question.tokens || [];
   const placed = settled ? decodeOrder(Number(answer!.correctIndex), n) : marks;
+  const sentenceOf = (order: number[]) =>
+    order
+      .map((p, k) => (k === 0 ? capitalized(tokens[p]) : tokens[p]))
+      .join(' ') + (question.end || '');
+  const ownBuilt =
+    settled && own != null && own !== Number(answer!.correctIndex)
+      ? sentenceOf(decodeOrder(own, n))
+      : null;
   return (
     <>
+      {ownBuilt && (
+        <div className={ownLineCls}>
+          <span className={ownLabelCls}>
+            {answer!.isCorrect ? 'Your last try:' : 'You built:'}
+          </span>{' '}
+          {ownBuilt}
+        </div>
+      )}
       <div
         className={cx(
           cls.question,
@@ -232,6 +284,7 @@ export default function MultiTapQuestion({
           settled && answer!.isCorrect && builtCls
         )}
       >
+        {ownBuilt && <span className={ownLabelCls}>Right:</span>}
         {placed.length ? (
           placed.map((p, k) => (
             <button
@@ -270,6 +323,37 @@ export default function MultiTapQuestion({
   );
 }
 
+// the learner's own call on a settled sentence, beside the key
+const ownTagCls = css`
+  display: inline-block;
+  margin-left: 0.6rem;
+  padding: 0 0.45rem;
+  border-radius: 6px;
+  background: rgba(26, 20, 38, 0.35);
+  font-size: 1.1rem;
+  font-weight: 800;
+  white-space: nowrap;
+  text-decoration: none;
+`;
+// Build it: what the learner built, above the right order
+const ownLineCls = css`
+  margin: 0.2rem 0 0.4rem;
+  padding: 0.2rem 0 0.2rem 0.7rem;
+  border-left: 4px solid #f0607f;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  @media (max-height: 480px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.2rem;
+  }
+`;
+const ownLabelCls = css`
+  font-size: 1.2rem;
+  font-weight: 800;
+  opacity: 0.75;
+`;
 const countCls = css`
   font-weight: 900;
 `;

@@ -61,6 +61,13 @@ import {
   spriteUri
 } from './pixelUi';
 
+// boss (Mikey 10-11): a landed pick shows on its button (green, or a
+// counter's miss red beside the key) for this long before the throw, as
+// practice shows it before the marble moves. The next turn's reading pause
+// and clock start on this device after the throw, so the beat delays them
+// and never shortens them (the server grades on device time).
+const FEEDBACK_BEAT_MS = 500;
+
 // a boss question as the fight engine plays it
 function turnOf(q: QuestQuestion): BossTurn {
   return {
@@ -114,6 +121,7 @@ export default function MarbleRunScreen({
     | 'reading'
     | 'asking'
     | 'sending'
+    | 'feedback'
     | 'review'
     | 'bossReview'
     | 'finishing'
@@ -146,6 +154,9 @@ export default function MarbleRunScreen({
   // boss: the last wrong pick, for the explanation shown after the hit lands
   const [bossMissPick, setBossMissPick] = useState<number | null>(null);
   const shownAt = useRef(0);
+  // boss: a wrong click on this hit came back forgiven (its check already
+  // ruled the question at fault); the landed hit keeps the note
+  const forgivenHit = useRef<number | null>(null);
   const finishedRef = useRef(false);
   const answersRef = useRef(answers);
   answersRef.current = answers;
@@ -270,7 +281,11 @@ export default function MarbleRunScreen({
         : []
     );
     const rights = run.rights || 0;
-    practice.resume(rights, Math.max(0, (run.answers || []).length - rights));
+    // a miss ruled the question's fault doesn't count
+    const misses = (run.answers || []).filter(
+      (a: QuestAnswer) => !a.isCorrect && !a.forgiven
+    ).length;
+    practice.resume(rights, misses);
     if (run.rules.mode === 'practice') {
       practice.fog = run.rules.modifier === 'fog';
       if (run.rules.modifier === 'chaser')
@@ -319,6 +334,8 @@ export default function MarbleRunScreen({
     if (!boss || phase !== 'reading') return;
     if (shown !== nextOpen) {
       setShown(nextOpen);
+      // the last hit's crossed-out tries stayed up through its review
+      setWrongPicks([]);
       return;
     }
     if (!question) return;
@@ -740,13 +757,18 @@ export default function MarbleRunScreen({
                     question.format !== 'blank' ? null : (
                     <div className={choicesCls}>
                       {question.choices.map((choice, i) => {
+                        // a counter's one try shows its key either way
+                        // (right but late is no wrong pick)
                         const picked =
-                          answer?.selectedIndex === i && !answer?.isCorrect;
+                          answer?.selectedIndex === i &&
+                          !answer.isCorrect &&
+                          !answer.late;
                         const right =
                           answer?.correctIndex === i &&
-                          (answer.isCorrect || !boss);
+                          (answer.isCorrect || !boss || !!answer.counter);
                         const crossed =
-                          wrongPicks.includes(i) || (picked && !boss);
+                          wrongPicks.includes(i) ||
+                          (picked && (!boss || !!answer.counter));
                         return (
                           <button
                             key={i}
@@ -797,6 +819,9 @@ export default function MarbleRunScreen({
                       {boss ? (
                         <div className={nextRowCls}>
                           <span className={cx(nextNoteCls, bossNoteCls)}>
+                            {/* a wrong click its check already ruled the
+                                question's fault */}
+                            {answer.forgiven ? 'Free rematch earned. ' : ''}
                             {reading
                               ? `Next hit in ${secondsLeft}…`
                               : 'Get ready…'}
@@ -840,16 +865,20 @@ export default function MarbleRunScreen({
                             {/* an upheld challenge forgives a practice miss (nemesis misses stay) */}
                             {answer.caught
                               ? 'The chaser caught you! This stop ends here; try it again.'
-                              : answer.challenge?.upheld &&
-                                  run.rules.mode !== 'practice'
-                                ? 'Upheld! The answer key is fixed.'
-                                : answer.challenge?.upheld
-                                  ? answer.retry || answer.requeued
-                                    ? "Upheld! This miss doesn't count; the fixed question comes back later."
-                                    : "Upheld! This miss doesn't count."
-                                  : answer.retry || answer.requeued
-                                    ? 'It comes back later in this run.'
-                                    : 'That was the last try in this run.'}
+                              : answer.forgiven
+                                ? // its check already ruled the question
+                                  // at fault: not counted, not asked again
+                                  'Doesn’t count — the question was at fault.'
+                                : answer.challenge?.upheld &&
+                                    run.rules.mode !== 'practice'
+                                  ? 'Upheld! The answer key is fixed.'
+                                  : answer.challenge?.upheld
+                                    ? answer.retry || answer.requeued
+                                      ? "Upheld! This miss doesn't count; the fixed question comes back later."
+                                      : "Upheld! This miss doesn't count."
+                                    : answer.retry || answer.requeued
+                                      ? 'It comes back later in this run.'
+                                      : 'That was the last try in this run.'}
                           </span>
                           <button
                             className={nextCls}
@@ -932,6 +961,7 @@ export default function MarbleRunScreen({
         }
         if (question.counter) {
           setAnswers((prev) => ({ ...prev, [result.position]: result }));
+          await feedbackBeat(fight);
           fight.counterResult(result.isCorrect, result.damage || 0, result.hp);
           setReady(false);
           setPhase('waiting');
@@ -940,16 +970,23 @@ export default function MarbleRunScreen({
         // a wrong click: keep picking (unless the click limit settled the
         // hit as an F: then it lands like any hit)
         if (!result.isCorrect && !result.settled) {
+          if (result.forgiven) forgivenHit.current = result.position;
           setWrongPicks((w) => [...w, choiceIndex]);
           fight.answerWrong();
           setPhase('asking');
           return;
         }
-        setAnswers((prev) => ({ ...prev, [result.position]: result }));
+        const landed =
+          forgivenHit.current === result.position
+            ? { ...result, forgiven: true }
+            : result;
+        setAnswers((prev) => ({ ...prev, [result.position]: landed }));
         setBossMissPick(
           wrongPicks.length ? wrongPicks[wrongPicks.length - 1] : null
         );
-        setWrongPicks([]);
+        // the crossed-out tries stay up through the review (cleared when
+        // the next turn starts)
+        await feedbackBeat(fight);
         // a hit that took wrong clicks: its explanation shows while the next
         // question waits (the same read time the server adds to its clock)
         const holdMs = result.readMs || 0;
@@ -992,6 +1029,13 @@ export default function MarbleRunScreen({
       );
       setPhase('asking');
     }
+  }
+
+  // the landed pick's look first, then the throw
+  async function feedbackBeat(fight: BossFight) {
+    fight.lockIn();
+    setPhase('feedback');
+    await new Promise((resolve) => setTimeout(resolve, FEEDBACK_BEAT_MS));
   }
 
   // the modal behind keeps its own Tab trap; keep focus on this layer

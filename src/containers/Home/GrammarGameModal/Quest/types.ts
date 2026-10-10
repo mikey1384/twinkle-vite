@@ -86,6 +86,7 @@ export interface QuestQuestion {
 export interface QuestAnswer {
   position: number;
   isCorrect: boolean;
+  // the tap graded (a counter's one try; -1: its clock ran out)
   selectedIndex: number;
   // a boss keeps the key hidden until the right pick
   correctIndex: number | null;
@@ -134,6 +135,9 @@ export interface QuestAnswer {
   counter?: boolean;
   damage?: number;
   late?: boolean; // a counter answered right after its window closed
+  // a miss later ruled the question's fault (a check or someone's upheld
+  // challenge): a stop's doesn't count, a boss's earned a free rematch
+  forgiven?: boolean;
 }
 
 export type QuestRules =
@@ -201,5 +205,8 @@ export interface QuestResult {
   replayCut?: boolean; // an early replay: half XP, no Coins
   freeRematch?: boolean; // a full-pay rematch earned by an upheld challenge
   countsForGoals?: boolean; // false: this node is too far back for today's goals
+  // the run's answers as finished (a miss since ruled the question's fault
+  // carries forgiven)
+  answers?: Pick<QuestAnswer, 'position' | 'forgiven'>[];
   dailyTaskStatus?: any;
 }
