@@ -88,6 +88,8 @@ export default function Suggested({
   const [error, setError] = useState('');
   const [busyUserId, setBusyUserId] = useState(0);
   const [dismissing, setDismissing] = useState<{ userId: number; note: string } | null>(null);
+  // Add writes to the roster, so it asks once more inline (no browser dialog)
+  const [confirmingAddId, setConfirmingAddId] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,7 +184,10 @@ export default function Suggested({
                   variant="soft"
                   tone="raised"
                   disabled={busyUserId === member.userId}
-                  onClick={() => handleAdd(member.userId)}
+                  onClick={() => {
+                    setDismissing(null);
+                    setConfirmingAddId(member.userId);
+                  }}
                 >
                   Add
                 </Button>
@@ -191,7 +196,10 @@ export default function Suggested({
                   variant="soft"
                   tone="raised"
                   disabled={busyUserId === member.userId}
-                  onClick={() => setDismissing({ userId: member.userId, note: '' })}
+                  onClick={() => {
+                    setConfirmingAddId(0);
+                    setDismissing({ userId: member.userId, note: '' });
+                  }}
                 >
                   Not now
                 </Button>
@@ -277,6 +285,25 @@ export default function Suggested({
               ))}
             </div>
           )}
+          {confirmingAddId === member.userId && (
+            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ flex: 1, minWidth: '20rem', fontSize: '1.4rem' }}>
+                Add {member.username} to the notable roster?
+              </span>
+              <Button
+                color="green"
+                variant="soft"
+                tone="raised"
+                disabled={busyUserId === member.userId}
+                onClick={() => handleAdd(member.userId)}
+              >
+                Confirm add
+              </Button>
+              <Button color="darkerGray" variant="soft" tone="raised" onClick={() => setConfirmingAddId(0)}>
+                Cancel
+              </Button>
+            </div>
+          )}
           {dismissing?.userId === member.userId && (
             <div style={{ marginTop: '1rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
               <input
@@ -308,6 +335,7 @@ export default function Suggested({
     try {
       await onAdd(userId);
       setMembers((list) => list.filter((m) => m.userId !== userId));
+      setConfirmingAddId(0);
     } catch {
       setError('Could not add them. Try again.');
     } finally {
