@@ -213,7 +213,7 @@ const sdkSections: GuideSection[] = [
       'Use roomContext for shared scene transcript so Zero and Ciel can know what happened in the same room when the player switches speakers.',
       'includeWebsiteContext defaults to true. Set includeWebsiteContext: false for in-world NPC dialogue that should only use Zero/Ciel basic character identity plus the app scene/instructions.',
       'thinkingMode low is billable Lite Mode and usually costs less because it uses a smaller model or lower reasoning; medium is normal battery use; high is high battery use.',
-      'Inside Build character chat, Zero and Ciel use GPT-6 Luna with reasoning disabled for low and medium. In high mode, Zero uses Grok 4.7 with high reasoning and Ciel uses Claude Opus 5.5 with high thinking.',
+      'Inside Build character chat, low and medium run Zero on GPT-6 Luna with reasoning disabled and Ciel on Claude Haiku 5.5 with low thinking. In high mode, Zero uses Grok 4.7 with high reasoning and Ciel uses Claude Opus 5.5 with high thinking.',
       'When AI Energy is empty, Low, Medium, and High all reject before new provider work; there is no free fallback mode.',
       'Use Twinkle.characters.chat for Zero/Ciel NPCs instead of pretending with Twinkle.ai.chat systemPrompt.'
     ]
