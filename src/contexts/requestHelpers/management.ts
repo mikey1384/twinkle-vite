@@ -157,16 +157,27 @@ export default function managementRequestHelpers({
       try {
         const {
           data: { moderators }
-        } = await request.get(`${URL}/user/management/moderator`);
+        } = await request.get(`${URL}/user/management/moderator`, auth());
         return moderators;
       } catch (error) {
-        return handleError(error);
+        // the list is for approved teachers, staff types and the admin; the
+        // page only renders it for staff, so a refusal is just an empty list
+        // (after the usual handling, e.g. a dead session's 401)
+        try {
+          return await handleError(error);
+        } catch (handledError: any) {
+          if (handledError?.status === 401 || handledError?.status === 403) {
+            return [];
+          }
+          throw handledError;
+        }
       }
     },
     async loadModeratorsCSV() {
       try {
         const { data } = await axios.get(
-          `${URL}/user/management/moderator/csv`
+          `${URL}/user/management/moderator/csv`,
+          auth()
         );
         return data;
       } catch (error) {
@@ -1133,7 +1144,10 @@ export default function managementRequestHelpers({
     },
     async loadBannedUsers() {
       try {
-        const { data } = await request.get(`${URL}/user/management/banned`);
+        const { data } = await request.get(
+          `${URL}/user/management/banned`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);

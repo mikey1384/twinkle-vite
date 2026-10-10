@@ -680,7 +680,10 @@ export default function contentRequestHelpers({
             lastCommentId ? `&lastCommentId=${lastCommentId}` : ''
           }${isPreview ? '&isPreview=1' : ''}${
             isRepliesOfReply ? '&isRepliesOfReply=1' : ''
-          }${limit ? `&limit=${limit}` : ''}`
+          }${limit ? `&limit=${limit}` : ''}`,
+          // signed in: comments under private builds the member can open and
+          // secrets they unlocked (the API hides them from everyone else)
+          auth()
         );
         return { comments, loadMoreButton };
       } catch (error) {
@@ -704,7 +707,8 @@ export default function contentRequestHelpers({
         } = await request.get(
           `${URL}/content/comments/byPoster?contentId=${contentId}&contentType=${contentType}&posterId=${posterId}${
             lastCommentId ? `&lastCommentId=${lastCommentId}` : ''
-          }`
+          }`,
+          auth()
         );
         return { comments, loadMoreButton };
       } catch (error) {
@@ -1733,7 +1737,8 @@ export default function contentRequestHelpers({
             lastReplyId ? `lastReplyId=${lastReplyId}&` : ''
           }commentId=${commentId}${isReverse ? '&isReverse=true' : ''}${
             isLoadingRepliesOfReply ? '&isLoadingRepliesOfReply=true' : ''
-          }`
+          }`,
+          auth()
         );
         return data;
       } catch (error) {

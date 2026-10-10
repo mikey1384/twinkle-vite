@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Approvals from './Approvals';
 import Supermods from './Supermods';
@@ -79,8 +79,15 @@ export default function Main() {
       onLoadAccountTypes(data);
     }
     async function initBannedUsers() {
-      const data = await loadBannedUsers();
-      onLoadBannedUsers(data);
+      try {
+        const data = await loadBannedUsers();
+        onLoadBannedUsers(data);
+      } catch (error: any) {
+        if (error?.status === 401 || error?.status === 403) {
+          return setBannedUsersRefused(true);
+        }
+        console.error(error);
+      }
     }
     async function initWealthData() {
       const data = await loadWealthData();
@@ -88,6 +95,11 @@ export default function Main() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // Restricted accounts are for approved teachers, staff account types and the
+  // admin (the API decides; AP-derived managementLevel opens this page but not
+  // that list). Declared below the effect only to keep this hunk apart from
+  // the sensitive-access change; hook order is still unconditional.
+  const [bannedUsersRefused, setBannedUsersRefused] = useState(false);
 
   return (
     <ErrorBoundary
@@ -101,7 +113,7 @@ export default function Main() {
       <Supermods canManage={canManage} />
       {canManage && <Moderators canManage={canManage} />}
       {canManage && <AccountTypes canManage={canManage} />}
-      <BannedUsers canManage={canManage} />
+      {!bannedUsersRefused && <BannedUsers canManage={canManage} />}
     </ErrorBoundary>
   );
 }
