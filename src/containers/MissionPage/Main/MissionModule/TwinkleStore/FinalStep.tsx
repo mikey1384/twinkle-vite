@@ -62,28 +62,33 @@ export default function FinalStep({
 
   async function handleCompleteMission() {
     setSubmitDisabled(true);
-    const { success, newXpAndRank, newCoins } = await uploadMissionAttempt({
-      missionId: mission.id,
-      attempt: { status: 'pass' }
-    });
-    if (success) {
-      if (newXpAndRank.xp) {
-        onSetUserState({
-          userId,
-          newState: { xp: newXpAndRank.xp, rank: newXpAndRank.rank }
-        });
-      }
-      if (newCoins) {
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: newCoins }
-        });
-      }
-      onUpdateMissionAttempt({
+    // A refused claim (e.g. requirements not met) must not leave the
+    // button stuck disabled.
+    try {
+      const { success, newXpAndRank, newCoins } = await uploadMissionAttempt({
         missionId: mission.id,
-        newState: { status: 'pass' }
+        attempt: { status: 'pass' }
       });
+      if (success) {
+        if (newXpAndRank.xp) {
+          onSetUserState({
+            userId,
+            newState: { xp: newXpAndRank.xp, rank: newXpAndRank.rank }
+          });
+        }
+        if (newCoins) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: newCoins }
+          });
+        }
+        onUpdateMissionAttempt({
+          missionId: mission.id,
+          newState: { status: 'pass' }
+        });
+      }
+    } finally {
+      setSubmitDisabled(false);
     }
-    setSubmitDisabled(false);
   }
 }

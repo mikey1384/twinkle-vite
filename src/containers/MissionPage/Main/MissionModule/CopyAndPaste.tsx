@@ -120,31 +120,36 @@ export default function CopyAndPaste({
 
   async function handleSuccess() {
     setSubmitDisabled(true);
-    const { success, newXpAndRank, newCoins } = await uploadMissionAttempt({
-      missionId: mission.id,
-      attempt: { content, status: 'pass' }
-    });
-    if (success) {
-      if (newXpAndRank.xp) {
-        onSetUserState({
-          userId,
-          newState: { twinkleXP: newXpAndRank.xp, rank: newXpAndRank.rank }
-        });
-      }
-      if (newCoins) {
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: newCoins }
-        });
-      }
-      onUpdateMissionAttempt({
+    // A refused claim (e.g. requirements not met) must not leave the
+    // button stuck disabled.
+    try {
+      const { success, newXpAndRank, newCoins } = await uploadMissionAttempt({
         missionId: mission.id,
-        newState: { status: 'pass' }
+        attempt: { content, status: 'pass' }
       });
-      const appElement = document.getElementById('App');
-      if (appElement) appElement.scrollTop = 0;
-      BodyRef.scrollTop = 0;
+      if (success) {
+        if (newXpAndRank.xp) {
+          onSetUserState({
+            userId,
+            newState: { twinkleXP: newXpAndRank.xp, rank: newXpAndRank.rank }
+          });
+        }
+        if (newCoins) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: newCoins }
+          });
+        }
+        onUpdateMissionAttempt({
+          missionId: mission.id,
+          newState: { status: 'pass' }
+        });
+        const appElement = document.getElementById('App');
+        if (appElement) appElement.scrollTop = 0;
+        BodyRef.scrollTop = 0;
+      }
+    } finally {
+      setSubmitDisabled(false);
     }
-    setSubmitDisabled(false);
   }
 }
