@@ -554,11 +554,16 @@ const footCls = css`
   }
 `;
 // the "more below" cue: hidden (no taps, no tab stop) until the lesson
-// scrolls under the footer; it fades in once (opacity only, no loop)
+// scrolls under the footer; it fades in once (opacity only, no loop) and
+// goes at once, so it never lingers on the next page (r28 review: it faded
+// out over ~250 ms after Next)
 const shownCls = css`
   && {
     opacity: 1;
     visibility: visible;
+    transition:
+      opacity 0.2s,
+      visibility 0.2s;
   }
 `;
 const fadeCls = css`
@@ -571,9 +576,6 @@ const fadeCls = css`
   background: linear-gradient(${FOOT_BG}00, ${FOOT_BG});
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 0.2s,
-    visibility 0.2s;
 `;
 // a small chip over the faded lines; its tap box is 44px tall (40 on a
 // phone on its side) and ends above the footer, so it never takes Next's
@@ -587,7 +589,8 @@ const moreCls = css`
   min-height: 28px;
   padding: 0 1rem;
   font-family: inherit;
-  font-size: 1.2rem;
+  /* never under 11px (an 8px rem made it 9.6px on phones) */
+  font-size: max(11px, 1.2rem);
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
@@ -596,9 +599,6 @@ const moreCls = css`
   filter: drop-shadow(0 2px 0 rgba(26, 20, 38, 0.3));
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 0.2s,
-    visibility 0.2s;
   &::before {
     content: '';
     position: absolute;

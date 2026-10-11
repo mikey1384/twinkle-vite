@@ -61,10 +61,17 @@ export default function WorldMap({
   const positions = nodePositions(world.key, world.nodes.length);
   // a crowded world's map is drawn big enough for every stop to keep a whole
   // tap box (the map area scrolls to the rest; Mikey 10-11)
-  const perGapPx = mapHeightPerGapPx(
-    world.key,
-    world.nodes.length,
-    world.nodes.flatMap((n, i) => (n.kind === 'stop' ? [] : [i]))
+  const bigStopsKey = world.nodes
+    .flatMap((n, i) => (n.kind === 'stop' ? [] : [i]))
+    .join(',');
+  const perGapPx = useMemo(
+    () =>
+      mapHeightPerGapPx(
+        world.key,
+        world.nodes.length,
+        bigStopsKey ? bigStopsKey.split(',').map(Number) : []
+      ),
+    [world.key, world.nodes.length, bigStopsKey]
   );
   const selected =
     world.nodes.find((n) => n.id === selectedNodeId) ||
@@ -98,27 +105,6 @@ export default function WorldMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [world.key, world.nodes.length, mapSize]
   );
-  useEffect(() => {
-    const area = mapAreaRef.current;
-    const map = mapRef.current;
-    const at = positions[selectedIndex];
-    if (!area || !map || !at) return;
-    const wide = area.scrollWidth > area.clientWidth;
-    const tall = area.scrollHeight > area.clientHeight;
-    if (!wide && !tall) return;
-    // the stop's place in the area's scrolled content
-    const box = map.getBoundingClientRect();
-    const view = area.getBoundingClientRect();
-    const x =
-      box.left - view.left + area.scrollLeft + (at[0] / 100) * box.width;
-    const y = box.top - view.top + area.scrollTop + (at[1] / 100) * box.height;
-    area.scrollTo({
-      left: wide ? x - area.clientWidth / 2 : undefined,
-      top: tall ? y - area.clientHeight / 2 : undefined,
-      behavior: 'smooth'
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [world.id, selectedIndex, mapSize]);
 
   // the picked stop's PLAY bubble goes on whichever side of it has room, so
   // it never covers another stop or its tap box (Mikey 10-11: it sat over
@@ -146,6 +132,57 @@ export default function WorldMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id, selected?.unlocked, world.key, hitLimits, bubbleLabel]);
   const spot = bubbleAt && bubbleAt.id === selected?.id ? bubbleAt : null;
+
+  // A map bigger than its area scrolls the picked stop (and its PLAY bubble)
+  // into view, but only when the stop isn't wholly in view already: a stop
+  // the player can see never moves, so a second tap or click on it (or on
+  // its bubble) always lands (r28 review: on desktop the map slid away
+  // under the mouse between the pick and the Play click).
+  useEffect(() => {
+    const area = mapAreaRef.current;
+    const map = mapRef.current;
+    if (!area || !map || selectedIndex < 0) return;
+    const wide = area.scrollWidth > area.clientWidth;
+    const tall = area.scrollHeight > area.clientHeight;
+    if (!wide && !tall) return;
+    const stop = map.querySelector<HTMLElement>(
+      `[data-stop="${selectedIndex}"]`
+    );
+    if (!stop) return;
+    const own = tapBoxOf(stop);
+    const frame = area.getBoundingClientRect();
+    const view = {
+      l: frame.left + area.clientLeft,
+      t: frame.top + area.clientTop,
+      r: frame.left + area.clientLeft + area.clientWidth,
+      b: frame.top + area.clientTop + area.clientHeight
+    };
+    if (
+      own.l >= view.l - 0.5 &&
+      own.t >= view.t - 0.5 &&
+      own.r <= view.r + 0.5 &&
+      own.b <= view.b + 0.5
+    )
+      return;
+    // the stop and its bubble, centred
+    const box = { ...own };
+    const bubble = spot && bubbleRef.current?.getBoundingClientRect();
+    if (bubble) {
+      box.l = Math.min(box.l, bubble.left);
+      box.t = Math.min(box.t, bubble.top);
+      box.r = Math.max(box.r, bubble.right);
+      box.b = Math.max(box.b, bubble.bottom);
+    }
+    area.scrollTo({
+      left: wide
+        ? area.scrollLeft + (box.l + box.r) / 2 - (view.l + view.r) / 2
+        : undefined,
+      top: tall
+        ? area.scrollTop + (box.t + box.b) / 2 - (view.t + view.b) / 2
+        : undefined,
+      behavior: 'smooth'
+    });
+  }, [world.id, selectedIndex, mapSize, spot]);
 
   // Each map plays its world's own map song (not the level theme), including
   // when browsing unlocked worlds without leaving this screen.
@@ -203,7 +240,9 @@ export default function WorldMap({
             {
               backgroundImage: `url(${WORLD_IMAGES[world.key]})`,
               '--map-per-tap': perGapPx.tap,
-              '--map-per-big': perGapPx.big
+              '--map-per-big': perGapPx.big,
+              '--map-per-edge': perGapPx.edge,
+              '--map-per-big-edge': perGapPx.bigEdge
             } as React.CSSProperties
           }
         >
@@ -327,7 +366,13 @@ export default function WorldMap({
                           onClick={() => onPlayNode(node)}
                           aria-label={`Play ${node.name}`}
                         >
-                          {spot?.side === 'on' ? '▶' : bubbleLabel}
+                          {spot?.side === 'on' ? (
+                            // over the stop's own box: a small ▶ in its
+                            // corner, the stop's disc or marble showing
+                            <span className={onBadgeCls}>▶</span>
+                          ) : (
+                            bubbleLabel
+                          )}
                         </button>
                       </span>
                     </span>
@@ -587,15 +632,28 @@ const noChipsRowCls = css`
 `;
 // the map is as big as fits both ways, keeping the painting's shape, but
 // never smaller than its stops need: a crowded world's closest two stops
-// stay a whole tap box apart (--tap-need: 44px on an upright phone, 40px
-// elsewhere), and a fort's or castle's disc stays clear of its neighbour
-// (--big-need: its disc and a little air); --map-per-tap and --map-per-big
-// come from the world's layout. The area scrolls to the rest. The map
-// centres itself with auto margins, so a map bigger than the area still
-// scrolls to every edge.
+// stay a whole tap box apart (--tap-need), a fort's or castle's disc stays
+// clear of its neighbour (--big-need: its disc and a little air), and every
+// stop sits half its tap box inside the map's edges (--edge-need,
+// --big-edge-need: half its disc plus its tap pad), so no disc or tap box
+// is ever cut by the edge; the --map-per-* factors come from the world's
+// layout. The area scrolls to the rest. The map centres itself with auto
+// margins, so a map bigger than the area still scrolls to every edge.
+//
+// --tap-need follows the pointer (r28 review): a finger needs 44px on an
+// upright phone and 40px elsewhere (Mikey 10-11: crowded maps zoom and
+// scroll so every stop gets a whole box); a mouse needs far less, so on a
+// fine pointer with no touch screen it is 28px, and so is a fort's or
+// castle's gap (its disc may touch a neighbour's there; the boxes still
+// split the gap), so the desktop map stays whole unless even that can't
+// fit. There a scrolling map shows a styled scrollbar (macOS hides the
+// default one until you scroll).
+const FINE_POINTER = '@media (pointer: fine) and (not (any-pointer: coarse))';
 const mapAreaCls = css`
   --tap-need: 40px;
   --big-need: calc(4.5rem + 4px);
+  --edge-need: calc(1.8rem + 6px);
+  --big-edge-need: calc(2.25rem + 6px);
   grid-area: map;
   min-height: 0;
   container-type: size;
@@ -604,9 +662,32 @@ const mapAreaCls = css`
   overscroll-behavior: contain;
   @media (max-width: ${mobileMaxWidth}) {
     --big-need: calc(3.6rem + 4px);
+    --edge-need: calc(1.5rem + 10px);
+    --big-edge-need: calc(1.8rem + 10px);
   }
   @media (max-width: ${mobileMaxWidth}) and (orientation: portrait) {
     --tap-need: 44px;
+  }
+  ${FINE_POINTER} {
+    --tap-need: 28px;
+    --big-need: 28px;
+    &::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+    &::-webkit-scrollbar-track {
+      background: rgba(26, 20, 38, 0.25);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #b06a35;
+      border: 2px solid ${INK};
+    }
+    &::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+    @supports not selector(::-webkit-scrollbar) {
+      scrollbar-color: #b06a35 rgba(26, 20, 38, 0.25);
+    }
   }
 `;
 const sideCls = css`
@@ -694,8 +775,14 @@ const nemesisCls = css`
   }
 `;
 
-const MAP_MIN_HEIGHT =
-  'calc(max(var(--tap-need) * var(--map-per-tap, 0), var(--big-need) * var(--map-per-big, 0)) + 24px)';
+// the frame's two borders (12px each on desktop, 9px on a phone) and a
+// pixel of slack for rounding
+const MAP_MIN_HEIGHT = `calc(max(${[
+  'var(--tap-need) * var(--map-per-tap, 0)',
+  'var(--big-need) * var(--map-per-big, 0)',
+  'var(--edge-need) * var(--map-per-edge, 0)',
+  'var(--big-edge-need) * var(--map-per-big-edge, 0)'
+].join(', ')}) + 26px)`;
 const mapCls = css`
   ${frame(WOOD, 4, false)}
   position: relative;
@@ -835,6 +922,19 @@ interface Box {
   r: number;
   b: number;
 }
+// a drawn stop's tap box and disc together, in viewport px
+function tapBoxOf(stop: HTMLElement) {
+  const r = stop.getBoundingClientRect();
+  const hit = getComputedStyle(stop, '::before');
+  return {
+    l: r.left + Math.min(0, parseFloat(hit.left) || 0),
+    t: r.top + Math.min(0, parseFloat(hit.top) || 0),
+    r: r.right - Math.min(0, parseFloat(hit.right) || 0),
+    b: r.bottom - Math.min(0, parseFloat(hit.bottom) || 0),
+    cx: (r.left + r.right) / 2,
+    cy: (r.top + r.bottom) / 2
+  };
+}
 function placeBubble(
   map: HTMLElement,
   index: number,
@@ -849,16 +949,14 @@ function placeBubble(
   const ox = frame.left + map.clientLeft;
   const oy = frame.top + map.clientTop;
   const boxes = stops.map((stop) => {
-    const r = stop.getBoundingClientRect();
-    const hit = getComputedStyle(stop, '::before');
-    // the tap box and the disc together
+    const box = tapBoxOf(stop);
     return {
-      l: r.left - ox + Math.min(0, parseFloat(hit.left) || 0),
-      t: r.top - oy + Math.min(0, parseFloat(hit.top) || 0),
-      r: r.right - ox - Math.min(0, parseFloat(hit.right) || 0),
-      b: r.bottom - oy - Math.min(0, parseFloat(hit.bottom) || 0),
-      cx: (r.left + r.right) / 2 - ox,
-      cy: (r.top + r.bottom) / 2 - oy
+      l: box.l - ox,
+      t: box.t - oy,
+      r: box.r - ox,
+      b: box.b - oy,
+      cx: box.cx - ox,
+      cy: box.cy - oy
     };
   });
   const own = boxes[index];
@@ -1168,16 +1266,21 @@ const playBubbleCls = css`
 `;
 const TAIL_SIDE: Record<BubbleSpot['side'], string> = {
   above: '',
-  // crowded on every side: a ▶ button over the stop's own tap box (it stays
-  // put, so it never bobs into a neighbour's)
+  // crowded on every side: the stop's own tap box becomes its Play button
+  // (it stays put, so it never bobs into a neighbour's): a see-through gold
+  // ring with a small ▶ in its corner, so the stop's disc or marble still
+  // shows (r28 review: a solid ▶ square hid the marble)
   on: css`
     && {
       min-height: 0;
       padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
+      border: 2px solid #ffcb32;
+      border-image: none;
+      background: rgba(255, 203, 50, 0.16);
+      box-shadow:
+        0 0 0 2px ${INK},
+        inset 0 0 0 1px ${INK};
+      filter: none;
       animation: none;
     }
     &&::after {
@@ -1217,6 +1320,22 @@ const TAIL_SIDE: Record<BubbleSpot['side'], string> = {
     }
   `
 };
+// the ▶ in the corner of a stop's own Play box
+const onBadgeCls = css`
+  ${frame(GOLD, 1)}
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 9px;
+  line-height: 1;
+  color: ${INK};
+  pointer-events: none;
+`;
 const pointerAnchorCls = css`
   position: absolute;
   z-index: 3;
@@ -1301,9 +1420,13 @@ const panelCls = css`
   filter: drop-shadow(0 5px 0 rgba(26, 20, 38, 0.3));
   @media (max-width: ${mobileMaxWidth}) {
     ${frame(PARCHMENT, 3)}
-    /* phones: one compact row, the stop beside its Play button */
+    /* phones: one compact row, the stop beside its Play button; one height
+       for every stop and boss (the title keeps to one line, and a boss with
+       no skill row keeps its room), so picking a stop never resizes the map
+       above and slides the stops under the finger (r29) */
     flex-direction: row;
     align-items: center;
+    min-height: 10.7rem;
     max-height: 12rem;
     padding: 0.5rem 0.6rem;
   }
@@ -1330,6 +1453,9 @@ const panelTitleCls = css`
   margin: 0.4rem 0 0.7rem;
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 `;
 
@@ -1355,6 +1481,10 @@ const skillChipCls = css`
   color: #3b2a1a;
   font-size: 1.25rem;
   font-weight: 800;
+  /* phones: one line (the row scrolls sideways), so the panel's height holds */
+  @media (max-width: ${mobileMaxWidth}) {
+    white-space: nowrap;
+  }
 `;
 
 const panelTextCls = css`
