@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { readGrammarblesSettings } from './audioPreferences';
@@ -94,6 +95,10 @@ const choiceCls = css`
   gap: 0.8rem;
   min-height: 4.8rem;
   font-size: 1.3rem;
+  /* px on phones, whose rem is 8px: a 44px thumb target */
+  @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
+  }
 `;
 const onCls = css`
   ${button(GOLD, '#8a5200')}

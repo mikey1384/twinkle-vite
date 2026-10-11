@@ -464,7 +464,8 @@ const trayCls = css`
   gap: 0.8rem;
   justify-content: center;
 `;
-// every piece is a 40px+ tap (Mikey 10-11), in px since a phone's rem is 8px
+// every piece is a 40px+ tap, 44 on a phone held upright (Mikey 10-11), in
+// px since a phone's rem is 8px
 const chunkCls = css`
   display: inline-flex;
   align-items: center;
@@ -486,8 +487,12 @@ const chunkCls = css`
     cursor: default;
   }
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
     font-size: 1.3rem;
     padding: 0.5rem 0.8rem;
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    min-height: 40px;
   }
 `;
 const placedCls = css`

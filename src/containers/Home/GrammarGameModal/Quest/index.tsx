@@ -285,9 +285,13 @@ const resumeCls = css`
   font-size: 1.4rem;
   font-weight: 800;
   text-shadow: 1px 1px 0 #1a1426;
+  /* px on phones, whose rem is 8px: 44 held upright, 40 on its side */
+  @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
+  }
   @media (max-height: 520px) and (orientation: landscape) {
     flex: none;
-    min-height: 3.4rem;
+    min-height: 40px;
     margin-bottom: 0.5rem;
     font-size: 1.2rem;
   }

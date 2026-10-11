@@ -1332,6 +1332,8 @@ const cardCls = css`
   flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* a miss's ✗ badge on a button at the edge never adds a sideways scroll */
+  overflow-x: hidden;
   width: 100%;
   max-width: 980px;
   @media (max-width: ${mobileMaxWidth}) {
@@ -1554,25 +1556,42 @@ const rightCls = css`
 // a miss reads as red at a glance, with readable text (the old pale pink
 // at 85% looked like a faded boss button: about 2.5:1). White text clears
 // 4.5:1 on every part of the gradient, and a ✗ tells it from the boss's
-// magenta buttons without relying on the hue.
+// magenta buttons without relying on the hue. The ✗ is a badge on the
+// corner, out of the flow: a button never changes size when it turns red
+// (a boss's crossed brick stayed in its row while the clock ran, instead
+// of pushing the words after it along), and a struck line doesn't cross it.
 const wrongCls = css`
   && {
     position: relative;
-    padding-right: 2.8rem;
     border-color: #6e1229;
     background: linear-gradient(#d23552, #c02a4a);
     box-shadow: 0 4px 0 #6e1229;
     color: #fff;
     opacity: 1;
   }
-  /* out of the flow, so a struck sentence's line doesn't cross it */
   &&::after {
     content: '✗';
     position: absolute;
-    right: 0.9rem;
-    top: 50%;
-    transform: translateY(-50%);
+    /* on the bottom corner, mostly outside the button so it hides little
+       of a short word (above it sit the instruction line and the row
+       before); the card clips the odd pixel past its padding */
+    bottom: -8px;
+    right: -6px;
+    z-index: 1;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #6e1229;
+    border-radius: 50%;
+    background: #fff;
+    color: #c02a4a;
+    font-size: 9px;
     font-weight: 900;
+    line-height: 1;
+    text-shadow: none;
+    pointer-events: none;
   }
 `;
 const keyCls = css`

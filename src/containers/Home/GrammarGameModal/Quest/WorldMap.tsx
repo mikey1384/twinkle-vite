@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { NavSlotContext } from '../navSlot';
 import { FORMAT_INFO, GotchaText, MODIFIER_INFO } from './FormatQuestion';
@@ -66,6 +66,27 @@ export default function WorldMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [world.id, selectedIndex]);
 
+  // each stop's tap box is as big as its size allows (44px on a phone), but
+  // never reaches over a neighbour's: two stops close together split the gap
+  // between them, so a tap always picks the nearer one (Mikey 10-11)
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapSize, setMapSize] = useState<[number, number] | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const measure = () => setMapSize([map.clientWidth, map.clientHeight]);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(map);
+    return () => observer.disconnect();
+  }, []);
+  const hitLimits = useMemo(
+    () => (mapSize ? stopHitLimits(positions, mapSize) : []),
+    // positions follow the world
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [world.key, world.nodes.length, mapSize]
+  );
+
   // Each map plays its world's own map song (not the level theme), including
   // when browsing unlocked worlds without leaving this screen.
   useEffect(() => {
@@ -117,6 +138,7 @@ export default function WorldMap({
       <div className={mapAreaCls} ref={mapAreaRef}>
         <div
           className={mapCls}
+          ref={mapRef}
           style={{ backgroundImage: `url(${WORLD_IMAGES[world.key]})` }}
         >
           <div className={titleCls}>
@@ -129,6 +151,7 @@ export default function WorldMap({
             const [x, y] = positions[i];
             const big = node.kind !== 'stop';
             const at = { left: `${x}%`, top: `${y}%` };
+            const hit = hitLimits[i];
             // a cleared node becomes its letter marble (Mikey 10-07); forts
             // and castles keep their bigger size
             const done = node.cleared && node.grade;
@@ -159,14 +182,13 @@ export default function WorldMap({
                     !node.unlocked && 'gq-locked',
                     selected?.id === node.id && selectedCls
                   )}
-                  style={
-                    done
-                      ? {
-                          ...at,
-                          backgroundImage: `url(${spriteUri(node.grade)})`
-                        }
-                      : at
-                  }
+                  style={{
+                    ...at,
+                    ...(done
+                      ? { backgroundImage: `url(${spriteUri(node.grade)})` }
+                      : null),
+                    ...hit
+                  }}
                   // a tap picks the stop; a tap on the picked stop plays it
                   // (Mikey 10-07: a player tapped the stop and "nothing
                   // happened" — the Play button was off to the side)
@@ -645,7 +667,55 @@ const nameCls = css`
   }
 `;
 
+// How far each stop's tap box may reach from its centre toward each side
+// (px) before it would cross a neighbour's: for each pair of stops close
+// enough to touch, the axis they are further apart on is split down the
+// middle, so the two boxes can't overlap. Sides with no close neighbour
+// stay unset (the full reach).
+const NEAR = 64;
+function stopHitLimits(
+  positions: [number, number][],
+  [width, height]: [number, number]
+) {
+  const px = positions.map(([x, y]) => [(x / 100) * width, (y / 100) * height]);
+  const limits = px.map(() => ({ t: NEAR, r: NEAR, b: NEAR, l: NEAR }));
+  for (let i = 0; i < px.length; i++) {
+    for (let j = i + 1; j < px.length; j++) {
+      const dx = px[j][0] - px[i][0];
+      const dy = px[j][1] - px[i][1];
+      if (Math.abs(dx) >= NEAR || Math.abs(dy) >= NEAR) continue;
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        const half = Math.abs(dx) / 2;
+        const [left, right] = dx >= 0 ? [i, j] : [j, i];
+        limits[left].r = Math.min(limits[left].r, half);
+        limits[right].l = Math.min(limits[right].l, half);
+      } else {
+        const half = Math.abs(dy) / 2;
+        const [top, bottom] = dy >= 0 ? [i, j] : [j, i];
+        limits[top].b = Math.min(limits[top].b, half);
+        limits[bottom].t = Math.min(limits[bottom].t, half);
+      }
+    }
+  }
+  return limits.map(
+    (l) =>
+      ({
+        '--hit-t': `${l.t.toFixed(1)}px`,
+        '--hit-r': `${l.r.toFixed(1)}px`,
+        '--hit-b': `${l.b.toFixed(1)}px`,
+        '--hit-l': `${l.l.toFixed(1)}px`
+      }) as React.CSSProperties
+  );
+}
+
+// a stop's tap box: --hit-pad past its disc on every side, cut back on a
+// side where the gap to a neighbour is shorter (inside the disc too, where
+// two discs nearly touch: the box, not the disc, takes the tap)
+const hitSide = (side: string) =>
+  `calc(50% - min(50% + var(--hit-pad), var(--hit-${side}, 999px)))`;
+
 const nodeCls = css`
+  --hit-pad: 6px;
   position: absolute;
   transform: translate(-50%, -50%);
   width: 3.6rem;
@@ -660,22 +730,23 @@ const nodeCls = css`
   display: flex;
   align-items: center;
   justify-content: center;
+  /* only the tap box takes taps, so neighbours' boxes never overlap */
+  pointer-events: none;
   &::before {
     /* a bigger tap target than the drawn disc */
     content: '';
     position: absolute;
-    inset: -0.6rem;
+    inset: ${hitSide('t')} ${hitSide('r')} ${hitSide('b')} ${hitSide('l')};
+    pointer-events: auto;
   }
   &:hover {
     transform: translate(-50%, -50%) scale(1.08);
   }
   @media (max-width: ${mobileMaxWidth}) {
+    /* 24px disc + 10px all round = a 44px tap box */
+    --hit-pad: 10px;
     width: 3rem;
     height: 3rem;
-    &::before {
-      /* 24px disc + 10px all round = a 44px tap box */
-      inset: -10px;
-    }
   }
 `;
 

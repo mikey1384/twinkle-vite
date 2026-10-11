@@ -161,7 +161,7 @@ export default function FormatQuestion({
     return (
       <>
         <div
-          className={cx(cls.question, wallCls)}
+          className={cx(cls.question, wallCls, answer && settledWallCls)}
           role="group"
           aria-label="Tap the word that is wrong"
         >
@@ -228,8 +228,9 @@ export const foggedCls = css`
 `;
 // a sentence of tappable words, like bricks in a wall. Each brick's tap box
 // (::before) fills half the gap around it, so a brick plus a row gap is a
-// 40px+ target and neighbours never overlap (Mikey 10-11); the bricks still
-// wrap like words. --gy and --gx are the gaps the tap boxes split.
+// 44px target (40 on a phone on its side) and neighbours never overlap
+// (Mikey 10-11); the bricks still wrap like words. --gy and --gx are the
+// gaps the tap boxes split.
 const wallCls = css`
   --gy: 8px;
   --gx: 6px;
@@ -237,18 +238,24 @@ const wallCls = css`
   flex-wrap: wrap;
   gap: var(--gy) var(--gx);
   align-items: center;
-  @media (max-width: ${mobileMaxWidth}) {
-    --gy: 6px;
-  }
-  @media (max-height: 520px) and (orientation: landscape) {
-    --gy: 8px;
+`;
+// once the answer is in, the bricks take no more taps: on a phone the wall
+// packs back to the words' own height (r23's), so a long sentence's miss
+// card (its rule card and Continue) still fits one screen
+const settledWallCls = css`
+  @media (max-width: ${mobileMaxWidth}),
+    (max-height: 520px) and (orientation: landscape) {
+    --gy: 0.6rem;
+    > button {
+      min-height: 0;
+    }
   }
 `;
 const brickCls = css`
   position: relative;
   min-height: 36px;
   /* a one-letter word ("I", "a") is still a brick you can hit */
-  min-width: 36px;
+  min-width: 38px;
   padding: 0.5rem 0.9rem;
   border-radius: 8px;
   border: 2px solid #8a4a32;
@@ -273,8 +280,6 @@ const brickCls = css`
     inset: calc(var(--gy) / -2 - 2px) calc(var(--gx) / -2 - 2px);
   }
   @media (max-width: ${mobileMaxWidth}) {
-    min-height: 34px;
-    min-width: 34px;
     padding: 0.4rem 0.7rem;
   }
   @media (max-height: 520px) and (orientation: landscape) {
