@@ -276,7 +276,13 @@ const topCls = css`
   gap: 1rem;
 `;
 
+// every tap here is at least 44px tall (Mikey 10-11), in px since a
+// phone's rem is 8px
 const quitCls = css`
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.6rem;
   border: none;
   background: none;
   font-size: 1.3rem;
@@ -335,6 +341,7 @@ const choiceCls = css`
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-height: 44px;
   padding: 1rem 1.2rem;
   border: 2px solid var(--ui-border);
   border-radius: 14px;
@@ -404,6 +411,7 @@ const nextRowCls = css`
 // a miss's Challenge sits left of Next
 const challengeCls = css`
   margin-right: auto;
+  min-height: 44px;
   padding: 0.7rem 1.4rem;
   border: 2px solid ${Color.rose()};
   border-radius: 12px;
@@ -415,6 +423,7 @@ const challengeCls = css`
 `;
 
 const nextCls = css`
+  min-height: 44px;
   padding: 0.8rem 2.4rem;
   border: none;
   border-radius: 12px;

@@ -226,14 +226,29 @@ export const foggedCls = css`
     filter: blur(2px);
   }
 `;
-// a sentence of tappable words, like bricks in a wall
+// a sentence of tappable words, like bricks in a wall. Each brick's tap box
+// (::before) fills half the gap around it, so a brick plus a row gap is a
+// 40px+ target and neighbours never overlap (Mikey 10-11); the bricks still
+// wrap like words. --gy and --gx are the gaps the tap boxes split.
 const wallCls = css`
+  --gy: 8px;
+  --gx: 6px;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: var(--gy) var(--gx);
   align-items: center;
+  @media (max-width: ${mobileMaxWidth}) {
+    --gy: 6px;
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    --gy: 8px;
+  }
 `;
 const brickCls = css`
+  position: relative;
+  min-height: 36px;
+  /* a one-letter word ("I", "a") is still a brick you can hit */
+  min-width: 36px;
   padding: 0.5rem 0.9rem;
   border-radius: 8px;
   border: 2px solid #8a4a32;
@@ -251,8 +266,20 @@ const brickCls = css`
   &:disabled {
     cursor: default;
   }
+  /* the box is measured from inside the 2px border */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: calc(var(--gy) / -2 - 2px) calc(var(--gx) / -2 - 2px);
+  }
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 34px;
+    min-width: 34px;
     padding: 0.4rem 0.7rem;
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    min-height: 32px;
+    min-width: 34px;
   }
 `;
 // the jammed wrong part of a "fix it" sentence

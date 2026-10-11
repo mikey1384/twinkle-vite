@@ -61,12 +61,13 @@ const chipCls = css`
   &:active {
     transform: translateY(2px);
   }
+  /* px, not rem: a phone's rem is 8px, and these stay thumb-sized */
   @media (max-width: ${mobileMaxWidth}) {
-    min-width: 4rem;
-    min-height: 4rem;
+    min-width: 44px;
+    min-height: 44px;
   }
   @media (max-height: 520px) and (orientation: landscape) {
-    min-height: 3.4rem;
-    min-width: 3.4rem;
+    min-height: 40px;
+    min-width: 40px;
   }
 `;

@@ -451,7 +451,7 @@ const tabsCls = css`
 `;
 const tabCls = css`
   flex: 1 1 auto;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0.5rem 1rem;
   border-radius: 10px;
   border: 2px solid ${rgba(NEON.cyanRgb, 0.35)};
@@ -512,6 +512,8 @@ const choiceCls = css`
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  /* a 44px tap on a phone too (its rem is 8px) */
+  min-height: 44px;
   padding: 0.9rem 1.1rem;
   border-radius: 12px;
   text-align: left;

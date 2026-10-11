@@ -18,6 +18,8 @@ import {
 
 const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
 
+// a phone on its side
+const SHORT_LANDSCAPE = '(max-height: 520px) and (orientation: landscape)';
 export default function FinishScreen({
   scoreArrayRef,
   onBackToStart,
@@ -146,6 +148,11 @@ export default function FinishScreen({
           @media (max-width: ${mobileMaxWidth}) {
             padding: 2rem 0.75rem 2.5rem;
           }
+          /* a phone on its side: Play Again was below the screen's edge
+             (Mikey 10-07: every screen fits) */
+          @media ${SHORT_LANDSCAPE} {
+            padding: 0.4rem 2rem 0.8rem;
+          }
         `}
       >
         <div
@@ -157,6 +164,9 @@ export default function FinishScreen({
             text-align: center;
             @media (max-width: ${mobileMaxWidth}) {
               padding: 2rem 1.2rem 1.8rem;
+            }
+            @media ${SHORT_LANDSCAPE} {
+              padding: 1.2rem 2rem 1.2rem;
             }
           `}
         >
@@ -196,6 +206,9 @@ export default function FinishScreen({
               flex-wrap: wrap;
               gap: 0.3rem;
               margin-top: 2rem;
+              @media ${SHORT_LANDSCAPE} {
+                margin-top: 1rem;
+              }
               padding: 0.6rem 0.9rem;
               border-radius: 9999px;
               background: rgba(8, 10, 40, 0.7);
@@ -214,6 +227,9 @@ export default function FinishScreen({
               flex-wrap: wrap;
               gap: 0.8rem 1.6rem;
               margin-top: 2rem;
+              @media ${SHORT_LANDSCAPE} {
+                margin-top: 1rem;
+              }
               font-family: ${PIXEL_FONT};
               font-size: 1.2rem;
             `}
@@ -235,6 +251,9 @@ export default function FinishScreen({
           <div
             className={css`
               margin-top: 2.2rem;
+              @media ${SHORT_LANDSCAPE} {
+                margin-top: 1rem;
+              }
               font-size: 1.6rem;
               line-height: 1.6;
               color: ${NEON.inkSoft};
@@ -256,6 +275,9 @@ export default function FinishScreen({
           <div
             className={css`
               margin-top: 2.6rem;
+              @media ${SHORT_LANDSCAPE} {
+                margin-top: 1rem;
+              }
               font-family: ${PIXEL_FONT};
               line-height: 1.6;
               color: ${NEON.ink};
@@ -273,12 +295,15 @@ export default function FinishScreen({
           </div>
         </div>
         <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '2.5rem'
-          }}
+          className={css`
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 2.5rem;
+            @media ${SHORT_LANDSCAPE} {
+              margin-top: 1rem;
+            }
+          `}
         >
           {timesPlayedToday + 1 < 5 ? (
             <GameCTAButton

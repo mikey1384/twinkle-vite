@@ -675,7 +675,8 @@ const challengeSmallCls = css`
   flex: none;
   padding: 0.3rem 0.9rem;
   font-size: 1rem;
-  min-height: 4.4rem;
+  /* px: a phone's rem is 8px, and this stays a 44px tap */
+  min-height: 44px;
   max-width: 14rem;
 `;
 const reviewSmallCls = css`

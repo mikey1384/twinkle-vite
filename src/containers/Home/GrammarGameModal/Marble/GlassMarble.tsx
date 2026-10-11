@@ -17,7 +17,8 @@ export default function GlassMarble({
   const gradeColor = useGradeColor();
   const known = !!letter;
   const c = (alpha?: number) => gradeColor(letter, alpha);
-  // phones get a slightly smaller marble so a level's ten fit on one rail
+  // phones (held upright or on their side) get a slightly smaller marble so
+  // a level's ten fit on one rail
   const mobileSize = Math.round(size * 0.8);
   const shine = `radial-gradient(circle at 33% 27%, rgba(255,255,255,0.95) 0, rgba(255,255,255,0.55) 9%, rgba(255,255,255,0) 26%)`;
   const smokyShine = `radial-gradient(circle at 33% 27%, rgba(255,255,255,0.3) 0, rgba(255,255,255,0.12) 9%, rgba(255,255,255,0) 26%)`;
@@ -60,7 +61,8 @@ export default function GlassMarble({
           box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.35);
         `
         }
-        @media (max-width: ${mobileMaxWidth}) {
+        @media (max-width: ${mobileMaxWidth}),
+          (max-height: 520px) and (orientation: landscape) {
           width: ${mobileSize}px;
           height: ${mobileSize}px;
           font-size: ${Math.max(7, Math.round(mobileSize * 0.36))}px;

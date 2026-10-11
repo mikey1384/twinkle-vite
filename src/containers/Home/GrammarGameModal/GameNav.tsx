@@ -130,12 +130,16 @@ const plateCls = css`
   &:active {
     transform: translateY(2px);
   }
+  /* phones (8px rem): a full 44px thumb target; a phone on its side
+     keeps 40px so the game below keeps its height */
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
+    min-width: 44px;
     font-size: 0.95rem;
     padding: 0 0.9rem;
   }
   @media (max-height: 520px) and (orientation: landscape) {
-    min-height: 3.4rem;
+    min-height: 40px;
     padding: 0 0.7rem;
     font-size: 0.85rem;
   }
@@ -167,11 +171,13 @@ const neonCls = css`
     transform: translateY(2px);
   }
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
+    min-width: 44px;
     font-size: 0.9rem;
     padding: 0 0.9rem;
   }
   @media (max-height: 520px) and (orientation: landscape) {
-    min-height: 3.4rem;
+    min-height: 40px;
     padding: 0 0.7rem;
     font-size: 0.85rem;
   }

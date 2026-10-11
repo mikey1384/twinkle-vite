@@ -143,11 +143,20 @@ const nameKoCls = css`
   font-weight: 500;
 `;
 const toggleCls = css`
+  position: relative;
   flex-shrink: 0;
   padding: 0.3rem 0.9rem;
   font-size: 1.15rem;
   font-weight: 700;
   cursor: pointer;
+  /* a 40px+ tap box around the small chip, so the card's header keeps
+     its height (Mikey 10-11: tappable on a phone): 9px past the chip's
+     6px pixel frame (an inset counts from inside the border) */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -15px -12px;
+  }
 `;
 const koCls = css`
   margin-top: 0.25rem;
@@ -272,6 +281,10 @@ const LOOKS: Record<
       border: 2px solid ${rgba(NEON.cyanRgb, 0.5)};
       color: ${NEON.cyan};
       font-family: ${READ_FONT};
+      /* its border is 2px, not the pixel frame's 6px */
+      &::before {
+        inset: -11px -8px;
+      }
     `
   }
 };

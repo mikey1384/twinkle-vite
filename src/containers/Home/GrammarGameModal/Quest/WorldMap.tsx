@@ -106,7 +106,7 @@ export default function WorldMap({
         </span>
       </span>
       <GoalsChip />
-      <AudioToggles />
+      <AudioToggles className={audioFirstCls} />
     </div>
   );
 
@@ -518,6 +518,15 @@ const chipsCls = css`
   }
 `;
 
+// the sound and music switches: last on a wide screen; first where the
+// chip row scrolls sideways (phones, held upright or on their side), so
+// they show without a swipe (Mikey 10-11)
+const audioFirstCls = css`
+  @media (max-width: ${mobileMaxWidth}),
+    (max-height: 520px) and (orientation: landscape) {
+    order: -1;
+  }
+`;
 const chipCls = css`
   ${frame(PLATE, 2)}
   display: inline-flex;
@@ -530,11 +539,12 @@ const chipCls = css`
   color: #fff3d0;
   white-space: nowrap;
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
     font-size: 1.2rem;
     padding: 0 0.6rem;
   }
   @media (max-height: 520px) and (orientation: landscape) {
-    min-height: 3.4rem;
+    min-height: 40px;
     padding: 0 0.5rem;
     font-size: 1.1rem;
   }
@@ -663,7 +673,8 @@ const nodeCls = css`
     width: 3rem;
     height: 3rem;
     &::before {
-      inset: -0.7rem;
+      /* 24px disc + 10px all round = a 44px tap box */
+      inset: -10px;
     }
   }
 `;
@@ -850,6 +861,7 @@ const playBubbleCls = css`
     animation: none;
   }
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 40px;
     font-size: 0.95rem;
     padding: 0.35rem 0.8rem;
   }
@@ -1019,7 +1031,7 @@ const playCls = css`
   text-transform: uppercase;
   @media (max-width: ${mobileMaxWidth}) {
     min-width: 9rem;
-    min-height: 4.4rem;
+    min-height: 44px;
     padding: 0.4rem 1rem;
     font-size: 1.3rem;
   }

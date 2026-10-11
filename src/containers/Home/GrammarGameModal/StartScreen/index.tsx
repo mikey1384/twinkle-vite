@@ -603,6 +603,10 @@ export default function StartScreen({
             <div
               className={css`
                 min-height: 2rem;
+                /* a phone on its side: one status line's height, no more */
+                @media (max-height: 520px) and (orientation: landscape) {
+                  min-height: 1.6rem;
+                }
               `}
             />
           )}
@@ -741,5 +745,9 @@ const actionsCls = css`
   gap: 1rem;
   @media (max-width: 900px) {
     gap: 0.6rem;
+  }
+  /* a phone on its side: the status line under Start stays on the screen */
+  @media (max-height: 520px) and (orientation: landscape) {
+    gap: 0.3rem;
   }
 `;

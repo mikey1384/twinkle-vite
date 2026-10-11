@@ -1240,6 +1240,10 @@ const quitCls = css`
   font-size: 1.3rem;
   font-weight: 800;
   text-shadow: 1px 1px 0 ${INK};
+  /* phones (8px rem): a 44px thumb target */
+  @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
+  }
 `;
 const labelCls = css`
   font-family: ${PIXEL_FONT};
@@ -1357,12 +1361,15 @@ const challengeCls = css`
   ${challengeButton()}
   flex: none;
   margin-right: auto;
-  @media (max-height: 520px) and (orientation: landscape) {
-    min-height: 3.4rem;
-  }
   min-height: 4rem;
   padding: 0.3rem 1.2rem;
   font-size: 1.1rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    min-height: 40px;
+  }
 `;
 const ruleScrollCls = css`
   max-height: 26vh;
@@ -1453,11 +1460,15 @@ const choiceCls = css`
   &:disabled {
     cursor: default;
   }
+  /* every answer is a comfortable tap (Mikey 10-11: 39px was too small
+     on a phone); px, since a phone's rem is 8px */
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
     padding: 0.9rem 1.2rem;
     font-size: 1.6rem;
   }
   @media (max-height: 520px) {
+    min-height: 40px;
     padding: 0.7rem 1rem;
     font-size: 1.4rem;
   }
@@ -1541,14 +1552,27 @@ const rightCls = css`
   }
 `;
 // a miss reads as red at a glance, with readable text (the old pale pink
-// at 85% looked like a faded boss button: about 2.5:1)
+// at 85% looked like a faded boss button: about 2.5:1). White text clears
+// 4.5:1 on every part of the gradient, and a ✗ tells it from the boss's
+// magenta buttons without relying on the hue.
 const wrongCls = css`
   && {
-    border-color: #8f1d38;
-    background: linear-gradient(#e0405e, #c02a4a);
-    box-shadow: 0 4px 0 #8f1d38;
+    position: relative;
+    padding-right: 2.8rem;
+    border-color: #6e1229;
+    background: linear-gradient(#d23552, #c02a4a);
+    box-shadow: 0 4px 0 #6e1229;
     color: #fff;
     opacity: 1;
+  }
+  /* out of the flow, so a struck sentence's line doesn't cross it */
+  &&::after {
+    content: '✗';
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 900;
   }
 `;
 const keyCls = css`
@@ -1601,8 +1625,11 @@ const nextCls = css`
   padding: 0.4rem 1.6rem;
   font-size: 1.2rem;
   text-transform: uppercase;
+  @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
+  }
   /* phones on their side: the miss card's row stays as short as the chips */
   @media (max-height: 520px) and (orientation: landscape) {
-    min-height: 3.4rem;
+    min-height: 40px;
   }
 `;

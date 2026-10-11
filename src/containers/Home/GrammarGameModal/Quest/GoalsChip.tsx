@@ -92,11 +92,12 @@ const chipCls = css`
   white-space: nowrap;
   cursor: pointer;
   @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
     padding: 0 0.6rem;
   }
   @media (max-height: 520px) and (orientation: landscape) {
-    min-height: 3.4rem;
-    min-width: 3.4rem;
+    min-height: 40px;
+    min-width: 40px;
   }
 `;
 const labelCls = css`

@@ -802,4 +802,6 @@ const classicBodyCls = css`
   width: 100%;
   display: flex;
   flex-direction: column;
+  /* never clipped: a screen taller than a short phone scrolls inside */
+  overflow-y: auto;
 `;

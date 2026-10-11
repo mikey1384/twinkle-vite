@@ -40,8 +40,13 @@ export default function ResultLevelRow({
     @media (max-height: 700px) {
       margin: 0.45rem 0;
     }
+    /* the rail gives way before the row overflows its board (a phone on
+       its side clipped the "lvl" labels by 6px) */
     @media (max-width: 900px) {
-      grid-template-columns: 6.2rem 32rem 9rem;
+      grid-template-columns: 6.2rem minmax(0, 32rem) 9rem;
+    }
+    @media (max-height: 520px) and (orientation: landscape) {
+      gap: 0.6rem;
     }
     @media (max-width: ${mobileMaxWidth}) {
       grid-template-columns: 7rem 1fr;

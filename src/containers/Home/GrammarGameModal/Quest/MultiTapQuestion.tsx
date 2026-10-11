@@ -464,7 +464,11 @@ const trayCls = css`
   gap: 0.8rem;
   justify-content: center;
 `;
+// every piece is a 40px+ tap (Mikey 10-11), in px since a phone's rem is 8px
 const chunkCls = css`
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
   padding: 0.6rem 1rem;
   border-radius: 10px;
   border: 2px solid #3f7f2f;

@@ -132,6 +132,10 @@ const boardCls = css`
     padding: 0.8rem 0.8rem 0.9rem;
     gap: 0.5rem;
   }
+  @media (max-height: 520px) and (orientation: landscape) {
+    padding: 0.6rem 1rem 0.7rem;
+    gap: 0.4rem;
+  }
 `;
 const headCls = css`
   font-family: ${PIXEL_FONT};
@@ -148,6 +152,12 @@ const rowCls = css`
     grid-template-columns: 8.6rem minmax(0, 1fr);
     gap: 0.5rem;
   }
+  /* a phone on its side: the goal's name above its two ways, which get the
+     full width (four-line ways pushed Classic's Start below the screen) */
+  @media (max-height: 520px) and (orientation: landscape) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+  }
 `;
 const goalCls = css`
   display: flex;
@@ -157,6 +167,9 @@ const goalCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.25rem;
     gap: 0.4rem;
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    font-size: 1.25rem;
   }
 `;
 const dotCls = css`
@@ -168,6 +181,11 @@ const dotCls = css`
   justify-content: center;
   border-radius: 999px;
   font-size: 1.1rem;
+  @media (max-height: 520px) and (orientation: landscape) {
+    width: 1.8rem;
+    height: 1.8rem;
+    font-size: 0.95rem;
+  }
 `;
 const routesCls = css`
   display: grid;
