@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import {
@@ -14,7 +8,15 @@ import {
   type LessonStep
 } from './lessonText';
 import type { QuestLesson } from './types';
-import { GOLD, INK, PIXEL_FONT, TAG, button, frame } from './pixelUi';
+import {
+  GOLD,
+  INK,
+  PARCHMENT,
+  PIXEL_FONT,
+  TAG,
+  button,
+  frame
+} from './pixelUi';
 
 // A rule-first stop's lesson card (Mikey 10-11: the old "Watch this first"
 // card "genuinely confuses" him; it showed a filled-in sentence and notes
@@ -26,7 +28,10 @@ import { GOLD, INK, PIXEL_FONT, TAG, button, frame } from './pixelUi';
 // Got it starts the questions.
 // Every page fits one screen (Mikey's rule): a lesson too long for this
 // screen is measured once, hidden, and split into its rule page and its
-// worked-question page. Short landscape phones scroll the card instead.
+// worked-question page. The footer (page dots, Back, Next / Got it) is
+// pinned to the bottom of the card, so it is always in view; a page still
+// too tall after the split (a phone held sideways) scrolls only the lesson
+// above it.
 export default function LessonCard({
   lessons,
   scrollerRef,
@@ -86,16 +91,6 @@ export default function LessonCard({
     }, 160);
     return () => clearTimeout(timer);
   }, [measuring, current.lesson, lessons, scrollerRef]);
-
-  // the Korean line shown or hidden changes a lesson's height: measure again
-  // (the same part of the same lesson stays on screen once measured)
-  const koreanBefore = useRef(koreanShown);
-  useEffect(() => {
-    if (koreanBefore.current === koreanShown) return;
-    koreanBefore.current = koreanShown;
-    setSplit(new Set());
-    setMeasured(new Set());
-  }, [koreanShown]);
 
   // the screen turned or resized: measure again
   useEffect(() => {
@@ -491,12 +486,46 @@ const noteCls = css`
     font-size: 1.15rem;
   }
 `;
+const FOOT_BG = PARCHMENT.f;
+const FOOT_RULE = '#dbc18f';
+// pinned to the card's bottom edge: the lesson scrolls under it, Next never
+// leaves the screen (Korean shown or a long worked page only scrolls more)
 const footCls = css`
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 0.2rem;
+  padding-top: 0.5rem;
+  /* the parchment behind it, with a thin rule on top, reaches over the
+     card's own padding (as shadows: they add no sideways scroll), so no
+     scrolled line shows at its sides */
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: 0;
+    right: 0;
+    top: 0;
+  }
+  &::before {
+    bottom: 0;
+    background: ${FOOT_BG};
+    box-shadow:
+      -2rem 0 0 ${FOOT_BG},
+      2rem 0 0 ${FOOT_BG};
+  }
+  &::after {
+    height: 2px;
+    background: ${FOOT_RULE};
+    box-shadow:
+      -2rem 0 0 ${FOOT_RULE},
+      2rem 0 0 ${FOOT_RULE};
+  }
 `;
 const dotsCls = css`
   display: inline-flex;

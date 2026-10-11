@@ -241,8 +241,20 @@ const wallCls = css`
 `;
 // once the answer is in, the bricks take no more taps: on a phone the wall
 // packs back to the words' own height (r23's), so a long sentence's miss
-// card (its rule card and Continue) still fits one screen
+// card (its rule card and Continue) still fits one screen. A missed brick's
+// ✗ badge is smaller and further out on a settled wall, at every size: on a
+// packed brick the usual 18px badge covered the word's last letter
+// ("forecas✗"). 14px at -10/-10 clears the word's own text box and the
+// next brick's (measured at 360-1280 wide); it stays out of the flow, so no
+// brick changes width.
 const settledWallCls = css`
+  && > button::after {
+    bottom: -10px;
+    right: -10px;
+    width: 10px;
+    height: 10px;
+    font-size: 8px;
+  }
   @media (max-width: ${mobileMaxWidth}),
     (max-height: 520px) and (orientation: landscape) {
     --gy: 0.6rem;
