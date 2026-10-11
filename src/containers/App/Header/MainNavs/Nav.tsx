@@ -216,7 +216,7 @@ function Nav({
       !todayStats.dailyBonusAttempted;
     const resultNotViewed = !todayStats.dailyRewardResultViewed;
     return (
-      todayStats.achievedDailyGoals.length === 3 &&
+      todayStats?.achievedDailyGoals?.length === 3 &&
       (hasDailyBonusButNotAttempted || resultNotViewed)
     );
   }, [

@@ -21,6 +21,16 @@ function mergeTodayStats(
   const nextTodayStats = {
     ...state.todayStats,
     ...newStats,
+    // the header and Home menu read .length on this list: a partial update
+    // that carries it as undefined/null keeps the list it already had
+    ...('achievedDailyGoals' in newStats &&
+    !Array.isArray(newStats.achievedDailyGoals)
+      ? {
+          achievedDailyGoals: Array.isArray(state.todayStats.achievedDailyGoals)
+            ? state.todayStats.achievedDailyGoals
+            : []
+        }
+      : {}),
     ...('aiUsagePolicy' in newStats
       ? { aiUsagePolicy: nextAiUsagePolicy }
       : {}),

@@ -35,6 +35,8 @@ import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
+const NO_DAILY_GOALS: string[] = [];
+
 export default function TopMenu({
   onInputModalButtonClick,
   onPlayAIStories,
@@ -177,7 +179,8 @@ export default function TopMenu({
     todayStats?.dailyHasBonus,
     AI_FEATURES_DISABLED
   ]);
-  const achievedDailyGoals = todayStats.achievedDailyGoals;
+  const achievedDailyGoals: string[] =
+    todayStats?.achievedDailyGoals || NO_DAILY_GOALS;
   const dailyQuestionCompleted = !!todayStats?.dailyQuestionCompleted;
   const dailyQuestionShiny = !dailyQuestionCompleted;
   const allGoalsAchieved = useMemo(
