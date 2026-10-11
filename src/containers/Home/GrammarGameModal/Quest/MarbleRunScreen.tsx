@@ -1540,12 +1540,15 @@ const rightCls = css`
     box-shadow: 0 4px 0 #18803e;
   }
 `;
+// a miss reads as red at a glance, with readable text (the old pale pink
+// at 85% looked like a faded boss button: about 2.5:1)
 const wrongCls = css`
   && {
-    border-color: #3a3442;
-    background: linear-gradient(#ff8fa8, #f0607f);
-    box-shadow: 0 4px 0 #b02c4b;
-    opacity: 0.85;
+    border-color: #8f1d38;
+    background: linear-gradient(#e0405e, #c02a4a);
+    box-shadow: 0 4px 0 #8f1d38;
+    color: #fff;
+    opacity: 1;
   }
 `;
 const keyCls = css`

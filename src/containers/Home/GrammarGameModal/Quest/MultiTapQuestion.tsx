@@ -156,7 +156,10 @@ export default function MultiTapQuestion({
                   sentenceCls,
                   marks.includes(i) && !settled && stompedCls,
                   settled && !bit(wrongMask, i) && cls.right,
-                  settled && bit(wrongMask, i) && stompedCls,
+                  // the learner's own miss keeps its strike but not the fade
+                  settled &&
+                    bit(wrongMask, i) &&
+                    (off && !answer!.isCorrect ? strikeCls : stompedCls),
                   off && !answer!.isCorrect && cls.wrong,
                   i >= revealed && foggedCls
                 )}
@@ -381,6 +384,12 @@ const sentenceCls = css`
       padding-bottom: 0.45rem;
       line-height: 1.25;
     }
+  }
+`;
+const strikeCls = css`
+  && {
+    text-decoration: line-through;
+    text-decoration-thickness: 3px;
   }
 `;
 const stompedCls = css`
