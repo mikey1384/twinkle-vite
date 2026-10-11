@@ -120,6 +120,21 @@ export default function WorldMap({
       : '▶ PLAY';
   // its full size, as drawn beside a stop (an 'on' bubble is the stop's)
   const bubbleSize = useRef<[number, number]>([0, 0]);
+  // the pixel font arrives after the first paint (font-display: swap), and
+  // the bubble and the stop's title are measured again in it
+  const [fontsTick, setFontsTick] = useState(0);
+  useEffect(() => {
+    const fonts = document.fonts;
+    if (!fonts) return;
+    let live = true;
+    const remeasure = () => live && setFontsTick((tick) => tick + 1);
+    fonts.ready.then(remeasure);
+    fonts.addEventListener?.('loadingdone', remeasure);
+    return () => {
+      live = false;
+      fonts.removeEventListener?.('loadingdone', remeasure);
+    };
+  }, []);
   useLayoutEffect(() => {
     const map = mapRef.current;
     const bubble = bubbleRef.current;
@@ -130,15 +145,31 @@ export default function WorldMap({
     setBubbleAt(spot ? { ...spot, id: selected.id } : null);
     // the bubble moves with the picked stop, the map's size and its label
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected?.id, selected?.unlocked, world.key, hitLimits, bubbleLabel]);
+  }, [
+    selected?.id,
+    selected?.unlocked,
+    world.key,
+    hitLimits,
+    bubbleLabel,
+    fontsTick
+  ]);
   const spot = bubbleAt && bubbleAt.id === selected?.id ? bubbleAt : null;
 
   // A map bigger than its area scrolls the picked stop (and its PLAY bubble)
   // into view, but only when the stop isn't wholly in view already: a stop
   // the player can see never moves, so a second tap or click on it (or on
   // its bubble) always lands (r28 review: on desktop the map slid away
-  // under the mouse between the pick and the Play click).
+  // under the mouse between the pick and the Play click). A stop the player
+  // didn't pick (the one a world opens on) also brings its whole bubble into
+  // view: nobody's finger is on it, and its PLAY was cut by the area's edge
+  // (r29 review: "▶ PLA" on first open).
+  const pickedByPlayer = useRef<string | null>(null);
+  const pickedInWorld = useRef(world.id);
   useEffect(() => {
+    if (pickedInWorld.current !== world.id) {
+      pickedInWorld.current = world.id;
+      pickedByPlayer.current = null;
+    }
     const area = mapAreaRef.current;
     const map = mapRef.current;
     if (!area || !map || selectedIndex < 0) return;
@@ -149,7 +180,7 @@ export default function WorldMap({
       `[data-stop="${selectedIndex}"]`
     );
     if (!stop) return;
-    const own = tapBoxOf(stop);
+    const own = stopBoxOf(stop);
     const frame = area.getBoundingClientRect();
     const view = {
       l: frame.left + area.clientLeft,
@@ -157,22 +188,25 @@ export default function WorldMap({
       r: frame.left + area.clientLeft + area.clientWidth,
       b: frame.top + area.clientTop + area.clientHeight
     };
-    if (
-      own.l >= view.l - 0.5 &&
-      own.t >= view.t - 0.5 &&
-      own.r <= view.r + 0.5 &&
-      own.b <= view.b + 0.5
-    )
-      return;
-    // the stop and its bubble, centred
+    // the stop and its bubble (with room for its bob)
     const box = { ...own };
     const bubble = spot && bubbleRef.current?.getBoundingClientRect();
     if (bubble) {
-      box.l = Math.min(box.l, bubble.left);
-      box.t = Math.min(box.t, bubble.top);
-      box.r = Math.max(box.r, bubble.right);
-      box.b = Math.max(box.b, bubble.bottom);
+      box.l = Math.min(box.l, bubble.left - BUBBLE_CLEAR);
+      box.t = Math.min(box.t, bubble.top - BUBBLE_CLEAR);
+      box.r = Math.max(box.r, bubble.right + BUBBLE_CLEAR);
+      box.b = Math.max(box.b, bubble.bottom + BUBBLE_CLEAR);
     }
+    const mustShow =
+      pickedByPlayer.current === selected?.id || !bubble ? own : box;
+    if (
+      mustShow.l >= view.l - 0.5 &&
+      mustShow.t >= view.t - 0.5 &&
+      mustShow.r <= view.r + 0.5 &&
+      mustShow.b <= view.b + 0.5
+    )
+      return;
+    // centred
     area.scrollTo({
       left: wide
         ? area.scrollLeft + (box.l + box.r) / 2 - (view.l + view.r) / 2
@@ -182,7 +216,25 @@ export default function WorldMap({
         : undefined,
       behavior: 'smooth'
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [world.id, selectedIndex, mapSize, spot]);
+
+  // The phone panel keeps one height for every stop (r29), so a long stop
+  // name can't grow it: a name too long for one line drops to the 8px pixel
+  // size and wraps to two lines; one longer still (a few three- and four-group
+  // stops on narrow phones) ends in "…" and opens in full over the panel
+  // when tapped, the panel staying the same size (r29 review N-3).
+  const titleRef = useRef<HTMLDivElement>(null);
+  const [titleCut, setTitleCut] = useState(false);
+  const [titleOpen, setTitleOpen] = useState(false);
+  useLayoutEffect(() => {
+    setTitleOpen(false);
+    const title = titleRef.current;
+    if (!title) return;
+    delete title.dataset.fit;
+    if (title.scrollWidth > title.clientWidth + 1) title.dataset.fit = 'small';
+    setTitleCut(title.scrollHeight > title.clientHeight + 1);
+  }, [selected?.id, mapSize, fontsTick]);
 
   // Each map plays its world's own map song (not the level theme), including
   // when browsing unlocked worlds without leaving this screen.
@@ -282,27 +334,29 @@ export default function WorldMap({
                       !node.grade &&
                       (big ? bossNodeCls : openNodeCls),
                     node.unlocked && node.grade && GRADE_NODE[node.grade],
-                    done && marbleNodeCls,
                     node.unlocked && node.grade && 'gq-graded',
                     !node.unlocked && lockedCls,
                     !node.unlocked && 'gq-locked',
                     selected?.id === node.id && selectedCls
                   )}
-                  style={{
-                    ...at,
-                    ...(done
-                      ? { backgroundImage: `url(${spriteUri(node.grade)})` }
-                      : null),
-                    ...hit
-                  }}
+                  style={
+                    {
+                      ...at,
+                      ...(done
+                        ? { '--disc-art': `url(${spriteUri(node.grade)})` }
+                        : null),
+                      ...hit
+                    } as React.CSSProperties
+                  }
                   // a tap picks the stop; a tap on the picked stop plays it
                   // (Mikey 10-07: a player tapped the stop and "nothing
                   // happened" — the Play button was off to the side)
-                  onClick={() =>
-                    selected?.id === node.id && node.unlocked && !starting
-                      ? onPlayNode(node)
-                      : onSelectNode(node.id)
-                  }
+                  onClick={() => {
+                    if (selected?.id === node.id && node.unlocked && !starting)
+                      return onPlayNode(node);
+                    pickedByPlayer.current = node.id;
+                    onSelectNode(node.id);
+                  }}
                   aria-label={
                     node.grade
                       ? `${node.name}, best grade ${node.grade}`
@@ -310,22 +364,26 @@ export default function WorldMap({
                   }
                   title={node.grade ? `Best grade ${node.grade}` : undefined}
                 >
-                  {!done &&
-                    (node.kind === 'stop' ? (
-                      <span className={nodeNumCls}>{node.index}</span>
-                    ) : (
-                      <PixelIcon
-                        name={node.kind === 'fort' ? 'tower' : 'crown'}
-                        scale={2}
-                        className={cx(
-                          nodeIconCls,
-                          !node.unlocked && greyIconCls
-                        )}
-                      />
-                    ))}
-                  {node.cleared && !done && (
-                    <PixelIcon name="flag" scale={2} className={flagCls} />
-                  )}
+                  {/* the disc art, zoomed on hover apart from the button,
+                      whose ::before is the tap box */}
+                  <span className={discArtCls}>
+                    {!done &&
+                      (node.kind === 'stop' ? (
+                        <span className={nodeNumCls}>{node.index}</span>
+                      ) : (
+                        <PixelIcon
+                          name={node.kind === 'fort' ? 'tower' : 'crown'}
+                          scale={2}
+                          className={cx(
+                            nodeIconCls,
+                            !node.unlocked && greyIconCls
+                          )}
+                        />
+                      ))}
+                    {node.cleared && !done && (
+                      <PixelIcon name="flag" scale={2} className={flagCls} />
+                    )}
+                  </span>
                 </button>
                 {selected?.id === node.id &&
                   (node.unlocked ? (
@@ -420,7 +478,18 @@ export default function WorldMap({
                     ? 'Fort · mini-boss'
                     : 'Castle · world boss'}
               </div>
-              <div className={panelTitleCls}>{selected.name}</div>
+              <div
+                ref={titleRef}
+                className={cx(panelTitleCls, titleOpen && titleOpenCls)}
+                title={selected.name}
+                role={titleCut ? 'button' : undefined}
+                aria-expanded={titleCut ? titleOpen : undefined}
+                onClick={
+                  titleCut ? () => setTitleOpen((open) => !open) : undefined
+                }
+              >
+                {selected.name}
+              </div>
               {selected.skills ? (
                 <div className={skillListCls}>
                   {selected.skills.map((s) => (
@@ -922,17 +991,30 @@ interface Box {
   r: number;
   b: number;
 }
-// a drawn stop's tap box and disc together, in viewport px
-function tapBoxOf(stop: HTMLElement) {
+// a drawn stop's tap box (its ::before, as stopHitLimits cut it) and its
+// disc and tap box together, in viewport px; read unscaled, so a stop drawn
+// bigger under the mouse (its hover zoom) measures as it sits
+function stopBoxOf(stop: HTMLElement) {
   const r = stop.getBoundingClientRect();
+  const cx = (r.left + r.right) / 2;
+  const cy = (r.top + r.bottom) / 2;
+  const halfW = stop.offsetWidth / 2;
+  const halfH = stop.offsetHeight / 2;
   const hit = getComputedStyle(stop, '::before');
+  const tap = {
+    l: cx - halfW + (parseFloat(hit.left) || 0),
+    t: cy - halfH + (parseFloat(hit.top) || 0),
+    r: cx + halfW - (parseFloat(hit.right) || 0),
+    b: cy + halfH - (parseFloat(hit.bottom) || 0)
+  };
   return {
-    l: r.left + Math.min(0, parseFloat(hit.left) || 0),
-    t: r.top + Math.min(0, parseFloat(hit.top) || 0),
-    r: r.right - Math.min(0, parseFloat(hit.right) || 0),
-    b: r.bottom - Math.min(0, parseFloat(hit.bottom) || 0),
-    cx: (r.left + r.right) / 2,
-    cy: (r.top + r.bottom) / 2
+    l: Math.min(tap.l, cx - halfW),
+    t: Math.min(tap.t, cy - halfH),
+    r: Math.max(tap.r, cx + halfW),
+    b: Math.max(tap.b, cy + halfH),
+    cx,
+    cy,
+    tap
   };
 }
 function placeBubble(
@@ -949,14 +1031,15 @@ function placeBubble(
   const ox = frame.left + map.clientLeft;
   const oy = frame.top + map.clientTop;
   const boxes = stops.map((stop) => {
-    const box = tapBoxOf(stop);
+    const box = stopBoxOf(stop);
     return {
       l: box.l - ox,
       t: box.t - oy,
       r: box.r - ox,
       b: box.b - oy,
       cx: box.cx - ox,
-      cy: box.cy - oy
+      cy: box.cy - oy,
+      tap: box.tap
     };
   });
   const own = boxes[index];
@@ -1010,14 +1093,17 @@ function placeBubble(
       covered(box) === 0
     );
   });
+  // the stop's own tap box exactly, never its disc: on a mouse a disc is
+  // wider than its box, and a Play box that size reached into the next
+  // stop's box, so a click meant to pick it started this run (r29 review)
   if (!clear)
     return {
       side: 'on',
-      dx: own.l - own.cx,
-      dy: own.t - own.cy,
+      dx: own.tap.l - ox - own.cx,
+      dy: own.tap.t - oy - own.cy,
       tail: 0,
-      width: own.r - own.l,
-      height: own.b - own.t
+      width: own.tap.r - own.tap.l,
+      height: own.tap.b - own.tap.t
     };
   const { side, x, y } = clear;
   const along = side === 'above' || side === 'below';
@@ -1041,14 +1127,13 @@ const nodeCls = css`
   height: 3.6rem;
   padding: 0;
   border: none;
-  background: ${disc(12, OPEN_DISC)} center / 100% 100% no-repeat;
+  /* the disc's picture, drawn by its art span (discArtCls); the classes
+     below and a cleared node's marble set it */
+  --disc-art: ${disc(12, OPEN_DISC)};
+  background: none;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 0 rgba(26, 20, 38, 0.45));
   cursor: pointer;
-  transition: transform 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   /* only the tap box takes taps, so neighbours' boxes never overlap */
   pointer-events: none;
   &::before {
@@ -1058,8 +1143,14 @@ const nodeCls = css`
     inset: ${hitSide('t')} ${hitSide('r')} ${hitSide('b')} ${hitSide('l')};
     pointer-events: auto;
   }
-  &:hover {
-    transform: translate(-50%, -50%) scale(1.08);
+  /* the disc art zooms under a hovering pointer; the button (and its tap
+     box) never scales, so hit areas are the same hovered or not (r30: a
+     zoomed box reached ~1.5px into the next stop's). Only where a pointer
+     hovers: a phone keeps :hover on the last stop tapped. */
+  @media (hover: hover) {
+    &:hover > span {
+      transform: scale(1.08);
+    }
   }
   @media (max-width: ${mobileMaxWidth}) {
     /* 24px disc + 10px all round = a 44px tap box */
@@ -1078,24 +1169,27 @@ const bigNodeCls = css`
   }
 `;
 
-// the node drawn as Classic's letter marble (its image set inline)
-const marbleNodeCls = css`
-  && {
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-  }
+// a node's disc art: its picture (--disc-art) with its number or icon
+const discArtCls = css`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--disc-art) center / 100% 100% no-repeat;
+  transition: transform 0.15s;
 `;
 const openNodeCls = css`
-  background-image: ${disc(12, OPEN_DISC)};
+  --disc-art: ${disc(12, OPEN_DISC)};
 `;
 // big (boss) discs use the 15-row art, stops the 12-row
 const GRADE_NODE: Record<string, string> = Object.fromEntries(
   Object.entries(GRADE_DISCS).map(([grade, p]) => [
     grade,
     css`
-      background-image: ${disc(12, p)};
+      --disc-art: ${disc(12, p)};
       &.gq-big {
-        background-image: ${disc(15, p)};
+        --disc-art: ${disc(15, p)};
       }
       color: #fff;
     `
@@ -1103,11 +1197,11 @@ const GRADE_NODE: Record<string, string> = Object.fromEntries(
 );
 
 const bossNodeCls = css`
-  background-image: ${disc(15, BOSS_DISC)};
+  --disc-art: ${disc(15, BOSS_DISC)};
 `;
 
 const lockedCls = css`
-  background-image: ${disc(12, STONE_DISC)};
+  --disc-art: ${disc(12, STONE_DISC)};
   color: #4a4f5c;
 `;
 
@@ -1196,6 +1290,9 @@ const playAnchorCls = css`
   z-index: 4;
   width: 0;
   height: 0;
+  /* only the bubble itself takes clicks: its wrapper's line box is taller
+     than the button and swallowed clicks on the next stop's tap box (r30) */
+  pointer-events: none;
   > span {
     position: absolute;
     left: 50%;
@@ -1230,6 +1327,7 @@ const bigPlayAnchorCls = css`
 `;
 const playBubbleCls = css`
   ${button(GOLD, '#8a5200')}
+  pointer-events: auto;
   padding: 0.4rem 1rem;
   font-family: ${PIXEL_FONT};
   font-size: 1.1rem;
@@ -1285,6 +1383,12 @@ const TAIL_SIDE: Record<BubbleSpot['side'], string> = {
     }
     &&::after {
       display: none;
+    }
+    /* and it never lifts or sinks under the pointer (a game button's hover
+       and press shift it 1-4px, into the next stop's box) */
+    &&&:hover:not(:disabled),
+    &&&:active:not(:disabled) {
+      transform: none;
     }
   `,
   below: css`
@@ -1435,6 +1539,16 @@ const panelCls = css`
 const panelBodyCls = css`
   flex: 1;
   min-width: 0;
+  /* the stop's full name opens over it (titleOpenCls) */
+  position: relative;
+  /* phones: as tall as the panel row, its text centred, so the opened
+     name has the panel's whole height */
+  @media (max-width: ${mobileMaxWidth}) {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
 `;
 
 const panelLabelCls = css`
@@ -1456,6 +1570,35 @@ const panelTitleCls = css`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* too long for one line: the pixel font's own 8px size, up to two
+       lines (set from the measured name, see titleRef) */
+    &[data-fit='small'] {
+      margin: 0.2rem 0 0.3rem;
+      font-size: 8px;
+      line-height: 1.3;
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+    &[role='button'] {
+      cursor: pointer;
+    }
+  }
+`;
+// a cut name, tapped: shown whole over the panel's text (same panel size)
+const titleOpenCls = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    &&& {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      margin: 0;
+      display: block;
+      -webkit-line-clamp: unset;
+      overflow-y: auto;
+      background: ${PARCHMENT.f};
+    }
   }
 `;
 

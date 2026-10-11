@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import test from 'node:test';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   closestGap,
   spacedStops,
@@ -127,22 +128,63 @@ test('a straight path keeps its stops evenly spread', () => {
   for (const gap of gaps) assert.ok(Math.abs(gap - gaps[0]) < 0.01);
 });
 
-// Each world's node count today (twinkle-api helpers/english/questMap.ts:
-// its stops, forts and castle). The map reads its stops from
-// worldStops.generated.ts; run this file with WRITE_STOP_TABLE=1 to rewrite
-// it after a path or a count changes.
-const WORLD_NODE_COUNTS: Record<string, number> = {
-  'starter-village': 13,
-  'harbor-town': 12,
-  'windmill-hills': 11,
-  'forest-of-clauses': 14,
-  'tense-canyon': 11,
-  'passive-glacier': 12,
-  'sky-library': 21,
-  'the-citadel': 7,
-  'the-academy': 16,
-  'logic-tower': 21
-};
+// Each world's nodes (its stops, forts and castle) come from one place: the
+// website's snapshot of the api's QUEST_MAP (test/fixtures/grammarQuestMap.json,
+// which the Quest browser test renders too). The next test checks that
+// snapshot against the api's own helpers/english/questMap.ts whenever an api
+// checkout sits beside this one, so a world that gains a stop can't drift
+// silently. The map reads its stops from worldStops.generated.ts; run this
+// file with WRITE_STOP_TABLE=1 to rewrite it after a path or a count changes
+// (refresh the snapshot first).
+interface MapWorld {
+  key: string;
+  nodes: { id: string; kind: string }[];
+}
+const QUEST_MAP: MapWorld[] = JSON.parse(
+  readFileSync(
+    new URL('./fixtures/grammarQuestMap.json', import.meta.url),
+    'utf8'
+  )
+);
+const WORLD_NODE_COUNTS: Record<string, number> = Object.fromEntries(
+  QUEST_MAP.map((world) => [world.key, world.nodes.length])
+);
+const shapeOf = (worlds: MapWorld[]) =>
+  worlds.map((world) => ({
+    key: world.key,
+    nodes: world.nodes.map((node) => `${node.id}:${node.kind}`)
+  }));
+
+// the api checkout beside this one: work trees keep it at ../api, the main
+// checkouts at ../twinkle-api (GRAMMAR_QUEST_API_MAP names another file)
+const API_QUEST_MAP = [
+  process.env.GRAMMAR_QUEST_API_MAP,
+  fileURLToPath(
+    new URL('../../api/helpers/english/questMap.ts', import.meta.url)
+  ),
+  fileURLToPath(
+    new URL('../../twinkle-api/helpers/english/questMap.ts', import.meta.url)
+  )
+].find((file): file is string => !!file && existsSync(file));
+
+test(
+  'the quest map snapshot has the api’s worlds and nodes',
+  {
+    skip: API_QUEST_MAP
+      ? false
+      : 'no api checkout beside this one (../api or ../twinkle-api); set GRAMMAR_QUEST_API_MAP to its helpers/english/questMap.ts to compare'
+  },
+  async () => {
+    const api: { QUEST_MAP: MapWorld[] } = await import(
+      pathToFileURL(API_QUEST_MAP!).href
+    );
+    assert.deepEqual(
+      shapeOf(QUEST_MAP),
+      shapeOf(api.QUEST_MAP),
+      `test/fixtures/grammarQuestMap.json is out of date with ${API_QUEST_MAP}: refresh it, then rerun this file with WRITE_STOP_TABLE=1`
+    );
+  }
+);
 const STOP_TABLE = new URL(
   '../src/containers/Home/GrammarGameModal/Quest/worldStops.generated.ts',
   import.meta.url
