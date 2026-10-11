@@ -26,6 +26,7 @@ import AudioToggles from './AudioToggles';
 import PixelIcon from './PixelIcon';
 import { musicForNode, playMusic, stopMusic } from './MarbleRun/music';
 import { useReadCooldown } from './readCooldown';
+import { useMoreBelow } from './moreBelow';
 import { PracticeRun } from './MarbleRun/level/runner';
 import { themeFor } from './MarbleRun/level/themes';
 import { BossFight, type BossTurn } from './MarbleRun/boss/fight';
@@ -445,6 +446,23 @@ export default function MarbleRunScreen({
   lessonOpenRef.current = lessonOpen;
   const dockRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  // a miss's card: the sentence, its marks and the Continue row always show
+  // whole; the rule card between them is the part that gives way (it
+  // shrinks and scrolls on its own, fading out at its fold)
+  const missOpen =
+    (phase === 'review' && !!answer && !answer.isCorrect) ||
+    (phase === 'bossReview' && !!answer);
+  // the level gives the miss card more room too, while it shows (on a
+  // phone on its side, only once the card is short of room, and then until
+  // the card closes, so the level doesn't flip back and forth)
+  const missOpenRef = useRef(missOpen);
+  missOpenRef.current = missOpen;
+  const missRoomyRef = useRef(false);
+  const ruleRef = useRef<HTMLDivElement>(null);
+  const ruleMore = useMoreBelow(
+    ruleRef,
+    missOpen ? `${run.runId}:${question?.position}:${koreanShown}` : null
+  );
   const [stageWidth, setStageWidth] = useState<number | undefined>(undefined);
   // Continue can be below the fold on a small screen or with larger text.
   // A new question must start at its sentence, not at the review's scroll
@@ -470,12 +488,25 @@ export default function MarbleRunScreen({
         parseFloat(style.paddingBottom);
       const ratio = 960 / 380;
       let width: number;
+      const card = cardRef.current;
+      const rule = card?.querySelector<HTMLElement>('[data-fit-flex]');
+      if (!missOpenRef.current) missRoomyRef.current = false;
+      else if (
+        card &&
+        (card.scrollHeight > card.clientHeight + 1 ||
+          (!!rule &&
+            rule.scrollHeight > rule.clientHeight + 1 &&
+            rule.clientHeight < parseFloat(style.fontSize) * 6.4))
+      )
+        missRoomyRef.current = true;
       if (style.flexDirection === 'row') {
         const gap = parseFloat(style.columnGap) || 0;
         // Landscape needs room for the sentence and two columns of answers.
-        // A lesson page has no answers to tap: the card takes more room.
+        // A lesson page has no answers to tap, and a miss's card holds the
+        // whole sentence, its rule card and Continue: the card takes more room.
         width = Math.min(
-          (innerW - gap) * (lessonOpenRef.current ? 0.28 : 0.4),
+          (innerW - gap) *
+            (lessonOpenRef.current ? 0.28 : missRoomyRef.current ? 0.22 : 0.4),
           innerH * ratio
         );
       } else {
@@ -489,12 +520,22 @@ export default function MarbleRunScreen({
             (el.offsetHeight - el.clientHeight) +
             (i ? dockGap : 0);
         });
+        // a part that shrinks to fit (a miss's rule card) still wants its
+        // own height, up to its cap: the level gives way first
+        dock.querySelectorAll<HTMLElement>('[data-fit-flex]').forEach((el) => {
+          const cap = parseFloat(getComputedStyle(el).maxHeight);
+          const wants = Math.min(el.scrollHeight, cap >= 0 ? cap : Infinity);
+          need += Math.max(0, wants - el.clientHeight);
+        });
         const gap = parseFloat(style.rowGap) || 0;
-        // the level never shrinks below about a third of the screen: a tall
-        // card (four long sentences and a rule card) scrolls instead
+        // the level never shrinks below about a third of the screen while a
+        // question is asked (a tall card scrolls instead); a lesson page or a
+        // miss's card is read, not played, and may take more of it
         const floor = Math.min(
           innerW,
-          innerH * (lessonOpenRef.current ? 0.12 : 0.32) * ratio
+          innerH *
+            (lessonOpenRef.current ? 0.12 : missOpenRef.current ? 0.2 : 0.32) *
+            ratio
         );
         width = Math.max(
           floor,
@@ -642,8 +683,15 @@ export default function MarbleRunScreen({
               </span>
             </span>
           )}
-          <div className={cx(cardCls, boss && bossCardCls)} ref={cardRef}>
-            <div className={cardInnerCls}>
+          <div
+            className={cx(
+              cardCls,
+              boss && bossCardCls,
+              missOpen && missCardCls
+            )}
+            ref={cardRef}
+          >
+            <div className={cx(cardInnerCls, missOpen && missInnerCls)}>
               {phase === 'finishing' || toFlag || !question ? (
                 <div className={readyCls}>
                   {phase === 'finishing'
@@ -828,7 +876,15 @@ export default function MarbleRunScreen({
                     (phase === 'bossReview' && answer)) && (
                     <div className={reviewCls}>
                       {answer.ruleCard && (
-                        <div className={ruleScrollCls}>
+                        <div
+                          className={cx(
+                            ruleScrollCls,
+                            missRuleCls,
+                            ruleMore && ruleFadeCls
+                          )}
+                          ref={ruleRef}
+                          data-fit-flex
+                        >
                           <RuleCard
                             card={answer.ruleCard}
                             look={boss ? 'boss' : 'quest'}
@@ -1416,6 +1472,46 @@ const ruleScrollCls = css`
     max-height: 22dvh;
   }
 `;
+// a miss: the card lays its parts out in a column that fits the card, and
+// only the rule card (missRuleCls) may shrink
+const missCardCls = css`
+  display: flex;
+  flex-direction: column;
+`;
+const missInnerCls = css`
+  && {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  > * {
+    flex: none;
+  }
+`;
+const missRuleCls = css`
+  && {
+    flex: 0 1 auto;
+    min-height: 4.8rem;
+  }
+  /* phones on their side: the level sits beside the card, so the rule card
+     may take all the height the card has left (and with the longest
+     sentences, as little as its first lines) */
+  @media (max-height: 520px) and (orientation: landscape) {
+    && {
+      min-height: 3.2rem;
+      max-height: none;
+    }
+  }
+`;
+// more of the rule card below its fold: its last lines fade out (the mask
+// stays put while the card scrolls under it; a short window fades less)
+const RULE_FADE =
+  'linear-gradient(#000 max(60%, calc(100% - 2.4rem)), transparent)';
+const ruleFadeCls = css`
+  -webkit-mask-image: ${RULE_FADE};
+  mask-image: ${RULE_FADE};
+`;
 const readyCls = css`
   padding: 4rem 0;
   text-align: center;
@@ -1646,6 +1742,18 @@ const errorCls = css`
 const reviewCls = css`
   margin-top: 0.8rem;
   color: #1f2937;
+  @media (max-height: 520px) and (orientation: landscape) {
+    margin-top: 0.4rem;
+  }
+  && {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  > * {
+    flex: none;
+  }
 `;
 const nextRowCls = css`
   display: flex;

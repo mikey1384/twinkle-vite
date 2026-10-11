@@ -1,12 +1,11 @@
 import { gqMedia } from '../media';
+import { closestGap, spacedStops, stopGap, type Point } from './stopSpacing';
 
 // Where map nodes sit on each world painting: points along the painted path,
 // in percent of the image (x from the left, y from the top). Every painting
 // was made with the path running from the bottom-left foreground to the
 // castle at the top-right; a world can override the default curve once its
 // painting is in.
-
-type Point = [number, number];
 
 const DEFAULT_PATH: Point[] = [
   [8, 88],
@@ -240,27 +239,35 @@ export const WORLD_THUMBS: Record<string, string> = Object.fromEntries(
   ])
 );
 
-// Spread nodes by distance on the 16:9 painting. A horizontal percentage
-// covers more pixels than a vertical one; equal percent distances crowded
-// nodes together on steep sections of a route.
+// Each world's stops along its painted path, spaced so no two crowd each
+// other (stopSpacing.ts); worked out once per world.
+const placed = new Map<string, Point[]>();
 export function nodePositions(worldKey: string, count: number): Point[] {
-  const path = WORLD_PATHS[worldKey] || DEFAULT_PATH;
-  if (count <= 0) return [];
-  if (count === 1) return [path[path.length - 1]];
-  const lengths = [0];
-  for (let i = 1; i < path.length; i++) {
-    const [x1, y1] = path[i - 1];
-    const [x2, y2] = path[i];
-    lengths.push(lengths[i - 1] + Math.hypot((x2 - x1) * (16 / 9), y2 - y1));
+  const key = `${worldKey}:${count}`;
+  let points = placed.get(key);
+  if (!points) {
+    points = spacedStops(WORLD_PATHS[worldKey] || DEFAULT_PATH, count);
+    placed.set(key, points);
   }
-  const total = lengths[lengths.length - 1];
-  return Array.from({ length: count }, (_, n) => {
-    const d = (total * n) / (count - 1);
-    let i = 1;
-    while (i < path.length - 1 && lengths[i] < d) i++;
-    const t = (d - lengths[i - 1]) / (lengths[i] - lengths[i - 1] || 1);
-    const [x1, y1] = path[i - 1];
-    const [x2, y2] = path[i];
-    return [x1 + (x2 - x1) * t, y1 + (y2 - y1) * t] as Point;
-  });
+  return points;
+}
+
+// How tall the map must be drawn, per px of the gap its stops need, for its
+// two closest stops to sit that far apart: `tap` for any two stops (a whole
+// tap box), `big` for a fort or castle and its closest neighbour (its bigger
+// disc must not reach into the neighbour's box). The map grows past the
+// screen, and scrolls, when the screen is smaller than that.
+export function mapHeightPerGapPx(
+  worldKey: string,
+  count: number,
+  bigStops: number[]
+) {
+  const points = nodePositions(worldKey, count);
+  const per = (gap: number) => (gap > 0 && gap < Infinity ? 100 / gap : 0);
+  let big = Infinity;
+  for (const i of bigStops)
+    points.forEach((p, j) => {
+      if (j !== i && points[i]) big = Math.min(big, stopGap(points[i], p));
+    });
+  return { tap: per(closestGap(points)), big: per(big) };
 }

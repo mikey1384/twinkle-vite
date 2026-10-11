@@ -1,0 +1,125 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {
+  closestGap,
+  spacedStops,
+  stopGap,
+  type Point
+} from '../src/containers/Home/GrammarGameModal/Quest/stopSpacing';
+
+// distance from a point to the nearest place on a path (in height percent)
+function offPath(p: Point, path: Point[]) {
+  let best = Infinity;
+  for (let i = 1; i < path.length; i++) {
+    const [ax, ay] = path[i - 1];
+    const [bx, by] = path[i];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const t = Math.max(
+      0,
+      Math.min(
+        1,
+        ((p[0] - ax) * dx + (p[1] - ay) * dy) / (dx * dx + dy * dy || 1)
+      )
+    );
+    best = Math.min(
+      best,
+      Math.hypot(p[0] - (ax + dx * t), p[1] - (ay + dy * t))
+    );
+  }
+  return best;
+}
+
+// windmill-hills' painted path (layout.ts): it doubles back on itself, so
+// stops spread evenly along it bunch up where it turns
+const HAIRPIN: Point[] = [
+  [38, 94],
+  [27, 89],
+  [23, 86],
+  [23, 83],
+  [28, 79],
+  [37, 76],
+  [45, 72],
+  [50, 70],
+  [49, 67],
+  [46, 64],
+  [51, 61],
+  [59, 58],
+  [67, 56],
+  [68, 53],
+  [62, 50],
+  [56, 48],
+  [57, 46],
+  [64, 45],
+  [70, 44],
+  [76, 42],
+  [82, 38],
+  [87, 35],
+  [88, 33],
+  [84, 30],
+  [81, 28],
+  [82, 27],
+  [85, 25]
+];
+
+test('two stops are as far apart as their larger axis gap, on the painting’s 16:9 shape', () => {
+  assert.equal(stopGap([10, 10], [19, 12]), 16);
+  assert.equal(stopGap([10, 10], [11, 30]), 20);
+  assert.equal(
+    closestGap([
+      [0, 0],
+      [90, 0],
+      [0, 50]
+    ]),
+    50
+  );
+});
+
+test('stops stay on the painted path, in order, from its start to its end', () => {
+  const stops = spacedStops(HAIRPIN, 11);
+  assert.equal(stops.length, 11);
+  assert.deepEqual(stops[0], HAIRPIN[0]);
+  assert.deepEqual(stops[10], HAIRPIN[HAIRPIN.length - 1]);
+  for (const stop of stops) assert.ok(offPath(stop, HAIRPIN) < 1e-6);
+  assert.deepEqual(spacedStops(HAIRPIN, 1), [HAIRPIN[HAIRPIN.length - 1]]);
+  assert.deepEqual(spacedStops(HAIRPIN, 0), []);
+});
+
+test('stops a hairpin crowds together are pushed apart along the path', () => {
+  const count = 11;
+  // evenly along the path (the old layout) for comparison
+  const lengths = [0];
+  for (let i = 1; i < HAIRPIN.length; i++)
+    lengths.push(
+      lengths[i - 1] +
+        Math.hypot(
+          ((HAIRPIN[i][0] - HAIRPIN[i - 1][0]) * 16) / 9,
+          HAIRPIN[i][1] - HAIRPIN[i - 1][1]
+        )
+    );
+  const total = lengths[lengths.length - 1];
+  const even = Array.from({ length: count }, (_, n): Point => {
+    const d = (total * n) / (count - 1);
+    let i = 1;
+    while (i < HAIRPIN.length - 1 && lengths[i] < d) i++;
+    const t = (d - lengths[i - 1]) / (lengths[i] - lengths[i - 1] || 1);
+    return [
+      HAIRPIN[i - 1][0] + (HAIRPIN[i][0] - HAIRPIN[i - 1][0]) * t,
+      HAIRPIN[i - 1][1] + (HAIRPIN[i][1] - HAIRPIN[i - 1][1]) * t
+    ];
+  });
+  const spaced = spacedStops(HAIRPIN, count);
+  assert.ok(closestGap(spaced) > closestGap(even) * 2);
+  // and it is worked out the same way every time
+  assert.deepEqual(spacedStops(HAIRPIN, count), spaced);
+});
+
+test('a straight path keeps its stops evenly spread', () => {
+  const line: Point[] = [
+    [10, 90],
+    [90, 10]
+  ];
+  const stops = spacedStops(line, 5);
+  const gaps = stops.slice(1).map((p, i) => stopGap(p, stops[i]));
+  for (const gap of gaps) assert.ok(Math.abs(gap - gaps[0]) < 0.01);
+});

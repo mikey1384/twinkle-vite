@@ -230,7 +230,10 @@ export const foggedCls = css`
 // (::before) fills half the gap around it, so a brick plus a row gap is a
 // 44px target (40 on a phone on its side) and neighbours never overlap
 // (Mikey 10-11); the bricks still wrap like words. --gy and --gx are the
-// gaps the tap boxes split.
+// gaps the tap boxes split. Where the card's own padding is thin (phones),
+// the wall keeps 8px clear at its right end, so a missed row-end brick's ✗
+// badge (below) stays inside the card; it is there before any answer, so
+// settling never rewraps the wall.
 const wallCls = css`
   --gy: 8px;
   --gx: 6px;
@@ -238,28 +241,37 @@ const wallCls = css`
   flex-wrap: wrap;
   gap: var(--gy) var(--gx);
   align-items: center;
+  @media (max-width: ${mobileMaxWidth}),
+    (max-height: 520px) and (orientation: landscape) {
+    padding-right: 8px;
+  }
 `;
 // once the answer is in, the bricks take no more taps: on a phone the wall
 // packs back to the words' own height (r23's), so a long sentence's miss
 // card (its rule card and Continue) still fits one screen. A missed brick's
-// ✗ badge is smaller and further out on a settled wall, at every size: on a
-// packed brick the usual 18px badge covered the word's last letter
-// ("forecas✗"). 14px at -10/-10 clears the word's own text box and the
-// next brick's (measured at 360-1280 wide); it stays out of the flow, so no
-// brick changes width.
+// ✗ badge sits in the gap after the brick, centred on it and level with the
+// brick's lower half: between the brick's last letter and the next brick's
+// first, and above the next row's words, so on a packed wall it covers no
+// text (the usual corner badge covered the last letter: "forecas✗"). 18px
+// with an 11px ✗ (Mikey's looks bar: the old settled 8px ✗ was too small);
+// out of the flow, so no brick changes width.
 const settledWallCls = css`
   && > button::after {
-    bottom: -10px;
-    right: -10px;
-    width: 10px;
-    height: 10px;
-    font-size: 8px;
+    right: calc(-11px - var(--gx) / 2);
+    bottom: -7px;
+    width: 14px;
+    height: 14px;
+    font-size: 11px;
   }
   @media (max-width: ${mobileMaxWidth}),
     (max-height: 520px) and (orientation: landscape) {
     --gy: 0.6rem;
     > button {
       min-height: 0;
+      /* the words' own height: only the top and bottom padding go, so no
+         brick changes width and the wall never rewraps */
+      padding-top: 0.15rem;
+      padding-bottom: 0.15rem;
     }
   }
 `;

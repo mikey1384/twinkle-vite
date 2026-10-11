@@ -1,10 +1,22 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { createPortal } from 'react-dom';
 import { NavSlotContext } from '../navSlot';
 import { FORMAT_INFO, GotchaText, MODIFIER_INFO } from './FormatQuestion';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { WORLD_IMAGES, WORLD_THUMBS, nodePositions } from './layout';
+import {
+  WORLD_IMAGES,
+  WORLD_THUMBS,
+  mapHeightPerGapPx,
+  nodePositions
+} from './layout';
 import type { QuestNode, QuestState, QuestWorld } from './types';
 import AudioToggles from './AudioToggles';
 import GoalsChip from './GoalsChip';
@@ -47,6 +59,13 @@ export default function WorldMap({
   starting: boolean;
 }) {
   const positions = nodePositions(world.key, world.nodes.length);
+  // a crowded world's map is drawn big enough for every stop to keep a whole
+  // tap box (the map area scrolls to the rest; Mikey 10-11)
+  const perGapPx = mapHeightPerGapPx(
+    world.key,
+    world.nodes.length,
+    world.nodes.flatMap((n, i) => (n.kind === 'stop' ? [] : [i]))
+  );
   const selected =
     world.nodes.find((n) => n.id === selectedNodeId) ||
     world.nodes.find((n) => n.unlocked && !n.cleared) ||
@@ -54,17 +73,10 @@ export default function WorldMap({
   // display only: the node the player is up to pulses gold on the map
   const current = world.nodes.find((n) => n.unlocked && !n.cleared);
   const nemesisDue = state.nemesis.filter((n) => n.due);
-  // phones scroll the wide map sideways: keep the picked stop in view
+  // phones scroll the wide map sideways, and a crowded world's map scrolls
+  // both ways: keep the picked stop in view
   const mapAreaRef = useRef<HTMLDivElement>(null);
   const selectedIndex = selected ? world.nodes.indexOf(selected) : -1;
-  useEffect(() => {
-    const area = mapAreaRef.current;
-    const map = area?.firstElementChild as HTMLElement | null;
-    if (!area || !map || area.scrollWidth <= area.clientWidth) return;
-    const x = ((positions[selectedIndex]?.[0] ?? 50) / 100) * map.offsetWidth;
-    area.scrollTo({ left: x - area.clientWidth / 2, behavior: 'smooth' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [world.id, selectedIndex]);
 
   // each stop's tap box is as big as its size allows (44px on a phone), but
   // never reaches over a neighbour's: two stops close together split the gap
@@ -86,6 +98,54 @@ export default function WorldMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [world.key, world.nodes.length, mapSize]
   );
+  useEffect(() => {
+    const area = mapAreaRef.current;
+    const map = mapRef.current;
+    const at = positions[selectedIndex];
+    if (!area || !map || !at) return;
+    const wide = area.scrollWidth > area.clientWidth;
+    const tall = area.scrollHeight > area.clientHeight;
+    if (!wide && !tall) return;
+    // the stop's place in the area's scrolled content
+    const box = map.getBoundingClientRect();
+    const view = area.getBoundingClientRect();
+    const x =
+      box.left - view.left + area.scrollLeft + (at[0] / 100) * box.width;
+    const y = box.top - view.top + area.scrollTop + (at[1] / 100) * box.height;
+    area.scrollTo({
+      left: wide ? x - area.clientWidth / 2 : undefined,
+      top: tall ? y - area.clientHeight / 2 : undefined,
+      behavior: 'smooth'
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [world.id, selectedIndex, mapSize]);
+
+  // the picked stop's PLAY bubble goes on whichever side of it has room, so
+  // it never covers another stop or its tap box (Mikey 10-11: it sat over
+  // the next stops on crowded worlds)
+  const bubbleRef = useRef<HTMLButtonElement>(null);
+  const [bubbleAt, setBubbleAt] = useState<
+    (BubbleSpot & { id: string }) | null
+  >(null);
+  const bubbleLabel = starting
+    ? '…'
+    : selected?.freeRematch
+      ? '▶ FREE'
+      : '▶ PLAY';
+  // its full size, as drawn beside a stop (an 'on' bubble is the stop's)
+  const bubbleSize = useRef<[number, number]>([0, 0]);
+  useLayoutEffect(() => {
+    const map = mapRef.current;
+    const bubble = bubbleRef.current;
+    if (!map || !bubble || !selected || selectedIndex < 0) return;
+    if (bubble.textContent !== '▶')
+      bubbleSize.current = [bubble.offsetWidth, bubble.offsetHeight];
+    const spot = placeBubble(map, selectedIndex, ...bubbleSize.current);
+    setBubbleAt(spot ? { ...spot, id: selected.id } : null);
+    // the bubble moves with the picked stop, the map's size and its label
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id, selected?.unlocked, world.key, hitLimits, bubbleLabel]);
+  const spot = bubbleAt && bubbleAt.id === selected?.id ? bubbleAt : null;
 
   // Each map plays its world's own map song (not the level theme), including
   // when browsing unlocked worlds without leaving this screen.
@@ -139,7 +199,13 @@ export default function WorldMap({
         <div
           className={mapCls}
           ref={mapRef}
-          style={{ backgroundImage: `url(${WORLD_IMAGES[world.key]})` }}
+          style={
+            {
+              backgroundImage: `url(${WORLD_IMAGES[world.key]})`,
+              '--map-per-tap': perGapPx.tap,
+              '--map-per-big': perGapPx.big
+            } as React.CSSProperties
+          }
         >
           <div className={titleCls}>
             <div className={tierCls}>
@@ -166,6 +232,7 @@ export default function WorldMap({
                   />
                 )}
                 <button
+                  data-stop={i}
                   className={cx(
                     nodeCls,
                     big && bigNodeCls,
@@ -223,23 +290,44 @@ export default function WorldMap({
                 </button>
                 {selected?.id === node.id &&
                   (node.unlocked ? (
-                    // the picked stop says PLAY right where the finger is
+                    // the picked stop says PLAY right where the finger is, on
+                    // the side with room (placeBubble)
                     <span
-                      className={cx(playAnchorCls, big && bigPlayAnchorCls)}
+                      className={cx(
+                        playAnchorCls,
+                        big && bigPlayAnchorCls,
+                        spot && placedAnchorCls
+                      )}
                       style={at}
                     >
-                      <span className={playCenterCls}>
+                      <span
+                        className={playCenterCls}
+                        style={
+                          spot
+                            ? { left: spot.dx, top: spot.dy, bottom: 'auto' }
+                            : undefined
+                        }
+                      >
                         <button
-                          className={playBubbleCls}
+                          ref={bubbleRef}
+                          className={cx(
+                            playBubbleCls,
+                            spot && TAIL_SIDE[spot.side]
+                          )}
+                          style={
+                            spot
+                              ? ({
+                                  '--tail': `${spot.tail}px`,
+                                  width: spot.width,
+                                  height: spot.height
+                                } as React.CSSProperties)
+                              : undefined
+                          }
                           disabled={starting}
                           onClick={() => onPlayNode(node)}
                           aria-label={`Play ${node.name}`}
                         >
-                          {starting
-                            ? '…'
-                            : node.freeRematch
-                              ? '▶ FREE'
-                              : '▶ PLAY'}
+                          {spot?.side === 'on' ? '▶' : bubbleLabel}
                         </button>
                       </span>
                     </span>
@@ -497,18 +585,28 @@ const noChipsRowCls = css`
       'side';
   }
 `;
-// the map is as big as fits both ways, keeping the painting's shape
+// the map is as big as fits both ways, keeping the painting's shape, but
+// never smaller than its stops need: a crowded world's closest two stops
+// stay a whole tap box apart (--tap-need: 44px on an upright phone, 40px
+// elsewhere), and a fort's or castle's disc stays clear of its neighbour
+// (--big-need: its disc and a little air); --map-per-tap and --map-per-big
+// come from the world's layout. The area scrolls to the rest. The map
+// centres itself with auto margins, so a map bigger than the area still
+// scrolls to every edge.
 const mapAreaCls = css`
+  --tap-need: 40px;
+  --big-need: calc(4.5rem + 4px);
   grid-area: map;
   min-height: 0;
   container-type: size;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: auto;
+  overscroll-behavior: contain;
   @media (max-width: ${mobileMaxWidth}) {
-    justify-content: flex-start;
-    overflow-x: auto;
-    overflow-y: hidden;
+    --big-need: calc(3.6rem + 4px);
+  }
+  @media (max-width: ${mobileMaxWidth}) and (orientation: portrait) {
+    --tap-need: 44px;
   }
 `;
 const sideCls = css`
@@ -596,10 +694,14 @@ const nemesisCls = css`
   }
 `;
 
+const MAP_MIN_HEIGHT =
+  'calc(max(var(--tap-need) * var(--map-per-tap, 0), var(--big-need) * var(--map-per-big, 0)) + 24px)';
 const mapCls = css`
   ${frame(WOOD, 4, false)}
   position: relative;
-  width: min(100cqw, 100cqh * 16 / 9);
+  flex: none;
+  margin: auto;
+  width: max(min(100cqw, 100cqh * 16 / 9), ${MAP_MIN_HEIGHT} * 16 / 9);
   aspect-ratio: 16 / 9;
   overflow: hidden;
   background-size: cover;
@@ -609,8 +711,8 @@ const mapCls = css`
     ${frame(WOOD, 3, false)}
     /* phones: the whole wide painting at the full height left, scrolled
        sideways like a game map (nodes stay on the painted path) */
-    flex: none;
-    height: 100cqh;
+    margin: auto 0;
+    height: max(100cqh, ${MAP_MIN_HEIGHT});
     width: auto;
   }
 `;
@@ -706,6 +808,125 @@ function stopHitLimits(
         '--hit-l': `${l.l.toFixed(1)}px`
       }) as React.CSSProperties
   );
+}
+
+// Where the picked stop's PLAY bubble goes: beside the stop on the first
+// side (above, below, right, left; centred, then slid along) where it stays
+// inside the map and touches no other stop's disc or tap box, with room for
+// its bob. Read from the drawn stops, so it follows their real sizes.
+// Offsets are from the stop's centre to the bubble's top-left corner; `tail`
+// is where its pointer sits along the edge facing the stop. Where stops
+// crowd it on every side, the bubble becomes a ▶ button over the stop's own
+// tap box (side 'on', its size): it covers only the stop it plays.
+export interface BubbleSpot {
+  side: 'above' | 'below' | 'left' | 'right' | 'on';
+  dx: number;
+  dy: number;
+  tail: number;
+  width?: number;
+  height?: number;
+}
+const BUBBLE_GAP = 6;
+// the bubble's bob (questPlayBob) and a hair of air
+const BUBBLE_CLEAR = 3;
+interface Box {
+  l: number;
+  t: number;
+  r: number;
+  b: number;
+}
+function placeBubble(
+  map: HTMLElement,
+  index: number,
+  width: number,
+  height: number
+): BubbleSpot | null {
+  const stops = Array.from(
+    map.querySelectorAll<HTMLElement>('[data-stop]')
+  ).sort((a, b) => Number(a.dataset.stop) - Number(b.dataset.stop));
+  if (!stops[index] || !width || !height) return null;
+  const frame = map.getBoundingClientRect();
+  const ox = frame.left + map.clientLeft;
+  const oy = frame.top + map.clientTop;
+  const boxes = stops.map((stop) => {
+    const r = stop.getBoundingClientRect();
+    const hit = getComputedStyle(stop, '::before');
+    // the tap box and the disc together
+    return {
+      l: r.left - ox + Math.min(0, parseFloat(hit.left) || 0),
+      t: r.top - oy + Math.min(0, parseFloat(hit.top) || 0),
+      r: r.right - ox - Math.min(0, parseFloat(hit.right) || 0),
+      b: r.bottom - oy - Math.min(0, parseFloat(hit.bottom) || 0),
+      cx: (r.left + r.right) / 2 - ox,
+      cy: (r.top + r.bottom) / 2 - oy
+    };
+  });
+  const own = boxes[index];
+  const covered = (box: Box) =>
+    boxes.reduce(
+      (sum, other, i) =>
+        i === index
+          ? sum
+          : sum +
+            Math.max(
+              0,
+              Math.min(box.r, other.r + BUBBLE_CLEAR) -
+                Math.max(box.l, other.l - BUBBLE_CLEAR)
+            ) *
+              Math.max(
+                0,
+                Math.min(box.b, other.b + BUBBLE_CLEAR) -
+                  Math.max(box.t, other.t - BUBBLE_CLEAR)
+              ),
+      0
+    );
+  const slides = (size: number) => [
+    0,
+    -size / 4,
+    size / 4,
+    -size / 2 + 14,
+    size / 2 - 14
+  ];
+  const spots: { side: BubbleSpot['side']; x: number; y: number }[] = [];
+  for (const side of ['above', 'below'] as const)
+    for (const slide of slides(width))
+      spots.push({
+        side,
+        x: own.cx - width / 2 + slide,
+        y: side === 'above' ? own.t - BUBBLE_GAP - height : own.b + BUBBLE_GAP
+      });
+  for (const side of ['right', 'left'] as const)
+    for (const slide of slides(height))
+      spots.push({
+        side,
+        x: side === 'right' ? own.r + BUBBLE_GAP : own.l - BUBBLE_GAP - width,
+        y: own.cy - height / 2 + slide
+      });
+  const clear = spots.find((spot) => {
+    const box = { l: spot.x, t: spot.y, r: spot.x + width, b: spot.y + height };
+    return (
+      box.l >= 0 &&
+      box.t >= BUBBLE_CLEAR &&
+      box.r <= map.clientWidth &&
+      box.b <= map.clientHeight - BUBBLE_CLEAR &&
+      covered(box) === 0
+    );
+  });
+  if (!clear)
+    return {
+      side: 'on',
+      dx: own.l - own.cx,
+      dy: own.t - own.cy,
+      tail: 0,
+      width: own.r - own.l,
+      height: own.b - own.t
+    };
+  const { side, x, y } = clear;
+  const along = side === 'above' || side === 'below';
+  const tail = along
+    ? Math.max(14, Math.min(width - 14, own.cx - x))
+    : Math.max(12, Math.min(height - 12, own.cy - y));
+  return { side, dx: x - own.cx, dy: y - own.cy, tail };
 }
 
 // a stop's tap box: --hit-pad past its disc on every side, cut back on a
@@ -893,6 +1114,12 @@ const playAnchorCls = css`
 const playCenterCls = css`
   display: block;
 `;
+// placed beside the stop (placeBubble): its offsets come inline
+const placedAnchorCls = css`
+  && > span {
+    transform: none;
+  }
+`;
 const bigPlayAnchorCls = css`
   > span {
     bottom: 3rem;
@@ -910,10 +1137,11 @@ const playBubbleCls = css`
   font-size: 1.1rem;
   white-space: nowrap;
   animation: questPlayBob 0.9s ease-in-out infinite alternate;
+  /* its pointer, on the edge that faces the stop (--tail: how far along) */
   &::after {
     content: '';
     position: absolute;
-    left: 50%;
+    left: var(--tail, 50%);
     bottom: -9px;
     margin-left: -6px;
     border: 6px solid transparent;
@@ -931,12 +1159,64 @@ const playBubbleCls = css`
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
+  /* px on phones (8px rem): a 44px thumb target */
   @media (max-width: ${mobileMaxWidth}) {
-    min-height: 40px;
+    min-height: 44px;
     font-size: 0.95rem;
     padding: 0.35rem 0.8rem;
   }
 `;
+const TAIL_SIDE: Record<BubbleSpot['side'], string> = {
+  above: '',
+  // crowded on every side: a ▶ button over the stop's own tap box (it stays
+  // put, so it never bobs into a neighbour's)
+  on: css`
+    && {
+      min-height: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      animation: none;
+    }
+    &&::after {
+      display: none;
+    }
+  `,
+  below: css`
+    &&::after {
+      bottom: auto;
+      top: -9px;
+      border: 6px solid transparent;
+      border-bottom-color: ${INK};
+      border-top: 0;
+    }
+  `,
+  right: css`
+    &&::after {
+      left: -9px;
+      top: var(--tail);
+      bottom: auto;
+      margin: -6px 0 0;
+      border: 6px solid transparent;
+      border-right-color: ${INK};
+      border-left: 0;
+    }
+  `,
+  left: css`
+    &&::after {
+      left: auto;
+      right: -9px;
+      top: var(--tail);
+      bottom: auto;
+      margin: -6px 0 0;
+      border: 6px solid transparent;
+      border-left-color: ${INK};
+      border-right: 0;
+    }
+  `
+};
 const pointerAnchorCls = css`
   position: absolute;
   z-index: 3;

@@ -1,4 +1,10 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import {
@@ -8,6 +14,7 @@ import {
   type LessonStep
 } from './lessonText';
 import type { QuestLesson } from './types';
+import { scrollToMore, useMoreBelow } from './moreBelow';
 import {
   GOLD,
   INK,
@@ -31,7 +38,8 @@ import {
 // worked-question page. The footer (page dots, Back, Next / Got it) is
 // pinned to the bottom of the card, so it is always in view; a page still
 // too tall after the split (a phone held sideways) scrolls only the lesson
-// above it.
+// above it, and says so: the lesson fades out at the footer and a "More"
+// chip above it scrolls on (an iPhone shows no scrollbar until you scroll).
 export default function LessonCard({
   lessons,
   scrollerRef,
@@ -62,6 +70,11 @@ export default function LessonCard({
   const parts = q ? questionParts(q.text) : [];
   const showRule = current.part !== 'worked';
   const measuring = current.part === 'whole' && !measured.has(current.lesson);
+  const footRef = useRef<HTMLDivElement>(null);
+  // (not while a whole lesson is being measured: it may yet be split)
+  const more =
+    useMoreBelow(scrollerRef, `${at}:${koreanShown}:${measuring}`) &&
+    !measuring;
 
   function go(index: number) {
     const next = steps[Math.max(0, Math.min(steps.length - 1, index))];
@@ -218,7 +231,20 @@ export default function LessonCard({
           </div>
         </div>
       )}
-      <div className={footCls}>
+      <div className={footCls} ref={footRef}>
+        {/* the lesson goes on under the footer: a fade and a chip say so */}
+        <span className={cx(fadeCls, more && shownCls)} aria-hidden />
+        <button
+          className={cx(moreCls, more && shownCls)}
+          tabIndex={more ? 0 : -1}
+          aria-hidden={!more}
+          aria-label="Scroll down for more"
+          onClick={() =>
+            scrollToMore(scrollerRef.current, footRef.current?.offsetHeight)
+          }
+        >
+          More ▼
+        </button>
         {steps.length > 1 && (
           <span className={dotsCls} aria-hidden>
             {steps.map((s, i) => (
@@ -525,6 +551,64 @@ const footCls = css`
     box-shadow:
       -2rem 0 0 ${FOOT_RULE},
       2rem 0 0 ${FOOT_RULE};
+  }
+`;
+// the "more below" cue: hidden (no taps, no tab stop) until the lesson
+// scrolls under the footer; it fades in once (opacity only, no loop)
+const shownCls = css`
+  && {
+    opacity: 1;
+    visibility: visible;
+  }
+`;
+const fadeCls = css`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 3.2rem;
+  pointer-events: none;
+  background: linear-gradient(${FOOT_BG}00, ${FOOT_BG});
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+`;
+// a small chip over the faded lines; its tap box is 44px tall (40 on a
+// phone on its side) and ends above the footer, so it never takes Next's
+// taps
+const moreCls = css`
+  ${frame(TAG, 2)}
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.8rem);
+  translate: -50% 0;
+  min-height: 28px;
+  padding: 0 1rem;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  color: #8a5200;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 0 rgba(26, 20, 38, 0.3));
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -8px -6px;
+  }
+  ${SHORT} {
+    bottom: calc(100% + 0.6rem);
+    &::before {
+      inset: -6px -6px;
+    }
   }
 `;
 const dotsCls = css`
