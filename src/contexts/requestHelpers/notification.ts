@@ -100,25 +100,33 @@ export default function notificationRequestHelpers({
     },
     async fetchTodayStats() {
       try {
+        const { data } = await request.get(`${URL}/notification/today`, auth());
+        // a 2xx whose body is not the stats (an HTML page from a proxy or
+        // captive portal) must not overwrite Today Stats with undefined
+        if (
+          !data ||
+          typeof data !== 'object' ||
+          !Array.isArray(data.achievedDailyGoals)
+        ) {
+          throw new Error('Unexpected Today Stats response');
+        }
         const {
-          data: {
-            achievedDailyGoals,
-            dailyTaskStreak,
-            dailyTaskBestStreak,
-            dailyTaskStatus,
-            aiCallDuration,
-            aiUsagePolicy,
-            dailyHasBonus,
-            dailyBonusAttempted,
-            dailyRewardResultViewed,
-            dailyQuestionCompleted,
-            xpEarned,
-            coinsEarned,
-            nextDayTimeStamp,
-            nextMission,
-            standardTimeStamp
-          }
-        } = await request.get(`${URL}/notification/today`, auth());
+          achievedDailyGoals,
+          dailyTaskStreak,
+          dailyTaskBestStreak,
+          dailyTaskStatus,
+          aiCallDuration,
+          aiUsagePolicy,
+          dailyHasBonus,
+          dailyBonusAttempted,
+          dailyRewardResultViewed,
+          dailyQuestionCompleted,
+          xpEarned,
+          coinsEarned,
+          nextDayTimeStamp,
+          nextMission,
+          standardTimeStamp
+        } = data;
         return {
           achievedDailyGoals,
           dailyTaskStreak,

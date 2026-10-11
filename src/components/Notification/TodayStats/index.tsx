@@ -306,7 +306,7 @@ export default function TodayStats({
               </div>
             </div>
             <DailyGoals
-              achievedGoals={todayStats.achievedDailyGoals}
+              achievedGoals={todayStats.achievedDailyGoals || []}
               isChecked={isDailyRewardChecked}
               isDailyBonusButtonShown={isDailyBonusButtonShown}
             />
