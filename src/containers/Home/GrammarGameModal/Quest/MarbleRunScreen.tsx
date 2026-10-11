@@ -10,6 +10,7 @@ import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import RuleCard from '../Review/RuleCard';
+import LessonCard from './LessonCard';
 import ChallengeModal from '../Review/ChallengeModal';
 import useChallengeReviews from '../Review/useChallengeReviews';
 import {
@@ -139,8 +140,14 @@ export default function MarbleRunScreen({
   // question, a combo meter, fog (choices come out one at a time) or a chaser
   const rules = run.rules.mode === 'practice' ? run.rules : null;
   const modifier = rules?.modifier || null;
+  // a stop with approved lessons teaches them, one page per point
+  // (Mikey 10-11); one without still shows its worked example
+  const lessons = rules?.lessons?.length ? rules.lessons : null;
   const [showExample, setShowExample] = useState(
-    () => modifier === 'example' && !!rules?.example && !run.answers?.length
+    () =>
+      modifier === 'example' &&
+      (!!lessons || !!rules?.example) &&
+      !run.answers?.length
   );
   const [fogShown, setFogShown] = useState(99);
   const [chaser, setChaser] = useState(rules?.chaser || null);
@@ -385,8 +392,10 @@ export default function MarbleRunScreen({
         n <= Math.min(question?.choices.length || 0, fogShown)
       )
         handlePick(n - 1);
-      if (e.key === 'Enter' && showExample) setShowExample(false);
-      else if (e.key === 'Enter' && phase === 'review' && ready && !reading)
+      // a lesson card turns its own pages on Enter (LessonCard)
+      if (e.key === 'Enter' && showExample) {
+        if (!lessons) setShowExample(false);
+      } else if (e.key === 'Enter' && phase === 'review' && ready && !reading)
         handleContinue();
     }
     addEventListener('keydown', onKey);
@@ -428,6 +437,12 @@ export default function MarbleRunScreen({
   // keeping the stage's 960×380 shape. Short landscape screens put the
   // stage and the card side by side.
   const bodyRef = useRef<HTMLDivElement>(null);
+  // a lesson page is read, not played: the level may shrink further so the
+  // whole page fits (Mikey's one-screen rule), and the empty progress row
+  // stays hidden until the questions start
+  const lessonOpen = showExample && !!lessons;
+  const lessonOpenRef = useRef(lessonOpen);
+  lessonOpenRef.current = lessonOpen;
   const dockRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [stageWidth, setStageWidth] = useState<number | undefined>(undefined);
@@ -458,7 +473,11 @@ export default function MarbleRunScreen({
       if (style.flexDirection === 'row') {
         const gap = parseFloat(style.columnGap) || 0;
         // Landscape needs room for the sentence and two columns of answers.
-        width = Math.min((innerW - gap) * 0.4, innerH * ratio);
+        // A lesson page has no answers to tap: the card takes more room.
+        width = Math.min(
+          (innerW - gap) * (lessonOpenRef.current ? 0.28 : 0.4),
+          innerH * ratio
+        );
       } else {
         // the dock's natural height: every child at its content height
         let need = 0;
@@ -473,7 +492,10 @@ export default function MarbleRunScreen({
         const gap = parseFloat(style.rowGap) || 0;
         // the level never shrinks below about a third of the screen: a tall
         // card (four long sentences and a rule card) scrolls instead
-        const floor = Math.min(innerW, innerH * 0.32 * ratio);
+        const floor = Math.min(
+          innerW,
+          innerH * (lessonOpenRef.current ? 0.12 : 0.32) * ratio
+        );
         width = Math.max(
           floor,
           Math.min(innerW, 1320, (innerH - need - gap) * ratio)
@@ -532,7 +554,7 @@ export default function MarbleRunScreen({
           <Stage engine={engine} />
         </div>
         <div className={dockCls} ref={dockRef}>
-          <span className={slotsCls}>
+          <span className={cx(slotsCls, lessonOpen && hiddenCls)}>
             {boss
               ? Array.from({ length: 7 }, (_, i) => {
                   const g = Object.values(answers)
@@ -630,6 +652,14 @@ export default function MarbleRunScreen({
                       ? 'THE LAST HIT…'
                       : 'TO THE FLAG…'}
                 </div>
+              ) : showExample && lessons ? (
+                <LessonCard
+                  lessons={lessons}
+                  scrollerRef={cardRef}
+                  onDone={() => setShowExample(false)}
+                  koreanShown={koreanShown}
+                  onToggleKorean={handleToggleKorean}
+                />
               ) : showExample && rules?.example ? (
                 // a worked example first: a solved question on this stop's
                 // grammar, with its rule card
@@ -1250,6 +1280,9 @@ const labelCls = css`
   font-size: 1rem;
   color: #ffd84a;
   ${inkShadow(1)}
+`;
+const hiddenCls = css`
+  display: none;
 `;
 // the progress marbles on their own row (Mikey 10-07): a dark plate as wide
 // as the card, the marbles centered both ways with room around them

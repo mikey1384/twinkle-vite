@@ -140,6 +140,25 @@ export interface QuestAnswer {
   forgiven?: boolean;
 }
 
+// A point's lesson, written for the point before any question is asked:
+// a short title, one plain rule (its Korean note secondary), right/wrong
+// pairs, and one worked question shown with its blank, its four choices,
+// the key and each wrong choice's trap (null when the stop's pinned
+// question changed since the lesson was written)
+export interface QuestLesson {
+  skillCode: string;
+  title: string;
+  rule: string;
+  ruleKo: string | null;
+  pairs: { right: string; wrong: string }[];
+  question: null | {
+    text: string;
+    choices: string[];
+    key: number;
+    notes: (string | null)[];
+  };
+}
+
 export type QuestRules =
   | {
       mode: 'practice';
@@ -154,6 +173,9 @@ export type QuestRules =
         answer: string;
         card: ReviewRuleCard;
       };
+      // a rule-first stop with approved lessons gets these instead of
+      // `example` (Mikey 10-11): one page per point the stop teaches
+      lessons?: QuestLesson[];
       chaser?: { gap: number; start: number };
     }
   | {
