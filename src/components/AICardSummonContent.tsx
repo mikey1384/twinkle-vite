@@ -29,7 +29,6 @@ export default function AICardSummonContent({
       <AICardPreview
         card={displayedCard}
         artwork={<AICard card={displayedCard} compact />}
-        summoner={displayedCard.creator}
         density="target"
         framed={false}
       />

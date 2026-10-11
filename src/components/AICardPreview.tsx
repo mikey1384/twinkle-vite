@@ -3,21 +3,23 @@ import { css } from '@emotion/css';
 import AICardDetails from '~/components/AICardDetails';
 import AICardMarketDetails from '~/components/AICardMarketDetails';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { Card, User } from '~/types';
+import { Card } from '~/types';
 
 export default function AICardPreview({
   card,
   artwork,
-  summoner,
   density = 'preview',
+  brief = false,
   framed = true,
   style,
   onClick
 }: {
   card: Partial<Card>;
   artwork: React.ReactNode;
-  summoner?: User;
   density?: 'preview' | 'target';
+  // name, quality and value only (trades): the prompt, style and summon
+  // date belong to the card's own page
+  brief?: boolean;
   framed?: boolean;
   style?: React.CSSProperties;
   onClick?: () => void;
@@ -27,7 +29,7 @@ export default function AICardPreview({
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       aria-label={onClick ? `View card #${card.id}` : undefined}
-      className={`${compactPreviewClass} compact-ai-card-preview${density === 'target' ? ' compact-ai-card-preview--target' : ''}`}
+      className={`${compactPreviewClass} compact-ai-card-preview${density === 'target' ? ' compact-ai-card-preview--target' : ''}${brief ? ' compact-ai-card-preview--brief' : ''}`}
       style={{
         ...style,
         border: framed ? undefined : 0,
@@ -41,9 +43,10 @@ export default function AICardPreview({
         className="compact-ai-card-preview__details"
         card={card}
         density={density}
+        brief={brief}
         showIdentity
       />
-      <AICardMarketDetails card={card} summoner={summoner} />
+      <AICardMarketDetails card={card} />
     </div>
   );
 
@@ -178,6 +181,34 @@ const compactPreviewClass = css`
 
     @media (max-width: ${mobileMaxWidth}) {
       min-height: calc(max(12rem, 120px) - 2px);
+    }
+  }
+
+  &.compact-ai-card-preview--brief {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1.2rem;
+    min-height: 0;
+    padding: 0.8rem 1.2rem;
+    --ai-card-preview-art-width: 6rem;
+    --ai-card-preview-art-height: 8.4rem;
+    --ai-card-market-gap: 0.6rem;
+
+    .compact-ai-card-preview__market {
+      min-width: 9rem;
+      padding-inline: 1.2rem 0;
+    }
+
+    @media (max-width: ${mobileMaxWidth}) {
+      gap: 0.8rem;
+      padding: 0.6rem 0.8rem;
+      --ai-card-preview-art-width: 5.4rem;
+      --ai-card-preview-art-height: 7.6rem;
+
+      .compact-ai-card-preview__market {
+        min-width: 7.5rem;
+        padding-inline: 0.8rem 0;
+      }
     }
   }
 `;

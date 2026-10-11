@@ -51,8 +51,8 @@ export default function AssetList({
             <AICardPreview
               card={card}
               artwork={<AICard card={card} compact />}
-              summoner={card.creator}
               density="target"
+              brief
               framed={false}
               onClick={() => onInspectCard(id)}
             />

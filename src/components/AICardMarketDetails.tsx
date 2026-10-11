@@ -102,13 +102,7 @@ export function CardOwner({
   }
 }
 
-export default function AICardMarketDetails({
-  card,
-  summoner
-}: {
-  card: Partial<Card>;
-  summoner?: User;
-}) {
+export default function AICardMarketDetails({ card }: { card: Partial<Card> }) {
   const { colorKey } = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const xpNumberColor = colorKey && colorKey in Color ? colorKey : 'logoGreen';
   const burnXP =
@@ -158,7 +152,6 @@ export default function AICardMarketDetails({
           label={card.isBurned ? 'Burned by' : 'Owned by'}
         />
       )}
-      {summoner && <CardOwner owner={summoner} label="Summoned by" />}
       {!card.isBurned && !!card.askPrice && (
         <div
           className="compact-ai-card-preview__stat compact-ai-card-preview__stat--listed"

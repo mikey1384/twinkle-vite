@@ -15,19 +15,21 @@ export default function AICardDetails({
   style,
   card,
   density = 'full',
+  brief = false,
   showIdentity = false
 }: {
   className?: string;
   style?: React.CSSProperties;
   card: Partial<Card>;
   density?: 'full' | 'preview' | 'target';
+  // identity and quality only
+  brief?: boolean;
   showIdentity?: boolean;
 }) {
   const { promptText, engine, word, cardColor } = useAICard(card);
   const compact = density !== 'full';
   const target = density === 'target';
-  const isNanoBananaEngine =
-    String(engine || '').startsWith('Nano Banana');
+  const isNanoBananaEngine = String(engine || '').startsWith('Nano Banana');
 
   const formattedDate = card.timeStamp
     ? new Date(card.timeStamp * 1000).toLocaleDateString('en-US', {
@@ -117,97 +119,101 @@ export default function AICardDetails({
           </b>{' '}
           card
         </div>
-        <div
-          className={`ai-card-details__prompt ${css`
-            font-family: 'Lato', 'Arial', sans-serif;
-            font-size: ${compact ? '1.2rem' : '1.5rem'};
-            font-weight: 400;
-            line-height: ${compact ? '1.4' : '1.6'};
-            text-align: center;
-            margin: ${target ? '0.15rem 0' : compact ? '0.35rem 0' : '2rem 0'};
-            padding: ${compact ? '0' : '0 5rem'};
-            color: ${Color.black()};
-            ${compact ? `display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: ${target ? 2 : 4}; overflow: hidden;` : ''}
-
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.1rem;
-              padding: ${compact ? '0' : '0 2rem'};
-            }
-          `}`}
-        >
-          <SanitizedHTML
-            allowedAttributes={{ b: ['style'] }}
-            html={`"${promptText || ''}"`}
-          />
-        </div>
-        <div
-          className={`ai-card-details__meta ${css`
-            text-align: center;
-            ${target ? 'display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0.1rem 0.65rem;' : ''}
-            margin-top: ${compact ? '0.25rem' : '2.5rem'};
-
-            @media (max-width: ${mobileMaxWidth}) {
-              margin-top: ${compact ? '0.2rem' : '2rem'};
-            }
-          `}`}
-        >
-          <div
-            className={css`
-              font-size: ${compact ? '1.1rem' : '1.3rem'};
-              font-weight: bold;
-              font-family: 'Poppins', sans-serif;
-              color: ${Color.darkerGray()};
-              margin-bottom: ${compact ? '0.2rem' : '0.5rem'};
-
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.1rem;
-              }
-            `}
-          >
-            {card.imagePath ? card.style : '???'}
-          </div>
-          {((compact && engine) ||
-            engine === 'DALL-E 3' ||
-            engine === 'image-1' ||
-            engine === 'image-1.5' ||
-            engine === 'image-2' ||
-            engine === 'image-2.5' ||
-            isNanoBananaEngine) && (
+        {!brief && (
+          <>
             <div
-              className={css`
-                font-size: ${compact ? '1.1rem' : isNanoBananaEngine ? '1.35rem' : '1.2rem'};
-                font-family: ${
-                  isNanoBananaEngine
-                    ? `'Baloo 2', 'Poppins', sans-serif`
-                    : engine === 'DALL-E 3'
-                      ? `'Orbitron', 'Roboto Mono', sans-serif`
-                      : `'Roboto Mono', monospace`
-                };
-                text-transform: ${engine === 'DALL-E 3' ? 'uppercase' : 'none'};
-                letter-spacing: ${
-                  isNanoBananaEngine
-                    ? '0'
-                    : engine === 'DALL-E 3'
-                      ? '0.1em'
-                      : '0.02em'
-                };
-                font-weight: ${isNanoBananaEngine ? 800 : 700};
-                color: ${Color.darkerGray()};
-                margin-top: ${compact ? '0.2rem' : '0.5rem'};
-                line-height: 1;
-                text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+              className={`ai-card-details__prompt ${css`
+                font-family: 'Lato', 'Arial', sans-serif;
+                font-size: ${compact ? '1.2rem' : '1.5rem'};
+                font-weight: 400;
+                line-height: ${compact ? '1.4' : '1.6'};
+                text-align: center;
+                margin: ${target ? '0.15rem 0' : compact ? '0.35rem 0' : '2rem 0'};
+                padding: ${compact ? '0' : '0 5rem'};
+                color: ${Color.black()};
+                ${compact ? `display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: ${target ? 2 : 4}; overflow: hidden;` : ''}
 
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: ${isNanoBananaEngine ? '1.12rem' : '1.1rem'};
+                  font-size: 1.1rem;
+                  padding: ${compact ? '0' : '0 2rem'};
                 }
-              `}
+              `}`}
             >
-              {engine === 'DALL-E 3' ? 'DALL·E 3' : engine}
+              <SanitizedHTML
+                allowedAttributes={{ b: ['style'] }}
+                html={`"${promptText || ''}"`}
+              />
             </div>
-          )}
-        </div>
+            <div
+              className={`ai-card-details__meta ${css`
+                text-align: center;
+                ${target ? 'display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0.1rem 0.65rem;' : ''}
+                margin-top: ${compact ? '0.25rem' : '2.5rem'};
+
+                @media (max-width: ${mobileMaxWidth}) {
+                  margin-top: ${compact ? '0.2rem' : '2rem'};
+                }
+              `}`}
+            >
+              <div
+                className={css`
+                  font-size: ${compact ? '1.1rem' : '1.3rem'};
+                  font-weight: bold;
+                  font-family: 'Poppins', sans-serif;
+                  color: ${Color.darkerGray()};
+                  margin-bottom: ${compact ? '0.2rem' : '0.5rem'};
+
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.1rem;
+                  }
+                `}
+              >
+                {card.imagePath ? card.style : '???'}
+              </div>
+              {((compact && engine) ||
+                engine === 'DALL-E 3' ||
+                engine === 'image-1' ||
+                engine === 'image-1.5' ||
+                engine === 'image-2' ||
+                engine === 'image-2.5' ||
+                isNanoBananaEngine) && (
+                <div
+                  className={css`
+                    font-size: ${compact ? '1.1rem' : isNanoBananaEngine ? '1.35rem' : '1.2rem'};
+                    font-family: ${
+                      isNanoBananaEngine
+                        ? `'Baloo 2', 'Poppins', sans-serif`
+                        : engine === 'DALL-E 3'
+                          ? `'Orbitron', 'Roboto Mono', sans-serif`
+                          : `'Roboto Mono', monospace`
+                    };
+                    text-transform: ${engine === 'DALL-E 3' ? 'uppercase' : 'none'};
+                    letter-spacing: ${
+                      isNanoBananaEngine
+                        ? '0'
+                        : engine === 'DALL-E 3'
+                          ? '0.1em'
+                          : '0.02em'
+                    };
+                    font-weight: ${isNanoBananaEngine ? 800 : 700};
+                    color: ${Color.darkerGray()};
+                    margin-top: ${compact ? '0.2rem' : '0.5rem'};
+                    line-height: 1;
+                    text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: ${isNanoBananaEngine ? '1.12rem' : '1.1rem'};
+                    }
+                  `}
+                >
+                  {engine === 'DALL-E 3' ? 'DALL·E 3' : engine}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
-      {formattedDate && (
+      {!brief && formattedDate && (
         <div
           className={`ai-card-details__summoned ${css`
             font-size: 1.1rem;
