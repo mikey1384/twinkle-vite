@@ -1,4 +1,10 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import {
@@ -9,8 +15,6 @@ import {
 } from './lessonText';
 import type { QuestLesson } from './types';
 import { GOLD, INK, PIXEL_FONT, TAG, button, frame } from './pixelUi';
-
-const SHORT_QUERY = '(max-height: 520px) and (orientation: landscape)';
 
 // A rule-first stop's lesson card (Mikey 10-11: the old "Watch this first"
 // card "genuinely confuses" him; it showed a filled-in sentence and notes
@@ -74,16 +78,24 @@ export default function LessonCard({
     const lessonIndex = current.lesson;
     const timer = setTimeout(() => {
       const el = scrollerRef.current;
-      const tooTall =
-        !!el &&
-        el.scrollHeight > el.clientHeight + 2 &&
-        !matchMedia(SHORT_QUERY).matches;
+      // (a phone on its side too: unsplit, Next fell below the card's fold)
+      const tooTall = !!el && el.scrollHeight > el.clientHeight + 2;
       if (tooTall && lessons[lessonIndex]?.question)
         setSplit((s) => new Set(s).add(lessonIndex));
       setMeasured((m) => new Set(m).add(lessonIndex));
     }, 160);
     return () => clearTimeout(timer);
   }, [measuring, current.lesson, lessons, scrollerRef]);
+
+  // the Korean line shown or hidden changes a lesson's height: measure again
+  // (the same part of the same lesson stays on screen once measured)
+  const koreanBefore = useRef(koreanShown);
+  useEffect(() => {
+    if (koreanBefore.current === koreanShown) return;
+    koreanBefore.current = koreanShown;
+    setSplit(new Set());
+    setMeasured(new Set());
+  }, [koreanShown]);
 
   // the screen turned or resized: measure again
   useEffect(() => {
