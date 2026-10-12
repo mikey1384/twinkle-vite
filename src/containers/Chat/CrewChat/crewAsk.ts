@@ -39,6 +39,24 @@ export function buildCrewAskText({
   );
 }
 
+// Telemetry (Bridge Builder): a message sent from the Ask button's fill is
+// marked crewAsk so the daily run can tell button calls from typed ones. It
+// counts only while the sent text still starts with the filled-in mention.
+export function isCrewAskSend({
+  filledText,
+  content
+}: {
+  filledText: string;
+  content: string;
+}) {
+  const mention = /^@(Zero|Ciel)\b/i.exec(String(filledText || '').trim());
+  if (!mention) return false;
+  return String(content || '')
+    .trimStart()
+    .toLowerCase()
+    .startsWith(mention[0].toLowerCase());
+}
+
 export function requestCrewChatAsk(detail: CrewChatAskDetail) {
   window.dispatchEvent(new CustomEvent(CREW_CHAT_ASK_EVENT, { detail }));
 }

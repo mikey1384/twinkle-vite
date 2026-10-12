@@ -107,6 +107,7 @@ export default function useOptimisticSave({
       username?: string;
       profilePicUrl?: string;
       targetMessage?: any;
+      crewAsk?: boolean;
     }) {
       const isCielChat = partner?.id === CIEL_TWINKLE_ID;
       const isZeroChat = partner?.id === ZERO_TWINKLE_ID;
@@ -131,7 +132,9 @@ export default function useOptimisticSave({
         targetMessageId: newMessage.targetMessageId,
         timeStamp: newMessage.timeStamp,
         subjectId: newMessage.subjectId || 0,
-        subchannelId: newMessage.subchannelId
+        subchannelId: newMessage.subchannelId,
+        // sent from the crew panel's Ask button fill (telemetry only)
+        ...(newMessage.crewAsk ? { crewAsk: true } : {})
       };
 
       let savedMessage;

@@ -57,6 +57,7 @@ import type {
 import useMessageInputBridge from './hooks/useMessageInputBridge';
 import {
   CREW_CHAT_ASK_EVENT,
+  isCrewAskSend,
   type CrewChatAskDetail
 } from '../../CrewChat/crewAsk';
 import useMessageSearch from './hooks/useMessageSearch';
@@ -679,13 +680,21 @@ export default function MessagesContainer({
   ]);
 
   // The crew panel's Ask Ciel / Ask Zero: the call goes into this chat's
-  // message box for the member to send (CrewChat/crewAsk.ts).
+  // message box for the member to send (CrewChat/crewAsk.ts). The fill is
+  // remembered until the next send, to mark that message as a button call.
+  const crewAskFillRef = useRef<{ channelId: number; text: string } | null>(
+    null
+  );
   useEffect(() => {
     function handleCrewChatAsk(event: Event) {
       const detail = (event as CustomEvent<CrewChatAskDetail>).detail;
       if (!detail || Number(detail.channelId) !== Number(selectedChannelId)) {
         return;
       }
+      crewAskFillRef.current = {
+        channelId: Number(detail.channelId),
+        text: detail.text
+      };
       messageInputSetTextRef.current?.(detail.text);
       ChatInputRef.current?.focus();
     }
@@ -1480,13 +1489,20 @@ export default function MessagesContainer({
       }
       const isTopicMessage =
         selectedTab === 'topic' || appliedIsRespondingToSubject;
+      const crewAskFill = crewAskFillRef.current;
+      crewAskFillRef.current = null;
+      const crewAsk =
+        !!crewAskFill &&
+        crewAskFill.channelId === Number(selectedChannelId) &&
+        isCrewAskSend({ filledText: crewAskFill.text, content });
       const message = {
         userId,
         username,
         profilePicUrl,
         content,
         channelId: selectedChannelId,
-        subjectId: isTopicMessage ? topicId || appliedTopicId : null
+        subjectId: isTopicMessage ? topicId || appliedTopicId : null,
+        ...(crewAsk ? { crewAsk: true } : {})
       };
       const messageId = uuidv1();
 
