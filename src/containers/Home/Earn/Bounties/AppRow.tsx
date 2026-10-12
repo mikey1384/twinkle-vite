@@ -10,7 +10,8 @@ import {
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
-  appTitleTextClass
+  appTitleTextClass,
+  appOpenTapClass
 } from './appCardHelpers';
 import { useBountySeen, useOpenBountyApp } from './bountyTracking';
 import { AppAskButton, AppRewardsButton } from './AppRewardsModal';
@@ -25,7 +26,8 @@ export default function AppRow({ app }: { app: EarnHubApp }) {
     <li className={rowClass} ref={seenRef as React.Ref<HTMLLIElement>}>
       <span className={rankClass}>{app.popularity?.rank ?? ''}</span>
       <div
-        className={thumbClass}
+        className={cx(thumbClass, appOpenTapClass)}
+        onClick={() => openApp(app, 'row')}
         style={
           app.thumbnailUrl
             ? { backgroundImage: `url(${app.thumbnailUrl})` }
@@ -37,7 +39,12 @@ export default function AppRow({ app }: { app: EarnHubApp }) {
       </div>
       <div className={mainClass}>
         <div className={cx(titleClass, appTitleRowClass)}>
-          <span className={appTitleTextClass}>{app.title}</span>
+          <span
+            className={cx(appTitleTextClass, appOpenTapClass)}
+            onClick={() => openApp(app, 'row')}
+          >
+            {app.title}
+          </span>
           {app.popularity?.isNew && <span className={newBadgeClass}>New</span>}
         </div>
         <div className={byClass}>

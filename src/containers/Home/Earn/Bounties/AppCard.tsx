@@ -13,7 +13,8 @@ import {
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
-  appTitleTextClass
+  appTitleTextClass,
+  appOpenTapClass
 } from './appCardHelpers';
 import {
   useBountySeen,
@@ -61,7 +62,8 @@ export default function AppCard({
       ref={seenRef as React.Ref<HTMLElement>}
     >
       <div
-        className={thumbClass}
+        className={cx(thumbClass, appOpenTapClass)}
+        onClick={() => openApp(app, slot)}
         style={
           app.thumbnailUrl
             ? { backgroundImage: `url(${app.thumbnailUrl})` }
@@ -79,7 +81,12 @@ export default function AppCard({
         {eyebrow && <div className={eyebrowClass}>{eyebrow}</div>}
         <div className={payLine}>{payout}</div>
         <h3 className={cx(titleClass, appTitleRowClass)}>
-          <span className={appTitleTextClass}>{app.title}</span>
+          <span
+            className={cx(appTitleTextClass, appOpenTapClass)}
+            onClick={() => openApp(app, slot)}
+          >
+            {app.title}
+          </span>
           {isNew && <span className={newBadgeClass}>New</span>}
         </h3>
         <div className={byClass}>

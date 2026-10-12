@@ -208,6 +208,12 @@ export const appTitleTextClass = css`
   ${lineClamp(2)}
 `;
 
+// The picture and the name open the app too (Mikey 10-12): people expect to
+// tap the thumbnail, not hunt for Play. Play stays the keyboard/reader control.
+export const appOpenTapClass = css`
+  cursor: pointer;
+`;
+
 export const newBadgeClass = css`
   display: inline-block;
   flex-shrink: 0;

@@ -89,7 +89,7 @@ export function useBountySeen(app: EarnHubApp, slot: BountySlot) {
   return ref;
 }
 
-// Play tags this visit so the shelf cannot inflate its own organic ranking.
+// Play (and a tap on the picture or name) tags this visit so the shelf cannot inflate its own organic ranking.
 export function useOpenBountyApp() {
   const navigate = useNavigate();
   const tracker = useContext(TrackingContext);

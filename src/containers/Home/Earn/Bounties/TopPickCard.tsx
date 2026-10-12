@@ -13,7 +13,8 @@ import {
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
-  appTitleTextClass
+  appTitleTextClass,
+  appOpenTapClass
 } from './appCardHelpers';
 import { useBountySeen, useOpenBountyApp } from './bountyTracking';
 import { AppAskButton, AppRewardsButton } from './AppRewardsModal';
@@ -46,7 +47,8 @@ export default function TopPickCard({
       ref={seenRef as React.Ref<HTMLElement>}
     >
       <div
-        className={thumbClass}
+        className={cx(thumbClass, appOpenTapClass)}
+        onClick={() => openApp(app, slot)}
         style={
           app.thumbnailUrl
             ? { backgroundImage: `url(${app.thumbnailUrl})` }
@@ -68,7 +70,12 @@ export default function TopPickCard({
       </div>
       <div className={bodyClass}>
         <h3 className={cx(titleClass, appTitleRowClass)}>
-          <span className={appTitleTextClass}>{app.title}</span>
+          <span
+            className={cx(appTitleTextClass, appOpenTapClass)}
+            onClick={() => openApp(app, slot)}
+          >
+            {app.title}
+          </span>
           {app.popularity?.isNew && <span className={newBadgeClass}>New</span>}
         </h3>
         <div className={byClass}>

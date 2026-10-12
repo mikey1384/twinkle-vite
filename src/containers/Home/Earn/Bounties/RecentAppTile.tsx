@@ -1,9 +1,9 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import Button from '~/components/Button';
 import { Color, borderRadius } from '~/constants/css';
 import type { EarnHubApp } from './useEarnHub';
-import { getAppStatus } from './appCardHelpers';
+import { appOpenTapClass, getAppStatus } from './appCardHelpers';
 import { useBountySeen, useOpenBountyApp } from './bountyTracking';
 
 // "Jump back in" (Mikey 10-08): one of the member's recently used apps, small,
@@ -15,7 +15,8 @@ export default function RecentAppTile({ app }: { app: EarnHubApp }) {
   return (
     <li className={tileClass} ref={seenRef as React.Ref<HTMLLIElement>}>
       <div
-        className={thumbClass}
+        className={cx(thumbClass, appOpenTapClass)}
+        onClick={() => openApp(app, 'recent')}
         style={
           app.thumbnailUrl
             ? { backgroundImage: `url(${app.thumbnailUrl})` }
@@ -26,7 +27,12 @@ export default function RecentAppTile({ app }: { app: EarnHubApp }) {
         {!app.thumbnailUrl && app.title.slice(0, 1)}
       </div>
       <div className={mainClass}>
-        <div className={titleClass}>{app.title}</div>
+        <div
+          className={cx(titleClass, appOpenTapClass)}
+          onClick={() => openApp(app, 'recent')}
+        >
+          {app.title}
+        </div>
         <div className={statusClass}>{status.line}</div>
       </div>
       <Button
