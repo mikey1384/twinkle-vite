@@ -9,6 +9,10 @@ import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import RichText from '~/components/Texts/RichText';
 import { compactMarkdownPreviewStyles } from '~/components/Texts/RichText/previewTypography';
+import {
+  getExternalLinkUrl,
+  getInternalPath
+} from '~/helpers/referenceLinkHelpers';
 import UsernameText from '~/components/Texts/UsernameText';
 import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -423,7 +427,7 @@ function EmbedReferenceLine({ embed }: { embed: MarkdownMediaEmbed }) {
     return (
       <ReferenceLine
         icon={getMarkdownLinkPreviewIcon(embed)}
-        to={info?.normalizedSrc || ''}
+        to={getInternalPath(embed.src, info?.normalizedSrc)}
       >
         <span>{embed.alt || getMarkdownMediaLabel(embed)}</span>
       </ReferenceLine>
@@ -480,7 +484,12 @@ function CommentReferenceLine({ commentId }: { commentId: number }) {
       : 'View comment');
 
   return (
-    <ReferenceLine icon="comment" label="Comment" to={`/comments/${commentId}`}>
+    <ReferenceLine
+      ariaLabel={`Comment${username ? ` by ${username}` : ''}: ${truncateLabel(body)}`}
+      icon="comment"
+      label="Comment"
+      to={`/comments/${commentId}`}
+    >
       {username ? <strong>{username}</strong> : null}
       <span>{body}</span>
     </ReferenceLine>
@@ -519,12 +528,14 @@ function SubjectReferenceLine({
 // browser so they open a new tab. Enter is the anchor's own activation key
 // and Space is left alone, as for any link.
 function ReferenceLine({
+  ariaLabel,
   children,
   href,
   icon,
   label,
-  to
+  to: rawTo
 }: {
+  ariaLabel?: string;
   children: React.ReactNode;
   href?: string;
   icon: string;
@@ -533,6 +544,9 @@ function ReferenceLine({
 }) {
   const navigate = useNavigate();
   const nestedNavigate = useNestedNavigate();
+  // never a protocol-relative "//host" path, whatever the caller passed
+  const to =
+    rawTo && rawTo.startsWith('/') && !rawTo.startsWith('//') ? rawTo : '';
   const content = (
     <>
       <span
@@ -552,6 +566,7 @@ function ReferenceLine({
 
   return (
     <a
+      aria-label={ariaLabel}
       className="compact-comment-embed__reference compact-comment-embed__reference--link"
       data-feed-card-interactive="true"
       href={to || href}
@@ -583,6 +598,10 @@ function ReferenceLine({
   }
 }
 
+function truncateLabel(text: string, max = 80) {
+  return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+}
+
 function isModifiedClick(event: React.MouseEvent) {
   return (
     event.button !== 0 ||
@@ -591,20 +610,6 @@ function isModifiedClick(event: React.MouseEvent) {
     event.shiftKey ||
     event.altKey
   );
-}
-
-// Only http(s) links get an href. A bare "www." link is read as https, the
-// same way internal embed sources are parsed; anything else (relative paths,
-// other schemes) renders as plain text.
-function getExternalLinkUrl(src: string) {
-  const trimmed = String(src || '').trim();
-  const candidate = /^www\./i.test(trimmed) ? `https://${trimmed}` : trimmed;
-  try {
-    const url = new URL(candidate);
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url : null;
-  } catch {
-    return null;
-  }
 }
 
 function MarkdownInternalVideoPreview({
@@ -1004,7 +1009,8 @@ const compactCommentEmbedPreviewClass = css`
   background: #fff;
   color: ${Color.darkerGray()};
   text-align: left;
-  &[role='button'] {
+  &[role='button'],
+  &[data-feed-card-interactive='true'] {
     cursor: pointer;
   }
   &.compact-comment-embed--has-media {
@@ -1139,7 +1145,8 @@ const compactCommentEmbedPreviewClass = css`
   }
   &:has(> .compact-comment-embed__open:focus-visible) {
     outline: 2px solid ${Color.logoBlue(0.6)};
-    outline-offset: 2px;
+    /* inside the box: hero slots clip anything drawn outside it */
+    outline-offset: -2px;
   }
   .compact-comment-embed__reference--link {
     position: relative;

@@ -97,10 +97,13 @@ assert.match(
   compactCommentEmbedSource,
   /if \(!to \|\| isModifiedClick\(event\)\) return;/
 );
+// link safety (http(s) only, one leading slash) lives in referenceLinkHelpers
+// and is exercised in test/referenceLinkHelpers.test.ts
 assert.match(
   compactCommentEmbedSource,
-  /url\.protocol === 'http:' \|\| url\.protocol === 'https:'/
+  /from '~\/helpers\/referenceLinkHelpers'/
 );
+assert.match(compactCommentEmbedSource, /getInternalPath\(embed\.src/);
 assert.match(
   compactCommentEmbedSource,
   /const outerIsButton = interactive && !hasReferences;/
