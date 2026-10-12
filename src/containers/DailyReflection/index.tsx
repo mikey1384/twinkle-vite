@@ -154,7 +154,10 @@ const pageCls = css`
   color: ${PAGE.ink};
   padding: 1.4rem 2rem 4rem;
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 1rem 1rem 3rem;
+    /* the fixed bottom nav covers the page's end on phones: leave its
+       footprint (nav plus safe area, keyboard netted out) plus breathing
+       room, as Build pages do */
+    padding: 1rem 1rem calc(var(--mobile-nav-total-height, 7rem) + 2.5rem);
   }
 `;
 
