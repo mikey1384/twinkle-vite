@@ -816,9 +816,7 @@ export default function BuildWideCard({
             </div>
             {build.username ? (
               <div className={bylineClass}>
-                <span onClick={stopEvent} onKeyDown={stopEvent}>
-                  <BuildAttribution build={build} />
-                </span>
+                <BuildAttribution build={build} />
               </div>
             ) : null}
             {visitCount > 0 ? (

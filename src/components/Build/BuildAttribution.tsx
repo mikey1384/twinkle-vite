@@ -20,15 +20,21 @@ export default function BuildAttribution({
   return (
     <span style={{ display: 'block', minWidth: 0, whiteSpace: 'normal' }}>
       Owned by{' '}
-      <UsernameText
-        color="inherit"
-        textStyle={style}
-        user={{
-          id: Number(build.userId),
-          username: build.username || '',
-          profilePicUrl: build.profilePicUrl || ''
-        }}
-      />
+      {/* only the name opens the profile; taps elsewhere reach the card */}
+      <span
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        <UsernameText
+          color="inherit"
+          textStyle={style}
+          user={{
+            id: Number(build.userId),
+            username: build.username || '',
+            profilePicUrl: build.profilePicUrl || ''
+          }}
+        />
+      </span>
     </span>
   );
 }

@@ -92,14 +92,19 @@ export function normalizeBuildSummary(
   const ownerId = normalizePositiveInteger(
     build.userId ?? build.ownerId ?? uploader.id ?? current?.userId ?? 0
   );
+  // apps can be traded: the cached name and photo belong to whoever owned it
+  // then, so they fill gaps only while the owner is the same
+  const cachedOwnerId = Number(current?.userId || 0);
+  const sameOwner = !cachedOwnerId || !ownerId || cachedOwnerId === ownerId;
+  const cachedOwner = sameOwner ? current : null;
   const username = normalizeText(
     build.username ??
       build.ownerUsername ??
       uploader.username ??
-      current?.username
+      cachedOwner?.username
   );
   const profilePicUrl = normalizeText(
-    build.profilePicUrl ?? uploader.profilePicUrl ?? current?.profilePicUrl
+    build.profilePicUrl ?? uploader.profilePicUrl ?? cachedOwner?.profilePicUrl
   );
   const thumbnailUrl = normalizeText(
     build.thumbnailUrl ?? build.thumbUrl ?? current?.thumbnailUrl
@@ -109,7 +114,7 @@ export function normalizeBuildSummary(
       build.profileTheme ??
       build.ownerProfileTheme ??
       uploader.profileTheme ??
-      current?.owner?.profileTheme
+      cachedOwner?.owner?.profileTheme
   );
   const viewerRequest =
     Object.prototype.hasOwnProperty.call(build, 'viewerCollaborationRequest') ||
