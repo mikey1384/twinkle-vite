@@ -51,10 +51,9 @@ export function isCrewAskSend({
 }) {
   const mention = /^@(Zero|Ciel)\b/i.exec(String(filledText || '').trim());
   if (!mention) return false;
-  return String(content || '')
-    .trimStart()
-    .toLowerCase()
-    .startsWith(mention[0].toLowerCase());
+  return new RegExp(`^${mention[0]}\\b`, 'i').test(
+    String(content || '').trimStart()
+  );
 }
 
 export function requestCrewChatAsk(detail: CrewChatAskDetail) {

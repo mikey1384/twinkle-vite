@@ -23,6 +23,7 @@ test('a send from the Ask fill is marked only while it starts with the mention',
     false
   );
   assert.equal(isCrewAskSend({ filledText, content: '@Zero help' }), false);
+  assert.equal(isCrewAskSend({ filledText, content: '@Cielo hi' }), false);
   assert.equal(
     isCrewAskSend({ filledText: 'hello', content: '@Ciel help' }),
     false
