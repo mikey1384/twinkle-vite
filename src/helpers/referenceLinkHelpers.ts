@@ -1,10 +1,14 @@
 // A same-site path with exactly one leading slash, or '' (plain text). Extra
 // leading slashes would make "//example.org/x", which a browser reads as
 // another site; script/data sources and backslashes never become links.
+// Browsers drop tabs and newlines inside URLs and read a backslash as a
+// slash, so "/\t/evil.com" or "/\\evil.com" would still open another site.
+export const UNSAFE_PATH_CHARACTERS = /[\u0000-\u001F\u007F\\]/;
+
 export function getInternalPath(src: string, normalizedSrc?: string) {
   if (/^\s*(javascript|data|vbscript):/i.test(String(src || ''))) return '';
   const path = String(normalizedSrc || '').trim();
-  if (!path.startsWith('/') || path.includes('\\')) return '';
+  if (!path.startsWith('/') || UNSAFE_PATH_CHARACTERS.test(path)) return '';
   if (/^\/*[a-z][a-z0-9+.-]*:/i.test(path)) return '';
   return `/${path.replace(/^\/+/, '')}`;
 }

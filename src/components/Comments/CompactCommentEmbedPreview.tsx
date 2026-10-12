@@ -11,7 +11,8 @@ import RichText from '~/components/Texts/RichText';
 import { compactMarkdownPreviewStyles } from '~/components/Texts/RichText/previewTypography';
 import {
   getExternalLinkUrl,
-  getInternalPath
+  getInternalPath,
+  UNSAFE_PATH_CHARACTERS
 } from '~/helpers/referenceLinkHelpers';
 import UsernameText from '~/components/Texts/UsernameText';
 import CompactSubjectEmbedPreview from '~/components/Subjects/CompactSubjectEmbedPreview';
@@ -546,7 +547,12 @@ function ReferenceLine({
   const nestedNavigate = useNestedNavigate();
   // never a protocol-relative "//host" path, whatever the caller passed
   const to =
-    rawTo && rawTo.startsWith('/') && !rawTo.startsWith('//') ? rawTo : '';
+    rawTo &&
+    rawTo.startsWith('/') &&
+    !rawTo.startsWith('//') &&
+    !UNSAFE_PATH_CHARACTERS.test(rawTo)
+      ? rawTo
+      : '';
   const content = (
     <>
       <span

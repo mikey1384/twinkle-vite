@@ -25,6 +25,9 @@ test('an internal reference never links off-site through extra slashes', () => {
   }
   assert.equal(getInternalPath('', '//example.org/x'), '/example.org/x');
   assert.equal(getInternalPath('', '/\\example.org/x'), '');
+  for (const path of ['/\t/evil.com/x', '/\n/evil.com/x', '/\r/evil.com/x']) {
+    assert.equal(getInternalPath('', path), '', JSON.stringify(path));
+  }
 });
 
 test('script and data sources are never links', () => {
