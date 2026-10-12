@@ -858,6 +858,7 @@ function MessageBody({
     return withCardFrame(
       'Trade',
       <TransactionDetails
+        channelId={currentChannel.id}
         currentTransactionId={currentChannel.currentTransactionId}
         isAICardModalShown={isAICardModalShown}
         partner={partner}

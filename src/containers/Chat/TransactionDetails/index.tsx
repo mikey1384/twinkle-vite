@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
@@ -11,9 +11,10 @@ import {
 import { getTradeStatus } from '../Trade/helpers/status';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function TransactionDetails({
+  channelId,
   currentTransactionId,
   onClick,
   isAICardModalShown: _isAICardModalShown,
@@ -25,6 +26,7 @@ export default function TransactionDetails({
   partner,
   style
 }: {
+  channelId?: number;
   currentTransactionId: number;
   onClick?: () => void;
   isAICardModalShown: boolean;
@@ -39,6 +41,18 @@ export default function TransactionDetails({
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const onCancelTransaction = useChatContext(
+    (v) => v.actions.onCancelTransaction
+  );
+  const onUpdateCurrentTransactionId = useChatContext(
+    (v) => v.actions.onUpdateCurrentTransactionId
+  );
+  const closeTransaction = useAppContext(
+    (v) => v.requestHelpers.closeTransaction
+  );
+  const [declining, setDeclining] = useState(false);
+  const decliningRef = useRef(false);
+  const [declineError, setDeclineError] = useState('');
   const acceptedTransactions = useChatContext(
     (v) => v.state.acceptedTransactions
   );
@@ -119,7 +133,32 @@ export default function TransactionDetails({
               : 'Nothing moves until this offer is accepted.';
   const canOpen =
     !isOnModal && !!onClick && (!settled || type === 'send') && !cancelled;
-  const statusColor = settled ? '#126b65' : cancelled ? '#65738a' : '#315b91';
+  // The receiver can say no right on the card (Mikey 10-12): with only one
+  // primary button, members took "Review offer" for "accept" and hesitated.
+  const canDecline =
+    canOpen &&
+    !!channelId &&
+    type === 'trade' &&
+    !isFromMe &&
+    Number(transaction.to) === Number(userId);
+  const statusColor = settled ? '#126b65' : cancelled ? '#5a677d' : '#315b91';
+  const statusIcon =
+    type === 'send'
+      ? 'gift'
+      : isAccepted
+        ? 'check'
+        : cancelled
+          ? 'xmark'
+          : type === 'show'
+            ? 'eye'
+            : 'clock';
+  // The result also closes the card (Mikey 10-12): after scrolling through the
+  // items, whether it went through is right there, not only in the header.
+  const resultBackground = settled
+    ? '#e9f6f3'
+    : cancelled
+      ? '#f1f3f6'
+      : '#edf3fb';
 
   return (
     <ErrorBoundary componentPath="Chat/TransactionDetails">
@@ -156,19 +195,7 @@ export default function TransactionDetails({
                 color: statusColor
               }}
             >
-              <Icon
-                icon={
-                  type === 'send'
-                    ? 'gift'
-                    : isAccepted
-                      ? 'check'
-                      : cancelled
-                        ? 'xmark'
-                        : type === 'show'
-                          ? 'eye'
-                          : 'clock'
-                }
-              />
+              <Icon icon={statusIcon} />
               <span>{status}</span>
             </div>
             <div
@@ -222,30 +249,120 @@ export default function TransactionDetails({
           />
         </div>
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            marginTop: '1.4rem',
-            fontSize: '1.2rem',
-            color: statusColor
-          }}
+          className={css`
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.4rem;
+            padding: 1rem 1.2rem;
+            border-radius: 1.2rem;
+            background: ${resultBackground};
+            color: ${statusColor};
+          `}
           role={isOnModal ? 'status' : undefined}
         >
-          <span>{statusNote}</span>
+          <div
+            className={css`
+              display: flex;
+              align-items: flex-start;
+              gap: 0.8rem;
+              min-width: 0;
+              flex: 1 1 18rem;
+            `}
+          >
+            <Icon
+              icon={statusIcon}
+              style={{ fontSize: '1.5rem', marginTop: '0.2rem' }}
+            />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+                {status}
+              </div>
+              <div style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}>
+                {statusNote}
+              </div>
+            </div>
+          </div>
           {canOpen && (
-            <Button color="logoBlue" variant="solid" onClick={onClick}>
-              {type === 'send'
-                ? 'View gift'
-                : type === 'show' || requestOnly
-                  ? 'View offer'
-                  : 'Review offer'}
-            </Button>
+            <div
+              className={css`
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.8rem;
+                margin-left: auto;
+              `}
+            >
+              {canDecline && (
+                <Button
+                  color="darkerGray"
+                  variant="outline"
+                  loading={declining}
+                  onClick={handleDecline}
+                >
+                  <Icon icon="xmark" />
+                  <span style={{ marginLeft: '0.6rem' }}>Decline</span>
+                </Button>
+              )}
+              <Button
+                color="logoBlue"
+                variant="solid"
+                disabled={declining}
+                onClick={onClick}
+              >
+                {type === 'send'
+                  ? 'View gift'
+                  : type === 'show' || requestOnly
+                    ? 'View offer'
+                    : 'Review offer'}
+              </Button>
+            </div>
+          )}
+          {declineError && (
+            <p
+              role="alert"
+              style={{
+                width: '100%',
+                margin: 0,
+                color: '#a12235',
+                fontSize: '1.2rem'
+              }}
+            >
+              {declineError}
+            </p>
           )}
         </div>
       </article>
     </ErrorBoundary>
   );
+
+  async function handleDecline() {
+    if (!channelId || decliningRef.current) return;
+    decliningRef.current = true;
+    try {
+      setDeclining(true);
+      setDeclineError('');
+      const result = await closeTransaction({
+        channelId,
+        transactionId: transaction.id,
+        cancelReason: 'decline'
+      });
+      // the server broadcasts this too; applying it here makes the card
+      // settle at once even if the socket is slow
+      onCancelTransaction({
+        transactionId: transaction.id,
+        reason: result?.cancelReason || 'decline'
+      });
+      onUpdateCurrentTransactionId({ channelId, transactionId: null });
+    } catch (error: any) {
+      setDeclineError(
+        error?.response?.data?.error ||
+          'This offer could not be declined. Please try again.'
+      );
+    } finally {
+      decliningRef.current = false;
+      setDeclining(false);
+    }
+  }
 }
