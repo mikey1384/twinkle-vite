@@ -13,7 +13,7 @@ import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { WORLD_IMAGES, WORLD_THUMBS, nodePositions } from './layout';
 import { mapHeightPerGapPx } from './worldPaths';
-import { mouseDiscSizes } from './stopSpacing';
+import { MOUSE_DISCS, mouseDiscSizes } from './stopSpacing';
 import type { QuestNode, QuestState, QuestWorld } from './types';
 import AudioToggles from './AudioToggles';
 import GoalsChip from './GoalsChip';
@@ -58,8 +58,12 @@ export default function WorldMap({
   // a crowded world's map is drawn big enough for every stop to keep a whole
   // tap box (the map area scrolls to the rest; Mikey 10-11). A mouse gets
   // the layout that keeps forts and castles clear of every other marble
-  // (worldPaths.ts); it goes with the mouse sizes (FINE_POINTER below)
+  // (worldPaths.ts); it goes with the mouse sizes (FINE_POINTER below). A
+  // narrow window (styles.css: an 8px root font) has smaller discs and its
+  // own mouse layout, made for them (r31 review SF-1)
   const mouse = useMediaMatch(FINE_POINTER_QUERY);
+  const narrow = useMediaMatch(`(max-width: ${mobileMaxWidth})`);
+  const mouseFit = mouse ? (narrow ? 'narrow' : 'wide') : undefined;
   const bigStopsKey = world.nodes
     .flatMap((n, i) => (n.kind === 'stop' ? [] : [i]))
     .join(',');
@@ -70,11 +74,12 @@ export default function WorldMap({
   const positions = nodePositions(
     world.key,
     world.nodes.length,
-    mouse ? bigStops : undefined
+    mouseFit ? bigStops : undefined,
+    mouseFit
   );
   const perGapPx = useMemo(
-    () => mapHeightPerGapPx(world.key, world.nodes.length, bigStops, mouse),
-    [world.key, world.nodes.length, bigStops, mouse]
+    () => mapHeightPerGapPx(world.key, world.nodes.length, bigStops, mouseFit),
+    [world.key, world.nodes.length, bigStops, mouseFit]
   );
   const selected =
     world.nodes.find((n) => n.id === selectedNodeId) ||
@@ -96,7 +101,12 @@ export default function WorldMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const measure = () => setMapSize([map.clientWidth, map.clientHeight]);
+    // a map not laid out yet (mounted hidden) measures 0×0: sizes and tap
+    // boxes are never worked out from that (r31 review N-2)
+    const measure = () => {
+      if (map.clientWidth > 0 && map.clientHeight > 0)
+        setMapSize([map.clientWidth, map.clientHeight]);
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(map);
@@ -108,21 +118,19 @@ export default function WorldMap({
     [positions, mapSize]
   );
   // on a mouse each disc is drawn as big as the drawn map lets it be with
-  // no two overlapping (mouseDiscSizes; its tap box keeps its size)
-  const narrow = useMediaMatch(`(max-width: ${mobileMaxWidth})`);
-  const mouseDiscs = useMemo(
-    () =>
-      mouse && mapSize
-        ? mouseDiscSizes(
-            positions,
-            bigStops,
-            mapSize,
-            narrow ? 30 : 36,
-            narrow ? 36 : 45
-          )
-        : null,
-    [mouse, narrow, positions, bigStops, mapSize]
-  );
+  // no two overlapping (mouseDiscSizes; its tap box keeps its size), up to
+  // the window's design sizes (MOUSE_DISCS: 36/45px, 24/28.8px narrow);
+  // `k` scales its number, icon, flag and pulse ring to match
+  const mouseDiscs = useMemo(() => {
+    if (!mouseFit || !mapSize) return null;
+    const design = MOUSE_DISCS[mouseFit];
+    const sizes = mouseDiscSizes(positions, bigStops, mapSize, design);
+    return {
+      ...sizes,
+      stopK: sizes.stop / design.stop,
+      bossK: sizes.boss / design.boss
+    };
+  }, [mouseFit, positions, bigStops, mapSize]);
 
   // the picked stop's PLAY bubble goes on whichever side of it has room, so
   // it never covers another stop or its tap box (Mikey 10-11: it sat over
@@ -180,24 +188,67 @@ export default function WorldMap({
   // under the mouse between the pick and the Play click). A stop the player
   // didn't pick (the one a world opens on) also brings its whole bubble into
   // view: nobody's finger is on it, and its PLAY was cut by the area's edge
-  // (r29 review: "▶ PLA" on first open). Once the player has touched the
-  // map (panned it, scrolled it or picked a stop), a re-placed bubble (a
-  // font arriving, a resize) never moves it again: only a new pick may, and
-  // only to bring that stop into view (r30 review N-4: a late font slid a
-  // hand-panned map back).
+  // (r29 review: "▶ PLA" on first open). Once the player has panned the
+  // map by hand (dragged it, or scrolled it with a wheel or the keys), a
+  // re-placed bubble (a font arriving) never moves it again: only a new pick
+  // may, and only to bring that stop into view (r30 review N-4: a late font
+  // slid a hand-panned map back). The tap that picks a stop is not a pan
+  // (r30b review SF-2: it counted as one, so after a rotation the map never
+  // scrolled back and the picked stop sat off-screen). A new map size (a
+  // rotation, a resized window) makes the old offset meaningless: the
+  // picked stop and its bubble come back into view, panned or not.
   const pickedByPlayer = useRef<string | null>(null);
   const pickedInWorld = useRef(world.id);
   const mapTouched = useRef(false);
   const placedFor = useRef('');
+  const placedSize = useRef('');
+  const resizedSincePick = useRef(false);
   useEffect(() => {
     const area = mapAreaRef.current;
     if (!area) return;
-    const touched = () => (mapTouched.current = true);
-    const events = ['pointerdown', 'touchstart', 'wheel', 'keydown'];
-    for (const type of events)
-      area.addEventListener(type, touched, { passive: true });
+    const panned = () => (mapTouched.current = true);
+    // a drag (a finger, or a mouse on the scrollbar) pans the map if it
+    // ends with the map scrolled from where the press found it
+    let pressedAt: [number, number] | null = null;
+    const press = () => (pressedAt = [area.scrollLeft, area.scrollTop]);
+    const release = () => {
+      if (
+        pressedAt &&
+        (Math.abs(area.scrollLeft - pressedAt[0]) > 1 ||
+          Math.abs(area.scrollTop - pressedAt[1]) > 1)
+      )
+        panned();
+      pressedAt = null;
+    };
+    const SCROLL_KEYS = new Set([
+      'ArrowUp',
+      'ArrowDown',
+      'ArrowLeft',
+      'ArrowRight',
+      'PageUp',
+      'PageDown',
+      'Home',
+      'End',
+      ' '
+    ]);
+    // (Space on a stop or the bubble presses it, it doesn't scroll)
+    const key = (e: Event) => {
+      const { key: name, target } = e as KeyboardEvent;
+      if (name === ' ' && (target as HTMLElement).closest?.('button')) return;
+      if (SCROLL_KEYS.has(name)) panned();
+    };
+    const listeners: [string, EventListener][] = [
+      ['pointerdown', press],
+      ['touchstart', press],
+      ['pointerup', release],
+      ['touchend', release],
+      ['wheel', panned],
+      ['keydown', key]
+    ];
+    for (const [type, fn] of listeners)
+      area.addEventListener(type, fn, { passive: true });
     return () => {
-      for (const type of events) area.removeEventListener(type, touched);
+      for (const [type, fn] of listeners) area.removeEventListener(type, fn);
     };
   }, []);
   useEffect(() => {
@@ -206,7 +257,16 @@ export default function WorldMap({
       pickedByPlayer.current = null;
       mapTouched.current = false;
     }
+    const size = mapSize ? mapSize.join('x') : '';
+    if (size !== placedSize.current) {
+      if (placedSize.current) {
+        mapTouched.current = false;
+        resizedSincePick.current = true;
+      }
+      placedSize.current = size;
+    }
     const pick = `${world.id}:${selected?.id}`;
+    if (placedFor.current !== pick) resizedSincePick.current = false;
     if (mapTouched.current && placedFor.current === pick) return;
     placedFor.current = pick;
     const area = mapAreaRef.current;
@@ -236,8 +296,13 @@ export default function WorldMap({
       box.r = Math.max(box.r, bubble.right + BUBBLE_CLEAR);
       box.b = Math.max(box.b, bubble.bottom + BUBBLE_CLEAR);
     }
+    // (a stop just picked by hand shows at least itself; after a resize
+    // its bubble too: no finger or mouse is on it any more)
     const mustShow =
-      pickedByPlayer.current === selected?.id || !bubble ? own : box;
+      (pickedByPlayer.current === selected?.id && !resizedSincePick.current) ||
+      !bubble
+        ? own
+        : box;
     if (
       mustShow.l >= view.l - 0.5 &&
       mustShow.t >= view.t - 0.5 &&
@@ -306,6 +371,7 @@ export default function WorldMap({
   // whatever size its button was (r30 review N-1). The boxes never overlap
   // (stopHitLimits), so a point is in one stop's box at most.
   type MapTarget = number | 'play' | null;
+  const TAP_SLOP = 10;
   function targetAt(x: number, y: number): MapTarget {
     const map = mapRef.current;
     if (!map) return null;
@@ -325,16 +391,37 @@ export default function WorldMap({
     pickedByPlayer.current = node.id;
     onSelectNode(node.id);
   }
-  // the target under the press (before the bubble's pressed look moves it)
-  const pressed = useRef<{ target: MapTarget; x: number; y: number } | null>(
-    null
-  );
+  // the target under the press, and where it was then (before the bubble's
+  // pressed look moves it)
+  const pressed = useRef<{
+    target: MapTarget;
+    x: number;
+    y: number;
+    mouse: boolean;
+    rect: DOMRect | null;
+  } | null>(null);
+  function targetRect(target: MapTarget) {
+    if (target === 'play')
+      return bubbleRef.current?.getBoundingClientRect() || null;
+    if (target === null) return null;
+    return (
+      mapRef.current
+        ?.querySelector<HTMLElement>(`[data-stop="${target}"]`)
+        ?.getBoundingClientRect() || null
+    );
+  }
   const [pressedPlay, setPressedPlay] = useState(false);
   const [hovered, setHovered] = useState<MapTarget>(null);
   const mapPointer = {
     onPointerDown: (e: React.PointerEvent) => {
       const target = targetAt(e.clientX, e.clientY);
-      pressed.current = { target, x: e.clientX, y: e.clientY };
+      pressed.current = {
+        target,
+        x: e.clientX,
+        y: e.clientY,
+        mouse: e.pointerType !== 'touch',
+        rect: targetRect(target)
+      };
       setPressedPlay(target === 'play');
     },
     onPointerUp: () => setPressedPlay(false),
@@ -353,10 +440,35 @@ export default function WorldMap({
       if ((e.target as HTMLElement).closest('button')) return;
       const press = pressed.current;
       pressed.current = null;
-      const target =
-        press && Math.hypot(e.clientX - press.x, e.clientY - press.y) < 10
-          ? press.target
-          : targetAt(e.clientX, e.clientY);
+      const moved = press
+        ? Math.hypot(e.clientX - press.x, e.clientY - press.y)
+        : Infinity;
+      let target: MapTarget;
+      if (press?.mouse) {
+        // a mouse drag is never a click (r30b review SF-1: the stops take
+        // no pointer events, so the browser clicks the map after any drag,
+        // and a drag that ended on the picked stop started its run). It
+        // counts only as a click on what it pressed, released on that same
+        // target (where it was at the press: the bubble sinks when
+        // pressed) within the tap slop, like a button.
+        const r = press.rect;
+        const releasedOn =
+          !!r &&
+          e.clientX >= r.left &&
+          e.clientX < r.right &&
+          e.clientY >= r.top &&
+          e.clientY < r.bottom;
+        if (moved >= TAP_SLOP || !releasedOn) return;
+        target = press.target;
+      } else {
+        // a finger that moves pans the map, and the browser sends no click;
+        // a tap the browser moved a little (touch adjustment) keeps its
+        // pressed target
+        target =
+          press && moved < TAP_SLOP
+            ? press.target
+            : targetAt(e.clientX, e.clientY);
+      }
       if (target === 'play') {
         if (selected?.unlocked && !starting) onPlayNode(selected);
       } else if (target !== null && world.nodes[target]) {
@@ -418,6 +530,13 @@ export default function WorldMap({
           className={mapCls}
           ref={mapRef}
           {...mapPointer}
+          // the hovered stop's best grade (the stops take no pointer
+          // events, so their own tooltips never showed; r30b review N-1)
+          title={
+            typeof hovered === 'number' && world.nodes[hovered]?.grade
+              ? `Best grade ${world.nodes[hovered].grade}`
+              : undefined
+          }
           style={
             {
               cursor: hovered !== null ? 'pointer' : undefined,
@@ -429,8 +548,8 @@ export default function WorldMap({
               ...(mouseDiscs && {
                 '--mouse-stop-art': `${mouseDiscs.stop}px`,
                 '--mouse-boss-art': `${mouseDiscs.boss}px`,
-                '--mouse-stop-k': mouseDiscs.stop / (narrow ? 30 : 36),
-                '--mouse-boss-k': mouseDiscs.boss / (narrow ? 36 : 45)
+                '--mouse-stop-k': mouseDiscs.stopK,
+                '--mouse-boss-k': mouseDiscs.bossK
               })
             } as React.CSSProperties
           }
@@ -503,7 +622,6 @@ export default function WorldMap({
                       ? `${node.name}, best grade ${node.grade}`
                       : node.name
                   }
-                  title={node.grade ? `Best grade ${node.grade}` : undefined}
                 >
                   {/* the disc art, centred on the stop's point; it takes no
                       taps (the button is the tap box) and zooms on hover */}
@@ -878,7 +996,8 @@ const noChipsRowCls = css`
 // counts as 28px apart once its smallest mouse discs (26px stops, 34px
 // forts and castles) clear each other with a pixel of air (roomAround in
 // stopSpacing.ts; decided 10-12: on a mouse no two marbles overlap, r29
-// review SF-2). Each disc is then drawn as big as the map's gaps allow
+// review SF-2; in a narrow window, its 24px and 28.8px design discs, on
+// its own mouse layout, r31 review SF-1). Each disc is then drawn as big as the map's gaps allow
 // (mouseDiscSizes), up to its usual size, so the desktop map stays whole
 // unless even the smallest discs can't fit. There a scrolling map shows a
 // styled scrollbar (macOS hides the default one until you scroll).
@@ -1442,19 +1561,27 @@ const greyIconCls = css`
   filter: grayscale(1) brightness(0.8);
 `;
 
+// it scales with the disc (--art-k) from its corner, so it stays pinned
+// to the same place on a smaller marble
 const flagCls = css`
   position: absolute;
-  right: -0.6rem;
-  top: -1.2rem;
+  right: calc(-0.6rem * var(--art-k, 1));
+  top: calc(-1.2rem * var(--art-k, 1));
+  transform-origin: 100% 0;
 `;
 
 // the node you're up to: a gold pixel ring that keeps rippling out
-// (transform/opacity only)
+// (transform/opacity only). --ring is its size around a disc drawn at its
+// design size; on a mouse it scales with the drawn marble (--mouse-*-k,
+// mouseDiscSizes), so a crowded world's smaller marbles get a smaller ring
+// (r31 review N-4)
 const pulseCls = css`
+  --ring: 4.8rem;
+  --ring-size: calc(var(--ring) * var(--ring-k, 1));
   position: absolute;
-  width: 4.8rem;
-  height: 4.8rem;
-  margin: -2.4rem 0 0 -2.4rem;
+  width: var(--ring-size);
+  height: var(--ring-size);
+  margin: calc(var(--ring-size) / -2) 0 0 calc(var(--ring-size) / -2);
   background: ${RING} center / 100% 100% no-repeat;
   pointer-events: none;
   animation: questNodePulse 1.4s ease-out infinite;
@@ -1473,20 +1600,20 @@ const pulseCls = css`
     opacity: 0.8;
   }
   @media (max-width: ${mobileMaxWidth}) {
-    width: 4.2rem;
-    height: 4.2rem;
-    margin: -2.1rem 0 0 -2.1rem;
+    --ring: 4.2rem;
+  }
+  ${FINE_POINTER} {
+    --ring-k: var(--mouse-stop-k, 1);
   }
 `;
 
 const bigPulseCls = css`
-  width: 5.8rem;
-  height: 5.8rem;
-  margin: -2.9rem 0 0 -2.9rem;
+  --ring: 5.8rem;
   @media (max-width: ${mobileMaxWidth}) {
-    width: 4.8rem;
-    height: 4.8rem;
-    margin: -2.4rem 0 0 -2.4rem;
+    --ring: 4.8rem;
+  }
+  ${FINE_POINTER} {
+    --ring-k: var(--mouse-boss-k, 1);
   }
 `;
 
@@ -1575,9 +1702,12 @@ const bubbleHoverCls = css`
     transform: translateY(-1px);
   }
 `;
+// pressed like every game button (button()'s :active): it sinks onto its
+// shadow, so the shadow goes
 const bubblePressedCls = css`
   && {
     transform: translateY(4px);
+    filter: none;
   }
 `;
 const TAIL_SIDE: Record<BubbleSpot['side'], string> = {
@@ -1779,6 +1909,11 @@ const panelLabelCls = css`
 
 const panelTitleCls = css`
   position: relative;
+  /* its name toggle's focus ring, round the title (titleToggleCls) */
+  &:has(> button:focus-visible) {
+    outline: 2px solid ${INK};
+    outline-offset: 2px;
+  }
   font-family: ${PIXEL_FONT};
   font-size: 1.6rem;
   line-height: 1.5;
@@ -1819,6 +1954,13 @@ const titleToggleCls = css`
     /* inside the title, which clips what overflows it */
     outline: 2px solid ${INK};
     outline-offset: -2px;
+  }
+  /* where it can, the ring goes round the title instead, clear of its
+     letters (r30b review N-2: the inset ring crossed the glyph tops) */
+  @supports selector(:has(*)) {
+    &:focus-visible {
+      outline: none;
+    }
   }
 `;
 // a cut name, tapped: shown whole over the panel's text (same panel size)

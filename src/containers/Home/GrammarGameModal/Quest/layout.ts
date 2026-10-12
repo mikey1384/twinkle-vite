@@ -1,5 +1,5 @@
 import { gqMedia } from '../media';
-import type { Point } from './stopSpacing';
+import type { MouseFit, Point } from './stopSpacing';
 import { stopsAlongPath } from './worldPaths';
 
 export const WORLD_IMAGES: Record<string, string> = {
@@ -25,11 +25,13 @@ export const WORLD_THUMBS: Record<string, string> = Object.fromEntries(
 );
 
 // Each world's stops on its painted path (worked out ahead: worldPaths.ts);
-// `mouseBigStops` (the forts' and castle's places) picks the mouse layout
+// `mouseBigStops` (the forts' and castle's places) picks the mouse layout,
+// `fit` the window's (a narrow window's discs are smaller)
 export function nodePositions(
   worldKey: string,
   count: number,
-  mouseBigStops?: number[]
+  mouseBigStops?: number[],
+  fit?: MouseFit
 ): Point[] {
-  return stopsAlongPath(worldKey, count, mouseBigStops);
+  return stopsAlongPath(worldKey, count, mouseBigStops, fit);
 }

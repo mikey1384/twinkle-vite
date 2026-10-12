@@ -1,9 +1,11 @@
 import {
+  MOUSE_DISCS,
   MOUSE_SLACKS,
   closestGap,
   roomAround,
   spacedStops,
   stopGap,
+  type MouseFit,
   type Point
 } from './stopSpacing';
 import { PLACED_STOPS } from './worldStops.generated';
@@ -235,27 +237,32 @@ export const WORLD_PATHS: Record<string, Point[]> = {
 // castle's places among the stops), the pairs with a fort or castle in them
 // get room for their smallest mouse discs (roomAround), so no two marbles
 // need overlap on a mouse (stopSpacing.ts); touch screens keep the even
-// layout, whose every pair needs the same whole tap box.
+// layout, whose every pair needs the same whole tap box. A narrow window's
+// mouse layout (`fit` 'narrow', r31 review SF-1) gives them room for its
+// own, smaller discs (MOUSE_DISCS.narrow), so it needs less room than the
+// desktop one.
 const placed = new Map<string, Point[]>();
 export function stopTableKey(
   worldKey: string,
   count: number,
-  mouseBigStops?: number[]
+  mouseBigStops?: number[],
+  fit: MouseFit = 'wide'
 ) {
-  return mouseBigStops
-    ? `${worldKey}:${count}:mouse:${mouseBigStops.join(',')}`
-    : `${worldKey}:${count}`;
+  if (!mouseBigStops) return `${worldKey}:${count}`;
+  const layout = fit === 'wide' ? 'mouse' : `mouse-${fit}`;
+  return `${worldKey}:${count}:${layout}:${mouseBigStops.join(',')}`;
 }
 export function spaceWorldStops(
   worldKey: string,
   count: number,
-  mouseBigStops?: number[]
+  mouseBigStops?: number[],
+  fit: MouseFit = 'wide'
 ): Point[] {
   return mouseBigStops
     ? spacedStops(
         stopPath(worldKey),
         count,
-        roomAround(mouseBigStops),
+        roomAround(mouseBigStops, MOUSE_DISCS[fit]),
         MOUSE_SLACKS
       )
     : spacedStops(stopPath(worldKey), count);
@@ -263,12 +270,13 @@ export function spaceWorldStops(
 export function stopsAlongPath(
   worldKey: string,
   count: number,
-  mouseBigStops?: number[]
+  mouseBigStops?: number[],
+  fit: MouseFit = 'wide'
 ): Point[] {
-  const key = stopTableKey(worldKey, count, mouseBigStops);
+  const key = stopTableKey(worldKey, count, mouseBigStops, fit);
   let points = placed.get(key) || PLACED_STOPS[key];
   if (!points) {
-    points = spaceWorldStops(worldKey, count, mouseBigStops);
+    points = spaceWorldStops(worldKey, count, mouseBigStops, fit);
     placed.set(key, points);
   }
   return points;
@@ -298,22 +306,27 @@ export function edgeGap([x, y]: Point) {
 // How tall the map must be drawn, per px of the room its stops need, for:
 // `tap`: its two closest stops to sit a whole tap box apart; `big`: a fort
 // or castle and its closest neighbour to keep its bigger disc out of the
-// neighbour's box (on a `mouse`, in the mouse layout, for their smallest
-// mouse discs to clear each other: roomAround counts such a pair 28px
-// apart, WorldMap's mouse --big-need, once they do); `edge` (stops) and `bigEdge` (forts and
-// castles): every stop to sit half its tap box (its disc and the pad around
-// it) inside the map's edges, so the edge never clips a disc or a tap box
-// (r28 review: stop 1 at the path's start lost up to 9 px of its box to the
-// bottom edge). The map grows past the screen, and scrolls, when the screen
-// is smaller than that.
+// neighbour's box (on a `mouse`, in that window's mouse layout, for their
+// smallest mouse discs to clear each other: roomAround counts such a pair
+// 28px apart, WorldMap's mouse --big-need, once they do); `edge` (stops)
+// and `bigEdge` (forts and castles): every stop to sit half its tap box
+// (its disc and the pad around it) inside the map's edges, so the edge
+// never clips a disc or a tap box (r28 review: stop 1 at the path's start
+// lost up to 9 px of its box to the bottom edge). The map grows past the
+// screen, and scrolls, when the screen is smaller than that.
 export function mapHeightPerGapPx(
   worldKey: string,
   count: number,
   bigStops: number[],
-  mouse = false
+  mouse?: MouseFit
 ) {
-  const points = stopsAlongPath(worldKey, count, mouse ? bigStops : undefined);
-  const pairGap = mouse ? roomAround(bigStops) : null;
+  const points = stopsAlongPath(
+    worldKey,
+    count,
+    mouse ? bigStops : undefined,
+    mouse
+  );
+  const pairGap = mouse ? roomAround(bigStops, MOUSE_DISCS[mouse]) : null;
   const per = (gap: number) => (gap > 0 && gap < Infinity ? 100 / gap : 0);
   const isBig = new Set(bigStops);
   let big = Infinity;

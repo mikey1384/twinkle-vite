@@ -167,39 +167,79 @@ export const MOUSE_MIN_BOSS = 34;
 export const DISC_AIR = 1;
 // the mouse layout's shares of the widest gap to try (spacedStops)
 export const MOUSE_SLACKS = [1, 0.99, 0.98, 0.97];
+
+// A mouse's disc sizes, in px: the design size of a stop's and a fort's or
+// castle's disc, and the smallest each is ever drawn. `wide` is a desktop
+// window (root font 10px: 3.6rem and 4.5rem discs); `narrow` is a window
+// up to 767px wide, where styles.css drops the root font to 8px and the
+// discs are 3rem and 3.6rem (r31 review SF-1: r31 drew them 30/36 there).
+// A floor never exceeds its design size, so a narrow window's floors are
+// its design sizes: its marbles never shrink, they are drawn as on a phone
+// (r30b), on a mouse layout made for those sizes (worldPaths.ts), which
+// gives every pair room for them.
+export interface MouseDiscs {
+  stop: number;
+  boss: number;
+  minStop: number;
+  minBoss: number;
+}
+const mouseDiscs = (stop: number, boss: number): MouseDiscs => ({
+  stop,
+  boss,
+  minStop: Math.min(MOUSE_MIN_STOP, stop),
+  minBoss: Math.min(MOUSE_MIN_BOSS, boss)
+});
+export type MouseFit = 'wide' | 'narrow';
+export const MOUSE_DISCS: Record<MouseFit, MouseDiscs> = {
+  wide: mouseDiscs(STOP_DISC, BOSS_DISC),
+  narrow: mouseDiscs(24, 28.8)
+};
+
 const straight = (a: Point, b: Point) =>
   Math.hypot((a[0] - b[0]) * ASPECT, a[1] - b[1]);
 // what two smallest discs need, centre to centre, in px
-function smallestRoom(bigI: boolean, bigJ: boolean) {
-  const disc = (big: boolean) => (big ? MOUSE_MIN_BOSS : MOUSE_MIN_STOP);
+function smallestRoom(bigI: boolean, bigJ: boolean, discs: MouseDiscs) {
+  const disc = (big: boolean) => (big ? discs.minBoss : discs.minStop);
   return disc(bigI) / 2 + disc(bigJ) / 2 + DISC_AIR;
 }
-export function roomAround(bigStops: number[]): PairGap {
+export function roomAround(
+  bigStops: number[],
+  discs: MouseDiscs = MOUSE_DISCS.wide
+): PairGap {
   const big = new Set(bigStops);
   return (i, j, a, b) =>
     big.has(i) || big.has(j)
       ? Math.min(
           stopGap(a, b),
-          (straight(a, b) * MOUSE_TAP) / smallestRoom(big.has(i), big.has(j))
+          (straight(a, b) * MOUSE_TAP) /
+            smallestRoom(big.has(i), big.has(j), discs)
         )
       : stopGap(a, b);
 }
 
 // How big each disc is drawn on a mouse, on a map drawn `width` × `height`
-// px, so no two overlap: stops at most `stopDisc` (36px; 30px in a narrow
-// window), forts and castles at most `bossDisc`, all of one kind the same
-// size, every pair a pixel apart. Stops first; if that leaves the forts and
-// castles under MOUSE_MIN_BOSS, they keep that and the stops give way. Whole
-// px. `hover[i]` is how much stop i's disc may zoom under the mouse (up to
-// 1.08) with its neighbours still a pixel clear. The map is never drawn
-// smaller than the smallest discs need (WorldMap's mouse --big-need).
+// px, so no two overlap: stops at most `discs.stop`, forts and castles at
+// most `discs.boss`, all of one kind the same size, every pair a pixel
+// apart. Stops first; if that leaves the forts and castles under their
+// floor, they keep it (as far as two forts or castles close together
+// allow) and the stops give way. Whole px below the design size. `hover[i]`
+// is how much stop i's disc may zoom under the mouse (up to 1.08) with its
+// neighbours still a pixel clear. The map is never drawn smaller than the
+// smallest discs need (WorldMap's mouse --big-need); a map not laid out
+// yet (0×0) gets the design sizes, never sizes worked out from it.
+const EPS = 1e-6;
 export function mouseDiscSizes(
   points: Point[],
   bigStops: number[],
   [width, height]: [number, number],
-  stopDisc = STOP_DISC,
-  bossDisc = BOSS_DISC
+  discs: MouseDiscs = MOUSE_DISCS.wide
 ) {
+  if (!(width > 0 && height > 0))
+    return {
+      stop: discs.stop,
+      boss: discs.boss,
+      hover: points.map(() => 1)
+    };
   const big = new Set(bigStops);
   const px = points.map(([x, y]) => [(x / 100) * width, (y / 100) * height]);
   const apart = (i: number, j: number) =>
@@ -208,20 +248,31 @@ export function mouseDiscSizes(
   for (let i = 0; i < px.length; i++)
     for (let j = i + 1; j < px.length; j++) pairs.push([i, j]);
   const mixed = pairs.filter(([i, j]) => big.has(i) !== big.has(j));
-  let stop = stopDisc;
-  let boss = bossDisc;
+  let stop = discs.stop;
+  let boss = discs.boss;
+  let bossPair = Infinity;
   for (const [i, j] of pairs) {
     if (!big.has(i) && !big.has(j)) stop = Math.min(stop, apart(i, j));
-    else if (big.has(i) && big.has(j)) boss = Math.min(boss, apart(i, j));
+    else if (big.has(i) && big.has(j))
+      bossPair = Math.min(bossPair, apart(i, j));
   }
+  boss = Math.min(boss, bossPair);
   for (const [i, j] of mixed) boss = Math.min(boss, 2 * apart(i, j) - stop);
-  const minBoss = Math.min(MOUSE_MIN_BOSS, bossDisc);
-  if (boss < minBoss) {
-    boss = minBoss;
+  // (a hair under the floor is floating-point error, not a crowded map)
+  if (boss < discs.minBoss - EPS) {
+    // the floor, unless two forts or castles sit closer than it (r31
+    // review N-3): then they get what is between them
+    boss = Math.min(discs.minBoss, bossPair);
     for (const [i, j] of mixed) stop = Math.min(stop, 2 * apart(i, j) - boss);
   }
-  stop = Math.max(1, Math.floor(stop));
-  boss = Math.max(1, Math.floor(boss));
+  // whole px below the design size (the design size as it is)
+  const whole = (size: number, design: number) =>
+    size >= design - EPS ? design : Math.max(1, Math.floor(size + EPS));
+  stop = whole(stop, discs.stop);
+  // a stop can't go under 1px: if one still crowds a fort or castle, the
+  // fort or castle gives way too, so every pair stays clear
+  for (const [i, j] of mixed) boss = Math.min(boss, 2 * apart(i, j) - stop);
+  boss = whole(boss, discs.boss);
   const disc = (i: number) => (big.has(i) ? boss : stop);
   const hover = px.map((_, i) => {
     let zoom = 1.08;
