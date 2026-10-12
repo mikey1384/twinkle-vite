@@ -31,6 +31,7 @@ export default function InputArea({
   currentTopic,
   forcedDisabled = false,
   forcedPlaceholder,
+  idlePlaceholder,
   isBanned,
   isRestrictedChannel,
   innerRef,
@@ -51,6 +52,8 @@ export default function InputArea({
   currentTopic: any;
   forcedDisabled?: boolean;
   forcedPlaceholder?: string;
+  // what an empty, open box says (default: "Enter a message...")
+  idlePlaceholder?: string;
   isBanned: boolean;
   isRestrictedChannel: boolean;
   isOnlyOwnerPostingTopic: boolean;
@@ -214,7 +217,7 @@ export default function InputArea({
     if (isOwnerPostingOnly && isMain && !isOwner) {
       return 'Only the owner can post messages on the main chat...';
     }
-    return `${enterMessageLabel}...`;
+    return idlePlaceholder || `${enterMessageLabel}...`;
   }
 
   function handleKeyDown(event: any) {

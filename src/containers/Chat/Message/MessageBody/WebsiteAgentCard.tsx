@@ -19,6 +19,11 @@ export interface WebsiteAgentCardData {
     'pending' | 'processing' | 'approved' | 'declined' | 'failed' | 'closed';
   result?: any;
   kind?: 'request' | 'owner_access';
+  // who the card is for (the server answers only their tap) and, in a
+  // Bridge Builder crew chat, the crew it was offered in
+  requesterUserId?: number;
+  requesterUsername?: string;
+  crewId?: number;
 }
 
 // The Build chat's choice bubble reads these from its panel; the main chat
@@ -35,13 +40,16 @@ const bubbleVariables = css`
 
 // A Zero/Ciel card: a question with tappable answers, or a change on Twinkle
 // waiting for the user's approval. The tap is recorded on the server (which
-// makes an approved change), then sent as the user's reply.
+// makes an approved change), then sent as the user's reply. In a crew chat
+// the card is the caller's alone: everyone else sees "Waiting for <name>",
+// and the caller's answer @mentions the assistant so it carries on.
 export default function WebsiteAgentCard({
   card,
   channelId,
   messageId,
   topicId,
   messageText = '',
+  assistantName,
   onAnswered
 }: {
   card: WebsiteAgentCardData;
@@ -51,6 +59,8 @@ export default function WebsiteAgentCard({
   // The reply the card belongs to; a question it already asks in words is
   // not repeated as the card's title.
   messageText?: string;
+  // who wrote the card's reply (Zero or Ciel)
+  assistantName?: 'Zero' | 'Ciel';
   // Outside the chat page (Home's ask box) the answer is sent by the caller,
   // which then shows the next reply itself.
   onAnswered?: (reply: string) => void;
@@ -67,6 +77,9 @@ export default function WebsiteAgentCard({
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const requesterId = Number(card.requesterUserId || 0);
+  const isSomeoneElses = !!requesterId && requesterId !== Number(userId);
+  const requesterName = card.requesterUsername || 'the member who asked';
 
   const decided =
     card.type === 'choice'
@@ -87,20 +100,20 @@ export default function WebsiteAgentCard({
             card.answer === option
               ? ('positive' as const)
               : ('neutral' as const),
-          disabled: decided
+          disabled: decided || isSomeoneElses
         }))
       : [
           {
             key: 'approve',
             label: 'Yes, go ahead!',
             tone: 'positive' as const,
-            disabled: decided
+            disabled: decided || isSomeoneElses
           },
           {
             key: 'decline',
             label: 'No thanks',
             tone: 'neutral' as const,
-            disabled: decided
+            disabled: decided || isSomeoneElses
           }
         ];
 
@@ -118,6 +131,9 @@ export default function WebsiteAgentCard({
         busyLabel={busyLabel}
         footnote={
           error ||
+          (isSomeoneElses
+            ? describeOthersCard(card, requesterName, decided)
+            : undefined) ||
           (card.type === 'permission'
             ? describePermissionStatus(card)
             : card.type === 'approval'
@@ -134,7 +150,7 @@ export default function WebsiteAgentCard({
   );
 
   async function handleSelect(key: string) {
-    if (busyLabel || decided) return;
+    if (busyLabel || decided || isSomeoneElses) return;
     setError('');
     const decision =
       card.type === 'choice' || card.type === 'lumine'
@@ -168,13 +184,18 @@ export default function WebsiteAgentCard({
         onAnswered(describeReply(nextCard));
         return;
       }
+      // In a crew chat a yes or a choice calls the assistant back by name
+      // (a new reply on the caller's Energy); "No thanks" just ends it.
+      const reply = describeReply(nextCard);
       onSubmitMessage({
         messageId: uuidv1(),
         message: {
           userId,
           username,
           profilePicUrl,
-          content: describeReply(nextCard),
+          content: crewCallsBack(nextCard, assistantName)
+            ? `@${assistantName} ${reply}`
+            : reply,
           channelId,
           subjectId: topicId || null
         },
@@ -187,6 +208,14 @@ export default function WebsiteAgentCard({
       setBusyLabel(null);
     }
   }
+}
+
+// Whether a crew card's answer @mentions the assistant to carry on.
+export function crewCallsBack(
+  card: WebsiteAgentCardData,
+  assistantName?: 'Zero' | 'Ciel'
+) {
+  return !!card.crewId && !!assistantName && card.status !== 'declined';
 }
 
 function sameWords(a = '', b = '') {
@@ -231,6 +260,27 @@ function describeLumineStatus(card: WebsiteAgentCardData) {
       : 'Okay, not sent.';
   }
   return undefined;
+}
+
+// A card shown to a crew member it is not for.
+export function describeOthersCard(
+  card: WebsiteAgentCardData,
+  requesterName: string,
+  decided: boolean
+) {
+  if (!decided && card.status !== 'processing') {
+    return `Waiting for ${requesterName}…`;
+  }
+  if (card.type === 'choice' || card.type === 'lumine') {
+    return card.answer
+      ? `${requesterName} chose "${card.answer}".`
+      : `Waiting for ${requesterName}…`;
+  }
+  if (card.status === 'processing')
+    return `${requesterName} said yes. Working on it…`;
+  if (card.status === 'declined') return `${requesterName} said no thanks.`;
+  if (card.status === 'failed') return 'That didn’t work.';
+  return `${requesterName} said yes. Done!`;
 }
 
 function describePermissionStatus(card: WebsiteAgentCardData) {

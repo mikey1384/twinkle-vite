@@ -55,6 +55,10 @@ import type {
   SubjectMsgsModalState
 } from './types';
 import useMessageInputBridge from './hooks/useMessageInputBridge';
+import {
+  CREW_CHAT_ASK_EVENT,
+  type CrewChatAskDetail
+} from '../../CrewChat/crewAsk';
 import useMessageSearch from './hooks/useMessageSearch';
 import useBoardTimers from './hooks/useBoardTimers';
 import useGameMoveHandlers from './hooks/useGameMoveHandlers';
@@ -673,6 +677,22 @@ export default function MessagesContainer({
     currentChannel.featuredTopicId,
     currentlySelectedTopic?.loaded
   ]);
+
+  // The crew panel's Ask Ciel / Ask Zero: the call goes into this chat's
+  // message box for the member to send (CrewChat/crewAsk.ts).
+  useEffect(() => {
+    function handleCrewChatAsk(event: Event) {
+      const detail = (event as CustomEvent<CrewChatAskDetail>).detail;
+      if (!detail || Number(detail.channelId) !== Number(selectedChannelId)) {
+        return;
+      }
+      messageInputSetTextRef.current?.(detail.text);
+      ChatInputRef.current?.focus();
+    }
+    window.addEventListener(CREW_CHAT_ASK_EVENT, handleCrewChatAsk);
+    return () =>
+      window.removeEventListener(CREW_CHAT_ASK_EVENT, handleCrewChatAsk);
+  }, [messageInputSetTextRef, selectedChannelId]);
 
   useEffect(() => {
     if (!deviceIsMobile) {
@@ -1712,6 +1732,7 @@ export default function MessagesContainer({
     socketConnected,
     isRespondingToSubject: appliedIsRespondingToSubject,
     isTwoPeopleChannel: currentChannel.twoPeople,
+    isCrewChannel: Number(currentChannel.settings?.meetupCrewId || 0) > 0,
     onChessButtonClick: handleChessModalShown,
     onOmokButtonClick: handleOmokModalShown,
     onScrollToBottom,

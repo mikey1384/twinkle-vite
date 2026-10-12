@@ -8,10 +8,12 @@ import { Color } from '~/constants/css';
 import { STEP_ICONS } from '~/containers/BridgeBuilderQuest/StepTracker';
 import useCrewView from './useCrewView';
 import CrewReviewSummary from './CrewReviewSummary';
+import CrewAskButtons from './CrewAskButtons';
 
 // The crew's path as a checklist, in the chat's right sidebar under the
 // member list: what is done, what to do next, what comes after. Server-owned
-// numbers only (the crew page owns every action).
+// numbers only (the crew page owns every action). Ask Ciel / Ask Zero puts a
+// call about the current step into this chat's message box.
 export default function CrewTrackerPanel({ crewId }: { crewId: number }) {
   const navigate = useNavigate();
   const trackMeetupQuestView = useAppContext(
@@ -132,6 +134,7 @@ export default function CrewTrackerPanel({ crewId }: { crewId: number }) {
         </div>
       )}
       <CrewReviewSummary crew={crew} />
+      <CrewAskButtons crew={crew} style={{ marginTop: '1.2rem' }} />
       <Button
         size="sm"
         color="logoBlue"

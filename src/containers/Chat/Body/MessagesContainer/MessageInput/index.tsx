@@ -108,6 +108,7 @@ export default function MessageInput({
   isRestrictedChannel,
   isRespondingToSubject,
   isTwoPeopleChannel,
+  isCrewChannel = false,
   isCielChannel,
   isZeroChannel,
   isOnlyOwnerPostingTopic,
@@ -150,6 +151,8 @@ export default function MessageInput({
   isRestrictedChannel: boolean;
   isRespondingToSubject: boolean;
   isTwoPeopleChannel: number | boolean;
+  // a Bridge Builder crew chat, where members call Zero or Ciel by @mention
+  isCrewChannel?: boolean;
   isOnlyOwnerPostingTopic: boolean;
   isOwnerPostingOnly: boolean;
   loading: boolean;
@@ -668,16 +671,39 @@ export default function MessageInput({
   // own next-step ideas; starters only when the chat has been quiet a while
   // (they know nothing of the conversation, so right after one they'd be
   // beside the point).
+  // In a crew chat the ideas are only for the member who called that reply
+  // (its websiteAgentRequester), and picking one calls the same assistant.
   const agentSuggestionsEnabled =
-    isAIChannel && isWebsiteAgentEnabledFor(Number(myId));
+    (isAIChannel || isCrewChannel) && isWebsiteAgentEnabledFor(Number(myId));
   const latestReplySettings = useChatContext((v) => {
     if (!agentSuggestionsEnabled) return null;
     const channel = v.state.channelsObj?.[selectedChannelId];
     const latest = channel?.messagesObj?.[channel?.messageIds?.[0]];
-    return latest &&
-      [ZERO_TWINKLE_ID, CIEL_TWINKLE_ID].includes(Number(latest.userId))
-      ? latest.settings
-      : null;
+    if (
+      !latest ||
+      ![ZERO_TWINKLE_ID, CIEL_TWINKLE_ID].includes(Number(latest.userId))
+    ) {
+      return null;
+    }
+    if (
+      isCrewChannel &&
+      readAgentRequesterId(latest.settings) !== Number(myId)
+    ) {
+      return null;
+    }
+    return latest.settings;
+  });
+  const latestReplyAssistant = useChatContext((v) => {
+    if (!isCrewChannel) return null;
+    const channel = v.state.channelsObj?.[selectedChannelId];
+    const latestUserId = Number(
+      channel?.messagesObj?.[channel?.messageIds?.[0]]?.userId || 0
+    );
+    return latestUserId === ZERO_TWINKLE_ID
+      ? 'Zero'
+      : latestUserId === CIEL_TWINKLE_ID
+        ? 'Ciel'
+        : null;
   });
   const latestMessageTimeStamp = useChatContext((v) => {
     if (!agentSuggestionsEnabled) return 0;
@@ -698,7 +724,8 @@ export default function MessageInput({
   );
   const [starterIdeas, setStarterIdeas] = useState<string[]>([]);
   useEffect(() => {
-    if (!agentSuggestionsEnabled) return;
+    // starters are for a member's own Zero/Ciel chat, never a crew chat
+    if (!agentSuggestionsEnabled || isCrewChannel) return;
     let cancelled = false;
     Promise.resolve(loadWebsiteAgentStarters?.())
       .then((ideas) => {
@@ -709,7 +736,7 @@ export default function MessageInput({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agentSuggestionsEnabled, selectedChannelId]);
+  }, [agentSuggestionsEnabled, isCrewChannel, selectedChannelId]);
   // While typing, the row keeps its place (hidden) so the messages above
   // don't jump; with no AI Energy a tap could only fail, so it goes.
   const suggestionsShown =
@@ -808,11 +835,17 @@ export default function MessageInput({
               ideas={
                 replyIdeas?.length
                   ? replyIdeas
-                  : chatIsQuiet
+                  : chatIsQuiet && !isCrewChannel
                     ? starterIdeas
                     : []
               }
-              onPick={(idea) => handleSendMsg(idea)}
+              onPick={(idea) =>
+                handleSendMsg(
+                  isCrewChannel && latestReplyAssistant
+                    ? `@${latestReplyAssistant} ${idea}`
+                    : idea
+                )
+              }
             />
           </div>
         ) : null}
@@ -852,6 +885,11 @@ export default function MessageInput({
               ? isCielChannel
                 ? 'Ciel is unavailable.'
                 : 'Zero is unavailable.'
+              : undefined
+          }
+          idlePlaceholder={
+            isCrewChannel && isWebsiteAgentEnabledFor(Number(myId))
+              ? 'Message your crew, or type @Ciel or @Zero for help...'
               : undefined
           }
           isBanned={isBanned}
@@ -1283,6 +1321,19 @@ export default function MessageInput({
     }, 700);
     textRef.current = newText;
   }
+}
+
+// Who called a crew-chat reply (its websiteAgentRequester), or 0.
+function readAgentRequesterId(settings: unknown) {
+  let parsed: any = settings;
+  if (typeof settings === 'string') {
+    try {
+      parsed = JSON.parse(settings);
+    } catch {
+      return 0;
+    }
+  }
+  return Number(parsed?.websiteAgentRequester?.userId || 0);
 }
 
 const aiUsagePolicyRetryCls = css`

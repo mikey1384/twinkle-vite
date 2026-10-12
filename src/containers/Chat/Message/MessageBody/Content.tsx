@@ -515,6 +515,7 @@ export default function Content({
                 messageId={messageId}
                 topicId={message.subjectId || null}
                 messageText={content}
+                assistantName={isCielMessage ? 'Ciel' : 'Zero'}
               />
             )}
           {parsedSettings?.saveFailed && (
