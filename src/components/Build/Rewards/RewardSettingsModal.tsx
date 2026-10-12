@@ -9,6 +9,7 @@ import { rewardApprovalPresentation } from './approvalPresentation';
 import useRewardStatus from './useRewardStatus';
 import RewardProposalDiffModal from './RewardProposalDiffModal';
 import RewardProposalEarnings from './RewardProposalEarnings';
+import ProposalIdentityChange from './ProposalIdentityChange';
 import RewardProposalTryButton from './RewardProposalTryButton';
 import type { RewardProposalDiff, RewardSettings } from './types';
 
@@ -219,6 +220,12 @@ export default function RewardSettingsModal({
                 {settings.proposal.note ? (
                   <p className={noteTextClass}>{settings.proposal.note}</p>
                 ) : null}
+                <ProposalIdentityChange
+                  currentTitle={settings.proposal.currentTitle}
+                  proposedTitle={settings.proposal.title}
+                  currentThumbnailUrl={settings.proposal.currentThumbnailUrl}
+                  proposedThumbnailUrl={settings.proposal.thumbnailUrl}
+                />
                 <ul className={fileListClass}>
                   {settings.proposal.changedFiles.map((file) => (
                     <li key={file.path}>

@@ -13,6 +13,9 @@ export type BuildRewardReviewStatus =
 export interface BuildRewardReviewProposalSummary {
   revision?: number;
   note?: string;
+  // A new app name / thumbnail the offer applies on accept.
+  title?: string | null;
+  thumbnailUrl?: string | null;
   offeredAt?: number;
   changedFiles?: Array<{ path?: string; status?: string }>;
   diffSummary?: {
@@ -183,11 +186,20 @@ export function formatBuildRewardProposalSummary(
       Number(summary.total ?? (proposal?.changedFiles || []).length) || 0
     )
   );
-  if (total === 0) return 'No file changes';
+  const identity = [
+    proposal?.title ? 'new name' : '',
+    proposal?.thumbnailUrl ? 'new thumbnail' : ''
+  ].filter(Boolean);
+  if (total === 0) {
+    if (!identity.length) return 'No file changes';
+    const text = identity.join(' · ');
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
   const parts = [
     `${total} ${total === 1 ? 'file' : 'files'} changed`,
     summary.added ? `${summary.added} added` : '',
-    summary.deleted ? `${summary.deleted} removed` : ''
+    summary.deleted ? `${summary.deleted} removed` : '',
+    ...identity
   ].filter(Boolean);
   return parts.join(' · ');
 }

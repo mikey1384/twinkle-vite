@@ -136,4 +136,20 @@ test('the proposal chip counts changed files without ever showing contents', () 
     }),
     '2 files changed · 1 removed'
   );
+  // A new name or thumbnail is part of what the offer changes.
+  assert.equal(
+    formatBuildRewardProposalSummary({
+      diffSummary: { total: 1, added: 0, updated: 1, deleted: 0 },
+      title: 'Word Forge'
+    }),
+    '1 file changed · new name'
+  );
+  assert.equal(
+    formatBuildRewardProposalSummary({
+      diffSummary: { total: 0 },
+      title: 'Word Forge',
+      thumbnailUrl: 'https://cdn.example/t.jpg'
+    }),
+    'New name · new thumbnail'
+  );
 });

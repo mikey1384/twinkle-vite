@@ -14,6 +14,7 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { formatBuildRewardProposalSummary } from '~/helpers/buildRewardReviewCard';
+import ProposalIdentityChange from '~/components/Build/Rewards/ProposalIdentityChange';
 import {
   BUILD_REVIEW_REQUEST_TYPES,
   BUILD_REVIEW_TYPE_ICONS,
@@ -141,6 +142,10 @@ export default function BuildRewardApprovals() {
   const [rulesText, setRulesText] = useState('');
   const [rulesError, setRulesError] = useState('');
   const [proposalError, setProposalError] = useState('');
+  // A new app name, and whether to offer the copy's thumbnail (null: offer it
+  // whenever the copy has one).
+  const [offerTitle, setOfferTitle] = useState('');
+  const [offerThumbnail, setOfferThumbnail] = useState<boolean | null>(null);
   // Rules typed for a review survive collapsing it or switching to another
   // review; they are dropped only once a decision on that review is saved.
   const [rulesDrafts, setRulesDrafts] = useState<Record<number, string>>({});
@@ -178,6 +183,8 @@ export default function BuildRewardApprovals() {
     selectedItem?.type === 'rewards'
       ? rewardDetails[selectedItem.id] || selectedItem.review
       : undefined;
+  const offerThumbnailChecked =
+    offerThumbnail ?? Boolean(selected?.proposalWorkspaceThumbnailUrl);
   const pendingCount = items.filter((item) => item.status === 'pending').length;
   const offeredCount = items.filter(
     (item) => item.status === 'changes_offered'
@@ -472,6 +479,52 @@ export default function BuildRewardApprovals() {
                     it.
                   </p>
                 ) : null}
+                {selected.proposal ? (
+                  <ProposalIdentityChange
+                    currentTitle={selected.title}
+                    proposedTitle={selected.proposal.title}
+                    currentThumbnailUrl={selected.thumbnailUrl}
+                    proposedThumbnailUrl={selected.proposal.thumbnailUrl}
+                  />
+                ) : null}
+                {selected.proposalBuildId ? (
+                  <>
+                    <label>
+                      New app name (optional)
+                      <span className={hintClass}>
+                        Leave empty to keep “{selected.title || 'this name'}”.
+                      </span>
+                      <input
+                        value={offerTitle}
+                        maxLength={100}
+                        placeholder={selected.title || ''}
+                        onChange={(event) => setOfferTitle(event.target.value)}
+                      />
+                    </label>
+                    {selected.proposalWorkspaceThumbnailUrl ? (
+                      <label className={checkRowClass}>
+                        <input
+                          type="checkbox"
+                          checked={offerThumbnailChecked}
+                          onChange={(event) =>
+                            setOfferThumbnail(event.target.checked)
+                          }
+                        />
+                        <span>Offer my copy’s thumbnail as the new one</span>
+                        <img
+                          className={copyThumbClass}
+                          src={selected.proposalWorkspaceThumbnailUrl}
+                          alt="Your copy’s thumbnail"
+                        />
+                      </label>
+                    ) : (
+                      <p className={hintClass}>
+                        To offer a new thumbnail, set one on your copy (Open my
+                        copy), then come back here.
+                      </p>
+                    )}
+                  </>
+                ) : null}
                 <div className={actionsClass}>
                   {selected.status === 'changes_offered' ? (
                     <RewardProposalTryButton reviewId={selected.id} />
@@ -594,6 +647,8 @@ export default function BuildRewardApprovals() {
   function openReview(review: RewardReview) {
     setSelectedRef(`rewards:${review.id}`);
     setReason('');
+    setOfferTitle(review.proposal?.title || '');
+    setOfferThumbnail(null);
     setRulesError('');
     // Resume the reviewer's typed draft if there is one; otherwise start from
     // the request's own rules (a code-only update carries the previous
@@ -783,13 +838,21 @@ export default function BuildRewardApprovals() {
     try {
       const review = await proposeChanges(selected.id, {
         config,
-        reason: reason.trim()
+        reason: reason.trim(),
+        title: offerTitle.trim() || undefined,
+        thumbnailFrom:
+          offerThumbnailChecked && selected.proposalWorkspaceThumbnailUrl
+            ? 'workspace'
+            : undefined
       });
       setRewardDetails((current) => ({
         ...current,
         [selected.id]: { ...selected, ...review }
       }));
       await handleRefresh();
+      // The refresh drops loaded details; the copy's thumbnail (and so the
+      // checkbox a re-offer reads) only comes with the full review.
+      await loadRewardDetail(selected.id);
     } catch (err) {
       setProposalError(
         err instanceof Error ? err.message : 'Could not offer these changes.'
@@ -1047,6 +1110,28 @@ const ruleIdClass = css`
   padding: 0.1rem 0.6rem;
   border-radius: 6px;
   background: ${Color.wellGray()};
+`;
+
+const checkRowClass = css`
+  &&& {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8rem;
+    font-weight: 400;
+  }
+  input[type='checkbox'] {
+    width: auto;
+    margin: 0;
+  }
+`;
+
+const copyThumbClass = css`
+  width: 12rem;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid ${Color.borderGray()};
 `;
 
 const actionsClass = css`

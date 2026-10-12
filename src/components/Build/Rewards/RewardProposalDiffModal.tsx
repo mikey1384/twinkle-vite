@@ -7,6 +7,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { buildLineDiffHunks, diffLines } from '~/helpers/lineDiff';
 import type { RewardProposalDiff } from './types';
 import RewardProposalEarnings from './RewardProposalEarnings';
+import ProposalIdentityChange from './ProposalIdentityChange';
 
 // What the admin changed, file by file, the way a branch suggestion shows
 // it: removed lines in red, added lines in green, a little context around
@@ -78,6 +79,14 @@ export default function RewardProposalDiffModal({
               <p>{diff.note}</p>
             </div>
           </section>
+        ) : null}
+        {diff ? (
+          <ProposalIdentityChange
+            currentTitle={diff.title}
+            proposedTitle={diff.proposedTitle}
+            currentThumbnailUrl={diff.thumbnailUrl}
+            proposedThumbnailUrl={diff.proposedThumbnailUrl}
+          />
         ) : null}
         {diff && diff.files.length === 0 ? (
           <p className={mutedClass}>No file changes were offered.</p>

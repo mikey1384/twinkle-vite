@@ -613,12 +613,23 @@ export default function buildRequestHelpers({
     },
     async proposeBuildRewardReviewChanges(
       reviewId: number,
-      { config, reason }: { config: unknown; reason: string }
+      {
+        config,
+        reason,
+        title,
+        thumbnailFrom
+      }: {
+        config: unknown;
+        reason: string;
+        // A new app name, and 'workspace' to offer the copy's thumbnail.
+        title?: string;
+        thumbnailFrom?: 'workspace';
+      }
     ) {
       try {
         const { data } = await request.post(
           `${URL}/build/reward-reviews/${reviewId}/propose`,
-          { config, reason },
+          { config, reason, title, thumbnailFrom },
           getBuildRequestConfig({ maxRetries: 0 })
         );
         return data;

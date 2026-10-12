@@ -73,6 +73,12 @@ export interface RewardProposalSummary {
   revision: number;
   rewards?: RewardProposalEarnings;
   note: string;
+  // A new app name / thumbnail the offer applies on accept (null: unchanged),
+  // and (creator settings) what the app has now.
+  title?: string | null;
+  thumbnailUrl?: string | null;
+  currentTitle?: string;
+  currentThumbnailUrl?: string | null;
   offeredAt: number;
   changedFiles: Array<{
     path: string;
@@ -93,6 +99,11 @@ export interface RewardProposalDiff {
   title: string;
   status: string;
   note: string;
+  // The app's thumbnail now, and what the offer would change name and
+  // thumbnail to (null: unchanged).
+  thumbnailUrl?: string | null;
+  proposedTitle?: string | null;
+  proposedThumbnailUrl?: string | null;
   offeredAt: number | null;
   declinedAt: number | null;
   files: Array<{
@@ -121,6 +132,10 @@ export interface RewardReview {
   proposalHash?: string | null;
   proposalNote?: string;
   proposalBuildId?: number | null;
+  // Reviewer view: the app's thumbnail and the one set on the reviewer's
+  // workspace copy (offerable as a new thumbnail).
+  thumbnailUrl?: string | null;
+  proposalWorkspaceThumbnailUrl?: string | null;
   offeredAt?: number | null;
   declinedAt?: number | null;
   declinedByCreator?: boolean;
