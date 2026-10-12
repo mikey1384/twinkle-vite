@@ -445,6 +445,7 @@ test(
         // or playing sound on the shared dev machine.
         await page.addInitScript(() => {
           window.startedTracks = [];
+          window.stoppedTracks = [];
           window.AudioContext = class {
             state = 'running';
             currentTime = 0;
@@ -484,7 +485,9 @@ test(
                 start() {
                   window.startedTracks.push(this.buffer.trackId);
                 },
-                stop() {}
+                stop() {
+                  window.stoppedTracks.push(this.buffer.trackId);
+                }
               };
             }
           };
@@ -727,12 +730,27 @@ test(
           await page
             .getByRole('button', { name: 'Clear fixture level' })
             .click();
+          // a clear starts the victory fanfare (the fixture's id 99: its
+          // file has no world number) on the result screen (Mikey 10-12)
+          await page.waitForFunction(() => window.startedTracks.at(-1) === 99);
+          const fanfareStops = await page.evaluate(
+            () => window.stoppedTracks.filter((id) => id === 99).length
+          );
           await page
             .getByRole('button', { name: 'Back to map', exact: true })
             .click();
           await page
             .getByRole('button', { name: 'Play Village Castle', exact: true })
             .waitFor();
+          // Back to map stops it and the map's own song returns
+          await page.waitForFunction(() => window.startedTracks.at(-1) === 1);
+          assert.equal(
+            await page.evaluate(
+              () => window.stoppedTracks.filter((id) => id === 99).length
+            ),
+            fanfareStops + 1,
+            'Back to map stops the victory fanfare'
+          );
           // An explicit world choice must not pin the next world after a castle clear.
           await page
             .getByRole('button', {
@@ -768,7 +786,22 @@ test(
             exact: true
           })
           .click({ force: true });
+        const startsBeforeFail = await page.evaluate(
+          () => window.startedTracks.length
+        );
         await page.getByRole('button', { name: 'Fail fixture level' }).click();
+        await page
+          .getByRole('button', { name: 'Back to map', exact: true })
+          .waitFor();
+        await page.waitForTimeout(300);
+        assert.deepEqual(
+          await page.evaluate(
+            (from) => window.startedTracks.slice(from),
+            startsBeforeFail
+          ),
+          [],
+          'a stop that is not cleared plays no victory fanfare'
+        );
         await page
           .getByRole('button', { name: 'Back to map', exact: true })
           .click();
@@ -779,8 +812,36 @@ test(
           })
           .waitFor();
 
+        // music off: a clear's result screen stays silent too
         await page.evaluate(() => {
           window.setFixtureMusic(false);
+          window.resetMap();
+          window.showFixture('map');
+        });
+        const startsWhileMuted = await page.evaluate(
+          () => window.startedTracks.length
+        );
+        await page
+          .getByRole('button', {
+            name: 'Play Articles · Sentence patterns and word order',
+            exact: true
+          })
+          .click({ force: true });
+        await page.getByRole('button', { name: 'Clear fixture level' }).click();
+        await page
+          .getByRole('button', { name: 'Back to map', exact: true })
+          .waitFor();
+        await page.waitForTimeout(300);
+        assert.equal(
+          await page.evaluate(() => window.startedTracks.length),
+          startsWhileMuted,
+          'with music off a clear plays no victory fanfare'
+        );
+        await page
+          .getByRole('button', { name: 'Back to map', exact: true })
+          .click();
+
+        await page.evaluate(() => {
           window.resetAllMaps();
           window.showFixture('map');
         });

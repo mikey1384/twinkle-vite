@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import type { QuestAnswer, QuestResult } from './types';
 import QuestMarble, { answerLook } from './QuestMarble';
 import { reviewList, withForgiven } from './reviewList';
 import PixelIcon from './PixelIcon';
+import { VICTORY_TRACK, playMusic, stopMusic } from './MarbleRun/music';
 import ChallengeModal from '../Review/ChallengeModal';
 import useChallengeReviews from '../Review/useChallengeReviews';
 import {
@@ -89,6 +90,16 @@ export default function Result({
         : 'NOT YET';
   const celebrate = !!result.cleared;
   const won = celebrate || kind === 'nemesis';
+  // a cleared stop, fort or castle gets the victory fanfare (Mikey 10-12):
+  // the brass plays once, then a soft tune loops until BACK TO MAP. The run's
+  // level song has just stopped; a stop that isn't cleared stays quiet, and
+  // nemesis practice keeps its own clear chime. It follows the music switch.
+  const fanfare = celebrate && kind !== 'nemesis';
+  useEffect(() => {
+    if (!fanfare) return;
+    playMusic(VICTORY_TRACK, { fade: 0.02 });
+    return () => stopMusic(0.6);
+  }, [fanfare]);
   return (
     <div className={wrapCls}>
       {celebrate && (

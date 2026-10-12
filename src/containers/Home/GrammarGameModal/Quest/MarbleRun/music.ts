@@ -27,6 +27,10 @@ const VOLUME = 0.176; // Mikey 10-07: 80% of 0.22
 const KEEP_DECODED = 2;
 const IDLE_RELEASE_MS = 30000;
 
+// the level-clear result screen (Mikey 10-12): a brass fanfare that plays
+// once, then a soft flute-and-harp tune loops quietly until BACK TO MAP
+export const VICTORY_TRACK = 'victory-fanfare';
+
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let manifest: Promise<Record<string, MusicTrack>> | null = null;
@@ -98,14 +102,16 @@ function armUnlock() {
   events.forEach((e) => document.addEventListener(e, unlock, true));
 }
 
-// keep only the most recently used decoded tracks
+// keep only the most recently used decoded tracks. The victory fanfare is
+// short (40 s) and sits outside the count, so a level clear never drops the
+// map's song and BACK TO MAP brings it back at once.
 function touchBuffer(id: string) {
   const hit = buffers.get(id);
   if (!hit) return;
   buffers.delete(id);
   buffers.set(id, hit);
-  while (buffers.size > KEEP_DECODED)
-    buffers.delete(buffers.keys().next().value as string);
+  const big = [...buffers.keys()].filter((key) => key !== VICTORY_TRACK);
+  while (big.length > KEEP_DECODED) buffers.delete(big.shift() as string);
 }
 
 // nothing playing for a while: drop the decoded tracks and let the audio
@@ -141,9 +147,10 @@ function loadBuffer(id: string) {
   return hit;
 }
 
-// warm a track up (fetch + decode) so it starts instantly later
+// warm a track up (fetch + decode) so it starts instantly later; nothing to
+// warm while music is off
 export function preloadMusic(id: string) {
-  if (!audio()) return;
+  if (!musicEnabled() || !audio()) return;
   loadBuffer(id).catch(() => {});
 }
 

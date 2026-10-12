@@ -24,7 +24,13 @@ import {
 import Stage from './MarbleRun/Stage';
 import AudioToggles from './AudioToggles';
 import PixelIcon from './PixelIcon';
-import { musicForNode, playMusic, stopMusic } from './MarbleRun/music';
+import {
+  VICTORY_TRACK,
+  musicForNode,
+  playMusic,
+  preloadMusic,
+  stopMusic
+} from './MarbleRun/music';
 import { useReadCooldown } from './readCooldown';
 import { useMoreBelow } from './moreBelow';
 import { PracticeRun } from './MarbleRun/level/runner';
@@ -304,9 +310,12 @@ export default function MarbleRunScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run.runId]);
 
-  // the world's theme for a stop, the fort/castle/final theme for a boss
+  // the world's theme for a stop, the fort/castle/final theme for a boss;
+  // the result screen's victory fanfare is warmed up now so a clear starts
+  // it on the beat
   useEffect(() => {
     playMusic(musicForNode(run.nodeId));
+    preloadMusic(VICTORY_TRACK);
     return () => stopMusic(0.6);
   }, [run.nodeId]);
 
