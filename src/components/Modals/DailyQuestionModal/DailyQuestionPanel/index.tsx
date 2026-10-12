@@ -16,6 +16,8 @@ import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import {
   DAILY_QUESTION_DRAFT_RESTORED_NOTICE,
   DAILY_QUESTION_DRAFT_SAVED_NOTICE,
+  DAILY_QUESTION_POLISH_UNAVAILABLE_CODE,
+  DAILY_QUESTION_POLISH_UNAVAILABLE_NOTICE,
   DAILY_QUESTION_RECOVERY_MAX_ATTEMPTS,
   DAILY_QUESTION_RECOVERY_NOT_FOUND_RETRY_LIMIT,
   DAILY_QUESTION_RECOVERY_POLL_MS,
@@ -1355,6 +1357,21 @@ export default function DailyQuestionPanel({
       });
     } catch (err: any) {
       console.error('Failed to submit response:', err);
+      // Nothing was saved, so there is nothing to recover: back to the draft.
+      if (err?.code === DAILY_QUESTION_POLISH_UNAVAILABLE_CODE) {
+        persistDraftRecovery({
+          questionId,
+          clientRequestId,
+          responseText: trimmedResponse,
+          typingMetadata: typingMetadataRef.current
+        });
+        returnToDraftStartScreen({
+          responseText: trimmedResponse,
+          notice: DAILY_QUESTION_POLISH_UNAVAILABLE_NOTICE,
+          typingMetadata: typingMetadataRef.current
+        });
+        return;
+      }
       if (err?.status && err.status < 500 && err.status !== 409) {
         clearPendingSubmission();
         setError(err?.message || 'Failed to submit. Please try again.');

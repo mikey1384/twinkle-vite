@@ -16,6 +16,12 @@ export const DAILY_QUESTION_PENDING_SUBMISSION_STORAGE_KEY =
 export const DAILY_QUESTION_RECOVERY_POLL_MS = 2000;
 export const DAILY_QUESTION_RECOVERY_MAX_ATTEMPTS = 30;
 export const DAILY_QUESTION_RECOVERY_NOT_FOUND_RETRY_LIMIT = 3;
+// The server couldn't polish the answer, so nothing was saved; the draft
+// stays and sending it again shortly is the fix.
+export const DAILY_QUESTION_POLISH_UNAVAILABLE_CODE =
+  'daily_question_polish_unavailable';
+export const DAILY_QUESTION_POLISH_UNAVAILABLE_NOTICE =
+  "We couldn't finish polishing your answer, so nothing was saved yet. Your words are still here. Please try again in a minute.";
 export const DAILY_QUESTION_DRAFT_RESTORED_NOTICE =
   "We couldn't confirm your previous submission. Your draft is restored. Start again to resubmit.";
 export const DAILY_QUESTION_DRAFT_SAVED_NOTICE =
