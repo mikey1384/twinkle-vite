@@ -78,6 +78,26 @@ assert.match(
 );
 assert.match(compactCommentEmbedSource, /function CommentReferenceLine/);
 assert.match(compactCommentEmbedSource, /compact-comment-embed__reference/);
+// Each reference opens what it names (not the outer comment), and a
+// deleted or failed nested comment says so instead of an empty chip.
+assert.match(compactCommentEmbedSource, /to={`\/comments\/\$\{commentId\}`}/);
+assert.match(compactCommentEmbedSource, /'Comment unavailable'/);
+assert.match(compactCommentEmbedSource, /'Loading comment…'/);
+assert.match(
+  compactCommentEmbedSource,
+  /function handleClick\(event[\s\S]*?event\.stopPropagation\(\);[\s\S]*?navigate\(to\)/
+);
+// The stacked media layout is for the home feed's fixed slots only; every
+// other surface keeps the side-by-side row and its narrow-container rule.
+assert.match(compactCommentEmbedSource, /@container \(max-width: 28rem\)/);
+assert.match(
+  compactCommentEmbedSource,
+  /\.home-feed-card__body\s*&\.compact-comment-embed--has-media/
+);
+assert.doesNotMatch(
+  compactCommentEmbedSource,
+  /\n  &\.compact-comment-embed--has-media:not\(\s*\.compact-comment-embed--target-root\s*\):not\(\.compact-comment-embed--column\),\n  &\.compact-comment-embed--media-only:not\(\s*\.compact-comment-embed--target-root\s*\):not\(\.compact-comment-embed--column\) \{\n    grid-template-columns: 4\.2rem minmax\(0, 1fr\);\n    grid-template-rows: auto/
+);
 
 // The snapshot the preview is handed is overlaid with the canonical comment
 // state before anything is read off it.

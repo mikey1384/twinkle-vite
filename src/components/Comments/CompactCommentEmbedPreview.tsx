@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CardThumb from '~/components/CardThumb';
 import { BuildMiniCard } from '~/components/Build/Cards';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -213,7 +214,7 @@ export default function CompactCommentEmbedPreview({
             hideDictation={isAIMessage}
             isAIMessage={isAIMessage}
             isPreview
-            lineHeight={isTargetRoot ? 1.22 : 1.35}
+            lineHeight={isTargetRoot ? 1.22 : isColumn ? 1.35 : undefined}
             maxLines={appliedMaxTextLines}
             section="content"
             theme={theme}
@@ -400,18 +401,44 @@ function EmbedReferenceLine({ embed }: { embed: MarkdownMediaEmbed }) {
       />
     );
   }
+  if (embed.type === 'internal') {
+    return (
+      <ReferenceLine
+        icon={getMarkdownLinkPreviewIcon(embed)}
+        to={info?.normalizedSrc || ''}
+      >
+        <span>{embed.alt || getMarkdownMediaLabel(embed)}</span>
+      </ReferenceLine>
+    );
+  }
   return (
-    <ReferenceLine icon={getMarkdownLinkPreviewIcon(embed)}>
-      <span>{embed.alt || getMarkdownMediaLabel(embed)}</span>
+    <ReferenceLine href={embed.src} icon={getMarkdownLinkPreviewIcon(embed)}>
+      {embed.alt ? <strong>{embed.alt}</strong> : null}
+      <span>{getLinkHostname(embed.src) || getMarkdownMediaLabel(embed)}</span>
     </ReferenceLine>
   );
 }
 
 function CommentReferenceLine({ commentId }: { commentId: number }) {
-  const comment = useEmbeddedContent({
+  const { content: comment, status } = useEmbeddedContent({
     contentId: commentId,
     contentType: 'comment'
   });
+
+  if (status !== 'loaded') {
+    return (
+      <ReferenceLine
+        icon="comment"
+        label="Comment"
+        to={status === 'loading' ? `/comments/${commentId}` : ''}
+      >
+        <span className="compact-comment-embed__reference-muted">
+          {status === 'loading' ? 'Loading comment…' : 'Comment unavailable'}
+        </span>
+      </ReferenceLine>
+    );
+  }
+
   const username = String(
     comment?.uploader?.username || comment?.username || ''
   );
@@ -424,14 +451,12 @@ function CommentReferenceLine({ commentId }: { commentId: number }) {
       ? nestedEmbed.type === 'internal'
         ? getInternalEmbedCommentLabel(nestedEmbed.internalInfo || null)
         : `shared ${getMarkdownMediaLabel(nestedEmbed).toLowerCase()}`
-      : comment?.loaded
-        ? 'View comment'
-        : '');
+      : 'View comment');
 
   return (
-    <ReferenceLine icon="comment" label="Comment">
+    <ReferenceLine icon="comment" label="Comment" to={`/comments/${commentId}`}>
       {username ? <strong>{username}</strong> : null}
-      {body ? <span>{body}</span> : null}
+      <span>{body}</span>
     </ReferenceLine>
   );
 }
@@ -443,27 +468,42 @@ function SubjectReferenceLine({
   contentId: number;
   fallbackTitle: string;
 }) {
-  const subject = useEmbeddedContent({ contentId, contentType: 'subject' });
+  const { content: subject, status } = useEmbeddedContent({
+    contentId,
+    contentType: 'subject'
+  });
   const title = getPlainPreviewText(subject?.title || '') || fallbackTitle;
 
   return (
-    <ReferenceLine icon="comments" label="Subject">
+    <ReferenceLine
+      icon="comments"
+      label="Subject"
+      to={status === 'unavailable' ? '' : `/subjects/${contentId}`}
+    >
       <strong>{title}</strong>
     </ReferenceLine>
   );
 }
 
+// Each reference opens what it names, not the comment around it. It is an
+// anchor (so the feed card's nested-interactive check skips it) and stops
+// the click and Enter key from also reaching the outer preview.
 function ReferenceLine({
   children,
+  href,
   icon,
-  label
+  label,
+  to
 }: {
   children: React.ReactNode;
+  href?: string;
   icon: string;
   label?: string;
+  to?: string;
 }) {
-  return (
-    <span className="compact-comment-embed__reference">
+  const navigate = useNavigate();
+  const content = (
+    <>
       <span
         aria-label={label}
         className="compact-comment-embed__reference-icon"
@@ -472,8 +512,47 @@ function ReferenceLine({
         <Icon icon={icon} />
       </span>
       <span className="compact-comment-embed__reference-text">{children}</span>
-    </span>
+    </>
   );
+
+  if (!to && !href) {
+    return <span className="compact-comment-embed__reference">{content}</span>;
+  }
+
+  return (
+    <a
+      className="compact-comment-embed__reference compact-comment-embed__reference--link"
+      data-feed-card-interactive="true"
+      href={to || href}
+      rel={href ? 'noopener noreferrer' : undefined}
+      target={href ? '_blank' : undefined}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+    >
+      {content}
+    </a>
+  );
+
+  function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.stopPropagation();
+    if (!to) return;
+    event.preventDefault();
+    navigate(to);
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLAnchorElement>) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.stopPropagation();
+    }
+  }
+}
+
+function getLinkHostname(src: string) {
+  try {
+    return new URL(src).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
 }
 
 function MarkdownInternalVideoPreview({
@@ -483,7 +562,10 @@ function MarkdownInternalVideoPreview({
   alt: string;
   contentId: number;
 }) {
-  const video = useEmbeddedContent({ contentId, contentType: 'video' });
+  const { content: video } = useEmbeddedContent({
+    contentId,
+    contentType: 'video'
+  });
   const videoCode = String(video?.content || '');
 
   if (!videoCode) {
@@ -509,54 +591,73 @@ function MarkdownInternalVideoPreview({
   );
 }
 
-// Loads an embedded content into the shared content state once, so nested
-// previews show live data and repeated embeds share one request.
+// Loads an embedded content into the shared content state, so nested
+// previews show live data. Content already in the store is used as is, and
+// concurrent loads of the same content share one request.
+const embeddedContentLoads = new Map<string, Promise<any>>();
+
 function useEmbeddedContent({
   contentId,
   contentType
 }: {
   contentId: number;
   contentType: string;
-}) {
-  const loadingRef = useRef<string | null>(null);
+}): {
+  content: any;
+  status: 'loaded' | 'loading' | 'unavailable';
+} {
+  const [failedKey, setFailedKey] = useState('');
   const contentState = useContentState({ contentId, contentType });
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
+  const requestKey = `${userId || 0}:${contentType}:${contentId}`;
 
   useEffect(() => {
-    const requestKey = `${userId || 0}:${contentId}:${contentType}`;
-    if (
-      !contentId ||
-      contentState.loaded ||
-      loadingRef.current === requestKey
-    ) {
+    if (!contentId || contentState.loaded || failedKey === requestKey) {
       return;
     }
     const requestUserId = userId;
-    loadingRef.current = requestKey;
-    loadContent({ contentId, contentType })
+    let cancelled = false;
+    let request = embeddedContentLoads.get(requestKey);
+    if (!request) {
+      request = Promise.resolve(loadContent({ contentId, contentType }))
+        .then((data: any) => {
+          if (data && !data.notFound && !checkUserChange(requestUserId)) {
+            onInitContent({ ...data, contentId, contentType });
+          }
+          return data;
+        })
+        .finally(() => {
+          embeddedContentLoads.delete(requestKey);
+        });
+      embeddedContentLoads.set(requestKey, request);
+    }
+    request
       .then((data: any) => {
-        if (checkUserChange(requestUserId)) return;
-        if (!data?.notFound) {
-          onInitContent({ ...data, contentId, contentType });
-        }
+        if (cancelled || checkUserChange(requestUserId)) return;
+        if (!data || data.notFound) setFailedKey(requestKey);
       })
       .catch((error: unknown) => {
-        if (checkUserChange(requestUserId)) return;
+        if (cancelled || checkUserChange(requestUserId)) return;
         console.error(error);
-      })
-      .finally(() => {
-        if (loadingRef.current === requestKey) {
-          loadingRef.current = null;
-        }
+        setFailedKey(requestKey);
       });
+    return () => {
+      cancelled = true;
+    };
     // checkUserChange/loadContent/onInitContent are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentId, contentState.loaded, contentType, userId]);
+  }, [contentState.loaded, failedKey, requestKey]);
 
-  return contentState.loaded && !contentState.notFound ? contentState : null;
+  if (contentState.loaded && !contentState.notFound) {
+    return { content: contentState, status: 'loaded' };
+  }
+  if (!contentId || contentState.notFound || failedKey === requestKey) {
+    return { content: null, status: 'unavailable' };
+  }
+  return { content: null, status: 'loading' };
 }
 
 function MarkdownSubjectPreview({
@@ -566,7 +667,10 @@ function MarkdownSubjectPreview({
   contentId: number;
   label: string;
 }) {
-  const subject = useEmbeddedContent({ contentId, contentType: 'subject' });
+  const { content: subject } = useEmbeddedContent({
+    contentId,
+    contentType: 'subject'
+  });
   const previewContent = subject || {
     contentId,
     contentType: 'subject',
@@ -601,7 +705,10 @@ function MarkdownBuildPreview({
   contentId: number;
   label: string;
 }) {
-  const build = useEmbeddedContent({ contentId, contentType: 'build' });
+  const { content: build } = useEmbeddedContent({
+    contentId,
+    contentType: 'build'
+  });
   const previewContent = build || {
     contentId,
     contentType: 'build',
@@ -950,6 +1057,36 @@ const compactCommentEmbedPreviewClass = css`
     font-weight: 500;
     line-height: 1.3;
   }
+  .compact-comment-embed__reference--link {
+    position: relative;
+    color: ${Color.darkGray()};
+    text-decoration: none;
+    cursor: pointer;
+  }
+  /* Grows the tap target to about 40px tall without changing the layout. */
+  .compact-comment-embed__reference--link::after {
+    content: '';
+    position: absolute;
+    inset: -9px 0;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .compact-comment-embed__reference--link:hover {
+      background: ${Color.whiteGray()};
+    }
+    .compact-comment-embed__reference--link:hover
+      .compact-comment-embed__reference-text
+      > span {
+      text-decoration: underline;
+    }
+  }
+  .compact-comment-embed__reference--link:focus-visible {
+    outline: 2px solid ${Color.logoBlue(0.6)};
+    outline-offset: 1px;
+  }
+  .compact-comment-embed__reference-muted {
+    color: ${Color.gray()};
+    font-style: italic;
+  }
   .compact-comment-embed__reference-icon {
     display: inline-flex;
     flex: 0 0 auto;
@@ -1017,7 +1154,11 @@ const compactCommentEmbedPreviewClass = css`
   .compact-comment-embed__media-tile.video {
     position: relative;
   }
+  /* The thumbnail fills whatever box the layout gives the tile and never
+     sizes it, so a loaded image cannot grow the embed. */
   .compact-comment-embed__media-tile.video img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -1343,14 +1484,69 @@ const compactCommentEmbedPreviewClass = css`
       font-size: max(1.42rem, 14.2px);
     }
   }
-  /* Compact variant with media: the comment (author + text) comes first and
-     the media sits under it as a strip of evenly sized tiles. A third grid
-     column squeezed tiles into tall, clipped slivers beside a short row of
-     text and left the rest of a tall slot empty. */
-  &.compact-comment-embed--has-media:not(
+  @container (max-width: 28rem) {
+    &.compact-comment-embed--has-media:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column),
+    &.compact-comment-embed--media-only:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column) {
+      grid-template-columns: 4.2rem minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) auto;
+      align-items: stretch;
+      gap: 0.55rem 0.7rem;
+      padding: 0.6rem;
+    }
+    &.compact-comment-embed--has-media:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
+      > .compact-comment-embed__avatar,
+    &.compact-comment-embed--media-only:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
+      > .compact-comment-embed__avatar {
+      grid-column: 1;
+      grid-row: 2;
+      align-self: center;
+    }
+    &.compact-comment-embed--has-media:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
+      > .compact-comment-embed__copy,
+    &.compact-comment-embed--media-only:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
+      > .compact-comment-embed__copy {
+      grid-column: 2;
+      grid-row: 2;
+      align-self: center;
+    }
+    &.compact-comment-embed--has-media:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
+      > .compact-comment-embed__media,
+    &.compact-comment-embed--media-only:not(
+        .compact-comment-embed--target-root
+      ):not(.compact-comment-embed--column)
+      > .compact-comment-embed__media {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      width: 100%;
+      min-height: 0;
+    }
+  }
+  /* Home feed only: with media, the comment (author + text) comes first and
+     the media sits under it as a strip of evenly sized tiles. In the feed's
+     fixed-height slots a third grid column squeezed tiles into tall, clipped
+     slivers beside a short row of text and left the rest of the slot empty.
+     Other surfaces (comments drawer, Earn, preview comments) keep the
+     content-height side-by-side row above. */
+  .home-feed-card__body
+    &.compact-comment-embed--has-media:not(
       .compact-comment-embed--target-root
     ):not(.compact-comment-embed--column),
-  &.compact-comment-embed--media-only:not(
+  .home-feed-card__body
+    &.compact-comment-embed--media-only:not(
       .compact-comment-embed--target-root
     ):not(.compact-comment-embed--column) {
     grid-template-columns: 4.2rem minmax(0, 1fr);
@@ -1360,11 +1556,13 @@ const compactCommentEmbedPreviewClass = css`
     gap: 0.6rem 0.7rem;
     padding: 0.6rem;
   }
-  &.compact-comment-embed--has-media:not(
+  .home-feed-card__body
+    &.compact-comment-embed--has-media:not(
       .compact-comment-embed--target-root
     ):not(.compact-comment-embed--column)
     > .compact-comment-embed__avatar,
-  &.compact-comment-embed--media-only:not(
+  .home-feed-card__body
+    &.compact-comment-embed--media-only:not(
       .compact-comment-embed--target-root
     ):not(.compact-comment-embed--column)
     > .compact-comment-embed__avatar {
@@ -1372,11 +1570,13 @@ const compactCommentEmbedPreviewClass = css`
     grid-row: 1;
     align-self: start;
   }
-  &.compact-comment-embed--has-media:not(
+  .home-feed-card__body
+    &.compact-comment-embed--has-media:not(
       .compact-comment-embed--target-root
     ):not(.compact-comment-embed--column)
     > .compact-comment-embed__copy,
-  &.compact-comment-embed--media-only:not(
+  .home-feed-card__body
+    &.compact-comment-embed--media-only:not(
       .compact-comment-embed--target-root
     ):not(.compact-comment-embed--column)
     > .compact-comment-embed__copy {
@@ -1384,11 +1584,13 @@ const compactCommentEmbedPreviewClass = css`
     grid-row: 1;
     align-self: center;
   }
-  &.compact-comment-embed--has-media:not(
+  .home-feed-card__body
+    &.compact-comment-embed--has-media:not(
       .compact-comment-embed--target-root
     ):not(.compact-comment-embed--column)
     > .compact-comment-embed__media,
-  &.compact-comment-embed--media-only:not(
+  .home-feed-card__body
+    &.compact-comment-embed--media-only:not(
       .compact-comment-embed--target-root
     ):not(.compact-comment-embed--column)
     > .compact-comment-embed__media {
@@ -1490,7 +1692,7 @@ const compactCommentEmbedPreviewClass = css`
     > .compact-comment-embed__copy
     > .compact-comment-embed__meta
     .compact-comment-embed__timestamp {
-    font-size: 1.1rem;
+    font-size: max(1.1rem, 11px);
     font-weight: 600;
   }
   &.compact-comment-embed--column > .compact-comment-embed__copy p {

@@ -799,7 +799,9 @@ export const mainPreviewStyles = `
   }
   /* Inside a subject description the comment row has a fixed allowance
      (COMMENT_EMBED_PREVIEW_HEIGHT_REM), so its one media tile sits beside the
-     text instead of under it, where the card would clip it. */
+     text instead of under it, where the card would clip it. Nested under
+     bodyClass, these outrank the feed-scoped stacked layout in
+     CompactCommentEmbedPreview by one class. */
   .home-feed-card__subject-embed-preview
     [data-compact-comment-embed]:is(
       .compact-comment-embed--has-media,
