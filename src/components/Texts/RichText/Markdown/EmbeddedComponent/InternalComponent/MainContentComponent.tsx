@@ -342,11 +342,23 @@ function CompactMainContentEmbedPreview({
   };
 
   if (isBuild) {
+    // the loaded app names its current owner as its uploader
+    const ownerIsUploader =
+      Number(content?.userId) > 0 &&
+      Number(content?.uploader?.id) === Number(content?.userId);
     const buildPreview = {
       ...content,
       contentId,
       contentType: 'build',
       id: contentId,
+      username:
+        content?.username ||
+        (ownerIsUploader ? content.uploader.username : '') ||
+        '',
+      profilePicUrl:
+        content?.profilePicUrl ||
+        (ownerIsUploader ? content.uploader.profilePicUrl : '') ||
+        '',
       thumbnailUrl: thumbUrl
     };
 

@@ -6,6 +6,7 @@ import FavoriteButton, {
 } from '~/components/Build/FavoriteButton';
 import PreviewFrame from '~/components/Build/PreviewFrame';
 import Icon from '~/components/Icon';
+import UsernameText from '~/components/Texts/UsernameText';
 import ViewCount from '~/components/ViewCount';
 import { BuildForkersTrigger } from '~/components/Modals/BuildForkersModal';
 import { BuildTeamMembersTrigger } from '~/components/Modals/BuildTeamMembersModal';
@@ -106,6 +107,16 @@ const miniCardClass = css`
     box-decoration-break: clone;
   }
 
+  &.compact-embed .build-mini-card__owner {
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.06rem 0.24rem;
+    border-radius: 0.35rem;
+    background: rgba(255, 255, 255, 0.94);
+    color: #1f2937;
+    font-size: 1rem;
+  }
+
   &.compact-embed .build-mini-card__description {
     width: fit-content;
     max-width: 100%;
@@ -148,6 +159,20 @@ const miniCardClass = css`
       font-size: 1.12rem;
       line-height: 1.08;
     }
+
+    /* Phone-size tiles have no room for both lines above the status
+       badges, so the owner line takes the description's slot. */
+    &.compact-embed .build-mini-card__owner + .build-mini-card__description {
+      display: none;
+    }
+  }
+
+  /* Feed and target panels have a fixed height; the owner line's room comes
+     out of the description so the badges and actions stay inside the card. */
+  &:not(.compact-embed)
+    .build-mini-card__owner
+    + .build-mini-card__description {
+    -webkit-line-clamp: 1;
   }
 `;
 
@@ -212,6 +237,18 @@ const badgeClass = css`
   color: #1d4ed8;
   font-size: 1rem;
   font-weight: 900;
+`;
+
+const ownerClass = css`
+  min-width: 0;
+  margin: 0;
+  color: rgba(31, 41, 55, 0.7);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const titleClass = css`
@@ -375,14 +412,23 @@ export default function BuildMiniCard({
   const showVisitBadge = serverCountFields.includes('viewCount');
   const hasStatusBadges = Boolean(
     relationshipLabels.length > 0 ||
-      showOpenSource ||
-      showVisitBadge ||
-      collaboratorCount > 0
+    showOpenSource ||
+    showVisitBadge ||
+    collaboratorCount > 0
   );
   const shouldShowCompactStatusBadges = Boolean(
     isCompactEmbed && !isThumbEmbed && hasStatusBadges
   );
   const compactOpenEnabled = Boolean(isCompactEmbed && !showActions && onOpen);
+  // apps can be traded, so show who owns it now, never who made it
+  const ownerId = Number(build.userId || 0);
+  const uploader: { id?: number; username?: string; profilePicUrl?: string } =
+    (build as any).uploader || {};
+  const ownerName = String(
+    build.username ||
+      (Number(uploader.id) === ownerId ? uploader.username : '') ||
+      ''
+  );
 
   return (
     <div
@@ -432,6 +478,33 @@ export default function BuildMiniCard({
                 {displayTitle}
               </span>
             </h3>
+            {ownerId > 0 && ownerName ? (
+              <div
+                className={cx(ownerClass, 'build-mini-card__owner')}
+                onClick={stopEvent}
+                onKeyDown={stopEvent}
+              >
+                Owned by{' '}
+                <UsernameText
+                  color="inherit"
+                  textStyle={{
+                    color: 'inherit',
+                    fontSize: 'inherit',
+                    fontWeight: 'inherit'
+                  }}
+                  user={{
+                    id: ownerId,
+                    username: ownerName,
+                    profilePicUrl:
+                      build.profilePicUrl ||
+                      (Number(uploader.id) === ownerId
+                        ? uploader.profilePicUrl
+                        : '') ||
+                      ''
+                  }}
+                />
+              </div>
+            ) : null}
             {build.description ? (
               <p
                 className={cx(descriptionClass, 'build-mini-card__description')}
@@ -513,6 +586,10 @@ export default function BuildMiniCard({
 
   function handleOpenClick(event: React.MouseEvent<HTMLButtonElement>) {
     handleOpenEvent(event);
+  }
+
+  function stopEvent(event: React.SyntheticEvent) {
+    event.stopPropagation();
   }
 
   function handleCompactOpenClick(event: React.MouseEvent<HTMLDivElement>) {

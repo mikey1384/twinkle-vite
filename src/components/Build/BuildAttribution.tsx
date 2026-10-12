@@ -1,6 +1,8 @@
 import React from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 
+// Apps can be traded, so a card names who owns the app now (like AI cards),
+// never who first made it.
 export default function BuildAttribution({
   build
 }: {
@@ -8,13 +10,8 @@ export default function BuildAttribution({
     userId?: number | string;
     username?: string;
     profilePicUrl?: string | null;
-    creatorId?: number | null;
-    creatorUsername?: string | null;
-    creatorProfilePicUrl?: string | null;
   };
 }) {
-  const creatorId = Number(build.creatorId || build.userId);
-  const transferred = creatorId !== Number(build.userId);
   const style: React.CSSProperties = {
     color: 'inherit',
     fontSize: 'inherit',
@@ -22,36 +19,16 @@ export default function BuildAttribution({
   };
   return (
     <span style={{ display: 'block', minWidth: 0, whiteSpace: 'normal' }}>
-      Created by{' '}
+      Owned by{' '}
       <UsernameText
         color="inherit"
         textStyle={style}
         user={{
-          id: creatorId,
-          username:
-            build.creatorUsername ||
-            (transferred ? 'Original creator' : build.username) ||
-            '',
-          profilePicUrl:
-            build.creatorProfilePicUrl ||
-            (transferred ? '' : build.profilePicUrl) ||
-            ''
+          id: Number(build.userId),
+          username: build.username || '',
+          profilePicUrl: build.profilePicUrl || ''
         }}
       />
-      {transferred && (
-        <>
-          {' · '}Owned by{' '}
-          <UsernameText
-            color="inherit"
-            textStyle={style}
-            user={{
-              id: Number(build.userId),
-              username: build.username || '',
-              profilePicUrl: build.profilePicUrl || ''
-            }}
-          />
-        </>
-      )}
     </span>
   );
 }
