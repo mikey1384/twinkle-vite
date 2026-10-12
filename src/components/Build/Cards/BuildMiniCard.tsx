@@ -479,30 +479,29 @@ export default function BuildMiniCard({
               </span>
             </h3>
             {ownerId > 0 && ownerName ? (
-              <div
-                className={cx(ownerClass, 'build-mini-card__owner')}
-                onClick={stopEvent}
-                onKeyDown={stopEvent}
-              >
+              <div className={cx(ownerClass, 'build-mini-card__owner')}>
                 Owned by{' '}
-                <UsernameText
-                  color="inherit"
-                  textStyle={{
-                    color: 'inherit',
-                    fontSize: 'inherit',
-                    fontWeight: 'inherit'
-                  }}
-                  user={{
-                    id: ownerId,
-                    username: ownerName,
-                    profilePicUrl:
-                      build.profilePicUrl ||
-                      (Number(uploader.id) === ownerId
-                        ? uploader.profilePicUrl
-                        : '') ||
-                      ''
-                  }}
-                />
+                {/* only the name opens the profile; the rest of the card opens the app */}
+                <span onClick={stopEvent} onKeyDown={stopEvent}>
+                  <UsernameText
+                    color="inherit"
+                    textStyle={{
+                      color: 'inherit',
+                      fontSize: 'inherit',
+                      fontWeight: 'inherit'
+                    }}
+                    user={{
+                      id: ownerId,
+                      username: ownerName,
+                      profilePicUrl:
+                        build.profilePicUrl ||
+                        (Number(uploader.id) === ownerId
+                          ? uploader.profilePicUrl
+                          : '') ||
+                        ''
+                    }}
+                  />
+                </span>
               </div>
             ) : null}
             {build.description ? (

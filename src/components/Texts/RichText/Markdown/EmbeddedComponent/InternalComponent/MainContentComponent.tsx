@@ -353,12 +353,12 @@ function CompactMainContentEmbedPreview({
       id: contentId,
       username:
         content?.username ||
-        (ownerIsUploader ? content.uploader.username : '') ||
-        '',
+        (ownerIsUploader ? content.uploader.username : undefined) ||
+        undefined,
       profilePicUrl:
         content?.profilePicUrl ||
-        (ownerIsUploader ? content.uploader.profilePicUrl : '') ||
-        '',
+        (ownerIsUploader ? content.uploader.profilePicUrl : undefined) ||
+        undefined,
       thumbnailUrl: thumbUrl
     };
 
