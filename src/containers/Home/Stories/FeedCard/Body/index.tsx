@@ -32,6 +32,7 @@ import {
 } from '~/helpers/aiCardEmbedHelpers';
 import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { NestedNavigationContext } from '~/contexts/NestedNavigationContext';
 import { useContentState } from '~/helpers/hooks';
 import { mergeLiveCommentState } from '~/helpers/aiEnergySponsorship';
 import { seedCommentContentPage } from '~/helpers/contentPageSeed';
@@ -188,29 +189,33 @@ export default function Body({
   }
 
   return (
-    <div
-      ref={BodyRef}
-      className={`${bodyClass} home-feed-card__body${
-        resolvedSizing.main.size === 'media-attachment-with-text'
-          ? ' home-feed-card__body--tablet-media-attachment'
-          : ''
-      }`}
-    >
-      <section className={panelClassName}>{renderContentPreview()}</section>
-      <TargetPreview
-        contentType={contentType}
-        normalizedRootType={normalizedRootType}
-        onNavigate={onNavigate}
-        resolvedRootObj={resolvedRootObj}
-        secretHidden={secretHidden}
-        targetComment={targetComment}
-        targetPanelClassName={targetPanelClassName}
-        targetSubject={targetSubject}
-        targetUser={targetUser}
-        theme={theme}
-        userId={userId}
-      />
-    </div>
+    // Links nested inside previews (comment reference lines) navigate through
+    // the card's handler, like the embeds that receive onNavigate directly.
+    <NestedNavigationContext.Provider value={onNavigate}>
+      <div
+        ref={BodyRef}
+        className={`${bodyClass} home-feed-card__body${
+          resolvedSizing.main.size === 'media-attachment-with-text'
+            ? ' home-feed-card__body--tablet-media-attachment'
+            : ''
+        }`}
+      >
+        <section className={panelClassName}>{renderContentPreview()}</section>
+        <TargetPreview
+          contentType={contentType}
+          normalizedRootType={normalizedRootType}
+          onNavigate={onNavigate}
+          resolvedRootObj={resolvedRootObj}
+          secretHidden={secretHidden}
+          targetComment={targetComment}
+          targetPanelClassName={targetPanelClassName}
+          targetSubject={targetSubject}
+          targetUser={targetUser}
+          theme={theme}
+          userId={userId}
+        />
+      </div>
+    </NestedNavigationContext.Provider>
   );
 
   function renderContentPreview() {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNestedNavigate } from '~/contexts/NestedNavigationContext';
 import CardThumb from '~/components/CardThumb';
 import { BuildMiniCard } from '~/components/Build/Cards';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -142,6 +143,11 @@ export default function CompactCommentEmbedPreview({
       item.embed.internalInfo?.kind === 'build'
   );
   const interactive = Boolean(onOpen);
+  // Reference lines are links. A link may not sit inside role="button", so
+  // when the preview has them the outer box stays clickable for pointers but
+  // drops the button role, and keyboard and screen-reader users open the
+  // comment with a visually hidden "Open comment" button instead.
+  const outerIsButton = interactive && !hasReferences;
 
   return (
     <div
@@ -159,11 +165,23 @@ export default function CompactCommentEmbedPreview({
         .filter(Boolean)
         .join(' ')}
       data-compact-comment-embed="true"
-      role={interactive ? 'button' : undefined}
-      tabIndex={interactive ? 0 : undefined}
+      // Without role="button" the feed card's tap handler must still treat
+      // this box as its own target, or a tap on the text would open the card.
+      data-feed-card-interactive={interactive ? 'true' : undefined}
+      role={outerIsButton ? 'button' : undefined}
+      tabIndex={outerIsButton ? 0 : undefined}
       onClick={interactive ? handleOpen : undefined}
-      onKeyDown={interactive ? handleKeyDown : undefined}
+      onKeyDown={outerIsButton ? handleKeyDown : undefined}
     >
+      {interactive && !outerIsButton ? (
+        <button
+          className="compact-comment-embed__open"
+          type="button"
+          onClick={handleOpen}
+        >
+          Open comment
+        </button>
+      ) : null}
       <div className="compact-comment-embed__avatar">
         <ProfilePic
           userId={uploader.id}
@@ -253,7 +271,7 @@ export default function CompactCommentEmbedPreview({
     </div>
   );
 
-  function handleOpen(event: React.MouseEvent<HTMLDivElement>) {
+  function handleOpen(event: React.MouseEvent<HTMLElement>) {
     event.stopPropagation();
     onOpen?.();
   }
@@ -411,10 +429,18 @@ function EmbedReferenceLine({ embed }: { embed: MarkdownMediaEmbed }) {
       </ReferenceLine>
     );
   }
+  const externalUrl = getExternalLinkUrl(embed.src);
   return (
-    <ReferenceLine href={embed.src} icon={getMarkdownLinkPreviewIcon(embed)}>
+    <ReferenceLine
+      href={externalUrl ? externalUrl.href : undefined}
+      icon={getMarkdownLinkPreviewIcon(embed)}
+    >
       {embed.alt ? <strong>{embed.alt}</strong> : null}
-      <span>{getLinkHostname(embed.src) || getMarkdownMediaLabel(embed)}</span>
+      <span>
+        {externalUrl
+          ? externalUrl.hostname.replace(/^www\./, '')
+          : embed.src || getMarkdownMediaLabel(embed)}
+      </span>
     </ReferenceLine>
   );
 }
@@ -486,8 +512,12 @@ function SubjectReferenceLine({
 }
 
 // Each reference opens what it names, not the comment around it. It is an
-// anchor (so the feed card's nested-interactive check skips it) and stops
-// the click and Enter key from also reaching the outer preview.
+// anchor (so the feed card's nested-interactive check skips it). A plain left
+// click navigates through the surface's nested-navigation handler when there
+// is one (the home feed card's, which saves the scroll anchor and records the
+// owner trace), else the router. Modified and middle clicks are left to the
+// browser so they open a new tab. Enter is the anchor's own activation key
+// and Space is left alone, as for any link.
 function ReferenceLine({
   children,
   href,
@@ -502,6 +532,7 @@ function ReferenceLine({
   to?: string;
 }) {
   const navigate = useNavigate();
+  const nestedNavigate = useNestedNavigate();
   const content = (
     <>
       <span
@@ -534,24 +565,45 @@ function ReferenceLine({
   );
 
   function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    // The outer preview must never also open.
     event.stopPropagation();
-    if (!to) return;
+    if (!to || isModifiedClick(event)) return;
     event.preventDefault();
+    if (nestedNavigate) {
+      nestedNavigate(to, event.currentTarget);
+      return;
+    }
     navigate(to);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLAnchorElement>) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.stopPropagation();
-    }
+    // Enter activates the anchor (a click follows); keep it from also
+    // reaching any key handler around the preview.
+    if (event.key === 'Enter') event.stopPropagation();
   }
 }
 
-function getLinkHostname(src: string) {
+function isModifiedClick(event: React.MouseEvent) {
+  return (
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey
+  );
+}
+
+// Only http(s) links get an href. A bare "www." link is read as https, the
+// same way internal embed sources are parsed; anything else (relative paths,
+// other schemes) renders as plain text.
+function getExternalLinkUrl(src: string) {
+  const trimmed = String(src || '').trim();
+  const candidate = /^www\./i.test(trimmed) ? `https://${trimmed}` : trimmed;
   try {
-    return new URL(src).hostname.replace(/^www\./, '');
+    const url = new URL(candidate);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url : null;
   } catch {
-    return '';
+    return null;
   }
 }
 
@@ -595,6 +647,9 @@ function MarkdownInternalVideoPreview({
 // previews show live data. Content already in the store is used as is, and
 // concurrent loads of the same content share one request.
 const embeddedContentLoads = new Map<string, Promise<any>>();
+// Not-found contents are remembered for the session, so a deleted nested
+// comment is not requested again each time its card remounts.
+const unavailableEmbeddedContent = new Set<string>();
 
 function useEmbeddedContent({
   contentId,
@@ -615,7 +670,12 @@ function useEmbeddedContent({
   const requestKey = `${userId || 0}:${contentType}:${contentId}`;
 
   useEffect(() => {
-    if (!contentId || contentState.loaded || failedKey === requestKey) {
+    if (
+      !contentId ||
+      contentState.loaded ||
+      failedKey === requestKey ||
+      unavailableEmbeddedContent.has(requestKey)
+    ) {
       return;
     }
     const requestUserId = userId;
@@ -637,6 +697,7 @@ function useEmbeddedContent({
     request
       .then((data: any) => {
         if (cancelled || checkUserChange(requestUserId)) return;
+        if (data?.notFound) unavailableEmbeddedContent.add(requestKey);
         if (!data || data.notFound) setFailedKey(requestKey);
       })
       .catch((error: unknown) => {
@@ -654,7 +715,12 @@ function useEmbeddedContent({
   if (contentState.loaded && !contentState.notFound) {
     return { content: contentState, status: 'loaded' };
   }
-  if (!contentId || contentState.notFound || failedKey === requestKey) {
+  if (
+    !contentId ||
+    contentState.notFound ||
+    failedKey === requestKey ||
+    unavailableEmbeddedContent.has(requestKey)
+  ) {
     return { content: null, status: 'unavailable' };
   }
   return { content: null, status: 'loading' };
@@ -1057,17 +1123,36 @@ const compactCommentEmbedPreviewClass = css`
     font-weight: 500;
     line-height: 1.3;
   }
+  /* Keyboard and screen-reader way to open a preview whose box holds links
+     (see outerIsButton): hidden until focused, then the box shows a ring. */
+  .compact-comment-embed__open {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    white-space: nowrap;
+  }
+  &:has(> .compact-comment-embed__open:focus-visible) {
+    outline: 2px solid ${Color.logoBlue(0.6)};
+    outline-offset: 2px;
+  }
   .compact-comment-embed__reference--link {
     position: relative;
     color: ${Color.darkGray()};
     text-decoration: none;
     cursor: pointer;
   }
-  /* Grows the tap target to about 40px tall without changing the layout. */
-  .compact-comment-embed__reference--link::after {
-    content: '';
-    position: absolute;
-    inset: -9px 0;
+  /* The tap target is the line's own box and nothing outside it, so a tap
+     on the comment text or a neighbouring line never lands here. It gets
+     its height from its own padding, not from an overlay. */
+  .compact-comment-embed__reference--link {
+    min-height: max(2.8rem, 28px);
+    padding-block: 0.4rem;
   }
   @media (hover: hover) and (pointer: fine) {
     .compact-comment-embed__reference--link:hover {

@@ -82,6 +82,37 @@ assert.match(compactCommentEmbedSource, /compact-comment-embed__reference/);
 // deleted or failed nested comment says so instead of an empty chip.
 assert.match(compactCommentEmbedSource, /to={`\/comments\/\$\{commentId\}`}/);
 assert.match(compactCommentEmbedSource, /'Comment unavailable'/);
+// Round 3 (2026-10-12): a reference's tap target is its own box only (an
+// overlay reaching past it stole taps from the comment text above); plain
+// left clicks go through the surface's nested-navigation handler (the feed
+// card's), modified clicks are left to the browser, bare "www." links are
+// read as https and only http(s) gets an href, and a preview holding links
+// is not role="button" (it gets a hidden "Open comment" button instead).
+assert.doesNotMatch(
+  compactCommentEmbedSource,
+  /compact-comment-embed__reference--link::after/
+);
+assert.match(compactCommentEmbedSource, /useNestedNavigate\(\)/);
+assert.match(
+  compactCommentEmbedSource,
+  /if \(!to \|\| isModifiedClick\(event\)\) return;/
+);
+assert.match(
+  compactCommentEmbedSource,
+  /url\.protocol === 'http:' \|\| url\.protocol === 'https:'/
+);
+assert.match(
+  compactCommentEmbedSource,
+  /const outerIsButton = interactive && !hasReferences;/
+);
+assert.match(
+  compactCommentEmbedSource,
+  /role={outerIsButton \? 'button' : undefined}/
+);
+assert.match(
+  feedCardBodySource,
+  /<NestedNavigationContext\.Provider value={onNavigate}>/
+);
 assert.match(compactCommentEmbedSource, /'Loading comment…'/);
 assert.match(
   compactCommentEmbedSource,
