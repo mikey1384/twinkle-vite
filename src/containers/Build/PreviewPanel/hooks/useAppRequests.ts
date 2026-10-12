@@ -50,6 +50,11 @@ export default function useAppRequests({
   );
   const requestBuildCardCraftPreviewRef = useRef(requestBuildCardCraftPreview);
   requestBuildCardCraftPreviewRef.current = requestBuildCardCraftPreview;
+  const requestBuildCraft = useAppContext(
+    (v) => v.requestHelpers.requestBuildCraft
+  );
+  const requestBuildCraftRef = useRef(requestBuildCraft);
+  requestBuildCraftRef.current = requestBuildCraft;
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
@@ -556,6 +561,7 @@ export default function useAppRequests({
     requestBuildRewardPreviewRef,
     requestBuildCardCraftRef,
     requestBuildCardCraftPreviewRef,
+    requestBuildCraftRef,
     connectBuildAppMcpRuntimeRef,
     pollBuildAppMcpCallRef,
     completeBuildAppMcpCallRef,

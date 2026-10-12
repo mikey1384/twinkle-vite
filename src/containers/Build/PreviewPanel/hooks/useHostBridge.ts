@@ -4907,6 +4907,73 @@ export function useHostBridge({
             break;
           }
 
+          case 'craft:state':
+          case 'craft:list':
+          case 'craft:item':
+          case 'craft:journey':
+          case 'craft:rankings':
+          case 'craft:merge': {
+            const operation = type.slice('craft:'.length);
+            if (!previewAuth.userIdRef.current) {
+              // Signed-out viewers see an empty universe in the documented
+              // shapes (the site day is UTC); merging asks them to sign in.
+              if (operation === 'merge') triggerGuestRestriction(previewAuth);
+              const craftDay = new Date().toISOString().slice(0, 10);
+              const noRank = { rank: null, worldFirsts: 0 };
+              response =
+                operation === 'state'
+                  ? {
+                      starters: [],
+                      counts: { mine: 0, world: 0 },
+                      today: { day: craftDay, target: null, par: null, done: false },
+                      reason: 'sign_in_required'
+                    }
+                  : operation === 'list'
+                    ? { items: [], cursor: null }
+                    : operation === 'item'
+                      ? { item: null }
+                      : operation === 'journey'
+                        ? {
+                            day: typeof payload?.day === 'string' ? payload.day : craftDay,
+                            journey: null,
+                            reason: 'sign_in_required'
+                          }
+                        : {
+                            allTime: { top: [], me: noRank },
+                            month: { month: craftDay.slice(0, 7), top: [], me: noRank }
+                          };
+              break;
+            }
+            const craftToken = await ensureBuildApiToken(
+              [operation === 'merge' ? 'craft:write' : 'craft:read'],
+              previewAuth
+            );
+            // Ids and paging only: names, answers and World Firsts come
+            // from the server.
+            response = await requestRefs.requestBuildCraftRef.current({
+              buildId: activeBuild.id,
+              operation,
+              payload:
+                operation === 'merge'
+                  ? { a: payload?.a, b: payload?.b, requestId: payload?.requestId }
+                  : operation === 'list'
+                    ? { cursor: payload?.cursor, limit: payload?.limit }
+                    : operation === 'item'
+                      ? { id: payload?.id }
+                      : operation === 'journey'
+                        ? { day: payload?.day }
+                        : {},
+              token: craftToken
+            });
+            if (
+              response?.aiUsagePolicy &&
+              typeof response.aiUsagePolicy === 'object'
+            ) {
+              onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            }
+            break;
+          }
+
           case 'rewards:status':
           case 'rewards:receipt':
           case 'rewards:start':

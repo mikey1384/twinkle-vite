@@ -57,20 +57,30 @@ export default function buildRequestHelpers({
     };
   }
 
-  function toCardCraftRequestError(error: unknown) {
+  // Also used by Twinkle.craft: aiUsagePolicy rides along when a failed AI
+  // step still used Energy, so the host can refresh the battery.
+  function toCardCraftRequestError(
+    error: unknown,
+    fallback = 'Could not complete the card crafting request.'
+  ) {
     const data = axios.isAxiosError(error) ? error.response?.data : null;
     const result = new Error(
-      data?.error ||
-        (error instanceof Error
-          ? error.message
-          : 'Could not complete the card crafting request.')
-    ) as Error & { code?: string; status?: number; details?: unknown };
+      data?.error || (error instanceof Error ? error.message : fallback)
+    ) as Error & {
+      code?: string;
+      status?: number;
+      details?: unknown;
+      aiUsagePolicy?: unknown;
+    };
     if (typeof data?.code === 'string') result.code = data.code;
     if (axios.isAxiosError(error) && error.response?.status) {
       result.status = error.response.status;
     }
     if (data?.details && typeof data.details === 'object') {
       result.details = data.details;
+    }
+    if (data?.aiUsagePolicy && typeof data.aiUsagePolicy === 'object') {
+      result.aiUsagePolicy = data.aiUsagePolicy;
     }
     return result;
   }
@@ -821,6 +831,34 @@ export default function buildRequestHelpers({
         return data;
       } catch (error) {
         throw toCardCraftRequestError(error);
+      }
+    },
+    // Twinkle.craft runtime calls (state, list, merge, item, journey,
+    // rankings). Errors keep the server's code so the app can tell "someone
+    // is discovering this pair" from "out of Energy".
+    async requestBuildCraft({
+      buildId,
+      operation,
+      payload,
+      token
+    }: {
+      buildId: number;
+      operation: string;
+      payload: unknown;
+      token: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/craft/${operation}`,
+          payload,
+          {
+            ...getBuildRequestConfig({ maxRetries: 0 }),
+            headers: { ...auth().headers, 'x-build-api-token': token }
+          }
+        );
+        return data;
+      } catch (error) {
+        throw toCardCraftRequestError(error, 'Could not complete the crafting request.');
       }
     },
     // "Crafted into …" badges for up to 50 cards in one request.

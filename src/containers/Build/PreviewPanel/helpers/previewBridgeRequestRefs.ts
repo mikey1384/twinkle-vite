@@ -5,6 +5,7 @@ export interface PreviewHostBridgeRequestRefs {
   requestBuildRewardPreviewRef: AsyncRequestRef;
   requestBuildCardCraftRef: AsyncRequestRef;
   requestBuildCardCraftPreviewRef: AsyncRequestRef;
+  requestBuildCraftRef: AsyncRequestRef;
   connectBuildAppMcpRuntimeRef: AsyncRequestRef;
   pollBuildAppMcpCallRef: AsyncRequestRef;
   completeBuildAppMcpCallRef: AsyncRequestRef;

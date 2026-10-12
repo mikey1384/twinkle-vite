@@ -3,7 +3,7 @@
 // the app is public and, for a song, while that song is still published.
 export interface BountySubject {
   kind: 'song' | 'item';
-  action: 'listen' | 'listen-own' | 'publish' | null;
+  action: 'listen' | 'listen-own' | 'publish' | 'discover' | null;
   title: string;
   path: string | null;
   imageUrl: string | null;
@@ -27,7 +27,8 @@ export function normalizeBountySubject(value: unknown): BountySubject | null {
     action:
       source.action === 'listen' ||
       source.action === 'listen-own' ||
-      source.action === 'publish'
+      source.action === 'publish' ||
+      source.action === 'discover'
         ? source.action
         : null,
     title,
@@ -56,6 +57,9 @@ export function getBountySubjectCopy(subject: BountySubject) {
     return { lead: 'Listened to their own song', byCreator: false };
   if (subject.action === 'publish')
     return { lead: 'Published', byCreator: false };
+  // Twinkle.craft: the first in the app's universe to make this item.
+  if (subject.action === 'discover')
+    return { lead: 'Discovered', byCreator: false };
   return { lead: '', byCreator: false };
 }
 
@@ -83,6 +87,8 @@ export function getBountySubjectSentence({
     return `${who} ${earned} listening to their own song ${subject.title}${where}`;
   if (subject.action === 'publish')
     return `${who} ${earned} publishing ${subject.title}${where}`;
+  if (subject.action === 'discover')
+    return `${who} ${earned} discovering ${subject.title} first${where}`;
   return `${who} ${earned} for ${subject.title}${where}`;
 }
 

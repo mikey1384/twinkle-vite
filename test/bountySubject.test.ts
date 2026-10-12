@@ -56,3 +56,14 @@ test('Play appears only for a song the server identified, never an app-supplied 
   assert.equal(canPlayBountySubject({ ...listened, kind: 'item' }), false);
   assert.equal(canPlayBountySubject(null), false);
 });
+
+test('a Twinkle.craft World First reads "discovering <item> first"; it is never playable', () => {
+  const discovered = normalizeBountySubject({ kind: 'item', action: 'discover', title: 'Obsidian' })!;
+  assert.equal(discovered.action, 'discover');
+  assert.deepEqual(getBountySubjectCopy(discovered), { lead: 'Discovered', byCreator: false });
+  assert.equal(
+    getBountySubjectSentence({ subject: discovered, username: 'jet', xp: 2000, appTitle: 'Infinity Craft' }),
+    'jet earned 2,000 XP discovering Obsidian first in Infinity Craft'
+  );
+  assert.equal(canPlayBountySubject(discovered), false);
+});

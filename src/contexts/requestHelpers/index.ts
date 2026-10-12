@@ -85,6 +85,7 @@ registerMethods('build', [
   'requestBuildRewardPreview',
   'requestBuildCardCraft',
   'requestBuildCardCraftPreview',
+  'requestBuildCraft',
   'loadCardCraftBadges',
   'loadRewardEarnHub',
   'loadRewardEarnStandings',

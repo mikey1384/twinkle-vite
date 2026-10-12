@@ -14,6 +14,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'rewards:rematch-claim',
   'cardCraft:craft',
   'cardCraft:set-state',
+  'craft:merge',
   'ai:chat',
   'ai:generate-object',
   'ai:decide',
