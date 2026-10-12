@@ -283,7 +283,7 @@ export const GQ_MEDIA: Record<string, string> = {
   'music/grammar-quest/boss-fort.mp3': 'music/boss-fort.5a0a0090c4.mp3',
   'music/grammar-quest/overworld.mp3': 'music/overworld.4a0442e72f.mp3',
   'music/grammar-quest/victory-fanfare.mp3':
-    'music/victory-fanfare.5d541011ff.mp3',
+    'music/victory-fanfare.ce84ce5837.mp3',
   'music/grammar-quest/w1-map-village-green.mp3':
     'music/w1-map-village-green.64ce2abdaa.mp3',
   'music/grammar-quest/w1-starter-village.mp3':
@@ -371,10 +371,10 @@ export const GQ_MUSIC: Record<
   'victory-fanfare': {
     id: 'victory-fanfare',
     title: 'Stage Clear!',
-    bpm: 132,
-    loopStart: 11.363628,
-    loopEnd: 40.454535,
-    duration: 40.454535
+    bpm: 152,
+    loopStart: 3.157891,
+    loopEnd: 41.05263,
+    duration: 41.05263
   },
   'w1-map-village-green': {
     id: 'w1-map-village-green',

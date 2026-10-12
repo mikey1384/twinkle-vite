@@ -27,8 +27,9 @@ const VOLUME = 0.176; // Mikey 10-07: 80% of 0.22
 const KEEP_DECODED = 2;
 const IDLE_RELEASE_MS = 30000;
 
-// the level-clear result screen (Mikey 10-12): a brass fanfare that plays
-// once, then a soft flute-and-harp tune loops quietly until BACK TO MAP
+// the level-clear result screen (Mikey 10-12): a short surprise burst plays
+// once, then a bouncy steel-drum tune loops, a little under the level songs,
+// until BACK TO MAP
 export const VICTORY_TRACK = 'victory-fanfare';
 
 let ctx: AudioContext | null = null;
@@ -103,7 +104,7 @@ function armUnlock() {
 }
 
 // keep only the most recently used decoded tracks. The victory fanfare is
-// short (40 s) and sits outside the count, so a level clear never drops the
+// short (41 s) and sits outside the count, so a level clear never drops the
 // map's song and BACK TO MAP brings it back at once.
 function touchBuffer(id: string) {
   const hit = buffers.get(id);

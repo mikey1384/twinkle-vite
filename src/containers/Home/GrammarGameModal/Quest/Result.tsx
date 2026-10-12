@@ -90,8 +90,8 @@ export default function Result({
         : 'NOT YET';
   const celebrate = !!result.cleared;
   const won = celebrate || kind === 'nemesis';
-  // a cleared stop, fort or castle gets the victory fanfare (Mikey 10-12):
-  // the brass plays once, then a soft tune loops until BACK TO MAP. The run's
+  // a cleared stop, fort or castle gets the victory song (Mikey 10-12): its
+  // burst plays once, then the happy tune loops until BACK TO MAP. The run's
   // level song has just stopped; a stop that isn't cleared stays quiet, and
   // nemesis practice keeps its own clear chime. It follows the music switch.
   const fanfare = celebrate && kind !== 'nemesis';
