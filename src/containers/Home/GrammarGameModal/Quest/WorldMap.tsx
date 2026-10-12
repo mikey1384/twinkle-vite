@@ -162,14 +162,35 @@ export default function WorldMap({
   // under the mouse between the pick and the Play click). A stop the player
   // didn't pick (the one a world opens on) also brings its whole bubble into
   // view: nobody's finger is on it, and its PLAY was cut by the area's edge
-  // (r29 review: "▶ PLA" on first open).
+  // (r29 review: "▶ PLA" on first open). Once the player has touched the
+  // map (panned it, scrolled it or picked a stop), a re-placed bubble (a
+  // font arriving, a resize) never moves it again: only a new pick may, and
+  // only to bring that stop into view (r30 review N-4: a late font slid a
+  // hand-panned map back).
   const pickedByPlayer = useRef<string | null>(null);
   const pickedInWorld = useRef(world.id);
+  const mapTouched = useRef(false);
+  const placedFor = useRef('');
+  useEffect(() => {
+    const area = mapAreaRef.current;
+    if (!area) return;
+    const touched = () => (mapTouched.current = true);
+    const events = ['pointerdown', 'touchstart', 'wheel', 'keydown'];
+    for (const type of events)
+      area.addEventListener(type, touched, { passive: true });
+    return () => {
+      for (const type of events) area.removeEventListener(type, touched);
+    };
+  }, []);
   useEffect(() => {
     if (pickedInWorld.current !== world.id) {
       pickedInWorld.current = world.id;
       pickedByPlayer.current = null;
+      mapTouched.current = false;
     }
+    const pick = `${world.id}:${selected?.id}`;
+    if (mapTouched.current && placedFor.current === pick) return;
+    placedFor.current = pick;
     const area = mapAreaRef.current;
     const map = mapRef.current;
     if (!area || !map || selectedIndex < 0) return;
@@ -220,21 +241,111 @@ export default function WorldMap({
   }, [world.id, selectedIndex, mapSize, spot]);
 
   // The phone panel keeps one height for every stop (r29), so a long stop
-  // name can't grow it: a name too long for one line drops to the 8px pixel
-  // size and wraps to two lines; one longer still (a few three- and four-group
-  // stops on narrow phones) ends in "…" and opens in full over the panel
-  // when tapped, the panel staying the same size (r29 review N-3).
+  // name can't grow it: a name too long for one line drops to a smaller
+  // pixel size and wraps to two lines; one longer still ends in "…" and a
+  // button over it opens it in full over the panel, the panel staying the
+  // same size (r29 review N-3). The fit is worked out afresh for every
+  // stop (and size, and font load), always from the plain closed title: a
+  // new stop starts closed and unmeasured, then is measured one line, then
+  // two (r30 review: measured with the last stop's name still open, a cut
+  // name got no button).
   const titleRef = useRef<HTMLDivElement>(null);
-  const [titleCut, setTitleCut] = useState(false);
-  const [titleOpen, setTitleOpen] = useState(false);
+  const titleKey = `${selected?.id}|${mapSize?.[0]}|${fontsTick}`;
+  const [titleFit, setTitleFit] = useState({
+    key: '',
+    small: false,
+    cut: false,
+    done: false
+  });
+  const fit =
+    titleFit.key === titleKey
+      ? titleFit
+      : { key: titleKey, small: false, cut: false, done: false };
+  const [openTitleKey, setOpenTitleKey] = useState<string | null>(null);
+  const titleOpen = fit.cut && openTitleKey === titleKey;
+  const { small: titleSmall, done: titleDone } = fit;
   useLayoutEffect(() => {
-    setTitleOpen(false);
     const title = titleRef.current;
-    if (!title) return;
-    delete title.dataset.fit;
-    if (title.scrollWidth > title.clientWidth + 1) title.dataset.fit = 'small';
-    setTitleCut(title.scrollHeight > title.clientHeight + 1);
-  }, [selected?.id, mapSize, fontsTick]);
+    if (titleDone || !title) return;
+    const overflows = titleSmall
+      ? title.scrollHeight > title.clientHeight + 1
+      : title.scrollWidth > title.clientWidth + 1;
+    setTitleFit({
+      key: titleKey,
+      small: titleSmall || overflows,
+      cut: titleSmall && overflows,
+      done: titleSmall || !overflows
+    });
+  }, [titleKey, titleSmall, titleDone]);
+
+  // Taps and clicks on the map are worked out here, from where the pointer
+  // is: inside the PLAY bubble plays, inside a stop's tap box picks it (or,
+  // already picked, plays it). The stops and the bubble take no pointer
+  // events themselves (they stay buttons for the keyboard and screen
+  // readers), so a browser's touch adjustment has nothing to snap to: it
+  // weighs how much of the finger's area each tap target covers, and sent a
+  // tap 2-3px inside a neighbour's box at its corner to the picked stop,
+  // whatever size its button was (r30 review N-1). The boxes never overlap
+  // (stopHitLimits), so a point is in one stop's box at most.
+  type MapTarget = number | 'play' | null;
+  function targetAt(x: number, y: number): MapTarget {
+    const map = mapRef.current;
+    if (!map) return null;
+    const inside = (r: DOMRect) =>
+      x >= r.left && x < r.right && y >= r.top && y < r.bottom;
+    const bubble = bubbleRef.current;
+    if (bubble && !bubble.disabled && inside(bubble.getBoundingClientRect()))
+      return 'play';
+    for (const stop of map.querySelectorAll<HTMLElement>('[data-stop]'))
+      if (inside(stop.getBoundingClientRect()))
+        return Number(stop.dataset.stop);
+    return null;
+  }
+  function tapNode(node: QuestNode) {
+    if (selected?.id === node.id && node.unlocked && !starting)
+      return onPlayNode(node);
+    pickedByPlayer.current = node.id;
+    onSelectNode(node.id);
+  }
+  // the target under the press (before the bubble's pressed look moves it)
+  const pressed = useRef<{ target: MapTarget; x: number; y: number } | null>(
+    null
+  );
+  const [pressedPlay, setPressedPlay] = useState(false);
+  const [hovered, setHovered] = useState<MapTarget>(null);
+  const mapPointer = {
+    onPointerDown: (e: React.PointerEvent) => {
+      const target = targetAt(e.clientX, e.clientY);
+      pressed.current = { target, x: e.clientX, y: e.clientY };
+      setPressedPlay(target === 'play');
+    },
+    onPointerUp: () => setPressedPlay(false),
+    onPointerCancel: () => setPressedPlay(false),
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
+      const target = targetAt(e.clientX, e.clientY);
+      if (target !== hovered) setHovered(target);
+    },
+    onPointerLeave: () => {
+      setPressedPlay(false);
+      setHovered(null);
+    },
+    onClick: (e: React.MouseEvent) => {
+      // a stop's or the bubble's own click (the keyboard) is handled there
+      if ((e.target as HTMLElement).closest('button')) return;
+      const press = pressed.current;
+      pressed.current = null;
+      const target =
+        press && Math.hypot(e.clientX - press.x, e.clientY - press.y) < 10
+          ? press.target
+          : targetAt(e.clientX, e.clientY);
+      if (target === 'play') {
+        if (selected?.unlocked && !starting) onPlayNode(selected);
+      } else if (target !== null && world.nodes[target]) {
+        tapNode(world.nodes[target]);
+      }
+    }
+  };
 
   // Each map plays its world's own map song (not the level theme), including
   // when browsing unlocked worlds without leaving this screen.
@@ -288,8 +399,10 @@ export default function WorldMap({
         <div
           className={mapCls}
           ref={mapRef}
+          {...mapPointer}
           style={
             {
+              cursor: hovered !== null ? 'pointer' : undefined,
               backgroundImage: `url(${WORLD_IMAGES[world.key]})`,
               '--map-per-tap': perGapPx.tap,
               '--map-per-big': perGapPx.big,
@@ -337,11 +450,15 @@ export default function WorldMap({
                     node.unlocked && node.grade && 'gq-graded',
                     !node.unlocked && lockedCls,
                     !node.unlocked && 'gq-locked',
-                    selected?.id === node.id && selectedCls
+                    selected?.id === node.id && selectedCls,
+                    hovered === i && hoveredNodeCls
                   )}
                   style={
                     {
-                      ...at,
+                      // the button is the stop's tap box: its corner sits
+                      // the box's reach up and left of the stop's point
+                      left: `calc(${x}% - var(--reach-l))`,
+                      top: `calc(${y}% - var(--reach-t))`,
                       ...(done
                         ? { '--disc-art': `url(${spriteUri(node.grade)})` }
                         : null),
@@ -351,12 +468,9 @@ export default function WorldMap({
                   // a tap picks the stop; a tap on the picked stop plays it
                   // (Mikey 10-07: a player tapped the stop and "nothing
                   // happened" — the Play button was off to the side)
-                  onClick={() => {
-                    if (selected?.id === node.id && node.unlocked && !starting)
-                      return onPlayNode(node);
-                    pickedByPlayer.current = node.id;
-                    onSelectNode(node.id);
-                  }}
+                  // the keyboard's (and a screen reader's) click; a pointer's
+                  // lands on the map (mapPointer)
+                  onClick={() => tapNode(node)}
                   aria-label={
                     node.grade
                       ? `${node.name}, best grade ${node.grade}`
@@ -364,8 +478,8 @@ export default function WorldMap({
                   }
                   title={node.grade ? `Best grade ${node.grade}` : undefined}
                 >
-                  {/* the disc art, zoomed on hover apart from the button,
-                      whose ::before is the tap box */}
+                  {/* the disc art, centred on the stop's point; it takes no
+                      taps (the button is the tap box) and zooms on hover */}
                   <span className={discArtCls}>
                     {!done &&
                       (node.kind === 'stop' ? (
@@ -409,7 +523,14 @@ export default function WorldMap({
                           ref={bubbleRef}
                           className={cx(
                             playBubbleCls,
-                            spot && TAIL_SIDE[spot.side]
+                            spot && TAIL_SIDE[spot.side],
+                            // a game button's lift and press (it takes no
+                            // pointer events; the ▶ ring stays put)
+                            spot?.side !== 'on' &&
+                              !starting &&
+                              (pressedPlay
+                                ? bubblePressedCls
+                                : hovered === 'play' && bubbleHoverCls)
                           )}
                           style={
                             spot
@@ -480,15 +601,28 @@ export default function WorldMap({
               </div>
               <div
                 ref={titleRef}
-                className={cx(panelTitleCls, titleOpen && titleOpenCls)}
+                className={cx(
+                  panelTitleCls,
+                  fit.small && smallTitleCls,
+                  titleOpen && titleOpenCls
+                )}
                 title={selected.name}
-                role={titleCut ? 'button' : undefined}
-                aria-expanded={titleCut ? titleOpen : undefined}
-                onClick={
-                  titleCut ? () => setTitleOpen((open) => !open) : undefined
-                }
               >
                 {selected.name}
+                {fit.cut && (
+                  // over the whole name: opens it in full, and closes it
+                  <button
+                    type="button"
+                    className={titleToggleCls}
+                    aria-expanded={titleOpen}
+                    aria-label={
+                      titleOpen
+                        ? 'Hide the full name'
+                        : `Show the full name: ${selected.name}`
+                    }
+                    onClick={() => setOpenTitleKey(titleOpen ? null : titleKey)}
+                  />
+                )}
               </div>
               {selected.skills ? (
                 <div className={skillListCls}>
@@ -991,22 +1125,19 @@ interface Box {
   r: number;
   b: number;
 }
-// a drawn stop's tap box (its ::before, as stopHitLimits cut it) and its
-// disc and tap box together, in viewport px; read unscaled, so a stop drawn
-// bigger under the mouse (its hover zoom) measures as it sits
+// a drawn stop's tap box (its button, as stopHitLimits cut it) and its
+// disc and tap box together, in viewport px
 function stopBoxOf(stop: HTMLElement) {
+  // the button is the tap box; its first child is the disc art, measured
+  // unscaled (it zooms under a hovering mouse)
   const r = stop.getBoundingClientRect();
-  const cx = (r.left + r.right) / 2;
-  const cy = (r.top + r.bottom) / 2;
-  const halfW = stop.offsetWidth / 2;
-  const halfH = stop.offsetHeight / 2;
-  const hit = getComputedStyle(stop, '::before');
-  const tap = {
-    l: cx - halfW + (parseFloat(hit.left) || 0),
-    t: cy - halfH + (parseFloat(hit.top) || 0),
-    r: cx + halfW - (parseFloat(hit.right) || 0),
-    b: cy + halfH - (parseFloat(hit.bottom) || 0)
-  };
+  const art = stop.firstElementChild as HTMLElement;
+  const a = art.getBoundingClientRect();
+  const cx = (a.left + a.right) / 2;
+  const cy = (a.top + a.bottom) / 2;
+  const halfW = art.offsetWidth / 2;
+  const halfH = art.offsetHeight / 2;
+  const tap = { l: r.left, t: r.top, r: r.right, b: r.bottom };
   return {
     l: Math.min(tap.l, cx - halfW),
     t: Math.min(tap.t, cy - halfH),
@@ -1113,18 +1244,27 @@ function placeBubble(
   return { side, dx: x - own.cx, dy: y - own.cy, tail };
 }
 
-// a stop's tap box: --hit-pad past its disc on every side, cut back on a
-// side where the gap to a neighbour is shorter (inside the disc too, where
-// two discs nearly touch: the box, not the disc, takes the tap)
-const hitSide = (side: string) =>
-  `calc(50% - min(50% + var(--hit-pad), var(--hit-${side}, 999px)))`;
+// A stop's button IS its tap box (r30 review N-1): --hit-pad past its disc
+// on every side, cut back on a side where the gap to a neighbour is shorter
+// (inside the disc too, where two discs nearly touch). Nothing of a stop
+// that takes taps lies outside its box, so no part of one stop sits over
+// another's box and a browser's touch adjustment has only the boxes to
+// snap to (a ::before box beside a disc-sized button let Chromium send a
+// tap 2px inside a neighbour to the picked stop). --reach-* is how far the
+// box reaches from the stop's point on each side.
+const reach = (side: string) =>
+  `min(var(--disc) / 2 + var(--hit-pad), var(--hit-${side}, 999px))`;
 
 const nodeCls = css`
   --hit-pad: 6px;
+  --disc: 3.6rem;
+  --reach-t: ${reach('t')};
+  --reach-r: ${reach('r')};
+  --reach-b: ${reach('b')};
+  --reach-l: ${reach('l')};
   position: absolute;
-  transform: translate(-50%, -50%);
-  width: 3.6rem;
-  height: 3.6rem;
+  width: calc(var(--reach-l) + var(--reach-r));
+  height: calc(var(--reach-t) + var(--reach-b));
   padding: 0;
   border: none;
   /* the disc's picture, drawn by its art span (discArtCls); the classes
@@ -1133,46 +1273,43 @@ const nodeCls = css`
   background: none;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 0 rgba(26, 20, 38, 0.45));
-  cursor: pointer;
-  /* only the tap box takes taps, so neighbours' boxes never overlap */
+  /* the map takes the pointer and works out which box it is in (see
+     mapPointer); the button is for the keyboard and screen readers */
   pointer-events: none;
-  &::before {
-    /* a bigger tap target than the drawn disc */
-    content: '';
-    position: absolute;
-    inset: ${hitSide('t')} ${hitSide('r')} ${hitSide('b')} ${hitSide('l')};
-    pointer-events: auto;
-  }
-  /* the disc art zooms under a hovering pointer; the button (and its tap
-     box) never scales, so hit areas are the same hovered or not (r30: a
-     zoomed box reached ~1.5px into the next stop's). Only where a pointer
-     hovers: a phone keeps :hover on the last stop tapped. */
-  @media (hover: hover) {
-    &:hover > span {
-      transform: scale(1.08);
-    }
-  }
   @media (max-width: ${mobileMaxWidth}) {
     /* 24px disc + 10px all round = a 44px tap box */
     --hit-pad: 10px;
-    width: 3rem;
-    height: 3rem;
+    --disc: 3rem;
+  }
+`;
+
+// the stop under a mouse (mapPointer): its disc art zooms, its box (the
+// button) never does, so hit areas are the same hovered or not
+const hoveredNodeCls = css`
+  @media (hover: hover) {
+    > span {
+      transform: scale(1.08);
+    }
   }
 `;
 
 const bigNodeCls = css`
-  width: 4.5rem;
-  height: 4.5rem;
+  --disc: 4.5rem;
   @media (max-width: ${mobileMaxWidth}) {
-    width: 3.6rem;
-    height: 3.6rem;
+    --disc: 3.6rem;
   }
 `;
 
-// a node's disc art: its picture (--disc-art) with its number or icon
+// a node's disc art: its picture (--disc-art) with its number or icon,
+// centred on the stop's point inside (or, on a mouse, past) its tap box
 const discArtCls = css`
   position: absolute;
-  inset: 0;
+  left: var(--reach-l);
+  top: var(--reach-t);
+  width: var(--disc);
+  height: var(--disc);
+  margin: calc(var(--disc) / -2) 0 0 calc(var(--disc) / -2);
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1290,8 +1427,8 @@ const playAnchorCls = css`
   z-index: 4;
   width: 0;
   height: 0;
-  /* only the bubble itself takes clicks: its wrapper's line box is taller
-     than the button and swallowed clicks on the next stop's tap box (r30) */
+  /* takes no clicks: its line box is taller than the bubble and swallowed
+     clicks on the next stop's tap box (r30); the map handles them */
   pointer-events: none;
   > span {
     position: absolute;
@@ -1327,7 +1464,8 @@ const bigPlayAnchorCls = css`
 `;
 const playBubbleCls = css`
   ${button(GOLD, '#8a5200')}
-  pointer-events: auto;
+  /* the map takes the pointer (mapPointer) */
+  pointer-events: none;
   padding: 0.4rem 1rem;
   font-family: ${PIXEL_FONT};
   font-size: 1.1rem;
@@ -1362,6 +1500,16 @@ const playBubbleCls = css`
     padding: 0.35rem 0.8rem;
   }
 `;
+const bubbleHoverCls = css`
+  && {
+    transform: translateY(-1px);
+  }
+`;
+const bubblePressedCls = css`
+  && {
+    transform: translateY(4px);
+  }
+`;
 const TAIL_SIDE: Record<BubbleSpot['side'], string> = {
   above: '',
   // crowded on every side: the stop's own tap box becomes its Play button
@@ -1384,8 +1532,8 @@ const TAIL_SIDE: Record<BubbleSpot['side'], string> = {
     &&::after {
       display: none;
     }
-    /* and it never lifts or sinks under the pointer (a game button's hover
-       and press shift it 1-4px, into the next stop's box) */
+    /* and it never lifts or sinks (a game button's press shifts it 4px,
+       into the next stop's box) */
     &&&:hover:not(:disabled),
     &&&:active:not(:disabled) {
       transform: none;
@@ -1560,6 +1708,7 @@ const panelLabelCls = css`
 `;
 
 const panelTitleCls = css`
+  position: relative;
   font-family: ${PIXEL_FONT};
   font-size: 1.6rem;
   line-height: 1.5;
@@ -1570,20 +1719,36 @@ const panelTitleCls = css`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* too long for one line: the pixel font's own 8px size, up to two
-       lines (set from the measured name, see titleRef) */
-    &[data-fit='small'] {
-      margin: 0.2rem 0 0.3rem;
-      font-size: 8px;
-      line-height: 1.3;
+  }
+`;
+// too long for one line (measured, see titleFit): a smaller pixel size, up
+// to two lines, in the panel's fixed height
+const smallTitleCls = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    && {
+      margin: 0;
+      font-size: 10px;
+      line-height: 1.2;
       white-space: normal;
       display: -webkit-box;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
     }
-    &[role='button'] {
-      cursor: pointer;
-    }
+  }
+`;
+// the see-through button over a cut name (and over the opened name)
+const titleToggleCls = css`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  &:focus-visible {
+    /* inside the title, which clips what overflows it */
+    outline: 2px solid ${INK};
+    outline-offset: -2px;
   }
 `;
 // a cut name, tapped: shown whole over the panel's text (same panel size)

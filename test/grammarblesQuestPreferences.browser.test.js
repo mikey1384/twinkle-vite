@@ -670,18 +670,21 @@ test(
             window.showFixture('map');
           });
           // Select another dot and then the current stop, reproducing a pinned selection.
+          // The map takes the pointer and works out the stop from where it
+          // lands (the stop buttons are for the keyboard), so these are real
+          // clicks at each stop's point.
           await page
             .getByRole('button', {
               name: 'First stop, best grade S',
               exact: true
             })
-            .click();
+            .click({ force: true });
           await page
             .getByRole('button', {
               name: 'Articles · Sentence patterns and word order',
               exact: true
             })
-            .click();
+            .click({ force: true });
           const panelPlay = page.getByRole('button', {
             name: 'Play',
             exact: true
