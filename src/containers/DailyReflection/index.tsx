@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import HomeLoginPrompt from '~/components/HomeLoginPrompt';
@@ -10,6 +10,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import ModeChooser from './ModeChooser';
 import StatPicker from './StatPicker';
 import { PAGE } from './theme';
+import { paperSecondaryButtonCls } from '~/components/Modals/DailyQuestionModal/paperTheme';
 
 // /daily-reflection: Daily Reflection's own page (Mikey 2026-10-12: like
 // Grammarbles, a page instead of a modal, with two modes picked from painted
@@ -34,17 +35,31 @@ export default function DailyReflectionPage() {
   const view: View =
     rawView === 'classic' || rawView === 'training' ? rawView : 'choose';
   const [modes, setModes] = useState<DailyReflectionModes | null>(null);
+  const [modesFailed, setModesFailed] = useState(false);
+  const [modesRetry, setModesRetry] = useState(0);
   // the stat picked on this visit, before Training's question exists
   const [pickedAxis, setPickedAxis] = useState<string | null>(null);
 
-  const refreshModes = useCallback(async () => {
-    const data = await loadDailyReflectionModes();
-    if (data && !data.error) setModes(data);
-  }, [loadDailyReflectionModes]);
-
   useEffect(() => {
-    if (userId) void refreshModes();
-  }, [refreshModes, userId, view]);
+    if (!userId) return;
+    let cancelled = false;
+    setModesFailed(false);
+    init();
+    return () => {
+      cancelled = true;
+    };
+
+    async function init() {
+      const data = await loadDailyReflectionModes();
+      if (cancelled) return;
+      if (data && !data.error && data.classic && data.training) {
+        setModes(data);
+      } else {
+        setModesFailed(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, view, modesRetry]);
 
   if (!userId) {
     return <HomeLoginPrompt message="Log in to write your Daily Reflection" />;
@@ -79,6 +94,19 @@ export default function DailyReflectionPage() {
 
           {view === 'training' && !showTrainingPanel && modes && (
             <StatPicker onPick={(axis) => setPickedAxis(axis)} />
+          )}
+
+          {view === 'training' && !modes && modesFailed && (
+            <div className={failCls}>
+              <p>We couldn’t load today’s Training. Please try again.</p>
+              <button
+                type="button"
+                className={paperSecondaryButtonCls}
+                onClick={() => setModesRetry((value) => value + 1)}
+              >
+                Try again
+              </button>
+            </div>
           )}
 
           {(view === 'classic' || showTrainingPanel) && (
@@ -187,5 +215,15 @@ const panelWrapCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 12px;
     padding: 0.4rem;
+  }
+`;
+
+const failCls = css`
+  text-align: center;
+  p {
+    margin: 0 0 1.2rem;
+    font-family: ${PAGE.serif};
+    font-size: 1.9rem;
+    color: ${PAGE.ink};
   }
 `;

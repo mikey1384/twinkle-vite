@@ -51,7 +51,8 @@ export default function ModeChooser({
     return () => {
       cancelled = true;
     };
-  }, [loadReflectionStats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={wrapCls}>
@@ -113,8 +114,8 @@ export default function ModeChooser({
             <p>
               Every reflection grows your shape. Classic grows whichever stat
               your answer used most, a little. Training grows the stat you pick,
-              more, and even more when your answer is about something you
-              really did on Twinkle.
+              more, and even more when your answer is about something you really
+              did on Twinkle.
             </p>
           </div>
         </section>

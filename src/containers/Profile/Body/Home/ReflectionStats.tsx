@@ -9,8 +9,8 @@ import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
 // A member's reflection stats shape on their profile (Mikey 2026-10-12). Shown
-// only when the member opted in; the owner also sees it with a note that it is
-// hidden. Never shows numbers or rankings.
+// only when the member opted in, to everyone including the owner (who opts in
+// from the Daily Reflection result screen). Never shows numbers or rankings.
 export default function ReflectionStats({
   profileId,
   selectedTheme
@@ -38,7 +38,8 @@ export default function ReflectionStats({
     return () => {
       cancelled = true;
     };
-  }, [loadUserReflectionStats, profileId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
 
   if (!data?.visible || !Array.isArray(data.shape)) return null;
   // the owner sees the section only once they've opted in

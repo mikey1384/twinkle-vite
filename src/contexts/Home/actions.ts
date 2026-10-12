@@ -132,12 +132,6 @@ export default function HomeActions(dispatch: Dispatch) {
         shown
       });
     },
-    onSetDailyQuestionModalShown(shown: boolean) {
-      return dispatch({
-        type: 'SET_DAILY_QUESTION_MODAL_SHOWN',
-        shown
-      });
-    },
     onLoadGroups({
       groups,
       loadMoreShown

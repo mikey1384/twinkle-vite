@@ -64,25 +64,34 @@ export default function ReflectionStatsPanel({
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    load(0);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+
+    // The award can land just after the grade when the stat check is slow
+    // (the server stops waiting after 15 s), so look again a couple of times.
+    async function load(attempt: number) {
       const data = await loadReflectionStats({ responseId });
       if (cancelled || !data || data.error || !Array.isArray(data.shape)) {
         return;
       }
       setShape(data.shape);
       setShowOnProfile(!!data.showOnProfile);
+      setLoaded(true);
       if (data.growth) {
         setGrowth(data.growth);
         const seen = hasSeenGrowth(responseId);
         setAnimateGrowth(!seen);
         if (seen && data.growth.layerUp) setShowLayerUp(true);
+      } else if (attempt < 2) {
+        timer = setTimeout(() => load(attempt + 1), 8000);
       }
-      setLoaded(true);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadReflectionStats, responseId]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [responseId]);
 
   if (!loaded) return null;
 

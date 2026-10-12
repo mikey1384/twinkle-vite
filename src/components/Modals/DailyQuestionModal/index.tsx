@@ -1,34 +1,12 @@
 import React, { useState } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import { paperPrimaryButtonCls } from './paperTheme';
-import ErrorBoundary from '~/components/ErrorBoundary';
-import Modal from '~/components/Modal';
 import { useAppContext, useNotiContext, useViewContext } from '~/contexts';
 import DailyQuestionPanel from './DailyQuestionPanel';
 
-export default function DailyQuestionModal({ onHide }: { onHide: () => void }) {
-  return (
-    <ErrorBoundary componentPath="DailyQuestion/Modal">
-      <Modal
-        xpActivity
-        modalKey="DailyQuestionModal"
-        isOpen={true}
-        allowOverflow
-        onClose={onHide}
-        title={`Today's Question`}
-        size="lg"
-        closeOnBackdropClick={false}
-        modalLevel={0}
-      >
-        <DailyQuestionContent onHide={onHide} />
-      </Modal>
-    </ErrorBoundary>
-  );
-}
-
-// The reflection itself, shared by the modal and the full-screen Daily
-// Reflection page (Mikey 2026-10-12): the panel, or the AI-unavailable notice
-// with its streak-preserving button.
+// The reflection itself, rendered by the full-screen Daily Reflection page
+// (Mikey 2026-10-12; it replaced the old modal): the panel, or the
+// AI-unavailable notice with its streak-preserving button.
 export function DailyQuestionContent({
   onHide,
   mode = 'classic',

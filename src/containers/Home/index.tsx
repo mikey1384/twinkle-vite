@@ -11,7 +11,6 @@ import Store from './Store';
 import Stories from './Stories';
 import LocalContext from './Context';
 import AIStoriesModal from './AIStoriesModal';
-import DailyQuestionModal from '~/components/Modals/DailyQuestionModal';
 import Achievements from './Achievements';
 import { useHomeContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';
@@ -26,14 +25,8 @@ function Home({
   const aiStoriesModalShown = useHomeContext(
     (v) => v.state.aiStoriesModalShown
   );
-  const dailyQuestionModalShown = useHomeContext(
-    (v) => v.state.dailyQuestionModalShown
-  );
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
-  );
-  const onSetDailyQuestionModalShown = useHomeContext(
-    (v) => v.actions.onSetDailyQuestionModalShown
   );
   const [alertModalShown, setAlertModalShown] = useState(false);
 
@@ -69,11 +62,6 @@ function Home({
           )}
           {aiStoriesModalShown && (
             <AIStoriesModal onHide={() => onSetAIStoriesModalShown(false)} />
-          )}
-          {dailyQuestionModalShown && (
-            <DailyQuestionModal
-              onHide={() => onSetDailyQuestionModalShown(false)}
-            />
           )}
         </div>
       </LocalContext.Provider>

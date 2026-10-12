@@ -44,7 +44,8 @@ export default function StatPicker({
     return () => {
       cancelled = true;
     };
-  }, [loadReflectionStats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={stageCls}>
