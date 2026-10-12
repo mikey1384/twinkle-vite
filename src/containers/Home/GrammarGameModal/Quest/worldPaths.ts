@@ -1,4 +1,11 @@
-import { spacedStops, type Point } from './stopSpacing';
+import {
+  MOUSE_SLACKS,
+  closestGap,
+  roomAround,
+  spacedStops,
+  stopGap,
+  type Point
+} from './stopSpacing';
 import { PLACED_STOPS } from './worldStops.generated';
 
 // Where map nodes sit on each world painting: points along the painted path,
@@ -223,12 +230,45 @@ export const WORLD_PATHS: Record<string, Point[]> = {
 // against spacedStops by test/grammarQuestStopSpacing.test.ts, which
 // rewrites it when run with WRITE_STOP_TABLE=1); a stop count the table
 // doesn't have is worked out on first open and kept.
+//
+// A mouse gets its own layout (r31): given `mouseBigStops` (the forts' and
+// castle's places among the stops), the pairs with a fort or castle in them
+// get room for their smallest mouse discs (roomAround), so no two marbles
+// need overlap on a mouse (stopSpacing.ts); touch screens keep the even
+// layout, whose every pair needs the same whole tap box.
 const placed = new Map<string, Point[]>();
-export function stopsAlongPath(worldKey: string, count: number): Point[] {
-  const key = `${worldKey}:${count}`;
+export function stopTableKey(
+  worldKey: string,
+  count: number,
+  mouseBigStops?: number[]
+) {
+  return mouseBigStops
+    ? `${worldKey}:${count}:mouse:${mouseBigStops.join(',')}`
+    : `${worldKey}:${count}`;
+}
+export function spaceWorldStops(
+  worldKey: string,
+  count: number,
+  mouseBigStops?: number[]
+): Point[] {
+  return mouseBigStops
+    ? spacedStops(
+        stopPath(worldKey),
+        count,
+        roomAround(mouseBigStops),
+        MOUSE_SLACKS
+      )
+    : spacedStops(stopPath(worldKey), count);
+}
+export function stopsAlongPath(
+  worldKey: string,
+  count: number,
+  mouseBigStops?: number[]
+): Point[] {
+  const key = stopTableKey(worldKey, count, mouseBigStops);
   let points = placed.get(key) || PLACED_STOPS[key];
   if (!points) {
-    points = spacedStops(stopPath(worldKey), count);
+    points = spaceWorldStops(worldKey, count, mouseBigStops);
     placed.set(key, points);
   }
   return points;
@@ -246,4 +286,55 @@ export function stopPath(worldKey: string): Point[] {
   if (y1 <= LOWEST_STOP || !next || next[1] >= y1) return path;
   const t = Math.min(1, (y1 - LOWEST_STOP) / (y1 - next[1]));
   return [[x1 + (next[0] - x1) * t, y1 + (next[1] - y1) * t], ...path.slice(1)];
+}
+
+// How far a stop sits from the map's nearest edge, in height percent (x on
+// the painting's 16:9 shape, as in stopSpacing.ts)
+const ASPECT = 16 / 9;
+export function edgeGap([x, y]: Point) {
+  return Math.min(y, 100 - y, x * ASPECT, (100 - x) * ASPECT);
+}
+
+// How tall the map must be drawn, per px of the room its stops need, for:
+// `tap`: its two closest stops to sit a whole tap box apart; `big`: a fort
+// or castle and its closest neighbour to keep its bigger disc out of the
+// neighbour's box (on a `mouse`, in the mouse layout, for their smallest
+// mouse discs to clear each other: roomAround counts such a pair 28px
+// apart, WorldMap's mouse --big-need, once they do); `edge` (stops) and `bigEdge` (forts and
+// castles): every stop to sit half its tap box (its disc and the pad around
+// it) inside the map's edges, so the edge never clips a disc or a tap box
+// (r28 review: stop 1 at the path's start lost up to 9 px of its box to the
+// bottom edge). The map grows past the screen, and scrolls, when the screen
+// is smaller than that.
+export function mapHeightPerGapPx(
+  worldKey: string,
+  count: number,
+  bigStops: number[],
+  mouse = false
+) {
+  const points = stopsAlongPath(worldKey, count, mouse ? bigStops : undefined);
+  const pairGap = mouse ? roomAround(bigStops) : null;
+  const per = (gap: number) => (gap > 0 && gap < Infinity ? 100 / gap : 0);
+  const isBig = new Set(bigStops);
+  let big = Infinity;
+  for (const i of bigStops)
+    points.forEach((p, j) => {
+      if (j !== i && points[i])
+        big = Math.min(
+          big,
+          pairGap ? pairGap(i, j, points[i], p) : stopGap(points[i], p)
+        );
+    });
+  let edge = Infinity;
+  let bigEdge = Infinity;
+  points.forEach((p, i) => {
+    if (isBig.has(i)) bigEdge = Math.min(bigEdge, edgeGap(p));
+    else edge = Math.min(edge, edgeGap(p));
+  });
+  return {
+    tap: per(closestGap(points)),
+    big: per(big),
+    edge: per(edge),
+    bigEdge: per(bigEdge)
+  };
 }

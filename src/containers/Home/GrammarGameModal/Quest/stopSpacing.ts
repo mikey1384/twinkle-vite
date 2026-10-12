@@ -50,10 +50,16 @@ function walk(path: Point[]) {
   return { total: lengths[lengths.length - 1], at };
 }
 
-// the widest gap `count` stops can all keep on this path, walking it from the
-// first stop and dropping each next one at the first spot far enough from
-// every stop already down (a loop or a hairpin can't crowd them either)
-function widestGap(path: Point[], count: number) {
+// How far apart two stops (i and j, at points a and b) count as being, in
+// height percent: their stopGap, unless a layout weighs a pair differently
+// (roomAround, for a mouse).
+export type PairGap = (i: number, j: number, a: Point, b: Point) => number;
+const PLAIN: PairGap = (_i, _j, a, b) => stopGap(a, b);
+
+// the widest gap `count` stops can all keep on this path, walking it from
+// the first stop and dropping each next one at the first spot far enough
+// from every stop already down (a loop or a hairpin can't crowd them either)
+function widestGap(path: Point[], count: number, pairGap: PairGap) {
   const { total, at } = walk(path);
   const step = total / 2000;
   const fits = (gap: number) => {
@@ -61,7 +67,8 @@ function widestGap(path: Point[], count: number) {
     for (let d = step; placed.length < count; d += step) {
       if (d > total + step / 2) return false;
       const p = at(Math.min(d, total));
-      if (placed.every((q) => stopGap(p, q) >= gap)) placed.push(p);
+      const k = placed.length;
+      if (placed.every((q, i) => pairGap(i, k, q, p) >= gap)) placed.push(p);
     }
     return true;
   };
@@ -78,17 +85,21 @@ function widestGap(path: Point[], count: number) {
 // Stops spread evenly along the path (the painting's look), then any two
 // closer than the path allows are pushed apart along it, a little at a
 // time, until every pair keeps nearly the widest gap the path can give
-// `count` stops. The first stop stays at the path's start and the last (the
-// castle) at its end; stops never pass each other.
-export function spacedStops(path: Point[], count: number): Point[] {
-  if (count <= 0) return [];
-  if (count === 1) return [path[path.length - 1]];
+// `count` stops (`slack` of it). The first stop stays at the path's start
+// and the last (the castle) at its end; stops never pass each other.
+// `settled` says whether every pair got there.
+function spreadStops(
+  path: Point[],
+  count: number,
+  pairGap: PairGap,
+  slack: number
+): { points: Point[]; settled: boolean } {
   const { total, at } = walk(path);
   const along = Array.from(
     { length: count },
     (_, n) => (total * n) / (count - 1)
   );
-  const target = widestGap(path, count) * 0.97;
+  const target = widestGap(path, count, pairGap) * slack;
   const nudge = total / 3000;
   const minStep = total / 10000;
   for (let round = 0; round < 6000; round++) {
@@ -96,13 +107,13 @@ export function spacedStops(path: Point[], count: number): Point[] {
     let moved = false;
     for (let i = 0; i < count; i++) {
       for (let j = i + 1; j < count; j++) {
-        if (stopGap(points[i], points[j]) >= target) continue;
+        if (pairGap(i, j, points[i], points[j]) >= target) continue;
         along[i] -= nudge;
         along[j] += nudge;
         moved = true;
       }
     }
-    if (!moved) break;
+    if (!moved) return { points, settled: true };
     along[0] = 0;
     along[count - 1] = total;
     for (let k = 1; k < count - 1; k++)
@@ -111,5 +122,113 @@ export function spacedStops(path: Point[], count: number): Point[] {
       along[k] = Math.min(along[k], along[k + 1] - minStep);
     along[0] = 0;
   }
-  return along.map(at);
+  return { points: along.map(at), settled: false };
+}
+
+// A world's stops on its path (spreadStops), keeping 97% of the widest gap.
+// With a `pairGap`, a pair that needs more room (a fort or castle on a
+// mouse: roomAround) is measured as needing it, and the other pairs share
+// what is left; `slacks` are the shares of the widest gap to try, tightest
+// first, keeping the first that every pair settles at (the mouse layout
+// wants all it can get: the desktop map must stay whole).
+export function spacedStops(
+  path: Point[],
+  count: number,
+  pairGap: PairGap = PLAIN,
+  slacks: number[] = [0.97]
+): Point[] {
+  if (count <= 0) return [];
+  if (count === 1) return [path[path.length - 1]];
+  let points: Point[] = [];
+  for (const slack of slacks) {
+    const spread = spreadStops(path, count, pairGap, slack);
+    points = spread.points;
+    if (spread.settled) break;
+  }
+  return points;
+}
+
+// On a mouse a stop's tap box is only 28px (MOUSE_TAP), smaller than its
+// 36px disc, so two stops' discs (and a fort's or castle's 45px one beside
+// them) overlapped on crowded maps (r29 review SF-2: Logic Tower's fort and
+// castle by 16px). Decided 10-12: on a mouse no two marbles overlap. So on
+// a mouse the discs are drawn as big as the drawn map's gaps allow
+// (mouseDiscSizes), down to MOUSE_MIN_STOP and MOUSE_MIN_BOSS, and the
+// mouse layout (roomAround) gives each pair with a fort or castle in it room
+// for those smallest discs and a pixel of air, scaled to MOUSE_TAP: such a
+// pair counts as 28px apart once its smallest discs clear each other (and
+// its tap boxes still split a 28px gap). Ordinary pairs keep the plain gap:
+// their 28px tap gap always has room for two smallest stop discs.
+export const MOUSE_TAP = 28;
+export const STOP_DISC = 36;
+export const BOSS_DISC = 45;
+export const MOUSE_MIN_STOP = 26;
+export const MOUSE_MIN_BOSS = 34;
+export const DISC_AIR = 1;
+// the mouse layout's shares of the widest gap to try (spacedStops)
+export const MOUSE_SLACKS = [1, 0.99, 0.98, 0.97];
+const straight = (a: Point, b: Point) =>
+  Math.hypot((a[0] - b[0]) * ASPECT, a[1] - b[1]);
+// what two smallest discs need, centre to centre, in px
+function smallestRoom(bigI: boolean, bigJ: boolean) {
+  const disc = (big: boolean) => (big ? MOUSE_MIN_BOSS : MOUSE_MIN_STOP);
+  return disc(bigI) / 2 + disc(bigJ) / 2 + DISC_AIR;
+}
+export function roomAround(bigStops: number[]): PairGap {
+  const big = new Set(bigStops);
+  return (i, j, a, b) =>
+    big.has(i) || big.has(j)
+      ? Math.min(
+          stopGap(a, b),
+          (straight(a, b) * MOUSE_TAP) / smallestRoom(big.has(i), big.has(j))
+        )
+      : stopGap(a, b);
+}
+
+// How big each disc is drawn on a mouse, on a map drawn `width` × `height`
+// px, so no two overlap: stops at most `stopDisc` (36px; 30px in a narrow
+// window), forts and castles at most `bossDisc`, all of one kind the same
+// size, every pair a pixel apart. Stops first; if that leaves the forts and
+// castles under MOUSE_MIN_BOSS, they keep that and the stops give way. Whole
+// px. `hover[i]` is how much stop i's disc may zoom under the mouse (up to
+// 1.08) with its neighbours still a pixel clear. The map is never drawn
+// smaller than the smallest discs need (WorldMap's mouse --big-need).
+export function mouseDiscSizes(
+  points: Point[],
+  bigStops: number[],
+  [width, height]: [number, number],
+  stopDisc = STOP_DISC,
+  bossDisc = BOSS_DISC
+) {
+  const big = new Set(bigStops);
+  const px = points.map(([x, y]) => [(x / 100) * width, (y / 100) * height]);
+  const apart = (i: number, j: number) =>
+    Math.hypot(px[i][0] - px[j][0], px[i][1] - px[j][1]) - DISC_AIR;
+  const pairs: [number, number][] = [];
+  for (let i = 0; i < px.length; i++)
+    for (let j = i + 1; j < px.length; j++) pairs.push([i, j]);
+  const mixed = pairs.filter(([i, j]) => big.has(i) !== big.has(j));
+  let stop = stopDisc;
+  let boss = bossDisc;
+  for (const [i, j] of pairs) {
+    if (!big.has(i) && !big.has(j)) stop = Math.min(stop, apart(i, j));
+    else if (big.has(i) && big.has(j)) boss = Math.min(boss, apart(i, j));
+  }
+  for (const [i, j] of mixed) boss = Math.min(boss, 2 * apart(i, j) - stop);
+  const minBoss = Math.min(MOUSE_MIN_BOSS, bossDisc);
+  if (boss < minBoss) {
+    boss = minBoss;
+    for (const [i, j] of mixed) stop = Math.min(stop, 2 * apart(i, j) - boss);
+  }
+  stop = Math.max(1, Math.floor(stop));
+  boss = Math.max(1, Math.floor(boss));
+  const disc = (i: number) => (big.has(i) ? boss : stop);
+  const hover = px.map((_, i) => {
+    let zoom = 1.08;
+    px.forEach((__, j) => {
+      if (j !== i) zoom = Math.min(zoom, (2 * apart(i, j) - disc(j)) / disc(i));
+    });
+    return Math.max(1, zoom);
+  });
+  return { stop, boss, hover };
 }

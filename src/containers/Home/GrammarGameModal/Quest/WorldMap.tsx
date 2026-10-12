@@ -11,12 +11,9 @@ import { NavSlotContext } from '../navSlot';
 import { FORMAT_INFO, GotchaText, MODIFIER_INFO } from './FormatQuestion';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import {
-  WORLD_IMAGES,
-  WORLD_THUMBS,
-  mapHeightPerGapPx,
-  nodePositions
-} from './layout';
+import { WORLD_IMAGES, WORLD_THUMBS, nodePositions } from './layout';
+import { mapHeightPerGapPx } from './worldPaths';
+import { mouseDiscSizes } from './stopSpacing';
 import type { QuestNode, QuestState, QuestWorld } from './types';
 import AudioToggles from './AudioToggles';
 import GoalsChip from './GoalsChip';
@@ -58,20 +55,26 @@ export default function WorldMap({
   onPlayNemesis: () => void;
   starting: boolean;
 }) {
-  const positions = nodePositions(world.key, world.nodes.length);
   // a crowded world's map is drawn big enough for every stop to keep a whole
-  // tap box (the map area scrolls to the rest; Mikey 10-11)
+  // tap box (the map area scrolls to the rest; Mikey 10-11). A mouse gets
+  // the layout that keeps forts and castles clear of every other marble
+  // (worldPaths.ts); it goes with the mouse sizes (FINE_POINTER below)
+  const mouse = useMediaMatch(FINE_POINTER_QUERY);
   const bigStopsKey = world.nodes
     .flatMap((n, i) => (n.kind === 'stop' ? [] : [i]))
     .join(',');
+  const bigStops = useMemo(
+    () => (bigStopsKey ? bigStopsKey.split(',').map(Number) : []),
+    [bigStopsKey]
+  );
+  const positions = nodePositions(
+    world.key,
+    world.nodes.length,
+    mouse ? bigStops : undefined
+  );
   const perGapPx = useMemo(
-    () =>
-      mapHeightPerGapPx(
-        world.key,
-        world.nodes.length,
-        bigStopsKey ? bigStopsKey.split(',').map(Number) : []
-      ),
-    [world.key, world.nodes.length, bigStopsKey]
+    () => mapHeightPerGapPx(world.key, world.nodes.length, bigStops, mouse),
+    [world.key, world.nodes.length, bigStops, mouse]
   );
   const selected =
     world.nodes.find((n) => n.id === selectedNodeId) ||
@@ -99,11 +102,26 @@ export default function WorldMap({
     observer.observe(map);
     return () => observer.disconnect();
   }, []);
+  // (a layout's positions are kept, so they change only with the layout)
   const hitLimits = useMemo(
     () => (mapSize ? stopHitLimits(positions, mapSize) : []),
-    // positions follow the world
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [world.key, world.nodes.length, mapSize]
+    [positions, mapSize]
+  );
+  // on a mouse each disc is drawn as big as the drawn map lets it be with
+  // no two overlapping (mouseDiscSizes; its tap box keeps its size)
+  const narrow = useMediaMatch(`(max-width: ${mobileMaxWidth})`);
+  const mouseDiscs = useMemo(
+    () =>
+      mouse && mapSize
+        ? mouseDiscSizes(
+            positions,
+            bigStops,
+            mapSize,
+            narrow ? 30 : 36,
+            narrow ? 36 : 45
+          )
+        : null,
+    [mouse, narrow, positions, bigStops, mapSize]
   );
 
   // the picked stop's PLAY bubble goes on whichever side of it has room, so
@@ -407,7 +425,13 @@ export default function WorldMap({
               '--map-per-tap': perGapPx.tap,
               '--map-per-big': perGapPx.big,
               '--map-per-edge': perGapPx.edge,
-              '--map-per-big-edge': perGapPx.bigEdge
+              '--map-per-big-edge': perGapPx.bigEdge,
+              ...(mouseDiscs && {
+                '--mouse-stop-art': `${mouseDiscs.stop}px`,
+                '--mouse-boss-art': `${mouseDiscs.boss}px`,
+                '--mouse-stop-k': mouseDiscs.stop / (narrow ? 30 : 36),
+                '--mouse-boss-k': mouseDiscs.boss / (narrow ? 36 : 45)
+              })
             } as React.CSSProperties
           }
         >
@@ -462,6 +486,9 @@ export default function WorldMap({
                       ...(done
                         ? { '--disc-art': `url(${spriteUri(node.grade)})` }
                         : null),
+                      ...(mouseDiscs && {
+                        '--hover-zoom': mouseDiscs.hover[i]
+                      }),
                       ...hit
                     } as React.CSSProperties
                   }
@@ -846,12 +873,37 @@ const noChipsRowCls = css`
 // --tap-need follows the pointer (r28 review): a finger needs 44px on an
 // upright phone and 40px elsewhere (Mikey 10-11: crowded maps zoom and
 // scroll so every stop gets a whole box); a mouse needs far less, so on a
-// fine pointer with no touch screen it is 28px, and so is a fort's or
-// castle's gap (its disc may touch a neighbour's there; the boxes still
-// split the gap), so the desktop map stays whole unless even that can't
-// fit. There a scrolling map shows a styled scrollbar (macOS hides the
-// default one until you scroll).
-const FINE_POINTER = '@media (pointer: fine) and (not (any-pointer: coarse))';
+// fine pointer with no touch screen it is 28px. So is --big-need there,
+// in the mouse layout's own units: a pair with a fort or castle in it
+// counts as 28px apart once its smallest mouse discs (26px stops, 34px
+// forts and castles) clear each other with a pixel of air (roomAround in
+// stopSpacing.ts; decided 10-12: on a mouse no two marbles overlap, r29
+// review SF-2). Each disc is then drawn as big as the map's gaps allow
+// (mouseDiscSizes), up to its usual size, so the desktop map stays whole
+// unless even the smallest discs can't fit. There a scrolling map shows a
+// styled scrollbar (macOS hides the default one until you scroll).
+const FINE_POINTER_QUERY = '(pointer: fine) and (not (any-pointer: coarse))';
+const FINE_POINTER = `@media ${FINE_POINTER_QUERY}`;
+// whether a media query applies, kept up to date (FINE_POINTER_QUERY: the
+// mouse layout and disc sizes go with the mouse sizes in CSS)
+function useMediaMatch(query: string) {
+  const list = () =>
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia(query)
+      : null;
+  const [matches, setMatches] = useState(() => !!list()?.matches);
+  useEffect(() => {
+    const media = list();
+    if (!media) return;
+    const update = () => setMatches(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+    // list() reads only the query
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+  return matches;
+}
 const mapAreaCls = css`
   --tap-need: 40px;
   --big-need: calc(4.5rem + 4px);
@@ -1255,9 +1307,14 @@ function placeBubble(
 const reach = (side: string) =>
   `min(var(--disc) / 2 + var(--hit-pad), var(--hit-${side}, 999px))`;
 
+// --disc sizes the tap box; --art is the disc as drawn: the same, but on a
+// mouse as big as the map's gaps allow (mouseDiscSizes, set on the map),
+// with its number, icon and flag scaled to match (--art-k)
 const nodeCls = css`
   --hit-pad: 6px;
   --disc: 3.6rem;
+  --art: var(--disc);
+  --art-k: 1;
   --reach-t: ${reach('t')};
   --reach-r: ${reach('r')};
   --reach-b: ${reach('b')};
@@ -1281,14 +1338,20 @@ const nodeCls = css`
     --hit-pad: 10px;
     --disc: 3rem;
   }
+  ${FINE_POINTER} {
+    --art: var(--mouse-stop-art, var(--disc));
+    --art-k: var(--mouse-stop-k, 1);
+  }
 `;
 
 // the stop under a mouse (mapPointer): its disc art zooms, its box (the
-// button) never does, so hit areas are the same hovered or not
+// button) never does, so hit areas are the same hovered or not; on a
+// mouse it zooms only as far as keeps its neighbours a pixel clear
+// (--hover-zoom, mouseDiscSizes)
 const hoveredNodeCls = css`
   @media (hover: hover) {
     > span {
-      transform: scale(1.08);
+      transform: scale(var(--hover-zoom, 1.08));
     }
   }
 `;
@@ -1298,6 +1361,10 @@ const bigNodeCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     --disc: 3.6rem;
   }
+  ${FINE_POINTER} {
+    --art: var(--mouse-boss-art, var(--disc));
+    --art-k: var(--mouse-boss-k, 1);
+  }
 `;
 
 // a node's disc art: its picture (--disc-art) with its number or icon,
@@ -1306,15 +1373,18 @@ const discArtCls = css`
   position: absolute;
   left: var(--reach-l);
   top: var(--reach-t);
-  width: var(--disc);
-  height: var(--disc);
-  margin: calc(var(--disc) / -2) 0 0 calc(var(--disc) / -2);
+  width: var(--art);
+  height: var(--art);
+  margin: calc(var(--art) / -2) 0 0 calc(var(--art) / -2);
   pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--disc-art) center / 100% 100% no-repeat;
   transition: transform 0.15s;
+  > * {
+    scale: var(--art-k);
+  }
 `;
 const openNodeCls = css`
   --disc-art: ${disc(12, OPEN_DISC)};
