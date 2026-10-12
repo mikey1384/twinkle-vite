@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { PAPER } from '../../paperTheme';
 import { priceTable } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import {
@@ -19,6 +19,7 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { DEFAULT_REWARD_COLOR, DEFAULT_XP_NUMBER_COLOR } from './constants';
 import GradeOverview from './GradeOverview';
 import Preferences from './Preferences';
+import ReflectionStatsPanel from './ReflectionStatsPanel';
 import ResponseSection, { isPolishUnchanged } from './ResponseSection';
 import ShareActions from './ShareActions';
 
@@ -46,6 +47,7 @@ export default function GradingResult({
   initialPaidCurrentFocusSelections,
   initialReusableCurrentFocusSelection,
   isAdultUser = false,
+  mode = 'classic',
   onClose
 }: {
   question: string;
@@ -71,6 +73,7 @@ export default function GradingResult({
   initialPaidCurrentFocusSelections?: string[];
   initialReusableCurrentFocusSelection?: string | null;
   isAdultUser?: boolean;
+  mode?: 'classic' | 'training';
   onClose: () => void;
 }) {
   const shareDailyQuestionResponse = useAppContext(
@@ -453,7 +456,8 @@ export default function GradingResult({
   const canShareToAI = hasResponseText;
   const canShareWithZero = canShareToAI && !sharedWithZero;
   const canShareWithCiel = canShareToAI && !sharedWithCiel;
-  const canChooseTomorrowPreferences = grade !== 'Fail';
+  // tomorrow's vibe and focus belong to Classic
+  const canChooseTomorrowPreferences = grade !== 'Fail' && mode === 'classic';
   const tomorrowVibePrice = priceTable.dailyQuestionTomorrowVibe;
   const currentFocusPrice = priceTable.dailyQuestionCurrentFocus;
   const availableTwinkleCoins = twinkleCoins || 0;
@@ -481,6 +485,13 @@ export default function GradingResult({
         xpNumberColor={xpNumberColor}
       />
 
+      {grade !== 'Fail' && responseId > 0 && (
+        <ReflectionStatsPanel
+          responseId={responseId}
+          prominent={mode === 'training'}
+        />
+      )}
+
       <ResponseSection
         aiSelectedVersion={aiSelectedVersion}
         aiShareTarget={aiShareTarget}
@@ -502,7 +513,7 @@ export default function GradingResult({
       {shareError && (
         <p
           className={css`
-            color: ${Color.rose()};
+            color: ${PAPER.warn};
             font-size: 1.2rem;
             text-align: center;
             margin-bottom: 1rem;
@@ -520,7 +531,7 @@ export default function GradingResult({
             className={css`
               text-align: center;
               font-size: 1.2rem;
-              color: ${Color.darkerGray()};
+              color: ${PAPER.inkSoft};
               margin-bottom: 0.5rem;
             `}
           >

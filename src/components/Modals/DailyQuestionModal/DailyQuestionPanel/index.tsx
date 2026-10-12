@@ -6,10 +6,13 @@ import React, {
   useRef,
   useState
 } from 'react';
-import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
+import {
+  REFLECTION_STAT_LABELS,
+  type ReflectionStatAxis
+} from '~/components/ReflectionStatShape';
+import { PAPER, paperSecondaryButtonCls } from '../paperTheme';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
@@ -41,6 +44,7 @@ import {
   createEmptyTypingMetadata,
   isDeletionOnlyChange,
   loadPendingDailyQuestionSubmission,
+  type DailyReflectionMode,
   normalizeSelectionArray,
   normalizeTypingMetadata,
   savePendingDailyQuestionSubmission
@@ -188,16 +192,29 @@ function getTypingCadenceSummary(timestamps: number[]): TypingCadenceSummary {
 }
 
 export default function DailyQuestionPanel({
-  onClose
+  onClose,
+  mode = 'classic',
+  trainingAxis = null
 }: {
   onClose: () => void;
+  // Daily Reflection has two modes (Mikey 2026-10-12): Classic, and Training,
+  // whose question trains the stat picked for today (written on first load)
+  mode?: DailyReflectionMode;
+  trainingAxis?: string | null;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const getDailyQuestion = useAppContext(
+  const getClassicDailyQuestion = useAppContext(
     (v) => v.requestHelpers.getDailyQuestion
   );
+  const getDailyTrainingQuestion = useAppContext(
+    (v) => v.requestHelpers.getDailyTrainingQuestion
+  );
+  const getDailyQuestion =
+    mode === 'training'
+      ? () => getDailyTrainingQuestion({ axis: trainingAxis })
+      : getClassicDailyQuestion;
   const submitDailyQuestionResponse = useAppContext(
     (v) => v.requestHelpers.submitDailyQuestionResponse
   );
@@ -498,7 +515,7 @@ export default function DailyQuestionPanel({
   function clearPendingSubmission() {
     clearRecoveryPoll();
     if (userId) {
-      clearPendingDailyQuestionSubmission(userId);
+      clearPendingDailyQuestionSubmission(userId, mode);
     }
     activeClientRequestIdRef.current = null;
   }
@@ -544,15 +561,18 @@ export default function DailyQuestionPanel({
     typingMetadata?: TypingMetadata | null;
   }) {
     if (!userId) return;
-    savePendingDailyQuestionSubmission({
-      userId,
-      questionId,
-      clientRequestId,
-      response: responseText,
-      createdAt: Date.now(),
-      recoveryState: 'draft',
-      typingMetadata
-    });
+    savePendingDailyQuestionSubmission(
+      {
+        userId,
+        questionId,
+        clientRequestId,
+        response: responseText,
+        createdAt: Date.now(),
+        recoveryState: 'draft',
+        typingMetadata
+      },
+      mode
+    );
   }
 
   function persistDraftRecovery({
@@ -811,12 +831,15 @@ export default function DailyQuestionPanel({
         setIsKeywordDay(isKeywordDayRef.current);
         setDayKeyword(data.keyword || '');
 
-        const pendingSubmission = loadPendingDailyQuestionSubmission(userId);
+        const pendingSubmission = loadPendingDailyQuestionSubmission(
+          userId,
+          mode
+        );
         if (
           pendingSubmission &&
           pendingSubmission.questionId !== data.questionId
         ) {
-          clearPendingDailyQuestionSubmission(userId);
+          clearPendingDailyQuestionSubmission(userId, mode);
         }
 
         typingMetadataRef.current = createEmptyTypingMetadata();
@@ -892,7 +915,8 @@ export default function DailyQuestionPanel({
     return () => {
       currentRequestRef.cancelled = true;
     };
-  }, [userId]);
+    // the page remounts the panel per mode (key), so mode is fixed per mount
+  }, [userId, mode]);
 
   useEffect(() => {
     // Keyword days have no inactivity pressure: nothing auto-submits.
@@ -1305,15 +1329,18 @@ export default function DailyQuestionPanel({
     activeClientRequestIdRef.current = clientRequestId;
 
     if (userId) {
-      savePendingDailyQuestionSubmission({
-        userId,
-        questionId,
-        clientRequestId,
-        response: trimmedResponse,
-        createdAt: endTime,
-        recoveryState: 'pending',
-        typingMetadata: typingMetadataRef.current
-      });
+      savePendingDailyQuestionSubmission(
+        {
+          userId,
+          questionId,
+          clientRequestId,
+          response: trimmedResponse,
+          createdAt: endTime,
+          recoveryState: 'pending',
+          typingMetadata: typingMetadataRef.current
+        },
+        mode
+      );
     }
 
     const typingCadenceSummary = getTypingCadenceSummary(timestamps);
@@ -1431,24 +1458,36 @@ export default function DailyQuestionPanel({
     }
     return <Icon icon="check" />;
   }, [minEffortProgress, trimmedResponseLength]);
-  const minEffortColor = useMemo(
-    () => (minLengthMet ? Color.green() : Color.rose()),
-    [minLengthMet]
-  );
 
   const timeWarning = inactivityTimer <= 3 && inactivityTimer > 0;
   const todayVibeLabel = getVibeLabel(todayVibe);
   const todayCurrentFocusLabel = getFocusLabel(todayCurrentFocus, isAdultUser);
+  const trainingLabel =
+    mode === 'training' && trainingAxis
+      ? REFLECTION_STAT_LABELS[trainingAxis as ReflectionStatAxis] || null
+      : null;
 
   if (error) {
     return (
       <div className={centeredContainerCls}>
-        <p style={{ color: Color.darkerGray(), marginBottom: '1rem' }}>
+        <p
+          style={{
+            color: PAPER.ink,
+            fontFamily: PAPER.serif,
+            fontSize: '1.9rem',
+            textAlign: 'center',
+            margin: '0 0 1.4rem'
+          }}
+        >
           {error}
         </p>
-        <Button variant="solid" color="logoBlue" onClick={onClose}>
-          Close
-        </Button>
+        <button
+          type="button"
+          className={paperSecondaryButtonCls}
+          onClick={onClose}
+        >
+          Back
+        </button>
       </div>
     );
   }
@@ -1480,6 +1519,7 @@ export default function DailyQuestionPanel({
         streakRepairAvailable={streakRepairAvailable}
         todayCurrentFocusLabel={todayCurrentFocusLabel}
         todayVibeLabel={todayVibeLabel}
+        trainingLabel={trainingLabel}
         twinkleCoins={twinkleCoins}
         onClose={onClose}
         onPurchaseRepair={handlePurchaseRepair}
@@ -1505,7 +1545,6 @@ export default function DailyQuestionPanel({
         inactivityTimer={inactivityTimer}
         isKeywordDay={isKeywordDay}
         minEffortBarShown={minEffortBarShown}
-        minEffortColor={minEffortColor}
         minEffortDisplayLabel={minEffortDisplayLabel}
         minEffortProgress={minEffortProgress}
         minLengthMet={minLengthMet}
@@ -1570,6 +1609,7 @@ export default function DailyQuestionPanel({
           initialPaidCurrentFocusSelections={paidCurrentFocusSelections}
           initialReusableCurrentFocusSelection={reusableCurrentFocusSelection}
           isAdultUser={isAdultUser}
+          mode={mode}
           onClose={onClose}
         />
       </ErrorBoundary>

@@ -3144,6 +3144,74 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async getDailyTrainingQuestion({ axis }: { axis?: string | null } = {}) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/daily-question/training${
+            axis ? `?axis=${encodeURIComponent(axis)}` : ''
+          }`,
+          {
+            ...auth(),
+            timeout: 195000,
+            meta: { allowExtendedTimeout: true, enforceTimeout: false }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadDailyReflectionModes() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/daily-question/modes/today`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadReflectionStats({ responseId }: { responseId?: number } = {}) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/daily-question/stats${
+            responseId ? `?responseId=${responseId}` : ''
+          }`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setReflectionStatsVisibility({
+      showOnProfile
+    }: {
+      showOnProfile: boolean;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/stats/visibility`,
+          { showOnProfile },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadUserReflectionStats(userId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/daily-question/stats/user/${userId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async setDailyQuestionCurrentFocus({
       currentFocus
     }: {

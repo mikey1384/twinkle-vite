@@ -25,9 +25,6 @@ export default function Earn() {
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );
-  const onSetDailyQuestionModalShown = useHomeContext(
-    (v) => v.actions.onSetDailyQuestionModalShown
-  );
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown
   );
@@ -46,7 +43,7 @@ export default function Earn() {
         style={{ marginBottom: '3.5rem' }}
         onPlayAIStories={() => onSetAIStoriesModalShown(true)}
         onPlayGrammarGame={() => navigate('/grammarbles')}
-        onDailyQuestionClick={() => onSetDailyQuestionModalShown(true)}
+        onDailyQuestionClick={() => navigate('/daily-reflection')}
         onInputModalButtonClick={handleInputModalButtonClick}
       />
       <div

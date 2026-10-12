@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import DailyQuestionModal from '~/components/Modals/DailyQuestionModal';
 import { useKeyContext, useNotiContext } from '~/contexts';
 
 export default function AnswerDailyQuestionButton({
@@ -14,13 +14,11 @@ export default function AnswerDailyQuestionButton({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const [dailyQuestionModalShown, setDailyQuestionModalShown] = useState(false);
+  const navigate = useNavigate();
 
   const hasAnsweredToday = todayStats?.dailyQuestionCompleted;
   const showButton = userId && !hasAnsweredToday;
 
-  // Keep modal open even after hasAnsweredToday becomes true (to show grading result)
-  // Only hide the button, not the modal
   return (
     <>
       {showButton && (
@@ -39,14 +37,11 @@ export default function AnswerDailyQuestionButton({
             variant="purple"
             size="md"
             shiny
-            onClick={() => setDailyQuestionModalShown(true)}
+            onClick={() => navigate('/daily-reflection')}
           >
             Answer Today's Question
           </GameCTAButton>
         </div>
-      )}
-      {dailyQuestionModalShown && (
-        <DailyQuestionModal onHide={() => setDailyQuestionModalShown(false)} />
       )}
     </>
   );

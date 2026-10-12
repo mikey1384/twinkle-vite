@@ -92,9 +92,6 @@ export default function Vocabulary({
   const onSetChessPuzzleModalShown = useHomeContext(
     (v) => v.actions.onSetChessPuzzleModalShown
   );
-  const onSetDailyQuestionModalShown = useHomeContext(
-    (v) => v.actions.onSetDailyQuestionModalShown
-  );
   const onSetOrderUsersBy = useAppContext(
     (v) => v.user.actions.onSetOrderUsersBy
   );
@@ -375,8 +372,7 @@ export default function Vocabulary({
 
   function handleOpenDailyQuestion() {
     setWordMasterBreakModalShown(false);
-    navigate('/');
-    onSetDailyQuestionModalShown(true);
+    navigate('/daily-reflection');
   }
 
   function handleOpenChessPuzzle() {

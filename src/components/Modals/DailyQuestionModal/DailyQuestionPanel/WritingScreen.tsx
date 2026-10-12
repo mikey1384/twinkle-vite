@@ -1,10 +1,9 @@
 import React from 'react';
-import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
-import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import PaperProgress from '../PaperProgress';
+import { PAPER, paperPrimaryButtonCls } from '../paperTheme';
 import {
   containerCls,
   pulseAnimation,
@@ -19,7 +18,6 @@ export default function WritingScreen({
   inactivityTimer,
   isKeywordDay,
   minEffortBarShown,
-  minEffortColor,
   minEffortDisplayLabel,
   minEffortProgress,
   minLengthMet,
@@ -49,7 +47,6 @@ export default function WritingScreen({
   inactivityTimer: number;
   isKeywordDay?: boolean;
   minEffortBarShown: boolean;
-  minEffortColor: string;
   minEffortDisplayLabel: React.ReactNode;
   minEffortProgress: number;
   minLengthMet: boolean;
@@ -82,10 +79,12 @@ export default function WritingScreen({
           <div className={timerContainerCls}>
             <div
               className={css`
-                font-size: 2.5rem;
-                font-weight: bold;
+                font-family: ${PAPER.serif};
+                font-size: 3.4rem;
+                font-weight: 600;
+                line-height: 1.1;
                 color: ${
-                  timeWarning && !responseTooLong ? Color.rose() : Color.black()
+                  timeWarning && !responseTooLong ? PAPER.warn : PAPER.ink
                 };
                 ${
                   !restoredDraftNeedsFreshTyping &&
@@ -100,7 +99,14 @@ export default function WritingScreen({
                 ? '--'
                 : `${inactivityTimer}s`}
             </div>
-            <div style={{ color: Color.darkerGray(), fontSize: '1.2rem' }}>
+            <div
+              style={{
+                color: PAPER.inkSoft,
+                fontSize: '1.2rem',
+                fontWeight: 600,
+                letterSpacing: '0.04em'
+              }}
+            >
               {responseTooLong
                 ? 'Shorten to continue'
                 : restoredDraftNeedsFreshTyping
@@ -150,10 +156,10 @@ export default function WritingScreen({
               margin-top: 0.75rem;
               padding: 0.75rem 1rem;
               border-radius: 10px;
-              background: ${Color.yellow(0.14)};
-              border: 1px solid ${Color.yellow(0.35)};
-              color: ${Color.darkerGray()};
-              font-size: 1.1rem;
+              background: ${PAPER.accentSoft};
+              border-left: 4px solid ${PAPER.accent};
+              color: ${PAPER.ink};
+              font-size: 1.25rem;
               line-height: 1.4;
             `}
           >
@@ -163,11 +169,11 @@ export default function WritingScreen({
         )}
 
         <div className={statsRowCls}>
-          <span style={{ color: Color.lightGray() }}>{wordCount} words</span>
+          <span style={{ color: PAPER.inkFaint }}>{wordCount} words</span>
           <span
             style={{
-              color: responseTooLong ? Color.rose() : Color.lightGray(),
-              fontSize: '1.1rem'
+              color: responseTooLong ? PAPER.warn : PAPER.inkFaint,
+              fontSize: '1.2rem'
             }}
           >
             {responseTooLong
@@ -178,11 +184,11 @@ export default function WritingScreen({
           </span>
         </div>
         {!isKeywordDay && minEffortBarShown && (
-          <div style={{ width: '100%' }}>
-            <ProgressBar
-              text={minEffortDisplayLabel}
-              color={minEffortColor}
+          <div style={{ width: '100%', marginTop: '0.8rem' }}>
+            <PaperProgress
+              label={minEffortDisplayLabel}
               progress={minEffortProgress}
+              complete={minLengthMet}
             />
           </div>
         )}
@@ -195,25 +201,25 @@ export default function WritingScreen({
               margin-top: 1rem;
             `}
           >
-            <Button
-              variant="solid"
-              color="green"
+            <button
+              type="button"
+              className={paperPrimaryButtonCls}
               disabled={!canSubmitKeywordDay || responseTooLong}
               onClick={() => onSubmitKeywordDay?.()}
             >
-              <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+              <Icon icon="check" />
               Done
-            </Button>
+            </button>
           </div>
         ) : (
           <div
             style={{
-              color: Color.lightGray(),
-              fontSize: '1.1rem',
-              marginTop: '0.3rem'
+              color: PAPER.inkFaint,
+              fontSize: '1.2rem',
+              marginTop: '0.6rem'
             }}
           >
-            No backspace allowed - keep going!
+            No backspace: keep going.
           </div>
         )}
       </div>

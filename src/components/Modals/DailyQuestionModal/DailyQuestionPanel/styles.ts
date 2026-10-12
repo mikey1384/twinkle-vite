@@ -1,5 +1,6 @@
 import { css, keyframes } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
+import { PAPER } from '../paperTheme';
 
 export const pulseAnimation = keyframes`
   0%, 100% { opacity: 1; }
@@ -7,7 +8,10 @@ export const pulseAnimation = keyframes`
 `;
 
 export const containerCls = css`
-  padding: 1.5rem;
+  padding: 2.4rem 2rem 2rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.6rem 1rem 1.4rem;
+  }
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -34,21 +38,24 @@ export const innerContainerCls = css`
 `;
 
 export const questionTextCls = css`
-  font-size: 1.7rem;
-  color: ${Color.black()};
-  line-height: 1.5;
+  max-width: 720px;
+  font-family: ${PAPER.serif};
+  font-size: 2.6rem;
+  color: ${PAPER.ink};
+  line-height: 1.4;
   font-weight: 500;
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.2rem;
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.5rem;
+    font-size: 2rem;
   }
 `;
 
 export const questionTextSmallCls = css`
-  font-size: 1.4rem;
-  color: ${Color.darkerGray()};
-  line-height: 1.4;
+  font-family: ${PAPER.serif};
+  font-size: 1.6rem;
+  color: ${PAPER.inkSoft};
+  line-height: 1.45;
   text-align: center;
   margin-bottom: 1rem;
   font-style: italic;
@@ -62,20 +69,20 @@ export const todayPreferenceRowCls = css`
   width: 100%;
   max-width: 560px;
   margin-bottom: 1.5rem;
-  border: 1px solid ${Color.borderGray()};
+  border: 1px solid ${PAPER.line};
   border-radius: 16px;
-  background: ${Color.highlightGray()};
+  background: ${PAPER.paperDeep};
   overflow: hidden;
   @media (max-width: ${mobileMaxWidth}) {
     flex-direction: column;
   }
   > div:not(:last-child) {
-    border-right: 1px solid ${Color.borderGray()};
+    border-right: 1px solid ${PAPER.line};
   }
   @media (max-width: ${mobileMaxWidth}) {
     > div:not(:last-child) {
       border-right: 0;
-      border-bottom: 1px solid ${Color.borderGray()};
+      border-bottom: 1px solid ${PAPER.line};
     }
   }
 `;
@@ -96,18 +103,18 @@ export const todayPreferenceLabelCls = css`
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: ${Color.lightGray()};
+  color: ${PAPER.accent};
 `;
 
 export const todayPreferenceValueCls = css`
   font-size: 1.2rem;
   font-weight: 700;
-  color: ${Color.black()};
+  color: ${PAPER.ink};
   line-height: 1.35;
 `;
 
 export const instructionBoxCls = css`
-  background: ${Color.highlightGray()};
+  background: ${PAPER.paperDeep};
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -119,7 +126,7 @@ export const instructionListCls = css`
   margin: 0;
   padding-left: 1.5rem;
   font-size: 1.3rem;
-  color: ${Color.darkerGray()};
+  color: ${PAPER.inkSoft};
   line-height: 1.8;
   li {
     margin-bottom: 0.3rem;
@@ -131,17 +138,17 @@ export const instructionListCls = css`
 
 export const ruleTitleCls = css`
   font-weight: 700;
-  color: ${Color.black()};
+  color: ${PAPER.ink};
 `;
 
 export const ruleWarningCls = css`
   font-weight: 700;
-  color: ${Color.rose()};
+  color: ${PAPER.warn};
 `;
 
 export const ruleSuccessCls = css`
   font-weight: 700;
-  color: ${Color.green()};
+  color: ${PAPER.done};
 `;
 
 export const timerContainerCls = css`
@@ -151,17 +158,19 @@ export const timerContainerCls = css`
 
 export const textareaCls = css`
   width: 100%;
-  min-height: 200px;
-  padding: 1rem;
-  font-size: 1.5rem;
-  line-height: 1.7;
-  border: 1px solid ${Color.borderGray()};
-  border-radius: 8px;
+  min-height: 240px;
+  padding: 1.4rem 1.6rem;
+  font-size: 1.7rem;
+  line-height: 1.75;
+  color: ${PAPER.ink};
+  background: ${PAPER.paper};
+  border: 1px solid ${PAPER.lineStrong};
+  border-radius: 14px;
   resize: vertical;
   font-family: inherit;
   &:focus {
     outline: none;
-    border-color: ${Color.logoBlue()};
+    border-color: ${PAPER.accent};
   }
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.3rem;

@@ -451,6 +451,11 @@ registerMethods('content', [
   'purchaseDailyQuestionRepair',
   'setDailyQuestionNextCategory',
   'setDailyQuestionCurrentFocus',
+  'getDailyTrainingQuestion',
+  'loadDailyReflectionModes',
+  'loadReflectionStats',
+  'setReflectionStatsVisibility',
+  'loadUserReflectionStats',
   'getDailyQuestionHistory'
 ]);
 

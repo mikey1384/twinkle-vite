@@ -1,6 +1,4 @@
-import {
-  DAILY_QUESTION_PENDING_SUBMISSION_STORAGE_KEY
-} from '../constants';
+import { DAILY_QUESTION_PENDING_SUBMISSION_STORAGE_KEY } from '../constants';
 import type {
   PendingDailyQuestionRecoveryState,
   PendingDailyQuestionSubmission,
@@ -14,9 +12,7 @@ export function createEmptyTypingMetadata(): TypingMetadata {
   };
 }
 
-export function normalizeTypingMetadata(
-  value: unknown
-): TypingMetadata | null {
+export function normalizeTypingMetadata(value: unknown): TypingMetadata | null {
   const parsed = value as Partial<TypingMetadata> | null;
   if (!parsed || typeof parsed !== 'object') return null;
 
@@ -90,8 +86,16 @@ export function createDailyQuestionClientRequestId() {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function getPendingSubmissionStorageKey(userId: number) {
-  return `${DAILY_QUESTION_PENDING_SUBMISSION_STORAGE_KEY}:${userId}`;
+export type DailyReflectionMode = 'classic' | 'training';
+
+// Classic keeps its original key; Training gets its own, so a pending answer
+// in one mode never clears the other's (one reflection per mode per day).
+function getPendingSubmissionStorageKey(
+  userId: number,
+  mode: DailyReflectionMode = 'classic'
+) {
+  const base = `${DAILY_QUESTION_PENDING_SUBMISSION_STORAGE_KEY}:${userId}`;
+  return mode === 'training' ? `${base}:training` : base;
 }
 
 function normalizePendingSubmissionRecoveryState(
@@ -100,7 +104,10 @@ function normalizePendingSubmissionRecoveryState(
   return value === 'draft' ? 'draft' : 'pending';
 }
 
-export function loadPendingDailyQuestionSubmission(userId: number) {
+export function loadPendingDailyQuestionSubmission(
+  userId: number,
+  mode: DailyReflectionMode = 'classic'
+) {
   if (
     typeof window === 'undefined' ||
     typeof window.sessionStorage === 'undefined'
@@ -110,7 +117,7 @@ export function loadPendingDailyQuestionSubmission(userId: number) {
 
   try {
     const rawValue = window.sessionStorage.getItem(
-      getPendingSubmissionStorageKey(userId)
+      getPendingSubmissionStorageKey(userId, mode)
     );
     if (!rawValue) return null;
 
@@ -144,15 +151,18 @@ export function loadPendingDailyQuestionSubmission(userId: number) {
   }
 }
 
-export function savePendingDailyQuestionSubmission({
-  userId,
-  questionId,
-  clientRequestId,
-  response,
-  createdAt,
-  recoveryState,
-  typingMetadata
-}: PendingDailyQuestionSubmission) {
+export function savePendingDailyQuestionSubmission(
+  {
+    userId,
+    questionId,
+    clientRequestId,
+    response,
+    createdAt,
+    recoveryState,
+    typingMetadata
+  }: PendingDailyQuestionSubmission,
+  mode: DailyReflectionMode = 'classic'
+) {
   if (
     typeof window === 'undefined' ||
     typeof window.sessionStorage === 'undefined'
@@ -162,7 +172,7 @@ export function savePendingDailyQuestionSubmission({
 
   try {
     window.sessionStorage.setItem(
-      getPendingSubmissionStorageKey(userId),
+      getPendingSubmissionStorageKey(userId, mode),
       JSON.stringify({
         userId,
         questionId,
@@ -176,7 +186,10 @@ export function savePendingDailyQuestionSubmission({
   } catch {}
 }
 
-export function clearPendingDailyQuestionSubmission(userId: number) {
+export function clearPendingDailyQuestionSubmission(
+  userId: number,
+  mode: DailyReflectionMode = 'classic'
+) {
   if (
     typeof window === 'undefined' ||
     typeof window.sessionStorage === 'undefined'
@@ -185,6 +198,8 @@ export function clearPendingDailyQuestionSubmission(userId: number) {
   }
 
   try {
-    window.sessionStorage.removeItem(getPendingSubmissionStorageKey(userId));
+    window.sessionStorage.removeItem(
+      getPendingSubmissionStorageKey(userId, mode)
+    );
   } catch {}
 }

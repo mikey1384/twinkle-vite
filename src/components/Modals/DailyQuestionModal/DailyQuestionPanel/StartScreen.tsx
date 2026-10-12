@@ -1,38 +1,25 @@
 import React from 'react';
 import LumineRescueEntry from '~/components/LumineRescueEntry';
-import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import {
   INACTIVITY_LIMIT,
   MAX_RESPONSE_LENGTH,
   MIN_RESPONSE_LENGTH,
   STREAK_REPAIR_COST
 } from './constants';
+import { buttonContainerCls, containerCls, questionTextCls } from './styles';
 import {
-  buttonContainerCls,
-  containerCls,
-  instructionBoxCls,
-  instructionListCls,
-  questionTextCls,
-  ruleSuccessCls,
-  ruleTitleCls,
-  ruleWarningCls,
-  todayPreferenceCardCls,
-  todayPreferenceLabelCls,
-  todayPreferenceRowCls,
-  todayPreferenceValueCls
-} from './styles';
+  PAPER,
+  paperPrimaryButtonCls,
+  paperSecondaryButtonCls,
+  paperTextButtonCls
+} from '../paperTheme';
 
-function getStreakColor(currentStreak: number) {
-  if (currentStreak >= 10) return '#FFD700';
-  if (currentStreak >= 7) return '#E53935';
-  if (currentStreak >= 4) return '#FF9800';
-  return '#9E9E9E';
-}
-
+// Daily Reflection's start screen in the page's paper-and-ink style (Mikey
+// 2026-10-12: no traces of the old modal look). Same behaviour as before.
 export default function StartScreen({
   currentStreak,
   dayKeyword,
@@ -40,7 +27,6 @@ export default function StartScreen({
   isKeywordDay,
   isSimplified,
   isSimplifying,
-  profileTheme,
   purchasingRepair,
   question,
   recoveryNotice,
@@ -49,6 +35,7 @@ export default function StartScreen({
   streakRepairAvailable,
   todayCurrentFocusLabel,
   todayVibeLabel,
+  trainingLabel,
   twinkleCoins,
   onClose,
   onPurchaseRepair,
@@ -72,6 +59,8 @@ export default function StartScreen({
   streakRepairAvailable: boolean;
   todayCurrentFocusLabel: string;
   todayVibeLabel: string;
+  // Training mode: the stat today's question trains
+  trainingLabel?: string | null;
   twinkleCoins?: number;
   onClose: () => void;
   onPurchaseRepair: () => void;
@@ -80,85 +69,48 @@ export default function StartScreen({
   onSimplify: () => void;
   onStart: () => void;
 }) {
-  const streakColor = getStreakColor(currentStreak);
+  const showStreak = currentStreak > 0 && !streakBroken && !streakAtRisk;
 
   return (
     <ErrorBoundary componentPath="DailyQuestionPanel/Start">
       <div className={containerCls}>
         {recoveryNotice && (
-          <div
-            className={css`
-              text-align: center;
-              margin-bottom: 1rem;
-              padding: 0.75rem 1rem;
-              border-radius: 10px;
-              background: ${Color.yellow(0.18)};
-              border: 1px solid ${Color.yellow(0.5)};
-            `}
-          >
-            <p
-              className={css`
-                margin: 0;
-                color: ${Color.darkerGray()};
-                font-size: 1.1rem;
-                line-height: 1.4;
-                font-weight: 600;
-              `}
-            >
-              {recoveryNotice}
-            </p>
+          <div className={noticeCls(PAPER.accent, PAPER.accentSoft)}>
+            <p>{recoveryNotice}</p>
           </div>
         )}
 
-        {currentStreak > 0 && !streakBroken && !streakAtRisk && (
-          <div
-            className={css`
-              text-align: center;
-              margin-bottom: 1.5rem;
-              padding: 1rem 1.5rem;
-              background: ${streakColor}15;
-              border: 2px solid ${streakColor}40;
-              border-radius: 12px;
-            `}
-          >
-            <div
-              className={css`
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
-              `}
-            >
-              <span
-                className={css`
-                  font-size: 1.8rem;
-                `}
-              >
-                🔥
+        <div className={metaRowCls}>
+          {trainingLabel && (
+            <span className={metaChipCls}>
+              <span className={metaLabelCls}>Training</span>
+              {trainingLabel}
+            </span>
+          )}
+          {!trainingLabel && !isKeywordDay && (
+            <>
+              <span className={metaChipCls}>
+                <span className={metaLabelCls}>Vibe</span>
+                {todayVibeLabel}
               </span>
-              <span
-                className={css`
-                  font-size: 1.5rem;
-                  font-weight: bold;
-                  color: ${streakColor};
-                `}
-              >
-                {currentStreak}-day streak
+              <span className={metaChipCls}>
+                <span className={metaLabelCls}>Focus</span>
+                {todayCurrentFocusLabel}
               </span>
-            </div>
-            <p
-              className={css`
-                font-size: 1.2rem;
-                color: ${Color.darkerGray()};
-                margin-top: 0.3rem;
-              `}
-            >
-              {isKeywordDay
-                ? 'Write anything today to keep it going'
-                : `Keep it going for x${Math.min(currentStreak + 1, 10)} XP!`}
-            </p>
-          </div>
-        )}
+            </>
+          )}
+          {showStreak && (
+            <span className={metaChipCls}>
+              <Icon icon="fire" style={{ color: PAPER.accent }} />
+              {currentStreak}-day streak
+              <span className={metaFaintCls}>
+                {isKeywordDay
+                  ? 'write anything to keep it'
+                  : `x${Math.min(currentStreak + 1, 10)} XP today`}
+              </span>
+            </span>
+          )}
+        </div>
 
         {(streakAtRisk || streakBroken) &&
           currentStreak > 0 &&
@@ -170,99 +122,44 @@ export default function StartScreen({
               style={{ marginBottom: '1rem', textAlign: 'left' }}
             />
           )}
+
         {streakAtRisk && currentStreak > 0 && (
-          <div
-            className={css`
-              text-align: center;
-              margin-bottom: 1.5rem;
-              padding: 1rem 1.5rem;
-              background: ${Color.rose()}15;
-              border: 2px solid ${Color.rose()}40;
-              border-radius: 12px;
-            `}
-          >
-            <p
-              className={css`
-                font-size: 1.3rem;
-                font-weight: bold;
-                color: ${Color.rose()};
-                margin-bottom: 0.5rem;
-              `}
-            >
-              ⚠️ You missed yesterday
-            </p>
-            <p
-              className={css`
-                font-size: 1.2rem;
-                color: ${Color.darkerGray()};
-                margin-bottom: 0.75rem;
-              `}
-            >
+          <div className={noticeCls(PAPER.warn, PAPER.warnSoft)}>
+            <strong>You missed yesterday</strong>
+            <p>
               Your {currentStreak}-day streak is broken. Use a repair today to
               restore it and continue to {currentStreak + 1} days when you
               answer.
             </p>
             {streakRepairAvailable ? (
-              <p
-                className={css`
-                  font-size: 1.2rem;
-                  color: ${Color.green()};
-                  font-weight: 600;
-                  margin-bottom: 0;
-                `}
-              >
-                ✨ Repair ready — answer today to restore your {currentStreak}
-                -day streak and continue to {currentStreak + 1} days.
+              <p className={noticeGoodCls}>
+                Repair ready: answer today to restore your {currentStreak}-day
+                streak and continue to {currentStreak + 1} days.
               </p>
             ) : (
-              <Button
-                variant="solid"
-                color="orange"
+              <button
+                type="button"
+                className={paperSecondaryButtonCls}
                 onClick={onPurchaseRepair}
                 disabled={purchasingRepair || !hasEnoughCoins}
-                loading={purchasingRepair}
               >
-                <Icon icon="wrench" style={{ marginRight: '0.5rem' }} />
-                {hasEnoughCoins
-                  ? `Restore Streak (${STREAK_REPAIR_COST.toLocaleString()} coins)`
-                  : `Need ${STREAK_REPAIR_COST.toLocaleString()} coins (you have ${(
-                      twinkleCoins || 0
-                    ).toLocaleString()})`}
-              </Button>
+                <Icon icon="wrench" />
+                {purchasingRepair
+                  ? 'Restoring...'
+                  : hasEnoughCoins
+                    ? `Restore streak (${STREAK_REPAIR_COST.toLocaleString()} coins)`
+                    : `Need ${STREAK_REPAIR_COST.toLocaleString()} coins (you have ${(
+                        twinkleCoins || 0
+                      ).toLocaleString()})`}
+              </button>
             )}
           </div>
         )}
 
         {streakBroken && (
-          <div
-            className={css`
-              text-align: center;
-              margin-bottom: 1.5rem;
-              padding: 1rem 1.5rem;
-              background: ${Color.gray()}10;
-              border: 2px solid ${Color.borderGray()};
-              border-radius: 12px;
-            `}
-          >
-            <p
-              className={css`
-                font-size: 1.3rem;
-                font-weight: bold;
-                color: ${Color.darkerGray()};
-                margin-bottom: 0.5rem;
-              `}
-            >
-              Your streak was broken
-            </p>
-            <p
-              className={css`
-                font-size: 1.2rem;
-                color: ${Color.darkerGray()};
-                margin-bottom: 0;
-              `}
-            >
-              Start a new streak by answering today.
-            </p>
+          <div className={noticeCls(PAPER.inkFaint, PAPER.paperDeep)}>
+            <strong>Your streak was broken</strong>
+            <p>Start a new streak by answering today.</p>
           </div>
         )}
 
@@ -270,182 +167,243 @@ export default function StartScreen({
           !streakAtRisk &&
           !streakBroken &&
           currentStreak > 0 && (
-            <div
-              className={css`
-                text-align: center;
-                margin-bottom: 1rem;
-                padding: 0.75rem 1rem;
-                background: ${Color.green()}15;
-                border-radius: 8px;
-              `}
-            >
-              <p
-                className={css`
-                  font-size: 1.2rem;
-                  color: ${Color.green()};
-                  font-weight: 600;
-                `}
-              >
-                ✨ Streak repair ready - your streak is protected!
+            <div className={noticeCls(PAPER.done, PAPER.doneSoft)}>
+              <p className={noticeGoodCls}>
+                Streak repair ready: your streak is protected.
               </p>
             </div>
           )}
 
-        {!isKeywordDay && (
-          <div className={todayPreferenceRowCls}>
-            <div className={todayPreferenceCardCls}>
-              <span className={todayPreferenceLabelCls}>Today's vibe</span>
-              <span className={todayPreferenceValueCls}>{todayVibeLabel}</span>
-            </div>
-            <div className={todayPreferenceCardCls}>
-              <span className={todayPreferenceLabelCls}>Current focus</span>
-              <span className={todayPreferenceValueCls}>
-                {todayCurrentFocusLabel}
-              </span>
-            </div>
-          </div>
-        )}
-
         {isKeywordDay && dayKeyword ? (
-          <div
-            className={css`
-              text-align: center;
-              margin-bottom: 2rem;
-            `}
-          >
-            <p
-              className={css`
-                font-size: 1.2rem;
-                color: ${Color.darkerGray()};
-                margin-bottom: 0.5rem;
-              `}
-            >
-              Today's word:
-            </p>
-            <p
-              className={css`
-                font-size: 3rem;
-                font-weight: bold;
-                color: ${Color.black()};
-                margin-bottom: 0.5rem;
-              `}
-            >
-              {dayKeyword}
-            </p>
-            <p
-              className={css`
-                font-size: 1.2rem;
-                font-style: italic;
-                color: ${Color.darkerGray()};
-                margin: 0;
-              `}
-            >
-              or write about anything else
-            </p>
+          <div className={keywordCls}>
+            <span className={metaLabelCls}>Today’s word</span>
+            <p className={keywordWordCls}>{dayKeyword}</p>
+            <p className={keywordHintCls}>or write about anything else</p>
           </div>
         ) : (
           <p className={questionTextCls}>{question}</p>
         )}
 
         {!isKeywordDay && (
-          <div
-            className={css`
-              margin-bottom: 1.5rem;
-            `}
+          <button
+            type="button"
+            className={paperTextButtonCls}
+            onClick={isSimplified ? onShowOriginal : onSimplify}
+            disabled={isSimplifying}
+            style={{ marginBottom: '1.6rem' }}
           >
-            {isSimplified ? (
-              <Button
-                variant="soft"
-                tone="raised"
-                color={profileTheme || undefined}
-                onClick={onShowOriginal}
-                uppercase={false}
-              >
-                <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
-                Show original question
-              </Button>
-            ) : (
-              <Button
-                variant="soft"
-                tone="raised"
-                color={profileTheme || undefined}
-                onClick={onSimplify}
-                disabled={isSimplifying}
-                loading={isSimplifying}
-                uppercase={false}
-              >
-                <Icon icon="child" style={{ marginRight: '0.5rem' }} />
-                {isSimplifying
-                  ? 'Simplifying...'
-                  : 'Make question easier to understand'}
-              </Button>
-            )}
-          </div>
+            <Icon
+              icon={isSimplified ? 'undo' : 'child'}
+              style={{ marginRight: '0.5rem' }}
+            />
+            {isSimplified
+              ? 'Show the original question'
+              : isSimplifying
+                ? 'Making it easier...'
+                : 'Make it easier to understand'}
+          </button>
         )}
 
         {!isKeywordDay && (
-          <div className={instructionBoxCls}>
-            <h4 style={{ marginBottom: '0.75rem', color: Color.black() }}>
-              <Icon icon="info-circle" style={{ marginRight: '0.5rem' }} />
-              Rules
-            </h4>
-            <ul className={instructionListCls}>
+          <div className={rulesCls}>
+            <div className={rulesTitleCls}>How it works</div>
+            <ul>
               <li>
-                <span className={ruleTitleCls}>Keep typing</span> — if you stop
-                for more than{' '}
-                <span className={ruleWarningCls}>
-                  {INACTIVITY_LIMIT} seconds
-                </span>
-                , your response auto-submits
-              </li>
-              <li>
-                <span className={ruleTitleCls}>Minimum length</span> — write at
-                least{' '}
-                <span className={ruleSuccessCls}>
-                  {MIN_RESPONSE_LENGTH} characters
-                </span>{' '}
-                before the timer runs out, or it's an{' '}
-                <span className={ruleWarningCls}>automatic fail</span>
-              </li>
-              <li>
-                <span className={ruleTitleCls}>Maximum length</span> — up to{' '}
-                <span className={ruleSuccessCls}>
-                  {MAX_RESPONSE_LENGTH.toLocaleString()} characters
+                <Icon icon="clock" />
+                <span>
+                  <b>Keep typing.</b> Stop for more than{' '}
+                  <em>{INACTIVITY_LIMIT} seconds</em> and your answer is sent.
                 </span>
               </li>
               <li>
-                <span className={ruleTitleCls}>No going back</span> —{' '}
-                <span className={ruleWarningCls}>
-                  backspace and delete are disabled
+                <Icon icon="pencil-alt" />
+                <span>
+                  <b>At least {MIN_RESPONSE_LENGTH} characters,</b> up to{' '}
+                  {MAX_RESPONSE_LENGTH.toLocaleString()}. Shorter is an{' '}
+                  <em>automatic fail</em>.
                 </span>
-                . Just keep moving forward!
               </li>
               <li>
-                <span className={ruleTitleCls}>No copy‑paste</span> — write in
-                your own words
+                <Icon icon="arrow-right" />
+                <span>
+                  <b>No going back.</b> <em>Backspace and delete are off</em>,
+                  so keep moving forward.
+                </span>
               </li>
               <li>
-                <span className={ruleTitleCls}>
-                  Closing this window cancels
-                </span>{' '}
-                — your response{' '}
-                <span className={ruleWarningCls}>won't be saved</span>, so
-                you'll need to start over
+                <Icon icon="ban" />
+                <span>
+                  <b>No copy-paste.</b> Use your own words.
+                </span>
+              </li>
+              <li>
+                <Icon icon="sign-out-alt" />
+                <span>
+                  <b>Leaving this page cancels.</b> Your answer{' '}
+                  <em>won’t be saved</em>.
+                </span>
               </li>
             </ul>
           </div>
         )}
 
         <div className={buttonContainerCls}>
-          <Button variant="ghost" onClick={onClose}>
-            Maybe Later
-          </Button>
-          <Button variant="solid" color="green" onClick={onStart}>
-            <Icon icon="play" style={{ marginRight: '0.5rem' }} />
-            Start Writing
-          </Button>
+          <button
+            type="button"
+            className={paperTextButtonCls}
+            onClick={onClose}
+          >
+            Not now
+          </button>
+          <button
+            type="button"
+            className={paperPrimaryButtonCls}
+            onClick={onStart}
+          >
+            Start writing
+            <Icon icon="arrow-right" />
+          </button>
         </div>
       </div>
     </ErrorBoundary>
   );
 }
+
+function noticeCls(edge: string, background: string) {
+  return css`
+    width: 100%;
+    max-width: 620px;
+    margin-bottom: 1.4rem;
+    padding: 1rem 1.3rem;
+    border-radius: 12px;
+    border-left: 4px solid ${edge};
+    background: ${background};
+    color: ${PAPER.ink};
+    font-size: 1.3rem;
+    line-height: 1.5;
+    strong {
+      display: block;
+      font-size: 1.4rem;
+      margin-bottom: 0.3rem;
+    }
+    p {
+      margin: 0 0 0.6rem;
+    }
+    p:last-child {
+      margin-bottom: 0;
+    }
+  `;
+}
+
+const noticeGoodCls = css`
+  color: ${PAPER.done};
+  font-weight: 700;
+`;
+
+const metaRowCls = css`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-bottom: 1.8rem;
+  &:empty {
+    display: none;
+  }
+`;
+
+const metaChipCls = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid ${PAPER.line};
+  background: ${PAPER.paper};
+  color: ${PAPER.ink};
+  font-size: 1.25rem;
+  font-weight: 600;
+`;
+
+const metaLabelCls = css`
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${PAPER.accent};
+`;
+
+const metaFaintCls = css`
+  color: ${PAPER.inkFaint};
+  font-weight: 500;
+`;
+
+const keywordCls = css`
+  text-align: center;
+  margin-bottom: 2rem;
+`;
+
+const keywordWordCls = css`
+  margin: 0.4rem 0;
+  font-family: ${PAPER.serif};
+  font-size: 4rem;
+  font-weight: 600;
+  color: ${PAPER.ink};
+`;
+
+const keywordHintCls = css`
+  margin: 0;
+  font-size: 1.3rem;
+  font-style: italic;
+  color: ${PAPER.inkSoft};
+`;
+
+const rulesCls = css`
+  width: 100%;
+  max-width: 620px;
+  margin-bottom: 1.6rem;
+  padding: 1.2rem 1.5rem;
+  border-radius: 14px;
+  background: ${PAPER.paperDeep};
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  li {
+    display: grid;
+    grid-template-columns: 1.8rem 1fr;
+    gap: 0.6rem;
+    align-items: baseline;
+    font-size: 1.35rem;
+    line-height: 1.5;
+    color: ${PAPER.inkSoft};
+    svg {
+      color: ${PAPER.accent};
+    }
+  }
+  b {
+    color: ${PAPER.ink};
+  }
+  em {
+    font-style: normal;
+    font-weight: 700;
+    color: ${PAPER.warn};
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1rem 1.1rem;
+    li {
+      font-size: 1.25rem;
+    }
+  }
+`;
+
+const rulesTitleCls = css`
+  margin-bottom: 0.8rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${PAPER.inkFaint};
+`;

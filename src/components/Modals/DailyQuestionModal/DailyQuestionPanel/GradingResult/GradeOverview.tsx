@@ -1,48 +1,57 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import { Color, getStreakColor, mobileMaxWidth } from '~/constants/css';
+import { css, keyframes } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
+import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import {
-  fireAnimation,
-  gradeColors,
-  gradeLabels,
-  gradeSymbols,
-  masterpieceTypeLabels,
-  pulseAnimation
-} from './constants';
+import { gradeLabels, gradeSymbols, masterpieceTypeLabels } from './constants';
+import { PAPER } from '../../paperTheme';
+
+// The grade in Daily Reflection's paper style (Mikey 2026-10-12): a quiet
+// seal, the grade in serif, XP and streak as chips, and the feedback as a
+// note. One settle-in animation instead of a constant pulse.
+const GRADE_TONES: Record<string, { ink: string; soft: string }> = {
+  Masterpiece: { ink: '#b8860b', soft: 'rgba(184, 134, 11, 0.14)' },
+  Pass: { ink: PAPER.done, soft: PAPER.doneSoft },
+  Fail: { ink: PAPER.warn, soft: PAPER.warnSoft }
+};
+
+const settle = keyframes`
+  0% { transform: scale(0.7); opacity: 0; }
+  70% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+`;
 
 export default function GradeOverview({
   feedback,
   grade,
   isKeywordDay = false,
   masterpieceType,
-  rewardColor,
   streak,
   streakMultiplier,
   usedRepair,
-  xpAwarded,
-  xpNumberColor
+  xpAwarded
 }: {
   feedback: string;
   grade: string;
   isKeywordDay?: boolean;
   masterpieceType?: 'heart' | 'mind' | 'heart_and_mind' | null;
-  rewardColor: string;
+  rewardColor?: string;
   streak: number;
   streakMultiplier: number;
   usedRepair: boolean;
   xpAwarded: number;
-  xpNumberColor: string;
+  xpNumberColor?: string;
 }) {
-  const gradeColor = isKeywordDay
-    ? Color.green()
-    : gradeColors[grade] || Color.darkerGray();
+  const tone = isKeywordDay
+    ? GRADE_TONES.Pass
+    : GRADE_TONES[grade] || { ink: PAPER.inkSoft, soft: PAPER.paperDeep };
   const gradeLabel = isKeywordDay
     ? 'Counted'
     : grade === 'Masterpiece' && masterpieceType
       ? masterpieceTypeLabels[masterpieceType] || 'Masterpiece'
       : gradeLabels[grade] || '';
   const gradeSymbol = isKeywordDay ? '✓' : gradeSymbols[grade] || '?';
+  const showStreak = streak > 0 && grade !== 'Fail';
 
   return (
     <>
@@ -51,28 +60,29 @@ export default function GradeOverview({
           display: flex;
           flex-direction: column;
           align-items: center;
-          margin-bottom: 2rem;
+          padding-top: 1rem;
+          margin-bottom: 1.6rem;
         `}
       >
         <div
           className={css`
-            width: 100px;
-            height: 100px;
+            width: 92px;
+            height: 92px;
             border-radius: 50%;
-            background: ${gradeColor};
+            background: ${tone.soft};
+            border: 2px solid ${tone.ink};
+            box-shadow: inset 0 0 0 5px ${PAPER.paper};
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: ${pulseAnimation} 2s ease-in-out infinite;
-            box-shadow: 0 4px 20px ${gradeColor}40;
+            animation: ${settle} 0.6s ease-out;
           `}
         >
           <span
             className={css`
-              font-size: 3rem;
-              font-weight: bold;
-              color: white;
-              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+              font-family: ${PAPER.serif};
+              font-size: 3.4rem;
+              color: ${tone.ink};
             `}
           >
             {gradeSymbol}
@@ -80,126 +90,91 @@ export default function GradeOverview({
         </div>
         <p
           className={css`
-            font-size: 1.5rem;
-            color: ${gradeColor};
-            margin-top: 0.5rem;
+            margin: 0.8rem 0 0;
+            font-family: ${PAPER.serif};
+            font-size: 2.8rem;
             font-weight: 600;
+            color: ${PAPER.ink};
+            text-align: center;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 2.3rem;
+            }
           `}
         >
           {gradeLabel}
         </p>
       </div>
 
-      {xpAwarded > 0 && (
+      {(xpAwarded > 0 || showStreak) && (
         <div
           className={css`
-            text-align: center;
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
-            font-weight: bold;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.6rem;
+            margin-bottom: 1.8rem;
           `}
         >
-          <span style={{ color: xpNumberColor }}>
-            +{addCommasToNumber(xpAwarded)}
-          </span>{' '}
-          <span style={{ color: rewardColor }}>XP</span>
-        </div>
-      )}
-
-      {streak > 0 && grade !== 'Fail' && (
-        <div
-          className={css`
-            text-align: center;
-            margin-bottom: 1.5rem;
-            padding: 1rem 1.5rem;
-            background: ${getStreakColor(streak)}15;
-            border-radius: 12px;
-          `}
-        >
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 0.5rem;
-            `}
-          >
-            <span
-              className={css`
-                font-size: ${
-                  streak >= 10 ? '2.5rem' : streak >= 5 ? '2.2rem' : '2rem'
-                };
-                animation: ${streak >= 5 ? fireAnimation : 'none'} 0.6s
-                  ease-in-out infinite;
-              `}
-            >
-              🔥
+          {xpAwarded > 0 && (
+            <span className={chipCls}>
+              <b style={{ color: PAPER.done }}>
+                +{addCommasToNumber(xpAwarded)}
+              </b>
+              XP
             </span>
-            <span
-              className={css`
-                font-size: ${
-                  streak >= 10 ? '2rem' : streak >= 5 ? '1.8rem' : '1.6rem'
-                };
-                font-weight: bold;
-                color: ${getStreakColor(streak)};
-              `}
-            >
-              {streak}-day streak
-            </span>
-          </div>
-          {streakMultiplier > 1 && !isKeywordDay && (
-            <p
-              className={css`
-                font-size: 1.3rem;
-                color: ${getStreakColor(streak)};
-                margin-top: 0.5rem;
-                font-weight: 600;
-              `}
-            >
-              {streakMultiplier >= 10
-                ? 'x10 MAX!'
-                : `x${streakMultiplier} XP multiplier!`}
-            </p>
           )}
-          {usedRepair && (
-            <p
-              className={css`
-                font-size: 1.2rem;
-                color: ${Color.green()};
-                margin-top: 0.5rem;
-                font-weight: 600;
-              `}
-            >
-              ✨ Streak saved with repair!
-            </p>
+          {showStreak && (
+            <span className={chipCls}>
+              <Icon icon="fire" style={{ color: PAPER.accent }} />
+              {streak}-day streak
+              {streakMultiplier > 1 && !isKeywordDay && (
+                <span style={{ color: PAPER.inkFaint, fontWeight: 500 }}>
+                  {streakMultiplier >= 10
+                    ? 'x10 max'
+                    : `x${streakMultiplier} XP`}
+                </span>
+              )}
+            </span>
+          )}
+          {showStreak && usedRepair && (
+            <span className={chipCls} style={{ color: PAPER.done }}>
+              Streak saved with a repair
+            </span>
           )}
         </div>
       )}
 
       <div
         className={css`
-          background: ${Color.highlightGray()};
-          border-radius: 8px;
-          padding: 1.5rem;
-          margin-bottom: 1.5rem;
+          max-width: 680px;
+          margin: 0 auto 1.8rem;
+          padding: 1.2rem 1.6rem;
+          border-left: 3px solid ${PAPER.accent};
+          background: ${PAPER.paperDeep};
+          border-radius: 0 12px 12px 0;
         `}
       >
-        <h4
+        <div
           className={css`
-            font-size: 1.3rem;
-            color: ${Color.darkerGray()};
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: ${PAPER.accent};
           `}
         >
           {isKeywordDay ? 'Today' : 'Feedback'}
-        </h4>
+        </div>
         <p
           className={css`
-            font-size: 1.4rem;
-            color: ${Color.black()};
+            margin: 0;
+            font-family: ${PAPER.serif};
+            font-size: 1.7rem;
+            color: ${PAPER.ink};
             line-height: 1.6;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.3rem;
+              font-size: 1.55rem;
             }
           `}
         >
@@ -209,3 +184,16 @@ export default function GradeOverview({
     </>
   );
 }
+
+const chipCls = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid ${PAPER.line};
+  background: ${PAPER.paper};
+  color: ${PAPER.ink};
+  font-size: 1.35rem;
+  font-weight: 600;
+`;

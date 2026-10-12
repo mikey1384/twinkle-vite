@@ -334,9 +334,6 @@ export default function Stories() {
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );
-  const onSetDailyQuestionModalShown = useHomeContext(
-    (v) => v.actions.onSetDailyQuestionModalShown
-  );
   const category = useHomeContext((v) => v.state.category);
   const displayOrder = useHomeContext((v) => v.state.displayOrder);
   const feedPaginationCursor = useHomeContext(
@@ -597,7 +594,7 @@ export default function Stories() {
           }
           onPlayAIStories={() => onSetAIStoriesModalShown(true)}
           onPlayGrammarGame={() => navigate('/grammarbles')}
-          onDailyQuestionClick={() => onSetDailyQuestionModalShown(true)}
+          onDailyQuestionClick={() => navigate('/daily-reflection')}
         />
         <Featured />
         <HomeFilter

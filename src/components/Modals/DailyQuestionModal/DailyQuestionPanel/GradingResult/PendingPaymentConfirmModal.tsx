@@ -1,7 +1,7 @@
 import React from 'react';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { PAPER } from '../../paperTheme';
 
 interface Props {
   label: string;
@@ -31,7 +31,7 @@ export default function PendingPaymentConfirmModal({
             font-size: 1.3rem;
             line-height: 1.65;
             text-align: left;
-            color: ${Color.black()};
+            color: ${PAPER.ink};
           `}
         >
           <p style={{ marginTop: 0 }}>

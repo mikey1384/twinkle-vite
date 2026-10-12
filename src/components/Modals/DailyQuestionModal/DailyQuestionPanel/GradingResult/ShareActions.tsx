@@ -1,8 +1,12 @@
 import React from 'react';
-import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import {
+  PAPER,
+  paperPrimaryButtonCls,
+  paperSecondaryButtonCls,
+  paperTextButtonCls
+} from '../../paperTheme';
 import ciel from '~/assets/ciel.png';
 import zero from '~/assets/zero.png';
 
@@ -71,19 +75,15 @@ export default function ShareActions({
             align-items: center;
           `}
         >
-          <Button
-            variant="solid"
-            color="logoBlue"
+          <button
+            type="button"
+            className={paperPrimaryButtonCls}
             onClick={onShareClick}
             disabled={!canShareToFeedNow || refining || sharing}
-            loading={
-              canShareToFeedNow &&
-              ((refining && !preparingAIVersionTarget) || sharing)
-            }
           >
             {!canShareToFeedNow ? (
               <>
-                <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+                <Icon icon="check" />
                 Shared to Feed
               </>
             ) : sharing ? (
@@ -92,22 +92,22 @@ export default function ShareActions({
               'Polishing...'
             ) : refinedResponse ? (
               <>
-                <Icon icon="share" style={{ marginRight: '0.5rem' }} />
+                <Icon icon="share" />
                 Share to Feed
               </>
             ) : (
               <>
-                <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
+                <Icon icon="magic" />
                 See AI Polished Version
               </>
             )}
-          </Button>
+          </button>
           {canShareToFeedNow && refinedResponse && (
             <span
               className={css`
                 margin-top: 0.4rem;
                 font-size: 1.1rem;
-                color: ${Color.orange()};
+                color: ${PAPER.accent};
                 font-weight: 600;
               `}
             >
@@ -126,22 +126,15 @@ export default function ShareActions({
               align-items: center;
             `}
           >
-            <Button
-              color="logoBlue"
-              variant="solid"
-              tone="raised"
+            <button
+              type="button"
+              className={paperSecondaryButtonCls}
               onClick={() => onShareWithAI('zero')}
               disabled={
                 !canShareWithZero ||
                 sharingWithCiel ||
                 sharingWithZero ||
                 preparingAIVersionTarget !== null
-              }
-              loading={
-                sharingWithZero ||
-                (preparingAIVersionTarget === 'zero' &&
-                  refining &&
-                  !refinedResponse)
               }
             >
               <img
@@ -158,7 +151,7 @@ export default function ShareActions({
               />
               {!canShareWithZero ? (
                 <>
-                  <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+                  <Icon icon="check" />
                   Shared with Zero
                 </>
               ) : sharingWithZero ? (
@@ -166,13 +159,13 @@ export default function ShareActions({
               ) : (
                 'Share with Zero'
               )}
-            </Button>
+            </button>
             {canShareWithZero && canGetAIShareCoins && (
               <span
                 className={css`
                   margin-top: 0.4rem;
                   font-size: 1.1rem;
-                  color: ${Color.orange()};
+                  color: ${PAPER.accent};
                   font-weight: 600;
                 `}
               >
@@ -188,22 +181,15 @@ export default function ShareActions({
               align-items: center;
             `}
           >
-            <Button
-              color="purple"
-              variant="solid"
-              tone="raised"
+            <button
+              type="button"
+              className={paperSecondaryButtonCls}
               onClick={() => onShareWithAI('ciel')}
               disabled={
                 !canShareWithCiel ||
                 sharingWithCiel ||
                 sharingWithZero ||
                 preparingAIVersionTarget !== null
-              }
-              loading={
-                sharingWithCiel ||
-                (preparingAIVersionTarget === 'ciel' &&
-                  refining &&
-                  !refinedResponse)
               }
             >
               <img
@@ -220,7 +206,7 @@ export default function ShareActions({
               />
               {!canShareWithCiel ? (
                 <>
-                  <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+                  <Icon icon="check" />
                   Shared with Ciel
                 </>
               ) : sharingWithCiel ? (
@@ -228,13 +214,13 @@ export default function ShareActions({
               ) : (
                 'Share with Ciel'
               )}
-            </Button>
+            </button>
             {canShareWithCiel && canGetAIShareCoins && (
               <span
                 className={css`
                   margin-top: 0.4rem;
                   font-size: 1.1rem;
-                  color: ${Color.orange()};
+                  color: ${PAPER.accent};
                   font-weight: 600;
                 `}
               >
@@ -247,13 +233,14 @@ export default function ShareActions({
 
       {showVersionSelector && (
         <>
-          <Button
-            style={{ marginRight: '2rem' }}
-            variant="ghost"
+          <button
+            type="button"
+            className={paperTextButtonCls}
             onClick={onCancelVersionSelector}
+            style={{ marginRight: '2rem' }}
           >
             Go Back
-          </Button>
+          </button>
           <div
             className={css`
               display: flex;
@@ -261,21 +248,20 @@ export default function ShareActions({
               align-items: center;
             `}
           >
-            <Button
-              variant="solid"
-              color="logoBlue"
+            <button
+              type="button"
+              className={paperPrimaryButtonCls}
               onClick={onConfirmShare}
               disabled={sharing}
-              loading={sharing}
             >
-              <Icon icon="share" style={{ marginRight: '0.5rem' }} />
+              <Icon icon="share" />
               {sharing ? 'Sharing...' : 'Share to Feed'}
-            </Button>
+            </button>
             <span
               className={css`
                 margin-top: 0.4rem;
                 font-size: 1.1rem;
-                color: ${Color.orange()};
+                color: ${PAPER.accent};
                 font-weight: 600;
               `}
             >
@@ -287,17 +273,20 @@ export default function ShareActions({
 
       {showAIVersionSelector && aiShareTarget && (
         <>
-          <Button variant="ghost" onClick={onCancelAIVersionSelector}>
+          <button
+            type="button"
+            className={paperTextButtonCls}
+            onClick={onCancelAIVersionSelector}
+          >
             Go Back
-          </Button>
-          <Button
-            variant="solid"
-            color={aiShareTarget === 'ciel' ? 'purple' : 'logoBlue'}
+          </button>
+          <button
+            type="button"
+            className={paperPrimaryButtonCls}
             onClick={onConfirmShareWithAI}
             disabled={sharingWithZero || sharingWithCiel}
-            loading={aiShareTarget === 'zero' ? sharingWithZero : sharingWithCiel}
           >
-            <Icon icon="share" style={{ marginRight: '0.5rem' }} />
+            <Icon icon="share" />
             {aiShareTarget === 'zero'
               ? sharingWithZero
                 ? 'Sharing with Zero...'
@@ -305,7 +294,7 @@ export default function ShareActions({
               : sharingWithCiel
                 ? 'Sharing with Ciel...'
                 : 'Confirm Share with Ciel'}
-          </Button>
+          </button>
         </>
       )}
     </div>

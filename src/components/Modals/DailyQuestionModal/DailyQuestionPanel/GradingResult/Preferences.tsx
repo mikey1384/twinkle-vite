@@ -1,10 +1,8 @@
 import React from 'react';
-import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import Modal from '~/components/Modal';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import {
   FOCUS_OPTIONS,
   VIBE_OPTIONS,
@@ -18,13 +16,16 @@ import {
   getVibeLabel
 } from './helpers';
 import PendingPaymentConfirmModal from './PendingPaymentConfirmModal';
+import { PAPER, paperPrimaryButtonCls } from '../../paperTheme';
 
+// Classic's choices for tomorrow, in Daily Reflection's paper style (Mikey
+// 2026-10-12). On the full page the option lists open in place under each
+// card instead of in pop-up modals; the coin confirmation stays a modal.
 export default function Preferences({
   availableTwinkleCoins,
   canChooseTomorrowPreferences,
   currentFocus,
   currentFocusPrice,
-  doneColor,
   isAdultUser,
   isFocusModalOpen,
   isFocusSelectionFreeToday,
@@ -52,7 +53,7 @@ export default function Preferences({
   canChooseTomorrowPreferences: boolean;
   currentFocus: string | null;
   currentFocusPrice: number;
-  doneColor: string;
+  doneColor?: string;
   isAdultUser: boolean;
   isFocusModalOpen: boolean;
   isFocusSelectionFreeToday: (selection: FocusOptionId) => boolean;
@@ -85,499 +86,219 @@ export default function Preferences({
       ? getVibeLabel(pendingPayment.selection)
       : getFocusLabel(pendingPayment.selection, isAdultUser)
     : '';
+  const selectorsHidden = showVersionSelector || showAIVersionSelector;
 
   return (
     <>
-      {canChooseTomorrowPreferences &&
-        !showVersionSelector &&
-        !showAIVersionSelector && (
-          <div
-            className={css`
-              margin-top: 1.6rem;
-              display: flex;
-              flex-direction: column;
-              gap: 1rem;
-            `}
-          >
-            <button
-              type="button"
-              className={css`
-                width: 100%;
-                text-align: left;
-                border: 1px solid ${Color.borderGray()};
-                border-radius: 12px;
-                background: ${Color.white()};
-                padding: 1.2rem 1.3rem;
-                cursor: pointer;
-                &:hover {
-                  border-color: ${Color.logoBlue(0.5)};
-                }
-              `}
-              onClick={onOpenVibeModal}
-            >
-              <div
-                className={css`
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  margin-bottom: 0.45rem;
-                  gap: 1rem;
-                `}
+      {canChooseTomorrowPreferences && !selectorsHidden && (
+        <section className={sectionCls}>
+          <div className={sectionTitleCls}>For tomorrow</div>
+          <div className={cardsCls}>
+            <div className={cardWrapCls}>
+              <button
+                type="button"
+                className={cardCls(isVibeModalOpen)}
+                onClick={isVibeModalOpen ? onCloseVibeModal : onOpenVibeModal}
+                aria-expanded={isVibeModalOpen}
               >
-                <div
-                  className={css`
-                    display: flex;
-                    align-items: center;
-                    gap: 0.6rem;
-                    font-size: 1.3rem;
-                    color: ${Color.black()};
-                    font-weight: 700;
-                  `}
-                >
-                  <Icon icon="sparkles" />
-                  Tomorrow's Vibe
-                </div>
-                <div
-                  className={css`
-                    display: flex;
-                    align-items: center;
-                    gap: 0.35rem;
-                    color: ${Color.orange()};
-                    font-size: 1.15rem;
-                    font-weight: 700;
-                    flex-shrink: 0;
-                  `}
-                >
-                  <Icon icon="coins" />
-                  {tomorrowVibePrice.toLocaleString()}
-                </div>
-              </div>
-              <p
-                className={css`
-                  margin: 0 0 0.7rem;
-                  font-size: 1.15rem;
-                  color: ${Color.darkerGray()};
-                `}
-              >
-                Pick the style of tomorrow's reflection question.
-              </p>
-              <div
-                className={css`
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  gap: 0.8rem;
-                  font-size: 1.15rem;
-                `}
-              >
-                <span
-                  className={css`
-                    color: ${Color.darkGray()};
-                  `}
-                >
-                  Current selection
+                <span className={cardHeadCls}>
+                  <span className={cardNameCls}>
+                    <Icon icon="sparkles" /> Tomorrow’s vibe
+                  </span>
+                  <span className={priceCls}>
+                    <Icon icon="coins" /> {tomorrowVibePrice.toLocaleString()}
+                  </span>
                 </span>
-                <span
-                  className={css`
-                    color: ${Color.black()};
-                    font-weight: 700;
-                  `}
-                >
+                <span className={cardHintCls}>
+                  The style of tomorrow’s question.
+                </span>
+                <span className={cardValueCls}>
                   {getVibeLabel(nextCategory)}
+                  <Icon
+                    icon={isVibeModalOpen ? 'chevron-up' : 'chevron-down'}
+                  />
                 </span>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className={css`
-                width: 100%;
-                text-align: left;
-                border: 1px solid ${Color.borderGray()};
-                border-radius: 12px;
-                background: ${Color.white()};
-                padding: 1.2rem 1.3rem;
-                cursor: pointer;
-                &:hover {
-                  border-color: ${Color.purple(0.5)};
-                }
-              `}
-              onClick={onOpenFocusModal}
-            >
-              <div
-                className={css`
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  margin-bottom: 0.45rem;
-                  gap: 1rem;
-                `}
-              >
-                <div
-                  className={css`
-                    display: flex;
-                    align-items: center;
-                    gap: 0.6rem;
-                    font-size: 1.3rem;
-                    color: ${Color.black()};
-                    font-weight: 700;
-                  `}
-                >
-                  <Icon icon="magic" />
-                  Current Focus
+              </button>
+              {isVibeModalOpen && (
+                <div className={optionListCls}>
+                  {VIBE_OPTIONS.map((option) => {
+                    const isSelected =
+                      (nextCategory || 'default') === option.id;
+                    const isPaidOption = option.id !== 'default';
+                    const isOwnedPaidOption =
+                      isPaidOption && ownedVibeSelections.includes(option.id);
+                    const requiresPayment = isPaidOption && !isOwnedPaidOption;
+                    const isDisabledForCoins =
+                      requiresPayment &&
+                      availableTwinkleCoins < tomorrowVibePrice;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={optionCls(isSelected)}
+                        onClick={() => onSelectVibe(option.id)}
+                        disabled={isSettingVibe || isDisabledForCoins}
+                        title={
+                          isDisabledForCoins
+                            ? `You don't have enough coins for this choice (need ${tomorrowVibePrice.toLocaleString()} coins).`
+                            : undefined
+                        }
+                      >
+                        <span className={optionTextCls}>
+                          <span className={optionTitleCls}>{option.title}</span>
+                          <span className={optionDescCls}>
+                            {option.description}
+                          </span>
+                        </span>
+                        <span className={optionMetaCls}>
+                          {requiresPayment && (
+                            <span className={priceCls}>
+                              <Icon icon="coins" />{' '}
+                              {tomorrowVibePrice.toLocaleString()}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <Icon icon="check" style={{ color: PAPER.done }} />
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-                <div
-                  className={css`
-                    display: flex;
-                    align-items: center;
-                    gap: 0.35rem;
-                    color: ${Color.orange()};
-                    font-size: 1.15rem;
-                    font-weight: 700;
-                    flex-shrink: 0;
-                  `}
-                >
-                  <Icon icon="coins" />
-                  {currentFocusPrice.toLocaleString()}
-                </div>
-              </div>
-              <p
-                className={css`
-                  margin: 0 0 0.7rem;
-                  font-size: 1.15rem;
-                  color: ${Color.darkerGray()};
-                `}
-              >
-                Pick the main life area to focus on tomorrow.
-              </p>
-              {isFollowUpSelected && (
-                <p
-                  className={css`
-                    margin: 0 0 0.7rem;
-                    font-size: 1.1rem;
-                    color: ${Color.orange()};
-                    font-weight: 700;
-                  `}
-                >
-                  Keep Going is selected, so Current Focus will be ignored for
-                  tomorrow unless you change the vibe.
-                </p>
               )}
-              <div
-                className={css`
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  gap: 0.8rem;
-                  font-size: 1.15rem;
-                `}
+            </div>
+
+            <div className={cardWrapCls}>
+              <button
+                type="button"
+                className={cardCls(isFocusModalOpen)}
+                onClick={
+                  isFocusModalOpen ? onCloseFocusModal : onOpenFocusModal
+                }
+                aria-expanded={isFocusModalOpen}
               >
-                <span
-                  className={css`
-                    color: ${Color.darkGray()};
-                  `}
-                >
-                  Current selection
+                <span className={cardHeadCls}>
+                  <span className={cardNameCls}>
+                    <Icon icon="magic" /> Current focus
+                  </span>
+                  <span className={priceCls}>
+                    <Icon icon="coins" /> {currentFocusPrice.toLocaleString()}
+                  </span>
                 </span>
-                <span
-                  className={css`
-                    color: ${Color.black()};
-                    font-weight: 700;
-                  `}
-                >
+                <span className={cardHintCls}>
+                  The part of life tomorrow’s question is about.
+                </span>
+                {isFollowUpSelected && (
+                  <span className={warnHintCls}>
+                    Keep Going is selected, so Current Focus is ignored tomorrow
+                    unless you change the vibe.
+                  </span>
+                )}
+                <span className={cardValueCls}>
                   {getFocusLabel(currentFocus, isAdultUser)}
+                  <Icon
+                    icon={isFocusModalOpen ? 'chevron-up' : 'chevron-down'}
+                  />
                 </span>
-              </div>
-            </button>
+              </button>
+              {isFocusModalOpen && (
+                <div className={optionListCls}>
+                  {FOCUS_OPTIONS.map((option) => {
+                    const isSelected = (currentFocus || 'infer') === option.id;
+                    const isPaidOption = option.id !== 'infer';
+                    const isFreeToday =
+                      isPaidOption && isFocusSelectionFreeToday(option.id);
+                    const requiresPayment =
+                      isPaidOption && !isFreeToday && !isSelected;
+                    const isDisabledForCoins =
+                      requiresPayment &&
+                      availableTwinkleCoins < currentFocusPrice;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={optionCls(isSelected)}
+                        onClick={() => onSelectFocus(option.id)}
+                        disabled={isSettingFocus || isDisabledForCoins}
+                        title={
+                          isDisabledForCoins
+                            ? `You don't have enough coins for this choice (need ${currentFocusPrice.toLocaleString()} coins).`
+                            : undefined
+                        }
+                      >
+                        <span className={optionTextCls}>
+                          <span className={optionTitleCls}>
+                            {getFocusOptionTitle(option, isAdultUser)}
+                          </span>
+                          <span className={optionDescCls}>
+                            {getFocusOptionDescription(option, isAdultUser)}
+                          </span>
+                        </span>
+                        <span className={optionMetaCls}>
+                          {requiresPayment && (
+                            <span className={priceCls}>
+                              <Icon icon="coins" />{' '}
+                              {currentFocusPrice.toLocaleString()}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <Icon icon="check" style={{ color: PAPER.done }} />
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </section>
+      )}
 
       <NextDayCountdown
         label="Next Daily Reflection"
         className={css`
-          margin-top: 1.5rem;
+          margin-top: 2rem;
           display: flex;
           flex-direction: column;
           align-items: center;
-          color: ${Color.darkerGray()};
+          color: ${PAPER.inkSoft};
           font-size: 1.3rem;
         `}
         labelClassName={css`
+          font-size: 1.1rem;
           font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
           margin-bottom: 0.3rem;
-          color: ${Color.black()};
+          color: ${PAPER.inkFaint};
         `}
         timerClassName={css`
-          font-size: 1.4rem;
-          font-weight: 700;
+          font-family: ${PAPER.serif};
+          font-size: 2.2rem;
+          font-weight: 600;
           letter-spacing: 0.04em;
-          color: ${Color.logoBlue()};
+          color: ${PAPER.ink};
         `}
       />
 
-      {!showVersionSelector && !showAIVersionSelector && (
+      {!selectorsHidden && (
         <div
           className={css`
             display: flex;
             justify-content: center;
-            margin-top: 1.5rem;
+            margin-top: 1.6rem;
           `}
         >
-          <Button variant="solid" color={doneColor} onClick={onClose}>
+          <button
+            type="button"
+            className={paperPrimaryButtonCls}
+            onClick={onClose}
+          >
             Done
-          </Button>
+          </button>
         </div>
       )}
-
-      <Modal
-        modalKey="DailyQuestionVibeModal"
-        isOpen={isVibeModalOpen}
-        onClose={onCloseVibeModal}
-        hasHeader
-        title="Tomorrow's Vibe"
-        size="md"
-      >
-        <div
-          className={css`
-            max-height: 55vh;
-            overflow-y: auto;
-            border: 1px solid ${Color.borderGray()};
-            border-radius: 10px;
-            > div:first-of-type > button {
-              border-top: none;
-            }
-            > div:last-of-type > button {
-              border-bottom: none;
-            }
-          `}
-        >
-          {VIBE_OPTIONS.map((option) => {
-            const isSelected = (nextCategory || 'default') === option.id;
-            const isPaidOption = option.id !== 'default';
-            const isOwnedPaidOption =
-              isPaidOption && ownedVibeSelections.includes(option.id);
-            const requiresPayment = isPaidOption && !isOwnedPaidOption;
-            const isDisabledForCoins =
-              requiresPayment && availableTwinkleCoins < tomorrowVibePrice;
-            const disabledReason = isDisabledForCoins
-              ? `You don't have enough coins for this choice (need ${tomorrowVibePrice.toLocaleString()} coins).`
-              : '';
-
-            return (
-              <div key={option.id} title={disabledReason || undefined}>
-                <button
-                  type="button"
-                  className={css`
-                    width: 100%;
-                    text-align: left;
-                    background: ${isSelected ? Color.logoBlue(0.07) : 'white'};
-                    border: none;
-                    border-bottom: 1px solid ${Color.borderGray()};
-                    padding: 1rem 1rem;
-                    opacity: ${isDisabledForCoins ? 0.55 : 1};
-                    cursor: ${isDisabledForCoins ? 'not-allowed' : 'pointer'};
-                    &:hover {
-                      background: ${isDisabledForCoins
-                        ? isSelected
-                          ? Color.logoBlue(0.07)
-                          : 'white'
-                        : Color.wellGray()};
-                    }
-                  `}
-                  onClick={() => onSelectVibe(option.id)}
-                  disabled={isSettingVibe || isDisabledForCoins}
-                >
-                  <div
-                    className={css`
-                      display: flex;
-                      justify-content: space-between;
-                      align-items: center;
-                      gap: 0.75rem;
-                    `}
-                  >
-                    <div>
-                      <div
-                        className={css`
-                          font-size: 1.25rem;
-                          color: ${Color.black()};
-                          font-weight: 700;
-                          margin-bottom: 0.3rem;
-                        `}
-                      >
-                        {option.title}
-                      </div>
-                      <div
-                        className={css`
-                          font-size: 1.1rem;
-                          color: ${Color.darkerGray()};
-                        `}
-                      >
-                        {option.description}
-                      </div>
-                    </div>
-                    <div
-                      className={css`
-                        display: flex;
-                        align-items: center;
-                        gap: 0.5rem;
-                        flex-shrink: 0;
-                      `}
-                    >
-                      {requiresPayment && (
-                        <span
-                          className={css`
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 0.3rem;
-                            font-size: 1.1rem;
-                            color: ${Color.orange()};
-                            font-weight: 700;
-                          `}
-                        >
-                          <Icon icon="coins" />
-                          {tomorrowVibePrice.toLocaleString()}
-                        </span>
-                      )}
-                      {isSelected && <Icon icon="check" />}
-                    </div>
-                  </div>
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </Modal>
-
-      <Modal
-        modalKey="DailyQuestionFocusModal"
-        isOpen={isFocusModalOpen}
-        onClose={onCloseFocusModal}
-        hasHeader
-        title="Current Focus"
-        size="md"
-      >
-        <div
-          className={css`
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-          `}
-        >
-          <div
-            className={css`
-              max-height: 55vh;
-              overflow-y: auto;
-              border: 1px solid ${Color.borderGray()};
-              border-radius: 10px;
-              > div:first-of-type > button {
-                border-top: none;
-              }
-              > div:last-of-type > button {
-                border-bottom: none;
-              }
-            `}
-          >
-            {FOCUS_OPTIONS.map((option) => {
-              const isSelected = (currentFocus || 'infer') === option.id;
-              const isPaidOption = option.id !== 'infer';
-              const isFreeToday =
-                isPaidOption && isFocusSelectionFreeToday(option.id);
-              const requiresPayment =
-                isPaidOption && !isFreeToday && !isSelected;
-              const isDisabledForCoins =
-                requiresPayment && availableTwinkleCoins < currentFocusPrice;
-              const disabledReason = isDisabledForCoins
-                ? `You don't have enough coins for this choice (need ${currentFocusPrice.toLocaleString()} coins).`
-                : '';
-
-              return (
-                <div key={option.id} title={disabledReason || undefined}>
-                  <button
-                    type="button"
-                    className={css`
-                      width: 100%;
-                      text-align: left;
-                      background: ${isSelected
-                        ? Color.logoBlue(0.07)
-                        : 'white'};
-                      border: none;
-                      border-bottom: 1px solid ${Color.borderGray()};
-                      padding: 1rem 1rem;
-                      opacity: ${isDisabledForCoins ? 0.55 : 1};
-                      cursor: ${isDisabledForCoins ? 'not-allowed' : 'pointer'};
-                      &:hover {
-                        background: ${isDisabledForCoins
-                          ? isSelected
-                            ? Color.logoBlue(0.07)
-                            : 'white'
-                          : Color.wellGray()};
-                      }
-                    `}
-                    onClick={() => onSelectFocus(option.id)}
-                    disabled={isSettingFocus || isDisabledForCoins}
-                  >
-                    <div
-                      className={css`
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        gap: 0.75rem;
-                      `}
-                    >
-                      <div>
-                        <div
-                          className={css`
-                            font-size: 1.25rem;
-                            color: ${Color.black()};
-                            font-weight: 700;
-                            margin-bottom: 0.3rem;
-                          `}
-                        >
-                          {getFocusOptionTitle(option, isAdultUser)}
-                        </div>
-                        <div
-                          className={css`
-                            font-size: 1.1rem;
-                            color: ${Color.darkerGray()};
-                          `}
-                        >
-                          {getFocusOptionDescription(option, isAdultUser)}
-                        </div>
-                      </div>
-                      <div
-                        className={css`
-                          display: flex;
-                          align-items: center;
-                          gap: 0.5rem;
-                          flex-shrink: 0;
-                        `}
-                      >
-                        {requiresPayment && (
-                          <span
-                            className={css`
-                              display: inline-flex;
-                              align-items: center;
-                              gap: 0.3rem;
-                              font-size: 1.1rem;
-                              color: ${Color.orange()};
-                              font-weight: 700;
-                            `}
-                          >
-                            <Icon icon="coins" />
-                            {currentFocusPrice.toLocaleString()}
-                          </span>
-                        )}
-                        {isSelected && <Icon icon="check" />}
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </Modal>
 
       {pendingPayment && (
         <PendingPaymentConfirmModal
@@ -591,3 +312,166 @@ export default function Preferences({
     </>
   );
 }
+
+const sectionCls = css`
+  margin-top: 2.2rem;
+  padding-top: 1.8rem;
+  border-top: 1px solid ${PAPER.line};
+`;
+
+const sectionTitleCls = css`
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${PAPER.inkFaint};
+`;
+
+const cardsCls = css`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const cardWrapCls = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+`;
+
+function cardCls(open: boolean) {
+  return css`
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    text-align: left;
+    border: 1px solid ${open ? PAPER.accent : PAPER.line};
+    border-radius: 14px;
+    background: ${PAPER.paper};
+    padding: 1.2rem 1.3rem;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    &:hover {
+      border-color: ${PAPER.accent};
+    }
+  `;
+}
+
+const cardHeadCls = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const cardNameCls = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: ${PAPER.ink};
+  svg {
+    color: ${PAPER.accent};
+  }
+`;
+
+const cardHintCls = css`
+  font-size: 1.25rem;
+  color: ${PAPER.inkSoft};
+`;
+
+const warnHintCls = css`
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: ${PAPER.warn};
+`;
+
+const cardValueCls = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.3rem;
+  font-family: ${PAPER.serif};
+  font-size: 1.6rem;
+  color: ${PAPER.ink};
+  svg {
+    font-size: 1.2rem;
+    color: ${PAPER.inkFaint};
+  }
+`;
+
+const priceCls = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: ${PAPER.accent};
+  flex-shrink: 0;
+`;
+
+const optionListCls = css`
+  border: 1px solid ${PAPER.line};
+  border-radius: 14px;
+  background: ${PAPER.paper};
+  max-height: 46vh;
+  overflow-y: auto;
+`;
+
+function optionCls(selected: boolean) {
+  return css`
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid ${PAPER.line};
+    background: ${selected ? PAPER.accentSoft : 'transparent'};
+    padding: 0.9rem 1.2rem;
+    cursor: pointer;
+    &:last-child {
+      border-bottom: none;
+    }
+    &:hover:not(:disabled) {
+      background: ${selected ? PAPER.accentSoft : PAPER.paperDeep};
+    }
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+  `;
+}
+
+const optionTextCls = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+`;
+
+const optionTitleCls = css`
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: ${PAPER.ink};
+`;
+
+const optionDescCls = css`
+  font-size: 1.2rem;
+  color: ${PAPER.inkSoft};
+`;
+
+const optionMetaCls = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+`;

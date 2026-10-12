@@ -1,9 +1,7 @@
 import React from 'react';
-import Button from '~/components/Button';
-import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { PAPER, paperSecondaryButtonCls } from '../../paperTheme';
 
 export default function ResponseSection({
   aiSelectedVersion,
@@ -34,14 +32,15 @@ export default function ResponseSection({
   selectedVersion: 'original' | 'refined';
   showAIVersionSelector: boolean;
   showVersionSelector: boolean;
-  onAiSelectedVersionChange: (
-    version: 'original' | 'refined' | 'both'
-  ) => void;
+  onAiSelectedVersionChange: (version: 'original' | 'refined' | 'both') => void;
   onRefine: () => void;
   onSelectedVersionChange: (version: 'original' | 'refined') => void;
 }) {
   // A "polish" identical to what the author typed is not offered or labelled as AI-polished.
-  const polishUnchanged = isPolishUnchanged(refinedResponse, originalResponse || response);
+  const polishUnchanged = isPolishUnchanged(
+    refinedResponse,
+    originalResponse || response
+  );
   return (
     <>
       {showVersionSelector && refinedResponse && (
@@ -53,18 +52,13 @@ export default function ResponseSection({
           <h4
             className={css`
               font-size: 1.3rem;
-              color: ${Color.darkerGray()};
+              color: ${PAPER.inkSoft};
               margin-bottom: 0.75rem;
             `}
           >
             Choose version to share:
           </h4>
-          <FilterBar
-            style={{
-              fontSize: '1.3rem',
-              height: '3.8rem'
-            }}
-          >
+          <div className={segmentedCls}>
             <nav
               className={selectedVersion === 'original' ? 'active' : ''}
               onClick={() => onSelectedVersionChange('original')}
@@ -81,14 +75,14 @@ export default function ResponseSection({
                 AI Polished
               </nav>
             )}
-          </FilterBar>
+          </div>
           {polishUnchanged && <PolishUnchangedNote />}
 
           <div
             className={css`
               padding: 1rem;
-              background: ${Color.wellGray()};
-              border-radius: 8px;
+              background: ${PAPER.paperDeep};
+              border-radius: 12px;
               max-height: 200px;
               overflow-y: auto;
             `}
@@ -96,7 +90,7 @@ export default function ResponseSection({
             <p
               className={css`
                 font-size: 1.2rem;
-                color: ${Color.darkerGray()};
+                color: ${PAPER.inkSoft};
                 margin-bottom: 0.5rem;
                 font-style: italic;
               `}
@@ -105,9 +99,10 @@ export default function ResponseSection({
             </p>
             <p
               className={css`
-                font-size: 1.3rem;
-                color: ${Color.black()};
-                line-height: 1.6;
+                font-family: ${PAPER.serif};
+                font-size: 1.6rem;
+                color: ${PAPER.ink};
+                line-height: 1.65;
                 white-space: pre-wrap;
               `}
             >
@@ -128,19 +123,14 @@ export default function ResponseSection({
           <h4
             className={css`
               font-size: 1.3rem;
-              color: ${Color.darkerGray()};
+              color: ${PAPER.inkSoft};
               margin-bottom: 0.75rem;
             `}
           >
             Choose version to share with{' '}
             {aiShareTarget === 'ciel' ? 'Ciel' : 'Zero'}:
           </h4>
-          <FilterBar
-            style={{
-              fontSize: '1.3rem',
-              height: '3.8rem'
-            }}
-          >
+          <div className={segmentedCls}>
             <nav
               className={aiSelectedVersion === 'original' ? 'active' : ''}
               onClick={() => onAiSelectedVersionChange('original')}
@@ -169,14 +159,14 @@ export default function ResponseSection({
                 Both
               </nav>
             )}
-          </FilterBar>
+          </div>
           {polishUnchanged && <PolishUnchangedNote />}
 
           <div
             className={css`
               padding: 1rem;
-              background: ${Color.wellGray()};
-              border-radius: 8px;
+              background: ${PAPER.paperDeep};
+              border-radius: 12px;
               max-height: 220px;
               overflow-y: auto;
             `}
@@ -184,7 +174,7 @@ export default function ResponseSection({
             <p
               className={css`
                 font-size: 1.2rem;
-                color: ${Color.darkerGray()};
+                color: ${PAPER.inkSoft};
                 margin-bottom: 0.5rem;
                 font-style: italic;
               `}
@@ -196,7 +186,7 @@ export default function ResponseSection({
                 <p
                   className={css`
                     font-size: 1.15rem;
-                    color: ${Color.darkerGray()};
+                    color: ${PAPER.inkSoft};
                     margin-bottom: 0.3rem;
                     font-weight: 600;
                   `}
@@ -206,7 +196,7 @@ export default function ResponseSection({
                 <p
                   className={css`
                     font-size: 1.3rem;
-                    color: ${Color.black()};
+                    color: ${PAPER.ink};
                     line-height: 1.6;
                     white-space: pre-wrap;
                     margin-bottom: 1rem;
@@ -217,7 +207,7 @@ export default function ResponseSection({
                 <p
                   className={css`
                     font-size: 1.15rem;
-                    color: ${Color.logoBlue()};
+                    color: ${PAPER.blue};
                     margin-bottom: 0.3rem;
                     font-weight: 600;
                   `}
@@ -227,7 +217,7 @@ export default function ResponseSection({
                 <p
                   className={css`
                     font-size: 1.3rem;
-                    color: ${Color.black()};
+                    color: ${PAPER.ink};
                     line-height: 1.6;
                     white-space: pre-wrap;
                   `}
@@ -239,7 +229,7 @@ export default function ResponseSection({
               <p
                 className={css`
                   font-size: 1.3rem;
-                  color: ${Color.black()};
+                  color: ${PAPER.ink};
                   line-height: 1.6;
                   white-space: pre-wrap;
                 `}
@@ -263,27 +253,27 @@ export default function ResponseSection({
             className={css`
               cursor: pointer;
               font-size: 1.3rem;
-              color: ${Color.darkerGray()};
+              color: ${PAPER.inkSoft};
               padding: 0.5rem 0;
               &:hover {
-                color: ${Color.black()};
+                color: ${PAPER.ink};
               }
             `}
           >
-            View your response
+            Your answer
           </summary>
           <div
             className={css`
               margin-top: 1rem;
               padding: 1rem;
-              background: ${Color.wellGray()};
-              border-radius: 8px;
+              background: ${PAPER.paperDeep};
+              border-radius: 12px;
             `}
           >
             <p
               className={css`
                 font-size: 1.2rem;
-                color: ${Color.darkerGray()};
+                color: ${PAPER.inkSoft};
                 margin-bottom: 0.5rem;
                 font-style: italic;
               `}
@@ -292,9 +282,10 @@ export default function ResponseSection({
             </p>
             <p
               className={css`
-                font-size: 1.3rem;
-                color: ${Color.black()};
-                line-height: 1.6;
+                font-family: ${PAPER.serif};
+                font-size: 1.6rem;
+                color: ${PAPER.ink};
+                line-height: 1.65;
                 white-space: pre-wrap;
               `}
             >
@@ -307,18 +298,17 @@ export default function ResponseSection({
                   margin-top: 1rem;
                 `}
               >
-                <Button
-                  variant="soft"
-                  color="logoBlue"
+                <button
+                  type="button"
+                  className={paperSecondaryButtonCls}
                   onClick={onRefine}
                   disabled={refining}
-                  loading={refining && !preparingAIVersionTarget}
                 >
-                  <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
+                  <Icon icon="magic" />
                   {refining && !preparingAIVersionTarget
                     ? 'Polishing...'
                     : 'See AI-polished version'}
-                </Button>
+                </button>
               </div>
             )}
 
@@ -328,13 +318,13 @@ export default function ResponseSection({
                 className={css`
                   margin-top: 1rem;
                   padding-top: 1rem;
-                  border-top: 1px solid ${Color.borderGray()};
+                  border-top: 1px solid ${PAPER.line};
                 `}
               >
                 <h5
                   className={css`
                     font-size: 1.2rem;
-                    color: ${Color.logoBlue()};
+                    color: ${PAPER.blue};
                     margin-bottom: 0.5rem;
                   `}
                 >
@@ -344,7 +334,7 @@ export default function ResponseSection({
                 <p
                   className={css`
                     font-size: 1.3rem;
-                    color: ${Color.black()};
+                    color: ${PAPER.ink};
                     line-height: 1.6;
                     white-space: pre-wrap;
                   `}
@@ -375,7 +365,7 @@ function PolishUnchangedNote() {
       className={css`
         margin-top: 1rem;
         font-size: 1.2rem;
-        color: ${Color.darkerGray()};
+        color: ${PAPER.inkSoft};
         line-height: 1.5;
       `}
     >
@@ -385,3 +375,33 @@ function PolishUnchangedNote() {
     </p>
   );
 }
+
+const segmentedCls = css`
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  background: ${PAPER.paperDeep};
+  border: 1px solid ${PAPER.line};
+  nav {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 1.3rem;
+    border-radius: 999px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: ${PAPER.inkSoft};
+    cursor: pointer;
+    user-select: none;
+  }
+  nav:hover {
+    color: ${PAPER.ink};
+  }
+  nav.active {
+    background: ${PAPER.paper};
+    color: ${PAPER.ink};
+    box-shadow: 0 1px 3px rgba(80, 60, 30, 0.15);
+  }
+`;

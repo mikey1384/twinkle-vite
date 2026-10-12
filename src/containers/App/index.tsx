@@ -141,6 +141,9 @@ const BridgeBuilderOrgAsks = lazyWithRetry(
 );
 const Friends = lazyWithRetry(() => import('~/containers/Friends'));
 const Grammarbles = lazyWithRetry(() => import('~/containers/Grammarbles'));
+const DailyReflection = lazyWithRetry(
+  () => import('~/containers/DailyReflection')
+);
 const BridgeBuilderEmails = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/EmailsReviewPage')
 );
@@ -1506,6 +1509,10 @@ export default function App() {
                 />
                 <Route path="/friends" element={<Friends />} />
                 <Route path="/grammarbles" element={<Grammarbles />} />
+                <Route
+                  path="/daily-reflection"
+                  element={<DailyReflection />}
+                />
                 <Route
                   path="/achievements/bridge-builder/staff"
                   element={<BridgeBuilderQuest view="staff" />}

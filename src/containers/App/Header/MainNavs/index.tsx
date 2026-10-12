@@ -219,6 +219,12 @@ function iconForContentNav(nav: string) {
                           : 'comment-alt';
 }
 
+// pages that open in their own nav tab and can be pinned
+const OWN_PAGE_TABS = [
+  { to: '/grammarbles', icon: 'spell-check', label: 'Grammarbles' },
+  { to: '/daily-reflection', icon: 'lightbulb', label: 'Daily Reflection' }
+];
+
 export default function MainNavs({
   isAIChat,
   loggedIn,
@@ -1083,20 +1089,22 @@ export default function MainNavs({
     sessionStateArrived
   ]);
 
-  // Grammarbles is its own page (Mikey 10-07): opening it gives it its own
-  // tab, like a Lumine app, so it can be pinned. handleCaptureTab adds a tab
-  // only once per URL; a closed tab comes back the next time it's opened.
+  // Grammarbles (Mikey 10-07) and Daily Reflection (10-12) are their own
+  // pages: opening one gives it its own tab, like a Lumine app, so it can be
+  // pinned. handleCaptureTab adds a tab only once per URL; a closed tab comes
+  // back the next time it's opened.
   useEffect(() => {
-    if (pathname !== '/grammarbles') return;
+    const ownPage = OWN_PAGE_TABS.find((page) => page.to === pathname);
+    if (!ownPage) return;
     if (navScope !== userId) return;
     if (userId && !navServerReadyRef.current) return;
-    const existing = customTabs.find((tab) => tab.to === '/grammarbles');
+    const existing = customTabs.find((tab) => tab.to === ownPage.to);
     if (existing && !existing.pinned) rememberExtraTabOpened(existing.id);
     if (existing) return;
     handleCaptureTab({
-      to: '/grammarbles',
-      icon: 'spell-check',
-      label: 'Grammarbles',
+      to: ownPage.to,
+      icon: ownPage.icon,
+      label: ownPage.label,
       pinned: false
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
