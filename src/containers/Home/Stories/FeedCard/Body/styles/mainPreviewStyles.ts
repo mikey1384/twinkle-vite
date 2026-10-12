@@ -797,6 +797,71 @@ export const mainPreviewStyles = `
     .compact-comment-embed__timestamp {
     font-size: max(1.25rem, 12.5px);
   }
+  /* Inside a subject description the comment row has a fixed allowance
+     (COMMENT_EMBED_PREVIEW_HEIGHT_REM), so its one media tile sits beside the
+     text instead of under it, where the card would clip it. */
+  .home-feed-card__subject-embed-preview
+    [data-compact-comment-embed]:is(
+      .compact-comment-embed--has-media,
+      .compact-comment-embed--media-only
+    ):not(.compact-comment-embed--target-root):not(
+      .compact-comment-embed--column
+    ) {
+    grid-template-columns: 4.2rem minmax(0, 1fr) minmax(10rem, 32%);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .home-feed-card__subject-embed-preview
+    [data-compact-comment-embed]:is(
+      .compact-comment-embed--has-media,
+      .compact-comment-embed--media-only
+    ):not(.compact-comment-embed--target-root):not(
+      .compact-comment-embed--column
+    )
+    > :is(.compact-comment-embed__avatar, .compact-comment-embed__copy) {
+    grid-row: 1;
+    align-self: center;
+  }
+  .home-feed-card__subject-embed-preview
+    [data-compact-comment-embed]:is(
+      .compact-comment-embed--has-media,
+      .compact-comment-embed--media-only
+    ):not(.compact-comment-embed--target-root):not(
+      .compact-comment-embed--column
+    )
+    > .compact-comment-embed__media {
+    grid-column: 3;
+    grid-row: 1;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+  }
+  /* A comment shared on its own fills the card's hero slot. Its text inherits
+     the slot's tiny base size otherwise (8px), which made the comment the
+     least readable thing in its own card. */
+  .home-feed-card__rich-embed-preview--image-only
+    > .home-feed-card__rich-embed-internal--comment
+    [data-compact-comment-embed]:not(.compact-comment-embed--column)
+    > .compact-comment-embed__copy {
+    font-size: max(1.4rem, 14px);
+    line-height: 1.32;
+  }
+  .home-feed-card__rich-embed-preview--image-only
+    > .home-feed-card__rich-embed-internal--comment
+    [data-compact-comment-embed]:not(.compact-comment-embed--column)
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta
+    :is(a, strong, .compact-comment-embed__username) {
+    font-size: max(1.4rem, 14px);
+  }
+  .home-feed-card__rich-embed-preview--image-only
+    > .home-feed-card__rich-embed-internal--comment
+    .compact-comment-embed__reference,
+  .home-feed-card__subject-embed-preview:has([data-compact-comment-embed])
+    .compact-comment-embed__reference {
+    font-size: max(1.3rem, 13px);
+  }
+  .home-feed-card__subject-embed-preview:has([data-compact-comment-embed])
+    .compact-comment-embed__copy,
   .home-feed-card__subject-embed-preview:has([data-compact-comment-embed])
     .compact-comment-embed__copy
     p,

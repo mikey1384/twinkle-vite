@@ -22,6 +22,7 @@ import { useContentState, useLiveComment } from '~/helpers/hooks';
 import {
   fetchedVideoCodeFromURL,
   getFileInfoFromFileName,
+  getPlainPreviewText,
   isValidYoutubeUrl
 } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -102,9 +103,20 @@ export default function CompactCommentEmbedPreview({
     [aiEnergyPlaceholderName, rawContent]
   );
   const attachment = getAttachmentInfo(liveComment);
+  // Embeds that have a picture to show (images, videos, apps, AI cards,
+  // subject cards) get a media tile. Everything else, nested comments above
+  // all, reads as a one-line reference under the text: a lone icon tile
+  // ("Comment", "Link") would carry no content and float beside the comment.
+  const canRenderSharedInternal = Boolean(renderInternalEmbedPreview);
+  const tileEmbeds = markdownMedia.filter((embed) =>
+    isTileEmbed({ canRenderSharedInternal, embed, isColumn })
+  );
+  const referenceEmbeds = markdownMedia.filter(
+    (embed) => !isTileEmbed({ canRenderSharedInternal, embed, isColumn })
+  );
   const mediaItems = [
     ...(attachment ? [attachment] : []),
-    ...markdownMedia.map((embed) => ({
+    ...tileEmbeds.map((embed) => ({
       kind: 'markdown' as const,
       embed
     }))
@@ -114,7 +126,13 @@ export default function CompactCommentEmbedPreview({
     0,
     mediaItems.length - shownMediaItems.length
   );
+  // The column slot has a fixed height: one reference line, and the text
+  // gives up lines for it so the reference is never cut off at the bottom.
+  const shownReferenceEmbeds = referenceEmbeds.slice(0, isColumn ? 1 : 2);
   const hasText = Boolean(textContent.trim());
+  const hasReferences = shownReferenceEmbeds.length > 0;
+  const appliedMaxTextLines =
+    isColumn && hasReferences ? Math.min(maxTextLines, 2) : maxTextLines;
   const hasMedia = shownMediaItems.length > 0;
   const hasBuildMedia = shownMediaItems.some(
     (item) =>
@@ -131,10 +149,11 @@ export default function CompactCommentEmbedPreview({
         className,
         hasMedia ? 'compact-comment-embed--has-media' : '',
         hasBuildMedia ? 'compact-comment-embed--build-media' : '',
-        !hasText ? 'compact-comment-embed--media-only' : '',
+        !hasText && !hasReferences ? 'compact-comment-embed--media-only' : '',
         isNested ? 'compact-comment-embed--nested' : '',
         isTargetRoot ? 'compact-comment-embed--target-root' : '',
-        isColumn ? 'compact-comment-embed--column' : ''
+        isColumn ? 'compact-comment-embed--column' : '',
+        hasReferences ? 'compact-comment-embed--with-reference' : ''
       ]
         .filter(Boolean)
         .join(' ')}
@@ -152,7 +171,9 @@ export default function CompactCommentEmbedPreview({
             width: isTargetRoot
               ? '5.45rem'
               : isColumn
-                ? '6rem'
+                ? hasReferences
+                  ? '4.8rem'
+                  : '6rem'
                 : isNested
                   ? '3.4rem'
                   : '4.1rem'
@@ -161,7 +182,15 @@ export default function CompactCommentEmbedPreview({
       </div>
       <div className="compact-comment-embed__copy">
         <div className="compact-comment-embed__meta">
-          {showTypeLabel ? <span>Comment</span> : null}
+          {showTypeLabel ? (
+            <span
+              aria-label="Comment"
+              className="compact-comment-embed__type-cue"
+              role="img"
+            >
+              <Icon icon="comment" />
+            </span>
+          ) : null}
           {uploader.username ? (
             <UsernameText
               className="compact-comment-embed__username"
@@ -184,18 +213,21 @@ export default function CompactCommentEmbedPreview({
             hideDictation={isAIMessage}
             isAIMessage={isAIMessage}
             isPreview
-            lineHeight={isTargetRoot ? 1.22 : isColumn ? 1.35 : undefined}
-            maxLines={maxTextLines}
+            lineHeight={isTargetRoot ? 1.22 : 1.35}
+            maxLines={appliedMaxTextLines}
             section="content"
             theme={theme}
           >
             {textContent}
           </RichText>
-        ) : (
+        ) : hasReferences ? null : (
           <p className="compact-comment-embed__empty">
             {hasMedia ? getMediaOnlyLabel(shownMediaItems[0]) : 'View comment'}
           </p>
         )}
+        {shownReferenceEmbeds.map((embed, index) => (
+          <EmbedReferenceLine key={`${embed.src}-${index}`} embed={embed} />
+        ))}
       </div>
       {hasMedia ? (
         <div className="compact-comment-embed__media">
@@ -319,33 +351,182 @@ function CommentMediaPreview({
         />
       );
     }
+    if (
+      item.embed.internalInfo?.kind === 'video' &&
+      item.embed.internalInfo.contentId
+    ) {
+      return (
+        <MarkdownInternalVideoPreview
+          alt={item.embed.alt}
+          contentId={item.embed.internalInfo.contentId}
+        />
+      );
+    }
   }
 
-  return <MarkdownLinkPreview embed={item.embed} variant={variant} />;
+  return <MarkdownLinkPreview embed={item.embed} />;
 }
 
-function MarkdownSubjectPreview({
+function isTileEmbed({
+  canRenderSharedInternal,
+  embed,
+  isColumn
+}: {
+  canRenderSharedInternal: boolean;
+  embed: MarkdownMediaEmbed;
+  isColumn: boolean;
+}) {
+  if (embed.type === 'image' || embed.type === 'video') return true;
+  if (embed.type !== 'internal') return false;
+  const kind = embed.internalInfo?.kind;
+  if (kind === 'comment') return false;
+  if (kind === 'aiCard' || kind === 'build' || kind === 'video') return true;
+  // The column slot is too narrow for a subject card; its title reads better
+  // as a reference line than as a clipped sliver.
+  if (kind === 'subject') return !isColumn;
+  return canRenderSharedInternal;
+}
+
+function EmbedReferenceLine({ embed }: { embed: MarkdownMediaEmbed }) {
+  const info = embed.internalInfo;
+  if (info?.kind === 'comment' && info.contentId) {
+    return <CommentReferenceLine commentId={info.contentId} />;
+  }
+  if (info?.kind === 'subject' && info.contentId) {
+    return (
+      <SubjectReferenceLine
+        contentId={info.contentId}
+        fallbackTitle={embed.alt || info.label}
+      />
+    );
+  }
+  return (
+    <ReferenceLine icon={getMarkdownLinkPreviewIcon(embed)}>
+      <span>{embed.alt || getMarkdownMediaLabel(embed)}</span>
+    </ReferenceLine>
+  );
+}
+
+function CommentReferenceLine({ commentId }: { commentId: number }) {
+  const comment = useEmbeddedContent({
+    contentId: commentId,
+    contentType: 'comment'
+  });
+  const username = String(
+    comment?.uploader?.username || comment?.username || ''
+  );
+  const rawText = String(comment?.content || '');
+  const text = getPlainPreviewText(removeMarkdownMediaEmbeds(rawText));
+  const nestedEmbed = getMarkdownMediaEmbeds(rawText)[0];
+  const body =
+    text ||
+    (nestedEmbed
+      ? nestedEmbed.type === 'internal'
+        ? getInternalEmbedCommentLabel(nestedEmbed.internalInfo || null)
+        : `shared ${getMarkdownMediaLabel(nestedEmbed).toLowerCase()}`
+      : comment?.loaded
+        ? 'View comment'
+        : '');
+
+  return (
+    <ReferenceLine icon="comment" label="Comment">
+      {username ? <strong>{username}</strong> : null}
+      {body ? <span>{body}</span> : null}
+    </ReferenceLine>
+  );
+}
+
+function SubjectReferenceLine({
   contentId,
-  label
+  fallbackTitle
 }: {
   contentId: number;
-  label: string;
+  fallbackTitle: string;
+}) {
+  const subject = useEmbeddedContent({ contentId, contentType: 'subject' });
+  const title = getPlainPreviewText(subject?.title || '') || fallbackTitle;
+
+  return (
+    <ReferenceLine icon="comments" label="Subject">
+      <strong>{title}</strong>
+    </ReferenceLine>
+  );
+}
+
+function ReferenceLine({
+  children,
+  icon,
+  label
+}: {
+  children: React.ReactNode;
+  icon: string;
+  label?: string;
+}) {
+  return (
+    <span className="compact-comment-embed__reference">
+      <span
+        aria-label={label}
+        className="compact-comment-embed__reference-icon"
+        role={label ? 'img' : undefined}
+      >
+        <Icon icon={icon} />
+      </span>
+      <span className="compact-comment-embed__reference-text">{children}</span>
+    </span>
+  );
+}
+
+function MarkdownInternalVideoPreview({
+  alt,
+  contentId
+}: {
+  alt: string;
+  contentId: number;
+}) {
+  const video = useEmbeddedContent({ contentId, contentType: 'video' });
+  const videoCode = String(video?.content || '');
+
+  if (!videoCode) {
+    return (
+      <div className="compact-comment-embed__media-tile fallback">
+        <Icon icon="play" />
+        <span>{alt || video?.title || 'Video'}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="compact-comment-embed__media-tile video">
+      <img
+        src={`https://img.youtube.com/vi/${videoCode}/mqdefault.jpg`}
+        alt={alt || video?.title || 'Video preview'}
+        loading="lazy"
+      />
+      <span className="compact-comment-embed__media-play">
+        <Icon icon="play" />
+      </span>
+    </div>
+  );
+}
+
+// Loads an embedded content into the shared content state once, so nested
+// previews show live data and repeated embeds share one request.
+function useEmbeddedContent({
+  contentId,
+  contentType
+}: {
+  contentId: number;
+  contentType: string;
 }) {
   const loadingRef = useRef<string | null>(null);
-  const contentState = useContentState({ contentId, contentType: 'subject' });
+  const contentState = useContentState({ contentId, contentType });
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
-  const hasLoadedSubject = Boolean(
-    contentState.loaded && !contentState.notFound
-  );
-  const previewContent = hasLoadedSubject
-    ? contentState
-    : { contentId, contentType: 'subject', id: contentId, title: label };
 
   useEffect(() => {
-    const requestKey = `${userId || 0}:${contentId}:subject`;
+    const requestKey = `${userId || 0}:${contentId}:${contentType}`;
     if (
       !contentId ||
       contentState.loaded ||
@@ -355,11 +536,11 @@ function MarkdownSubjectPreview({
     }
     const requestUserId = userId;
     loadingRef.current = requestKey;
-    loadContent({ contentId, contentType: 'subject' })
+    loadContent({ contentId, contentType })
       .then((data: any) => {
         if (checkUserChange(requestUserId)) return;
         if (!data?.notFound) {
-          onInitContent({ ...data, contentId, contentType: 'subject' });
+          onInitContent({ ...data, contentId, contentType });
         }
       })
       .catch((error: unknown) => {
@@ -373,7 +554,25 @@ function MarkdownSubjectPreview({
       });
     // checkUserChange/loadContent/onInitContent are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentId, contentState.loaded, userId]);
+  }, [contentId, contentState.loaded, contentType, userId]);
+
+  return contentState.loaded && !contentState.notFound ? contentState : null;
+}
+
+function MarkdownSubjectPreview({
+  contentId,
+  label
+}: {
+  contentId: number;
+  label: string;
+}) {
+  const subject = useEmbeddedContent({ contentId, contentType: 'subject' });
+  const previewContent = subject || {
+    contentId,
+    contentType: 'subject',
+    id: contentId,
+    title: label
+  };
 
   return (
     <div className="compact-comment-embed__media-tile subject">
@@ -402,62 +601,19 @@ function MarkdownBuildPreview({
   contentId: number;
   label: string;
 }) {
-  const loadingRef = useRef<string | null>(null);
-  const contentState = useContentState({ contentId, contentType: 'build' });
-  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
-  const onInitContent = useContentContext((v) => v.actions.onInitContent);
-  const userId = useKeyContext((v) => v.myState.userId);
-  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
-  const hasLoadedBuild = Boolean(contentState.loaded && !contentState.notFound);
-  const previewContent = hasLoadedBuild
-    ? contentState
-    : {
-        contentId,
-        contentType: 'build',
-        id: contentId,
-        title: label
-      };
-
-  useEffect(() => {
-    const requestKey = `${userId || 0}:${contentId}:build`;
-    if (
-      !contentId ||
-      contentState.loaded ||
-      loadingRef.current === requestKey
-    ) {
-      return;
-    }
-    const requestUserId = userId;
-    loadingRef.current = requestKey;
-    loadContent({ contentId, contentType: 'build' })
-      .then((data: any) => {
-        if (checkUserChange(requestUserId)) return;
-        if (!data?.notFound) {
-          onInitContent({
-            ...data,
-            contentId,
-            contentType: 'build'
-          });
-        }
-      })
-      .catch((error: unknown) => {
-        if (checkUserChange(requestUserId)) return;
-        console.error(error);
-      })
-      .finally(() => {
-        if (loadingRef.current === requestKey) {
-          loadingRef.current = null;
-        }
-      });
-    // checkUserChange/loadContent/onInitContent are stable context helpers.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentId, contentState.loaded, userId]);
+  const build = useEmbeddedContent({ contentId, contentType: 'build' });
+  const previewContent = build || {
+    contentId,
+    contentType: 'build',
+    id: contentId,
+    title: label
+  };
 
   return (
     <div className="compact-comment-embed__media-tile build">
       <BuildMiniCard
         build={previewContent}
-        cacheInput={hasLoadedBuild}
+        cacheInput={Boolean(build)}
         interactiveBadges={false}
         variant="thumbEmbed"
       />
@@ -465,18 +621,12 @@ function MarkdownBuildPreview({
   );
 }
 
-function MarkdownLinkPreview({
-  embed,
-  variant
-}: {
-  embed: MarkdownMediaEmbed;
-  variant: 'column' | 'compact' | 'targetRoot';
-}) {
+function MarkdownLinkPreview({ embed }: { embed: MarkdownMediaEmbed }) {
   const videoCode =
     embed.type === 'video' ? fetchedVideoCodeFromURL(embed.src) : '';
   const icon = getMarkdownLinkPreviewIcon(embed);
 
-  if (variant === 'targetRoot' && videoCode) {
+  if (videoCode) {
     return (
       <div className="compact-comment-embed__media-tile video">
         <img
@@ -774,6 +924,48 @@ const compactCommentEmbedPreviewClass = css`
     font-size: 1.1rem;
     font-weight: 600;
     white-space: nowrap;
+  }
+  /* "This is a comment" stays a quiet hint beside the author; the name and
+     text carry the preview. */
+  .compact-comment-embed__meta .compact-comment-embed__type-cue {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-self: center;
+    color: ${Color.gray()};
+    font-size: 1rem;
+    line-height: 1;
+  }
+  .compact-comment-embed__reference {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.32rem 0.6rem;
+    border-left: 2px solid ${Color.borderGray()};
+    border-radius: 0.5rem;
+    background: ${Color.whiteGray(0.7)};
+    color: ${Color.darkGray()};
+    font-size: max(1.15rem, 11.5px);
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .compact-comment-embed__reference-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: ${Color.gray()};
+    font-size: 0.9em;
+  }
+  .compact-comment-embed__reference-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .compact-comment-embed__reference-text strong {
+    margin-right: 0.38rem;
+    color: ${Color.darkerGray()};
+    font-weight: 750;
   }
   .compact-comment-embed__meta a,
   .compact-comment-embed__meta > div,
@@ -1151,56 +1343,64 @@ const compactCommentEmbedPreviewClass = css`
       font-size: max(1.42rem, 14.2px);
     }
   }
-  @container (max-width: 28rem) {
-    &.compact-comment-embed--has-media:not(
-        .compact-comment-embed--target-root
-      ):not(.compact-comment-embed--column),
-    &.compact-comment-embed--media-only:not(
-        .compact-comment-embed--target-root
-      ):not(.compact-comment-embed--column) {
-      grid-template-columns: 4.2rem minmax(0, 1fr);
-      grid-template-rows: minmax(0, 1fr) auto;
-      align-items: stretch;
-      gap: 0.55rem 0.7rem;
-      padding: 0.6rem;
-    }
-    &.compact-comment-embed--has-media:not(
-        .compact-comment-embed--target-root
-      ):not(.compact-comment-embed--column)
-      > .compact-comment-embed__avatar,
-    &.compact-comment-embed--media-only:not(
-        .compact-comment-embed--target-root
-      ):not(.compact-comment-embed--column)
-      > .compact-comment-embed__avatar {
-      grid-column: 1;
-      grid-row: 2;
-      align-self: center;
-    }
-    &.compact-comment-embed--has-media:not(
-        .compact-comment-embed--target-root
-      ):not(.compact-comment-embed--column)
-      > .compact-comment-embed__copy,
-    &.compact-comment-embed--media-only:not(
-        .compact-comment-embed--target-root
-      ):not(.compact-comment-embed--column)
-      > .compact-comment-embed__copy {
-      grid-column: 2;
-      grid-row: 2;
-      align-self: center;
-    }
-    &.compact-comment-embed--has-media:not(
-        .compact-comment-embed--target-root
-      ):not(.compact-comment-embed--column)
-      > .compact-comment-embed__media,
-    &.compact-comment-embed--media-only:not(
-        .compact-comment-embed--target-root
-      ):not(.compact-comment-embed--column)
-      > .compact-comment-embed__media {
-      grid-column: 1 / -1;
-      grid-row: 1;
-      width: 100%;
-      min-height: 0;
-    }
+  /* Compact variant with media: the comment (author + text) comes first and
+     the media sits under it as a strip of evenly sized tiles. A third grid
+     column squeezed tiles into tall, clipped slivers beside a short row of
+     text and left the rest of a tall slot empty. */
+  &.compact-comment-embed--has-media:not(
+      .compact-comment-embed--target-root
+    ):not(.compact-comment-embed--column),
+  &.compact-comment-embed--media-only:not(
+      .compact-comment-embed--target-root
+    ):not(.compact-comment-embed--column) {
+    grid-template-columns: 4.2rem minmax(0, 1fr);
+    grid-template-rows: auto minmax(7rem, 1fr);
+    align-items: center;
+    align-content: center;
+    gap: 0.6rem 0.7rem;
+    padding: 0.6rem;
+  }
+  &.compact-comment-embed--has-media:not(
+      .compact-comment-embed--target-root
+    ):not(.compact-comment-embed--column)
+    > .compact-comment-embed__avatar,
+  &.compact-comment-embed--media-only:not(
+      .compact-comment-embed--target-root
+    ):not(.compact-comment-embed--column)
+    > .compact-comment-embed__avatar {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+  }
+  &.compact-comment-embed--has-media:not(
+      .compact-comment-embed--target-root
+    ):not(.compact-comment-embed--column)
+    > .compact-comment-embed__copy,
+  &.compact-comment-embed--media-only:not(
+      .compact-comment-embed--target-root
+    ):not(.compact-comment-embed--column)
+    > .compact-comment-embed__copy {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+  &.compact-comment-embed--has-media:not(
+      .compact-comment-embed--target-root
+    ):not(.compact-comment-embed--column)
+    > .compact-comment-embed__media,
+  &.compact-comment-embed--media-only:not(
+      .compact-comment-embed--target-root
+    ):not(.compact-comment-embed--column)
+    > .compact-comment-embed__media {
+    grid-template-columns: none;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    height: 100%;
+    min-height: 7rem;
+    max-height: 16rem;
   }
   /* Column variant: fills the home-feed rich-embed hero column (a tall,
      narrow slot sized for image/build heroes). The default horizontal row
@@ -1235,6 +1435,14 @@ const compactCommentEmbedPreviewClass = css`
     height: auto;
     align-self: start;
   }
+  &.compact-comment-embed--column.compact-comment-embed--with-reference {
+    gap: 0.4rem;
+    padding-block: 0.8rem;
+  }
+  &.compact-comment-embed--column.compact-comment-embed--with-reference
+    > .compact-comment-embed__copy {
+    gap: 0.6rem;
+  }
   &.compact-comment-embed--column > .compact-comment-embed__copy {
     grid-column: 1;
     grid-row: auto;
@@ -1250,9 +1458,18 @@ const compactCommentEmbedPreviewClass = css`
   &.compact-comment-embed--column
     > .compact-comment-embed__copy
     > .compact-comment-embed__meta {
-    flex-direction: column;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.18rem;
+    justify-content: center;
+    gap: 0.18rem 0.32rem;
+  }
+  /* Cue stays beside the name; the time takes the next line. */
+  &.compact-comment-embed--column
+    > .compact-comment-embed__copy
+    > .compact-comment-embed__meta
+    > .compact-comment-embed__timestamp {
+    flex-basis: 100%;
+    text-align: center;
   }
   &.compact-comment-embed--column
     > .compact-comment-embed__copy

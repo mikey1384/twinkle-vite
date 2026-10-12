@@ -57,13 +57,27 @@ assert.match(compactCommentEmbedSource, /getInternalEmbedPreviewInfo/);
 assert.match(compactCommentEmbedSource, /getInternalEmbedCommentLabel/);
 assert.match(compactCommentEmbedSource, /targetRootUsernameTextStyle/);
 assert.match(compactCommentEmbedSource, /showTypeLabel = true/);
-assert.match(compactCommentEmbedSource, // A 'column' variant was added later; compact and targetRoot both survive.
-  /variant\?: 'column' \| 'compact' \| 'targetRoot'/);
+assert.match(
+  compactCommentEmbedSource, // A 'column' variant was added later; compact and targetRoot both survive.
+  /variant\?: 'column' \| 'compact' \| 'targetRoot'/
+);
 assert.match(compactCommentEmbedSource, /variant = 'compact'/);
+// The "this is a comment" cue is a small muted icon beside the author in the
+// meta line (2026-10-12): the old "Comment" label and the icon-only
+// "Comment" media tile for nested comments sat apart from, or over, the text.
+assert.doesNotMatch(compactCommentEmbedSource, /<span>Comment<\/span>/);
 assert.match(
   compactCommentEmbedSource,
-  /{showTypeLabel \? <span>Comment<\/span> : null}/
+  /{showTypeLabel \? \([\s\S]*?className="compact-comment-embed__type-cue"[\s\S]*?<Icon icon="comment" \/>/
 );
+// Nested comments (and other icon-only embeds) read as a one-line reference
+// under the text instead of a media tile.
+assert.match(
+  compactCommentEmbedSource,
+  /if \(kind === 'comment'\) return false;/
+);
+assert.match(compactCommentEmbedSource, /function CommentReferenceLine/);
+assert.match(compactCommentEmbedSource, /compact-comment-embed__reference/);
 
 // The snapshot the preview is handed is overlaid with the canonical comment
 // state before anything is read off it.
@@ -97,7 +111,8 @@ assert.match(compactCommentEmbedSource, /hei\[cf\]/);
 assert.match(compactCommentEmbedSource, /if \(embed\.type === 'internal'\) \{/);
 assert.match(
   compactCommentEmbedSource,
-  /embed\.internalInfo\?\.label \|\| 'Twinkle content'/
+  // The brand name moved to SITE_NAME (lumine.network rebrand).
+  /embed\.internalInfo\?\.label \|\| `\$\{SITE_NAME\} content`/
 );
 assert.match(
   compactCommentEmbedSource,
@@ -186,7 +201,15 @@ assert.match(
   internalComponentSource,
   /showCompactCommentTypeLabel={showCompactCommentTypeLabel}/
 );
-assert.match(previewPrimitivesSource, /showCompactCommentTypeLabel={false}/);
+// Feed embeds keep the quiet comment cue; only the target-root comment (whose
+// card header already says "X's comment") hides it.
+assert.doesNotMatch(
+  previewPrimitivesSource,
+  /showCompactCommentTypeLabel={false}/
+);
+// The latest-comment strip already says "replied"/"commented"; its separate
+// trailing comment icon is gone.
+assert.doesNotMatch(feedCardBodySource, /home-feed-card__comment-preview-icon/);
 assert.match(aiCardEmbedHelpersSource, /export function isAICardEmbedSrc/);
 assert.match(
   aiCardEmbedHelpersSource,

@@ -255,11 +255,6 @@ export const commentPreviewStyles = `
     color: #fff;
     font-size: 1.35rem;
   }
-  .home-feed-card__comment-preview-icon {
-    flex-shrink: 0;
-    color: var(--home-feed-comment-accent, ${Color.logoBlue()});
-    font-size: 1.65rem;
-  }
   @media (max-width: ${mobileMaxWidth}) {
     .home-feed-card__comment-preview {
       flex-basis: var(--home-feed-card-mobile-comment-preview-height);

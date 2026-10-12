@@ -1322,7 +1322,6 @@ export function HomeFeedCommentPreview({
           )}
         </span>
         {previewMedia ? renderPreviewCommentMedia(previewMedia) : null}
-        <Icon className="home-feed-card__comment-preview-icon" icon="comment" />
       </button>
     </div>
   );

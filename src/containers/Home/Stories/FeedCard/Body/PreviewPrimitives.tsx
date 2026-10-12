@@ -137,7 +137,6 @@ export function MarkdownEmbedPreview({
             internalPreviewVariant === 'compact' ? 'thumbnail' : 'fullWidth'
           }
           isPreview
-          showCompactCommentTypeLabel={false}
           src={internalSrc}
           theme={theme}
         />
