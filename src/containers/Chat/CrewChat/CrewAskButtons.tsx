@@ -32,7 +32,15 @@ export default function CrewAskButtons({
     fallback: 'logoBlue'
   });
   const channelId = Number(crew.chat?.channelId || 0);
-  if (!channelId || !isWebsiteAgentEnabledFor(userId)) return null;
+  // Zero and Ciel answer only in an active crew's chat (a finished crew's
+  // members are no longer active), so the buttons show only there.
+  if (
+    !channelId ||
+    crew.status !== 'active' ||
+    !isWebsiteAgentEnabledFor(userId)
+  ) {
+    return null;
+  }
   const assistants: CrewAssistantName[] =
     preferred === 'Zero' ? ['Zero', 'Ciel'] : ['Ciel', 'Zero'];
   const current = crew.progress?.steps.find(
@@ -85,8 +93,7 @@ export default function CrewAskButtons({
         assistant,
         stepNumber: current?.number,
         stepLabel: current?.label,
-        blocking: crew.progress?.blocking,
-        isDone: crew.status === 'completed'
+        blocking: crew.progress?.blocking
       })
     });
   }

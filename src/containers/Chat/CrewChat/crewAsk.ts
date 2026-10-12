@@ -16,18 +16,13 @@ export function buildCrewAskText({
   assistant,
   stepNumber,
   stepLabel,
-  blocking,
-  isDone
+  blocking
 }: {
   assistant: CrewAssistantName;
   stepNumber?: number;
   stepLabel?: string;
   blocking?: string;
-  isDone?: boolean;
 }) {
-  if (isDone) {
-    return `@${assistant} Our meetup is done! Can you help us think of what to plan next? `;
-  }
   const nextText = String(blocking || '')
     .replace(/^Next:\s*/, '')
     .trim();
