@@ -60,6 +60,16 @@ export default function BuildRewardReview({
   const proposal = review?.proposal || null;
   const reason = String(review?.reason || '').trim();
   const thumbnailUrl = String(review?.thumbnailUrl || '').trim();
+  // A new name or thumbnail is the most visible part of an offer, so the card
+  // shows it as before → after rather than only naming it in a chip.
+  const offeredTitle =
+    status === 'changes_offered'
+      ? String(proposal?.title || '').trim()
+      : '';
+  const offeredThumbnailUrl =
+    status === 'changes_offered'
+      ? String(proposal?.thumbnailUrl || '').trim()
+      : '';
   const sourceVersionId = Number(review?.sourceVersionId || 0);
   const budgets = review?.budgets || {};
   const sentByMe = Number(sender.id) === Number(myId);
@@ -330,6 +340,48 @@ export default function BuildRewardReview({
               </>
             )}
           </div>
+          {offeredTitle || offeredThumbnailUrl ? (
+            <div className={identityClass}>
+              {offeredTitle ? (
+                <div className={identityRowClass}>
+                  <span className={identityLabelClass}>New name</span>
+                  <span className={identityValuesClass}>
+                    <span className={oldValueClass}>{title}</span>
+                    <Icon icon="arrow-right" />
+                    <strong>{offeredTitle}</strong>
+                  </span>
+                </div>
+              ) : null}
+              {offeredThumbnailUrl ? (
+                <div className={identityRowClass}>
+                  <span className={identityLabelClass}>New thumbnail</span>
+                  <span className={identityValuesClass}>
+                    {thumbnailUrl ? (
+                      <img
+                        className={compareThumbClass}
+                        src={thumbnailUrl}
+                        alt="Current thumbnail"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span
+                        className={`${compareThumbClass} ${compareEmptyClass}`}
+                      >
+                        None
+                      </span>
+                    )}
+                    <Icon icon="arrow-right" />
+                    <img
+                      className={`${compareThumbClass} ${newThumbClass}`}
+                      src={offeredThumbnailUrl}
+                      alt="Suggested thumbnail"
+                      loading="lazy"
+                    />
+                  </span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           {reason &&
           (status === 'rejected' ||
             status === 'revoked' ||
@@ -462,11 +514,85 @@ const reasonClass = css`
   font-size: 1.1rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
+  /* Keep the reviewer's line breaks, so a list in the note stays a list. */
+  white-space: pre-line;
   > svg {
     color: ${Color.logoBlue()};
     flex: 0 0 auto;
     margin-top: 0.2rem;
   }
+`;
+
+const identityClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border: 1px solid ${Color.gold(0.45)};
+  border-radius: 10px;
+  background: ${Color.gold(0.08)};
+  padding: 0.7rem 0.8rem;
+`;
+
+const identityRowClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+`;
+
+const identityLabelClass = css`
+  color: ${Color.gray()};
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+`;
+
+const identityValuesClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.7rem;
+  color: ${Color.darkerGray()};
+  font-size: 1.15rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  > svg {
+    color: ${Color.gold()};
+    flex: 0 0 auto;
+  }
+`;
+
+const oldValueClass = css`
+  color: ${Color.gray()};
+  text-decoration: line-through;
+`;
+
+const compareThumbClass = css`
+  width: 9.6rem;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #fff;
+  border: 1px solid ${Color.borderGray()};
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 7.2rem;
+  }
+`;
+
+const newThumbClass = css`
+  width: 14.4rem;
+  border: 2px solid ${Color.gold()};
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 10.8rem;
+  }
+`;
+
+const compareEmptyClass = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: ${Color.gray()};
+  font-size: 0.95rem;
 `;
 
 const budgetClass = css`
