@@ -187,6 +187,7 @@ export default function Input({
         />
         {registerButtonShown && (
           <Button
+            loading={isSubmitting}
             variant="solid"
             shape="pill"
             size="sm"

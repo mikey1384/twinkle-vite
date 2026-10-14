@@ -185,6 +185,7 @@ export function VideoPicker({
           <div role="alert" style={{ fontSize: 16 }}>
             Could not load more videos. Your current results are kept.
             <Button
+              loading={loadingMore}
               style={actionStyle}
               variant="ghost"
               disabled={loadingMore}

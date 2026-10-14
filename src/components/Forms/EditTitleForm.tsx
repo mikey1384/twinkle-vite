@@ -55,6 +55,7 @@ export default function EditTitleForm({
         />
         {!stringIsEmpty(title) && (
           <Button
+            loading={savingEdit}
             style={{ marginLeft: '1rem', zIndex: 1000 }}
             disabled={title?.length > maxLength || savingEdit}
             color={successColorKey || 'green'}

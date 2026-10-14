@@ -259,6 +259,7 @@ export default function CloneButtons({
         `}
       >
         <Button
+          loading={isSubmitting}
           color={color}
           variant={compact ? 'ghost' : 'solid'}
           tone={compact ? 'flat' : 'raised'}
@@ -270,11 +271,7 @@ export default function CloneButtons({
         >
           {isSubmitting ? (
             <>
-              <Icon
-                style={{ marginRight: compact ? '0.4rem' : '0.5rem' }}
-                icon="spinner"
-                pulse
-              />
+
               {loadingText}
             </>
           ) : compact ? (

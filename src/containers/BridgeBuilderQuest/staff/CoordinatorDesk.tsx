@@ -1,5 +1,6 @@
 import DateCalendar from '~/components/DateCalendar';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { Link, useSearchParams } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
 import Button from '~/components/Button';
@@ -527,6 +528,7 @@ function ApplicationView({
   isAdmin: boolean;
   onChanged: () => Promise<void>;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const loadStaffApplication = useAppContext((v) => v.requestHelpers.loadStaffApplication);
   const confirmMeetupSlot = useAppContext((v) => v.requestHelpers.confirmMeetupSlot);
   const addMeetupStaffNote = useAppContext((v) => v.requestHelpers.addMeetupStaffNote);
@@ -671,7 +673,7 @@ function ApplicationView({
               </div>
             )}
             <div>
-              <Button color="green" size="lg" loading={busy} disabled={busy || readOnly} onClick={handleSetSlot}>
+              <Button color="green" size="lg" loading={pendingAction === 'slot'} disabled={busy || pendingAction !== null || readOnly} onClick={handleSetSlot}>
                 <Icon icon="check" style={{ marginRight: '0.6rem' }} />
                 Slot is set up
               </Button>
@@ -725,11 +727,11 @@ function ApplicationView({
         {actionError && <QuestNote tone="warning">{actionError}</QuestNote>}
         {isAdmin && (
           <div className={css`display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; border-top: 1px dashed var(--ui-border); padding-top: 1.2rem;`}>
-            <Button size="sm" variant="soft" color="logoBlue" disabled={busy} onClick={handlePreview}>
+            <Button loading={pendingAction === 'preview'} size="sm" variant="soft" color="logoBlue" disabled={busy || pendingAction !== null} onClick={handlePreview}>
               <Icon icon="eye" style={{ marginRight: '0.4rem' }} />
               Preview email
             </Button>
-            <Button size="sm" variant="outline" color="logoBlue" disabled={busy} onClick={handleResend}>
+            <Button loading={pendingAction === 'resend'} size="sm" variant="outline" color="logoBlue" disabled={busy || pendingAction !== null} onClick={handleResend}>
               <Icon icon="paper-plane" style={{ marginRight: '0.4rem' }} />
               Resend email
             </Button>
@@ -798,7 +800,7 @@ function ApplicationView({
               placeholder="Add a note…"
               onChange={(event) => setNote(event.target.value)}
             />
-            <Button color="logoBlue" disabled={busy || readOnly || !note.trim()} onClick={handleNote}>
+            <Button loading={pendingAction === 'note'} color="logoBlue" disabled={busy || pendingAction !== null || readOnly || !note.trim()} onClick={handleNote}>
               <Icon icon="paper-plane" />
             </Button>
           </div>
@@ -895,7 +897,11 @@ function ApplicationView({
     }
   }
 
-  async function handleSetSlot() {
+  function handleSetSlot(...args: Parameters<typeof handleSetSlotRequest>) {
+    return runAction('slot', () => handleSetSlotRequest(...args));
+  }
+
+  async function handleSetSlotRequest() {
     const ok = await run(
       () => confirmMeetupSlot(useCustom ? { crewId, slot: custom } : { crewId, slotIndex: choice }),
       ''
@@ -903,14 +909,22 @@ function ApplicationView({
     if (ok) setJustSet(true);
   }
 
-  function handleNote() {
+  function handleNote(...args: Parameters<typeof handleNoteRequest>) {
+    return runAction('note', () => handleNoteRequest(...args));
+  }
+
+  function handleNoteRequest() {
     return run(async () => {
       await addMeetupStaffNote({ crewId, note });
       setNote('');
     }, '');
   }
 
-  async function handlePreview() {
+  function handlePreview(...args: Parameters<typeof handlePreviewRequest>) {
+    return runAction('preview', () => handlePreviewRequest(...args));
+  }
+
+  async function handlePreviewRequest() {
     setActionError('');
     try {
       setPreview(await previewCoordinatorEmail(crewId));
@@ -919,7 +933,11 @@ function ApplicationView({
     }
   }
 
-  function handleResend() {
+  function handleResend(...args: Parameters<typeof handleResendRequest>) {
+    return runAction('resend', () => handleResendRequest(...args));
+  }
+
+  function handleResendRequest() {
     return run(async () => {
       const result = await resendCoordinatorEmail(crewId);
       if (!result?.sent) throw new Error(`Not sent: ${result?.reason || 'unknown'}`);

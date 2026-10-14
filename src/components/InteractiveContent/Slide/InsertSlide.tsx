@@ -50,6 +50,7 @@ export default function InsertSlide({
       }}
     >
       <button
+        aria-busy={insertingSlide}
         className={`unselectable ${css`
           ${insertingSlide
             ? ''
@@ -73,6 +74,9 @@ export default function InsertSlide({
         <span style={{ marginLeft: '0.7rem', fontSize: '1.2rem' }}>
           insert{archivedSlides.length > 0 ? ' new' : ''}
         </span>
+        {(insertingSlide) && (
+          <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+        )}
       </button>
       {archivedSlides.length > 0 && (
         <button
@@ -130,18 +134,21 @@ export default function InsertSlide({
 
   async function handleInsertSlide() {
     setInsertingSlide(true);
-    const { slide, numUpdates } = await insertInteractiveSlide({
-      interactiveId,
-      forkedFrom,
-      slideId
-    });
-    onChangeNumUpdates({ interactiveId, numUpdates });
-    onInsertInteractiveSlide({
-      interactiveId,
-      forkedFrom,
-      slideId,
-      newSlide: slide
-    });
-    setInsertingSlide(false);
+    try {
+      const { slide, numUpdates } = await insertInteractiveSlide({
+        interactiveId,
+        forkedFrom,
+        slideId
+      });
+      onChangeNumUpdates({ interactiveId, numUpdates });
+      onInsertInteractiveSlide({
+        interactiveId,
+        forkedFrom,
+        slideId,
+        newSlide: slide
+      });
+    } finally {
+      setInsertingSlide(false);
+    }
   }
 }

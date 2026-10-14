@@ -25,7 +25,7 @@ export default function AdminReview({
   );
   const [note, setNote] = useState('');
   const [attended, setAttended] = useState<number[]>([]);
-  const { busy, error, setError, run } = useQuestAction(onChanged);
+  const { busy, pendingAction, error, setError, run } = useQuestAction(onChanged);
 
   // Staff may give shared feedback even while a member requirement is open.
   // Approval still requires the server's readiness check.
@@ -63,20 +63,21 @@ export default function AdminReview({
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
           <Button
             color="green"
-            loading={busy}
+            loading={pendingAction === 'approve'}
             disabled={busy || !canApprove}
             onClick={() =>
               run(() =>
                 reviewMeetupCrew({
                   crewId: crew.crewId,
                   action: stage === 'crew' ? 'approve-crew' : 'approve-grownup'
-                })
+                }), 'approve'
               )
             }
           >
             {stage === 'crew' ? 'Approve crew' : 'Approve parents and adult'}
           </Button>
           <Button
+            loading={pendingAction === 'request-changes'}
             color="orange"
             variant="soft"
             disabled={busy}
@@ -85,7 +86,7 @@ export default function AdminReview({
                 setError('Write a note so every member knows what to change.');
                 return;
               }
-              run(() => reviewMeetupCrew({ crewId: crew.crewId, action: 'request-changes', step: stage, note }));
+              run(() => reviewMeetupCrew({ crewId: crew.crewId, action: 'request-changes', step: stage, note }), 'request-changes');
             }}
           >
             Request changes
@@ -174,7 +175,7 @@ export default function AdminReview({
         ) : (
         <Button
           color="green"
-          loading={busy}
+          loading={pendingAction === 'approve'}
           disabled={busy}
           onClick={() =>
             run(() =>
@@ -183,7 +184,7 @@ export default function AdminReview({
                 action: stage === 'plan' ? 'approve-plan' : 'approve',
                 note,
                 attendedUserIds: stage === 'video' ? attended : undefined
-              })
+              }), 'approve'
             )
           }
         >
@@ -191,6 +192,7 @@ export default function AdminReview({
         </Button>
         )}
         <Button
+          loading={pendingAction === 'send-back'}
           color="orange"
           variant="soft"
           disabled={busy}
@@ -204,7 +206,7 @@ export default function AdminReview({
                 crewId: crew.crewId,
                 action: 'send-back',
                 note
-              })
+              }), 'send-back'
             );
           }}
         >

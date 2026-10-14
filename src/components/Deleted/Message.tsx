@@ -1,4 +1,5 @@
 import React, { useMemo, useEffect, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import FileAttachment from './FileAttachment';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
@@ -23,6 +24,7 @@ export default function DeletedMessage({
   onDeletePermanently?: (v: number) => void;
   style?: React.CSSProperties;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const deleteChatMessage = useAppContext(
     (v) => v.requestHelpers.deleteChatMessage
@@ -210,6 +212,7 @@ export default function DeletedMessage({
                 </Button>
               )}
               <Button
+                loading={pendingAction === 'handleUndoDelete'}
                 onClick={() => handleUndoDelete({ redo: isRecovered })}
                 color="darkerGray"
                 style={{ marginLeft: '1rem' }}
@@ -241,7 +244,11 @@ export default function DeletedMessage({
     }
   }
 
-  async function handleUndoDelete({ redo }: { redo: boolean }) {
+  function handleUndoDelete(...args: Parameters<typeof handleUndoDeleteRequest>) {
+    return runAction('handleUndoDelete', () => handleUndoDeleteRequest(...args));
+  }
+
+  async function handleUndoDeleteRequest({ redo }: { redo: boolean }) {
     const { success, isRecovered } = await deleteChatMessage({
       messageId,
       isUndo: !redo

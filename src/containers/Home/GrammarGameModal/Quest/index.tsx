@@ -1,4 +1,6 @@
+import Icon from '~/components/Icon';
 import React, { Suspense, useEffect, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -31,6 +33,7 @@ const MarbleRunScreen = lazyWithRetry(loadMarbleRun);
 // Stops and bosses play as the marble run (10-07); the nemesis house keeps
 // the plain question list. Classic Grammarbles stays as it is.
 export default function GrammarQuest() {
+  const { pendingAction, runAction } = usePendingAction();
   const loadState = useAppContext(
     (v) => v.requestHelpers.loadGrammarQuestState
   );
@@ -116,9 +119,11 @@ export default function GrammarQuest() {
         ) : (
           <>
             {state.openRun && (
-              <button className={resumeCls} onClick={handleResume}>
+              <button className={resumeCls} disabled={starting || pendingAction !== null}
+                aria-busy={pendingAction === 'resume'} onClick={handleResume}>
                 <PixelIcon name="flag" scale={2} />
                 You have an unfinished run. Continue it →
+                {pendingAction === 'resume' && <Icon icon="spinner" pulse />}
               </button>
             )}
             <WorldMap
@@ -138,7 +143,9 @@ export default function GrammarQuest() {
                 playQuestSound('nemesis');
                 handleStart({ nemesis: true });
               }}
-              starting={starting}
+              starting={starting || pendingAction !== null}
+              startingNodeId={pendingAction?.startsWith('node:') ? pendingAction.slice(5) : null}
+              startingNemesis={pendingAction === 'nemesis'}
             />
             <div className={footnoteCls}>
               {/* the real rules in plain words, one idea each (Mikey 10-07:
@@ -171,7 +178,13 @@ export default function GrammarQuest() {
     }
   }
 
-  async function handleStart(target: { nodeId: string } | { nemesis: true }) {
+  function handleStart(...args: Parameters<typeof handleStartRequest>) {
+    return runAction('nodeId' in args[0] ? 'node:' + args[0].nodeId : 'nemesis', () =>
+      handleStartRequest(...args)
+    );
+  }
+
+  async function handleStartRequest(target: { nodeId: string } | { nemesis: true }) {
     setStarting(true);
     setError('');
     try {
@@ -185,7 +198,11 @@ export default function GrammarQuest() {
     }
   }
 
-  async function handleResume() {
+  function handleResume(...args: Parameters<typeof handleResumeRequest>) {
+    return runAction('resume', () => handleResumeRequest(...args));
+  }
+
+  async function handleResumeRequest() {
     if (!state?.openRun) return;
     try {
       const reopened = await loadRun(state.openRun.runId);

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -28,6 +29,7 @@ export default function ChangePasswordModal({
 }: {
   onHide: () => void;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColorKey = doneRole.colorKey;
   const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
@@ -260,6 +262,7 @@ export default function ChangePasswordModal({
             Close
           </Button>
           <Button
+            loading={pendingAction !== null}
             style={{ marginLeft: '1rem' }}
             color={success ? 'green' : doneColorKey}
             onClick={
@@ -285,7 +288,15 @@ export default function ChangePasswordModal({
     </Modal>
   );
 
-  async function handleVerifyCurrentPassword() {
+  function handleVerifyCurrentPassword(
+
+    ...args: Parameters<typeof handleVerifyCurrentPasswordRequest>
+
+  ) {
+    return runAction('verify', () => handleVerifyCurrentPasswordRequest(...args));
+  }
+
+  async function handleVerifyCurrentPasswordRequest() {
     try {
       const passwordMatches = await checkIfPasswordMatches(currentPassword);
       if (passwordMatches) {
@@ -306,7 +317,11 @@ export default function ChangePasswordModal({
     }
   }
 
-  async function handleSubmit() {
+  function handleSubmit(...args: Parameters<typeof handleSubmitRequest>) {
+    return runAction('change', () => handleSubmitRequest(...args));
+  }
+
+  async function handleSubmitRequest() {
     setChanging(true);
     try {
       const { isSuccess } = await changePasswordFromStore({

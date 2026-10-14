@@ -123,6 +123,7 @@ export default function Googling({
           }}
         >
           <Button
+            loading={submitDisabled}
             style={{ fontSize: '1.7rem' }}
             disabled={submitDisabled}
             color={doneColor}
@@ -176,42 +177,44 @@ export default function Googling({
       return;
     }
     setSubmitDisabled(true);
-    for (const { id: questionId } of mission.questions) {
-      if (!answers[questionId] || stringIsEmpty(answers[questionId])) {
-        handleSetHasErrorObj({
-          questionId,
-          hasError: true
-        });
-        scrollElementToCenter(QuestionRefs.current[questionId]);
-        setSubmitDisabled(false);
-        return QuestionRefs.current[questionId]?.focus();
+    try {
+      for (const { id: questionId } of mission.questions) {
+        if (!answers[questionId] || stringIsEmpty(answers[questionId])) {
+          handleSetHasErrorObj({
+            questionId,
+            hasError: true
+          });
+          scrollElementToCenter(QuestionRefs.current[questionId]);
+          return QuestionRefs.current[questionId]?.focus();
+        }
       }
-    }
 
-    const { success } = await uploadMissionAttempt({
-      missionId: mission.id,
-      attempt: {
-        answers
-      }
-    });
-    if (success) {
-      setAnswers({});
-      answersRef.current = {};
-      onSetMissionState({
+      const { success } = await uploadMissionAttempt({
         missionId: mission.id,
-        newState: {
-          answers: {},
-          hasErrorObj: {}
+        attempt: {
+          answers
         }
       });
-      onUpdateMissionAttempt({
-        missionId: mission.id,
-        newState: { status: 'pending', tryingAgain: false }
-      });
-      const appElement = document.getElementById('App');
-      if (appElement) appElement.scrollTop = 0;
-      BodyRef.scrollTop = 0;
+      if (success) {
+        setAnswers({});
+        answersRef.current = {};
+        onSetMissionState({
+          missionId: mission.id,
+          newState: {
+            answers: {},
+            hasErrorObj: {}
+          }
+        });
+        onUpdateMissionAttempt({
+          missionId: mission.id,
+          newState: { status: 'pending', tryingAgain: false }
+        });
+        const appElement = document.getElementById('App');
+        if (appElement) appElement.scrollTop = 0;
+        BodyRef.scrollTop = 0;
+      }
+    } finally {
+      setSubmitDisabled(false);
     }
-    setSubmitDisabled(false);
   }
 }

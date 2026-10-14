@@ -12,8 +12,10 @@ import {
   chatTopicActionStyle
 } from '../Modals/topicStyles';
 import { useChatPins } from './context';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 
 export default function PinsDialog() {
+  const { pendingAction, runAction } = usePendingAction();
   const pins = useChatPins();
   if (!pins) return null;
   const { snapshot } = pins;
@@ -143,6 +145,7 @@ export default function PinsDialog() {
                 <div className={chatTopicActionsClass}>
                   {snapshot.canManage && (
                     <Button
+                      loading={pins.savingId === pin.messageId}
                       variant="ghost"
                       style={chatTopicActionStyle}
                       disabled={pins.savingId !== null}
@@ -152,10 +155,13 @@ export default function PinsDialog() {
                     </Button>
                   )}
                   <Button
+                    loading={pendingAction === String(pin.messageId)}
                     variant="soft"
                     style={chatTopicActionStyle}
-                    disabled={pins.historyLoading}
-                    onClick={() => pins.jump(pin.messageId)}
+                    disabled={pins.historyLoading || pendingAction !== null}
+                    onClick={() =>
+                      runAction(String(pin.messageId), () => pins.jump(pin.messageId))
+                    }
                   >
                     Jump to message <Icon icon="arrow-right" />
                   </Button>

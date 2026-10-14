@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
@@ -15,9 +16,7 @@ export default function Questions({
   onSetQuestionObj: (arg0: any) => void;
   pendingQuestions: any[];
 }) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
-  const [isDisapproving, setIsDisapproving] = useState(false);
+  const { pendingAction, runAction } = usePendingAction();
   const approveGoogleQuestion = useAppContext(
     (v) => v.requestHelpers.approveGoogleQuestion
   );
@@ -88,8 +87,9 @@ export default function Questions({
                   }}
                 >
                   <Button
+                    loading={pendingAction === 'approve:' + question.id}
                     color="green"
-                    disabled={isApproving}
+                    disabled={pendingAction !== null}
                     variant="soft"
                     tone="raised"
                     style={{ opacity: 0.5 }}
@@ -98,8 +98,9 @@ export default function Questions({
                     <Icon icon="check" />
                   </Button>
                   <Button
+                    loading={pendingAction === 'delete:' + question.id}
                     color="cranberry"
-                    disabled={isDeleting}
+                    disabled={pendingAction !== null}
                     variant="soft"
                     tone="raised"
                     style={{ marginLeft: '1rem', opacity: 0.5 }}
@@ -118,8 +119,9 @@ export default function Questions({
                   }}
                 >
                   <Button
+                    loading={pendingAction === 'disapprove:' + question.id}
                     color="cranberry"
-                    disabled={isDisapproving}
+                    disabled={pendingAction !== null}
                     variant="soft"
                     tone="raised"
                     style={{ opacity: 0.5 }}
@@ -146,8 +148,11 @@ export default function Questions({
     </div>
   );
 
-  async function handleApprove(questionId: number) {
-    setIsApproving(true);
+  function handleApprove(...args: Parameters<typeof handleApproveRequest>) {
+    return runAction('approve:' + args[0], () => handleApproveRequest(...args));
+  }
+
+  async function handleApproveRequest(questionId: number) {
     await approveGoogleQuestion(questionId);
     onSetQuestionObj((prev: any) => ({
       ...prev,
@@ -156,11 +161,13 @@ export default function Questions({
         isApproved: true
       }
     }));
-    setIsApproving(false);
   }
 
-  async function handleDisApprove(questionId: number) {
-    setIsDisapproving(true);
+  function handleDisApprove(...args: Parameters<typeof handleDisApproveRequest>) {
+    return runAction('disapprove:' + args[0], () => handleDisApproveRequest(...args));
+  }
+
+  async function handleDisApproveRequest(questionId: number) {
     await disapproveGoogleQuestion(questionId);
     onSetQuestionObj((prev: any) => ({
       ...prev,
@@ -169,11 +176,13 @@ export default function Questions({
         isApproved: false
       }
     }));
-    setIsDisapproving(false);
   }
 
-  async function handleDelete(questionId: number) {
-    setIsDeleting(true);
+  function handleDelete(...args: Parameters<typeof handleDeleteRequest>) {
+    return runAction('delete:' + args[0], () => handleDeleteRequest(...args));
+  }
+
+  async function handleDeleteRequest(questionId: number) {
     await deleteGoogleQuestion(questionId);
     onSetQuestionIds((prev: any) =>
       prev.filter((id: number) => id !== questionId)
@@ -183,6 +192,5 @@ export default function Questions({
       delete newQuestionObj[questionId];
       return newQuestionObj;
     });
-    setIsDeleting(false);
   }
 }

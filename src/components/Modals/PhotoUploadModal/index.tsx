@@ -245,6 +245,7 @@ export default function PhotoUploadModal({
               Cancel
             </Button>
             <Button
+              loading={multiImageUploading}
               disabled={
                 !!captionExceedsCharLimit ||
                 multiImageUploading ||

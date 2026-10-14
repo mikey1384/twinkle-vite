@@ -1,3 +1,4 @@
+import Icon from '~/components/Icon';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -165,6 +166,7 @@ export default function Run({
           )}
           {allAnswered ? (
             <button
+              aria-busy={finishing}
               className={nextCls}
               disabled={finishing || reading}
               onClick={handleFinish}
@@ -174,6 +176,9 @@ export default function Run({
                 : reading
                   ? `Read it · ${secondsLeft}`
                   : `Finish · ${rightSoFar}/${run.questions.length}`}
+              {(finishing) && (
+                <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+              )}
             </button>
           ) : (
             <button className={nextCls} disabled={reading} onClick={handleNext}>

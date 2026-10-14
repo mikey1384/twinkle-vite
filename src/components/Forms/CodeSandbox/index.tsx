@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Editor from './Editor';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -30,6 +31,7 @@ export default function CodeSandbox({
   runButtonLabel?: string;
   style?: React.CSSProperties;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const formatCode = useAppContext((v) => v.requestHelpers.formatCode);
   const userId = useKeyContext((v) => v.myState.userId);
   const timerRef = useRef<any>(null);
@@ -75,6 +77,7 @@ export default function CodeSandbox({
       >
         <div style={{ display: 'flex' }}>
           <Button
+            loading={pendingAction === 'handleFormatCode'}
             style={{ fontSize: '1.3rem' }}
             color="logoBlue"
             onClick={handleFormatCode}
@@ -109,7 +112,11 @@ export default function CodeSandbox({
     </ErrorBoundary>
   );
 
-  async function handleFormatCode() {
+  function handleFormatCode(...args: Parameters<typeof handleFormatCodeRequest>) {
+    return runAction('handleFormatCode', () => handleFormatCodeRequest(...args));
+  }
+
+  async function handleFormatCodeRequest() {
     try {
       onSetErrorMsg?.('');
       const formattedCode = await formatCode(code);

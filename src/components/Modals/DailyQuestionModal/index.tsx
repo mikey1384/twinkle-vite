@@ -1,3 +1,4 @@
+import Icon from '~/components/Icon';
 import React, { useState } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import { paperPrimaryButtonCls } from './paperTheme';
@@ -55,12 +56,16 @@ export function DailyQuestionContent({
                 "Press the button below to preserve today's Question streak while AI is unavailable."}
           </div>
           <button
+            aria-busy={preservingStreak}
             type="button"
             className={paperPrimaryButtonCls}
             disabled={dailyQuestionCompleted || preservingStreak}
             onClick={handleUnavailableDailyQuestionClear}
           >
             {preservingStreak ? 'Preserving...' : 'Preserve my streak'}
+            {(preservingStreak) && (
+              <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+            )}
           </button>
         </div>
       ) : (

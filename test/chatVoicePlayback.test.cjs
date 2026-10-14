@@ -79,10 +79,12 @@ function environment() {
   const hook = compile(base + 'useVoicePlayback.ts', {
     react: new Proxy({}, { get: (_, name) => active.hooks[name] }),
     '~/contexts': {
+      useKeyContext: fn => fn({ myState: { userId: 1 } }),
       useAppContext: fn => fn({ requestHelpers: { textToSpeech: (text, voice) => new Promise((resolve, reject) => requests.push({ text, voice, resolve, reject })) } }),
       useViewContext: fn => fn({ state: { audioKey }, actions: { onSetAudioKey: value => { keys.push(value); audioKey = value; } } })
     },
-    '~/constants/state': shared
+    '~/constants/state': shared,
+    '~/helpers/assistantVoice': { useUserReadAloudVoice: () => 'zero' }
   }, { Audio: FakeAudio, URL: { createObjectURL: blob => { const url = `blob:voice-${urls.length + 1}`; urls.push({ blob, url }); return url; }, revokeObjectURL: url => revoked.push(url) } }).default;
   return {
     shared, requests, players, urls, revoked, keys, FakeAudio,
@@ -102,7 +104,7 @@ test('voice loads only on explicit intent, guards duplicate clicks, and keeps ge
   let ui = app.render(); assert.equal(ui.prepared, false); assert.equal(env.requests.length, 0);
   ui.playOrPause(); ui.playOrPause(); ui = app.render();
   assert.equal(ui.preparing, true); assert.equal(env.players[0].playCalls, 1); assert.equal(env.requests.length, 1);
-  assert.deepEqual([env.requests[0].text, env.requests[0].voice], ['Hello there', 'nova']);
+  assert.deepEqual([env.requests[0].text, env.requests[0].voice], ['Hello there', 'ciel']);
   env.requests[0].resolve(speech()); await settle(); ui = app.render();
   assert.equal(ui.playing, true); assert.equal(ui.preparing, false); assert.equal(ui.downloadUrl, 'blob:voice-1');
   assert.equal(env.shared.audioRef.player, env.players[0]);
@@ -206,7 +208,7 @@ test('chat controls have named 44px Listen/Pause/Retry/Download actions and read
   state = { ...state, playing: false, error: 'Could not play voice audio. Try again.' }; assert.match(renderToStaticMarkup(render()), /Retry voice audio/); assert.match(renderToStaticMarkup(render()), /role="alert"/);
   state = { ...state, error: '', preparing: true }; assert.match(renderToStaticMarkup(render()), /role="status"/);
   buttons = findAll(render(), node => node.type === Button);
-  assert.equal(buttons[0].props.loading, undefined, 'busy intent stays focusable; hook guards duplicate requests');
+  assert.equal(buttons[0].props.loading, true, 'preparation uses the shared disabled spinner state');
   assert.equal(buttons[0].props['aria-busy'], true);
   assert.equal(findAll(render(false), node => node.type === Button)[0].props.style.minHeight, undefined);
 });
@@ -239,10 +241,12 @@ test('chat copy fallback removes its textarea and restores focus; failed fallbac
   assert.match(JSON.stringify(app.render()), /Could not copy this message/); assert.equal(app.removed.length, 2);
 });
 
-test('chat toolbar is gated to complete AI chat messages; shared Button forwards busy and description semantics', () => {
+test('read-aloud controls wait for complete messages; shared Button forwards busy and description semantics', () => {
   const source = readFileSync(path.resolve(__dirname, '..', base + 'index.tsx'), 'utf8');
-  assert.match(source, /isAIMessage && !hideDictation && !isStreaming/); assert.match(source, /contentType === 'chat' \? \(\s*<ChatMessageTools/); assert.match(source, /audioShown=\{isAudioButtonShown\}/);
+  assert.match(source, /!hideDictation\s*&&\s*!isStreaming\s*&&\s*\(isAIMessage \|\| \(readAloud && isReadAloudEligible\(text\)\)\)/); assert.match(source, /contentType === 'chat' \? \(\s*<ChatMessageTools/); assert.match(source, /audioShown=\{isAudioButtonShown\}/);
   const Button = compile('src/components/Button.tsx', { react: { ...React, useMemo: fn => fn() }, '@emotion/css': { css: () => '', cx: () => '' }, '~/constants/css': { Color: new Proxy({}, { get: () => () => '#456' }), mobileMaxWidth: '767px' }, '~/components/Icon': () => null }).default;
   const html = renderToStaticMarkup(Button({ onClick() {}, 'aria-label': 'Preparing', 'aria-describedby': 'hint', 'aria-busy': true }));
   assert.match(html, /aria-describedby="hint"/); assert.match(html, /aria-busy="true"/);
+  const loadingHtml = renderToStaticMarkup(Button({ onClick() {}, loading: true }));
+  assert.match(loadingHtml, /disabled=""/); assert.match(loadingHtml, /aria-busy="true"/);
 });

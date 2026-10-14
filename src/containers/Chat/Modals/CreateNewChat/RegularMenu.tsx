@@ -37,7 +37,7 @@ export default function RegularMenu({ creatingChat, onBackClick, onHide, onDone 
     </main>
     <ModalFooter>
       <Button variant="ghost" disabled={busy} onClick={onBackClick || onHide}>{onBackClick ? 'Back' : 'Cancel'}</Button>
-      <Button color={doneColor}
+      <Button loading={busy} color={doneColor}
         disabled={!valid} aria-busy={busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={busy ? 'Creating group' : 'Create group'} onClick={handleDone}>{busy ? 'Creating…' : 'Create group'}</Button>
     </ModalFooter>
   </section>;

@@ -131,6 +131,7 @@ export default function EditTab({
           Close
         </Button>
         <Button
+          loading={posting}
           color={doneColor}
           disabled={disabled || posting}
           onClick={() => handleEditDone({ poses, editedDefinitionOrder })}
@@ -149,19 +150,22 @@ export default function EditTab({
     editedDefinitionOrder: { [key: string]: number[] };
   }) {
     setPosting(true);
-    await editWord({
-      editedDefinitionOrder,
-      deletedDefIds,
-      partOfSpeeches: poses,
-      word
-    });
-    onEditWord({
-      deletedDefIds,
-      partOfSpeeches: poses,
-      editedDefinitionOrder,
-      word
-    });
-    setPosting(false);
+    try {
+      await editWord({
+        editedDefinitionOrder,
+        deletedDefIds,
+        partOfSpeeches: poses,
+        word
+      });
+      onEditWord({
+        deletedDefIds,
+        partOfSpeeches: poses,
+        editedDefinitionOrder,
+        word
+      });
+    } finally {
+      setPosting(false);
+    }
   }
 
   function handleRemoveListItemClick(defId: number) {

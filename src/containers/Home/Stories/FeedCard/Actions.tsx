@@ -72,6 +72,7 @@ export default function Actions({
     <div className={`${actionsClass} home-feed-card__actions`}>
       <div className="home-feed-card__counts">
         <button
+          aria-busy={likeLoading}
           aria-pressed={likedByUser}
           className={`home-feed-card__action-button like ${
             likedByUser ? 'selected' : ''
@@ -86,6 +87,9 @@ export default function Actions({
           </span>
           <strong>Like</strong>
           <em>{likesCount}</em>
+          {(likeLoading) && (
+            <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+          )}
         </button>
         <button
           className="home-feed-card__action-button comment"

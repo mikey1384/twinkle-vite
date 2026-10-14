@@ -219,6 +219,7 @@ export default function SubjectInputForm({
               {cancelLabel}
             </Button>
             <Button
+              loading={submitting}
               color={doneColor}
               style={{ fontSize: '1.7rem' }}
               onClick={handleSubmit}

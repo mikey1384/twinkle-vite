@@ -918,6 +918,7 @@ export default function MessageInput({
             }}
           >
             <Button
+              loading={loading}
               aria-label="Send message"
               variant="soft"
               tone="raised"

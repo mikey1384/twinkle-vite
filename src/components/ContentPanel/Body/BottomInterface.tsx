@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import LikeButton from '~/components/Buttons/LikeButton';
 import StarButton from '~/components/Buttons/StarButton';
 import Button from '~/components/Button';
@@ -165,6 +166,7 @@ export default function BottomInterface({
   userId: number;
   xpRewardInterfaceShown: boolean;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const {
     contentId,
     contentType,
@@ -420,6 +422,7 @@ export default function BottomInterface({
           )}
           {!secretHidden && (
             <Button
+              loading={pendingAction === 'handleCommentButtonClick'}
               key="commentButton"
               variant="ghost"
               onClick={handleCommentButtonClick}
@@ -564,7 +567,17 @@ export default function BottomInterface({
     </div>
   );
 
-  async function handleCommentButtonClick() {
+  function handleCommentButtonClick(
+
+    ...args: Parameters<typeof handleCommentButtonClickRequest>
+
+  ) {
+    return runAction('handleCommentButtonClick', () =>
+      handleCommentButtonClickRequest(...args)
+    );
+  }
+
+  async function handleCommentButtonClickRequest() {
     if (!commentsShown && !(autoExpand && !secretHidden)) {
       await onExpandComments();
     }

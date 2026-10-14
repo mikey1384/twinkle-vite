@@ -65,6 +65,7 @@ export default function Pictures({
           Cancel
         </Button>
         <Button
+          loading={saveDisabled}
           variant="soft"
           tone="raised"
           disabled={saveDisabled}

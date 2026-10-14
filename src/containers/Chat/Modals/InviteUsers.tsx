@@ -54,6 +54,7 @@ export default function InviteUsersModal({ isOwner, selectedChannelId, onDone, o
       <ModalFooter>
         <Button variant="ghost" disabled={request.busy} onClick={onHide}>Cancel</Button>
         <Button color={doneColor}
+          loading={request.busy}
           disabled={!selectedUsers.length || overInvitationLimit} aria-busy={request.busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={request.busy ? 'Inviting people' : 'Invite selected people'}
           onClick={handleDone}>{request.busy ? 'Inviting…' : committed.current ? 'Finish' : 'Invite people'}</Button>
       </ModalFooter>

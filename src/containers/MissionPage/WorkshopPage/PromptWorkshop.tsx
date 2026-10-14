@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -40,6 +41,7 @@ export default function PromptWorkshop({
   onSetMissionState: (params: { missionId: number; newState: any }) => void;
   style?: React.CSSProperties;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
@@ -638,6 +640,7 @@ export default function PromptWorkshop({
             <div className={labelClass}>System Prompt</div>
             {hasPrompt ? (
               <Button
+                loading={improving}
                 onClick={handleImprovePrompt}
                 disabled={improving || generating}
                 color="magenta"
@@ -652,6 +655,7 @@ export default function PromptWorkshop({
               </Button>
             ) : (
               <Button
+                loading={generating}
                 onClick={handleGeneratePrompt}
                 disabled={!canGenerate}
                 color="darkBlue"
@@ -660,11 +664,7 @@ export default function PromptWorkshop({
               >
                 {generating ? (
                   <>
-                    <Icon
-                      icon="spinner"
-                      pulse
-                      style={{ marginRight: '0.4rem' }}
-                    />
+
                     Generating...
                   </>
                 ) : (
@@ -797,6 +797,7 @@ export default function PromptWorkshop({
             }
           />
           <Button
+            loading={sending}
             color="darkBlue"
             variant="soft"
             tone="raised"
@@ -806,7 +807,7 @@ export default function PromptWorkshop({
           >
             {sending ? (
               <>
-                <Icon icon="spinner" pulse style={{ marginRight: '0.4rem' }} />
+
                 Sending...
               </>
             ) : (
@@ -859,10 +860,11 @@ export default function PromptWorkshop({
               `}
             >
               <button
+                aria-busy={pendingAction === 'target:zero'}
                 type="button"
                 role="tab"
                 aria-selected={saveTarget === 'zero'}
-                disabled={Boolean(saveAction) || Boolean(applyingTarget)}
+                disabled={Boolean(saveAction) || Boolean(applyingTarget) || pendingAction !== null}
                 onClick={() => handleSaveTargetChange('zero')}
                 className={css`
                   flex: 1;
@@ -899,12 +901,16 @@ export default function PromptWorkshop({
                   `}
                 />
                 Zero
+                {(pendingAction === 'target:zero') && (
+                  <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                )}
               </button>
               <button
+                aria-busy={pendingAction === 'target:ciel'}
                 type="button"
                 role="tab"
                 aria-selected={saveTarget === 'ciel'}
-                disabled={Boolean(saveAction) || Boolean(applyingTarget)}
+                disabled={Boolean(saveAction) || Boolean(applyingTarget) || pendingAction !== null}
                 onClick={() => handleSaveTargetChange('ciel')}
                 className={css`
                   flex: 1;
@@ -941,6 +947,9 @@ export default function PromptWorkshop({
                   `}
                 />
                 Ciel
+                {(pendingAction === 'target:ciel') && (
+                  <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                )}
               </button>
             </div>
           </div>
@@ -1135,15 +1144,23 @@ export default function PromptWorkshop({
     return target === 'zero' ? 'Zero' : 'Ciel';
   }
 
-  async function handleSaveTargetChange(target: 'zero' | 'ciel') {
+  function handleSaveTargetChange(
+
+    ...args: Parameters<typeof handleSaveTargetChangeRequest>
+
+  ) {
+    return runAction('target:' + args[0], () => handleSaveTargetChangeRequest(...args));
+  }
+
+  async function handleSaveTargetChangeRequest(target: 'zero' | 'ciel') {
     if (target === saveTarget) return;
     if (saveAction || applyingTarget) return;
-    setSaveTarget(target);
     try {
       await updateMissionStatus({
         missionType: 'system-prompt',
         newStatus: { workshopSaveTarget: target }
       });
+      setSaveTarget(target);
       if (userId) {
         onSetUserState({
           userId,

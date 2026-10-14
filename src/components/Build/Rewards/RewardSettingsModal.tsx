@@ -90,6 +90,7 @@ export default function RewardSettingsModal({
               {presentation.state === 'needs_review' ? 'Cancel' : 'Close'}
             </Button>
             <Button
+              loading={loading}
               variant="ghost"
               disabled={busy || loading}
               onClick={refresh}

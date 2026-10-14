@@ -110,6 +110,7 @@ export default function LetsLaunch({
         )}
         {urlIsNotEmpty && !urlError && (
           <Button
+            loading={submitting}
             style={{ marginTop: '3rem' }}
             variant="soft"
             tone="raised"
@@ -128,20 +129,23 @@ export default function LetsLaunch({
     if (!submittingRef.current) {
       submittingRef.current = true;
       setSubmitting(true);
-      const { success } = await uploadMissionAttempt({
-        missionId: taskId,
-        attempt: {
-          content: url
-        }
-      });
-      if (success) {
-        onUpdateMissionAttempt({
+      try {
+        const { success } = await uploadMissionAttempt({
           missionId: taskId,
-          newState: { status: 'pending', tryingAgain: false }
+          attempt: {
+            content: url
+          }
         });
+        if (success) {
+          onUpdateMissionAttempt({
+            missionId: taskId,
+            newState: { status: 'pending', tryingAgain: false }
+          });
+        }
+      } finally {
+        setSubmitting(false);
+        submittingRef.current = false;
       }
-      submittingRef.current = false;
-      setSubmitting(false);
     }
   }
 }

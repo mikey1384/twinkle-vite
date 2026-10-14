@@ -49,7 +49,7 @@ export default function ClassroomChatForm({ channelId, onBackClick, onHide, onBu
     </main>
     <ModalFooter>
       <Button variant="ghost" disabled={request.busy} onClick={onBackClick || onHide}>{onBackClick ? 'Back' : 'Cancel'}</Button>
-      <Button color={doneColor}
+      <Button loading={request.busy} color={doneColor}
         disabled={!valid} aria-busy={request.busy} aria-describedby={request.error ? request.errorId : undefined} aria-label={request.busy ? 'Creating classroom' : committed.current ? 'Open created classroom' : 'Create classroom'} onClick={handleDone}>
         {request.busy ? 'Creating…' : committed.current ? 'Open classroom' : 'Create classroom'}
       </Button>

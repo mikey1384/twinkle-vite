@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Button from '~/components/Button';
 import FriendButton from '~/components/FriendButton';
 import Icon from '~/components/Icon';
@@ -63,6 +64,7 @@ export default function BasicInfos({
   youtubeUrl: string;
   style?: React.CSSProperties;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const myId = useKeyContext((v) => v.myState.userId);
@@ -351,6 +353,7 @@ export default function BasicInfos({
           }}
         >
           <Button
+            loading={pendingAction === 'handleTalkButtonClick'}
             style={{ width: 'auto' }}
             variant="soft"
             tone="raised"
@@ -387,7 +390,17 @@ export default function BasicInfos({
     </ScopedTheme>
   );
 
-  async function handleTalkButtonClick() {
+  function handleTalkButtonClick(
+
+    ...args: Parameters<typeof handleTalkButtonClickRequest>
+
+  ) {
+    return runAction('handleTalkButtonClick', () =>
+      handleTalkButtonClickRequest(...args)
+    );
+  }
+
+  async function handleTalkButtonClickRequest() {
     const { pathId } = await loadDMChannel({
       recipient: { id: userId, username }
     });

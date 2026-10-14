@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
@@ -15,6 +16,7 @@ function MicrophoneAccessModal({
   onHide: () => void;
   onSuccess: () => void;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const [showManualInstructions, setShowManualInstructions] = useState(false);
   if (!isShown) return null;
 
@@ -259,7 +261,7 @@ function MicrophoneAccessModal({
         </main>
         <footer>
           {!showManualInstructions ? (
-            <Button color="blue" onClick={requestMicrophoneAccess}>
+            <Button loading={pendingAction === 'microphone'} color="blue" onClick={requestMicrophoneAccess}>
               <Icon icon="microphone" />
               <span style={{ marginLeft: '0.7rem' }}>Enable Microphone</span>
             </Button>
@@ -276,7 +278,15 @@ function MicrophoneAccessModal({
     </Modal>
   );
 
-  async function requestMicrophoneAccess() {
+  function requestMicrophoneAccess(
+
+    ...args: Parameters<typeof requestMicrophoneAccessRequest>
+
+  ) {
+    return runAction('microphone', () => requestMicrophoneAccessRequest(...args));
+  }
+
+  async function requestMicrophoneAccessRequest() {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       onSuccess();

@@ -263,6 +263,7 @@ export default function AddPlaylistModal({
           )}
           {section === 2 ? (
             <Button
+              loading={isUploading}
               color={doneColor}
               disabled={isUploading}
               onClick={handleFinish}
@@ -312,6 +313,8 @@ export default function AddPlaylistModal({
       onHide();
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsUploading(false);
     }
   }
 

@@ -1,3 +1,4 @@
+import Icon from '~/components/Icon';
 import React from 'react';
 import { css } from '@emotion/css';
 import { useNotiContext } from '~/contexts';
@@ -78,6 +79,9 @@ export default function DailyBonusButton() {
       `}
     >
       {isOpening ? 'Opening…' : 'Bonus!'}
+      {(isOpening) && (
+        <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+      )}
     </button>
   );
 }

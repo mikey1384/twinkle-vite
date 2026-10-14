@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -16,6 +17,7 @@ export default function AddAccountTypeModal({
 }: {
   onHide: () => void;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColor = useMemo(
     () => doneRole.getColor() || Color.blue(),
@@ -191,7 +193,7 @@ export default function AddAccountTypeModal({
           >
             Cancel
           </Button>
-          <Button color={doneColor} disabled={disabled} onClick={handleSubmit}>
+          <Button loading={pendingAction === 'handleSubmit'} color={doneColor} disabled={disabled} onClick={handleSubmit}>
             Done
           </Button>
         </footer>
@@ -199,7 +201,11 @@ export default function AddAccountTypeModal({
     </Modal>
   );
 
-  async function handleSubmit() {
+  function handleSubmit(...args: Parameters<typeof handleSubmitRequest>) {
+    return runAction('handleSubmit', () => handleSubmitRequest(...args));
+  }
+
+  async function handleSubmitRequest() {
     const accountType = {
       label: accountLabel,
       authLevel,

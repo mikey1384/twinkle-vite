@@ -496,6 +496,7 @@ function BuildLiveHostSafetyControl({
         {statusLabel}
       </span>
       <button
+        aria-busy={submitting}
         type="button"
         className={liveSafetyButtonClass}
         disabled={submitting}
@@ -504,6 +505,9 @@ function BuildLiveHostSafetyControl({
         }}
       >
         {submitting ? 'Ending…' : 'End stream'}
+        {(submitting) && (
+          <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+        )}
       </button>
       <span className={liveHostSafetyDetailClass}>{detail}</span>
       {error ? (

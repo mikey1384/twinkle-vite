@@ -57,7 +57,7 @@ export function MyInfoCheckCard({
   const answerMeetupInfoCheck = useAppContext(
     (v) => v.requestHelpers.answerMeetupInfoCheck
   );
-  const { busy, error, run } = useQuestAction(onChanged);
+  const { busy, pendingAction, error, run } = useQuestAction(onChanged);
   const [teacherName, setTeacherName] = useState(check?.answer.teacherName || '');
   const [className, setClassName] = useState(check?.answer.className || '');
   const [relationship, setRelationship] = useState(check?.answer.relationship || '');
@@ -162,7 +162,7 @@ export function MyInfoCheckCard({
           >
             <Button
               color="logoBlue"
-              loading={busy}
+              loading={pendingAction === 'answer'}
               disabled={busy || !ready}
               onClick={() =>
                 run(() =>
@@ -171,7 +171,7 @@ export function MyInfoCheckCard({
                     teacherName: noClass ? '' : teacherName,
                     className: noClass ? '' : className,
                     relationship: noClass ? relationship : ''
-                  })
+                  }), 'answer'
                 )
               }
             >
@@ -215,7 +215,7 @@ export function AdminInfoChecks({
   const approveMeetupClass = useAppContext(
     (v) => v.requestHelpers.approveMeetupClass
   );
-  const { busy, error, run } = useQuestAction(onChanged);
+  const { busy, pendingAction, error, run } = useQuestAction(onChanged);
   const [openFor, setOpenFor] = useState<number | null>(null);
   const [note, setNote] = useState('');
   if (!crew.viewer.isAdmin || crew.status !== 'active') return null;
@@ -260,7 +260,7 @@ export function AdminInfoChecks({
             });
             setOpenFor(null);
             setNote('');
-          });
+          }, `${action}:${member.userId}`);
         const noteOpen = openFor === member.userId;
         return (
           <div
@@ -312,7 +312,7 @@ export function AdminInfoChecks({
                     <Button
                       size="sm"
                       color="logoBlue"
-                      loading={busy}
+                      loading={pendingAction === 'class:' + member.userId}
                       disabled={busy}
                       onClick={() => run(() => approveMeetupClass({
                         crewId: crew.crewId,
@@ -320,7 +320,7 @@ export function AdminInfoChecks({
                         checkId: current.checkId,
                         answerRevision: current.answerRevision!,
                         expectedBranch: current.classBranch!
-                      }))}
+                      }), 'class:' + member.userId)}
                     >
                       Make class official
                     </Button>
@@ -351,17 +351,17 @@ export function AdminInfoChecks({
                 </Button>
               )}
               {!open && noteOpen && (
-                <Button size="sm" color="orange" loading={busy} disabled={busy} onClick={() => act('request')}>
+                <Button size="sm" color="orange" loading={pendingAction === `request:${member.userId}`} disabled={busy} onClick={() => act('request')}>
                   Ask {member.username}
                 </Button>
               )}
               {open?.status === 'answered' && (
                 <>
-                  <Button size="sm" color="green" loading={busy} disabled={busy} onClick={() => act('accept')}>
+                  <Button size="sm" color="green" loading={pendingAction === `accept:${member.userId}`} disabled={busy} onClick={() => act('accept')}>
                     Accept
                   </Button>
                   {noteOpen ? (
-                    <Button size="sm" color="orange" disabled={busy || !note.trim()} onClick={() => act('ask-again')}>
+                    <Button size="sm" color="orange" loading={pendingAction === `ask-again:${member.userId}`} disabled={busy || !note.trim()} onClick={() => act('ask-again')}>
                       Ask again with this note
                     </Button>
                   ) : (
@@ -372,7 +372,7 @@ export function AdminInfoChecks({
                 </>
               )}
               {open && (
-                <Button size="sm" variant="ghost" color="darkerGray" disabled={busy} onClick={() => act('withdraw')}>
+                <Button size="sm" variant="ghost" color="darkerGray" loading={pendingAction === `withdraw:${member.userId}`} disabled={busy} onClick={() => act('withdraw')}>
                   Withdraw the question
                 </Button>
               )}

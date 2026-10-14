@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -13,6 +14,7 @@ export default function PasswordInputModal({
   onHide: () => any;
   onConfirm: () => any;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -55,6 +57,7 @@ export default function PasswordInputModal({
             Cancel
           </Button>
           <Button
+            loading={pendingAction === 'handleConfirmPassword'}
             style={{ marginLeft: '1rem' }}
             color={doneColor}
             onClick={handleConfirmPassword}
@@ -66,7 +69,17 @@ export default function PasswordInputModal({
     </Modal>
   );
 
-  async function handleConfirmPassword() {
+  function handleConfirmPassword(
+
+    ...args: Parameters<typeof handleConfirmPasswordRequest>
+
+  ) {
+    return runAction('handleConfirmPassword', () =>
+      handleConfirmPasswordRequest(...args)
+    );
+  }
+
+  async function handleConfirmPasswordRequest() {
     const success = await confirmPassword(password);
     if (success) {
       onConfirm();

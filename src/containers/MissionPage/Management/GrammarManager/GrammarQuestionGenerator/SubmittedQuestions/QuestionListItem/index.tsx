@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import QuestionContent from './QuestionContent';
@@ -22,6 +23,7 @@ export default function QuestionListItem({
   question: any;
   style?: React.CSSProperties;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const approveGrammarQuestion = useAppContext(
     (v) => v.requestHelpers.approveGrammarQuestion
   );
@@ -97,6 +99,8 @@ export default function QuestionListItem({
             <span style={{ marginLeft: '0.7rem' }}>Edit</span>
           </Button>
           <Button
+            disabled={pendingAction !== null}
+            loading={pendingAction === 'approve'}
             style={{ width: '50%', fontSize: '1.7rem', marginTop: '1rem' }}
             variant="soft"
             tone="raised"
@@ -107,6 +111,8 @@ export default function QuestionListItem({
           </Button>
           {!question.isApproved && (
             <Button
+              disabled={pendingAction !== null}
+              loading={pendingAction === 'delete'}
               style={{ width: '50%', fontSize: '1.7rem', marginTop: '5rem' }}
               color="rose"
               variant="soft"
@@ -122,7 +128,11 @@ export default function QuestionListItem({
     </div>
   );
 
-  async function handleApprove() {
+  function handleApprove(...args: Parameters<typeof handleApproveRequest>) {
+    return runAction('approve', () => handleApproveRequest(...args));
+  }
+
+  async function handleApproveRequest() {
     const success = await approveGrammarQuestion({
       questionId: question.id,
       isApproved: !question.isApproved
@@ -132,7 +142,11 @@ export default function QuestionListItem({
     }
   }
 
-  async function handleDelete() {
+  function handleDelete(...args: Parameters<typeof handleDeleteRequest>) {
+    return runAction('delete', () => handleDeleteRequest(...args));
+  }
+
+  async function handleDeleteRequest() {
     const success = await deleteGrammarQuestion(question.id);
     if (success) {
       onDeleteQuestion(question.id);

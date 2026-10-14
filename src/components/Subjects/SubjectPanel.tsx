@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Button from '~/components/Button';
 import UsernameText from '~/components/Texts/UsernameText';
 import Comments from '~/components/Comments';
@@ -80,6 +81,7 @@ export default function SubjectPanel({
   secretAttachment: any;
   subjectId: number;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const titleMaxChar = charLimit.subject.title;
   const descriptionMaxChar = charLimit.subject.description;
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
@@ -435,6 +437,7 @@ export default function SubjectPanel({
                 Cancel
               </Button>
               <Button
+                loading={pendingAction === 'handleEditDone'}
                 color={doneColor}
                 style={{
                   fontSize: '1.8rem'
@@ -459,6 +462,7 @@ export default function SubjectPanel({
                 }}
               >
                 <Button
+                  loading={loadingComments}
                   variant="solid"
                   tone="raised"
                   color="darkerGray"
@@ -729,7 +733,11 @@ export default function SubjectPanel({
     }
   }
 
-  async function handleEditDone() {
+  function handleEditDone(...args: Parameters<typeof handleEditDoneRequest>) {
+    return runAction('handleEditDone', () => handleEditDoneRequest(...args));
+  }
+
+  async function handleEditDoneRequest() {
     const editedSubject = await editContent({
       contentId: subjectId,
       contentType: 'subject',

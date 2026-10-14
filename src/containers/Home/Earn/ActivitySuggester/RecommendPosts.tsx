@@ -75,6 +75,7 @@ export default function RecommendPosts() {
         {posts.length > 0 && (
           <div className={primaryActionRow}>
             <Button
+              loading={skipping || loading}
               variant="soft"
               tone="raised"
               color={showMeAnotherPostButtonColor}
@@ -122,13 +123,16 @@ export default function RecommendPosts() {
   async function handleLoadAnotherPostClick() {
     if (posts[0]?.id) {
       setSkipping(true);
-      await markPostAsSkipped({
-        earnType: 'karma',
-        action: 'recommendation',
-        contentType: posts[0].contentType,
-        contentId: posts[0].id
-      });
-      setSkipping(false);
+      try {
+        await markPostAsSkipped({
+          earnType: 'karma',
+          action: 'recommendation',
+          contentType: posts[0].contentType,
+          contentId: posts[0].id
+        });
+      } finally {
+        setSkipping(false);
+      }
     }
     const appElement = document.getElementById('App');
     if (appElement) {
@@ -140,16 +144,19 @@ export default function RecommendPosts() {
 
   async function handleLoadPostsToRecommend() {
     setLoading(true);
-    const data = await loadPostsToRecommend();
-    for (const post of data) {
-      onSetContentState({
-        contentId: post.id,
-        contentType: post.contentType,
-        newState: post
-      });
+    try {
+      const data = await loadPostsToRecommend();
+      for (const post of data) {
+        onSetContentState({
+          contentId: post.id,
+          contentType: post.contentType,
+          newState: post
+        });
+      }
+      setPosts(data);
+    } finally {
+      setLoading(false);
     }
-    setPosts(data);
-    setLoading(false);
   }
 }
 

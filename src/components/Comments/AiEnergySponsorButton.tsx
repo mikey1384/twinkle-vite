@@ -49,7 +49,6 @@ export default function AiEnergySponsorButton({
         : phase === 'sponsoring'
           ? 'Sponsoring'
           : 'Sponsor';
-  const buttonIcon = isWaiting ? 'spinner' : 'bolt';
 
   if (!aiName) return null;
 
@@ -75,6 +74,7 @@ export default function AiEnergySponsorButton({
           {message && <div className={sponsorMessageCls}>{message}</div>}
         </div>
         <Button
+          loading={isWaiting}
           variant="soft"
           tone="raised"
           size="sm"
@@ -83,7 +83,7 @@ export default function AiEnergySponsorButton({
           onClick={sponsor}
           color={themeName}
         >
-          <Icon icon={buttonIcon} pulse={isWaiting} />
+          <Icon icon="bolt" />
           <span style={{ marginLeft: '0.6rem' }}>{buttonLabel}</span>
         </Button>
       </div>

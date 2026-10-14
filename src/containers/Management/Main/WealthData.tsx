@@ -1,4 +1,5 @@
 import React from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
@@ -10,6 +11,7 @@ import { SITE_NAME } from '~/constants/siteBrand';
 const userLabel = 'User';
 
 export default function WealthData() {
+  const { pendingAction, runAction } = usePendingAction();
   const { colorKey: tableHeaderColor } = useRoleColor('tableHeader', {
     fallback: 'logoBlue'
   });
@@ -28,7 +30,7 @@ export default function WealthData() {
         loaded={usersLoaded}
         innerStyle={{ paddingLeft: 0, paddingRight: 0 }}
         button={
-          <Button color="darkerGray" variant="solid" tone="raised" onClick={handleDownloadCSV}>
+          <Button loading={pendingAction === 'handleDownloadCSV'} color="darkerGray" variant="solid" tone="raised" onClick={handleDownloadCSV}>
             <Icon icon="file-csv" />
           </Button>
         }
@@ -116,6 +118,7 @@ export default function WealthData() {
           }}
         >
           <Button
+            loading={pendingAction === 'handleDownloadCSV'}
             variant="ghost"
             color={tableHeaderColor}
             onClick={handleDownloadCSV}
@@ -127,7 +130,11 @@ export default function WealthData() {
     </ErrorBoundary>
   );
 
-  async function handleDownloadCSV() {
+  function handleDownloadCSV(...args: Parameters<typeof handleDownloadCSVRequest>) {
+    return runAction('handleDownloadCSV', () => handleDownloadCSVRequest(...args));
+  }
+
+  async function handleDownloadCSVRequest() {
     try {
       const response = await loadWealthDataCSV();
       const blob = new Blob([response], { type: 'text/csv' });

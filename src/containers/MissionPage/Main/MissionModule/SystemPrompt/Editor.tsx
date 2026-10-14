@@ -148,6 +148,7 @@ export default function Editor({
             <div className={labelClass}>System Prompt</div>
             {hasPrompt ? (
               <Button
+                loading={improving}
                 onClick={onImprovePrompt}
                 disabled={improving || generating}
                 color="magenta"
@@ -157,11 +158,7 @@ export default function Editor({
               >
                 {improving ? (
                   <>
-                    <Icon
-                      style={{ marginRight: '0.5rem' }}
-                      icon="spinner"
-                      pulse
-                    />
+
                     Improving...
                   </>
                 ) : (
@@ -176,6 +173,7 @@ export default function Editor({
               </Button>
             ) : (
               <Button
+                loading={generating}
                 onClick={onGeneratePrompt}
                 disabled={!canGenerate}
                 color="darkBlue"
@@ -185,11 +183,7 @@ export default function Editor({
               >
                 {generating ? (
                   <>
-                    <Icon
-                      style={{ marginRight: '0.5rem' }}
-                      icon="spinner"
-                      pulse
-                    />
+
                     Generating...
                   </>
                 ) : (

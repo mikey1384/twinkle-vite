@@ -6,6 +6,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 
 export default function InputModal({
   isOpen,
@@ -14,6 +15,7 @@ export default function InputModal({
   isOpen: boolean;
   onHide: () => void;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const subject = useInputContext((v) => v.state.subject);
   const userId = useKeyContext((v) => v.myState.userId);
   const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
@@ -62,7 +64,7 @@ export default function InputModal({
         closeOnBackdropClick={false}
         modalLevel={0}
         footer={
-          <Button variant="ghost" onClick={handleClose}>
+          <Button loading={pendingAction === 'close'} variant="ghost" onClick={handleClose}>
             Close
           </Button>
         }
@@ -84,7 +86,11 @@ export default function InputModal({
     </ErrorBoundary>
   );
 
-  async function handleClose() {
+  function handleClose() {
+    return runAction('close', closeAndCleanDraft);
+  }
+
+  async function closeAndCleanDraft() {
     if (draftIdRef.current && stringIsEmpty(title)) {
       try {
         titleRef.current = '';

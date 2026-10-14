@@ -350,6 +350,7 @@ export default function SystemPromptShared() {
             `}
           >
             <Button
+              loading={loadingMore}
               variant="soft"
               color="logoBlue"
               tone="raised"
@@ -358,11 +359,7 @@ export default function SystemPromptShared() {
             >
               {loadingMore ? (
                 <>
-                  <Icon
-                    style={{ marginRight: '0.5rem' }}
-                    icon="spinner"
-                    pulse
-                  />
+
                   Loading...
                 </>
               ) : (

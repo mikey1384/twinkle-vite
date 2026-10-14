@@ -2275,6 +2275,7 @@ export default function BuildRuntime({
                     />
                   </button>
                   <button
+                    aria-busy={headerCollapsePending}
                     type="button"
                     className={headerToggleClass}
                     onClick={() => void handleHideEverything()}
@@ -2283,6 +2284,9 @@ export default function BuildRuntime({
                     aria-label="Hide everything (full screen)"
                   >
                     <Icon icon="angles-up" />
+                    {(headerCollapsePending) && (
+                      <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                    )}
                   </button>
                 </div>
               )}

@@ -78,7 +78,7 @@ export default function PurchaseModal({
       <ModalFooter>
         <Button variant="ghost"
           disabled={request.busy} onClick={close}>{confirmed ? 'Close' : 'Cancel'}</Button>
-        <Button color="logoBlue"
+        <Button loading={request.busy} color="logoBlue"
           disabled={insufficientFunds} aria-busy={request.busy}
           aria-describedby={request.error ? request.errorId : undefined} onClick={purchase}>
           {request.busy ? confirmed ? 'Updating…' : 'Purchasing…' : confirmed ? 'Retry updating' : `Buy for ${price.toLocaleString()} coins`}

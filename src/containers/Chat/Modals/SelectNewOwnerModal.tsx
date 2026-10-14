@@ -157,7 +157,7 @@ export default function SelectNewOwnerModal({
       <ModalFooter>
         <Button variant="ghost" disabled={busy}
           onClick={onHide}>{transferred ? andLeave ? 'Stay in group' : 'Close' : 'Cancel'}</Button>
-        <Button color={doneColor}
+        <Button loading={busy} color={doneColor}
           disabled={!selected} aria-busy={busy} aria-describedby={request.error ? request.errorId : undefined}
           aria-label={busy ? 'Changing channel ownership' : transferred ? andLeave ? 'Retry leaving group' : 'Finish ownership update' : andLeave ? 'Transfer ownership and leave' : 'Confirm new owner'}
           onClick={handleSubmit}>{busy ? 'Working…' : transferred ? andLeave ? 'Retry leaving' : 'Finish update' : andLeave ? 'Transfer & leave' : 'Change owner'}</Button>

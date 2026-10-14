@@ -570,6 +570,7 @@ export default function Content({
                           label: 'Action',
                           render: (_value, row) => (
                             <button
+                              aria-busy={manualIdentitySavingKey === `disable:${Number(row.id || 0)}`}
                               type="button"
                               className={inlineActionClass}
                               disabled={
@@ -583,6 +584,9 @@ export default function Content({
                               }
                             >
                               Remove
+                              {(manualIdentitySavingKey === `disable:${Number(row.id || 0)}`) && (
+                                <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                              )}
                             </button>
                           )
                         }

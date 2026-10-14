@@ -1,3 +1,4 @@
+import Icon from '~/components/Icon';
 import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
@@ -414,6 +415,7 @@ export default function RuntimeUploadsModal({
                         </div>
                       </div>
                       <button
+                        aria-busy={runtimeUploadDeletingId === asset.id}
                         type="button"
                         onClick={() => void onDeleteRuntimeUpload(asset)}
                         disabled={runtimeUploadDeletingId === asset.id}
@@ -440,6 +442,9 @@ export default function RuntimeUploadsModal({
                         {runtimeUploadDeletingId === asset.id
                           ? 'Deleting...'
                           : 'Delete'}
+                        {(runtimeUploadDeletingId === asset.id) && (
+                          <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                        )}
                       </button>
                     </div>
                   ))}
@@ -548,6 +553,7 @@ function GeneratedAssetUploadPanel({
           Add generated asset
         </span>
         <button
+          aria-busy={uploading}
           type="submit"
           disabled={uploading}
           className={css`
@@ -567,6 +573,9 @@ function GeneratedAssetUploadPanel({
           data-testid="generated-build-asset-upload-submit"
         >
           {uploading ? 'Uploading...' : 'Upload asset'}
+          {(uploading) && (
+            <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+          )}
         </button>
       </div>
       <div

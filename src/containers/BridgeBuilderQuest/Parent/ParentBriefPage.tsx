@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
@@ -227,6 +228,7 @@ const cardClass = css`
 `;
 
 export default function ParentBriefPage() {
+  const { pendingAction, runAction } = usePendingAction();
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const token = params.get('token') || '';
@@ -671,8 +673,11 @@ export default function ParentBriefPage() {
                       style={{ width: '100%', minHeight: '9rem', marginTop: '0.6rem', padding: '1rem', fontFamily: 'inherit', fontSize: '1.5rem', border: '1px solid var(--ui-border)', borderRadius: 8 }}
                     />
                     <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.8rem' }}>
-                      <button type="button" disabled={busy || !suggestion.trim()} onClick={sendSuggestion} style={primaryButton(Color.logoBlue())}>
+                      <button aria-busy={pendingAction === 'suggest'} type="button" disabled={busy || !suggestion.trim()} onClick={sendSuggestion} style={primaryButton(Color.logoBlue())}>
                         {t.send}
+                        {(pendingAction === 'suggest') && (
+                          <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                        )}
                       </button>
                       <button type="button" disabled={busy} onClick={() => setMode('')} style={secondaryButton}>
                         {t.cancel}
@@ -692,8 +697,11 @@ export default function ParentBriefPage() {
                       style={{ width: '100%', minHeight: '9rem', marginTop: '0.6rem', padding: '1rem', fontFamily: 'inherit', fontSize: '1.5rem', border: '1px solid var(--ui-border)', borderRadius: 8 }}
                     />
                     <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.8rem' }}>
-                      <button type="button" disabled={busy || !question.trim()} onClick={() => decide('question')} style={primaryButton(Color.logoBlue())}>
+                      <button aria-busy={pendingAction === 'question'} type="button" disabled={busy || !question.trim()} onClick={() => decide('question')} style={primaryButton(Color.logoBlue())}>
                         {t.send}
+                        {(pendingAction === 'question') && (
+                          <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                        )}
                       </button>
                       <button type="button" disabled={busy} onClick={() => setMode('')} style={secondaryButton}>
                         {t.cancel}
@@ -738,6 +746,7 @@ export default function ParentBriefPage() {
                     </div>
                     <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
                       <button
+                        aria-busy={pendingAction === 'approve'}
                         type="button"
                         disabled={busy || brief.planStatus !== 'approved'}
                         onClick={() => decide('approve')}
@@ -748,6 +757,9 @@ export default function ParentBriefPage() {
                         }}
                       >
                         {t.yes}
+                        {(pendingAction === 'approve') && (
+                          <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                        )}
                       </button>
                       <button type="button" disabled={busy} onClick={() => setMode('suggest')} style={secondaryButton}>
                         {t.suggest}
@@ -755,8 +767,11 @@ export default function ParentBriefPage() {
                       <button type="button" disabled={busy} onClick={() => setMode('question')} style={secondaryButton}>
                         {t.question}
                       </button>
-                      <button type="button" disabled={busy} onClick={() => decide('decline')} style={secondaryButton}>
+                      <button aria-busy={pendingAction === 'decline'} type="button" disabled={busy} onClick={() => decide('decline')} style={secondaryButton}>
                         {t.no}
+                        {(pendingAction === 'decline') && (
+                          <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                        )}
                       </button>
                     </div>
                   </>
@@ -770,7 +785,11 @@ export default function ParentBriefPage() {
     </div>
   );
 
-  async function sendSuggestion() {
+  function sendSuggestion(...args: Parameters<typeof sendSuggestionRequest>) {
+    return runAction('suggest', () => sendSuggestionRequest(...args));
+  }
+
+  async function sendSuggestionRequest() {
     if (busy) return;
     setBusy(true);
     setError('');
@@ -786,7 +805,11 @@ export default function ParentBriefPage() {
     }
   }
 
-  async function decide(decision: 'approve' | 'decline' | 'question') {
+  function decide(...args: Parameters<typeof decideRequest>) {
+    return runAction(args[0], () => decideRequest(...args));
+  }
+
+  async function decideRequest(decision: 'approve' | 'decline' | 'question') {
     if (busy) return;
     setBusy(true);
     setError('');

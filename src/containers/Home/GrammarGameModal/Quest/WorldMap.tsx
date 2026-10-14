@@ -19,6 +19,7 @@ import AudioToggles from './AudioToggles';
 import GoalsChip from './GoalsChip';
 import { musicForWorldMap, playMusic, stopMusic } from './MarbleRun/music';
 import PixelIcon from './PixelIcon';
+import Icon from '~/components/Icon';
 import {
   GOLD,
   INK,
@@ -44,6 +45,8 @@ export default function WorldMap({
   onSelectNode,
   onPlayNode,
   onPlayNemesis,
+  startingNodeId,
+  startingNemesis = false,
   starting
 }: {
   state: QuestState;
@@ -53,6 +56,8 @@ export default function WorldMap({
   onSelectNode: (id: string) => void;
   onPlayNode: (node: QuestNode) => void;
   onPlayNemesis: () => void;
+  startingNodeId?: string | null;
+  startingNemesis?: boolean;
   starting: boolean;
 }) {
   // a crowded world's map is drawn big enough for every stop to keep a whole
@@ -497,6 +502,7 @@ export default function WorldMap({
       <button
         className={cx(chipCls, nemesisCls)}
         disabled={!nemesisDue.length || starting}
+        aria-busy={startingNemesis}
         onClick={onPlayNemesis}
         title={
           state.nemesis.length
@@ -504,7 +510,7 @@ export default function WorldMap({
             : 'Points you keep missing come here'
         }
       >
-        <PixelIcon name="ghost" />
+        {startingNemesis ? <Icon icon="spinner" pulse /> : <PixelIcon name="ghost" />}
         {state.nemesis.length
           ? `${nemesisDue.length ? `${nemesisDue.length} due` : `${state.nemesis.length} resting`}`
           : 'No nemesis'}
@@ -687,10 +693,11 @@ export default function WorldMap({
                               : undefined
                           }
                           disabled={starting}
+                          aria-busy={startingNodeId === node.id}
                           onClick={() => onPlayNode(node)}
                           aria-label={`Play ${node.name}`}
                         >
-                          {spot?.side === 'on' ? (
+                          {startingNodeId === node.id ? <Icon icon="spinner" pulse /> : spot?.side === 'on' ? (
                             // over the stop's own box: a small ▶ in its
                             // corner, the stop's disc or marble showing
                             <span className={onBadgeCls}>▶</span>
@@ -724,9 +731,10 @@ export default function WorldMap({
             <button
               className={playCls}
               disabled={!selected.unlocked || starting}
+              aria-busy={startingNodeId === selected.id}
               onClick={() => onPlayNode(selected)}
             >
-              {starting
+              {startingNodeId === selected.id
                 ? 'Starting…'
                 : selected.freeRematch
                   ? selected.kind === 'stop'
@@ -735,6 +743,7 @@ export default function WorldMap({
                   : selected.cleared
                     ? 'Play again'
                     : 'Play'}
+              {startingNodeId === selected.id && <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />}
             </button>
             <div className={panelBodyCls}>
               <div className={panelLabelCls}>

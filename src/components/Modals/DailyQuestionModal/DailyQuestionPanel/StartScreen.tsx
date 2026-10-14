@@ -138,6 +138,7 @@ export default function StartScreen({
               </p>
             ) : (
               <button
+                aria-busy={purchasingRepair}
                 type="button"
                 className={paperSecondaryButtonCls}
                 onClick={onPurchaseRepair}
@@ -151,6 +152,9 @@ export default function StartScreen({
                     : `Need ${STREAK_REPAIR_COST.toLocaleString()} coins (you have ${(
                         twinkleCoins || 0
                       ).toLocaleString()})`}
+                {(purchasingRepair) && (
+                  <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                )}
               </button>
             )}
           </div>
@@ -186,6 +190,7 @@ export default function StartScreen({
 
         {!isKeywordDay && (
           <button
+            aria-busy={isSimplifying}
             type="button"
             className={paperTextButtonCls}
             onClick={isSimplified ? onShowOriginal : onSimplify}
@@ -201,6 +206,9 @@ export default function StartScreen({
               : isSimplifying
                 ? 'Making it easier...'
                 : 'Make it easier to understand'}
+            {(isSimplifying) && (
+              <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+            )}
           </button>
         )}
 

@@ -22,6 +22,7 @@ function AIAudioButton({ text, voice, contentKey, chat = false }: {
   const controls = (
     <>
       <Button
+        loading={audio.preparing}
         className={chat ? chatFocusClass : undefined}
         aria-label={label}
         aria-describedby={audio.error || audio.hint ? noticeId : undefined}
@@ -31,7 +32,7 @@ function AIAudioButton({ text, voice, contentKey, chat = false }: {
         onClick={audio.playOrPause}
         style={chat ? chatControlStyle : { padding: '0.5rem 0.7rem', lineHeight: 1 }}
         color={audio.error ? 'redOrange' : audio.prepared ? 'logoBlue' : 'darkerGray'}>
-        <Icon icon={audio.preparing ? 'spinner' : audio.playing ? 'pause' : 'volume'} pulse={audio.preparing} />
+        {!audio.preparing && <Icon icon={audio.playing ? 'pause' : 'volume'} />}
         {chat && <span>{caption}</span>}
       </Button>
       {audio.downloadUrl && (

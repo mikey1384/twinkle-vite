@@ -785,6 +785,7 @@ function Comment({
                                   />
                                 ) : (
                                   <Button
+                                    loading={loadingReplies}
                                     color="darkerGray"
                                     disabled={loadingReplies}
                                     variant="ghost"

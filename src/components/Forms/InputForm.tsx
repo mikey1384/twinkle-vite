@@ -517,6 +517,7 @@ function InputForm({
           >
             {isComment && <DraftSaveIndicator savingState={savingState} />}
             <Button
+              loading={submitting}
               variant="soft"
               tone="raised"
               color="green"

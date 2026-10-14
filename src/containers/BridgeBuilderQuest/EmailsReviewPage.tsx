@@ -10,6 +10,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { QuestNote } from './StepCard';
 import { backLinkClass } from './pageStyles';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 
 // /achievements/bridge-builder/emails (owner only): parent emails wait here
 // until the owner has read them (and edited them if he wants). The review
@@ -27,6 +28,7 @@ interface Draft {
 }
 
 export default function EmailsReviewPage() {
+  const { pendingAction, runAction } = usePendingAction();
   const userId = useKeyContext((v) => v.myState.userId);
   const loadMeetupEmails = useAppContext((v) => v.requestHelpers.loadMeetupEmails);
   const sendMeetupEmail = useAppContext((v) => v.requestHelpers.sendMeetupEmail);
@@ -52,7 +54,11 @@ export default function EmailsReviewPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  async function run(id: number, work: () => Promise<any>) {
+  function run(id: number, kind: string, work: () => Promise<any>) {
+    return runAction(`${kind}:${id}`, () => runRequest(id, work));
+  }
+
+  async function runRequest(id: number, work: () => Promise<any>) {
     setBusyId(id);
     setError('');
     try {
@@ -128,7 +134,6 @@ export default function EmailsReviewPage() {
         )}
         {open.map((draft) => {
           const edit = edits[draft.id] || { subject: draft.subject, body: draft.body };
-          const busy = busyId === draft.id;
           return (
             <section
               key={draft.id}
@@ -178,10 +183,10 @@ export default function EmailsReviewPage() {
                 <Button
                   color="logoBlue"
                   variant="solid"
-                  loading={busy}
+                  loading={pendingAction === `send:${draft.id}`}
                   disabled={!!busyId}
                   onClick={() =>
-                    run(draft.id, () => sendMeetupEmail({ id: draft.id, ...edit }))
+                    run(draft.id, 'send', () => sendMeetupEmail({ id: draft.id, ...edit }))
                   }
                 >
                   <Icon icon="paper-plane" />
@@ -189,16 +194,18 @@ export default function EmailsReviewPage() {
                 </Button>
                 <Button
                   color="darkerGray"
+                  loading={pendingAction === `save:${draft.id}`}
                   disabled={!!busyId}
-                  onClick={() => run(draft.id, () => saveMeetupEmail({ id: draft.id, ...edit }))}
+                  onClick={() => run(draft.id, 'save', () => saveMeetupEmail({ id: draft.id, ...edit }))}
                 >
                   Save changes
                 </Button>
                 <Button
                   color="red"
                   variant="soft"
+                  loading={pendingAction === `discard:${draft.id}`}
                   disabled={!!busyId}
-                  onClick={() => run(draft.id, () => discardMeetupEmail(draft.id))}
+                  onClick={() => run(draft.id, 'discard', () => discardMeetupEmail(draft.id))}
                 >
                   Discard
                 </Button>

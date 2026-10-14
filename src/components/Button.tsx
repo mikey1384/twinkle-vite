@@ -200,7 +200,7 @@ export default function Button(props: ButtonProps) {
       aria-expanded={ariaExpanded}
       aria-controls={ariaControls}
       aria-describedby={ariaDescribedBy}
-      aria-busy={ariaBusy}
+      aria-busy={ariaBusy ?? loading}
       aria-disabled={isDisabled}
       disabled={isDisabled}
       style={style}

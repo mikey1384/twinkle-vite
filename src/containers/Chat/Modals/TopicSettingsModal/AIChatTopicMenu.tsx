@@ -376,6 +376,7 @@ export default function AIChatTopicMenu({
         {isCustomInstructionsOn && (
           <div className={topicSettingsActionsClass}>
             <Button
+              loading={generating}
               onClick={handleGenerateCustomInstructions}
               color="darkerGray"
               variant="ghost"
@@ -384,11 +385,7 @@ export default function AIChatTopicMenu({
             >
               {generating ? (
                 <>
-                  <Icon
-                    style={{ marginRight: '0.5rem' }}
-                    icon="spinner"
-                    pulse
-                  />
+
                   Generating...
                 </>
               ) : (
@@ -400,6 +397,7 @@ export default function AIChatTopicMenu({
             </Button>
             {newCustomInstructions && (
               <Button
+                loading={improving}
                 onClick={handleImproveCustomInstructions}
                 color="darkerGray"
                 variant="ghost"
@@ -408,11 +406,7 @@ export default function AIChatTopicMenu({
               >
                 {improving ? (
                   <>
-                    <Icon
-                      style={{ marginRight: '0.5rem' }}
-                      icon="spinner"
-                      pulse
-                    />
+
                     Improving...
                   </>
                 ) : (

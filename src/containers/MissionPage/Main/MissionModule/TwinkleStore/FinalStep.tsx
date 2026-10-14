@@ -48,6 +48,7 @@ export default function FinalStep({
         collect your reward
       </p>
       <Button
+        loading={submitDisabled}
         variant="solid"
         disabled={submitDisabled}
         style={{ marginTop: '5rem', fontSize: '1.7rem' }}

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { css, cx, keyframes } from '@emotion/css';
 import { v1 as uuidv1 } from 'uuid';
@@ -68,6 +69,7 @@ interface UploadJob {
 }
 
 export default function StoryEditorPage() {
+  const { pendingAction, runAction } = usePendingAction();
   const { crewId: rawCrewId } = useParams();
   const crewId = Number(rawCrewId) || 0;
   const navigate = useNavigate();
@@ -798,11 +800,12 @@ export default function StoryEditorPage() {
                 const on = tags.includes(person.userId);
                 return (
                   <button
+                    aria-busy={pendingAction === 'tags:' + item.id + ':' + person.userId}
                     key={person.userId}
                     type="button"
-                    disabled={!canEdit}
+                    disabled={!canEdit || pendingAction !== null}
                     onClick={() =>
-                      mediaAction(() =>
+                      runAction('tags:' + item.id + ':' + person.userId, () => mediaAction(() =>
                         updateMeetupStoryMedia({
                           storyId: story!.storyId,
                           mediaId: item.id,
@@ -810,33 +813,38 @@ export default function StoryEditorPage() {
                             ? tags.filter((id) => id !== person.userId)
                             : [...tags, person.userId]
                         })
-                      )
+                      ))
                     }
                     className={chip(on, Color.logoBlue())}
                   >
                     {on && <Icon icon="check" style={{ marginRight: '0.4rem' }} />}
                     {person.username}
+                    {pendingAction === 'tags:' + item.id + ':' + person.userId && (
+                      <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                    )}
                   </button>
                 );
               })}
               <button
-                type="button"
-                disabled={!canEdit}
+                aria-busy={pendingAction === 'faces:' + item.id}
+                    type="button"
+                disabled={!canEdit || pendingAction !== null}
                 onClick={() =>
-                  mediaAction(() =>
+                  runAction('faces:' + item.id, () => mediaAction(() =>
                     updateMeetupStoryMedia({
                       storyId: story!.storyId,
                       mediaId: item.id,
                       taggedUserIds: [],
                       noFaces: !item.noFaces
                     })
-                  )
+                  ))
                 }
                 className={chip(!!item.noFaces, '#22a35a')}
               >
                 {item.noFaces && <Icon icon="check" style={{ marginRight: '0.4rem' }} />}
                 No faces
-              </button>
+              {pendingAction === 'faces:' + item.id && <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />}
+                  </button>
             </div>
           </div>
           <div
@@ -860,24 +868,25 @@ export default function StoryEditorPage() {
             {canEdit && (
               <span style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem' }}>
                 {item.kind === 'photo' && !isCover && (
-                  <Button size="sm" variant="ghost" color="logoBlue" onClick={() => setCover(item.id)}>
+                  <Button disabled={pendingAction !== null} loading={pendingAction === 'cover:' + item.id} size="sm" variant="ghost" color="logoBlue" onClick={() => setCover(item.id)}>
                     Make cover
                   </Button>
                 )}
-                <Button size="sm" variant="ghost" color="darkGray" disabled={index === 0} onClick={() => move(item.id, -1)} aria-label="Move up">
+                <Button loading={pendingAction === 'move:' + item.id + ':-1'} size="sm" variant="ghost" color="darkGray" disabled={index === 0 || pendingAction !== null} onClick={() => move(item.id, -1)} aria-label="Move up">
                   <Icon icon="arrow-up" />
                 </Button>
                 <Button
+                  loading={pendingAction === 'move:' + item.id + ':1'}
                   size="sm"
                   variant="ghost"
                   color="darkGray"
-                  disabled={index === items.length - 1}
+                  disabled={index === items.length - 1 || pendingAction !== null}
                   onClick={() => move(item.id, 1)}
                   aria-label="Move down"
                 >
                   <Icon icon="arrow-down" />
                 </Button>
-                <Button size="sm" variant="ghost" color="red" onClick={() => remove(item.id)} aria-label="Remove">
+                <Button disabled={pendingAction !== null} loading={pendingAction === 'remove:' + item.id} size="sm" variant="ghost" color="red" onClick={() => remove(item.id)} aria-label="Remove">
                   <Icon icon="trash-alt" />
                 </Button>
               </span>
@@ -1154,7 +1163,11 @@ export default function StoryEditorPage() {
     }
   }
 
-  async function setCover(mediaId: number) {
+  function setCover(...args: Parameters<typeof setCoverRequest>) {
+    return runAction('cover:' + args[0], () => setCoverRequest(...args));
+  }
+
+  async function setCoverRequest(mediaId: number) {
     setActionError('');
     try {
       await saveMeetupStory({ storyId: story!.storyId, patch: { coverMediaId: mediaId } });
@@ -1164,18 +1177,26 @@ export default function StoryEditorPage() {
     }
   }
 
-  function move(mediaId: number, delta: number) {
+  function move(...args: Parameters<typeof moveRequest>) {
+    return runAction('move:' + args[0] + ':' + args[1], () => moveRequest(...args));
+  }
+
+  async function moveRequest(mediaId: number, delta: number) {
     const ids = items.map((item) => item.id);
     const from = ids.indexOf(mediaId);
     const to = from + delta;
     if (from < 0 || to < 0 || to >= ids.length) return;
     [ids[from], ids[to]] = [ids[to], ids[from]];
-    mediaAction(() => reorderMeetupStoryMedia({ storyId: story!.storyId, mediaIds: ids }));
+    return mediaAction(() => reorderMeetupStoryMedia({ storyId: story!.storyId, mediaIds: ids }));
   }
 
-  function remove(mediaId: number) {
+  function remove(...args: Parameters<typeof removeRequest>) {
+    return runAction('remove:' + args[0], () => removeRequest(...args));
+  }
+
+  async function removeRequest(mediaId: number) {
     if (!window.confirm('Remove this from your story?')) return;
-    mediaAction(() => removeMeetupStoryMedia({ storyId: story!.storyId, mediaId }));
+    return mediaAction(() => removeMeetupStoryMedia({ storyId: story!.storyId, mediaId }));
   }
 
   async function handleStart() {

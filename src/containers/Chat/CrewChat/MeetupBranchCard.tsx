@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -21,6 +22,7 @@ interface BranchView {
 // not real = the members' branch text is cleared and their crew chat is told;
 // merge = same as an official branch (members are rewritten to its name).
 export default function MeetupBranchCard({ branchId }: { branchId: number }) {
+  const { pendingAction, runAction } = usePendingAction();
   const loadMeetupBranch = useAppContext((v) => v.requestHelpers.loadMeetupBranch);
   const loadMeetupBranchChoices = useAppContext(
     (v) => v.requestHelpers.loadMeetupBranchChoices
@@ -98,11 +100,11 @@ export default function MeetupBranchCard({ branchId }: { branchId: number }) {
       ) : (
         <>
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-            <Button size="sm" color="green" disabled={busy} onClick={() => review('official')}>
+            <Button loading={pendingAction === 'official'} size="sm" color="green" disabled={busy} onClick={() => review('official')}>
               <Icon icon="check" style={{ marginRight: '0.5rem' }} />
               Make official
             </Button>
-            <Button size="sm" variant="soft" color="red" disabled={busy} onClick={() => review('reject')}>
+            <Button loading={pendingAction === 'reject'} size="sm" variant="soft" color="red" disabled={busy} onClick={() => review('reject')}>
               Not a real branch
             </Button>
           </div>
@@ -129,6 +131,7 @@ export default function MeetupBranchCard({ branchId }: { branchId: number }) {
                 ))}
               </select>
               <Button
+                loading={pendingAction === 'merge'}
                 size="sm"
                 variant="soft"
                 color="logoBlue"
@@ -145,7 +148,11 @@ export default function MeetupBranchCard({ branchId }: { branchId: number }) {
     </div>
   );
 
-  async function review(action: 'official' | 'reject' | 'merge') {
+  function review(...args: Parameters<typeof reviewRequest>) {
+    return runAction(args[0], () => reviewRequest(...args));
+  }
+
+  async function reviewRequest(action: 'official' | 'reject' | 'merge') {
     if (busy) return;
     setBusy(true);
     setError('');

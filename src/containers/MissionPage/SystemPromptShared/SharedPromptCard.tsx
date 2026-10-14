@@ -214,17 +214,14 @@ function SharedPromptCard({
               style={{ flex: 1 }}
             />
             <Button
+              loading={commentSubmitting}
               color="logoBlue"
               variant="soft"
               tone="raised"
               disabled={stringIsEmpty(commentText || '') || commentSubmitting}
               onClick={() => onCommentSubmit?.()}
             >
-              {commentSubmitting ? (
-                <Icon icon="spinner" pulse />
-              ) : (
-                <Icon icon="paper-plane" />
-              )}
+              {!commentSubmitting && <Icon icon="paper-plane" />}
             </Button>
           </div>
         ) : null}

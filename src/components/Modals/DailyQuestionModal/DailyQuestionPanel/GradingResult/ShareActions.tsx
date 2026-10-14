@@ -76,6 +76,7 @@ export default function ShareActions({
           `}
         >
           <button
+            aria-busy={sharing || (refining && !preparingAIVersionTarget)}
             type="button"
             className={paperPrimaryButtonCls}
             onClick={onShareClick}
@@ -100,6 +101,9 @@ export default function ShareActions({
                 <Icon icon="magic" />
                 See AI Polished Version
               </>
+            )}
+            {(sharing || (refining && !preparingAIVersionTarget)) && (
+              <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
             )}
           </button>
           {canShareToFeedNow && refinedResponse && (
@@ -127,6 +131,7 @@ export default function ShareActions({
             `}
           >
             <button
+              aria-busy={sharingWithZero || preparingAIVersionTarget === 'zero'}
               type="button"
               className={paperSecondaryButtonCls}
               onClick={() => onShareWithAI('zero')}
@@ -159,6 +164,9 @@ export default function ShareActions({
               ) : (
                 'Share with Zero'
               )}
+              {(sharingWithZero || preparingAIVersionTarget === 'zero') && (
+                <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+              )}
             </button>
             {canShareWithZero && canGetAIShareCoins && (
               <span
@@ -182,6 +190,7 @@ export default function ShareActions({
             `}
           >
             <button
+              aria-busy={sharingWithCiel || preparingAIVersionTarget === 'ciel'}
               type="button"
               className={paperSecondaryButtonCls}
               onClick={() => onShareWithAI('ciel')}
@@ -213,6 +222,9 @@ export default function ShareActions({
                 'Sharing with Ciel...'
               ) : (
                 'Share with Ciel'
+              )}
+              {(sharingWithCiel || preparingAIVersionTarget === 'ciel') && (
+                <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
               )}
             </button>
             {canShareWithCiel && canGetAIShareCoins && (
@@ -249,6 +261,7 @@ export default function ShareActions({
             `}
           >
             <button
+              aria-busy={sharing}
               type="button"
               className={paperPrimaryButtonCls}
               onClick={onConfirmShare}
@@ -256,6 +269,9 @@ export default function ShareActions({
             >
               <Icon icon="share" />
               {sharing ? 'Sharing...' : 'Share to Feed'}
+              {(sharing) && (
+                <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+              )}
             </button>
             <span
               className={css`
@@ -281,6 +297,7 @@ export default function ShareActions({
             Go Back
           </button>
           <button
+            aria-busy={sharingWithZero || sharingWithCiel}
             type="button"
             className={paperPrimaryButtonCls}
             onClick={onConfirmShareWithAI}
@@ -294,6 +311,9 @@ export default function ShareActions({
               : sharingWithCiel
                 ? 'Sharing with Ciel...'
                 : 'Confirm Share with Ciel'}
+            {(sharingWithZero || sharingWithCiel) && (
+              <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+            )}
           </button>
         </>
       )}

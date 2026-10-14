@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
@@ -11,6 +12,7 @@ export default function PasswordForm({
 }: {
   resetToken: string;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -54,6 +56,7 @@ export default function PasswordForm({
         }}
       >
         <Button
+          loading={pendingAction === 'handleSubmit'}
           style={{ fontSize: '2rem' }}
           disabled={!!errorMsg || stringIsEmpty(password)}
           variant="solid"
@@ -66,7 +69,11 @@ export default function PasswordForm({
     </div>
   );
 
-  async function handleSubmit() {
+  function handleSubmit(...args: Parameters<typeof handleSubmitRequest>) {
+    return runAction('handleSubmit', () => handleSubmitRequest(...args));
+  }
+
+  async function handleSubmitRequest() {
     if (!isValidPassword(password)) {
       return setErrorMsg('Passwords need to be at least 5 characters long');
     }

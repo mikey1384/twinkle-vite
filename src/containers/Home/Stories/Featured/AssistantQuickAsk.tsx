@@ -1,3 +1,4 @@
+import Icon from '~/components/Icon';
 import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -136,6 +137,7 @@ export default function AssistantQuickAsk({
           `}
         />
         <button
+          aria-busy={sending}
           type="submit"
           disabled={!text.trim() || sending || replying}
           className={css`
@@ -155,6 +157,9 @@ export default function AssistantQuickAsk({
           `}
         >
           Ask
+          {(sending) && (
+            <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+          )}
         </button>
       </form>
       {!text.trim() && !sending && !replying ? (

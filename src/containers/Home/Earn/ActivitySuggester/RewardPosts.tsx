@@ -73,6 +73,7 @@ export default function RewardPosts() {
         {posts.length > 0 && (
           <div className={primaryActionRow}>
             <Button
+              loading={skipping || loading}
               variant="soft"
               tone="raised"
               color={showMeAnotherPostButtonColor}
@@ -120,13 +121,16 @@ export default function RewardPosts() {
   async function handleLoadAnotherPostClick() {
     if (posts[0]?.id) {
       setSkipping(true);
-      await markPostAsSkipped({
-        earnType: 'karma',
-        action: 'reward',
-        contentType: posts[0].contentType,
-        contentId: posts[0].id
-      });
-      setSkipping(false);
+      try {
+        await markPostAsSkipped({
+          earnType: 'karma',
+          action: 'reward',
+          contentType: posts[0].contentType,
+          contentId: posts[0].id
+        });
+      } finally {
+        setSkipping(false);
+      }
     }
     const appElement = document.getElementById('App');
     if (appElement) {
@@ -138,16 +142,19 @@ export default function RewardPosts() {
 
   async function handleLoadPostsToReward() {
     setLoading(true);
-    const data = await loadPostsToReward();
-    for (const post of data) {
-      onSetContentState({
-        contentId: post.id,
-        contentType: post.contentType,
-        newState: post
-      });
+    try {
+      const data = await loadPostsToReward();
+      for (const post of data) {
+        onSetContentState({
+          contentId: post.id,
+          contentType: post.contentType,
+          newState: post
+        });
+      }
+      setPosts(data);
+    } finally {
+      setLoading(false);
     }
-    setPosts(data);
-    setLoading(false);
   }
 }
 

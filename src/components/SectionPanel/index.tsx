@@ -207,6 +207,7 @@ export default function SectionPanel({
                   />
                   {!stringIsEmpty(editedTitle) && title !== editedTitle && (
                     <Button
+                      loading={savingEdit}
                       style={{ marginLeft: '1rem', zIndex: 1000 }}
                       variant="soft"
                       tone="raised"

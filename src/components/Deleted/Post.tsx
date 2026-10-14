@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
@@ -28,6 +29,7 @@ export default function DeletedPost({
   onDeletePermanently?: (v: number) => void;
   style?: React.CSSProperties;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const onSetContentState = useContentContext(
     (v) => v.actions.onSetContentState
   );
@@ -523,6 +525,7 @@ export default function DeletedPost({
                     </Button>
                   )}
                   <Button
+                    loading={pendingAction === 'handleUndoDelete'}
                     onClick={() => handleUndoDelete({ redo: isRecovered })}
                     color="darkerGray"
                     style={{ marginLeft: '1rem' }}
@@ -557,7 +560,11 @@ export default function DeletedPost({
     }
   }
 
-  async function handleUndoDelete({ redo }: { redo: boolean }) {
+  function handleUndoDelete(...args: Parameters<typeof handleUndoDeleteRequest>) {
+    return runAction('handleUndoDelete', () => handleUndoDeleteRequest(...args));
+  }
+
+  async function handleUndoDeleteRequest({ redo }: { redo: boolean }) {
     const { success, isRecovered } = await deleteContent({
       id: contentId,
       contentType,

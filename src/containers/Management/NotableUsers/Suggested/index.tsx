@@ -291,6 +291,7 @@ export default function Suggested({
                 Add {member.username} to the notable roster?
               </span>
               <Button
+                loading={busyUserId === member.userId}
                 color="green"
                 variant="soft"
                 tone="raised"
@@ -317,7 +318,7 @@ export default function Suggested({
                 }}
                 style={{ flex: 1, minWidth: '20rem', padding: '0.6rem 0.8rem', fontSize: '1.4rem' }}
               />
-              <Button color="red" variant="soft" tone="raised" disabled={!dismissing.note.trim()} onClick={handleDismiss}>
+              <Button loading={busyUserId === dismissing.userId} color="red" variant="soft" tone="raised" disabled={!dismissing.note.trim()} onClick={handleDismiss}>
                 Dismiss
               </Button>
               <Button color="darkerGray" variant="soft" tone="raised" onClick={() => setDismissing(null)}>

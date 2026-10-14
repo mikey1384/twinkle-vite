@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
@@ -16,6 +17,7 @@ export default function GrammarQuestionGenerator({
   onSetMissionState: (arg0: any) => void;
   style?: React.CSSProperties;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const uploadGrammarQuestion = useAppContext(
     (v) => v.requestHelpers.uploadGrammarQuestion
   );
@@ -206,6 +208,7 @@ export default function GrammarQuestionGenerator({
           }}
         >
           <Button
+            loading={pendingAction === 'handleSubmitQuestion'}
             disabled={submitDisabled}
             style={{ fontSize: '2rem' }}
             color="logoBlue"
@@ -237,7 +240,15 @@ export default function GrammarQuestionGenerator({
     </div>
   );
 
-  async function handleSubmitQuestion() {
+  function handleSubmitQuestion(
+
+    ...args: Parameters<typeof handleSubmitQuestionRequest>
+
+  ) {
+    return runAction('handleSubmitQuestion', () => handleSubmitQuestionRequest(...args));
+  }
+
+  async function handleSubmitQuestionRequest() {
     const { alreadyExists, question } = await uploadGrammarQuestion({
       leftSideText: finalLeftSideText,
       rightSideText: finalRightSideText,

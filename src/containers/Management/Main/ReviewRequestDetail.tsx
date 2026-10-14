@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
@@ -22,6 +23,7 @@ export default function ReviewRequestDetail({
   item: BuildReviewRequestItem;
   onDecided: (item: BuildReviewRequestItem) => void;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const navigate = useNavigate();
   const { colorKey: successColor } = useRoleColor('success', {
     fallback: 'green'
@@ -144,6 +146,7 @@ export default function ReviewRequestDetail({
             ) : null}
             {item.decisions.includes('approve') ? (
               <Button
+                loading={pendingAction === 'decision:approve'}
                 color={successColor}
                 variant="solid"
                 tone="raised"
@@ -156,6 +159,7 @@ export default function ReviewRequestDetail({
             ) : null}
             {item.decisions.includes('reject') ? (
               <Button
+                loading={pendingAction === 'decision:reject'}
                 variant="outline"
                 color="redOrange"
                 disabled={busy || (needsNote && !note.trim())}
@@ -166,6 +170,7 @@ export default function ReviewRequestDetail({
             ) : null}
             {item.decisions.includes('revoke') ? (
               <Button
+                loading={pendingAction === 'decision:revoke'}
                 variant="outline"
                 color="redOrange"
                 disabled={busy || !note.trim()}
@@ -192,7 +197,11 @@ export default function ReviewRequestDetail({
     </div>
   );
 
-  async function handleDecision(decision: 'approve' | 'reject' | 'revoke') {
+  function handleDecision(...args: Parameters<typeof handleDecisionRequest>) {
+    return runAction('decision:' + args[0], () => handleDecisionRequest(...args));
+  }
+
+  async function handleDecisionRequest(decision: 'approve' | 'reject' | 'revoke') {
     if (busy) return;
     setBusy(true);
     setError('');

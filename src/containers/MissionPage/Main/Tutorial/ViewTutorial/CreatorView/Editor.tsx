@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
@@ -20,6 +21,7 @@ export default function Editor({
   tutorialPrompt?: string;
   tutorialButtonLabel?: string;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const updateTutorialPrompt = useAppContext(
@@ -74,6 +76,7 @@ export default function Editor({
       </div>
       <div style={{ display: 'flex', marginTop: '2rem' }}>
         <Button
+          loading={pendingAction === 'handleDone'}
           style={{ fontSize: '1.7rem' }}
           color={doneColor}
           onClick={handleDone}
@@ -91,7 +94,11 @@ export default function Editor({
     </div>
   );
 
-  async function handleDone() {
+  function handleDone(...args: Parameters<typeof handleDoneRequest>) {
+    return runAction('handleDone', () => handleDoneRequest(...args));
+  }
+
+  async function handleDoneRequest() {
     const success = await updateTutorialPrompt({
       missionId,
       tutorialPrompt: editedTutorialPrompt,

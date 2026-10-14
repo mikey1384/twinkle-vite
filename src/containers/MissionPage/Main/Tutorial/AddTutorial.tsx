@@ -1,4 +1,5 @@
 import React from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { panel } from '../../Styles';
@@ -11,6 +12,7 @@ export default function AddTutorial({
   missionId: number;
   missionTitle: string;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const attachMissionTutorial = useAppContext(
     (v) => v.requestHelpers.attachMissionTutorial
   );
@@ -27,14 +29,22 @@ export default function AddTutorial({
         marginBottom: '5rem'
       }}
     >
-      <Button variant="soft" tone="raised" onClick={handleAttachTutorial}>
+      <Button loading={pendingAction === 'handleAttachTutorial'} variant="soft" tone="raised" onClick={handleAttachTutorial}>
         <Icon icon="plus" />
         <span style={{ marginLeft: '0.7rem' }}>Attach a Tutorial</span>
       </Button>
     </div>
   );
 
-  async function handleAttachTutorial() {
+  function handleAttachTutorial(
+
+    ...args: Parameters<typeof handleAttachTutorialRequest>
+
+  ) {
+    return runAction('handleAttachTutorial', () => handleAttachTutorialRequest(...args));
+  }
+
+  async function handleAttachTutorialRequest() {
     const tutorialId = await attachMissionTutorial({ missionId, missionTitle });
     onSetMissionState({ missionId, newState: { tutorialId } });
   }

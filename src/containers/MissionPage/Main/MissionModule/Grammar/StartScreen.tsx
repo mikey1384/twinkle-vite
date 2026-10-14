@@ -83,6 +83,7 @@ export default function StartScreen({
         }}
       >
         <Button
+          loading={loading}
           color="green"
           variant="soft"
           tone="raised"

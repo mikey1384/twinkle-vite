@@ -94,6 +94,7 @@ export default function CopyAndPaste({
         >
           {status === 'pass' && (
             <Button
+              loading={submitDisabled}
               disabled={submitDisabled}
               onClick={handleSuccess}
               color={successColor}

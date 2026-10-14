@@ -1,3 +1,4 @@
+import Icon from '~/components/Icon';
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import {
@@ -72,12 +73,16 @@ export default function AiEnergyRefillNotice({
           Refill time has passed; this balance is from before the refill.{' '}
           {onRefresh && (
             <button
+              aria-busy={refreshing}
               type="button"
               className={refreshCls}
               disabled={refreshing}
               onClick={onRefresh}
             >
               {refreshing ? 'Checking…' : refreshLabel}
+              {(refreshing) && (
+                <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+              )}
             </button>
           )}
         </div>

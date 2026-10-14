@@ -3,6 +3,7 @@ import {
   type OpenAiImageModel
 } from '~/helpers/aiImageModels';
 import React, { useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import type { AiEnergyDisplayPolicy } from '~/helpers/aiEnergyDisplay';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -99,6 +100,7 @@ export default function GeneratedImageDisplay({
   communityFundsRequirements,
   onRechargeWithCommunityFunds
 }: GeneratedImageDisplayProps) {
+  const { pendingAction, runAction } = usePendingAction();
   const [isEditing, setIsEditing] = useState(false);
   const themeRole = useRoleColor('button', {
     themeName: themeColor,
@@ -145,7 +147,7 @@ export default function GeneratedImageDisplay({
             &:hover .edit-overlay {
               opacity: 1;
             }
-            
+
             &:hover .action-buttons {
               opacity: 1;
               transform: translate(-50%, -50%) scale(1);
@@ -348,6 +350,8 @@ export default function GeneratedImageDisplay({
             </button>
 
             <button
+              disabled={pendingAction === 'download'}
+              aria-busy={pendingAction === 'download'}
               onClick={handleDownload}
               className={css`
                 background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -377,6 +381,9 @@ export default function GeneratedImageDisplay({
             >
               <Icon icon="download" />
               <span>Download</span>
+              {(pendingAction === 'download') && (
+                <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+              )}
             </button>
           </div>
         )}
@@ -438,7 +445,11 @@ export default function GeneratedImageDisplay({
     onImageEdited?.(dataUrl);
   }
 
-  async function handleDownload() {
+  function handleDownload(...args: Parameters<typeof handleDownloadRequest>) {
+    return runAction('download', () => handleDownloadRequest(...args));
+  }
+
+  async function handleDownloadRequest() {
     if (!currentImageSrc) return;
 
     try {

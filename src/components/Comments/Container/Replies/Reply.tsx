@@ -554,6 +554,7 @@ function Reply({
                             />
                           ) : (
                             <Button
+                              loading={loadingReplies}
                               color="darkerGray"
                               variant="ghost"
                               style={{

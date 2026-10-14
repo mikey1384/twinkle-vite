@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import StepSlide from '../components/StepSlide';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
@@ -19,6 +20,7 @@ export default function ConnectReplToGitHub({
   onOpenTutorial: () => void;
   taskType: string;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
   const linkColor = useMemo(
     () => linkRole.getColor() || Color.logoBlue(),
@@ -102,6 +104,7 @@ export default function ConnectReplToGitHub({
                   </p>
                   <div style={{ textAlign: 'center', marginTop: '3rem' }}>
                     <Button
+                      loading={pendingAction === 'handleUpdateSelectedIndex'}
                       color="logoBlue"
                       variant="soft"
                       tone="raised"
@@ -127,7 +130,17 @@ export default function ConnectReplToGitHub({
     </StepSlide>
   );
 
-  async function handleUpdateSelectedIndex(newIndex: number) {
+  function handleUpdateSelectedIndex(
+
+    ...args: Parameters<typeof handleUpdateSelectedIndexRequest>
+
+  ) {
+    return runAction('handleUpdateSelectedIndex', () =>
+      handleUpdateSelectedIndexRequest(...args)
+    );
+  }
+
+  async function handleUpdateSelectedIndexRequest(newIndex: number) {
     await updateMissionStatus({
       missionType: taskType,
       newStatus: { selectedIndex: newIndex }

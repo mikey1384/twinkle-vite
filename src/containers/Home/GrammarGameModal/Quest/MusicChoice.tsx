@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Icon from '~/components/Icon';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -14,7 +15,8 @@ export default function MusicChoice() {
     (v) => v.requestHelpers.updateGrammarblesSettings
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const [saving, setSaving] = useState(false);
+  const [savingChoice, setSavingChoice] = useState<boolean | null>(null);
+  const saving = savingChoice !== null;
   const [error, setError] = useState('');
 
   return (
@@ -26,16 +28,20 @@ export default function MusicChoice() {
         <button
           className={cx(choiceCls, onCls)}
           disabled={saving}
+          aria-busy={savingChoice === true}
           onClick={() => handleChoose(true)}
         >
           <PixelIcon name="musicOn" scale={2} /> Music on
+          {savingChoice === true && <Icon icon="spinner" pulse />}
         </button>
         <button
           className={cx(choiceCls, offCls)}
           disabled={saving}
+          aria-busy={savingChoice === false}
           onClick={() => handleChoose(false)}
         >
           <PixelIcon name="musicOff" scale={2} /> Music off
+          {savingChoice === false && <Icon icon="spinner" pulse />}
         </button>
       </div>
       {saving && <p role="status">Saving your choice…</p>}
@@ -48,7 +54,7 @@ export default function MusicChoice() {
 
   async function handleChoose(music: boolean) {
     if (saving) return;
-    setSaving(true);
+    setSavingChoice(music);
     setError('');
     try {
       const result = await updateSettings({ music });
@@ -60,7 +66,7 @@ export default function MusicChoice() {
     } catch {
       setError('Could not save your choice. Please try again.');
     } finally {
-      setSaving(false);
+      setSavingChoice(null);
     }
   }
 }

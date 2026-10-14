@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import SelectArchivedSlideModal from '../SelectArchivedSlideModal';
@@ -15,6 +16,7 @@ export default function AddSlide({
   interactiveId: number;
   lastFork?: any;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const appendInteractiveSlide = useAppContext(
     (v) => v.requestHelpers.appendInteractiveSlide
   );
@@ -74,7 +76,7 @@ export default function AddSlide({
           <div
             style={{ width: '100%', display: 'flex', flexDirection: 'column' }}
           >
-            <Button onClick={handleAddNewSlide} variant="soft" tone="raised">
+            <Button loading={pendingAction === 'handleAddNewSlide'} onClick={handleAddNewSlide} variant="soft" tone="raised">
               <Icon icon="plus" />
               <span style={{ marginLeft: '0.7rem' }}>Insert a New Slide</span>
             </Button>
@@ -144,7 +146,11 @@ export default function AddSlide({
     setSelectArchivedSlideModalShown(false);
   }
 
-  async function handleAddNewSlide() {
+  function handleAddNewSlide(...args: Parameters<typeof handleAddNewSlideRequest>) {
+    return runAction('handleAddNewSlide', () => handleAddNewSlideRequest(...args));
+  }
+
+  async function handleAddNewSlideRequest() {
     const { slide, numUpdates } = await appendInteractiveSlide({
       interactiveId,
       lastFork

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -24,6 +25,7 @@ export default function EditSupermodModal({
   onHide: () => void;
   target: any;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColor = useMemo(
     () => doneRole.getColor() || Color.blue(),
@@ -128,6 +130,7 @@ export default function EditSupermodModal({
             Cancel
           </Button>
           <Button
+            loading={pendingAction === 'handleSubmit'}
             color={doneColor}
             disabled={role === selectedRole}
             onClick={handleSubmit}
@@ -139,7 +142,11 @@ export default function EditSupermodModal({
     </Modal>
   );
 
-  async function handleSubmit() {
+  function handleSubmit(...args: Parameters<typeof handleSubmitRequest>) {
+    return runAction('handleSubmit', () => handleSubmitRequest(...args));
+  }
+
+  async function handleSubmitRequest() {
     const { unlockedAchievementIds, level, achievementPoints, title } =
       await changeSupermodRole({
         userId: target.id,

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
@@ -35,6 +36,7 @@ import {
 } from './styles';
 
 export default function UserBuckets() {
+  const { pendingAction, runAction } = usePendingAction();
   const loadBucketsHelper = useAppContext(
     (v) => v.requestHelpers.loadAiEnergyManualIdentityBuckets
   );
@@ -178,7 +180,7 @@ export default function UserBuckets() {
             <Button
               color="logoBlue"
               variant="solid"
-              loading={busy}
+              loading={pendingAction === 'handleCreateBucket'}
               disabled={busy || !newBucketLabel.trim()}
               onClick={handleCreateBucket}
             >
@@ -250,7 +252,7 @@ export default function UserBuckets() {
           <Button
             color="logoBlue"
             variant="soft"
-            loading={busy}
+            loading={pendingAction === 'handleMigrateLegacy'}
             onClick={handleMigrateLegacy}
           >
             <Icon icon="sync" />
@@ -292,7 +294,7 @@ export default function UserBuckets() {
                   <Button
                     color="green"
                     variant="solid"
-                    loading={busy}
+                    loading={pendingAction === 'ban:false'}
                     onClick={() => handleSetBan(false)}
                   >
                     <Icon icon="undo" />
@@ -302,7 +304,7 @@ export default function UserBuckets() {
                   <Button
                     color={banScopeDraft === 'signup' ? 'orange' : 'rose'}
                     variant="solid"
-                    loading={busy}
+                    loading={pendingAction === 'ban:true'}
                     disabled={busy || ruleCount === 0}
                     onClick={() => handleSetBan(true)}
                   >
@@ -366,7 +368,7 @@ export default function UserBuckets() {
                   <Button
                     color="logoBlue"
                     variant="solid"
-                    loading={busy}
+                    loading={pendingAction === 'handleMergeBuckets'}
                     disabled={busy || !mergeTargetId || !mergeName.trim()}
                     onClick={handleMergeBuckets}
                   >
@@ -405,7 +407,7 @@ export default function UserBuckets() {
                     <Button
                       color="logoBlue"
                       variant="soft"
-                      loading={busy}
+                      loading={pendingAction === 'handleRenameBucket'}
                       disabled={
                         busy ||
                         !bucketNameDraft.trim() ||
@@ -499,7 +501,7 @@ export default function UserBuckets() {
                   <Button
                     color="logoBlue"
                     variant="soft"
-                    loading={busy}
+                    loading={pendingAction === 'ban:true'}
                     disabled={
                       busy ||
                       (banMessageDraft.trim() ===
@@ -595,6 +597,7 @@ export default function UserBuckets() {
                           <span>{view.label}</span>
                         </div>
                         <Button
+                          loading={pendingAction === 'remove:' + Number(rule.id)}
                           color="rose"
                           variant="outline"
                           disabled={busy}
@@ -640,6 +643,7 @@ export default function UserBuckets() {
                       placeholder="email@example.com"
                     />
                     <Button
+                      loading={pendingAction === 'handleAddEmail'}
                       color="logoBlue"
                       variant="soft"
                       disabled={busy || !emailDraft.trim()}
@@ -670,6 +674,7 @@ export default function UserBuckets() {
                       placeholder="203.0.113.7"
                     />
                     <Button
+                      loading={pendingAction === 'handleAddIp'}
                       color="logoBlue"
                       variant="soft"
                       disabled={busy || !ipDraft.trim()}
@@ -722,6 +727,7 @@ export default function UserBuckets() {
                       placeholder="Device id (from cost evidence)"
                     />
                     <Button
+                      loading={pendingAction === 'handleAddDevice'}
                       color="logoBlue"
                       variant="soft"
                       disabled={busy || !deviceDraft.trim()}
@@ -799,7 +805,11 @@ export default function UserBuckets() {
     };
   }
 
-  async function handleAddDevice() {
+  function handleAddDevice(...args: Parameters<typeof handleAddDeviceRequest>) {
+    return runAction('handleAddDevice', () => handleAddDeviceRequest(...args));
+  }
+
+  async function handleAddDeviceRequest() {
     const deviceId = deviceDraft.trim();
     if (!selectedBucket || !deviceId || busy) return;
     setBusy(true);
@@ -839,7 +849,11 @@ export default function UserBuckets() {
     }
   }
 
-  async function handleCreateBucket() {
+  function handleCreateBucket(...args: Parameters<typeof handleCreateBucketRequest>) {
+    return runAction('handleCreateBucket', () => handleCreateBucketRequest(...args));
+  }
+
+  async function handleCreateBucketRequest() {
     const label = newBucketLabel.trim();
     if (!label || busy) return;
     setBusy(true);
@@ -855,7 +869,11 @@ export default function UserBuckets() {
     }
   }
 
-  async function handleRenameBucket() {
+  function handleRenameBucket(...args: Parameters<typeof handleRenameBucketRequest>) {
+    return runAction('handleRenameBucket', () => handleRenameBucketRequest(...args));
+  }
+
+  async function handleRenameBucketRequest() {
     const label = bucketNameDraft.trim();
     if (!selectedBucket || !label || label === selectedBucket.label || busy) {
       return;
@@ -875,7 +893,15 @@ export default function UserBuckets() {
     }
   }
 
-  async function handleMigrateLegacy() {
+  function handleMigrateLegacy(
+
+    ...args: Parameters<typeof handleMigrateLegacyRequest>
+
+  ) {
+    return runAction('handleMigrateLegacy', () => handleMigrateLegacyRequest(...args));
+  }
+
+  async function handleMigrateLegacyRequest() {
     if (busy) return;
     setBusy(true);
     setError('');
@@ -918,7 +944,11 @@ export default function UserBuckets() {
     }
   }
 
-  async function handleMergeBuckets() {
+  function handleMergeBuckets(...args: Parameters<typeof handleMergeBucketsRequest>) {
+    return runAction('handleMergeBuckets', () => handleMergeBucketsRequest(...args));
+  }
+
+  async function handleMergeBucketsRequest() {
     const label = mergeName.trim();
     if (!selectedBucket || !mergeTargetId || !label || busy) return;
     setBusy(true);
@@ -942,7 +972,11 @@ export default function UserBuckets() {
     }
   }
 
-  async function handleSetBan(isBanned: boolean) {
+  function handleSetBan(...args: Parameters<typeof handleSetBanRequest>) {
+    return runAction('ban:' + args[0], () => handleSetBanRequest(...args));
+  }
+
+  async function handleSetBanRequest(isBanned: boolean) {
     if (!selectedBucket || busy) return;
     setBusy(true);
     setError('');
@@ -975,7 +1009,11 @@ export default function UserBuckets() {
     }
   }
 
-  async function handleAddEmail() {
+  function handleAddEmail(...args: Parameters<typeof handleAddEmailRequest>) {
+    return runAction('handleAddEmail', () => handleAddEmailRequest(...args));
+  }
+
+  async function handleAddEmailRequest() {
     const email = emailDraft.trim();
     if (!selectedBucket || !email || busy) return;
     setBusy(true);
@@ -996,7 +1034,11 @@ export default function UserBuckets() {
     }
   }
 
-  async function handleAddIp() {
+  function handleAddIp(...args: Parameters<typeof handleAddIpRequest>) {
+    return runAction('handleAddIp', () => handleAddIpRequest(...args));
+  }
+
+  async function handleAddIpRequest() {
     const ip = ipDraft.trim();
     if (!selectedBucket || !ip || busy) return;
     setBusy(true);
@@ -1017,7 +1059,11 @@ export default function UserBuckets() {
     }
   }
 
-  async function handleRemoveRule(ruleId: number) {
+  function handleRemoveRule(...args: Parameters<typeof handleRemoveRuleRequest>) {
+    return runAction('remove:' + args[0], () => handleRemoveRuleRequest(...args));
+  }
+
+  async function handleRemoveRuleRequest(ruleId: number) {
     if (!selectedBucket || !ruleId || busy) return;
     setBusy(true);
     setError('');

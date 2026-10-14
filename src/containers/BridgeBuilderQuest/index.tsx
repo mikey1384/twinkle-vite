@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { Link, useSearchParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
@@ -67,6 +68,7 @@ export default function BridgeBuilderQuest({
   // board and the review queues, kept off the members' page
   view?: 'member' | 'staff';
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const userId = useKeyContext((v) => v.myState.userId);
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const loadMeetupQuest = useAppContext(
@@ -363,6 +365,7 @@ export default function BridgeBuilderQuest({
                       : `Your crew "${notice.crewName}" was disbanded by its founder. You can join or start another crew any time.`}
                   </span>
                   <Button
+                    loading={pendingAction === 'dismiss:' + notice.crewId}
                     size="sm"
                     variant="ghost"
                     color="darkGray"
@@ -765,7 +768,15 @@ export default function BridgeBuilderQuest({
     }
   }
 
-  async function handleDismissNotice(crewId: number) {
+  function handleDismissNotice(
+
+    ...args: Parameters<typeof handleDismissNoticeRequest>
+
+  ) {
+    return runAction('dismiss:' + args[0], () => handleDismissNoticeRequest(...args));
+  }
+
+  async function handleDismissNoticeRequest(crewId: number) {
     try {
       await dismissMeetupNotice(crewId);
     } finally {

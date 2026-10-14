@@ -1,3 +1,4 @@
+import Icon from '~/components/Icon';
 import React, { useEffect, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { PAPER } from '../../paperTheme';
@@ -158,6 +159,7 @@ export default function ReflectionStatsPanel({
       />
 
       <button
+        aria-busy={savingVisibility}
         type="button"
         role="switch"
         aria-checked={showOnProfile}
@@ -199,6 +201,9 @@ export default function ReflectionStatsPanel({
           />
         </span>
         Show my stats on my profile
+        {(savingVisibility) && (
+          <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+        )}
       </button>
       {error && (
         <p

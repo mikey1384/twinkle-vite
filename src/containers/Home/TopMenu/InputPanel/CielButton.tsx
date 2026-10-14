@@ -35,6 +35,8 @@ export default function CielButton({ style }: { style?: React.CSSProperties }) {
     <ErrorBoundary componentPath="TopMenu/InputPanel/CielButton">
       <div style={{ position: 'relative', cursor: 'pointer' }}>
         <Button
+          disabled={chatLoading}
+          aria-busy={chatLoading}
           aria-label="Chat with Ciel"
           style={{
             opacity: chatLoading ? 0.5 : 1,

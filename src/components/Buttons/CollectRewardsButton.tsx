@@ -108,6 +108,9 @@ export default function CollectRewardsButton({
       ) : (
         'Collect Rewards'
       )}
+      {(isOpening) && (
+        <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+      )}
     </button>
   );
 }

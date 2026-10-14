@@ -9,6 +9,7 @@ function environment(initial = {}) {
   const request = compile(base + 'useChatDialogRequest.ts', { react: runtime.hooks }).default;
   const Component = compile(base + 'SettingsModal/PurchaseModal.tsx', {
     react: runtime.hooks, '~/components/Modal': Modal, '~/components/Button': Button, '~/components/Icon': Icon,
+    '~/constants/siteBrand': { SITE_NAME: 'Twinkle' },
     '../useChatDialogRequest': request, '../chatFormStyles': { chatFormClass: 'form', chatFormModalClass: 'modal', chatFormActionStyle: { minHeight: 44 } }
   }).default;
   props = { scope: '1:7:theme:rose', title: 'Unlock channel color', description: 'Unlock rose.', price: 100, balance: 1000,
@@ -28,11 +29,11 @@ test('purchase confirmation states the exact price, balance and named dialog wit
   assert.ok(nodes(tree, node => node.type === 'p').some(node => node.props.children === 'Your balance: 1,000 coins'));
 });
 
-test('pending purchase stays focused, guards duplicate clicks and all dismissal paths', async () => {
+test('pending purchase uses standard loading, guards duplicate clicks and all dismissal paths', async () => {
   const env = environment(); const submit = confirm(env.render());
   submit.props.onClick(); submit.props.onClick(); assert.equal(env.purchases.length, 1);
   const tree = env.render(); assert.equal(confirm(tree).props['aria-busy'], true); assert.equal(confirm(tree).props.disabled, false);
-  assert.equal(confirm(tree).props.loading, undefined); assert.equal(tree.props.closeOnEscape, false); assert.equal(tree.props.showCloseButton, false);
+  assert.equal(confirm(tree).props.loading, true); assert.equal(tree.props.closeOnEscape, false); assert.equal(tree.props.showCloseButton, false);
   assert.equal(tree.props.closeOnBackdropClick, false); assert.equal(buttons(tree)[0].props.disabled, true);
   tree.props.onClose(); buttons(tree)[0].props.onClick(); assert.equal(env.hides, 0);
   env.purchases[0].resolve(receipt); await settle(); assert.deepEqual(env.applied, [receipt]); assert.equal(env.hides, 1);

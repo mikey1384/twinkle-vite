@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
@@ -95,6 +96,7 @@ function statusColorKey(status: string) {
 }
 
 export default function BuildRewardApprovals() {
+  const { pendingAction, runAction } = usePendingAction();
   const location = useLocation();
   const navigate = useNavigate();
   // /management?rewardReview=<id> or ?review=<type>:<id> (the chat cards'
@@ -204,6 +206,7 @@ export default function BuildRewardApprovals() {
         innerStyle={{ paddingLeft: 0, paddingRight: 0 }}
         button={
           <Button
+            loading={pendingAction === 'refresh'}
             color="darkerGray"
             variant="solid"
             tone="raised"
@@ -352,7 +355,8 @@ export default function BuildRewardApprovals() {
           <div className={loadMoreRowClass}>
             <LoadMoreButton
               variant="ghost"
-              loading={busy}
+              loading={pendingAction === 'more'}
+              disabled={busy || pendingAction !== null}
               style={{ fontSize: '2rem' }}
               onClick={handleLoadMore}
             />
@@ -530,6 +534,7 @@ export default function BuildRewardApprovals() {
                     <RewardProposalTryButton reviewId={selected.id} />
                   ) : null}
                   <Button
+                    loading={pendingAction === 'workspace'}
                     variant="outline"
                     color="logoBlue"
                     disabled={busy}
@@ -544,6 +549,7 @@ export default function BuildRewardApprovals() {
                   </Button>
                   {selected.proposalBuildId ? (
                     <Button
+                      loading={pendingAction === 'propose'}
                       color="logoBlue"
                       variant="solid"
                       tone="raised"
@@ -603,6 +609,7 @@ export default function BuildRewardApprovals() {
                   {isOpenRequest(selected.status) ? (
                     <>
                       <Button
+                        loading={pendingAction === 'decision:approve'}
                         color={successColor}
                         variant="solid"
                         tone="raised"
@@ -617,6 +624,7 @@ export default function BuildRewardApprovals() {
                         </span>
                       </Button>
                       <Button
+                        loading={pendingAction === 'decision:reject'}
                         variant="outline"
                         color="redOrange"
                         disabled={busy || !reason.trim()}
@@ -627,6 +635,7 @@ export default function BuildRewardApprovals() {
                     </>
                   ) : (
                     <Button
+                      loading={pendingAction === 'decision:revoke'}
                       variant="outline"
                       color="redOrange"
                       disabled={busy || !reason.trim()}
@@ -741,7 +750,11 @@ export default function BuildRewardApprovals() {
     }
   }
 
-  async function handleLoadMore() {
+  function handleLoadMore(...args: Parameters<typeof handleLoadMoreRequest>) {
+    return runAction('more', () => handleLoadMoreRequest(...args));
+  }
+
+  async function handleLoadMoreRequest() {
     if (busy) return;
     if (moreLocally) {
       setNumShown((count) => count + PAGE_SIZE);
@@ -771,7 +784,11 @@ export default function BuildRewardApprovals() {
     }
   }
 
-  async function handleRefresh() {
+  function handleRefresh(...args: Parameters<typeof handleRefreshRequest>) {
+    return runAction('refresh', () => handleRefreshRequest(...args));
+  }
+
+  async function handleRefreshRequest() {
     setBusy(true);
     setError('');
     try {
@@ -804,7 +821,15 @@ export default function BuildRewardApprovals() {
     return config;
   }
 
-  async function handleOpenProposalWorkspace() {
+  function handleOpenProposalWorkspace(
+
+    ...args: Parameters<typeof handleOpenProposalWorkspaceRequest>
+
+  ) {
+    return runAction('workspace', () => handleOpenProposalWorkspaceRequest(...args));
+  }
+
+  async function handleOpenProposalWorkspaceRequest() {
     if (!selected || busy) return;
     setBusy(true);
     setProposalError('');
@@ -828,7 +853,11 @@ export default function BuildRewardApprovals() {
     }
   }
 
-  async function handlePropose() {
+  function handlePropose(...args: Parameters<typeof handleProposeRequest>) {
+    return runAction('propose', () => handleProposeRequest(...args));
+  }
+
+  async function handleProposeRequest() {
     if (!selected || busy) return;
     const config = parseRulesForOffer();
     if (!config) return;
@@ -862,7 +891,11 @@ export default function BuildRewardApprovals() {
     }
   }
 
-  async function handleDecision(decision: string) {
+  function handleDecision(...args: Parameters<typeof handleDecisionRequest>) {
+    return runAction('decision:' + args[0], () => handleDecisionRequest(...args));
+  }
+
+  async function handleDecisionRequest(decision: string) {
     if (!selected || busy) return;
     let config: RewardConfig | undefined;
     if (decision === 'approve') {

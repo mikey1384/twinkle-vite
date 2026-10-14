@@ -109,6 +109,7 @@ export default function ChangeUsername({
           style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}
         >
           <Button
+            loading={changing}
             variant="soft"
             tone="raised"
             style={{ marginTop: '0.5rem' }}
@@ -135,16 +136,19 @@ export default function ChangeUsername({
       return;
     }
     setChanging(true);
-    const { coins, alreadyExists } = await changeUsername(newUsername);
-    if (alreadyExists) {
-      setUsernameAvailable(false);
-      setErrorMessage(usernameAlreadyTakenLabel);
-    } else {
-      socket.emit('change_username', newUsername);
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      setStoredItem('username', newUsername);
-      setNewUsername('');
+    try {
+      const { coins, alreadyExists } = await changeUsername(newUsername);
+      if (alreadyExists) {
+        setUsernameAvailable(false);
+        setErrorMessage(usernameAlreadyTakenLabel);
+      } else {
+        socket.emit('change_username', newUsername);
+        onSetUserState({ userId, newState: { twinkleCoins: coins } });
+        setStoredItem('username', newUsername);
+        setNewUsername('');
+      }
+    } finally {
+      setChanging(false);
     }
-    setChanging(false);
   }
 }

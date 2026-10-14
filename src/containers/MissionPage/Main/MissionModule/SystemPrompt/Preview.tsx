@@ -285,6 +285,7 @@ export default function SystemPromptPreview({
           `}
         >
           <Button
+            loading={sending}
             color="darkBlue"
             variant="soft"
             tone="raised"
@@ -294,7 +295,7 @@ export default function SystemPromptPreview({
           >
             {sending ? (
               <>
-                <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
+
                 Thinking...
               </>
             ) : (

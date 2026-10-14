@@ -41,6 +41,8 @@ export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
         }}
       >
         <Button
+          disabled={chatLoading}
+          aria-busy={chatLoading}
           aria-label="Chat with Zero"
           style={{
             opacity: chatLoading ? 0.5 : 1,

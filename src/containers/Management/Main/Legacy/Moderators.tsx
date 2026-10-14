@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
@@ -24,6 +25,7 @@ const userLabel = 'User';
 const deviceIsMobile = isMobile(navigator);
 
 export default function Moderators({ canManage }: { canManage: boolean }) {
+  const { pendingAction, runAction } = usePendingAction();
   const userId = useKeyContext((v) => v.myState.userId);
   const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });
   const tableHeaderColor = tableHeaderRole.colorKey || 'logoBlue';
@@ -84,6 +86,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
                 <span style={{ marginLeft: '0.7rem' }}>{addLabel}</span>
               </Button>
               <Button
+                loading={pendingAction === 'handleDownloadCSV'}
                 color="darkerGray"
                 variant="solid"
                 tone="raised"
@@ -209,7 +212,11 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
     setConvertModalTarget(null);
   }
 
-  async function handleDownloadCSV() {
+  function handleDownloadCSV(...args: Parameters<typeof handleDownloadCSVRequest>) {
+    return runAction('handleDownloadCSV', () => handleDownloadCSVRequest(...args));
+  }
+
+  async function handleDownloadCSVRequest() {
     try {
       const response = await loadModeratorsCSV();
       const blob = new Blob([response], { type: 'text/csv' });

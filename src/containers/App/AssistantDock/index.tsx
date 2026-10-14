@@ -414,6 +414,7 @@ function DockWindow({
                 `}
               />
               <button
+                aria-busy={sending}
                 type="submit"
                 disabled={(!text.trim() && !askContext) || sending || replying}
                 className={css`
@@ -432,6 +433,9 @@ function DockWindow({
                 `}
               >
                 Send
+                {(sending) && (
+                  <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                )}
               </button>
             </form>
           </div>

@@ -1,4 +1,5 @@
 import React, { useRef, useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import CodeSandbox from '~/components/Forms/CodeSandbox';
 import defaultCode from './constants/defaultCode';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -22,6 +23,7 @@ export default function FinalizeYourCode({
   username: string;
   onSetCode: (v: any) => void;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
@@ -83,6 +85,7 @@ export default function FinalizeYourCode({
           />
         </div>
         <Button
+          loading={pendingAction === 'handleSave'}
           disabled={!saveAvailable}
           onClick={handleSave}
           style={{ marginTop: '2rem', marginBottom: '-0.5rem' }}
@@ -99,7 +102,11 @@ export default function FinalizeYourCode({
     </ErrorBoundary>
   );
 
-  async function handleSave() {
+  function handleSave(...args: Parameters<typeof handleSaveRequest>) {
+    return runAction('handleSave', () => handleSaveRequest(...args));
+  }
+
+  async function handleSaveRequest() {
     await updateMissionStatus({
       missionType: task.missionType,
       newStatus: { code }

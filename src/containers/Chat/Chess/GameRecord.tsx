@@ -1,3 +1,4 @@
+import Icon from '~/components/Icon';
 import React, { useEffect, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -118,6 +119,7 @@ function GameRecordContent({
               </div>
             )}
             <button
+              aria-busy={status === 'loading'}
               type="button"
               disabled={status === 'loading'}
               onClick={handleReveal}
@@ -148,6 +150,9 @@ function GameRecordContent({
                     : showPgn
                       ? 'Show FEN & PGN'
                       : 'Show FEN'}
+              {(status === 'loading') && (
+                <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+              )}
             </button>
           </div>
         ) : (

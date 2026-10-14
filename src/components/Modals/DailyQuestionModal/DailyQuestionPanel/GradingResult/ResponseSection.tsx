@@ -299,6 +299,7 @@ export default function ResponseSection({
                 `}
               >
                 <button
+                  aria-busy={refining && !preparingAIVersionTarget}
                   type="button"
                   className={paperSecondaryButtonCls}
                   onClick={onRefine}
@@ -308,6 +309,9 @@ export default function ResponseSection({
                   {refining && !preparingAIVersionTarget
                     ? 'Polishing...'
                     : 'See AI-polished version'}
+                  {(refining && !preparingAIVersionTarget) && (
+                    <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                  )}
                 </button>
               </div>
             )}

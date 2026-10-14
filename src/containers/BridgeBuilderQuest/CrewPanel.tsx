@@ -157,6 +157,7 @@ export default function CrewPanel({
           placeholder="Your branch's name"
         />
         <Button
+          loading={crewAction.pendingAction === 'branch'}
           variant="soft"
           color="logoBlue"
           style={{ marginTop: '0.8rem' }}
@@ -164,7 +165,7 @@ export default function CrewPanel({
           onClick={() => {
             if (mustVerifyBranch) trackMeetupQuestView('branch_verify_pick');
             crewAction.run(() =>
-              updateMyMeetupMembership({ crewId: crew.crewId, branch })
+              updateMyMeetupMembership({ crewId: crew.crewId, branch }), 'branch'
             );
           }}
         >
@@ -529,13 +530,14 @@ export default function CrewPanel({
                 member.userId !== myId &&
                 !member.branchVerified && member.branchStatus !== 'not_student' && (
                   <Button
+                    loading={crewAction.pendingAction === 'nudge:' + member.userId}
                     size="sm"
                     color="orange"
                     disabled={crewAction.busy}
                     style={{ marginLeft: 'auto' }}
                     onClick={() =>
                       crewAction.run(() =>
-                        nudgeMeetupBranch({ crewId: crew.crewId, userId: member.userId })
+                        nudgeMeetupBranch({ crewId: crew.crewId, userId: member.userId }), 'nudge:' + member.userId
                       )
                     }
                   >
@@ -808,6 +810,7 @@ export default function CrewPanel({
                     />
                   )}
                   <Button
+                    loading={grownUpAction.pendingAction === 'save-adult'}
                     variant="soft"
                     color="logoBlue"
                     disabled={
@@ -829,7 +832,7 @@ export default function CrewPanel({
                               crewId: crew.crewId,
                               kind: adultKind,
                               name: adultName
-                            })
+                            }), 'save-adult'
                       )
                     }
                   >

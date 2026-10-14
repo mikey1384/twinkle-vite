@@ -1,3 +1,4 @@
+import Icon from '~/components/Icon';
 import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { tabletMaxWidth } from '~/constants/css';
@@ -68,6 +69,7 @@ export default function PromotionCTA({
   if (needsPromotion) {
     return (
       <button
+        aria-busy={startingPromotion}
         onClick={onPromotionClick}
         disabled={startingPromotion || disabled}
         className={css`
@@ -186,6 +188,9 @@ export default function PromotionCTA({
         `}
       >
         {startingPromotion ? '⏳ Starting...' : '🔥 Promotion trial unlocked!'}
+        {(startingPromotion) && (
+          <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+        )}
       </button>
     );
   }

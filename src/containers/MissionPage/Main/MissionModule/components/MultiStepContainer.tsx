@@ -1,4 +1,5 @@
 import React, { Children, useEffect, useMemo, useRef } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
@@ -18,6 +19,7 @@ export default function MultiStepContainer({
   taskId: number;
   taskType: string;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
   const missions = useKeyContext((v) => v.myState.missions);
   const warningColor = useKeyContext((v) => v.theme.warning.color);
   const updateMissionStatus = useAppContext(
@@ -49,7 +51,14 @@ export default function MultiStepContainer({
     }
 
     const DefaultButton = (
-      <Button variant="solid" tone="raised" color="green" onClick={handleGoNext}>
+      <Button
+        loading={pendingAction === String(selectedIndex + 1)}
+        disabled={pendingAction !== null}
+        variant="solid"
+        tone="raised"
+        color="green"
+        onClick={handleGoNext}
+      >
         <span>Next</span>
         <Icon style={{ marginLeft: '0.7rem' }} icon="arrow-right" />
       </Button>
@@ -73,11 +82,12 @@ export default function MultiStepContainer({
           buttonObj.tone ?? (buttonObj.skeuomorphic ? 'raised' : undefined);
         return (
           <Button
+            loading={pendingAction === String(selectedIndex + 1)}
             key={index}
             color={buttonObj.color || 'logoBlue'}
             variant={variant}
             tone={tone}
-            disabled={buttonObj.disabled}
+            disabled={buttonObj.disabled || pendingAction !== null}
             onClick={
               buttonObj.onClick
                 ? () => buttonObj.onClick(handleGoNext)
@@ -100,7 +110,7 @@ export default function MultiStepContainer({
     }
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buttons, selectedIndex, childrenArray.length, taskId]);
+  }, [buttons, selectedIndex, childrenArray.length, taskId, pendingAction]);
 
   useEffect(() => {
     scrollElementToCenter(SlideRefs.current[selectedIndex]);
@@ -124,6 +134,8 @@ export default function MultiStepContainer({
         {NextButton}
         {selectedIndex > 0 && (
           <Button
+            loading={pendingAction === String(Math.max(selectedIndex - 1, 0))}
+            disabled={pendingAction !== null}
             variant="soft"
             tone="raised"
             style={{ marginTop: NextButton ? '7rem' : '3rem' }}
@@ -152,7 +164,15 @@ export default function MultiStepContainer({
     </ErrorBoundary>
   );
 
-  async function handleUpdateSelectedIndex(newIndex: number) {
+  function handleUpdateSelectedIndex(
+
+    ...args: Parameters<typeof handleUpdateSelectedIndexRequest>
+
+  ) {
+    return runAction(String(args[0]), () => handleUpdateSelectedIndexRequest(...args));
+  }
+
+  async function handleUpdateSelectedIndexRequest(newIndex: number) {
     await updateMissionStatus({
       missionType: taskType,
       newStatus: { selectedIndex: newIndex }

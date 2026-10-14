@@ -190,13 +190,14 @@ export default function ManageCrewPanel({
                     <Icon icon="clock" style={{ color: Color.gray() }} /> {invite.username}
                   </span>
                   <Button
+                    loading={inviteAction.pendingAction === 'cancel:' + invite.inviteId}
                     size="sm"
                     variant="ghost"
                     color="darkGray"
                     disabled={inviteAction.busy}
                     onClick={() =>
                       inviteAction.run(() =>
-                        cancelMeetupInvite({ crewId: crew.crewId, inviteId: invite.inviteId })
+                        cancelMeetupInvite({ crewId: crew.crewId, inviteId: invite.inviteId }), 'cancel:' + invite.inviteId
                       )
                     }
                   >

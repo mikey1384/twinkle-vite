@@ -214,6 +214,7 @@ export default function ThumbnailModal({
               action that saves and asks in a single press. */}
           {canSendToOwner && onSaveAndSendToOwner ? (
             <Button
+              loading={sendingToOwner}
               color="logoBlue"
               variant="soft"
               disabled={saveDisabled || sendingToOwner || !croppedImageUrl}
@@ -232,6 +233,7 @@ export default function ThumbnailModal({
             </Button>
           ) : null}
           <Button
+            loading={loading && !sendingToOwner}
             color="logoBlue"
             disabled={saveDisabled || sendingToOwner}
             onClick={handleSave}
@@ -271,6 +273,7 @@ export default function ThumbnailModal({
           `}
         >
           <Button
+            loading={capturingPreview}
             variant="ghost"
             disabled={!canCaptureFromPreview || capturingPreview || loading}
             onClick={handleCaptureFromPreview}

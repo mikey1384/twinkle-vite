@@ -44,6 +44,7 @@ export default function EarnXPFromSubjects() {
           )}
           <div className={primaryActionRow}>
             <Button
+              loading={loading}
               variant="soft"
               tone="raised"
               color={showMeAnotherSubjectButtonColor}
@@ -101,9 +102,12 @@ export default function EarnXPFromSubjects() {
 
   async function handleLoadHighXPSubjects() {
     setLoading(true);
-    const data = await loadHighXPSubjects();
-    setSubjects(data);
-    setLoading(false);
+    try {
+      const data = await loadHighXPSubjects();
+      setSubjects(data);
+    } finally {
+      setLoading(false);
+    }
   }
 }
 

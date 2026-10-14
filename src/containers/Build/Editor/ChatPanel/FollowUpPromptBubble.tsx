@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 
 export default function FollowUpPromptBubble({
   question,
@@ -26,6 +27,8 @@ export default function FollowUpPromptBubble({
   onNo: () => void;
   onRedirect: () => void;
 }) {
+  const { pendingAction, runAction } = usePendingAction();
+  const disabled = busy || pendingAction !== null;
   const onceShown = Boolean(onceLabel && onOnce);
   return (
     <div
@@ -100,8 +103,9 @@ export default function FollowUpPromptBubble({
       >
         <button
           type="button"
-          onClick={onYes}
-          disabled={busy}
+          onClick={() => runAction('yes', async () => onYes())}
+          disabled={disabled}
+          aria-busy={pendingAction === 'yes'}
           className={css`
             border: 1px solid ${Color.green(0.24)};
             background: ${Color.green(0.12)};
@@ -128,12 +132,16 @@ export default function FollowUpPromptBubble({
           `}
         >
           {yesLabel}
+          {pendingAction === 'yes' && (
+            <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+          )}
         </button>
         {onceShown ? (
           <button
             type="button"
-            onClick={onOnce}
-            disabled={busy}
+            onClick={() => runAction('once', async () => onOnce?.())}
+            disabled={disabled}
+            aria-busy={pendingAction === 'once'}
             className={css`
               border: 1px solid ${Color.logoBlue(0.24)};
               background: ${Color.logoBlue(0.1)};
@@ -159,11 +167,16 @@ export default function FollowUpPromptBubble({
             `}
           >
             {onceLabel}
+            {pendingAction === 'once' && (
+              <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+            )}
           </button>
         ) : null}
         <button
           type="button"
-          onClick={onNo}
+          onClick={() => runAction('no', async () => onNo())}
+          disabled={disabled}
+          aria-busy={pendingAction === 'no'}
           className={css`
             border: 1px solid rgba(148, 163, 184, 0.28);
             background: rgba(148, 163, 184, 0.1);
@@ -183,14 +196,23 @@ export default function FollowUpPromptBubble({
               background: rgba(148, 163, 184, 0.18);
               color: #1e293b;
             }
+            &:disabled {
+              opacity: 0.6;
+              cursor: default;
+            }
           `}
         >
           {noLabel}
+          {pendingAction === 'no' && (
+            <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+          )}
         </button>
         {onceShown ? null : (
           <button
             type="button"
-            onClick={onRedirect}
+            onClick={() => runAction('redirect', async () => onRedirect())}
+            disabled={disabled}
+            aria-busy={pendingAction === 'redirect'}
             className={css`
               border: 1px solid rgba(217, 119, 6, 0.2);
               background: rgba(245, 158, 11, 0.11);
@@ -210,9 +232,16 @@ export default function FollowUpPromptBubble({
                 background: rgba(245, 158, 11, 0.18);
                 color: #92400e;
               }
+              &:disabled {
+                opacity: 0.6;
+                cursor: default;
+              }
             `}
           >
             No (explain what you want instead)
+            {pendingAction === 'redirect' && (
+              <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+            )}
           </button>
         )}
       </div>

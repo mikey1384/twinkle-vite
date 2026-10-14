@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
@@ -46,6 +47,7 @@ const STATUS_COLOR: Record<Status, string> = {
 };
 
 export default function OrgAsksPage() {
+  const { pendingAction, runAction } = usePendingAction();
   const userId = useKeyContext((v) => v.myState.userId);
   const loadMeetupOrgAsks = useAppContext((v) => v.requestHelpers.loadMeetupOrgAsks);
   const setMeetupOrgAskStatus = useAppContext((v) => v.requestHelpers.setMeetupOrgAskStatus);
@@ -106,7 +108,11 @@ export default function OrgAsksPage() {
     return result?.draft as { to: string; subject: string; body: string } | undefined;
   }
 
-  async function openDraft() {
+  function openDraft(...args: Parameters<typeof openDraftRequest>) {
+    return runAction('open', () => openDraftRequest(...args));
+  }
+
+  async function openDraftRequest() {
     const draft = await composeDraft();
     if (!draft) return;
     const url =
@@ -124,7 +130,27 @@ export default function OrgAsksPage() {
     }
   }
 
-  async function copyDraft() {
+  function handleSaveRecipient(
+
+    ...args: Parameters<typeof handleSaveRecipientRequest>
+
+  ) {
+    return runAction('recipient', () => handleSaveRecipientRequest(...args));
+  }
+
+  async function handleSaveRecipientRequest() {
+    const data = await run(() => saveMeetupOrgRecipient(recipientDraft.trim()));
+    if (data) {
+      apply(data as any);
+      setEditingTo(false);
+    }
+  }
+
+  function copyDraft(...args: Parameters<typeof copyDraftRequest>) {
+    return runAction('copy', () => copyDraftRequest(...args));
+  }
+
+  async function copyDraftRequest() {
     const draft = await composeDraft();
     if (!draft) return;
     try {
@@ -182,14 +208,19 @@ export default function OrgAsksPage() {
             <input
               type="checkbox"
               checked={friendsOn}
+              disabled={busy || pendingAction !== null}
+              aria-busy={pendingAction === 'friends'}
               onChange={(e) => {
                 const next = e.target.checked;
-                setFriendsOn(next);
-                setFriendsSwitch(next).catch(() => setFriendsOn(!next));
+                void runAction('friends', async () => {
+                  const data = await run<{ on: boolean }>(() => setFriendsSwitch(next));
+                  if (data) setFriendsOn(data.on);
+                });
               }}
               style={{ width: '2rem', height: '2rem' }}
             />
             Friend buttons on profiles
+            {pendingAction === 'friends' && <Icon icon="spinner" pulse />}
             <span style={{ fontWeight: 400, color: Color.gray() }}>
               ({friendsOn ? 'on' : 'off: nobody sees them'})
             </span>
@@ -271,7 +302,7 @@ export default function OrgAsksPage() {
                       <select
                         aria-label={`Status of "${ask.title}"`}
                         value={ask.status}
-                        disabled={busy}
+                        disabled={busy || pendingAction !== null}
                         onChange={async (e) => {
                           const data = await run(() =>
                             setMeetupOrgAskStatus({ slug: ask.slug, status: e.target.value })
@@ -377,15 +408,10 @@ export default function OrgAsksPage() {
                     style={{ flex: 1, minWidth: 0, padding: '0.6rem 0.9rem', fontSize: '1.4rem' }}
                   />
                   <Button
+                    loading={pendingAction === 'recipient'}
                     color="darkerGray"
-                    disabled={busy || recipientDraft.trim() === recipient}
-                    onClick={async () => {
-                      const data = await run(() => saveMeetupOrgRecipient(recipientDraft.trim()));
-                      if (data) {
-                        apply(data as any);
-                        setEditingTo(false);
-                      }
-                    }}
+                    disabled={busy || pendingAction !== null || recipientDraft.trim() === recipient}
+                    onClick={handleSaveRecipient}
                   >
                     Save
                   </Button>
@@ -403,13 +429,14 @@ export default function OrgAsksPage() {
                 </span>
               )}
             </div>
-            <Button color="darkerGray" disabled={busy || !pickedList.length} onClick={copyDraft}>
+            <Button loading={pendingAction === 'copy'} color="darkerGray" disabled={busy || pendingAction !== null || !pickedList.length} onClick={copyDraft}>
               {copied ? 'Copied' : 'Copy'}
             </Button>
             <Button
+              loading={pendingAction === 'open'}
               color="logoBlue"
               variant="solid"
-              disabled={busy || !pickedList.length}
+              disabled={busy || pendingAction !== null || !pickedList.length}
               onClick={openDraft}
             >
               <Icon icon="envelope" />
