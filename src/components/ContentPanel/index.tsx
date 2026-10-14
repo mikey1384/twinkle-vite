@@ -633,7 +633,21 @@ export default function ContentPanel({
                   rootObj?.id &&
                   !rootObj.notFound && (
                     <div
-                      style={{ padding: '1.5rem', borderTop: '1px solid #ddd' }}
+                      className={css`
+                        background: #fff;
+                        border: 1px solid var(--ui-border);
+                        border-radius: 0 0 ${borderRadius} ${borderRadius};
+                        padding: 1.5rem;
+                        @media (max-width: ${mobileMaxWidth}) {
+                          border: none;
+                          border-radius: 0;
+                        }
+                      `}
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
+                      }}
                     >
                       <BountyContent
                         bounty={rootObj}
