@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { css, keyframes } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
+import { lockBodyScroll } from '~/helpers/bodyScrollLock';
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -42,11 +43,10 @@ export default function Lightbox({
       if (event.key === 'ArrowLeft') step(-1);
     }
     window.addEventListener('keydown', handleKey);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlockBodyScroll = lockBodyScroll(document.body);
     return () => {
       window.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = previousOverflow;
+      unlockBodyScroll();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos.length]);

@@ -4,6 +4,7 @@ import {
   suppressScrollAnchorRestores,
   suppressScrollAnchorSaves
 } from '~/helpers/scrollAnchorRestorationCoordinator';
+import { lockBodyScroll } from '~/helpers/bodyScrollLock';
 
 const defaultScrollResetSaveSuppressionMs = 250;
 
@@ -50,13 +51,14 @@ export function lockAppShellScrollSurface() {
   const body = document.body;
   const previousAppStyle = snapshotScrollLockStyle(appElement);
   const previousRootStyle = snapshotScrollLockStyle(root);
-  const previousBodyStyle = snapshotScrollLockStyle(body);
+  const unlockBodyScroll = lockBodyScroll(body);
+  const previousBodyOverscroll = body.style.overscrollBehavior;
   let resetFrame = 0;
   let resettingScroll = false;
 
   applyScrollLockStyle(appElement);
   applyScrollLockStyle(root);
-  applyScrollLockStyle(body);
+  body.style.overscrollBehavior = 'none';
   runScrollReset();
 
   window.addEventListener('scroll', scheduleScrollReset, {
@@ -79,7 +81,8 @@ export function lockAppShellScrollSurface() {
     scrollingElement?.removeEventListener('scroll', scheduleScrollReset);
     restoreScrollLockStyle(appElement, previousAppStyle);
     restoreScrollLockStyle(root, previousRootStyle);
-    restoreScrollLockStyle(body, previousBodyStyle);
+    unlockBodyScroll();
+    body.style.overscrollBehavior = previousBodyOverscroll;
   };
 
   function scheduleScrollReset() {

@@ -8,6 +8,7 @@ import React, {
 import { createPortal } from 'react-dom';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { lockBodyScroll } from '~/helpers/bodyScrollLock';
 import { useAppContext } from '~/contexts';
 import RuleCard from '../Review/RuleCard';
 import LessonCard from './LessonCard';
@@ -429,17 +430,10 @@ export default function MarbleRunScreen({
 
   // the run plays on its own full-screen layer (Mikey 10-07: inside the
   // modal the card got cut off and Continue hid behind the footer), so the
-  // page under it must not scroll while it is open. The modal behind
-  // normally holds that lock already; take it only when nobody does, so
-  // unmount order can never leave the page locked.
+  // page under it must not scroll while it is open. Share ownership with
+  // dialogs so leaving a run and its dialog in either order unlocks the page.
   useEffect(() => {
-    const body = document.body;
-    if (getComputedStyle(body).overflow === 'hidden') return;
-    const previousOverflow = body.style.overflow;
-    body.style.overflow = 'hidden';
-    return () => {
-      body.style.overflow = previousOverflow;
-    };
+    return lockBodyScroll(document.body);
   }, []);
 
   // the stage is as big as fits next to the progress marbles and the

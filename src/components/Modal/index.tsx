@@ -20,6 +20,7 @@ import { isMobile, isTablet } from '~/helpers';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ModalFooter, { ModalFooterContext } from './Footer';
+import { lockBodyScroll } from '~/helpers/bodyScrollLock';
 
 function safeRender(node: React.ReactNode): React.ReactNode {
   if (isValidElement(node)) return node;
@@ -332,22 +333,14 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
     }, [size, isLandscape]);
 
     useEffect(() => {
-      if (!preventBodyScroll || currentLevel > 0) return;
+      if (!preventBodyScroll || !isOpen) return;
 
       const targetDocument = portalTarget?.ownerDocument ?? document;
-      const targetWindow = targetDocument?.defaultView ?? window;
       const bodyElement = targetDocument?.body;
       if (!bodyElement) return;
 
-      if (isOpen) {
-        const originalStyle =
-          targetWindow.getComputedStyle(bodyElement).overflow;
-        bodyElement.style.overflow = 'hidden';
-        return () => {
-          bodyElement.style.overflow = originalStyle;
-        };
-      }
-    }, [isOpen, preventBodyScroll, currentLevel, portalTarget]);
+      return lockBodyScroll(bodyElement);
+    }, [isOpen, preventBodyScroll, portalTarget]);
 
     useEffect(() => {
       if (!isOpen) return;

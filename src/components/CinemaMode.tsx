@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { useViewContext } from '~/contexts';
 import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import { CinemaLevel, storeCinemaLevel } from '~/constants/cinema';
+import { lockBodyScroll } from '~/helpers/bodyScrollLock';
 
 export type { CinemaLevel };
 
@@ -114,8 +115,7 @@ export function useCinemaMode({
       }
     }
     const root = document.documentElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlockBodyScroll = lockBodyScroll(document.body);
     root.style.setProperty(
       CINEMA_STAGE_TOP_VAR,
       cinemaLevel === 2 ? '0px' : APP_SHELL_HEADER_OFFSET_STYLE
@@ -125,7 +125,7 @@ export function useCinemaMode({
     }
     window.addEventListener('keydown', handleKeyDown, true);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockBodyScroll();
       root.style.removeProperty(CINEMA_STAGE_TOP_VAR);
       document.body.classList.remove('cinema-mode-full');
       window.removeEventListener('keydown', handleKeyDown, true);
