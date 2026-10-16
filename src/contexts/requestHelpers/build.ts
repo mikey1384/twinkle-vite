@@ -5169,6 +5169,24 @@ export default function buildRequestHelpers({
       }
     },
 
+    async requestBuildWordMaster({ buildId, operation, payload, token }: {
+      buildId: number;
+      operation: string;
+      payload: Record<string, unknown>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/word-master/${encodeURIComponent(operation)}`,
+          payload,
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async checkBuildGrammarblesAnswer({
       buildId,
       questionId,

@@ -3766,6 +3766,30 @@ export function useHostBridge({
             break;
           }
 
+          case 'content:word-master:words':
+          case 'content:word-master:telemetry':
+          case 'content:word-master:details':
+          case 'content:word-master:generate-entry':
+          case 'content:word-master:entry-status':
+          case 'content:word-master:encounter':
+          case 'content:word-master:book':
+          case 'content:word-master:quiz':
+          case 'content:word-master:quiz-status':
+          case 'content:word-master:answer':
+          case 'content:word-master:items':
+          case 'content:word-master:use-item': {
+            const operation = type.slice('content:word-master:'.length);
+            const read = ['words', 'book', 'quiz-status', 'entry-status', 'items'].includes(operation);
+            const token = await ensureBuildApiToken([read ? 'content:read' : 'content:write'], previewAuth);
+            response = await requestRefs.requestBuildWordMasterRef.current({
+              buildId: activeBuild.id, operation, token,
+              payload: { ...payload, mode: runtimeOnly && activeBuild.rewardRuntimeGrant && !appMcpControlsThisTab() ? 'live' : 'preview' }
+            });
+            if (response?.aiUsagePolicy) onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            response = sanitizeBuildAppAiUsagePolicyPayload(response);
+            break;
+          }
+
           case 'content:grammarbles:questions': {
             const contentGrammarblesToken = await ensureBuildApiToken(
               ['content:read'],

@@ -60,6 +60,7 @@ export interface PreviewHostBridgeRequestRefs {
   listBuildAiStoryChaptersRef: AsyncRequestRef;
   searchBuildAiStoriesRef: AsyncRequestRef;
   getBuildAiStoryRef: AsyncRequestRef;
+  requestBuildWordMasterRef: AsyncRequestRef;
   listBuildGrammarblesQuestionsRef: AsyncRequestRef;
   checkBuildGrammarblesAnswerRef: AsyncRequestRef;
   getBuildGrammarblesHistoryRef: AsyncRequestRef;

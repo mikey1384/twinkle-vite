@@ -229,6 +229,9 @@ export default function useAppRequests({
   const getBuildAiStory = useAppContext(
     (v) => v.requestHelpers.getBuildAiStory
   );
+  const requestBuildWordMaster = useAppContext(
+    (v) => v.requestHelpers.requestBuildWordMaster
+  );
   const listBuildGrammarblesQuestions = useAppContext(
     (v) => v.requestHelpers.listBuildGrammarblesQuestions
   );
@@ -478,6 +481,7 @@ export default function useAppRequests({
   const listBuildAiStoryChaptersRef = useRef(listBuildAiStoryChapters);
   const searchBuildAiStoriesRef = useRef(searchBuildAiStories);
   const getBuildAiStoryRef = useRef(getBuildAiStory);
+  const requestBuildWordMasterRef = useRef(requestBuildWordMaster);
   const listBuildGrammarblesQuestionsRef = useRef(
     listBuildGrammarblesQuestions
   );
@@ -620,6 +624,7 @@ export default function useAppRequests({
     listBuildAiStoryChaptersRef,
     searchBuildAiStoriesRef,
     getBuildAiStoryRef,
+    requestBuildWordMasterRef,
     listBuildGrammarblesQuestionsRef,
     checkBuildGrammarblesAnswerRef,
     getBuildGrammarblesHistoryRef,

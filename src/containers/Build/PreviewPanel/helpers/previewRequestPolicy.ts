@@ -1,4 +1,13 @@
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
+  'content:word-master:details',
+  'content:word-master:telemetry',
+  'content:word-master:generate-entry',
+  'content:word-master:entry-status',
+  'content:word-master:encounter',
+  'content:word-master:quiz',
+  'content:word-master:quiz-status',
+  'content:word-master:answer',
+  'content:word-master:use-item',
   'soundtracks:request-tag',
   'soundtracks:remove-tag',
   'network:update-agent',

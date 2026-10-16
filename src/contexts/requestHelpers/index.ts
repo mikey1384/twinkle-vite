@@ -256,6 +256,7 @@ registerMethods('build', [
   'listBuildAiStoryChapters',
   'searchBuildAiStories',
   'getBuildAiStory',
+  'requestBuildWordMaster',
   'listBuildGrammarblesQuestions',
   'checkBuildGrammarblesAnswer',
   'getBuildGrammarblesHistory',
