@@ -4,6 +4,10 @@ import { userIdRef } from '~/constants/state';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { createOwnerTraceRecorder } from '~/helpers/ownerTraceRecorder';
 import {
+  createScrollPerfMonitor,
+  getScrollPerfContext
+} from '~/helpers/ownerTraceScrollPerf';
+import {
   buildPageLoadTiming,
   createNavTimingTracker,
   createStallMonitor,
@@ -17,7 +21,7 @@ import type {
 
 // Always-on client trace for the site owner only (the same
 // userIdRef.current === ADMIN_USER_ID gate as emitAdminTelemetry). When Mikey
-// reports a UI issue from his phone, Claude reads it with
+// reports a UI issue from his desktop or phone, agents read it with
 // `lumine admin owner-trace`. Records ids, paths, scroll numbers and short
 // error text only: never message text or other members' content. A no-op for
 // everyone else (no listeners, timers or requests).
@@ -76,12 +80,22 @@ const stallMonitor = createStallMonitor({
   onStall: ({ path, ...data }) => recordOwnerTrace('stall', data, path)
 });
 
+const scrollPerfMonitor = createScrollPerfMonitor({
+  isActive: () => recorder.isActive(),
+  isVisible: () =>
+    typeof document !== 'undefined' && document.visibilityState === 'visible',
+  getPath: getCurrentPath,
+  getContext: () => getScrollPerfContext(document, window),
+  record: (data, path) => recordOwnerTrace('scroll-perf', data, path)
+});
+
 // A navigation the app started itself (Header nav tap).
 export function noteOwnerNavStart(via: string) {
   navTiming.start(via);
 }
 
 export function noteOwnerNavLocation(path: string, navigationType: string) {
+  scrollPerfMonitor.stop('route');
   navTiming.location(path, navigationType);
 }
 
@@ -268,6 +282,7 @@ function getSessionHeader(): Record<string, unknown> {
     };
     return {
       version: clientVersion,
+      scrollPerf: 1,
       vw: window.innerWidth,
       vh: window.innerHeight,
       vvh: Math.round(window.visualViewport?.height || 0),
@@ -292,6 +307,10 @@ let listenersInstalled = false;
 function installOwnerTraceListeners() {
   if (listenersInstalled || typeof window === 'undefined') return;
   listenersInstalled = true;
+  document.addEventListener('scroll', () => scrollPerfMonitor.scroll(), {
+    capture: true,
+    passive: true
+  });
   // Tap time for nav-timing (a timestamp, nothing recorded).
   window.addEventListener(
     'pointerdown',
@@ -329,6 +348,7 @@ function installOwnerTraceListeners() {
     }
   );
   window.addEventListener('pagehide', (event: PageTransitionEvent) => {
+    scrollPerfMonitor.stop('pagehide');
     navTiming.flush();
     stallMonitor.stop();
     recordOwnerTrace('pagehide', { persisted: event.persisted });
@@ -336,6 +356,7 @@ function installOwnerTraceListeners() {
   });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
+      scrollPerfMonitor.stop('hidden');
       navTiming.flush();
       stallMonitor.stop();
     }
