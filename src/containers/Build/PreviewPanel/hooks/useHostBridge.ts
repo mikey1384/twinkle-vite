@@ -4637,6 +4637,27 @@ export function useHostBridge({
             break;
           }
 
+          case 'soundtracks:sources':
+          case 'soundtracks:tags':
+          case 'soundtracks:recommendations':
+          case 'soundtracks:request-tag':
+          case 'soundtracks:remove-tag': {
+            const action = type.slice('soundtracks:'.length) as
+              'sources' | 'tags' | 'recommendations' | 'request-tag' | 'remove-tag';
+            if (action === 'recommendations' && isGuestViewerActive(previewAuth)) {
+              response = { picks: [] };
+              break;
+            }
+            const writing = action === 'request-tag' || action === 'remove-tag';
+            const token = await ensureBuildApiToken(
+              [writing ? 'sharedDb:write' : 'sharedDb:read'], previewAuth
+            );
+            response = await requestRefs.requestBuildSoundtracksRef.current({
+              buildId: activeBuild.id, action, payload: payload || {}, token
+            });
+            break;
+          }
+
           case 'arena:board':
           case 'arena:publish':
           case 'arena:challenge':

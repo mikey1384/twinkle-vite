@@ -6422,6 +6422,24 @@ export default function buildRequestHelpers({
       }
     },
 
+    async requestBuildSoundtracks({ buildId, action, payload, token }: {
+      buildId: number;
+      action: 'sources' | 'tags' | 'recommendations' | 'request-tag' | 'remove-tag';
+      payload: Record<string, unknown>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/soundtracks/${action}`,
+          payload,
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleContentWriteError(error);
+      }
+    },
+
     async requestBuildArena({
       buildId,
       action,

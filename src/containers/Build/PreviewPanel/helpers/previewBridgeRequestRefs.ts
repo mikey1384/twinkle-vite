@@ -101,6 +101,7 @@ export interface PreviewHostBridgeRequestRefs {
   listPrivateDbItemsRef: AsyncRequestRef;
   setPrivateDbItemRef: AsyncRequestRef;
   comparePrivateDbItemRef: AsyncRequestRef;
+  requestBuildSoundtracksRef: AsyncRequestRef;
   requestBuildArenaRef: AsyncRequestRef;
   requestBuildTownRef: AsyncRequestRef;
   requestBuildNetworkRef: AsyncRequestRef;

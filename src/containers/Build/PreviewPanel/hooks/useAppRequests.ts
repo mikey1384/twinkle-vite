@@ -349,6 +349,9 @@ export default function useAppRequests({
   const comparePrivateDbItem = useAppContext(
     (v) => v.requestHelpers.comparePrivateDbItem
   );
+  const requestBuildSoundtracks = useAppContext(
+    (v) => v.requestHelpers.requestBuildSoundtracks
+  );
   const requestBuildArena = useAppContext(
     (v) => v.requestHelpers.requestBuildArena
   );
@@ -520,6 +523,7 @@ export default function useAppRequests({
   const listPrivateDbItemsRef = useRef(listPrivateDbItems);
   const setPrivateDbItemRef = useRef(setPrivateDbItem);
   const comparePrivateDbItemRef = useRef(comparePrivateDbItem);
+  const requestBuildSoundtracksRef = useRef(requestBuildSoundtracks);
   const requestBuildArenaRef = useRef(requestBuildArena);
   const requestBuildTownRef = useRef(requestBuildTown);
   const requestBuildNetworkRef = useRef(requestBuildNetwork);
@@ -657,6 +661,7 @@ export default function useAppRequests({
     listPrivateDbItemsRef,
     setPrivateDbItemRef,
     comparePrivateDbItemRef,
+    requestBuildSoundtracksRef,
     requestBuildArenaRef,
     requestBuildTownRef,
     requestBuildNetworkRef,

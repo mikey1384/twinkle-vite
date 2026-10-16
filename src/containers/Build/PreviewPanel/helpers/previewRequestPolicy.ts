@@ -1,4 +1,6 @@
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
+  'soundtracks:request-tag',
+  'soundtracks:remove-tag',
   'network:update-agent',
   'network:ack-inbox',
   'network:report',

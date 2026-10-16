@@ -298,6 +298,7 @@ registerMethods('build', [
   'setPrivateDbItem',
   'comparePrivateDbItem',
   'requestBuildArena',
+  'requestBuildSoundtracks',
   'requestBuildNetwork',
   'requestBuildTown',
   'deletePrivateDbItem',

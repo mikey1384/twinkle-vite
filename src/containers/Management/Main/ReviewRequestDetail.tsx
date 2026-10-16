@@ -60,7 +60,7 @@ export default function ReviewRequestDetail({
   }, [item.type, item.id, item.eventTimeMs]);
 
   const events: any[] = detail?.events || [];
-  const needsNote = item.type === 'cardcraft';
+  const needsNote = item.type === 'cardcraft' || item.type === 'soundtrack';
   const tiers: number[] = Array.from(
     new Set([requestedBytes, ...((item.details?.tiers as number[]) || [])])
   )
@@ -70,6 +70,36 @@ export default function ReviewRequestDetail({
   return (
     <div className={panelClass}>
       <p className={summaryClass}>{item.summary}</p>
+      {item.type === 'soundtrack' ? (
+        <div className={soundtrackClass}>
+          {item.details.coverUrl ? (
+            <img src={item.details.coverUrl} alt="Song cover" />
+          ) : null}
+          <div>
+            <p>
+              Approve this song’s connection to{' '}
+              <strong>{item.details.sourceTitle}</strong> so people who used
+              that app can discover it.
+            </p>
+            <p>
+              Changing the song or its music parts closes this approval. You can
+              revoke it here at any time.
+            </p>
+            <div className={actionsClass}>
+              <a href={item.details.songHref} target="_blank" rel="noreferrer">
+                Listen to the song ↗
+              </a>
+              <a
+                href={item.details.sourceHref}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open {item.details.sourceTitle} ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {item.reason ? (
         <p>
           <strong>Creator’s reason:</strong> “{item.reason}”
@@ -81,9 +111,11 @@ export default function ReviewRequestDetail({
           {formatReviewBytes(detail.storage.runtimeFileStorageBytes)} used of{' '}
           {formatReviewBytes(detail.storage.maxRuntimeFileStorageBytes)} across{' '}
           {Number(detail.storage.runtimeFileCount || 0)} file(s). Default{' '}
-          {formatReviewBytes(detail.storage.defaultMaxRuntimeFileStorageBytes)}
-          , cap{' '}
-          {formatReviewBytes(detail.storage.maxApprovableRuntimeFileStorageBytes)}
+          {formatReviewBytes(detail.storage.defaultMaxRuntimeFileStorageBytes)},
+          cap{' '}
+          {formatReviewBytes(
+            detail.storage.maxApprovableRuntimeFileStorageBytes
+          )}
           . An approval never lowers what they already have.
         </p>
       ) : null}
@@ -120,7 +152,12 @@ export default function ReviewRequestDetail({
       {item.decisions.length ? (
         <>
           <label className={labelClass}>
-            Note {needsNote ? '(the creator reads it; needed to decline)' : '(optional; the creator reads it)'}
+            Note{' '}
+            {item.decisions.includes('revoke')
+              ? '(the creator reads it; needed to revoke)'
+              : needsNote
+                ? '(the creator reads it; needed to decline)'
+                : '(optional; the creator reads it)'}
             <textarea
               maxLength={1000}
               value={note}
@@ -198,10 +235,14 @@ export default function ReviewRequestDetail({
   );
 
   function handleDecision(...args: Parameters<typeof handleDecisionRequest>) {
-    return runAction('decision:' + args[0], () => handleDecisionRequest(...args));
+    return runAction('decision:' + args[0], () =>
+      handleDecisionRequest(...args)
+    );
   }
 
-  async function handleDecisionRequest(decision: 'approve' | 'reject' | 'revoke') {
+  async function handleDecisionRequest(
+    decision: 'approve' | 'reject' | 'revoke'
+  ) {
     if (busy) return;
     setBusy(true);
     setError('');
@@ -329,4 +370,30 @@ const selectClass = css`
   border-radius: 8px;
   border: 1px solid ${Color.borderGray()};
   background: #fff;
+`;
+
+const soundtrackClass = css`
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  > img {
+    width: 12rem;
+    max-width: 35%;
+    border-radius: 0.8rem;
+  }
+  > div {
+    min-width: 0;
+  }
+  p {
+    margin: 0 0 1rem;
+  }
+  a {
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    flex-direction: column;
+    > img {
+      max-width: 100%;
+    }
+  }
 `;

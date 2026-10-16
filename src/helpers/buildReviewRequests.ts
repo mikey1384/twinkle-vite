@@ -6,16 +6,14 @@
 // Creators never pick sizes, fill in forms or read rule IDs here.
 
 export type BuildReviewRequestType =
-  | 'rewards'
-  | 'project-limit'
-  | 'storage-limit'
-  | 'cardcraft';
+  'rewards' | 'project-limit' | 'storage-limit' | 'cardcraft' | 'soundtrack';
 
 export const BUILD_REVIEW_REQUEST_TYPES: BuildReviewRequestType[] = [
   'rewards',
   'project-limit',
   'storage-limit',
-  'cardcraft'
+  'cardcraft',
+  'soundtrack'
 ];
 
 export const BUILD_REVIEW_TYPE_LABELS: Record<BuildReviewRequestType, string> =
@@ -23,6 +21,7 @@ export const BUILD_REVIEW_TYPE_LABELS: Record<BuildReviewRequestType, string> =
     rewards: 'XP & Coins',
     'project-limit': 'Project room',
     'storage-limit': 'File storage',
+    soundtrack: 'Song app tag',
     cardcraft: 'Card crafting'
   };
 
@@ -30,6 +29,7 @@ export const BUILD_REVIEW_TYPE_ICONS: Record<BuildReviewRequestType, string> = {
   rewards: 'coins',
   'project-limit': 'copy',
   'storage-limit': 'folder-open',
+  soundtrack: 'music',
   cardcraft: 'wand-magic-sparkles'
 };
 
@@ -99,9 +99,10 @@ export function formatReviewBytes(value: number) {
 }
 
 export function parseBuildReviewRequestRef(value: unknown) {
-  const match = /^(rewards|project-limit|storage-limit|cardcraft):(\d+)$/.exec(
-    String(value || '').trim()
-  );
+  const match =
+    /^(rewards|project-limit|storage-limit|cardcraft|soundtrack):(\d+)$/.exec(
+      String(value || '').trim()
+    );
   if (!match) return null;
   const id = Number(match[2]);
   return id > 0 ? { type: match[1] as BuildReviewRequestType, id } : null;
@@ -152,17 +153,17 @@ export function projectLimitReviewRow({
   if (!approval || !isOwner || approval.isInherited) return null;
   const requestFiles = Boolean(
     approval.canRequestFiles &&
-      nearLimit(
-        Number(usage?.projectFileCount || 0),
-        Number(limits?.maxFilesPerProject || 0)
-      )
+    nearLimit(
+      Number(usage?.projectFileCount || 0),
+      Number(limits?.maxFilesPerProject || 0)
+    )
   );
   const requestSize = Boolean(
     approval.canRequestSize &&
-      nearLimit(
-        Number(usage?.currentProjectBytes || 0),
-        Number(limits?.maxProjectBytes || 0)
-      )
+    nearLimit(
+      Number(usage?.currentProjectBytes || 0),
+      Number(limits?.maxProjectBytes || 0)
+    )
   );
   const pending = approval.latestRequest?.status === 'pending';
   if (!pending && !requestFiles && !requestSize) return null;
@@ -171,7 +172,8 @@ export function projectLimitReviewRow({
   const selectedFiles = pending
     ? direct
       ? Boolean(
-          approval.canRequestFiles && (requestFiles || latest?.requestedMaxFiles)
+          approval.canRequestFiles &&
+          (requestFiles || latest?.requestedMaxFiles)
         )
       : requestFiles && !Number(latest?.requestedMaxFiles || 0)
     : requestFiles;
@@ -179,7 +181,7 @@ export function projectLimitReviewRow({
     ? direct
       ? Boolean(
           approval.canRequestSize &&
-            (requestSize || latest?.requestedMaxProjectBytes)
+          (requestSize || latest?.requestedMaxProjectBytes)
         )
       : requestSize && !Number(latest?.requestedMaxProjectBytes || 0)
     : requestSize;
@@ -272,7 +274,9 @@ export function storageLimitReviewRow({
   return {
     type: 'storage-limit',
     tone: 'action',
-    title: direct ? 'Ready for your approval' : 'Your file storage is getting full',
+    title: direct
+      ? 'Ready for your approval'
+      : 'Your file storage is getting full',
     detail: direct
       ? `Approve ${formatReviewBytes(nextTier)} of storage for all your Builds. It changes right away.`
       : `Ask Mikey for ${formatReviewBytes(nextTier)} of storage for all your Builds. Nothing changes until he says yes.`,
@@ -367,7 +371,9 @@ export function cardCraftReviewRow(
 }
 
 // Chat card and Management copy for one request, reviewer's point of view.
-export function buildReviewStatusLabel(item: Pick<BuildReviewRequestItem, 'status' | 'type'>) {
+export function buildReviewStatusLabel(
+  item: Pick<BuildReviewRequestItem, 'status' | 'type'>
+) {
   switch (item.status) {
     case 'pending':
       return 'Waiting for review';
@@ -409,17 +415,21 @@ export function parseBuildReviewRequestFocus(search: string) {
 }
 
 // What the chat card's banner says, for the creator and for Mikey alike.
-export function buildReviewCardBanner(item: Pick<BuildReviewRequestItem, 'type' | 'status'>) {
+export function buildReviewCardBanner(
+  item: Pick<BuildReviewRequestItem, 'type' | 'status'>
+) {
   const asked: Record<BuildReviewRequestType, string> = {
     rewards: 'Sent an app for XP & Coin review',
     'project-limit': 'Asked for more project room',
     'storage-limit': 'Asked for more file storage',
+    soundtrack: 'Sent a song app tag for review',
     cardcraft: 'Sent a card crafting recipe for review'
   };
   const approved: Record<BuildReviewRequestType, string> = {
     rewards: 'XP & Coin rewards approved',
     'project-limit': 'Project room approved',
     'storage-limit': 'File storage approved',
+    soundtrack: 'Song app tag approved',
     cardcraft: 'Card crafting approved'
   };
   if (item.status === 'approved') return approved[item.type];
