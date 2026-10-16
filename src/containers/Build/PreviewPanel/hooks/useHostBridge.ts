@@ -4957,6 +4957,7 @@ export function useHostBridge({
           case 'craft:item':
           case 'craft:journey':
           case 'craft:rankings':
+          case 'craft:hint':
           case 'craft:merge': {
             const operation = type.slice('craft:'.length);
             if (!previewAuth.userIdRef.current) {
@@ -4983,7 +4984,15 @@ export function useHostBridge({
                             journey: null,
                             reason: 'sign_in_required'
                           }
-                        : {
+                        : operation === 'hint'
+                          ? {
+                              day: craftDay,
+                              hints: [],
+                              remaining: 0,
+                              parForfeited: false,
+                              reason: 'sign_in_required'
+                            }
+                          : {
                             allTime: { top: [], me: noRank },
                             month: { month: craftDay.slice(0, 7), top: [], me: noRank }
                           };
@@ -5007,7 +5016,9 @@ export function useHostBridge({
                       ? { id: payload?.id }
                       : operation === 'journey'
                         ? { day: payload?.day }
-                        : {},
+                        : operation === 'hint'
+                          ? { peek: payload?.peek === true }
+                          : {},
               token: craftToken
             });
             if (

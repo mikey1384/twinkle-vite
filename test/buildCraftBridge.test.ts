@@ -66,6 +66,8 @@ test('a merge is a mutating preview request; reads are not', () => {
   assert.equal(isMutatingPreviewRequestType('craft:merge'), true);
   for (const op of ['state', 'list', 'item', 'journey', 'rankings'])
     assert.equal(isMutatingPreviewRequestType(`craft:${op}`), false);
+  // A hint reveal gives up the par bonus: never sent twice by a preview swap.
+  assert.equal(isMutatingPreviewRequestType('craft:hint'), true);
 });
 
 test('a merge sends only ids and requestId with a craft:write token, and forwards the Energy update', async () => {
@@ -99,7 +101,17 @@ test('reads use craft:read and forward only their own fields', async () => {
   await h.invoke('craft:item', { id: 12, userId: 7 });
   await h.invoke('craft:journey', { day: '2026-10-11', userId: 7 });
   await h.invoke('craft:rankings', { limit: 1000 });
-  assert.deepEqual(h.tokens, [['craft:read'], ['craft:read'], ['craft:read'], ['craft:read'], ['craft:read']]);
+  await h.invoke('craft:hint', { peek: 'yes', day: '2026-10-17', step: 9 });
+  await h.invoke('craft:hint', { peek: true });
+  assert.deepEqual(h.tokens, [
+    ['craft:read'],
+    ['craft:read'],
+    ['craft:read'],
+    ['craft:read'],
+    ['craft:read'],
+    ['craft:read'],
+    ['craft:read']
+  ]);
   assert.deepEqual(
     h.calls.map((call) => [call.operation, call.payload]),
     [
@@ -107,7 +119,10 @@ test('reads use craft:read and forward only their own fields', async () => {
       ['list', { cursor: 40, limit: 200 }],
       ['item', { id: 12 }],
       ['journey', { day: '2026-10-11' }],
-      ['rankings', {}]
+      ['rankings', {}],
+      // only the peek flag, and only a real true
+      ['hint', { peek: false }],
+      ['hint', { peek: true }]
     ]
   );
 });
@@ -128,6 +143,13 @@ test('signed-out viewers get the documented shapes, empty, and are asked to sign
   assert.deepEqual(await guest.invoke('craft:journey', { day: '2026-10-01' }), {
     day: '2026-10-01',
     journey: null,
+    reason: 'sign_in_required'
+  });
+  assert.deepEqual(await guest.invoke('craft:hint'), {
+    day,
+    hints: [],
+    remaining: 0,
+    parForfeited: false,
     reason: 'sign_in_required'
   });
   assert.deepEqual(await guest.invoke('craft:list'), { items: [], cursor: null });

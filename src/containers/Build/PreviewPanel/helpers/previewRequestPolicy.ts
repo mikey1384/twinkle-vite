@@ -26,6 +26,8 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'cardCraft:craft',
   'cardCraft:set-state',
   'craft:merge',
+  // a reveal gives up the player's par bonus for the day
+  'craft:hint',
   'ai:chat',
   'ai:generate-object',
   'ai:decide',
