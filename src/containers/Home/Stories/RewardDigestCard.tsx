@@ -11,6 +11,22 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { getDigestDayLabel } from '~/helpers/rewardDigest';
+import { trackEvent } from '~/helpers/analytics';
+import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
+import {
+  isOwnerTraceActive,
+  noteOwnerTraceTap,
+  recordOwnerTrace,
+  takeOwnerTraceTap
+} from '~/helpers/ownerTrace';
+import {
+  popupDismissNavigationFeedCardTargetProps,
+  shouldSuppressPopupDismissNavigation
+} from '~/helpers/popupDismissNavigation';
+import {
+  shouldSkipFeedCardNavigation,
+  shouldUseExplicitFeedCardNavigation
+} from './FeedCard/helpers/navigation';
 
 export interface RewardDigestPreview {
   id: number;
@@ -35,8 +51,18 @@ export interface RewardDigestPreview {
 // An app's "earning today" card on Home: everyone who earned XP or Coins in
 // one app on one reward day, as one card (the server sends it as a
 // 'rewardDigest' feed row, bumped to the top at most every 3 hours). Each
-// earner's own claims stay on their profile.
-function RewardDigestCard({ digest }: { digest: RewardDigestPreview }) {
+// earner's own claims stay on their profile. Opens like every Home card:
+// the whole card on desktop, only its button, art and title on touch, with
+// the scroll anchor saved and the open tracked.
+function RewardDigestCard({
+  digest,
+  index,
+  homeFeedAnchorKey
+}: {
+  digest: RewardDigestPreview;
+  index: number;
+  homeFeedAnchorKey?: string;
+}) {
   const navigate = useNavigate();
   const appTitle = digest.buildTitle || 'Lumine app';
   const appAvailable = !!(digest.appAvailable && digest.buildId);
@@ -47,12 +73,20 @@ function RewardDigestCard({ digest }: { digest: RewardDigestPreview }) {
 
   return (
     <article
-      className={`${cardClass} reward-digest-card`}
+      {...popupDismissNavigationFeedCardTargetProps}
+      className={`${cardClass} reward-digest-card${appAvailable ? ' reward-digest-card--open' : ''}`}
       aria-label={`${players} ${players === 1 ? 'player' : 'players'} earned in ${appTitle} ${when.toLowerCase()}`}
-      onClick={appAvailable ? handleOpenApp : undefined}
+      tabIndex={appAvailable ? 0 : undefined}
+      onClick={appAvailable ? handleCardClick : undefined}
+      onKeyDown={appAvailable ? handleCardKeyDown : undefined}
     >
       <div className="reward-digest-card__head">
-        <div className="reward-digest-card__art">
+        <div
+          className="reward-digest-card__art"
+          role={appAvailable ? 'link' : undefined}
+          aria-label={appAvailable ? `Open ${appTitle}` : undefined}
+          onClick={appAvailable ? handleOpenClick : undefined}
+        >
           {digest.buildThumbnailUrl ? (
             <LinkPreviewImage src={digest.buildThumbnailUrl} alt="" />
           ) : (
@@ -66,7 +100,13 @@ function RewardDigestCard({ digest }: { digest: RewardDigestPreview }) {
           </span>
           <h3 className="reward-digest-card__title">
             {addCommasToNumber(players)} {players === 1 ? 'player' : 'players'}{' '}
-            earned in <span className="reward-digest-card__app">{appTitle}</span>
+            earned in{' '}
+            <span
+              className="reward-digest-card__app"
+              onClick={appAvailable ? handleOpenClick : undefined}
+            >
+              {appTitle}
+            </span>
           </h3>
           <div className="reward-digest-card__rewards" aria-label="Rewards earned">
             <RewardChips xp={Number(digest.xp)} coins={Number(digest.coins)} />
@@ -116,7 +156,7 @@ function RewardDigestCard({ digest }: { digest: RewardDigestPreview }) {
           tone="raised"
           size="sm"
           uppercase={false}
-          onClick={handleOpenApp}
+          onClick={handleOpenClick}
         >
           <span className="reward-digest-card__try-label">
             Join them in {appTitle}
@@ -129,8 +169,55 @@ function RewardDigestCard({ digest }: { digest: RewardDigestPreview }) {
     </article>
   );
 
-  function handleOpenApp(event?: React.MouseEvent) {
-    event?.stopPropagation();
+  function handleCardClick(event: React.MouseEvent<HTMLElement>) {
+    if (shouldSuppressPopupDismissNavigation(event.nativeEvent)) return;
+    if (
+      shouldSkipFeedCardNavigation({
+        currentTarget: event.currentTarget,
+        defaultPrevented: event.defaultPrevented,
+        target: event.target
+      })
+    ) {
+      return;
+    }
+    if (shouldUseExplicitFeedCardNavigation()) return;
+    noteOwnerTraceTap('click', event.target);
+    openApp(event.currentTarget, 'open');
+  }
+
+  function handleCardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key !== 'Enter' || event.target !== event.currentTarget) return;
+    noteOwnerTraceTap('enter', event.target);
+    openApp(event.currentTarget, 'open');
+  }
+
+  // the button, the art and the app's name: open the app on any device
+  function handleOpenClick(event: React.MouseEvent<HTMLElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (shouldSuppressPopupDismissNavigation(event.nativeEvent)) return;
+    noteOwnerTraceTap('open-button', event.target);
+    openApp(event.currentTarget, 'open-button');
+  }
+
+  function openApp(sourceElement: HTMLElement | null, action: string) {
+    saveScrollAnchorForElement(sourceElement, homeFeedAnchorKey);
+    trackEvent('feed_item_open', {
+      content_type: 'rewardDigest',
+      position: index + 1,
+      action,
+      surface: 'home'
+    });
+    if (isOwnerTraceActive()) {
+      recordOwnerTrace('feed-open', {
+        ct: 'rewardDigest',
+        id: digest.id,
+        action,
+        pos: index + 1,
+        surface: 'home',
+        ...takeOwnerTraceTap()
+      });
+    }
     navigate(`/app/${digest.buildId}`);
   }
 }
@@ -148,12 +235,25 @@ const cardClass = css`
   border-radius: ${borderRadius};
   background: #fff;
   color: ${Color.darkerGray()};
-  cursor: pointer;
   transition: border-color 0.18s ease;
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      border-color: var(--ui-border-strong);
+  &.reward-digest-card--open {
+    cursor: pointer;
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        border-color: var(--ui-border-strong);
+      }
     }
+    @media (hover: none), (pointer: coarse), (max-width: ${mobileMaxWidth}) {
+      cursor: default;
+    }
+    .reward-digest-card__art,
+    .reward-digest-card__app {
+      cursor: pointer;
+    }
+  }
+  &:focus-visible {
+    outline: 2px solid ${Color.logoBlue(0.45)};
+    outline-offset: 2px;
   }
 
   .reward-digest-card__head {

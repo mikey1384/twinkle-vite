@@ -693,7 +693,11 @@ export default function Stories() {
                           data-scroll-anchor-content-key={contentKey}
                           data-scroll-anchor-group-key={homeFeedAnchorKey}
                         >
-                          <RewardDigestCard digest={feed.previewContent} />
+                          <RewardDigestCard
+                            digest={feed.previewContent}
+                            index={index}
+                            homeFeedAnchorKey={homeFeedAnchorKey}
+                          />
                         </div>
                       ) : null;
                     }
