@@ -7,6 +7,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import HomeFilter from './HomeFilter';
 import TopMenu from '../TopMenu';
 import Featured from './Featured';
+import RewardDigestCard from './RewardDigestCard';
 import HomeFeedCard from './FeedCard';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
@@ -675,6 +676,27 @@ export default function Stories() {
                     const stackExpanded = stack
                       ? !!expandedBountyStacks[stack.headKey]
                       : false;
+                    // an app's "earning today" card: news, not a post
+                    if (feed.contentType === 'rewardDigest') {
+                      return feed.contentId && feed.previewContent ? (
+                        <div
+                          key={panelKey}
+                          className={`feed-item ${feedItemCustomClass}`}
+                          data-feed-anchor-id={feedAnchorId}
+                          data-feed-id={feed.feedId || undefined}
+                          data-content-key={contentKey}
+                          data-feed-index={index}
+                          data-scroll-anchor-id={feedAnchorId}
+                          data-scroll-anchor-secondary-id={
+                            feed.feedId || undefined
+                          }
+                          data-scroll-anchor-content-key={contentKey}
+                          data-scroll-anchor-group-key={homeFeedAnchorKey}
+                        >
+                          <RewardDigestCard digest={feed.previewContent} />
+                        </div>
+                      ) : null;
+                    }
                     return feed.contentId ? (
                       <div
                         key={panelKey}
