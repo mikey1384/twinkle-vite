@@ -188,14 +188,14 @@ export function getBuildRewardOfferedIdentity({
   currentTitle?: string | null;
   currentThumbnailUrl?: string | null;
 }) {
-  const title = String(proposedTitle || '').trim();
+  // Titles compare as the server does (normalizeSuggestedBuildTitle):
+  // whitespace collapsed, case kept, so a case-only rename still shows.
+  const normalizeTitle = (value?: string | null) =>
+    String(value || '').replace(/\s+/g, ' ').trim();
+  const title = normalizeTitle(proposedTitle);
   const thumbnailUrl = String(proposedThumbnailUrl || '').trim();
   return {
-    title:
-      title &&
-      title.toLowerCase() !== String(currentTitle || '').trim().toLowerCase()
-        ? title
-        : '',
+    title: title && title !== normalizeTitle(currentTitle) ? title : '',
     thumbnailUrl:
       thumbnailUrl && thumbnailUrl !== String(currentThumbnailUrl || '').trim()
         ? thumbnailUrl

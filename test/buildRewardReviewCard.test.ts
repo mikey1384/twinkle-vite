@@ -160,10 +160,18 @@ test('a name or thumbnail the app already has is no offered change', () => {
     getBuildRewardOfferedIdentity({
       proposedTitle: 'Infinity Craft',
       proposedThumbnailUrl: 'https://cdn/x.png',
-      currentTitle: ' infinity craft ',
+      currentTitle: ' Infinity   Craft ',
       currentThumbnailUrl: 'https://cdn/x.png'
     }),
     { title: '', thumbnailUrl: '' }
+  );
+  // A case-only rename is a rename (accepting it applies it).
+  assert.equal(
+    getBuildRewardOfferedIdentity({
+      proposedTitle: 'Infinity Craft',
+      currentTitle: 'infinity craft'
+    }).title,
+    'Infinity Craft'
   );
   assert.deepEqual(
     getBuildRewardOfferedIdentity({
