@@ -175,10 +175,46 @@ export function parseBuildRewardReviewFocusId(search: string) {
   }
 }
 
-// "3 files changed · 1 added" — the proposal chip on the card.
+// The name and thumbnail an offer would actually change. One the app already
+// has (the creator renamed to it after the offer) is no change.
+export function getBuildRewardOfferedIdentity({
+  proposedTitle,
+  proposedThumbnailUrl,
+  currentTitle,
+  currentThumbnailUrl
+}: {
+  proposedTitle?: string | null;
+  proposedThumbnailUrl?: string | null;
+  currentTitle?: string | null;
+  currentThumbnailUrl?: string | null;
+}) {
+  const title = String(proposedTitle || '').trim();
+  const thumbnailUrl = String(proposedThumbnailUrl || '').trim();
+  return {
+    title:
+      title &&
+      title.toLowerCase() !== String(currentTitle || '').trim().toLowerCase()
+        ? title
+        : '',
+    thumbnailUrl:
+      thumbnailUrl && thumbnailUrl !== String(currentThumbnailUrl || '').trim()
+        ? thumbnailUrl
+        : ''
+  };
+}
+
+// "3 files changed · 1 added" — the proposal chip on the card. Pass the app's
+// current name and thumbnail so ones it already has are not counted.
 export function formatBuildRewardProposalSummary(
-  proposal?: BuildRewardReviewProposalSummary | null
+  proposal?: BuildRewardReviewProposalSummary | null,
+  current?: { title?: string | null; thumbnailUrl?: string | null }
 ) {
+  const offered = getBuildRewardOfferedIdentity({
+    proposedTitle: proposal?.title,
+    proposedThumbnailUrl: proposal?.thumbnailUrl,
+    currentTitle: current?.title,
+    currentThumbnailUrl: current?.thumbnailUrl
+  });
   const summary = proposal?.diffSummary || {};
   const total = Math.max(
     0,
@@ -187,8 +223,8 @@ export function formatBuildRewardProposalSummary(
     )
   );
   const identity = [
-    proposal?.title ? 'new name' : '',
-    proposal?.thumbnailUrl ? 'new thumbnail' : ''
+    offered.title ? 'new name' : '',
+    offered.thumbnailUrl ? 'new thumbnail' : ''
   ].filter(Boolean);
   if (total === 0) {
     if (!identity.length) return 'No file changes';

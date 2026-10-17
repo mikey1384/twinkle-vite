@@ -12,6 +12,7 @@ import { useAppContext } from '~/contexts';
 import {
   formatBuildRewardProposalSummary,
   formatBuildRewardRulesSummary,
+  getBuildRewardOfferedIdentity,
   getBuildRewardReviewBannerText,
   getBuildRewardReviewManagementPath,
   getBuildRewardReviewStatusLabel,
@@ -62,14 +63,15 @@ export default function BuildRewardReview({
   const thumbnailUrl = String(review?.thumbnailUrl || '').trim();
   // A new name or thumbnail is the most visible part of an offer, so the card
   // shows it as before → after rather than only naming it in a chip.
-  const offeredTitle =
+  const { title: offeredTitle, thumbnailUrl: offeredThumbnailUrl } =
     status === 'changes_offered'
-      ? String(proposal?.title || '').trim()
-      : '';
-  const offeredThumbnailUrl =
-    status === 'changes_offered'
-      ? String(proposal?.thumbnailUrl || '').trim()
-      : '';
+      ? getBuildRewardOfferedIdentity({
+          proposedTitle: proposal?.title,
+          proposedThumbnailUrl: proposal?.thumbnailUrl,
+          currentTitle: title,
+          currentThumbnailUrl: thumbnailUrl
+        })
+      : { title: '', thumbnailUrl: '' };
   const sourceVersionId = Number(review?.sourceVersionId || 0);
   const budgets = review?.budgets || {};
   const sentByMe = Number(sender.id) === Number(myId);
@@ -114,7 +116,10 @@ export default function BuildRewardReview({
           </BuildMessageCardChip>
           {status === 'changes_offered' && proposal ? (
             <BuildMessageCardChip icon="file" themeName={sender.profileTheme}>
-              {formatBuildRewardProposalSummary(proposal)}
+              {formatBuildRewardProposalSummary(proposal, {
+                title,
+                thumbnailUrl
+              })}
             </BuildMessageCardChip>
           ) : null}
           <BuildMessageCardChip icon="coins" themeName={sender.profileTheme}>

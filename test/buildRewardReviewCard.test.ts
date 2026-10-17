@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   formatBuildRewardProposalSummary,
+  getBuildRewardOfferedIdentity,
   formatBuildRewardRulesSummary,
   getBuildRewardReviewBannerText,
   getBuildRewardReviewManagementPath,
@@ -151,5 +152,33 @@ test('the proposal chip counts changed files without ever showing contents', () 
       thumbnailUrl: 'https://cdn.example/t.jpg'
     }),
     'New name · new thumbnail'
+  );
+});
+
+test('a name or thumbnail the app already has is no offered change', () => {
+  assert.deepEqual(
+    getBuildRewardOfferedIdentity({
+      proposedTitle: 'Infinity Craft',
+      proposedThumbnailUrl: 'https://cdn/x.png',
+      currentTitle: ' infinity craft ',
+      currentThumbnailUrl: 'https://cdn/x.png'
+    }),
+    { title: '', thumbnailUrl: '' }
+  );
+  assert.deepEqual(
+    getBuildRewardOfferedIdentity({
+      proposedTitle: 'Infinity Craft',
+      proposedThumbnailUrl: 'https://cdn/y.png',
+      currentTitle: 'my game',
+      currentThumbnailUrl: 'https://cdn/x.png'
+    }),
+    { title: 'Infinity Craft', thumbnailUrl: 'https://cdn/y.png' }
+  );
+  assert.equal(
+    formatBuildRewardProposalSummary(
+      { title: 'Infinity Craft', thumbnailUrl: 'https://cdn/y.png' },
+      { title: 'Infinity Craft', thumbnailUrl: '' }
+    ),
+    'New thumbnail'
   );
 });

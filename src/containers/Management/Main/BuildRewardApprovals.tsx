@@ -470,7 +470,10 @@ export default function BuildRewardApprovals() {
                 {selected.proposal ? (
                   <p>
                     <strong>Offered:</strong>{' '}
-                    {formatBuildRewardProposalSummary(selected.proposal)}
+                    {formatBuildRewardProposalSummary(selected.proposal, {
+                      title: selected.title,
+                      thumbnailUrl: selected.thumbnailUrl
+                    })}
                     {selected.proposal.offeredAt
                       ? ` · ${timeSince(selected.proposal.offeredAt)}`
                       : ''}

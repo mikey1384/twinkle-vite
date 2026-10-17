@@ -2,22 +2,30 @@ import React from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { getBuildRewardOfferedIdentity } from '~/helpers/buildRewardReviewCard';
 
 // A reviewer proposal can rename the app and give it a new thumbnail along
 // with its files. Shown before → after wherever the offer is read: the
 // creator's comparison and the reviewer's panel. Renders nothing when the
-// offer keeps both.
+// offer keeps both, or the app already has them.
 export default function ProposalIdentityChange({
   currentTitle,
-  proposedTitle,
+  proposedTitle: offeredTitle,
   currentThumbnailUrl,
-  proposedThumbnailUrl
+  proposedThumbnailUrl: offeredThumbnailUrl
 }: {
   currentTitle?: string | null;
   proposedTitle?: string | null;
   currentThumbnailUrl?: string | null;
   proposedThumbnailUrl?: string | null;
 }) {
+  const { title: proposedTitle, thumbnailUrl: proposedThumbnailUrl } =
+    getBuildRewardOfferedIdentity({
+      proposedTitle: offeredTitle,
+      proposedThumbnailUrl: offeredThumbnailUrl,
+      currentTitle,
+      currentThumbnailUrl
+    });
   if (!proposedTitle && !proposedThumbnailUrl) return null;
   return (
     <section className={identityClass} aria-label="Name and thumbnail">
