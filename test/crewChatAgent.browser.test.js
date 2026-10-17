@@ -36,8 +36,8 @@ function Box() {
   return <textarea aria-label="Message box" value={text} readOnly style={{ width: '100%', height: 70, fontSize: 14 }} />;
 }
 
-const card = { type: 'approval', id: 'c1', summary: 'Can I save this plan for the crew? Saturday 2 PM at Olympic Park, flying kites.',
-  method: 'POST', path: '/user/meetup-quest/crews/77/plan', status: 'pending', requesterUserId: 501, requesterUsername: 'mia', crewId: 77 };
+const card = { type: 'approval', id: 'c1', summary: 'Can I save "Kite flyers who love science" as the crew’s about?',
+  method: 'PUT', path: '/user/meetup-quest/crews/77/profile', status: 'pending', requesterUserId: 501, requesterUsername: 'mia', crewId: 77 };
 
 window.lastCard = card;
 function Fixture() {
@@ -47,8 +47,8 @@ function Fixture() {
       <Box />
       <div className="bubble" data-shot="waiting">
         <b>Ciel</b>
-        <p>Here is a plan you can all look at. Mia, tap yes if it looks right.</p>
-        <WebsiteAgentCard card={card} channelId={4401} messageId={9001} assistantName="Ciel" messageText="Here is a plan" />
+        <p>Here is an about line you can all look at. Mia, tap yes if it looks right.</p>
+        <WebsiteAgentCard card={card} channelId={4401} messageId={9001} assistantName="Ciel" messageText="Here is an about line" />
       </div>
       <div className="bubble" data-shot="caller">
         <b>Ciel (as mia sees it)</b>
@@ -64,49 +64,32 @@ const crewView = {
   crewId: 77,
   displayName: 'Park Pals',
   status: 'active',
+  completedAt: 0,
+  members: [],
+  viewer: { isMember: true },
   chat: { channelId: 4401, pathId: 4401 },
   progress: {
-    currentStep: 'plan',
-    blocking: 'Next: pick a date, a time and a place together',
+    currentStep: 'meet',
+    crewReady: true,
+    metAt: 0,
+    blocking: 'Next: meet up and check each other in',
     steps: [
       {
         key: 'crew',
         number: 1,
-        label: 'Build your crew',
+        label: 'Crew',
         state: 'done',
         detail: ''
       },
       {
-        key: 'grownUp',
+        key: 'meet',
         number: 2,
-        label: 'Find a grown-up',
-        state: 'done',
-        detail: ''
-      },
-      {
-        key: 'plan',
-        number: 3,
-        label: 'Make a plan',
+        label: 'Meet up',
         state: 'current',
-        detail: 'When, where and what you will do'
-      },
-      {
-        key: 'film',
-        number: 4,
-        label: 'Film your meetup',
-        state: 'locked',
-        detail: 'A short video of the day'
-      },
-      {
-        key: 'review',
-        number: 5,
-        label: 'Get it checked',
-        state: 'locked',
-        detail: 'Staff check your video'
+        detail: 'Meet up and scan each other’s check-in codes'
       }
     ]
-  },
-  reviews: { crew: { status: 'none' }, grownUp: { status: 'none' } }
+  }
 };
 
 async function compileFixture() {
@@ -132,7 +115,7 @@ async function compileFixture() {
       'export const useRoleColor = () => ({getColor:()=>"#126bb5", color:"#126bb5",colorKey:"logoBlue",themeName:"logoBlue"});',
     '~/components/Icon':
       'import React from "react"; export default ({style}) => <span aria-hidden="true" style={style}>●</span>;',
-    './CrewReviewSummary': 'export default () => null;'
+    '~/containers/BridgeBuilderQuest/Checkin/CheckinButton': 'export default () => null;'
   };
   const result = await build({
     stdin: { contents: fixture, resolveDir: repo, loader: 'tsx' },
@@ -218,7 +201,7 @@ test(
         const text = await page.getByLabel('Message box').inputValue();
         assert.equal(
           text,
-          "@Zero We're on step 3 (Make a plan). Next up: pick a date, a time and a place together. Can you help us figure out this step? "
+          "@Zero We're on \"Meet up\". Next up: meet up and check each other in. Can you help us figure out this step? "
         );
         assert.deepEqual(await page.evaluate(() => window.tracked), [
           'crew_agent_ask'

@@ -12,7 +12,6 @@ import BuildCollaborationRequest from './BuildCollaborationRequest';
 import BuildContributionSubmission from './BuildContributionSubmission';
 import BuildThumbnailSuggestion from './BuildThumbnailSuggestion';
 import BuildTitleSuggestion from './BuildTitleSuggestion';
-import MeetupTeacherRequest from './MeetupTeacherRequest';
 import BuildContributionInvite from './BuildContributionInvite';
 import BuildProjectLimitRequest from './BuildProjectLimitRequest';
 import BuildReviewRequestCard from './BuildReviewRequestCard';
@@ -243,18 +242,6 @@ export default function Content({
             profileTheme
           }}
         />
-      ) : rootType === 'meetupTeacherRequest' && rootId ? (
-        <MeetupTeacherRequest
-          channelId={channelId}
-          messageId={messageId}
-          request={parsedSettings?.meetupTeacherRequest}
-          myId={myId}
-          sender={{
-            id: userId,
-            username: appliedUsername,
-            profileTheme
-          }}
-        />
       ) : rootType === 'buildContributionSubmission' && rootId ? (
         <BuildContributionSubmission
           channelId={channelId}
@@ -302,16 +289,11 @@ export default function Content({
         <MeetupBranchCard branchId={rootId} />
       ) : rootType === 'meetupQuestCrew' && rootId ? (
         <CrewChatCard crewId={rootId} />
-      ) : (rootType === 'meetupQuest' ||
-          rootType === 'meetupQuestInvite' ||
-          rootType === 'meetupQuestSlot' ||
-          rootType === 'meetupStory') &&
+      ) : (rootType === 'meetupQuestInvite' || rootType === 'meetupStory') &&
         rootId ? (
         <MeetupQuestCard
           crewId={rootId}
           username={appliedUsername}
-          isInvite={rootType === 'meetupQuestInvite'}
-          isSlot={rootType === 'meetupQuestSlot'}
           isStory={rootType === 'meetupStory'}
         />
       ) : invitePath ? (

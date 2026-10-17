@@ -6,7 +6,6 @@ import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import useCrewView from './useCrewView';
-import CrewReviewSummary from './CrewReviewSummary';
 import CrewAskButtons from './CrewAskButtons';
 
 // The message a crew's chat opens with (rootType 'meetupQuestCrew'): where
@@ -21,7 +20,7 @@ export default function CrewChatCard({ crewId }: { crewId: number }) {
   if (!crew?.progress) return null;
   const { progress } = crew;
   const current = progress.steps.find((step) => step.key === progress.currentStep);
-  const isDone = crew.status === 'completed';
+  const isDone = !!crew.completedAt;
   return (
     <div
       className={css`
@@ -54,13 +53,12 @@ export default function CrewChatCard({ crewId }: { crewId: number }) {
         <b>{crew.displayName}</b>
         <div>
           {isDone
-            ? 'Your meetup is done. Plan another one any time.'
+            ? 'Your crew met up! Meet again any time.'
             : current
-            ? `Step ${current.number} of ${progress.steps.length}: ${current.label}. ${progress.blocking.replace(/^Next:\s*/, '')}`
+            ? `${current.label}: ${progress.blocking.replace(/^Next:\s*/, '')}`
             : ''}
         </div>
       </div>
-      <CrewReviewSummary crew={crew} />
       <CrewAskButtons crew={crew} />
       <Button
         size="sm"

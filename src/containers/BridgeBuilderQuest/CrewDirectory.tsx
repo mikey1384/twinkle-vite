@@ -16,8 +16,8 @@ import type { CrewDirectoryData, CrewStage, DirectoryCrew } from './types';
 
 const WEEK_SECONDS = 7 * 24 * 60 * 60;
 const SECTION_LIMIT = 6;
-const FILTER_STAGES: CrewStage[] = ['forming', 'parents', 'planning', 'meeting', 'filmed'];
-const STAGE_ORDER: CrewStage[] = ['forming', 'parents', 'planning', 'meeting', 'filmed', 'done'];
+const FILTER_STAGES: CrewStage[] = ['forming', 'meeting'];
+const STAGE_ORDER: CrewStage[] = ['forming', 'meeting', 'met'];
 
 function branchKey(name: string) {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();
@@ -152,7 +152,7 @@ export default function CrewDirectory({
         (hasActiveCrew &&
           !crew.isMine &&
           crew.isOpen &&
-          (crew.stage === 'forming' || crew.stage === 'parents') &&
+          (crew.stage === 'forming' || crew.stage === 'meeting') &&
           crew.members.length < MEETUP_CREW_MAX_MEMBERS)
     );
     const mine = myBranch && branchKey(myBranch) !== branchKey(MEETUP_NON_STUDENT_BRANCH)

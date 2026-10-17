@@ -38,7 +38,7 @@ export default function MeetupStepPreview({
               textShadow: '0 1px 3px rgba(0,0,0,0.35)'
             }}
           >
-            <Icon icon={content?.stepKey === 'review' ? 'trophy' : 'star'} />
+            <Icon icon={content?.stepKey === 'meet' ? 'trophy' : 'star'} />
           </span>
         </CrewCover>
         </div>
@@ -46,9 +46,6 @@ export default function MeetupStepPreview({
       <div className="home-feed-card__achievement-copy">
         <h3 className={textClassName}>
           {content?.title}
-          <span>
-            (Step {content?.stepNumber} of 5)
-          </span>
         </h3>
         <div
           style={{

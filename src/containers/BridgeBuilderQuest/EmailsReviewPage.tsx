@@ -19,6 +19,9 @@ interface Draft {
   id: number;
   crewId: number;
   kind: string;
+  childUserId?: number;
+  childUsername?: string;
+  addressSource?: string;
   to: string;
   subject: string;
   body: string;
@@ -119,7 +122,10 @@ export default function EmailsReviewPage() {
             />
             Review parent emails before they are sent
             {!review && (
-              <span style={{ color: Color.orange() }}>(off: they go out right away)</span>
+              <span style={{ color: Color.orange() }}>
+                (off: they go out right away, except a grown-up request to an address the child
+                typed)
+              </span>
             )}
           </label>
         )}
@@ -146,9 +152,30 @@ export default function EmailsReviewPage() {
               `}
             >
               <div style={{ fontSize: '1.3rem', color: Color.gray() }}>
-                {draft.kind === 'brief' ? 'Meetup request' : 'Your reply to a parent'} · crew #
-                {draft.crewId} ·{' '}
-                <Link to={`/achievements/bridge-builder/crew/${draft.crewId}`}>open crew</Link>
+                {draft.kind === 'witness' ? (
+                  <>
+                    Grown-up request from{' '}
+                    {draft.childUsername ? (
+                      <Link to={`/users/${draft.childUsername}`}>{draft.childUsername}</Link>
+                    ) : (
+                      `member #${draft.childUserId}`
+                    )}{' '}
+                    ·{' '}
+                    {draft.addressSource === 'added' ? (
+                      <b style={{ color: Color.orange() }}>the child typed this address</b>
+                    ) : draft.addressSource === 'guardian' ? (
+                      'guardian from the sign-up consent'
+                    ) : (
+                      'address from an earlier request'
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {draft.kind === 'brief' ? 'Meetup request' : 'Your reply to a parent'} · crew #
+                    {draft.crewId} ·{' '}
+                    <Link to={`/achievements/bridge-builder/crew/${draft.crewId}`}>open crew</Link>
+                  </>
+                )}
                 {draft.status === 'failed' && (
                   <b style={{ color: Color.red() }}> · last send failed</b>
                 )}

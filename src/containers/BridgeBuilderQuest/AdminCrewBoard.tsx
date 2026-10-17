@@ -6,11 +6,8 @@ import type { AdminCrewRow, QuestStepKey } from './types';
 import { crewPath } from './DirectoryCard';
 
 const STEP_LABEL: Record<QuestStepKey, string> = {
-  crew: '1 Crew',
-  plan: '2 Plan',
-  grownUp: '3 Grown-up',
-  film: '4 Meet & film',
-  review: '5 Review'
+  crew: 'Forming',
+  meet: 'Ready to meet'
 };
 
 const DAY = 86400;
@@ -74,14 +71,14 @@ export default function AdminCrewBoard({ crews }: { crews: AdminCrewRow[] }) {
                     fontSize: '1.2rem'
                   }}
                 >
-                  {crew.currentStep ? STEP_LABEL[crew.currentStep] : 'Done'}
+                  {crew.currentStep ? STEP_LABEL[crew.currentStep] : 'Met up'}
                 </span>
                 <div style={{ flex: 1, minWidth: '18rem' }}>
                   <b>{crew.displayName}</b> <span style={{ color: Color.darkGray() }}>#{crew.crewId}</span>
                   <span style={{ color: Color.darkerGray() }}>
                     {' '}
                     · {crew.members.length} student{crew.members.length === 1 ? '' : 's'}
-                    {crew.parents.asked ? ` · parents ${crew.parents.approved}/${crew.parents.asked}` : ''}
+                    {crew.tier ? ` · ${crew.tier}` : ''}
                     {crew.branchesToVerify.length ? ` · ${crew.branchesToVerify.length} branch to verify` : ''}
                   </span>
                   <div style={{ color: Color.darkerGray() }}>{crew.blocking.replace(/^Next:\s*/, '')}</div>

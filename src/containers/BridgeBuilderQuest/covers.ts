@@ -26,16 +26,13 @@ export function coverFor(key: string) {
 
 export const STAGE_STYLES: Record<CrewStage, { label: string; color: string }> = {
   forming: { label: 'Forming', color: '#418ceb' },
-  parents: { label: 'Parents', color: '#8a4fd6' },
-  planning: { label: 'Planning', color: '#e08a00' },
-  meeting: { label: 'Meeting soon', color: '#d9577f' },
-  filmed: { label: 'Filmed', color: '#139a9a' },
-  done: { label: 'Complete!', color: '#28a745' },
+  meeting: { label: 'Ready to meet', color: '#d9577f' },
+  met: { label: 'Met up!', color: '#28a745' },
   closed: { label: 'Closed', color: '#888888' }
 };
 
-// "Bridge Builders!" for finished crews, from the achievement's own title.
+// "Bridge Builders!" for crews that met up, from the achievement's own title.
 export function stageLabel(stage: CrewStage, achievementTitle: string) {
-  if (stage === 'done' && achievementTitle) return `${achievementTitle}s!`;
+  if (stage === 'met' && achievementTitle) return `${achievementTitle}s!`;
   return STAGE_STYLES[stage]?.label || '';
 }

@@ -4,9 +4,10 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import * as meetup from '../src/constants/meetupQuest';
 
-// The Bridge Builder card said "at least 3 students from 3 different Twinkle
-// branches", which is the Gold bar; Bronze needs only 2 students. The card
-// now states every tier from the mirrored quest constants.
+// The Bridge Builder card states its numbers from the mirrored quest
+// constants, never typed ones. Since 2026-10-17 it unlocks after check-ins
+// with 7 different people (the same count as friends brought in) or one
+// meetup with a grown-up there.
 
 const cardSource = readFileSync(
   new URL('../src/components/AchievementItem/Big/Meetup.tsx', import.meta.url),
@@ -41,26 +42,20 @@ test('the mirrored numbers equal the API when it is checked out next to this rep
   ] as const) {
     assert.equal(readConst(questSource, name), meetup[name], name);
   }
-  assert.equal(
-    readConst(readFileSync(userHelpersPath, 'utf8'), 'FACE_TO_FACE_RECRUIT_TARGET'),
-    meetup.FACE_TO_FACE_RECRUIT_TARGET
+  // the API's one count (check-ins and invited friends alike)
+  assert.equal(readConst(questSource, 'BRIDGE_BUILDER_PEOPLE_TARGET'), meetup.FACE_TO_FACE_RECRUIT_TARGET);
+  assert.match(
+    readFileSync(userHelpersPath, 'utf8'),
+    /FACE_TO_FACE_RECRUIT_TARGET = BRIDGE_BUILDER_PEOPLE_TARGET/
   );
 });
 
-test('the card states the Bronze minimum and every tier from the constants, never typed numbers', () => {
+test('the card states the people count from the constant and both ways to unlock', () => {
   const text = cardSource.replace(/\s+/g, ' ');
-  assert.doesNotMatch(text, /at least \d+ students/);
-  assert.doesNotMatch(text, /\d+ different Twinkle branches/);
-  assert.doesNotMatch(text, /Bring \d+ friends/);
-  assert.match(text, /at least \{MEETUP_CREW_MIN_MEMBERS\}\{' '\} Twinkle students/);
-  assert.match(text, /<b>Bronze<\/b> \{MEETUP_CREW_MIN_MEMBERS\}\+ students/);
-  assert.match(
-    text,
-    /<b>Silver<\/b> \{MEETUP_CREW_MIN_MEMBERS\}\+ students from\{' '\} \{MEETUP_SILVER_MIN_BRANCHES\}\+ branches/
-  );
-  assert.match(
-    text,
-    /<b>Gold<\/b>\{' '\} \{MEETUP_GOLD_MIN_MEMBERS\}\+ students from \{MEETUP_GOLD_MIN_BRANCHES\}\+ branches/
-  );
-  assert.match(text, /Bring \{FACE_TO_FACE_RECRUIT_TARGET\} friends/);
+  assert.doesNotMatch(text, /Meet \d+ different people/);
+  assert.match(text, /Meet \{FACE_TO_FACE_RECRUIT_TARGET\} different people in real life/);
+  assert.match(text, /Friends you bring to Twinkle count too/);
+  assert.match(text, /a Twinkle teacher or your parent there/);
+  // the retired steps are gone from the card
+  assert.doesNotMatch(text, /film it|Dark Citadel|step \$\{/);
 });

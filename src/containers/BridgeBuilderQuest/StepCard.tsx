@@ -82,7 +82,7 @@ export default function StepCard({
   const bodyShown = !isDone || open;
   return (
     <section
-      aria-label={`Step ${step.number}: ${step.label}`}
+      aria-label={step.label}
       className={css`
         border-radius: 1.2rem;
         border: ${isCurrent ? `2px solid ${Color.logoBlue()}` : '1px solid var(--ui-border)'};
@@ -145,7 +145,7 @@ export default function StepCard({
             margin: 0;
           `}
         >
-          Step {step.number}: {step.label}
+          {step.label}
         </h3>
         <span
           className={css`

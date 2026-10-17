@@ -1,7 +1,10 @@
 import React from 'react';
 import { Color } from '~/constants/css';
 
-// A meetup achievement request: what the member wrote about the meetup.
+// A Bridge Builder unlock waiting for the administrator: the member reached
+// 7 people, but no check-in looked like two phones in one place
+// (twinkle-api meetupCheckins.ts); the content lists who counted. Older items
+// are what a member wrote in the retired free-text form.
 export default function Meetup({
   username,
   content
@@ -28,7 +31,7 @@ export default function Meetup({
           color: Color.darkerGray()
         }}
       >
-        Meetup achievement request
+        Bridge Builder unlock to confirm
       </p>
       <p
         style={{

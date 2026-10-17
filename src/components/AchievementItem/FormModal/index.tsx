@@ -22,20 +22,11 @@ export default function FormModal({
   const checkDobApprovalSubmission = useAppContext(
     (v) => v.requestHelpers.checkDobApprovalSubmission
   );
-  const checkMeetupApprovalSubmission = useAppContext(
-    (v) => v.requestHelpers.checkMeetupApprovalSubmission
-  );
   const submitDobForApproval = useAppContext(
     (v) => v.requestHelpers.submitDobForApproval
   );
-  const submitMeetupForApproval = useAppContext(
-    (v) => v.requestHelpers.submitMeetupForApproval
-  );
   const retryDobApproval = useAppContext(
     (v) => v.requestHelpers.retryDobApproval
-  );
-  const retryMeetupApproval = useAppContext(
-    (v) => v.requestHelpers.retryMeetupApproval
   );
 
   const approvalTypeConfigs: {
@@ -57,13 +48,6 @@ export default function FormModal({
       checkSubmission: checkDobApprovalSubmission,
       submitForApproval: submitDobForApproval,
       retryApproval: retryDobApproval
-    },
-    meetup: {
-      label: 'Which meetup did you attend?',
-      inputType: 'text',
-      checkSubmission: checkMeetupApprovalSubmission,
-      submitForApproval: submitMeetupForApproval,
-      retryApproval: retryMeetupApproval
     }
   };
 

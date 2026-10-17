@@ -6,23 +6,17 @@ import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color, borderRadius } from '~/constants/css';
 
-// The notification DM an admin gets when a meetup quest crew sends its plan
-// or its video (twinkle-api user/routes/meetupQuest.ts, rootType
-// 'meetupQuest', rootId = crew id). The review itself happens on the quest
-// page, or with `lumine admin meetup`.
+// Bridge Builder notification DMs (twinkle-api user/routes/meetupQuest.ts and
+// meetupStory.ts): a founder's crew invite (rootType 'meetupQuestInvite',
+// rootId = crew id), or a crew's story sent for the admins' approval
+// ('meetupStory', rootId = story id).
 export default function MeetupQuestCard({
   crewId,
   username,
-  isInvite = false,
-  isSlot = false,
   isStory = false
 }: {
   crewId: number;
   username: string;
-  // rootType 'meetupQuestInvite': a founder invited the recipient
-  isInvite?: boolean;
-  // rootType 'meetupQuestSlot': the coordinator set up the crew's slot
-  isSlot?: boolean;
   // rootType 'meetupStory': a crew sent its Bridge Builder story for the
   // admins' approval (crewId is then the story id)
   isStory?: boolean;
@@ -58,21 +52,10 @@ export default function MeetupQuestCard({
             {achievementTitle ? `${achievementTitle} ` : ''}story for your
             approval.
           </>
-        ) : isSlot ? (
-          <>
-            <b>{username}</b> set up your crew&apos;s meetup slot. See the
-            date, time and place on your crew page.
-          </>
-        ) : isInvite ? (
-          <>
-            <b>{username}</b> invited you to join their{' '}
-            {achievementTitle ? `${achievementTitle} ` : ''}meetup quest crew.
-          </>
         ) : (
           <>
-            <b>{username}</b>&apos;s crew (#{crewId}) sent their{' '}
-            {achievementTitle ? `${achievementTitle} ` : ''}meetup quest for
-            review.
+            <b>{username}</b> invited you to join their{' '}
+            {achievementTitle ? `${achievementTitle} ` : ''}crew.
           </>
         )}
       </div>
@@ -84,19 +67,11 @@ export default function MeetupQuestCard({
             navigate(
               isStory
                 ? `/bridge-builder/stories/${crewId}`
-                : isInvite || isSlot
-                ? `/achievements/bridge-builder/crew/${crewId}`
-                : `/achievements/bridge-builder/desk?crew=${crewId}`
+                : `/achievements/bridge-builder/crew/${crewId}`
             )
           }
         >
-          {isStory
-            ? 'Review the story'
-            : isSlot
-            ? 'See your meetup'
-            : isInvite
-            ? 'See the invitation'
-            : 'Open the review'}
+          {isStory ? 'Review the story' : 'See the invitation'}
         </Button>
       </div>
     </div>

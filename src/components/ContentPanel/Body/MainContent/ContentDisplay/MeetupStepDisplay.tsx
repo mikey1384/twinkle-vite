@@ -44,15 +44,12 @@ export default function MeetupStepDisplay({
             textShadow: '0 1px 3px rgba(0,0,0,0.35)'
           }}
         >
-          <Icon icon={content?.stepKey === 'review' ? 'trophy' : 'star'} />
+          <Icon icon={content?.stepKey === 'meet' ? 'trophy' : 'star'} />
         </span>
       </CrewCover>
       <div style={{ padding: '1.4rem 1.6rem' }}>
         <h3 style={{ margin: 0, fontSize: '2rem', color: Color.black() }}>
-          {content?.title}{' '}
-          <span style={{ fontSize: '1.4rem', color: Color.darkGray() }}>
-            (Step {content?.stepNumber} of 5)
-          </span>
+          {content?.title}
         </h3>
         {content?.line ? (
           <p style={{ margin: '0.4rem 0 0', fontSize: '1.5rem', color: Color.darkerGray() }}>

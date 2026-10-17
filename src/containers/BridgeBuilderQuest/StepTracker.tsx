@@ -6,16 +6,14 @@ import type { QuestProgress, QuestStepKey } from './types';
 
 export const STEP_ICONS: Record<QuestStepKey, string> = {
   crew: 'users',
-  grownUp: 'chalkboard-teacher',
-  plan: 'clipboard-check',
-  film: 'film',
-  review: 'trophy'
+  meet: 'qrcode'
 };
 
+// a looping glow on the current stage: transform/opacity only (looping
+// box-shadow keeps phones busy)
 const pulse = keyframes`
-  0% { box-shadow: 0 0 0 0 rgba(65, 140, 235, 0.45); }
-  70% { box-shadow: 0 0 0 0.9rem rgba(65, 140, 235, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(65, 140, 235, 0); }
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.5); opacity: 0; }
 `;
 
 const pop = keyframes`
@@ -39,7 +37,9 @@ export default function StepTracker({
           margin: 0;
           padding: 0;
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(${progress.steps.length || 2}, 1fr);
+          max-width: 36rem;
+          margin: 0 auto;
           position: relative;
         `}
       >
@@ -100,11 +100,7 @@ export default function StepTracker({
                       : isCurrent
                       ? Color.logoBlue()
                       : 'var(--ui-border)'};
-                  animation: ${isCurrent
-                    ? `${pulse} 1.8s ease-out infinite`
-                    : isDone
-                    ? `${pop} 0.45s ease-out`
-                    : 'none'};
+                  animation: ${isDone ? `${pop} 0.45s ease-out` : 'none'};
                   @media (max-width: ${mobileMaxWidth}) {
                     width: 3.6rem;
                     height: 3.6rem;
@@ -112,12 +108,28 @@ export default function StepTracker({
                   }
                 `}
               >
+                {isCurrent && (
+                  <span
+                    aria-hidden
+                    className={css`
+                      position: absolute;
+                      inset: -3px;
+                      border-radius: 50%;
+                      border: 3px solid ${Color.logoBlue()};
+                      animation: ${pulse} 1.8s ease-out infinite;
+                      @media (prefers-reduced-motion: reduce) {
+                        animation: none;
+                      }
+                    `}
+                  />
+                )}
                 {isDone ? (
                   <Icon icon="check" />
-                ) : isCurrent ? (
-                  <Icon icon={STEP_ICONS[step.key]} />
                 ) : (
-                  <span style={{ color: Color.darkGray() }}>{step.number}</span>
+                  <Icon
+                    icon={STEP_ICONS[step.key] || 'circle'}
+                    style={isCurrent ? undefined : { color: Color.darkGray() }}
+                  />
                 )}
               </span>
               <span
@@ -134,7 +146,7 @@ export default function StepTracker({
                   }
                 `}
               >
-                {step.number}. {step.label}
+                {step.label}
               </span>
             </li>
           );

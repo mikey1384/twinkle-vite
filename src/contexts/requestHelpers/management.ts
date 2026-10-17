@@ -990,20 +990,6 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async checkMeetupApprovalSubmission() {
-      try {
-        const {
-          data: { isSubmitted, content, status }
-        } = await request.get(`${URL}/management/approval/meetup`, auth());
-        return {
-          isSubmitted,
-          content,
-          status
-        };
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async convertUser(userId: number) {
       try {
         const {
@@ -1287,20 +1273,6 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async retryMeetupApproval(meetupDetails: string) {
-      try {
-        const {
-          data: { status }
-        } = await request.put(
-          `${URL}/management/approval/meetup/retry`,
-          { meetupDetails },
-          auth()
-        );
-        return status;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async revertApproval({ userId, type }: { userId: number; type: string }) {
       try {
         const {
@@ -1320,18 +1292,6 @@ export default function managementRequestHelpers({
         const data = await request.post(
           `${URL}/management/approval/dob`,
           { dob },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async submitMeetupForApproval(meetupDetails: string) {
-      try {
-        const data = await request.post(
-          `${URL}/management/approval/meetup`,
-          { meetupDetails },
           auth()
         );
         return data;

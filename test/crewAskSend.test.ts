@@ -11,11 +11,14 @@ test('a send from the Ask fill is marked only while it starts with the mention',
   const filledText = buildCrewAskText({
     assistant: 'Ciel',
     stepNumber: 2,
-    stepLabel: 'Plan'
+    stepLabel: 'Meet up'
   });
+  // stages are named, never numbered
+  assert.match(filledText, /We're on "Meet up"/);
+  assert.doesNotMatch(filledText, /step 2/);
   assert.equal(isCrewAskSend({ filledText, content: filledText }), true);
   assert.equal(
-    isCrewAskSend({ filledText, content: '@Ciel what date works for us?' }),
+    isCrewAskSend({ filledText, content: '@Ciel who should we invite?' }),
     true
   );
   assert.equal(

@@ -7,7 +7,6 @@ import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { STEP_ICONS } from '~/containers/BridgeBuilderQuest/StepTracker';
 import useCrewView from './useCrewView';
-import CrewReviewSummary from './CrewReviewSummary';
 import CrewAskButtons from './CrewAskButtons';
 
 // The crew's path as a checklist, in the chat's right sidebar under the
@@ -22,7 +21,7 @@ export default function CrewTrackerPanel({ crewId }: { crewId: number }) {
   const crew = useCrewView(crewId);
   if (!crew?.progress) return null;
   const { progress } = crew;
-  const isDone = crew.status === 'completed';
+  const isDone = !!crew.completedAt;
   return (
     <div
       className={css`
@@ -85,10 +84,8 @@ export default function CrewTrackerPanel({ crewId }: { crewId: number }) {
               >
                 {done ? (
                   <Icon icon="check" />
-                ) : current ? (
-                  <Icon icon={STEP_ICONS[step.key]} />
                 ) : (
-                  <span style={{ color: Color.darkGray() }}>{step.number}</span>
+                  <Icon icon={STEP_ICONS[step.key] || 'circle'} />
                 )}
               </span>
               <div
@@ -133,7 +130,6 @@ export default function CrewTrackerPanel({ crewId }: { crewId: number }) {
           {progress.blocking.replace(/^Next:\s*/, '')}
         </div>
       )}
-      <CrewReviewSummary crew={crew} />
       <CrewAskButtons crew={crew} style={{ marginTop: '1.2rem' }} />
       <Button
         size="sm"

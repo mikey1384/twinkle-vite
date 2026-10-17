@@ -5,7 +5,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
-import { formatSlot } from '~/containers/BridgeBuilderQuest/staff/shared';
+import CheckinButton from '~/containers/BridgeBuilderQuest/Checkin/CheckinButton';
 import useCrewView from './useCrewView';
 
 const cardClass = css`
@@ -37,10 +37,10 @@ const mutedClass = css`
 `;
 
 // The crew hub in the chat's left "In this chat" column (the room a group
-// without subchats leaves empty): ONE card about the meetup itself, meetup.com
-// style: what is planned, when and where, who is coming. The path and the next
-// action live in the right sidebar (CrewTrackerPanel), so nothing is repeated
-// here. Every value is the server's (crew view); actions live on the crew page.
+// without subchats leaves empty): ONE card about meeting up: ready, or who
+// checked in, with the Check in button. The path and the next action live in
+// the right sidebar (CrewTrackerPanel), so nothing is repeated here. Every
+// value is the server's (crew view).
 export default function CrewHubPanel({ crewId }: { crewId: number }) {
   const navigate = useNavigate();
   const trackMeetupQuestView = useAppContext(
@@ -48,52 +48,15 @@ export default function CrewHubPanel({ crewId }: { crewId: number }) {
   );
   const crew = useCrewView(crewId);
   if (!crew?.progress) return null;
-  const { plan, venue, adult } = crew;
-  const slot = venue?.status === 'set' ? venue.confirmedSlot : null;
-  const isDone = crew.status === 'completed';
-
-  let headline = 'Nothing planned yet';
-  let detail = '';
-  if (isDone) {
-    headline = 'Meetup done';
-    detail = 'Great job. Plan another one any time.';
-  } else if (slot) {
-    headline = formatSlot(slot);
-    detail =
-      [venue.branch && `${venue.branch} branch`, venue.room]
-        .filter(Boolean)
-        .join(' · ') ||
-      plan.area ||
-      'Set up by staff';
-  } else if (plan.status === 'pending') {
-    headline = 'Plan sent';
-    detail = 'Staff are reviewing it.';
-  } else if (plan.status === 'approved') {
-    headline = 'Plan approved';
-    detail =
-      venue?.status === 'offered'
-        ? 'Staff offered a classroom and times.'
-        : 'Waiting for a time and place.';
-  } else if (plan.status === 'sent_back') {
-    headline = 'Staff asked for changes';
-    detail = plan.note || '';
-  }
-  // the server's adultForDisplay: a teacher is "coming" only once they said
-  // yes, a classroom names no person (older APIs: never claim a teacher)
-  const shown = adult?.display;
-  const grownUp = shown
-    ? shown.kind === 'classroom'
-      ? shown.status === 'confirmed' && shown.name
-        ? `Supervised at ${shown.name}`
-        : 'Twinkle arranges the grown-up for classroom meetups'
-      : shown.status === 'waiting'
-        ? `Waiting for ${shown.waitingFor} (Twinkle teacher) to confirm`
-        : shown.name
-          ? `${shown.name} (${shown.kind === 'teacher' ? 'Twinkle teacher' : 'parent'}) is coming`
-          : ''
-    : adult?.kind === 'parent' && adult.name
-      ? `${adult.name} (parent) is coming`
-      : '';
+  const met = !!crew.completedAt;
+  const checkedIn = crew.members.filter((member) => member.attended);
+  const ready = crew.progress.crewReady;
+  const headline = met ? 'Your crew met up!' : ready ? 'Ready to meet up' : 'Your crew is forming';
+  const detail = met
+    ? `Checked in: ${checkedIn.map((member) => member.username).join(', ')}`
+    : ready
+      ? 'When you’re together, check each other in.'
+      : crew.progress.blocking.replace(/^Next:\s*/, '');
 
   const go = (to: string, kind: 'crew_hub_open' | 'crew_hub_examples') => {
     trackMeetupQuestView(kind);
@@ -104,8 +67,8 @@ export default function CrewHubPanel({ crewId }: { crewId: number }) {
     <div style={{ paddingTop: '0.4rem' }}>
       <div className={cardClass}>
         <div className={eyebrowClass}>
-          <Icon icon="calendar-day" style={{ marginRight: '0.5rem' }} />
-          Next meetup
+          <Icon icon="qrcode" style={{ marginRight: '0.5rem' }} />
+          Meet up
         </div>
         <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{headline}</div>
         {detail && (
@@ -113,39 +76,22 @@ export default function CrewHubPanel({ crewId }: { crewId: number }) {
             {detail}
           </div>
         )}
-        {!!plan.activity && plan.status !== 'none' && (
-          <div
-            className={css`
-              margin-top: 0.7rem;
-              color: ${Color.darkerGray()};
-              display: -webkit-box;
-              -webkit-box-orient: vertical;
-              -webkit-line-clamp: 3;
-              overflow: hidden;
-            `}
-          >
-            <Icon icon="lightbulb" style={{ marginRight: '0.5rem', color: Color.gold() }} />
-            {plan.activity}
+        {ready && crew.viewer.isMember && crew.status === 'active' && (
+          <div style={{ marginTop: '1rem' }}>
+            <CheckinButton size="sm" label="Check in together" />
           </div>
         )}
-        {grownUp && (
-          <div className={mutedClass} style={{ marginTop: '0.7rem' }}>
-            <Icon icon="user-shield" style={{ marginRight: '0.5rem' }} />
-            {grownUp}
-          </div>
-        )}
-        {/* the sidebar's "Open crew page" already covers a crew with no plan yet */}
-        {(slot || isDone || plan.status !== 'none') && (
+        {met && (
           <Button
             size="sm"
             color="logoBlue"
             style={{ marginTop: '1rem', width: '100%' }}
             onClick={() => go(`/achievements/bridge-builder/crew/${crewId}`, 'crew_hub_open')}
           >
-            See the details
+            Make our story page
           </Button>
         )}
-        {headline === 'Nothing planned yet' && (
+        {!met && (
           <button
             type="button"
             onClick={() => go('/bridge-builder/examples', 'crew_hub_examples')}

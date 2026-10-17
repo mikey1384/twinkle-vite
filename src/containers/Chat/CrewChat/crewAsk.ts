@@ -27,12 +27,9 @@ export function buildCrewAskText({
     .replace(/^Next:\s*/, '')
     .trim();
   const next = nextText && !/[.!?]$/.test(nextText) ? `${nextText}.` : nextText;
-  const step =
-    stepLabel && stepNumber
-      ? `We're on step ${stepNumber} (${stepLabel}).`
-      : stepLabel
-        ? `We're on "${stepLabel}".`
-        : '';
+  // stages are named, not numbered (stepNumber stays for older callers)
+  void stepNumber;
+  const step = stepLabel ? `We're on "${stepLabel}".` : '';
   return `@${assistant} ${step}${next ? ` Next up: ${next}` : ''} Can you help us figure out this step? `.replace(
     /\s+/g,
     ' '

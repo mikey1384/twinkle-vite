@@ -6,21 +6,12 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
-import {
-  FACE_TO_FACE_RECRUIT_TARGET,
-  MEETUP_CREW_MIN_MEMBERS,
-  MEETUP_GOLD_MIN_BRANCHES,
-  MEETUP_GOLD_MIN_MEMBERS,
-  MEETUP_SILVER_MIN_BRANCHES
-} from '~/constants/meetupQuest';
+import { FACE_TO_FACE_RECRUIT_TARGET } from '~/constants/meetupQuest';
 
-const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
-// Bridge Builder's step-by-step meetup quest (containers/BridgeBuilderQuest).
-// It replaced the old free-text "let us know" form as the entry point; items
-// already sent through that form stay reviewable in Management.
+// Bridge Builder (containers/BridgeBuilderQuest): check-ins with people met
+// in person, or one meetup with a grown-up there. Items sent through the old
+// free-text form stay reviewable in Management.
 export const BRIDGE_BUILDER_QUEST_PATH = '/achievements/bridge-builder';
-// the example stories (containers/BridgeBuilderQuest/Story)
-const BRIDGE_BUILDER_EXAMPLES_PATH = '/bridge-builder/examples';
 
 export default function Meetup({
   isThumb,
@@ -54,7 +45,6 @@ export default function Meetup({
   const [quest, setQuest] = useState<{
     crewId: number;
     completedCount?: number;
-    stepNumber?: number;
     stepLabel?: string;
   } | null>(null);
   const questShown = !isThumb && !isNotification;
@@ -76,13 +66,7 @@ export default function Meetup({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questShown, userId]);
 
-  // the quest stays open after the achievement unlocks: members can plan
-  // meetup after meetup
-  const questButtonLabel = quest?.crewId
-    ? `Open your crew (step ${quest.stepNumber}: ${quest.stepLabel})`
-    : quest?.completedCount
-    ? 'Plan another meetup'
-    : 'Start the meetup quest';
+
   return (
     <ErrorBoundary componentPath="AchievementItems/Big/Meetup">
       <ItemPanel
@@ -98,60 +82,35 @@ export default function Meetup({
         anyOf
         requirements={[
           <>
-            Meet up in real life with at least {MEETUP_CREW_MIN_MEMBERS}{' '}
-            Twinkle students, with a parent or a Twinkle teacher there. Do
-            something educational together and film it: the{' '}
-            <Link to={BRIDGE_BUILDER_QUEST_PATH} style={{ fontWeight: 'bold' }}>
-              meetup quest
-            </Link>{' '}
-            walks your crew through it one step at a time. Your tier comes from
-            who shows up: <b>Bronze</b> {MEETUP_CREW_MIN_MEMBERS}+ students,{' '}
-            <b>Silver</b> {MEETUP_CREW_MIN_MEMBERS}+ students from{' '}
-            {MEETUP_SILVER_MIN_BRANCHES}+ branches, <b>Gold</b>{' '}
-            {MEETUP_GOLD_MIN_MEMBERS}+ students from {MEETUP_GOLD_MIN_BRANCHES}+
-            branches
+            Meet {FACE_TO_FACE_RECRUIT_TARGET} different people in real life
+            and scan each other&apos;s check-in codes. Friends you bring to
+            Twinkle count too.
             {questShown && (
-              <div
-                style={{
-                  marginTop: '0.8rem',
-                  display: 'flex',
-                  gap: '0.6rem',
-                  flexWrap: 'wrap',
-                  alignItems: 'center'
-                }}
-              >
-                <Button
-                  size="sm"
-                  color="logoBlue"
-                  onClick={() => navigate(BRIDGE_BUILDER_QUEST_PATH)}
-                >
-                  <Icon icon="users" style={{ marginRight: '0.5rem' }} />
-                  {questButtonLabel}
+              <div style={{ marginTop: '0.8rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                <Button size="sm" color="green" onClick={() => navigate(BRIDGE_BUILDER_QUEST_PATH)}>
+                  <Icon icon="qrcode" style={{ marginRight: '0.5rem' }} />
+                  Check in
                 </Button>
-                <Button
-                  size="sm"
-                  variant="soft"
-                  color="logoBlue"
-                  onClick={() => navigate(BRIDGE_BUILDER_EXAMPLES_PATH)}
-                >
-                  <Icon icon="wand-magic-sparkles" style={{ marginRight: '0.5rem' }} />
-                  See what a finished meetup looks like
-                </Button>
+                {!!quest?.crewId && (
+                  <Button
+                    size="sm"
+                    variant="soft"
+                    color="logoBlue"
+                    onClick={() => navigate(`${BRIDGE_BUILDER_QUEST_PATH}/crew/${quest.crewId}`)}
+                  >
+                    <Icon icon="users" style={{ marginRight: '0.5rem' }} />
+                    Open your crew
+                  </Button>
+                )}
               </div>
             )}
           </>,
           <>
-            Bring {FACE_TO_FACE_RECRUIT_TARGET} friends who aren&apos;t on
-            Twinkle yet: for each one, play{' '}
-            <Link
-              to={DARK_CITADEL_PRIVATE_ROOM_PATH}
-              style={{ fontWeight: 'bold' }}
-            >
-              The Dark Citadel
-            </Link>{' '}
-            together for 10 minutes in a private room while they&apos;re a
-            guest, and they sign up (or, if you moderate our Minecraft server,
-            vouch for new players who join Twinkle)
+            Or meet up once with a Twinkle teacher or your parent there: every
+            kid who scans their code unlocks it.{' '}
+            <Link to={BRIDGE_BUILDER_QUEST_PATH} style={{ fontWeight: 'bold' }}>
+              How it works
+            </Link>
           </>
         ]}
         progressObj={progressObj}

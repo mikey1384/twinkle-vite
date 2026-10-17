@@ -147,12 +147,6 @@ const DailyReflection = lazyWithRetry(
 const BridgeBuilderEmails = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/EmailsReviewPage')
 );
-const BridgeBuilderHeadmasterDesk = lazyWithRetry(
-  () => import('~/containers/BridgeBuilderQuest/staff/HeadmasterDesk')
-);
-const BridgeBuilderCoordinatorDesk = lazyWithRetry(
-  () => import('~/containers/BridgeBuilderQuest/staff/CoordinatorDesk')
-);
 // Bridge Builder story pages, the examples, the hall, the crew's editor and
 // the parents' consent page (containers/BridgeBuilderQuest/Story)
 const BridgeStoryPage = lazyWithRetry(
@@ -170,8 +164,13 @@ const BridgeStoryEditorPage = lazyWithRetry(
 const BridgeStoryConsentPage = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/Story/ParentConsentPage')
 );
-const BridgeParentBriefPage = lazyWithRetry(
-  () => import('~/containers/BridgeBuilderQuest/Parent/ParentBriefPage')
+// Bridge Builder check-ins: a code's own link (a phone camera opened it) and
+// the grown-up page a parent opens from their email (no account)
+const BridgeCheckinLinkPage = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/Checkin/CheckinLinkPage')
+);
+const BridgeGrownUpPage = lazyWithRetry(
+  () => import('~/containers/BridgeBuilderQuest/Checkin/ParentWitnessPage')
 );
 const BridgeStoryReveal = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/Story/StoryReveal')
@@ -446,7 +445,7 @@ export default function App() {
       // a parent's or guardian's consent page needs no account
       location.pathname === '/signup/guardian' ||
       location.pathname === '/bridge-builder/consent' ||
-      location.pathname === '/bridge-builder/parent')
+      location.pathname === '/bridge-builder/grown-up')
   );
 
   const prevUserId = useRef(userId);
@@ -1550,16 +1549,12 @@ export default function App() {
                   element={<BridgeStoryConsentPage />}
                 />
                 <Route
-                  path="/bridge-builder/parent"
-                  element={<BridgeParentBriefPage />}
+                  path="/bridge-builder/grown-up"
+                  element={<BridgeGrownUpPage />}
                 />
                 <Route
-                  path="/achievements/bridge-builder/desk"
-                  element={<BridgeBuilderHeadmasterDesk />}
-                />
-                <Route
-                  path="/achievements/bridge-builder/coordinator"
-                  element={<BridgeBuilderCoordinatorDesk />}
+                  path="/bridge/c/:token"
+                  element={<BridgeCheckinLinkPage />}
                 />
                 <Route
                   path="/achievements/:achievementType"

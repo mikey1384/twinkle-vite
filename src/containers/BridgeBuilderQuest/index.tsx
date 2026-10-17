@@ -8,7 +8,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
-import ProgressBar from '~/components/ProgressBar';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import CreateCrewModal from './CreateCrewModal';
@@ -21,13 +20,8 @@ import AdminCrewBoard from './AdminCrewBoard';
 import JoinCrewModal from './JoinCrewModal';
 import { QuestNote } from './StepCard';
 import { backLinkClass, pageWidthClass, sectionClass } from './pageStyles';
-import { StaffNav } from './staff/shared';
-import type {
-  CrewInvitation,
-  DirectoryCrew,
-  MeetupQuestData,
-  StaffSummary
-} from './types';
+import CheckinCard from './Checkin/CheckinCard';
+import type { CrewInvitation, DirectoryCrew, MeetupQuestData } from './types';
 import {
   AdminStoryQueue,
   ExampleStoriesRow,
@@ -35,8 +29,6 @@ import {
 } from './Story/QuestStories';
 import { storyPath } from './Story/storyHelpers';
 import type { StoriesOverview } from './Story/types';
-
-const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
 
 const headingClass = css`
   font-size: 1.9rem;
@@ -58,14 +50,15 @@ interface JoinTarget {
   inviteId: number;
 }
 
-// Bridge Builder's step-by-step meetup quest (achievement type 'meetup'):
-// your crew, invitations, and the crew directory. The achievement's name
-// comes from its data, so a rename is one DB change.
+// Bridge Builder (achievement type 'meetup'): the check-in checkpoint on top
+// (7 people met in person, or one meetup with a grown-up there), then your
+// crew, invitations and the crew directory. The achievement's name comes from
+// its data, so a rename is one DB change.
 export default function BridgeBuilderQuest({
   view = 'member'
 }: {
-  // 'staff' is the staff desk (/achievements/bridge-builder/staff): the crew
-  // board and the review queues, kept off the members' page
+  // 'staff' is the admins' desk (/achievements/bridge-builder/staff): the crew
+  // board, members' answers and the story queue, kept off the members' page
   view?: 'member' | 'staff';
 }) {
   const { pendingAction, runAction } = usePendingAction();
@@ -74,32 +67,20 @@ export default function BridgeBuilderQuest({
   const loadMeetupQuest = useAppContext(
     (v) => v.requestHelpers.loadMeetupQuest
   );
-  const loadMyAchievements = useAppContext(
-    (v) => v.requestHelpers.loadMyAchievements
-  );
   const declineMeetupInvite = useAppContext(
     (v) => v.requestHelpers.declineMeetupInvite
   );
   const dismissMeetupNotice = useAppContext(
     (v) => v.requestHelpers.dismissMeetupNotice
   );
-  const loadMeetupStaffSummary = useAppContext(
-    (v) => v.requestHelpers.loadMeetupStaffSummary
-  );
   const loadMeetupStoriesOverview = useAppContext(
     (v) => v.requestHelpers.loadMeetupStoriesOverview
   );
-  const [staff, setStaff] = useState<StaffSummary | null>(null);
-  const [staffChecked, setStaffChecked] = useState(false);
   const [stories, setStories] = useState<StoriesOverview | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedCrewId = Number(searchParams.get('crew')) || 0;
   const [data, setData] = useState<MeetupQuestData | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [friendWay, setFriendWay] = useState<{
-    isUnlocked: boolean;
-    progressObj?: { label: string; currentValue: number; targetValue: number };
-  } | null>(null);
   const [createShown, setCreateShown] = useState(false);
   const [joinTarget, setJoinTarget] = useState<JoinTarget | null>(null);
   const [inviteError, setInviteError] = useState('');
@@ -123,11 +104,6 @@ export default function BridgeBuilderQuest({
   useEffect(() => {
     if (!userId) return;
     reload();
-    loadFriendWay();
-    loadMeetupStaffSummary()
-      .then((summary: StaffSummary) => setStaff(summary))
-      .catch(() => setStaff(null))
-      .finally(() => setStaffChecked(true));
     loadMeetupStoriesOverview()
       .then((overview: StoriesOverview) => setStories(overview))
       .catch(() => setStories(null));
@@ -144,11 +120,8 @@ export default function BridgeBuilderQuest({
   // members without an active crew (a finished crew counts as none); a member
   // of an active crew sees just their crew
   const memberBrowse = view === 'member' && !data?.hasActiveCrew;
-  const staffDeskShown = !!(
-    (staff && (staff.canReviewPlans || staff.canCoordinate)) ||
-    data?.reviewQueue ||
-    stories?.reviewQueue
-  );
+  // admins only: the crew board, members' answers and the story queue
+  const staffDeskShown = !!(data?.reviewQueue || stories?.reviewQueue);
   const staffWaiting =
     (data?.reviewQueue?.length || 0) + (stories?.reviewQueue?.length || 0);
 
@@ -187,13 +160,13 @@ export default function BridgeBuilderQuest({
 
           {view === 'staff' ? (
             <h1 className={compactTitleClass}>Bridge Builder staff desk</h1>
-          ) : data?.myCrew ? (
+          ) : (
+            <CheckinCard achievementTitle={achievementTitle} />
+          )}
+
+          {view === 'member' && data?.myCrew && (
             <>
-              <h1 className={compactTitleClass}>
-                {achievementTitle
-                  ? `${achievementTitle}: your crew`
-                  : 'Your crew'}
-              </h1>
+              <h2 className={compactTitleClass}>Your crew</h2>
               <div ref={myCrewRef} style={{ marginTop: '1rem' }}>
                 <CrewPanel
                   crew={data.myCrew}
@@ -203,76 +176,67 @@ export default function BridgeBuilderQuest({
                 />
               </div>
             </>
-          ) : (
-            <>
-              <section
-                className={sectionClass}
-                style={{ padding: 0, overflow: 'hidden' }}
+          )}
+
+          {memberBrowse && (
+            <section
+              className={sectionClass}
+              style={{ padding: 0, overflow: 'hidden' }}
+            >
+              <CrewCover cover="galaxy" height="6rem" rounded="0" />
+              <div
+                className={css`
+                  padding: 1.6rem 2rem 2rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    padding: 1.4rem 1rem;
+                  }
+                `}
               >
-                <CrewCover cover="galaxy" height="7rem" rounded="0" />
+                <h2 className={headingClass} style={{ marginBottom: '0.6rem' }}>
+                  Meet up with a crew
+                </h2>
+                <p className={bodyTextClass}>
+                  Team up with friends you know on Twinkle: your crew gets a group
+                  chat, and when you check in together it gets its own story page.
+                </p>
                 <div
                   className={css`
-                    padding: 1.8rem 2rem 2rem;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      padding: 1.4rem 1rem;
-                    }
+                    display: flex;
+                    gap: 0.8rem;
+                    flex-wrap: wrap;
+                    margin-top: 1.4rem;
                   `}
                 >
-                  <h1
-                    className={css`
-                      font-size: 2.6rem;
-                      font-weight: bold;
-                      color: ${Color.black()};
-                      margin: 0 0 0.8rem;
-                    `}
+                  <Button color="green" onClick={openCreateCrew}>
+                    <Icon icon="plus" style={{ marginRight: '0.6rem' }} />
+                    Start a crew
+                  </Button>
+                  <Button
+                    variant="soft"
+                    color="logoBlue"
+                    onClick={() => {
+                      trackMeetupQuestView('directory_view');
+                      directoryRef.current?.scrollIntoView({
+                        behavior: 'smooth'
+                      });
+                    }}
                   >
-                    Meet your Twinkle friends in real life
-                  </h1>
-                  <p className={bodyTextClass}>
-                    Hung out here online? Plan a real meetup together, with a
-                    parent or a Twinkle teacher there. It takes a few simple
-                    steps, and our staff check every plan first.
-                  </p>
-                  <div
-                    className={css`
-                      display: flex;
-                      gap: 0.8rem;
-                      flex-wrap: wrap;
-                      margin-top: 1.4rem;
-                    `}
-                  >
-                    <Button color="green" onClick={openCreateCrew}>
-                      <Icon icon="plus" style={{ marginRight: '0.6rem' }} />
-                      Start a crew with friends
-                    </Button>
-                    <Button
-                      variant="soft"
-                      color="logoBlue"
-                      onClick={() => {
-                        trackMeetupQuestView('directory_view');
-                        directoryRef.current?.scrollIntoView({
-                          behavior: 'smooth'
-                        });
-                      }}
-                    >
-                      <Icon icon="search" style={{ marginRight: '0.6rem' }} />
-                      Find a crew to join
-                    </Button>
-                    <AskAgentButton
-                      label="Not sure? Ask"
-                      context={{
-                        kind: 'page',
-                        label: 'the Bridge Builder meetup quest',
-                        path: '/achievements/bridge-builder',
-                        excerpt:
-                          'Twinkle friends plan a real-life meetup with a parent or teacher there: start or join a crew, send a plan, parents say yes and a grown-up is named, then meet, film it and finish.'
-                      }}
-                    />
-                  </div>
-                  <SafetyChips />
+                    <Icon icon="search" style={{ marginRight: '0.6rem' }} />
+                    Find a crew
+                  </Button>
+                  <AskAgentButton
+                    label="Questions? Ask"
+                    context={{
+                      kind: 'page',
+                      label: 'Bridge Builder',
+                      path: '/achievements/bridge-builder',
+                      excerpt:
+                        'Friends who meet in person scan each other’s QR codes to check in. 7 different people, or one meetup with a Twinkle teacher or a parent there, unlock Bridge Builder. Crews are friends who meet up together.'
+                    }}
+                  />
                 </div>
-              </section>
-            </>
+              </div>
+            </section>
           )}
 
           {view === 'member' && staffDeskShown && (
@@ -358,9 +322,7 @@ export default function BridgeBuilderQuest({
                   `}
                 >
                   <span>
-                    {notice.kind === 'replaced'
-                      ? `Your parent hadn't said yes to crew "${notice.crewName}" yet, so its founder invited someone else this time. You can join or start another crew any time.`
-                      : notice.kind === 'removed'
+                    {notice.kind === 'removed'
                       ? `You were removed from crew "${notice.crewName}". You can join or start another crew any time.`
                       : `Your crew "${notice.crewName}" was disbanded by its founder. You can join or start another crew any time.`}
                   </span>
@@ -473,8 +435,7 @@ export default function BridgeBuilderQuest({
                       Find a crew
                     </h2>
                     <p className={bodyTextClass} style={{ fontSize: '1.3rem' }}>
-                      Crews show usernames, profile pictures and branches. Plans
-                      and videos stay private to each crew.
+                      Crews show usernames, profile pictures and branches.
                     </p>
                   </div>
                   {!data.hasActiveCrew && (
@@ -510,83 +471,10 @@ export default function BridgeBuilderQuest({
             </div>
           )}
 
-          {memberBrowse && (
-          <>
-          <details
-            className={detailsClass}
-            onToggle={(event) => {
-              if ((event.currentTarget as HTMLDetailsElement).open) {
-                trackMeetupQuestView('rules_open');
-              }
-            }}
-          >
-            <summary className={summaryClass}>What counts as a meetup?</summary>
-            <p className={bodyTextClass} style={{ marginTop: '1rem' }}>
-              Two or more Twinkle friends meet in real life, at a Twinkle
-              classroom or a member&apos;s home, with a grown-up there. Do
-              something really educational together and film it. Everyone who
-              showed up unlocks <b>{achievementName}</b>. Every step waits for
-              staff to approve it.
-            </p>
-          </details>
-
-          <details
-            className={detailsClass}
-            onToggle={(event) => {
-              if ((event.currentTarget as HTMLDetailsElement).open) {
-                trackMeetupQuestView('way2_open');
-              }
-            }}
-          >
-            <summary className={summaryClass}>
-              Another way to unlock {achievementName}: bring friends to Twinkle
-            </summary>
-            <div style={{ marginTop: '1rem' }}>
-              <p className={bodyTextClass}>
-                Bring friends who aren&apos;t on Twinkle yet: for each one, play{' '}
-                <Link
-                  to={DARK_CITADEL_PRIVATE_ROOM_PATH}
-                  style={{ fontWeight: 'bold' }}
-                >
-                  The Dark Citadel
-                </Link>{' '}
-                together for 10 minutes in a private room while they&apos;re a
-                guest, and they sign up (or, if you moderate our Minecraft
-                server, vouch for new players who join Twinkle).
-              </p>
-              {friendWay?.progressObj && !friendWay.isUnlocked && (
-                <div style={{ marginTop: '1.2rem' }}>
-                  <div
-                    className={css`
-                      font-size: 1.4rem;
-                      font-weight: bold;
-                      color: ${Color.black()};
-                    `}
-                  >
-                    {friendWay.progressObj.label}:{' '}
-                    {friendWay.progressObj.currentValue}/
-                    {friendWay.progressObj.targetValue}
-                  </div>
-                  <ProgressBar
-                    progress={Math.min(
-                      100,
-                      Math.ceil(
-                        (100 * friendWay.progressObj.currentValue) /
-                          (friendWay.progressObj.targetValue || 1)
-                      )
-                    )}
-                  />
-                </div>
-              )}
-            </div>
-          </details>
-          </>
-          )}
-
-          {view === 'staff' && data && staffChecked && !staffDeskShown && (
+          {view === 'staff' && data && !staffDeskShown && (
             <div style={{ marginTop: '1.6rem' }}>
               <QuestNote tone="info">
-                This page is for Bridge Builder staff.{' '}
+                This page is for Twinkle admins.{' '}
                 <Link to="/achievements/bridge-builder">Back to Bridge Builder</Link>
               </QuestNote>
             </div>
@@ -604,11 +492,6 @@ export default function BridgeBuilderQuest({
                   </Link>
                 </div>
               )}
-              {staff && (staff.canReviewPlans || staff.canCoordinate) && (
-                <div style={{ marginTop: '1rem' }}>
-                  <StaffNav summary={staff} />
-                </div>
-              )}
               {data?.reviewQueue && (
                 <section className={sectionClass}>
                   <h2 className={headingClass}>
@@ -616,7 +499,7 @@ export default function BridgeBuilderQuest({
                       icon="clipboard-check"
                       style={{ color: Color.logoBlue() }}
                     />{' '}
-                    Admin: waiting for review
+                    Admin: members' answers to read
                   </h2>
                   {data.reviewQueue.length === 0 ? (
                     <p className={bodyTextClass}>
@@ -646,23 +529,6 @@ export default function BridgeBuilderQuest({
                         >
                           <b>Crew #{item.crewId}</b>
                           <span>
-                            {
-                              {
-                                crew: 'Crew',
-                                plan: 'Plan',
-                                grownUp: 'Parents & adult',
-                                video: 'Video',
-                                memberInfo: "A member's answer"
-                              }[
-                                item.waitingFor as
-                                  | 'crew'
-                                  | 'plan'
-                                  | 'grownUp'
-                                  | 'video'
-                                  | 'memberInfo'
-                              ] || 'Plan'
-                            }{' '}
-                            ·{' '}
                             {item.members
                               .map(
                                 (member) =>
@@ -678,7 +544,7 @@ export default function BridgeBuilderQuest({
                               setSearchParams({ crew: String(item.crewId) })
                             }
                           >
-                            Review
+                            Read the answer
                           </Button>
                         </li>
                       ))}
@@ -729,21 +595,6 @@ export default function BridgeBuilderQuest({
     }
   }
 
-  async function loadFriendWay() {
-    try {
-      const achievements = await loadMyAchievements();
-      const meetup = achievements?.meetup;
-      if (meetup) {
-        setFriendWay({
-          isUnlocked: !!meetup.isUnlocked,
-          progressObj: meetup.progressObj
-        });
-      }
-    } catch {
-      setFriendWay(null);
-    }
-  }
-
   function openCreateCrew() {
     trackMeetupQuestView('create_open');
     setCreateShown(true);
@@ -791,71 +642,6 @@ const compactTitleClass = css`
   color: ${Color.black()};
   margin: 1.4rem 0 0;
 `;
-
-const detailsClass = css`
-  margin-top: 1.6rem;
-  padding: 1.2rem 1.6rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 1.2rem;
-  background: #fff;
-  @media (max-width: ${mobileMaxWidth}) {
-    margin-left: 1rem;
-    margin-right: 1rem;
-  }
-`;
-
-const summaryClass = css`
-  cursor: pointer;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: ${Color.darkerGray()};
-`;
-
-// Only claims the product really enforces: a named grown-up is required
-// (step 3), contact details are rejected by the API, the plan is admin-gated,
-// and the video is private (signed, short-lived links).
-const SAFETY_POINTS = [
-  { icon: 'user-shield', text: 'A grown-up always comes' },
-  { icon: 'map-marker-alt', text: 'No home addresses online' },
-  { icon: 'clipboard-check', text: 'Staff check every plan' },
-  { icon: 'lock', text: 'Videos stay private to your crew' }
-];
-
-function SafetyChips() {
-  return (
-    <ul
-      className={css`
-        list-style: none;
-        margin: 1.4rem 0 0;
-        padding: 0;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem;
-      `}
-    >
-      {SAFETY_POINTS.map((point) => (
-        <li
-          key={point.text}
-          className={css`
-            display: inline-flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 0.5rem 1.1rem;
-            border-radius: 2rem;
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: ${Color.darkerGray()};
-            background: ${Color.green(0.1)};
-            border: 1px solid ${Color.green(0.35)};
-          `}
-        >
-          <Icon icon={point.icon as any} style={{ color: Color.green() }} />
-          {point.text}
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 function InvitationCard({
   invite,

@@ -209,6 +209,16 @@ import { faUser } from '@fortawesome/pro-solid-svg-icons/faUser';
 import { faUserPlus } from '@fortawesome/pro-solid-svg-icons/faUserPlus';
 import { faCalendarDay } from '@fortawesome/pro-solid-svg-icons/faCalendarDay';
 import { faUserCheck } from '@fortawesome/pro-solid-svg-icons/faUserCheck';
+import { faQrcode } from '@fortawesome/pro-solid-svg-icons/faQrcode';
+import { faVolumeHigh } from '@fortawesome/pro-solid-svg-icons/faVolumeHigh';
+import { faWifi } from '@fortawesome/pro-solid-svg-icons/faWifi';
+import { faEarListen } from '@fortawesome/pro-solid-svg-icons/faEarListen';
+import { faMobileScreenButton } from '@fortawesome/pro-solid-svg-icons/faMobileScreenButton';
+import { faTowerBroadcast } from '@fortawesome/pro-solid-svg-icons/faTowerBroadcast';
+import { faKey } from '@fortawesome/pro-solid-svg-icons/faKey';
+import { faArrowRotateRight } from '@fortawesome/pro-solid-svg-icons/faArrowRotateRight';
+import { faHandshake } from '@fortawesome/pro-solid-svg-icons/faHandshake';
+import { faCamera } from '@fortawesome/pro-solid-svg-icons/faCamera';
 import { faLocationDot } from '@fortawesome/pro-solid-svg-icons/faLocationDot';
 import { faCircleCheck } from '@fortawesome/pro-solid-svg-icons/faCircleCheck';
 import { faUserShield } from '@fortawesome/pro-solid-svg-icons/faUserShield';
@@ -451,6 +461,16 @@ library.add(
   faUserPlus,
   faCalendarDay,
   faUserCheck,
+  faQrcode,
+  faVolumeHigh,
+  faWifi,
+  faEarListen,
+  faMobileScreenButton,
+  faTowerBroadcast,
+  faKey,
+  faArrowRotateRight,
+  faHandshake,
+  faCamera,
   faLocationDot,
   faCircleCheck,
   faUserShield,

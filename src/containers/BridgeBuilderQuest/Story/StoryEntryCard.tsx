@@ -10,15 +10,9 @@ const bob = keyframes`
   50% { transform: translateY(-0.4rem) rotate(4deg); }
 `;
 
-// On the crew panel once the meetup video is sent: the way into the crew's
-// story page (writing can start while the admins review the video).
-export default function StoryEntryCard({
-  crewId,
-  completed
-}: {
-  crewId: number;
-  completed: boolean;
-}) {
+// On the crew panel once the crew has met up and checked in: the way into
+// the crew's story page.
+export default function StoryEntryCard({ crewId }: { crewId: number }) {
   return (
     <div
       className={css`
@@ -59,12 +53,11 @@ export default function StoryEntryCard({
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className={css`font-size: 1.9rem; font-weight: 900;`}>
-          {completed ? 'Make your story page' : 'Start writing your story'}
+          Make your story page
         </div>
         <div className={css`font-size: 1.4rem; line-height: 1.5; opacity: 0.92; margin-top: 0.3rem;`}>
-          {completed
-            ? 'Your meetup is approved! Turn it into a page on Twinkle: who came, what you did, your best photos and clips.'
-            : 'While the admins watch your video, your crew can start writing the page about your meetup.'}{' '}
+          You met up! Turn it into a page on Twinkle: who came, what you
+          did, your best photos and clips.{' '}
           <Link to={EXAMPLES_PATH} className={css`color: #fff; font-weight: bold; text-decoration: underline;`}>
             See examples
           </Link>

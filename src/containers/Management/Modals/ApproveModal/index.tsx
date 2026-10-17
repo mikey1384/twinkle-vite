@@ -107,14 +107,19 @@ export default function ApproveModal({
                   boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
                   background:
                     Color[
-                      target.status === 'approved' ? 'limeGreen' : 'redOrange'
+                      target.status === 'approved'
+                        ? 'limeGreen'
+                        : target.status === 'rejected'
+                          ? 'redOrange'
+                          : 'logoBlue'
                     ](),
                   color: '#fff',
                   fontWeight: 'bold'
                 }}
               >
                 <Icon
-                  icon={target.status === 'approved' ? 'check' : 'times'}
+                  // 'settled': resolved on its own, never decided
+                  icon={target.status === 'rejected' ? 'times' : 'check'}
                   style={{ marginRight: '0.7rem' }}
                 />
                 {target.status.toUpperCase()}
