@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatNewcomers, getDigestDayLabel } from '../src/helpers/rewardDigest';
+import { getDigestDayLabel, getNewcomerSummary } from '../src/helpers/rewardDigest';
 
 test('a digest names its reward day plainly', () => {
   const now = Date.parse('2026-10-17T05:00:00Z');
@@ -10,9 +10,13 @@ test('a digest names its reward day plainly', () => {
   assert.equal(getDigestDayLabel('garbage', now), 'Earlier');
 });
 
-test('newcomers read as two names and the rest, from two up', () => {
-  assert.equal(formatNewcomers({ count: 8, names: ['Mina', 'Joon'] }), 'Mina, Joon, +6');
-  assert.equal(formatNewcomers({ count: 2, names: ['Mina', 'Joon'] }), 'Mina, Joon');
-  assert.equal(formatNewcomers({ count: 1, names: ['Mina'] }), '');
-  assert.equal(formatNewcomers(null), '');
+test('newcomers show from two up: the first two named, the rest counted', () => {
+  const users = [
+    { userId: 1, username: 'Mina' },
+    { userId: 2, username: 'Joon' }
+  ];
+  assert.deepEqual(getNewcomerSummary({ count: 8, users }), { users, rest: 6 });
+  assert.deepEqual(getNewcomerSummary({ count: 2, users }), { users, rest: 0 });
+  assert.equal(getNewcomerSummary({ count: 1, users: users.slice(0, 1) }), null);
+  assert.equal(getNewcomerSummary(null), null);
 });

@@ -13,14 +13,18 @@ export function getDigestDayLabel(dayKey: string, now = Date.now()) {
   });
 }
 
-// "Mina, Joon, +6": who earned their first reward in the app today. Shown
-// only for two or more (one newcomer has their own card).
-export function formatNewcomers(
-  newcomers?: { count?: number; names?: string[] } | null
+// "Mina, Joon, +6": who earned their first reward in the app today, shown
+// from two up (one newcomer has their own card). The first two are named.
+export function getNewcomerSummary(
+  newcomers?: {
+    count?: number;
+    users?: Array<{ userId: number; username: string }>;
+  } | null
 ) {
   const count = Math.max(0, Math.floor(Number(newcomers?.count) || 0));
-  const names = (newcomers?.names || []).filter(Boolean).slice(0, 2);
-  if (count < 2 || !names.length) return '';
-  const rest = count - names.length;
-  return `${names.join(', ')}${rest > 0 ? `, +${rest}` : ''}`;
+  const users = (newcomers?.users || [])
+    .filter((user) => user?.userId && user.username)
+    .slice(0, 2);
+  if (count < 2 || !users.length) return null;
+  return { users, rest: Math.max(0, count - users.length) };
 }

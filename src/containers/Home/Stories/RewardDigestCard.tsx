@@ -10,7 +10,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { formatNewcomers, getDigestDayLabel } from '~/helpers/rewardDigest';
+import { getDigestDayLabel, getNewcomerSummary } from '~/helpers/rewardDigest';
 import { trackEvent } from '~/helpers/analytics';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
@@ -46,8 +46,11 @@ export interface RewardDigestPreview {
     profilePicUrl?: string | null;
   }>;
   latest?: { bountyId: number; title: string; username: string } | null;
-  // earners whose first reward in this app came today
-  newcomers?: { count: number; names: string[] } | null;
+  // earners whose first reward in this app came today (the first two named)
+  newcomers?: {
+    count: number;
+    users: Array<{ userId: number; username: string }>;
+  } | null;
 }
 
 // An app's "earning today" card on Home: everyone who earned XP or Coins in
@@ -72,7 +75,7 @@ function RewardDigestCard({
   const shownEarners = (digest.earners || []).slice(0, 6);
   const moreEarners = Math.max(0, players - shownEarners.length);
   const when = getDigestDayLabel(digest.dayKey);
-  const newcomersLine = formatNewcomers(digest.newcomers);
+  const newcomers = getNewcomerSummary(digest.newcomers);
 
   return (
     <article
@@ -151,9 +154,16 @@ function RewardDigestCard({
           ) : null}
         </div>
       ) : null}
-      {newcomersLine ? (
+      {newcomers ? (
         <div className="reward-digest-card__newcomers">
-          <Icon icon="star" /> New today: {newcomersLine}
+          <Icon icon="star" /> New today:{' '}
+          {newcomers.users.map((user, i) => (
+            <React.Fragment key={user.userId}>
+              {i > 0 ? ', ' : ''}
+              <UsernameText user={{ id: user.userId, username: user.username }} />
+            </React.Fragment>
+          ))}
+          {newcomers.rest ? `, +${addCommasToNumber(newcomers.rest)}` : ''}
         </div>
       ) : null}
       {appAvailable ? (
