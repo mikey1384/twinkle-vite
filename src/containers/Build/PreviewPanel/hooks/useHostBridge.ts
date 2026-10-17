@@ -195,6 +195,7 @@ function emitWorldBridgeTelemetry(data: {
 
 export function useHostBridge({
   runtimeOnly,
+  previewSrcOverride,
   appMcpSessionId,
   buildId,
   buildIsPublic,
@@ -245,6 +246,8 @@ export function useHostBridge({
   const audioMutedRef = useRef(audioMuted);
   const runtimeOnlyRef = useRef(runtimeOnly);
   runtimeOnlyRef.current = runtimeOnly;
+  const previewSrcOverrideRef = useRef(previewSrcOverride || null);
+  previewSrcOverrideRef.current = previewSrcOverride || null;
   const launchTargetBroadcastReadyRef = useRef(false);
   const resetWorldSessionsRef = useRef<((reason: string) => void) | null>(null);
   const worldViewerIdentityKeyRef = useRef<string | null>(null);
@@ -2941,7 +2944,10 @@ export function useHostBridge({
                 appUrl: `${window.location.origin}/app/${activeBuild.id}`,
                 ...getAppInfoRelease({
                   runtimeOnly: runtimeOnlyRef.current,
-                  currentArtifactVersionId: activeBuild.currentArtifactVersionId
+                  previewSrcOverride: previewSrcOverrideRef.current,
+                  currentArtifactVersionId: activeBuild.currentArtifactVersionId,
+                  publishedArtifactVersionId:
+                    activeBuild.publishedArtifactVersionId
                 })
               }
             };

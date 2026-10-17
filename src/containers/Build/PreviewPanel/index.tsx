@@ -101,6 +101,7 @@ import useProjectAssets from './hooks/useProjectAssets';
 import useVersionHistory from './hooks/useVersionHistory';
 import { BUILD_WORKSPACE_COMPACT_MEDIA_QUERY } from '../Editor/constants';
 import { SITE_NAME } from '~/constants/siteBrand';
+import { getAppInfoRelease } from '~/helpers/buildAppInfo';
 const GUEST_RESTRICTION_BANNER_TEXT =
   'Some features were restricted because this app uses user-only data. Sign in to access those parts.';
 
@@ -1352,18 +1353,20 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     });
     const appHelperBridgeRef = useRef<AppHelperBridge | null>(null);
     const appHelperEventsRef = useRef<AppHelperEvents | null>(null);
-    const appHelperSource: 'published' | 'workspace' =
-      runtimeOnly && Number(build.currentArtifactVersionId) > 0
-        ? 'published'
-        : 'workspace';
+    // Same rule as Twinkle.app.getInfo: published only for the app page's own
+    // run of exactly the published release.
+    const appHelperRelease = getAppInfoRelease({
+      runtimeOnly,
+      previewSrcOverride: normalizedPreviewSrcOverride,
+      currentArtifactVersionId: build.currentArtifactVersionId,
+      publishedArtifactVersionId: build.publishedArtifactVersionId
+    });
+    const appHelperSource: 'published' | 'workspace' = appHelperRelease.source;
     const appHelper = useAppHelperPairing({
       buildId: Number(build.id),
       userId: resolvedUserId || null,
       source: appHelperSource,
-      artifactVersionId:
-        appHelperSource === 'published'
-          ? Number(build.currentArtifactVersionId)
-          : null,
+      artifactVersionId: appHelperRelease.artifactVersionId,
       enabled:
         !appMcpSessionId &&
         (runtimeOnly ? appHelperEnabled && Boolean(appHelperToolbarSlot) : true),
@@ -1374,6 +1377,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
 
     useHostBridge({
       runtimeOnly,
+      previewSrcOverride: normalizedPreviewSrcOverride,
       appMcpSessionId,
       appHelperRelayStateRef,
       appHelperBridgeRef,

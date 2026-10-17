@@ -36,6 +36,8 @@ export interface Build {
   username: string;
   primaryArtifactId?: number | null;
   currentArtifactVersionId?: number | null;
+  // the build's published release (runtime payload; absent when none)
+  publishedArtifactVersionId?: number | null;
   isPublic?: boolean | number | null;
   updatedAt?: number | null;
   // Server-issued hash of the canonical project files this client last
