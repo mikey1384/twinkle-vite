@@ -10,7 +10,11 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { getDigestDayLabel, getNewcomerSummary } from '~/helpers/rewardDigest';
+import {
+  getDigestDayLabel,
+  getDigestLatestLine,
+  getNewcomerSummary
+} from '~/helpers/rewardDigest';
 import { trackEvent } from '~/helpers/analytics';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
@@ -45,7 +49,13 @@ export interface RewardDigestPreview {
     username: string;
     profilePicUrl?: string | null;
   }>;
-  latest?: { bountyId: number; title: string; username: string } | null;
+  latest?: {
+    bountyId: number;
+    title: string;
+    username: string;
+    // what it was for (API rewardDigests: the bounty's subject), or null
+    subject?: unknown;
+  } | null;
   // earners whose first reward in this app came today (the first two named)
   newcomers?: {
     count: number;
@@ -76,6 +86,7 @@ function RewardDigestCard({
   const moreEarners = Math.max(0, players - shownEarners.length);
   const when = getDigestDayLabel(digest.dayKey);
   const newcomers = getNewcomerSummary(digest.newcomers);
+  const latestLine = digest.latest ? getDigestLatestLine(digest.latest) : null;
 
   return (
     <article
@@ -146,10 +157,28 @@ function RewardDigestCard({
                 }}
                 color={Color.darkerGray()}
               />{' '}
-              just earned{' '}
-              <span className="reward-digest-card__latest-title">
-                {digest.latest.title}
-              </span>
+              {latestLine?.subjectTitle ? (
+                <>
+                  {latestLine.lead}{' '}
+                  <span className="reward-digest-card__latest-title">
+                    {latestLine.subjectTitle}
+                  </span>
+                  {latestLine.after}
+                  {latestLine.tag ? (
+                    <span className="reward-digest-card__latest-tag">
+                      {' · '}
+                      {latestLine.tag}
+                    </span>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  just earned{' '}
+                  <span className="reward-digest-card__latest-title">
+                    {digest.latest.title}
+                  </span>
+                </>
+              )}
             </div>
           ) : null}
         </div>
@@ -374,6 +403,11 @@ const cardClass = css`
 
   .reward-digest-card__latest-title {
     font-weight: 700;
+  }
+
+  .reward-digest-card__latest-tag {
+    color: ${Color.gray()};
+    font-weight: 600;
   }
 
   .reward-digest-card__newcomers {

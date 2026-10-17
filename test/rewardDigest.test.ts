@@ -20,3 +20,30 @@ test('newcomers show from two up: the first two named, the rest counted', () => 
   assert.equal(getNewcomerSummary({ count: 1, users: users.slice(0, 1) }), null);
   assert.equal(getNewcomerSummary(null), null);
 });
+
+test('the latest line says what was discovered, with the tier as a tag', async () => {
+  const { getDigestLatestLine } = await import('../src/helpers/rewardDigest');
+  assert.deepEqual(
+    getDigestLatestLine({
+      title: 'World First: Intermediate word',
+      subject: { kind: 'item', action: 'discover', title: 'Puddle' }
+    }),
+    {
+      lead: 'discovered',
+      subjectTitle: 'Puddle',
+      after: ' first',
+      tag: 'Intermediate word',
+      ruleTitle: 'World First: Intermediate word'
+    }
+  );
+  const song = getDigestLatestLine({
+    title: 'Listen to a song',
+    subject: { kind: 'song', action: 'listen', title: 'Night Drive' }
+  });
+  assert.equal(song.lead, 'listened to');
+  assert.equal(song.subjectTitle, 'Night Drive');
+  assert.equal(song.tag, 'Listen to a song');
+  const plain = getDigestLatestLine({ title: "Reach Today's Star", subject: null });
+  assert.equal(plain.lead, 'just earned');
+  assert.equal(plain.subjectTitle, null);
+});

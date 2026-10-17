@@ -1,3 +1,5 @@
+import { getBountySubjectCopy, normalizeBountySubject } from './bountySubject';
+
 // The reward day is the site's UTC day (rewardDay on the server).
 export function getDigestDayLabel(dayKey: string, now = Date.now()) {
   const today = new Date(now).toISOString().slice(0, 10);
@@ -27,4 +29,36 @@ export function getNewcomerSummary(
     .slice(0, 2);
   if (count < 2 || !users.length) return null;
   return { users, rest: Math.max(0, count - users.length) };
+}
+
+// The card's "who just earned what" line. When the latest reward says what it
+// was for (a World First item, a song), lead with that: "discovered Puddle
+// first", with the rule title as a small tag ("Intermediate word"). Without a
+// subject, keep "just earned <rule title>".
+export function getDigestLatestLine(
+  latest?: { title?: string; subject?: unknown } | null
+) {
+  const ruleTitle = String(latest?.title || '').trim();
+  const subject = normalizeBountySubject(latest?.subject);
+  if (!subject) {
+    return { lead: 'just earned', subjectTitle: null, after: '', tag: '', ruleTitle };
+  }
+  if (subject.action === 'discover') {
+    return {
+      lead: 'discovered',
+      subjectTitle: subject.title,
+      after: ' first',
+      // "World First: Intermediate word" -> "Intermediate word"
+      tag: ruleTitle.replace(/^world first\s*[:\-–]\s*/i, '') || ruleTitle,
+      ruleTitle
+    };
+  }
+  const { lead } = getBountySubjectCopy(subject);
+  return {
+    lead: lead ? lead.charAt(0).toLowerCase() + lead.slice(1) : 'earned a reward for',
+    subjectTitle: subject.title,
+    after: '',
+    tag: ruleTitle,
+    ruleTitle
+  };
 }
