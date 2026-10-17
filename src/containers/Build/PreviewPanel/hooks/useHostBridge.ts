@@ -1,3 +1,4 @@
+import { getAppInfoRelease } from '~/helpers/buildAppInfo';
 import { armUpdateIfDeployedBundleNewer } from '~/helpers/clientUpdate';
 import { USER_ACTIVITY_INPUT_EVENT } from '~/helpers/userActivity';
 import {
@@ -242,6 +243,8 @@ export function useHostBridge({
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
   const launchTargetRef = useRef<Record<string, any> | null>(launchTarget);
   const audioMutedRef = useRef(audioMuted);
+  const runtimeOnlyRef = useRef(runtimeOnly);
+  runtimeOnlyRef.current = runtimeOnly;
   const launchTargetBroadcastReadyRef = useRef(false);
   const resetWorldSessionsRef = useRef<((reason: string) => void) | null>(null);
   const worldViewerIdentityKeyRef = useRef<string | null>(null);
@@ -2929,10 +2932,17 @@ export function useHostBridge({
             // Host-computed app identity so a build can build its own canonical
             // share/deep-link URLs (the sandboxed iframe has an opaque origin and
             // can't read the parent site origin itself).
+            // artifactVersionId: the published release this frame is
+            // running, so an app can attribute its own telemetry to an exact
+            // version (null in the editor's workspace preview).
             response = {
               app: {
                 buildId: activeBuild.id,
-                appUrl: `${window.location.origin}/app/${activeBuild.id}`
+                appUrl: `${window.location.origin}/app/${activeBuild.id}`,
+                ...getAppInfoRelease({
+                  runtimeOnly: runtimeOnlyRef.current,
+                  currentArtifactVersionId: activeBuild.currentArtifactVersionId
+                })
               }
             };
             break;
