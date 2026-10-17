@@ -3777,7 +3777,10 @@ export function useHostBridge({
           case 'content:word-master:quiz-status':
           case 'content:word-master:answer':
           case 'content:word-master:items':
-          case 'content:word-master:use-item': {
+          case 'content:word-master:use-item':
+          case 'content:word-master:puzzle-start':
+          case 'content:word-master:puzzle-events':
+          case 'content:word-master:puzzle-hint': {
             const operation = type.slice('content:word-master:'.length);
             const read = ['words', 'book', 'quiz-status', 'entry-status', 'items'].includes(operation);
             const token = await ensureBuildApiToken([read ? 'content:read' : 'content:write'], previewAuth);
