@@ -12,3 +12,15 @@ export function getDigestDayLabel(dayKey: string, now = Date.now()) {
     timeZone: 'UTC'
   });
 }
+
+// "Mina, Joon, +6": who earned their first reward in the app today. Shown
+// only for two or more (one newcomer has their own card).
+export function formatNewcomers(
+  newcomers?: { count?: number; names?: string[] } | null
+) {
+  const count = Math.max(0, Math.floor(Number(newcomers?.count) || 0));
+  const names = (newcomers?.names || []).filter(Boolean).slice(0, 2);
+  if (count < 2 || !names.length) return '';
+  const rest = count - names.length;
+  return `${names.join(', ')}${rest > 0 ? `, +${rest}` : ''}`;
+}

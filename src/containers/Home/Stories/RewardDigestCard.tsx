@@ -10,7 +10,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { getDigestDayLabel } from '~/helpers/rewardDigest';
+import { formatNewcomers, getDigestDayLabel } from '~/helpers/rewardDigest';
 import { trackEvent } from '~/helpers/analytics';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import {
@@ -46,6 +46,8 @@ export interface RewardDigestPreview {
     profilePicUrl?: string | null;
   }>;
   latest?: { bountyId: number; title: string; username: string } | null;
+  // earners whose first reward in this app came today
+  newcomers?: { count: number; names: string[] } | null;
 }
 
 // An app's "earning today" card on Home: everyone who earned XP or Coins in
@@ -70,6 +72,7 @@ function RewardDigestCard({
   const shownEarners = (digest.earners || []).slice(0, 6);
   const moreEarners = Math.max(0, players - shownEarners.length);
   const when = getDigestDayLabel(digest.dayKey);
+  const newcomersLine = formatNewcomers(digest.newcomers);
 
   return (
     <article
@@ -146,6 +149,11 @@ function RewardDigestCard({
               </span>
             </div>
           ) : null}
+        </div>
+      ) : null}
+      {newcomersLine ? (
+        <div className="reward-digest-card__newcomers">
+          <Icon icon="star" /> New today: {newcomersLine}
         </div>
       ) : null}
       {appAvailable ? (
@@ -356,6 +364,16 @@ const cardClass = css`
 
   .reward-digest-card__latest-title {
     font-weight: 700;
+  }
+
+  .reward-digest-card__newcomers {
+    color: ${Color.darkerGray()};
+    font-size: max(1.3rem, 13px);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    svg {
+      color: ${Color.gold()};
+    }
   }
 
   .reward-digest-card__try {
