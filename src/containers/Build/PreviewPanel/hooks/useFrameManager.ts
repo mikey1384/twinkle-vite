@@ -752,7 +752,13 @@ export function useFrameManager({
   const frameBootRef = useRef<
     Record<
       PreviewFrameKey,
-      { src: string; at: number; timers: number[]; rafTicks: number } | null
+      {
+        src: string;
+        at: number;
+        timers: number[];
+        rafTicks: number;
+        loaded: boolean;
+      } | null
     >
   >({ primary: null, secondary: null });
   useEffect(() => {
@@ -760,9 +766,19 @@ export function useFrameManager({
     for (const frame of ['primary', 'secondary'] as const) {
       const src = previewFrameSources[frame];
       const current = frameBootRef.current[frame];
-      if (!src || current?.src === src) continue;
+      if (current?.src === src) continue;
+      // A changed or cleared src ends the old entry: no "stalled" for a
+      // source that is gone, and its frame counter stops.
       current?.timers.forEach((timer) => window.clearTimeout(timer));
-      const entry = { src, at: Date.now(), timers: [] as number[], rafTicks: 0 };
+      frameBootRef.current[frame] = null;
+      if (!src) continue;
+      const entry = {
+        src,
+        at: Date.now(),
+        timers: [] as number[],
+        rafTicks: 0,
+        loaded: false
+      };
       frameBootRef.current[frame] = entry;
       const countFrames = () => {
         if (frameBootRef.current[frame] !== entry) return;
@@ -808,6 +824,8 @@ export function useFrameManager({
     () => () => {
       for (const entry of Object.values(frameBootRef.current))
         entry?.timers.forEach((timer) => window.clearTimeout(timer));
+      // Nulling the entries also stops their frame counters.
+      frameBootRef.current = { primary: null, secondary: null };
     },
     []
   );
@@ -916,7 +934,12 @@ export function useFrameManager({
     previewFrameReadyRef.current = nextReadyState;
     setPreviewFrameReady(nextReadyState);
     const boot = frameBootRef.current[frame];
-    if (boot && boot.src === expectedSrc && isOwnerTraceActive()) {
+    if (
+      boot &&
+      !boot.loaded &&
+      boot.src === expectedSrc &&
+      isOwnerTraceActive()
+    ) {
       boot.timers.forEach((timer) => window.clearTimeout(timer));
       recordOwnerTrace('build-frame', {
         phase: 'load',
@@ -924,6 +947,8 @@ export function useFrameManager({
         msSinceSrcSet: Date.now() - boot.at,
         rafTicksSinceSrc: boot.rafTicks
       });
+      // One load per src: a same-src reload is not a new boot.
+      boot.loaded = true;
     }
 
     const loadedMeta = previewFrameMetaRef.current[frame];
