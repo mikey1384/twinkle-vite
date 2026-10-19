@@ -7,6 +7,7 @@ import {
   createScrollPerfMonitor,
   getScrollPerfContext
 } from '~/helpers/ownerTraceScrollPerf';
+import { createFrameAttribution } from '~/helpers/ownerTraceFrameAttribution';
 import {
   buildPageLoadTiming,
   createNavTimingTracker,
@@ -80,14 +81,28 @@ const stallMonitor = createStallMonitor({
   onStall: ({ path, ...data }) => recordOwnerTrace('stall', data, path)
 });
 
+// Slow-frame attribution only exists while a scroll sample is open, which
+// only happens for the owner.
+const frameAttribution = createFrameAttribution();
+
 const scrollPerfMonitor = createScrollPerfMonitor({
   isActive: () => recorder.isActive(),
   isVisible: () =>
     typeof document !== 'undefined' && document.visibilityState === 'visible',
   getPath: getCurrentPath,
   getContext: () => getScrollPerfContext(document, window),
-  record: (data, path) => recordOwnerTrace('scroll-perf', data, path)
+  record: (data, path) => recordOwnerTrace('scroll-perf', data, path),
+  attribution: frameAttribution,
+  recordFrame: (data, path) => recordOwnerTrace('scroll-frame', data, path)
 });
+
+// Feed cards call these on every render (see useOwnerFeedCardFrameCount).
+// A single boolean check unless the owner is mid-scroll.
+export function noteOwnerFeedCardRender(type: string, firstRender: boolean) {
+  if (!frameAttribution.isActive()) return;
+  if (firstRender) frameAttribution.noteMount(type);
+  else frameAttribution.noteRender(type);
+}
 
 // A navigation the app started itself (Header nav tap).
 export function noteOwnerNavStart(via: string) {

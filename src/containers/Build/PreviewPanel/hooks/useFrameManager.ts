@@ -16,6 +16,7 @@ import {
   canUseSameOriginBuildPreviewSandbox,
   getBuildPreviewMessageTargetOrigin
 } from '~/helpers/buildPreviewOriginHelpers';
+import { isOwnerTraceActive, recordOwnerTrace } from '~/helpers/ownerTrace';
 
 const PREVIEW_SEED_CACHE_TTL_MS = 10 * 60 * 1000;
 const PREVIEW_SEED_CACHE_MAX_ENTRIES = 8;
@@ -744,6 +745,73 @@ export function useFrameManager({
     previewFrameSourcesRef.current = previewFrameSources;
   }, [previewFrameSources]);
 
+  // Owner-only boot timeline for the app frame (todo 97: automation-opened
+  // tabs sat at the 92% bar, which only clears on this frame's onLoad, and
+  // nothing recorded whether the src was set, the frame loaded or the tab was
+  // rendering at all). No-op for everyone but the owner.
+  const frameBootRef = useRef<
+    Record<
+      PreviewFrameKey,
+      { src: string; at: number; timers: number[]; rafTicks: number } | null
+    >
+  >({ primary: null, secondary: null });
+  useEffect(() => {
+    if (!isOwnerTraceActive()) return;
+    for (const frame of ['primary', 'secondary'] as const) {
+      const src = previewFrameSources[frame];
+      const current = frameBootRef.current[frame];
+      if (!src || current?.src === src) continue;
+      current?.timers.forEach((timer) => window.clearTimeout(timer));
+      const entry = { src, at: Date.now(), timers: [] as number[], rafTicks: 0 };
+      frameBootRef.current[frame] = entry;
+      const countFrames = () => {
+        if (frameBootRef.current[frame] !== entry) return;
+        entry.rafTicks += 1;
+        if (Date.now() - entry.at < 30_000 && !previewFrameReadyRef.current[frame])
+          window.requestAnimationFrame(countFrames);
+      };
+      window.requestAnimationFrame(countFrames);
+      recordOwnerTrace('build-frame', {
+        phase: 'src-set',
+        frame,
+        srcKind: src.startsWith('blob:') ? 'blob' : src.startsWith('/') ? 'relative' : 'url',
+        visibility: document.visibilityState,
+        focused: document.hasFocus(),
+        webdriver: Boolean(navigator.webdriver)
+      });
+      for (const afterMs of [10_000, 30_000]) {
+        entry.timers.push(
+          window.setTimeout(() => {
+            if (frameBootRef.current[frame] !== entry) return;
+            if (previewFrameReadyRef.current[frame]) return;
+            const iframe = (
+              frame === 'primary' ? primaryIframeRef : secondaryIframeRef
+            ).current;
+            recordOwnerTrace('build-frame', {
+              phase: 'stalled',
+              frame,
+              afterMs,
+              iframeConnected: Boolean(iframe?.isConnected),
+              iframeHasSrc: Boolean(iframe?.getAttribute('src')),
+              // 0 means the tab is not rendering at all (a tool issue).
+              rafTicksSinceSrc: entry.rafTicks,
+              visibility: document.visibilityState,
+              focused: document.hasFocus(),
+              webdriver: Boolean(navigator.webdriver)
+            });
+          }, afterMs)
+        );
+      }
+    }
+  }, [previewFrameSources]);
+  useEffect(
+    () => () => {
+      for (const entry of Object.values(frameBootRef.current))
+        entry?.timers.forEach((timer) => window.clearTimeout(timer));
+    },
+    []
+  );
+
   useEffect(() => {
     previewFrameReadyRef.current = previewFrameReady;
   }, [previewFrameReady]);
@@ -847,6 +915,16 @@ export function useFrameManager({
     };
     previewFrameReadyRef.current = nextReadyState;
     setPreviewFrameReady(nextReadyState);
+    const boot = frameBootRef.current[frame];
+    if (boot && boot.src === expectedSrc && isOwnerTraceActive()) {
+      boot.timers.forEach((timer) => window.clearTimeout(timer));
+      recordOwnerTrace('build-frame', {
+        phase: 'load',
+        frame,
+        msSinceSrcSet: Date.now() - boot.at,
+        rafTicksSinceSrc: boot.rafTicks
+      });
+    }
 
     const loadedMeta = previewFrameMetaRef.current[frame];
     if (loadedMeta.hasLoaded) {

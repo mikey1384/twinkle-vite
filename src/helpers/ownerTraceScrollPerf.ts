@@ -1,11 +1,17 @@
+import type { createFrameAttribution } from '~/helpers/ownerTraceFrameAttribution';
+
 // Owner-only frame sampling while a page actually scrolls. No idle frame loop,
 // layout work per frame, retained frame list, or per-frame network request.
+// With `attribution`, the worst slow frames of a sample are also recorded as
+// separate `scroll-frame` events (ownerTraceFrameAttribution.ts).
 export function createScrollPerfMonitor({
   isActive,
   isVisible,
   getPath,
   getContext,
   record,
+  attribution,
+  recordFrame,
   now = () => performance.now(),
   requestFrame = (callback) => requestAnimationFrame(callback),
   cancelFrame = (id) => cancelAnimationFrame(id),
@@ -17,6 +23,8 @@ export function createScrollPerfMonitor({
   getPath: () => string;
   getContext: () => Record<string, unknown>;
   record: (data: Record<string, unknown>, path: string) => void;
+  attribution?: ReturnType<typeof createFrameAttribution>;
+  recordFrame?: (data: Record<string, unknown>, path: string) => void;
   now?: () => number;
   requestFrame?: (callback: (at: number) => void) => number;
   cancelFrame?: (id: number) => void;
@@ -75,6 +83,11 @@ export function createScrollPerfMonitor({
         contextAt: -Infinity,
         contextGapMs: 0
       };
+      try {
+        attribution?.begin();
+      } catch {
+        // attribution is optional evidence; the sample still runs
+      }
     }
     sample.lastScroll = t;
     sample.scrolls += 1;
@@ -92,8 +105,14 @@ export function createScrollPerfMonitor({
     // OS sleep/suspended rendering is not a measured scrolling frame.
     if (t - (sample.previousFrame ?? sample.start) > 30_000) {
       sample = null;
+      try {
+        attribution?.end(t);
+      } catch {
+        // discarded with the sample
+      }
       return;
     }
+    attribution?.frame(gap, t);
     if (sample.previousFrame === null) {
       sample.firstFrameMs = Math.max(0, t - sample.start);
     } else if (gap > 0) {
@@ -131,6 +150,14 @@ export function createScrollPerfMonitor({
     frame = null;
     const done = sample;
     sample = null;
+    let attributed: ReturnType<
+      ReturnType<typeof createFrameAttribution>['end']
+    > = null;
+    try {
+      attributed = done ? attribution?.end(done.start) ?? null : null;
+    } catch {
+      attributed = null;
+    }
     if (!done || !isActive()) return;
     const end = done.previousFrame ?? done.start;
     record(
@@ -155,10 +182,14 @@ export function createScrollPerfMonitor({
           : null,
         context:
           done.context ||
-          (done.path === getPath() ? context() : { routeChanged: true })
+          (done.path === getPath() ? context() : { routeChanged: true }),
+        ...(attributed ? { frameSource: attributed.summary } : {})
       },
       done.path
     );
+    for (const frameData of attributed?.frames || []) {
+      recordFrame?.(frameData, done.path);
+    }
   }
 }
 

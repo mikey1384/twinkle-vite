@@ -4,6 +4,7 @@ import {
   getOwnerTraceScrollHeight,
   getOwnerTraceScrollTop,
   isOwnerTraceActive,
+  noteOwnerFeedCardRender,
   recordOwnerTrace
 } from '~/helpers/ownerTrace';
 import { useAppNavigationType } from '~/helpers/hooks/useAppNavigationType';
@@ -110,4 +111,14 @@ export function describeLocationState(state: unknown) {
     result.feedIntent = intent.action;
   }
   return result;
+}
+
+// Owner trace slow-frame attribution: counts this feed card's renders (and
+// its first render as a mount) by card type while the owner is mid-scroll,
+// so a slow frame on Safari/iPhone (no Long Animation Frames API) still says
+// which card types did work in it. Counts only; no props or content.
+export function useOwnerFeedCardFrameCount(type: string) {
+  const renderedRef = useRef(false);
+  noteOwnerFeedCardRender(type, !renderedRef.current);
+  renderedRef.current = true;
 }

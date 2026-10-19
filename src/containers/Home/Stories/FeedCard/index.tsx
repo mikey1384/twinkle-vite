@@ -66,6 +66,7 @@ import {
   createHomeFeedNavigationState
 } from '~/helpers/homeFeedActionIntent';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
+import { useOwnerFeedCardFrameCount } from '~/helpers/hooks/useOwnerTrace';
 import { normalizeViewCount } from '~/helpers/viewCount';
 import { trackEvent } from '~/helpers/analytics';
 import {
@@ -138,6 +139,7 @@ function HomeFeedCard({
 }) {
   const contentId = Number(feed?.contentId || 0);
   const contentType = String(feed?.contentType || '');
+  useOwnerFeedCardFrameCount(contentType);
   // what the Ask Zero/Ciel button attaches; the server re-reads it as the member
   const askContext = useMemo(() => {
     const noun =

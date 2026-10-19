@@ -17,6 +17,7 @@ import {
 } from '~/helpers/rewardDigest';
 import { trackEvent } from '~/helpers/analytics';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
+import { useOwnerFeedCardFrameCount } from '~/helpers/hooks/useOwnerTrace';
 import {
   isOwnerTraceActive,
   noteOwnerTraceTap,
@@ -78,6 +79,7 @@ function RewardDigestCard({
   index: number;
   homeFeedAnchorKey?: string;
 }) {
+  useOwnerFeedCardFrameCount('rewardDigest');
   const navigate = useNavigate();
   const appTitle = digest.buildTitle || 'Lumine app';
   const appAvailable = !!(digest.appAvailable && digest.buildId);
