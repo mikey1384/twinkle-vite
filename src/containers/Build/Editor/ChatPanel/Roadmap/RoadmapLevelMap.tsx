@@ -134,7 +134,9 @@ export default function RoadmapLevelMap({
   const edge = `${100 / (2 * count)}%`;
   const reachedIndex = Math.max(
     milestones.findIndex((milestone) => milestone.state === 'now'),
-    milestones.filter((milestone) => milestone.state === 'done').length - 1,
+    milestones.filter(
+      (milestone) => milestone.state === 'done' || milestone.state === 'skipped'
+    ).length - 1,
     0
   );
   const doneFraction = count > 1 ? reachedIndex / (count - 1) : 0;
@@ -175,7 +177,9 @@ export default function RoadmapLevelMap({
               ? 'done'
               : milestone.state === 'now'
                 ? 'building now'
-                : 'not started';
+                : milestone.state === 'skipped'
+                  ? 'skipped for now'
+                  : 'not started';
           return (
             <li
               key={milestone.id}
@@ -193,6 +197,8 @@ export default function RoadmapLevelMap({
                       <Icon icon="trophy" />
                     ) : milestone.state === 'done' ? (
                       <Icon icon="star" />
+                    ) : milestone.state === 'skipped' ? (
+                      <Icon icon="arrow-right" />
                     ) : (
                       milestone.number
                     )}

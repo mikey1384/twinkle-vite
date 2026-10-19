@@ -32,7 +32,12 @@ import {
   normalizeLumineModelSelection
 } from '../helpers/lumineModelSelection';
 
+// flex-shrink 0: the chat panel is a fixed-height flex column, and a header
+// allowed to shrink to its min-height let its wrapped rows (share control,
+// Energy bar) spill over the Build plan panel below it on narrow columns.
 const headerClass = css`
+  flex-shrink: 0;
+  min-width: 0;
   min-height: var(--build-workspace-header-height);
   padding: 0.55rem 1rem 0 1rem;
   background: #fff;
@@ -64,6 +69,8 @@ const headerTitleClass = css`
 
 const headerActionsClass = css`
   margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -999,11 +1006,14 @@ function LumineChatVisibilitySettings({
             color: var(--chat-text);
             border-radius: 999px;
             min-height: 2.45rem;
+            max-width: 100%;
             padding: 0.35rem 0.85rem;
             display: inline-flex;
+            flex-wrap: wrap;
             align-items: center;
             justify-content: center;
-            gap: 0.45rem;
+            gap: 0.1rem 0.45rem;
+            text-align: center;
             font-family: inherit;
             font-size: var(--build-workshop-small-font-size);
             font-weight: 900;

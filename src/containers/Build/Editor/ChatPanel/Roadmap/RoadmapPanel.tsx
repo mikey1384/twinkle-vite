@@ -4,7 +4,9 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import {
+  formatEnergyDays,
   formatRoadmapDaysLeft,
+  formatRoadmapOverEstimate,
   type RoadmapAction,
   type RoadmapView
 } from '../../helpers/roadmap';
@@ -20,8 +22,14 @@ import {
   roadmapMuted
 } from './styles';
 
+// In the chat panel's fixed-height column the plan may shrink down to its
+// head (the body scrolls), so it never pushes the header over itself or
+// squeezes the chat transcript to nothing on short screens.
 const panelClass = css`
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   margin: 1rem 1.2rem 0;
   background: #fff;
   border: 1px solid ${roadmapLine};
@@ -32,15 +40,24 @@ const panelClass = css`
 `;
 
 const bodyClass = css`
+  flex: 0 1 auto;
+  min-height: 0;
   max-height: 46vh;
   overflow-y: auto;
   overscroll-behavior: contain;
 `;
 
+// The head is a grid, never absolutely positioned pieces: kicker and chevron
+// share the first row, the title owns the second (two lines at most), and
+// the days chip / progress bar get their own row, so nothing can overlap at
+// narrow chat-panel widths (Oct 2026: 310px tablet column).
 const headClass = css`
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1rem;
+  column-gap: 0.8rem;
+  row-gap: 0.45rem;
+  flex-shrink: 0;
   width: 100%;
   padding: 1.2rem 1.4rem;
   border: 0;
@@ -56,18 +73,50 @@ const headClass = css`
   }
 `;
 
-const headTextClass = css`
-  flex: 1;
+const headKickerClass = css`
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const headTitleClass = css`
-  display: block;
-  margin-top: 0.35rem;
+  grid-column: 1 / -1;
+  min-width: 0;
   font-size: var(--build-workshop-title-font-size, 1.6rem);
   font-weight: 800;
   line-height: 1.2;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const headChipsClass = css`
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+`;
+
+// Chips may wrap their own text on the narrowest panels instead of pushing
+// past the edge (pillClass is nowrap for the wider cards).
+const headChipClass = css`
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+`;
+
+const overEstimateChipClass = css`
+  border-color: ${Color.orange(0.45)};
+  background: ${Color.orange(0.08)};
+  color: ${Color.darkAmber()};
+  svg {
+    color: ${Color.orange()};
+  }
 `;
 
 const chevronClass = css`
@@ -77,10 +126,42 @@ const chevronClass = css`
 `;
 
 const collapsedRowClass = css`
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  margin-top: 0.5rem;
+  min-width: 0;
+`;
+
+const stallBoxClass = css`
+  margin: 0.6rem 0 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid ${Color.orange(0.35)};
+  font-size: var(--build-workshop-body-font-size, 1.4rem);
+  line-height: 1.4;
+  b {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: ${Color.darkAmber()};
+  }
+  p {
+    margin: 0;
+    color: ${roadmapInk};
+  }
+`;
+
+const stallChoicesClass = css`
+  display: grid;
+  gap: 0.6rem;
+`;
+
+const spentNoteClass = css`
+  margin: 0.2rem 0 0.8rem;
+  font-size: var(--build-workshop-label-font-size, 1.2rem);
+  color: ${Color.darkAmber()};
+  line-height: 1.4;
 `;
 
 const barClass = css`
@@ -296,7 +377,9 @@ export default function RoadmapPanel({
       : current.steps
     : [];
   // NEEDS_WORK says what is being fixed; otherwise the hand-off's "Next: …".
-  const fixingNote = current?.fixingNote || '';
+  const stall = current?.stall || null;
+  const stalled = Boolean(stall);
+  const fixingNote = stalled ? '' : current?.fixingNote || '';
   const nextNote = !fixingNote && !upNext ? view.nextNote : '';
   const bodyId = `build-roadmap-panel-${view.buildId}`;
   const bar = (
@@ -319,37 +402,47 @@ export default function RoadmapPanel({
         aria-controls={bodyId}
         onClick={onToggleCollapsed}
       >
-        <span className={headTextClass}>
-          <span className={kickerClass} style={{ color: roadmapMuted }}>
-            Your build plan
-          </span>
-          <span className={headTitleClass}>{view.title}</span>
-          {collapsed ? (
-            <span className={collapsedRowClass}>
-              <span style={{ flex: 1 }}>{bar}</span>
-              <span
-                style={{
-                  fontSize: 'var(--build-workshop-label-font-size, 1.2rem)',
-                  color: roadmapMuted,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {view.doneCount} of {view.total} done
-              </span>
-            </span>
-          ) : null}
+        <span
+          className={`${kickerClass} ${headKickerClass}`}
+          style={{ color: roadmapMuted }}
+        >
+          Your build plan
         </span>
-        {!collapsed && view.daysLeft > 0 ? (
-          <span className={`${pillClass} ${energyPillClass}`}>
-            <Icon icon="bolt" />
-            {formatRoadmapDaysLeft(view.daysLeft)}
-          </span>
-        ) : null}
         <Icon
           icon="chevron-down"
           className={chevronClass}
           style={{ transform: collapsed ? 'none' : 'rotate(180deg)' }}
         />
+        <span className={headTitleClass} title={view.title}>
+          {view.title}
+        </span>
+        {collapsed ? (
+          <span className={collapsedRowClass}>
+            <span style={{ flex: 1, minWidth: 0 }}>{bar}</span>
+            <span
+              style={{
+                fontSize: 'var(--build-workshop-label-font-size, 1.2rem)',
+                color: stalled ? Color.darkAmber() : roadmapMuted,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {stalled ? 'Needs your choice' : `${view.doneCount} of ${view.total} done`}
+            </span>
+          </span>
+        ) : view.daysLeft > 0 ? (
+          <span className={headChipsClass}>
+            <span
+              className={`${pillClass} ${energyPillClass} ${headChipClass}${
+                view.overEstimate ? ` ${overEstimateChipClass}` : ''
+              }`}
+            >
+              <Icon icon={view.overEstimate ? 'hourglass-half' : 'bolt'} />
+              {view.overEstimate
+                ? formatRoadmapOverEstimate(view)
+                : formatRoadmapDaysLeft(view.daysLeft)}
+            </span>
+          </span>
+        ) : null}
       </button>
       {replanNotice ? (
         <div className={replanClass} role="status">
@@ -385,6 +478,74 @@ export default function RoadmapPanel({
                 {current.number}
               </div>
               <h5 className={nowTitleClass}>{current.title}</h5>
+              {/* While stalled, the stall message already says it is over
+                  budget; dropping the note keeps the choices above the fold. */}
+              {view.overEstimate && !upNext && !stall ? (
+                <p className={spentNoteClass}>
+                  Used about {formatEnergyDays(view.overEstimate.spentDays)} of
+                  Energy so far (planned{' '}
+                  {formatEnergyDays(view.overEstimate.estimateDays)}).
+                </p>
+              ) : null}
+              {stall ? (
+                <div className={stallBoxClass} role="status">
+                  <p>{stall.message} What should we do?</p>
+                </div>
+              ) : null}
+              {/* The choices sit right under the question, before the checklist,
+                  so they are visible without scrolling on a narrow panel. */}
+              {canAct && !generating && stall ? (
+                <div className={stallChoicesClass}>
+                  <Button
+                    color="violet"
+                    variant="solid"
+                    uppercase={false}
+                    stretch
+                    className={`${roadmapButtonClass} ${primaryButtonClass}`}
+                    disabled={disabled || Boolean(busyAction)}
+                    loading={busyAction === 'keep_trying'}
+                    onClick={() => onAction('keep_trying')}
+                  >
+                    Keep trying
+                  </Button>
+                  <Button
+                    color="green"
+                    variant="soft"
+                    uppercase={false}
+                    stretch
+                    className={roadmapButtonClass}
+                    disabled={disabled || Boolean(busyAction)}
+                    loading={busyAction === 'mark_done'}
+                    onClick={() => onAction('mark_done')}
+                  >
+                    It works, mark it done
+                  </Button>
+                  <Button
+                    color="violet"
+                    variant="soft"
+                    uppercase={false}
+                    stretch
+                    className={roadmapButtonClass}
+                    disabled={disabled || Boolean(busyAction)}
+                    loading={busyAction === 'replan_milestone'}
+                    onClick={() => onAction('replan_milestone')}
+                  >
+                    Re-plan it into smaller steps
+                  </Button>
+                  <Button
+                    color="darkerGray"
+                    variant="soft"
+                    uppercase={false}
+                    stretch
+                    className={roadmapButtonClass}
+                    disabled={disabled || Boolean(busyAction)}
+                    loading={busyAction === 'next_milestone'}
+                    onClick={() => onAction('next_milestone')}
+                  >
+                    Move on to the next milestone
+                  </Button>
+                </div>
+              ) : null}
               {fixingNote ? (
                 <p className={fixingClass}>
                   <Icon icon="wrench" />
@@ -420,7 +581,7 @@ export default function RoadmapPanel({
                   ))}
                 </ul>
               ) : null}
-              {canAct && !generating ? (
+              {canAct && !generating && !stall ? (
                 <Button
                   color="violet"
                   variant="solid"

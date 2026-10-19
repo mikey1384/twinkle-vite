@@ -202,12 +202,34 @@ export interface BuildExecutionPlanChunk {
   acceptanceCriteria?: Array<BuildRoadmapCriterion | string> | null;
   // The latest evaluator grading of this milestone.
   evaluation?: BuildRoadmapEvaluation | null;
+  // Measured: runs and AI Energy units spent on this milestone, and its
+  // planned run count (honest days left, "taking longer than planned").
+  runs?: number | null;
+  energyUnits?: number | null;
+  estimatedRuns?: number | null;
+  startedAt?: number | null;
+  // Set when the loop guard stopped automatic runs: the kid chooses keep
+  // trying / mark done / re-plan / next milestone.
+  stall?: BuildRoadmapMilestoneStall | null;
+  // 'creator_confirmed': the kid said it works after a stall.
+  completedBy?: 'evaluator' | 'creator_confirmed' | string | null;
+  // The kid moved on to the next milestone after a stall.
+  skippedAt?: number | null;
+}
+
+export interface BuildRoadmapMilestoneStall {
+  at?: number | null;
+  reason?: 'unverified' | 'over_budget' | 'many_runs' | string | null;
+  runs?: number | null;
+  energyUnits?: number | null;
 }
 
 export interface BuildRoadmapCriterion {
   id?: string | null;
   text: string;
   passes?: boolean | null;
+  // UNVERIFIED: the checker could not reach the code it needed.
+  verdict?: 'PASS' | 'NEEDS_WORK' | 'UNVERIFIED' | string | null;
 }
 
 export interface BuildRoadmapEvaluation {
@@ -237,6 +259,11 @@ export interface BuildExecutionPlan {
     kind?: string | null;
     title?: string | null;
     energyDays?: number | null;
+    // How many Energy units one day is for this kid (honest days left).
+    energyEstimate?: {
+      energyPerRunUnits?: number | null;
+      dailyEnergyUnits?: number | null;
+    } | null;
     smaller?: BuildRoadmapSmallerOption | null;
     hardestNote?: string | null;
     // The latest run's hand-off for the next run / day ("Next: ...").
@@ -417,7 +444,12 @@ export type BuildPlanAction =
   // build the original request directly.
   | 'start'
   | 'smaller'
-  | 'skip';
+  | 'skip'
+  // A stalled milestone's choices.
+  | 'keep_trying'
+  | 'mark_done'
+  | 'replan_milestone'
+  | 'next_milestone';
 
 export interface BuildScopedPlanContinuePromptBinding {
   kind: 'scoped_plan_continue';

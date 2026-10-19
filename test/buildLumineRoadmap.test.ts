@@ -7,6 +7,7 @@ import {
   formatMoreMilestones,
   formatNextMilestoneRibbon,
   formatPlayableLine,
+  formatRoadmapOverEstimate,
   isRoadmapPlan,
   resolveRoadmapActionRequest,
   resolveRoadmapSurfaces,
@@ -636,4 +637,72 @@ test('a plan cancelled on a pivot disappears at once', () => {
       { panel: false, strip: false, transcriptCard: null }
     );
   }
+});
+
+test('days left counts the Energy the current milestone already spent', () => {
+  // Build 863's shape: 5 milestones, milestone 1 estimated 1.5 days.
+  const plan: any = roadmapPlan({
+    status: 'running',
+    currentSteps: ['completed', 'pending', 'pending']
+  });
+  plan.plan.chunks = plan.plan.chunks.slice(0, 5);
+  plan.plan.chunks.forEach((chunk: any, index: number) => {
+    chunk.energyDays = [1.5, 1.5, 2, 1, 1][index];
+  });
+  plan.plan.energyEstimate = { energyPerRunUnits: 150000, dailyEnergyUnits: 1_200_000 };
+  const fresh = resolveRoadmapView(plan)!;
+  assert.equal(fresh.daysLeft, 7);
+  assert.equal(fresh.overEstimate, null);
+  // One day spent of 1.5: the count moves instead of freezing at 7.
+  plan.plan.chunks[0].energyUnits = 1_200_000;
+  assert.equal(resolveRoadmapView(plan)!.daysLeft, 6);
+  // 3.8 days spent: over its estimate, an honest floor plus what is left.
+  plan.plan.chunks[0].energyUnits = 4_573_977;
+  const over = resolveRoadmapView(plan)!;
+  assert.deepEqual(over.overEstimate, { spentDays: 3.8, estimateDays: 1.5 });
+  assert.equal(over.daysLeft, 6);
+  assert.equal(over.current?.spentDays, 3.8);
+  assert.equal(
+    formatRoadmapOverEstimate(over),
+    'Taking longer than planned · ~6 days left'
+  );
+});
+
+test('a stalled milestone offers the four choices; skipped and kid-confirmed milestones read honestly', () => {
+  const plan: any = roadmapPlan({
+    status: 'running',
+    currentSteps: ['completed', 'pending', 'pending']
+  });
+  plan.plan.chunks[0].runs = 29;
+  plan.plan.chunks[0].stall = { at: 900, reason: 'many_runs', runs: 29, energyUnits: 4_000_000 };
+  const view = resolveRoadmapView(plan)!;
+  assert.equal(view.current?.stall?.reason, 'many_runs');
+  assert.match(view.current!.stall!.message, /29 times/);
+  for (const [action, planAction, message] of [
+    ['keep_trying', 'keep_trying', 'Keep trying'],
+    ['mark_done', 'mark_done', 'It works, mark milestone 1 done'],
+    ['replan_milestone', 'replan_milestone', 'Re-plan milestone 1 into smaller steps'],
+    ['next_milestone', 'next_milestone', 'Move on to the next milestone']
+  ] as const) {
+    assert.deepEqual(resolveRoadmapActionRequest(action, view), { message, planAction });
+  }
+  // The kid moved on: milestone 1 stays on the map as skipped, 2 is up next.
+  plan.plan.chunks[0].status = 'cancelled';
+  plan.plan.chunks[0].skippedAt = 950;
+  delete plan.plan.chunks[0].stall;
+  plan.currentBigChunkId = 'm2';
+  const moved = resolveRoadmapView(plan)!;
+  assert.equal(moved.milestones[0].state, 'skipped');
+  assert.equal(moved.current?.number, 2);
+  assert.equal(moved.total, 7);
+  // "It works": done, recorded as the kid's own confirmation.
+  plan.plan.chunks[0].status = 'completed';
+  plan.plan.chunks[0].completedBy = 'creator_confirmed';
+  plan.plan.chunks[0].completedAt = 960;
+  const confirmed = resolveRoadmapView(plan)!;
+  assert.equal(confirmed.milestones[0].state, 'done');
+  assert.equal(confirmed.milestones[0].creatorConfirmed, true);
+  // A stall on a finished milestone is ignored.
+  plan.plan.chunks[0].stall = { at: 900, reason: 'unverified' };
+  assert.equal(resolveRoadmapView(plan)!.milestones[0].stall, null);
 });

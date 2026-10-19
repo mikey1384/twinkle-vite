@@ -21,7 +21,15 @@ export type RoadmapPhase =
   // Every milestone is done.
   | 'complete';
 
-export type RoadmapMilestoneState = 'done' | 'now' | 'pending';
+export type RoadmapMilestoneState = 'done' | 'now' | 'pending' | 'skipped';
+
+// The loop guard stopped automatic runs on the current milestone
+// (twinkle-api roadmap.ts): the kid picks what happens next.
+export interface RoadmapStallView {
+  reason: 'unverified' | 'over_budget' | 'many_runs';
+  // One kind, no-blame sentence on why.
+  message: string;
+}
 
 export interface RoadmapStepView {
   id: string;
@@ -48,6 +56,12 @@ export interface RoadmapMilestoneView {
   // One friendly line when the evaluator says NEEDS_WORK ("Almost! …").
   fixingNote: string;
   completedAt: number | null;
+  // Measured so far on this milestone.
+  runs: number;
+  spentDays: number;
+  // Closed by the kid's own "it works" after a stall.
+  creatorConfirmed: boolean;
+  stall: RoadmapStallView | null;
 }
 
 export interface RoadmapView {
@@ -65,7 +79,12 @@ export interface RoadmapView {
   // The most recently finished milestone (celebrated in milestone_done).
   lastDone: RoadmapMilestoneView | null;
   energyDays: number;
+  // Honest: pending estimates plus what is left of the current milestone's
+  // estimate after the Energy it already spent (never below half a day).
   daysLeft: number;
+  // The current milestone used more Energy than planned: the panel says
+  // "taking longer than planned" instead of a frozen number.
+  overEstimate: { spentDays: number; estimateDays: number } | null;
   smaller: BuildRoadmapSmallerOption | null;
   hardestNote: string;
   // "Next: …" from the latest run's hand-off note.
@@ -77,7 +96,19 @@ export interface RoadmapView {
 }
 
 export type RoadmapAction =
-  'start' | 'continue' | 'smaller' | 'skip' | 'cancel';
+  | 'start'
+  | 'continue'
+  | 'smaller'
+  | 'skip'
+  | 'cancel'
+  | 'keep_trying'
+  | 'mark_done'
+  | 'replan_milestone'
+  | 'next_milestone';
+
+// Server default for one day of Energy (AI_ENERGY_FULL_BATTERY_UNITS).
+const DEFAULT_DAILY_ENERGY_UNITS = 1_200_000;
+const OVER_ESTIMATE_FLOOR_DAYS = 0.5;
 
 const MAX_MILESTONES = 8;
 const MAX_STEPS = 5;
@@ -256,6 +287,31 @@ function fixingNoteOf(milestone: BuildExecutionPlanChunk) {
     : 'Almost! Lumine is fixing a few things.';
 }
 
+function stallOf(milestone: BuildExecutionPlanChunk): RoadmapStallView | null {
+  if (milestone.status === 'completed' || milestone.status === 'cancelled') {
+    return null;
+  }
+  const reason = String(milestone.stall?.reason || '');
+  if (!positiveNumber(milestone.stall?.at)) return null;
+  if (reason === 'unverified') {
+    return {
+      reason,
+      message:
+        "Lumine's checker can't find all the code it needs to test this part, so more tries won't settle it."
+    };
+  }
+  if (reason === 'over_budget' || reason === 'many_runs') {
+    return {
+      reason,
+      message:
+        reason === 'over_budget'
+          ? 'This part has used more than twice the Energy we planned.'
+          : `Lumine has worked on this part ${Math.round(positiveNumber(milestone.stall?.runs) || positiveNumber(milestone.runs))} times and it still isn't finished.`
+    };
+  }
+  return null;
+}
+
 // "Next: add the lava stage" from a hand-off note ("Next: …" or plain).
 export function formatHandoffNext(note: unknown) {
   const text = cleanText(note, 140)
@@ -292,19 +348,24 @@ export function resolveRoadmapView(
 ): RoadmapView | null {
   if (!isRoadmapPlan(plan)) return null;
   if (plan.status === 'cancelled') return null;
+  // Skipped milestones (moved past after a stall) stay on the map.
   const rawMilestones = milestonesOf(plan)
-    .filter((milestone) => milestone.status !== 'cancelled')
+    .filter(
+      (milestone) =>
+        milestone.status !== 'cancelled' || positiveNumber(milestone.skippedAt)
+    )
     .slice(0, MAX_MILESTONES);
+  const isOpen = (milestone: BuildExecutionPlanChunk) =>
+    milestone.status !== 'completed' && milestone.status !== 'cancelled';
+  const dailyEnergyUnits =
+    positiveNumber(plan.plan.energyEstimate?.dailyEnergyUnits) ||
+    DEFAULT_DAILY_ENERGY_UNITS;
   if (rawMilestones.length === 0) return null;
 
   const currentIndexFromPlan = rawMilestones.findIndex(
-    (milestone) =>
-      milestone.id === plan.currentBigChunkId &&
-      milestone.status !== 'completed'
+    (milestone) => milestone.id === plan.currentBigChunkId && isOpen(milestone)
   );
-  const firstOpenIndex = rawMilestones.findIndex(
-    (milestone) => milestone.status !== 'completed'
-  );
+  const firstOpenIndex = rawMilestones.findIndex(isOpen);
   const currentIndex =
     currentIndexFromPlan >= 0 ? currentIndexFromPlan : firstOpenIndex;
 
@@ -312,6 +373,7 @@ export function resolveRoadmapView(
     (milestone, index) => {
       const steps = stepsOf(milestone);
       const done = milestone.status === 'completed';
+      const skipped = milestone.status === 'cancelled';
       const playable = cleanText(milestone.playable, 120);
       const title = cleanText(milestone.title, 70);
       return {
@@ -323,7 +385,13 @@ export function resolveRoadmapView(
         playableOutcome: stripPlayablePrefix(playable),
         label: cleanText(milestone.label, 14) || deriveMilestoneLabel(title),
         energyDays: roundToHalf(positiveNumber(milestone.energyDays)),
-        state: done ? 'done' : index === currentIndex ? 'now' : 'pending',
+        state: done
+          ? 'done'
+          : skipped
+            ? 'skipped'
+            : index === currentIndex
+              ? 'now'
+              : 'pending',
         started:
           done ||
           milestone.status === 'in_progress' ||
@@ -338,12 +406,20 @@ export function resolveRoadmapView(
         completedAt:
           positiveNumber(milestone.completedAt) > 0
             ? Number(milestone.completedAt)
-            : null
+            : null,
+        runs: Math.round(positiveNumber(milestone.runs)),
+        spentDays:
+          Math.round(
+            (positiveNumber(milestone.energyUnits) / dailyEnergyUnits) * 10
+          ) / 10,
+        creatorConfirmed: done && milestone.completedBy === 'creator_confirmed',
+        stall: stallOf(milestone)
       };
     }
   );
 
   const doneCount = milestones.filter((m) => m.state === 'done').length;
+  const skippedCount = milestones.filter((m) => m.state === 'skipped').length;
   const total = milestones.length;
   const current = currentIndex >= 0 ? milestones[currentIndex] || null : null;
   const doneMilestones = milestones.filter((m) => m.state === 'done');
@@ -364,16 +440,41 @@ export function resolveRoadmapView(
     0
   );
   const energyDays = planEnergyDays || roundToHalf(milestoneEnergyTotal);
-  const remainingByMilestones = milestones
-    .filter((milestone) => milestone.state !== 'done')
-    .reduce((sum, milestone) => sum + milestone.energyDays, 0);
+  // Honest days left: the current milestone counts only what is left of its
+  // estimate after the Energy it already spent (an over-estimate milestone
+  // still shows a small floor: it is not done). Unrounded estimates so the
+  // sum matches the server's computeBuildRoadmapDaysLeft.
+  let remainingByMilestones = 0;
+  let overEstimate: RoadmapView['overEstimate'] = null;
+  rawMilestones.forEach((milestone, index) => {
+    if (!isOpen(milestone)) return;
+    const estimateDays = positiveNumber(milestone.energyDays);
+    if (index !== currentIndex) {
+      remainingByMilestones += estimateDays;
+      return;
+    }
+    const spentDays = positiveNumber(milestone.energyUnits) / dailyEnergyUnits;
+    remainingByMilestones += Math.max(
+      OVER_ESTIMATE_FLOOR_DAYS,
+      estimateDays - spentDays
+    );
+    if (estimateDays > 0 && spentDays > estimateDays) {
+      overEstimate = {
+        spentDays: Math.round(spentDays * 10) / 10,
+        estimateDays
+      };
+    }
+  });
+  const openCount = total - doneCount - skippedCount;
   const daysLeft =
-    milestoneEnergyTotal > 0
-      ? roundToHalf(remainingByMilestones)
-      : roundToHalf(energyDays * ((total - doneCount) / Math.max(1, total)));
+    openCount <= 0
+      ? 0
+      : milestoneEnergyTotal > 0
+        ? Math.max(0.5, roundToHalf(remainingByMilestones))
+        : roundToHalf(energyDays * (openCount / Math.max(1, total)));
 
   let phase: RoadmapPhase;
-  if (plan.status === 'completed' || doneCount === total) {
+  if (plan.status === 'completed' || doneCount + skippedCount === total) {
     phase = 'complete';
   } else if (doneCount === 0 && plan.status === 'awaiting_confirmation') {
     phase = 'proposal';
@@ -405,6 +506,7 @@ export function resolveRoadmapView(
     lastDone,
     energyDays,
     daysLeft,
+    overEstimate,
     smaller:
       plan.plan.smaller &&
       String(plan.plan.smaller.label || '').trim() &&
@@ -442,6 +544,13 @@ export function formatRoadmapEnergyTotal(days: number) {
 
 export function formatRoadmapDaysLeft(days: number) {
   return `~${formatEnergyDays(days)} left`;
+}
+
+// The current milestone went over its estimate: say so, with the honest
+// remaining figure (at least half a day while it is unfinished).
+export function formatRoadmapOverEstimate(view: RoadmapView) {
+  if (!view.overEstimate) return '';
+  return `Taking longer than planned · ~${formatEnergyDays(view.daysLeft)} left`;
 }
 
 // "+ 4 more: stages, 8 fighters, menus, online battles"
@@ -495,6 +604,21 @@ export function resolveRoadmapActionRequest(
       return { message: 'Just build it, no plan', planAction: 'skip' };
     case 'cancel':
       return { message: 'Stop the build plan', planAction: 'cancel' };
+    // A stalled milestone's choices.
+    case 'keep_trying':
+      return { message: 'Keep trying', planAction: 'keep_trying' };
+    case 'mark_done':
+      return {
+        message: `It works, mark milestone ${view.current?.number || 1} done`,
+        planAction: 'mark_done'
+      };
+    case 'replan_milestone':
+      return {
+        message: `Re-plan milestone ${view.current?.number || 1} into smaller steps`,
+        planAction: 'replan_milestone'
+      };
+    case 'next_milestone':
+      return { message: 'Move on to the next milestone', planAction: 'next_milestone' };
     default:
       return null;
   }
