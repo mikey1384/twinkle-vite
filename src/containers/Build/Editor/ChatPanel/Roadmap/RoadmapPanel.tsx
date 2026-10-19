@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import {
   formatEnergyDays,
-  formatRoadmapDaysLeft,
+  formatRoadmapPlanDaysLeft,
   formatRoadmapOverEstimate,
   type RoadmapAction,
   type RoadmapView
@@ -22,9 +22,9 @@ import {
   roadmapMuted
 } from './styles';
 
-// In the chat panel's fixed-height column the plan may shrink down to its
-// head (the body scrolls), so it never pushes the header over itself or
-// squeezes the chat transcript to nothing on short screens.
+// In the chat panel's fixed-height column the plan may shrink, but never
+// below its head (min-height is set from the measured head, plus room to
+// scroll to the choices while a milestone is stalled); the body scrolls.
 const panelClass = css`
   flex: 0 1 auto;
   min-height: 0;
@@ -38,6 +38,10 @@ const panelClass = css`
   color: ${roadmapInk};
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 `;
+
+// While stalled, the body keeps at least this much height so the choices
+// can be scrolled to even on the shortest columns (one choice button + air).
+const STALL_SCROLL_MIN_PX = 64;
 
 const bodyClass = css`
   flex: 0 1 auto;
@@ -60,6 +64,10 @@ const headClass = css`
   flex-shrink: 0;
   width: 100%;
   padding: 1.2rem 1.4rem;
+  @media (max-height: 560px) {
+    padding: 0.8rem 1.2rem;
+    row-gap: 0.3rem;
+  }
   border: 0;
   background: transparent;
   text-align: left;
@@ -93,7 +101,12 @@ const headTitleClass = css`
   overflow: hidden;
 `;
 
+// Short screens (landscape tablets, an open keyboard): the chip steps aside
+// so the head stays small; the body still says how long it is taking.
 const headChipsClass = css`
+  @media (max-height: 560px) {
+    display: none !important;
+  }
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
@@ -155,6 +168,10 @@ const stallBoxClass = css`
 const stallChoicesClass = css`
   display: grid;
   gap: 0.6rem;
+  margin-bottom: 1rem;
+  > :first-child {
+    margin-bottom: 0.4rem;
+  }
 `;
 
 const spentNoteClass = css`
@@ -379,9 +396,47 @@ export default function RoadmapPanel({
   // NEEDS_WORK says what is being fixed; otherwise the hand-off's "Next: …".
   const stall = current?.stall || null;
   const stalled = Boolean(stall);
+  // When the checker could not see the code, more tries will not settle it:
+  // "It works, mark it done" leads and Keep trying is offered last-but-one.
+  const stallChoices: Array<{
+    action: RoadmapAction;
+    label: string;
+    color: string;
+  }> =
+    stall?.reason === 'unverified'
+      ? [
+          { action: 'mark_done', label: 'It works, mark it done', color: 'green' },
+          { action: 'replan_milestone', label: 'Re-plan it into smaller steps', color: 'violet' },
+          { action: 'keep_trying', label: 'Keep trying anyway', color: 'violet' },
+          { action: 'next_milestone', label: 'Move on to the next milestone', color: 'darkerGray' }
+        ]
+      : [
+          { action: 'keep_trying', label: 'Keep trying', color: 'violet' },
+          { action: 'mark_done', label: 'It works, mark it done', color: 'green' },
+          { action: 'replan_milestone', label: 'Re-plan it into smaller steps', color: 'violet' },
+          { action: 'next_milestone', label: 'Move on to the next milestone', color: 'darkerGray' }
+        ];
   const fixingNote = stalled ? '' : current?.fixingNote || '';
   const nextNote = !fixingNote && !upNext ? view.nextNote : '';
   const bodyId = `build-roadmap-panel-${view.buildId}`;
+  // The panel's floor: its head (title, chip), never clipped on short
+  // columns, plus a scrollable strip for a stall's choices.
+  const headRef = useRef<HTMLButtonElement | null>(null);
+  const [headHeight, setHeadHeight] = useState(0);
+  useLayoutEffect(() => {
+    const head = headRef.current;
+    if (!head) return;
+    const measure = () =>
+      setHeadHeight(Math.ceil(head.getBoundingClientRect().height));
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(head);
+    return () => observer.disconnect();
+  }, []);
+  const panelMinHeight = headHeight
+    ? headHeight + 2 + (stalled && canAct && !collapsed ? STALL_SCROLL_MIN_PX : 0)
+    : undefined;
   const bar = (
     <div className={barClass} aria-hidden>
       <i
@@ -393,9 +448,11 @@ export default function RoadmapPanel({
   return (
     <section
       className={panelClass}
+      style={panelMinHeight ? { minHeight: panelMinHeight } : undefined}
       aria-label={`Build plan: ${view.title}, ${view.doneCount} of ${view.total} milestones done`}
     >
       <button
+        ref={headRef}
         type="button"
         className={headClass}
         aria-expanded={!collapsed}
@@ -426,7 +483,11 @@ export default function RoadmapPanel({
                 whiteSpace: 'nowrap'
               }}
             >
-              {stalled ? 'Needs your choice' : `${view.doneCount} of ${view.total} done`}
+              {stalled
+                ? canAct
+                  ? 'Needs your choice'
+                  : 'Waiting for the owner'
+                : `${view.doneCount} of ${view.total} done`}
             </span>
           </span>
         ) : view.daysLeft > 0 ? (
@@ -439,7 +500,7 @@ export default function RoadmapPanel({
               <Icon icon={view.overEstimate ? 'hourglass-half' : 'bolt'} />
               {view.overEstimate
                 ? formatRoadmapOverEstimate(view)
-                : formatRoadmapDaysLeft(view.daysLeft)}
+                : formatRoadmapPlanDaysLeft(view.daysLeft)}
             </span>
           </span>
         ) : null}
@@ -480,7 +541,11 @@ export default function RoadmapPanel({
               <h5 className={nowTitleClass}>{current.title}</h5>
               {/* While stalled, the stall message already says it is over
                   budget; dropping the note keeps the choices above the fold. */}
-              {view.overEstimate && !upNext && !stall ? (
+              {view.overEstimate &&
+              !upNext &&
+              !stall &&
+              formatEnergyDays(view.overEstimate.spentDays) !==
+                formatEnergyDays(view.overEstimate.estimateDays) ? (
                 <p className={spentNoteClass}>
                   Used about {formatEnergyDays(view.overEstimate.spentDays)} of
                   Energy so far (planned{' '}
@@ -489,61 +554,35 @@ export default function RoadmapPanel({
               ) : null}
               {stall ? (
                 <div className={stallBoxClass} role="status">
-                  <p>{stall.message} What should we do?</p>
+                  <p>
+                    {stall.message}{' '}
+                    {canAct
+                      ? 'What should we do?'
+                      : 'Lumine is waiting for the owner to choose what happens next.'}
+                  </p>
                 </div>
               ) : null}
               {/* The choices sit right under the question, before the checklist,
                   so they are visible without scrolling on a narrow panel. */}
               {canAct && !generating && stall ? (
                 <div className={stallChoicesClass}>
-                  <Button
-                    color="violet"
-                    variant="solid"
-                    uppercase={false}
-                    stretch
-                    className={`${roadmapButtonClass} ${primaryButtonClass}`}
-                    disabled={disabled || Boolean(busyAction)}
-                    loading={busyAction === 'keep_trying'}
-                    onClick={() => onAction('keep_trying')}
-                  >
-                    Keep trying
-                  </Button>
-                  <Button
-                    color="green"
-                    variant="soft"
-                    uppercase={false}
-                    stretch
-                    className={roadmapButtonClass}
-                    disabled={disabled || Boolean(busyAction)}
-                    loading={busyAction === 'mark_done'}
-                    onClick={() => onAction('mark_done')}
-                  >
-                    It works, mark it done
-                  </Button>
-                  <Button
-                    color="violet"
-                    variant="soft"
-                    uppercase={false}
-                    stretch
-                    className={roadmapButtonClass}
-                    disabled={disabled || Boolean(busyAction)}
-                    loading={busyAction === 'replan_milestone'}
-                    onClick={() => onAction('replan_milestone')}
-                  >
-                    Re-plan it into smaller steps
-                  </Button>
-                  <Button
-                    color="darkerGray"
-                    variant="soft"
-                    uppercase={false}
-                    stretch
-                    className={roadmapButtonClass}
-                    disabled={disabled || Boolean(busyAction)}
-                    loading={busyAction === 'next_milestone'}
-                    onClick={() => onAction('next_milestone')}
-                  >
-                    Move on to the next milestone
-                  </Button>
+                  {stallChoices.map((choice, index) => (
+                    <Button
+                      key={choice.action}
+                      color={choice.color}
+                      variant={index === 0 ? 'solid' : 'soft'}
+                      uppercase={false}
+                      stretch
+                      className={`${roadmapButtonClass}${
+                        index === 0 ? ` ${primaryButtonClass}` : ''
+                      }`}
+                      disabled={disabled || Boolean(busyAction)}
+                      loading={busyAction === choice.action}
+                      onClick={() => onAction(choice.action)}
+                    >
+                      {choice.label}
+                    </Button>
+                  ))}
                 </div>
               ) : null}
               {fixingNote ? (

@@ -186,15 +186,19 @@ const desktopOnlyMainButtonClass = css`
   }
 `;
 
-// The transcript keeps a usable minimum: the header and the Build plan
-// panel above it shrink (the plan's body scrolls) before the chat does.
+// The transcript keeps a small usable minimum: the header (scrolls) and the
+// Build plan panel (down to its head) give way first, and the Composer
+// below never does.
 const scrollAreaClass = css`
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 1.2rem;
   background: #fff;
-  min-height: min(12rem, 30%);
+  min-height: min(8rem, 20%);
+  @media (max-height: 560px) {
+    min-height: min(4rem, 10%);
+  }
 `;
 
 const peoplePaneClass = css`

@@ -79,6 +79,10 @@ export interface RoadmapView {
   // The most recently finished milestone (celebrated in milestone_done).
   lastDone: RoadmapMilestoneView | null;
   energyDays: number;
+  // Milestones moved past after a stall, and ones the kid marked done
+  // themselves (the completion card must not claim more than was built).
+  skippedCount: number;
+  confirmedCount: number;
   // Honest: pending estimates plus what is left of the current milestone's
   // estimate after the Energy it already spent (never below half a day).
   daysLeft: number;
@@ -297,16 +301,21 @@ function stallOf(milestone: BuildExecutionPlanChunk): RoadmapStallView | null {
     return {
       reason,
       message:
-        "Lumine's checker can't find all the code it needs to test this part, so more tries won't settle it."
+        "Lumine's checker can't find all the code it needs to test this part, so more tries probably won't settle it. If it works when you play it, you can mark it done."
     };
   }
   if (reason === 'over_budget' || reason === 'many_runs') {
+    const runs = Math.round(
+      positiveNumber(milestone.stall?.runs) || positiveNumber(milestone.runs)
+    );
     return {
       reason,
       message:
         reason === 'over_budget'
-          ? 'This part has used more than twice the Energy we planned.'
-          : `Lumine has worked on this part ${Math.round(positiveNumber(milestone.stall?.runs) || positiveNumber(milestone.runs))} times and it still isn't finished.`
+          ? 'This part has used at least twice the Energy we planned.'
+          : runs > 0
+            ? `Lumine has worked on this part ${runs} times and it still isn't finished.`
+            : 'This part has taken many more tries than we planned.'
     };
   }
   return null;
@@ -505,6 +514,8 @@ export function resolveRoadmapView(
     current,
     lastDone,
     energyDays,
+    skippedCount,
+    confirmedCount: milestones.filter((m) => m.creatorConfirmed).length,
     daysLeft,
     overEstimate,
     smaller:
@@ -546,11 +557,16 @@ export function formatRoadmapDaysLeft(days: number) {
   return `~${formatEnergyDays(days)} left`;
 }
 
+// The panel chip: the whole plan's remaining Energy days, said so.
+export function formatRoadmapPlanDaysLeft(days: number) {
+  return `~${formatEnergyDays(days)} left in the plan`;
+}
+
 // The current milestone went over its estimate: say so, with the honest
 // remaining figure (at least half a day while it is unfinished).
 export function formatRoadmapOverEstimate(view: RoadmapView) {
   if (!view.overEstimate) return '';
-  return `Taking longer than planned · ~${formatEnergyDays(view.daysLeft)} left`;
+  return `Taking longer than planned · ~${formatEnergyDays(view.daysLeft)} left in the plan`;
 }
 
 // "+ 4 more: stages, 8 fighters, menus, online battles"

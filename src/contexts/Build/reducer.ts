@@ -83,6 +83,10 @@ export interface BuildLiveRunDeferredRequest {
     | 'start'
     | 'smaller'
     | 'skip'
+    | 'keep_trying'
+    | 'mark_done'
+    | 'replan_milestone'
+    | 'next_milestone'
     | null;
   stopActiveRun?: boolean | null;
   stopRequestId?: string | null;
@@ -1419,7 +1423,12 @@ function normalizeBuildRunDeferredRequest(
     deferredBuildRequest?.planAction === 'pivot' ||
     deferredBuildRequest?.planAction === 'start' ||
     deferredBuildRequest?.planAction === 'smaller' ||
-    deferredBuildRequest?.planAction === 'skip'
+    deferredBuildRequest?.planAction === 'skip' ||
+    // A stalled build-plan milestone's choices.
+    deferredBuildRequest?.planAction === 'keep_trying' ||
+    deferredBuildRequest?.planAction === 'mark_done' ||
+    deferredBuildRequest?.planAction === 'replan_milestone' ||
+    deferredBuildRequest?.planAction === 'next_milestone'
       ? deferredBuildRequest.planAction
       : null;
   const stopRequestId =

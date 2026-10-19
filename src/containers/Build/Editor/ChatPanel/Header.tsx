@@ -32,13 +32,22 @@ import {
   normalizeLumineModelSelection
 } from '../helpers/lumineModelSelection';
 
-// flex-shrink 0: the chat panel is a fixed-height flex column, and a header
-// allowed to shrink to its min-height let its wrapped rows (share control,
-// Energy bar) spill over the Build plan panel below it on narrow columns.
+// The chat panel is a fixed-height flex column. The header used to shrink
+// to its min-height with overflow visible, so its wrapped rows (share
+// control, Energy bar) painted over the Build plan panel on narrow columns.
+// Now it keeps its full height while there is room, is capped at 40% of the
+// column, and scrolls inside itself when it must give way (short landscape
+// tablets, an open Android keyboard, limits expanded): never over its
+// neighbours, never pushing the Composer out.
 const headerClass = css`
-  flex-shrink: 0;
+  /* A small shrink weight: the Build plan panel's body gives way first;
+     the header only scrolls once the panel is down to its floor. */
+  flex: 0 0.1 auto;
   min-width: 0;
-  min-height: var(--build-workspace-header-height);
+  max-height: 40%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: min(var(--build-workspace-header-height), 40%);
   padding: 0.55rem 1rem 0 1rem;
   background: #fff;
   display: grid;

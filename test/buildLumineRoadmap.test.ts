@@ -664,7 +664,7 @@ test('days left counts the Energy the current milestone already spent', () => {
   assert.equal(over.current?.spentDays, 3.8);
   assert.equal(
     formatRoadmapOverEstimate(over),
-    'Taking longer than planned · ~6 days left'
+    'Taking longer than planned · ~6 days left in the plan'
   );
 });
 
@@ -705,4 +705,31 @@ test('a stalled milestone offers the four choices; skipped and kid-confirmed mil
   // A stall on a finished milestone is ignored.
   plan.plan.chunks[0].stall = { at: 900, reason: 'unverified' };
   assert.equal(resolveRoadmapView(plan)!.milestones[0].stall, null);
+});
+
+test('the finished card never claims milestones that were skipped or only kid-confirmed', async () => {
+  const { formatRoadmapCompleteLine } = await import(
+    '../src/containers/Build/Editor/ChatPanel/Roadmap/RoadmapCompleteCard'
+  );
+  const plan: any = roadmapPlan({ status: 'completed', done: 7 });
+  plan.plan.chunks[1].status = 'cancelled';
+  plan.plan.chunks[1].skippedAt = 950;
+  plan.plan.chunks[2].completedBy = 'creator_confirmed';
+  const view = resolveRoadmapView(plan)!;
+  assert.equal(view.skippedCount, 1);
+  assert.equal(view.confirmedCount, 1);
+  assert.equal(
+    formatRoadmapCompleteLine(view),
+    '6 of 7 milestones of Platform Brawl built, 1 skipped for now. You marked one of them done yourself.'
+  );
+});
+
+test('stall copy: unverified says what to do, missing run counts never read "0 times"', () => {
+  const plan: any = roadmapPlan({ status: 'running', currentSteps: ['completed', 'pending', 'pending'] });
+  plan.plan.chunks[0].stall = { at: 900, reason: 'unverified' };
+  assert.match(resolveRoadmapView(plan)!.current!.stall!.message, /mark it done/);
+  plan.plan.chunks[0].stall = { at: 900, reason: 'many_runs' };
+  assert.doesNotMatch(resolveRoadmapView(plan)!.current!.stall!.message, /0 times/);
+  plan.plan.chunks[0].stall = { at: 900, reason: 'over_budget' };
+  assert.match(resolveRoadmapView(plan)!.current!.stall!.message, /at least twice/);
 });

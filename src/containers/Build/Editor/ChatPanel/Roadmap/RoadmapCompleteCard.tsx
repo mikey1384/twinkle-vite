@@ -98,6 +98,20 @@ const closeClass = css`
   }
 `;
 
+// Deliver or don't claim: skipped milestones and ones the kid marked done
+// themselves are said as such, never folded into "all built".
+export function formatRoadmapCompleteLine(view: RoadmapView) {
+  const built = view.total - view.skippedCount;
+  const confirmed =
+    view.confirmedCount > 0
+      ? ` You marked ${view.confirmedCount === 1 ? 'one' : view.confirmedCount} of them done yourself.`
+      : '';
+  if (view.skippedCount > 0) {
+    return `${built} of ${view.total} milestones of ${view.title} built, ${view.skippedCount} skipped for now.${confirmed}`;
+  }
+  return `You built all ${view.total} milestones of ${view.title}.${confirmed}`;
+}
+
 export default function RoadmapCompleteCard({
   view,
   canAct,
@@ -121,9 +135,7 @@ export default function RoadmapCompleteCard({
         <h4 className={titleClass}>Build plan complete!</h4>
         {/* Lumine's message carries the publish nudge; the card just
             celebrates and offers the buttons. */}
-        <p className={textClass}>
-          You built all {view.total} milestones of {view.title}.
-        </p>
+        <p className={textClass}>{formatRoadmapCompleteLine(view)}</p>
       </div>
       <RoadmapLevelMap milestones={view.milestones} />
       {canAct ? (

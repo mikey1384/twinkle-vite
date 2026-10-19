@@ -734,7 +734,17 @@ export default function useBuildSocket() {
         message?: string | null;
         messageContext?: string | null;
         planAction?:
-          'continue' | 'cancel' | 'pivot' | 'start' | 'smaller' | 'skip' | null;
+          | 'continue'
+          | 'cancel'
+          | 'pivot'
+          | 'start'
+          | 'smaller'
+          | 'skip'
+          | 'keep_trying'
+          | 'mark_done'
+          | 'replan_milestone'
+          | 'next_milestone'
+          | null;
         stopActiveRun?: boolean | null;
         stopRequestId?: string | null;
       } | null;

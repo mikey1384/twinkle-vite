@@ -179,6 +179,9 @@ export default function Composer({
     <div
       ref={containerRef}
       className={css`
+        /* Never squeezed out of the chat column: the header scrolls and
+           the Build plan panel shrinks to its head first. */
+        flex-shrink: 0;
         padding: 0.9rem 1rem 1.1rem;
         background: #fff;
         position: relative;
