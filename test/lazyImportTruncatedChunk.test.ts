@@ -62,11 +62,27 @@ test('the reload param stops a loop even without sessionStorage', () => {
     false
   );
   assert.equal(hasRecentLazyImportReload('not a url', now), false);
+  // a future timestamp (another device's clock) does not block recovery
   assert.equal(
-    wasOpenedByLazyImportReload(`${base}&_twinkleLazyImportReload=1`),
+    hasRecentLazyImportReload(
+      `${base}&_twinkleLazyImportReload=${now + 30_000}`,
+      now
+    ),
+    false
+  );
+  assert.equal(
+    wasOpenedByLazyImportReload(
+      `${base}&_twinkleLazyImportReload=${now - 5_000}`,
+      now
+    ),
     true
   );
-  assert.equal(wasOpenedByLazyImportReload(base), false);
+  // an old bookmarked param is not a recent recovery reload
+  assert.equal(
+    wasOpenedByLazyImportReload(`${base}&_twinkleLazyImportReload=1`, now),
+    false
+  );
+  assert.equal(wasOpenedByLazyImportReload(base, now), false);
 });
 
 const helpers = readFileSync(

@@ -6,6 +6,9 @@ export const LAZY_IMPORT_RELOAD_PARAM = '_twinkleLazyImportReload';
 // it passes the server's lazy-chunk suppression.
 export const LAZY_CHUNK_UNRECOVERABLE_MARKER = '[lazy-chunk-unrecoverable]';
 const RECENT_RELOAD_MS = 60 * 1000;
+// how long after its recovery reload a still-broken chunk counts as
+// unrecoverable (an old bookmarked param must not trigger that report)
+const RECOVERY_RELOAD_WINDOW_MS = 10 * 60 * 1000;
 
 // A lazy chunk that arrived cut off (a dropped connection mid-download, seen
 // from a Naver in-app browser on iPhone, 10-20) fails to parse instead of
@@ -24,23 +27,28 @@ export function isTruncatedScriptError(error: unknown) {
   );
 }
 
-// The page was itself opened by a lazy-chunk reload in the last minute. The
-// reload param stays in the URL, so this holds even in a webview whose
-// sessionStorage does not survive the reload: no reload loop either way.
-export function hasRecentLazyImportReload(href: string, now = Date.now()) {
+function readLazyImportReloadAt(href: string) {
   try {
     const at = Number(new URL(href).searchParams.get(LAZY_IMPORT_RELOAD_PARAM));
-    return Number.isFinite(at) && at > 0 && now - at < RECENT_RELOAD_MS;
+    return Number.isFinite(at) && at > 0 ? at : 0;
   } catch {
-    return false;
+    return 0;
   }
 }
 
-// The page already reloaded once for a lazy chunk (any time this session).
-export function wasOpenedByLazyImportReload(href: string) {
-  try {
-    return new URL(href).searchParams.has(LAZY_IMPORT_RELOAD_PARAM);
-  } catch {
-    return false;
-  }
+// The page was itself opened by a lazy-chunk reload in the last minute. The
+// reload param stays in the URL, so this holds even in a webview whose
+// sessionStorage does not survive the reload: no reload loop either way. A
+// future timestamp (another device's clock, a clock set back) does not count.
+export function hasRecentLazyImportReload(href: string, now = Date.now()) {
+  const age = now - readLazyImportReloadAt(href);
+  return readLazyImportReloadAt(href) > 0 && age >= 0 && age < RECENT_RELOAD_MS;
+}
+
+// The page was opened by a lazy-chunk recovery reload a few minutes ago at
+// most, so a chunk still failing now did not recover.
+export function wasOpenedByLazyImportReload(href: string, now = Date.now()) {
+  const at = readLazyImportReloadAt(href);
+  const age = now - at;
+  return at > 0 && age >= 0 && age < RECOVERY_RELOAD_WINDOW_MS;
 }
