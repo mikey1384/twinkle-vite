@@ -2959,9 +2959,17 @@ export default function MainNavs({
       return;
     }
     navMetaRef.current.touchedIds.add(id);
-    const nextCustomTabs = base.customTabs.map((tab) =>
-      tab.id === id ? { ...tab, pinned: nextPinned } : tab
-    );
+    // a new pin goes LAST in the pinned row, like a freshly captured pinned
+    // tab, instead of keeping its old slot somewhere in the middle where it
+    // was hidden past the visible cap (Mikey 10-20)
+    const nextCustomTabs = nextPinned
+      ? [
+          ...base.customTabs.filter((tab) => tab.id !== id),
+          { ...target, pinned: true }
+        ]
+      : base.customTabs.map((tab) =>
+          tab.id === id ? { ...tab, pinned: false } : tab
+        );
     const nextOrder = nextPinned
       ? base.order.filter((entry) => entry !== id)
       : [id, ...base.order.filter((entry) => entry !== id)];
