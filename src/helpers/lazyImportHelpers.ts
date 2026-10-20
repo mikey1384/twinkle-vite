@@ -67,9 +67,25 @@ async function retryLazyImport<T extends ComponentType<any>>(
   throw lastError;
 }
 
+// A lazy chunk that arrived cut off (a dropped connection mid-download, seen
+// from a Naver in-app browser on iPhone, 10-20) fails to parse instead of
+// failing to fetch. Safari: "Unexpected end of script"; Chrome: "Unexpected
+// end of input"; Firefox: "expected expression, got end of script". The
+// browser keeps the failed module, so retries alone cannot fix it; a reload
+// can, without any new deploy.
+export function isTruncatedScriptError(error: unknown) {
+  const message = String((error as Error)?.message || error || '');
+  return (
+    message.includes('Unexpected end of script') ||
+    message.includes('Unexpected end of input') ||
+    message.includes('got end of script')
+  );
+}
+
 export function isLazyImportLoadError(error: unknown) {
   const message = String((error as Error)?.message || error || '');
   return (
+    isTruncatedScriptError(error) ||
     message.includes('Failed to fetch dynamically imported module') ||
     message.includes('error loading dynamically imported module') ||
     message.includes('Importing a module script failed') ||
@@ -118,7 +134,11 @@ async function shouldReloadForLazyImportFailure(
 ) {
   if (typeof window === 'undefined') return false;
   const failedUrl = getLazyImportFailureUrl(error);
-  if (failedUrl) {
+  if (isTruncatedScriptError(error)) {
+    // a reload re-downloads the chunk; still only after the retries, and
+    // within the cooldown and per-path caps below
+    if (confirmedStaleOnly) return false;
+  } else if (failedUrl) {
     const staleAsset = await isLikelyStaleLazyImportAsset(failedUrl);
     if (!staleAsset) return false;
   } else {
