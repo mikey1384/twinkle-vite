@@ -310,6 +310,14 @@ export default function RewardSettingsModal({
                         </li>
                       ))}
                     </ul>
+                    {declaration.warnings?.length ? (
+                      <div className={warningClass} role="note">
+                        <strong>Before you send</strong>
+                        {declaration.warnings.map((warning, index) => (
+                          <p key={index}>{warning}</p>
+                        ))}
+                      </div>
+                    ) : null}
                     {declaration.budgets && (
                       <p className={mutedClass}>
                         Up to{' '}
@@ -885,6 +893,22 @@ const problemListClass = css`
   display: grid;
   gap: 0.4rem;
   color: #7f1d1d;
+`;
+
+// A warning the creator should read before sending; Send stays available.
+const warningClass = css`
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #78350f;
+  font-size: 1.3rem;
+  line-height: 1.5;
+  p {
+    margin: 0;
+  }
 `;
 
 const tryRowClass = css`

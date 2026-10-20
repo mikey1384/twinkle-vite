@@ -950,6 +950,11 @@ function ReviewerContext({ review }: { review: RewardReview }) {
             ))
           : 'none detected (heuristic scan; read the source)'}
       </p>
+      {(review.timerOnlyWarnings || []).map((warning, index) => (
+        <p key={index} role="alert">
+          {warning}
+        </p>
+      ))}
       {review.closedBySave && (
         <p role="alert">
           The creator saved a newer version after sending this request, so this

@@ -150,6 +150,8 @@ export interface RewardReview {
   } | null;
   // Reviewer context returned by the single-review load.
   detectedRuleIds?: string[];
+  // rules only a timer checks (the warning the creator saw before sending)
+  timerOnlyWarnings?: string[];
   isLatest?: boolean;
   // 'superseded' because the creator saved past it (not because a newer
   // request replaced it). Nothing can be decided on such a review.
@@ -210,6 +212,8 @@ export interface RewardSettings {
     legacy: boolean;
     ok: boolean;
     errors: string[];
+    // rules only a timer checks; shown before Send, never blocking it
+    warnings?: string[];
     rules: Array<{
       id: string;
       title: string;
