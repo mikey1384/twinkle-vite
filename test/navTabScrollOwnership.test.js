@@ -59,8 +59,18 @@ test('a new pin lands last and the pinned row scrolls to it', () => {
   );
   assert.match(
     source,
-    /const added = keys\.filter\(\(key\) => !seen\.has\(key\)\);[\s\S]*?setJustPinnedKey\(added\[0\]\);/m
+    /const key = newlyPinnedKey\(seenPinnedKeysRef\.current, keys\);[\s\S]*?setJustPinned\(\{ key, nonce: Date\.now\(\) \}\);/m
   );
+  // the reset timer is not tied to the effect's cleanup (a stuck key would
+  // block the next reveal of the same tab)
+  assert.doesNotMatch(source, /return \(\) => clearTimeout\(timer\);/);
+  assert.match(source, /\}, \[revealKey, revealNonce\]\);/);
+  // a running reveal is the row's only scroller
+  assert.match(
+    source,
+    /function scrollActiveIntoView\(\) \{\s*const el = scrollRef\.current;\s*if \(!el \|\| revealPendingRef\.current\) return;/m
+  );
+  assert.match(source, /if \(revealPendingRef\.current\) return;/);
   assert.match(source, /revealKey=\{justPinnedKey\}/);
   // the row rests at its end through the load-time re-layouts, until the
   // user scrolls it

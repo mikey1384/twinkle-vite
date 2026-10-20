@@ -4,9 +4,10 @@ import { useLocation } from 'react-router-dom';
 import Nav, { navTargetIsActive } from './Nav';
 import Icon from '~/components/Icon';
 import DropdownList from '~/components/DropdownList';
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_FALLBACK } from '~/constants/appShell';
+import { newlyPinnedKey } from './pinnedReveal';
 
 export interface NavTabDescriptor {
   key: string;
@@ -225,18 +226,22 @@ const dragZoneClass = css`
   flex-shrink: 0;
 `;
 
-// a just-pinned tab pops twice so the pin is noticed (one-shot, transform only)
-const justPinnedClass = css`
-  & > *:first-child {
-    animation: twinkle-just-pinned 0.45s ease-in-out 2;
+// a just-pinned tab's icon pops twice so the pin is noticed (one-shot,
+// transform only). The icon, not the full-height link: the row clips
+// vertically and a scaled link would overlap its neighbours.
+const justPinnedPop = keyframes`
+  50% {
+    transform: scale(1.15);
   }
-  @keyframes twinkle-just-pinned {
-    50% {
-      transform: translateY(-3px) scale(1.12);
-    }
+`;
+const justPinnedClass = css`
+  & .nav-thumb,
+  & a > svg {
+    animation: ${justPinnedPop} 0.45s ease-in-out 2;
   }
   @media (prefers-reduced-motion: reduce) {
-    & > *:first-child {
+    & .nav-thumb,
+    & a > svg {
       animation: none;
     }
   }
@@ -343,7 +348,8 @@ function ScrollableRow({
   wrapperClassName,
   onScrollChange,
   scrollToEndOnLoad,
-  revealKey
+  revealKey,
+  revealNonce
 }: {
   children: React.ReactNode;
   signature: string;
@@ -358,6 +364,8 @@ function ScrollableRow({
   scrollToEndOnLoad?: boolean;
   // a tab (by data-tab-key) to bring fully into view, e.g. one just pinned
   revealKey?: string | null;
+  // changes on every reveal, so re-pinning the same tab reveals it again
+  revealNonce?: number;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [scrollState, setScrollState] = useState({
@@ -368,9 +376,15 @@ function ScrollableRow({
   const scrollStateRef = useRef(scrollState);
   scrollStateRef.current = scrollState;
   const [capWidth, setCapWidth] = useState<number | undefined>(undefined);
-  // set once the user scrolls this row (wheel, swipe, chevron, a tap on it);
-  // from then on the row stays where they put it
+  // set once the user scrolls this row (wheel, swipe, chevron, a tap on it,
+  // keyboard focus); from then on the row stays where they put it. Per page
+  // load on purpose: the row doesn't remount on route changes.
   const userMovedRef = useRef(false);
+  // while a reveal runs it is the row's only scroller: the active-tab
+  // alignment and the rest-at-end snap stand aside so they can't pull the
+  // new pin back out of view
+  const revealPendingRef = useRef(false);
+  const cancelRevealRef = useRef<() => void>(() => {});
   const cancelActiveScrollRef = useRef<() => void>(() => {});
   const pendingControlLayoutCompensationRef = useRef<number | null>(null);
   const { pathname, search } = useLocation();
@@ -413,19 +427,31 @@ function ScrollableRow({
   // Re-run after the cap/layout settles, like the active-tab scroll below.
   useEffect(() => {
     if (!revealKey) return;
+    revealPendingRef.current = true;
     const reveal = () => scrollTabIntoView(revealKey);
     const raf = requestAnimationFrame(reveal);
     const timers = [
       window.setTimeout(reveal, 120),
-      window.setTimeout(reveal, 340)
+      window.setTimeout(() => {
+        reveal();
+        revealPendingRef.current = false;
+      }, 340)
     ];
-    return () => {
+    function cancelReveal() {
       cancelAnimationFrame(raf);
       timers.forEach(clearTimeout);
+      revealPendingRef.current = false;
+    }
+    cancelRevealRef.current = cancelReveal;
+    return () => {
+      cancelReveal();
+      if (cancelRevealRef.current === cancelReveal) {
+        cancelRevealRef.current = () => {};
+      }
     };
     // scrollTabIntoView only reads the scroll ref
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revealKey]);
+  }, [revealKey, revealNonce]);
 
   // cap the visible width to the first `maxVisible` tabs; beyond that the row
   // pages via its scroll instead of growing
@@ -479,6 +505,7 @@ function ScrollableRow({
       // pull against the user's movement for the first few hundred ms.
       userMovedRef.current = true;
       cancelActiveScrollRef.current();
+      cancelRevealRef.current();
       if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
       el.scrollLeft += event.deltaY;
       event.preventDefault();
@@ -528,6 +555,7 @@ function ScrollableRow({
     <div
       className={`${scrollRowClass} ${wrapperClassName || ''}`}
       onPointerDownCapture={cancelPendingActiveScroll}
+      onFocusCapture={cancelPendingActiveScroll}
     >
       {scrollState.overflowing && (
         <div className={scrollButtonClass}>
@@ -586,7 +614,7 @@ function ScrollableRow({
 
   function scrollActiveIntoView() {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el || revealPendingRef.current) return;
     const active = el.querySelector('a.active') as HTMLElement | null;
     if (!active) return;
     // measure the whole tab WRAPPER (link + any trailing affordance like the
@@ -629,11 +657,13 @@ function ScrollableRow({
   function cancelPendingActiveScroll() {
     userMovedRef.current = true;
     cancelActiveScrollRef.current();
+    cancelRevealRef.current();
   }
 
   function restAtEnd() {
     const el = scrollRef.current;
     if (!scrollToEndOnLoad || userMovedRef.current || !el) return;
+    if (revealPendingRef.current) return;
     if (el.scrollWidth <= el.clientWidth + 1) return; // fits, nothing to do
     if (el.querySelector('a.active')) return; // active tab wins
     el.scrollLeft = el.scrollWidth;
@@ -790,23 +820,30 @@ export default function TabStrip({
   // the end, often past the visible cap. The first load only sets the
   // baseline.
   const seenPinnedKeysRef = useRef<Set<string> | null>(null);
-  const [justPinnedKey, setJustPinnedKey] = useState<string | null>(null);
+  const justPinnedTimerRef = useRef<number | undefined>(undefined);
+  const [justPinned, setJustPinned] = useState<{
+    key: string;
+    nonce: number;
+  } | null>(null);
+  const justPinnedKey = justPinned?.key ?? null;
   useEffect(() => {
     const keys = pinnedTabs.map((tab) => tab.key);
-    const seen = seenPinnedKeysRef.current;
+    const key = newlyPinnedKey(seenPinnedKeysRef.current, keys);
     seenPinnedKeysRef.current = new Set(keys);
-    if (!seen || seen.size === 0) return;
-    const added = keys.filter((key) => !seen.has(key));
-    if (added.length !== 1) return; // a sync/reload, not one new pin
-    setJustPinnedKey(added[0]);
-    const timer = window.setTimeout(
-      () => setJustPinnedKey(null),
+    if (!key) return;
+    // The reset timer lives in a ref, not this effect's cleanup: a later
+    // unpin or reorder within the pop must not cancel it and leave the pin
+    // stuck. The nonce makes re-pinning the same tab reveal it again.
+    clearTimeout(justPinnedTimerRef.current);
+    setJustPinned({ key, nonce: Date.now() });
+    justPinnedTimerRef.current = window.setTimeout(
+      () => setJustPinned(null),
       JUST_PINNED_MS
     );
-    return () => clearTimeout(timer);
     // pinnedSignature is pinnedTabs' key list
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinnedSignature]);
+  useEffect(() => () => clearTimeout(justPinnedTimerRef.current), []);
   const mainSignature = `${defaultTabs
     .map((tab) => tab.key)
     .join(',')}|${tabs.map((tab) => tab.key).join(',')}`;
@@ -856,6 +893,7 @@ export default function TabStrip({
           wrapperClassName={pinnedAreaClass}
           scrollToEndOnLoad
           revealKey={justPinnedKey}
+          revealNonce={justPinned?.nonce}
         >
           <div
             ref={pinnedZoneRef}
