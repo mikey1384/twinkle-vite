@@ -147,6 +147,18 @@ export function challengeButton() {
     gap: 0.5rem;
   `;
 }
+// The same button once a reviewer has answered: quiet grey, so the loud
+// Challenge buttons that still need a look are easy to find.
+export function reviewedButton() {
+  return `
+    ${button(GREY, '#5d626c', '#2c2838')}
+    ${inkShadow(1)}
+    margin-bottom: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  `;
+}
 export const NIGHT: Palette = {
   k: '#0d0816',
   l: '#5b3a7e',

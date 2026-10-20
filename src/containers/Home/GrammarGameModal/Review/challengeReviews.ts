@@ -21,6 +21,20 @@ export function getSavedChallengeReview(
     : null;
 }
 
+// A challenge with nothing left to do (reviewed, saved, or reworded since):
+// the quiet "already reviewed" look, so the still-open ones stand out (a
+// learner asked for the two to look different, 10-20).
+export function isChallengeReviewSettled(
+  review?: ChallengeReview,
+  savedReview?: SavedChallengeReview | null
+) {
+  return Boolean(
+    savedReview ||
+    review?.status === 'complete' ||
+    (review?.status === 'error' && (review.savedReview || review.rewritten))
+  );
+}
+
 export function challengeReviewLabel(
   review?: ChallengeReview,
   savedReview?: SavedChallengeReview | null

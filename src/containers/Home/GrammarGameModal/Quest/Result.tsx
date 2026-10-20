@@ -10,10 +10,12 @@ import ChallengeModal from '../Review/ChallengeModal';
 import useChallengeReviews from '../Review/useChallengeReviews';
 import {
   challengeReviewLabel,
+  isChallengeReviewSettled,
   getSavedChallengeReview
 } from '../Review/challengeReviews';
 import {
   BLUE,
+  GREY,
   GOLD,
   INK,
   PARCHMENT,
@@ -280,7 +282,11 @@ export default function Result({
                 {id != null && (
                   <button
                     className={
-                      review || savedReview ? reviewSmallCls : challengeSmallCls
+                      isChallengeReviewSettled(review, savedReview)
+                        ? reviewedSmallCls
+                        : review
+                          ? reviewSmallCls
+                          : challengeSmallCls
                     }
                     title={
                       savedReview || review?.status === 'complete'
@@ -693,6 +699,11 @@ const challengeSmallCls = css`
 const reviewSmallCls = css`
   ${challengeSmallCls}
   ${button(BLUE, '#2a5fb0', '#fff')}
+`;
+// a reviewer has answered: quiet grey, so open challenges stand out
+const reviewedSmallCls = css`
+  ${challengeSmallCls}
+  ${button(GREY, '#5d626c', '#2c2838')}
 `;
 const counterTagCls = css`
   display: inline-block;

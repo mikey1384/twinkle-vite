@@ -16,6 +16,7 @@ import ChallengeModal from '../Review/ChallengeModal';
 import useChallengeReviews from '../Review/useChallengeReviews';
 import {
   challengeReviewLabel,
+  isChallengeReviewSettled,
   getSavedChallengeReview
 } from '../Review/challengeReviews';
 import {
@@ -64,6 +65,7 @@ import {
   button,
   challengeButton,
   discRows,
+  reviewedButton,
   frame,
   inkShadow,
   pixelSvg,
@@ -924,7 +926,14 @@ export default function MarbleRunScreen({
                               run on a clock, so theirs wait for the result. */}
                           {answer.challenge && (
                             <button
-                              className={challengeCls}
+                              className={
+                                isChallengeReviewSettled(
+                                  challengeReview,
+                                  savedReview
+                                )
+                                  ? reviewedCls
+                                  : challengeCls
+                              }
                               title={
                                 savedReview ||
                                 challengeReview?.status === 'complete'
@@ -1453,6 +1462,20 @@ const cardInnerCls = css`
 // a long rule card scrolls on its own; choices and Continue stay put
 const challengeCls = css`
   ${challengeButton()}
+  flex: none;
+  margin-right: auto;
+  min-height: 4rem;
+  padding: 0.3rem 1.2rem;
+  font-size: 1.1rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    min-height: 44px;
+  }
+  @media (max-height: 520px) and (orientation: landscape) {
+    min-height: 40px;
+  }
+`;
+const reviewedCls = css`
+  ${reviewedButton()}
   flex: none;
   margin-right: auto;
   min-height: 4rem;

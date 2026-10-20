@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   challengeReviewLabel,
   createChallengeReviewStore,
+  isChallengeReviewSettled,
   type ChallengeResult
 } from '../src/containers/Home/GrammarGameModal/Review/challengeReviews';
 
@@ -131,4 +132,49 @@ test('a Quest miss met on a rewritten wording says why and never retries', async
   assert.equal(challengeReviewLabel(store.get(7)[10]), 'Reworded since');
   await store.start(7, 10, rewritten);
   assert.equal(calls, 1);
+});
+
+test('only challenges with nothing left to do take the quiet reviewed look', () => {
+  assert.equal(isChallengeReviewSettled(), false);
+  assert.equal(
+    isChallengeReviewSettled({ status: 'pending', thought: '' }),
+    false
+  );
+  assert.equal(
+    isChallengeReviewSettled({
+      status: 'error',
+      message: 'The review result did not reach us.',
+      canRetry: true
+    }),
+    false
+  );
+  assert.equal(
+    isChallengeReviewSettled({
+      status: 'complete',
+      result: { justified: false, explanation: 'The answer key holds.' }
+    } as any),
+    true
+  );
+  assert.equal(
+    isChallengeReviewSettled(undefined, { outcome: null, explanation: '' }),
+    true
+  );
+  assert.equal(
+    isChallengeReviewSettled({
+      status: 'error',
+      message: 'Already reviewed',
+      canRetry: false,
+      savedReview: { outcome: true, explanation: '' }
+    } as any),
+    true
+  );
+  assert.equal(
+    isChallengeReviewSettled({
+      status: 'error',
+      message: 'This question was reworded after you met it.',
+      canRetry: false,
+      rewritten: true
+    }),
+    true
+  );
 });

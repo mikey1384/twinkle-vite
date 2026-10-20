@@ -13,6 +13,7 @@ import ChallengeModal from './ChallengeModal';
 import useChallengeReviews from './useChallengeReviews';
 import {
   challengeReviewLabel,
+  isChallengeReviewSettled,
   getSavedChallengeReview,
   type SavedChallengeReview
 } from './challengeReviews';
@@ -106,10 +107,20 @@ export default function QuestMisses() {
               </div>
             ) : (
               <div className={actionCls}>
+                {/* open challenges loud, already-reviewed ones quiet (a
+                    learner couldn't tell them apart, 10-20) */}
                 <GameCTAButton
                   arcade
-                  icon="exclamation-circle"
-                  variant="logoBlue"
+                  icon={
+                    isChallengeReviewSettled(review, savedReview)
+                      ? 'check'
+                      : 'flag'
+                  }
+                  variant={
+                    isChallengeReviewSettled(review, savedReview)
+                      ? 'neutral'
+                      : 'pink'
+                  }
                   size="sm"
                   onClick={() => setOpen(it)}
                 >

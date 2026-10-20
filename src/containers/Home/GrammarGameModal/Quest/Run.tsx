@@ -8,7 +8,8 @@ import ChallengeModal from '../Review/ChallengeModal';
 import useChallengeReviews from '../Review/useChallengeReviews';
 import {
   challengeReviewLabel,
-  getSavedChallengeReview
+  getSavedChallengeReview,
+  isChallengeReviewSettled
 } from '../Review/challengeReviews';
 import {
   initialKoreanShown,
@@ -153,7 +154,11 @@ export default function Run({
         <div className={nextRowCls}>
           {challenge && (
             <button
-              className={challengeCls}
+              className={
+                isChallengeReviewSettled(challengeReview, savedReview)
+                  ? reviewedCls
+                  : challengeCls
+              }
               title={
                 reviewed
                   ? 'Read the reviewer’s explanation'
@@ -425,6 +430,13 @@ const challengeCls = css`
   font-size: 1.3rem;
   font-weight: 800;
   cursor: pointer;
+`;
+// once a reviewer has answered: quiet, so open challenges stand out
+const reviewedCls = css`
+  ${challengeCls}
+  border-color: ${Color.gray(0.6)};
+  background: ${Color.gray(0.08)};
+  color: ${Color.darkGray()};
 `;
 
 const nextCls = css`
