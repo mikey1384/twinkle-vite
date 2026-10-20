@@ -104,7 +104,8 @@ const wakeProfiler = createWakeProfiler({
   isActive: () => recorder.isActive(),
   record: (data) => recordOwnerTrace('wake', data)
 });
-let lastSocketConnected: boolean | undefined;
+// a cold load starts disconnected; connect/disconnect events keep it current
+let lastSocketConnected = false;
 let hiddenAt: number | null = null;
 
 // Socket.IO transitions (useInitSocket), for the wake window.
@@ -226,10 +227,12 @@ export function traceOwnerRequest<T, R>(
   send: (config: ExtendedAxiosRequestConfig<T>) => Promise<R>
 ): Promise<R> {
   if (!recorder.isActive()) return send(config);
+  const method = String(config.method || 'get').toUpperCase();
+  // grouped by redacted pattern; true repeats counted by the exact URL (kept
+  // in memory only), so 13 different feed cards are not 13 "repeats"
   wakeProfiler.noteRequest(
-    `${String(config.method || 'get').toUpperCase()} ${redactRequestPath(
-      config.url
-    )}`
+    `${method} ${redactRequestPath(config.url)}`,
+    `${method} ${config.url || ''}`
   );
   const startedAt = Date.now();
   let queuedMs = 0;

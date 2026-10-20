@@ -121,3 +121,15 @@ test('the top list is cut, not dropped, and nothing records for anyone but the o
   assert.equal(other.records.length, 0);
   assert.equal(other.profiler.isOpen(), false);
 });
+
+test('different items under one request pattern are grouped but not counted as repeats', () => {
+  const h = harness();
+  h.profiler.start({ kind: 'load' });
+  h.profiler.noteRequest('GET /content?contentId', 'GET /content?contentId=1');
+  h.profiler.noteRequest('GET /content?contentId', 'GET /content?contentId=2');
+  h.profiler.noteRequest('GET /content?contentId', 'GET /content?contentId=2');
+  h.endWindow();
+  assert.equal(h.records[0].requests, 3);
+  assert.equal(h.records[0].repeats, 1);
+  assert.deepEqual(h.records[0].top, ['GET /content?contentId x3']);
+});

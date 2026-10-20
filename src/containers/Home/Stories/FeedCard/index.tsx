@@ -75,6 +75,7 @@ import {
   recordOwnerTrace,
   takeOwnerTraceTap
 } from '~/helpers/ownerTrace';
+import { homeFeedHydrationPacer } from './hydrationPacer';
 
 const SHOWCASE_CARD_CLASS = 'home-feed-card--showcase';
 const HOME_FEED_CARD_LAYOUT_CACHE_LIMIT = 600;
@@ -157,6 +158,9 @@ function HomeFeedCard({
     };
   }, [contentId, contentType, feed?.rootType]);
   const [VisibilityRef, inView] = useInViewFlag();
+  // read when a content reply is queued (hydrationPacer: on-screen first)
+  const inViewRef = useRef(inView);
+  inViewRef.current = inView;
   // Not the router hook useNavigate: it re-renders every card whenever
   // <Routes> re-renders (see useStableNavigate).
   const { navigate, routeNavigateRef } = useStableNavigate();
@@ -443,13 +447,25 @@ function HomeFeedCard({
     hydrateContent();
 
     async function hydrateContent() {
+      let data: any = null;
       try {
-        const data = await loadContent({
+        data = await loadContent({
           contentId,
           contentType,
           rootType: feed?.rootType
         });
-        if (!data) return;
+      } catch (error) {
+        if (!checkUserChange(requestUserId)) console.error(error);
+      }
+      if (!data || checkUserChange(requestUserId)) {
+        releaseHydration();
+        return;
+      }
+      // Replies that land together are applied a few per frame, on-screen
+      // cards first (hydrationPacer.ts). The request stays marked in flight
+      // until it is applied, so a remount in between cannot refetch it.
+      homeFeedHydrationPacer.enqueue(() => {
+        releaseHydration();
         if (checkUserChange(requestUserId)) return;
         onInitContent({
           ...(feed?.feedId ? { ...data, feedId: feed.feedId } : data)
@@ -461,15 +477,14 @@ function HomeFeedCard({
             ...data.rootObj
           });
         }
-      } catch (error) {
-        if (checkUserChange(requestUserId)) return;
-        console.error(error);
-      } finally {
-        if (loadingRef.current === hydrationRequestKey) {
-          loadingRef.current = null;
-        }
-        homeFeedContentHydrationRequests.delete(hydrationRequestKey);
+      }, inViewRef.current);
+    }
+
+    function releaseHydration() {
+      if (loadingRef.current === hydrationRequestKey) {
+        loadingRef.current = null;
       }
+      homeFeedContentHydrationRequests.delete(hydrationRequestKey);
     }
     // checkUserChange/loadContent/onInitContent are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps

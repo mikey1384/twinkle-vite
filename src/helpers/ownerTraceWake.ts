@@ -55,6 +55,8 @@ export function createWakeProfiler({
     stalls: number;
     stallMs: number;
     requests: Map<string, number>;
+    exactRequests: Set<string>;
+    sameRequests: number;
     connects: number;
     disconnects: number;
     reconnectAttempts: number;
@@ -90,6 +92,8 @@ export function createWakeProfiler({
       stalls: 0,
       stallMs: 0,
       requests: new Map(),
+      exactRequests: new Set(),
+      sameRequests: 0,
       connects: 0,
       disconnects: 0,
       reconnectAttempts: 0,
@@ -115,9 +119,13 @@ export function createWakeProfiler({
     frame = requestFrame(tick);
   }
 
-  function noteRequest(key: string) {
+  // key: the redacted pattern (what is shown); exact: the full request, only
+  // to tell a true repeat (same URL again) from a different item
+  function noteRequest(key: string, exact = key) {
     if (!wake || !key) return;
     wake.requests.set(key, (wake.requests.get(key) || 0) + 1);
+    if (wake.exactRequests.has(exact)) wake.sameRequests += 1;
+    else wake.exactRequests.add(exact);
   }
 
   function noteSocket(
@@ -157,11 +165,7 @@ export function createWakeProfiler({
     const endedAt = now();
     const requests = [...done.requests.entries()].sort((a, b) => b[1] - a[1]);
     let total = 0;
-    let repeats = 0;
-    for (const [, n] of requests) {
-      total += n;
-      repeats += n - 1;
-    }
+    for (const [, n] of requests) total += n;
     let images = 0;
     try {
       images = countImages(done.startedAt, endedAt);
@@ -185,8 +189,8 @@ export function createWakeProfiler({
       stalls: done.stalls,
       stallMs: Math.round(done.stallMs),
       requests: total,
-      // the same request sent more than once in this window
-      repeats,
+      // the exact same request sent again in this window
+      repeats: done.sameRequests,
       top: requests
         .slice(0, MAX_TOP_REQUESTS)
         .map(([key, n]) => (n > 1 ? `${key} x${n}` : key)),
