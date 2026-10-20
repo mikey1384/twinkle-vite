@@ -951,8 +951,8 @@ function ReviewerContext({ review }: { review: RewardReview }) {
           : 'none detected (heuristic scan; read the source)'}
       </p>
       {(review.timerOnlyWarnings || []).map((warning, index) => (
-        <p key={index} role="alert">
-          {warning}
+        <p key={index}>
+          <strong>Unchecked:</strong> {warning}
         </p>
       ))}
       {review.closedBySave && (
