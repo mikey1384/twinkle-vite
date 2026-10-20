@@ -147,12 +147,14 @@ export function challengeButton() {
     gap: 0.5rem;
   `;
 }
-// The same button once a reviewer has answered: quiet grey, so the loud
-// Challenge buttons that still need a look are easy to find.
+// The same button once nothing is left to do: a quiet parchment tag, so the
+// loud Challenge buttons that still need a look are easy to find. Not grey:
+// grey is how a disabled button looks, and the reviewer's explanation behind
+// this one is still worth opening.
 export function reviewedButton() {
   return `
-    ${button(GREY, '#5d626c', '#2c2838')}
-    ${inkShadow(1)}
+    ${button(TAG, '#b89a5c', INK)}
+    text-shadow: none;
     margin-bottom: 4px;
     display: inline-flex;
     align-items: center;

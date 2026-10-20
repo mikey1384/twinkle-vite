@@ -64,7 +64,7 @@ export default function Run({
     challenge?.checked,
     challenge?.review
   );
-  const reviewed = !!savedReview || challengeReview?.status === 'complete';
+  const reviewed = isChallengeReviewSettled(challengeReview, savedReview);
   // a miss's explanation holds Next/Finish for its read time
   const { reading, secondsLeft } = useReadCooldown(
     answer && !answer.isCorrect ? `miss-${position}` : null,
@@ -154,11 +154,7 @@ export default function Run({
         <div className={nextRowCls}>
           {challenge && (
             <button
-              className={
-                isChallengeReviewSettled(challengeReview, savedReview)
-                  ? reviewedCls
-                  : challengeCls
-              }
+              className={reviewed ? reviewedCls : challengeCls}
               title={
                 reviewed
                   ? 'Read the reviewer’s explanation'
@@ -181,7 +177,7 @@ export default function Run({
                 : reading
                   ? `Read it · ${secondsLeft}`
                   : `Finish · ${rightSoFar}/${run.questions.length}`}
-              {(finishing) && (
+              {finishing && (
                 <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
               )}
             </button>

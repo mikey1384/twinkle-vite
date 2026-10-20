@@ -79,6 +79,7 @@ export default function QuestMisses() {
           it.challenge?.checked,
           it.challenge?.review
         );
+        const settled = isChallengeReviewSettled(review, savedReview);
         const world = /^w(\d+)/.exec(it.nodeId)?.[1];
         return (
           <div key={`${it.runId}:${it.position}`} className={itemCls}>
@@ -111,16 +112,8 @@ export default function QuestMisses() {
                     learner couldn't tell them apart, 10-20) */}
                 <GameCTAButton
                   arcade
-                  icon={
-                    isChallengeReviewSettled(review, savedReview)
-                      ? 'check'
-                      : 'flag'
-                  }
-                  variant={
-                    isChallengeReviewSettled(review, savedReview)
-                      ? 'neutral'
-                      : 'pink'
-                  }
+                  icon={settled ? 'check' : 'flag'}
+                  variant={settled ? 'neutral' : 'pink'}
                   size="sm"
                   onClick={() => setOpen(it)}
                 >

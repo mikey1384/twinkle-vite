@@ -11,11 +11,11 @@ import useChallengeReviews from '../Review/useChallengeReviews';
 import {
   challengeReviewLabel,
   isChallengeReviewSettled,
-  getSavedChallengeReview
+  getSavedChallengeReview,
+  type ChallengeReview
 } from '../Review/challengeReviews';
 import {
   BLUE,
-  GREY,
   GOLD,
   INK,
   PARCHMENT,
@@ -26,6 +26,7 @@ import {
   frame,
   inkShadow,
   pixelSvg,
+  reviewedButton,
   spriteUri
 } from './pixelUi';
 
@@ -54,7 +55,7 @@ export default function Result({
   const allReviewed = challengeable.every(
     (a) =>
       a.challenge!.checked ||
-      reviews[a.challenge!.questionId]?.status === 'complete'
+      isChallengeReviewSettled(reviews[a.challenge!.questionId])
   );
   const selectedChallenge = challengeable.find(
     (a) => a.challenge?.questionId === challengeId
@@ -253,6 +254,7 @@ export default function Result({
               a.challenge?.checked,
               a.challenge?.review
             );
+            const settled = isChallengeReviewSettled(review, savedReview);
             return (
               <div key={a.position} className={challengeItemCls}>
                 <div className={challengeTextCls}>
@@ -268,41 +270,24 @@ export default function Result({
                     </div>
                   )}
                   {review && (
-                    <div className={checkedCls}>
-                      {review.status === 'complete'
-                        ? review.result.justified
-                          ? 'Accepted · question fixed'
-                          : 'Not accepted · answer correct'
-                        : review.status === 'pending'
-                          ? 'Review in progress'
-                          : 'Review interrupted'}
-                    </div>
+                    <div className={checkedCls}>{reviewStatusLine(review)}</div>
                   )}
                 </div>
                 {id != null && (
                   <button
                     className={
-                      isChallengeReviewSettled(review, savedReview)
+                      settled
                         ? reviewedSmallCls
                         : review
                           ? reviewSmallCls
                           : challengeSmallCls
                     }
                     title={
-                      savedReview || review?.status === 'complete'
-                        ? 'Read the reviewer’s explanation'
-                        : undefined
+                      settled ? 'Read the reviewer’s explanation' : undefined
                     }
                     onClick={() => setChallengeId(id)}
                   >
-                    <PixelIcon
-                      name={
-                        savedReview || review?.status === 'complete'
-                          ? 'check'
-                          : 'flag'
-                      }
-                      scale={2}
-                    />{' '}
+                    <PixelIcon name={settled ? 'check' : 'flag'} scale={2} />{' '}
                     {challengeReviewLabel(review, savedReview)}
                   </button>
                 )}
@@ -687,6 +672,25 @@ const challengeTextCls = css`
   text-align: left;
   overflow-wrap: anywhere;
 `;
+// the line under a reviewed miss; a saved or reworded one reads finished,
+// like its button
+function reviewStatusLine(review: ChallengeReview) {
+  if (review.status === 'complete') {
+    return review.result.justified
+      ? 'Accepted · question fixed'
+      : 'Not accepted · answer correct';
+  }
+  if (review.status === 'pending') return 'Review in progress';
+  if (review.savedReview?.outcome === 'accepted') {
+    return 'Accepted · question fixed';
+  }
+  if (review.savedReview?.outcome === 'rejected') {
+    return 'Not accepted · answer correct';
+  }
+  if (review.savedReview) return 'Already reviewed';
+  if (review.rewritten) return 'Reworded since';
+  return 'Review interrupted';
+}
 const challengeSmallCls = css`
   ${challengeButton()}
   flex: none;
@@ -700,10 +704,10 @@ const reviewSmallCls = css`
   ${challengeSmallCls}
   ${button(BLUE, '#2a5fb0', '#fff')}
 `;
-// a reviewer has answered: quiet grey, so open challenges stand out
+// nothing left to do: a quiet tag, so open challenges stand out
 const reviewedSmallCls = css`
   ${challengeSmallCls}
-  ${button(GREY, '#5d626c', '#2c2838')}
+  ${reviewedButton()}
 `;
 const counterTagCls = css`
   display: inline-block;

@@ -156,6 +156,23 @@ test('only challenges with nothing left to do take the quiet reviewed look', () 
     true
   );
   assert.equal(
+    isChallengeReviewSettled({
+      status: 'complete',
+      result: { justified: true, explanation: 'The key was wrong.' }
+    }),
+    true
+  );
+  // signed out mid-review: can't retry from here, but nothing was decided
+  assert.equal(
+    isChallengeReviewSettled({
+      status: 'error',
+      message: 'Log in to continue.',
+      canRetry: false
+    }),
+    false
+  );
+  assert.equal(isChallengeReviewSettled(undefined, null), false);
+  assert.equal(
     isChallengeReviewSettled(undefined, { outcome: null, explanation: '' }),
     true
   );

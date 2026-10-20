@@ -200,6 +200,10 @@ export default function MarbleRunScreen({
     answer?.challenge?.checked,
     answer?.challenge?.review
   );
+  const challengeSettled = isChallengeReviewSettled(
+    challengeReview,
+    savedReview
+  );
   // a miss's explanation holds Continue for its read time (practice), or
   // holds the next boss hit (the server's clock waits the same time)
   const { reading, secondsLeft } = useReadCooldown(
@@ -927,16 +931,10 @@ export default function MarbleRunScreen({
                           {answer.challenge && (
                             <button
                               className={
-                                isChallengeReviewSettled(
-                                  challengeReview,
-                                  savedReview
-                                )
-                                  ? reviewedCls
-                                  : challengeCls
+                                challengeSettled ? reviewedCls : challengeCls
                               }
                               title={
-                                savedReview ||
-                                challengeReview?.status === 'complete'
+                                challengeSettled
                                   ? 'Read the reviewer’s explanation'
                                   : 'Think the answer key is wrong? Challenge it'
                               }
@@ -945,12 +943,7 @@ export default function MarbleRunScreen({
                               }
                             >
                               <PixelIcon
-                                name={
-                                  savedReview ||
-                                  challengeReview?.status === 'complete'
-                                    ? 'check'
-                                    : 'flag'
-                                }
+                                name={challengeSettled ? 'check' : 'flag'}
                                 scale={2}
                               />{' '}
                               {challengeReviewLabel(
