@@ -4,6 +4,7 @@ import {
   setStoredItem
 } from '~/helpers/userDataHelpers';
 import { isOwnerTraceActive, recordOwnerTrace } from '~/helpers/ownerTrace';
+import { shouldOwnerTraceScrollDiagnostic } from '~/helpers/ownerTraceScrollAnchorFilter';
 
 // Client-side, opt-in diagnostics for the home-feed scroll-anchor restoration.
 // Logging is OFF by default and is a cheap no-op until an admin enables it from
@@ -140,6 +141,7 @@ export function scrollDiagnosticsToCsv() {
 function recordOwnerTraceScrollDiagnostic(
   event: Partial<ScrollDiagnosticEvent> & { type: string }
 ) {
+  if (!shouldOwnerTraceScrollDiagnostic(event)) return;
   const data: Record<string, unknown> = { e: event.type };
   const fields: Array<[string, unknown]> = [
     ['key', event.anchorKey],

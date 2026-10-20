@@ -13,8 +13,10 @@ import {
   createNavTimingTracker,
   createStallMonitor,
   describeSlowRequest,
+  redactRequestPath,
   type NavTimingGateReport
 } from '~/helpers/ownerTracePerf';
+import { createWakeProfiler } from '~/helpers/ownerTraceWake';
 import type {
   ExtendedAxiosRequestConfig,
   RequestAttemptTiming
@@ -67,9 +69,21 @@ export function recordOwnerTrace(
 
 let lastPointerDownAt: number | null = null;
 
+// Taps that reached their page quickly are routine; only slow ones are kept
+// (10-20 noise cut: 130 of 132 a day were under this).
+const NAV_TIMING_MIN_TOTAL_MS = 500;
+
 const navTiming = createNavTimingTracker({
   isActive: () => recorder.isActive(),
-  record: (type, data, path) => recordOwnerTrace(type, data, path),
+  record: (type, data, path) => {
+    if (
+      type === 'nav-timing' &&
+      Number(data?.total) < NAV_TIMING_MIN_TOTAL_MS
+    ) {
+      return;
+    }
+    recordOwnerTrace(type, data, path);
+  },
   getRecentTapAt: () => lastPointerDownAt
 });
 
@@ -78,8 +92,38 @@ const stallMonitor = createStallMonitor({
   isVisible: () =>
     typeof document !== 'undefined' && document.visibilityState === 'visible',
   getPath: getCurrentPath,
-  onStall: ({ path, ...data }) => recordOwnerTrace('stall', data, path)
+  onStall: ({ path, ...data }) => {
+    wakeProfiler.noteStall(Number(data.ms));
+    recordOwnerTrace('stall', data, path);
+  }
 });
+
+// The WAKE_WINDOW_MS after a load (an iOS tab restore is a fresh back_forward
+// load) or a return to the tab, summarized as one `wake` event.
+const wakeProfiler = createWakeProfiler({
+  isActive: () => recorder.isActive(),
+  record: (data) => recordOwnerTrace('wake', data)
+});
+let lastSocketConnected: boolean | undefined;
+let hiddenAt: number | null = null;
+
+// Socket.IO transitions (useInitSocket), for the wake window.
+export function noteOwnerSocket(
+  event: 'connect' | 'disconnect' | 'reconnect-attempt',
+  reason?: string
+) {
+  if (event === 'connect') lastSocketConnected = true;
+  else if (event === 'disconnect') lastSocketConnected = false;
+  wakeProfiler.noteSocket(event, reason);
+}
+
+// A boot/refresh pipeline that ran (session init, chat load), for the wake
+// window: shows which trigger repeated the work.
+export function noteOwnerWakeWork(name: string) {
+  wakeProfiler.noteWork(name);
+}
+
+let smoothScrollSamples = 0;
 
 // Slow-frame attribution only exists while a scroll sample is open, which
 // only happens for the owner.
@@ -91,7 +135,20 @@ const scrollPerfMonitor = createScrollPerfMonitor({
     typeof document !== 'undefined' && document.visibilityState === 'visible',
   getPath: getCurrentPath,
   getContext: () => getScrollPerfContext(document, window),
-  record: (data, path) => recordOwnerTrace('scroll-perf', data, path),
+  // A smooth sample is routine (504 of 576 a day): keep only samples with a
+  // dropped frame, carrying how many smooth ones came before (10-20 noise cut).
+  record: (data, path) => {
+    if (Number(data.over50) === 0 && Number(data.maxFrameMs) < 50) {
+      smoothScrollSamples += 1;
+      return;
+    }
+    recordOwnerTrace(
+      'scroll-perf',
+      { ...data, smoothBefore: smoothScrollSamples },
+      path
+    );
+    smoothScrollSamples = 0;
+  },
   attribution: frameAttribution,
   recordFrame: (data, path) => recordOwnerTrace('scroll-frame', data, path)
 });
@@ -169,6 +226,11 @@ export function traceOwnerRequest<T, R>(
   send: (config: ExtendedAxiosRequestConfig<T>) => Promise<R>
 ): Promise<R> {
   if (!recorder.isActive()) return send(config);
+  wakeProfiler.noteRequest(
+    `${String(config.method || 'get').toUpperCase()} ${redactRequestPath(
+      config.url
+    )}`
+  );
   const startedAt = Date.now();
   let queuedMs = 0;
   let attempts = 0;
@@ -278,6 +340,16 @@ function sendOwnerTraceBatch(
   }).catch(() => {});
 }
 
+function getNavigationType() {
+  try {
+    const entry = performance.getEntriesByType('navigation')[0] as
+      PerformanceNavigationTiming | undefined;
+    return entry?.type || '';
+  } catch {
+    return '';
+  }
+}
+
 function getCurrentPath() {
   try {
     return `${window.location.pathname}${window.location.search}`.slice(
@@ -310,7 +382,10 @@ function getSessionHeader(): Record<string, unknown> {
       standalone:
         nav.standalone === true ||
         window.matchMedia?.('(display-mode: standalone)').matches === true,
-      touch: navigator.maxTouchPoints || 0
+      touch: navigator.maxTouchPoints || 0,
+      // back_forward on iOS with a fresh session = the tab was discarded while
+      // away and restored by reloading
+      navType: getNavigationType()
     };
   } catch {
     return { version: clientVersion };
@@ -338,6 +413,13 @@ function installOwnerTraceListeners() {
   window.setTimeout(() => {
     maybeRecordPageLoad();
     stallMonitor.start();
+    if (document.visibilityState === 'visible') {
+      wakeProfiler.start({
+        kind: 'load',
+        navType: getNavigationType(),
+        socketConnected: lastSocketConnected
+      });
+    }
   }, 0);
   window.addEventListener('error', (event: ErrorEvent) => {
     recordOwnerTrace('error', {
@@ -363,6 +445,7 @@ function installOwnerTraceListeners() {
     }
   );
   window.addEventListener('pagehide', (event: PageTransitionEvent) => {
+    wakeProfiler.stop('pagehide');
     scrollPerfMonitor.stop('pagehide');
     navTiming.flush();
     stallMonitor.stop();
@@ -371,12 +454,22 @@ function installOwnerTraceListeners() {
   });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
+      hiddenAt = Date.now();
+      wakeProfiler.stop('hidden');
       scrollPerfMonitor.stop('hidden');
       navTiming.flush();
       stallMonitor.stop();
     }
     // Recording restarts the stall monitor when visible again.
     recordOwnerTrace('visibility', { state: document.visibilityState });
+    if (document.visibilityState === 'visible') {
+      wakeProfiler.start({
+        kind: 'resume',
+        awayMs: hiddenAt === null ? undefined : Date.now() - hiddenAt,
+        socketConnected: lastSocketConnected
+      });
+      hiddenAt = null;
+    }
     if (document.visibilityState === 'hidden') {
       recorder.flush({ unloading: true });
     }

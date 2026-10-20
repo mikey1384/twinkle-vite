@@ -40,7 +40,7 @@ export default function useAPISocket({
   channelsObj: any;
   currentPathId: string;
   isAIChat: boolean;
-  onInit: () => Promise<boolean>;
+  onInit: (options?: { refreshOnly?: boolean }) => Promise<boolean>;
   pathname: string;
   selectedChannelId: number;
   subchannelId: number;

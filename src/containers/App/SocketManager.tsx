@@ -16,7 +16,7 @@ import { useChatContext, useKeyContext } from '~/contexts';
 export default function SocketManager({
   onInit
 }: {
-  onInit: () => Promise<boolean>;
+  onInit: (options?: { refreshOnly?: boolean }) => Promise<boolean>;
 }) {
   const { pathname = '' } = useLocation();
 

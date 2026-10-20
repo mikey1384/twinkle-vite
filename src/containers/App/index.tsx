@@ -108,6 +108,7 @@ import useAppShellHeaderOffset from './hooks/useAppShellHeaderOffset';
 import useMobileKeyboardInset from './hooks/useMobileKeyboardInset';
 import usePhoneLandscape from '~/helpers/hooks/usePhoneLandscape';
 import { useOwnerTraceRoute } from '~/helpers/hooks/useOwnerTrace';
+import { noteOwnerWakeWork } from '~/helpers/ownerTrace';
 import { NavigationRouteReadyObserver } from './navigationFeedback';
 
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -1370,7 +1371,7 @@ export default function App() {
       `}
     >
       <KeyContext.Provider value={keyContextValue}>
-        <SocketManager onInit={handleInit} />
+        <SocketManager onInit={handleSocketInit} />
         {mobileMenuShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <MobileMenu onClose={() => setMobileMenuShown(false)} />
@@ -2169,16 +2170,26 @@ export default function App() {
     }
   }
 
+  // The socket's chat bootstrap asks for a session-only refresh after a real
+  // transport gap (identity is already confirmed then): see handleLoadChat.
+  function handleSocketInit(options?: { refreshOnly?: boolean }) {
+    return options?.refreshOnly
+      ? handleInit(0, true, false, true)
+      : handleInit();
+  }
+
   async function handleInit(
     attempts = 0,
     canonicalAnalyticsUserConfirmed = false,
-    allowOfflineProbe = false
+    allowOfflineProbe = false,
+    refreshOnly = false
   ): Promise<boolean> {
     if (attempts > 0) {
       return runSessionInit(
         attempts,
         canonicalAnalyticsUserConfirmed,
-        allowOfflineProbe
+        allowOfflineProbe,
+        refreshOnly
       );
     }
 
@@ -2188,7 +2199,8 @@ export default function App() {
     const initPromise = runSessionInit(
       attempts,
       canonicalAnalyticsUserConfirmed,
-      allowOfflineProbe
+      allowOfflineProbe,
+      refreshOnly
     );
     const trackedInit = initPromise.finally(() => {
       if (sessionInitPromiseRef.current === trackedInit) {
@@ -2226,10 +2238,16 @@ export default function App() {
   async function runSessionInit(
     attempts: number,
     canonicalAnalyticsUserConfirmed: boolean,
-    allowOfflineProbe: boolean
+    allowOfflineProbe: boolean,
+    // reread the session only: community funds and chess stats change slowly
+    // and traffic is counted once per page load, not per reconnect
+    refreshOnly: boolean
   ): Promise<boolean> {
     const initToken = auth()?.headers?.authorization;
     if (!initToken) return false;
+    if (attempts === 0) {
+      noteOwnerWakeWork(refreshOnly ? 'session-refresh' : 'session-init');
+    }
     if (browserReportsOffline() && !allowOfflineProbe) {
       onSetSessionLoaded();
       return false;
@@ -2267,6 +2285,7 @@ export default function App() {
       setConfirmedAnalyticsUserId(Number(data.id));
       setAnalyticsUser(data);
       analyticsUserConfirmed = true;
+      if (refreshOnly) return !sessionChanged();
       try {
         const { totalFunds } = await loadCommunityFunds();
         if (sessionChanged()) return false;
@@ -2310,7 +2329,8 @@ export default function App() {
         return handleInit(
           attempts + 1,
           analyticsUserConfirmed,
-          allowOfflineProbe
+          allowOfflineProbe,
+          refreshOnly
         );
       }
       if (!analyticsUserConfirmed) clearAnalyticsUser();

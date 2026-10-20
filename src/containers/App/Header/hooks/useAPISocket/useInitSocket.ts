@@ -75,6 +75,7 @@ import {
 } from '~/helpers/chatSelectedChannelRecovery';
 import type { RequestAttemptTiming } from '~/contexts/requestHelpers/axiosInstance';
 import { shouldSkipChatWakeBarrier } from './chatWakeBarrierThrottle';
+import { noteOwnerSocket, noteOwnerWakeWork } from '~/helpers/ownerTrace';
 
 const MAX_CANONICAL_CHAT_BOOTSTRAP_ATTEMPTS = 4;
 
@@ -142,7 +143,7 @@ export default function useInitSocket({
   chatBusyRef: React.RefObject<boolean>;
   chatType: string;
   currentPathId: string | number;
-  onInit: () => Promise<boolean>;
+  onInit: (options?: { refreshOnly?: boolean }) => Promise<boolean>;
   selectedChannelId: number;
   subchannelPath: string | null;
   usingChatRef: React.RefObject<boolean>;
@@ -921,6 +922,7 @@ export default function useInitSocket({
     socket.on('away_status_changed', handleSelfAwayDemoted);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
+    socket.io.on('reconnect_attempt', handleReconnectAttempt);
     socket.on('home_outdated', handleHomeOutdated);
     socket.on(TWINKLE_SERVER_HANDOFF_EVENT, handlePlannedServerHandoff);
 
@@ -937,6 +939,7 @@ export default function useInitSocket({
       socket.off('away_status_changed', handleSelfAwayDemoted);
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
+      socket.io.off('reconnect_attempt', handleReconnectAttempt);
       socket.off('home_outdated', handleHomeOutdated);
       socket.off(TWINKLE_SERVER_HANDOFF_EVENT, handlePlannedServerHandoff);
       if (loadChatRetryTimerRef.current) {
@@ -1108,7 +1111,12 @@ export default function useInitSocket({
       }
     }
 
+    function handleReconnectAttempt() {
+      noteOwnerSocket('reconnect-attempt');
+    }
+
     function handleConnect() {
+      noteOwnerSocket('connect');
       plannedServerHandoffAtRef.current = 0;
       if (terminalSocketAuthFailureRef.current) {
         stopSocketAuthRecovery();
@@ -1147,8 +1155,12 @@ export default function useInitSocket({
           loadedForUserIdRef.current === userIdRef.current);
 
       onClearRecentChessMessage(selectedChannelIdRef.current);
-      void handleCheckVersion();
-      void checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
+      // A signed-in socket runs both checks once its bind is acknowledged
+      // (onBound below); running them here too sent each twice per connect.
+      if (!userIdRef.current) {
+        void handleCheckVersion();
+        void checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
+      }
 
       if (userIdRef.current) {
         if (loadChatRetryTimerRef.current) {
@@ -1317,7 +1329,20 @@ export default function useInitSocket({
       });
 
       try {
-        onInit();
+        // The app shell confirms identity once per page load. This used to
+        // re-run that whole sign-in (session, community funds, chess stats,
+        // traffic) on every chat load, so every cold start and every reconnect
+        // did it twice (10-20, iOS 5G wake heat). Now the full sign-in runs
+        // only while identity is unconfirmed; after a real transport gap (a
+        // writer resync) just the session is reread, for what changed away.
+        if (!canonicalSessionUserIdRef.current) {
+          void onInit();
+        } else if (canonicalReadFromWriter) {
+          void onInit({ refreshOnly: true });
+        }
+        noteOwnerWakeWork(
+          canonicalReadFromWriter ? 'chat-load-writer' : 'chat-load'
+        );
         recordChatBootstrapEvent('chat-bootstrap-on-init', {
           bootstrapId,
           userId: bootstrapUserId
@@ -1923,6 +1948,7 @@ export default function useInitSocket({
     }
 
     function handleDisconnect(reason: string) {
+      noteOwnerSocket('disconnect', reason);
       const plannedServerHandoff = Boolean(
         reason === 'io server disconnect' &&
         plannedServerHandoffAtRef.current > 0 &&
