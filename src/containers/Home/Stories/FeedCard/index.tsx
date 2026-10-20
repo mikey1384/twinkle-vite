@@ -477,7 +477,7 @@ function HomeFeedCard({
             ...data.rootObj
           });
         }
-      }, inViewRef.current);
+      }, () => inViewRef.current);
     }
 
     function releaseHydration() {

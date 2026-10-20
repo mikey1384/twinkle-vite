@@ -157,6 +157,7 @@ const scrollPerfMonitor = createScrollPerfMonitor({
 // Feed cards call these on every render (see useOwnerFeedCardFrameCount).
 // A single boolean check unless the owner is mid-scroll.
 export function noteOwnerFeedCardRender(type: string, firstRender: boolean) {
+  wakeProfiler.noteCardRender(type, firstRender);
   if (!frameAttribution.isActive()) return;
   if (firstRender) frameAttribution.noteMount(type);
   else frameAttribution.noteRender(type);
@@ -168,6 +169,7 @@ export function noteOwnerNavStart(via: string) {
 }
 
 export function noteOwnerNavLocation(path: string, navigationType: string) {
+  wakeProfiler.noteRoute();
   scrollPerfMonitor.stop('route');
   navTiming.location(path, navigationType);
 }
@@ -228,11 +230,13 @@ export function traceOwnerRequest<T, R>(
 ): Promise<R> {
   if (!recorder.isActive()) return send(config);
   const method = String(config.method || 'get').toUpperCase();
-  // grouped by redacted pattern; true repeats counted by the exact URL (kept
-  // in memory only), so 13 different feed cards are not 13 "repeats"
+  const pattern = `${method} ${redactRequestPath(config.url)}`;
+  // grouped by redacted pattern; true repeats counted by the exact request
+  // (URL and params, kept in memory only), so 13 different feed cards are not
+  // 13 "repeats"
   wakeProfiler.noteRequest(
-    `${method} ${redactRequestPath(config.url)}`,
-    `${method} ${config.url || ''}`
+    pattern,
+    `${method} ${config.url || ''} ${stableParams(config.params)}`
   );
   const startedAt = Date.now();
   let queuedMs = 0;
@@ -251,6 +255,7 @@ export function traceOwnerRequest<T, R>(
   };
   const promise = send(traced);
   const finish = (status: number | string | undefined) => {
+    wakeProfiler.noteRequestDone(pattern);
     const data = describeSlowRequest({
       method: config.method,
       url: config.url,
@@ -271,6 +276,19 @@ export function traceOwnerRequest<T, R>(
       )
   );
   return promise;
+}
+
+function stableParams(params: unknown) {
+  if (!params || typeof params !== 'object') return '';
+  try {
+    return JSON.stringify(
+      Object.keys(params as Record<string, unknown>)
+        .sort()
+        .map((key) => [key, (params as Record<string, unknown>)[key]])
+    );
+  } catch {
+    return '';
+  }
 }
 
 // Which element a Home feed open came from, in coarse terms (how it was

@@ -7,6 +7,7 @@ function harness({ active = true } = {}) {
   const frames: ((at: number) => void)[] = [];
   const timers: { callback: () => void; cleared: boolean }[] = [];
   const records: Record<string, any>[] = [];
+  let imageLoad: (() => void) | null = null;
   const profiler = createWakeProfiler({
     isActive: () => active,
     record: (data) => records.push(data),
@@ -23,7 +24,13 @@ function harness({ active = true } = {}) {
     clearTimer: (handle) => {
       (handle as { cleared: boolean }).cleared = true;
     },
-    countImages: () => 3
+    countImages: () => 3,
+    listenImageLoads: (onLoad) => {
+      imageLoad = onLoad;
+      return () => {
+        imageLoad = null;
+      };
+    }
   });
   return {
     profiler,
@@ -32,6 +39,9 @@ function harness({ active = true } = {}) {
       clock += gapMs;
       const callback = frames.shift();
       callback?.(clock);
+    },
+    image() {
+      imageLoad?.();
     },
     endWindow() {
       for (const timer of timers.splice(0)) {
@@ -132,4 +142,41 @@ test('different items under one request pattern are grouped but not counted as r
   assert.equal(h.records[0].requests, 3);
   assert.equal(h.records[0].repeats, 1);
   assert.deepEqual(h.records[0].top, ['GET /content?contentId x3']);
+});
+
+test('slow frames carry what landed just before them, worst four kept', () => {
+  const h = harness();
+  h.profiler.start({ kind: 'resume', awayMs: 60_000 });
+  h.frame(16);
+  h.profiler.noteRequestDone('GET /chat');
+  h.profiler.noteCardRender('comment', false);
+  h.profiler.noteCardRender('comment', false);
+  h.profiler.noteCardRender('subject', true);
+  h.image();
+  h.profiler.noteSocket('connect');
+  h.frame(300); // slow: gets the chat reply, renders, image, socket
+  h.frame(16); // fast: counters reset
+  h.profiler.noteRequestDone('GET /content/feeds');
+  h.frame(80);
+  for (const gap of [60, 70, 90]) h.frame(gap);
+  h.endWindow();
+  const frames = h.records[0].slowFrames;
+  assert.equal(frames.length, 4);
+  assert.deepEqual(
+    frames.map((frame: any) => frame.ms),
+    [300, 90, 80, 70]
+  );
+  assert.deepEqual(frames[0], {
+    ms: 300,
+    at: 316,
+    done: ['GET /chat'],
+    img: 1,
+    cards: { comment: 2 },
+    mounts: { subject: 1 },
+    sock: 1
+  });
+  assert.deepEqual(frames[2].done, ['GET /content/feeds']);
+  // the image listener is removed with the window
+  h.image();
+  assert.ok(JSON.stringify(h.records[0]).length < 2000);
 });

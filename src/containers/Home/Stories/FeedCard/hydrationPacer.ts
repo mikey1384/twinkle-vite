@@ -9,7 +9,9 @@ export const HYDRATION_APPLIES_PER_FRAME = 2;
 
 interface PacedApply {
   run: () => void;
-  urgent: boolean;
+  // read when the frame applies, so a card scrolled into view meanwhile
+  // still goes first
+  urgent: () => boolean;
 }
 
 export function createHydrationPacer({
@@ -25,15 +27,24 @@ export function createHydrationPacer({
   return { enqueue, pending: () => queue.length };
 
   // urgent: the card is on screen, so its reply goes before off-screen ones
-  function enqueue(run: () => void, urgent = false) {
-    if (urgent) {
-      const firstLater = queue.findIndex((item) => !item.urgent);
-      if (firstLater === -1) queue.push({ run, urgent });
-      else queue.splice(firstLater, 0, { run, urgent });
-    } else {
-      queue.push({ run, urgent });
-    }
+  function enqueue(run: () => void, urgent: boolean | (() => boolean) = false) {
+    queue.push({
+      run,
+      urgent: typeof urgent === 'function' ? urgent : () => urgent
+    });
     schedule();
+  }
+
+  function takeNext() {
+    let index = queue.findIndex((item) => {
+      try {
+        return item.urgent();
+      } catch {
+        return false;
+      }
+    });
+    if (index === -1) index = 0;
+    return queue.splice(index, 1)[0];
   }
 
   function schedule() {
@@ -45,7 +56,7 @@ export function createHydrationPacer({
   function flush() {
     scheduled = false;
     for (let i = 0; i < perFrame && queue.length; i++) {
-      const item = queue.shift()!;
+      const item = takeNext();
       try {
         item.run();
       } catch (error) {

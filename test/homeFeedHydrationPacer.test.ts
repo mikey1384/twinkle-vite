@@ -70,5 +70,23 @@ test('feed cards apply content through the pacer and stay marked in flight until
     source,
     /homeFeedHydrationPacer\.enqueue\(\(\) => \{\s*releaseHydration\(\);[\s\S]*?onInitContent\(/m
   );
-  assert.match(source, /\}, inViewRef\.current\);/);
+  assert.match(source, /\}, \(\) => inViewRef\.current\);/);
+});
+
+test('urgency is read when the frame applies, not when the reply arrived', () => {
+  const f = frames();
+  const pacer = createHydrationPacer({
+    perFrame: 1,
+    requestFrame: f.requestFrame
+  });
+  const applied: string[] = [];
+  let scrolledIntoView = false;
+  pacer.enqueue(() => applied.push('off-screen'));
+  pacer.enqueue(
+    () => applied.push('scrolled-in'),
+    () => scrolledIntoView
+  );
+  scrolledIntoView = true;
+  f.next();
+  assert.deepEqual(applied, ['scrolled-in']);
 });
