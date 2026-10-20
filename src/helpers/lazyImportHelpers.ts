@@ -1,12 +1,18 @@
 import { lazy, type ComponentType } from 'react';
 import { Color } from '~/constants/css';
 import { SITE_NAME } from '~/constants/siteBrand';
+import {
+  hasRecentLazyImportReload,
+  isTruncatedScriptError,
+  LAZY_IMPORT_RELOAD_PARAM
+} from '~/helpers/lazyChunkErrors';
+
+export { isTruncatedScriptError };
 
 const lazyImportRetryDelays = [400, 1200, 2500];
 const LAZY_IMPORT_OVERLAY_ID = 'twinkle-lazy-import-reload-overlay';
 const LAZY_IMPORT_RELOAD_STORAGE_KEY = 'twinkleLazyImportReloadAt';
 const LAZY_IMPORT_RELOAD_COOLDOWN_MS = 60 * 1000;
-const LAZY_IMPORT_RELOAD_PARAM = '_twinkleLazyImportReload';
 const LAZY_IMPORT_MANUAL_RECOVERY_PARAM = '_twinkleLazyImportRecovery';
 const LAZY_IMPORT_RELOAD_COUNTS_KEY = 'twinkleLazyImportReloadCounts';
 // Reloading can only fix a stale bundle. If a page keeps failing for another
@@ -48,12 +54,14 @@ async function retryLazyImport<T extends ComponentType<any>>(
         throw error;
       }
       const isFinalAttempt = attempt >= lazyImportRetryDelays.length;
+      // a chunk that failed to parse stays failed for this page, so a
+      // truncated one goes straight to the (capped) reload
       // A chunk confirmed stale (deploy replaced the hashed assets) never
       // recovers by retrying, so reload immediately instead of burning the
       // retry delays while the user stares at the previous page.
       if (
         await recoverFromLazyImportLoadError(error, {
-          confirmedStaleOnly: !isFinalAttempt
+          confirmedStaleOnly: !isFinalAttempt && !isTruncatedScriptError(error)
         })
       ) {
         return await new Promise<{ default: T }>(() => {});
@@ -65,21 +73,6 @@ async function retryLazyImport<T extends ComponentType<any>>(
     }
   }
   throw lastError;
-}
-
-// A lazy chunk that arrived cut off (a dropped connection mid-download, seen
-// from a Naver in-app browser on iPhone, 10-20) fails to parse instead of
-// failing to fetch. Safari: "Unexpected end of script"; Chrome: "Unexpected
-// end of input"; Firefox: "expected expression, got end of script". The
-// browser keeps the failed module, so retries alone cannot fix it; a reload
-// can, without any new deploy.
-export function isTruncatedScriptError(error: unknown) {
-  const message = String((error as Error)?.message || error || '');
-  return (
-    message.includes('Unexpected end of script') ||
-    message.includes('Unexpected end of input') ||
-    message.includes('got end of script')
-  );
 }
 
 export function isLazyImportLoadError(error: unknown) {
@@ -110,7 +103,7 @@ export async function recoverFromLazyImportLoadError(
       confirmedStaleOnly
     })
   ) {
-    showLazyImportReloadOverlay();
+    showLazyImportReloadOverlay(isTruncatedScriptError(error));
     reloadAfterLazyImportFailure();
     return true;
   }
@@ -135,9 +128,11 @@ async function shouldReloadForLazyImportFailure(
   if (typeof window === 'undefined') return false;
   const failedUrl = getLazyImportFailureUrl(error);
   if (isTruncatedScriptError(error)) {
-    // a reload re-downloads the chunk; still only after the retries, and
-    // within the cooldown and per-path caps below
+    // a reload re-downloads the chunk, within the cooldown and per-path caps
+    // below; and never again within a minute of the last such reload (the URL
+    // carries it, so this stops a loop even if sessionStorage is lost)
     if (confirmedStaleOnly) return false;
+    if (hasRecentLazyImportReload(window.location.href)) return false;
   } else if (failedUrl) {
     const staleAsset = await isLikelyStaleLazyImportAsset(failedUrl);
     if (!staleAsset) return false;
@@ -203,7 +198,7 @@ function readLazyImportReloadCounts(): Record<string, number> {
 // Rendered with plain DOM because this runs outside the React tree and the
 // document is about to be replaced; it also blocks repeat taps that would
 // otherwise stack history entries while the reload is in flight.
-function showLazyImportReloadOverlay() {
+function showLazyImportReloadOverlay(truncated = false) {
   try {
     if (typeof document === 'undefined' || !document.body) return;
     if (document.getElementById(LAZY_IMPORT_OVERLAY_ID)) return;
@@ -226,10 +221,14 @@ function showLazyImportReloadOverlay() {
       `border-top-color: ${Color.logoBlue()};` +
       `animation: ${LAZY_IMPORT_OVERLAY_ID}-spin 0.8s linear infinite;`;
     const title = document.createElement('div');
-    title.textContent = `${SITE_NAME} has been updated!`;
+    title.textContent = truncated
+      ? 'Reloading...'
+      : `${SITE_NAME} has been updated!`;
     title.style.cssText = 'font-size: 1.7rem; font-weight: bold;';
     const message = document.createElement('div');
-    message.textContent = 'Loading the new version...';
+    message.textContent = truncated
+      ? 'Part of the page did not finish loading. Trying again...'
+      : 'Loading the new version...';
     message.style.cssText = 'font-size: 1.3rem;';
     overlay.append(style, spinner, title, message);
     document.body.appendChild(overlay);

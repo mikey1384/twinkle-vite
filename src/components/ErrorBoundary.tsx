@@ -8,6 +8,11 @@ import {
   isLazyImportLoadError,
   reloadForLazyImportRecovery
 } from '~/helpers/lazyImportHelpers';
+import {
+  isTruncatedScriptError,
+  LAZY_CHUNK_UNRECOVERABLE_MARKER,
+  wasOpenedByLazyImportReload
+} from '~/helpers/lazyChunkErrors';
 import reportDomMutationEvent from '~/helpers/reportDomMutationEvent';
 import { trackEvent } from '~/helpers/analytics';
 import { getStoredItem } from '~/helpers/userDataHelpers';
@@ -35,6 +40,7 @@ const DOM_MUTATION_UNRECOVERABLE_MARKER = '[dom-mutation-unrecoverable]';
 interface State {
   hasError: boolean;
   lastErrorIsLazyImportLoadError: boolean;
+  lastErrorIsTruncatedChunk?: boolean;
   recoveryKey: number;
 }
 export default class ErrorBoundary extends Component<
@@ -112,16 +118,31 @@ export default class ErrorBoundary extends Component<
       trackBoundaryException(this.props.componentPath, error, 'dom_mutation');
       this.setState({
         hasError: true,
-        lastErrorIsLazyImportLoadError: false
+        lastErrorIsLazyImportLoadError: false,
+        lastErrorIsTruncatedChunk: false
       });
       return;
     }
 
     const lazyImportLoadError = isLazyImportLoadError(error);
+    const truncatedChunk = isTruncatedScriptError(error);
     if (!shouldSuppressErrorReport(error)) {
       reportError({
         componentPath: this.props.componentPath,
         message: buildErrorMessage(error),
+        info: buildErrorInfo(errorInfo)
+      });
+    } else if (
+      truncatedChunk &&
+      !isLocalDevelopmentRuntime() &&
+      wasOpenedByLazyImportReload(window.location.href)
+    ) {
+      // A cut-off chunk normally recovers with one reload. Still failing
+      // after it means something keeps serving a broken file (a cache or
+      // edge): report past the server's lazy-chunk suppression.
+      reportError({
+        componentPath: this.props.componentPath,
+        message: `${LAZY_CHUNK_UNRECOVERABLE_MARKER} ${buildErrorMessage(error)}`,
         info: buildErrorInfo(errorInfo)
       });
     }
@@ -133,15 +154,30 @@ export default class ErrorBoundary extends Component<
     );
     this.setState({
       hasError: true,
-      lastErrorIsLazyImportLoadError: lazyImportLoadError
+      lastErrorIsLazyImportLoadError: lazyImportLoadError,
+      lastErrorIsTruncatedChunk: truncatedChunk
     });
   }
 
   render() {
     const { children, innerRef, componentPath, ...props } = this.props;
-    const { hasError, lastErrorIsLazyImportLoadError, recoveryKey } =
-      this.state;
+    const {
+      hasError,
+      lastErrorIsLazyImportLoadError,
+      lastErrorIsTruncatedChunk,
+      recoveryKey
+    } = this.state;
     if (hasError) {
+      if (lastErrorIsTruncatedChunk) {
+        return (
+          <UpdateRecoveryNotice
+            buttonLabel="Reload"
+            message="Part of the page didn't finish loading. Reload to try again."
+            onAction={reloadForLazyImportRecovery}
+            title="Didn't Finish Loading"
+          />
+        );
+      }
       if (lastErrorIsLazyImportLoadError) {
         return (
           <UpdateRecoveryNotice
