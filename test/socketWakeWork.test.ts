@@ -27,18 +27,28 @@ test('a chat load re-runs sign-in only while identity is unconfirmed, and refres
   );
 });
 
-test('a session-only refresh skips funds, chess stats and traffic', () => {
-  assert.match(
-    app,
-    /if \(refreshOnly\) return !sessionChanged\(\);\s*try \{\s*const \{ totalFunds \} = await loadCommunityFunds\(\);/m
+test('a session-only refresh rereads funds but skips chess stats and traffic', () => {
+  const refresh = app.slice(
+    app.indexOf('if (refreshOnly) {'),
+    app.indexOf('const chessStats = await loadChessStats();')
   );
+  const refreshBranch = refresh.slice(
+    0,
+    refresh.indexOf('return !sessionChanged();')
+  );
+  assert.match(refreshBranch, /await loadCommunityFunds\(\);/);
+  assert.doesNotMatch(refreshBranch, /loadChessStats|recordUserTraffic/);
   assert.match(app, /<SocketManager onInit=\{handleSocketInit\} \/>/);
 });
 
-test('a signed-in connect leaves the version and feed checks to the bind acknowledgement', () => {
+test('one version check per connect (even if the bind fails); the feed check waits for the bind', () => {
   assert.match(
     initSocket,
-    /if \(!userIdRef\.current\) \{\s*void handleCheckVersion\(\);\s*void checkFeedsOutdated\(\{ bypassThrottle: true, withFallback: true \}\);\s*\}/m
+    /void handleCheckVersion\(\);\s*if \(!userIdRef\.current\) \{\s*void checkFeedsOutdated\(\{ bypassThrottle: true, withFallback: true \}\);\s*\}/m
   );
-  assert.match(initSocket, /onBound\(\) \{\s*void handleCheckVersion\(\);/m);
+  assert.match(initSocket, /onBound\(\) \{\s*void checkFeedsOutdated\(\{/m);
+  assert.doesNotMatch(
+    initSocket,
+    /onBound\(\) \{\s*void handleCheckVersion\(\);/m
+  );
 });

@@ -2285,7 +2285,18 @@ export default function App() {
       setConfirmedAnalyticsUserId(Number(data.id));
       setAnalyticsUser(data);
       analyticsUserConfirmed = true;
-      if (refreshOnly) return !sessionChanged();
+      if (refreshOnly) {
+        // community funds move while the phone sleeps and only arrive by
+        // socket push otherwise; one small read (also retries a failed one)
+        try {
+          const { totalFunds } = await loadCommunityFunds();
+          if (sessionChanged()) return false;
+          onSetCommunityFunds(totalFunds || 0);
+        } catch (error) {
+          console.error('Failed to load community funds:', error);
+        }
+        return !sessionChanged();
+      }
       try {
         const { totalFunds } = await loadCommunityFunds();
         if (sessionChanged()) return false;

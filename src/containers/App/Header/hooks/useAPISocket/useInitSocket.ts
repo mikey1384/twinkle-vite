@@ -1155,10 +1155,12 @@ export default function useInitSocket({
           loadedForUserIdRef.current === userIdRef.current);
 
       onClearRecentChessMessage(selectedChannelIdRef.current);
-      // A signed-in socket runs both checks once its bind is acknowledged
-      // (onBound below); running them here too sent each twice per connect.
+      // One version check per connect, here: a bind that fails (auth or bind
+      // error, ack timeout) never reaches onBound. The feed check needs the
+      // bind barrier, so a signed-in socket runs it in onBound only (doing
+      // both in both places sent each twice per connect).
+      void handleCheckVersion();
       if (!userIdRef.current) {
-        void handleCheckVersion();
         void checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
       }
 
@@ -1174,7 +1176,6 @@ export default function useInitSocket({
         bindSocketToUser({
           bindingUserId,
           onBound() {
-            void handleCheckVersion();
             void checkFeedsOutdated({
               bypassThrottle: true,
               withFallback: true
