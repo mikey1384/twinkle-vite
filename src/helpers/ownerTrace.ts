@@ -163,6 +163,15 @@ export function noteOwnerFeedCardRender(type: string, firstRender: boolean) {
   else frameAttribution.noteRender(type);
 }
 
+// Measure the suspected synchronous layout read, only inside an owner's
+// existing scroll sample. No extra observer, timer, DOM read or event volume.
+export function measureOwnerFeedText<T>(measure: () => T): T {
+  if (!frameAttribution.isActive()) return measure();
+  const startedAt = performance.now();
+  try { return measure(); }
+  finally { frameAttribution.noteTextMeasure(performance.now() - startedAt); }
+}
+
 // A navigation the app started itself (Header nav tap).
 export function noteOwnerNavStart(via: string) {
   navTiming.start(via);

@@ -71,6 +71,7 @@ import { normalizeViewCount } from '~/helpers/viewCount';
 import { trackEvent } from '~/helpers/analytics';
 import {
   isOwnerTraceActive,
+  measureOwnerFeedText,
   noteOwnerTraceTap,
   recordOwnerTrace,
   takeOwnerTraceTap
@@ -596,7 +597,9 @@ function HomeFeedCard({
       if (animationFrame) cancelAnimationFrame(animationFrame);
       animationFrame = requestAnimationFrame(() => {
         if (destroyed) return;
-        const nextTruncated = hasHomeFeedPrimaryTextTruncation(measuredPanel);
+        const nextTruncated = measureOwnerFeedText(() =>
+          hasHomeFeedPrimaryTextTruncation(measuredPanel)
+        );
         setPrimaryTextTruncated((current) =>
           current === nextTruncated ? current : nextTruncated
         );

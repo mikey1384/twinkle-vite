@@ -12,6 +12,35 @@ import { createScrollPerfMonitor } from '../src/helpers/ownerTraceScrollPerf';
 
 const ORIGIN = 'https://www.twin-kle.com';
 
+test('minified slow-frame scripts retain exact source positions but omit unavailable coordinates', () => {
+  const summary = summarizeLongFrame({ startTime: 0, duration: 100, scripts: [
+    { duration: 80, sourceURL: `${ORIGIN}/assets/main.js?private=1`, sourceFunctionName: 'Y', sourceCharPosition: 1234, sourceLine: 1, sourceColumn: 1235 },
+    { duration: 10, sourceCharPosition: -1, sourceLine: NaN, sourceColumn: undefined }
+  ] });
+  assert.equal(summary.scripts[0].char, 1234);
+  assert.equal(summary.scripts[0].line, 1);
+  assert.equal(summary.scripts[0].column, 1235);
+  assert.equal(summary.scripts[1].char, undefined);
+  assert.equal(summary.scripts[1].line, undefined);
+  assert.doesNotMatch(JSON.stringify(summary), /private/);
+});
+
+test('text measurement time belongs only to its active frame and resets between samples', () => {
+  const tracker = createFrameAttribution({ observeLongFrames: () => null, listenImageLoads: () => () => {} });
+  tracker.noteTextMeasure(100);
+  tracker.begin();
+  tracker.noteTextMeasure(12);
+  tracker.noteTextMeasure(30);
+  tracker.frame(80, 80);
+  tracker.noteTextMeasure(NaN);
+  tracker.frame(60, 140);
+  const result = tracker.end(0)!;
+  assert.deepEqual(result.frames[0].textMeasure, { calls: 2, ms: 42, maxMs: 30 });
+  assert.deepEqual(result.frames[1].textMeasure, { calls: 0, ms: 0, maxMs: 0 });
+  tracker.begin(); tracker.frame(70, 210);
+  assert.equal(tracker.end(140)!.frames[0].textMeasure.calls, 0);
+});
+
 function fakeLoaf(supported: boolean) {
   const state = {
     observing: 0,
@@ -216,8 +245,8 @@ test('Safari path (no LoAF): slow rAF frames record which card types rendered or
   assert.deepEqual(
     frames.map((event) => event.data),
     [
-      { schema: 1, source: 'raf', offsetMs: 32, gapMs: 78, renders: { rewardDigest: 1 }, mounts: { build: 2 }, imgLoads: 2 },
-      { schema: 1, source: 'raf', offsetMs: 126, gapMs: 64, renders: { subject: 1 }, mounts: {}, imgLoads: 0 }
+      { schema: 1, source: 'raf', offsetMs: 32, gapMs: 78, renders: { rewardDigest: 1 }, mounts: { build: 2 }, imgLoads: 2, textMeasure: { calls: 0, ms: 0, maxMs: 0 } },
+      { schema: 1, source: 'raf', offsetMs: 126, gapMs: 64, renders: { subject: 1 }, mounts: {}, imgLoads: 0, textMeasure: { calls: 0, ms: 0, maxMs: 0 } }
     ]
   );
 });

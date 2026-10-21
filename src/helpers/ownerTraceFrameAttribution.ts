@@ -24,6 +24,9 @@ export interface LongFrameScript {
   duration?: number;
   sourceURL?: string;
   sourceFunctionName?: string;
+  sourceCharPosition?: number;
+  sourceLine?: number;
+  sourceColumn?: number;
   invoker?: string;
   invokerType?: string;
   forcedStyleAndLayoutDuration?: number;
@@ -55,6 +58,7 @@ interface CounterFrame {
   renders: Record<string, number>;
   mounts: Record<string, number>;
   imgLoads: number;
+  textMeasure: { calls: number; ms: number; maxMs: number };
 }
 
 export function defaultObserveLongFrames(
@@ -152,6 +156,7 @@ export function summarizeLongFrame(
       ms: round(script.duration),
       src: stripScriptUrl(script.sourceURL, origin),
       fn: String(script.sourceFunctionName || '').slice(0, 60),
+      ...scriptPosition(script),
       invoker: cleanInvoker(script.invoker, origin),
       type: String(script.invokerType || '').slice(0, 24),
       ...(Number(script.forcedStyleAndLayoutDuration) > 0
@@ -170,6 +175,20 @@ export function summarizeLongFrame(
     scriptCount: (entry.scripts || []).length,
     scripts
   };
+}
+
+function scriptPosition(script: LongFrameScript) {
+  const position: Record<string, number> = {};
+  for (const [key, value] of [
+    ['char', script.sourceCharPosition],
+    ['line', script.sourceLine],
+    ['column', script.sourceColumn]
+  ] as const) {
+    if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) {
+      position[key] = value;
+    }
+  }
+  return position;
 }
 
 // Keeps one event's data under the server's limit by dropping the smallest
@@ -201,10 +220,18 @@ export function createFrameAttribution({
   let renders = new Map<string, number>();
   let mounts = new Map<string, number>();
   let imgLoads = 0;
+  let textMeasure = { calls: 0, ms: 0, maxMs: 0 };
   let slowFrames: CounterFrame[] = [];
   let totals = { renders: 0, mounts: 0, imgLoads: 0 };
 
-  return { begin, frame, end, noteRender, noteMount, isActive: () => active };
+  return { begin, frame, end, noteRender, noteMount, noteTextMeasure, isActive: () => active };
+
+  function noteTextMeasure(ms: number) {
+    if (!active || !Number.isFinite(ms) || ms < 0) return;
+    textMeasure.calls++;
+    textMeasure.ms += ms;
+    textMeasure.maxMs = Math.max(textMeasure.maxMs, ms);
+  }
 
   function begin() {
     if (active) return;
@@ -267,7 +294,8 @@ export function createFrameAttribution({
         endMs: at,
         renders: topCounts(renders),
         mounts: topCounts(mounts),
-        imgLoads
+        imgLoads,
+        textMeasure: { calls: textMeasure.calls, ms: Math.round(textMeasure.ms), maxMs: Math.round(textMeasure.maxMs) }
       });
       if (slowFrames.length > MAX_FRAMES_PER_SAMPLE * 4) {
         slowFrames.sort((a, b) => b.gapMs - a.gapMs);
@@ -321,7 +349,8 @@ export function createFrameAttribution({
                   gapMs: round(overlap.gapMs),
                   renders: overlap.renders,
                   mounts: overlap.mounts,
-                  imgLoads: overlap.imgLoads
+                  imgLoads: overlap.imgLoads,
+                  textMeasure: overlap.textMeasure
                 }
               : {}),
             loaf: summarizeLongFrame(entry, origin)
@@ -338,7 +367,8 @@ export function createFrameAttribution({
             gapMs: round(item.gapMs),
             renders: item.renders,
             mounts: item.mounts,
-            imgLoads: item.imgLoads
+            imgLoads: item.imgLoads,
+            textMeasure: item.textMeasure
           })
         );
       }
@@ -359,6 +389,7 @@ export function createFrameAttribution({
     renders = new Map();
     mounts = new Map();
     imgLoads = 0;
+    textMeasure = { calls: 0, ms: 0, maxMs: 0 };
   }
 }
 
