@@ -8,7 +8,10 @@ import type { QuestAnswer } from './types';
 export function reviewList(answers: QuestAnswer[]) {
   const list: QuestAnswer[] = [];
   const byQuestion = new Map<number, number>();
-  for (const a of answers) {
+  const expanded = answers.flatMap((a) => a.sentences?.length
+    ? a.sentences.map((sentence) => ({ ...a, ...sentence, questionText: sentence.text }))
+    : [a]);
+  for (const a of expanded) {
     if (!a.questionText || (!a.challenge && !a.forgiven)) continue;
     const id = a.challenge?.questionId;
     const at = id != null ? byQuestion.get(id) : undefined;

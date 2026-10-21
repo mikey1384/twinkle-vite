@@ -75,7 +75,7 @@ export interface MarbleCtl {
   t: number;
   mode: Mode;
   fx: Fx;
-  // where the right answer sat among those shown, when the screen knows
+  // Answer animation hint: Stomp uses a bit mask of the wrong sentences.
   hint?: number | null;
   // ground height at x (null over a gap) and the marble's resting centre there
   groundAt(x: number): number | null;

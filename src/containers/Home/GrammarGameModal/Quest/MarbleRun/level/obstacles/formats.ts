@@ -522,8 +522,8 @@ registerObstacle('lockgate', (b) => {
 
 // ---- stompers: a squad of the level's enemies, one per sentence ------------
 // Each holds up a numbered placard (its sentence on the card). A pass hops
-// along the squad stomping the wrong ones and sails over the one that is
-// right; a miss bounces off the first.
+// along the squad stomping the wrong ones and sails over every right one;
+// a miss bounces off the first.
 const PLACARD = [1, 2, 3, 4].map((n) =>
   makeSprite(11, 16, (put) => {
     rect(put, 5, 9, 1, 7, '#7d4f24');
@@ -576,8 +576,8 @@ registerObstacle('stompers', (b) => {
   });
   b.entity(new Squad(squad));
   const landX = xs[3] + 130;
-  // the right sentence's enemy is spared: the marble sails over it
-  let friend = 1;
+  // One bit per enemy: only wrong sentences are stomped.
+  let wrongMask = 13;
   let flags: Record<string, boolean> = {};
   const stops = [waitX, ...xs, landX];
   return {
@@ -589,7 +589,7 @@ registerObstacle('stompers', (b) => {
       step(k, m, t) {
         if (k === 0) {
           flags = {};
-          friend = m.hint != null && m.hint >= 0 && m.hint < 4 ? m.hint : 1;
+          wrongMask = m.hint != null && m.hint >= 0 && m.hint < 16 ? m.hint : 13;
         }
         const hops = stops.length - 1;
         const i = Math.min(hops - 1, Math.floor(k * hops));
@@ -597,14 +597,14 @@ registerObstacle('stompers', (b) => {
         const from = stops[i];
         const to = stops[i + 1];
         const target = squad[i];
-        const high = i === friend + 1 || i === 0 ? 120 : 90;
+        const high = i === 0 || !(wrongMask & (1 << (i - 1))) ? 120 : 90;
         const p = m.arc(from, to, high, local);
         const top = target && target.alive ? target.topAt(m) - MR : null;
         m.place(p.x, top != null && local > 0.8 ? Math.min(p.y, top) : p.y);
-        // landing on each enemy but the friend: stomp
+        // landing on wrong sentences: stomp; spare every correct sentence
         if (local > 0.95 && target && !flags[`s${i}`]) {
           flags[`s${i}`] = true;
-          if (i === friend) {
+          if (!(wrongMask & (1 << i))) {
             m.fx.burst('sparkle', 8, target.x, target.topAt(m) - 20);
             note(81, { instrument: 'glock', level: 0.07 });
           } else {

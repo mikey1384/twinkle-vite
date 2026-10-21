@@ -6,12 +6,12 @@ import { GotchaText, foggedCls, type ChoiceClasses } from './FormatQuestion';
 
 // The several-tap question types (Mikey 10-10): each sends one number once
 // the taps are done, and the server grades it.
-//   stomp    — mark every wrong sentence; done when as many are marked as
-//              there are wrong ones (a bit mask of the marked sentences)
+//   stomp    — mark every wrong sentence, then submit the set. Legacy
+//              questions still submit when their disclosed count is reached.
 //   momentum — three sentences one after another, a quick Right/Wrong call
 //              on each (a bit mask of the ones called right)
 //   build    — tap the chunks in order (the tapped order in base n)
-// Keyboard: 1–4 mark (stomp); 1 or ← Right, 2 or → Wrong (momentum); 1–6
+// Keyboard: 1–4 mark and Enter submits (stomp); 1 or ← Right, 2 or → Wrong (momentum); 1–6
 // place a chunk and Backspace takes the last one back (build).
 
 export function encodeOrder(sequence: number[], n: number) {
@@ -83,6 +83,10 @@ export default function MultiTapQuestion({
   const who = answer?.isCorrect ? 'Your last try' : 'You';
   const n =
     format === 'build' ? question.tokens?.length || 0 : question.choices.length;
+  const canSubmit = !disabled && !settled && marks.length > 0 && revealed >= n;
+  function submitStomp() {
+    if (canSubmit) submit(marks.reduce((mask, m) => mask | (1 << m), 0));
+  }
 
   function tap(i: number) {
     if (disabled || settled) return;
@@ -92,7 +96,7 @@ export default function MultiTapQuestion({
         ? marks.filter((m) => m !== i)
         : [...marks, i];
       setMarks(next);
-      if (next.length === (question.targets || n - 1))
+      if (!question.manualSubmit && next.length === (question.targets || n - 1))
         submit(next.reduce((mask, m) => mask | (1 << m), 0));
     } else if (format === 'momentum') {
       // marks: one entry per sentence called, 1 = right, 0 = wrong
@@ -115,6 +119,13 @@ export default function MultiTapQuestion({
     function onKey(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
       if (target && /INPUT|TEXTAREA/.test(target.tagName)) return;
+      if (format === 'stomp' && question.manualSubmit && e.key === 'Enter') {
+        // Focused buttons keep their native keyboard activation.
+        if (target?.closest('button') || e.repeat) return;
+        e.preventDefault();
+        submitStomp();
+        return;
+      }
       const digit = '123456'.indexOf(e.key);
       if (format === 'momentum') {
         if (e.key === '1' || e.key === 'ArrowLeft') tap(1);
@@ -136,11 +147,11 @@ export default function MultiTapQuestion({
       <>
         <div className={cls.question}>
           <GotchaText
-            text={`Stomp the ${question.targets || n - 1} wrong ones`}
+            text={question.manualSubmit ? 'Select every wrong sentence' : `Stomp the ${question.targets || n - 1} wrong ones`}
           />{' '}
           ·{' '}
           <span className={countCls}>
-            {marks.length}/{question.targets || n - 1}
+            {question.manualSubmit ? `${marks.length} selected` : `${marks.length}/${question.targets || n - 1}`}
           </span>
         </div>
         <div className={cx(cls.choices, stackCls)}>
@@ -164,6 +175,7 @@ export default function MultiTapQuestion({
                   i >= revealed && foggedCls
                 )}
                 disabled={disabled || settled || i >= revealed}
+                aria-pressed={settled ? undefined : marks.includes(i)}
                 onClick={() => tap(i)}
               >
                 <span className={cls.key}>{i + 1}</span>
@@ -179,6 +191,15 @@ export default function MultiTapQuestion({
             );
           })}
         </div>
+        {question.manualSubmit && !settled && (
+          <button
+            className={cx(cls.choice, choiceExtra, submitCls)}
+            disabled={!canSubmit}
+            onClick={submitStomp}
+          >
+            Submit (Enter)
+          </button>
+        )}
       </>
     );
   }
@@ -359,6 +380,16 @@ const ownLabelCls = css`
 `;
 const countCls = css`
   font-weight: 900;
+`;
+const submitCls = css`
+  && {
+    align-self: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.4rem;
+    font-weight: 900;
+    margin-top: 0.5rem;
+  }
 `;
 const stackCls = css`
   && {

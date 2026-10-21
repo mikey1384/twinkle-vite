@@ -68,8 +68,10 @@ export interface QuestQuestion {
   end?: string;
   // fix: the sentence around the wrong part
   parts?: { before: string; wrong: string; after: string };
-  // stomp: how many sentences are wrong
+  // Legacy Stomp only: how many sentences are wrong.
   targets?: number;
+  // New Stomp: independent sentences, hidden count, explicit submission.
+  manualSubmit?: boolean;
   skill: string;
   skillName: string;
   retryOf?: number; // practice: a missed question asked again
@@ -92,6 +94,7 @@ export interface QuestAnswer {
   correctIndex: number | null;
   combo?: number;
   ruleCard?: ReviewRuleCard | null;
+  sentences?: QuestSentenceFeedback[];
   // a miss (or a boss hit that took wrong clicks) can challenge its question
   // with Classic's Challenge; checked = already reviewed by one
   // upheld (client only): the challenge fixed the key and forgave the miss
@@ -138,6 +141,17 @@ export interface QuestAnswer {
   // a miss later ruled the question's fault (a check or someone's upheld
   // challenge): a stop's doesn't count, a boss's earned a free rematch
   forgiven?: boolean;
+}
+
+export interface QuestSentenceFeedback {
+  index: number;
+  text: string;
+  isWrong: boolean;
+  correctText: string;
+  prompt: string;
+  pickedText?: string;
+  ruleCard: ReviewRuleCard | null;
+  challenge: QuestAnswer['challenge'];
 }
 
 // A point's lesson, written for the point before any question is asked:

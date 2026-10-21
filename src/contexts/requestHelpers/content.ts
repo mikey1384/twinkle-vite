@@ -1328,7 +1328,7 @@ export default function contentRequestHelpers({
     async loadGrammarQuestState() {
       try {
         const { data } = await request.get(
-          `${URL}/content/game/quest/state`,
+          `${URL}/content/game/quest/state?formatEdition=2`,
           auth()
         );
         return data;
@@ -1340,7 +1340,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/game/quest/run`,
-          target,
+          { ...target, formatEdition: 2 },
           auth()
         );
         return data;
@@ -1356,7 +1356,7 @@ export default function contentRequestHelpers({
     ) {
       try {
         const { data } = await request.get(
-          `${URL}/content/game/quest/run/${runId}${refresh ? '?refresh=1' : ''}`,
+          `${URL}/content/game/quest/run/${runId}?formatEdition=2${refresh ? '&refresh=1' : ''}`,
           auth()
         );
         return data;
@@ -1378,7 +1378,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/game/quest/run/${runId}/answer`,
-          { position, choiceIndex, responseMs },
+          { position, choiceIndex, responseMs, formatEdition: 2 },
           auth()
         );
         return data;
@@ -1395,6 +1395,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.get(
           `${URL}/content/game/quest/misses?${[
+            'formatEdition=2',
             before ? `before=${encodeURIComponent(before)}` : '',
             `limit=${limit}`
           ]

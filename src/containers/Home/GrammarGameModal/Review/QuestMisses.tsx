@@ -22,6 +22,7 @@ type QuestKind = 'stop' | 'fort' | 'castle' | 'nemesis';
 export interface QuestMiss {
   runId: number;
   position: number;
+  sourceIndex?: number;
   kind: QuestKind;
   nodeId: string;
   format: QuestFormat;
@@ -82,7 +83,7 @@ export default function QuestMisses() {
         const settled = isChallengeReviewSettled(review, savedReview);
         const world = /^w(\d+)/.exec(it.nodeId)?.[1];
         return (
-          <div key={`${it.runId}:${it.position}`} className={itemCls}>
+          <div key={`${it.runId}:${it.position}:${it.sourceIndex ?? ''}`} className={itemCls}>
             <div className={metaCls}>
               {[
                 it.counter ? 'Counter' : FORMAT_INFO[it.format]?.name,

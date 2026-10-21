@@ -256,7 +256,7 @@ export default function Result({
             );
             const settled = isChallengeReviewSettled(review, savedReview);
             return (
-              <div key={a.position} className={challengeItemCls}>
+              <div key={`${a.position}:${a.challenge?.questionId ?? a.questionText}`} className={challengeItemCls}>
                 <div className={challengeTextCls}>
                   {a.counter && <span className={counterTagCls}>Counter</span>}
                   {a.questionText}

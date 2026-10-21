@@ -65,14 +65,14 @@ import {useSyncExternalStore} from 'react';
 let state = {myState:{userId:7,settings:JSON.parse(localStorage.getItem('fixtureAccount') || '{}')}};
 const listeners = new Set();
 const subscribe = fn => {listeners.add(fn);return () => listeners.delete(fn)};
-window.musicRequests = []; window.challengeRequests = []; window.balanceUpdates = []; window.startRequests=[];
+window.musicRequests = []; window.challengeRequests = []; window.balanceUpdates = []; window.startRequests=[]; window.answerRequests=[];
 window.setAccount = settings => {state={myState:{userId:7,settings}};localStorage.setItem('fixtureAccount',JSON.stringify(settings));listeners.forEach(fn=>fn())};
 const app = {user:{actions:{onSetUserState:update=>{window.balanceUpdates.push(update);window.setAccount(update.newState.settings)}}},requestHelpers:{
  updateGrammarblesSettings: choice=>new Promise((resolve,reject)=>window.musicRequests.push({choice,resolve,reject})),
  loadGrammarQuestState:async()=>structuredClone(window.serverQuestState || {worlds:[{id:1,unlocked:true,nodes:[]}],nemesis:[],rewardedRunsLeft:3}),
  startGrammarQuestRun:async({nodeId})=>{window.startRequests.push(nodeId);const world=window.serverQuestState.worlds.find(w=>w.nodes.some(n=>n.id===nodeId));const node=world.nodes.find(n=>n.id===nodeId);return {runId:1,nodeId,worldId:world.id,kind:node.kind,rules:{mode:node.kind==='stop'?'practice':'boss'},questions:[]}},
  loadGrammarReview:async()=>({items:[window.reviewItem],hasMore:false}),
- answerGrammarQuestQuestion:async()=>window.questAnswer,
+ answerGrammarQuestQuestion:async data=>{window.answerRequests.push(data);return window.questAnswer},
  challengeGrammarQuestion:async data=>{window.challengeRequests.push(data);return {justified:false,explanation:'The reviewer confirmed the answer.'}}
 }};
 export const useAppContext = select => select(app);
@@ -83,15 +83,28 @@ export const useViewContext = select => select({state:{aiFeaturesDisabled:window
 const fixture = `
 import React,{useState} from 'react';
 import {createRoot} from 'react-dom/client';
+import {flushSync} from 'react-dom';
 import Quest from '${base}Quest';
 import MarbleRunScreen from '${base}Quest/MarbleRunScreen';
+import MultiTapQuestion from '${base}Quest/MultiTapQuestion';
 import Result from '${base}Quest/Result';
 import Review from '${base}Review';
 import {setMusicEnabled} from '${base}Quest/MarbleRun/music';
+import '${base}Quest/MarbleRun/level/enemies';
+import '${base}Quest/MarbleRun/level/obstacles/formats';
+import {obstacleMaker} from '${base}Quest/MarbleRun/level/obstacles/registry';
 // Snapshot of the public map fields from the API catalog, c6017dfa (2026-10-10).
 // Keep the UI fixture runnable from a standalone website checkout.
 import QUEST_MAP from './test/fixtures/grammarQuestMap.json';
 window.setFixtureMusic=on=>setMusicEnabled(on,{fromAccount:true});
+window.stompAnimationOutcome=mask=>{
+ const entities=[];
+ const obstacle=obstacleMaker('stompers')({x:100,enemyKind:()=> 'beetle',add(){},entity(e){entities.push(e);return e}});
+ const marble={hint:mask,groundAt:()=>309,arc:(from,to,high,k)=>({x:from+(to-from)*k,y:200}),place(){},fx:{burst(){},text(){}}};
+ obstacle.pass.step(0,marble,0);
+ for(let i=0;i<5;i++)obstacle.pass.step((i+0.99)/5,marble,(i+1)*400);
+ return entities.slice(0,4).map(e=>e.alive);
+};
 window.resetAllMaps=()=>{
  window.serverQuestState={worlds:QUEST_MAP.map(w=>({...w,unlocked:true,sMarbles:0,nodeCount:w.nodes.length,nodes:w.nodes.map(n=>({...n,skills:undefined,unlocked:true,cleared:false,countsForGoals:true}))})),nemesis:[],ruleBook:{seen:2,total:20},rewardedRunsLeft:3};
 };
@@ -119,8 +132,9 @@ function Fixture(){const [view,setView]=useState({mode:'music',revision:0});
    const saved=checked?{outcome,explanation:outcome==='accepted'?'Two choices were possible. The question was corrected.':outcome==='rejected'?'Milk is uncountable, so “There is some milk” is correct.':'This earlier review explains why “some milk” is correct.'}:null;
    window.questAnswer={position:0,isCorrect:false,selectedIndex:3,correctIndex:0,readMs:1,ruleCard,challenge:{questionId:id,checked,review:saved}};
    window.reviewItem={id,questionId:id,question:question.question,choices:question.choices,answerIndex:0,isChecked:checked,explanation:saved?.explanation,challengeReview:saved};
-   setView({mode,revision:view.revision+1});
+   flushSync(()=>setView({mode,revision:view.revision+1}));
  };
+ if(view.mode==='stomp')return <MultiTapQuestion key={view.revision} {...window.stompProps} cls={{question:'prompt',choices:'choices',choice:'choice',key:'key',right:'right',wrong:'wrong'}} onPick={index=>window.answerRequests.push({choiceIndex:index})}/>;
  if(view.mode==='practice')return <MarbleRunScreen key={view.revision} run={window.fixtureRun || run} onFinished={()=>{}} onQuit={()=>{}}/>;
  if(view.mode==='results')return <Result key={view.revision} kind="fort" result={{runId:1,score:50,cleared:false,firstTryCorrect:0,size:1,xp:0,coins:0}} answers={[{...window.questAnswer,questionText:question.question}]} onBackToMap={()=>{}}/>;
  if(view.mode==='classic')return <Review key={view.revision}/>;
@@ -187,6 +201,117 @@ async function compile() {
     stop();
   }
 }
+
+test('independent Stomp submits explicitly and keeps each sentence review reachable on phones', { timeout: 60000 }, async () => {
+  const output = path.resolve(repo, '../work/grammar-stomp-20261021');
+  mkdirSync(output, { recursive: true });
+  const script = await compile();
+  const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+  const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+  let browser;
+  try {
+    browser = await chromium.launch({ headless: true, timeout: 10000, args: ['--disable-gpu'] });
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    page.setDefaultTimeout(10000);
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.route('**/*', (route) => route.request().isNavigationRequest()
+      ? route.fulfill({ contentType: 'text/html', body: html }) : route.abort());
+    await page.addInitScript(() => {
+      localStorage.setItem('grammarQuestMusic', '0');
+      localStorage.setItem('grammarQuestSound', '0');
+    });
+    await page.goto('http://localhost:3000/__grammar-stomp-fixture');
+    await page.waitForFunction(() => !!window.showFixture);
+    for (const mask of [1, 5, 13]) {
+      assert.deepEqual(await page.evaluate((mask) => window.stompAnimationOutcome(mask), mask),
+        [0, 1, 2, 3].map((i) => !(mask & (1 << i))), 'the real obstacle spares every correct sentence’s enemy');
+    }
+    for (const mask of [1, 5, 13]) {
+      await page.evaluate(() => {
+        window.answerRequests = [];
+        window.stompProps = { disabled: false, question: { position: 0, format: 'stomp', manualSubmit: true, question: '', choices: ['One.', 'Two.', 'Three.', 'Four.'], skill: 'agreement', skillName: 'Agreement' } };
+        window.showFixture('stomp');
+      });
+      await page.getByRole('button', { name: 'Submit (Enter)', exact: true }).waitFor();
+      for (let i = 0; i < 4; i++) if (mask & (1 << i)) await page.keyboard.press(String(i + 1));
+      assert.equal(await page.evaluate(() => window.answerRequests.length), 0, 'marking never auto-submits');
+      await page.keyboard.press('Enter');
+      assert.deepEqual(await page.evaluate(() => window.answerRequests), [{ choiceIndex: mask }]);
+    }
+    await page.evaluate(() => { window.answerRequests = []; window.showFixture('stomp'); });
+    await page.getByRole('button', { name: /^1\s*One\./ }).click();
+    await page.getByRole('button', { name: /^1\s*One\./ }).click();
+    assert.equal(await page.getByRole('button', { name: 'Submit (Enter)', exact: true }).isEnabled(), false);
+    await page.getByRole('button', { name: /^4\s*Four\./ }).click();
+    await page.getByRole('button', { name: 'Submit (Enter)', exact: true }).click();
+    assert.deepEqual(await page.evaluate(() => window.answerRequests), [{ choiceIndex: 8 }]);
+    await page.evaluate(() => {
+      window.answerRequests = [];
+      window.stompProps = { ...window.stompProps, revealed: 2 };
+      window.showFixture('stomp');
+    });
+    await page.getByRole('button', { name: /^1\s*One\./ }).click();
+    assert.equal(await page.getByRole('button', { name: /^3\s*Three\./ }).isEnabled(), false);
+    assert.equal(await page.getByRole('button', { name: 'Submit (Enter)', exact: true }).isEnabled(), false, 'read all four before submitting through fog');
+    await page.evaluate(() => {
+      window.answerRequests = [];
+      window.stompProps = { disabled: false, question: { ...window.stompProps.question, manualSubmit: undefined, targets: 3 } };
+      window.showFixture('stomp');
+    });
+    await page.getByRole('button', { name: 'Submit (Enter)', exact: true }).waitFor({ state: 'detached' });
+    for (const key of ['1', '2', '3']) await page.keyboard.press(key);
+    assert.deepEqual(await page.evaluate(() => window.answerRequests), [{ choiceIndex: 7 }], 'old questions keep their original interaction');
+
+    for (const [width, height] of [[1280, 800], [360, 800], [360, 640]]) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(() => {
+        window.answerRequests = [];
+        const choices = [
+          'The books that were borrowed from the library last week have to be returned before Friday.',
+          'The student who helped organize the exhibition have already received a thank-you letter from the principal.',
+          'The paintings that hang beside the entrance were donated by a local artist.',
+          'The teacher whose students won the competition are planning a small celebration after school.'
+        ];
+        const question = { position: 0, format: 'stomp', manualSubmit: true, question: '', choices, skill: 'agreement', skillName: 'Agreement with relative clauses' };
+        window.fixtureRun = { runId: 42, nodeId: 'w7s1', kind: 'stop', worldId: 7, rules: { mode: 'practice', goal: 5, slots: Array(5).fill('stomp') }, questions: [question] };
+        window.showFixture('practice');
+        window.questAnswer = {
+          position: 0, isCorrect: false, selectedIndex: 1, correctIndex: 10, rights: 0, readMs: 1,
+          sentences: [0, 1, 3].map((index) => ({
+            index, text: choices[index], isWrong: index !== 0,
+            correctText: choices[index].replace('exhibition have', 'exhibition has').replace('competition are', 'competition is'),
+            prompt: choices[index], ruleCard: null,
+            challenge: { questionId: 200 + index, checked: true, review: { outcome: 'rejected', explanation: `Saved explanation for sentence ${index + 1}.` } }
+          }))
+        };
+      });
+      const submit = page.getByRole('button', { name: 'Submit (Enter)', exact: true });
+      await submit.waitFor();
+      const first = page.getByRole('button', { name: /^1\s*The books/ });
+      await first.click();
+      assert.equal(await page.evaluate(() => window.answerRequests.length), 0);
+      const bounds = await submit.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: innerWidth, height: innerHeight };
+      });
+      assert.ok(bounds.left >= 0 && bounds.right <= width && bounds.top >= 0 && bounds.bottom <= height, JSON.stringify(bounds));
+      await page.screenshot({ path: path.join(output, `stomp-${width}x${height}.png`), animations: 'disabled' });
+      await submit.click();
+      await page.getByRole('button', { name: 'Sentence 4', exact: true }).click();
+      await page.getByText('Corrected: The teacher whose students won the competition is planning a small celebration after school.', { exact: true }).waitFor();
+      await page.getByRole('button', { name: 'Challenge rejected', exact: true }).click();
+      await page.getByText('Saved explanation for sentence 4.', { exact: true }).waitFor();
+      assert.equal(await page.evaluate(() => window.challengeRequests.length), 0, 'reading a saved ruling makes no AI request');
+      await page.keyboard.press('Escape');
+      await page.screenshot({ path: path.join(output, `stomp-review-${width}x${height}.png`), animations: 'disabled' });
+    }
+    assert.deepEqual(errors, []);
+    await page.close();
+  } finally {
+    await browser?.close();
+  }
+});
 
 test(
   'Quest sentences stay fully visible as questions change and after scrolling a review',

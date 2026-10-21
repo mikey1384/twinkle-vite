@@ -170,8 +170,7 @@ export class PracticeRun implements RunView {
 
   // The player answered the current question. Returns false while the
   // marble is busy (the caller keeps the buttons disabled anyway).
-  // `hint`: where the right answer sat among those shown (a squad spares
-  // that enemy)
+  // `hint`: Stomp's wrong-sentence mask; only those enemies are stomped.
   answer(ok: boolean, hint: number | null = null) {
     if (this.busy) return false;
     this.hint = hint;

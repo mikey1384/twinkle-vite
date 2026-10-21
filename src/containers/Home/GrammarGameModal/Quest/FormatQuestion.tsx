@@ -12,7 +12,7 @@ export const FORMAT_INFO: Record<QuestFormat, { name: string; how: string }> = {
   which: { name: 'Which way?', how: 'Pick the sentence that is right.' },
   crack: { name: 'Spot the crack', how: 'Tap the word that is wrong.' },
   fix: { name: 'Fix it', how: 'Pick what should replace the wrong part.' },
-  stomp: { name: 'Stomp', how: 'Stomp every sentence that is wrong.' },
+  stomp: { name: 'Stomp', how: 'Select every wrong sentence, then submit. The number of wrong sentences changes.' },
   momentum: {
     name: 'Momentum',
     how: 'Right or wrong? Three quick calls; all three must be right.'

@@ -87,3 +87,18 @@ test('the finish’s forgiven flags reach the screen’s answers', () => {
   const same = [answer({ position: 0 })];
   assert.equal(withForgiven(same, undefined), same);
 });
+
+test('each misjudged Stomp sentence keeps its own challenge in the result', () => {
+  const sentence = (index: number, questionId: number) => ({
+    index, text: `Sentence ${index + 1}`, isWrong: true,
+    correctText: 'Corrected sentence.', prompt: 'A _____ sentence.',
+    ruleCard: null, challenge: { questionId, checked: false }
+  });
+  const list = reviewList([
+    answer({ position: 4, sentences: [sentence(0, 11), sentence(2, 12)] }),
+    answer({ position: 5, forgiven: true, sentences: [sentence(1, 11)] })
+  ]);
+  assert.deepEqual(list.map((a) => [a.position, a.questionText, a.challenge?.questionId, !!a.forgiven]), [
+    [4, 'Sentence 1', 11, true], [4, 'Sentence 3', 12, false]
+  ]);
+});

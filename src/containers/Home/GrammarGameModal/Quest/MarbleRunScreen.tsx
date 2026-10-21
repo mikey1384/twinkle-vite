@@ -193,12 +193,16 @@ export default function MarbleRunScreen({
   const position = shown;
   const question = position >= 0 ? questions[position] : null;
   const answer = question ? answers[question.position] : undefined;
-  const challengeReview = answer?.challenge
-    ? reviews[answer.challenge.questionId]
+  const [reviewSentence, setReviewSentence] = useState(0);
+  useEffect(() => setReviewSentence(0), [question?.position]);
+  const sentenceReview = answer?.sentences?.[reviewSentence];
+  const feedback = sentenceReview || answer;
+  const challengeReview = feedback?.challenge
+    ? reviews[feedback.challenge.questionId]
     : undefined;
   const savedReview = getSavedChallengeReview(
-    answer?.challenge?.checked,
-    answer?.challenge?.review
+    feedback?.challenge?.checked,
+    feedback?.challenge?.review
   );
   const challengeSettled = isChallengeReviewSettled(
     challengeReview,
@@ -216,7 +220,8 @@ export default function MarbleRunScreen({
   );
 
   useEffect(() => {
-    for (const a of Object.values(answers)) {
+    const all = Object.values(answers).flatMap((a) => [a, ...(a.sentences || [])]);
+    for (const a of all) {
       const id = a.challenge?.questionId;
       const review = id ? reviews[id] : undefined;
       if (
@@ -230,16 +235,15 @@ export default function MarbleRunScreen({
         Object.fromEntries(
           Object.entries(prev).map(([key, value]) => [
             key,
-            value.challenge?.questionId === id
-              ? {
-                  ...value,
-                  challenge: {
-                    ...value.challenge,
-                    checked: true,
-                    upheld: review.result.justified
-                  }
-                }
-              : value
+            {
+              ...value,
+              challenge: value.challenge?.questionId === id
+                ? { ...value.challenge, checked: true, upheld: review.result.justified }
+                : value.challenge,
+              sentences: value.sentences?.map((sentence) => sentence.challenge?.questionId === id
+                ? { ...sentence, challenge: { ...sentence.challenge, checked: true, upheld: review.result.justified } }
+                : sentence)
+            }
           ])
         )
       );
@@ -884,7 +888,29 @@ export default function MarbleRunScreen({
                   {((phase === 'review' && answer && !answer.isCorrect) ||
                     (phase === 'bossReview' && answer)) && (
                     <div className={reviewCls}>
-                      {answer.ruleCard && (
+                      {!!answer.sentences?.length && (
+                        <div className={sentenceReviewCls}>
+                          <div className={sentenceTabsCls} role="group" aria-label="Review each sentence">
+                            {answer.sentences.map((sentence, i) => (
+                              <button
+                                key={sentence.index}
+                                className={nextCls}
+                                aria-pressed={reviewSentence === i}
+                                onClick={() => setReviewSentence(i)}
+                              >
+                                Sentence {sentence.index + 1}
+                              </button>
+                            ))}
+                          </div>
+                          {sentenceReview && (
+                            <div>
+                              {sentenceReview.isWrong ? 'Corrected: ' : 'This sentence is correct: '}
+                              {sentenceReview.correctText}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {feedback?.ruleCard && (
                         <div
                           className={cx(
                             ruleScrollCls,
@@ -895,10 +921,10 @@ export default function MarbleRunScreen({
                           data-fit-flex
                         >
                           <RuleCard
-                            card={answer.ruleCard}
+                            card={feedback.ruleCard}
                             look={boss ? 'boss' : 'quest'}
                             pickedChoice={
-                              answer.pickedText ??
+                              feedback.pickedText ??
                               question.choices[
                                 boss
                                   ? (bossMissPick ?? -1)
@@ -928,7 +954,7 @@ export default function MarbleRunScreen({
                               wrong challenges it right here, by Continue (in
                               this row so the card keeps its height). Bosses
                               run on a clock, so theirs wait for the result. */}
-                          {answer.challenge && (
+                          {feedback?.challenge && (
                             <button
                               className={
                                 challengeSettled ? reviewedCls : challengeCls
@@ -939,7 +965,7 @@ export default function MarbleRunScreen({
                                   : 'Think the answer key is wrong? Challenge it'
                               }
                               onClick={() =>
-                                setChallengeId(answer.challenge!.questionId)
+                                setChallengeId(feedback.challenge!.questionId)
                               }
                             >
                               <PixelIcon
@@ -960,10 +986,10 @@ export default function MarbleRunScreen({
                                 ? // its check already ruled the question
                                   // at fault: not counted, not asked again
                                   'Doesn’t count — the question was at fault.'
-                                : answer.challenge?.upheld &&
+                                : feedback?.challenge?.upheld &&
                                     run.rules.mode !== 'practice'
                                   ? 'Upheld! The answer key is fixed.'
-                                  : answer.challenge?.upheld
+                                  : feedback?.challenge?.upheld
                                     ? answer.retry || answer.requeued
                                       ? "Upheld! This miss doesn't count; the fixed question comes back later."
                                       : "Upheld! This miss doesn't count."
@@ -997,7 +1023,7 @@ export default function MarbleRunScreen({
           questionId={challengeId}
           // a type that showed the sentence changed (cracked, jammed, in
           // chunks): the bank's own sentence, sent once answered
-          questionText={answer?.prompt ?? question?.question}
+          questionText={feedback?.prompt ?? question?.question}
           savedReview={savedReview}
           questKind={run.kind}
           questRef={
@@ -1102,12 +1128,10 @@ export default function MarbleRunScreen({
         setChaser(result.chaser);
         run_.setChaser(result.chaser);
       }
-      // a squad spares the right sentence's enemy (the sentence not stomped)
+      // Every right sentence's enemy is spared; stomp exactly the wrong set.
       const hint =
         question.format === 'stomp' && result.correctIndex != null
-          ? question.choices.findIndex(
-              (_, i) => !(Number(result.correctIndex) & (1 << i))
-            )
+          ? Number(result.correctIndex)
           : null;
       run_.answer(result.isCorrect, hint);
       if (result.isCorrect && (result.rights || 0) >= (result.goal || 5))
@@ -1453,6 +1477,21 @@ const cardInnerCls = css`
   }
 `;
 // a long rule card scrolls on its own; choices and Continue stay put
+const sentenceReviewCls = css`
+  font-size: 1.2rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+`;
+const sentenceTabsCls = css`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  button[aria-pressed='true'] {
+    outline: 3px solid ${GOLD.s};
+    outline-offset: 1px;
+  }
+`;
 const challengeCls = css`
   ${challengeButton()}
   flex: none;
