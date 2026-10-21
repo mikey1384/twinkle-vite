@@ -690,7 +690,7 @@ function NotiMessage({
           <span style={{ color: recommendationColorValue, fontWeight: 'bold' }}>
             accepted your friend request
           </span>
-          . You are friends now.
+          .
         </>
       );
     case 'buildCollaborationRequestAccepted':
