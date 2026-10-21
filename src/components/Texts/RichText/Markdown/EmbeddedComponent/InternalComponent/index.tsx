@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import MainContentComponent from './MainContentComponent';
+import MainContentComponent, { LazyProfileAppEmbed } from './MainContentComponent';
 import MissionComponent from './MissionComponent';
 import UserComponent from './UserComponent';
 import DefaultComponent from './DefaultComponent';
@@ -23,6 +23,7 @@ export default function InternalComponent({
   embedPreviewMode,
   isPreview,
   isProfileComponent,
+  showProfileApps,
   showCompactCommentTypeLabel = true,
   subjectPreviewVariant,
   theme
@@ -36,6 +37,7 @@ export default function InternalComponent({
   src: string;
   isPreview?: boolean;
   isProfileComponent?: boolean;
+  showProfileApps?: boolean;
   showCompactCommentTypeLabel?: boolean;
   subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   theme?: string;
@@ -54,6 +56,21 @@ export default function InternalComponent({
       'daily-reflections'
     ];
     if (isProfileComponent) {
+      // A status message can show its owner's Lumine apps as short cards. Every other profile
+      // text (bio bullets, the popup, the chat profile card) has no room for one, and the
+      // remaining embed types stay plain links: a profile inside a profile would nest forever.
+      if (
+        showProfileApps &&
+        ['app', 'apps', 'build', 'builds'].includes(linkType) &&
+        contentId
+      ) {
+        return (
+          <LazyProfileAppEmbed
+            contentId={contentId}
+            profileUserId={rootType === 'user' ? Number(rootId) || 0 : 0}
+          />
+        );
+      }
       return (
         <DefaultComponent linkType={linkType} src={src} isPreview={isPreview} />
       );
@@ -125,6 +142,7 @@ export default function InternalComponent({
     commentPreviewVariant,
     embedPreviewMode,
     isProfileComponent,
+    showProfileApps,
     isPreview,
     rootId,
     rootType,

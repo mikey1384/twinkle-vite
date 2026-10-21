@@ -179,8 +179,10 @@ export default function Intro({
                   statusColor={
                     displayedStatusColor || statusColor || 'logoBlue'
                   }
+                  showApps
                   statusMsg={displayedStatusMsg || statusMsg}
-                  userId={userId}
+                  // the status belongs to the profile being shown (userId is the viewer)
+                  userId={profile.id || 0}
                 />
               )}
               {userId === profile.id &&

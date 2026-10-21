@@ -306,6 +306,7 @@ function RichText({
   hideDictation,
   isPreview,
   isStatusMsg,
+  showProfileApps,
   isProfileComponent,
   isAIMessage,
   disableImageModal,
@@ -342,6 +343,8 @@ function RichText({
   isUseNewFormat?: boolean;
   isPreview?: boolean;
   isStatusMsg?: boolean;
+  // a Lumine app link shows as a short app card (a profile status box has room for that)
+  showProfileApps?: boolean;
   isProfileComponent?: boolean;
   isShowMoreButtonCentered?: boolean;
   isAIMessage?: boolean;
@@ -792,6 +795,7 @@ function RichText({
           embedPreviewMode={embedPreviewMode}
           isPreview={embedPreview}
           isProfileComponent={isProfileComponent}
+          showProfileApps={showProfileApps}
           isAIMessage={isAIMessage}
           disableImageModal={disableImageModal}
           linkColor={appliedLinkColor}
@@ -815,6 +819,7 @@ function RichText({
     embedPreview,
     isAIMessage,
     isProfileComponent,
+    showProfileApps,
     markerColor,
     appliedSubjectPreviewVariant,
     theme,
@@ -1000,6 +1005,7 @@ function RichText({
               embedPreviewMode={embedPreviewMode}
               isAIMessage={isAIMessage}
               isProfileComponent={isProfileComponent}
+              showProfileApps={showProfileApps}
               lineHeight={effectiveCollapsedLineHeight}
               linkColor={appliedLinkColor}
               markerColor={markerColor}

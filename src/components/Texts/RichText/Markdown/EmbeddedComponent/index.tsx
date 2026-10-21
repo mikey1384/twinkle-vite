@@ -23,6 +23,7 @@ function EmbeddedComponent({
   alt,
   isPreview,
   isProfileComponent,
+  showProfileApps,
   subjectPreviewVariant,
   disableImageModal,
   theme,
@@ -37,6 +38,7 @@ function EmbeddedComponent({
   alt?: string;
   isPreview?: boolean;
   isProfileComponent?: boolean;
+  showProfileApps?: boolean;
   subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   disableImageModal?: boolean;
   theme?: string;
@@ -65,6 +67,13 @@ function EmbeddedComponent({
     isInternalLink &&
     subjectPreviewVariant === 'fullWidth' &&
     cleanReplacedLink.split('/')?.[1] === 'subjects';
+
+  // a Lumine app in a status message is a short card: keep its row tight
+  const isStatusAppCard =
+    Boolean(showProfileApps && isProfileComponent && isInternalLink) &&
+    ['app', 'apps', 'build', 'builds'].includes(
+      cleanReplacedLink.split('/')?.[1]
+    );
 
   const { ext, fileNameFromSrc, fileType } = useMemo(() => {
     const { extension, fileName, fileType } = getFileInfoFromUrl(src);
@@ -106,7 +115,9 @@ function EmbeddedComponent({
             (cleanReplacedLink.split('/')?.[1] === 'users' &&
               isProfileComponent)
               ? '0'
-              : '1rem'
+              : isStatusAppCard
+                ? '0.35rem 0'
+                : '1rem'
           };
         width: 100%;
       `}`}
@@ -116,6 +127,7 @@ function EmbeddedComponent({
           rootId={contentId}
           rootType={contentType}
           isProfileComponent={isProfileComponent}
+          showProfileApps={showProfileApps}
           src={cleanReplacedLink}
           embedPreviewMode={embedPreviewMode}
           subjectPreviewVariant={subjectPreviewVariant}

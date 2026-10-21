@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BuildMiniCard, BuildWideCard } from '~/components/Build/Cards';
+import { useInViewFlag } from '~/helpers/hooks/useInViewFlag';
+import {
+  BuildMiniCard,
+  BuildStatusCard,
+  BuildWideCard
+} from '~/components/Build/Cards';
+import { BUILD_STATUS_CARD_HEIGHT } from '~/components/Build/Cards/BuildStatusCard';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
@@ -52,6 +58,8 @@ export default function MainContentComponent({
   commentPreviewVariant = 'compact',
   embedPreviewMode = 'thumbnail',
   isPreview,
+  isProfileApp,
+  profileUserId = 0,
   showCompactCommentTypeLabel = true,
   subjectPreviewVariant,
   theme
@@ -63,6 +71,9 @@ export default function MainContentComponent({
   commentPreviewVariant?: 'column' | 'compact';
   embedPreviewMode?: RichTextEmbedPreviewMode;
   isPreview?: boolean;
+  // a Lumine app inside a profile's status message: one short card (or note), never a tall embed
+  isProfileApp?: boolean;
+  profileUserId?: number;
   showCompactCommentTypeLabel?: boolean;
   subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   theme?: string;
@@ -147,15 +158,28 @@ export default function MainContentComponent({
   // Read the unpublished flag from shared content state too (not just this
   // component's own request) so a cached unpublished placeholder never falls
   // through to the notFound -> Invalid Content branch below.
+  const isStatusApp = Boolean(isProfileApp && appliedContentType === 'build');
   if (isUnpublished || contentState.unpublished) {
+    if (isStatusApp) {
+      return (
+        <StatusAppNote
+          icon="eye-slash"
+          text="This app is no longer published"
+        />
+      );
+    }
     return <UnpublishedBuildContent bare={isPreview} />;
   }
   if (hasError || notFound || isNaN(Number(contentId))) {
+    if (isStatusApp) {
+      return <StatusAppNote icon="ban" text="This app isn't available" />;
+    }
     return (
       <InvalidContent bare={isPreview && appliedContentType === 'build'} />
     );
   }
   if (!loaded) {
+    if (isStatusApp) return <StatusAppNote text="Loading app…" />;
     // The column comment embed fills the tall hero slot; Loading's default
     // wrapper is a fixed 15rem block, which leaves the spinner stuck at the
     // top of the slot instead of vertically centered.
@@ -166,6 +190,16 @@ export default function MainContentComponent({
             ? { height: '100%' }
             : undefined
         }
+      />
+    );
+  }
+
+  if (isStatusApp) {
+    return (
+      <BuildStatusCard
+        build={getBuildPreviewInput(contentState, Number(contentId))}
+        profileUserId={profileUserId}
+        onOpen={() => navigate(getContentPath('build', Number(contentId)))}
       />
     );
   }
@@ -277,6 +311,86 @@ function BuildRichTextEmbed({
   );
 }
 
+// A loaded app as the build cards want it: the app names its current owner as its uploader.
+function getBuildPreviewInput(content: any, contentId: number) {
+  const ownerIsUploader =
+    Number(content?.userId) > 0 &&
+    Number(content?.uploader?.id) === Number(content?.userId);
+  return {
+    ...content,
+    contentId,
+    contentType: 'build',
+    id: contentId,
+    username:
+      content?.username ||
+      (ownerIsUploader ? content.uploader.username : undefined) ||
+      undefined,
+    profilePicUrl:
+      content?.profilePicUrl ||
+      (ownerIsUploader ? content.uploader.profilePicUrl : undefined) ||
+      undefined,
+    thumbnailUrl: String(content?.thumbUrl || content?.thumbnailUrl || '')
+  };
+}
+
+// A Lumine app in a profile status message loads only once it scrolls into view, so a status with
+// many apps (or apps still folded under "Show More") costs nothing until they are looked at. The
+// placeholder is exactly as tall as the card, so the box does not jump when the app arrives.
+export function LazyProfileAppEmbed({
+  contentId,
+  profileUserId
+}: {
+  contentId: string;
+  profileUserId: number;
+}) {
+  const [inViewRef, inView] = useInViewFlag();
+  const [wasSeen, setWasSeen] = useState(false);
+  useEffect(() => {
+    if (inView) setWasSeen(true);
+  }, [inView]);
+  return (
+    <div ref={inViewRef} style={{ width: '100%' }}>
+      {wasSeen ? (
+        <MainContentComponent
+          contentType="build"
+          contentId={contentId}
+          isProfileApp
+          profileUserId={profileUserId}
+        />
+      ) : (
+        <StatusAppNote text="Loading app…" />
+      )}
+    </div>
+  );
+}
+
+// The status message's stand-in while an app loads or cannot be shown: one quiet line,
+// the same height as the card so the box does not jump.
+function StatusAppNote({ icon, text }: { icon?: string; text: string }) {
+  return (
+    <div
+      className={css`
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        height: ${BUILD_STATUS_CARD_HEIGHT};
+        border: 1px dashed rgba(15, 23, 42, 0.25);
+        border-radius: 0.8rem;
+        background: rgba(255, 255, 255, 0.7);
+        color: #475569;
+        font-size: 1.1rem;
+        font-weight: 700;
+      `}
+    >
+      {icon ? <Icon icon={icon} /> : null}
+      {text}
+    </div>
+  );
+}
+
 function CompactMainContentEmbedPreview({
   content,
   contentId,
@@ -342,25 +456,7 @@ function CompactMainContentEmbedPreview({
   };
 
   if (isBuild) {
-    // the loaded app names its current owner as its uploader
-    const ownerIsUploader =
-      Number(content?.userId) > 0 &&
-      Number(content?.uploader?.id) === Number(content?.userId);
-    const buildPreview = {
-      ...content,
-      contentId,
-      contentType: 'build',
-      id: contentId,
-      username:
-        content?.username ||
-        (ownerIsUploader ? content.uploader.username : undefined) ||
-        undefined,
-      profilePicUrl:
-        content?.profilePicUrl ||
-        (ownerIsUploader ? content.uploader.profilePicUrl : undefined) ||
-        undefined,
-      thumbnailUrl: thumbUrl
-    };
+    const buildPreview = getBuildPreviewInput(content, contentId);
 
     if (buildPreviewVariant === 'wide') {
       const ownerId = Number(content?.userId || content?.uploader?.id || 0);

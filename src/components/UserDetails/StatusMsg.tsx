@@ -7,12 +7,15 @@ export default function StatusMsg({
   statusColor = 'logoBlue',
   statusMsg,
   contrastSafe = false,
+  showApps = false,
   style,
   userId
 }: {
   statusColor?: string;
   statusMsg: string;
   contrastSafe?: boolean;
+  // Lumine app links show as app cards (only where the box has room for them)
+  showApps?: boolean;
   style?: React.CSSProperties;
   userId: number;
 }) {
@@ -37,6 +40,7 @@ export default function StatusMsg({
       <RichText
         isStatusMsg
         isProfileComponent
+        showProfileApps={showApps}
         theme={statusColor}
         readMoreColor={contrastSafe ? textColor : statusColor === 'ivory' ? 'black' : '#fff'}
         contentType="user"

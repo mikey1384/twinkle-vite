@@ -189,8 +189,10 @@ export default function UserDetails({
           contrastSafe={isChatEmbed}
           style={isChatEmbed ? { fontSize: '14px', lineHeight: 1.5, padding: '10px', borderRadius: 8, boxShadow: 'none' } : undefined}
           statusColor={statusColor}
+          showApps={!isChatEmbed && !small}
           statusMsg={displayedStatusMsg}
-          userId={userId || 0}
+          // the status belongs to the profile being shown (userId is the viewer)
+          userId={profile.id || 0}
         />
       )}
       {profile.statusMsg &&

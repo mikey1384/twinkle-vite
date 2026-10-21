@@ -28,6 +28,7 @@ export default function InvisibleTextContainer({
   isAIMessage,
   isPreview,
   isProfileComponent,
+  showProfileApps,
   lineHeight,
   linkColor,
   markerColor,
@@ -45,6 +46,7 @@ export default function InvisibleTextContainer({
   isAIMessage?: boolean;
   isPreview?: boolean;
   isProfileComponent?: boolean;
+  showProfileApps?: boolean;
   lineHeight: number;
   linkColor: string;
   markerColor: string;
@@ -160,6 +162,7 @@ export default function InvisibleTextContainer({
             embedPreviewMode={embedPreviewMode}
             isPreview={isPreview}
             isProfileComponent={isProfileComponent}
+            showProfileApps={showProfileApps}
             isAIMessage={isAIMessage}
             linkColor={linkColor}
             markerColor={markerColor}
