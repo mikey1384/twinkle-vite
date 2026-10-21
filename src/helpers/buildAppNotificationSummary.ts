@@ -22,3 +22,19 @@ export function stripLeadingActorName(
   const stripped = rest.slice(match[0].length);
   return stripped || text;
 }
+
+// The notification adds " in <app title>" after the summary. Some apps already
+// name themselves in it ("Liki responded to the Twinkle Newspaper: “Rrr”"), which
+// read "... the Twinkle Newspaper: “Rrr” in Twinkle Newspaper". Only the words
+// before the first colon or quote count: a member's own quoted words that happen
+// to contain the title must not hide where the update came from.
+export function summaryNamesApp(summary: string, appTitle?: string | null) {
+  const title = String(appTitle || '')
+    .trim()
+    .toLowerCase();
+  if (!title) return false;
+  const lead = String(summary || '')
+    .split(/[:“”"]/)[0]
+    .toLowerCase();
+  return lead.includes(title);
+}

@@ -50,6 +50,10 @@ const RADIUS = 96;
 const MIN_RADIUS_RATIO = 0.16;
 const MORPH_MS = 1400;
 const LABEL_ROOM = 64;
+// a long label wraps at its hyphen so it stays inside the side room on a phone
+const LABEL_LINES: Partial<Record<ReflectionStatAxis, string[]>> = {
+  self_awareness: ['Self-', 'awareness']
+};
 
 const glow = keyframes`
   0% { transform: scale(1); opacity: 0.9; }
@@ -325,7 +329,21 @@ export default function ReflectionStatShape({
             fontWeight={isGrown ? 800 : 600}
             fill={isGrown ? PAPER.ink : PAPER.inkSoft}
           >
-            {REFLECTION_STAT_LABELS[axis]}
+            {(LABEL_LINES[axis] || [REFLECTION_STAT_LABELS[axis]]).map(
+              (line, lineIndex, lines) => (
+                <tspan
+                  key={line}
+                  x={x}
+                  dy={
+                    lineIndex === 0
+                      ? `${-0.55 * (lines.length - 1)}em`
+                      : '1.1em'
+                  }
+                >
+                  {line}
+                </tspan>
+              )
+            )}
           </text>
         );
       })}

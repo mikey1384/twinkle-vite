@@ -17,7 +17,10 @@ import {
   shouldShowNotificationContentDetail
 } from '../../notificationLabels';
 import { SITE_NAME } from '~/constants/siteBrand';
-import { stripLeadingActorName } from '~/helpers/buildAppNotificationSummary';
+import {
+  stripLeadingActorName,
+  summaryNamesApp
+} from '~/helpers/buildAppNotificationSummary';
 
 function NotiMessage({
   actionObj,
@@ -268,11 +271,16 @@ function NotiMessage({
         <>
           <span style={{ color: infoColorValue, fontWeight: 'bold' }}>
             {summary}
-          </span>{' '}
-          in{' '}
-          <span style={{ color: targetLinkColor, fontWeight: 'bold' }}>
-            {buildTitle}
           </span>
+          {summaryNamesApp(summary, buildTitle) ? null : (
+            <>
+              {' '}
+              in{' '}
+              <span style={{ color: targetLinkColor, fontWeight: 'bold' }}>
+                {buildTitle}
+              </span>
+            </>
+          )}
         </>
       );
     }

@@ -33,6 +33,36 @@ const xpRankBadgeClass = css`
   height: 1.6rem;
 `;
 
+// Profile / Cards / Chat / Add friend. The popup is at most half the screen
+// wide, so on a phone four side-by-side buttons spill out of it: there they sit
+// two by two, icon over label.
+const actionRowClass = css`
+  padding: 1rem;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem 0.2rem;
+    padding: 0.6rem 0.3rem;
+    > * {
+      min-width: 0;
+      flex-direction: column;
+      text-align: center;
+      padding: 0.4rem 0.2rem !important;
+      gap: 0.3rem;
+    }
+    > * span {
+      margin-left: 0 !important;
+      font-size: 1.1rem !important;
+      white-space: nowrap;
+    }
+  }
+`;
+
 export default function UserPopup({
   isLoading,
   myId,
@@ -390,16 +420,7 @@ export default function UserPopup({
                 {bio}
               </RichText>
             )}
-            <div
-              style={{
-                padding: '1rem',
-                borderTop: '1px solid #eee',
-                borderBottom: '1px solid #eee',
-                marginBottom: '1rem',
-                display: 'flex',
-                justifyContent: 'space-between'
-              }}
-            >
+            <div className={actionRowClass}>
               <Link
                 style={{
                   color: Color.darkerGray(),
