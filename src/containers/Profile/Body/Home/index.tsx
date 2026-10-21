@@ -15,6 +15,7 @@ import Pictures from './Pictures';
 import Builds from './Builds';
 import PinnedAICards from './PinnedAICards';
 import ReorderSectionsModal from './ReorderSectionsModal';
+import { normalizeSectionOrder, profileSectionLabels } from './profileSections';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useContentState, useProfileState } from '~/helpers/hooks';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
@@ -29,61 +30,6 @@ import { mobileMaxWidth } from '~/constants/css';
 const messageBoardLabel = 'Message Board';
 const reorderSectionsLabel = 'Reorder Sections';
 const EMPTY_PICTURES: any[] = [];
-const profileSectionKeys = [
-  'intro',
-  'pictures',
-  'builds',
-  'pinnedAICards',
-  'featuredSubjects',
-  'notableActivities',
-  'xpAnalysis',
-  'missionProgress'
-];
-const profileSectionLabels: Record<string, string> = {
-  intro: 'Intro',
-  pictures: 'Pictures',
-  builds: 'Builds',
-  pinnedAICards: 'AI Cards',
-  featuredSubjects: 'Featured Subjects',
-  notableActivities: 'Notable Activities',
-  xpAnalysis: 'XP Analysis',
-  missionProgress: 'Mission Progress'
-};
-const legacyActivitySectionKeys = [
-  'featuredSubjects',
-  'notableActivities',
-  'xpAnalysis',
-  'missionProgress'
-];
-
-function normalizeSectionOrder(sectionOrder: any) {
-  const allowed = new Set(profileSectionKeys);
-  const seen = new Set<string>();
-  const normalized: string[] = [];
-  if (Array.isArray(sectionOrder)) {
-    for (const rawKey of sectionOrder) {
-      const key = String(rawKey);
-      if (key === 'activities') {
-        for (const activityKey of legacyActivitySectionKeys) {
-          if (seen.has(activityKey)) continue;
-          seen.add(activityKey);
-          normalized.push(activityKey);
-        }
-        continue;
-      }
-      if (!allowed.has(key) || seen.has(key)) continue;
-      seen.add(key);
-      normalized.push(key);
-    }
-  }
-  for (const key of profileSectionKeys) {
-    if (!seen.has(key)) {
-      seen.add(key);
-      normalized.push(key);
-    }
-  }
-  return normalized;
-}
 
 export default function Home({
   profile,
@@ -170,6 +116,12 @@ export default function Home({
     return profile?.state?.profile?.subjects?.length > 0;
   }, [profile.id, profile?.state?.profile?.subjects?.length, userId]);
   const sectionContentByKey: Record<string, React.ReactNode> = {
+    reflectionStats: (
+      <ReflectionStats
+        profileId={Number(profile.id) || 0}
+        selectedTheme={selectedTheme}
+      />
+    ),
     intro: <Intro profile={profile} selectedTheme={selectedTheme} />,
     pictures: userId ? (
       <Pictures
@@ -320,10 +272,6 @@ export default function Home({
         )}
         <BroughtFriends profile={profile} />
         <BridgeStories profileId={Number(profile.id) || 0} />
-        <ReflectionStats
-          profileId={Number(profile.id) || 0}
-          selectedTheme={selectedTheme}
-        />
         {sectionOrder.map((sectionKey) => {
           const sectionContent = sectionContentByKey[sectionKey];
           if (!sectionContent) return null;
