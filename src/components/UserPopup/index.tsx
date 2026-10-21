@@ -16,7 +16,8 @@ import { User } from '~/types';
 import { getSectionFromPathname } from '~/helpers';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';import RankBadge from '~/components/RankBadge';
+import { css } from '@emotion/css';
+import RankBadge from '~/components/RankBadge';
 
 const chatLabel = 'Chat';
 const profileLabel = 'Profile';
@@ -45,7 +46,7 @@ const actionRowClass = css`
   justify-content: space-between;
   @media (max-width: ${mobileMaxWidth}) {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.4rem 0.2rem;
     padding: 0.6rem 0.3rem;
     > * {
@@ -58,7 +59,9 @@ const actionRowClass = css`
     > * span {
       margin-left: 0 !important;
       font-size: 1.1rem !important;
-      white-space: nowrap;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
   }
 `;
@@ -339,6 +342,7 @@ export default function UserPopup({
               <div
                 className={css`
                   width: 5rem;
+                  flex-shrink: 0;
                   @media (max-width: ${mobileMaxWidth}) {
                     width: 3rem;
                   }
@@ -354,7 +358,13 @@ export default function UserPopup({
                   statusShown
                 />
               </div>
-              <div style={{ marginLeft: '1rem' }}>
+              <div
+                style={{
+                  marginLeft: '1rem',
+                  minWidth: 0,
+                  overflowWrap: 'anywhere'
+                }}
+              >
                 <div
                   style={{
                     fontSize: '1.5rem',

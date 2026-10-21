@@ -25,16 +25,35 @@ export function stripLeadingActorName(
 
 // The notification adds " in <app title>" after the summary. Some apps already
 // name themselves in it ("Liki responded to the Twinkle Newspaper: “Rrr”"), which
-// read "... the Twinkle Newspaper: “Rrr” in Twinkle Newspaper". Only the words
-// before the first colon or quote count: a member's own quoted words that happen
-// to contain the title must not hide where the update came from.
+// read "... the Twinkle Newspaper: “Rrr” in Twinkle Newspaper". Match a complete
+// title in the unquoted lead, not a substring ("Go" inside "got"). Delimiters
+// inside the title belong to it: "AI: Friends" is still one app title. A colon
+// or quote before the match starts the quoted payload, which cannot supply the
+// app attribution. This is an exact title check, not a repeated-phrase filter.
 export function summaryNamesApp(summary: string, appTitle?: string | null) {
   const title = String(appTitle || '')
     .trim()
+    .normalize('NFC')
     .toLowerCase();
   if (!title) return false;
-  const lead = String(summary || '')
-    .split(/[:“”"]/)[0]
+  const text = String(summary || '')
+    .normalize('NFC')
     .toLowerCase();
-  return lead.includes(title);
+  for (
+    let index = text.indexOf(title);
+    index !== -1;
+    index = text.indexOf(title, index + 1)
+  ) {
+    const before = text.slice(0, index);
+    if (/[:“”"]/.test(before)) return false;
+    const after = text.slice(index + title.length);
+    if (
+      /[\p{L}\p{N}\p{M}_]$/u.test(before) ||
+      /^[\p{L}\p{N}\p{M}_]/u.test(after)
+    ) {
+      continue;
+    }
+    return true;
+  }
+  return false;
 }
