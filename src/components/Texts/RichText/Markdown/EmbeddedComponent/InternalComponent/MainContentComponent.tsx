@@ -29,6 +29,7 @@ import type {
   RichTextEmbedPreviewMode,
   RichTextSubjectPreviewVariant
 } from '../../../embedPreviewMode';
+import DailyGoalsEmbed from './DailyGoalsEmbed';
 import InvalidContent from '../InvalidContent';
 import UnpublishedBuildContent from '../UnpublishedBuildContent';
 import { shouldNavigateEmbeddedVideoContainerClick } from './embeddedVideoNavigation';
@@ -88,6 +89,9 @@ export default function MainContentComponent({
     }
     if (contentType === 'daily-reflection') {
       return 'dailyReflection';
+    }
+    if (contentType === 'daily-reward') {
+      return 'xpChange';
     }
     return contentType === 'link' ? 'url' : contentType;
   }, [contentType]);
@@ -200,6 +204,24 @@ export default function MainContentComponent({
         build={getBuildPreviewInput(contentState, Number(contentId))}
         profileUserId={profileUserId}
         onOpen={() => navigate(getContentPath('build', Number(contentId)))}
+      />
+    );
+  }
+
+  // a daily goals bonus is already the Home feed's compact card, in a preview too
+  if (appliedContentType === 'xpChange') {
+    // Older responses can contain a reward card for an unrelated XP target
+    // with the same numeric ID. The target, not the attached card, is canonical.
+    if (
+      contentState.target !== 'dailyBonus' ||
+      (!contentState.card && !contentState.word)
+    ) {
+      return <InvalidContent />;
+    }
+    return (
+      <DailyGoalsEmbed
+        contentId={Number(contentId)}
+        dailyGoals={contentState}
       />
     );
   }

@@ -53,7 +53,8 @@ export default function InternalComponent({
       'subjects',
       'comments',
       'ai-stories',
-      'daily-reflections'
+      'daily-reflections',
+      'daily-rewards'
     ];
     if (isProfileComponent) {
       // A status message can show its owner's Lumine apps as short cards. Every other profile
