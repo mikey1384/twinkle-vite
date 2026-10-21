@@ -312,9 +312,14 @@ const badgeClass = css`
   font-weight: 800;
   line-height: 1;
   &::after {
+    /* Keep the small artwork, but give the entire badge a generous hit area. */
     content: '';
     position: absolute;
-    inset: -4px;
+    top: 50%;
+    left: 50%;
+    width: max(28px, calc(100% + 16px));
+    height: max(28px, calc(100% + 16px));
+    transform: translate(-50%, -50%);
   }
   img {
     width: 100%;
@@ -362,6 +367,13 @@ const popupClass = css`
   background: #fff;
   color: #29374a;
   box-shadow: 0 8px 28px #1b305530;
+  &::before {
+    /* Bridge the placement gap, including when the popup flips above. */
+    content: '';
+    position: absolute;
+    inset: -8px;
+    z-index: -1;
+  }
   .activity-heading {
     display: flex;
     align-items: center;

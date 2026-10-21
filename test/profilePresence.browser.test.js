@@ -114,6 +114,169 @@ async function compileFixture() {
 
 for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
   test(
+    `activity badge hover covers its edges and the path to the popup (${engine})`,
+    { timeout: 60000 },
+    async () => {
+      const script = await compileFixture();
+      const browser = await browserType.launch();
+      try {
+        const page = await browser.newPage({
+          viewport: { width: 1280, height: 800 }
+        });
+        page.setDefaultTimeout(5000);
+        const errors = [];
+        page.on('pageerror', error => errors.push(error.message));
+        await page.route('http://localhost:3000/img/default-avatar-4.png', route =>
+          route.fulfill({
+            contentType: 'image/png',
+            body: readFileSync(path.join(repo, 'public/img/default-avatar-4.png'))
+          })
+        );
+        await page.setContent(`<base href="http://localhost:3000/"><style>${readFileSync(path.join(repo, 'src/styles.css'), 'utf8')}
+          main{padding:24px;max-width:400px}section{margin-bottom:32px}#member{background:#f7f9fc}
+        </style><div id="root"></div><div id="outer-layer"></div>`);
+        await page.addScriptTag({ content: script });
+        await page.waitForFunction(
+          () => typeof window.setServerPresence === 'function'
+        );
+        await page.clock.install();
+        const thumbnailUrl = 'data:image/svg+xml,' + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" fill="#e35b48"/></svg>'
+        );
+        await page.evaluate(thumbnailUrl => window.setServerPresence({
+          isAway: false,
+          activity: { kind: 'app', id: 2, title: 'The Adventure of a Red Square', thumbnailUrl }
+        }), thumbnailUrl);
+        for (const width of [1280, 390]) {
+          await page.setViewportSize({ width, height: 800 });
+          for (const surface of ['member', 'profile']) {
+            await checkHover(surface, `${width}-${surface}`, false);
+          }
+        }
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await page.locator('#profile').evaluate(element => {
+          element.style.cssText = 'position:fixed;left:24px;bottom:24px;margin:0';
+        });
+        await checkHover('profile', 'above', true);
+        await page.evaluate(() => window.setServerPresence({
+          activity: { kind: 'app', id: 2, title: 'The Adventure of a Red Square' }
+        }));
+        await checkHover('profile', 'above-fallback', true);
+
+        // The transparent hover bridge must not intercept either popup button.
+        const badge = page.locator('#member button[aria-haspopup="dialog"]');
+        await badge.hover();
+        await page.getByRole('button', { name: 'Close activity', exact: true }).click();
+        await page.getByRole('dialog').waitFor({ state: 'detached' });
+        await page.mouse.move(600, 600);
+        await badge.focus();
+        await page.keyboard.press('Enter');
+        await page.getByRole('button', { name: 'Open app', exact: true }).waitFor();
+        await page.keyboard.press('Escape');
+        await page.getByRole('dialog').waitFor({ state: 'detached' });
+        assert.equal(await badge.evaluate(element => element === document.activeElement), true);
+        await badge.click();
+        await page.getByRole('button', { name: 'Open app', exact: true }).click();
+        await page.waitForFunction(() => window.fixtureLocation.pathname === '/app/2');
+        await page.getByRole('dialog').waitFor({ state: 'detached' });
+        await badge.hover();
+        await page.mouse.click(600, 400);
+        await page.getByRole('dialog').waitFor({ state: 'detached' });
+        await page.evaluate(() => window.unmountFixture());
+        assert.deepEqual(errors, []);
+        await page.close();
+
+        const touchPage = await browser.newPage({
+          hasTouch: true,
+          viewport: { width: 390, height: 800 }
+        });
+        touchPage.setDefaultTimeout(5000);
+        touchPage.on('pageerror', error => errors.push(error.message));
+        await touchPage.setContent(`<style>${readFileSync(path.join(repo, 'src/styles.css'), 'utf8')}
+          main{padding:24px}section{margin-bottom:32px}
+        </style><div id="root"></div><div id="outer-layer"></div>`);
+        await touchPage.addScriptTag({ content: script });
+        await touchPage.waitForFunction(() => typeof window.setServerPresence === 'function');
+        await touchPage.evaluate(() => window.setServerPresence({
+          isAway: false,
+          activity: { kind: 'app', id: 2, title: 'The Adventure of a Red Square' }
+        }));
+        const touchBadge = touchPage.locator('#member button[aria-haspopup="dialog"]');
+        await touchBadge.waitFor();
+        const touchBounds = await touchBadge.boundingBox();
+        // Tap the enlarged target outside the artwork, then dismiss and reopen.
+        await touchPage.touchscreen.tap(touchBounds.x - 5, touchBounds.y + touchBounds.height / 2);
+        await touchPage.getByRole('dialog').waitFor();
+        await touchPage.touchscreen.tap(350, 400);
+        await touchPage.getByRole('dialog').waitFor({ state: 'detached' });
+        await touchBadge.tap();
+        await touchPage.getByRole('button', { name: 'Open app', exact: true }).tap();
+        await touchPage.waitForFunction(() => window.fixtureLocation.pathname === '/app/2');
+        await touchPage.getByRole('dialog').waitFor({ state: 'detached' });
+        await touchPage.evaluate(() => window.unmountFixture());
+        assert.deepEqual(errors, []);
+
+        async function checkHover(surface, label, above) {
+          const badge = page.locator(`#${surface} button[aria-haspopup="dialog"]`);
+          await badge.hover();
+          const dialog = page.getByRole('dialog');
+          await dialog.waitFor();
+          const bounds = await badge.boundingBox();
+          const missed = await badge.evaluate(element => {
+            const rect = element.getBoundingClientRect();
+            const missed = [];
+            for (let x = Math.ceil(rect.left); x < rect.right; x++) {
+              for (let y = Math.ceil(rect.top); y < rect.bottom; y++) {
+                if (!element.contains(document.elementFromPoint(x, y))) missed.push([x, y]);
+              }
+            }
+            return missed;
+          });
+          assert.deepEqual(missed, [], `${engine} ${label}: visible badge hit area`);
+          // Pause longer than dismissal at the center, edges and corners.
+          for (const x of [0.1, 0.5, 0.9]) {
+            for (const y of [0.1, 0.5, 0.9]) {
+              await expectOpenAt(bounds.x + bounds.width * x, bounds.y + bounds.height * y);
+            }
+          }
+          for (const x of [bounds.x - 5, bounds.x + bounds.width + 5]) {
+            await expectOpenAt(x, bounds.y + bounds.height / 2);
+          }
+          const popup = await dialog.boundingBox();
+          assert.equal(popup.y < bounds.y, above, `${engine} ${label}: popup placement`);
+          const bridgeX = bounds.x + bounds.width / 2;
+          const bridgeY = above
+            ? (popup.y + popup.height + bounds.y) / 2
+            : (bounds.y + bounds.height + popup.y) / 2;
+          await expectOpenAt(bridgeX, bridgeY);
+          await page.getByRole('button', { name: 'Open app', exact: true }).hover();
+          await page.clock.runFor(350);
+          assert.equal(await badge.getAttribute('aria-expanded'), 'true');
+          await expectOpenAt(bridgeX, bridgeY);
+          await expectOpenAt(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+          if (process.env.PROFILE_PRESENCE_SCREENSHOTS) {
+            mkdirSync(process.env.PROFILE_PRESENCE_SCREENSHOTS, { recursive: true });
+            await page.screenshot({
+              path: path.join(process.env.PROFILE_PRESENCE_SCREENSHOTS, `${engine}-${label}-hover.png`)
+            });
+          }
+          await page.mouse.move(page.viewportSize().width - 20, 400);
+          await page.clock.runFor(350);
+          await dialog.waitFor({ state: 'detached' });
+
+          async function expectOpenAt(x, y) {
+            await page.mouse.move(x, y);
+            await page.clock.runFor(350);
+            assert.equal(await badge.getAttribute('aria-expanded'), 'true', `${engine} ${label}: pointer at ${x}, ${y}`);
+          }
+        }
+      } finally {
+        await browser.close();
+      }
+    }
+  );
+
+  test(
     `away overrides outside-chat busy status in member dots and profile labels (${engine})`,
     { timeout: 30000 },
     async () => {
