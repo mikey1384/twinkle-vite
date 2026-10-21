@@ -19,6 +19,9 @@ export default function ChangePicture({ shown }: { shown: boolean }) {
         borderBottomLeftRadius: '50%',
         background: shown ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0)',
         opacity: shown ? 1 : 0,
+        // The portrait handles clicks; this visual overlay must not steal them
+        // from activity badges, including while the overlay is transparent.
+        pointerEvents: 'none',
         transition: 'opacity 0.3s ease-in-out, background 0.3s ease-in-out',
         zIndex: 9999
       }}

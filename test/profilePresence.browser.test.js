@@ -20,13 +20,13 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faBook, faCardsBlank } from '@fortawesome/pro-solid-svg-icons';
+import { faBook, faCamera, faCardsBlank } from '@fortawesome/pro-solid-svg-icons';
 import ProfilePic from './src/components/ProfilePic';
 import MemberListItem from './src/containers/Chat/RightMenu/ChatInfo/Members/MemberListItem';
 import Collect from './src/containers/Chat/Body/Collect';
 import useUserActivity, { userActivityRegistry } from './src/helpers/hooks/useUserActivity';
 import { Color } from './src/constants/css';
-library.add(faBook, faCardsBlank);
+library.add(faBook, faCamera, faCardsBlank);
 function RouteProbe() { window.fixtureLocation = useLocation(); return null; }
 function ActivityOverlay({activity}) { useUserActivity(activity); return null; }
 function Fixture() {
@@ -46,7 +46,8 @@ function Fixture() {
       creatorId={0} onlineMemberObj={presence.isOnline ? {2: presence} : {}}/></section>
     <section id="profile"><ProfilePic userId={2} online={presence.isOnline}
       isAway={presence.isAway} isBusy={presence.isBusy} statusShown statusSize="large" size={80}/></section>
-    <section id="self"><ProfilePic userId={1} isAway isBusy online statusShown size={40}/></section>
+    <section id="self"><ProfilePic userId={1} isAway isBusy online statusShown size={40}
+      isProfilePage onClick={() => {window.fixtureProfileClicks = (window.fixtureProfileClicks || 0) + 1;}}/></section>
     {collectPage && <Collect displayedThemeColor="logoBlue" {...collectPage}/>}
     {overlay !== undefined && <ActivityOverlay activity={overlay}/>}
   </main></MemoryRouter>;
@@ -75,8 +76,7 @@ async function compileFixture() {
     '~/components/Texts/UsernameText':
       'import React from "react"; export default ({user, ...props}) => <strong {...props}>{user.username}</strong>;',
     './AICards': 'import React from "react"; export default ({loadingAICardChat}) => <div>{loadingAICardChat ? "Loading AI Cards" : "AI Cards collection"}</div>;',
-    './Vocabulary': 'import React from "react"; export default ({loadingVocabulary}) => <div>{loadingVocabulary ? "Loading Word Master" : "Word Master collection"}</div>;',
-    './ChangePicture': 'export default () => null;'
+    './Vocabulary': 'import React from "react"; export default ({loadingVocabulary}) => <div>{loadingVocabulary ? "Loading Word Master" : "Word Master collection"}</div>;'
   };
   const result = await build({
     stdin: { contents: fixture, resolveDir: repo, loader: 'tsx' },
@@ -182,6 +182,19 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
         await badge.hover();
         await page.mouse.click(600, 400);
         await page.getByRole('dialog').waitFor({ state: 'detached' });
+        // The real picture-editing overlay still fades in and its parent still
+        // opens editing when the member clicks the visible Change Picture label.
+        await page.clock.resume();
+        const selfPortrait = page.locator('#self > div');
+        await selfPortrait.hover();
+        const editLabel = page.locator('#self').getByText('Change Picture', { exact: true });
+        const editLabelElement = await editLabel.elementHandle();
+        await page.waitForFunction(element => getComputedStyle(element.parentElement.parentElement).opacity === '1', editLabelElement);
+        const selfBounds = await selfPortrait.boundingBox();
+        await page.mouse.click(selfBounds.x + selfBounds.width / 2, selfBounds.y + selfBounds.height * 0.8);
+        assert.equal(await page.evaluate(() => window.fixtureProfileClicks), 1);
+        await page.mouse.move(600, 400);
+        await page.waitForFunction(element => getComputedStyle(element.parentElement.parentElement).opacity === '0', editLabelElement);
         await page.evaluate(() => window.unmountFixture());
         assert.deepEqual(errors, []);
         await page.close();
@@ -218,25 +231,31 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
 
         async function checkHover(surface, label, above) {
           const badge = page.locator(`#${surface} button[aria-haspopup="dialog"]`);
-          await badge.hover();
-          const dialog = page.getByRole('dialog');
-          await dialog.waitFor();
+          await badge.waitFor();
           const bounds = await badge.boundingBox();
+          // Check the actual topmost target and cursor before opening the popup.
+          // A transparent sibling can leave the artwork visible while stealing
+          // hits from its center/right side. Keep the real ChangePicture overlay.
           const missed = await badge.evaluate(element => {
             const rect = element.getBoundingClientRect();
             const missed = [];
-            for (let x = Math.ceil(rect.left); x < rect.right; x++) {
-              for (let y = Math.ceil(rect.top); y < rect.bottom; y++) {
-                if (!element.contains(document.elementFromPoint(x, y))) missed.push([x, y]);
+            for (let x = Math.ceil(rect.left - 5); x < rect.right + 5; x++) {
+              for (let y = Math.ceil(rect.top - 5); y < rect.bottom + 5; y++) {
+                const target = document.elementFromPoint(x, y);
+                const cursor = target && getComputedStyle(target).cursor;
+                if (!element.contains(target) || cursor !== 'pointer') missed.push({ x, y, cursor });
               }
             }
             return missed;
           });
-          assert.deepEqual(missed, [], `${engine} ${label}: visible badge hit area`);
+          assert.deepEqual(missed, [], `${engine} ${label}: pointer target centered on the visible badge`);
+          await badge.hover();
+          const dialog = page.getByRole('dialog');
+          await dialog.waitFor();
           // Pause longer than dismissal at the center, edges and corners.
           for (const x of [0.1, 0.5, 0.9]) {
             for (const y of [0.1, 0.5, 0.9]) {
-              await expectOpenAt(bounds.x + bounds.width * x, bounds.y + bounds.height * y);
+              await expectOpenAt(bounds.x + bounds.width * x, bounds.y + bounds.height * y, true);
             }
           }
           for (const x of [bounds.x - 5, bounds.x + bounds.width + 5]) {
@@ -264,10 +283,14 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
           await page.clock.runFor(350);
           await dialog.waitFor({ state: 'detached' });
 
-          async function expectOpenAt(x, y) {
+          async function expectOpenAt(x, y, checkCursor = false) {
             await page.mouse.move(x, y);
             await page.clock.runFor(350);
             assert.equal(await badge.getAttribute('aria-expanded'), 'true', `${engine} ${label}: pointer at ${x}, ${y}`);
+            if (checkCursor) {
+              const cursor = await page.evaluate(({ x, y }) => getComputedStyle(document.elementFromPoint(x, y)).cursor, { x, y });
+              assert.equal(cursor, 'pointer', `${engine} ${label}: cursor over artwork at ${x}, ${y}`);
+            }
           }
         }
       } finally {
