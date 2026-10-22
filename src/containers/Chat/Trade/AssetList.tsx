@@ -116,7 +116,7 @@ export default function AssetList({
         );
       })}
       {bundle.builds.map((build) => (
-        <div className="asset" key={`app-${build.id}`}>
+        <div className="asset asset--app" key={`app-${build.id}`}>
           <div className="asset-heading">
             <b>Lumine app · #{build.id}</b>
             {onRemove && (

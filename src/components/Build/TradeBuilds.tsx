@@ -20,6 +20,7 @@ const listClass = css`
   width: 100%;
   font-size: 1.3rem;
   > div {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -33,11 +34,38 @@ const listClass = css`
     background: var(--ui-soft-bg, #f3f7fd);
   }
   &[data-embedded='true'] > div {
+    position: static;
     border: 0;
     padding: 0;
   }
-  .app-action {
+  .app-action,
+  .app-remove {
+    position: relative;
+    z-index: 1;
     flex-shrink: 0;
+  }
+  .app-preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+    border-radius: 0.5rem;
+  }
+  a.app-preview::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  a.app-preview:hover strong {
+    text-decoration: underline;
+  }
+  a.app-preview:focus-visible {
+    outline: 2px solid var(--ui-border-strong, #315b91);
+    outline-offset: 0.3rem;
   }
   img {
     width: 5rem;
@@ -50,10 +78,6 @@ const listClass = css`
     flex: 1;
     min-width: 0;
     overflow-wrap: anywhere;
-  }
-  a {
-    color: inherit;
-    font-weight: 600;
   }
   small {
     display: block;
@@ -77,47 +101,54 @@ export default function TradeBuilds({
 }) {
   return (
     <div className={listClass} data-embedded={embedded}>
-      {builds.map((build) => (
-        <div key={build.id} data-selected={selectedIds.includes(build.id)}>
-          {build.thumbnailUrl ? (
-            <img src={build.thumbnailUrl} alt="" />
-          ) : (
-            <Icon icon="laptop-code" />
-          )}
-          <div className="app-title">
-            {build.unavailable || !build.isPublic ? (
-              <strong>{build.title}</strong>
-            ) : (
-              <a
-                href={`/app/${build.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(event) => event.stopPropagation()}
+      {builds.map((build) => {
+        const canOpen = !build.unavailable && !!build.isPublic;
+        const Preview = canOpen ? 'a' : 'div';
+        return (
+          <div key={build.id} data-selected={selectedIds.includes(build.id)}>
+            <Preview
+              className="app-preview"
+              {...(canOpen
+                ? {
+                    href: `/app/${build.id}`,
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                    'aria-label': `Open ${build.title}`,
+                    onClick: (event: React.MouseEvent) => event.stopPropagation()
+                  }
+                : {})}
+            >
+              {build.thumbnailUrl ? (
+                <img src={build.thumbnailUrl} alt="" />
+              ) : (
+                <Icon icon="laptop-code" />
+              )}
+              <div className="app-title">
+                <strong>{build.title}</strong>
+                {build.creatorUsername && (
+                  <small>Created by {build.creatorUsername}</small>
+                )}
+                {!build.isPublic && !build.unavailable && (
+                  <small>Private app · workspace included</small>
+                )}
+              </div>
+            </Preview>
+            {renderAction && (
+              <div className="app-action">{renderAction(build)}</div>
+            )}
+            {onRemove && (
+              <Button
+                className="app-remove"
+                variant="ghost"
+                aria-label={`Remove ${build.title}`}
+                onClick={() => onRemove(build.id)}
               >
-                {build.title}
-              </a>
-            )}
-            {build.creatorUsername && (
-              <small>Created by {build.creatorUsername}</small>
-            )}
-            {!build.isPublic && !build.unavailable && (
-              <small>Private app · workspace included</small>
+                <Icon icon="xmark" />
+              </Button>
             )}
           </div>
-          {renderAction && (
-            <div className="app-action">{renderAction(build)}</div>
-          )}
-          {onRemove && (
-            <Button
-              variant="ghost"
-              aria-label={`Remove ${build.title}`}
-              onClick={() => onRemove(build.id)}
-            >
-              <Icon icon="xmark" />
-            </Button>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

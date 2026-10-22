@@ -123,6 +123,13 @@ export const assetListClass = css`
     padding: 0;
     overflow: hidden;
   }
+  .asset--app {
+    position: relative;
+  }
+  .asset--app .remove {
+    position: relative;
+    z-index: 1;
+  }
   .asset-actions {
     display: flex;
     justify-content: flex-end;
