@@ -21,7 +21,7 @@ export default function ParentInviteStatus({
     ],
     sent: [
       'Invitation sent',
-      `The email was sent to ${invite.toMasked}. When you meet your friends, ask your parent to open it and press “We’re together” / “함께 있어요”. Each of you scans the code from your own Twinkle account. The link works until ${when(invite.expiresAt)}.`
+      `The email was sent to ${invite.toMasked}. When you get a chance, ask your parent if it arrived. They can check their spam folder too. When you meet your friends, ask your parent to open it and press “We’re together” / “함께 있어요”. Each of you scans the code from your own Twinkle account. The link works until ${when(invite.expiresAt)}.`
     ],
     active: [
       invite.checkedIn
