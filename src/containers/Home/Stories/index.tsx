@@ -25,6 +25,7 @@ import { useScrollAnchor } from './hooks/useScrollAnchor';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { HOME_FEED_PERFORMANCE_FORCE_KEY } from '~/constants/defaultValues';
 import { resetAppShellScroll } from '~/helpers/appShellScroll';
+import { getBountyStacks } from '~/helpers/homeBountyStacks';
 import type {
   HomeFeedPage,
   HomeFeedPaginationCursor,
@@ -267,43 +268,6 @@ function getHomeFeedAnchorId(feed: { [key: string]: any } = {}, index: number) {
   ].filter(Boolean);
 
   return parts.length > 0 ? parts.join('|') : `position:${index}`;
-}
-
-const MIN_BOUNTY_RUN_TO_STACK = 2;
-
-function getBountyStackKey(feed: { [key: string]: any } = {}) {
-  const uploaderId = Number(feed?.uploaderId || 0);
-  return feed?.contentType === 'bounty' && feed?.contentId && uploaderId > 0
-    ? `bounty-${uploaderId}`
-    : '';
-}
-
-/* Consecutive "earned a bounty" cards from one person collapse into one
-   stack. Only the render changes; feed state, paging and anchors stay as is. */
-function getBountyStacks(feeds: any[] = []) {
-  const stacks = new Map<number, { size: number; headKey: string }>();
-  const hidden = new Map<number, string>();
-  let runStart = 0;
-  while (runStart < feeds.length) {
-    const key = getBountyStackKey(feeds[runStart]);
-    let runEnd = runStart + 1;
-    if (key) {
-      while (
-        runEnd < feeds.length &&
-        getBountyStackKey(feeds[runEnd]) === key
-      ) {
-        runEnd++;
-      }
-      const size = runEnd - runStart;
-      if (size >= MIN_BOUNTY_RUN_TO_STACK) {
-        const headKey = `${key}-${feeds[runStart].feedId || feeds[runStart].contentId}`;
-        stacks.set(runStart, { size, headKey });
-        for (let i = runStart + 1; i < runEnd; i++) hidden.set(i, headKey);
-      }
-    }
-    runStart = runEnd;
-  }
-  return { stacks, hidden };
 }
 
 function getHomeFeedAnchorPart(label: string, value: unknown) {
