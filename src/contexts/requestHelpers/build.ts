@@ -9,6 +9,12 @@ import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
 import { toBuildRewardRequestError } from '~/helpers/buildRewardRequestError';
+import {
+  queueRewardDiagnostic,
+  rewardClientDiagnostic,
+  rewardTraceId,
+  REWARD_TRACE_OPERATIONS
+} from '~/helpers/buildRewardDiagnostics';
 import { RequestHelpers } from '~/types';
 import {
   readBuildRuntimeAiStream,
@@ -753,14 +759,52 @@ export default function buildRequestHelpers({
       operation,
       payload,
       token,
-      runtimeGrant
+      runtimeGrant,
+      diagnosticUserId
     }: {
       buildId: number;
       operation: string;
       payload: unknown;
       token: string;
       runtimeGrant: string;
+      diagnosticUserId?: number;
     }) {
+      const requestId = REWARD_TRACE_OPERATIONS.has(operation)
+        ? rewardTraceId()
+        : null;
+      const beganAt = Date.now();
+      const headers = {
+        ...auth().headers,
+        'x-build-api-token': token,
+        'x-build-reward-runtime': runtimeGrant
+      };
+      const report = (result?: unknown, error?: unknown) => {
+        if (!requestId || !diagnosticUserId) return;
+        void queueRewardDiagnostic({
+          userId: diagnosticUserId,
+          buildId,
+          event: rewardClientDiagnostic({
+            requestId,
+            operation,
+            payload,
+            result,
+            error: axios.isAxiosError(error) ? error : error ? {} : undefined,
+            durationMs: Date.now() - beganAt
+          }),
+          send: (event) =>
+            request.post(
+              `${URL}/build/${buildId}/api/rewards/diagnostic`,
+              event,
+              {
+                ...getBuildRequestConfig({
+                  maxRetries: 0,
+                  totalTimeoutMs: 5000
+                }),
+                headers
+              }
+            )
+        }).catch(() => {});
+      };
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/rewards/${operation}`,
@@ -768,14 +812,15 @@ export default function buildRequestHelpers({
           {
             ...getBuildRequestConfig({ maxRetries: 0 }),
             headers: {
-              ...auth().headers,
-              'x-build-api-token': token,
-              'x-build-reward-runtime': runtimeGrant
+              ...headers,
+              ...(requestId ? { 'x-build-reward-request': requestId } : {})
             }
           }
         );
+        report(data);
         return data;
       } catch (error) {
+        report(undefined, error);
         throw toBuildRewardRequestError(error);
       }
     },

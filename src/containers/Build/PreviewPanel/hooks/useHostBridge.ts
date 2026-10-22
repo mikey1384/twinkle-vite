@@ -5294,6 +5294,7 @@ export function useHostBridge({
             );
             response = await requestRefs.requestBuildRewardsRef.current({
               buildId: activeBuild.id,
+              diagnosticUserId: rewardUserId,
               operation: type.slice('rewards:'.length),
               payload: {
                 ruleId: payload?.ruleId,
