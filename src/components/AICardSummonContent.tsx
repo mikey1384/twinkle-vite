@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import AICard from '~/components/AICard';
 import AICardDetails from '~/components/AICardDetails';
 import AICardPreview from '~/components/AICardPreview';
-import Button from '~/components/Button';
 import AICardModal from '~/components/Modals/AICardModal';
 import { useChatContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
@@ -70,13 +69,6 @@ export default function AICardSummonContent({
           style={{ minWidth: 0, overflowWrap: 'anywhere', fontSize: '1.4rem' }}
         >
           <AICardDetails card={displayedCard} showIdentity />
-          <Button
-            variant="ghost"
-            style={{ marginTop: '1rem' }}
-            onClick={() => setModalShown(true)}
-          >
-            View card details
-          </Button>
         </div>
       </div>
       {modalShown && (
