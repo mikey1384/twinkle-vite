@@ -6,11 +6,12 @@ import { Color } from '~/constants/css';
 import type { RoadmapAction, RoadmapView } from '../../helpers/roadmap';
 import { primaryButtonClass, roadmapInk, roadmapMuted } from './styles';
 
-// The open proposal, folded to one line once the chat has moved past its
-// card: Start stays one tap away and View brings the full card back.
+// Start stays one tap away; View opens the plan's full workspace. Give the
+// title and actions separate rows so long labels fit a narrow split panel.
 const stripClass = css`
   flex-shrink: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
   margin: 1rem 1.2rem 0;
@@ -34,6 +35,7 @@ const iconClass = css`
 `;
 
 const textClass = css`
+  grid-column: 2 / -1;
   flex: 1;
   min-width: 0;
   line-height: 1.25;
@@ -53,6 +55,7 @@ const textClass = css`
 `;
 
 const startClass = css`
+  grid-column: 1 / 3;
   flex-shrink: 0;
   border-radius: 10px !important;
   font-weight: 800 !important;
@@ -60,6 +63,8 @@ const startClass = css`
 `;
 
 const viewClass = css`
+  grid-column: 3;
+  min-height: 44px;
   flex-shrink: 0;
   border: 0;
   background: none;
@@ -88,7 +93,7 @@ export default function RoadmapProposalStrip({
   disabled?: boolean;
   busyAction?: RoadmapAction | null;
   onAction: (action: RoadmapAction) => void;
-  onView: () => void;
+  onView: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <section className={stripClass} aria-label="Your build plan is ready">

@@ -1,5 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { BUILD_WORKSPACE_COMPACT_MEDIA_QUERY } from '../../constants';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
+import { css } from '@emotion/css';
 import {
   resolveReplanNotice,
   resolveStopConfirmAnswered,
@@ -18,6 +24,7 @@ import RoadmapPanel from './RoadmapPanel';
 import RoadmapProposalCard from './RoadmapProposalCard';
 import RoadmapProposalStrip from './RoadmapProposalStrip';
 import RoadmapStopConfirm from './RoadmapStopConfirm';
+import RoadmapSummary from './RoadmapSummary';
 
 export type { RoadmapPublishControl };
 
@@ -45,17 +52,16 @@ function writeMemory(key: string, memory: RoadmapUiMemory) {
   }
 }
 
-function defaultCollapsed() {
-  try {
-    return window.matchMedia(BUILD_WORKSPACE_COMPACT_MEDIA_QUERY).matches;
-  } catch {
-    return false;
-  }
-}
+const proposalWorkspaceClass = css`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.2rem;
+`;
 
-// Everything the Lumine chat shows for a roadmap: the pinned panel (above
-// the transcript) and the card at the end of the transcript. ChatPanel only
-// places the two nodes; which one shows is resolveRoadmapSurfaces's call.
+// The small summary, the full workspace view, and milestones in the chat
+// all use the same server-owned plan and action state.
 export function useRoadmapSurfaces({
   executionPlan,
   generating,
@@ -100,13 +106,15 @@ export function useRoadmapSurfaces({
     viewKey ? readMemory(viewKey) : {}
   );
   const [busyAction, setBusyAction] = useState<RoadmapAction | null>(null);
-  // "View" on the proposal strip brings the full card back to the end of
-  // the chat until the kid writes again.
-  const [proposalOpened, setProposalOpened] = useState(false);
+  const [planOpened, setPlanOpened] = useState(false);
+  const planOpenerRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
-    setProposalOpened(false);
-  }, [viewKey, latestUserMessageAt]);
-
+    setPlanOpened(false);
+  }, [viewKey]);
+  useEffect(() => {
+    // Return to the conversation when an accepted action starts a new run.
+    if (generating) setPlanOpened(false);
+  }, [generating]);
   useEffect(() => {
     setMemory(viewKey ? readMemory(viewKey) : {});
   }, [viewKey]);
@@ -155,23 +163,15 @@ export function useRoadmapSurfaces({
     memory,
     latestUserMessageAt,
     proposalAnswered,
-    proposalOpened,
     stopConfirmAnswered: resolveStopConfirmAnswered(messages || [], view)
   });
   const canAct = isOwner && Boolean(onSendRoadmapAction);
-  const collapsed =
-    typeof memory.collapsed === 'boolean'
-      ? memory.collapsed
-      : defaultCollapsed();
-
-  const handleViewProposal = useCallback(() => {
-    setProposalOpened(true);
-    window.requestAnimationFrame(() => {
-      document
-        .getElementById(`build-roadmap-proposal-${viewKey}`)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }, [viewKey]);
+  function openPlan(event: React.MouseEvent<HTMLButtonElement>) {
+    // Safari does not focus buttons on pointer clicks. Remember the actual
+    // opener rather than relying on document.activeElement for the return.
+    planOpenerRef.current = event.currentTarget;
+    setPlanOpened(true);
+  }
 
   const panelNode =
     view && surfaces.strip ? (
@@ -181,17 +181,36 @@ export function useRoadmapSurfaces({
         disabled={disabled || generating}
         busyAction={busyAction}
         onAction={handleAction}
-        onView={handleViewProposal}
+        onView={openPlan}
       />
     ) : view && surfaces.panel ? (
-      <RoadmapPanel
+      <RoadmapSummary
         view={view}
-        collapsed={collapsed}
+        canAct={canAct}
+        updated={Boolean(resolveReplanNotice(view, memory))}
+        onOpen={openPlan}
+      />
+    ) : null;
+
+  const planNode =
+    view && surfaces.strip ? (
+      <div className={proposalWorkspaceClass}>
+        <RoadmapProposalCard
+          view={view}
+          canAct={canAct}
+          disabled={disabled || generating}
+          busyAction={busyAction}
+          onAction={handleAction}
+        />
+      </div>
+    ) : view && surfaces.panel ? (
+      <RoadmapPanel
+        key={view.key}
+        view={view}
         generating={generating}
         canAct={canAct}
         disabled={disabled}
         busyAction={busyAction}
-        onToggleCollapsed={() => updateMemory({ collapsed: !collapsed })}
         onAction={handleAction}
         replanNotice={resolveReplanNotice(view, memory)}
         onDismissReplan={() =>
@@ -268,6 +287,10 @@ export function useRoadmapSurfaces({
     isRoadmap: Boolean(view),
     view,
     panelNode,
+    planNode,
+    planOpenerRef,
+    planOpened: Boolean(planNode) && planOpened,
+    closePlan: () => setPlanOpened(false),
     transcriptNode
   };
 }

@@ -34,6 +34,7 @@ const spotlightFadeIn = keyframes`
 const SPOTLIGHT_Z_INDEX = 9_999_000;
 
 interface ComposerProps {
+  compact?: boolean;
   AI_FEATURES_DISABLED: boolean;
   aiInputDisabled: boolean;
   aiInputDisabledNotice: string;
@@ -66,6 +67,7 @@ interface ComposerProps {
 }
 
 export default function Composer({
+  compact = false,
   AI_FEATURES_DISABLED,
   aiInputDisabled,
   aiInputDisabledNotice,
@@ -179,8 +181,8 @@ export default function Composer({
     <div
       ref={containerRef}
       className={css`
-        /* Never squeezed out of the chat column: the header scrolls and
-           the Build plan panel shrinks to its head first. */
+        /* The draft stays available while settings and the plan use their
+           own space. Short panels need less empty space around the input. */
         flex-shrink: 0;
         padding: 0.9rem 1rem 1.1rem;
         background: #fff;
@@ -343,7 +345,7 @@ export default function Composer({
             resize: none;
             font-size: var(--build-workshop-input-font-size);
             font-family: inherit;
-            min-height: 64px;
+            min-height: ${compact ? 44 : 64}px;
             max-height: 120px;
             background: #fff;
             &:focus {

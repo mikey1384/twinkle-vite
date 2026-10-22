@@ -2,16 +2,18 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
-import { mobileMaxWidth } from '~/constants/css';
+import { workshopThemeClass } from './workshopTheme';
 import BranchMainUpdateNotice from '../BranchMainUpdateNotice';
 import MainProjectButton from '../MainProjectButton';
 import ThreeVendorUpgradeNotice from '../ThreeVendorUpgradeNotice';
 import Composer from './Composer';
 import useAppReferences from './hooks/useAppReferences';
+import useChatPanelSpace from './hooks/useChatPanelSpace';
 import Header from './Header';
 import RuntimeUploadsModal from './RuntimeUploadsModal';
 import Transcript from './Transcript';
 import { useRoadmapSurfaces } from './Roadmap';
+import RoadmapWorkspace from './Roadmap/RoadmapWorkspace';
 import {
   resolveProposalAnswered,
   resolveRoadmapCheckActivity,
@@ -36,107 +38,10 @@ const panelClass = css`
   overflow: hidden;
   border-right: 1px solid var(--ui-border);
   background: #fff;
-  --build-chat-accent: #2563eb;
-  --build-chat-accent-strong: #1d4ed8;
-  --build-chat-user-bg: #eef6ff;
-  --build-chat-user-text: #1f2937;
-  --build-chat-user-border: rgba(65, 140, 235, 0.28);
-  --theme-bg: var(--build-chat-accent);
-  --theme-hover-bg: var(--build-chat-accent-strong);
-  --theme-text: #ffffff;
-  --theme-border: var(--build-chat-accent);
-  --ui-border: rgba(148, 163, 184, 0.28);
-  --ui-border-strong: rgba(65, 140, 235, 0.52);
-  --chat-bg: #f8fafc;
-  --chat-title-bg: #eef4ff;
-  --chat-hover-bg: #f1f6ff;
-  --chat-hover-title-bg: #e2edff;
-  --chat-text: #2f3747;
-  --chat-border: rgba(148, 163, 184, 0.34);
-  /* Reading text (messages, input, prompts) is sized close to the main site
-     chat (1.6rem messages); chrome and fine print (label/meta/small/tiny)
-     stay compact so the dense header/settings rows don't overflow.
-     --build-workshop-font-scale is set inline by the component (desktop
-     panel-width scaling); the bases must stay here in CSS so the mobile
-     breakpoint below can override them. */
-  --build-workshop-font-scale: 1;
-  --build-workshop-title-font-size: calc(
-    1.6rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-body-font-size: calc(
-    1.4rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-label-font-size: calc(
-    1.2rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-meta-font-size: calc(
-    1.1rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-small-font-size: calc(
-    1.1rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-tiny-font-size: max(
-    1rem,
-    1rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-message-font-size: calc(
-    1.5rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-message-meta-font-size: calc(
-    1.1rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-input-font-size: calc(
-    1.5rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-prompt-font-size: calc(
-    1.4rem * var(--build-workshop-font-scale)
-  );
-  --build-workshop-choice-font-size: calc(
-    1.3rem * var(--build-workshop-font-scale)
-  );
-  font-size: var(--build-workshop-body-font-size);
+  ${workshopThemeClass};
   @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     border-right: none;
     border-bottom: 1px solid var(--ui-border);
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    /* The site root font drops from 10px to 8px at this breakpoint
-       (styles.css), which would shrink all the sizes above by 20% on
-       phones; these overrides restore roughly the same physical px sizes
-       as desktop. */
-    --build-workshop-title-font-size: calc(
-      2rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-body-font-size: calc(
-      1.7rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-label-font-size: calc(
-      1.4rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-meta-font-size: calc(
-      1.3rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-small-font-size: calc(
-      1.3rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-tiny-font-size: calc(
-      1.2rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-message-font-size: calc(
-      1.8rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-message-meta-font-size: calc(
-      1.3rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-input-font-size: calc(
-      1.8rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-prompt-font-size: calc(
-      1.7rem * var(--build-workshop-font-scale)
-    );
-    --build-workshop-choice-font-size: calc(
-      1.6rem * var(--build-workshop-font-scale)
-    );
   }
 `;
 
@@ -186,9 +91,8 @@ const desktopOnlyMainButtonClass = css`
   }
 `;
 
-// The transcript keeps a small usable minimum: the header (scrolls) and the
-// Build plan panel (down to its head) give way first, and the Composer
-// below never does.
+// The transcript takes the remaining conversation space. Compact settings
+// and the plan summary leave room for reading without shrinking the composer.
 const scrollAreaClass = css`
   flex: 1;
   overflow-y: auto;
@@ -206,6 +110,22 @@ const peoplePaneClass = css`
   min-height: 0;
   overflow: hidden;
   background: #fff;
+`;
+
+const lumineSurfaceClass = css`
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+`;
+
+const lumineConversationClass = css`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
 `;
 
 const mainUpdateNoticePlacementClass = css`
@@ -309,6 +229,7 @@ export default function ChatPanel({
   onFixRuntimeObservationMessage,
   onDeleteMessage
 }: ChatPanelProps) {
+  const { panelRef, compact, short } = useChatPanelSpace();
   const normalizedWorkshopScale = Number.isFinite(workshopScale)
     ? Math.max(0.96, Math.min(1.25, workshopScale))
     : 1;
@@ -892,6 +813,7 @@ export default function ChatPanel({
 
   return (
     <div
+      ref={panelRef}
       className={className ? `${panelClass} ${className}` : panelClass}
       style={
         {
@@ -938,157 +860,175 @@ export default function ChatPanel({
       ) : luminePanelOverride ? (
         <div className={peoplePaneClass}>{luminePanelOverride}</div>
       ) : (
-        <>
-          {mainUpdateNoticeControl?.shown ? (
-            <BranchMainUpdateNotice
-              className={mainUpdateNoticePlacementClass}
-              canUpdate={mainUpdateNoticeControl.canUpdate}
-              loading={mainUpdateNoticeControl.loading}
-              error={mainUpdateNoticeControl.error}
-              lumineFixBlocksBranchSync={
-                mainUpdateNoticeControl.lumineFixBlocksBranchSync
-              }
-              lumineFixTargetsCurrentBranch={
-                mainUpdateNoticeControl.lumineFixTargetsCurrentBranch
-              }
-              lumineFixControl={mainUpdateNoticeControl.lumineFixControl}
-              branchLumineFixControl={
-                mainUpdateNoticeControl.branchLumineFixControl
-              }
-              onUpdate={mainUpdateNoticeControl.onUpdate}
-            />
-          ) : null}
-          {threeUpgradeNoticeControl?.shown ? (
-            <ThreeVendorUpgradeNotice
-              className={mainUpdateNoticePlacementClass}
-              loading={generating}
-              disabled={aiInputDisabled}
-              onUpgrade={threeUpgradeNoticeControl.onUpgrade}
-              onDismiss={threeUpgradeNoticeControl.onDismiss}
-            />
-          ) : null}
-          <Header
-            copilotPolicy={copilotPolicy}
-            aiUsagePolicy={aiUsagePolicy}
-            lumineChatVisibilityControl={lumineChatVisibilityControl}
-            lumineModelSelectionControl={lumineModelSelectionControl}
-            pageFeedbackEvents={pageFeedbackEvents}
-            twinkleCoins={twinkleCoins}
-            purchasingGenerationReset={purchasingGenerationReset}
-            generationResetError={generationResetError}
-            generationResetUi={generationResetUi}
-            limitsExpanded={limitsExpanded}
-            minimized={lumineHeaderMinimized}
-            onPurchaseGenerationReset={onPurchaseGenerationReset}
-            onOpenRuntimeUploadsManager={onOpenRuntimeUploadsManager}
-            onToggleLimitsExpanded={handleToggleLimitsExpanded}
-            onToggleMinimized={handleToggleMinimized}
-          />
-          {roadmap.panelNode}
+        <div className={lumineSurfaceClass}>
           <div
-            ref={chatScrollRef}
-            onScroll={handleLumineScroll}
-            className={scrollAreaClass}
+            className={lumineConversationClass}
+            inert={roadmap.planOpened}
+            aria-hidden={roadmap.planOpened || undefined}
+            style={roadmap.planOpened ? { visibility: 'hidden' } : undefined}
           >
-            <Transcript
-              messages={messages}
-              runMode={runMode}
+            {mainUpdateNoticeControl?.shown ? (
+              <BranchMainUpdateNotice
+                className={mainUpdateNoticePlacementClass}
+                canUpdate={mainUpdateNoticeControl.canUpdate}
+                loading={mainUpdateNoticeControl.loading}
+                error={mainUpdateNoticeControl.error}
+                lumineFixBlocksBranchSync={
+                  mainUpdateNoticeControl.lumineFixBlocksBranchSync
+                }
+                lumineFixTargetsCurrentBranch={
+                  mainUpdateNoticeControl.lumineFixTargetsCurrentBranch
+                }
+                lumineFixControl={mainUpdateNoticeControl.lumineFixControl}
+                branchLumineFixControl={
+                  mainUpdateNoticeControl.branchLumineFixControl
+                }
+                onUpdate={mainUpdateNoticeControl.onUpdate}
+              />
+            ) : null}
+            {threeUpgradeNoticeControl?.shown ? (
+              <ThreeVendorUpgradeNotice
+                className={mainUpdateNoticePlacementClass}
+                loading={generating}
+                disabled={aiInputDisabled}
+                onUpgrade={threeUpgradeNoticeControl.onUpgrade}
+                onDismiss={threeUpgradeNoticeControl.onDismiss}
+              />
+            ) : null}
+            <Header
+              compact={compact}
+              short={short}
+              copilotPolicy={copilotPolicy}
+              aiUsagePolicy={aiUsagePolicy}
+              lumineChatVisibilityControl={lumineChatVisibilityControl}
+              lumineModelSelectionControl={lumineModelSelectionControl}
+              pageFeedbackEvents={pageFeedbackEvents}
+              twinkleCoins={twinkleCoins}
+              purchasingGenerationReset={purchasingGenerationReset}
+              generationResetError={generationResetError}
+              generationResetUi={generationResetUi}
+              limitsExpanded={limitsExpanded}
+              minimized={lumineHeaderMinimized}
+              onPurchaseGenerationReset={onPurchaseGenerationReset}
+              onOpenRuntimeUploadsManager={onOpenRuntimeUploadsManager}
+              onToggleLimitsExpanded={handleToggleLimitsExpanded}
+              onToggleMinimized={handleToggleMinimized}
+            />
+            {roadmap.panelNode}
+            <div
+              ref={chatScrollRef}
+              onScroll={handleLumineScroll}
+              className={scrollAreaClass}
+            >
+              <Transcript
+                messages={messages}
+                runMode={runMode}
+                generating={generating}
+                generatingStatus={generatingStatus}
+                assistantStatusSteps={assistantStatusSteps}
+                currentActivity={currentActivity}
+                statusStepEntries={statusStepEntries}
+                runtimeDebugSnapshot={runtimeDebugSnapshot}
+                runError={runError}
+                activeStreamMessageIds={activeStreamMessageIds}
+                isOwner={isOwner}
+                chatEndRef={chatEndRef}
+                quickReplyShown={
+                  showScopedPlanQuickReplies || showGenericFollowUpQuickReplies
+                }
+                quickReplyQuestion={
+                  showScopedPlanQuickReplies
+                    ? normalizedScopedPlanQuestion
+                    : normalizedFollowUpQuestion
+                }
+                quickReplyYesLabel={
+                  followUpModelSwitchLabel
+                    ? `Yes, switch to ${followUpModelSwitchLabel}!`
+                    : followUpContinuesUnfinishedWork
+                      ? 'Continue'
+                      : undefined
+                }
+                quickReplyOnceLabel={
+                  followUpModelSwitchLabel ? 'Just this once' : undefined
+                }
+                onQuickReplyOnce={
+                  followUpModelSwitchLabel
+                    ? onAcceptFollowUpPromptOnce
+                    : undefined
+                }
+                quickReplyNoLabel={
+                  followUpModelSwitchLabel
+                    ? 'No thanks'
+                    : followUpContinuesUnfinishedWork
+                      ? 'Not now'
+                      : undefined
+                }
+                quickReplyBusy={
+                  Boolean(followUpModelSwitchLabel) &&
+                  Boolean(lumineModelSelectionControl?.loading)
+                }
+                onQuickReplyYes={
+                  showScopedPlanQuickReplies
+                    ? onContinueScopedPlan
+                    : onAcceptFollowUpPrompt
+                }
+                onQuickReplyNo={
+                  showScopedPlanQuickReplies
+                    ? onCancelScopedPlan
+                    : onDismissFollowUpPrompt
+                }
+                onQuickReplyRedirect={handlePrefillRedirect}
+                pendingToolApproval={
+                  showPendingToolApproval ? pendingToolApproval : null
+                }
+                toolApprovalBusy={toolApprovalBusy}
+                onApproveToolRequest={onApproveToolRequest}
+                onDeclineToolRequest={onDeclineToolRequest}
+                thumbnailNudgePrompt={
+                  showThumbnailNudge ? thumbnailNudgePrompt : null
+                }
+                onThumbnailNudgeSelect={onThumbnailNudgeSelect}
+                roadmapCard={roadmap.transcriptNode}
+                onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
+                onDeleteMessage={onDeleteMessage}
+              />
+            </div>
+            <BranchSendToOwnerStrip build={branchSendToOwnerBuild} />
+            <Composer
+              compact={short}
+              AI_FEATURES_DISABLED={AI_FEATURES_DISABLED}
+              aiInputDisabled={aiInputDisabled}
+              aiInputDisabledNotice={aiInputDisabledNotice}
+              energyModelSwitch={energyModelSwitch}
+              buildId={buildId}
+              draftMessage={draftMessage}
               generating={generating}
-              generatingStatus={generatingStatus}
-              assistantStatusSteps={assistantStatusSteps}
-              currentActivity={currentActivity}
-              statusStepEntries={statusStepEntries}
-              runtimeDebugSnapshot={runtimeDebugSnapshot}
-              runError={runError}
-              activeStreamMessageIds={activeStreamMessageIds}
+              inputRef={inputRef}
               isOwner={isOwner}
-              chatEndRef={chatEndRef}
-              quickReplyShown={
-                showScopedPlanQuickReplies || showGenericFollowUpQuickReplies
-              }
-              quickReplyQuestion={
-                showScopedPlanQuickReplies
-                  ? normalizedScopedPlanQuestion
-                  : normalizedFollowUpQuestion
-              }
-              quickReplyYesLabel={
-                followUpModelSwitchLabel
-                  ? `Yes, switch to ${followUpModelSwitchLabel}!`
-                  : followUpContinuesUnfinishedWork
-                    ? 'Continue'
-                    : undefined
-              }
-              quickReplyOnceLabel={
-                followUpModelSwitchLabel ? 'Just this once' : undefined
-              }
-              onQuickReplyOnce={
-                followUpModelSwitchLabel
-                  ? onAcceptFollowUpPromptOnce
-                  : undefined
-              }
-              quickReplyNoLabel={
-                followUpModelSwitchLabel
-                  ? 'No thanks'
-                  : followUpContinuesUnfinishedWork
-                    ? 'Not now'
-                    : undefined
-              }
-              quickReplyBusy={
-                Boolean(followUpModelSwitchLabel) &&
-                Boolean(lumineModelSelectionControl?.loading)
-              }
-              onQuickReplyYes={
-                showScopedPlanQuickReplies
-                  ? onContinueScopedPlan
-                  : onAcceptFollowUpPrompt
-              }
-              onQuickReplyNo={
-                showScopedPlanQuickReplies
-                  ? onCancelScopedPlan
-                  : onDismissFollowUpPrompt
-              }
-              onQuickReplyRedirect={handlePrefillRedirect}
-              pendingToolApproval={
-                showPendingToolApproval ? pendingToolApproval : null
-              }
-              toolApprovalBusy={toolApprovalBusy}
-              onApproveToolRequest={onApproveToolRequest}
-              onDeclineToolRequest={onDeclineToolRequest}
-              thumbnailNudgePrompt={
-                showThumbnailNudge ? thumbnailNudgePrompt : null
-              }
-              onThumbnailNudgeSelect={onThumbnailNudgeSelect}
-              roadmapCard={roadmap.transcriptNode}
-              onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
-              onDeleteMessage={onDeleteMessage}
+              limitsExpanded={!compact && limitsExpanded}
+              onDraftMessageChange={onDraftMessageChange}
+              onOpenBuildChatUpload={onOpenBuildChatUpload}
+              onStopGeneration={onStopGeneration}
+              onSubmitMessage={appReferences.submitMessage}
+              referenceApps={appReferences.apps}
+              onAddReferenceApp={appReferences.addApp}
+              onRemoveReferenceApp={appReferences.removeApp}
+              commentFeedback={draftCommentFeedback}
+              onRemoveCommentFeedback={appReferences.removeFeedback}
+              submitting={appReferences.submitting}
+              submitError={appReferences.error}
+              uploadInFlight={uploadInFlight}
             />
           </div>
-          <BranchSendToOwnerStrip build={branchSendToOwnerBuild} />
-          <Composer
-            AI_FEATURES_DISABLED={AI_FEATURES_DISABLED}
-            aiInputDisabled={aiInputDisabled}
-            aiInputDisabledNotice={aiInputDisabledNotice}
-            energyModelSwitch={energyModelSwitch}
-            buildId={buildId}
-            draftMessage={draftMessage}
-            generating={generating}
-            inputRef={inputRef}
-            isOwner={isOwner}
-            limitsExpanded={limitsExpanded}
-            onDraftMessageChange={onDraftMessageChange}
-            onOpenBuildChatUpload={onOpenBuildChatUpload}
-            onStopGeneration={onStopGeneration}
-            onSubmitMessage={appReferences.submitMessage}
-            referenceApps={appReferences.apps}
-            onAddReferenceApp={appReferences.addApp}
-            onRemoveReferenceApp={appReferences.removeApp}
-            commentFeedback={draftCommentFeedback}
-            onRemoveCommentFeedback={appReferences.removeFeedback}
-            submitting={appReferences.submitting}
-            submitError={appReferences.error}
-            uploadInFlight={uploadInFlight}
-          />
-        </>
+          {roadmap.planOpened ? (
+            <RoadmapWorkspace
+              onClose={roadmap.closePlan}
+              returnFocusRef={roadmap.planOpenerRef}
+            >
+              {roadmap.planNode}
+            </RoadmapWorkspace>
+          ) : null}
+        </div>
       )}
       <RuntimeUploadsModal
         buildId={buildId}

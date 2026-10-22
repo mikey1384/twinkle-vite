@@ -6,6 +6,7 @@ import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import ProgressBar from '~/components/ProgressBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { workshopThemeClass } from './workshopTheme';
 import {
   BuildAiUsagePolicy,
   BuildCopilotPolicy,
@@ -103,6 +104,45 @@ const minimizedHeaderClass = css`
   }
 `;
 
+const compactHeaderClass = css`
+  flex-shrink: 0;
+  min-width: 0;
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--ui-border);
+  background: #fff;
+`;
+
+const compactToolbarClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  button,
+  select {
+    min-height: 32px;
+  }
+`;
+
+const dialogHeaderClass = css`
+  max-height: none;
+  overflow: visible;
+  border-bottom: 0;
+`;
+
+const noticeLinkClass = css`
+  border: 0;
+  padding: 0.3rem 0;
+  background: none;
+  color: #1d4ed8;
+  font: inherit;
+  font-size: var(--build-workshop-label-font-size);
+  text-align: left;
+  cursor: pointer;
+`;
+
 const headerIconButtonClass = css`
   flex: 0 0 auto;
   width: 2.45rem;
@@ -175,6 +215,8 @@ function HeaderMinimizeToggle({
 }
 
 interface HeaderProps {
+  compact?: boolean;
+  short?: boolean;
   copilotPolicy: BuildCopilotPolicy | null;
   aiUsagePolicy: BuildAiUsagePolicy | null;
   lumineChatVisibilityControl?: {
@@ -207,6 +249,8 @@ interface HeaderProps {
 }
 
 export default function Header({
+  compact = false,
+  short = false,
   copilotPolicy,
   aiUsagePolicy,
   lumineChatVisibilityControl,
@@ -226,6 +270,13 @@ export default function Header({
   // Presentation choice belongs to the header, not the selected mode or
   // either layout branch. Only the explicit Advanced toggle closes it.
   const [advancedModelsShown, setAdvancedModelsShown] = useState(false);
+  const [settingsShown, setSettingsShown] = useState(false);
+  useEffect(() => {
+    if (!compact && settingsShown) {
+      setSettingsShown(false);
+      if (limitsExpanded) onToggleLimitsExpanded();
+    }
+  }, [compact, settingsShown, limitsExpanded, onToggleLimitsExpanded]);
   const dailyGenerationUsage = useMemo(() => {
     if (!aiUsagePolicy) return null;
     if (typeof aiUsagePolicy.energyPercent === 'number') {
@@ -309,7 +360,7 @@ export default function Header({
       />
     ) : null;
 
-  if (minimized) {
+  if (minimized && !compact) {
     return (
       <div className={`${headerClass} ${minimizedHeaderClass}`}>
         <div className={minimizedRowClass}>
@@ -358,8 +409,8 @@ export default function Header({
     );
   }
 
-  return (
-    <div className={headerClass}>
+  const expandedHeader = (
+    <div className={`${headerClass}${compact ? ` ${dialogHeaderClass}` : ''}`}>
       <div className={headerTopRowClass}>
         <div className={headerTitleClass}>
           <Icon icon="sparkles" />
@@ -573,15 +624,17 @@ export default function Header({
               padding-top: 0.65rem;
             `}
           >
-            <button
-              type="button"
-              onClick={onToggleMinimized}
-              className={headerPillButtonClass}
-              aria-label="Minimize Lumine header"
-            >
-              <Icon icon="compress" />
-              Minimize
-            </button>
+            {!compact ? (
+              <button
+                type="button"
+                onClick={onToggleMinimized}
+                className={headerPillButtonClass}
+                aria-label="Minimize Lumine header"
+              >
+                <Icon icon="compress" />
+                Minimize
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={onToggleLimitsExpanded}
@@ -608,8 +661,99 @@ export default function Header({
     </div>
   );
 
+  if (!compact) return expandedHeader;
+
+  return (
+    <>
+      <div className={compactHeaderClass} aria-label="Lumine toolbar">
+        <div className={compactToolbarClass}>
+          {lumineModelSelectionControl ? (
+            <LumineModelSelectionSettings
+              control={lumineModelSelectionControl}
+              advancedShown={false}
+              showModeLabel
+              onToggleAdvanced={() => {
+                setAdvancedModelsShown(true);
+                setSettingsShown(true);
+              }}
+              compact
+            />
+          ) : (
+            <b>Lumine</b>
+          )}
+          <div className={headerActionsClass}>
+            {short && dailyGenerationUsage != null ? (
+              <button
+                type="button"
+                className={headerPillButtonClass}
+                aria-label={`AI Energy: ${Math.round(dailyGenerationUsage)}%. Open settings`}
+                aria-haspopup="dialog"
+                onClick={() => setSettingsShown(true)}
+              >
+                <Icon icon="bolt" /> {Math.round(dailyGenerationUsage)}%
+              </button>
+            ) : null}
+            {lumineChatVisibilityControl ? (
+              <LumineChatVisibilitySettings
+                control={lumineChatVisibilityControl}
+                compact
+              />
+            ) : null}
+            <button
+              type="button"
+              className={headerPillButtonClass}
+              aria-haspopup="dialog"
+              onClick={() => setSettingsShown(true)}
+            >
+              <Icon icon="sliders" /> Settings
+            </button>
+          </div>
+        </div>
+        {!short ? energyCard : null}
+        {lumineChatVisibilityControl?.teamNotice ? (
+          <button
+            type="button"
+            className={noticeLinkClass}
+            onClick={() => setSettingsShown(true)}
+          >
+            <Icon icon="users" /> Your team can see this chat · Details
+          </button>
+        ) : null}
+        {visiblePageFeedbackEvents.length > 0 ? (
+          <button
+            type="button"
+            className={noticeLinkClass}
+            onClick={() => setSettingsShown(true)}
+          >
+            <Icon icon="info-circle" /> {visiblePageFeedbackEvents.length}{' '}
+            Lumine notice{visiblePageFeedbackEvents.length === 1 ? '' : 's'} ·
+            View
+          </button>
+        ) : null}
+      </div>
+      <Modal
+        isOpen={settingsShown}
+        onClose={handleCloseSettings}
+        title="Lumine settings"
+        aria-label="Lumine settings"
+        className={workshopThemeClass}
+        size="md"
+        bodyPadding="1rem"
+      >
+        {expandedHeader}
+      </Modal>
+    </>
+  );
+
   function handleToggleAdvancedModels() {
     setAdvancedModelsShown((shown) => !shown);
+  }
+
+  function handleCloseSettings() {
+    setSettingsShown(false);
+    // The dialog's expanded details must not hide the desktop composer if
+    // the panel is widened later.
+    if (limitsExpanded) onToggleLimitsExpanded();
   }
 }
 
@@ -617,12 +761,14 @@ function LumineModelSelectionSettings({
   control,
   advancedShown,
   onToggleAdvanced,
-  compact = false
+  compact = false,
+  showModeLabel = false
 }: {
   control: LumineModelSelectionControl;
   advancedShown: boolean;
   onToggleAdvanced: () => void;
   compact?: boolean;
+  showModeLabel?: boolean;
 }) {
   const availableModes = getAvailableLumineModes(control.modelOptions);
   const selectedOption = getLumineModelOption(
@@ -650,7 +796,7 @@ function LumineModelSelectionSettings({
         label="Mode"
         value={control.value.mode}
         disabled={control.loading}
-        compact={compact}
+        compact={compact && !showModeLabel}
         icon="robot"
         onChange={handleModeChange}
       >
@@ -980,8 +1126,7 @@ function LumineChatVisibilitySettings({
   const selectedOption = getLumineChatVisibilityOption(control.value);
   // Until the owner has chosen, saving the default (Team) still counts: it
   // records the choice and retires the "shared with your team" notice.
-  const changed =
-    draftValue !== control.savedValue || !control.choiceRecorded;
+  const changed = draftValue !== control.savedValue || !control.choiceRecorded;
 
   useEffect(() => {
     if (!modalShown) {
