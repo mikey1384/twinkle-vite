@@ -17,6 +17,7 @@ import {
   type NavTimingGateReport
 } from '~/helpers/ownerTracePerf';
 import { createWakeProfiler } from '~/helpers/ownerTraceWake';
+import { installOwnerViewportTrace } from '~/helpers/ownerTraceViewport';
 import type {
   ExtendedAxiosRequestConfig,
   RequestAttemptTiming
@@ -400,6 +401,7 @@ function getSessionHeader(): Record<string, unknown> {
     return {
       version: clientVersion,
       scrollPerf: 1,
+      viewportTrace: 1,
       vw: window.innerWidth,
       vh: window.innerHeight,
       vvh: Math.round(window.visualViewport?.height || 0),
@@ -427,6 +429,11 @@ let listenersInstalled = false;
 function installOwnerTraceListeners() {
   if (listenersInstalled || typeof window === 'undefined') return;
   listenersInstalled = true;
+  installOwnerViewportTrace({
+    isActive: () => recorder.isActive(),
+    record: (data) => recordOwnerTrace('wake-viewport', data),
+    version: clientVersion
+  });
   document.addEventListener('scroll', () => scrollPerfMonitor.scroll(), {
     capture: true,
     passive: true

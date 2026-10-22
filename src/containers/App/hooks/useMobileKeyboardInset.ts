@@ -67,6 +67,11 @@ export default function useMobileKeyboardInset({
     visualViewport.addEventListener('scroll', scheduleApply);
     window.addEventListener('resize', scheduleApply);
     window.addEventListener('orientationchange', scheduleApply);
+    // A restored tab can lose its keyboard/focus while suspended without a
+    // fresh resize. Re-read the same geometry on return; never move the nav or
+    // force a viewport size. Chat still disables this entire hook.
+    window.addEventListener('pageshow', scheduleApply);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     // focusin/focusout are what tell us a keyboard is plausible at all; without
     // them a viewport that shrinks for browser chrome reads as a keyboard.
     document.addEventListener('focusin', scheduleApply);
@@ -86,11 +91,17 @@ export default function useMobileKeyboardInset({
       visualViewport.removeEventListener('scroll', scheduleApply);
       window.removeEventListener('resize', scheduleApply);
       window.removeEventListener('orientationchange', scheduleApply);
+      window.removeEventListener('pageshow', scheduleApply);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('focusin', scheduleApply);
       document.removeEventListener('focusout', scheduleApply);
       rootResizeObserver?.disconnect();
       root.style.removeProperty(APP_SHELL_KEYBOARD_INSET_VAR);
     };
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') scheduleApply();
+    }
 
     function scheduleApply() {
       if (frame !== null) return;
