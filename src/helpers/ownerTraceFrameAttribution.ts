@@ -58,6 +58,7 @@ interface CounterFrame {
   renders: Record<string, number>;
   mounts: Record<string, number>;
   imgLoads: number;
+  layoutWork: Record<string, { calls: number; ms: number; maxMs: number }>;
   textMeasure: { calls: number; ms: number; maxMs: number };
 }
 
@@ -199,6 +200,7 @@ export function boundFrameEvent(data: Record<string, any>) {
   if (!fits()) {
     delete data.renders;
     delete data.mounts;
+    delete data.layoutWork;
   }
   return data;
 }
@@ -221,10 +223,17 @@ export function createFrameAttribution({
   let mounts = new Map<string, number>();
   let imgLoads = 0;
   let textMeasure = { calls: 0, ms: 0, maxMs: 0 };
+  let layoutWork: CounterFrame['layoutWork'] = {};
   let slowFrames: CounterFrame[] = [];
   let totals = { renders: 0, mounts: 0, imgLoads: 0 };
 
-  return { begin, frame, end, noteRender, noteMount, noteTextMeasure, isActive: () => active };
+  return { begin, frame, end, noteRender, noteMount, noteTextMeasure, noteLayout, isActive: () => active };
+
+  function noteLayout(name: 'block-preview' | 'richtext-overflow' | 'feed-truncation', ms: number) {
+    if (!active || !Number.isFinite(ms) || ms < 0) return;
+    const item = layoutWork[name] ||= { calls: 0, ms: 0, maxMs: 0 };
+    item.calls++; item.ms += ms; item.maxMs = Math.max(item.maxMs, ms);
+  }
 
   function noteTextMeasure(ms: number) {
     if (!active || !Number.isFinite(ms) || ms < 0) return;
@@ -295,6 +304,7 @@ export function createFrameAttribution({
         renders: topCounts(renders),
         mounts: topCounts(mounts),
         imgLoads,
+        layoutWork: Object.fromEntries(Object.entries(layoutWork).map(([name, item]) => [name, { calls: item.calls, ms: Math.round(item.ms), maxMs: Math.round(item.maxMs) }])),
         textMeasure: { calls: textMeasure.calls, ms: Math.round(textMeasure.ms), maxMs: Math.round(textMeasure.maxMs) }
       });
       if (slowFrames.length > MAX_FRAMES_PER_SAMPLE * 4) {
@@ -350,7 +360,8 @@ export function createFrameAttribution({
                   renders: overlap.renders,
                   mounts: overlap.mounts,
                   imgLoads: overlap.imgLoads,
-                  textMeasure: overlap.textMeasure
+                  textMeasure: overlap.textMeasure,
+                  layoutWork: overlap.layoutWork
                 }
               : {}),
             loaf: summarizeLongFrame(entry, origin)
@@ -368,7 +379,8 @@ export function createFrameAttribution({
             renders: item.renders,
             mounts: item.mounts,
             imgLoads: item.imgLoads,
-            textMeasure: item.textMeasure
+            textMeasure: item.textMeasure,
+            layoutWork: item.layoutWork
           })
         );
       }
@@ -390,6 +402,7 @@ export function createFrameAttribution({
     mounts = new Map();
     imgLoads = 0;
     textMeasure = { calls: 0, ms: 0, maxMs: 0 };
+    layoutWork = {};
   }
 }
 

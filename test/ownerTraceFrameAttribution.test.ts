@@ -245,8 +245,8 @@ test('Safari path (no LoAF): slow rAF frames record which card types rendered or
   assert.deepEqual(
     frames.map((event) => event.data),
     [
-      { schema: 1, source: 'raf', offsetMs: 32, gapMs: 78, renders: { rewardDigest: 1 }, mounts: { build: 2 }, imgLoads: 2, textMeasure: { calls: 0, ms: 0, maxMs: 0 } },
-      { schema: 1, source: 'raf', offsetMs: 126, gapMs: 64, renders: { subject: 1 }, mounts: {}, imgLoads: 0, textMeasure: { calls: 0, ms: 0, maxMs: 0 } }
+      { schema: 1, source: 'raf', offsetMs: 32, gapMs: 78, renders: { rewardDigest: 1 }, mounts: { build: 2 }, imgLoads: 2, layoutWork: {}, textMeasure: { calls: 0, ms: 0, maxMs: 0 } },
+      { schema: 1, source: 'raf', offsetMs: 126, gapMs: 64, renders: { subject: 1 }, mounts: {}, imgLoads: 0, layoutWork: {}, textMeasure: { calls: 0, ms: 0, maxMs: 0 } }
     ]
   );
 });
@@ -278,4 +278,17 @@ test('a frame event stays under the server data limit', () => {
   });
   assert.ok(JSON.stringify(data).length <= MAX_FRAME_EVENT_CHARS);
   assert.equal(data.loaf.ms, 200);
+});
+
+test('named layout work is bounded to the active frame and clears between samples', () => {
+  const collector = createFrameAttribution({ observeLongFrames: () => null, listenImageLoads: () => () => {} });
+  collector.noteLayout('block-preview', 999);
+  collector.begin();
+  collector.noteLayout('block-preview', 12.4);
+  collector.noteLayout('block-preview', 3.1);
+  collector.frame(80, 100);
+  const frame = collector.end(0)!.frames[0];
+  assert.deepEqual(frame.layoutWork['block-preview'], { calls: 2, ms: 16, maxMs: 12 });
+  collector.begin();collector.frame(80, 200);
+  assert.deepEqual(collector.end(100)!.frames[0].layoutWork, {});
 });

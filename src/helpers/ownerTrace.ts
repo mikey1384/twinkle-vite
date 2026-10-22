@@ -173,6 +173,13 @@ export function measureOwnerFeedText<T>(measure: () => T): T {
   finally { frameAttribution.noteTextMeasure(performance.now() - startedAt); }
 }
 
+// Attribute scoped synchronous layout work during the existing owner sample.
+export function measureOwnerLayout<T>(name: 'block-preview' | 'richtext-overflow' | 'feed-truncation', run: () => T): T {
+  if (!frameAttribution.isActive()) return run();
+  const at = performance.now();
+  try { return run(); } finally { frameAttribution.noteLayout(name, performance.now() - at); }
+}
+
 // A navigation the app started itself (Header nav tap).
 export function noteOwnerNavStart(via: string) {
   navTiming.start(via);

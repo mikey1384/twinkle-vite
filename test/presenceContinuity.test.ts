@@ -139,3 +139,15 @@ test('handshake and bind both carry continuity while snapshots wait for bind', (
   );
   assert.doesNotMatch(continuitySource, /localStorage|sessionStorage/);
 });
+
+
+test('recovery correlation reuses the socket page ID across reconnects without exposing proofs', () => {
+  const continuity = createPresenceContinuityState();
+  const first = continuity.getPageSessionId();
+  continuity.recordCanonicalProof({ expiresAt: 3000, userId: 42, token: 'private-proof' });
+  assert.equal(first, continuity.getBindMetadata({ userId: 42, visible: true }).presenceSessionId);
+  continuity.clear();
+  assert.equal(first, continuity.getPageSessionId());
+  assert.notEqual(first, createPresenceContinuityState().getPageSessionId());
+  assert.doesNotMatch(first, /private-proof/);
+});

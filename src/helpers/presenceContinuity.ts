@@ -14,6 +14,9 @@ export function createPresenceContinuityState({
   let canonicalProof: PresenceContinuityProof | null = null;
 
   return {
+    getPageSessionId() {
+      return pageSessionId;
+    },
     getBindMetadata({
       userId,
       visible
@@ -64,6 +67,10 @@ export function createPresenceContinuityState({
 }
 
 const pagePresenceContinuity = createPresenceContinuityState();
+
+export function getPresencePageSessionId() {
+  return pagePresenceContinuity.getPageSessionId();
+}
 
 export function getPresenceContinuityBindMetadata(userId: number) {
   return pagePresenceContinuity.getBindMetadata({

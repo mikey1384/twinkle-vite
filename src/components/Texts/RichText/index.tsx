@@ -45,9 +45,11 @@ import {
 } from './helpers/overflow';
 import { createStringRevision } from '~/helpers/stringRevision';
 import {
-  measureBlockPreviewClampLines,
+  queueBlockPreviewClamp,
   richTextPreviewClampLinesVar
 } from './helpers/previewClamp';
+
+import { measureOwnerLayout } from '~/helpers/ownerTrace';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 
@@ -525,6 +527,7 @@ function RichText({
       containerNodeRef.current = node;
       if (isPreview) return;
 
+      measureOwnerLayout('richtext-overflow', () => {
       const collapseThreshold = resolveRichTextCollapseThreshold({
         computedMaxHeight: window.getComputedStyle(node).maxHeight,
         fallbackClientHeight: node.clientHeight
@@ -552,6 +555,7 @@ function RichText({
           isOverflown: overflown
         })
       );
+      });
     },
     [hasTopEmbeddedContent, isPreview, renderAsLiteralText]
   );
@@ -641,23 +645,12 @@ function RichText({
     let animationFrame = 0;
     let measuredWidth = -1;
     const baseMaxLines = Math.max(maxLines, previewMobileMaxLines);
+    let cancelMeasure = () => {};
     const measure = () => {
       if (cancelled) return;
-      measuredWidth = node.getBoundingClientRect().width;
-      node.style.removeProperty(richTextPreviewClampLinesVar);
-      const cssMaxLines = parseInt(
-        window.getComputedStyle(node).webkitLineClamp,
-        10
-      );
-      const lines = measureBlockPreviewClampLines(
-        node,
-        Number.isFinite(cssMaxLines) && cssMaxLines > 0
-          ? cssMaxLines
-          : baseMaxLines
-      );
-      if (lines !== null) {
-        node.style.setProperty(richTextPreviewClampLinesVar, String(lines));
-      }
+      cancelMeasure();
+      cancelMeasure = queueBlockPreviewClamp(node, baseMaxLines,
+        width => { measuredWidth = width; }, run => measureOwnerLayout('block-preview', run));
     };
     measure();
     const scheduleMeasure = () => {
@@ -683,6 +676,7 @@ function RichText({
     }
     return () => {
       cancelled = true;
+      cancelMeasure();
       if (animationFrame) cancelAnimationFrame(animationFrame);
       resizeObserver?.disconnect();
       node.style.removeProperty(richTextPreviewClampLinesVar);

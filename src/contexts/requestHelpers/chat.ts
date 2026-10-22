@@ -16,6 +16,7 @@ import {
 } from '~/helpers/aiCardSummonQuotaProjection';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import type { ChatPinScope } from '~/helpers/chatPins';
+import { getPresencePageSessionId } from '~/helpers/presenceContinuity';
 
 export default function chatRequestHelpers({
   auth,
@@ -1555,7 +1556,10 @@ export default function chatRequestHelpers({
                 ? { 'x-twinkle-chat-bootstrap-id': bootstrapId }
                 : {}),
               ...(recoveryId
-                ? { 'x-twinkle-chat-recovery-id': recoveryId }
+                ? {
+                    'x-twinkle-chat-recovery-id': recoveryId,
+                    'x-twinkle-chat-page-id': getPresencePageSessionId()
+                  }
                 : {})
             },
             meta: {
@@ -1636,7 +1640,10 @@ export default function chatRequestHelpers({
             headers: {
               ...auth().headers,
               ...(recoveryId
-                ? { 'x-twinkle-chat-recovery-id': recoveryId }
+                ? {
+                    'x-twinkle-chat-recovery-id': recoveryId,
+                    'x-twinkle-chat-page-id': getPresencePageSessionId()
+                  }
                 : {})
             },
             meta: {
@@ -2011,7 +2018,10 @@ export default function chatRequestHelpers({
             headers: {
               ...auth().headers,
               ...(recoveryId
-                ? { 'x-twinkle-chat-recovery-id': recoveryId }
+                ? {
+                    'x-twinkle-chat-recovery-id': recoveryId,
+                    'x-twinkle-chat-page-id': getPresencePageSessionId()
+                  }
                 : {})
             },
             meta: {
@@ -2083,7 +2093,10 @@ export default function chatRequestHelpers({
             headers: {
               ...auth().headers,
               ...(recoveryId
-                ? { 'x-twinkle-chat-recovery-id': recoveryId }
+                ? {
+                    'x-twinkle-chat-recovery-id': recoveryId,
+                    'x-twinkle-chat-page-id': getPresencePageSessionId()
+                  }
                 : {})
             },
             meta: {
