@@ -5110,7 +5110,12 @@ export function useHostBridge({
                   }
                 : type === 'rewards:related-archive' ||
                     type === 'rewards:explanations'
-                  ? { receiptId: payload?.receiptId }
+                  ? {
+                      receiptId: payload?.receiptId,
+                      ...(payload?.setKey !== undefined
+                        ? { setKey: payload.setKey }
+                        : {})
+                    }
                   : type === 'rewards:explanation-post'
                     ? { receiptId: payload?.receiptId, text: payload?.text }
                     : type === 'rewards:explanation-vote'
@@ -5144,6 +5149,9 @@ export function useHostBridge({
                       ...(type === 'rewards:start'
                         ? {
                             levelIndex: payload?.levelIndex,
+                            ...(payload?.setKey !== undefined
+                              ? { setKey: payload.setKey }
+                              : {}),
                             // listening rules: the song being played
                             ...(payload?.completionToken !== undefined
                               ? { completionToken: payload.completionToken }
@@ -5303,6 +5311,9 @@ export function useHostBridge({
                 ...(type === 'rewards:start'
                   ? {
                       levelIndex: payload?.levelIndex,
+                      ...(payload?.setKey !== undefined
+                        ? { setKey: payload.setKey }
+                        : {}),
                       // listening rules: the song being played
                       ...(payload?.completionToken !== undefined
                         ? { completionToken: payload.completionToken }
