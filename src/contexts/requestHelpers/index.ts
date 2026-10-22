@@ -585,6 +585,8 @@ registerMethods('management', [
   'loadAllAchievements',
   'loadApprovalItemById',
   'loadApprovalItems',
+  'loadMeetupReviewEvidence',
+  'decideMeetupCrewCompletion',
   'loadBannedUsers',
   'loadDeletedContent',
   'loadDeletedMessage',

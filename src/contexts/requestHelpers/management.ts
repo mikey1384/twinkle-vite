@@ -932,7 +932,8 @@ export default function managementRequestHelpers({
     }: {
       type: string;
       data: {
-        dob: string;
+        dob?: string;
+        fingerprint?: string;
       };
       isApproved: boolean;
       userId: number;
@@ -1105,6 +1106,19 @@ export default function managementRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    async loadMeetupReviewEvidence({ userId, crewId }: { userId?: number; crewId?: number }) {
+      try {
+        const path = crewId ? `/user/meetup-quest/crews/${crewId}/checkin-review` : `/management/approval/meetup/evidence?userId=${userId}`;
+        const { data } = await request.get(`${URL}${path}`, auth());
+        return data;
+      } catch (error) { return handleError(error); }
+    },
+    async decideMeetupCrewCompletion({ crewId, isApproved, fingerprint }: { crewId: number; isApproved: boolean; fingerprint: string }) {
+      try {
+        const { data } = await request.post(`${URL}/user/meetup-quest/crews/${crewId}/checkin-review`, { isApproved, fingerprint }, auth());
+        return data;
+      } catch (error) { return handleError(error); }
     },
     async loadApprovalItemById(approvalId: number) {
       try {

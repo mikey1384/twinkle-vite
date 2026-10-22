@@ -499,7 +499,7 @@ export default function BridgeBuilderQuest({
                       icon="clipboard-check"
                       style={{ color: Color.logoBlue() }}
                     />{' '}
-                    Admin: members' answers to read
+                    Admin: meetups and members’ answers to review
                   </h2>
                   {data.reviewQueue.length === 0 ? (
                     <p className={bodyTextClass}>
@@ -544,7 +544,7 @@ export default function BridgeBuilderQuest({
                               setSearchParams({ crew: String(item.crewId) })
                             }
                           >
-                            Read the answer
+                            {item.waitingFor === 'meetup' ? 'Review meetup' : 'Read the answer'}
                           </Button>
                         </li>
                       ))}

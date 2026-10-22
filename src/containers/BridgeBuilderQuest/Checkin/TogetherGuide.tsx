@@ -191,7 +191,7 @@ export default function TogetherGuide({
           ) : (
             'Show that you two are together'
           )}{' '}
-          and this check-in counts right away.
+          and this helps Mikey review your meetup.
         </p>
         <Choice
           icon="ear-listen"

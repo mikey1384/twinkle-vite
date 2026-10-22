@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import Button from '~/components/Button';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -11,6 +11,7 @@ import { QuestNote } from '../StepCard';
 import CheckinModal from './CheckinModal';
 import { unlockSound } from './soundCode';
 import { ParentInviteModal, TeacherWitnessModal } from './GrownUpModals';
+import ParentInviteStatus from './ParentInviteStatus';
 import type { CheckinPerson, CheckinProgress } from '../types';
 
 const pop = keyframes`
@@ -38,6 +39,8 @@ export default function CheckinCard({
   );
   const [progress, setProgress] = useState<CheckinProgress | null>(null);
   const [error, setError] = useState('');
+  const refreshing = useRef(false);
+  const [refreshBusy, setRefreshBusy] = useState(false);
   const [modal, setModal] = useState<
     '' | 'checkin' | 'together' | 'teacher' | 'parent' | 'birthdate'
   >('');
@@ -45,6 +48,8 @@ export default function CheckinCard({
   useEffect(() => {
     trackMeetupQuestView('checkin_page');
     reload();
+    window.addEventListener('focus', reload);
+    return () => window.removeEventListener('focus', reload);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -133,10 +138,10 @@ export default function CheckinCard({
       >
         {progress.unlocked ? (
           <>
-            <Icon icon="trophy" /> All {progress.target} met!
+            <Icon icon="trophy" /> {title} unlocked
           </>
         ) : (
-          `${Math.min(progress.counted, progress.target)} of ${progress.target} met`
+          `${Math.min(progress.counted, progress.target)} of ${progress.target} people counted`
         )}
       </div>
 
@@ -154,12 +159,54 @@ export default function CheckinCard({
             .join(' · ')}
         </div>
       )}
+      {progress.reviewRejected && !progress.unlocked && (
+        <QuestNote tone="warning">
+          This meetup was not approved. Your check-ins are saved; you can check
+          in again when you next meet.
+        </QuestNote>
+      )}
       {progress.review && !progress.unlocked && (
         <div style={{ marginTop: '1.2rem' }}>
           <QuestNote tone="info">
-            You reached {progress.target}! The administrator is taking a quick
-            look at your check-ins.
+            Your check-ins are saved. Waiting for Mikey’s review before the
+            achievement unlocks. You don’t need to send another request.
           </QuestNote>
+        </div>
+      )}
+      {!progress.unlocked &&
+        !progress.review &&
+        !progress.reviewRejected &&
+        progress.witnessPending && (
+          <div style={{ marginTop: '1.2rem' }}>
+            <QuestNote tone="info">
+              Your grown-up check-in is saved. At least two kids need to scan
+              and have their birthdates checked before Mikey reviews the meetup.
+            </QuestNote>
+          </div>
+        )}
+      {!progress.unlocked &&
+        !progress.review &&
+        !progress.reviewRejected &&
+        progress.parentInvite && (
+          <div style={{ marginTop: '1.2rem' }}>
+            <ParentInviteStatus invite={progress.parentInvite} />
+          </div>
+        )}
+      {(progress.parentInvite ||
+        progress.review ||
+        progress.reviewRejected ||
+        progress.witnessPending) && (
+        <div style={{ marginTop: '0.8rem' }}>
+          <Button
+            size="sm"
+            variant="ghost"
+            color="darkGray"
+            loading={refreshBusy}
+            onClick={reload}
+          >
+            Refresh status
+          </Button>
+          {error && <QuestNote tone="warning">{error}</QuestNote>}
         </div>
       )}
       {progress.needsTogether && !progress.unlocked && (
@@ -168,7 +215,7 @@ export default function CheckinCard({
             <div className={rowClass}>
               <span>
                 <b>One quick step:</b> next time you meet, show that you’re
-                together so {title} unlocks on its own.
+                together to help Mikey review your meetup.
               </span>
               <Button
                 size="sm"
@@ -253,7 +300,8 @@ export default function CheckinCard({
             `}
           >
             If a Twinkle teacher or your parent is there when you meet, every
-            kid who scans their code unlocks {title} in one go.
+            kid who scans their code can qualify for {title} after Mikey reviews
+            the meetup.
           </div>
           <div
             className={css`
@@ -312,7 +360,15 @@ export default function CheckinCard({
       {modal === 'teacher' && (
         <TeacherWitnessModal onHide={() => setModal('')} />
       )}
-      {modal === 'parent' && <ParentInviteModal onHide={() => setModal('')} />}
+      {modal === 'parent' && (
+        <ParentInviteModal
+          hasInvitation={!!progress.parentInvite}
+          onHide={() => {
+            setModal('');
+            reload();
+          }}
+        />
+      )}
       {modal === 'birthdate' && (
         <FormModal
           header="Your birthdate"
@@ -327,11 +383,17 @@ export default function CheckinCard({
   );
 
   async function reload() {
+    if (refreshing.current) return;
+    refreshing.current = true;
+    setRefreshBusy(true);
     try {
       handleProgress(await loadMeetupCheckins());
       setError('');
     } catch (err: any) {
       setError(err?.message || 'Could not load your check-ins.');
+    } finally {
+      refreshing.current = false;
+      setRefreshBusy(false);
     }
   }
 

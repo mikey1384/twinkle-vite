@@ -176,7 +176,8 @@ export default function CheckinModal({
       stopped = true;
       window.clearInterval(timer);
     };
-  }, [mode, loadMeetupCheckins, loadLatestMeetupCheckin]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   // while scanning (sound check on), listen for my friend's chirp
   useEffect(() => {
@@ -275,8 +276,8 @@ export default function CheckinModal({
             <div className={titleClass}>Your phone listens too</div>
             <p className={leadClass}>
               Your friend’s phone plays a short, quiet sound (some people hear
-              it as a faint tick). When your phone hears it, your check-in
-              counts right away, even with no Wi-Fi.
+              it as a faint tick). When your phone hears it, that helps show
+              you’re together, even with no Wi-Fi.
             </p>
             <p className={leadClass}>
               Your browser will ask for the camera and the microphone.{' '}
@@ -539,13 +540,15 @@ function ResultView({
           You’re checked in at the grown-up’s meetup!
         </div>
         <p className={leadClass}>
-          When two or more kids have scanned it, everyone who did unlocks Bridge
-          Builder.
+          {progress.review
+            ? 'Your check-in is saved. Waiting for Mikey to review the meetup.'
+            : 'At least two kids need to scan, and your birthdates need to be checked. Then Mikey reviews the meetup before Bridge Builder unlocks.'}
         </p>
         {!result.inPlace && (
           <div className={nudgeClass}>
-            <b>So it counts right away:</b> join the grown-up’s Wi-Fi (or their
-            phone’s hotspot), then scan their code again.
+            <b>Help show you’re together:</b> join the grown-up’s Wi-Fi (or
+            their phone’s hotspot), then scan their code again. Your check-in is
+            already saved.
             <Button
               color="logoBlue"
               variant="soft"
@@ -627,6 +630,12 @@ function ResultView({
           +1 person. <b>{progress.counted}</b> of {progress.target}.
         </p>
       )}
+      {progress.review && !progress.unlocked && (
+        <p className={leadClass}>
+          Check-ins saved. Waiting for Mikey’s review before Bridge Builder
+          unlocks.
+        </p>
+      )}
       {person?.state === 'getting_started' && (
         <p className={leadClass}>
           {partner.username} counts once they’ve played on Twinkle a few days.
@@ -649,8 +658,7 @@ function ResultView({
         <div className={nudgeClass}>
           <b>One more step</b>
           <span>
-            Show that you two are together, and Bridge Builder unlocks on its
-            own.
+            Show that you two are together to help Mikey review the meetup.
           </span>
           <Button
             color="logoBlue"

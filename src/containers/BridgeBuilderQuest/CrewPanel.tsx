@@ -19,6 +19,7 @@ import StepTracker from './StepTracker';
 import StoryEntryCard from './Story/StoryEntryCard';
 import CheckinButton from './Checkin/CheckinButton';
 import useQuestAction from './useQuestAction';
+import MeetupReview from './MeetupReview';
 import type { CrewView, QuestStepKey } from './types';
 
 // A crew's page (members, admins): the crew stage (members, branches, the
@@ -429,6 +430,7 @@ export default function CrewPanel({
         {!mustVerifyBranch && branchEditor}
         <div data-admin-review>
           <AdminInfoChecks crew={crew} onChanged={onChanged} />
+          {crew.viewer.canApproveClasses && <MeetupReview crewId={crew.crewId} pending={crew.meetupReview === 'pending'} onDecided={onChanged} />}
         </div>
         {crewAction.error && (
           <QuestNote tone="warning">{crewAction.error}</QuestNote>
@@ -436,6 +438,8 @@ export default function CrewPanel({
       </StepCard>
 
       <StepCard step={stepOf('meet')}>
+        {crew.meetupReview === 'pending' && <QuestNote tone="info">Check-ins saved. Mikey is reviewing the meetup before it appears as completed.</QuestNote>}
+        {crew.meetupReview === 'rejected' && <QuestNote tone="warning">This meetup was not approved. Your check-ins are saved; you can check in again when you next meet.</QuestNote>}
         {stepOf('meet').state !== 'locked' && (
           <>
             <p
@@ -447,7 +451,7 @@ export default function CrewPanel({
               `}
             >
               With a Twinkle teacher or a parent there, everyone who scans their
-              code unlocks {achievementTitle} in one go.
+              code can qualify for {achievementTitle} after Mikey reviews the meetup.
             </p>
             {viewer.isMember && crew.status === 'active' && (
               <div>

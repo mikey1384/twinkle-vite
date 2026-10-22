@@ -54,11 +54,12 @@ export function TeacherWitnessModal({ onHide }: { onHide: () => void }) {
       <div className={columnClass}>
         <p className={leadClass}>
           Each kid at the meetup scans this code with their own phone. With two
-          or more, everyone who scanned unlocks Bridge Builder.
+          or more, everyone who scanned can qualify for Bridge Builder after
+          Mikey reviews the meetup.
         </p>
         <p className={leadClass}>
-          Kids on this academy’s Wi-Fi (or your phone’s hotspot) count right
-          away; anywhere else, Twinkle takes a quick look first.
+          Using this academy’s Wi-Fi or your phone’s hotspot helps confirm that
+          everyone is together.
         </p>
         {/* no sound check: for a grown-up's meetup only the network counts */}
         <LiveCode
@@ -120,7 +121,13 @@ export function TeacherWitnessModal({ onHide }: { onHide: () => void }) {
 // A kid asks a parent to be the grown-up: an email with a link the parent
 // opens at the meetup. The address on file (from sign-up) is used when there
 // is one; Twinkle reads every parent email before it goes out.
-export function ParentInviteModal({ onHide }: { onHide: () => void }) {
+export function ParentInviteModal({
+  onHide,
+  hasInvitation = false
+}: {
+  onHide: () => void;
+  hasInvitation?: boolean;
+}) {
   const inviteParentToWitness = useAppContext(
     (v) => v.requestHelpers.inviteParentToWitness
   );
@@ -167,18 +174,26 @@ export function ParentInviteModal({ onHide }: { onHide: () => void }) {
         {sent ? (
           <QuestNote tone="success">
             {sent.held
-              ? `Twinkle will read it first, then send it to ${sent.toMasked}.`
+              ? `Waiting for Mikey to review the email to ${sent.toMasked} before it is sent.`
               : `Sent to ${sent.toMasked}.`}{' '}
-            When you meet your friends, your parent opens the email and shows
-            you all a code to scan.
+            You can follow its status on your Bridge Builder page. When you
+            meet, your parent opens the email and presses “We’re together” /
+            “함께 있어요”. Each child scans the code from their own account.
+            Mikey then reviews the meetup.
           </QuestNote>
         ) : (
           <>
             <p className={leadClass} style={{ textAlign: 'left' }}>
               Your parent gets a link. When you meet your friends, they open it
-              and everyone scans their code: that unlocks Bridge Builder in one
-              go.
+              and press “We’re together”. Everyone scans their code, then Mikey
+              reviews the meetup for Bridge Builder.
             </p>
+            {hasInvitation && (
+              <QuestNote tone="info">
+                A new invitation replaces your previous parent link. You don’t
+                need another request if you’re waiting for review.
+              </QuestNote>
+            )}
             <div>
               <label className={questLabelClass} htmlFor="bridge-parent-email">
                 Your parent’s email

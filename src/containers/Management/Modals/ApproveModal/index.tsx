@@ -6,6 +6,7 @@ import Icon from '~/components/Icon';
 import Dob from './Dob';
 import Mentor from './Mentor';
 import Meetup from './Meetup';
+import MeetupReview from '~/containers/BridgeBuilderQuest/MeetupReview';
 import { useAppContext, useManagementContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -25,6 +26,8 @@ export default function ApproveModal({
   onSetApprovalModalTarget: (target: any) => void;
   onHide: () => void;
 }) {
+  const [fingerprint, setFingerprint] = useState('');
+  const [error, setError] = useState('');
   const [reverting, setReverting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
@@ -35,7 +38,13 @@ export default function ApproveModal({
   );
 
   return (
-    <Modal modalKey="ApproveModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal
+      modalKey="ApproveModal"
+      isOpen
+      onClose={onHide}
+      hasHeader={false}
+      bodyPadding={0}
+    >
       <LegacyModalLayout>
         <header>Approve Request</header>
         <main>
@@ -52,9 +61,16 @@ export default function ApproveModal({
             )}
             {target.type === 'mentor' && <Mentor content={target.content} />}
             {target.type === 'meetup' && (
-              <Meetup username={target.username} content={target.content} />
+              <>
+                <Meetup username={target.username} content={target.content} />
+                <MeetupReview
+                  userId={target.userId}
+                  onFingerprint={setFingerprint}
+                />
+              </>
             )}
           </div>
+          {error && <p role="alert">{error}</p>}
           {target.status === 'pending' ? (
             <div
               style={{
@@ -67,7 +83,9 @@ export default function ApproveModal({
               <Button
                 color="rose"
                 variant="solid"
-                disabled={submitting}
+                disabled={
+                  submitting || (target.type === 'meetup' && !fingerprint)
+                }
                 loading={submitting && !isApproved}
                 onClick={() =>
                   handleSubmit({
@@ -82,7 +100,9 @@ export default function ApproveModal({
                 style={{ marginLeft: '1.5rem' }}
                 variant="solid"
                 color="green"
-                disabled={submitting}
+                disabled={
+                  submitting || (target.type === 'meetup' && !fingerprint)
+                }
                 loading={submitting && isApproved}
                 onClick={() =>
                   handleSubmit({
@@ -124,29 +144,33 @@ export default function ApproveModal({
                 />
                 {target.status.toUpperCase()}
               </div>
-              <div
-                className={css`
-                  margin-top: 1rem;
-                  font-size: 1.3rem;
-                  color: ${reverting ? Color.lightGray() : Color.darkerGray()};
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                `}
-              >
-                <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
-                <span
-                  onClick={handleRevert}
+              {target.type !== 'meetup' && (
+                <div
                   className={css`
-                    cursor: ${reverting ? 'default' : 'pointer'};
-                    ${reverting
-                      ? ''
-                      : '&:hover { text-decoration: underline; }'}
+                    margin-top: 1rem;
+                    font-size: 1.3rem;
+                    color: ${reverting
+                      ? Color.lightGray()
+                      : Color.darkerGray()};
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                   `}
                 >
-                  revert
-                </span>
-              </div>
+                  <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
+                  <span
+                    onClick={handleRevert}
+                    className={css`
+                      cursor: ${reverting ? 'default' : 'pointer'};
+                      ${reverting
+                        ? ''
+                        : '&:hover { text-decoration: underline; }'}
+                    `}
+                  >
+                    revert
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </main>
@@ -189,22 +213,33 @@ export default function ApproveModal({
     userId: number;
   }) {
     setSubmitting(true);
+    setError('');
     setIsApproved(isApproved);
     const data: {
       dob?: string;
+      fingerprint?: string;
     } = {};
     if (target.type === 'dob') data.dob = target.content;
-    const status = await approveRequest({
-      isApproved,
-      type: target.type,
-      userId,
-      data
-    });
-    onApproveRequest({ userId, status, requestType: target.type });
-    onSetApprovalModalTarget({
-      ...target,
-      status
-    });
-    setSubmitting(false);
+    if (target.type === 'meetup') data.fingerprint = fingerprint;
+    try {
+      const status = await approveRequest({
+        isApproved,
+        type: target.type,
+        userId,
+        data
+      });
+      onApproveRequest({ userId, status, requestType: target.type });
+      onSetApprovalModalTarget({
+        ...target,
+        status
+      });
+    } catch {
+      setError(
+        'The decision was not confirmed. Reload the evidence and request before trying again.'
+      );
+      if (target.type === 'meetup') setFingerprint('');
+    } finally {
+      setSubmitting(false);
+    }
   }
 }

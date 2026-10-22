@@ -20,7 +20,11 @@ export interface QuestProgress {
   branches: number;
   branchesToVerify: { userId: number; username: string; branch: string }[];
   // members staff asked who they are, until staff accept the answer
-  infoChecks?: { userId: number; username: string; status: 'requested' | 'answered' }[];
+  infoChecks?: {
+    userId: number;
+    username: string;
+    status: 'requested' | 'answered';
+  }[];
   branchNames: string[];
   // the tier: earned from who checked in once met, else what the crew would
   // earn if everyone checked in; and how to climb
@@ -105,8 +109,14 @@ export interface MemberBranchChange {
 }
 
 export interface CrewView extends CrewProfile {
+  meetupReview?: '' | 'pending' | 'approved' | 'rejected';
   stage: CrewStage;
-  invites: { inviteId: number; userId: number; username: string; createdAt: number }[];
+  invites: {
+    inviteId: number;
+    userId: number;
+    username: string;
+    createdAt: number;
+  }[];
   crewId: number;
   founderId: number;
   status: 'active' | 'completed' | 'disbanded';
@@ -151,7 +161,7 @@ export interface BoardCrew {
 export interface ReviewQueueItem {
   crewId: number;
   status: string;
-  waitingFor: '' | 'memberInfo';
+  waitingFor: '' | 'memberInfo' | 'meetup';
   founderUsername: string;
   members: { userId: number; username: string; branch: string }[];
   blocking: string;
@@ -287,8 +297,25 @@ export interface CheckinProgress {
   canWitness: boolean;
   bar: { days: number; xp: number };
   unlocked: boolean;
-  // every counted check-in looked remote: the unlock waits for the administrator
+  // Every qualifying physical meetup waits for the owner's decision.
   review: boolean;
+  reviewRejected?: boolean;
+  parentInvite?: {
+    state:
+      | 'held'
+      | 'sent'
+      | 'failed'
+      | 'discarded'
+      | 'expired'
+      | 'active'
+      | 'ended'
+      | 'unknown';
+    toMasked: string;
+    expiresAt: number;
+    sessionEndsAt: number;
+    checkedIn: boolean;
+    attendees: number;
+  } | null;
   // met people, but no check-in showed one place yet: offer the "show you're
   // together" guide (TogetherGuide.tsx)
   needsTogether?: boolean;
