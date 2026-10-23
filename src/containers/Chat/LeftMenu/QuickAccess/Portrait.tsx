@@ -37,7 +37,7 @@ export default function QuickAccessPortrait({
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0.125rem;
+        padding: 2px;
         border-radius: 50%;
         border: 2px solid ${selected ? Color.logoBlue() : 'transparent'};
         background: #fff;
@@ -58,7 +58,7 @@ export default function QuickAccessPortrait({
         }
       `}
     >
-      <QuickAccessAvatar partner={displayedPartner} size="3.25rem" />
+      <QuickAccessAvatar partner={displayedPartner} size="100%" />
       {loading ? (
         <span
           className={css`

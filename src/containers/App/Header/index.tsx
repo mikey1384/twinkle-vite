@@ -12,7 +12,7 @@ import {
   recoverFromLazyImportLoadError
 } from '~/helpers/lazyImportHelpers';
 import { getSectionFromPathname } from '~/helpers';
-import { getBasePageTitle } from '~/helpers/analytics';
+import { getBasePageTitle } from '~/helpers/pageTitles';
 import TwinkleLogo from './TwinkleLogo';
 import MainNavs from './MainNavs';
 import AccountMenu from './AccountMenu';

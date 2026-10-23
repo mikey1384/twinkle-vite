@@ -1,10 +1,8 @@
-import { getSectionFromPathname } from '~/helpers';
-import { capitalize } from '~/helpers/stringHelpers';
+import { getBasePageTitle } from '~/helpers/pageTitles';
 import {
   createAnalyticsCommandGate,
   type AnalyticsCommand
 } from '~/helpers/analyticsCommandGate';
-import { SITE_NAME } from '~/constants/siteBrand';
 
 // GA4 event names sent by the app. Standard GA4 names (sign_up, login,
 // search) are used where they exist so GA's built-in reports pick them up.
@@ -62,48 +60,6 @@ type AnalyticsParams = Record<
   string,
   string | number | boolean | null | undefined
 >;
-
-export const contentSubsectionTitles: Record<string, string> = {
-  comments: 'Comment',
-  links: 'Link',
-  missions: 'Mission',
-  playlists: 'Playlist',
-  subjects: 'Subject',
-  videos: 'Video',
-  'ai-cards': 'AI Card',
-  'ai-stories': 'AI Story',
-  'ai-card-summons': 'AI Card Summon',
-  'daily-reflections': 'Daily Reflection',
-  'mission-passes': 'Mission Pass',
-  'achievement-unlocks': 'Achievement',
-  bounties: 'Bounty',
-  'daily-rewards': 'Daily Goal',
-  'shared-prompts': 'Shared Prompt'
-};
-
-const sectionTitleOverrides: Record<string, string> = {
-  app: 'Build App',
-  'app-capture': 'Build App',
-  build: 'Build',
-  chat: 'Chat',
-  'ai-cards': 'Explore AI Cards',
-  'ai-stories': 'AI Stories'
-};
-
-// Deterministic, synchronous title for a pathname. This is what page_view
-// reports under "page title" — pages with richer async titles (content
-// pages, build apps) additionally send identity via events/document.title
-// once their data loads.
-export function getBasePageTitle(pathname: string): string {
-  const { section, isSubsection } = getSectionFromPathname(pathname) || {};
-  if (!section || section === 'home') return SITE_NAME;
-  const subsectionTitle = isSubsection ? contentSubsectionTitles[section] : '';
-  const displayedSection =
-    subsectionTitle || sectionTitleOverrides[section] || section;
-  return `${
-    subsectionTitle ? displayedSection : capitalize(displayedSection)
-  } | ${SITE_NAME}`;
-}
 
 function gtagAvailable() {
   return typeof window !== 'undefined' && typeof window.gtag === 'function';
@@ -165,16 +121,19 @@ export function trackPageView({
   const pageLocation = sanitizeAnalyticsUrl(path);
   const rawReferrer = referrerPath || document.referrer;
   const pageReferrer = rawReferrer ? sanitizeAnalyticsUrl(rawReferrer) : '';
-  // Later events on this page inherit these instead of the raw address bar.
+  const pageTitle = getBasePageTitle(pathname);
+  // Later events inherit the same stable title and cleaned URL, rather than
+  // a content-specific tab title or its unread-notification marker.
   send('set', {
     page_location: pageLocation,
+    page_title: pageTitle,
     ...(pageReferrer ? { page_referrer: pageReferrer } : {})
   });
   send('event', 'page_view', {
     page_location: pageLocation,
     page_path: new URL(pageLocation).pathname,
     ...(pageReferrer ? { page_referrer: pageReferrer } : {}),
-    page_title: getBasePageTitle(pathname)
+    page_title: pageTitle
   });
 }
 
