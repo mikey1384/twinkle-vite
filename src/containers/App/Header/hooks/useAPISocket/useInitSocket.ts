@@ -76,6 +76,7 @@ import {
 import type { RequestAttemptTiming } from '~/contexts/requestHelpers/axiosInstance';
 import { shouldSkipChatWakeBarrier } from './chatWakeBarrierThrottle';
 import { noteOwnerSocket, noteOwnerWakeWork } from '~/helpers/ownerTrace';
+import { createSocketReconnectEvidence } from '~/helpers/socketReconnectEvidence';
 
 const MAX_CANONICAL_CHAT_BOOTSTRAP_ATTEMPTS = 4;
 
@@ -93,6 +94,9 @@ interface SocketBindPayload {
   presenceSessionId: string;
   presenceVisible: boolean;
   presenceContinuityToken?: string;
+  previousDisconnect?: ReturnType<
+    ReturnType<typeof createSocketReconnectEvidence>['forUser']
+  >;
 }
 
 interface SocketBindResult {
@@ -250,6 +254,8 @@ export default function useInitSocket({
   const chatLoadedRef = useRef(chatLoaded);
   const loadedForUserIdRef = useRef(loadedForUserId);
   const didSocketDisconnectRef = useRef(false);
+  const reconnectEvidenceRef = useRef(createSocketReconnectEvidence());
+  const lastTransportSocketIdRef = useRef<string | null>(null);
   const socketDisconnectSequenceRef = useRef(0);
   const boundSocketIdRef = useRef<string | null>(null);
   const isLoadingChatRef = useRef(false);
@@ -1116,6 +1122,7 @@ export default function useInitSocket({
     }
 
     function handleConnect() {
+      lastTransportSocketIdRef.current = socket.id || null;
       noteOwnerSocket('connect');
       plannedServerHandoffAtRef.current = 0;
       if (terminalSocketAuthFailureRef.current) {
@@ -1949,6 +1956,14 @@ export default function useInitSocket({
     }
 
     function handleDisconnect(reason: string) {
+      reconnectEvidenceRef.current.record({
+        userId: Number(userIdRef.current || 0),
+        socketId: lastTransportSocketIdRef.current,
+        reason,
+        visibility: document.visibilityState,
+        hiddenForMs: hiddenAtRef.current ? Date.now() - hiddenAtRef.current : null,
+        online: !browserReportsOffline()
+      });
       noteOwnerSocket('disconnect', reason);
       const plannedServerHandoff = Boolean(
         reason === 'io server disconnect' &&
@@ -2302,6 +2317,7 @@ export default function useInitSocket({
         profilePicUrl: profilePicUrlRef.current,
         token: tokenRead.token,
         deviceId: getTwinkleDeviceId(),
+        previousDisconnect: reconnectEvidenceRef.current.forUser(bindingUserId),
         ...getPresenceContinuityBindMetadata(bindingUserId)
       },
       onAcknowledged(result) {

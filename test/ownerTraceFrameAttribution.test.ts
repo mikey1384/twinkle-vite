@@ -12,6 +12,20 @@ import { createScrollPerfMonitor } from '../src/helpers/ownerTraceScrollPerf';
 
 const ORIGIN = 'https://www.twin-kle.com';
 
+test('a LoAF spanning two slow rAF intervals does not discard the interval whose counters it did not carry', () => {
+  const tracker = createFrameAttribution({
+    observeLongFrames: () => ({ takeRecords: () => [{ startTime: 100, duration: 210 }], disconnect() {} }),
+    listenImageLoads: () => () => {}
+  });
+  tracker.begin();
+  tracker.frame(200, 200); tracker.frame(200, 400);
+  const result = tracker.end(0)!;
+  assert.equal(result.frames.length, 2);
+  assert.equal(result.frames.filter(frame => frame.source === 'raf').length, 1);
+  assert.equal(result.summary.retainedUnmatchedRafFrames, 1);
+  assert.equal(result.summary.candidateFramesDropped, 0);
+});
+
 test('minified slow-frame scripts retain exact source positions but omit unavailable coordinates', () => {
   const summary = summarizeLongFrame({ startTime: 0, duration: 100, scripts: [
     { duration: 80, sourceURL: `${ORIGIN}/assets/main.js?private=1`, sourceFunctionName: 'Y', sourceCharPosition: 1234, sourceLine: 1, sourceColumn: 1235 },
@@ -198,6 +212,10 @@ test('Chrome path: LoAF frames over 50 ms become at most three scroll-frame even
   assert.deepEqual(perf?.data.frameSource, {
     source: 'loaf',
     loafFrames: 4,
+    loafDropped: 0,
+    slowRafFrames: 1,
+    retainedUnmatchedRafFrames: 0,
+    candidateFramesDropped: 1,
     cardRenders: 2,
     cardMounts: 1,
     imgLoads: 1
@@ -291,4 +309,31 @@ test('named layout work is bounded to the active frame and clears between sample
   assert.deepEqual(frame.layoutWork['block-preview'], { calls: 2, ms: 16, maxMs: 12 });
   collector.begin();collector.frame(80, 200);
   assert.deepEqual(collector.end(100)!.frames[0].layoutWork, {});
+});
+
+test('Chrome keeps an unmatched rAF delay even when shorter LoAFs were delivered', () => {
+  const s = setupMonitor(true);
+  s.monitor.scroll(); s.frame(16); s.attribution.noteRender('subject');
+  s.state.clock = 600; s.monitor.scroll(); s.frame(616);
+  s.loaf.state.deliver([{ startTime: 700, duration: 70 }, { startTime: 800, duration: 65 }, { startTime: 900, duration: 60 }]);
+  s.monitor.stop('test');
+  const frames = s.events.filter(event => event.type === 'scroll-frame');
+  assert.equal(frames.length, 3);
+  assert.equal(frames[0].data.source, 'raf');
+  assert.equal(frames[0].data.gapMs, 600);
+  assert.equal(frames[0].data.loafMatched, false);
+  assert.deepEqual(frames[0].data.renders, { subject: 1 });
+  assert.equal(s.events[0].data.frameSource.retainedUnmatchedRafFrames, 1);
+});
+
+test('absolute frame phases retain tiny rendering spans and do not invent absent timestamps', () => {
+  const summary = summarizeLongFrame({ startTime: 1000, duration: 592,
+    renderStart: 1590, styleAndLayoutStart: 1591, scripts: [{ duration: 10 }] });
+  assert.equal(summary.renderShare, 0);
+  assert.equal(summary.renderMs, 2);
+  assert.equal(summary.styleLayoutMs, 1);
+  assert.equal(summary.preRenderMs, 590);
+  assert.equal(summary.reportedScriptMs, 10);
+  const absent = summarizeLongFrame({ startTime: 1000, duration: 100 });
+  assert.equal(absent.preRenderMs, null); assert.equal(absent.renderMs, null);
 });

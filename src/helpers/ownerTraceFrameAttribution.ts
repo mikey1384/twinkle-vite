@@ -165,14 +165,22 @@ export function summarizeLongFrame(
         : {})
     }));
   const share = (start: number) =>
-    duration > 0 && start > 0
+    duration > 0 && start > 0 && start >= entry.startTime && start <= end
       ? Math.round((Math.max(0, end - start) / duration) * 100) / 100
       : null;
+  const remaining = (start: number) =>
+    start > 0 && start >= entry.startTime && start <= end ? round(end - start) : null;
   return {
     ms: round(duration),
     blockingMs: round(entry.blockingDuration),
     styleLayoutShare: share(styleStart),
     renderShare: share(renderStart),
+    // Percentages round tiny rendering spans down to zero on large gaps.
+    // Keep milliseconds too. Pre-render time is elapsed time, not CPU work.
+    preRenderMs: remaining(renderStart) === null ? null : round(renderStart - entry.startTime),
+    renderMs: remaining(renderStart),
+    styleLayoutMs: remaining(styleStart),
+    reportedScriptMs: round((entry.scripts || []).reduce((sum, script) => sum + Math.max(0, Number(script.duration) || 0), 0)),
     scriptCount: (entry.scripts || []).length,
     scripts
   };
@@ -219,6 +227,8 @@ export function createFrameAttribution({
   let loafSupported = false;
   let stopImages: (() => void) | null = null;
   let loafEntries: LongFrameEntry[] = [];
+  let loafCount = 0;
+  let slowRafCount = 0;
   let renders = new Map<string, number>();
   let mounts = new Map<string, number>();
   let imgLoads = 0;
@@ -246,6 +256,8 @@ export function createFrameAttribution({
     if (active) return;
     active = true;
     loafEntries = [];
+    loafCount = 0;
+    slowRafCount = 0;
     slowFrames = [];
     totals = { renders: 0, mounts: 0, imgLoads: 0 };
     resetCounters();
@@ -269,6 +281,7 @@ export function createFrameAttribution({
     if (!active) return;
     for (const entry of entries || []) {
       if (!(Number(entry?.duration) > SLOW_FRAME_MS)) continue;
+      loafCount++;
       loafEntries.push(entry);
     }
     if (loafEntries.length > MAX_LOAF_ENTRIES) {
@@ -297,6 +310,7 @@ export function createFrameAttribution({
     totals.mounts += sum(mounts);
     totals.imgLoads += imgLoads;
     if (gapMs > SLOW_FRAME_MS) {
+      slowRafCount++;
       slowFrames.push({
         gapMs,
         startMs: at - gapMs,
@@ -340,15 +354,15 @@ export function createFrameAttribution({
     const origin = getOrigin();
     const counterFrames = [...slowFrames].sort((a, b) => b.gapMs - a.gapMs);
     const frames: Record<string, any>[] = [];
+    const matched = new Set<CounterFrame>();
     if (loafSupported) {
-      const worst = [...loafEntries]
-        .sort((a, b) => b.duration - a.duration)
-        .slice(0, MAX_FRAMES_PER_SAMPLE);
+      const worst = [...loafEntries].sort((a, b) => b.duration - a.duration);
       for (const entry of worst) {
         const entryEnd = entry.startTime + entry.duration;
-        const overlap = counterFrames.find(
-          (item) => item.startMs < entryEnd && item.endMs > entry.startTime
-        );
+        const overlapping = counterFrames.filter(item => item.startMs < entryEnd && item.endMs > entry.startTime);
+        const overlapMs = (item: CounterFrame) => Math.min(item.endMs, entryEnd) - Math.max(item.startMs, entry.startTime);
+        const overlap = overlapping.sort((a, b) => overlapMs(b) - overlapMs(a))[0];
+        if (overlap) matched.add(overlap);
         frames.push(
           boundFrameEvent({
             schema: 1,
@@ -368,32 +382,40 @@ export function createFrameAttribution({
           })
         );
       }
-    } else {
-      for (const item of counterFrames.slice(0, MAX_FRAMES_PER_SAMPLE)) {
-        frames.push(
-          boundFrameEvent({
-            schema: 1,
-            source: 'raf',
-            offsetMs: round(item.startMs - sampleStart),
-            gapMs: round(item.gapMs),
-            renders: item.renders,
-            mounts: item.mounts,
-            imgLoads: item.imgLoads,
-            textMeasure: item.textMeasure,
-            layoutWork: item.layoutWork
-          })
-        );
-      }
     }
+    // Chrome can report a large rAF gap without delivering a matching LoAF.
+    // Keep that missing attribution visible instead of losing the slow frame.
+    const unmatched = counterFrames.filter(item => !matched.has(item));
+    for (const item of unmatched) {
+      frames.push(
+        boundFrameEvent({
+          schema: 1,
+          source: 'raf',
+          ...(loafSupported ? { loafMatched: false } : {}),
+          offsetMs: round(item.startMs - sampleStart),
+          gapMs: round(item.gapMs),
+          renders: item.renders,
+          mounts: item.mounts,
+          imgLoads: item.imgLoads,
+          textMeasure: item.textMeasure,
+          layoutWork: item.layoutWork
+        })
+      );
+    }
+    frames.sort((a, b) => Math.max(b.gapMs || 0, b.loaf?.ms || 0) - Math.max(a.gapMs || 0, a.loaf?.ms || 0));
     return {
       summary: {
         source: loafSupported ? 'loaf' : 'raf',
-        loafFrames: loafSupported ? loafEntries.length : null,
+        loafFrames: loafSupported ? loafCount : null,
+        loafDropped: loafSupported ? loafCount - loafEntries.length : null,
+        slowRafFrames: slowRafCount,
+        retainedUnmatchedRafFrames: frames.slice(0, MAX_FRAMES_PER_SAMPLE).filter(frame => frame.source === 'raf').length,
+        candidateFramesDropped: Math.max(0, frames.length - MAX_FRAMES_PER_SAMPLE),
         cardRenders: totals.renders,
         cardMounts: totals.mounts,
         imgLoads: totals.imgLoads
       },
-      frames
+      frames: frames.slice(0, MAX_FRAMES_PER_SAMPLE)
     };
   }
 

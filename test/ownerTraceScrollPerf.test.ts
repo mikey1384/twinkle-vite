@@ -127,6 +127,8 @@ test('route changes do not attach the next page’s cards to the prior scroll', 
 test('visible-card context is bounded and contains identifiers, never card content', () => {
   let calls = 0;
   const doc = {
+    hasFocus: () => false,
+    visibilityState: 'visible',
     elementFromPoint: () => {
       calls++;
       return {
@@ -152,6 +154,8 @@ test('visible-card context is bounded and contains identifiers, never card conte
   } as Window);
   assert.equal(calls, 9);
   assert.deepEqual(result, {
+    focused: false,
+    visibility: 'visible',
     cards: [{ key: 'subject-123', feed: '456', index: '2' }],
     media: ['img'],
     st: 500,

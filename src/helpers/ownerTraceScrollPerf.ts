@@ -220,6 +220,8 @@ export function getScrollPerfContext(doc: Document, win: Window) {
   }
   const app = doc.getElementById('App');
   return {
+    focused: typeof doc.hasFocus === 'function' ? doc.hasFocus() : null,
+    visibility: doc.visibilityState || null,
     cards: [...cards.values()],
     media: [...media],
     st: Math.round(
