@@ -338,10 +338,17 @@ export default function BattleRunner({
             )}
             <Icon icon={omrOpen ? 'chevron-down' : 'chevron-up'} />
           </button>
-          <div className={omrGridCls}>
+          <div
+            className={cx(
+              omrGridCls,
+              // printed numbers like "LFM42" need a wider number column
+              data.items.some((item) => (item.display || '').length > 3) &&
+                omrWideNoCls
+            )}
+          >
             {data.items.map((item) => (
               <div key={item.no} className={omrRowCls}>
-                <span className={omrNoCls}>{item.no}</span>
+                <span className={omrNoCls}>{item.display || item.no}</span>
                 {item.typed ? (
                   // 단답형: the answer sheet's own box, same value as the item's
                   <TypedAnswer
@@ -533,7 +540,7 @@ export function PaperItem({
         <>
           {passage && (
             <div className={problemCls}>
-              {item.no > 0 && <b>{item.no}.</b>}{' '}
+              {item.no > 0 && <b>{item.display || item.no}.</b>}{' '}
               <PaperText text={passage.body} />
             </div>
           )}
@@ -545,7 +552,7 @@ export function PaperItem({
         </>
       )}
       <p className={stemCls}>
-        {item.no > 0 && !(problemLayout && passage) && <b>{item.no}.</b>}{' '}
+        {item.no > 0 && !(problemLayout && passage) && <b>{item.display || item.no}.</b>}{' '}
         <MathText text={stemText(item.stem)} />
         {(allPointTags || item.points === 3) && (
           <span className={pointsCls}> [{item.points}점]</span>
@@ -1202,6 +1209,15 @@ const omrRowCls = css`
     border-bottom: 1px solid #e3b4b2;
     padding-bottom: 0.4rem;
     margin-bottom: 0.3rem;
+  }
+`;
+
+const omrWideNoCls = css`
+  > div {
+    grid-template-columns: 4rem repeat(5, 1fr);
+  }
+  > div > span:first-of-type {
+    font-size: 0.95rem;
   }
 `;
 

@@ -75,6 +75,11 @@ export interface ArenaItem {
   choices: string[];
   // a typed answer (수학 단답형 etc.): digits only, or a word or phrase
   typed?: 'integer' | 'number' | 'text';
+  // the number the real paper prints when it restarts per section
+  // (TOEFL Junior "L12", TOSEL "II-3"); `no` stays the unique key
+  display?: string;
+  // options heard, not printed (TOSEL): choices are bare letters
+  spokenChoices?: boolean;
   // a choice index, or the typed text
   answer: number | string | null;
   // the key: a choice index, or the accepted typed answer the review prints
