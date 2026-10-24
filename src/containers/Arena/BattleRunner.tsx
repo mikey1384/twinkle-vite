@@ -349,29 +349,31 @@ export default function BattleRunner({
                     label={`${item.no}번 답`}
                     onCommit={(value) => handleMark(item.no, value)}
                   />
-                ) : CIRCLED.slice(0, item.choices.length || 5).map(
-                  (label, choice) => {
-                    const filled = answers[item.no] === choice;
-                    const isKey = finished && item.key === choice;
-                    return (
-                      <button
-                        key={choice}
-                        type="button"
-                        disabled={finished}
-                        aria-label={`${item.no}번 ${choice + 1}`}
-                        className={cx(
-                          bubbleCls,
-                          filled && bubbleFilledCls,
-                          isKey && bubbleKeyCls
-                        )}
-                        onClick={() =>
-                          handleMark(item.no, filled ? null : choice)
-                        }
-                      >
-                        {filled ? '' : choice + 1}
-                      </button>
-                    );
-                  }
+                ) : (
+                  CIRCLED.slice(0, item.choices.length || 5).map(
+                    (label, choice) => {
+                      const filled = answers[item.no] === choice;
+                      const isKey = finished && item.key === choice;
+                      return (
+                        <button
+                          key={choice}
+                          type="button"
+                          disabled={finished}
+                          aria-label={`${item.no}번 ${choice + 1}`}
+                          className={cx(
+                            bubbleCls,
+                            filled && bubbleFilledCls,
+                            isKey && bubbleKeyCls
+                          )}
+                          onClick={() =>
+                            handleMark(item.no, filled ? null : choice)
+                          }
+                        >
+                          {filled ? '' : choice + 1}
+                        </button>
+                      );
+                    }
+                  )
                 )}
               </div>
             ))}
@@ -522,7 +524,8 @@ export function PaperItem({
         </div>
       )}
       <p className={stemCls}>
-        {item.no > 0 && <b>{item.no}.</b>} <MathText text={stemText(item.stem)} />
+        {item.no > 0 && <b>{item.no}.</b>}{' '}
+        <MathText text={stemText(item.stem)} />
         {(allPointTags || item.points === 3) && (
           <span className={pointsCls}> [{item.points}점]</span>
         )}
@@ -550,9 +553,7 @@ export function PaperItem({
           {isDialogue(passage.body) ? (
             <DialogueText text={passage.body} />
           ) : (
-            <PaperText
-              text={withoutDrawnTimeline(passage.body, item.visual)}
-            />
+            <PaperText text={withoutDrawnTimeline(passage.body, item.visual)} />
           )}
         </div>
       )}
@@ -574,49 +575,49 @@ export function PaperItem({
       )}
       {!item.typed &&
         !(
-        item.visual && tableMarksChoices(item.visual as unknown as Visual)
-      ) && (
-        <ol
-          className={cx(
-            choicesCls,
-            item.choices.every((choice, i) => choice.trim() === CIRCLED[i]) &&
-              markerRowCls
-          )}
-        >
-          {item.choices.map((choice, index) => {
-            const chosen = marked === index;
-            const isKey = finished && item.key === index;
-            const wrongPick = finished && chosen && item.key !== index;
-            return (
-              <li key={index}>
-                <button
-                  type="button"
-                  disabled={finished}
-                  className={cx(
-                    choiceCls,
-                    chosen && choiceChosenCls,
-                    isKey && choiceKeyCls,
-                    wrongPick && choiceWrongCls
-                  )}
-                  onClick={() => onMark(chosen ? null : index)}
-                >
-                  <span className={circledCls}>{CIRCLED[index]}</span>
-                  {/* a marker choice (the underlined ① of a grammar item) is
+          item.visual && tableMarksChoices(item.visual as unknown as Visual)
+        ) && (
+          <ol
+            className={cx(
+              choicesCls,
+              item.choices.every((choice, i) => choice.trim() === CIRCLED[i]) &&
+                markerRowCls
+            )}
+          >
+            {item.choices.map((choice, index) => {
+              const chosen = marked === index;
+              const isKey = finished && item.key === index;
+              const wrongPick = finished && chosen && item.key !== index;
+              return (
+                <li key={index}>
+                  <button
+                    type="button"
+                    disabled={finished}
+                    className={cx(
+                      choiceCls,
+                      chosen && choiceChosenCls,
+                      isKey && choiceKeyCls,
+                      wrongPick && choiceWrongCls
+                    )}
+                    onClick={() => onMark(chosen ? null : index)}
+                  >
+                    <span className={circledCls}>{CIRCLED[index]}</span>
+                    {/* a marker choice (the underlined ① of a grammar item) is
                     printed once, as the paper does */}
-                  {choice.trim() === CIRCLED[index] ? (
-                    ''
-                  ) : (
-                    <>
-                      {' '}
-                      <MathText text={choice} />
-                    </>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      )}
+                    {choice.trim() === CIRCLED[index] ? (
+                      ''
+                    ) : (
+                      <>
+                        {' '}
+                        <MathText text={choice} />
+                      </>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        )}
       {finished && item.review && (
         <div
           className={cx(
@@ -647,7 +648,11 @@ export function PaperItem({
           {item.typed && !item.correct && (
             <p>
               {ko ? '내 답: ' : 'Your answer: '}
-              {marked == null || marked === '' ? (ko ? '(빈칸)' : '(blank)') : String(marked)}
+              {marked == null || marked === ''
+                ? ko
+                  ? '(빈칸)'
+                  : '(blank)'
+                : String(marked)}
             </p>
           )}
           {review!.evidence && (
@@ -656,22 +661,24 @@ export function PaperItem({
           <p>
             <MathText text={review!.explanation} />
           </p>
-          {typeof marked === 'number' && !item.correct && review!.why?.[marked] && (
-            <p>
-              {ko ? (
-                <>
-                  <span className={glyphCls}>{CIRCLED[marked]}</span> 오답
-                  이유:{' '}
-                </>
-              ) : (
-                <>
-                  Why <span className={glyphCls}>{CIRCLED[marked]}</span> is
-                  wrong:{' '}
-                </>
-              )}
-              <MathText text={review!.why[marked]} />
-            </p>
-          )}
+          {typeof marked === 'number' &&
+            !item.correct &&
+            review!.why?.[marked] && (
+              <p>
+                {ko ? (
+                  <>
+                    <span className={glyphCls}>{CIRCLED[marked]}</span> 오답
+                    이유:{' '}
+                  </>
+                ) : (
+                  <>
+                    Why <span className={glyphCls}>{CIRCLED[marked]}</span> is
+                    wrong:{' '}
+                  </>
+                )}
+                <MathText text={review!.why[marked]} />
+              </p>
+            )}
         </div>
       )}
     </article>
