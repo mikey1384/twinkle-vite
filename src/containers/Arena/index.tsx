@@ -86,6 +86,10 @@ export default function ArenaPage() {
           {view === 'train' && activity === 'skills' && (
             <Skills
               onBack={() => setSearchParams({ mode: 'train' })}
+              onOpenDeck={() =>
+                setSearchParams({ mode: 'train', play: 'deck' })
+              }
+              onOpenArena={() => setSearchParams({ mode: 'arena' })}
               onDrill={(examKey, types) =>
                 setSearchParams({
                   mode: 'train',

@@ -21,14 +21,22 @@ interface ExamSkills {
   pace: { mine: number | null; real: number | null };
   blankShare: number;
   changes: { changed: number; helped: number; hurt: number };
+  hunterRank: { grade: number; low: number; high: number } | null;
+  gradeLabels: string[] | null;
+  deckOpen: number;
+  nextBattle: { difficulty: string; length: string };
 }
 
 export default function Skills({
   onBack,
-  onDrill
+  onDrill,
+  onOpenDeck,
+  onOpenArena
 }: {
   onBack: () => void;
   onDrill: (examKey: string, types: string[]) => void;
+  onOpenDeck: () => void;
+  onOpenArena: () => void;
 }) {
   const loadArenaSkills = useAppContext(
     (v) => v.requestHelpers.loadArenaSkills
@@ -75,6 +83,62 @@ export default function Skills({
                 {exam.battles} battle{exam.battles === 1 ? '' : 's'}
               </span>
             </div>
+            <ol className={prepCls}>
+              <li>
+                <span>
+                  <b>Boss prep.</b>{' '}
+                  {exam.hunterRank
+                    ? `Hunter Rank about ${gradeText(exam.gradeLabels, exam.hunterRank.grade)}. `
+                    : 'No Hunter Rank yet. '}
+                  {exam.deckOpen
+                    ? `First clear the ${exam.deckOpen} missed question${exam.deckOpen === 1 ? '' : 's'} from this exam in your deck.`
+                    : 'Your deck has nothing left from this exam.'}
+                </span>
+                {exam.deckOpen > 0 && (
+                  <button
+                    type="button"
+                    className={drillButtonCls}
+                    onClick={onOpenDeck}
+                  >
+                    Deck
+                  </button>
+                )}
+              </li>
+              {exam.weakest.length > 0 && (
+                <li>
+                  <span>
+                    Then drill your weakest:{' '}
+                    {exam.weakest.map(typeLabel).join(', ')}.
+                  </span>
+                  <button
+                    type="button"
+                    className={drillButtonCls}
+                    onClick={() => onDrill(exam.examKey, exam.weakest)}
+                  >
+                    Drill
+                  </button>
+                </li>
+              )}
+              <li>
+                <span>
+                  Next battle:{' '}
+                  <b>
+                    {capitalize(exam.nextBattle.difficulty)}{' '}
+                    {capitalize(exam.nextBattle.length)}
+                  </b>
+                  {exam.hunterRank
+                    ? ', fitted to your Hunter Rank.'
+                    : ', to earn a Hunter Rank.'}
+                </span>
+                <button
+                  type="button"
+                  className={drillButtonCls}
+                  onClick={onOpenArena}
+                >
+                  Arena
+                </button>
+              </li>
+            </ol>
             <div className={factsCls}>
               <Fact
                 label="Pace"
@@ -154,6 +218,14 @@ export default function Skills({
       )}
     </div>
   );
+}
+
+function gradeText(labels: string[] | null, grade: number) {
+  return labels?.[grade - 1] || `${grade}등급`;
+}
+
+function capitalize(word: string) {
+  return word ? word[0].toUpperCase() + word.slice(1) : word;
 }
 
 function Fact({
@@ -357,4 +429,21 @@ const drillButtonCls = css`
 const actionsCls = css`
   display: flex;
   justify-content: flex-end;
+`;
+
+const prepCls = css`
+  margin: 0;
+  padding: 1rem 1.2rem 1rem 3rem;
+  border: 2px solid ${ARENA.ink};
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  li {
+    font-size: 1.4rem;
+  }
+  li > span {
+    margin-right: 0.8rem;
+  }
 `;
