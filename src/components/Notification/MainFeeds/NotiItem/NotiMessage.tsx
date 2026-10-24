@@ -692,6 +692,23 @@ function NotiMessage({
           </span>
         </>
       );
+    // Arena (Mikey 10-24): a taker beat your score on your challenge
+    case 'arenaChallengeBeaten':
+      return (
+        <>
+          <span style={{ color: recommendationColorValue, fontWeight: 'bold' }}>
+            beat your score
+          </span>{' '}
+          on your Arena challenge{' '}
+          <Link
+            to={`/arena?mode=arena&challenge=${targetObj.id}`}
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            {targetObj.content || 'See the board'}
+          </Link>
+          . Rematch?
+        </>
+      );
     case 'friendAccepted':
       return (
         <>

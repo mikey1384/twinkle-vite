@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
+import { socket } from '~/constants/sockets/api';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
 import ArenaButton from './ArenaButton';
@@ -516,6 +517,14 @@ function Result({ data }: { data: ArenaBattle }) {
   );
   const [sharing, setSharing] = useState(false);
   const [sharedId, setSharedId] = useState(0);
+  const shareArenaBattleWithAI = useAppContext(
+    (v) => v.requestHelpers.shareArenaBattleWithAI
+  );
+  const [agentSharing, setAgentSharing] = useState<'zero' | 'ciel' | null>(
+    null
+  );
+  const [agentShared, setAgentShared] = useState<Record<string, boolean>>({});
+  const [agentError, setAgentError] = useState('');
   return (
     <div className={resultCls}>
       <div>
@@ -569,10 +578,45 @@ function Result({ data }: { data: ArenaBattle }) {
               Share as a challenge
             </ArenaButton>
           )}
+          {/* private coaching (Mikey 10-24, Daily Reflection's way): the
+              result and every miss go to Zero or Ciel's chat */}
+          {(['zero', 'ciel'] as const).map((target) => (
+            <ArenaButton
+              key={target}
+              tone="paper"
+              size="md"
+              loading={agentSharing === target}
+              disabled={!!agentShared[target]}
+              onClick={() => handleShareWithAgent(target)}
+            >
+              {agentShared[target]
+                ? `Sent to ${target === 'zero' ? 'Zero' : 'Ciel'} ✓`
+                : `Ask ${target === 'zero' ? 'Zero' : 'Ciel'} to coach me`}
+            </ArenaButton>
+          ))}
+          {agentError && <span className={agentErrorCls}>{agentError}</span>}
         </div>
       )}
     </div>
   );
+
+  async function handleShareWithAgent(target: 'zero' | 'ciel') {
+    setAgentSharing(target);
+    setAgentError('');
+    try {
+      const result = await shareArenaBattleWithAI(battle.id, target);
+      if (result?.channelId) socket.emit('join_chat_group', result.channelId);
+      setAgentShared((prev) => ({ ...prev, [target]: true }));
+    } catch (error: any) {
+      setAgentError(
+        error?.code === 'ARENA_ALREADY_SHARED'
+          ? 'Already sent.'
+          : error?.message || 'Could not send it. Please try again.'
+      );
+    } finally {
+      setAgentSharing(null);
+    }
+  }
 
   async function handleShare() {
     setSharing(true);
@@ -955,7 +999,17 @@ const bubbleKeyCls = css`
 `;
 
 const shareCls = css`
+  flex-direction: row !important;
+  flex-wrap: wrap;
   justify-content: center;
+  gap: 0.6rem;
+`;
+
+const agentErrorCls = css`
+  width: 100%;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 700;
 `;
 
 const resultCls = css`

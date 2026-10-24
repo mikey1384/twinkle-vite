@@ -392,6 +392,7 @@ registerMethods('content', [
   'setArenaLeagueHidden',
   'markArenaLeagueResultSeen',
   'shareArenaBattle',
+  'shareArenaBattleWithAI',
   'loadArenaChallenge',
   'startArenaChallenge',
   'loadGrammarQuestState',

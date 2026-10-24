@@ -1339,6 +1339,18 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async shareArenaBattleWithAI(battleId: number, target: 'zero' | 'ciel') {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/battle/${battleId}/share-ai`,
+          { target },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadArenaChallenge(challengeId: number) {
       try {
         const { data } = await request.get(

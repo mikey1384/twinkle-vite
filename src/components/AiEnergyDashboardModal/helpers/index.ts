@@ -106,6 +106,7 @@ const AI_USAGE_TARGET_LABELS: Record<string, string> = {
   ai_image_followup: 'image edit',
   ai_music_generation: 'music',
   daily_reflection_share: 'reflection',
+  arena_battle_share: 'arena',
   chat_topic: 'topic'
 };
 
