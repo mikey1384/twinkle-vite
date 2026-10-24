@@ -39,7 +39,8 @@ import {
   markAppClosed,
   getAppLifecycleStatus,
   requestAppLifecycleSnapshot,
-  subscribeAppLifecycleStatus
+  subscribeAppLifecycleStatus,
+  warmAppLifecycleStore
 } from '~/helpers/buildAppLifecycle';
 
 // Phones run out of memory with several apps loaded at once (10-25: Safari
@@ -205,6 +206,10 @@ export default function BuildRuntimeKeepAliveHost() {
   const lastShownAtRef = useRef(new Map<number, number>());
   const unloadingRef = useRef(new Set<string>());
   const [lifecycleStatusVersion, setLifecycleStatusVersion] = useState(0);
+  // Open the saved-place store before the first app asks for its place.
+  useEffect(() => {
+    warmAppLifecycleStore();
+  }, []);
   useEffect(
     () =>
       subscribeAppLifecycleStatus(() =>

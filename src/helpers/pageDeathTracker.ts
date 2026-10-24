@@ -26,7 +26,7 @@ interface PageMarker {
 }
 
 let marker: PageMarker | null = null;
-let diedBefore = false;
+let diedOn: string | null = null;
 let writeTimer: number | null = null;
 // Set by pagehide. Some browsers (WebKit) fire visibilitychange AFTER
 // pagehide while unloading; nothing may write the marker back after that.
@@ -101,7 +101,7 @@ export function startPageDeathTracker() {
   if (typeof window === 'undefined' || marker) return;
   const previous = readMarker();
   if (previous && previous.startedAt) {
-    diedBefore = true;
+    diedOn = String(previous.pathname || '');
     report(previous);
   }
   marker = {
@@ -139,9 +139,12 @@ export function startPageDeathTracker() {
   document.addEventListener('scroll', writeSoon, { capture: true, passive: true });
 }
 
-/** The previous page in this tab died (crashed or discarded), not closed. */
-export function previousPageDied() {
-  return diedBefore;
+/**
+ * Where the previous page in this tab was when it died (crashed or was
+ * discarded) instead of closing; null when it closed normally.
+ */
+export function previousPageDeathPath() {
+  return diedOn;
 }
 
 /** KeepAliveHost: the apps currently loaded in this tab. */

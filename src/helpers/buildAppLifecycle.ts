@@ -10,7 +10,17 @@
 const DB_NAME = 'twinkle-app-lifecycle';
 const STORE = 'snapshots';
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-const SNAPSHOT_WAIT_MS = 1600;
+// The SDK gives onSuspend 1.5 s; leave room for the message round trip.
+const SNAPSHOT_WAIT_MS = 2500;
+// App start never waits longer than this for a saved place (a stuck
+// IndexedDB in WebKit must not hold up the app's init).
+const LOAD_TIMEOUT_MS = 300;
+// Same cap as the SDK (1 MB of JSON), measured here again: a frame can post
+// to the host directly, so the SDK's own check is not enough.
+const MAX_SNAPSHOT_CHARS = 1_100_000;
+// One snapshot per app per second at most; the newest within that second waits.
+const MIN_SNAPSHOT_GAP_MS = 1000;
+const MAX_SNAPSHOTS = 200;
 
 export interface AppLifecycleSnapshot {
   state: Record<string, unknown>;
@@ -23,17 +33,36 @@ export interface AppLifecycleStatus {
   webgl: number;
 }
 
+/** Per viewer, app, runtime source (live / workspace) and subject mount. */
 export function appLifecycleKey({
   userId,
   buildId,
+  source,
   mount
 }: {
   userId?: number | null;
   buildId: number;
+  source: string;
   mount?: { type: string; id: number } | null;
 }) {
   const place = mount ? `${mount.type}-${mount.id}` : 'app';
-  return `${Number(userId) || 0}:${buildId}:${place}`;
+  return `${Number(userId) || 0}:${buildId}:${source}:${place}`;
+}
+
+/**
+ * A snapshot as plain JSON within the size cap, or null. Anything that does
+ * not survive JSON (Blobs, Maps, ArrayBuffers) is dropped, and the size is
+ * measured on what is actually stored.
+ */
+export function normalizeAppLifecycleState(state: unknown) {
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return null;
+  try {
+    const text = JSON.stringify(state);
+    if (!text || text.length > MAX_SNAPSHOT_CHARS) return null;
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
 }
 
 let dbPromise: Promise<IDBDatabase | null> | null = null;
@@ -48,7 +77,10 @@ function openDb() {
           request.result.createObjectStore(STORE);
         }
       };
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        resolve(request.result);
+        pruneSnapshots(request.result);
+      };
       request.onerror = () => resolve(null);
       request.onblocked = () => resolve(null);
     } catch {
@@ -56,6 +88,38 @@ function openDb() {
     }
   });
   return dbPromise;
+}
+
+// Once per page: drop snapshots older than a week, and the oldest past
+// MAX_SNAPSHOTS, so the store never grows without bound.
+function pruneSnapshots(db: IDBDatabase) {
+  try {
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    const all: Array<{ key: IDBValidKey; savedAt: number }> = [];
+    const cursorRequest = store.openCursor();
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (cursor) {
+        all.push({ key: cursor.key, savedAt: Number(cursor.value?.savedAt) || 0 });
+        cursor.continue();
+        return;
+      }
+      all.sort((a, b) => b.savedAt - a.savedAt);
+      all.forEach((entry, index) => {
+        if (index >= MAX_SNAPSHOTS || !(Date.now() - entry.savedAt < MAX_AGE_MS)) {
+          store.delete(entry.key);
+        }
+      });
+    };
+  } catch {
+    // pruning is best effort
+  }
+}
+
+/** Start opening the store early, so the first app start does not wait. */
+export function warmAppLifecycleStore() {
+  void openDb();
 }
 
 function run<T>(
@@ -82,9 +146,12 @@ function run<T>(
 export async function loadAppLifecycleSnapshot(
   key: string
 ): Promise<AppLifecycleSnapshot | null> {
-  const value = await run<AppLifecycleSnapshot>('readonly', (store) =>
-    store.get(key)
-  );
+  const value = await Promise.race([
+    run<AppLifecycleSnapshot>('readonly', (store) => store.get(key)),
+    new Promise<null>((resolve) =>
+      window.setTimeout(() => resolve(null), LOAD_TIMEOUT_MS)
+    )
+  ]);
   if (!value || typeof value !== 'object' || !value.state) return null;
   if (!(Date.now() - Number(value.savedAt) < MAX_AGE_MS)) {
     void forgetAppLifecycleSnapshot(key);
@@ -129,6 +196,8 @@ export async function forgetAppLifecycleSnapshots({
 interface RunningApp {
   status: AppLifecycleStatus;
   lastSnapshotAt: number;
+  pendingSave: { key: string; snapshot: AppLifecycleSnapshot } | null;
+  pendingTimer: number | null;
   requestSuspend: ((reason: string) => void) | null;
   waiters: Array<(saved: boolean) => void>;
 }
@@ -141,6 +210,8 @@ const closedApps = new Set<number>();
 
 export function markAppClosed(buildId: number) {
   closedApps.add(buildId);
+  const app = running.get(buildId);
+  if (app) app.pendingSave = null;
 }
 
 export function noteAppStarted(buildId: number) {
@@ -157,6 +228,8 @@ function entry(buildId: number) {
     app = {
       status: { suspend: false, webgl: 0 },
       lastSnapshotAt: 0,
+      pendingSave: null,
+      pendingTimer: null,
       requestSuspend: null,
       waiters: []
     };
@@ -201,12 +274,31 @@ export function registerAppLifecycleFrame(
   };
 }
 
-export function noteAppLifecycleSnapshot(buildId: number) {
+/**
+ * Keep a snapshot an app sent. Waiters (an unload in progress) hear right
+ * away; the write follows. At most one write per app per second: a newer
+ * snapshot inside that second replaces the queued one.
+ */
+export function acceptAppLifecycleSnapshot(
+  buildId: number,
+  key: string,
+  snapshot: AppLifecycleSnapshot
+) {
   const app = entry(buildId);
-  app.lastSnapshotAt = Date.now();
   const waiters = app.waiters;
   app.waiters = [];
   waiters.forEach((resolve) => resolve(true));
+  app.pendingSave = { key, snapshot };
+  if (app.pendingTimer !== null) return;
+  const wait = Math.max(0, app.lastSnapshotAt + MIN_SNAPSHOT_GAP_MS - Date.now());
+  app.pendingTimer = window.setTimeout(() => {
+    app.pendingTimer = null;
+    const pending = app.pendingSave;
+    app.pendingSave = null;
+    if (!pending || closedApps.has(buildId)) return;
+    app.lastSnapshotAt = Date.now();
+    void saveAppLifecycleSnapshot(pending.key, pending.snapshot);
+  }, wait);
 }
 
 /**

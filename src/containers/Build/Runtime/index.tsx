@@ -2652,6 +2652,7 @@ export default function BuildRuntime({
                     projectFiles={build.projectFiles || []}
                     isOwner={false}
                     runtimeOnly
+                    appLifecycleSource={loadedRuntimeSource}
                     requireSignedPreviewAccess={
                       loadedRuntimeSource === 'workspace'
                     }

@@ -1,8 +1,9 @@
-import { previousPageDied } from '~/helpers/pageDeathTracker';
+import { previousPageDeathPath } from '~/helpers/pageDeathTracker';
 
-// After the browser kills or discards the tab (pageDeathTracker), the home feed
-// comes back where the viewer was instead of at the top (10-25: Mikey lost his
-// place 55,000 px down the feed when Safari reloaded the tab). The loaded
+// After the browser kills or discards the tab on the home feed
+// (pageDeathTracker), the feed comes back where the viewer was instead of at
+// the top (10-25: Mikey lost his place 55,000 px down the feed when Safari
+// reloaded the tab). The loaded
 // feed pages and the saved scroll anchor are kept in sessionStorage, which
 // survives those reloads in the same tab. A normal reload or a new visit still
 // starts fresh: this is used only when the previous page died.
@@ -13,8 +14,9 @@ import { previousPageDied } from '~/helpers/pageDeathTracker';
 const FEED_KEY = 'twinkle:home-feed-lifeline';
 const ANCHOR_KEY = 'twinkle:home-feed-lifeline-anchor';
 const MAX_AGE_MS = 3 * 60 * 60 * 1000;
-// sessionStorage holds about 5 MB per site; leave room for everything else.
-const MAX_CHARS = 2_500_000;
+// sessionStorage holds about 5 MB per site, and WebKit may count two bytes a
+// character: keep well under half of it for everything else.
+const MAX_CHARS = 1_000_000;
 export const HOME_FEED_LIFELINE_ANCHOR_KEY = 'recommended:all:desc';
 
 export interface HomeFeedLifelinePage {
@@ -43,7 +45,13 @@ function write(key: string, value: unknown) {
     }
     sessionStorage.setItem(key, text);
   } catch {
-    // full or blocked storage: the next reload just starts at the top
+    // Full or blocked storage: drop the old copy too, so a stale feed is never
+    // paired with a newer anchor. The next reload just starts at the top.
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // nothing to remove
+    }
   }
 }
 
@@ -78,7 +86,10 @@ export function takeHomeFeedLifeline(userId: number | null): {
 } | null {
   if (taken) return null;
   taken = true;
-  if (!previousPageDied()) return null;
+  // Only when the tab died while the viewer was on the home feed: a death
+  // elsewhere (an app, a post) leaves an older feed that a later visit to
+  // Home should not bring back.
+  if (previousPageDeathPath() !== '/') return null;
   const saved = read<{ userId: number; savedAt: number; page: HomeFeedLifelinePage }>(FEED_KEY);
   const anchor = read<{ userId: number; savedAt: number; anchor: HomeFeedLifelineAnchor }>(ANCHOR_KEY);
   const viewer = Number(userId) || 0;

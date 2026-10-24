@@ -64,6 +64,7 @@ export interface BuildLiveSafetyStopRequest {
 
 export interface UsePreviewHostBridgeArgs {
   runtimeOnly: boolean;
+  appLifecycleSource?: string | null;
   // a thumbnail/view_preview capture's frame source (not the app's own run)
   previewSrcOverride?: string | null;
   appMcpSessionId: string | null;
