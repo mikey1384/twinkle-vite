@@ -13,6 +13,12 @@ import type { ArenaFight, ArenaItem } from './types';
 // shows the keys and why each answer is right or wrong.
 
 const CIRCLED = ['①', '②', '③', '④', '⑤'];
+const BODY_FIRST_TYPES = new Set(['eng.order', 'eng.insert']);
+
+// the point tag comes from the blueprint, never from authored stem text
+function stemText(stem: string) {
+  return String(stem || '').replace(/\s*\[\d점\]\s*/g, ' ').trim();
+}
 
 export default function FightRunner({
   fightId,
@@ -287,6 +293,9 @@ function PaperItem({
   onMark: (choice: number | null) => void;
 }) {
   const listening = item.section === 'listening';
+  // the given text of an order or insertion item comes before the passage,
+  // as on the real paper; a summary or <보기> box comes after it
+  const bodyFirst = BODY_FIRST_TYPES.has(item.type);
   return (
     <article className={itemCls}>
       {passage && listening && (
@@ -299,12 +308,31 @@ function PaperItem({
         </div>
       )}
       <p className={stemCls}>
-        <b>{item.no}.</b> {item.stem}
+        <b>{item.no}.</b> {stemText(item.stem)}
         {item.points === 3 && <span className={pointsCls}> [3점]</span>}
       </p>
-      {passage && !listening && <div className={passageCls}>{passage.body}</div>}
-      {item.body && <div className={boxCls}>{item.body}</div>}
-      <ol className={choicesCls}>
+      {item.body && bodyFirst && (
+        <div className={boxCls}>
+          <PaperText text={item.body} />
+        </div>
+      )}
+      {passage && !listening && (
+        <div className={passageCls}>
+          <PaperText text={passage.body} />
+        </div>
+      )}
+      {item.body && !bodyFirst && (
+        <div className={boxCls}>
+          <PaperText text={item.body} />
+        </div>
+      )}
+      <ol
+        className={cx(
+          choicesCls,
+          item.choices.every((choice, i) => choice.trim() === CIRCLED[i]) &&
+            markerRowCls
+        )}
+      >
         {item.choices.map((choice, index) => {
           const chosen = marked === index;
           const isKey = finished && item.key === index;
@@ -322,7 +350,10 @@ function PaperItem({
                 )}
                 onClick={() => onMark(chosen ? null : index)}
               >
-                <span className={circledCls}>{CIRCLED[index]}</span> {choice}
+                <span className={circledCls}>{CIRCLED[index]}</span>
+                {/* a marker choice (the underlined ① of a grammar item) is
+                    printed once, as the paper does */}
+                {choice.trim() === CIRCLED[index] ? '' : ` ${choice}`}
               </button>
             </li>
           );
@@ -355,6 +386,33 @@ function PaperItem({
   );
 }
 
+// The paper's text: <u>…</u> underlines (grammar, vocabulary, referents)
+// and '* word: 뜻' glosses set small and right-aligned below the passage,
+// as the real booklet prints them. Built as elements; never raw HTML.
+function PaperText({ text }: { text: string }) {
+  const lines = String(text || '').split('\n');
+  const body = lines.filter((line) => !line.startsWith('* '));
+  const glosses = lines.filter((line) => line.startsWith('* '));
+  return (
+    <>
+      {body.join('\n').split(/(<u>[\s\S]*?<\/u>)/g).map((part, i) =>
+        part.startsWith('<u>') && part.endsWith('</u>') ? (
+          <u key={i}>{part.slice(3, -4)}</u>
+        ) : (
+          <React.Fragment key={i}>{part}</React.Fragment>
+        )
+      )}
+      {glosses.length > 0 && (
+        <span className={glossesCls}>
+          {glosses.map((gloss, i) => (
+            <span key={i}>{gloss}</span>
+          ))}
+        </span>
+      )}
+    </>
+  );
+}
+
 function Result({ data }: { data: ArenaFight }) {
   const { fight } = data;
   const estimate = fight.estimate?.grade;
@@ -373,11 +431,11 @@ function Result({ data }: { data: ArenaFight }) {
         </div>
       )}
       <div>
-        <span className={resultLabelCls}>Power level</span>
+        <span className={resultLabelCls}>Hunter Rank</span>
         <strong>
           {estimate
             ? `about ${estimate.grade}등급 (likely ${estimate.low}–${estimate.high})`
-            : 'Still measuring'}
+            : 'Still tracking'}
         </strong>
       </div>
     </div>
@@ -810,4 +868,22 @@ const confirmButtonsCls = css`
 // the circled numbers exist in the paper's serif, not in the UI sans
 const glyphCls = css`
   font-family: ${PAPER_SERIF};
+`;
+
+const glossesCls = css`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 0.6rem;
+  font-size: 1.2rem;
+  white-space: normal;
+`;
+
+// marker-only choices (① ② ③ ④ ⑤ of an underline item) sit in one row
+const markerRowCls = css`
+  display: flex;
+  gap: 2.4rem;
+  li button {
+    width: auto;
+  }
 `;
