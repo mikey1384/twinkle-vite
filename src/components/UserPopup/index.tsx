@@ -343,7 +343,7 @@ export default function UserPopup({
                 style={{ position: 'absolute', inset: 0, zIndex: 0 }}
               />
             )}
-            <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ position: 'relative', zIndex: 1, width: '100%' }}>
               <AchievementBadges
                 thumbSize="2rem"
                 unlockedAchievementIds={appliedUnlockedAchievementIds}

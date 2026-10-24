@@ -37,14 +37,14 @@ export default function AchievementBadges({
           width: 'auto',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center'
+          alignItems: 'center',
+          gap: '0.5rem'
         }}
       >
         {achievements.map((achievement) =>
           achievement ? (
             <AchievementItem
               key={achievement.type}
-              style={{ marginRight: '0.5rem' }}
               isSmall
               isThumb
               thumbSize={thumbSize}
