@@ -34,6 +34,8 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
   );
   const MainRef: React.RefObject<any> = useRef(null);
   const [resetNumber, setResetNumber] = useState(0);
+  // bumped to remount the game fresh (Story menu from the clear screen)
+  const [gameKey, setGameKey] = useState(0);
   const [activeTab, setActiveTab] = useState('game');
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [displayedSection, setDisplayedSection] = useState('story');
@@ -233,6 +235,7 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
                     initialImagePath={clearScreenStory.imagePath}
                     isListening={clearScreenStory.isListening}
                     onHide={handleCloseClearScreen}
+                    onStoryMenu={handleStoryMenu}
                     numQuestions={clearScreenStory.numQuestions}
                     difficulty={clearScreenStory.difficulty}
                     xpRewardAmount={clearScreenStory.xpRewardAmount}
@@ -248,6 +251,7 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
                   }}
                 >
                   <Game
+                    key={gameKey}
                     attemptId={attemptId}
                     dailyTask={dailyTask}
                     difficulty={Number(difficulty)}
@@ -434,6 +438,22 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
     } catch (error) {
       console.error('Failed to open AI Story rewards:', error);
     }
+  }
+
+  // the clear screen's Story menu (Mikey 10-24): back to level and Read/
+  // Listen, the same reset as the story's New Story button
+  function handleStoryMenu() {
+    setClearScreenShown(false);
+    setClearScreenStory(null);
+    setStoryId(0);
+    setQuestions([]);
+    setDisplayedSection('story');
+    setSolveObj({ numCorrect: 0, isGraded: false });
+    setIsCloseLocked(false);
+    setIsGameStarted(false);
+    setResetNumber((n) => n + 1);
+    setGameKey((k) => k + 1);
+    if (MainRef.current) MainRef.current.scrollTop = 0;
   }
 
   function handleCloseClearScreen() {

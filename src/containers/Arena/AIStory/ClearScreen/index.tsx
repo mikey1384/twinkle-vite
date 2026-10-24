@@ -169,6 +169,7 @@ export default function ClearScreen({
   initialImagePath,
   isListening,
   onHide,
+  onStoryMenu,
   numQuestions,
   xpRewardAmount,
   coinRewardAmount,
@@ -178,6 +179,8 @@ export default function ClearScreen({
   initialImagePath?: string;
   isListening: boolean;
   onHide: () => void;
+  // back to the AI Story menu (level, Read / Listen)
+  onStoryMenu: () => void;
   numQuestions: number;
   // what the pass actually paid (the API's stored amounts)
   xpRewardAmount: number;
@@ -723,6 +726,9 @@ export default function ClearScreen({
           <ArenaButton tone="paper" size="md" onClick={onHide}>
             Back to story
           </ArenaButton>
+          <ArenaButton tone="ink" size="md" onClick={onStoryMenu}>
+            Story menu
+          </ArenaButton>
         </footer>
       </div>
     </div>
@@ -1068,6 +1074,8 @@ const pictureCls = css`
 const clearFootCls = css`
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
   padding: 1rem 1.6rem 1.4rem;
   border-top: 2px dashed ${ARENA.inkSoft};
 `;
