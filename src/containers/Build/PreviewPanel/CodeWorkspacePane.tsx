@@ -215,6 +215,9 @@ export default function CodeWorkspacePane({
           min-height: 0;
           display: flex;
           flex-direction: column;
+          /* the whole column scrolls only when its fixed parts alone overflow
+             (short windows, the phone's 220px row) */
+          overflow-y: auto;
           @media (max-width: ${mobileMaxWidth}) {
             border-right: none;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -653,8 +656,8 @@ export default function CodeWorkspacePane({
         </div>
         <div
           className={css`
-            flex: 1;
-            min-height: 0;
+            flex: 1 1 0;
+            min-height: 9rem;
             overflow: auto;
             padding: 0.45rem;
             display: flex;
@@ -887,6 +890,9 @@ export default function CodeWorkspacePane({
               display: flex;
               flex-direction: column;
               gap: 0.5rem;
+              flex: 0 1 auto;
+              max-height: 40%;
+              min-height: 8rem;
             `}
           >
             <div
@@ -940,6 +946,8 @@ export default function CodeWorkspacePane({
                   display: flex;
                   flex-direction: column;
                   gap: 0.35rem;
+                  min-height: 0;
+                  overflow-y: auto;
                 `}
               >
                 {displayedAssetEntries.map((asset) => {

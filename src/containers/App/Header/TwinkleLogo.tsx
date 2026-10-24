@@ -118,9 +118,10 @@ export default function TwinkleLogo({
   );
 }
 
-// Platinum (100M XP): the whole word is metal, no blue. "Twin" is dark
-// graphite steel, "kle" bright polished platinum, both with a fine engraved
-// edge. A light crosses once on hover; the logo never loops on its own.
+// Platinum (100M XP): the brand's own blue and green, finished like polished
+// metal: each half shades from a deep tone through the brand colour to a
+// bright highlight, with a fine engraved edge. A light crosses once on hover;
+// the logo never loops on its own.
 const platinumLogoClass = css`
   > .logo-twin,
   > .logo-kle {
@@ -129,28 +130,28 @@ const platinumLogoClass = css`
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.9))
-      drop-shadow(0 -0.5px 0 rgba(38, 42, 49, 0.35));
+    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7))
+      drop-shadow(0 -0.5px 0 rgba(15, 30, 60, 0.3));
     transition: background-position 900ms cubic-bezier(0.45, 0.05, 0.25, 1);
   }
   > .logo-twin {
     background-image: linear-gradient(
       100deg,
-      #3e4652 0%,
-      #6b7380 30%,
-      #c9ced6 46%,
-      #6b7380 58%,
-      #2f353f 100%
+      #1f5fb8 0%,
+      ${Color.logoBlue()} 30%,
+      #a9cdfa 46%,
+      ${Color.logoBlue()} 58%,
+      #1b4f9c 100%
     );
   }
   > .logo-kle {
     background-image: linear-gradient(
       100deg,
-      #646c77 0%,
-      #a9b0ba 26%,
-      #eef0f3 42%,
-      #8e96a1 56%,
-      #535a65 100%
+      #2f9e37 0%,
+      ${Color.logoGreen()} 26%,
+      #c4f5c5 42%,
+      ${Color.logoGreen()} 56%,
+      #2a8a31 100%
     );
   }
   /* beats the base hover shadow, which smudges through metal text */

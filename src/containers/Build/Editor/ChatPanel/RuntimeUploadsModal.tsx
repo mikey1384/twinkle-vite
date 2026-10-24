@@ -1,12 +1,16 @@
 import Icon from '~/components/Icon';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import ProgressBar from '~/components/ProgressBar';
 import { mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { BuildCopilotPolicy, BuildRuntimeUploadAsset } from './types';
+import {
+  BuildCopilotPolicy,
+  BuildRuntimeUploadAsset,
+  BuildRuntimeUploadGroup
+} from './types';
 import ReferenceDocumentsPanel from './ReferenceDocumentsPanel';
 import { formatBytes, formatTokenCount } from './helpers/utils';
 import type {
@@ -19,10 +23,11 @@ interface RuntimeUploadsModalProps {
   canManageReferenceDocuments: boolean;
   copilotPolicy: BuildCopilotPolicy | null;
   runtimeUploadsModalShown: boolean;
-  runtimeUploadAssets: BuildRuntimeUploadAsset[];
+  runtimeUploadGroups: BuildRuntimeUploadGroup[];
   runtimeUploadsNextCursor: number | null;
   runtimeUploadsLoading: boolean;
   runtimeUploadsLoadingMore: boolean;
+  runtimeUploadsLoadingBuildId: number | null;
   runtimeUploadsError: string;
   runtimeUploadDeletingId: number | null;
   onCloseRuntimeUploadsManager: () => void;
@@ -31,6 +36,7 @@ interface RuntimeUploadsModalProps {
     options: BuildAgentAssetCreateOptions
   ) => Promise<BuildAgentAssetCreateResult>;
   onLoadMoreRuntimeUploads: () => void;
+  onLoadMoreRuntimeUploadsForBuild: (buildId: number) => void;
 }
 
 export default function RuntimeUploadsModal({
@@ -38,62 +44,19 @@ export default function RuntimeUploadsModal({
   canManageReferenceDocuments,
   copilotPolicy,
   runtimeUploadsModalShown,
-  runtimeUploadAssets,
+  runtimeUploadGroups,
   runtimeUploadsNextCursor,
   runtimeUploadsLoading,
   runtimeUploadsLoadingMore,
+  runtimeUploadsLoadingBuildId,
   runtimeUploadsError,
   runtimeUploadDeletingId,
   onCloseRuntimeUploadsManager,
   onDeleteRuntimeUpload,
   onCreateGeneratedRuntimeAsset,
-  onLoadMoreRuntimeUploads
+  onLoadMoreRuntimeUploads,
+  onLoadMoreRuntimeUploadsForBuild
 }: RuntimeUploadsModalProps) {
-  const groupedRuntimeUploadAssets = useMemo(() => {
-    const groups: Array<{
-      key: string;
-      buildId: number;
-      buildTitle: string;
-      buildExists: boolean;
-      assets: BuildRuntimeUploadAsset[];
-    }> = [];
-    const groupMap = new Map<
-      string,
-      {
-        key: string;
-        buildId: number;
-        buildTitle: string;
-        buildExists: boolean;
-        assets: BuildRuntimeUploadAsset[];
-      }
-    >();
-
-    for (const asset of runtimeUploadAssets) {
-      const buildExists = Boolean(asset.buildTitle?.trim());
-      const buildTitle =
-        asset.buildTitle?.trim() ||
-        `Deleted build #${formatTokenCount(asset.buildId)}`;
-      const key = `${asset.buildId}:${buildTitle}`;
-      let group = groupMap.get(key);
-
-      if (!group) {
-        group = {
-          key,
-          buildId: asset.buildId,
-          buildTitle,
-          buildExists,
-          assets: []
-        };
-        groupMap.set(key, group);
-        groups.push(group);
-      }
-
-      group.assets.push(asset);
-    }
-
-    return groups;
-  }, [runtimeUploadAssets]);
-
   if (!runtimeUploadsModalShown) {
     return null;
   }
@@ -114,17 +77,6 @@ export default function RuntimeUploadsModal({
           >
             Close
           </Button>
-          {runtimeUploadsNextCursor ? (
-            <Button
-              color="blue"
-              variant="solid"
-              loading={runtimeUploadsLoadingMore}
-              onClick={onLoadMoreRuntimeUploads}
-              uppercase={false}
-            >
-              Load more
-            </Button>
-          ) : null}
         </>
       }
     >
@@ -230,9 +182,9 @@ export default function RuntimeUploadsModal({
             {runtimeUploadsError}
           </div>
         ) : null}
-        {runtimeUploadsLoading && runtimeUploadAssets.length === 0 ? (
+        {runtimeUploadsLoading && runtimeUploadGroups.length === 0 ? (
           <EmptyState>Loading uploaded files...</EmptyState>
-        ) : groupedRuntimeUploadAssets.length === 0 ? (
+        ) : runtimeUploadGroups.length === 0 ? (
           <EmptyState>No uploaded files yet.</EmptyState>
         ) : (
           <div
@@ -244,9 +196,18 @@ export default function RuntimeUploadsModal({
               padding-bottom: 0.25rem;
             `}
           >
-            {groupedRuntimeUploadAssets.map((group) => (
+            {runtimeUploadGroups.map((group) => {
+              const buildExists = Boolean(group.buildTitle?.trim());
+              const buildTitle =
+                group.buildTitle?.trim() ||
+                `Deleted build #${formatTokenCount(group.buildId)}`;
+              const hiddenCount = Math.max(
+                0,
+                group.fileCount - group.assets.length
+              );
+              return (
               <section
-                key={group.key}
+                key={group.buildId}
                 className={css`
                   display: flex;
                   flex-direction: column;
@@ -283,7 +244,7 @@ export default function RuntimeUploadsModal({
                         color: var(--chat-text);
                       `}
                     >
-                      {group.buildTitle}
+                      {buildTitle}
                     </span>
                     <span
                       className={css`
@@ -292,10 +253,12 @@ export default function RuntimeUploadsModal({
                         opacity: 0.68;
                       `}
                     >
-                      Build #{formatTokenCount(group.buildId)}
+                      Build #{formatTokenCount(group.buildId)} ·{' '}
+                      {formatTokenCount(group.fileCount)} file
+                      {group.fileCount === 1 ? '' : 's'}
                     </span>
                   </div>
-                  {group.buildExists ? (
+                  {buildExists ? (
                     <a
                       href={`/build/${group.buildId}`}
                       className={css`
@@ -449,8 +412,39 @@ export default function RuntimeUploadsModal({
                     </div>
                   ))}
                 </div>
+                {group.nextCursor ? (
+                  <button
+                    type="button"
+                    aria-busy={runtimeUploadsLoadingBuildId === group.buildId}
+                    disabled={runtimeUploadsLoadingBuildId !== null}
+                    onClick={() => onLoadMoreRuntimeUploadsForBuild(group.buildId)}
+                    className={showMoreButtonClass}
+                  >
+                    {runtimeUploadsLoadingBuildId === group.buildId ? (
+                      <>
+                        Loading...
+                        <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />
+                      </>
+                    ) : (
+                      `Show ${formatTokenCount(hiddenCount)} more from this build`
+                    )}
+                  </button>
+                ) : null}
               </section>
-            ))}
+              );
+            })}
+            {runtimeUploadsNextCursor ? (
+              <Button
+                color="blue"
+                variant="soft"
+                loading={runtimeUploadsLoadingMore}
+                onClick={onLoadMoreRuntimeUploads}
+                uppercase={false}
+                style={{ alignSelf: 'center' }}
+              >
+                Show more builds
+              </Button>
+            ) : null}
           </div>
         )}
       </div>
@@ -738,6 +732,27 @@ const generatedAssetInputClass = css`
   &:disabled {
     opacity: 0.65;
     cursor: wait;
+  }
+`;
+
+const showMoreButtonClass = css`
+  border: none;
+  border-top: 1px solid rgba(226, 232, 240, 0.65);
+  background: rgba(248, 250, 252, 0.9);
+  color: #1d4ed8;
+  padding: 0.75rem 1rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover:not(:disabled) {
+    background: rgba(239, 246, 255, 0.95);
+  }
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
   }
 `;
 

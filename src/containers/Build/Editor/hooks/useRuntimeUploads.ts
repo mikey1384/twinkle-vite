@@ -20,9 +20,14 @@ import type {
   Build,
   BuildCopilotPolicy,
   BuildRuntimeUploadAsset,
+  BuildRuntimeUploadGroup,
   BuildRuntimeUploadUsage
 } from '../types';
 import { SITE_NAME } from '~/constants/siteBrand';
+
+const RUNTIME_UPLOAD_BUILDS_PER_PAGE = 10;
+const RUNTIME_UPLOAD_FILES_PER_SECTION = 5;
+const RUNTIME_UPLOAD_FILES_PER_PAGE = 20;
 
 export default function useRuntimeUploads({
   build,
@@ -56,6 +61,9 @@ export default function useRuntimeUploads({
   loadBuildRuntimeUploads: (options: {
     cursor?: number | null;
     limit: number;
+    groupBy?: 'build';
+    perBuild?: number;
+    buildId?: number;
   }) => Promise<any>;
   requestConfirm: (options: ConfirmModalOptions) => Promise<boolean>;
   replaceCopilotPolicy: (policy: BuildCopilotPolicy | null) => void;
@@ -67,8 +75,8 @@ export default function useRuntimeUploads({
 }) {
   const [runtimeUploadsModalShown, setRuntimeUploadsModalShown] =
     useState(false);
-  const [runtimeUploadAssets, setRuntimeUploadAssets] = useState<
-    BuildRuntimeUploadAsset[]
+  const [runtimeUploadGroups, setRuntimeUploadGroups] = useState<
+    BuildRuntimeUploadGroup[]
   >([]);
   const [currentBuildRuntimeAssets, setCurrentBuildRuntimeAssets] = useState<
     BuildRuntimeUploadAsset[]
@@ -79,6 +87,8 @@ export default function useRuntimeUploads({
   const [runtimeUploadsLoading, setRuntimeUploadsLoading] = useState(false);
   const [runtimeUploadsLoadingMore, setRuntimeUploadsLoadingMore] =
     useState(false);
+  const [runtimeUploadsLoadingBuildId, setRuntimeUploadsLoadingBuildId] =
+    useState<number | null>(null);
   const [runtimeUploadsError, setRuntimeUploadsError] = useState('');
   const [runtimeUploadDeletingId, setRuntimeUploadDeletingId] = useState<
     number | null
@@ -86,11 +96,12 @@ export default function useRuntimeUploads({
 
   useEffect(() => {
     setRuntimeUploadsModalShown(false);
-    setRuntimeUploadAssets([]);
+    setRuntimeUploadGroups([]);
     setCurrentBuildRuntimeAssets([]);
     setRuntimeUploadsNextCursor(null);
     setRuntimeUploadsLoading(false);
     setRuntimeUploadsLoadingMore(false);
+    setRuntimeUploadsLoadingBuildId(null);
     setRuntimeUploadsError('');
     setRuntimeUploadDeletingId(null);
   }, [build.id]);
@@ -140,6 +151,9 @@ export default function useRuntimeUploads({
     }
   }
 
+  // The manager shows one section per build, newest activity first. More
+  // builds come in below the last section; each section loads its own older
+  // files, so a page never drops files into a section above.
   async function loadRuntimeUploadsPage(options?: { append?: boolean }) {
     if (!isOwner) return;
     const append = Boolean(options?.append);
@@ -154,23 +168,26 @@ export default function useRuntimeUploads({
     setRuntimeUploadsError('');
     try {
       const payload = await loadBuildRuntimeUploads({
+        groupBy: 'build',
         cursor,
-        limit: 30
+        limit: RUNTIME_UPLOAD_BUILDS_PER_PAGE,
+        perBuild: RUNTIME_UPLOAD_FILES_PER_SECTION
       });
-      const nextAssets = Array.isArray(payload?.assets) ? payload.assets : [];
+      const nextGroups: BuildRuntimeUploadGroup[] = Array.isArray(
+        payload?.groups
+      )
+        ? payload.groups
+        : [];
       const nextCursor = Number(payload?.nextCursor);
-      setRuntimeUploadAssets((prev) => {
+      setRuntimeUploadGroups((prev) => {
         if (!append) {
-          return nextAssets;
+          return nextGroups;
         }
-        const merged = [...prev];
-        const seenIds = new Set(prev.map((asset) => asset.id));
-        for (const asset of nextAssets) {
-          if (seenIds.has(asset.id)) continue;
-          seenIds.add(asset.id);
-          merged.push(asset);
-        }
-        return merged;
+        const seenBuildIds = new Set(prev.map((group) => group.buildId));
+        return [
+          ...prev,
+          ...nextGroups.filter((group) => !seenBuildIds.has(group.buildId))
+        ];
       });
       setRuntimeUploadsNextCursor(
         Number.isFinite(nextCursor) && nextCursor > 0 ? nextCursor : null
@@ -186,6 +203,52 @@ export default function useRuntimeUploads({
     } finally {
       setRuntimeUploadsLoading(false);
       setRuntimeUploadsLoadingMore(false);
+    }
+  }
+
+  async function handleLoadMoreRuntimeUploadsForBuild(buildId: number) {
+    if (!isOwner || runtimeUploadsLoadingBuildId) return;
+    const group = runtimeUploadGroups.find((item) => item.buildId === buildId);
+    if (!group?.nextCursor) return;
+    setRuntimeUploadsLoadingBuildId(buildId);
+    setRuntimeUploadsError('');
+    try {
+      const payload = await loadBuildRuntimeUploads({
+        buildId,
+        cursor: group.nextCursor,
+        limit: RUNTIME_UPLOAD_FILES_PER_PAGE
+      });
+      const nextAssets: BuildRuntimeUploadAsset[] = Array.isArray(
+        payload?.assets
+      )
+        ? payload.assets
+        : [];
+      const nextCursor = Number(payload?.nextCursor);
+      setRuntimeUploadGroups((prev) =>
+        prev.map((item) => {
+          if (item.buildId !== buildId) return item;
+          const seenIds = new Set(item.assets.map((asset) => asset.id));
+          return {
+            ...item,
+            assets: [
+              ...item.assets,
+              ...nextAssets.filter((asset) => !seenIds.has(asset.id))
+            ],
+            nextCursor:
+              Number.isFinite(nextCursor) && nextCursor > 0 ? nextCursor : null
+          };
+        })
+      );
+      updateRuntimeUploadQuotaUsage(payload?.usage || null);
+    } catch (error: any) {
+      console.error('Failed to load more runtime uploads:', error);
+      const message =
+        error?.response?.data?.error ||
+        error?.message ||
+        'Failed to load uploaded files';
+      setRuntimeUploadsError(message);
+    } finally {
+      setRuntimeUploadsLoadingBuildId(null);
     }
   }
 
@@ -291,10 +354,38 @@ export default function useRuntimeUploads({
       : [uploadedAsset];
     updateRuntimeUploadQuotaUsage(listPayload?.usage || null);
     setCurrentBuildRuntimeAssets(currentBuildAssets);
-    setRuntimeUploadAssets((prev) => [
-      uploadedAsset,
-      ...prev.filter((asset) => asset.id !== uploadedAsset.id)
-    ]);
+    setRuntimeUploadGroups((prev) => {
+      const existing = prev.find(
+        (group) => group.buildId === uploadedAsset.buildId
+      );
+      const alreadyListed = Boolean(
+        existing?.assets.some((asset) => asset.id === uploadedAsset.id)
+      );
+      const group: BuildRuntimeUploadGroup = existing
+        ? {
+            ...existing,
+            fileCount: existing.fileCount + (alreadyListed ? 0 : 1),
+            assets: [
+              uploadedAsset,
+              ...existing.assets.filter(
+                (asset) => asset.id !== uploadedAsset.id
+              )
+            ]
+          }
+        : {
+            buildId: uploadedAsset.buildId,
+            buildTitle: uploadedAsset.buildTitle,
+            buildSlug: uploadedAsset.buildSlug,
+            buildIsPublic: uploadedAsset.buildIsPublic,
+            fileCount: 1,
+            assets: [uploadedAsset],
+            nextCursor: null
+          };
+      return [
+        group,
+        ...prev.filter((item) => item.buildId !== uploadedAsset.buildId)
+      ];
+    });
     return {
       success: true,
       asset,
@@ -323,8 +414,15 @@ export default function useRuntimeUploads({
     setRuntimeUploadsError('');
     try {
       const payload = await deleteBuildRuntimeUpload(assetId);
-      setRuntimeUploadAssets((prev) =>
-        prev.filter((item) => item.id !== assetId)
+      setRuntimeUploadGroups((prev) =>
+        prev.flatMap((group) => {
+          if (!group.assets.some((item) => item.id === assetId)) {
+            return [group];
+          }
+          const assets = group.assets.filter((item) => item.id !== assetId);
+          const fileCount = Math.max(0, group.fileCount - 1);
+          return fileCount > 0 ? [{ ...group, assets, fileCount }] : [];
+        })
       );
       setCurrentBuildRuntimeAssets((prev) =>
         prev.filter((item) => item.id !== assetId)
@@ -348,12 +446,14 @@ export default function useRuntimeUploads({
     handleCreateGeneratedRuntimeAsset,
     handleDeleteRuntimeUploadManagerAsset,
     handleLoadMoreRuntimeUploads,
+    handleLoadMoreRuntimeUploadsForBuild,
     handleOpenRuntimeUploadsManager,
     handleRuntimeUploadsSyncFromPreview,
-    runtimeUploadAssets,
+    runtimeUploadGroups,
     runtimeUploadDeletingId,
     runtimeUploadsError,
     runtimeUploadsLoading,
+    runtimeUploadsLoadingBuildId,
     runtimeUploadsLoadingMore,
     runtimeUploadsModalShown,
     runtimeUploadsNextCursor

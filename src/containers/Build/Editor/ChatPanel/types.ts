@@ -1,5 +1,6 @@
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react';
 import type { BuildAppReference } from '../helpers/appReferences';
+import type { BuildRuntimeUploadGroup } from '../types';
 import type { BuildCommentFeedback } from '~/helpers/buildCommentFeedback';
 import type {
   BuildAgentAssetCreateOptions,
@@ -428,15 +429,17 @@ export interface ChatPanelProps {
   onOpenBuildChatUpload: () => void;
   uploadInFlight: boolean;
   runtimeUploadsModalShown: boolean;
-  runtimeUploadAssets: BuildRuntimeUploadAsset[];
+  runtimeUploadGroups: BuildRuntimeUploadGroup[];
   runtimeUploadsNextCursor: number | null;
   runtimeUploadsLoading: boolean;
   runtimeUploadsLoadingMore: boolean;
+  runtimeUploadsLoadingBuildId: number | null;
   runtimeUploadsError: string;
   runtimeUploadDeletingId: number | null;
   onOpenRuntimeUploadsManager: () => void;
   onCloseRuntimeUploadsManager: () => void;
   onLoadMoreRuntimeUploads: () => void;
+  onLoadMoreRuntimeUploadsForBuild: (buildId: number) => void;
   onDeleteRuntimeUpload: (
     asset: BuildRuntimeUploadAsset
   ) => Promise<void> | void;
@@ -453,3 +456,5 @@ export interface ChatPanelProps {
   ) => Promise<boolean> | boolean;
   onDeleteMessage: (message: ChatMessage) => void;
 }
+
+export type { BuildRuntimeUploadGroup };

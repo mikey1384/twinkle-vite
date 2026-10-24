@@ -539,7 +539,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           darkBlue: 'oceanBlue',
           vantaBlack: 'oceanBlue',
           gold: 'lightOrange',
-          platinum: 'platinumSilver'
+          platinum: 'platinum'
         },
         'lightOceanBlue'
       )
@@ -602,19 +602,14 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           darkBlue: 'lightOceanBlue',
           vantaBlack: 'black',
           gold: 'lightOceanBlue',
-          platinum: 'platinumSilver'
+          platinum: 'darkPlatinum'
         },
         'lightBlue'
       )
     },
     login: { color: 'green' },
-    logoTwin: { color: pickColor({ platinum: 'darkPlatinum' }, 'logoBlue') },
-    logoKle: {
-      color: pickColor(
-        { gold: 'darkGold', platinum: 'platinumSilver' },
-        'logoGreen'
-      )
-    },
+    logoTwin: { color: 'logoBlue' },
+    logoKle: { color: pickColor({ gold: 'darkGold' }, 'logoGreen') },
     mention: {
       color: pickColor({ pink: 'orange', gold: 'magenta' }, 'passionFruit')
     },

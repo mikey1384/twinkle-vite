@@ -210,15 +210,17 @@ export default function ChatPanel({
   onOpenBuildChatUpload,
   uploadInFlight,
   runtimeUploadsModalShown,
-  runtimeUploadAssets,
+  runtimeUploadGroups,
   runtimeUploadsNextCursor,
   runtimeUploadsLoading,
   runtimeUploadsLoadingMore,
+  runtimeUploadsLoadingBuildId,
   runtimeUploadsError,
   runtimeUploadDeletingId,
   onOpenRuntimeUploadsManager,
   onCloseRuntimeUploadsManager,
   onLoadMoreRuntimeUploads,
+  onLoadMoreRuntimeUploadsForBuild,
   onDeleteRuntimeUpload,
   onCreateGeneratedRuntimeAsset,
   twinkleCoins,
@@ -1035,16 +1037,18 @@ export default function ChatPanel({
         canManageReferenceDocuments={isOwner}
         copilotPolicy={copilotPolicy}
         runtimeUploadsModalShown={runtimeUploadsModalShown}
-        runtimeUploadAssets={runtimeUploadAssets}
+        runtimeUploadGroups={runtimeUploadGroups}
         runtimeUploadsNextCursor={runtimeUploadsNextCursor}
         runtimeUploadsLoading={runtimeUploadsLoading}
         runtimeUploadsLoadingMore={runtimeUploadsLoadingMore}
+        runtimeUploadsLoadingBuildId={runtimeUploadsLoadingBuildId}
         runtimeUploadsError={runtimeUploadsError}
         runtimeUploadDeletingId={runtimeUploadDeletingId}
         onCloseRuntimeUploadsManager={onCloseRuntimeUploadsManager}
         onDeleteRuntimeUpload={onDeleteRuntimeUpload}
         onCreateGeneratedRuntimeAsset={onCreateGeneratedRuntimeAsset}
         onLoadMoreRuntimeUploads={onLoadMoreRuntimeUploads}
+        onLoadMoreRuntimeUploadsForBuild={onLoadMoreRuntimeUploadsForBuild}
       />
     </div>
   );
