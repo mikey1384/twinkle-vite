@@ -5,6 +5,7 @@ import {
   type AiEnergyDisplayPolicy
 } from '~/helpers/aiEnergyDisplay';
 import { useNotiContext } from '~/contexts';
+import { uiScale } from '~/helpers/uiScale';
 
 // The floating Zero/Ciel window's shared parts: dragging it by its picture,
 // and the AI Energy battery. The call window and the chat window (the same
@@ -37,7 +38,8 @@ export function useDraggableWindow(initialPosition: { x: number; y: number }) {
   const windowRef = useRef<HTMLDivElement>(null);
   const stopDragging = useRef<(() => void) | null>(null);
 
-  // Always reachable: at least the picture stays on screen.
+  // Always reachable: at least the picture stays on screen (the handle is
+  // drawn larger on big screens, styles.css --px).
   function clamp(next: { x: number; y: number }) {
     const box = windowRef.current?.getBoundingClientRect();
     const width = box?.width || 0;
@@ -46,7 +48,7 @@ export function useDraggableWindow(initialPosition: { x: number; y: number }) {
       x: Math.min(Math.max(0, next.x), Math.max(0, window.innerWidth - width)),
       y: Math.min(
         Math.max(0, next.y),
-        Math.max(0, window.innerHeight - Math.min(height, 96))
+        Math.max(0, window.innerHeight - Math.min(height, 96 * uiScale()))
       )
     };
   }

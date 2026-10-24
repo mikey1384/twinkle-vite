@@ -208,7 +208,7 @@ function createPalette(color: string) {
         bg: color,
         shadow: '0 10px 20px -14px rgba(15, 23, 42, 0.3)',
         knobShadow: '0 6px 12px rgba(15, 23, 42, 0.16)',
-        focus: (radius: number) => `0 0 0 ${radius}px rgba(59, 130, 246, 0.45)`
+        focus: (radius: number) => `0 0 0 ${dp(radius)} rgba(59, 130, 246, 0.45)`
       },
       inactive: {
         bg: 'rgba(148, 163, 184, 0.35)',
@@ -230,7 +230,7 @@ function createPalette(color: string) {
       )} 100%)`,
       shadow: `0 12px 24px -18px ${toRgba({ ...parsed, a: 0.65 })}`,
       knobShadow: `0 10px 16px -8px ${toRgba({ ...parsed, a: 0.55 })}`,
-      focus: (radius: number) => `0 0 0 ${radius}px ${focusColor}`,
+      focus: (radius: number) => `0 0 0 ${dp(radius)} ${focusColor}`,
       hoverBg: `linear-gradient(135deg, ${toRgba(hoverLighten)} 0%, ${toRgba(
         darken
       )} 100%)`
