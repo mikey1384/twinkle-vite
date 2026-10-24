@@ -98,7 +98,7 @@ function Window({
               white-space: nowrap;
               color: white;
               font-family: 'Inter', sans-serif;
-              font-size: 16px;
+              font-size: calc(16 * var(--px));
               font-weight: 500;
               text-transform: uppercase;
               letter-spacing: 1px;

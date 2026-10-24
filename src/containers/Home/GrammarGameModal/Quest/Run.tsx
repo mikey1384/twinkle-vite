@@ -271,7 +271,7 @@ export default function Run({
 
 const wrapCls = css`
   width: 100%;
-  max-width: 760px;
+  max-width: calc(760 * var(--px));
   margin: 0 auto;
   padding: 1rem 0.5rem 2rem;
 `;

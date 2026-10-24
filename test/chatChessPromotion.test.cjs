@@ -16,7 +16,7 @@ test('promotion offers four named choices with bounded artwork and separate canc
     for (const [i, type] of ['queen', 'rook', 'bishop', 'knight'].entries()) {
       const button = buttons[i];
       assert.equal(button.props['aria-label'], `Promote to ${type}`);
-      assert.equal(button.props.style.fontSize, 14);
+      assert.equal(button.props.style.fontSize, 'calc(14 * var(--px))');
       assert.equal(button.props.style.color, color === 'black' ? '#222' : '#fff');
       const img = nodes(button, n => n.type === 'img')[0];
       assert.equal(img.props.alt, ''); assert.match(img.props.className, /width: 36px/);

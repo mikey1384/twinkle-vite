@@ -63,7 +63,7 @@ export default function CrewDetailPage() {
           padding-bottom: 20rem;
         `}
       >
-        <main className={pageWidthClass} style={{ maxWidth: '900px' }}>
+        <main className={pageWidthClass} style={{ maxWidth: 'calc(900 * var(--px))' }}>
           <Link to="/achievements/bridge-builder" className={backLinkClass}>
             <Icon icon="arrow-left" /> All crews
           </Link>

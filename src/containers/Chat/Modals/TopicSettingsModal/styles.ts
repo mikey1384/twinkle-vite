@@ -7,12 +7,12 @@ export const topicSettingsFormClass = css`
   width: 100%;
   min-width: 0;
   color: #273449;
-  font-size: 16px;
+  font-size: calc(16 * var(--px));
   line-height: 1.5;
   input[type='text'], textarea {
     width: 100%;
     min-height: 44px;
-    font-size: 16px;
+    font-size: calc(16 * var(--px));
     line-height: 1.6;
     color: #273449;
   }
@@ -32,14 +32,14 @@ export const topicSettingsLabelClass = css`
   display: block;
   margin-bottom: 8px;
   color: #334155;
-  font-size: 14px;
+  font-size: calc(14 * var(--px));
   font-weight: 600;
 `;
 
 export const topicSettingsHelpClass = css`
   margin: 8px 0 0;
   color: #526176;
-  font-size: 13px;
+  font-size: calc(13 * var(--px));
   line-height: 1.5;
   overflow-wrap: anywhere;
   &[data-error='true'] { color: #b42318; }
@@ -60,7 +60,7 @@ export const topicSettingsActionsClass = css`
   gap: 8px;
   margin-top: 16px;
   > button { border: 0; font-family: inherit; font-weight: 500; text-transform: none; }
-  > [aria-live] { color: #526176; font-size: 13px; }
+  > [aria-live] { color: #526176; font-size: calc(13 * var(--px)); }
 `;
 
 export const topicSettingsSwitchStyle = {
@@ -71,7 +71,7 @@ export const topicSettingsSwitchStyle = {
 };
 
 export const topicSettingsSwitchLabelStyle = {
-  fontSize: '14px',
+  fontSize: 'calc(14 * var(--px))',
   lineHeight: 1.5,
   color: '#334155',
   margin: 0

@@ -146,7 +146,7 @@ export default function GradeOverview({
 
       <div
         className={css`
-          max-width: 680px;
+          max-width: calc(680 * var(--px));
           margin: 0 auto 1.8rem;
           padding: 1.2rem 1.6rem;
           border-left: 3px solid ${PAPER.accent};

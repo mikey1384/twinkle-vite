@@ -67,7 +67,7 @@ export default function SkeletonItem() {
       />
       <div
         className={css`
-          ${skeletonBar({ height: 32, width: '180px', radius: 8 })};
+          ${skeletonBar({ height: 32, width: 'calc(180 * var(--px))', radius: 8 })};
           margin-top: 14px;
           align-self: center;
         `}

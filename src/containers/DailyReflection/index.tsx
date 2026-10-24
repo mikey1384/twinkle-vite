@@ -175,7 +175,7 @@ const stageCls = css`
 
 const topBarCls = css`
   width: 100%;
-  max-width: 1100px;
+  max-width: calc(1100 * var(--px));
   margin: 0 auto 1.2rem;
   display: flex;
   align-items: center;
@@ -209,7 +209,7 @@ const modeTagCls = css`
 
 const panelWrapCls = css`
   width: 100%;
-  max-width: 820px;
+  max-width: calc(820 * var(--px));
   margin: 0 auto;
   background: ${PAGE.paper};
   border: 1px solid ${PAGE.line};

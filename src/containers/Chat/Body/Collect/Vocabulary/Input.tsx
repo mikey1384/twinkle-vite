@@ -107,7 +107,7 @@ export default function Input({
           border-radius: 999px;
           padding: 0.5rem 0.75rem;
           width: 100%;
-          max-width: 560px;
+          max-width: calc(560 * var(--px));
           overflow: hidden;
           transition: border-color 0.2s ease, box-shadow 0.2s ease;
 

@@ -178,7 +178,7 @@ export default function OrgAsksPage() {
       <div
         className={css`
           width: 100%;
-          max-width: 760px;
+          max-width: calc(760 * var(--px));
           margin: 0 auto;
           padding: 1.6rem 16px 14rem;
           font-size: 1.5rem;
@@ -388,7 +388,7 @@ export default function OrgAsksPage() {
         >
           <div
             className={css`
-              max-width: 760px;
+              max-width: calc(760 * var(--px));
               margin: 0 auto;
               display: flex;
               gap: 0.8rem;

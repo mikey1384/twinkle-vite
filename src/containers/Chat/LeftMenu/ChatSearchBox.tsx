@@ -49,13 +49,16 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
     <ErrorBoundary componentPath="Chat/LeftMenu/ChatSearchBox">
       <div style={style} className={css`
         padding: 0 1rem;
-        @container chat-channels (max-width: 180px) {
+        @media (max-width: 1512px) { @container chat-channels (max-width: 180px) {
           padding: 0 0.6rem;
-        }
+        } }
+@media (min-width: 1513px) { @container chat-channels (max-width: 18rem) {
+          padding: 0 0.6rem;
+        } }
       `}>
         <SearchInput
           className={css`
-            @container chat-channels (max-width: 180px) {
+            @media (max-width: 1512px) { @container chat-channels (max-width: 180px) {
               /* SearchInput sizes its icon with the input text (2.3rem), which
                  reaches past a 3rem text start. Shrink the icon here so the
                  narrow panel keeps its text room and still shows a clear gap. */
@@ -64,10 +67,23 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
                 left: 0.9rem;
               }
               && input {
-                font-size: 16px;
+                font-size: calc(16 * var(--px));
                 padding-left: 3.4rem !important;
               }
-            }
+            } }
+@media (min-width: 1513px) { @container chat-channels (max-width: 18rem) {
+              /* SearchInput sizes its icon with the input text (2.3rem), which
+                 reaches past a 3rem text start. Shrink the icon here so the
+                 narrow panel keeps its text room and still shows a clear gap. */
+              && svg {
+                font-size: 1.6rem;
+                left: 0.9rem;
+              }
+              && input {
+                font-size: calc(16 * var(--px));
+                padding-left: 3.4rem !important;
+              }
+            } }
           `}
           inputHeight="max(36px, 4.3rem)"
           placeholder="Search..."

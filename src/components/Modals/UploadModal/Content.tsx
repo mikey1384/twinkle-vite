@@ -65,9 +65,9 @@ export default function UploadModalContent({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(calc(250 * var(--px)), 1fr))',
               gap: '1.5rem',
-              maxWidth: '600px',
+              maxWidth: 'calc(600 * var(--px))',
               margin: '0 auto'
             }}
           >

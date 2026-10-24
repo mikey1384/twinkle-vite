@@ -27,7 +27,7 @@ export default function UploadProgress({ progress }: { progress: number | null }
         className={css`
           height: 18px;
           > span {
-            font-size: 12px;
+            font-size: calc(12 * var(--px));
           }
         `}
       />

@@ -58,10 +58,14 @@ const discoveryGridClass = css`
     border: 0;
   }
 
-  @container (max-width: 640px) {
+  @media (max-width: 1512px) { @container (max-width: 640px) {
     grid-template-columns: minmax(0, 1fr);
     gap: 1.3rem;
-  }
+  } }
+@media (min-width: 1513px) { @container (max-width: 64rem) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.3rem;
+  } }
 `;
 
 const topViewedCopyClass = css`

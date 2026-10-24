@@ -25,11 +25,16 @@ const buttonStyle = css`
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  @container chat-context (max-width: 180px) {
+  @media (max-width: 1512px) { @container chat-context (max-width: 180px) {
     margin: 0.6rem 0.4rem;
     padding: 0.7rem 0.3rem;
     font-size: max(13px, 1.3rem);
-  }
+  } }
+@media (min-width: 1513px) { @container chat-context (max-width: 18rem) {
+    margin: 0.6rem 0.4rem;
+    padding: 0.7rem 0.3rem;
+    font-size: max(13px, 1.3rem);
+  } }
   @media (pointer: coarse) {
     min-height: 44px;
   }

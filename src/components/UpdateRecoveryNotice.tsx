@@ -51,7 +51,7 @@ export default function UpdateRecoveryNotice({
         className={css`
           background: #fff;
           width: 90%;
-          max-width: 550px;
+          max-width: calc(550 * var(--px));
           border-radius: 1rem;
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25),
             0 0 30px ${Color.gold(0.2)};

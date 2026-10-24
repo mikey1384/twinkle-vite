@@ -1,6 +1,6 @@
 // Use CSS viewport width, including Windows display scaling and browser zoom.
 // Below 1024px, stack the navigation lists to leave room for the conversation.
-export const SPLIT_NAVIGATION_MEDIA_QUERY = '(min-width: 1024px)';
+export const SPLIT_NAVIGATION_MEDIA_QUERY = '(min-width: calc(1024 * var(--px)))';
 
 // Short viewports (phones in a browser, 768px-tall laptops) trim the controls
 // block's padding. Nothing collapses behind a toggle: quick-access portraits

@@ -64,7 +64,7 @@ export default function GameModalFooter({
       {error && (
         <p
           role="alert"
-          style={{ width: '100%', fontSize: '14px', lineHeight: 1.5 }}
+          style={{ width: '100%', fontSize: 'calc(14 * var(--px))', lineHeight: 1.5 }}
         >
           {error}
         </p>
@@ -72,7 +72,7 @@ export default function GameModalFooter({
       {showHowToPlay && (
         <Button
           variant="ghost"
-          style={{ minHeight: '44px', fontSize: '14px' }}
+          style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))' }}
           color={howToPlayColor || 'magenta'}
           onClick={onHowToPlay || noop}
         >
@@ -82,7 +82,7 @@ export default function GameModalFooter({
       {showGameEndButton && (
         <Button
           variant="ghost"
-          style={{ minHeight: '44px', fontSize: '14px' }}
+          style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))' }}
           color={drawOfferPending || isAbortable ? 'orange' : 'red'}
           onClick={onOpenConfirmModal || noop}
           disabled={actionsDisabled || loading}
@@ -93,7 +93,7 @@ export default function GameModalFooter({
       {showOfferDraw && (
         <Button
           variant="ghost"
-          style={{ minHeight: '44px', fontSize: '14px' }}
+          style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))' }}
           color="orange"
           onClick={onOfferDraw || noop}
           disabled={actionsDisabled || loading}
@@ -103,7 +103,7 @@ export default function GameModalFooter({
       )}
       <Button
         variant="ghost"
-        style={{ minHeight: '44px', fontSize: '14px' }}
+        style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))' }}
         onClick={onClose || noop}
       >
         Close
@@ -111,7 +111,7 @@ export default function GameModalFooter({
       {showCancelMove && (
         <Button
           variant="ghost"
-          style={{ minHeight: '44px', fontSize: '14px' }}
+          style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))' }}
           color={warningColor}
           onClick={onCancelMove || noop}
           disabled={actionsDisabled || loading}
@@ -122,7 +122,7 @@ export default function GameModalFooter({
       {gameFinished ? (
         <Button
           variant="ghost"
-          style={{ minHeight: '44px', fontSize: '14px' }}
+          style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))' }}
           color="orange"
           onClick={onStartNewGame || noop}
           disabled={actionsDisabled || loading}
@@ -134,7 +134,7 @@ export default function GameModalFooter({
           variant="ghost"
           color={doneColor}
           loading={loading}
-          style={{ minHeight: '44px', fontSize: '14px' }}
+          style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))' }}
           onClick={handleDone}
           disabled={actionsDisabled || doneDisabled || loading || !onDone}
         >

@@ -97,7 +97,7 @@ export default function UserListModal({
         <header>{title}</header>
         <main style={{ paddingTop: 0 }}>
           {error && (
-            <p role="alert" style={{ fontSize: 16, lineHeight: 1.5 }}>
+            <p role="alert" style={{ fontSize: 'calc(16 * var(--px))', lineHeight: 1.5 }}>
               {error}
             </p>
           )}
@@ -186,7 +186,7 @@ export default function UserListModal({
                           color="logoBlue"
                           variant="solid"
                           style={{
-                            fontSize: 14,
+                            fontSize: 'calc(14 * var(--px))',
                             minHeight: 44,
                             minWidth: 44,
                             marginRight: 8
@@ -201,7 +201,7 @@ export default function UserListModal({
                           loading={pendingUser === user.id}
                           color="green"
                           variant="solid"
-                          style={{ fontSize: 14, minHeight: 44, minWidth: 44 }}
+                          style={{ fontSize: 'calc(14 * var(--px))', minHeight: 44, minWidth: 44 }}
                           onClick={() => handleTalkClick(user)}
                         >
                           <Icon icon="comments" />

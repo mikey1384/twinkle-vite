@@ -256,7 +256,7 @@ const landscapeMenuButtonClass = css`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: calc(16 * var(--px));
   line-height: 1;
   cursor: pointer;
   opacity: 0.6;

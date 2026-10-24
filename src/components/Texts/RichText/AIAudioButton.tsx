@@ -72,7 +72,7 @@ function AIAudioButton({ text, voice, contentKey, chat = false }: {
 
 const chatControlStyle: React.CSSProperties = {
   minHeight: 44, minWidth: 44, borderRadius: 12, padding: '10px 12px',
-  fontFamily: 'inherit', fontSize: 13, fontWeight: 600, lineHeight: 1.3, color: '#334155'
+  fontFamily: 'inherit', fontSize: 'calc(13 * var(--px))', fontWeight: 600, lineHeight: 1.3, color: '#334155'
 };
 const chatFocusClass = css`
   &:focus-visible { outline-color: #334155; }

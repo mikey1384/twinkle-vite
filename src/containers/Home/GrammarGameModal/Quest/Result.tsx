@@ -391,7 +391,7 @@ const wrapCls = css`
   /* the pane around it scrolls a long result (an open challenge list); the
      card never shrinks to the pane and clips its own buttons */
   flex-shrink: 0;
-  max-width: 560px;
+  max-width: calc(560 * var(--px));
   margin: 2rem auto;
   padding: 1.4rem 1.6rem 1.8rem;
   text-align: center;

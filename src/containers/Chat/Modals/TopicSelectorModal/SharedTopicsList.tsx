@@ -35,7 +35,7 @@ export default function SharedTopicsList({
   onRetry: () => void;
 }) {
   if (sharedTopicObj.loading && !sharedTopicObj.subjects.length) {
-    return <Loading text="Loading shared topics" innerStyle={{ fontSize: '14px' }} style={{ minHeight: 120 }} />;
+    return <Loading text="Loading shared topics" innerStyle={{ fontSize: 'calc(14 * var(--px))' }} style={{ minHeight: 120 }} />;
   }
 
   if (sharedTopicObj.error && !sharedTopicObj.subjects.length) {
@@ -49,7 +49,7 @@ export default function SharedTopicsList({
           width: 100%;
           text-align: center;
           padding: 3rem 0;
-          font-size: 16px;
+          font-size: calc(16 * var(--px));
           color: ${Color.darkerGray()};
         `}
       >
@@ -92,7 +92,7 @@ export default function SharedTopicsList({
                 >
                   <UsernameText
                     color="#526176"
-                    textStyle={{ fontSize: '14px', fontWeight: 600 }}
+                    textStyle={{ fontSize: 'calc(14 * var(--px))', fontWeight: 600 }}
                     user={{ id: subject.userId, username: subject?.username }}
                   />
                   {subject.timeStamp && (
@@ -115,7 +115,7 @@ export default function SharedTopicsList({
               <div
                 className={css`
                   color: #526176;
-                  font-size: 16px;
+                  font-size: calc(16 * var(--px));
                   line-height: 1.6;
                   overflow-wrap: anywhere;
                 `}

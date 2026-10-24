@@ -55,9 +55,9 @@ export default function Rewind({
   }, [scope, myId, channelId, rewindRequestId, attempt, fetchCurrentRewindRequest]);
 
   if (current.status !== 'loaded') return (
-    <div style={{padding: 16, fontSize: 16, lineHeight: 1.5}}>
+    <div style={{padding: 16, fontSize: 'calc(16 * var(--px))', lineHeight: 1.5}}>
       <p role={current.status === 'error' ? 'alert' : 'status'}>{current.status === 'error' ? 'Could not load this retry position. It may no longer be available.' : 'Loading retry position…'}</p>
-      {current.status === 'error' && <Button variant="ghost" style={{minHeight: 44, fontSize: 14}} onClick={() => setAttempt(value => value + 1)}>Try again</Button>}
+      {current.status === 'error' && <Button variant="ghost" style={{minHeight: 44, fontSize: 'calc(14 * var(--px))'}} onClick={() => setAttempt(value => value + 1)}>Try again</Button>}
     </div>
   );
   const rewindRequestMessage = result.message;

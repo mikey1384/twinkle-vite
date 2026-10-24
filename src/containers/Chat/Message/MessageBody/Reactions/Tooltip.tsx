@@ -50,7 +50,7 @@ const tooltipClass = css`
   background: #fff;
   color: #253247;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14);
-  font-size: 13px;
+  font-size: calc(13 * var(--px));
   line-height: 1.45;
   font-weight: 500;
   text-align: center;

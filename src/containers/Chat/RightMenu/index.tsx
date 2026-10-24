@@ -81,7 +81,7 @@ function RightMenu({
               : 'touch'
           };
           @media (min-width: 768px) {
-            flex: 0 0 ${chatType ? '22vw' : '18vw'};
+            flex: 0 0 calc(var(--ui-frame) * ${chatType ? '0.22' : '0.18'});
           }
           @media (max-width: ${mobileMaxWidth}) {
             max-width: ${chatType === VOCAB_CHAT_TYPE ||

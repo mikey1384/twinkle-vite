@@ -110,7 +110,7 @@ export default function AchievementUnlockComponent({
       );
     }
     return (
-      <Loading text="Loading achievement" innerStyle={{ fontSize: '14px' }} />
+      <Loading text="Loading achievement" innerStyle={{ fontSize: 'calc(14 * var(--px))' }} />
     );
   }
 

@@ -91,7 +91,7 @@ export function VideoPicker({
       generation.current++;
     };
   }, [search, list.data]);
-  const actionStyle = { minHeight: 44, fontSize: 14 };
+  const actionStyle = { minHeight: 44, fontSize: 'calc(14 * var(--px))' };
   return (
     <Modal
       modalKey="SelectVideoModal"
@@ -142,13 +142,13 @@ export function VideoPicker({
           gap: 16
         }}
       >
-        <label style={{ fontSize: 16 }}>
+        <label style={{ fontSize: 'calc(16 * var(--px))' }}>
           Search videos
           <input
             type="search"
             autoFocus
             value={query}
-            style={{ width: '100%', minHeight: 44, fontSize: 16 }}
+            style={{ width: '100%', minHeight: 44, fontSize: 'calc(16 * var(--px))' }}
             onCompositionStart={() => setComposing(true)}
             onCompositionEnd={(event) => {
               setComposing(false);
@@ -161,7 +161,7 @@ export function VideoPicker({
           />
         </label>
         {list.error ? (
-          <div role="alert" style={{ fontSize: 16 }}>
+          <div role="alert" style={{ fontSize: 'calc(16 * var(--px))' }}>
             Could not load videos. Your search is still here.
             <Button style={actionStyle} variant="ghost" onClick={list.retry}>
               Try again
@@ -182,7 +182,7 @@ export function VideoPicker({
           />
         )}
         {pageError && (
-          <div role="alert" style={{ fontSize: 16 }}>
+          <div role="alert" style={{ fontSize: 'calc(16 * var(--px))' }}>
             Could not load more videos. Your current results are kept.
             <Button
               loading={loadingMore}

@@ -115,7 +115,7 @@ const stageCls = css`
 
 const wrapCls = css`
   width: 100%;
-  max-width: 1100px;
+  max-width: calc(1100 * var(--px));
   margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -207,7 +207,7 @@ const statLineCls = css`
 
 const captionCls = css`
   margin: 0;
-  max-width: 380px;
+  max-width: calc(380 * var(--px));
   min-height: 4.6rem;
   font-family: ${PAGE.serif};
   font-size: 1.6rem;

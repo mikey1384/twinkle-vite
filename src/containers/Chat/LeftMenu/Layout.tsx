@@ -40,7 +40,7 @@ export default function Layout({
           height: 100%;
           min-height: 0;
           width: calc(
-            var(--chat-channel-width, ${DEFAULT_WIDTHS.channels}px) + 2px
+            var(--chat-channel-width, calc(${DEFAULT_WIDTHS.channels} * var(--px))) + 2px
           );
           position: relative;
 
@@ -54,15 +54,15 @@ export default function Layout({
             &[data-has-channel-navigation='true'] {
               display: grid;
               width: calc(
-                var(--chat-channel-width, ${DEFAULT_WIDTHS.channels}px) +
-                  var(--chat-context-width, ${DEFAULT_WIDTHS.context}px) +
+                var(--chat-channel-width, calc(${DEFAULT_WIDTHS.channels} * var(--px))) +
+                  var(--chat-context-width, calc(${DEFAULT_WIDTHS.context} * var(--px))) +
                   ${RESIZE_HANDLE_WIDTH + 2}px
               );
               grid-template-columns:
-                var(--chat-channel-width, ${DEFAULT_WIDTHS.channels}px)
+                var(--chat-channel-width, calc(${DEFAULT_WIDTHS.channels} * var(--px)))
                 ${RESIZE_HANDLE_WIDTH}px var(
                   --chat-context-width,
-                  ${DEFAULT_WIDTHS.context}px
+                  calc(${DEFAULT_WIDTHS.context} * var(--px))
                 );
               grid-template-rows: minmax(0, auto) auto minmax(11rem, 1fr);
               grid-template-areas:
@@ -158,10 +158,14 @@ export default function Layout({
                   font-weight: 600;
                   letter-spacing: 0.02em;
                 }
-                @container chat-context (max-width: 180px) {
+                @media (max-width: 1512px) { @container chat-context (max-width: 180px) {
                   padding: 1rem 0.7rem 0.4rem;
                   font-size: 1.1rem;
-                }
+                } }
+@media (min-width: 1513px) { @container chat-context (max-width: 18rem) {
+                  padding: 1rem 0.7rem 0.4rem;
+                  font-size: 1.1rem;
+                } }
               `}
             >
               In this chat

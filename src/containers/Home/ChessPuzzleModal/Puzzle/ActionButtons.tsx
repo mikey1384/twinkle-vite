@@ -175,7 +175,7 @@ const successBtnCss = css`
   padding: 0.75rem 1.25rem;
   gap: 0.5rem;
   min-height: 44px;
-  min-width: 140px;
+  min-width: calc(140 * var(--px));
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #15803d;
 

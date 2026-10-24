@@ -91,9 +91,12 @@ export default function WordleResult({
           padding: max(28px, 2.8rem) 56px;
           font-size: 1.6rem;
           text-align: center;
-          @container (min-width: 720px) {
+          @media (max-width: 1512px) { @container (min-width: 720px) {
             padding-block: 1.4rem;
-          }
+          } }
+@media (min-width: 1513px) { @container (min-width: 72rem) {
+            padding-block: 1.4rem;
+          } }
           @media (max-width: ${mobileMaxWidth}) {
             font-size: max(14px, 1.4rem);
           }

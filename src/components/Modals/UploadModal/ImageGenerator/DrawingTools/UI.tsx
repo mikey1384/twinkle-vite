@@ -133,7 +133,7 @@ export default function DrawingToolsUI({
               display: flex;
               flex-direction: column;
               gap: 0.75rem;
-              min-width: 200px;
+              min-width: calc(200 * var(--px));
             `}
           >
             <label
@@ -340,7 +340,7 @@ export default function DrawingToolsUI({
               display: flex;
               flex-direction: column;
               gap: 0.5rem;
-              min-width: 120px;
+              min-width: calc(120 * var(--px));
             `}
           >
             <label
@@ -412,7 +412,7 @@ export default function DrawingToolsUI({
                 display: flex;
                 flex-direction: column;
                 gap: 0.5rem;
-                min-width: 100px;
+                min-width: calc(100 * var(--px));
               `}
             >
               <label
@@ -485,7 +485,7 @@ export default function DrawingToolsUI({
                 display: flex;
                 flex-direction: column;
                 gap: 0.5rem;
-                min-width: 100px;
+                min-width: calc(100 * var(--px));
               `}
             >
               <label
@@ -660,7 +660,7 @@ export default function DrawingToolsUI({
             padding: 1.5rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             z-index: 1001;
-            min-width: 320px;
+            min-width: calc(320 * var(--px));
           `}
         >
           <div

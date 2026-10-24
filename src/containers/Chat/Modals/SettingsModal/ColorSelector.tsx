@@ -42,7 +42,7 @@ export default function ColorSelector({ unlocked = [], colors, onSetColor, selec
 
 const colorsClass = css`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(calc(76 * var(--px)), 1fr));
   gap: 8px;
   width: 100%;
   button {
@@ -69,12 +69,12 @@ const colorsClass = css`
     height: 28px;
     border-radius: 50%;
     color: #fff;
-    font-size: 12px;
+    font-size: calc(12 * var(--px));
     text-shadow: 0 1px 2px #0008;
   }
   button[aria-pressed='true'] { background: #e9edf2; font-weight: 600; }
   button:hover:not(:disabled) { background: #eef2f7; }
   button:disabled { cursor: default; }
   button:disabled > span:first-child { opacity: .5; }
-  .color-label { font-size: 12px; }
+  .color-label { font-size: calc(12 * var(--px)); }
 `;

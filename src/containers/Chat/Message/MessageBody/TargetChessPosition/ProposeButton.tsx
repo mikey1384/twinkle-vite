@@ -48,10 +48,10 @@ export default function ProposeButton({
     >
       <span
         className={css`
-          font-size: 14px;
+          font-size: calc(14 * var(--px));
           font-weight: bold;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 14px;
+            font-size: calc(14 * var(--px));
           }
         `}
       >

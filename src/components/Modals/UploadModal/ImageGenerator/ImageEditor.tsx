@@ -427,7 +427,7 @@ export default function ImageEditor({
                   className={css`
                     font-size: 1.1rem;
                     font-weight: 600;
-                    max-width: 360px;
+                    max-width: calc(360 * var(--px));
                   `}
                 >
                   {imageLoadError}

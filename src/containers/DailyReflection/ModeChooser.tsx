@@ -125,7 +125,7 @@ export default function ModeChooser({
 }
 
 const wrapCls = css`
-  max-width: 1100px;
+  max-width: calc(1100 * var(--px));
   margin: 0 auto;
 `;
 

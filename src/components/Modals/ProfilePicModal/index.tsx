@@ -88,7 +88,7 @@ export default function ProfilePicModal({
               padding: '1rem 3rem',
               fontSize: '1.1rem',
               fontWeight: 600,
-              minWidth: 200,
+              minWidth: 'calc(200 * var(--px))',
               borderRadius: '12px'
             }}
           >
@@ -160,7 +160,7 @@ function SelectionScreen({
         style={{
           display: 'grid',
           gridTemplateColumns: hasCurrentPic
-            ? 'repeat(auto-fit, minmax(250px, 1fr))'
+            ? 'repeat(auto-fit, minmax(calc(250 * var(--px)), 1fr))'
             : '1fr',
           gap: '1.5rem',
           maxWidth: hasCurrentPic ? '600px' : '300px',

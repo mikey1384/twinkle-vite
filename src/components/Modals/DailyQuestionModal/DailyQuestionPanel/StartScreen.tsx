@@ -280,7 +280,7 @@ export default function StartScreen({
 function noticeCls(edge: string, background: string) {
   return css`
     width: 100%;
-    max-width: 620px;
+    max-width: calc(620 * var(--px));
     margin-bottom: 1.4rem;
     padding: 1rem 1.3rem;
     border-radius: 12px;
@@ -367,7 +367,7 @@ const keywordHintCls = css`
 
 const rulesCls = css`
   width: 100%;
-  max-width: 620px;
+  max-width: calc(620 * var(--px));
   margin-bottom: 1.6rem;
   padding: 1.2rem 1.5rem;
   border-radius: 14px;

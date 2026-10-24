@@ -207,7 +207,7 @@ export default function StoryEditorPage() {
         <main
           className={css`
             width: 100%;
-            max-width: 1500px;
+            max-width: calc(1500 * var(--px));
             display: flex;
             flex-direction: column;
             gap: 1.4rem;

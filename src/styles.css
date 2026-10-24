@@ -17,6 +17,40 @@ body {
   right: 0;
 }
 
+/* Big screens (Mikey 10-24): the design is made on a 1512px-wide Mac window.
+   Wider desktop windows and TVs show that same design larger, not more empty
+   space. --px is one design pixel: exactly 1px up to 1512px wide (phones,
+   tablets and laptops are unchanged), then it grows with the window up to
+   1.5px (2268px); past that the page stays 1.5x inside a centered frame.
+   The desktop root size (1rem) is 10 design pixels, so rem sizes scale too.
+   Write fixed sizes as calc(N * var(--px)), and size page columns from
+   --ui-frame (not vw) so they stop with it. */
+@property --px {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 1px;
+}
+:root {
+  --px: 1px;
+  --ui-frame: 100vw;
+  --ui-frame-x: 0px;
+}
+@media (min-width: 1513px) {
+  :root {
+    --px: min(calc(100vw / 1512), 1.5px);
+  }
+  html,
+  body {
+    font-size: calc(10 * var(--px));
+  }
+}
+@media (min-width: 2269px) {
+  :root {
+    --ui-frame: 2268px;
+    --ui-frame-x: calc((100vw - 2268px) / 2);
+  }
+}
+
 :root {
   /* Default CSS variables for theme; will be overridden at runtime */
   --page-bg: rgb(255, 255, 255);

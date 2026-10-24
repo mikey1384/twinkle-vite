@@ -27,7 +27,7 @@ const fileInputButtonStyles = css`
   font-size: 1.1rem;
   transition: all 0.2s ease;
   color: #212529;
-  min-width: 140px;
+  min-width: calc(140 * var(--px));
   text-align: center;
   height: 40px;
 
@@ -103,7 +103,7 @@ export default function StylizedFileInput({
             <React.Fragment>
               <span
                 className={css`
-                  max-width: 200px;
+                  max-width: calc(200 * var(--px));
                   overflow: hidden;
                   text-overflow: ellipsis;
                   white-space: nowrap;

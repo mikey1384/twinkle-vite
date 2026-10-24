@@ -187,7 +187,7 @@ export default function UserDetails({
       {(profile.statusMsg || displayedStatusMsg) && (
         <StatusMsg
           contrastSafe={isChatEmbed}
-          style={isChatEmbed ? { fontSize: '14px', lineHeight: 1.5, padding: '10px', borderRadius: 8, boxShadow: 'none' } : undefined}
+          style={isChatEmbed ? { fontSize: 'calc(14 * var(--px))', lineHeight: 1.5, padding: '10px', borderRadius: 8, boxShadow: 'none' } : undefined}
           statusColor={statusColor}
           showApps={!isChatEmbed && !small}
           statusMsg={displayedStatusMsg}
@@ -230,7 +230,7 @@ export default function UserDetails({
         )}
       {!noProfile && (
         <Bio
-          style={isChatEmbed ? { fontSize: '14px', paddingLeft: 0, marginTop: '12px' } : undefined}
+          style={isChatEmbed ? { fontSize: 'calc(14 * var(--px))', paddingLeft: 0, marginTop: '12px' } : undefined}
           small={small}
           userId={profile.id}
           firstRow={profileFirstRow}

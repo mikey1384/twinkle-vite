@@ -137,7 +137,7 @@ function AIChatMenu({
         padding: 1rem 1rem 0 1rem;
         background-color: #fff;
         font-family: 'Helvetica Neue', Arial, sans-serif;
-        max-width: 300px;
+        max-width: calc(300 * var(--px));
         margin: 0 auto;
         display: grid;
         grid-template-rows: auto 1fr;

@@ -87,7 +87,7 @@ export default function ThinkingIndicator({
           position: absolute;
           top: 0;
           left: -200px;
-          width: 200px;
+          width: calc(200 * var(--px));
           height: 100%;
           background: linear-gradient(
             90deg,

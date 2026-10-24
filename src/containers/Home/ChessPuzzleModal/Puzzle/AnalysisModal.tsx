@@ -243,7 +243,7 @@ const overlayCSS = css`
 const modalCSS = css`
   background: white;
   border-radius: 12px;
-  max-width: 600px;
+  max-width: calc(600 * var(--px));
   width: 100%;
   max-height: 80vh;
   display: flex;

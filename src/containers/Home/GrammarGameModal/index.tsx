@@ -748,7 +748,7 @@ const focusCls = css`
 `;
 const pageInnerCls = css`
   width: 100%;
-  max-width: 1400px;
+  max-width: calc(1400 * var(--px));
   margin: 0 auto;
   padding: 0 1.6rem 3rem;
   @media (max-width: ${mobileMaxWidth}) {

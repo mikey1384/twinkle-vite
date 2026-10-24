@@ -45,22 +45,22 @@ export default function RewindRequestButton({
         background: Color.white(0.9)
       }}
     >
-      <p style={{ fontWeight: 'bold', fontSize: 16, lineHeight: 1.5, overflowWrap: 'anywhere', margin: '0 0 12px', color: Color.black() }}>
+      <p style={{ fontWeight: 'bold', fontSize: 'calc(16 * var(--px))', lineHeight: 1.5, overflowWrap: 'anywhere', margin: '0 0 12px', color: Color.black() }}>
         {`${
           isMyMessage ? 'You' : username || 'Your opponent'
         } proposed a new game from this position`}
       </p>
-      {request.error && <p ref={request.errorRef} id={request.errorId} role="alert" style={{ fontSize: 14, lineHeight: 1.5, color: Color.black() }}>{request.error}</p>}
-      {(request.busy || completed) && <p role="status" style={{ fontSize: 14, lineHeight: 1.5, color: Color.black() }}>{completed ? `${activeAction === 'cancel' ? 'Request canceled.' : activeAction === 'accept' ? 'Request accepted.' : 'Request declined.'} Waiting for the game to update.` : activeAction === 'cancel' ? 'Canceling request…' : 'Sending response…'}</p>}
+      {request.error && <p ref={request.errorRef} id={request.errorId} role="alert" style={{ fontSize: 'calc(14 * var(--px))', lineHeight: 1.5, color: Color.black() }}>{request.error}</p>}
+      {(request.busy || completed) && <p role="status" style={{ fontSize: 'calc(14 * var(--px))', lineHeight: 1.5, color: Color.black() }}>{completed ? `${activeAction === 'cancel' ? 'Request canceled.' : activeAction === 'accept' ? 'Request accepted.' : 'Request declined.'} Waiting for the game to update.` : activeAction === 'cancel' ? 'Canceling request…' : 'Sending response…'}</p>}
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         {isMyMessage ? (
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
-            {!request.busy && !completed && <span style={{ fontSize: 14, lineHeight: 1.5, color: Color.black() }}>Waiting for response...</span>}
+            {!request.busy && !completed && <span style={{ fontSize: 'calc(14 * var(--px))', lineHeight: 1.5, color: Color.black() }}>Waiting for response...</span>}
             <Button
               onClick={() => respond('cancel', onCancelRewindRequest)}
               loading={request.busy && activeAction === 'cancel'}
               disabled={request.busy || completed || !onCancelRewindRequest}
-              style={{ minHeight: 44, fontSize: 14 }}
+              style={{ minHeight: 44, fontSize: 'calc(14 * var(--px))' }}
               aria-label="Cancel chess retry request"
               variant="ghost"
               color="red"
@@ -74,7 +74,7 @@ export default function RewindRequestButton({
               onClick={() => respond('accept', onAcceptRewind)}
               loading={request.busy && activeAction === 'accept'}
               disabled={request.busy || completed || !onAcceptRewind}
-              style={{ minHeight: 44, fontSize: 14 }}
+              style={{ minHeight: 44, fontSize: 'calc(14 * var(--px))' }}
               aria-label="Accept chess retry request"
               variant="ghost"
               color="green"
@@ -86,7 +86,7 @@ export default function RewindRequestButton({
               onClick={() => respond('decline', onDeclineRewind)}
               loading={request.busy && activeAction === 'decline'}
               disabled={request.busy || completed || !onDeclineRewind}
-              style={{ minHeight: 44, fontSize: 14 }}
+              style={{ minHeight: 44, fontSize: 'calc(14 * var(--px))' }}
               aria-label="Decline chess retry request"
               variant="ghost"
               color="red"

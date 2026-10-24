@@ -168,7 +168,7 @@ export default function ChessGame({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '16px',
+              fontSize: 'calc(16 * var(--px))',
               lineHeight: 1.5,
               textAlign: 'center'
             }}
@@ -178,7 +178,7 @@ export default function ChessGame({
               again.
             </p>
             <Button
-              style={{ minHeight: '44px', fontSize: '14px', marginTop: '12px' }}
+              style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))', marginTop: '12px' }}
               onClick={() => setAttempt((value) => value + 1)}
             >
               Try again

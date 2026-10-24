@@ -391,7 +391,7 @@ const closeCls = css`
   border: 2px solid #b59a64;
   background: transparent;
   color: #513d23;
-  font-size: 24px;
+  font-size: calc(24 * var(--px));
   cursor: pointer;
 `;
 const questionCls = css`

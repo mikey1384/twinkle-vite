@@ -10,7 +10,7 @@ export default function EmbedLoadError({ onRetry }: { onRetry: () => void }) {
         color="logoBlue"
         variant="soft"
         aria-label="Retry attachment"
-        style={{ minHeight: 44, fontSize: '14px', color: '#334155' }}
+        style={{ minHeight: 44, fontSize: 'calc(14 * var(--px))', color: '#334155' }}
         onClick={(event) => {
           event?.stopPropagation();
           onRetry();
@@ -38,7 +38,7 @@ const embedLoadErrorClass = css`
   text-align: center;
   p {
     margin: 0;
-    font-size: 14px;
+    font-size: calc(14 * var(--px));
     line-height: 1.5;
     overflow-wrap: anywhere;
   }

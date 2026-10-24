@@ -239,7 +239,7 @@ const linkClass = css`
 `;
 const shelfClass = css`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(calc(210 * var(--px)), 1fr));
   gap: 1.2rem;
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
@@ -259,7 +259,7 @@ const recentListClass = css`
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(calc(260 * var(--px)), 1fr));
   gap: 0.8rem;
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;

@@ -261,7 +261,7 @@ const settledWallCls = css`
     bottom: -7px;
     width: 14px;
     height: 14px;
-    font-size: 11px;
+    font-size: calc(11 * var(--px));
   }
   @media (max-width: ${mobileMaxWidth}),
     (max-height: 520px) and (orientation: landscape) {

@@ -18,7 +18,7 @@ test('message controls stay 30px with 14px icons and inherit the original Button
   for (const property of ['width', 'min-width', 'height', 'min-height']) {
     assert.match(styles, new RegExp(`${property}: 30px;`));
   }
-  assert.match(styles, /font-size: 14px/);
+  assert.match(styles, /font-size: calc\(14 \* var\(--px\)\)/);
   assert.doesNotMatch(styles, /(?:background|color|box-shadow|outline)\s*:/,
     'shared Button must retain its original colors, shadow and keyboard focus ring');
 });

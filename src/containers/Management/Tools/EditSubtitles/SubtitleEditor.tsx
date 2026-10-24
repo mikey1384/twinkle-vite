@@ -47,7 +47,7 @@ const textInputStyles = {
 };
 
 const timeInputStyles = css`
-  width: 150px;
+  width: calc(150 * var(--px));
   padding: 6px 8px;
   border-radius: 4px;
   border: 1px solid rgba(221, 221, 221, 0.8);

@@ -82,7 +82,7 @@ export default function CloneSharedTopicButton({
           <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
         )}
       </button>
-      {submitError && <p role="alert" style={{ margin: '10px 0 0', fontSize: '14px', color: '#b42318' }}>{submitError}</p>}
+      {submitError && <p role="alert" style={{ margin: '10px 0 0', fontSize: 'calc(14 * var(--px))', color: '#b42318' }}>{submitError}</p>}
     </ScopedTheme>
   );
 

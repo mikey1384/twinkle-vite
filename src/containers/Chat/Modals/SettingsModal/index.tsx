@@ -341,7 +341,7 @@ export default function SettingsModal({
           showCloseButton={!topicAction.busy}
           closeOnBackdropClick={false}
           title="Deleted Topics"
-          header={<h2 ref={deletedTopicsHeadingRef} tabIndex={-1} style={{ margin: 0, fontSize: 20, lineHeight: 1.3 }}>Deleted topics</h2>}
+          header={<h2 ref={deletedTopicsHeadingRef} tabIndex={-1} style={{ margin: 0, fontSize: 'calc(20 * var(--px))', lineHeight: 1.3 }}>Deleted topics</h2>}
           size="md"
           modalLevel={1}
           footer={
@@ -359,7 +359,7 @@ export default function SettingsModal({
               width: 100%;
             `}
           >
-            {!permanentDeleteTopic && topicAction.error && <div style={{ fontSize: 16 }}>
+            {!permanentDeleteTopic && topicAction.error && <div style={{ fontSize: 'calc(16 * var(--px))' }}>
               <p role="alert">{topicAction.confirmed ? 'Topic restored, but the view couldn’t update. Retry updating without restoring again.' : topicAction.error}</p>
               <Button loading={topicAction.busy} variant="soft" color="logoBlue" style={chatFormActionStyle} uppercase={false} disabled={topicAction.busy}
                 onClick={() => handleRestoreTopic(topicActionLoadingId)}>{topicAction.confirmed ? 'Retry updating' : 'Retry restore'}</Button>
@@ -367,7 +367,7 @@ export default function SettingsModal({
             {deletedTopicsLoading ? (
               <Loading style={{ height: '12rem' }} />
             ) : deletedTopicsList.error ? (
-              <div style={{ padding: '20px 0', fontSize: 16 }}>
+              <div style={{ padding: '20px 0', fontSize: 'calc(16 * var(--px))' }}>
                 <p role="alert">{deletedTopicsList.error}</p>
                 <Button variant="soft" uppercase={false} style={chatFormActionStyle}
                   onClick={handleLoadDeletedTopics}>Retry loading topics</Button>
@@ -406,7 +406,7 @@ export default function SettingsModal({
                     >
                       <div
                         className={css`
-                          font-size: 16px;
+                          font-size: calc(16 * var(--px));
                           font-weight: bold;
                           overflow-wrap: anywhere;
                         `}
@@ -415,7 +415,7 @@ export default function SettingsModal({
                       </div>
                       <div
                         className={css`
-                          font-size: 14px;
+                          font-size: calc(14 * var(--px));
                           color: ${Color.darkerGray()};
                           margin-top: 0.2rem;
                         `}
@@ -695,10 +695,10 @@ export default function SettingsModal({
 const settingsClass = css`
   .identity { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: start; }
   .permission-settings { display: flex; flex-direction: column; gap: 10px; }
-  h3 { margin: 0 0 10px; font-size: 16px; color: #253247; }
+  h3 { margin: 0 0 10px; font-size: calc(16 * var(--px)); color: #253247; }
   .permission-settings h3 { margin-bottom: 0; }
   .management-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid #dce3ed; }
-  textarea { display: block; width: 100%; min-height: 90px; padding: 10px 12px; border: 1px solid #b8c4d4; border-radius: 10px; background: #fff; color: #253247; font: inherit; font-size: 16px; line-height: 1.5; resize: vertical; scroll-margin-block: 120px 84px; }
+  textarea { display: block; width: 100%; min-height: 90px; padding: 10px 12px; border: 1px solid #b8c4d4; border-radius: 10px; background: #fff; color: #253247; font: inherit; font-size: calc(16 * var(--px)); line-height: 1.5; resize: vertical; scroll-margin-block: 120px 84px; }
   textarea:focus-visible { outline: 2px solid #334155; outline-offset: 2px; }
   input:disabled, textarea:disabled { cursor: default; }
   input[aria-invalid='true'], textarea[aria-invalid='true'] { border-color: #b42338; }

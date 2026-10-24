@@ -103,27 +103,27 @@ const peopleClass = css`
   width: 100%;
   height: max-content;
   color: #253247;
-  font-size: 14px;
+  font-size: calc(14 * var(--px));
   line-height: 1.5;
   header { display: flex; align-items: center; gap: 12px; padding: 16px 16px 8px; margin: 0; position: sticky; top: 0; background: #fff; z-index: 1; }
   .heading { flex: 1; min-width: 0; }
-  h2 { margin: 0; font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
-  .heading p { margin: 0; color: #64748b; font-size: 13px; }
+  h2 { margin: 0; font-size: calc(18 * var(--px)); font-weight: 700; overflow-wrap: anywhere; }
+  .heading p { margin: 0; color: #64748b; font-size: calc(13 * var(--px)); }
   .hint { margin: 0; padding: 0 16px 12px; color: #64748b; }
   ul { list-style: none; padding: 0 8px 12px; margin: 0; }
   li { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 12px; }
   .profile { display: flex; flex: 1; min-width: 0; align-items: center; gap: 12px; min-height: 52px; color: inherit; text-decoration: none; border-radius: 8px; }
   .profile > div { flex-shrink: 0; }
   .identity { min-width: 0; overflow-wrap: anywhere; }
-  strong { display: block; font-size: 14px; font-weight: 600; }
-  small { display: block; color: #64748b; font-size: 12px; }
+  strong { display: block; font-size: calc(14 * var(--px)); font-weight: 600; }
+  small { display: block; color: #64748b; font-size: calc(12 * var(--px)); }
   button { font-family: inherit; cursor: pointer; }
-  .icon-button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border: 1px solid #dce3ed; border-radius: 12px; color: #334155; background: #f4f6fa; font-size: 16px; }
+  .icon-button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border: 1px solid #dce3ed; border-radius: 12px; color: #334155; background: #f4f6fa; font-size: calc(16 * var(--px)); }
   .chat-button { color: #216642; background: #edf7f0; border-color: #cee7d6; }
   .icon-button:disabled { opacity: 0.55; cursor: wait; }
   a:hover, button:hover:not(:disabled) { background: #eef2f7; }
   a:focus-visible, button:focus-visible { outline: 2px solid #334155; outline-offset: 2px; }
   .notice { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 16px 12px; padding: 12px; border-radius: 10px; background: #f1f5f9; }
   .error { color: #8b2735; background: #fff1f2; }
-  .notice button { min-height: 44px; padding: 8px 12px; border: 1px solid #d5a0a7; border-radius: 8px; background: #fff; color: inherit; font-size: 14px; font-weight: 600; }
+  .notice button { min-height: 44px; padding: 8px 12px; border: 1px solid #d5a0a7; border-radius: 8px; background: #fff; color: inherit; font-size: calc(14 * var(--px)); font-weight: 600; }
 `;

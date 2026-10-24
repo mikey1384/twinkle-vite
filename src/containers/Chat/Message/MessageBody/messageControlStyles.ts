@@ -12,7 +12,7 @@ export const messageControlClass = css`
     flex-shrink: 0;
     padding: 0;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: calc(14 * var(--px));
     line-height: 1;
   }
 

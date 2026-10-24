@@ -243,6 +243,9 @@ export default function Header({
           box-shadow: none;
           align-items: center;
           width: 100%;
+          /* past 2268px the page sits in a centered frame (styles.css) */
+          padding-left: var(--ui-frame-x);
+          padding-right: var(--ui-frame-x);
           margin-bottom: 0px;
           height: ${APP_SHELL_HEADER_OFFSET_FALLBACK};
           &::after {

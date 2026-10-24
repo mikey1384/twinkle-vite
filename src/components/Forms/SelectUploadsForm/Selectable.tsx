@@ -122,7 +122,7 @@ export default function Selectable({
               style={{
                 marginTop: '1rem',
                 fontWeight: 'bold',
-                fontSize: 14,
+                fontSize: 'calc(14 * var(--px))',
                 display: '-webkit-box',
                 WebkitLineClamp: 3,
                 WebkitBoxOrient: 'vertical',
@@ -142,7 +142,7 @@ export default function Selectable({
               whiteSpace: 'nowrap',
               textOverflow: 'ellipsis',
               overflow: 'hidden',
-              fontSize: 12,
+              fontSize: 'calc(12 * var(--px))',
               lineHeight: 2
             }}
           >

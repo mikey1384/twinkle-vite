@@ -402,7 +402,7 @@ const bountyContentClass = css`
     }
   }
 
-  @container bounty-content (max-width: 440px) {
+  @media (max-width: 1512px) { @container bounty-content (max-width: 440px) {
     &.bounty-content--compact .bounty-content__layout {
       grid-template-columns: minmax(8.5rem, 30%) minmax(0, 1fr);
       gap: 1.25rem;
@@ -412,5 +412,16 @@ const bountyContentClass = css`
     &.bounty-content--compact .bounty-content__title {
       font-size: max(1.6rem, 16px) !important;
     }
-  }
+  } }
+@media (min-width: 1513px) { @container bounty-content (max-width: 44rem) {
+    &.bounty-content--compact .bounty-content__layout {
+      grid-template-columns: minmax(8.5rem, 30%) minmax(0, 1fr);
+      gap: 1.25rem;
+      padding: 0.8rem;
+    }
+
+    &.bounty-content--compact .bounty-content__title {
+      font-size: max(1.6rem, 16px) !important;
+    }
+  } }
 `;

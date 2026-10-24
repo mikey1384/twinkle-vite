@@ -89,7 +89,7 @@ export default function AchievementComponent({
     }
     if (status !== 'ready') {
       return (
-        <Loading text="Loading achievement" innerStyle={{ fontSize: '14px' }} />
+        <Loading text="Loading achievement" innerStyle={{ fontSize: 'calc(14 * var(--px))' }} />
       );
     }
   }

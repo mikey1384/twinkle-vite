@@ -38,7 +38,7 @@ export const innerContainerCls = css`
 `;
 
 export const questionTextCls = css`
-  max-width: 720px;
+  max-width: calc(720 * var(--px));
   font-family: ${PAPER.serif};
   font-size: 2.6rem;
   color: ${PAPER.ink};
@@ -67,7 +67,7 @@ export const questionTextSmallCls = css`
 export const todayPreferenceRowCls = css`
   display: flex;
   width: 100%;
-  max-width: 560px;
+  max-width: calc(560 * var(--px));
   margin-bottom: 1.5rem;
   border: 1px solid ${PAPER.line};
   border-radius: 16px;
@@ -119,7 +119,7 @@ export const instructionBoxCls = css`
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   width: 100%;
-  max-width: 500px;
+  max-width: calc(500 * var(--px));
 `;
 
 export const instructionListCls = css`

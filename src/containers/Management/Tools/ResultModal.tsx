@@ -46,7 +46,7 @@ export default function ResultModal({
           borderRadius: 8,
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
           width: '80%',
-          maxWidth: 800,
+          maxWidth: 'calc(800 * var(--px))',
           maxHeight: '80vh',
           display: 'flex',
           flexDirection: 'column',
@@ -68,7 +68,7 @@ export default function ResultModal({
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '20px',
+              fontSize: 'calc(20 * var(--px))',
               cursor: 'pointer',
               color: '#666'
             }}

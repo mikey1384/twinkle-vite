@@ -48,7 +48,7 @@ const rowLabelClass = css`
   font-weight: bold;
   min-height: 0;
   overflow: hidden;
-  font-size: 10px;
+  font-size: calc(10 * var(--px));
   line-height: 1;
   font-variant-numeric: tabular-nums;
 `;
@@ -61,7 +61,7 @@ const colLabelClass = css`
   font-weight: bold;
   min-width: 0;
   overflow: hidden;
-  font-size: 10px;
+  font-size: calc(10 * var(--px));
   line-height: 1;
 `;
 

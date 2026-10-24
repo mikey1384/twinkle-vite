@@ -47,7 +47,7 @@ test('mission copy is rendered as text and chat sizing cannot shrink with the le
   const card=Mission({mission:{...mission,title:'<img src=x>',subtitle:'A < B & C'},missionLink:'/missions/community'});
   const html=renderToStaticMarkup(card);assert.match(html,/&lt;img src=x&gt;/);assert.match(html,/A &lt; B &amp; C/);
   const source=readFileSync(path.resolve(__dirname,'../src/components/ChatMissionEmbedPreview.tsx'),'utf8');
-  for(const rule of ['font-size: 17px','font-size: 15px','font-size: 14px','font-size: 13px','overflow-wrap: anywhere',':focus-visible','outline: 2px solid #334155','minmax(0, 1fr)'])assert.ok(source.includes(rule),rule);
+  for(const rule of ['font-size: calc(17 * var(--px))','font-size: calc(15 * var(--px))','font-size: calc(14 * var(--px))','font-size: calc(13 * var(--px))','overflow-wrap: anywhere',':focus-visible','outline: 2px solid #334155','minmax(0, 1fr)'])assert.ok(source.includes(rule),rule);
 });
 
 test('only chat roots opt into the mission, prompt and profile presentation changes',()=>{

@@ -43,7 +43,7 @@ export default function ProgressScreen({
       <div
         className={css`
           width: 100%;
-          max-width: 420px;
+          max-width: calc(420 * var(--px));
         `}
       >
         <PaperProgress progress={progress} />

@@ -10,11 +10,16 @@ const panelClass = css`
   padding-left: 1.8rem;
   border-left: 1px solid rgba(65, 140, 235, 0.18);
 
-  @container (max-width: 640px) {
+  @media (max-width: 1512px) { @container (max-width: 640px) {
     padding: 1.3rem 0 0;
     border-left: 0;
     border-top: 1px solid rgba(65, 140, 235, 0.18);
-  }
+  } }
+@media (min-width: 1513px) { @container (max-width: 64rem) {
+    padding: 1.3rem 0 0;
+    border-left: 0;
+    border-top: 1px solid rgba(65, 140, 235, 0.18);
+  } }
 `;
 
 const headerClass = css`

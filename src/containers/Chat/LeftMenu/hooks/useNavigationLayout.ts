@@ -18,6 +18,7 @@ import {
   type NavigationPanel,
   type NavigationWidths
 } from '../helpers/navigationSizing';
+import { uiScale } from '~/helpers/uiScale';
 
 const STORAGE_KEY = 'twinkle:chat-navigation-widths';
 
@@ -53,13 +54,15 @@ export default function useNavigationLayout(hasContext: boolean) {
       const style = getComputedStyle(workspace);
       const detailsWidth = details?.getBoundingClientRect().width || 0;
       const gaps = (parseFloat(style.columnGap) || 0) * (details ? 2 : 1);
+      // in design pixels: panel widths are stored and drawn at the 1512px
+      // design size and scale with the page on big screens (uiScale)
       const availableWidth = Math.floor(
-        workspace.clientWidth -
-        (parseFloat(style.paddingLeft) || 0) -
-        (parseFloat(style.paddingRight) || 0) -
-        detailsWidth - gaps - MIN_CONVERSATION_WIDTH - 2
+        (workspace.clientWidth -
+          (parseFloat(style.paddingLeft) || 0) -
+          (parseFloat(style.paddingRight) || 0) -
+          detailsWidth - gaps) / uiScale() - MIN_CONVERSATION_WIDTH - 2
       );
-      const resizable = window.matchMedia('(min-width: 768px)').matches;
+      const resizable = window.matchMedia('(min-width: calc(768 * var(--px)))').matches;
       const split = hasContext && window.matchMedia(SPLIT_NAVIGATION_MEDIA_QUERY).matches;
       setGeometry((previous) => {
         if (previous.availableWidth === availableWidth &&
@@ -88,8 +91,8 @@ export default function useNavigationLayout(hasContext: boolean) {
   }, [hasContext]);
 
   const style = {
-    '--chat-channel-width': `${widths.channels}px`,
-    '--chat-context-width': `${widths.context}px`
+    '--chat-channel-width': `calc(${widths.channels} * var(--px))`,
+    '--chat-context-width': `calc(${widths.context} * var(--px))`
   } as CSSProperties;
 
   return {
@@ -147,6 +150,7 @@ export default function useNavigationLayout(hasContext: boolean) {
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startWidth = widths[panel];
+    const scale = uiScale();
     const previousCursor = document.body.style.cursor;
     const previousSelect = document.body.style.userSelect;
     let latest = preferredWidths;
@@ -182,7 +186,7 @@ export default function useNavigationLayout(hasContext: boolean) {
       if (moveEvent.pointerId !== pointerId) return;
       moveEvent.preventDefault();
       moved = true;
-      latest = { ...interactionWidths, [panel]: getWidth(panel, startWidth + moveEvent.clientX - startX) };
+      latest = { ...interactionWidths, [panel]: getWidth(panel, startWidth + (moveEvent.clientX - startX) / scale) };
       setPreferredWidths(latest);
     }
 

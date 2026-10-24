@@ -20,7 +20,7 @@ export default function Privacy() {
       className={css`
         padding: 2rem;
         margin: 2rem auto;
-        max-width: 800px;
+        max-width: calc(800 * var(--px));
         background: #ffffff;
         border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};

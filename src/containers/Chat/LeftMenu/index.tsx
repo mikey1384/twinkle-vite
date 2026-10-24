@@ -133,7 +133,7 @@ export default function LeftMenu({
                 flex-direction: column;
                 padding: 1rem;
                 border-bottom: 1px solid var(--ui-border);
-                @container chat-channels (max-width: 180px) {
+                @media (max-width: 1512px) { @container chat-channels (max-width: 180px) {
                   /* Narrow panel: the customize gear shares New Group's row
                      (QuickAccess flattens itself), portraits get their own. */
                   flex-direction: row;
@@ -147,10 +147,28 @@ export default function LeftMenu({
                     min-width: 0;
                     min-height: 36px;
                     padding: 0.6rem 0.3rem;
-                    font-size: 13px;
+                    font-size: calc(13 * var(--px));
                     white-space: nowrap;
                   }
-                }
+                } }
+@media (min-width: 1513px) { @container chat-channels (max-width: 18rem) {
+                  /* Narrow panel: the customize gear shares New Group's row
+                     (QuickAccess flattens itself), portraits get their own. */
+                  flex-direction: row;
+                  flex-wrap: wrap;
+                  align-items: center;
+                  gap: 0.6rem 0.2rem;
+                  padding: 0.7rem 0.6rem;
+                  > button {
+                    flex: 1 1 0;
+                    width: auto;
+                    min-width: 0;
+                    min-height: 36px;
+                    padding: 0.6rem 0.3rem;
+                    font-size: calc(13 * var(--px));
+                    white-space: nowrap;
+                  }
+                } }
                 @media (pointer: coarse) {
                   > button { min-height: 44px; }
                 }

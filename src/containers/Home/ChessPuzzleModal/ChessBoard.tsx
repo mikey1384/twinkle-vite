@@ -388,7 +388,7 @@ function ChessBoard({
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
             transition: all 0.3s ease;
-            max-width: 280px;
+            max-width: calc(280 * var(--px));
             position: relative;
             overflow: hidden;
 
@@ -429,7 +429,7 @@ function ChessBoard({
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.1rem;
               padding: 1rem 1.5rem;
-              max-width: 240px;
+              max-width: calc(240 * var(--px));
             }
           `}
         >

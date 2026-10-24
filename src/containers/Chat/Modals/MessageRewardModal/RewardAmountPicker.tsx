@@ -19,7 +19,7 @@ export default function RewardAmountPicker({
       aria-label="Reward amount"
       className={css`
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(calc(90 * var(--px)), 1fr));
         gap: 8px;
         width: 100%;
         margin-top: 16px;
@@ -31,7 +31,7 @@ export default function RewardAmountPicker({
           color: #334155;
           padding: 8px;
           font: inherit;
-          font-size: 14px;
+          font-size: calc(14 * var(--px));
           line-height: 1.4;
           cursor: pointer;
         }

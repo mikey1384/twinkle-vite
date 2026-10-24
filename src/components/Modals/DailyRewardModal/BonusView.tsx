@@ -130,7 +130,7 @@ export default function BonusView({
             selectedChoiceIndex={bonusSelectedChoiceIndex}
             answerIndex={question.answerIndex}
             onSelectChoice={onSelectChoice}
-            style={{ width: '100%', maxWidth: '680px' }}
+            style={{ width: '100%', maxWidth: 'calc(680 * var(--px))' }}
           />
         );
       })}

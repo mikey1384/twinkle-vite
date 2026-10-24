@@ -45,7 +45,7 @@ const panelStyles = css`
 
 const timestampStyles = css`
   margin-top: 10px;
-  font-size: 14px;
+  font-size: calc(14 * var(--px));
   font-family: monospace;
   background-color: rgba(248, 249, 250, 0.9);
   padding: 6px 10px;
@@ -110,7 +110,7 @@ const shiftActionStyles = css`
 
 const shiftSummaryStyles = css`
   margin-left: auto;
-  font-size: 12px;
+  font-size: calc(12 * var(--px));
   color: #6c757d;
 `;
 

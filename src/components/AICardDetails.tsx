@@ -62,7 +62,7 @@ export default function AICardDetails({
           align-items: center;
           justify-content: center;
           width: 100%;
-          max-width: 800px;
+          max-width: calc(800 * var(--px));
           flex-grow: ${compact ? 0 : 1};
           min-width: 0;
           gap: ${target ? '0.15rem' : compact ? '0.35rem' : '0'};

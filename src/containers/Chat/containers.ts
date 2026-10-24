@@ -24,6 +24,11 @@ export const chatWorkspaceClass = css`
   @media (max-height: 560px) {
     padding-block: 0.4rem;
   }
+  /* past 2268px the page sits in a centered frame (styles.css) */
+  @media (min-width: 2269px) {
+    max-width: var(--ui-frame);
+    margin-inline: auto;
+  }
   @media (max-width: ${mobileMaxWidth}) {
     --chat-panel-radius: 0px;
     width: 170vw;

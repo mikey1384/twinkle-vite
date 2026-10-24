@@ -150,7 +150,7 @@ export default function Main({
 
   return (
     <div style={{ width: '100%', paddingBottom: '1rem' }}>
-      {!isLoaded && <Loading text="Loading topics" innerStyle={{ fontSize: '14px' }} />}
+      {!isLoaded && <Loading text="Loading topics" innerStyle={{ fontSize: 'calc(14 * var(--px))' }} />}
       <div style={{ width: '100%', marginTop: '1.5rem' }}>
         {!isTwoPeopleChat && (
           <>
@@ -250,7 +250,7 @@ export default function Main({
               >
                 <FilterBar
                   color={displayedThemeColor}
-                  style={{ margin: '20px 0 8px', fontSize: '14px' }}
+                  style={{ margin: '20px 0 8px', fontSize: 'calc(14 * var(--px))' }}
                   className={css`
                     && > .nav-section > nav {
                       padding: 0;
@@ -329,7 +329,7 @@ export default function Main({
                   width: 100%;
                   text-align: center;
                   padding: 3rem 0;
-                  font-size: 16px;
+                  font-size: calc(16 * var(--px));
                   > p {
                     margin-top: 1rem;
                   }

@@ -85,7 +85,7 @@ export default function CallScreen({
         </div>
         <div
           className={css`
-            width: 200px;
+            width: calc(200 * var(--px));
             height: 40px;
             background-color: #e0e0e0;
             border-radius: 20px;

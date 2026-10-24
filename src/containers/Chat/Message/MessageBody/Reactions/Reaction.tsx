@@ -242,7 +242,7 @@ function Reaction({
           style={{
             appearance: 'none',
             borderRadius: '0 999px 999px 0', padding: '3px 8px', fontFamily: 'inherit',
-            fontSize: 13, fontWeight: 600, color: '#334155', background: 'transparent',
+            fontSize: 'calc(13 * var(--px))', fontWeight: 600, color: '#334155', background: 'transparent',
             cursor: reactionCount ? 'pointer' : 'default'
           }}
           onClick={(event) => {

@@ -249,7 +249,7 @@ export default function ReflectionStatShape({
       ).join(', ')}`}
       className={css`
         width: 100%;
-        max-width: ${maxWidth}px;
+        max-width: calc(${maxWidth} * var(--px));
         height: auto;
         display: block;
         margin: 0 auto;

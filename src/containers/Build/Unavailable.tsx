@@ -22,7 +22,7 @@ export default function Unavailable({
     <div
       className={css`
         width: 100%;
-        max-width: 720px;
+        max-width: calc(720 * var(--px));
         margin: 3rem auto;
         padding: 0 2rem;
         @media (max-width: ${mobileMaxWidth}) {

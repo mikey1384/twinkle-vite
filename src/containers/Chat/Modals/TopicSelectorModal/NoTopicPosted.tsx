@@ -42,7 +42,7 @@ export default function NoTopicPosted({
         alignItems: 'center',
         padding: '24px 0',
         gap: 12,
-        fontSize: '16px',
+        fontSize: 'calc(16 * var(--px))',
         color: '#334155'
       }}
     >
@@ -50,7 +50,7 @@ export default function NoTopicPosted({
         {canAddTopic ? 'Start the first topic for this chat.' : 'No topics have been posted yet.'}
       </p>
       {canAddTopic && <>
-        <div style={{ width: '100%', maxWidth: 480 }}>
+        <div style={{ width: '100%', maxWidth: 'calc(480 * var(--px))' }}>
           <label htmlFor={inputId} style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>
             Topic title
           </label>
@@ -68,7 +68,7 @@ export default function NoTopicPosted({
             style={{
               display: 'block',
               marginTop: 6,
-              fontSize: '13px',
+              fontSize: 'calc(13 * var(--px))',
               color: titleExceedsCharLimit ? '#b42318' : '#526176'
             }}
           >

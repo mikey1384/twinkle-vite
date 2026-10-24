@@ -121,7 +121,7 @@ function XPBar({
               white-space: normal;
               text-align: center;
               padding: 3px 8px;
-              font-size: 12px;
+              font-size: calc(12 * var(--px));
               line-height: 1.4;
             }
             [data-video-earned] {
@@ -135,7 +135,7 @@ function XPBar({
               width: auto;
               min-width: 40px;
               padding: 0 8px;
-              font-size: 12px;
+              font-size: calc(12 * var(--px));
               color: #334155;
             }
             [data-video-earned-xp] {

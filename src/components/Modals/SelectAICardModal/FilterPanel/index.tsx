@@ -308,7 +308,7 @@ export default function FilterPanel({
 const panelClass = css`
   font-size: 1.6rem;
   width: 100%;
-  max-width: 960px;
+  max-width: calc(960 * var(--px));
   padding: 1.6rem 1.8rem;
   background: #fff;
   border: 1px solid var(--ui-border);
@@ -445,11 +445,11 @@ const exploreFiltersGridClass = css`
   width: 100%;
   display: grid;
   gap: 1.2rem;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(calc(160 * var(--px)), 1fr));
   align-items: end;
   @media (max-width: ${mobileMaxWidth}) {
     gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(calc(140 * var(--px)), 1fr));
   }
 `;
 

@@ -114,10 +114,10 @@ interface ModalProps {
 }
 
 const sizeMap: Record<ModalSize, { width: string; maxWidth: string }> = {
-  sm: { width: '90vw', maxWidth: '400px' },
-  md: { width: '90vw', maxWidth: '600px' },
-  lg: { width: '90vw', maxWidth: '800px' },
-  xl: { width: '90vw', maxWidth: '1200px' },
+  sm: { width: '90vw', maxWidth: 'calc(400 * var(--px))' },
+  md: { width: '90vw', maxWidth: 'calc(600 * var(--px))' },
+  lg: { width: '90vw', maxWidth: 'calc(800 * var(--px))' },
+  xl: { width: '90vw', maxWidth: 'calc(1200 * var(--px))' },
   fullscreen: { width: '100vw', maxWidth: '100vw' }
 };
 

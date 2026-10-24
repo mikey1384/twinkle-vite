@@ -59,7 +59,7 @@ export default function MessageRewardModal({
     >
       <LegacyModalLayout>
         <header
-          style={{ fontSize: '20px', overflowWrap: 'anywhere', minWidth: 0 }}
+          style={{ fontSize: 'calc(20 * var(--px))', overflowWrap: 'anywhere', minWidth: 0 }}
           className={css`
             font-size: 1.5rem;
             font-weight: bold;
@@ -76,7 +76,7 @@ export default function MessageRewardModal({
             >
               <div
                 className={css`
-                  font-size: 24px;
+                  font-size: calc(24 * var(--px));
                   font-weight: bold;
                 `}
               >
@@ -87,7 +87,7 @@ export default function MessageRewardModal({
                   className={css`
                     margin-left: 1rem;
                     color: ${Color.darkerGray()};
-                    font-size: 14px;
+                    font-size: calc(14 * var(--px));
                   `}
                 >
                   ({displayedRewardAmount} coins)
@@ -101,7 +101,7 @@ export default function MessageRewardModal({
                   text-align: center;
                   color: red;
                   margin-bottom: 1rem;
-                  font-size: 14px;
+                  font-size: calc(14 * var(--px));
                 `}
               >
                 You do not have enough coins to reward this amount.
@@ -131,7 +131,7 @@ export default function MessageRewardModal({
                 style={{
                   marginTop: '8px',
                   minHeight: '44px',
-                  fontSize: '14px',
+                  fontSize: 'calc(14 * var(--px))',
                   width: '100%',
                   lineHeight: 1.5
                 }}
@@ -146,7 +146,7 @@ export default function MessageRewardModal({
               style={{
                 width: '100%',
                 margin: 0,
-                fontSize: '16px',
+                fontSize: 'calc(16 * var(--px))',
                 lineHeight: 1.5
               }}
             >
@@ -159,7 +159,7 @@ export default function MessageRewardModal({
               style={{
                 width: '100%',
                 margin: 0,
-                fontSize: '16px',
+                fontSize: 'calc(16 * var(--px))',
                 lineHeight: 1.5
               }}
             >
@@ -168,7 +168,7 @@ export default function MessageRewardModal({
           )}
           <Button
             variant="ghost"
-            style={{ minHeight: '44px', fontSize: '14px' }}
+            style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))' }}
             onClick={handleClose}
             disabled={pending}
           >
@@ -178,7 +178,7 @@ export default function MessageRewardModal({
             color={doneColor}
             disabled={submitDisabled || pending || submitted}
             loading={pending}
-            style={{ minHeight: '44px', fontSize: '14px' }}
+            style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))' }}
             onClick={handleSubmit}
           >
             Submit

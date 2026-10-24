@@ -40,7 +40,7 @@ export default function GeneratedImage({
         className={css`
           position: relative;
           width: 80%;
-          max-width: 600px;
+          max-width: calc(600 * var(--px));
           height: 300px;
           background-color: #e0e0e0;
           display: flex;

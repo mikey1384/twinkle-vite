@@ -70,7 +70,7 @@ export default class ChessErrorBoundary extends Component<Props, State> {
               font-size: 1.1rem;
               color: ${Color.darkGray()};
               margin-bottom: 1.5rem;
-              max-width: 400px;
+              max-width: calc(400 * var(--px));
             `}
           >
             {this.state.error?.message ||

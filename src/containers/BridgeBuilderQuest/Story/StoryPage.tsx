@@ -27,7 +27,7 @@ export const storyPageShell = css`
 
 export const storyPageWidth = css`
   width: 100%;
-  max-width: 1180px;
+  max-width: calc(1180 * var(--px));
   display: flex;
   flex-direction: column;
   gap: 1.4rem;

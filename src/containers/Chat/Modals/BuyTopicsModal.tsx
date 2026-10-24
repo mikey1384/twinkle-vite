@@ -56,7 +56,7 @@ export default function BuyTopicsModal({
       onClose={handleClose}
       aria-label={hasTopics ? 'Topic permissions' : 'Enable topics'}
       header={
-        <span style={{ fontSize: '20px', lineHeight: 1.4 }}>
+        <span style={{ fontSize: 'calc(20 * var(--px))', lineHeight: 1.4 }}>
           {hasTopics ? 'Topic permissions' : 'Enable topics'}
         </span>
       }
@@ -70,7 +70,7 @@ export default function BuyTopicsModal({
               style={{
                 width: '100%',
                 margin: 0,
-                fontSize: '16px',
+                fontSize: 'calc(16 * var(--px))',
                 lineHeight: 1.5
               }}
             >
@@ -105,7 +105,7 @@ export default function BuyTopicsModal({
           width: 100%;
           min-width: 0;
           padding: 8px;
-          font-size: 16px;
+          font-size: calc(16 * var(--px));
           line-height: 1.5;
           color: #253247;
           p {
@@ -127,18 +127,18 @@ export default function BuyTopicsModal({
             border-radius: 50%;
             background: ${Color.logoBlue(0.08)};
             color: ${Color.logoBlue()};
-            font-size: 24px;
+            font-size: calc(24 * var(--px));
           }
           .topic-heading {
             margin: 0 0 8px;
-            font-size: 18px;
+            font-size: calc(18 * var(--px));
             font-weight: 600;
             line-height: 1.4;
           }
           .topic-description {
-            max-width: 300px;
+            max-width: calc(300 * var(--px));
             color: #526176;
-            font-size: 15px;
+            font-size: calc(15 * var(--px));
           }
           .topic-price {
             display: flex;
@@ -149,25 +149,25 @@ export default function BuyTopicsModal({
           }
           .topic-price > svg {
             color: ${Color.gold()};
-            font-size: 22px;
+            font-size: calc(22 * var(--px));
           }
           .topic-price strong {
-            font-size: 28px;
+            font-size: calc(28 * var(--px));
             font-weight: 600;
             line-height: 1.3;
           }
           .topic-price span {
             color: #526176;
-            font-size: 15px;
+            font-size: calc(15 * var(--px));
           }
           .topic-cost-note {
             margin-top: 6px;
             color: #526176;
-            font-size: 14px;
+            font-size: calc(14 * var(--px));
           }
           .topic-balance-status {
             margin-top: 12px;
-            font-size: 14px;
+            font-size: calc(14 * var(--px));
           }
           .permission-row {
             display: flex;
@@ -227,7 +227,7 @@ export default function BuyTopicsModal({
                   <p
                     style={{
                       fontWeight: 'bold',
-                      fontSize: '16px'
+                      fontSize: 'calc(16 * var(--px))'
                     }}
                   >
                     Allow anyone to add topics

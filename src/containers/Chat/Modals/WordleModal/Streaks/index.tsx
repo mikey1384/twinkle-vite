@@ -41,7 +41,7 @@ export default function Streaks({
             background: transparent;
             color: inherit;
             font: inherit;
-            font-size: 16px;
+            font-size: calc(16 * var(--px));
             line-height: 1.4;
             width: 100%;
             min-height: 44px;

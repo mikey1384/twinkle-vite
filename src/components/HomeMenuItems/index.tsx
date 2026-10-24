@@ -276,7 +276,8 @@ export default function HomeMenuItems({
               }
             }
           }
-          @media (min-width: 2304px) {
+          /* the centered frame (styles.css) leaves space at the edge */
+          @media (min-width: 2269px) {
             border-left: 1px solid var(--ui-border);
           }
         `}`}

@@ -804,7 +804,7 @@ export default function ImageEditModal({
                   !canAffordGeneration
                 }
                 loading={isGenerating}
-                style={{ minWidth: '120px' }}
+                style={{ minWidth: 'calc(120 * var(--px))' }}
               >
                 {isGenerating
                   ? getProgressLabel()

@@ -13,7 +13,7 @@ const useThisImageButtonStyle = {
   padding: '1rem 3rem',
   fontSize: '1.1rem',
   fontWeight: 600,
-  minWidth: 200,
+  minWidth: 'calc(200 * var(--px))',
   borderRadius: '12px',
   textTransform: 'none',
   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)'

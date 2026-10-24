@@ -744,7 +744,7 @@ export default function ImageGenerator({
                 : uploadThemeRole.getColor()};
               position: relative;
               overflow: hidden;
-              min-width: 200px;
+              min-width: calc(200 * var(--px));
               opacity: ${isShowingLoadingState ? 0.5 : 1};
 
               &:hover {

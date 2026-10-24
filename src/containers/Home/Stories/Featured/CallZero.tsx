@@ -691,7 +691,7 @@ export default function CallZero({
         >
           <div
             className={css`
-              width: 300px;
+              width: calc(300 * var(--px));
               height: 40px;
               background-color: #e0e0e0;
               border-radius: 20px;

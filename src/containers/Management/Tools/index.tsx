@@ -30,7 +30,7 @@ const colors = {
 };
 
 const containerStyles = css`
-  max-width: 1200px;
+  max-width: calc(1200 * var(--px));
   margin: 0 auto;
   padding: 2rem;
 `;

@@ -7,7 +7,7 @@ export const inputStyles = css`
   font-size: 1.1rem;
   transition: all 0.2s ease;
   width: 100%;
-  max-width: 320px;
+  max-width: calc(320 * var(--px));
   background-color: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
@@ -64,7 +64,7 @@ export const videoContainerStyles = css`
 
 export const timestampStyles = css`
   margin-top: 5px;
-  font-size: 14px;
+  font-size: calc(14 * var(--px));
   font-family: monospace;
   background-color: rgba(248, 249, 250, 0.7);
   padding: 4px 8px;
@@ -90,7 +90,7 @@ export const textAreaStyles = css`
   padding: 8px;
   border: 1px solid var(--ui-border);
   border-radius: 4px;
-  font-size: 14px;
+  font-size: calc(14 * var(--px));
   resize: vertical;
 
   &:focus {

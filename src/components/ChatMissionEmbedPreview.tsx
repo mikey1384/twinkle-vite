@@ -76,7 +76,7 @@ const missionEmbedClass = css`
     border-radius: 6px;
     background: #fff1c2;
     color: #72520d;
-    font-size: 12px;
+    font-size: calc(12 * var(--px));
     font-weight: 700;
     line-height: 1.4;
   }
@@ -84,7 +84,7 @@ const missionEmbedClass = css`
     grid-area: title;
     min-width: 0;
     color: #273449;
-    font-size: 17px;
+    font-size: calc(17 * var(--px));
     font-weight: 700;
     line-height: 1.4;
     overflow-wrap: anywhere;
@@ -92,7 +92,7 @@ const missionEmbedClass = css`
   .chat-mission-embed__summary {
     grid-area: summary;
     color: #526176;
-    font-size: 15px;
+    font-size: calc(15 * var(--px));
     font-weight: 400;
     line-height: 1.5;
     overflow-wrap: anywhere;
@@ -100,7 +100,7 @@ const missionEmbedClass = css`
   .chat-mission-embed__rewards {
     grid-area: rewards;
     color: #72520d;
-    font-size: 13px;
+    font-size: calc(13 * var(--px));
     font-weight: 700;
     line-height: 1.5;
     overflow-wrap: anywhere;
@@ -108,9 +108,9 @@ const missionEmbedClass = css`
   &.compact {
     padding: 12px;
     gap: 8px 10px;
-    .chat-mission-embed__title { font-size: 16px; }
+    .chat-mission-embed__title { font-size: calc(16 * var(--px)); }
     .chat-mission-embed__summary {
-      font-size: 14px;
+      font-size: calc(14 * var(--px));
       display: -webkit-box;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;

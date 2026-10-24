@@ -239,7 +239,7 @@ const popoverClass = css`
 const optionsClass = css`
   display: flex;
   flex-direction: column;
-  width: 192px;
+  width: calc(192 * var(--px));
   max-width: calc(100vw - 16px);
   padding: 6px;
   gap: 4px;
@@ -265,7 +265,7 @@ const optionClass = css`
   background: transparent;
   color: #253247;
   font-family: inherit;
-  font-size: 14px;
+  font-size: calc(14 * var(--px));
   font-weight: 600;
   line-height: 1.4;
   text-align: left;
@@ -273,7 +273,7 @@ const optionClass = css`
   touch-action: manipulation;
   svg {
     width: 18px;
-    font-size: 16px;
+    font-size: calc(16 * var(--px));
     flex-shrink: 0;
     color: var(--chat-action-accent, currentColor);
   }
