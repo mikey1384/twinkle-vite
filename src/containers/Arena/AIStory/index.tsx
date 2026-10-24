@@ -5,7 +5,7 @@ import Icon from '~/components/Icon';
 import Game from './Game';
 import Rankings from './Rankings';
 import Button from '~/components/Button';
-import SuccessModal from './SuccessModal';
+import ClearScreen from './ClearScreen';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useNotiContext, useViewContext } from '~/contexts';
@@ -63,8 +63,8 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [topic, setTopic] = useState('');
   const [topicKey, setTopicKey] = useState('');
-  const [successModalShown, setSuccessModalShown] = useState(false);
-  const [successModalStory, setSuccessModalStory] =
+  const [clearScreenShown, setClearScreenShown] = useState(false);
+  const [clearScreenStory, setClearScreenStory] =
     useState<AIStoryClearFollowUp | null>(null);
   const [storyId, setStoryId] = useState(0);
   const [storyType, setStoryType] = useState('');
@@ -224,40 +224,65 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
                 </Button>
               </div>
             ) : activeTab === 'game' ? (
-              <Game
-                attemptId={attemptId}
-                dailyTask={dailyTask}
-                difficulty={Number(difficulty)}
-                displayedSection={displayedSection}
-                gameMode={gameMode}
-                isGameStarted={isGameStarted}
-                onSetIsGameStarted={setIsGameStarted}
-                loadingTopic={loadingTopic}
-                onLoadTopic={handleLoadTopic}
-                onSetAttemptId={setAttemptId}
-                onSetDropdownShown={setDropdownShown}
-                onSetGameMode={setGameMode}
-                onSetResetNumber={setResetNumber}
-                onSetSolveObj={setSolveObj}
-                onSetStoryId={setStoryId}
-                onSetDifficulty={setDifficulty}
-                onSetDisplayedSection={setDisplayedSection}
-                onSetIsCloseLocked={setIsCloseLocked}
-                onSetDailyTask={setDailyTask}
-                onOpenSuccessModal={handleOpenCurrentSuccessModal}
-                onSetQuestions={setQuestions}
-                onSetTopicLoadError={setTopicLoadError}
-                readCount={readCount}
-                listenCount={listenCount}
-                questions={questions}
-                storyId={storyId}
-                MainRef={MainRef}
-                storyType={storyType}
-                topic={topic}
-                topicKey={topicKey}
-                topicLoadError={topicLoadError}
-                solveObj={solveObj}
-              />
+              <>
+                {/* the clear screen is a view here, not a modal (Mikey 10-24);
+                  the story stays mounted underneath so "Back to story" returns
+                  to the graded questions */}
+                {clearScreenShown && clearScreenStory && (
+                  <ClearScreen
+                    initialImagePath={clearScreenStory.imagePath}
+                    isListening={clearScreenStory.isListening}
+                    onHide={handleCloseClearScreen}
+                    numQuestions={clearScreenStory.numQuestions}
+                    difficulty={clearScreenStory.difficulty}
+                    xpRewardAmount={clearScreenStory.xpRewardAmount}
+                    coinRewardAmount={clearScreenStory.coinRewardAmount}
+                    storyId={clearScreenStory.storyId}
+                  />
+                )}
+                <div
+                  style={{
+                    width: '100%',
+                    display:
+                      clearScreenShown && clearScreenStory ? 'none' : 'contents'
+                  }}
+                >
+                  <Game
+                    attemptId={attemptId}
+                    dailyTask={dailyTask}
+                    difficulty={Number(difficulty)}
+                    displayedSection={displayedSection}
+                    gameMode={gameMode}
+                    isGameStarted={isGameStarted}
+                    onSetIsGameStarted={setIsGameStarted}
+                    loadingTopic={loadingTopic}
+                    onLoadTopic={handleLoadTopic}
+                    onSetAttemptId={setAttemptId}
+                    onSetDropdownShown={setDropdownShown}
+                    onSetGameMode={setGameMode}
+                    onSetResetNumber={setResetNumber}
+                    onSetSolveObj={setSolveObj}
+                    onSetStoryId={setStoryId}
+                    onSetDifficulty={setDifficulty}
+                    onSetDisplayedSection={setDisplayedSection}
+                    onSetIsCloseLocked={setIsCloseLocked}
+                    onSetDailyTask={setDailyTask}
+                    onOpenClearScreen={handleOpenCurrentClearScreen}
+                    onSetQuestions={setQuestions}
+                    onSetTopicLoadError={setTopicLoadError}
+                    readCount={readCount}
+                    listenCount={listenCount}
+                    questions={questions}
+                    storyId={storyId}
+                    MainRef={MainRef}
+                    storyType={storyType}
+                    topic={topic}
+                    topicKey={topicKey}
+                    topicLoadError={topicLoadError}
+                    solveObj={solveObj}
+                  />
+                </div>
+              </>
             ) : null}
             {!AI_FEATURES_DISABLED && activeTab === 'rankings' && (
               <div
@@ -277,18 +302,6 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
             )}
           </div>
         </div>
-        {successModalShown && successModalStory && (
-          <SuccessModal
-            initialImagePath={successModalStory.imagePath}
-            isListening={successModalStory.isListening}
-            onHide={handleCloseSuccessModal}
-            numQuestions={successModalStory.numQuestions}
-            difficulty={successModalStory.difficulty}
-            xpRewardAmount={successModalStory.xpRewardAmount}
-            coinRewardAmount={successModalStory.coinRewardAmount}
-            storyId={successModalStory.storyId}
-          />
-        )}
         {showConfirm && (
           <ConfirmModal
             onHide={() => setShowConfirm(false)}
@@ -409,21 +422,23 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
     };
   }
 
-  async function handleOpenCurrentSuccessModal(targetStoryId = storyId) {
+  async function handleOpenCurrentClearScreen(targetStoryId = storyId) {
     if (!targetStoryId) return;
     try {
       const story = await loadClearedStory(targetStoryId);
       if (!story) return;
-      setSuccessModalStory(story);
-      setSuccessModalShown(true);
+      setClearScreenStory(story);
+      setClearScreenShown(true);
+      // the view replaces the story in place; start it at the top
+      if (MainRef.current) MainRef.current.scrollTop = 0;
     } catch (error) {
       console.error('Failed to open AI Story rewards:', error);
     }
   }
 
-  function handleCloseSuccessModal() {
-    setSuccessModalShown(false);
-    setSuccessModalStory(null);
+  function handleCloseClearScreen() {
+    setClearScreenShown(false);
+    setClearScreenStory(null);
   }
 
   async function handleUnavailableAIStoryClear() {

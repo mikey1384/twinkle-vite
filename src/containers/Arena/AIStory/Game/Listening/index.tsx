@@ -8,7 +8,7 @@ export default function Listening({
   isDisabled,
   isGrading,
   onGrade,
-  onOpenSuccessModal,
+  onOpenClearScreen,
   onReset,
   onLoadQuestions,
   onSetAttemptId,
@@ -27,7 +27,7 @@ export default function Listening({
   difficulty: number;
   isGrading: boolean;
   onGrade: () => void;
-  onOpenSuccessModal: () => void;
+  onOpenClearScreen: () => void;
   onReset: () => void;
   onLoadQuestions: (storyId: number) => void;
   onSetAttemptId: (attemptId: number) => void;
@@ -63,7 +63,7 @@ export default function Listening({
         isGrading={isGrading}
         onLoadQuestions={onLoadQuestions}
         onGrade={onGrade}
-        onOpenSuccessModal={onOpenSuccessModal}
+        onOpenClearScreen={onOpenClearScreen}
         onReset={onReset}
         onSetStoryId={onSetStoryId}
         onSetAttemptId={onSetAttemptId}

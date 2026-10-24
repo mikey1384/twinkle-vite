@@ -17,7 +17,7 @@ export default function Questions({
   isGrading,
   solveObj,
   onGrade,
-  onOpenSuccessModal,
+  onOpenClearScreen,
   questions,
   questionsLoaded,
   onLoadQuestions,
@@ -30,7 +30,7 @@ export default function Questions({
   isGrading: boolean;
   solveObj: any;
   onGrade: () => void;
-  onOpenSuccessModal: () => void;
+  onOpenClearScreen: () => void;
   questions: any[];
   questionsLoaded: boolean;
   storyId: number;
@@ -181,7 +181,7 @@ export default function Questions({
                     <div style={{ marginTop: '2rem' }}>
                       <ArenaButton
                         tone="gold"
-                        onClick={() => onOpenSuccessModal()}
+                        onClick={() => onOpenClearScreen()}
                       >
                         Reopen Clear Screen
                       </ArenaButton>

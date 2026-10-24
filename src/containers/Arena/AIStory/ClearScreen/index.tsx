@@ -1,6 +1,4 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import Modal from '~/components/Modal';
-import SuccessText from './SuccessText';
 import ArenaButton from '../../ArenaButton';
 import { ARENA } from '../../theme';
 import Input from '~/components/Texts/Input';
@@ -10,7 +8,7 @@ import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import VocabQuizModal from './VocabQuizModal';
+import VocabQuiz from './VocabQuiz';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import {
@@ -166,7 +164,7 @@ function labelFromStage(s: ImageGenStatus['stage'], callingOpenAITime: number) {
   }
 }
 
-export default function SuccessModal({
+export default function ClearScreen({
   difficulty,
   initialImagePath,
   isListening,
@@ -473,270 +471,261 @@ export default function SuccessModal({
     return energyDepleted ? 'Energy empty' : 'Uses Energy';
   }, [energyDepleted]);
 
-  return (
-    <>
-      <Modal
-        modalKey="SuccessModal"
+  // a view in the AI Story panel, not a modal (Mikey 10-24: "a modal here
+  // looks unfitting"); the vocab quiz takes its place while it runs
+  if (vocabQuizShown) {
+    return (
+      <VocabQuiz
         isOpen
-        size="xl"
-        onClose={onHide}
-        closeOnBackdropClick={false}
-        modalLevel={2}
-        hasHeader={false}
-        bodyPadding={0}
-        allowOverflow
-      >
-        <div className={clearCls}>
-          <header className={bannerCls}>
-            <span className={bannerTagCls}>
-              {isListening ? 'Listen' : 'Read'} · Lv{difficulty}
-            </span>
-            <span>Cleared!</span>
-          </header>
-          <main className={clearBodyCls}>
-            <SuccessText difficulty={difficulty} />
-            <div className={scoreLineCls}>
-              {numQuestions} / {numQuestions} correct
-            </div>
-            {(xpRewardAmount > 0 || coinRewardAmount > 0) && (
-              <div className={rewardCls}>
-                You earned{' '}
-                {xpRewardAmount > 0 && (
-                  <>
-                    <b style={{ color: Color[xpNumberColorKey]() }}>
-                      {addCommasToNumber(xpRewardAmount)}
-                    </b>{' '}
-                    <b style={{ color: Color.gold() }}>XP</b>
-                  </>
-                )}
-                {xpRewardAmount > 0 && coinRewardAmount > 0 && ' and '}
-                {coinRewardAmount > 0 && (
-                  <b style={{ color: Color.brownOrange() }}>
-                    {addCommasToNumber(coinRewardAmount)} coins
-                  </b>
-                )}
-              </div>
-            )}
-            <div
-              style={{
-                marginTop: '2rem',
-                marginBottom: imageUrl ? '1rem' : 0,
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '1.5rem'
-              }}
-            >
-              {(imageUrl || previewImageUrl) && (
-                <img
-                  loading="lazy"
-                  className={pictureCls}
-                  src={imageUrl || previewImageUrl}
-                  alt="Generated Story Image"
-                />
+        onClose={handleVocabQuizClose}
+        onNoWords={handleVocabQuizNoWords}
+        storyId={storyId}
+      />
+    );
+  }
+
+  return (
+    <div className={wrapCls}>
+      <div className={clearCls}>
+        <header className={bannerCls}>
+          <span className={bannerTagCls}>
+            {isListening ? 'Listen' : 'Read'}
+          </span>
+          <span>Level {difficulty} cleared!</span>
+        </header>
+        <main className={clearBodyCls}>
+          <div className={scoreLineCls}>
+            {numQuestions} / {numQuestions} correct
+          </div>
+          {(xpRewardAmount > 0 || coinRewardAmount > 0) && (
+            <div className={rewardCls}>
+              You earned{' '}
+              {xpRewardAmount > 0 && (
+                <>
+                  <b style={{ color: Color[xpNumberColorKey]() }}>
+                    {addCommasToNumber(xpRewardAmount)}
+                  </b>{' '}
+                  <b style={{ color: Color.gold() }}>XP</b>
+                </>
               )}
+              {xpRewardAmount > 0 && coinRewardAmount > 0 && ' and '}
+              {coinRewardAmount > 0 && (
+                <b style={{ color: Color.brownOrange() }}>
+                  {addCommasToNumber(coinRewardAmount)} coins
+                </b>
+              )}
+            </div>
+          )}
+          <div
+            style={{
+              marginTop: '2rem',
+              marginBottom: imageUrl ? '1rem' : 0,
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '1.5rem'
+            }}
+          >
+            {(imageUrl || previewImageUrl) && (
+              <img
+                loading="lazy"
+                className={pictureCls}
+                src={imageUrl || previewImageUrl}
+                alt="Generated Story Image"
+              />
+            )}
 
-              {!imageUrl && (
-                <div
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div>
-                    <Input
-                      hasError={!!inputError}
-                      placeholder="Enter Art Style..."
-                      onChange={handleChange}
-                      value={styleText}
-                    />
-                  </div>
-                  {!inputError && (
-                    <div
-                      style={{
-                        color: ARENA.inkSoft,
-                        fontSize: '1.1rem',
-                        marginTop: '0.5rem'
-                      }}
-                    >
-                      Examples: Cartoon, Realistic, Watercolor, Sketch, etc.
-                    </div>
-                  )}
-                  {inputError && (
-                    <div
-                      style={{
-                        color: 'red',
-                        marginTop: '0.5rem'
-                      }}
-                    >
-                      {inputError}
-                    </div>
-                  )}
-
-                  {false && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        marginTop: '1rem'
-                      }}
-                    >
-                      <label
-                        style={{
-                          fontWeight: 600,
-                          color: ARENA.inkSoft,
-                          fontSize: '1.1rem'
-                        }}
-                      >
-                        Image Model
-                      </label>
-                      <select
-                        value={imageEngine}
-                        onChange={(e) =>
-                          handleEngineChange(
-                            e.target.value as 'gemini' | 'openai'
-                          )
-                        }
-                        disabled={generatingImage}
-                        style={{
-                          padding: '0.35rem 0.5rem',
-                          borderRadius: '8px',
-                          border: `1px solid ${Color.borderGray()}`,
-                          fontSize: '1.1rem'
-                        }}
-                      >
-                        <option value="gemini">Nano Banana Pro</option>
-                        <option value="openai">GPT Image-1</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {aiUsagePolicy && (
-                    <AiEnergyCard
-                      variant="inline"
-                      className={css`
-                        width: min(100%, 34rem);
-                        margin-top: 1.2rem;
-                      `}
-                      energyPercent={aiUsagePolicy.energyPercent ?? 0}
-                      energyPolicy={aiUsagePolicy}
-                      energySegments={aiUsagePolicy.energySegments}
-                      energySegmentsRemaining={
-                        aiUsagePolicy.energySegmentsRemaining
-                      }
-                      overflowed={aiUsagePolicy.lastUsageOverflowed}
-                      resetNeeded={energyDepleted}
-                      resetCost={aiUsagePolicy.resetCost || 0}
-                      resetPurchaseNumber={
-                        (aiUsagePolicy.resetPurchasesToday || 0) + 1
-                      }
-                      twinkleCoins={twinkleCoins}
-                      rechargeLoading={aiUsageResetLoading}
-                      rechargeError={aiUsageResetError}
-                      onRecharge={() => handlePurchaseAiUsageReset(false)}
-                      communityFundsEligible={isCommunityFundRechargeAvailable({
-                        aiUsagePolicy,
-                        communityFunds,
-                        communityFundsKnown: communityFundsLoaded
-                      })}
-                      communityFundsRequirements={
-                        aiUsagePolicy.communityFundResetEligibility
-                          ?.requirements
-                      }
-                      onRechargeWithCommunityFunds={
-                        aiUsagePolicy.communityFundResetEligibility
-                          ? () => handlePurchaseAiUsageReset(true)
-                          : undefined
-                      }
-                    />
-                  )}
-
-                  <ArenaButton
-                    tone={colorHash[difficulty] || 'ink'}
-                    loading={generatingImage}
-                    onClick={handleGenerateImage}
-                    style={{ marginTop: '1.5rem' }}
-                    disabled={!canGenerateImage}
-                  >
-                    <div>
-                      <div>{buttonLabel}</div>
-                      <div
-                        className={css`
-                          font-size: 1.1rem;
-                          margin-top: 0.5rem;
-                          @media (max-width: ${mobileMaxWidth}) {
-                            font-size: 1.1rem;
-                          }
-                        `}
-                      >
-                        ({imageGenerationCostText})
-                      </div>
-                    </div>
-                  </ArenaButton>
-
+            {!imageUrl && (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <Input
+                    hasError={!!inputError}
+                    placeholder="Enter Art Style..."
+                    onChange={handleChange}
+                    value={styleText}
+                  />
+                </div>
+                {!inputError && (
                   <div
                     style={{
                       color: ARENA.inkSoft,
                       fontSize: '1.1rem',
-                      marginTop: '0.5rem',
-                      textAlign: 'center'
+                      marginTop: '0.5rem'
                     }}
                   >
-                    <div>Image generation uses Energy.</div>
-                    <div>Recharge when the battery is empty.</div>
+                    Examples: Cartoon, Realistic, Watercolor, Sketch, etc.
                   </div>
-                </div>
-              )}
-              {!isListening && (
-                <div
-                  className={css`
-                    width: 100%;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    margin-top: ${imageUrl ? '1.5rem' : '2rem'};
-                    gap: 0.6rem;
-                  `}
-                >
-                  <ArenaButton
-                    tone={
-                      loadingVocabSummary || eligibleVocabCount === 0
-                        ? 'paper'
-                        : 'train'
-                    }
-                    loading={loadingVocabSummary}
-                    disabled={!loadingVocabSummary && eligibleVocabCount === 0}
-                    onClick={() => setVocabQuizShown(true)}
+                )}
+                {inputError && (
+                  <div
+                    style={{
+                      color: 'red',
+                      marginTop: '0.5rem'
+                    }}
                   >
-                    {!loadingVocabSummary && eligibleVocabCount === 0
-                      ? 'No Words to Collect'
-                      : 'Collect Words'}
-                  </ArenaButton>
+                    {inputError}
+                  </div>
+                )}
+
+                {false && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginTop: '1rem'
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: 600,
+                        color: ARENA.inkSoft,
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      Image Model
+                    </label>
+                    <select
+                      value={imageEngine}
+                      onChange={(e) =>
+                        handleEngineChange(
+                          e.target.value as 'gemini' | 'openai'
+                        )
+                      }
+                      disabled={generatingImage}
+                      style={{
+                        padding: '0.35rem 0.5rem',
+                        borderRadius: '8px',
+                        border: `1px solid ${Color.borderGray()}`,
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      <option value="gemini">Nano Banana Pro</option>
+                      <option value="openai">GPT Image-1</option>
+                    </select>
+                  </div>
+                )}
+
+                {aiUsagePolicy && (
+                  <AiEnergyCard
+                    variant="inline"
+                    className={css`
+                      width: min(100%, 34rem);
+                      margin-top: 1.2rem;
+                    `}
+                    energyPercent={aiUsagePolicy.energyPercent ?? 0}
+                    energyPolicy={aiUsagePolicy}
+                    energySegments={aiUsagePolicy.energySegments}
+                    energySegmentsRemaining={
+                      aiUsagePolicy.energySegmentsRemaining
+                    }
+                    overflowed={aiUsagePolicy.lastUsageOverflowed}
+                    resetNeeded={energyDepleted}
+                    resetCost={aiUsagePolicy.resetCost || 0}
+                    resetPurchaseNumber={
+                      (aiUsagePolicy.resetPurchasesToday || 0) + 1
+                    }
+                    twinkleCoins={twinkleCoins}
+                    rechargeLoading={aiUsageResetLoading}
+                    rechargeError={aiUsageResetError}
+                    onRecharge={() => handlePurchaseAiUsageReset(false)}
+                    communityFundsEligible={isCommunityFundRechargeAvailable({
+                      aiUsagePolicy,
+                      communityFunds,
+                      communityFundsKnown: communityFundsLoaded
+                    })}
+                    communityFundsRequirements={
+                      aiUsagePolicy.communityFundResetEligibility?.requirements
+                    }
+                    onRechargeWithCommunityFunds={
+                      aiUsagePolicy.communityFundResetEligibility
+                        ? () => handlePurchaseAiUsageReset(true)
+                        : undefined
+                    }
+                  />
+                )}
+
+                <ArenaButton
+                  tone={colorHash[difficulty] || 'ink'}
+                  loading={generatingImage}
+                  onClick={handleGenerateImage}
+                  style={{ marginTop: '1.5rem' }}
+                  disabled={!canGenerateImage}
+                >
+                  <div>
+                    <div>{buttonLabel}</div>
+                    <div
+                      className={css`
+                        font-size: 1.1rem;
+                        margin-top: 0.5rem;
+                        @media (max-width: ${mobileMaxWidth}) {
+                          font-size: 1.1rem;
+                        }
+                      `}
+                    >
+                      ({imageGenerationCostText})
+                    </div>
+                  </div>
+                </ArenaButton>
+
+                <div
+                  style={{
+                    color: ARENA.inkSoft,
+                    fontSize: '1.1rem',
+                    marginTop: '0.5rem',
+                    textAlign: 'center'
+                  }}
+                >
+                  <div>Image generation uses Energy.</div>
+                  <div>Recharge when the battery is empty.</div>
                 </div>
-              )}
-            </div>
-          </main>
-          <footer className={clearFootCls}>
-            <ArenaButton tone="paper" size="md" onClick={onHide}>
-              Close
-            </ArenaButton>
-          </footer>
-        </div>
-      </Modal>
-      {vocabQuizShown && (
-        <VocabQuizModal
-          isOpen={vocabQuizShown}
-          onClose={handleVocabQuizClose}
-          onNoWords={handleVocabQuizNoWords}
-          storyId={storyId}
-        />
-      )}
-    </>
+              </div>
+            )}
+            {!isListening && (
+              <div
+                className={css`
+                  width: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  margin-top: ${imageUrl ? '1.5rem' : '2rem'};
+                  gap: 0.6rem;
+                `}
+              >
+                <ArenaButton
+                  tone={
+                    loadingVocabSummary || eligibleVocabCount === 0
+                      ? 'paper'
+                      : 'train'
+                  }
+                  loading={loadingVocabSummary}
+                  disabled={!loadingVocabSummary && eligibleVocabCount === 0}
+                  onClick={() => setVocabQuizShown(true)}
+                >
+                  {!loadingVocabSummary && eligibleVocabCount === 0
+                    ? 'No Words to Collect'
+                    : 'Collect Words'}
+                </ArenaButton>
+              </div>
+            )}
+          </div>
+        </main>
+        <footer className={clearFootCls}>
+          <ArenaButton tone="paper" size="md" onClick={onHide}>
+            Back to story
+          </ArenaButton>
+        </footer>
+      </div>
+    </div>
   );
 
   function handleVocabQuizNoWords() {
@@ -986,7 +975,19 @@ export default function SuccessModal({
 
 // the clear screen in Arena's look (Mikey 10-24: "i want everything
 // consistent"): a green CLEARED banner on paper, an ink reward stamp
+const wrapCls = css`
+  width: 100%;
+  padding: 2rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1rem;
+  }
+`;
+
 const clearCls = css`
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  box-shadow: 4px 4px 0 ${ARENA.line};
   background: ${ARENA.paper};
   color: ${ARENA.ink};
   border: 3px solid ${ARENA.line};
@@ -1037,7 +1038,7 @@ const clearBodyCls = css`
 `;
 
 const scoreLineCls = css`
-  margin-top: 2.4rem;
+  margin-top: 0.4rem;
   font-size: 2.2rem;
   font-weight: 900;
   color: ${ARENA.train};

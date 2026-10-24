@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Modal from '~/components/Modal';
 import Icon from '~/components/Icon';
 import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -56,7 +55,7 @@ type ResultTone =
   | 'censored'
   | 'correct';
 
-export default function VocabQuizModal({
+export default function VocabQuiz({
   isOpen,
   onClose,
   onNoWords,
@@ -319,17 +318,9 @@ export default function VocabQuizModal({
   ];
 
   return (
-    <Modal
-      modalKey="VocabQuizModal"
-      isOpen={isOpen}
-      onClose={submitting || loadingNextQuestion ? () => null : onClose}
-      size="lg"
-      modalLevel={3}
-      hasHeader={false}
-      closeOnBackdropClick={!submitting && !loadingNextQuestion}
-      bodyPadding={0}
-      allowOverflow
-    >
+    // a view in the AI Story panel where the clear screen was (Mikey 10-24:
+    // no modals inside Arena's pages); its own Close returns to the clear screen
+    <div className={vocabViewCls}>
       <div
         className={css`
           display: flex;
@@ -1034,7 +1025,7 @@ export default function VocabQuizModal({
           )}
         </div>
       </div>
-    </Modal>
+    </div>
   );
 
   function renderStatusMessage() {
@@ -1291,3 +1282,13 @@ function getResultMeta(result: QuizResult): ResultMeta {
     note: result.message || undefined
   };
 }
+
+const vocabViewCls = css`
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1rem;
+  }
+`;
