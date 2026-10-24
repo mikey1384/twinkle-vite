@@ -64,7 +64,10 @@ export default function ArenaPage() {
         <main
           className={cx(
             stageCls,
-            (activity === 'ai-story' || challengeId > 0) && stageTopCls
+            (activity === 'ai-story' ||
+              challengeId > 0 ||
+              !!searchParams.get('records')) &&
+              stageTopCls
           )}
         >
           {view === 'choose' && <ModeChooser onPick={openView} />}
@@ -93,6 +96,14 @@ export default function ArenaPage() {
             <Battles
               onStart={(id) =>
                 setSearchParams({ mode: 'arena', battle: String(id) })
+              }
+              recordsKey={searchParams.get('records') || ''}
+              onOpenRecords={(examKey) =>
+                setSearchParams(
+                  examKey
+                    ? { mode: 'arena', records: examKey }
+                    : { mode: 'arena' }
+                )
               }
             />
           )}

@@ -389,6 +389,7 @@ registerMethods('content', [
   'saveArenaAnswer',
   'submitArenaBattle',
   'loadArenaLeague',
+  'loadArenaRecords',
   'setArenaLeagueHidden',
   'markArenaLeagueResultSeen',
   'shareArenaBattle',

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
 import { arenaMediaURL } from './media';
 import League from './League';
+import Records from './Records';
 import type { ArenaDifficulty, ArenaState } from './types';
 
 // Arena: real battles only. Exam and boss names use their real Korean
@@ -49,9 +51,14 @@ const LENGTH_LABEL: Record<string, string> = {
 };
 
 export default function Battles({
-  onStart
+  onStart,
+  recordsKey = '',
+  onOpenRecords
 }: {
   onStart: (battleId: number) => void;
+  // Boss Records for this exam key, in place of the boss list
+  recordsKey?: string;
+  onOpenRecords: (examKey: string | null) => void;
 }) {
   const loadArenaState = useAppContext((v) => v.requestHelpers.loadArenaState);
   const startArenaBattle = useAppContext(
@@ -82,6 +89,24 @@ export default function Battles({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const recordsExam = recordsKey
+    ? state?.exams.find((exam) => exam.key === recordsKey)
+    : null;
+  if (recordsExam) {
+    return (
+      <div className={wrapCls}>
+        <button
+          type="button"
+          className={recordsBackCls}
+          onClick={() => onOpenRecords(null)}
+        >
+          <Icon icon="arrow-left" /> All bosses
+        </button>
+        <Records exam={recordsExam} />
+      </div>
+    );
+  }
 
   return (
     <div className={wrapCls}>
@@ -128,10 +153,19 @@ export default function Battles({
                 )}
               </div>
               <div className={bodyCls}>
-                <span className={codeCls}>
-                  BOSS {exam.code}
-                  {exam.codeLabel ? ` · ${exam.codeLabel}` : ''}
-                </span>
+                <div className={codeRowCls}>
+                  <span className={codeCls}>
+                    BOSS {exam.code}
+                    {exam.codeLabel ? ` · ${exam.codeLabel}` : ''}
+                  </span>
+                  <button
+                    type="button"
+                    className={recordsLinkCls}
+                    onClick={() => onOpenRecords(exam.key)}
+                  >
+                    <Icon icon="trophy" /> Records
+                  </button>
+                </div>
                 <strong>
                   {exam.name} <small>{exam.nameEn}</small>
                 </strong>
@@ -395,4 +429,39 @@ const modeOnCls = css`
 const modeIdleCls = css`
   border-style: dashed;
   opacity: 0.55;
+`;
+
+const codeRowCls = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+`;
+
+const recordsLinkCls = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.7rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 999px;
+  background: #ffe08a;
+  color: ${ARENA.ink};
+  font-size: 1.15rem;
+  font-weight: 900;
+  cursor: pointer;
+`;
+
+const recordsBackCls = css`
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  border: none;
+  background: none;
+  color: ${ARENA.inkSoft};
+  font-size: 1.4rem;
+  font-weight: 800;
+  cursor: pointer;
 `;

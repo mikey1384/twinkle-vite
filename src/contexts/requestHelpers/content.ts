@@ -1374,6 +1374,24 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // Arena's Boss Records (Mikey 10-24)
+    async loadArenaRecords(params: {
+      examKey: string;
+      length: string;
+      difficulty: string;
+      period: string;
+      band: string;
+    }) {
+      try {
+        const { data } = await request.get(`${URL}/content/arena/records`, {
+          ...auth(),
+          params
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // Arena's Weekly League (Mikey 10-24)
     async loadArenaLeague() {
       try {
