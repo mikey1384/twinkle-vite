@@ -135,34 +135,122 @@ function triggerPreviewObjectUrlDownload(blob: Blob, fileName: string) {
   };
 }
 
-function getPreviewDownloadFetchUrl(parsedUrl: URL) {
-  if (PREVIEW_DOWNLOAD_PROXY_HOSTS.has(parsedUrl.hostname)) {
-    return `${API_URL}/content/image/proxy?url=${encodeURIComponent(
-      parsedUrl.href
-    )}`;
-  }
-  return parsedUrl.href;
+function getPreviewDownloadProxyUrl(parsedUrl: URL) {
+  return `${API_URL}/content/image/proxy?url=${encodeURIComponent(
+    parsedUrl.href
+  )}`;
 }
 
-async function createBlobFromPreviewDownloadUrl(
-  parsedUrl: URL,
-  fallbackMimeType: string
-) {
-  const fetchUrl = getPreviewDownloadFetchUrl(parsedUrl);
+// Saving a file needs no tap, so an app could ask for any size: stop at
+// 500 MB, checked against the declared length and again while reading.
+const PREVIEW_DOWNLOAD_MAX_BYTES = 500 * 1024 * 1024;
+
+function previewDownloadTooLargeError(bytes: number) {
+  return new Error(
+    `This file is too large to download here (${Math.ceil(
+      bytes / (1024 * 1024)
+    )} MB; the limit is ${PREVIEW_DOWNLOAD_MAX_BYTES / (1024 * 1024)} MB).`
+  );
+}
+
+// A response that declares its size within the limit is read with
+// response.blob(), which lets the browser keep a large file on disk; only a
+// response with no declared size is streamed and counted here, since that
+// is the one case the limit could not be checked up front (holding the
+// chunks costs about twice the file in memory, so it is not the default).
+async function readPreviewDownloadBody(response: Response) {
+  const rawLength = response.headers?.get?.('content-length');
+  const declared =
+    rawLength != null && String(rawLength).trim() !== ''
+      ? Number(rawLength)
+      : NaN;
+  if (Number.isFinite(declared) && declared >= 0) {
+    if (declared > PREVIEW_DOWNLOAD_MAX_BYTES) {
+      // Stop the browser fetching the rest in the background.
+      await response.body?.cancel?.().catch(() => {});
+      throw previewDownloadTooLargeError(declared);
+    }
+    return readPreviewDownloadBlob(response);
+  }
+  const reader = response.body?.getReader?.();
+  if (!reader) return readPreviewDownloadBlob(response);
+  const chunks: BlobPart[] = [];
+  let total = 0;
+  for (;;) {
+    let next: ReadableStreamReadResult<Uint8Array>;
+    try {
+      next = await reader.read();
+    } catch {
+      await reader.cancel().catch(() => {});
+      throw new Error('The download was interrupted. Please try again.');
+    }
+    if (next.done) break;
+    total += next.value.byteLength;
+    if (total > PREVIEW_DOWNLOAD_MAX_BYTES) {
+      await reader.cancel().catch(() => {});
+      throw previewDownloadTooLargeError(total);
+    }
+    chunks.push(next.value as BlobPart);
+  }
+  // The MIME type as response.blob() would report it (lower case, trimmed).
+  const type = String(response.headers?.get?.('content-type') || '')
+    .trim()
+    .toLowerCase();
+  return new Blob(chunks, { type });
+}
+
+// A declared size can be the compressed one, so the decoded file is checked
+// again after reading.
+async function readPreviewDownloadBlob(response: Response) {
+  const blob = await response.blob();
+  if (blob.size > PREVIEW_DOWNLOAD_MAX_BYTES) {
+    throw previewDownloadTooLargeError(blob.size);
+  }
+  return blob;
+}
+
+// networkFailure marks a fetch that never got a response (blocked, offline,
+// refused by CORS), the only case worth retrying through the proxy: a 403 or
+// 404 from Twinkle's file host would be the same through it.
+async function fetchPreviewDownloadBlob(fetchUrl: string) {
   let response: Response;
   try {
     response = await fetch(fetchUrl, { credentials: 'omit' });
   } catch {
-    throw new Error(
-      'Could not fetch download URL. The remote server may block browser downloads.'
+    throw Object.assign(
+      new Error(
+        'Could not fetch download URL. The remote server may block browser downloads.'
+      ),
+      { networkFailure: true }
     );
   }
-
   if (!response.ok) {
     throw new Error(`Could not fetch download URL (${response.status}).`);
   }
+  return readPreviewDownloadBody(response);
+}
 
-  const blob = await response.blob();
+// Twinkle's file host serves files to any origin (CORS *), so the file is
+// fetched directly first: the proxy only passes images (415 for audio, PDFs
+// and other files) and caps them at 5 MB, which broke saveAs({ url }) for a
+// Groove Lab mp3 or a Book Maker PDF (10-24). The proxy stays as a fallback
+// for Twinkle-hosted files the direct fetch cannot reach at all.
+async function createBlobFromPreviewDownloadUrl(
+  parsedUrl: URL,
+  fallbackMimeType: string
+) {
+  let blob: Blob;
+  try {
+    blob = await fetchPreviewDownloadBlob(parsedUrl.href);
+  } catch (directError: any) {
+    if (
+      !directError?.networkFailure ||
+      !PREVIEW_DOWNLOAD_PROXY_HOSTS.has(parsedUrl.hostname)
+    ) {
+      throw directError;
+    }
+    blob = await fetchPreviewDownloadBlob(getPreviewDownloadProxyUrl(parsedUrl));
+  }
   return fallbackMimeType && blob.type !== fallbackMimeType
     ? blob.slice(0, blob.size, fallbackMimeType)
     : blob;
