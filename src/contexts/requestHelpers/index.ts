@@ -387,6 +387,8 @@ registerMethods('content', [
   'startArenaBattle',
   'loadArenaBattle',
   'saveArenaAnswer',
+  'saveArenaRecording',
+  'requestArenaMarking',
   'submitArenaBattle',
   'loadArenaLeague',
   'loadArenaRecords',

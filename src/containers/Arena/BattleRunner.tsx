@@ -13,6 +13,9 @@ import ListeningConsole, { type ListeningTrack } from './ListeningConsole';
 import PaperVisual, { tableMarksChoices, type Visual } from './PaperVisual';
 import MathText from './MathText';
 import TypedAnswer from './TypedAnswer';
+import EssayAnswer from './EssayAnswer';
+import SpokenAnswer from './SpokenAnswer';
+import MarkReview from './MarkReview';
 import type { ArenaBattle, ArenaItem } from './types';
 
 // One sitting of a real exam (Mikey 2026-10-24): the paper looks like the
@@ -22,6 +25,17 @@ import type { ArenaBattle, ArenaItem } from './types';
 // shows the keys and why each answer is right or wrong.
 
 const CIRCLED = ['①', '②', '③', '④', '⑤'];
+// how long the result waits between looks while essays are being marked
+const MARKING_POLL_MS = 4000;
+const MARKING_POLL_LIMIT = 45;
+
+// an essay or spoken answer still being marked (or not yet queued)
+function markingPending(item: ArenaItem) {
+  return (
+    !!item.marked &&
+    ['draft', 'queued', 'marking'].includes(item.marking?.status || 'queued')
+  );
+}
 const BODY_FIRST_TYPES = new Set(['eng.order', 'eng.insert']);
 
 // what the listening broadcast plays, in order: each recording once (a
@@ -127,6 +141,9 @@ export default function BattleRunner({
   const submitArenaBattle = useAppContext(
     (v) => v.requestHelpers.submitArenaBattle
   );
+  const requestArenaMarking = useAppContext(
+    (v) => v.requestHelpers.requestArenaMarking
+  );
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
   );
@@ -138,10 +155,23 @@ export default function BattleRunner({
   }, [data?.battle.exam.language]);
   const hasKoreanReview =
     data?.battle.exam.language === 'en' &&
-    !!data?.items.some((i) => i.review?.ko);
+    // an essay's mark carries Korean feedback too
+    !!data?.items.some((i) => i.review?.ko || i.marking?.mark?.feedbackKo);
   const [answers, setAnswers] = useState<
     Record<number, number | string | null>
   >({});
+  // spoken answers recorded so far (seconds)
+  const [recordings, setRecordings] = useState<Record<number, number | null>>(
+    {}
+  );
+  const markingPollsRef = useRef(0);
+  const markingTimerRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (markingTimerRef.current) window.clearTimeout(markingTimerRef.current);
+    },
+    []
+  );
   const [loadError, setLoadError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [confirmShown, setConfirmShown] = useState(false);
@@ -215,7 +245,7 @@ export default function BattleRunner({
   if (!data) return <div className={centerCls}>Opening the exam…</div>;
 
   const answeredCount = data.items.filter(
-    (item) => answers[item.no] != null
+    (item) => answers[item.no] != null || recordings[item.no] != null
   ).length;
   const shownPassages = new Set<number>();
 
@@ -314,6 +344,13 @@ export default function BattleRunner({
                     // untimed retake and the review after a battle
                     audioControls={finished || data.battle.mode === 'untimed'}
                     onMark={(choice) => handleMark(item.no, choice)}
+                    battleId={data.battle.id}
+                    untimed={data.battle.mode === 'untimed'}
+                    korean={data.battle.exam.language === 'ko'}
+                    onRecorded={(seconds) =>
+                      setRecordings((prev) => ({ ...prev, [item.no]: seconds }))
+                    }
+                    onRequestMarking={handleRequestMarking}
                   />
                 );
               })}
@@ -339,7 +376,17 @@ export default function BattleRunner({
             {data.items.map((item) => (
               <div key={item.no} className={omrRowCls}>
                 <span className={omrNoCls}>{item.no}</span>
-                {item.typed ? (
+                {item.marked ? (
+                  // an essay or recording: written on the paper, ticked here
+                  <span className={omrMarkedCls}>
+                    {item.marked === 'essay'
+                      ? '서술 · Essay'
+                      : '말하기 · Spoken'}{' '}
+                    {(item.marked === 'essay'
+                      ? answers[item.no] != null
+                      : recordings[item.no] != null) && <Icon icon="check" />}
+                  </span>
+                ) : item.typed ? (
                   // 단답형: the answer sheet's own box, same value as the item's
                   <TypedAnswer
                     compact
@@ -425,8 +472,18 @@ export default function BattleRunner({
       setAnswers(
         Object.fromEntries(battle.items.map((item) => [item.no, item.answer]))
       );
+      setRecordings(
+        Object.fromEntries(
+          battle.items
+            .filter((item) => item.recording)
+            .map((item) => [item.no, item.recording!.seconds])
+        )
+      );
       if (battle.battle.status === 'grading') {
         window.setTimeout(load, 1500);
+      } else if (battle.battle.status === 'finished') {
+        // essays are marked after the battle: look again until the marks are in
+        scheduleMarkingPoll(battle);
       }
     } catch {
       setLoadError('This exam could not be opened.');
@@ -466,11 +523,27 @@ export default function BattleRunner({
         });
       }
       if (result.battle.status === 'grading') window.setTimeout(load, 1500);
+      else scheduleMarkingPoll(result);
     } catch {
       submittedRef.current = false;
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function scheduleMarkingPoll(battle: ArenaBattle) {
+    if (!battle.items.some(markingPending)) return;
+    if (markingPollsRef.current >= MARKING_POLL_LIMIT) return;
+    markingPollsRef.current += 1;
+    if (markingTimerRef.current) window.clearTimeout(markingTimerRef.current);
+    markingTimerRef.current = window.setTimeout(load, MARKING_POLL_MS);
+  }
+
+  // answers that waited for AI Energy (or failed): mark them now, then look
+  async function handleRequestMarking() {
+    await requestArenaMarking(battleId);
+    markingPollsRef.current = 0;
+    await load();
   }
 
   function handleLeave() {
@@ -488,7 +561,12 @@ export function PaperItem({
   reviewLang,
   audioControls,
   allPointTags,
-  onMark
+  onMark,
+  battleId = 0,
+  untimed = false,
+  korean = false,
+  onRecorded,
+  onRequestMarking
 }: {
   item: ArenaItem;
   allPointTags: boolean;
@@ -498,6 +576,12 @@ export function PaperItem({
   finished: boolean;
   audioControls: boolean;
   onMark: (choice: number | string | null) => void;
+  // essay and spoken answers (a battle only, never Train's cards)
+  battleId?: number;
+  untimed?: boolean;
+  korean?: boolean;
+  onRecorded?: (seconds: number) => void;
+  onRequestMarking?: () => Promise<void>;
 }) {
   const listening = item.section === 'listening';
   const ko = reviewLang === 'ko';
@@ -509,7 +593,9 @@ export function PaperItem({
   // as on the real paper; a summary or <보기> box comes after it
   const bodyFirst = BODY_FIRST_TYPES.has(item.type);
   return (
-    <article className={itemCls}>
+    // an essay or recording takes the page's full width, as the answer
+    // sheet's writing space does
+    <article className={cx(itemCls, item.marked && wideItemCls)}>
       {passage && listening && audioControls && (
         <div className={audioCls}>
           {passage.audioPath ? (
@@ -562,6 +648,43 @@ export function PaperItem({
           <PaperText text={item.body} />
         </div>
       )}
+      {item.marked === 'essay' && (
+        <EssayAnswer
+          no={item.no}
+          task={item.task}
+          value={typeof marked === 'string' ? marked : null}
+          finished={finished}
+          korean={korean}
+          onCommit={onMark}
+        />
+      )}
+      {item.marked === 'spoken' && (
+        <SpokenAnswer
+          battleId={battleId}
+          no={item.no}
+          task={item.task}
+          recording={item.recording ?? null}
+          finished={finished}
+          retakeAllowed={untimed}
+          korean={korean}
+          onSaved={(seconds) => onRecorded?.(seconds)}
+        />
+      )}
+      {finished && item.marked && (
+        <>
+          <MarkReview
+            item={item}
+            ko={ko}
+            onRequestMarking={onRequestMarking || (async () => {})}
+          />
+          {review?.explanation && (
+            <p className={strongAnswerCls}>
+              <b>{ko ? '좋은 답안은: ' : 'A strong answer: '}</b>
+              <MathText text={review.explanation} />
+            </p>
+          )}
+        </>
+      )}
       {item.typed && (
         <div className={typedRowCls}>
           <TypedAnswer
@@ -574,6 +697,7 @@ export function PaperItem({
         </div>
       )}
       {!item.typed &&
+        !item.marked &&
         !(
           item.visual && tableMarksChoices(item.visual as unknown as Visual)
         ) && (
@@ -618,7 +742,7 @@ export function PaperItem({
             })}
           </ol>
         )}
-      {finished && item.review && (
+      {finished && item.review && !item.marked && (
         <div
           className={cx(
             reviewCls,
@@ -718,6 +842,26 @@ function PaperText({ text }: { text: string }) {
 function Result({ data }: { data: ArenaBattle }) {
   const { battle } = data;
   const estimate = battle.estimate?.grade;
+  // essay and spoken answers: their marks are AI estimates and may still be
+  // on their way; the score says so until they are all in
+  const aiMarked = !!battle.exam.aiMarked;
+  const markedItems = data.items.filter((item) => item.marked);
+  const waiting = markedItems.filter(
+    (item) => item.marking?.status !== 'marked'
+  );
+  const waitingPoints = waiting.reduce((sum, item) => sum + item.points, 0);
+  const needsEnergy = waiting.some((item) =>
+    ['awaiting', 'failed'].includes(item.marking?.status || '')
+  );
+  // marks already in count now; the server adds them to the battle's score
+  // once every mark is in (settled)
+  const shownPoints =
+    battle.rawPoints == null
+      ? null
+      : battle.rawPoints +
+        (battle.marking && !battle.marking.settled
+          ? battle.marking.markedPoints || 0
+          : 0);
   const navigate = useNavigate();
   const shareArenaBattle = useAppContext(
     (v) => v.requestHelpers.shareArenaBattle
@@ -744,12 +888,25 @@ function Result({ data }: { data: ArenaBattle }) {
               : 'Score'}
         </span>
         <strong>
-          {battle.rawPoints} / {battle.maxPoints}
+          {shownPoints} / {battle.maxPoints}
         </strong>
+        {aiMarked && (
+          <span className={resultNoteCls}>
+            {waiting.length
+              ? needsEnergy
+                ? `Includes AI estimates · up to ${waitingPoints} points wait for marking (below)`
+                : `Includes AI estimates · marking ${waiting.length === 1 ? 'one more answer' : `${waiting.length} more answers`} (up to ${waitingPoints} points)…`
+              : 'Includes AI-estimated marks'}
+          </span>
+        )}
       </div>
       {battle.grade != null && (
         <div>
-          <span className={resultLabelCls}>Grade on this paper</span>
+          <span className={resultLabelCls}>
+            {aiMarked
+              ? 'Grade on this paper · AI estimate'
+              : 'Grade on this paper'}
+          </span>
           <strong>{gradeText(battle.exam.gradeLabels, battle.grade)}</strong>
         </div>
       )}
@@ -758,7 +915,9 @@ function Result({ data }: { data: ArenaBattle }) {
         <strong>
           {estimate
             ? `about ${gradeText(battle.exam.gradeLabels, estimate.grade)} (likely ${gradeText(battle.exam.gradeLabels, estimate.low)}–${gradeText(battle.exam.gradeLabels, estimate.high)})`
-            : 'Still tracking'}
+            : aiMarked
+              ? 'Not estimated for essays'
+              : 'Still tracking'}
         </strong>
       </div>
       {/* a timed battle can be shared as a challenge (Mikey 10-24): a Home
@@ -1013,6 +1172,10 @@ const itemCls = css`
   margin-bottom: 2.2rem;
   font-size: 1.45rem;
   line-height: 1.7;
+`;
+
+const wideItemCls = css`
+  column-span: all;
 `;
 
 const stemCls = css`
@@ -1324,6 +1487,12 @@ const resultCls = css`
   }
 `;
 
+const resultNoteCls = css`
+  font-size: 1.1rem;
+  font-weight: 700;
+  opacity: 0.9;
+`;
+
 const resultLabelCls = css`
   font-size: 1.1rem;
   font-weight: 700;
@@ -1395,6 +1564,25 @@ const artPendingCls = css`
   text-align: center;
   color: #888;
   font-size: 1.3rem;
+`;
+
+// an essay or spoken answer's line in the OMR panel
+const omrMarkedCls = css`
+  grid-column: 2 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #a1221f;
+`;
+
+const strongAnswerCls = css`
+  margin: 0.6rem 0 0;
+  font-family: system-ui, sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  color: #444;
 `;
 
 // 단답형: the answer box under the stem, as the booklet leaves room for work

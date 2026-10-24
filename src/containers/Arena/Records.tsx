@@ -15,6 +15,8 @@ import type { ArenaExamSummary } from './types';
 // at everything. Top 10 and you; Hide me shows "Hidden hunter".
 interface RecordsView {
   total: number;
+  // essay or spoken answers: the scores include AI-estimated marks
+  aiMarked?: boolean;
   myRank: number | null;
   rows: {
     rank: number;
@@ -112,6 +114,11 @@ export default function Records({ exam }: { exam: ArenaExamSummary }) {
         <p className={noteCls}>No records here yet. The first win sets it.</p>
       ) : (
         <ol className={rowsCls}>
+          {view.aiMarked && (
+            <li className={noteCls}>
+              Scores include AI-estimated marks for essays and spoken answers.
+            </li>
+          )}
           {view.rows.map((row, i) => (
             <React.Fragment key={`${row.rank}-${row.user?.id || i}`}>
               {i > 0 && row.rank - view.rows[i - 1].rank > 1 && (

@@ -19,6 +19,8 @@ interface ChallengeView {
     examNameEn: string;
     code: string;
     codeLabel: string | null;
+    // essay or spoken answers: the scores include AI-estimated marks
+    aiMarked?: boolean;
     length: 'short' | 'medium' | 'full';
     difficulty: 'easy' | 'normal' | 'hard';
     sharer: { id: number; username: string; profilePicUrl: string | null };
@@ -111,6 +113,7 @@ export default function Challenge({
             <span className={scoreCls}>
               {view.isSharer ? 'Your score' : 'Their score'}: {sharerRow.raw} /{' '}
               {sharerRow.max}
+              {challenge.aiMarked && ' (includes AI estimates)'}
             </span>
           )}
         </div>

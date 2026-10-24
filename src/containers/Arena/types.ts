@@ -15,6 +15,8 @@ export interface ArenaExamSummary {
   nameEn: string;
   // has a listening section (the cover's rules mention it)
   listening?: boolean;
+  // essay or spoken answers: its scores include AI estimates
+  aiMarked?: boolean;
   lengths: {
     length: 'short' | 'medium' | 'full';
     items: number;
@@ -37,6 +39,10 @@ export interface ArenaBattleSummary {
   // a win (the exam's top-grade line on this paper) can be shared
   winAt: number | null;
   won: boolean;
+  // the exam has essay or spoken answers: the score includes AI estimates
+  aiMarked?: boolean;
+  // its essay or spoken answers' marking (lists and the result)
+  marking?: ArenaMarkingSummary;
   mode: 'battle' | 'untimed';
   status: 'open' | 'grading' | 'finished' | 'abandoned';
   rawPoints: number | null;
@@ -51,6 +57,41 @@ export interface ArenaBattleSummary {
   } | null;
   startedAt: number;
   finishedAt: number | null;
+}
+
+export interface ArenaMarkingSummary {
+  total: number;
+  marked: number;
+  // points of the marks already in
+  markedPoints: number;
+  // the battle's rawPoints already include every mark
+  settled?: boolean;
+  pending: number;
+  awaiting: number;
+  failed: number;
+  stalled: boolean;
+}
+
+// An AI mark on the exam's public scale: always an estimate
+export interface ArenaMark {
+  criteria: {
+    id: string;
+    name: string;
+    nameKo: string;
+    score: number;
+    max: number;
+    comment: string;
+    commentKo?: string;
+  }[];
+  total: number;
+  max: number;
+  // how the exam reports it: "16/20", "Band 6.5", "7점 / 10점"
+  scaleScore: string;
+  points: number;
+  maxPoints: number;
+  feedback: string;
+  feedbackKo?: string;
+  estimate: true;
 }
 
 export interface ArenaState {
@@ -75,6 +116,30 @@ export interface ArenaItem {
   choices: string[];
   // a typed answer (수학 단답형 etc.): digits only, or a word or phrase
   typed?: 'integer' | 'text';
+  // an essay or spoken answer, AI-marked after the battle
+  marked?: 'essay' | 'spoken';
+  task?: {
+    minWords?: number;
+    maxWords?: number;
+    minChars?: number;
+    maxChars?: number;
+    prepSeconds?: number;
+    responseSeconds?: number;
+  };
+  // a spoken answer's recording (null: none yet)
+  recording?: { seconds: number | null } | null;
+  // after the battle: the rubric it was marked on and the mark so far
+  rubric?: {
+    scale: string;
+    criteria: { id: string; name?: string; max?: number; descriptor: string }[];
+    requirements?: string[];
+  };
+  marking?: {
+    status: 'draft' | 'queued' | 'marking' | 'marked' | 'awaiting' | 'failed';
+    failure?: string;
+    mark?: ArenaMark;
+    transcript?: string;
+  };
   // a choice index, or the typed text
   answer: number | string | null;
   // the key: a choice index, or the accepted typed answer the review prints
@@ -102,6 +167,7 @@ export interface ArenaBattle {
       name: string;
       nameEn: string;
       choices: number;
+      aiMarked?: boolean;
       gradeLabels?: string[] | null;
     };
     minutes: number | null;

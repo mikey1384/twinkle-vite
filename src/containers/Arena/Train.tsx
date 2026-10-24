@@ -194,6 +194,12 @@ function describeBattle(battle: ArenaBattleSummary) {
   return [
     kind,
     `${battle.rawPoints}/${battle.maxPoints}`,
+    // essay and spoken marks are AI estimates, and may still be coming
+    battle.aiMarked
+      ? battle.marking && battle.marking.marked < battle.marking.total
+        ? 'marking…'
+        : 'AI estimate'
+      : '',
     battle.grade ? `${battle.grade}등급` : '',
     when
   ]
