@@ -13,6 +13,7 @@ import ListeningConsole, { type ListeningTrack } from './ListeningConsole';
 import PaperVisual, { tableMarksChoices, type Visual } from './PaperVisual';
 import MathText from './MathText';
 import TypedAnswer from './TypedAnswer';
+import ParentEmailOffer from './ParentEmailOffer';
 import type { ArenaBattle, ArenaItem } from './types';
 
 // One sitting of a real exam (Mikey 2026-10-24): the paper looks like the
@@ -829,6 +830,12 @@ function Result({ data }: { data: ArenaBattle }) {
           ))}
           {agentError && <span className={agentErrorCls}>{agentError}</span>}
         </div>
+      )}
+      {/* after a timed win, optionally send the result to a parent (Mikey
+          10-24): Korean, exam terms, a one-time reward when the parent
+          confirms a first parent email */}
+      {battle.mode === 'battle' && battle.won && (
+        <ParentEmailOffer battleId={battle.id} />
       )}
     </div>
   );

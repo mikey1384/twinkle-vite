@@ -143,6 +143,10 @@ const BridgeBuilderOrgAsks = lazyWithRetry(
 const Friends = lazyWithRetry(() => import('~/containers/Friends'));
 const Grammarbles = lazyWithRetry(() => import('~/containers/Grammarbles'));
 const Arena = lazyWithRetry(() => import('~/containers/Arena'));
+// the mock-exam result page a parent opens from their email (no account)
+const ArenaParentReportPage = lazyWithRetry(
+  () => import('~/containers/Arena/ParentReportPage')
+);
 const DailyReflection = lazyWithRetry(
   () => import('~/containers/DailyReflection')
 );
@@ -447,7 +451,8 @@ export default function App() {
       // a parent's or guardian's consent page needs no account
       location.pathname === '/signup/guardian' ||
       location.pathname === '/bridge-builder/consent' ||
-      location.pathname === '/bridge-builder/grown-up')
+      location.pathname === '/bridge-builder/grown-up' ||
+      location.pathname === '/exam-report')
   );
 
   const prevUserId = useRef(userId);
@@ -1515,6 +1520,10 @@ export default function App() {
                 <Route path="/friends" element={<Friends />} />
                 <Route path="/grammarbles" element={<Grammarbles />} />
                 <Route path="/arena" element={<Arena />} />
+                <Route
+                  path="/exam-report"
+                  element={<ArenaParentReportPage />}
+                />
                 <Route
                   path="/daily-reflection"
                   element={<DailyReflection />}
