@@ -1487,7 +1487,7 @@ export default function contentRequestHelpers({
     }: {
       battleId: number;
       no: number;
-      answer: number | null;
+      answer: number | string | null;
       responseMs?: number;
     }) {
       try {

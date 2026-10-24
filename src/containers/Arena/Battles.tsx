@@ -17,6 +17,16 @@ import type { ArenaDifficulty, ArenaState } from './types';
 // imagegen; art notes in work/mock-test-arena-20261024/reference_art).
 const BOSSES: Record<string, { name: string; nameEn: string; color: string }> =
   {
+    'suneung-kor': {
+      name: '국어 선생님',
+      nameEn: 'The Literature Teacher',
+      color: '#d9a72b'
+    },
+    'suneung-math': {
+      name: '수학 강사',
+      nameEn: 'The Star Math Lecturer',
+      color: '#2e9c94'
+    },
     'suneung-eng': {
       name: '수능 감독관',
       nameEn: 'The CSAT Proctor',

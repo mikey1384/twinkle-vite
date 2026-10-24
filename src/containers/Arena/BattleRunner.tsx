@@ -10,6 +10,8 @@ import ArenaButton from './ArenaButton';
 import { arenaMediaURL } from './media';
 import ListeningConsole, { type ListeningTrack } from './ListeningConsole';
 import PaperVisual, { tableMarksChoices, type Visual } from './PaperVisual';
+import MathText from './MathText';
+import TypedAnswer from './TypedAnswer';
 import type { ArenaBattle, ArenaItem } from './types';
 
 // One sitting of a real exam (Mikey 2026-10-24): the paper looks like the
@@ -119,7 +121,9 @@ export default function BattleRunner({
   const hasKoreanReview =
     data?.battle.exam.language === 'en' &&
     !!data?.items.some((i) => i.review?.ko);
-  const [answers, setAnswers] = useState<Record<number, number | null>>({});
+  const [answers, setAnswers] = useState<
+    Record<number, number | string | null>
+  >({});
   const [loadError, setLoadError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [confirmShown, setConfirmShown] = useState(false);
@@ -285,6 +289,7 @@ export default function BattleRunner({
                     item={item}
                     passage={passage}
                     marked={answers[item.no] ?? null}
+                    allPointTags={data.battle.exam.pointTags === 'all'}
                     finished={finished}
                     reviewLang={reviewLang}
                     // replay controls only where replays are allowed: Train's
@@ -316,7 +321,17 @@ export default function BattleRunner({
             {data.items.map((item) => (
               <div key={item.no} className={omrRowCls}>
                 <span className={omrNoCls}>{item.no}</span>
-                {CIRCLED.slice(0, item.choices.length || 5).map(
+                {item.typed ? (
+                  // 단답형: the answer sheet's own box, same value as the item's
+                  <TypedAnswer
+                    compact
+                    typed={item.typed}
+                    value={answers[item.no] ?? null}
+                    finished={finished}
+                    label={`${item.no}번 답`}
+                    onCommit={(value) => handleMark(item.no, value)}
+                  />
+                ) : CIRCLED.slice(0, item.choices.length || 5).map(
                   (label, choice) => {
                     const filled = answers[item.no] === choice;
                     const isKey = finished && item.key === choice;
@@ -398,15 +413,18 @@ export default function BattleRunner({
     }
   }
 
-  function handleMark(no: number, choice: number | null) {
+  // a choice index, or a typed answer (committed on blur or Enter)
+  function handleMark(no: number, choice: number | string | null) {
     if (finished || submittedRef.current) return;
+    const value = typeof choice === 'string' && !choice.trim() ? null : choice;
+    if ((answers[no] ?? null) === value) return;
     const elapsed = Date.now() - lastMarkRef.current;
     lastMarkRef.current = Date.now();
-    setAnswers((prev) => ({ ...prev, [no]: choice }));
+    setAnswers((prev) => ({ ...prev, [no]: value }));
     saveArenaAnswer({
       battleId,
       no,
-      answer: choice,
+      answer: value,
       responseMs: elapsed
     }).catch(() => null);
   }
@@ -438,15 +456,17 @@ function PaperItem({
   finished,
   reviewLang,
   audioControls,
+  allPointTags,
   onMark
 }: {
   item: ArenaItem;
+  allPointTags: boolean;
   reviewLang: 'en' | 'ko';
   passage: { kind: string; body: string; audioPath: string | null } | null;
-  marked: number | null;
+  marked: number | string | null;
   finished: boolean;
   audioControls: boolean;
-  onMark: (choice: number | null) => void;
+  onMark: (choice: number | string | null) => void;
 }) {
   const listening = item.section === 'listening';
   const ko = reviewLang === 'ko';
@@ -473,8 +493,10 @@ function PaperItem({
         </div>
       )}
       <p className={stemCls}>
-        <b>{item.no}.</b> {stemText(item.stem)}
-        {item.points === 3 && <span className={pointsCls}> [3점]</span>}
+        <b>{item.no}.</b> <MathText text={stemText(item.stem)} />
+        {(allPointTags || item.points === 3) && (
+          <span className={pointsCls}> [{item.points}점]</span>
+        )}
       </p>
       {item.body && bodyFirst && (
         <div className={boxCls}>
@@ -484,7 +506,7 @@ function PaperItem({
       {item.visual ? (
         <PaperVisual
           visual={item.visual as unknown as Visual}
-          marked={marked}
+          marked={typeof marked === 'number' ? marked : null}
           onMark={finished ? undefined : onMark}
         />
       ) : (
@@ -508,7 +530,19 @@ function PaperItem({
           <PaperText text={item.body} />
         </div>
       )}
-      {!(
+      {item.typed && (
+        <div className={typedRowCls}>
+          <TypedAnswer
+            typed={item.typed}
+            value={marked}
+            finished={finished}
+            label={`${item.no}번 답`}
+            onCommit={onMark}
+          />
+        </div>
+      )}
+      {!item.typed &&
+        !(
         item.visual && tableMarksChoices(item.visual as unknown as Visual)
       ) && (
         <ol
@@ -538,7 +572,14 @@ function PaperItem({
                   <span className={circledCls}>{CIRCLED[index]}</span>
                   {/* a marker choice (the underlined ① of a grammar item) is
                     printed once, as the paper does */}
-                  {choice.trim() === CIRCLED[index] ? '' : ` ${choice}`}
+                  {choice.trim() === CIRCLED[index] ? (
+                    ''
+                  ) : (
+                    <>
+                      {' '}
+                      <MathText text={choice} />
+                    </>
+                  )}
                 </button>
               </li>
             );
@@ -562,15 +603,29 @@ function PaperItem({
             ) : (
               <>
                 {ko ? '정답:' : 'Answer:'}{' '}
-                <span className={glyphCls}>{CIRCLED[item.key ?? 0]}</span>
+                {item.typed ? (
+                  <span className={typedKeyCls}>{String(item.key ?? '')}</span>
+                ) : (
+                  <span className={glyphCls}>
+                    {CIRCLED[Number(item.key ?? 0)]}
+                  </span>
+                )}
               </>
             )}
           </b>
+          {item.typed && !item.correct && (
+            <p>
+              {ko ? '내 답: ' : 'Your answer: '}
+              {marked == null || marked === '' ? (ko ? '(빈칸)' : '(blank)') : String(marked)}
+            </p>
+          )}
           {review!.evidence && (
             <p className={evidenceCls}>“{review!.evidence}”</p>
           )}
-          <p>{review!.explanation}</p>
-          {marked != null && !item.correct && review!.why?.[marked] && (
+          <p>
+            <MathText text={review!.explanation} />
+          </p>
+          {typeof marked === 'number' && !item.correct && review!.why?.[marked] && (
             <p>
               {ko ? (
                 <>
@@ -583,7 +638,7 @@ function PaperItem({
                   wrong:{' '}
                 </>
               )}
-              {review!.why[marked]}
+              <MathText text={review!.why[marked]} />
             </p>
           )}
         </div>
@@ -608,7 +663,7 @@ function PaperText({ text }: { text: string }) {
           part.startsWith('<u>') && part.endsWith('</u>') ? (
             <u key={i}>{part.slice(3, -4)}</u>
           ) : (
-            <React.Fragment key={i}>{part}</React.Fragment>
+            <MathText key={i} text={part} />
           )
         )}
       {glosses.length > 0 && (
@@ -1302,4 +1357,14 @@ const artPendingCls = css`
   text-align: center;
   color: #888;
   font-size: 1.3rem;
+`;
+
+// 단답형: the answer box under the stem, as the booklet leaves room for work
+const typedRowCls = css`
+  margin: 1.2rem 0 0.4rem;
+`;
+
+const typedKeyCls = css`
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
 `;
