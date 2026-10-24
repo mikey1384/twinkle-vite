@@ -13,13 +13,17 @@ export default function Train({
   onOpenDeck,
   onOpenSkills,
   onOpenBattle,
-  onPlayEraser
+  onPlayEraser,
+  onOpenScoreReport,
+  onOpenPaper
 }: {
   onPlayAIStory: () => void;
   onPlayEraser: () => void;
   onOpenDeck: () => void;
   onOpenSkills: () => void;
   onOpenBattle: (battleId: number) => void;
+  onOpenScoreReport: () => void;
+  onOpenPaper: () => void;
 }) {
   const aiStoryTask = useNotiContext(
     (v) => v.state.todayStats?.dailyTaskStatus?.aiStory
@@ -143,6 +147,42 @@ export default function Train({
         </span>
       </button>
 
+      {/* SPEC §10-11: real results and real papers, rewarded once a
+          reviewer checks them (Reports.tsx) */}
+      <button type="button" className={rowCls} onClick={onOpenScoreReport}>
+        <span className={badgeCls} style={{ background: '#f2c14e' }}>
+          <Icon icon="trophy" />
+        </span>
+        <span className={textCls}>
+          <strong>Report a real score</strong>
+          <span>
+            Took a real exam? Tell us your grade or score, with a photo of the
+            score sheet if you have it.
+          </span>
+        </span>
+        <span className={statusCls}>
+          +5,000 XP
+          <Icon icon="chevron-right" />
+        </span>
+      </button>
+
+      <button type="button" className={rowCls} onClick={onOpenPaper}>
+        <span className={badgeCls} style={{ background: ARENA.accent }}>
+          <Icon icon="upload" />
+        </span>
+        <span className={textCls}>
+          <strong>Send a real paper</strong>
+          <span>
+            Share a test paper from your school or academy. It stays private and
+            helps make Arena’s exams feel real.
+          </span>
+        </span>
+        <span className={statusCls}>
+          Up to 20,000 XP
+          <Icon icon="chevron-right" />
+        </span>
+      </button>
+
       <div
         className={rowCls}
         aria-disabled={finishedBattles.length ? undefined : 'true'}
@@ -217,6 +257,12 @@ function describeBattle(battle: ArenaBattleSummary) {
   return [
     kind,
     `${battle.rawPoints}/${battle.maxPoints}`,
+    // essay and spoken marks are AI estimates, and may still be coming
+    battle.aiMarked
+      ? battle.marking && battle.marking.marked < battle.marking.total
+        ? 'marking…'
+        : 'AI estimate'
+      : '',
     battle.grade ? `${battle.grade}등급` : '',
     when
   ]

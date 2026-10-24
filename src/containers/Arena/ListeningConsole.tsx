@@ -5,7 +5,8 @@ import { ARENA } from './theme';
 import { arenaMediaURL } from './media';
 
 // The listening section as the real exam broadcasts it (Mikey 2026-10-24):
-// the Korean announcer's opening, every item once (16-17 twice) with time
+// the Korean announcer's opening, every item as often as the exam plays it
+// (수능 영어: once, 16-17 twice) with time
 // to answer after each, then the closing line. No pause, no replay, no
 // scrubbing. Browsers need one tap before sound, so the broadcast starts on
 // a "Start listening" tap; after that it runs on its own. A reload resumes
@@ -13,6 +14,20 @@ import { arenaMediaURL } from './media';
 
 const ANSWER_GAP_MS = 8000;
 const REPEAT_GAP_MS = 4000;
+
+// how often this paper's recordings play, as the real exam does it
+function playsNote(tracks: ListeningTrack[]) {
+  const twice = tracks.filter((track) => track.plays > 1);
+  const how =
+    !twice.length
+      ? 'Each recording plays once'
+      : twice.length === tracks.length
+        ? 'Each recording plays twice'
+        : `Each recording plays once (${twice
+            .map((track) => track.label.replace(/번$/, ''))
+            .join(', ')} twice)`;
+  return `${how}, as in the real exam. No replays.`;
+}
 
 export interface ListeningTrack {
   label: string;
@@ -127,10 +142,7 @@ export default function ListeningConsole({
             : `${step.label} 답할 시간`}
         </span>
       )}
-      <span className={noteCls}>
-        Each recording plays once (16–17 twice), as in the real exam. No
-        replays.
-      </span>
+      <span className={noteCls}>{playsNote(tracks)}</span>
     </div>
   );
 }

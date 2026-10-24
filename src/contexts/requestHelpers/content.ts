@@ -1486,10 +1486,62 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // Train's real score reports and paper submissions (helpers/arena/
+    // reports.ts on the API): choices, rewards and the member's own history
+    async loadArenaReports() {
+      try {
+        const { data } = await request.get(`${URL}/content/arena/reports`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitArenaScoreReport(report: {
+      examKey: string;
+      sitting: string;
+      sittingOther?: string;
+      grade?: number | null;
+      score?: number | null;
+      proofKey?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/reports/score`,
+          report,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitArenaPaper(paper: {
+      fileKeys: string[];
+      examKind: string;
+      school?: string;
+      gradeLevel?: string;
+      year?: number | null;
+      term?: string;
+      subject: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/reports/paper`,
+          paper,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // Train's 오답 deck (helpers/arena/train.ts on the API)
     async loadArenaDeck() {
       try {
-        const { data } = await request.get(`${URL}/content/arena/train/deck`, auth());
+        const { data } = await request.get(
+          `${URL}/content/arena/train/deck`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -1538,7 +1590,10 @@ export default function contentRequestHelpers({
     },
     async loadArenaRising() {
       try {
-        const { data } = await request.get(`${URL}/content/arena/rising`, auth());
+        const { data } = await request.get(
+          `${URL}/content/arena/rising`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -1655,6 +1710,42 @@ export default function contentRequestHelpers({
         const { data } = await request.post(
           `${URL}/content/arena/battle/${battleId}/answer`,
           { no, answer, responseMs },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // a spoken answer: the private upload's key and how long it runs
+    async saveArenaRecording({
+      battleId,
+      no,
+      key,
+      seconds
+    }: {
+      battleId: number;
+      no: number;
+      key: string;
+      seconds: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/battle/${battleId}/recording`,
+          { no, key, seconds },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // essay or spoken answers that waited for AI Energy (or failed): mark now
+    async requestArenaMarking(battleId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/battle/${battleId}/mark`,
+          {},
           auth()
         );
         return data;

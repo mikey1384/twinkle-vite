@@ -107,15 +107,14 @@ const AI_USAGE_TARGET_LABELS: Record<string, string> = {
   ai_music_generation: 'music',
   daily_reflection_share: 'reflection',
   arena_battle_share: 'arena',
+  arena_answer_marking: 'arena marking',
   chat_topic: 'topic'
 };
 
 export function getAiUsageTargetLabel(targetType: string) {
   const normalized = (targetType || '').trim();
   if (!normalized) return '';
-  return (
-    AI_USAGE_TARGET_LABELS[normalized] || normalized.split('_').join(' ')
-  );
+  return AI_USAGE_TARGET_LABELS[normalized] || normalized.split('_').join(' ');
 }
 
 // Converts raw energy units into the battery scale where 100 = a full battery
