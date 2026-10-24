@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
 import { arenaMediaURL } from './media';
-import type { ArenaState } from './types';
+import type { ArenaDifficulty, ArenaState } from './types';
 
 // Arena: real battles only. Exam and boss names use their real Korean
 // terms so a parent watching recognizes the exam (Mikey 10-24: an exception
@@ -35,6 +35,12 @@ const BOSSES: Record<string, { name: string; nameEn: string; color: string }> =
     }
   };
 
+const MODE_LABEL: Record<ArenaDifficulty, string> = {
+  easy: 'Easy',
+  normal: 'Normal',
+  hard: 'Hard'
+};
+
 const LENGTH_LABEL: Record<string, string> = {
   short: 'Short',
   medium: 'Medium',
@@ -53,6 +59,8 @@ export default function Battles({
   const [state, setState] = useState<ArenaState | null>(null);
   const [error, setError] = useState('');
   const [starting, setStarting] = useState('');
+  // each boss's chosen mode; Normal (the real exam) unless picked
+  const [modes, setModes] = useState<Record<string, ArenaDifficulty>>({});
   const openBattle = (state?.recent || []).find(
     (battle) => battle.status === 'open' && battle.mode === 'battle'
   );
@@ -125,6 +133,35 @@ export default function Battles({
                 <strong>
                   {exam.name} <small>{exam.nameEn}</small>
                 </strong>
+                <div className={modesCls} role="radiogroup" aria-label="Mode">
+                  {exam.difficulties.map(({ difficulty, ready }) => {
+                    const on = (modes[exam.key] || 'normal') === difficulty;
+                    return (
+                      <button
+                        key={difficulty}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        title={
+                          ready ? undefined : 'Still training: no questions yet'
+                        }
+                        className={cx(
+                          modeCls,
+                          on && modeOnCls,
+                          !ready && modeIdleCls
+                        )}
+                        onClick={() =>
+                          setModes((prev) => ({
+                            ...prev,
+                            [exam.key]: difficulty
+                          }))
+                        }
+                      >
+                        {MODE_LABEL[difficulty]}
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className={lengthsCls}>
                   {exam.lengths.map((option) => {
                     const key = `${exam.key}:${option.length}`;
@@ -163,7 +200,11 @@ export default function Battles({
     setStarting(`${examKey}:${length}`);
     setError('');
     try {
-      const data = await startArenaBattle({ examKey, length });
+      const data = await startArenaBattle({
+        examKey,
+        length,
+        difficulty: modes[examKey] || 'normal'
+      });
       onStart(data.battle.id);
     } catch (err: any) {
       setError(
@@ -322,4 +363,34 @@ const codeCls = css`
   font-size: 1.15rem;
   font-weight: 900;
   letter-spacing: 0.06em;
+`;
+
+// Easy / Normal / Hard (Mikey 10-24): Normal is the real exam; Hard is the
+// examiners on a bad day. A mode with no questions yet stays pickable but
+// faded, and starting it says the boss is still training.
+const modesCls = css`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+`;
+
+const modeCls = css`
+  padding: 0.45rem 0.4rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 8px;
+  background: ${ARENA.paper};
+  color: ${ARENA.ink};
+  font-size: 1.25rem;
+  font-weight: 800;
+  cursor: pointer;
+`;
+
+const modeOnCls = css`
+  background: ${ARENA.ink};
+  color: #fff;
+`;
+
+const modeIdleCls = css`
+  border-style: dashed;
+  opacity: 0.55;
 `;

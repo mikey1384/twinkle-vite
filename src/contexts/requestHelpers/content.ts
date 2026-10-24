@@ -1336,7 +1336,11 @@ export default function contentRequestHelpers({
     },
     async startArenaBattle(
       target:
-        | { examKey: string; length: 'short' | 'medium' | 'full' }
+        | {
+            examKey: string;
+            length: 'short' | 'medium' | 'full';
+            difficulty?: 'easy' | 'normal' | 'hard';
+          }
         | { examKey: string; mode: 'untimed'; sourceBattleId: number }
     ) {
       try {

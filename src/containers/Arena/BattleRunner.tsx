@@ -138,7 +138,11 @@ export default function BattleRunner({
           <span>
             {data.battle.mode === 'untimed'
               ? 'Untimed retake'
-              : `${lengthLabel(data.battle.length)} · ${data.battle.minutes} min`}
+              : `${lengthLabel(data.battle.length)}${
+                  data.battle.difficulty !== 'normal'
+                    ? ` · ${data.battle.difficulty === 'hard' ? 'Hard' : 'Easy'}`
+                    : ''
+                } · ${data.battle.minutes} min`}
           </span>
         </div>
         {timed && remaining != null ? (
@@ -507,7 +511,14 @@ function Result({ data }: { data: ArenaBattle }) {
   return (
     <div className={resultCls}>
       <div>
-        <span className={resultLabelCls}>Score</span>
+        <span className={resultLabelCls}>
+          {/* an Easy or Hard score is that mode's, never a real 등급 */}
+          {battle.difficulty === 'hard'
+            ? 'Score on Hard'
+            : battle.difficulty === 'easy'
+              ? 'Score on Easy'
+              : 'Score'}
+        </span>
         <strong>
           {battle.rawPoints} / {battle.maxPoints}
         </strong>

@@ -1,8 +1,12 @@
+export type ArenaDifficulty = 'easy' | 'normal' | 'hard';
+
 export interface ArenaExamSummary {
   key: string;
   // boss codename, e.g. H3-3 with label 수능
   code: string;
   codeLabel: string | null;
+  // the three modes and whether each has questions yet
+  difficulties: { difficulty: ArenaDifficulty; ready: boolean }[];
   name: string;
   nameEn: string;
   lengths: {
@@ -23,6 +27,7 @@ export interface ArenaBattleSummary {
   id: number;
   examKey: string;
   length: 'short' | 'medium' | 'full';
+  difficulty: ArenaDifficulty;
   mode: 'battle' | 'untimed';
   status: 'open' | 'grading' | 'finished' | 'abandoned';
   rawPoints: number | null;
