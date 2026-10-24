@@ -84,8 +84,8 @@ function listeningTracks(data: ArenaBattle): ListeningTrack[] {
     tracks.push({
       label:
         members.length > 1
-          ? `${printed(members[0])}~${printed(members[members.length - 1])}번`
-          : `${printed(item)}번`,
+          ? `${printed(members[0])}~${printed(members[members.length - 1])}`
+          : printed(item),
       src: arenaMediaURL(audioPath),
       plays: item.plays || 1
     });
@@ -407,6 +407,10 @@ export default function BattleRunner({
                     battleId={data.battle.id}
                     examKey={data.battle.exam.key}
                     tracks={listeningTracks(data)}
+                    english={
+                      data.battle.exam.language === 'en' &&
+                      !/^수능 /.test(data.battle.exam.name)
+                    }
                   />
                 )}
               {items.map((item) => {

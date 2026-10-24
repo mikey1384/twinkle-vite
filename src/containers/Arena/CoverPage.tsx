@@ -10,7 +10,8 @@ import type { ArenaExamSummary } from './types';
 // starts only on 시작, so reading the cover costs no exam time. The header
 // says Twinkle's mock paper, never the 평가원's. 필적 확인 lines are from
 // public-domain poems (윤동주, 김소월, 한용운); copying it is for the feel,
-// never required.
+// never required. 영역 and the 필적 확인 are the 수능's; an English-language
+// exam (TOEFL, IELTS, A2 Key, TOSEL, SAT) gets an English cover.
 const PHRASES = [
   { line: '죽는 날까지 하늘을 우러러', source: '윤동주, 「서시」' },
   { line: '계절이 지나가는 하늘에는', source: '윤동주, 「별 헤는 밤」' },
@@ -39,6 +40,16 @@ const MODE: Record<string, string> = {
   normal: '보통',
   hard: '어려움'
 };
+const LENGTH_EN: Record<string, string> = {
+  short: 'Short test',
+  medium: 'Medium test',
+  full: 'Full test'
+};
+const MODE_EN: Record<string, string> = {
+  easy: 'Easy',
+  normal: 'Normal',
+  hard: 'Hard'
+};
 
 export default function CoverPage({
   exam,
@@ -64,32 +75,85 @@ export default function CoverPage({
   const period = PERIOD[exam.key];
   const matches =
     copied.replace(/\s+/g, '') === phrase.line.replace(/\s+/g, '');
+  const suneung = /^수능 /.test(exam.name);
+  const english = exam.language === 'en' && !suneung;
+
+  if (english) {
+    return (
+      <div className={backdropCls} role="dialog" aria-label="Exam cover">
+        <section className={coverCls}>
+          <p className={kickerCls}>Twinkle practice test</p>
+          <h2 className={titleCls}>{exam.nameEn || exam.name}</h2>
+          <p className={metaCls}>
+            {LENGTH_EN[length]} · {MODE_EN[difficulty] || MODE_EN.normal}
+            {spec ? ` · ${spec.items} questions · ${spec.minutes} minutes` : ''}
+          </p>
+          <ul className={rulesCls}>
+            <li>
+              Mark your answers on the answer sheet. The choice you tap on the
+              paper is marked there too.
+            </li>
+            <li>
+              When time is up, your answer sheet is handed in. A blank answer is
+              wrong.
+            </li>
+            {exam.listening && (
+              <li>
+                The recordings play as in the real test: once or twice, no
+                replays.
+              </li>
+            )}
+            <li>The clock starts when you press Start.</li>
+          </ul>
+          <div className={actionsCls}>
+            <button type="button" className={cancelCls} onClick={onCancel}>
+              Not now
+            </button>
+            <ArenaButton
+              tone="red"
+              size="lg"
+              loading={starting}
+              disabled={starting}
+              onClick={onStart}
+            >
+              Start
+            </ArenaButton>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className={backdropCls} role="dialog" aria-label="Exam cover">
       <section className={coverCls}>
         <p className={kickerCls}>Twinkle 모의고사 문제지</p>
         {period && <p className={periodCls}>제 {period} 교시</p>}
-        <h2 className={titleCls}>{exam.name} 영역</h2>
+        <h2 className={titleCls}>
+          {exam.name}
+          {suneung ? ' 영역' : ''}
+        </h2>
         <p className={metaCls}>
           {LENGTH[length]} · {MODE[difficulty] || MODE.normal}
           {spec ? ` · ${spec.items}문항 · ${spec.minutes}분` : ''}
         </p>
 
-        <div className={phraseBoxCls}>
-          <span className={phraseLabelCls}>필적 확인 문구</span>
-          <strong>{phrase.line}</strong>
-          <span className={sourceCls}>{phrase.source}</span>
-          <input
-            className={phraseInputCls}
-            value={copied}
-            onChange={(event) => setCopied(event.target.value)}
-            placeholder="필적 확인란 (따라 써 보세요, 선택)"
-            aria-label="필적 확인란"
-            maxLength={60}
-          />
-          {matches && <span className={okCls}>확인되었습니다</span>}
-        </div>
+        {suneung && (
+          <div className={phraseBoxCls}>
+            <span className={phraseLabelCls}>필적 확인 문구</span>
+            <strong>{phrase.line}</strong>
+            <span className={sourceCls}>{phrase.source}</span>
+            <input
+              className={phraseInputCls}
+              value={copied}
+              onChange={(event) => setCopied(event.target.value)}
+              placeholder="필적 확인란 (따라 써 보세요, 선택)"
+              aria-label="필적 확인란"
+              maxLength={60}
+            />
+            {matches && <span className={okCls}>확인되었습니다</span>}
+          </div>
+        )}
 
         <ul className={rulesCls}>
           <li>
@@ -150,7 +214,9 @@ const coverCls = css`
   border-radius: 4px;
   background: #fff;
   color: ${ARENA.ink};
-  font-family: 'Arena Old Hangul', 'Noto Serif KR', 'Nanum Myeongjo', AppleMyungjo, Batang, serif;
+  font-family:
+    'Arena Old Hangul', 'Noto Serif KR', 'Nanum Myeongjo', AppleMyungjo, Batang,
+    serif;
   box-shadow: 6px 6px 0 ${ARENA.ink};
   @media (max-width: ${mobileMaxWidth}) {
     padding: 2.4rem 1.6rem 1.6rem;

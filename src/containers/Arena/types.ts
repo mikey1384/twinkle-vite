@@ -13,6 +13,7 @@ export interface ArenaExamSummary {
   }[];
   name: string;
   nameEn: string;
+  language?: 'ko' | 'en';
   // has a listening section (the cover's rules mention it)
   listening?: boolean;
   // essay or spoken answers: its scores include AI estimates

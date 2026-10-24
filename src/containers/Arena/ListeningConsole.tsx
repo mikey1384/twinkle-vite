@@ -12,6 +12,10 @@ import { arenaMediaURL } from './media';
 // a "Start listening" tap; after that it runs on its own. A reload resumes
 // at the item that was playing, never replaying finished ones.
 
+// exams whose broadcast opens and closes with the announcer's recording
+// (audio/<exam>/intro.mp3, outro.mp3); the others start at the first item
+const ANNOUNCED_EXAMS = new Set(['suneung-eng']);
+
 const ANSWER_GAP_MS = 8000;
 const REPEAT_GAP_MS = 4000;
 
@@ -24,7 +28,7 @@ function playsNote(tracks: ListeningTrack[]) {
       : twice.length === tracks.length
         ? 'Each recording plays twice'
         : `Each recording plays once (${twice
-            .map((track) => track.label.replace(/번$/, ''))
+            .map((track) => track.label)
             .join(', ')} twice)`;
   return `${how}, as in the real exam. No replays.`;
 }
@@ -40,13 +44,16 @@ type Step =
   | { kind: 'gap'; ms: number; label: string };
 
 function buildSteps(examKey: string, tracks: ListeningTrack[]): Step[] {
-  const steps: Step[] = [
-    {
-      kind: 'audio',
-      src: arenaMediaURL(`audio/${examKey}/intro.mp3`),
-      label: '안내 방송'
-    }
-  ];
+  const announced = ANNOUNCED_EXAMS.has(examKey);
+  const steps: Step[] = announced
+    ? [
+        {
+          kind: 'audio',
+          src: arenaMediaURL(`audio/${examKey}/intro.mp3`),
+          label: '안내 방송'
+        }
+      ]
+    : [];
   for (const track of tracks) {
     for (let play = 0; play < track.plays; play++) {
       steps.push({ kind: 'audio', src: track.src, label: track.label });
@@ -57,22 +64,27 @@ function buildSteps(examKey: string, tracks: ListeningTrack[]): Step[] {
       });
     }
   }
-  steps.push({
-    kind: 'audio',
-    src: arenaMediaURL(`audio/${examKey}/outro.mp3`),
-    label: '안내 방송'
-  });
+  if (announced) {
+    steps.push({
+      kind: 'audio',
+      src: arenaMediaURL(`audio/${examKey}/outro.mp3`),
+      label: '안내 방송'
+    });
+  }
   return steps;
 }
 
 export default function ListeningConsole({
   battleId,
   examKey,
-  tracks
+  tracks,
+  english
 }: {
   battleId: number;
   examKey: string;
   tracks: ListeningTrack[];
+  // an English-language exam's broadcast reads in English
+  english: boolean;
 }) {
   const storageKey = `arena-listening-${battleId}`;
   const steps = useRef(buildSteps(examKey, tracks)).current;
@@ -108,7 +120,11 @@ export default function ListeningConsole({
     audio.onended = () => setIndex((i) => i + 1);
     // a missing recording must not stall the paper: skip it
     audio.onerror = () => setIndex((i) => i + 1);
-    audio.play().catch(() => setBlocked(true));
+    // only a browser's sound block needs another tap; a recording that
+    // can't load is skipped by onerror
+    audio.play().catch((error) => {
+      if (error?.name === 'NotAllowedError') setBlocked(true);
+    });
     return () => {
       audio.onended = null;
       audio.onerror = null;
@@ -121,7 +137,9 @@ export default function ListeningConsole({
   return (
     <div className={consoleCls}>
       {done ? (
-        <span>듣기 평가가 끝났습니다. Listening is over.</span>
+        <span>
+          {english ? 'Listening is over.' : '듣기 평가가 끝났습니다.'}
+        </span>
       ) : !started || blocked ? (
         <button
           type="button"
@@ -137,9 +155,15 @@ export default function ListeningConsole({
       ) : (
         <span className={nowCls}>
           <Icon icon="volume-high" />{' '}
-          {step.kind === 'audio'
-            ? `${step.label} 방송 중`
-            : `${step.label} 답할 시간`}
+          {step.label === '안내 방송'
+            ? '안내 방송 중'
+            : english
+              ? step.kind === 'audio'
+                ? `Now playing: ${step.label}`
+                : `Time to answer: ${step.label}`
+              : step.kind === 'audio'
+                ? `${step.label}번 방송 중`
+                : `${step.label}번 답할 시간`}
         </span>
       )}
       <span className={noteCls}>{playsNote(tracks)}</span>
