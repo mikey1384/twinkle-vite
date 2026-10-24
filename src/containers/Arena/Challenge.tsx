@@ -100,8 +100,8 @@ export default function Challenge({
           </span>
           <strong>
             {view.isSharer
-              ? 'Your challenge'
-              : `${challenge.sharer.username} challenges you`}
+              ? 'You took on this boss and won'
+              : `${challenge.sharer.username} took on this boss and won`}
           </strong>
           <span>
             {challenge.examName} · {LENGTH[challenge.length]} ·{' '}
@@ -119,7 +119,7 @@ export default function Challenge({
       <div className={actionsCls}>
         {view.canTake ? (
           <ArenaButton tone="red" loading={starting} onClick={handleTake}>
-            Take this same test
+            Challenge!
           </ArenaButton>
         ) : view.myBattle ? (
           <ArenaButton
@@ -132,12 +132,13 @@ export default function Challenge({
           </ArenaButton>
         ) : view.isSharer ? (
           <p className={noteCls}>
-            This is your challenge. Others sit the same paper once.
+            Others can sit the same paper once and land on this board.
           </p>
         ) : null}
         {view.canTake && (
           <p className={noteCls}>
-            The exact same paper, timed like the real exam. One attempt counts.
+            Can you do better? The exact same paper, timed like the real exam.
+            One attempt counts.
           </p>
         )}
       </div>

@@ -2,15 +2,18 @@ import React, { memo } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import ProfilePic from '~/components/ProfilePic';
-import { mobileMaxWidth } from '~/constants/css';
+import UsernameText from '~/components/Texts/UsernameText';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { timeSince } from '~/helpers/timeStampHelpers';
 import ArenaButton from '~/containers/Arena/ArenaButton';
 import { arenaMediaURL } from '~/containers/Arena/media';
 import { ARENA } from '~/containers/Arena/theme';
 
-// An Arena challenge on Home (Mikey 10-24: sharing lets a member show off
-// and gives everyone else an easy way into the same test). Shows the boss,
-// the sharer's score and Hunter Rank, how many took it on, and "Take this
-// same test". Never any wrong answers (the own-misses ruling).
+// A won Arena battle shared on Home (Mikey 10-24): the member showing off a
+// win ("im just showing off my achievement"), "took on a boss and won. Can
+// you do better?" in the feed's default card frame, the Arena look only
+// inside the result panel, and a Challenge! button for anyone who wants to
+// sit the same paper. Never any wrong answers (the own-misses ruling).
 export interface ArenaChallengePreview {
   id: number;
   examKey: string;
@@ -24,6 +27,7 @@ export interface ArenaChallengePreview {
   raw: number;
   max: number;
   hunterRank: { grade: number; low: number; high: number } | null;
+  createdAt: number;
   takers: number;
   bestTaker: number | null;
 }
@@ -48,116 +52,173 @@ function ArenaChallengeCard({
   const grade = (g: number) => challenge.gradeLabels?.[g - 1] || `${g}등급`;
   return (
     <article className={cardCls}>
-      <img
-        className={eraserCls}
-        src={arenaMediaURL(`img/bosses/${challenge.examKey}.jpg`)}
-        alt={challenge.examName}
-      />
-      <div className={bodyCls}>
-        <div className={whoCls}>
-          <span className={picCls}>
-            <ProfilePic
-              style={{ width: '100%' }}
-              userId={challenge.sharer.id}
-              profilePicUrl={challenge.sharer.profilePicUrl || ''}
-            />
-          </span>
-          <b>{challenge.sharer.username}</b> took on a boss and dares you
+      <header className={headCls}>
+        <span className={picCls}>
+          <ProfilePic
+            style={{ width: '100%' }}
+            userId={challenge.sharer.id}
+            profilePicUrl={challenge.sharer.profilePicUrl || ''}
+          />
+        </span>
+        <div className={headTextCls}>
+          <div>
+            <UsernameText
+              user={{
+                id: challenge.sharer.id,
+                username: challenge.sharer.username
+              }}
+              color={Color.logoBlue()}
+            />{' '}
+            <span className={actionCls}>
+              took on a boss and won. Can you do better?
+            </span>
+          </div>
+          {challenge.createdAt > 0 && (
+            <span className={timeCls}>{timeSince(challenge.createdAt)}</span>
+          )}
         </div>
-        <span className={codeCls}>
-          BOSS {challenge.code}
-          {challenge.codeLabel ? ` · ${challenge.codeLabel}` : ''}
-        </span>
-        <strong className={titleCls}>
-          {challenge.examName} · {LENGTH[challenge.length]} ·{' '}
-          {MODE[challenge.difficulty]}
-        </strong>
-        <span className={scoreCls}>
-          {challenge.raw} / {challenge.max}
-          {challenge.hunterRank &&
-            ` · Hunter Rank about ${grade(challenge.hunterRank.grade)}`}
-        </span>
+      </header>
+
+      <div className={resultCls}>
+        <img
+          className={eraserCls}
+          src={arenaMediaURL(`img/bosses/${challenge.examKey}.jpg`)}
+          alt={challenge.examName}
+        />
+        <div className={resultTextCls}>
+          <span className={codeCls}>
+            BOSS {challenge.code}
+            {challenge.codeLabel ? ` · ${challenge.codeLabel}` : ''}
+          </span>
+          <strong className={titleCls}>
+            {challenge.examName} · {LENGTH[challenge.length]} ·{' '}
+            {MODE[challenge.difficulty]}
+          </strong>
+          <span className={scoreCls}>
+            {challenge.raw} / {challenge.max}
+          </span>
+          {challenge.hunterRank && (
+            <span className={rankCls}>
+              Hunter Rank about {grade(challenge.hunterRank.grade)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <footer className={footCls}>
         <span className={metaCls}>
           {challenge.takers
-            ? `${challenge.takers} took it on${
+            ? `${challenge.takers} tried the same paper${
                 challenge.bestTaker != null
                   ? ` · best ${challenge.bestTaker}`
                   : ''
               }`
-            : 'Be the first to take it on'}
+            : 'Same paper, same clock'}
         </span>
         <ArenaButton
           tone="red"
           size="md"
-          style={{ alignSelf: 'flex-start', marginTop: '0.6rem' }}
           onClick={() =>
             navigate(`/arena?mode=arena&challenge=${challenge.id}`)
           }
         >
-          Take this same test
+          Challenge!
         </ArenaButton>
-      </div>
+      </footer>
     </article>
   );
 }
 
 export default memo(ArenaChallengeCard);
 
+// the feed's default card frame (as the reward digest card)
 const cardCls = css`
+  box-sizing: border-box;
   display: flex;
-  gap: 1.6rem;
-  align-items: center;
-  padding: 1.4rem 1.6rem;
-  background: ${ARENA.paper};
-  color: ${ARENA.ink};
-  border: 3px solid ${ARENA.line};
-  border-radius: 12px;
-  box-shadow: 4px 4px 0 ${ARENA.line};
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+  padding: 1.6rem;
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  background: #fff;
+  color: ${Color.darkerGray()};
   @media (max-width: ${mobileMaxWidth}) {
-    gap: 1rem;
-    padding: 1rem;
     border-radius: 0;
     border-left: 0;
     border-right: 0;
-    box-shadow: none;
+    padding: 1.2rem;
+  }
+`;
+
+const headCls = css`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const picCls = css`
+  width: 4.2rem;
+  display: inline-flex;
+  flex: none;
+`;
+
+const headTextCls = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+`;
+
+const actionCls = css`
+  color: ${Color.darkerGray()};
+  font-weight: 600;
+`;
+
+const timeCls = css`
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: ${Color.gray()};
+`;
+
+// the Arena look, inside the default frame
+const resultCls = css`
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 1.2rem 1.4rem;
+  background: ${ARENA.paper};
+  color: ${ARENA.ink};
+  border: 2px solid ${ARENA.line};
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 ${ARENA.line};
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 1rem;
+    padding: 1rem;
   }
 `;
 
 const eraserCls = css`
-  height: 14rem;
+  height: 11rem;
   aspect-ratio: 3 / 4;
   object-fit: cover;
   border: 2px solid ${ARENA.line};
   border-radius: 4px;
-  box-shadow: 4px 5px 0 ${ARENA.line};
+  box-shadow: 3px 4px 0 ${ARENA.line};
   transform: rotate(-4deg);
   flex: none;
   @media (max-width: ${mobileMaxWidth}) {
-    height: 10rem;
+    height: 9rem;
   }
 `;
 
-const bodyCls = css`
+const resultTextCls = css`
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
-`;
-
-const whoCls = css`
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 1.35rem;
-  color: ${ARENA.inkSoft};
-  b {
-    color: ${ARENA.ink};
-  }
-`;
-
-const picCls = css`
-  width: 2.4rem;
-  display: inline-flex;
 `;
 
 const codeCls = css`
@@ -172,17 +233,31 @@ const codeCls = css`
 `;
 
 const titleCls = css`
-  font-size: 1.7rem;
+  font-size: 1.6rem;
   font-weight: 900;
 `;
 
 const scoreCls = css`
-  font-size: 1.6rem;
-  font-weight: 800;
+  font-size: 2.2rem;
+  font-weight: 900;
   color: ${ARENA.train};
 `;
 
-const metaCls = css`
-  font-size: 1.25rem;
+const rankCls = css`
+  font-size: 1.3rem;
+  font-weight: 700;
   color: ${ARENA.inkSoft};
+`;
+
+const footCls = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+const metaCls = css`
+  font-size: 1.3rem;
+  color: ${Color.gray()};
 `;

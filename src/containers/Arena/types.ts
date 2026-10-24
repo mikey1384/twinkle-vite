@@ -28,6 +28,9 @@ export interface ArenaBattleSummary {
   examKey: string;
   length: 'short' | 'medium' | 'full';
   difficulty: ArenaDifficulty;
+  // a win (the exam's top-grade line on this paper) can be shared
+  winAt: number | null;
+  won: boolean;
   mode: 'battle' | 'untimed';
   status: 'open' | 'grading' | 'finished' | 'abandoned';
   rawPoints: number | null;

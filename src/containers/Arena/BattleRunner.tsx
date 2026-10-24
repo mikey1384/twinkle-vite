@@ -558,7 +558,13 @@ function Result({ data }: { data: ArenaBattle }) {
           card where others take the exact same paper */}
       {battle.mode === 'battle' && (
         <div className={shareCls}>
-          {sharedId ? (
+          {!battle.won ? (
+            battle.winAt != null && (
+              <span className={winHintCls}>
+                {battle.winAt}+ is a win you can share
+              </span>
+            )
+          ) : sharedId ? (
             <ArenaButton
               tone="paper"
               size="md"
@@ -1003,6 +1009,13 @@ const shareCls = css`
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.6rem;
+`;
+
+const winHintCls = css`
+  align-self: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  opacity: 0.9;
 `;
 
 const agentErrorCls = css`
