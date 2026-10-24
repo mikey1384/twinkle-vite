@@ -1147,9 +1147,9 @@ function formatClock(seconds: number) {
 // and Korean in a Myeongjo serif (신명조 is commercial; these are the
 // closest system and free faces). The Latin face comes first so English
 // letters and punctuation never fall to the Korean font, which draws ’ and
-// “ ” full-width ("It’  s").
+// “ ” full-width ("It’  s"). 'Arena Old Hangul' covers only archaic jamo (see paperFont.ts).
 const PAPER_SERIF =
-  "'Times New Roman', Tinos, 'Noto Serif KR', 'Nanum Myeongjo', AppleMyungjo, Batang, serif";
+  "'Times New Roman', Tinos, 'Arena Old Hangul', 'Noto Serif KR', 'Nanum Myeongjo', AppleMyungjo, Batang, serif";
 
 // above the site header and nav, as Grammarbles' full-screen rounds are
 const shellCls = css`

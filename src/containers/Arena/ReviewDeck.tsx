@@ -511,7 +511,7 @@ const paperCls = css`
   border: 2px solid ${ARENA.line};
   border-radius: 6px;
   background: #fff;
-  font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif;
+  font-family: 'Arena Old Hangul', 'Noto Serif KR', 'Nanum Myeongjo', serif;
   @media (max-width: ${mobileMaxWidth}) {
     padding: 1.4rem;
   }

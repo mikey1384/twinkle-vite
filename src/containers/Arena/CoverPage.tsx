@@ -150,7 +150,7 @@ const coverCls = css`
   border-radius: 4px;
   background: #fff;
   color: ${ARENA.ink};
-  font-family: 'Noto Serif KR', 'Nanum Myeongjo', AppleMyungjo, Batang, serif;
+  font-family: 'Arena Old Hangul', 'Noto Serif KR', 'Nanum Myeongjo', AppleMyungjo, Batang, serif;
   box-shadow: 6px 6px 0 ${ARENA.ink};
   @media (max-width: ${mobileMaxWidth}) {
     padding: 2.4rem 1.6rem 1.6rem;
