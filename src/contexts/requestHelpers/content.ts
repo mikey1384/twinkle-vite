@@ -1326,9 +1326,48 @@ export default function contentRequestHelpers({
       }
     },
     // Arena (10-24): authentic mock-exam battles
+    // Arena's Weekly League (Mikey 10-24)
+    async loadArenaLeague() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/arena/league`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setArenaLeagueHidden(hidden: boolean) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/league/hidden`,
+          { hidden },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async markArenaLeagueResultSeen(week: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/league/result-seen`,
+          { week },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadArenaState() {
       try {
-        const { data } = await request.get(`${URL}/content/arena/state`, auth());
+        const { data } = await request.get(
+          `${URL}/content/arena/state`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
