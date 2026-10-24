@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
+import ArenaButton from './ArenaButton';
 import { arenaMediaURL } from './media';
 import ListeningConsole, { type ListeningTrack } from './ListeningConsole';
 import PaperVisual, { tableMarksChoices, type Visual } from './PaperVisual';
@@ -508,6 +510,12 @@ function PaperText({ text }: { text: string }) {
 function Result({ data }: { data: ArenaBattle }) {
   const { battle } = data;
   const estimate = battle.estimate?.grade;
+  const navigate = useNavigate();
+  const shareArenaBattle = useAppContext(
+    (v) => v.requestHelpers.shareArenaBattle
+  );
+  const [sharing, setSharing] = useState(false);
+  const [sharedId, setSharedId] = useState(0);
   return (
     <div className={resultCls}>
       <div>
@@ -537,8 +545,44 @@ function Result({ data }: { data: ArenaBattle }) {
             : 'Still tracking'}
         </strong>
       </div>
+      {/* a timed battle can be shared as a challenge (Mikey 10-24): a Home
+          card where others take the exact same paper */}
+      {battle.mode === 'battle' && (
+        <div className={shareCls}>
+          {sharedId ? (
+            <ArenaButton
+              tone="paper"
+              size="md"
+              onClick={() =>
+                navigate(`/arena?mode=arena&challenge=${sharedId}`)
+              }
+            >
+              <Icon icon="check" /> Shared to Home · See challenge
+            </ArenaButton>
+          ) : (
+            <ArenaButton
+              tone="red"
+              size="md"
+              loading={sharing}
+              onClick={handleShare}
+            >
+              Share as a challenge
+            </ArenaButton>
+          )}
+        </div>
+      )}
     </div>
   );
+
+  async function handleShare() {
+    setSharing(true);
+    try {
+      const { challengeId } = await shareArenaBattle(battle.id);
+      setSharedId(challengeId);
+    } finally {
+      setSharing(false);
+    }
+  }
 }
 
 // the exam's own grade name (1급, 불합격) or "N등급"
@@ -910,8 +954,14 @@ const bubbleKeyCls = css`
   box-shadow: 0 0 0 2px #2f9e5b;
 `;
 
+const shareCls = css`
+  justify-content: center;
+`;
+
 const resultCls = css`
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
   gap: 3rem;
   padding: 1rem;

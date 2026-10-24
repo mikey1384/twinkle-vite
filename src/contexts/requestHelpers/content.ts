@@ -1326,6 +1326,42 @@ export default function contentRequestHelpers({
       }
     },
     // Arena (10-24): authentic mock-exam battles
+    // Arena challenges (Mikey 10-24): share a battle; sit someone's paper
+    async shareArenaBattle(battleId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/battle/${battleId}/share`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadArenaChallenge(challengeId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/arena/challenge/${challengeId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startArenaChallenge(challengeId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/challenge/${challengeId}/start`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // Arena's Weekly League (Mikey 10-24)
     async loadArenaLeague() {
       try {

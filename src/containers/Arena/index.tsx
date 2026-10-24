@@ -10,6 +10,7 @@ import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import ModeChooser from './ModeChooser';
 import Train from './Train';
 import Battles from './Battles';
+import Challenge from './Challenge';
 import AIStory from './AIStory';
 import BattleRunner from './BattleRunner';
 import { ARENA } from './theme';
@@ -31,6 +32,8 @@ export default function ArenaPage() {
     rawView === 'train' || rawView === 'arena' ? rawView : 'choose';
   const activity = view === 'train' ? searchParams.get('play') : null;
   const battleId = Number(searchParams.get('battle')) || 0;
+  // a shared challenge opened from Home (Mikey 10-24)
+  const challengeId = Number(searchParams.get('challenge')) || 0;
 
   if (!userId) {
     return <HomeLoginPrompt message="Log in to enter the Arena" />;
@@ -58,7 +61,12 @@ export default function ArenaPage() {
           </div>
         )}
 
-        <main className={cx(stageCls, activity === 'ai-story' && stageTopCls)}>
+        <main
+          className={cx(
+            stageCls,
+            (activity === 'ai-story' || challengeId > 0) && stageTopCls
+          )}
+        >
           {view === 'choose' && <ModeChooser onPick={openView} />}
           {view === 'train' && activity === 'ai-story' && (
             <AIStory onHide={() => setSearchParams({ mode: 'train' })} />
@@ -73,7 +81,15 @@ export default function ArenaPage() {
               }
             />
           )}
-          {view === 'arena' && (
+          {view === 'arena' && challengeId > 0 && !battleId && (
+            <Challenge
+              challengeId={challengeId}
+              onOpenBattle={(id) =>
+                setSearchParams({ mode: 'arena', battle: String(id) })
+              }
+            />
+          )}
+          {view === 'arena' && !challengeId && (
             <Battles
               onStart={(id) =>
                 setSearchParams({ mode: 'arena', battle: String(id) })
