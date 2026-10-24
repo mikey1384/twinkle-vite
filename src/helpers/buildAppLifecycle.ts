@@ -22,10 +22,11 @@ const LOAD_TIMEOUT_MS = 1500;
 // to the host directly, so the SDK's own check is not enough.
 const MAX_SNAPSHOT_CHARS = 1_100_000;
 // One snapshot per app per second at most; the newest within that second
-// waits. Snapshots taken as the app or page goes away are written at once:
-// a backgrounded iPhone page can be frozen before a timer fires.
+// waits. Two cases are written at once, judged from what the host knows (the
+// app's own reason label is not trusted): an unload is waiting for this
+// snapshot, or this page itself is going to the background, where iOS can
+// freeze it before a timer fires.
 const MIN_SNAPSHOT_GAP_MS = 1000;
-const URGENT_REASONS = new Set(['hidden', 'background', 'pagehide', 'unload']);
 const MAX_SNAPSHOTS = 200;
 
 export interface AppLifecycleSnapshot {
@@ -308,7 +309,10 @@ export function acceptAppLifecycleSnapshot(
   waiters.forEach((resolve) => resolve(true));
   app.pendingSave = { key, snapshot };
   const wait = Math.max(0, app.lastSnapshotAt + MIN_SNAPSHOT_GAP_MS - Date.now());
-  if (wait === 0 || URGENT_REASONS.has(snapshot.reason)) {
+  const urgent =
+    waiters.length > 0 ||
+    (typeof document !== 'undefined' && document.visibilityState === 'hidden');
+  if (wait === 0 || urgent) {
     if (app.pendingTimer !== null) window.clearTimeout(app.pendingTimer);
     app.pendingTimer = null;
     flushPendingSave(buildId, app);
