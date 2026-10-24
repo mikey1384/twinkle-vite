@@ -259,7 +259,6 @@ const rowClass = css`
   color: var(--chat-text);
   @media (max-width: ${mobileMaxWidth}) {
     flex-wrap: nowrap;
-    align-items: flex-end;
     padding: 0.55rem 0.7rem;
     gap: 0.6rem;
     > button {
@@ -271,7 +270,7 @@ const rowClass = css`
 const textClass = css`
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 0.25rem 0.6rem;
   min-width: 0;
   flex: 1 1 22rem;
