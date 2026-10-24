@@ -8,7 +8,15 @@ import { arenaMediaURL } from './media';
 // drawn from the item's data, so the numbers the questions test are exact.
 
 export interface Visual {
-  kind: 'table' | 'bar' | 'groupedBar' | 'line' | 'pie' | 'image' | 'panels';
+  kind:
+    | 'table'
+    | 'bar'
+    | 'groupedBar'
+    | 'line'
+    | 'pie'
+    | 'image'
+    | 'panels'
+    | 'timeline';
   orientation?: 'vertical' | 'horizontal';
   panels?: Visual[];
   title?: string;
@@ -23,6 +31,10 @@ export interface Visual {
   note?: string;
   src?: string;
   alt?: string;
+  // timeline (한국사 연표): the marked events in order, and the labels of
+  // the spans between consecutive marks ((가) … (마))
+  ticks?: { label: string; text?: string }[];
+  segments?: string[];
 }
 
 const FILLS = [
@@ -61,6 +73,7 @@ export default function PaperVisual({
       </figure>
     );
   }
+  if (visual.kind === 'timeline') return <PaperTimeline visual={visual} />;
   if (visual.kind === 'panels') {
     return (
       <figure className={figureCls}>
@@ -230,6 +243,97 @@ function HorizontalBarChart({ visual }: { visual: Visual }) {
       {visual.note && <p className={noteCls}>{visual.note}</p>}
     </figure>
   );
+}
+
+// A 연표 as 한국사 papers print it: one black rule, a dot per event with its
+// year above and the event below, and the span labels ((가) …) set between
+// consecutive dots. Drawn from the item's data so the order the question
+// tests is exact.
+function PaperTimeline({ visual }: { visual: Visual }) {
+  const ticks = visual.ticks || [];
+  const segments = visual.segments || [];
+  if (ticks.length < 2) return null;
+  const W = 640;
+  const pad = 40;
+  const step = (W - pad * 2) / (ticks.length - 1);
+  const x = (i: number) => pad + i * step;
+  const lineY = 62;
+  return (
+    <figure className={figureCls}>
+      {visual.title && <figcaption>{visual.title}</figcaption>}
+      <svg
+        viewBox={`0 0 ${W} 130`}
+        className={timelineCls}
+        role="img"
+        aria-label={ticks.map((t) => `${t.label} ${t.text || ''}`).join(', ')}
+      >
+        <line
+          x1={pad - 16}
+          x2={W - pad + 16}
+          y1={lineY}
+          y2={lineY}
+          stroke="#111"
+          strokeWidth={2}
+        />
+        {ticks.map((tick, i) => (
+          <g key={i}>
+            <circle cx={x(i)} cy={lineY} r={5} fill="#111" />
+            <text
+              x={x(i)}
+              y={lineY - 16}
+              textAnchor="middle"
+              fontSize={15}
+              fontWeight={700}
+            >
+              {tick.label}
+            </text>
+            {tick.text &&
+              wrap(tick.text, 9).map((line, j) => (
+                <text
+                  key={j}
+                  x={x(i)}
+                  y={lineY + 26 + j * 17}
+                  textAnchor="middle"
+                  fontSize={13}
+                >
+                  {line}
+                </text>
+              ))}
+          </g>
+        ))}
+        {segments.slice(0, ticks.length - 1).map((label, i) => (
+          <text
+            key={label}
+            x={(x(i) + x(i + 1)) / 2}
+            y={lineY - 6}
+            textAnchor="middle"
+            fontSize={15}
+            fontWeight={700}
+          >
+            {label}
+          </text>
+        ))}
+      </svg>
+      {visual.note && <p className={noteCls}>{visual.note}</p>}
+    </figure>
+  );
+}
+
+// split a short Korean event name into lines of about n characters
+function wrap(text: string, n: number) {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let line = '';
+  for (const word of words) {
+    if (line && (line + ' ' + word).length > n) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = line ? `${line} ${word}` : word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, 3);
 }
 
 function PaperTable({
@@ -543,6 +647,12 @@ function LineChart({ visual }: { visual: Visual }) {
     </figure>
   );
 }
+
+const timelineCls = css`
+  width: 100%;
+  max-width: 64rem;
+  font-family: inherit;
+`;
 
 const figureCls = css`
   margin: 0 0 0.8rem;

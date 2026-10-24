@@ -42,7 +42,49 @@ function listeningTracks(data: ArenaBattle): ListeningTrack[] {
 }
 
 function isArtBrief(body: string) {
+  return /^\s*\[(Picture|Chart|Table|Graph|Map|Photo|Frame|Scene)\b/i.test(
+    body
+  );
+}
+
+// a picture, chart or map still to come shows a placeholder; a 자료 frame
+// or a decorative scene (한국사) is a layout note only
+function awaitsArt(body: string) {
   return /^\s*\[(Picture|Chart|Table|Graph|Map|Photo)\b/i.test(body);
+}
+
+// a 대화 자료 (한국사): every line "speaker: words", 2 to 6 lines
+function isDialogue(text: string) {
+  const lines = String(text || '')
+    .split('\n')
+    .filter((l) => l.trim());
+  return (
+    lines.length >= 2 &&
+    lines.length <= 6 &&
+    lines.every((l) => /^[^:\n]{1,10}:\s/.test(l))
+  );
+}
+
+// 대화 자료 as the paper prints it: the speaker, then the words in a bubble
+function DialogueText({ text }: { text: string }) {
+  return (
+    <div className={dialogueCls}>
+      {String(text)
+        .split('\n')
+        .filter((l) => l.trim())
+        .map((line, i) => {
+          const at = line.indexOf(':');
+          return (
+            <div key={i} className={bubbleRowCls}>
+              <span className={speakerCls}>{line.slice(0, at)}</span>
+              <span className={dialogueBubbleCls}>
+                <PaperText text={line.slice(at + 1).trim()} />
+              </span>
+            </div>
+          );
+        })}
+    </div>
+  );
 }
 
 // the point tag comes from the blueprint, never from authored stem text
@@ -447,14 +489,18 @@ function PaperItem({
         />
       ) : (
         item.body &&
-        isArtBrief(item.body) && (
+        awaitsArt(item.body) && (
           // a picture or chart item's body is the art brief, never shown
           <div className={artPendingCls}>(그림 / 도표)</div>
         )
       )}
       {passage && !listening && (
         <div className={passageCls}>
-          <PaperText text={passage.body} />
+          {isDialogue(passage.body) ? (
+            <DialogueText text={passage.body} />
+          ) : (
+            <PaperText text={passage.body} />
+          )}
         </div>
       )}
       {item.body && !bodyFirst && !isArtBrief(item.body) && (
@@ -1097,6 +1143,34 @@ const langCls = css`
 const langOnCls = css`
   background: ${ARENA.ink};
   color: #fff;
+`;
+
+const dialogueCls = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+`;
+
+const bubbleRowCls = css`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+`;
+
+const speakerCls = css`
+  flex: none;
+  min-width: 4.4rem;
+  padding-top: 0.5rem;
+  font-weight: 700;
+  text-align: right;
+`;
+
+const dialogueBubbleCls = css`
+  flex: 1;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid #222;
+  border-radius: 14px;
+  background: #fff;
 `;
 
 const shareCls = css`
