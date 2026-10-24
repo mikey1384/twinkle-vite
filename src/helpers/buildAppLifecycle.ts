@@ -9,17 +9,23 @@
 
 const DB_NAME = 'twinkle-app-lifecycle';
 const STORE = 'snapshots';
+// savedAt per key, so pruning never has to read the snapshots themselves.
+const META = 'saved-at';
+const PRUNE_DELAY_MS = 10_000;
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 // The SDK gives onSuspend 1.5 s; leave room for the message round trip.
 const SNAPSHOT_WAIT_MS = 2500;
-// App start never waits longer than this for a saved place (a stuck
-// IndexedDB in WebKit must not hold up the app's init).
-const LOAD_TIMEOUT_MS = 300;
+// App start never waits longer than this for a saved place: protection
+// against an IndexedDB open that never finishes (WebKit), not a slow phone.
+const LOAD_TIMEOUT_MS = 1500;
 // Same cap as the SDK (1 MB of JSON), measured here again: a frame can post
 // to the host directly, so the SDK's own check is not enough.
 const MAX_SNAPSHOT_CHARS = 1_100_000;
-// One snapshot per app per second at most; the newest within that second waits.
+// One snapshot per app per second at most; the newest within that second
+// waits. Snapshots taken as the app or page goes away are written at once:
+// a backgrounded iPhone page can be frozen before a timer fires.
 const MIN_SNAPSHOT_GAP_MS = 1000;
+const URGENT_REASONS = new Set(['hidden', 'background', 'pagehide', 'unload']);
 const MAX_SNAPSHOTS = 200;
 
 export interface AppLifecycleSnapshot {
@@ -71,15 +77,16 @@ function openDb() {
   dbPromise = new Promise((resolve) => {
     try {
       if (typeof indexedDB === 'undefined') return resolve(null);
-      const request = indexedDB.open(DB_NAME, 1);
+      const request = indexedDB.open(DB_NAME, 2);
       request.onupgradeneeded = () => {
-        if (!request.result.objectStoreNames.contains(STORE)) {
-          request.result.createObjectStore(STORE);
-        }
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+        if (!db.objectStoreNames.contains(META)) db.createObjectStore(META);
       };
       request.onsuccess = () => {
         resolve(request.result);
-        pruneSnapshots(request.result);
+        // Later, so it never queues in front of an app's first read.
+        window.setTimeout(() => pruneSnapshots(request.result), PRUNE_DELAY_MS);
       };
       request.onerror = () => resolve(null);
       request.onblocked = () => resolve(null);
@@ -91,24 +98,26 @@ function openDb() {
 }
 
 // Once per page: drop snapshots older than a week, and the oldest past
-// MAX_SNAPSHOTS, so the store never grows without bound.
+// MAX_SNAPSHOTS, so the store never grows without bound. Reads only the small
+// saved-at index, never the snapshots themselves.
 function pruneSnapshots(db: IDBDatabase) {
   try {
-    const tx = db.transaction(STORE, 'readwrite');
-    const store = tx.objectStore(STORE);
+    const tx = db.transaction([STORE, META], 'readwrite');
+    const meta = tx.objectStore(META);
     const all: Array<{ key: IDBValidKey; savedAt: number }> = [];
-    const cursorRequest = store.openCursor();
+    const cursorRequest = meta.openCursor();
     cursorRequest.onsuccess = () => {
       const cursor = cursorRequest.result;
       if (cursor) {
-        all.push({ key: cursor.key, savedAt: Number(cursor.value?.savedAt) || 0 });
+        all.push({ key: cursor.key, savedAt: Number(cursor.value) || 0 });
         cursor.continue();
         return;
       }
       all.sort((a, b) => b.savedAt - a.savedAt);
       all.forEach((entry, index) => {
         if (index >= MAX_SNAPSHOTS || !(Date.now() - entry.savedAt < MAX_AGE_MS)) {
-          store.delete(entry.key);
+          tx.objectStore(STORE).delete(entry.key);
+          meta.delete(entry.key);
         }
       });
     };
@@ -124,15 +133,15 @@ export function warmAppLifecycleStore() {
 
 function run<T>(
   mode: IDBTransactionMode,
-  action: (store: IDBObjectStore) => IDBRequest<T> | void
+  action: (stores: { snapshots: IDBObjectStore; meta: IDBObjectStore }) => IDBRequest<T> | void
 ): Promise<T | null> {
   return openDb().then(
     (db) =>
       new Promise<T | null>((resolve) => {
         if (!db) return resolve(null);
         try {
-          const tx = db.transaction(STORE, mode);
-          const request = action(tx.objectStore(STORE));
+          const tx = db.transaction([STORE, META], mode);
+          const request = action({ snapshots: tx.objectStore(STORE), meta: tx.objectStore(META) });
           tx.oncomplete = () => resolve(request ? (request.result as T) : null);
           tx.onerror = () => resolve(null);
           tx.onabort = () => resolve(null);
@@ -147,7 +156,7 @@ export async function loadAppLifecycleSnapshot(
   key: string
 ): Promise<AppLifecycleSnapshot | null> {
   const value = await Promise.race([
-    run<AppLifecycleSnapshot>('readonly', (store) => store.get(key)),
+    run<AppLifecycleSnapshot>('readonly', ({ snapshots }) => snapshots.get(key)),
     new Promise<null>((resolve) =>
       window.setTimeout(() => resolve(null), LOAD_TIMEOUT_MS)
     )
@@ -164,11 +173,17 @@ export async function saveAppLifecycleSnapshot(
   key: string,
   snapshot: AppLifecycleSnapshot
 ) {
-  await run('readwrite', (store) => store.put(snapshot, key));
+  await run('readwrite', ({ snapshots, meta }) => {
+    meta.put(snapshot.savedAt, key);
+    return snapshots.put(snapshot, key);
+  });
 }
 
 export async function forgetAppLifecycleSnapshot(key: string) {
-  await run('readwrite', (store) => store.delete(key));
+  await run('readwrite', ({ snapshots, meta }) => {
+    meta.delete(key);
+    return snapshots.delete(key);
+  });
 }
 
 /** Forget every snapshot of one app for this viewer (explicit "Close app"). */
@@ -180,12 +195,15 @@ export async function forgetAppLifecycleSnapshots({
   buildId: number;
 }) {
   const prefix = `${Number(userId) || 0}:${buildId}:`;
-  await run('readwrite', (store) => {
-    const cursorRequest = store.openCursor();
+  await run('readwrite', ({ snapshots, meta }) => {
+    const cursorRequest = meta.openKeyCursor();
     cursorRequest.onsuccess = () => {
       const cursor = cursorRequest.result;
       if (!cursor) return;
-      if (String(cursor.key).startsWith(prefix)) cursor.delete();
+      if (String(cursor.key).startsWith(prefix)) {
+        snapshots.delete(cursor.key);
+        meta.delete(cursor.key);
+      }
       cursor.continue();
     };
   });
@@ -289,16 +307,26 @@ export function acceptAppLifecycleSnapshot(
   app.waiters = [];
   waiters.forEach((resolve) => resolve(true));
   app.pendingSave = { key, snapshot };
-  if (app.pendingTimer !== null) return;
   const wait = Math.max(0, app.lastSnapshotAt + MIN_SNAPSHOT_GAP_MS - Date.now());
+  if (wait === 0 || URGENT_REASONS.has(snapshot.reason)) {
+    if (app.pendingTimer !== null) window.clearTimeout(app.pendingTimer);
+    app.pendingTimer = null;
+    flushPendingSave(buildId, app);
+    return;
+  }
+  if (app.pendingTimer !== null) return;
   app.pendingTimer = window.setTimeout(() => {
     app.pendingTimer = null;
-    const pending = app.pendingSave;
-    app.pendingSave = null;
-    if (!pending || closedApps.has(buildId)) return;
-    app.lastSnapshotAt = Date.now();
-    void saveAppLifecycleSnapshot(pending.key, pending.snapshot);
+    flushPendingSave(buildId, app);
   }, wait);
+}
+
+function flushPendingSave(buildId: number, app: RunningApp) {
+  const pending = app.pendingSave;
+  app.pendingSave = null;
+  if (!pending || closedApps.has(buildId)) return;
+  app.lastSnapshotAt = Date.now();
+  void saveAppLifecycleSnapshot(pending.key, pending.snapshot);
 }
 
 /**
