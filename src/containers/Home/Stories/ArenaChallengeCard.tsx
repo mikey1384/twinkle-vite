@@ -32,6 +32,21 @@ export interface ArenaChallengePreview {
   bestTaker: number | null;
 }
 
+// 수우미양가 (Mikey 10-24: a teacher's stamp for the old-school feel), the
+// classic school lines on the paper's score: 수 90%+, 우 80%+, 미 70%+,
+// 양 60%+, 가 below
+const MARKS = [
+  { min: 0.9, mark: '수', file: 'su' },
+  { min: 0.8, mark: '우', file: 'u' },
+  { min: 0.7, mark: '미', file: 'mi' },
+  { min: 0.6, mark: '양', file: 'yang' },
+  { min: 0, mark: '가', file: 'ga' }
+];
+export function gradeMark(raw: number, max: number) {
+  const ratio = max > 0 ? raw / max : 0;
+  return MARKS.find((m) => ratio >= m.min)!;
+}
+
 const LENGTH: Record<string, string> = {
   short: 'Short',
   medium: 'Medium',
@@ -80,6 +95,13 @@ function ArenaChallengeCard({
       </header>
 
       <div className={resultCls}>
+        <img
+          className={stampCls}
+          src={arenaMediaURL(
+            `img/stamps/${gradeMark(challenge.raw, challenge.max).file}.png`
+          )}
+          alt={gradeMark(challenge.raw, challenge.max).mark}
+        />
         <img
           className={eraserCls}
           src={arenaMediaURL(`img/bosses/${challenge.examKey}.jpg`)}
@@ -185,6 +207,7 @@ const timeCls = css`
 
 // the Arena look, inside the default frame
 const resultCls = css`
+  position: relative;
   display: flex;
   align-items: center;
   gap: 1.6rem;
@@ -197,6 +220,22 @@ const resultCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     gap: 1rem;
     padding: 1rem;
+  }
+`;
+
+// stamped over the panel's corner, a little crooked like a real one
+const stampCls = css`
+  position: absolute;
+  top: -1.2rem;
+  right: 1.2rem;
+  width: 8.4rem;
+  height: 8.4rem;
+  transform: rotate(-12deg);
+  pointer-events: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 6.4rem;
+    height: 6.4rem;
+    right: 0.6rem;
   }
 `;
 
