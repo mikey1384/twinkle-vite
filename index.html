@@ -164,10 +164,52 @@
           // If storage is unavailable, the app cannot hydrate a cached user.
         }
         window.twinkleAnalyticsIdentityReady = !cachedUserId;
+        // Bots that run JavaScript (one-visit Chrome from data centers, e.g.
+        // Singapore: 2s visits, 2% engaged) still look like real visitors to
+        // GA. Nothing reaches GA until the visitor acts like a person: a
+        // touch, click, key or wheel, or 10 seconds with the page in
+        // view. Until then the app's page views wait in its command queue.
+        // Not 'scroll': the app scrolls by itself (chat jumps to the newest
+        // message); wheel, touch and keys cover a person scrolling.
+        var HUMAN_VISIBLE_SECONDS = 10;
+        var humanSeen = false;
+        var visibleSeconds = 0;
+        var visibleTimer = null;
+        var HUMAN_EVENTS = [
+          'pointerdown',
+          'touchstart',
+          'keydown',
+          'wheel'
+        ];
+        function onHumanSignal(event) {
+          if (humanSeen) return;
+          // Events a page script dispatches are not a person.
+          if (event && event.isTrusted === false) return;
+          humanSeen = true;
+          for (var i = 0; i < HUMAN_EVENTS.length; i++) {
+            window.removeEventListener(HUMAN_EVENTS[i], onHumanSignal, true);
+          }
+          if (visibleTimer) clearInterval(visibleTimer);
+          window.twinkleConfigureAnalytics();
+        }
+        for (var i = 0; i < HUMAN_EVENTS.length; i++) {
+          window.addEventListener(HUMAN_EVENTS[i], onHumanSignal, {
+            capture: true,
+            passive: true
+          });
+        }
+        visibleTimer = setInterval(function () {
+          if (document.visibilityState === 'hidden') return;
+          visibleSeconds += 1;
+          if (visibleSeconds >= HUMAN_VISIBLE_SECONDS) onHumanSignal();
+        }, 1000);
         var analyticsConfigured = false;
+        window.twinkleAnalyticsConfigured = false;
         window.twinkleConfigureAnalytics = function () {
           if (analyticsConfigured) return;
+          if (!humanSeen || !window.twinkleAnalyticsIdentityReady) return;
           analyticsConfigured = true;
+          window.twinkleAnalyticsConfigured = true;
           gtag('config', 'G-S5ZDMC9JF8', {
             // Without this gtag would attach the raw address bar to every
             // hit; the app then sets the cleaned URL on each page view.
@@ -179,6 +221,10 @@
             allow_google_signals: false,
             allow_ad_personalization_signals: false
           });
+          // The app sends its waiting page views and events now.
+          if (typeof window.twinkleOnAnalyticsConfigured === 'function') {
+            window.twinkleOnAnalyticsConfigured();
+          }
         };
         var script = document.createElement('script');
         script.async = true;

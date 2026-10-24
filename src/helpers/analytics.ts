@@ -76,11 +76,17 @@ function analyticsAvailable() {
   return window.twinkleAnalyticsEnabled === true && gtagAvailable();
 }
 
+// Commands wait until index.html has configured GA, which needs both the
+// visitor's identity and a sign that the visitor is a person (see the human
+// gate there). index.html calls twinkleOnAnalyticsConfigured when it does.
 function getAnalyticsCommandGate() {
   if (!analyticsCommandGate) {
-    analyticsCommandGate = createAnalyticsCommandGate(
-      window.twinkleAnalyticsIdentityReady === true
+    const commandGate = createAnalyticsCommandGate(
+      window.twinkleAnalyticsConfigured === true
     );
+    analyticsCommandGate = commandGate;
+    window.twinkleOnAnalyticsConfigured = () =>
+      commandGate.resolve(dispatchCommand);
   }
   return analyticsCommandGate;
 }
@@ -101,10 +107,9 @@ function sendImmediately(command: string, ...args: any[]) {
 
 function resolveAnalyticsIdentity() {
   if (!analyticsAvailable()) return;
-  const commandGate = getAnalyticsCommandGate();
+  getAnalyticsCommandGate();
   window.twinkleAnalyticsIdentityReady = true;
   window.twinkleConfigureAnalytics();
-  commandGate.resolve(dispatchCommand);
 }
 
 export function trackPageView({

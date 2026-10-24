@@ -269,6 +269,8 @@ declare global {
     twinkleAnalyticsEnabled: boolean;
     twinkleAnalyticsIdentityReady: boolean;
     twinkleConfigureAnalytics: () => void;
+    twinkleAnalyticsConfigured?: boolean;
+    twinkleOnAnalyticsConfigured?: () => void;
     twinkleAnalyticsUrl?: (input: string) => string;
   }
 }

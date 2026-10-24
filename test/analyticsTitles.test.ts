@@ -90,7 +90,10 @@ const analyticsBundle = buildSync({
   define: { 'import.meta.env.PROD': 'true' }
 }).outputFiles[0].text;
 
-function createAnalyticsRecorder(hostname = 'www.twin-kle.com') {
+function createAnalyticsRecorder(
+  hostname = 'www.twin-kle.com',
+  { configured = true }: { configured?: boolean } = {}
+) {
   const calls: any[][] = [];
   const origin = `https://${hostname}`;
   const context = vm.createContext({
@@ -100,12 +103,14 @@ function createAnalyticsRecorder(hostname = 'www.twin-kle.com') {
       location: { hostname, origin },
       twinkleAnalyticsEnabled: true,
       twinkleAnalyticsIdentityReady: true,
+      twinkleAnalyticsConfigured: configured,
+      twinkleConfigureAnalytics() {},
       twinkleAnalyticsUrl: (input: string) => `${origin}${new URL(input, origin).pathname}`,
       gtag: (...args: any[]) => calls.push(JSON.parse(JSON.stringify(args)))
     }
   });
   vm.runInContext(analyticsBundle, context);
-  return { calls, analytics: context.analytics };
+  return { calls, analytics: context.analytics, window: context.window };
 }
 
 test('page views and subsequent events share the readable title', () => {
@@ -133,4 +138,23 @@ test('Lumine titles keep their host branding and capture pages remain excluded',
   assert.equal(calls[1][2].page_title, 'Daily Reflection | Lumine');
   analytics.trackPageView({ path: '/app-capture/123' });
   assert.equal(calls.length, 2);
+});
+
+test('page views wait until GA is configured for a person, then go in order', () => {
+  const { calls, analytics, window } = createAnalyticsRecorder(
+    'www.twin-kle.com',
+    { configured: false }
+  );
+  analytics.trackPageView({ path: '/daily-reflection' });
+  analytics.trackEvent('daily_reflection_submit');
+  assert.equal(calls.length, 0);
+
+  window.twinkleOnAnalyticsConfigured();
+  assert.deepEqual(
+    calls.map((call) => call[1] === 'page_view' || call[1] === 'daily_reflection_submit' ? call[1] : call[0]),
+    ['set', 'page_view', 'daily_reflection_submit']
+  );
+
+  analytics.trackEvent('wordle_complete');
+  assert.equal(calls.length, 4);
 });
