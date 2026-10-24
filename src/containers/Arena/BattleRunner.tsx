@@ -69,6 +69,14 @@ export default function BattleRunner({
     (v) => v.requestHelpers.submitArenaBattle
   );
   const [data, setData] = useState<ArenaBattle | null>(null);
+  // the review's language: the exam's own unless the member switches
+  const [reviewLang, setReviewLang] = useState<'en' | 'ko'>('en');
+  useEffect(() => {
+    if (data?.battle.exam.language) setReviewLang(data.battle.exam.language);
+  }, [data?.battle.exam.language]);
+  const hasKoreanReview =
+    data?.battle.exam.language === 'en' &&
+    !!data?.items.some((i) => i.review?.ko);
   const [answers, setAnswers] = useState<Record<number, number | null>>({});
   const [loadError, setLoadError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -185,6 +193,22 @@ export default function BattleRunner({
       </header>
 
       {finished && <Result data={data} />}
+      {/* reviews in both languages, the exam's own first (Mikey 10-24) */}
+      {finished && hasKoreanReview && (
+        <div className={langBarCls}>
+          <span>해설</span>
+          {(['en', 'ko'] as const).map((lang) => (
+            <button
+              key={lang}
+              type="button"
+              className={cx(langCls, reviewLang === lang && langOnCls)}
+              onClick={() => setReviewLang(lang)}
+            >
+              {lang === 'en' ? 'English' : '한국어'}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className={bodyCls}>
         <main className={paperCls}>
@@ -220,6 +244,7 @@ export default function BattleRunner({
                     passage={passage}
                     marked={answers[item.no] ?? null}
                     finished={finished}
+                    reviewLang={reviewLang}
                     // replay controls only where replays are allowed: Train's
                     // untimed retake and the review after a battle
                     audioControls={finished || data.battle.mode === 'untimed'}
@@ -369,10 +394,12 @@ function PaperItem({
   passage,
   marked,
   finished,
+  reviewLang,
   audioControls,
   onMark
 }: {
   item: ArenaItem;
+  reviewLang: 'en' | 'ko';
   passage: { kind: string; body: string; audioPath: string | null } | null;
   marked: number | null;
   finished: boolean;
@@ -380,6 +407,11 @@ function PaperItem({
   onMark: (choice: number | null) => void;
 }) {
   const listening = item.section === 'listening';
+  const ko = reviewLang === 'ko';
+  const review =
+    item.review && ko && item.review.ko
+      ? { ...item.review, ...item.review.ko }
+      : item.review;
   // the given text of an order or insertion item comes before the passage,
   // as on the real paper; a summary or <보기> box comes after it
   const bodyFirst = BODY_FIRST_TYPES.has(item.type);
@@ -476,22 +508,36 @@ function PaperItem({
         >
           <b>
             {item.correct ? (
-              'Correct'
+              ko ? (
+                '정답'
+              ) : (
+                'Correct'
+              )
             ) : (
               <>
-                Answer:{' '}
+                {ko ? '정답:' : 'Answer:'}{' '}
                 <span className={glyphCls}>{CIRCLED[item.key ?? 0]}</span>
               </>
             )}
           </b>
-          {item.review.evidence && (
-            <p className={evidenceCls}>“{item.review.evidence}”</p>
+          {review!.evidence && (
+            <p className={evidenceCls}>“{review!.evidence}”</p>
           )}
-          <p>{item.review.explanation}</p>
-          {marked != null && !item.correct && item.review.why?.[marked] && (
+          <p>{review!.explanation}</p>
+          {marked != null && !item.correct && review!.why?.[marked] && (
             <p>
-              Why <span className={glyphCls}>{CIRCLED[marked]}</span> is wrong:{' '}
-              {item.review.why[marked]}
+              {ko ? (
+                <>
+                  <span className={glyphCls}>{CIRCLED[marked]}</span>가 틀린
+                  이유:{' '}
+                </>
+              ) : (
+                <>
+                  Why <span className={glyphCls}>{CIRCLED[marked]}</span> is
+                  wrong:{' '}
+                </>
+              )}
+              {review!.why[marked]}
             </p>
           )}
         </div>
@@ -1025,6 +1071,32 @@ const bubbleFilledCls = css`
 
 const bubbleKeyCls = css`
   box-shadow: 0 0 0 2px #2f9e5b;
+`;
+
+const langBarCls = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  background: ${ARENA.paper};
+  border-bottom: 2px solid ${ARENA.line};
+  font-size: 1.3rem;
+  font-weight: 800;
+`;
+
+const langCls = css`
+  padding: 0.2rem 0.9rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 999px;
+  background: #fff;
+  font-weight: 800;
+  cursor: pointer;
+`;
+
+const langOnCls = css`
+  background: ${ARENA.ink};
+  color: #fff;
 `;
 
 const shareCls = css`

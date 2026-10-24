@@ -73,13 +73,21 @@ export interface ArenaItem {
   answer: number | null;
   key?: number;
   correct?: boolean;
-  review?: { explanation: string; evidence?: string; why?: string[] };
+  // ko: the Korean review of an English exam
+  review?: {
+    explanation: string;
+    evidence?: string;
+    why?: string[];
+    ko?: { explanation: string; why?: string[] };
+  };
 }
 
 export interface ArenaBattle {
   battle: ArenaBattleSummary & {
     exam: {
       key: string;
+      // the exam's own language: reviews default to it
+      language?: 'en' | 'ko';
       code: string;
       codeLabel: string | null;
       name: string;
