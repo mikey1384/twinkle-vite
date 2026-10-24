@@ -13,6 +13,8 @@ export interface ArenaExamSummary {
   }[];
   name: string;
   nameEn: string;
+  // has a listening section (the cover's rules mention it)
+  listening?: boolean;
   lengths: {
     length: 'short' | 'medium' | 'full';
     items: number;

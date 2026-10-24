@@ -12,6 +12,7 @@ import Train from './Train';
 import ReviewDeck from './ReviewDeck';
 import Skills from './Skills';
 import Drill from './Drill';
+import { useArenaPaperFonts } from './paperFont';
 import Battles from './Battles';
 import Challenge from './Challenge';
 import AIStory from './AIStory';
@@ -29,6 +30,7 @@ type View = 'choose' | 'train' | 'arena';
 export default function ArenaPage() {
   const userId = useKeyContext((v) => v.myState.userId);
   const navigate = useNavigate();
+  useArenaPaperFonts();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawView = searchParams.get('mode');
   const view: View =

@@ -7,6 +7,7 @@ import { ARENA } from './theme';
 import { arenaMediaURL } from './media';
 import League from './League';
 import Records from './Records';
+import CoverPage from './CoverPage';
 import Rising from './Rising';
 import type { ArenaDifficulty, ArenaState } from './types';
 
@@ -78,6 +79,14 @@ export default function Battles({
   const [state, setState] = useState<ArenaState | null>(null);
   const [error, setError] = useState('');
   const [starting, setStarting] = useState('');
+  // the booklet cover, read before the clock starts
+  const [cover, setCover] = useState<{
+    examKey: string;
+    length: 'short' | 'medium' | 'full';
+  } | null>(null);
+  const coverExam = cover
+    ? state?.exams.find((exam) => exam.key === cover.examKey)
+    : null;
   // each boss's chosen mode; Normal (the real exam) unless picked
   const [modes, setModes] = useState<Record<string, ArenaDifficulty>>({});
   const openBattle = (state?.recent || []).find(
@@ -224,7 +233,9 @@ export default function Battles({
                         type="button"
                         className={lengthCls}
                         disabled={!!starting}
-                        onClick={() => handleStart(exam.key, option.length)}
+                        onClick={() =>
+                          setCover({ examKey: exam.key, length: option.length })
+                        }
                       >
                         <b>
                           {starting === key
@@ -243,6 +254,16 @@ export default function Battles({
           );
         })}
       </div>
+      {cover && coverExam && (
+        <CoverPage
+          exam={coverExam}
+          length={cover.length}
+          difficulty={modes[cover.examKey] || 'normal'}
+          starting={starting === `${cover.examKey}:${cover.length}`}
+          onStart={() => handleStart(cover.examKey, cover.length)}
+          onCancel={() => setCover(null)}
+        />
+      )}
     </div>
   );
 
@@ -258,8 +279,10 @@ export default function Battles({
         length,
         difficulty: modes[examKey] || 'normal'
       });
+      setCover(null);
       onStart(data.battle.id);
     } catch (err: any) {
+      setCover(null);
       setError(
         err?.code === 'ARENA_NOT_READY'
           ? 'This boss is still training. Its questions are not ready yet.'
