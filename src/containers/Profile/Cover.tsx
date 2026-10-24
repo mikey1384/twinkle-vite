@@ -103,7 +103,8 @@ export default function Cover({
   );
   // Mikey taking down a member's cover photo; anyone else reporting it
   const [coverTakedownShown, setCoverTakedownShown] = useState(false);
-  const [coverReportShown, setCoverReportShown] = useState(false);
+  // the cover key on screen when the report form opened
+  const [coverReportKey, setCoverReportKey] = useState<string | null>(null);
   const [coverTakedownError, setCoverTakedownError] = useState('');
   const [platinumSeen, setPlatinumSeen] = useState(
     () => !!getStoredItem(platinumSeenKey(userId))
@@ -515,7 +516,7 @@ export default function Cover({
                   type="button"
                   className={reportChipClass}
                   aria-label="Report cover photo"
-                  onClick={() => setCoverReportShown(true)}
+                  onClick={() => setCoverReportKey(profile.profileCoverUrl)}
                 >
                   <Icon icon="flag" />
                 </button>
@@ -689,11 +690,12 @@ export default function Cover({
             statusSize={coverStatusSize}
           />
         </div>
-        {coverReportShown && (
+        {coverReportKey && (
           <ReportMessageModal
             subject="cover"
+            coverKey={coverReportKey}
             reportedUser={{ id: profile.id, username }}
-            onHide={() => setCoverReportShown(false)}
+            onHide={() => setCoverReportKey(null)}
           />
         )}
         {coverTakedownShown && (

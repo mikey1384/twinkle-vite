@@ -48,11 +48,14 @@ const RECEIVED_MESSAGE = 'Thanks. Our team will look at this.';
 export default function ReportMessageModal({
   messageId = 0,
   subject = 'message',
+  coverKey = '',
   reportedUser,
   onHide
 }: {
   messageId?: number;
   subject?: 'message' | 'cover';
+  // the cover photo on screen when the form opened
+  coverKey?: string;
   reportedUser: { id: number; username: string };
   onHide: () => void;
 }) {
@@ -212,6 +215,7 @@ export default function ReportMessageModal({
       if (subject === 'cover') {
         await reportProfileCover({
           userId: reportedUser.id,
+          coverKey,
           reason,
           note: note.trim() || undefined
         });
