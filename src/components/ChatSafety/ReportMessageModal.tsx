@@ -43,18 +43,26 @@ export const CHAT_REPORT_REASON_OPTIONS = [
 const NOTE_MAX_LENGTH = 500;
 const RECEIVED_MESSAGE = 'Thanks. Our team will look at this.';
 
+// Reports one chat message, or (subject "cover") a member's platinum cover
+// photo; both go through the same report pipeline.
 export default function ReportMessageModal({
-  messageId,
+  messageId = 0,
+  subject = 'message',
   reportedUser,
   onHide
 }: {
-  messageId: number;
+  messageId?: number;
+  subject?: 'message' | 'cover';
   reportedUser: { id: number; username: string };
   onHide: () => void;
 }) {
   const reportChatMessage = useAppContext(
     (v) => v.requestHelpers.reportChatMessage
   );
+  const reportProfileCover = useAppContext(
+    (v) => v.requestHelpers.reportProfileCover
+  );
+  const subjectLabel = subject === 'cover' ? 'cover photo' : 'message';
   const myId = Number(useKeyContext((v) => v.myState.userId) || 0);
   const blockList = useBlockedUsers();
   const groupName = useId();
@@ -82,7 +90,7 @@ export default function ReportMessageModal({
         isOpen={!blockModalShown}
         onClose={onHide}
         hasHeader
-        title={sent ? 'Report sent' : 'Report this message'}
+        title={sent ? 'Report sent' : `Report this ${subjectLabel}`}
         size="sm"
         closeOnBackdropClick={!submitting}
         footer={
@@ -142,7 +150,7 @@ export default function ReportMessageModal({
             }}
           >
             <fieldset className={safetyFieldsetClass}>
-              <legend>What’s wrong with this message?</legend>
+              <legend>What’s wrong with this {subjectLabel}?</legend>
               {CHAT_REPORT_REASON_OPTIONS.map((option) => (
                 <label key={option.value} className={safetyOptionClass}>
                   <input
@@ -201,11 +209,19 @@ export default function ReportMessageModal({
     setSubmitting(true);
     setError('');
     try {
-      await reportChatMessage({
-        messageId,
-        reason,
-        note: note.trim() || undefined
-      });
+      if (subject === 'cover') {
+        await reportProfileCover({
+          userId: reportedUser.id,
+          reason,
+          note: note.trim() || undefined
+        });
+      } else {
+        await reportChatMessage({
+          messageId,
+          reason,
+          note: note.trim() || undefined
+        });
+      }
       setSent(true);
     } catch (submitError: any) {
       setError(

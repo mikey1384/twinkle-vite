@@ -6,6 +6,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import ReportMessageModal from '~/components/ChatSafety/ReportMessageModal';
 import ImageModal from '~/components/Modals/ImageModal';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import ProfilePicModal from '~/components/Modals/ProfilePicModal';
@@ -22,9 +23,12 @@ import {
 import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
 import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
+import {
+  cloudFrontURL,
+  MAX_PROFILE_PIC_SIZE,
+  MIKEY_USER_ID
+} from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
-import { useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
@@ -69,8 +73,6 @@ export default function Cover({
     (v) => v.requestHelpers.loadUserReferrals
   );
   const userId = useKeyContext((v) => v.myState.userId);
-  const myLevel = useKeyContext((v) => v.myState.level);
-  const { canDelete } = useMyLevel();
   const removeMemberProfileCover = useAppContext(
     (v) => v.requestHelpers.removeMemberProfileCover
   );
@@ -99,8 +101,9 @@ export default function Cover({
   const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(
     null
   );
-  // staff taking down a member's cover photo
+  // Mikey taking down a member's cover photo; anyone else reporting it
   const [coverTakedownShown, setCoverTakedownShown] = useState(false);
+  const [coverReportShown, setCoverReportShown] = useState(false);
   const [coverTakedownError, setCoverTakedownError] = useState('');
   const [platinumSeen, setPlatinumSeen] = useState(
     () => !!getStoredItem(platinumSeenKey(userId))
@@ -208,14 +211,12 @@ export default function Cover({
     platinumUnlocked &&
     profileTheme === PLATINUM_THEME &&
     themeName === PLATINUM_THEME;
-  // the same rule as deleting a member's content; the server checks it too
-  const staffCanRemoveCover =
-    !isOwner &&
-    !!userId &&
-    !!canDelete &&
-    Number(myLevel || 0) > Number(profile.level || 0) &&
-    cover.isPlatinum &&
-    !!profile.profileCoverUrl;
+  // someone else's cover photo: only Mikey can take it down (the server
+  // checks too); every other signed-in member can report it
+  const othersCoverPhotoShown =
+    !isOwner && !!userId && cover.isPlatinum && !!profile.profileCoverUrl;
+  const mikeyCanRemoveCover =
+    othersCoverPhotoShown && Number(userId) === MIKEY_USER_ID;
   const platinumIsNew =
     isOwner &&
     platinumUnlocked &&
@@ -479,11 +480,12 @@ export default function Cover({
               }}
             />
           )}
-          {staffCanRemoveCover && (
+          {othersCoverPhotoShown && !reposition && (
+            // top-right: Share holds the bottom-right corner
             <div
               className={css`
                 position: absolute;
-                bottom: 1rem;
+                top: 1rem;
                 right: 1rem;
                 z-index: 15;
                 display: flex;
@@ -491,22 +493,33 @@ export default function Cover({
                 align-items: flex-end;
                 gap: 0.5rem;
                 @media (max-width: ${mobileMaxWidth}) {
-                  bottom: 0.6rem;
+                  top: 0.6rem;
                   right: 0.6rem;
                 }
               `}
             >
-              <button
-                type="button"
-                className={staffChipClass}
-                onClick={() => {
-                  setCoverTakedownError('');
-                  setCoverTakedownShown(true);
-                }}
-              >
-                <Icon icon="trash-alt" />
-                <span>Remove cover</span>
-              </button>
+              {mikeyCanRemoveCover ? (
+                <button
+                  type="button"
+                  className={staffChipClass}
+                  onClick={() => {
+                    setCoverTakedownError('');
+                    setCoverTakedownShown(true);
+                  }}
+                >
+                  <Icon icon="trash-alt" />
+                  <span>Remove cover</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={reportChipClass}
+                  aria-label="Report cover photo"
+                  onClick={() => setCoverReportShown(true)}
+                >
+                  <Icon icon="flag" />
+                </button>
+              )}
               {coverTakedownError && (
                 <div role="alert" className={staffErrorClass}>
                   {coverTakedownError}
@@ -676,6 +689,13 @@ export default function Cover({
             statusSize={coverStatusSize}
           />
         </div>
+        {coverReportShown && (
+          <ReportMessageModal
+            subject="cover"
+            reportedUser={{ id: profile.id, username }}
+            onHide={() => setCoverReportShown(false)}
+          />
+        )}
         {coverTakedownShown && (
           <ConfirmModal
             title="Remove cover photo"
@@ -903,6 +923,29 @@ const staffChipClass = css`
   box-shadow: 0 2px 10px rgba(20, 24, 30, 0.14);
   &:hover {
     background: #fff;
+  }
+  &:focus-visible {
+    outline: 3px solid rgba(65, 140, 235, 0.7);
+    outline-offset: 2px;
+  }
+`;
+// quiet: a small glass flag, not a call to action
+const reportChipClass = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  background: rgba(20, 23, 28, 0.32);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1.2rem;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background-color 160ms ease;
+  &:hover {
+    background: rgba(20, 23, 28, 0.55);
   }
   &:focus-visible {
     outline: 3px solid rgba(65, 140, 235, 0.7);

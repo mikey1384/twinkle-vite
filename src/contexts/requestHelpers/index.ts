@@ -650,6 +650,7 @@ registerMethods('chat', [
   'blockUser',
   'loadBlockedUsers',
   'reportChatMessage',
+  'reportProfileCover',
   'unblockUser',
   'acceptTrade',
   'burnAICard',

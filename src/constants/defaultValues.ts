@@ -31,6 +31,9 @@ export const months = [
   'December'
 ];
 export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
+// Mikey's own account (username "mikey"): a fixed id, like MIKEY_USER_ID in
+// twinkle-api, for what only he may do (taking down a member's cover photo).
+export const MIKEY_USER_ID = 5;
 // Zero/Ciel acting on the website, for every signed-in user. The server keeps
 // the authoritative gate (isWebsiteAgentUserId); this only shows the UI.
 // VITE_WEBSITE_AGENT_DISABLED=1 hides it.
