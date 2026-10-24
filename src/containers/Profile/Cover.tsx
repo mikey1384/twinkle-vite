@@ -3,7 +3,9 @@ import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoor
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';
 import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import ImageModal from '~/components/Modals/ImageModal';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import ProfilePicModal from '~/components/Modals/ProfilePicModal';
@@ -22,6 +24,7 @@ import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
+import { useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
@@ -66,6 +69,11 @@ export default function Cover({
     (v) => v.requestHelpers.loadUserReferrals
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const myLevel = useKeyContext((v) => v.myState.level);
+  const { canDelete } = useMyLevel();
+  const removeMemberProfileCover = useAppContext(
+    (v) => v.requestHelpers.removeMemberProfileCover
+  );
   const {
     profilePicUrl,
     profileTheme,
@@ -91,6 +99,9 @@ export default function Cover({
   const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(
     null
   );
+  // staff taking down a member's cover photo
+  const [coverTakedownShown, setCoverTakedownShown] = useState(false);
+  const [coverTakedownError, setCoverTakedownError] = useState('');
   const [platinumSeen, setPlatinumSeen] = useState(
     () => !!getStoredItem(platinumSeenKey(userId))
   );
@@ -197,6 +208,14 @@ export default function Cover({
     platinumUnlocked &&
     profileTheme === PLATINUM_THEME &&
     themeName === PLATINUM_THEME;
+  // the same rule as deleting a member's content; the server checks it too
+  const staffCanRemoveCover =
+    !isOwner &&
+    !!userId &&
+    !!canDelete &&
+    Number(myLevel || 0) > Number(profile.level || 0) &&
+    cover.isPlatinum &&
+    !!profile.profileCoverUrl;
   const platinumIsNew =
     isOwner &&
     platinumUnlocked &&
@@ -460,6 +479,41 @@ export default function Cover({
               }}
             />
           )}
+          {staffCanRemoveCover && (
+            <div
+              className={css`
+                position: absolute;
+                bottom: 1rem;
+                right: 1rem;
+                z-index: 15;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.5rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  bottom: 0.6rem;
+                  right: 0.6rem;
+                }
+              `}
+            >
+              <button
+                type="button"
+                className={staffChipClass}
+                onClick={() => {
+                  setCoverTakedownError('');
+                  setCoverTakedownShown(true);
+                }}
+              >
+                <Icon icon="trash-alt" />
+                <span>Remove cover</span>
+              </button>
+              {coverTakedownError && (
+                <div role="alert" className={staffErrorClass}>
+                  {coverTakedownError}
+                </div>
+              )}
+            </div>
+          )}
           {isOwner && !reposition && (
             <div
               className={cx(
@@ -622,6 +676,17 @@ export default function Cover({
             statusSize={coverStatusSize}
           />
         </div>
+        {coverTakedownShown && (
+          <ConfirmModal
+            title="Remove cover photo"
+            description={`Take down ${username}'s cover photo? The image is kept for safety review, and they can add a new one.`}
+            descriptionFontSize="1.7rem"
+            confirmButtonLabel="Remove"
+            confirmButtonColor="red"
+            onHide={() => setCoverTakedownShown(false)}
+            onConfirm={handleRemoveMemberCover}
+          />
+        )}
         {imageModalShown && (
           <ImageModal
             downloadable={false}
@@ -675,6 +740,23 @@ export default function Cover({
     document
       .getElementById(BROUGHT_FRIENDS_ANCHOR_ID)
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function handleRemoveMemberCover() {
+    try {
+      const data = await removeMemberProfileCover(profile.id);
+      onSetUserState({
+        userId: profile.id,
+        newState: {
+          profileCoverUrl: data?.profileCoverUrl ?? null,
+          profileCoverPosition: data?.profileCoverPosition ?? null
+        }
+      });
+    } catch (error: any) {
+      setCoverTakedownError(error?.message || 'The cover could not be removed.');
+    } finally {
+      setCoverTakedownShown(false);
+    }
   }
 
   function handleOpenThemes() {
@@ -803,4 +885,35 @@ const repositionSaveClass = css`
   &:hover {
     background: #eef0f3;
   }
+`;
+
+const staffChipClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 3.2rem;
+  padding: 0 1.1rem;
+  border: 1px solid rgba(163, 38, 42, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #a3262a;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(20, 24, 30, 0.14);
+  &:hover {
+    background: #fff;
+  }
+  &:focus-visible {
+    outline: 3px solid rgba(65, 140, 235, 0.7);
+    outline-offset: 2px;
+  }
+`;
+const staffErrorClass = css`
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #a3262a;
+  font-size: 1.2rem;
+  font-weight: 600;
 `;

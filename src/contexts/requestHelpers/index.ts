@@ -944,6 +944,7 @@ registerMethods('user', [
   'setProfileCover',
   'updateProfileCoverSettings',
   'removeProfileCover',
+  'removeMemberProfileCover',
   'signup',
   'createDevAccount',
   'toggleHideWatched',

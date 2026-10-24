@@ -2243,6 +2243,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // Staff (canDelete, higher level) take a member's cover photo down.
+    async removeMemberProfileCover(memberId: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/user/cover/member/${memberId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async setTheme({ color }: { color: string }) {
       try {
         const { data } = await request.put(
