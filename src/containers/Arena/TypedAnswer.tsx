@@ -14,7 +14,7 @@ export default function TypedAnswer({
   compact,
   onCommit
 }: {
-  typed: 'integer' | 'text';
+  typed: 'integer' | 'number' | 'text';
   value: number | string | null;
   finished: boolean;
   label: string;
@@ -26,24 +26,36 @@ export default function TypedAnswer({
   // the other box (item or answer sheet) changed it: show the new value
   useEffect(() => setDraft(saved), [saved]);
   const integer = typed === 'integer';
+  // a number: digits, a minus sign, a decimal point or one fraction bar
+  const numeric = typed === 'number';
   return (
     <span className={cx(wrapCls, compact && compactWrapCls)}>
       {!compact && <span className={promptCls}>답</span>}
       <input
-        className={cx(inputCls, integer && integerCls, compact && compactCls)}
+        className={cx(
+          inputCls,
+          (integer || numeric) && integerCls,
+          compact && compactCls
+        )}
         aria-label={label}
         value={draft}
         disabled={finished}
-        inputMode={integer ? 'numeric' : 'text'}
+        inputMode={integer ? 'numeric' : numeric ? 'decimal' : 'text'}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
-        maxLength={integer ? 6 : 48}
+        maxLength={integer ? 6 : numeric ? 12 : 48}
         placeholder={compact ? '' : integer ? '0–999' : ''}
         onChange={(event) => {
           const next = event.target.value;
-          setDraft(integer ? next.replace(/[^\d-]/g, '') : next);
+          setDraft(
+            integer
+              ? next.replace(/[^\d-]/g, '')
+              : numeric
+                ? next.replace(/[^\d./-]/g, '')
+                : next
+          );
         }}
         onBlur={commit}
         onKeyDown={(event) => {

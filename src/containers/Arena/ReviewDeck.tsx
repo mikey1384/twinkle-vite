@@ -74,7 +74,7 @@ interface CardView {
     body?: string;
     visual?: Record<string, unknown>;
     choices: string[];
-    typed?: 'integer' | 'text';
+    typed?: 'integer' | 'number' | 'text';
     missedAnswer?: number | string | null;
     key?: number | string;
     review?: ArenaItem['review'];

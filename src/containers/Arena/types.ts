@@ -74,7 +74,7 @@ export interface ArenaItem {
   // [] for a typed answer
   choices: string[];
   // a typed answer (수학 단답형 etc.): digits only, or a word or phrase
-  typed?: 'integer' | 'text';
+  typed?: 'integer' | 'number' | 'text';
   // a choice index, or the typed text
   answer: number | string | null;
   // the key: a choice index, or the accepted typed answer the review prints
