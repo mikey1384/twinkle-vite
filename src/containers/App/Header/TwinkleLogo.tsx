@@ -119,8 +119,8 @@ export default function TwinkleLogo({
 }
 
 // Platinum (100M XP): the brand's own blue and green, finished like polished
-// metal: each half shades from a deep tone through the brand colour to a
-// bright highlight, with a fine engraved edge. A light crosses once on hover;
+// metal: each half shades between a deep tone and a bright highlight through
+// the brand colour, with a fine engraved edge. A light crosses once on hover;
 // the logo never loops on its own.
 const platinumLogoClass = css`
   > .logo-twin,
@@ -144,14 +144,16 @@ const platinumLogoClass = css`
       #1b4f9c 100%
     );
   }
+  /* "kle" runs the other way at rest: deep at the k, light at the e, so the
+     two dark ends meet in the middle of the word */
   > .logo-kle {
     background-image: linear-gradient(
       100deg,
-      #2f9e37 0%,
-      ${Color.logoGreen()} 26%,
-      #c4f5c5 42%,
-      ${Color.logoGreen()} 56%,
-      #2a8a31 100%
+      #c4f5c5 0%,
+      ${Color.logoGreen()} 22%,
+      #2a8a31 46%,
+      ${Color.logoGreen()} 74%,
+      #a6eea8 100%
     );
   }
   /* beats the base hover shadow, which smudges through metal text */
