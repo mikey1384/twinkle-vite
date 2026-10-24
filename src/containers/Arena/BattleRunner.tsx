@@ -528,7 +528,7 @@ function PaperItem({
             <p>
               {ko ? (
                 <>
-                  <span className={glyphCls}>{CIRCLED[marked]}</span>가 틀린
+                  <span className={glyphCls}>{CIRCLED[marked]}</span> 오답
                   이유:{' '}
                 </>
               ) : (
