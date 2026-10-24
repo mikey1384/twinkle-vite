@@ -308,6 +308,7 @@ export default function BattleRunner({
                     passage={passage}
                     marked={answers[item.no] ?? null}
                     allPointTags={data.battle.exam.pointTags === 'all'}
+                    problemLayout={data.battle.exam.layout === 'problem'}
                     finished={finished}
                     reviewLang={reviewLang}
                     // replay controls only where replays are allowed: Train's
@@ -488,10 +489,12 @@ export function PaperItem({
   reviewLang,
   audioControls,
   allPointTags,
+  problemLayout = false,
   onMark
 }: {
   item: ArenaItem;
   allPointTags: boolean;
+  problemLayout?: boolean;
   reviewLang: 'en' | 'ko';
   passage: { kind: string; body: string; audioPath: string | null } | null;
   marked: number | string | null;
@@ -523,14 +526,30 @@ export function PaperItem({
           )}
         </div>
       )}
+      {problemLayout && (passage || (item.body && !isArtBrief(item.body))) && (
+        // 수학: the number, the setup inline, any box, then the question
+        <>
+          {passage && (
+            <div className={problemCls}>
+              {item.no > 0 && <b>{item.no}.</b>}{' '}
+              <PaperText text={passage.body} />
+            </div>
+          )}
+          {item.body && !isArtBrief(item.body) && (
+            <div className={boxCls}>
+              <PaperText text={item.body} />
+            </div>
+          )}
+        </>
+      )}
       <p className={stemCls}>
-        {item.no > 0 && <b>{item.no}.</b>}{' '}
+        {item.no > 0 && !(problemLayout && passage) && <b>{item.no}.</b>}{' '}
         <MathText text={stemText(item.stem)} />
         {(allPointTags || item.points === 3) && (
           <span className={pointsCls}> [{item.points}점]</span>
         )}
       </p>
-      {item.body && bodyFirst && (
+      {item.body && bodyFirst && !problemLayout && (
         <div className={boxCls}>
           <PaperText text={item.body} />
         </div>
@@ -548,7 +567,7 @@ export function PaperItem({
           <div className={artPendingCls}>(그림 / 도표)</div>
         )
       )}
-      {passage && !listening && (
+      {passage && !listening && !problemLayout && (
         <div className={passageCls}>
           {isDialogue(passage.body) ? (
             <DialogueText text={passage.body} />
@@ -557,7 +576,7 @@ export function PaperItem({
           )}
         </div>
       )}
-      {item.body && !bodyFirst && !isArtBrief(item.body) && (
+      {item.body && !bodyFirst && !problemLayout && !isArtBrief(item.body) && (
         <div className={boxCls}>
           <PaperText text={item.body} />
         </div>
@@ -1405,4 +1424,10 @@ const typedRowCls = css`
 const typedKeyCls = css`
   font-variant-numeric: tabular-nums;
   font-weight: 900;
+`;
+
+// 수학's problem text: inline after the number, no box
+const problemCls = css`
+  margin: 0 0 0.6rem;
+  line-height: 1.9;
 `;

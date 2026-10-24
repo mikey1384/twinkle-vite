@@ -97,6 +97,8 @@ export interface ArenaBattle {
       language?: 'en' | 'ko';
       // 'all': every item prints its [n점] tag (수학, 한국사능력검정)
       pointTags?: 'all' | null;
+      // 'problem': 수학-style items (setup inline, then the question)
+      layout?: 'problem' | null;
       code: string;
       codeLabel: string | null;
       name: string;
