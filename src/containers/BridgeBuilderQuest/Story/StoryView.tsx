@@ -159,10 +159,10 @@ export default function StoryView({
           max-height: 68vh;
           overflow: hidden;
           background: ${INK};
-          @media (width <= 1512px) { @container (max-width: 720px) {
+          @container (max-width: 720px) {
             height: 38rem;
             max-height: 56vh;
-          } }
+          }
 @media (width > 1512px) { @container (max-width: 72rem) {
             height: 38rem;
             max-height: 56vh;
@@ -245,12 +245,12 @@ export default function StoryView({
           padding: 3.2rem 4rem 3rem;
           box-shadow: 0 1.2rem 4rem rgba(29, 43, 58, 0.16);
           animation: ${rise} 0.6s ease-out 0.1s both;
-          @media (width <= 1512px) { @container (max-width: 720px) {
+          @container (max-width: 720px) {
             margin-top: -6rem;
             width: calc(100% - 2rem);
             padding: 2.2rem 1.8rem 2rem;
             border-radius: 1.6rem;
-          } }
+          }
 @media (width > 1512px) { @container (max-width: 72rem) {
             margin-top: -6rem;
             width: calc(100% - 2rem);
@@ -307,9 +307,9 @@ export default function StoryView({
             letter-spacing: -0.02em;
             color: ${INK};
             overflow-wrap: anywhere;
-            @media (width <= 1512px) { @container (max-width: 720px) {
+            @container (max-width: 720px) {
               font-size: 2.8rem;
-            } }
+            }
 @media (width > 1512px) { @container (max-width: 72rem) {
               font-size: 2.8rem;
             } }
@@ -324,9 +324,9 @@ export default function StoryView({
               font-size: 2rem;
               line-height: 1.4;
               color: ${Color.darkerGray()};
-              @media (width <= 1512px) { @container (max-width: 720px) {
+              @container (max-width: 720px) {
                 font-size: 1.7rem;
-              } }
+              }
 @media (width > 1512px) { @container (max-width: 72rem) {
                 font-size: 1.7rem;
               } }
@@ -387,10 +387,10 @@ export default function StoryView({
               font-size: 1.8rem;
               line-height: 1.8;
               color: #2c3a48;
-              @media (width <= 1512px) { @container (max-width: 720px) {
+              @container (max-width: 720px) {
                 font-size: 1.65rem;
                 line-height: 1.75;
-              } }
+              }
 @media (width > 1512px) { @container (max-width: 72rem) {
                 font-size: 1.65rem;
                 line-height: 1.75;
@@ -431,15 +431,15 @@ export default function StoryView({
             className={css`
               column-count: 3;
               column-gap: 2.4rem;
-              @media (width <= 1512px) { @container (max-width: 900px) {
+              @container (max-width: 900px) {
                 column-count: 2;
-              } }
+              }
 @media (width > 1512px) { @container (max-width: 90rem) {
                 column-count: 2;
               } }
-              @media (width <= 1512px) { @container (max-width: 520px) {
+              @container (max-width: 520px) {
                 column-count: 1;
-              } }
+              }
 @media (width > 1512px) { @container (max-width: 52rem) {
                 column-count: 1;
               } }
@@ -461,9 +461,9 @@ export default function StoryView({
                     transform: rotate(0deg) scale(1.02);
                     box-shadow: 0 1rem 2.8rem rgba(29, 43, 58, 0.2);
                   }
-                  @media (width <= 1512px) { @container (max-width: 520px) {
+                  @container (max-width: 520px) {
                     transform: none;
-                  } }
+                  }
 @media (width > 1512px) { @container (max-width: 52rem) {
                     transform: none;
                   } }
@@ -663,9 +663,9 @@ function Section({
         margin: 0 auto;
         padding: 5rem 4rem 0;
         animation: ${rise} 0.6s ease-out ${delay}s both;
-        @media (width <= 1512px) { @container (max-width: 720px) {
+        @container (max-width: 720px) {
           padding: 3.4rem 1.6rem 0;
-        } }
+        }
 @media (width > 1512px) { @container (max-width: 72rem) {
           padding: 3.4rem 1.6rem 0;
         } }
@@ -685,10 +685,10 @@ function Section({
           font-weight: 900;
           color: ${INK};
           text-align: center;
-          @media (width <= 1512px) { @container (max-width: 720px) {
+          @container (max-width: 720px) {
             font-size: 2.1rem;
             margin-bottom: 2rem;
-          } }
+          }
 @media (width > 1512px) { @container (max-width: 72rem) {
             font-size: 2.1rem;
             margin-bottom: 2rem;
@@ -751,9 +751,9 @@ function CrewRow({ people, isSample }: { people: StoryPerson[]; isSample: boolea
           width: 88%;
           height: 6.4rem;
           overflow: visible;
-          @media (width <= 1512px) { @container (max-width: 720px) {
+          @container (max-width: 720px) {
             display: none;
-          } }
+          }
 @media (width > 1512px) { @container (max-width: 72rem) {
             display: none;
           } }
@@ -805,11 +805,11 @@ function CrewRow({ people, isSample }: { people: StoryPerson[]; isSample: boolea
           grid-template-columns: repeat(${Math.min(count, 4)}, minmax(0, 1fr));
           gap: 2rem;
           padding-top: 5.6rem;
-          @media (width <= 1512px) { @container (max-width: 720px) {
+          @container (max-width: 720px) {
             grid-template-columns: repeat(2, minmax(0, 1fr));
             padding-top: 0;
             gap: 1.2rem;
-          } }
+          }
 @media (width > 1512px) { @container (max-width: 72rem) {
             grid-template-columns: repeat(2, minmax(0, 1fr));
             padding-top: 0;
@@ -955,10 +955,10 @@ function CallToAction({ isSample }: { isSample: boolean }) {
         text-align: center;
         position: relative;
         overflow: hidden;
-        @media (width <= 1512px) { @container (max-width: 720px) {
+        @container (max-width: 720px) {
           margin: 4rem 1.2rem 2rem;
           padding: 3rem 1.8rem;
-        } }
+        }
 @media (width > 1512px) { @container (max-width: 72rem) {
           margin: 4rem 1.2rem 2rem;
           padding: 3rem 1.8rem;
@@ -999,9 +999,9 @@ function CallToAction({ isSample }: { isSample: boolean }) {
           font-size: 3rem;
           font-weight: 900;
           line-height: 1.2;
-          @media (width <= 1512px) { @container (max-width: 720px) {
+          @container (max-width: 720px) {
             font-size: 2.3rem;
-          } }
+          }
 @media (width > 1512px) { @container (max-width: 72rem) {
             font-size: 2.3rem;
           } }

@@ -41,10 +41,10 @@ export default function ChatQuickAccess() {
           gap: 0.55rem;
           width: 100%;
           margin-top: 1rem;
-          @media (width <= 1512px) { @container chat-channels (max-width: 180px) {
+          @container chat-channels (max-width: 180px) {
             /* Flatten into the parent row: gear joins New Group, portraits wrap below. */
             display: contents;
-          } }
+          }
 @media (width > 1512px) { @container chat-channels (max-width: 18rem) {
             /* Flatten into the parent row: gear joins New Group, portraits wrap below. */
             display: contents;
@@ -66,10 +66,10 @@ export default function ChatQuickAccess() {
             touch-action: pan-x;
             scrollbar-width: thin;
             overscroll-behavior-x: contain;
-            @media (width <= 1512px) { @container chat-channels (max-width: 180px) {
+            @container chat-channels (max-width: 180px) {
               order: 1;
               flex: 1 0 100%;
-            } }
+            }
 @media (width > 1512px) { @container chat-channels (max-width: 18rem) {
               order: 1;
               flex: 1 0 100%;
@@ -119,7 +119,7 @@ export default function ChatQuickAccess() {
               color: ${Color.logoBlue()};
               border-color: ${Color.logoBlue(0.5)};
             }
-            @media (width <= 1512px) { @container chat-channels (max-width: 180px) {
+            @container chat-channels (max-width: 180px) {
               /* Sits beside New Group: same height and corners, visually quiet. */
               width: 36px;
               height: 36px;
@@ -131,7 +131,7 @@ export default function ChatQuickAccess() {
                 border-color: transparent;
                 background: ${Color.highlightGray()};
               }
-            } }
+            }
 @media (width > 1512px) { @container chat-channels (max-width: 18rem) {
               /* Sits beside New Group: same height and corners, visually quiet. */
               width: 36px;
@@ -149,9 +149,9 @@ export default function ChatQuickAccess() {
               min-width: 44px;
               min-height: 44px;
             }
-            @media (width <= 1512px) { @container chat-channels (max-width: 180px) {
+            @container chat-channels (max-width: 180px) {
               min-width: 36px;
-            } }
+            }
 @media (width > 1512px) { @container chat-channels (max-width: 18rem) {
               min-width: 36px;
             } }

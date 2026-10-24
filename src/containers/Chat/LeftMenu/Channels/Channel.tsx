@@ -435,11 +435,11 @@ export default function Channel({
       <Link
         title={ChannelName}
         className={cx(chatChannelRowClass, css`
-          @media (width <= 1512px) { @container chat-channels (max-width: 180px) {
+          @container chat-channels (max-width: 180px) {
             height: auto;
             min-height: 56px;
             padding: 0.8rem 0.6rem;
-          } }
+          }
 @media (width > 1512px) { @container chat-channels (max-width: 18rem) {
             height: auto;
             min-height: 56px;
@@ -493,7 +493,7 @@ export default function Channel({
                   @media (max-width: ${mobileMaxWidth}) {
                     font-size: max(14px, 1.5rem);
                   }
-                  @media (width <= 1512px) { @container chat-channels (max-width: 180px) {
+                  @container chat-channels (max-width: 180px) {
                     font-size: max(14px, 1.4rem);
                     line-height: 1.3;
                     white-space: normal;
@@ -501,7 +501,7 @@ export default function Channel({
                     display: -webkit-box;
                     -webkit-box-orient: vertical;
                     -webkit-line-clamp: 2;
-                  } }
+                  }
 @media (width > 1512px) { @container chat-channels (max-width: 18rem) {
                     font-size: max(14px, 1.4rem);
                     line-height: 1.3;

@@ -187,11 +187,11 @@ const chatProfileClass = css`
     .profile-attachment__avatar { width: 64px; flex-shrink: 0; }
     .profile-attachment__details { min-width: 0; width: 100%; margin-left: 0; }
     &:focus-visible { outline: 2px solid #334155; outline-offset: 3px; }
-    @media (width <= 1512px) { @container chatProfileAttachment (min-width: 360px) {
+    @media (max-width: 1512px) { @container chatProfileAttachment (min-width: 360px) {
       .profile-attachment__body { flex-direction: row; align-items: flex-start; }
       .profile-attachment__details { flex: 1; }
     } }
-@media (width > 1512px) { @container chatProfileAttachment (min-width: 36rem) {
+@media (min-width: 1512.02px) { @container chatProfileAttachment (min-width: 36rem) {
       .profile-attachment__body { flex-direction: row; align-items: flex-start; }
       .profile-attachment__details { flex: 1; }
     } }

@@ -58,10 +58,10 @@ const discoveryGridClass = css`
     border: 0;
   }
 
-  @media (width <= 1512px) { @container (max-width: 640px) {
+  @container (max-width: 640px) {
     grid-template-columns: minmax(0, 1fr);
     gap: 1.3rem;
-  } }
+  }
 @media (width > 1512px) { @container (max-width: 64rem) {
     grid-template-columns: minmax(0, 1fr);
     gap: 1.3rem;

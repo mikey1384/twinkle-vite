@@ -133,7 +133,7 @@ export default function LeftMenu({
                 flex-direction: column;
                 padding: 1rem;
                 border-bottom: 1px solid var(--ui-border);
-                @media (width <= 1512px) { @container chat-channels (max-width: 180px) {
+                @container chat-channels (max-width: 180px) {
                   /* Narrow panel: the customize gear shares New Group's row
                      (QuickAccess flattens itself), portraits get their own. */
                   flex-direction: row;
@@ -150,7 +150,7 @@ export default function LeftMenu({
                     font-size: calc(13 * var(--px));
                     white-space: nowrap;
                   }
-                } }
+                }
 @media (width > 1512px) { @container chat-channels (max-width: 18rem) {
                   /* Narrow panel: the customize gear shares New Group's row
                      (QuickAccess flattens itself), portraits get their own. */
