@@ -156,12 +156,19 @@ function run<T>(
 export async function loadAppLifecycleSnapshot(
   key: string
 ): Promise<AppLifecycleSnapshot | null> {
+  let timedOut = false;
   const value = await Promise.race([
     run<AppLifecycleSnapshot>('readonly', ({ snapshots }) => snapshots.get(key)),
     new Promise<null>((resolve) =>
-      window.setTimeout(() => resolve(null), LOAD_TIMEOUT_MS)
+      window.setTimeout(() => {
+        timedOut = true;
+        resolve(null);
+      }, LOAD_TIMEOUT_MS)
     )
   ]);
+  // The store hung (WebKit's IndexedDB open that never settles): give up on
+  // it for this page so later app starts don't each wait the full guard.
+  if (timedOut) dbPromise = Promise.resolve(null);
   if (!value || typeof value !== 'object' || !value.state) return null;
   if (!(Date.now() - Number(value.savedAt) < MAX_AGE_MS)) {
     void forgetAppLifecycleSnapshot(key);
@@ -261,11 +268,14 @@ export function getAppLifecycleStatus(buildId: number): AppLifecycleStatus {
   return { ...(running.get(buildId)?.status || { suspend: false, webgl: 0 }) };
 }
 
+// Records exist only while the app's frame is registered: a late message from
+// an app already unloaded must not bring back its old flags for the next run.
 export function setAppLifecycleStatus(
   buildId: number,
   status: Partial<AppLifecycleStatus>
 ) {
-  const app = entry(buildId);
+  const app = running.get(buildId);
+  if (!app) return;
   app.status = {
     suspend:
       typeof status.suspend === 'boolean' ? status.suspend : app.status.suspend,
@@ -303,7 +313,8 @@ export function acceptAppLifecycleSnapshot(
   key: string,
   snapshot: AppLifecycleSnapshot
 ) {
-  const app = entry(buildId);
+  const app = running.get(buildId);
+  if (!app) return;
   const waiters = app.waiters;
   app.waiters = [];
   waiters.forEach((resolve) => resolve(true));

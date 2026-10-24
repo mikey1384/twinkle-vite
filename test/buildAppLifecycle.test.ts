@@ -39,3 +39,15 @@ test('a closed app is remembered until it starts again', () => {
   lifecycle.noteAppStarted(88);
   assert.equal(lifecycle.isAppClosed(88), false);
 });
+
+test('a late message from an unloaded app does not bring back its old flags', () => {
+  lifecycle.setAppLifecycleStatus(99, { suspend: true, webgl: 2 });
+  assert.deepEqual(lifecycle.getAppLifecycleStatus(99), { suspend: false, webgl: 0 });
+  const off = lifecycle.registerAppLifecycleFrame(99, () => {});
+  lifecycle.setAppLifecycleStatus(99, { suspend: true, webgl: 2 });
+  assert.deepEqual(lifecycle.getAppLifecycleStatus(99), { suspend: true, webgl: 2 });
+  off();
+  lifecycle.forgetRunningApp(99);
+  lifecycle.setAppLifecycleStatus(99, { webgl: 3 });
+  assert.deepEqual(lifecycle.getAppLifecycleStatus(99), { suspend: false, webgl: 0 });
+});
