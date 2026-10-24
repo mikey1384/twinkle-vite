@@ -924,8 +924,8 @@ export function PaperItem({
   );
 }
 
-// The paper's text: <u>…</u> underlines (grammar, vocabulary, referents)
-// and '* word: 뜻' glosses set small and right-aligned below the passage,
+// The paper's text: <u>…</u> underlines (grammar, vocabulary, referents),
+// <b>…</b> bold (GMAT boldface reasoning) and '* word: 뜻' glosses set small and right-aligned below the passage,
 // as the real booklet prints them. Built as elements; never raw HTML.
 function PaperText({ text }: { text: string }) {
   const lines = String(text || '').split('\n');
@@ -935,10 +935,12 @@ function PaperText({ text }: { text: string }) {
     <>
       {body
         .join('\n')
-        .split(/(<u>[\s\S]*?<\/u>)/g)
+        .split(/(<u>[\s\S]*?<\/u>|<b>[\s\S]*?<\/b>)/g)
         .map((part, i) =>
           part.startsWith('<u>') && part.endsWith('</u>') ? (
             <u key={i}>{part.slice(3, -4)}</u>
+          ) : part.startsWith('<b>') && part.endsWith('</b>') ? (
+            <b key={i}>{part.slice(3, -4)}</b>
           ) : (
             <MathText key={i} text={part} />
           )
