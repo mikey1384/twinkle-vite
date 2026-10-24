@@ -110,7 +110,7 @@ test('unseen count is diffed from the newest edge and reset at exact UI scopes',
 test('indicator button takes precedence over go-to-bottom and scrolls on click', () => {
   const buttonBlock =
     displayedMessagesSource.match(
-      /\{unseenMessageCount > 0 \? \([\s\S]*?\) : showGoToBottom \? \(/
+      /unseenMessageCount > 0 \? \([\s\S]*?\) : showGoToBottom \? \(/
     )?.[0] || '';
   assert.match(buttonBlock, /<NewMessagesButton/);
   assert.match(buttonBlock, /count=\{unseenMessageCount\}/);
