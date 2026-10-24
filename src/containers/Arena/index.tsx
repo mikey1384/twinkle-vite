@@ -12,6 +12,7 @@ import Train from './Train';
 import ReviewDeck from './ReviewDeck';
 import Skills from './Skills';
 import Drill from './Drill';
+import Reports from './Reports';
 import { useArenaPaperFonts } from './paperFont';
 import Battles from './Battles';
 import Challenge from './Challenge';
@@ -73,6 +74,8 @@ export default function ArenaPage() {
               activity === 'deck' ||
               activity === 'skills' ||
               activity === 'drill' ||
+              activity === 'score-report' ||
+              activity === 'paper' ||
               challengeId > 0 ||
               !!searchParams.get('records')) &&
               stageTopCls
@@ -113,9 +116,22 @@ export default function ArenaPage() {
             />
           )}
           {view === 'train' &&
-            !['ai-story', 'deck', 'skills', 'drill'].includes(
-              activity || ''
-            ) && (
+            (activity === 'score-report' || activity === 'paper') && (
+              <Reports
+                key={activity}
+                kind={activity === 'paper' ? 'paper' : 'score'}
+                onBack={() => setSearchParams({ mode: 'train' })}
+              />
+            )}
+          {view === 'train' &&
+            ![
+              'ai-story',
+              'deck',
+              'skills',
+              'drill',
+              'score-report',
+              'paper'
+            ].includes(activity || '') && (
               <Train
                 onOpenDeck={() =>
                   setSearchParams({ mode: 'train', play: 'deck' })
@@ -128,6 +144,12 @@ export default function ArenaPage() {
                 }
                 onOpenBattle={(id) =>
                   setSearchParams({ mode: 'train', battle: String(id) })
+                }
+                onOpenScoreReport={() =>
+                  setSearchParams({ mode: 'train', play: 'score-report' })
+                }
+                onOpenPaper={() =>
+                  setSearchParams({ mode: 'train', play: 'paper' })
                 }
               />
             )}
