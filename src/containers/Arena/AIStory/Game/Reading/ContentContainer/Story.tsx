@@ -106,7 +106,8 @@ export default function Story({
 const sheetCls = css`
   width: 100%;
   max-width: 72rem;
-  padding: 2.4rem 2.8rem;
+  /* room at the bottom for the text's copy / read-aloud buttons */
+  padding: 2.4rem 2.8rem 4rem;
   background: ${ARENA.paper};
   color: ${ARENA.ink};
   border: 3px solid ${ARENA.line};

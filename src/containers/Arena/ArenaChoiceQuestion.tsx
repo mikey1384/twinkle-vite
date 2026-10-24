@@ -157,24 +157,36 @@ const choiceCls = css`
     transform 0.1s,
     box-shadow 0.1s,
     background 0.12s;
+  /* hover never repaints the chosen row (white-on-light was unreadable) */
   @media (hover: hover) and (pointer: fine) {
-    &:hover:not(:disabled) {
+    &:hover:not(:disabled):not([aria-pressed='true']) {
       transform: translate(-1px, -1px);
       box-shadow: 3px 3px 0 ${ARENA.line};
       background: #f6f1e4;
     }
+  }
+  &:focus {
+    outline: none;
+  }
+  &:focus-visible {
+    outline: 3px solid ${ARENA.ink};
+    outline-offset: 2px;
   }
   &:disabled {
     cursor: default;
   }
 `;
 
+// the pick reads like a highlighter mark: pale yellow, ink text, the letter
+// inked in (Mikey 10-24: the solid ink block had poor contrast on hover)
 const chosenCls = css`
-  background: ${ARENA.ink};
-  color: #fff;
+  background: #fff1b8;
+  color: ${ARENA.ink};
+  box-shadow: 3px 3px 0 ${ARENA.line};
+  font-weight: 600;
   > span:first-child {
-    background: #fff;
-    color: ${ARENA.ink};
+    background: ${ARENA.ink};
+    color: #fff;
   }
 `;
 
