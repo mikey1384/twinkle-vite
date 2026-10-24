@@ -25,9 +25,15 @@ import type { ArenaBattle, ArenaItem } from './types';
 // Untimed retakes (Train) have no clock. After submitting, the same paper
 // shows the keys and why each answer is right or wrong.
 
-const CIRCLED = ['①', '②', '③', '④', '⑤'];
+const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
 // options heard, not printed (TOSEL): the paper shows bare letters
-const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+// an option's printed marker: (A)-(E) on English-language exams, ①-⑤ on
+// Korean papers (수능 영어 included)
+function optionMarker(index: number, letters: boolean) {
+  return letters ? `(${LETTERS[index]})` : CIRCLED[index];
+}
 // how long the result waits between looks while essays are being marked
 const MARKING_POLL_MS = 4000;
 const MARKING_POLL_LIMIT = 45;
@@ -373,6 +379,7 @@ export default function BattleRunner({
                     passage={passage}
                     marked={answers[item.no] ?? null}
                     allPointTags={data.battle.exam.pointTags === 'all'}
+                    letters={data.battle.exam.optionMarkers === 'letters'}
                     problemLayout={data.battle.exam.layout === 'problem'}
                     finished={finished}
                     reviewLang={reviewLang}
@@ -417,7 +424,26 @@ export default function BattleRunner({
             )}
           >
             {data.items.map((item) => (
-              <div key={item.no} className={omrRowCls}>
+              <div
+                key={item.no}
+                className={omrRowCls}
+                // a matching part's 7-8 options (IELTS, A2 Key) get a bubble
+                // each
+                style={
+                  item.choices.length > 5
+                    ? {
+                        gridTemplateColumns: `${
+                          data.items.some(
+                            (other) => (other.display || '').length > 3
+                          )
+                            ? '4rem'
+                            : '2.6rem'
+                        } repeat(${item.choices.length}, 1fr)`,
+                        gap: '0.1rem'
+                      }
+                    : undefined
+                }
+              >
                 <span className={omrNoCls}>{item.display || item.no}</span>
                 {item.marked ? (
                   // an essay or recording: written on the paper, ticked here
@@ -436,7 +462,11 @@ export default function BattleRunner({
                     typed={item.typed}
                     value={answers[item.no] ?? null}
                     finished={finished}
-                    label={`${item.no}번 답`}
+                    label={
+                      data.battle.exam.optionMarkers === 'letters'
+                        ? `Question ${item.display || item.no} answer`
+                        : `${item.display || item.no}번 답`
+                    }
                     onCommit={(value) => handleMark(item.no, value)}
                   />
                 ) : (
@@ -449,8 +479,9 @@ export default function BattleRunner({
                           key={choice}
                           type="button"
                           disabled={finished}
-                          aria-label={`${item.no}번 ${
-                            item.spokenChoices ? LETTERS[choice] : choice + 1
+                          aria-label={`${item.display || item.no}번 ${
+                            (item.spokenChoices ||
+                              data.battle.exam.optionMarkers === 'letters') ? LETTERS[choice] : choice + 1
                           }`}
                           className={cx(
                             bubbleCls,
@@ -463,7 +494,8 @@ export default function BattleRunner({
                         >
                           {filled
                             ? ''
-                            : item.spokenChoices
+                            : (item.spokenChoices ||
+                              data.battle.exam.optionMarkers === 'letters')
                               ? LETTERS[choice]
                               : choice + 1}
                         </button>
@@ -610,6 +642,7 @@ export function PaperItem({
   reviewLang,
   audioControls,
   allPointTags,
+  letters = false,
   problemLayout = false,
   onMark,
   battleId = 0,
@@ -620,6 +653,8 @@ export function PaperItem({
 }: {
   item: ArenaItem;
   allPointTags: boolean;
+  // (A)-(E) instead of ①-⑤ (English-language exams)
+  letters?: boolean;
   problemLayout?: boolean;
   reviewLang: 'en' | 'ko';
   passage: { kind: string; body: string; audioPath: string | null } | null;
@@ -758,7 +793,12 @@ export function PaperItem({
             typed={item.typed}
             value={marked}
             finished={finished}
-            label={`${item.no}번 답`}
+            prompt={letters ? 'Answer' : '답'}
+            label={
+              letters
+                ? `Question ${item.display || item.no} answer`
+                : `${item.display || item.no}번 답`
+            }
             onCommit={onMark}
           />
         </div>
@@ -794,9 +834,7 @@ export function PaperItem({
                     onClick={() => onMark(chosen ? null : index)}
                   >
                     <span className={circledCls}>
-                      {item.spokenChoices
-                        ? `(${LETTERS[index]})`
-                        : CIRCLED[index]}
+                      {optionMarker(index, letters || !!item.spokenChoices)}
                     </span>
                     {/* a marker choice (the underlined ① of a grammar item) is
                     printed once, as the paper does; spoken options are only
@@ -836,7 +874,7 @@ export function PaperItem({
                   <span className={typedKeyCls}>{String(item.key ?? '')}</span>
                 ) : (
                   <span className={glyphCls}>
-                    {CIRCLED[Number(item.key ?? 0)]}
+                    {optionMarker(Number(item.key ?? 0), letters)}
                   </span>
                 )}
               </>
@@ -864,12 +902,16 @@ export function PaperItem({
               <p>
                 {ko ? (
                   <>
-                    <span className={glyphCls}>{CIRCLED[marked]}</span> 오답
+                    <span className={glyphCls}>
+                      {optionMarker(marked, letters)}
+                    </span> 오답
                     이유:{' '}
                   </>
                 ) : (
                   <>
-                    Why <span className={glyphCls}>{CIRCLED[marked]}</span> is
+                    Why <span className={glyphCls}>
+                      {optionMarker(marked, letters)}
+                    </span> is
                     wrong:{' '}
                   </>
                 )}

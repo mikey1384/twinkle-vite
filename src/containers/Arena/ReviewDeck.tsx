@@ -66,6 +66,7 @@ interface CardView {
     name: string;
     language: 'en' | 'ko';
     pointTags: 'all' | null;
+    optionMarkers?: 'letters' | 'circled';
   } | null;
   passage: { kind: string; body: string; audioPath: string | null } | null;
   item: {
@@ -192,6 +193,7 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
               reviewLang={card.exam?.language || 'ko'}
               audioControls
               allPointTags={false}
+              letters={card.exam?.optionMarkers === 'letters'}
               onMark={(value) => !result && setMarked(value)}
             />
           </div>

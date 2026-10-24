@@ -28,7 +28,12 @@ interface DrillItem {
 }
 
 interface DrillData {
-  exam: { key: string; name: string; language: 'en' | 'ko' };
+  exam: {
+    key: string;
+    name: string;
+    language: 'en' | 'ko';
+    optionMarkers?: 'letters' | 'circled';
+  };
   types: string[];
   example: DrillItem | null;
   items: DrillItem[];
@@ -148,6 +153,7 @@ export default function Drill({
                 reviewLang={drill.exam.language}
                 audioControls
                 allPointTags={false}
+                letters={drill.exam.optionMarkers === 'letters'}
                 onMark={(value) => !result && setMarked(value)}
               />
             </div>

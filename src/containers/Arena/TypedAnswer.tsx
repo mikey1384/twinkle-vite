@@ -12,6 +12,7 @@ export default function TypedAnswer({
   finished,
   label,
   compact,
+  prompt = '답',
   onCommit
 }: {
   typed: 'integer' | 'number' | 'text';
@@ -19,6 +20,8 @@ export default function TypedAnswer({
   finished: boolean;
   label: string;
   compact?: boolean;
+  // the box's printed label: 답 on Korean papers, Answer on English ones
+  prompt?: string;
   onCommit: (value: string | null) => void;
 }) {
   const saved = value == null ? '' : String(value);
@@ -30,7 +33,7 @@ export default function TypedAnswer({
   const numeric = typed === 'number';
   return (
     <span className={cx(wrapCls, compact && compactWrapCls)}>
-      {!compact && <span className={promptCls}>답</span>}
+      {!compact && <span className={promptCls}>{prompt}</span>}
       <input
         className={cx(
           inputCls,
