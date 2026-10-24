@@ -8,6 +8,7 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import type { EarnHubApp } from './useEarnHub';
 import { getRowConditions, getRowPayout, getRowState } from './appCardHelpers';
+import { getAppToday } from './appToday';
 import { useOpenBountyApp, type BountySlot } from './bountyTracking';
 import {
   countRewardRows,
@@ -17,7 +18,7 @@ import {
 
 // Every reward one app pays, in plain words: what it pays, how to earn it
 // (the app's own howTo from rewards.json), how often, and where this member
-// stands on it today, with the app's daily cap and a fair-play note. Opened
+// stands on it today, with the most it can pay today and a fair-play note. Opened
 // from any App Store card; everything shown is the server's Earn hub answer.
 // Long lists read as sections (the app's rule categories) with one row per
 // series of repeat rules (rewardGroups.ts).
@@ -91,8 +92,23 @@ export default function AppRewardsModal({
 }) {
   const openApp = useOpenBountyApp();
   const sectionIdPrefix = useId();
-  const sections = useMemo(() => groupRewardRules(app.rules), [app.rules]);
-  const { budgets, today } = app;
+  // A daily rematch the server says would not pay this member today reads
+  // "Not open today" here, matching the card.
+  const sections = useMemo(
+    () =>
+      groupRewardRules(
+        app.today.rematchOpen === false
+          ? app.rules.map((rule) =>
+              rule.verifier === 'archive-rematch' && !rule.earnedToday
+                ? { ...rule, available: false }
+                : rule
+            )
+          : app.rules
+      ),
+    [app.rules, app.today.rematchOpen]
+  );
+  const { today } = app;
+  const day = getAppToday(app);
   return (
     <Modal
       modalKey="EarnAppRewardsModal"
@@ -128,41 +144,27 @@ export default function AppRewardsModal({
       }
     >
       <div className={bodyClass}>
-        {budgets.userDailyXP > 0 || budgets.userDailyCoins > 0 ? (
+        {day.totalXP > 0 ||
+        day.totalCoins > 0 ||
+        today.xp > 0 ||
+        today.coins > 0 ? (
           <section className={todayClass} aria-label="Today in this app">
             <div className={todayHeadClass}>
               <strong>Today in this app</strong>
-              <span>
-                {today.capReached
-                  ? 'Daily cap reached · back tomorrow'
-                  : today.possible &&
-                      (today.possible.xp || today.possible.coins)
-                    ? `Still up for grabs: ${[
-                        today.possible.xp
-                          ? `${addCommasToNumber(today.possible.xp)} XP`
-                          : '',
-                        today.possible.coins
-                          ? `${addCommasToNumber(today.possible.coins)} Coins`
-                          : ''
-                      ]
-                        .filter(Boolean)
-                        .join(' + ')}`
-                    : ''}
-              </span>
             </div>
-            {budgets.userDailyXP > 0 && (
-              <Meter label="XP" value={today.xp} max={budgets.userDailyXP} />
+            {day.totalXP > 0 && (
+              <Meter label="XP" value={day.earnedXP} max={day.totalXP} />
             )}
-            {budgets.userDailyCoins > 0 && (
+            {day.totalCoins > 0 && (
               <Meter
                 label="Coins"
-                value={today.coins}
-                max={budgets.userDailyCoins}
+                value={day.earnedCoins}
+                max={day.totalCoins}
               />
             )}
             <p className={fineClass}>
-              The daily cap is the most this app can pay you in one day. A new
-              day starts at midnight UTC (9 AM in Korea).
+              That is the most you can earn here today. A new day starts at 9 AM
+              in Korea (midnight UTC).
             </p>
           </section>
         ) : null}

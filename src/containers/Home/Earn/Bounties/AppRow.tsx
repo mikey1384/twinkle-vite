@@ -6,7 +6,7 @@ import { Color, borderRadius } from '~/constants/css';
 import { SITE_NAME } from '~/constants/siteBrand';
 import type { EarnHubApp } from './useEarnHub';
 import {
-  getAppPayout,
+  getAppStatus,
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
@@ -60,9 +60,9 @@ export default function AppRow({ app }: { app: EarnHubApp }) {
             <b>a {SITE_NAME} member</b>
           )}
         </div>
+        <div className={payClass}>{getAppStatus(app).line}</div>
       </div>
       <div className={factsClass}>
-        <span className={payClass}>{getAppPayout(app)}</span>
         {playersLine && <span className={playersClass}>{playersLine}</span>}
         <AppRewardsButton app={app} slot="row" className={rewardsLinkClass} />
       </div>
@@ -140,6 +140,7 @@ const rewardsLinkClass = css`
   align-self: flex-end;
   font-size: 1.2rem;
 `;
+// Today's reward line, under the name as on the cards.
 const payClass = css`
   font-size: 1.3rem;
   font-weight: 800;

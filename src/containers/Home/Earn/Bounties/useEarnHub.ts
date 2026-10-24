@@ -55,6 +55,9 @@ export interface EarnHubApp {
     capReached: boolean;
     // What is still up for grabs here today, within the daily budgets.
     possible?: { xp: number; coins: number };
+    // Whether a right answer to today's daily rematch would still pay this
+    // member; only for apps with an unearned rematch. Older servers leave it out.
+    rematchOpen?: boolean;
   };
   rules: EarnHubRule[];
   // Present once the server ranks the shelf; apps then arrive already sorted

@@ -7,9 +7,7 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import type { EarnHubApp } from './useEarnHub';
 import { SITE_NAME } from '~/constants/siteBrand';
 import {
-  getAppPayout,
   getAppStatus,
-  getAppSubtitle,
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
@@ -51,9 +49,7 @@ export default function AppCard({
   useEffect(() => {
     setFavorited(Boolean(app.isFavorited));
   }, [app.isFavorited]);
-  const payout = getAppPayout(app);
   const status = getAppStatus(app);
-  const subtitle = getAppSubtitle(app);
   const playersLine = rank ? getPlayersLine(app) : '';
   const isNew = Boolean(rank && app.popularity?.isNew);
   return (
@@ -75,11 +71,9 @@ export default function AppCard({
           <span className={monogram}>{app.title.slice(0, 1)}</span>
         )}
         {rank ? <span className={rankBadge}>#{rank}</span> : null}
-        <span className={payPill}>{payout}</span>
       </div>
       <div className={bodyClass}>
         {eyebrow && <div className={eyebrowClass}>{eyebrow}</div>}
-        <div className={payLine}>{payout}</div>
         <h3 className={cx(titleClass, appTitleRowClass)}>
           <span
             className={cx(appTitleTextClass, appOpenTapClass)}
@@ -100,8 +94,7 @@ export default function AppCard({
             </Link>
           ) : (
             <b>a {SITE_NAME} member</b>
-          )}{' '}
-          · {subtitle}
+          )}
         </div>
         {note && <div className={noteClass}>{note}</div>}
         {playersLine && <div className={playersClass}>{playersLine}</div>}
@@ -195,15 +188,6 @@ const actionsClass = css`
     padding: 1rem 0 0;
   }
 `;
-const payLine = css`
-  display: none;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #865910;
-  @media (max-width: ${mobileMaxWidth}) {
-    display: block;
-  }
-`;
 const monogram = css`
   font-size: 4rem;
   @media (max-width: ${mobileMaxWidth}) {
@@ -211,24 +195,6 @@ const monogram = css`
   }
   font-weight: 800;
   color: rgba(255, 255, 255, 0.85);
-`;
-const payPill = css`
-  position: absolute;
-  left: 1rem;
-  bottom: 1rem;
-  max-width: calc(100% - 2rem);
-  background: ${Color.gold(0.95)};
-  color: #5a3d05;
-  border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-  font-size: 1.2rem;
-  font-weight: 800;
-  line-height: 1.3;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  text-align: left;
-  @media (max-width: ${mobileMaxWidth}) {
-    display: none;
-  }
 `;
 const bodyClass = css`
   display: flex;
@@ -279,9 +245,11 @@ const playersClass = css`
   font-weight: 700;
   color: ${Color.logoBlue()};
 `;
+// What this member can earn here today: the card's one reward line.
 const statusClass = css`
   font-size: 1.35rem;
-  color: rgba(15, 23, 42, 0.85);
+  font-weight: 800;
+  color: #865910;
 `;
 const barClass = css`
   height: 0.6rem;

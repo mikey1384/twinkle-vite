@@ -7,9 +7,7 @@ import { Color, borderRadius } from '~/constants/css';
 import { SITE_NAME } from '~/constants/siteBrand';
 import type { EarnHubApp } from './useEarnHub';
 import {
-  getAppPayout,
   getAppStatus,
-  getAppSubtitle,
   getPlayersLine,
   newBadgeClass,
   appTitleRowClass,
@@ -38,7 +36,6 @@ export default function TopPickCard({
   useEffect(() => {
     setFavorited(Boolean(app.isFavorited));
   }, [app.isFavorited]);
-  const payout = getAppPayout(app);
   const status = getAppStatus(app);
   const playersLine = getPlayersLine(app);
   return (
@@ -89,14 +86,14 @@ export default function TopPickCard({
             </Link>
           ) : (
             <b>a {SITE_NAME} member</b>
-          )}{' '}
-          · {getAppSubtitle(app)}
+          )}
         </div>
         {note && <div className={noteClass}>{note}</div>}
-        <div className={pillRowClass}>
-          <span className={payPillClass}>{payout}</span>
-          {playersLine && <span className={playersClass}>{playersLine}</span>}
-        </div>
+        {playersLine && (
+          <div className={pillRowClass}>
+            <span className={playersClass}>{playersLine}</span>
+          </div>
+        )}
         <div className={statusClass}>{status.line}</div>
         <div className={barClass} role="img" aria-label={status.line}>
           <i style={{ width: `${Math.round(status.ratio * 100)}%` }} />
@@ -215,24 +212,17 @@ const pillRowClass = css`
   flex-wrap: wrap;
   gap: 0.6rem 1rem;
 `;
-const payPillClass = css`
-  background: ${Color.gold(0.95)};
-  color: #5a3d05;
-  border-radius: 999px;
-  padding: 0.4rem 1rem;
-  font-size: 1.3rem;
-  font-weight: 800;
-  line-height: 1.3;
-`;
 const playersClass = css`
   font-size: 1.3rem;
   font-weight: 700;
   color: ${Color.logoBlue()};
 `;
+// What this member can earn here today: the card's one reward line.
 const statusClass = css`
   margin-top: 0.4rem;
   font-size: 1.35rem;
-  color: rgba(15, 23, 42, 0.85);
+  font-weight: 800;
+  color: #865910;
 `;
 const barClass = css`
   height: 0.6rem;
