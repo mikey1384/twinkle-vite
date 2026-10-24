@@ -22,6 +22,16 @@ import {
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
 import { useScrollAnchor } from './hooks/useScrollAnchor';
+import {
+  getSavedScrollAnchor,
+  seedSavedScrollAnchor
+} from '~/helpers/hooks/useScrollAnchorRestoration';
+import {
+  HOME_FEED_LIFELINE_ANCHOR_KEY,
+  saveHomeFeedLifeline,
+  saveHomeFeedLifelineAnchor,
+  takeHomeFeedLifeline
+} from '~/helpers/homeFeedLifeline';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { HOME_FEED_PERFORMANCE_FORCE_KEY } from '~/constants/defaultValues';
 import { resetAppShellScroll } from '~/helpers/appShellScroll';
@@ -479,6 +489,44 @@ export default function Stories() {
     feedsReady: loaded && !loadingPosts && feeds?.length > 0
   });
 
+  // Keep the default feed and the viewer's place where a tab reload after a
+  // crash can find them (homeFeedLifeline.ts).
+  const lifelineView =
+    homeFeedAnchorKey === HOME_FEED_LIFELINE_ANCHOR_KEY && loaded && feeds?.length > 0;
+  useEffect(() => {
+    if (!lifelineView) return;
+    const timer = window.setTimeout(() => {
+      saveHomeFeedLifeline(userId, {
+        feeds,
+        loadMoreButton: Boolean(loadMoreButton),
+        feedPaginationCursor
+      });
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [feedPaginationCursor, feeds, lifelineView, loadMoreButton, userId]);
+  useEffect(() => {
+    if (!lifelineView) return;
+    let timer: number | null = null;
+    function saveAnchor() {
+      timer = null;
+      saveHomeFeedLifelineAnchor(
+        userId,
+        getSavedScrollAnchor(HOME_FEED_LIFELINE_ANCHOR_KEY)
+      );
+    }
+    function saveAnchorSoon() {
+      if (timer === null) timer = window.setTimeout(saveAnchor, 1000);
+    }
+    document.addEventListener('scroll', saveAnchorSoon, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener('scroll', saveAnchorSoon, { capture: true });
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        saveAnchor();
+      }
+    };
+  }, [lifelineView, userId]);
+
   useEffect(() => {
     const maxRetries = 3;
     const retryDelay = 1000;
@@ -491,6 +539,19 @@ export default function Stories() {
       if (!mountedRef.current) return;
       const requestUserId = userId;
       if (shouldIgnoreStoryRequest(requestUserId)) return;
+
+      // The tab was reloaded after the browser killed it: put the feed back
+      // where the viewer was instead of starting from the top.
+      const lifeline = attempts === 0 ? takeHomeFeedLifeline(requestUserId) : null;
+      if (lifeline) {
+        categoryRef.current = 'recommended';
+        onChangeCategory('recommended');
+        onChangeSubFilter('all');
+        onResetNumNewPosts();
+        if (lifeline.anchor) seedSavedScrollAnchor(lifeline.anchor);
+        onLoadFeeds(lifeline.page);
+        return;
+      }
 
       setLoadingFeeds(true);
       try {

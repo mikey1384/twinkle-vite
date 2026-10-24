@@ -88,6 +88,16 @@ import {
   shouldRecoverAIImageUnknownOutcome
 } from '~/helpers/aiImageStatus';
 import { isPublicMinecraftRead } from '../helpers/publicMinecraftReads';
+import {
+  appLifecycleKey,
+  isAppClosed,
+  loadAppLifecycleSnapshot,
+  noteAppLifecycleSnapshot,
+  noteAppStarted,
+  registerAppLifecycleFrame,
+  saveAppLifecycleSnapshot,
+  setAppLifecycleStatus
+} from '~/helpers/buildAppLifecycle';
 
 interface ActiveAiImageStatusTarget {
   messageId: string;
@@ -359,6 +369,18 @@ export function useHostBridge({
       }
     );
   }, [mountContext, previewFrameMetaRef, primaryIframeRef, secondaryIframeRef]);
+
+  // KeepAliveHost asks this app for a fresh snapshot before unloading it.
+  useEffect(() => {
+    if (!runtimeOnly || !buildId) return;
+    return registerAppLifecycleFrame(Number(buildId), (reason) => {
+      postToPreviewFrames(primaryIframeRef, secondaryIframeRef, previewFrameMetaRef, {
+        source: 'twinkle-parent',
+        type: 'lifecycle:suspend',
+        payload: { reason }
+      });
+    });
+  }, [buildId, previewFrameMetaRef, primaryIframeRef, runtimeOnly, secondaryIframeRef]);
 
   useEffect(() => {
     if (!launchTargetBroadcastReadyRef.current) {
@@ -2373,6 +2395,7 @@ export function useHostBridge({
           }
 
           case 'init':
+            if (runtimeOnly) noteAppStarted(activeBuild.id);
             response = {
               id: activeBuild.id,
               title: activeBuild.title,
@@ -2381,8 +2404,60 @@ export function useHostBridge({
               mount: mountContextRef.current,
               launchTarget: launchTargetRef.current,
               capabilities: capabilitySnapshotRef.current,
-              explorationPlan: runtimeExplorationPlanRef.current
+              explorationPlan: runtimeExplorationPlanRef.current,
+              // The viewer's saved place in this app (Twinkle.app.lifecycle).
+              // Only the /app runtime resumes; the Build editor's preview
+              // starts fresh so changed code never meets old state.
+              lifecycleResume: runtimeOnly
+                ? await loadAppLifecycleSnapshot(
+                    appLifecycleKey({
+                      userId,
+                      buildId: activeBuild.id,
+                      mount: mountContextRef.current
+                    })
+                  )
+                : null
             };
+            break;
+
+          case 'lifecycle:snapshot': {
+            const state = payload?.state;
+            if (
+              !runtimeOnly ||
+              isAppClosed(activeBuild.id) ||
+              !state ||
+              typeof state !== 'object' ||
+              Array.isArray(state) ||
+              JSON.stringify(state).length > 1_100_000
+            ) {
+              response = { success: false };
+              break;
+            }
+            await saveAppLifecycleSnapshot(
+              appLifecycleKey({
+                userId,
+                buildId: activeBuild.id,
+                mount: mountContextRef.current
+              }),
+              {
+                state,
+                savedAt: Date.now(),
+                reason: String(payload?.reason || '').slice(0, 40)
+              }
+            );
+            noteAppLifecycleSnapshot(activeBuild.id);
+            response = { success: true };
+            break;
+          }
+
+          case 'lifecycle:status':
+            if (runtimeOnly) {
+              setAppLifecycleStatus(activeBuild.id, {
+                suspend: payload?.suspend === true,
+                webgl: Number(payload?.webgl) || 0
+              });
+            }
+            response = { success: true };
             break;
 
           case 'app:navigate': {

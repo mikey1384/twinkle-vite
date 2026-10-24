@@ -855,6 +855,18 @@ function getSavedAnchorRestoreSignature(anchorKey: string) {
   }:${savedAnchor.contentKey || ''}:${savedAnchor.offset}:${savedAnchor.scrollTop}`;
 }
 
+/** A copy of the saved anchor for this key (homeFeedLifeline keeps it). */
+export function getSavedScrollAnchor(anchorKey: string) {
+  const saved = savedScrollAnchors[anchorKey];
+  return saved ? { ...saved } : null;
+}
+
+/** Put back an anchor saved before the tab was reloaded (homeFeedLifeline). */
+export function seedSavedScrollAnchor(anchor: SavedScrollAnchor) {
+  if (!anchor?.anchorKey || savedScrollAnchors[anchor.anchorKey]) return;
+  savedScrollAnchors[anchor.anchorKey] = { ...anchor };
+}
+
 export function clearSavedScrollAnchors(...anchorKeys: string[]) {
   for (const anchorKey of anchorKeys) {
     delete savedScrollAnchors[anchorKey];

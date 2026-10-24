@@ -19,6 +19,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import installSafeHistory from './helpers/installSafeHistory';
 import { markAppScrollOwnershipTaken } from './helpers/scrollAnchorRestorationCoordinator';
 import installDomMutationGuard from './helpers/installDomMutationGuard';
+import { startPageDeathTracker } from './helpers/pageDeathTracker';
 import { registerChatPushServiceWorkerIfEnabled } from './helpers/desktopNotifications';
 import { BrowserRouter } from 'react-router-dom';
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -552,6 +553,7 @@ library.add(
     // sandboxed embeds can block history access
   }
   installDomMutationGuard();
+  startPageDeathTracker();
   registerChatPushServiceWorkerIfEnabled();
 
   const rootElement = document.getElementById('react-view');

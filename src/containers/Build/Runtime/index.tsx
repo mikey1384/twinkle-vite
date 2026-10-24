@@ -2560,7 +2560,7 @@ export default function BuildRuntime({
             {closeConfirmShown ? (
               <ConfirmModal
                 title="Close app"
-                description={`Close ${build.title || 'this app'}? It will stop running.`}
+                description={`Close ${build.title || 'this app'}? It will stop running and start over next time you open it.`}
                 descriptionFontSize="1.7rem"
                 confirmButtonLabel="Close app"
                 confirmButtonColor="rose"
