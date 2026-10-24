@@ -1325,7 +1325,7 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    // Arena (10-24): authentic mock-exam fights
+    // Arena (10-24): authentic mock-exam battles
     async loadArenaState() {
       try {
         const { data } = await request.get(`${URL}/content/arena/state`, auth());
@@ -1334,14 +1334,14 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async startArenaFight(
+    async startArenaBattle(
       target:
         | { examKey: string; length: 'short' | 'medium' | 'full' }
-        | { examKey: string; mode: 'untimed'; sourceFightId: number }
+        | { examKey: string; mode: 'untimed'; sourceBattleId: number }
     ) {
       try {
         const { data } = await request.post(
-          `${URL}/content/arena/fight`,
+          `${URL}/content/arena/battle`,
           target,
           auth()
         );
@@ -1350,10 +1350,10 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadArenaFight(fightId: number) {
+    async loadArenaBattle(battleId: number) {
       try {
         const { data } = await request.get(
-          `${URL}/content/arena/fight/${fightId}`,
+          `${URL}/content/arena/battle/${battleId}`,
           auth()
         );
         return data;
@@ -1362,19 +1362,19 @@ export default function contentRequestHelpers({
       }
     },
     async saveArenaAnswer({
-      fightId,
+      battleId,
       no,
       answer,
       responseMs
     }: {
-      fightId: number;
+      battleId: number;
       no: number;
       answer: number | null;
       responseMs?: number;
     }) {
       try {
         const { data } = await request.post(
-          `${URL}/content/arena/fight/${fightId}/answer`,
+          `${URL}/content/arena/battle/${battleId}/answer`,
           { no, answer, responseMs },
           auth()
         );
@@ -1383,10 +1383,10 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async submitArenaFight(fightId: number) {
+    async submitArenaBattle(battleId: number) {
       try {
         const { data } = await request.post(
-          `${URL}/content/arena/fight/${fightId}/submit`,
+          `${URL}/content/arena/battle/${battleId}/submit`,
           {},
           auth()
         );

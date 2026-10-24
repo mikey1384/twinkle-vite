@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';
-import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
-import ProgressBar from '~/components/ProgressBar';
-import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { ARENA } from '../../theme';
+import ArenaButton from '../../ArenaButton';
+import ArenaLoader from '../../ArenaLoader';
+import ArenaChoiceQuestion from '../../ArenaChoiceQuestion';
 import { wordLevelHash } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import {
@@ -55,9 +55,6 @@ type ResultTone =
   | 'already_collected'
   | 'censored'
   | 'correct';
-
-const funFont =
-  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 export default function VocabQuizModal({
   isOpen,
@@ -251,8 +248,8 @@ export default function VocabQuizModal({
   const loadingText = loading
     ? 'Starting quiz...'
     : waitingForFirstQuestion || waitingForNextQuestion
-    ? 'Generating question...'
-    : null;
+      ? 'Generating question...'
+      : null;
 
   useEffect(() => {
     if (!loadingText) {
@@ -339,8 +336,11 @@ export default function VocabQuizModal({
           flex-direction: column;
           gap: 1.8rem;
           padding: 1.5rem;
-          background: #fff;
-          border-radius: ${borderRadius};
+          background: ${ARENA.paper};
+          color: ${ARENA.ink};
+          border: 3px solid ${ARENA.line};
+          border-radius: 12px;
+          box-shadow: 4px 4px 0 ${ARENA.line};
           width: 100%;
           @media (max-width: ${mobileMaxWidth}) {
             padding: 1rem;
@@ -361,11 +361,10 @@ export default function VocabQuizModal({
                 flex-direction: column;
                 gap: 1.1rem;
                 padding: 1.6rem;
-                border-radius: 1.3rem;
+                border-radius: 12px;
                 background: transparent;
-                border: 1px solid ${Color.borderGray()};
-                font-family: ${funFont};
-                color: ${Color.darkerGray()};
+                border: 2px solid ${ARENA.line};
+                color: ${ARENA.ink};
                 overflow: hidden;
                 @media (max-width: ${mobileMaxWidth}) {
                   padding: 1.2rem;
@@ -384,13 +383,14 @@ export default function VocabQuizModal({
                   className={css`
                     width: 3.2rem;
                     height: 3.2rem;
-                    border-radius: 1rem;
-                    background: ${Color.white(0.9)};
-                    border: 2px solid ${Color.gold(0.5)};
+                    border-radius: 10px;
+                    background: #f2c14e;
+                    border: 2px solid ${ARENA.line};
+                    box-shadow: 2px 2px 0 ${ARENA.line};
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    color: ${Color.gold()};
+                    color: ${ARENA.ink};
                     font-size: 1.4rem;
                   `}
                 >
@@ -399,9 +399,9 @@ export default function VocabQuizModal({
                 <div>
                   <div
                     className={css`
-                      font-size: 1.6rem;
-                      font-weight: 800;
-                      color: ${Color.logoBlue()};
+                      font-size: 1.8rem;
+                      font-weight: 900;
+                      color: ${ARENA.ink};
                       letter-spacing: 0.04rem;
                     `}
                   >
@@ -411,7 +411,7 @@ export default function VocabQuizModal({
                     className={css`
                       font-size: 1.1rem;
                       font-weight: 600;
-                      color: ${Color.darkGray()};
+                      color: ${ARENA.inkSoft};
                     `}
                   >
                     AI Story vocab complete
@@ -421,9 +421,10 @@ export default function VocabQuizModal({
                   className={css`
                     margin-left: auto;
                     padding: 0.6rem 0.9rem;
-                    border-radius: 0.9rem;
-                    background: transparent;
-                    border: 1px solid ${Color.logoBlue(0.25)};
+                    border-radius: 10px;
+                    background: ${ARENA.ink};
+                    color: #fff;
+                    border: 2px solid ${ARENA.line};
                     text-align: center;
                     min-width: 7rem;
                     @media (max-width: ${mobileMaxWidth}) {
@@ -435,7 +436,7 @@ export default function VocabQuizModal({
                     className={css`
                       font-size: 1.8rem;
                       font-weight: 900;
-                      color: ${Color.logoBlue()};
+                      color: #fff;
                     `}
                   >
                     {correctCount}/{totalTarget}
@@ -444,7 +445,7 @@ export default function VocabQuizModal({
                     className={css`
                       font-size: 1.1rem;
                       font-weight: 700;
-                      color: ${Color.darkGray()};
+                      color: #fff;
                     `}
                   >
                     Correct
@@ -459,10 +460,10 @@ export default function VocabQuizModal({
                     align-items: center;
                     gap: 0.6rem;
                     padding: 0.6rem 0.8rem;
-                    border-radius: 0.8rem;
-                    background: transparent;
-                    border: 1px solid ${Color.rose(0.3)};
-                    color: ${Color.rose()};
+                    border-radius: 8px;
+                    background: #fbe0dc;
+                    border: 2px solid ${ARENA.line};
+                    color: ${ARENA.accent};
                     font-size: 1.1rem;
                     font-weight: 700;
                   `}
@@ -491,9 +492,10 @@ export default function VocabQuizModal({
                       align-items: center;
                       gap: 0.4rem;
                       padding: 0.9rem;
-                      border-radius: 1rem;
-                      background: transparent;
-                      border: 1px solid ${toneColors.border};
+                      border-radius: 10px;
+                      background: #fff;
+                      border: 2px solid ${ARENA.line};
+                      box-shadow: 3px 3px 0 ${ARENA.line};
                       text-align: center;
                     `}
                   >
@@ -501,9 +503,9 @@ export default function VocabQuizModal({
                       className={css`
                         width: 2.4rem;
                         height: 2.4rem;
-                        border-radius: 0.8rem;
+                        border-radius: 50%;
                         background: ${toneColors.soft};
-                        border: 1px dashed ${toneColors.border};
+                        border: 2px solid ${ARENA.line};
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -525,8 +527,8 @@ export default function VocabQuizModal({
                     <div
                       className={css`
                         font-size: 1.1rem;
-                        font-weight: 700;
-                        color: ${Color.darkerGray()};
+                        font-weight: 900;
+                        color: ${ARENA.ink};
                         text-transform: uppercase;
                         letter-spacing: 0.05rem;
                       `}
@@ -549,9 +551,9 @@ export default function VocabQuizModal({
             >
               <div
                 className={css`
-                  font-size: 1.2rem;
-                  font-weight: 800;
-                  color: ${Color.darkerGray()};
+                  font-size: 1.4rem;
+                  font-weight: 900;
+                  color: ${ARENA.ink};
                 `}
               >
                 Quiz Logbook
@@ -576,17 +578,10 @@ export default function VocabQuizModal({
                         gap: 0.4rem;
                         padding: 0.35rem 0.8rem;
                         border-radius: 999px;
-                        border: 1px solid
-                          ${isActive
-                            ? Color.logoBlue(0.35)
-                            : Color.borderGray()};
-                        background: ${isActive
-                          ? Color.logoBlue(0.12)
-                          : Color.white()};
-                        color: ${isActive
-                          ? Color.logoBlue()
-                          : Color.darkGray()};
-                        font-weight: 700;
+                        border: 2px solid ${ARENA.line};
+                        background: ${isActive ? ARENA.ink : '#fff'};
+                        color: ${isActive ? '#fff' : ARENA.ink};
+                        font-weight: 800;
                         font-size: 1.1rem;
                         cursor: pointer;
                       `}
@@ -596,10 +591,10 @@ export default function VocabQuizModal({
                         className={css`
                           padding: 0 0.45rem;
                           border-radius: 999px;
-                          background: ${Color.white()};
-                          border: 1px solid ${Color.borderGray()};
+                          background: #fff;
+                          border: 1px solid ${ARENA.line};
                           font-size: 1.1rem;
-                          color: ${Color.darkGray()};
+                          color: ${ARENA.ink};
                         `}
                       >
                         {tab.count}
@@ -613,9 +608,9 @@ export default function VocabQuizModal({
             <div
               className={css`
                 padding: 1rem;
-                border-radius: 1.2rem;
-                border: 1px solid ${Color.borderGray()};
-                background: transparent;
+                border-radius: 12px;
+                border: 2px solid ${ARENA.line};
+                background: #fff;
               `}
             >
               <div
@@ -630,7 +625,7 @@ export default function VocabQuizModal({
                   className={css`
                     font-size: 1.1rem;
                     font-weight: 700;
-                    color: ${Color.darkerGray()};
+                    color: ${ARENA.ink};
                   `}
                 >
                   Words
@@ -638,7 +633,7 @@ export default function VocabQuizModal({
                 <div
                   className={css`
                     font-size: 1.1rem;
-                    color: ${Color.gray()};
+                    color: ${ARENA.inkSoft};
                     font-weight: 600;
                   `}
                 >
@@ -674,7 +669,7 @@ export default function VocabQuizModal({
                           flex-direction: column;
                           gap: 0.5rem;
                           padding: 0.6rem 0;
-                          border-bottom: 1px solid ${Color.borderGray()};
+                          border-bottom: 2px dashed ${ARENA.inkSoft};
 
                           &:last-child {
                             border-bottom: none;
@@ -726,7 +721,7 @@ export default function VocabQuizModal({
                             <span
                               className={css`
                                 font-size: 1.1rem;
-                                color: ${Color.darkGray()};
+                                color: ${ARENA.inkSoft};
                                 line-height: 1.3;
                                 display: -webkit-box;
                                 -webkit-line-clamp: 2;
@@ -747,7 +742,7 @@ export default function VocabQuizModal({
                   className={css`
                     padding: 1.4rem 0;
                     text-align: center;
-                    color: ${Color.gray()};
+                    color: ${ARENA.inkSoft};
                     font-weight: 600;
                   `}
                 >
@@ -766,22 +761,7 @@ export default function VocabQuizModal({
               padding: 2rem;
             `}
           >
-            <div
-              className={css`
-                font-size: 1.6rem;
-                font-weight: 600;
-                color: ${Color.darkerGray()};
-                margin-bottom: 1.5rem;
-                text-align: center;
-              `}
-            >
-              {loadingText}
-            </div>
-            <ProgressBar
-              progress={mockProgress}
-              text=""
-              style={{ width: '80%', margin: '0 auto' }}
-            />
+            <ArenaLoader text={loadingText} progress={mockProgress} />
           </div>
         ) : loadError ? (
           <div
@@ -799,15 +779,15 @@ export default function VocabQuizModal({
               icon="exclamation-circle"
               style={{
                 fontSize: '3rem',
-                color: Color.orange(),
+                color: ARENA.coral,
                 marginBottom: '1rem'
               }}
             />
             <div
               className={css`
-                font-size: 1.5rem;
-                font-weight: 600;
-                color: ${Color.darkerGray()};
+                font-size: 1.6rem;
+                font-weight: 900;
+                color: ${ARENA.ink};
               `}
             >
               Couldn't start the quiz
@@ -815,7 +795,7 @@ export default function VocabQuizModal({
             <div
               className={css`
                 font-size: 1.2rem;
-                color: ${Color.gray()};
+                color: ${ARENA.inkSoft};
                 margin-top: 0.5rem;
               `}
             >
@@ -824,7 +804,7 @@ export default function VocabQuizModal({
             <div
               className={css`
                 font-size: 1.2rem;
-                color: ${Color.gray()};
+                color: ${ARENA.inkSoft};
                 margin-top: 0.5rem;
               `}
             >
@@ -836,13 +816,13 @@ export default function VocabQuizModal({
             <section
               className={css`
                 padding: 1.4rem 1.6rem;
-                border-radius: 1.2rem;
-                background: ${Color.white()};
-                border: 1px solid ${Color.borderGray()};
+                border-radius: 12px;
+                background: #fff;
+                border: 2px solid ${ARENA.line};
                 display: flex;
                 flex-direction: column;
                 gap: 1rem;
-                box-shadow: 0 10px 24px ${Color.black(0.06)};
+                box-shadow: 4px 4px 0 ${ARENA.line};
               `}
             >
               <div
@@ -854,20 +834,23 @@ export default function VocabQuizModal({
               >
                 <div
                   className={css`
-                    width: 0.7rem;
+                    width: 0.9rem;
                     height: 2.6rem;
                     border-radius: 999px;
-                    background: ${currentQuestion.status === 'discoverable'
-                      ? Color.gold()
-                      : Color.green()};
+                    border: 2px solid ${ARENA.line};
+                    background: ${
+                      currentQuestion.status === 'discoverable'
+                        ? '#f2c14e'
+                        : ARENA.train
+                    };
                     margin-top: 0.2rem;
                   `}
                 />
                 <div
                   className={css`
-                    font-size: 1.6rem;
-                    font-weight: 700;
-                    color: ${Color.darkerGray()};
+                    font-size: 1.8rem;
+                    font-weight: 900;
+                    color: ${ARENA.ink};
                   `}
                 >
                   AI Story Vocabulary
@@ -879,13 +862,13 @@ export default function VocabQuizModal({
               <section
                 className={css`
                   padding: 1.2rem;
-                  border-radius: 1.2rem;
-                  background: ${Color.rose(0.08)};
-                  border: 1px solid ${Color.rose(0.25)};
+                  border-radius: 12px;
+                  background: #fbe0dc;
+                  border: 2px solid ${ARENA.line};
                   display: flex;
                   align-items: center;
                   gap: 0.8rem;
-                  box-shadow: 0 10px 20px ${Color.black(0.04)};
+                  box-shadow: 4px 4px 0 ${ARENA.line};
                 `}
               >
                 <div
@@ -893,11 +876,12 @@ export default function VocabQuizModal({
                     width: 3rem;
                     height: 3rem;
                     border-radius: 50%;
-                    background: ${Color.rose(0.15)};
+                    background: ${ARENA.accent};
+                    border: 2px solid ${ARENA.line};
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    color: ${Color.rose()};
+                    color: #fff;
                     flex-shrink: 0;
                   `}
                 >
@@ -907,8 +891,8 @@ export default function VocabQuizModal({
                   <div
                     className={css`
                       font-size: 1.3rem;
-                      font-weight: 700;
-                      color: ${Color.rose()};
+                      font-weight: 900;
+                      color: ${ARENA.accent};
                     `}
                   >
                     Word Master blocked
@@ -916,7 +900,7 @@ export default function VocabQuizModal({
                   <div
                     className={css`
                       font-size: 1.15rem;
-                      color: ${Color.darkerGray()};
+                      color: ${ARENA.ink};
                       margin-top: 0.2rem;
                     `}
                   >
@@ -931,18 +915,18 @@ export default function VocabQuizModal({
               {...{ [WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE]: 'aiStoryVocabQuiz' }}
               className={css`
                 padding: 1.8rem;
-                border-radius: 1.2rem;
-                border: 1px solid ${Color.borderGray()};
-                background: ${Color.white()};
+                border-radius: 12px;
+                border: 3px solid ${ARENA.line};
+                background: ${ARENA.paper};
                 display: flex;
                 flex-direction: column;
                 gap: 1.4rem;
-                box-shadow: 0 10px 20px ${Color.black(0.04)};
+                box-shadow: 4px 4px 0 ${ARENA.line};
               `}
             >
               {renderStatusMessage()}
 
-              <MultipleChoiceQuestion
+              <ArenaChoiceQuestion
                 question={
                   <SanitizedHTML
                     allowedAttributes={{ b: ['style'] }}
@@ -954,7 +938,6 @@ export default function VocabQuizModal({
                 selectedChoiceIndex={gradedSelectedIndex}
                 answerIndex={Number(answerResult?.answerIndex || 0)}
                 onSelectChoice={handleSelectChoice}
-                allowReselect={false}
               />
             </section>
           </>
@@ -974,15 +957,15 @@ export default function VocabQuizModal({
               icon="check-circle"
               style={{
                 fontSize: '3rem',
-                color: Color.green(),
+                color: ARENA.train,
                 marginBottom: '1rem'
               }}
             />
             <div
               className={css`
-                font-size: 1.5rem;
-                font-weight: 600;
-                color: ${Color.darkerGray()};
+                font-size: 1.6rem;
+                font-weight: 900;
+                color: ${ARENA.ink};
               `}
             >
               No words to collect
@@ -990,7 +973,7 @@ export default function VocabQuizModal({
             <div
               className={css`
                 font-size: 1.2rem;
-                color: ${Color.gray()};
+                color: ${ARENA.inkSoft};
                 margin-top: 0.5rem;
               `}
             >
@@ -1004,46 +987,49 @@ export default function VocabQuizModal({
             display: flex;
             justify-content: ${showResults ? 'center' : 'flex-end'};
             gap: 1rem;
-            border-top: 1px solid ${Color.borderGray()};
+            border-top: 3px solid ${ARENA.line};
             padding-top: 1.5rem;
           `}
         >
           {showResults ? (
             <>
-              <Button variant="ghost" onClick={onClose}>
+              <ArenaButton tone="paper" size="md" onClick={onClose}>
                 Close
-              </Button>
-              <GameCTAButton
-                variant="gold"
-                icon="keyboard"
-                shiny
+              </ArenaButton>
+              <ArenaButton
+                tone="gold"
+                size="md"
                 onClick={() => {
                   onClose();
                   navigate('/chat/vocabulary');
                 }}
               >
+                <Icon icon="keyboard" />
                 Word Master
-              </GameCTAButton>
+              </ArenaButton>
             </>
           ) : (
             <>
-              <Button
-                variant="ghost"
+              <ArenaButton
+                tone="paper"
+                size="md"
                 onClick={onClose}
                 disabled={submitting || loadingNextQuestion}
               >
                 Close
-              </Button>
-              <GameCTAButton
-                variant="success"
-                icon={isLastQuestion ? 'check' : 'arrow-right'}
-                shiny
+              </ArenaButton>
+              <ArenaButton
+                tone="train"
+                size="md"
                 onClick={handleNext}
                 disabled={!answerResult || submitting || loadingNextQuestion}
                 loading={loadingNextQuestion}
               >
+                {!loadingNextQuestion && (
+                  <Icon icon={isLastQuestion ? 'check' : 'arrow-right'} />
+                )}
                 {isLastQuestion ? 'Finish' : 'Next Word'}
-              </GameCTAButton>
+              </ArenaButton>
             </>
           )}
         </div>
@@ -1060,11 +1046,12 @@ export default function VocabQuizModal({
     ) {
       const isDiscovered = answerResult.discovered;
       const word = answerResult?.word || '';
-      const wordLevel = answerResult?.wordLevel || currentQuestion?.wordLevel || 3;
+      const wordLevel =
+        answerResult?.wordLevel || currentQuestion?.wordLevel || 3;
       const levelInfo = wordLevelHash[wordLevel] || wordLevelHash[3];
       const wordColor =
         Color[levelInfo.color as keyof typeof Color]?.() || Color.orange();
-      const actionColor = isDiscovered ? Color.gold() : Color.green();
+      const actionColor = isDiscovered ? '#b8860b' : ARENA.train;
 
       return (
         <div
@@ -1091,11 +1078,13 @@ export default function VocabQuizModal({
           className={css`
             font-size: 1.2rem;
             font-weight: 700;
-            color: ${statusTone === 'error'
-              ? Color.rose()
-              : statusTone === 'warning'
-              ? Color.orange()
-              : Color.green()};
+            color: ${
+              statusTone === 'error'
+                ? ARENA.accent
+                : statusTone === 'warning'
+                  ? ARENA.coral
+                  : ARENA.train
+            };
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -1106,8 +1095,8 @@ export default function VocabQuizModal({
               statusTone === 'error'
                 ? 'times-circle'
                 : statusTone === 'warning'
-                ? 'exclamation-circle'
-                : 'check-circle'
+                  ? 'exclamation-circle'
+                  : 'check-circle'
             }
           />
           {statusMessage}
@@ -1159,8 +1148,8 @@ export default function VocabQuizModal({
               (result.blocked
                 ? 'Correct (blocked)'
                 : result.alreadyCollected
-                ? 'Already collected'
-                : 'Cannot collect');
+                  ? 'Already collected'
+                  : 'Cannot collect');
             setStatusMessage(message);
             setStatusTone('warning');
           } else if (result.collected || result.discovered) {
@@ -1226,50 +1215,23 @@ interface ResultMeta {
   note?: string;
 }
 
+// Arena palette (Mikey 10-24): a solid tone for the number, a light fill for the chip
 function getToneColors(tone: ResultTone): ToneColors {
   switch (tone) {
     case 'collected':
-      return {
-        color: Color.green(),
-        soft: Color.green(0.12),
-        border: Color.green(0.35)
-      };
+      return { color: ARENA.train, soft: '#dff2e3', border: ARENA.line };
     case 'discovered':
-      return {
-        color: Color.gold(),
-        soft: Color.gold(0.16),
-        border: Color.gold(0.4)
-      };
+      return { color: '#b8860b', soft: '#fbeec4', border: ARENA.line };
     case 'blocked':
-      return {
-        color: Color.orange(),
-        soft: Color.orange(0.14),
-        border: Color.orange(0.4)
-      };
+      return { color: ARENA.coral, soft: '#fde3d8', border: ARENA.line };
     case 'already_collected':
-      return {
-        color: Color.logoBlue(),
-        soft: Color.logoBlue(0.12),
-        border: Color.logoBlue(0.35)
-      };
+      return { color: ARENA.sky, soft: '#dcecfa', border: ARENA.line };
     case 'censored':
-      return {
-        color: Color.darkGray(),
-        soft: Color.borderGray(0.2),
-        border: Color.gray(0.4)
-      };
+      return { color: ARENA.inkSoft, soft: '#ece8de', border: ARENA.line };
     case 'missed':
-      return {
-        color: Color.rose(),
-        soft: Color.rose(0.12),
-        border: Color.rose(0.35)
-      };
+      return { color: ARENA.accent, soft: '#fbe0dc', border: ARENA.line };
     default:
-      return {
-        color: Color.logoBlue(),
-        soft: Color.logoBlue(0.12),
-        border: Color.logoBlue(0.35)
-      };
+      return { color: ARENA.ink, soft: '#f4efe4', border: ARENA.line };
   }
 }
 

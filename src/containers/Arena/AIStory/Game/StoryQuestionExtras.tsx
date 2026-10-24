@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { ARENA } from '../../theme';
 
 // AI Story v2 (10-06): questions name the reading skill they test, Level 1–2
 // add unscored bonus questions, and after grading each question shows why its
@@ -76,8 +76,9 @@ export function StoryScoreLine({
     <div style={{ textAlign: 'center' }}>
       <div
         style={{
-          color: isPassed ? Color.green() : '',
-          fontWeight: isPassed ? 'bold' : ''
+          color: isPassed ? ARENA.train : ARENA.ink,
+          fontWeight: 900,
+          fontSize: '2.2rem'
         }}
       >
         {numCorrect} / {total} correct
@@ -92,37 +93,43 @@ export function StoryScoreLine({
   );
 }
 
+// Arena look (Mikey 10-24): the skill as a small ink tag over the question
 const labelCls = css`
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.6rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
+  margin-bottom: 0.7rem;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: ${Color.logoBlue()};
+  color: ${ARENA.inkSoft};
 `;
 
 const bonusCls = css`
   flex-shrink: 0;
   white-space: nowrap;
   padding: 0.1rem 0.6rem;
+  border: 2px solid ${ARENA.line};
   border-radius: 999px;
-  background: ${Color.gold(0.18)};
-  color: ${Color.darkerGray()};
+  background: #f2c14e;
+  color: ${ARENA.ink};
   text-transform: none;
   letter-spacing: 0;
   font-weight: 700;
 `;
 
 const noteCls = css`
-  margin-top: 1rem;
-  padding: 0.8rem 1rem;
-  border-left: 4px solid ${Color.logoBlue()};
-  background: ${Color.wellGray(0.5)};
-  border-radius: 8px;
-  color: ${Color.darkerGray()};
+  width: 100%;
+  max-width: 72rem;
+  margin: 1rem auto 0;
+  padding: 1rem 1.2rem;
+  border: 2px solid ${ARENA.line};
+  border-left-width: 6px;
+  background: ${ARENA.paper};
+  border-radius: 10px;
+  color: ${ARENA.ink};
   font-size: 1.35rem;
   line-height: 1.5;
 `;
@@ -130,12 +137,13 @@ const noteCls = css`
 const quoteCls = css`
   margin: 0.5rem 0 0;
   padding-left: 0.8rem;
-  border-left: 2px solid var(--ui-border);
+  border-left: 2px solid ${ARENA.inkSoft};
   font-style: italic;
 `;
 
 const bonusLineCls = css`
   margin-top: 0.4rem;
   font-size: 1.3rem;
-  color: ${Color.darkerGray()};
+  font-weight: 700;
+  color: ${ARENA.inkSoft};
 `;

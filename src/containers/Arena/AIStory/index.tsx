@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import Icon from '~/components/Icon';
-import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import Rankings from './Rankings';
 import Button from '~/components/Button';
@@ -13,6 +12,8 @@ import { useAppContext, useNotiContext, useViewContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus, sleep } from '~/helpers';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import { mobileMaxWidth } from '~/constants/css';
+import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
+import { ARENA } from '../theme';
 
 interface AIStoryClearFollowUp {
   storyId: number;
@@ -134,19 +135,19 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
 
   return (
     <ErrorBoundary componentPath="Arena/AIStory">
-      <div className={panelCls}>
+      <div className={cx(panelCls, isGameStarted && playingCls)}>
         <div className={panelBarCls}>
           <button
             type="button"
             className={backCls}
             onClick={handleHide}
-            disabled={isCloseLocked && activeTab === 'game'}
             aria-label="Back to Train"
           >
             <Icon icon="arrow-left" />
             <span>Train</span>
           </button>
           <span className={titleCls}>AI Story</span>
+          <span className={trainTagCls}>Train</span>
         </div>
         <div
           style={{
@@ -157,25 +158,20 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
           }}
         >
           {!isGameStarted && !AI_FEATURES_DISABLED ? (
-            <FilterBar
-              style={{
-                height: '6rem',
-                marginBottom: 0
-              }}
-            >
-              <nav
-                className={activeTab === 'game' ? 'active' : ''}
-                onClick={() => setActiveTab('game')}
-              >
-                Game
-              </nav>
-              <nav
-                className={activeTab === 'rankings' ? 'active' : ''}
-                onClick={() => setActiveTab('rankings')}
-              >
-                Rankings
-              </nav>
-            </FilterBar>
+            <div className={tabsCls} role="tablist">
+              {(['game', 'rankings'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab}
+                  className={cx(tabCls, activeTab === tab && tabActiveCls)}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab === 'game' ? 'Game' : 'Rankings'}
+                </button>
+              ))}
+            </div>
           ) : null}
           <div
             style={{
@@ -214,9 +210,9 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
                   {aiStoryUnavailableCleared
                     ? 'AI Story is marked complete for today so your Daily Tasks streak is protected.'
                     : aiStoryTaskDone
-                    ? 'AI Story is already complete for today.'
-                    : unavailableActionMessage ||
-                      "Press the button below to preserve today's Daily Tasks streak while AI Story is unavailable."}
+                      ? 'AI Story is already complete for today.'
+                      : unavailableActionMessage ||
+                        "Press the button below to preserve today's Daily Tasks streak while AI Story is unavailable."}
                 </div>
                 <Button
                   color="logoBlue"
@@ -438,7 +434,9 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
       if (result?.dailyTaskStatus) {
         setDailyTask(result.dailyTaskStatus.aiStory || null);
         onApplyTodayStatsProgress({
-          newStats: buildTodayStatsPatchFromDailyTaskStatus(result.dailyTaskStatus)
+          newStats: buildTodayStatsPatchFromDailyTaskStatus(
+            result.dailyTaskStatus
+          )
         });
         setUnavailableActionMessage(
           'AI Story was marked complete for Daily Tasks streak preservation.'
@@ -460,7 +458,9 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
 
   function handleHide() {
     if (usermenuShown) return;
-    if (isGameStarted && !solveObj.isGraded) {
+    // a story in progress is never a trap (Mikey 10-24): leaving is always
+    // allowed, with a warning that the story and its progress will be lost
+    if (isCloseLocked || (isGameStarted && !solveObj.isGraded)) {
       setShowConfirm(true);
     } else {
       onHide();
@@ -475,22 +475,29 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
 
 // the old modal was 80vh tall; on the page the panel takes the room below the
 // back bar and scrolls inside, like the modal body did
+// Arena's paper card (Mikey 10-24: AI Story takes the Arena look)
 const panelCls = css`
   width: 100%;
-  max-width: 960px;
+  max-width: 1100px;
   margin: 0 auto;
-  height: calc(100dvh - 15rem);
-  min-height: 52rem;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border: 1px solid var(--ui-border);
-  border-radius: 16px;
+  background: ${ARENA.paper};
+  color: ${ARENA.ink};
+  border: 3px solid ${ARENA.line};
+  border-radius: 14px;
+  box-shadow: 5px 5px 0 ${ARENA.line};
   overflow: hidden;
+`;
+
+// a story in play fills the screen and scrolls inside; the menu hugs its
+// content
+const playingCls = css`
+  height: calc(100dvh - ${APP_SHELL_HEADER_OFFSET_STYLE} - 5rem);
+  min-height: 52rem;
   @media (max-width: ${mobileMaxWidth}) {
     height: auto;
     min-height: calc(100dvh - 20rem);
-    border-radius: 12px;
   }
 `;
 
@@ -498,8 +505,8 @@ const panelBarCls = css`
   display: flex;
   align-items: center;
   gap: 1.2rem;
-  padding: 0.8rem 1.2rem;
-  border-bottom: 1px solid var(--ui-border);
+  padding: 0.9rem 1.4rem;
+  border-bottom: 3px solid ${ARENA.line};
 `;
 
 const backCls = css`
@@ -508,13 +515,13 @@ const backCls = css`
   gap: 0.6rem;
   border: none;
   background: none;
-  color: #555;
+  color: ${ARENA.inkSoft};
   font-size: 1.4rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   padding: 0.4rem 0;
   &:hover:not(:disabled) {
-    color: #222;
+    color: ${ARENA.ink};
   }
   &:disabled {
     opacity: 0.4;
@@ -523,6 +530,41 @@ const backCls = css`
 `;
 
 const titleCls = css`
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 900;
+`;
+
+const trainTagCls = css`
+  margin-left: auto;
+  padding: 0.2rem 0.8rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 6px;
+  background: ${ARENA.train};
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+`;
+
+const tabsCls = css`
+  display: flex;
+  gap: 1rem;
+  padding: 1.2rem 1.4rem 0;
+`;
+
+const tabCls = css`
+  padding: 0.6rem 1.6rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 999px;
+  background: ${ARENA.paper};
+  color: ${ARENA.ink};
+  font-size: 1.4rem;
+  font-weight: 800;
+  cursor: pointer;
+`;
+
+const tabActiveCls = css`
+  background: ${ARENA.ink};
+  color: #fff;
 `;

@@ -1,8 +1,15 @@
 export interface ArenaExamSummary {
   key: string;
+  // boss codename, e.g. H3-3 with label 수능
+  code: string;
+  codeLabel: string | null;
   name: string;
   nameEn: string;
-  lengths: { length: 'short' | 'medium' | 'full'; items: number; minutes: number }[];
+  lengths: {
+    length: 'short' | 'medium' | 'full';
+    items: number;
+    minutes: number;
+  }[];
 }
 
 export interface ArenaGradeEstimate {
@@ -12,11 +19,11 @@ export interface ArenaGradeEstimate {
   probability: number;
 }
 
-export interface ArenaFightSummary {
+export interface ArenaBattleSummary {
   id: number;
   examKey: string;
   length: 'short' | 'medium' | 'full';
-  mode: 'fight' | 'untimed';
+  mode: 'battle' | 'untimed';
   status: 'open' | 'grading' | 'finished' | 'abandoned';
   rawPoints: number | null;
   maxPoints: number | null;
@@ -34,9 +41,9 @@ export interface ArenaFightSummary {
 
 export interface ArenaState {
   exams: ArenaExamSummary[];
-  recent: ArenaFightSummary[];
-  paidFightsToday: number;
-  paidFightsPerDay: number;
+  recent: ArenaBattleSummary[];
+  paidBattlesToday: number;
+  paidBattlesPerDay: number;
 }
 
 export interface ArenaItem {
@@ -49,6 +56,7 @@ export interface ArenaItem {
   plays?: number;
   stem: string;
   body?: string;
+  visual?: Record<string, unknown>;
   choices: string[];
   answer: number | null;
   key?: number;
@@ -56,13 +64,24 @@ export interface ArenaItem {
   review?: { explanation: string; evidence?: string; why?: string[] };
 }
 
-export interface ArenaFight {
-  fight: ArenaFightSummary & {
-    exam: { key: string; name: string; nameEn: string; choices: number };
+export interface ArenaBattle {
+  battle: ArenaBattleSummary & {
+    exam: {
+      key: string;
+      code: string;
+      codeLabel: string | null;
+      name: string;
+      nameEn: string;
+      choices: number;
+      gradeLabels?: string[] | null;
+    };
     minutes: number | null;
     deadlineAt: number | null;
     serverNow: number;
   };
-  passages: Record<string, { kind: string; body: string; audioPath: string | null }>;
+  passages: Record<
+    string,
+    { kind: string; body: string; audioPath: string | null }
+  >;
   items: ArenaItem[];
 }

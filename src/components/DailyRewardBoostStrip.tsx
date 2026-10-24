@@ -1105,9 +1105,9 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
   };
 }
 
-// The A goal is Arena (Mikey 10-24). Until fights exist its only route is
+// The A goal is Arena (Mikey 10-24). Until battles exist its only route is
 // Train's AI Story, so the row keeps AI Story's targets under the Arena label.
-function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
+export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
   if (isLoading) {
     return buildLoadingRow({
       label: 'Arena',
@@ -1245,6 +1245,6 @@ export function getBoostStreakMultiplier(streak: any) {
   return Math.min(Math.floor(Math.max(appliedStreak - 1, 0) / 10) + 2, 10);
 }
 
-function formatMultiplier(value: number) {
+export function formatMultiplier(value: number) {
   return `${Number(value.toFixed(2))}`;
 }

@@ -1,21 +1,22 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
+import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import ModeChooser from './ModeChooser';
 import Train from './Train';
-import Fights from './Fights';
+import Battles from './Battles';
 import AIStory from './AIStory';
-import FightRunner from './FightRunner';
+import BattleRunner from './BattleRunner';
 import { ARENA } from './theme';
 
 // /arena: the "A" of the daily goals (Mikey 2026-10-24). Train on the left
-// holds everything that is not a real fight (AI Story, review, untimed
-// retakes, boss prep); Arena on the right holds only real fights, authentic
+// holds everything that is not a real battle (AI Story, review, untimed
+// retakes, boss prep); Arena on the right holds only real battles, authentic
 // mock exams under their real conditions. Like Grammarbles and Daily
 // Reflection, a page with two covers instead of a modal.
 
@@ -29,7 +30,7 @@ export default function ArenaPage() {
   const view: View =
     rawView === 'train' || rawView === 'arena' ? rawView : 'choose';
   const activity = view === 'train' ? searchParams.get('play') : null;
-  const fightId = Number(searchParams.get('fight')) || 0;
+  const battleId = Number(searchParams.get('battle')) || 0;
 
   if (!userId) {
     return <HomeLoginPrompt message="Log in to enter the Arena" />;
@@ -57,7 +58,7 @@ export default function ArenaPage() {
           </div>
         )}
 
-        <main className={stageCls}>
+        <main className={cx(stageCls, activity === 'ai-story' && stageTopCls)}>
           {view === 'choose' && <ModeChooser onPick={openView} />}
           {view === 'train' && activity === 'ai-story' && (
             <AIStory onHide={() => setSearchParams({ mode: 'train' })} />
@@ -67,22 +68,22 @@ export default function ArenaPage() {
               onPlayAIStory={() =>
                 setSearchParams({ mode: 'train', play: 'ai-story' })
               }
-              onOpenFight={(id) =>
-                setSearchParams({ mode: 'train', fight: String(id) })
+              onOpenBattle={(id) =>
+                setSearchParams({ mode: 'train', battle: String(id) })
               }
             />
           )}
           {view === 'arena' && (
-            <Fights
+            <Battles
               onStart={(id) =>
-                setSearchParams({ mode: 'arena', fight: String(id) })
+                setSearchParams({ mode: 'arena', battle: String(id) })
               }
             />
           )}
-          {fightId > 0 && view !== 'choose' && (
-            <FightRunner
-              key={fightId}
-              fightId={fightId}
+          {battleId > 0 && view !== 'choose' && (
+            <BattleRunner
+              key={battleId}
+              battleId={battleId}
               onExit={() => setSearchParams({ mode: view })}
             />
           )}
@@ -105,7 +106,9 @@ export default function ArenaPage() {
 }
 
 const pageCls = css`
-  min-height: calc(100vh - 7rem);
+  /* the shell's real header height, so the page's paper reaches the
+     bottom with no strip of the site background under it */
+  min-height: calc(100dvh - ${APP_SHELL_HEADER_OFFSET_STYLE});
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -115,6 +118,11 @@ const pageCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     padding: 1rem 1rem calc(var(--mobile-nav-total-height, 7rem) + 2.5rem);
   }
+`;
+
+// AI Story starts at the top like Arena's other pages, not mid-screen
+const stageTopCls = css`
+  justify-content: flex-start;
 `;
 
 const stageCls = css`

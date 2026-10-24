@@ -4,7 +4,10 @@ import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
-import type { ArenaFight, ArenaItem } from './types';
+import { arenaMediaURL } from './media';
+import ListeningConsole, { type ListeningTrack } from './ListeningConsole';
+import PaperVisual, { tableMarksChoices, type Visual } from './PaperVisual';
+import type { ArenaBattle, ArenaItem } from './types';
 
 // One sitting of a real exam (Mikey 2026-10-24): the paper looks like the
 // real paper (two serif columns, ①-⑤, [3점], <보기>), answers are marked on
@@ -15,22 +18,54 @@ import type { ArenaFight, ArenaItem } from './types';
 const CIRCLED = ['①', '②', '③', '④', '⑤'];
 const BODY_FIRST_TYPES = new Set(['eng.order', 'eng.insert']);
 
-// the point tag comes from the blueprint, never from authored stem text
-function stemText(stem: string) {
-  return String(stem || '').replace(/\s*\[\d점\]\s*/g, ' ').trim();
+// what the listening broadcast plays, in order: each recording once (a
+// shared set's recording once for the set)
+function listeningTracks(data: ArenaBattle): ListeningTrack[] {
+  const seen = new Set<number>();
+  const tracks: ListeningTrack[] = [];
+  for (const item of data.items) {
+    if (item.section !== 'listening' || item.passageId == null) continue;
+    if (seen.has(item.passageId)) continue;
+    seen.add(item.passageId);
+    const audioPath = data.passages[String(item.passageId)]?.audioPath;
+    if (!audioPath) continue;
+    tracks.push({
+      label: item.set ? `${item.set.replace('-', '~')}번` : `${item.no}번`,
+      src: arenaMediaURL(audioPath),
+      plays: item.plays || 1
+    });
+  }
+  return tracks;
 }
 
-export default function FightRunner({
-  fightId,
+function isArtBrief(body: string) {
+  return /^\s*\[(Picture|Chart|Table|Graph|Map|Photo)\b/i.test(body);
+}
+
+// the point tag comes from the blueprint, never from authored stem text
+function stemText(stem: string) {
+  return String(stem || '')
+    .replace(/\s*\[\d점\]\s*/g, ' ')
+    .trim();
+}
+
+export default function BattleRunner({
+  battleId,
   onExit
 }: {
-  fightId: number;
+  battleId: number;
   onExit: () => void;
 }) {
-  const loadArenaFight = useAppContext((v) => v.requestHelpers.loadArenaFight);
-  const saveArenaAnswer = useAppContext((v) => v.requestHelpers.saveArenaAnswer);
-  const submitArenaFight = useAppContext((v) => v.requestHelpers.submitArenaFight);
-  const [data, setData] = useState<ArenaFight | null>(null);
+  const loadArenaBattle = useAppContext(
+    (v) => v.requestHelpers.loadArenaBattle
+  );
+  const saveArenaAnswer = useAppContext(
+    (v) => v.requestHelpers.saveArenaAnswer
+  );
+  const submitArenaBattle = useAppContext(
+    (v) => v.requestHelpers.submitArenaBattle
+  );
+  const [data, setData] = useState<ArenaBattle | null>(null);
   const [answers, setAnswers] = useState<Record<number, number | null>>({});
   const [loadError, setLoadError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -44,14 +79,14 @@ export default function FightRunner({
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fightId]);
+  }, [battleId]);
 
-  const finished = data?.fight.status === 'finished';
-  const timed = !!data?.fight.deadlineAt && !finished;
+  const finished = data?.battle.status === 'finished';
+  const timed = !!data?.battle.deadlineAt && !finished;
 
   useEffect(() => {
-    if (!timed || !data?.fight.deadlineAt) return;
-    const deadline = data.fight.deadlineAt;
+    if (!timed || !data?.battle.deadlineAt) return;
+    const deadline = data.battle.deadlineAt;
     const tick = () => {
       const serverNow = Math.floor(Date.now() / 1000) + clockOffsetRef.current;
       const left = Math.max(0, deadline - serverNow);
@@ -62,7 +97,7 @@ export default function FightRunner({
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timed, data?.fight.deadlineAt]);
+  }, [timed, data?.battle.deadlineAt]);
 
   const sections = useMemo(() => {
     if (!data) return [];
@@ -87,7 +122,9 @@ export default function FightRunner({
   }
   if (!data) return <div className={centerCls}>Opening the exam…</div>;
 
-  const answeredCount = data.items.filter((item) => answers[item.no] != null).length;
+  const answeredCount = data.items.filter(
+    (item) => answers[item.no] != null
+  ).length;
   const shownPassages = new Set<number>();
 
   return (
@@ -97,11 +134,11 @@ export default function FightRunner({
           <Icon icon="arrow-left" /> {finished ? 'Done' : 'Leave'}
         </button>
         <div className={titleCls}>
-          <strong>{data.fight.exam.name}</strong>
+          <strong>{data.battle.exam.name}</strong>
           <span>
-            {data.fight.mode === 'untimed'
+            {data.battle.mode === 'untimed'
               ? 'Untimed retake'
-              : `${lengthLabel(data.fight.length)} · ${data.fight.minutes} min`}
+              : `${lengthLabel(data.battle.length)} · ${data.battle.minutes} min`}
           </span>
         </div>
         {timed && remaining != null ? (
@@ -128,7 +165,7 @@ export default function FightRunner({
       <div className={bodyCls}>
         <main className={paperCls}>
           <div className={paperHeadCls}>
-            <span>{data.fight.exam.name.replace(/^수능 /, '')} 영역</span>
+            <span>{data.battle.exam.name.replace(/^수능 /, '')} 영역</span>
           </div>
           {sections.map(({ section, items }) => (
             <section key={section} className={columnsCls}>
@@ -137,10 +174,18 @@ export default function FightRunner({
                   1번부터 17번까지는 듣고 답하는 문제입니다.
                 </p>
               )}
+              {section === 'listening' &&
+                data.battle.mode === 'battle' &&
+                !finished && (
+                  <ListeningConsole
+                    battleId={data.battle.id}
+                    examKey={data.battle.exam.key}
+                    tracks={listeningTracks(data)}
+                  />
+                )}
               {items.map((item) => {
                 const passage =
-                  item.passageId != null &&
-                  !shownPassages.has(item.passageId)
+                  item.passageId != null && !shownPassages.has(item.passageId)
                     ? data.passages[String(item.passageId)]
                     : null;
                 if (item.passageId != null) shownPassages.add(item.passageId);
@@ -151,6 +196,9 @@ export default function FightRunner({
                     passage={passage}
                     marked={answers[item.no] ?? null}
                     finished={finished}
+                    // replay controls only where replays are allowed: Train's
+                    // untimed retake and the review after a battle
+                    audioControls={finished || data.battle.mode === 'untimed'}
                     onMark={(choice) => handleMark(item.no, choice)}
                   />
                 );
@@ -172,26 +220,30 @@ export default function FightRunner({
             {data.items.map((item) => (
               <div key={item.no} className={omrRowCls}>
                 <span className={omrNoCls}>{item.no}</span>
-                {CIRCLED.slice(0, item.choices.length || 5).map((label, choice) => {
-                  const filled = answers[item.no] === choice;
-                  const isKey = finished && item.key === choice;
-                  return (
-                    <button
-                      key={choice}
-                      type="button"
-                      disabled={finished}
-                      aria-label={`${item.no}번 ${choice + 1}`}
-                      className={cx(
-                        bubbleCls,
-                        filled && bubbleFilledCls,
-                        isKey && bubbleKeyCls
-                      )}
-                      onClick={() => handleMark(item.no, filled ? null : choice)}
-                    >
-                      {filled ? '' : choice + 1}
-                    </button>
-                  );
-                })}
+                {CIRCLED.slice(0, item.choices.length || 5).map(
+                  (label, choice) => {
+                    const filled = answers[item.no] === choice;
+                    const isKey = finished && item.key === choice;
+                    return (
+                      <button
+                        key={choice}
+                        type="button"
+                        disabled={finished}
+                        aria-label={`${item.no}번 ${choice + 1}`}
+                        className={cx(
+                          bubbleCls,
+                          filled && bubbleFilledCls,
+                          isKey && bubbleKeyCls
+                        )}
+                        onClick={() =>
+                          handleMark(item.no, filled ? null : choice)
+                        }
+                      >
+                        {filled ? '' : choice + 1}
+                      </button>
+                    );
+                  }
+                )}
               </div>
             ))}
           </div>
@@ -199,7 +251,7 @@ export default function FightRunner({
       </div>
 
       {confirmShown && (
-        // drawn inside the fight screen: a site modal would open beneath it
+        // drawn inside the battle screen: a site modal would open beneath it
         <div className={confirmBackdropCls} role="dialog" aria-modal="true">
           <div className={confirmCls}>
             <strong>Submit your answers?</strong>
@@ -235,13 +287,14 @@ export default function FightRunner({
 
   async function load() {
     try {
-      const fight: ArenaFight = await loadArenaFight(fightId);
-      clockOffsetRef.current = fight.fight.serverNow - Math.floor(Date.now() / 1000);
-      setData(fight);
+      const battle: ArenaBattle = await loadArenaBattle(battleId);
+      clockOffsetRef.current =
+        battle.battle.serverNow - Math.floor(Date.now() / 1000);
+      setData(battle);
       setAnswers(
-        Object.fromEntries(fight.items.map((item) => [item.no, item.answer]))
+        Object.fromEntries(battle.items.map((item) => [item.no, item.answer]))
       );
-      if (fight.fight.status === 'grading') {
+      if (battle.battle.status === 'grading') {
         window.setTimeout(load, 1500);
       }
     } catch {
@@ -254,9 +307,12 @@ export default function FightRunner({
     const elapsed = Date.now() - lastMarkRef.current;
     lastMarkRef.current = Date.now();
     setAnswers((prev) => ({ ...prev, [no]: choice }));
-    saveArenaAnswer({ fightId, no, answer: choice, responseMs: elapsed }).catch(
-      () => null
-    );
+    saveArenaAnswer({
+      battleId,
+      no,
+      answer: choice,
+      responseMs: elapsed
+    }).catch(() => null);
   }
 
   async function handleSubmit() {
@@ -264,9 +320,9 @@ export default function FightRunner({
     submittedRef.current = true;
     setSubmitting(true);
     try {
-      const result: ArenaFight = await submitArenaFight(fightId);
+      const result: ArenaBattle = await submitArenaBattle(battleId);
       setData(result);
-      if (result.fight.status === 'grading') window.setTimeout(load, 1500);
+      if (result.battle.status === 'grading') window.setTimeout(load, 1500);
     } catch {
       submittedRef.current = false;
     } finally {
@@ -284,12 +340,14 @@ function PaperItem({
   passage,
   marked,
   finished,
+  audioControls,
   onMark
 }: {
   item: ArenaItem;
   passage: { kind: string; body: string; audioPath: string | null } | null;
   marked: number | null;
   finished: boolean;
+  audioControls: boolean;
   onMark: (choice: number | null) => void;
 }) {
   const listening = item.section === 'listening';
@@ -298,10 +356,14 @@ function PaperItem({
   const bodyFirst = BODY_FIRST_TYPES.has(item.type);
   return (
     <article className={itemCls}>
-      {passage && listening && (
+      {passage && listening && audioControls && (
         <div className={audioCls}>
           {passage.audioPath ? (
-            <audio controls src={passage.audioPath} preload="none" />
+            <audio
+              controls
+              src={arenaMediaURL(passage.audioPath)}
+              preload="none"
+            />
           ) : (
             <span>(Audio for this question is being prepared.)</span>
           )}
@@ -316,57 +378,80 @@ function PaperItem({
           <PaperText text={item.body} />
         </div>
       )}
+      {item.visual ? (
+        <PaperVisual
+          visual={item.visual as unknown as Visual}
+          marked={marked}
+          onMark={finished ? undefined : onMark}
+        />
+      ) : (
+        item.body &&
+        isArtBrief(item.body) && (
+          // a picture or chart item's body is the art brief, never shown
+          <div className={artPendingCls}>(그림 / 도표)</div>
+        )
+      )}
       {passage && !listening && (
         <div className={passageCls}>
           <PaperText text={passage.body} />
         </div>
       )}
-      {item.body && !bodyFirst && (
+      {item.body && !bodyFirst && !isArtBrief(item.body) && (
         <div className={boxCls}>
           <PaperText text={item.body} />
         </div>
       )}
-      <ol
-        className={cx(
-          choicesCls,
-          item.choices.every((choice, i) => choice.trim() === CIRCLED[i]) &&
-            markerRowCls
-        )}
-      >
-        {item.choices.map((choice, index) => {
-          const chosen = marked === index;
-          const isKey = finished && item.key === index;
-          const wrongPick = finished && chosen && item.key !== index;
-          return (
-            <li key={index}>
-              <button
-                type="button"
-                disabled={finished}
-                className={cx(
-                  choiceCls,
-                  chosen && choiceChosenCls,
-                  isKey && choiceKeyCls,
-                  wrongPick && choiceWrongCls
-                )}
-                onClick={() => onMark(chosen ? null : index)}
-              >
-                <span className={circledCls}>{CIRCLED[index]}</span>
-                {/* a marker choice (the underlined ① of a grammar item) is
+      {!(
+        item.visual && tableMarksChoices(item.visual as unknown as Visual)
+      ) && (
+        <ol
+          className={cx(
+            choicesCls,
+            item.choices.every((choice, i) => choice.trim() === CIRCLED[i]) &&
+              markerRowCls
+          )}
+        >
+          {item.choices.map((choice, index) => {
+            const chosen = marked === index;
+            const isKey = finished && item.key === index;
+            const wrongPick = finished && chosen && item.key !== index;
+            return (
+              <li key={index}>
+                <button
+                  type="button"
+                  disabled={finished}
+                  className={cx(
+                    choiceCls,
+                    chosen && choiceChosenCls,
+                    isKey && choiceKeyCls,
+                    wrongPick && choiceWrongCls
+                  )}
+                  onClick={() => onMark(chosen ? null : index)}
+                >
+                  <span className={circledCls}>{CIRCLED[index]}</span>
+                  {/* a marker choice (the underlined ① of a grammar item) is
                     printed once, as the paper does */}
-                {choice.trim() === CIRCLED[index] ? '' : ` ${choice}`}
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+                  {choice.trim() === CIRCLED[index] ? '' : ` ${choice}`}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      )}
       {finished && item.review && (
-        <div className={cx(reviewCls, item.correct ? reviewRightCls : reviewWrongCls)}>
+        <div
+          className={cx(
+            reviewCls,
+            item.correct ? reviewRightCls : reviewWrongCls
+          )}
+        >
           <b>
             {item.correct ? (
               'Correct'
             ) : (
               <>
-                Answer: <span className={glyphCls}>{CIRCLED[item.key ?? 0]}</span>
+                Answer:{' '}
+                <span className={glyphCls}>{CIRCLED[item.key ?? 0]}</span>
               </>
             )}
           </b>
@@ -395,13 +480,16 @@ function PaperText({ text }: { text: string }) {
   const glosses = lines.filter((line) => line.startsWith('* '));
   return (
     <>
-      {body.join('\n').split(/(<u>[\s\S]*?<\/u>)/g).map((part, i) =>
-        part.startsWith('<u>') && part.endsWith('</u>') ? (
-          <u key={i}>{part.slice(3, -4)}</u>
-        ) : (
-          <React.Fragment key={i}>{part}</React.Fragment>
-        )
-      )}
+      {body
+        .join('\n')
+        .split(/(<u>[\s\S]*?<\/u>)/g)
+        .map((part, i) =>
+          part.startsWith('<u>') && part.endsWith('</u>') ? (
+            <u key={i}>{part.slice(3, -4)}</u>
+          ) : (
+            <React.Fragment key={i}>{part}</React.Fragment>
+          )
+        )}
       {glosses.length > 0 && (
         <span className={glossesCls}>
           {glosses.map((gloss, i) => (
@@ -413,28 +501,28 @@ function PaperText({ text }: { text: string }) {
   );
 }
 
-function Result({ data }: { data: ArenaFight }) {
-  const { fight } = data;
-  const estimate = fight.estimate?.grade;
+function Result({ data }: { data: ArenaBattle }) {
+  const { battle } = data;
+  const estimate = battle.estimate?.grade;
   return (
     <div className={resultCls}>
       <div>
         <span className={resultLabelCls}>Score</span>
         <strong>
-          {fight.rawPoints} / {fight.maxPoints}
+          {battle.rawPoints} / {battle.maxPoints}
         </strong>
       </div>
-      {fight.grade != null && (
+      {battle.grade != null && (
         <div>
           <span className={resultLabelCls}>Grade on this paper</span>
-          <strong>{fight.grade}등급</strong>
+          <strong>{gradeText(battle.exam.gradeLabels, battle.grade)}</strong>
         </div>
       )}
       <div>
         <span className={resultLabelCls}>Hunter Rank</span>
         <strong>
           {estimate
-            ? `about ${estimate.grade}등급 (likely ${estimate.low}–${estimate.high})`
+            ? `about ${gradeText(battle.exam.gradeLabels, estimate.grade)} (likely ${gradeText(battle.exam.gradeLabels, estimate.low)}–${gradeText(battle.exam.gradeLabels, estimate.high)})`
             : 'Still tracking'}
         </strong>
       </div>
@@ -442,8 +530,17 @@ function Result({ data }: { data: ArenaFight }) {
   );
 }
 
+// the exam's own grade name (1급, 불합격) or "N등급"
+function gradeText(labels: string[] | null | undefined, grade: number) {
+  return labels?.[grade - 1] || `${grade}등급`;
+}
+
 function lengthLabel(length: string) {
-  return length === 'full' ? 'Full exam' : length === 'medium' ? 'Medium' : 'Short';
+  return length === 'full'
+    ? 'Full exam'
+    : length === 'medium'
+      ? 'Medium'
+      : 'Short';
 }
 
 function formatClock(seconds: number) {
@@ -888,4 +985,13 @@ const markerRowCls = css`
   li button {
     width: auto;
   }
+`;
+
+const artPendingCls = css`
+  border: 1px dashed #999;
+  padding: 2.4rem 1rem;
+  margin-bottom: 0.8rem;
+  text-align: center;
+  color: #888;
+  font-size: 1.3rem;
 `;

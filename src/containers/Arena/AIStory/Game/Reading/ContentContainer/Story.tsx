@@ -1,9 +1,9 @@
 import React from 'react';
+import ArenaButton from '../../../../ArenaButton';
 import RichText from '~/components/Texts/RichText';
-import GradientButton from '~/components/Buttons/GradientButton';
-import Button from '~/components/Button';
-import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
+import { css, cx } from '@emotion/css';
+import { ARENA } from '../../../../theme';
 
 export default function Story({
   storyId,
@@ -35,17 +35,12 @@ export default function Story({
       `}
     >
       <div
-        className={css`
-          user-select: ${isGraded ? 'text' : 'none'};
-          width: 50%;
-          font-family: 'Poppins', sans-serif;
-          @media (max-width: ${tabletMaxWidth}) {
-            width: 70%;
-          }
-          @media (max-width: ${mobileMaxWidth}) {
-            width: 100%;
-          }
-        `}
+        className={cx(
+          sheetCls,
+          css`
+            user-select: ${isGraded ? 'text' : 'none'};
+          `
+        )}
       >
         <RichText
           key={storyId}
@@ -60,33 +55,8 @@ export default function Story({
         </RichText>
       </div>
       {explanation && (
-        <div
-          className={css`
-            margin-top: 10rem;
-            width: 50%;
-            @media (max-width: ${tabletMaxWidth}) {
-              width: 70%;
-            }
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
-            }
-          `}
-        >
-          <p
-            className={css`
-              font-size: 2rem;
-              font-weight: bold;
-              margin-bottom: 3rem;
-              @media (max-width: ${tabletMaxWidth}) {
-                font-size: 1.8rem;
-              }
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.7rem;
-              }
-            `}
-          >
-            Vocabulary
-          </p>
+        <div className={cx(sheetCls, vocabCls)}>
+          <p className={vocabHeadCls}>Vocabulary</p>
           <RichText
             isAIMessage
             isStreaming={!explanationStreamComplete}
@@ -114,19 +84,56 @@ export default function Story({
           }}
         >
           {isGraded ? (
-            <Button variant="solid" color="orange" onClick={onFinishRead}>
+            <ArenaButton tone="orange" onClick={onFinishRead}>
               Review Questions
-            </Button>
+            </ArenaButton>
           ) : (
-            <GradientButton
+            <ArenaButton
+              tone="train"
               loading={!questionsButtonEnabled}
               onClick={onFinishRead}
             >
               {questionsButtonEnabled ? 'Solve Questions' : 'Generating...'}
-            </GradientButton>
+            </ArenaButton>
           )}
         </div>
       )}
     </div>
   );
 }
+
+// the story on a paper reading sheet, Arena's look (Mikey 10-24)
+const sheetCls = css`
+  width: 100%;
+  max-width: 72rem;
+  padding: 2.4rem 2.8rem;
+  background: ${ARENA.paper};
+  color: ${ARENA.ink};
+  border: 3px solid ${ARENA.line};
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 ${ARENA.line};
+  font-family: 'Poppins', sans-serif;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.6rem 1.4rem;
+  }
+`;
+
+const vocabCls = css`
+  margin-top: 2.4rem;
+  padding-top: 0;
+  overflow: hidden;
+`;
+
+const vocabHeadCls = css`
+  margin: 0 -2.8rem 1.8rem;
+  padding: 0.9rem 2.8rem;
+  background: ${ARENA.ink};
+  color: #fff;
+  font-size: 1.8rem;
+  font-weight: 900;
+  @media (max-width: ${mobileMaxWidth}) {
+    margin: 0 -1.4rem 1.4rem;
+    padding: 0.8rem 1.4rem;
+    font-size: 1.6rem;
+  }
+`;

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import GradientButton from '~/components/Buttons/GradientButton';
+import ArenaButton from '../../../ArenaButton';
 import ContentContainer from './ContentContainer';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -387,12 +387,12 @@ export default function Reading({
                 justifyContent: 'center'
               }}
             >
-              <GradientButton
+              <ArenaButton
                 style={{ marginTop: '5rem' }}
                 onClick={() => onReset()}
               >
                 Retry
-              </GradientButton>
+              </ArenaButton>
             </div>
           </div>
         </div>

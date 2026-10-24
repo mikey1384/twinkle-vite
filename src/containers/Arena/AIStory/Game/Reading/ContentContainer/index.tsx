@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import Loading from '~/components/Loading';
-import ProgressBar from '~/components/ProgressBar';
+import ArenaButton from '../../../../ArenaButton';
+import ArenaLoader from '../../../../ArenaLoader';
 import Story from './Story';
 import Questions from './Questions';
-import GradientButton from '~/components/Buttons/GradientButton';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -90,15 +89,14 @@ export default function ContentContainer({
             }
           `}
         >
-          <Loading text="Generating a Story..." />
-          <ProgressBar progress={loadingProgress} />
+          <ArenaLoader text="Writing your story…" progress={loadingProgress} />
         </div>
       ) : (
         <div
           style={{
             width: '100%',
             height: '100%',
-            marginTop: '10rem',
+            marginTop: '2rem',
             padding: '2rem',
             fontSize: '1.7rem'
           }}
@@ -140,7 +138,7 @@ export default function ContentContainer({
                 justifyContent: 'center'
               }}
             >
-              <GradientButton onClick={onReset}>New Story</GradientButton>
+              <ArenaButton onClick={onReset}>New Story</ArenaButton>
             </div>
           ) : null}
         </div>

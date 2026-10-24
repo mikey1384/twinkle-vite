@@ -140,7 +140,7 @@ export default function Badge({
           timerIdRef.current = null;
         }
         setLoadingWordle(false);
-        // Arena (Train or a fight) is its own page now
+        // Arena (Train or a battle) is its own page now
         navigate('/arena');
         setMobileMenuShown(false);
         break;

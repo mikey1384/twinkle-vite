@@ -4,22 +4,24 @@ import Icon from '~/components/Icon';
 import { useAppContext, useNotiContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
-import type { ArenaFightSummary, ArenaState } from './types';
+import type { ArenaBattleSummary, ArenaState } from './types';
 
-// Train: everything that is not a real fight. AI Story is here unchanged;
-// fight review, untimed retakes and boss prep join as Arena's fights arrive.
+// Train: everything that is not a real battle. AI Story is here unchanged;
+// battle review, untimed retakes and boss prep join as Arena's battles arrive.
 export default function Train({
   onPlayAIStory,
-  onOpenFight
+  onOpenBattle
 }: {
   onPlayAIStory: () => void;
-  onOpenFight: (fightId: number) => void;
+  onOpenBattle: (battleId: number) => void;
 }) {
   const aiStoryTask = useNotiContext(
     (v) => v.state.todayStats?.dailyTaskStatus?.aiStory
   );
   const loadArenaState = useAppContext((v) => v.requestHelpers.loadArenaState);
-  const startArenaFight = useAppContext((v) => v.requestHelpers.startArenaFight);
+  const startArenaBattle = useAppContext(
+    (v) => v.requestHelpers.startArenaBattle
+  );
   const [state, setState] = useState<ArenaState | null>(null);
   const [retaking, setRetaking] = useState(0);
 
@@ -34,8 +36,8 @@ export default function Train({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const finishedFights = (state?.recent || []).filter(
-    (fight) => fight.status === 'finished'
+  const finishedBattles = (state?.recent || []).filter(
+    (battle) => battle.status === 'finished'
   );
   const examName = (key: string) =>
     state?.exams.find((exam) => exam.key === key)?.name || key;
@@ -49,8 +51,7 @@ export default function Train({
         <span className={textCls}>
           <strong>AI Story</strong>
           <span>
-            Read or listen to a story at your level, then answer its
-            questions.
+            Read or listen to a story at your level, then answer its questions.
           </span>
         </span>
         <span className={statusCls}>
@@ -67,76 +68,81 @@ export default function Train({
 
       <div
         className={rowCls}
-        aria-disabled={finishedFights.length ? undefined : 'true'}
+        aria-disabled={finishedBattles.length ? undefined : 'true'}
       >
         <span className={badgeCls} style={{ background: ARENA.violet }}>
           <Icon icon="redo" />
         </span>
         <span className={textCls}>
-          <strong>Review your fights</strong>
+          <strong>Review your battles</strong>
           <span>
-            Every fight you finish in the Arena shows up here, question by
+            Every battle you finish in the Arena shows up here, question by
             question, with an untimed retake.
           </span>
         </span>
-        {!finishedFights.length && (
-          <span className={mutedCls}>No fights yet</span>
+        {!finishedBattles.length && (
+          <span className={mutedCls}>No battles yet</span>
         )}
       </div>
-      {finishedFights.map((fight) => (
-        <div key={fight.id} className={fightRowCls}>
-          <span className={fightTextCls}>
-            <strong>{examName(fight.examKey)}</strong>
-            <span>{describeFight(fight)}</span>
+      {finishedBattles.map((battle) => (
+        <div key={battle.id} className={battleRowCls}>
+          <span className={battleTextCls}>
+            <strong>{examName(battle.examKey)}</strong>
+            <span>{describeBattle(battle)}</span>
           </span>
           <button
             type="button"
             className={smallButtonCls}
-            onClick={() => onOpenFight(fight.id)}
+            onClick={() => onOpenBattle(battle.id)}
           >
             Review
           </button>
           <button
             type="button"
             className={smallButtonCls}
-            disabled={retaking === fight.id}
-            onClick={() => handleRetake(fight)}
+            disabled={retaking === battle.id}
+            onClick={() => handleRetake(battle)}
           >
-            {retaking === fight.id ? 'Opening…' : 'Retake untimed'}
+            {retaking === battle.id ? 'Opening…' : 'Retake untimed'}
           </button>
         </div>
       ))}
     </div>
   );
 
-  async function handleRetake(fight: ArenaFightSummary) {
-    setRetaking(fight.id);
+  async function handleRetake(battle: ArenaBattleSummary) {
+    setRetaking(battle.id);
     try {
-      const data = await startArenaFight({
-        examKey: fight.examKey,
+      const data = await startArenaBattle({
+        examKey: battle.examKey,
         mode: 'untimed',
-        sourceFightId: fight.id
+        sourceBattleId: battle.id
       });
-      onOpenFight(data.fight.id);
+      onOpenBattle(data.battle.id);
     } catch {
       setRetaking(0);
     }
   }
 }
 
-function describeFight(fight: ArenaFightSummary) {
+function describeBattle(battle: ArenaBattleSummary) {
   const kind =
-    fight.mode === 'untimed'
+    battle.mode === 'untimed'
       ? 'Untimed retake'
-      : fight.length === 'full'
+      : battle.length === 'full'
         ? 'Full exam'
-        : fight.length === 'medium'
+        : battle.length === 'medium'
           ? 'Medium'
           : 'Short';
-  const when = fight.finishedAt
-    ? new Date(fight.finishedAt * 1000).toLocaleDateString()
+  const when = battle.finishedAt
+    ? new Date(battle.finishedAt * 1000).toLocaleDateString()
     : '';
-  return [kind, `${fight.rawPoints}/${fight.maxPoints}`, fight.grade ? `${fight.grade}등급` : '', when]
+  return [
+    kind,
+    `${battle.rawPoints}/${battle.maxPoints}`,
+    battle.grade ? `${battle.grade}등급` : '',
+    when
+  ]
     .filter(Boolean)
     .join(' · ');
 }
@@ -224,7 +230,7 @@ const mutedCls = css`
   white-space: nowrap;
 `;
 
-const fightRowCls = css`
+const battleRowCls = css`
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -239,7 +245,7 @@ const fightRowCls = css`
   }
 `;
 
-const fightTextCls = css`
+const battleTextCls = css`
   flex: 1;
   min-width: 0;
   display: flex;

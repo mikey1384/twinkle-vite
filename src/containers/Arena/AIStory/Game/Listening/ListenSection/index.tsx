@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import GradientButton from '~/components/Buttons/GradientButton';
+import ArenaButton from '../../../../ArenaButton';
+import ArenaLoader from '../../../../ArenaLoader';
+import { ARENA } from '../../../../theme';
 import { useAppContext } from '~/contexts';
-import { Color, mobileMaxWidth } from '~/constants/css';
-import { css, keyframes } from '@emotion/css';
+import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
-import ProgressBar from '~/components/ProgressBar';
 import useEasedProgress from '~/helpers/hooks/useEasedProgress';
 import Questions from './Questions';
 
@@ -215,7 +215,7 @@ export default function ListenSection({
               justifyContent: 'center'
             }}
           >
-            <GradientButton onClick={onReset}>New Story</GradientButton>
+            <ArenaButton onClick={onReset}>New Story</ArenaButton>
           </div>
         ) : null}
       </div>
@@ -239,14 +239,14 @@ export default function ListenSection({
           className={css`
             font-size: 1.6rem;
             font-weight: bold;
-            color: ${Color.darkerGray()};
+            color: ${ARENA.ink};
             text-align: center;
             padding: 0 1.5rem;
           `}
         >
           Daily listening limit reached. Please try again tomorrow.
         </div>
-        <GradientButton onClick={onReset}>Back</GradientButton>
+        <ArenaButton onClick={onReset}>Back</ArenaButton>
       </div>
     );
   }
@@ -272,7 +272,7 @@ export default function ListenSection({
           >
             {audioError}
           </p>
-          <GradientButton onClick={onReset}>Try again</GradientButton>
+          <ArenaButton onClick={onReset}>Try again</ArenaButton>
         </div>
       ) : (
         <div
@@ -280,7 +280,7 @@ export default function ListenSection({
             width: 100%;
             height: 100%;
             font-size: 1.2em;
-            color: #333;
+            color: ${ARENA.ink};
             text-align: center;
             display: flex;
             align-items: center;
@@ -288,29 +288,17 @@ export default function ListenSection({
           `}
         >
           {isPlaying ? (
-            <div
-              className={css`
-                font-family: 'Arial', sans-serif;
-                font-size: 2em;
-                font-weight: bold;
-                color: ${Color.darkerGray()};
-              `}
-            >
+            <div className={onAirCls} role="status">
+              <span className={onAirDotCls} />
               Listen
             </div>
           ) : isLoaded ? (
             countdown !== null ? (
-              <div
-                className={css`
-                  font-size: 1.8em;
-                  font-weight: bold;
-                  color: ${Color.darkerGray()};
-                `}
-              >
-                Playing in {countdown}
-              </div>
+              <div className={countdownCls}>Playing in {countdown}</div>
             ) : (
-              <button
+              <ArenaButton
+                tone="blue"
+                disabled={!isLoaded}
                 onClick={() => {
                   if (deviceIsMobile) {
                     audioRef.current?.play();
@@ -319,95 +307,60 @@ export default function ListenSection({
                     setCountdown(3);
                   }
                 }}
-                disabled={!isLoaded}
-                className={css`
-                  background: linear-gradient(135deg, #6e8efb, #a777e3);
-                  border: none;
-                  color: white;
-                  padding: 15px 30px;
-                  font-size: 1em;
-                  font-weight: bold;
-                  border-radius: 5px;
-                  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                  cursor: pointer;
-                  transition: background 0.3s ease-in-out, transform 0.2s ease;
-
-                  &:hover {
-                    background: linear-gradient(135deg, #5a75f6, #945ad1);
-                  }
-
-                  &:disabled {
-                    background: linear-gradient(135deg, #ddd, #ccc);
-                    cursor: not-allowed;
-                  }
-                `}
               >
                 Start Listening
-              </button>
+              </ArenaButton>
             )
           ) : (
-            <div
-              className={css`
-                width: 100%;
-                display: flex;
-                justify-content: center;
-              `}
-            >
-              <div
-                className={css`
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  text-align: center;
-                `}
-              >
-                <div
-                  className={css`
-                    border: 4px solid #f3f3f3;
-                    border-top: 4px solid #3498db;
-                    border-radius: 50%;
-                    width: 30px;
-                    height: 30px;
-                    animation: ${keyframes`
-                      0% { transform: rotate(0deg); }
-                      100% { transform: rotate(360deg); }
-                    `} 2s linear infinite;
-                    margin-bottom: 2rem;
-                  `}
-                />
-                <div
-                  className={css`
-                    font-family: 'Arial', sans-serif;
-                    font-weight: bold;
-                    color: ${Color.darkerGray()};
-                    display: flex;
-                    flex-direction: row;
-                    justify-content: center;
-                    font-size: 2rem;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.8rem;
-                    }
-                  `}
-                >
-                  {loadingStatus}
-                  {'.'.repeat(dotCount)}
-                </div>
-                {progressReported && (
-                  <div
-                    className={css`
-                      width: 32rem;
-                      max-width: 80vw;
-                      margin-top: 2rem;
-                    `}
-                  >
-                    <ProgressBar progress={loadingProgress} />
-                  </div>
-                )}
-              </div>
-            </div>
+            <ArenaLoader
+              text={`${loadingStatus}${'.'.repeat(dotCount)}`}
+              progress={progressReported ? loadingProgress : undefined}
+            />
           )}
         </div>
       )}
     </div>
   );
 }
+
+// on air: a sky card with a pulsing dot (opacity only) while the story plays
+const onAirCls = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.4rem 3rem;
+  background: ${ARENA.sky};
+  color: #fff;
+  border: 3px solid ${ARENA.line};
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 ${ARENA.line};
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 ${ARENA.line};
+`;
+
+const onAirDotCls = css`
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  border: 2px solid ${ARENA.line};
+  background: ${ARENA.accent};
+  animation: arena-on-air 1.2s ease-in-out infinite;
+  @keyframes arena-on-air {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.25;
+    }
+  }
+`;
+
+const countdownCls = css`
+  font-size: 3rem;
+  font-weight: 900;
+  color: ${ARENA.ink};
+`;

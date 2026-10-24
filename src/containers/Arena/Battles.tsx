@@ -3,15 +3,37 @@ import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
+import { arenaMediaURL } from './media';
 import type { ArenaState } from './types';
 
-// Arena: real fights only. Exam and fighter names use their real Korean
+// Arena: real battles only. Exam and boss names use their real Korean
 // terms so a parent watching recognizes the exam (Mikey 10-24: an exception
 // to the English-only UI rule); English sits beside them.
-const FIGHTERS: Record<string, { name: string; nameEn: string; color: string }> = {
-  'suneung-eng': { name: '수능 감독관', nameEn: 'The CSAT Proctor', color: ARENA.violet },
-  'suneung-khist': { name: '한국사 강사', nameEn: 'The History Lecturer', color: ARENA.coral }
-};
+// Each boss is drawn as an early-90s eraser card with its codename (Codex
+// imagegen; art notes in work/mock-test-arena-20261024/reference_art).
+const BOSSES: Record<string, { name: string; nameEn: string; color: string }> =
+  {
+    'suneung-eng': {
+      name: '수능 감독관',
+      nameEn: 'The CSAT Proctor',
+      color: ARENA.violet
+    },
+    'suneung-khist': {
+      name: '한국사 강사',
+      nameEn: 'The History Lecturer',
+      color: ARENA.coral
+    },
+    'khist-cert-advanced': {
+      name: '사학 교수',
+      nameEn: 'The History Professor',
+      color: ARENA.sky
+    },
+    'khist-cert-basic': {
+      name: '사회 선생님',
+      nameEn: 'The Social Studies Teacher',
+      color: '#5dbb63'
+    }
+  };
 
 const LENGTH_LABEL: Record<string, string> = {
   short: 'Short',
@@ -19,18 +41,20 @@ const LENGTH_LABEL: Record<string, string> = {
   full: 'Full exam'
 };
 
-export default function Fights({
+export default function Battles({
   onStart
 }: {
-  onStart: (fightId: number) => void;
+  onStart: (battleId: number) => void;
 }) {
   const loadArenaState = useAppContext((v) => v.requestHelpers.loadArenaState);
-  const startArenaFight = useAppContext((v) => v.requestHelpers.startArenaFight);
+  const startArenaBattle = useAppContext(
+    (v) => v.requestHelpers.startArenaBattle
+  );
   const [state, setState] = useState<ArenaState | null>(null);
   const [error, setError] = useState('');
   const [starting, setStarting] = useState('');
-  const openFight = (state?.recent || []).find(
-    (fight) => fight.status === 'open' && fight.mode === 'fight'
+  const openBattle = (state?.recent || []).find(
+    (battle) => battle.status === 'open' && battle.mode === 'battle'
   );
 
   useEffect(() => {
@@ -40,7 +64,8 @@ export default function Fights({
         const data = await loadArenaState();
         if (!cancelled) setState(data);
       } catch {
-        if (!cancelled) setError('The Arena could not be loaded. Please try again.');
+        if (!cancelled)
+          setError('The Arena could not be loaded. Please try again.');
       }
     })();
     return () => {
@@ -52,37 +77,51 @@ export default function Fights({
   return (
     <div className={wrapCls}>
       <p className={introCls}>
-        Each fighter is a real exam, with its real time limits and grading.
+        Each boss is a real exam, with its real time limits and grading.
         {state
-          ? ` Paid fights today: ${state.paidFightsToday} of ${state.paidFightsPerDay}.`
+          ? ` Paid battles today: ${state.paidBattlesToday} of ${state.paidBattlesPerDay}.`
           : ''}
       </p>
       {error && <p className={errorCls}>{error}</p>}
-      {openFight && (
+      {openBattle && (
         <button
           type="button"
           className={resumeCls}
-          onClick={() => onStart(openFight.id)}
+          onClick={() => onStart(openBattle.id)}
         >
-          You have a fight in progress:{' '}
-          {state?.exams.find((e) => e.key === openFight.examKey)?.name ||
-            openFight.examKey}
+          You have a battle in progress:{' '}
+          {state?.exams.find((e) => e.key === openBattle.examKey)?.name ||
+            openBattle.examKey}
           . Resume it
         </button>
       )}
       <div className={gridCls}>
         {(state?.exams || []).map((exam) => {
-          const fighter = FIGHTERS[exam.key];
+          const boss = BOSSES[exam.key];
           return (
             <div key={exam.key} className={cardCls}>
               <div
                 className={faceCls}
-                style={{ background: fighter?.color || ARENA.sky }}
+                style={{ background: boss?.color || ARENA.sky }}
               >
-                <span className={nameCls}>{fighter?.name || exam.name}</span>
-                <span className={nameEnCls}>{fighter?.nameEn || exam.nameEn}</span>
+                {boss ? (
+                  <>
+                    <img
+                      className={eraserCls}
+                      src={arenaMediaURL(`img/bosses/${exam.key}.jpg`)}
+                      alt={boss.name}
+                    />
+                    <span className={nameEnCls}>{boss.nameEn}</span>
+                  </>
+                ) : (
+                  <span className={nameCls}>{exam.name}</span>
+                )}
               </div>
               <div className={bodyCls}>
+                <span className={codeCls}>
+                  BOSS {exam.code}
+                  {exam.codeLabel ? ` · ${exam.codeLabel}` : ''}
+                </span>
                 <strong>
                   {exam.name} <small>{exam.nameEn}</small>
                 </strong>
@@ -97,7 +136,11 @@ export default function Fights({
                         disabled={!!starting}
                         onClick={() => handleStart(exam.key, option.length)}
                       >
-                        <b>{starting === key ? 'Starting…' : LENGTH_LABEL[option.length]}</b>
+                        <b>
+                          {starting === key
+                            ? 'Starting…'
+                            : LENGTH_LABEL[option.length]}
+                        </b>
                         <span>
                           {option.items} questions · {option.minutes} min
                         </span>
@@ -113,17 +156,20 @@ export default function Fights({
     </div>
   );
 
-  async function handleStart(examKey: string, length: 'short' | 'medium' | 'full') {
+  async function handleStart(
+    examKey: string,
+    length: 'short' | 'medium' | 'full'
+  ) {
     setStarting(`${examKey}:${length}`);
     setError('');
     try {
-      const data = await startArenaFight({ examKey, length });
-      onStart(data.fight.id);
+      const data = await startArenaBattle({ examKey, length });
+      onStart(data.battle.id);
     } catch (err: any) {
       setError(
         err?.code === 'ARENA_NOT_READY'
-          ? 'This fighter is still training. Its questions are not ready yet.'
-          : 'The fight could not start. Please try again.'
+          ? 'This boss is still training. Its questions are not ready yet.'
+          : 'The battle could not start. Please try again.'
       );
     } finally {
       setStarting('');
@@ -167,13 +213,25 @@ const cardCls = css`
 `;
 
 const faceCls = css`
-  height: 12rem;
+  height: 21rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+  gap: 1.4rem;
   align-items: center;
   justify-content: center;
+  padding: 0 1.2rem;
   border-bottom: 3px solid ${ARENA.line};
+`;
+
+// the card as a little eraser block: tilted, with a hard drop shadow
+const eraserCls = css`
+  height: 17.5rem;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border: 2px solid ${ARENA.line};
+  border-radius: 4px;
+  box-shadow: 4px 5px 0 ${ARENA.line};
+  transform: rotate(-4deg);
+  background: #fff;
 `;
 
 const nameCls = css`
@@ -184,10 +242,12 @@ const nameCls = css`
 `;
 
 const nameEnCls = css`
+  max-width: 9rem;
   color: #fff;
-  font-size: 1.3rem;
-  font-weight: 700;
-  opacity: 0.9;
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-shadow: 2px 2px 0 ${ARENA.line};
 `;
 
 const bodyCls = css`
@@ -250,4 +310,16 @@ const resumeCls = css`
   font-weight: 800;
   cursor: pointer;
   box-shadow: 3px 3px 0 ${ARENA.line};
+`;
+
+const codeCls = css`
+  align-self: flex-start;
+  padding: 0.15rem 0.6rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 4px;
+  background: ${ARENA.line};
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
 `;

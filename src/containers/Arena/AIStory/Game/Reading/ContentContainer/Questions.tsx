@@ -1,9 +1,7 @@
 import React from 'react';
-import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
-import Button from '~/components/Button';
-import GradientButton from '~/components/Buttons/GradientButton';
-import Loading from '~/components/Loading';
-import ProgressBar from '~/components/ProgressBar';
+import ArenaButton from '../../../../ArenaButton';
+import ArenaLoader from '../../../../ArenaLoader';
+import ArenaChoiceQuestion from '../../../../ArenaChoiceQuestion';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import useStoryQuestionProgress from '../../useStoryQuestionProgress';
@@ -97,7 +95,7 @@ export default function Questions({
             `}
           >
             <div>There was an error while loading the questions.</div>
-            <GradientButton
+            <ArenaButton
               style={{ marginTop: '3rem' }}
               onClick={() => {
                 restartLoadingProgress();
@@ -105,7 +103,7 @@ export default function Questions({
               }}
             >
               Retry
-            </GradientButton>
+            </ArenaButton>
           </div>
         ) : !questionsLoaded ? (
           <div
@@ -117,12 +115,7 @@ export default function Questions({
               width: 100%;
             `}
           >
-            <Loading text={loadingStep} />
-            {/* a fixed slot: inside a centered column a 100%-wide bar would
-                collapse to nothing (same layout as the daily question bar) */}
-            <div style={{ width: '60%', maxWidth: '42rem', minWidth: '20rem' }}>
-              <ProgressBar progress={loadingProgress} />
-            </div>
+            <ArenaLoader text={loadingStep} progress={loadingProgress} />
           </div>
         ) : (
           <div
@@ -138,17 +131,13 @@ export default function Questions({
               <div
                 key={question.id}
                 style={{
-                  marginTop: index === 0 ? 0 : '7rem',
+                  marginTop: index === 0 ? 0 : '2.4rem',
                   width: '100%'
                 }}
               >
-                <MultipleChoiceQuestion
+                <ArenaChoiceQuestion
+                  number={index + 1}
                   isGraded={solveObj.isGraded}
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}
                   question={
                     <div>
                       <StoryQuestionLabel question={question} />
@@ -190,23 +179,18 @@ export default function Questions({
                 >
                   <StoryScoreLine solveObj={solveObj} questions={questions} />
                   <div style={{ marginTop: '2rem' }}>
-                    <Button
-                      variant="solid"
-                      color="logoBlue"
-                      onClick={onReadAgain}
-                    >
+                    <ArenaButton tone="logoBlue" onClick={onReadAgain}>
                       Read Again
-                    </Button>
+                    </ArenaButton>
                   </div>
                   {storyScore(solveObj, questions).isPassed ? (
                     <div style={{ marginTop: '1rem' }}>
-                      <Button
-                        variant="solid"
-                        color="gold"
+                      <ArenaButton
+                        tone="gold"
                         onClick={() => onOpenSuccessModal()}
                       >
                         Reopen Clear Screen
-                      </Button>
+                      </ArenaButton>
                     </div>
                   ) : null}
                 </div>
@@ -221,21 +205,18 @@ export default function Questions({
                     paddingBottom: '10rem'
                   }}
                 >
-                  <GradientButton
+                  <ArenaButton
+                    tone="train"
                     loading={isGrading}
                     disabled={!allAnswered}
                     onClick={onGrade}
                   >
                     Finish
-                  </GradientButton>
+                  </ArenaButton>
                   <div style={{ marginTop: '2rem' }}>
-                    <Button
-                      variant="solid"
-                      color="logoBlue"
-                      onClick={onReadAgain}
-                    >
+                    <ArenaButton tone="logoBlue" onClick={onReadAgain}>
                       Read Again
-                    </Button>
+                    </ArenaButton>
                   </div>
                 </div>
               )}

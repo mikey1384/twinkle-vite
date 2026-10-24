@@ -36,3 +36,6 @@ dist-ssr
 # Grammar Quest media for the dev server (the real files live on the CDN;
 # quest/media/build.mjs fills this)
 public/gq-media/
+
+# Arena media is served from the CDN; local copies for dev only
+public/arena-media/

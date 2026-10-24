@@ -25,15 +25,15 @@ export default function ModeChooser({
       mode: 'train' as const,
       title: 'Train',
       cover: '/img/arena/cover-train.jpg',
-      line: 'AI Story, reviews of your fights, and practice before each boss.',
+      line: 'AI Story, reviews of your battles, and practice before each boss.',
       status: trainStatus
     },
     {
       mode: 'arena' as const,
       title: 'Arena',
       cover: '/img/arena/cover-arena.jpg',
-      line: 'Real exams, real conditions. Beat each fighter to climb the ladder.',
-      status: 'Fighters arriving soon'
+      line: 'Real exams, real conditions. Beat each boss to climb the ladder.',
+      status: 'Bosses arriving soon'
     }
   ];
 
@@ -41,7 +41,7 @@ export default function ModeChooser({
     <div className={wrapCls}>
       <header className={headerCls}>
         <h1>Arena</h1>
-        <p>Train for it. Then fight the real thing.</p>
+        <p>Train for it. Then battle the real thing.</p>
       </header>
       <div className={cardsCls}>
         {CARDS.map((card) => (

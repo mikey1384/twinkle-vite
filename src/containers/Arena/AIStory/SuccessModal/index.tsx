@@ -1,10 +1,8 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import Modal from '~/components/Modal';
-import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
-import Button from '~/components/Button';
-import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import SuccessText from './SuccessText';
-import GradientButton from '~/components/Buttons/GradientButton';
+import ArenaButton from '../../ArenaButton';
+import { ARENA } from '../../theme';
 import Input from '~/components/Texts/Input';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -22,25 +20,12 @@ import {
 import { pollCanonicalAIImageStatus } from '~/helpers/aiImageStatus';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
-const colorHash: Record<
-  number,
-  'default' | 'blue' | 'purple' | 'pink' | 'orange' | 'gold'
-> = {
+// each level's color on the clear screen, from Arena's palette
+const colorHash: Record<number, string> = {
   1: 'blue',
   2: 'pink',
   3: 'orange',
-  4: 'purple',
-  5: 'gold'
-};
-
-const vocabButtonVariantHash: Record<
-  number,
-  'logoBlue' | 'pink' | 'orange' | 'magenta' | 'gold'
-> = {
-  1: 'logoBlue',
-  2: 'pink',
-  3: 'orange',
-  4: 'magenta',
+  4: 'violet',
   5: 'gold'
 };
 
@@ -501,24 +486,20 @@ export default function SuccessModal({
         bodyPadding={0}
         allowOverflow
       >
-        <LegacyModalLayout wrapped>
-          <header>
-            {isListening ? 'AI Story Listening' : 'AI Story Reading'} Cleared
+        <div className={clearCls}>
+          <header className={bannerCls}>
+            <span className={bannerTagCls}>
+              {isListening ? 'Listen' : 'Read'} · Lv{difficulty}
+            </span>
+            <span>Cleared!</span>
           </header>
-          <main>
+          <main className={clearBodyCls}>
             <SuccessText difficulty={difficulty} />
-            <div style={{ marginTop: '3.5rem' }}>
-              You answered {numQuestions} out of {numQuestions} question
-              {numQuestions === 1 ? '' : 's'} correctly!
+            <div className={scoreLineCls}>
+              {numQuestions} / {numQuestions} correct
             </div>
             {(xpRewardAmount > 0 || coinRewardAmount > 0) && (
-              <div
-                style={{
-                  marginTop: '1rem',
-                  marginBottom: '2rem',
-                  fontSize: difficulty > 3 ? '1.7rem' : '1.5rem'
-                }}
-              >
+              <div className={rewardCls}>
                 You earned{' '}
                 {xpRewardAmount > 0 && (
                   <>
@@ -550,12 +531,7 @@ export default function SuccessModal({
               {(imageUrl || previewImageUrl) && (
                 <img
                   loading="lazy"
-                  style={{
-                    width: '100%',
-                    maxHeight: '50vh',
-                    objectFit: 'contain',
-                    borderRadius: '12px'
-                  }}
+                  className={pictureCls}
                   src={imageUrl || previewImageUrl}
                   alt="Generated Story Image"
                 />
@@ -582,7 +558,7 @@ export default function SuccessModal({
                   {!inputError && (
                     <div
                       style={{
-                        color: Color.darkGray(),
+                        color: ARENA.inkSoft,
                         fontSize: '1.1rem',
                         marginTop: '0.5rem'
                       }}
@@ -613,7 +589,7 @@ export default function SuccessModal({
                       <label
                         style={{
                           fontWeight: 600,
-                          color: Color.darkerGray(),
+                          color: ARENA.inkSoft,
                           fontSize: '1.1rem'
                         }}
                       >
@@ -680,12 +656,10 @@ export default function SuccessModal({
                     />
                   )}
 
-                  <GradientButton
-                    theme={colorHash[difficulty] || 'default'}
+                  <ArenaButton
+                    tone={colorHash[difficulty] || 'ink'}
                     loading={generatingImage}
                     onClick={handleGenerateImage}
-                    fontSize="1.5rem"
-                    mobileFontSize="1.1rem"
                     style={{ marginTop: '1.5rem' }}
                     disabled={!canGenerateImage}
                   >
@@ -703,11 +677,11 @@ export default function SuccessModal({
                         ({imageGenerationCostText})
                       </div>
                     </div>
-                  </GradientButton>
+                  </ArenaButton>
 
                   <div
                     style={{
-                      color: Color.darkGray(),
+                      color: ARENA.inkSoft,
                       fontSize: '1.1rem',
                       marginTop: '0.5rem',
                       textAlign: 'center'
@@ -729,14 +703,12 @@ export default function SuccessModal({
                     gap: 0.6rem;
                   `}
                 >
-                  <GameCTAButton
-                    variant={
+                  <ArenaButton
+                    tone={
                       loadingVocabSummary || eligibleVocabCount === 0
-                        ? 'logoBlue'
-                        : vocabButtonVariantHash[difficulty] || 'logoBlue'
+                        ? 'paper'
+                        : 'train'
                     }
-                    size="lg"
-                    shiny={!loadingVocabSummary && eligibleVocabCount > 0}
                     loading={loadingVocabSummary}
                     disabled={!loadingVocabSummary && eligibleVocabCount === 0}
                     onClick={() => setVocabQuizShown(true)}
@@ -744,21 +716,17 @@ export default function SuccessModal({
                     {!loadingVocabSummary && eligibleVocabCount === 0
                       ? 'No Words to Collect'
                       : 'Collect Words'}
-                  </GameCTAButton>
+                  </ArenaButton>
                 </div>
               )}
             </div>
           </main>
-          <footer>
-            <Button
-              variant="ghost"
-              style={{ marginRight: '0.7rem' }}
-              onClick={onHide}
-            >
+          <footer className={clearFootCls}>
+            <ArenaButton tone="paper" size="md" onClick={onHide}>
               Close
-            </Button>
+            </ArenaButton>
           </footer>
-        </LegacyModalLayout>
+        </div>
       </Modal>
       {vocabQuizShown && (
         <VocabQuizModal
@@ -865,8 +833,7 @@ export default function SuccessModal({
       if (!recoveredImageUrl && error?.isTransportError === true) {
         const canonicalResult = await pollCanonicalAIImageStatus({
           loadStatus: () => loadAIStoryImageStatus({ storyId }),
-          isActive: () =>
-            isAIStoryImageGenerationInProgress(normalizedStoryId),
+          isActive: () => isAIStoryImageGenerationInProgress(normalizedStoryId),
           transientInitialStatuses: ['not_found', 'not_started'],
           transientInitialStatusTimeoutMs: 10_000
         });
@@ -1016,3 +983,90 @@ export default function SuccessModal({
     }
   }
 }
+
+// the clear screen in Arena's look (Mikey 10-24: "i want everything
+// consistent"): a green CLEARED banner on paper, an ink reward stamp
+const clearCls = css`
+  background: ${ARENA.paper};
+  color: ${ARENA.ink};
+  border: 3px solid ${ARENA.line};
+  border-radius: 14px;
+  overflow: hidden;
+`;
+
+const bannerCls = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem 1.6rem;
+  background: ${ARENA.train};
+  border-bottom: 3px solid ${ARENA.line};
+  color: #fff;
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 ${ARENA.line};
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.9rem;
+    padding: 1rem 1.2rem;
+  }
+`;
+
+const bannerTagCls = css`
+  padding: 0.2rem 0.8rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 6px;
+  background: ${ARENA.paper};
+  color: ${ARENA.ink};
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
+  text-shadow: none;
+`;
+
+const clearBodyCls = css`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 2rem 1.6rem;
+  text-align: center;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.4rem 1.2rem 1.2rem;
+  }
+`;
+
+const scoreLineCls = css`
+  margin-top: 2.4rem;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: ${ARENA.train};
+`;
+
+const rewardCls = css`
+  margin: 1rem 0 1.2rem;
+  padding: 0.6rem 1.4rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 3px 3px 0 ${ARENA.line};
+  font-size: 1.6rem;
+  font-weight: 700;
+`;
+
+const pictureCls = css`
+  width: 100%;
+  max-height: 50vh;
+  object-fit: contain;
+  border: 3px solid ${ARENA.line};
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 ${ARENA.line};
+  background: #fff;
+`;
+
+const clearFootCls = css`
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 1.6rem 1.4rem;
+  border-top: 2px dashed ${ARENA.inkSoft};
+`;
