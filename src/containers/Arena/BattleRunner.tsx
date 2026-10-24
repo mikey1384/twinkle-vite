@@ -45,7 +45,8 @@ function listeningTracks(data: ArenaBattle): ListeningTrack[] {
 }
 
 function isArtBrief(body: string) {
-  return /^\s*\[(Picture|Chart|Table|Graph|Map|Photo|Frame|Scene)\b/i.test(
+  // Figure: a 수학 figure note the problem can be solved without
+  return /^\s*\[(Picture|Chart|Table|Graph|Map|Photo|Frame|Scene|Figure)\b/i.test(
     body
   );
 }
@@ -628,7 +629,7 @@ export function PaperItem({
                     ) : (
                       <>
                         {' '}
-                        <MathText text={choice} />
+                        <MathText text={choice} displayStyle />
                       </>
                     )}
                   </button>
