@@ -25,7 +25,7 @@ export const chatWorkspaceClass = css`
     padding-block: 0.4rem;
   }
   /* past 2268px the page sits in a centered frame (styles.css) */
-  @media (min-width: 2269px) {
+  @media (width > 2268px) {
     max-width: var(--ui-frame);
     margin-inline: auto;
   }

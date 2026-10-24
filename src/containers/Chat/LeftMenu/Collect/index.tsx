@@ -41,7 +41,7 @@ export default function Collect({
             background: ${Color.checkboxAreaGray()};
           }
           &:focus-visible { outline: 2px solid #64748b; outline-offset: -2px; }
-          @media (max-width: 1512px) { @container chat-channels (max-width: 180px) {
+          @media (width <= 1512px) { @container chat-channels (max-width: 180px) {
             padding: 0.7rem 0.6rem;
             > div > div:first-child {
               font-size: calc(14 * var(--px));
@@ -51,7 +51,7 @@ export default function Collect({
             }
             p { font-size: calc(12 * var(--px)); }
           } }
-@media (min-width: 1513px) { @container chat-channels (max-width: 18rem) {
+@media (width > 1512px) { @container chat-channels (max-width: 18rem) {
             padding: 0.7rem 0.6rem;
             > div > div:first-child {
               font-size: calc(14 * var(--px));

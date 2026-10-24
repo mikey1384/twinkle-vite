@@ -65,11 +65,11 @@ export default function WorkshopMenuNote({ note }: { note: string }) {
         color: var(--chat-muted-text, #475569);
         font-size: 1.2rem;
         line-height: 1.5;
-        @media (max-width: 1512px) { @container chat-context (max-width: 180px) {
+        @media (width <= 1512px) { @container chat-context (max-width: 180px) {
           margin: 0.8rem 0.4rem 0;
           padding: 0.8rem 0.7rem;
         } }
-@media (min-width: 1513px) { @container chat-context (max-width: 18rem) {
+@media (width > 1512px) { @container chat-context (max-width: 18rem) {
           margin: 0.8rem 0.4rem 0;
           padding: 0.8rem 0.7rem;
         } }

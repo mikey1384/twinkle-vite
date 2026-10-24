@@ -17,11 +17,11 @@ const cardClass = css`
   font-size: 1.3rem;
   line-height: 1.45;
   color: ${Color.black()};
-  @media (max-width: 1512px) { @container chat-context (max-width: 180px) {
+  @media (width <= 1512px) { @container chat-context (max-width: 180px) {
     margin: 0 0.4rem 0.8rem;
     padding: 0.9rem 0.8rem;
   } }
-@media (min-width: 1513px) { @container chat-context (max-width: 18rem) {
+@media (width > 1512px) { @container chat-context (max-width: 18rem) {
     margin: 0 0.4rem 0.8rem;
     padding: 0.9rem 0.8rem;
   } }

@@ -158,11 +158,11 @@ export default function Layout({
                   font-weight: 600;
                   letter-spacing: 0.02em;
                 }
-                @media (max-width: 1512px) { @container chat-context (max-width: 180px) {
+                @media (width <= 1512px) { @container chat-context (max-width: 180px) {
                   padding: 1rem 0.7rem 0.4rem;
                   font-size: 1.1rem;
                 } }
-@media (min-width: 1513px) { @container chat-context (max-width: 18rem) {
+@media (width > 1512px) { @container chat-context (max-width: 18rem) {
                   padding: 1rem 0.7rem 0.4rem;
                   font-size: 1.1rem;
                 } }

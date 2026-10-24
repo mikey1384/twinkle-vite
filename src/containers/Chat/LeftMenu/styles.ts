@@ -12,12 +12,18 @@ export const contextGroupClass = css`
       overflow: visible;
     }
   }
-  @container chat-context (max-width: ${COMPACT_NAVIGATION_WIDTH}px) {
+  @media (width <= 1512px) { @container chat-context (max-width: ${COMPACT_NAVIGATION_WIDTH}px) {
     margin-inline: 0.4rem;
     width: calc(100% - 0.8rem);
     border: 0;
     padding: 0;
-  }
+  } }
+  @media (width > 1512px) { @container chat-context (max-width: ${COMPACT_NAVIGATION_WIDTH / 10}rem) {
+    margin-inline: 0.4rem;
+    width: calc(100% - 0.8rem);
+    border: 0;
+    padding: 0;
+  } }
   @media (max-width: ${mobileMaxWidth}) {
     margin-top: 0.4rem;
     padding-block: 0;
@@ -38,7 +44,7 @@ export const contextRowClass = css`
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  @container chat-context (max-width: ${COMPACT_NAVIGATION_WIDTH}px) {
+  @media (width <= 1512px) { @container chat-context (max-width: ${COMPACT_NAVIGATION_WIDTH}px) {
     gap: 0.5rem;
     padding: 0.8rem 0.4rem;
     .chat-context-label {
@@ -50,7 +56,20 @@ export const contextRowClass = css`
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
     }
-  }
+  } }
+  @media (width > 1512px) { @container chat-context (max-width: ${COMPACT_NAVIGATION_WIDTH / 10}rem) {
+    gap: 0.5rem;
+    padding: 0.8rem 0.4rem;
+    .chat-context-label {
+      font-size: max(13px, 1.3rem);
+      line-height: 1.35;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+  } }
   @media (pointer: coarse) {
     min-height: 44px;
   }

@@ -35,7 +35,7 @@ body {
   --ui-frame: 100vw;
   --ui-frame-x: 0px;
 }
-@media (min-width: 1513px) {
+@media (width > 1512px) {
   :root {
     --px: min(calc(100vw / 1512), 1.5px);
   }
@@ -44,7 +44,7 @@ body {
     font-size: calc(10 * var(--px));
   }
 }
-@media (min-width: 2269px) {
+@media (width > 2268px) {
   :root {
     --ui-frame: 2268px;
     --ui-frame-x: calc((100vw - 2268px) / 2);

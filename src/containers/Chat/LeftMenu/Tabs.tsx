@@ -23,12 +23,12 @@ export default function Tabs({ style }: { style?: React.CSSProperties }) {
           min-width: 0;
           padding: 0.8rem 0.6rem;
         }
-        @media (max-width: 1512px) { @container chat-channels (max-width: 180px) {
+        @media (width <= 1512px) { @container chat-channels (max-width: 180px) {
           padding-inline: 0.3rem;
           > .nav-section { gap: 0; }
           > .nav-section > nav { padding-inline: 0.3rem; }
         } }
-@media (min-width: 1513px) { @container chat-channels (max-width: 18rem) {
+@media (width > 1512px) { @container chat-channels (max-width: 18rem) {
           padding-inline: 0.3rem;
           > .nav-section { gap: 0; }
           > .nav-section > nav { padding-inline: 0.3rem; }

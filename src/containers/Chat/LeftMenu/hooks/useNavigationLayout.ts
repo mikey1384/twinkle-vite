@@ -62,7 +62,7 @@ export default function useNavigationLayout(hasContext: boolean) {
           (parseFloat(style.paddingRight) || 0) -
           detailsWidth - gaps) / uiScale() - MIN_CONVERSATION_WIDTH - 2
       );
-      const resizable = window.matchMedia('(min-width: calc(768 * var(--px)))').matches;
+      const resizable = window.matchMedia('(min-width: 768px)').matches;
       const split = hasContext && window.matchMedia(SPLIT_NAVIGATION_MEDIA_QUERY).matches;
       setGeometry((previous) => {
         if (previous.availableWidth === availableWidth &&
