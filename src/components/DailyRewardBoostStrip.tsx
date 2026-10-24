@@ -1143,20 +1143,32 @@ export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
       ? `Lv${currentLevel}`
       : `Lv${currentLevel} or higher`;
 
-  let description = `Excellence target: clear both Read and Listen at ${excellenceTargetPhrase}.`;
+  // the A goal's two routes (Mikey 10-24, "A = Arena"): an AI Story clear,
+  // or an Arena battle (60%+ on Normal or Hard for Basic, a win at your own
+  // best level for Excellence)
+  const arenaBar = aiStory?.arena?.excellenceBar;
+  const arenaBarPhrase = arenaBar
+    ? `${capitalize(arenaBar.difficulty)} ${capitalize(arenaBar.length)} or harder`
+    : 'Normal Short or harder';
+  let description = `Excellence: clear Read and Listen at ${excellenceTargetPhrase}, or win a ${arenaBarPhrase} battle.`;
   if (excellenceAchieved) {
-    description = 'Read and Listen both cleared.';
+    description =
+      aiStory?.excellenceVia === 'arena'
+        ? 'Boss beaten at your best level.'
+        : 'Read and Listen both cleared.';
   } else if (hasReading && !hasListening) {
-    description = `Read is done. Finish Listen at ${excellenceTargetPhrase}.`;
+    description = `Read is done. Finish Listen at ${excellenceTargetPhrase}, or win a ${arenaBarPhrase} battle.`;
   } else if (!hasReading && hasListening) {
-    description = `Listen is done. Finish Read at ${excellenceTargetPhrase}.`;
+    description = `Listen is done. Finish Read at ${excellenceTargetPhrase}, or win a ${arenaBarPhrase} battle.`;
   }
 
   return {
     label: 'Arena',
     title: basicAchieved
-      ? `AI Story Lv${highestPassedLevel} cleared`
-      : `Clear AI Story ${basicTargetPhrase}`,
+      ? aiStory?.basicVia === 'arena'
+        ? 'Arena battle cleared'
+        : `AI Story Lv${highestPassedLevel} cleared`
+      : `Clear AI Story ${basicTargetPhrase} or score 60% in a battle`,
     description,
     tone: 'logoBlue',
     basicAchieved,
@@ -1247,4 +1259,8 @@ export function getBoostStreakMultiplier(streak: any) {
 
 export function formatMultiplier(value: number) {
   return `${Number(value.toFixed(2))}`;
+}
+
+function capitalize(word: string) {
+  return word ? word[0].toUpperCase() + word.slice(1) : word;
 }

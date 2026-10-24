@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useNotiContext } from '~/contexts';
+import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import { socket } from '~/constants/sockets/api';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
@@ -111,6 +112,9 @@ export default function BattleRunner({
   );
   const submitArenaBattle = useAppContext(
     (v) => v.requestHelpers.submitArenaBattle
+  );
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const [data, setData] = useState<ArenaBattle | null>(null);
   // the review's language: the exam's own unless the member switches
@@ -434,8 +438,17 @@ export default function BattleRunner({
     submittedRef.current = true;
     setSubmitting(true);
     try {
-      const result: ArenaBattle = await submitArenaBattle(battleId);
+      const result: ArenaBattle & { dailyTaskStatus?: any } =
+        await submitArenaBattle(battleId);
       setData(result);
+      // a finished battle can clear today's A goal
+      if (result.dailyTaskStatus) {
+        onApplyTodayStatsProgress({
+          newStats: buildTodayStatsPatchFromDailyTaskStatus(
+            result.dailyTaskStatus
+          )
+        });
+      }
       if (result.battle.status === 'grading') window.setTimeout(load, 1500);
     } catch {
       submittedRef.current = false;
