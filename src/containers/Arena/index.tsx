@@ -10,6 +10,8 @@ import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import ModeChooser from './ModeChooser';
 import Train from './Train';
 import ReviewDeck from './ReviewDeck';
+import Skills from './Skills';
+import Drill from './Drill';
 import Battles from './Battles';
 import Challenge from './Challenge';
 import AIStory from './AIStory';
@@ -67,6 +69,8 @@ export default function ArenaPage() {
             stageCls,
             (activity === 'ai-story' ||
               activity === 'deck' ||
+              activity === 'skills' ||
+              activity === 'drill' ||
               challengeId > 0 ||
               !!searchParams.get('records')) &&
               stageTopCls
@@ -79,12 +83,39 @@ export default function ArenaPage() {
           {view === 'train' && activity === 'deck' && (
             <ReviewDeck onBack={() => setSearchParams({ mode: 'train' })} />
           )}
+          {view === 'train' && activity === 'skills' && (
+            <Skills
+              onBack={() => setSearchParams({ mode: 'train' })}
+              onDrill={(examKey, types) =>
+                setSearchParams({
+                  mode: 'train',
+                  play: 'drill',
+                  exam: examKey,
+                  types: types.join(',')
+                })
+              }
+            />
+          )}
+          {view === 'train' && activity === 'drill' && (
+            <Drill
+              key={`${searchParams.get('exam')}:${searchParams.get('types')}`}
+              examKey={searchParams.get('exam') || ''}
+              types={(searchParams.get('types') || '')
+                .split(',')
+                .filter(Boolean)}
+              onBack={() => setSearchParams({ mode: 'train', play: 'skills' })}
+            />
+          )}
           {view === 'train' &&
-            activity !== 'ai-story' &&
-            activity !== 'deck' && (
+            !['ai-story', 'deck', 'skills', 'drill'].includes(
+              activity || ''
+            ) && (
               <Train
                 onOpenDeck={() =>
                   setSearchParams({ mode: 'train', play: 'deck' })
+                }
+                onOpenSkills={() =>
+                  setSearchParams({ mode: 'train', play: 'skills' })
                 }
                 onPlayAIStory={() =>
                   setSearchParams({ mode: 'train', play: 'ai-story' })

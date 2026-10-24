@@ -1375,6 +1375,56 @@ export default function contentRequestHelpers({
       }
     },
     // Arena's Rising board (Mikey 10-24)
+    // Train's exam-skill record and type drills (helpers/arena/drills.ts)
+    async loadArenaSkills() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/arena/train/skills`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startArenaDrill({
+      examKey,
+      types
+    }: {
+      examKey: string;
+      types: string[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/train/drill`,
+          { examKey, types },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async answerArenaDrill({
+      itemId,
+      version,
+      answer
+    }: {
+      itemId: number;
+      version: number;
+      answer: number | string | null;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/train/drill/answer`,
+          { itemId, version, answer },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // Train's 오답 deck (helpers/arena/train.ts on the API)
     async loadArenaDeck() {
       try {

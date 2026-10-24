@@ -11,10 +11,12 @@ import type { ArenaBattleSummary, ArenaState } from './types';
 export default function Train({
   onPlayAIStory,
   onOpenDeck,
+  onOpenSkills,
   onOpenBattle
 }: {
   onPlayAIStory: () => void;
   onOpenDeck: () => void;
+  onOpenSkills: () => void;
   onOpenBattle: (battleId: number) => void;
 }) {
   const aiStoryTask = useNotiContext(
@@ -97,6 +99,23 @@ export default function Train({
               : deckCounts?.open
                 ? 'All caught up'
                 : 'Open'}
+          <Icon icon="chevron-right" />
+        </span>
+      </button>
+
+      <button type="button" className={rowCls} onClick={onOpenSkills}>
+        <span className={badgeCls} style={{ background: ARENA.train }}>
+          <Icon icon="chart-line" />
+        </span>
+        <span className={textCls}>
+          <strong>Exam skills and drills</strong>
+          <span>
+            Where your battles lose points: pace, blanks, changed answers and
+            your weakest question types, each with a drill.
+          </span>
+        </span>
+        <span className={statusCls}>
+          Open
           <Icon icon="chevron-right" />
         </span>
       </button>
