@@ -132,6 +132,15 @@ export default function League() {
                         : 'Hidden hunter'}
                       {row.me && ' (you)'}
                     </span>
+                    {/* only climbs and newcomers: a drop shown as feedback
+                        tends to demotivate more than none (Pickal et al.) */}
+                    {row.move === 'new' ? (
+                      <span className={newCls}>new</span>
+                    ) : row.move > 0 ? (
+                      <span className={upCls}>▲ {row.move}</span>
+                    ) : (
+                      <span />
+                    )}
                     <span className={lpCls}>
                       {addCommasToNumber(row.lp)}
                       <small> LP</small>
@@ -324,7 +333,7 @@ const rowsCls = css`
 
 const rowCls = css`
   display: grid;
-  grid-template-columns: 3rem 3rem minmax(0, 1fr) auto;
+  grid-template-columns: 3rem 3rem minmax(0, 1fr) 4.4rem auto;
   align-items: center;
   gap: 0.9rem;
   padding: 0.5rem 0.6rem;
@@ -423,4 +432,21 @@ const hideCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.15rem;
   }
+`;
+
+const upCls = css`
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: ${ARENA.train};
+  white-space: nowrap;
+`;
+
+const newCls = css`
+  justify-self: start;
+  padding: 0 0.5rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
 `;

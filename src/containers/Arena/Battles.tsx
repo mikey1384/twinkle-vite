@@ -172,7 +172,7 @@ export default function Battles({
                   {exam.name} <small>{exam.nameEn}</small>
                 </strong>
                 <div className={modesCls} role="radiogroup" aria-label="Mode">
-                  {exam.difficulties.map(({ difficulty, ready }) => {
+                  {exam.difficulties.map(({ difficulty, ready, slain }) => {
                     const on = (modes[exam.key] || 'normal') === difficulty;
                     return (
                       <button
@@ -181,7 +181,11 @@ export default function Battles({
                         role="radio"
                         aria-checked={on}
                         title={
-                          ready ? undefined : 'Still training: no questions yet'
+                          slain
+                            ? `Boss slain on ${MODE_LABEL[difficulty]}`
+                            : ready
+                              ? undefined
+                              : 'Still training: no questions yet'
                         }
                         className={cx(
                           modeCls,
@@ -196,6 +200,7 @@ export default function Battles({
                         }
                       >
                         {MODE_LABEL[difficulty]}
+                        {slain && <span className={slainCls}> ★</span>}
                       </button>
                     );
                   })}
@@ -466,4 +471,9 @@ const recordsBackCls = css`
   font-size: 1.4rem;
   font-weight: 800;
   cursor: pointer;
+`;
+
+// Boss slayer: a star on every mode of this boss you have won
+const slainCls = css`
+  color: #e0a100;
 `;

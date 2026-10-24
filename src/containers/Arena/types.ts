@@ -6,7 +6,11 @@ export interface ArenaExamSummary {
   code: string;
   codeLabel: string | null;
   // the three modes and whether each has questions yet
-  difficulties: { difficulty: ArenaDifficulty; ready: boolean }[];
+  difficulties: {
+    difficulty: ArenaDifficulty;
+    ready: boolean;
+    slain: boolean;
+  }[];
   name: string;
   nameEn: string;
   lengths: {
@@ -122,6 +126,8 @@ export interface ArenaLeague {
     rank: number;
     lp: number;
     me: boolean;
+    // places moved since yesterday (+ up), or 'new' today
+    move: number | 'new';
     user: { id: number; username: string; profilePicUrl: string | null } | null;
   }[];
 }
