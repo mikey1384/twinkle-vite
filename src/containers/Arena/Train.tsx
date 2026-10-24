@@ -12,9 +12,11 @@ export default function Train({
   onPlayAIStory,
   onOpenDeck,
   onOpenSkills,
-  onOpenBattle
+  onOpenBattle,
+  onPlayEraser
 }: {
   onPlayAIStory: () => void;
+  onPlayEraser: () => void;
   onOpenDeck: () => void;
   onOpenSkills: () => void;
   onOpenBattle: (battleId: number) => void;
@@ -53,6 +55,10 @@ export default function Train({
   const finishedBattles = (state?.recent || []).filter(
     (battle) => battle.status === 'finished'
   );
+  // a boss beaten on any mode gives its eraser card (Mikey 10-24)
+  const erasersWon = (state?.exams || []).filter((exam) =>
+    exam.difficulties.some((d) => d.slain)
+  ).length;
   const examName = (key: string) =>
     state?.exams.find((exam) => exam.key === key)?.name || key;
 
@@ -116,6 +122,23 @@ export default function Train({
         </span>
         <span className={statusCls}>
           Open
+          <Icon icon="chevron-right" />
+        </span>
+      </button>
+
+      <button type="button" className={rowCls} onClick={onPlayEraser}>
+        <span className={badgeCls} style={{ background: '#e8577e' }}>
+          <Icon icon="eraser" />
+        </span>
+        <span className={textCls}>
+          <strong>지우개 따먹기 · Eraser flick</strong>
+          <span>
+            Flick your eraser onto theirs. Every boss you beat gives you their
+            eraser card to play with.
+          </span>
+        </span>
+        <span className={statusCls}>
+          {state ? `${erasersWon} of ${state.exams.length} won` : 'Play'}
           <Icon icon="chevron-right" />
         </span>
       </button>
