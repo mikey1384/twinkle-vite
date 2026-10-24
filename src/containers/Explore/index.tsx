@@ -26,6 +26,8 @@ export default function Explore({ category }: { category: string }) {
       ? window.innerWidth > window.innerHeight
       : false
   );
+  // the right-hand leaderboard: hidden on tablets held upright
+  const notificationShown = !deviceIsTablet || isLandscape;
   const searchText = useExploreContext((v) => v.state.search.searchText);
   const onSetPrevUserId = useExploreContext((v) => v.actions.onSetPrevUserId);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -113,7 +115,11 @@ export default function Explore({ category }: { category: string }) {
             width: CALC(100% - 51rem - 2rem);
             margin-left: 20rem;
             @media (max-width: ${tabletMaxWidth}) {
-              width: CALC(100% - 21rem);
+              /* the leaderboard (20rem at 1rem from the edge) still shows
+                 on desktop windows and landscape tablets this narrow */
+              width: ${notificationShown
+                ? 'CALC(100% - 20rem - 21rem - 2rem)'
+                : 'CALC(100% - 21rem)'};
             }
             @media (max-width: ${mobileMaxWidth}) {
               width: 100%;
@@ -158,7 +164,7 @@ export default function Explore({ category }: { category: string }) {
             `}
           />
         </div>
-        {(!deviceIsTablet || isLandscape) && (
+        {notificationShown && (
           <Notification
             trackScrollPosition
             className={css`

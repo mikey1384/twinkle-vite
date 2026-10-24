@@ -29,7 +29,8 @@ export default function Search({
       <div style={style}>
         <SearchBox
           style={{
-            width: '50%',
+            // half the column, but never too narrow to read its placeholder
+            width: 'min(100%, max(50%, 28rem))',
             marginTop: '2rem',
             height: '5rem'
           }}

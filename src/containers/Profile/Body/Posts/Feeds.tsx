@@ -329,7 +329,12 @@ export default function Feeds({
               width: ${section === 'watched' ? '55%' : '50%'};
               margin-left: ${section === 'watched' ? '0' : '21rem'};
               margin-right: ${section === 'watched' ? '0' : '2rem'};
-              margin-top: ${section !== 'watched' ? '-2rem' : '0'};
+              /* 1rem below the subtab band (whose margin is 2.2rem) whether
+                 the inner All / Made by filter bar (it adds a 1rem top
+                 margin) or the search box comes first. */
+              margin-top: ${
+                section === 'watched' ? '0' : filterBarShown ? '-2.2rem' : '-1.2rem'
+              };
               @media (max-width: ${tabletMaxWidth}) {
                 width: 70%;
                 margin-left: 0;
@@ -339,10 +344,10 @@ export default function Feeds({
                 width: 100%;
                 margin-left: 0;
                 margin-right: 0;
-                /* Without the inner byuser filter bar there is nothing to pull
-                   up against the subtab bar; let the subtab bar's 1rem
-                   margin-bottom act as the content gap. */
-                margin-top: ${filterBarShown ? '-2rem' : '0'};
+                /* 1rem below the section strip whether the inner All / Made by
+                   filter bar or the search box comes first (the strip leaves
+                   0.8rem; the filter bar adds its own 1rem top margin). */
+                margin-top: ${filterBarShown ? '-0.8rem' : '0.2rem'};
               }
             `}
           >
