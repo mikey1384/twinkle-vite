@@ -341,6 +341,8 @@ const tileFaceCls = css`
   position: relative;
   height: 9rem;
   display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   align-items: center;
   justify-content: center;
   border-bottom: 3px solid ${ARENA.line};
@@ -361,10 +363,8 @@ const tileLabelCls = css`
   }
 `;
 
+// under the label, never over it (on phones a corner badge hit LISTEN)
 const tileTagCls = css`
-  position: absolute;
-  top: 0.7rem;
-  right: 0.7rem;
   padding: 0.15rem 0.6rem;
   border: 2px solid ${ARENA.line};
   border-radius: 999px;
