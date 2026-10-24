@@ -9,6 +9,8 @@ import UserDetails from '~/components/UserDetails';
 import AchievementBadges from '~/components/AchievementBadges';
 import ChessLevelBadge from '~/components/ChessLevelBadge';
 import ScopedTheme from '~/theme/ScopedTheme';
+import PlatinumSurface from '~/components/PlatinumSurface';
+import { platinumCoverOf } from '~/constants/profileThemes';
 import { ThemeName } from '~/theme';
 import ActionButtons from './ActionButtons';
 import EditModals from './EditModals';
@@ -158,6 +160,7 @@ export default function Content({
   twinkleXP?: number;
   userId: number;
 }) {
+  const platinum = platinumCoverOf(profile, themeName);
   return (
     <>
       <ScopedTheme theme={themeName} roles={['profilePanel']}>
@@ -169,7 +172,19 @@ export default function Content({
           }}
         >
           <div className={panelContainerClass} style={panelContainerStyle}>
-            <div className={`unselectable ${heroSectionClass}`}>
+            <div
+              className={`unselectable ${heroSectionClass}`}
+              data-platinum-photo={platinum.photoUrl ? 'true' : undefined}
+            >
+              {platinum.isPlatinum && (
+                <PlatinumSurface
+                  size="card"
+                  photoUrl={platinum.photoUrl}
+                  photoPosition={platinum.position}
+                  shine={platinum.shine}
+                  style={{ position: 'absolute', inset: 0, zIndex: 0 }}
+                />
+              )}
               <div className={heroBadgesClass}>
                 <AchievementBadges
                   thumbSize="2.5rem"

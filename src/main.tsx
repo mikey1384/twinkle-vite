@@ -219,6 +219,7 @@ import { faKey } from '@fortawesome/pro-solid-svg-icons/faKey';
 import { faArrowRotateRight } from '@fortawesome/pro-solid-svg-icons/faArrowRotateRight';
 import { faHandshake } from '@fortawesome/pro-solid-svg-icons/faHandshake';
 import { faCamera } from '@fortawesome/pro-solid-svg-icons/faCamera';
+import { faArrowsAlt } from '@fortawesome/pro-solid-svg-icons/faArrowsAlt';
 import { faLocationDot } from '@fortawesome/pro-solid-svg-icons/faLocationDot';
 import { faCircleCheck } from '@fortawesome/pro-solid-svg-icons/faCircleCheck';
 import { faUserShield } from '@fortawesome/pro-solid-svg-icons/faUserShield';
@@ -471,6 +472,7 @@ library.add(
   faArrowRotateRight,
   faHandshake,
   faCamera,
+  faArrowsAlt,
   faLocationDot,
   faCircleCheck,
   faUserShield,

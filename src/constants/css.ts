@@ -91,6 +91,11 @@ export const Color: {
   white: (opacity = 1) => `rgba(255,255,255,${opacity})`,
   brightGold: (opacity = 1) => `rgba(255,213,100,${opacity})`,
   gold: (opacity = 1) => `rgba(255,203,50,${opacity})`,
+  // platinum (100M XP): graphite steel for buttons, pale and deep tones around it
+  platinum: (opacity = 1) => `rgba(104,114,128,${opacity})`,
+  lightPlatinum: (opacity = 1) => `rgba(221,225,231,${opacity})`,
+  platinumSilver: (opacity = 1) => `rgba(178,185,195,${opacity})`,
+  darkPlatinum: (opacity = 1) => `rgba(62,70,82,${opacity})`,
   darkGold: (opacity = 1) => `rgba(250,193,50,${opacity})`,
   goldOrange: (opacity = 1) => `rgba(255,185,60,${opacity})`,
   yellow: (opacity = 1) => `rgba(255,255,55,${opacity})`

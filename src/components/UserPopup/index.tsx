@@ -18,6 +18,8 @@ import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorResto
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import RankBadge from '~/components/RankBadge';
+import PlatinumSurface from '~/components/PlatinumSurface';
+import { platinumCoverOf } from '~/constants/profileThemes';
 
 const chatLabel = 'Chat';
 const profileLabel = 'Profile';
@@ -179,6 +181,7 @@ export default function UserPopup({
   const appliedProfileTheme = useMemo(() => {
     return user.profileTheme || profileTheme;
   }, [user.profileTheme, profileTheme]);
+  const platinum = platinumCoverOf({ ...user, profileTheme: appliedProfileTheme });
   const appliedRealName = useMemo(() => {
     return user.realName || realName;
   }, [realName, user.realName]);
@@ -321,15 +324,31 @@ export default function UserPopup({
         >
           <div
             style={{
-              background: Color[appliedProfileTheme || 'logoBlue'](),
-              minHeight: '2rem',
-              padding: '0.5rem'
+              position: 'relative',
+              overflow: 'hidden',
+              isolation: 'isolate',
+              background: `radial-gradient(120% 140% at 20% 0%, rgba(255,255,255,0.18), rgba(255,255,255,0) 60%), ${(Color as any)[appliedProfileTheme || 'logoBlue']?.() || Color.logoBlue()}`,
+              minHeight: platinum.photoUrl ? '5.5rem' : '2rem',
+              padding: '0.5rem',
+              display: 'flex',
+              alignItems: 'flex-end'
             }}
           >
-            <AchievementBadges
-              thumbSize="2rem"
-              unlockedAchievementIds={appliedUnlockedAchievementIds}
-            />
+            {platinum.isPlatinum && (
+              <PlatinumSurface
+                size="strip"
+                photoUrl={platinum.photoUrl}
+                photoPosition={platinum.position}
+                shine={platinum.shine}
+                style={{ position: 'absolute', inset: 0, zIndex: 0 }}
+              />
+            )}
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <AchievementBadges
+                thumbSize="2rem"
+                unlockedAchievementIds={appliedUnlockedAchievementIds}
+              />
+            </div>
           </div>
           <div style={{ padding: '0.7rem 1rem 1rem 1rem' }}>
             <div

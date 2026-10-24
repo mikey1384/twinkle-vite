@@ -160,14 +160,24 @@ export const panelContainerClass = css`
 `;
 
 export const heroSectionClass = css`
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem 1.4rem;
   border-radius: calc(${borderRadius} - 0.6rem);
-  background: var(--profile-panel-hero-bg, rgba(59, 130, 246, 0.65));
+  background:
+    radial-gradient(120% 120% at 20% 0%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 60%),
+    var(--profile-panel-hero-bg, rgba(59, 130, 246, 0.65));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38),
     0 10px 32px -20px rgba(15, 23, 42, 0.55);
+  /* a platinum cover photo needs room to be seen */
+  &[data-platinum-photo='true'] {
+    min-height: 9rem;
+    align-items: flex-end;
+  }
   @media (max-width: ${tabletMaxWidth}) {
     border-radius: ${borderRadius};
   }
@@ -181,6 +191,8 @@ export const heroBadgesClass = css`
   gap: 0.9rem;
   width: 100%;
   min-height: 2.5rem;
+  position: relative;
+  z-index: 1;
 `;
 
 export const profileContentClass = css`
