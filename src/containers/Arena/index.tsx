@@ -10,6 +10,7 @@ import ModeChooser from './ModeChooser';
 import Train from './Train';
 import Fights from './Fights';
 import AIStory from './AIStory';
+import FightRunner from './FightRunner';
 import { ARENA } from './theme';
 
 // /arena: the "A" of the daily goals (Mikey 2026-10-24). Train on the left
@@ -28,6 +29,7 @@ export default function ArenaPage() {
   const view: View =
     rawView === 'train' || rawView === 'arena' ? rawView : 'choose';
   const activity = view === 'train' ? searchParams.get('play') : null;
+  const fightId = Number(searchParams.get('fight')) || 0;
 
   if (!userId) {
     return <HomeLoginPrompt message="Log in to enter the Arena" />;
@@ -65,9 +67,25 @@ export default function ArenaPage() {
               onPlayAIStory={() =>
                 setSearchParams({ mode: 'train', play: 'ai-story' })
               }
+              onOpenFight={(id) =>
+                setSearchParams({ mode: 'train', fight: String(id) })
+              }
             />
           )}
-          {view === 'arena' && <Fights />}
+          {view === 'arena' && (
+            <Fights
+              onStart={(id) =>
+                setSearchParams({ mode: 'arena', fight: String(id) })
+              }
+            />
+          )}
+          {fightId > 0 && view !== 'choose' && (
+            <FightRunner
+              key={fightId}
+              fightId={fightId}
+              onExit={() => setSearchParams({ mode: view })}
+            />
+          )}
         </main>
       </div>
     </ErrorBoundary>

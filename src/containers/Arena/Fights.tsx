@@ -1,70 +1,134 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
+import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
+import type { ArenaState } from './types';
 
-// Arena: real fights only. The first fighters (Mikey 2026-10-24) are listed
-// with what each one is; the fight runner and the question bank arrive in
-// the next rounds, so nothing here is playable yet. Exam and fighter names
-// use their real Korean terms so a parent watching recognizes the exam
-// (Mikey 10-24: an exception to the English-only UI rule); English sits
-// beside them.
-const LAUNCH_FIGHTERS = [
-  {
-    key: 'suneung-eng',
-    name: '수능 감독관',
-    nameEn: 'The CSAT Proctor',
-    exam: '수능 영어',
-    examEn: 'CSAT English',
-    detail: '45 questions · 70 minutes · listening included',
-    color: ARENA.violet
-  },
-  {
-    key: 'hakpyeong-eng',
-    name: '학평 담임',
-    nameEn: 'The Homeroom Teacher',
-    exam: '학력평가 영어',
-    examEn: 'Mock Exam English',
-    detail: 'Short and medium fights from the reading section',
-    color: ARENA.train
-  },
-  {
-    key: 'korean-history',
-    name: '한국사 강사',
-    nameEn: 'The History Lecturer',
-    exam: '수능 한국사 · 한국사능력검정',
-    examEn: 'Korean History',
-    detail: '20 or 50 questions, absolute grades',
-    color: ARENA.coral
-  }
-];
+// Arena: real fights only. Exam and fighter names use their real Korean
+// terms so a parent watching recognizes the exam (Mikey 10-24: an exception
+// to the English-only UI rule); English sits beside them.
+const FIGHTERS: Record<string, { name: string; nameEn: string; color: string }> = {
+  'suneung-eng': { name: '수능 감독관', nameEn: 'The CSAT Proctor', color: ARENA.violet },
+  'suneung-khist': { name: '한국사 강사', nameEn: 'The History Lecturer', color: ARENA.coral }
+};
 
-export default function Fights() {
+const LENGTH_LABEL: Record<string, string> = {
+  short: 'Short',
+  medium: 'Medium',
+  full: 'Full exam'
+};
+
+export default function Fights({
+  onStart
+}: {
+  onStart: (fightId: number) => void;
+}) {
+  const loadArenaState = useAppContext((v) => v.requestHelpers.loadArenaState);
+  const startArenaFight = useAppContext((v) => v.requestHelpers.startArenaFight);
+  const [state, setState] = useState<ArenaState | null>(null);
+  const [error, setError] = useState('');
+  const [starting, setStarting] = useState('');
+  const openFight = (state?.recent || []).find(
+    (fight) => fight.status === 'open' && fight.mode === 'fight'
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await loadArenaState();
+        if (!cancelled) setState(data);
+      } catch {
+        if (!cancelled) setError('The Arena could not be loaded. Please try again.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className={wrapCls}>
       <p className={introCls}>
         Each fighter is a real exam, with its real time limits and grading.
-        The first fighters are on their way.
+        {state
+          ? ` Paid fights today: ${state.paidFightsToday} of ${state.paidFightsPerDay}.`
+          : ''}
       </p>
+      {error && <p className={errorCls}>{error}</p>}
+      {openFight && (
+        <button
+          type="button"
+          className={resumeCls}
+          onClick={() => onStart(openFight.id)}
+        >
+          You have a fight in progress:{' '}
+          {state?.exams.find((e) => e.key === openFight.examKey)?.name ||
+            openFight.examKey}
+          . Resume it
+        </button>
+      )}
       <div className={gridCls}>
-        {LAUNCH_FIGHTERS.map((fighter) => (
-          <div key={fighter.key} className={cardCls}>
-            <div className={faceCls} style={{ background: fighter.color }}>
-              <span className={nameCls}>{fighter.name}</span>
-              <span className={nameEnCls}>{fighter.nameEn}</span>
+        {(state?.exams || []).map((exam) => {
+          const fighter = FIGHTERS[exam.key];
+          return (
+            <div key={exam.key} className={cardCls}>
+              <div
+                className={faceCls}
+                style={{ background: fighter?.color || ARENA.sky }}
+              >
+                <span className={nameCls}>{fighter?.name || exam.name}</span>
+                <span className={nameEnCls}>{fighter?.nameEn || exam.nameEn}</span>
+              </div>
+              <div className={bodyCls}>
+                <strong>
+                  {exam.name} <small>{exam.nameEn}</small>
+                </strong>
+                <div className={lengthsCls}>
+                  {exam.lengths.map((option) => {
+                    const key = `${exam.key}:${option.length}`;
+                    return (
+                      <button
+                        key={option.length}
+                        type="button"
+                        className={lengthCls}
+                        disabled={!!starting}
+                        onClick={() => handleStart(exam.key, option.length)}
+                      >
+                        <b>{starting === key ? 'Starting…' : LENGTH_LABEL[option.length]}</b>
+                        <span>
+                          {option.items} questions · {option.minutes} min
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            <div className={bodyCls}>
-              <strong>
-                {fighter.exam} <small>{fighter.examEn}</small>
-              </strong>
-              <span>{fighter.detail}</span>
-              <em>Coming soon</em>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
+
+  async function handleStart(examKey: string, length: 'short' | 'medium' | 'full') {
+    setStarting(`${examKey}:${length}`);
+    setError('');
+    try {
+      const data = await startArenaFight({ examKey, length });
+      onStart(data.fight.id);
+    } catch (err: any) {
+      setError(
+        err?.code === 'ARENA_NOT_READY'
+          ? 'This fighter is still training. Its questions are not ready yet.'
+          : 'The fight could not start. Please try again.'
+      );
+    } finally {
+      setStarting('');
+    }
+  }
 }
 
 const wrapCls = css`
@@ -77,6 +141,12 @@ const introCls = css`
   text-align: center;
   font-size: 1.5rem;
   color: ${ARENA.inkSoft};
+`;
+
+const errorCls = css`
+  text-align: center;
+  color: ${ARENA.accent};
+  font-weight: 700;
 `;
 
 const gridCls = css`
@@ -124,7 +194,7 @@ const bodyCls = css`
   padding: 1rem 1.2rem 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.8rem;
   strong {
     font-size: 1.6rem;
     small {
@@ -133,15 +203,51 @@ const bodyCls = css`
       color: ${ARENA.inkSoft};
     }
   }
+`;
+
+const lengthsCls = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+`;
+
+const lengthCls = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  b {
+    font-size: 1.4rem;
+  }
   span {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     color: ${ARENA.inkSoft};
   }
-  em {
-    margin-top: 0.4rem;
-    font-style: normal;
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: ${ARENA.accent};
+  &:hover:not(:disabled) {
+    background: ${ARENA.background};
   }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`;
+
+const resumeCls = css`
+  display: block;
+  margin: 0 auto 1.6rem;
+  padding: 0.9rem 1.6rem;
+  border: 3px solid ${ARENA.line};
+  border-radius: 10px;
+  background: #fff6d6;
+  font: inherit;
+  font-size: 1.45rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 ${ARENA.line};
 `;

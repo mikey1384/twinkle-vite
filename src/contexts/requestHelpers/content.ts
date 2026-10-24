@@ -1325,6 +1325,76 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // Arena (10-24): authentic mock-exam fights
+    async loadArenaState() {
+      try {
+        const { data } = await request.get(`${URL}/content/arena/state`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startArenaFight(
+      target:
+        | { examKey: string; length: 'short' | 'medium' | 'full' }
+        | { examKey: string; mode: 'untimed'; sourceFightId: number }
+    ) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/fight`,
+          target,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadArenaFight(fightId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/arena/fight/${fightId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveArenaAnswer({
+      fightId,
+      no,
+      answer,
+      responseMs
+    }: {
+      fightId: number;
+      no: number;
+      answer: number | null;
+      responseMs?: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/fight/${fightId}/answer`,
+          { no, answer, responseMs },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitArenaFight(fightId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/fight/${fightId}/submit`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadGrammarQuestState() {
       try {
         const { data } = await request.get(
