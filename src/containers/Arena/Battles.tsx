@@ -7,6 +7,7 @@ import { ARENA } from './theme';
 import { arenaMediaURL } from './media';
 import League from './League';
 import Records from './Records';
+import Rising from './Rising';
 import type { ArenaDifficulty, ArenaState } from './types';
 
 // Arena: real battles only. Exam and boss names use their real Korean
@@ -111,6 +112,7 @@ export default function Battles({
   return (
     <div className={wrapCls}>
       <League />
+      <Rising />
       <p className={introCls}>
         Each boss is a real exam, with its real time limits and grading.
         {state

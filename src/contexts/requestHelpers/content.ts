@@ -1374,6 +1374,15 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // Arena's Rising board (Mikey 10-24)
+    async loadArenaRising() {
+      try {
+        const { data } = await request.get(`${URL}/content/arena/rising`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // Arena's Boss Records (Mikey 10-24)
     async loadArenaRecords(params: {
       examKey: string;

@@ -102,6 +102,23 @@ export default function BattleRunner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timed, data?.battle.deadlineAt]);
 
+  // the ghost (Rising, Mikey 10-24): in an untimed retake, how many you had
+  // answered by this point last time
+  const [ghostCount, setGhostCount] = useState<number | null>(null);
+  useEffect(() => {
+    const ghost = data?.ghost;
+    if (!ghost?.length || finished || !data) return;
+    const startedAt = data.battle.startedAt;
+    const tick = () => {
+      const elapsed =
+        Math.floor(Date.now() / 1000) + clockOffsetRef.current - startedAt;
+      setGhostCount(ghost.filter((g) => g.at <= elapsed).length);
+    };
+    tick();
+    const timer = window.setInterval(tick, 5000);
+    return () => window.clearInterval(timer);
+  }, [data, finished]);
+
   const sections = useMemo(() => {
     if (!data) return [];
     const out: { section: string; items: ArenaItem[] }[] = [];
@@ -221,6 +238,11 @@ export default function BattleRunner({
             onClick={() => setOmrOpen((open) => !open)}
           >
             OMR 답안지 · {answeredCount}/{data.items.length}
+            {ghostCount != null && (
+              <span className={ghostCls}>
+                Last time: {ghostCount} answered by now
+              </span>
+            )}
             <Icon icon={omrOpen ? 'chevron-down' : 'chevron-up'} />
           </button>
           <div className={omrGridCls}>
@@ -939,6 +961,7 @@ const omrOpenCls = css`
 
 const omrToggleCls = css`
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   padding: 1.2rem;
@@ -1016,6 +1039,17 @@ const winHintCls = css`
   font-size: 1.25rem;
   font-weight: 800;
   opacity: 0.9;
+`;
+
+// its own line under the OMR title
+const ghostCls = css`
+  order: 3;
+  flex-basis: 100%;
+  margin-top: 0.3rem;
+  text-align: left;
+  font-size: 1.15rem;
+  font-weight: 700;
+  opacity: 0.8;
 `;
 
 const agentErrorCls = css`

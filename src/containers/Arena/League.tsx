@@ -187,7 +187,10 @@ function statusLine(league: ArenaLeague) {
     const gap = rank - league.upTo;
     return `You're ${ordinal(rank)}: ${gap} place${gap === 1 ? '' : 's'} from the promotion line.`;
   }
-  return `You're ${ordinal(rank)} in the top league.`;
+  if (league.tierName === 'S')
+    return `You're ${ordinal(rank)} in the top league.`;
+  // a group too small for lines yet (it fills as hunters battle this week)
+  return `You're ${ordinal(rank)} so far. Your group fills up as more hunters battle this week.`;
 }
 
 function ordinal(n: number) {

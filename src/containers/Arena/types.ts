@@ -92,6 +92,8 @@ export interface ArenaBattle {
     { kind: string; body: string; audioPath: string | null }
   >;
   items: ArenaItem[];
+  // an untimed retake: when each question was answered last time (seconds)
+  ghost?: { no: number; at: number }[] | null;
 }
 
 // Arena's Weekly League board (api helpers/arena/league.ts loadLeague)

@@ -390,6 +390,7 @@ registerMethods('content', [
   'submitArenaBattle',
   'loadArenaLeague',
   'loadArenaRecords',
+  'loadArenaRising',
   'setArenaLeagueHidden',
   'markArenaLeagueResultSeen',
   'shareArenaBattle',
