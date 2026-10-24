@@ -23,7 +23,10 @@ export const WEBSITE_AGENT_UI_ATTRIBUTE = 'data-website-agent-ui';
 // Zero and Ciel get that state once, clean, not the tiles' letters too.
 export const WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE = 'data-agent-state-shown';
 // Marks what Zero and Ciel must not help with (an AI Story's text and its
-// questions, which the user reads and answers alone): never read at all.
+// questions, which the user reads and answers alone; a live Arena battle's
+// paper): never read at all, never tapped or typed into. Its value names
+// what it is, and read_page says which are on screen (offLimits), so the
+// agent can tell the user why.
 export const WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE = 'data-agent-off-limits';
 const SKIPPED_SELECTOR = `[${WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE}], [${WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE}]`;
 const MAX_ELEMENTS = 220;
@@ -389,7 +392,13 @@ export function readWebsiteAgentPage() {
           : 'offscreen',
         isCoveredOnScreen(element) ? 'covered by something on top' : '',
         (element as HTMLButtonElement).disabled ? 'disabled' : '',
-        (element as HTMLInputElement).checked ? 'checked' : ''
+        (element as HTMLInputElement).checked ? 'checked' : '',
+        // a toggle or radio that is on (a marked answer, a chosen mode)
+        ['aria-pressed', 'aria-checked', 'aria-selected'].some(
+          (name) => element.getAttribute(name) === 'true'
+        )
+          ? 'selected'
+          : ''
       ]
         .filter(Boolean)
         .join(', ');
@@ -445,6 +454,18 @@ export function readWebsiteAgentPage() {
       ? ''
       : collapse(accessibleText(mainView, MAX_TEXT_CHARS), MAX_TEXT_CHARS);
   const screenState = readAgentScreenState({ windowOpen: !!openWindow });
+  const offLimits = [
+    ...new Set(
+      Array.from(
+        document.querySelectorAll(`[${WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE}]`)
+      )
+        .filter((element) => isRendered(element))
+        .map((element) =>
+          String(element.getAttribute(WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE) || '')
+        )
+        .filter(Boolean)
+    )
+  ];
   return {
     // Exact state components on screen report (a Wordle's guesses and
     // colours), first: trust it over reading the page text.
@@ -455,6 +476,8 @@ export function readWebsiteAgentPage() {
     ...(omitted ? { moreElementsNotListed: omitted } : {}),
     ...(windowText ? { openWindowText: windowText } : {}),
     ...(openWindow ? { pageBehindWindow: 'left out' } : {}),
+    // what is left out because it is the user's alone (aiStory, arenaBattle)
+    ...(offLimits.length ? { offLimits } : {}),
     // Counts only, for Zero/Ciel's telemetry: which kind of screen answered
     // and how much of an open window it read.
     diagnostics: {
@@ -534,7 +557,22 @@ function asksForCredentials(element: Element) {
   return !!container?.querySelector(CREDENTIAL_FIELD_SELECTOR);
 }
 
+const OFF_LIMITS_REFUSAL: Record<string, string> = {
+  arenaBattle:
+    'This is a live Arena battle, a real test: the user answers it alone. Offer to go through it in the review once they submit.'
+};
+
 function refusedInsideXpActivity(element: Element) {
+  const offLimits = element.closest(`[${WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE}]`);
+  if (offLimits) {
+    return {
+      ok: false,
+      error:
+        OFF_LIMITS_REFUSAL[
+          offLimits.getAttribute(WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE) || ''
+        ] || 'This part is the user’s alone; explain instead.'
+    };
+  }
   if (asksForCredentials(element)) {
     return {
       ok: false,
@@ -582,8 +620,10 @@ export async function performWebsiteAgentClick({
   }
   // Closing a window is never the user's work to protect, and a window
   // opened by mistake must not trap the agent.
+  // an off-limits part is never tapped, not even its close or tab buttons
   const refused =
-    isDismissControl(element) || (effect === 'view' && isTab(element))
+    !element.closest(`[${WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE}]`) &&
+    (isDismissControl(element) || (effect === 'view' && isTab(element)))
       ? null
       : refusedInsideXpActivity(element);
   if (refused) return refused;

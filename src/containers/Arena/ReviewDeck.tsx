@@ -7,6 +7,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import ArenaButton from './ArenaButton';
 import ArenaLoader from './ArenaLoader';
 import { PaperItem } from './BattleRunner';
+import { WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 import { ARENA } from './theme';
 import type { ArenaItem } from './types';
 import { typeLabel } from './typeLabels';
@@ -189,7 +190,9 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
             {card.card.tag && <span> · {TAG_LABEL[card.card.tag]}</span>}
             {!tagging && <span> · review {card.card.box + 1} of 4</span>}
           </div>
-          <div className={paperCls}>
+          {/* Zero and Ciel go through a card with them, but the member
+              marks, sorts and checks it (the server refuses the agent's) */}
+          <div className={paperCls} {...{ [WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE]: 'arenaTrain' }}>
             <PaperItem
               item={asPaperItem(card, result)}
               passage={card.passage}
@@ -201,10 +204,16 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
               letters={card.exam?.optionMarkers === 'letters'}
               problemLayout={card.exam?.layout === 'problem'}
               onMark={(value) => !result && setMarked(value)}
+              ask={{
+                kind: 'arenaCard',
+                id: card.card.itemId,
+                label: 'this missed question',
+                path: '/arena?mode=train&play=deck'
+              }}
             />
           </div>
           {tagging && (
-            <div className={tagPickCls}>
+            <div className={tagPickCls} {...{ [WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE]: 'arenaTrain' }}>
               <strong>Why did you miss it?</strong>
               <div className={tagGridCls}>
                 {MISS_TAGS.map((t) => (
@@ -223,7 +232,7 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
             </div>
           )}
           {!tagging && !result && (
-            <div className={actionsCls}>
+            <div className={actionsCls} {...{ [WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE]: 'arenaTrain' }}>
               <ArenaButton
                 tone="ink"
                 size="md"

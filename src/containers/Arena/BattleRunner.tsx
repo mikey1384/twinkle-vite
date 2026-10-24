@@ -18,6 +18,13 @@ import SpokenAnswer from './SpokenAnswer';
 import MarkReview from './MarkReview';
 import ParentEmailOffer from './ParentEmailOffer';
 import type { ArenaBattle, ArenaItem } from './types';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
+import type { AssistantAskContext } from '~/containers/App/AssistantDock/dockState';
+import {
+  WEBSITE_AGENT_NO_PLAY_ATTRIBUTE,
+  WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE
+} from '~/helpers/websiteAgentPage';
+import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
 // One sitting of a real exam (Mikey 2026-10-24): the paper looks like the
 // real paper (two serif columns, ①-⑤, [3점], <보기>), answers are marked on
@@ -261,6 +268,30 @@ export default function BattleRunner({
     return out;
   }, [data]);
 
+  // What Zero and Ciel are told about a sitting in progress: where it
+  // stands, never its questions (the paper itself is off limits to them,
+  // below). A submitted battle's review is theirs to read and go through.
+  useAgentScreenState(
+    'arenaBattle',
+    data && !finished
+      ? {
+          live: true,
+          exam: data.battle.exam.nameEn,
+          kind:
+            data.battle.mode === 'untimed'
+              ? 'untimed retake'
+              : `${data.battle.length} ${data.battle.difficulty} battle`,
+          minutesLeft:
+            remaining == null ? null : Math.ceil(remaining / 60),
+          answered: data.items.filter(
+            (item) => answers[item.no] != null || recordings[item.no] != null
+          ).length,
+          questions: data.items.length,
+          note: 'The paper is hidden from you while it runs: it is their own test.'
+        }
+      : null
+  );
+
   if (loadError) {
     return (
       <div className={centerCls}>
@@ -280,7 +311,12 @@ export default function BattleRunner({
 
   return (
     <div className={shellCls}>
-      <header className={barCls}>
+      {/* while it runs, the agent may see the bar (exam, clock) but tap
+          nothing in it (Submit is theirs) */}
+      <header
+        className={barCls}
+        {...(!finished ? { [WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: 'arenaBattle' } : {})}
+      >
         <button type="button" className={plainButtonCls} onClick={handleLeave}>
           <Icon icon="arrow-left" /> {finished ? 'Done' : 'Leave'}
         </button>
@@ -333,7 +369,14 @@ export default function BattleRunner({
         </div>
       )}
 
-      <div className={bodyCls}>
+      {/* a live paper is the member's alone: Zero and Ciel never read it or
+          answer on it (Mikey 10-25); the review after is theirs to share */}
+      <div
+        className={bodyCls}
+        {...(!finished
+          ? { [WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE]: 'arenaBattle' }
+          : {})}
+      >
         <main className={paperCls}>
           <div className={paperHeadCls}>
             {/* a Korean paper's 영역 heading; an English-language exam
@@ -394,6 +437,17 @@ export default function BattleRunner({
                       setRecordings((prev) => ({ ...prev, [item.no]: seconds }))
                     }
                     onRequestMarking={handleRequestMarking}
+                    ask={
+                      finished
+                        ? {
+                            kind: 'arenaBattleItem',
+                            id: data.battle.id,
+                            no: item.no,
+                            label: `question ${item.display || item.no}`,
+                            path: `/arena?mode=train&battle=${data.battle.id}`
+                          }
+                        : null
+                    }
                   />
                 );
               })}
@@ -511,7 +565,12 @@ export default function BattleRunner({
 
       {confirmShown && (
         // drawn inside the battle screen: a site modal would open beneath it
-        <div className={confirmBackdropCls} role="dialog" aria-modal="true">
+        <div
+          className={confirmBackdropCls}
+          role="dialog"
+          aria-modal="true"
+          {...{ [WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: 'arenaBattle' }}
+        >
           <div className={confirmCls}>
             <strong>Submit your answers?</strong>
             <p>
@@ -649,7 +708,8 @@ export function PaperItem({
   untimed = false,
   korean = false,
   onRecorded,
-  onRequestMarking
+  onRequestMarking,
+  ask = null
 }: {
   item: ArenaItem;
   allPointTags: boolean;
@@ -668,6 +728,9 @@ export function PaperItem({
   korean?: boolean;
   onRecorded?: (seconds: number) => void;
   onRequestMarking?: () => Promise<void>;
+  // "Ask Zero/Ciel" about this question, once it is the member's to go
+  // through (a submitted battle's review, a deck card, an answered drill)
+  ask?: AssistantAskContext | null;
 }) {
   const listening = item.section === 'listening';
   const ko = reviewLang === 'ko';
@@ -825,6 +888,7 @@ export function PaperItem({
                   <button
                     type="button"
                     disabled={finished}
+                    aria-pressed={chosen}
                     className={cx(
                       choiceCls,
                       chosen && choiceChosenCls,
@@ -920,6 +984,11 @@ export function PaperItem({
                 <MathText text={review!.why[marked]} />
               </p>
             )}
+        </div>
+      )}
+      {ask && (
+        <div className={askRowCls}>
+          <AskAgentButton context={ask} />
         </div>
       )}
     </article>
@@ -1380,6 +1449,12 @@ const choiceKeyCls = css`
 const choiceWrongCls = css`
   background: #f8dcd8;
   text-decoration: line-through;
+`;
+
+const askRowCls = css`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.8rem;
 `;
 
 const reviewCls = css`

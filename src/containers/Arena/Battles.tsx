@@ -11,6 +11,7 @@ import Records from './Records';
 import CoverPage from './CoverPage';
 import Rising from './Rising';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import type { ArenaDifficulty, ArenaExamSummary, ArenaState } from './types';
 
 // Arena: real battles only. Exam and boss names use their real Korean
@@ -98,6 +99,18 @@ export default function Battles({
 
   return (
     <div className={wrapCls}>
+      {/* Zero or Ciel, to go through the Arena together (Mikey 10-25) */}
+      <div className={askBarCls}>
+        <AskAgentButton
+          label="Help me here"
+          context={{
+            kind: 'page',
+            label: 'Arena battles',
+            path: '/arena?mode=arena',
+            excerpt: 'Arena: the bosses (real mock exams) by stage, modes and lengths, the Weekly League, Rising and Boss Records.'
+          }}
+        />
+      </div>
       <TodayArenaGoals />
       <League />
       <Rising />
@@ -526,4 +539,10 @@ const stageTitleCls = css`
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: ${ARENA.inkSoft};
+`;
+
+const askBarCls = css`
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 `;

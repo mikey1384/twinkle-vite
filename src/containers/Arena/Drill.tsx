@@ -7,6 +7,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import ArenaButton from './ArenaButton';
 import ArenaLoader from './ArenaLoader';
 import { PaperItem } from './BattleRunner';
+import { WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 import { ARENA } from './theme';
 import { typeLabel } from './typeLabels';
 import type { ArenaItem } from './types';
@@ -149,7 +150,9 @@ export default function Drill({
                 your own.
               </p>
             )}
-            <div className={paperCls}>
+            {/* the member marks and checks every drill answer; Zero and
+                Ciel go through it with them once it is answered */}
+            <div className={paperCls} {...{ [WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE]: 'arenaTrain' }}>
               <PaperItem
                 item={asPaperItem(current, index === -1, result)}
                 passage={current.passage}
@@ -161,6 +164,20 @@ export default function Drill({
                 letters={drill.exam.optionMarkers === 'letters'}
                 problemLayout={drill.exam.layout === 'problem'}
                 onMark={(value) => !result && setMarked(value)}
+                ask={
+                  index === -1 || result
+                    ? {
+                        kind: 'arenaDrillItem',
+                        id: current.itemId,
+                        version: current.version,
+                        label:
+                          index === -1
+                            ? 'this worked example'
+                            : 'this drill question',
+                        path: '/arena?mode=train&play=skills'
+                      }
+                    : null
+                }
               />
             </div>
             <div className={actionsCls}>
@@ -183,15 +200,17 @@ export default function Drill({
                   </ArenaButton>
                 </>
               ) : (
-                <ArenaButton
-                  tone="ink"
-                  size="md"
-                  disabled={busy || marked == null || marked === ''}
-                  loading={busy}
-                  onClick={handleCheck}
-                >
-                  Check
-                </ArenaButton>
+                <span {...{ [WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE]: 'arenaTrain' }}>
+                  <ArenaButton
+                    tone="ink"
+                    size="md"
+                    disabled={busy || marked == null || marked === ''}
+                    loading={busy}
+                    onClick={handleCheck}
+                  >
+                    Check
+                  </ArenaButton>
+                </span>
               )}
             </div>
           </section>

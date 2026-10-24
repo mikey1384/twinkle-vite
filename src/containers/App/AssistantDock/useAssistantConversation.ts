@@ -64,6 +64,8 @@ export default function useAssistantConversation({
                       id: askContext.id,
                       rootType: askContext.rootType,
                       focus: askContext.focus,
+                      no: askContext.no,
+                      version: askContext.version,
                       label: askContext.label,
                       path: askContext.path,
                       excerpt: askContext.excerpt

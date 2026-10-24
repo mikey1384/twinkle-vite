@@ -6,6 +6,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
 import type { ArenaBattleSummary, ArenaState } from './types';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
+import AskAgentButton from '~/components/Buttons/AskAgentButton';
 
 // Train: everything that is not a real battle. AI Story is here unchanged;
 // battle review, untimed retakes and boss prep join as Arena's battles arrive.
@@ -69,6 +70,18 @@ export default function Train({
 
   return (
     <div className={wrapCls}>
+      {/* Zero or Ciel, to go through the Arena together (Mikey 10-25) */}
+      <div className={askBarCls}>
+        <AskAgentButton
+          label="Help me here"
+          context={{
+            kind: 'page',
+            label: 'Arena Train',
+            path: '/arena?mode=train',
+            excerpt: 'Train: battle reviews and untimed retakes, the missed-question deck, exam skills and drills, AI Story, Eraser flick, real score reports and papers.'
+          }}
+        />
+      </div>
       <TodayArenaGoals />
       <button type="button" className={rowCls} onClick={onPlayAIStory}>
         <span className={badgeCls} style={{ background: ARENA.sky }}>
@@ -397,4 +410,10 @@ const smallButtonCls = css`
   &:disabled {
     opacity: 0.6;
   }
+`;
+
+const askBarCls = css`
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 `;

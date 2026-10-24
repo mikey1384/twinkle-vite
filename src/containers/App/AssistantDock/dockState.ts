@@ -24,6 +24,10 @@ export interface AssistantAskContext {
   rootType?: string;
   // an app asked about for its rewards (the Earn page), not to play
   focus?: 'rewards';
+  // an Arena battle question's number, a drill question's version (the
+  // server re-reads the question as the member)
+  no?: number;
+  version?: number;
   // a short name for the chip ("this comment", "the Bridge Builder meetup quest")
   label: string;
   // where it lives, for the agent to open or link
