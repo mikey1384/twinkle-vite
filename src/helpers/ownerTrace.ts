@@ -157,11 +157,11 @@ const scrollPerfMonitor = createScrollPerfMonitor({
 
 // Feed cards call these on every render (see useOwnerFeedCardFrameCount).
 // A single boolean check unless the owner is mid-scroll.
-export function noteOwnerFeedCardRender(type: string, firstRender: boolean) {
+export function noteOwnerFeedCardRender(type: string, firstRender: boolean, reasons: string[] = []) {
   wakeProfiler.noteCardRender(type, firstRender);
   if (!frameAttribution.isActive()) return;
   if (firstRender) frameAttribution.noteMount(type);
-  else frameAttribution.noteRender(type);
+  else frameAttribution.noteRender(type, reasons);
 }
 
 // Measure the suspected synchronous layout read, only inside an owner's

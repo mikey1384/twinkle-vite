@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { feedRenderChanges, type FeedRenderSignals } from '~/helpers/ownerTraceFrameAttribution';
 import { useLocation } from 'react-router-dom';
 import {
   getOwnerTraceScrollHeight,
@@ -117,8 +118,11 @@ export function describeLocationState(state: unknown) {
 // its first render as a mount) by card type while the owner is mid-scroll,
 // so a slow frame on Safari/iPhone (no Long Animation Frames API) still says
 // which card types did work in it. Counts only; no props or content.
-export function useOwnerFeedCardFrameCount(type: string) {
+export function useOwnerFeedCardFrameCount(type: string, signals?: FeedRenderSignals) {
   const renderedRef = useRef(false);
-  noteOwnerFeedCardRender(type, !renderedRef.current);
+  const previous = useRef<FeedRenderSignals | null>(null);
+  const reasons = signals ? feedRenderChanges(previous.current, signals) : [];
+  previous.current = signals || null;
+  noteOwnerFeedCardRender(type, !renderedRef.current, reasons);
   renderedRef.current = true;
 }

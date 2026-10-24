@@ -4,6 +4,7 @@ import {
   MAX_FRAME_EVENT_CHARS,
   boundFrameEvent,
   createFrameAttribution,
+  feedRenderChanges,
   stripScriptUrl,
   summarizeLongFrame,
   type LongFrameEntry
@@ -11,6 +12,23 @@ import {
 import { createScrollPerfMonitor } from '../src/helpers/ownerTraceScrollPerf';
 
 const ORIGIN = 'https://www.twin-kle.com';
+
+test('render attribution identifies changed inputs without recording their values or unbounded labels', () => {
+  const previous = { feed: {}, visibility: false, content: {}, preview: {}, shown: true,
+    theme: 'blue', level: 3, likeLoading: false, truncated: false, placeholderHeight: 100 };
+  const next = { ...previous, visibility: true, content: { privateText: 'never send' } };
+  assert.deepEqual(feedRenderChanges(previous, next), ['visibility', 'content']);
+  assert.deepEqual(feedRenderChanges(next, { ...next }), ['other']);
+  const tracker = createFrameAttribution({ observeLongFrames: () => null, listenImageLoads: () => () => {} });
+  tracker.noteRender('comment', ['content']); // ignored while closed
+  tracker.begin();
+  tracker.noteRender('comment', [...feedRenderChanges(previous, next), 'untrusted member text']);
+  tracker.frame(80, 100);
+  const result = tracker.end(0)!;
+  assert.deepEqual(result.frames[0].updates, { 'comment:visibility': 1, 'comment:content': 1 });
+  assert.equal(result.frames[0].renders.comment, 1);
+  assert.doesNotMatch(JSON.stringify(result), /never send|untrusted member text/);
+});
 
 test('a LoAF spanning two slow rAF intervals does not discard the interval whose counters it did not carry', () => {
   const tracker = createFrameAttribution({

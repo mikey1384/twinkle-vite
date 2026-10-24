@@ -141,7 +141,6 @@ function HomeFeedCard({
 }) {
   const contentId = Number(feed?.contentId || 0);
   const contentType = String(feed?.contentType || '');
-  useOwnerFeedCardFrameCount(contentType);
   // what the Ask Zero/Ciel button attaches; the server re-reads it as the member
   const askContext = useMemo(() => {
     const noun =
@@ -401,6 +400,11 @@ function HomeFeedCard({
     () => showcase || inView || isVisible,
     [inView, isVisible, showcase]
   );
+  useOwnerFeedCardFrameCount(contentType, isOwnerTraceActive() ? {
+    feed, visibility: inView, content: contentState, preview: livePreviewComment,
+    shown: contentShown, theme: theme || profileTheme, level,
+    likeLoading, truncated: primaryTextTruncated, placeholderHeight
+  } : undefined);
   const shouldHydrate =
     contentId > 0 && Boolean(contentType) && !contentState.loaded;
   const hydrationRequestKey = getHomeFeedContentHydrationKey(

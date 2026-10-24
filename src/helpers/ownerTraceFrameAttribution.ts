@@ -16,6 +16,16 @@ const MAX_FRAMES_PER_SAMPLE = 3;
 const MAX_SCRIPTS_PER_FRAME = 3;
 const MAX_TYPES_PER_FRAME = 8;
 const MAX_LOAF_ENTRIES = 40;
+const FEED_RENDER_SIGNALS = ['feed', 'visibility', 'content', 'preview', 'shown', 'theme', 'level', 'likeLoading', 'truncated', 'placeholderHeight'] as const;
+const FEED_RENDER_REASONS = new Set<string>([...FEED_RENDER_SIGNALS, 'initial', 'other']);
+export type FeedRenderSignals = Record<typeof FEED_RENDER_SIGNALS[number], unknown>;
+// Only fixed signal names leave the browser. Values (including feed content)
+// are compared by identity locally and never enter a telemetry event.
+export function feedRenderChanges(previous: FeedRenderSignals | null, next: FeedRenderSignals) {
+  if (!previous) return ['initial'];
+  const changed = FEED_RENDER_SIGNALS.filter(key => !Object.is(previous[key], next[key]));
+  return changed.length ? changed : ['other'];
+}
 // The owner-trace server replaces event data over 2000 chars with a
 // truncation marker; stay well under it.
 export const MAX_FRAME_EVENT_CHARS = 1800;
@@ -57,6 +67,7 @@ interface CounterFrame {
   endMs: number;
   renders: Record<string, number>;
   mounts: Record<string, number>;
+  updates?: Record<string, number>;
   imgLoads: number;
   layoutWork: Record<string, { calls: number; ms: number; maxMs: number }>;
   textMeasure: { calls: number; ms: number; maxMs: number };
@@ -209,6 +220,7 @@ export function boundFrameEvent(data: Record<string, any>) {
     delete data.renders;
     delete data.mounts;
     delete data.layoutWork;
+    delete data.updates;
   }
   return data;
 }
@@ -231,6 +243,7 @@ export function createFrameAttribution({
   let slowRafCount = 0;
   let renders = new Map<string, number>();
   let mounts = new Map<string, number>();
+  let updates = new Map<string, number>();
   let imgLoads = 0;
   let textMeasure = { calls: 0, ms: 0, maxMs: 0 };
   let layoutWork: CounterFrame['layoutWork'] = {};
@@ -290,10 +303,15 @@ export function createFrameAttribution({
     }
   }
 
-  function noteRender(type: string) {
+  function noteRender(type: string, reasons: string[] = []) {
     if (!active) return;
     const key = String(type || 'unknown').slice(0, 24);
     renders.set(key, (renders.get(key) || 0) + 1);
+    for (const reason of reasons) {
+      if (!FEED_RENDER_REASONS.has(reason)) continue;
+      const signal = `${key}:${reason}`;
+      if (updates.has(signal) || updates.size < 32) updates.set(signal, (updates.get(signal) || 0) + 1);
+    }
   }
 
   function noteMount(type: string) {
@@ -317,6 +335,7 @@ export function createFrameAttribution({
         endMs: at,
         renders: topCounts(renders),
         mounts: topCounts(mounts),
+        ...(updates.size ? { updates: topCounts(updates) } : {}),
         imgLoads,
         layoutWork: Object.fromEntries(Object.entries(layoutWork).map(([name, item]) => [name, { calls: item.calls, ms: Math.round(item.ms), maxMs: Math.round(item.maxMs) }])),
         textMeasure: { calls: textMeasure.calls, ms: Math.round(textMeasure.ms), maxMs: Math.round(textMeasure.maxMs) }
@@ -373,6 +392,7 @@ export function createFrameAttribution({
                   gapMs: round(overlap.gapMs),
                   renders: overlap.renders,
                   mounts: overlap.mounts,
+                  ...(overlap.updates ? { updates: overlap.updates } : {}),
                   imgLoads: overlap.imgLoads,
                   textMeasure: overlap.textMeasure,
                   layoutWork: overlap.layoutWork
@@ -396,6 +416,7 @@ export function createFrameAttribution({
           gapMs: round(item.gapMs),
           renders: item.renders,
           mounts: item.mounts,
+          ...(item.updates ? { updates: item.updates } : {}),
           imgLoads: item.imgLoads,
           textMeasure: item.textMeasure,
           layoutWork: item.layoutWork
@@ -422,6 +443,7 @@ export function createFrameAttribution({
   function resetCounters() {
     renders = new Map();
     mounts = new Map();
+    updates = new Map();
     imgLoads = 0;
     textMeasure = { calls: 0, ms: 0, maxMs: 0 };
     layoutWork = {};
