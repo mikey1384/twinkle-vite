@@ -206,6 +206,39 @@ export default function useRuntimeUploads({
     }
   }
 
+  async function refreshRuntimeUploadSection(buildId: number) {
+    try {
+      const payload = await loadBuildRuntimeUploads({
+        buildId,
+        limit: RUNTIME_UPLOAD_FILES_PER_SECTION
+      });
+      const assets: BuildRuntimeUploadAsset[] = Array.isArray(payload?.assets)
+        ? payload.assets
+        : [];
+      const nextCursor = Number(payload?.nextCursor);
+      const fileCount = Number(payload?.fileCount);
+      setRuntimeUploadGroups((prev) =>
+        prev.map((group) =>
+          group.buildId === buildId && assets.length > 0
+            ? {
+                ...group,
+                assets,
+                fileCount: Number.isFinite(fileCount)
+                  ? fileCount
+                  : group.fileCount,
+                nextCursor:
+                  Number.isFinite(nextCursor) && nextCursor > 0
+                    ? nextCursor
+                    : null
+              }
+            : group
+        )
+      );
+    } catch (error) {
+      console.error('Failed to refresh uploads for build:', error);
+    }
+  }
+
   async function handleLoadMoreRuntimeUploadsForBuild(buildId: number) {
     if (!isOwner || runtimeUploadsLoadingBuildId) return;
     const group = runtimeUploadGroups.find((item) => item.buildId === buildId);
@@ -354,6 +387,9 @@ export default function useRuntimeUploads({
       : [uploadedAsset];
     updateRuntimeUploadQuotaUsage(listPayload?.usage || null);
     setCurrentBuildRuntimeAssets(currentBuildAssets);
+    const sectionLoaded = runtimeUploadGroups.some(
+      (group) => group.buildId === uploadedAsset.buildId
+    );
     setRuntimeUploadGroups((prev) => {
       const existing = prev.find(
         (group) => group.buildId === uploadedAsset.buildId
@@ -386,6 +422,11 @@ export default function useRuntimeUploads({
         ...prev.filter((item) => item.buildId !== uploadedAsset.buildId)
       ];
     });
+    if (!sectionLoaded && isOwner) {
+      // The build had no section yet: the placeholder holds just this file,
+      // so fetch the build's first page for its older files and real total.
+      void refreshRuntimeUploadSection(uploadedAsset.buildId);
+    }
     return {
       success: true,
       asset,
