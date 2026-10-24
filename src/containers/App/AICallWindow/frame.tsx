@@ -161,16 +161,16 @@ export function EnergyBattery({
     <div
       aria-label={`AI Energy ${energyDisplay.label}`}
       className={css`
-        width: ${width}px;
+        width: calc(${width} * var(--px));
         margin: ${margin};
         background-color: #e0e0e0;
         border-radius: 10px;
-        padding: 3px;
+        padding: calc(3 * var(--px));
         position: relative;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
-        gap: 3px;
+        gap: calc(3 * var(--px));
         flex-shrink: 0;
       `}
     >
@@ -218,7 +218,7 @@ export function EnergyBattery({
           color: ${batteryLevel < 30 ? '#333' : '#fff'};
           font-weight: 600;
           font-size: 1.1rem;
-          width: 80px;
+          width: calc(80 * var(--px));
           text-align: center;
         `}
       >

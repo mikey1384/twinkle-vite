@@ -12,6 +12,7 @@ import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import { getChatReaction } from '~/constants/chatReactions';
 import { useChatContext } from '~/contexts';
 import { isMobile } from '~/helpers';
+import { uiScale } from '~/helpers/uiScale';
 import Icon from '~/components/Icon';
 import AssistantFace from '~/components/AssistantFace';
 import { latestThoughtLine } from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
@@ -118,11 +119,14 @@ function DockWindow({
   const [phone] = useState(() => isMobile(navigator));
   const { position, windowRef, handleStart } = useDraggableWindow({
     // Its real width: narrow screens make it the screen width less 16px.
+    // Big screens draw it larger (design pixels, styles.css --px).
     x: Math.max(
       8,
-      window.innerWidth - Math.min(WINDOW_WIDTH, window.innerWidth - 16) - 8
+      window.innerWidth -
+        Math.min(WINDOW_WIDTH * uiScale(), window.innerWidth - 16) -
+        8
     ),
-    y: phone ? 8 : 70
+    y: phone ? 8 : 70 * uiScale()
   });
   const [expanded, setExpanded] = useState(!phone);
   const [text, setText] = useState('');
@@ -174,7 +178,7 @@ function DockWindow({
         className={css`
           position: fixed;
           z-index: 2147482999;
-          width: ${WINDOW_WIDTH}px;
+          width: calc(${WINDOW_WIDTH} * var(--px));
           max-width: calc(100vw - 16px);
           max-height: calc(100vh - 90px);
           display: flex;
@@ -193,7 +197,7 @@ function DockWindow({
           className={`draggable-area ${css`
             display: flex;
             align-items: stretch;
-            height: ${phone ? 60 : 96}px;
+            height: calc(${phone ? 60 : 96} * var(--px));
             flex-shrink: 0;
             touch-action: none;
             cursor: move;
@@ -203,7 +207,7 @@ function DockWindow({
           <div
             className={css`
               display: flex;
-              min-width: ${phone ? 52 : 76}px;
+              min-width: calc(${phone ? 52 : 76} * var(--px));
               align-items: center;
               padding-left: 0.8rem;
             `}
@@ -263,7 +267,7 @@ function DockWindow({
               cursor: default;
               display: flex;
               flex-direction: ${phone ? 'row' : 'column'};
-              width: ${phone ? 76 : 40}px;
+              width: calc(${phone ? 76 : 40} * var(--px));
               flex-shrink: 0;
               border-left: 1px solid var(--ui-border);
             `}

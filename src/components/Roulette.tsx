@@ -115,12 +115,12 @@ function RouletteInner<TData = unknown>({
   const wheelContainerStyles = useMemo(
     () => css`
       position: relative;
-      width: ${wheelSize}px;
-      height: ${wheelSize}px;
+      width: calc(${wheelSize} * var(--px));
+      height: calc(${wheelSize} * var(--px));
       border-radius: 50%;
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
       background: #fff;
-      padding: 3px;
+      padding: calc(3 * var(--px));
       text-align: center;
 
       @media (max-width: ${mobileMaxWidth}) {
@@ -210,12 +210,12 @@ function RouletteInner<TData = unknown>({
                   style={{
                     transform: `
                       translate(
-                        ${
+                        calc(${
                           Math.cos(((labelAngle - 90) * Math.PI) / 180) * radius
-                        }px,
-                        ${
+                        } * var(--px)),
+                        calc(${
                           Math.sin(((labelAngle - 90) * Math.PI) / 180) * radius
-                        }px
+                        } * var(--px))
                       )
                       translate(-50%, -50%)
                       rotate(${labelAngle}deg)
@@ -448,11 +448,11 @@ function RouletteInner<TData = unknown>({
 
 const pointerStyles = css`
   position: absolute;
-  top: -15px;
+  top: calc(-15 * var(--px));
   left: 50%;
   transform: translateX(-50%) rotate(180deg);
-  width: 30px;
-  height: 30px;
+  width: calc(30 * var(--px));
+  height: calc(30 * var(--px));
   background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.15));
@@ -463,9 +463,9 @@ const wheelCenterStyles = css`
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 40px;
-  height: 40px;
-  margin: -20px 0 0 -20px;
+  width: calc(40 * var(--px));
+  height: calc(40 * var(--px));
+  margin: calc(-20 * var(--px)) 0 0 calc(-20 * var(--px));
   border-radius: 50%;
   background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
   z-index: 5;
@@ -477,8 +477,8 @@ const wheelCenterStyles = css`
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 15px;
-    height: 15px;
+    width: calc(15 * var(--px));
+    height: calc(15 * var(--px));
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.9);
   }

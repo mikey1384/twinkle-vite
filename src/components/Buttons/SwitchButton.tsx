@@ -67,18 +67,18 @@ export default function SwitchButton({
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
-    width: ${metrics.trackWidth}px;
-    height: ${metrics.trackHeight}px;
-    border-radius: ${metrics.trackHeight}px;
+    width: ${dp(metrics.trackWidth)};
+    height: ${dp(metrics.trackHeight)};
+    border-radius: ${dp(metrics.trackHeight)};
     transition: background 0.25s ease, box-shadow 0.25s ease;
   `;
 
   const knobClass = css`
     position: absolute;
     top: 50%;
-    left: ${isSmall ? 4 : 5}px;
-    width: ${metrics.knobSize}px;
-    height: ${metrics.knobSize}px;
+    left: ${dp(isSmall ? 4 : 5)};
+    width: ${dp(metrics.knobSize)};
+    height: ${dp(metrics.knobSize)};
     border-radius: 50%;
     background: #ffffff;
     transition: transform 0.28s cubic-bezier(0.2, 0.95, 0.48, 1),
@@ -115,8 +115,8 @@ export default function SwitchButton({
           display: inline-block;
         `}
         style={{
-          width: metrics.trackWidth,
-          height: metrics.trackHeight,
+          width: dp(metrics.trackWidth),
+          height: dp(metrics.trackHeight),
           cursor: disabled ? 'default' : 'pointer'
         }}
         onKeyDown={(event) => {
@@ -157,9 +157,9 @@ export default function SwitchButton({
           <span
             className={knobClass}
             style={{
-              transform: `translate(${
+              transform: `translate(${dp(
                 checked ? metrics.knobTranslate : 0
-              }px, -50%)`,
+              )}, -50%)`,
               boxShadow: checked
                 ? palette.active.knobShadow
                 : palette.inactive.knobShadow
@@ -169,6 +169,12 @@ export default function SwitchButton({
       </label>
     </ErrorBoundary>
   );
+}
+
+// the switch is drawn in design pixels so it grows with the page on big
+// screens (styles.css --px)
+function dp(n: number) {
+  return `calc(${n} * var(--px))`;
 }
 
 const visuallyHiddenInput = css`
