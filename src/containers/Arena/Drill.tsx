@@ -22,7 +22,7 @@ interface DrillItem {
   body?: string;
   visual?: Record<string, unknown>;
   choices: string[];
-  typed?: 'integer' | 'text';
+  typed?: 'integer' | 'number' | 'text';
   key?: number | string;
   review?: ArenaItem['review'];
 }

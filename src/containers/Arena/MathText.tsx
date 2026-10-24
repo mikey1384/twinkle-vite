@@ -12,7 +12,15 @@ export function hasMath(text: string) {
   return /\\\(|\\\[/.test(String(text || ''));
 }
 
-export default function MathText({ text }: { text: string }) {
+// displayStyle: inline math at full size (fractions in 수학 choices print
+// large on the real paper)
+export default function MathText({
+  text,
+  displayStyle = false
+}: {
+  text: string;
+  displayStyle?: boolean;
+}) {
   const value = String(text ?? '');
   if (!hasMath(value)) return <>{value}</>;
   return (
@@ -23,7 +31,11 @@ export default function MathText({ text }: { text: string }) {
         if (!display && !inline) {
           return <React.Fragment key={i}>{part}</React.Fragment>;
         }
-        const html = renderTex(part.slice(2, -2), display);
+        const tex = part.slice(2, -2);
+        const html = renderTex(
+          displayStyle && !display ? `\\displaystyle ${tex}` : tex,
+          display
+        );
         return (
           <span
             key={i}

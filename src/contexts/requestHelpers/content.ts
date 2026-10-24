@@ -1351,6 +1351,67 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // Arena parent email (Mikey 10-24): after a timed win, send the result
+    // to a parent; the parent confirms on /exam-report (no account)
+    async loadArenaParentPrompt(battleId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/arena/battle/${battleId}/parent`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async sendArenaParentReport(
+      battleId: number,
+      body: { email?: string; useOnFile?: boolean }
+    ) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/battle/${battleId}/parent`,
+          body,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async dismissArenaParentPrompt(battleId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/battle/${battleId}/parent/dismiss`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadArenaParentReport(token: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/arena/parent?token=${encodeURIComponent(token)}`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async confirmArenaParentReport(token: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/parent/confirm`,
+          { token }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadArenaChallenge(challengeId: number) {
       try {
         const { data } = await request.get(
@@ -1418,6 +1479,55 @@ export default function contentRequestHelpers({
         const { data } = await request.post(
           `${URL}/content/arena/train/drill/answer`,
           { itemId, version, answer },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Train's real score reports and paper submissions (helpers/arena/
+    // reports.ts on the API): choices, rewards and the member's own history
+    async loadArenaReports() {
+      try {
+        const { data } = await request.get(`${URL}/content/arena/reports`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitArenaScoreReport(report: {
+      examKey: string;
+      sitting: string;
+      sittingOther?: string;
+      grade?: number | null;
+      score?: number | null;
+      proofKey?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/reports/score`,
+          report,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitArenaPaper(paper: {
+      fileKeys: string[];
+      examKind: string;
+      school?: string;
+      gradeLevel?: string;
+      year?: number | null;
+      term?: string;
+      subject: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/reports/paper`,
+          paper,
           auth()
         );
         return data;

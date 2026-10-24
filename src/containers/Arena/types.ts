@@ -115,7 +115,7 @@ export interface ArenaItem {
   // [] for a typed answer
   choices: string[];
   // a typed answer (수학 단답형 etc.): digits only, or a word or phrase
-  typed?: 'integer' | 'text';
+  typed?: 'integer' | 'number' | 'text';
   // an essay or spoken answer, AI-marked after the battle
   marked?: 'essay' | 'spoken';
   task?: {
@@ -162,6 +162,8 @@ export interface ArenaBattle {
       language?: 'en' | 'ko';
       // 'all': every item prints its [n점] tag (수학, 한국사능력검정)
       pointTags?: 'all' | null;
+      // 'problem': 수학-style items (setup inline, then the question)
+      layout?: 'problem' | null;
       code: string;
       codeLabel: string | null;
       name: string;

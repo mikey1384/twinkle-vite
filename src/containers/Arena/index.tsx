@@ -12,6 +12,8 @@ import Train from './Train';
 import ReviewDeck from './ReviewDeck';
 import Skills from './Skills';
 import Drill from './Drill';
+import EraserFlick from './Eraser';
+import Reports from './Reports';
 import { useArenaPaperFonts } from './paperFont';
 import Battles from './Battles';
 import Challenge from './Challenge';
@@ -46,7 +48,7 @@ export default function ArenaPage() {
 
   return (
     <ErrorBoundary componentPath="Arena/Page">
-      <div className={pageCls}>
+      <div className={cx(pageCls, activity === 'eraser' && fitPageCls)}>
         {activity !== 'ai-story' && (
           <div className={topBarCls}>
             <button
@@ -73,6 +75,9 @@ export default function ArenaPage() {
               activity === 'deck' ||
               activity === 'skills' ||
               activity === 'drill' ||
+              activity === 'eraser' ||
+              activity === 'score-report' ||
+              activity === 'paper' ||
               challengeId > 0 ||
               !!searchParams.get('records')) &&
               stageTopCls
@@ -112,10 +117,29 @@ export default function ArenaPage() {
               onBack={() => setSearchParams({ mode: 'train', play: 'skills' })}
             />
           )}
+          {view === 'train' && activity === 'eraser' && (
+            <EraserFlick
+              onOpenArena={() => setSearchParams({ mode: 'arena' })}
+            />
+          )}
           {view === 'train' &&
-            !['ai-story', 'deck', 'skills', 'drill'].includes(
-              activity || ''
-            ) && (
+            (activity === 'score-report' || activity === 'paper') && (
+              <Reports
+                key={activity}
+                kind={activity === 'paper' ? 'paper' : 'score'}
+                onBack={() => setSearchParams({ mode: 'train' })}
+              />
+            )}
+          {view === 'train' &&
+            ![
+              'ai-story',
+              'deck',
+              'skills',
+              'drill',
+              'score-report',
+              'paper',
+              'eraser'
+            ].includes(activity || '') && (
               <Train
                 onOpenDeck={() =>
                   setSearchParams({ mode: 'train', play: 'deck' })
@@ -126,8 +150,17 @@ export default function ArenaPage() {
                 onPlayAIStory={() =>
                   setSearchParams({ mode: 'train', play: 'ai-story' })
                 }
+                onPlayEraser={() =>
+                  setSearchParams({ mode: 'train', play: 'eraser' })
+                }
                 onOpenBattle={(id) =>
                   setSearchParams({ mode: 'train', battle: String(id) })
+                }
+                onOpenScoreReport={() =>
+                  setSearchParams({ mode: 'train', play: 'score-report' })
+                }
+                onOpenPaper={() =>
+                  setSearchParams({ mode: 'train', play: 'paper' })
                 }
               />
             )}
@@ -191,6 +224,17 @@ const pageCls = css`
   padding: 1.4rem 2rem 4rem;
   @media (max-width: ${mobileMaxWidth}) {
     padding: 1rem 1rem calc(var(--mobile-nav-total-height, 7rem) + 2.5rem);
+  }
+`;
+
+// the eraser game fits one screen: the page stops growing and the desk
+// takes whatever height is left (games never scroll, Mikey 10-07)
+const fitPageCls = css`
+  height: calc(100dvh - ${APP_SHELL_HEADER_OFFSET_STYLE});
+  min-height: 0;
+  overflow: hidden;
+  main {
+    min-height: 0;
   }
 `;
 

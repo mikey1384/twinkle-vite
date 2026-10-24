@@ -709,6 +709,38 @@ function NotiMessage({
           . Rematch?
         </>
       );
+    // Arena (SPEC §10-11): a reviewer verified or turned down your real
+    // score report or paper; the line carries the reward or the reason
+    case 'arenaReviewApproved':
+    case 'arenaReviewRejected': {
+      const isPaper = targetObj.contentType === 'arenaPaper';
+      return (
+        <>
+          <span
+            style={{
+              color:
+                actionObj.contentType === 'arenaReviewApproved'
+                  ? recommendationColorValue
+                  : mentionColorValue,
+              fontWeight: 'bold'
+            }}
+          >
+            {actionObj.contentType === 'arenaReviewApproved'
+              ? isPaper
+                ? 'accepted'
+                : 'verified'
+              : 'could not accept'}
+          </span>{' '}
+          your Arena {isPaper ? 'paper' : 'score report'}{' '}
+          <Link
+            to={`/arena?mode=train&play=${isPaper ? 'paper' : 'score-report'}`}
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            {targetObj.content || 'See it'}
+          </Link>
+        </>
+      );
+    }
     case 'friendAccepted':
       return (
         <>

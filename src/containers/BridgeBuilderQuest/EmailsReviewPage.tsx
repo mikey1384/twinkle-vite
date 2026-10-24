@@ -152,9 +152,11 @@ export default function EmailsReviewPage() {
               `}
             >
               <div style={{ fontSize: '1.3rem', color: Color.gray() }}>
-                {draft.kind === 'witness' ? (
+                {draft.kind === 'witness' || draft.kind === 'arena' ? (
                   <>
-                    Grown-up request from{' '}
+                    {draft.kind === 'arena'
+                      ? 'Arena mock-exam result to a parent from'
+                      : 'Grown-up request from'}{' '}
                     {draft.childUsername ? (
                       <Link to={`/users/${draft.childUsername}`}>{draft.childUsername}</Link>
                     ) : (
@@ -165,6 +167,8 @@ export default function EmailsReviewPage() {
                       <b style={{ color: Color.orange() }}>the child typed this address</b>
                     ) : draft.addressSource === 'guardian' ? (
                       'guardian from the sign-up consent'
+                    ) : draft.kind === 'arena' ? (
+                      'a parent-confirmed address'
                     ) : (
                       'address from an earlier request'
                     )}

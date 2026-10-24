@@ -16,6 +16,7 @@ import TypedAnswer from './TypedAnswer';
 import EssayAnswer from './EssayAnswer';
 import SpokenAnswer from './SpokenAnswer';
 import MarkReview from './MarkReview';
+import ParentEmailOffer from './ParentEmailOffer';
 import type { ArenaBattle, ArenaItem } from './types';
 
 // One sitting of a real exam (Mikey 2026-10-24): the paper looks like the
@@ -59,7 +60,8 @@ function listeningTracks(data: ArenaBattle): ListeningTrack[] {
 }
 
 function isArtBrief(body: string) {
-  return /^\s*\[(Picture|Chart|Table|Graph|Map|Photo|Frame|Scene)\b/i.test(
+  // Figure: a 수학 figure note the problem can be solved without
+  return /^\s*\[(Picture|Chart|Table|Graph|Map|Photo|Frame|Scene|Figure)\b/i.test(
     body
   );
 }
@@ -307,7 +309,14 @@ export default function BattleRunner({
       <div className={bodyCls}>
         <main className={paperCls}>
           <div className={paperHeadCls}>
-            <span>{data.battle.exam.name.replace(/^수능 /, '')} 영역</span>
+            {/* a Korean paper's 영역 heading; an English-language exam
+                (C1, IELTS, TOEFL) prints its name only */}
+            <span>
+              {data.battle.exam.language === 'en' &&
+              !/^수능 /.test(data.battle.exam.name)
+                ? data.battle.exam.name
+                : `${data.battle.exam.name.replace(/^수능 /, '')} 영역`}
+            </span>
           </div>
           {sections.map(({ section, items }) => (
             <section key={section} className={columnsCls}>
@@ -338,6 +347,7 @@ export default function BattleRunner({
                     passage={passage}
                     marked={answers[item.no] ?? null}
                     allPointTags={data.battle.exam.pointTags === 'all'}
+                    problemLayout={data.battle.exam.layout === 'problem'}
                     finished={finished}
                     reviewLang={reviewLang}
                     // replay controls only where replays are allowed: Train's
@@ -561,6 +571,7 @@ export function PaperItem({
   reviewLang,
   audioControls,
   allPointTags,
+  problemLayout = false,
   onMark,
   battleId = 0,
   untimed = false,
@@ -570,6 +581,7 @@ export function PaperItem({
 }: {
   item: ArenaItem;
   allPointTags: boolean;
+  problemLayout?: boolean;
   reviewLang: 'en' | 'ko';
   passage: { kind: string; body: string; audioPath: string | null } | null;
   marked: number | string | null;
@@ -609,14 +621,30 @@ export function PaperItem({
           )}
         </div>
       )}
+      {problemLayout && (passage || (item.body && !isArtBrief(item.body))) && (
+        // 수학: the number, the setup inline, any box, then the question
+        <>
+          {passage && (
+            <div className={problemCls}>
+              {item.no > 0 && <b>{item.no}.</b>}{' '}
+              <PaperText text={passage.body} />
+            </div>
+          )}
+          {item.body && !isArtBrief(item.body) && (
+            <div className={boxCls}>
+              <PaperText text={item.body} />
+            </div>
+          )}
+        </>
+      )}
       <p className={stemCls}>
-        {item.no > 0 && <b>{item.no}.</b>}{' '}
+        {item.no > 0 && !(problemLayout && passage) && <b>{item.no}.</b>}{' '}
         <MathText text={stemText(item.stem)} />
         {(allPointTags || item.points === 3) && (
           <span className={pointsCls}> [{item.points}점]</span>
         )}
       </p>
-      {item.body && bodyFirst && (
+      {item.body && bodyFirst && !problemLayout && (
         <div className={boxCls}>
           <PaperText text={item.body} />
         </div>
@@ -634,7 +662,7 @@ export function PaperItem({
           <div className={artPendingCls}>(그림 / 도표)</div>
         )
       )}
-      {passage && !listening && (
+      {passage && !listening && !problemLayout && (
         <div className={passageCls}>
           {isDialogue(passage.body) ? (
             <DialogueText text={passage.body} />
@@ -643,7 +671,7 @@ export function PaperItem({
           )}
         </div>
       )}
-      {item.body && !bodyFirst && !isArtBrief(item.body) && (
+      {item.body && !bodyFirst && !problemLayout && !isArtBrief(item.body) && (
         <div className={boxCls}>
           <PaperText text={item.body} />
         </div>
@@ -733,7 +761,7 @@ export function PaperItem({
                     ) : (
                       <>
                         {' '}
-                        <MathText text={choice} />
+                        <MathText text={choice} displayStyle />
                       </>
                     )}
                   </button>
@@ -968,6 +996,12 @@ function Result({ data }: { data: ArenaBattle }) {
           ))}
           {agentError && <span className={agentErrorCls}>{agentError}</span>}
         </div>
+      )}
+      {/* after a timed win, optionally send the result to a parent (Mikey
+          10-24): Korean, exam terms, a one-time reward when the parent
+          confirms a first parent email */}
+      {battle.mode === 'battle' && battle.won && (
+        <ParentEmailOffer battleId={battle.id} />
       )}
     </div>
   );
@@ -1593,4 +1627,10 @@ const typedRowCls = css`
 const typedKeyCls = css`
   font-variant-numeric: tabular-nums;
   font-weight: 900;
+`;
+
+// 수학's problem text: inline after the number, no box
+const problemCls = css`
+  margin: 0 0 0.6rem;
+  line-height: 1.9;
 `;
