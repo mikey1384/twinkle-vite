@@ -373,7 +373,7 @@ const eyebrowCls = css`
 `;
 
 const questionCls = css`
-  max-width: 640px;
+  max-width: calc(640 * var(--px));
   font-family: ${PAPER.serif};
   font-size: 2.2rem;
   line-height: 1.4;
@@ -387,7 +387,7 @@ const questionCls = css`
 
 const sectionCls = css`
   width: 100%;
-  max-width: 640px;
+  max-width: calc(640 * var(--px));
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
@@ -398,7 +398,7 @@ const sectionCls = css`
 
 const promptAreaCls = css`
   ${textareaCls};
-  min-height: 130px;
+  min-height: calc(130 * var(--px));
 `;
 
 const labelCls = css`

@@ -505,7 +505,7 @@ export default function GradingResult({
           className={css`
             display: block;
             width: 100%;
-            max-width: 560px;
+            max-width: calc(560 * var(--px));
             margin: 0 auto 1.6rem;
             border-radius: 14px;
             border: 1px solid ${PAPER.line};

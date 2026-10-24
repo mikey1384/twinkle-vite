@@ -182,7 +182,7 @@ function formatDay(day: GalleryDay) {
 }
 
 const wrapCls = css`
-  max-width: 1100px;
+  max-width: calc(1100 * var(--px));
   width: 100%;
   margin: 0 auto;
 `;
@@ -258,7 +258,7 @@ const sharedLinkCls = css`
 
 const gridCls = css`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(calc(200 * var(--px)), 1fr));
   gap: 1.2rem;
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
