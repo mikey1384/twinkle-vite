@@ -15,6 +15,7 @@ const contentTitles = new Map([
   ['achievement-unlocks', 'Achievement'],
   ['bounties', 'Bounty'],
   ['bridge-steps', 'Bridge Step'],
+  ['arena-challenges', 'Arena Challenge'],
   ['daily-rewards', 'Daily Goal'],
   ['shared-prompts', 'Shared Prompt']
 ]);

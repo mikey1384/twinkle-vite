@@ -67,6 +67,9 @@ function Heading({
     if (contentType === 'meetupQuestStep') {
       return `/bridge-steps/${id}`;
     }
+    if (contentType === 'arenaChallenge') {
+      return `/arena-challenges/${id}`;
+    }
     if (contentType === 'sharedTopic') {
       return `/shared-prompts/${id}`;
     }

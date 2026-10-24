@@ -57,6 +57,7 @@ import { getCommentPreviewPlainText } from '../helpers/commentPreviewText';
 import type { Comment } from '~/types';
 import DailyGoalsPreview from './DailyGoalsPreview';
 import MeetupStepPreview from './MeetupStepPreview';
+import ArenaChallengePanel from '~/components/ArenaChallengePanel';
 import VideoPreview from './VideoPreview';
 import {
   type FeedCardSizing,
@@ -246,6 +247,9 @@ export default function Body({
           textClassName={primaryPreviewTextClass}
         />
       );
+    }
+    if (contentType === 'arenaChallenge') {
+      return <ArenaChallengePanel challenge={content} />;
     }
     if (contentType === 'sharedTopic') {
       return renderSharedTopicPreview();

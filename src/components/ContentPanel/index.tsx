@@ -1,4 +1,5 @@
 import MeetupStepDisplay from './Body/MainContent/ContentDisplay/MeetupStepDisplay';
+import ArenaChallengePanel from '~/components/ArenaChallengePanel';
 import ContentLink from '~/components/ContentLink';
 import BountyContent from '~/components/BountyContent';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -672,6 +673,19 @@ export default function ContentPanel({
                         marginTop: alignTopWithTarget ?? targetTuckMargin
                       }}
                     />
+                  )}
+                {contentType === 'comment' &&
+                  appliedRootType === 'arenaChallenge' &&
+                  rootObj?.id && (
+                    <div
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
+                      }}
+                    >
+                      <ArenaChallengePanel challenge={rootObj} />
+                    </div>
                   )}
                 {contentType === 'comment' &&
                   appliedRootType === 'xpChange' &&

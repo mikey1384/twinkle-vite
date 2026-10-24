@@ -28,6 +28,7 @@ const KIND_IDEAS: Record<string, string[]> = {
   mission: ['How do I pass this mission?', "What's my next step?"],
   xpChange: ['How do I get a reward like this?', 'How does the multiplier work?'],
   meetupQuestStep: ['What is Bridge Builder?', 'How do I start a crew?'],
+  arenaChallenge: ['What is the Arena?', 'How do I beat this boss?'],
   aiCard: ['How rare is this card?', 'How do I summon cards?'],
   sharedTopic: ['What does this prompt do?', 'How do I try it?']
 };

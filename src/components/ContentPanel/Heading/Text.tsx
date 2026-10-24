@@ -283,6 +283,14 @@ export default function HeadingText({
           an app: {renderBuildContentLink()}{' '}
         </>
       );
+    case 'arenaChallenge': {
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} /> took on
+          a boss and won. Can you do better?{' '}
+        </>
+      );
+    }
     case 'meetupQuestStep': {
       return (
         <>
@@ -445,6 +453,13 @@ export default function HeadingText({
         return (
           <>
             {renderCompactUser()} {renderCompactAction('completed daily goals')}
+          </>
+        );
+      case 'arenaChallenge':
+        return (
+          <>
+            {renderCompactUser()}{' '}
+            {renderCompactAction('took on a boss and won. Can you do better?')}
           </>
         );
       case 'meetupQuestStep':

@@ -20,6 +20,7 @@ export function getNotificationContentTypeLabel({
   if (contentType === 'xpChange') return DAILY_GOAL_COMPLETION_LABEL;
   if (contentType === 'sharedTopic') return SHARED_SYSTEM_PROMPT_LABEL;
   if (contentType === 'dailyReflection') return 'reflection';
+  if (contentType === 'arenaChallenge') return 'Arena challenge';
   if (contentType === 'pass') {
     return passType === 'achievement'
       ? 'achievement'

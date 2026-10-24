@@ -35,7 +35,7 @@ export default function ArenaButton({
   size?: 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
-  onClick: () => any;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => any;
   style?: React.CSSProperties;
   className?: string;
   children?: React.ReactNode;

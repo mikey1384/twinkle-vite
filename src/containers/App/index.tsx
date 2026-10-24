@@ -1434,6 +1434,10 @@ export default function App() {
                   element={<ContentPage />}
                 />
                 <Route
+                  path="/arena-challenges/:contentId"
+                  element={<ContentPage />}
+                />
+                <Route
                   path="/shared-prompts/:contentId"
                   element={<ContentPage />}
                 />

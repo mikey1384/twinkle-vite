@@ -56,6 +56,9 @@ export default function ContentPage() {
     if (rawContentType === 'bridge-step') {
       return { contentType: 'meetupQuestStep', rootType: undefined };
     }
+    if (rawContentType === 'arena-challenge') {
+      return { contentType: 'arenaChallenge', rootType: undefined };
+    }
     if (rawContentType === 'shared-prompt') {
       return { contentType: 'sharedTopic', rootType: undefined };
     }

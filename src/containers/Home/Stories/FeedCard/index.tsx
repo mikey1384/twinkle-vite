@@ -112,6 +112,7 @@ const ASK_NOUNS: Record<string, string> = {
   sharedTopic: 'shared prompt',
   xpChange: 'daily reward',
   meetupQuestStep: 'Bridge Builder step',
+  arenaChallenge: 'Arena challenge',
   aiCard: 'AI card'
 };
 

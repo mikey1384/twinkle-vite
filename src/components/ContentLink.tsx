@@ -69,6 +69,8 @@ export default function ContentLink({
       result = 'daily-rewards';
     } else if (contentType === 'meetupQuestStep') {
       result = 'bridge-steps';
+    } else if (contentType === 'arenaChallenge') {
+      result = 'arena-challenges';
     } else if (contentType === 'sharedTopic') {
       result = 'shared-prompts';
     } else if (contentType === 'dailyReflection') {

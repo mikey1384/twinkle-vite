@@ -48,6 +48,7 @@ const askableContentLabels: Record<string, string> = {
   sharedTopic: 'this shared prompt',
   xpChange: 'this daily reward',
   meetupQuestStep: 'this Bridge Builder step',
+  arenaChallenge: 'this Arena challenge',
   pass: 'this pass'
 };
 
@@ -57,6 +58,7 @@ const nonEditableContentTypes = [
   'pass',
   'xpChange',
   'meetupQuestStep',
+  'arenaChallenge',
   'sharedTopic'
 ];
 
@@ -458,6 +460,7 @@ export default function BottomInterface({
             contentType !== 'pass' &&
             contentType !== 'xpChange' &&
             contentType !== 'meetupQuestStep' &&
+            contentType !== 'arenaChallenge' &&
             contentType !== 'sharedTopic' && (
               <ShareButton
                 variant="compact"

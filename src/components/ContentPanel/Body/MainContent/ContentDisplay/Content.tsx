@@ -1,4 +1,5 @@
 import MeetupStepDisplay from './MeetupStepDisplay';
+import ArenaChallengePanel from '~/components/ArenaChallengePanel';
 import BountyContent from '~/components/BountyContent';
 import React, { useMemo, useState } from 'react';
 import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
@@ -357,6 +358,8 @@ export default function Content({
         return <BountyContent bounty={contentObj} theme={theme} />;
       case 'meetupQuestStep':
         return <MeetupStepDisplay content={contentObj} />;
+      case 'arenaChallenge':
+        return <ArenaChallengePanel challenge={contentObj as any} />;
       case 'xpChange': {
         const appliedQuestion = getRenderedTextForVocabQuestions(
           bonusQuestion.question,

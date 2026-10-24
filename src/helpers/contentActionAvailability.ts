@@ -12,7 +12,8 @@ export const contentPanelNoRewardContentTypes = new Set([
   'dailyReflection',
   'pass',
   'sharedTopic',
-  'xpChange'
+  'xpChange',
+  'arenaChallenge'
 ]);
 
 export const homeFeedUnsupportedRecommendContentTypes = new Set([
@@ -29,7 +30,8 @@ const contentPanelCommentLabelContentTypes = new Set([
   'url',
   'video',
   'xpChange',
-  'meetupQuestStep'
+  'meetupQuestStep',
+  'arenaChallenge'
 ]);
 
 export function getContentPanelCommentActionLabel(contentType: string) {

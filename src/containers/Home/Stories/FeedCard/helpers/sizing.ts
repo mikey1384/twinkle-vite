@@ -173,7 +173,8 @@ const KNOWN_CONTENT_TYPES = new Set([
   'url',
   'video',
   'xpChange',
-  'meetupQuestStep'
+  'meetupQuestStep',
+  'arenaChallenge'
 ]);
 const PANEL_HEIGHT_REM: Record<
   FeedCardSize,
@@ -1311,7 +1312,12 @@ function getPreviewKind(content: any): FeedCardPreviewKind {
   }
 
   // a Bridge Builder step milestone is laid out like the achievement pass card
-  if (content?.contentType === 'pass' || content?.contentType === 'meetupQuestStep') {
+  // so is an Arena challenge's result panel
+  if (
+    content?.contentType === 'pass' ||
+    content?.contentType === 'meetupQuestStep' ||
+    content?.contentType === 'arenaChallenge'
+  ) {
     return 'pass';
   }
 

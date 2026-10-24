@@ -12,6 +12,7 @@ export function getHomeFeedContentPath({
   // a Bridge Builder step milestone opens its own page (comments, recommend,
   // reward live there); the page links to the crew
   if (contentType === 'meetupQuestStep') return `/bridge-steps/${contentId}`;
+  if (contentType === 'arenaChallenge') return `/arena-challenges/${contentId}`;
   if (contentType === 'url') return `/links/${contentId}`;
   if (contentType === 'aiStory') return `/ai-stories/${contentId}`;
   if (contentType === 'aiCard') return `/ai-card-summons/${contentId}`;

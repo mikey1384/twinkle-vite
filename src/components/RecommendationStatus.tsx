@@ -82,6 +82,7 @@ export default function RecommendationStatus({
       contentType !== 'sharedTopic' &&
       contentType !== 'bounty' &&
       contentType !== 'xpChange' &&
+      contentType !== 'arenaChallenge' &&
       ((isSupermod(myRecommendation?.level) &&
         !myRecommendation?.rewardDisabled) ||
         (isSupermod(mostRecentRewardEnabledRecommenderOtherThanMe?.level) &&
