@@ -452,11 +452,13 @@ function formatClock(seconds: number) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-// The paper's type: a Myeongjo serif like the real booklet (신명조 is
-// commercial; these are the closest system and free faces), English
-// passages in a Times-metric face.
+// The paper's type, as the real booklet sets it: English in Times New Roman
+// and Korean in a Myeongjo serif (신명조 is commercial; these are the
+// closest system and free faces). The Latin face comes first so English
+// letters and punctuation never fall to the Korean font, which draws ’ and
+// “ ” full-width ("It’  s").
 const PAPER_SERIF =
-  "'Noto Serif KR', 'Nanum Myeongjo', AppleMyungjo, Batang, 'Times New Roman', Tinos, serif";
+  "'Times New Roman', Tinos, 'Noto Serif KR', 'Nanum Myeongjo', AppleMyungjo, Batang, serif";
 
 // above the site header and nav, as Grammarbles' full-screen rounds are
 const shellCls = css`
