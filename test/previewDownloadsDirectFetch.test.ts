@@ -266,20 +266,79 @@ test('downloads stop at 500 MB, by declared size or while reading', async () => 
   );
 });
 
-test('a file that declares its size is read with blob(), not held twice in memory', async () => {
-  // twinkle-1a review r8: streaming into chunks then new Blob(chunks) holds
-  // about twice the file; response.blob() lets the browser spill to disk.
+const MB = 1024 * 1024;
+const streamedResponse = (headers: Record<string, string>, parts: Array<Uint8Array | { byteLength: number }>, onCancel = () => {}) => ({
+  ok: true,
+  status: 200,
+  headers: { get: (name: string) => headers[name] ?? null },
+  body: {
+    getReader: () => ({ read: async () => (parts.length ? { done: false, value: parts.shift() } : { done: true }), cancel: async () => onCancel() })
+  },
+  blob: async () => {
+    throw new Error('should stream, not call blob()');
+  }
+});
+
+test('a compressed file that declares a small size is still stopped at 500 MB while reading', async () => {
+  // twinkle-1a review r9: a gzip response declares its compressed length, so
+  // blob() would expand past the limit before the size was checked.
+  let cancelled = false;
+  const parts = Array.from({ length: 6 }, () => ({ byteLength: 100 * MB }));
   await withDownloadStubs(
-    async () => ({
-      ok: true,
-      status: 200,
-      headers: { get: (name: string) => (name === 'content-length' ? '4096' : name === 'content-type' ? 'audio/mpeg' : null) },
-      body: { getReader: () => { throw new Error('should not stream a declared size'); } },
-      blob: async () => new Blob([new Uint8Array(4096)], { type: 'audio/mpeg' })
-    }),
+    async () => streamedResponse({ 'content-length': String(5 * MB), 'content-type': 'audio/mpeg' }, parts, () => { cancelled = true; }),
     async (state) => {
-      await triggerPreviewLocalDownload({ url: CDN_MP3, fileName: 'a.mp3' });
-      assert.deepEqual(state.saved, [{ name: 'a.mp3', size: 4096, type: 'audio/mpeg' }]);
+      await assert.rejects(
+        triggerPreviewLocalDownload({ url: CDN_MP3, fileName: 'bomb.mp3' }),
+        /too large to download here \(600 MB/
+      );
+      assert.equal(cancelled, true);
+      // Stopped at the sixth chunk, not read to the end.
+      assert.equal(parts.length, 0);
+      assert.equal(state.saved.length, 0);
+    }
+  );
+});
+
+test('a file past the 16 MB fold is saved whole, bytes in order', async () => {
+  const first = new Uint8Array(12 * MB).fill(1);
+  const second = new Uint8Array(8 * MB).fill(2);
+  const third = new Uint8Array(3).fill(3);
+  let saved: Blob | undefined;
+  await withDownloadStubs(
+    async () => streamedResponse({ 'content-length': String(20 * MB + 3), 'content-type': 'application/pdf' }, [first, second, third]),
+    async (state) => {
+      const createObjectURL = URL.createObjectURL;
+      URL.createObjectURL = (blob: Blob) => {
+        saved = blob;
+        return createObjectURL(blob);
+      };
+      await triggerPreviewLocalDownload({ url: CDN_MP3, fileName: 'big.pdf' });
+      assert.deepEqual(state.saved, [{ name: 'big.pdf', size: 20 * MB + 3, type: 'application/pdf' }]);
+    }
+  );
+  const bytes = new Uint8Array(await saved!.arrayBuffer());
+  assert.equal(bytes[0], 1);
+  assert.equal(bytes[12 * MB - 1], 1);
+  assert.equal(bytes[12 * MB], 2);
+  assert.equal(bytes[20 * MB - 1], 2);
+  assert.deepEqual([...bytes.slice(20 * MB)], [3, 3, 3]);
+});
+
+test('only a plain digit content-length counts as a declared size', async () => {
+  for (const length of ['1e9', '600000000, 600000000', '-1', '']) {
+    await withDownloadStubs(
+      async () => streamedResponse({ 'content-length': length }, [new Uint8Array(4)]),
+      async (state) => {
+        await triggerPreviewLocalDownload({ url: CDN_MP3, fileName: 'a.mp3' });
+        assert.equal(state.saved[0]?.size, 4, `content-length ${JSON.stringify(length)}`);
+      }
+    );
+  }
+  // A plain length over the limit is refused before reading.
+  await withDownloadStubs(
+    async () => streamedResponse({ 'content-length': ` ${600 * MB} ` }, [new Uint8Array(4)]),
+    async () => {
+      await assert.rejects(triggerPreviewLocalDownload({ url: CDN_MP3, fileName: 'a.mp3' }), /600 MB/);
     }
   );
 });

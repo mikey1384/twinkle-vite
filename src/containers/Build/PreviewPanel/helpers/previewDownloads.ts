@@ -144,6 +144,7 @@ function getPreviewDownloadProxyUrl(parsedUrl: URL) {
 // Saving a file needs no tap, so an app could ask for any size: stop at
 // 500 MB, checked against the declared length and again while reading.
 const PREVIEW_DOWNLOAD_MAX_BYTES = 500 * 1024 * 1024;
+const PREVIEW_DOWNLOAD_FOLD_BYTES = 16 * 1024 * 1024;
 
 function previewDownloadTooLargeError(bytes: number) {
   return new Error(
@@ -153,28 +154,28 @@ function previewDownloadTooLargeError(bytes: number) {
   );
 }
 
-// A response that declares its size within the limit is read with
-// response.blob(), which lets the browser keep a large file on disk; only a
-// response with no declared size is streamed and counted here, since that
-// is the one case the limit could not be checked up front (holding the
-// chunks costs about twice the file in memory, so it is not the default).
+// Every body is streamed and counted. A declared size cannot be trusted as
+// the file's size: a compressed response declares its compressed length,
+// and response.blob() would expand all of it before any check (twinkle-1a
+// review r9). The chunks are folded into a Blob every 16 MB so they are not
+// also held as script memory; the browser keeps a large Blob in its own
+// storage, which can spill to disk.
 async function readPreviewDownloadBody(response: Response) {
-  const rawLength = response.headers?.get?.('content-length');
-  const declared =
-    rawLength != null && String(rawLength).trim() !== ''
-      ? Number(rawLength)
-      : NaN;
-  if (Number.isFinite(declared) && declared >= 0) {
+  const rawLength = String(response.headers?.get?.('content-length') ?? '');
+  // Only a plain digit string is a length ("1e3", "100, 100" or "-1" are not).
+  if (/^\s*\d+\s*$/.test(rawLength)) {
+    const declared = Number(rawLength);
     if (declared > PREVIEW_DOWNLOAD_MAX_BYTES) {
       // Stop the browser fetching the rest in the background.
       await response.body?.cancel?.().catch(() => {});
       throw previewDownloadTooLargeError(declared);
     }
-    return readPreviewDownloadBlob(response);
   }
   const reader = response.body?.getReader?.();
   if (!reader) return readPreviewDownloadBlob(response);
-  const chunks: BlobPart[] = [];
+  const folded: Blob[] = [];
+  let pending: BlobPart[] = [];
+  let pendingBytes = 0;
   let total = 0;
   for (;;) {
     let next: ReadableStreamReadResult<Uint8Array>;
@@ -190,17 +191,20 @@ async function readPreviewDownloadBody(response: Response) {
       await reader.cancel().catch(() => {});
       throw previewDownloadTooLargeError(total);
     }
-    chunks.push(next.value as BlobPart);
+    pending.push(next.value as BlobPart);
+    pendingBytes += next.value.byteLength;
+    if (pendingBytes >= PREVIEW_DOWNLOAD_FOLD_BYTES) {
+      folded.push(new Blob(pending));
+      pending = [];
+      pendingBytes = 0;
+    }
   }
-  // The MIME type as response.blob() would report it (lower case, trimmed).
-  const type = String(response.headers?.get?.('content-type') || '')
-    .trim()
-    .toLowerCase();
-  return new Blob(chunks, { type });
+  // The Blob lower-cases the type, as response.blob() reports it.
+  const type = String(response.headers?.get?.('content-type') || '').trim();
+  return new Blob([...folded, ...pending], { type });
 }
 
-// A declared size can be the compressed one, so the decoded file is checked
-// again after reading.
+// For a body that cannot be streamed: the size is checked after reading.
 async function readPreviewDownloadBlob(response: Response) {
   const blob = await response.blob();
   if (blob.size > PREVIEW_DOWNLOAD_MAX_BYTES) {
