@@ -31,6 +31,8 @@ export interface Visual {
   note?: string;
   src?: string;
   alt?: string;
+  // a licensed photo's required attribution (공공누리 제1유형: 출처표시)
+  credit?: string;
   // timeline (한국사 연표): the marked events in order, and the labels of
   // the spans between consecutive marks ((가) … (마))
   ticks?: { label: string; text?: string }[];
@@ -69,7 +71,9 @@ export default function PaperVisual({
         <img
           src={arenaMediaURL(visual.src)}
           alt={visual.alt || visual.title || ''}
+          className={visual.credit ? 'photo' : undefined}
         />
+        {visual.credit && <p className={creditCls}>{visual.credit}</p>}
       </figure>
     );
   }
@@ -648,6 +652,13 @@ function LineChart({ visual }: { visual: Visual }) {
   );
 }
 
+const creditCls = css`
+  margin: 0.3rem 0 0;
+  font-size: 1.05rem;
+  text-align: right;
+  color: #555;
+`;
+
 const timelineCls = css`
   width: 100%;
   max-width: 64rem;
@@ -667,6 +678,11 @@ const figureCls = css`
     display: block;
     max-width: 100%;
     margin: 0 auto;
+  }
+  /* an artifact photo prints small, as on the real paper */
+  img.photo {
+    max-height: 22rem;
+    width: auto;
   }
 `;
 
