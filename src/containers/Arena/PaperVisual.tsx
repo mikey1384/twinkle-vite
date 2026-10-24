@@ -1,6 +1,8 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { arenaMediaURL } from './media';
+import PaperDiagram, { type DiagramVisual } from './PaperDiagram';
+import PaperMap, { type MapVisual } from './PaperMap';
 
 // Tables, charts and pictures as the real booklet prints them (Mikey
 // 2026-10-24): black and white, series told apart by solid, white and
@@ -16,7 +18,9 @@ export interface Visual {
     | 'pie'
     | 'image'
     | 'panels'
-    | 'timeline';
+    | 'timeline'
+    | 'diagram'
+    | 'map';
   orientation?: 'vertical' | 'horizontal';
   panels?: Visual[];
   title?: string;
@@ -78,6 +82,14 @@ export default function PaperVisual({
     );
   }
   if (visual.kind === 'timeline') return <PaperTimeline visual={visual} />;
+  // a 수학/과학/KMC figure drawn from the item's data (PaperDiagram.tsx)
+  if (visual.kind === 'diagram') {
+    return <PaperDiagram visual={visual as unknown as DiagramVisual} />;
+  }
+  // a locator map from bundled outlines (PaperMap.tsx)
+  if (visual.kind === 'map') {
+    return <PaperMap visual={visual as unknown as MapVisual} />;
+  }
   if (visual.kind === 'panels') {
     return (
       <figure className={figureCls}>
