@@ -462,7 +462,9 @@ export default function BattleRunner({
   }
 }
 
-function PaperItem({
+// One question as the paper prints it (also Train's 오답 deck cards, which
+// pass no: 0 to print no number)
+export function PaperItem({
   item,
   passage,
   marked,
@@ -506,7 +508,7 @@ function PaperItem({
         </div>
       )}
       <p className={stemCls}>
-        <b>{item.no}.</b> <MathText text={stemText(item.stem)} />
+        {item.no > 0 && <b>{item.no}.</b>} <MathText text={stemText(item.stem)} />
         {(allPointTags || item.points === 3) && (
           <span className={pointsCls}> [{item.points}점]</span>
         )}

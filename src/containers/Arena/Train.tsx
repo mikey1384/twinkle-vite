@@ -10,9 +10,11 @@ import type { ArenaBattleSummary, ArenaState } from './types';
 // battle review, untimed retakes and boss prep join as Arena's battles arrive.
 export default function Train({
   onPlayAIStory,
+  onOpenDeck,
   onOpenBattle
 }: {
   onPlayAIStory: () => void;
+  onOpenDeck: () => void;
   onOpenBattle: (battleId: number) => void;
 }) {
   const aiStoryTask = useNotiContext(
@@ -22,13 +24,23 @@ export default function Train({
   const startArenaBattle = useAppContext(
     (v) => v.requestHelpers.startArenaBattle
   );
+  const loadArenaDeck = useAppContext((v) => v.requestHelpers.loadArenaDeck);
   const [state, setState] = useState<ArenaState | null>(null);
+  const [deckCounts, setDeckCounts] = useState<{
+    open: number;
+    untagged: number;
+    due: number;
+    retired: number;
+  } | null>(null);
   const [retaking, setRetaking] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     loadArenaState()
       .then((data: ArenaState) => !cancelled && setState(data))
+      .catch(() => null);
+    loadArenaDeck()
+      .then((deck: any) => !cancelled && setDeckCounts(deck?.counts || null))
       .catch(() => null);
     return () => {
       cancelled = true;
@@ -62,6 +74,29 @@ export default function Train({
           ) : (
             'Play'
           )}
+          <Icon icon="chevron-right" />
+        </span>
+      </button>
+
+      <button type="button" className={rowCls} onClick={onOpenDeck}>
+        <span className={badgeCls} style={{ background: ARENA.coral }}>
+          <Icon icon="layer-group" />
+        </span>
+        <span className={textCls}>
+          <strong>Missed-question deck</strong>
+          <span>
+            Every question you miss in a battle comes back here, spaced out
+            until you have it for good.
+          </span>
+        </span>
+        <span className={statusCls}>
+          {deckCounts?.untagged
+            ? `${deckCounts.untagged} to sort`
+            : deckCounts?.due
+              ? `${deckCounts.due} due`
+              : deckCounts?.open
+                ? 'All caught up'
+                : 'Open'}
           <Icon icon="chevron-right" />
         </span>
       </button>

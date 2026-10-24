@@ -9,6 +9,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import ModeChooser from './ModeChooser';
 import Train from './Train';
+import ReviewDeck from './ReviewDeck';
 import Battles from './Battles';
 import Challenge from './Challenge';
 import AIStory from './AIStory';
@@ -65,6 +66,7 @@ export default function ArenaPage() {
           className={cx(
             stageCls,
             (activity === 'ai-story' ||
+              activity === 'deck' ||
               challengeId > 0 ||
               !!searchParams.get('records')) &&
               stageTopCls
@@ -74,16 +76,24 @@ export default function ArenaPage() {
           {view === 'train' && activity === 'ai-story' && (
             <AIStory onHide={() => setSearchParams({ mode: 'train' })} />
           )}
-          {view === 'train' && activity !== 'ai-story' && (
-            <Train
-              onPlayAIStory={() =>
-                setSearchParams({ mode: 'train', play: 'ai-story' })
-              }
-              onOpenBattle={(id) =>
-                setSearchParams({ mode: 'train', battle: String(id) })
-              }
-            />
+          {view === 'train' && activity === 'deck' && (
+            <ReviewDeck onBack={() => setSearchParams({ mode: 'train' })} />
           )}
+          {view === 'train' &&
+            activity !== 'ai-story' &&
+            activity !== 'deck' && (
+              <Train
+                onOpenDeck={() =>
+                  setSearchParams({ mode: 'train', play: 'deck' })
+                }
+                onPlayAIStory={() =>
+                  setSearchParams({ mode: 'train', play: 'ai-story' })
+                }
+                onOpenBattle={(id) =>
+                  setSearchParams({ mode: 'train', battle: String(id) })
+                }
+              />
+            )}
           {view === 'arena' && challengeId > 0 && !battleId && (
             <Challenge
               challengeId={challengeId}

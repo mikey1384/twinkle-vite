@@ -1375,6 +1375,56 @@ export default function contentRequestHelpers({
       }
     },
     // Arena's Rising board (Mikey 10-24)
+    // Train's 오답 deck (helpers/arena/train.ts on the API)
+    async loadArenaDeck() {
+      try {
+        const { data } = await request.get(`${URL}/content/arena/train/deck`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadArenaCard(itemId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/arena/train/card/${itemId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async tagArenaCard({ itemId, tag }: { itemId: number; tag: string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/train/card/${itemId}/tag`,
+          { tag },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async answerArenaCard({
+      itemId,
+      answer
+    }: {
+      itemId: number;
+      answer: number | string | null;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/train/card/${itemId}/answer`,
+          { answer },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadArenaRising() {
       try {
         const { data } = await request.get(`${URL}/content/arena/rising`, auth());
