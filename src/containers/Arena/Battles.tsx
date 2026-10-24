@@ -9,7 +9,7 @@ import League from './League';
 import Records from './Records';
 import CoverPage from './CoverPage';
 import Rising from './Rising';
-import type { ArenaDifficulty, ArenaState } from './types';
+import type { ArenaDifficulty, ArenaExamSummary, ArenaState } from './types';
 
 // Arena: real battles only. Exam and boss names use their real Korean
 // terms so a parent watching recognizes the exam (Mikey 10-24: an exception
@@ -151,109 +151,121 @@ export default function Battles({
           . Resume it
         </button>
       )}
-      <div className={gridCls}>
-        {(state?.exams || []).map((exam) => {
-          const boss = BOSSES[exam.key];
-          return (
-            <div key={exam.key} className={cardCls}>
-              <div
-                className={faceCls}
-                style={{ background: boss?.color || ARENA.sky }}
-              >
-                {boss ? (
-                  <>
-                    <img
-                      className={eraserCls}
-                      src={arenaMediaURL(`img/bosses/${exam.key}.jpg`)}
-                      alt={boss.name}
-                    />
-                    <span className={nameEnCls}>{boss.nameEn}</span>
-                  </>
-                ) : (
-                  <span className={nameCls}>{exam.name}</span>
-                )}
-              </div>
-              <div className={bodyCls}>
-                <div className={codeRowCls}>
-                  <span className={codeCls}>
-                    BOSS {exam.code}
-                    {exam.codeLabel ? ` · ${exam.codeLabel}` : ''}
-                  </span>
-                  <button
-                    type="button"
-                    className={recordsLinkCls}
-                    onClick={() => onOpenRecords(exam.key)}
+      {ladder(state?.exams || []).map((stage) => (
+        <section key={stage.title} className={stageCls}>
+          <h3 className={stageTitleCls}>{stage.title}</h3>
+          <div className={gridCls}>
+            {stage.exams.map((exam) => {
+              const boss = BOSSES[exam.key];
+              return (
+                <div key={exam.key} className={cardCls}>
+                  <div
+                    className={faceCls}
+                    style={{ background: boss?.color || ARENA.sky }}
                   >
-                    <Icon icon="trophy" /> Records
-                  </button>
-                </div>
-                <strong>
-                  {exam.name} <small>{exam.nameEn}</small>
-                </strong>
-                <div className={modesCls} role="radiogroup" aria-label="Mode">
-                  {exam.difficulties.map(({ difficulty, ready, slain }) => {
-                    const on = (modes[exam.key] || 'normal') === difficulty;
-                    return (
+                    {boss ? (
+                      <>
+                        <img
+                          className={eraserCls}
+                          src={arenaMediaURL(`img/bosses/${exam.key}.jpg`)}
+                          alt={boss.name}
+                        />
+                        <span className={nameEnCls}>{boss.nameEn}</span>
+                      </>
+                    ) : (
+                      <span className={nameCls}>{exam.name}</span>
+                    )}
+                  </div>
+                  <div className={bodyCls}>
+                    <div className={codeRowCls}>
+                      <span className={codeCls}>
+                        BOSS {exam.code}
+                        {exam.codeLabel ? ` · ${exam.codeLabel}` : ''}
+                      </span>
                       <button
-                        key={difficulty}
                         type="button"
-                        role="radio"
-                        aria-checked={on}
-                        title={
-                          slain
-                            ? `Boss slain on ${MODE_LABEL[difficulty]}`
-                            : ready
-                              ? undefined
-                              : 'Still training: no questions yet'
-                        }
-                        className={cx(
-                          modeCls,
-                          on && modeOnCls,
-                          !ready && modeIdleCls
-                        )}
-                        onClick={() =>
-                          setModes((prev) => ({
-                            ...prev,
-                            [exam.key]: difficulty
-                          }))
-                        }
+                        className={recordsLinkCls}
+                        onClick={() => onOpenRecords(exam.key)}
                       >
-                        {MODE_LABEL[difficulty]}
-                        {slain && <span className={slainCls}> ★</span>}
+                        <Icon icon="trophy" /> Records
                       </button>
-                    );
-                  })}
+                    </div>
+                    <strong>
+                      {exam.name} <small>{exam.nameEn}</small>
+                    </strong>
+                    <div
+                      className={modesCls}
+                      role="radiogroup"
+                      aria-label="Mode"
+                    >
+                      {exam.difficulties.map(({ difficulty, ready, slain }) => {
+                        const on = (modes[exam.key] || 'normal') === difficulty;
+                        return (
+                          <button
+                            key={difficulty}
+                            type="button"
+                            role="radio"
+                            aria-checked={on}
+                            title={
+                              slain
+                                ? `Boss slain on ${MODE_LABEL[difficulty]}`
+                                : ready
+                                  ? undefined
+                                  : 'Still training: no questions yet'
+                            }
+                            className={cx(
+                              modeCls,
+                              on && modeOnCls,
+                              !ready && modeIdleCls
+                            )}
+                            onClick={() =>
+                              setModes((prev) => ({
+                                ...prev,
+                                [exam.key]: difficulty
+                              }))
+                            }
+                          >
+                            {MODE_LABEL[difficulty]}
+                            {slain && <span className={slainCls}> ★</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className={lengthsCls}>
+                      {exam.lengths.map((option) => {
+                        const key = `${exam.key}:${option.length}`;
+                        return (
+                          <button
+                            key={option.length}
+                            type="button"
+                            className={lengthCls}
+                            disabled={!!starting}
+                            onClick={() =>
+                              setCover({
+                                examKey: exam.key,
+                                length: option.length
+                              })
+                            }
+                          >
+                            <b>
+                              {starting === key
+                                ? 'Starting…'
+                                : LENGTH_LABEL[option.length]}
+                            </b>
+                            <span>
+                              {option.items} questions · {option.minutes} min
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-                <div className={lengthsCls}>
-                  {exam.lengths.map((option) => {
-                    const key = `${exam.key}:${option.length}`;
-                    return (
-                      <button
-                        key={option.length}
-                        type="button"
-                        className={lengthCls}
-                        disabled={!!starting}
-                        onClick={() =>
-                          setCover({ examKey: exam.key, length: option.length })
-                        }
-                      >
-                        <b>
-                          {starting === key
-                            ? 'Starting…'
-                            : LENGTH_LABEL[option.length]}
-                        </b>
-                        <span>
-                          {option.items} questions · {option.minutes} min
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
       {cover && coverExam && (
         <CoverPage
           exam={coverExam}
@@ -509,4 +521,40 @@ const recordsBackCls = css`
 // Boss slayer: a star on every mode of this boss you have won
 const slainCls = css`
   color: #e0a100;
+`;
+
+// The ladder (Street Fighter's stage order): bosses grouped by codename
+// world, 초등 → 중등 → 고등 → certificates → endgame. A display, never a lock:
+// any member may take on any boss.
+const STAGES: { world: string; title: string }[] = [
+  { world: 'E', title: 'Elementary · 초등' },
+  { world: 'M', title: 'Middle school · 중등' },
+  { world: 'H', title: 'High school · 고등' },
+  { world: 'C', title: 'Certificates' },
+  { world: 'X', title: 'Endgame' }
+];
+
+function ladder(exams: ArenaExamSummary[]) {
+  const level = (code: string) => Number(code.match(/^[A-Z](\d+)/)?.[1]) || 0;
+  return STAGES.map((stage) => ({
+    title: stage.title,
+    exams: exams
+      .filter((exam) => exam.code.startsWith(stage.world))
+      .sort(
+        (a, b) => level(a.code) - level(b.code) || a.code.localeCompare(b.code)
+      )
+  })).filter((stage) => stage.exams.length);
+}
+
+const stageCls = css`
+  margin-top: 2rem;
+`;
+
+const stageTitleCls = css`
+  margin: 0 0 1rem;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: ${ARENA.inkSoft};
 `;
