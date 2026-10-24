@@ -7,13 +7,13 @@ function readSource(path) {
 }
 
 const gameSource = readSource(
-  'src/containers/Home/AIStoriesModal/Game/index.tsx'
+  'src/containers/Arena/AIStory/Game/index.tsx'
 );
 const readingQuestionsSource = readSource(
-  'src/containers/Home/AIStoriesModal/Game/Reading/ContentContainer/Questions.tsx'
+  'src/containers/Arena/AIStory/Game/Reading/ContentContainer/Questions.tsx'
 );
 const listeningQuestionsSource = readSource(
-  'src/containers/Home/AIStoriesModal/Game/Listening/ListenSection/Questions.tsx'
+  'src/containers/Arena/AIStory/Game/Listening/ListenSection/Questions.tsx'
 );
 const multipleChoiceSource = readSource(
   'src/components/MultipleChoiceQuestion.tsx'

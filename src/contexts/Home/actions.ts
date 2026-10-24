@@ -126,12 +126,6 @@ export default function HomeActions(dispatch: Dispatch) {
         year
       });
     },
-    onSetAIStoriesModalShown(shown: boolean) {
-      return dispatch({
-        type: 'SET_AI_STORIES_MODAL_SHOWN',
-        shown
-      });
-    },
     onLoadGroups({
       groups,
       loadMoreShown

@@ -25,6 +25,7 @@ const sectionTitles = new Map([
   ['ai-stories', 'AI Stories'],
   ['app', 'Build App'],
   ['app-capture', 'Build App'],
+  ['arena', 'Arena'],
   ['bridge', 'Bridge Builder Check-in'],
   ['bridge-builder', 'Bridge Builder'],
   ['build', 'Build'],

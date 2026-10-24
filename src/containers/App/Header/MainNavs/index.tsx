@@ -222,6 +222,7 @@ function iconForContentNav(nav: string) {
 // pages that open in their own nav tab and can be pinned
 const OWN_PAGE_TABS = [
   { to: '/grammarbles', icon: 'spell-check', label: 'Grammarbles' },
+  { to: '/arena', icon: 'trophy', label: 'Arena' },
   { to: '/daily-reflection', icon: 'lightbulb', label: 'Daily Reflection' }
 ];
 

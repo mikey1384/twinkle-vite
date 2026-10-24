@@ -14,7 +14,6 @@ export const initialHomeState = {
   feedPaginationCursor: null as HomeFeedPaginationCursor | null,
   feedsOutdated: false,
   fileUploadProgress: null,
-  aiStoriesModalShown: false,
   chessPuzzleModalShown: false,
   chessOptionsTargetUser: null,
   groupIds: [],

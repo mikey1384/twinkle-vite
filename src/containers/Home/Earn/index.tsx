@@ -22,9 +22,6 @@ export default function Earn() {
   const navigate = useNavigate();
   const earnListRef = useRef<HTMLDivElement | null>(null);
   const [boardTab, setBoardTab] = useState<'members' | 'apps' | 'creators'>('members');
-  const onSetAIStoriesModalShown = useHomeContext(
-    (v) => v.actions.onSetAIStoriesModalShown
-  );
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown
   );
@@ -41,7 +38,7 @@ export default function Earn() {
       <TopMenu
         showDailyRewardBoostStrip={false}
         style={{ marginBottom: '3.5rem' }}
-        onPlayAIStories={() => onSetAIStoriesModalShown(true)}
+        onPlayArena={() => navigate('/arena')}
         onPlayGrammarGame={() => navigate('/grammarbles')}
         onDailyQuestionClick={() => navigate('/daily-reflection')}
         onInputModalButtonClick={handleInputModalButtonClick}

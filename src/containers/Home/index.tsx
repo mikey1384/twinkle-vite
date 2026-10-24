@@ -10,9 +10,7 @@ import Groups from './Groups';
 import Store from './Store';
 import Stories from './Stories';
 import LocalContext from './Context';
-import AIStoriesModal from './AIStoriesModal';
 import Achievements from './Achievements';
-import { useHomeContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';
 
 function Home({
@@ -22,12 +20,6 @@ function Home({
   onFileUpload?: (file: any) => void;
   section: string;
 }) {
-  const aiStoriesModalShown = useHomeContext(
-    (v) => v.state.aiStoriesModalShown
-  );
-  const onSetAIStoriesModalShown = useHomeContext(
-    (v) => v.actions.onSetAIStoriesModalShown
-  );
   const [alertModalShown, setAlertModalShown] = useState(false);
 
   return (
@@ -59,9 +51,6 @@ function Home({
               content="Please select a smaller image"
               onHide={() => setAlertModalShown(false)}
             />
-          )}
-          {aiStoriesModalShown && (
-            <AIStoriesModal onHide={() => onSetAIStoriesModalShown(false)} />
           )}
         </div>
       </LocalContext.Provider>

@@ -1105,16 +1105,18 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
   };
 }
 
+// The A goal is Arena (Mikey 10-24). Until fights exist its only route is
+// Train's AI Story, so the row keeps AI Story's targets under the Arena label.
 function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
   if (isLoading) {
     return buildLoadingRow({
-      label: 'AI Story',
+      label: 'Arena',
       tone: 'logoBlue'
     });
   }
   if (!aiStory) {
     return buildUnavailableRow({
-      label: 'AI Story',
+      label: 'Arena',
       tone: 'logoBlue'
     });
   }
@@ -1151,10 +1153,10 @@ function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
   }
 
   return {
-    label: 'AI Story',
+    label: 'Arena',
     title: basicAchieved
-      ? `Lv${highestPassedLevel} cleared`
-      : `Clear ${basicTargetPhrase}`,
+      ? `AI Story Lv${highestPassedLevel} cleared`
+      : `Clear AI Story ${basicTargetPhrase}`,
     description,
     tone: 'logoBlue',
     basicAchieved,

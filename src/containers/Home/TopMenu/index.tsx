@@ -39,14 +39,14 @@ const NO_DAILY_GOALS: string[] = [];
 
 export default function TopMenu({
   onInputModalButtonClick,
-  onPlayAIStories,
+  onPlayArena,
   onPlayGrammarGame,
   onDailyQuestionClick,
   showDailyRewardBoostStrip = true,
   style
 }: {
   onInputModalButtonClick: (v?: string) => void;
-  onPlayAIStories: () => void;
+  onPlayArena: () => void;
   onPlayGrammarGame: () => void;
   onDailyQuestionClick: () => void;
   showDailyRewardBoostStrip?: boolean;
@@ -298,15 +298,15 @@ export default function TopMenu({
           `}
         >
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/ArenaButton">
               <GameCTAButton
                 icon="wand-magic-sparkles"
                 variant="logoBlue"
                 size="md"
                 shiny={false}
-                onClick={handleAIStoriesClick}
+                onClick={handleArenaClick}
               >
-                A{allGoalsAchieved ? '' : '.I Stories'}
+                A{allGoalsAchieved ? '' : 'rena'}
                 {isAchieved('A') ? ' ✓' : ''}
               </GameCTAButton>
             </ErrorBoundary>
@@ -473,12 +473,12 @@ export default function TopMenu({
     setChessModalShown(true);
   }
 
-  function handleAIStoriesClick() {
+  function handleArenaClick() {
     if (!userId) {
       onOpenSigninModal();
       return;
     }
-    onPlayAIStories();
+    onPlayArena();
   }
 
   async function handleNavigateToChessMessage(): Promise<void> {

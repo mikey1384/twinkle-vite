@@ -9,9 +9,9 @@ import test from 'node:test';
 function readSource(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 }
-const modalSource = readSource('src/containers/Home/AIStoriesModal/index.tsx');
+const modalSource = readSource('src/containers/Arena/AIStory/index.tsx');
 const successSource = readSource(
-  'src/containers/Home/AIStoriesModal/SuccessModal/index.tsx'
+  'src/containers/Arena/AIStory/SuccessModal/index.tsx'
 );
 
 test('the success screen shows the paid amounts and never recomputes a reward', () => {

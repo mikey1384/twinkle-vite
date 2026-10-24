@@ -5,7 +5,7 @@ import { applyCanonicalTextStreamUpdate } from '../src/helpers/canonicalTextStre
 
 const readingSource = readFileSync(
   new URL(
-    '../src/containers/Home/AIStoriesModal/Game/Reading/index.tsx',
+    '../src/containers/Arena/AIStory/Game/Reading/index.tsx',
     import.meta.url
   ),
   'utf8'

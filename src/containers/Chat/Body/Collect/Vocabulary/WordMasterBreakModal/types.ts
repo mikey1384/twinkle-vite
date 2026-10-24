@@ -20,7 +20,7 @@ export interface WordMasterBreakModalProps {
   onSubmitQuizAnswer: (selectedIndex: number) => Promise<any>;
   onOpenWordle?: () => void;
   onOpenGrammarGame?: () => void;
-  onOpenAIStories?: () => void;
+  onOpenArena?: () => void;
   onOpenDailyQuestion?: () => void;
   onOpenChessPuzzle?: () => void;
   onOpenPendingOmok?: (channelId: number) => void;

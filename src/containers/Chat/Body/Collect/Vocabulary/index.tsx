@@ -86,9 +86,6 @@ export default function Vocabulary({
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
-  const onSetAIStoriesModalShown = useHomeContext(
-    (v) => v.actions.onSetAIStoriesModalShown
-  );
   const onSetChessPuzzleModalShown = useHomeContext(
     (v) => v.actions.onSetChessPuzzleModalShown
   );
@@ -350,10 +347,9 @@ export default function Vocabulary({
             setWordMasterBreakModalShown(false);
             navigate('/grammarbles');
           }}
-          onOpenAIStories={() => {
+          onOpenArena={() => {
             setWordMasterBreakModalShown(false);
-            navigate('/');
-            onSetAIStoriesModalShown(true);
+            navigate('/arena');
           }}
           onOpenDailyQuestion={handleOpenDailyQuestion}
           onOpenChessPuzzle={handleOpenChessPuzzle}

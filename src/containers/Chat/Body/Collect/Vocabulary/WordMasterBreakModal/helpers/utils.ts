@@ -7,7 +7,7 @@ export const BREAK_GUIDE_ROWS: BreakGuideRowData[] = [
     breakNum: 1,
     label: 'Break 1',
     title: 'Daily Tasks',
-    description: 'Finish Wordle, Grammarbles, and AI Story.',
+    description: 'Finish Wordle, Grammarbles, and Arena.',
     tone: 'logoBlue'
   },
   {

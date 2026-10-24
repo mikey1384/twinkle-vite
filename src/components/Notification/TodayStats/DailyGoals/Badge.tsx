@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { useChatContext, useHomeContext, useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import {
   GENERAL_CHAT_ID,
@@ -28,7 +28,6 @@ const gradientMap: {
   }
 };
 
-const notHomePath = ['links', 'videos', 'subjects', 'ai-cards'];
 
 export default function Badge({
   children,
@@ -39,14 +38,10 @@ export default function Badge({
   isAchieved: boolean;
   isAmped: boolean;
 }) {
-  const location = useLocation();
   const navigate = useNavigate();
   const setMobileMenuShown = useKeyContext((v) => v.helpers.setMobileMenuShown);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
-  );
-  const onSetAIStoriesModalShown = useHomeContext(
-    (v) => v.actions.onSetAIStoriesModalShown
   );
   const onSetWordleModalShown = useChatContext(
     (v) => v.actions.onSetWordleModalShown
@@ -140,19 +135,14 @@ export default function Badge({
         break;
       }
       case 'A': {
-        const wordsInPath = location.pathname.split('/');
-        const isNotHomePage = wordsInPath.some((pathWord) =>
-          notHomePath.includes(pathWord)
-        );
         if (timerIdRef.current) {
           clearTimeout(timerIdRef.current);
           timerIdRef.current = null;
         }
         setLoadingWordle(false);
-        if (isNotHomePage) {
-          navigate('/');
-        }
-        onSetAIStoriesModalShown(true);
+        // Arena (Train or a fight) is its own page now
+        navigate('/arena');
+        setMobileMenuShown(false);
         break;
       }
       default:

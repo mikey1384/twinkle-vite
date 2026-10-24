@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { css } from '@emotion/css';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
-import Modal from '~/components/Modal';
+import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import Rankings from './Rankings';
@@ -11,6 +12,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useNotiContext, useViewContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus, sleep } from '~/helpers';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
+import { mobileMaxWidth } from '~/constants/css';
 
 interface AIStoryClearFollowUp {
   storyId: number;
@@ -23,7 +25,9 @@ interface AIStoryClearFollowUp {
   coinRewardAmount: number;
 }
 
-export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
+// AI Story inside Arena's Train (Mikey 10-24: Arena replaces the old AI
+// Stories modal; the game itself is unchanged). onHide goes back to Train.
+export default function AIStory({ onHide }: { onHide: () => void }) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
@@ -37,7 +41,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [difficulty, setDifficulty] = useState(
     () => Number(getStoredItem('story-difficulty')) || 3
   );
-  const [dropdownShown, setDropdownShown] = useState(false);
+  const [, setDropdownShown] = useState(false);
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
   );
@@ -129,35 +133,21 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   }, [isGameStarted]);
 
   return (
-    <ErrorBoundary componentPath="Home/AIStoriesModal">
-      <Modal
-        xpActivity
-        modalKey="AIStoriesModal"
-        isOpen
-        onClose={handleHide}
-        size="xl"
-        hasHeader={false}
-        closeOnBackdropClick={
-          !dropdownShown && (!isCloseLocked || activeTab === 'rankings')
-        }
-        bodyPadding={0}
-        showCloseButton={
-          activeTab === 'rankings' ||
-          (activeTab === 'game' && (!isGameStarted || solveObj.isGraded))
-        }
-        style={{
-          height: '80vh',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-        footer={
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <Button variant="ghost" onClick={onHide}>
-              Close
-            </Button>
-          </div>
-        }
-      >
+    <ErrorBoundary componentPath="Arena/AIStory">
+      <div className={panelCls}>
+        <div className={panelBarCls}>
+          <button
+            type="button"
+            className={backCls}
+            onClick={handleHide}
+            disabled={isCloseLocked && activeTab === 'game'}
+            aria-label="Back to Train"
+          >
+            <Icon icon="arrow-left" />
+            <span>Train</span>
+          </button>
+          <span className={titleCls}>AI Story</span>
+        </div>
         <div
           style={{
             width: '100%',
@@ -305,18 +295,17 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         )}
         {showConfirm && (
           <ConfirmModal
-            modalOverModal
             onHide={() => setShowConfirm(false)}
             title="Warning"
-            description="If you close the game, this story and all your related progress will be lost."
+            description="If you leave the game, this story and all your related progress will be lost."
             descriptionFontSize="2rem"
             onConfirm={handleConfirmClose}
             confirmButtonColor="red"
-            confirmButtonLabel="Close anyway"
+            confirmButtonLabel="Leave anyway"
             isReverseButtonOrder
           />
         )}
-      </Modal>
+      </div>
     </ErrorBoundary>
   );
 
@@ -483,3 +472,57 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     onHide();
   }
 }
+
+// the old modal was 80vh tall; on the page the panel takes the room below the
+// back bar and scrolls inside, like the modal body did
+const panelCls = css`
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  height: calc(100dvh - 15rem);
+  min-height: 52rem;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--ui-border);
+  border-radius: 16px;
+  overflow: hidden;
+  @media (max-width: ${mobileMaxWidth}) {
+    height: auto;
+    min-height: calc(100dvh - 20rem);
+    border-radius: 12px;
+  }
+`;
+
+const panelBarCls = css`
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.8rem 1.2rem;
+  border-bottom: 1px solid var(--ui-border);
+`;
+
+const backCls = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: none;
+  background: none;
+  color: #555;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.4rem 0;
+  &:hover:not(:disabled) {
+    color: #222;
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+`;
+
+const titleCls = css`
+  font-size: 1.5rem;
+  font-weight: 700;
+`;

@@ -19,7 +19,7 @@ export default function BreakSection({
   hasActiveBreak,
   isLocked,
   loading,
-  onOpenAIStories,
+  onOpenArena,
   onOpenChessPuzzle,
   onOpenDailyQuestion,
   onOpenGrammarGame,
@@ -51,7 +51,7 @@ export default function BreakSection({
   hasActiveBreak: boolean;
   isLocked: boolean;
   loading?: boolean;
-  onOpenAIStories?: () => void;
+  onOpenArena?: () => void;
   onOpenChessPuzzle?: () => void;
   onOpenDailyQuestion?: () => void;
   onOpenGrammarGame?: () => void;
@@ -114,7 +114,7 @@ export default function BreakSection({
         breakPanel = (
           <RequirementSection
             title="Daily Tasks"
-            description="Finish Wordle, Grammarbles, and AI Story today."
+            description="Finish Wordle, Grammarbles, and Arena today."
             rows={[
               {
                 label: requirement?.wordleDone
@@ -132,10 +132,10 @@ export default function BreakSection({
               },
               {
                 label: requirement?.aiStoryDone
-                  ? 'AI Story completed'
-                  : 'Complete AI Story',
+                  ? 'Arena completed'
+                  : 'Complete Arena',
                 done: Boolean(requirement?.aiStoryDone),
-                onClick: onOpenAIStories
+                onClick: onOpenArena
               }
             ]}
             tone="logoBlue"

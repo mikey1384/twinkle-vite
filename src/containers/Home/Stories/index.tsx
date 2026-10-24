@@ -296,9 +296,6 @@ export default function Stories() {
   );
   const navigate = useNavigate();
   const onSetNumNewPosts = useNotiContext((v) => v.actions.onSetNumNewPosts);
-  const onSetAIStoriesModalShown = useHomeContext(
-    (v) => v.actions.onSetAIStoriesModalShown
-  );
   const category = useHomeContext((v) => v.state.category);
   const displayOrder = useHomeContext((v) => v.state.displayOrder);
   const feedPaginationCursor = useHomeContext(
@@ -557,7 +554,7 @@ export default function Stories() {
           onInputModalButtonClick={(modalType) =>
             onSetInputModalShown({ shown: true, modalType })
           }
-          onPlayAIStories={() => onSetAIStoriesModalShown(true)}
+          onPlayArena={() => navigate('/arena')}
           onPlayGrammarGame={() => navigate('/grammarbles')}
           onDailyQuestionClick={() => navigate('/daily-reflection')}
         />

@@ -20,7 +20,7 @@ export default function WordMasterBreakModal({
   onSubmitQuizAnswer,
   onOpenWordle,
   onOpenGrammarGame,
-  onOpenAIStories,
+  onOpenArena,
   onOpenDailyQuestion,
   onOpenChessPuzzle,
   onOpenPendingOmok,
@@ -294,7 +294,7 @@ export default function WordMasterBreakModal({
           hasActiveBreak={hasActiveBreak}
           isLocked={isLocked}
           loading={loading}
-          onOpenAIStories={onOpenAIStories}
+          onOpenArena={onOpenArena}
           onOpenChessPuzzle={onOpenChessPuzzle}
           onOpenDailyQuestion={onOpenDailyQuestion}
           onOpenGrammarGame={onOpenGrammarGame}
