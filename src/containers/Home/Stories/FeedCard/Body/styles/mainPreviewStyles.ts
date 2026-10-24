@@ -1200,6 +1200,93 @@ export const mainPreviewStyles = `
     display: flex;
     flex-direction: column;
   }
+  /* Picture Day: the picture leads, the member's description sits under it */
+  .home-feed-card__picture-day-preview {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 1.2rem;
+    height: 100%;
+    min-height: 0;
+    padding: 1rem;
+    color: ${Color.darkerGray()};
+  }
+  .home-feed-card__picture-day-frame {
+    height: 100%;
+    aspect-ratio: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: 0.8rem;
+    background: ${Color.whiteGray()};
+    box-shadow: inset 0 0 0 1px ${Color.white(0.72)};
+  }
+  .home-feed-card__picture-day-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: cover;
+  }
+  .home-feed-card__picture-day-caption {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+    padding-top: 0.4rem;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    .home-feed-card__picture-day-preview {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) auto;
+      align-items: stretch;
+      gap: 0.7rem;
+    }
+    .home-feed-card__picture-day-frame {
+      height: auto;
+      aspect-ratio: auto;
+    }
+    .home-feed-card__picture-day-caption {
+      padding-top: 0;
+      gap: 0.3rem;
+    }
+  }
+  .home-feed-card__picture-day-label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .home-feed-card__picture-day-label .style {
+    overflow: hidden;
+    color: ${Color.gray()};
+    font-weight: 700;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    text-transform: none;
+    white-space: nowrap;
+  }
+  .home-feed-card__picture-day-prompt {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    font-size: var(--home-feed-content-font-size);
+    line-height: 1.36;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 7;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    .home-feed-card__picture-day-prompt {
+      -webkit-line-clamp: 2;
+    }
+  }
   /* Wins over the card's blanket mobile h3 rule so the prompt title keeps its
      place above the instructions text at every breakpoint. */
   .home-feed-card__shared-topic-preview h3 {

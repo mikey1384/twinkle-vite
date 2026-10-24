@@ -5,10 +5,13 @@ import { User } from '~/types';
 
 export default function DailyReflectionDetails({
   description,
+  isPictureDay,
   question,
   uploader
 }: {
   description: string;
+  // Picture Day: the stock prompt is no title; the picture is the thumb
+  isPictureDay?: boolean;
   question?: string;
   uploader: User;
 }) {
@@ -20,7 +23,7 @@ export default function DailyReflectionDetails({
   return (
     <>
       <div className="title">
-        <p>{question || 'Daily Reflection'}</p>
+        <p>{isPictureDay ? 'Picture Day' : question || 'Daily Reflection'}</p>
         {uploader.username && (
           <small style={{ color: Color.gray(), fontSize: '1.3rem' }}>
             Posted by {uploader.username}

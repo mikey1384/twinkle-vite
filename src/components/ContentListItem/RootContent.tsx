@@ -733,7 +733,8 @@ export default function RootContent({
       (contentType === 'subject' && rootId) ||
       (filePath && userId) ||
       contentType === 'video' ||
-      (contentType === 'mission' && !!thumbUrl)
+      ((contentType === 'mission' || contentType === 'dailyReflection') &&
+        !!thumbUrl)
     );
   }, [contentType, filePath, rootId, thumbUrl, userId]);
 
@@ -795,7 +796,8 @@ export default function RootContent({
           rewardLevel={rewardLevel}
         />
       )}
-      {contentType === 'mission' && thumbUrl && (
+      {(contentType === 'mission' || contentType === 'dailyReflection') &&
+        thumbUrl && (
         <Thumbnail
           className="thumb"
           thumbUrl={thumbUrl}

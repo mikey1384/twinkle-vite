@@ -112,6 +112,9 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-reflection-tight {
       height: max(21rem, 210px);
     }
+    .home-feed-card__panel-preview--size-reflection-picture {
+      height: max(42rem, 420px);
+    }
     .home-feed-card__panel-preview--size-rich-image-compact {
       height: max(15.5rem, 155px);
     }

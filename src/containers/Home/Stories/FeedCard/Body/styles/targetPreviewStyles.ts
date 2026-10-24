@@ -154,6 +154,45 @@ export const targetPreviewStyles = `
       font-weight: 400;
       line-height: 1.22;
     }
+    /* Picture Day: the picture sits where the question box does */
+    .home-feed-card__target-daily-reflection-picture {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid ${Color.borderGray()};
+      border-radius: 0.7rem;
+      background: ${Color.whiteGray()};
+    }
+    .home-feed-card__target-daily-reflection-picture img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .home-feed-card__target-daily-reflection--picture
+      .home-feed-card__target-daily-reflection-answer {
+      flex-direction: column;
+    }
+    .home-feed-card__target-daily-reflection-picture-label {
+      display: flex;
+      align-items: center;
+      gap: 0.36rem;
+      min-width: 0;
+      margin-bottom: 0.3rem;
+      color: ${Color.darkGray()};
+      font-size: 1rem;
+      font-weight: 850;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .home-feed-card__target-daily-reflection-picture-label .style {
+      overflow: hidden;
+      color: ${Color.gray()};
+      font-weight: 700;
+      text-overflow: ellipsis;
+    }
     .home-feed-card__target-shared-topic {
       /* No accent spine here: SharedPromptBlock already carries the accent in
          its chip and instructions well, and the spine read as a stray bar. */

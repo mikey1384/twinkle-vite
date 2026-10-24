@@ -7,6 +7,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
 import AnswerDailyQuestionButton from '~/components/Buttons/AnswerDailyQuestionButton';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
+import DailyReflectionPicture from '~/components/DailyReflectionPicture';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Content, User } from '~/types';
@@ -102,7 +103,15 @@ export default function TargetDailyReflectionContent({
           padding: 0.5rem 1rem;
         `}
       >
-        {dailyReflectionContent.question && (
+        {dailyReflectionContent.picturePath ? (
+          <DailyReflectionPicture
+            alt={dailyReflectionContent.description}
+            maxWidth="48rem"
+            picturePath={dailyReflectionContent.picturePath}
+            pictureStyle={dailyReflectionContent.pictureStyle}
+            style={{ marginBottom: '1rem' }}
+          />
+        ) : dailyReflectionContent.question && (
           <div
             className={css`
               margin-bottom: 1rem;

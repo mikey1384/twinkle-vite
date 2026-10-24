@@ -25,6 +25,7 @@ import {
 import UsernameText from '~/components/Texts/UsernameText';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { Color } from '~/constants/css';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import {
   getAICardCollectionEmbedPreviewTitle,
   getInternalEmbedCommentLabel,
@@ -707,6 +708,7 @@ export default function Body({
   }
 
   function renderDailyReflectionPreview() {
+    if (content?.picturePath) return renderPictureDayPreview();
     const answerLineLimits = getReflectionAnswerLineLimitsForLayout();
     const hasMetaBadges = hasDailyReflectionMetaBadges(content);
 
@@ -754,6 +756,40 @@ export default function Body({
             xpAwarded={content?.xpAwarded}
           />
         ) : null}
+      </div>
+    );
+  }
+
+  // Picture Day (10-24): the picture the member made, with their description
+  function renderPictureDayPreview() {
+    const description = String(content?.description || '');
+    return (
+      <div className="home-feed-card__picture-day-preview">
+        <div className="home-feed-card__picture-day-frame">
+          <img
+            alt={description || 'Picture Day picture'}
+            className="home-feed-card__picture-day-image"
+            decoding="async"
+            loading="lazy"
+            src={`${cloudFrontURL}/${content.picturePath}`}
+          />
+        </div>
+        <div className="home-feed-card__picture-day-caption">
+          <span className="home-feed-card__picture-day-label">
+            <Icon icon="palette" />
+            Picture Day
+            {content?.pictureStyle ? (
+              <span className="style">· {content.pictureStyle}</span>
+            ) : null}
+          </span>
+          {description ? (
+            <p
+              className={`home-feed-card__picture-day-prompt ${primaryPreviewTextClass}`}
+            >
+              {description}
+            </p>
+          ) : null}
+        </div>
       </div>
     );
   }

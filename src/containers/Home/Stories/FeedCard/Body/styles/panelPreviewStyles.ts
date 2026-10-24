@@ -166,6 +166,9 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-reflection-tight {
     height: max(22rem, 220px);
   }
+  .home-feed-card__panel-preview--size-reflection-picture {
+    height: max(30rem, 300px);
+  }
   .home-feed-card__panel-preview--size-rich-image-compact {
     height: max(20rem, 200px);
   }

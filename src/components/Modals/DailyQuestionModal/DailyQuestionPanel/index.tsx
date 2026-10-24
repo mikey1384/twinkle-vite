@@ -34,6 +34,7 @@ import {
   QUESTION_PROGRESS_DURATIONS
 } from './constants';
 import GradingResult from './GradingResult';
+import PictureDayScreen, { type PictureDayState } from './PictureDayScreen';
 import ProgressScreen from './ProgressScreen';
 import { getFocusLabel, getVibeLabel } from './helpers/questionPreferences';
 import StartScreen from './StartScreen';
@@ -218,6 +219,9 @@ export default function DailyQuestionPanel({
   const submitDailyQuestionResponse = useAppContext(
     (v) => v.requestHelpers.submitDailyQuestionResponse
   );
+  const submitDailyPicture = useAppContext(
+    (v) => v.requestHelpers.submitDailyPicture
+  );
   const recoverDailyQuestionSubmission = useAppContext(
     (v) => v.requestHelpers.recoverDailyQuestionSubmission
   );
@@ -269,6 +273,13 @@ export default function DailyQuestionPanel({
   const [isAdultUser, setIsAdultUser] = useState<boolean>(false);
   const [isKeywordDay, setIsKeywordDay] = useState(false);
   const [dayKeyword, setDayKeyword] = useState('');
+  // Picture Day (10-24): Word Day's twin, its own screen instead of writing
+  const [isPictureDay, setIsPictureDay] = useState(false);
+  const [dayPicture, setDayPicture] = useState<PictureDayState | null>(null);
+  const [pictureSubmitting, setPictureSubmitting] = useState(false);
+  const [pictureSubmitError, setPictureSubmitError] = useState<string | null>(
+    null
+  );
   const [purchasingRepair, setPurchasingRepair] = useState(false);
   const [recoveryNotice, setRecoveryNotice] = useState<string | null>(null);
   const [restoredDraftNeedsFreshTyping, setRestoredDraftNeedsFreshTyping] =
@@ -281,16 +292,20 @@ export default function DailyQuestionPanel({
   // the grade once it is shown, never the answer text itself.
   useAgentScreenState('dailyQuestion', {
     screen,
-    question: !isKeywordDay && question ? question.slice(0, 500) : null,
+    question:
+      !isKeywordDay && !isPictureDay && question ? question.slice(0, 500) : null,
     isSimplified,
     isKeywordDay,
+    isPictureDay,
     keyword: isKeywordDay ? dayKeyword || null : null,
     responseLength: response.length,
     minResponseLength: MIN_RESPONSE_LENGTH,
     maxResponseLength: MAX_RESPONSE_LENGTH,
     responseTooLong,
     inactivityTimer:
-      screen === 'writing' && !isKeywordDay ? inactivityTimer : null,
+      screen === 'writing' && !isKeywordDay && !isPictureDay
+        ? inactivityTimer
+        : null,
     streak: currentStreak,
     streakAtRisk,
     streakBroken,
@@ -830,6 +845,9 @@ export default function DailyQuestionPanel({
         isKeywordDayRef.current = !!data.isKeywordDay;
         setIsKeywordDay(isKeywordDayRef.current);
         setDayKeyword(data.keyword || '');
+        setIsPictureDay(!!data.isPictureDay);
+        setDayPicture(data.isPictureDay ? normalizePictureDay(data.picture) : null);
+        setPictureSubmitError(null);
 
         const pendingSubmission = loadPendingDailyQuestionSubmission(
           userId,
@@ -919,8 +937,8 @@ export default function DailyQuestionPanel({
   }, [userId, mode]);
 
   useEffect(() => {
-    // Keyword days have no inactivity pressure: nothing auto-submits.
-    if (screen !== 'writing' || isKeywordDay) return;
+    // Word Day and Picture Day have no inactivity pressure: nothing auto-submits.
+    if (screen !== 'writing' || isKeywordDay || isPictureDay) return;
 
     lastActivityRef.current = Date.now();
     setInactivityTimer(INACTIVITY_LIMIT);
@@ -945,7 +963,13 @@ export default function DailyQuestionPanel({
     return () => {
       clearInterval(interval);
     };
-  }, [screen, isKeywordDay, restoredDraftNeedsFreshTyping, responseTooLong]);
+  }, [
+    screen,
+    isKeywordDay,
+    isPictureDay,
+    restoredDraftNeedsFreshTyping,
+    responseTooLong
+  ]);
 
   function handleStart() {
     setRecoveryNotice(null);
@@ -1297,6 +1321,49 @@ export default function DailyQuestionPanel({
     e.preventDefault();
   }
 
+  async function handlePictureDone({
+    picturePath,
+    prompt
+  }: {
+    picturePath: string;
+    prompt: string;
+  }) {
+    if (!questionId || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setPictureSubmitting(true);
+    setPictureSubmitError(null);
+    try {
+      const result = await submitDailyPicture({
+        questionId,
+        response: prompt,
+        picturePath,
+        clientRequestId: createDailyQuestionClientRequestId()
+      });
+      if (result?.error) throw new Error(result.error);
+      // the server's answer, which wins over this tab's pick if an earlier
+      // Done had already been saved
+      setDayPicture((current) =>
+        current
+          ? {
+              ...current,
+              chosenPath:
+                typeof result?.picturePath === 'string'
+                  ? result.picturePath
+                  : ''
+            }
+          : current
+      );
+      applyCompletedSubmitResult({ result, fallbackOriginalResponse: prompt });
+    } catch (err: any) {
+      setPictureSubmitError(
+        err?.message || "Couldn't save your picture. Please try again."
+      );
+      isSubmittingRef.current = false;
+    } finally {
+      setPictureSubmitting(false);
+    }
+  }
+
   const handleSubmit = useCallback(async () => {
     if (
       !questionId ||
@@ -1501,13 +1568,27 @@ export default function DailyQuestionPanel({
     );
   }
 
+  if (isPictureDay && screen === 'writing') {
+    return (
+      <PictureDayScreen
+        question={question}
+        initialPicture={dayPicture || normalizePictureDay(null)}
+        submitting={pictureSubmitting}
+        submitError={pictureSubmitError}
+        onDone={handlePictureDone}
+        onPictureChange={setDayPicture}
+      />
+    );
+  }
+
   if (screen === 'start') {
     return (
       <StartScreen
         currentStreak={currentStreak}
         dayKeyword={dayKeyword}
         hasEnoughCoins={hasEnoughCoins}
-        isKeywordDay={isKeywordDay}
+        isKeywordDay={isKeywordDay || isPictureDay}
+        isPictureDay={isPictureDay}
         isSimplified={isSimplified}
         isSimplifying={isSimplifying}
         profileTheme={profileTheme}
@@ -1589,7 +1670,9 @@ export default function DailyQuestionPanel({
           question={question}
           response={response}
           questionId={questionId}
-          isKeywordDay={isKeywordDay}
+          isKeywordDay={isKeywordDay || isPictureDay}
+          picturePath={isPictureDay ? dayPicture?.chosenPath || '' : ''}
+          isPictureDay={isPictureDay}
           grade={gradingResult.grade}
           masterpieceType={gradingResult.masterpieceType}
           xpAwarded={gradingResult.xpAwarded}
@@ -1617,4 +1700,20 @@ export default function DailyQuestionPanel({
   }
 
   return null;
+}
+
+// The day's pictures as the server sends them (pictureDayPayload)
+function normalizePictureDay(value: any): PictureDayState {
+  const candidates = Array.isArray(value?.candidates)
+    ? value.candidates.filter(
+        (c: any) => c && typeof c.path === 'string' && c.path
+      )
+    : [];
+  return {
+    prompt: typeof value?.prompt === 'string' ? value.prompt : '',
+    style: typeof value?.style === 'string' ? value.style : '',
+    chosenPath: typeof value?.chosenPath === 'string' ? value.chosenPath : '',
+    freeAvailable: value?.freeAvailable !== false,
+    candidates
+  };
 }
