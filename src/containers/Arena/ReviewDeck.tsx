@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useNotiContext } from '~/contexts';
+import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import { mobileMaxWidth } from '~/constants/css';
 import ArenaButton from './ArenaButton';
 import ArenaLoader from './ArenaLoader';
@@ -89,6 +90,9 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
   const tagArenaCard = useAppContext((v) => v.requestHelpers.tagArenaCard);
   const answerArenaCard = useAppContext(
     (v) => v.requestHelpers.answerArenaCard
+  );
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const [deck, setDeck] = useState<Deck | null>(null);
   const [card, setCard] = useState<CardView | null>(null);
@@ -297,6 +301,14 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
         itemId: card.card.itemId,
         answer: marked
       });
+      // an answer that meets an A-goal target brings today's goals back
+      if (data.dailyTaskStatus) {
+        onApplyTodayStatsProgress({
+          newStats: buildTodayStatsPatchFromDailyTaskStatus(
+            data.dailyTaskStatus
+          )
+        });
+      }
       setResult({
         correct: data.correct,
         key: data.key,

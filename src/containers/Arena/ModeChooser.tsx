@@ -16,9 +16,21 @@ export default function ModeChooser({
   const aiStoryTask = useNotiContext(
     (v) => v.state.todayStats?.dailyTaskStatus?.aiStory
   );
-  const trainStatus = aiStoryTask?.isPassed
-    ? 'AI Story cleared today'
-    : 'Not started today';
+  // each side's own progress today (the A goal itself takes any route)
+  const arena = aiStoryTask?.arena;
+  const train = arena?.train;
+  const trainStatus =
+    train?.answered > 0
+      ? `${train.right} of ${train.answered} right today`
+      : (aiStoryTask?.storyPassed ?? aiStoryTask?.isPassed)
+        ? 'AI Story cleared today'
+        : 'Not started today';
+  const arenaStatus =
+    arena?.excellenceVia === 'battle'
+      ? 'Boss beaten today'
+      : arena?.basicVia === 'battle'
+        ? 'Battle cleared today'
+        : 'Bosses ready';
 
   const CARDS = [
     {
@@ -33,7 +45,7 @@ export default function ModeChooser({
       title: 'Arena',
       cover: '/img/arena/cover-arena.jpg',
       line: 'Real exams, real conditions. Beat each boss to climb the ladder.',
-      status: 'Bosses arriving soon'
+      status: arenaStatus
     }
   ];
 

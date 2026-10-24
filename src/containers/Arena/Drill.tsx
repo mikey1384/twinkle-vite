@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useNotiContext } from '~/contexts';
+import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import { mobileMaxWidth } from '~/constants/css';
 import ArenaButton from './ArenaButton';
 import ArenaLoader from './ArenaLoader';
@@ -54,6 +55,9 @@ export default function Drill({
   );
   const answerArenaDrill = useAppContext(
     (v) => v.requestHelpers.answerArenaDrill
+  );
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const [drill, setDrill] = useState<DrillData | null>(null);
   const [error, setError] = useState('');
@@ -207,6 +211,14 @@ export default function Drill({
       });
       setResult(data);
       if (data.correct) setScore((s) => s + 1);
+      // an answer that meets an A-goal target brings today's goals back
+      if (data.dailyTaskStatus) {
+        onApplyTodayStatsProgress({
+          newStats: buildTodayStatsPatchFromDailyTaskStatus(
+            data.dailyTaskStatus
+          )
+        });
+      }
     } catch {
       setError('That did not save. Try again.');
     } finally {

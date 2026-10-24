@@ -1105,8 +1105,8 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
   };
 }
 
-// The A goal is Arena (Mikey 10-24). Until battles exist its only route is
-// Train's AI Story, so the row keeps AI Story's targets under the Arena label.
+// The A goal is Arena (Mikey 10-24): AI Story, a battle or Train meets it,
+// under the Arena label.
 export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
   if (isLoading) {
     return buildLoadingRow({
@@ -1143,32 +1143,52 @@ export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
       ? `Lv${currentLevel}`
       : `Lv${currentLevel} or higher`;
 
-  // the A goal's two routes (Mikey 10-24, "A = Arena"): an AI Story clear,
-  // or an Arena battle (60%+ on Normal or Hard for Basic, a win at your own
-  // best level for Excellence)
-  const arenaBar = aiStory?.arena?.excellenceBar;
+  // the A goal's three routes (Mikey 10-24, "A = Arena"; 10-25 Train too):
+  // an AI Story clear, an Arena battle (60%+ on Normal or Hard for Basic, a
+  // win at your own best level for Excellence), or Train answers (fresh
+  // Normal/Hard questions; the targets come from the API)
+  const arena = aiStory?.arena;
+  const arenaBar = arena?.excellenceBar;
   const arenaBarPhrase = arenaBar
     ? `${capitalize(arenaBar.difficulty)} ${capitalize(arenaBar.length)} or harder`
     : 'Normal Short or harder';
-  let description = `Excellence: clear Read and Listen at ${excellenceTargetPhrase}, or win a ${arenaBarPhrase} battle.`;
+  const train = arena?.train;
+  const trainBasic = train?.targets?.basic || { answers: 10, share: 0.8 };
+  const trainExcellence = train?.targets?.excellence || {
+    answers: 20,
+    share: 0.9,
+    weak: 10
+  };
+  const percent = (share: number) => `${Math.round(share * 100)}%`;
+  const trainExcellencePhrase = `get ${percent(trainExcellence.share)} of ${trainExcellence.answers}+ Train questions right (${trainExcellence.weak} on your weak spots)`;
+  // today's Train count, once there is one
+  const trainProgress =
+    train?.answered > 0
+      ? ` Train today: ${train.right} of ${train.answered} right, ${train.weak} on weak spots.`
+      : '';
+  let description = `Excellence: clear Read and Listen at ${excellenceTargetPhrase}, win a ${arenaBarPhrase} battle, or ${trainExcellencePhrase}.${trainProgress}`;
   if (excellenceAchieved) {
     description =
       aiStory?.excellenceVia === 'arena'
-        ? 'Boss beaten at your best level.'
+        ? arena?.excellenceVia === 'train'
+          ? 'Train Excellence reached.'
+          : 'Boss beaten at your best level.'
         : 'Read and Listen both cleared.';
   } else if (hasReading && !hasListening) {
-    description = `Read is done. Finish Listen at ${excellenceTargetPhrase}, or win a ${arenaBarPhrase} battle.`;
+    description = `Read is done. Finish Listen at ${excellenceTargetPhrase}, win a ${arenaBarPhrase} battle, or ${trainExcellencePhrase}.${trainProgress}`;
   } else if (!hasReading && hasListening) {
-    description = `Listen is done. Finish Read at ${excellenceTargetPhrase}, or win a ${arenaBarPhrase} battle.`;
+    description = `Listen is done. Finish Read at ${excellenceTargetPhrase}, win a ${arenaBarPhrase} battle, or ${trainExcellencePhrase}.${trainProgress}`;
   }
 
   return {
     label: 'Arena',
     title: basicAchieved
       ? aiStory?.basicVia === 'arena'
-        ? 'Arena battle cleared'
+        ? arena?.basicVia === 'train'
+          ? 'Train goal cleared'
+          : 'Arena battle cleared'
         : `AI Story Lv${highestPassedLevel} cleared`
-      : `Clear AI Story ${basicTargetPhrase} or score 60% in a battle`,
+      : `Clear AI Story ${basicTargetPhrase}, score 60% in a battle, or get ${percent(trainBasic.share)} of ${trainBasic.answers}+ Train questions right`,
     description,
     tone: 'logoBlue',
     basicAchieved,

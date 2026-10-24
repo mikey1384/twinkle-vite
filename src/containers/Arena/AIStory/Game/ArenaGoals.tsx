@@ -7,7 +7,21 @@ import {
   getBoostStreakMultiplier
 } from '~/components/DailyRewardBoostStrip';
 import { useNotiContext } from '~/contexts';
+import { getDailyRewardPreviewStreak } from '~/helpers';
 import { ARENA } from '../../theme';
+
+// The same board on the Train and Arena pages, from today's stats (every
+// route meets the A goal, so each side shows what's left)
+export function TodayArenaGoals() {
+  const dailyTask = useNotiContext(
+    (v) => v.state.todayStats?.dailyTaskStatus?.aiStory
+  );
+  const loaded = useNotiContext((v) => !!v.state.todayStats?.dailyTaskStatus);
+  const streak = useNotiContext((v) =>
+    getDailyRewardPreviewStreak(v.state.todayStats)
+  );
+  return <ArenaGoals dailyTask={dailyTask} loading={!loaded} streak={streak} />;
+}
 
 // Arena's own Basic / Excellence board (Mikey 10-24: AI Story moved into
 // Arena and takes its look, as Grammarbles got its own board). The targets
@@ -42,7 +56,7 @@ export default function ArenaGoals({
       met: row.excellenceAchieved,
       // the strip's line names the goal; here the row already does
       text: row.description
-        .replace(/^Excellence target:\s*/, '')
+        .replace(/^Excellence( target)?:\s*/, '')
         .replace(/^./, (c) => c.toUpperCase())
     }
   ];

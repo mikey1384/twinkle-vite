@@ -5,6 +5,7 @@ import { useAppContext, useNotiContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
 import type { ArenaBattleSummary, ArenaState } from './types';
+import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 
 // Train: everything that is not a real battle. AI Story is here unchanged;
 // battle review, untimed retakes and boss prep join as Arena's battles arrive.
@@ -68,6 +69,7 @@ export default function Train({
 
   return (
     <div className={wrapCls}>
+      <TodayArenaGoals />
       <button type="button" className={rowCls} onClick={onPlayAIStory}>
         <span className={badgeCls} style={{ background: ARENA.sky }}>
           <Icon icon="book-open" />
@@ -79,7 +81,7 @@ export default function Train({
           </span>
         </span>
         <span className={statusCls}>
-          {aiStoryTask?.isPassed ? (
+          {(aiStoryTask?.storyPassed ?? aiStoryTask?.isPassed) ? (
             <>
               <Icon icon="check" /> Cleared today
             </>

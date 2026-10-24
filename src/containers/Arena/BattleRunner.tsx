@@ -891,7 +891,9 @@ export function PaperItem({
             </p>
           )}
           {review!.evidence && (
-            <p className={evidenceCls}>“{review!.evidence}”</p>
+            <p className={evidenceCls}>
+              “<PaperText text={review!.evidence} />”
+            </p>
           )}
           <p>
             <MathText text={review!.explanation} />

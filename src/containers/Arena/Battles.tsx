@@ -10,6 +10,7 @@ import League from './League';
 import Records from './Records';
 import CoverPage from './CoverPage';
 import Rising from './Rising';
+import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import type { ArenaDifficulty, ArenaExamSummary, ArenaState } from './types';
 
 // Arena: real battles only. Exam and boss names use their real Korean
@@ -97,6 +98,7 @@ export default function Battles({
 
   return (
     <div className={wrapCls}>
+      <TodayArenaGoals />
       <League />
       <Rising />
       <p className={introCls}>
