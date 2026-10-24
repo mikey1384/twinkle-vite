@@ -180,3 +180,23 @@ test('slow frames carry what landed just before them, worst four kept', () => {
   h.image();
   assert.ok(JSON.stringify(h.records[0]).length < 2000);
 });
+
+test('past the distinct-request cap repeats are marked as capped, never silently dropped', () => {
+  const h = harness();
+  h.profiler.start({ kind: 'load' });
+  for (let i = 0; i < 405; i++)
+    h.profiler.noteRequest(
+      'GET /content?contentId',
+      `GET /content?contentId=${i}`
+    );
+  h.profiler.noteRequest('GET /content?contentId', 'GET /content?contentId=1');
+  h.endWindow();
+  assert.equal(h.records[0].requests, 406);
+  assert.equal(h.records[0].repeats, 1);
+  assert.equal(h.records[0].repeatsCapped, true);
+  const small = harness();
+  small.profiler.start({ kind: 'load' });
+  small.profiler.noteRequest('GET /a', 'GET /a');
+  small.endWindow();
+  assert.equal(small.records[0].repeatsCapped, undefined);
+});

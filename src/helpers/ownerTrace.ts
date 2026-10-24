@@ -250,11 +250,12 @@ export function traceOwnerRequest<T, R>(
   const pattern = `${method} ${redactRequestPath(config.url)}`;
   // grouped by redacted pattern; true repeats counted by the exact request
   // (URL and params, kept in memory only), so 13 different feed cards are not
-  // 13 "repeats"
-  wakeProfiler.noteRequest(
-    pattern,
-    `${method} ${config.url || ''} ${stableParams(config.params)}`
-  );
+  // 13 "repeats". The exact key is only built while a wake window is open.
+  if (wakeProfiler.isOpen())
+    wakeProfiler.noteRequest(
+      pattern,
+      `${method} ${config.url || ''} ${stableParams(config.params)}`
+    );
   const startedAt = Date.now();
   let queuedMs = 0;
   let attempts = 0;
@@ -295,17 +296,22 @@ export function traceOwnerRequest<T, R>(
   return promise;
 }
 
-function stableParams(params: unknown) {
+// Params as text with keys sorted at every depth, so the same request built
+// with a different key order still counts as a repeat.
+export function stableParams(params: unknown) {
   if (!params || typeof params !== 'object') return '';
   try {
-    return JSON.stringify(
-      Object.keys(params as Record<string, unknown>)
-        .sort()
-        .map((key) => [key, (params as Record<string, unknown>)[key]])
-    );
+    return JSON.stringify(sortKeysDeep(params));
   } catch {
     return '';
   }
+}
+function sortKeysDeep(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortKeysDeep);
+  if (!value || typeof value !== 'object') return value;
+  return Object.keys(value as Record<string, unknown>)
+    .sort()
+    .map((key) => [key, sortKeysDeep((value as Record<string, unknown>)[key])]);
 }
 
 // Which element a Home feed open came from, in coarse terms (how it was

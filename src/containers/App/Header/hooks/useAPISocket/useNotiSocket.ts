@@ -86,6 +86,10 @@ export default function useNotiSocket({
   );
 
   const subjectRewardLevelRefreshInFlightRef = useRef(false);
+  // One return to the tab fires connect, visibilitychange and pageshow; a
+  // refresh that fully succeeded covers the others for 15 s. A failed one
+  // (network not back yet) leaves the next trigger free to retry.
+  const subjectRewardLevelRefreshedAtRef = useRef(0);
   const userIdRef = useRef(userId);
   userIdRef.current = userId;
 
@@ -93,7 +97,8 @@ export default function useNotiSocket({
     async function refreshObservedSubjectRewardLevels() {
       if (
         document.visibilityState !== 'visible' ||
-        subjectRewardLevelRefreshInFlightRef.current
+        subjectRewardLevelRefreshInFlightRef.current ||
+        Date.now() - subjectRewardLevelRefreshedAtRef.current < 15000
       ) {
         return;
       }
@@ -104,6 +109,8 @@ export default function useNotiSocket({
       if (subjectIds.length === 0) return;
 
       subjectRewardLevelRefreshInFlightRef.current = true;
+      const startedAt = Date.now();
+      let failed = false;
       const requestUserId = userId;
       try {
         await refreshSubjectRewardLevelBatches({
@@ -119,12 +126,16 @@ export default function useNotiSocket({
             });
           },
           onBatchError: (error) => {
+            failed = true;
             console.error(
               'Failed to refresh a subject effort-level batch after resume:',
               error
             );
           }
         });
+        if (!failed && requestUserId === userIdRef.current) {
+          subjectRewardLevelRefreshedAtRef.current = startedAt;
+        }
       } finally {
         subjectRewardLevelRefreshInFlightRef.current = false;
       }

@@ -9,6 +9,7 @@
 
 export const WAKE_WINDOW_MS = 20_000;
 const MAX_TOP_REQUESTS = 10;
+const MAX_EXACT_REQUESTS = 400;
 const MAX_SOCKET_REASONS = 4;
 // the slowest frames of a window, each with what landed just before it
 const SLOW_FRAME_MS = 50;
@@ -84,6 +85,7 @@ export function createWakeProfiler({
     requests: Map<string, number>;
     exactRequests: Set<string>;
     sameRequests: number;
+    exactCapped: boolean;
     connects: number;
     disconnects: number;
     reconnectAttempts: number;
@@ -127,6 +129,7 @@ export function createWakeProfiler({
       requests: new Map(),
       exactRequests: new Set(),
       sameRequests: 0,
+      exactCapped: false,
       connects: 0,
       disconnects: 0,
       reconnectAttempts: 0,
@@ -163,8 +166,6 @@ export function createWakeProfiler({
     frame = requestFrame(tick);
   }
 
-  // key: the redacted pattern (what is shown); exact: the full request, only
-  // to tell a true repeat (same URL again) from a different item
   // A slow frame with what landed between the previous frame and it: API
   // replies (by pattern), images, Home feed card renders/mounts, socket
   // events, route changes. Safari has no script attribution, so this
@@ -223,11 +224,17 @@ export function createWakeProfiler({
     if (wake) wake.since.routes += 1;
   }
 
+  // key: the redacted pattern (what is shown); exact: the full request, only
+  // to tell a true repeat (same URL again) from a different item. Past
+  // MAX_EXACT_REQUESTS distinct requests, new ones are no longer remembered
+  // and the window is marked repeatsCapped (repeats may be undercounted).
   function noteRequest(key: string, exact = key) {
     if (!wake || !key) return;
     wake.requests.set(key, (wake.requests.get(key) || 0) + 1);
     if (wake.exactRequests.has(exact)) wake.sameRequests += 1;
-    else wake.exactRequests.add(exact);
+    else if (wake.exactRequests.size < MAX_EXACT_REQUESTS)
+      wake.exactRequests.add(exact);
+    else wake.exactCapped = true;
   }
 
   function noteSocket(
@@ -296,6 +303,7 @@ export function createWakeProfiler({
       requests: total,
       // the exact same request sent again in this window
       repeats: done.sameRequests,
+      ...(done.exactCapped ? { repeatsCapped: true } : {}),
       top: requests
         .slice(0, MAX_TOP_REQUESTS)
         .map(([key, n]) => (n > 1 ? `${key} x${n}` : key)),

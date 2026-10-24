@@ -90,3 +90,26 @@ test('urgency is read when the frame applies, not when the reply arrived', () =>
   f.next();
   assert.deepEqual(applied, ['scrolled-in']);
 });
+
+test('an urgency check that throws counts as not urgent and never stalls the queue', () => {
+  const f = frames();
+  const pacer = createHydrationPacer({
+    perFrame: 1,
+    requestFrame: f.requestFrame
+  });
+  const applied: string[] = [];
+  pacer.enqueue(
+    () => applied.push('broken'),
+    () => {
+      throw new Error('unmounted');
+    }
+  );
+  pacer.enqueue(
+    () => applied.push('visible'),
+    () => true
+  );
+  f.next();
+  f.next();
+  assert.deepEqual(applied, ['visible', 'broken']);
+  assert.equal(pacer.pending(), 0);
+});

@@ -41,8 +41,9 @@ function readLazyImportReloadAt(href: string) {
 // sessionStorage does not survive the reload: no reload loop either way. A
 // future timestamp (another device's clock, a clock set back) does not count.
 export function hasRecentLazyImportReload(href: string, now = Date.now()) {
-  const age = now - readLazyImportReloadAt(href);
-  return readLazyImportReloadAt(href) > 0 && age >= 0 && age < RECENT_RELOAD_MS;
+  const at = readLazyImportReloadAt(href);
+  const age = now - at;
+  return at > 0 && age >= 0 && age < RECENT_RELOAD_MS;
 }
 
 // The page was opened by a lazy-chunk recovery reload a few minutes ago at

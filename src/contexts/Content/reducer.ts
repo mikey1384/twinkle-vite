@@ -1683,84 +1683,32 @@ export default function ContentReducer(
         }
       };
     case 'SET_REWARD_LEVEL': {
-      const newState = { ...state };
+      // Only entries that hold this content (itself, as a root, in a subject
+      // list or as a target's subject) and whose values actually change get a
+      // new object. Rebuilding every entry made one resume refresh (one action
+      // per visible subject) re-render every mounted card once per subject.
+      let newState = state;
       if (
         action.contentType === 'subject' &&
         action.contentId &&
-        !newState[contentKey]
+        !state[contentKey]
       ) {
-        newState[contentKey] = {
-          ...defaultState,
-          contentId: action.contentId,
-          contentType: action.contentType,
-          rewardLevel: action.rewardLevel,
-          rewardLevelRevision: action.rewardLevelRevision
+        newState = {
+          ...state,
+          [contentKey]: {
+            ...defaultState,
+            contentId: action.contentId,
+            contentType: action.contentType,
+            rewardLevel: action.rewardLevel,
+            rewardLevelRevision: action.rewardLevelRevision
+          }
         };
       }
-      const contentKeys = Object.keys(newState);
-      for (const contentKey of contentKeys) {
-        const prevContentState = newState[contentKey];
-        const contentMatches =
-          prevContentState.contentId === action.contentId &&
-          prevContentState.contentType === action.contentType;
-        const rootMatches =
-          prevContentState.rootId === action.contentId &&
-          prevContentState.rootType === action.contentType;
-        newState[contentKey] = {
-          ...prevContentState,
-          rewardLevel: contentMatches
-            ? action.rewardLevel
-            : prevContentState.rewardLevel,
-          rewardLevelRevision: contentMatches
-            ? action.rewardLevelRevision
-            : prevContentState.rewardLevelRevision,
-          subjects: prevContentState.subjects?.map((subject: Subject) => {
-            const subjectMatches =
-              subject.id === action.contentId &&
-              action.contentType === 'subject';
-            return {
-              ...subject,
-              rewardLevel: subjectMatches
-                ? action.rewardLevel
-                : subject.rewardLevel,
-              rewardLevelRevision: subjectMatches
-                ? action.rewardLevelRevision
-                : subject.rewardLevelRevision
-            };
-          }),
-          rootObj: prevContentState.rootObj
-            ? {
-                ...prevContentState.rootObj,
-                rewardLevel: rootMatches
-                  ? action.rewardLevel
-                  : prevContentState.rootObj.rewardLevel,
-                rewardLevelRevision: rootMatches
-                  ? action.rewardLevelRevision
-                  : prevContentState.rootObj.rewardLevelRevision
-              }
-            : undefined,
-          targetObj: prevContentState.targetObj
-            ? {
-                ...prevContentState.targetObj,
-                subject: prevContentState.targetObj.subject
-                  ? {
-                      ...prevContentState.targetObj.subject,
-                      rewardLevel:
-                        prevContentState.targetObj.subject.id ===
-                          action.contentId && action.contentType === 'subject'
-                          ? action.rewardLevel
-                          : prevContentState.targetObj.subject.rewardLevel,
-                      rewardLevelRevision:
-                        prevContentState.targetObj.subject.id ===
-                          action.contentId && action.contentType === 'subject'
-                          ? action.rewardLevelRevision
-                          : prevContentState.targetObj.subject
-                              .rewardLevelRevision
-                    }
-                  : undefined
-              }
-            : undefined
-        };
+      for (const key of Object.keys(newState)) {
+        const next = applyRewardLevel(newState[key], action);
+        if (next === newState[key]) continue;
+        if (newState === state) newState = { ...state };
+        newState[key] = next;
       }
       return newState;
     }
@@ -2114,4 +2062,73 @@ export default function ContentReducer(
     default:
       return state;
   }
+}
+
+// SET_REWARD_LEVEL for one content entry: the same object back when nothing in
+// it refers to the changed content or the values are already current.
+function applyRewardLevel(entry: any, action: any) {
+  if (!entry) return entry;
+  const isSubject = action.contentType === 'subject';
+  const level = action.rewardLevel;
+  const revision = action.rewardLevelRevision;
+  const stale = (obj: any) =>
+    obj.rewardLevel !== level || obj.rewardLevelRevision !== revision;
+  let next = entry;
+  const write = (changes: any) => {
+    next = next === entry ? { ...entry, ...changes } : { ...next, ...changes };
+  };
+  if (
+    entry.contentId === action.contentId &&
+    entry.contentType === action.contentType &&
+    stale(entry)
+  ) {
+    write({ rewardLevel: level, rewardLevelRevision: revision });
+  }
+  if (isSubject && Array.isArray(entry.subjects)) {
+    const index = entry.subjects.findIndex(
+      (subject: Subject) => subject?.id === action.contentId && stale(subject)
+    );
+    if (index >= 0) {
+      write({
+        subjects: entry.subjects.map((subject: Subject) =>
+          subject?.id === action.contentId
+            ? { ...subject, rewardLevel: level, rewardLevelRevision: revision }
+            : subject
+        )
+      });
+    }
+  }
+  if (
+    entry.rootObj &&
+    entry.rootId === action.contentId &&
+    entry.rootType === action.contentType &&
+    stale(entry.rootObj)
+  ) {
+    write({
+      rootObj: {
+        ...entry.rootObj,
+        rewardLevel: level,
+        rewardLevelRevision: revision
+      }
+    });
+  }
+  const targetSubject = entry.targetObj?.subject;
+  if (
+    isSubject &&
+    targetSubject &&
+    targetSubject.id === action.contentId &&
+    stale(targetSubject)
+  ) {
+    write({
+      targetObj: {
+        ...entry.targetObj,
+        subject: {
+          ...targetSubject,
+          rewardLevel: level,
+          rewardLevelRevision: revision
+        }
+      }
+    });
+  }
+  return next;
 }
