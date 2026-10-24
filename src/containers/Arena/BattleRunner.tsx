@@ -90,6 +90,20 @@ function DialogueText({ text }: { text: string }) {
   );
 }
 
+// A timeline item's passage also carries its ticks as a text line ("1961
+// 5·16 … | (가) | 1964 …") for blind solvers and reviews; the paper draws
+// the timeline, so that line is not printed again.
+function withoutDrawnTimeline(
+  body: string,
+  visual: Record<string, unknown> | undefined
+) {
+  if (visual?.kind !== 'timeline') return body;
+  return String(body || '')
+    .split('\n')
+    .filter((line) => !/\|\s*\(가\)\s*\|/.test(line))
+    .join('\n');
+}
+
 // the point tag comes from the blueprint, never from authored stem text
 function stemText(stem: string) {
   return String(stem || '')
@@ -536,7 +550,9 @@ export function PaperItem({
           {isDialogue(passage.body) ? (
             <DialogueText text={passage.body} />
           ) : (
-            <PaperText text={passage.body} />
+            <PaperText
+              text={withoutDrawnTimeline(passage.body, item.visual)}
+            />
           )}
         </div>
       )}
