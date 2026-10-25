@@ -15,7 +15,7 @@ export default function TypedAnswer({
   prompt = '답',
   onCommit
 }: {
-  typed: 'integer' | 'number' | 'text';
+  typed: 'integer' | 'number' | 'text' | 'transformation';
   value: number | string | null;
   finished: boolean;
   label: string;
@@ -48,7 +48,7 @@ export default function TypedAnswer({
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
-        maxLength={integer ? 6 : numeric ? 12 : 48}
+        maxLength={integer ? 6 : numeric ? 12 : typed === 'transformation' ? 128 : 48}
         placeholder={compact ? '' : integer ? '0–999' : ''}
         onChange={(event) => {
           const next = event.target.value;

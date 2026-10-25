@@ -55,6 +55,7 @@ import {
   shouldSuppressPopupDismissNavigation
 } from '~/helpers/popupDismissNavigation';
 import { getFeedCardSizing, type FeedCardSizing } from './helpers/sizing';
+import { latestArenaResult } from './helpers/arenaResult';
 import { chooseHomeFeedPreviewComment } from './helpers/previewComments';
 import { suppressGhostTapAfterNavigation } from './helpers/ghostTap';
 import {
@@ -1141,6 +1142,7 @@ function mergeLoadedFeedContentWithPreviewState({
   };
   return {
     ...loadedContent,
+    ...latestArenaResult(contentState, previewContent),
     secretShown: Boolean(
       previewContent?.secretShown || contentState?.secretShown
     ),

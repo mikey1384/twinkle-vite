@@ -22,6 +22,7 @@ export interface ArenaExamSummary {
     length: 'short' | 'medium' | 'full';
     items: number;
     minutes: number;
+    rewards?: Record<ArenaDifficulty, { xp: number; coins: number }>;
   }[];
 }
 
@@ -102,6 +103,28 @@ export interface ArenaState {
   paidBattlesPerDay: number;
 }
 
+export type TypedFormat = 'integer' | 'number' | 'text' | 'transformation';
+
+export interface ArenaPartialCredit {
+  earned: number;
+  max: number;
+  reason: 'blank' | 'word-count' | 'keyword' | 'full-forms' | null;
+  parts: { correct: boolean; accepted: string[] }[];
+}
+
+export interface C1ScaleReport {
+  skills: {
+    key: string;
+    label: string;
+    raw: number;
+    max: number;
+    pending: boolean;
+    complete: boolean;
+    range: { low: number; high: number } | null;
+  }[];
+  average: { low: number; high: number; skills: number } | null;
+}
+
 export interface ArenaItem {
   no: number;
   type: string;
@@ -116,7 +139,7 @@ export interface ArenaItem {
   // [] for a typed answer
   choices: string[];
   // a typed answer (수학 단답형 etc.): digits only, or a word or phrase
-  typed?: 'integer' | 'number' | 'text';
+  typed?: TypedFormat;
   // the number the real paper prints when it restarts per section
   // (TOEFL Junior "L12", TOSEL "II-3"); `no` stays the unique key
   display?: string;
@@ -151,6 +174,7 @@ export interface ArenaItem {
   // the key: a choice index, or the accepted typed answer the review prints
   key?: number | string;
   correct?: boolean;
+  partialCredit?: ArenaPartialCredit;
   // ko: the Korean review of an English exam
   review?: {
     explanation: string;
@@ -183,6 +207,13 @@ export interface ArenaBattle {
     minutes: number | null;
     deadlineAt: number | null;
     serverNow: number;
+    scaleReport?: C1ScaleReport | null;
+    reward?: {
+      xpEarned: number;
+      coinsEarned: number;
+      rewardPending: boolean;
+      markingPending: boolean;
+    } | null;
   };
   passages: Record<
     string,

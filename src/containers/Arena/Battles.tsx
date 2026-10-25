@@ -9,6 +9,7 @@ import { BOSSES } from './bosses';
 import League from './League';
 import Records from './Records';
 import CoverPage from './CoverPage';
+import ArenaRewards from './Rewards';
 import Rising from './Rising';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
@@ -47,6 +48,7 @@ export default function Battles({
   );
   const [state, setState] = useState<ArenaState | null>(null);
   const [error, setError] = useState('');
+  const [reviewBattleId, setReviewBattleId] = useState(0);
   const [starting, setStarting] = useState('');
   // the booklet cover, read before the clock starts
   const [cover, setCover] = useState<{
@@ -121,6 +123,14 @@ export default function Battles({
           : ''}
       </p>
       {error && <p className={errorCls}>{error}</p>}
+      {reviewBattleId > 0 && (
+        <p className={introCls}>
+          You have already taken this paper.{' '}
+          <button type="button" className={recordsBackCls} onClick={() => onStart(reviewBattleId)}>
+            Review your answers
+          </button>
+        </p>
+      )}
       {openBattle && (
         <button
           type="button"
@@ -173,7 +183,7 @@ export default function Battles({
                       </button>
                     </div>
                     <strong>
-                      {exam.name} <small>{exam.nameEn}</small>
+                      {exam.name}{exam.nameEn !== exam.name && <> <small>{exam.nameEn}</small></>}
                     </strong>
                     <div
                       className={modesCls}
@@ -237,6 +247,12 @@ export default function Battles({
                             <span>
                               {option.items} questions · {option.minutes} min
                             </span>
+                            {option.rewards?.[modes[exam.key] || 'normal'] && (
+                              <ArenaRewards
+                                {...option.rewards[modes[exam.key] || 'normal']}
+                                label="Up to"
+                              />
+                            )}
                           </button>
                         );
                       })}
@@ -267,6 +283,7 @@ export default function Battles({
   ) {
     setStarting(`${examKey}:${length}`);
     setError('');
+    setReviewBattleId(0);
     try {
       const data = await startArenaBattle({
         examKey,
@@ -274,7 +291,11 @@ export default function Battles({
         difficulty: modes[examKey] || 'normal'
       });
       setCover(null);
-      onStart(data.battle.id);
+      if (data.alreadyTaken && data.battle.status === 'finished') {
+        setReviewBattleId(data.battle.id);
+      } else {
+        onStart(data.battle.id);
+      }
     } catch (err: any) {
       setCover(null);
       setError(
@@ -384,6 +405,7 @@ const lengthsCls = css`
 
 const lengthCls = css`
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;

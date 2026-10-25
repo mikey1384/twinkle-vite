@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import ArenaButton from '~/containers/Arena/ArenaButton';
+import ArenaRewards from '~/containers/Arena/Rewards';
 import { arenaMediaURL } from '~/containers/Arena/media';
 import { ARENA } from '~/containers/Arena/theme';
 
 // A won Arena battle shared as a post (Mikey 10-24): the member showing off a
 // win ("im just showing off my achievement"). The post itself is a normal
-// one (heading "took on a boss and won. Can you do better?", likes, comments,
+// one (score-aware achievement heading, likes, comments,
 // recommends); this is its body on Home and on /arena-challenges/:id, the
 // Arena look only inside the panel, with a Challenge! button for anyone who
 // wants to sit the same paper. Never any wrong answers (the own-misses ruling).
@@ -25,6 +26,12 @@ export interface ArenaChallengePreview {
   sharer: { id: number; username: string; profilePicUrl: string | null };
   raw: number;
   max: number;
+  xpEarned?: number;
+  coinsEarned?: number;
+  scoreBonusXpEarned?: number;
+  scoreBonusCoinsEarned?: number;
+  rewardPending?: boolean;
+  markingPending?: boolean;
   hunterRank: { grade: number; low: number; high: number } | null;
   createdAt: number;
   takers: number;
@@ -86,54 +93,61 @@ function ArenaChallengePanel({
           BOSS {challenge.code}
           {challenge.codeLabel ? ` · ${challenge.codeLabel}` : ''}
         </span>
-        <strong className={titleCls}>
-          {challenge.examName} · {LENGTH[challenge.length]} ·{' '}
-          {MODE[challenge.difficulty]}
-        </strong>
+        <strong className={titleCls}>{challenge.examName}</strong>
+        <span className={modeCls}>
+          {LENGTH[challenge.length]} · {MODE[challenge.difficulty]}
+        </span>
         <span className={scoreCls}>
-          {challenge.raw} / {challenge.max}
+          <small>Score</small> {challenge.raw} <span>/ {challenge.max}</span>
         </span>
         {challenge.hunterRank && (
           <span className={rankCls}>
             Hunter Rank about {grade(challenge.hunterRank.grade)}
           </span>
         )}
-        <div className={footCls}>
-          <span className={metaCls}>
-            {challenge.takers
-              ? `${challenge.takers} tried the same paper${
-                  challenge.bestTaker != null
-                    ? ` · best ${challenge.bestTaker}`
-                    : ''
-                }`
-              : 'Same paper, same clock'}
-          </span>
-          {!isMine && (
-            <ArenaButton
-              tone="red"
-              size="md"
-              onClick={(event) => {
-                // the feed card opens the post on a click; this opens the battle
-                event.stopPropagation();
-                navigate(`/arena?mode=arena&challenge=${challenge.id}`);
-              }}
-            >
-              Challenge!
-            </ArenaButton>
-          )}
-        </div>
+      </div>
+      <div className={awardCls}>
+        <ArenaRewards
+          xp={challenge.xpEarned}
+          coins={challenge.coinsEarned}
+          scoreBonusXp={challenge.scoreBonusXpEarned}
+          scoreBonusCoins={challenge.scoreBonusCoinsEarned}
+          rewardPending={challenge.rewardPending}
+          markingPending={challenge.markingPending}
+          emptyNote="Daily exam reward limit reached"
+          label="Awarded"
+          highlight
+        />
+      </div>
+      <div className={footCls}>
+        <span className={metaCls}>
+          {challenge.takers
+            ? `${challenge.takers} tried the same paper${
+                challenge.bestTaker != null
+                  ? ` · best ${challenge.bestTaker}`
+                  : ''
+              }`
+            : 'Same paper, same clock'}
+        </span>
+        {!isMine && (
+          <ArenaButton
+            tone="red"
+            size="md"
+            onClick={(event) => {
+              // the feed card opens the post on a click; this opens the battle
+              event.stopPropagation();
+              navigate(`/arena?mode=arena&challenge=${challenge.id}`);
+            }}
+          >
+            Challenge!
+          </ArenaButton>
+        )}
       </div>
     </div>
   );
 }
 
 export default memo(ArenaChallengePanel);
-
-
-
-
-
-
 
 // the Arena look, inside the post's default frame
 const resultCls = css`
@@ -144,9 +158,11 @@ const resultCls = css`
   /* fills the feed card's fixed preview slot; on the content page the
      slot has no set height, so this is a no-op there */
   min-height: calc(100% - 4px);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
   align-items: center;
-  gap: 1.6rem;
+  gap: 1rem 1.6rem;
   padding: 1.2rem 1.4rem;
   background: ${ARENA.paper};
   color: ${ARENA.ink};
@@ -154,7 +170,7 @@ const resultCls = css`
   border-radius: 10px;
   box-shadow: 3px 3px 0 ${ARENA.line};
   @media (max-width: ${mobileMaxWidth}) {
-    gap: 1rem;
+    gap: 0.9rem 1rem;
     padding: 1rem;
   }
 `;
@@ -165,19 +181,19 @@ const stampCls = css`
   position: absolute;
   top: 0.4rem;
   right: 0.8rem;
-  width: 7.6rem;
-  height: 7.6rem;
+  width: 5.6rem;
+  height: 5.6rem;
   transform: rotate(-12deg);
   pointer-events: none;
   @media (max-width: ${mobileMaxWidth}) {
-    width: 5.6rem;
-    height: 5.6rem;
+    width: 4.6rem;
+    height: 4.6rem;
     right: 0.4rem;
   }
 `;
 
 const eraserCls = css`
-  height: 13.5rem;
+  height: 11rem;
   aspect-ratio: 3 / 4;
   object-fit: cover;
   border: 2px solid ${ARENA.line};
@@ -186,7 +202,7 @@ const eraserCls = css`
   transform: rotate(-4deg);
   flex: none;
   @media (max-width: ${mobileMaxWidth}) {
-    height: 12rem;
+    height: 10rem;
   }
 `;
 
@@ -195,6 +211,7 @@ const resultTextCls = css`
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
+  padding-right: 3.6rem;
 `;
 
 const codeCls = css`
@@ -213,10 +230,17 @@ const titleCls = css`
   font-weight: 900;
 `;
 
+const modeCls = css`
+  font-size: 1.2rem;
+  color: ${ARENA.inkSoft};
+`;
+
 const scoreCls = css`
   font-size: 2.2rem;
   font-weight: 900;
   color: ${ARENA.train};
+  small { font-size: 1.1rem; font-weight: 700; color: ${ARENA.inkSoft}; }
+  > span { font-size: 1.5rem; }
 `;
 
 const rankCls = css`
@@ -226,11 +250,17 @@ const rankCls = css`
 `;
 
 const footCls = css`
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+`;
+
+const awardCls = css`
+  grid-column: 1 / -1;
+  min-width: 0;
 `;
 
 const metaCls = css`

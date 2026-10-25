@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import ArenaButton from './ArenaButton';
+import ArenaRewards from './Rewards';
 import { ARENA } from './theme';
-import type { ArenaExamSummary } from './types';
+import type { ArenaDifficulty, ArenaExamSummary } from './types';
 
 // The booklet's cover, read before the bell as in the real exam room: 교시,
 // 영역, the paper's size and time, the 유의사항 and a 필적 확인 문구. The clock
@@ -61,7 +62,7 @@ export default function CoverPage({
 }: {
   exam: ArenaExamSummary;
   length: 'short' | 'medium' | 'full';
-  difficulty: string;
+  difficulty: ArenaDifficulty;
   starting: boolean;
   onStart: () => void;
   onCancel: () => void;
@@ -104,7 +105,33 @@ export default function CoverPage({
               </li>
             )}
             <li>The clock starts when you press Start.</li>
+            {exam.key === 'c1-advanced' && (
+              <>
+                <li>
+                  In key word transformations, write 3–6 words including the
+                  unchanged key word. Use full forms, not contractions. Each
+                  answer has two parts worth one mark each.
+                </li>
+                <li>
+                  This practice test uses one total clock and omits Speaking.
+                  Practice grades use raw marks; scale estimates appear only
+                  after a Normal Full test and are not official results.
+                  Writing marks are AI estimates.
+                </li>
+              </>
+            )}
           </ul>
+          {exam.key === 'c1-advanced' && (
+            <p>
+              C1 Advanced and Cambridge English are trade marks of Cambridge
+              University Press & Assessment. Twinkle is not affiliated with,
+              endorsed or approved by Cambridge University Press & Assessment.
+              All questions are original.
+            </p>
+          )}
+          {spec?.rewards?.[difficulty] && (
+            <ArenaRewards {...spec.rewards[difficulty]} label="Up to" />
+          )}
           <div className={actionsCls}>
             <button type="button" className={cancelCls} onClick={onCancel}>
               Not now
@@ -168,6 +195,9 @@ export default function CoverPage({
           <li>시작 버튼을 누르는 순간부터 시간이 흐릅니다.</li>
         </ul>
 
+        {spec?.rewards?.[difficulty] && (
+          <ArenaRewards {...spec.rewards[difficulty]} label="Up to" />
+        )}
         <div className={actionsCls}>
           <button type="button" className={cancelCls} onClick={onCancel}>
             Not now

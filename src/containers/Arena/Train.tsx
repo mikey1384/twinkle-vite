@@ -9,7 +9,7 @@ import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 
 // Train: everything that is not a real battle. AI Story is here unchanged;
-// battle review, untimed retakes and boss prep join as Arena's battles arrive.
+// completed-paper review and boss prep join as Arena's battles arrive.
 export default function Train({
   onPlayAIStory,
   onOpenDeck,
@@ -31,9 +31,6 @@ export default function Train({
     (v) => v.state.todayStats?.dailyTaskStatus?.aiStory
   );
   const loadArenaState = useAppContext((v) => v.requestHelpers.loadArenaState);
-  const startArenaBattle = useAppContext(
-    (v) => v.requestHelpers.startArenaBattle
-  );
   const loadArenaDeck = useAppContext((v) => v.requestHelpers.loadArenaDeck);
   const [state, setState] = useState<ArenaState | null>(null);
   const [deckCounts, setDeckCounts] = useState<{
@@ -42,7 +39,6 @@ export default function Train({
     due: number;
     retired: number;
   } | null>(null);
-  const [retaking, setRetaking] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,7 +74,7 @@ export default function Train({
             kind: 'page',
             label: 'Arena Train',
             path: '/arena?mode=train',
-            excerpt: 'Train: battle reviews and untimed retakes, the missed-question deck, exam skills and drills, AI Story, Eraser flick, real score reports and papers.'
+            excerpt: 'Train: completed battle reviews, the missed-question deck, exam skills and drills, AI Story, Eraser flick, real score reports and papers.'
           }}
         />
       </div>
@@ -209,7 +205,7 @@ export default function Train({
           <strong>Review your battles</strong>
           <span>
             Every battle you finish in the Arena shows up here, question by
-            question, with an untimed retake.
+            question. Completed papers are for review; your next battle uses a different paper.
           </span>
         </span>
         {!finishedBattles.length && (
@@ -229,32 +225,13 @@ export default function Train({
           >
             Review
           </button>
-          <button
-            type="button"
-            className={smallButtonCls}
-            disabled={retaking === battle.id}
-            onClick={() => handleRetake(battle)}
-          >
-            {retaking === battle.id ? 'Opening…' : 'Retake untimed'}
-          </button>
+
         </div>
       ))}
     </div>
   );
 
-  async function handleRetake(battle: ArenaBattleSummary) {
-    setRetaking(battle.id);
-    try {
-      const data = await startArenaBattle({
-        examKey: battle.examKey,
-        mode: 'untimed',
-        sourceBattleId: battle.id
-      });
-      onOpenBattle(data.battle.id);
-    } catch {
-      setRetaking(0);
-    }
-  }
+
 }
 
 function describeBattle(battle: ArenaBattleSummary) {

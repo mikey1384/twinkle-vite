@@ -24,7 +24,7 @@ interface DrillItem {
   body?: string;
   visual?: Record<string, unknown>;
   choices: string[];
-  typed?: 'integer' | 'number' | 'text';
+  typed?: ArenaItem['typed'];
   key?: number | string;
   review?: ArenaItem['review'];
 }
@@ -69,6 +69,7 @@ export default function Drill({
     correct: boolean;
     key: number | string;
     review: ArenaItem['review'];
+    partialCredit?: ArenaItem['partialCredit'];
   } | null>(null);
   const [score, setScore] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -260,6 +261,7 @@ function asPaperItem(
     correct: boolean;
     key: number | string;
     review: ArenaItem['review'];
+    partialCredit?: ArenaItem['partialCredit'];
   } | null
 ): ArenaItem {
   return {
@@ -277,7 +279,7 @@ function asPaperItem(
     ...(example
       ? { key: item.key, correct: true, review: item.review }
       : result
-        ? { key: result.key, correct: result.correct, review: result.review }
+        ? { key: result.key, correct: result.correct, review: result.review, partialCredit: result.partialCredit }
         : {})
   };
 }

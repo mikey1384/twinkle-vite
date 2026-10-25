@@ -74,6 +74,15 @@ function buildSteps(examKey: string, tracks: ListeningTrack[]): Step[] {
       ]
     : [];
   for (const track of tracks) {
+    if (examKey === 'c1-advanced') {
+      // Directions and the preview pause play once; only the extract
+      // repeats. Files are produced together by arena_audio.py.
+      steps.push({
+        kind: 'audio',
+        src: arenaMediaURL(track.audioPath.replace(/\.mp3$/, '-intro.mp3')),
+        label: 'Directions · Read the questions'
+      });
+    }
     const called =
       !!CALLED_EXAMS[examKey] && CALL_FREE_RECORDING.test(track.audioPath);
     for (let play = 0; play < track.plays; play++) {
@@ -106,6 +115,9 @@ function buildSteps(examKey: string, tracks: ListeningTrack[]): Step[] {
       src: arenaMediaURL(`audio/${examKey}/outro.mp3`),
       label: '안내 방송'
     });
+  }
+  if (examKey === 'c1-advanced' && tracks.length) {
+    steps.push({ kind: 'gap', ms: 120000, label: 'Check your listening answers' });
   }
   return steps;
 }

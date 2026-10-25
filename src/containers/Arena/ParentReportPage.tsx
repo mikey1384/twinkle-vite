@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useSearchParams } from 'react-router-dom';
 import Button from '~/components/Button';
@@ -6,12 +6,15 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
+import ParentPaperReview, { type ParentPaper } from './ParentPaperReview';
 
 interface ParentReport {
   childUsername: string;
   rows: [string, string][];
   disclaimer: string;
   confirmed: boolean;
+  confirmationRequired?: boolean;
+  review?: ParentPaper;
 }
 
 // The parent's page (/exam-report?token=), from the mock-exam result email a
@@ -22,6 +25,8 @@ interface ParentReport {
 export default function ParentReportPage() {
   const [params] = useSearchParams();
   const token = params.get('token') || '';
+  const tokenRef = useRef(token);
+  tokenRef.current = token;
   const loadArenaParentReport = useAppContext(
     (v) => v.requestHelpers.loadArenaParentReport
   );
@@ -35,11 +40,15 @@ export default function ParentReportPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
+    setReport(undefined);
+    setError('');
+    setConfirming(false);
     loadArenaParentReport(token)
-      .then((data: any) => setReport(data?.report || null))
-      .catch(() => setReport(null));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+      .then((data: any) => { if (!cancelled) setReport(data?.report || null); })
+      .catch(() => { if (!cancelled) setReport(null); });
+    return () => { cancelled = true; };
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps -- context request helpers stay out of effect dependencies
 
   return (
     <ErrorBoundary componentPath="Arena/ParentReportPage">
@@ -48,8 +57,7 @@ export default function ParentReportPage() {
           <Loading />
         ) : !report ? (
           <p className={leadCls}>
-            링크가 만료되었거나 더 이상 유효하지 않습니다. 학생에게 결과를 다시
-            보내 달라고 해 주세요.
+            링크가 만료되었거나 더 이상 유효하지 않습니다.
           </p>
         ) : (
           <>
@@ -72,7 +80,7 @@ export default function ParentReportPage() {
                 보호자 이메일이 확인되었습니다. 앞으로 {report.childUsername}{' '}
                 학생이 보내는 모의고사 결과를 이 주소로 받아 보실 수 있습니다.
               </p>
-            ) : (
+            ) : (report.confirmationRequired ?? true) ? (
               <>
                 <p className={leadCls}>
                   {report.childUsername} 학생의 보호자이시면 아래 버튼을 눌러
@@ -88,7 +96,8 @@ export default function ParentReportPage() {
                   보호자 이메일 확인하기
                 </Button>
               </>
-            )}
+            ) : null}
+            {report.review && <ParentPaperReview paper={report.review} />}
             {error && <p className={noteCls}>{error}</p>}
           </>
         )}
@@ -97,17 +106,20 @@ export default function ParentReportPage() {
   );
 
   async function handleConfirm() {
+    const requestedToken = token;
     setConfirming(true);
     setError('');
     try {
       await confirmArenaParentReport(token);
       // the canonical state from the server
       const data = await loadArenaParentReport(token);
+      if (tokenRef.current !== requestedToken) return;
       setReport(data?.report || null);
     } catch {
+      if (tokenRef.current !== requestedToken) return;
       setError('확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
-      setConfirming(false);
+      if (tokenRef.current === requestedToken) setConfirming(false);
     }
   }
 }

@@ -7,6 +7,11 @@ export const BOSSES: Record<
   string,
   { name: string; nameEn: string; color: string }
 > = {
+  'c1-advanced': {
+    name: '영문학 시험관',
+    nameEn: 'The Advanced English Examiner',
+    color: '#467c77'
+  },
   'suneung-kor': {
     name: '국어 선생님',
     nameEn: 'The Literature Teacher',

@@ -103,6 +103,9 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-profile {
       height: max(23rem, 230px);
     }
+    .home-feed-card__panel-preview--size-arena-challenge {
+      height: max(34rem, 340px);
+    }
     .home-feed-card__panel-preview--size-reflection {
       height: max(27rem, 270px);
     }

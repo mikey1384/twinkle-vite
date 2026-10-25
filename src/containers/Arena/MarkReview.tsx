@@ -15,7 +15,7 @@ export default function MarkReview({
 }: {
   item: ArenaItem;
   ko: boolean;
-  onRequestMarking: () => Promise<void>;
+  onRequestMarking?: () => Promise<void>;
 }) {
   const [asking, setAsking] = useState(false);
   const [askError, setAskError] = useState('');
@@ -42,20 +42,24 @@ export default function MarkReview({
             <p>
               {waitingEnergy
                 ? ko
-                  ? 'AI 에너지가 없어 아직 채점하지 못했습니다. 답안은 저장되어 있습니다.'
-                  : 'Not marked yet: your AI Energy ran out. Your answer is saved.'
+                  ? onRequestMarking
+                    ? 'AI 에너지가 없어 아직 채점하지 못했습니다. 답안은 저장되어 있습니다.'
+                    : '아직 채점하지 않았습니다. 답안은 저장되어 있습니다.'
+                  : onRequestMarking
+                    ? 'Not marked yet: your AI Energy ran out. Your answer is saved.'
+                    : 'Not marked yet. The answer is saved.'
                 : ko
                   ? '채점을 마치지 못했습니다. 답안은 저장되어 있습니다.'
                   : "Marking didn't finish. Your answer is saved."}
             </p>
-            <ArenaButton
+            {onRequestMarking && <ArenaButton
               tone="red"
               size="md"
               loading={asking}
               onClick={handleAsk}
             >
               {ko ? '지금 채점하기' : 'Mark it now'}
-            </ArenaButton>
+            </ArenaButton>}
             {askError && <p className={errorCls}>{askError}</p>}
           </>
         ) : (
@@ -121,7 +125,7 @@ export default function MarkReview({
     setAsking(true);
     setAskError('');
     try {
-      await onRequestMarking();
+      await onRequestMarking?.();
     } catch (error: any) {
       setAskError(
         error?.code === 'ai_energy_depleted'

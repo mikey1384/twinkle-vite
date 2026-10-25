@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
+import { isPerfectArenaScore } from '~/helpers/arenaChallengeCopy';
 import ArenaButton from './ArenaButton';
 import { arenaMediaURL } from './media';
 import { ARENA } from './theme';
@@ -75,7 +76,8 @@ export default function Challenge({
     return () => {
       alive = false;
     };
-  }, [challengeId, loadArenaChallenge]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- context request helpers stay out of effect dependencies
+  }, [challengeId]);
 
   if (error) return <p className={noteCls}>{error}</p>;
   if (!view) {
@@ -87,6 +89,7 @@ export default function Challenge({
   }
   const { challenge, board } = view;
   const sharerRow = board.find((row) => row.sharer);
+  const perfectScore = isPerfectArenaScore(sharerRow);
   return (
     <section className={cardCls}>
       <header className={headCls}>
@@ -101,9 +104,10 @@ export default function Challenge({
             {challenge.codeLabel ? ` · ${challenge.codeLabel}` : ''}
           </span>
           <strong>
-            {view.isSharer
-              ? 'You took on this boss and won'
-              : `${challenge.sharer.username} took on this boss and won`}
+            {view.isSharer ? 'You' : challenge.sharer.username}{' '}
+            {perfectScore
+              ? 'got a perfect score!'
+              : 'took on this boss and won'}
           </strong>
           <span>
             {challenge.examName} · {LENGTH[challenge.length]} ·{' '}
@@ -140,8 +144,8 @@ export default function Challenge({
         ) : null}
         {view.canTake && (
           <p className={noteCls}>
-            Can you do better? The exact same paper, timed like the real exam.
-            One attempt counts.
+            {perfectScore ? 'Can you match it?' : 'Can you do better?'}{' '}
+            The exact same paper, timed like the real exam. One attempt counts.
           </p>
         )}
       </div>

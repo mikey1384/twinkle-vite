@@ -78,10 +78,11 @@ interface CardView {
     body?: string;
     visual?: Record<string, unknown>;
     choices: string[];
-    typed?: 'integer' | 'number' | 'text';
+    typed?: ArenaItem['typed'];
     missedAnswer?: number | string | null;
     key?: number | string;
     review?: ArenaItem['review'];
+    partialCredit?: ArenaItem['partialCredit'];
   };
 }
 
@@ -102,6 +103,7 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
     correct: boolean;
     key: number | string;
     review: ArenaItem['review'];
+    partialCredit?: ArenaItem['partialCredit'];
     retired: boolean;
   } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -322,6 +324,7 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
         correct: data.correct,
         key: data.key,
         review: data.review,
+        partialCredit: data.partialCredit,
         retired: !!data.card?.retired
       });
     } catch {
@@ -392,6 +395,7 @@ function asPaperItem(
     correct: boolean;
     key: number | string;
     review: ArenaItem['review'];
+    partialCredit?: ArenaItem['partialCredit'];
   } | null
 ): ArenaItem {
   const listening = view.item.type.includes('.l.');
@@ -409,9 +413,9 @@ function asPaperItem(
     typed: view.item.typed,
     answer: null,
     ...(tagging
-      ? { key: view.item.key, correct: false, review: view.item.review }
+      ? { key: view.item.key, correct: false, review: view.item.review, partialCredit: view.item.partialCredit }
       : result
-        ? { key: result.key, correct: result.correct, review: result.review }
+        ? { key: result.key, correct: result.correct, review: result.review, partialCredit: result.partialCredit }
         : {})
   };
 }

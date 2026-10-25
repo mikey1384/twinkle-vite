@@ -30,6 +30,7 @@ export type FeedCardPreviewKind =
 
 export type FeedCardSize =
   | 'attachment-only'
+  | 'arena-challenge'
   | 'ai-story-listening'
   | 'ai-story-reading'
   | 'bounty'
@@ -182,6 +183,7 @@ const PANEL_HEIGHT_REM: Record<
   { desktop: number; mobile: number }
 > = {
   'attachment-only': { desktop: 12, mobile: 11 },
+  'arena-challenge': { desktop: 32, mobile: 34 },
   'ai-story-listening': { desktop: 18, mobile: 17 },
   'ai-story-reading': { desktop: 20, mobile: 19 },
   bounty: { desktop: 16, mobile: 18 },
@@ -746,7 +748,7 @@ function getMainPanelSize({
   }
 
   if (kind === 'pass') {
-    return 'pass';
+    return content?.contentType === 'arenaChallenge' ? 'arena-challenge' : 'pass';
   }
 
   if (
@@ -1237,6 +1239,7 @@ function getFeedCardFrameSize({
     mainSize === 'url' ||
     mainSize === 'build' ||
     mainSize === 'pass' ||
+    mainSize === 'arena-challenge' ||
     mainSize === 'subject-media' ||
     mainSize === 'subject-secret-media'
   ) {

@@ -8,6 +8,7 @@ import ContentLink from '~/components/ContentLink';
 import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { returnTheme } from '~/helpers';
+import { arenaChallengeHeadline } from '~/helpers/arenaChallengeCopy';
 import {
   type BuildRelationshipLabel,
   getBuildDisplayTitle,
@@ -286,8 +287,8 @@ export default function HeadingText({
     case 'arenaChallenge': {
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> took on
-          a boss and won. Can you do better?{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
+          {arenaChallengeHeadline(contentObj)}{' '}
         </>
       );
     }
@@ -459,7 +460,7 @@ export default function HeadingText({
         return (
           <>
             {renderCompactUser()}{' '}
-            {renderCompactAction('took on a boss and won. Can you do better?')}
+            {renderCompactAction(arenaChallengeHeadline(contentObj))}
           </>
         );
       case 'meetupQuestStep':

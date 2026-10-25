@@ -16,7 +16,10 @@ import TypedAnswer from './TypedAnswer';
 import EssayAnswer from './EssayAnswer';
 import SpokenAnswer from './SpokenAnswer';
 import MarkReview from './MarkReview';
+import PartialCreditReview from './PartialCreditReview';
+import C1ScoreReview from './C1ScoreReview';
 import ParentEmailOffer from './ParentEmailOffer';
+import ArenaRewards from './Rewards';
 import type { ArenaBattle, ArenaItem } from './types';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import type { AssistantAskContext } from '~/containers/App/AssistantDock/dockState';
@@ -848,7 +851,7 @@ export function PaperItem({
           <MarkReview
             item={item}
             ko={ko}
-            onRequestMarking={onRequestMarking || (async () => {})}
+            onRequestMarking={onRequestMarking}
           />
           {review?.explanation && (
             <p className={strongAnswerCls}>
@@ -952,7 +955,7 @@ export function PaperItem({
               </>
             )}
           </b>
-          {item.typed && !item.correct && (
+          {item.typed && (!item.correct || item.typed === 'transformation') && (
             <p>
               {ko ? '내 답: ' : 'Your answer: '}
               {marked == null || marked === ''
@@ -962,6 +965,7 @@ export function PaperItem({
                 : String(marked)}
             </p>
           )}
+          {item.partialCredit && <PartialCreditReview credit={item.partialCredit} ko={ko} />}
           {review!.evidence && (
             <p className={evidenceCls}>
               “<PaperText text={review!.evidence} />”
@@ -1040,8 +1044,8 @@ function Result({ data }: { data: ArenaBattle }) {
   const estimate = battle.estimate?.grade;
   // essay and spoken answers: their marks are AI estimates and may still be
   // on their way; the score says so until they are all in
-  const aiMarked = !!battle.exam.aiMarked;
   const markedItems = data.items.filter((item) => item.marked);
+  const aiMarked = markedItems.length > 0;
   const waiting = markedItems.filter(
     (item) => item.marking?.status !== 'marked'
   );
@@ -1111,11 +1115,21 @@ function Result({ data }: { data: ArenaBattle }) {
         <strong>
           {estimate
             ? `about ${gradeText(battle.exam.gradeLabels, estimate.grade)} (likely ${gradeText(battle.exam.gradeLabels, estimate.low)}–${gradeText(battle.exam.gradeLabels, estimate.high)})`
-            : aiMarked
-              ? 'Not estimated for essays'
+            : battle.exam.aiMarked
+              ? 'Not estimated for this exam'
               : 'Still tracking'}
         </strong>
       </div>
+      <div className={rewardPanelCls}>
+        <ArenaRewards
+          xp={battle.reward?.xpEarned}
+          coins={battle.reward?.coinsEarned}
+          rewardPending={battle.reward?.rewardPending}
+          markingPending={battle.reward?.markingPending}
+          emptyNote={battle.mode === 'untimed' ? 'Practice · no rewards' : 'Daily exam reward limit reached'}
+        />
+      </div>
+      {battle.scaleReport && <C1ScoreReview report={battle.scaleReport} />}
       {/* a timed battle can be shared as a challenge (Mikey 10-24): a Home
           card where others take the exact same paper */}
       {battle.mode === 'battle' && (
@@ -1816,4 +1830,10 @@ const typedKeyCls = css`
 const problemCls = css`
   margin: 0 0 0.6rem;
   line-height: 1.9;
+`;
+
+const rewardPanelCls = css`
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background: ${ARENA.paper};
 `;
