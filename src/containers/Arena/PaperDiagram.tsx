@@ -22,8 +22,9 @@ export interface DiagramVisual {
   alt?: string;
 }
 
-// white hides what lies behind it (a solid's faces, drawn back to front)
-type Fill = 'none' | 'hatch' | 'light' | 'white';
+// white hides what lies behind it (a solid's faces, drawn back to front);
+// dark is solid black (the stroke a 한자 필순 item asks about)
+type Fill = 'none' | 'hatch' | 'light' | 'white' | 'dark';
 type Compass = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw' | 'c';
 
 export type DiagramElement =
@@ -209,7 +210,9 @@ export function buildDiagram(visual: DiagramVisual, uid: string) {
         ? '#d4d4d4'
         : fill === 'white'
           ? '#fff'
-          : 'none';
+          : fill === 'dark'
+            ? '#111'
+            : 'none';
   const markers = (end?: 'start' | 'end' | 'both') => ({
     markerStart:
       end === 'start' || end === 'both' ? `url(#${arrow})` : undefined,
