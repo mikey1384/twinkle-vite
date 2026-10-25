@@ -191,9 +191,12 @@ export default function SpokenAnswer({
     const stream = streamRef.current;
     if (!stream) return;
     const type = recorderType() || '';
-    const recorder = type
-      ? new MediaRecorder(stream, { mimeType: type })
-      : new MediaRecorder(stream);
+    // 64 kbps is plenty for speech and keeps a take well inside the server's
+    // size check (24 KB per allowed second, helpers/arena/marking.ts)
+    const recorder = new MediaRecorder(stream, {
+      ...(type ? { mimeType: type } : {}),
+      audioBitsPerSecond: 64_000
+    });
     const chunks: Blob[] = [];
     const startedAt = Date.now();
     recorder.ondataavailable = (event) => {
