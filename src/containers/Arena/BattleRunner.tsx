@@ -81,11 +81,15 @@ function listeningTracks(data: ArenaBattle): ListeningTrack[] {
       ? data.items.filter((other) => other.set === item.set)
       : [item];
     const printed = (other: ArenaItem) => other.display || String(other.no);
+    const label =
+      members.length > 1
+        ? `${printed(members[0])}~${printed(members[members.length - 1])}`
+        : printed(item);
     tracks.push({
-      label:
-        members.length > 1
-          ? `${printed(members[0])}~${printed(members[members.length - 1])}`
-          : printed(item),
+      label,
+      // the number call's file name: the printed label, a set "15~16" as 15-16
+      callKey: label.replace('~', '-'),
+      audioPath,
       src: arenaMediaURL(audioPath),
       plays: item.plays || 1
     });

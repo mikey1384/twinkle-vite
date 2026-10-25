@@ -16,6 +16,21 @@ import { arenaMediaURL } from './media';
 // (audio/<exam>/intro.mp3, outro.mp3); the others start at the first item
 const ANNOUNCED_EXAMS = new Set(['suneung-eng']);
 
+// exams whose broadcast calls each recording's number first, in the exam's
+// language (수능 "십일 번.", TOSEL "Number five.", 레벨테스트 "Numbers fifteen
+// and sixteen."). A battle fills each slot with any bank item of its type,
+// so the call is the PRINTED number: audio/<exam>/calls/<label>.mp3, then
+// the recording tool's 0.9 s pause (Mikey 10-25). The recordings under a
+// <paper>-v2/ folder have their own call cut out; an older recording still
+// holds the authored number's call and plays as it is, never called twice.
+const CALLED_EXAMS: Record<string, 'ko' | 'en'> = {
+  'suneung-eng': 'ko',
+  'tosel-ba': 'en',
+  'lt-eng-e6': 'en'
+};
+const CALL_GAP_MS = 900;
+const CALL_FREE_RECORDING = /-v2\/[^/]+$/;
+
 const ANSWER_GAP_MS = 8000;
 const REPEAT_GAP_MS = 4000;
 
@@ -35,13 +50,17 @@ function playsNote(tracks: ListeningTrack[]) {
 
 export interface ListeningTrack {
   label: string;
+  // the printed label as a file name (a set "15~16" is 15-16)
+  callKey: string;
+  audioPath: string;
   src: string;
   plays: number;
 }
 
+// call: the number call and its pause, shown as the recording playing
 type Step =
-  | { kind: 'audio'; src: string; label: string }
-  | { kind: 'gap'; ms: number; label: string };
+  | { kind: 'audio'; src: string; label: string; call?: boolean }
+  | { kind: 'gap'; ms: number; label: string; call?: boolean };
 
 function buildSteps(examKey: string, tracks: ListeningTrack[]): Step[] {
   const announced = ANNOUNCED_EXAMS.has(examKey);
@@ -55,7 +74,24 @@ function buildSteps(examKey: string, tracks: ListeningTrack[]): Step[] {
       ]
     : [];
   for (const track of tracks) {
+    const called =
+      !!CALLED_EXAMS[examKey] && CALL_FREE_RECORDING.test(track.audioPath);
     for (let play = 0; play < track.plays; play++) {
+      // every play is called, as the real broadcast does (TOSEL's second)
+      if (called) {
+        steps.push({
+          kind: 'audio',
+          src: arenaMediaURL(`audio/${examKey}/calls/${track.callKey}.mp3`),
+          label: track.label,
+          call: true
+        });
+        steps.push({
+          kind: 'gap',
+          ms: CALL_GAP_MS,
+          label: track.label,
+          call: true
+        });
+      }
       steps.push({ kind: 'audio', src: track.src, label: track.label });
       steps.push({
         kind: 'gap',
@@ -158,10 +194,10 @@ export default function ListeningConsole({
           {step.label === '안내 방송'
             ? '안내 방송 중'
             : english
-              ? step.kind === 'audio'
+              ? step.kind === 'audio' || step.call
                 ? `Now playing: ${step.label}`
                 : `Time to answer: ${step.label}`
-              : step.kind === 'audio'
+              : step.kind === 'audio' || step.call
                 ? `${step.label}번 방송 중`
                 : `${step.label}번 답할 시간`}
         </span>
