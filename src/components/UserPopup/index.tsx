@@ -20,6 +20,7 @@ import { css } from '@emotion/css';
 import RankBadge from '~/components/RankBadge';
 import PlatinumSurface from '~/components/PlatinumSurface';
 import { platinumCoverOf } from '~/constants/profileThemes';
+import { resolveProfileAppearance } from '~/helpers/profileAppearance';
 
 const chatLabel = 'Chat';
 const profileLabel = 'Profile';
@@ -127,6 +128,15 @@ export default function UserPopup({
   const profileTheme = useAppContext(
     (v) => v.user.state.userObj[user.id]?.profileTheme
   );
+  const profileCoverUrl = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.profileCoverUrl
+  );
+  const profileCoverPosition = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.profileCoverPosition
+  );
+  const profileCoverShine = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.profileCoverShine
+  );
   const realName = useAppContext(
     (v) => v.user.state.userObj[user.id]?.realName
   );
@@ -178,10 +188,14 @@ export default function UserPopup({
     return rank;
   }, [rank, user.rank]);
 
-  const appliedProfileTheme = useMemo(() => {
-    return user.profileTheme || profileTheme;
-  }, [user.profileTheme, profileTheme]);
-  const platinum = platinumCoverOf({ ...user, profileTheme: appliedProfileTheme });
+  const appearance = resolveProfileAppearance(user, {
+    profileTheme,
+    profileCoverUrl,
+    profileCoverPosition,
+    profileCoverShine
+  });
+  const appliedProfileTheme = appearance.profileTheme;
+  const platinum = platinumCoverOf(appearance);
   const appliedRealName = useMemo(() => {
     return user.realName || realName;
   }, [realName, user.realName]);

@@ -19,6 +19,7 @@ import type {
 } from '~/types/chat';
 import { SITE_NAME } from '~/constants/siteBrand';
 import { getEmailTicket, rememberEmailTicket } from '~/helpers/signupPasses';
+import { withLoadedProfileAppearance } from '~/helpers/profileAppearance';
 
 interface GuardianConsentView {
   status: 'pending' | 'approved' | 'declined' | 'expired' | 'used';
@@ -1711,18 +1712,20 @@ export default function userRequestHelpers({
       }
     },
     async loadProfile(userId: number) {
+      const requestedAt = Date.now();
       try {
         // signed in: the profile carries the viewer's friend button state
         const { data } = await request.get(
           `${URL}/user?userId=${userId}`,
           auth()
         );
-        return data;
+        return withLoadedProfileAppearance(data, requestedAt);
       } catch (error) {
         return handleError(error);
       }
     },
     async loadProfileViaUsername(username: string) {
+      const requestedAt = Date.now();
       try {
         const {
           data: { pageNotExists, user }
@@ -1731,7 +1734,10 @@ export default function userRequestHelpers({
           // signed in: emails follow the viewer (shown to members, both to the owner)
           auth()
         );
-        return { pageNotExists, user };
+        return {
+          pageNotExists,
+          user: withLoadedProfileAppearance(user, requestedAt)
+        };
       } catch (error) {
         return handleError(error);
       }

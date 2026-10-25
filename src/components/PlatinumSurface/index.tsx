@@ -88,7 +88,7 @@ export default function PlatinumSurface({
           className={photoClass(size)}
           style={{
             backgroundImage: `url("${photoUrl.startsWith('http') ? photoUrl : `${cloudFrontURL}${photoUrl}`}")`,
-            backgroundPosition: `${Number(x) || 50}% ${Number(y) || 50}%`
+            backgroundPosition: `${focalPoint(x)}% ${focalPoint(y)}%`
           }}
         />
       )}
@@ -104,6 +104,13 @@ export default function PlatinumSurface({
       {children}
     </div>
   );
+}
+
+function focalPoint(value: string) {
+  const number = Number(value);
+  return value?.trim() && Number.isFinite(number)
+    ? Math.max(0, Math.min(100, number))
+    : 50;
 }
 
 const overPhotoClass = css`

@@ -4,6 +4,7 @@ import {
   achievementIdToType
 } from '~/constants/defaultValues';
 import { applyCanonicalUserProfileStatePatch } from './profileState';
+import { reconcileProfileAppearancePatch } from '~/helpers/profileAppearance';
 
 function normalizeCommunityFundsState(data: { [key: string]: any } | null) {
   if (!data) return data;
@@ -284,8 +285,11 @@ export default function UserReducer(
         }
       };
     case 'SET_USER_STATE': {
-      const normalizedNewState = normalizeCommunityFundsState(action.newState);
       const prevUser = state.userObj[action.userId] || {};
+      const normalizedNewState = reconcileProfileAppearancePatch(
+        prevUser,
+        normalizeCommunityFundsState(action.newState)
+      );
       let updatedUser: any = {
         ...prevUser,
         ...normalizedNewState,

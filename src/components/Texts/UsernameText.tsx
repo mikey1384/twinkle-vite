@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { User } from '~/types';
 import UserPopup from '~/components/UserPopup';
+import { isProfileAppearanceFresh } from '~/helpers/profileAppearance';
 const deviceIsMobile = isMobile(navigator);
 const deletedLabel = 'Deleted';
 
@@ -49,6 +50,9 @@ export default function UsernameText({
   const cachedLoaded = useAppContext(
     (v) => v.user.state.userObj[user.id]?.loaded
   );
+  const cachedAppearanceLoadedAt = useAppContext(
+    (v) => v.user.state.userObj[user.id]?.profileAppearanceLoadedAt
+  );
   const cachedLevel = useAppContext(
     (v) => v.user.state.userObj[user.id]?.level
   );
@@ -77,26 +81,6 @@ export default function UsernameText({
     height: number;
   } | null>(null);
   const menuShownRef = useRef(false);
-
-  const shouldLoadProfile = useMemo(() => {
-    return (
-      (cachedTwinkleXP == null && user.twinkleXP == null) ||
-      cachedLevel == null ||
-      (!cachedUnlockedAchievementIds && !user.unlockedAchievementIds) ||
-      (!cachedLoaded &&
-        cachedChessMaxLevelUnlocked == null &&
-        user.chessMaxLevelUnlocked == null)
-    );
-  }, [
-    cachedChessMaxLevelUnlocked,
-    cachedLevel,
-    cachedLoaded,
-    cachedTwinkleXP,
-    cachedUnlockedAchievementIds,
-    user.chessMaxLevelUnlocked,
-    user.twinkleXP,
-    user.unlockedAchievementIds
-  ]);
 
   useEffect(() => {
     menuShownRef.current = !!dropdownContext;
@@ -172,6 +156,18 @@ export default function UsernameText({
     </div>
   );
 
+  function shouldLoadProfile() {
+    return (
+      !isProfileAppearanceFresh(cachedAppearanceLoadedAt) ||
+      (cachedTwinkleXP == null && user.twinkleXP == null) ||
+      cachedLevel == null ||
+      (!cachedUnlockedAchievementIds && !user.unlockedAchievementIds) ||
+      (!cachedLoaded &&
+        cachedChessMaxLevelUnlocked == null &&
+        user.chessMaxLevelUnlocked == null)
+    );
+  }
+
   async function onMouseEnter() {
     mouseEntered.current = true;
     const parentElementDimensions =
@@ -185,19 +181,14 @@ export default function UsernameText({
       clearTimeout(hideTimerRef.current);
       clearTimeout(hideTimerRef2.current);
       clearTimeout(showTimerRef.current);
-      if (shouldLoadProfile) {
-        setLoading(true);
+      if (shouldLoadProfile()) {
+        setLoading(!cachedLoaded);
         showTimerRef.current = setTimeout(async () => {
           if (mouseEntered.current) {
             setDropdownContext(parentElementDimensions);
           }
         }, 500);
-        const data = await loadProfile(user.id);
-        onSetUserState({
-          userId: user.id,
-          newState: { ...data, loaded: true }
-        });
-        setLoading(false);
+        await refreshProfile();
       } else {
         showTimerRef.current = setTimeout(
           () => setDropdownContext(parentElementDimensions),
@@ -216,22 +207,35 @@ export default function UsernameText({
       height: UsernameTextRef.current?.getBoundingClientRect?.()?.height || 0
     };
     if (user.username) {
-      if (shouldLoadProfile && !menuShownRef.current) {
-        setLoading(true);
+      if (shouldLoadProfile() && !menuShownRef.current) {
+        setLoading(!cachedLoaded);
         setDropdownContext(elementContext);
-        const data = await loadProfile(user.id);
-        onSetUserState({
-          userId: user.id,
-          newState: { ...data, loaded: true }
-        });
-        setLoading(false);
+        await refreshProfile();
       } else {
         setDropdownContext(menuShownRef.current ? null : elementContext);
       }
     }
   }
 
+  async function refreshProfile() {
+    try {
+      const data = await loadProfile(user.id);
+      if (data?.id === user.id) {
+        onSetUserState({
+          userId: user.id,
+          newState: { ...data, loaded: true }
+        });
+      }
+    } catch {
+      // The request helper reports the error. Keep the available identity
+      // usable, clear the spinner, and let the next interaction retry.
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function handleMouseLeave() {
+    mouseEntered.current = false;
     clearTimeout(showTimerRef.current);
     hideTimerRef.current = setTimeout(() => {
       setDropdownContext(null);

@@ -101,23 +101,10 @@ export default function usePlatinumCover(profile: any) {
   }) {
     setSaving(true);
     setError('');
-    // the switch answers at once; the server's reply settles it
-    if (settings.shine !== undefined) {
-      onSetUserState({
-        userId: profile.id,
-        newState: { profileCoverShine: settings.shine }
-      });
-    }
     try {
       applyCover(await updateProfileCoverSettings(settings));
       return true;
     } catch (caught: any) {
-      if (settings.shine !== undefined) {
-        onSetUserState({
-          userId: profile.id,
-          newState: { profileCoverShine: !settings.shine }
-        });
-      }
       setError(caught?.message || 'That change could not be saved. Try again.');
       return false;
     } finally {
