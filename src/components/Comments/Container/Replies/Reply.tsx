@@ -529,6 +529,7 @@ function Reply({
                         margin-top: 1rem;
                         display: flex;
                         justify-content: space-between;
+                        container-type: inline-size;
                       `}
                     >
                       <div>
@@ -606,9 +607,8 @@ function Reply({
                                 contentType="comment"
                                 disableReason={xpButtonDisabled}
                                 theme={theme}
-                                hideLabel={
-                                  isTablet(navigator) || isMobile(navigator)
-                                }
+                                // a reply's row is short: the icon alone
+                                hideLabel
                               />
                             )}
                         </div>

@@ -762,6 +762,7 @@ function Comment({
                             className={`comment__actions ${css`
                               display: flex;
                               justify-content: space-between;
+                              container-type: inline-size;
                             `}`}
                           >
                             <div>

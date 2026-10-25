@@ -82,6 +82,10 @@ export default function AskAgentButton({
                 @media (max-width: ${mobileMaxWidth}) {
                   display: none;
                 }
+                /* a narrow comment row, desktop too: the face alone */
+                @container (max-width: 560px) {
+                  display: none;
+                }
               `}
             >
               {text}

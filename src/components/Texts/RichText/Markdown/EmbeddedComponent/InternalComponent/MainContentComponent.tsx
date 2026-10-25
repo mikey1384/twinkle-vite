@@ -37,6 +37,10 @@ import { css } from '@emotion/css';
 
 const displayIsMobile = isMobile(navigator);
 
+// below this width the wide app card's columns crush its text (a comment,
+// a narrow profile panel): the compact card is used instead
+const WIDE_BUILD_EMBED_MIN_WIDTH = 720;
+
 function getBuildOwnerProfileTheme(build?: any) {
   const owner =
     build?.owner && typeof build.owner === 'object' ? build.owner : {};
@@ -287,6 +291,20 @@ function BuildRichTextEmbed({
   contentId: number;
 }) {
   const [forkHistoryBuildId, setForkHistoryBuildId] = useState(0);
+  const navigate = useNavigate();
+  // the wide card needs room: in a narrow column (a comment, a side panel)
+  // the app shows as the compact card instead
+  const embedRef = useRef<HTMLDivElement>(null);
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const el = embedRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) =>
+      setNarrow(entry.contentRect.width < WIDE_BUILD_EMBED_MIN_WIDTH)
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const uploader = build?.uploader || {};
   const ownerProfileTheme = String(
     build?.owner?.profileTheme ||
@@ -314,14 +332,23 @@ function BuildRichTextEmbed({
   if (!contentId) return null;
 
   return (
-    <>
-      <BuildWideCard
-        build={buildCardInput}
-        showFavoriteAction
-        to={`/app/${contentId}`}
-        updatedAtSource={build?.isPublic ? 'publicVersion' : 'workspace'}
-        onOpenForkHistory={setForkHistoryBuildId}
-      />
+    <div ref={embedRef} style={{ width: '100%' }}>
+      {narrow ? (
+        <BuildMiniCard
+          build={buildCardInput}
+          showActions
+          showFavoriteAction
+          onOpen={() => navigate(`/app/${contentId}`)}
+        />
+      ) : (
+        <BuildWideCard
+          build={buildCardInput}
+          showFavoriteAction
+          to={`/app/${contentId}`}
+          updatedAtSource={build?.isPublic ? 'publicVersion' : 'workspace'}
+          onOpenForkHistory={setForkHistoryBuildId}
+        />
+      )}
       {forkHistoryBuildId ? (
         <ForkHistoryModal
           buildId={forkHistoryBuildId}
@@ -329,7 +356,7 @@ function BuildRichTextEmbed({
           onClose={() => setForkHistoryBuildId(0)}
         />
       ) : null}
-    </>
+    </div>
   );
 }
 

@@ -125,7 +125,15 @@ export default function RewardButton({
           {...(hideLabel ? { title: rewardLabel } : {})}
         />
         {!hideLabel && (
-          <span className={labelClassName} style={{ marginLeft: '0.7rem' }}>
+          <span
+            className={`${labelClassName || ''} ${css`
+              /* a narrow comment row, desktop too: the icon alone */
+              @container (max-width: 560px) {
+                display: none;
+              }
+            `}`}
+            style={{ marginLeft: '0.7rem' }}
+          >
             {rewardLabel}
           </span>
         )}
