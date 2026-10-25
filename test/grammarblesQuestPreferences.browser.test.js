@@ -7,7 +7,7 @@ import path from 'node:path';
 import { build, stop } from 'esbuild';
 
 const require = createRequire(import.meta.url);
-const { chromium } = require(
+const { chromium, webkit } = require(
   process.env.PLAYWRIGHT_MODULE ||
     '/Users/mikey/.npm-packages/lib/node_modules/playwright'
 );
@@ -72,7 +72,7 @@ const app = {user:{actions:{onSetUserState:update=>{window.balanceUpdates.push(u
  loadGrammarQuestState:async()=>structuredClone(window.serverQuestState || {worlds:[{id:1,unlocked:true,nodes:[]}],nemesis:[],rewardedRunsLeft:3}),
  startGrammarQuestRun:async({nodeId})=>{window.startRequests.push(nodeId);const world=window.serverQuestState.worlds.find(w=>w.nodes.some(n=>n.id===nodeId));const node=world.nodes.find(n=>n.id===nodeId);return {runId:1,nodeId,worldId:world.id,kind:node.kind,rules:{mode:node.kind==='stop'?'practice':'boss'},questions:[]}},
  loadGrammarReview:async()=>({items:[window.reviewItem],hasMore:false}),
- answerGrammarQuestQuestion:async data=>{window.answerRequests.push(data);return window.questAnswer},
+ answerGrammarQuestQuestion:async data=>{window.answerRequests.push(data);return typeof window.questAnswer==='function'?window.questAnswer(data):window.questAnswer},
  challengeGrammarQuestion:async data=>{window.challengeRequests.push(data);return {justified:false,explanation:'The reviewer confirmed the answer.'}}
 }};
 export const useAppContext = select => select(app);
@@ -143,7 +143,7 @@ function Fixture(){const [view,setView]=useState({mode:'music',revision:0});
 createRoot(document.getElementById('root')).render(<Fixture/>);
 `;
 
-async function compile() {
+async function compile({ realBoss = false } = {}) {
   const stubs = {
     '~/contexts': contexts,
     '~/helpers':
@@ -161,11 +161,22 @@ async function compile() {
     './WorldMap': `import React from 'react'; import AudioToggles from '${base}Quest/AudioToggles'; import WorldMap from '${base}Quest/WorldMap'; export default function Map(props){return window.realMap ? <div data-testid="real-map" style={{display:'flex',flex:1,minHeight:0}}><WorldMap {...props}/></div> : <div><h1>Quest map</h1><AudioToggles/></div>}`,
     './MarbleRunScreen': `import React from 'react';export default function Run({run,onFinished}){const finish=cleared=>{window.finishMapNode(run.nodeId,cleared);onFinished({runId:run.runId,cleared,score:100,firstTryCorrect:5,size:5,xp:0,coins:0,rights:5},[])};return <div><button onClick={()=>finish(true)}>Clear fixture level</button><button onClick={()=>finish(false)}>Fail fixture level</button></div>}`,
     './MarbleRun/level/runner': `export class PracticeRun {grade='B';busy=false;constructor(theme,node,events){this.events=events}resume(){}answer(){setTimeout(()=>this.events.onReady(),0)}frame(g){g.fillStyle='#223a43';g.fillRect(0,0,960,380)}}`,
-    './MarbleRun/boss/fight': 'export class BossFight {}',
+    './MarbleRun/boss/fight': 'export class BossFight {} export const WRONG_PICK_PENALTY_MS=2000;',
     './MarbleRun/boss/catalog': 'export const bossFor=()=>({});',
     './MarbleRun/lab/fitPreview':
       'export const fitPreviewParam=()=>null; export const PREVIEW_QUEST_RUN=null, PREVIEW_QUEST_RESULT=null, PREVIEW_QUEST_ANSWERS=[];'
   };
+  if (realBoss) {
+    const fight = path.join(repo, base, 'Quest/MarbleRun/boss/fight.ts');
+    stubs['./MarbleRun/boss/fight'] = `
+      import {BossFight as ActualBossFight} from '${fight}';
+      export {WRONG_PICK_PENALTY_MS} from '${fight}';
+      export class BossFight extends ActualBossFight {
+        constructor(...args){super(...args);window.fixtureFight=this;}
+      }
+    `;
+    delete stubs['./MarbleRun/boss/catalog'];
+  }
   try {
     const result = await build({
       stdin: { contents: fixture, resolveDir: repo, loader: 'tsx' },
@@ -201,6 +212,146 @@ async function compile() {
     stop();
   }
 }
+
+test('boss penalties survive reading grace, retries and reopening in Chromium and WebKit', { timeout: 120000 }, async () => {
+  const output = path.resolve(repo, '../work/grammar-quest-boss-penalty-20261025');
+  mkdirSync(output, { recursive: true });
+  const script = await compile({ realBoss: true });
+  const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+  const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+  for (const [label, browserType, viewport] of [
+    ['chromium-desktop', chromium, { width: 1280, height: 800 }],
+    ['webkit-phone', webkit, { width: 360, height: 780 }]
+  ]) {
+    let browser;
+    try {
+      browser = await browserType.launch({ headless: true, timeout: 10000 });
+      const page = await browser.newPage({ viewport });
+      page.setDefaultTimeout(12000);
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      page.on('console', (message) => {
+        if (message.text().includes('Marble run frame failed')) errors.push(message.text());
+      });
+      await page.route('**/*', async (route) => {
+        if (route.request().isNavigationRequest())
+          return route.fulfill({ contentType: 'text/html', body: html });
+        const url = new URL(route.request().url());
+        if (url.pathname.startsWith('/gq-media/') && !url.pathname.endsWith('.mp3'))
+          return route.fulfill({ contentType: 'image/webp', body: await readMedia(url.pathname) });
+        return route.abort();
+      });
+      await page.addInitScript(() => {
+        localStorage.setItem('grammarQuestMusic', '0');
+        localStorage.setItem('grammarQuestSound', '0');
+      });
+      await page.goto('http://localhost:3000/__grammar-boss-penalty-fixture');
+      await page.waitForFunction(() => !!window.showFixture);
+      await page.evaluate(() => {
+        window.bossQuestion = {
+          position: 0, format: 'fix', question: 'She are ready.',
+          parts: { before: 'She ', wrong: 'are', after: ' ready.' },
+          choices: ['is', 'be', 'am'], skill: 'agreement',
+          skillName: 'Subject–verb agreement', baseTimeMs: 13600, graceMs: 4000,
+          revealDelayMs: 50, telegraphMs: 0, attack: 'trap'
+        };
+        window.mountBoss = (extra = {}) => {
+          window.fixtureRun = {
+            runId: 123, nodeId: 'w1f1', kind: 'fort', worldId: 1,
+            rules: { mode: 'boss', hits: 7, passPoints: 490, hp: 490, timeScale: 2 },
+            questions: [window.bossQuestion], wrongPicks: [], usedMs: 0, hp: 490,
+            answers: [], ...extra
+          };
+          window.answerRequests = [];
+          window.showFixture('practice');
+        };
+        window.mountBoss();
+        window.questAnswer = () => new Promise((resolve) => { window.resolveBossAnswer = resolve; });
+      });
+      await page.waitForFunction(() => window.fixtureFight.canAnswer);
+      await page.getByRole('button', { name: /^B\s*be$/ }).click();
+      await page.waitForFunction(() => !!window.resolveBossAnswer);
+      assert.equal(await page.getByText('1 wrong · +2s penalty', { exact: true }).count(), 0,
+        'pending requests do not invent penalties');
+      assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
+      await page.evaluate(() => window.resolveBossAnswer({ position: 0, isCorrect: false, wrong: 1 }));
+      await page.getByText('1 wrong · +2s penalty', { exact: true }).waitFor();
+      assert.equal(await page.evaluate(() => window.fixtureFight.liveGrade(900)), 'A',
+        'reading allowance cannot erase a confirmed mistake');
+
+      await page.evaluate(() => { window.questAnswer = () => Promise.reject(new Error('offline')); });
+      await page.getByRole('button', { name: /^C\s*am$/ }).click();
+      await page.getByText('That answer did not reach the server. Try again.', { exact: true }).waitFor();
+      assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 1,
+        'failed requests do not add a penalty');
+      await page.evaluate(() => { window.questAnswer = { position: 0, isCorrect: false, wrong: 2 }; });
+      await page.getByRole('button', { name: /^C\s*am$/ }).click();
+      await page.getByText('2 wrong · +4s penalty', { exact: true }).waitFor();
+      assert.equal(await page.evaluate(() => {
+        const fight = window.fixtureFight;
+        fight.answerWrong(2);
+        return fight.wrongPicks;
+      }), 2, 'a replayed acknowledgement is counted once');
+      assert.equal(await page.evaluate(() => window.fixtureFight.liveGrade(900)), 'B');
+      const penalty = await page.getByText('2 wrong · +4s penalty', { exact: true }).boundingBox();
+      assert.ok(penalty && penalty.x >= 0 && penalty.x + penalty.width <= viewport.width,
+        'the penalty remains readable inside the phone viewport');
+      await page.screenshot({ path: path.join(output, `${label}-wrong-answer.png`), fullPage: true });
+
+      await page.evaluate(() => {
+        window.questAnswer = {
+          position: 0, isCorrect: true, selectedIndex: 0, correctIndex: 0,
+          grade: 'D', hp: 460, readMs: 0,
+          next: { ...window.bossQuestion, position: 1 }
+        };
+      });
+      await page.getByRole('button', { name: /^A\s*is$/ }).click();
+      await page.waitForFunction(() => window.fixtureFight.answered === 'D');
+      assert.equal(await page.evaluate(() => window.fixtureFight.hpAfter), 460,
+        'the server decides the final grade and damage');
+      assert.equal(await page.getByText(/wrong · \+\d+s penalty/).count(), 0,
+        'the final grade replaces the running penalty once the hit settles');
+      await page.waitForFunction(() => window.fixtureFight.canAnswer && window.fixtureFight.idx === 1);
+      assert.equal(await page.getByText(/wrong · \+\d+s penalty/).count(), 0,
+        'penalties end with the question, not the fight');
+      assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
+      assert.equal(await page.evaluate(() => window.fixtureFight.usedMs), 0);
+
+      await page.evaluate(() => window.mountBoss({
+        questions: [{ ...window.bossQuestion, baseTimeMs: 18000, graceMs: 6000, revealDelayMs: 500 }],
+        wrongPicks: [1, 2], usedMs: 9000,
+        answers: [{ position: 0, selectedIndex: 1, correctIndex: null, isCorrect: false, grade: null, points: 0 }]
+      }));
+      await page.waitForFunction(() => window.fixtureFight.canAnswer);
+      await page.getByText('2 wrong · +4s penalty', { exact: true }).waitFor();
+      assert.deepEqual(await page.evaluate(() => {
+        const fight = window.fixtureFight;
+        return {
+          wrong: fight.wrongPicks, used: fight.elapsedMs(fight.questionAt),
+          grade: fight.liveGrade(fight.elapsedMs(fight.questionAt)),
+          reveal: fight.questionAt - fight.telegraphEnd
+        };
+      }), { wrong: 2, used: 9000, grade: 'C', reveal: 500 },
+      'reopening keeps the banked clock and wrong picks without skipping the reading pause');
+      assert.equal(await page.getByRole('button', { name: /^B\s*be/ }).isDisabled(), true);
+      await page.screenshot({ path: path.join(output, `${label}-resumed.png`), fullPage: true });
+
+      await page.evaluate(() => {
+        window.mountBoss({ questions: [{ ...window.bossQuestion, counter: true, baseTimeMs: 8000, graceMs: 0 }] });
+        window.questAnswer = { position: 0, counter: true, isCorrect: false, hit: false, damage: 0, hp: 490 };
+      });
+      await page.waitForFunction(() => window.fixtureFight.canAnswer);
+      await page.getByRole('button', { name: /^B\s*be$/ }).click();
+      await page.waitForFunction(() => window.fixtureFight.phase === 'recover');
+      assert.equal(await page.getByText(/wrong · \+\d+s penalty/).count(), 0,
+        'optional counter misses still carry no penalty');
+      assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
+      assert.deepEqual(errors, []);
+    } finally {
+      await browser?.close();
+    }
+  }
+});
 
 test('independent Stomp submits explicitly and keeps each sentence review reachable on phones', { timeout: 60000 }, async () => {
   const output = path.resolve(repo, '../work/grammar-stomp-20261021');

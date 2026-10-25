@@ -37,7 +37,11 @@ import { useReadCooldown } from './readCooldown';
 import { useMoreBelow } from './moreBelow';
 import { PracticeRun } from './MarbleRun/level/runner';
 import { themeFor } from './MarbleRun/level/themes';
-import { BossFight, type BossTurn } from './MarbleRun/boss/fight';
+import {
+  BossFight,
+  WRONG_PICK_PENALTY_MS,
+  type BossTurn
+} from './MarbleRun/boss/fight';
 import { ATTACK_KINDS } from './MarbleRun/boss/attacks';
 import { bossFor } from './MarbleRun/boss/catalog';
 import { LADDER, type Grade } from './MarbleRun/marble';
@@ -127,6 +131,7 @@ export default function MarbleRunScreen({
   const [wrongPicks, setWrongPicks] = useState<number[]>(
     () => run.wrongPicks || []
   );
+  const [wrongCount, setWrongCount] = useState(run.wrongPicks?.length || 0);
   const [phase, setPhase] = useState<
     | 'waiting'
     | 'reading'
@@ -287,7 +292,11 @@ export default function MarbleRunScreen({
             )
       );
       if (next?.baseTimeMs)
-        fight.setQuestion({ ...turnOf(next), usedMs: run.usedMs || 0 });
+        fight.setQuestion({
+          ...turnOf(next),
+          usedMs: run.usedMs || 0,
+          wrongPicks: run.wrongPicks?.length || 0
+        });
       return fight;
     }
     const practice = new PracticeRun(
@@ -364,6 +373,7 @@ export default function MarbleRunScreen({
       setShown(nextOpen);
       // the last hit's crossed-out tries stayed up through its review
       setWrongPicks([]);
+      setWrongCount(0);
       return;
     }
     if (!question) return;
@@ -808,6 +818,12 @@ export default function MarbleRunScreen({
                           .filter(Boolean)
                           .join(' · ')}
                   </div>
+                  {boss && !question.counter && !answer?.grade && wrongCount > 0 && (
+                    <div className={penaltyCls} role="status">
+                      {wrongCount} wrong · +
+                      {(wrongCount * WRONG_PICK_PENALTY_MS) / 1000}s penalty
+                    </div>
+                  )}
                   {question.format && question.format !== 'blank' && (
                     <div className={cx(howCls, boss && bossHowCls)}>
                       <GotchaText text={FORMAT_INFO[question.format].how} />
@@ -1088,8 +1104,12 @@ export default function MarbleRunScreen({
         // hit as an F: then it lands like any hit)
         if (!result.isCorrect && !result.settled) {
           if (result.forgiven) forgivenHit.current = result.position;
-          setWrongPicks((w) => [...w, choiceIndex]);
-          fight.answerWrong();
+          setWrongPicks((w) =>
+            w.includes(choiceIndex) ? w : [...w, choiceIndex]
+          );
+          const confirmedWrongCount = result.wrong ?? wrongCount + 1;
+          setWrongCount(confirmedWrongCount);
+          fight.answerWrong(confirmedWrongCount);
           setPhase('asking');
           return;
         }
@@ -1591,6 +1611,12 @@ const metaCls = css`
   font-size: 1.25rem;
   font-weight: 700;
   opacity: 0.7;
+`;
+const penaltyCls = css`
+  margin: 0.3rem 0;
+  color: #ffb0bf;
+  font-size: 1.2rem;
+  font-weight: 800;
 `;
 const questionCls = css`
   margin: 0.3rem 0 1.3rem;

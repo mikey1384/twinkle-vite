@@ -56,6 +56,7 @@ import './bosses';
 export const BOSS_HITS = 7;
 export const PASS_POINTS = Math.round(BOSS_HITS * 100 * 0.7);
 const CLASSIC_SHORT_MS = 12000; // Classic's base time for a short question
+export const WRONG_PICK_PENALTY_MS = 2000;
 
 export function gradeFor(ms: number, baseMs: number): Grade {
   if (ms < baseMs * 0.2) return 'S';
@@ -84,6 +85,7 @@ export interface BossTurn {
   attack?: AttackKind;
   counter?: boolean;
   usedMs?: number;
+  wrongPicks?: number; // canonical wrong-pick count when reopening a hit
 }
 
 export const bossPhaseOf = (hp: number) =>
@@ -235,11 +237,7 @@ export class BossFight {
     this.holdMs = holdMs;
     this.hpAfter = hpAfter ?? null;
     this.countering = false;
-    const g =
-      grade ||
-      this.liveGrade(
-        (this.lockedAt ?? this.t) - this.questionAt + this.wrongPicks * 2000
-      );
+    const g = grade || this.liveGrade(this.elapsedMs(this.lockedAt ?? this.t));
     this.answered = g;
     if (g === 'F') {
       missSound();
@@ -287,9 +285,12 @@ export class BossFight {
     this.lockedAt = this.t;
   }
 
-  answerWrong() {
-    if (this.phase !== 'question' || this.answered) return;
-    this.wrongPicks++;
+  answerWrong(wrongPicks = this.wrongPicks + 1) {
+    if (this.phase !== 'question' || this.answered || this.counter) return;
+    // The live screen supplies the server's count. Replayed responses must
+    // not charge or animate the same miss again. The default is for the lab.
+    if (wrongPicks <= this.wrongPicks) return;
+    this.wrongPicks = wrongPicks;
     this.streak = 0;
     note(55, { instrument: 'marimba', level: 0.12 });
     this.attack(this.t, true);
@@ -542,11 +543,22 @@ export class BossFight {
       this.explode(t);
   }
 
-  // the grade so far: on the time past the turn's reading allowance (the
-  // server grades the same way)
+  private elapsedMs(t: number) {
+    return this.usedMs + Math.max(0, t - this.questionAt);
+  }
+
+  // Same order as the server: remove free reading time first, then charge
+  // each wrong pick. Reading grace can never pay a mistake's penalty.
+  private gradedMs(elapsed: number) {
+    return (
+      Math.max(0, elapsed - this.graceMs) +
+      this.wrongPicks * WRONG_PICK_PENALTY_MS
+    );
+  }
+
   private liveGrade(elapsed: number) {
     return gradeFor(
-      Math.max(0, elapsed - this.graceMs),
+      this.gradedMs(elapsed),
       Math.max(1, this.baseMs - this.graceMs)
     );
   }
@@ -554,11 +566,12 @@ export class BossFight {
   private startQuestion(t: number) {
     const turn = this.queued;
     this.queued = null;
+    this.usedMs = turn?.usedMs || 0;
+    this.wrongPicks = turn?.wrongPicks || 0;
     if (turn) {
       this.baseMs = turn.baseTimeMs;
       this.graceMs = turn.graceMs || 0;
       this.revealMs = turn.revealDelayMs;
-      this.usedMs = turn.usedMs || 0;
       this.telegraphMs = turn.telegraphMs || 0;
       this.counter = !!turn.counter;
       this.turnAttack = turn.attack ? bossAttack(this.def, turn.attack) : null;
@@ -566,7 +579,6 @@ export class BossFight {
     this.answered = null;
     this.lockedAt = null;
     this.countering = false;
-    this.wrongPicks = 0;
     this.impacted = false;
     this.hidden = false;
     this.mx = -40;
@@ -595,11 +607,9 @@ export class BossFight {
       if (k >= 1) {
         this.phase = 'question';
         this.telegraphEnd = t + this.telegraphMs;
-        this.questionAt = Math.max(
-          this.telegraphEnd,
-          t + this.revealMs - this.usedMs
-        );
-        this.usedMs = 0;
+        // Replaying the intro does not spend or discard banked thinking
+        // time. Keep the full reading pause, matching the question card.
+        this.questionAt = Math.max(this.telegraphEnd, t + this.revealMs);
         this.nextAttack = this.telegraphEnd + 900;
         this.nextHazard = this.telegraphEnd + 1500;
         if (this.counter) {
@@ -1116,9 +1126,7 @@ export class BossFight {
   private drawMarble(g: CanvasRenderingContext2D, t: number) {
     if (this.hidden || this.phase === 'intro') return;
     const floor = this.geo.floorY;
-    const elapsed =
-      Math.max(0, (this.lockedAt ?? t) - this.questionAt) +
-      this.wrongPicks * 2000;
+    const elapsed = this.elapsedMs(this.lockedAt ?? t);
     const live =
       this.phase === 'question'
         ? this.liveGrade(elapsed)
@@ -1140,7 +1148,13 @@ export class BossFight {
         this.mx,
         this.my,
         MR + 9,
-        Math.max(0, 1 - elapsed / this.baseMs),
+        Math.max(
+          0,
+          1 -
+            (this.counter
+              ? elapsed / this.baseMs
+              : this.gradedMs(elapsed) / Math.max(1, this.baseMs - this.graceMs))
+        ),
         this.counter ? '#ffcb32' : GRADE[live][0]
       );
     const filled = this.phase === 'throw';
