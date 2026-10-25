@@ -11,7 +11,7 @@ function readSource(path: string) {
 }
 const modalSource = readSource('src/containers/Arena/AIStory/index.tsx');
 const successSource = readSource(
-  'src/containers/Arena/AIStory/SuccessModal/index.tsx'
+  'src/containers/Arena/AIStory/ClearScreen/index.tsx'
 );
 
 test('the success screen shows the paid amounts and never recomputes a reward', () => {
@@ -31,6 +31,6 @@ test('the success screen shows the paid amounts and never recomputes a reward', 
 test('the paid amounts come from the cleared story the API serves', () => {
   assert.match(modalSource, /xpRewardAmount: Number\(story\.xpRewardAmount \|\| 0\)/);
   assert.match(modalSource, /coinRewardAmount: Number\(story\.coinRewardAmount \|\| 0\)/);
-  assert.match(modalSource, /xpRewardAmount=\{successModalStory\.xpRewardAmount\}/);
-  assert.match(modalSource, /coinRewardAmount=\{successModalStory\.coinRewardAmount\}/);
+  assert.match(modalSource, /xpRewardAmount=\{clearScreenStory\.xpRewardAmount\}/);
+  assert.match(modalSource, /coinRewardAmount=\{clearScreenStory\.coinRewardAmount\}/);
 });
