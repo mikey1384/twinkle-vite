@@ -12,6 +12,7 @@ export const REWARD_TRACE_OPERATIONS = new Set([
   'bank-progress',
   'bank-status',
   'bank-generate',
+  'bank-result',
   'rematch-claim'
 ]);
 export interface RewardClientDiagnostic {
@@ -25,6 +26,10 @@ export interface RewardClientDiagnostic {
   challengeId: string | null;
   at: number;
   outboxDropped?: number;
+  bankRequestId?: string | null;
+  visibility?: string | null;
+  online?: boolean | null;
+  transportCode?: string | null;
 }
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const safeCode = (value: unknown) =>
@@ -59,6 +64,10 @@ export function rewardClientDiagnostic({
     requestId,
     operation,
     durationMs: Math.max(0, Math.round(durationMs)),
+    bankRequestId: typeof payload?.requestId === 'string' && /^[A-Za-z0-9_-]{16,64}$/.test(payload.requestId) ? payload.requestId : null,
+    visibility: typeof document !== 'undefined' ? document.visibilityState : null,
+    online: typeof navigator !== 'undefined' ? navigator.onLine : null,
+    transportCode: ['ERR_NETWORK', 'ERR_CANCELED', 'ECONNABORTED', 'ETIMEDOUT'].includes(error?.code || '') ? error!.code! : null,
     outcome: error ? (status ? 'http_error' : 'transport_error') : 'response',
     httpStatus: typeof status === 'number' ? status : error ? null : 200,
     errorCode: safeCode(error?.response?.data?.code),
@@ -127,6 +136,10 @@ export async function queueRewardDiagnostic({
           operation: v.operation,
           outcome: v.outcome,
           durationMs: Number.isFinite(v.durationMs) ? v.durationMs : 0,
+          bankRequestId: typeof v.bankRequestId === 'string' && /^[A-Za-z0-9_-]{16,64}$/.test(v.bankRequestId) ? v.bankRequestId : null,
+          visibility: ['visible', 'hidden', 'prerender'].includes(v.visibility) ? v.visibility : null,
+          online: typeof v.online === 'boolean' ? v.online : null,
+          transportCode: ['ERR_NETWORK', 'ERR_CANCELED', 'ECONNABORTED', 'ETIMEDOUT'].includes(v.transportCode) ? v.transportCode : null,
           httpStatus: Number.isInteger(v.httpStatus) ? v.httpStatus : null,
           errorCode: safeCode(v.errorCode),
           transport: ['network', 'timeout', 'cancelled', 'unknown'].includes(

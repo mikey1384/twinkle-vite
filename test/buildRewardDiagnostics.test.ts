@@ -122,3 +122,23 @@ test('HTTP refusals retain a fixed error code without a free-form error body', (
     error: { response: { status: 400, data: { code: 'private answer: 42' } } }
   }).errorCode, null);
 });
+test('recovery joins a separate HTTP request to its bank job and preserves only fixed transport metadata', async () => {
+  const storage = memory();
+  const event = rewardClientDiagnostic({ requestId: id, operation: 'bank-generate',
+    payload: { requestId: 'bank-request-0123456789', answer: 'SECRET' },
+    error: { code: 'ECONNABORTED' }, durationMs: 64_500 });
+  assert.equal(event.transport, 'timeout');
+  assert.equal(event.transportCode, 'ECONNABORTED');
+  assert.equal(event.bankRequestId, 'bank-request-0123456789');
+  storage.setItem(key, JSON.stringify([{ ...event, visibility: 'hidden', online: false, unexpected: 'SECRET' }]));
+  const sent: any[] = [];
+  await queueRewardDiagnostic({ userId: 5, buildId: 2799,
+    event: { ...event, requestId: '8361b22b-ddc7-4ca5-be5d-fe8f0253a7d5', operation: 'bank-result', outcome: 'response' },
+    storage, send: async e => { sent.push(e); } });
+  assert.equal(sent.length, 2);
+  assert.equal(sent[0].visibility, 'hidden');
+  assert.equal(sent[0].online, false);
+  assert.equal(sent[0].transportCode, 'ECONNABORTED');
+  assert.equal(sent[1].bankRequestId, event.bankRequestId);
+  assert.ok(!JSON.stringify(sent).includes('SECRET'));
+});

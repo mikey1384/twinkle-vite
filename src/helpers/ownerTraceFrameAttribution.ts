@@ -62,6 +62,7 @@ type ObserveLongFrames = (
 type ListenImageLoads = (onLoad: () => void) => () => void;
 
 interface CounterFrame {
+  phase: 'initial' | 'scroll';
   gapMs: number;
   startMs: number; // performance-clock start of the slow frame interval
   endMs: number;
@@ -241,6 +242,7 @@ export function createFrameAttribution({
   let loafEntries: LongFrameEntry[] = [];
   let loafCount = 0;
   let slowRafCount = 0;
+  let slowInitialCount = 0;
   let renders = new Map<string, number>();
   let mounts = new Map<string, number>();
   let updates = new Map<string, number>();
@@ -271,6 +273,7 @@ export function createFrameAttribution({
     loafEntries = [];
     loafCount = 0;
     slowRafCount = 0;
+    slowInitialCount = 0;
     slowFrames = [];
     totals = { renders: 0, mounts: 0, imgLoads: 0 };
     resetCounters();
@@ -322,14 +325,16 @@ export function createFrameAttribution({
 
   // Called once per measured animation frame with the time since the
   // previous one; the counters since that frame belong to this interval.
-  function frame(gapMs: number, at: number) {
+  function frame(gapMs: number, at: number, phase: CounterFrame['phase'] = 'scroll') {
     if (!active) return;
     totals.renders += sum(renders);
     totals.mounts += sum(mounts);
     totals.imgLoads += imgLoads;
     if (gapMs > SLOW_FRAME_MS) {
-      slowRafCount++;
+      if (phase === 'initial') slowInitialCount++;
+      else slowRafCount++;
       slowFrames.push({
+        phase,
         gapMs,
         startMs: at - gapMs,
         endMs: at,
@@ -390,6 +395,7 @@ export function createFrameAttribution({
             ...(overlap
               ? {
                   gapMs: round(overlap.gapMs),
+                  phase: overlap.phase,
                   renders: overlap.renders,
                   mounts: overlap.mounts,
                   ...(overlap.updates ? { updates: overlap.updates } : {}),
@@ -414,6 +420,7 @@ export function createFrameAttribution({
           ...(loafSupported ? { loafMatched: false } : {}),
           offsetMs: round(item.startMs - sampleStart),
           gapMs: round(item.gapMs),
+          phase: item.phase,
           renders: item.renders,
           mounts: item.mounts,
           ...(item.updates ? { updates: item.updates } : {}),
@@ -430,6 +437,7 @@ export function createFrameAttribution({
         loafFrames: loafSupported ? loafCount : null,
         loafDropped: loafSupported ? loafCount - loafEntries.length : null,
         slowRafFrames: slowRafCount,
+        slowInitialFrames: slowInitialCount,
         retainedUnmatchedRafFrames: frames.slice(0, MAX_FRAMES_PER_SAMPLE).filter(frame => frame.source === 'raf').length,
         candidateFramesDropped: Math.max(0, frames.length - MAX_FRAMES_PER_SAMPLE),
         cardRenders: totals.renders,

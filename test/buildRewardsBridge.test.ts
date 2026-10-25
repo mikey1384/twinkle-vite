@@ -185,6 +185,7 @@ test('published bridge uses only the host grant, strips award controls and appli
   assert.deepEqual(h.calls, [
     {
       buildId: 2460,
+      diagnosticUserId: 2,
       operation: 'claim',
       payload: {
         ruleId: undefined,

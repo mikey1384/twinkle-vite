@@ -48,6 +48,7 @@ export function createScrollPerfMonitor({
     context: Record<string, unknown> | null;
     contextAt: number;
     contextGapMs: number;
+    contextPhase: 'after-initial-frame' | 'after-slow-frame' | null;
   } | null = null;
 
   return { scroll, stop };
@@ -81,7 +82,8 @@ export function createScrollPerfMonitor({
         scrolls: 0,
         context: null,
         contextAt: -Infinity,
-        contextGapMs: 0
+        contextGapMs: 0,
+        contextPhase: null
       };
       try {
         attribution?.begin();
@@ -112,10 +114,19 @@ export function createScrollPerfMonitor({
       }
       return;
     }
-    attribution?.frame(gap, t);
     if (sample.previousFrame === null) {
       sample.firstFrameMs = Math.max(0, t - sample.start);
+      // Keep the work before the first rAF, particularly on Safari without
+      // LoAF. This is startup latency, separate from between-frame stutter.
+      attribution?.frame(sample.firstFrameMs, t, 'initial');
+      if (sample.firstFrameMs > 50) {
+        sample.context = context();
+        sample.contextAt = t;
+        sample.contextGapMs = sample.firstFrameMs;
+        sample.contextPhase = 'after-initial-frame';
+      }
     } else if (gap > 0) {
+      attribution?.frame(gap, t);
       sample.frames += 1;
       sample.total += gap;
       sample.max = Math.max(sample.max, gap);
@@ -132,6 +143,7 @@ export function createScrollPerfMonitor({
         sample.context = context();
         sample.contextAt = t;
         sample.contextGapMs = gap;
+        sample.contextPhase = 'after-slow-frame';
       }
     }
     sample.previousFrame = t;
@@ -175,7 +187,7 @@ export function createScrollPerfMonitor({
         over34: done.over34,
         over50: done.over50,
         over100: done.over100,
-        contextPhase: done.context ? 'after-slow-frame' : 'end',
+        contextPhase: done.contextPhase || 'end',
         contextGapMs: done.context ? Math.round(done.contextGapMs) : null,
         contextOffsetMs: done.context
           ? Math.round(done.contextAt - done.start)

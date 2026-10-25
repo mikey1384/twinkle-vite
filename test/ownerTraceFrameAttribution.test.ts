@@ -145,6 +145,37 @@ function setupMonitor(supported: boolean) {
   return { loaf, attribution, monitor, frame, events, state };
 }
 
+test('slow first paint retains its work separately from scrolling intervals on Safari and Chrome', () => {
+  for (const supported of [false, true]) {
+    const s = setupMonitor(supported);
+    s.monitor.scroll();
+    s.attribution.noteRender('rewardDigest', ['content']);
+    s.attribution.noteLayout('block-preview', 42);
+    s.loaf.images.fire();
+    if (supported) s.loaf.state.deliver([{ startTime: 0, duration: 300 }]);
+    s.frame(300);
+    const sample = s.events.find(event => event.type === 'scroll-perf')!.data;
+    const detail = s.events.find(event => event.type === 'scroll-frame')!.data;
+    assert.equal(sample.firstRafMs, 300);
+    assert.equal(sample.frames, 0);
+    assert.equal(sample.over100, 0);
+    assert.equal(sample.contextPhase, 'after-initial-frame');
+    assert.equal(sample.frameSource.slowRafFrames, 0);
+    assert.equal(sample.frameSource.slowInitialFrames, 1);
+    assert.equal(detail.phase, 'initial');
+    assert.equal(detail.gapMs, 300);
+    assert.equal(detail.renders.rewardDigest, 1);
+    assert.equal(detail.imgLoads, 1);
+    assert.equal(detail.layoutWork['block-preview'].ms, 42);
+    assert.equal(s.loaf.images.listeners, 0);
+    assert(JSON.stringify(detail).length < MAX_FRAME_EVENT_CHARS);
+    s.monitor.scroll();
+    s.frame(316);
+    s.monitor.stop('done');
+    assert.equal(s.events.filter(event => event.type === 'scroll-frame').length, 1);
+  }
+});
+
 test('script URLs lose query, hash and this site origin; other hosts keep host and path', () => {
   assert.equal(
     stripScriptUrl(`${ORIGIN}/assets/index-C5h.js?v=2&token=abc#x`, ORIGIN),
@@ -232,6 +263,7 @@ test('Chrome path: LoAF frames over 50 ms become at most three scroll-frame even
     loafFrames: 4,
     loafDropped: 0,
     slowRafFrames: 1,
+    slowInitialFrames: 0,
     retainedUnmatchedRafFrames: 0,
     candidateFramesDropped: 1,
     cardRenders: 2,
@@ -281,8 +313,8 @@ test('Safari path (no LoAF): slow rAF frames record which card types rendered or
   assert.deepEqual(
     frames.map((event) => event.data),
     [
-      { schema: 1, source: 'raf', offsetMs: 32, gapMs: 78, renders: { rewardDigest: 1 }, mounts: { build: 2 }, imgLoads: 2, layoutWork: {}, textMeasure: { calls: 0, ms: 0, maxMs: 0 } },
-      { schema: 1, source: 'raf', offsetMs: 126, gapMs: 64, renders: { subject: 1 }, mounts: {}, imgLoads: 0, layoutWork: {}, textMeasure: { calls: 0, ms: 0, maxMs: 0 } }
+      { schema: 1, source: 'raf', phase: 'scroll', offsetMs: 32, gapMs: 78, renders: { rewardDigest: 1 }, mounts: { build: 2 }, imgLoads: 2, layoutWork: {}, textMeasure: { calls: 0, ms: 0, maxMs: 0 } },
+      { schema: 1, source: 'raf', phase: 'scroll', offsetMs: 126, gapMs: 64, renders: { subject: 1 }, mounts: {}, imgLoads: 0, layoutWork: {}, textMeasure: { calls: 0, ms: 0, maxMs: 0 } }
     ]
   );
 });

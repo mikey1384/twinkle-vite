@@ -9,6 +9,7 @@ import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
 import { toBuildRewardRequestError } from '~/helpers/buildRewardRequestError';
+import { runRewardBankGeneration } from '~/helpers/buildRewardBankRecovery';
 import {
   queueRewardDiagnostic,
   rewardClientDiagnostic,
@@ -22,6 +23,15 @@ import {
 } from './buildRuntimeAiStream';
 
 const BRANCH_MAIN_SYNC_TOTAL_TIMEOUT_MS = 90_000;
+const canRecoverBankTransport = (error: unknown) =>
+  axios.isAxiosError(error) &&
+  ((error.response?.status || 0) >= 500 ||
+    ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(error.code || '') ||
+    (error.code === 'ERR_CANCELED' && error.message === 'total-timeout'));
+const hasBankRequestId = (payload: unknown) =>
+  typeof (payload as any)?.requestId === 'string' &&
+  /^[A-Za-z0-9_-]{16,64}$/.test((payload as any).requestId);
+
 
 export interface BuildAppMcpInvocationContext {
   appMcpSessionId: string;
@@ -693,12 +703,19 @@ export default function buildRequestHelpers({
       payload: unknown;
     }) {
       try {
-        const { data } = await request.post(
-          `${URL}/build/reward-reviews/${reviewId}/proposal/rewards/${operation}`,
-          payload,
-          getBuildRequestConfig({ maxRetries: 0 })
-        );
-        return data;
+        const send = async (op: string) => {
+          const { data } = await request.post(
+            `${URL}/build/reward-reviews/${reviewId}/proposal/rewards/${op}`,
+            payload,
+            getBuildRequestConfig({ maxRetries: 0, ...(op === 'bank-result' ? { totalTimeoutMs: 10_000 } : {}) })
+          );
+          return data;
+        };
+        return operation === 'bank-generate' && hasBankRequestId(payload)
+          ? await runRewardBankGeneration({
+              generate: () => send(operation), readResult: () => send('bank-result'), transient: canRecoverBankTransport
+            })
+          : await send(operation);
       } catch (error) {
         throw new Error(
           axios.isAxiosError(error)
@@ -740,12 +757,19 @@ export default function buildRequestHelpers({
       payload: unknown;
     }) {
       try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/rewards/preview/${operation}`,
-          payload,
-          getBuildRequestConfig({ maxRetries: 0 })
-        );
-        return data;
+        const send = async (op: string) => {
+          const { data } = await request.post(
+            `${URL}/build/${buildId}/rewards/preview/${op}`,
+            payload,
+            getBuildRequestConfig({ maxRetries: 0, ...(op === 'bank-result' ? { totalTimeoutMs: 10_000 } : {}) })
+          );
+          return data;
+        };
+        return operation === 'bank-generate' && hasBankRequestId(payload)
+          ? await runRewardBankGeneration({
+              generate: () => send(operation), readResult: () => send('bank-result'), transient: canRecoverBankTransport
+            })
+          : await send(operation);
       } catch (error) {
         throw new Error(
           axios.isAxiosError(error)
@@ -778,18 +802,18 @@ export default function buildRequestHelpers({
         'x-build-api-token': token,
         'x-build-reward-runtime': runtimeGrant
       };
-      const report = (result?: unknown, error?: unknown) => {
-        if (!requestId || !diagnosticUserId) return;
+      const report = (result?: unknown, error?: unknown, op = operation, traceId = requestId, started = beganAt) => {
+        if (!traceId || !diagnosticUserId) return;
         void queueRewardDiagnostic({
           userId: diagnosticUserId,
           buildId,
           event: rewardClientDiagnostic({
-            requestId,
-            operation,
+            requestId: traceId,
+            operation: op,
             payload,
             result,
             error: axios.isAxiosError(error) ? error : error ? {} : undefined,
-            durationMs: Date.now() - beganAt
+            durationMs: Date.now() - started
           }),
           send: (event) =>
             request.post(
@@ -805,22 +829,32 @@ export default function buildRequestHelpers({
             )
         }).catch(() => {});
       };
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/rewards/${operation}`,
-          payload,
-          {
-            ...getBuildRequestConfig({ maxRetries: 0 }),
-            headers: {
-              ...headers,
-              ...(requestId ? { 'x-build-reward-request': requestId } : {})
+      const send = async (op: string) => {
+        const traceId = op === operation ? requestId : rewardTraceId();
+        const started = Date.now();
+        try {
+          const { data } = await request.post(
+            `${URL}/build/${buildId}/api/rewards/${op}`,
+            payload,
+            {
+              ...getBuildRequestConfig({ maxRetries: 0, ...(op === 'bank-result' ? { totalTimeoutMs: 10_000 } : {}) }),
+              headers: { ...headers, ...(traceId ? { 'x-build-reward-request': traceId } : {}) }
             }
-          }
-        );
-        report(data);
-        return data;
+          );
+          report(data, undefined, op, traceId, started);
+          return data;
+        } catch (error) {
+          report(undefined, error, op, traceId, started);
+          throw error;
+        }
+      };
+      try {
+        return operation === 'bank-generate' && hasBankRequestId(payload)
+          ? await runRewardBankGeneration({
+              generate: () => send(operation), readResult: () => send('bank-result'), transient: canRecoverBankTransport
+            })
+          : await send(operation);
       } catch (error) {
-        report(undefined, error);
         throw toBuildRewardRequestError(error);
       }
     },
