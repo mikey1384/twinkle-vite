@@ -34,6 +34,9 @@ export const notiFilterBar = css`
 `;
 
 export const notiFeedListItem = css`
+  /* iOS otherwise inflates longer notifications independently of shorter rows. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
