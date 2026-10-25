@@ -38,7 +38,13 @@ export default function LetterGrade({
   const shimmerColor = roleS.getColor() || Color.gold();
 
   return (
-    <div style={{ display: 'inline-block', width: size, height: size }}>
+    <div
+      style={{
+        display: 'inline-block',
+        width: `calc(${size} * var(--px))`,
+        height: `calc(${size} * var(--px))`
+      }}
+    >
       <div
         className={css`
           border-radius: 100%;

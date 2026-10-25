@@ -12,9 +12,9 @@ export const container = css`
 
 export const Left = css`
   position: fixed;
-  left: 0;
   top: 4.5rem;
-  width: 18vw;
+  left: var(--ui-frame-x);
+  width: calc(var(--ui-frame) * 0.18);
 
   height: calc(100vh - 4.5rem);
   height: calc(100dvh - 4.5rem);
@@ -34,18 +34,14 @@ export const Left = css`
   @media (max-width: ${mobileMaxWidth}) {
     display: none;
   }
-  @media (min-width: 2304px) {
-    width: 14vw;
-    left: 12vw;
-  }
 `;
 
 export const Center = css`
   display: flex;
   justify-content: center;
-  width: 45vw;
+  width: calc(var(--ui-frame) * 0.45);
   height: 100%;
-  margin-left: 23vw;
+  margin-left: calc(var(--ui-frame-x) + var(--ui-frame) * 0.23);
   @media (max-width: ${tabletMaxWidth}) {
     width: 51vw;
     margin-left: 20vw;
@@ -57,8 +53,8 @@ export const Center = css`
 `;
 
 export const Right = css`
-  width: CALC(27vw - 1rem);
-  right: 1rem;
+  width: calc(var(--ui-frame) * 0.27 - 1rem);
+  right: calc(var(--ui-frame-x) + 1rem);
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
   top: 4.5rem;
@@ -66,9 +62,5 @@ export const Right = css`
   position: fixed;
   @media (max-width: ${mobileMaxWidth}) {
     display: none;
-  }
-  @media (min-width: 2304px) {
-    width: 20vw;
-    right: 15vw;
   }
 `;

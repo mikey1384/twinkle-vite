@@ -97,7 +97,7 @@ export default function Window({
           border: 1px solid var(--ui-border);
           border-radius: 10px;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-          width: 400px;
+          width: calc(400 * var(--px));
           z-index: 1000;
           touch-action: none;
           cursor: move;

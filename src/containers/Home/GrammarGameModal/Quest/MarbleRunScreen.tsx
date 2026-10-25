@@ -1303,7 +1303,7 @@ const dockCls = css`
   flex: 0 1 auto;
   min-height: 0;
   width: 100%;
-  max-width: 1000px;
+  max-width: calc(1000 * var(--px));
   max-height: 100%;
   @media (max-height: 520px) and (orientation: landscape) {
     flex: 1;
@@ -1323,7 +1323,7 @@ const audioCls = css`
 `;
 const stageFitCls = css`
   flex: none;
-  max-width: 1320px;
+  max-width: calc(1320 * var(--px));
   canvas {
     border-radius: 0;
   }
@@ -1453,7 +1453,7 @@ const cardCls = css`
   /* a miss's ✗ badge on a button at the edge never adds a sideways scroll */
   overflow-x: hidden;
   width: 100%;
-  max-width: 980px;
+  max-width: calc(980 * var(--px));
   @media (max-width: ${mobileMaxWidth}) {
     ${frame(PARCHMENT, 2)}
   }
@@ -1774,7 +1774,7 @@ const wrongCls = css`
     border-radius: 50%;
     background: #fff;
     color: #c02a4a;
-    font-size: 9px;
+    font-size: calc(9 * var(--px));
     font-weight: 900;
     line-height: 1;
     text-shadow: none;

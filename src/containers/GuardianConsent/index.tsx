@@ -220,7 +220,7 @@ export default function GuardianConsentPage() {
       <main
         lang={lang}
         className={css`
-          max-width: 640px;
+          max-width: calc(640 * var(--px));
           margin: 0 auto;
           background: #fff;
           border: 1px solid var(--ui-border);

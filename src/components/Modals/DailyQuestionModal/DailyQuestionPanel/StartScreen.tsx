@@ -25,6 +25,7 @@ export default function StartScreen({
   dayKeyword,
   hasEnoughCoins,
   isKeywordDay,
+  isPictureDay,
   isSimplified,
   isSimplifying,
   purchasingRepair,
@@ -48,6 +49,8 @@ export default function StartScreen({
   dayKeyword?: string;
   hasEnoughCoins: boolean;
   isKeywordDay?: boolean;
+  // Picture Day keeps Word Day's start (streak, repair) with its own lead
+  isPictureDay?: boolean;
   isSimplified: boolean;
   isSimplifying: boolean;
   profileTheme?: string | null;
@@ -178,7 +181,15 @@ export default function StartScreen({
             </div>
           )}
 
-        {isKeywordDay && dayKeyword ? (
+        {isPictureDay ? (
+          <div className={keywordCls}>
+            <span className={metaLabelCls}>Picture Day</span>
+            <p className={keywordHintCls}>
+              Describe a picture you have in mind and Twinkle paints it, or
+              write about anything at all
+            </p>
+          </div>
+        ) : isKeywordDay && dayKeyword ? (
           <div className={keywordCls}>
             <span className={metaLabelCls}>Today’s word</span>
             <p className={keywordWordCls}>{dayKeyword}</p>
@@ -268,7 +279,7 @@ export default function StartScreen({
             className={paperPrimaryButtonCls}
             onClick={onStart}
           >
-            Start writing
+            {isPictureDay ? 'Describe my picture' : 'Start writing'}
             <Icon icon="arrow-right" />
           </button>
         </div>
@@ -280,7 +291,7 @@ export default function StartScreen({
 function noticeCls(edge: string, background: string) {
   return css`
     width: 100%;
-    max-width: 620px;
+    max-width: calc(620 * var(--px));
     margin-bottom: 1.4rem;
     padding: 1rem 1.3rem;
     border-radius: 12px;
@@ -367,7 +378,7 @@ const keywordHintCls = css`
 
 const rulesCls = css`
   width: 100%;
-  max-width: 620px;
+  max-width: calc(620 * var(--px));
   margin-bottom: 1.6rem;
   padding: 1.2rem 1.5rem;
   border-radius: 14px;

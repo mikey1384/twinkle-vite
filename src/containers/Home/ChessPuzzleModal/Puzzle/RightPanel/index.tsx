@@ -162,9 +162,9 @@ export default function RightPanel({
                 disabled={normalAttemptControlsLocked}
                 aria-label="Go to XP Levels"
               >
-                <Icon icon="bolt" style={{ fontSize: 16 }} />
+                <Icon icon="bolt" style={{ fontSize: 'calc(16 * var(--px))' }} />
                 Go to XP Levels
-                <Icon icon="arrow-right" style={{ fontSize: 16 }} />
+                <Icon icon="arrow-right" style={{ fontSize: 'calc(16 * var(--px))' }} />
               </button>
             </div>
           ) : (

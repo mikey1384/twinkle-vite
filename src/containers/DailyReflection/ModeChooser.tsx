@@ -8,8 +8,10 @@ import ReflectionStatShape, {
 } from '~/components/ReflectionStatShape';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import { PAGE } from './theme';
 import type { DailyReflectionModes } from './index';
+import type { GalleryDay } from './PictureGallery';
 
 // The two Daily Reflection modes as painted covers (Mikey 2026-10-12), with
 // today's status for each and the member's stats shape underneath.
@@ -28,17 +30,57 @@ const MODES = [
   }
 ];
 
+// On a Word Day or Picture Day the Classic card wears that day's cover, so
+// members who now head straight for Training still notice it (Mikey 10-24).
+const CLASSIC_DAYS = {
+  keyword: {
+    cover: '/img/daily-reflection/cover-word-day.jpg',
+    title: 'Word Day',
+    line: 'Today is your Word Day: one word to start from, or write about anything.'
+  },
+  picture: {
+    cover: '/img/daily-reflection/cover-picture-day.jpg',
+    title: 'Picture Day',
+    line: 'Today is your Picture Day: describe a picture, and it’s painted for you.'
+  }
+};
+
 export default function ModeChooser({
   modes,
-  onPick
+  onPick,
+  onOpenPictures
 }: {
   modes: DailyReflectionModes | null;
   onPick: (mode: 'classic' | 'training') => void;
+  onOpenPictures: () => void;
 }) {
   const loadReflectionStats = useAppContext(
     (v) => v.requestHelpers.loadReflectionStats
   );
+  const loadMyPictures = useAppContext((v) => v.requestHelpers.loadMyPictures);
   const [shape, setShape] = useState<ReflectionStatAxisShape[] | null>(null);
+  // the newest few pictures, for the My pictures entry (hidden until any)
+  const [recentPictures, setRecentPictures] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await loadMyPictures({ limit: 4 });
+        if (cancelled || !Array.isArray(data?.days)) return;
+        const paths = data.days
+          .flatMap((day: GalleryDay) => day.pictures.map((p) => p.path))
+          .slice(0, 4);
+        setRecentPictures(paths);
+      } catch {
+        // the entry simply stays hidden
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,7 +104,9 @@ export default function ModeChooser({
       </header>
 
       <div className={cardsCls}>
-        {MODES.map((item) => {
+        {MODES.map((base) => {
+          const dayType = base.mode === 'classic' ? modes?.classic.dayType : null;
+          const item = dayType ? { ...base, ...CLASSIC_DAYS[dayType] } : base;
           const status = modes?.[item.mode];
           const trainingAxis =
             item.mode === 'training' ? modes?.training.axis : null;
@@ -104,6 +148,32 @@ export default function ModeChooser({
         })}
       </div>
 
+      {recentPictures.length > 0 && (
+        <button
+          type="button"
+          className={picturesCls}
+          onClick={onOpenPictures}
+          aria-label="Open My pictures"
+        >
+          <div className={pictureStripCls}>
+            {recentPictures.map((path) => (
+              <img key={path} src={`${cloudFrontURL}/${path}`} alt="" loading="lazy" />
+            ))}
+          </div>
+          <div className={picturesTextCls}>
+            <h2>My pictures</h2>
+            <p>
+              <Icon icon="lock" /> Every picture you made on Picture Day, just
+              for you.
+            </p>
+          </div>
+          <span className={openCls}>
+            Open
+            <Icon icon="chevron-right" />
+          </span>
+        </button>
+      )}
+
       {shape && (
         <section className={statsCls}>
           <div className={statsShapeCls}>
@@ -125,7 +195,7 @@ export default function ModeChooser({
 }
 
 const wrapCls = css`
-  max-width: 1100px;
+  max-width: calc(1100 * var(--px));
   margin: 0 auto;
 `;
 
@@ -275,5 +345,76 @@ const statsTextCls = css`
   }
   @media (max-width: ${mobileMaxWidth}) {
     text-align: center;
+  }
+`;
+
+// My pictures: a slim row between the modes and the stats, in the cards' paper
+const picturesCls = css`
+  margin-top: 2rem;
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 1.2rem 1.6rem;
+  text-align: left;
+  border: 1px solid ${PAGE.line};
+  border-radius: 18px;
+  background: ${PAGE.paper};
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(80, 60, 30, 0.08);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(80, 60, 30, 0.14);
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    margin-top: 1.2rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.9rem 1rem;
+    padding: 1rem;
+  }
+`;
+
+const pictureStripCls = css`
+  display: flex;
+  gap: 0.6rem;
+  img {
+    width: 6.4rem;
+    height: 6.4rem;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid ${PAGE.line};
+    background: ${PAGE.paperDeep};
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-column: 1 / -1;
+    img {
+      flex: 1 1 0;
+      min-width: 0;
+      width: auto;
+      height: auto;
+      aspect-ratio: 1;
+    }
+  }
+`;
+
+const picturesTextCls = css`
+  min-width: 0;
+  h2 {
+    margin: 0 0 0.3rem;
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: ${PAGE.ink};
+  }
+  p {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.35rem;
+    color: ${PAGE.inkSoft};
   }
 `;

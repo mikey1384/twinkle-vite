@@ -75,12 +75,12 @@ function GameRecordContent({
             outline: 2px solid currentColor;
             outline-offset: 2px;
           }
-          font-size: 14px;
+          font-size: calc(14 * var(--px));
           color: ${Color.darkerGray()};
         `}
       >
         {copyError && (
-          <p role="alert" style={{ fontSize: 14, lineHeight: 1.5 }}>
+          <p role="alert" style={{ fontSize: 'calc(14 * var(--px))', lineHeight: 1.5 }}>
             {copyError}
           </p>
         )}
@@ -100,7 +100,7 @@ function GameRecordContent({
             {status === 'unfinished' && (
               <div
                 className={css`
-                  font-size: 14px;
+                  font-size: calc(14 * var(--px));
                   color: ${Color.darkerGray()};
                 `}
               >
@@ -111,7 +111,7 @@ function GameRecordContent({
               <div
                 role="alert"
                 className={css`
-                  font-size: 14px;
+                  font-size: calc(14 * var(--px));
                   color: ${Color.darkerGray()};
                 `}
               >
@@ -129,7 +129,7 @@ function GameRecordContent({
                 color: ${Color.darkerGray()};
                 border-radius: 5px;
                 padding: 0.5rem 1rem;
-                font-size: 14px;
+                font-size: calc(14 * var(--px));
                 font-weight: bold;
                 cursor: pointer;
                 &:hover {
@@ -170,7 +170,7 @@ function GameRecordContent({
             {record?.white && record?.black && (
               <div
                 className={css`
-                  font-size: 14px;
+                  font-size: calc(14 * var(--px));
                   font-weight: bold;
                 `}
               >
@@ -192,7 +192,7 @@ function GameRecordContent({
                   flex: 1 1 0;
                   min-width: 0;
                   font-family: monospace;
-                  font-size: 14px;
+                  font-size: calc(14 * var(--px));
                   word-break: break-all;
                   padding: 0.5rem 0.7rem;
                   background: #fff;
@@ -221,7 +221,7 @@ function GameRecordContent({
                       min-width: 0;
                       margin: 0;
                       font-family: monospace;
-                      font-size: 14px;
+                      font-size: calc(14 * var(--px));
                       white-space: pre-wrap;
                       word-break: break-word;
                       max-height: 240px;
@@ -246,7 +246,7 @@ function GameRecordContent({
               ) : (
                 <div
                   className={css`
-                    font-size: 14px;
+                    font-size: calc(14 * var(--px));
                     color: ${Color.darkerGray()};
                   `}
                 >
@@ -278,7 +278,7 @@ function GameRecordContent({
           color: ${Color.darkerGray()};
           border-radius: 4px;
           padding: 0.5rem 0.8rem;
-          font-size: 14px;
+          font-size: calc(14 * var(--px));
           font-weight: bold;
           cursor: pointer;
           &:hover {

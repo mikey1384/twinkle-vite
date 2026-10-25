@@ -298,7 +298,7 @@ export default function TopicSettingsModal({
             </>
           }
         >
-          <p style={{ margin: 0, color: '#334155', fontSize: 16, lineHeight: 1.6 }}>
+          <p style={{ margin: 0, color: '#334155', fontSize: 'calc(16 * var(--px))', lineHeight: 1.6 }}>
             {isAIChannel ? 'Are you sure you want to delete this AI topic?' : 'Remove this topic?'}
           </p>
         </Modal>

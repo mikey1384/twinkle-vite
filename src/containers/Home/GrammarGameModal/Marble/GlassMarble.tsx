@@ -32,12 +32,12 @@ export default function GlassMarble({
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: ${size}px;
-        height: ${size}px;
+        width: calc(${size} * var(--px));
+        height: calc(${size} * var(--px));
         flex-shrink: 0;
         border-radius: 50%;
         font-family: ${PIXEL_FONT};
-        font-size: ${Math.max(8, Math.round(size * 0.36))}px;
+        font-size: calc(${Math.max(8, Math.round(size * 0.36))} * var(--px));
         line-height: 1;
         ${
           known
@@ -63,9 +63,11 @@ export default function GlassMarble({
         }
         @media (max-width: ${mobileMaxWidth}),
           (max-height: 520px) and (orientation: landscape) {
-          width: ${mobileSize}px;
-          height: ${mobileSize}px;
-          font-size: ${Math.max(7, Math.round(mobileSize * 0.36))}px;
+          width: calc(${mobileSize} * var(--px));
+          height: calc(${mobileSize} * var(--px));
+          font-size: calc(
+            ${Math.max(7, Math.round(mobileSize * 0.36))} * var(--px)
+          );
         }
       `}
     >

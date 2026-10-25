@@ -127,7 +127,7 @@ export default function SubjectItem({
           {currentSubjectId === id && (
             <b
               style={{
-                fontSize: '14px',
+                fontSize: 'calc(14 * var(--px))',
                 color: '#334155'
               }}
             >
@@ -141,7 +141,7 @@ export default function SubjectItem({
           <div className={chatTopicMetadataClass}>
             <UsernameText
               color="#526176"
-              textStyle={{ fontSize: '14px', fontWeight: 600 }}
+              textStyle={{ fontSize: 'calc(14 * var(--px))', fontWeight: 600 }}
               user={{
                 id: userId,
                 username: username

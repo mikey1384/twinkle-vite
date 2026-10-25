@@ -177,7 +177,7 @@ const chatProfileClass = css`
     padding: 14px;
     border-color: #dce3ed;
     border-radius: 14px;
-    .label { color: #334155; font-size: 15px; line-height: 1.5; }
+    .label { color: #334155; font-size: calc(15 * var(--px)); line-height: 1.5; }
     .profile-attachment__body {
       display: flex;
       flex-direction: column;
@@ -187,9 +187,13 @@ const chatProfileClass = css`
     .profile-attachment__avatar { width: 64px; flex-shrink: 0; }
     .profile-attachment__details { min-width: 0; width: 100%; margin-left: 0; }
     &:focus-visible { outline: 2px solid #334155; outline-offset: 3px; }
-    @container chatProfileAttachment (min-width: 360px) {
+    @media (max-width: 1512px) { @container chatProfileAttachment (min-width: 360px) {
       .profile-attachment__body { flex-direction: row; align-items: flex-start; }
       .profile-attachment__details { flex: 1; }
-    }
+    } }
+@media (min-width: 1512.02px) { @container chatProfileAttachment (min-width: 36rem) {
+      .profile-attachment__body { flex-direction: row; align-items: flex-start; }
+      .profile-attachment__details { flex: 1; }
+    } }
   }
 `;

@@ -368,14 +368,14 @@ const VideoPlayerWithSubtitles: React.FC<VideoPlayerProps> = ({
             color: 'white',
             padding: '8px',
             borderRadius: '4px',
-            fontSize: '14px',
+            fontSize: 'calc(14 * var(--px))',
             textAlign: 'center',
             zIndex: 10
           }}
         >
           {errorMessage}
           {retryCount > 0 && retryCount <= maxRetries && (
-            <div style={{ marginTop: '5px', fontSize: '12px' }}>
+            <div style={{ marginTop: '5px', fontSize: 'calc(12 * var(--px))' }}>
               Retrying with alternative format... ({retryCount}/{maxRetries})
             </div>
           )}

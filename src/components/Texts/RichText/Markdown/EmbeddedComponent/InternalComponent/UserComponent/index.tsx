@@ -103,7 +103,7 @@ export default function UserComponent({
     if (requestState?.username === username && requestState.status === 'error') {
       return <EmbedLoadError onRetry={() => setRetryAttempt(value => value + 1)} />;
     }
-    return <Loading text="Loading profile" innerStyle={{ fontSize: '14px' }} />;
+    return <Loading text="Loading profile" innerStyle={{ fontSize: 'calc(14 * var(--px))' }} />;
   }
 
   if (isChat) {

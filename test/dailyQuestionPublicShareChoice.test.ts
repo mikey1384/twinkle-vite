@@ -26,7 +26,7 @@ test('Keyword Day feed sharing uses the normal original-versus-polished chooser'
     'async function handleShareClick()'
   );
   const confirmShareStart = gradingResultSource.indexOf(
-    'async function handleConfirmShare()',
+    'async function handleConfirmShare(',
     shareClickStart
   );
   const shareClickSource = gradingResultSource.slice(
@@ -37,10 +37,16 @@ test('Keyword Day feed sharing uses the normal original-versus-polished chooser'
   assert.ok(shareClickStart >= 0 && confirmShareStart > shareClickStart);
   assert.doesNotMatch(shareClickSource, /isKeywordDay/);
   assert.match(shareClickSource, /setShowVersionSelector\(true\)/);
+  // Picture Day alone skips the chooser: its text is never polished
+  assert.match(
+    shareClickSource,
+    /if \(isPictureDay\) \{\s*await handleConfirmShare\('original'\);\s*return;/
+  );
   assert.match(
     gradingResultSource,
-    /responseText: textToShare,\s*version: selectedVersion/
+    /const version = versionOverride \|\| selectedVersion;/
   );
+  assert.match(gradingResultSource, /responseText: textToShare,\s*version\s*\}/);
   assert.doesNotMatch(
     gradingResultSource,
     /!isKeywordDay\s*&&\s*\(canShareToFeedNow/
@@ -60,7 +66,7 @@ test('public share controls reject concurrent clicks before React rerenders', ()
   assert.match(gradingResultSource, /const sharingRef = useRef\(false\)/);
   assert.match(
     gradingResultSource,
-    /async function handleConfirmShare\(\) \{\s*if \(sharingRef\.current\) return;\s*sharingRef\.current = true;/
+    /async function handleConfirmShare\([^)]*\) \{\s*if \(sharingRef\.current\) return;\s*sharingRef\.current = true;/
   );
   assert.match(
     gradingResultSource,

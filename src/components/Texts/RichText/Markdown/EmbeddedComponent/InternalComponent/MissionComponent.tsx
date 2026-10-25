@@ -108,7 +108,7 @@ export default function MissionComponent({
     return <InvalidContent />;
   }
   if (status === 'loading' || !missionId || !loadedForUser) {
-    return <Loading text="Loading mission" innerStyle={{ fontSize: '14px' }} />;
+    return <Loading text="Loading mission" innerStyle={{ fontSize: 'calc(14 * var(--px))' }} />;
   }
 
   if (isChat) {

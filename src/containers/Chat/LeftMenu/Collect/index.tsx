@@ -44,13 +44,23 @@ export default function Collect({
           @container chat-channels (max-width: 180px) {
             padding: 0.7rem 0.6rem;
             > div > div:first-child {
-              font-size: 14px;
+              font-size: calc(14 * var(--px));
               display: flex;
               align-items: center;
               > svg { flex-shrink: 0; }
             }
-            p { font-size: 12px; }
+            p { font-size: calc(12 * var(--px)); }
           }
+@media (width > 1512px) { @container chat-channels (max-width: 18rem) {
+            padding: 0.7rem 0.6rem;
+            > div > div:first-child {
+              font-size: calc(14 * var(--px));
+              display: flex;
+              align-items: center;
+              > svg { flex-shrink: 0; }
+            }
+            p { font-size: calc(12 * var(--px)); }
+          } }
         `}`}
         onClick={onClick}
         onKeyDown={(event) => {

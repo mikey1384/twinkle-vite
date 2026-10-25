@@ -88,6 +88,16 @@ import {
   shouldRecoverAIImageUnknownOutcome
 } from '~/helpers/aiImageStatus';
 import { isPublicMinecraftRead } from '../helpers/publicMinecraftReads';
+import {
+  acceptAppLifecycleSnapshot,
+  appLifecycleKey,
+  isAppClosed,
+  loadAppLifecycleSnapshot,
+  normalizeAppLifecycleState,
+  noteAppStarted,
+  registerAppLifecycleFrame,
+  setAppLifecycleStatus
+} from '~/helpers/buildAppLifecycle';
 
 interface ActiveAiImageStatusTarget {
   messageId: string;
@@ -195,6 +205,7 @@ function emitWorldBridgeTelemetry(data: {
 
 export function useHostBridge({
   runtimeOnly,
+  appLifecycleSource,
   previewSrcOverride,
   appMcpSessionId,
   buildId,
@@ -246,6 +257,8 @@ export function useHostBridge({
   const audioMutedRef = useRef(audioMuted);
   const runtimeOnlyRef = useRef(runtimeOnly);
   runtimeOnlyRef.current = runtimeOnly;
+  const appLifecycleSourceRef = useRef(appLifecycleSource || null);
+  appLifecycleSourceRef.current = appLifecycleSource || null;
   const previewSrcOverrideRef = useRef(previewSrcOverride || null);
   previewSrcOverrideRef.current = previewSrcOverride || null;
   const launchTargetBroadcastReadyRef = useRef(false);
@@ -359,6 +372,18 @@ export function useHostBridge({
       }
     );
   }, [mountContext, previewFrameMetaRef, primaryIframeRef, secondaryIframeRef]);
+
+  // KeepAliveHost asks this app for a fresh snapshot before unloading it.
+  useEffect(() => {
+    if (!appLifecycleSource || !buildId) return;
+    return registerAppLifecycleFrame(Number(buildId), (reason) => {
+      postToPreviewFrames(primaryIframeRef, secondaryIframeRef, previewFrameMetaRef, {
+        source: 'twinkle-parent',
+        type: 'lifecycle:suspend',
+        payload: { reason }
+      });
+    });
+  }, [appLifecycleSource, buildId, previewFrameMetaRef, primaryIframeRef, secondaryIframeRef]);
 
   useEffect(() => {
     if (!launchTargetBroadcastReadyRef.current) {
@@ -2373,6 +2398,7 @@ export function useHostBridge({
           }
 
           case 'init':
+            if (appLifecycleSourceRef.current) noteAppStarted(activeBuild.id);
             response = {
               id: activeBuild.id,
               title: activeBuild.title,
@@ -2381,8 +2407,58 @@ export function useHostBridge({
               mount: mountContextRef.current,
               launchTarget: launchTargetRef.current,
               capabilities: capabilitySnapshotRef.current,
-              explorationPlan: runtimeExplorationPlanRef.current
+              explorationPlan: runtimeExplorationPlanRef.current,
+              // The viewer's saved place in this app (Twinkle.app.lifecycle).
+              // Only the viewer's own /app run resumes (appLifecycleSourceRef.current);
+              // the Build editor, reward proposal player and thumbnail
+              // capture start fresh, so other code never meets this state.
+              lifecycleResume: appLifecycleSourceRef.current
+                ? await loadAppLifecycleSnapshot(
+                    appLifecycleKey({
+                      userId,
+                      buildId: activeBuild.id,
+                      source: appLifecycleSourceRef.current,
+                      mount: mountContextRef.current
+                    })
+                  )
+                : null
             };
+            break;
+
+          case 'lifecycle:snapshot': {
+            const state = appLifecycleSourceRef.current
+              ? normalizeAppLifecycleState(payload?.state)
+              : null;
+            if (!appLifecycleSourceRef.current || !state || isAppClosed(activeBuild.id)) {
+              response = { success: false };
+              break;
+            }
+            acceptAppLifecycleSnapshot(
+              activeBuild.id,
+              appLifecycleKey({
+                userId,
+                buildId: activeBuild.id,
+                source: appLifecycleSourceRef.current,
+                mount: mountContextRef.current
+              }),
+              {
+                state,
+                savedAt: Date.now(),
+                reason: String(payload?.reason || '').slice(0, 40)
+              }
+            );
+            response = { success: true };
+            break;
+          }
+
+          case 'lifecycle:status':
+            if (appLifecycleSourceRef.current) {
+              setAppLifecycleStatus(activeBuild.id, {
+                suspend: payload?.suspend === true,
+                webgl: Number(payload?.webgl) || 0
+              });
+            }
+            response = { success: true };
             break;
 
           case 'app:navigate': {

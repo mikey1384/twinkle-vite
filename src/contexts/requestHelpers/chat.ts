@@ -559,6 +559,30 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // A member's platinum cover photo, through the same report pipeline.
+    // coverKey: the photo the member was looking at (refused if it changed)
+    async reportProfileCover({
+      userId,
+      coverKey,
+      reason,
+      note
+    }: {
+      userId: number;
+      coverKey: string;
+      reason: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/profile-cover/report`,
+          { userId, coverKey, reason, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadBlockedUsers() {
       try {
         const { data } = await request.get(`${URL}/chat/blocks`, auth());

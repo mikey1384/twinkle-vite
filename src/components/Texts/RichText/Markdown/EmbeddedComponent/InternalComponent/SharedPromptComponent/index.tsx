@@ -111,7 +111,7 @@ export default function SharedPromptComponent({
       ) : status === 'notFound' ? (
         <InvalidContent style={{ marginTop: '2rem' }} />
       ) : status === 'loading' || !prompt ? (
-        <Loading text="Loading shared prompt" innerStyle={{ fontSize: '14px' }} />
+        <Loading text="Loading shared prompt" innerStyle={{ fontSize: 'calc(14 * var(--px))' }} />
       ) : prompt && isPreview ? (
         <button
           type="button"
@@ -233,7 +233,7 @@ const compactSharedPromptClass = css`
 // Placement only — the frame, tint and typography belong to SharedPromptBlock
 // so this embed and the feed's prompt card stay one design.
 const cardClass = css`
-  max-width: 500px;
+  max-width: calc(500 * var(--px));
   margin: 1rem auto;
 
   /* Reset styles inherited from RichText */
@@ -272,7 +272,7 @@ const chatPromptClass = css`
     .shared-prompt__stat { line-height: 1.5; }
     .shared-prompt__meta {
       color: #526176;
-      small { font-size: 12px; line-height: 1.5; color: #64748b; }
+      small { font-size: calc(12 * var(--px)); line-height: 1.5; color: #64748b; }
     }
     > button {
       min-height: 44px;

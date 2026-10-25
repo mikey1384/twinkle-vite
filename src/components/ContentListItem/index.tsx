@@ -7,7 +7,7 @@ import { useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useInView } from 'react-intersection-observer';
 import { placeholderHeights } from '~/constants/state';
-import { returnMissionThumb } from '~/constants/defaultValues';
+import { cloudFrontURL, returnMissionThumb } from '~/constants/defaultValues';
 import { observeMountedSubject } from '~/helpers/subjectRewardLevelSync';
 import { getDisplayedSubjectRewardLevel } from '~/helpers/rewardLevelRevision';
 
@@ -145,6 +145,7 @@ function ContentListItem({
     contributionStatus,
     rootBuildSourceBuildId,
     missionType,
+    picturePath,
     userId: buildUserId,
     uploader = {}
   } = currentContent;
@@ -159,7 +160,9 @@ function ContentListItem({
     thumbnailUrl ||
     (contentType === 'mission' && missionType
       ? returnMissionThumb(missionType)
-      : undefined);
+      : contentType === 'dailyReflection' && picturePath
+        ? `${cloudFrontURL}/${picturePath}`
+        : undefined);
   const isBuildItem = contentType === 'build';
   const placeholderHeightKey = `list-item-${contentType}-${contentId}`;
   const previousPlaceholderHeight = useMemo(

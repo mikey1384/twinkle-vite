@@ -7,7 +7,7 @@ export default function TopicRequestStatus({ message, onRetry }: {
   onRetry: () => void;
 }) {
   return (
-    <div role="alert" style={{ padding: '16px 0', textAlign: 'center', fontSize: '16px', color: '#334155' }}>
+    <div role="alert" style={{ padding: '16px 0', textAlign: 'center', fontSize: 'calc(16 * var(--px))', color: '#334155' }}>
       <p style={{ margin: '0 0 8px' }}>{message}</p>
       <Button variant="ghost" style={chatTopicActionStyle} onClick={onRetry}>
         Retry

@@ -33,7 +33,7 @@ const displayFontFamily =
 
 const pageClass = css`
   width: 100%;
-  max-width: 980px;
+  max-width: calc(980 * var(--px));
   box-sizing: border-box;
   margin: ${buildPageTopGap} auto 0;
   padding: 0 2rem 3rem;

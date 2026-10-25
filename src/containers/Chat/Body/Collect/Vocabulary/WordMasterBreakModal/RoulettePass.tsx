@@ -49,7 +49,7 @@ export default function RoulettePass({
           font-size: 1.2rem;
           color: ${Color.gray()};
           text-align: center;
-          max-width: 320px;
+          max-width: calc(320 * var(--px));
         `}
       >
         Spin the wheel to determine your break pass price for today. You might

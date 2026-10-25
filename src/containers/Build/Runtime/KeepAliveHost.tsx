@@ -30,6 +30,45 @@ import {
   type BuildViewAnalyticsPayload
 } from '~/helpers/buildViewAnalytics';
 import { SITE_NAME } from '~/constants/siteBrand';
+import { isMobile } from '~/helpers';
+import { useToast } from '~/contexts/Toast';
+import { notePageDeathApps } from '~/helpers/pageDeathTracker';
+import {
+  forgetAppLifecycleSnapshots,
+  forgetRunningApp,
+  markAppClosed,
+  getAppLifecycleStatus,
+  requestAppLifecycleSnapshot,
+  subscribeAppLifecycleStatus,
+  warmAppLifecycleStore
+} from '~/helpers/buildAppLifecycle';
+
+// Phones run out of memory with several apps loaded at once (10-25: Safari
+// killed the whole tab with a 3D app kept in the background). On phones a
+// hidden 3D app is unloaded right away, and at most this many other hidden
+// apps stay loaded. Apps using Twinkle.app.lifecycle get their place back
+// when they start again; the others are warned about once.
+const PHONE_HIDDEN_APP_LIMIT = 1;
+const deviceIsPhoneOrTablet =
+  typeof navigator !== 'undefined' && isMobile(navigator);
+
+function warnAppRestartsOnce(
+  buildId: number,
+  title: string,
+  showToast: ReturnType<typeof useToast>
+) {
+  const key = `twinkle:app-unload-warned:${buildId}`;
+  try {
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+  } catch {
+    // no storage: still warn this time
+  }
+  showToast({
+    message: `${title || 'This app'} was closed to save memory on this phone. It will start over next time you open it.`,
+    duration: 6000
+  });
+}
 
 interface RuntimeSession {
   buildId: number;
@@ -162,6 +201,22 @@ export default function BuildRuntimeKeepAliveHost() {
   const sessionsRef = useRef<RuntimeSession[]>([]);
   sessionsRef.current = sessions;
   const currentUserId = Number(userId) || null;
+  const showToast = useToast();
+  // When each app was last on screen (least recently used is unloaded first).
+  const lastShownAtRef = useRef(new Map<number, number>());
+  const unloadingRef = useRef(new Set<string>());
+  const [lifecycleStatusVersion, setLifecycleStatusVersion] = useState(0);
+  // Open the saved-place store before the first app asks for its place.
+  useEffect(() => {
+    warmAppLifecycleStore();
+  }, []);
+  useEffect(
+    () =>
+      subscribeAppLifecycleStatus(() =>
+        setLifecycleStatusVersion((version) => version + 1)
+      ),
+    []
+  );
 
   const activeSession = useMemo(
     () =>
@@ -364,10 +419,63 @@ export default function BuildRuntimeKeepAliveHost() {
     setSessions((current) =>
       current.filter((s) => Number(s.buildId) !== killBuildId)
     );
+    // A deliberate close starts the app fresh next time.
+    markAppClosed(killBuildId);
+    forgetRunningApp(killBuildId);
+    void forgetAppLifecycleSnapshots({ userId: currentUserId, buildId: killBuildId });
     if (killingActiveRoute) {
       navigate('/build', { replace: true });
     }
   }, [killBuildAppSession, isRuntimeRoute, activeBuildId, navigate]);
+
+  // Phones: unload hidden apps that would crowd memory (see
+  // PHONE_HIDDEN_APP_LIMIT). The app is asked for a last snapshot first.
+  useEffect(() => {
+    if (isRuntimeRoute && activeBuildId) {
+      lastShownAtRef.current.set(Number(activeBuildId), Date.now());
+    }
+    if (!deviceIsPhoneOrTablet) return;
+    const hidden = sessions.filter(
+      (s) =>
+        s.loaded &&
+        !(isRuntimeRoute && Number(activeBuildId) === Number(s.buildId)) &&
+        !unloadingRef.current.has(s.key)
+    );
+    const heavy = hidden.filter((s) => getAppLifecycleStatus(s.buildId).webgl > 0);
+    const light = hidden
+      .filter((s) => !heavy.includes(s))
+      .sort(
+        (a, b) =>
+          (lastShownAtRef.current.get(b.buildId) || 0) -
+          (lastShownAtRef.current.get(a.buildId) || 0)
+      );
+    const unload = [...heavy, ...light.slice(PHONE_HIDDEN_APP_LIMIT)];
+    for (const session of unload) {
+      unloadingRef.current.add(session.key);
+      const { buildId, key, title } = session;
+      void requestAppLifecycleSnapshot(buildId, 'unload').then(() => {
+        unloadingRef.current.delete(key);
+        // Came back to it meanwhile, or already gone: keep it as it is.
+        const backOnScreen =
+          getRuntimeRouteMatch(window.location.pathname)?.buildId === buildId;
+        const stillThere = sessionsRef.current.some((s) => s.key === key);
+        if (backOnScreen || !stillThere) return;
+        const keepsPlace = getAppLifecycleStatus(buildId).suspend;
+        setSessions((current) => current.filter((s) => s.key !== key));
+        forgetRunningApp(buildId);
+        if (!keepsPlace) warnAppRestartsOnce(buildId, title, showToast);
+      });
+    }
+  }, [activeBuildId, isRuntimeRoute, lifecycleStatusVersion, sessions, showToast]);
+
+  // Crash evidence (pageDeathTracker): which apps are loaded right now.
+  useEffect(() => {
+    const loaded = sessions.filter((s) => s.loaded).map((s) => s.buildId);
+    notePageDeathApps(
+      loaded,
+      loaded.filter((buildId) => getAppLifecycleStatus(buildId).webgl > 0)
+    );
+  }, [lifecycleStatusVersion, sessions]);
 
   // Header skips document.title writes on /app routes, so the runtime owns the
   // title while it is the active route. Header overwrites it on exit.

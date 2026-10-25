@@ -35,7 +35,7 @@ export const chatScrollButtonClass = css`
   background: var(--chat-scroll-bg);
   color: var(--chat-scroll-text);
   font-family: inherit;
-  font-size: 14px;
+  font-size: calc(14 * var(--px));
   font-weight: 600;
   line-height: 1.4;
   cursor: pointer;

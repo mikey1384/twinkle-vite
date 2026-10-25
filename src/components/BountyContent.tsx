@@ -413,4 +413,15 @@ const bountyContentClass = css`
       font-size: max(1.6rem, 16px) !important;
     }
   }
+@media (width > 1512px) { @container bounty-content (max-width: 44rem) {
+    &.bounty-content--compact .bounty-content__layout {
+      grid-template-columns: minmax(8.5rem, 30%) minmax(0, 1fr);
+      gap: 1.25rem;
+      padding: 0.8rem;
+    }
+
+    &.bounty-content--compact .bounty-content__title {
+      font-size: max(1.6rem, 16px) !important;
+    }
+  } }
 `;

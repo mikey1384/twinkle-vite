@@ -2873,3 +2873,19 @@ test('bounty stories and their comment targets have a recognized compact layout'
   assert.equal(reply.card.hasTarget, true);
   assert.equal(reply.target.size, 'standard');
 });
+
+test('Picture Day reflections get the picture size, whatever the text length', () => {
+  for (const description of ['A fox', 'A long description. '.repeat(60)]) {
+    const sizing = getFeedCardSizing({
+      content: {
+        contentType: 'dailyReflection',
+        description,
+        picturePath: 'daily-reflection/abc.png',
+        pictureStyle: 'Storybook'
+      },
+      userId: 1
+    });
+    assert.equal(sizing.main.size, 'reflection-picture');
+    assert.equal(sizing.card.bodyHeight, 'max(30rem, 300px)');
+  }
+});

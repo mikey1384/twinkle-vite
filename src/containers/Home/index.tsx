@@ -35,7 +35,7 @@ function Home({
             <HomeMenuItems style={{ marginTop: '1rem' }} />
           </div>
           <div className={Center}>
-            <div style={{ maxWidth: '700px', width: '100%' }}>
+            <div style={{ maxWidth: 'calc(700 * var(--px))', width: '100%' }}>
               {section === 'group' && <Groups />}
               {section === 'people' && <People />}
               {section === 'earn' && <Earn />}

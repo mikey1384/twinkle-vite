@@ -44,7 +44,7 @@ test('actual Omok grid labels and callbacks agree in black and reversed white or
       lastMovePosition: { row: source, col: source }, myAssignedColor: color,
       onCellClick: (...coords) => clicked.push(coords), onReveal() {}, winningMap: {}, boardToRender: board }));
     const cells = nodes(tree, node => node.type === Cell); assert.equal(cells.length, 361);
-    const axes = nodes(tree, node => node.type === 'div' && /font-size: 10px/.test(node.props.className || ''));
+    const axes = nodes(tree, node => node.type === 'div' && /font-size: calc\(10 \* var\(--px\)\)/.test(node.props.className || ''));
     assert.equal(axes.length, 38); assert.ok(axes.every(node => /line-height: 1/.test(node.props.className)));
     assert.equal(cells.filter(cell => cell.props.tabIndex === 0).length, 1);
     const grid = nodes(tree, node => node.props?.role === 'group')[0];

@@ -57,7 +57,7 @@ export default function PromotionModal({
       bodyPadding={0}
     >
       <LegacyModalLayout>
-        <header style={{ fontSize: 20 }}>Promote Pawn</header>
+        <header style={{ fontSize: 'calc(20 * var(--px))' }}>Promote Pawn</header>
         <main>
           <div
             className={css`
@@ -71,7 +71,7 @@ export default function PromotionModal({
           >
             <p
               className={css`
-                font-size: 16px;
+                font-size: calc(16 * var(--px));
                 line-height: 1.5;
                 text-align: center;
               `}
@@ -85,7 +85,7 @@ export default function PromotionModal({
                 margin-top: 16px;
                 gap: 8px;
                 width: 100%;
-                max-width: 360px;
+                max-width: calc(360 * var(--px));
                 @media (max-width: 480px) {
                   grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
@@ -97,7 +97,7 @@ export default function PromotionModal({
                   variant="solid"
                   aria-label={`Promote to ${type}`}
                   uppercase={false}
-                  style={{ fontSize: 14, color: color === 'black' ? '#222' : '#fff' }}
+                  style={{ fontSize: 'calc(14 * var(--px))', color: color === 'black' ? '#222' : '#fff' }}
                   color={color === 'white' ? 'darkerGray' : 'lighterGray'}
                   onClick={() => onPromote(type)}
                   className={css`
@@ -106,7 +106,7 @@ export default function PromotionModal({
                     padding: 10px;
                     min-height: 76px;
                     min-width: 0;
-                    font-size: 14px;
+                    font-size: calc(14 * var(--px));
                   `}
                 >
                   <img

@@ -15,7 +15,7 @@ export const studioPageClass = css`
   padding: 0 2rem 3rem;
 
   @media (max-width: ${buildActivityRailBreakpoint}) {
-    max-width: 980px;
+    max-width: calc(980 * var(--px));
   }
 
   @media (max-width: ${mobileMaxWidth}) {

@@ -6,9 +6,9 @@ import Modal from '~/components/Modal';
 
 const chooserGridClass = css`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(calc(220 * var(--px)), 1fr));
   gap: 1rem;
-  max-width: 620px;
+  max-width: calc(620 * var(--px));
   margin: 0 auto;
 `;
 

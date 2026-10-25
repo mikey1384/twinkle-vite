@@ -195,7 +195,7 @@ export default function ParentConsentPage() {
       <main
         lang={lang}
         className={css`
-          max-width: 720px;
+          max-width: calc(720 * var(--px));
           margin: 0 auto;
           background: #fff;
           border: 1px solid var(--ui-border);

@@ -37,7 +37,7 @@ const thumbnailClass = css`
   cursor: pointer;
   font: inherit;
   img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  .empty { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; gap: 8px; font-size: 12px; }
-  .empty svg { font-size: 24px; }
+  .empty { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; gap: 8px; font-size: calc(12 * var(--px)); }
+  .empty svg { font-size: calc(24 * var(--px)); }
   &:disabled { cursor: default; opacity: .6; }
 `;

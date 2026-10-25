@@ -159,6 +159,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onApplyRestoredProjectFiles,
       onSaveProjectFiles,
       runtimeOnly = false,
+      appLifecycleSource = null,
       requireSignedPreviewAccess = false,
       runtimeHostVisible = true,
       preventFrameSuspend = false,
@@ -1377,6 +1378,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
 
     useHostBridge({
       runtimeOnly,
+      appLifecycleSource,
       previewSrcOverride: normalizedPreviewSrcOverride,
       appMcpSessionId,
       appHelperRelayStateRef,

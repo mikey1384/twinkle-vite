@@ -45,6 +45,10 @@ export default function ChatQuickAccess() {
             /* Flatten into the parent row: gear joins New Group, portraits wrap below. */
             display: contents;
           }
+@media (width > 1512px) { @container chat-channels (max-width: 18rem) {
+            /* Flatten into the parent row: gear joins New Group, portraits wrap below. */
+            display: contents;
+          } }
         `}
       >
         <div
@@ -66,6 +70,10 @@ export default function ChatQuickAccess() {
               order: 1;
               flex: 1 0 100%;
             }
+@media (width > 1512px) { @container chat-channels (max-width: 18rem) {
+              order: 1;
+              flex: 1 0 100%;
+            } }
             @media (pointer: coarse) {
               > button { width: 44px; height: 44px; }
             }
@@ -118,12 +126,25 @@ export default function ChatQuickAccess() {
               border-color: transparent;
               border-radius: 5px;
               background: transparent;
-              font-size: 16px;
+              font-size: calc(16 * var(--px));
               &:hover {
                 border-color: transparent;
                 background: ${Color.highlightGray()};
               }
             }
+@media (width > 1512px) { @container chat-channels (max-width: 18rem) {
+              /* Sits beside New Group: same height and corners, visually quiet. */
+              width: 36px;
+              height: 36px;
+              border-color: transparent;
+              border-radius: 5px;
+              background: transparent;
+              font-size: calc(16 * var(--px));
+              &:hover {
+                border-color: transparent;
+                background: ${Color.highlightGray()};
+              }
+            } }
             @media (pointer: coarse) {
               min-width: 44px;
               min-height: 44px;
@@ -131,6 +152,9 @@ export default function ChatQuickAccess() {
             @container chat-channels (max-width: 180px) {
               min-width: 36px;
             }
+@media (width > 1512px) { @container chat-channels (max-width: 18rem) {
+              min-width: 36px;
+            } }
           `}
         >
           <Icon icon="cog" />

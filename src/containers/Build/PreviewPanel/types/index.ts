@@ -98,6 +98,11 @@ export interface PreviewPanelProps {
     filesHash?: string | null;
   }>;
   runtimeOnly?: boolean;
+  // Set only by the /app runtime (Runtime/index.tsx): this frame is the
+  // viewer's own run of the app, which keeps its place (Twinkle.app.lifecycle).
+  // Other runtimeOnly hosts (reward proposal player, thumbnail capture) never
+  // resume or save a place.
+  appLifecycleSource?: string | null;
   requireSignedPreviewAccess?: boolean;
   runtimeHostVisible?: boolean;
   // Keep the preview frame MOUNTED even while host-hidden (the keep-alive

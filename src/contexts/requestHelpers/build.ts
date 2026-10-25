@@ -1214,9 +1214,23 @@ export default function buildRequestHelpers({
     async loadBuildRuntimeUploads(options?: {
       cursor?: number | null;
       limit?: number;
+      // 'build': sections per build (cursor pages builds); buildId: one
+      // build's next files.
+      groupBy?: 'build';
+      perBuild?: number;
+      buildId?: number;
     }) {
       try {
         const params: Record<string, any> = {};
+        if (options?.groupBy === 'build') {
+          params.groupBy = 'build';
+        }
+        for (const key of ['perBuild', 'buildId'] as const) {
+          const value = Number(options?.[key]);
+          if (Number.isFinite(value) && value > 0) {
+            params[key] = Math.floor(value);
+          }
+        }
         if (
           Number.isFinite(Number(options?.cursor)) &&
           Number(options?.cursor) > 0

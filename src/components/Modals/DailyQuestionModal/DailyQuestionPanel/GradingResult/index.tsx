@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { PAPER } from '../../paperTheme';
-import { priceTable } from '~/constants/defaultValues';
+import { cloudFrontURL, priceTable } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
 import {
   useAppContext,
@@ -27,6 +27,8 @@ export default function GradingResult({
   question,
   questionId,
   isKeywordDay = false,
+  picturePath = '',
+  isPictureDay = false,
   response,
   originalResponse,
   initialRefinedResponse,
@@ -53,6 +55,9 @@ export default function GradingResult({
   question: string;
   questionId: number | null;
   isKeywordDay?: boolean;
+  // Picture Day: the picture the member chose
+  picturePath?: string;
+  isPictureDay?: boolean;
   response: string;
   originalResponse: string;
   initialRefinedResponse: string | null;
@@ -213,6 +218,13 @@ export default function GradingResult({
   async function handleShareClick() {
     if (sharingRef.current) return;
 
+    // Picture Day: the description is shared as written, with the picture;
+    // there is no polished version to choose between
+    if (isPictureDay) {
+      await handleConfirmShare('original');
+      return;
+    }
+
     if (!refinedResponse && !refining) {
       try {
         setRefining(true);
@@ -240,9 +252,10 @@ export default function GradingResult({
     setShowVersionSelector(true);
   }
 
-  async function handleConfirmShare() {
+  async function handleConfirmShare(versionOverride?: 'original' | 'refined') {
     if (sharingRef.current) return;
     sharingRef.current = true;
+    const version = versionOverride || selectedVersion;
 
     try {
       setSharing(true);
@@ -250,14 +263,14 @@ export default function GradingResult({
 
       const rawResponseText = originalResponse || response;
       const textToShare =
-        selectedVersion === 'refined' && refinedResponse
+        version === 'refined' && refinedResponse
           ? refinedResponse
           : rawResponseText;
 
       const result = await shareDailyQuestionResponse({
         responseId,
         responseText: textToShare,
-        version: selectedVersion
+        version
       });
 
       if (result.error) {
@@ -485,6 +498,22 @@ export default function GradingResult({
         xpNumberColor={xpNumberColor}
       />
 
+      {picturePath && (
+        <img
+          src={`${cloudFrontURL}/${picturePath}`}
+          alt={originalResponse || response}
+          className={css`
+            display: block;
+            width: 100%;
+            max-width: calc(560 * var(--px));
+            margin: 0 auto 1.6rem;
+            border-radius: 14px;
+            border: 1px solid ${PAPER.line};
+            background: ${PAPER.paperDeep};
+          `}
+        />
+      )}
+
       {grade !== 'Fail' && responseId > 0 && (
         <ReflectionStatsPanel
           responseId={responseId}
@@ -559,7 +588,7 @@ export default function GradingResult({
         refining={refining}
         onCancelAIVersionSelector={handleCancelAIVersionSelector}
         onCancelVersionSelector={() => setShowVersionSelector(false)}
-        onConfirmShare={handleConfirmShare}
+        onConfirmShare={() => handleConfirmShare()}
         onConfirmShareWithAI={handleConfirmShareWithAI}
         onShareClick={handleShareClick}
         onShareWithAI={handleShareWithAI}

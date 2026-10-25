@@ -73,6 +73,10 @@ export default function RankingsListItem({
     () =>
       css`
         display: flex;
+        /* in a narrow panel the XP drops to its own line instead of the
+           picture sliding over it */
+        flex-wrap: wrap;
+        row-gap: 0.2rem;
         align-items: center;
         justify-content: space-between;
         gap: ${small ? '0.8rem' : '1.2rem'};
@@ -104,7 +108,8 @@ export default function RankingsListItem({
         align-items: center;
         gap: ${small ? '0.65rem' : '0.9rem'};
         flex: 1;
-        min-width: 0;
+        /* rank, picture and a little of the name never shrink away */
+        min-width: ${small ? '11.1rem' : '14rem'};
       `,
     [small]
   );
@@ -147,6 +152,7 @@ export default function RankingsListItem({
         display: flex;
         align-items: baseline;
         gap: 0.35rem;
+        margin-left: auto;
         font-weight: 700;
         font-size: ${xpFontSize};
         white-space: nowrap;

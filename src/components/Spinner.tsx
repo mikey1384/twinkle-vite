@@ -52,8 +52,8 @@ export default function Spinner({
           aria-hidden="true"
           focusable="false"
           className={css`
-            width: ${size}px;
-            height: ${size}px;
+            width: calc(${size} * var(--px));
+            height: calc(${size} * var(--px));
             animation: loading-rotator 1.4s linear infinite;
 
             @media (prefers-reduced-motion: reduce) {

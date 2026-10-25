@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
 import { BuildMiniCard } from '~/components/Build/Cards';
+import DailyReflectionPicture from '~/components/DailyReflectionPicture';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -67,7 +68,9 @@ export default function ContentPreview({
     thumbUrl,
     thumbnailUrl,
     title,
-    difficulty
+    difficulty,
+    picturePath,
+    pictureStyle
   } = contentObj;
   const userId = useKeyContext((v) => v.myState.userId);
   const navigate = useNavigate();
@@ -332,7 +335,15 @@ export default function ContentPreview({
     if (contentType === 'dailyReflection') {
       return (
         <div className={previewContentClass}>
-          {question && (
+          {picturePath ? (
+            // Picture Day: the picture stands in for the stock question
+            <DailyReflectionPicture
+              alt={description}
+              maxWidth="48rem"
+              picturePath={picturePath}
+              pictureStyle={pictureStyle}
+            />
+          ) : question && (
             <div
               className={css`
                 font-size: 1.5rem;

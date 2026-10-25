@@ -200,6 +200,6 @@ const primaryActionRow = css`
 const secondaryActionRow = css`
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(calc(180 * var(--px)), 1fr));
   margin-top: 1.4rem;
 `;

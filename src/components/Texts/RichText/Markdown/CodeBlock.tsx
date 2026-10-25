@@ -132,7 +132,7 @@ function CodeBlock({
         <span
           className={css`
             color: #e1e4e8;
-            font-size: 12px;
+            font-size: calc(12 * var(--px));
             display: flex;
             align-items: center;
             margin-left: 10px;

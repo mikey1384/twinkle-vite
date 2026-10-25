@@ -15,6 +15,11 @@ const panelClass = css`
     border-left: 0;
     border-top: 1px solid rgba(65, 140, 235, 0.18);
   }
+@media (width > 1512px) { @container (max-width: 64rem) {
+    padding: 1.3rem 0 0;
+    border-left: 0;
+    border-top: 1px solid rgba(65, 140, 235, 0.18);
+  } }
 `;
 
 const headerClass = css`

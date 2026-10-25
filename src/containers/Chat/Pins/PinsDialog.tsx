@@ -31,7 +31,7 @@ export default function PinsDialog() {
         className={css`
           margin: 0 0 12px;
           color: #526176;
-          font-size: 14px;
+          font-size: calc(14 * var(--px));
           line-height: 1.5;
         `}
       >
@@ -45,7 +45,7 @@ export default function PinsDialog() {
         <div
           role="alert"
           className={css`
-            font-size: 14px;
+            font-size: calc(14 * var(--px));
             padding: 16px 0;
           `}
         >
@@ -60,7 +60,7 @@ export default function PinsDialog() {
             padding: 36px 12px;
             text-align: center;
             color: #526176;
-            font-size: 15px;
+            font-size: calc(15 * var(--px));
             line-height: 1.6;
           `}
         >
@@ -92,14 +92,14 @@ export default function PinsDialog() {
                   align-items: baseline;
                   flex-wrap: wrap;
                   color: #273449;
-                  font-size: 14px;
+                  font-size: calc(14 * var(--px));
                 `}
               >
                 <strong>{pin.username}</strong>
                 <time
                   dateTime={new Date(pin.timeStamp * 1000).toISOString()}
                   className={css`
-                    font-size: 12px;
+                    font-size: calc(12 * var(--px));
                     color: #64748b;
                   `}
                 >
@@ -112,7 +112,7 @@ export default function PinsDialog() {
               <p
                 className={css`
                   margin: 8px 0;
-                  font-size: 16px;
+                  font-size: calc(16 * var(--px));
                   line-height: 1.6;
                   color: #273449;
                   white-space: pre-wrap;
@@ -137,7 +137,7 @@ export default function PinsDialog() {
                 <span
                   className={css`
                     color: #64748b;
-                    font-size: 12px;
+                    font-size: calc(12 * var(--px));
                   `}
                 >
                   <Icon icon="thumbtack" /> Pinned by {pin.pinnedByUsername}

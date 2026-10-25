@@ -69,6 +69,10 @@ export default function WorkshopMenuNote({ note }: { note: string }) {
           margin: 0.8rem 0.4rem 0;
           padding: 0.8rem 0.7rem;
         }
+@media (width > 1512px) { @container chat-context (max-width: 18rem) {
+          margin: 0.8rem 0.4rem 0;
+          padding: 0.8rem 0.7rem;
+        } }
         @media (max-width: ${mobileMaxWidth}) {
           margin: 0.6rem 0.4rem 0;
           padding: 0.7rem 0.6rem;

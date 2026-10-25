@@ -256,7 +256,7 @@ const landscapeMenuButtonClass = css`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: calc(16 * var(--px));
   line-height: 1;
   cursor: pointer;
   opacity: 0.6;
@@ -2560,7 +2560,7 @@ export default function BuildRuntime({
             {closeConfirmShown ? (
               <ConfirmModal
                 title="Close app"
-                description={`Close ${build.title || 'this app'}? It will stop running.`}
+                description={`Close ${build.title || 'this app'}? It will stop running and start over next time you open it.`}
                 descriptionFontSize="1.7rem"
                 confirmButtonLabel="Close app"
                 confirmButtonColor="rose"
@@ -2652,6 +2652,7 @@ export default function BuildRuntime({
                     projectFiles={build.projectFiles || []}
                     isOwner={false}
                     runtimeOnly
+                    appLifecycleSource={loadedRuntimeSource}
                     requireSignedPreviewAccess={
                       loadedRuntimeSource === 'workspace'
                     }

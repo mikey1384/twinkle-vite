@@ -237,7 +237,7 @@ export default function TopicSelectorModal({
         </Button>
       }
     >
-      <div style={{ width: '100%', fontSize: '16px', ...chatTopicThemeStyle(displayedThemeColor) }}>
+      <div style={{ width: '100%', fontSize: 'calc(16 * var(--px))', ...chatTopicThemeStyle(displayedThemeColor) }}>
         {loaded && !noTopicPostedYet && (
           <div style={{ width: '100%' }}>
             <h3 className={chatTopicSectionClass} style={{ marginTop: 0, marginBottom: 8 }}>

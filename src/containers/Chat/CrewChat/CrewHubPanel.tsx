@@ -21,6 +21,10 @@ const cardClass = css`
     margin: 0 0.4rem 0.8rem;
     padding: 0.9rem 0.8rem;
   }
+@media (width > 1512px) { @container chat-context (max-width: 18rem) {
+    margin: 0 0.4rem 0.8rem;
+    padding: 0.9rem 0.8rem;
+  } }
 `;
 
 const eyebrowClass = css`

@@ -3,7 +3,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 
 export const pageWidthClass = css`
   width: 80%;
-  max-width: 1100px;
+  max-width: calc(1100 * var(--px));
   margin-top: 1rem;
   @media (max-width: ${mobileMaxWidth}) {
     width: 100%;

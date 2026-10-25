@@ -496,7 +496,7 @@ const chatProfileEmbedClass = css`
     padding: 12px;
     gap: 10px;
     border-radius: 14px;
-    .profile-embed-card__heading { font-size: 14px; line-height: 1.5; white-space: normal; color: #334155; }
+    .profile-embed-card__heading { font-size: calc(14 * var(--px)); line-height: 1.5; white-space: normal; color: #334155; }
     .profile-embed-card__header {
       display: grid;
       grid-template-columns: 56px minmax(0, 1fr);
@@ -507,13 +507,13 @@ const chatProfileEmbedClass = css`
     }
     .profile-embed-card__avatar-wrap { grid-area: avatar; width: 56px; }
     .profile-embed-card__details { grid-area: details; align-items: flex-start; gap: 6px; text-align: left; }
-    .profile-embed-card__username { font-size: 17px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
+    .profile-embed-card__username { font-size: calc(17 * var(--px)); line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
     .profile-embed-card__title-row { justify-content: flex-start; line-height: 1.5; }
-    .profile-embed-card__title, .profile-embed-card__real-name { font-size: 13px; line-height: 1.5; color: #526176; white-space: normal; overflow-wrap: anywhere; }
+    .profile-embed-card__title, .profile-embed-card__real-name { font-size: calc(13 * var(--px)); line-height: 1.5; color: #526176; white-space: normal; overflow-wrap: anywhere; }
     .profile-embed-card__bio-panel { grid-area: bio; display: flex; width: 100%; border: 0; padding: 0; }
-    .profile-embed-card__bio, .profile-embed-card__empty-bio { font-size: 14px; line-height: 1.5; font-weight: 400; }
+    .profile-embed-card__bio, .profile-embed-card__empty-bio { font-size: calc(14 * var(--px)); line-height: 1.5; font-weight: 400; }
     .profile-embed-card__rank-strip { min-height: 36px; gap: 8px; flex-wrap: wrap; padding: 6px 8px; }
-    .profile-embed-card__rank-xp { display: block; font-size: 13px; line-height: 1.5; color: #166534; }
+    .profile-embed-card__rank-xp { display: block; font-size: calc(13 * var(--px)); line-height: 1.5; color: #166534; }
     .profile-embed-card__rank-xp span { color: #72520d; }
     .profile-embed-card__rank-strip.top-rank .profile-embed-card__rank-xp { color: #86efac; }
     .profile-embed-card__rank-strip.top-rank .profile-embed-card__rank-xp span { color: #f5d878; }

@@ -79,7 +79,7 @@ export default function SearchResult({
         border-radius: 1rem;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         width: 90%;
-        max-width: 600px;
+        max-width: calc(600 * var(--px));
         max-height: 80%;
         overflow-y: auto;
         z-index: 1;

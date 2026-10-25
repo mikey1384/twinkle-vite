@@ -15,7 +15,7 @@ export default function ErrorMessage({ message }: ErrorMessageProps) {
         left: 50%;
         transform: translate(-50%, 0);
         width: 95%;
-        max-width: 800px;
+        max-width: calc(800 * var(--px));
         font-size: 2rem;
         font-weight: bold;
         color: #fff;

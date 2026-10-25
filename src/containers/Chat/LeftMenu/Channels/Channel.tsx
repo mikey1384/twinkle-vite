@@ -440,6 +440,11 @@ export default function Channel({
             min-height: 56px;
             padding: 0.8rem 0.6rem;
           }
+@media (width > 1512px) { @container chat-channels (max-width: 18rem) {
+            height: auto;
+            min-height: 56px;
+            padding: 0.8rem 0.6rem;
+          } }
         `)}
         to={pathId ? `/chat/${pathId}${lastSubchannelPath ? `/${lastSubchannelPath}` : ''}` : '/chat/new'}
         aria-current={selected ? 'page' : undefined}
@@ -497,6 +502,15 @@ export default function Channel({
                     -webkit-box-orient: vertical;
                     -webkit-line-clamp: 2;
                   }
+@media (width > 1512px) { @container chat-channels (max-width: 18rem) {
+                    font-size: max(14px, 1.4rem);
+                    line-height: 1.3;
+                    white-space: normal;
+                    overflow-wrap: anywhere;
+                    display: -webkit-box;
+                    -webkit-box-orient: vertical;
+                    -webkit-line-clamp: 2;
+                  } }
                 `}
               >
                 {ChannelName}

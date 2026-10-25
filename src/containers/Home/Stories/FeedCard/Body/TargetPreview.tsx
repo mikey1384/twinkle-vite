@@ -12,6 +12,7 @@ import SharedPromptBlock from '~/components/SharedPromptBlock';
 import WideSubjectEmbedPreview from '~/components/Subjects/WideSubjectEmbedPreview';
 import RichText from '~/components/Texts/RichText';
 import { homeFeedMarkdownPreviewClass } from '../helpers/typography';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
@@ -501,17 +502,42 @@ export default function TargetPreview({
           answer
             ? ''
             : ' home-feed-card__target-daily-reflection--question-only'
+        }${
+          reflection?.picturePath
+            ? ' home-feed-card__target-daily-reflection--picture'
+            : ''
         }`}
       >
-        <div className="home-feed-card__target-daily-reflection-question">
-          <span>
-            <Icon icon="edit" />
-            Question
-          </span>
-          <h4>{reflection?.question || 'Daily Reflection'}</h4>
-        </div>
+        {reflection?.picturePath ? (
+          // Picture Day: the picture takes the question's place
+          <div className="home-feed-card__target-daily-reflection-picture">
+            <img
+              alt={answer || 'Picture Day picture'}
+              decoding="async"
+              loading="lazy"
+              src={`${cloudFrontURL}/${reflection.picturePath}`}
+            />
+          </div>
+        ) : (
+          <div className="home-feed-card__target-daily-reflection-question">
+            <span>
+              <Icon icon="edit" />
+              Question
+            </span>
+            <h4>{reflection?.question || 'Daily Reflection'}</h4>
+          </div>
+        )}
         {answer ? (
           <div className="home-feed-card__target-daily-reflection-answer">
+            {reflection?.picturePath ? (
+              <span className="home-feed-card__target-daily-reflection-picture-label">
+                <Icon icon="palette" />
+                Picture Day
+                {reflection?.pictureStyle ? (
+                  <span className="style">· {reflection.pictureStyle}</span>
+                ) : null}
+              </span>
+            ) : null}
             <RichText
               className={`home-feed-card__target-daily-reflection-answer-text ${homeFeedMarkdownPreviewClass} home-feed-card__markdown-preview--secondary`}
               contentId={Number(reflection.id || 0)}

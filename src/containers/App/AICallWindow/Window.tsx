@@ -33,7 +33,7 @@ function Window({
           border: 1px solid var(--ui-border);
           border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          height: 120px;
+          height: calc(120 * var(--px));
           display: flex;
           overflow: hidden;
           z-index: 1000;
@@ -52,8 +52,8 @@ function Window({
         >
           <div
             className={css`
-              width: 80px;
-              height: 80px;
+              width: calc(80 * var(--px));
+              height: calc(80 * var(--px));
             `}
           >
             <ZeroPic assistant={assistantName} />
@@ -80,7 +80,7 @@ function Window({
           }}
           style={{ pointerEvents: 'auto' }}
           className={`hangup-button ${css`
-            width: 40px;
+            width: calc(40 * var(--px));
             background-color: ${Color.rose(0.9)};
             display: flex;
             justify-content: center;
@@ -98,7 +98,7 @@ function Window({
               white-space: nowrap;
               color: white;
               font-family: 'Inter', sans-serif;
-              font-size: 16px;
+              font-size: calc(16 * var(--px));
               font-weight: 500;
               text-transform: uppercase;
               letter-spacing: 1px;

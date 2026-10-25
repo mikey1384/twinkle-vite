@@ -163,6 +163,10 @@ export default function StoryView({
             height: 38rem;
             max-height: 56vh;
           }
+@media (width > 1512px) { @container (max-width: 72rem) {
+            height: 38rem;
+            max-height: 56vh;
+          } }
         `}
       >
         {showCover ? (
@@ -247,6 +251,12 @@ export default function StoryView({
             padding: 2.2rem 1.8rem 2rem;
             border-radius: 1.6rem;
           }
+@media (width > 1512px) { @container (max-width: 72rem) {
+            margin-top: -6rem;
+            width: calc(100% - 2rem);
+            padding: 2.2rem 1.8rem 2rem;
+            border-radius: 1.6rem;
+          } }
           @media (prefers-reduced-motion: reduce) {
             animation: none;
           }
@@ -300,6 +310,9 @@ export default function StoryView({
             @container (max-width: 720px) {
               font-size: 2.8rem;
             }
+@media (width > 1512px) { @container (max-width: 72rem) {
+              font-size: 2.8rem;
+            } }
           `}
         >
           {title}
@@ -314,6 +327,9 @@ export default function StoryView({
               @container (max-width: 720px) {
                 font-size: 1.7rem;
               }
+@media (width > 1512px) { @container (max-width: 72rem) {
+                font-size: 1.7rem;
+              } }
             `}
           >
             {story.subtitle}
@@ -375,6 +391,10 @@ export default function StoryView({
                 font-size: 1.65rem;
                 line-height: 1.75;
               }
+@media (width > 1512px) { @container (max-width: 72rem) {
+                font-size: 1.65rem;
+                line-height: 1.75;
+              } }
               p {
                 margin: 0 0 1.6rem;
                 overflow-wrap: anywhere;
@@ -414,9 +434,15 @@ export default function StoryView({
               @container (max-width: 900px) {
                 column-count: 2;
               }
+@media (width > 1512px) { @container (max-width: 90rem) {
+                column-count: 2;
+              } }
               @container (max-width: 520px) {
                 column-count: 1;
               }
+@media (width > 1512px) { @container (max-width: 52rem) {
+                column-count: 1;
+              } }
             `}
           >
             {photos.map((item, index) => (
@@ -438,6 +464,9 @@ export default function StoryView({
                   @container (max-width: 520px) {
                     transform: none;
                   }
+@media (width > 1512px) { @container (max-width: 52rem) {
+                    transform: none;
+                  } }
                   @media (prefers-reduced-motion: reduce) {
                     transition: none;
                   }
@@ -637,6 +666,9 @@ function Section({
         @container (max-width: 720px) {
           padding: 3.4rem 1.6rem 0;
         }
+@media (width > 1512px) { @container (max-width: 72rem) {
+          padding: 3.4rem 1.6rem 0;
+        } }
         @media (prefers-reduced-motion: reduce) {
           animation: none;
         }
@@ -657,6 +689,10 @@ function Section({
             font-size: 2.1rem;
             margin-bottom: 2rem;
           }
+@media (width > 1512px) { @container (max-width: 72rem) {
+            font-size: 2.1rem;
+            margin-bottom: 2rem;
+          } }
         `}
       >
         <span
@@ -718,6 +754,9 @@ function CrewRow({ people, isSample }: { people: StoryPerson[]; isSample: boolea
           @container (max-width: 720px) {
             display: none;
           }
+@media (width > 1512px) { @container (max-width: 72rem) {
+            display: none;
+          } }
         `}
       >
         {hangers.map((x, i) => {
@@ -771,6 +810,11 @@ function CrewRow({ people, isSample }: { people: StoryPerson[]; isSample: boolea
             padding-top: 0;
             gap: 1.2rem;
           }
+@media (width > 1512px) { @container (max-width: 72rem) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            padding-top: 0;
+            gap: 1.2rem;
+          } }
         `}
       >
         {people.map((person, index) => (
@@ -915,6 +959,10 @@ function CallToAction({ isSample }: { isSample: boolean }) {
           margin: 4rem 1.2rem 2rem;
           padding: 3rem 1.8rem;
         }
+@media (width > 1512px) { @container (max-width: 72rem) {
+          margin: 4rem 1.2rem 2rem;
+          padding: 3rem 1.8rem;
+        } }
       `}
     >
       <svg
@@ -954,6 +1002,9 @@ function CallToAction({ isSample }: { isSample: boolean }) {
           @container (max-width: 720px) {
             font-size: 2.3rem;
           }
+@media (width > 1512px) { @container (max-width: 72rem) {
+            font-size: 2.3rem;
+          } }
         `}
       >
         Build a bridge of your own

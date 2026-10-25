@@ -90,7 +90,7 @@ export default function Input({
         : ''};
       @media (max-width: ${mobileMaxWidth}) {
         line-height: 1.6;
-        font-size: 16px;
+        font-size: calc(16 * var(--px));
       }
     `}`;
   }, [className, isHighlighted, hasError]);

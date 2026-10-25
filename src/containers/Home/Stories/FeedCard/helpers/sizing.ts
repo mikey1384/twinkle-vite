@@ -44,6 +44,7 @@ export type FeedCardSize =
   | 'profile'
   | 'reflection'
   | 'reflection-tall'
+  | 'reflection-picture'
   | 'reflection-tight'
   | 'rich-image-compact'
   | 'rich-embed'
@@ -195,6 +196,8 @@ const PANEL_HEIGHT_REM: Record<
   profile: { desktop: 24, mobile: 23 },
   reflection: { desktop: 27, mobile: 27 },
   'reflection-tall': { desktop: 34, mobile: 32 },
+  // Picture Day: a square picture beside (desktop) or above (phone) the words
+  'reflection-picture': { desktop: 30, mobile: 42 },
   'reflection-tight': { desktop: 22, mobile: 21 },
   'rich-image-compact': { desktop: 20, mobile: 15.5 },
   'rich-embed': { desktop: 27, mobile: 25 },
@@ -1219,7 +1222,8 @@ function getFeedCardFrameSize({
   if (
     mainSize === 'reflection' ||
     mainSize === 'reflection-tight' ||
-    mainSize === 'reflection-tall'
+    mainSize === 'reflection-tall' ||
+    mainSize === 'reflection-picture'
   ) {
     return 'reflection-card';
   }
@@ -1924,6 +1928,7 @@ function getPlainTextPanelSize(content: any): FeedCardSize {
 }
 
 function getReflectionPanelSize(content: any): FeedCardSize {
+  if (content?.picturePath) return 'reflection-picture';
   const answerLength = String(
     content?.answer ||
       content?.reflection ||

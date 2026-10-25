@@ -11,7 +11,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { chatTextClass } from '../../typography';
 
-const dialogActionStyle = { minHeight: 44, fontSize: '14px', color: '#334155' };
+const dialogActionStyle = { minHeight: 44, fontSize: 'calc(14 * var(--px))', color: '#334155' };
 
 export default function SubjectMsgsModal({
   displayedThemeColor = '',
@@ -117,7 +117,7 @@ export default function SubjectMsgsModal({
             <Loading
               text="Loading topic messages"
               theme={displayedThemeColor || profileTheme}
-              innerStyle={{ fontSize: '14px' }}
+              innerStyle={{ fontSize: 'calc(14 * var(--px))' }}
             />
           )}
           {requestError && (

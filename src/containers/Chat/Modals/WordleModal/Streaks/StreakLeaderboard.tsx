@@ -92,7 +92,7 @@ export default function StreakLeaderboard({
           width: '100%',
           padding: '16px',
           textAlign: 'center',
-          fontSize: '16px',
+          fontSize: 'calc(16 * var(--px))',
           lineHeight: 1.5,
           overflow: 'auto'
         }}
@@ -102,7 +102,7 @@ export default function StreakLeaderboard({
         </p>
         <Button
           onClick={() => setAttempt((value) => value + 1)}
-          style={{ minHeight: '44px', fontSize: '14px', marginTop: '12px' }}
+          style={{ minHeight: '44px', fontSize: 'calc(14 * var(--px))', marginTop: '12px' }}
         >
           Try again
         </Button>
@@ -114,7 +114,7 @@ export default function StreakLeaderboard({
         role="status"
         style={{
           padding: '16px',
-          fontSize: '16px',
+          fontSize: 'calc(16 * var(--px))',
           lineHeight: 1.5,
           textAlign: 'center'
         }}

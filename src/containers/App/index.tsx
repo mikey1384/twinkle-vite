@@ -42,6 +42,7 @@ import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
 import { relayChatMessage } from '~/helpers/chatMessageSend';
+import { uiScale } from '~/helpers/uiScale';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import {
   clearAnalyticsUser,
@@ -1711,8 +1712,8 @@ export default function App() {
           <Suspense fallback={null}>
             <AICallWindow
               initialPosition={{
-                x: Math.max(0, window.innerWidth - 520),
-                y: 70
+                x: Math.max(0, window.innerWidth - 520 * uiScale()),
+                y: 70 * uiScale()
               }}
             />
           </Suspense>

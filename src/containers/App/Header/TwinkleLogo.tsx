@@ -1,14 +1,17 @@
 import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { isLumineHost } from '~/constants/siteBrand';
+import { useRootTheme } from '~/theme/RootThemeProvider';
 
 export default function TwinkleLogo({
   style
 }: {
   style?: React.CSSProperties;
 }) {
+  const { themeName } = useRootTheme();
+  const isPlatinum = themeName === 'platinum' && !isLumineHost;
   const logoTwinRole = useRoleColor('logoTwin', { fallback: 'logoBlue' });
   const logoKleRole = useRoleColor('logoKle', { fallback: 'logoGreen' });
   const twinColor = useMemo(
@@ -38,56 +41,59 @@ export default function TwinkleLogo({
           const appElement = document.getElementById('App');
           if (appElement) appElement.scrollTop = 0;
         }}
-        className={css`
-          font-size: 2rem;
-          font-weight: bold;
-          font-family: 'Ubuntu', sans-serif;
-          line-height: 0.9;
-          letter-spacing: -0.02em;
-          color: ${Color.gray()};
-          transition: all 0.2s ease-in-out;
+        className={cx(
+          css`
+            font-size: 2rem;
+            font-weight: bold;
+            font-family: 'Ubuntu', sans-serif;
+            line-height: 0.9;
+            letter-spacing: -0.02em;
+            color: ${Color.gray()};
+            transition: all 0.2s ease-in-out;
 
-          &:hover {
-            transform: scale(1.03);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.12);
-          }
+            &:hover {
+              transform: scale(1.03);
+              text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.12);
+            }
 
-          > .logo {
-            line-height: 1;
-            display: inline-block;
-          }
-          > .logo-twin {
-            color: ${twinColor};
-          }
-          > .logo-kle {
-            color: ${kleColor};
-          }
-          > .logo-spark {
-            width: 1.1rem;
-            height: 1.1rem;
-            margin-left: 0.15rem;
-            vertical-align: top;
-            transform: translateY(-0.35rem);
-            color: ${Color.gold()};
-            animation: lumineSparkTwinkle 2.6s ease-in-out infinite;
-          }
-          @keyframes lumineSparkTwinkle {
-            0%,
-            100% {
-              opacity: 0.75;
-              transform: translateY(-0.35rem) scale(0.85) rotate(0deg);
+            > .logo {
+              line-height: 1;
+              display: inline-block;
             }
-            50% {
-              opacity: 1;
-              transform: translateY(-0.35rem) scale(1.15) rotate(18deg);
+            > .logo-twin {
+              color: ${twinColor};
             }
-          }
-          @media (prefers-reduced-motion: reduce) {
+            > .logo-kle {
+              color: ${kleColor};
+            }
             > .logo-spark {
-              animation: none;
+              width: 1.1rem;
+              height: 1.1rem;
+              margin-left: 0.15rem;
+              vertical-align: top;
+              transform: translateY(-0.35rem);
+              color: ${Color.gold()};
+              animation: lumineSparkTwinkle 2.6s ease-in-out infinite;
             }
-          }
-        `}
+            @keyframes lumineSparkTwinkle {
+              0%,
+              100% {
+                opacity: 0.75;
+                transform: translateY(-0.35rem) scale(0.85) rotate(0deg);
+              }
+              50% {
+                opacity: 1;
+                transform: translateY(-0.35rem) scale(1.15) rotate(18deg);
+              }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              > .logo-spark {
+                animation: none;
+              }
+            }
+          `,
+          isPlatinum && platinumLogoClass
+        )}
       >
         {isLumineHost ? (
           <>
@@ -111,3 +117,57 @@ export default function TwinkleLogo({
     </div>
   );
 }
+
+// Platinum (100M XP): the brand's own blue and green, finished like polished
+// metal: each half shades between a deep tone and a bright highlight through
+// the brand colour, with a fine engraved edge. A light crosses once on hover;
+// the logo never loops on its own.
+const platinumLogoClass = css`
+  > .logo-twin,
+  > .logo-kle {
+    background-size: 220% 100%;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7))
+      drop-shadow(0 -0.5px 0 rgba(15, 30, 60, 0.3));
+    transition: background-position 900ms cubic-bezier(0.45, 0.05, 0.25, 1);
+  }
+  > .logo-twin {
+    background-image: linear-gradient(
+      100deg,
+      #1f5fb8 0%,
+      ${Color.logoBlue()} 30%,
+      #a9cdfa 46%,
+      ${Color.logoBlue()} 58%,
+      #1b4f9c 100%
+    );
+  }
+  /* "kle" runs the other way at rest: deep at the k, light at the e, so the
+     two dark ends meet in the middle of the word */
+  > .logo-kle {
+    background-image: linear-gradient(
+      100deg,
+      #c4f5c5 0%,
+      ${Color.logoGreen()} 22%,
+      #2a8a31 46%,
+      ${Color.logoGreen()} 74%,
+      #a6eea8 100%
+    );
+  }
+  /* beats the base hover shadow, which smudges through metal text */
+  &&:hover {
+    text-shadow: none;
+  }
+  &:hover > .logo-twin,
+  &:hover > .logo-kle {
+    background-position: 0 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    > .logo-twin,
+    > .logo-kle {
+      transition: none;
+    }
+  }
+`;

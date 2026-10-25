@@ -25,7 +25,7 @@ export default function TopicInput({
           placeholder="Enter Topic..."
           value={topicSearchText}
           onChange={onSetTopicSearchText}
-          style={{ minHeight: 44, fontSize: '16px' }}
+          style={{ minHeight: 44, fontSize: 'calc(16 * var(--px))' }}
         />
         <small
           id={`${inputId}-count`}
@@ -33,7 +33,7 @@ export default function TopicInput({
             display: 'block',
             marginTop: 6,
             textAlign: 'right',
-            fontSize: '12px',
+            fontSize: 'calc(12 * var(--px))',
             color: tooLong ? '#b42318' : '#526176'
           }}
         >

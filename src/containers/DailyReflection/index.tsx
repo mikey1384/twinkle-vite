@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 import { DailyQuestionContent } from '~/components/Modals/DailyQuestionModal';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
+import PictureGallery from './PictureGallery';
 import ModeChooser from './ModeChooser';
 import StatPicker from './StatPicker';
 import { PAGE } from './theme';
@@ -18,11 +19,12 @@ import { paperSecondaryButtonCls } from '~/components/Modals/DailyQuestionModal/
 // stat picked for today. One reflection per mode per day.
 
 export interface DailyReflectionModes {
-  classic: { started: boolean; answered: boolean };
+  // dayType: today's Word Day / Picture Day, so the Classic card can show it
+  classic: { started: boolean; answered: boolean; dayType?: 'keyword' | 'picture' | null };
   training: { started: boolean; answered: boolean; axis: string | null };
 }
 
-type View = 'choose' | 'classic' | 'training';
+type View = 'choose' | 'classic' | 'training' | 'pictures';
 
 export default function DailyReflectionPage() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -33,7 +35,9 @@ export default function DailyReflectionPage() {
   );
   const rawView = searchParams.get('mode');
   const view: View =
-    rawView === 'classic' || rawView === 'training' ? rawView : 'choose';
+    rawView === 'classic' || rawView === 'training' || rawView === 'pictures'
+      ? rawView
+      : 'choose';
   const [modes, setModes] = useState<DailyReflectionModes | null>(null);
   const [modesFailed, setModesFailed] = useState(false);
   const [modesRetry, setModesRetry] = useState(0);
@@ -82,7 +86,7 @@ export default function DailyReflectionPage() {
             <Icon icon="arrow-left" />
             <span>{view === 'choose' ? 'Home' : 'Daily Reflection'}</span>
           </button>
-          {view !== 'choose' && (
+          {view !== 'choose' && view !== 'pictures' && (
             <div className={modeTagCls}>
               {view === 'classic' ? 'Classic' : 'Training'}
             </div>
@@ -90,7 +94,15 @@ export default function DailyReflectionPage() {
         </div>
 
         <main className={stageCls}>
-          {view === 'choose' && <ModeChooser modes={modes} onPick={openMode} />}
+          {view === 'choose' && (
+            <ModeChooser
+              modes={modes}
+              onPick={openMode}
+              onOpenPictures={() => setSearchParams({ mode: 'pictures' })}
+            />
+          )}
+
+          {view === 'pictures' && <PictureGallery />}
 
           {view === 'training' && !showTrainingPanel && modes && (
             <StatPicker onPick={(axis) => setPickedAxis(axis)} />
@@ -175,7 +187,7 @@ const stageCls = css`
 
 const topBarCls = css`
   width: 100%;
-  max-width: 1100px;
+  max-width: calc(1100 * var(--px));
   margin: 0 auto 1.2rem;
   display: flex;
   align-items: center;
@@ -209,7 +221,7 @@ const modeTagCls = css`
 
 const panelWrapCls = css`
   width: 100%;
-  max-width: 820px;
+  max-width: calc(820 * var(--px));
   margin: 0 auto;
   background: ${PAGE.paper};
   border: 1px solid ${PAGE.line};

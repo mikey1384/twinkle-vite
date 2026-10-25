@@ -53,7 +53,7 @@ export default function Search({
   return (
     <div style={{ width: '100%', position: 'relative', minHeight: '10rem' }}>
       {!searched ? (
-        <Loading text="Searching topics" innerStyle={{ fontSize: '14px' }} style={{ minHeight: 120 }} />
+        <Loading text="Searching topics" innerStyle={{ fontSize: 'calc(14 * var(--px))' }} style={{ minHeight: 120 }} />
       ) : searchError ? (
         <TopicRequestStatus message="Couldn't search topics. Please try again." onRetry={onRetry} />
       ) : (

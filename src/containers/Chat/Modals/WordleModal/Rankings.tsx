@@ -75,11 +75,11 @@ export default function Rankings({
   return loading ? (
     <Loading className={containerClass} />
   ) : error ? (
-    <div className={containerClass} role="alert" style={{ fontSize: 16 }}>
+    <div className={containerClass} role="alert" style={{ fontSize: 'calc(16 * var(--px))' }}>
       <p>Could not load Top Scorers.</p>
       <Button
         variant="ghost"
-        style={{ minHeight: 44, fontSize: 14 }}
+        style={{ minHeight: 44, fontSize: 'calc(14 * var(--px))' }}
         onClick={retry}
       >
         Try again
@@ -123,7 +123,7 @@ export default function Rankings({
         mobilePadding={`${mobilePaddingTop} 0.75rem 3rem`}
       >
         {!users.length && (
-          <p role="status" style={{ fontSize: 16 }}>
+          <p role="status" style={{ fontSize: 'calc(16 * var(--px))' }}>
             No scores yet.
           </p>
         )}

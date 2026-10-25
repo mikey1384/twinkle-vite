@@ -264,7 +264,7 @@ export default function GeneratedImageDisplay({
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
-                font-size: 14px;
+                font-size: calc(14 * var(--px));
                 font-weight: bold;
                 color: #666;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

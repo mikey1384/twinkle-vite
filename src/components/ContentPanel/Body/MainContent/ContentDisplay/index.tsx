@@ -1,5 +1,6 @@
 import React from 'react';
 import ContentEditor from '../../ContentEditor';
+import DailyReflectionPicture from '~/components/DailyReflectionPicture';
 import Content from './Content';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext } from '~/contexts';
@@ -92,7 +93,17 @@ export default function ContentDisplay({
         }}
       >
         {isEditing ? (
-          <ContentEditor
+          <>
+            {contentType === 'dailyReflection' && contentObj?.picturePath ? (
+              // a Picture Day's picture stays in view while its words are edited
+              <DailyReflectionPicture
+                alt={description}
+                picturePath={contentObj.picturePath}
+                pictureStyle={contentObj.pictureStyle}
+                style={{ marginBottom: '1rem' }}
+              />
+            ) : null}
+            <ContentEditor
             comment={content}
             content={displayedContent}
             contentId={contentId}
@@ -109,9 +120,10 @@ export default function ContentDisplay({
                   ? '1rem'
                   : 0
             }}
-            title={title}
-            contentType={contentType}
-          />
+              title={title}
+              contentType={contentType}
+            />
+          </>
         ) : (
           <Content
             audioPath={audioPath}

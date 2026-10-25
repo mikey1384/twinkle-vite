@@ -159,7 +159,7 @@ function TopicItem({
           {currentTopicId === id && !hideCurrentLabel && (
             <b
               style={{
-                fontSize: '14px',
+                fontSize: 'calc(14 * var(--px))',
                 color: '#334155'
               }}
             >
@@ -172,7 +172,7 @@ function TopicItem({
           <div className={chatTopicMetadataClass}>
             <UsernameText
               color="#526176"
-              textStyle={{ fontSize: '14px', fontWeight: 600 }}
+              textStyle={{ fontSize: 'calc(14 * var(--px))', fontWeight: 600 }}
               user={{
                 id: userId,
                 username: username
@@ -258,7 +258,7 @@ function TopicItem({
         )}
       </div>
       {actionError && (
-        <p role="alert" style={{ gridColumn: '1 / -1', margin: 0, fontSize: '14px', color: '#b42318' }}>
+        <p role="alert" style={{ gridColumn: '1 / -1', margin: 0, fontSize: 'calc(14 * var(--px))', color: '#b42318' }}>
           {actionError}
         </p>
       )}

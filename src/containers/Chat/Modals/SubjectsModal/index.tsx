@@ -90,9 +90,9 @@ export default function SubjectsModal({
         </Button>
       }
     >
-      <div style={{ width: '100%', fontSize: '16px', ...chatTopicThemeStyle(displayedThemeColor) }}>
+      <div style={{ width: '100%', fontSize: 'calc(16 * var(--px))', ...chatTopicThemeStyle(displayedThemeColor) }}>
         {loadError && <TopicRequestStatus message="Couldn't load topics. Please try again." onRetry={() => setRetryCount(count => count + 1)} />}
-        {!loaded && !loadError && <Loading text="Loading topics" innerStyle={{ fontSize: '14px' }} />}
+        {!loaded && !loadError && <Loading text="Loading topics" innerStyle={{ fontSize: 'calc(14 * var(--px))' }} />}
         {loaded && mySubjects.subjects.length > 0 && (
           <div style={{ width: '100%' }}>
             <h3 className={chatTopicSectionClass}>

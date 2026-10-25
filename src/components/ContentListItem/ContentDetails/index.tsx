@@ -109,6 +109,8 @@ export default function ContentDetails({
       {contentType === 'dailyReflection' && (
         <DailyReflectionDetails
           description={description}
+          // a reflection's only thumb is its Picture Day picture
+          isPictureDay={!!thumbUrl}
           question={question}
           uploader={uploader}
         />

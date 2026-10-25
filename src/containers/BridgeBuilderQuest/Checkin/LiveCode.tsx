@@ -140,15 +140,24 @@ export default function LiveCode({
           background: #fff;
           border: 1px solid var(--ui-border);
           box-shadow: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.08);
-          width: ${size + 28}px;
-          height: ${size + 28}px;
+          width: calc(${size + 28} * var(--px));
+          height: calc(${size + 28} * var(--px));
           display: flex;
           align-items: center;
           justify-content: center;
         `}
       >
         {code ? (
-          <QRCodeSVG value={code.url} size={size} level="M" />
+          <QRCodeSVG
+            value={code.url}
+            size={size}
+            level="M"
+            // drawn in design pixels: bigger on big screens (styles.css --px)
+            style={{
+              width: `calc(${size} * var(--px))`,
+              height: `calc(${size} * var(--px))`
+            }}
+          />
         ) : (
           <Loading />
         )}
@@ -157,7 +166,7 @@ export default function LiveCode({
         <div
           aria-hidden
           className={css`
-            width: ${size}px;
+            width: calc(${size} * var(--px));
             height: 0.4rem;
             border-radius: 1rem;
             background: ${Color.logoBlue(0.15)};

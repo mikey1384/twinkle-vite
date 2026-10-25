@@ -188,7 +188,7 @@ export default function InputSection({
               }
 
               @media (max-width: 768px) {
-                font-size: 16px;
+                font-size: calc(16 * var(--px));
                 line-height: 1.6;
               }
             `}

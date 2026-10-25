@@ -16,9 +16,11 @@ import {
 
 function Feed({
   feed,
+  eager = false,
   onWordMasterBreak
 }: {
   feed: any;
+  eager?: boolean;
   onWordMasterBreak?: (status: any) => void;
 }) {
   const {
@@ -65,7 +67,13 @@ function Feed({
     return moment.unix(timeStamp).format('lll');
   }, [timeStamp]);
 
-  const feedShown = useMemo(() => inView || isVisible, [inView, isVisible]);
+  // The newest cards are what's on screen when Word Master opens; they render
+  // in full from the first frame instead of opening from a placeholder on
+  // screen (the iPhone drift, same as the 10-04 /users jank).
+  const feedShown = useMemo(
+    () => eager || inView || isVisible,
+    [eager, inView, isVisible]
+  );
   const componentHeight = useMemo(
     () => placeholderHeight || '60px',
     [placeholderHeight]

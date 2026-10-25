@@ -3602,6 +3602,86 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // Picture Day (10-24): paint one picture from the member's description.
+    // The first at default settings is on the site; the rest use AI Battery.
+    async generateDailyPicture({
+      prompt,
+      style,
+      quality,
+      requestId
+    }: {
+      prompt: string;
+      style: string;
+      quality?: string;
+      requestId?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/picture`,
+          { prompt, style, quality, requestId },
+          { ...auth(), timeout: 330000, meta: { enforceTimeout: false } }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Today's pictures as stored: after a failed or dropped generation the
+    // server may still have finished (and charged) it
+    async loadDailyPicture() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/daily-question/picture`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // The member's own Picture Day pictures, newest day first (private)
+    async loadMyPictures({
+      before,
+      limit
+    }: { before?: number | null; limit?: number } = {}) {
+      try {
+        const params = new URLSearchParams();
+        if (before) params.set('before', String(before));
+        if (limit) params.set('limit', String(limit));
+        const { data } = await request.get(
+          `${URL}/content/daily-question/pictures?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Picture Day is finished with the picture the member chose (or words
+    // alone: picturePath '')
+    async submitDailyPicture({
+      questionId,
+      response,
+      picturePath,
+      clientRequestId
+    }: {
+      questionId: number;
+      response: string;
+      picturePath: string;
+      clientRequestId: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/response`,
+          { questionId, response, picturePath, clientRequestId },
+          { ...auth(), timeout: 180000, meta: { enforceTimeout: false } }
+        );
+        if (data && !data.error) trackEvent('daily_reflection_submit', { grade: 'Picture' });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadDailyReflectionModes() {
       try {
         const { data } = await request.get(

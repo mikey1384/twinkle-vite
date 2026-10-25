@@ -127,7 +127,7 @@ test('load-more failure keeps messages, stops loading, and retries the same cano
   app.requests[0].resolve({ messages: [{ id: 2, content: 'Recent message' }], loadMoreButtonShown: true });
   await settle(); app.render();
   assert.deepEqual(app.button('Load earlier messages').style,
-    { minHeight: 44, fontSize: '14px', color: '#334155' });
+    { minHeight: 44, fontSize: 'calc(14 * var(--px))', color: '#334155' });
   app.button('Load earlier messages').onClick(); app.render();
   assert.equal(app.button('Load earlier messages').loading, true);
   app.requests[1].reject(new Error('Local test failure')); await settle();

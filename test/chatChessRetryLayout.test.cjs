@@ -13,10 +13,10 @@ test('retry request reserves layout space, wraps long names and keeps distinct s
     assert.equal(tree.props.style.boxSizing, 'border-box');
     const title = nodes(tree, n => n.type === 'p')[0];
     assert.equal(title.props.style.overflowWrap, 'anywhere');
-    assert.equal(title.props.style.fontSize, 16);
+    assert.equal(title.props.style.fontSize, 'calc(16 * var(--px))');
     const buttons = nodes(tree, n => n.type === Button);
     assert.deepEqual(buttons.map(n => n.props['aria-label']), isMyMessage ? ['Cancel chess retry request'] : ['Accept chess retry request', 'Decline chess retry request']);
-    assert.ok(buttons.every(n => n.props.style.minHeight === 44 && n.props.style.fontSize === 14));
+    assert.ok(buttons.every(n => n.props.style.minHeight === 44 && n.props.style.fontSize === 'calc(14 * var(--px))'));
     d.dispose();
   }
 });

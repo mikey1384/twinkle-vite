@@ -81,7 +81,7 @@ export default function EmailsReviewPage() {
       <div
         className={css`
           width: 100%;
-          max-width: 760px;
+          max-width: calc(760 * var(--px));
           margin: 0 auto;
           padding: 1.6rem 16px 12rem;
           font-size: 1.5rem;

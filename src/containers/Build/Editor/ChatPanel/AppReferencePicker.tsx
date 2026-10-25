@@ -451,7 +451,7 @@ const pickerClass = css`
       font-size: 1.6rem;
     }
     input {
-      font-size: 16px;
+      font-size: calc(16 * var(--px));
     }
     .app-reference-row {
       padding: 1.1rem;

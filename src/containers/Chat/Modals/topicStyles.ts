@@ -62,10 +62,10 @@ export const chatTopicMetadataClass = css`
   gap: 4px 8px;
   margin-top: 4px;
   color: #526176;
-  font-size: 14px;
+  font-size: calc(14 * var(--px));
   line-height: 1.5;
   small {
-    font-size: 12px;
+    font-size: calc(12 * var(--px));
   }
 `;
 
@@ -75,7 +75,7 @@ export const chatTopicActionsClass = css`
   justify-content: flex-end;
   align-items: center;
   gap: 6px;
-  max-width: 280px;
+  max-width: calc(280 * var(--px));
   min-width: 0;
   > button {
     border: 0;
@@ -92,26 +92,26 @@ export const chatTopicActionsClass = css`
 export const chatTopicActionStyle = {
   minHeight: 44,
   minWidth: 44,
-  fontSize: '14px',
+  fontSize: 'calc(14 * var(--px))',
   color: '#334155'
 };
 
 export const chatTopicSectionClass = css`
   margin: 24px 0 4px;
   color: #64748b;
-  font-size: 14px;
+  font-size: calc(14 * var(--px));
   font-weight: 600;
   line-height: 1.5;
 `;
 
 export const chatTopicModalClass = css`
   > div:first-child > div {
-    font-size: 18px;
+    font-size: calc(18 * var(--px));
   }
   button[aria-label='Close modal'] {
     width: 44px;
     height: 44px;
-    font-size: 16px;
+    font-size: calc(16 * var(--px));
     color: #334155;
   }
 `;

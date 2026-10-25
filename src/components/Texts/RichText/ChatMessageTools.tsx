@@ -24,11 +24,11 @@ export default function ChatMessageTools({ text, contentKey, voice, audioShown }
     <div role="group" aria-label="Message reading tools" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', gap: 6, flexWrap: 'wrap', minWidth: 0, marginTop: 8 }}>
       <Button aria-label={copyStatus === 'copied' ? 'Message copied' : 'Copy message'}
         variant="soft" tone="raised" color="darkerGray" onClick={handleCopy}
-        style={{ minHeight: 44, minWidth: 44, padding: 10, borderRadius: 12, flexShrink: 0, fontSize: 14 }}>
+        style={{ minHeight: 44, minWidth: 44, padding: 10, borderRadius: 12, flexShrink: 0, fontSize: 'calc(14 * var(--px))' }}>
         <Icon icon={copyStatus === 'copied' ? 'check' : 'copy'} />
       </Button>
       {audioShown && <AIAudioButton chat text={text} contentKey={contentKey} voice={voice} />}
-      {copyStatus === 'failed' && <span role="alert" style={{ flexBasis: '100%', fontSize: 13, lineHeight: 1.5, color: '#9f2737', textAlign: 'right' }}>Could not copy this message. Please try again.</span>}
+      {copyStatus === 'failed' && <span role="alert" style={{ flexBasis: '100%', fontSize: 'calc(13 * var(--px))', lineHeight: 1.5, color: '#9f2737', textAlign: 'right' }}>Could not copy this message. Please try again.</span>}
     </div>
   );
 

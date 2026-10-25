@@ -23,12 +23,12 @@ function CopyButton({
         align-items: center;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica,
           Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-        font-size: 12px;
+        font-size: calc(12 * var(--px));
         &:hover {
           background: rgba(149, 157, 165, 0.3);
         }
         @media (max-width: 600px) {
-          font-size: 10px;
+          font-size: calc(10 * var(--px));
           padding: 3px 6px;
         }
       `}

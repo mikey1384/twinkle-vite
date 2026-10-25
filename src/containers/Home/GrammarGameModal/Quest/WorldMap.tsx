@@ -1792,7 +1792,7 @@ const onBadgeCls = css`
   justify-content: center;
   width: 16px;
   height: 16px;
-  font-size: 9px;
+  font-size: calc(9 * var(--px));
   line-height: 1;
   color: ${INK};
   pointer-events: none;
@@ -1941,7 +1941,7 @@ const smallTitleCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     && {
       margin: 0;
-      font-size: 10px;
+      font-size: calc(10 * var(--px));
       line-height: 1.2;
       white-space: normal;
       display: -webkit-box;

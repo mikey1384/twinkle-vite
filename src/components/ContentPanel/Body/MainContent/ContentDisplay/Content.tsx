@@ -4,6 +4,7 @@ import BountyContent from '~/components/BountyContent';
 import React, { useMemo, useState } from 'react';
 import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
 import { borderRadius, Color } from '~/constants/css';
+import DailyReflectionPicture from '~/components/DailyReflectionPicture';
 import {
   cardLevelHash,
   CIEL_TWINKLE_ID,
@@ -529,7 +530,15 @@ export default function Content({
       case 'dailyReflection':
         return (
           <div style={{ width: '100%' }}>
-            {contentObj?.question && (
+            {contentObj?.picturePath ? (
+              // Picture Day (10-24): the picture leads; the description follows
+              <DailyReflectionPicture
+                alt={description}
+                picturePath={contentObj.picturePath}
+                pictureStyle={contentObj.pictureStyle}
+                style={{ marginBottom: '1rem' }}
+              />
+            ) : contentObj?.question && (
               <div
                 style={{
                   marginBottom: '1rem',

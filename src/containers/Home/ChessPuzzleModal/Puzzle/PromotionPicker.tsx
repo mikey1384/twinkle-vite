@@ -77,7 +77,7 @@ export default function PromotionPicker({
           padding: 2.5rem;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
           text-align: center;
-          max-width: 360px;
+          max-width: calc(360 * var(--px));
           width: 90%;
           animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 

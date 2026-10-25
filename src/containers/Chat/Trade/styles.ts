@@ -16,7 +16,7 @@ export const footerActionsClass = css`
   }
   @media (max-width: ${mobileMaxWidth}) {
     > button {
-      font-size: 14px;
+      font-size: calc(14 * var(--px));
     }
   }
 `;

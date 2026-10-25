@@ -179,7 +179,7 @@ const popoverClass = css`
   z-index: 5000;
 `;
 const panelClass = css`
-  width: 224px;
+  width: calc(224 * var(--px));
   overflow-y: auto;
   overscroll-behavior: contain;
   box-sizing: border-box;
@@ -201,7 +201,7 @@ const headerClass = css`
   min-height: 36px;
   padding: 0 10px;
   }
-  h3 { margin: 0; font-size: 13px; line-height: 1.4; font-weight: 600; }
+  h3 { margin: 0; font-size: calc(13 * var(--px)); line-height: 1.4; font-weight: 600; }
   h3:focus { outline: none; }
 `;
 const gridClass = css`
@@ -238,7 +238,7 @@ const orderClass = css`
   border-radius: 5px;
   background: #334155;
   color: white;
-  font-size: 10px;
+  font-size: calc(10 * var(--px));
   line-height: 1;
   font-weight: 700;
 `;
@@ -246,7 +246,7 @@ const helpClass = css`
   && {
   margin: 0;
   padding: 0 10px 10px;
-  font-size: 12px;
+  font-size: calc(12 * var(--px));
   line-height: 1.45;
   color: #526176;
   }
@@ -266,7 +266,7 @@ const textButtonClass = css`
   color: #334155;
   padding: 6px;
   font: inherit;
-  font-size: 12px;
+  font-size: calc(12 * var(--px));
   font-weight: 600;
   line-height: 1.4;
   cursor: pointer;
@@ -278,7 +278,7 @@ const backClass = css`
   flex-shrink: 0;
   width: 44px;
   margin-left: -8px;
-  font-size: 20px;
+  font-size: calc(20 * var(--px));
 `;
 const saveClass = css`
   ${textButtonClass};
@@ -292,7 +292,7 @@ const countClass = css`
   && {
   margin: 0;
   padding: 4px 6px;
-  font-size: 12px;
+  font-size: calc(12 * var(--px));
   line-height: 1.4;
   color: #526176;
   }

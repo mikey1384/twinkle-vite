@@ -18,9 +18,9 @@ function CodeBlockPlaceholder({ height }: CodeBlockPlaceholderProps) {
         color: #6a737d;
         font-family: 'Fira Code', 'Source Code Pro', Menlo, Monaco, Consolas,
           'Courier New', monospace;
-        font-size: 14px;
+        font-size: calc(14 * var(--px));
         @media (max-width: 600px) {
-          font-size: 11px;
+          font-size: calc(11 * var(--px));
         }
       `}
       style={{ height: `${height}px` }}

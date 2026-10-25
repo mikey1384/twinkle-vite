@@ -144,7 +144,7 @@ test('chat-only scroll controls have readable type, 44px targets and a visible f
   for (const rule of [
     'min-width: 44px',
     'min-height: 44px',
-    'font-size: 14px',
+    'font-size: calc(14 * var(--px))',
     ':focus-visible',
     'outline: 2px solid #273449',
     'max-width: calc(100% - 24px)'

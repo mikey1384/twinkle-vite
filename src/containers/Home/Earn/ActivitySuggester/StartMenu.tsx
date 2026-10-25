@@ -80,7 +80,7 @@ export default function StartMenu() {
 
 const gridClass = css`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(calc(190 * var(--px)), 1fr));
   gap: 1.2rem;
   width: 100%;
   @media (max-width: ${mobileMaxWidth}) {

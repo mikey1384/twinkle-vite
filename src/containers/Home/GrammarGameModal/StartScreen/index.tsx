@@ -566,7 +566,7 @@ export default function StartScreen({
               <div
                 className={css`
                   width: 60%;
-                  max-width: 420px;
+                  max-width: calc(420 * var(--px));
                   height: 10px;
                   border-radius: 9999px;
                   background: rgba(8, 10, 40, 0.8);

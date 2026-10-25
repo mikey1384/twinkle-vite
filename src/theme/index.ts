@@ -42,7 +42,8 @@ export type ThemeName =
   | 'red'
   | 'darkBlue'
   | 'vantaBlack'
-  | 'gold';
+  | 'gold'
+  | 'platinum';
 
 export interface GeneralPack {
   bg: string;
@@ -333,6 +334,29 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       border: 'rgba(209, 170, 0, 1)'
     },
     page: { bg: 'rgba(255, 255, 255, 1)' }
+  },
+  // Platinum (100M XP, the final theme): cool graphite steel on silver-white.
+  platinum: {
+    general: {
+      bg: 'rgba(104, 114, 128, 1)',
+      disabledBg: 'rgba(104, 114, 128, 0.5)',
+      hoverBg: 'rgba(84, 93, 106, 1)',
+      text: 'rgba(255, 255, 255, 1)',
+      border: 'rgba(78, 87, 100, 1)',
+      disabledBorder: 'rgba(104, 114, 128, 0.5)',
+      rewardStatusBg: 'rgba(84, 93, 106, 0.55)',
+      rewardStatusGradient: 'rgba(240, 243, 247, 0.16)',
+      perfectStarColor: 'rgba(255, 215, 0, 1)'
+    },
+    chat: {
+      bg: 'rgba(232, 236, 241, 0.12)',
+      titleBg: 'rgba(232, 236, 241, 0.55)',
+      hoverBg: 'rgba(232, 236, 241, 0.25)',
+      hoverTitleBg: 'rgba(232, 236, 241, 1)',
+      text: 'rgba(40, 45, 52, 1)',
+      border: 'rgba(170, 178, 189, 1)'
+    },
+    page: { bg: 'rgba(246, 247, 249, 1)' }
   }
 };
 
@@ -354,7 +378,8 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           black: 'darkOceanBlue',
           red: 'magenta',
           darkBlue: 'armyGreen',
-          vantaBlack: 'vantaBlack'
+          vantaBlack: 'vantaBlack',
+          platinum: 'darkPlatinum'
         },
         'green'
       )
@@ -363,7 +388,12 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     alert: { color: 'gold' },
     alreadyPostedByOtherUser: { color: 'red' },
     alreadyPostedByThisUser: { color: 'blue' },
-    background: { color: pickColor({ gold: 'whiteBlueGray' }, 'whiteGray') },
+    background: {
+      color: pickColor(
+        { gold: 'whiteBlueGray', platinum: 'whiteBlueGray' },
+        'whiteGray'
+      )
+    },
     button: {
       color: pickColor({ gold: 'brownOrange', vantaBlack: 'vantaBlack' }, color)
     },
@@ -401,7 +431,8 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           red: 'redOrange',
           black: 'darkerGray',
           vantaBlack: 'black',
-          gold: 'logoBlue'
+          gold: 'logoBlue',
+          platinum: 'logoBlue'
         },
         color
       )
@@ -417,14 +448,15 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           black: 'darkOceanBlue',
           red: 'magenta',
           darkBlue: 'armyGreen',
-          vantaBlack: 'vantaBlack'
+          vantaBlack: 'vantaBlack',
+          platinum: 'darkPlatinum'
         },
         'green'
       )
     },
     cover: { color },
     coverText: {
-      color: 'white',
+      color: pickColor({ platinum: 'darkPlatinum' }, 'white'),
       shadow: pickColor({ gold: 'darkBrownOrange' }, '')
     },
     todayProgressText: {
@@ -446,10 +478,15 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     fail: { color: 'black' },
     filter: {
       color: pickColor(
-        { gold: 'darkerGray', orange: 'darkerGray', logoBlue: 'darkerGray' },
+        {
+          gold: 'darkerGray',
+          orange: 'darkerGray',
+          logoBlue: 'darkerGray',
+          platinum: 'darkPlatinum'
+        },
         color
       ),
-      opacity: pickNumber({ gold: 1, orange: 1, logoBlue: 1 }, 0.7)
+      opacity: pickNumber({ gold: 1, orange: 1, logoBlue: 1, platinum: 1 }, 0.7)
     },
     filterText: {
       color: 'white',
@@ -458,13 +495,23 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     invertedFilterActive: { color },
     filterActive: {
       color: pickColor(
-        { gold: 'darkerGray', orange: 'black', vantaBlack: 'vantaBlack' },
+        {
+          gold: 'darkerGray',
+          orange: 'black',
+          vantaBlack: 'vantaBlack',
+          platinum: 'darkPlatinum'
+        },
         color
       )
     },
     generalChat: {
       color: pickColor(
-        { black: 'darkBlue', vantaBlack: 'darkBlue', gold: 'logoBlue' },
+        {
+          black: 'darkBlue',
+          vantaBlack: 'darkBlue',
+          gold: 'logoBlue',
+          platinum: 'logoBlue'
+        },
         color
       )
     },
@@ -491,7 +538,8 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           red: 'lightRed',
           darkBlue: 'oceanBlue',
           vantaBlack: 'oceanBlue',
-          gold: 'lightOrange'
+          gold: 'lightOrange',
+          platinum: 'platinum'
         },
         'lightOceanBlue'
       )
@@ -553,7 +601,8 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           red: 'lightRed',
           darkBlue: 'lightOceanBlue',
           vantaBlack: 'black',
-          gold: 'lightOceanBlue'
+          gold: 'lightOceanBlue',
+          platinum: 'darkPlatinum'
         },
         'lightBlue'
       )
@@ -604,13 +653,14 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
         {
           black: 'darkOceanBlue',
           vantaBlack: 'darkBlue',
-          gold: 'brownOrange'
+          gold: 'brownOrange',
+          platinum: 'darkOceanBlue'
         },
         color
       )
     },
     sectionPanelText: {
-      color: pickColor({ gold: 'darkGold' }, color),
+      color: pickColor({ gold: 'darkGold', platinum: 'darkPlatinum' }, color),
       shadow: pickColor({ gold: 'darkBrownOrange' }, '')
     },
     showMeAnotherSubjectButton: { color: 'green' },
@@ -638,7 +688,8 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           orange: 'darkBrownOrange',
           rose: 'passionFruit',
           pink: 'strongPink',
-          gold: 'darkGold'
+          gold: 'darkGold',
+          platinum: 'darkPlatinum'
         },
         color
       )

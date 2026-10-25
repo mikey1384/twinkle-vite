@@ -19,7 +19,7 @@ const overlayClass = css`
   background: #172033b8;
   color: #fff;
   opacity: 0;
-  font-size: 12px;
+  font-size: calc(12 * var(--px));
   transition: opacity .15s ease;
   pointer-events: none;
   &[data-shown='true'] { opacity: 1; }

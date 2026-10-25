@@ -19,6 +19,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import installSafeHistory from './helpers/installSafeHistory';
 import { markAppScrollOwnershipTaken } from './helpers/scrollAnchorRestorationCoordinator';
 import installDomMutationGuard from './helpers/installDomMutationGuard';
+import { startPageDeathTracker } from './helpers/pageDeathTracker';
 import { registerChatPushServiceWorkerIfEnabled } from './helpers/desktopNotifications';
 import { BrowserRouter } from 'react-router-dom';
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -219,6 +220,7 @@ import { faKey } from '@fortawesome/pro-solid-svg-icons/faKey';
 import { faArrowRotateRight } from '@fortawesome/pro-solid-svg-icons/faArrowRotateRight';
 import { faHandshake } from '@fortawesome/pro-solid-svg-icons/faHandshake';
 import { faCamera } from '@fortawesome/pro-solid-svg-icons/faCamera';
+import { faArrowsAlt } from '@fortawesome/pro-solid-svg-icons/faArrowsAlt';
 import { faLocationDot } from '@fortawesome/pro-solid-svg-icons/faLocationDot';
 import { faCircleCheck } from '@fortawesome/pro-solid-svg-icons/faCircleCheck';
 import { faUserShield } from '@fortawesome/pro-solid-svg-icons/faUserShield';
@@ -268,6 +270,8 @@ declare global {
     twinkleAnalyticsEnabled: boolean;
     twinkleAnalyticsIdentityReady: boolean;
     twinkleConfigureAnalytics: () => void;
+    twinkleAnalyticsConfigured?: boolean;
+    twinkleOnAnalyticsConfigured?: () => void;
     twinkleAnalyticsUrl?: (input: string) => string;
   }
 }
@@ -471,6 +475,7 @@ library.add(
   faArrowRotateRight,
   faHandshake,
   faCamera,
+  faArrowsAlt,
   faLocationDot,
   faCircleCheck,
   faUserShield,
@@ -548,6 +553,7 @@ library.add(
     // sandboxed embeds can block history access
   }
   installDomMutationGuard();
+  startPageDeathTracker();
   registerChatPushServiceWorkerIfEnabled();
 
   const rootElement = document.getElementById('react-view');

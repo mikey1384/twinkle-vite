@@ -37,8 +37,29 @@ function runAnalyticsBootstrap({
 } = {}) {
   const appendedScripts: Array<Record<string, unknown>> = [];
   const dataLayer: unknown[] = [];
+  const listeners = new Map<string, Set<(event: unknown) => void>>();
+  const intervals: Array<{ run: () => void; cleared: boolean }> = [];
+  const documentObject: Record<string, any> = {
+    referrer,
+    visibilityState: 'visible',
+    createElement() {
+      return {};
+    },
+    head: {
+      appendChild(script: Record<string, unknown>) {
+        appendedScripts.push(script);
+      }
+    }
+  };
   const windowObject: Record<string, any> = {
     dataLayer,
+    addEventListener(type: string, listener: (event: unknown) => void) {
+      if (!listeners.has(type)) listeners.set(type, new Set());
+      listeners.get(type)!.add(listener);
+    },
+    removeEventListener(type: string, listener: (event: unknown) => void) {
+      listeners.get(type)?.delete(listener);
+    },
     localStorage: {
       getItem(key: string) {
         if (key === 'twinkle-analytics-opt-out') return optedOut ? '1' : null;
@@ -64,19 +85,28 @@ function runAnalyticsBootstrap({
     URLSearchParams,
     dataLayer,
     navigator: navigatorObject,
-    document: {
-      referrer,
-      createElement() {
-        return {};
-      },
-      head: {
-        appendChild(script: Record<string, unknown>) {
-          appendedScripts.push(script);
-        }
-      }
+    document: documentObject,
+    window: windowObject,
+    setInterval(run: () => void) {
+      const interval = { run, cleared: false };
+      intervals.push(interval);
+      return interval;
     },
-    window: windowObject
+    clearInterval(interval: { cleared: boolean }) {
+      if (interval) interval.cleared = true;
+    }
   });
+
+  function dispatch(type: string, isTrusted = true) {
+    for (const listener of [...(listeners.get(type) || [])]) {
+      listener({ type, isTrusted });
+    }
+  }
+  function passSeconds(seconds: number) {
+    for (let i = 0; i < seconds; i++) {
+      for (const interval of intervals) if (!interval.cleared) interval.run();
+    }
+  }
 
   return {
     analyticsEnabled: windowObject.twinkleAnalyticsEnabled,
@@ -84,6 +114,13 @@ function runAnalyticsBootstrap({
     appendedScripts,
     dataLayer,
     configureAnalytics: windowObject.twinkleConfigureAnalytics,
+    windowObject,
+    documentObject,
+    dispatch,
+    passSeconds,
+    configCount: () =>
+      dataLayer.filter((entry: any) => entry && entry[0] === 'config').length,
+    actLikePerson: () => dispatch('pointerdown'),
     analyticsUrl: windowObject.twinkleAnalyticsUrl as (input: string) => string
   };
 }
@@ -104,6 +141,8 @@ test('loads GA only on Twinkle public production websites', () => {
   assert.equal(production.analyticsEnabled, true);
   assert.equal(production.analyticsIdentityReady, true);
   assert.equal(production.appendedScripts.length, 1);
+  assert.equal(production.dataLayer.length, 1);
+  production.actLikePerson();
   assert.equal(production.dataLayer.length, 2);
   assert.equal(productionAlias.analyticsEnabled, true);
   assert.equal(productionAlias.appendedScripts.length, 1);
@@ -122,10 +161,62 @@ test('delays GA configuration until a cached user identity is resolved', () => {
   assert.equal(pendingIdentity.analyticsIdentityReady, false);
   assert.equal(pendingIdentity.dataLayer.length, 1);
 
+  pendingIdentity.actLikePerson();
+  assert.equal(pendingIdentity.configCount(), 0);
+
+  pendingIdentity.windowObject.twinkleAnalyticsIdentityReady = true;
   pendingIdentity.configureAnalytics();
   pendingIdentity.configureAnalytics();
 
   assert.equal(pendingIdentity.dataLayer.length, 2);
+});
+
+test('nothing reaches GA until the visitor acts like a person', () => {
+  // A bot that loads the page and leaves within seconds sends nothing.
+  const bot = runAnalyticsBootstrap();
+  bot.passSeconds(9);
+  bot.configureAnalytics();
+  assert.equal(bot.configCount(), 0);
+
+  for (const type of ['pointerdown', 'touchstart', 'keydown', 'wheel']) {
+    const person = runAnalyticsBootstrap();
+    person.dispatch(type);
+    assert.equal(person.configCount(), 1, type);
+    person.dispatch(type);
+    person.passSeconds(20);
+    assert.equal(person.configCount(), 1, `${type} configures once`);
+  }
+
+  // Scrolling by itself (the app scrolls chat) and script-made events are
+  // not a person.
+  const scripted = runAnalyticsBootstrap();
+  scripted.dispatch('scroll');
+  scripted.dispatch('pointerdown', false);
+  assert.equal(scripted.configCount(), 0);
+
+  // A reader who never touches anything counts after 10 seconds in view.
+  const reader = runAnalyticsBootstrap();
+  reader.passSeconds(10);
+  assert.equal(reader.configCount(), 1);
+
+  // Time in a background tab does not count.
+  const background = runAnalyticsBootstrap();
+  background.documentObject.visibilityState = 'hidden';
+  background.passSeconds(30);
+  assert.equal(background.configCount(), 0);
+  background.documentObject.visibilityState = 'visible';
+  background.passSeconds(10);
+  assert.equal(background.configCount(), 1);
+});
+
+test('the app sends its waiting commands once GA is configured', () => {
+  const run = runAnalyticsBootstrap();
+  let flushed = 0;
+  run.windowObject.twinkleOnAnalyticsConfigured = () => flushed++;
+  assert.equal(run.windowObject.twinkleAnalyticsConfigured, false);
+  run.actLikePerson();
+  assert.equal(run.windowObject.twinkleAnalyticsConfigured, true);
+  assert.equal(flushed, 1);
 });
 
 test('the Twinkle parent owns analytics for its embedded app frame', () => {
@@ -219,6 +310,7 @@ test('the first gtag config already uses the cleaned address and referrer', () =
     pathname: '/verify/email/abc.def.ghi',
     referrer: 'https://mail.example.com/inbox/123'
   });
+  run.actLikePerson();
   const config = run.dataLayer.find(
     (entry: any) => entry && entry[0] === 'config'
   ) as any;

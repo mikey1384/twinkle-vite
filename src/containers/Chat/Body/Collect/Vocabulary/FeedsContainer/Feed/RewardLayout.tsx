@@ -174,7 +174,7 @@ export default function RewardLayout({
           <div
             className={css`
               width: 100%;
-              max-width: 300px;
+              max-width: calc(300 * var(--px));
             `}
           >
             <AICard

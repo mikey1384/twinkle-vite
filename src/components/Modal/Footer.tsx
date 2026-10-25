@@ -22,7 +22,7 @@ export const modalFooterStyles = `
     min-width: 44px;
   }
   @media (max-width: ${mobileMaxWidth}) {
-    > button { font-size: 14px; }
+    > button { font-size: calc(14 * var(--px)); }
   }
 `;
 

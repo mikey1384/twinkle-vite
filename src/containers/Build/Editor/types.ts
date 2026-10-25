@@ -498,6 +498,17 @@ export interface BuildRuntimeUploadAsset {
   createdAt: number;
 }
 
+// One build's section in the upload manager, paged on its own.
+export interface BuildRuntimeUploadGroup {
+  buildId: number;
+  buildTitle: string | null;
+  buildSlug: string | null;
+  buildIsPublic: boolean;
+  fileCount: number;
+  assets: BuildRuntimeUploadAsset[];
+  nextCursor: number | null;
+}
+
 export interface BuildRuntimeUploadUsage {
   totalBytes: number;
   fileCount: number;

@@ -1011,6 +1011,7 @@ export const mainPreviewStyles = `
      centered SQUARE tile (mirrors the square-video treatment below) rather
      than a card stretched to the full height of the text-matched column. */
   .home-feed-card__attachment-preview--file-tile {
+    display: flex;
     align-self: center;
     aspect-ratio: 1 / 1;
     height: auto;
@@ -1018,6 +1019,39 @@ export const mainPreviewStyles = `
     border: 0;
     background: transparent;
     box-shadow: none;
+  }
+  /* A file that is the whole comment: the tile's box is full-width and
+     clamped to the panel height, so the square never fits. Safari sized the
+     card from the width instead (a 362px square clipped to a 98px box: an
+     empty rectangle on phones, 10-25); Chrome clipped the stacked icon. Show
+     the standard horizontal file row at its natural height instead. */
+  .home-feed-card__attachment-only-preview
+    > .home-feed-card__attachment-preview--file-tile {
+    aspect-ratio: auto;
+    height: auto;
+  }
+  .home-feed-card__attachment-only-preview
+    > .home-feed-card__attachment-preview--file-tile
+    .home-feed-card__attachment-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    text-align: left;
+  }
+  .home-feed-card__attachment-only-preview
+    > .home-feed-card__attachment-preview--file-tile
+    .home-feed-card__attachment-card-icon {
+    width: 3.8rem;
+    height: 3.8rem;
+    border-radius: 1rem;
+    font-size: 1.75rem;
+  }
+  .home-feed-card__attachment-only-preview
+    > .home-feed-card__attachment-preview--file-tile
+    .home-feed-card__attachment-card-copy {
+    align-items: flex-start;
+    text-align: left;
   }
   .home-feed-card__attachment-preview.home-feed-card__rich-file-embed {
     align-self: center;
@@ -1036,7 +1070,12 @@ export const mainPreviewStyles = `
     align-items: center;
     justify-content: center;
     gap: 0.85rem;
-    height: 100%;
+    /* sized by the tile's flex box, not height: 100%: Safari resolves a
+       percentage against the aspect-ratio height even when max-height has
+       clamped the tile, so the card overflowed the box it sits in */
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
     padding: 1.2rem;
     text-align: center;
   }
@@ -1199,6 +1238,93 @@ export const mainPreviewStyles = `
   .home-feed-card__shared-topic-preview {
     display: flex;
     flex-direction: column;
+  }
+  /* Picture Day: the picture leads, the member's description sits under it */
+  .home-feed-card__picture-day-preview {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 1.2rem;
+    height: 100%;
+    min-height: 0;
+    padding: 1rem;
+    color: ${Color.darkerGray()};
+  }
+  .home-feed-card__picture-day-frame {
+    height: 100%;
+    aspect-ratio: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: 0.8rem;
+    background: ${Color.whiteGray()};
+    box-shadow: inset 0 0 0 1px ${Color.white(0.72)};
+  }
+  .home-feed-card__picture-day-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: cover;
+  }
+  .home-feed-card__picture-day-caption {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+    padding-top: 0.4rem;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    .home-feed-card__picture-day-preview {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) auto;
+      align-items: stretch;
+      gap: 0.7rem;
+    }
+    .home-feed-card__picture-day-frame {
+      height: auto;
+      aspect-ratio: auto;
+    }
+    .home-feed-card__picture-day-caption {
+      padding-top: 0;
+      gap: 0.3rem;
+    }
+  }
+  .home-feed-card__picture-day-label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    color: ${Color.darkGray()};
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .home-feed-card__picture-day-label .style {
+    overflow: hidden;
+    color: ${Color.gray()};
+    font-weight: 700;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    text-transform: none;
+    white-space: nowrap;
+  }
+  .home-feed-card__picture-day-prompt {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    font-size: var(--home-feed-content-font-size);
+    line-height: 1.36;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 7;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    .home-feed-card__picture-day-prompt {
+      -webkit-line-clamp: 2;
+    }
   }
   /* Wins over the card's blanket mobile h3 rule so the prompt title keeps its
      place above the instructions text at every breakpoint. */

@@ -19,8 +19,8 @@ function luminance(color){
   const rgb=color.startsWith('#')?(color==='#fff'?[255,255,255]:[0,0,0]):color.match(/[\d.]+/g).slice(0,3).map(Number);
   return rgb.map(value=>value/255).map(value=>value<=0.04045?value/12.92:((value+0.055)/1.055)**2.4).reduce((sum,value,i)=>sum+value*[0.2126,0.7152,0.0722][i],0);
 }
-test('topic creation and cloning labels have at least 4.5:1 contrast in all 11 themes, including hover',()=>{
-  assert.equal(Object.keys(theme.themeRegistry).length,11);
+test('topic creation and cloning labels have at least 4.5:1 contrast in all 12 themes, including hover',()=>{
+  assert.equal(Object.keys(theme.themeRegistry).length,12);
   for(const [name,tokens] of Object.entries(theme.themeRegistry)){
     const vars=styles.chatTopicButtonStyle(name);
     for(const [background,key] of [[tokens.general.bg,'--chat-topic-button-text'],[tokens.general.hoverBg,'--chat-topic-button-hover-text']]){

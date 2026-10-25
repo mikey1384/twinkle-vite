@@ -67,18 +67,18 @@ export default function SwitchButton({
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
-    width: ${metrics.trackWidth}px;
-    height: ${metrics.trackHeight}px;
-    border-radius: ${metrics.trackHeight}px;
+    width: ${dp(metrics.trackWidth)};
+    height: ${dp(metrics.trackHeight)};
+    border-radius: ${dp(metrics.trackHeight)};
     transition: background 0.25s ease, box-shadow 0.25s ease;
   `;
 
   const knobClass = css`
     position: absolute;
     top: 50%;
-    left: ${isSmall ? 4 : 5}px;
-    width: ${metrics.knobSize}px;
-    height: ${metrics.knobSize}px;
+    left: ${dp(isSmall ? 4 : 5)};
+    width: ${dp(metrics.knobSize)};
+    height: ${dp(metrics.knobSize)};
     border-radius: 50%;
     background: #ffffff;
     transition: transform 0.28s cubic-bezier(0.2, 0.95, 0.48, 1),
@@ -115,8 +115,8 @@ export default function SwitchButton({
           display: inline-block;
         `}
         style={{
-          width: metrics.trackWidth,
-          height: metrics.trackHeight,
+          width: dp(metrics.trackWidth),
+          height: dp(metrics.trackHeight),
           cursor: disabled ? 'default' : 'pointer'
         }}
         onKeyDown={(event) => {
@@ -157,9 +157,9 @@ export default function SwitchButton({
           <span
             className={knobClass}
             style={{
-              transform: `translate(${
+              transform: `translate(${dp(
                 checked ? metrics.knobTranslate : 0
-              }px, -50%)`,
+              )}, -50%)`,
               boxShadow: checked
                 ? palette.active.knobShadow
                 : palette.inactive.knobShadow
@@ -169,6 +169,12 @@ export default function SwitchButton({
       </label>
     </ErrorBoundary>
   );
+}
+
+// the switch is drawn in design pixels so it grows with the page on big
+// screens (styles.css --px)
+function dp(n: number) {
+  return `calc(${n} * var(--px))`;
 }
 
 const visuallyHiddenInput = css`
@@ -202,7 +208,7 @@ function createPalette(color: string) {
         bg: color,
         shadow: '0 10px 20px -14px rgba(15, 23, 42, 0.3)',
         knobShadow: '0 6px 12px rgba(15, 23, 42, 0.16)',
-        focus: (radius: number) => `0 0 0 ${radius}px rgba(59, 130, 246, 0.45)`
+        focus: (radius: number) => `0 0 0 ${dp(radius)} rgba(59, 130, 246, 0.45)`
       },
       inactive: {
         bg: 'rgba(148, 163, 184, 0.35)',
@@ -224,7 +230,7 @@ function createPalette(color: string) {
       )} 100%)`,
       shadow: `0 12px 24px -18px ${toRgba({ ...parsed, a: 0.65 })}`,
       knobShadow: `0 10px 16px -8px ${toRgba({ ...parsed, a: 0.55 })}`,
-      focus: (radius: number) => `0 0 0 ${radius}px ${focusColor}`,
+      focus: (radius: number) => `0 0 0 ${dp(radius)} ${focusColor}`,
       hoverBg: `linear-gradient(135deg, ${toRgba(hoverLighten)} 0%, ${toRgba(
         darken
       )} 100%)`
