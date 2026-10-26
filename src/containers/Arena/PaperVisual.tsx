@@ -395,6 +395,7 @@ function PaperTable({
           ))}
         </tbody>
       </table>
+      {visual.note && <p className={noteCls}>{visual.note}</p>}
     </figure>
   );
 }
