@@ -415,6 +415,7 @@ function getSessionHeader(): Record<string, unknown> {
       version: clientVersion,
       scrollPerf: 1,
       viewportTrace: 1,
+      viewportDetail: 2,
       vw: window.innerWidth,
       vh: window.innerHeight,
       vvh: Math.round(window.visualViewport?.height || 0),
