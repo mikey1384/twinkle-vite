@@ -17,6 +17,7 @@ import {
 } from '~/helpers/aiEnergy';
 import { pollCanonicalAIImageStatus } from '~/helpers/aiImageStatus';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
+import { useAIStoryViewScroll } from '../scroll';
 
 // each level's color on the clear screen, from Arena's palette
 const colorHash: Record<number, string> = {
@@ -254,6 +255,7 @@ export default function ClearScreen({
   } | null>(null);
   const [loadingVocabSummary, setLoadingVocabSummary] = useState(false);
   const [vocabQuizShown, setVocabQuizShown] = useState(false);
+  useAIStoryViewScroll(vocabQuizShown);
   const [vocabSummaryReloadKey, setVocabSummaryReloadKey] = useState(0);
   const vocabQuizHadNoWordsRef = useRef(false);
   const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(

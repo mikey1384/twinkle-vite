@@ -34,6 +34,7 @@ import {
 } from '~/helpers/ownerTrace';
 import { useInputContext } from '~/contexts/hooks';
 import { AppNavigationTypeProvider } from '~/helpers/hooks/useAppNavigationType';
+import { NAVIGATION_BLOCKED_EVENT } from '~/helpers/navigationPopGuard';
 
 export interface ReadyNavigationLocation {
   key: string;
@@ -114,6 +115,21 @@ export function NavigationFeedbackProvider({
   const dispatchedRequestIdRef = useRef<number | null>(null);
   const requestIdRef = useRef(0);
   const pendingNavigationId = pendingNavigation?.id ?? null;
+
+  useEffect(() => {
+    function handleBlockedNavigation() {
+      requestIdRef.current += 1;
+      setPendingNavigation(null);
+      setLoadingRequestId(null);
+    }
+    window.addEventListener(NAVIGATION_BLOCKED_EVENT, handleBlockedNavigation);
+    return () => {
+      window.removeEventListener(
+        NAVIGATION_BLOCKED_EVENT,
+        handleBlockedNavigation
+      );
+    };
+  }, []);
 
   // Keep the currently rendered route mounted until canonical index.html says
   // whether this tab's entry bundle is still current. Previously App learned

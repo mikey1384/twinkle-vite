@@ -8,6 +8,7 @@ import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
 import useEasedProgress from '~/helpers/hooks/useEasedProgress';
 import Questions from './Questions';
+import { useAIStoryViewScroll } from '../../../scroll';
 
 const deviceIsMobile = isMobile(navigator);
 // Matches the API's mark for "script written, voices next".
@@ -65,6 +66,7 @@ export default function ListenSection({
   const [audioError, setAudioError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isFinished, setIsFinished] = useState(false);
+  useAIStoryViewScroll(isFinished);
   const [loadingStatus, setLoadingStatus] = useState<string>('Loading Story');
   const [dotCount, setDotCount] = useState(0);
   // Stays false against an API that doesn't report progress, so the screen
@@ -78,16 +80,24 @@ export default function ListenSection({
 
   useEffect(() => {
     if (isDisabled) return;
+    let cancelled = false;
+    let audioUrl = '';
 
     setProgressReported(false);
     resetLoadingProgress();
     loadAudio();
 
     return () => {
+      cancelled = true;
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.onended = null;
+        audioRef.current.onerror = null;
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
         audioRef.current = null;
       }
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
 
     async function loadAudio() {
@@ -102,10 +112,11 @@ export default function ListenSection({
           topicKey,
           type
         });
+        if (cancelled) return;
         onSetStoryId(storyId);
         onSetAttemptId(newAttemptId);
         onLoadQuestions(storyId);
-        const audioUrl = URL.createObjectURL(audioBlob);
+        audioUrl = URL.createObjectURL(audioBlob);
         audioRef.current = new Audio(audioUrl);
         setIsLoaded(true);
 
@@ -119,6 +130,7 @@ export default function ListenSection({
           setIsPlaying(false);
         };
       } catch (error) {
+        if (cancelled) return;
         console.error('Error loading audio:', error);
         const errorMessage =
           (error as any)?.response?.data?.error ||

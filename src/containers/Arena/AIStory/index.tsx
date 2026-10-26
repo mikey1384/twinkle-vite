@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState
+} from 'react';
 import { css, cx } from '@emotion/css';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import Icon from '~/components/Icon';
@@ -11,9 +17,12 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useNotiContext, useViewContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus, sleep } from '~/helpers';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
+import { resetAppShellScroll } from '~/helpers/appShellScroll';
 import { mobileMaxWidth } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import { ARENA } from '../theme';
+import { AIStoryScrollContext } from './scroll';
+import useStoryNavigationGuard from './useStoryNavigationGuard';
 
 interface AIStoryClearFollowUp {
   storyId: number;
@@ -32,7 +41,8 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
-  const MainRef: React.RefObject<any> = useRef(null);
+  const MainRef = useRef<HTMLDivElement>(null);
+  const clearRequestRef = useRef(0);
   const [resetNumber, setResetNumber] = useState(0);
   // bumped to remount the game fresh (Story menu from the clear screen)
   const [gameKey, setGameKey] = useState(0);
@@ -62,7 +72,6 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
   const [readCount, setReadCount] = useState(0);
   const [listenCount, setListenCount] = useState(0);
   const [questions, setQuestions] = useState<any[]>([]);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [topic, setTopic] = useState('');
   const [topicKey, setTopicKey] = useState('');
   const [clearScreenShown, setClearScreenShown] = useState(false);
@@ -73,7 +82,6 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
   const [loadingTopic, setLoadingTopic] = useState(true);
   const [topicLoadError, setTopicLoadError] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
-  const [isCloseLocked, setIsCloseLocked] = useState(false);
   const [preservingDailyTask, setPreservingDailyTask] = useState(false);
   const [unavailableActionMessage, setUnavailableActionMessage] = useState('');
   const [solveObj, setSolveObj] = useState<{
@@ -92,6 +100,29 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
   const aiStoryTask = todayStats?.dailyTaskStatus?.aiStory;
   const aiStoryTaskDone = !!aiStoryTask?.isPassed;
   const aiStoryUnavailableCleared = !!aiStoryTask?.isUnavailableCleared;
+  const navigationGuard = useStoryNavigationGuard(
+    isGameStarted && !solveObj.isGraded
+  );
+  // Stable because nested views depend on this callback for navigation only;
+  // a streamed paragraph or answer selection must never trigger a reset.
+  const resetScroll = useCallback(() => {
+    if (MainRef.current) MainRef.current.scrollTop = 0;
+    resetAppShellScroll();
+  }, []);
+
+  useLayoutEffect(() => {
+    // Desktop scrolls inside the panel; mobile lets Arena's page scroll.
+    // Reset both after the new view commits, before it can paint at the old
+    // view's offset. Answer selections and streamed text keep their position.
+    resetScroll();
+  }, [activeTab, clearScreenShown, displayedSection, isGameStarted, resetScroll]);
+
+  useLayoutEffect(() => {
+    return () => {
+      // A delayed reward view must not replace a newer story or its menu.
+      clearRequestRef.current += 1;
+    };
+  }, [storyId, isGameStarted]);
 
   useEffect(() => {
     if (AI_FEATURES_DISABLED) {
@@ -108,32 +139,6 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty, resetNumber]);
-
-  useEffect(() => {
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
-
-    function handleBeforeUnload(e: BeforeUnloadEvent) {
-      if (isGameStarted) {
-        e.preventDefault();
-        const message =
-          'You will lose your progress if you leave. Are you sure?';
-        return message;
-      }
-    }
-
-    function handlePopState(e: PopStateEvent) {
-      if (isGameStarted) {
-        e.preventDefault();
-        setShowConfirm(true);
-      }
-    }
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [isGameStarted]);
 
   return (
     <ErrorBoundary componentPath="Arena/AIStory">
@@ -154,7 +159,8 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
         <div
           style={{
             width: '100%',
-            height: '100%',
+            flex: 1,
+            minHeight: 0,
             display: 'flex',
             flexDirection: 'column'
           }}
@@ -226,7 +232,7 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
                 </Button>
               </div>
             ) : activeTab === 'game' ? (
-              <>
+              <AIStoryScrollContext.Provider value={resetScroll}>
                 {/* the clear screen is a view here, not a modal (Mikey 10-24);
                   the story stays mounted underneath so "Back to story" returns
                   to the graded questions */}
@@ -269,7 +275,6 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
                     onSetStoryId={setStoryId}
                     onSetDifficulty={setDifficulty}
                     onSetDisplayedSection={setDisplayedSection}
-                    onSetIsCloseLocked={setIsCloseLocked}
                     onSetDailyTask={setDailyTask}
                     onOpenClearScreen={handleOpenCurrentClearScreen}
                     onSetQuestions={setQuestions}
@@ -278,7 +283,6 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
                     listenCount={listenCount}
                     questions={questions}
                     storyId={storyId}
-                    MainRef={MainRef}
                     storyType={storyType}
                     topic={topic}
                     topicKey={topicKey}
@@ -286,7 +290,7 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
                     solveObj={solveObj}
                   />
                 </div>
-              </>
+              </AIStoryScrollContext.Provider>
             ) : null}
             {!AI_FEATURES_DISABLED && activeTab === 'rankings' && (
               <div
@@ -306,13 +310,13 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
             )}
           </div>
         </div>
-        {showConfirm && (
+        {navigationGuard.blocked && (
           <ConfirmModal
-            onHide={() => setShowConfirm(false)}
+            onHide={navigationGuard.cancel}
             title="Warning"
             description="If you leave the game, this story and all your related progress will be lost."
             descriptionFontSize="2rem"
-            onConfirm={handleConfirmClose}
+            onConfirm={navigationGuard.proceed}
             confirmButtonColor="red"
             confirmButtonLabel="Leave anyway"
             isReverseButtonOrder
@@ -428,13 +432,12 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
 
   async function handleOpenCurrentClearScreen(targetStoryId = storyId) {
     if (!targetStoryId) return;
+    const request = ++clearRequestRef.current;
     try {
       const story = await loadClearedStory(targetStoryId);
-      if (!story) return;
+      if (!story || request !== clearRequestRef.current) return;
       setClearScreenStory(story);
       setClearScreenShown(true);
-      // the view replaces the story in place; start it at the top
-      if (MainRef.current) MainRef.current.scrollTop = 0;
     } catch (error) {
       console.error('Failed to open AI Story rewards:', error);
     }
@@ -449,14 +452,13 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
     setQuestions([]);
     setDisplayedSection('story');
     setSolveObj({ numCorrect: 0, isGraded: false });
-    setIsCloseLocked(false);
     setIsGameStarted(false);
     setResetNumber((n) => n + 1);
     setGameKey((k) => k + 1);
-    if (MainRef.current) MainRef.current.scrollTop = 0;
   }
 
   function handleCloseClearScreen() {
+    clearRequestRef.current += 1;
     setClearScreenShown(false);
     setClearScreenStory(null);
   }
@@ -493,23 +495,10 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
 
   function handleHide() {
     if (usermenuShown) return;
-    // a story in progress is never a trap (Mikey 10-24): leaving is always
-    // allowed, with a warning that the story and its progress will be lost
-    if (isCloseLocked || (isGameStarted && !solveObj.isGraded)) {
-      setShowConfirm(true);
-    } else {
-      onHide();
-    }
-  }
-
-  function handleConfirmClose() {
-    setShowConfirm(false);
     onHide();
   }
 }
 
-// the old modal was 80vh tall; on the page the panel takes the room below the
-// back bar and scrolls inside, like the modal body did
 // Arena's paper card (Mikey 10-24: AI Story takes the Arena look)
 const panelCls = css`
   width: 100%;
@@ -525,8 +514,8 @@ const panelCls = css`
   overflow: hidden;
 `;
 
-// a story in play fills the screen and scrolls inside; the menu hugs its
-// content
+// Desktop play scrolls inside the panel; mobile uses page scrolling.
+// The menu hugs its content.
 const playingCls = css`
   height: calc(100dvh - ${APP_SHELL_HEADER_OFFSET_STYLE} - 5rem);
   min-height: 52rem;

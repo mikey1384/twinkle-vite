@@ -17,6 +17,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary';
 import installSafeHistory from './helpers/installSafeHistory';
+import { installNavigationPopGuard } from './helpers/navigationPopGuard';
 import { markAppScrollOwnershipTaken } from './helpers/scrollAnchorRestorationCoordinator';
 import installDomMutationGuard from './helpers/installDomMutationGuard';
 import { startPageDeathTracker } from './helpers/pageDeathTracker';
@@ -511,6 +512,7 @@ library.add(
   }
   await loadPolyfills();
   installSafeHistory();
+  installNavigationPopGuard();
   // The app runs its own scroll restoration (useScrollAnchorRestoration), but
   // its anchor cache is in-memory, so it can only own scroll for
   // same-document navigation. Ownership hands over at the FIRST in-app

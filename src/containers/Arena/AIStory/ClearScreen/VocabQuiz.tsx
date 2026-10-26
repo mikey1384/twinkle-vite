@@ -18,6 +18,7 @@ import {
 } from '~/components/WordMasterBadges';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import { WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE } from '~/helpers/websiteAgentPage';
+import { useAIStoryViewScroll } from '../scroll';
 
 interface QuizQuestion {
   id: number;
@@ -92,6 +93,7 @@ export default function VocabQuiz({
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [resultTab, setResultTab] = useState<ResultTab>('all');
+  useAIStoryViewScroll(`${isOpen}:${currentIndex}:${showResults}`);
 
   const storyIdRef = useRef(storyId);
   const onNoWordsRef = useRef(onNoWords);

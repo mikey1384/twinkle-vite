@@ -19,7 +19,6 @@ export default function Game({
   gameMode,
   isGameStarted,
   loadingTopic,
-  MainRef,
   onLoadTopic,
   onOpenClearScreen,
   onSetAttemptId,
@@ -30,7 +29,6 @@ export default function Game({
   onSetDisplayedSection,
   onSetDropdownShown,
   onSetGameMode,
-  onSetIsCloseLocked,
   onSetDailyTask,
   onSetQuestions,
   onSetTopicLoadError,
@@ -52,7 +50,6 @@ export default function Game({
   isGameStarted: boolean;
   gameMode: string;
   loadingTopic: boolean;
-  MainRef: React.RefObject<any>;
   onLoadTopic: (v: any) => void;
   onOpenClearScreen: (storyId?: number) => void;
   onSetAttemptId: (v: number) => void;
@@ -63,7 +60,6 @@ export default function Game({
   onSetDisplayedSection: (v: string) => void;
   onSetDropdownShown: (v: boolean) => void;
   onSetGameMode: (v: string) => void;
-  onSetIsCloseLocked: (v: boolean) => void;
   onSetDailyTask: (v: any) => void;
   onSetQuestions: (v: any) => void;
   onSetTopicLoadError: (v: boolean) => void;
@@ -171,14 +167,12 @@ export default function Game({
               isGrading={isGrading}
               loadStoryComplete={loadStoryComplete}
               isDisabled={readCount >= MAX_READ_ATTEMPTS}
-              MainRef={MainRef}
               onGrade={handleGrade}
               onLoadQuestions={handleLoadQuestions}
               onOpenClearScreen={onOpenClearScreen}
               onSetDisplayedSection={onSetDisplayedSection}
               onReset={handleReset}
               onSetAttemptId={onSetAttemptId}
-              onSetIsCloseLocked={onSetIsCloseLocked}
               onSetQuestionsButtonEnabled={setQuestionsButtonEnabled}
               onSetStory={setStory}
               onSetExplanation={setExplanation}
@@ -360,7 +354,6 @@ export default function Game({
     setStory('');
     setExplanation('');
     setLoadStoryComplete(false);
-    onSetIsCloseLocked(false);
     setQuestionsLoaded(false);
     setQuestionsButtonEnabled(false);
     onSetQuestions([]);

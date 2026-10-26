@@ -21,7 +21,6 @@ export default function ContentContainer({
   onOpenClearScreen,
   onSetDisplayedSection,
   onSetUserChoiceObj,
-  onScrollToTop,
   questionsButtonEnabled,
   questionsLoadError,
   questionsLoaded,
@@ -46,7 +45,6 @@ export default function ContentContainer({
   onSetDisplayedSection: (section: string) => void;
   onSetSolveObj: (solveObj: any) => void;
   onSetUserChoiceObj: (userChoiceObj: any) => void;
-  onScrollToTop: () => void;
   questionsButtonEnabled: boolean;
   questionsLoadError: boolean;
   questionsLoaded: boolean;
@@ -147,12 +145,10 @@ export default function ContentContainer({
   );
 
   function handleFinishRead() {
-    onScrollToTop();
     onSetDisplayedSection('questions');
   }
 
   function handleReadAgain() {
-    onScrollToTop();
     onSetDisplayedSection('story');
   }
 }

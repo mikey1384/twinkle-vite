@@ -49,7 +49,6 @@ export default function Reading({
   isDisabled,
   isGrading,
   loadStoryComplete,
-  MainRef,
   onLoadQuestions,
   onGrade,
   onOpenClearScreen,
@@ -57,7 +56,6 @@ export default function Reading({
   onSetAttemptId,
   onSetDisplayedSection,
   onSetExplanation,
-  onSetIsCloseLocked,
   onSetLoadStoryComplete,
   onSetQuestionsButtonEnabled,
   onSetSolveObj,
@@ -82,7 +80,6 @@ export default function Reading({
   isDisabled: boolean;
   isGrading: boolean;
   loadStoryComplete: boolean;
-  MainRef: React.RefObject<any>;
   onLoadQuestions: (storyId: number) => void;
   onGrade: () => void;
   onOpenClearScreen: () => void;
@@ -90,7 +87,6 @@ export default function Reading({
   onSetAttemptId: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetExplanation: (v: string) => void;
-  onSetIsCloseLocked: (v: boolean) => void;
   onSetLoadStoryComplete: (v: boolean) => void;
   onSetQuestionsButtonEnabled: (v: boolean) => void;
   onSetSolveObj: (v: any) => void;
@@ -129,7 +125,6 @@ export default function Reading({
     difficulty,
     onLoadQuestions,
     onSetExplanation,
-    onSetIsCloseLocked,
     onSetQuestionsButtonEnabled,
     onSetStory,
     userId
@@ -139,16 +134,19 @@ export default function Reading({
     difficulty,
     onLoadQuestions,
     onSetExplanation,
-    onSetIsCloseLocked,
     onSetQuestionsButtonEnabled,
     onSetStory,
     userId
   };
 
   useEffect(() => {
+    let cancelled = false;
     if (!solveObj.isGraded && !isDisabled && userId) {
       handleGenerateStory();
     }
+    return () => {
+      cancelled = true;
+    };
 
     async function handleGenerateStory() {
       setStoryLoadError(false);
@@ -159,12 +157,14 @@ export default function Reading({
           userId,
           STORY_GENERATION_ACCEPT_TIMEOUT_MS
         );
+        if (cancelled) return;
         const { attemptId: newAttemptId, storyObj } = await loadAIStory({
           difficulty,
           topic,
           topicKey,
           type: storyType
         });
+        if (cancelled) return;
         onSetAttemptId(newAttemptId);
         activeStoryIdRef.current = storyObj.id;
         finishedStoryIdRef.current = 0;
@@ -180,7 +180,6 @@ export default function Reading({
         onSetStory(storyObj.story);
         onSetExplanation(storyObj.explanation);
         onSetLoadStoryComplete(true);
-        onSetIsCloseLocked(true);
         await emitAIStoryRequestWithAck('generate_ai_story', {
           difficulty,
           topic,
@@ -188,8 +187,8 @@ export default function Reading({
           storyId: storyObj.id
         });
       } catch (error) {
+        if (cancelled) return;
         console.error(error);
-        onSetIsCloseLocked(false);
         setStoryLoadError(true);
       }
     }
@@ -197,6 +196,7 @@ export default function Reading({
   }, [solveObj?.isGraded, userId]);
 
   useEffect(() => {
+    let cancelled = false;
     socket.on('ai_story_updated', handleAIStoryUpdated);
     socket.on('ai_story_delta', handleAIStoryDelta);
     socket.on('ai_story_finished', handleAIStoryFinished);
@@ -262,11 +262,13 @@ export default function Reading({
             activeUserId,
             STORY_GENERATION_ACCEPT_TIMEOUT_MS
           );
+          if (cancelled) return;
           await emitAIStoryRequestWithAck('generate_ai_story_explanations', {
             storyId: Number(streamedStoryId),
             difficulty: activeDifficulty
           });
         } catch (error) {
+          if (cancelled) return;
           console.error('Failed to start AI Story explanations:', error);
           setQuestionsButtonEnabled(true);
         }
@@ -323,7 +325,6 @@ export default function Reading({
       );
       if (failedStoryId && failedStoryId !== activeStoryIdRef.current) return;
       console.error('Error while streaming AI Story:', error);
-      streamContextRef.current.onSetIsCloseLocked(false);
       setStoryLoadError(true);
     }
 
@@ -338,6 +339,7 @@ export default function Reading({
     }
 
     return function cleanUp() {
+      cancelled = true;
       socket.off('ai_story_updated', handleAIStoryUpdated);
       socket.off('ai_story_delta', handleAIStoryDelta);
       socket.off('ai_story_finished', handleAIStoryFinished);
@@ -413,7 +415,6 @@ export default function Reading({
           onLoadQuestions={onLoadQuestions}
           onSetDisplayedSection={onSetDisplayedSection}
           onSetUserChoiceObj={onSetUserChoiceObj}
-          onScrollToTop={() => (MainRef.current.scrollTop = 0)}
           onReset={onReset}
           onSetSolveObj={onSetSolveObj}
           questionsLoaded={questionsLoaded}
