@@ -1427,7 +1427,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/arena/challenge/${challengeId}/start`,
-          { previewToken, componentTiming: true },
+          { previewToken, componentTiming: true, rewardQualifications: true },
           auth()
         );
         return data;
@@ -1666,7 +1666,7 @@ export default function contentRequestHelpers({
     },
     async prepareArenaBattle(target: { examKey?: string; length?: 'short' | 'medium' | 'full'; difficulty?: 'easy' | 'normal' | 'hard'; challengeId?: number }) {
       try {
-        const { data } = await request.post(`${URL}/content/arena/battle/preview`, { ...target, componentTiming: true }, auth());
+        const { data } = await request.post(`${URL}/content/arena/battle/preview`, { ...target, componentTiming: true, rewardQualifications: true }, auth());
         return data;
       } catch (error) {
         return handleError(error);
@@ -1685,7 +1685,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/arena/battle`,
-          { ...target, componentTiming: true },
+          { ...target, componentTiming: true, rewardQualifications: true },
           auth()
         );
         return data;
@@ -1696,7 +1696,7 @@ export default function contentRequestHelpers({
     async loadArenaBattle(battleId: number) {
       try {
         const { data } = await request.get(
-          `${URL}/content/arena/battle/${battleId}?componentTiming=true`,
+          `${URL}/content/arena/battle/${battleId}?componentTiming=true&rewardQualifications=true`,
           auth()
         );
         return data;

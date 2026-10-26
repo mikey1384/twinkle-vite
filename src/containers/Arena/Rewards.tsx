@@ -32,7 +32,8 @@ export default function ArenaRewards({
     : markingPending
       ? 'Writing / Speaking marks pending'
       : !paid && known ? rewardStatus === 'below_target' ? 'Reward target not reached'
-        : rewardStatus === 'already_rewarded' ? 'These questions have already earned rewards'
+        : rewardStatus === 'below_skill_target' ? 'A section reward target was not reached'
+          : rewardStatus === 'already_rewarded' ? 'These questions have already earned rewards'
           : rewardStatus === 'daily_limit' ? 'Daily exam reward limit reached' : emptyNote : null;
   return (
     <span className={cx(wrapCls, highlight && highlightCls)} aria-label="Exam rewards">

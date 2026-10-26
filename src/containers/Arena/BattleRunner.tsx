@@ -1,3 +1,4 @@
+import { RewardRequirements } from './RewardOffer';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
@@ -1223,7 +1224,10 @@ function Result({ data }: { data: ArenaBattle }) {
         </strong>
       </div>
       <div className={rewardPanelCls}>
-        {battle.rewardOffer && <p>Reward target: {battle.rewardOffer.target} / {battle.rewardOffer.max}</p>}
+        {battle.rewardOffer && <>
+          <p>Reward target: {battle.rewardOffer.target} / {battle.rewardOffer.max}</p>
+          <RewardRequirements requirements={battle.rewardOffer.requirements} results />
+        </>}
         <ArenaRewards
           xp={battle.reward?.xpEarned}
           coins={battle.reward?.coinsEarned}
@@ -1949,4 +1953,7 @@ const rewardPanelCls = css`
   padding: 0.8rem 1rem;
   border-radius: 8px;
   background: ${ARENA.paper};
+  color: ${ARENA.ink};
+  max-width: 100%;
+  && strong { font-size: inherit; }
 `;

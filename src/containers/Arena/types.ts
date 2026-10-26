@@ -12,9 +12,10 @@ export interface ArenaRewardOffer {
   dailyRemaining?: number;
   pendingOverlapPoints?: number;
   markingRequired?: boolean;
+  requirements?: { id: string; label: string; target: number; max: number; earned?: number | null }[];
 }
 
-export type ArenaRewardStatus = 'pending' | 'below_target' | 'daily_limit' | 'already_rewarded' | 'awarded';
+export type ArenaRewardStatus = 'pending' | 'below_target' | 'below_skill_target' | 'daily_limit' | 'already_rewarded' | 'awarded';
 
 export type ArenaBattlePreview =
   | { alreadyTaken: true; battleId: number; status: string; preview?: never }
