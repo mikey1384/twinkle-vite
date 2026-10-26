@@ -20,6 +20,9 @@ import PartialCreditReview from './PartialCreditReview';
 import C1ScoreReview from './C1ScoreReview';
 import ParentEmailOffer from './ParentEmailOffer';
 import ArenaRewards from './Rewards';
+import { ANSWER_FLUSH_EVENT } from './useAnswerFlush';
+import C1ReadingPaper from './C1ReadingPaper';
+import { isC1Reading } from './examTasks';
 import type { ArenaBattle, ArenaItem } from './types';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import type { AssistantAskContext } from '~/containers/App/AssistantDock/dockState';
@@ -184,6 +187,7 @@ export default function BattleRunner({
   const submitArenaBattle = useAppContext(
     (v) => v.requestHelpers.submitArenaBattle
   );
+  const changeArenaComponent = useAppContext((v) => v.requestHelpers.changeArenaComponent);
   const requestArenaMarking = useAppContext(
     (v) => v.requestHelpers.requestArenaMarking
   );
@@ -217,6 +221,11 @@ export default function BattleRunner({
   );
   const [loadError, setLoadError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [pendingAnswers, setPendingAnswers] = useState<Record<number, number | string | null>>({});
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const unsavedRef = useRef(new Map<number, number | string | null>());
+  const autoSubmitFailedRef = useRef(false);
   const [confirmShown, setConfirmShown] = useState(false);
   const [omrOpen, setOmrOpen] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -230,6 +239,7 @@ export default function BattleRunner({
   }, [battleId]);
 
   const finished = data?.battle.status === 'finished';
+  const component = data?.battle.component;
   const timed = !!data?.battle.deadlineAt && !finished;
 
   useEffect(() => {
@@ -239,7 +249,7 @@ export default function BattleRunner({
       const serverNow = Math.floor(Date.now() / 1000) + clockOffsetRef.current;
       const left = Math.max(0, deadline - serverNow);
       setRemaining(left);
-      if (left === 0 && !submittedRef.current) void handleSubmit();
+      if (left === 0 && !submittedRef.current && !autoSubmitFailedRef.current) void handleSubmit();
     };
     tick();
     const timer = window.setInterval(tick, 1000);
@@ -315,6 +325,10 @@ export default function BattleRunner({
     (item) => answers[item.no] != null || recordings[item.no] != null
   ).length;
   const shownPassages = new Set<number>();
+  const readingItems = data.battle.exam.key === 'c1-advanced' ? data.items.filter(isC1Reading) : [];
+  // Local drafts remain visible during a save/failure; counts above use only
+  // canonical saved answers. Never present a pending draft as a saved receipt.
+  const shownAnswers = { ...answers, ...pendingAnswers };
 
   return (
     <div className={shellCls}>
@@ -324,13 +338,13 @@ export default function BattleRunner({
         className={barCls}
         {...(!finished ? { [WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: 'arenaBattle' } : {})}
       >
-        <button type="button" className={plainButtonCls} onClick={handleLeave}>
+        <button type="button" className={plainButtonCls} disabled={submitting} onClick={handleLeave}>
           <Icon icon="arrow-left" /> {finished ? 'Done' : 'Leave'}
         </button>
         <div className={titleCls}>
           <strong>{data.battle.exam.name}</strong>
           <span>
-            {data.battle.mode === 'untimed'
+            {component && !finished ? `${component.name} · ${component.minutes} min` : data.battle.mode === 'untimed'
               ? 'Untimed retake'
               : `${lengthLabel(data.battle.length)}${
                   data.battle.difficulty !== 'normal'
@@ -346,19 +360,36 @@ export default function BattleRunner({
         ) : (
           <div />
         )}
-        {!finished && (
-          <button
-            type="button"
+        {!finished && component?.state !== 'ready' && (
+          <ArenaButton
+            tone="red"
+            size="md"
             className={submitCls}
-            disabled={submitting}
+            loading={submitting}
+            disabled={submitting || (component?.allowEarlyFinish === false && remaining !== 0)}
             onClick={() => setConfirmShown(true)}
           >
-            {submitting ? 'Grading…' : 'Submit'}
-          </button>
+            {component ? 'Submit component' : 'Submit'}
+          </ArenaButton>
         )}
       </header>
 
       {finished && <Result data={data} />}
+      {!finished && component?.allowEarlyFinish === false && remaining !== 0 && <p className={draftStatusCls}>You can review this module until its clock runs out. {component.index + 1 < component.count ? 'The next module opens automatically.' : 'Your saved answers are then submitted.'}</p>}
+      {!!Object.keys(pendingAnswers).length && <p role="status" className={draftStatusCls}>Answers waiting to save: {Object.keys(pendingAnswers).join(', ')}</p>}
+      {saveError && <div className={centerCls} role="alert">
+        <p>{saveError}</p>
+        <button type="button" className={plainButtonCls} disabled={submitting} onClick={retryAnswers}>Retry saves</button>
+        {remaining === 0 && <button type="button" className={plainButtonCls} disabled={submitting} onClick={() => void handleSubmit(true)}>Continue with saved answers</button>}
+      </div>}
+      {component?.state === 'ready' && !finished && <section className={centerCls}>
+        <h2>{component.name}</h2>
+        <p>The previous component is submitted. Its answers are locked.</p>
+        <p>You have {component.minutes} minutes. The clock starts when you press the button below.</p>
+        <ArenaButton tone="red" size="md" className={submitCls} loading={submitting} onClick={() => void handleComponentStart()}>
+          {`Start ${component.name}`}
+        </ArenaButton>
+      </section>}
       {/* reviews in both languages, the exam's own first (Mikey 10-24) */}
       {finished && hasKoreanReview && (
         <div className={langBarCls}>
@@ -378,13 +409,14 @@ export default function BattleRunner({
 
       {/* a live paper is the member's alone: Zero and Ciel never read it or
           answer on it (Mikey 10-25); the review after is theirs to share */}
+      <fieldset disabled={!finished && (submitting || remaining === 0)} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
       <div
         className={bodyCls}
         {...(!finished
           ? { [WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE]: 'arenaBattle' }
           : {})}
       >
-        <main className={paperCls}>
+        <main className={cx(paperCls, readingItems.length > 0 && digitalPaperCls)}>
           <div className={paperHeadCls}>
             {/* a Korean paper's 영역 heading; an English-language exam
                 (C1, IELTS, TOEFL) prints its name only */}
@@ -395,6 +427,13 @@ export default function BattleRunner({
                 : `${data.battle.exam.name.replace(/^수능 /, '')} 영역`}
             </span>
           </div>
+          {readingItems.length > 0 && <C1ReadingPaper
+            items={readingItems} passages={data.passages} answers={shownAnswers} finished={finished} disabled={finished || submitting || remaining === 0}
+            onMark={handleMark}
+            renderReview={item => <PaperItem item={item} passage={null} marked={answers[item.no] ?? null} finished reviewOnly
+              audioControls={false} allPointTags={false} letters reviewLang={reviewLang} onMark={() => {}}
+              ask={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.no}`, path: `/arena?mode=train&battle=${data.battle.id}` }} />}
+          />}
           {sections.map(({ section, items }) => (
             <section key={section} className={columnsCls}>
               {section === 'listening' && (
@@ -420,7 +459,7 @@ export default function BattleRunner({
                     }
                   />
                 )}
-              {items.map((item) => {
+              {items.filter(item => !readingItems.includes(item)).map((item) => {
                 const passage =
                   item.passageId != null && !shownPassages.has(item.passageId)
                     ? data.passages[String(item.passageId)]
@@ -431,7 +470,7 @@ export default function BattleRunner({
                     key={item.no}
                     item={item}
                     passage={passage}
-                    marked={answers[item.no] ?? null}
+                    marked={shownAnswers[item.no] ?? null}
                     allPointTags={data.battle.exam.pointTags === 'all'}
                     letters={data.battle.exam.optionMarkers === 'letters'}
                     problemLayout={data.battle.exam.layout === 'problem'}
@@ -466,7 +505,7 @@ export default function BattleRunner({
           ))}
         </main>
 
-        <aside className={cx(omrCls, omrOpen && omrOpenCls)}>
+        {!!data.items.length && !readingItems.length && <aside className={cx(omrCls, omrOpen && omrOpenCls)}>
           <button
             type="button"
             className={omrToggleCls}
@@ -525,7 +564,7 @@ export default function BattleRunner({
                   <TypedAnswer
                     compact
                     typed={item.typed}
-                    value={answers[item.no] ?? null}
+                    value={shownAnswers[item.no] ?? null}
                     finished={finished}
                     label={
                       data.battle.exam.optionMarkers === 'letters'
@@ -537,7 +576,7 @@ export default function BattleRunner({
                 ) : (
                   CIRCLED.slice(0, item.choices.length || 5).map(
                     (label, choice) => {
-                      const filled = answers[item.no] === choice;
+                      const filled = shownAnswers[item.no] === choice;
                       const isKey = finished && item.key === choice;
                       return (
                         <button
@@ -571,8 +610,9 @@ export default function BattleRunner({
               </div>
             ))}
           </div>
-        </aside>
+        </aside>}
       </div>
+      </fieldset>
 
       {confirmShown && (
         // drawn inside the battle screen: a site modal would open beneath it
@@ -583,12 +623,13 @@ export default function BattleRunner({
           {...{ [WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: 'arenaBattle' }}
         >
           <div className={confirmCls}>
-            <strong>Submit your answers?</strong>
+            <strong>{component ? `Submit ${component.name}?` : 'Submit your answers?'}</strong>
             <p>
               {answeredCount < data.items.length
                 ? `${data.items.length - answeredCount} questions are still blank. Blank answers are wrong.`
                 : 'Your answers will be graded now.'}
             </p>
+            {component && <p>You cannot return to this component. Unused time does not carry over.</p>}
             <div className={confirmButtonsCls}>
               <button
                 type="button"
@@ -620,6 +661,7 @@ export default function BattleRunner({
       clockOffsetRef.current =
         battle.battle.serverNow - Math.floor(Date.now() / 1000);
       setData(battle);
+      submittedRef.current = battle.battle.status === 'finished';
       setAnswers(
         Object.fromEntries(battle.items.map((item) => [item.no, item.answer]))
       );
@@ -645,26 +687,55 @@ export default function BattleRunner({
   function handleMark(no: number, choice: number | string | null) {
     if (finished || submittedRef.current) return;
     const value = typeof choice === 'string' && !choice.trim() ? null : choice;
-    if ((answers[no] ?? null) === value) return;
+    if (unsavedRef.current.has(no) ? unsavedRef.current.get(no) === value : (answers[no] ?? null) === value) return;
     const elapsed = Date.now() - lastMarkRef.current;
     lastMarkRef.current = Date.now();
-    setAnswers((prev) => ({ ...prev, [no]: value }));
-    saveArenaAnswer({
-      battleId,
-      no,
-      answer: value,
-      responseMs: elapsed
-    }).catch(() => null);
+    enqueueAnswer(no, value, elapsed);
   }
 
-  async function handleSubmit() {
+  function enqueueAnswer(no: number, value: number | string | null, elapsed = 0) {
+    unsavedRef.current.set(no, value);
+    setPendingAnswers(previous => ({ ...previous, [no]: value }));
+    saveQueueRef.current = saveQueueRef.current.then(async () => {
+      try {
+        const saved = await saveArenaAnswer({ battleId, no, answer: value, responseMs: elapsed });
+        if (!saved?.saved) throw new Error('Answer was not saved');
+        setAnswers(previous => ({ ...previous, [no]: saved.answer }));
+        if (unsavedRef.current.get(no) === value) {
+          unsavedRef.current.delete(no);
+          setPendingAnswers(previous => { const next = { ...previous }; delete next[no]; return next; });
+        }
+        if (!unsavedRef.current.size) setSaveError('');
+      } catch {
+        setSaveError('Some answers could not be saved. Your draft is still here. Retry before submitting.');
+      }
+    });
+  }
+
+  function retryAnswers() {
+    autoSubmitFailedRef.current = false;
+    for (const [no, value] of unsavedRef.current) enqueueAnswer(no, value);
+  }
+
+  async function handleSubmit(savedOnly = false) {
     if (submittedRef.current) return;
+    if (!savedOnly) window.dispatchEvent(new Event(ANSWER_FLUSH_EVENT));
     submittedRef.current = true;
     setSubmitting(true);
     try {
+      await saveQueueRef.current;
+      if (unsavedRef.current.size && !savedOnly) throw new Error('Unsaved answers');
       const result: ArenaBattle & { dailyTaskStatus?: any } =
-        await submitArenaBattle(battleId);
+        component ? await changeArenaComponent(battleId, component.index, 'finish') : await submitArenaBattle(battleId);
       setData(result);
+      setAnswers(Object.fromEntries(result.items.map(item => [item.no, item.answer])));
+      clockOffsetRef.current = result.battle.serverNow - Math.floor(Date.now() / 1000);
+      submittedRef.current = result.battle.status === 'finished';
+      autoSubmitFailedRef.current = false;
+      unsavedRef.current.clear();
+      setPendingAnswers({});
+      setSaveError('');
+      setRemaining(null);
       // a finished battle can clear today's A goal
       if (result.dailyTaskStatus) {
         onApplyTodayStatsProgress({
@@ -677,9 +748,28 @@ export default function BattleRunner({
       else scheduleMarkingPoll(result);
     } catch {
       submittedRef.current = false;
+      autoSubmitFailedRef.current = true;
+      setSaveError(unsavedRef.current.size ? 'Some answers are not saved. Retry, or continue with the answers already saved if time has expired.' : 'Submission could not be confirmed. Refresh or try submitting again.');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleComponentStart() {
+    if (!component || submitting) return;
+    setSubmitting(true);
+    try {
+      const result: ArenaBattle = await changeArenaComponent(battleId, component.index, 'start');
+      setData(result);
+      setAnswers(Object.fromEntries(result.items.map(item => [item.no, item.answer])));
+      clockOffsetRef.current = result.battle.serverNow - Math.floor(Date.now() / 1000);
+      submittedRef.current = false;
+      autoSubmitFailedRef.current = false;
+      setRemaining(null);
+      setSaveError('');
+    } catch {
+      setSaveError('The next component could not be opened. Try again.');
+    } finally { setSubmitting(false); }
   }
 
   function scheduleMarkingPoll(battle: ArenaBattle) {
@@ -698,7 +788,15 @@ export default function BattleRunner({
   }
 
   function handleLeave() {
-    onExit();
+    if (submittedRef.current && !finished) return;
+    if (finished) { onExit(); return; }
+    window.dispatchEvent(new Event(ANSWER_FLUSH_EVENT));
+    submittedRef.current = true;
+    setSubmitting(true);
+    void saveQueueRef.current.then(() => {
+      if (!unsavedRef.current.size) onExit();
+      else setSaveError('Your latest answers have not saved yet. Retry saves before leaving.');
+    }).finally(() => { submittedRef.current = false; setSubmitting(false); });
   }
 }
 
@@ -720,7 +818,8 @@ export function PaperItem({
   korean = false,
   onRecorded,
   onRequestMarking,
-  ask = null
+  ask = null,
+  reviewOnly = false
 }: {
   item: ArenaItem;
   allPointTags: boolean;
@@ -742,6 +841,7 @@ export function PaperItem({
   // "Ask Zero/Ciel" about this question, once it is the member's to go
   // through (a submitted battle's review, a deck card, an answered drill)
   ask?: AssistantAskContext | null;
+  reviewOnly?: boolean;
 }) {
   const listening = item.section === 'listening';
   const ko = reviewLang === 'ko';
@@ -756,6 +856,7 @@ export function PaperItem({
     // an essay or recording takes the page's full width, as the answer
     // sheet's writing space does
     <article className={cx(itemCls, item.marked && wideItemCls)}>
+      {!reviewOnly && <>
       {passage && listening && audioControls && (
         <div className={audioCls}>
           {passage.audioPath ? (
@@ -928,6 +1029,7 @@ export function PaperItem({
             })}
           </ol>
         )}
+      </>}
       {finished && item.review && !item.marked && (
         <div
           className={cx(
@@ -1370,6 +1472,13 @@ const paperHeadCls = css`
     padding: 0.4rem 1.6rem;
   }
 `;
+
+const digitalPaperCls = css`
+  padding: 1rem;
+  @media (max-width: ${mobileMaxWidth}) { padding: 0; }
+`;
+
+const draftStatusCls = css`margin:0;padding:.5rem 1.6rem;background:#fff7dc;color:#604910;font-size:1.3rem;`;
 
 const columnsCls = css`
   column-count: 2;

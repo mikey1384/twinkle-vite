@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import ArenaButton from './ArenaButton';
 import RewardOffer from './RewardOffer';
+import ComponentSchedule from './ComponentSchedule';
 import { useAppContext } from '~/contexts';
 import { ARENA } from './theme';
 import type { ArenaBattlePreview, ArenaDifficulty, ArenaExamSummary, ArenaRewardOffer } from './types';
@@ -118,12 +119,13 @@ export default function CoverPage({
           <h2 className={titleCls}>{exam.nameEn || exam.name}</h2>
           <p className={metaCls}>
             {LENGTH_EN[length]} · {MODE_EN[difficulty] || MODE_EN.normal}
-            {spec ? ` · ${spec.items} questions · ${spec.minutes} minutes` : ''}
+            {spec ? ` · ${spec.items} questions${length === 'full' && exam.components?.length ? '' : ` · ${spec.minutes} minutes`}` : ''}
           </p>
+          {length === 'full' && <ComponentSchedule examKey={exam.key} components={exam.components} />}
+          {length !== 'full' && <p>This is a shortened practice selection.</p>}
           <ul className={rulesCls}>
             <li>
-              Mark your answers on the answer sheet. The choice you tap on the
-              paper is marked there too.
+              Answer each question on the screen. Your answers are saved as you work.
             </li>
             <li>
               When time is up, your answer sheet is handed in. A blank answer is
@@ -144,7 +146,7 @@ export default function CoverPage({
                   answer has two parts worth one mark each.
                 </li>
                 <li>
-                  This practice test uses one total clock and omits Speaking.
+                  This practice test omits Speaking.
                   Practice grades use raw marks; scale estimates appear only
                   after a Normal Full test and are not official results.
                   Writing marks are AI estimates.

@@ -38,6 +38,7 @@ export interface ArenaExamSummary {
   listening?: boolean;
   // essay or spoken answers: its scores include AI estimates
   aiMarked?: boolean;
+  components?: { name: string; minutes: number }[];
   lengths: {
     length: 'short' | 'medium' | 'full';
     items: number;
@@ -160,6 +161,7 @@ export interface ArenaItem {
   choices: string[];
   // a typed answer (수학 단답형 etc.): digits only, or a word or phrase
   typed?: TypedFormat;
+  keyword?: string;
   // the number the real paper prints when it restarts per section
   // (TOEFL Junior "L12", TOSEL "II-3"); `no` stays the unique key
   display?: string;
@@ -227,6 +229,16 @@ export interface ArenaBattle {
     minutes: number | null;
     deadlineAt: number | null;
     serverNow: number;
+    component?: {
+      index: number;
+      count: number;
+      name: string;
+      minutes: number;
+      allowEarlyFinish?: boolean;
+      startedAt: number | null;
+      deadlineAt: number | null;
+      state: 'ready' | 'running' | 'expired' | 'complete';
+    };
     scaleReport?: C1ScaleReport | null;
     rewardOffer?: ArenaRewardOffer;
     reward?: {

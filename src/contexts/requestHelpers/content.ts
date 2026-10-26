@@ -1427,7 +1427,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/arena/challenge/${challengeId}/start`,
-          { previewToken },
+          { previewToken, componentTiming: true },
           auth()
         );
         return data;
@@ -1666,7 +1666,7 @@ export default function contentRequestHelpers({
     },
     async prepareArenaBattle(target: { examKey?: string; length?: 'short' | 'medium' | 'full'; difficulty?: 'easy' | 'normal' | 'hard'; challengeId?: number }) {
       try {
-        const { data } = await request.post(`${URL}/content/arena/battle/preview`, target, auth());
+        const { data } = await request.post(`${URL}/content/arena/battle/preview`, { ...target, componentTiming: true }, auth());
         return data;
       } catch (error) {
         return handleError(error);
@@ -1685,7 +1685,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/arena/battle`,
-          target,
+          { ...target, componentTiming: true },
           auth()
         );
         return data;
@@ -1696,7 +1696,7 @@ export default function contentRequestHelpers({
     async loadArenaBattle(battleId: number) {
       try {
         const { data } = await request.get(
-          `${URL}/content/arena/battle/${battleId}`,
+          `${URL}/content/arena/battle/${battleId}?componentTiming=true`,
           auth()
         );
         return data;
@@ -1769,6 +1769,14 @@ export default function contentRequestHelpers({
           {},
           auth()
         );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async changeArenaComponent(battleId: number, index: number, action: 'start' | 'finish') {
+      try {
+        const { data } = await request.post(`${URL}/content/arena/battle/${battleId}/component`, { index, action }, auth());
         return data;
       } catch (error) {
         return handleError(error);

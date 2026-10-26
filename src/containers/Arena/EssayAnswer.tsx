@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import type { ArenaItem } from './types';
+import useAnswerFlush from './useAnswerFlush';
 
 // An essay answer (C1 / IELTS / TOEFL Writing, 내신 논술형): a lined answer
 // sheet with the exam's own length count beside it (words, or 글자 수 for a
@@ -39,6 +40,7 @@ export default function EssayAnswer({
   // the latest draft for the unmount flush (state is stale in a cleanup)
   const draftRef = useRef(draft);
   draftRef.current = draft;
+  useAnswerFlush(flush);
   useEffect(() => {
     // the server's copy changed (a reload): show it unless mid-edit
     if (saved !== lastSentRef.current) {

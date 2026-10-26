@@ -391,6 +391,7 @@ registerMethods('content', [
   'saveArenaRecording',
   'requestArenaMarking',
   'submitArenaBattle',
+  'changeArenaComponent',
   'loadArenaLeague',
   'loadArenaRecords',
   'loadArenaRising',

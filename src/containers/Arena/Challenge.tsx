@@ -7,6 +7,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { isPerfectArenaScore } from '~/helpers/arenaChallengeCopy';
 import ArenaButton from './ArenaButton';
 import RewardOffer from './RewardOffer';
+import ComponentSchedule from './ComponentSchedule';
 import type { ArenaBattlePreview, ArenaRewardOffer } from './types';
 import { arenaMediaURL } from './media';
 import { ARENA } from './theme';
@@ -20,6 +21,7 @@ interface ChallengeView {
     examKey: string;
     examName: string;
     examNameEn: string;
+    components?: { name: string; minutes: number }[];
     code: string;
     codeLabel: string | null;
     // essay or spoken answers: the scores include AI-estimated marks
@@ -142,6 +144,7 @@ export default function Challenge({
           )}
         </div>
       </header>
+      {view.canTake && <ComponentSchedule examKey={challenge.examKey} components={challenge.components} />}
 
       {(notice || error || view.canTake) && <div className={rewardSectionCls}>
         {notice && <p role="status">{notice}</p>}

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { ARENA } from './theme';
+import useAnswerFlush from './useAnswerFlush';
 
 // A typed answer (수학 단답형, KMC integers, C1 Use of English words): a
 // box like the answer sheet's, saved when the member leaves it or presses
@@ -26,11 +27,18 @@ export default function TypedAnswer({
 }) {
   const saved = value == null ? '' : String(value);
   const [draft, setDraft] = useState(saved);
+  const previousValue = useRef(saved);
   // the other box (item or answer sheet) changed it: show the new value
-  useEffect(() => setDraft(saved), [saved]);
+  useEffect(() => {
+    // An earlier save response must not erase a newer edit still in focus.
+    const previous = previousValue.current;
+    setDraft(current => current === previous ? saved : current);
+    previousValue.current = saved;
+  }, [saved]);
   const integer = typed === 'integer';
   // a number: digits, a minus sign, a decimal point or one fraction bar
   const numeric = typed === 'number';
+  useAnswerFlush(commit);
   return (
     <span className={cx(wrapCls, compact && compactWrapCls)}>
       {!compact && <span className={promptCls}>{prompt}</span>}
