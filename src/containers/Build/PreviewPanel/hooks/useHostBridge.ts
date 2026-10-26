@@ -3859,6 +3859,9 @@ export function useHostBridge({
           }
 
           case 'content:word-master:words':
+          case 'content:word-master:dictionary':
+          case 'content:word-master:korean-definition':
+          case 'content:word-master:korean-definition-status':
           case 'content:word-master:telemetry':
           case 'content:word-master:details':
           case 'content:word-master:generate-entry':
@@ -3874,7 +3877,7 @@ export function useHostBridge({
           case 'content:word-master:puzzle-events':
           case 'content:word-master:puzzle-hint': {
             const operation = type.slice('content:word-master:'.length);
-            const read = ['words', 'book', 'quiz-status', 'entry-status', 'items'].includes(operation);
+            const read = ['words', 'book', 'quiz-status', 'entry-status', 'items', 'dictionary'].includes(operation);
             const token = await ensureBuildApiToken([read ? 'content:read' : 'content:write'], previewAuth);
             response = await requestRefs.requestBuildWordMasterRef.current({
               buildId: activeBuild.id, operation, token,

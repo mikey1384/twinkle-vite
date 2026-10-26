@@ -1,4 +1,6 @@
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
+  'content:word-master:korean-definition',
+  'content:word-master:korean-definition-status',
   'content:word-master:details',
   'content:word-master:telemetry',
   'content:word-master:generate-entry',
