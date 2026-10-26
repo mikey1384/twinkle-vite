@@ -20,7 +20,7 @@ import InvisibleTextContainer, {
 } from './InvisibleTextContainer';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -315,6 +315,7 @@ function RichText({
   isAudioButtonShown = true,
   readAloud,
   aiActionPlacement = 'floating',
+  aiActionClassName,
   compactEmbedPreview,
   subjectPreviewVariant,
   isShowMoreButtonCentered,
@@ -340,6 +341,7 @@ function RichText({
   // reading). Bot messages show it regardless.
   readAloud?: boolean;
   aiActionPlacement?: 'floating' | 'inline';
+  aiActionClassName?: string;
   compactEmbedPreview?: boolean;
   subjectPreviewVariant?: RichTextSubjectPreviewVariant;
   isUseNewFormat?: boolean;
@@ -1066,13 +1068,18 @@ function RichText({
           <>
             {toolsPlacement === 'inline' ? (
               <div
-                style={{
-                  marginTop: '0.7rem',
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
+                role="group"
+                aria-label="Message reading tools"
+                className={cx(
+                  css`
+                    margin-top: 0.7rem;
+                    display: flex;
+                    justify-content: flex-end;
+                    align-items: center;
+                    gap: 0.5rem;
+                  `,
+                  aiActionClassName
+                )}
               >
                 {isAIMessage && (
                   <Button
@@ -1099,14 +1106,19 @@ function RichText({
               </div>
             ) : (
               <div
-                style={{
-                  position: 'absolute',
-                  bottom: '-3rem',
-                  right: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
+                role="group"
+                aria-label="Message reading tools"
+                className={cx(
+                  css`
+                    position: absolute;
+                    bottom: -3rem;
+                    right: 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                  `,
+                  aiActionClassName
+                )}
               >
                 {isAIMessage && (
                   <Button

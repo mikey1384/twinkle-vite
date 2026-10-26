@@ -47,6 +47,8 @@ export default function Story({
           contentId={storyId}
           contentType="ai_story"
           isAIMessage
+          aiActionPlacement="inline"
+          aiActionClassName={readingToolsCls}
           isStreaming={!storyStreamComplete}
           style={{ lineHeight: 2 }}
           maxLines={1000}
@@ -59,6 +61,8 @@ export default function Story({
           <p className={vocabHeadCls}>Vocabulary</p>
           <RichText
             isAIMessage
+            aiActionPlacement="inline"
+            aiActionClassName={readingToolsCls}
             isStreaming={!explanationStreamComplete}
             className={css`
               font-size: 1.7rem;
@@ -106,8 +110,7 @@ export default function Story({
 const sheetCls = css`
   width: 100%;
   max-width: 72rem;
-  /* room at the bottom for the text's copy / read-aloud buttons */
-  padding: 2.4rem 2.8rem 4rem;
+  padding: 2.4rem 2.8rem;
   background: ${ARENA.paper};
   color: ${ARENA.ink};
   border: 3px solid ${ARENA.line};
@@ -116,6 +119,46 @@ const sheetCls = css`
   font-family: 'Poppins', sans-serif;
   @media (max-width: ${mobileMaxWidth}) {
     padding: 1.6rem 1.4rem;
+  }
+`;
+
+const readingToolsCls = css`
+  margin-top: 1.6rem;
+  align-items: flex-start;
+  gap: 0.8rem;
+
+  button {
+    min-width: calc(44 * var(--px));
+    min-height: calc(44 * var(--px));
+    flex-shrink: 0;
+    background: ${ARENA.background};
+    border: 2px solid ${ARENA.line};
+    border-radius: 8px;
+    box-shadow: 3px 3px 0 ${ARENA.line};
+    font-family: inherit;
+    font-size: calc(16 * var(--px));
+    transition:
+      transform 0.1s,
+      box-shadow 0.1s,
+      background 0.1s;
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover:not(:disabled) {
+        background: ${ARENA.paper};
+        border-color: ${ARENA.line};
+        transform: translate(-1px, -1px);
+        box-shadow: 4px 4px 0 ${ARENA.line};
+      }
+    }
+
+    &:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 ${ARENA.line};
+    }
+
+    &:focus-visible {
+      outline-color: ${ARENA.ink};
+    }
   }
 `;
 
