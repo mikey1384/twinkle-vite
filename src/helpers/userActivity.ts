@@ -25,7 +25,9 @@ export type ActivityGame =
   | 'word-master'
   | 'ai-cards';
 export type UserActivityIntent =
-  { kind: 'app'; id: number } | { kind: 'game'; id: ActivityGame };
+  | { kind: 'app'; id: number }
+  | { kind: 'game'; id: ActivityGame }
+  | { kind: 'arena'; id: string };
 export type UserActivity = UserActivityIntent & {
   title: string;
   thumbnailUrl: string | null;

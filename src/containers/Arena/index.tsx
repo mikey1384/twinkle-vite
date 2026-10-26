@@ -163,6 +163,8 @@ export default function ArenaPage() {
           )}
           {view === 'arena' && !challengeId && (
             <Battles
+              examKey={searchParams.get('exam') || ''}
+              onBrowseExams={() => setSearchParams({ mode: 'arena' })}
               onStart={(id) =>
                 setSearchParams({ mode: 'arena', battle: String(id) })
               }

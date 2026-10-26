@@ -22,6 +22,8 @@ import {
   VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import type { UserActivity } from '~/helpers/userActivity';
+import { arenaExamPath } from '~/helpers/arenaActivity';
+import { arenaMediaURL } from '~/containers/Arena/media';
 
 export default function ActivityBadge({
   activity
@@ -56,8 +58,17 @@ export default function ActivityBadge({
   const [shown, setShown] = useState(false);
   const [position, setPosition] = useState<React.CSSProperties>({});
   const [imageFailed, setImageFailed] = useState(false);
-  const verb = activity.kind === 'game' ? 'Playing' : 'Using';
+  const verb =
+    activity.kind === 'arena'
+      ? 'Taking'
+      : activity.kind === 'game'
+        ? 'Playing'
+        : 'Using';
   const label = `${verb} ${activity.title}`;
+  const thumbnailUrl =
+    activity.kind === 'arena'
+      ? arenaMediaURL(`img/bosses/${encodeURIComponent(activity.id)}.jpg`)
+      : activity.thumbnailUrl;
   const chatGame =
     activity.kind === 'game' &&
     (activity.id === 'chess' || activity.id === 'omok');
@@ -70,19 +81,21 @@ export default function ActivityBadge({
   const fallback =
     activity.kind === 'app'
       ? '▦'
-      : {
-          wordle: 'W',
-          grammarbles: 'G',
-          chess: '♟',
-          'chess-puzzles': '♟',
-          omok: '●',
-          'word-master': <Icon icon="book" />,
-          'ai-cards': <Icon icon="cards-blank" />
-        }[activity.id];
+      : activity.kind === 'arena'
+        ? <Icon icon="trophy" />
+        : {
+            wordle: 'W',
+            grammarbles: 'G',
+            chess: '♟',
+            'chess-puzzles': '♟',
+            omok: '●',
+            'word-master': <Icon icon="book" />,
+            'ai-cards': <Icon icon="cards-blank" />
+          }[activity.id];
 
   useEffect(() => {
     setImageFailed(false);
-  }, [activity.thumbnailUrl]);
+  }, [thumbnailUrl]);
   useEffect(() => () => clearTimeout(closeTimer.current), []);
   useLayoutEffect(() => {
     if (!shown) return;
@@ -171,9 +184,9 @@ export default function ActivityBadge({
         }}
         onKeyDown={(event) => event.stopPropagation()}
       >
-        {activity.thumbnailUrl && !imageFailed ? (
+        {thumbnailUrl && !imageFailed ? (
           <img
-            src={activity.thumbnailUrl}
+            src={thumbnailUrl}
             alt=""
             onError={() => setImageFailed(true)}
           />
@@ -208,9 +221,9 @@ export default function ActivityBadge({
                   className="activity-icon"
                   data-game={activity.kind === 'game' ? activity.id : undefined}
                 >
-                  {activity.thumbnailUrl && !imageFailed ? (
+                  {thumbnailUrl && !imageFailed ? (
                     <img
-                      src={activity.thumbnailUrl}
+                      src={thumbnailUrl}
                       alt=""
                       onError={() => setImageFailed(true)}
                     />
@@ -242,9 +255,11 @@ export default function ActivityBadge({
               >
                 {activity.kind === 'app'
                   ? 'Open app'
-                  : chatGame
-                    ? 'Open chat'
-                    : `${collectType ? 'Open' : 'Play'} ${activity.title}`}
+                  : activity.kind === 'arena'
+                    ? 'View exam'
+                    : chatGame
+                      ? 'Open chat'
+                      : `${collectType ? 'Open' : 'Play'} ${activity.title}`}
               </button>
             </div>,
             document.getElementById('outer-layer') || document.body
@@ -267,6 +282,11 @@ export default function ActivityBadge({
     setShown(false);
     if (activity.kind === 'app') {
       navigate(`/app/${activity.id}`);
+      return;
+    }
+    if (activity.kind === 'arena') {
+      navigate(arenaExamPath(activity.id));
+      if (!userId) onOpenSigninModal();
       return;
     }
     if (!userId) {

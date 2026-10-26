@@ -4,6 +4,8 @@ import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useNotiContext } from '~/contexts';
+import useUserActivity from '~/helpers/hooks/useUserActivity';
+import { getArenaBattleActivity } from '~/helpers/arenaActivity';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import { socket } from '~/constants/sockets/api';
 import { mobileMaxWidth } from '~/constants/css';
@@ -240,6 +242,7 @@ export default function BattleRunner({
   }, [battleId]);
 
   const finished = data?.battle.status === 'finished';
+  useUserActivity(getArenaBattleActivity(loadError ? null : data?.battle, battleId));
   const component = data?.battle.component;
   const timed = !!data?.battle.deadlineAt && !finished;
 

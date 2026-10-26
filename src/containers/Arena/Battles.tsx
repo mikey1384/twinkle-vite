@@ -14,6 +14,7 @@ import Rising from './Rising';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import type { ArenaDifficulty, ArenaExamSummary, ArenaState } from './types';
+import { arenaExamPath } from '~/helpers/arenaActivity';
 
 // Arena: real battles only. Exam and boss names use their real Korean
 // terms so a parent watching recognizes the exam (Mikey 10-24: an exception
@@ -34,10 +35,14 @@ const LENGTH_LABEL: Record<string, string> = {
 
 export default function Battles({
   onStart,
+  examKey = '',
+  onBrowseExams,
   recordsKey = '',
   onOpenRecords
 }: {
   onStart: (battleId: number) => void;
+  examKey?: string;
+  onBrowseExams: () => void;
   // Boss Records for this exam key, in place of the boss list
   recordsKey?: string;
   onOpenRecords: (examKey: string | null) => void;
@@ -63,6 +68,17 @@ export default function Battles({
   const openBattle = (state?.recent || []).find(
     (battle) => battle.status === 'open' && battle.mode === 'battle'
   );
+  const selectedExam = state?.exams.find((exam) => exam.key === examKey);
+  const visibleExams = examKey
+    ? selectedExam
+      ? [selectedExam]
+      : []
+    : state?.exams || [];
+
+  useEffect(() => {
+    setCover(null);
+    setReviewBattleId(0);
+  }, [examKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,24 +123,41 @@ export default function Battles({
           label="Help me here"
           context={{
             kind: 'page',
-            label: 'Arena battles',
-            path: '/arena?mode=arena',
-            excerpt: 'Arena: the bosses (real mock exams) by stage, modes and lengths, the Weekly League, Rising and Boss Records.'
+            label: selectedExam ? selectedExam.nameEn : 'Arena battles',
+            path: examKey ? arenaExamPath(examKey) : '/arena?mode=arena',
+            excerpt: selectedExam
+              ? `Choosing the difficulty and length for ${selectedExam.nameEn}. The exam has not started.`
+              : 'Arena: the bosses (real mock exams) by stage, modes and lengths, the Weekly League, Rising and Boss Records.'
           }}
         />
       </div>
-      <div style={{ marginBottom: '1.8rem' }}>
-        <TodayArenaGoals />
-      </div>
-      <League />
-      <Rising />
+      {examKey ? (
+        <button type="button" className={recordsBackCls} onClick={onBrowseExams}>
+          <Icon icon="arrow-left" /> All exams
+        </button>
+      ) : (
+        <>
+          <div style={{ marginBottom: '1.8rem' }}>
+            <TodayArenaGoals />
+          </div>
+          <League />
+          <Rising />
+        </>
+      )}
       <p className={introCls}>
-        Each boss is a real exam, with its real time limits and grading.
+        {examKey
+          ? 'Choose a difficulty and length. The exam starts only after you confirm on its cover.'
+          : 'Each boss is a real exam, with its real time limits and grading.'}
         {state
           ? ` Paid battles today: ${state.paidBattlesToday} of ${state.paidBattlesPerDay}.`
           : ''}
       </p>
       {error && <p className={errorCls}>{error}</p>}
+      {state && examKey && !selectedExam && (
+        <p className={errorCls}>
+          This exam is not available. Choose All exams to find another.
+        </p>
+      )}
       {reviewBattleId > 0 && (
         <p className={introCls}>
           You have already taken this paper.{' '}
@@ -145,7 +178,7 @@ export default function Battles({
           . Resume it
         </button>
       )}
-      {ladder(state?.exams || []).map((stage) => (
+      {ladder(visibleExams).map((stage) => (
         <section key={stage.title} className={stageCls}>
           <h3 className={stageTitleCls}>{stage.title}</h3>
           <div className={gridCls}>
@@ -263,7 +296,7 @@ export default function Battles({
           </div>
         </section>
       ))}
-      {cover && coverExam && (
+      {cover && coverExam && (!examKey || cover.examKey === examKey) && (
         <CoverPage
           exam={coverExam}
           length={cover.length}
