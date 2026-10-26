@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FriendButton, { type FriendState } from '~/components/FriendButton';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import Loading from '~/components/Loading';
 import ProfilePic from '~/components/ProfilePic';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -50,7 +50,7 @@ export default function Friends() {
   if (!userId) {
     return (
       <div style={{ padding: '2rem 1rem' }}>
-        <HomeLoginPrompt />
+        <LoggedOutPrompt />
       </div>
     );
   }

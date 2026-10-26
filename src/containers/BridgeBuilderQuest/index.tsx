@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -132,7 +132,7 @@ export default function BridgeBuilderQuest({
           padding: 2rem 1rem;
         `}
       >
-        <HomeLoginPrompt />
+        <LoggedOutPrompt />
       </div>
     );
   }

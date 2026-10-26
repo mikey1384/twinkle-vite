@@ -59,7 +59,7 @@ const actionWrapClass = css`
 
 interface LoggedOutPromptProps {
   badge?: ReactNode;
-  title: ReactNode;
+  title?: ReactNode;
   body?: ReactNode;
   buttonLabel?: ReactNode;
   className?: string;
@@ -68,7 +68,7 @@ interface LoggedOutPromptProps {
 
 export default function LoggedOutPrompt({
   badge,
-  title,
+  title = 'Please log in to view this page',
   body,
   buttonLabel = 'Log In',
   className,

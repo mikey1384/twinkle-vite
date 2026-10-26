@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { css, keyframes } from '@emotion/css';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -170,7 +170,7 @@ export default function StoryHallPage({ mode }: { mode: 'hall' | 'examples' }) {
 
           {isHall && !userId && (
             <section className={sectionClass}>
-              <HomeLoginPrompt />
+              <LoggedOutPrompt />
             </section>
           )}
 

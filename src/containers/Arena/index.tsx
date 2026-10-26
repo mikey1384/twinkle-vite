@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
@@ -42,7 +42,7 @@ export default function ArenaPage() {
   const challengeId = Number(searchParams.get('challenge')) || 0;
 
   if (!userId) {
-    return <HomeLoginPrompt message="Log in to enter the Arena" />;
+    return <LoggedOutPrompt title="Log in to enter the Arena" />;
   }
 
   return (

@@ -3,7 +3,7 @@ import { Color } from '~/constants/css';
 import AchievementItem from '~/components/AchievementItem';
 import UserLevelStatus from './UserLevelStatus';
 import Loading from '~/components/Loading';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 import HomeSectionHeader from '~/components/HomeSectionHeader';
 import { useScrollAnchorRestoration } from '~/helpers/hooks/useScrollAnchorRestoration';
@@ -98,7 +98,7 @@ export default function Achievements() {
     <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
       <HomeSectionHeader title="Achievements" style={{ marginBottom: '2rem' }} />
       {!userId ? (
-        <HomeLoginPrompt />
+        <LoggedOutPrompt />
       ) : !isAchievementsLoaded ? (
         <Loading />
       ) : (

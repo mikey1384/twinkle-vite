@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import { useKeyContext } from '~/contexts';
 import Grammarbles from '~/containers/Home/GrammarGameModal';
 
@@ -9,6 +9,6 @@ import Grammarbles from '~/containers/Home/GrammarGameModal';
 export default function GrammarblesPage() {
   const userId = useKeyContext((v) => v.myState.userId);
   const navigate = useNavigate();
-  if (!userId) return <HomeLoginPrompt message="Log in to play Grammarbles" />;
+  if (!userId) return <LoggedOutPrompt title="Log in to play Grammarbles" />;
   return <Grammarbles onHide={() => navigate('/')} />;
 }

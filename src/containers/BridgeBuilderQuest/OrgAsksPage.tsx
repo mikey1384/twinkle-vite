@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -164,7 +164,7 @@ export default function OrgAsksPage() {
     }
   }
 
-  if (!userId) return <HomeLoginPrompt />;
+  if (!userId) return <LoggedOutPrompt />;
   const showToInput = editingTo || !recipient;
   const detail: [string, keyof Ask][] = [
     ['What we need', 'ask'],

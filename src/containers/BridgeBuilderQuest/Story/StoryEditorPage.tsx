@@ -5,7 +5,7 @@ import { css, cx, keyframes } from '@emotion/css';
 import { v1 as uuidv1 } from 'uuid';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import ProfilePic from '~/components/ProfilePic';
@@ -170,7 +170,7 @@ export default function StoryEditorPage() {
   if (!userId) {
     return (
       <div className={css`padding: 2rem 1rem;`}>
-        <HomeLoginPrompt />
+        <LoggedOutPrompt />
       </div>
     );
   }

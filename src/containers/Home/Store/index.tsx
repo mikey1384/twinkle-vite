@@ -10,7 +10,7 @@ import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
 import DonorLicenseItem from './DonorLicenseItem';
 import Loading from '~/components/Loading';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import { isSupermod } from '~/helpers';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 import { priceTable } from '~/constants/defaultValues';
@@ -159,7 +159,7 @@ export default function Store() {
     <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
       <HomeSectionHeader title={settingsLabel} style={headingMargin} />
       {!userId ? (
-        <HomeLoginPrompt />
+        <LoggedOutPrompt />
       ) : (
         <div ref={settingsListRef} className={contentWrapperClass}>
           <div data-scroll-anchor-id="home-settings:karma">

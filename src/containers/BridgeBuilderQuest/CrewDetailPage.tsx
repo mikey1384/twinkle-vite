@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -47,7 +47,7 @@ export default function CrewDetailPage() {
   if (!userId) {
     return (
       <div className={css`padding: 2rem 1rem;`}>
-        <HomeLoginPrompt />
+        <LoggedOutPrompt />
       </div>
     );
   }

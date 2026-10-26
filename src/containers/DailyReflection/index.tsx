@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { css } from '@emotion/css';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { DailyQuestionContent } from '~/components/Modals/DailyQuestionModal';
@@ -66,7 +66,7 @@ export default function DailyReflectionPage() {
   }, [userId, view, modesRetry]);
 
   if (!userId) {
-    return <HomeLoginPrompt message="Log in to write your Daily Reflection" />;
+    return <LoggedOutPrompt title="Log in to write your Daily Reflection" />;
   }
 
   const trainingAxis = modes?.training.axis || pickedAxis;

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import HomeLoginPrompt from '~/components/HomeLoginPrompt';
+import LoggedOutPrompt from '~/components/LoggedOutPrompt';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -73,7 +73,7 @@ export default function EmailsReviewPage() {
     }
   }
 
-  if (!userId) return <HomeLoginPrompt />;
+  if (!userId) return <LoggedOutPrompt />;
   const open = (drafts || []).filter((d) => d.status === 'held' || d.status === 'failed');
   const recent = (drafts || []).filter((d) => d.status === 'sent' || d.status === 'discarded');
   return (
