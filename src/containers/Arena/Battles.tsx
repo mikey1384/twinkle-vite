@@ -113,7 +113,9 @@ export default function Battles({
           }}
         />
       </div>
-      <TodayArenaGoals />
+      <div style={{ marginBottom: '1.8rem' }}>
+        <TodayArenaGoals />
+      </div>
       <League />
       <Rising />
       <p className={introCls}>
