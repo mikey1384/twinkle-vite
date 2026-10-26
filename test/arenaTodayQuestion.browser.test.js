@@ -40,7 +40,7 @@ async function compile() {
   return bundle = result.outputFiles[0].text;
 }
 const prompt = q => ({ prompt: q.prompt, passage: q.passage, choices: q.choices });
-const rewards = { correctXP: 50000, correctCoins: 200, guidedXP: 25000, guidedCoins: 0 };
+const rewards = { correctXP: 50000, correctCoins: 5000, guidedXP: 25000, guidedCoins: 0 };
 function backend() {
   let profile = null, ready = false, firstAnswer = null, completedVia = null, lessonStep = 0, responses = [], checkAnswer = null;
   let loseReply = false;
@@ -49,7 +49,7 @@ function backend() {
   function snapshot(viewer = '1') {
     if (viewer !== '1') return { dayIndex: 1, nextDay: Date.now() + 86400000, options, rewards, profile: null, assignment: null, balances: { twinkleXP: 0, twinkleCoins: 0 } };
     const learned = lessonStep === 2;
-    const paid = completedVia === 'correct' ? { xp: 50000, coins: 200 } : completedVia ? { xp: 25000, coins: 0 } : { xp: 0, coins: 0 };
+    const paid = completedVia === 'correct' ? { xp: 50000, coins: 5000 } : completedVia ? { xp: 25000, coins: 0 } : { xp: 0, coins: 0 };
     return { dayIndex: 1, nextDay: Date.now() + 86400000, options, rewards, profile,
       balances: { twinkleXP: paid.xp, twinkleCoins: paid.coins },
       ...(completedVia ? { dailyTaskStatus: { aiStory: { isPassed: true, arena: { todayQuestion: { done: true } } } } } : {}),
@@ -130,6 +130,7 @@ test('Today’s Challenge automatic readiness, onboarding, guided learning and c
         else await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
         await page.getByRole('heading', { name: source.title }).waitFor();
         assert.equal(await page.getByText('50,000', { exact: true }).count(), 1);
+        assert.equal(await page.getByText('5,000', { exact: true }).count(), 1);
         assert.equal(await page.getByText('25,000', { exact: true }).count(), 1);
         assert.equal(await page.locator('[data-twinkle-agent-off-limits="arenaToday"]').count(), 1);
         await shot('question');
@@ -172,7 +173,7 @@ test('Today’s Challenge automatic readiness, onboarding, guided learning and c
           await page.getByRole('heading', { name: 'You worked it out.' }).waitFor();
         }
         await shot('complete');
-        assert.deepEqual(await page.evaluate(() => window.balances.newState), outcome === 'correct' ? { twinkleXP: 50000, twinkleCoins: 200 } : { twinkleXP: 25000, twinkleCoins: 0 });
+        assert.deepEqual(await page.evaluate(() => window.balances.newState), outcome === 'correct' ? { twinkleXP: 50000, twinkleCoins: 5000 } : { twinkleXP: 25000, twinkleCoins: 0 });
         assert.equal(await page.evaluate(() => window.daily.newStats.dailyTaskStatus.aiStory.isPassed), true);
         assert.equal(await page.locator('[data-twinkle-agent-off-limits]').count(), 0);
         await page.getByRole('button', { name: 'My focus', exact: true }).click();
