@@ -23,6 +23,7 @@ import { NavSlotContext } from './navSlot';
 import Button from '~/components/Button';
 import Rankings from './Rankings';
 import Review from './Review';
+import QuestReview from './Review/QuestReview';
 import Loading from '~/components/Loading';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import ModeChooser from './ModeChooser';
@@ -81,6 +82,10 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
   const [mode, setMode] = useState<'choose' | 'classic' | 'quest'>('choose');
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
+  const [questMapSelection, setQuestMapSelection] = useState<{
+    worldId: number | null;
+    nodeId: string | null;
+  }>({ worldId: null, nodeId: null });
   const [gameState, setGameState] = useState('notStarted');
   useUserActivity(
     activeTab === 'game' && gameState === 'started'
@@ -309,7 +314,8 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
       : mode === 'quest'
         ? [
             { key: 'quest', label: 'Map' },
-            { key: 'questRankings', label: 'Rankings' }
+            { key: 'questRankings', label: 'Rankings' },
+            { key: 'questReview', label: 'Review' }
           ]
         : [];
   // Grammarbles is its own page (Mikey 10-07: more room than a modal), and
@@ -422,7 +428,10 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
           )}
           {mode === 'quest' && activeTab === 'quest' && (
             <Suspense fallback={<Loading />}>
-              <GrammarQuest />
+              <GrammarQuest
+                selection={questMapSelection}
+                onSelect={setQuestMapSelection}
+              />
             </Suspense>
           )}
           {mode === 'quest' && activeTab === 'questRankings' && (
@@ -432,6 +441,11 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
                 onSetRankingsTab={setRankingsTab}
                 rankingsTab={rankingsTab}
               />
+            </div>
+          )}
+          {mode === 'quest' && activeTab === 'questReview' && (
+            <div className={fillCls}>
+              <QuestReview />
             </div>
           )}
           {mode === 'classic' &&

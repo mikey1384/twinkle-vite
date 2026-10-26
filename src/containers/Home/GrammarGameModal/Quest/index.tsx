@@ -32,7 +32,13 @@ const MarbleRunScreen = lazyWithRetry(loadMarbleRun);
 // Grammar Quest (10-06): a painted world map over the tagged grammar bank.
 // Stops and bosses play as the marble run (10-07); the nemesis house keeps
 // the plain question list. Classic Grammarbles stays as it is.
-export default function GrammarQuest() {
+export default function GrammarQuest({
+  selection,
+  onSelect
+}: {
+  selection?: { worldId: number | null; nodeId: string | null };
+  onSelect?: (selection: { worldId: number | null; nodeId: string | null }) => void;
+} = {}) {
   const { pendingAction, runAction } = usePendingAction();
   const loadState = useAppContext(
     (v) => v.requestHelpers.loadGrammarQuestState
@@ -46,8 +52,10 @@ export default function GrammarQuest() {
   const userId = useKeyContext((v) => v.myState.userId);
   const accountSettings = useKeyContext((v) => v.myState.settings);
   const [state, setState] = useState<QuestState | null>(null);
-  const [worldId, setWorldId] = useState<number | null>(null);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [worldId, setWorldId] = useState<number | null>(selection?.worldId ?? null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(
+    selection?.nodeId ?? null
+  );
   const [run, setRun] = useState<QuestRun | null>(null);
   const [result, setResult] = useState<QuestResult | null>(null);
   const [resultAnswers, setResultAnswers] = useState<QuestAnswer[]>([]);
@@ -133,10 +141,12 @@ export default function GrammarQuest() {
               onSelectWorld={(id) => {
                 setWorldId(id);
                 setSelectedNodeId(null);
+                onSelect?.({ worldId: id, nodeId: null });
               }}
               onSelectNode={(id) => {
                 playQuestSound('select');
                 setSelectedNodeId(id);
+                onSelect?.({ worldId: world.id, nodeId: id });
               }}
               onPlayNode={(node: QuestNode) => handleStart({ nodeId: node.id })}
               onPlayNemesis={() => {

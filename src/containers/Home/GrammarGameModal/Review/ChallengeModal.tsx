@@ -20,6 +20,7 @@ import {
 import useChallengeReviews from './useChallengeReviews';
 import { useGamePortalTarget } from '../gamePortal';
 import type { SavedChallengeReview } from './challengeReviews';
+import ReportQuestionButton from './ReportQuestionButton';
 
 export default function ChallengeModal({
   isOpen,
@@ -291,6 +292,16 @@ export default function ChallengeModal({
               label="Reviewing…"
             />
           </details>
+        )}
+        {questRef && !pending && (
+          <div className={smallCls}>
+            <p>If this still seems faulty, send Mikey the question and your note.</p>
+            <ReportQuestionButton
+              quest={quest}
+              portalTarget={portalTarget}
+              target={{ questionId, questionText, ...questRef }}
+            />
+          </div>
         )}
       </div>
       <ModalFooter className={quest ? questFooterCls : footerCls}>

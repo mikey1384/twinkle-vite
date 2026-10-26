@@ -583,6 +583,24 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async reportGrammarQuestion(params: {
+      questionId: number;
+      questionVersion?: number;
+      runId: number;
+      position: number;
+      note: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/grammar-question/report`,
+          params,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadBlockedUsers() {
       try {
         const { data } = await request.get(`${URL}/chat/blocks`, auth());
