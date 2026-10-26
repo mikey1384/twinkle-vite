@@ -62,7 +62,7 @@ export default function ArenaPage() {
             </button>
             {view !== 'choose' && (
               <div className={modeTagCls}>
-                {view === 'today' ? 'Today’s Q' : view === 'train' ? 'Train' : 'Arena'}
+                {view === 'today' ? 'Today’s Challenge' : view === 'train' ? 'Train' : 'Arena'}
               </div>
             )}
           </div>

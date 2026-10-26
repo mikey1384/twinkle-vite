@@ -76,7 +76,7 @@ function backend() {
   };
 }
 
-test('Today’s Q onboarding, guided learning, canonical rewards and lost-response recovery render at 360px and desktop', { timeout: 90000 }, async () => {
+test('Today’s Challenge automatic readiness, onboarding, guided learning and canonical rewards render at 360px and desktop', { timeout: 90000 }, async () => {
   const script = await compile();
   const browser = await chromium.launch();
   try {
@@ -84,6 +84,7 @@ test('Today’s Q onboarding, guided learning, canonical rewards and lost-respon
       for (const outcome of ['guided', 'correct']) {
         const server = backend();
         const page = await browser.newPage({ viewport: { width, height: 900 } });
+        await page.clock.install();
         page.setDefaultTimeout(6000);
         const errors = []; page.on('pageerror', err => errors.push(err.message));
         await page.route('**/*', route => {
@@ -96,7 +97,7 @@ test('Today’s Q onboarding, guided learning, canonical rewards and lost-respon
           assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `horizontal overflow ${name} ${width}`);
           if (artifacts) { mkdirSync(artifacts, { recursive: true }); await page.screenshot({ path: path.join(artifacts, `${width}-${outcome}-${name}.png`), fullPage: true }); }
         };
-        const boot = async () => { await page.goto('http://localhost:3000/'); await page.addScriptTag({ content: script }); await page.getByRole('button', { name: /Today’s Q/ }).waitFor(); if (outcome === 'guided') await shot('chooser'); await page.getByRole('button', { name: /Today’s Q/ }).click(); };
+        const boot = async () => { await page.goto('http://localhost:3000/'); await page.addScriptTag({ content: script }); await page.getByRole('button', { name: /Today’s Challenge/ }).waitFor(); if (outcome === 'guided') await shot('chooser'); await page.getByRole('button', { name: /Today’s Challenge/ }).click(); };
         await boot();
         await page.getByRole('heading', { name: 'What are you working toward?' }).waitFor();
         await shot('setup');
@@ -104,13 +105,40 @@ test('Today’s Q onboarding, guided learning, canonical rewards and lost-respon
         await page.getByRole('button', { name: 'Math', exact: true }).click();
         await page.getByRole('button', { name: '중등 2 · Grade 8', exact: true }).click();
         await page.getByRole('button', { name: 'I know the basics; help me improve', exact: true }).click();
-        await page.getByRole('heading', { name: 'We’re preparing your question' }).waitFor();
-        server.publish(); await page.getByRole('button', { name: 'Check for my question' }).click();
+        await page.getByRole('heading', { name: 'We’re preparing your challenge' }).waitFor();
+        assert.equal(await page.getByRole('button', { name: 'Check for my question' }).count(), 0);
+        await shot('waiting');
+        const openCount = () => server.actions.filter(action => action.action === 'open').length;
+        if (outcome === 'guided') {
+          await page.getByRole('button', { name: 'My focus', exact: true }).click();
+          await page.getByRole('button', { name: 'SAT', exact: true }).click();
+          const beforeEditing = openCount();
+          await page.clock.fastForward(60000);
+          await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+          assert.equal(openCount(), beforeEditing, 'Do not refresh over preference edits');
+          assert.equal(await page.getByRole('heading', { name: 'What should we focus on?' }).count(), 1);
+          await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+          await page.evaluate(() => Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' }));
+          const beforeHidden = openCount();
+          await page.clock.fastForward(60000);
+          assert.equal(openCount(), beforeHidden, 'Do not poll a hidden page');
+          await page.evaluate(() => Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' }));
+        }
+        server.publish();
+        if (outcome === 'guided') await page.clock.fastForward(60000);
+        else if (width === 360) await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+        else await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
         await page.getByRole('heading', { name: source.title }).waitFor();
         assert.equal(await page.getByText('50,000', { exact: true }).count(), 1);
         assert.equal(await page.getByText('25,000', { exact: true }).count(), 1);
         assert.equal(await page.locator('[data-twinkle-agent-off-limits="arenaToday"]').count(), 1);
         await shot('question');
+        await page.getByLabel('Your answer', { exact: true }).fill('draft answer');
+        const beforeAnswering = openCount();
+        await page.clock.fastForward(60000);
+        await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+        assert.equal(openCount(), beforeAnswering, 'Stop readiness polling once the question is served');
+        assert.equal(await page.getByLabel('Your answer', { exact: true }).inputValue(), 'draft answer');
         if (outcome === 'correct') {
           await page.getByLabel('Your answer', { exact: true }).fill('75');
           server.loseNextReply();

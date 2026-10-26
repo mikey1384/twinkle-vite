@@ -559,7 +559,7 @@ function asksForCredentials(element: Element) {
 
 const OFF_LIMITS_REFUSAL: Record<string, string> = {
   arenaToday:
-    'Today’s Q earns a personal daily learning reward. The user answers the question, lesson interactions and understanding check themselves. You can review it together once completed.',
+    'Today’s Challenge earns a personal daily learning reward. The user answers the question, lesson interactions and understanding check themselves. You can review it together once completed.',
   arenaBattle:
     'This is a live Arena battle, a real test: the user answers it alone. Offer to go through it in the review once they submit.'
 };

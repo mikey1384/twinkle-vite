@@ -30,6 +30,8 @@ export default function TodayQuestion() {
   const [lessonIndex, setLessonIndex] = useState(0);
   const [exploring, setExploring] = useState(false);
   const assignmentId = useRef<number | null>(null);
+  const hasProfile = !!data?.profile;
+  const waitingForQuestion = hasProfile && !data?.assignment;
 
   useEffect(() => {
     mounted.current = true;
@@ -48,18 +50,28 @@ export default function TodayQuestion() {
   }, [userId]);
 
   useEffect(() => {
-    if (!data) return;
+    if (!data || !hasProfile || editing) return;
     const refresh = () => {
-      if (Date.now() >= data.nextDay && !busyRef.current) void run('open');
+      if (
+        document.visibilityState === 'visible' &&
+        !busyRef.current &&
+        (waitingForQuestion || Date.now() >= data.nextDay)
+      ) void run('open');
     };
     const timer = window.setTimeout(refresh, Math.max(50, data.nextDay - Date.now() + 100));
-    const retry = window.setInterval(refresh, 30000);
+    const retry = window.setInterval(refresh, 60000);
     window.addEventListener('focus', refresh);
-    return () => { window.clearTimeout(timer); window.clearInterval(retry); window.removeEventListener('focus', refresh); };
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearInterval(retry);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.nextDay]);
+  }, [data?.nextDay, hasProfile, waitingForQuestion, editing]);
 
-  if (!data) return <section className={wrapCls}>{error ? <><p role="alert">{error}</p><button className={primaryCls} onClick={() => void run('open')}>Try again</button></> : <ArenaLoader text="Opening your daily question…" />}</section>;
+  if (!data) return <section className={wrapCls}>{error ? <><p role="alert">{error}</p><button className={primaryCls} onClick={() => void run('open')}>Try again</button></> : <ArenaLoader text="Opening your challenge…" />}</section>;
   const q = data.assignment;
   const rewards = q?.rewards || data.rewards;
   const setup = !data.profile || editing;
@@ -74,7 +86,7 @@ export default function TodayQuestion() {
   return (
     <section className={wrapCls} aria-busy={busy} {...(!setup && q && !q.completedVia ? { [WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: 'arenaToday', [WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE]: 'arenaToday' } : {})}>
       <header className={headCls}>
-        <div><span className={eyebrowCls}>ONE QUESTION, FOR YOU</span><h1>Today’s Q</h1></div>
+        <div><span className={eyebrowCls}>ONE QUESTION, FOR YOU</span><h1>Today’s Challenge</h1></div>
         {data.profile && !setup && <button className={linkCls} disabled={busy} onClick={editPreferences}>My focus</button>}
       </header>
       {error && <div role="alert" className={errorCls}>{error}<button className={linkCls} disabled={busy} onClick={() => void run('open')}>Refresh</button></div>}
@@ -96,11 +108,10 @@ export default function TodayQuestion() {
       ) : !q ? (
         <div className={paperCls}>
           <span className={eyebrowCls}>YOUR FOCUS IS SAVED</span>
-          <h2>We’re preparing your question</h2>
+          <h2>We’re preparing your challenge</h2>
           <p>{profileLabel(data)} · {data.options.grades.find(g => g.key === data.profile?.grade)?.label}</p>
-          <p>Your next question will include an interactive explanation made for that question. Check back here later.</p>
+          <p>Your challenge will appear here when it’s ready, with an interactive explanation to help you learn.</p>
           <RewardOffer rewards={rewards} />
-          <button className={primaryCls} disabled={busy} onClick={() => void run('open')}>Check for my question</button>
         </div>
       ) : (
         <>

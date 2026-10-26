@@ -58,7 +58,7 @@ export default function ModeChooser({
       <button type="button" className={todayCls} onClick={() => onPick('today')}>
         <span className={todayBadgeCls}>Q</span>
         <span className={todayTextCls}>
-          <strong>Today’s Q</strong>
+          <strong>Today’s Challenge</strong>
           <span>One question for your goals. Learn it, earn rewards, and clear A.</span>
           {arena?.todayQuestion?.done && <span className={statusCls}>Completed today ✓</span>}
         </span>
