@@ -11,7 +11,7 @@ import { ARENA } from './theme';
 export default function ModeChooser({
   onPick
 }: {
-  onPick: (mode: 'train' | 'arena') => void;
+  onPick: (mode: 'today' | 'train' | 'arena') => void;
 }) {
   const aiStoryTask = useNotiContext(
     (v) => v.state.todayStats?.dailyTaskStatus?.aiStory
@@ -55,6 +55,15 @@ export default function ModeChooser({
         <h1>Arena</h1>
         <p>Train for it. Then battle the real thing.</p>
       </header>
+      <button type="button" className={todayCls} onClick={() => onPick('today')}>
+        <span className={todayBadgeCls}>Q</span>
+        <span className={todayTextCls}>
+          <strong>Today’s Q</strong>
+          <span>One question for your goals. Learn it, earn rewards, and clear A.</span>
+          {arena?.todayQuestion?.done && <span className={statusCls}>Completed today ✓</span>}
+        </span>
+        <Icon icon="chevron-right" />
+      </button>
       <div className={cardsCls}>
         {CARDS.map((card) => (
           <button
@@ -87,6 +96,24 @@ export default function ModeChooser({
 const wrapCls = css`
   max-width: 1100px;
   margin: 0 auto;
+`;
+const todayCls = css`
+  width: 100%; display: flex; align-items: center; gap: 1.3rem;
+  padding: 1.7rem; margin-bottom: 2rem; text-align: left;
+  color: ${ARENA.ink}; background: #fff8d8; border: 3px solid ${ARENA.ink};
+  border-radius: 14px; box-shadow: 4px 5px 0 ${ARENA.ink}; cursor: pointer;
+  &:hover { background: #fff1b2; }
+  &:focus-visible { outline: 3px solid #3976bb; outline-offset: 5px; }
+`;
+const todayBadgeCls = css`
+  font-size: 2.7rem; font-weight: 900; border: 3px solid ${ARENA.ink};
+  border-radius: 50%; width: 4.6rem; height: 4.6rem; flex: 0 0 4.6rem;
+  display: grid; place-items: center; background: white;
+`;
+const todayTextCls = css`
+  display: flex; flex-direction: column; gap: 0.4rem; flex: 1;
+  font-size: max(1.3rem, 14px); line-height: 1.45;
+  strong { font-size: max(1.8rem, 20px); }
 `;
 
 const headerCls = css`

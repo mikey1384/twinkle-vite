@@ -384,6 +384,7 @@ registerMethods('content', [
   'loadGrammarReview',
   'challengeGrammarQuestion',
   'loadArenaState',
+  'arenaToday',
   'startArenaBattle',
   'prepareArenaBattle',
   'loadArenaBattle',

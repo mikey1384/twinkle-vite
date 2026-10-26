@@ -1653,6 +1653,14 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async arenaToday(action: 'open' | 'profile' | 'action', body: Record<string, unknown> = {}) {
+      try {
+        const { data } = await request.post(`${URL}/content/arena/today/${action}`, body, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadArenaState() {
       try {
         const { data } = await request.get(

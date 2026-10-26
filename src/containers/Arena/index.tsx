@@ -8,6 +8,7 @@ import { useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { APP_SHELL_HEADER_OFFSET_STYLE } from '~/constants/appShell';
 import ModeChooser from './ModeChooser';
+import TodayQuestion from './TodayQuestion';
 import Train from './Train';
 import ReviewDeck from './ReviewDeck';
 import Skills from './Skills';
@@ -26,7 +27,7 @@ import { ARENA } from './theme';
 // mock exams under their real conditions. Like Grammarbles and Daily
 // Reflection, a page with two covers instead of a modal.
 
-type View = 'choose' | 'train' | 'arena';
+type View = 'choose' | 'today' | 'train' | 'arena';
 
 export default function ArenaPage() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -35,7 +36,7 @@ export default function ArenaPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawView = searchParams.get('mode');
   const view: View =
-    rawView === 'train' || rawView === 'arena' ? rawView : 'choose';
+    rawView === 'train' || rawView === 'arena' || rawView === 'today' ? rawView : 'choose';
   const activity = view === 'train' ? searchParams.get('play') : null;
   const battleId = Number(searchParams.get('battle')) || 0;
   // a shared challenge opened from Home (Mikey 10-24)
@@ -61,7 +62,7 @@ export default function ArenaPage() {
             </button>
             {view !== 'choose' && (
               <div className={modeTagCls}>
-                {view === 'train' ? 'Train' : 'Arena'}
+                {view === 'today' ? 'Today’s Q' : view === 'train' ? 'Train' : 'Arena'}
               </div>
             )}
           </div>
@@ -82,6 +83,7 @@ export default function ArenaPage() {
           )}
         >
           {view === 'choose' && <ModeChooser onPick={openView} />}
+          {view === 'today' && <TodayQuestion key={userId} />}
           {view === 'train' && activity === 'ai-story' && (
             <AIStory onHide={() => setSearchParams({ mode: 'train' })} />
           )}
@@ -178,7 +180,7 @@ export default function ArenaPage() {
               }
             />
           )}
-          {battleId > 0 && view !== 'choose' && (
+          {battleId > 0 && (view === 'train' || view === 'arena') && (
             <BattleRunner
               key={battleId}
               battleId={battleId}
@@ -190,7 +192,7 @@ export default function ArenaPage() {
     </ErrorBoundary>
   );
 
-  function openView(next: 'train' | 'arena') {
+  function openView(next: 'today' | 'train' | 'arena') {
     setSearchParams({ mode: next });
   }
 
