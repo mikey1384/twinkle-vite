@@ -158,7 +158,9 @@ export default function DailyReflectionPage() {
 // every view sits centred in the space below the back bar, so short screens
 // never look top-heavy (Mikey 10-12: "same applies to classic")
 const pageCls = css`
-  min-height: calc(100vh - 7rem);
+  /* #App already accounts for the header and keyboard. Fill its available
+     height; a separate viewport subtraction leaves the site background bare. */
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   width: 100%;
