@@ -43,16 +43,19 @@ const prompt = q => ({ prompt: q.prompt, passage: q.passage, choices: q.choices 
 const rewards = { correctXP: 50000, correctCoins: 5000, guidedXP: 25000, guidedCoins: 0 };
 function backend() {
   let profile = null, ready = false, firstAnswer = null, completedVia = null, lessonStep = 0, responses = [], checkAnswer = null;
+  let dayIndex = 1, setupDayIndex = null;
+  const priorBalance = { xp: 0, coins: 0 };
   let loseReply = false;
   const actions = [];
   const options = { goals: [{ key: 'sat', label: 'SAT', subjects: ['Reading and Writing', 'Math'] }], grades: [{ key: 'm2', label: '중등 2 · Grade 8' }], confidence: [{ key: 'comfortable', label: 'I know the basics; help me improve' }], exams: [] };
   function snapshot(viewer = '1') {
-    if (viewer !== '1') return { dayIndex: 1, nextDay: Date.now() + 86400000, options, rewards, profile: null, assignment: null, balances: { twinkleXP: 0, twinkleCoins: 0 } };
+    if (viewer !== '1') return { dayIndex, nextDay: Date.now() + 86400000, options, rewards, profile: null, setupCompletedToday: false, assignment: null, balances: { twinkleXP: 0, twinkleCoins: 0 } };
     const learned = lessonStep === 2;
     const paid = completedVia === 'correct' ? { xp: 50000, coins: 5000 } : completedVia ? { xp: 25000, coins: 0 } : { xp: 0, coins: 0 };
-    return { dayIndex: 1, nextDay: Date.now() + 86400000, options, rewards, profile,
-      balances: { twinkleXP: paid.xp, twinkleCoins: paid.coins },
-      ...(completedVia ? { dailyTaskStatus: { aiStory: { isPassed: true, arena: { todayQuestion: { done: true } } } } } : {}),
+    const setupCompletedToday = setupDayIndex === dayIndex;
+    return { dayIndex, nextDay: Date.now() + 86400000, options, rewards, profile, setupCompletedToday,
+      balances: { twinkleXP: priorBalance.xp + paid.xp, twinkleCoins: priorBalance.coins + paid.coins },
+      dailyTaskStatus: { aiStory: { isPassed: !!completedVia || setupCompletedToday, arena: { todayQuestion: { done: !!completedVia, completedVia, setupCompleted: setupCompletedToday } } } },
       assignment: ready ? { id: 71, dayIndex: 1, title: source.title, skill: source.skill, question: prompt(source.question), rewards, attempted: firstAnswer !== null, firstAnswer, firstCorrect: firstAnswer === null ? null : firstAnswer === '75', completedVia, reward: paid,
         ...(firstAnswer !== null ? { lesson: { title: source.lesson.title, totalSteps: 2, completedSteps: lessonStep, ...(learned ? { summary: source.lesson.summary } : {}), steps: source.lesson.steps.slice(0, lessonStep + 1).map((s, i) => ({ title: s.title, prompt: s.prompt, scene: s.scene, options: s.options.map(o => ({ label: o.label })), ...(responses[i] ? { response: { ...responses[i], feedback: s.options[responses[i].option].feedback, scene: s.options[responses[i].option].scene } } : {}) })) } } : {}),
         ...(learned ? { check: prompt(source.check), checkResult: checkAnswer === null ? null : { answer: checkAnswer, correct: checkAnswer === '96', ...(checkAnswer === '96' ? { explanation: source.check.explanation } : {}) } } : {})
@@ -60,17 +63,18 @@ function backend() {
   }
   return {
     actions, publish: () => { ready = true; }, loseNextReply: () => { loseReply = true; }, snapshot,
+    nextDay: () => { const saved = snapshot().balances; priorBalance.xp = saved.twinkleXP; priorBalance.coins = saved.twinkleCoins; dayIndex++; ready = false; completedVia = null; firstAnswer = null; lessonStep = 0; responses = []; checkAnswer = null; },
     async route(route) {
       const action = new URL(route.request().url()).pathname.split('/').at(-1);
       const body = route.request().postDataJSON(); actions.push({ action, body });
-      if (action === 'profile') profile = { ...body, revision: 1 };
+      if (action === 'profile') { if (!profile) setupDayIndex = dayIndex; profile = { ...body, revision: 1 }; }
       if (action === 'action') {
         if (body.action === 'answer' && firstAnswer === null) { firstAnswer = body.answer; if (firstAnswer === '75') completedVia = 'correct'; }
         if (body.action === 'lesson') { responses[body.step] = { option: body.option, correct: body.option === source.lesson.steps[body.step].correct }; if (responses[body.step].correct) lessonStep = body.step + 1; }
         if (body.action === 'check') { checkAnswer = body.answer; if (checkAnswer === '96' && !completedVia) completedVia = 'guided'; }
-        await new Promise(resolve => setTimeout(resolve, 150));
-        if (loseReply) { loseReply = false; return route.abort(); }
       }
+      if (action !== 'open') await new Promise(resolve => setTimeout(resolve, 150));
+      if (loseReply) { loseReply = false; return route.abort(); }
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify(snapshot(route.request().headers()['x-viewer'])) });
     }
   };
@@ -104,8 +108,18 @@ test('Today’s Challenge automatic readiness, onboarding, guided learning and c
         await page.getByRole('button', { name: 'SAT', exact: true }).click();
         await page.getByRole('button', { name: 'Math', exact: true }).click();
         await page.getByRole('button', { name: '중등 2 · Grade 8', exact: true }).click();
+        const lostSetupReply = width === 360 && outcome === 'correct';
+        if (lostSetupReply) server.loseNextReply();
         await page.getByRole('button', { name: 'I know the basics; help me improve', exact: true }).click();
+        if (lostSetupReply) {
+          await page.getByRole('alert').waitFor();
+          assert.equal(await page.getByText('A cleared for today ✓', { exact: true }).count(), 0, 'No optimistic setup credit');
+          await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+        }
         await page.getByRole('heading', { name: 'We’re preparing your challenge' }).waitFor();
+        assert.equal(await page.getByText('A cleared for today ✓', { exact: true }).count(), 1);
+        assert.equal(await page.evaluate(() => window.daily.newStats.dailyTaskStatus.aiStory.isPassed), true);
+        assert.deepEqual(await page.evaluate(() => window.balances.newState), { twinkleXP: 0, twinkleCoins: 0 });
         assert.equal(await page.getByRole('button', { name: 'Check for my question' }).count(), 0);
         await shot('waiting');
         const openCount = () => server.actions.filter(action => action.action === 'open').length;
@@ -179,6 +193,17 @@ test('Today’s Challenge automatic readiness, onboarding, guided learning and c
         await page.getByRole('button', { name: 'My focus', exact: true }).click();
         await page.getByRole('button', { name: 'Cancel', exact: true }).click();
         assert.equal(await page.getByText('A CLEARED ✓', { exact: true }).count(), 1);
+        server.nextDay();
+        await boot();
+        await page.getByRole('heading', { name: 'We’re preparing your challenge' }).waitFor();
+        await page.getByRole('button', { name: 'My focus', exact: true }).click();
+        await page.getByRole('button', { name: 'SAT', exact: true }).click();
+        await page.getByRole('button', { name: 'Reading and Writing', exact: true }).click();
+        await page.getByRole('button', { name: '중등 2 · Grade 8', exact: true }).click();
+        await page.getByRole('button', { name: 'I know the basics; help me improve', exact: true }).click();
+        await page.getByRole('heading', { name: 'We’re preparing your challenge' }).waitFor();
+        assert.equal(await page.getByText('A cleared for today ✓', { exact: true }).count(), 0, 'Editing tomorrow cannot renew setup credit');
+        assert.equal(await page.evaluate(() => window.daily.newStats.dailyTaskStatus.aiStory.isPassed), false);
         await page.evaluate(() => window.setViewer(2));
         await page.getByRole('heading', { name: 'What are you working toward?' }).waitFor();
         assert.equal(await page.getByText('A CLEARED ✓', { exact: true }).count(), 0);

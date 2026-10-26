@@ -90,6 +90,10 @@ export default function TodayQuestion() {
         {data.profile && !setup && <button className={linkCls} disabled={busy} onClick={editPreferences}>My focus</button>}
       </header>
       {error && <div role="alert" className={errorCls}>{error}<button className={linkCls} disabled={busy} onClick={() => void run('open')}>Refresh</button></div>}
+      {!setup && data.setupCompletedToday && !q?.completedVia && <div className={successCls} role="status">
+        <strong>A cleared for today ✓</strong>
+        <p>Your first-time setup counts. You can still complete your challenge to earn its rewards.</p>
+      </div>}
       {setup ? (
         <div className={paperCls}>
           <p className={eyebrowCls}>STEP {setupStep + 1} OF 4</p>
@@ -103,7 +107,7 @@ export default function TodayQuestion() {
             {setupStep > 0 && <button className={linkCls} disabled={busy} onClick={() => setSetupStep(s => s - 1)}>Back</button>}
             {editing && <button className={linkCls} disabled={busy} onClick={() => setEditing(false)}>Cancel</button>}
           </div>
-          <p className={mutedCls}>{editing ? 'Changes apply to future questions; today’s question stays the same.' : 'We’ll prepare a question for your focus. You’ll see it here when it’s ready.'}</p>
+          <p className={mutedCls}>{editing ? 'Changes apply to future questions; today’s question stays the same.' : 'Finish this first-time setup to clear A for today. We’ll prepare a question for your focus.'}</p>
         </div>
       ) : !q ? (
         <div className={paperCls}>

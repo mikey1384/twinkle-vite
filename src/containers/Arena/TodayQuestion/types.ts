@@ -12,6 +12,7 @@ export interface LessonStep {
 export interface TodayState {
   dayIndex: number; nextDay: number;
   profile: Profile | null;
+  setupCompletedToday: boolean;
   rewards: { correctXP: number; correctCoins: number; guidedXP: number; guidedCoins: number };
   balances: { twinkleXP: number; twinkleCoins: number };
   options: { goals: (Choice & { subjects: string[] })[]; grades: Choice[]; confidence: Choice[]; exams: Choice[] };
