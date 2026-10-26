@@ -413,7 +413,7 @@ export default function BattleRunner({
 
       {/* a live paper is the member's alone: Zero and Ciel never read it or
           answer on it (Mikey 10-25); the review after is theirs to share */}
-      <fieldset disabled={!finished && (submitting || remaining === 0)} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      <fieldset disabled={!finished && (submitting || remaining === 0)} className={answerFieldsetCls}>
       <div
         className={bodyCls}
         {...(!finished
@@ -1183,7 +1183,7 @@ function Result({ data }: { data: ArenaBattle }) {
   const [agentShared, setAgentShared] = useState<Record<string, boolean>>({});
   const [agentError, setAgentError] = useState('');
   return (
-    <div className={resultCls}>
+    <div className={resultCls} role="region" aria-label="Exam results" tabIndex={0}>
       <div>
         <span className={resultLabelCls}>
           {/* an Easy or Hard score is that mode's, never a real 등급 */}
@@ -1452,6 +1452,21 @@ const bodyCls = css`
     padding: 0.6rem;
     padding-bottom: 5.6rem;
   }
+`;
+
+// The answer lock sits between the fixed screen and its scrolling paper.
+// Keep that height constraint through the fieldset; otherwise the paper
+// expands to its full content height and its lower questions are clipped.
+const answerFieldsetCls = css`
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  margin: 0;
+  padding: 0;
 `;
 
 const paperCls = css`
@@ -1813,6 +1828,10 @@ const agentErrorCls = css`
 `;
 
 const resultCls = css`
+  /* Detailed score reports must leave room to read the paper on short screens. */
+  flex-shrink: 0;
+  max-height: 40%;
+  overflow-y: auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
