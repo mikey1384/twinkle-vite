@@ -19,7 +19,10 @@ import AccountMenu from './AccountMenu';
 import useIsAIChat from '../hooks/useIsAIChat';
 
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { APP_SHELL_HEADER_OFFSET_FALLBACK } from '~/constants/appShell';
+import {
+  APP_SHELL_HEADER_OFFSET_FALLBACK,
+  MOBILE_NAV_FOOTPRINT_STYLE
+} from '~/constants/appShell';
 
 import {
   VOCAB_CHAT_TYPE,
@@ -266,7 +269,9 @@ export default function Header({
             top: auto;
             bottom: 0;
             box-shadow: none;
-            height: var(--mobile-nav-height, 7rem);
+            /* The border-box height includes the safe-area padding. Match the
+               footprint reserved by pages so the controls keep their height. */
+            height: ${MOBILE_NAV_FOOTPRINT_STYLE};
             padding-bottom: env(safe-area-inset-bottom, 0px);
           }
         `}`}

@@ -51,7 +51,7 @@ export default function Toast({
         @media (max-width: ${mobileMaxWidth}) {
           font-size: 1.1rem;
           /* Clear the mobile bottom nav (Header pinned bottom). */
-          bottom: calc(var(--mobile-nav-height, 7rem) + 1rem);
+          bottom: calc(var(--mobile-nav-footprint) + 1rem);
         }
       `}
     >

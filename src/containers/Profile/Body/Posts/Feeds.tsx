@@ -465,6 +465,7 @@ export default function Feeds({
                 height: 7rem;
                 @media (max-width: ${mobileMaxWidth}) {
                   display: block;
+                  height: var(--mobile-nav-total-height);
                 }
               `}
             />

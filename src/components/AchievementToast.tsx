@@ -149,9 +149,8 @@ export default function AchievementToast({
             ? 'ease-in forwards'
             : 'cubic-bezier(0.2, 0.9, 0.3, 1.2) both'};
         @media (max-width: ${mobileMaxWidth}) {
-          /* Float just above the mobile bottom nav (Header pinned bottom at
-             --mobile-nav-height) instead of colliding with it. */
-          bottom: calc(var(--mobile-nav-height, 7rem) + 1rem);
+          /* Clear the full mobile bar, including its safe-area padding. */
+          bottom: calc(var(--mobile-nav-footprint) + 1rem);
         }
       `}
     >

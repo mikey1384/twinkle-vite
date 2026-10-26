@@ -330,6 +330,9 @@ export default function Home({
           className={css`
             display: block;
             height: 7rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              height: var(--mobile-nav-total-height);
+            }
           `}
         />
       </div>
