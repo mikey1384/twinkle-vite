@@ -105,7 +105,7 @@ export default function CoverPage({
   const rewardSection = <>
     {preparing && <p role="status">Checking available rewards…</p>}
     {preview && <RewardOffer offer={preview} />}
-    {existing && <p>{existing.status === 'finished' ? 'You have already taken this paper. Your result and review are ready.' : 'You already have a sitting of this paper.'}</p>}
+    {existing && <p>{existing.status === 'finished' ? 'You have already taken this paper. Your result and review are ready.' : 'You already have a sitting of this paper.'}{existing.status !== 'finished' && length === 'full' && !!exam.components?.length && ' New sittings use the section clocks shown above; your saved sitting keeps its original timing.'}</p>}
     {notice && <p role="status">{notice}</p>}
     {previewError && <p role="alert">{previewError} <button type="button" onClick={() => setRefresh(value => value + 1)}>Try again</button></p>}
   </>;
