@@ -1763,8 +1763,9 @@ const cardClass = css`
   background: #fff;
   cursor: pointer;
   overflow: hidden;
-  content-visibility: auto;
-  contain-intrinsic-size: auto var(--home-feed-card-height);
+  /* useLazyLoad already replaces off-screen cards with measured placeholders.
+     Keep mounted cards laid out: Safari can otherwise report the intrinsic
+     estimate on re-entry and overwrite a taller attachment card's measurement. */
   transition: border-color 0.18s ease;
   @media (hover: hover) and (pointer: fine) {
     &:hover {
@@ -1842,7 +1843,6 @@ const cardClass = css`
     &.home-feed-card--tablet-media-attachment {
       min-height: var(--home-feed-card-mobile-height);
       gap: max(0.75rem, 7.5px);
-      contain-intrinsic-size: auto var(--home-feed-card-mobile-height);
     }
   }
   .heading {

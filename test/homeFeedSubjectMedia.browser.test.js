@@ -18,8 +18,19 @@ const feedSource = readFileSync(
 );
 const cardStyles = feedSource.match(/const cardClass = css`[\s\S]*?\n`;/)[0];
 const sizingStyle = feedSource.match(/const sizingStyle = \{[\s\S]*?\n  \}/)[0];
-const artifacts =
-  process.env.FEED_MEDIA_ARTIFACTS || '/private/tmp/twinkle-mobile-feed-cards';
+const artifacts = process.env.FEED_MEDIA_ARTIFACTS ||
+  path.join(repo, '../work/home-feed-subject-media');
+
+const hooksSource = readFileSync(path.join(repo, 'src/helpers/hooks/index.tsx'), 'utf8');
+const lazyLoadHook = hooksSource.slice(
+  hooksSource.indexOf('export function useLazyLoad({'),
+  hooksSource.indexOf('export function useMyState')
+);
+const helpersSource = readFileSync(path.join(repo, 'src/helpers/index.ts'), 'utf8');
+const throttleSource = helpersSource.slice(
+  helpersSource.indexOf('export function throttle<'),
+  helpersSource.indexOf('/**', helpersSource.indexOf('export function throttle<'))
+);
 
 // Render the real feed Body, ImagePreview, RichText, footer and frame styles.
 // Isolate services and the image modal; no server-owned state is changed.
@@ -30,6 +41,7 @@ import {MemoryRouter} from 'react-router-dom';
 import {css} from '@emotion/css';
 import {Color,borderRadius,desktopMinWidth,mobileMaxWidth,tabletMaxWidth} from './src/constants/css';
 import Body from './src/containers/Home/Stories/FeedCard/Body';
+import HomeFeedCard from './src/containers/Home/Stories/FeedCard';
 import Actions from './src/containers/Home/Stories/FeedCard/Actions';
 import {getFeedCardSizing} from './src/containers/Home/Stories/FeedCard/helpers/sizing';
 const SHOWCASE_CARD_CLASS='home-feed-card--showcase';
@@ -48,10 +60,22 @@ function Fixture(){
  if(sample==='markdown'){subject.description+='\\n\\n![Full image](https://cdn.example.com/wide/photo.svg)';delete subject.filePath;delete subject.fileName;}
  if(sample==='long'){subject.title='A much longer title that wraps across several lines on a narrow phone';subject.description='A detailed description with enough words to fill the preview. '.repeat(20);subject.secretAnswer='A longer secret message with a useful response. '.repeat(10);}
  if(sample==='secret-attachment'){subject.secretAnswer='';subject.secretAttachment={filePath:'fixture/portrait',fileName:'photo.svg'};}
+ if(sample==='scroll-essay'){
+  subject.title='Do you think this is enough for JLee? Which parts should I practice more?';
+  subject.description='@Zero @Ciel @AdorableBunny @mikey @livv @Laserkwi @OverClassified\\nI tagged the smartest users I know';
+  subject.rewardLevel=4;subject.filePath='fixture/portrait';
+  subject.secretAnswer='Conclusion';subject.secretAttachment={filePath:'fixture/portrait',fileName:'photo.svg'};
+  subject.commentsLoaded=true;subject.commentsCount=32;subject.comments=[{id:3,content:'Practice learning more vocabulary and more complex sentences.',uploader:{id:3,username:'adle'}}];
+ }
+ window.scrollSubject=sample==='scroll-essay'?subject:null;
  const content=subject,rootObj={};
  const sizing=getFeedCardSizing({content,rootObj,userId:1});
  ${sizingStyle};
  const action=name=>event=>{event.stopPropagation();window.actions.push(name)};
+ if(sample==='scroll-essay')return <MemoryRouter><main className="fixture">
+  <div style={{height:1800}}/><div data-tracked-card><HomeFeedCard feed={subject} index={0} totalCount={1}/></div>
+  <div data-following-card style={{height:2200,background:'#edf3fb'}}>Following post</div>
+ </main></MemoryRouter>;
  return <MemoryRouter><main className="fixture"><article className={cardClass} style={sizingStyle}>
   <header className="heading"><div><b>Kiwi_Da_Bird started a subject</b><small>2 days ago</small></div></header>
   <Body content={content} rootObj={rootObj} loading={false} sizing={sizing} userId={1} onNavigate={action('navigate')}/>
@@ -65,10 +89,22 @@ let bundle;
 async function compileFixture() {
   if (bundle) return bundle;
   const stubs = {
-    '~/contexts': `const state={myState:{userId:1},helpers:{checkUserChange:()=>false},requestHelpers:{},actions:{}};export const useAppContext=select=>select(state);export const useContentContext=select=>select(state);export const useKeyContext=select=>select(state);`,
-    '~/helpers': 'export const isMobile=()=>false;',
-    '~/helpers/hooks':
-      'export const useLiveComment=value=>value;export const useContentState=()=>({});',
+    '~/contexts': `const state={myState:{userId:1,level:20},user:{actions:{}},helpers:{checkUserChange:()=>false},requestHelpers:{},actions:{onSyncServerComments:()=>{}}};export const useAppContext=select=>select(state);export const useContentContext=select=>select(state);export const useKeyContext=select=>select(state);`,
+    '~/helpers': 'export const isMobile=()=>false;export const determineUserCanRewardThis=()=>true;export const determineXpButtonDisabled=()=>false;export const scrollElementToCenter=()=>{};',
+    '~/helpers/hooks': `
+      import React,{useCallback,useEffect,useRef,useSyncExternalStore} from 'react';
+      import {lazyLoadStore} from '${repo}/src/helpers/hooks/lazyLoadStore';
+      ${throttleSource}${lazyLoadHook}
+      export const useLiveComment=value=>value;
+      export const useContentState=({contentId})=>contentId===2&&window.scrollSubject?window.scrollSubject:{};
+      export const useMyLevel=()=>({canReward:true});`,
+    '~/components/ContentPanel/Heading':
+      'import React from "react";export default ()=> <header className="heading"><div><b>dew started a subject</b><small>A day ago</small></div></header>;',
+    '~/components/Buttons/AskAgentButton': 'export default ()=>null;',
+    '~/helpers/hooks/useOwnerTrace': 'export const useOwnerFeedCardFrameCount=()=>{};',
+    '~/helpers/ownerTrace': 'export const isOwnerTraceActive=()=>false;export const measureOwnerFeedText=fn=>fn();export const measureOwnerLayout=fn=>fn();export const noteOwnerTraceTap=()=>{};export const recordOwnerTrace=()=>{};export const takeOwnerTraceTap=()=>null;',
+    '~/helpers/analytics': 'export const trackEvent=()=>{};',
+    '~/helpers/hooks/useScrollAnchorRestoration': 'export const saveScrollAnchorForElement=()=>{};',
     '~/theme/hooks/useRoleColor':
       'export const useRoleColor=()=>({getColor:()=>"#126bb5",color:"#126bb5",colorKey:"logoBlue",themeName:"logoBlue"});',
     '~/theme/hooks/useThemedCardVars':
@@ -133,7 +169,7 @@ async function compileFixture() {
             { filter: /.*/, namespace: 'fixture' },
             ({ path }) => ({
               contents: stubs[path],
-              loader: 'jsx',
+              loader: 'tsx',
               resolveDir: repo
             })
           );
@@ -299,4 +335,81 @@ for (const engine of ['chromium', 'webkit']) {
       }
     }
   );
+}
+
+// The media layout can grow beyond its estimate. Exercise the actual card,
+// pooled intersection observer, lazy-load store and measured placeholder through
+// the bottom-edge re-entry that made Safari replace a 665px card with ~535px.
+for (const engine of ['webkit', 'chromium']) {
+  test(`subject attachment height survives scroll re-entry (${engine})`, { timeout: 90000 }, async () => {
+    const browser = await { chromium, webkit }[engine].launch();
+    try {
+      for (const width of [390, 1280]) {
+        const page = await browser.newPage({ viewport: { width, height: 844 } });
+        const errors = [];
+        page.on('pageerror', error => errors.push(error.message));
+        await page.route('**/*', async route => {
+          if (route.request().url().includes('/attachments/feed/fixture/')) {
+            // Loading the essay is deliberately later than the card layout.
+            await new Promise(resolve => setTimeout(resolve, 150));
+            return route.fulfill({ contentType: 'image/svg+xml', body:
+              '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="600"><rect width="300" height="600" fill="#754b36"/><rect x="20" y="20" width="260" height="560" fill="beige"/></svg>' });
+          }
+          return route.abort();
+        });
+        await page.setContent(`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>${readFileSync(path.join(repo, 'src/styles.css'), 'utf8')}
+          html,body{height:auto!important;overflow:visible!important}html{overflow-anchor:none}
+          .fixture{width:100%;max-width:660px;margin:0 auto}.heading small{display:block}
+          </style><div id="root"></div>`);
+        await page.addScriptTag({ content: await compileFixture() });
+        await page.locator('.home-feed-card__subject-main').waitFor();
+        await page.evaluate(() => window.configureSubject('scroll-essay'));
+        const tracked = page.locator('[data-tracked-card]');
+        await tracked.waitFor();
+        await page.evaluate(() => scrollTo(0, 1600));
+        await tracked.locator('article').waitFor();
+        const beforeLoad = await tracked.evaluate(el => el.getBoundingClientRect().height);
+        await tracked.locator('img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+        const height = await tracked.evaluate(el => el.getBoundingClientRect().height);
+        assert.ok(Math.abs(height - beforeLoad) <= 1, `${engine}/${width}: image loading moved the card`);
+        const top = await tracked.evaluate(el => el.getBoundingClientRect().top + scrollY);
+        for (let cycle = 0; cycle < 2; cycle++) {
+          // Let the real one-second virtualization delay finish below the card.
+          await page.evaluate(y => scrollTo(0, y), top + height + 300);
+          await tracked.locator('article').waitFor({ state: 'detached' });
+          assert.ok(Math.abs((await tracked.boundingBox()).height - height) <= 1);
+          await page.evaluate(() => {
+            window.heightSamples = [];
+            const card = document.querySelector('[data-tracked-card]');
+            window.heightObserver = new ResizeObserver(() => window.heightSamples.push(card.getBoundingClientRect().height));
+            window.heightObserver.observe(card);
+          });
+          // Only the bottom 16px re-enter. Safari used to skip the new article's
+          // contents, measure its estimate and move this card out of view again.
+          await page.evaluate(y => scrollTo(0, y), top + height - 16);
+          await page.waitForTimeout(1200);
+          const tail = await tracked.boundingBox();
+          const samples = await page.evaluate(() => { window.heightObserver.disconnect(); return window.heightSamples; });
+          assert.ok(samples.length > 0);
+          assert.ok(samples.every(value => Math.abs(value - height) <= 1),
+            JSON.stringify({ engine, width, cycle, height, samples }));
+          assert.ok(Math.abs(tail.height - height) <= 1);
+          assert.equal(await tracked.locator('article').count(), 1);
+          await page.evaluate(y => scrollTo(0, y), top - 200);
+          await tracked.locator('article').waitFor();
+          assert.ok(Math.abs((await tracked.boundingBox()).height - height) <= 1);
+          // Leaving above and returning from the other direction is stable too.
+          await page.evaluate(() => scrollTo(0, 0));
+          await tracked.locator('article').waitFor({ state: 'detached' });
+          await page.evaluate(y => scrollTo(0, y), top - 200);
+          await tracked.locator('article').waitFor();
+          assert.ok(Math.abs((await tracked.boundingBox()).height - height) <= 1);
+        }
+        mkdirSync(artifacts, { recursive: true });
+        await page.screenshot({ path: path.join(artifacts, `${engine}-scroll-essay-${width}.png`) });
+        assert.deepEqual(errors, []);
+        await page.close();
+      }
+    } finally { await browser.close(); }
+  });
 }
