@@ -23,10 +23,21 @@ const ENTER_ACTIVATION_SELECTOR = [
 type WordleKeyboardEvent = Pick<
   KeyboardEvent,
   'code' | 'defaultPrevented' | 'target'
->;
+> &
+  Partial<
+    Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'metaKey' | 'isComposing'>
+  >;
 
 export function shouldIgnoreWordleKeyboardEvent(event: WordleKeyboardEvent) {
-  if (event.defaultPrevented) return true;
+  if (
+    event.defaultPrevented ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.isComposing
+  ) {
+    return true;
+  }
 
   const target = event.target as
     | (EventTarget & {
@@ -41,6 +52,7 @@ export function shouldIgnoreWordleKeyboardEvent(event: WordleKeyboardEvent) {
   // Enter already has native activation semantics on these controls. Let the
   // focused control consume it instead of also submitting a Wordle guess.
   return (
-    event.code === 'Enter' && Boolean(target.closest(ENTER_ACTIVATION_SELECTOR))
+    (event.code === 'Enter' || event.code === 'NumpadEnter') &&
+    Boolean(target.closest(ENTER_ACTIVATION_SELECTOR))
   );
 }

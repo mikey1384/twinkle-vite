@@ -35,13 +35,21 @@ export default function Keyboard({
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      if (isChecking || shouldIgnoreWordleKeyboardEvent(e)) return;
+      if (shouldIgnoreWordleKeyboardEvent(e)) return;
 
-      if (e.code === 'Enter') {
+      const isEnter = e.code === 'Enter' || e.code === 'NumpadEnter';
+      const isDelete = e.code === 'Backspace';
+      const isLetter = e.code.startsWith('Key');
+      if (!isEnter && !isDelete && !isLetter) return;
+      // Held keys and a pending submission still must not navigate the browser.
+      e.preventDefault();
+      if (isChecking || e.repeat) return;
+
+      if (isEnter) {
         onEnter();
-      } else if (e.code === 'Backspace') {
+      } else if (isDelete) {
         onDelete();
-      } else if (e.code.startsWith('Key')) {
+      } else if (isLetter) {
         // e.code will be something like "KeyA", "KeyB", etc.
         // We just want the final letter, e.g. "KeyA" -> "A"
         const letter = e.code.slice(-1);
@@ -49,9 +57,11 @@ export default function Keyboard({
       }
     };
 
-    window.addEventListener('keyup', listener);
+    // Consume game keys before the browser's default action (notably Safari's
+    // Backspace navigation). Focused controls retain their own Enter behavior.
+    window.addEventListener('keydown', listener);
     return () => {
-      window.removeEventListener('keyup', listener);
+      window.removeEventListener('keydown', listener);
     };
   }, [isChecking, onEnter, onDelete, onChar]);
 

@@ -24,6 +24,17 @@ export default function chatRequestHelpers({
 }: RequestHelpers) {
   let chatReadRequestSequence = 0;
 
+  function wordleRequestOptions() {
+    return {
+      ...auth(),
+      meta: {
+        channel: 'ui' as const,
+        totalTimeoutMs: 20000,
+        maxRetries: 0
+      }
+    };
+  }
+
   function nextChatReadRequestTelemetry() {
     chatReadRequestSequence += 1;
     return {
@@ -2521,7 +2532,7 @@ export default function chatRequestHelpers({
         const { data } = await request.post(
           `${URL}/chat/wordle/skipShield/resolve`,
           { channelId },
-          auth()
+          wordleRequestOptions()
         );
         return data;
       } catch (error) {
@@ -2532,7 +2543,7 @@ export default function chatRequestHelpers({
       try {
         const { data } = await request.get(
           `${URL}/chat/wordle?channelId=${channelId}`,
-          auth()
+          wordleRequestOptions()
         );
         return data;
       } catch (error) {
@@ -2960,7 +2971,9 @@ export default function chatRequestHelpers({
         const { data } = await request.put(
           `${URL}/chat/wordle/attempt`,
           { channelName, channelId, guesses, expectedSolution },
-          auth()
+          // If the response is lost, Game reads the writer's canonical state.
+          // Never leave input locked indefinitely or replay the mutation here.
+          wordleRequestOptions()
         );
         return data;
       } catch (error) {

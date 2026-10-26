@@ -49,6 +49,7 @@ export default function Game({
   onSetSubmissionPending,
   onRefreshCanonicalState,
   submissionPending,
+  keyboardDisabled = false,
   skipShieldChecklist,
   playAreaRef,
   uiScale = 1
@@ -68,6 +69,7 @@ export default function Game({
   onRefreshCanonicalState: () => Promise<void>;
   onSetOverviewModalShown: (isShown: boolean) => void;
   submissionPending: boolean;
+  keyboardDisabled?: boolean;
   skipShieldChecklist: SkipShieldChecklistState | null;
   playAreaRef: React.RefObject<HTMLDivElement | null>;
   solution: string;
@@ -195,10 +197,14 @@ export default function Game({
       />
       <div
         ref={playAreaRef}
+        role="group"
+        aria-label="Wordle board and keyboard"
+        tabIndex={-1}
         // The board and keyboard are what 'wordle' above reports exactly.
         {...{ [WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE]: 'wordle' }}
         style={{
           width: '100%',
+          outline: 'none',
           display: 'flex',
           flexDirection: 'column',
           marginTop: `${1.6 * uiScale}rem`,
@@ -220,7 +226,7 @@ export default function Game({
           />
         </ErrorBoundary>
         <Keyboard
-          isChecking={isChecking || submissionPending}
+          isChecking={isChecking || submissionPending || keyboardDisabled}
           onChar={handleChar}
           onDelete={handleDelete}
           onEnter={handleEnter}
@@ -268,10 +274,14 @@ export default function Game({
       !isGameWon &&
       !isChecking &&
       !submissionPending &&
+      !keyboardDisabled &&
       !isRevealing &&
       !isProcessingGameResult.current
     ) {
       setCurrentGuess(`${currentGuess}${value}`);
+      // Status buttons accept letters through the global keyboard listener.
+      // Hand focus back to play so Enter submits instead of clicking that button.
+      playAreaRef.current?.focus({ preventScroll: true });
     }
   }
 
@@ -279,6 +289,7 @@ export default function Game({
     if (
       isChecking ||
       submissionPending ||
+      keyboardDisabled ||
       isRevealing ||
       isProcessingGameResult.current
     ) {
@@ -287,12 +298,16 @@ export default function Game({
     setCurrentGuess((currentGuess) =>
       currentGuess.split('').slice(0, -1).join('')
     );
+    if (currentGuess.length > 0) {
+      playAreaRef.current?.focus({ preventScroll: true });
+    }
   }
 
   async function handleEnter() {
     if (
       isChecking ||
       submissionPending ||
+      keyboardDisabled ||
       isRevealing ||
       isProcessingGameResult.current
     ) {

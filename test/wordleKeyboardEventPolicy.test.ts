@@ -38,10 +38,24 @@ test('focused Wordle controls consume Enter without also submitting a guess', ()
     '[role="button"]',
     '[role="switch"]'
   ]) {
+    for (const code of ['Enter', 'NumpadEnter']) {
+      assert.equal(
+        shouldIgnoreWordleKeyboardEvent(
+          keyboardEvent({ code, matchedSelector })
+        ),
+        true
+      );
+    }
+  }
+});
+
+test('browser shortcuts and composition never edit the guess', () => {
+  for (const modifier of ['altKey', 'ctrlKey', 'metaKey', 'isComposing']) {
     assert.equal(
-      shouldIgnoreWordleKeyboardEvent(
-        keyboardEvent({ code: 'Enter', matchedSelector })
-      ),
+      shouldIgnoreWordleKeyboardEvent({
+        ...keyboardEvent({ code: 'KeyR' }),
+        [modifier]: true
+      }),
       true
     );
   }

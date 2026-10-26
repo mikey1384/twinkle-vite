@@ -493,6 +493,9 @@ export default function WordleModal({
                     solution={solution}
                     onSetOverviewModalShown={setOverviewModalShown}
                     submissionPending={wordleSubmissionPending}
+                    keyboardDisabled={
+                      overviewModalShown || skipShieldModalShown
+                    }
                     skipShieldChecklist={skipShieldChecklist}
                     playAreaRef={playAreaRef}
                     uiScale={uiScale}
