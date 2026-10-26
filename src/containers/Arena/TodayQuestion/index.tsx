@@ -91,14 +91,14 @@ export default function TodayQuestion() {
             {setupStep > 0 && <button className={linkCls} disabled={busy} onClick={() => setSetupStep(s => s - 1)}>Back</button>}
             {editing && <button className={linkCls} disabled={busy} onClick={() => setEditing(false)}>Cancel</button>}
           </div>
-          <p className={mutedCls}>Questions are prepared for you during our regular refills. {editing ? 'Changes apply to future questions; today’s question stays the same.' : 'You’ll see your first question here when it’s ready.'}</p>
+          <p className={mutedCls}>{editing ? 'Changes apply to future questions; today’s question stays the same.' : 'We’ll prepare a question for your focus. You’ll see it here when it’s ready.'}</p>
         </div>
       ) : !q ? (
         <div className={paperCls}>
           <span className={eyebrowCls}>YOUR FOCUS IS SAVED</span>
           <h2>We’re preparing your question</h2>
           <p>{profileLabel(data)} · {data.options.grades.find(g => g.key === data.profile?.grade)?.label}</p>
-          <p>Your next question will include an interactive explanation made for that question. Check back after the next refill.</p>
+          <p>Your next question will include an interactive explanation made for that question. Check back here later.</p>
           <RewardOffer rewards={rewards} />
           <button className={primaryCls} disabled={busy} onClick={() => void run('open')}>Check for my question</button>
         </div>
