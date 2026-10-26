@@ -2,6 +2,16 @@ import { Color } from '~/constants/css';
 
 export type ColorResolver = ((opacity?: number) => string) | undefined;
 
+// Server-owned theme names can outlive the palette in an open browser tab.
+// Unlike resolveColor's CSS-value support, these callers need a known key.
+export function resolvePaletteColorKey(colorKey: unknown): string {
+  return typeof colorKey === 'string' &&
+    Object.prototype.hasOwnProperty.call(Color, colorKey) &&
+    typeof Color[colorKey] === 'function'
+    ? colorKey
+    : 'logoBlue';
+}
+
 interface ResolveColorOptions {
   colorKey?: string;
   opacity?: number;

@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import { resolvePaletteColorKey } from '~/theme/resolveColor';
 
 export default function GoToBottomButton({
   theme,
@@ -11,10 +12,11 @@ export default function GoToBottomButton({
   onClick: () => void;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const colorKey = resolvePaletteColorKey(theme || profileTheme);
   return (
     <button
       className={css`
-        background-color: ${Color[theme || profileTheme](0.6)};
+        background-color: ${Color[colorKey](0.6)};
         border: none;
         border-radius: 50%;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -27,7 +29,7 @@ export default function GoToBottomButton({
         width: 40px;
         @media (hover: hover) and (pointer: fine) {
           &:hover {
-            background-color: ${Color[theme || profileTheme]()};
+            background-color: ${Color[colorKey]()};
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transform: translateY(-2px);
           }

@@ -25,6 +25,7 @@ import {
   useProfileContext
 } from '~/contexts';
 import { getCanonicalProfileStatus } from '~/helpers/profileCanonicalState';
+import { resolvePaletteColorKey } from '~/theme/resolveColor';
 const doesNotHaveBioLabel = ' does not have a bio, yet';
 
 export default function UserDetails({
@@ -67,9 +68,12 @@ export default function UserDetails({
   const [statusSubmitting, setStatusSubmitting] = useState(false);
   useEffect(() => {
     if (!unEditable) onSetEditedStatusColor('');
-  }, [userId, unEditable, onSetEditedStatusColor]);
+    // onSetEditedStatusColor is a stable context action.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, unEditable]);
   const StatusInputRef: React.RefObject<any> = useRef(null);
   const { profileFirstRow, profileSecondRow, profileThirdRow } = profile;
+  const profileThemeColorKey = resolvePaletteColorKey(profile.profileTheme);
   const statusColor = useMemo(() => {
     return (
       (!unEditable && userId === profile.id
@@ -126,9 +130,7 @@ export default function UserDetails({
                   @media (hover: hover) and (pointer: fine) {
                     transition: color 0.2s;
                     &:hover {
-                      color: ${Color[
-                        profile.profileTheme || 'logoBlue'
-                      ]()}!important;
+                      color: ${Color[profileThemeColorKey]()}!important;
                     }
                   }
                 `
@@ -251,7 +253,7 @@ export default function UserDetails({
               variant="soft"
               size="lg"
               tone="raised"
-              color={profile.profileTheme || 'logoBlue'}
+              color={profileThemeColorKey}
               onClick={() => onSetBioEditModalShown?.(true)}
               style={{ fontWeight: 700 }}
             >
