@@ -37,7 +37,7 @@ export default function ModeChooser({
       mode: 'train' as const,
       title: 'Train',
       cover: '/img/arena/cover-train.jpg',
-      line: 'AI Story, reviews of your battles, and practice before each boss.',
+      line: 'AI Story and Arena preparation: review mistakes and practise your weak spots.',
       status: trainStatus
     },
     {

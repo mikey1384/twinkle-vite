@@ -9,7 +9,7 @@ import { BOSSES } from './bosses';
 import League from './League';
 import Records from './Records';
 import CoverPage from './CoverPage';
-import ArenaRewards from './Rewards';
+import RewardOffer from './RewardOffer';
 import Rising from './Rising';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
@@ -250,10 +250,7 @@ export default function Battles({
                               {option.items} questions · {option.minutes} min
                             </span>
                             {option.rewards?.[modes[exam.key] || 'normal'] && (
-                              <ArenaRewards
-                                {...option.rewards[modes[exam.key] || 'normal']}
-                                label="Up to"
-                              />
+                              <RewardOffer offer={option.rewards[modes[exam.key] || 'normal']} compact />
                             )}
                           </button>
                         );
@@ -272,7 +269,8 @@ export default function Battles({
           length={cover.length}
           difficulty={modes[cover.examKey] || 'normal'}
           starting={starting === `${cover.examKey}:${cover.length}`}
-          onStart={() => handleStart(cover.examKey, cover.length)}
+          onStart={(token) => handleStart(cover.examKey, cover.length, token)}
+          onOpenExisting={(id) => { setCover(null); onStart(id); }}
           onCancel={() => setCover(null)}
         />
       )}
@@ -281,7 +279,8 @@ export default function Battles({
 
   async function handleStart(
     examKey: string,
-    length: 'short' | 'medium' | 'full'
+    length: 'short' | 'medium' | 'full',
+    previewToken: string
   ) {
     setStarting(`${examKey}:${length}`);
     setError('');
@@ -290,8 +289,9 @@ export default function Battles({
       const data = await startArenaBattle({
         examKey,
         length,
-        difficulty: modes[examKey] || 'normal'
+        difficulty: modes[examKey] || 'normal', previewToken
       });
+      if (data.previewChanged) return data;
       setCover(null);
       if (data.alreadyTaken && data.battle.status === 'finished') {
         setReviewBattleId(data.battle.id);
@@ -299,6 +299,7 @@ export default function Battles({
         onStart(data.battle.id);
       }
     } catch (err: any) {
+      if (err?.code === 'ARENA_PREVIEW_EXPIRED') throw err;
       setCover(null);
       setError(
         err?.code === 'ARENA_NOT_READY'

@@ -2,10 +2,11 @@ import React from 'react';
 import { css, cx } from '@emotion/css';
 import RewardChips from '~/components/RewardChips';
 import { Color } from '~/constants/css';
+import type { ArenaRewardStatus } from './types';
 
 export default function ArenaRewards({
   xp, coins, label = 'Earned', rewardPending, markingPending, emptyNote,
-  highlight = false, scoreBonusXp, scoreBonusCoins
+  highlight = false, scoreBonusXp, scoreBonusCoins, rewardStatus
 }: {
   xp?: number;
   coins?: number;
@@ -18,6 +19,7 @@ export default function ArenaRewards({
   // from the score or treat a later marking top-up as a score bonus.
   scoreBonusXp?: number;
   scoreBonusCoins?: number;
+  rewardStatus?: ArenaRewardStatus;
 }) {
   const known = Number.isFinite(xp) && Number.isFinite(coins);
   const paid = known && (Number(xp) > 0 || Number(coins) > 0);
@@ -29,7 +31,9 @@ export default function ArenaRewards({
     ? 'Reward payment pending'
     : markingPending
       ? 'Writing / Speaking marks pending'
-      : !paid && known ? emptyNote : null;
+      : !paid && known ? rewardStatus === 'below_target' ? 'Reward target not reached'
+        : rewardStatus === 'already_rewarded' ? 'These questions have already earned rewards'
+          : rewardStatus === 'daily_limit' ? 'Daily exam reward limit reached' : emptyNote : null;
   return (
     <span className={cx(wrapCls, highlight && highlightCls)} aria-label="Exam rewards">
       {highlight && paid && <span className={labelCls}>

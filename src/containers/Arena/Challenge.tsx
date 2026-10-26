@@ -6,6 +6,8 @@ import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { isPerfectArenaScore } from '~/helpers/arenaChallengeCopy';
 import ArenaButton from './ArenaButton';
+import RewardOffer from './RewardOffer';
+import type { ArenaBattlePreview, ArenaRewardOffer } from './types';
 import { arenaMediaURL } from './media';
 import { ARENA } from './theme';
 
@@ -64,6 +66,10 @@ export default function Challenge({
   const startArenaChallenge = useAppContext(
     (v) => v.requestHelpers.startArenaChallenge
   );
+  const prepareArenaBattle = useAppContext((v) => v.requestHelpers.prepareArenaBattle);
+  const [preview, setPreview] = useState<(ArenaRewardOffer & { token: string }) | null>(null);
+  const [refresh, setRefresh] = useState(0);
+  const [notice, setNotice] = useState('');
   const [view, setView] = useState<ChallengeView | null>(null);
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(false);
@@ -79,7 +85,21 @@ export default function Challenge({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- context request helpers stay out of effect dependencies
   }, [challengeId]);
 
-  if (error) return <p className={noteCls}>{error}</p>;
+  useEffect(() => {
+    if (!view?.canTake) return;
+    let cancelled = false;
+    setPreview(null);
+    prepareArenaBattle({ challengeId }).then((data: ArenaBattlePreview) => {
+      if (cancelled) return;
+      if (data.alreadyTaken) setView(previous => previous ? { ...previous, canTake: false, myBattle: { id: data.battleId, status: data.status } } : previous);
+      else if (data.preview) setPreview(data.preview);
+      else setError('The reward details could not be loaded.');
+    }).catch(() => { if (!cancelled) setError('The reward details could not be loaded.'); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- context request helpers stay out of dependencies
+  }, [challengeId, view?.canTake, refresh]);
+
+  if (error && !view) return <p className={noteCls}>{error}</p>;
   if (!view) {
     return (
       <p className={noteCls}>
@@ -123,9 +143,14 @@ export default function Challenge({
         </div>
       </header>
 
+      {(notice || error || view.canTake) && <div className={rewardSectionCls}>
+        {notice && <p role="status">{notice}</p>}
+        {error && <p role="alert">{error} <button type="button" onClick={() => { setError(''); setRefresh(value => value + 1); }}>Try again</button></p>}
+        {view.canTake && (preview ? <RewardOffer offer={preview} /> : <p role="status">Checking available rewards…</p>)}
+      </div>}
       <div className={actionsCls}>
         {view.canTake ? (
-          <ArenaButton tone="red" loading={starting} onClick={handleTake}>
+          <ArenaButton tone="red" loading={starting} disabled={starting || !preview} onClick={handleTake}>
             Challenge!
           </ArenaButton>
         ) : view.myBattle ? (
@@ -183,12 +208,15 @@ export default function Challenge({
   );
 
   async function handleTake() {
+    if (!preview) return;
     setStarting(true);
     try {
-      const data = await startArenaChallenge(challengeId);
+      const data = await startArenaChallenge(challengeId, preview.token);
+      if (data.previewChanged) { setPreview(data.preview); setNotice('Your available rewards changed. Check the updated amounts before starting.'); return; }
       onOpenBattle(data.battle.id);
     } catch {
-      setError('The battle could not start. Please try again.');
+      setPreview(null); setRefresh(value => value + 1);
+      setError('The battle could not start. Its reward details are being refreshed.');
     } finally {
       setStarting(false);
     }
@@ -277,6 +305,12 @@ const actionsCls = css`
   align-items: center;
   gap: 0.6rem;
   padding: 1.6rem 1.6rem 1rem;
+`;
+
+const rewardSectionCls = css`
+  padding: 1.4rem 1.6rem 0;
+  font-size: 1.3rem;
+  line-height: 1.5;
 `;
 
 const noteCls = css`

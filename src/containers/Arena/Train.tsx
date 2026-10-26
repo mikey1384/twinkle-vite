@@ -8,19 +8,16 @@ import type { ArenaBattleSummary, ArenaState } from './types';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 
-// Train: everything that is not a real battle. AI Story is here unchanged;
-// completed-paper review and boss prep join as Arena's battles arrive.
+// Train is AI Story and preparation for Arena: reviews and focused practice.
 export default function Train({
   onPlayAIStory,
   onOpenDeck,
   onOpenSkills,
   onOpenBattle,
-  onPlayEraser,
   onOpenScoreReport,
   onOpenPaper
 }: {
   onPlayAIStory: () => void;
-  onPlayEraser: () => void;
   onOpenDeck: () => void;
   onOpenSkills: () => void;
   onOpenBattle: (battleId: number) => void;
@@ -57,10 +54,6 @@ export default function Train({
   const finishedBattles = (state?.recent || []).filter(
     (battle) => battle.status === 'finished'
   );
-  // a boss beaten on any mode gives its eraser card (Mikey 10-24)
-  const erasersWon = (state?.exams || []).filter((exam) =>
-    exam.difficulties.some((d) => d.slain)
-  ).length;
   const examName = (key: string) =>
     state?.exams.find((exam) => exam.key === key)?.name || key;
 
@@ -74,7 +67,7 @@ export default function Train({
             kind: 'page',
             label: 'Arena Train',
             path: '/arena?mode=train',
-            excerpt: 'Train: completed battle reviews, the missed-question deck, exam skills and drills, AI Story, Eraser flick, real score reports and papers.'
+            excerpt: 'Train is AI Story and preparation for Arena: review completed battles, practise missed questions and weak areas, and share real score reports and papers.'
           }}
         />
       </div>
@@ -137,23 +130,6 @@ export default function Train({
         </span>
         <span className={statusCls}>
           Open
-          <Icon icon="chevron-right" />
-        </span>
-      </button>
-
-      <button type="button" className={rowCls} onClick={onPlayEraser}>
-        <span className={badgeCls} style={{ background: '#e8577e' }}>
-          <Icon icon="eraser" />
-        </span>
-        <span className={textCls}>
-          <strong>지우개 따먹기 · Eraser flick</strong>
-          <span>
-            Flick your eraser onto theirs. Every boss you beat gives you their
-            eraser card to play with.
-          </span>
-        </span>
-        <span className={statusCls}>
-          {state ? `${erasersWon} of ${state.exams.length} won` : 'Play'}
           <Icon icon="chevron-right" />
         </span>
       </button>

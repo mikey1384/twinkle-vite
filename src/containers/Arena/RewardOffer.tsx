@@ -1,0 +1,35 @@
+import React from 'react';
+import { css } from '@emotion/css';
+import RewardChips from '~/components/RewardChips';
+import type { ArenaRewardOffer } from './types';
+
+export default function RewardOffer({ offer, compact = false }: { offer: ArenaRewardOffer; compact?: boolean }) {
+  const available = offer.xp > 0 || offer.coins > 0;
+  const reduced = offer.freshPoints != null && offer.totalPoints != null && offer.freshPoints < offer.totalPoints;
+  return <div className={offerCls} aria-label="Exam reward target">
+    <strong>Reward target: {offer.target} / {offer.max}</strong>
+    {available ? <>
+      <div><span>At target</span><RewardChips xp={offer.baseXP} coins={offer.baseCoins} /></div>
+      <div><span>Full marks</span><RewardChips xp={offer.xp} coins={offer.coins} /></div>
+    </> : <p>{offer.dailyRemaining === 0 ? 'Daily exam reward limit reached.' : 'These questions have already earned rewards.'}</p>}
+    {!compact && <>
+      <p>Below the target: no XP or Coins. Higher scores earn a larger bonus.</p>
+      {reduced && <p>The amounts shown exclude questions you have already been rewarded for.</p>}
+      {!!offer.pendingOverlapPoints && <p>Another exam containing some of these questions is awaiting its result. Each question can earn rewards once, so the final amounts may be lower.</p>}
+      {offer.markingRequired && <p>Rewards arrive after the final Writing / Speaking marks.</p>}
+      {offer.dailyRemaining != null && <p>{offer.dailyRemaining} of 5 exam rewards available today (UTC). Pending exams count towards the day you start them.</p>}
+    </>}
+  </div>;
+}
+
+const offerCls = css`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  > div { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  > div > span:first-child { min-width: 6.2rem; font-weight: 600; }
+  p { margin: 0.2rem 0; font-size: 1.1rem; }
+`;

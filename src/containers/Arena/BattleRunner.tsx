@@ -1121,11 +1121,15 @@ function Result({ data }: { data: ArenaBattle }) {
         </strong>
       </div>
       <div className={rewardPanelCls}>
+        {battle.rewardOffer && <p>Reward target: {battle.rewardOffer.target} / {battle.rewardOffer.max}</p>}
         <ArenaRewards
           xp={battle.reward?.xpEarned}
           coins={battle.reward?.coinsEarned}
           rewardPending={battle.reward?.rewardPending}
           markingPending={battle.reward?.markingPending}
+          rewardStatus={battle.reward?.rewardStatus}
+          scoreBonusXp={battle.reward?.scoreBonusXpEarned}
+          scoreBonusCoins={battle.reward?.scoreBonusCoinsEarned}
           emptyNote={battle.mode === 'untimed' ? 'Practice · no rewards' : 'Daily exam reward limit reached'}
         />
       </div>

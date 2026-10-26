@@ -8,6 +8,7 @@ const RESULT_FIELDS = [
   'scoreBonusXpEarned',
   'scoreBonusCoinsEarned',
   'rewardPending',
+  'rewardStatus',
   'markingPending',
   'takers',
   'bestTaker'
@@ -28,7 +29,7 @@ export function latestArenaResult(loaded: any, preview: any) {
       : loaded;
   return Object.fromEntries(
     RESULT_FIELDS.filter((field) => source?.[field] !== undefined
-      || (field.startsWith('scoreBonus') && loaded?.[field] !== undefined)).map(
+      || ((field.startsWith('scoreBonus') || field === 'rewardStatus') && loaded?.[field] !== undefined)).map(
       (field) => [field, source?.[field]]
     )
   );

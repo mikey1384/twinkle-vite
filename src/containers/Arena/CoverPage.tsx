@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import ArenaButton from './ArenaButton';
-import ArenaRewards from './Rewards';
+import RewardOffer from './RewardOffer';
+import { useAppContext } from '~/contexts';
 import { ARENA } from './theme';
-import type { ArenaDifficulty, ArenaExamSummary } from './types';
+import type { ArenaBattlePreview, ArenaDifficulty, ArenaExamSummary, ArenaRewardOffer } from './types';
 
 // The booklet's cover, read before the bell as in the real exam room: 교시,
 // 영역, the paper's size and time, the 유의사항 and a 필적 확인 문구. The clock
@@ -58,15 +59,37 @@ export default function CoverPage({
   difficulty,
   starting,
   onStart,
+  onOpenExisting,
   onCancel
 }: {
   exam: ArenaExamSummary;
   length: 'short' | 'medium' | 'full';
   difficulty: ArenaDifficulty;
   starting: boolean;
-  onStart: () => void;
+  onStart: (token: string) => Promise<any>;
+  onOpenExisting: (battleId: number) => void;
   onCancel: () => void;
 }) {
+  const prepareArenaBattle = useAppContext((v) => v.requestHelpers.prepareArenaBattle);
+  const [preview, setPreview] = useState<(ArenaRewardOffer & { token: string }) | null>(null);
+  const [existing, setExisting] = useState<{ battleId: number; status: string } | null>(null);
+  const [preparing, setPreparing] = useState(true);
+  const [previewError, setPreviewError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [refresh, setRefresh] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    setPreview(null); setExisting(null); setPreparing(true); setPreviewError('');
+    prepareArenaBattle({ examKey: exam.key, length, difficulty }).then((data: ArenaBattlePreview) => {
+      if (cancelled) return;
+      if (data.alreadyTaken) setExisting({ battleId: data.battleId, status: data.status });
+      else if (data.preview) setPreview(data.preview);
+      else setPreviewError('The exam cover could not be prepared. Please try again.');
+    }).catch(() => { if (!cancelled) setPreviewError('The exam cover could not be prepared. Please try again.'); })
+      .finally(() => { if (!cancelled) setPreparing(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- context request helpers stay out of dependencies
+  }, [exam.key, length, difficulty, refresh]);
   const phrase = useMemo(
     () => PHRASES[Math.floor(Math.random() * PHRASES.length)],
     []
@@ -78,6 +101,14 @@ export default function CoverPage({
     copied.replace(/\s+/g, '') === phrase.line.replace(/\s+/g, '');
   const suneung = /^수능 /.test(exam.name);
   const english = exam.language === 'en' && !suneung;
+  const rewardSection = <>
+    {preparing && <p role="status">Checking available rewards…</p>}
+    {preview && <RewardOffer offer={preview} />}
+    {existing && <p>{existing.status === 'finished' ? 'You have already taken this paper. Your result and review are ready.' : 'You already have a sitting of this paper.'}</p>}
+    {notice && <p role="status">{notice}</p>}
+    {previewError && <p role="alert">{previewError} <button type="button" onClick={() => setRefresh(value => value + 1)}>Try again</button></p>}
+  </>;
+
 
   if (english) {
     return (
@@ -129,9 +160,7 @@ export default function CoverPage({
               All questions are original.
             </p>
           )}
-          {spec?.rewards?.[difficulty] && (
-            <ArenaRewards {...spec.rewards[difficulty]} label="Up to" />
-          )}
+          {rewardSection}
           <div className={actionsCls}>
             <button type="button" className={cancelCls} onClick={onCancel}>
               Not now
@@ -139,11 +168,11 @@ export default function CoverPage({
             <ArenaButton
               tone="red"
               size="lg"
-              loading={starting}
-              disabled={starting}
-              onClick={onStart}
+              loading={starting || preparing}
+              disabled={starting || (!preview && !existing)}
+              onClick={handleStart}
             >
-              Start
+              {existing ? existing.status === 'finished' ? 'See my result' : 'Resume exam' : 'Start'}
             </ArenaButton>
           </div>
         </section>
@@ -195,9 +224,7 @@ export default function CoverPage({
           <li>시작 버튼을 누르는 순간부터 시간이 흐릅니다.</li>
         </ul>
 
-        {spec?.rewards?.[difficulty] && (
-          <ArenaRewards {...spec.rewards[difficulty]} label="Up to" />
-        )}
+        {rewardSection}
         <div className={actionsCls}>
           <button type="button" className={cancelCls} onClick={onCancel}>
             Not now
@@ -205,16 +232,31 @@ export default function CoverPage({
           <ArenaButton
             tone="red"
             size="lg"
-            loading={starting}
-            disabled={starting}
-            onClick={onStart}
+            loading={starting || preparing}
+            disabled={starting || (!preview && !existing)}
+            onClick={handleStart}
           >
-            시작
+            {existing ? existing.status === 'finished' ? 'See my result' : 'Resume exam' : '시작'}
           </ArenaButton>
         </div>
       </section>
     </div>
   );
+
+  async function handleStart() {
+    if (existing) { onOpenExisting(existing.battleId); return; }
+    if (!preview) return;
+    try {
+      const result = await onStart(preview.token);
+      if (result?.previewChanged) {
+        setPreview(result.preview);
+        setNotice('Your available rewards changed. Check the updated amounts before starting.');
+      }
+    } catch {
+      setNotice('The cover expired or changed. Available rewards have been refreshed.');
+      setRefresh(value => value + 1);
+    }
+  }
 }
 
 const backdropCls = css`

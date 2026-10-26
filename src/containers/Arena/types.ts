@@ -1,5 +1,25 @@
 export type ArenaDifficulty = 'easy' | 'normal' | 'hard';
 
+export interface ArenaRewardOffer {
+  xp: number;
+  coins: number;
+  baseXP: number;
+  baseCoins: number;
+  target: number;
+  max: number;
+  freshPoints?: number;
+  totalPoints?: number;
+  dailyRemaining?: number;
+  pendingOverlapPoints?: number;
+  markingRequired?: boolean;
+}
+
+export type ArenaRewardStatus = 'pending' | 'below_target' | 'daily_limit' | 'already_rewarded' | 'awarded';
+
+export type ArenaBattlePreview =
+  | { alreadyTaken: true; battleId: number; status: string; preview?: never }
+  | { alreadyTaken?: false; preview: ArenaRewardOffer & { token: string } };
+
 export interface ArenaExamSummary {
   key: string;
   // boss codename, e.g. H3-3 with label 수능
@@ -22,7 +42,7 @@ export interface ArenaExamSummary {
     length: 'short' | 'medium' | 'full';
     items: number;
     minutes: number;
-    rewards?: Record<ArenaDifficulty, { xp: number; coins: number }>;
+    rewards?: Record<ArenaDifficulty, ArenaRewardOffer>;
   }[];
 }
 
@@ -208,11 +228,17 @@ export interface ArenaBattle {
     deadlineAt: number | null;
     serverNow: number;
     scaleReport?: C1ScaleReport | null;
+    rewardOffer?: ArenaRewardOffer;
     reward?: {
       xpEarned: number;
       coinsEarned: number;
       rewardPending: boolean;
       markingPending: boolean;
+      rewardStatus?: ArenaRewardStatus;
+      baseXpEarned?: number;
+      baseCoinsEarned?: number;
+      scoreBonusXpEarned?: number;
+      scoreBonusCoinsEarned?: number;
     } | null;
   };
   passages: Record<

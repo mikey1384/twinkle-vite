@@ -5,6 +5,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import ArenaButton from '~/containers/Arena/ArenaButton';
 import ArenaRewards from '~/containers/Arena/Rewards';
+import type { ArenaRewardStatus } from '~/containers/Arena/types';
 import { arenaMediaURL } from '~/containers/Arena/media';
 import { ARENA } from '~/containers/Arena/theme';
 
@@ -31,6 +32,7 @@ export interface ArenaChallengePreview {
   scoreBonusXpEarned?: number;
   scoreBonusCoinsEarned?: number;
   rewardPending?: boolean;
+  rewardStatus?: ArenaRewardStatus;
   markingPending?: boolean;
   hunterRank: { grade: number; low: number; high: number } | null;
   createdAt: number;
@@ -113,6 +115,7 @@ function ArenaChallengePanel({
           scoreBonusXp={challenge.scoreBonusXpEarned}
           scoreBonusCoins={challenge.scoreBonusCoinsEarned}
           rewardPending={challenge.rewardPending}
+          rewardStatus={challenge.rewardStatus}
           markingPending={challenge.markingPending}
           emptyNote="Daily exam reward limit reached"
           label="Awarded"

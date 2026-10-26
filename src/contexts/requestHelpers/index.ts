@@ -385,6 +385,7 @@ registerMethods('content', [
   'challengeGrammarQuestion',
   'loadArenaState',
   'startArenaBattle',
+  'prepareArenaBattle',
   'loadArenaBattle',
   'saveArenaAnswer',
   'saveArenaRecording',

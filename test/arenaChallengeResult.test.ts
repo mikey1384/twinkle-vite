@@ -33,14 +33,16 @@ test('the newer canonical amount wins even when it decreases', () => {
 });
 
 test('the score bonus follows its paid receipt and a newer snapshot can remove it', () => {
-  const withBonus = { ...after, scoreBonusXpEarned: 2000, scoreBonusCoinsEarned: 25 };
+  const withBonus = { ...after, rewardStatus: 'awarded', scoreBonusXpEarned: 2000, scoreBonusCoinsEarned: 25 };
   const paid = latestArenaResult(before, withBonus);
   assert.equal(paid.scoreBonusXpEarned, 2000);
   assert.equal(paid.scoreBonusCoinsEarned, 25);
+  assert.equal(paid.rewardStatus, 'awarded');
   const correction = { ...after, arenaResultObservedAt: 3000 };
   const merged = { ...withBonus, ...latestArenaResult(withBonus, correction) };
   assert.equal(merged.scoreBonusXpEarned, undefined);
   assert.equal(merged.scoreBonusCoinsEarned, undefined);
+  assert.equal(merged.rewardStatus, undefined);
   assert.equal(merged.xpEarned, 17000);
 });
 

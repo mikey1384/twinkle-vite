@@ -1423,11 +1423,11 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async startArenaChallenge(challengeId: number) {
+    async startArenaChallenge(challengeId: number, previewToken?: string) {
       try {
         const { data } = await request.post(
           `${URL}/content/arena/challenge/${challengeId}/start`,
-          {},
+          { previewToken },
           auth()
         );
         return data;
@@ -1664,12 +1664,21 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async prepareArenaBattle(target: { examKey?: string; length?: 'short' | 'medium' | 'full'; difficulty?: 'easy' | 'normal' | 'hard'; challengeId?: number }) {
+      try {
+        const { data } = await request.post(`${URL}/content/arena/battle/preview`, target, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async startArenaBattle(
       target:
         | {
             examKey: string;
             length: 'short' | 'medium' | 'full';
             difficulty?: 'easy' | 'normal' | 'hard';
+            previewToken?: string;
           }
         | { examKey: string; mode: 'untimed'; sourceBattleId: number }
     ) {
