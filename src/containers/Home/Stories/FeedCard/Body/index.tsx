@@ -1,3 +1,4 @@
+import { getSubjectDisplayDescription } from '~/helpers/bookEmbedHelpers';
 import BountyContent from '~/components/BountyContent';
 import RewardChips from '~/components/RewardChips';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -318,7 +319,7 @@ export default function Body({
 
   function renderSubjectPreview() {
     const attachmentPreview = renderAttachmentPreview('subject');
-    const description = String(content?.description || content?.content || '');
+    const description = getSubjectDisplayDescription(content);
     const descriptionEmbed = getMarkdownImageEmbedPreview(description);
     const promotedDescriptionAttachmentEmbed =
       !attachmentPreview && shouldAttemptMarkdownImagePreview(descriptionEmbed)

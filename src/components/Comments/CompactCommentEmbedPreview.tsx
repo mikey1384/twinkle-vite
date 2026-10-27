@@ -1,3 +1,8 @@
+import BookEmbed from '~/components/Books/BookEmbed';
+import {
+  embedStandaloneBookLinks,
+  parseBookLink
+} from '~/helpers/bookEmbedHelpers';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNestedNavigate } from '~/contexts/NestedNavigationContext';
@@ -347,6 +352,9 @@ function CommentMediaPreview({
     });
     if (sharedInternalPreview) return <>{sharedInternalPreview}</>;
 
+    const book = parseBookLink(item.embed.src);
+    if (book) return <BookEmbed subjectId={book.subjectId} path={book.path} compact />;
+
     if (
       item.embed.internalInfo?.kind === 'aiCard' &&
       item.embed.internalInfo.cardId
@@ -404,7 +412,7 @@ function isTileEmbed({
   if (embed.type !== 'internal') return false;
   const kind = embed.internalInfo?.kind;
   if (kind === 'comment') return false;
-  if (kind === 'aiCard' || kind === 'build' || kind === 'video') return true;
+  if (kind === 'aiCard' || kind === 'build' || kind === 'video' || kind === 'book') return true;
   // The column slot is too narrow for a subject card; its title reads better
   // as a reference line than as a clipped sliver.
   if (kind === 'subject') return !isColumn;
@@ -935,7 +943,9 @@ function getAttachmentFileName(comment: any, filePath: string) {
 function getMarkdownMediaEmbeds(text: string): MarkdownMediaEmbed[] {
   if (!text) return [];
   return Array.from(
-    text.matchAll(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+['"][^'"]*['"])?\)/g)
+    embedStandaloneBookLinks(text).matchAll(
+      /!\[([^\]]*)\]\(([^)\s]+)(?:\s+['"][^'"]*['"])?\)/g
+    )
   ).map((match) => {
     const src = match[2]?.trim() || '';
     const internalInfo = getInternalEmbedPreviewInfo(src) || undefined;
@@ -949,7 +959,7 @@ function getMarkdownMediaEmbeds(text: string): MarkdownMediaEmbed[] {
 }
 
 function removeMarkdownMediaEmbeds(text: string) {
-  return String(text || '')
+  return embedStandaloneBookLinks(String(text || ''))
     .replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+['"][^'"]*['"])?\)/g, '')
     .trim();
 }

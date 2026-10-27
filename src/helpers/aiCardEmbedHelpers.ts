@@ -1,10 +1,12 @@
 import { SITE_NAME } from '~/constants/siteBrand';
+import { parseBookLink } from './bookEmbedHelpers';
 
 export type InternalEmbedPreviewKind =
   | 'achievement'
   | 'aiCard'
   | 'aiStory'
   | 'build'
+  | 'book'
   | 'comment'
   | 'dailyReflection'
   | 'genericInternal'
@@ -161,6 +163,16 @@ export function getInternalEmbedPreviewInfo(
   if (!parsed) return null;
 
   const { normalizedSrc, parts, searchParams } = parsed;
+  const book = parseBookLink(normalizedSrc);
+  if (book) {
+    return {
+      contentId: book.subjectId,
+      icon: 'book-open',
+      kind: 'book',
+      label: 'Book',
+      normalizedSrc: book.path
+    };
+  }
   const linkType = parts[0] || '';
   const linkSubType = parts[1] || '';
 
@@ -327,6 +339,7 @@ export function getInternalEmbedCommentLabel(
   if (info.kind === 'aiCard') return 'shared an AI card';
   if (info.kind === 'aiStory') return 'shared an AI story';
   if (info.kind === 'build') return 'shared an app';
+  if (info.kind === 'book') return 'shared a book';
   if (info.kind === 'comment') return 'shared a comment';
   if (info.kind === 'dailyReflection') return 'shared a reflection';
   if (info.kind === 'mission') return 'shared a mission';

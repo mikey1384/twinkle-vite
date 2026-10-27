@@ -3,6 +3,7 @@ import {
   type OpenAiImageModel
 } from '~/helpers/aiImageModels';
 import request from './axiosInstance';
+import { type BookPreview } from '~/helpers/bookEmbedHelpers';
 import URL from '~/constants/URL';
 import axios from 'axios';
 import { RequestHelpers, type UploadCompletionMeta } from '~/types';
@@ -22,6 +23,10 @@ export default function contentRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
+    async loadBookPreview(subjectId: number): Promise<{ book: BookPreview | null }> {
+      const { data } = await request.get(`${URL}/content/books/${subjectId}/preview`);
+      return data;
+    },
     // "Ask about Twinkle" on /parents: no account needed. Limit and busy
     // replies come back as { error } so the page can explain them.
     async askParentGuide({

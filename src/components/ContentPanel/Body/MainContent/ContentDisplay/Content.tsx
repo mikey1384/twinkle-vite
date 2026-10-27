@@ -1,3 +1,4 @@
+import { getSubjectDisplayDescription } from '~/helpers/bookEmbedHelpers';
 import MeetupStepDisplay from './MeetupStepDisplay';
 import ArenaChallengePanel from '~/components/ArenaChallengePanel';
 import BountyContent from '~/components/BountyContent';
@@ -247,12 +248,19 @@ export default function Content({
   );
 
   const Description = useMemo(() => {
+    if (contentType === 'subject') {
+      return getSubjectDisplayDescription({
+        ...contentObj,
+        contentId,
+        description
+      });
+    }
     return !stringIsEmpty(description)
       ? description.trim()
       : contentType === 'video' || contentType === 'url'
         ? (title || '').trimEnd()
         : '';
-  }, [contentType, description, title]);
+  }, [contentType, description, title, contentId, contentObj]);
 
   const RenderedContent = useMemo(() => {
     switch (contentType) {

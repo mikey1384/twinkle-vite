@@ -1,3 +1,4 @@
+import { getSubjectDisplayDescription } from '~/helpers/bookEmbedHelpers';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import usePendingAction from '~/helpers/hooks/usePendingAction';
 import Button from '~/components/Button';
@@ -48,6 +49,7 @@ export default function SubjectPanel({
   rootId,
   rootType,
   description,
+  bookAvailable,
   title,
   rewardLevel,
   uploaderLevel,
@@ -66,6 +68,7 @@ export default function SubjectPanel({
   rootId: number;
   rootType: string;
   description: string;
+  bookAvailable?: boolean | number;
   title: string;
   rewardLevel: number;
   uploaderLevel: number;
@@ -358,8 +361,14 @@ export default function SubjectPanel({
             </div>
           </div>
         </div>
-        {!onEdit && !!description && (
-          <RichText style={{ padding: '1rem 0' }}>{description}</RichText>
+        {!onEdit && (!!description || !!bookAvailable) && (
+          <RichText style={{ padding: '1rem 0' }}>
+            {getSubjectDisplayDescription({
+              id: subjectId,
+              bookAvailable,
+              description
+            })}
+          </RichText>
         )}
         {subjectHasSecretMessage && !onEdit && (
           <SecretAnswer

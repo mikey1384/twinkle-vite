@@ -658,6 +658,14 @@ export const mainPreviewStyles = `
     border: 0;
     background: transparent;
   }
+  .home-feed-card__rich-embed-internal--book {
+    flex: 0 0 auto;
+    height: auto;
+    align-items: center;
+  }
+  .home-feed-card__rich-embed-internal--book > * {
+    height: auto;
+  }
   .home-feed-card__subject-embed-preview.home-feed-card__rich-file-embed {
     flex: 0 0 auto;
     align-items: center;

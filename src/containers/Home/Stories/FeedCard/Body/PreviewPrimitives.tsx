@@ -1,3 +1,7 @@
+import {
+  getSubjectDisplayDescription,
+  parseBookLink
+} from '~/helpers/bookEmbedHelpers';
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import WideSubjectEmbedPreview from '~/components/Subjects/WideSubjectEmbedPreview';
@@ -73,11 +77,13 @@ export function MarkdownEmbedPreview({
     const internalSrcParts = internalSrc.split('/');
     const internalLinkType = (internalSrcParts[1] || '').split('?')[0];
     const internalLinkSubType = (internalSrcParts[2] || '').split('?')[0];
+    const isBook = Boolean(parseBookLink(internalSrc));
     const internalClassName = [
+      isBook ? 'home-feed-card__rich-embed-internal--book' : '',
       internalLinkType === 'subjects'
         ? 'home-feed-card__rich-embed-internal--subject'
         : '',
-      ['app', 'apps', 'build', 'builds'].includes(internalLinkType)
+      !isBook && ['app', 'apps', 'build', 'builds'].includes(internalLinkType)
         ? 'home-feed-card__rich-embed-internal--build'
         : '',
       internalLinkType === 'ai-cards' ||
@@ -225,7 +231,7 @@ function HomeFeedWideSubjectEmbedPreview({
         id: subjectId,
         title: fallbackLabel
       };
-  const description = String(subject?.description || subject?.content || '');
+  const description = getSubjectDisplayDescription(subject);
   const {
     contentEmbed: descriptionContentEmbed,
     promotedBuildEmbed: descriptionBuildEmbed,
@@ -388,6 +394,8 @@ function stopFeedCardNestedClick(event: React.MouseEvent<HTMLElement>) {
 }
 
 function normalizeInternalEmbedSrc(src: string) {
+  const book = parseBookLink(src);
+  if (book) return book.path;
   try {
     const url = new URL(src, 'https://twinkle.local');
     const parts = url.pathname.replace(/^\/+/, '').split('/').filter(Boolean);

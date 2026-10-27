@@ -1,3 +1,4 @@
+import { embedStandaloneBookLinks } from '~/helpers/bookEmbedHelpers';
 import React, {
   memo,
   useCallback,
@@ -363,7 +364,7 @@ function RichText({
   theme?: string;
   voice?: string;
 }) {
-  text = text || '';
+  text = embedStandaloneBookLinks(text || '');
   const readAloudToolsShown =
     !hideDictation &&
     !isStreaming &&

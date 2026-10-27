@@ -1,4 +1,8 @@
 import { normalizeRootType } from './navigation';
+import {
+  embedStandaloneBookLinks,
+  getSubjectDisplayDescription
+} from '~/helpers/bookEmbedHelpers';
 import { resolveWideSubjectMedia } from '~/components/Subjects/wideSubjectMedia';
 import { isRenderableHomeFeedTargetComment } from './targetComment';
 import {
@@ -517,7 +521,7 @@ export function hasDailyReflectionMetaBadges(content: any) {
 }
 
 export function removeMarkdownImageEmbeds(text: string) {
-  return text
+  return embedStandaloneBookLinks(text)
     .replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+['"][^'"]*['"])?\)/g, '')
     .trim();
 }
@@ -1165,7 +1169,9 @@ function estimateCommentEmbedBodyHeight(
   const gapHeight = Math.max(0, renderedChildrenCount - 1) * layout.gap;
   const embedKind = getSubjectContentSizedEmbedKind(content);
   const embedHeight =
-    embedKind === 'aiStory'
+    embedKind === 'book'
+      ? (axis === 'desktop' ? 27 : 23)
+      : embedKind === 'aiStory'
       ? AI_STORY_EMBED_PREVIEW_HEIGHT_REM[axis]
       : embedKind === 'aiCard'
         ? AI_CARD_EMBED_PREVIEW_HEIGHT_REM[axis]
@@ -1430,6 +1436,7 @@ function getPreviewCommentCount(content: any) {
 
 function hasRichTextEmbed(content: any) {
   const text =
+    (Number(content?.bookAvailable) === 1 ? getSubjectDisplayDescription(content) : '') ||
     content?.content ||
     content?.description ||
     content?.question ||
@@ -1463,9 +1470,10 @@ function getSubjectContentSizedEmbedKind(
   | 'aiCardCollection'
   | 'file'
   | 'subject'
+  | 'book'
   | null {
   const embedPreview = getMarkdownImageEmbedPreview(
-    String(content?.description || content?.content || '')
+    getSubjectDisplayDescription(content)
   );
   if (!embedPreview) {
     return null;
@@ -1478,7 +1486,7 @@ function getSubjectContentSizedEmbedKind(
     return 'aiCardCollection';
   }
   const kind = info?.kind;
-  return kind === 'comment' || kind === 'aiStory' || kind === 'subject'
+  return kind === 'comment' || kind === 'aiStory' || kind === 'subject' || kind === 'book'
     ? kind
     : null;
 }
@@ -1492,7 +1500,7 @@ export function getSubjectTargetDescriptionEmbeds(target: any): {
   promotedFileEmbed: MarkdownImageEmbed | null;
 } {
   const embed = getMarkdownImageEmbedPreview(
-    String(target?.description || target?.content || '')
+    getSubjectDisplayDescription(target)
   );
   if (!embed) {
     return {
@@ -2638,7 +2646,9 @@ function getMarkdownImageEmbeds(text: string): MarkdownImageEmbed[] {
   }
 
   return Array.from(
-    text.matchAll(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+['"][^'"]*['"])?\)/g)
+    embedStandaloneBookLinks(text).matchAll(
+      /!\[([^\]]*)\]\(([^)\s]+)(?:\s+['"][^'"]*['"])?\)/g
+    )
   ).map((match) => {
     const src = match[2]?.trim() || '';
 

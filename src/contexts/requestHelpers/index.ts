@@ -326,6 +326,7 @@ registerMethods('community', [
 ]);
 
 registerMethods('content', [
+  'loadBookPreview',
   'askParentGuide',
   'replaceSubjectAttachment',
   'replaceCommentAttachment',

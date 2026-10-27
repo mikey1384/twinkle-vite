@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import BookEmbed from '~/components/Books/BookEmbed';
+import { parseBookLink } from '~/helpers/bookEmbedHelpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MainContentComponent, { LazyProfileAppEmbed } from './MainContentComponent';
 import MissionComponent from './MissionComponent';
@@ -47,6 +49,7 @@ export default function InternalComponent({
     const linkType = urlParts[1];
     const linkSubType = urlParts[2];
     const contentId = linkSubType?.split('?')?.[0];
+    const book = parseBookLink(src);
     const mainContentTypes = [
       'videos',
       'links',
@@ -62,6 +65,7 @@ export default function InternalComponent({
       // remaining embed types stay plain links: a profile inside a profile would nest forever.
       if (
         showProfileApps &&
+        !book &&
         ['app', 'apps', 'build', 'builds'].includes(linkType) &&
         contentId
       ) {
@@ -74,6 +78,19 @@ export default function InternalComponent({
       }
       return (
         <DefaultComponent linkType={linkType} src={src} isPreview={isPreview} />
+      );
+    }
+    if (book) {
+      return (
+        <BookEmbed
+          subjectId={book.subjectId}
+          path={book.path}
+          compact={
+            buildPreviewVariant === 'compact' ||
+            embedPreviewMode === 'compactComment' ||
+            embedPreviewMode === 'thumbnail'
+          }
+        />
       );
     }
     if (['app', 'apps', 'build', 'builds'].includes(linkType) && contentId) {

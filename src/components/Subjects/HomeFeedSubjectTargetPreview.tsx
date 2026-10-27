@@ -1,3 +1,4 @@
+import { getSubjectDisplayDescription } from '~/helpers/bookEmbedHelpers';
 import React from 'react';
 import RichText from '~/components/Texts/RichText';
 
@@ -33,7 +34,7 @@ export default function HomeFeedSubjectTargetPreview({
   const body =
     typeof descriptionText === 'string'
       ? descriptionText
-      : String(subject?.description || subject?.content || '');
+      : getSubjectDisplayDescription(subject);
   const resolvedUploaderName =
     typeof uploaderName === 'string'
       ? uploaderName.trim()
