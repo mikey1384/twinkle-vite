@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { arenaExamLimitMessage } from '~/helpers/arenaExamLimit';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
@@ -74,6 +75,7 @@ export default function Challenge({
   const [notice, setNotice] = useState('');
   const [view, setView] = useState<ChallengeView | null>(null);
   const [error, setError] = useState('');
+  const [startLimited, setStartLimited] = useState(false);
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
@@ -90,13 +92,18 @@ export default function Challenge({
   useEffect(() => {
     if (!view?.canTake) return;
     let cancelled = false;
-    setPreview(null);
+    setPreview(null); setError(''); setStartLimited(false);
     prepareArenaBattle({ challengeId }).then((data: ArenaBattlePreview) => {
       if (cancelled) return;
       if (data.alreadyTaken) setView(previous => previous ? { ...previous, canTake: false, myBattle: { id: data.battleId, status: data.status } } : previous);
       else if (data.preview) setPreview(data.preview);
       else setError('The reward details could not be loaded.');
-    }).catch(() => { if (!cancelled) setError('The reward details could not be loaded.'); });
+    }).catch((error: any) => {
+      if (cancelled) return;
+      const limit = arenaExamLimitMessage(error);
+      setStartLimited(!!limit);
+      setError(limit || 'The reward details could not be loaded.');
+    });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- context request helpers stay out of dependencies
   }, [challengeId, view?.canTake, refresh]);
@@ -148,8 +155,8 @@ export default function Challenge({
 
       {(notice || error || view.canTake) && <div className={rewardSectionCls}>
         {notice && <p role="status">{notice}</p>}
-        {error && <p role="alert">{error} <button type="button" onClick={() => { setError(''); setRefresh(value => value + 1); }}>Try again</button></p>}
-        {view.canTake && (preview ? <RewardOffer offer={preview} /> : <p role="status">Checking available rewards…</p>)}
+        {error && <p role="alert">{error} {!startLimited && <button type="button" onClick={() => { setError(''); setRefresh(value => value + 1); }}>Try again</button>}</p>}
+        {view.canTake && (preview ? <RewardOffer offer={preview} /> : !error && <p role="status">Checking available rewards…</p>)}
       </div>}
       <div className={actionsCls}>
         {view.canTake ? (
@@ -217,7 +224,9 @@ export default function Challenge({
       const data = await startArenaChallenge(challengeId, preview.token);
       if (data.previewChanged) { setPreview(data.preview); setNotice('Your available rewards changed. Check the updated amounts before starting.'); return; }
       onOpenBattle(data.battle.id);
-    } catch {
+    } catch (error: any) {
+      const limit = arenaExamLimitMessage(error);
+      if (limit) { setStartLimited(true); setPreview(null); setError(limit); return; }
       setPreview(null); setRefresh(value => value + 1);
       setError('The battle could not start. Its reward details are being refreshed.');
     } finally {

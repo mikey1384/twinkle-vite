@@ -23,6 +23,7 @@ export type ArenaBattlePreview =
 
 export interface ArenaExamSummary {
   key: string;
+  cooldown?: { availableAgainDayIndex: number; availableAt: number } | null;
   // boss codename, e.g. H3-3 with label 수능
   code: string;
   codeLabel: string | null;
@@ -123,6 +124,8 @@ export interface ArenaState {
   recent: ArenaBattleSummary[];
   paidBattlesToday: number;
   paidBattlesPerDay: number;
+  examsToday?: number;
+  examsPerDay?: number;
 }
 
 export type TypedFormat = 'integer' | 'number' | 'text' | 'transformation';

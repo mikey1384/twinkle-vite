@@ -16,6 +16,7 @@ import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import type { ArenaDifficulty, ArenaExamSummary, ArenaState } from './types';
 import { arenaExamPath } from '~/helpers/arenaActivity';
+import { arenaExamLimitMessage } from '~/helpers/arenaExamLimit';
 
 // Arena: real battles only. Exam and boss names use their real Korean
 // terms so a parent watching recognizes the exam (Mikey 10-24: an exception
@@ -149,8 +150,8 @@ export default function Battles({
         {examKey
           ? 'Choose a difficulty and length. The exam starts only after you confirm on its cover.'
           : 'Each boss is a real exam, with its real time limits and grading.'}
-        {state
-          ? ` Paid battles today: ${state.paidBattlesToday} of ${state.paidBattlesPerDay}.`
+        {state?.examsPerDay != null && state.examsToday != null
+          ? ` Exams started today: ${state.examsToday} of ${state.examsPerDay}. Resets at 9:00 AM Korea time (00:00 UTC).`
           : ''}
       </p>
       {error && <p className={errorCls}>{error}</p>}
@@ -222,6 +223,13 @@ export default function Battles({
                       {exam.name}{exam.nameEn !== exam.name && <> <small>{exam.nameEn}</small></>}
                     </strong>
                     <ExamScope examKey={exam.key} />
+                    {exam.cooldown && (
+                      <p className={cooldownCls} role="status">
+                        Boss cleared! New sittings unlock {new Date(exam.cooldown.availableAt).toLocaleDateString('en-US', {
+                          timeZone: 'Asia/Seoul', month: 'short', day: 'numeric'
+                        })} at 9:00 AM Korea time, across all lengths and difficulties. Your results remain in Records.
+                      </p>
+                    )}
                     <div
                       className={modesCls}
                       role="radiogroup"
@@ -334,7 +342,7 @@ export default function Battles({
         onStart(data.battle.id);
       }
     } catch (err: any) {
-      if (err?.code === 'ARENA_PREVIEW_EXPIRED') throw err;
+      if (err?.code === 'ARENA_PREVIEW_EXPIRED' || arenaExamLimitMessage(err)) throw err;
       setCover(null);
       setError(
         err?.code === 'ARENA_NOT_READY'
@@ -439,6 +447,16 @@ const lengthsCls = css`
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+`;
+
+const cooldownCls = css`
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 8px;
+  background: #fff6d6;
+  font-size: 1.3rem;
+  line-height: 1.5;
 `;
 
 const lengthCls = css`

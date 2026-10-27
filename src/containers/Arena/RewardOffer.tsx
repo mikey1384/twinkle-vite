@@ -20,7 +20,8 @@ export default function RewardOffer({ offer, compact = false }: { offer: ArenaRe
       {reduced && <p>The amounts shown exclude questions you have already been rewarded for.</p>}
       {!!offer.pendingOverlapPoints && <p>Another exam containing some of these questions is awaiting its result. Each question can earn rewards once, so the final amounts may be lower.</p>}
       {offer.markingRequired && <p>Rewards arrive after the final Writing / Speaking marks.</p>}
-      {offer.dailyRemaining != null && <p>{offer.dailyRemaining} of 5 exam rewards available today (UTC). Pending exams count towards the day you start them.</p>}
+      <p>One new exam per day across all exams and lengths. Starting uses today’s attempt, even if you leave or do not reach the reward target. You can resume the same exam. Resets at 9:00 AM Korea time (00:00 UTC).</p>
+      <p>Clearing a boss locks that exam’s lengths and difficulties for seven site days. Your result and review stay available.</p>
     </>}
   </div>;
 }

@@ -6,6 +6,7 @@ import RewardOffer from './RewardOffer';
 import ComponentSchedule from './ComponentSchedule';
 import ExamScope from './ExamScope';
 import { useAppContext } from '~/contexts';
+import { arenaExamLimitMessage } from '~/helpers/arenaExamLimit';
 import { ARENA } from './theme';
 import type { ArenaBattlePreview, ArenaDifficulty, ArenaExamSummary, ArenaRewardOffer } from './types';
 
@@ -77,17 +78,23 @@ export default function CoverPage({
   const [existing, setExisting] = useState<{ battleId: number; status: string } | null>(null);
   const [preparing, setPreparing] = useState(true);
   const [previewError, setPreviewError] = useState('');
+  const [startLimited, setStartLimited] = useState(false);
   const [notice, setNotice] = useState('');
   const [refresh, setRefresh] = useState(0);
   useEffect(() => {
     let cancelled = false;
-    setPreview(null); setExisting(null); setPreparing(true); setPreviewError('');
+    setPreview(null); setExisting(null); setPreparing(true); setPreviewError(''); setStartLimited(false);
     prepareArenaBattle({ examKey: exam.key, length, difficulty }).then((data: ArenaBattlePreview) => {
       if (cancelled) return;
       if (data.alreadyTaken) setExisting({ battleId: data.battleId, status: data.status });
       else if (data.preview) setPreview(data.preview);
       else setPreviewError('The exam cover could not be prepared. Please try again.');
-    }).catch(() => { if (!cancelled) setPreviewError('The exam cover could not be prepared. Please try again.'); })
+    }).catch((error: any) => {
+      if (cancelled) return;
+      const limit = arenaExamLimitMessage(error);
+      setStartLimited(!!limit);
+      setPreviewError(limit || 'The exam cover could not be prepared. Please try again.');
+    })
       .finally(() => { if (!cancelled) setPreparing(false); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- context request helpers stay out of dependencies
@@ -103,13 +110,13 @@ export default function CoverPage({
     copied.replace(/\s+/g, '') === phrase.line.replace(/\s+/g, '');
   const suneung = /^수능 /.test(exam.name);
   const english = exam.language === 'en' && !suneung;
-  const rewardSection = <>
+  const rewardSection = <div className={rewardSectionCls}>
     {preparing && <p role="status">Checking available rewards…</p>}
     {preview && <RewardOffer offer={preview} />}
     {existing && <p>{existing.status === 'finished' ? 'You have already taken this paper. Your result and review are ready.' : 'You already have a sitting of this paper.'}{existing.status !== 'finished' && length === 'full' && !!exam.components?.length && ' New sittings use the section clocks shown above; your saved sitting keeps its original timing.'}</p>}
     {notice && <p role="status">{notice}</p>}
-    {previewError && <p role="alert">{previewError} <button type="button" onClick={() => setRefresh(value => value + 1)}>Try again</button></p>}
-  </>;
+    {previewError && <p role="alert">{previewError} {!startLimited && <button type="button" onClick={() => setRefresh(value => value + 1)}>Try again</button>}</p>}
+  </div>;
 
 
   if (english) {
@@ -256,7 +263,9 @@ export default function CoverPage({
         setPreview(result.preview);
         setNotice('Your available rewards changed. Check the updated amounts before starting.');
       }
-    } catch {
+    } catch (error: any) {
+      const limit = arenaExamLimitMessage(error);
+      if (limit) { setStartLimited(true); setPreview(null); setPreviewError(limit); return; }
       setNotice('The cover expired or changed. Available rewards have been refreshed.');
       setRefresh(value => value + 1);
     }
@@ -388,6 +397,16 @@ const actionsCls = css`
   gap: 1.6rem;
   margin-top: 1.2rem;
   font-family: inherit;
+`;
+
+const rewardSectionCls = css`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  font-size: 1.3rem;
+  line-height: 1.5;
+  p { margin: 0; }
 `;
 
 const cancelCls = css`

@@ -30,15 +30,15 @@ const boss={id:102,examKey:'c1-advanced',examName:'C1 Advanced',code:'C1',codeLa
  xpEarned:120000,coinsEarned:2400,scoreBonusXpEarned:40000,scoreBonusCoinsEarned:800,
  hunterRank:null,createdAt:daily.createdAt,takers:0,bestTaker:null};
 function App(){
- const [data,setData]=useState(daily);const [done,setDone]=useState(false);const [viewer,setViewer]=useState(1);
+ const [data,setData]=useState(daily);const [done,setDone]=useState(false);const [viewer,setViewer]=useState(1);const [surface,setSurface]=useState('feed');
  window.storyState=(s)=>{if('done'in s)setDone(s.done);if('viewer'in s)setViewer(s.viewer);
-  if(s.kind==='boss')setData(boss);else if(s.kind==='today')setData({...daily,...s.values});};
+  if(s.surface)setSurface(s.surface);if(s.kind==='boss')setData({...boss,...s.values});else if(s.kind==='today')setData({...daily,...s.values});};
  const location=useLocation();window.route=location.pathname+location.search;
  return <FixtureProvider value={{myState:{userId:viewer},state:{todayStats:{dailyTaskStatus:{aiStory:{arena:{todayQuestion:{done,setupCompleted:true},done:true}}}}}}}>
  <main><article onClick={()=>window.cardClicks=(window.cardClicks||0)+1}>
   <header><b>Fixture member</b> <span>{arenaChallengeHeadline(data)}</span><small>Local design preview · synthetic rewards</small></header>
   <div className={css(panelPreviewStyles+mobilePreviewStyles)}>
-   <div data-slot className="home-feed-card__panel-preview home-feed-card__panel-preview--pass home-feed-card__panel-preview--size-arena-challenge">
+   <div data-slot className={surface==='feed'?"home-feed-card__panel-preview home-feed-card__panel-preview--pass home-feed-card__panel-preview--size-arena-challenge":"content-page-panel"}>
     <ArenaChallengePanel challenge={data}/>
    </div>
   </div><footer>Like　Comment　Recommend</footer>
@@ -111,6 +111,50 @@ test('daily stories fit the actual Home preview slot and nudge only an unfinishe
         await bossButton.click();
         await page.waitForFunction(() => window.route === '/arena?mode=arena&challenge=102');
         assert.equal(await page.evaluate(() => window.route), '/arena?mode=arena&challenge=102');
+        assert.deepEqual(errors, []);
+        await page.close();
+      }
+    } finally { await browser.close(); }
+  }
+});
+
+test('million-XP awards are larger at the exact threshold and fit Home and content panels', { timeout: 90000 }, async () => {
+  const html = await compile();
+  for (const engine of [chromium, webkit]) {
+    const browser = await engine.launch();
+    try {
+      for (const width of [360, 1440]) {
+        const page = await browser.newPage({ viewport: { width, height: 900 } });
+        const errors = []; page.on('pageerror', e => errors.push(e.message));
+        await page.route('**/*', route => route.request().url() === 'http://localhost:3000/'
+          ? route.fulfill({ contentType: 'text/html', body: html }) : route.fulfill({ status: 204, body: '' }));
+        await page.goto('http://localhost:3000/');
+        await page.getByRole('button', { name: 'Try today’s challenge', exact: true }).waitFor();
+        for (const surface of ['feed', 'content']) {
+          let smallerFont;
+          for (const xp of [999999, 1000000, 13500000]) {
+            await page.evaluate(({ xp, surface }) => window.storyState({ kind: 'boss', surface,
+              values: { xpEarned: xp, coinsEarned: 13500, scoreBonusXpEarned: Math.floor(xp / 3), scoreBonusCoinsEarned: 4500 } }), { xp, surface });
+            const mainXP = page.getByLabel('Exam rewards', { exact: true }).locator('.xp').first();
+            await page.waitForFunction(xp => document.querySelector('[aria-label="Exam rewards"] .reward-chip__xp-number')?.textContent === xp.toLocaleString('en-US'), xp);
+            const font = await mainXP.evaluate(el => Number.parseFloat(getComputedStyle(el).fontSize));
+            if (xp < 1000000) smallerFont = font;
+            else assert.ok(font > smallerFont, `${engine.name()} ${width} ${surface}: million award must be larger`);
+            const fit = await page.evaluate(() => {
+              const slot = document.querySelector('[data-slot]').getBoundingClientRect();
+              return [...document.querySelectorAll('[data-slot] button,[data-slot] .reward-amount-chip')].every(el => {
+                const r = el.getBoundingClientRect(); return r.bottom <= slot.bottom + 1 && r.right <= slot.right + 1 && r.left >= slot.left - 1;
+              }) && document.documentElement.scrollWidth <= innerWidth + 1;
+            });
+            assert.ok(fit, `${engine.name()} ${width} ${surface} ${xp}: reward or action clipped`);
+            if (artifacts && xp >= 1000000) await page.screenshot({ path: path.join(artifacts, `${engine.name()}-${surface}-${width}-${xp}.png`), fullPage: true });
+          }
+          await page.evaluate(surface => window.storyState({ kind: 'boss', surface, values: {
+            xpEarned: 0, coinsEarned: 0, rewardPending: true, scoreBonusXpEarned: undefined, scoreBonusCoinsEarned: undefined
+          } }), surface);
+          await page.getByText('Reward payment pending', { exact: true }).waitFor();
+          assert.equal(await page.getByLabel('Exam rewards', { exact: true }).locator('.xp').count(), 0, 'Pending rewards never invent a large award');
+        }
         assert.deepEqual(errors, []);
         await page.close();
       }

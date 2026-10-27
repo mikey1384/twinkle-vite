@@ -24,6 +24,7 @@ export default function ArenaRewards({
 }) {
   const known = Number.isFinite(xp) && Number.isFinite(coins);
   const paid = known && (Number(xp) > 0 || Number(coins) > 0);
+  const largeAward = highlight && paid && label !== 'Up to' && Number(xp) >= 1000000;
   const hasBonus = paid && Number.isFinite(scoreBonusXp) && Number.isFinite(scoreBonusCoins)
     && Number(scoreBonusXp) >= 0 && Number(scoreBonusCoins) >= 0
     && Number(scoreBonusXp) <= Number(xp) && Number(scoreBonusCoins) <= Number(coins)
@@ -37,14 +38,14 @@ export default function ArenaRewards({
           : rewardStatus === 'already_rewarded' ? 'These questions have already earned rewards'
           : rewardStatus === 'daily_limit' ? 'Daily exam reward limit reached' : emptyNote : null;
   return (
-    <span className={cx(wrapCls, highlight && highlightCls)} aria-label={ariaLabel}>
+    <span className={cx(wrapCls, highlight && highlightCls, largeAward && largeAwardCls)} aria-label={ariaLabel}>
       {highlight && paid && <span className={labelCls}>
         {rewardPending || markingPending ? 'Awarded so far' : label}
       </span>}
       <span className={rowCls}>
         {paid ? <>
           {!highlight && <span className={labelCls}>{label}</span>}
-          <RewardChips xp={xp} coins={coins} className={cx(amountCls, highlight && highlightedAmountCls)} />
+          <RewardChips xp={xp} coins={coins} className={cx(amountCls, highlight && highlightedAmountCls, largeAward && largeAmountCls)} />
         </> : <span>{known
           ? highlight && (rewardPending || markingPending)
             ? 'Rewards pending'
@@ -90,6 +91,18 @@ const highlightCls = css`
 const highlightedAmountCls = css`
   &.xp { font-size: 2.3rem; }
   &.coins { font-size: 1.7rem; }
+`;
+const largeAwardCls = css`
+  border: 2px solid ${Color.logoGreen(0.45)};
+  background: ${Color.logoGreen(0.07)};
+`;
+const largeAmountCls = css`
+  &.xp {
+    font-size: clamp(2.8rem, 4vw, 3.6rem);
+    font-weight: 900;
+    padding: 0.55rem 0.8rem;
+    border-width: 2px;
+  }
 `;
 const bonusCls = css`
   display: inline-flex;
