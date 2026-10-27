@@ -1,8 +1,8 @@
 import React, { memo } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useNotiContext } from '~/contexts';
 import ArenaButton from '~/containers/Arena/ArenaButton';
 import ArenaRewards from '~/containers/Arena/Rewards';
 import type { ArenaRewardStatus } from '~/containers/Arena/types';
@@ -15,7 +15,8 @@ import { ARENA } from '~/containers/Arena/theme';
 // recommends); this is its body on Home and on /arena-challenges/:id, the
 // Arena look only inside the panel, with a Challenge! button for anyone who
 // wants to sit the same paper. Never any wrong answers (the own-misses ruling).
-export interface ArenaChallengePreview {
+interface ArenaBossChallengePreview {
+  kind?: 'battle';
   id: number;
   examKey: string;
   examName: string;
@@ -39,6 +40,19 @@ export interface ArenaChallengePreview {
   takers: number;
   bestTaker: number | null;
 }
+
+interface ArenaTodayChallengePreview {
+  kind: 'today';
+  id: number;
+  dayIndex: number;
+  dayKey: string;
+  createdAt: number;
+  sharer: { id: number; username: string; profilePicUrl: string | null };
+  xpEarned: number;
+  coinsEarned: number;
+}
+
+export type ArenaChallengePreview = ArenaBossChallengePreview | ArenaTodayChallengePreview;
 
 // 수우미양가 (Mikey 10-24: a teacher's stamp for the old-school feel), the
 // classic school lines on the paper's score: 수 90%+, 우 80%+, 미 70%+,
@@ -73,36 +87,42 @@ function ArenaChallengePanel({
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
-  if (!challenge?.examKey) return null;
-  const mark = gradeMark(challenge.raw, challenge.max);
-  const grade = (g: number) => challenge.gradeLabels?.[g - 1] || `${g}등급`;
+  const todayCompleted = useNotiContext(
+    (v) => v.state.todayStats?.dailyTaskStatus?.aiStory?.arena?.todayQuestion?.done
+  );
+  const isDaily = challenge?.kind === 'today';
+  if (!isDaily && !challenge?.examKey) return null;
+  const mark = !isDaily ? gradeMark(challenge.raw, challenge.max) : null;
+  const grade = (g: number) => (!isDaily && challenge.gradeLabels?.[g - 1]) || `${g}등급`;
   // the sharer can't take their own paper again (the API refuses it)
   const isMine = !!userId && userId === challenge.sharer?.id;
   return (
     <div className={resultCls}>
-      <img
+      {isDaily ? <span className={cx(stampCls, clearedStampCls)}>CLEARED</span> : <img
         className={stampCls}
-        src={arenaMediaURL(`img/stamps/${mark.file}.png`)}
-        alt={mark.mark}
-      />
-      <img
+        src={arenaMediaURL(`img/stamps/${mark!.file}.png`)}
+        alt={mark!.mark}
+      />}
+      {isDaily ? <div className={cx(eraserCls, dailyIconCls)} aria-hidden="true">Q</div> : <img
         className={eraserCls}
         src={arenaMediaURL(`img/bosses/${challenge.examKey}.jpg`)}
         alt={challenge.examName}
-      />
+      />}
       <div className={resultTextCls}>
         <span className={codeCls}>
-          BOSS {challenge.code}
-          {challenge.codeLabel ? ` · ${challenge.codeLabel}` : ''}
+          {isDaily ? 'ARENA · DAILY' : <>BOSS {challenge.code}
+          {challenge.codeLabel ? ` · ${challenge.codeLabel}` : ''}</>}
         </span>
-        <strong className={titleCls}>{challenge.examName}</strong>
+        <strong className={titleCls}>{isDaily ? 'Today’s Challenge' : challenge.examName}</strong>
         <span className={modeCls}>
-          {LENGTH[challenge.length]} · {MODE[challenge.difficulty]}
+          {isDaily ? new Date(`${challenge.dayKey}T00:00:00Z`).toLocaleDateString('en-US', {
+            timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric'
+          }) : <>{LENGTH[challenge.length]} · {MODE[challenge.difficulty]}</>}
         </span>
         <span className={scoreCls}>
-          <small>Score</small> {challenge.raw} <span>/ {challenge.max}</span>
+          {isDaily ? 'Challenge cleared' : <><small>Score</small> {challenge.raw} <span>/ {challenge.max}</span></>}
         </span>
-        {challenge.hunterRank && (
+        {!isDaily && challenge.hunterRank && (
           <span className={rankCls}>
             Hunter Rank about {grade(challenge.hunterRank.grade)}
           </span>
@@ -112,19 +132,24 @@ function ArenaChallengePanel({
         <ArenaRewards
           xp={challenge.xpEarned}
           coins={challenge.coinsEarned}
-          scoreBonusXp={challenge.scoreBonusXpEarned}
-          scoreBonusCoins={challenge.scoreBonusCoinsEarned}
-          rewardPending={challenge.rewardPending}
-          rewardStatus={challenge.rewardStatus}
-          markingPending={challenge.markingPending}
+          scoreBonusXp={!isDaily ? challenge.scoreBonusXpEarned : undefined}
+          scoreBonusCoins={!isDaily ? challenge.scoreBonusCoinsEarned : undefined}
+          rewardPending={!isDaily ? challenge.rewardPending : false}
+          rewardStatus={!isDaily ? challenge.rewardStatus : undefined}
+          markingPending={!isDaily ? challenge.markingPending : false}
+          ariaLabel={isDaily ? 'Daily challenge rewards' : 'Exam rewards'}
           emptyNote="Daily exam reward limit reached"
           label="Awarded"
           highlight
         />
+        {isDaily && challenge.coinsEarned === 0 && <span className={modeCls}>0 Coins</span>}
       </div>
       <div className={footCls}>
         <span className={metaCls}>
-          {challenge.takers
+          {isDaily ? todayCompleted === true && userId
+            ? 'You’ve completed today’s challenge ✓'
+            : 'One question for your goals'
+            : challenge.takers
             ? `${challenge.takers} tried the same paper${
                 challenge.bestTaker != null
                   ? ` · best ${challenge.bestTaker}`
@@ -132,17 +157,17 @@ function ArenaChallengePanel({
               }`
             : 'Same paper, same clock'}
         </span>
-        {!isMine && (
+        {(isDaily ? !!userId && todayCompleted === false : !isMine) && (
           <ArenaButton
             tone="red"
             size="md"
             onClick={(event) => {
               // the feed card opens the post on a click; this opens the battle
               event.stopPropagation();
-              navigate(`/arena?mode=arena&challenge=${challenge.id}`);
+              navigate(isDaily ? '/arena?mode=today' : `/arena?mode=arena&challenge=${challenge.id}`);
             }}
           >
-            Challenge!
+            {isDaily ? 'Try today’s challenge' : 'Challenge!'}
           </ArenaButton>
         )}
       </div>
@@ -206,6 +231,33 @@ const eraserCls = css`
   flex: none;
   @media (max-width: ${mobileMaxWidth}) {
     height: 10rem;
+  }
+`;
+
+const dailyIconCls = css`
+  display: grid;
+  place-items: center;
+  background: ${ARENA.train};
+  color: white;
+  font-size: 5rem;
+  font-weight: 900;
+`;
+
+const clearedStampCls = css`
+  display: grid;
+  place-items: center;
+  top: 0.9rem;
+  width: auto;
+  height: auto;
+  padding: 0.3rem;
+  border: 2px solid ${ARENA.train};
+  border-radius: 3px;
+  color: ${ARENA.train};
+  font-size: 1rem;
+  font-weight: 900;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: auto;
+    height: auto;
   }
 `;
 

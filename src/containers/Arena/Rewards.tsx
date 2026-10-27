@@ -6,7 +6,7 @@ import type { ArenaRewardStatus } from './types';
 
 export default function ArenaRewards({
   xp, coins, label = 'Earned', rewardPending, markingPending, emptyNote,
-  highlight = false, scoreBonusXp, scoreBonusCoins, rewardStatus
+  highlight = false, scoreBonusXp, scoreBonusCoins, rewardStatus, ariaLabel = 'Exam rewards'
 }: {
   xp?: number;
   coins?: number;
@@ -20,6 +20,7 @@ export default function ArenaRewards({
   scoreBonusXp?: number;
   scoreBonusCoins?: number;
   rewardStatus?: ArenaRewardStatus;
+  ariaLabel?: string;
 }) {
   const known = Number.isFinite(xp) && Number.isFinite(coins);
   const paid = known && (Number(xp) > 0 || Number(coins) > 0);
@@ -36,7 +37,7 @@ export default function ArenaRewards({
           : rewardStatus === 'already_rewarded' ? 'These questions have already earned rewards'
           : rewardStatus === 'daily_limit' ? 'Daily exam reward limit reached' : emptyNote : null;
   return (
-    <span className={cx(wrapCls, highlight && highlightCls)} aria-label="Exam rewards">
+    <span className={cx(wrapCls, highlight && highlightCls)} aria-label={ariaLabel}>
       {highlight && paid && <span className={labelCls}>
         {rewardPending || markingPending ? 'Awarded so far' : label}
       </span>}
