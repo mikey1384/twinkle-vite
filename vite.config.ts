@@ -1,10 +1,9 @@
 import react from '@vitejs/plugin-react-swc';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { resolve } from 'path';
 import { readFileSync } from 'node:fs';
 import inject from '@rollup/plugin-inject';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
-import type { Plugin } from 'vite';
 import { buildLumineHtml } from './scripts/hostPages.mjs';
 
 function getVercelDeploymentAssetOrigin({
@@ -50,6 +49,9 @@ function hostPages(): Plugin {
 const appVersion: string = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf8')
 ).version;
+const pdfVersion: string = JSON.parse(
+  readFileSync(new URL('./node_modules/pdfjs-dist/package.json', import.meta.url), 'utf8')
+).version;
 
 export default defineConfig(({ command, mode }) => {
   if (command === 'build') {
@@ -90,6 +92,10 @@ export default defineConfig(({ command, mode }) => {
         // the fallback for browsers without SIMD. Keep names in sync with
         // the worker.
         targets: [
+          ...['cmaps', 'standard_fonts', 'wasm', 'iccs'].map(directory => ({
+            src: `node_modules/pdfjs-dist/${directory}`,
+            dest: `assets/pdfjs/${pdfVersion}`
+          })),
           {
             src: 'node_modules/stockfish/src/stockfish-17.1-lite-single-03e3232.js',
             dest: ''

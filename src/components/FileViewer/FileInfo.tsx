@@ -4,6 +4,7 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { renderFileSize } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
+import FileDownload from '~/components/Texts/RichText/Markdown/EmbeddedComponent/FileDownload';
 
 export default function FileInfo({
   src,
@@ -19,6 +20,17 @@ export default function FileInfo({
   const linkColor = useKeyContext((v) => v.theme.link.color);
 
   const displayedFileSize = useMemo(() => renderFileSize(fileSize), [fileSize]);
+  if (fileType === 'pdf') {
+    return (
+      <FileDownload
+        fileName={fileName}
+        fileType="pdf"
+        extension="pdf"
+        fileSizeLabel={displayedFileSize || undefined}
+        src={src}
+      />
+    );
+  }
   return (
     <div
       style={{

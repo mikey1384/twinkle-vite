@@ -11,6 +11,8 @@ import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
 import EmbeddedComponent from './EmbeddedComponent';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import PdfAttachmentLink from '~/components/PdfAttachment/Link';
+import { getPdfAttachmentName } from '~/helpers/pdfAttachment';
 import { css } from '@emotion/css';
 import {
   applyTextEffects,
@@ -249,10 +251,10 @@ function Markdown({
                       </Link>
                     );
                   } else {
-                    let cleanHref = decodeURIComponent(href);
+                    let cleanHref = getPdfAttachmentName(href) ? href : decodeURIComponent(href);
                     cleanHref = cleanHref.replace(/]t|]s|]h|]b/g, '');
                     return (
-                      <a
+                      <PdfAttachmentLink
                         style={{
                           ...parseStyle(domNode.attribs?.style || ''),
                           color: linkColor
@@ -264,7 +266,7 @@ function Markdown({
                         {unescapeEqualSignAndDash(
                           (node as any)?.data || 'Link'
                         )}
-                      </a>
+                      </PdfAttachmentLink>
                     );
                   }
                 }
@@ -638,14 +640,14 @@ function Markdown({
                 </ErrorBoundary>
               );
             } else {
-              let cleanHref = decodeURIComponent(href);
+              let cleanHref = getPdfAttachmentName(href) ? href : decodeURIComponent(href);
               cleanHref = cleanHref.replace(/]t|]s|]h|]b/g, '');
               return (
                 <ErrorBoundary
                   componentPath={`${componentPath}/convertToJSX/a`}
                   key={key}
                 >
-                  <a
+                  <PdfAttachmentLink
                     {...commonProps}
                     href={cleanHref}
                     style={{
@@ -661,7 +663,7 @@ function Markdown({
                           unescapeEqualSignAndDash(child)
                         )
                       : 'Link'}
-                  </a>
+                  </PdfAttachmentLink>
                 </ErrorBoundary>
               );
             }

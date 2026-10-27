@@ -96,6 +96,8 @@ interface ModalProps {
   className?: string;
   style?: React.CSSProperties;
   priority?: boolean;
+  /** A file opened from the floating companion window must appear above it. */
+  aboveAssistant?: boolean;
   modalLevel?: number;
   header?: React.ReactNode;
   footer?: React.ReactNode;
@@ -194,6 +196,7 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
       className = '',
       style = {},
       priority = false,
+      aboveAssistant = false,
       modalLevel,
       header,
       footer,
@@ -275,7 +278,10 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [modalLevel, priority, modalId]);
 
-    const zIndex = useMemo(() => getZIndex(currentLevel), [currentLevel]);
+    const zIndex = useMemo(
+      () => aboveAssistant ? 2147483000 : getZIndex(currentLevel),
+      [aboveAssistant, currentLevel]
+    );
 
     useEffect(() => {
       if (isOpen) {

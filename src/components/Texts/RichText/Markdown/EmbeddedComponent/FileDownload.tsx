@@ -4,12 +4,14 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import PdfAttachmentLink from '~/components/PdfAttachment/Link';
 
 export default function FileDownload({
   className = '',
   extension,
   fileName,
   fileType,
+  fileSizeLabel,
   isPreview,
   openFile = true,
   src,
@@ -18,6 +20,7 @@ export default function FileDownload({
   className?: string;
   extension?: string;
   fileName: string;
+  fileSizeLabel?: string;
   fileType?: 'image' | 'audio' | 'video' | 'pdf' | 'text' | 'other' | string;
   isPreview?: boolean;
   openFile?: boolean;
@@ -49,6 +52,7 @@ export default function FileDownload({
       <span className="rich-text-file-card__copy">
         <span>{kindLabel}</span>
         <strong title={fileName}>{fileName || 'Attached file'}</strong>
+        {fileSizeLabel && <span className="rich-text-file-card__size">{fileSizeLabel}</span>}
       </span>
       <span className="rich-text-file-card__meta">
         <span title={extensionLabel}>{extensionLabel}</span>
@@ -60,17 +64,18 @@ export default function FileDownload({
   return (
     <ErrorBoundary componentPath="Texts/RichText/Markdown/EmbeddedComponent/FileDownload">
       {openFile ? (
-        <a
+        <PdfAttachmentLink
           aria-label={`Open ${fileName || 'attached file'}`}
           className={cardClassName}
           href={src}
+          fileName={fileName}
           rel="noopener noreferrer"
           style={cardStyle}
           target="_blank"
           onClick={(event) => event.stopPropagation()}
         >
           {contents}
-        </a>
+        </PdfAttachmentLink>
       ) : (
         <div
           className={cardClassName}
@@ -146,6 +151,10 @@ const fileCardClass = css`
     font-weight: 850;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .rich-text-file-card__copy > .rich-text-file-card__size {
+    font-weight: 500;
   }
 
   .rich-text-file-card__meta {

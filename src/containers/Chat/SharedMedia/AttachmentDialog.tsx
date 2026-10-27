@@ -12,6 +12,8 @@ import {
   type SharedAttachment
 } from '~/helpers/chatSharedMedia';
 import { sharedMediaModalClass } from './Browser';
+import PdfPreview from '~/components/PdfAttachment';
+import { getPdfAttachmentName } from '~/helpers/pdfAttachment';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -31,6 +33,22 @@ export default function AttachmentDialog({
   onJump?: () => void;
 }) {
   const [failed, setFailed] = useState(false);
+  if (item.fileType === 'file' && getPdfAttachmentName(item.url)) {
+    return <PdfPreview
+      key={item.id}
+      src={item.url}
+      fileName={item.name}
+      onClose={onClose}
+      onDownload={onDownload}
+      downloadBusy={action === 'download'}
+      downloadDisabled={!!action}
+      extraActions={<>
+        {error && <p role="alert">{error}</p>}
+        {onJump && <Button variant="soft" uppercase={false} disabled={!!action}
+          loading={action === 'jump'} onClick={onJump}>Show in chat</Button>}
+      </>}
+    />;
+  }
   const actions = (
     <>
       {error && (

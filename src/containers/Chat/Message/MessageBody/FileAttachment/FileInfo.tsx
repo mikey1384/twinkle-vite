@@ -10,6 +10,7 @@ import {
 } from '~/constants/css';
 import { renderFileSize } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import FileDownload from '~/components/Texts/RichText/Markdown/EmbeddedComponent/FileDownload';
 
 export default function FileInfo({
   fileName,
@@ -30,6 +31,18 @@ export default function FileInfo({
   });
 
   const displayedFileSize = useMemo(() => renderFileSize(fileSize), [fileSize]);
+  if (fileType === 'pdf') {
+    return (
+      <FileDownload
+        fileName={fileName}
+        fileType="pdf"
+        extension="pdf"
+        fileSizeLabel={displayedFileSize || undefined}
+        src={src}
+        theme={theme}
+      />
+    );
+  }
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment/FileInfo">
       <div
