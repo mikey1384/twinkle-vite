@@ -24,7 +24,8 @@ export default function C1ReadingPaper({
   finished,
   disabled = finished,
   onMark,
-  renderReview
+  renderReview,
+  renderHelp
 }: {
   items: ArenaItem[];
   passages: ArenaBattle['passages'];
@@ -33,6 +34,7 @@ export default function C1ReadingPaper({
   onMark: (no: number, value: number | string | null) => void;
   disabled?: boolean;
   renderReview: (item: ArenaItem) => React.ReactNode;
+  renderHelp?: (item: ArenaItem) => React.ReactNode;
 }) {
   const available = C1_READING_TASKS.map((task, index) => ({
     ...task,
@@ -193,6 +195,7 @@ export default function C1ReadingPaper({
       </div>
       {questionNav}
       {task}
+      {renderHelp && <div className={questionNavCls}>{(active.part === 4 ? [current] : active.items).map(item => <div key={item.no}>Question {item.display || item.no} {renderHelp(item)}</div>)}</div>}
       {finished && (
         <section className={reviewCls} aria-label="Answer explanations">
           {(active.part === 4 ? [current] : active.items).map((item) => (

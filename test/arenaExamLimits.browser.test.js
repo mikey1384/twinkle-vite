@@ -19,35 +19,36 @@ import {faCoins,faSpinner,faArrowLeft,faTrophy} from '@fortawesome/pro-solid-svg
 import CoverPage from './src/containers/Arena/CoverPage';
 import Challenge from './src/containers/Arena/Challenge';
 import Battles from './src/containers/Arena/Battles';
+import {getAssistantDock,getAssistantAskContext,closeAssistantDock} from './src/containers/App/AssistantDock/dockState';
 library.add(faCoins,faSpinner,faArrowLeft,faTrophy);
-const offer={token:'fixture-token',baseXP:200000,xp:300000,baseCoins:200,coins:300,target:10,max:16};
+const offer={token:'fixture-token',baseXP:200000,xp:300000,baseCoins:4000,coins:6000,target:10,max:16};
 const exam={key:'c1-advanced',name:'C1 Advanced',nameEn:'C1 Advanced',code:'X1',language:'en',listening:false,aiMarked:false,
  difficulties:['easy','normal','hard'].map(difficulty=>({difficulty,ready:true,slain:true})),
  lengths:[{length:'short',items:12,minutes:20,rewards:{normal:offer}}],
- cooldown:{availableAgainDayIndex:1767,availableAt:Date.UTC(2026,10,3)}};
+ ageLevel:19};
 const challenge={id:9,examKey:exam.key,examName:exam.name,examNameEn:exam.name,code:exam.code,codeLabel:null,
  length:'short',difficulty:'normal',sharer:{id:2,username:'Fixture member',profilePicUrl:null}};
 function App(){
  const [c,setCase]=useState({surface:'cover',phase:'prepare',code:'ARENA_DAILY_EXAM_LIMIT',sequence:0});
- window.showFixture=next=>{window.calls={prepare:0,start:0};window.opened=null;window.cancelled=false;flushSync(()=>setCase(prev=>({...next,sequence:prev.sequence+1})));};
+ window.showFixture=next=>{window.calls={prepare:0,start:0};window.opened=null;window.chosen=null;closeAssistantDock();window.cancelled=false;flushSync(()=>setCase(prev=>({...next,sequence:prev.sequence+1})));};
  window.calls ||= {prepare:0,start:0};
- const error=()=>({code:c.code,message:c.code==='ARENA_EXAM_COOLDOWN'
-  ?'You cleared this exam. All its lengths and difficulties unlock again on 2026-11-03 at 9:00 AM Korea time (00:00 UTC). Your result and review are still available.'
-  :'Fixture unavailable'});
+ const error=()=>({code:c.code});
+ const reward=()=>c.mastery?{...offer,mastery:{clears:24,required:25,completed:false,solo:true,pending:false},masteryReward:{target:14,xp:5333400,coins:106660,maxXP:6000000,maxCoins:120000},xp:6000000,coins:120000}:offer;
  const prepare=async()=>{
   window.calls.prepare++;
   if(c.phase==='prepare' || (c.phase==='retry' && window.calls.prepare===1))throw error();
   if(c.existing)return {alreadyTaken:true,battleId:42,status:c.existing};
-  return {preview:offer};
+  return {preview:reward()};
  };
- const start=async()=>{window.calls.start++;if(c.phase==='start')throw error();return {battle:{id:42,status:'open'}};};
+ const start=async(...args)=>{window.calls.start++;if(c.phase==='start')throw error();window.chosen=typeof args[0]==='object'?args[0].companion:args[2];return {battle:{id:42,status:'open',exam:{nameEn:exam.name},companion:c.mastery?'solo':window.chosen,mastery:c.mastery?{solo:true}:undefined},items:[{no:1}]};};
+ window.dock=()=>({assistant:getAssistantDock(),context:getAssistantAskContext()});
  window.requests={prepareArenaBattle:prepare,startArenaBattle:start,startArenaChallenge:start,
-  loadArenaState:async()=>({exams:[exam],recent:[],abilities:[],examsToday:0,examsPerDay:1}),
+  loadArenaState:async()=>({exams:[{...exam,...(c.locked?{access:{message:'First clear a Full Normal or Hard SAT Reading and Writing exam.',prerequisites:[{key:'sat-rw',name:'SAT Reading and Writing'}]}}:{}),lengths:exam.lengths.map(l=>({...l,rewards:{normal:{...offer,...(c.wait?{nextPaperAvailable:false}:{} )}}}))}],recent:[],abilities:[],examsToday:0,examsPerDay:1}),
   loadArenaChallenge:async()=>({challenge,board:[],myBattle:c.existing?{id:42,status:c.existing}:null,canTake:!c.existing,isSharer:false})};
  const open=id=>{window.opened=id;};
  return <main key={c.sequence}>
-  {c.surface==='cover'?<CoverPage exam={exam} length="short" difficulty="normal" starting={false}
-   onStart={async()=>{const result=await start();open(result.battle.id);return result;}} onOpenExisting={open} onCancel={()=>{window.cancelled=true;}}/>
+  {c.surface==='cover'?<CoverPage exam={exam} length={c.mastery?"full":"short"} difficulty={c.mastery?"hard":"normal"} starting={false}
+   onStart={async(token,companion)=>{const result=await start({previewToken:token,companion});open(result.battle.id);return result;}} onOpenExisting={open} onCancel={()=>{window.cancelled=true;}}/>
   :c.surface==='challenge'?<Challenge challengeId={9} onOpenBattle={open}/>
   :<Battles examKey={exam.key} onStart={open} onBrowseExams={()=>{}} onOpenRecords={key=>{window.records=key;}}/>}
  </main>;
@@ -62,7 +63,7 @@ async function compile() {
       b.onResolve({ filter: /^~\/contexts$/ }, () => ({ path: 'context', namespace: 'fixture' }));
       b.onResolve({ filter: /^(~\/components\/(ProfilePic|Buttons\/AskAgentButton)|\.\/Records|\.\/League|\.\/Rising|\.\/AIStory\/Game\/ArenaGoals)$/ }, () => ({ path: 'unrelated', namespace: 'fixture' }));
       b.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({
-        contents: args.path === 'context' ? 'export const useAppContext=s=>s({requestHelpers:window.requests});'
+        contents: args.path === 'context' ? 'export const useAppContext=s=>s({requestHelpers:window.requests});export const useChatContext=s=>s({state:{zeroChannelId:1,cielChannelId:2}});'
           : 'export default function Stub(){return null};export const TodayArenaGoals=Stub;', loader: 'jsx', resolveDir: repo
       }));
     } }]
@@ -86,7 +87,7 @@ test('covers and shared challenges explain admission limits, keep review and ret
         await page.waitForFunction(() => !!window.showFixture);
         for (const surface of ['cover', 'challenge']) {
           const startButton = () => page.getByRole('button', { name: surface === 'cover' ? 'Start' : 'Challenge!', exact: true });
-          for (const phase of ['prepare', 'start']) for (const code of ['ARENA_DAILY_EXAM_LIMIT', 'ARENA_EXAM_COOLDOWN']) {
+          for (const phase of ['prepare', 'start']) for (const code of ['ARENA_DAILY_EXAM_LIMIT', 'ARENA_NEXT_PAPER_PENDING', 'ARENA_MASTERY_MARKING_PENDING', 'ARENA_PREREQUISITE_REQUIRED']) {
             await page.evaluate(c => window.showFixture(c), { surface, phase, code });
             if (phase === 'start') {
               await page.getByText(/One new exam per day/).waitFor();
@@ -94,7 +95,7 @@ test('covers and shared challenges explain admission limits, keep review and ret
             }
             const alert = page.getByRole('alert');
             await alert.waitFor();
-            assert.match(await alert.innerText(), code === 'ARENA_EXAM_COOLDOWN' ? /2026-11-03/ : /already started today/);
+            assert.match(await alert.innerText(), ({ARENA_DAILY_EXAM_LIMIT:/already started today/,ARENA_NEXT_PAPER_PENDING:/next different paper/,ARENA_MASTERY_MARKING_PENDING:/still being marked/,ARENA_PREREQUISITE_REQUIRED:/prerequisite exam/})[code]);
             assert.equal(await startButton().isEnabled(), false);
             assert.equal(await page.getByRole('button', { name: 'Try again', exact: true }).count(), 0);
             assert.equal(await page.getByText('Checking available rewards…', { exact: true }).count(), 0);
@@ -119,17 +120,38 @@ test('covers and shared challenges explain admission limits, keep review and ret
             assert.equal(await page.evaluate(() => window.calls.start), 0, 'Review/resume must open the saved sitting');
           }
         }
-        await page.evaluate(() => window.showFixture({ surface: 'catalog', phase: 'start', code: 'ARENA_EXAM_COOLDOWN' }));
-        await page.getByText(/Boss cleared! New sittings unlock Nov 3/).waitFor();
+        for (const surface of ['cover', 'challenge']) {
+          await page.evaluate(c => window.showFixture(c), { surface });
+          await page.getByRole('radio', { name: 'Do this with Ciel' }).click();
+          await page.getByText(/usual AI Energy/).waitFor();
+          await page.getByRole('button', { name: surface === 'cover' ? 'Start' : 'Challenge!', exact: true }).click();
+          await page.waitForFunction(() => window.opened === 42);
+          assert.equal(await page.evaluate(() => window.chosen), 'Ciel');
+          if (surface === 'challenge') {
+            assert.deepEqual(await page.evaluate(() => window.dock()), { assistant:'Ciel',context:{kind:'arenaBattleItem',id:42,no:1,label:'C1 Advanced · question 1',path:'/arena?mode=arena&battle=42'} });
+          }
+          await page.evaluate(c => window.showFixture(c), { surface, mastery: true });
+          await page.getByText('This is your solo mastery run.', { exact: true }).waitFor();
+          assert.equal(await page.getByRole('radio', { name: 'Do this with Ciel' }).count(), 0);
+          assert.match(await page.locator('main').innerText(), /24 \/ 25 clears/);
+          assert.match(await page.locator('main').innerText(), /Mastery clear/);
+          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+          if (artifacts) await page.screenshot({ path: path.join(artifacts, `${engine.name()}-mastery-${surface}-${width}.png`), fullPage: true });
+          await page.getByRole('button', { name: surface === 'cover' ? 'Start' : 'Challenge!', exact: true }).click();
+          await page.waitForFunction(() => window.opened === 42);
+          assert.equal(await page.evaluate(() => window.chosen), 'solo');
+          assert.equal(await page.evaluate(() => window.dock().assistant), null);
+        }
+        await page.evaluate(() => window.showFixture({ surface:'catalog', locked:true }));
+        await page.getByText(/First clear a Full Normal/).waitFor();
+        assert.equal(await page.getByRole('button', { name: /^Short/ }).isDisabled(), true);
+        assert.match(await page.getByRole('link', { name: /SAT Reading/ }).getAttribute('href'), /sat-rw/);
         await page.getByRole('button', { name: 'Records', exact: true }).click();
         assert.equal(await page.evaluate(() => window.records), 'c1-advanced');
-        if (artifacts) await page.screenshot({ path: path.join(artifacts, `${engine.name()}-catalog-${width}.png`), fullPage: true });
-        await page.getByRole('button', { name: /^Short/ }).click();
-        await page.getByText(/One new exam per day/).waitFor();
-        await page.getByRole('button', { name: 'Start', exact: true }).click();
-        await page.getByRole('alert').waitFor();
-        assert.match(await page.getByRole('alert').innerText(), /2026-11-03/);
-        assert.equal(await page.getByRole('dialog', { name: 'Exam cover' }).count(), 1, 'The catalog must preserve the cover and its canonical limit');
+        await page.evaluate(() => window.showFixture({ surface:'catalog', wait:true }));
+        await page.getByText(/next different paper/).waitFor();
+        assert.equal(await page.getByRole('button', { name: /^Short/ }).isDisabled(), true);
+        if (artifacts) await page.screenshot({ path: path.join(artifacts, `${engine.name()}-waiting-${width}.png`), fullPage: true });
         assert.deepEqual(errors, []);
         await page.close();
       }

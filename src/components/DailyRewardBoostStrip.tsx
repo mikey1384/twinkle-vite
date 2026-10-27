@@ -1143,15 +1143,13 @@ export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
       ? `Lv${currentLevel}`
       : `Lv${currentLevel} or higher`;
 
-  // the A goal's three routes (Mikey 10-24, "A = Arena"; 10-25 Train too):
-  // an AI Story clear, an Arena battle (60%+ on Normal or Hard for Basic, a
-  // win at your own best level for Excellence), or Train answers (fresh
-  // Normal/Hard questions; the targets come from the API)
+  // Exams use Full clears and age level. AI Story and Train retain their
+  // existing requirements; the server owns every qualification flag.
   const arena = aiStory?.arena;
-  const arenaBar = arena?.excellenceBar;
-  const arenaBarPhrase = arenaBar
-    ? `${capitalize(arenaBar.difficulty)} ${capitalize(arenaBar.length)} or harder`
-    : 'Normal Short or harder';
+  const arenaAge = arena?.excellenceAgeLevel;
+  const arenaGoal = arenaAge == null
+    ? 'clear a Full exam at your age level or higher (birthday approval needed), or complete solo mastery'
+    : `clear a Full exam at age level ${arenaAge >= 19 ? 'Adult' : arenaAge} or higher (any difficulty), or complete solo mastery`;
   const train = arena?.train;
   const trainBasic = train?.targets?.basic || { answers: 10, share: 0.8 };
   const trainExcellence = train?.targets?.excellence || {
@@ -1166,18 +1164,18 @@ export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
     train?.answered > 0
       ? ` Train today: ${train.right} of ${train.answered} right, ${train.weak} on weak spots.`
       : '';
-  let description = `Excellence: clear Read and Listen at ${excellenceTargetPhrase}, win a ${arenaBarPhrase} battle, or ${trainExcellencePhrase}.${trainProgress}`;
+  let description = `Excellence: clear Read and Listen at ${excellenceTargetPhrase}, ${arenaGoal}, or ${trainExcellencePhrase}.${trainProgress}`;
   if (excellenceAchieved) {
     description =
       aiStory?.excellenceVia === 'arena'
         ? arena?.excellenceVia === 'train'
           ? 'Train Excellence reached.'
-          : 'Boss beaten at your best level.'
+          : arena?.masteryCleared ? 'Solo mastery cleared.' : 'Full exam cleared at your age level or higher.'
         : 'Read and Listen both cleared.';
   } else if (hasReading && !hasListening) {
-    description = `Read is done. Finish Listen at ${excellenceTargetPhrase}, win a ${arenaBarPhrase} battle, or ${trainExcellencePhrase}.${trainProgress}`;
+    description = `Read is done. Finish Listen at ${excellenceTargetPhrase}, ${arenaGoal}, or ${trainExcellencePhrase}.${trainProgress}`;
   } else if (!hasReading && hasListening) {
-    description = `Listen is done. Finish Read at ${excellenceTargetPhrase}, win a ${arenaBarPhrase} battle, or ${trainExcellencePhrase}.${trainProgress}`;
+    description = `Listen is done. Finish Read at ${excellenceTargetPhrase}, ${arenaGoal}, or ${trainExcellencePhrase}.${trainProgress}`;
   }
 
   return {
@@ -1186,9 +1184,9 @@ export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
       ? aiStory?.basicVia === 'arena'
         ? arena?.basicVia === 'train'
           ? 'Train goal cleared'
-          : 'Arena battle cleared'
+          : 'Full Arena exam cleared'
         : `AI Story Lv${highestPassedLevel} cleared`
-      : `Clear AI Story ${basicTargetPhrase}, score 60% in a battle, or get ${percent(trainBasic.share)} of ${trainBasic.answers}+ Train questions right`,
+      : `Clear AI Story ${basicTargetPhrase}, clear any Full exam (any difficulty), or get ${percent(trainBasic.share)} of ${trainBasic.answers}+ Train questions right`,
     description,
     tone: 'logoBlue',
     basicAchieved,
@@ -1279,8 +1277,4 @@ export function getBoostStreakMultiplier(streak: any) {
 
 export function formatMultiplier(value: number) {
   return `${Number(value.toFixed(2))}`;
-}
-
-function capitalize(word: string) {
-  return word ? word[0].toUpperCase() + word.slice(1) : word;
 }

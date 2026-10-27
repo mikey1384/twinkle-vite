@@ -1,4 +1,6 @@
 export type ArenaDifficulty = 'easy' | 'normal' | 'hard';
+export type ArenaCompanion = 'Zero' | 'Ciel' | 'solo';
+export interface ArenaMasteryProgress { clears: number; required: number; completed: boolean; solo: boolean; pending: boolean }
 
 export interface ArenaRewardOffer {
   xp: number;
@@ -12,6 +14,9 @@ export interface ArenaRewardOffer {
   dailyRemaining?: number;
   pendingOverlapPoints?: number;
   markingRequired?: boolean;
+  mastery?: ArenaMasteryProgress;
+  masteryReward?: { target: number; xp: number; coins: number; maxXP: number; maxCoins: number };
+  nextPaperAvailable?: boolean;
   requirements?: { id: string; label: string; target: number; max: number; earned?: number | null }[];
 }
 
@@ -23,7 +28,9 @@ export type ArenaBattlePreview =
 
 export interface ArenaExamSummary {
   key: string;
-  cooldown?: { availableAgainDayIndex: number; availableAt: number } | null;
+  ageLevel?: number;
+  access?: { message: string; prerequisites: { key: string; name: string }[] } | null;
+  mastery?: ArenaMasteryProgress;
   // boss codename, e.g. H3-3 with label 수능
   code: string;
   codeLabel: string | null;
@@ -58,6 +65,8 @@ export interface ArenaGradeEstimate {
 
 export interface ArenaBattleSummary {
   id: number;
+  companion?: ArenaCompanion;
+  mastery?: { clearsBefore: number; required: number; solo: boolean; target: number; completed: boolean; clearedAt?: number };
   examKey: string;
   length: 'short' | 'medium' | 'full';
   difficulty: ArenaDifficulty;

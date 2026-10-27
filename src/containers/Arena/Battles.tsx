@@ -6,15 +6,14 @@ import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
 import { arenaMediaURL } from './media';
 import { BOSSES } from './bosses';
-import League from './League';
 import Records from './Records';
 import CoverPage from './CoverPage';
+import { openArenaCompanion } from './ExamCompanionChoice';
 import ExamScope from './ExamScope';
 import RewardOffer from './RewardOffer';
-import Rising from './Rising';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
-import type { ArenaDifficulty, ArenaExamSummary, ArenaState } from './types';
+import type { ArenaCompanion, ArenaDifficulty, ArenaExamSummary, ArenaState } from './types';
 import { arenaExamPath } from '~/helpers/arenaActivity';
 import { arenaExamLimitMessage } from '~/helpers/arenaExamLimit';
 
@@ -129,7 +128,7 @@ export default function Battles({
             path: examKey ? arenaExamPath(examKey) : '/arena?mode=arena',
             excerpt: selectedExam
               ? `Choosing the difficulty and length for ${selectedExam.nameEn}. The exam has not started.`
-              : 'Arena: the bosses (real mock exams) by stage, modes and lengths, the Weekly League, Rising and Boss Records.'
+              : 'Arena: today\'s goals and the bosses (real mock exams) by stage, modes and lengths, with Boss Records for each exam.'
           }}
         />
       </div>
@@ -138,13 +137,9 @@ export default function Battles({
           <Icon icon="arrow-left" /> All exams
         </button>
       ) : (
-        <>
-          <div style={{ marginBottom: '1.8rem' }}>
-            <TodayArenaGoals />
-          </div>
-          <League />
-          <Rising />
-        </>
+        <div style={{ marginBottom: '1.8rem' }}>
+          <TodayArenaGoals />
+        </div>
       )}
       <p className={introCls}>
         {examKey
@@ -223,13 +218,11 @@ export default function Battles({
                       {exam.name}{exam.nameEn !== exam.name && <> <small>{exam.nameEn}</small></>}
                     </strong>
                     <ExamScope examKey={exam.key} />
-                    {exam.cooldown && (
-                      <p className={cooldownCls} role="status">
-                        Boss cleared! New sittings unlock {new Date(exam.cooldown.availableAt).toLocaleDateString('en-US', {
-                          timeZone: 'Asia/Seoul', month: 'short', day: 'numeric'
-                        })} at 9:00 AM Korea time, across all lengths and difficulties. Your results remain in Records.
-                      </p>
-                    )}
+                    {exam.ageLevel != null && <p className={introCls}>Age level: {exam.ageLevel >= 19 ? 'Adult' : exam.ageLevel}. Full clears at your age level or higher earn Excellence.</p>}
+                    {exam.access && <div className={cooldownCls} role="status">
+                      <p>{exam.access.message}</p>
+                      {exam.access.prerequisites.map(prerequisite => <a key={prerequisite.key} href={arenaExamPath(prerequisite.key)}>{prerequisite.name} → </a>)}
+                    </div>}
                     <div
                       className={modesCls}
                       role="radiogroup"
@@ -276,7 +269,7 @@ export default function Battles({
                             key={option.length}
                             type="button"
                             className={lengthCls}
-                            disabled={!!starting}
+                            disabled={!!starting || !!exam.access || option.rewards?.[modes[exam.key] || 'normal']?.nextPaperAvailable === false || !!option.rewards?.[modes[exam.key] || 'normal']?.mastery?.pending}
                             onClick={() =>
                               setCover({
                                 examKey: exam.key,
@@ -312,7 +305,7 @@ export default function Battles({
           length={cover.length}
           difficulty={modes[cover.examKey] || 'normal'}
           starting={starting === `${cover.examKey}:${cover.length}`}
-          onStart={(token) => handleStart(cover.examKey, cover.length, token)}
+          onStart={(token, companion) => handleStart(cover.examKey, cover.length, token, companion)}
           onOpenExisting={(id) => { setCover(null); onStart(id); }}
           onCancel={() => setCover(null)}
         />
@@ -323,7 +316,8 @@ export default function Battles({
   async function handleStart(
     examKey: string,
     length: 'short' | 'medium' | 'full',
-    previewToken: string
+    previewToken: string,
+    companion: ArenaCompanion
   ) {
     setStarting(`${examKey}:${length}`);
     setError('');
@@ -332,7 +326,7 @@ export default function Battles({
       const data = await startArenaBattle({
         examKey,
         length,
-        difficulty: modes[examKey] || 'normal', previewToken
+        difficulty: modes[examKey] || 'normal', previewToken, companion
       });
       if (data.previewChanged) return data;
       setCover(null);
@@ -340,6 +334,7 @@ export default function Battles({
         setReviewBattleId(data.battle.id);
       } else {
         onStart(data.battle.id);
+        openArenaCompanion(data);
       }
     } catch (err: any) {
       if (err?.code === 'ARENA_PREVIEW_EXPIRED' || arenaExamLimitMessage(err)) throw err;

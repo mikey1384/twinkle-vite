@@ -18,15 +18,17 @@ import {MemoryRouter} from 'react-router-dom';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {faArrowLeft,faClock,faCheck,faChevronUp,faChevronDown,faSpinner,faTrophy} from '@fortawesome/pro-solid-svg-icons';
 import BattleRunner from './src/containers/Arena/BattleRunner';
+import {readWebsiteAgentPage} from './src/helpers/websiteAgentPage';
+window.readAgent=readWebsiteAgentPage;
 library.add(faArrowLeft,faClock,faCheck,faChevronUp,faChevronDown,faSpinner,faTrophy);
-window.mode='finished';window.saves=[];window.submits=[];window.exits=0;
+window.mode='finished';window.solo=false;window.parentChecks=0;window.saves=[];window.submits=[];window.exits=0;
 function data(){const now=Math.floor(Date.now()/1000);return {
- battle:{id:70,exam:{key:'kmc-pre-middle1',name:'KMC 예선 중1',nameEn:'KMC Preliminary Middle 1',language:'ko',code:'M1',codeLabel:null,pointTags:'all',layout:'problem',choices:0},length:'full',difficulty:'hard',mode:'battle',status:window.mode,minutes:120,serverNow:now,startedAt:now,deadlineAt:window.mode==='open'?now+7200:null,finishedAt:window.mode==='finished'?now:null,rawPoints:12,maxPoints:100,grade:null,estimate:null,scaleReport:window.scaleReport,won:false,winAt:62,rewardOffer:{target:62,max:100},reward:{xpEarned:0,coinsEarned:0,rewardStatus:'below_target'}},
+ battle:{id:70,companion:'Ciel',...(window.solo?{mastery:{clearsBefore:24,required:25,solo:true,target:62,completed:false}}:{}),exam:{key:'kmc-pre-middle1',name:'KMC 예선 중1',nameEn:'KMC Preliminary Middle 1',language:'ko',code:'M1',codeLabel:null,pointTags:'all',layout:'problem',choices:0},length:'full',difficulty:'hard',mode:'battle',status:window.mode,minutes:120,serverNow:now,startedAt:now,deadlineAt:window.mode==='open'?now+7200:null,finishedAt:window.mode==='finished'?now:null,rawPoints:12,maxPoints:100,grade:null,estimate:null,scaleReport:window.scaleReport,won:false,winAt:62,rewardOffer:{target:62,max:100},reward:{xpEarned:0,coinsEarned:0,rewardStatus:'below_target'}},
  passages:{},items:Array.from({length:40},(_,i)=>({no:i+1,type:'math.integer',section:'main',points:3,passageId:null,stem:'Question '+(i+1)+'. 다음 조건을 만족하는 정수의 개수를 구하시오. '+ '문제의 모든 조건을 확인하고 알맞은 답을 쓰시오. '.repeat(4),body:'검토할 내용과 수식입니다. '+ '자연수와 정수의 관계를 살펴보세요. '.repeat(3),choices:[],typed:'integer',answer:window.mode==='finished'?'28':null,...(window.mode==='finished'?{key:'28',correct:true,review:{explanation:'정답 해설입니다. '+ '문제의 조건에 맞는 정수를 하나씩 세어 봅니다. '.repeat(8)}}:{})}))
 };}
-window.requests={loadArenaBattle:async()=>data(),saveArenaAnswer:async args=>{window.saves.push(args);return {saved:true,answer:args.answer};},submitArenaBattle:async()=>{window.submits.push(1);await new Promise(resolve=>window.finishSubmit=resolve);window.mode='finished';return data();},loadArenaParentPrompt:async()=>({eligible:false})};
+window.requests={loadArenaBattle:async()=>data(),saveArenaAnswer:async args=>{window.saves.push(args);return {saved:true,answer:args.answer};},submitArenaBattle:async()=>{window.submits.push(1);await new Promise(resolve=>window.finishSubmit=resolve);window.mode='finished';return data();},loadArenaParentPrompt:async()=>{window.parentChecks++;return {eligible:false}}};
 function Fixture(){const [key,setKey]=useState(0);window.changeMode=mode=>{window.mode=mode;setKey(x=>x+1);};return <BattleRunner key={key} battleId={70} onExit={()=>window.exits++}/>;}
-createRoot(document.getElementById('root')).render(<MemoryRouter><Fixture/></MemoryRouter>);
+createRoot(document.getElementById('react-view')).render(<MemoryRouter><Fixture/></MemoryRouter>);
 `;
 
 let bundle;
@@ -38,7 +40,7 @@ async function compile() {
     '~/helpers/hooks/useUserActivity': 'export default ()=>{};',
     '~/helpers/websiteAgentScreenState': 'export const useAgentScreenState=()=>{};',
     '~/constants/sockets/api': 'export const socket={emit(){},on(){},off(){}};',
-    '~/components/Buttons/AskAgentButton': 'import React from "react";export default ()=> <button>Ask Zero</button>;',
+    '~/components/Buttons/AskAgentButton': 'import React from "react";export default ({assistant,context})=> <button data-question={context?.no}>Ask {assistant||"Zero"}</button>;',
     './EssayAnswer': 'export default ()=>null;',
     './SpokenAnswer': 'export default ()=>null;',
     './MarkReview': 'export default ()=>null;'
@@ -67,7 +69,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
         await page.route('**/*', route => route.request().url() === 'http://localhost:3000/'
-          ? route.fulfill({ contentType: 'text/html', body: `<style>${readFileSync(path.join(repo, 'src/styles.css'), 'utf8')}</style><div id="root"></div>` })
+          ? route.fulfill({ contentType: 'text/html', body: `<style>${readFileSync(path.join(repo, 'src/styles.css'), 'utf8')}</style><div id="react-view"></div>` })
           : route.abort());
         await page.goto('http://localhost:3000/');
         if (longResult) await page.evaluate(() => {
@@ -146,6 +148,26 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
             await page.evaluate(() => window.finishSubmit());
             await page.getByRole('button', { name: 'Done', exact: true }).waitFor();
           }
+        }
+        if (width === 390 && !longResult && !expectBroken) {
+          await page.evaluate(() => window.changeMode('open'));
+          await page.locator('fieldset [data-agent-no-play="arenaBattle"]').waitFor();
+          assert.equal(await page.getByRole('button', { name:'Ask Ciel',exact:true }).count(), 40);
+          const visible = await page.evaluate(() => window.readAgent());
+          assert.match(visible.text, /Question 1/);
+          assert.equal(await page.getByRole('button', {name:'Ask Ciel',exact:true}).first().getAttribute('data-question'), '1');
+          await page.evaluate(() => {window.solo=true;window.changeMode('open');});
+          await page.locator('[data-agent-off-limits="arenaBattle"]').waitFor();
+          assert.equal(await page.getByRole('button', { name:/^Ask (Zero|Ciel)$/,exact:true }).count(), 0);
+          const hidden = await page.evaluate(() => window.readAgent());
+          assert.ok(hidden.offLimits.includes('arenaBattle'));
+          assert.doesNotMatch(hidden.text, /Question 1/);
+          if (artifacts) await page.screenshot({ path:path.join(artifacts, `${name}-solo-mastery-live.png`) });
+          await page.evaluate(() => window.changeMode('finished'));
+          await page.getByRole('button',{name:'Done',exact:true}).waitFor();
+          assert.equal(await page.locator('[data-agent-off-limits="arenaBattle"]').count(), 0);
+          assert.ok(await page.getByRole('button', {name:/^Ask (Zero|Ciel)$/,exact:true}).count() > 0);
+          assert.equal(await page.evaluate(() => window.parentChecks), 0, 'An unsuccessful solo attempt offers no parent email');
         }
         assert.deepEqual(errors, []);
         await page.close();

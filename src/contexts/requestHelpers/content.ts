@@ -1428,11 +1428,11 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async startArenaChallenge(challengeId: number, previewToken?: string) {
+    async startArenaChallenge(challengeId: number, previewToken?: string, companion: 'Zero' | 'Ciel' | 'solo' = 'solo') {
       try {
         const { data } = await request.post(
           `${URL}/content/arena/challenge/${challengeId}/start`,
-          { previewToken, componentTiming: true, rewardQualifications: true },
+          { previewToken, companion, guidedExams: true, componentTiming: true, rewardQualifications: true },
           auth()
         );
         return data;
@@ -1679,7 +1679,7 @@ export default function contentRequestHelpers({
     },
     async prepareArenaBattle(target: { examKey?: string; length?: 'short' | 'medium' | 'full'; difficulty?: 'easy' | 'normal' | 'hard'; challengeId?: number }) {
       try {
-        const { data } = await request.post(`${URL}/content/arena/battle/preview`, { ...target, componentTiming: true, rewardQualifications: true }, auth());
+        const { data } = await request.post(`${URL}/content/arena/battle/preview`, { ...target, guidedExams: true, componentTiming: true, rewardQualifications: true }, auth());
         return data;
       } catch (error) {
         return handleError(error);
@@ -1692,13 +1692,14 @@ export default function contentRequestHelpers({
             length: 'short' | 'medium' | 'full';
             difficulty?: 'easy' | 'normal' | 'hard';
             previewToken?: string;
+            companion?: 'Zero' | 'Ciel' | 'solo';
           }
         | { examKey: string; mode: 'untimed'; sourceBattleId: number }
     ) {
       try {
         const { data } = await request.post(
           `${URL}/content/arena/battle`,
-          { ...target, componentTiming: true, rewardQualifications: true },
+          { ...target, guidedExams: true, componentTiming: true, rewardQualifications: true },
           auth()
         );
         return data;

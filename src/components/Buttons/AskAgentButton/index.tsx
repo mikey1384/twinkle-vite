@@ -23,6 +23,7 @@ export default function AskAgentButton({
   style,
   hideLabel,
   label,
+  assistant: chosenAssistant,
   onClick
 }: {
   context: AssistantAskContext;
@@ -30,12 +31,14 @@ export default function AskAgentButton({
   hideLabel?: boolean;
   // overrides the default "Ask Zero" text (e.g. "Help me plan")
   label?: string;
+  assistant?: 'Zero' | 'Ciel';
   // runs first (e.g. closing the modal the button sits in, so the agent
   // window is not under it)
   onClick?: () => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const assistant = useUserAssistant(userId);
+  const preferredAssistant = useUserAssistant(userId);
+  const assistant = chosenAssistant || preferredAssistant;
   const channelId = useChatContext((v) =>
     assistant === 'Ciel' ? v.state.cielChannelId : v.state.zeroChannelId
   );

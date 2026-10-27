@@ -8,8 +8,9 @@ import { mobileMaxWidth } from '~/constants/css';
 import { isPerfectArenaScore } from '~/helpers/arenaChallengeCopy';
 import ArenaButton from './ArenaButton';
 import RewardOffer from './RewardOffer';
+import ExamCompanionChoice, { openArenaCompanion } from './ExamCompanionChoice';
 import ComponentSchedule from './ComponentSchedule';
-import type { ArenaBattlePreview, ArenaRewardOffer } from './types';
+import type { ArenaCompanion, ArenaBattlePreview, ArenaRewardOffer } from './types';
 import { arenaMediaURL } from './media';
 import { ARENA } from './theme';
 
@@ -77,6 +78,7 @@ export default function Challenge({
   const [error, setError] = useState('');
   const [startLimited, setStartLimited] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [companion, setCompanion] = useState<ArenaCompanion>('solo');
 
   useEffect(() => {
     let alive = true;
@@ -158,6 +160,7 @@ export default function Challenge({
         {error && <p role="alert">{error} {!startLimited && <button type="button" onClick={() => { setError(''); setRefresh(value => value + 1); }}>Try again</button>}</p>}
         {view.canTake && (preview ? <RewardOffer offer={preview} /> : !error && <p role="status">Checking available rewards…</p>)}
       </div>}
+      {view.canTake && preview && <div style={{ padding: '1.2rem' }}><ExamCompanionChoice value={companion} onChange={setCompanion} solo={!!preview.mastery?.solo} disabled={starting} /></div>}
       <div className={actionsCls}>
         {view.canTake ? (
           <ArenaButton tone="red" loading={starting} disabled={starting || !preview} onClick={handleTake}>
@@ -221,9 +224,10 @@ export default function Challenge({
     if (!preview) return;
     setStarting(true);
     try {
-      const data = await startArenaChallenge(challengeId, preview.token);
+      const data = await startArenaChallenge(challengeId, preview.token, preview.mastery?.solo ? 'solo' : companion);
       if (data.previewChanged) { setPreview(data.preview); setNotice('Your available rewards changed. Check the updated amounts before starting.'); return; }
       onOpenBattle(data.battle.id);
+      openArenaCompanion(data);
     } catch (error: any) {
       const limit = arenaExamLimitMessage(error);
       if (limit) { setStartLimited(true); setPreview(null); setError(limit); return; }

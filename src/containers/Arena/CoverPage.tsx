@@ -3,12 +3,13 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import ArenaButton from './ArenaButton';
 import RewardOffer from './RewardOffer';
+import ExamCompanionChoice from './ExamCompanionChoice';
 import ComponentSchedule from './ComponentSchedule';
 import ExamScope from './ExamScope';
 import { useAppContext } from '~/contexts';
 import { arenaExamLimitMessage } from '~/helpers/arenaExamLimit';
 import { ARENA } from './theme';
-import type { ArenaBattlePreview, ArenaDifficulty, ArenaExamSummary, ArenaRewardOffer } from './types';
+import type { ArenaCompanion, ArenaBattlePreview, ArenaDifficulty, ArenaExamSummary, ArenaRewardOffer } from './types';
 
 // The booklet's cover, read before the bell as in the real exam room: 교시,
 // 영역, the paper's size and time, the 유의사항 and a 필적 확인 문구. The clock
@@ -69,7 +70,7 @@ export default function CoverPage({
   length: 'short' | 'medium' | 'full';
   difficulty: ArenaDifficulty;
   starting: boolean;
-  onStart: (token: string) => Promise<any>;
+  onStart: (token: string, companion: ArenaCompanion) => Promise<any>;
   onOpenExisting: (battleId: number) => void;
   onCancel: () => void;
 }) {
@@ -81,6 +82,7 @@ export default function CoverPage({
   const [startLimited, setStartLimited] = useState(false);
   const [notice, setNotice] = useState('');
   const [refresh, setRefresh] = useState(0);
+  const [companion, setCompanion] = useState<ArenaCompanion>('solo');
   useEffect(() => {
     let cancelled = false;
     setPreview(null); setExisting(null); setPreparing(true); setPreviewError(''); setStartLimited(false);
@@ -112,7 +114,7 @@ export default function CoverPage({
   const english = exam.language === 'en' && !suneung;
   const rewardSection = <div className={rewardSectionCls}>
     {preparing && <p role="status">Checking available rewards…</p>}
-    {preview && <RewardOffer offer={preview} />}
+    {preview && <><RewardOffer offer={preview} /><ExamCompanionChoice value={companion} onChange={setCompanion} solo={!!preview.mastery?.solo} disabled={starting} /></>}
     {existing && <p>{existing.status === 'finished' ? 'You have already taken this paper. Your result and review are ready.' : 'You already have a sitting of this paper.'}{existing.status !== 'finished' && length === 'full' && !!exam.components?.length && ' New sittings use the section clocks shown above; your saved sitting keeps its original timing.'}</p>}
     {notice && <p role="status">{notice}</p>}
     {previewError && <p role="alert">{previewError} {!startLimited && <button type="button" onClick={() => setRefresh(value => value + 1)}>Try again</button>}</p>}
@@ -258,7 +260,7 @@ export default function CoverPage({
     if (existing) { onOpenExisting(existing.battleId); return; }
     if (!preview) return;
     try {
-      const result = await onStart(preview.token);
+      const result = await onStart(preview.token, preview.mastery?.solo ? 'solo' : companion);
       if (result?.previewChanged) {
         setPreview(result.preview);
         setNotice('Your available rewards changed. Check the updated amounts before starting.');

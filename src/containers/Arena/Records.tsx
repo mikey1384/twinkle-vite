@@ -6,6 +6,7 @@ import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { arenaMediaURL } from './media';
 import { ARENA } from './theme';
+import BoardVisibility from './BoardVisibility';
 import type { ArenaExamSummary } from './types';
 
 // Boss Records (Mikey 10-24, design: reports/Arena leaderboard and
@@ -73,7 +74,9 @@ export default function Records({ exam }: { exam: ArenaExamSummary }) {
     return () => {
       alive = false;
     };
-  }, [exam.key, length, difficulty, period, band, loadArenaRecords]);
+    // Request helpers are provided by the application context.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exam.key, length, difficulty, period, band]);
 
   return (
     <section className={cardCls}>
@@ -156,6 +159,7 @@ export default function Records({ exam }: { exam: ArenaExamSummary }) {
           ))}
         </ol>
       )}
+      <BoardVisibility />
     </section>
   );
 }

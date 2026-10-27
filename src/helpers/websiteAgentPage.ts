@@ -23,8 +23,8 @@ export const WEBSITE_AGENT_UI_ATTRIBUTE = 'data-website-agent-ui';
 // Zero and Ciel get that state once, clean, not the tiles' letters too.
 export const WEBSITE_AGENT_STATE_SHOWN_ATTRIBUTE = 'data-agent-state-shown';
 // Marks what Zero and Ciel must not help with (an AI Story's text and its
-// questions, which the user reads and answers alone; a live Arena battle's
-// paper): never read at all, never tapped or typed into. Its value names
+// questions, which the user reads and answers alone; a live solo Arena
+// mastery paper): never read at all, never tapped or typed into. Its value names
 // what it is, and read_page says which are on screen (offLimits), so the
 // agent can tell the user why.
 export const WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE = 'data-agent-off-limits';
@@ -561,7 +561,7 @@ const OFF_LIMITS_REFUSAL: Record<string, string> = {
   arenaToday:
     'Today’s Challenge earns a personal daily learning reward. The user answers the question, lesson interactions and understanding check themselves. You can review it together once completed.',
   arenaBattle:
-    'This is a live Arena battle, a real test: the user answers it alone. Offer to go through it in the review once they submit.'
+    'This is a solo Arena mastery run. Offer to go through this paper together after the member submits it. Ordinary exams allow your help.'
 };
 
 function refusedInsideXpActivity(element: Element) {

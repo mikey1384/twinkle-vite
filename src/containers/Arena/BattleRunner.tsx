@@ -289,9 +289,8 @@ export default function BattleRunner({
     return out;
   }, [data]);
 
-  // What Zero and Ciel are told about a sitting in progress: where it
-  // stands, never its questions (the paper itself is off limits to them,
-  // below). A submitted battle's review is theirs to read and go through.
+  // Shared floating companions receive current exam context. The solo
+  // mastery paper stays hidden until submission.
   useAgentScreenState(
     'arenaBattle',
     data && !finished
@@ -308,7 +307,10 @@ export default function BattleRunner({
             (item) => answers[item.no] != null || recordings[item.no] != null
           ).length,
           questions: data.items.length,
-          note: 'The paper is hidden from you while it runs: it is their own test.'
+          soloMastery: !!data.battle.mastery?.solo,
+          battleId: data.battle.id,
+          visibleQuestions: data.items.map(item => item.no),
+          note: data.battle.mastery?.solo ? 'Solo mastery: review together after submission.' : 'Ordinary exam: teach concepts and steps first. Give an explained answer when asked or after repeated difficulty. The member enters every answer.'
         }
       : null
   );
@@ -411,13 +413,13 @@ export default function BattleRunner({
         </div>
       )}
 
-      {/* a live paper is the member's alone: Zero and Ciel never read it or
-          answer on it (Mikey 10-25); the review after is theirs to share */}
+      {/* Ordinary exams welcome tutoring. Solo mastery hides the paper;
+          the member always enters and submits every answer. */}
       <fieldset disabled={!finished && (submitting || remaining === 0)} className={answerFieldsetCls}>
       <div
         className={bodyCls}
         {...(!finished
-          ? { [WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE]: 'arenaBattle' }
+          ? { [data.battle.mastery?.solo ? WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE : WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: 'arenaBattle' }
           : {})}
       >
         <main className={cx(paperCls, readingItems.length > 0 && digitalPaperCls)}>
@@ -434,6 +436,8 @@ export default function BattleRunner({
           {readingItems.length > 0 && <C1ReadingPaper
             items={readingItems} passages={data.passages} answers={shownAnswers} finished={finished} disabled={finished || submitting || remaining === 0}
             onMark={handleMark}
+            renderHelp={!finished && !data.battle.mastery?.solo ? item => <AskAgentButton assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
+              context={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.display || item.no}`, path: `/arena?mode=arena&battle=${data.battle.id}` }} /> : undefined}
             renderReview={item => <PaperItem item={item} passage={null} marked={answers[item.no] ?? null} finished reviewOnly
               audioControls={false} allPointTags={false} letters reviewLang={reviewLang} onMark={() => {}}
               ask={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.no}`, path: `/arena?mode=train&battle=${data.battle.id}` }} />}
@@ -491,14 +495,15 @@ export default function BattleRunner({
                       setRecordings((prev) => ({ ...prev, [item.no]: seconds }))
                     }
                     onRequestMarking={handleRequestMarking}
+                    assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
                     ask={
-                      finished
+                      (finished || !data.battle.mastery?.solo)
                         ? {
                             kind: 'arenaBattleItem',
                             id: data.battle.id,
                             no: item.no,
                             label: `question ${item.display || item.no}`,
-                            path: `/arena?mode=train&battle=${data.battle.id}`
+                            path: `/arena?mode=${finished ? 'train' : 'arena'}&battle=${data.battle.id}`
                           }
                         : null
                     }
@@ -823,6 +828,7 @@ export function PaperItem({
   onRecorded,
   onRequestMarking,
   ask = null,
+  assistant,
   reviewOnly = false
 }: {
   item: ArenaItem;
@@ -845,6 +851,7 @@ export function PaperItem({
   // "Ask Zero/Ciel" about this question, once it is the member's to go
   // through (a submitted battle's review, a deck card, an answered drill)
   ask?: AssistantAskContext | null;
+  assistant?: 'Zero' | 'Ciel';
   reviewOnly?: boolean;
 }) {
   const listening = item.section === 'listening';
@@ -1106,7 +1113,7 @@ export function PaperItem({
       )}
       {ask && (
         <div className={askRowCls}>
-          <AskAgentButton context={ask} />
+          <AskAgentButton context={ask} assistant={assistant} />
         </div>
       )}
     </article>
@@ -1227,6 +1234,13 @@ function Result({ data }: { data: ArenaBattle }) {
         </strong>
       </div>
       <div className={rewardPanelCls}>
+        {battle.mastery && <p role="status">{battle.mastery.completed
+          ? 'Solo mastery complete! Your one-time mastery reward is shown below. Future papers return to ordinary rewards.'
+          : battle.mastery.clearedAt
+            ? `Full Hard mastery: ${Math.min(battle.mastery.required, battle.mastery.clearsBefore + 1)} / ${battle.mastery.required} different papers cleared.`
+            : battle.marking?.pending || battle.reward?.rewardPending
+              ? 'Mastery progress will update after final marking.'
+              : `Full Hard mastery: ${battle.mastery.clearsBefore} / ${battle.mastery.required} clears. This paper did not advance it.`}</p>}
         {battle.rewardOffer && <>
           <p>Reward target: {battle.rewardOffer.target} / {battle.rewardOffer.max}</p>
           <RewardRequirements requirements={battle.rewardOffer.requirements} results />
@@ -1295,7 +1309,7 @@ function Result({ data }: { data: ArenaBattle }) {
       {/* after a timed win, optionally send the result to a parent (Mikey
           10-24): Korean, exam terms, a one-time reward when the parent
           confirms a first parent email */}
-      {battle.mode === 'battle' && battle.won && (
+      {battle.mode === 'battle' && battle.mastery?.completed && (
         <ParentEmailOffer battleId={battle.id} />
       )}
     </div>
