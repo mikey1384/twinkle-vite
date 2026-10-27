@@ -113,6 +113,7 @@ const VideoPlayer = memo(
       onPlay: () => void;
       onPause?: () => void;
       onEnded?: () => void;
+      onError?: React.ReactEventHandler<HTMLMediaElement>;
       onProgress?: (currentTime: number) => void;
       initialTime: number;
       width: string;
@@ -120,6 +121,7 @@ const VideoPlayer = memo(
       playing?: boolean;
       style?: React.CSSProperties;
       playsInline?: boolean;
+      preload?: React.VideoHTMLAttributes<HTMLVideoElement>['preload'];
       onPlayerReady?: (player: any) => void;
       // Twinkle custom control surface (replaces native player controls).
       customControls?: boolean;
@@ -501,7 +503,8 @@ const VideoPlayer = memo(
 
     const commonProps = {
       style: { ...props?.style, width: props?.width, height: props?.height },
-      playsInline: props?.playsInline !== false
+      playsInline: props?.playsInline !== false,
+      preload: props?.preload
     };
 
     // Hide the cursor whenever the controls are idle-hidden (i.e. playing +
@@ -534,8 +537,9 @@ const VideoPlayer = memo(
             <video
               className={mediaFillClass}
               src={props?.src}
-              onError={handleNativeVideoError}
+              onError={handleNativeMediaError}
               playsInline={props?.playsInline !== false}
+              preload={props?.preload}
               ref={playerRef as React.RefObject<HTMLVideoElement>}
             />
           )}
@@ -689,7 +693,7 @@ const VideoPlayer = memo(
         {...commonProps}
         controls
         src={props?.src}
-        onError={handleNativeVideoError}
+        onError={handleNativeMediaError}
         ref={playerRef as React.RefObject<HTMLVideoElement>}
       />
     ) : (
@@ -697,6 +701,7 @@ const VideoPlayer = memo(
         {...commonProps}
         controls
         src={props?.src}
+        onError={handleNativeMediaError}
         ref={playerRef as React.RefObject<HTMLAudioElement>}
       />
     );
@@ -876,18 +881,20 @@ const VideoPlayer = memo(
       console.error('Error playing media:', error);
     }
 
-    function handleNativeVideoError(
-      event: React.SyntheticEvent<HTMLVideoElement>
+    function handleNativeMediaError(
+      event: React.SyntheticEvent<HTMLMediaElement>
     ) {
       // Only "the browser cannot use this source" swaps in the notice; a
       // network hiccup or decode error mid-playback keeps the player.
       if (
+        props?.fileType === 'video' &&
         props?.src &&
         event.currentTarget.error?.code ===
           MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
       ) {
         setUnsupportedSource(true);
       }
+      props?.onError?.(event);
     }
 
     async function initYouTubePlayer() {

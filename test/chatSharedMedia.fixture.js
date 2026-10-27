@@ -5,7 +5,7 @@ import path from 'node:path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 export async function sharedMediaFixture() {
   const stubs = {
-    '~/contexts': `export const useAppContext=s=>s({requestHelpers:window.requests}); export const useKeyContext=s=>s({myState:{userId:1}}); export const useContentContext=s=>s({actions:{onEditContent:()=>{}}});`,
+    '~/contexts': `export const useAppContext=s=>s({requestHelpers:window.requests}); export const useKeyContext=s=>s({myState:{userId:1}}); export const useContentContext=s=>s({actions:{onEditContent:()=>{}}}); export const useViewContext=s=>s({state:{videoCinemaLevel:0},actions:{onSetVideoCinemaLevel:()=>{}}});`,
     '~/contexts/Toast':
       'export const useToast=()=>event=>{window.lastToast=event;};',
     '~/constants/sockets/api':

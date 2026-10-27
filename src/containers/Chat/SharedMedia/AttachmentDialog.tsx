@@ -2,14 +2,18 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
 import ImageModal from '~/components/Modals/ImageModal';
+import VideoPlayer from '~/components/VideoPlayer';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { isMobile } from '~/helpers';
 import {
   attachmentDate,
   attachmentSize,
   type SharedAttachment
 } from '~/helpers/chatSharedMedia';
 import { sharedMediaModalClass } from './Browser';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function AttachmentDialog({
   item,
@@ -113,17 +117,21 @@ export default function AttachmentDialog({
           }
         `}
       >
-        {item.fileType === 'video' && !failed ? (
-          <video
-            controls
+        {(item.fileType === 'video' || item.fileType === 'audio') && !failed ? (
+          <VideoPlayer
+            fileType={item.fileType}
+            customControls={!deviceIsMobile}
+            initialTime={0}
+            onPlay={() => {}}
+            width="100%"
+            height={
+              item.fileType === 'video'
+                ? deviceIsMobile
+                  ? 'auto'
+                  : 'min(48dvh, calc(440 * var(--px)))'
+                : '54px'
+            }
             playsInline
-            preload="metadata"
-            src={item.url}
-            onError={() => setFailed(true)}
-          />
-        ) : item.fileType === 'audio' && !failed ? (
-          <audio
-            controls
             preload="metadata"
             src={item.url}
             onError={() => setFailed(true)}

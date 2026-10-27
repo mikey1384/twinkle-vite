@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createRequire } from 'node:module';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { sharedMediaFixture } from './chatSharedMedia.fixture.js';
 const require = createRequire(import.meta.url);
@@ -11,10 +11,11 @@ const {
 } = require('/Users/mikey/.npm-packages/lib/node_modules/playwright');
 const artifacts = process.env.CHAT_MEDIA_ARTIFACTS;
 let html;
-async function prepare(browser, width = 1280) {
+async function prepare(browser, width = 1280, options = {}) {
   const page = await browser.newPage({
     viewport: { width, height: width === 360 ? 800 : 900 },
-    hasTouch: width === 360
+    hasTouch: width === 360,
+    ...options
   });
   page.setDefaultTimeout(6500);
   const errors = [];
@@ -50,6 +51,107 @@ const openGallery = async (page) => {
     )
   );
 };
+
+// Three seconds of silence, generated locally. No network or microphone access.
+function audioFixture() {
+  const samples = 8000 * 3;
+  const wav = Buffer.alloc(44 + samples * 2);
+  wav.write('RIFF');
+  wav.writeUInt32LE(wav.length - 8, 4);
+  wav.write('WAVEfmt ', 8);
+  wav.writeUInt32LE(16, 16);
+  wav.writeUInt16LE(1, 20);
+  wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(8000, 24);
+  wav.writeUInt32LE(16000, 28);
+  wav.writeUInt16LE(2, 32);
+  wav.writeUInt16LE(16, 34);
+  wav.write('data', 36);
+  wav.writeUInt32LE(samples * 2, 40);
+  return wav;
+}
+
+for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
+  test(`shared attachment playback and fallbacks (${engineName})`, { timeout: 60000 }, async () => {
+    html ||= await sharedMediaFixture();
+    const browser = await engine.launch();
+    try {
+      for (const width of [1280, 360]) {
+        const { page, errors } = await prepare(browser, width, width === 360 ? {
+          userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'
+        } : {});
+        await page.route('**/test-video.mp4', route => route.fulfill({
+          contentType: 'video/mp4',
+          body: readFileSync(new URL('./fixtures/chatSharedMedia.mp4', import.meta.url))
+        }));
+        await page.route('**/test-audio.wav', route => route.fulfill({
+          contentType: 'audio/wav', body: audioFixture()
+        }));
+        await page.evaluate(() => {
+          window.rows.find(row => row.id === 96).url = 'http://localhost:3000/test-video.mp4';
+          Object.assign(window.rows.find(row => row.id === 97), {
+            fileType: 'audio', url: 'http://localhost:3000/test-audio.wav'
+          });
+        });
+        await openGallery(page);
+        await gallery(page).getByRole('button', { name: /^Open First animation/ }).first().click();
+        const preview = page.getByRole('dialog', { name: 'First animation.mp4', exact: true });
+        await preview.locator('video').waitFor();
+        await page.waitForFunction(() => document.querySelector('video')?.readyState >= 1);
+        const media = preview.locator('video');
+        assert.equal(await media.evaluate(el => el.paused), true, 'opening a preview must not autoplay');
+        assert.equal(await media.getAttribute('preload'), 'metadata');
+        if (width === 1280) {
+          await preview.getByRole('button', { name: 'Play', exact: true }).click();
+          await page.waitForFunction(() => document.querySelector('video').currentTime > 0.1);
+          await preview.getByRole('button', { name: 'Pause', exact: true }).click();
+          assert.equal(await media.evaluate(el => el.paused), true);
+        } else {
+          assert.equal(await media.evaluate(el => el.controls), true, 'phone keeps native playback controls');
+          await media.evaluate(el => el.play());
+          await page.waitForFunction(() => document.querySelector('video').currentTime > 0.1);
+          await media.evaluate(el => el.pause());
+        }
+        const bounds = await media.boundingBox();
+        assert.ok(bounds.width > 0 && bounds.width <= width && bounds.height <= 440);
+        if (artifacts) {
+          mkdirSync(artifacts, { recursive: true });
+          await page.screenshot({ path: path.join(artifacts, `shared-player-${engineName}-${width}.png`), animations: 'disabled' });
+        }
+        await media.evaluate(el => {
+          el.src = 'data:video/mp4,not-a-video';
+          el.load();
+        });
+        await preview.getByText('This format can’t be previewed here.', { exact: true }).waitFor();
+        await preview.getByRole('link', { name: 'Open file' }).waitFor();
+        assert.equal(await preview.getByRole('button', { name: 'Download', exact: true }).isEnabled(), true);
+        await preview.getByRole('button', { name: 'Close modal', exact: true }).click();
+
+        await gallery(page).getByRole('button', { name: /^Open Club project notes/ }).first().click();
+        const audioPreview = page.getByRole('dialog', { name: 'Club project notes.pdf', exact: true });
+        const audio = audioPreview.locator('audio');
+        await audio.waitFor();
+        await page.waitForFunction(() => document.querySelector('audio')?.readyState >= 1);
+        assert.equal(await audio.evaluate(el => el.paused && el.controls), true);
+        await audio.evaluate(el => el.play());
+        await page.waitForFunction(() => document.querySelector('audio').currentTime > 0.1);
+        await audio.evaluate(el => {
+          el.pause();
+          el.src = 'data:audio/wav,not-audio';
+          el.load();
+        });
+        await audioPreview.getByText('This format can’t be previewed here.', { exact: true }).waitFor();
+        await audioPreview.getByRole('link', { name: 'Open file' }).waitFor();
+        await audioPreview.getByRole('button', { name: 'Close modal', exact: true }).click();
+        await gallery(page).waitFor();
+        assert.deepEqual(errors, []);
+        await page.close();
+      }
+    } finally {
+      await browser.close();
+    }
+  });
+}
 
 test('a burst of uploads keeps every attachment reachable without closing the preview', { timeout: 30000 }, async () => {
   html ||= await sharedMediaFixture();

@@ -13,6 +13,11 @@ import {
   faDownload,
   faComment,
   faPlay,
+  faPause,
+  faVolume,
+  faVolumeMute,
+  faExpand,
+  faCompress,
   faFilm,
   faMusic,
   faPencilAlt
@@ -36,6 +41,11 @@ library.add(
   faDownload,
   faComment,
   faPlay,
+  faPause,
+  faVolume,
+  faVolumeMute,
+  faExpand,
+  faCompress,
   faFilm,
   faMusic,
   faPencilAlt
