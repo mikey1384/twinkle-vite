@@ -23,6 +23,7 @@ import {
   faPencilAlt
 } from '@fortawesome/pro-solid-svg-icons';
 import SharedMedia from '../../src/containers/Chat/SharedMedia';
+import { ChatContextProvider } from '../../src/contexts/Chat';
 import ChatPinsProvider from '../../src/containers/Chat/Pins';
 import { useChatPins } from '../../src/containers/Chat/Pins/context';
 import Layout from '../../src/containers/Chat/LeftMenu/Layout';
@@ -248,7 +249,12 @@ function App() {
   w.currentTopic = routedTopicId;
   const [dm, setDm] = useState(false);
   const [channel, setChannel] = useState(11);
+  const [mount, setMount] = useState(0);
+  const [userId, setUserId] = useState(1);
   w.changeChannel = setChannel;
+  w.remountMedia = () => setMount((value) => value + 1);
+  w.changeUser = setUserId;
+  w.userId = userId;
   return (
     <>
       <div className="fixture-bar">
@@ -304,7 +310,7 @@ function App() {
                   </div>
                 )}
                 <SharedMedia
-                  key={channel}
+                  key={`${userId}:${channel}:${mount}`}
                   channelId={channel}
                   channelPath="creative"
                   channelName={dm ? 'Gadget' : 'Our creative corner'}
@@ -353,6 +359,8 @@ function App() {
 }
 createRoot(document.getElementById('root')!).render(
   <MemoryRouter initialEntries={['/chat/creative/topic/22']}>
-    <App />
+    <ChatContextProvider>
+      <App />
+    </ChatContextProvider>
   </MemoryRouter>
 );

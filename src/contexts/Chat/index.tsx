@@ -2,6 +2,8 @@ import React, { ReactNode, useEffect, useReducer, useMemo } from 'react';
 import { createContext } from '../selectableContext';
 import ChatActions from './actions';
 import ChatReducer from './reducer';
+import useSharedMediaCacheEvents from './useSharedMediaCacheEvents';
+import type { SharedMediaCache } from '~/helpers/chatSharedMedia';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { getStoredItem, removeStoredItem } from '~/helpers/userDataHelpers';
 
@@ -66,6 +68,13 @@ function getInitialChatState() {
       // Account notification preferences can change from another device.
       // Always hydrate their canonical server state for the active session.
       chatNotificationSettings: null,
+      // Provider replacement can miss socket events; revalidate snapshots on
+      // demand while keeping already loaded content available.
+      sharedMediaByKey: Object.fromEntries(
+        Object.entries(
+          (persistedState.sharedMediaByKey || {}) as SharedMediaCache
+        ).map(([key, entry]) => [key, { ...entry, checkedAt: 0 }])
+      ),
       // A request owned by an unmounted provider cannot safely reconcile into
       // the replacement provider. The socket bootstrap hook starts a fresh,
       // explicitly owned attempt after remount.
@@ -108,6 +117,7 @@ function getInitialChatState() {
     channelLoading: false,
     channelOnCall: {},
     chatNotificationSettings: null,
+    sharedMediaByKey: {} as SharedMediaCache,
     buildContributionMembershipByKey: {},
     buildContributionReleaseByRootBuildId: {},
     buildContributionSubmissionByBranchId: {},
@@ -222,6 +232,7 @@ export const initialChatState = {
   channelLoading: false,
   channelOnCall: {},
   chatNotificationSettings: null,
+  sharedMediaByKey: {} as SharedMediaCache,
   buildContributionMembershipByKey: {},
   buildContributionReleaseByRootBuildId: {},
   buildContributionSubmissionByBranchId: {},
@@ -323,6 +334,7 @@ export function ChatContextProvider({ children }: { children: ReactNode }) {
   const [chatState, chatDispatch] = useReducer(ChatReducer, undefined, () =>
     getInitialChatState()
   );
+  useSharedMediaCacheEvents(chatDispatch);
 
   useEffect(() => {
     recordChatBootstrapEvent('chat-context-mounted', {});

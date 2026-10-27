@@ -52,6 +52,192 @@ const openGallery = async (page) => {
   );
 };
 
+test('foreground events retain shared media and do not duplicate fresh requests', { timeout: 30000 }, async () => {
+  html ||= await sharedMediaFixture();
+  const browser = await chromium.launch();
+  try {
+    const { page, errors } = await prepare(browser);
+    await openGallery(page);
+    await gallery(page).getByRole('button', { name: /^Open Mountain study/ }).first().click();
+    const preview = page.getByRole('button', { name: 'Show in chat', exact: true });
+    await preview.waitFor();
+    const before = await page.evaluate(() => window.requestsLog.length);
+    await page.evaluate(() => {
+      window.emit('new_message_received', {
+        channelId: 11,
+        message: { id: 500, channelId: 11, userId: 1, content: 'A plain chat message' }
+      });
+    });
+    await page.waitForTimeout(250);
+    assert.equal(await page.evaluate(() => window.requestsLog.length), before, 'posting a plain message must not reload attachments');
+    await page.evaluate(() => {
+      window.deferLoads = true;
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForTimeout(250);
+    assert.equal(await page.evaluate(() => window.requestsLog.length), before, 'foregrounding a fresh list must not reload it');
+    assert.equal(await preview.isVisible(), true, 'returning to Chrome must not close the attachment being viewed');
+    assert.ok(await gallery(page).getByRole('button', { name: /^Open / }).count() > 0, 'loaded cards must stay mounted');
+    assert.deepEqual(errors, []);
+    await page.close();
+  } finally {
+    await browser.close();
+  }
+});
+
+test('a confirmed empty chat stays settled during a background head check', { timeout: 30000 }, async () => {
+  html ||= await sharedMediaFixture();
+  const browser = await chromium.launch();
+  try {
+    const { page, errors } = await prepare(browser);
+    await page.evaluate(() => {
+      window.rows = [];
+      window.emit('hide_message_attachment', { channelId: 11, messageId: 100 });
+    });
+    const panel = page.getByRole('region', { name: 'Shared in this chat' });
+    await panel.getByRole('button', { name: 'Photos & files', exact: true }).waitFor();
+    await page.clock.setFixedTime(new Date(Date.now() + 120_000));
+    await page.evaluate(() => {
+      window.deferLoads = true;
+      window.dispatchEvent(new Event('focus'));
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForFunction(() => window.pendingReads.length === 1);
+    assert.equal(await panel.getByText('Loading…', { exact: true }).count(), 0);
+    assert.equal(await panel.getByRole('button', { name: 'Photos & files', exact: true }).isVisible(), true);
+    assert.deepEqual(errors, []);
+    await page.close();
+  } finally {
+    await browser.close();
+  }
+});
+
+test('global Chat state retains shared media pages across a sidebar remount', { timeout: 30000 }, async () => {
+  html ||= await sharedMediaFixture();
+  const browser = await chromium.launch();
+  try {
+    const { page, errors } = await prepare(browser);
+    await openGallery(page);
+    const more = gallery(page).getByRole('button', { name: 'Load older' });
+    if (await more.count()) await more.click();
+    await page.waitForFunction(() => window.requestsLog.some(input => input.beforeId));
+    await gallery(page).getByText('Loading attachments…', { exact: true }).waitFor({ state: 'hidden' });
+    const count = await gallery(page).getByRole('button', { name: /^Open / }).count();
+    const before = await page.evaluate(() => window.requestsLog.length);
+    await page.evaluate(() => {
+      window.deferLoads = true;
+      window.remountMedia();
+    });
+    await gallery(page).waitFor({ state: 'detached' });
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(() => window.requestsLog.length), before, 'a new sidebar instance should reuse the global page');
+    await openGallery(page);
+    assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), count, 'already loaded older pages must survive');
+    assert.deepEqual(errors, []);
+    await page.close();
+  } finally {
+    await browser.close();
+  }
+});
+
+for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
+  test(`stale foreground checks keep pages visible and reconcile removals (${engineName})`, { timeout: 30000 }, async () => {
+    html ||= await sharedMediaFixture();
+    const browser = await engine.launch();
+    try {
+      const { page, errors } = await prepare(browser, engineName === 'webkit' ? 360 : 1280);
+      await openGallery(page);
+      await gallery(page).getByRole('button', { name: 'Load older' }).click();
+      await page.waitForFunction(() => window.requestsLog.some(input => input.beforeId));
+      await gallery(page).getByText('Loading attachments…', { exact: true }).waitFor({ state: 'hidden' });
+      assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), 33);
+      await gallery(page).getByRole('button', { name: /^Open Mountain study/ }).first().click();
+      const previewAction = page.getByRole('button', { name: 'Show in chat', exact: true });
+      await previewAction.waitFor();
+      const before = await page.evaluate(() => window.requestsLog.length);
+      await page.clock.setFixedTime(new Date(Date.now() + 120_000));
+      await page.evaluate(() => {
+        window.deferLoads = true;
+        window.dispatchEvent(new Event('focus'));
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      await page.waitForFunction(() => window.pendingReads.length === 1);
+      assert.equal(await page.evaluate(() => window.requestsLog.length), before + 1, 'paired events share one refresh');
+      assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), 33, 'pending check retains all loaded pages');
+      assert.equal(await previewAction.isVisible(), true, 'pending check keeps the open preview');
+      await page.evaluate(() => {
+        window.pendingReads.shift()();
+        window.deferLoads = false;
+      });
+      await gallery(page).getByText('Loading attachments…', { exact: true }).waitFor({ state: 'hidden' });
+      assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), 33, 'head refresh preserves validated older pages');
+      assert.equal(await previewAction.isVisible(), true);
+      if (artifacts) {
+        mkdirSync(artifacts, { recursive: true });
+        await page.screenshot({ path: path.join(artifacts, `foreground-preview-${engineName}.png`), animations: 'disabled' });
+      }
+
+      await page.clock.setFixedTime(new Date(Date.now() + 240_000));
+      await page.evaluate(() => {
+        window.deleted.add(100);
+        window.dispatchEvent(new Event('focus'));
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      await previewAction.waitFor({ state: 'detached' });
+      assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), 32, 'canonical head removes a deleted record without losing older pages');
+      assert.deepEqual(errors, []);
+      await page.close();
+    } finally {
+      await browser.close();
+    }
+  });
+}
+
+test('inactive caches receive uploads and deletions and never cross accounts', { timeout: 30000 }, async () => {
+  html ||= await sharedMediaFixture();
+  const browser = await chromium.launch();
+  try {
+    const { page, errors } = await prepare(browser);
+    await openGallery(page);
+    await page.evaluate(() => window.changeChannel(12));
+    await gallery(page).waitFor({ state: 'detached' });
+    await page.evaluate(() => {
+      window.deleted.add(100);
+      window.emit('hide_message_attachment', { channelId: 11, messageId: 100 });
+      window.deferLoads = true;
+      window.changeChannel(11);
+    });
+    await page.waitForFunction(() => window.pendingReads.length === 1);
+    assert.equal(await page.getByRole('button', { name: /^Open Mountain study/ }).count(), 0, 'hidden attachments cannot flash from an inactive cache');
+    await page.evaluate(() => { window.pendingReads.shift()(); window.deferLoads = false; });
+    await openGallery(page);
+    assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), 24);
+    await page.evaluate(() => window.changeChannel(12));
+    await gallery(page).waitFor({ state: 'detached' });
+    await page.evaluate(() => {
+      window.rows.unshift({ ...window.rows[0], id: 101, name: 'Inactive upload.png' });
+      window.emit('new_message_received', { channelId: 11, message: { fileName: 'new.png' } });
+      window.changeChannel(11);
+    });
+    await openGallery(page);
+    await gallery(page).getByRole('button', { name: /^Open Inactive upload/ }).waitFor();
+
+    // A different account must fetch its own canonical page, even if the
+    // channel/filter happen to match and the prior account's cache is fresh.
+    await page.evaluate(() => { window.deferLoads = true; window.changeUser(2); });
+    await page.waitForFunction(() => window.pendingReads.length === 1);
+    assert.equal(await page.getByRole('button', { name: /^Open Inactive upload/ }).count(), 0);
+    await page.evaluate(() => { window.pendingReads.shift()(); window.deferLoads = false; });
+    await openGallery(page);
+    await gallery(page).getByRole('button', { name: /^Open Inactive upload/ }).waitFor();
+    assert.deepEqual(errors, []);
+    await page.close();
+  } finally {
+    await browser.close();
+  }
+});
+
 // Three seconds of silence, generated locally. No network or microphone access.
 function audioFixture() {
   const samples = 8000 * 3;

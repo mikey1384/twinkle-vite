@@ -5,14 +5,16 @@ import path from 'node:path';
 const repo = fileURLToPath(new URL('..', import.meta.url));
 export async function sharedMediaFixture() {
   const stubs = {
-    '~/contexts': `export const useAppContext=s=>s({requestHelpers:window.requests}); export const useKeyContext=s=>s({myState:{userId:1}}); export const useContentContext=s=>s({actions:{onEditContent:()=>{}}}); export const useViewContext=s=>s({state:{videoCinemaLevel:0},actions:{onSetVideoCinemaLevel:()=>{}}});`,
+    '~/contexts': `import { ChatContext } from './src/contexts/Chat'; import { useContextSelector } from './src/contexts/selectableContext'; export const useChatContext=s=>useContextSelector(ChatContext,s); export const useAppContext=s=>s({requestHelpers:window.requests}); export const useKeyContext=s=>s({myState:{userId:window.userId || 1}}); export const useContentContext=s=>s({actions:{onEditContent:()=>{}}}); export const useViewContext=s=>s({state:{videoCinemaLevel:0},actions:{onSetVideoCinemaLevel:()=>{}}});`,
     '~/contexts/Toast':
       'export const useToast=()=>event=>{window.lastToast=event;};',
     '~/constants/sockets/api':
       'export const socket={on:(name,fn)=>{if(!window.events.has(name))window.events.set(name,new Set());window.events.get(name).add(fn);},off:(name,fn)=>window.events.get(name)?.delete(fn)};',
+    'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url':
+      'export default "http://localhost:3000/pdf.worker.mjs";',
     '~/components/ErrorBoundary': 'export default ({children})=>children;',
     '~/helpers':
-      'export const isMobile=nav=>/iPhone|Android/i.test(nav.userAgent);export const isTablet=()=>false;',
+      'export const isMobile=nav=>/iPhone|Android/i.test(nav.userAgent);export const isTablet=()=>false;export const objectify=rows=>Object.fromEntries(rows.map(row=>[row.id,row]));',
     '~/helpers/stringHelpers':
       'export const stringIsEmpty=s=>!s?.trim();export const exceedsCharLimit=()=>false;export const finalizeEmoji=s=>s;export const generateFileName=()=>"fixture.png";',
     '~/helpers/imageHelpers': 'export const downloadImage=async()=>{};',

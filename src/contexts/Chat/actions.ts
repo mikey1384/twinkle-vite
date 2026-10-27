@@ -1,4 +1,5 @@
 import type { UserActivity } from '~/helpers/userActivity';
+import type { SharedMediaCacheEntry } from '~/helpers/chatSharedMedia';
 import { Dispatch } from '~/types';
 import { getConfirmedAICardListingState } from '~/helpers/aiCardCanonicalUpdates';
 import type {
@@ -19,6 +20,9 @@ function getNextConfirmedChatEventSequence() {
 
 export default function ChatActions(dispatch: Dispatch) {
   return {
+    onCacheChatSharedMedia(key: string, entry: SharedMediaCacheEntry) {
+      return dispatch({ type: 'CACHE_CHAT_SHARED_MEDIA', key, entry });
+    },
     onBumpChessThemeVersion() {
       return dispatch({ type: 'BUMP_CHESS_THEME_VERSION' });
     },

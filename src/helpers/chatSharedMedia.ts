@@ -26,6 +26,44 @@ export interface SharedMediaQuery {
   kind?: SharedMediaKind;
   beforeId?: number;
 }
+export interface SharedMediaCacheEntry {
+  channelId: number;
+  page: SharedMediaPage;
+  checkedAt: number;
+}
+export type SharedMediaCache = Record<string, SharedMediaCacheEntry>;
+
+export const sharedMediaInvalidationEvents = [
+  'chat_message_deleted',
+  'hide_message_attachment',
+  'chat_message_edited',
+  'chat_attachment_thumbnail_updated',
+  'human_topic_state_changed'
+];
+
+export function sharedMediaEventChannel(event: any) {
+  return Number(
+    event?.channelId || event?.channel?.id || event?.message?.channelId
+  );
+}
+
+export function invalidateSharedMediaCache(
+  cache: SharedMediaCache,
+  channelId?: number,
+  preserve = false
+): SharedMediaCache {
+  if (!channelId) return {};
+  return Object.fromEntries(
+    Object.entries(cache).flatMap(([key, entry]) =>
+      entry.channelId !== channelId
+        ? [[key, entry]]
+        : preserve
+          ? [[key, { ...entry, checkedAt: 0 }]]
+          : []
+    )
+  );
+}
+
 export function mergeSharedMedia(
   current: SharedMediaPage,
   next: SharedMediaPage
@@ -38,6 +76,37 @@ export function mergeSharedMedia(
     ].sort((a, b) => b.id - a.id),
     nextCursor: next.nextCursor
   };
+}
+
+export function refreshSharedMediaPage(
+  current: SharedMediaPage,
+  head: SharedMediaPage
+): SharedMediaPage {
+  // Without overlap, retaining old pages would skip the uploads between the
+  // new head and our previous cursor. Let the canonical head fill that gap.
+  if (
+    !head.nextCursor ||
+    !head.items.some((item) =>
+      current.items.some((existing) => existing.id === item.id)
+    )
+  )
+    return head;
+
+  // Replace the entire range the server just checked, including attachments
+  // it no longer returns. Keep only older pages outside that range.
+  return mergeSharedMedia(
+    {
+      items: current.items.filter((item) => item.id < head.nextCursor!),
+      nextCursor: null
+    },
+    {
+      items: head.items,
+      nextCursor:
+        current.nextCursor === null
+          ? null
+          : Math.min(current.nextCursor, head.nextCursor)
+    }
+  );
 }
 export function attachmentSize(bytes: number) {
   if (!bytes) return '';

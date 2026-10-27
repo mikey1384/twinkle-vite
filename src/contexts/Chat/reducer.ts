@@ -1,4 +1,5 @@
 import { applyUserActivityEvent } from '~/helpers/userActivity';
+import { invalidateSharedMediaCache } from '~/helpers/chatSharedMedia';
 import { clearDeletedReplyTargets } from '~/helpers/chatReplyTargetDeletion';
 import { initialChatState } from '.';
 import {
@@ -1752,6 +1753,31 @@ export default function ChatReducer(
   }
 ): any {
   switch (action.type) {
+    case 'CACHE_CHAT_SHARED_MEDIA': {
+      const entries = Object.entries({
+        ...state.sharedMediaByKey,
+        [action.key]: action.entry
+      });
+      // Bound this supplementary cache as members visit more chats/filters.
+      // Always retain the page just loaded, even when older pages are stale.
+      const others = entries.filter(([key]) => key !== action.key);
+      return {
+        ...state,
+        sharedMediaByKey: Object.fromEntries([
+          ...others.slice(-39),
+          [action.key, action.entry]
+        ])
+      };
+    }
+    case 'INVALIDATE_CHAT_SHARED_MEDIA':
+      return {
+        ...state,
+        sharedMediaByKey: invalidateSharedMediaCache(
+          state.sharedMediaByKey || {},
+          action.channelId,
+          action.preserve
+        )
+      };
     case 'BUMP_CHESS_THEME_VERSION': {
       return {
         ...state,
