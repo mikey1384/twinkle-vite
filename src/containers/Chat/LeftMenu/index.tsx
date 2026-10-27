@@ -5,6 +5,7 @@ import Collect from './Collect';
 import Tabs from './Tabs';
 import Subchannels from './Subchannels';
 import PinnedTopics from './PinnedTopics';
+import SharedMedia from '../SharedMedia';
 import CrewHubPanel from '../CrewChat/CrewHubPanel';
 import ChatQuickAccess from './QuickAccess';
 import ChatFlatButton from '../FlatButton';
@@ -116,6 +117,10 @@ export default function LeftMenu({
     topicNavigation.isVisible &&
     selectedChannelId === currentChannel?.id &&
     selectedChannelId !== GENERAL_CHAT_ID;
+  const sharedMediaAvailable = !!userId && !chatType && !isAIChat &&
+    !loadingVocabulary && !loadingAICardChat &&
+    selectedChannelId > 0 && selectedChannelId === currentChannel?.id &&
+    selectedChannelId !== GENERAL_CHAT_ID;
   // Lumine Workshop help happens in the Zero and Ciel chats, so its one note
   // sits in their left menu, below the topics.
   const workshopNote = useWorkshopMenuNote(
@@ -209,6 +214,7 @@ export default function LeftMenu({
           crewHubId > 0 ||
           subchannelsShown ||
           isTopicMenuAvailable ||
+          sharedMediaAvailable ||
           workshopNote ? (
             <>
               {crewHubId > 0 ? <CrewHubPanel crewId={crewHubId} /> : null}
@@ -238,6 +244,16 @@ export default function LeftMenu({
                   pathId={String(currentChannel?.pathId)}
                 />
               ) : null}
+              {sharedMediaAvailable && <SharedMedia
+                key={`${userId}:${selectedChannelId}`}
+                channelId={selectedChannelId}
+                channelPath={String(currentChannel.pathId)}
+                channelName={channelName}
+                currentTopic={currentChannel?.selectedTab === 'topic' ? {
+                  id: Number(currentChannel.selectedTopicId || currentChannel.featuredTopicId || 0),
+                  title: String(currentChannel.topicObj?.[currentChannel.selectedTopicId || currentChannel.featuredTopicId]?.content || 'Current topic')
+                } : undefined}
+              />}
               {workshopNote ? (
                 <WorkshopMenuNote note={workshopNote} />
               ) : null}

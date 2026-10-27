@@ -1,3 +1,4 @@
+import type { SharedMediaPage, SharedMediaQuery, SharedAttachment } from '~/helpers/chatSharedMedia';
 import URL from '~/constants/URL';
 import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import { RequestHelpers } from '~/types';
@@ -170,6 +171,18 @@ export default function chatRequestHelpers({
   }
 
   return {
+    async loadChatSharedMedia(input: SharedMediaQuery): Promise<SharedMediaPage> {
+      try {
+        const { data } = await request.get(`${URL}/chat/shared-media`, { ...auth(), params: input });
+        return data;
+      } catch (error) { return handleError(error); }
+    },
+    async loadChatSharedMediaItem(input: { channelId: number; messageId: number; download?: boolean }): Promise<SharedAttachment> {
+      try {
+        const { data } = await request.get(`${URL}/chat/shared-media/item`, { ...auth(), params: input });
+        return data;
+      } catch (error) { return handleError(error); }
+    },
     async loadChatPins(input: ChatPinScope & { beforeId?: number }) {
       try {
         const { data } = await request.get(`${URL}/chat/pins`, {

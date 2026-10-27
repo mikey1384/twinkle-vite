@@ -9,25 +9,15 @@ export default function ChatPinsProvider({
   children,
   ...scope
 }: ChatPinScope & { children: React.ReactNode }) {
-  if (!scope.channelId || scope.channelId === GENERAL_CHAT_ID) {
-    return (
-      <ChatPinsContext.Provider value={null}>
-        {children}
-      </ChatPinsContext.Provider>
-    );
-  }
-  return <EnabledPinsProvider {...scope}>{children}</EnabledPinsProvider>;
-}
-
-function EnabledPinsProvider({
-  children,
-  ...scope
-}: ChatPinScope & { children: React.ReactNode }) {
-  const controller = usePins(scope);
+  const enabled = !!scope.channelId && scope.channelId !== GENERAL_CHAT_ID;
+  const controller = usePins({
+    ...scope,
+    channelId: enabled ? scope.channelId : 0
+  });
   return (
-    <ChatPinsContext.Provider value={controller}>
+    <ChatPinsContext.Provider value={enabled ? controller : null}>
       {children}
-      {controller.dialogShown && <PinsDialog />}
+      {enabled && controller.dialogShown && <PinsDialog />}
     </ChatPinsContext.Provider>
   );
 }

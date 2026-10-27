@@ -28,7 +28,9 @@ export default function ImageModal({
   userIsUploader = false,
   contentType,
   contentId,
-  isReplaceable
+  isReplaceable,
+  extraActions,
+  className
 }: {
   caption?: string;
   hasCaption?: boolean;
@@ -42,6 +44,8 @@ export default function ImageModal({
   contentType?: string;
   contentId?: number;
   isReplaceable?: boolean;
+  extraActions?: React.ReactNode;
+  className?: string;
 }) {
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
@@ -77,6 +81,7 @@ export default function ImageModal({
   return (
     <Modal
       modalKey="ImageModal"
+      className={className}
       isOpen
       onClose={onHide}
       hasHeader={!!fileName}
@@ -91,6 +96,7 @@ export default function ImageModal({
       }}
       footer={
         <>
+          {extraActions}
           {downloadable && (
             <Button
               color="orange"

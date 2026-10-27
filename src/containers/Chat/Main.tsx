@@ -9,6 +9,7 @@ import CreateNewChat from './Modals/CreateNewChat';
 import LeftMenu from './LeftMenu';
 import RightMenu from './RightMenu';
 import Body from './Body';
+import ChatPinsProvider from './Pins';
 import Loading from '~/components/Loading';
 import PleaseLogIn from './PleaseLogIn';
 import LocalContext from './Context';
@@ -388,6 +389,9 @@ export default function Main({
     theme: string;
     subchannelIds: number[];
     twoPeople: boolean;
+    selectedTab?: string;
+    selectedTopicId?: number;
+    featuredTopicId?: number;
   } = useMemo(
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
@@ -1138,68 +1142,78 @@ export default function Main({
       <ErrorBoundary componentPath="Chat/Main">
         {userId ? (
           chatReadyForCurrentUser ? (
-            <div
-              data-chat-workspace
-              className={chatWorkspaceClass}
+            <ChatPinsProvider
+              channelId={chatType ? 0 : Number(selectedChannelId || 0)}
+              subchannelId={Number(selectedSubchannelId || 0)}
+              topicId={
+                currentChannel.selectedTab === 'topic'
+                  ? Number(currentChannel.selectedTopicId || currentChannel.featuredTopicId || 0)
+                  : 0
+              }
             >
-              {createNewChatModalShown && (
-                <CreateNewChat
-                  channelId={selectedChannelId}
-                  creatingChat={creatingChat}
-                  onHide={() => setCreateNewChatModalShown(false)}
-                  onDone={handleCreateNewChannel}
+              <div
+                data-chat-workspace
+                className={chatWorkspaceClass}
+              >
+                {createNewChatModalShown && (
+                  <CreateNewChat
+                    channelId={selectedChannelId}
+                    creatingChat={creatingChat}
+                    onHide={() => setCreateNewChatModalShown(false)}
+                    onDone={handleCreateNewChannel}
+                  />
+                )}
+                <LeftMenu
+                  aiPersona={
+                    partner?.id === CIEL_TWINKLE_ID
+                      ? 'ciel'
+                      : partner?.id === ZERO_TWINKLE_ID
+                        ? 'zero'
+                        : null
+                  }
+                  channelName={currentChannelName}
+                  currentPathId={currentPathId}
+                  currentChannel={currentChannel}
+                  displayedThemeColor={displayedThemeColor}
+                  isAIChat={isAIChat}
+                  loadingVocabulary={loadingVocabulary}
+                  loadingAICardChat={loadingAICardChat}
+                  onNewButtonClick={() => setCreateNewChatModalShown(true)}
+                  selectedChannelId={selectedChannelId}
+                  subchannelIds={currentChannel.subchannelIds}
+                  subchannelObj={currentChannel.subchannelObj}
+                  subchannelPath={subchannelPath}
+                  onSetTopicSelectorModalShown={setTopicSelectorModalShown}
                 />
-              )}
-              <LeftMenu
-                aiPersona={
-                  partner?.id === CIEL_TWINKLE_ID
-                    ? 'ciel'
-                    : partner?.id === ZERO_TWINKLE_ID
-                      ? 'zero'
-                      : null
-                }
-                channelName={currentChannelName}
-                currentPathId={currentPathId}
-                currentChannel={currentChannel}
-                displayedThemeColor={displayedThemeColor}
-                isAIChat={isAIChat}
-                loadingVocabulary={loadingVocabulary}
-                loadingAICardChat={loadingAICardChat}
-                onNewButtonClick={() => setCreateNewChatModalShown(true)}
-                selectedChannelId={selectedChannelId}
-                subchannelIds={currentChannel.subchannelIds}
-                subchannelObj={currentChannel.subchannelObj}
-                subchannelPath={subchannelPath}
-                onSetTopicSelectorModalShown={setTopicSelectorModalShown}
-              />
-              <Body
-                key={selectedChannelId}
-                displayedThemeColor={displayedThemeColor}
-                channelName={currentChannelName}
-                partner={partner}
-                currentChannel={currentChannel}
-                currentPathId={currentPathId}
-                subchannelId={selectedSubchannelId}
-                subchannelPath={subchannelPath}
-                topicSelectorModalShown={topicSelectorModalShown}
-                onScrollToBottom={handleScrollToBottom}
-                onSetTopicSelectorModalShown={setTopicSelectorModalShown}
-                isAICardModalShown={!!aiCardModalCardId}
-                MessagesRef={MessagesRef}
-                onSetAICardModalCardId={setAICardModalCardId}
-              />
-              <RightMenu
-                channelOnCall={channelOnCall}
-                channelName={currentChannelName}
-                currentChannel={currentChannel}
-                currentOnlineUsers={currentOnlineUsers}
-                displayedThemeColor={displayedThemeColor}
-                isZeroChat={partner?.id === ZERO_TWINKLE_ID}
-                isCielChat={partner?.id === CIEL_TWINKLE_ID}
-                selectedChannelId={selectedChannelId}
-                onScrollToBottom={handleScrollToBottom}
-              />
-            </div>
+                <Body
+                  key={selectedChannelId}
+                  displayedThemeColor={displayedThemeColor}
+                  channelName={currentChannelName}
+                  partner={partner}
+                  currentChannel={currentChannel}
+                  currentPathId={currentPathId}
+                  subchannelId={selectedSubchannelId}
+                  subchannelPath={subchannelPath}
+                  topicSelectorModalShown={topicSelectorModalShown}
+                  onScrollToBottom={handleScrollToBottom}
+                  onSetTopicSelectorModalShown={setTopicSelectorModalShown}
+                  isAICardModalShown={!!aiCardModalCardId}
+                  MessagesRef={MessagesRef}
+                  onSetAICardModalCardId={setAICardModalCardId}
+                />
+                <RightMenu
+                  channelOnCall={channelOnCall}
+                  channelName={currentChannelName}
+                  currentChannel={currentChannel}
+                  currentOnlineUsers={currentOnlineUsers}
+                  displayedThemeColor={displayedThemeColor}
+                  isZeroChat={partner?.id === ZERO_TWINKLE_ID}
+                  isCielChat={partner?.id === CIEL_TWINKLE_ID}
+                  selectedChannelId={selectedChannelId}
+                  onScrollToBottom={handleScrollToBottom}
+                />
+              </div>
+            </ChatPinsProvider>
           ) : (
             <div
               style={{

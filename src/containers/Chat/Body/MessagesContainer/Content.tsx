@@ -4,8 +4,6 @@ import ChannelHeader from './ChannelHeader';
 import DisplayedMessages from './DisplayedMessages';
 import MessageInput from './MessageInput';
 import { chatComposerClass } from '../../containers';
-import ChatPinsProvider from '../../Pins';
-import { useKeyContext } from '~/contexts';
 import { useChatPins } from '../../Pins/context';
 import BlockedChatNotice from '~/components/ChatSafety/BlockedChatNotice';
 import useBlockedUsers from '~/helpers/hooks/useBlockedUsers';
@@ -31,7 +29,6 @@ export default function Content({
   messageInputProps: ComponentProps<typeof MessageInput>;
   onRetryCatchUp: () => void;
 }) {
-  const userId = useKeyContext((v) => v.myState.userId);
   const blockList = useBlockedUsers();
   const partner = channelHeaderProps.partner;
   const blockedPartner =
@@ -41,23 +38,8 @@ export default function Content({
     blockList.blockedIds.has(Number(partner.id))
       ? { id: Number(partner.id), username: partner.username }
       : null;
-  const channelId = Number(channelHeaderProps.selectedChannelId || 0);
-  const subchannelId = Number(subchannel?.id || 0);
-  const topicId =
-    channelHeaderProps.currentChannel.selectedTab === 'topic'
-      ? Number(
-          channelHeaderProps.currentChannel.selectedTopicId ||
-            channelHeaderProps.currentChannel.featuredTopicId ||
-            0
-        )
-      : 0;
   return (
-    <ChatPinsProvider
-      key={`${userId}:${channelId}`}
-      channelId={channelId}
-      subchannelId={subchannelId}
-      topicId={topicId}
-    >
+    <>
       <div
         className={css`
           display: flex;
@@ -151,7 +133,7 @@ export default function Content({
           <PinAwareMessageInput key={messageInputKey} {...messageInputProps} />
         )}
       </div>
-    </ChatPinsProvider>
+    </>
   );
 }
 

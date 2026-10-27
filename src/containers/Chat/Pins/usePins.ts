@@ -136,6 +136,7 @@ export default function usePins(scope: ChatPinScope): ChatPinsController {
     socket.on('chat_message_pins_changed', invalidate);
     socket.on('human_topic_state_changed', topicChanged);
     socket.on('chat_message_edited', messageChanged);
+    socket.on('hide_message_attachment', messageChanged);
     socket.on('chat_message_deleted', messageDeleted);
     socket.on('connect', reconnect);
     document.addEventListener('visibilitychange', focus);
@@ -150,6 +151,7 @@ export default function usePins(scope: ChatPinScope): ChatPinsController {
       socket.off('chat_message_pins_changed', invalidate);
       socket.off('human_topic_state_changed', topicChanged);
       socket.off('chat_message_edited', messageChanged);
+      socket.off('hide_message_attachment', messageChanged);
       socket.off('chat_message_deleted', messageDeleted);
       socket.off('connect', reconnect);
       document.removeEventListener('visibilitychange', focus);

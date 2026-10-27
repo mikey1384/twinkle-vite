@@ -685,6 +685,8 @@ registerMethods('mission', [
 ]);
 
 registerMethods('chat', [
+  'loadChatSharedMedia',
+  'loadChatSharedMediaItem',
   'acceptInvitation',
   'blockUser',
   'loadBlockedUsers',
