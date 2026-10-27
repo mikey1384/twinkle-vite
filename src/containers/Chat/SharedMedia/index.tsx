@@ -42,6 +42,10 @@ export default function SharedMedia({
   const [error, setError] = useState('');
   const media = useSharedMedia({ channelId, kind, topicId });
   const actionRequest = useRef(0);
+  const actionVisibility = useRef<{
+    item: SharedAttachment;
+    version: string;
+  } | null>(null);
   const busy = useRef(false);
   const mounted = useRef(false);
 
@@ -52,15 +56,15 @@ export default function SharedMedia({
     };
   }, []);
   useEffect(() => {
-    // Reconnect, deletion, a hidden attachment or a new filter invalidates
-    // both the browser and an already-open preview.
-    actionRequest.current++;
-    busy.current = false;
-    setSelected(null);
-    setPendingId(null);
-    setAction('');
-    setError('');
-  }, [media.revision, kind, topicId]);
+    resetAction();
+  }, [kind, topicId]);
+  useEffect(() => {
+    const active = actionVisibility.current;
+    if (active && active.version !== media.getVersion(active.item)) resetAction();
+    // The revision announces canonical visibility changes; the active item's
+    // version distinguishes its deletion from an unrelated text message.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [media.revision]);
   useEffect(() => {
     setTopicId(0);
   }, [currentTopic?.id]);
@@ -148,6 +152,15 @@ export default function SharedMedia({
     </>
   );
 
+  function resetAction() {
+    actionRequest.current++;
+    actionVisibility.current = null;
+    busy.current = false;
+    setSelected(null);
+    setPendingId(null);
+    setAction('');
+    setError('');
+  }
   function open(nextKind: SharedMediaKind) {
     pendingJump.current = null;
     setError('');
@@ -169,7 +182,8 @@ export default function SharedMedia({
     if (busy.current) return;
     busy.current = true;
     const version = ++actionRequest.current;
-    const mediaVersion = media.getVersion();
+    const mediaVersion = media.getVersion(item);
+    actionVisibility.current = { item, version: mediaVersion };
     setPendingId(item.id);
     setError('');
     try {
@@ -177,7 +191,7 @@ export default function SharedMedia({
       if (
         !mounted.current ||
         version !== actionRequest.current ||
-        mediaVersion !== media.getVersion()
+        mediaVersion !== media.getVersion(item)
       )
         return;
       setSelected(fresh);
@@ -195,7 +209,8 @@ export default function SharedMedia({
     if (!selected || busy.current) return;
     busy.current = true;
     const version = ++actionRequest.current;
-    const mediaVersion = media.getVersion();
+    const mediaVersion = media.getVersion(selected);
+    actionVisibility.current = { item: selected, version: mediaVersion };
     setAction(nextAction);
     setError('');
     try {
@@ -207,7 +222,7 @@ export default function SharedMedia({
       if (
         !mounted.current ||
         version !== actionRequest.current ||
-        mediaVersion !== media.getVersion()
+        mediaVersion !== media.getVersion(selected)
       )
         return;
       if (nextAction === 'download') {

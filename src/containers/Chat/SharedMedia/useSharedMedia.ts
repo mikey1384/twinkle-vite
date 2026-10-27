@@ -6,6 +6,8 @@ import {
   refreshSharedMediaPage,
   sharedMediaEventChannel,
   sharedMediaInvalidationEvents,
+  sharedMediaRemovalEvents,
+  type SharedAttachment,
   type SharedMediaCacheEntry,
   type SharedMediaPage,
   type SharedMediaQuery
@@ -30,6 +32,8 @@ export default function useSharedMedia(query: SharedMediaQuery) {
   cache.current = cached;
   const request = useRef(0);
   const visibilityVersion = useRef(0);
+  const removalSequence = useRef(0);
+  const removals = useRef(new Map<number, number>());
   const lastAttempt = useRef(0);
   const busy = useRef(false);
   const alive = useRef(false);
@@ -41,6 +45,8 @@ export default function useSharedMedia(query: SharedMediaQuery) {
     alive.current = true;
     busy.current = false;
     lastAttempt.current = 0;
+    removals.current = new Map();
+    removalSequence.current = 0;
     if (!cache.current || Date.now() - cache.current.checkedAt >= freshnessMs) {
       void read(false);
     } else {
@@ -72,11 +78,35 @@ export default function useSharedMedia(query: SharedMediaQuery) {
         sharedMediaEventChannel(event) !== query.channelId
       )
         return;
+      scheduleRefresh();
+    }
+    function scheduleRefresh() {
       clearTimeout(refreshTimer.current);
       refreshTimer.current = setTimeout(() => {
         refreshTimer.current = undefined;
         void refresh();
       }, 200);
+    }
+    function thumbnailChanged(event: any) {
+      if (sharedMediaEventChannel(event) === query.channelId) scheduleRefresh();
+    }
+    function removed(event: any) {
+      if (sharedMediaEventChannel(event) !== query.channelId) return;
+      const messageId = Number(event?.messageId);
+      if (!Number.isSafeInteger(messageId) || messageId <= 0) return changed(event);
+      removals.current.set(messageId, ++removalSequence.current);
+      const previous = cache.current;
+      if (previous)
+        cache.current = {
+          ...previous,
+          page: {
+            ...previous.page,
+            items: previous.page.items.filter((item) => item.id !== messageId)
+          }
+        };
+      // The provider removes this one confirmed item from every cached filter.
+      // Keep other cards/cursors and invalidate only actions for this message.
+      setRevision((value) => value + 1);
     }
     function reconnect() {
       invalidate();
@@ -96,6 +126,8 @@ export default function useSharedMedia(query: SharedMediaQuery) {
       void read(false);
     }
     for (const name of sharedMediaInvalidationEvents) socket.on(name, changed);
+    for (const name of sharedMediaRemovalEvents) socket.on(name, removed);
+    socket.on('chat_attachment_thumbnail_updated', thumbnailChanged);
     socket.on('new_message_received', received);
     socket.on('connect', reconnect);
     window.addEventListener('focus', focus);
@@ -107,6 +139,8 @@ export default function useSharedMedia(query: SharedMediaQuery) {
       clearTimeout(refreshTimer.current);
       refreshTimer.current = undefined;
       for (const name of sharedMediaInvalidationEvents) socket.off(name, changed);
+      for (const name of sharedMediaRemovalEvents) socket.off(name, removed);
+      socket.off('chat_attachment_thumbnail_updated', thumbnailChanged);
       socket.off('new_message_received', received);
       socket.off('connect', reconnect);
       window.removeEventListener('focus', focus);
@@ -135,7 +169,8 @@ export default function useSharedMedia(query: SharedMediaQuery) {
     ...(state.key === key ? state : { key, loading: !cached, error: '' }),
     page: cached?.page || emptyPage,
     revision,
-    getVersion: () => visibilityVersion.current,
+    getVersion: (item: SharedAttachment) =>
+      `${visibilityVersion.current}:${removals.current.get(item.id) || 0}`,
     refresh,
     loadMore: () => read(true)
   };
@@ -151,13 +186,14 @@ export default function useSharedMedia(query: SharedMediaQuery) {
   async function read(append: boolean) {
     if (busy.current || (append && !cache.current?.page.nextCursor)) return;
     const version = ++request.current;
+    const removedBeforeRead = removalSequence.current;
     busy.current = true;
     if (!append) lastAttempt.current = Date.now();
     // A confirmed page, including an empty one, stays settled during a head
     // recheck. Show loading only for a first page or requested older results.
     setState({ key, loading: append || !cache.current, error: '' });
     try {
-      const page: SharedMediaPage = await load({
+      const response: SharedMediaPage = await load({
         ...query,
         ...(append ? { beforeId: cache.current!.page.nextCursor! } : {})
       });
@@ -167,20 +203,26 @@ export default function useSharedMedia(query: SharedMediaQuery) {
         request.current !== version
       )
         return;
+      // A response already in flight when deletion arrived can still contain
+      // that item. A later canonical read may legitimately restore an undo.
+      const page = {
+        ...response,
+        items: response.items.filter(
+          (item) => (removals.current.get(item.id) || 0) <= removedBeforeRead
+        )
+      };
       const previous = cache.current;
-      if (
-        previous &&
-        !append &&
-        previous.page.items.some(
+      if (previous && !append) {
+        const missing = previous.page.items.filter(
           (item) =>
             (!page.nextCursor || item.id >= page.nextCursor) &&
             !page.items.some((fresh) => fresh.id === item.id)
-        )
-      ) {
+        );
         // A foreground check may discover a removal whose socket event was
-        // missed. Do not leave an old preview or pending detail action alive.
-        visibilityVersion.current++;
-        setRevision((value) => value + 1);
+        // missed. Close that item's preview, preserving unrelated previews.
+        for (const item of missing)
+          removals.current.set(item.id, ++removalSequence.current);
+        if (missing.length) setRevision((value) => value + 1);
       }
       const entry: SharedMediaCacheEntry = {
         channelId: query.channelId,

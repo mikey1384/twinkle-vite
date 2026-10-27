@@ -34,11 +34,11 @@ export interface SharedMediaCacheEntry {
 export type SharedMediaCache = Record<string, SharedMediaCacheEntry>;
 
 export const sharedMediaInvalidationEvents = [
-  'chat_message_deleted',
-  'hide_message_attachment',
-  'chat_message_edited',
-  'chat_attachment_thumbnail_updated',
   'human_topic_state_changed'
+];
+export const sharedMediaRemovalEvents = [
+  'chat_message_deleted',
+  'message_attachment_hid'
 ];
 
 export function sharedMediaEventChannel(event: any) {
@@ -61,6 +61,28 @@ export function invalidateSharedMediaCache(
           ? [[key, { ...entry, checkedAt: 0 }]]
           : []
     )
+  );
+}
+
+export function removeSharedMediaMessage(
+  cache: SharedMediaCache,
+  channelId: number,
+  messageId: number
+): SharedMediaCache {
+  return Object.fromEntries(
+    Object.entries(cache).map(([key, entry]) => [
+      key,
+      entry.channelId === channelId &&
+      entry.page.items.some((item) => item.id === messageId)
+        ? {
+            ...entry,
+            page: {
+              ...entry.page,
+              items: entry.page.items.filter((item) => item.id !== messageId)
+            }
+          }
+        : entry
+    ])
   );
 }
 

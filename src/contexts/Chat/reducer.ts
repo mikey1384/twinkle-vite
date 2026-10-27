@@ -1,5 +1,8 @@
 import { applyUserActivityEvent } from '~/helpers/userActivity';
-import { invalidateSharedMediaCache } from '~/helpers/chatSharedMedia';
+import {
+  invalidateSharedMediaCache,
+  removeSharedMediaMessage
+} from '~/helpers/chatSharedMedia';
 import { clearDeletedReplyTargets } from '~/helpers/chatReplyTargetDeletion';
 import { initialChatState } from '.';
 import {
@@ -1769,6 +1772,15 @@ export default function ChatReducer(
         ])
       };
     }
+    case 'REMOVE_CHAT_SHARED_MEDIA_MESSAGE':
+      return {
+        ...state,
+        sharedMediaByKey: removeSharedMediaMessage(
+          state.sharedMediaByKey || {},
+          action.channelId,
+          action.messageId
+        )
+      };
     case 'INVALIDATE_CHAT_SHARED_MEDIA':
       return {
         ...state,

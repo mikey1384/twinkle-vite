@@ -93,7 +93,7 @@ test('a confirmed empty chat stays settled during a background head check', { ti
     const { page, errors } = await prepare(browser);
     await page.evaluate(() => {
       window.rows = [];
-      window.emit('hide_message_attachment', { channelId: 11, messageId: 100 });
+      window.emit('connect');
     });
     const panel = page.getByRole('region', { name: 'Shared in this chat' });
     await panel.getByRole('button', { name: 'Photos & files', exact: true }).waitFor();
@@ -204,15 +204,15 @@ test('inactive caches receive uploads and deletions and never cross accounts', {
     await gallery(page).waitFor({ state: 'detached' });
     await page.evaluate(() => {
       window.deleted.add(100);
-      window.emit('hide_message_attachment', { channelId: 11, messageId: 100 });
-      window.deferLoads = true;
+      window.emit('message_attachment_hid', { channelId: 11, messageId: 100 });
       window.changeChannel(11);
     });
-    await page.waitForFunction(() => window.pendingReads.length === 1);
-    assert.equal(await page.getByRole('button', { name: /^Open Mountain study/ }).count(), 0, 'hidden attachments cannot flash from an inactive cache');
-    await page.evaluate(() => { window.pendingReads.shift()(); window.deferLoads = false; });
     await openGallery(page);
-    assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), 24);
+    assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), 23);
+    await gallery(page).getByRole('button', { name: /^Open Mountain study/ }).first().click();
+    await page.getByRole('button', { name: 'Show in chat', exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => window.itemInput.messageId), 94, 'the deleted first Mountain attachment must not return from an inactive cache');
+    await page.getByRole('button', { name: 'Close modal', exact: true }).last().click();
     await page.evaluate(() => window.changeChannel(12));
     await gallery(page).waitFor({ state: 'detached' });
     await page.evaluate(() => {
@@ -554,14 +554,14 @@ test(
       await page.waitForFunction(() => window.pendingItems.length === 1);
       await page.evaluate(() => {
         window.deleted.add(100);
-        window.emit('hide_message_attachment', {
+        window.emit('message_attachment_hid', {
           channelId: 11,
           messageId: 100
         });
         window.pendingItems.shift()();
         window.deferItem = false;
       });
-      await page.waitForFunction(() => window.requestsLog.length >= 2);
+      await page.waitForTimeout(50);
       assert.equal(
         await page
           .getByRole('button', { name: 'Show in chat', exact: true })
@@ -668,3 +668,81 @@ test(
     }
   }
 );
+
+for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
+  test(`deletions retain unrelated cards and previews without reloading (${engineName})`, { timeout: 30000 }, async () => {
+    html ||= await sharedMediaFixture();
+    const browser = await engine.launch();
+    try {
+      const { page, errors } = await prepare(browser, engineName === 'webkit' ? 360 : 1280);
+      await openGallery(page);
+      await gallery(page).getByRole('button', { name: /^Open Mountain study/ }).first().click();
+      const preview = page.getByRole('button', { name: 'Show in chat', exact: true });
+      await preview.waitFor();
+      const before = await page.evaluate(() => window.requestsLog.length);
+      const count = await gallery(page).getByRole('button', { name: /^Open / }).count();
+      await page.evaluate(() => {
+        window.deferLoads = true;
+        window.emit('chat_message_deleted', { channelId: 11, messageId: 9999 });
+        window.emit('chat_message_edited', { channelId: 11, messageId: 9998, editedMessage: 'Updated text' });
+      });
+      await page.waitForTimeout(250);
+      assert.equal(await page.evaluate(() => window.requestsLog.length), before, 'plain-message edits/deletions do not reload attachments');
+      assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), count);
+      assert.equal(await preview.isVisible(), true);
+      await page.evaluate(() => {
+        window.deleted.add(99);
+        window.emit('chat_message_deleted', { channelId: 11, messageId: 99 });
+      });
+      await page.waitForTimeout(250);
+      assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), count - 1, 'only the deleted attachment disappears');
+      assert.equal(await preview.isVisible(), true, 'deleting another attachment keeps this preview open');
+      assert.equal(await page.evaluate(() => window.requestsLog.length), before, 'canonical deletion needs no replacement list request');
+      assert.equal(await page.getByText('Loading…', { exact: true }).count(), 0);
+      assert.equal(await gallery(page).getByText('Loading attachments…', { exact: true }).count(), 0);
+      await page.evaluate(() => {
+        window.deleted.add(100);
+        window.emit('message_attachment_hid', { channelId: 11, messageId: 100 });
+      });
+      await preview.waitFor({ state: 'detached' });
+      assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), count - 2);
+      assert.equal(await page.evaluate(() => window.requestsLog.length), before);
+      assert.deepEqual(errors, []);
+    } finally { await browser.close(); }
+  });
+}
+
+test('deletion fences old list/detail responses and permits a later canonical undo', { timeout: 30000 }, async () => {
+  html ||= await sharedMediaFixture();
+  const browser = await chromium.launch();
+  try {
+    const { page, errors } = await prepare(browser);
+    await openGallery(page);
+    await page.clock.setFixedTime(new Date(Date.now() + 120_000));
+    await page.evaluate(() => {
+      window.deferLoads = true; window.deferItem = true;
+      window.dispatchEvent(new Event('focus'));
+    });
+    await page.waitForFunction(() => window.pendingReads.length === 1);
+    await gallery(page).getByRole('button', { name: /^Open Mountain study/ }).first().click();
+    await page.waitForFunction(() => window.pendingItems.length === 1);
+    await page.evaluate(() => {
+      window.deleted.add(100);
+      window.emit('message_attachment_hid', { channelId: 11, messageId: 100 });
+      window.pendingReads.shift()(); window.pendingItems.shift()();
+      window.deferLoads = false; window.deferItem = false;
+    });
+    await page.waitForTimeout(100);
+    assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), 23);
+    assert.equal(await page.getByRole('button', { name: 'Show in chat', exact: true }).count(), 0);
+    await page.clock.setFixedTime(new Date(Date.now() + 240_000));
+    await page.evaluate(() => { window.deleted.delete(100); window.dispatchEvent(new Event('focus')); });
+    await page.waitForFunction(() => window.requestsLog.length >= 3);
+    assert.equal(await gallery(page).getByRole('button', { name: /^Open / }).count(), 24, 'a canonical read after undo may restore the attachment');
+    await gallery(page).getByRole('button', { name: /^Open Mountain study/ }).first().click();
+    await page.getByRole('button', { name: 'Show in chat', exact: true }).waitFor();
+    await page.evaluate(() => { window.deleted.add(100); window.emit('chat_message_deleted', { channelId: 11, messageId: 100 }); });
+    await page.getByRole('button', { name: 'Show in chat', exact: true }).waitFor({ state: 'detached' });
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); }
+});
