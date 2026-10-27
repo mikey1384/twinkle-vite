@@ -9,6 +9,7 @@ import { BOSSES } from './bosses';
 import League from './League';
 import Records from './Records';
 import CoverPage from './CoverPage';
+import ExamScope from './ExamScope';
 import RewardOffer from './RewardOffer';
 import Rising from './Rising';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
@@ -220,6 +221,7 @@ export default function Battles({
                     <strong>
                       {exam.name}{exam.nameEn !== exam.name && <> <small>{exam.nameEn}</small></>}
                     </strong>
+                    <ExamScope examKey={exam.key} />
                     <div
                       className={modesCls}
                       role="radiogroup"

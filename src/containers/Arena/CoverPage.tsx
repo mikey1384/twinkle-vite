@@ -4,6 +4,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import ArenaButton from './ArenaButton';
 import RewardOffer from './RewardOffer';
 import ComponentSchedule from './ComponentSchedule';
+import ExamScope from './ExamScope';
 import { useAppContext } from '~/contexts';
 import { ARENA } from './theme';
 import type { ArenaBattlePreview, ArenaDifficulty, ArenaExamSummary, ArenaRewardOffer } from './types';
@@ -195,6 +196,7 @@ export default function CoverPage({
           {LENGTH[length]} · {MODE[difficulty] || MODE.normal}
           {spec ? ` · ${spec.items}문항 · ${spec.minutes}분` : ''}
         </p>
+        <ExamScope examKey={exam.key} />
 
         {suneung && (
           <div className={phraseBoxCls}>
