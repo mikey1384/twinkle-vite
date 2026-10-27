@@ -795,7 +795,7 @@ export default function MarbleRunScreen({
                     {/* just the grammar point: the level shows what a right answer does */}
                     {boss
                       ? question.counter
-                        ? `Counter · one try · ${question.skillName}`
+                        ? `Counter · one try · ${question.skillLabel || question.skillName}`
                         : [
                             (engine as BossFight).attackName(question.attack),
                             `Hit ${Math.min(
@@ -804,7 +804,7 @@ export default function MarbleRunScreen({
                                 .filter((q) => !q.counter).length,
                               7
                             )} of 7`,
-                            question.skillName
+                            question.skillLabel || question.skillName
                           ]
                             .filter(Boolean)
                             .join(' · ')
@@ -813,7 +813,7 @@ export default function MarbleRunScreen({
                             ? FORMAT_INFO[question.format].name
                             : null,
                           question.retryOf != null ? 'Again' : null,
-                          question.skillName
+                          question.skillLabel || question.skillName
                         ]
                           .filter(Boolean)
                           .join(' · ')}
@@ -827,6 +827,11 @@ export default function MarbleRunScreen({
                   {question.format && question.format !== 'blank' && (
                     <div className={cx(howCls, boss && bossHowCls)}>
                       <GotchaText text={FORMAT_INFO[question.format].how} />
+                    </div>
+                  )}
+                  {question.instruction && (
+                    <div className={instructionCls}>
+                      {question.instruction}
                     </div>
                   )}
                   {boss &&
@@ -1601,6 +1606,13 @@ const readyCls = css`
   }
 `;
 // what to do at this obstacle, in one line
+const instructionCls = css`
+  margin: 0.6rem 0 0.8rem;
+  font-size: max(1.4rem, calc(14 * var(--px)));
+  line-height: 1.45;
+  color: #373141;
+`;
+
 const howCls = css`
   margin-top: 0.2rem;
   font-size: 1.3rem;

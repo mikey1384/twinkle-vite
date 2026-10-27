@@ -74,6 +74,9 @@ export interface QuestQuestion {
   manualSubmit?: boolean;
   skill: string;
   skillName: string;
+  skillLabel?: string;
+  // Fixed task context; never one of the words to tap or pieces to move.
+  instruction?: string | null;
   retryOf?: number; // practice: a missed question asked again
   baseTimeMs?: number; // boss: this question's time limit
   graceMs?: number; // boss: its reading allowance, inside the limit, not graded
