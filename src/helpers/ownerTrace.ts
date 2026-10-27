@@ -11,7 +11,10 @@ import { createFrameAttribution } from '~/helpers/ownerTraceFrameAttribution';
 import {
   buildPageLoadTiming,
   createNavTimingTracker,
+  createRequestLifecycleTracker,
   createStallMonitor,
+  describeRequestLifecycle,
+  describeRequestResourceTiming,
   describeSlowRequest,
   redactRequestPath,
   type NavTimingGateReport
@@ -108,6 +111,10 @@ const wakeProfiler = createWakeProfiler({
 // a cold load starts disconnected; connect/disconnect events keep it current
 let lastSocketConnected = false;
 let hiddenAt: number | null = null;
+const requestLifecycle = createRequestLifecycleTracker({
+  getVisibility: () =>
+    typeof document === 'undefined' ? undefined : document.visibilityState
+});
 
 // Socket.IO transitions (useInitSocket), for the wake window.
 export function noteOwnerSocket(
@@ -174,7 +181,7 @@ export function measureOwnerFeedText<T>(measure: () => T): T {
 }
 
 // Attribute scoped synchronous layout work during the existing owner sample.
-export function measureOwnerLayout<T>(name: 'block-preview' | 'richtext-overflow' | 'feed-truncation', run: () => T): T {
+export function measureOwnerLayout<T>(name: 'block-preview' | 'richtext-overflow' | 'feed-truncation' | 'lazy-placeholder', run: () => T): T {
   if (!frameAttribution.isActive()) return run();
   const at = performance.now();
   try { return run(); } finally { frameAttribution.noteLayout(name, performance.now() - at); }
@@ -256,8 +263,11 @@ export function traceOwnerRequest<T, R>(
       pattern,
       `${method} ${config.url || ''} ${stableParams(config.params)}`
     );
-  const startedAt = Date.now();
+  const started = requestLifecycle.snapshot();
+  const startedPerformanceAt = typeof performance === 'undefined' ? null : performance.now();
   let queuedMs = 0;
+  let httpAndParseMs = 0;
+  let timedAttempts = 0;
   let attempts = 0;
   const originalTiming = config.meta?.onAttemptTiming;
   const traced: ExtendedAxiosRequestConfig<T> = {
@@ -267,33 +277,68 @@ export function traceOwnerRequest<T, R>(
       onAttemptTiming(timing: RequestAttemptTiming) {
         attempts = Math.max(attempts, timing.attempt + 1);
         queuedMs += (timing.preQueueDelayMs || 0) + (timing.queueWaitMs || 0);
+        if (Number.isFinite(timing.httpAndParseMs) && timing.httpAndParseMs >= 0) {
+          httpAndParseMs += timing.httpAndParseMs;
+          timedAttempts++;
+        }
         originalTiming?.(timing);
       }
     }
   };
   const promise = send(traced);
-  const finish = (status: number | string | undefined) => {
+  const finish = (status: number | string | undefined, request?: { responseURL?: unknown }) => {
     wakeProfiler.noteRequestDone(pattern);
+    const ended = requestLifecycle.snapshot();
+    const finishedPerformanceAt = typeof performance === 'undefined' ? null : performance.now();
     const data = describeSlowRequest({
       method: config.method,
       url: config.url,
       status,
-      ms: Date.now() - startedAt,
+      ms: ended.at - started.at,
       queuedMs,
       attempts
     });
-    if (data) recordOwnerTrace('slow-request', data);
+    if (data) {
+      data.lifecycle = describeRequestLifecycle(started, ended,
+        startedPerformanceAt !== null && finishedPerformanceAt !== null
+          ? finishedPerformanceAt - startedPerformanceAt : undefined);
+      if (timedAttempts) {
+        // Includes browser suspension/callback/parse time; it is not server time.
+        data.attemptTiming = { count: timedAttempts, httpAndParseMs: Math.round(httpAndParseMs) };
+      }
+      data.resource = requestResourceTiming(request?.responseURL, startedPerformanceAt, finishedPerformanceAt);
+      recordOwnerTrace('slow-request', data);
+    }
   };
   promise.then(
     (response) =>
-      finish(Number((response as { status?: unknown })?.status) || undefined),
+      finish(Number((response as { status?: unknown })?.status) || undefined,
+        (response as { request?: { responseURL?: unknown } })?.request),
     (error) =>
       finish(
         Number(error?.response?.status) ||
-          String(error?.code || error?.message || 'error').slice(0, 40)
+          String(error?.code || error?.message || 'error').slice(0, 40),
+        error?.request
       )
   );
   return promise;
+}
+
+function requestResourceTiming(responseUrl: unknown, startedAt: number | null, finishedAt: number | null) {
+  if (typeof responseUrl !== 'string' || !responseUrl) {
+    return { state: 'unavailable', reason: 'response_url_missing' };
+  }
+  if (startedAt === null || finishedAt === null || typeof performance === 'undefined' || typeof performance.getEntriesByName !== 'function') {
+    return { state: 'unavailable', reason: 'timing_api_missing' };
+  }
+  try {
+    return describeRequestResourceTiming({
+      responseUrl, startedAt, finishedAt,
+      entries: performance.getEntriesByName(responseUrl, 'resource') as PerformanceResourceTiming[]
+    });
+  } catch {
+    return { state: 'unavailable', reason: 'timing_read_failed' };
+  }
 }
 
 // Params as text with keys sorted at every depth, so the same request built
@@ -416,6 +461,7 @@ function getSessionHeader(): Record<string, unknown> {
       scrollPerf: 1,
       viewportTrace: 1,
       viewportDetail: 2,
+      requestTiming: 1,
       vw: window.innerWidth,
       vh: window.innerHeight,
       vvh: Math.round(window.visualViewport?.height || 0),
@@ -443,6 +489,7 @@ let listenersInstalled = false;
 function installOwnerTraceListeners() {
   if (listenersInstalled || typeof window === 'undefined') return;
   listenersInstalled = true;
+  requestLifecycle.snapshot();
   installOwnerViewportTrace({
     isActive: () => recorder.isActive(),
     record: (data) => recordOwnerTrace('wake-viewport', data),
@@ -496,6 +543,7 @@ function installOwnerTraceListeners() {
     }
   );
   window.addEventListener('pagehide', (event: PageTransitionEvent) => {
+    requestLifecycle.pageHidden();
     wakeProfiler.stop('pagehide');
     scrollPerfMonitor.stop('pagehide');
     navTiming.flush();
@@ -503,7 +551,9 @@ function installOwnerTraceListeners() {
     recordOwnerTrace('pagehide', { persisted: event.persisted });
     recorder.flush({ unloading: true });
   });
+  window.addEventListener('pageshow', () => requestLifecycle.pageShown());
   document.addEventListener('visibilitychange', () => {
+    requestLifecycle.visibilityChanged();
     if (document.visibilityState === 'hidden') {
       hiddenAt = Date.now();
       wakeProfiler.stop('hidden');

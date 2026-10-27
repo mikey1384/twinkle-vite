@@ -354,9 +354,11 @@ test('named layout work is bounded to the active frame and clears between sample
   collector.begin();
   collector.noteLayout('block-preview', 12.4);
   collector.noteLayout('block-preview', 3.1);
+  collector.noteLayout('lazy-placeholder', 46.2);
   collector.frame(80, 100);
   const frame = collector.end(0)!.frames[0];
   assert.deepEqual(frame.layoutWork['block-preview'], { calls: 2, ms: 16, maxMs: 12 });
+  assert.deepEqual(frame.layoutWork['lazy-placeholder'], { calls: 1, ms: 46, maxMs: 46 });
   collector.begin();collector.frame(80, 200);
   assert.deepEqual(collector.end(100)!.frames[0].layoutWork, {});
 });

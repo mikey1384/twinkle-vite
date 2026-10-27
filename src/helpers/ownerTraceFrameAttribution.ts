@@ -254,7 +254,7 @@ export function createFrameAttribution({
 
   return { begin, frame, end, noteRender, noteMount, noteTextMeasure, noteLayout, isActive: () => active };
 
-  function noteLayout(name: 'block-preview' | 'richtext-overflow' | 'feed-truncation', ms: number) {
+  function noteLayout(name: 'block-preview' | 'richtext-overflow' | 'feed-truncation' | 'lazy-placeholder', ms: number) {
     if (!active || !Number.isFinite(ms) || ms < 0) return;
     const item = layoutWork[name] ||= { calls: 0, ms: 0, maxMs: 0 };
     item.calls++; item.ms += ms; item.maxMs = Math.max(item.maxMs, ms);

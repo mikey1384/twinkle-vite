@@ -2577,28 +2577,34 @@ export default function buildRequestHelpers({
       buildId,
       state,
       questions,
+      runtimeRelease,
       appMcpInvocation
     }: {
       buildId: number;
       state: unknown;
       questions: Record<string, unknown>;
+      runtimeRelease?: { source: 'published' | 'workspace'; artifactVersionId: number | null };
       appMcpInvocation?: BuildAppMcpInvocationContext;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/runtime-ai-decision`,
-          { state, questions, ...appMcpInvocation },
+          { state, questions, runtimeRelease, ...appMcpInvocation },
           auth()
         );
         return data;
       } catch (error: any) {
         const response = error?.response;
-        if (response?.data?.code || response?.data?.aiUsagePolicy) {
+        if (response?.data?.code || response?.data?.aiUsagePolicy || response?.data?.requestId) {
           return Promise.reject({
             status: response.status,
             message:
               response.data.error || response.data.message || 'Decision failed',
             code: response.data.code,
+            ...(typeof response.data.requestId === 'string' &&
+              /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(response.data.requestId)
+              ? { requestId: response.data.requestId }
+              : {}),
             aiUsagePolicy: response.data.aiUsagePolicy
           });
         }

@@ -39,6 +39,7 @@ import {
   hasRejectedAuthSessionMarker
 } from '~/helpers/userDataHelpers';
 import { getVisibleCachedIdentity } from '~/helpers/sessionInterruption';
+import { measureOwnerLayout } from '~/helpers/ownerTrace';
 import { throttle } from '~/helpers';
 import {
   eventTargetsPopupDismissNavigationFeedCard,
@@ -268,7 +269,7 @@ export function useLazyLoad({
     let observedElement: Element | null = null;
     const handleResize = throttle((entries: ResizeObserverEntry[]) => {
       if (entries.length > 0) {
-        const clientHeight = entries[0].target.clientHeight;
+        const clientHeight = measureOwnerLayout('lazy-placeholder', () => entries[0].target.clientHeight);
         onSetPlaceholderHeightRef.current?.(clientHeight);
       }
     }, 100);
@@ -290,7 +291,9 @@ export function useLazyLoad({
         }
         observedElement = panelElement;
         resizeObserver.observe(panelElement);
-        onSetPlaceholderHeightRef.current?.(panelElement.clientHeight);
+        onSetPlaceholderHeightRef.current?.(
+          measureOwnerLayout('lazy-placeholder', () => panelElement.clientHeight)
+        );
         return;
       }
       if (!panelElement) {

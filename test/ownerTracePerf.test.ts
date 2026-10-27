@@ -3,10 +3,107 @@ import assert from 'node:assert/strict';
 import {
   buildPageLoadTiming,
   createNavTimingTracker,
+  createRequestLifecycleTracker,
   createStallMonitor,
+  describeRequestLifecycle,
+  describeRequestResourceTiming,
   describeSlowRequest,
   redactRequestPath
 } from '../src/helpers/ownerTracePerf';
+
+test('request lifecycle: initially hidden restore separates 242 seconds from foreground time', () => {
+  let at = 1000;
+  let visibility = 'hidden';
+  const tracker = createRequestLifecycleTracker({ now: () => at, getVisibility: () => visibility });
+  const start = tracker.snapshot();
+  at += 242000;
+  visibility = 'visible';
+  tracker.visibilityChanged();
+  at += 240;
+  const result = describeRequestLifecycle(start, tracker.snapshot(), 242240);
+  assert.deepEqual(result, {
+    v: 1, start: 'hidden', end: 'visible', hiddenMs: 242000,
+    foregroundElapsedMs: 240, transitions: 1, pageHides: 0, pageShows: 0,
+    monotonicMs: 242240
+  });
+});
+
+test('request lifecycle: overlapping requests use independent snapshots and ignore duplicate transitions', () => {
+  let at = 0;
+  let visibility = 'visible';
+  const tracker = createRequestLifecycleTracker({ now: () => at, getVisibility: () => visibility });
+  const first = tracker.snapshot();
+  at = 100; visibility = 'hidden'; tracker.visibilityChanged();
+  at = 150; tracker.visibilityChanged();
+  at = 200; const second = tracker.snapshot();
+  at = 500; visibility = 'visible'; tracker.visibilityChanged();
+  at = 700; const end = tracker.snapshot();
+  assert.equal(describeRequestLifecycle(first, end).hiddenMs, 400);
+  assert.equal(describeRequestLifecycle(first, end).transitions, 2);
+  assert.equal(describeRequestLifecycle(second, end).hiddenMs, 300);
+  assert.equal(describeRequestLifecycle(second, end).foregroundElapsedMs, 200);
+});
+
+test('request lifecycle: pagehide/pageshow accounts for BFCache without a visibility callback', () => {
+  let at = 0;
+  const tracker = createRequestLifecycleTracker({ now: () => at, getVisibility: () => 'visible' });
+  const start = tracker.snapshot();
+  at = 100; tracker.pageHidden();
+  at = 600; tracker.pageShown();
+  at = 650;
+  const result = describeRequestLifecycle(start, tracker.snapshot());
+  assert.equal(result.hiddenMs, 500);
+  assert.equal(result.foregroundElapsedMs, 150);
+  assert.equal(result.pageHides, 1);
+  assert.equal(result.pageShows, 1);
+});
+
+test('request lifecycle: unavailable state and clock rollback never invent negative elapsed time', () => {
+  let at = 100;
+  const tracker = createRequestLifecycleTracker({ now: () => at, getVisibility: () => undefined });
+  const start = tracker.snapshot();
+  at = 50;
+  const result = describeRequestLifecycle(start, tracker.snapshot(), 90);
+  assert.equal(result.start, 'unknown');
+  assert.equal(result.hiddenMs, 0);
+  assert.equal(result.foregroundElapsedMs, 0);
+  assert.equal(result.monotonicMs, 90);
+});
+
+const responseUrl = 'https://api.example.com/content?search=private-text';
+function resource(overrides: Record<string, unknown> = {}) {
+  return { name: responseUrl, initiatorType: 'xmlhttprequest', startTime: 110,
+    requestStart: 120, responseStart: 180, responseEnd: 200, ...overrides };
+}
+
+test('request resource: completed network then delayed callback is distinct from server latency', () => {
+  const result = describeRequestResourceTiming({ responseUrl, startedAt: 100, finishedAt: 242200, entries: [resource()] });
+  assert.deepEqual(result, { state: 'observed', detail: 'available', durationMs: 90,
+    callbackAfterResponseMs: 242000, requestToHeadersMs: 60 });
+  assert.equal(JSON.stringify(result).includes('private-text'), false);
+});
+
+test('request resource: opaque cross-origin timing still separates response end without inventing server time', () => {
+  assert.deepEqual(describeRequestResourceTiming({ responseUrl, startedAt: 100, finishedAt: 250,
+    entries: [resource({ requestStart: 0, responseStart: 0 })] }), {
+    state: 'observed', detail: 'opaque', durationMs: 90, callbackAfterResponseMs: 50
+  });
+});
+
+test('request resource: retries and concurrent identical requests remain explicitly ambiguous', () => {
+  assert.deepEqual(describeRequestResourceTiming({ responseUrl, startedAt: 100, finishedAt: 400,
+    entries: [resource(), resource({ startTime: 250, responseEnd: 300 })] }), {
+    state: 'ambiguous', matches: 2
+  });
+});
+
+test('request resource: unrelated, old, incomplete and future entries cannot be attributed to a request', () => {
+  const entries = [resource({ name: `${responseUrl}&other=1` }), resource({ startTime: 20 }),
+    resource({ responseEnd: 0 }), resource({ responseEnd: 500 }), resource({ initiatorType: 'img' })];
+  assert.deepEqual(describeRequestResourceTiming({ responseUrl, startedAt: 100, finishedAt: 400, entries }), {
+    state: 'unavailable', reason: 'no_matching_entry'
+  });
+});
 
 function fakeTimers() {
   const timers: { callback: () => void; ms: number; cleared: boolean }[] = [];

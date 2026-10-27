@@ -203,6 +203,137 @@ export function pathnameOnly(path: string) {
 export const SLOW_REQUEST_THRESHOLD_MS = 1000;
 const MAX_REQUEST_PATH_CHARS = 160;
 
+type Visibility = 'visible' | 'hidden' | 'unknown';
+export interface RequestLifecycleSnapshot {
+  at: number;
+  visibility: Visibility;
+  hiddenMs: number;
+  transitions: number;
+  pageHides: number;
+  pageShows: number;
+}
+
+// Shared owner-only counters, with no timer or request-sized listener set.
+// Snapshot the initial state as well: an iOS restored page can start requests
+// while hidden, before the first visibilitychange listener ever runs.
+export function createRequestLifecycleTracker({
+  getVisibility,
+  now = () => Date.now()
+}: {
+  getVisibility: () => string | undefined;
+  now?: () => number;
+}) {
+  let visibility: Visibility = 'unknown';
+  let sampledAt: number | null = null;
+  let hiddenMs = 0;
+  let pageAway = false;
+  let transitions = 0;
+  let pageHides = 0;
+  let pageShows = 0;
+
+  function sample() {
+    const at = now();
+    if (sampledAt !== null && (visibility === 'hidden' || pageAway)) {
+      hiddenMs += Math.max(0, at - sampledAt);
+    }
+    const value = getVisibility();
+    const next: Visibility = value === 'visible' || value === 'hidden' ? value : 'unknown';
+    if (sampledAt !== null && next !== visibility) transitions++;
+    visibility = next;
+    sampledAt = at;
+    return { at, visibility, hiddenMs, transitions, pageHides, pageShows };
+  }
+
+  return {
+    snapshot: sample,
+    visibilityChanged: sample,
+    pageHidden() {
+      sample();
+      pageAway = true;
+      pageHides++;
+    },
+    pageShown() {
+      sample();
+      pageAway = false;
+      pageShows++;
+    }
+  };
+}
+
+export function describeRequestLifecycle(
+  start: RequestLifecycleSnapshot,
+  end: RequestLifecycleSnapshot,
+  monotonicMs?: number
+) {
+  const wallMs = Math.max(0, end.at - start.at);
+  const hiddenMs = Math.min(wallMs, Math.max(0, end.hiddenMs - start.hiddenMs));
+  return {
+    v: 1,
+    start: start.visibility,
+    end: end.visibility,
+    hiddenMs: Math.round(hiddenMs),
+    // This is elapsed time outside observed hidden periods, NOT API or CPU time.
+    foregroundElapsedMs: Math.round(wallMs - hiddenMs),
+    transitions: Math.max(0, end.transitions - start.transitions),
+    pageHides: Math.max(0, end.pageHides - start.pageHides),
+    pageShows: Math.max(0, end.pageShows - start.pageShows),
+    ...(typeof monotonicMs === 'number' && Number.isFinite(monotonicMs)
+      ? { monotonicMs: Math.max(0, Math.round(monotonicMs)) }
+      : {})
+  };
+}
+
+interface RequestResourceTiming {
+  name: string;
+  initiatorType: string;
+  startTime: number;
+  responseEnd: number;
+  requestStart?: number;
+  responseStart?: number;
+}
+
+// The full response URL is matched in memory only. Never put it, its query, or
+// response headers into a trace. Concurrent identical requests/retries are
+// deliberately ambiguous instead of attributing a neighbour's fast response.
+export function describeRequestResourceTiming({
+  responseUrl,
+  startedAt,
+  finishedAt,
+  entries
+}: {
+  responseUrl: string;
+  startedAt: number;
+  finishedAt: number;
+  entries: RequestResourceTiming[];
+}): Record<string, unknown> {
+  const matching = entries.filter((entry) =>
+    entry.name === responseUrl &&
+    ['xmlhttprequest', 'fetch'].includes(entry.initiatorType) &&
+    Number.isFinite(entry.startTime) && Number.isFinite(entry.responseEnd) &&
+    entry.startTime >= startedAt - 2 && entry.startTime <= finishedAt &&
+    entry.responseEnd > 0 && entry.responseEnd >= entry.startTime &&
+    entry.responseEnd <= finishedAt + 2
+  );
+  if (matching.length !== 1) {
+    return matching.length
+      ? { state: 'ambiguous', matches: Math.min(99, matching.length) }
+      : { state: 'unavailable', reason: 'no_matching_entry' };
+  }
+  const entry = matching[0];
+  const detailed = Number(entry.requestStart) > 0 &&
+    Number(entry.responseStart) >= Number(entry.requestStart) &&
+    Number(entry.responseStart) <= entry.responseEnd;
+  return {
+    state: 'observed',
+    detail: detailed ? 'available' : 'opaque',
+    durationMs: Math.round(entry.responseEnd - entry.startTime),
+    callbackAfterResponseMs: Math.max(0, Math.round(finishedAt - entry.responseEnd)),
+    ...(detailed ? {
+      requestToHeadersMs: Math.round(Number(entry.responseStart) - Number(entry.requestStart))
+    } : {})
+  };
+}
+
 // A non-numeric segment right after one of these can be a member's username
 // (/users/<name>, /profile/<name>, /username/<name>), so it is masked. Bare
 // 'user' is not a marker: it is the API namespace (/user/session,

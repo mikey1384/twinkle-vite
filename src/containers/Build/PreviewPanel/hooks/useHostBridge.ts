@@ -2592,6 +2592,12 @@ export function useHostBridge({
               buildId: activeBuild.id,
               state: payload.state,
               questions: payload.questions,
+              runtimeRelease: getAppInfoRelease({
+                runtimeOnly: runtimeOnlyRef.current,
+                previewSrcOverride: previewSrcOverrideRef.current,
+                currentArtifactVersionId: activeBuild.currentArtifactVersionId,
+                publishedArtifactVersionId: activeBuild.publishedArtifactVersionId
+              }),
               appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
             });
             if (
@@ -5705,6 +5711,10 @@ export function useHostBridge({
                   : {}),
                 ...(error.details && typeof error.details === 'object'
                   ? error.details
+                  : {}),
+                ...(type === 'ai:decide' && typeof error.requestId === 'string' &&
+                  /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(error.requestId)
+                  ? { requestId: error.requestId }
                   : {})
               }
             : null;
