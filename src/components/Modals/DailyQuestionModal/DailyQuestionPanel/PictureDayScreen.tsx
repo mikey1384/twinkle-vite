@@ -81,6 +81,7 @@ export default function PictureDayScreen({
   const requestedPath = searchParams.get('picture');
   const openedPathRef = useRef<string | null>(null);
   const appliedJobPathRef = useRef<string | null>(null);
+  const memberSelectedPictureRef = useRef(false);
   const restoredJobRequestRef = useRef<string | null>(null);
   const snapshot = useSyncExternalStore(
     dailyPictureJobs.subscribe,
@@ -129,7 +130,7 @@ export default function PictureDayScreen({
     // member's choice among the pictures they have already made.
     if (job.path && appliedJobPathRef.current !== job.path) {
       appliedJobPathRef.current = job.path;
-      setSelectedPath(job.path);
+      if (!memberSelectedPictureRef.current) setSelectedPath(job.path);
     }
     if (isPending(job) && restoredJobRequestRef.current !== job.requestId) {
       restoredJobRequestRef.current = job.requestId;
@@ -211,7 +212,10 @@ export default function PictureDayScreen({
                           className={thumbCls}
                           aria-pressed={candidate.path === selectedPath}
                           disabled={busy}
-                          onClick={() => setSelectedPath(candidate.path)}
+                          onClick={() => {
+                            memberSelectedPictureRef.current = true;
+                            setSelectedPath(candidate.path);
+                          }}
                         >
                           <img
                             src={`${cloudFrontURL}/${candidate.path}`}
@@ -409,6 +413,7 @@ export default function PictureDayScreen({
   function handleGenerate() {
     const text = prompt.trim();
     if (!text || busy) return;
+    memberSelectedPictureRef.current = false;
     void dailyPictureJobs.start({
       userId: Number(userId),
       questionId,

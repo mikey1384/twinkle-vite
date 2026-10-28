@@ -142,7 +142,8 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
               return route.fulfill({ contentType: 'text/html', body: html });
             if (
               url.includes('/daily-reflection/finished.png') ||
-              url.includes('/daily-reflection/other.png')
+              url.includes('/daily-reflection/other.png') ||
+              url.includes('/daily-reflection/older.png')
             )
               return route.fulfill({
                 contentType: 'image/jpeg',
@@ -310,6 +311,9 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
               window.dispatchEvent(new Event('online'));
             });
             await page.getByRole('button', { name: 'View picture' }).click();
+            await page.waitForFunction(() =>
+              window.where.includes('mode=pictures&picture=')
+            );
             assert.match(
               await page.evaluate(() => window.where),
               /mode=pictures&picture=/
@@ -557,6 +561,70 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
             );
             await page.evaluate(() => window.finish());
             await page.getByRole('button', { name: 'View picture' }).waitFor();
+            assert.deepEqual(errors, []);
+          } finally {
+            await context.close();
+          }
+        }
+
+        // A late recovered result must respect a choice made after the member
+        // returned to the editor during an unknown transport outcome.
+        {
+          const { page, context, errors } = await open();
+          try {
+            await start(page);
+            await page.evaluate(() => {
+              const saved = JSON.parse(
+                localStorage.getItem('daily-picture-jobs:1')
+              );
+              saved.jobs[0].startedAt -= 11 * 60 * 1000;
+              localStorage.setItem(
+                'daily-picture-jobs:1',
+                JSON.stringify(saved)
+              );
+              window.server.picture.candidates = ['other', 'older'].map(
+                (name) => ({
+                  path: 'daily-reflection/' + name + '.png',
+                  prompt: 'Earlier ' + name,
+                  style: '',
+                  quality: 'medium',
+                  paidBy: 'site',
+                  requestId: name
+                })
+              );
+              localStorage.setItem(
+                'fixtureServer',
+                JSON.stringify(window.server)
+              );
+            });
+            await page.reload();
+            await page
+              .getByRole('button', { name: 'Return to editor', exact: true })
+              .click();
+            const chosen = page.getByRole('button', {
+              name: 'Earlier other',
+              exact: true
+            });
+            await chosen.click();
+            await page.evaluate(() => {
+              const previous = window.server.picture.candidates;
+              window.finish({ socket: false, http: false });
+              window.server.picture.candidates.unshift(...previous);
+              window.socketFire('daily_picture_ready', window.server);
+            });
+            await page.getByRole('button', { name: 'View picture' }).waitFor();
+            assert.equal(await chosen.getAttribute('aria-pressed'), 'true');
+            await page
+              .getByRole('button', { name: 'Done', exact: true })
+              .click();
+            assert.equal(
+              await page.evaluate(() => window.submits[0].picturePath),
+              'daily-reflection/other.png'
+            );
+            assert.equal(
+              await page.evaluate(() => localStorage.getItem('fixturePosts')),
+              '1'
+            );
             assert.deepEqual(errors, []);
           } finally {
             await context.close();
