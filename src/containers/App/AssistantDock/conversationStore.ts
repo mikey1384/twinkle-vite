@@ -44,7 +44,107 @@ export const EMPTY_ASSISTANT_REPLY: AssistantReply = {
   error: ''
 };
 
-const replies = new Map<number, AssistantReply>();
+const replies = new Map<string, AssistantReply>();
+const messageTopics = new Map<number, number>();
+const conversationKey = (channelId: number, topicId = 0) =>
+  `${channelId}:${topicId}`;
+export interface ConversationLine {
+  id: number;
+  userId: number;
+  content: string;
+}
+const transcripts = new Map<string, ConversationLine[]>();
+const EMPTY_TRANSCRIPT: ConversationLine[] = [];
+export function getAssistantTranscript(channelId: number, topicId = 0) {
+  return (
+    transcripts.get(conversationKey(channelId, topicId)) || EMPTY_TRANSCRIPT
+  );
+}
+export function resetAssistantConversations() {
+  replies.clear();
+  messageTopics.clear();
+  transcripts.clear();
+  lastHeardAt.clear();
+  listeners.forEach((fn) => fn());
+}
+export function receiveAssistantMessage(message: any) {
+  const channelId = Number(message?.channelId),
+    id = Number(message?.id);
+  if (!channelId || !id) return;
+  const topicId = Number(message.subjectId || 0);
+  // Keep only conversations actually followed by this dock, or canonical
+  // messages from the two companions. Ordinary group messages stay in Chat.
+  const key = conversationKey(channelId, topicId);
+  if (
+    !replies.has(key) &&
+    !transcripts.has(key) &&
+    ![ZERO_TWINKLE_ID, CIEL_TWINKLE_ID]
+      .map(Number)
+      .includes(Number(message.userId))
+  )
+    return;
+  messageTopics.set(id, topicId);
+  if (messageTopics.size > 2000)
+    messageTopics.delete(messageTopics.keys().next().value!);
+  const reply = replies.get(key);
+  if (reply?.done && reply.messageId != null && id > reply.messageId)
+    replies.delete(key);
+  const previous = transcripts.get(key) || [];
+  const line = {
+    id,
+    userId: Number(message.userId),
+    content: String(message.content || '')
+  };
+  transcripts.set(
+    key,
+    [...previous.filter((item) => item.id !== id), line]
+      .sort((a, b) => a.id - b.id)
+      .slice(-30)
+  );
+  listeners.forEach((fn) => fn());
+}
+export function followAssistantConversation(channelId: number, topicId = 0) {
+  const key = conversationKey(channelId, topicId);
+  if (!transcripts.has(key)) transcripts.set(key, []);
+}
+export function seedAssistantTranscript(
+  messages: any[],
+  channelId?: number,
+  topicId = 0,
+  replaceThroughId = 0
+) {
+  const groups = new Map<string, any[]>();
+  if (channelId) groups.set(conversationKey(channelId, topicId), []);
+  for (const message of messages) {
+    const channelId = Number(message.channelId),
+      topicId = Number(message.subjectId || 0);
+    if (!channelId || !Number(message.id)) continue;
+    const key = conversationKey(channelId, topicId);
+    groups.set(key, [...(groups.get(key) || []), message]);
+  }
+  for (const [key, rows] of groups) {
+    const newest = rows.length
+      ? Math.max(replaceThroughId, ...rows.map((row) => Number(row.id)))
+      : replaceThroughId || Infinity;
+    // Replace the confirmed snapshot (including offline deletions), retaining
+    // only events newer than that read if another device spoke meanwhile.
+    transcripts.set(
+      key,
+      (transcripts.get(key) || []).filter((line) => line.id > newest)
+    );
+    for (const message of rows) receiveAssistantMessage(message);
+  }
+  listeners.forEach((fn) => fn());
+}
+
+function updateReplyForMessage(
+  channelId: number,
+  messageId: unknown,
+  next: (current: AssistantReply | null) => AssistantReply | null
+) {
+  setAssistantReply(channelId, next, messageTopics.get(Number(messageId)) || 0);
+}
+
 const listeners = new Set<() => void>();
 
 export function subscribeAssistantReplies(listener: () => void) {
@@ -54,8 +154,8 @@ export function subscribeAssistantReplies(listener: () => void) {
   };
 }
 
-export function getAssistantReply(channelId: number) {
-  return replies.get(channelId) || null;
+export function getAssistantReply(channelId: number, topicId = 0) {
+  return replies.get(conversationKey(channelId, topicId)) || null;
 }
 
 export function setAssistantReply(
@@ -63,13 +163,15 @@ export function setAssistantReply(
   next:
     | AssistantReply
     | null
-    | ((current: AssistantReply | null) => AssistantReply | null)
+    | ((current: AssistantReply | null) => AssistantReply | null),
+  topicId = 0
 ) {
-  const current = replies.get(channelId) || null;
+  const key = conversationKey(channelId, topicId);
+  const current = replies.get(key) || null;
   const value = typeof next === 'function' ? next(current) : next;
   if (value === current) return;
-  if (value) replies.set(channelId, value);
-  else replies.delete(channelId);
+  if (value) replies.set(key, value);
+  else replies.delete(key);
   listeners.forEach((listener) => listener());
 }
 
@@ -99,31 +201,39 @@ function revived(reply: AssistantReply) {
 
 function handleNewMessage({ message, channelId }: any) {
   const id = Number(message?.id);
+  channelId = Number(channelId || message?.channelId);
   if (!channelId || !id) return;
+  const topicId = Number(message?.subjectId || 0);
+  messageTopics.set(id, topicId);
+  receiveAssistantMessage({ ...message, channelId });
   // A message can arrive already written (a Lumine update, say); a reply
   // being made arrives empty and streams in.
   const text = typeof message?.content === 'string' ? message.content : '';
-  setAssistantReply(Number(channelId), (current) => {
-    if (current?.messageId === id) return current;
-    const pending = !!current && !current.done && current.messageId == null;
-    if (pending && !text) return { ...current!, messageId: id };
-    // A finished message never takes the slot of the reply the user is
-    // waiting for.
-    if (pending) return current;
-    return {
-      ...EMPTY_ASSISTANT_REPLY,
-      messageId: id,
-      text,
-      suggestions: readAgentSuggestions(message?.settings),
-      card: isWebsiteAgentCardData(message?.settings?.websiteAgentCard)
-        ? message.settings.websiteAgentCard
-        : null
-    };
-  });
+  setAssistantReply(
+    Number(channelId),
+    (current) => {
+      if (current?.messageId === id) return current;
+      const pending = !!current && !current.done && current.messageId == null;
+      if (pending && !text) return { ...current!, messageId: id };
+      // A finished message never takes the slot of the reply the user is
+      // waiting for.
+      if (pending) return current;
+      return {
+        ...EMPTY_ASSISTANT_REPLY,
+        messageId: id,
+        text,
+        suggestions: readAgentSuggestions(message?.settings),
+        card: isWebsiteAgentCardData(message?.settings?.websiteAgentCard)
+          ? message.settings.websiteAgentCard
+          : null
+      };
+    },
+    topicId
+  );
 }
 
 function handleDelta({ channelId, messageId, delta, startOffset }: any) {
-  setAssistantReply(Number(channelId), (current) =>
+  updateReplyForMessage(Number(channelId), messageId, (current) =>
     isThisReply(current, messageId)
       ? {
           ...revived(current),
@@ -138,7 +248,23 @@ function handleDelta({ channelId, messageId, delta, startOffset }: any) {
 
 function handleEdit({ channelId, messageId, editedMessage, settings }: any) {
   if (typeof editedMessage !== 'string') return;
-  setAssistantReply(Number(channelId), (current) =>
+  const key = conversationKey(
+    Number(channelId),
+    messageTopics.get(Number(messageId)) || 0
+  );
+  const lines = transcripts.get(key);
+  if (lines?.some((line) => line.id === Number(messageId))) {
+    transcripts.set(
+      key,
+      lines.map((line) =>
+        line.id === Number(messageId)
+          ? { ...line, content: editedMessage }
+          : line
+      )
+    );
+    listeners.forEach((fn) => fn());
+  }
+  updateReplyForMessage(Number(channelId), messageId, (current) =>
     // Next-step ideas can arrive a moment after the reply is done.
     current &&
     current.messageId != null &&
@@ -163,7 +289,7 @@ function handleThought({
   isDelta,
   startOffset
 }: any) {
-  setAssistantReply(Number(channelId), (current) =>
+  updateReplyForMessage(Number(channelId), messageId, (current) =>
     isThisReply(current, messageId)
       ? {
           ...revived(current),
@@ -180,7 +306,7 @@ function handleThought({
 }
 
 function handleStatus({ channelId, messageId, status }: any) {
-  setAssistantReply(Number(channelId), (current) =>
+  updateReplyForMessage(Number(channelId), messageId, (current) =>
     isThisReply(current, messageId)
       ? { ...revived(current), status: String(status || '') }
       : current
@@ -188,7 +314,24 @@ function handleStatus({ channelId, messageId, status }: any) {
 }
 
 function handleDone(channelId: unknown, messageId?: unknown) {
-  setAssistantReply(Number(channelId), (current) =>
+  const topicId = messageTopics.get(Number(messageId)) || 0;
+  const current = getAssistantReply(Number(channelId), topicId);
+  if (
+    current?.messageId &&
+    current.text &&
+    (!messageId || current.messageId === Number(messageId))
+  ) {
+    const lines = getAssistantTranscript(Number(channelId), topicId);
+    const original = lines.find((line) => line.id === current.messageId);
+    if (original)
+      receiveAssistantMessage({
+        ...original,
+        content: current.text,
+        channelId: Number(channelId),
+        subjectId: topicId
+      });
+  }
+  updateReplyForMessage(Number(channelId), messageId, (current) =>
     isThisReply(current, messageId)
       ? { ...current, done: true, timedOut: false, status: '' }
       : current
@@ -197,14 +340,20 @@ function handleDone(channelId: unknown, messageId?: unknown) {
 
 // Zero or Ciel answered with a reaction on the user's message instead of
 // words: the reply they were waiting for is that reaction.
-function handleReaction({ channelId, userId, mutation, reaction }: any) {
+function handleReaction({
+  channelId,
+  messageId,
+  userId,
+  mutation,
+  reaction
+}: any) {
   if (mutation !== 'add' || !reaction) return;
   if (
     ![ZERO_TWINKLE_ID, CIEL_TWINKLE_ID].map(Number).includes(Number(userId))
   ) {
     return;
   }
-  setAssistantReply(Number(channelId), (current) =>
+  updateReplyForMessage(Number(channelId), messageId, (current) =>
     current && !current.text && !current.error
       ? {
           ...current,
@@ -224,15 +373,20 @@ const QUIET_REPLY_MS = 6 * 60_000;
 let quietTimer = 0;
 function checkQuietReplies() {
   const now = Date.now();
-  for (const [channelId, reply] of replies) {
+  for (const [key, reply] of replies) {
+    const [channelId, topicId] = key.split(':').map(Number);
     const lastHeard = lastHeardAt.get(channelId) || now;
     if (!reply.done && now - lastHeard > QUIET_REPLY_MS) {
-      setAssistantReply(channelId, {
-        ...reply,
-        done: true,
-        timedOut: true,
-        status: ''
-      });
+      setAssistantReply(
+        channelId,
+        {
+          ...reply,
+          done: true,
+          timedOut: true,
+          status: ''
+        },
+        topicId
+      );
     }
   }
 }
@@ -248,7 +402,30 @@ function heard(handler: (...args: any[]) => void) {
   };
 }
 
+function handleDelete({ channelId, messageId }: any) {
+  const topicId = messageTopics.get(Number(messageId)) || 0;
+  const key = conversationKey(Number(channelId), topicId);
+  const previous = transcripts.get(key);
+  if (previous)
+    transcripts.set(
+      key,
+      previous.filter((line) => line.id !== Number(messageId))
+    );
+  if (
+    getAssistantReply(Number(channelId), topicId)?.messageId ===
+    Number(messageId)
+  )
+    setAssistantReply(Number(channelId), null, topicId);
+  messageTopics.delete(Number(messageId));
+  listeners.forEach((fn) => fn());
+}
+
 const EVENTS: [string, (...args: any[]) => void][] = [
+  ['chat_message_deleted', handleDelete],
+  [
+    'new_message_received',
+    ({ message }: any) => receiveAssistantMessage(message)
+  ],
   ['new_ai_message_received', heard(handleNewMessage)],
   ['ai_message_delta_streamed', heard(handleDelta)],
   ['chat_message_edited', heard(handleEdit)],
@@ -274,7 +451,8 @@ export function attachAssistantConversationListeners() {
 
 // A message the user just sent: its reply starts now, before the server
 // names it.
-export function startAssistantReply(channelId: number) {
+export function startAssistantReply(channelId: number, topicId = 0) {
+  followAssistantConversation(channelId, topicId);
   lastHeardAt.set(channelId, Date.now());
-  setAssistantReply(channelId, { ...EMPTY_ASSISTANT_REPLY });
+  setAssistantReply(channelId, { ...EMPTY_ASSISTANT_REPLY }, topicId);
 }

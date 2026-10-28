@@ -17,7 +17,6 @@ import {
   isCoveredOnScreen
 } from '~/helpers/websiteAgentPage';
 import AssistantFace from '~/components/AssistantFace';
-import AssistantDock from './AssistantDock';
 import { openAssistantDock } from './AssistantDock/dockState';
 import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 
@@ -204,7 +203,6 @@ export default function WebsiteAgentSpotlight() {
     <>
       <SpotlightLayer />
       <PermissionPromptLayer />
-      <AssistantDock />
     </>
   );
 }
@@ -478,7 +476,7 @@ function SpotlightLayer() {
   const hasRect = Boolean(rect);
   const spotIndex = useMemo(
     () =>
-      spotlight && rectRef.current
+      spotlight && hasRect && rectRef.current
         ? chooseCardSpot({
             rect: rectRef.current,
             cardHeight,

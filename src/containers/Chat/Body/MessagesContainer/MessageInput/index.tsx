@@ -4,7 +4,8 @@ import React, {
   useEffect,
   useMemo,
   useRef,
-  useState
+  useState,
+  useSyncExternalStore
 } from 'react';
 import ChessTarget from '../ChessTarget';
 import AiEnergyCard from '~/components/AiEnergyCard';
@@ -15,14 +16,14 @@ import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
 import UploadFileModal from '~/components/Modals/UploadFileModal';
 import AlertModal from '~/components/Modals/AlertModal';
-import { socket } from '~/constants/sockets/api';
+import {
+  aiVoiceSession,
+  submitAiVoiceText,
+  getVoiceDelivery
+} from '~/helpers/aiVoiceCall';
 import { isMobile } from '~/helpers';
 import { stringIsEmpty, finalizeEmoji } from '~/helpers/stringHelpers';
-import {
-  appendRefusedCallMessage,
-  getChatMessageLengthError,
-  isIngressRejectedAck
-} from '~/helpers/chatMessageSend';
+import { getChatMessageLengthError } from '~/helpers/chatMessageSend';
 import {
   mb,
   returnMaxUploadSize,
@@ -214,10 +215,17 @@ export default function MessageInput({
     (v) => v.requestHelpers.purchaseAiEnergyRecharge
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const voiceState = useSyncExternalStore(
+    aiVoiceSession.subscribe,
+    aiVoiceSession.getSnapshot
+  );
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const isAICallOngoing = useMemo(
-    () => aiCallChannelId === selectedChannelId,
-    [aiCallChannelId, selectedChannelId]
+    () =>
+      aiCallChannelId === selectedChannelId ||
+      (voiceState.phase !== 'text' &&
+        voiceState.channelId === selectedChannelId),
+    [aiCallChannelId, selectedChannelId, voiceState.phase, voiceState.channelId]
   );
   const isAIChannel = useMemo(
     () => isZeroChannel || isCielChannel,
@@ -452,9 +460,9 @@ export default function MessageInput({
   const isExceedingCharLimit = !!messageLengthError;
   // A suggestion tap sends text that is not in the box; its length error is
   // shown the same way until the box changes.
-  const [overrideLengthError, setOverrideLengthError] = useState<
-    string | null
-  >(null);
+  const [overrideLengthError, setOverrideLengthError] = useState<string | null>(
+    null
+  );
   useEffect(() => {
     setOverrideLengthError(null);
   }, [inputText, selectedChannelId]);
@@ -495,67 +503,53 @@ export default function MessageInput({
         return;
       }
 
-      if (isAICallOngoing) {
-        // An AI voice call is a Zero/Ciel session — gate it on the aiChat ban
-        // (not banned.chat, which is human chat) before emitting over the socket.
+      const callTopicId = selectedTab === 'topic' ? topicId : 0;
+      const callMessage = finalizeEmoji(messageText);
+      if (
+        (isAIChannel && aiVoiceSession.getSnapshot().phase !== 'text') ||
+        getVoiceDelivery(callMessage, selectedChannelId, callTopicId)
+      ) {
         if (banned?.aiChat) return;
-        if (inputCoolingDown.current) {
-          resetCoolingDown(700);
-          return;
-        }
-
+        if (inputCoolingDown.current) return;
         inputCoolingDown.current = true;
-        const callMessage = finalizeEmoji(messageText);
         const callChannelId = selectedChannelId;
         const callSubchannelId = subchannelId;
-        socket.emit(
-          'ai_call_message_submit',
-          {
-            message: callMessage,
-            topicId: selectedTab === 'topic' ? topicId : undefined,
-            channelId: selectedChannelId
-          },
-          (ack: any) => {
-            // Only a refusal answers this emit (the ingress guard, which then
-            // drops the connection). Give the text back instead of losing it.
-            if (!isIngressRejectedAck(ack)) return;
-            // Never drop text: add the refused message after whatever is in
-            // that chat's box now, in the chat (and subchannel) it was typed in.
-            const stillHere =
-              prevChannelId.current === callChannelId &&
-              prevSubchannelId.current === callSubchannelId;
-            if (stillHere) {
-              handleSetText(
-                appendRefusedCallMessage(textRef.current, callMessage)
-              );
-            } else {
-              const draftKey =
-                'chat' +
-                callChannelId +
-                (callSubchannelId ? `/${callSubchannelId}` : '');
+        try {
+          await submitAiVoiceText(callMessage, callChannelId, callTopicId);
+          // A confirmed send clears only its own draft, never words typed
+          // while waiting or a different topic's box after navigation.
+          if (
+            prevChannelId.current === callChannelId &&
+            prevSubchannelId.current === callSubchannelId
+          ) {
+            if (textRef.current === messageText) {
+              handleSetText('');
+              onSetTextAreaHeight(0);
+            }
+          } else {
+            const draftKey =
+              'chat' +
+              callChannelId +
+              (callSubchannelId ? `/${callSubchannelId}` : '');
+            if (getInputStateValue(draftKey)?.text === messageText)
               onEnterComment({
                 contentType: 'chat',
                 contentId: callChannelId,
                 targetKey: callSubchannelId,
-                text: appendRefusedCallMessage(
-                  getInputStateValue(draftKey)?.text || '',
-                  callMessage
-                )
+                text: ''
               });
-            }
-            setAlertModalTitle('Message not sent');
-            setAlertModalContent(
-              stillHere
-                ? 'Your message could not be sent during the call. It is back in the message box so you can try again.'
-                : 'Your message could not be sent during the call. It was saved in the message box of the chat where you typed it.'
-            );
-            setAlertModalShown(true);
           }
-        );
-
-        startCoolingDown(500);
-        handleSetText('');
-        onSetTextAreaHeight(0);
+        } catch (error) {
+          setAlertModalTitle('Message not sent');
+          setAlertModalContent(
+            error instanceof Error
+              ? error.message
+              : 'Your draft is kept. Please try again.'
+          );
+          setAlertModalShown(true);
+        } finally {
+          startCoolingDown(500);
+        }
         return;
       }
 

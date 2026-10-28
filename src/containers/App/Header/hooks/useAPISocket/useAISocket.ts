@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
+import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
 import { shouldShowBackgroundAiReplyNotification } from '~/helpers/chatNotificationPolicy';
 import {
@@ -36,7 +37,16 @@ import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler
 import { useToast } from '~/contexts/Toast';
 import { extractAiVoiceScreenHTML } from '~/helpers/aiVoiceScreen';
 import { AiVoicePlayback } from '~/helpers/aiVoicePlayback';
-import { saveHomeCallAssistant } from '~/helpers/aiVoiceCall';
+import {
+  saveHomeCallAssistant,
+  aiVoiceSession,
+  AI_VOICE_STOP_LOCAL,
+  AI_VOICE_RESUME_MICROPHONE,
+  endAiVoiceCall,
+  needsVoiceReconciliation
+} from '~/helpers/aiVoiceCall';
+import { seedAssistantTranscript } from '~/containers/App/AssistantDock/conversationStore';
+import { openAssistantDock } from '~/containers/App/AssistantDock/dockState';
 import { createAiVoiceCaptureSender } from '~/helpers/aiVoiceCaptureSender';
 
 // This tab, among the user's open tabs and devices (see the website agent's
@@ -142,7 +152,18 @@ export default function useAISocket({
   );
 
   const voicePlaybackRef = useRef<AiVoicePlayback | null>(null);
+  const voiceState = useSyncExternalStore(
+    aiVoiceSession.subscribe,
+    aiVoiceSession.getSnapshot
+  );
   const lastScreenInformationRef = useRef('');
+
+  useEffect(() => {
+    onSetAICallEnding(voiceState.phase === 'ending');
+    if (voiceState.phase === 'text') onSetAICall(null);
+    // Context actions are stable; the canonical phase drives reconciliation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceState.phase]);
 
   useEffect(() => {
     lastScreenInformationRef.current = '';
@@ -154,17 +175,23 @@ export default function useAISocket({
   }, [aiCallChannelId, aiCallEnding]);
 
   useEffect(() => {
+    const captureCallId = voiceState.callId;
     let cancelled = false;
     let audioContext: AudioContext | null = null;
     let mediaStream: MediaStream | null = null;
     let audioWorkletNode: AudioWorkletNode | null = null;
     const captureSender = createAiVoiceCaptureSender({
       send: (pcm) => {
-        if (cancelled || !socket.connected) return;
-        socket.emit(
-          'ai_user_audio',
-          arrayBufferToBase64(pcm.buffer as ArrayBuffer)
-        );
+        if (
+          cancelled ||
+          !socket.connected ||
+          !aiVoiceSession.matches(captureCallId || undefined)
+        )
+          return;
+        socket.emit('ai_user_audio', {
+          audio: arrayBufferToBase64(pcm.buffer as ArrayBuffer),
+          callId: captureCallId
+        });
       },
       onOverflow: () => {
         mediaStream?.getTracks().forEach((track) => track.stop());
@@ -172,26 +199,45 @@ export default function useAISocket({
           message:
             'The microphone fell too far behind. Please start the call again.'
         });
-        socket.emit('ai_end_ai_voice_conversation');
+        void endAiVoiceCall(false).catch(() => {});
       }
     });
 
-    if (aiCallChannelId && !aiCallEnding) {
-      navigator.mediaDevices
-        .getUserMedia({
-          audio: {
-            noiseSuppression: true,
-            echoCancellation: true,
-            autoGainControl: true
-          }
-        })
+    if (aiCallChannelId && !aiCallEnding && voiceState.phase === 'voice') {
+      Promise.resolve(aiVoiceSession.getStream())
         .then(async (stream) => {
+          if (!stream) throw new Error('Microphone is unavailable.');
           if (cancelled) {
             stream.getTracks().forEach((track) => track.stop());
             return;
           }
           mediaStream = stream;
+          stream.getAudioTracks().forEach((track) =>
+            track.addEventListener(
+              'ended',
+              () => {
+                if (
+                  !cancelled &&
+                  aiVoiceSession.getSnapshot().phase === 'voice'
+                ) {
+                  showToast({
+                    message:
+                      'The microphone disconnected. Continue in text or reconnect voice.'
+                  });
+                  void endAiVoiceCall().catch(() => {});
+                }
+              },
+              { once: true }
+            )
+          );
           audioContext = new AudioContext({ sampleRate: 24000 });
+          audioContext.onstatechange = () => {
+            if (!cancelled && audioWorkletNode)
+              aiVoiceSession.setMicrophonePaused(
+                captureCallId || undefined,
+                audioContext?.state !== 'running'
+              );
+          };
 
           try {
             await audioContext.audioWorklet.addModule(
@@ -213,7 +259,12 @@ export default function useAISocket({
           audioWorkletNode.port.onmessage = (
             event: MessageEvent<Int16Array>
           ) => {
-            if (cancelled || !socket.connected) return;
+            if (
+              cancelled ||
+              !socket.connected ||
+              !aiVoiceSession.matches(captureCallId || undefined)
+            )
+              return;
             captureSender.enqueue(event.data);
           };
 
@@ -221,7 +272,18 @@ export default function useAISocket({
           // The processor's output is silence. Keep it connected so browsers
           // continue rendering the capture graph while the caller is quiet.
           audioWorkletNode.connect(audioContext.destination);
+          // Safari may leave resume() pending until another direct tap. Show
+          // that control before awaiting it, so the caller can recover.
+          aiVoiceSession.setMicrophonePaused(
+            captureCallId || undefined,
+            audioContext.state !== 'running'
+          );
           await audioContext.resume();
+          if (!cancelled)
+            aiVoiceSession.setMicrophonePaused(
+              captureCallId || undefined,
+              audioContext.state !== 'running'
+            );
         })
         .catch((error) => {
           console.error('Error accessing microphone:', error);
@@ -231,13 +293,42 @@ export default function useAISocket({
               message:
                 'Unable to use your microphone. Check its permission and try the call again.'
             });
-            socket.emit('ai_end_ai_voice_conversation');
+            void endAiVoiceCall(false).catch(() => {});
           }
         });
     }
 
+    function resumeMicrophone() {
+      if (
+        cancelled ||
+        !audioContext ||
+        !aiVoiceSession.matches(captureCallId || undefined) ||
+        aiVoiceSession.getSnapshot().phase !== 'voice'
+      )
+        return;
+      voicePlaybackRef.current?.resume();
+      void audioContext
+        .resume()
+        .then(() => {
+          if (!cancelled)
+            aiVoiceSession.setMicrophonePaused(
+              captureCallId || undefined,
+              audioContext?.state !== 'running'
+            );
+        })
+        .catch(() => {
+          aiVoiceSession.setMicrophonePaused(captureCallId || undefined, true);
+        });
+    }
+    function onVisible() {
+      if (!document.hidden) resumeMicrophone();
+    }
+    window.addEventListener(AI_VOICE_RESUME_MICROPHONE, resumeMicrophone);
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
+      window.removeEventListener(AI_VOICE_RESUME_MICROPHONE, resumeMicrophone);
+      document.removeEventListener('visibilitychange', onVisible);
       captureSender.stop();
       if (audioWorkletNode) {
         audioWorkletNode.disconnect();
@@ -251,7 +342,7 @@ export default function useAISocket({
     };
     // Context dispatchers are stable and do not belong in dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiCallChannelId, aiCallEnding]);
+  }, [aiCallChannelId, aiCallEnding, voiceState.phase, voiceState.callId]);
 
   function arrayBufferToBase64(buffer: ArrayBuffer): string {
     let binary = '';
@@ -422,7 +513,12 @@ export default function useAISocket({
 
   useEffect(() => {
     socket.on('ai_voice_session_started', handleAIVoiceSessionStarted);
-    socket.on('disconnect', handleAIVoiceSessionEnded);
+    socket.on('disconnect', handleVoiceDisconnected);
+    window.addEventListener(
+      TWINKLE_SOCKET_AUTH_READY_EVENT,
+      reconcileDisconnectedVoice
+    );
+    window.addEventListener(AI_VOICE_STOP_LOCAL, stopLocalVoicePlayback);
     socket.on('ai_realtime_audio', handleOpenAIAudio);
     socket.on('ai_realtime_response_stopped', handleAssistantResponseStopped);
     socket.on('ai_realtime_input_received', sendAIUIInformation);
@@ -434,6 +530,7 @@ export default function useAISocket({
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
     socket.on('ai_usage_policy_updated', handleAiUsagePolicyUpdate);
     socket.on('ai_voice_error', handleAIVoiceError);
+    socket.on('ai_realtime_error', handleAIVoiceError);
     socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
     socket.on('openai_voice_session_ended', handleAIVoiceSessionEnded);
     socket.on('last_used_files_updated', onUpdateLastUsedFiles);
@@ -444,7 +541,12 @@ export default function useAISocket({
 
     return function cleanUp() {
       socket.off('ai_voice_session_started', handleAIVoiceSessionStarted);
-      socket.off('disconnect', handleAIVoiceSessionEnded);
+      socket.off('disconnect', handleVoiceDisconnected);
+      window.removeEventListener(
+        TWINKLE_SOCKET_AUTH_READY_EVENT,
+        reconcileDisconnectedVoice
+      );
+      window.removeEventListener(AI_VOICE_STOP_LOCAL, stopLocalVoicePlayback);
       socket.off('ai_realtime_audio', handleOpenAIAudio);
       socket.off(
         'ai_realtime_response_stopped',
@@ -465,6 +567,7 @@ export default function useAISocket({
       socket.off('ai_call_duration_updated', handleAICallDurationUpdate);
       socket.off('ai_usage_policy_updated', handleAiUsagePolicyUpdate);
       socket.off('ai_voice_error', handleAIVoiceError);
+      socket.off('ai_realtime_error', handleAIVoiceError);
       socket.off(
         'ai_call_max_duration_reached',
         handleAICallMaxDurationReached
@@ -548,24 +651,45 @@ export default function useAISocket({
       });
     }
 
-    function handleAssistantResponseStopped() {
+    function handleAssistantResponseStopped(meta?: { callId?: string }) {
+      if (!aiVoiceSession.matches(meta?.callId)) return;
+      stopLocalVoicePlayback();
+    }
+    function stopLocalVoicePlayback() {
       voicePlaybackRef.current?.stop();
       voicePlaybackRef.current = null;
     }
 
-    function handleAICallMaxDurationReached() {
+    function handleAICallMaxDurationReached(meta?: { callId?: string }) {
+      if (!aiVoiceSession.matches(meta?.callId)) return;
       onSetAICallEnding(false);
       onSetAICall(null);
-      socket.emit('ai_end_ai_voice_conversation');
+      void endAiVoiceCall(false).catch(() => {});
     }
 
     function handleAIVoiceSessionStarted({
       channelId,
-      assistantName
+      assistantName,
+      callId,
+      topicId,
+      history
     }: {
       channelId: number;
+      callId?: string;
+      topicId?: number;
+      history?: any[];
       assistantName: 'Zero' | 'Ciel';
     }) {
+      const requested = aiVoiceSession.getSnapshot();
+      if (
+        requested.channelId !== channelId ||
+        requested.topicId !== (topicId || 0) ||
+        !aiVoiceSession.started(callId, assistantName)
+      )
+        return;
+      if (Array.isArray(history))
+        seedAssistantTranscript(history, channelId, topicId || 0);
+      openAssistantDock(assistantName, undefined, topicId || 0);
       aiCallChannelIdRef.current = channelId;
       onSetAICallEnding(false);
       onSetAICall(channelId, assistantName);
@@ -577,15 +701,38 @@ export default function useAISocket({
       sendAIUIInformation();
     }
 
-    function handleAIVoiceSessionEnded() {
+    function reconcileDisconnectedVoice() {
+      if (
+        aiVoiceSession.getSnapshot().phase === 'ending' &&
+        needsVoiceReconciliation()
+      )
+        void endAiVoiceCall(false).catch(() => {});
+    }
+    function handleVoiceDisconnected() {
+      aiVoiceSession.disconnected();
+      clearVoiceState();
+    }
+    function handleAIVoiceSessionEnded(meta?: { callId?: string }) {
+      if (!aiVoiceSession.ended(meta?.callId)) return;
+      clearVoiceState();
+    }
+    function clearVoiceState() {
       aiCallChannelIdRef.current = 0;
-      handleAssistantResponseStopped();
+      stopLocalVoicePlayback();
       onSetAICallEnding(false);
       onSetAICall(null);
     }
 
-    function handleOpenAIAudio(base64AudioDelta: string) {
-      if (!aiCallChannelIdRef.current) return;
+    function handleOpenAIAudio(
+      base64AudioDelta: string,
+      meta?: { callId?: string }
+    ) {
+      if (
+        !aiCallChannelIdRef.current ||
+        !aiVoiceSession.matches(meta?.callId) ||
+        aiVoiceSession.getSnapshot().phase !== 'voice'
+      )
+        return;
       if (base64AudioDelta) {
         const audioBuffer = base64ToArrayBuffer(base64AudioDelta);
         if (audioBuffer.byteLength > 0) {
@@ -600,11 +747,13 @@ export default function useAISocket({
 
     function playAudioChunk(arrayBuffer: ArrayBuffer) {
       try {
+        const callId = aiVoiceSession.getSnapshot().callId || undefined;
         voicePlaybackRef.current ||= new AiVoicePlayback(
           new window.AudioContext({
             sampleRate: 24_000,
             latencyHint: 'interactive'
-          })
+          }),
+          (speaking) => aiVoiceSession.setSpeaking(callId, speaking)
         );
         voicePlaybackRef.current.enqueue(arrayBuffer);
       } catch (error) {
@@ -863,16 +1012,23 @@ export default function useAISocket({
 
     function handleAIVoiceError({
       aiUsagePolicy,
-      error
+      error,
+      callId
     }: {
       aiUsagePolicy?: any;
       error?: string;
+      callId?: string;
     } = {}) {
+      if (!aiVoiceSession.matches(callId)) return;
       if (aiUsagePolicy) {
         handleAiUsagePolicyUpdate({ aiUsagePolicy });
       }
       if (aiCallChannelIdRef.current && error) showToast({ message: error });
-      handleAIVoiceSessionEnded();
+      void endAiVoiceCall(
+        false,
+        error || 'The call ended. You can keep typing.'
+      ).catch(() => {});
+      clearVoiceState();
     }
 
     function handleAIFileGenerated({

@@ -3,6 +3,22 @@
 // so the user can keep talking to them on that screen; the user's close puts
 // it away until they act again.
 let dockAssistant: 'Zero' | 'Ciel' | null = null;
+let dockTopicId = 0;
+let accountEpoch = 0;
+export function getAssistantAccountEpoch() {
+  return accountEpoch;
+}
+const drafts = new Map<string, string>();
+const lastTopics = new Map<string, number>();
+const contexts = new Map<string, AssistantAskContext | null>();
+const scrollPositions = new Map<string, { top: number; pinned: boolean }>();
+let view: {
+  position?: { x: number; y: number };
+  expanded?: boolean;
+  scrollTop?: number;
+} = {};
+const key = (assistant: string | null, topicId = dockTopicId) =>
+  `${assistant}:${topicId}`;
 const listeners = new Set<() => void>();
 
 function set(next: 'Zero' | 'Ciel' | null) {
@@ -43,6 +59,7 @@ export function getAssistantAskContext() {
 export function clearAssistantAskContext() {
   if (!askContext) return;
   askContext = null;
+  if (dockAssistant) contexts.set(key(dockAssistant), null);
   listeners.forEach((listener) => listener());
 }
 
@@ -56,17 +73,32 @@ export function getAssistantDockAskedFromItem() {
 
 export function openAssistantDock(
   assistant: 'Zero' | 'Ciel',
-  context?: AssistantAskContext | null
+  context?: AssistantAskContext | null,
+  requestedTopicId?: number
 ) {
+  const topicId =
+    requestedTopicId ??
+    (dockAssistant === assistant
+      ? dockTopicId
+      : lastTopics.get(assistant) || 0);
+  const topicChanged = dockTopicId !== topicId;
+  if (dockAssistant) contexts.set(key(dockAssistant), askContext);
+  if (dockAssistant !== assistant || topicChanged) askedFromItem = false;
+  if (dockAssistant !== assistant || topicChanged)
+    askContext = contexts.get(key(assistant, topicId)) || null;
+  dockTopicId = topicId;
+  lastTopics.set(assistant, topicId);
   if (context !== undefined) askContext = context;
   if (context) askedFromItem = true;
   const changed = dockAssistant !== assistant;
   dockAssistant = assistant;
   // a new context must reach an already-open dock too
-  if (changed || context !== undefined) listeners.forEach((l) => l());
+  if (changed || topicChanged || context !== undefined)
+    listeners.forEach((l) => l());
 }
 
 export function closeAssistantDock() {
+  if (dockAssistant) contexts.set(key(dockAssistant), askContext);
   askContext = null;
   askedFromItem = false;
   set(null);
@@ -112,4 +144,66 @@ export function subscribeHomeAskPrefill(listener: () => void) {
 }
 export function getHomeAskPrefill() {
   return homeAskPrefill;
+}
+
+export function getAssistantDockTopic() {
+  return dockTopicId;
+}
+export function getAssistantDraft(assistant: string, topicId: number) {
+  return drafts.get(key(assistant, topicId)) || '';
+}
+export function setAssistantDraft(
+  assistant: string,
+  topicId: number,
+  text: string
+) {
+  drafts.set(key(assistant, topicId), text);
+  listeners.forEach((fn) => fn());
+}
+export function getAssistantWindowView() {
+  return view;
+}
+export function setAssistantWindowView(patch: Partial<typeof view>) {
+  view = { ...view, ...patch };
+}
+export function resetAssistantDock() {
+  accountEpoch++;
+  homeAskAssistant = null;
+  homeAskPrefill = null;
+  lastTopics.clear();
+  drafts.clear();
+  contexts.clear();
+  scrollPositions.clear();
+  askContext = null;
+  askedFromItem = false;
+  view = {};
+  dockTopicId = 0;
+  dockAssistant = null;
+  listeners.forEach((fn) => fn());
+}
+
+export function getAssistantScroll(assistant: string, topicId: number) {
+  return scrollPositions.get(key(assistant, topicId));
+}
+export function setAssistantScroll(
+  assistant: string,
+  topicId: number,
+  scroll: { top: number; pinned: boolean }
+) {
+  scrollPositions.set(key(assistant, topicId), scroll);
+}
+
+export function consumeAssistantAskContext(
+  assistant: string,
+  topicId: number,
+  expected: AssistantAskContext | null
+) {
+  if (contexts.get(key(assistant, topicId)) === expected)
+    contexts.set(key(assistant, topicId), null);
+  if (
+    dockAssistant === assistant &&
+    dockTopicId === topicId &&
+    askContext === expected
+  )
+    clearAssistantAskContext();
 }

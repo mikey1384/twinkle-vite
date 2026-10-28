@@ -79,7 +79,7 @@ export default function AssistantQuickAsk({
   async function handleSend(idea?: string) {
     if (!(await send(idea ?? text))) return;
     setText('');
-    openAssistantDock(assistantName);
+    openAssistantDock(assistantName, undefined, 0);
   }
 
   return (

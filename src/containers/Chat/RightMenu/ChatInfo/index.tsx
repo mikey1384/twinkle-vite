@@ -17,7 +17,8 @@ import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
 import { checkMicrophoneAccess, objectify } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CallButton from './CallButton';
-import { startAiVoiceCall } from '~/helpers/aiVoiceCall';
+import { startAiVoiceCall, endAiVoiceCall } from '~/helpers/aiVoiceCall';
+import { openAssistantDock } from '~/containers/App/AssistantDock/dockState';
 import LocalContext from '../../Context';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -65,7 +66,6 @@ function ChatInfo({
   const [callConnecting, setCallConnecting] = useState(false);
   const [callError, setCallError] = useState('');
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
-  const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const aiUsagePolicy = useNotiContext(
@@ -287,9 +287,11 @@ function ChatInfo({
       setCallConnecting(true);
       setCallError('');
       try {
+        openAssistantDock(isCielChat ? 'Ciel' : 'Zero', undefined, currentChannel.selectedTab === 'topic' ? topicId : 0);
         await startAiVoiceCall(
           selectedChannelId,
-          currentChannel.selectedTab === 'topic' ? topicId : undefined
+          currentChannel.selectedTab === 'topic' ? topicId : undefined,
+          { assistant: isCielChat ? 'Ciel' : 'Zero', continuation: true }
         );
       } catch (error) {
         setCallError(
@@ -363,8 +365,7 @@ function ChatInfo({
 
     if (callOngoing || aiCallOngoing) {
       if (isZeroChat || isCielChat) {
-        onSetAICallEnding(true);
-        socket.emit('ai_end_ai_voice_conversation');
+        await endAiVoiceCall().catch(error => setCallError(error.message));
       } else {
         if (calling) {
           onSetCall({});

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { AiVoicePlayback } from '../src/helpers/aiVoicePlayback';
 
 function playbackFixture() {
+  let resumes = 0;
   const starts: {
     at: number;
     duration: number;
@@ -14,7 +15,10 @@ function playbackFixture() {
     currentTime: 0,
     state: 'suspended',
     destination: {},
-    resume: () => new Promise<void>(() => {}),
+    resume: () => {
+      resumes++;
+      return new Promise<void>(() => {});
+    },
     close: async () => {},
     createGain: () => ({ gain: { value: 0 }, connect() {}, disconnect() {} }),
     createBuffer: (_channels: number, count: number, rate: number) => ({
@@ -45,6 +49,7 @@ function playbackFixture() {
   return {
     context,
     starts,
+    resumes: () => resumes,
     player: new AiVoicePlayback(context as unknown as AudioContext)
   };
 }
@@ -81,6 +86,18 @@ test('ordinary network jitter stays continuous and initial resume cannot reorder
     6,
     'late audio after hangup cannot resume playback'
   );
+});
+
+test('resuming suspended playback keeps queued audio and never revives a stopped call', () => {
+  const f = playbackFixture();
+  f.player.enqueue(new Int16Array(2400).buffer);
+  f.player.resume();
+  assert.equal(f.resumes(), 2);
+  assert.equal(f.starts.length, 1);
+  f.player.stop();
+  f.player.resume();
+  assert.equal(f.resumes(), 2);
+  assert.equal(f.starts.length, 1);
 });
 
 test('microphone batches by samples on the audio thread, including silence', () => {

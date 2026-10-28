@@ -5,11 +5,8 @@ import {
   type AiEnergyDisplayPolicy
 } from '~/helpers/aiEnergyDisplay';
 import { useNotiContext } from '~/contexts';
-import { uiScale } from '~/helpers/uiScale';
 
-// The floating Zero/Ciel window's shared parts: dragging it by its picture,
-// and the AI Energy battery. The call window and the chat window (the same
-// window when there is no call) are built from these.
+// Dragging and the canonical AI Energy display for the shared companion window.
 
 // Movement that makes a press a drag rather than a tap.
 const DRAG_THRESHOLD_PX = 6;
@@ -34,21 +31,34 @@ interface AiUsagePolicy extends AiEnergyDisplayPolicy {
 
 export function useDraggableWindow(initialPosition: { x: number; y: number }) {
   const [position, setPosition] = useState(initialPosition);
+  const [viewport, setViewport] = useState(() => ({
+    width: window.visualViewport?.width || window.innerWidth,
+    height: window.visualViewport?.height || window.innerHeight,
+    left: window.visualViewport?.offsetLeft || 0,
+    top: window.visualViewport?.offsetTop || 0
+  }));
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
   const stopDragging = useRef<(() => void) | null>(null);
 
-  // Always reachable: at least the picture stays on screen (the handle is
-  // drawn larger on big screens, styles.css --px).
+  // Keep the controls inside the visible viewport, including above a phone keyboard.
   function clamp(next: { x: number; y: number }) {
     const box = windowRef.current?.getBoundingClientRect();
     const width = box?.width || 0;
     const height = box?.height || 0;
+    const visible = window.visualViewport;
+    const left = visible?.offsetLeft || 0,
+      top = visible?.offsetTop || 0;
+    const availableWidth = visible?.width || window.innerWidth;
+    const availableHeight = visible?.height || window.innerHeight;
     return {
-      x: Math.min(Math.max(0, next.x), Math.max(0, window.innerWidth - width)),
+      x: Math.min(
+        Math.max(left, next.x),
+        left + Math.max(0, availableWidth - width)
+      ),
       y: Math.min(
-        Math.max(0, next.y),
-        Math.max(0, window.innerHeight - Math.min(height, 96 * uiScale()))
+        Math.max(top, next.y),
+        top + Math.max(0, availableHeight - height)
       )
     };
   }
@@ -76,7 +86,9 @@ export function useDraggableWindow(initialPosition: { x: number; y: number }) {
     // page instead lost them over anything that keeps its own events (a
     // modal like Wordle stops pointer moves, an app's iframe takes them), so
     // dragging worked only some of the time.
-    const handle = e.currentTarget as HTMLElement;
+    // Capture on a tapped header button itself. Capturing its pointer on
+    // the outer window retargets the eventual click and swallows expand taps.
+    const handle = (target.closest('button') || e.currentTarget) as HTMLElement;
     try {
       handle.setPointerCapture(pointerId);
     } catch {
@@ -128,17 +140,29 @@ export function useDraggableWindow(initialPosition: { x: number; y: number }) {
 
   useEffect(() => {
     function handleResize() {
-      setPosition((current) => clamp(current));
+      setViewport({
+        width: window.visualViewport?.width || window.innerWidth,
+        height: window.visualViewport?.height || window.innerHeight,
+        left: window.visualViewport?.offsetLeft || 0,
+        top: window.visualViewport?.offsetTop || 0
+      });
+      setPosition((current) => {
+        const next = clamp(current);
+        return next.x === current.x && next.y === current.y ? current : next;
+      });
     }
     window.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('scroll', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('scroll', handleResize);
       stopDragging.current?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { position, windowRef, handleStart };
+  return { position, viewport, windowRef, handleStart };
 }
 
 export function EnergyBattery({

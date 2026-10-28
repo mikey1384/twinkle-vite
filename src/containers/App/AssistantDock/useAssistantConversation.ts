@@ -1,13 +1,28 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react';
+import {
+  aiVoiceSession,
+  submitAiVoiceText,
+  getVoiceDelivery
+} from '~/helpers/aiVoiceCall';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { dismissWebsiteAgentPrompts } from '../WebsiteAgentSpotlight';
-import type { AssistantAskContext } from './dockState';
+import {
+  getAssistantAccountEpoch,
+  type AssistantAskContext
+} from './dockState';
 import {
   EMPTY_ASSISTANT_REPLY,
   attachAssistantConversationListeners,
   getAssistantReply,
   setAssistantReply,
   startAssistantReply,
+  followAssistantConversation,
   subscribeAssistantReplies
 } from './conversationStore';
 
@@ -16,35 +31,83 @@ import {
 // and the latest reply as it streams.
 export default function useAssistantConversation({
   assistantName,
-  channelId
+  channelId,
+  topicId = 0
 }: {
   assistantName: 'Zero' | 'Ciel';
   channelId: number;
+  topicId?: number;
 }) {
   const saveChatMessage = useAppContext(
     (v) => v.requestHelpers.saveChatMessage
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const sendLock = useRef(false);
+  const [sendError, setSendError] = useState('');
   const [sending, setSending] = useState(false);
   useEffect(() => attachAssistantConversationListeners(), []);
+  useEffect(() => {
+    followAssistantConversation(channelId, topicId);
+    setSendError('');
+  }, [channelId, topicId]);
   const reply = useSyncExternalStore(subscribeAssistantReplies, () =>
-    getAssistantReply(channelId)
+    getAssistantReply(channelId, topicId)
   );
   const replying = !!reply && !reply.done;
 
   const send = useCallback(
     async (content: string, askContext?: AssistantAskContext | null) => {
+      const epoch = getAssistantAccountEpoch();
       const message = content.trim();
+      const voiceMessage = message || 'Please explain the attached item.';
       // One question at a time: a new one mid-reply would mix the two replies.
-      const current = getAssistantReply(channelId);
+      const current = getAssistantReply(channelId, topicId);
       // with something attached the attachment is the question; text is optional
-      if ((!message && !askContext) || !channelId || sending || (current && !current.done)) {
+      if (
+        (!message && !askContext) ||
+        !channelId ||
+        sendLock.current ||
+        (current && !current.done)
+      ) {
         return false;
       }
+      const call = aiVoiceSession.getSnapshot();
+      if (call.phase === 'connecting' || call.phase === 'ending') {
+        setSendError(
+          'Wait for the voice handoff to finish. Your draft is kept.'
+        );
+        return false;
+      }
+      sendLock.current = true;
       setSending(true);
+      setSendError('');
+      if (
+        call.phase === 'voice' ||
+        getVoiceDelivery(voiceMessage, channelId, topicId, askContext)
+      ) {
+        try {
+          return await submitAiVoiceText(
+            voiceMessage,
+            channelId,
+            topicId,
+            askContext
+          );
+        } catch (error) {
+          if (epoch !== getAssistantAccountEpoch()) return false;
+          setSendError(
+            error instanceof Error
+              ? error.message
+              : 'Unable to send. Your draft is kept.'
+          );
+          return false;
+        } finally {
+          sendLock.current = false;
+          setSending(false);
+        }
+      }
       // Like sending from the chat page: whatever they were waiting on ends.
       dismissWebsiteAgentPrompts();
-      startAssistantReply(channelId);
+      startAssistantReply(channelId, topicId);
       try {
         await saveChatMessage({
           // The same fields the chat page sends.
@@ -53,7 +116,7 @@ export default function useAssistantConversation({
             content: message,
             channelId,
             isNotification: false,
-            subjectId: 0,
+            subjectId: topicId,
             // what the member pressed "Ask" on; the server re-reads it as them
             // and keeps only what it can verify
             ...(askContext
@@ -82,23 +145,31 @@ export default function useAssistantConversation({
         });
         return true;
       } catch (error: any) {
-        setAssistantReply(channelId, {
-          ...EMPTY_ASSISTANT_REPLY,
-          done: true,
-          error: error?.message || 'That didn’t send. Try again?'
-        });
+        if (epoch !== getAssistantAccountEpoch()) return false;
+        setAssistantReply(
+          channelId,
+          {
+            ...EMPTY_ASSISTANT_REPLY,
+            done: true,
+            error: error?.message || 'That didn’t send. Try again?'
+          },
+          topicId
+        );
         return false;
       } finally {
+        sendLock.current = false;
         setSending(false);
       }
     },
-    [assistantName, channelId, saveChatMessage, sending, userId]
+    // Request helpers are stable context actions, not reactive dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [assistantName, channelId, topicId, userId]
   );
 
   const clear = useCallback(() => {
-    const current = getAssistantReply(channelId);
-    if (!current || current.done) setAssistantReply(channelId, null);
-  }, [channelId]);
+    const current = getAssistantReply(channelId, topicId);
+    if (!current || current.done) setAssistantReply(channelId, null, topicId);
+  }, [channelId, topicId]);
 
-  return { reply, replying, sending, send, clear };
+  return { reply, replying, sending, send, clear, sendError };
 }

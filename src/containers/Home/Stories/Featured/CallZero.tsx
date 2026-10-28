@@ -3,6 +3,7 @@ import ZeroPic from '~/components/ZeroPic';
 import CallPartnerChooser from './CallPartnerChooser';
 import {
   startAiVoiceCall,
+  endAiVoiceCall,
   type HomeCallAssistant
 } from '~/helpers/aiVoiceCall';
 import { css } from '@emotion/css';
@@ -10,7 +11,7 @@ import {
   getAiEnergyDisplay,
   type AiEnergyDisplayPolicy
 } from '~/helpers/aiEnergyDisplay';
-import { socket } from '~/constants/sockets/api';
+import { openAssistantDock } from '~/containers/App/AssistantDock/dockState';
 import {
   useAppContext,
   useChatContext,
@@ -257,7 +258,6 @@ export default function CallZero({
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
-  const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
   const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
   const actionRole = useRoleColor('action', { fallback: 'green' });
 
@@ -437,7 +437,8 @@ export default function CallZero({
     setCallError('');
     onSetCallConnecting(true);
     try {
-      await startAiVoiceCall(callChannelId);
+      openAssistantDock(assistantName, undefined, 0);
+      await startAiVoiceCall(callChannelId, undefined, { assistant: assistantName, continuation: true });
     } catch (error) {
       setCallError(
         error instanceof Error
@@ -447,7 +448,7 @@ export default function CallZero({
     } finally {
       onSetCallConnecting(false);
     }
-  }, [callChannelId, callConnecting, onSetCallConnecting]);
+  }, [callChannelId, callConnecting, assistantName, onSetCallConnecting]);
 
   const handleCallButtonClick = useCallback(async () => {
     if (aiCallEnding || (isCallButtonUnavailable && !aiCallOngoing)) {
@@ -455,8 +456,7 @@ export default function CallZero({
     }
 
     if (aiCallOngoing) {
-      onSetAICallEnding(true);
-      socket.emit('ai_end_ai_voice_conversation');
+      await endAiVoiceCall().catch(error => setCallError(error.message));
       return;
     }
 

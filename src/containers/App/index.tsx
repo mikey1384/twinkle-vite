@@ -36,13 +36,19 @@ import {
   isWebsiteAgentEnabledFor
 } from '~/constants/defaultValues';
 import WebsiteAgentSpotlight from './WebsiteAgentSpotlight';
+import { resetAssistantDock } from './AssistantDock/dockState';
+import { resetAssistantConversations } from './AssistantDock/conversationStore';
+import {
+  aiVoiceSession,
+  endAiVoiceCall,
+  resetVoiceDeliveries
+} from '~/helpers/aiVoiceCall';
 import MinecraftVouchLink from './MinecraftVouchLink';
 import { stripClientUpdateReloadParam } from '~/helpers/clientUpdate';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
 import { relayChatMessage } from '~/helpers/chatMessageSend';
-import { uiScale } from '~/helpers/uiScale';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import {
   clearAnalyticsUser,
@@ -214,7 +220,7 @@ const SigninModal = lazyWithRetry(() => import('~/containers/Signin'));
 const MobileMenu = lazyWithRetry(() => import('./MobileMenu'));
 const Incoming = lazyWithRetry(() => import('./Stream/Incoming'));
 const Outgoing = lazyWithRetry(() => import('./Stream/Outgoing'));
-const AICallWindow = lazyWithRetry(() => import('./AICallWindow'));
+const AssistantDock = lazyWithRetry(() => import('./AssistantDock'));
 const AdminTelemetryWindow = lazyWithRetry(
   () => import('./AdminTelemetryWindow')
 );
@@ -591,7 +597,6 @@ export default function App() {
     (v) => v.user.state.myState.buildHeaderCollapsed
   );
   const userSessionLoaded = useAppContext((v) => v.user.state.loaded);
-  const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const onChangePageVisibility = useViewContext(
     (v) => v.actions.onChangePageVisibility
   );
@@ -630,8 +635,6 @@ export default function App() {
     }),
     [keyContextHelpers, keyContextMyState, themeRoles]
   );
-
-  const aiCallOngoing = useMemo(() => !!aiCallChannelId, [aiCallChannelId]);
 
   const usingChat = useMemo(
     () => getSectionFromPathname(location?.pathname)?.section === 'chat',
@@ -690,6 +693,17 @@ export default function App() {
     stripClientUpdateReloadParam();
   }, []);
 
+  useEffect(() => {
+    // Account changes must never expose another member's drafts or transcript.
+    return () => {
+      void endAiVoiceCall(false).catch(() => {});
+      aiVoiceSession.reset();
+      resetVoiceDeliveries();
+      resetAssistantDock();
+      resetAssistantConversations();
+    };
+  }, [userId]);
+
   // Endless decorative animations stop repainting while scrolled out of view.
   useEffect(() => startPausingOffscreenAnimations(), []);
 
@@ -718,7 +732,10 @@ export default function App() {
     }, 4000);
     return () => {
       window.clearTimeout(timer);
-      if (idleHandle !== null && typeof window.cancelIdleCallback === 'function') {
+      if (
+        idleHandle !== null &&
+        typeof window.cancelIdleCallback === 'function'
+      ) {
         window.cancelIdleCallback(idleHandle);
       }
     };
@@ -1525,10 +1542,7 @@ export default function App() {
                   path="/exam-report"
                   element={<ArenaParentReportPage />}
                 />
-                <Route
-                  path="/daily-reflection"
-                  element={<DailyReflection />}
-                />
+                <Route path="/daily-reflection" element={<DailyReflection />} />
                 <Route
                   path="/achievements/bridge-builder/staff"
                   element={<BridgeBuilderQuest view="staff" />}
@@ -1708,14 +1722,9 @@ export default function App() {
         {isWebsiteAgentEnabledFor(Number(userId)) && !sessionAccessBlocked && (
           <WebsiteAgentSpotlight />
         )}
-        {aiCallOngoing && !sessionAccessBlocked && (
+        {!!userId && !sessionAccessBlocked && (
           <Suspense fallback={null}>
-            <AICallWindow
-              initialPosition={{
-                x: Math.max(0, window.innerWidth - 520 * uiScale()),
-                y: 70 * uiScale()
-              }}
-            />
+            <AssistantDock />
           </Suspense>
         )}
         {isAdmin && shouldShowAdminTelemetryWindow && !sessionAccessBlocked && (
