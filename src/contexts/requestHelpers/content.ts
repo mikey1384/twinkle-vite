@@ -1819,7 +1819,7 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async startGrammarQuestRun(target: { nodeId: string } | { nemesis: true }) {
+    async startGrammarQuestRun(target: { nodeId: string } | { nemesis: true; practiceOf?: number }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/quest/run`,

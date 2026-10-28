@@ -35,13 +35,17 @@ export default function Result({
   answers,
   kind,
   runId,
-  onBackToMap
+  onBackToMap,
+  onPracticeAgain,
+  startingPractice = false
 }: {
   result: QuestResult;
   answers: QuestAnswer[];
   kind: string;
   runId: number;
   onBackToMap: () => void;
+  onPracticeAgain?: () => void;
+  startingPractice?: boolean;
 }) {
   const boss = kind === 'fort' || kind === 'castle';
   const goals = result.dailyTaskStatus?.grammarbles;
@@ -65,7 +69,9 @@ export default function Result({
   const headline = perfect
     ? boss
       ? 'Flawless! Every hit landed first try.'
-      : 'Perfect! Five right answers, not a single miss.'
+      : kind === 'nemesis'
+        ? `Perfect! All ${result.size} right on the first try.`
+        : 'Perfect! Five right answers, not a single miss.'
     : result.cleared
       ? kind === 'castle'
         ? 'Castle cleared! The next world is open.'
@@ -73,7 +79,7 @@ export default function Result({
           ? 'Boss defeated!'
           : 'Stop cleared!'
       : kind === 'nemesis'
-        ? 'Nemesis practice done'
+        ? result.practiceOnly ? 'Ghost practice complete' : 'Ghost review complete'
         : boss
           ? 'Not yet: the boss is still standing'
           : result.caught
@@ -83,7 +89,7 @@ export default function Result({
   const banner = perfect
     ? 'PERFECT!'
     : kind === 'nemesis'
-      ? 'PRACTICE DONE!'
+      ? result.practiceOnly ? 'PRACTICE DONE!' : 'REVIEW DONE!'
       : result.cleared
         ? kind === 'castle'
           ? 'CASTLE CLEAR!'
@@ -241,7 +247,9 @@ export default function Result({
           </>
         ) : (
           <span className={noRewardCls}>
-            No more ordinary run rewards today. Your marbles and all-S world bonuses still count.
+            {result.practiceOnly
+              ? 'Practice run · No XP or Coins. Review as often as you like.'
+              : 'No more ordinary run rewards today. Your marbles and all-S world bonuses still count.'}
           </span>
         )}
       </div>
@@ -304,6 +312,13 @@ export default function Result({
         </div>
       )}
       <div className={buttonsCls}>
+        {onPracticeAgain && (
+          <button className={practiceCls} onClick={onPracticeAgain}
+            disabled={startingPractice} aria-busy={startingPractice}>
+            <span>{startingPractice ? 'Starting…' : 'Practice again'}</span>
+            <small>No XP or Coins</small>
+          </button>
+        )}
         {listed.length > 0 && (
           <button
             className={challengeOpenCls}
@@ -315,7 +330,7 @@ export default function Result({
             )
           </button>
         )}
-        <button className={primaryCls} onClick={onBackToMap}>
+        <button className={primaryCls} onClick={onBackToMap} disabled={startingPractice}>
           Back to map
         </button>
       </div>
@@ -763,4 +778,15 @@ const primaryCls = css`
   padding: 0.6rem 1.8rem;
   font-size: 1.6rem;
   text-transform: uppercase;
+`;
+const practiceCls = css`
+  ${primaryCls}
+  ${button(BLUE, '#2a5fb0', '#fff')}
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  small { font-size: 1.1rem; text-transform: none; }
+  &:disabled { opacity: 0.6; cursor: default; }
 `;

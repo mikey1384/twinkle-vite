@@ -57,7 +57,7 @@ const G_SHADE = '#cfc6ec';
 const G_EDGE = '#9a8fc4';
 const G_MOUTH = '#5a1638';
 const G_TONGUE = '#ff6f9a';
-export function ghostSprite(face: GhostFace, f: number) {
+function ghostSprite(face: GhostFace, f: number) {
   return makeSprite(26, 24, (put) => {
     // a wispy tail curling off the back
     const tw = f ? 1 : 0;

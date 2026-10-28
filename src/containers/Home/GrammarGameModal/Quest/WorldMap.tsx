@@ -506,17 +506,21 @@ export default function WorldMap({
       </span>
       <button
         className={cx(chipCls, nemesisCls)}
-        disabled={!nemesisDue.length || starting}
+        disabled={(!nemesisDue.length && !state.reviewPracticeRunId) || starting}
         aria-busy={startingNemesis}
         onClick={onPlayNemesis}
         title={
-          state.nemesis.length
+          !nemesisDue.length && state.reviewPracticeRunId
+            ? 'Practice your last review topics again. No XP or Coins; your next scheduled review stays the same.'
+            : state.nemesis.length
             ? `Review these grammar topics: ${state.nemesis.map((n) => n.nameEn).join(', ')}`
             : 'Topics missed across several runs come back for a ghost review'
         }
       >
         {startingNemesis ? <Icon icon="spinner" pulse /> : <PixelIcon name="ghost" />}
-        {state.nemesis.length
+        {!nemesisDue.length && state.reviewPracticeRunId
+          ? 'Review · Practice'
+          : state.nemesis.length
           ? `Review · ${nemesisDue.length ? `${nemesisDue.length} due` : `${state.nemesis.length} resting`}`
           : 'No reviews due'}
       </button>

@@ -65,13 +65,13 @@ import {useSyncExternalStore} from 'react';
 let state = {myState:{userId:7,settings:JSON.parse(localStorage.getItem('fixtureAccount') || '{}')}};
 const listeners = new Set();
 const subscribe = fn => {listeners.add(fn);return () => listeners.delete(fn)};
-window.musicRequests = []; window.challengeRequests = []; window.balanceUpdates = []; window.startRequests=[]; window.answerRequests=[]; window.masteryRequests=[];
+window.musicRequests = []; window.challengeRequests = []; window.balanceUpdates = []; window.startRequests=[]; window.startTargets=[]; window.answerRequests=[]; window.masteryRequests=[];
 window.setAccount = settings => {state={myState:{userId:7,settings}};localStorage.setItem('fixtureAccount',JSON.stringify(settings));listeners.forEach(fn=>fn())};
 const app = {user:{actions:{onSetUserState:update=>{window.balanceUpdates.push(update);if(Object.hasOwn(update.newState,'settings'))window.setAccount(update.newState.settings)}}},requestHelpers:{
  updateGrammarblesSettings: choice=>new Promise((resolve,reject)=>window.musicRequests.push({choice,resolve,reject})),
  loadGrammarQuestState:async()=>structuredClone(window.serverQuestState || {worlds:[{id:1,unlocked:true,nodes:[]}],nemesis:[],rewardedRunsLeft:3}),
  claimGrammarQuestWorldMastery:worldId=>new Promise((resolve,reject)=>window.masteryRequests.push({worldId,resolve,reject})),
- startGrammarQuestRun:async({nodeId,nemesis})=>{window.startRequests.push(nemesis?'nemesis':nodeId);if(nemesis)return window.fixtureRun;const world=window.serverQuestState.worlds.find(w=>w.nodes.some(n=>n.id===nodeId));const node=world.nodes.find(n=>n.id===nodeId);return {runId:1,nodeId,worldId:world.id,kind:node.kind,rules:{mode:node.kind==='stop'?'practice':'boss'},questions:[]}},
+ startGrammarQuestRun:async target=>{const {nodeId,nemesis}=target;window.startRequests.push(nemesis?'nemesis':nodeId);window.startTargets.push(target);if(window.questStart)return window.questStart(target);if(nemesis)return window.fixtureRun;const world=window.serverQuestState.worlds.find(w=>w.nodes.some(n=>n.id===nodeId));const node=world.nodes.find(n=>n.id===nodeId);return {runId:1,nodeId,worldId:world.id,kind:node.kind,rules:{mode:node.kind==='stop'?'practice':'boss'},questions:[]}},
  loadGrammarReview:async()=>({items:[window.reviewItem],hasMore:false}),
  answerGrammarQuestQuestion:async data=>{window.answerRequests.push(data);return typeof window.questAnswer==='function'?window.questAnswer(data):window.questAnswer},
  resumeGrammarQuestRun:async(runId,position)=>{window.resumeRequests.push({runId,position});return typeof window.questResume==='function'?window.questResume():window.questResume},
@@ -171,24 +171,18 @@ async function compile({ realBoss = false, realGhost = false } = {}) {
     './MarbleRun/lab/fitPreview':
       'export const fitPreviewParam=()=>null; export const PREVIEW_QUEST_RUN=null, PREVIEW_QUEST_RESULT=null, PREVIEW_QUEST_ANSWERS=[];'
   };
-  if (realBoss) {
+  if (realBoss || realGhost) {
     const fight = path.join(repo, base, 'Quest/MarbleRun/boss/fight.ts');
+    const registry = path.join(repo, base, 'Quest/MarbleRun/boss/registry.ts');
     stubs['./MarbleRun/boss/fight'] = `
       import {BossFight as ActualBossFight} from '${fight}';
+      import {bossDef} from '${registry}';
+      window.normalSpecter = () => bossDef('chalk-specter');
       export class BossFight extends ActualBossFight {
-        constructor(...args){super(...args);window.fixtureFight=this;}
+        constructor(...args){super(...args);window.fixtureFight=this;if(args[2])window.reviewBattle=this;}
       }
     `;
     delete stubs['./MarbleRun/boss/catalog'];
-  }
-  if (realGhost) {
-    const battle = path.join(repo, base, 'Quest/MarbleRun/GhostReviewBattle.ts');
-    stubs['./MarbleRun/GhostReviewBattle'] = `
-      import {GhostReviewBattle as ActualGhostReviewBattle} from '${battle}';
-      export class GhostReviewBattle extends ActualGhostReviewBattle {
-        constructor(...args){super(...args);window.reviewBattle=this;}
-      }
-    `;
   }
   try {
     const result = await build({
@@ -361,8 +355,8 @@ test('all-S world bonuses show progress and canonical collection, and replays st
   }
 });
 
-test('ghost reviews animate confirmed answers, preserve manual explanations, and finish all assigned questions', { timeout: 180000 }, async () => {
-  const output = path.resolve(repo, '../work/grammar-quest-ghost-review-20261028');
+test('ghost reviews reuse full boss battles, preserve manual explanations, and finish all assigned questions', { timeout: 240000 }, async () => {
+  const output = path.resolve(repo, '../work/grammar-quest-ghost-boss-reuse-20261028');
   mkdirSync(output, { recursive: true });
   const script = await compile({ realGhost: true });
   const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
@@ -427,18 +421,56 @@ test('ghost reviews animate confirmed answers, preserve manual explanations, and
         window.questAnswer = () => Promise.reject(new Error('offline'));
       });
       if (font) await page.evaluate(() => document.fonts.load('10px "Press Start 2P"'));
-      await page.waitForFunction(() => window.reviewBattle.backdrop.complete && window.reviewBattle.backdrop.naturalWidth > 0);
+      await page.waitForFunction(() => window.reviewBattle.arena.complete && window.reviewBattle.arena.naturalWidth > 0 && window.reviewBattle.phase === 'question');
+      await page.waitForFunction(() => window.reviewBattle.shots.length > 0 || window.reviewBattle.warnings.length > 0);
+      assert.equal(await page.evaluate(() => window.reviewBattle.def.id), 'nemesis-specter');
+      assert.equal(await page.evaluate(() => window.reviewBattle.def.moves.length), 5);
+      const art = await page.evaluate(() => {
+        const normal = window.normalSpecter();
+        const fight = window.reviewBattle;
+        const frame = normal.pose(fight.t, 'idle', normal.frames()).frame;
+        const before = frame.toDataURL();
+        const rival = fight.def.pose(fight.t, 'idle', fight.frames).frame.toDataURL();
+        return { normal: before, rival, after: frame.toDataURL(), sharedMoves: normal.moves === fight.def.moves };
+      });
+      assert.equal(art.sharedMoves, true, 'the rival uses the normal ghost moveset');
+      assert.equal(art.normal, art.after, 'the rival skin must not change the normal boss sprites');
+      assert.notEqual(art.normal, art.rival, 'the rival must be visually distinct');
+      if (label === 'chromium-desktop') {
+        await page.evaluate(({ normal, rival }) => {
+          const row = document.createElement('div');
+          row.id = 'rival-comparison';
+          Object.assign(row.style, { position:'fixed', inset:'0', zIndex:'2147483647', background:'#20152f',
+            display:'flex', alignItems:'center', justifyContent:'center', gap:'80px', color:'white' });
+          for (const [title, src] of [['Normal Chalk Specter', normal], ['Review rival', rival]]) {
+            const figure = document.createElement('figure');
+            const image = document.createElement('img');
+            image.src = src;
+            Object.assign(image.style, { width:'370px', imageRendering:'pixelated' });
+            const caption = document.createElement('figcaption');
+            caption.textContent = title;
+            Object.assign(caption.style, { textAlign:'center', fontSize:'24px', marginTop:'24px' });
+            figure.append(image,caption); row.append(figure);
+          }
+          document.body.append(row);
+        }, art);
+        await page.locator('#rival-comparison').screenshot({ path: path.join(output, 'rival-comparison.png') });
+        await page.evaluate(() => document.getElementById('rival-comparison').remove());
+      }
       await page.screenshot({ path: path.join(output, `${label}-opening.png`) });
+      // Thinking for minutes must not lower a review hit or show a speed clock.
+      await page.evaluate(() => { window.reviewBattle.questionAt -= 300000; });
+      assert.match(await page.evaluate(() => window.reviewBattle.statusLine()), /NO TIMER/);
       await page.getByRole('button', { name: 'A some', exact: true }).click();
       await page.getByRole('alert').getByText('That answer did not reach the server. Try again.').waitFor();
-      assert.equal(await page.evaluate(() => window.reviewBattle.strength), 8);
+      assert.equal(await page.evaluate(() => window.reviewBattle.hp), 8);
       await page.evaluate(() => { window.questAnswer = data => new Promise(resolve => { window.resolveAnswer = () => resolve(window.makeReviewAnswer(data)); }); });
       await page.getByRole('button', { name: 'A some', exact: true }).click();
       assert.equal(await page.getByRole('button', { name: 'A some', exact: true }).isDisabled(), true);
-      assert.equal(await page.evaluate(() => window.reviewBattle.strength), 8, 'no visual damage before the server confirms');
+      assert.equal(await page.evaluate(() => window.reviewBattle.hp), 8, 'no visual damage before the server confirms');
       await page.evaluate(() => window.resolveAnswer());
       await page.getByRole('button', { name: 'Continue', exact: true }).waitFor();
-      assert.equal(await page.evaluate(() => window.reviewBattle.strength), 7);
+      assert.equal(await page.evaluate(() => window.reviewBattle.hp), 7);
       await page.getByRole('button', { name: 'Continue', exact: true }).click();
       await page.evaluate(() => { window.questAnswer = window.makeReviewAnswer; });
       for (let position = 1; position < 8; position++) {
@@ -449,9 +481,18 @@ test('ghost reviews animate confirmed answers, preserve manual explanations, and
           await page.waitForTimeout(4200);
           await page.getByText('Question 4 of 8 ·', { exact: false }).waitFor();
           assert.equal(await page.getByRole('button', { name: 'A some', exact: true }).isDisabled(), true);
-          assert.equal(await page.evaluate(() => window.reviewBattle.strength), 5);
+          assert.equal(await page.evaluate(() => window.reviewBattle.hp), 5);
           await page.getByRole('button', { name: 'Continue', exact: true }).scrollIntoViewIfNeeded();
           await page.screenshot({ path: path.join(output, `${label}-long-explanation.png`) });
+          const explanation = page.locator('[data-fit-flex]');
+          assert.match(await explanation.evaluate(el => getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage), /linear-gradient/);
+          await explanation.evaluate(el => { el.scrollTop = el.scrollHeight; });
+          await page.waitForFunction(() => {
+            const el = document.querySelector('[data-fit-flex]');
+            const style = getComputedStyle(el);
+            return (style.maskImage || style.webkitMaskImage) === 'none' && el.scrollTop > 0;
+          });
+          await page.getByText('Milk is uncountable.', { exact: false }).waitFor();
           await page.getByRole('button', { name: 'Challenge rejected', exact: true }).click();
           await page.getByRole('heading', { name: 'Reviewer’s explanation' }).waitFor();
           await page.getByText('Saved decision: some milk is correct.', { exact: true }).waitFor();
@@ -463,6 +504,9 @@ test('ghost reviews animate confirmed answers, preserve manual explanations, and
         if (position < 7) await next.click();
       }
       assert.equal(await page.evaluate(() => window.savedReviewAnswers.length), 8, 'the fifth correct answer does not end a review');
+      assert.equal(await page.evaluate(() => window.reviewBattle.idx), 8);
+      assert.equal(await page.evaluate(() => window.reviewBattle.bossPhase), 3, 'the shared boss reaches its full last-phase moveset');
+      assert.equal(await page.evaluate(() => window.reviewBattle.phase), 'review', 'the ending also waits for Finish review');
       await page.evaluate(() => { window.questFinish = () => Promise.reject(new Error('offline')); });
       await page.getByRole('button', { name: 'Finish review · 7/8', exact: true }).click();
       await page.getByRole('alert').getByText('Could not save the run. Try again.').waitFor();
@@ -483,7 +527,8 @@ test('ghost reviews animate confirmed answers, preserve manual explanations, and
         window.showFixture('nemesis');
       });
       await page.getByText('Question 7 of 8 ·', { exact: false }).waitFor();
-      assert.equal(await page.evaluate(() => window.reviewBattle.strength), 3);
+      assert.equal(await page.evaluate(() => window.reviewBattle.hp), 3);
+      assert.equal(await page.evaluate(() => window.reviewBattle.streak), 2);
       await page.evaluate(() => {
         window.fixtureRun = { ...window.fixtureRun, answers: window.savedReviewAnswers };
         window.showFixture('nemesis');
@@ -500,15 +545,180 @@ test('ghost reviews animate confirmed answers, preserve manual explanations, and
         await page.getByRole('button', { name: i === 7 ? 'Finish review · 8/8' : 'Continue', exact: true }).waitFor();
         if (i < 7) await page.getByRole('button', { name: 'Continue', exact: true }).click();
       }
-      assert.equal(await page.evaluate(() => window.reviewBattle.strength), 0);
+      assert.equal(await page.evaluate(() => window.reviewBattle.hp), 0);
       assert.equal(await page.evaluate(() => window.answerRequests.length), requestsBefore + 8);
       await page.getByRole('img', { name: /^Ghost strength/ }).scrollIntoViewIfNeeded();
       await page.screenshot({ path: path.join(output, `${label}-perfect.png`) });
+      await page.getByRole('button', { name: 'Finish review · 8/8', exact: true }).click();
+      await page.waitForFunction(() => window.reviewBattle.gone);
+      await page.screenshot({ path: path.join(output, `${label}-victory.png`) });
+      await page.waitForFunction(() => window.finishRequests === 3);
+      assert.equal(await page.evaluate(() => window.reviewBattle.phase), 'done');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       const fit = await page.getByRole('region', { name: 'Ghost review battle' }).evaluate(el => el.scrollWidth <= el.clientWidth);
       assert.equal(fit, true);
+      if (label === 'webkit-phone') {
+        await page.setViewportSize({ width: 780, height: 360 });
+        await page.waitForTimeout(100);
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        const stage = await page.getByRole('img', { name: /^Ghost strength/ }).boundingBox();
+        assert.ok(stage.x + stage.width < 780 * 0.6, 'short landscape uses the normal side-by-side battle layout');
+        await page.screenshot({ path: path.join(output, `${label}-landscape.png`) });
+      }
       await page.getByRole('button', { name: '← Map', exact: true }).click();
       assert.equal(await page.getByRole('region', { name: 'Ghost review battle' }).count(), 0);
+      assert.equal(await page.evaluate(() => document.body.style.overflow === 'hidden'), false);
+      await page.evaluate(() => window.resolveFinish());
+      await page.waitForTimeout(50);
+      assert.equal(await page.evaluate(() => window.finished), 1, 'a late finish reply cannot reopen a review after leaving');
+      assert.deepEqual(errors, []);
+    } finally { await browser?.close(); }
+  }
+});
+
+test('unpaid review practice repeats from results and the map with clear rewards and recoverable starts', { timeout: 180000 }, async () => {
+  const output = path.resolve(repo, '../work/grammar-quest-review-practice-20261028');
+  mkdirSync(output, { recursive: true });
+  const script = await compile({ realGhost: true });
+  const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+  const font = process.env.GRAMMARBLES_PIXEL_FONT;
+  const fontCss = font ? `@font-face{font-family:'Press Start 2P';src:url(data:font/woff2;base64,${readFileSync(font).toString('base64')})}` : '';
+  const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${fontCss}${css}body{margin:0}#root{display:flex;height:100dvh}</style><div id="root"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+  for (const [label, browserType, viewport] of [
+    ['chromium-desktop', chromium, { width: 1280, height: 800 }],
+    ['webkit-phone', webkit, { width: 360, height: 780 }]
+  ]) {
+    let browser;
+    try {
+      browser = await browserType.launch({ headless: true, timeout: 10000 });
+      const page = await browser.newPage({ viewport });
+      page.setDefaultTimeout(10000);
+      const errors = [];
+      page.on('pageerror', error => errors.push(error.message));
+      await page.route('**/*', async route => {
+        const url = new URL(route.request().url());
+        if (route.request().isNavigationRequest()) return route.fulfill({ contentType: 'text/html', body: html });
+        if (url.pathname.startsWith('/gq-media/') && !url.pathname.endsWith('.mp3'))
+          return route.fulfill({ contentType: 'image/webp', body: await readMedia(url.pathname) });
+        return route.abort();
+      });
+      await page.addInitScript(() => {
+        localStorage.setItem('fixtureAccount', JSON.stringify({ grammarbles: { music: false, sound: false } }));
+      });
+      await page.goto('http://localhost:3000/__grammar-review-practice-fixture');
+      await page.waitForFunction(() => !!window.showFixture);
+      await page.evaluate(() => {
+        window.resetMap();
+        window.realMap = true;
+        window.serverQuestState.nemesis = [{ skill: 'some-any', nameEn: 'some / any / no', misses: 3, due: true }];
+        window.fixtureRun = { runId: 42, nodeId: 'nemesis', kind: 'nemesis', worldId: 4,
+          rules: { mode: 'nemesis' }, questions: Array.from({ length: 2 }, (_, position) => ({
+            position, question: 'There is ____ milk in the fridge.', choices: ['some', 'any', 'many', 'a'],
+            skill: 'some-any', skillName: 'some / any / no'
+          })), answers: [0, 1].map(position => ({ position, selectedIndex: 0, correctIndex: 0, isCorrect: true, combo: position + 1 })) };
+        window.nextReviewId = 43;
+        window.questStart = target => {
+          if (target.practiceOf && window.failPractice) throw new Error('offline');
+          const start = () => {
+            window.currentReview = target.practiceOf
+              ? { ...window.fixtureRun, runId: window.nextReviewId++, nodeId: 'nemesis-practice', rules: { mode: 'nemesis', practiceOnly: true }, answers: [] }
+              : window.fixtureRun;
+            window.practiceAnswers = [];
+            return structuredClone(window.currentReview);
+          };
+          return target.practiceOf && window.holdPractice
+            ? new Promise(resolve => { window.resolvePractice = () => resolve(start()); }) : start();
+        };
+        window.showFixture('map');
+        window.questAnswer = ({ position, choiceIndex }) => {
+          const answer = { position, selectedIndex: choiceIndex, correctIndex: 0, isCorrect: choiceIndex === 0,
+            combo: choiceIndex === 0 ? position + 1 : 0,
+            ...(choiceIndex !== 0 ? { readMs: 3000,
+              ruleCard: { skill: 'some-any', nameEn: 'some / any / no', why: 'Use some with uncountable milk in this positive sentence.', wrongChoices: [{ choice: 'any', error: 'This is a positive statement.' }] },
+              challenge: { questionId: 199, checked: true, review: { outcome: 'rejected', explanation: 'Saved decision: some milk is correct.' } }
+            } : {}) };
+          window.practiceAnswers.push(answer);
+          return answer;
+        };
+        window.questFinish = () => {
+          const practiceOnly = !!window.currentReview.rules.practiceOnly;
+          const correct = practiceOnly ? window.practiceAnswers.filter(a => a.isCorrect).length : 2;
+          window.serverQuestState.nemesis = [];
+          window.serverQuestState.reviewPracticeRunId = window.currentReview.runId;
+          return { runId: window.currentReview.runId, practiceOnly, score: 50 * correct, cleared: false,
+            perfect: correct === 2, firstTryCorrect: correct, size: 2, xp: practiceOnly ? 0 : 600,
+            coins: practiceOnly ? 0 : 60, newXp: 123600, newCoins: 4560, rewardedRunsLeft: 2 };
+        };
+      });
+      await page.getByRole('button', { name: 'Review · 1 due', exact: true }).click();
+      await page.getByRole('button', { name: 'Finish review · 2/2', exact: true }).click();
+      await page.getByText('Perfect! All 2 right on the first try.', { exact: true }).waitFor();
+      const again = page.getByRole('button', { name: 'Practice again No XP or Coins', exact: true });
+      await again.waitFor();
+      if (font) await page.evaluate(() => document.fonts.load('10px "Press Start 2P"'));
+      await page.screenshot({ path: path.join(output, `${label}-scheduled-result.png`) });
+      await page.evaluate(() => { window.failPractice = true; });
+      await again.click();
+      await page.getByText('Could not start this run.', { exact: true }).waitFor();
+      assert.equal(await again.isEnabled(), true, 'a failed start leaves the completed result retryable');
+      await page.evaluate(() => { window.failPractice = false; window.holdPractice = true; });
+      const requests = await page.evaluate(() => window.startTargets.length);
+      await again.click();
+      const starting = page.getByRole('button', { name: 'Starting… No XP or Coins', exact: true });
+      assert.equal(await starting.isDisabled(), true);
+      await starting.evaluate(button => button.click());
+      assert.equal(await page.evaluate(() => window.startTargets.length), requests + 1);
+      assert.deepEqual(await page.evaluate(() => window.startTargets.at(-1)), { nemesis: true, practiceOf: 42 });
+      await page.evaluate(() => { window.holdPractice = false; window.resolvePractice(); });
+      for (let attempt = 0; attempt < 2; attempt++) {
+        await page.getByText('GHOST PRACTICE', { exact: true }).waitFor();
+        await page.getByText('No timer · Practice only: no XP or Coins. Your next scheduled review stays the same.', { exact: true }).waitFor();
+        for (let position = 0; position < 2; position++) {
+          const missed = attempt === 0 && position === 0;
+          await page.getByRole('button', { name: missed ? 'B any' : 'A some', exact: true }).click();
+          if (missed) {
+            try {
+              await page.getByRole('button', { name: /^Read it/ }).waitFor();
+            } catch (error) {
+              await page.screenshot({ path: path.join(output, `${label}-miss-failure.png`) });
+              throw new Error(JSON.stringify(await page.evaluate(() => ({
+                body: document.body.innerText, requests: window.answerRequests, answers: window.practiceAnswers,
+                fight: { phase: window.reviewBattle.phase, canAnswer: window.reviewBattle.canAnswer, idx: window.reviewBattle.idx }
+              }))), { cause: error });
+            }
+            await page.waitForTimeout(3500);
+            await page.getByText('Use some with uncountable milk in this positive sentence.', { exact: true }).waitFor();
+            await page.getByRole('button', { name: 'Challenge rejected', exact: true }).click();
+            await page.getByRole('heading', { name: 'Reviewer’s explanation' }).waitFor();
+            await page.getByRole('button', { name: 'Back to question', exact: true }).first().click();
+            assert.equal(await page.evaluate(() => window.answerRequests.at(-1).position), 0, 'reading does not auto-advance');
+          }
+          await page.getByRole('button', { name: position === 1 ? `Finish practice · ${attempt ? 2 : 1}/2` : 'Continue', exact: true }).click();
+        }
+        await page.getByText('Practice run · No XP or Coins. Review as often as you like.', { exact: true }).waitFor();
+        assert.equal(await page.getByText('No more ordinary run rewards today.', { exact: false }).count(), 0);
+        assert.deepEqual(await page.evaluate(() => window.balanceUpdates.at(-1).newState), { twinkleXP: 123600, twinkleCoins: 4560 });
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        await page.screenshot({ path: path.join(output, `${label}-practice-result-${attempt + 1}.png`) });
+        if (attempt === 0) {
+          await again.click();
+          assert.deepEqual(await page.evaluate(() => window.startTargets.at(-1)), { nemesis: true, practiceOf: 43 });
+        }
+      }
+      await page.getByRole('button', { name: 'Back to map', exact: true }).click();
+      const practice = page.getByRole('button', { name: 'Review · Practice', exact: true });
+      await practice.waitFor();
+      assert.equal(await practice.isEnabled(), true, 'practice stays available after all ghosts are cleared');
+      await practice.click();
+      assert.deepEqual(await page.evaluate(() => window.startTargets.at(-1)), { nemesis: true, practiceOf: 44 });
+      await page.getByRole('button', { name: '← Map', exact: true }).click();
+      await page.evaluate(() => {
+        window.serverQuestState.nemesis = [{ skill: 'some-any', nameEn: 'some / any / no', misses: 3, due: true }];
+        window.showFixture('map');
+      });
+      await page.getByRole('button', { name: 'Review · 1 due', exact: true }).click();
+      assert.deepEqual(await page.evaluate(() => window.startTargets.at(-1)), { nemesis: true }, 'a due scheduled review keeps its rewarded path');
+      await page.getByRole('button', { name: '← Map', exact: true }).click();
       assert.equal(await page.evaluate(() => document.body.style.overflow === 'hidden'), false);
       assert.deepEqual(errors, []);
     } finally { await browser?.close(); }
@@ -516,7 +726,7 @@ test('ghost reviews animate confirmed answers, preserve manual explanations, and
 });
 
 test('a boss explanation waits for Resume without spending the next grade clock in Chromium and WebKit', { timeout: 180000 }, async () => {
-  const output = path.resolve(repo, '../work/grammar-quest-review-resume-20261028');
+  const output = process.env.GRAMMARBLES_BOSS_ARTIFACTS || path.resolve(repo, '../work/grammar-quest-review-resume-20261028');
   mkdirSync(output, { recursive: true });
   const script = await compile({ realBoss: true });
   const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');

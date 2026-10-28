@@ -1,6 +1,5 @@
 import React, {
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState
@@ -24,6 +23,8 @@ import {
   saveKoreanShown
 } from '~/helpers/grammarblesRuleCard';
 import Stage from './MarbleRun/Stage';
+import { useStageFit } from './MarbleRun/useStageFit';
+import { wrapCls, bossCls, bodyCls, dockCls, stageFitCls, cardCls, bossCardCls, cardInnerCls, ruleScrollCls, ruleFadeCls } from './MarbleRun/battleLayout';
 import AudioToggles from './AudioToggles';
 import PixelIcon from './PixelIcon';
 import {
@@ -58,7 +59,6 @@ import {
   GOLD,
   INK,
   NIGHT,
-  PARCHMENT,
   PIXEL_FONT,
   PLATE,
   WOOD,
@@ -477,132 +477,18 @@ export default function MarbleRunScreen({
     return lockBodyScroll(document.body);
   }, []);
 
-  // the stage is as big as fits next to the progress marbles and the
-  // question card at their full height (the card never gets squeezed),
-  // keeping the stage's 960×380 shape. Short landscape screens put the
-  // stage and the card side by side.
-  const bodyRef = useRef<HTMLDivElement>(null);
-  // a lesson page is read, not played: the level may shrink further so the
-  // whole page fits (Mikey's one-screen rule), and the empty progress row
-  // stays hidden until the questions start
   const lessonOpen = showExample && !!lessons;
-  const lessonOpenRef = useRef(lessonOpen);
-  lessonOpenRef.current = lessonOpen;
-  const dockRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-  // a miss's card: the sentence, its marks and the Continue row always show
-  // whole; the rule card between them is the part that gives way (it
-  // shrinks and scrolls on its own, fading out at its fold)
   const missOpen =
     (phase === 'review' && !!answer && !answer.isCorrect) ||
     (phase === 'bossReview' && !!answer);
-  // the level gives the miss card more room too, while it shows (on a
-  // phone on its side, only once the card is short of room, and then until
-  // the card closes, so the level doesn't flip back and forth)
-  const missOpenRef = useRef(missOpen);
-  missOpenRef.current = missOpen;
-  const missRoomyRef = useRef(false);
+  const { bodyRef, dockRef, cardRef, stageWidth } = useStageFit({
+    lessonOpen, missOpen, resetKey: `${run.runId}:${question?.position}`
+  });
   const ruleRef = useRef<HTMLDivElement>(null);
   const ruleMore = useMoreBelow(
     ruleRef,
     missOpen ? `${run.runId}:${question?.position}:${koreanShown}` : null
   );
-  const [stageWidth, setStageWidth] = useState<number | undefined>(undefined);
-  // Continue can be below the fold on a small screen or with larger text.
-  // A new question must start at its sentence, not at the review's scroll
-  // position (which can hide the sentence's first lines).
-  useLayoutEffect(() => {
-    if (cardRef.current) cardRef.current.scrollTop = 0;
-  }, [run.runId, question?.position]);
-
-  useLayoutEffect(() => {
-    const body = bodyRef.current;
-    const dock = dockRef.current;
-    if (!body || !dock) return;
-    function fit() {
-      if (!body || !dock) return;
-      const style = getComputedStyle(body);
-      const innerW =
-        body.clientWidth -
-        parseFloat(style.paddingLeft) -
-        parseFloat(style.paddingRight);
-      const innerH =
-        body.clientHeight -
-        parseFloat(style.paddingTop) -
-        parseFloat(style.paddingBottom);
-      const ratio = 960 / 380;
-      let width: number;
-      const card = cardRef.current;
-      const rule = card?.querySelector<HTMLElement>('[data-fit-flex]');
-      if (!missOpenRef.current) missRoomyRef.current = false;
-      else if (
-        card &&
-        (card.scrollHeight > card.clientHeight + 1 ||
-          (!!rule &&
-            rule.scrollHeight > rule.clientHeight + 1 &&
-            rule.clientHeight < parseFloat(style.fontSize) * 6.4))
-      )
-        missRoomyRef.current = true;
-      if (style.flexDirection === 'row') {
-        const gap = parseFloat(style.columnGap) || 0;
-        // Landscape needs room for the sentence and two columns of answers.
-        // A lesson page has no answers to tap, and a miss's card holds the
-        // whole sentence, its rule card and Continue: the card takes more room.
-        width = Math.min(
-          (innerW - gap) *
-            (lessonOpenRef.current ? 0.28 : missRoomyRef.current ? 0.22 : 0.4),
-          innerH * ratio
-        );
-      } else {
-        // the dock's natural height: every child at its content height
-        let need = 0;
-        const dockGap = parseFloat(getComputedStyle(dock).rowGap) || 0;
-        Array.from(dock.children).forEach((child, i) => {
-          const el = child as HTMLElement;
-          need +=
-            el.scrollHeight +
-            (el.offsetHeight - el.clientHeight) +
-            (i ? dockGap : 0);
-        });
-        // a part that shrinks to fit (a miss's rule card) still wants its
-        // own height, up to its cap: the level gives way first
-        dock.querySelectorAll<HTMLElement>('[data-fit-flex]').forEach((el) => {
-          const cap = parseFloat(getComputedStyle(el).maxHeight);
-          const wants = Math.min(el.scrollHeight, cap >= 0 ? cap : Infinity);
-          need += Math.max(0, wants - el.clientHeight);
-        });
-        const gap = parseFloat(style.rowGap) || 0;
-        // the level never shrinks below about a third of the screen while a
-        // question is asked (a tall card scrolls instead); a lesson page or a
-        // miss's card is read, not played, and may take more of it
-        const floor = Math.min(
-          innerW,
-          innerH *
-            (lessonOpenRef.current ? 0.12 : missOpenRef.current ? 0.2 : 0.32) *
-            ratio
-        );
-        width = Math.max(
-          floor,
-          Math.min(innerW, 1320, (innerH - need - gap) * ratio)
-        );
-      }
-      setStageWidth(Math.max(160, Math.floor(width)));
-    }
-    fit();
-    const observer = new ResizeObserver(fit);
-    observer.observe(body);
-    observer.observe(dock);
-    const mutations = new MutationObserver(fit);
-    mutations.observe(dock, {
-      childList: true,
-      characterData: true,
-      subtree: true
-    });
-    return () => {
-      observer.disconnect();
-      mutations.disconnect();
-    };
-  }, []);
 
   const practice = engine instanceof PracticeRun ? engine : null;
   // the current streak: the last answer's combo, or the reopened run's
@@ -1331,94 +1217,8 @@ export default function MarbleRunScreen({
   }
 }
 
-// A full-screen layer above the modal (getZIndex in Modal starts at
-// 9,999,999; achievement toasts sit at 2147483000 and stay on top):
-// HUD, then the level shrunk to fit, then the question card.
-const wrapCls = css`
-  position: fixed;
-  inset: 0;
-  z-index: 2147482000;
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  color: ${INK};
-  background:
-    radial-gradient(
-      ellipse at 50% 30%,
-      rgba(90, 70, 140, 0.35) 0,
-      rgba(26, 20, 38, 0) 60%
-    ),
-    #1a1426;
-`;
-const bossCls = css`
-  color: #f3eefc;
-  background:
-    radial-gradient(
-      ellipse at 50% 30%,
-      rgba(140, 40, 90, 0.3) 0,
-      rgba(20, 13, 34, 0) 60%
-    ),
-    #140d22;
-`;
-// the level keeps 960:380 and fits both the width and the height left over
-// stage + marbles + card, centered together under the top bar
-const bodyCls = css`
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.8rem;
-  padding: 0.8rem 1rem 1rem;
-  overflow: hidden;
-  @media (max-width: ${mobileMaxWidth}) {
-    gap: 0.5rem;
-    padding: 0.5rem 0.4rem 0.6rem;
-  }
-  @media (max-height: 520px) {
-    gap: 0.4rem;
-    padding: 0.3rem 0.6rem 0.4rem;
-  }
-  /* short landscape screens (phones on their side): stage beside the card */
-  @media (max-height: 520px) and (orientation: landscape) {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.8rem;
-  }
-`;
-// the progress marbles and the question card; the card scrolls inside
-// itself only if a screen is too short even for it
-const dockCls = css`
-  flex: 0 1 auto;
-  min-height: 0;
-  width: 100%;
-  max-width: calc(1000 * var(--px));
-  max-height: 100%;
-  @media (max-height: 520px) and (orientation: landscape) {
-    flex: 1;
-    width: auto;
-    min-width: 0;
-  }
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-  @media (max-height: 520px) {
-    gap: 0.3rem;
-  }
-`;
 const audioCls = css`
   margin-left: auto;
-`;
-const stageFitCls = css`
-  flex: none;
-  max-width: calc(1320 * var(--px));
-  canvas {
-    border-radius: 0;
-  }
 `;
 // the status bar above the level, like the canvas HUD
 const hudCls = css`
@@ -1536,38 +1336,6 @@ const emptySlotCls = css`
   font-size: 0.8rem;
   color: #a39cb8;
 `;
-// the question card: natural height, pinned under the level
-const cardCls = css`
-  ${frame(PARCHMENT, 3)}
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  /* a miss's ✗ badge on a button at the edge never adds a sideways scroll */
-  overflow-x: hidden;
-  width: 100%;
-  max-width: calc(980 * var(--px));
-  @media (max-width: ${mobileMaxWidth}) {
-    ${frame(PARCHMENT, 2)}
-  }
-`;
-const bossCardCls = css`
-  ${frame(NIGHT, 3)}
-  @media (max-width: ${mobileMaxWidth}) {
-    ${frame(NIGHT, 2)}
-  }
-`;
-const cardInnerCls = css`
-  padding: 0.8rem 1.2rem 1rem;
-  @media (min-height: 760px) {
-    min-height: 15rem;
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.6rem 0.6rem 0.8rem;
-  }
-  @media (max-height: 520px) {
-    padding: 0.4rem 0.8rem 0.6rem;
-  }
-`;
 // a long rule card scrolls on its own; choices and Continue stay put
 const sentenceReviewCls = css`
   font-size: 1.2rem;
@@ -1612,16 +1380,6 @@ const reviewedCls = css`
     min-height: 40px;
   }
 `;
-const ruleScrollCls = css`
-  max-height: 26vh;
-  max-height: 26dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  @media (max-height: 520px) {
-    max-height: 22vh;
-    max-height: 22dvh;
-  }
-`;
 // a miss: the card lays its parts out in a column that fits the card, and
 // only the rule card (missRuleCls) may shrink
 const missCardCls = css`
@@ -1653,14 +1411,6 @@ const missRuleCls = css`
       max-height: none;
     }
   }
-`;
-// more of the rule card below its fold: its last lines fade out (the mask
-// stays put while the card scrolls under it; a short window fades less)
-const RULE_FADE =
-  'linear-gradient(#000 max(60%, calc(100% - 2.4rem)), transparent)';
-const ruleFadeCls = css`
-  -webkit-mask-image: ${RULE_FADE};
-  mask-image: ${RULE_FADE};
 `;
 const readyCls = css`
   padding: 4rem 0;

@@ -88,8 +88,8 @@ export interface BossTurn {
   wrongPicks?: number; // canonical wrong-pick count when reopening a hit
 }
 
-export const bossPhaseOf = (hp: number) =>
-  hp > (PASS_POINTS * 2) / 3 ? 1 : hp > PASS_POINTS / 3 ? 2 : 3;
+export const bossPhaseOf = (hp: number, maxHp = PASS_POINTS) =>
+  hp > (maxHp * 2) / 3 ? 1 : hp > maxHp / 3 ? 2 : 3;
 
 interface Warning {
   x: number;
@@ -117,6 +117,9 @@ export class BossFight {
   events: BossEvents;
   arena: HTMLImageElement;
   timeScale: number;
+  readonly review: boolean;
+  readonly hitCount: number;
+  readonly maxHp: number;
 
   phase: Phase = 'intro';
   phaseAt = 0;
@@ -167,7 +170,11 @@ export class BossFight {
   geo = { floorY: 304, ledgeY: 226, bossX: 830 };
   pose = { x: 830, y: 226, w: 160, h: 160 };
 
-  constructor(info: BossInfo, events: BossEvents = {}) {
+  constructor(
+    info: BossInfo,
+    events: BossEvents = {},
+    review?: { questions: number }
+  ) {
     this.info = info;
     this.def = bossDef(info.id) || bossDef('plural-slime')!;
     this.frames = this.def.frames();
@@ -175,6 +182,12 @@ export class BossFight {
     this.arena = loadImage(arenaUrl(info.arena));
     this.timeScale = bossTimeScale(info.id);
     this.baseMs = CLASSIC_SHORT_MS * this.timeScale;
+    // Nemesis keeps its untimed, first-attempt rules. It shares the full
+    // fight presentation; only its question count and damage scale differ.
+    this.review = !!review;
+    this.hitCount = review?.questions ?? BOSS_HITS;
+    this.maxHp = this.review ? this.hitCount : PASS_POINTS;
+    this.hp = this.shownHp = this.maxHp;
   }
 
   // Classic's reading pause: the question shows alone, then the choices
@@ -186,11 +199,17 @@ export class BossFight {
   }
   // pick up a fight reopened after a reload: the hits so far already landed
   resume(grades: Grade[], hp?: number) {
-    this.grades = grades.slice(0, BOSS_HITS);
+    this.grades = grades.slice(0, this.hitCount);
     this.idx = this.grades.length;
-    this.hp = hp ?? PASS_POINTS - this.points;
+    this.hp = hp ?? this.maxHp - this.points;
     this.shownHp = Math.max(0, this.hp);
-    this.bossPhase = bossPhaseOf(this.hp);
+    this.bossPhase = bossPhaseOf(this.hp, this.maxHp);
+  }
+
+  resumeAnswers(correct: boolean[]) {
+    if (!this.review) return;
+    this.resume(correct.map((right) => right ? 'S' : 'F'));
+    this.streak = correct.reduce((streak, right) => right ? streak + 1 : 0, 0);
   }
 
   // the turn on screen: its attack, whether it is a counter, its telegraph
@@ -213,7 +232,25 @@ export class BossFight {
     return this.revealed && !this.answered;
   }
   get points() {
-    return this.grades.reduce((s, gr) => s + GRADE[gr][1], 0);
+    return this.grades.reduce((s, gr) => s + this.damageFor(gr), 0);
+  }
+
+  private damageFor(grade: Grade) {
+    return this.review ? Number(grade !== 'F') : GRADE[grade][1];
+  }
+
+  // Called only with a confirmed answer. S/F select the existing throw
+  // animations internally; reviews never show or award a speed grade.
+  answerReview(correct: boolean) {
+    if (!this.review || !this.canAnswer || this.lockedAt != null) return false;
+    this.lockIn();
+    this.timers.push({
+      at: this.t + 500,
+      fn: () => this.answerRight(
+        correct ? 'S' : 'F', 0, this.hp - Number(correct), true
+      )
+    });
+    return true;
   }
 
   // the server sends each question's time limit (Classic's base time for its
@@ -244,7 +281,7 @@ export class BossFight {
     if (g === 'F') {
       missSound();
       this.streak = 0;
-    } else if (this.idx === BOSS_HITS - 1 && this.streak === BOSS_HITS - 1) {
+    } else if (this.idx === this.hitCount - 1 && this.streak === this.hitCount - 1) {
       this.streak++;
       perfectBonus();
     } else {
@@ -314,7 +351,7 @@ export class BossFight {
   }
 
   statusLine() {
-    return `${this.info.name.toUpperCase()} · HIT ${Math.min(this.idx + 1, BOSS_HITS)}/${BOSS_HITS} · HP ${Math.max(0, this.hp)}/${PASS_POINTS} · TIME ×${this.timeScale} · PHASE ${this.bossPhase}${this.counter ? ' · COUNTER' : this.turnAttack ? ` · ${this.turnAttack.name.toUpperCase()}` : ''}`;
+    return `${this.info.name.toUpperCase()} · HIT ${Math.min(this.idx + 1, this.hitCount)}/${this.hitCount} · HP ${Math.max(0, this.hp)}/${this.maxHp} · ${this.review ? 'NO TIMER' : `TIME ×${this.timeScale}`} · PHASE ${this.bossPhase}${this.counter ? ' · COUNTER' : this.turnAttack ? ` · ${this.turnAttack.name.toUpperCase()}` : ''}`;
   }
 
   // ---- the api handed to boss moves
@@ -488,7 +525,7 @@ export class BossFight {
         // reopened after the last hit already landed on the server (Mikey
         // 10-08: the fight sat on "TO THE FLAG…" forever): straight to the end
         if (this.queued) this.startQuestion(t);
-        else if (this.idx >= BOSS_HITS) this.finish(t);
+        else if (this.idx >= this.hitCount) this.finish(t);
         else this.phase = 'between';
       }
     }
@@ -511,7 +548,7 @@ export class BossFight {
     else if (this.counter && this.phase === 'question' && this.hp > 0)
       this.bossState = 'dazed';
     // a new phase below 2/3 and 1/3 health (every boss)
-    const next = bossPhaseOf(this.hp);
+    const next = bossPhaseOf(this.hp, this.maxHp);
     if (this.hp > 0 && next > this.bossPhase) {
       this.bossPhase = next;
       this.fx.flash(t, 160, 'rgba(255,60,90,.45)');
@@ -606,7 +643,7 @@ export class BossFight {
   private afterTurn(t: number) {
     this.my = this.geo.floorY - MR;
     if (this.queued) this.startQuestion(t);
-    else if (this.idx >= BOSS_HITS) this.finish(t);
+    else if (this.idx >= this.hitCount) this.finish(t);
     else this.phase = 'between';
   }
 
@@ -766,7 +803,7 @@ export class BossFight {
     const g = this.answered!;
     this.impacted = true;
     this.hidden = true;
-    const pts = this.countering ? this.counterDamage : GRADE[g][1];
+    const pts = this.countering ? this.counterDamage : this.damageFor(g);
     const big = this.countering
       ? 1.4
       : { S: 1, A: 0.8, B: 0.6, C: 0.45, D: 0.35, F: 0.15 }[g];
@@ -783,7 +820,7 @@ export class BossFight {
       this.fx.burst('star', 20, this.mx, this.my, { color: '#ffcb32' });
     }
     this.fx.text(
-      `-${pts}`,
+      this.review && pts === 0 ? 'MISS' : `-${pts}`,
       this.mx,
       this.my - 40,
       this.countering ? '#ffcb32' : GRADE[g][0],
@@ -1146,11 +1183,11 @@ export class BossFight {
     const floor = this.geo.floorY;
     const elapsed = this.elapsedMs(this.lockedAt ?? t);
     const live =
-      this.phase === 'question'
+      this.phase === 'question' && !this.review
         ? this.liveGrade(elapsed)
         : this.answered || 'S';
     const struggling =
-      this.phase === 'question' && !this.counter && 'CDF'.includes(live);
+      this.phase === 'question' && !this.review && !this.counter && 'CDF'.includes(live);
     const air = floor - MR - this.my;
     pxEllipse(
       g,
@@ -1160,7 +1197,7 @@ export class BossFight {
       U * 2,
       'rgba(0,0,0,.2)'
     );
-    if (this.phase === 'question' && t >= this.telegraphEnd)
+    if (this.phase === 'question' && !this.review && t >= this.telegraphEnd)
       pixelRing(
         g,
         this.mx,
@@ -1177,7 +1214,7 @@ export class BossFight {
       );
     const filled = this.phase === 'throw';
     const face: Face =
-      struggling || t < this.hurtUntil
+      struggling || t < this.hurtUntil || (this.review && this.answered === 'F')
         ? 'strained'
         : live === 'B'
           ? 'steady'
@@ -1187,7 +1224,7 @@ export class BossFight {
         (Math.round(this.turn / (Math.PI * 2)) * Math.PI * 2 - this.turn) *
         0.15;
     const sprite = marbleSprite(
-      filled ? this.answered : null,
+      filled && !this.review ? this.answered : null,
       face,
       this.turn + (struggling ? Math.sin(t / 90) * 0.12 : 0)
     );
@@ -1230,7 +1267,7 @@ export class BossFight {
     g.fillRect(x - U, y - U, w + U * 2, h + U * 2);
     g.fillStyle = '#3a2a52';
     g.fillRect(x, y, w, h);
-    const fw = r3((w * this.shownHp) / PASS_POINTS);
+    const fw = r3((w * this.shownHp) / this.maxHp);
     g.fillStyle =
       this.bossPhase === 3
         ? '#ff1f3d'
@@ -1249,7 +1286,7 @@ export class BossFight {
     }
     pixelText(
       g,
-      `HP ${Math.max(0, Math.round(this.shownHp))}`,
+      `${this.review ? 'STRENGTH' : 'HP'} ${Math.max(0, Math.round(this.shownHp))}`,
       x + w / 2,
       y + h - 4,
       9,
@@ -1271,13 +1308,15 @@ export class BossFight {
       g.globalAlpha = 1;
     }
     this.drawTelegraph(g, t);
-    // the seven hits so far
-    for (let i = 0; i < BOSS_HITS; i++) {
+    // The assigned review questions, or the ordinary boss's seven hits.
+    for (let i = 0; i < this.hitCount; i++) {
       const gr = this.grades[i];
-      const cx = W - 30 - (BOSS_HITS - 1 - i) * 22;
+      const cx = W - 30 - (this.hitCount - 1 - i) * 22;
       g.fillStyle = INK;
       g.fillRect(cx - 9, H - 30, 18, 18);
-      g.fillStyle = gr ? GRADE[gr][0] : '#3a2a52';
+      g.fillStyle = gr
+        ? this.review ? gr === 'F' ? '#ff4d6d' : '#42ce83' : GRADE[gr][0]
+        : '#3a2a52';
       g.fillRect(cx - 6, H - 27, 12, 12);
     }
   }
@@ -1359,8 +1398,9 @@ export class BossFight {
     g.fillRect(0, H - r3(bar), W, r3(bar));
     if (since > 700 && since < total - 100) {
       g.globalAlpha = Math.min(1, (since - 700) / 150);
-      const title =
-        this.info.node === 'castle' ? 'CASTLE' : `FORT ${this.info.index}`;
+      const title = this.review
+        ? 'GHOST REVIEW'
+        : this.info.node === 'castle' ? 'CASTLE' : `FORT ${this.info.index}`;
       pixelText(g, title, W / 2, H / 2 - 40, 14, '#ffcb32');
       pixelText(
         g,
@@ -1371,7 +1411,10 @@ export class BossFight {
         '#fff'
       );
       if (big)
-        pixelText(g, 'THE TEST BEGINS', W / 2, H / 2 + 34, 10, '#ff9db0');
+        pixelText(
+          g, this.review ? 'YOUR RIVAL RETURNS' : 'THE TEST BEGINS',
+          W / 2, H / 2 + 34, 10, '#ff9db0'
+        );
       g.globalAlpha = 1;
     }
   }

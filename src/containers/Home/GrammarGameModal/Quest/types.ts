@@ -50,6 +50,8 @@ export interface QuestWorldMastery {
 export interface QuestState {
   worlds: QuestWorld[];
   nemesis: { skill: string; nameEn: string; misses: number; due: boolean }[];
+  // A finished review whose topics can be practiced without rewards.
+  reviewPracticeRunId?: number | null;
   ruleBook: { seen: number; total: number };
   rewardedRunsLeft: number;
   // replays of cleared stops and bosses pay in full only once the final castle falls
@@ -213,7 +215,7 @@ export type QuestRules =
       hp?: number;
       counterDamage?: number;
     }
-  | { mode: 'nemesis' };
+  | { mode: 'nemesis'; practiceOnly?: boolean };
 
 export interface QuestRun {
   runId: number;
@@ -234,6 +236,7 @@ export interface QuestRun {
 
 export interface QuestResult {
   runId: number;
+  practiceOnly?: boolean;
   score: number;
   grade?: 'S' | 'A' | 'B' | 'C' | 'D' | 'F' | null;
   cleared: boolean;

@@ -115,6 +115,8 @@ export default function GrammarQuest({
             kind={run.kind}
             runId={run.runId}
             onBackToMap={handleBackToMap}
+            onPracticeAgain={run.kind === 'nemesis' ? () => handleStart({ nemesis: true, practiceOf: run.runId }) : undefined}
+            startingPractice={starting || pendingAction !== null}
           />
         ) : run && run.rules?.mode !== 'nemesis' ? (
           <Suspense fallback={<Loading />}>
@@ -126,7 +128,7 @@ export default function GrammarQuest({
           </Suspense>
         ) : run ? (
           <Suspense fallback={<Loading />}>
-            <NemesisRun run={run} onFinished={handleFinished} onQuit={handleBackToMap} />
+            <NemesisRun key={run.runId} run={run} onFinished={handleFinished} onQuit={handleBackToMap} />
           </Suspense>
         ) : (
           <>
@@ -155,11 +157,12 @@ export default function GrammarQuest({
               onPlayNode={(node: QuestNode) => handleStart({ nodeId: node.id })}
               onPlayNemesis={() => {
                 playQuestSound('nemesis');
-                handleStart({ nemesis: true });
+                handleStart({ nemesis: true, ...(!state.nemesis.some((n) => n.due) && state.reviewPracticeRunId
+                  ? { practiceOf: state.reviewPracticeRunId } : {}) });
               }}
               starting={starting || pendingAction !== null}
               startingNodeId={pendingAction?.startsWith('node:') ? pendingAction.slice(5) : null}
-              startingNemesis={pendingAction === 'nemesis'}
+              startingNemesis={pendingAction?.startsWith('nemesis') || false}
               collectingMastery={pendingAction === `mastery:${world.id}`}
               onCollectMastery={() => handleCollectMastery(world.id)}
             />
@@ -197,17 +200,19 @@ export default function GrammarQuest({
   }
 
   function handleStart(...args: Parameters<typeof handleStartRequest>) {
-    return runAction('nodeId' in args[0] ? 'node:' + args[0].nodeId : 'nemesis', () =>
+    const target = args[0];
+    return runAction('nodeId' in target ? 'node:' + target.nodeId : target.practiceOf ? 'nemesis-practice:' + target.practiceOf : 'nemesis', () =>
       handleStartRequest(...args)
     );
   }
 
-  async function handleStartRequest(target: { nodeId: string } | { nemesis: true }) {
+  async function handleStartRequest(target: { nodeId: string } | { nemesis: true; practiceOf?: number }) {
     setStarting(true);
     setError('');
     try {
       const started = await startRun(target);
       setResult(null);
+      setResultAnswers([]);
       setRun(started);
       rememberRunSelection(started);
     } catch (e: any) {

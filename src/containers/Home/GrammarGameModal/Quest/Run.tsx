@@ -15,12 +15,17 @@ import QuestMarble, { answerLook } from './QuestMarble';
 import AudioToggles from './AudioToggles';
 import PixelIcon from './PixelIcon';
 import { GotchaText } from './FormatQuestion';
-import { playQuestSound } from './sfx';
 import { useReadCooldown } from './readCooldown';
+import { useMoreBelow } from './moreBelow';
 import Stage from './MarbleRun/Stage';
-import { GhostReviewBattle } from './MarbleRun/GhostReviewBattle';
+import { BossFight } from './MarbleRun/boss/fight';
+import { NEMESIS_BOSS } from './MarbleRun/boss/nemesis';
+import { useStageFit } from './MarbleRun/useStageFit';
+import { wrapCls, bossCls, bodyCls, dockCls, stageFitCls, cardCls, bossCardCls, cardInnerCls, ruleScrollCls, ruleFadeCls } from './MarbleRun/battleLayout';
 import { playMusic, stopMusic } from './MarbleRun/music';
-import { GOLD, INK, PARCHMENT, PIXEL_FONT, PLATE, WOOD, button, frame, challengeButton, reviewedButton } from './pixelUi';
+import { GOLD, PIXEL_FONT, PLATE, WOOD, button, frame, challengeButton, reviewedButton } from './pixelUi';
+
+const REVIEW_TURN = { baseTimeMs: 12000, revealDelayMs: 0 };
 
 // One confirmed first attempt per question, as before. The ghost battle
 // illustrates those answers; rewards and spaced progress stay on the server.
@@ -32,6 +37,7 @@ export default function Run({ run, onFinished, onQuit }: {
 }) {
   const answerQuestion = useAppContext((v) => v.requestHelpers.answerGrammarQuestQuestion);
   const finishRun = useAppContext((v) => v.requestHelpers.finishGrammarQuestRun);
+  const practiceOnly = run.rules.mode === 'nemesis' && !!run.rules.practiceOnly;
   const [answers, setAnswers] = useState<Record<number, QuestAnswer>>(() =>
     Object.fromEntries((run.answers || []).map((a) => [a.position, a]))
   );
@@ -39,6 +45,7 @@ export default function Run({ run, onFinished, onQuit }: {
   const [sending, setSending] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [animating, setAnimating] = useState(false);
+  const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
   const [challengeOpen, setChallengeOpen] = useState(false);
@@ -47,10 +54,17 @@ export default function Run({ run, onFinished, onQuit }: {
   const inFlight = useRef(false);
   const alive = useRef(true);
   const layerRef = useRef<HTMLDivElement>(null);
-  const bodyRef = useRef<HTMLDivElement>(null);
-  const [engine] = useState(() => new GhostReviewBattle(
-    run.questions.length, run.answers || [], () => setAnimating(false)
-  ));
+  const finishDelay = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [engine] = useState(() => {
+    const fight = new BossFight(NEMESIS_BOSS, {
+      onReady: () => setReady(true),
+      onReviewReady: () => setAnimating(false)
+    }, { questions: run.questions.length });
+    fight.resumeAnswers(run.questions.flatMap((q) => answers[q.position] ? [answers[q.position].isCorrect] : []));
+    if (run.questions.every((q) => !!answers[q.position])) fight.restoreReview();
+    else fight.setQuestion(REVIEW_TURN);
+    return fight;
+  });
   const firstOpen = useMemo(() => run.questions.findIndex((q) => !answers[q.position]), [run.questions, answers]);
   const [position, setPosition] = useState(firstOpen === -1 ? run.questions.length - 1 : firstOpen);
   const question = run.questions[position];
@@ -65,10 +79,15 @@ export default function Run({ run, onFinished, onQuit }: {
   const { reading, secondsLeft } = useReadCooldown(
     answer && !answer.isCorrect ? `miss-${position}` : null, answer?.readMs
   );
+  const ruleRef = useRef<HTMLDivElement>(null);
+  const ruleMore = useMoreBelow(ruleRef, answer && !answer.isCorrect ? `${run.runId}:${question?.position}:${koreanShown}` : null);
+  const { bodyRef, dockRef, cardRef, stageWidth } = useStageFit({
+    missOpen: !!answer && !answer.isCorrect,
+    resetKey: `${run.runId}:${question?.position}`
+  });
 
   useEffect(() => {
     shownAt.current = Date.now();
-    bodyRef.current?.scrollTo({ top: 0 });
   }, [position]);
 
   useEffect(() => {
@@ -76,9 +95,10 @@ export default function Run({ run, onFinished, onQuit }: {
     const previousFocus = document.activeElement as HTMLElement | null;
     const unlock = lockBodyScroll(document.body);
     layerRef.current?.querySelector('button')?.focus({ preventScroll: true });
-    playMusic('w8-the-citadel');
+    playMusic('boss-fort');
     return () => {
       alive.current = false;
+      if (finishDelay.current != null) clearTimeout(finishDelay.current);
       unlock();
       stopMusic(0.6);
       if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
@@ -88,16 +108,17 @@ export default function Run({ run, onFinished, onQuit }: {
   if (!question) return null;
 
   return createPortal(
-    <div className={wrapCls} ref={layerRef} onKeyDown={handleKeyDown} role="region" aria-label="Ghost review battle">
+    <div className={cx(wrapCls, bossCls)} ref={layerRef} onKeyDown={handleKeyDown} role="region" aria-label="Ghost review battle">
       <div className={topCls}>
         <button className={quitCls} onClick={onQuit}>← Map</button>
-        <span className={titleCls}><PixelIcon name="ghost" /> GHOST REVIEW</span>
+        <span className={titleCls}><PixelIcon name="ghost" /> {practiceOnly ? 'GHOST PRACTICE' : 'GHOST REVIEW'}</span>
         <AudioToggles className={audioCls} />
       </div>
       <div className={bodyCls} ref={bodyRef}>
-        <div className={stageCls} role="img" aria-label={`Ghost strength: ${run.questions.length - rightSoFar} of ${run.questions.length}. ${answeredCount} questions answered.`}>
+        <div className={stageFitCls} style={{ width: stageWidth }} role="img" aria-label={`Ghost strength: ${run.questions.length - rightSoFar} of ${run.questions.length}. ${answeredCount} questions answered.`}>
           <Stage engine={engine} />
         </div>
+        <div className={dockCls} ref={dockRef}>
         <div className={progressCls}>
           <div className={marbleRowCls} aria-label={`${rightSoFar} correct answers`}>
             {run.questions.map((q) => {
@@ -110,8 +131,12 @@ export default function Run({ run, onFinished, onQuit }: {
           <span>{answeredCount}/{run.questions.length} answered</span>
           <span className={cx(comboCls, combo >= 3 && comboHotCls)}>Combo ×{combo}</span>
         </div>
-        <div className={cardCls}>
-          <div className={introCls}>Land a hit with each right answer. No timer · Perfect reviews pay 3× XP and Coins while daily rewards remain.</div>
+        <div className={cx(cardCls, bossCardCls)} ref={cardRef}>
+          <div className={cardInnerCls}>
+          <div className={introCls}>{practiceOnly
+            ? 'No timer · Practice only: no XP or Coins. Your next scheduled review stays the same.'
+            : 'Land a hit with each right answer. No timer · Perfect reviews pay 3× XP and Coins while daily rewards remain.'}</div>
+          {!ready && !answer ? <div className={readyCls} role="status">YOUR RIVAL RETURNS…</div> : <>
           <div className={metaCls}>Question {position + 1} of {run.questions.length} · <b>{question.skillName}</b></div>
           {question.instruction && <div className={instructionCls}><GotchaText text={question.instruction} /></div>}
           <div className={questionCls}>{question.question}</div>
@@ -120,17 +145,18 @@ export default function Run({ run, onFinished, onQuit }: {
               const state = !answer ? '' : i === answer.correctIndex ? 'right' : i === answer.selectedIndex ? 'wrong' : 'dim';
               return <button key={i}
                 className={cx(choiceCls, state === 'right' && rightCls, state === 'wrong' && wrongCls, state === 'dim' && dimCls)}
-                disabled={!!answer || sending || animating} onClick={() => handleAnswer(i)}>
+                disabled={!!answer || sending || animating || !ready} onClick={() => handleAnswer(i)}>
                 <span className={letterCls}>{'ABCD'[i]}</span>{choice}
               </button>;
             })}
           </div>
+          </>}
           {error && <div className={errorCls} role="alert">{error}</div>}
           {answer && !answer.isCorrect && <div className={missCls}>
             <div className={missNoteCls}>The ghost dodged. Read the explanation, then continue when you’re ready.</div>
-            {answer.ruleCard && <RuleCard card={answer.ruleCard} look="quest"
+            {answer.ruleCard && <div ref={ruleRef} className={cx(ruleScrollCls, ruleMore && ruleFadeCls)} data-fit-flex><RuleCard card={answer.ruleCard} look="quest"
               pickedChoice={question.choices[answer.selectedIndex] ?? null}
-              koreanShown={koreanShown} onToggleKorean={handleToggleKorean} />}
+              koreanShown={koreanShown} onToggleKorean={handleToggleKorean} /></div>}
           </div>}
           {answer && <div className={nextRowCls}>
             {challenge && <button className={reviewed ? reviewedCls : challengeCls}
@@ -139,10 +165,12 @@ export default function Run({ run, onFinished, onQuit }: {
             <button aria-busy={finishing} className={nextCls} disabled={finishing || reading || animating}
               onClick={allAnswered ? handleFinish : handleNext}>
               {finishing ? 'Saving…' : reading ? `Read it · ${secondsLeft}` : animating ? 'Marble away…'
-                : allAnswered ? `Finish review · ${rightSoFar}/${run.questions.length}` : 'Continue'}
+                : allAnswered ? `Finish ${practiceOnly ? 'practice' : 'review'} · ${rightSoFar}/${run.questions.length}` : 'Continue'}
               {finishing && <Icon icon="spinner" pulse style={{ marginLeft: '0.7rem' }} />}
             </button>
           </div>}
+          </div>
+        </div>
         </div>
       </div>
       {challengeOpen && challenge && <ChallengeModal isOpen portalTarget={layerRef.current ?? undefined}
@@ -153,7 +181,7 @@ export default function Run({ run, onFinished, onQuit }: {
   );
 
   async function handleAnswer(choiceIndex: number) {
-    if (inFlight.current || answer || animating) return;
+    if (inFlight.current || answer || animating || !ready || !engine.canAnswer) return;
     inFlight.current = true;
     setSending(true);
     setError('');
@@ -163,13 +191,8 @@ export default function Run({ run, onFinished, onQuit }: {
       if (!alive.current) return;
       setAnswers((prev) => ({ ...prev, [result.position]: result }));
       setCombo(result.combo || 0);
-      setAnimating(engine.answer(result.position, result.isCorrect));
-      if (result.isCorrect) {
-        const streak = result.combo || 0;
-        playQuestSound(streak > 0 && streak % 5 === 0 ? 'combo' : 'correct', {
-          shift: Math.min(Math.max(streak - 1, 0), 7)
-        });
-      } else playQuestSound('miss');
+      setReady(false);
+      setAnimating(engine.answerReview(result.isCorrect));
     } catch {
       if (alive.current) setError('That answer did not reach the server. Try again.');
     } finally {
@@ -181,7 +204,9 @@ export default function Run({ run, onFinished, onQuit }: {
   function handleNext() {
     if (reading || animating || inFlight.current || !answer) return;
     const next = run.questions.findIndex((q, i) => i > position && !answers[q.position]);
-    engine.next();
+    setReady(false);
+    engine.setQuestion(REVIEW_TURN);
+    engine.resumeReview();
     setError('');
     setPosition(next === -1 ? firstOpen : next);
   }
@@ -192,6 +217,13 @@ export default function Run({ run, onFinished, onQuit }: {
     setFinishing(true);
     setError('');
     try {
+      if (engine.phase === 'review') {
+        engine.resumeReview();
+        await new Promise<void>((resolve) => {
+          finishDelay.current = setTimeout(() => { finishDelay.current = null; resolve(); }, 1400);
+        });
+        if (!alive.current) return;
+      }
       const result = await finishRun(run.runId);
       if (!alive.current) return;
       onFinished(result, run.questions.filter((q) => answers[q.position]).map((q) => ({
@@ -221,12 +253,6 @@ export default function Run({ run, onFinished, onQuit }: {
   }
 }
 
-const wrapCls = css`
-  position: fixed; inset: 0; z-index: 2147482000;
-  height: 100vh; height: 100dvh;
-  display: flex; flex-direction: column; overflow: hidden;
-  background: #1a1426; color: ${INK};
-`;
 const topCls = css`
   display: flex; align-items: center; gap: 1rem;
   padding: 0.6rem 0.8rem; background: #2a2140; color: #f5eaff;
@@ -241,33 +267,19 @@ const quitCls = css`
   ${button(WOOD, '#6e3d1b')}
   min-height: 44px; font-size: 1.3rem; padding: 0 1rem; color: #fff5df; flex-shrink: 0;
 `;
-const bodyCls = css`
-  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 1rem; padding: 1rem 1.2rem 2rem;
-  @media (max-width: ${mobileMaxWidth}) { padding: 0.6rem 0.5rem 1rem; gap: 0.6rem; }
-`;
-const stageCls = css`
-  flex-shrink: 0; width: min(100%, 1100px, 86vh); width: min(100%, 1100px, 86dvh);
-  canvas { border-radius: 0; }
-`;
 const progressCls = css`
   ${frame(PLATE, 2)}
   display: flex; flex-shrink: 0; flex-wrap: wrap; align-items: center;
   justify-content: center; gap: 0.7rem 1.6rem;
-  width: min(100%, 1050px); padding: 0.7rem 1rem; color: #f5eaff; font-size: 1.3rem;
+  width: 100%; padding: 0.7rem 1rem; color: #f5eaff; font-size: 1.3rem;
 `;
 const marbleRowCls = css`display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center;`;
 const currentMarbleCls = css`outline: 2px solid #e3c3ff; outline-offset: 3px;`;
 const comboCls = css`font-weight: 800;`;
 const comboHotCls = css`color: #ffdc73;`;
-const cardCls = css`
-  ${frame(PARCHMENT, 2)}
-  flex-shrink: 0; width: min(100%, 1050px); padding: 1.5rem 1.8rem;
-  @media (max-width: ${mobileMaxWidth}) { padding: 1.1rem; }
-`;
-const introCls = css`font-size: 1.2rem; color: #6b5475; margin-bottom: 0.7rem; line-height: 1.5;`;
-const metaCls = css`font-size: 1.3rem; line-height: 1.5; color: #635546;`;
+const readyCls = css`padding: 2rem 1rem; font-family: ${PIXEL_FONT}; font-size: 1.2rem; text-align: center; color: #e3c3ff;`;
+const introCls = css`font-size: 1.2rem; color: #c4b3d6; margin-bottom: 0.7rem; line-height: 1.5;`;
+const metaCls = css`font-size: 1.3rem; line-height: 1.5; color: #d3c4e2;`;
 const instructionCls = css`margin-top: 0.6rem; font-size: 1.4rem; font-weight: 700;`;
 const questionCls = css`
   margin: 0.7rem 0 1.3rem; font-size: 2rem; font-weight: 700;
@@ -294,9 +306,9 @@ const letterCls = css`
 const rightCls = css`background: #278b4c; border-color: #197039; box-shadow: 0 4px 0 #176031;`;
 const wrongCls = css`background: #bc3154; border-color: #97273f; box-shadow: 0 4px 0 #7e2035;`;
 const dimCls = css`opacity: 0.55;`;
-const errorCls = css`margin-top: 1rem; color: #ac2348; font-size: 1.4rem;`;
+const errorCls = css`margin-top: 1rem; color: #ff9db0; font-size: 1.4rem;`;
 const missCls = css`margin-top: 1.5rem;`;
-const missNoteCls = css`font-size: 1.35rem; line-height: 1.5; color: #694b78; margin-bottom: 0.8rem;`;
+const missNoteCls = css`font-size: 1.35rem; line-height: 1.5; color: #e1d0f5; margin-bottom: 0.8rem;`;
 const nextRowCls = css`display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;`;
 const challengeCls = css`${challengeButton()} margin-right: auto; min-height: 44px;`;
 const reviewedCls = css`${reviewedButton()} margin-right: auto; min-height: 44px;`;
