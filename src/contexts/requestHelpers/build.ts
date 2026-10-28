@@ -5932,6 +5932,7 @@ export default function buildRequestHelpers({
       pageSize,
       cursor,
       order,
+      query,
       token,
       publicRead = false
     }: {
@@ -5942,13 +5943,24 @@ export default function buildRequestHelpers({
       pageSize?: number;
       cursor?: { id?: number };
       order?: string;
+      query?: {
+        authorUserId?: number;
+        fields?: string[];
+        where?: {
+          field: string;
+          equals?: string | number | boolean | null;
+          truthy?: true;
+        };
+        countBy?: string;
+        includeAuthor?: boolean;
+      };
       token?: string;
       publicRead?: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/${publicRead ? 'public-shared-db' : 'api/shared-db'}/entries`,
-          { topicName, topicId, limit, pageSize, cursor, order },
+          { topicName, topicId, limit, pageSize, cursor, order, query },
           {
             ...auth(),
             headers: {

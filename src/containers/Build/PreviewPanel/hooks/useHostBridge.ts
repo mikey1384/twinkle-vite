@@ -4327,7 +4327,8 @@ export function useHostBridge({
             break;
           }
 
-          case 'shared-db:get-entries': {
+          case 'shared-db:get-entries':
+          case 'shared-db:query-entries': {
             const publicRead = isGuestViewerActive(previewAuth);
             const sharedDbEntriesToken = publicRead
               ? undefined
@@ -4335,6 +4336,7 @@ export function useHostBridge({
             response = await requestRefs.getSharedDbEntriesRef.current({
               buildId: activeBuild.id,
               topicName: payload?.topicName,
+              query: payload?.query,
               topicId: payload?.topicId,
               limit: payload?.limit,
               pageSize: payload?.pageSize,
