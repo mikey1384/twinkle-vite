@@ -1827,7 +1827,7 @@ export default function contentRequestHelpers({
     ) {
       try {
         const { data } = await request.get(
-          `${URL}/content/game/quest/run/${runId}?formatEdition=2${refresh ? '&refresh=1' : ''}`,
+          `${URL}/content/game/quest/run/${runId}?formatEdition=2&manualReview=1${refresh ? '&refresh=1' : ''}`,
           auth()
         );
         return data;
@@ -1849,7 +1849,19 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/game/quest/run/${runId}/answer`,
-          { position, choiceIndex, responseMs, formatEdition: 2 },
+          { position, choiceIndex, responseMs, formatEdition: 2, manualReview: true },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async resumeGrammarQuestRun(runId: number, position: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/quest/run/${runId}/resume`,
+          { position },
           auth()
         );
         return data;

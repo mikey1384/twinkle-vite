@@ -73,6 +73,8 @@ const app = {user:{actions:{onSetUserState:update=>{window.balanceUpdates.push(u
  startGrammarQuestRun:async({nodeId})=>{window.startRequests.push(nodeId);const world=window.serverQuestState.worlds.find(w=>w.nodes.some(n=>n.id===nodeId));const node=world.nodes.find(n=>n.id===nodeId);return {runId:1,nodeId,worldId:world.id,kind:node.kind,rules:{mode:node.kind==='stop'?'practice':'boss'},questions:[]}},
  loadGrammarReview:async()=>({items:[window.reviewItem],hasMore:false}),
  answerGrammarQuestQuestion:async data=>{window.answerRequests.push(data);return typeof window.questAnswer==='function'?window.questAnswer(data):window.questAnswer},
+ resumeGrammarQuestRun:async(runId,position)=>{window.resumeRequests.push({runId,position});return typeof window.questResume==='function'?window.questResume():window.questResume},
+ finishGrammarQuestRun:async()=>{window.finishRequests=(window.finishRequests||0)+1;return {runId:123,points:610}},
  challengeGrammarQuestion:async data=>{window.challengeRequests.push(data);return {justified:false,explanation:'The reviewer confirmed the answer.'}}
 }};
 export const useAppContext = select => select(app);
@@ -135,7 +137,7 @@ function Fixture(){const [view,setView]=useState({mode:'music',revision:0});
    flushSync(()=>setView({mode,revision:view.revision+1}));
  };
  if(view.mode==='stomp')return <MultiTapQuestion key={view.revision} {...window.stompProps} cls={{question:'prompt',choices:'choices',choice:'choice',key:'key',right:'right',wrong:'wrong'}} onPick={index=>window.answerRequests.push({choiceIndex:index})}/>;
- if(view.mode==='practice')return <MarbleRunScreen key={view.revision} run={window.fixtureRun || run} onFinished={()=>{}} onQuit={()=>{}}/>;
+ if(view.mode==='practice')return <MarbleRunScreen key={view.revision} run={window.fixtureRun || run} onFinished={()=>{window.finished=(window.finished||0)+1}} onQuit={()=>{}}/>;
  if(view.mode==='results')return <Result key={view.revision} kind="fort" result={{runId:1,score:50,cleared:false,firstTryCorrect:0,size:1,xp:0,coins:0}} answers={[{...window.questAnswer,questionText:question.question}]} onBackToMap={()=>{}}/>;
  if(view.mode==='classic')return <Review key={view.revision}/>;
  return <Quest key={view.revision}/>;
@@ -212,8 +214,8 @@ async function compile({ realBoss = false } = {}) {
   }
 }
 
-test('a boss wrong answer fails only its marble and keeps the explanation in Chromium and WebKit', { timeout: 120000 }, async () => {
-  const output = path.resolve(repo, '../work/grammar-quest-boss-first-miss-20261028');
+test('a boss explanation waits for Resume without spending the next grade clock in Chromium and WebKit', { timeout: 180000 }, async () => {
+  const output = path.resolve(repo, '../work/grammar-quest-review-resume-20261028');
   mkdirSync(output, { recursive: true });
   const script = await compile({ realBoss: true });
   const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
@@ -262,6 +264,7 @@ test('a boss wrong answer fails only its marble and keeps the explanation in Chr
             answers: [], ...extra
           };
           window.answerRequests = [];
+          window.resumeRequests = [];
           window.showFixture('practice');
         };
         window.mountBoss();
@@ -283,14 +286,13 @@ test('a boss wrong answer fails only its marble and keeps the explanation in Chr
       assert.equal(await page.getByText('Wrong answer · F for this marble', { exact: true }).count(), 0,
         'pending requests do not invent a failure');
       assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
-      await page.evaluate(() => window.resolveBossAnswer({
+      await page.evaluate(() => window.resolveBossAnswer(window.savedMiss = {
         position: 0, isCorrect: false, settled: true, selectedIndex: 1, correctIndex: 0,
-        grade: 'F', gained: 10, points: 10, hp: 480, readMs: 6000,
+        grade: 'F', gained: 10, points: 10, hp: 480, readMs: 6000, reviewPending: true,
         ruleCard: { skill: 'agreement', nameEn: 'Subject–verb agreement',
           why: 'Use “is” with “she”. “She is ready” is correct.',
           wrongChoices: [{ choice: 'be', error: 'Use the singular form is with she.' }] },
-        pickedText: 'be', challenge: { questionId: 123, checked: false },
-        next: { ...window.bossQuestion, position: 1 }
+        pickedText: 'be', challenge: { questionId: 123, checked: false }
       }));
       await page.getByText('Wrong answer · F for this marble', { exact: true }).waitFor();
       await page.waitForFunction(() => window.fixtureFight.answered === 'F');
@@ -303,6 +305,26 @@ test('a boss wrong answer fails only its marble and keeps the explanation in Chr
       assert.ok(rule && rule.x >= 0 && rule.x + rule.width <= viewport.width,
         'the new rule fits on the phone');
       await page.screenshot({ path: path.join(output, `${label}-wrong-answer.png`), fullPage: true });
+      const resume = page.getByRole('button', { name: /^Resume/ });
+      assert.equal(await resume.isDisabled(), true, 'minimum reading time still applies');
+      await page.keyboard.press('Enter');
+      assert.equal(await page.evaluate(() => window.resumeRequests.length), 0);
+      await page.waitForFunction(() => window.fixtureFight.phase === 'review');
+      await page.getByRole('button', { name: 'Resume', exact: true }).waitFor();
+      await page.waitForTimeout(2000);
+      assert.equal(await page.evaluate(() => window.fixtureFight.phase), 'review', 'the minimum unlocks Resume without auto-advancing');
+      assert.equal(await page.evaluate(() => window.fixtureFight.queued), null);
+      await page.screenshot({ path: path.join(output, `${label}-resume-ready.png`), fullPage: true });
+      await page.evaluate(() => { window.questResume = () => Promise.reject(new Error('offline')); });
+      await resume.click();
+      await page.getByText('Could not resume. Your explanation is saved. Try again.', { exact: true }).waitFor();
+      assert.equal(await page.evaluate(() => window.fixtureFight.phase), 'review');
+      await page.evaluate(() => { window.questResume = () => new Promise(resolve => { window.resolveResume = resolve; }); });
+      await resume.click();
+      await page.getByRole('button', { name: 'Resuming…', exact: true }).waitFor();
+      await page.keyboard.press('Enter');
+      assert.equal(await page.evaluate(() => window.resumeRequests.length), 2, 'one failed request and one in flight, without double Resume');
+      await page.evaluate(() => window.resolveResume({ position: 0, next: { ...window.bossQuestion, position: 1 } }));
       await page.waitForFunction(() => window.fixtureFight.canAnswer && window.fixtureFight.idx === 1);
       assert.deepEqual(await page.evaluate(() => window.fixtureFight.grades), ['F']);
       assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
@@ -320,6 +342,51 @@ test('a boss wrong answer fails only its marble and keeps the explanation in Chr
       await page.waitForFunction(() => window.fixtureFight.canAnswer && window.fixtureFight.idx === 2);
       assert.deepEqual(await page.evaluate(() => window.fixtureFight.grades), ['F', 'S'],
         'a failed question does not end the boss battle or fail later marbles');
+
+      // Reopening a paused explanation restores it, including a long card
+      // on a phone. Sentence/translation controls must not trigger Resume.
+      await page.evaluate(() => {
+        window.mountBoss({ reviewPosition: 0, hp: 480,
+          answers: [{ ...window.savedMiss, readMs: 0, ruleCard: {
+            ...window.savedMiss.ruleCard,
+            why: Array(16).fill('Use “is” with “she”; the subject and verb must agree.').join(' ')
+          }}] });
+      });
+      await page.getByRole('button', { name: 'Resume', exact: true }).waitFor();
+      await page.waitForTimeout(1000);
+      assert.equal(await page.evaluate(() => window.fixtureFight.phase), 'review');
+      assert.deepEqual(await page.evaluate(() => window.fixtureFight.grades), ['F']);
+      const pausedButton = await page.getByRole('button', { name: 'Resume', exact: true }).boundingBox();
+      assert.ok(pausedButton && pausedButton.y >= 0 && pausedButton.y + pausedButton.height <= viewport.height, 'Resume stays visible beside a long explanation');
+      assert.equal(await page.evaluate(() => {
+        const card = document.querySelector('[data-fit-flex]');
+        if (card.scrollHeight <= card.clientHeight) return true;
+        card.scrollTop = card.scrollHeight;
+        return card.scrollTop > 0;
+      }), true, 'the full explanation remains scrollable');
+      await page.screenshot({ path: path.join(output, `${label}-long-review-reopened.png`), fullPage: true });
+      await page.evaluate(() => { window.questResume = { position: 0, next: { ...window.bossQuestion, position: 1 } }; });
+      await page.getByRole('button', { name: 'Resume', exact: true }).click();
+      await page.waitForFunction(() => window.fixtureFight.canAnswer && window.fixtureFight.idx === 1);
+      assert.equal(await page.evaluate(() => window.fixtureFight.usedMs), 0);
+
+      // Even a fight whose seventh marble has settled must not dismiss its
+      // last explanation or claim the result until Resume.
+      await page.evaluate(() => {
+        window.finished = window.finishRequests = 0;
+        const questions = Array.from({ length: 7 }, (_, position) => ({ ...window.bossQuestion, position }));
+        window.mountBoss({ questions, reviewPosition: 6, hp: 0, answers: questions.map(q => q.position === 6
+          ? { ...window.savedMiss, position: 6, readMs: 1 }
+          : { position: q.position, selectedIndex: 0, correctIndex: 0, isCorrect: true, grade: 'S' }) });
+        window.questResume = { position: 6 };
+      });
+      await page.getByRole('button', { name: 'Resume', exact: true }).waitFor();
+      await page.waitForTimeout(3500);
+      assert.equal(await page.evaluate(() => window.finishRequests), 0);
+      assert.equal(await page.evaluate(() => window.fixtureFight.phase), 'review');
+      await page.getByRole('button', { name: 'Resume', exact: true }).click();
+      await page.waitForFunction(() => window.finished === 1);
+      assert.equal(await page.evaluate(() => window.finishRequests), 1);
 
       // The saved F survives reopening; the current unanswered marble keeps
       // its own banked clock and reading pause.

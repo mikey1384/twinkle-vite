@@ -423,6 +423,7 @@ registerMethods('content', [
   'startGrammarQuestRun',
   'loadGrammarQuestRun',
   'answerGrammarQuestQuestion',
+  'resumeGrammarQuestRun',
   'loadGrammarQuestMisses',
   'finishGrammarQuestRun',
   'loadLikedFeeds',

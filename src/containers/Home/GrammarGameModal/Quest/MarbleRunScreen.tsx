@@ -118,7 +118,11 @@ export default function MarbleRunScreen({
     (v) => v.requestHelpers.finishGrammarQuestRun
   );
   const loadRun = useAppContext((v) => v.requestHelpers.loadGrammarQuestRun);
+  const resumeReview = useAppContext(
+    (v) => v.requestHelpers.resumeGrammarQuestRun
+  );
   const boss = run.rules.mode === 'boss';
+  const savedReviewPosition = boss ? run.reviewPosition : undefined;
   const [questions, setQuestions] = useState<QuestQuestion[]>(run.questions);
   const [answers, setAnswers] = useState<Record<number, QuestAnswer>>(() =>
     Object.fromEntries((run.answers || []).map((a) => [a.position, a]))
@@ -137,9 +141,11 @@ export default function MarbleRunScreen({
     | 'review'
     | 'bossReview'
     | 'finishing'
-  >('waiting');
+  >(savedReviewPosition != null ? 'bossReview' : 'waiting');
   // practice: the marble can take the next question (bosses say so per hit)
-  const [ready, setReady] = useState(!boss);
+  const [ready, setReady] = useState(!boss || savedReviewPosition != null);
+  const [resuming, setResuming] = useState(false);
+  const resumingRef = useRef(false);
   const [error, setError] = useState('');
   // practice: the fifth right answer sends the S marble to the flag
   // a stop reopened after its fifth right answer just rolls to the flag
@@ -170,7 +176,9 @@ export default function MarbleRunScreen({
   challengeOpenRef.current = challengeId != null;
   const layerRef = useRef<HTMLDivElement>(null);
   // boss: the last wrong pick, for the explanation shown after the hit lands
-  const [bossMissPick, setBossMissPick] = useState<number | null>(null);
+  const [bossMissPick, setBossMissPick] = useState<number | null>(() =>
+    run.answers?.find((a) => a.position === savedReviewPosition)?.selectedIndex ?? null
+  );
   const shownAt = useRef(0);
   // boss: a wrong click on this hit came back forgiven (its check already
   // ruled the question at fault); the landed hit keeps the note
@@ -190,7 +198,11 @@ export default function MarbleRunScreen({
   }, [boss, questions, answers]);
   // boss: the attack's name shows before its question (the telegraph)
   const [telegraph, setTelegraph] = useState(false);
-  const [shown, setShown] = useState(nextOpen);
+  const [shown, setShown] = useState(() =>
+    savedReviewPosition != null
+      ? questions.findIndex((q) => q.position === savedReviewPosition)
+      : nextOpen
+  );
   const position = shown;
   const question = position >= 0 ? questions[position] : null;
   const answer = question ? answers[question.position] : undefined;
@@ -209,8 +221,8 @@ export default function MarbleRunScreen({
     challengeReview,
     savedReview
   );
-  // a miss's explanation holds Continue for its read time (practice), or
-  // holds the next boss hit (the server's clock waits the same time)
+  // The minimum reading wait unlocks Continue/Resume; manual boss review
+  // stays open without running the next grade clock until the player resumes.
   const { reading, secondsLeft } = useReadCooldown(
     phase === 'review' && answer && !answer.isCorrect && question
       ? `miss-${question.position}`
@@ -270,6 +282,7 @@ export default function MarbleRunScreen({
             setPhase('reading');
             setReady(true);
           },
+          onReviewReady: () => setReady(true),
           onFinish: () => finish()
         }
       );
@@ -278,6 +291,10 @@ export default function MarbleRunScreen({
         .map((a) => a.grade)
         .filter(Boolean) as Grade[];
       if (graded.length || run.hp != null) fight.resume(graded, run.hp);
+      if (savedReviewPosition != null) {
+        fight.restoreReview();
+        return fight;
+      }
       const answered = new Set((run.answers || []).map((a) => a.position));
       // the turn being played: the first handed out and not yet settled
       const next = run.questions.find((q) =>
@@ -422,8 +439,16 @@ export default function MarbleRunScreen({
       // a lesson card turns its own pages on Enter (LessonCard)
       if (e.key === 'Enter' && showExample) {
         if (!lessons) setShowExample(false);
-      } else if (e.key === 'Enter' && phase === 'review' && ready && !reading)
-        handleContinue();
+      } else if (e.key === 'Enter' && ready && !reading) {
+        if (phase === 'review') handleContinue();
+        // Focused controls (sentence tabs, translation, Map) keep their own
+        // Enter action. A key held down must never dismiss an explanation.
+        else if (phase === 'bossReview' && !e.repeat &&
+          !target?.closest('button, a, [role="button"]')) {
+          e.preventDefault();
+          void handleResume();
+        }
+      }
     }
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
@@ -961,10 +986,19 @@ export default function MarbleRunScreen({
                             {/* a wrong click its check already ruled the
                                 question's fault */}
                             {answer.forgiven ? 'Free rematch earned. ' : ''}
-                            {reading
-                              ? `Next hit in ${secondsLeft}…`
-                              : 'Get ready…'}
+                            {answer.reviewPending
+                              ? 'Grade timer paused. Take your time.'
+                              : reading ? `Next hit in ${secondsLeft}…` : 'Get ready…'}
                           </span>
+                          {answer.reviewPending && (
+                            <button
+                              className={nextCls}
+                              disabled={!ready || reading || resuming}
+                              onClick={handleResume}
+                            >
+                              {resuming ? 'Resuming…' : reading ? `Resume in ${secondsLeft}…` : 'Resume'}
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <div className={nextRowCls}>
@@ -1129,12 +1163,17 @@ export default function MarbleRunScreen({
         // the crossed-out tries stay up through the review (cleared when
         // the next turn starts)
         await feedbackBeat(fight);
-        // a hit that took wrong clicks: its explanation shows while the next
-        // question waits (the same read time the server adds to its clock)
+        // Manual review waits for Resume after the throw. An older API
+        // keeps its fixed reading pause until both sides support Resume.
         const holdMs = result.readMs || 0;
-        fight.answerRight((result.grade || 'F') as Grade, holdMs, result.hp);
+        fight.answerRight(
+          (result.grade || 'F') as Grade,
+          holdMs,
+          result.hp,
+          !!result.reviewPending
+        );
         setReady(false);
-        setPhase(holdMs ? 'bossReview' : 'waiting');
+        setPhase(result.reviewPending || holdMs ? 'bossReview' : 'waiting');
         return;
       }
       const run_ = engine as PracticeRun;
@@ -1199,6 +1238,34 @@ export default function MarbleRunScreen({
         ? 0
         : i + 1;
     items[next].focus();
+  }
+
+  async function handleResume() {
+    if (!boss || phase !== 'bossReview' || !answer?.reviewPending ||
+      !question || !ready || reading || resumingRef.current) return;
+    resumingRef.current = true;
+    setResuming(true);
+    setError('');
+    try {
+      const result = await resumeReview(run.runId, question.position);
+      const fight = engine as BossFight;
+      if (result.next) {
+        const incoming: QuestQuestion = result.next;
+        setQuestions((qs) => qs.some((q) => q.position === incoming.position)
+          ? qs.map((q) => q.position === incoming.position ? incoming : q)
+          : [...qs, incoming]);
+        fight.setQuestion(turnOf(incoming));
+      }
+      setAnswers((prev) => ({ ...prev, [question.position]: { ...prev[question.position], reviewPending: false } }));
+      setReady(false);
+      setPhase('waiting');
+      fight.resumeReview();
+    } catch (e: any) {
+      setError(e?.response?.data?.error || 'Could not resume. Your explanation is saved. Try again.');
+    } finally {
+      resumingRef.current = false;
+      setResuming(false);
+    }
   }
 
   function handleContinue() {

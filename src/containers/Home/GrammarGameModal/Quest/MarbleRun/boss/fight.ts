@@ -68,11 +68,12 @@ export function gradeFor(ms: number, baseMs: number, wrongPicks = 0): Grade {
 
 export interface BossEvents {
   onReady?(): void; // ask the next question
+  onReviewReady?(): void; // the graded throw has landed; Resume can proceed
   onFinish?(result: { passed: boolean; points: number; grades: Grade[] }): void;
 }
 
 type Phase =
-  'intro' | 'enter' | 'question' | 'throw' | 'recover' | 'between' | 'done';
+  'intro' | 'enter' | 'question' | 'throw' | 'recover' | 'review' | 'between' | 'done';
 
 // one turn as the server hands it out
 export interface BossTurn {
@@ -228,12 +229,14 @@ export class BossFight {
   // after a hit that took wrong clicks, the explanation is read before the
   // next question comes on (the server adds the same time to its clock)
   holdMs = 0;
+  private reviewHeld = false;
 
   // the server's word is final: a graded pick lands even if this frame's
   // own reading pause has not quite run out
-  answerRight(grade?: Grade, holdMs = 0, hpAfter?: number) {
+  answerRight(grade?: Grade, holdMs = 0, hpAfter?: number, reviewHeld = false) {
     if (this.phase !== 'question' || this.answered) return;
-    this.holdMs = holdMs;
+    this.holdMs = reviewHeld ? 0 : holdMs;
+    this.reviewHeld = reviewHeld;
     this.hpAfter = hpAfter ?? null;
     this.countering = false;
     const g = grade || this.liveGrade(this.elapsedMs(this.lockedAt ?? this.t));
@@ -250,6 +253,21 @@ export class BossFight {
     }
     this.phase = 'throw';
     this.phaseAt = this.t;
+  }
+
+  // A saved explanation reopens after its already-recorded throw. Neither
+  // the next clock nor the final victory/defeat sequence starts yet.
+  restoreReview() {
+    this.reviewHeld = true;
+    this.phase = 'review';
+    this.hidden = true;
+    this.bossState = 'idle';
+  }
+
+  resumeReview() {
+    if (this.phase !== 'review' || !this.reviewHeld) return;
+    this.reviewHeld = false;
+    this.afterTurn(this.t);
   }
 
   // a counter's one try: landed (a golden throw for damage) or not (the
@@ -737,7 +755,10 @@ export class BossFight {
         this.idx++;
       }
       this.countering = false;
-      this.afterTurn(t);
+      if (this.reviewHeld) {
+        this.phase = 'review';
+        this.events.onReviewReady?.();
+      } else this.afterTurn(t);
     }
   }
 

@@ -111,6 +111,7 @@ export interface QuestAnswer {
   // a miss (or a boss hit that took wrong clicks): how long its explanation
   // holds Continue before the run moves on
   readMs?: number;
+  reviewPending?: boolean;
   // practice
   rights?: number;
   goal?: number;
@@ -218,6 +219,7 @@ export interface QuestRun {
   points?: number;
   wrongPicks?: number[]; // boss resume: choices already clicked wrong on the current hit
   usedMs?: number; // boss resume: time this hit's clock already ran
+  reviewPosition?: number; // settled marble whose explanation is awaiting Resume
   hp?: number; // boss resume: its health left
 }
 

@@ -8,7 +8,7 @@ export const READ_MIN_MS = 3000;
 export function useReadCooldown(key: string | null, readMs?: number) {
   // set during render so no keypress can slip in before the wait begins
   const until = useMemo(
-    () => (key ? Date.now() + (readMs || READ_MIN_MS) : 0),
+    () => (key ? Date.now() + (readMs ?? READ_MIN_MS) : 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [key]
   );
