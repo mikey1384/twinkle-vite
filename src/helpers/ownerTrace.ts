@@ -7,7 +7,7 @@ import {
   createScrollPerfMonitor,
   getScrollPerfContext
 } from '~/helpers/ownerTraceScrollPerf';
-import { createFrameAttribution } from '~/helpers/ownerTraceFrameAttribution';
+import { createFrameAttribution, type OwnerMeasuredWork, type PreviewClampProfile } from '~/helpers/ownerTraceFrameAttribution';
 import {
   buildPageLoadTiming,
   createNavTimingTracker,
@@ -181,10 +181,22 @@ export function measureOwnerFeedText<T>(measure: () => T): T {
 }
 
 // Attribute scoped synchronous layout work during the existing owner sample.
-export function measureOwnerLayout<T>(name: 'block-preview' | 'richtext-overflow' | 'feed-truncation' | 'lazy-placeholder', run: () => T): T {
+export function measureOwnerLayout<T>(name: OwnerMeasuredWork, run: () => T): T {
   if (!frameAttribution.isActive()) return run();
   const at = performance.now();
   try { return run(); } finally { frameAttribution.noteLayout(name, performance.now() - at); }
+}
+
+// The existing batch label could not distinguish one expensive style flush
+// from walking many text fragments. Collect fixed counts/timings only while
+// the owner's existing sample is open; never perform extra layout reads.
+export function measureOwnerBlockPreview(run: (profile?: PreviewClampProfile) => void) {
+  if (!frameAttribution.isActive()) return run();
+  const profile: PreviewClampProfile = { nodes: 0, textNodes: 0, rects: 0, ancestorReads: 0,
+    styleMs: 0, geometryMs: 0, rectMs: 0, resolveMs: 0 };
+  const at = performance.now();
+  try { return run(profile); }
+  finally { frameAttribution.noteLayout('block-preview', performance.now() - at, profile); }
 }
 
 // A navigation the app started itself (Header nav tap).

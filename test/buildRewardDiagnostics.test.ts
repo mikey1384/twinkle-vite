@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   queueRewardDiagnostic,
-  rewardClientDiagnostic
+  rewardClientDiagnostic,
+  observeRewardBankLifecycle,
+  type RewardClientDiagnostic
 } from '../src/helpers/buildRewardDiagnostics';
 const id = '8361b22b-ddc7-4ca5-be5d-fe8f0253a7d4';
 const key = 'twinkle.rewardDiagnostics.v1.5.2799';
@@ -27,6 +29,51 @@ const memory = () => {
     }
   };
 };
+test('bank lifecycle keeps bounded in-flight exit/offline evidence and removes listeners', () => {
+  const documentTarget = Object.assign(new EventTarget(), { visibilityState: 'visible' });
+  const windowTarget = new EventTarget();
+  const reports: RewardClientDiagnostic[] = []; let time = 1000, connected = true;
+  const stop = observeRewardBankLifecycle({ requestId: id,
+    payload: { requestId: 'bank-request-0123456789', answer: 'SECRET', completionToken: 'SECRET' },
+    beganAt: time, now: () => time, online: () => connected, report: e => reports.push(e),
+    documentTarget: documentTarget as any, windowTarget: windowTarget as any });
+  assert.equal(reports[0].lifecycle, 'started');
+  time += 159000; documentTarget.visibilityState = 'hidden';
+  documentTarget.dispatchEvent(new Event('visibilitychange'));
+  connected = false; windowTarget.dispatchEvent(new Event('offline'));
+  for (let i=0;i<20;i++) documentTarget.dispatchEvent(new Event('visibilitychange'));
+  windowTarget.dispatchEvent(Object.assign(new Event('pagehide'), { persisted: true }));
+  assert.equal(reports.length, 8);
+  assert.equal(reports.at(-1)?.lifecycle, 'pagehide');
+  assert.equal(reports.at(-1)?.pagePersisted, true);
+  assert.equal(reports.at(-1)?.durationMs, 159000);
+  assert.equal(reports.at(-1)?.online, false);
+  assert.ok(reports.every(e => e.bankRequestId === 'bank-request-0123456789' && e.httpStatus === null));
+  assert.ok(!JSON.stringify(reports).includes('SECRET'));
+  stop(); windowTarget.dispatchEvent(new Event('online'));
+  assert.equal(reports.length, 8);
+});
+test('outbox drains lifecycle and terminal events with the same request without losing either', async () => {
+  const storage = memory(); const sent: RewardClientDiagnostic[] = [];
+  let release!: () => void;
+  const waiting = new Promise<void>(r => { release = r; });
+  const start: RewardClientDiagnostic = { ...sample(), operation: 'bank-generate', outcome: 'lifecycle', lifecycle: 'started', httpStatus: null };
+  const common = { userId: 5, buildId: 2799, storage,
+    send: async (event: RewardClientDiagnostic) => { sent.push(event); if (sent.length === 1) await waiting; } };
+  const first = queueRewardDiagnostic({ ...common, event: start });
+  await queueRewardDiagnostic({ ...common, event: { ...start, lifecycle: 'pagehide', pagePersisted: false } });
+  await queueRewardDiagnostic({ ...common, event: { ...start, outcome: 'response', lifecycle: null, httpStatus: 200 } });
+  release(); await first;
+  assert.deepEqual(sent.map(e => e.lifecycle || e.outcome), ['started','pagehide','response']);
+  assert.equal(storage.getItem(key), '[]');
+});
+test('outbox rejects invented lifecycle strings and never rehydrates arbitrary text', async () => {
+  const storage = memory();
+  storage.setItem(key, JSON.stringify([{ ...sample(), operation:'bank-generate', outcome:'lifecycle', lifecycle:'private answer SECRET', extra:'SECRET' }]));
+  const sent: RewardClientDiagnostic[] = [];
+  await queueRewardDiagnostic({ userId:5, buildId:2799, storage, event:sample(), send:async e => { sent.push(e); } });
+  assert.equal(sent.length, 1); assert.ok(!JSON.stringify(sent).includes('SECRET'));
+});
 test('lost reply is metadata only and survives until a later successful send', async () => {
   const storage = memory();
   let sent: any[] = [];

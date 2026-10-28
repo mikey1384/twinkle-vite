@@ -13,6 +13,7 @@ import EmbeddedComponent from './EmbeddedComponent';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import PdfAttachmentLink from '~/components/PdfAttachment/Link';
 import { getPdfAttachmentName } from '~/helpers/pdfAttachment';
+import { measureOwnerLayout } from '~/helpers/ownerTrace';
 import { css } from '@emotion/css';
 import {
   applyTextEffects,
@@ -124,7 +125,7 @@ function Markdown({
         textForMarkdown = protectCurrencyLiteralsOutsideMath(preprocessedText);
       }
 
-      const markupString = isAIMessage
+      const markupString = measureOwnerLayout('markdown-parse', () => isAIMessage
         ? unified()
             .use(remarkParse)
             .use(remarkGfm)
@@ -140,13 +141,13 @@ function Markdown({
             .use(remarkRehype)
             .use(rehypeStringify)
             .processSync(preprocessedText)
-            .toString();
+            .toString());
 
       const finalString = isAIMessage
         ? restoreCurrencyPlaceholders(markupString)
         : markupString;
 
-      const result = convertStringToJSX({
+      const result = measureOwnerLayout('markdown-elements', () => convertStringToJSX({
         string: removeNbsp(
           handleMentions(
             applyTextSize(
@@ -157,7 +158,7 @@ function Markdown({
           ),
           { isAIMessage }
         )
-      });
+      }));
 
       return {
         content: <Fragment key={key}>{result}</Fragment>,

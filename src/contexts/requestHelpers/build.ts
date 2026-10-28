@@ -10,10 +10,13 @@ import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
 import { toBuildRewardRequestError } from '~/helpers/buildRewardRequestError';
 import { runRewardBankGeneration } from '~/helpers/buildRewardBankRecovery';
+import { createRewardRuntimeRenewal } from '~/helpers/buildRewardRuntimeRenewal';
 import {
   queueRewardDiagnostic,
   rewardClientDiagnostic,
   rewardTraceId,
+  observeRewardBankLifecycle,
+  type RewardClientDiagnostic,
   REWARD_TRACE_OPERATIONS
 } from '~/helpers/buildRewardDiagnostics';
 import { RequestHelpers } from '~/types';
@@ -44,6 +47,7 @@ export default function buildRequestHelpers({
 }: RequestHelpers) {
   const BUILD_RUNTIME_UPLOAD_CHUNK_SIZE = 5 * 1024 * 1024;
   const PUBLIC_BUILD_LEADERBOARD_ORDER_VERSION = 2;
+  const withRewardRuntime = createRewardRuntimeRenewal();
 
   function getBuildRequestConfig({
     collapseKey,
@@ -784,6 +788,7 @@ export default function buildRequestHelpers({
       payload,
       token,
       runtimeGrant,
+      runtimeArtifactVersionId,
       diagnosticUserId
     }: {
       buildId: number;
@@ -791,30 +796,26 @@ export default function buildRequestHelpers({
       payload: unknown;
       token: string;
       runtimeGrant: string;
+      runtimeArtifactVersionId?: number | null;
       diagnosticUserId?: number;
     }) {
       const requestId = REWARD_TRACE_OPERATIONS.has(operation)
         ? rewardTraceId()
         : null;
       const beganAt = Date.now();
+      const sessionKey = String(auth().headers?.Authorization || auth().headers?.authorization || '');
+      const sessionIsCurrent = () => sessionKey === String(auth().headers?.Authorization || auth().headers?.authorization || '');
       const headers = {
         ...auth().headers,
         'x-build-api-token': token,
         'x-build-reward-runtime': runtimeGrant
       };
-      const report = (result?: unknown, error?: unknown, op = operation, traceId = requestId, started = beganAt) => {
-        if (!traceId || !diagnosticUserId) return;
+      const reportEvent = (event: RewardClientDiagnostic) => {
+        if (!diagnosticUserId || !sessionIsCurrent()) return;
         void queueRewardDiagnostic({
           userId: diagnosticUserId,
           buildId,
-          event: rewardClientDiagnostic({
-            requestId: traceId,
-            operation: op,
-            payload,
-            result,
-            error: axios.isAxiosError(error) ? error : error ? {} : undefined,
-            durationMs: Date.now() - started
-          }),
+          event,
           send: (event) =>
             request.post(
               `${URL}/build/${buildId}/api/rewards/diagnostic`,
@@ -829,8 +830,15 @@ export default function buildRequestHelpers({
             )
         }).catch(() => {});
       };
-      const send = async (op: string) => {
-        const traceId = op === operation ? requestId : rewardTraceId();
+      const report = (result?: unknown, error?: unknown, op = operation, traceId = requestId, started = beganAt) => {
+        if (!traceId) return;
+        reportEvent(rewardClientDiagnostic({ requestId: traceId, operation: op, payload, result,
+          error: axios.isAxiosError(error) ? error : error ? {} : undefined, durationMs: Date.now() - started }));
+      };
+      let sentOriginalRequest = false;
+      const sendOnce = async (op: string, grant: string) => {
+        const traceId = !sentOriginalRequest && op === operation ? requestId : rewardTraceId();
+        sentOriginalRequest = true;
         const started = Date.now();
         try {
           const { data } = await request.post(
@@ -838,7 +846,7 @@ export default function buildRequestHelpers({
             payload,
             {
               ...getBuildRequestConfig({ maxRetries: 0, ...(op === 'bank-result' ? { totalTimeoutMs: 10_000 } : {}) }),
-              headers: { ...headers, ...(traceId ? { 'x-build-reward-request': traceId } : {}) }
+              headers: { ...headers, 'x-build-reward-runtime': grant, ...(traceId ? { 'x-build-reward-request': traceId } : {}) }
             }
           );
           report(data, undefined, op, traceId, started);
@@ -848,6 +856,22 @@ export default function buildRequestHelpers({
           throw error;
         }
       };
+      const send = (op: string) => withRewardRuntime({
+        sessionKey, isCurrentSession: sessionIsCurrent, userId: diagnosticUserId || 0,
+        buildId, artifactVersionId: runtimeArtifactVersionId, runtimeGrant,
+        isRuntimeRequired: (error) => axios.isAxiosError(error) && error.response?.status === 403 &&
+          error.response?.data?.code === 'build_reward_runtime_required',
+        send: (grant) => sendOnce(op, grant),
+        renew: async (grant) => {
+          const { data } = await request.post(`${URL}/build/${buildId}/api/rewards/runtime-grant`,
+            { artifactVersionId: runtimeArtifactVersionId },
+            { ...getBuildRequestConfig({ maxRetries: 0, totalTimeoutMs: 10_000 }),
+              headers: { ...headers, 'x-build-reward-runtime': grant } });
+          return data;
+        }
+      });
+      const stopLifecycle = operation === 'bank-generate' && requestId && diagnosticUserId && hasBankRequestId(payload)
+        ? observeRewardBankLifecycle({ requestId, payload, report: reportEvent, beganAt }) : () => {};
       try {
         return operation === 'bank-generate' && hasBankRequestId(payload)
           ? await runRewardBankGeneration({
@@ -856,6 +880,8 @@ export default function buildRequestHelpers({
           : await send(operation);
       } catch (error) {
         throw toBuildRewardRequestError(error);
+      } finally {
+        stopLifecycle();
       }
     },
     // Twinkle.cardCraft runtime calls. Errors keep the server's code and

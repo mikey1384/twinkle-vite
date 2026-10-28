@@ -50,7 +50,7 @@ import {
   richTextPreviewClampLinesVar
 } from './helpers/previewClamp';
 
-import { measureOwnerLayout } from '~/helpers/ownerTrace';
+import { measureOwnerLayout, measureOwnerBlockPreview } from '~/helpers/ownerTrace';
 
 const Markdown = lazyWithRetry(() => import('./Markdown'));
 
@@ -653,7 +653,7 @@ function RichText({
       if (cancelled) return;
       cancelMeasure();
       cancelMeasure = queueBlockPreviewClamp(node, baseMaxLines,
-        width => { measuredWidth = width; }, run => measureOwnerLayout('block-preview', run));
+        width => { measuredWidth = width; }, measureOwnerBlockPreview);
     };
     measure();
     const scheduleMeasure = () => {

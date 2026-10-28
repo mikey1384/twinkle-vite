@@ -13,6 +13,61 @@ import { createScrollPerfMonitor } from '../src/helpers/ownerTraceScrollPerf';
 
 const ORIGIN = 'https://www.twin-kle.com';
 
+test('slow block-preview detail identifies the worst batch, excludes content and resets between frames', () => {
+  const tracker = createFrameAttribution({ observeLongFrames: () => null, listenImageLoads: () => () => {} });
+  const profile = { nodes: 4, textNodes: 90, rects: 160, ancestorReads: 12,
+    styleMs: 4.1, geometryMs: 20.2, rectMs: 12.1, resolveMs: 1.2 };
+  tracker.noteLayout('block-preview', 80, profile); // inactive
+  tracker.begin();
+  tracker.noteLayout('block-preview', 40, { ...profile, privateText: 'never include this' } as any);
+  tracker.noteLayout('block-preview', 2, { ...profile, nodes: 1 });
+  tracker.noteLayout('markdown-parse', 18);
+  tracker.noteLayout('markdown-elements', 9);
+  tracker.frame(90, 90);
+  tracker.frame(70, 160);
+  const frames = tracker.end(0)!.frames;
+  assert.deepEqual(frames[0].layoutWork['block-preview'], { calls: 2, ms: 42, maxMs: 40,
+    slowest: { ...profile, styleMs: 4, geometryMs: 20, rectMs: 12, resolveMs: 1 } });
+  assert.equal(frames[0].layoutWork['markdown-parse'].ms, 18);
+  assert.equal(frames[0].layoutWork['markdown-elements'].ms, 9);
+  assert.deepEqual(frames[1].layoutWork, {});
+  assert.doesNotMatch(JSON.stringify(frames), /privateText|never include/);
+});
+
+test('bounded frame detail cannot erase the frame timing or masquerade as an unprofiled slower call', () => {
+  const tracker = createFrameAttribution({ observeLongFrames: () => null, listenImageLoads: () => () => {} });
+  tracker.begin();
+  tracker.noteLayout('block-preview', 10, { nodes: Infinity, textNodes: -2, rects: NaN, ancestorReads: 1,
+    styleMs: 1, geometryMs: 2, rectMs: 3, resolveMs: 4 });
+  tracker.noteLayout('block-preview', 50);
+  tracker.frame(80, 80);
+  assert.equal(tracker.end(0)!.frames[0].layoutWork['block-preview'].slowest, undefined);
+  const event = boundFrameEvent({ schema: 1, source: 'raf', gapMs: 321,
+    layoutWork: { 'block-preview': { calls: 1, ms: 40, maxMs: 40, slowest: { oversized: 'x'.repeat(2000) } } } });
+  assert.equal(event.gapMs, 321);
+  assert.equal(event.layoutWork['block-preview'].ms, 40);
+  assert.equal(event.layoutDetailOmitted, true);
+  assert(JSON.stringify(event).length <= MAX_FRAME_EVENT_CHARS);
+});
+
+test('trimming one oversized frame leaves shared layout and script evidence intact for other frames', () => {
+  const layoutWork = { 'block-preview': { calls: 1, ms: 40, maxMs: 40, slowest: { nodes: 4, rects: 20 } } };
+  const scripts = [{ src: 'x'.repeat(2000) }];
+  const original = { schema: 1, gapMs: 321, layoutWork, loaf: { ms: 300, scripts },
+    renders: Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`card${i}`.padEnd(30, 'x'), i])) };
+  const bounded = boundFrameEvent(original);
+  assert.equal(bounded.layoutDetailOmitted, true);
+  assert.equal(bounded.layoutWork, undefined);
+  assert.equal(scripts.length, 1);
+  assert.equal(original.loaf.scripts, scripts);
+  assert.equal(original.layoutWork, layoutWork);
+  assert.deepEqual(layoutWork['block-preview'].slowest, { nodes: 4, rects: 20 });
+  const sibling = boundFrameEvent({ schema: 1, gapMs: 100, layoutWork });
+  assert.equal(sibling.layoutDetailOmitted, undefined);
+  assert.deepEqual(sibling.layoutWork['block-preview'].slowest, { nodes: 4, rects: 20 });
+  assert(JSON.stringify(bounded).length <= MAX_FRAME_EVENT_CHARS);
+});
+
 test('render attribution identifies changed inputs without recording their values or unbounded labels', () => {
   const previous = { feed: {}, visibility: false, content: {}, preview: {}, shown: true,
     theme: 'blue', level: 3, likeLoading: false, truncated: false, placeholderHeight: 100 };

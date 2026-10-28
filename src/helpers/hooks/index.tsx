@@ -266,9 +266,12 @@ export function useLazyLoad({
 
     const panelRef = PanelRef;
     let frame = 0;
+    let disposed = false;
     let observedElement: Element | null = null;
     const handleResize = throttle((entries: ResizeObserverEntry[]) => {
-      if (entries.length > 0) {
+      // Disconnecting ResizeObserver does not cancel a trailing throttled call.
+      // A hidden/replaced panel must not publish its stale height after cleanup.
+      if (!disposed && entries.length > 0) {
         const clientHeight = measureOwnerLayout('lazy-placeholder', () => entries[0].target.clientHeight);
         onSetPlaceholderHeightRef.current?.(clientHeight);
       }
@@ -279,6 +282,7 @@ export function useLazyLoad({
     observePanelWhenReady();
 
     return () => {
+      disposed = true;
       if (frame) window.cancelAnimationFrame(frame);
       resizeObserver.disconnect();
     };

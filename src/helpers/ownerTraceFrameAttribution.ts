@@ -30,6 +30,18 @@ export function feedRenderChanges(previous: FeedRenderSignals | null, next: Feed
 // truncation marker; stay well under it.
 export const MAX_FRAME_EVENT_CHARS = 1800;
 
+export type OwnerMeasuredWork = 'block-preview' | 'richtext-overflow' | 'feed-truncation' | 'lazy-placeholder' | 'markdown-parse' | 'markdown-elements';
+export interface PreviewClampProfile {
+  nodes: number;
+  textNodes: number;
+  rects: number;
+  ancestorReads: number;
+  styleMs: number;
+  geometryMs: number;
+  rectMs: number;
+  resolveMs: number;
+}
+
 export interface LongFrameScript {
   duration?: number;
   sourceURL?: string;
@@ -70,7 +82,7 @@ interface CounterFrame {
   mounts: Record<string, number>;
   updates?: Record<string, number>;
   imgLoads: number;
-  layoutWork: Record<string, { calls: number; ms: number; maxMs: number }>;
+  layoutWork: Record<string, { calls: number; ms: number; maxMs: number; slowest?: PreviewClampProfile }>;
   textMeasure: { calls: number; ms: number; maxMs: number };
 }
 
@@ -215,8 +227,22 @@ function scriptPosition(script: LongFrameScript) {
 // Keeps one event's data under the server's limit by dropping the smallest
 // scripts, then the counters, never the frame timing.
 export function boundFrameEvent(data: Record<string, any>) {
+  // Multiple long frames can refer to the same counter snapshot. Trim only
+  // this event, never erase attribution from a sibling or the retained sample.
+  data = { ...data };
   const fits = () => JSON.stringify(data).length <= MAX_FRAME_EVENT_CHARS;
+  if (!fits() && data.loaf?.scripts?.length) {
+    data.loaf = { ...data.loaf, scripts: [...data.loaf.scripts] };
+  }
   while (!fits() && data.loaf?.scripts?.length) data.loaf.scripts.pop();
+  if (!fits() && data.layoutWork) {
+    data.layoutWork = Object.fromEntries(Object.entries(data.layoutWork).map(([key, item]) => {
+      const bounded = { ...(item as Record<string, any>) };
+      delete bounded.slowest;
+      return [key, bounded];
+    }));
+    data.layoutDetailOmitted = true;
+  }
   if (!fits()) {
     delete data.renders;
     delete data.mounts;
@@ -254,9 +280,17 @@ export function createFrameAttribution({
 
   return { begin, frame, end, noteRender, noteMount, noteTextMeasure, noteLayout, isActive: () => active };
 
-  function noteLayout(name: 'block-preview' | 'richtext-overflow' | 'feed-truncation' | 'lazy-placeholder', ms: number) {
+  function noteLayout(name: OwnerMeasuredWork, ms: number, profile?: PreviewClampProfile) {
     if (!active || !Number.isFinite(ms) || ms < 0) return;
     const item = layoutWork[name] ||= { calls: 0, ms: 0, maxMs: 0 };
+    if (ms >= item.maxMs) delete item.slowest;
+    if (profile && ms >= item.maxMs) {
+      const bounded = {} as PreviewClampProfile;
+      for (const key of ['nodes', 'textNodes', 'rects', 'ancestorReads', 'styleMs', 'geometryMs', 'rectMs', 'resolveMs'] as const) {
+        bounded[key] = Math.round(Math.min(1000000, Math.max(0, Number(profile[key]) || 0)));
+      }
+      item.slowest = bounded;
+    }
     item.calls++; item.ms += ms; item.maxMs = Math.max(item.maxMs, ms);
   }
 
@@ -342,7 +376,7 @@ export function createFrameAttribution({
         mounts: topCounts(mounts),
         ...(updates.size ? { updates: topCounts(updates) } : {}),
         imgLoads,
-        layoutWork: Object.fromEntries(Object.entries(layoutWork).map(([name, item]) => [name, { calls: item.calls, ms: Math.round(item.ms), maxMs: Math.round(item.maxMs) }])),
+        layoutWork: Object.fromEntries(Object.entries(layoutWork).map(([name, item]) => [name, { calls: item.calls, ms: Math.round(item.ms), maxMs: Math.round(item.maxMs), ...(item.slowest ? { slowest: item.slowest } : {}) }])),
         textMeasure: { calls: textMeasure.calls, ms: Math.round(textMeasure.ms), maxMs: Math.round(textMeasure.maxMs) }
       });
       if (slowFrames.length > MAX_FRAMES_PER_SAMPLE * 4) {

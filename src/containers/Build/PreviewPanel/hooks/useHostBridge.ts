@@ -5441,7 +5441,8 @@ export function useHostBridge({
                 limit: payload?.limit
               },
               token: rewardToken,
-              runtimeGrant
+              runtimeGrant,
+              runtimeArtifactVersionId: activeBuild.publishedArtifactVersionId
             });
             if (response?.aiUsagePolicy) {
               onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);

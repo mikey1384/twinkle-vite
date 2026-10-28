@@ -1,6 +1,7 @@
 // Structured previews keep their block layout. Count the text lines the browser
 // actually lays out, including nested lists/quotes and their spacing, rather
 // than estimating a whole list's line count from its outer height.
+import type { PreviewClampProfile } from '~/helpers/ownerTraceFrameAttribution';
 export const richTextPreviewClampLinesVar =
   '--rich-text-preview-clamp-lines';
 
@@ -80,8 +81,10 @@ export function measureBlockPreviewClampLines(
 
 function readBlockPreviewClampLines(
   node: HTMLElement,
-  maxLines: number
+  maxLines: number,
+  profile?: PreviewClampProfile
 ): number | null {
+  const geometryAt = profile ? performance.now() : 0;
   const nodeTop = node.getBoundingClientRect().top;
   let clipBottom = Infinity;
   for (
@@ -89,6 +92,7 @@ function readBlockPreviewClampLines(
     ancestor && ancestor !== document.body;
     ancestor = ancestor.parentElement
   ) {
+    if (profile) profile.ancestorReads++;
     const { overflowY } = window.getComputedStyle(ancestor);
     if (overflowY === 'auto' || overflowY === 'scroll') break;
     if (overflowY === 'hidden' || overflowY === 'clip') {
@@ -99,14 +103,21 @@ function readBlockPreviewClampLines(
     }
   }
   const budget = Math.min(node.clientHeight, clipBottom - nodeTop);
+  if (profile) profile.geometryMs += performance.now() - geometryAt;
   const rects: PreviewLineRect[] = [];
   const range = document.createRange();
+  const rectAt = profile ? performance.now() : 0;
   collectLineRects(node);
-  return resolveBlockPreviewClampLines({ rects, budget, maxLines });
+  if (profile) profile.rectMs += performance.now() - rectAt;
+  const resolveAt = profile ? performance.now() : 0;
+  const result = resolveBlockPreviewClampLines({ rects, budget, maxLines });
+  if (profile) profile.resolveMs += performance.now() - resolveAt;
+  return result;
 
   function collectLineRects(parent: Node) {
     for (const child of Array.from(parent.childNodes)) {
       if (child.nodeType === Node.TEXT_NODE) {
+        if (profile) profile.textNodes++;
         range.selectNodeContents(child);
         addRects(range.getClientRects());
       } else if (child instanceof HTMLElement) {
@@ -133,6 +144,7 @@ function readBlockPreviewClampLines(
   function addRects(clientRects: DOMRectList) {
     for (const rect of Array.from(clientRects)) {
       if (rect.height > 0) {
+        if (profile) profile.rects++;
         rects.push({
           top: rect.top - nodeTop,
           bottom: rect.bottom - nodeTop
@@ -146,7 +158,7 @@ interface ClampRequest {
   node: HTMLElement;
   maxLines: number;
   onWidth: (width: number) => void;
-  measure: (run: () => void) => void;
+  measure: (run: (profile?: PreviewClampProfile) => void) => void;
 }
 const pendingClamps = new Map<HTMLElement, ClampRequest>();
 let flushQueued = false;
@@ -157,7 +169,7 @@ export function queueBlockPreviewClamp(
   node: HTMLElement,
   maxLines: number,
   onWidth: (width: number) => void,
-  measure: (run: () => void) => void = (run) => run()
+  measure: ClampRequest['measure'] = (run) => run()
 ) {
   const request = { node, maxLines, onWidth, measure };
   pendingClamps.set(node, request);
@@ -170,7 +182,7 @@ export function queueBlockPreviewClamp(
       );
       pendingClamps.clear();
       if (requests.length)
-        requests[0].measure(() => applyBlockPreviewClamps(requests));
+        requests[0].measure((profile) => applyBlockPreviewClamps(requests, profile));
     });
   }
   return () => {
@@ -179,8 +191,11 @@ export function queueBlockPreviewClamp(
 }
 
 export function applyBlockPreviewClamps(
-  requests: Pick<ClampRequest, 'node' | 'maxLines' | 'onWidth'>[]
+  requests: Pick<ClampRequest, 'node' | 'maxLines' | 'onWidth'>[],
+  profile?: PreviewClampProfile
 ) {
+  const styleAt = profile ? performance.now() : 0;
+  if (profile) profile.nodes += requests.length;
   // Reset every previous answer first; reading computed style then has only
   // one pending style flush for the whole batch.
   for (const { node } of requests)
@@ -200,10 +215,13 @@ export function applyBlockPreviewClamps(
   });
   for (const { node } of prepared)
     node.style.setProperty('-webkit-line-clamp', 'unset', 'important');
+  if (profile) profile.styleMs += performance.now() - styleAt;
   try {
     for (const item of prepared) {
+      const widthAt = profile ? performance.now() : 0;
       item.onWidth(item.node.getBoundingClientRect().width);
-      item.lines = readBlockPreviewClampLines(item.node, item.maxLines);
+      if (profile) profile.geometryMs += performance.now() - widthAt;
+      item.lines = readBlockPreviewClampLines(item.node, item.maxLines, profile);
     }
   } finally {
     for (const { node, previous, priority, lines } of prepared) {
