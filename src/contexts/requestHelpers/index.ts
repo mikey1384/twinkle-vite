@@ -419,6 +419,7 @@ registerMethods('content', [
   'loadArenaChallenge',
   'startArenaChallenge',
   'loadGrammarQuestState',
+  'claimGrammarQuestWorldMastery',
   'loadGrammarQuestRankings',
   'startGrammarQuestRun',
   'loadGrammarQuestRun',
