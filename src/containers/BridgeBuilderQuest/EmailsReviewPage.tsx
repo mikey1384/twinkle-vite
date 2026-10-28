@@ -25,6 +25,9 @@ interface Draft {
   to: string;
   subject: string;
   body: string;
+  revision?: string;
+  verificationChanged?: boolean;
+  suggestedBody?: string;
   status: 'held' | 'sent' | 'discarded' | 'failed';
   createdAt: number;
   decidedAt: number;
@@ -33,14 +36,26 @@ interface Draft {
 export default function EmailsReviewPage() {
   const { pendingAction, runAction } = usePendingAction();
   const userId = useKeyContext((v) => v.myState.userId);
-  const loadMeetupEmails = useAppContext((v) => v.requestHelpers.loadMeetupEmails);
-  const sendMeetupEmail = useAppContext((v) => v.requestHelpers.sendMeetupEmail);
-  const saveMeetupEmail = useAppContext((v) => v.requestHelpers.saveMeetupEmail);
-  const discardMeetupEmail = useAppContext((v) => v.requestHelpers.discardMeetupEmail);
-  const setMeetupEmailReview = useAppContext((v) => v.requestHelpers.setMeetupEmailReview);
+  const loadMeetupEmails = useAppContext(
+    (v) => v.requestHelpers.loadMeetupEmails
+  );
+  const sendMeetupEmail = useAppContext(
+    (v) => v.requestHelpers.sendMeetupEmail
+  );
+  const saveMeetupEmail = useAppContext(
+    (v) => v.requestHelpers.saveMeetupEmail
+  );
+  const discardMeetupEmail = useAppContext(
+    (v) => v.requestHelpers.discardMeetupEmail
+  );
+  const setMeetupEmailReview = useAppContext(
+    (v) => v.requestHelpers.setMeetupEmailReview
+  );
   const [drafts, setDrafts] = useState<Draft[] | null>(null);
   const [review, setReview] = useState(true);
-  const [edits, setEdits] = useState<Record<number, { subject: string; body: string }>>({});
+  const [edits, setEdits] = useState<
+    Record<number, { subject: string; body: string; revision?: string }>
+  >({});
   const [busyId, setBusyId] = useState(0);
   const [error, setError] = useState('');
 
@@ -66,16 +81,28 @@ export default function EmailsReviewPage() {
     setError('');
     try {
       apply(await work());
+      setEdits((current) => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
     } catch (err: any) {
       setError(err?.message || 'Something went wrong.');
+      await loadMeetupEmails()
+        .then(apply)
+        .catch(() => {});
     } finally {
       setBusyId(0);
     }
   }
 
   if (!userId) return <LoggedOutPrompt />;
-  const open = (drafts || []).filter((d) => d.status === 'held' || d.status === 'failed');
-  const recent = (drafts || []).filter((d) => d.status === 'sent' || d.status === 'discarded');
+  const open = (drafts || []).filter(
+    (d) => d.status === 'held' || d.status === 'failed'
+  );
+  const recent = (drafts || []).filter(
+    (d) => d.status === 'sent' || d.status === 'discarded'
+  );
   return (
     <ErrorBoundary componentPath="BridgeBuilderQuest/EmailsReviewPage">
       <div
@@ -91,11 +118,17 @@ export default function EmailsReviewPage() {
         <Link to="/achievements/bridge-builder" className={backLinkClass}>
           <Icon icon="arrow-left" /> Bridge Builder
         </Link>
-        <h2 style={{ margin: '1.2rem 0 0.4rem', fontSize: '2.4rem', color: Color.black() }}>
+        <h2
+          style={{
+            margin: '1.2rem 0 0.4rem',
+            fontSize: '2.4rem',
+            color: Color.black()
+          }}
+        >
           Parent emails to review
         </h2>
         <p style={{ margin: 0, color: Color.gray() }}>
-          Nothing reaches a parent until you send it here. Edit the message if you want.
+          Review and edit queued parent emails before sending them.
         </p>
         {drafts && (
           <label
@@ -115,7 +148,9 @@ export default function EmailsReviewPage() {
                 setBusyId(-1);
                 setMeetupEmailReview(e.target.checked)
                   .then(apply)
-                  .catch((err: any) => setError(err?.message || 'Could not change that.'))
+                  .catch((err: any) =>
+                    setError(err?.message || 'Could not change that.')
+                  )
                   .finally(() => setBusyId(0));
               }}
               style={{ width: '2rem', height: '2rem' }}
@@ -123,8 +158,8 @@ export default function EmailsReviewPage() {
             Review parent emails before they are sent
             {!review && (
               <span style={{ color: Color.orange() }}>
-                (off: they go out right away, except a grown-up request to an address the child
-                typed)
+                (off: they go out right away, except requests to verify a new
+                parent address or invite a new grown-up)
               </span>
             )}
           </label>
@@ -136,10 +171,18 @@ export default function EmailsReviewPage() {
         )}
         {!drafts && !error && <Loading />}
         {drafts && !open.length && (
-          <p style={{ marginTop: '2rem', color: Color.gray() }}>Nothing is waiting.</p>
+          <p style={{ marginTop: '2rem', color: Color.gray() }}>
+            Nothing is waiting.
+          </p>
         )}
         {open.map((draft) => {
-          const edit = edits[draft.id] || { subject: draft.subject, body: draft.body };
+          const edit = edits[draft.id] || {
+            subject: draft.subject,
+            body: draft.body,
+            revision: draft.revision
+          };
+          const staleEdits =
+            !!edits[draft.id] && edit.revision !== draft.revision;
           return (
             <section
               key={draft.id}
@@ -158,48 +201,117 @@ export default function EmailsReviewPage() {
                       ? 'Arena mock-exam result to a parent from'
                       : 'Grown-up request from'}{' '}
                     {draft.childUsername ? (
-                      <Link to={`/users/${draft.childUsername}`}>{draft.childUsername}</Link>
+                      <Link to={`/users/${draft.childUsername}`}>
+                        {draft.childUsername}
+                      </Link>
                     ) : (
                       `member #${draft.childUserId}`
                     )}{' '}
                     ·{' '}
                     {draft.addressSource === 'added' ? (
-                      <b style={{ color: Color.orange() }}>the child typed this address</b>
+                      <b style={{ color: Color.orange() }}>
+                        the child typed this address
+                      </b>
                     ) : draft.addressSource === 'guardian' ? (
                       'guardian from the sign-up consent'
-                    ) : draft.kind === 'arena' ? (
-                      'a parent-confirmed address'
                     ) : (
-                      'address from an earlier request'
+                      'a verified parent address'
                     )}
                   </>
                 ) : (
                   <>
-                    {draft.kind === 'brief' ? 'Meetup request' : 'Your reply to a parent'} · crew #
-                    {draft.crewId} ·{' '}
-                    <Link to={`/achievements/bridge-builder/crew/${draft.crewId}`}>open crew</Link>
+                    {draft.kind === 'brief'
+                      ? 'Meetup request'
+                      : 'Your reply to a parent'}{' '}
+                    · crew #{draft.crewId} ·{' '}
+                    <Link
+                      to={`/achievements/bridge-builder/crew/${draft.crewId}`}
+                    >
+                      open crew
+                    </Link>
                   </>
                 )}
                 {draft.status === 'failed' && (
                   <b style={{ color: Color.red() }}> · last send failed</b>
                 )}
               </div>
-              <div style={{ margin: '0.6rem 0', fontWeight: 700 }}>To: {draft.to}</div>
+              <div style={{ margin: '0.6rem 0', fontWeight: 700 }}>
+                To: {draft.to}
+              </div>
+              {(draft.verificationChanged || staleEdits) && (
+                <div style={{ margin: '1rem 0' }}>
+                  <QuestNote tone="warning">
+                    {staleEdits
+                      ? 'This draft changed while you were editing. Your edits are still here. Review the latest message before sending.'
+                      : 'This parent address is now verified. Your edits are preserved; check for any old request to verify the address before sending.'}
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '0.8rem',
+                        flexWrap: 'wrap',
+                        marginTop: '0.8rem'
+                      }}
+                    >
+                      <Button
+                        color="logoBlue"
+                        variant="soft"
+                        disabled={!!busyId}
+                        onClick={() =>
+                          setEdits((current) => ({
+                            ...current,
+                            [draft.id]: {
+                              subject: edit.subject,
+                              body: draft.suggestedBody || draft.body,
+                              revision: draft.revision
+                            }
+                          }))
+                        }
+                      >
+                        Use updated message
+                      </Button>
+                      {staleEdits && (
+                        <Button
+                          color="darkerGray"
+                          disabled={!!busyId}
+                          onClick={() =>
+                            setEdits((current) => ({
+                              ...current,
+                              [draft.id]: { ...edit, revision: draft.revision }
+                            }))
+                          }
+                        >
+                          Keep my edits
+                        </Button>
+                      )}
+                    </div>
+                  </QuestNote>
+                </div>
+              )}
               <input
                 aria-label="Subject"
                 value={edit.subject}
                 maxLength={300}
                 onChange={(e) =>
-                  setEdits((v) => ({ ...v, [draft.id]: { ...edit, subject: e.target.value } }))
+                  setEdits((v) => ({
+                    ...v,
+                    [draft.id]: { ...edit, subject: e.target.value }
+                  }))
                 }
-                style={{ width: '100%', padding: '0.7rem 1rem', fontSize: '1.5rem' }}
+                style={{
+                  width: '100%',
+                  padding: '0.7rem 1rem',
+                  fontSize: '1.5rem'
+                }}
               />
               <textarea
                 aria-label="Message"
                 value={edit.body}
                 rows={14}
                 onChange={(e) =>
-                  setEdits((v) => ({ ...v, [draft.id]: { ...edit, body: e.target.value } }))
+                  setEdits((v) => ({
+                    ...v,
+                    [draft.id]: { ...edit, body: e.target.value }
+                  }))
                 }
                 style={{
                   width: '100%',
@@ -210,24 +322,39 @@ export default function EmailsReviewPage() {
                   fontFamily: 'inherit'
                 }}
               />
-              <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', marginTop: '0.8rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.8rem',
+                  flexWrap: 'wrap',
+                  marginTop: '0.8rem'
+                }}
+              >
                 <Button
                   color="logoBlue"
                   variant="solid"
                   loading={pendingAction === `send:${draft.id}`}
-                  disabled={!!busyId}
+                  disabled={!!busyId || staleEdits}
                   onClick={() =>
-                    run(draft.id, 'send', () => sendMeetupEmail({ id: draft.id, ...edit }))
+                    run(draft.id, 'send', () =>
+                      sendMeetupEmail({ id: draft.id, ...edit })
+                    )
                   }
                 >
                   <Icon icon="paper-plane" />
-                  <span style={{ marginLeft: '0.6rem' }}>Send to the parent</span>
+                  <span style={{ marginLeft: '0.6rem' }}>
+                    Send to the parent
+                  </span>
                 </Button>
                 <Button
                   color="darkerGray"
                   loading={pendingAction === `save:${draft.id}`}
-                  disabled={!!busyId}
-                  onClick={() => run(draft.id, 'save', () => saveMeetupEmail({ id: draft.id, ...edit }))}
+                  disabled={!!busyId || staleEdits}
+                  onClick={() =>
+                    run(draft.id, 'save', () =>
+                      saveMeetupEmail({ id: draft.id, ...edit })
+                    )
+                  }
                 >
                   Save changes
                 </Button>
@@ -236,17 +363,26 @@ export default function EmailsReviewPage() {
                   variant="soft"
                   loading={pendingAction === `discard:${draft.id}`}
                   disabled={!!busyId}
-                  onClick={() => run(draft.id, 'discard', () => discardMeetupEmail(draft.id))}
+                  onClick={() =>
+                    run(draft.id, 'discard', () => discardMeetupEmail(draft.id))
+                  }
                 >
                   Discard
                 </Button>
               </div>
-              <p style={{ fontSize: '1.2rem', color: Color.gray(), marginBottom: 0 }}>
+              <p
+                style={{
+                  fontSize: '1.2rem',
+                  color: Color.gray(),
+                  marginBottom: 0
+                }}
+              >
                 {draft.body.includes('http')
                   ? 'Keep the link line: it is how the parent answers. '
                   : ''}
-                An edited message is sent as plain paragraphs; an unedited one keeps its
-                designed layout. Discarding a meetup request lets the student ask again.
+                An edited message is sent as plain paragraphs; an unedited one
+                keeps its designed layout. Discarding a meetup request lets the
+                student ask again.
               </p>
             </section>
           );
@@ -254,10 +390,64 @@ export default function EmailsReviewPage() {
         {!!recent.length && (
           <div style={{ marginTop: '2.4rem' }}>
             <b>Recently handled</b>
-            <ul style={{ margin: '0.6rem 0 0', paddingLeft: '1.8rem', fontSize: '1.3rem' }}>
+            <ul
+              style={{
+                margin: '0.6rem 0 0',
+                paddingLeft: 0,
+                fontSize: '1.3rem'
+              }}
+            >
               {recent.map((d) => (
-                <li key={d.id}>
-                  {d.status === 'sent' ? 'Sent' : 'Discarded'}: {d.subject} → {d.to}
+                <li
+                  key={d.id}
+                  style={{ listStyle: 'none', marginTop: '0.8rem' }}
+                >
+                  <details
+                    className={css`
+                      border: 1px solid var(--ui-border);
+                      border-radius: 0.8rem;
+                      background: #fff;
+                      overflow-wrap: anywhere;
+                      summary {
+                        cursor: pointer;
+                        padding: 1.2rem;
+                      }
+                      summary:focus-visible {
+                        outline: 2px solid ${Color.logoBlue()};
+                        outline-offset: 2px;
+                      }
+                    `}
+                  >
+                    <summary>
+                      <b>{d.status === 'sent' ? 'Sent' : 'Discarded'}</b>:{' '}
+                      {d.subject}
+                      <span
+                        style={{
+                          display: 'block',
+                          marginTop: '0.4rem',
+                          color: Color.gray()
+                        }}
+                      >
+                        To: {d.to}
+                      </span>
+                    </summary>
+                    <div style={{ padding: '0 1.2rem 1.2rem' }}>
+                      <p style={{ color: Color.gray(), margin: '0 0 0.8rem' }}>
+                        {d.status === 'sent'
+                          ? 'Sent message (text version)'
+                          : 'Discarded draft — this message was not sent'}
+                        {d.decidedAt > 0 && (
+                          <>
+                            {' '}
+                            · {new Date(d.decidedAt * 1000).toLocaleString()}
+                          </>
+                        )}
+                      </p>
+                      <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                        {d.body}
+                      </div>
+                    </div>
+                  </details>
                 </li>
               ))}
             </ul>

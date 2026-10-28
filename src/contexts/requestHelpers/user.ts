@@ -1024,16 +1024,18 @@ export default function userRequestHelpers({
     async saveMeetupEmail({
       id,
       subject,
-      body
+      body,
+      revision
     }: {
       id: number;
       subject: string;
       body: string;
+      revision?: string;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/user/meetup-quest/emails/${id}`,
-          { subject, body },
+          { subject, body, revision },
           auth()
         );
         return data;
@@ -1044,16 +1046,18 @@ export default function userRequestHelpers({
     async sendMeetupEmail({
       id,
       subject,
-      body
+      body,
+      revision
     }: {
       id: number;
       subject: string;
       body: string;
+      revision?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/user/meetup-quest/emails/${id}/send`,
-          { subject, body },
+          { subject, body, revision },
           auth()
         );
         return data;
