@@ -35,6 +35,7 @@ export interface DailyQuestionSubmitResult {
   rejectionReason?: string;
   responseId?: number;
   sharedResponse?: string | null;
+  needsPolish?: boolean;
   streak?: number;
   streakMultiplier?: number;
   usedRepair?: boolean;

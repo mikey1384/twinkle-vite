@@ -661,7 +661,7 @@ export default function DailyQuestionPanel({
         sharedWithZero: false,
         sharedWithCiel: false,
         originalResponse,
-        sharedResponse: result.sharedResponse || null,
+        sharedResponse: result.needsPolish ? null : result.sharedResponse || null,
         streak: result.streak || 1,
         streakMultiplier: result.streakMultiplier || 1,
         usedRepair: result.usedRepair || false
@@ -877,7 +877,9 @@ export default function DailyQuestionPanel({
             sharedWithZero: !!data.response.sharedWithZero,
             sharedWithCiel: !!data.response.sharedWithCiel,
             originalResponse: data.response.response || '',
-            sharedResponse: data.response.sharedResponse || null,
+            sharedResponse: data.response.needsPolish
+              ? null
+              : data.response.sharedResponse || null,
             streak: data.response.streakAtTime || data.currentStreak || 1,
             streakMultiplier: Math.min(data.response.streakAtTime || 1, 10),
             usedRepair: !!data.response.usedRepair

@@ -192,6 +192,12 @@ export default function PictureDayScreen({
           <>
             <p className={questionCls}>{displayQuestion}</p>
 
+            {submitting && (
+              <p role="status" className={costLineCls}>
+                <Icon icon="spinner" pulse /> Polishing your words for sharing…
+              </p>
+            )}
+
             {hasPictures && (
               <div className={sectionCls}>
                 {selected && (

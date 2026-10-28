@@ -7,6 +7,7 @@ export default function ResponseSection({
   aiSelectedVersion,
   aiShareTarget,
   canShareToFeed,
+  isPictureDay = false,
   originalResponse,
   preparingAIVersionTarget,
   question,
@@ -23,6 +24,7 @@ export default function ResponseSection({
   aiSelectedVersion: 'original' | 'refined' | 'both';
   aiShareTarget: 'zero' | 'ciel' | null;
   canShareToFeed: boolean;
+  isPictureDay?: boolean;
   originalResponse: string;
   preparingAIVersionTarget: 'zero' | 'ciel' | null;
   question: string;
@@ -59,21 +61,25 @@ export default function ResponseSection({
             Choose version to share:
           </h4>
           <div className={segmentedCls}>
-            <nav
+            <button
+              type="button"
+              aria-pressed={selectedVersion === 'original'}
               className={selectedVersion === 'original' ? 'active' : ''}
               onClick={() => onSelectedVersionChange('original')}
             >
               <Icon icon="pencil-alt" style={{ marginRight: '0.5rem' }} />
               My Original
-            </nav>
+            </button>
             {!polishUnchanged && (
-              <nav
+              <button
+                type="button"
+                aria-pressed={selectedVersion === 'refined'}
                 className={selectedVersion === 'refined' ? 'active' : ''}
                 onClick={() => onSelectedVersionChange('refined')}
               >
                 <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
                 AI Polished
-              </nav>
+              </button>
             )}
           </div>
           {polishUnchanged && <PolishUnchangedNote />}
@@ -131,33 +137,39 @@ export default function ResponseSection({
             {aiShareTarget === 'ciel' ? 'Ciel' : 'Zero'}:
           </h4>
           <div className={segmentedCls}>
-            <nav
+            <button
+              type="button"
+              aria-pressed={aiSelectedVersion === 'original'}
               className={aiSelectedVersion === 'original' ? 'active' : ''}
               onClick={() => onAiSelectedVersionChange('original')}
               style={{ minWidth: '9rem' }}
             >
               <Icon icon="pencil-alt" style={{ marginRight: '0.5rem' }} />
               Original (raw)
-            </nav>
+            </button>
             {!polishUnchanged && (
-              <nav
+              <button
+                type="button"
+                aria-pressed={aiSelectedVersion === 'refined'}
                 className={aiSelectedVersion === 'refined' ? 'active' : ''}
                 onClick={() => onAiSelectedVersionChange('refined')}
                 style={{ minWidth: '9rem' }}
               >
                 <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
                 AI‑polished
-              </nav>
+              </button>
             )}
             {!polishUnchanged && (
-              <nav
+              <button
+                type="button"
+                aria-pressed={aiSelectedVersion === 'both'}
                 className={aiSelectedVersion === 'both' ? 'active' : ''}
                 onClick={() => onAiSelectedVersionChange('both')}
                 style={{ minWidth: '9rem' }}
               >
                 <Icon icon="copy" style={{ marginRight: '0.5rem' }} />
                 Both
-              </nav>
+              </button>
             )}
           </div>
           {polishUnchanged && <PolishUnchangedNote />}
@@ -243,8 +255,9 @@ export default function ResponseSection({
         </div>
       )}
 
-      {!showVersionSelector && (
+      {!showVersionSelector && !showAIVersionSelector && (
         <details
+          open={isPictureDay || undefined}
           className={css`
             margin-bottom: 1.5rem;
           `}
@@ -260,7 +273,7 @@ export default function ResponseSection({
               }
             `}
           >
-            Your answer
+            {isPictureDay ? 'Your description' : 'Your answer'}
           </summary>
           <div
             className={css`
@@ -389,8 +402,11 @@ const segmentedCls = css`
   border-radius: 999px;
   background: ${PAPER.paperDeep};
   border: 1px solid ${PAPER.line};
-  nav {
+  button {
     display: inline-flex;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
     align-items: center;
     padding: 0.6rem 1.3rem;
     border-radius: 999px;
@@ -400,10 +416,14 @@ const segmentedCls = css`
     cursor: pointer;
     user-select: none;
   }
-  nav:hover {
+  button:hover {
     color: ${PAPER.ink};
   }
-  nav.active {
+  button:focus-visible {
+    outline: 2px solid ${PAPER.blue};
+    outline-offset: 2px;
+  }
+  button.active {
     background: ${PAPER.paper};
     color: ${PAPER.ink};
     box-shadow: 0 1px 3px rgba(80, 60, 30, 0.15);

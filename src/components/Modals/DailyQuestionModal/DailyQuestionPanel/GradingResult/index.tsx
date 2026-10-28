@@ -218,13 +218,6 @@ export default function GradingResult({
   async function handleShareClick() {
     if (sharingRef.current) return;
 
-    // Picture Day: the description is shared as written, with the picture;
-    // there is no polished version to choose between
-    if (isPictureDay) {
-      await handleConfirmShare('original');
-      return;
-    }
-
     if (!refinedResponse && !refining) {
       try {
         setRefining(true);
@@ -239,6 +232,11 @@ export default function GradingResult({
         }
 
         setRefinedResponse(result.refinedText);
+        setSelectedVersion(
+          isPolishUnchanged(result.refinedText, originalResponse || response)
+            ? 'original'
+            : 'refined'
+        );
         setRefining(false);
         setShowVersionSelector(true);
       } catch (err) {
@@ -525,6 +523,7 @@ export default function GradingResult({
         aiSelectedVersion={aiSelectedVersion}
         aiShareTarget={aiShareTarget}
         canShareToFeed={canShareToFeed}
+        isPictureDay={isPictureDay}
         originalResponse={originalResponse}
         preparingAIVersionTarget={preparingAIVersionTarget}
         question={question}
@@ -631,7 +630,7 @@ export default function GradingResult({
     if (refining && !refinedResponse) return;
     setShareError(null);
 
-    if (isKeywordDay) {
+    if (isKeywordDay && !isPictureDay) {
       await performShareWithAI({ target, version: 'refined' });
       return;
     }
