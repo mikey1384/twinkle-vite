@@ -35,6 +35,7 @@ import {
 } from './constants';
 import GradingResult from './GradingResult';
 import PictureDayScreen, { type PictureDayState } from './PictureDayScreen';
+import { dailyPictureJobs } from '~/helpers/dailyPictureJobs';
 import ProgressScreen from './ProgressScreen';
 import { getFocusLabel, getVibeLabel } from './helpers/questionPreferences';
 import StartScreen from './StartScreen';
@@ -917,7 +918,15 @@ export default function DailyQuestionPanel({
           committedResponseRef.current = '';
           setResponse('');
           setGradingResult(null);
-          setScreen('start');
+          const pictureWork = dailyPictureJobs.getSnapshot();
+          setScreen(
+            data.isPictureDay &&
+              (data.picture?.candidates?.length > 0 ||
+                (pictureWork.userId === Number(userId) &&
+                  pictureWork.jobs.some((job) => job.questionId === data.questionId)))
+              ? 'writing'
+              : 'start'
+          );
         }
       } catch (err: any) {
         if (!isMountedRef.current || currentRequestRef.cancelled) return;
@@ -1571,12 +1580,14 @@ export default function DailyQuestionPanel({
   if (isPictureDay && screen === 'writing') {
     return (
       <PictureDayScreen
+        questionId={Number(questionId)}
         question={question}
         initialPicture={dayPicture || normalizePictureDay(null)}
         submitting={pictureSubmitting}
         submitError={pictureSubmitError}
         onDone={handlePictureDone}
         onPictureChange={setDayPicture}
+        onClose={onClose}
       />
     );
   }

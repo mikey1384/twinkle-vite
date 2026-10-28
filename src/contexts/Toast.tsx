@@ -2,11 +2,14 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Toast from '~/components/Toast';
 import AchievementToast from '~/components/AchievementToast';
+import CompletionToast from '~/components/CompletionToast';
+import { useAppContext } from '~/contexts';
 
 interface MessageToastOptions {
   kind?: 'message';
@@ -31,7 +34,21 @@ interface AchievementToastOptions {
   linkTo?: string;
 }
 
-type ToastOptions = MessageToastOptions | AchievementToastOptions;
+interface CompletionToastOptions {
+  kind: 'completion';
+  ownerUserId: number;
+  title: string;
+  message: string;
+  imageSrc?: string;
+  actionLabel: string;
+  linkTo: string;
+  duration?: number;
+  onShown?: () => void;
+  onClick?: () => void | Promise<void>;
+}
+
+type ToastOptions =
+  MessageToastOptions | AchievementToastOptions | CompletionToastOptions;
 type QueuedToast = ToastOptions & { id: number };
 
 type ShowToast = (options: ToastOptions) => void;
@@ -43,19 +60,33 @@ const ToastContext = createContext<ShowToast>(() => {});
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const userId = useAppContext((v) => v.user.state.userId);
   // Queue so back-to-back events (e.g. finishing a grammar game that also
   // crosses a milestone) play one after another instead of clobbering.
   const [queue, setQueue] = useState<QueuedToast[]>([]);
+  useEffect(() => {
+    setQueue((items) =>
+      items.filter(
+        (item) =>
+          item.kind !== 'completion' || item.ownerUserId === Number(userId)
+      )
+    );
+  }, [userId]);
 
   const showToast = useCallback((options: ToastOptions) => {
     setQueue((q) => [...q, { ...options, id: Date.now() + Math.random() }]);
   }, []);
 
-  const handleClose = useCallback(() => {
-    setQueue((q) => q.slice(1));
-  }, []);
-
-  const current = queue[0] || null;
+  // Private task results must never cross an account switch, even if an
+  // achievement ahead of them kept them queued until after logout.
+  const current =
+    queue.find(
+      (toast) =>
+        toast.kind !== 'completion' || toast.ownerUserId === Number(userId)
+    ) || null;
+  const closeCurrent = useCallback(() => {
+    setQueue((items) => items.filter((item) => item.id !== current?.id));
+  }, [current?.id]);
 
   function renderCurrent() {
     if (!current) return null;
@@ -65,6 +96,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         : current.linkTo
           ? () => navigate(current.linkTo as string)
           : undefined;
+
+    if (current.kind === 'completion') {
+      return (
+        <CompletionToast
+          key={current.id}
+          {...current}
+          onClose={closeCurrent}
+          onClick={goLink}
+        />
+      );
+    }
 
     if (current.kind === 'achievement') {
       return (
@@ -79,7 +121,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           delta={current.delta}
           ap={current.ap}
           duration={current.duration}
-          onClose={handleClose}
+          onClose={closeCurrent}
           onClick={goLink}
         />
       );
@@ -90,7 +132,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         key={current.id}
         message={current.message}
         duration={current.duration}
-        onClose={handleClose}
+        onClose={closeCurrent}
         onClick={goLink}
       />
     );

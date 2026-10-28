@@ -3660,11 +3660,13 @@ export default function contentRequestHelpers({
     // Picture Day (10-24): paint one picture from the member's description.
     // The first at default settings is on the site; the rest use AI Battery.
     async generateDailyPicture({
+      questionId,
       prompt,
       style,
       quality,
       requestId
     }: {
+      questionId: number;
       prompt: string;
       style: string;
       quality?: string;
@@ -3673,7 +3675,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/daily-question/picture`,
-          { prompt, style, quality, requestId },
+          { questionId, prompt, style, quality, requestId },
           { ...auth(), timeout: 330000, meta: { enforceTimeout: false } }
         );
         return data;
@@ -3683,10 +3685,10 @@ export default function contentRequestHelpers({
     },
     // Today's pictures as stored: after a failed or dropped generation the
     // server may still have finished (and charged) it
-    async loadDailyPicture() {
+    async loadDailyPicture(questionId?: number) {
       try {
         const { data } = await request.get(
-          `${URL}/content/daily-question/picture`,
+          `${URL}/content/daily-question/picture${questionId ? `?questionId=${questionId}` : ''}`,
           auth()
         );
         return data;

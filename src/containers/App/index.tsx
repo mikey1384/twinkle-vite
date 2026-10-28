@@ -10,6 +10,7 @@ import React, {
 import { buildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
 import Header from './Header';
 import SocketManager from './SocketManager';
+import DailyPictureNotifications from './DailyPictureNotifications';
 import InvalidPage from '~/components/InvalidPage';
 import LazyModalFallback from '~/components/Modals/LazyModalFallback';
 import { LazyDailyRewardModal } from '~/components/Modals/DailyRewardModal/lazy';
@@ -1396,6 +1397,7 @@ export default function App() {
     >
       <KeyContext.Provider value={keyContextValue}>
         <SocketManager onInit={handleSocketInit} />
+        <DailyPictureNotifications />
         {mobileMenuShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <MobileMenu onClose={() => setMobileMenuShown(false)} />

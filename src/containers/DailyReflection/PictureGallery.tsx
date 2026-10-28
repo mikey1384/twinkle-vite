@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import ImageModal from '~/components/Modals/ImageModal';
 import { useAppContext } from '~/contexts';
@@ -33,6 +33,9 @@ export interface GalleryDay {
 const PAGE_SIZE = 8;
 
 export default function PictureGallery() {
+  const [searchParams] = useSearchParams();
+  const requestedPath = searchParams.get('picture');
+  const openedPathRef = useRef<string | null>(null);
   const loadMyPictures = useAppContext((v) => v.requestHelpers.loadMyPictures);
   const [days, setDays] = useState<GalleryDay[]>([]);
   const [nextBefore, setNextBefore] = useState<number | null>(null);
@@ -45,6 +48,17 @@ export default function PictureGallery() {
     void loadPage(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!requestedPath || openedPathRef.current === requestedPath) return;
+    const picture = days
+      .flatMap((day) => day.pictures)
+      .find((item) => item.path === requestedPath);
+    if (picture) {
+      openedPathRef.current = requestedPath;
+      setViewing(picture);
+    }
+  }, [days, requestedPath]);
 
   return (
     <div className={wrapCls}>
@@ -107,7 +121,12 @@ export default function PictureGallery() {
 
       {loading ? (
         <p className={noteCls}>
-          <span className={paperWorkingDotsCls}>Loading your pictures</span>
+          Loading your pictures{' '}
+          <span className={paperWorkingDotsCls} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
         </p>
       ) : failed ? (
         <div className={noteCls}>
