@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppNavigationType } from '~/helpers/hooks/useAppNavigationType';
+import { createOrderedScrollAnchorReader } from '~/helpers/orderedScrollAnchorReader';
 import {
   addScrollAnchorExternalSaveListener,
   addScrollAnchorRestoreCancelListener,
@@ -89,13 +90,16 @@ export function useScrollAnchorRestoration({
   containerRef,
   ignoreSavedAnchor = false,
   initialScroll,
-  itemsReady
+  itemsReady,
+  orderedList = false
 }: {
   anchorKey: string;
   containerRef: RefObject<HTMLElement | null>;
   ignoreSavedAnchor?: boolean;
   initialScroll: InitialScrollPolicy;
   itemsReady: boolean;
+  // Only for non-overlapping vertical rows that are direct children.
+  orderedList?: boolean;
 }) {
   const initialScrollType = initialScroll.type;
   const initialScrollTargetRef =
@@ -323,6 +327,9 @@ export function useScrollAnchorRestoration({
     if (!itemsReady || !containerRef.current) return;
     const scroller = getAppScroller();
     const container = containerRef.current;
+    const anchorReader = orderedList
+      ? createOrderedScrollAnchorReader(container)
+      : null;
     let frame = 0;
 
     function handleScroll() {
@@ -332,7 +339,6 @@ export function useScrollAnchorRestoration({
       }
       if (saveShouldWaitForPendingRestore()) return;
       if (scrollIsNonUserWhileGuarded()) return;
-      saveAnchorAndMarkSettled();
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
         frame = 0;
@@ -424,9 +430,26 @@ export function useScrollAnchorRestoration({
     }
 
     function saveAnchorAndMarkSettled() {
-      saveCurrentAnchor(anchorKey, container, getActiveScroller());
+      saveCurrentAnchor(anchorKey, container, getActiveScroller(), anchorReader?.read);
       restoreSettledSignatureRef.current =
         getSavedAnchorRestoreSignature(anchorKey);
+    }
+
+    function flushScrollSave() {
+      if (frame) window.cancelAnimationFrame(frame);
+      frame = 0;
+      taintIfScrollLeftAppliedPosition('teardown-check');
+      if (
+        !scrollAnchorSavesAreSuppressed() &&
+        !saveShouldWaitForPendingRestore() &&
+        !nonUserScrollTaintedRef.current
+      ) {
+        saveAnchorAndMarkSettled();
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'hidden') flushScrollSave();
     }
 
     function saveShouldWaitForPendingRestore() {
@@ -461,21 +484,18 @@ export function useScrollAnchorRestoration({
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     scroller?.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('pagehide', flushScrollSave);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      taintIfScrollLeftAppliedPosition('teardown-check');
-      if (
-        !scrollAnchorSavesAreSuppressed() &&
-        !saveShouldWaitForPendingRestore() &&
-        !nonUserScrollTaintedRef.current
-      ) {
-        saveAnchorAndMarkSettled();
-      }
+      flushScrollSave();
+      anchorReader?.dispose();
       window.removeEventListener('scroll', handleScroll);
       scroller?.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('pagehide', flushScrollSave);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [anchorKey, containerRef, itemsReady]);
+  }, [anchorKey, containerRef, itemsReady, orderedList]);
 
   useLayoutEffect(() => {
     if (!itemsReady || !containerRef.current) return;
@@ -1126,7 +1146,7 @@ function saveAnchorElement(
 }
 
 function recordAnchorSave(anchorKey: string, note: string) {
-  // Routine saves run on every scroll event and frame; only the explicit
+  // Routine scroll saves are coalesced per frame; only the explicit
   // element save (a feed card tap) goes to the owner trace, the rest only to
   // the opt-in local capture. Restore events still carry the saved values.
   if (note !== 'element' && !isScrollDiagnosticsLoggingEnabled()) return;
@@ -1148,7 +1168,8 @@ function recordAnchorSave(anchorKey: string, note: string) {
 function saveCurrentAnchor(
   anchorKey: string,
   container: HTMLElement | null,
-  scroller: HTMLElement | null
+  scroller: HTMLElement | null,
+  readCandidates?: (anchorLine: number) => HTMLElement[]
 ) {
   if (!container) return;
   const scrollTop = getScrollTop(scroller);
@@ -1163,7 +1184,14 @@ function saveCurrentAnchor(
     return;
   }
 
-  const items = getScrollAnchorItems(container);
+  const viewportTop = getViewportTop(scroller);
+  const viewportBottom = getViewportBottom(scroller);
+  const viewportHeight = Math.max(0, viewportBottom - viewportTop);
+  const anchorLine =
+    viewportTop + Math.min(Math.max(viewportHeight * 0.1, 72), 140);
+  const items = readCandidates
+    ? readCandidates(anchorLine)
+    : getScrollAnchorItems(container);
   if (items.length === 0) {
     savedScrollAnchors[anchorKey] = {
       anchorKey,
@@ -1174,9 +1202,8 @@ function saveCurrentAnchor(
     return;
   }
 
-  const viewportTop = getViewportTop(scroller);
-  const viewportBottom = getViewportBottom(scroller);
   const anchorElement = findCurrentAnchorElement({
+    anchorLine,
     items,
     viewportBottom,
     viewportTop
@@ -1204,17 +1231,16 @@ function saveCurrentAnchor(
 }
 
 function findCurrentAnchorElement({
+  anchorLine,
   items,
   viewportBottom,
   viewportTop
 }: {
+  anchorLine: number;
   items: HTMLElement[];
   viewportBottom: number;
   viewportTop: number;
 }) {
-  const viewportHeight = Math.max(0, viewportBottom - viewportTop);
-  const anchorLine =
-    viewportTop + Math.min(Math.max(viewportHeight * 0.1, 72), 140);
   let containingAnchor: { item: HTMLElement; height: number } | null = null;
   let firstLowerAnchor: HTMLElement | null = null;
   let nearestAnchor: { item: HTMLElement; distance: number } | null = null;

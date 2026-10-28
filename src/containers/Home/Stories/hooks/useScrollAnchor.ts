@@ -29,6 +29,7 @@ export function useScrollAnchor({
     anchorKey,
     containerRef,
     initialScroll: { type: 'top' },
-    itemsReady: feedsReady
+    itemsReady: feedsReady,
+    orderedList: true
   });
 }

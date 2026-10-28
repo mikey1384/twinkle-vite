@@ -1,6 +1,8 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
+import { useKeyContext } from '~/contexts';
+import { useCardWindow } from './hooks/useCardWindow';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import LinkPreviewImage from '~/components/LinkPreviewImage';
@@ -64,6 +66,35 @@ export interface RewardDigestPreview {
   } | null;
 }
 
+interface RewardDigestCardProps {
+  digest: RewardDigestPreview;
+  index: number;
+  homeFeedAnchorKey?: string;
+}
+
+function RewardDigestWindow(props: RewardDigestCardProps) {
+  const userId = useKeyContext((v) => v.myState.userId);
+  // Natural height depends on the title, latest result, earners and newcomers.
+  // A changed canonical digest must be measured again, not use its old height.
+  const cacheKey = useMemo(
+    () => `reward-digest:${userId || 0}:${JSON.stringify(props.digest)}`,
+    [userId, props.digest]
+  );
+  const { contentShown, visibilityRef, panelRef, placeholderHeight } = useCardWindow({
+    cacheKey,
+    measureBeforeHide: true
+  });
+  return (
+    <div ref={visibilityRef}>
+      {contentShown ? (
+        <div ref={panelRef}>
+          <DigestContent {...props} />
+        </div>
+      ) : <div style={{ height: placeholderHeight }} />}
+    </div>
+  );
+}
+
 // An app's "earning today" card on Home: everyone who earned XP or Coins in
 // one app on one reward day, as one card (the server sends it as a
 // 'rewardDigest' feed row, bumped to the top at most every 3 hours). Each
@@ -74,11 +105,7 @@ function RewardDigestCard({
   digest,
   index,
   homeFeedAnchorKey
-}: {
-  digest: RewardDigestPreview;
-  index: number;
-  homeFeedAnchorKey?: string;
-}) {
+}: RewardDigestCardProps) {
   useOwnerFeedCardFrameCount('rewardDigest');
   const navigate = useNavigate();
   const appTitle = digest.buildTitle || 'Lumine app';
@@ -107,7 +134,7 @@ function RewardDigestCard({
           onClick={appAvailable ? handleOpenClick : undefined}
         >
           {digest.buildThumbnailUrl ? (
-            <LinkPreviewImage src={digest.buildThumbnailUrl} alt="" />
+            <LinkPreviewImage src={digest.buildThumbnailUrl} alt="" loading="lazy" decoding="async" />
           ) : (
             <Icon icon="laptop-code" />
           )}
@@ -271,7 +298,8 @@ function RewardDigestCard({
   }
 }
 
-export default memo(RewardDigestCard);
+const DigestContent = memo(RewardDigestCard);
+export default memo(RewardDigestWindow);
 
 const cardClass = css`
   box-sizing: border-box;

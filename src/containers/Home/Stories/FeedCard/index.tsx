@@ -15,8 +15,7 @@ import {
   mobileMaxWidth,
   tabletMaxWidth
 } from '~/constants/css';
-import { placeholderHeights } from '~/constants/state';
-import { useInViewFlag } from '~/helpers/hooks/useInViewFlag';
+import { useCardWindow } from '../hooks/useCardWindow';
 import {
   RouteNavigateBridge,
   useStableNavigate
@@ -24,7 +23,6 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import {
   useContentState,
-  useLazyLoad,
   useLiveComment,
   useMyLevel
 } from '~/helpers/hooks';
@@ -87,6 +85,8 @@ const HOME_FEED_CARD_TAP_MOVEMENT_THRESHOLD_PX = 10;
 const HOME_FEED_CARD_TAP_SCROLL_THRESHOLD_PX = 2;
 const homeFeedCardSizingCache = new Map<string, FeedCardSizing>();
 const homeFeedContentHydrationRequests = new Set<string>();
+const EMPTY_PREVIEW_CONTENT = {};
+const EMPTY_PREVIEW_COMMENTS: any[] = [];
 
 const askCornerClass = css`
   position: absolute;
@@ -159,10 +159,6 @@ function HomeFeedCard({
       label: `this ${noun}`
     };
   }, [contentId, contentType, feed?.rootType]);
-  const [VisibilityRef, inView] = useInViewFlag();
-  // read when a content reply is queued (hydrationPacer: on-screen first)
-  const inViewRef = useRef(inView);
-  inViewRef.current = inView;
   // Not the router hook useNavigate: it re-renders every card whenever
   // <Routes> re-renders (see useStableNavigate).
   const { navigate, routeNavigateRef } = useStableNavigate();
@@ -188,7 +184,6 @@ function HomeFeedCard({
   const [primaryTextTruncated, setPrimaryTextTruncated] = useState(false);
   const loadingRef = useRef<string | null>(null);
   const previewCommentLoadingRef = useRef<string | null>(null);
-  const PanelRef = useRef<HTMLDivElement | null>(null);
   const tapNavigationRef = useRef<{
     moved: boolean;
     pointerId: number;
@@ -197,10 +192,10 @@ function HomeFeedCard({
     startX: number;
     startY: number;
   } | null>(null);
-  const feedPreviewContent = feed?.previewContent || {};
+  const feedPreviewContent = feed?.previewContent || EMPTY_PREVIEW_CONTENT;
   const feedPreviewComments = Array.isArray(feed?.comments)
     ? feed.comments
-    : [];
+    : EMPTY_PREVIEW_COMMENTS;
   const feedRowObservedAt = getFeedRowObservedAt(feed);
   // A feed response is canonical server state, so its comments update the
   // content entry every surface reads instead of staying a second copy that
@@ -223,22 +218,26 @@ function HomeFeedCard({
   }, [feedRowObservedAt, feed, contentId, contentType]);
   const contentComments = Array.isArray(contentState.comments)
     ? contentState.comments
-    : [];
-  const selectedPreviewComments = getHomeFeedCardPreviewComments({
-    contentComments,
-    feedPreviewComments
-  });
+    : EMPTY_PREVIEW_COMMENTS;
+  const selectedPreviewComments = useMemo(
+    () => getHomeFeedCardPreviewComments({ contentComments, feedPreviewComments }),
+    [contentComments, feedPreviewComments]
+  );
   // The shown preview comment can still be a feed payload snapshot, which is
   // never refetched. Overlay the canonical copy so an AI Energy reply that has
   // since been sponsored and generated shows its answer here instead of the
   // "needs AI Energy" placeholder, and so this card sizes on what it renders.
   const livePreviewComment = useLiveComment(selectedPreviewComments[0]);
-  const previewComments =
-    livePreviewComment === selectedPreviewComments[0]
+  const previewComments = useMemo(
+    () => livePreviewComment === selectedPreviewComments[0]
       ? selectedPreviewComments
-      : [livePreviewComment, ...selectedPreviewComments.slice(1)];
-  const renderablePreviewComments =
-    getRenderableHomeFeedPreviewComments(previewComments);
+      : [livePreviewComment, ...selectedPreviewComments.slice(1)],
+    [livePreviewComment, selectedPreviewComments]
+  );
+  const renderablePreviewComments = useMemo(
+    () => getRenderableHomeFeedPreviewComments(previewComments),
+    [previewComments]
+  );
   const feedIdentity =
     feedAnchorId ||
     feed?.feedId ||
@@ -246,14 +245,14 @@ function HomeFeedCard({
     feed?.timeStamp ||
     feed?.lastInteraction ||
     index;
-  const previewContentForSecretState = {
+  const previewContentForSecretState = useMemo(() => ({
     ...feed,
     ...feedPreviewContent,
     id: contentId,
     contentId,
     contentType,
     rootType: feedPreviewContent.rootType || feed?.rootType
-  };
+  }), [feed, feedPreviewContent, contentId, contentType]);
   const preliminaryRootType = contentState.loaded
     ? contentState.rootType || previewContentForSecretState.rootType
     : previewContentForSecretState.rootType;
@@ -268,12 +267,15 @@ function HomeFeedCard({
         ? contentState.rootId || previewContentForSecretState.rootId
         : previewContentForSecretState.rootId) || 0
   });
-  const previewRootObjForSecretState = mergePreviewSubjectSecretState(
-    previewContentForSecretState.rootObj,
-    contentState.rootObj
+  const previewRootObjForSecretState = useMemo(
+    () => mergePreviewSubjectSecretState(
+      previewContentForSecretState.rootObj,
+      contentState.rootObj
+    ),
+    [previewContentForSecretState.rootObj, contentState.rootObj]
   );
   const rootObj = useMemo(() => {
-    const previewRootObj = previewRootObjForSecretState || {};
+    const previewRootObj = previewRootObjForSecretState || EMPTY_PREVIEW_CONTENT;
     if (!(rootContentState?.id || rootContentState?.notFound)) {
       return previewRootObj;
     }
@@ -285,10 +287,13 @@ function HomeFeedCard({
       )
     };
   }, [previewRootObjForSecretState, rootContentState]);
-  const preliminaryTargetObj = mergePreviewTargetSecretState(
-    previewContentForSecretState.targetObj,
-    contentState.targetObj,
-    preliminaryRootType
+  const preliminaryTargetObj = useMemo(
+    () => mergePreviewTargetSecretState(
+      previewContentForSecretState.targetObj,
+      contentState.targetObj,
+      preliminaryRootType
+    ),
+    [previewContentForSecretState.targetObj, contentState.targetObj, preliminaryRootType]
   );
   const preliminaryContentForSecretState = contentState.loaded
     ? {
@@ -311,11 +316,11 @@ function HomeFeedCard({
     !showcase &&
     !secretHiddenForPreview &&
     renderablePreviewComments.length > 0;
-  const baseFeedContent = {
+  const baseFeedContent = useMemo(() => ({
     ...previewContentForSecretState,
     __homeFeedHasCommentPreview: hasPreviewCommentSlot
-  };
-  const appliedContent = contentState.loaded
+  }), [previewContentForSecretState, hasPreviewCommentSlot]);
+  const appliedContent = useMemo(() => contentState.loaded
     ? mergeLoadedFeedContentWithPreviewState({
         contentState,
         previewComments,
@@ -328,13 +333,11 @@ function HomeFeedCard({
         previewLoaded: Boolean(
           contentState.previewLoaded || previewComments.length
         )
-      };
-  const calculatedSizing = getFeedCardSizing({
-    content: appliedContent,
-    rootObj,
-    showcase,
-    userId
-  });
+      }, [contentState, previewComments, baseFeedContent]);
+  const calculatedSizing = useMemo(
+    () => getFeedCardSizing({ content: appliedContent, rootObj, showcase, userId }),
+    [appliedContent, rootObj, showcase, userId]
+  );
   const sizingKey = `${HOME_FEED_CARD_LAYOUT_VERSION}:${
     showcase ? 'showcase' : 'feed'
   }:${contentType}:${contentId}:${feedIdentity}:${
@@ -343,25 +346,23 @@ function HomeFeedCard({
     calculatedSizing.flags.secretHidden ? 'secret-hidden' : 'secret-open'
   }`;
   const placeholderHeightKey = `home-feed-${sizingKey}`;
-  const previousPlaceholderHeight = useMemo(
-    () => placeholderHeights[placeholderHeightKey] || 0,
-    [placeholderHeightKey]
+  const sizing = useMemo(
+    () => getStableHomeFeedCardSizing(sizingKey, calculatedSizing),
+    [sizingKey, calculatedSizing]
   );
-  const sizing = getStableHomeFeedCardSizing(sizingKey, calculatedSizing);
   const tabletMediaAttachmentClassName =
     sizing.main.size === 'media-attachment-with-text'
       ? 'home-feed-card--tablet-media-attachment'
       : '';
-  const placeholderHeightRef = useRef(previousPlaceholderHeight);
-  const [placeholderHeightState, setPlaceholderHeightState] = useState(() => ({
-    height: previousPlaceholderHeight,
-    key: placeholderHeightKey
-  }));
-  const placeholderHeight =
-    placeholderHeightState.key === placeholderHeightKey
-      ? placeholderHeightState.height
-      : previousPlaceholderHeight;
-  const sizingStyle = {
+  const {
+    visibilityRef: VisibilityRef,
+    panelRef: measurePanel,
+    panelElementRef: PanelRef,
+    nearViewportRef,
+    contentShown,
+    placeholderHeight
+  } = useCardWindow({ cacheKey: placeholderHeightKey, alwaysShow: showcase });
+  const sizingStyle = useMemo(() => ({
     '--home-feed-card-body-height': sizing.card.bodyHeight,
     '--home-feed-card-comment-embed-panel-height':
       sizing.card.commentEmbedPanelHeight,
@@ -379,31 +380,12 @@ function HomeFeedCard({
       sizing.card.subjectSecretPanelHeight,
     '--home-feed-card-subject-secret-mobile-panel-height':
       sizing.card.mobileSubjectSecretPanelHeight
-  } as React.CSSProperties & Record<string, string>;
+  }) as React.CSSProperties & Record<string, string>, [sizing]);
   const placeholderStyle: React.CSSProperties = placeholderHeight
     ? { ...sizingStyle, height: placeholderHeight }
     : sizingStyle;
-  const isVisible = useLazyLoad({
-    id: placeholderHeightKey,
-    inView,
-    PanelRef,
-    onSetPlaceholderHeight: (height: number) => {
-      const nextHeight = Math.ceil(Number(height) || 0);
-      if (nextHeight <= 0) return;
-      setPlaceholderHeightState((prev) =>
-        getNextPlaceholderHeightState(prev, nextHeight, placeholderHeightKey)
-      );
-      placeholderHeightRef.current = nextHeight;
-    }
-  });
-  // Showcase lists are short and not virtualized, so skip the lazy placeholder
-  // (its fixed height would mismatch the content-height showcase card).
-  const contentShown = useMemo(
-    () => showcase || inView || isVisible,
-    [inView, isVisible, showcase]
-  );
   useOwnerFeedCardFrameCount(contentType, isOwnerTraceActive() ? {
-    feed, visibility: inView, content: contentState, preview: livePreviewComment,
+    feed, visibility: nearViewportRef.current, content: contentState, preview: livePreviewComment,
     shown: contentShown, theme: theme || profileTheme, level,
     likeLoading, truncated: primaryTextTruncated, placeholderHeight
   } : undefined);
@@ -425,25 +407,6 @@ function HomeFeedCard({
     (!contentState.commentsLoaded || contentComments.length === 0) &&
     !contentState.previewLoaded &&
     renderablePreviewComments.length === 0;
-
-  useEffect(() => {
-    placeholderHeightRef.current = previousPlaceholderHeight;
-    setPlaceholderHeightState((prev) =>
-      getNextPlaceholderHeightState(
-        prev,
-        previousPlaceholderHeight,
-        placeholderHeightKey
-      )
-    );
-  }, [placeholderHeightKey, previousPlaceholderHeight]);
-
-  useEffect(() => {
-    return function cleanUp() {
-      if (placeholderHeightRef.current > 0) {
-        placeholderHeights[placeholderHeightKey] = placeholderHeightRef.current;
-      }
-    };
-  }, [placeholderHeightKey]);
 
   useEffect(() => {
     if (!shouldHydrate || loadingRef.current === hydrationRequestKey) return;
@@ -468,7 +431,7 @@ function HomeFeedCard({
         releaseHydration();
         return;
       }
-      // Replies that land together are applied a few per frame, on-screen
+      // Replies that land together are applied a few per frame, nearby
       // cards first (hydrationPacer.ts). The request stays marked in flight
       // until it is applied, so a remount in between cannot refetch it.
       homeFeedHydrationPacer.enqueue(() => {
@@ -484,7 +447,7 @@ function HomeFeedCard({
             ...data.rootObj
           });
         }
-      }, () => inViewRef.current);
+      }, () => nearViewportRef.current);
     }
 
     function releaseHydration() {
@@ -559,6 +522,16 @@ function HomeFeedCard({
 
     const panel = PanelRef.current;
     if (!panel) return;
+    const mainPreview = panel.querySelector<HTMLElement>('.home-feed-card__panel-preview');
+    const textElements = mainPreview?.querySelectorAll<HTMLElement>(
+      HOME_FEED_PRIMARY_TEXT_SELECTOR
+    );
+    // Arena/reward/book-only previews have no truncated primary text. Avoid
+    // observing their entire heading, avatars, controls and reward subtree.
+    if (!mainPreview || !textElements?.length) {
+      setPrimaryTextTruncated(false);
+      return;
+    }
     const measuredPanel = panel;
 
     let animationFrame = 0;
@@ -572,8 +545,9 @@ function HomeFeedCard({
         ? new MutationObserver(schedulePrimaryTextTruncationMeasure)
         : null;
 
-    resizeObserver?.observe(measuredPanel);
-    mutationObserver?.observe(measuredPanel, {
+    resizeObserver?.observe(mainPreview);
+    textElements.forEach((element) => resizeObserver?.observe(element));
+    mutationObserver?.observe(mainPreview, {
       attributes: true,
       attributeFilter: ['class', 'style'],
       characterData: true,
@@ -611,7 +585,7 @@ function HomeFeedCard({
         );
       });
     }
-  }, [contentShown, sizingKey]);
+  }, [contentShown, sizingKey, appliedContent, PanelRef]);
 
   const headingAction = useMemo(() => {
     if (appliedContent.commentId) {
@@ -755,7 +729,7 @@ function HomeFeedCard({
         <RouteNavigateBridge navigateRef={routeNavigateRef} />
         {contentShown ? (
           <div
-            ref={PanelRef}
+            ref={measurePanel}
             className={`${visiblePanelClass} ${tabletMediaAttachmentClassName} ${
               showcase ? SHOWCASE_CARD_CLASS : ''
             }`}
@@ -1740,7 +1714,7 @@ const placeholderClass = css`
   }
 `;
 
-// The wrapper must follow the rendered card so useLazyLoad records wrapped
+// The wrapper must follow the rendered card so useCardWindow records wrapped
 // action rows in its measured placeholder height.
 const visiblePanelClass = css`
   box-sizing: border-box;
@@ -1763,7 +1737,7 @@ const cardClass = css`
   background: #fff;
   cursor: pointer;
   overflow: hidden;
-  /* useLazyLoad already replaces off-screen cards with measured placeholders.
+  /* useCardWindow replaces far-off-screen cards with measured placeholders.
      Keep mounted cards laid out: Safari can otherwise report the intrinsic
      estimate on re-entry and overwrite a taller attachment card's measurement. */
   transition: border-color 0.18s ease;

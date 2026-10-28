@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { type BookPreview } from '~/helpers/bookEmbedHelpers';
 import { saveScrollAnchorForElement } from '~/helpers/hooks/useScrollAnchorRestoration';
 
-// RichText can measure an invisible copy at the same time as the visible one.
-// Share in-flight reads, but don't retain metadata after requests settle.
-const pending = new Map<number, Promise<{ book: BookPreview | null }>>();
+import {
+  invalidateBookPreview,
+  readBookPreview,
+  requestBookPreview
+} from './helpers/previewCache';
 
 export default function BookEmbed({
   subjectId,
@@ -21,48 +23,78 @@ export default function BookEmbed({
   const loadBookPreview = useAppContext(
     (v) => v.requestHelpers.loadBookPreview
   );
+  const userId = useKeyContext((v) => v.myState.userId);
+  const subject = useContentContext((v) => v.state[`subject${subjectId}`]);
+  const bookMakerIsPrivate = useContentContext((v) =>
+    v.state.build884?.isPublic === false || v.state.build884?.isPublic === 0
+  );
+  const knownUnavailable = Boolean(
+    subject?.isDeleted || subject?.notFound || bookMakerIsPrivate
+  );
+  const cacheKey = useMemo(() => JSON.stringify([
+    userId || 0, subjectId, subject?.title, subject?.description,
+    subject?.thumbUrl, subject?.filePath, subject?.fileName, subject?.rootType,
+    subject?.rootId, subject?.bookAvailable, knownUnavailable
+  ]), [
+    userId, subjectId, subject?.title, subject?.description,
+    subject?.thumbUrl, subject?.filePath, subject?.fileName, subject?.rootType,
+    subject?.rootId, subject?.bookAvailable, knownUnavailable
+  ]);
   const [result, setResult] = useState<{
-    id: number;
+    key: string;
     book?: BookPreview | null;
     failed?: boolean;
-  } | null>(null);
+  } | null>(() => {
+    const cached = readBookPreview(cacheKey);
+    return cached ? { key: cacheKey, book: cached.book } : null;
+  });
   const [failedCover, setFailedCover] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
-  const current = result?.id === subjectId ? result : null;
+  const current = result?.key === cacheKey ? result : null;
   const book = current?.book;
   const loading = !current;
-  const unavailable = current?.book === null;
+  const unavailable = knownUnavailable || current?.book === null;
   const cover =
     book?.coverUrl && book.coverUrl !== failedCover ? book.coverUrl : null;
 
   useEffect(() => {
     let active = true;
-    setResult(null);
-    let request = pending.get(subjectId);
-    if (!request) {
-      request = Promise.resolve().then(() => loadBookPreview(subjectId));
-      pending.set(subjectId, request);
-      void request
-        .finally(() => {
-          if (pending.get(subjectId) === request) pending.delete(subjectId);
-        })
-        .catch(() => {});
+    if (knownUnavailable) {
+      invalidateBookPreview(cacheKey);
+      return;
     }
-    request
-      .then((data) => {
-        if (!data || (data.book !== null && data.book?.subjectId !== subjectId))
-          throw new Error('Invalid book preview');
-        if (active) setResult({ id: subjectId, book: data.book });
-      })
-      .catch(() => {
-        if (active) setResult({ id: subjectId, failed: true });
-      });
+    const cached = readBookPreview(cacheKey);
+    if (cached) {
+      setResult((previous) => previous?.key === cacheKey && previous.book === cached.book
+        ? previous
+        : { key: cacheKey, book: cached.book });
+    } else {
+      setResult(null);
+      refresh();
+    }
+    window.addEventListener('focus', revalidate);
     return () => {
       active = false;
+      window.removeEventListener('focus', revalidate);
     };
+
+    function revalidate() {
+      invalidateBookPreview(cacheKey);
+      refresh();
+    }
+
+    function refresh() {
+      requestBookPreview(cacheKey, subjectId, loadBookPreview)
+        .then((data) => {
+          if (active) setResult({ key: cacheKey, book: data.book });
+        })
+        .catch(() => {
+          if (active) setResult({ key: cacheKey, failed: true });
+        });
+    }
     // Request helpers are context services, not reactive inputs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subjectId, retry]);
+  }, [subjectId, cacheKey, knownUnavailable, retry]);
 
   if (unavailable || current?.failed) {
     return (
@@ -147,6 +179,7 @@ export default function BookEmbed({
 
   function handleRetry(event: React.MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
+    invalidateBookPreview(cacheKey);
     setRetry((value) => value + 1);
   }
 

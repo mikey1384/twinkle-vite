@@ -50,7 +50,6 @@ import {
   type PopupBoundaryRef
 } from '~/helpers/popupBoundary';
 
-const allContentState: Record<string, any> = {};
 const EMPTY_PROFILE_FEEDS: any[] = [];
 const EMPTY_USER_STATE = {};
 const DEFAULT_PROFILE_NOTABLES = {
@@ -188,9 +187,13 @@ export function useContentState({
 }) {
   const contentKey =
     (contentType || '') + (contentId || 0) + (targetKey ? `/${targetKey}` : '');
-  allContentState[contentKey] = useContentContext((v) => v.state[contentKey]);
-  const state = allContentState[contentKey];
-  return state ? { ...defaultContentState, ...state } : defaultContentState;
+  const state = useContentContext((v) => v.state[contentKey]);
+  // Reducers replace a canonical entry when it changes. Preserve the merged
+  // snapshot across visibility/height renders so memoized previews can skip.
+  return useMemo(
+    () => state ? { ...defaultContentState, ...state } : defaultContentState,
+    [state]
+  );
 }
 
 export function useInterval(callback: (v?: any) => any, interval: number) {

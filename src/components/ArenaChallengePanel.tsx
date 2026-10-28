@@ -79,13 +79,15 @@ const MODE: Record<string, string> = {
   normal: 'Normal',
   hard: 'Hard'
 };
+const dailyDateFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric'
+});
 
 function ArenaChallengePanel({
   challenge
 }: {
   challenge: ArenaChallengePreview;
 }) {
-  const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const todayCompleted = useNotiContext(
     (v) => v.state.todayStats?.dailyTaskStatus?.aiStory?.arena?.todayQuestion?.done
@@ -115,9 +117,8 @@ function ArenaChallengePanel({
         </span>
         <strong className={titleCls}>{isDaily ? 'Today’s Challenge' : challenge.examName}</strong>
         <span className={modeCls}>
-          {isDaily ? new Date(`${challenge.dayKey}T00:00:00Z`).toLocaleDateString('en-US', {
-            timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric'
-          }) : <>{LENGTH[challenge.length]} · {MODE[challenge.difficulty]}</>}
+          {isDaily ? formatDailyDate(challenge.dayKey)
+            : <>{LENGTH[challenge.length]} · {MODE[challenge.difficulty]}</>}
         </span>
         <span className={scoreCls}>
           {isDaily ? 'Challenge cleared' : <><small>Score</small> {challenge.raw} <span>/ {challenge.max}</span></>}
@@ -158,17 +159,7 @@ function ArenaChallengePanel({
             : 'Same paper, same clock'}
         </span>
         {(isDaily ? !!userId && todayCompleted === false : !isMine) && (
-          <ArenaButton
-            tone="red"
-            size="md"
-            onClick={(event) => {
-              // the feed card opens the post on a click; this opens the battle
-              event.stopPropagation();
-              navigate(isDaily ? '/arena?mode=today' : `/arena?mode=arena&challenge=${challenge.id}`);
-            }}
-          >
-            {isDaily ? 'Try today’s challenge' : 'Challenge!'}
-          </ArenaButton>
+          <ChallengeButton daily={isDaily} id={challenge.id} />
         )}
       </div>
     </div>
@@ -176,6 +167,24 @@ function ArenaChallengePanel({
 }
 
 export default memo(ArenaChallengePanel);
+
+// Keep router-context updates in the control, not the entire memoized receipt.
+function ChallengeButton({ daily, id }: { daily: boolean; id: number }) {
+  const navigate = useNavigate();
+  return (
+    <ArenaButton tone="red" size="md" onClick={(event) => {
+      event.stopPropagation();
+      navigate(daily ? '/arena?mode=today' : `/arena?mode=arena&challenge=${id}`);
+    }}>
+      {daily ? 'Try today’s challenge' : 'Challenge!'}
+    </ArenaButton>
+  );
+}
+
+function formatDailyDate(dayKey: string) {
+  const date = new Date(`${dayKey}T00:00:00Z`);
+  return Number.isFinite(date.getTime()) ? dailyDateFormatter.format(date) : 'Invalid Date';
+}
 
 // the Arena look, inside the post's default frame
 const resultCls = css`
