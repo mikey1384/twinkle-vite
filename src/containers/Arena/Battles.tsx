@@ -11,6 +11,7 @@ import CoverPage from './CoverPage';
 import { openArenaCompanion } from './ExamCompanionChoice';
 import ExamScope from './ExamScope';
 import RewardOffer from './RewardOffer';
+import MasteryProgress from './MasteryProgress';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import type { ArenaCompanion, ArenaDifficulty, ArenaExamSummary, ArenaState } from './types';
@@ -218,6 +219,7 @@ export default function Battles({
                       {exam.name}{exam.nameEn !== exam.name && <> <small>{exam.nameEn}</small></>}
                     </strong>
                     <ExamScope examKey={exam.key} />
+                    {exam.mastery && <MasteryProgress progress={exam.mastery} />}
                     {exam.ageLevel != null && <p className={introCls}>Age level: {exam.ageLevel >= 19 ? 'Adult' : exam.ageLevel}. Full clears at your age level or higher earn Excellence.</p>}
                     {exam.access && <div className={cooldownCls} role="status">
                       <p>{exam.access.message}</p>

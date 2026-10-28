@@ -23,6 +23,7 @@ import PartialCreditReview from './PartialCreditReview';
 import C1ScoreReview from './C1ScoreReview';
 import ParentEmailOffer from './ParentEmailOffer';
 import ArenaRewards from './Rewards';
+import MasteryProgress from './MasteryProgress';
 import { ANSWER_FLUSH_EVENT } from './useAnswerFlush';
 import C1ReadingPaper from './C1ReadingPaper';
 import { isC1Reading } from './examTasks';
@@ -1254,7 +1255,16 @@ function Result({ data }: { data: ArenaBattle }) {
         </strong>
       </div>
       <div className={rewardPanelCls}>
-        {battle.mastery && <p role="status">{battle.mastery.completed
+        {battle.masteryProgress && <MasteryProgress progress={battle.masteryProgress} />}
+        {battle.mastery && <p role="status">{battle.mastery.version === 2 && battle.mastery.solo
+          ? battle.marking?.pending || battle.reward?.rewardPending
+            ? 'Mastery progress will update after final marking.'
+            : battle.mastery.rewardTier
+              ? `${battle.mastery.rewardTier === 'perfect' ? 'Full-marks' : 'Pass'} mastery reward collected! Check the exam’s mastery tracker for the remaining reward and your next step.`
+              : 'No reserved mastery reward earned this time. Clear 10 more different Full Hard papers, with Zero or Ciel if you like, before another solo attempt.'
+          : battle.masteryProgress
+            ? battle.mastery.clearedAt ? 'This Full Hard clear counts toward mastery.' : 'This paper did not add a qualifying clear.'
+          : battle.mastery.completed
           ? 'Solo mastery complete! Your one-time mastery reward is shown below. Future papers return to ordinary rewards.'
           : battle.mastery.clearedAt
             ? `Full Hard mastery: ${Math.min(battle.mastery.required, battle.mastery.clearsBefore + 1)} / ${battle.mastery.required} different papers cleared.`

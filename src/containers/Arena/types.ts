@@ -1,6 +1,15 @@
 export type ArenaDifficulty = 'easy' | 'normal' | 'hard';
 export type ArenaCompanion = 'Zero' | 'Ciel' | 'solo';
-export interface ArenaMasteryProgress { clears: number; required: number; completed: boolean; solo: boolean; pending: boolean }
+export interface ArenaMasteryProgress {
+  clears: number;
+  required: number;
+  completed: boolean;
+  solo: boolean;
+  pending: boolean;
+  tiers?: { pass: boolean; perfect: boolean };
+  rewardsComplete?: boolean;
+  retry?: { clears: number; required: number };
+}
 export interface ArenaScoreRules { correct: number; incorrect: number; omitted: number }
 
 export interface ArenaRewardOffer {
@@ -16,7 +25,8 @@ export interface ArenaRewardOffer {
   pendingOverlapPoints?: number;
   markingRequired?: boolean;
   mastery?: ArenaMasteryProgress;
-  masteryReward?: { target: number; xp: number; coins: number; maxXP: number; maxCoins: number };
+  masteryReward?: { target: number; xp: number; coins: number; maxXP: number; maxCoins: number;
+    tiers?: { pass?: { target: number; xp: number; coins: number }; perfect?: { target: number; xp: number; coins: number } } };
   nextPaperAvailable?: boolean;
   requirements?: { id: string; label: string; target: number; max: number; earned?: number | null }[];
 }
@@ -67,8 +77,10 @@ export interface ArenaGradeEstimate {
 
 export interface ArenaBattleSummary {
   id: number;
+  masteryProgress?: ArenaMasteryProgress;
   companion?: ArenaCompanion;
-  mastery?: { clearsBefore: number; required: number; solo: boolean; target: number; completed: boolean; clearedAt?: number };
+  mastery?: { clearsBefore: number; required: number; solo: boolean; target: number; completed: boolean; clearedAt?: number;
+    version?: number; rewardTier?: 'pass' | 'perfect'; qualification?: { clears: number; required: number; afterBattleId: number } };
   examKey: string;
   length: 'short' | 'medium' | 'full';
   difficulty: ArenaDifficulty;
