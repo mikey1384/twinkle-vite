@@ -28,6 +28,7 @@ import C1ReadingPaper from './C1ReadingPaper';
 import { isC1Reading } from './examTasks';
 import type { ArenaBattle, ArenaItem } from './types';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
+import ScoreRules from './ScoreRules';
 import type { AssistantAskContext } from '~/containers/App/AssistantDock/dockState';
 import {
   WEBSITE_AGENT_NO_PLAY_ATTRIBUTE,
@@ -244,6 +245,7 @@ export default function BattleRunner({
   const finished = data?.battle.status === 'finished';
   useUserActivity(getArenaBattleActivity(loadError ? null : data?.battle, battleId));
   const component = data?.battle.component;
+  const takingBreak = component?.kind === 'break' && !finished;
   const timed = !!data?.battle.deadlineAt && !finished;
 
   useEffect(() => {
@@ -366,7 +368,7 @@ export default function BattleRunner({
         ) : (
           <div />
         )}
-        {!finished && component?.state !== 'ready' && (
+        {!finished && !takingBreak && component?.state !== 'ready' && (
           <ArenaButton
             tone="red"
             size="md"
@@ -375,13 +377,17 @@ export default function BattleRunner({
             disabled={submitting || (component?.allowEarlyFinish === false && remaining !== 0)}
             onClick={() => setConfirmShown(true)}
           >
-            {component ? 'Submit component' : 'Submit'}
+            {component ? 'Submit section' : 'Submit'}
           </ArenaButton>
         )}
       </header>
 
       {finished && <Result data={data} />}
-      {!finished && component?.allowEarlyFinish === false && remaining !== 0 && <p className={draftStatusCls}>You can review this module until its clock runs out. {component.index + 1 < component.count ? 'The next module opens automatically.' : 'Your saved answers are then submitted.'}</p>}
+      {!finished && !takingBreak && component?.allowEarlyFinish === false && remaining !== 0 && <p className={draftStatusCls}>You can review this section until its clock runs out. {component.index + 1 < component.count ? 'The next section or break opens automatically.' : 'Your saved answers are then submitted.'}</p>}
+      {takingBreak && <section className={centerCls} role="status">
+        <h2>{component.name}</h2>
+        <p>Take a break. Your previous answers are locked, and the next section opens when this clock reaches zero.</p>
+      </section>}
       {!!Object.keys(pendingAnswers).length && <p role="status" className={draftStatusCls}>Answers waiting to save: {Object.keys(pendingAnswers).join(', ')}</p>}
       {saveError && <div className={centerCls} role="alert">
         <p>{saveError}</p>
@@ -415,7 +421,7 @@ export default function BattleRunner({
 
       {/* Ordinary exams welcome tutoring. Solo mastery hides the paper;
           the member always enters and submits every answer. */}
-      <fieldset disabled={!finished && (submitting || remaining === 0)} className={answerFieldsetCls}>
+      {!takingBreak && <fieldset disabled={!finished && (submitting || remaining === 0)} className={answerFieldsetCls}>
       <div
         className={bodyCls}
         {...(!finished
@@ -443,7 +449,7 @@ export default function BattleRunner({
               ask={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.no}`, path: `/arena?mode=train&battle=${data.battle.id}` }} />}
           />}
           {sections.map(({ section, items }) => (
-            <section key={section} className={columnsCls}>
+            <section key={`${section}-${items[0]?.no}`} className={columnsCls}>
               {section === 'listening' && (
                 <p className={sectionNoteCls}>
                   {listeningNote(
@@ -481,7 +487,7 @@ export default function BattleRunner({
                     marked={shownAnswers[item.no] ?? null}
                     allPointTags={data.battle.exam.pointTags === 'all'}
                     letters={data.battle.exam.optionMarkers === 'letters'}
-                    problemLayout={data.battle.exam.layout === 'problem'}
+                    problemLayout={data.battle.exam.layout === 'problem' && !item.passageFirst && !item.written}
                     finished={finished}
                     reviewLang={reviewLang}
                     // replay controls only where replays are allowed: Train's
@@ -558,13 +564,13 @@ export default function BattleRunner({
                 }
               >
                 <span className={omrNoCls}>{item.display || item.no}</span>
-                {item.marked ? (
+                {item.marked || item.written ? (
                   // an essay or recording: written on the paper, ticked here
                   <span className={omrMarkedCls}>
-                    {item.marked === 'essay'
+                    {item.marked === 'essay' || item.written
                       ? '서술 · Essay'
                       : '말하기 · Spoken'}{' '}
-                    {(item.marked === 'essay'
+                    {(item.marked === 'essay' || item.written
                       ? answers[item.no] != null
                       : recordings[item.no] != null) && <Icon icon="check" />}
                   </span>
@@ -621,7 +627,7 @@ export default function BattleRunner({
           </div>
         </aside>}
       </div>
-      </fieldset>
+      </fieldset>}
 
       {confirmShown && (
         // drawn inside the battle screen: a site modal would open beneath it
@@ -813,7 +819,7 @@ export default function BattleRunner({
 // pass no: 0 to print no number)
 export function PaperItem({
   item,
-  passage,
+  passage: suppliedPassage,
   marked,
   finished,
   reviewLang,
@@ -854,6 +860,7 @@ export function PaperItem({
   assistant?: 'Zero' | 'Ciel';
   reviewOnly?: boolean;
 }) {
+  const passage = item.passageFirst ? null : suppliedPassage;
   const listening = item.section === 'listening';
   const ko = reviewLang === 'ko';
   const review =
@@ -866,7 +873,12 @@ export function PaperItem({
   return (
     // an essay or recording takes the page's full width, as the answer
     // sheet's writing space does
-    <article className={cx(itemCls, item.marked && wideItemCls)}>
+    <>
+    {!reviewOnly && item.heading && <div className={cx(sectionNoteCls, wideItemCls)}>
+      <h3>{item.heading.title}</h3><p>{item.heading.directions}</p>
+    </div>}
+    {!reviewOnly && item.passageFirst && suppliedPassage && <div className={cx(itemCls, passageCls, wideItemCls)}><PaperText text={suppliedPassage.body} /></div>}
+    <article className={cx(itemCls, (item.fullWidth || item.marked || item.written) && wideItemCls)}>
       {!reviewOnly && <>
       {passage && listening && audioControls && (
         <div className={audioCls}>
@@ -904,6 +916,7 @@ export function PaperItem({
           <span className={pointsCls}> [{item.points}점]</span>
         )}
       </p>
+      {item.unscored && <p className={sectionNoteCls}>Unscored</p>}
       {item.body && bodyFirst && !problemLayout && (
         <div className={boxCls}>
           <PaperText text={item.body} />
@@ -912,6 +925,7 @@ export function PaperItem({
       {item.visual ? (
         <PaperVisual
           visual={item.visual as unknown as Visual}
+          writingPrompt={!!item.written}
           marked={typeof marked === 'number' ? marked : null}
           onMark={finished ? undefined : onMark}
         />
@@ -936,7 +950,7 @@ export function PaperItem({
           <PaperText text={item.body} />
         </div>
       )}
-      {item.marked === 'essay' && (
+      {(item.marked === 'essay' || item.written) && (
         <EssayAnswer
           no={item.no}
           task={item.task}
@@ -973,6 +987,9 @@ export function PaperItem({
           )}
         </>
       )}
+      {finished && item.written && review?.explanation && <p className={strongAnswerCls}>
+        <b>{ko ? '쓰기 연습 안내: ' : 'Writing practice notes: '}</b><MathText text={review.explanation} />
+      </p>}
       {item.typed && (
         <div className={typedRowCls}>
           <TypedAnswer
@@ -991,6 +1008,7 @@ export function PaperItem({
       )}
       {!item.typed &&
         !item.marked &&
+        !item.written &&
         !(
           item.visual && tableMarksChoices(item.visual as unknown as Visual)
         ) && (
@@ -1041,7 +1059,7 @@ export function PaperItem({
           </ol>
         )}
       </>}
-      {finished && item.review && !item.marked && (
+      {finished && item.review && !item.marked && !item.written && (
         <div
           className={cx(
             reviewCls,
@@ -1117,6 +1135,7 @@ export function PaperItem({
         </div>
       )}
     </article>
+    </>
   );
 }
 
@@ -1203,6 +1222,7 @@ function Result({ data }: { data: ArenaBattle }) {
         <strong>
           {shownPoints} / {battle.maxPoints}
         </strong>
+        {battle.exam.scoreRules && <span className={resultNoteCls}><ScoreRules rules={battle.exam.scoreRules} /> Writing and experimental questions are unscored.</span>}
         {aiMarked && (
           <span className={resultNoteCls}>
             {waiting.length
@@ -1399,6 +1419,13 @@ const barCls = css`
   padding: 0.8rem 1.6rem;
   background: ${ARENA.paper};
   border-bottom: 3px solid ${ARENA.line};
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    > button:last-child:not(:first-child) {
+      grid-column: 2 / -1;
+      justify-self: end;
+    }
+  }
 `;
 
 const titleCls = css`

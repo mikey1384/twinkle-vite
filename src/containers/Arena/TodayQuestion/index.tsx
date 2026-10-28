@@ -76,8 +76,8 @@ export default function TodayQuestion() {
   const rewards = q?.rewards || data.rewards;
   const setup = !data.profile || editing;
   const goal = data.options.goals.find(g => g.key === profile.goal);
-  const setupTitles = ['What are you working toward?', 'What should we focus on?', 'Which school year are you in?', 'Where should we start?'];
-  const choices = setupStep === 0 ? data.options.goals : setupStep === 1 ? profile.goal === 'exam' ? data.options.exams : (goal?.subjects || []).map(s => ({ key: s, label: s })) : setupStep === 2 ? data.options.grades : data.options.confidence;
+  const setupTitles = ['What are you working toward?', profile.goal === 'ssat' ? 'Which SSAT level are you preparing for?' : 'What should we focus on?', 'Which school year are you in?', 'Where should we start?'];
+  const choices = setupStep === 0 ? data.options.goals : setupStep === 1 ? profile.goal === 'exam' ? data.options.exams : (goal?.subjects || []).map(s => ({ key: s, label: data.options.exams.find(exam => exam.key === s)?.label || s })) : setupStep === 2 ? data.options.grades : data.options.confidence;
   const lesson = q?.lesson;
   const step = lesson?.steps[lessonIndex];
   const showLesson = q?.attempted && (!q.completedVia || exploring);
@@ -99,7 +99,7 @@ export default function TodayQuestion() {
           <p className={eyebrowCls}>STEP {setupStep + 1} OF 4</p>
           <div className={progressCls} aria-hidden="true">{[0, 1, 2, 3].map(i => <span key={i} data-done={i <= setupStep} />)}</div>
           <h2>{setupTitles[setupStep]}</h2>
-          <p>{setupStep === 0 ? 'We’ll prepare one useful question a day for your goal.' : setupStep === 1 ? 'Pick one focus for now. You can change it later.' : setupStep === 2 ? 'This helps us choose the right starting point. Use the equivalent grade if you study outside Korea.' : 'Your answers will help us adjust future questions.'}</p>
+          <p>{setupStep === 0 ? 'We’ll prepare one useful question a day for your goal.' : setupStep === 1 ? profile.goal === 'ssat' ? 'Use your current US grade: Elementary 3 or 4, Middle 5–7, Upper 8–11. You can change this later.' : 'Pick one focus for now. You can change it later.' : setupStep === 2 ? 'This helps us choose the right starting point. Use the equivalent grade if you study outside Korea.' : 'Your answers will help us adjust future questions.'}</p>
           <div className={setupStep === 2 ? gradeChoicesCls : choicesCls}>
             {choices.map(choice => <button key={choice.key} type="button" className={optionCls} disabled={busy} onClick={() => void choosePreference(choice.key)}>{choice.label}</button>)}
           </div>
@@ -212,7 +212,7 @@ export default function TodayQuestion() {
 function hasAnswer(value: string | number | null) { return typeof value === 'number' || typeof value === 'string' && value.trim().length > 0; }
 function profileLabel(data: TodayState) {
   const profile = data.profile!;
-  return profile.goal === 'exam' ? data.options.exams.find(e => e.key === profile.subject)?.label : `${data.options.goals.find(g => g.key === profile.goal)?.label} · ${profile.subject}`;
+  return data.options.exams.find(e => e.key === profile.subject)?.label || `${data.options.goals.find(g => g.key === profile.goal)?.label} · ${profile.subject}`;
 }
 function RewardOffer({ rewards }: { rewards: TodayState['rewards'] }) {
   return <div className={offerCls}>

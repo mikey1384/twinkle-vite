@@ -59,10 +59,12 @@ export function tableMarksChoices(visual: Visual) {
 
 export default function PaperVisual({
   visual,
+  writingPrompt = false,
   marked = null,
   onMark
 }: {
   visual: Visual;
+  writingPrompt?: boolean;
   marked?: number | null;
   onMark?: (choice: number | null) => void;
 }) {
@@ -71,7 +73,7 @@ export default function PaperVisual({
   }
   if (visual.kind === 'image' && visual.src) {
     return (
-      <figure className={figureCls}>
+      <figure className={cx(figureCls, writingPrompt && writingPictureCls)}>
         <img
           src={arenaMediaURL(visual.src)}
           alt={visual.alt || visual.title || ''}
@@ -699,9 +701,24 @@ const figureCls = css`
   }
 `;
 
+// A writing scene is the whole prompt, so give it more space than an artifact
+// thumbnail. Keep its natural proportions and fit narrow screens.
+const writingPictureCls = css`
+  max-width: 60rem;
+  margin: 1.2rem auto;
+  img, img.photo {
+    width: 100%;
+    height: auto;
+    max-height: none;
+  }
+`;
+
 const svgCls = css`
+  display: block;
   width: 100%;
+  max-width: 64rem;
   height: auto;
+  margin: 0 auto;
   font-family: 'Times New Roman', Tinos, serif;
 `;
 

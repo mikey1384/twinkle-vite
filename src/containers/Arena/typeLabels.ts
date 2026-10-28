@@ -133,6 +133,21 @@ export function typeLabel(type: string): string {
   if (LABELS[type]) return LABELS[type];
   const parts = type.split('.');
   const last = parts[parts.length - 1];
+  if (parts[0] === 'ssat') {
+    const label = ({
+      numberOperations: 'Numbers and operations',
+      measurement: 'Measurement',
+      geometry: 'Geometry',
+      algebra: 'Algebra',
+      data: 'Data and probability',
+      math: 'Quantitative reasoning',
+      reading: 'Reading comprehension',
+      synonym: 'Synonyms',
+      analogy: 'Analogies',
+      writing: 'Writing sample'
+    } as Record<string, string>)[last];
+    if (label) return parts.includes('x') ? `${label} (experimental)` : label;
+  }
   // a subject-wide type ("kor.hs.short") is the form alone
   if (SUFFIXES[last] && parts.length > 1) {
     const base = parts.slice(0, -1).join('.');

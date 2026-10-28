@@ -13,7 +13,7 @@ export default function ComponentSchedule({
   components,
   examKey
 }: {
-  components?: { name: string; minutes: number }[];
+  components?: { name: string; minutes: number; kind?: 'break' }[];
   examKey?: string;
 }) {
   if (!components?.length) return null;
@@ -28,9 +28,10 @@ export default function ComponentSchedule({
         ))}
       </ol>
       <p>
-        Each component has its own clock. Once submitted, its answers are
+        Each section has its own clock. Once submitted, its answers are
         locked. Unused time does not carry over.
       </p>
+      {components.some(component => component.kind === 'break') && <p>Breaks are timed too. Each section starts automatically when the previous clock ends.</p>}
       {examKey && PRACTICE_NOTES[examKey] && <p>{PRACTICE_NOTES[examKey]}</p>}
     </div>
   );

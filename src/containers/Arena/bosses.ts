@@ -7,6 +7,26 @@ export const BOSSES: Record<
   string,
   { name: string; nameEn: string; color: string }
 > = {
+  'ssat-elementary-3': {
+    name: '호기심 선생님',
+    nameEn: 'The Curiosity Coach',
+    color: '#e7b649'
+  },
+  'ssat-elementary-4': {
+    name: '생각 탐험대장',
+    nameEn: 'The Thinking Explorer',
+    color: '#61a99a'
+  },
+  'ssat-middle': {
+    name: '추론 선생님',
+    nameEn: 'The Reasoning Teacher',
+    color: '#5578aa'
+  },
+  'ssat-upper': {
+    name: '사립학교 입시관',
+    nameEn: 'The Independent School Examiner',
+    color: '#795a91'
+  },
   'c1-advanced': {
     name: '영문학 시험관',
     nameEn: 'The Advanced English Examiner',

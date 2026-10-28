@@ -1432,7 +1432,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/arena/challenge/${challengeId}/start`,
-          { previewToken, companion, guidedExams: true, componentTiming: true, rewardQualifications: true },
+          { previewToken, companion, guidedExams: true, componentTiming: true, rewardQualifications: true, extendedScoring: true },
           auth()
         );
         return data;
@@ -1679,7 +1679,7 @@ export default function contentRequestHelpers({
     },
     async prepareArenaBattle(target: { examKey?: string; length?: 'short' | 'medium' | 'full'; difficulty?: 'easy' | 'normal' | 'hard'; challengeId?: number }) {
       try {
-        const { data } = await request.post(`${URL}/content/arena/battle/preview`, { ...target, guidedExams: true, componentTiming: true, rewardQualifications: true }, auth());
+        const { data } = await request.post(`${URL}/content/arena/battle/preview`, { ...target, guidedExams: true, componentTiming: true, rewardQualifications: true, extendedScoring: true }, auth());
         return data;
       } catch (error) {
         return handleError(error);
@@ -1699,7 +1699,7 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/arena/battle`,
-          { ...target, guidedExams: true, componentTiming: true, rewardQualifications: true },
+          { ...target, guidedExams: true, componentTiming: true, rewardQualifications: true, extendedScoring: true },
           auth()
         );
         return data;
@@ -1710,7 +1710,7 @@ export default function contentRequestHelpers({
     async loadArenaBattle(battleId: number) {
       try {
         const { data } = await request.get(
-          `${URL}/content/arena/battle/${battleId}?componentTiming=true&rewardQualifications=true`,
+          `${URL}/content/arena/battle/${battleId}?componentTiming=true&rewardQualifications=true&extendedScoring=true`,
           auth()
         );
         return data;

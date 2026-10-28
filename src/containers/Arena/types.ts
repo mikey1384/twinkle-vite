@@ -1,6 +1,7 @@
 export type ArenaDifficulty = 'easy' | 'normal' | 'hard';
 export type ArenaCompanion = 'Zero' | 'Ciel' | 'solo';
 export interface ArenaMasteryProgress { clears: number; required: number; completed: boolean; solo: boolean; pending: boolean }
+export interface ArenaScoreRules { correct: number; incorrect: number; omitted: number }
 
 export interface ArenaRewardOffer {
   xp: number;
@@ -47,7 +48,8 @@ export interface ArenaExamSummary {
   listening?: boolean;
   // essay or spoken answers: its scores include AI estimates
   aiMarked?: boolean;
-  components?: { name: string; minutes: number }[];
+  scoreRules?: ArenaScoreRules;
+  components?: { name: string; minutes: number; kind?: 'break' }[];
   lengths: {
     length: 'short' | 'medium' | 'full';
     items: number;
@@ -164,6 +166,12 @@ export interface ArenaItem {
   type: string;
   section: 'listening' | 'reading' | 'main';
   points: number;
+  unscored?: boolean;
+  written?: boolean;
+  wrongPenalty?: number;
+  heading?: { title: string; directions: string };
+  passageFirst?: boolean;
+  fullWidth?: boolean;
   passageId: number | null;
   set?: string;
   plays?: number;
@@ -238,11 +246,13 @@ export interface ArenaBattle {
       choices: number;
       aiMarked?: boolean;
       gradeLabels?: string[] | null;
+      scoreRules?: ArenaScoreRules;
     };
     minutes: number | null;
     deadlineAt: number | null;
     serverNow: number;
     component?: {
+      kind?: 'break';
       index: number;
       count: number;
       name: string;

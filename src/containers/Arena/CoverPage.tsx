@@ -6,6 +6,7 @@ import RewardOffer from './RewardOffer';
 import ExamCompanionChoice from './ExamCompanionChoice';
 import ComponentSchedule from './ComponentSchedule';
 import ExamScope from './ExamScope';
+import ScoreRules from './ScoreRules';
 import { useAppContext } from '~/contexts';
 import { arenaExamLimitMessage } from '~/helpers/arenaExamLimit';
 import { ARENA } from './theme';
@@ -127,6 +128,7 @@ export default function CoverPage({
         <section className={coverCls}>
           <p className={kickerCls}>Twinkle practice test</p>
           <h2 className={titleCls}>{exam.nameEn || exam.name}</h2>
+          <ExamScope examKey={exam.key} />
           <p className={metaCls}>
             {LENGTH_EN[length]} · {MODE_EN[difficulty] || MODE_EN.normal}
             {spec ? ` · ${spec.items} questions${length === 'full' && exam.components?.length ? '' : ` · ${spec.minutes} minutes`}` : ''}
@@ -138,8 +140,8 @@ export default function CoverPage({
               Answer each question on the screen. Your answers are saved as you work.
             </li>
             <li>
-              When time is up, your answer sheet is handed in. A blank answer is
-              wrong.
+              When time is up, your saved answers are handed in.
+              {' '}{exam.scoreRules ? <ScoreRules rules={exam.scoreRules} /> : 'A blank answer is wrong.'}
             </li>
             {exam.listening && (
               <li>
@@ -148,6 +150,12 @@ export default function CoverPage({
               </li>
             )}
             <li>The clock starts when you press Start.</li>
+            {exam.key.startsWith('ssat-') && <>
+              <li>No calculator. To leave a multiple-choice question blank, tap its selected answer again.</li>
+              <li>{length === 'full'
+                ? 'Writing and experimental questions are included but unscored. Your writing is saved for review; it does not use AI marking.'
+                : 'This shortened selection covers scored questions only. Writing, experimental questions and scheduled breaks belong to the Full test.'}</li>
+            </>}
             {exam.key === 'c1-advanced' && (
               <>
                 <li>
@@ -172,6 +180,7 @@ export default function CoverPage({
               All questions are original.
             </p>
           )}
+          {exam.key.startsWith('ssat-') && <p>SSAT is a registered trademark of its owner. Twinkle is independent and is not endorsed by the SSAT publisher. All questions are original.</p>}
           {rewardSection}
           <div className={actionsCls}>
             <button type="button" className={cancelCls} onClick={onCancel}>
