@@ -187,6 +187,7 @@ async function compile({ realBoss = false } = {}) {
       format: 'iife',
       platform: 'browser',
       jsx: 'transform',
+      loader: { '.webp': 'dataurl' },
       define: {
         'process.env.NODE_ENV': '"development"',
         'import.meta.env': '{"DEV":true}'
@@ -216,11 +217,16 @@ async function compile({ realBoss = false } = {}) {
 }
 
 test('all-S world bonuses show progress and canonical collection, and replays stay in the chosen world', { timeout: 120000 }, async () => {
-  const output = path.resolve(repo, '../work/grammar-quest-world-mastery-20261028');
+  const output = process.env.GRAMMARBLES_MASTERY_ARTIFACTS ||
+    path.resolve(repo, '../work/grammar-quest-world-mastery-20261028');
   mkdirSync(output, { recursive: true });
   const script = await compile();
   const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
-  const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}body{margin:0;background:#1a1426}#root{display:flex;height:100dvh;padding:8px}</style><div id="root"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+  const pixelFont = process.env.GRAMMARBLES_PIXEL_FONT;
+  const fontCss = pixelFont
+    ? `@font-face{font-family:'Press Start 2P';src:url(data:font/woff2;base64,${readFileSync(pixelFont).toString('base64')}) format('woff2');font-weight:400;}`
+    : '';
+  const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${fontCss}${css}body{margin:0;background:#1a1426}#root{display:flex;height:100dvh;padding:8px}</style><div id="root"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
   for (const [engine, browserType] of [['chromium', chromium], ['webkit', webkit]]) {
     let browser;
     try {
@@ -240,6 +246,9 @@ test('all-S world bonuses show progress and canonical collection, and replays st
           return route.abort();
         });
         await page.goto('http://localhost:3000/');
+        if (pixelFont) {
+          assert.equal(await page.evaluate(async () => (await document.fonts.load('10px "Press Start 2P"')).length), 1);
+        }
         await page.waitForFunction(() => typeof window.showFixture === 'function');
         await page.evaluate(() => {
           window.setAccount({ grammarbles: { music: false, sound: false } });
@@ -318,6 +327,23 @@ test('all-S world bonuses show progress and canonical collection, and replays st
         await page.screenshot({ path: path.join(output, `${engine}-${width}-result.png`), fullPage: true, animations: 'disabled' });
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
         assert.deepEqual(errors, []);
+        // Every world must display its own complete artwork, including the
+        // narrow layout. Keep this in the actual map/collection fixture.
+        await page.evaluate(() => window.showFixture('map'));
+        const worlds = await page.evaluate(() => window.serverQuestState.worlds.map(({ id, name }) => ({ id, name })));
+        const artSources = new Set();
+        for (const world of worlds) {
+          await page.getByRole('button', { name: `World ${world.id}: ${world.name}`, exact: true }).click();
+          const banner = page.getByRole('region', { name: `World ${world.id} all-S bonus` });
+          const art = banner.locator('figure img');
+          await art.evaluate(img => img.decode());
+          assert.equal(await art.evaluate(img => img.naturalWidth), 480);
+          artSources.add(await art.getAttribute('src'));
+          assert.equal(await banner.locator('figcaption').innerText(), world.name);
+          assert.equal(await banner.evaluate(el => el.scrollWidth <= el.clientWidth), true);
+          await banner.screenshot({ path: path.join(output, `${engine}-${width}-banner-${world.id}.png`) });
+        }
+        assert.equal(artSources.size, worlds.length);
         await page.close();
       }
     } finally { await browser?.close(); }
