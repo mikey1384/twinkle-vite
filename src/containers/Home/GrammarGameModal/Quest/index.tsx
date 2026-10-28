@@ -1,5 +1,5 @@
 import Icon from '~/components/Icon';
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -45,6 +45,7 @@ export default function GrammarQuest({
   );
   const startRun = useAppContext((v) => v.requestHelpers.startGrammarQuestRun);
   const loadRun = useAppContext((v) => v.requestHelpers.loadGrammarQuestRun);
+  const collectMastery = useAppContext((v) => v.requestHelpers.claimGrammarQuestWorldMastery);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
@@ -61,6 +62,7 @@ export default function GrammarQuest({
   const [resultAnswers, setResultAnswers] = useState<QuestAnswer[]>([]);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
+  const refreshVersion = useRef(0);
 
   // DEV ONLY (compiled out of production): the Fit Lab's sample result
   useEffect(() => {
@@ -156,6 +158,8 @@ export default function GrammarQuest({
               starting={starting || pendingAction !== null}
               startingNodeId={pendingAction?.startsWith('node:') ? pendingAction.slice(5) : null}
               startingNemesis={pendingAction === 'nemesis'}
+              collectingMastery={pendingAction === `mastery:${world.id}`}
+              onCollectMastery={() => handleCollectMastery(world.id)}
             />
             <div className={footnoteCls}>
               {/* the real rules in plain words, one idea each (Mikey 10-07:
@@ -167,7 +171,7 @@ export default function GrammarQuest({
               </div>
               <div>
                 <b>Today:</b> {state.rewardedRunsLeft} more runs earn XP and
-                Coins.
+                Coins. All-S world bonuses are separate and can be earned once per world.
                 {state.replaysPay
                   ? ''
                   : ' Playing a cleared stop or boss again earns half XP and no Coins.'}
@@ -180,10 +184,12 @@ export default function GrammarQuest({
   );
 
   async function refresh(first = false) {
+    const version = ++refreshVersion.current;
     try {
-      setState(await loadState());
+      const loaded = await loadState();
+      if (version === refreshVersion.current) setState(loaded);
     } catch {
-      if (first)
+      if (first && version === refreshVersion.current)
         setError('Grammar Quest could not open. Try again in a moment.');
     }
   }
@@ -201,6 +207,7 @@ export default function GrammarQuest({
       const started = await startRun(target);
       setResult(null);
       setRun(started);
+      rememberRunSelection(started);
     } catch (e: any) {
       setError(e?.response?.data?.error || 'Could not start this run.');
     } finally {
@@ -217,6 +224,7 @@ export default function GrammarQuest({
     try {
       const reopened = await loadRun(state.openRun.runId);
       setRun(reopened);
+      rememberRunSelection(reopened);
     } catch {
       setError('Could not reopen that run.');
     }
@@ -225,30 +233,18 @@ export default function GrammarQuest({
   function handleFinished(finished: QuestResult, answers: QuestAnswer[]) {
     setResult(finished);
     setResultAnswers(answers);
-    if (finished.cleared) {
-      // A manually picked stop/world must not pin the map to a level that
-      // was just beaten. The refreshed server map selects the next open one.
-      setSelectedNodeId(null);
-      setWorldId(null);
+    if (finished.cleared && run && run.kind !== 'nemesis') {
+      // Stay in this world while improving best grades. A newly cleared stop
+      // may select the next stop within it; a replay keeps the chosen stop.
+      const replay = state?.worlds.find((w) => w.id === run.worldId)?.nodes.find((n) => n.id === run.nodeId)?.cleared;
+      const nodeId = replay ? run.nodeId : null;
+      setWorldId(run.worldId);
+      setSelectedNodeId(nodeId);
+      onSelect?.({ worldId: run.worldId, nodeId });
     }
     // the marble run already played its flag or boss-down sound
     if (run?.kind === 'nemesis') playQuestSound('clear');
-    if (
-      typeof finished.newXp === 'number' ||
-      typeof finished.newCoins === 'number'
-    ) {
-      onSetUserState({
-        userId,
-        newState: {
-          ...(typeof finished.newXp === 'number'
-            ? { twinkleXP: finished.newXp }
-            : {}),
-          ...(typeof finished.newCoins === 'number'
-            ? { twinkleCoins: finished.newCoins }
-            : {})
-        }
-      });
-    }
+    applyBalances(finished);
     if (finished.dailyTaskStatus) {
       onApplyTodayStatsProgress({
         newStats: buildTodayStatsPatchFromDailyTaskStatus(
@@ -257,6 +253,47 @@ export default function GrammarQuest({
       });
     }
     refresh();
+  }
+
+  function rememberRunSelection(selectedRun: QuestRun) {
+    if (selectedRun.kind === 'nemesis') return;
+    setWorldId(selectedRun.worldId);
+    setSelectedNodeId(selectedRun.nodeId);
+    onSelect?.({ worldId: selectedRun.worldId, nodeId: selectedRun.nodeId });
+  }
+
+  function handleCollectMastery(id: number) {
+    return runAction(`mastery:${id}`, async () => {
+      setError('');
+      // An earlier map read cannot overwrite the canonical claim response.
+      ++refreshVersion.current;
+      try {
+        const collected = await collectMastery(id);
+        applyBalances(collected);
+        setState((current) => current && ({
+          ...current,
+          worlds: current.worlds.map((w) => w.id === collected.worldId ? { ...w, mastery: collected.mastery } : w)
+        }));
+      } catch (e: any) {
+        setError(e?.response?.data?.error || 'Could not collect the bonus. Try again.');
+      }
+    });
+  }
+
+  function applyBalances(balances: { newXp?: number; newCoins?: number }) {
+    if (typeof balances.newXp === 'number' || typeof balances.newCoins === 'number') {
+      onSetUserState({
+        userId,
+        newState: {
+          ...(typeof balances.newXp === 'number'
+            ? { twinkleXP: balances.newXp }
+            : {}),
+          ...(typeof balances.newCoins === 'number'
+            ? { twinkleCoins: balances.newCoins }
+            : {})
+        }
+      });
+    }
   }
 
   function handleBackToMap() {

@@ -1807,6 +1807,18 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async claimGrammarQuestWorldMastery(worldId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/quest/world/${worldId}/mastery`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async startGrammarQuestRun(target: { nodeId: string } | { nemesis: true }) {
       try {
         const { data } = await request.post(

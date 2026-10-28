@@ -65,11 +65,12 @@ import {useSyncExternalStore} from 'react';
 let state = {myState:{userId:7,settings:JSON.parse(localStorage.getItem('fixtureAccount') || '{}')}};
 const listeners = new Set();
 const subscribe = fn => {listeners.add(fn);return () => listeners.delete(fn)};
-window.musicRequests = []; window.challengeRequests = []; window.balanceUpdates = []; window.startRequests=[]; window.answerRequests=[];
+window.musicRequests = []; window.challengeRequests = []; window.balanceUpdates = []; window.startRequests=[]; window.answerRequests=[]; window.masteryRequests=[];
 window.setAccount = settings => {state={myState:{userId:7,settings}};localStorage.setItem('fixtureAccount',JSON.stringify(settings));listeners.forEach(fn=>fn())};
-const app = {user:{actions:{onSetUserState:update=>{window.balanceUpdates.push(update);window.setAccount(update.newState.settings)}}},requestHelpers:{
+const app = {user:{actions:{onSetUserState:update=>{window.balanceUpdates.push(update);if(Object.hasOwn(update.newState,'settings'))window.setAccount(update.newState.settings)}}},requestHelpers:{
  updateGrammarblesSettings: choice=>new Promise((resolve,reject)=>window.musicRequests.push({choice,resolve,reject})),
  loadGrammarQuestState:async()=>structuredClone(window.serverQuestState || {worlds:[{id:1,unlocked:true,nodes:[]}],nemesis:[],rewardedRunsLeft:3}),
+ claimGrammarQuestWorldMastery:worldId=>new Promise((resolve,reject)=>window.masteryRequests.push({worldId,resolve,reject})),
  startGrammarQuestRun:async({nodeId})=>{window.startRequests.push(nodeId);const world=window.serverQuestState.worlds.find(w=>w.nodes.some(n=>n.id===nodeId));const node=world.nodes.find(n=>n.id===nodeId);return {runId:1,nodeId,worldId:world.id,kind:node.kind,rules:{mode:node.kind==='stop'?'practice':'boss'},questions:[]}},
  loadGrammarReview:async()=>({items:[window.reviewItem],hasMore:false}),
  answerGrammarQuestQuestion:async data=>{window.answerRequests.push(data);return typeof window.questAnswer==='function'?window.questAnswer(data):window.questAnswer},
@@ -138,7 +139,7 @@ function Fixture(){const [view,setView]=useState({mode:'music',revision:0});
  };
  if(view.mode==='stomp')return <MultiTapQuestion key={view.revision} {...window.stompProps} cls={{question:'prompt',choices:'choices',choice:'choice',key:'key',right:'right',wrong:'wrong'}} onPick={index=>window.answerRequests.push({choiceIndex:index})}/>;
  if(view.mode==='practice')return <MarbleRunScreen key={view.revision} run={window.fixtureRun || run} onFinished={()=>{window.finished=(window.finished||0)+1}} onQuit={()=>{}}/>;
- if(view.mode==='results')return <Result key={view.revision} kind="fort" result={{runId:1,score:50,cleared:false,firstTryCorrect:0,size:1,xp:0,coins:0}} answers={[{...window.questAnswer,questionText:question.question}]} onBackToMap={()=>{}}/>;
+ if(view.mode==='results')return <Result key={view.revision} kind="fort" result={window.fixtureResult || {runId:1,score:50,cleared:false,firstTryCorrect:0,size:1,xp:0,coins:0}} answers={[{...window.questAnswer,questionText:question.question}]} onBackToMap={()=>{}}/>;
  if(view.mode==='classic')return <Review key={view.revision}/>;
  return <Quest key={view.revision}/>;
 }
@@ -213,6 +214,115 @@ async function compile({ realBoss = false } = {}) {
     stop();
   }
 }
+
+test('all-S world bonuses show progress and canonical collection, and replays stay in the chosen world', { timeout: 120000 }, async () => {
+  const output = path.resolve(repo, '../work/grammar-quest-world-mastery-20261028');
+  mkdirSync(output, { recursive: true });
+  const script = await compile();
+  const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+  const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}body{margin:0;background:#1a1426}#root{display:flex;height:100dvh;padding:8px}</style><div id="root"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+  for (const [engine, browserType] of [['chromium', chromium], ['webkit', webkit]]) {
+    let browser;
+    try {
+      browser = await browserType.launch({ headless: true, timeout: 10000 });
+      for (const width of [360, 1280]) {
+        const page = await browser.newPage({ viewport: { width, height: 820 } });
+        page.setDefaultTimeout(8000);
+        const errors = [];
+        page.on('pageerror', error => errors.push(error.message));
+        await page.addInitScript(() => localStorage.setItem('fixtureAccount', JSON.stringify({ grammarbles: { music: false, sound: false } })));
+        await page.route('**/*', async route => {
+          const url = new URL(route.request().url());
+          if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: html });
+          if (url.pathname.startsWith('/gq-media/') && !url.pathname.endsWith('.ogg')) {
+            try { return await route.fulfill({ body: await readMedia(url.pathname) }); } catch { return route.abort(); }
+          }
+          return route.abort();
+        });
+        await page.goto('http://localhost:3000/');
+        await page.waitForFunction(() => typeof window.showFixture === 'function');
+        await page.evaluate(() => {
+          window.setAccount({ grammarbles: { music: false, sound: false } });
+          window.realMap = true;
+          window.resetAllMaps();
+          for (const world of window.serverQuestState.worlds) {
+            world.mastery = { xp: world.id * 100000, coins: world.id * 5000, eligible: false, claimed: false };
+            for (const node of world.nodes) Object.assign(node, { cleared: true, bestScore: 90, grade: 'A' });
+          }
+          window.showFixture('map');
+        });
+        const last = page.getByRole('region', { name: 'World 10 all-S bonus' });
+        await last.waitFor();
+        assert.match(await last.innerText(), /1,000,000 XP/);
+        assert.match(await last.innerText(), /50,000 Coins/);
+        assert.equal(await last.getByRole('button').count(), 0);
+        await page.screenshot({ path: path.join(output, `${engine}-${width}-world10.png`), fullPage: true, animations: 'disabled' });
+        await page.getByRole('button', { name: 'World 1: Starter Village', exact: true }).click();
+        const first = page.getByRole('region', { name: 'World 1 all-S bonus' });
+        await first.waitFor();
+        assert.match(await first.innerText(), /100,000 XP/);
+        assert.match(await first.innerText(), /5,000 Coins/);
+        // Replay a cleared A stop twice. Finishing and map refreshes must not
+        // jump back to unlocked World 10 or silently switch the chosen stop.
+        for (let replay = 0; replay < 2; replay++) {
+          const target = await page.evaluate(() => window.serverQuestState.worlds[0].nodes[0].name);
+          await page.getByRole('button', { name: `Play ${target}`, exact: true }).click({ force: true });
+          await page.getByRole('button', { name: 'Clear fixture level', exact: true }).click();
+          await page.getByRole('button', { name: 'Back to map', exact: true }).click();
+          await first.waitFor();
+          assert.equal(await last.count(), 0);
+          assert.equal(await page.getByRole('button', { name: `Play ${target}`, exact: true }).count(), 1);
+        }
+        await page.screenshot({ path: path.join(output, `${engine}-${width}-world1.png`), fullPage: true, animations: 'disabled' });
+        // Existing all-S progress is collectible; wait for the canonical
+        // response before changing either the receipt or displayed balances.
+        await page.evaluate(() => {
+          const w = window.serverQuestState.worlds[9];
+          w.sMarbles = w.nodeCount;
+          w.mastery.eligible = true;
+          for (const n of w.nodes) Object.assign(n, { grade: 'S', bestScore: 100 });
+          window.showFixture('map');
+        });
+        const collect = last.getByRole('button', { name: 'Collect bonus', exact: true });
+        await collect.waitFor();
+        await page.screenshot({ path: path.join(output, `${engine}-${width}-ready.png`), fullPage: true, animations: 'disabled' });
+        await collect.click();
+        await page.waitForFunction(() => window.masteryRequests.length === 1);
+        assert.equal(await last.getByRole('button', { name: 'Collecting…', exact: true }).isDisabled(), true);
+        assert.equal(await page.evaluate(() => window.balanceUpdates.length), 0);
+        assert.doesNotMatch(await last.innerText(), /BONUS COLLECTED/);
+        await page.evaluate(() => window.masteryRequests[0].reject(new Error('synthetic failure')));
+        await collect.waitFor();
+        assert.match(await page.locator('body').innerText(), /Could not collect the bonus/);
+        assert.doesNotMatch(await last.innerText(), /BONUS COLLECTED/);
+        await collect.click();
+        await page.waitForFunction(() => window.masteryRequests.length === 2);
+        await page.evaluate(() => {
+          const w = window.serverQuestState.worlds[9];
+          w.mastery = { ...w.mastery, claimed: true, awardedAt: 123 };
+          window.masteryRequests[1].resolve({ worldId: 10, mastery: w.mastery, newXp: 1234567, newCoins: 54321 });
+        });
+        await page.waitForFunction(() => window.balanceUpdates.length === 1);
+        assert.match(await last.innerText(), /BONUS COLLECTED/);
+        assert.equal(await last.getByRole('button').count(), 0);
+        assert.deepEqual(await page.evaluate(() => window.balanceUpdates[0].newState), { twinkleXP: 1234567, twinkleCoins: 54321 });
+        await page.screenshot({ path: path.join(output, `${engine}-${width}-collected.png`), fullPage: true, animations: 'disabled' });
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+        await page.evaluate(() => {
+          window.fixtureResult = { runId: 1, score: 100, grade: 'S', cleared: true, firstTryCorrect: 7, size: 7, xp: 0, coins: 0,
+            masteryBonus: { worldId: 10, xp: 1000000, coins: 50000, awardedAt: 123 } };
+          window.showFixture('results');
+        });
+        await page.getByText('World 10 mastered!', { exact: false }).waitFor();
+        assert.match(await page.getByRole('status').innerText(), /\+1,000,000 XP · \+50,000 Coins/);
+        await page.screenshot({ path: path.join(output, `${engine}-${width}-result.png`), fullPage: true, animations: 'disabled' });
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+        assert.deepEqual(errors, []);
+        await page.close();
+      }
+    } finally { await browser?.close(); }
+  }
+});
 
 test('a boss explanation waits for Resume without spending the next grade clock in Chromium and WebKit', { timeout: 180000 }, async () => {
   const output = path.resolve(repo, '../work/grammar-quest-review-resume-20261028');
@@ -1102,7 +1212,7 @@ test(
             fanfareStops + 1,
             'Back to map stops the victory fanfare'
           );
-          // An explicit world choice must not pin the next world after a castle clear.
+          // A castle unlocks the next world, but keeps the chosen map (10-28).
           await page
             .getByRole('button', {
               name: 'World 1: Starter Village',
@@ -1120,10 +1230,11 @@ test(
             .click();
           await page
             .getByRole('button', {
-              name: 'Play Harbor Beginnings',
+              name: 'Play First stop',
               exact: true
             })
             .waitFor();
+          assert.equal(await page.getByRole('button', { name: 'Play Harbor Beginnings', exact: true }).count(), 0);
         }
 
         // Failure does not advance the selected stop.

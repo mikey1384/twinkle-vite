@@ -17,6 +17,7 @@ import { MOUSE_DISCS, mouseDiscSizes } from './stopSpacing';
 import type { QuestNode, QuestState, QuestWorld } from './types';
 import AudioToggles from './AudioToggles';
 import GoalsChip from './GoalsChip';
+import WorldMastery from './WorldMastery';
 import { musicForWorldMap, playMusic, stopMusic } from './MarbleRun/music';
 import PixelIcon from './PixelIcon';
 import Icon from '~/components/Icon';
@@ -47,6 +48,8 @@ export default function WorldMap({
   onPlayNemesis,
   startingNodeId,
   startingNemesis = false,
+  collectingMastery = false,
+  onCollectMastery,
   starting
 }: {
   state: QuestState;
@@ -58,6 +61,8 @@ export default function WorldMap({
   onPlayNemesis: () => void;
   startingNodeId?: string | null;
   startingNemesis?: boolean;
+  collectingMastery?: boolean;
+  onCollectMastery: () => void;
   starting: boolean;
 }) {
   // a crowded world's map is drawn big enough for every stop to keep a whole
@@ -530,6 +535,7 @@ export default function WorldMap({
   return (
     <div className={cx(wrapCls, navSlot && noChipsRowCls)}>
       {navSlot ? createPortal(chips, navSlot) : chips}
+      <WorldMastery world={world} busy={starting} collecting={collectingMastery} onCollect={onCollectMastery} />
       {/* the map fills the space left, keeping its painting's shape */}
       <div className={mapAreaCls} ref={mapAreaRef}>
         <div
@@ -962,27 +968,30 @@ const wrapCls = css`
   width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 30rem;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas:
     'chips chips'
+    'mastery mastery'
     'map side';
   gap: 1rem 1.2rem;
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       'chips'
+      'mastery'
       'map'
       'side';
     gap: 0.6rem;
   }
 `;
 const noChipsRowCls = css`
-  grid-template-rows: minmax(0, 1fr);
-  grid-template-areas: 'map side';
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: 'mastery mastery' 'map side';
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
+      'mastery'
       'map'
       'side';
   }

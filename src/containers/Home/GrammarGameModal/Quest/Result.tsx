@@ -241,10 +241,17 @@ export default function Result({
           </>
         ) : (
           <span className={noRewardCls}>
-            No more XP or Coins today. Your marbles still count.
+            No more ordinary run rewards today. Your marbles and all-S world bonuses still count.
           </span>
         )}
       </div>
+      {result.masteryBonus && (
+        <div className={masteryCls} role="status">
+          <div><PixelIcon name="star" scale={3} /> World {result.masteryBonus.worldId} mastered!</div>
+          <div>Every level at S · One-time bonus earned</div>
+          <strong>+{result.masteryBonus.xp.toLocaleString()} XP · +{result.masteryBonus.coins.toLocaleString()} Coins</strong>
+        </div>
+      )}
       {listOpen && (
         <div className={challengeListCls}>
           {listed.map((a) => {
@@ -383,6 +390,18 @@ const tail = (d: string, flip: boolean) =>
   )}")`;
 const RED = { k: INK, l: '#ff9aa9', f: '#e64560', s: '#a8233c' };
 
+const masteryCls = css`
+  ${frame(GOLD, 3)}
+  color: ${INK};
+  max-width: 100%;
+  padding: 1.2rem 1.6rem;
+  margin: 1rem auto;
+  font-size: 1.3rem;
+  line-height: 1.7;
+  text-align: center;
+  strong { font-size: 1.7rem; }
+`;
+
 const wrapCls = css`
   ${frame(PARCHMENT, 4)}
   position: relative;
@@ -391,7 +410,8 @@ const wrapCls = css`
   /* the pane around it scrolls a long result (an open challenge list); the
      card never shrinks to the pane and clips its own buttons */
   flex-shrink: 0;
-  max-width: calc(560 * var(--px));
+  width: min(100%, calc(560 * var(--px)));
+  min-width: 0;
   margin: 2rem auto;
   padding: 1.4rem 1.6rem 1.8rem;
   text-align: center;

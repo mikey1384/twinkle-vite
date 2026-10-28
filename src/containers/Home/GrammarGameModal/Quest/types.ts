@@ -36,6 +36,15 @@ export interface QuestWorld {
   sMarbles: number;
   nodeCount: number;
   nodes: QuestNode[];
+  mastery?: QuestWorldMastery;
+}
+
+export interface QuestWorldMastery {
+  xp: number;
+  coins: number;
+  claimed: boolean;
+  eligible: boolean;
+  awardedAt?: number;
 }
 
 export interface QuestState {
@@ -242,6 +251,7 @@ export interface QuestResult {
   coins: number;
   newXp?: number;
   newCoins?: number;
+  masteryBonus?: { worldId: number; xp: number; coins: number; awardedAt: number };
   rewardedRunsLeft?: number;
   replayCut?: boolean; // an early replay: half XP, no Coins
   freeRematch?: boolean; // a full-pay rematch earned by an upheld challenge
