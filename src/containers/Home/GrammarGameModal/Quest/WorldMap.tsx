@@ -511,14 +511,14 @@ export default function WorldMap({
         onClick={onPlayNemesis}
         title={
           state.nemesis.length
-            ? state.nemesis.map((n) => n.nameEn).join(', ')
-            : 'Points you keep missing come here'
+            ? `Review these grammar topics: ${state.nemesis.map((n) => n.nameEn).join(', ')}`
+            : 'Topics missed across several runs come back for a ghost review'
         }
       >
         {startingNemesis ? <Icon icon="spinner" pulse /> : <PixelIcon name="ghost" />}
         {state.nemesis.length
-          ? `${nemesisDue.length ? `${nemesisDue.length} due` : `${state.nemesis.length} resting`}`
-          : 'No nemesis'}
+          ? `Review · ${nemesisDue.length ? `${nemesisDue.length} due` : `${state.nemesis.length} resting`}`
+          : 'No reviews due'}
       </button>
       <span className={chipCls}>
         <PixelIcon name="book" />

@@ -10,7 +10,6 @@ import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import WorldMap from './WorldMap';
 import MusicChoice from './MusicChoice';
 import { readGrammarblesSettings } from './audioPreferences';
-import Run from './Run';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import Result from './Result';
 import { playQuestSound } from './sfx';
@@ -28,10 +27,11 @@ import type {
 // only when Quest opens, not with every Home page visit.
 const loadMarbleRun = () => import('./MarbleRunScreen');
 const MarbleRunScreen = lazyWithRetry(loadMarbleRun);
+const NemesisRun = lazyWithRetry(() => import('./Run'));
 
 // Grammar Quest (10-06): a painted world map over the tagged grammar bank.
-// Stops and bosses play as the marble run (10-07); the nemesis house keeps
-// the plain question list. Classic Grammarbles stays as it is.
+// Stops, bosses and the Nemesis ghost review play in Quest's marble world.
+// Classic Grammarbles stays as it is.
 export default function GrammarQuest({
   selection,
   onSelect
@@ -125,7 +125,9 @@ export default function GrammarQuest({
             />
           </Suspense>
         ) : run ? (
-          <Run run={run} onFinished={handleFinished} onQuit={handleBackToMap} />
+          <Suspense fallback={<Loading />}>
+            <NemesisRun run={run} onFinished={handleFinished} onQuit={handleBackToMap} />
+          </Suspense>
         ) : (
           <>
             {state.openRun && (
