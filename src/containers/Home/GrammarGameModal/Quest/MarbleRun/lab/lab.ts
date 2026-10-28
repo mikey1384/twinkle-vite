@@ -60,7 +60,10 @@ function answer(ok: boolean) {
   if (run) run.answer(ok);
   if (boss) {
     if (ok) boss.answerRight();
-    else boss.answerWrong();
+    else {
+      boss.answerWrong();
+      boss.answerRight('F');
+    }
   }
 }
 
@@ -100,7 +103,10 @@ function frame(t: number) {
     if (auto && boss.canAnswer && t > nextAutoAt) {
       nextAutoAt = t + 900 + Math.random() * 2500;
       if (Math.random() > 0.2) boss.answerRight();
-      else boss.answerWrong();
+      else {
+        boss.answerWrong();
+        boss.answerRight('F');
+      }
     }
   }
   requestAnimationFrame(frame);

@@ -37,11 +37,7 @@ import { useReadCooldown } from './readCooldown';
 import { useMoreBelow } from './moreBelow';
 import { PracticeRun } from './MarbleRun/level/runner';
 import { themeFor } from './MarbleRun/level/themes';
-import {
-  BossFight,
-  WRONG_PICK_PENALTY_MS,
-  type BossTurn
-} from './MarbleRun/boss/fight';
+import { BossFight, type BossTurn } from './MarbleRun/boss/fight';
 import { ATTACK_KINDS } from './MarbleRun/boss/attacks';
 import { bossFor } from './MarbleRun/boss/catalog';
 import { LADDER, type Grade } from './MarbleRun/marble';
@@ -101,8 +97,8 @@ function turnOf(q: QuestQuestion): BossTurn {
 //   Practice: accuracy only. Right = past the obstacle and promoted; wrong =
 //   the obstacle wins this time, the rule card shows, and the question comes
 //   back at the end of the run. S finishes the stop.
-//   Boss: seven hits graded like Classic (reading pause, then the clock;
-//   keep picking until right). Points are damage; 490 beats it. Each hit
+//   Boss: seven question marbles. Wrong = immediate F with an explanation;
+//   clean answers use speed grades. Points are damage; 490 beats it. Each hit
 //   is one of the boss's named attacks, asked its own way on its own clock
 //   (its name shows first); a new phase opens a counter: one try, a big hit
 //   if right, no harm if not (Mikey 10-10).
@@ -127,7 +123,7 @@ export default function MarbleRunScreen({
   const [answers, setAnswers] = useState<Record<number, QuestAnswer>>(() =>
     Object.fromEntries((run.answers || []).map((a) => [a.position, a]))
   );
-  // boss: wrong picks on the current question (keep picking until right)
+  // Saved pre-update wrong picks and compatibility with an older API.
   const [wrongPicks, setWrongPicks] = useState<number[]>(
     () => run.wrongPicks || []
   );
@@ -818,10 +814,11 @@ export default function MarbleRunScreen({
                           .filter(Boolean)
                           .join(' · ')}
                   </div>
-                  {boss && !question.counter && !answer?.grade && wrongCount > 0 && (
-                    <div className={penaltyCls} role="status">
-                      {wrongCount} wrong · +
-                      {(wrongCount * WRONG_PICK_PENALTY_MS) / 1000}s penalty
+                  {boss && !question.counter && (!answer?.grade || !answer.isCorrect) && (
+                    <div className={bossRuleCls} role="status">
+                      {answer?.grade === 'F'
+                        ? 'Wrong answer · F for this marble'
+                        : 'One wrong answer = F for this marble.'}
                     </div>
                   )}
                   {question.format && question.format !== 'blank' && (
@@ -1105,8 +1102,8 @@ export default function MarbleRunScreen({
           setPhase('waiting');
           return;
         }
-        // a wrong click: keep picking (unless the click limit settled the
-        // hit as an F: then it lands like any hit)
+        // Compatibility with an older API that has not settled the marble.
+        // Never invent a server grade or advance without its confirmation.
         if (!result.isCorrect && !result.settled) {
           if (result.forgiven) forgivenHit.current = result.position;
           setWrongPicks((w) =>
@@ -1124,8 +1121,11 @@ export default function MarbleRunScreen({
             : result;
         setAnswers((prev) => ({ ...prev, [result.position]: landed }));
         setBossMissPick(
-          wrongPicks.length ? wrongPicks[wrongPicks.length - 1] : null
+          !result.isCorrect
+            ? result.selectedIndex
+            : wrongPicks.length ? wrongPicks[wrongPicks.length - 1] : null
         );
+        if (!result.isCorrect) fight.answerWrong();
         // the crossed-out tries stay up through the review (cleared when
         // the next turn starts)
         await feedbackBeat(fight);
@@ -1624,7 +1624,7 @@ const metaCls = css`
   font-weight: 700;
   opacity: 0.7;
 `;
-const penaltyCls = css`
+const bossRuleCls = css`
   margin: 0.3rem 0;
   color: #ffb0bf;
   font-size: 1.2rem;

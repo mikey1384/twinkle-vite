@@ -38,8 +38,8 @@ import {
 } from './attacks';
 import './bosses';
 
-// A fort or castle fight: the test (Mikey 10-07). Seven hits graded exactly
-// like Classic (speed sets S–F, a wrong pick costs time) except that each
+// A fort or castle fight: seven question marbles. A wrong answer settles
+// that marble as F; clean answers use Classic's speed grades. Each
 // boss gives more time than Classic, easing down to exactly Classic at the
 // final boss. Every answer is a marble thrown at the boss; its Classic points
 // are the damage. The boss's health is the pass mark (70%: 490 of 700).
@@ -56,9 +56,8 @@ import './bosses';
 export const BOSS_HITS = 7;
 export const PASS_POINTS = Math.round(BOSS_HITS * 100 * 0.7);
 const CLASSIC_SHORT_MS = 12000; // Classic's base time for a short question
-export const WRONG_PICK_PENALTY_MS = 2000;
-
-export function gradeFor(ms: number, baseMs: number): Grade {
+export function gradeFor(ms: number, baseMs: number, wrongPicks = 0): Grade {
+  if (wrongPicks > 0) return 'F';
   if (ms < baseMs * 0.2) return 'S';
   if (ms < baseMs * 0.3) return 'A';
   if (ms < baseMs * 0.5) return 'B';
@@ -547,19 +546,17 @@ export class BossFight {
     return this.usedMs + Math.max(0, t - this.questionAt);
   }
 
-  // Same order as the server: remove free reading time first, then charge
-  // each wrong pick. Reading grace can never pay a mistake's penalty.
+  // Reading time remains free for a clean answer. Any saved wrong answer
+  // independently makes this marble F, including a pre-update resumed hit.
   private gradedMs(elapsed: number) {
-    return (
-      Math.max(0, elapsed - this.graceMs) +
-      this.wrongPicks * WRONG_PICK_PENALTY_MS
-    );
+    return Math.max(0, elapsed - this.graceMs);
   }
 
   private liveGrade(elapsed: number) {
     return gradeFor(
       this.gradedMs(elapsed),
-      Math.max(1, this.baseMs - this.graceMs)
+      Math.max(1, this.baseMs - this.graceMs),
+      this.wrongPicks
     );
   }
 

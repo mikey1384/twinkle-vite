@@ -161,7 +161,7 @@ async function compile({ realBoss = false } = {}) {
     './WorldMap': `import React from 'react'; import AudioToggles from '${base}Quest/AudioToggles'; import WorldMap from '${base}Quest/WorldMap'; export default function Map(props){return window.realMap ? <div data-testid="real-map" style={{display:'flex',flex:1,minHeight:0}}><WorldMap {...props}/></div> : <div><h1>Quest map</h1><AudioToggles/></div>}`,
     './MarbleRunScreen': `import React from 'react';export default function Run({run,onFinished}){const finish=cleared=>{window.finishMapNode(run.nodeId,cleared);onFinished({runId:run.runId,cleared,score:100,firstTryCorrect:5,size:5,xp:0,coins:0,rights:5},[])};return <div><button onClick={()=>finish(true)}>Clear fixture level</button><button onClick={()=>finish(false)}>Fail fixture level</button></div>}`,
     './MarbleRun/level/runner': `export class PracticeRun {grade='B';busy=false;constructor(theme,node,events){this.events=events}resume(){}answer(){setTimeout(()=>this.events.onReady(),0)}frame(g){g.fillStyle='#223a43';g.fillRect(0,0,960,380)}}`,
-    './MarbleRun/boss/fight': 'export class BossFight {} export const WRONG_PICK_PENALTY_MS=2000;',
+    './MarbleRun/boss/fight': 'export class BossFight {}',
     './MarbleRun/boss/catalog': 'export const bossFor=()=>({});',
     './MarbleRun/lab/fitPreview':
       'export const fitPreviewParam=()=>null; export const PREVIEW_QUEST_RUN=null, PREVIEW_QUEST_RESULT=null, PREVIEW_QUEST_ANSWERS=[];'
@@ -170,7 +170,6 @@ async function compile({ realBoss = false } = {}) {
     const fight = path.join(repo, base, 'Quest/MarbleRun/boss/fight.ts');
     stubs['./MarbleRun/boss/fight'] = `
       import {BossFight as ActualBossFight} from '${fight}';
-      export {WRONG_PICK_PENALTY_MS} from '${fight}';
       export class BossFight extends ActualBossFight {
         constructor(...args){super(...args);window.fixtureFight=this;}
       }
@@ -213,8 +212,8 @@ async function compile({ realBoss = false } = {}) {
   }
 }
 
-test('boss penalties survive reading grace, retries and reopening in Chromium and WebKit', { timeout: 120000 }, async () => {
-  const output = path.resolve(repo, '../work/grammar-quest-boss-penalty-20261025');
+test('a boss wrong answer fails only its marble and keeps the explanation in Chromium and WebKit', { timeout: 120000 }, async () => {
+  const output = path.resolve(repo, '../work/grammar-quest-boss-first-miss-20261028');
   mkdirSync(output, { recursive: true });
   const script = await compile({ realBoss: true });
   const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
@@ -245,7 +244,7 @@ test('boss penalties survive reading grace, retries and reopening in Chromium an
         localStorage.setItem('grammarQuestMusic', '0');
         localStorage.setItem('grammarQuestSound', '0');
       });
-      await page.goto('http://localhost:3000/__grammar-boss-penalty-fixture');
+      await page.goto('http://localhost:3000/__grammar-boss-first-miss-fixture');
       await page.waitForFunction(() => !!window.showFixture);
       await page.evaluate(() => {
         window.bossQuestion = {
@@ -269,72 +268,80 @@ test('boss penalties survive reading grace, retries and reopening in Chromium an
         window.questAnswer = () => new Promise((resolve) => { window.resolveBossAnswer = resolve; });
       });
       await page.waitForFunction(() => window.fixtureFight.canAnswer);
+      await page.getByText('One wrong answer = F for this marble.', { exact: true }).waitFor();
+      // A transport error has no verdict and must not consume a marble.
+      await page.evaluate(() => { window.questAnswer = () => Promise.reject(new Error('offline')); });
+      await page.getByRole('button', { name: /^B\s*be$/ }).click();
+      await page.getByText('That answer did not reach the server. Try again.', { exact: true }).waitFor();
+      assert.equal(await page.evaluate(() => window.fixtureFight.answered), null);
+      assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
+      await page.evaluate(() => {
+        window.questAnswer = () => new Promise((resolve) => { window.resolveBossAnswer = resolve; });
+      });
       await page.getByRole('button', { name: /^B\s*be$/ }).click();
       await page.waitForFunction(() => !!window.resolveBossAnswer);
-      assert.equal(await page.getByText('1 wrong · +2s penalty', { exact: true }).count(), 0,
-        'pending requests do not invent penalties');
+      assert.equal(await page.getByText('Wrong answer · F for this marble', { exact: true }).count(), 0,
+        'pending requests do not invent a failure');
       assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
-      await page.evaluate(() => window.resolveBossAnswer({ position: 0, isCorrect: false, wrong: 1 }));
-      await page.getByText('1 wrong · +2s penalty', { exact: true }).waitFor();
-      assert.equal(await page.evaluate(() => window.fixtureFight.liveGrade(900)), 'A',
-        'reading allowance cannot erase a confirmed mistake');
-
-      await page.evaluate(() => { window.questAnswer = () => Promise.reject(new Error('offline')); });
-      await page.getByRole('button', { name: /^C\s*am$/ }).click();
-      await page.getByText('That answer did not reach the server. Try again.', { exact: true }).waitFor();
-      assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 1,
-        'failed requests do not add a penalty');
-      await page.evaluate(() => { window.questAnswer = { position: 0, isCorrect: false, wrong: 2 }; });
-      await page.getByRole('button', { name: /^C\s*am$/ }).click();
-      await page.getByText('2 wrong · +4s penalty', { exact: true }).waitFor();
-      assert.equal(await page.evaluate(() => {
-        const fight = window.fixtureFight;
-        fight.answerWrong(2);
-        return fight.wrongPicks;
-      }), 2, 'a replayed acknowledgement is counted once');
-      assert.equal(await page.evaluate(() => window.fixtureFight.liveGrade(900)), 'B');
-      const penalty = await page.getByText('2 wrong · +4s penalty', { exact: true }).boundingBox();
-      assert.ok(penalty && penalty.x >= 0 && penalty.x + penalty.width <= viewport.width,
-        'the penalty remains readable inside the phone viewport');
+      await page.evaluate(() => window.resolveBossAnswer({
+        position: 0, isCorrect: false, settled: true, selectedIndex: 1, correctIndex: 0,
+        grade: 'F', gained: 10, points: 10, hp: 480, readMs: 6000,
+        ruleCard: { skill: 'agreement', nameEn: 'Subject–verb agreement',
+          why: 'Use “is” with “she”. “She is ready” is correct.',
+          wrongChoices: [{ choice: 'be', error: 'Use the singular form is with she.' }] },
+        pickedText: 'be', challenge: { questionId: 123, checked: false },
+        next: { ...window.bossQuestion, position: 1 }
+      }));
+      await page.getByText('Wrong answer · F for this marble', { exact: true }).waitFor();
+      await page.waitForFunction(() => window.fixtureFight.answered === 'F');
+      await page.getByText('Use “is” with “she”. “She is ready” is correct.', { exact: true }).waitFor();
+      assert.equal(await page.getByRole('button', { name: /^A\s*is/ }).isDisabled(), true,
+        'the revealed correct choice cannot rescue this marble');
+      assert.equal(await page.evaluate(() => window.fixtureFight.hpAfter), 480,
+        'damage remains the server-confirmed F points');
+      const rule = await page.getByText('Wrong answer · F for this marble', { exact: true }).boundingBox();
+      assert.ok(rule && rule.x >= 0 && rule.x + rule.width <= viewport.width,
+        'the new rule fits on the phone');
       await page.screenshot({ path: path.join(output, `${label}-wrong-answer.png`), fullPage: true });
-
+      await page.waitForFunction(() => window.fixtureFight.canAnswer && window.fixtureFight.idx === 1);
+      assert.deepEqual(await page.evaluate(() => window.fixtureFight.grades), ['F']);
+      assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
+      assert.equal(await page.evaluate(() => window.fixtureFight.usedMs), 0);
       await page.evaluate(() => {
         window.questAnswer = {
-          position: 0, isCorrect: true, selectedIndex: 0, correctIndex: 0,
-          grade: 'D', hp: 460, readMs: 0,
-          next: { ...window.bossQuestion, position: 1 }
+          position: 1, isCorrect: true, selectedIndex: 0, correctIndex: 0,
+          grade: 'S', gained: 100, points: 110, hp: 380,
+          next: { ...window.bossQuestion, position: 2 }
         };
       });
       await page.getByRole('button', { name: /^A\s*is$/ }).click();
-      await page.waitForFunction(() => window.fixtureFight.answered === 'D');
-      assert.equal(await page.evaluate(() => window.fixtureFight.hpAfter), 460,
-        'the server decides the final grade and damage');
-      assert.equal(await page.getByText(/wrong · \+\d+s penalty/).count(), 0,
-        'the final grade replaces the running penalty once the hit settles');
-      await page.waitForFunction(() => window.fixtureFight.canAnswer && window.fixtureFight.idx === 1);
-      assert.equal(await page.getByText(/wrong · \+\d+s penalty/).count(), 0,
-        'penalties end with the question, not the fight');
-      assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
-      assert.equal(await page.evaluate(() => window.fixtureFight.usedMs), 0);
+      await page.waitForFunction(() => window.fixtureFight.answered === 'S');
+      assert.equal(await page.evaluate(() => window.fixtureFight.hpAfter), 380);
+      await page.waitForFunction(() => window.fixtureFight.canAnswer && window.fixtureFight.idx === 2);
+      assert.deepEqual(await page.evaluate(() => window.fixtureFight.grades), ['F', 'S'],
+        'a failed question does not end the boss battle or fail later marbles');
 
+      // The saved F survives reopening; the current unanswered marble keeps
+      // its own banked clock and reading pause.
       await page.evaluate(() => window.mountBoss({
-        questions: [{ ...window.bossQuestion, baseTimeMs: 18000, graceMs: 6000, revealDelayMs: 500 }],
-        wrongPicks: [1, 2], usedMs: 9000,
-        answers: [{ position: 0, selectedIndex: 1, correctIndex: null, isCorrect: false, grade: null, points: 0 }]
+        questions: [window.bossQuestion, { ...window.bossQuestion, position: 1,
+          baseTimeMs: 18000, graceMs: 6000, revealDelayMs: 500 }],
+        wrongPicks: [], usedMs: 9000, hp: 480,
+        answers: [{ position: 0, selectedIndex: 1, correctIndex: 0, isCorrect: false, grade: 'F', points: 10 }]
       }));
       await page.waitForFunction(() => window.fixtureFight.canAnswer);
-      await page.getByText('2 wrong · +4s penalty', { exact: true }).waitFor();
       assert.deepEqual(await page.evaluate(() => {
         const fight = window.fixtureFight;
-        return {
-          wrong: fight.wrongPicks, used: fight.elapsedMs(fight.questionAt),
-          grade: fight.liveGrade(fight.elapsedMs(fight.questionAt)),
-          reveal: fight.questionAt - fight.telegraphEnd
-        };
-      }), { wrong: 2, used: 9000, grade: 'C', reveal: 500 },
-      'reopening keeps the banked clock and wrong picks without skipping the reading pause');
-      assert.equal(await page.getByRole('button', { name: /^B\s*be/ }).isDisabled(), true);
+        return { grades: fight.grades, wrong: fight.wrongPicks, used: fight.elapsedMs(fight.questionAt),
+          grade: fight.liveGrade(fight.elapsedMs(fight.questionAt)), reveal: fight.questionAt - fight.telegraphEnd };
+      }), { grades: ['F'], wrong: 0, used: 9000, grade: 'A', reveal: 500 });
       await page.screenshot({ path: path.join(output, `${label}-resumed.png`), fullPage: true });
+
+      // A wrong answer saved by the former retry rule cannot regain S.
+      await page.evaluate(() => window.mountBoss({ wrongPicks: [1],
+        answers: [{ position: 0, selectedIndex: 1, correctIndex: null, isCorrect: false, grade: null, points: 0 }] }));
+      await page.waitForFunction(() => window.fixtureFight.canAnswer);
+      assert.equal(await page.evaluate(() => window.fixtureFight.liveGrade(100)), 'F');
 
       await page.evaluate(() => {
         window.mountBoss({ questions: [{ ...window.bossQuestion, counter: true, baseTimeMs: 8000, graceMs: 0 }] });
@@ -343,8 +350,9 @@ test('boss penalties survive reading grace, retries and reopening in Chromium an
       await page.waitForFunction(() => window.fixtureFight.canAnswer);
       await page.getByRole('button', { name: /^B\s*be$/ }).click();
       await page.waitForFunction(() => window.fixtureFight.phase === 'recover');
-      assert.equal(await page.getByText(/wrong · \+\d+s penalty/).count(), 0,
-        'optional counter misses still carry no penalty');
+      assert.equal(await page.getByText('One wrong answer = F for this marble.', { exact: true }).count(), 0,
+        'optional counters are not question marbles');
+      assert.deepEqual(await page.evaluate(() => window.fixtureFight.grades), []);
       assert.equal(await page.evaluate(() => window.fixtureFight.wrongPicks), 0);
       assert.deepEqual(errors, []);
     } finally {
