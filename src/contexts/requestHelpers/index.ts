@@ -399,7 +399,6 @@ registerMethods('content', [
   'loadArenaRising',
   'loadArenaDeck',
   'loadArenaReports',
-  'submitArenaScoreReport',
   'submitArenaPaper',
   'loadArenaSkills',
   'startArenaDrill',

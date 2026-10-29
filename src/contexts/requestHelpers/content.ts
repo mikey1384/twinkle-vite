@@ -1491,30 +1491,11 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    // Train's real score reports and paper submissions (helpers/arena/
-    // reports.ts on the API): choices, rewards and the member's own history
+    // Train's paper submissions (helpers/arena/reports.ts on the API):
+    // choices, rewards and the member's own history
     async loadArenaReports() {
       try {
         const { data } = await request.get(`${URL}/content/arena/reports`, auth());
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async submitArenaScoreReport(report: {
-      examKey: string;
-      sitting: string;
-      sittingOther?: string;
-      grade?: number | null;
-      score?: number | null;
-      proofKey?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/content/arena/reports/score`,
-          report,
-          auth()
-        );
         return data;
       } catch (error) {
         return handleError(error);

@@ -709,8 +709,9 @@ function NotiMessage({
           . Rematch?
         </>
       );
-    // Arena (SPEC §10-11): a reviewer verified or turned down your real
-    // score report or paper; the line carries the reward or the reason
+    // Arena (SPEC §10-11): a reviewer verified or turned down your paper (or
+    // an older real score report, which can no longer be sent); the line
+    // carries the reward or the reason
     case 'arenaReviewApproved':
     case 'arenaReviewRejected': {
       const isPaper = targetObj.contentType === 'arenaPaper';
@@ -733,7 +734,7 @@ function NotiMessage({
           </span>{' '}
           your Arena {isPaper ? 'paper' : 'score report'}{' '}
           <Link
-            to={`/arena?mode=train&play=${isPaper ? 'paper' : 'score-report'}`}
+            to={`/arena?mode=train${isPaper ? '&play=paper' : ''}`}
             style={{ color: targetLinkColor, fontWeight: 'bold' }}
           >
             {targetObj.content || 'See it'}

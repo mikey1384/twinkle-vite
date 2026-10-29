@@ -75,7 +75,6 @@ export default function ArenaPage() {
               activity === 'deck' ||
               activity === 'skills' ||
               activity === 'drill' ||
-              activity === 'score-report' ||
               activity === 'paper' ||
               challengeId > 0 ||
               !!searchParams.get('records')) &&
@@ -117,21 +116,15 @@ export default function ArenaPage() {
               onBack={() => setSearchParams({ mode: 'train', play: 'skills' })}
             />
           )}
-          {view === 'train' &&
-            (activity === 'score-report' || activity === 'paper') && (
-              <Reports
-                key={activity}
-                kind={activity === 'paper' ? 'paper' : 'score'}
-                onBack={() => setSearchParams({ mode: 'train' })}
-              />
-            )}
+          {view === 'train' && activity === 'paper' && (
+            <Reports onBack={() => setSearchParams({ mode: 'train' })} />
+          )}
           {view === 'train' &&
             ![
               'ai-story',
               'deck',
               'skills',
               'drill',
-              'score-report',
               'paper'
             ].includes(activity || '') && (
               <Train
@@ -146,9 +139,6 @@ export default function ArenaPage() {
                 }
                 onOpenBattle={(id) =>
                   setSearchParams({ mode: 'train', battle: String(id) })
-                }
-                onOpenScoreReport={() =>
-                  setSearchParams({ mode: 'train', play: 'score-report' })
                 }
                 onOpenPaper={() =>
                   setSearchParams({ mode: 'train', play: 'paper' })

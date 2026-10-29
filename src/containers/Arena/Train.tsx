@@ -14,14 +14,12 @@ export default function Train({
   onOpenDeck,
   onOpenSkills,
   onOpenBattle,
-  onOpenScoreReport,
   onOpenPaper
 }: {
   onPlayAIStory: () => void;
   onOpenDeck: () => void;
   onOpenSkills: () => void;
   onOpenBattle: (battleId: number) => void;
-  onOpenScoreReport: () => void;
   onOpenPaper: () => void;
 }) {
   const aiStoryTask = useNotiContext(
@@ -67,7 +65,7 @@ export default function Train({
             kind: 'page',
             label: 'Arena Train',
             path: '/arena?mode=train',
-            excerpt: 'Train is AI Story and preparation for Arena: review completed battles, practise missed questions and weak areas, and share real score reports and papers.'
+            excerpt: 'Train is AI Story and preparation for Arena: review completed battles, practise missed questions and weak areas, and share real papers.'
           }}
         />
       </div>
@@ -134,25 +132,8 @@ export default function Train({
         </span>
       </button>
 
-      {/* SPEC §10-11: real results and real papers, rewarded once a
-          reviewer checks them (Reports.tsx) */}
-      <button type="button" className={rowCls} onClick={onOpenScoreReport}>
-        <span className={badgeCls} style={{ background: '#f2c14e' }}>
-          <Icon icon="trophy" />
-        </span>
-        <span className={textCls}>
-          <strong>Report a real score</strong>
-          <span>
-            Took a real exam? Tell us your grade or score, with a photo of the
-            score sheet if you have it.
-          </span>
-        </span>
-        <span className={statusCls}>
-          +5,000 XP
-          <Icon icon="chevron-right" />
-        </span>
-      </button>
-
+      {/* SPEC §10-11: real papers, rewarded once a reviewer checks them
+          (Reports.tsx) */}
       <button type="button" className={rowCls} onClick={onOpenPaper}>
         <span className={badgeCls} style={{ background: ARENA.accent }}>
           <Icon icon="upload" />

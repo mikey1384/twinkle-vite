@@ -9,34 +9,12 @@ import ArenaButton from './ArenaButton';
 import ArenaLoader from './ArenaLoader';
 import { ARENA } from './theme';
 
-// Train's two rewarded collection flows (API helpers/arena/reports.ts, SPEC
-// §10-11): report a real exam result (5,000 XP once a reviewer verifies it)
-// and send a real school or academy paper (3,000-20,000 XP + coins when
-// accepted, by how rare it is). Files go up through the site's normal upload
-// with context 'arena' and are kept privately: the member sees their own,
-// reviewers see them through signed links, nobody else.
-
-interface ExamChoice {
-  key: string;
-  name: string;
-  maxScore: number;
-  grades: { value: number; label: string }[];
-  sittings: string[];
-}
-
-interface ScoreReport {
-  id: number;
-  examName: string;
-  sitting: string;
-  gradeLabel: string | null;
-  score: number | null;
-  maxScore: number | null;
-  status: 'pending' | 'approved' | 'rejected';
-  reviewNote: string | null;
-  xpReward: number;
-  createdAt: number;
-  proofUrl: string | null;
-}
+// Train's rewarded collection flow (API helpers/arena/reports.ts, SPEC
+// §10-11): send a real school or academy paper (3,000-20,000 XP + coins when
+// accepted, by how rare it is). Self-reported score reports were removed
+// (Mikey 10-29). Files go up through the site's normal upload with context
+// 'arena' and are kept privately: the member sees their own, reviewers see
+// them through signed links, nobody else.
 
 interface PaperSubmission {
   id: number;
@@ -50,15 +28,13 @@ interface PaperSubmission {
 }
 
 interface ReportsData {
-  exams: ExamChoice[];
   paper: {
     examKinds: string[];
     terms: string[];
     gradeLevels: string[];
     maxFiles: number;
   };
-  rewards: { scoreXp: number; paperMinXp: number; paperMaxXp: number };
-  scoreReports: ScoreReport[];
+  rewards: { paperMinXp: number; paperMaxXp: number };
   papers: PaperSubmission[];
 }
 
@@ -87,13 +63,7 @@ const PDF_MAX_BYTES = 25 * 1024 * 1024;
 
 const xp = (value: number) => value.toLocaleString('en-US');
 
-export default function Reports({
-  kind,
-  onBack
-}: {
-  kind: 'score' | 'paper';
-  onBack: () => void;
-}) {
+export default function Reports({ onBack }: { onBack: () => void }) {
   const loadArenaReports = useAppContext(
     (v) => v.requestHelpers.loadArenaReports
   );
@@ -118,13 +88,10 @@ export default function Reports({
           <Icon icon="arrow-left" /> Train
         </button>
         <div>
-          <h2 className={titleCls}>
-            {kind === 'score' ? 'Report a real score' : 'Send a real paper'}
-          </h2>
+          <h2 className={titleCls}>Send a real paper</h2>
           <p className={subCls}>
-            {kind === 'score'
-              ? 'Tell us how you did on a real exam. Once a reviewer checks it, you earn XP, once per exam sitting.'
-              : 'Share a real test paper from your school or academy so Arena’s mock exams feel like the real thing.'}
+            Share a real test paper from your school or academy so Arena’s mock
+            exams feel like the real thing.
           </p>
         </div>
       </header>
@@ -134,276 +101,11 @@ export default function Reports({
         ) : (
           <ArenaLoader text="Loading…" />
         )
-      ) : kind === 'score' ? (
-        <ScoreReportForm data={data} onSaved={setData} />
       ) : (
         <PaperForm data={data} onSaved={setData} />
       )}
     </div>
   );
-}
-
-function ScoreReportForm({
-  data,
-  onSaved
-}: {
-  data: ReportsData;
-  onSaved: (data: ReportsData) => void;
-}) {
-  const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
-  const submitArenaScoreReport = useAppContext(
-    (v) => v.requestHelpers.submitArenaScoreReport
-  );
-  const [examKey, setExamKey] = useState(data.exams[0]?.key || '');
-  const exam = data.exams.find((e) => e.key === examKey);
-  const [sitting, setSitting] = useState('');
-  const [sittingOther, setSittingOther] = useState('');
-  const [grade, setGrade] = useState('');
-  const [score, setScore] = useState('');
-  const [proof, setProof] = useState<{ file: File; preview: string } | null>(
-    null
-  );
-  const [progress, setProgress] = useState<number | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [sent, setSent] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      if (proof) URL.revokeObjectURL(proof.preview);
-    };
-  }, [proof]);
-
-  const ready =
-    !!exam &&
-    (sitting === 'other' ? !!sittingOther.trim() : !!sitting) &&
-    (grade !== '' || score.trim() !== '');
-
-  return (
-    <>
-      <section className={cardCls}>
-        <p className={rewardCls}>
-          <Icon icon="star" /> +{xp(data.rewards.scoreXp)} XP when a reviewer
-          verifies it
-        </p>
-        <label className={fieldCls}>
-          <span>Exam</span>
-          <select
-            value={examKey}
-            onChange={(event) => {
-              setExamKey(event.target.value);
-              setSitting('');
-              setGrade('');
-              setScore('');
-            }}
-          >
-            {data.exams.map((option) => (
-              <option key={option.key} value={option.key}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={fieldCls}>
-          <span>Which sitting</span>
-          <select
-            value={sitting}
-            onChange={(event) => setSitting(event.target.value)}
-          >
-            <option value="">Pick one</option>
-            {(exam?.sittings || []).map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-            <option value="other">Other (type it)</option>
-          </select>
-        </label>
-        {sitting === 'other' && (
-          <label className={fieldCls}>
-            <span>Sitting, as printed on your score sheet</span>
-            <input
-              value={sittingOther}
-              maxLength={40}
-              placeholder="e.g. 2025 6월 모평"
-              onChange={(event) => setSittingOther(event.target.value)}
-            />
-          </label>
-        )}
-        <div className={rowFieldsCls}>
-          <label className={fieldCls}>
-            <span>Grade</span>
-            <select
-              value={grade}
-              onChange={(event) => setGrade(event.target.value)}
-            >
-              <option value="">Not given</option>
-              {(exam?.grades || []).map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={fieldCls}>
-            <span>Raw score (out of {exam?.maxScore ?? 100})</span>
-            <input
-              inputMode="numeric"
-              value={score}
-              placeholder="Not given"
-              onChange={(event) =>
-                setScore(event.target.value.replace(/[^0-9]/g, '').slice(0, 3))
-              }
-            />
-          </label>
-        </div>
-        <div className={fieldCls}>
-          <span>
-            Photo of your score sheet (optional, but it is checked faster)
-          </span>
-          {proof ? (
-            <div className={proofRowCls}>
-              <img src={proof.preview} alt="Your score sheet" />
-              <button
-                type="button"
-                className={smallButtonCls}
-                onClick={() => setProof(null)}
-              >
-                Remove
-              </button>
-            </div>
-          ) : (
-            <label className={pickCls}>
-              <Icon icon="camera" /> Add a photo
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = '';
-                  if (file) {
-                    setProof({ file, preview: URL.createObjectURL(file) });
-                  }
-                }}
-              />
-            </label>
-          )}
-          <small className={hintCls}>
-            Only you and Twinkle’s reviewers can see it. You can cover your name
-            and student number.
-          </small>
-        </div>
-        {error && <p className={errorCls}>{error}</p>}
-        {sent && !error && (
-          <p className={okCls}>
-            <Icon icon="check" /> Sent. You will get a notification when it is
-            reviewed.
-          </p>
-        )}
-        <div>
-          <ArenaButton
-            tone="train"
-            disabled={!ready}
-            loading={submitting}
-            onClick={handleSubmit}
-          >
-            {progress != null && progress < 100
-              ? `Uploading ${progress}%`
-              : 'Send for review'}
-          </ArenaButton>
-        </div>
-      </section>
-      <History title="Your score reports" empty="No reports yet.">
-        {data.scoreReports.map((report) => (
-          <li key={report.id} className={historyItemCls}>
-            <span className={historyTextCls}>
-              <strong>
-                {report.sitting} {report.examName}
-              </strong>
-              <span>
-                {[
-                  report.gradeLabel,
-                  report.score != null
-                    ? `${report.score}/${report.maxScore ?? '?'}`
-                    : null
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-                {report.proofUrl && (
-                  <>
-                    {' · '}
-                    <a href={report.proofUrl} target="_blank" rel="noreferrer">
-                      photo
-                    </a>
-                  </>
-                )}
-              </span>
-            </span>
-            <StatusChip
-              status={report.status}
-              reward={
-                report.status === 'approved' ? `+${xp(report.xpReward)} XP` : ''
-              }
-              note={report.reviewNote}
-            />
-          </li>
-        ))}
-      </History>
-    </>
-  );
-
-  async function handleSubmit() {
-    if (!exam) return;
-    setSubmitting(true);
-    setError('');
-    setSent(false);
-    try {
-      let proofKey = '';
-      if (proof) {
-        const prepared = await prepareStoryPhoto(proof.file);
-        setProgress(0);
-        proofKey =
-          (await uploadFile({
-            context: 'arena',
-            filePath: uuidv1(),
-            file: prepared.file,
-            fileName: 'score-proof.jpg',
-            onUploadProgress: ({
-              loaded,
-              total
-            }: {
-              loaded: number;
-              total: number;
-            }) => setProgress(Math.round((loaded / (total || 1)) * 100))
-          })) || '';
-        if (!proofKey) throw new Error('The photo did not finish uploading.');
-      }
-      const result = await submitArenaScoreReport({
-        examKey: exam.key,
-        sitting,
-        sittingOther: sitting === 'other' ? sittingOther : undefined,
-        grade: grade === '' ? null : Number(grade),
-        score: score.trim() === '' ? null : Number(score),
-        proofKey: proofKey || undefined
-      });
-      onSaved(result);
-      setSent(true);
-      setSitting('');
-      setSittingOther('');
-      setGrade('');
-      setScore('');
-      setProof(null);
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          err?.message ||
-          'Your report could not be sent. Try again.'
-      );
-    } finally {
-      setSubmitting(false);
-      setProgress(null);
-    }
-  }
 }
 
 interface PickedFile {
@@ -914,19 +616,6 @@ const pickCls = css`
   }
 `;
 
-const proofRowCls = css`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  img {
-    width: 9rem;
-    height: 9rem;
-    object-fit: cover;
-    border: 2px solid ${ARENA.line};
-    border-radius: 8px;
-  }
-`;
-
 const pagesCls = css`
   list-style: none;
   margin: 0;
@@ -997,17 +686,6 @@ const okCls = css`
   font-size: 1.35rem;
   font-weight: 700;
   color: ${ARENA.train};
-`;
-
-const smallButtonCls = css`
-  padding: 0.5rem 1rem;
-  border: 2px solid ${ARENA.line};
-  border-radius: 8px;
-  background: #fff;
-  font: inherit;
-  font-size: 1.25rem;
-  font-weight: 700;
-  cursor: pointer;
 `;
 
 const historyTitleCls = css`
