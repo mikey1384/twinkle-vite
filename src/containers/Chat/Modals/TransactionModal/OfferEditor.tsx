@@ -97,6 +97,7 @@ export default function OfferEditor({
   coinError,
   balance,
   showcase,
+  showOwnership = true,
   groupObjs,
   onCoinChange,
   onChoose,
@@ -110,6 +111,7 @@ export default function OfferEditor({
   coinError: string;
   balance?: number;
   showcase?: boolean;
+  showOwnership?: boolean;
   groupObjs: Record<number, any>;
   onCoinChange: (value: string) => void;
   onChoose: (kind: 'card' | 'group' | 'app') => void;
@@ -196,7 +198,7 @@ export default function OfferEditor({
             onInspectCard={onInspectCard}
             onRemove={onRemove}
             showCoins={false}
-            showOwnership={!showcase}
+            showOwnership={!showcase && showOwnership}
           />
         ) : (
           <div className="empty">

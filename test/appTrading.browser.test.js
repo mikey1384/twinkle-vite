@@ -343,7 +343,7 @@ test(
         );
         await button(chat, 'View gift').click();
         await button(page, 'Got it').click();
-        await button(page, 'Review request').waitFor();
+        await button(page, 'Review interest').waitFor();
         await page.evaluate(() => window.openFixture('messages'));
         for (const state of ['Withdrawn', 'Declined']) {
           await button(chat, state).click();

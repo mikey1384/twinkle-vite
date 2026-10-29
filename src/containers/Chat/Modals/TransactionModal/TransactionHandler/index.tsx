@@ -9,6 +9,7 @@ import { useChatContext } from '~/contexts';
 import ButtonsContainer from './ButtonsContainer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Card } from '~/types';
+import { isInterestOnlyTrade } from '../../../Trade/helpers/terms';
 
 export default function TransactionHandler({
   currentTransactionId,
@@ -54,18 +55,7 @@ export default function TransactionHandler({
     }
   }, [cancelReason]);
 
-  const isExpressionOfInterest = useMemo(() => {
-    const noCoinsOffered = !transactionDetails?.offer.coins;
-    const noCardsOffered = !transactionDetails?.offer.cards?.length;
-    const noGroupsOffered = !transactionDetails?.offer.groups?.length;
-    return (
-      transactionDetails?.type === 'trade' &&
-      noCoinsOffered &&
-      noCardsOffered &&
-      noGroupsOffered &&
-      !transactionDetails?.offer.builds?.length
-    );
-  }, [transactionDetails?.offer, transactionDetails?.type]);
+  const isExpressionOfInterest = isInterestOnlyTrade(transactionDetails);
 
   const isFromMe = transactionDetails.from === myId;
 
@@ -106,6 +96,7 @@ export default function TransactionHandler({
     );
     const hasValidGroupOffer = transactionDetails?.want?.groups?.length > 0;
     return (
+      Number(transactionDetails?.want?.coins) > 0 ||
       hasValidCardOffer ||
       hasValidGroupOffer ||
       transactionDetails?.want?.builds?.some(
@@ -141,6 +132,8 @@ export default function TransactionHandler({
           />
         )}
         {!cancelReason &&
+          !isExpressionOfInterest &&
+          transactionDetails?.type !== 'show' &&
           (transactionDetails?.offer?.builds?.length > 0 ||
             transactionDetails?.want?.builds?.length > 0) && (
             <AppOwnershipNotice />

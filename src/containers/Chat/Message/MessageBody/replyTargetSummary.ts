@@ -135,7 +135,7 @@ function summarizeTrade(
     };
   }
   const outcome = context.tradeOutcome?.(Number(transaction.id)) || {};
-  const { label } = getTradeStatus({
+  const { label, requestOnly } = getTradeStatus({
     transaction,
     viewerId: context.myId,
     isAccepted: !!outcome.isAccepted || !!transaction.isAccepted,
@@ -146,19 +146,22 @@ function summarizeTrade(
   const to = nameOf(transaction.to, undefined, context, false);
   const offer = countBundle(transaction.offer);
   const want = countBundle(transaction.want);
-  const items =
-    transaction.type === 'trade'
+  const items = requestOnly
+    ? want || 'items'
+    : transaction.type === 'trade'
       ? `${offer || 'nothing'} ↔ ${want || 'nothing'}`
       : offer || 'nothing';
   return {
     icon:
       transaction.type === 'send'
         ? 'gift'
-        : transaction.type === 'show'
+        : transaction.type === 'show' || requestOnly
           ? 'eye'
           : 'exchange-alt',
     label: `${label} #${transaction.id}`,
-    detail: `${from} → ${to} · ${items}`
+    detail: requestOnly
+      ? `${from} showed interest · ${items}`
+      : `${from} → ${to} · ${items}`
   };
 }
 

@@ -80,6 +80,50 @@ test('a quoted trade names its id, parties, items and its current status', () =>
   );
 });
 
+test('interest quotes preserve intent after decline and never show an exchange for nothing', () => {
+  const message = {
+    id: 10,
+    userId: 7,
+    username: 'LG_Twins',
+    transactionId: 33542,
+    transactionDetails: {
+      id: 33542,
+      type: 'trade',
+      from: 7,
+      to: 8,
+      offer: { coins: 0, cardIds: [], groupIds: [], buildIds: [] },
+      want: { coins: 0, cardIds: [], groupIds: [], buildIds: [1929] }
+    }
+  };
+  assert.deepEqual(getReplyTargetSummary(message, context), {
+    icon: 'eye',
+    label: 'Interest shown #33542',
+    detail: 'LG_Twins showed interest · 1 app'
+  });
+  assert.equal(
+    getReplyTargetSummary(message, {
+      ...context,
+      tradeOutcome: () => ({ cancelReason: 'decline' })
+    })?.label,
+    'Interest declined #33542'
+  );
+  assert.equal(
+    getReplyTargetSummary(message, {
+      ...context,
+      tradeOutcome: () => ({ cancelReason: 'withdraw' })
+    })?.label,
+    'Interest withdrawn #33542'
+  );
+  // Do not rewrite historical completed transfers as unfulfilled interest.
+  assert.equal(
+    getReplyTargetSummary(message, {
+      ...context,
+      tradeOutcome: () => ({ isAccepted: true })
+    })?.label,
+    'Trade completed #33542'
+  );
+});
+
 test('a quoted game result names the winner and never spells out a loss', () => {
   const summary = getReplyTargetSummary(
     { id: 2, userId: 7, isChessMsg: 1, gameWinnerId: 7 },

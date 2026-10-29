@@ -1,4 +1,4 @@
-import { hasTradeAssets, normalizeBundle } from './terms';
+import { isInterestOnlyTrade } from './terms';
 
 // The status words a trade card shows. Shared by the card itself and by its
 // compact quote in a reply, so both say the same thing about the same trade.
@@ -21,8 +21,8 @@ export function getTradeStatus({
 }) {
   const type = transaction?.type;
   const isFromMe = Number(transaction?.from) === Number(viewerId);
-  const requestOnly =
-    type === 'trade' && !hasTradeAssets(normalizeBundle(transaction?.offer));
+  // Preserve the receipt of any already-settled legacy transaction.
+  const requestOnly = !isAccepted && isInterestOnlyTrade(transaction);
   const settled = isAccepted || type === 'send';
   const cancelled = type === 'trade' && isCancelled && !isAccepted;
   const label =
@@ -34,12 +34,16 @@ export function getTradeStatus({
         ? 'Trade completed'
         : cancelled
           ? cancelReason === 'withdraw'
-            ? 'Offer withdrawn'
-            : 'Offer declined'
+            ? requestOnly
+              ? 'Interest withdrawn'
+              : 'Offer withdrawn'
+            : requestOnly
+              ? 'Interest declined'
+              : 'Offer declined'
           : type === 'show'
             ? 'Showcase'
             : requestOnly
-              ? 'Trade request'
+              ? 'Interest shown'
               : isCurrent === false
                 ? 'Earlier offer'
                 : 'Trade offer';

@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import ReviewModal from '../../../../Trade/ReviewModal';
 import {
   getViewerTradeTerms,
+  isInterestOnlyTrade,
   tradeTermsKey
 } from '../../../../Trade/helpers/terms';
 import { errorClass } from '../../../../Trade/styles';
@@ -113,6 +114,9 @@ export default function TradeButtons({
     if (disableReasonObj.reason === 'unauthorized') {
       return 'You are not authorized to accept this transaction';
     }
+    if (disableReasonObj.reason === 'interest only') {
+      return 'This message only shows interest. Propose a trade to discuss the terms.';
+    }
     if (disableReasonObj.reason === 'classes not allowed') {
       return 'Classes are not allowed to be traded';
     }
@@ -199,6 +203,7 @@ export default function TradeButtons({
       !current ||
       current.isCancelled ||
       current.isAccepted ||
+      isInterestOnlyTrade(current) ||
       tradeTermsKey(current) !== tradeTermsKey(snapshot)
     ) {
       setReviewSnapshot(null);

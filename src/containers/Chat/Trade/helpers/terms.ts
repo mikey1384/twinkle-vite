@@ -77,6 +77,13 @@ export function getViewerTradeTerms(
     : { give: want, receive: offer };
 }
 
+export function isInterestOnlyTrade(transaction: any) {
+  return (
+    transaction?.type === 'trade' &&
+    !hasTradeAssets(normalizeBundle(transaction.offer))
+  );
+}
+
 export function tradeTermsKey(transaction: any) {
   const keys = (bundle: any) => {
     const normalized = normalizeBundle(bundle);

@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import OfferEditor from './OfferEditor';
 import { exchangeGrid, noticeClass, panelClass } from '../../Trade/styles';
 import type { TradeTerms } from '../../Trade/types';
+import { hasTradeAssets } from '../../Trade/helpers/terms';
 
 const modesClass = css`
   display: grid;
@@ -136,6 +137,7 @@ export default function TransactionInitiator({
             bundle={terms.receive}
             coinInput={coinInputs.want}
             coinError={coinErrors.want}
+            showOwnership={hasTradeAssets(terms.give)}
             groupObjs={groupObjs}
             onCoinChange={(value) => onCoinChange('want', value)}
             onChoose={(kind) => onChoose('want', kind)}
@@ -173,7 +175,9 @@ export default function TransactionInitiator({
           ? 'You will review your gift before sending. Gifts transfer immediately after you confirm.'
           : selectedOption === 'offer'
             ? 'Share a showcase to start a conversation. Nothing changes owners.'
-            : 'Build an offer with any mix of coins, cards, groups and apps. Nothing moves until your partner accepts.'}
+            : !hasTradeAssets(terms.give)
+              ? 'Choose what interests you to start a conversation. Add something on your side to propose a trade.'
+              : 'Build an offer with any mix of coins, cards, groups and apps. Nothing moves until your partner accepts.'}
       </p>
     </div>
   );

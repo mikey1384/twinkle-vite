@@ -129,7 +129,7 @@ export default function TransactionDetails({
           : cancelled
             ? 'Nothing moved.'
             : requestOnly
-              ? 'Waiting for a response. Nothing moves yet.'
+              ? 'No offer has been made. Nothing changes owners.'
               : 'Nothing moves until this offer is accepted.';
   const canOpen =
     !isOnModal && !!onClick && (!settled || type === 'send') && !cancelled;
@@ -151,7 +151,9 @@ export default function TransactionDetails({
           ? 'xmark'
           : type === 'show'
             ? 'eye'
-            : 'clock';
+            : requestOnly
+              ? 'eye'
+              : 'clock';
   // The result also closes the card (Mikey 10-12): after scrolling through the
   // items, whether it went through is right there, not only in the header.
   const resultBackground = settled
@@ -213,11 +215,20 @@ export default function TransactionDetails({
                 ? 'showed these items to'
                 : type === 'send'
                   ? 'gave a gift to'
-                  : 'proposed a trade with'}{' '}
-              <UsernameText
-                displayedName={to.id === userId ? 'you' : to.username}
-                user={to}
-              />
+                  : requestOnly
+                    ? 'showed interest in'
+                    : 'proposed a trade with'}{' '}
+              {requestOnly && to.id === userId ? (
+                'your items'
+              ) : (
+                <>
+                  <UsernameText
+                    displayedName={to.id === userId ? 'you' : to.username}
+                    user={to}
+                  />
+                  {requestOnly ? "'s items" : ''}
+                </>
+              )}
             </div>
           </div>
           <time
@@ -242,6 +253,7 @@ export default function TransactionDetails({
             partnerName={partner.username}
             groupObjs={groupObjs}
             onInspectCard={onSetAICardModalCardId}
+            interest={requestOnly ? normalizeBundle(want) : undefined}
             showcase={type === 'show'}
             gift={type === 'send'}
             settled={settled}
@@ -302,7 +314,9 @@ export default function TransactionDetails({
                   onClick={handleDecline}
                 >
                   <Icon icon="xmark" />
-                  <span style={{ marginLeft: '0.6rem' }}>Decline</span>
+                  <span style={{ marginLeft: '0.6rem' }}>
+                    {requestOnly ? 'Not interested' : 'Decline'}
+                  </span>
                 </Button>
               )}
               <Button
@@ -313,9 +327,11 @@ export default function TransactionDetails({
               >
                 {type === 'send'
                   ? 'View gift'
-                  : type === 'show' || requestOnly
-                    ? 'View offer'
-                    : 'Review offer'}
+                  : requestOnly
+                    ? 'View interest'
+                    : type === 'show'
+                      ? 'View offer'
+                      : 'Review offer'}
               </Button>
             </div>
           )}
@@ -348,13 +364,23 @@ export default function TransactionDetails({
         transactionId: transaction.id,
         cancelReason: 'decline'
       });
+      if (
+        !result?.channelId ||
+        !result?.transactionId ||
+        !result.cancelReason
+      ) {
+        throw new Error('Missing confirmed transaction result');
+      }
       // the server broadcasts this too; applying it here makes the card
       // settle at once even if the socket is slow
       onCancelTransaction({
-        transactionId: transaction.id,
-        reason: result?.cancelReason || 'decline'
+        transactionId: result.transactionId,
+        reason: result.cancelReason
       });
-      onUpdateCurrentTransactionId({ channelId, transactionId: null });
+      onUpdateCurrentTransactionId({
+        channelId: result.channelId,
+        transactionId: null
+      });
     } catch (error: any) {
       setDeclineError(
         error?.response?.data?.error ||

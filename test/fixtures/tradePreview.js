@@ -20,7 +20,7 @@ import Modal from './src/components/Modal';
 import CardThumb from './src/components/CardThumb';
 library.add(faSpinner,faSearch,faCaretDown,faCheckCircle,faUser,faClock,faGift,faCoins,faArrowUp,faArrowDown,faLaptopCode,faUsers,faCardsBlank,faEye,faTimes,faXmark,faCheck,faSparkles,faRedo,faRightLeft,faChevronDown,faChevronUp,faChevronRight);
 window.viewer=1; localStorage.setItem('userId','1'); localStorage.setItem('username','Orbit'); localStorage.setItem('token','local-preview');
-window.posts=[];window.accepts=[];window.coinUpdates=[];window.handoffs=[];window.serverCoins=5000;
+window.posts=[];window.accepts=[];window.closes=[];window.partnerApps=[];window.coinUpdates=[];window.handoffs=[];window.serverCoins=5000;
 window.addEventListener('twinkle:build-ownership-changed',e=>window.handoffs.push(e.detail));
 const artwork='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160"><rect width="240" height="160" rx="12" fill="#122744"/><circle cx="160" cy="45" r="22" fill="#e8dba2"/><path d="M0 123 Q70 78 130 123 T260 100 V160 H0Z" fill="#347673"/><path d="M0 148 Q110 84 240 141 V160 H0Z" fill="#163e52"/><g fill="#b7d8c0"><circle cx="52" cy="95" r="5"/><circle cx="83" cy="115" r="5"/><circle cx="142" cy="126" r="6"/></g></svg>');
 window.app={id:21,userId:1,title:'Moon Garden',thumbnailUrl:artwork,isPublic:1,username:'Orbit',creatorId:7,creatorUsername:'Luna'};
@@ -30,8 +30,12 @@ window.groups=[window.group,...['The Long-Named Stargazers Guild and Creative Co
 window.cards={41:{id:41,ownerId:2,word:'Aurora Phoenix',level:4,quality:'legendary',isLive:1,isBurned:0},42:{id:42,ownerId:1,word:'Moonlit Fox',level:2,quality:'rare',isLive:1,isBurned:0}};
 Object.assign(window.cards,Object.fromEntries(Array.from({length:10},(_,index)=>{const id=50+index;return [id,{...window.cards[42],id,word:'Star Explorer '+(index+1),lastInteraction:id}]}))); window.cards[42].lastInteraction=42;
 window.makePending=()=>({id:71,type:'trade',from:2,to:1,timeStamp:1791400000,offer:{coins:0,cardIds:[41],cards:[window.cards[41]],groupIds:[],groups:[],buildIds:[],builds:[]},want:{coins:1500,cardIds:[],cards:[],groupIds:[90],groups:[window.group],buildIds:[21],builds:[window.app]}});
+window.interest={...window.makePending(),id:78,offer:{coins:0,cardIds:[],groupIds:[],buildIds:[]},want:{coins:0,cardIds:[],groupIds:[],buildIds:[21],builds:[window.app]}};
 window.pending=window.makePending();
 window.receipts={
+ interest:window.interest,
+ interestDeclined:{...window.interest,id:79,isCancelled:true,cancelReason:'decline'},
+ interestWithdrawn:{...window.interest,id:80,isCancelled:true,cancelReason:'withdraw'},
  completed:{...window.makePending(),id:72,isAccepted:true},
  pending:window.pending,
  gift:{...window.makePending(),id:73,type:'send',from:1,to:2,offer:{coins:0,cardIds:[],groupIds:[],buildIds:[21],builds:[window.app]},want:{}},
@@ -42,7 +46,7 @@ window.receipts={
 };
 window.requests={
  loadPendingTransaction:async()=>({transaction:structuredClone(window.pending)}),
- loadBuildsForTrade:async({type,search,lastId})=>{const matches=type==='offer'?window.apps.filter(app=>(!lastId||app.id<lastId)&&(!search||app.title.toLowerCase().includes(search.toLowerCase()))):[];return {results:matches.slice(0,5),loadMoreShown:matches.length>5};},
+ loadBuildsForTrade:async({type,search,lastId})=>{const matches=type==='offer'?window.apps.filter(app=>(!lastId||app.id<lastId)&&(!search||app.title.toLowerCase().includes(search.toLowerCase()))):window.partnerApps;return {results:matches.slice(0,5),loadMoreShown:matches.length>5};},
  loadGroupsForTrade:async({type,lastId})=>{const matches=type==='offer'?window.groups.filter(group=>!lastId||group.id<lastId):[];return {results:matches.slice(0,3),loadMoreShown:matches.length>3};},
  searchGroupsForTrade:async({type,searchQuery,lastId})=>{const matches=type==='offer'?window.groups.filter(group=>(!lastId||group.id<lastId)&&group.channelName.toLowerCase().includes(searchQuery.toLowerCase())):[];return {results:matches.slice(0,3),loadMoreShown:matches.length>3};},
  loadFilteredAICards:async({filters,lastId})=>{const owner=filters.owner==='Nova'?2:1;const matches=Object.values(window.cards).filter(card=>card.ownerId===owner&&(!lastId||card.id<lastId)).sort((a,b)=>b.id-a.id);return {cards:matches.slice(0,6),loadMoreShown:matches.length>6};},
@@ -51,7 +55,7 @@ window.requests={
  checkTransactionPossible:async()=>({isDisabled:false}),
  acceptTrade:async payload=>{window.accepts.push(payload);window.serverCoins=3500;return {coins:3500,channelId:20};},
  loadCoins:async()=>window.serverCoins,
- closeTransaction:async({cancelReason})=>({cancelReason}),
+ closeTransaction:async payload=>{window.closes.push(payload);return {...payload};},
  loadAICard:async id=>({card:window.cards[id]}),
  checkChatAccessible:async()=>({isAccessible:false,isPublic:false})
 };
@@ -59,10 +63,10 @@ function Fixture(){const [receiptKey,setReceiptKey]=useState('completed'),[mode,
  window.openFixture=(next,viewer=1)=>{window.viewer=viewer;localStorage.setItem('userId',String(viewer));setCardId(0);setMode(next);setRevision(v=>v+1);};
  return <main><div className="preview-brand">✦ <b>Twinkle</b><span>TRADE ROOM</span></div><p className="preview-tag">Interactive preview · Example accounts · No real transfers</p><h1>{mode==='messages'?'The trade, in your chat.':<>A trade you can read<br/>at a glance.</>}</h1><p className="preview-lead">Coins, cards, communities and creations.<br/>Two clear sides. One exact agreement.</p><nav><button onClick={()=>{window.pending=window.makePending();window.openFixture('pending')}}>Mixed trade example</button><button onClick={()=>window.openFixture('chat')}>Start a new offer</button><button onClick={()=>window.openFixture('app')}>Sell or give an app</button><button onClick={()=>window.openFixture('messages')}>Chat messages</button><button onClick={()=>window.openFixture('apps')}>App picker</button><button onClick={()=>window.openFixture('groups')}>Group picker</button><button onClick={()=>window.openFixture('cards')}>Card picker</button></nav>
  {mode==='messages'&&<section className="preview-chat" aria-label="Chat message preview">
- <nav aria-label="Message examples">{[['completed','Completed trade'],['pending','Pending offer'],['gift','Gift sent'],['giftReceived','Gift received'],['withdrawn','Withdrawn'],['declined','Declined'],['showcase','Showcase']].map(([key,label])=><button key={key} aria-pressed={receiptKey===key} onClick={()=>setReceiptKey(key)}>{label}</button>)}</nav>
+ <nav aria-label="Message examples">{[['interest','Interest'],['interestDeclined','Declined interest'],['interestWithdrawn','Withdrawn interest'],['completed','Completed trade'],['pending','Pending offer'],['gift','Gift sent'],['giftReceived','Gift received'],['withdrawn','Withdrawn'],['declined','Declined'],['showcase','Showcase']].map(([key,label])=><button key={key} aria-pressed={receiptKey===key} onClick={()=>setReceiptKey(key)}>{label}</button>)}</nav>
  <div className="chat-heading"><span className="avatar">N</span><div><strong>Nova</strong><p>Your conversation</p></div></div>
  <div className="chat-stream"><p className="chat-bubble">The app and the guild, plus 1,500 coins for my Phoenix?</p>
- <TransactionDetails transaction={window.receipts[receiptKey]} currentTransactionId={receiptKey==='giftReceived'?77:71} partner={{id:2,username:'Nova'}} groupObjs={groups} onSetGroupObjs={setGroups} isAICardModalShown={!!cardId} onSetAICardModalCardId={setCardId} onClick={receiptKey==='pending'||receiptKey==='giftReceived'?()=>{window.pending=window.receipts[receiptKey];window.openFixture('pending');}:undefined}/>
+ <TransactionDetails channelId={20} transaction={window.receipts[receiptKey]} currentTransactionId={window.receipts[receiptKey].id} partner={{id:window.viewer===1?2:1,username:window.viewer===1?'Nova':'Orbit'}} groupObjs={groups} onSetGroupObjs={setGroups} isAICardModalShown={!!cardId} onSetAICardModalCardId={setCardId} onClick={receiptKey==='pending'||receiptKey==='giftReceived'||receiptKey==='interest'?()=>{window.pending=window.receipts[receiptKey];window.openFixture('pending');}:undefined}/>
  </div></section>}
  <aside><strong>Try the new flow</strong><p>Counteroffer to edit either side. Review the exact exchange before accepting. Switch to Give a gift when you expect nothing back.</p></aside>
  {mode==='apps'&&<SelectBuildsModal type="offer" partnerId={2} selected={[]} onHide={()=>setMode(null)} onDone={items=>{window.selectedApps=items;setMode(null)}}/>}

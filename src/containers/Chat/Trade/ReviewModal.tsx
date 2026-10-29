@@ -35,7 +35,7 @@ export default function ReviewModal({
         : mode === 'show'
           ? 'Share showcase'
           : mode === 'request'
-            ? 'Send request'
+            ? 'Express interest'
             : 'Send trade offer';
   const explanation =
     mode === 'accept'
@@ -45,7 +45,7 @@ export default function ReviewModal({
         : mode === 'show'
           ? 'You keep everything. This only shows what you have.'
           : mode === 'request'
-            ? `${partnerName} can respond with an offer. Nothing moves yet.`
+            ? `Let ${partnerName} know what you are interested in. No offer is made and nothing changes owners.`
             : `${partnerName} can accept this exact offer. You can withdraw it before they accept.`;
 
   return (
@@ -60,7 +60,9 @@ export default function ReviewModal({
             ? 'Review your gift'
             : mode === 'show'
               ? 'Review showcase'
-              : 'Review your offer'
+              : mode === 'request'
+                ? 'Review your interest'
+                : 'Review your offer'
       }
       modalLevel={2}
       closeOnBackdropClick={false}
@@ -77,14 +79,22 @@ export default function ReviewModal({
               lineHeight: 1.5
             }}
           >
-            <span>
-              <b>{mode === 'show' ? 'You show' : 'You give'}:</b>{' '}
-              {summarizeBundle(terms.give)}
-            </span>
-            {mode !== 'show' && (
+            {mode === 'request' ? (
               <span>
-                <b>You receive:</b> {summarizeBundle(terms.receive)}
+                <b>Interested in:</b> {summarizeBundle(terms.receive)}
               </span>
+            ) : (
+              <>
+                <span>
+                  <b>{mode === 'show' ? 'You show' : 'You give'}:</b>{' '}
+                  {summarizeBundle(terms.give)}
+                </span>
+                {mode !== 'show' && (
+                  <span>
+                    <b>You receive:</b> {summarizeBundle(terms.receive)}
+                  </span>
+                )}
+              </>
             )}
           </div>
           <div className={footerActionsClass}>
@@ -120,6 +130,7 @@ export default function ReviewModal({
           partnerName={partnerName}
           groupObjs={groupObjs}
           onInspectCard={onInspectCard}
+          interest={mode === 'request' ? terms.receive : undefined}
           showcase={mode === 'show'}
           gift={mode === 'send'}
         />
@@ -127,6 +138,7 @@ export default function ReviewModal({
           <p className={noticeClass}>{review.coinExplanation}</p>
         )}
         {mode !== 'show' &&
+          mode !== 'request' &&
           (terms.give.builds.length > 0 || terms.receive.builds.length > 0) && (
             <AppOwnershipNotice />
           )}

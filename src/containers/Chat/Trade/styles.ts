@@ -42,6 +42,11 @@ export const panelClass = css`
     --trade-tint: #effaf7;
     --trade-line: #aad9cc;
   }
+  &[data-side='interest'] {
+    --trade-accent: #315b91;
+    --trade-tint: #edf3fb;
+    --trade-line: #c5d5eb;
+  }
   min-width: 0;
   border: 1px solid var(--trade-line);
   border-radius: 1.4rem;
@@ -135,9 +140,6 @@ export const assetListClass = css`
     justify-content: flex-end;
     padding: 0 1rem 0.8rem;
   }
-
-
-
 
   .remove {
     border: 0;

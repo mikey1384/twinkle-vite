@@ -15,6 +15,7 @@ import {
   emptyBundle,
   getViewerTradeTerms,
   hasTradeAssets,
+  isInterestOnlyTrade,
   parseTradeCoins,
   summarizeBundle
 } from '../../Trade/helpers/terms';
@@ -230,7 +231,9 @@ export default function TransactionModal({
         size="lg"
         title={
           showHandler
-            ? `Offer with ${partner.username}`
+            ? isInterestOnlyTrade(pendingTransaction)
+              ? `Interest in ${Number(pendingTransaction.from) === myId ? `${partner.username}'s` : 'your'} items`
+              : `Offer with ${partner.username}`
             : selectedOption === 'send'
               ? `Gift to ${partner.username}`
               : selectedOption === 'offer'
@@ -252,14 +255,24 @@ export default function TransactionModal({
                   lineHeight: 1.5
                 }}
               >
-                <span>
-                  <b>{selectedOption === 'offer' ? 'You show' : 'You give'}:</b>{' '}
-                  {summarizeBundle(terms.give)}
-                </span>
-                {selectedOption !== 'offer' && (
+                {mode === 'request' ? (
                   <span>
-                    <b>You receive:</b> {summarizeBundle(terms.receive)}
+                    <b>Interested in:</b> {summarizeBundle(terms.receive)}
                   </span>
+                ) : (
+                  <>
+                    <span>
+                      <b>
+                        {selectedOption === 'offer' ? 'You show' : 'You give'}:
+                      </b>{' '}
+                      {summarizeBundle(terms.give)}
+                    </span>
+                    {selectedOption !== 'offer' && (
+                      <span>
+                        <b>You receive:</b> {summarizeBundle(terms.receive)}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -281,7 +294,7 @@ export default function TransactionModal({
                     : mode === 'show'
                       ? 'Review showcase'
                       : mode === 'request'
-                        ? 'Review request'
+                        ? 'Review interest'
                         : 'Review offer'}
                 </Button>
               )}
