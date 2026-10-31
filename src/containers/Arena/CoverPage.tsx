@@ -307,6 +307,11 @@ const backdropCls = css`
   padding: 1.6rem;
   background: rgba(29, 27, 24, 0.55);
   overflow-y: auto;
+  /* the phone's bottom navigation is drawn above this dialog: keep the
+     cover's Start button clear of it on long covers */
+  @media (max-width: ${mobileMaxWidth}) {
+    padding-bottom: calc(var(--mobile-nav-total-height) + 1.6rem);
+  }
 `;
 
 const coverCls = css`
