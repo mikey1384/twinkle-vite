@@ -5,7 +5,7 @@ import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
-import { isPerfectArenaScore } from '~/helpers/arenaChallengeCopy';
+import { arenaAssistLabel, isPerfectArenaScore } from '~/helpers/arenaChallengeCopy';
 import ArenaButton from './ArenaButton';
 import RewardOffer from './RewardOffer';
 import ExamCompanionChoice, { openArenaCompanion } from './ExamCompanionChoice';
@@ -17,7 +17,8 @@ import { ARENA } from './theme';
 // A shared challenge (Mikey 10-24): who shared it and how they did, "Take
 // this same test" (the exact frozen paper, once), and the board of everyone
 // who took it. Scores and times only; nobody's wrong answers. A run Zero or
-// Ciel helped with is labelled "assisted" in the header and on its row.
+// Ciel helped with names them ("with Zero"; Mikey 10-31) in the header and
+// on its row.
 interface ChallengeView {
   challenge: {
     id: number;
@@ -32,8 +33,9 @@ interface ChallengeView {
     length: 'short' | 'medium' | 'full';
     difficulty: 'easy' | 'normal' | 'hard';
     sharer: { id: number; username: string; profilePicUrl: string | null };
-    // the shared score was reached with Zero or Ciel's help
+    // the shared score was reached with Zero or Ciel's help ("with Zero")
     assisted?: boolean;
+    assistLabel?: string | null;
   };
   board: {
     rank: number;
@@ -42,6 +44,7 @@ interface ChallengeView {
     seconds: number;
     sharer: boolean;
     assisted?: boolean;
+    assistLabel?: string | null;
     me: boolean;
     user: { id: number; username: string; profilePicUrl: string | null } | null;
   }[];
@@ -125,6 +128,7 @@ export default function Challenge({
   const { challenge, board } = view;
   const sharerRow = board.find((row) => row.sharer);
   const perfectScore = isPerfectArenaScore(sharerRow);
+  const sharerHelp = arenaAssistLabel(challenge);
   return (
     <section className={cardCls}>
       <header className={headCls}>
@@ -140,10 +144,10 @@ export default function Challenge({
           </span>
           <strong>
             {view.isSharer ? 'You' : challenge.sharer.username}{' '}
-            {challenge.assisted
+            {sharerHelp
               ? perfectScore
-                ? 'got a perfect score with help'
-                : 'took on this boss with help and won'
+                ? `got a perfect score ${sharerHelp}`
+                : `took on this boss ${sharerHelp} and won`
               : perfectScore
                 ? 'got a perfect score!'
                 : 'took on this boss and won'}
@@ -157,7 +161,7 @@ export default function Challenge({
               {view.isSharer ? 'Your score' : 'Their score'}: {sharerRow.raw} /{' '}
               {sharerRow.max}
               {challenge.aiMarked && ' (includes AI estimates)'}
-              {challenge.assisted && <em className={tagCls}>assisted</em>}
+              {sharerHelp && <em className={tagCls}>{sharerHelp}</em>}
             </span>
           )}
         </div>
@@ -217,7 +221,7 @@ export default function Challenge({
             <span className={nameCls}>
               {row.user ? row.user.username || 'Hunter' : 'Hidden hunter'}
               {row.sharer && <em className={tagCls}>sharer</em>}
-              {row.assisted && <em className={tagCls} title="Taken with help from Zero or Ciel">assisted</em>}
+              {arenaAssistLabel(row) && <em className={tagCls}>{arenaAssistLabel(row)}</em>}
               {row.me && ' (you)'}
             </span>
             <span className={pointsCls}>

@@ -36,6 +36,7 @@ import {
   WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE
 } from '~/helpers/websiteAgentPage';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
+import { arenaAssistLabel, arenaAssistNote } from '~/helpers/arenaChallengeCopy';
 
 // One sitting of a real exam (Mikey 2026-10-24): the paper looks like the
 // real paper (two serif columns, ①-⑤, [3점], <보기>), answers are marked on
@@ -1317,10 +1318,9 @@ function Result({ data }: { data: ArenaBattle }) {
               Share as a challenge
             </ArenaButton>
           )}
-          {battle.won && battle.assisted && (
+          {battle.won && arenaAssistLabel(battle) && (
             <span className={winHintCls}>
-              You had help on this one, so it shares as “assisted” and stays
-              off Boss Records.
+              {arenaAssistNote(arenaAssistLabel(battle)!)}
             </span>
           )}
           {/* private coaching (Mikey 10-24, Daily Reflection's way): the

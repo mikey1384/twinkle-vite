@@ -81,8 +81,10 @@ export interface ArenaBattleSummary {
   companion?: ArenaCompanion;
   // Zero or Ciel helped (chosen at the start, or asked to explain one of
   // its questions; looking at the page doesn't count): same rewards, its own
-  // assisted level, off Boss Records, shared as "assisted"
+  // assisted level, off Boss Records, shared as "with Zero" and the like
   assisted?: boolean;
+  // that public label from the API (arenaAssistLabel falls back without it)
+  assistLabel?: string | null;
   mastery?: { clearsBefore: number; required: number; solo: boolean; target: number; completed: boolean; clearedAt?: number;
     version?: number; rewardTier?: 'pass' | 'perfect'; qualification?: { clears: number; required: number; afterBattleId: number } };
   examKey: string;

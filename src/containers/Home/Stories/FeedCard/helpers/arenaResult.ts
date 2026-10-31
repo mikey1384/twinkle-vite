@@ -12,7 +12,8 @@ const RESULT_FIELDS = [
   'markingPending',
   'takers',
   'bestTaker',
-  'assisted'
+  'assisted',
+  'assistLabel'
 ] as const;
 
 // Both inputs came from the server. A fresh feed can arrive while the

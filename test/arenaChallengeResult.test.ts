@@ -53,14 +53,30 @@ test('legacy missing receipt fields stay unknown; result merge cannot override e
   assert.equal(latestArenaResult({ contentType: 'arenaChallenge' }, after).xpEarned, 17000);
 });
 
-test('shared headlines: daily clears all read the same; assisted wins say so', async () => {
+// Mikey 10-31 ("B is the best"): a helped win names its companion.
+test('shared headlines: daily clears all read the same; helped wins name the companion', async () => {
   const { arenaChallengeHeadline } = await import('../src/helpers/arenaChallengeCopy');
   assert.equal(arenaChallengeHeadline({ kind: 'today' }), 'cleared Today’s Challenge');
+  assert.equal(arenaChallengeHeadline({ kind: 'today', assisted: true, assistLabel: 'with Zero' }), 'cleared Today’s Challenge');
   assert.equal(arenaChallengeHeadline({ raw: 100, max: 100 }), 'got a perfect score! Can you match it?');
-  assert.equal(arenaChallengeHeadline({ raw: 100, max: 100, assisted: true }), 'got a perfect score with help (assisted). Can you match it?');
-  assert.equal(arenaChallengeHeadline({ raw: 90, max: 100, assisted: true }), 'took on a boss with help and won (assisted). Can you do better?');
+  assert.equal(arenaChallengeHeadline({ raw: 100, max: 100, assisted: true, assistLabel: 'with Zero' }), 'got a perfect score with Zero. Can you match it?');
+  assert.equal(arenaChallengeHeadline({ raw: 90, max: 100, assisted: true, assistLabel: 'with Zero and Ciel' }), 'took on a boss with Zero and Ciel and won. Can you do better?');
+  assert.equal(arenaChallengeHeadline({ raw: 90, max: 100, assisted: true }), 'took on a boss with a companion and won. Can you do better?', 'an older API sends only the flag');
 });
 
-test('a newer snapshot carries the assisted flag', () => {
-  assert.equal(latestArenaResult({ contentType: 'arenaChallenge', arenaResultObservedAt: 1 }, { arenaResultObservedAt: 2, assisted: true }).assisted, true);
+test('the help label and the member\'s own note', async () => {
+  const { arenaAssistLabel, arenaAssistNote } = await import('../src/helpers/arenaChallengeCopy');
+  assert.equal(arenaAssistLabel({ assisted: false }), null);
+  assert.equal(arenaAssistLabel(null), null);
+  assert.equal(arenaAssistLabel({ assisted: true, assistLabel: 'with Ciel' }), 'with Ciel');
+  assert.equal(arenaAssistLabel({ assisted: true }), 'with a companion');
+  assert.equal(arenaAssistNote('with Zero'), 'You had Zero’s help on this one, so it shares as “with Zero” and stays off Boss Records.');
+  assert.equal(arenaAssistNote('with Zero and Ciel'), 'You had Zero and Ciel’s help on this one, so it shares as “with Zero and Ciel” and stays off Boss Records.');
+  assert.equal(arenaAssistNote('with a companion'), 'You had help on this one, so it shares as “with a companion” and stays off Boss Records.');
+});
+
+test('a newer snapshot carries the help flag and label', () => {
+  const merged = latestArenaResult({ contentType: 'arenaChallenge', arenaResultObservedAt: 1 }, { arenaResultObservedAt: 2, assisted: true, assistLabel: 'with Zero' });
+  assert.equal(merged.assisted, true);
+  assert.equal(merged.assistLabel, 'with Zero');
 });

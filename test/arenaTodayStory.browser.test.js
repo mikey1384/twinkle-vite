@@ -112,14 +112,14 @@ test('daily stories fit the actual Home preview slot and nudge only an unfinishe
         await bossButton.waitFor();
         assert.ok(await page.getByText('got a perfect score! Can you match it?', { exact: true }).isVisible());
         assert.ok(await page.getByText('120,000', { exact: true }).isVisible());
-        assert.equal(await page.getByText(/^Assisted/).count(), 0);
+        assert.equal(await page.getByText(/^With (Zero|Ciel|a companion)/).count(), 0);
         await checkFit();
-        // a run Zero or Ciel helped with says so in the heading and the panel
-        await page.evaluate(() => window.storyState({ kind: 'boss', values: { assisted: true } }));
-        await page.getByText('Assisted · with Zero or Ciel’s help', { exact: true }).waitFor();
-        assert.ok(await page.getByText('got a perfect score with help (assisted). Can you match it?', { exact: true }).isVisible());
+        // a run Zero or Ciel helped with names them in the heading and the panel
+        await page.evaluate(() => window.storyState({ kind: 'boss', values: { assisted: true, assistLabel: 'with Zero' } }));
+        await page.getByText('With Zero', { exact: true }).waitFor();
+        assert.ok(await page.getByText('got a perfect score with Zero. Can you match it?', { exact: true }).isVisible());
         await checkFit();
-        await page.evaluate(() => window.storyState({ kind: 'boss', values: { assisted: false } }));
+        await page.evaluate(() => window.storyState({ kind: 'boss', values: { assisted: false, assistLabel: null } }));
         await bossButton.click();
         await page.waitForFunction(() => window.route === '/arena?mode=arena&challenge=102');
         assert.equal(await page.evaluate(() => window.route), '/arena?mode=arena&challenge=102');

@@ -8,6 +8,7 @@ import ArenaRewards from '~/containers/Arena/Rewards';
 import type { ArenaRewardStatus } from '~/containers/Arena/types';
 import { arenaMediaURL } from '~/containers/Arena/media';
 import { ARENA } from '~/containers/Arena/theme';
+import { arenaAssistLabel } from '~/helpers/arenaChallengeCopy';
 
 // A won Arena battle shared as a post (Mikey 10-24): the member showing off a
 // win ("im just showing off my achievement"). The post itself is a normal
@@ -15,7 +16,8 @@ import { ARENA } from '~/containers/Arena/theme';
 // recommends); this is its body on Home and on /arena-challenges/:id, the
 // Arena look only inside the panel, with a Challenge! button for anyone who
 // wants to sit the same paper. Never any wrong answers (the own-misses ruling).
-// A run Zero or Ciel helped with says "Assisted" beside its score. A daily
+// A run Zero or Ciel helped with names them beside its score ("With Zero";
+// Mikey 10-31). A daily
 // clear shows no XP or Coins: a guided clear pays less, so the amounts would
 // tell who missed first; the member's own receipt is on Today's Q.
 interface ArenaBossChallengePreview {
@@ -39,8 +41,9 @@ interface ArenaBossChallengePreview {
   rewardStatus?: ArenaRewardStatus;
   markingPending?: boolean;
   hunterRank: { grade: number; low: number; high: number } | null;
-  // Zero or Ciel helped with this run
+  // Zero or Ciel helped with this run, named as "with Zero" and the like
   assisted?: boolean;
+  assistLabel?: string | null;
   createdAt: number;
   takers: number;
   bestTaker: number | null;
@@ -98,6 +101,7 @@ function ArenaChallengePanel({
   const isDaily = challenge?.kind === 'today';
   if (!isDaily && !challenge?.examKey) return null;
   const mark = !isDaily ? gradeMark(challenge.raw, challenge.max) : null;
+  const helpedBy = !isDaily ? arenaAssistLabel(challenge) : null;
   const grade = (g: number) => (!isDaily && challenge.gradeLabels?.[g - 1]) || `${g}등급`;
   // the sharer can't take their own paper again (the API refuses it)
   const isMine = !!userId && userId === challenge.sharer?.id;
@@ -126,9 +130,9 @@ function ArenaChallengePanel({
         <span className={scoreCls}>
           {isDaily ? 'Challenge cleared' : <><small>Score</small> {challenge.raw} <span>/ {challenge.max}</span></>}
         </span>
-        {!isDaily && challenge.assisted && (
-          <span className={assistedCls} title="Taken with help from Zero or Ciel">
-            Assisted · with Zero or Ciel’s help
+        {!isDaily && helpedBy && (
+          <span className={assistedCls} title={`Taken ${helpedBy}`}>
+            {helpedBy.charAt(0).toUpperCase() + helpedBy.slice(1)}
           </span>
         )}
         {!isDaily && challenge.hunterRank && (
