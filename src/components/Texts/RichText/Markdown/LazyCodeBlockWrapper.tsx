@@ -1,9 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
-import CodeBlockPlaceholder from './CodeBlockPlaceholder';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CodeBlock from './CodeBlock';
-import { mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
 
 interface LazyCodeBlockWrapperProps {
@@ -12,6 +9,10 @@ interface LazyCodeBlockWrapperProps {
   stickyTopGap?: number | string;
 }
 
+// Syntax colours wait until the block is near the screen, but the block is
+// its full height from the first frame. It used to open as a "Loading code..."
+// box of estimated height and grow on screen, which moved a chat pinned to
+// its newest message (the Word Master drift class, 10-25).
 function LazyCodeBlockWrapper({
   language,
   value,
@@ -22,56 +23,15 @@ function LazyCodeBlockWrapper({
     rootMargin: '200px 0px'
   });
 
-  const [estimatedHeight, setEstimatedHeight] = useState<number>(100);
-  const hiddenPreRef = useRef<HTMLPreElement>(null);
-
-  useEffect(() => {
-    if (hiddenPreRef.current) {
-      const height = hiddenPreRef.current.offsetHeight;
-      setEstimatedHeight(Math.max(height, 100));
-    }
-  }, [value]);
-
   return (
     <ErrorBoundary componentPath="RichText/Markdown/LazyCodeBlockWrapper">
-      <div
-        ref={ref}
-        className={css`
-          position: relative;
-        `}
-        style={{ minHeight: estimatedHeight }}
-      >
-        <pre
-          ref={hiddenPreRef}
-          className={css`
-            visibility: hidden;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: -1;
-            width: 100%;
-            white-space: pre-wrap;
-            word-break: break-word;
-            font-family: 'Fira Code', 'Source Code Pro', Menlo, Monaco, Consolas,
-              'Courier New', monospace;
-            font-size: 1.4rem;
-            line-height: 1.5;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.1rem;
-            }
-          `}
-        >
-          {value}
-        </pre>
-        {inView ? (
-          <CodeBlock
-            language={language}
-            value={value}
-            stickyTopGap={stickyTopGap}
-          />
-        ) : (
-          <CodeBlockPlaceholder height={estimatedHeight} />
-        )}
+      <div ref={ref}>
+        <CodeBlock
+          language={language}
+          value={value}
+          stickyTopGap={stickyTopGap}
+          plain={!inView}
+        />
       </div>
     </ErrorBoundary>
   );

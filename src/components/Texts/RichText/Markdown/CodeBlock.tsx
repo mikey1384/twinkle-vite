@@ -81,11 +81,15 @@ const githubDark: PrismTheme = {
 function CodeBlock({
   language,
   value,
-  stickyTopGap
+  stickyTopGap,
+  plain = false
 }: {
   language: string;
   value: string;
   stickyTopGap?: number | string;
+  // Same box and lines without syntax colours (no Prism tokenizing), so a
+  // block that is not near the screen yet is already its full height.
+  plain?: boolean;
 }) {
   const [isCopied, setIsCopied] = useState(false);
 
@@ -165,7 +169,11 @@ function CodeBlock({
           padding-top: 44px;
         `}
       >
-        <Highlight theme={githubDark} code={value} language={language}>
+        <Highlight
+          theme={githubDark}
+          code={value}
+          language={plain ? '' : language}
+        >
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
             <pre
               className={`${className} ${css`

@@ -11,8 +11,10 @@ import Activity from './Activity';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import GoToBottomButton from '~/components/Buttons/GoToBottomButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Loading from '~/components/Loading';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { aiCardScrollHeight } from '~/constants/state';
+import { hydrateAICardFeedPage } from '~/helpers/aiCardFeedPage';
 
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
@@ -35,6 +37,8 @@ export default function ActivitiesContainer({
   const loadAICardFeeds = useAppContext(
     (v) => v.requestHelpers.loadAICardFeeds
   );
+  const loadAICardFeed = useAppContext((v) => v.requestHelpers.loadAICardFeed);
+  const onLoadAICardFeed = useChatContext((v) => v.actions.onLoadAICardFeed);
   const aiCardLoadMoreButton = useChatContext(
     (v) => v.state.aiCardLoadMoreButton
   );
@@ -50,6 +54,11 @@ export default function ActivitiesContainer({
 
   const [loadingMore, setLoadingMore] = useState(false);
   const [showGoToBottom, setShowGoToBottom] = useState(false);
+  // The opening page (entering AI Cards, or the chat bootstrap) arrives as
+  // feed shells; its cards show once they have all loaded.
+  const [loadingOpeningPage, setLoadingOpeningPage] = useState(() =>
+    aiCardFeeds.some((feed: any) => feed && !feed.isLoaded)
+  );
 
   const ActivitiesRef = useRef<any>(null);
   // seeded from the persisted position: the mount restore effect runs before
@@ -92,13 +101,19 @@ export default function ActivitiesContainer({
 
     try {
       const loadedFeeds = aiCardFeedsRef.current;
-      const { cardFeeds, cardObj, loadMoreShown, mostRecentOfferTimeStamp } =
-        await loadAICardFeeds(loadedFeeds?.[loadedFeeds.length - 1]?.id);
+      const page = await loadAICardFeeds(
+        loadedFeeds?.[loadedFeeds.length - 1]?.id
+      );
+      const { cardFeeds, cardObj } = await hydrateAICardFeedPage({
+        cardFeeds: page.cardFeeds,
+        cardObj: page.cardObj,
+        loadFeed: (feedId) => loadAICardFeed({ feedId })
+      });
       onLoadMoreAICards({
         cardFeeds,
         cardObj,
-        loadMoreShown,
-        mostRecentOfferTimeStamp
+        loadMoreShown: page.loadMoreShown,
+        mostRecentOfferTimeStamp: page.mostRecentOfferTimeStamp
       });
     } catch (error) {
       console.error(error);
@@ -144,8 +159,25 @@ export default function ActivitiesContainer({
   }, [aiCardFeeds?.length]);
 
   useEffect(() => {
-    (ActivitiesRef.current || {}).scrollTop = aiCardScrollHeight.current;
+    if (!loadingOpeningPage) return;
+    const openingFeeds = aiCardFeedsRef.current;
+    hydrateAICardFeedPage({
+      cardFeeds: openingFeeds,
+      cardObj: {},
+      loadFeed: (feedId) => loadAICardFeed({ feedId })
+    }).then(({ cardFeeds }) => {
+      cardFeeds.forEach((feed, index) => {
+        if (feed !== openingFeeds[index]) onLoadAICardFeed({ feed });
+      });
+      setLoadingOpeningPage(false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (loadingOpeningPage) return;
+    (ActivitiesRef.current || {}).scrollTop = aiCardScrollHeight.current;
+  }, [loadingOpeningPage]);
 
   useEffect(() => {
     const ActivitiesContainer = ActivitiesRef.current;
@@ -167,6 +199,10 @@ export default function ActivitiesContainer({
       aiCardScrollHeight.current = scrollTop;
     }
   });
+
+  if (loadingOpeningPage) {
+    return <Loading style={{ height: '50%' }} text="Loading AI Cards" />;
+  }
 
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/AICards/ActivitiesContainer">

@@ -52,6 +52,7 @@ import {
   reconcileCanonicalStreamingMessageId
 } from './aiGenerationState';
 import { updateAICardOfferNoticeStatusMap } from '~/helpers/aiCardOfferNotice';
+import { keepLoadedAICardFeeds } from '~/helpers/aiCardFeedPage';
 import { applyCanonicalChatMessagePage } from './messagePageState';
 import { applyCanonicalTextStreamUpdate } from '~/helpers/canonicalTextStream';
 import {
@@ -4035,7 +4036,7 @@ export default function ChatReducer(
           ? action.data.cardFeeds.map((feed: { id: number }) => feed.id)
           : state.aiCardFeedIds,
         aiCardFeedObj: aiCardsLoaded
-          ? objectify(action.data.cardFeeds)
+          ? keepLoadedAICardFeeds(action.data.cardFeeds, state.aiCardFeedObj)
           : state.aiCardFeedObj,
         aiCardLoadMoreButton: aiCardsLoaded
           ? action.data.aiCardLoadMoreButton

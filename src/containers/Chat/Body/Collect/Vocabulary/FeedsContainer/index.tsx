@@ -7,13 +7,11 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext } from '~/contexts';
 import { isMobile, isTablet } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
-import { recordOwnerTrace } from '~/helpers/ownerTrace';
 import { mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
-const HOLD_AT_NEWEST_MS = 3000;
 // About three phone screens of the newest cards (~140px each on an iPhone).
 const EAGER_NEWEST_FEEDS = 8;
 
@@ -87,48 +85,8 @@ function FeedsContainer({
   }, [vocabFeeds?.length]);
 
   useEffect(() => {
-    const Container = FeedsRef.current;
-    if (!Container) return;
-    const restoreTo = vocabScrollHeight.current;
-    Container.scrollTop = restoreTo;
-    // A returning reader keeps their place; only an open at the newest word
-    // is held there.
-    if (restoreTo !== 0) return;
-    // On iPhone the list drifted up about a card right after opening (Mikey
-    // 10-25, not reproducible in WebKit here). Hold it at the newest word
-    // for the first seconds unless the user scrolls, and trace each pull back
-    // so the owner trace shows what moved it.
-    const startedAt = Date.now();
-    let released = false;
-    let frame = 0;
-    const release = () => (released = true);
-    const inputs = ['touchstart', 'wheel', 'pointerdown', 'keydown'];
-    inputs.forEach((type) =>
-      Container.addEventListener(type, release, { passive: true })
-    );
-    hold();
-    return stop;
-
-    function hold() {
-      if (released || Date.now() - startedAt > HOLD_AT_NEWEST_MS) {
-        stop();
-        return;
-      }
-      // Sub-pixel rest positions (-0.33 on a 3x iPhone) are not a drift.
-      if (Math.abs(Container.scrollTop) >= 1) {
-        recordOwnerTrace('wordmaster-pin', {
-          ms: Date.now() - startedAt,
-          drift: Math.round(Container.scrollTop),
-          scrollHeight: Container.scrollHeight,
-          clientHeight: Container.clientHeight
-        });
-        Container.scrollTop = 0;
-      }
-      frame = requestAnimationFrame(hold);
-    }
-    function stop() {
-      cancelAnimationFrame(frame);
-      inputs.forEach((type) => Container.removeEventListener(type, release));
+    if (FeedsRef.current) {
+      FeedsRef.current.scrollTop = vocabScrollHeight.current;
     }
   }, []);
 
