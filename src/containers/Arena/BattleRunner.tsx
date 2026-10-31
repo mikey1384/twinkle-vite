@@ -1957,9 +1957,12 @@ const resultLabelCls = css`
   text-transform: uppercase;
 `;
 
+// above the sticky listening console (z-index 1), which otherwise covers the
+// dialog's buttons when it sits mid-screen
 const confirmBackdropCls = css`
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
