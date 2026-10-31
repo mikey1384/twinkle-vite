@@ -52,3 +52,15 @@ test('legacy missing receipt fields stay unknown; result merge cannot override e
   assert.deepEqual(latestArenaResult({ ...before, contentType: 'dailyReflection' }, after), {});
   assert.equal(latestArenaResult({ contentType: 'arenaChallenge' }, after).xpEarned, 17000);
 });
+
+test('shared headlines: daily clears all read the same; assisted wins say so', async () => {
+  const { arenaChallengeHeadline } = await import('../src/helpers/arenaChallengeCopy');
+  assert.equal(arenaChallengeHeadline({ kind: 'today' }), 'cleared Today’s Challenge');
+  assert.equal(arenaChallengeHeadline({ raw: 100, max: 100 }), 'got a perfect score! Can you match it?');
+  assert.equal(arenaChallengeHeadline({ raw: 100, max: 100, assisted: true }), 'got a perfect score with help (assisted). Can you match it?');
+  assert.equal(arenaChallengeHeadline({ raw: 90, max: 100, assisted: true }), 'took on a boss with help and won (assisted). Can you do better?');
+});
+
+test('a newer snapshot carries the assisted flag', () => {
+  assert.equal(latestArenaResult({ contentType: 'arenaChallenge', arenaResultObservedAt: 1 }, { arenaResultObservedAt: 2, assisted: true }).assisted, true);
+});

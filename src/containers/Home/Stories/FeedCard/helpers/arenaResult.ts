@@ -11,7 +11,8 @@ const RESULT_FIELDS = [
   'rewardStatus',
   'markingPending',
   'takers',
-  'bestTaker'
+  'bestTaker',
+  'assisted'
 ] as const;
 
 // Both inputs came from the server. A fresh feed can arrive while the

@@ -68,8 +68,13 @@ test('daily stories fit the actual Home preview slot and nudge only an unfinishe
         await page.goto('http://localhost:3000/');
         const button = page.getByRole('button', { name: 'Try today’s challenge', exact: true });
         await button.waitFor();
-        assert.ok(await page.getByText('50,000', { exact: true }).isVisible());
-        assert.ok(await page.getByLabel('5,000 coins', { exact: true }).isVisible());
+        // No amounts on a public daily clear: a guided clear pays less, so
+        // they would show who missed first (own-misses ruling).
+        assert.equal(await page.getByText('50,000', { exact: true }).count(), 0);
+        assert.equal(await page.getByLabel('5,000 coins', { exact: true }).count(), 0);
+        assert.equal(await page.getByLabel('Daily challenge rewards').count(), 0);
+        assert.ok(await page.getByText('cleared Today’s Challenge', { exact: true }).isVisible());
+        assert.ok(await page.getByText('Challenge cleared', { exact: true }).isVisible());
         assert.ok(await page.getByText('Oct 27, 2026', { exact: true }).isVisible());
         const checkFit = async () => {
           const fits = await page.evaluate(() => {
@@ -96,18 +101,25 @@ test('daily stories fit the actual Home preview slot and nudge only an unfinishe
         assert.equal(await button.count(), 0);
         await page.evaluate(() => window.storyState({ done: false, viewer: 2, kind: 'today', values: { xpEarned: 25000, coinsEarned: 0 } }));
         await button.waitFor(); // even on one's own old story, today's new challenge is available
-        assert.ok(await page.getByText('25,000', { exact: true }).isVisible());
-        assert.ok(await page.getByText('0 Coins', { exact: true }).isVisible());
+        // a stale cached guided clear still shows nothing that tells it apart
+        assert.equal(await page.getByText('25,000', { exact: true }).count(), 0);
+        assert.equal(await page.getByText('0 Coins', { exact: true }).count(), 0);
+        assert.ok(await page.getByText('Challenge cleared', { exact: true }).isVisible());
         await checkFit();
         if (artifacts && width === 360) await page.screenshot({ path: path.join(artifacts, `${engine.name()}-guided-${width}.png`), fullPage: true });
-        await page.evaluate(() => window.storyState({ kind: 'today', values: { coinsEarned: 200 } }));
-        await page.getByLabel('200 coins', { exact: true }).waitFor();
         await page.evaluate(() => window.storyState({ kind: 'boss', viewer: 1 }));
         const bossButton = page.getByRole('button', { name: 'Challenge!', exact: true });
         await bossButton.waitFor();
         assert.ok(await page.getByText('got a perfect score! Can you match it?', { exact: true }).isVisible());
         assert.ok(await page.getByText('120,000', { exact: true }).isVisible());
+        assert.equal(await page.getByText(/^Assisted/).count(), 0);
         await checkFit();
+        // a run Zero or Ciel helped with says so in the heading and the panel
+        await page.evaluate(() => window.storyState({ kind: 'boss', values: { assisted: true } }));
+        await page.getByText('Assisted · with Zero or Ciel’s help', { exact: true }).waitFor();
+        assert.ok(await page.getByText('got a perfect score with help (assisted). Can you match it?', { exact: true }).isVisible());
+        await checkFit();
+        await page.evaluate(() => window.storyState({ kind: 'boss', values: { assisted: false } }));
         await bossButton.click();
         await page.waitForFunction(() => window.route === '/arena?mode=arena&challenge=102');
         assert.equal(await page.evaluate(() => window.route), '/arena?mode=arena&challenge=102');

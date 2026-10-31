@@ -15,6 +15,9 @@ import { ARENA } from '~/containers/Arena/theme';
 // recommends); this is its body on Home and on /arena-challenges/:id, the
 // Arena look only inside the panel, with a Challenge! button for anyone who
 // wants to sit the same paper. Never any wrong answers (the own-misses ruling).
+// A run Zero or Ciel helped with says "Assisted" beside its score. A daily
+// clear shows no XP or Coins: a guided clear pays less, so the amounts would
+// tell who missed first; the member's own receipt is on Today's Q.
 interface ArenaBossChallengePreview {
   kind?: 'battle';
   id: number;
@@ -36,6 +39,8 @@ interface ArenaBossChallengePreview {
   rewardStatus?: ArenaRewardStatus;
   markingPending?: boolean;
   hunterRank: { grade: number; low: number; high: number } | null;
+  // Zero or Ciel helped with this run
+  assisted?: boolean;
   createdAt: number;
   takers: number;
   bestTaker: number | null;
@@ -48,8 +53,6 @@ interface ArenaTodayChallengePreview {
   dayKey: string;
   createdAt: number;
   sharer: { id: number; username: string; profilePicUrl: string | null };
-  xpEarned: number;
-  coinsEarned: number;
 }
 
 export type ArenaChallengePreview = ArenaBossChallengePreview | ArenaTodayChallengePreview;
@@ -123,28 +126,32 @@ function ArenaChallengePanel({
         <span className={scoreCls}>
           {isDaily ? 'Challenge cleared' : <><small>Score</small> {challenge.raw} <span>/ {challenge.max}</span></>}
         </span>
+        {!isDaily && challenge.assisted && (
+          <span className={assistedCls} title="Taken with help from Zero or Ciel">
+            Assisted · with Zero or Ciel’s help
+          </span>
+        )}
         {!isDaily && challenge.hunterRank && (
           <span className={rankCls}>
             Hunter Rank about {grade(challenge.hunterRank.grade)}
           </span>
         )}
       </div>
-      <div className={awardCls}>
+      {!isDaily && <div className={awardCls}>
         <ArenaRewards
           xp={challenge.xpEarned}
           coins={challenge.coinsEarned}
-          scoreBonusXp={!isDaily ? challenge.scoreBonusXpEarned : undefined}
-          scoreBonusCoins={!isDaily ? challenge.scoreBonusCoinsEarned : undefined}
-          rewardPending={!isDaily ? challenge.rewardPending : false}
-          rewardStatus={!isDaily ? challenge.rewardStatus : undefined}
-          markingPending={!isDaily ? challenge.markingPending : false}
-          ariaLabel={isDaily ? 'Daily challenge rewards' : 'Exam rewards'}
+          scoreBonusXp={challenge.scoreBonusXpEarned}
+          scoreBonusCoins={challenge.scoreBonusCoinsEarned}
+          rewardPending={challenge.rewardPending}
+          rewardStatus={challenge.rewardStatus}
+          markingPending={challenge.markingPending}
+          ariaLabel="Exam rewards"
           emptyNote="Daily exam reward limit reached"
           label="Awarded"
           highlight
         />
-        {isDaily && challenge.coinsEarned === 0 && <span className={modeCls}>0 Coins</span>}
-      </div>
+      </div>}
       <div className={footCls}>
         <span className={metaCls}>
           {isDaily ? todayCompleted === true && userId
@@ -305,6 +312,17 @@ const scoreCls = css`
   color: ${ARENA.train};
   small { font-size: 1.1rem; font-weight: 700; color: ${ARENA.inkSoft}; }
   > span { font-size: 1.5rem; }
+`;
+
+const assistedCls = css`
+  align-self: flex-start;
+  padding: 0.1rem 0.6rem;
+  border: 2px solid ${ARENA.line};
+  border-radius: 4px;
+  background: #fff;
+  color: ${ARENA.ink};
+  font-size: 1.2rem;
+  font-weight: 900;
 `;
 
 const rankCls = css`

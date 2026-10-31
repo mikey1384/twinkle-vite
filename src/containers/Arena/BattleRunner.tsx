@@ -1317,6 +1317,12 @@ function Result({ data }: { data: ArenaBattle }) {
               Share as a challenge
             </ArenaButton>
           )}
+          {battle.won && battle.assisted && (
+            <span className={winHintCls}>
+              You had help on this one, so it shares as “assisted” and stays
+              off Boss Records.
+            </span>
+          )}
           {/* private coaching (Mikey 10-24, Daily Reflection's way): the
               result and every miss go to Zero or Ciel's chat */}
           {(['zero', 'ciel'] as const).map((target) => (

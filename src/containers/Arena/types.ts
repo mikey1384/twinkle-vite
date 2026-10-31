@@ -79,6 +79,9 @@ export interface ArenaBattleSummary {
   id: number;
   masteryProgress?: ArenaMasteryProgress;
   companion?: ArenaCompanion;
+  // Zero or Ciel helped (chosen at the start, or a companion read one of
+  // its questions): same rewards, off Boss Records, shared as "assisted"
+  assisted?: boolean;
   mastery?: { clearsBefore: number; required: number; solo: boolean; target: number; completed: boolean; clearedAt?: number;
     version?: number; rewardTier?: 'pass' | 'perfect'; qualification?: { clears: number; required: number; afterBattleId: number } };
   examKey: string;

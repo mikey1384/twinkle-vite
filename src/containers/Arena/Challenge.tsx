@@ -16,7 +16,8 @@ import { ARENA } from './theme';
 
 // A shared challenge (Mikey 10-24): who shared it and how they did, "Take
 // this same test" (the exact frozen paper, once), and the board of everyone
-// who took it. Scores and times only; nobody's wrong answers.
+// who took it. Scores and times only; nobody's wrong answers. A run Zero or
+// Ciel helped with is labelled "assisted" in the header and on its row.
 interface ChallengeView {
   challenge: {
     id: number;
@@ -31,6 +32,8 @@ interface ChallengeView {
     length: 'short' | 'medium' | 'full';
     difficulty: 'easy' | 'normal' | 'hard';
     sharer: { id: number; username: string; profilePicUrl: string | null };
+    // the shared score was reached with Zero or Ciel's help
+    assisted?: boolean;
   };
   board: {
     rank: number;
@@ -38,6 +41,7 @@ interface ChallengeView {
     max: number;
     seconds: number;
     sharer: boolean;
+    assisted?: boolean;
     me: boolean;
     user: { id: number; username: string; profilePicUrl: string | null } | null;
   }[];
@@ -136,9 +140,13 @@ export default function Challenge({
           </span>
           <strong>
             {view.isSharer ? 'You' : challenge.sharer.username}{' '}
-            {perfectScore
-              ? 'got a perfect score!'
-              : 'took on this boss and won'}
+            {challenge.assisted
+              ? perfectScore
+                ? 'got a perfect score with help'
+                : 'took on this boss with help and won'
+              : perfectScore
+                ? 'got a perfect score!'
+                : 'took on this boss and won'}
           </strong>
           <span>
             {challenge.examName} · {LENGTH[challenge.length]} ·{' '}
@@ -149,6 +157,7 @@ export default function Challenge({
               {view.isSharer ? 'Your score' : 'Their score'}: {sharerRow.raw} /{' '}
               {sharerRow.max}
               {challenge.aiMarked && ' (includes AI estimates)'}
+              {challenge.assisted && <em className={tagCls}>assisted</em>}
             </span>
           )}
         </div>
@@ -208,6 +217,7 @@ export default function Challenge({
             <span className={nameCls}>
               {row.user ? row.user.username || 'Hunter' : 'Hidden hunter'}
               {row.sharer && <em className={tagCls}>sharer</em>}
+              {row.assisted && <em className={tagCls} title="Taken with help from Zero or Ciel">assisted</em>}
               {row.me && ' (you)'}
             </span>
             <span className={pointsCls}>
