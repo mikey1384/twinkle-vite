@@ -1,0 +1,154 @@
+[
+ {
+  "no": 17,
+  "stem": "(가)에 들어갈 문화유산으로 적절한 것은?",
+  "choices": [
+   "불국사 다보탑",
+   "원각사지 십층 석탑",
+   "경천사지 십층 석탑",
+   "정림사지 오층 석탑",
+   "월정사 팔각 구층 석탑"
+  ],
+  "visual": {
+   "kind": "panels",
+   "panels": [
+    {
+     "kind": "panels",
+     "title": "불국사 다보탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p0.svg",
+       "alt": "불국사 다보탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    },
+    {
+     "kind": "panels",
+     "title": "원각사지 십층 석탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p1.svg",
+       "alt": "원각사지 십층 석탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    },
+    {
+     "kind": "panels",
+     "title": "경천사지 십층 석탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p2.svg",
+       "alt": "경천사지 십층 석탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    },
+    {
+     "kind": "panels",
+     "title": "정림사지 오층 석탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p3.svg",
+       "alt": "정림사지 오층 석탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    },
+    {
+     "kind": "panels",
+     "title": "월정사 팔각 구층 석탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p4.svg",
+       "alt": "월정사 팔각 구층 석탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "no": 18,
+  "stem": "위 사진과 관련 있는 설명으로 적절한 것은?",
+  "choices": [
+   "가",
+   "나",
+   "다",
+   "라",
+   "마"
+  ],
+  "visual": {
+   "kind": "panels",
+   "panels": [
+    {
+     "kind": "panels",
+     "title": "불국사 다보탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p0.svg",
+       "alt": "불국사 다보탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    },
+    {
+     "kind": "panels",
+     "title": "원각사지 십층 석탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p1.svg",
+       "alt": "원각사지 십층 석탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    },
+    {
+     "kind": "panels",
+     "title": "경천사지 십층 석탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p2.svg",
+       "alt": "경천사지 십층 석탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    },
+    {
+     "kind": "panels",
+     "title": "정림사지 오층 석탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p3.svg",
+       "alt": "정림사지 오층 석탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    },
+    {
+     "kind": "panels",
+     "title": "월정사 팔각 구층 석탑",
+     "panels": [
+      {
+       "kind": "image",
+       "src": "img/fixture/p4.svg",
+       "alt": "월정사 팔각 구층 석탑",
+       "credit": "사진: 국가유산청 (공공누리 제1유형)"
+      }
+     ]
+    }
+   ]
+  }
+ }
+]

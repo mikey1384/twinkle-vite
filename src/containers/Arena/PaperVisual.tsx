@@ -77,16 +77,56 @@ export function picturesSideBySide(visual: Visual) {
   return panels.length > 1 && panels.every(isPicture);
 }
 
+// The pictures ARE the answer choices when the item's choices map one to one,
+// in order, onto the pictures' captions (한국사 photo choices: each titled
+// panel's title is exactly the choice text). A picture that is only context
+// for the question never matches, so it is never numbered. Derived here from
+// the item's own data; nothing in the content needs a flag.
+function pictureCaption(panel: Visual) {
+  return (panel.title || (panel.kind === 'image' ? panel.alt : '') || '').trim();
+}
+
+export function picturesAreChoices(visual: Visual, choices: string[]) {
+  const panels = visual.kind === 'panels' ? visual.panels || [] : [];
+  return (
+    panels.length > 1 &&
+    panels.length === choices.length &&
+    panels.every(isPicture) &&
+    choices.every((choice, i) => {
+      const text = choice.trim();
+      return !!text && text === pictureCaption(panels[i]);
+    })
+  );
+}
+
+// a picture's caption with its choice number before it, in the item's own
+// numbering style; a picture with no caption gets the number as its label
+function Caption({ title, marker }: { title?: string; marker?: string }) {
+  if (!title && !marker) return null;
+  return (
+    <figcaption>
+      {marker && <span className={optionNumberCls}>{marker}</span>}
+      {title}
+    </figcaption>
+  );
+}
+
 export default function PaperVisual({
   visual,
   writingPrompt = false,
   marked = null,
-  onMark
+  onMark,
+  marker,
+  optionMarkers
 }: {
   visual: Visual;
   writingPrompt?: boolean;
   marked?: number | null;
   onMark?: (choice: number | null) => void;
+  // this picture is answer choice `marker` (①, (A) ...)
+  marker?: string;
+  // the markers of this panel's pictures, when they are the answer choices
+  optionMarkers?: string[];
 }) {
   if (visual.kind === 'table') {
     return <PaperTable visual={visual} marked={marked} onMark={onMark} />;
@@ -94,6 +134,7 @@ export default function PaperVisual({
   if (visual.kind === 'image' && visual.src) {
     return (
       <figure className={cx(figureCls, writingPrompt && writingPictureCls)}>
+        <Caption marker={marker} />
         <img
           src={arenaMediaURL(visual.src)}
           alt={visual.alt || visual.title || ''}
@@ -117,16 +158,17 @@ export default function PaperVisual({
     const pictures = picturesSideBySide(visual);
     return (
       <figure className={cx(figureCls, pictures && picturesFigureCls)}>
-        {visual.title && <figcaption>{visual.title}</figcaption>}
+        <Caption title={visual.title} marker={marker} />
         <div
           className={cx(
             panelsCls,
             pictures && picturesCls,
-            pictures && panels.length === 4 && fourPicturesCls
+            pictures && panels.length === 4 && fourPicturesCls,
+            pictures && panels.length === 5 && fivePicturesCls
           )}
         >
           {panels.map((panel, i) => (
-            <PaperVisual key={i} visual={panel} />
+            <PaperVisual key={i} visual={panel} marker={optionMarkers?.[i]} />
           ))}
         </div>
       </figure>
@@ -818,6 +860,36 @@ const fourPicturesCls = css`
   @container arena-pictures (min-width: 91rem) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+`;
+
+// five pictures: three on the first row, two centred under them (never 2+2+1
+// with the fifth alone). On a very narrow figure two per row is the most
+// balanced layout that still keeps each picture readable.
+const fivePicturesCls = css`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  > * {
+    flex: 0 0 calc((100% - 2rem) / 3);
+    min-width: 0;
+  }
+  /* narrow cells: break between words, never inside 석탑 or 공공누리 */
+  figcaption,
+  p {
+    word-break: keep-all;
+  }
+  @container arena-pictures (max-width: 30rem) {
+    > * {
+      flex-basis: calc((100% - 1rem) / 2);
+    }
+  }
+`;
+
+// the choice number before a picture's caption
+const optionNumberCls = css`
+  font-family: 'Noto Serif KR', 'Times New Roman', Tinos, serif;
+  margin-right: 0.4em;
 `;
 
 const markableRowCls = css`

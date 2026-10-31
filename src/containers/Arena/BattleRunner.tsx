@@ -14,6 +14,7 @@ import ArenaButton from './ArenaButton';
 import { arenaMediaURL } from './media';
 import ListeningConsole, { type ListeningTrack } from './ListeningConsole';
 import PaperVisual, {
+  picturesAreChoices,
   picturesSideBySide,
   tableMarksChoices,
   type Visual
@@ -942,6 +943,12 @@ export function PaperItem({
           writingPrompt={!!item.written}
           marked={typeof marked === 'number' ? marked : null}
           onMark={finished ? undefined : onMark}
+          optionMarkers={
+            !item.spokenChoices &&
+            picturesAreChoices(item.visual as unknown as Visual, item.choices)
+              ? item.choices.map((_, i) => optionMarker(i, letters))
+              : undefined
+          }
         />
       ) : (
         item.body &&
