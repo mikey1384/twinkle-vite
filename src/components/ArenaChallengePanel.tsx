@@ -18,8 +18,8 @@ import { arenaAssistLabel } from '~/helpers/arenaChallengeCopy';
 // wants to sit the same paper. Never any wrong answers (the own-misses ruling).
 // A run Zero or Ciel helped with names them beside its score ("With Zero";
 // Mikey 10-31). A daily
-// clear shows no XP or Coins: a guided clear pays less, so the amounts would
-// tell who missed first; the member's own receipt is on Today's Q.
+// clear shows exactly what it paid, guided or not: the amounts are what make
+// others want to try it (Mikey 10-31, standing-rulings.md).
 interface ArenaBossChallengePreview {
   kind?: 'battle';
   id: number;
@@ -56,6 +56,8 @@ interface ArenaTodayChallengePreview {
   dayKey: string;
   createdAt: number;
   sharer: { id: number; username: string; profilePicUrl: string | null };
+  xpEarned: number;
+  coinsEarned: number;
 }
 
 export type ArenaChallengePreview = ArenaBossChallengePreview | ArenaTodayChallengePreview;
@@ -141,21 +143,22 @@ function ArenaChallengePanel({
           </span>
         )}
       </div>
-      {!isDaily && <div className={awardCls}>
+      <div className={awardCls}>
         <ArenaRewards
           xp={challenge.xpEarned}
           coins={challenge.coinsEarned}
-          scoreBonusXp={challenge.scoreBonusXpEarned}
-          scoreBonusCoins={challenge.scoreBonusCoinsEarned}
-          rewardPending={challenge.rewardPending}
-          rewardStatus={challenge.rewardStatus}
-          markingPending={challenge.markingPending}
-          ariaLabel="Exam rewards"
+          scoreBonusXp={!isDaily ? challenge.scoreBonusXpEarned : undefined}
+          scoreBonusCoins={!isDaily ? challenge.scoreBonusCoinsEarned : undefined}
+          rewardPending={!isDaily ? challenge.rewardPending : false}
+          rewardStatus={!isDaily ? challenge.rewardStatus : undefined}
+          markingPending={!isDaily ? challenge.markingPending : false}
+          ariaLabel={isDaily ? 'Daily challenge rewards' : 'Exam rewards'}
           emptyNote="Daily exam reward limit reached"
           label="Awarded"
           highlight
         />
-      </div>}
+        {isDaily && challenge.coinsEarned === 0 && <span className={modeCls}>0 Coins</span>}
+      </div>
       <div className={footCls}>
         <span className={metaCls}>
           {isDaily ? todayCompleted === true && userId

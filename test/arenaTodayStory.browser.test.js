@@ -68,11 +68,10 @@ test('daily stories fit the actual Home preview slot and nudge only an unfinishe
         await page.goto('http://localhost:3000/');
         const button = page.getByRole('button', { name: 'Try today’s challenge', exact: true });
         await button.waitFor();
-        // No amounts on a public daily clear: a guided clear pays less, so
-        // they would show who missed first (own-misses ruling).
-        assert.equal(await page.getByText('50,000', { exact: true }).count(), 0);
-        assert.equal(await page.getByLabel('5,000 coins', { exact: true }).count(), 0);
-        assert.equal(await page.getByLabel('Daily challenge rewards').count(), 0);
+        // A daily clear shows exactly what it paid (Mikey 10-31: the amounts
+        // are what make others want to try it).
+        assert.ok(await page.getByText('50,000', { exact: true }).isVisible());
+        assert.ok(await page.getByLabel('5,000 coins', { exact: true }).isVisible());
         assert.ok(await page.getByText('cleared Today’s Challenge', { exact: true }).isVisible());
         assert.ok(await page.getByText('Challenge cleared', { exact: true }).isVisible());
         assert.ok(await page.getByText('Oct 27, 2026', { exact: true }).isVisible());
@@ -101,9 +100,9 @@ test('daily stories fit the actual Home preview slot and nudge only an unfinishe
         assert.equal(await button.count(), 0);
         await page.evaluate(() => window.storyState({ done: false, viewer: 2, kind: 'today', values: { xpEarned: 25000, coinsEarned: 0 } }));
         await button.waitFor(); // even on one's own old story, today's new challenge is available
-        // a stale cached guided clear still shows nothing that tells it apart
-        assert.equal(await page.getByText('25,000', { exact: true }).count(), 0);
-        assert.equal(await page.getByText('0 Coins', { exact: true }).count(), 0);
+        // a guided clear shows what it paid too
+        assert.ok(await page.getByText('25,000', { exact: true }).isVisible());
+        assert.ok(await page.getByText('0 Coins', { exact: true }).isVisible());
         assert.ok(await page.getByText('Challenge cleared', { exact: true }).isVisible());
         await checkFit();
         if (artifacts && width === 360) await page.screenshot({ path: path.join(artifacts, `${engine.name()}-guided-${width}.png`), fullPage: true });
