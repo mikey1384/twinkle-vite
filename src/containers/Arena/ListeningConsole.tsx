@@ -31,6 +31,15 @@ const CALLED_EXAMS: Record<string, 'ko' | 'en'> = {
 const CALL_GAP_MS = 900;
 const CALL_FREE_RECORDING = /-v2\/[^/]+$/;
 
+// exams that read each part's directions where the part begins (TOEIC®:
+// audio/<exam>/directions/<part>.mp3, one exam-level file per part, so no
+// item recording carries directions or a number). The part is the item
+// type's last segment without "Graphic" (toeic.l.conversationGraphic is
+// Part 3, like toeic.l.conversation).
+const DIRECTED_EXAMS = new Set(['toeic-lr']);
+const partOf = (type?: string) =>
+  String(type || '').split('.').pop()!.replace(/Graphic$/, '');
+
 const ANSWER_GAP_MS = 8000;
 const REPEAT_GAP_MS = 4000;
 
@@ -55,6 +64,8 @@ export interface ListeningTrack {
   audioPath: string;
   src: string;
   plays: number;
+  // the item type, for exams that announce each part (DIRECTED_EXAMS)
+  type?: string;
 }
 
 // call: the number call and its pause, shown as the recording playing
@@ -73,7 +84,17 @@ function buildSteps(examKey: string, tracks: ListeningTrack[]): Step[] {
         }
       ]
     : [];
+  const directed = DIRECTED_EXAMS.has(examKey);
+  let part = '';
   for (const track of tracks) {
+    if (directed && partOf(track.type) !== part) {
+      part = partOf(track.type);
+      steps.push({
+        kind: 'audio',
+        src: arenaMediaURL(`audio/${examKey}/directions/${part}.mp3`),
+        label: 'Directions'
+      });
+    }
     if (examKey === 'c1-advanced') {
       // Directions and the preview pause play once; only the extract
       // repeats. Files are produced together by arena_audio.py.
