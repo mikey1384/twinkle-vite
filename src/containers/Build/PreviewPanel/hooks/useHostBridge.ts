@@ -5699,6 +5699,12 @@ export function useHostBridge({
                 ...(typeof error.status === 'number'
                   ? { status: error.status }
                   : {}),
+                // handleError reports a request that got no HTTP response as
+                // status 500 with isTransportError. Pass the flag on so apps
+                // can tell "never reached the server" from a real 500.
+                ...(error.isTransportError === true
+                  ? { isTransportError: true }
+                  : {}),
                 ...(typeof error.code === 'string' ? { code: error.code } : {}),
                 ...(error.retryAfterSeconds != null
                   ? { retryAfterSeconds: error.retryAfterSeconds }

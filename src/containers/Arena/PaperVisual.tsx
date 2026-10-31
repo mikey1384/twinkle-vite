@@ -57,6 +57,26 @@ export function tableMarksChoices(visual: Visual) {
   return visual.kind === 'table' && !!visual.rows?.some((row) => row.marker);
 }
 
+// a drawing or photo, or a titled panel holding only pictures: the picture
+// options of a listening item ((A)-(D)), the photos of a 한국사 item, or a
+// picture story
+function isPicture(visual: Visual): boolean {
+  if (visual.kind === 'diagram') return true;
+  if (visual.kind === 'image') return !!visual.src;
+  return (
+    visual.kind === 'panels' &&
+    !!visual.panels?.length &&
+    visual.panels.every(isPicture)
+  );
+}
+
+// picture options shown side by side (todo 162): the paper gives such an
+// item room for two pictures per row
+export function picturesSideBySide(visual: Visual) {
+  const panels = visual.kind === 'panels' ? visual.panels || [] : [];
+  return panels.length > 1 && panels.every(isPicture);
+}
+
 export default function PaperVisual({
   visual,
   writingPrompt = false,
@@ -93,11 +113,19 @@ export default function PaperVisual({
     return <PaperMap visual={visual as unknown as MapVisual} />;
   }
   if (visual.kind === 'panels') {
+    const panels = visual.panels || [];
+    const pictures = picturesSideBySide(visual);
     return (
-      <figure className={figureCls}>
+      <figure className={cx(figureCls, pictures && picturesFigureCls)}>
         {visual.title && <figcaption>{visual.title}</figcaption>}
-        <div className={panelsCls}>
-          {(visual.panels || []).map((panel, i) => (
+        <div
+          className={cx(
+            panelsCls,
+            pictures && picturesCls,
+            pictures && panels.length === 4 && fourPicturesCls
+          )}
+        >
+          {panels.map((panel, i) => (
             <PaperVisual key={i} visual={panel} />
           ))}
         </div>
@@ -764,9 +792,32 @@ const noteCls = css`
 
 const panelsCls = css`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
   gap: 1rem;
   align-items: start;
+`;
+
+// Picture options sit side by side, never one per row (todo 162, 10-31):
+// stacked, a phone or a half-width paper column put the answer row far
+// below pictures (A) and (B) while the audio played. At least two per row;
+// a wide paper keeps its larger columns.
+const picturesFigureCls = css`
+  container: arena-pictures / inline-size;
+`;
+
+const picturesCls = css`
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(22rem, calc(50% - 0.5rem)), 1fr)
+  );
+`;
+
+// four pictures: 2x2 (never 3+1), or one row of four when the paper is wide
+const fourPicturesCls = css`
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @container arena-pictures (min-width: 91rem) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 `;
 
 const markableRowCls = css`

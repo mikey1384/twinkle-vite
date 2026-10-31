@@ -13,7 +13,11 @@ import { ARENA } from './theme';
 import ArenaButton from './ArenaButton';
 import { arenaMediaURL } from './media';
 import ListeningConsole, { type ListeningTrack } from './ListeningConsole';
-import PaperVisual, { tableMarksChoices, type Visual } from './PaperVisual';
+import PaperVisual, {
+  picturesSideBySide,
+  tableMarksChoices,
+  type Visual
+} from './PaperVisual';
 import MathText from './MathText';
 import TypedAnswer from './TypedAnswer';
 import OrderAnswer, { orderSentence } from './OrderAnswer';
@@ -888,7 +892,7 @@ export function PaperItem({
       <h3>{item.heading.title}</h3><p>{item.heading.directions}</p>
     </div>}
     {!reviewOnly && item.passageFirst && suppliedPassage && <div className={cx(itemCls, passageCls, wideItemCls)}><PaperText text={suppliedPassage.body} /></div>}
-    <article className={cx(itemCls, (item.fullWidth || item.marked || item.written) && wideItemCls)}>
+    <article className={cx(itemCls, (item.fullWidth || item.marked || item.written) && wideItemCls, item.visual && picturesSideBySide(item.visual as unknown as Visual) && pictureItemCls)}>
       {!reviewOnly && <>
       {passage && listening && audioControls && (
         <div className={audioCls}>
@@ -1563,6 +1567,7 @@ const answerFieldsetCls = css`
 `;
 
 const paperCls = css`
+  container: arena-paper / inline-size;
   flex: 1;
   min-width: 0;
   overflow-y: auto;
@@ -1620,6 +1625,15 @@ const itemCls = css`
 
 const wideItemCls = css`
   column-span: all;
+`;
+
+// Picture options need two readable pictures per row. When the paper is too
+// narrow for that inside one of its two columns (a tablet beside the OMR
+// sheet), the item takes the paper's full width instead.
+const pictureItemCls = css`
+  @container arena-paper (max-width: 61rem) {
+    column-span: all;
+  }
 `;
 
 const stemCls = css`
@@ -2014,12 +2028,23 @@ const glossesCls = css`
   white-space: normal;
 `;
 
-// marker-only choices (① ② ③ ④ ⑤ of an underline item) sit in one row
+// marker-only choices (① ② ③ ④ ⑤ of an underline item, the bare (A)-(D) of
+// picture and spoken options) sit in one row: each is a full-size touch
+// target, and as large on a phone as on the desktop paper
 const markerRowCls = css`
   display: flex;
-  gap: 2.4rem;
+  flex-wrap: wrap;
+  gap: 1.6rem;
   li button {
     width: auto;
+    min-width: 44px;
+    min-height: 44px;
+    text-align: center;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    justify-content: space-between;
+    gap: 0.8rem;
+    font-size: 1.8rem;
   }
 `;
 

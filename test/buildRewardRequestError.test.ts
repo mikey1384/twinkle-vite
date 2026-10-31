@@ -77,4 +77,10 @@ test('requestBuildRewards throws the coded error, and the host bridge forwards c
     bridge,
     /typeof error\.status === 'number'\s*\?\s*\{ status: error\.status \}/
   );
+  // A request that never got an HTTP response keeps its transport flag, so
+  // the app can tell it apart from a real server 500.
+  assert.match(
+    bridge,
+    /error\.isTransportError === true\s*\?\s*\{ isTransportError: true \}/
+  );
 });
