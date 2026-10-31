@@ -768,7 +768,7 @@ export default function LinkPage() {
           display: none;
           @media (max-width: ${mobileMaxWidth}) {
             display: block;
-            height: var(--mobile-nav-total-height);
+            height: calc(var(--mobile-nav-total-height) + 2.5rem);
           }
         `}
       />
