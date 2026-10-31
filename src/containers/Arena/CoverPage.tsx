@@ -149,6 +149,14 @@ export default function CoverPage({
                 replays.
               </li>
             )}
+            {exam.key === 'toeic-lr' && (
+              <li>
+                Each part begins with its directions. A Normal Full test
+                shows an estimated total-score band (such as 800+), not
+                separate Listening and Reading scores. Part 1 pictures are
+                drawings.
+              </li>
+            )}
             <li>The clock starts when you press Start.</li>
             {exam.key.startsWith('ssat-') && <>
               <li>No calculator. To leave a multiple-choice question blank, tap its selected answer again.</li>
@@ -172,6 +180,12 @@ export default function CoverPage({
               </>
             )}
           </ul>
+          {exam.key === 'toeic-lr' && (
+            <p>
+              TOEIC® is a registered trademark of ETS. This product is not
+              endorsed or approved by ETS. All questions are original.
+            </p>
+          )}
           {exam.key === 'c1-advanced' && (
             <p>
               C1 Advanced and Cambridge English are trade marks of Cambridge

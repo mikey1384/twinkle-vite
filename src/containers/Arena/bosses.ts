@@ -161,6 +161,13 @@ export const BOSSES: Record<
     name: '법대 교수',
     nameEn: 'The Law Professor',
     color: '#1f7a4d'
+  },
+  // TOEIC®: the HR manager who reads the score box on every résumé (the
+  // Korean name avoids the ETS-banned transliteration)
+  'toeic-lr': {
+    name: '인사팀 부장',
+    nameEn: 'The HR Manager',
+    color: '#335c67'
   }
 };
 

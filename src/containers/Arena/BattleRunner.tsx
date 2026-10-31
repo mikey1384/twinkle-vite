@@ -102,7 +102,8 @@ function listeningTracks(data: ArenaBattle): ListeningTrack[] {
       callKey: label.replace('~', '-'),
       audioPath,
       src: arenaMediaURL(audioPath),
-      plays: item.plays || 1
+      plays: item.plays || 1,
+      type: item.type
     });
   }
   return tracks;

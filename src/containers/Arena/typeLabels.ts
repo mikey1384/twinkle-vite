@@ -88,6 +88,18 @@ const LABELS: Record<string, string> = {
   'tosel.l.retell': 'Listening: retell',
   'tosel.r.general': 'General reading',
   'tosel.r.practical': 'Practical reading',
+  // TOEIC® L&R: the real test's part names
+  'toeic.l.photo': 'Listening: photographs',
+  'toeic.l.response': 'Listening: question-response',
+  'toeic.l.conversation': 'Listening: conversations',
+  'toeic.l.conversationGraphic': 'Listening: conversations with a graphic',
+  'toeic.l.talk': 'Listening: talks',
+  'toeic.l.talkGraphic': 'Listening: talks with a graphic',
+  'toeic.r.sentence': 'Incomplete sentences',
+  'toeic.r.textCompletion': 'Text completion',
+  'toeic.r.single': 'Reading: single passages',
+  'toeic.r.double': 'Reading: double passages',
+  'toeic.r.triple': 'Reading: triple passages',
   // 내신: the school test's own sections
   'kor.hs.language': 'Grammar',
   'kor.hs.lit.poem': 'Poetry',
