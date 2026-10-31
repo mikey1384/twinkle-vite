@@ -137,6 +137,13 @@ export const BOSSES: Record<
     nameEn: 'The Speaking Examiner',
     color: '#2f5fd0'
   },
+  // TOEFL iBT®: the academy director with the study-abroad wall of
+  // acceptance letters (never the ETS name in Korean script)
+  'toefl-ibt': {
+    name: '어학원 원장',
+    nameEn: 'The Language Academy Director',
+    color: '#e07a1f'
+  },
   'sat-rw': {
     name: '입시 컨설턴트',
     nameEn: 'The Admissions Counselor',
@@ -161,6 +168,13 @@ export const BOSSES: Record<
     name: '법대 교수',
     nameEn: 'The Law Professor',
     color: '#1f7a4d'
+  },
+  // TOEIC®: the HR manager who reads the score box on every résumé (the
+  // Korean name avoids the ETS-banned transliteration)
+  'toeic-lr': {
+    name: '인사팀 부장',
+    nameEn: 'The HR Manager',
+    color: '#335c67'
   }
 };
 
