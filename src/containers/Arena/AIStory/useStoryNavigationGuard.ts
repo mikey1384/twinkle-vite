@@ -117,7 +117,13 @@ export default function useStoryNavigationGuard(enabled: boolean) {
     }
 
     function handlePop(event: PopStateEvent) {
-      if (proceeding) return;
+      if (proceeding) {
+        // Let the one confirmed traversal through, then guard again: the
+        // member may open another unfinished story without a remount.
+        proceeding = false;
+        rememberLocation();
+        return;
+      }
       if (restoring) {
         event.stopImmediatePropagation();
         if (window.location.href === currentHref) {

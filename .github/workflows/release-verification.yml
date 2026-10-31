@@ -40,6 +40,9 @@ jobs:
           if [[ "$base" == "$(git rev-parse HEAD)" ]]; then base=HEAD^; fi
           git diff --name-only -z "$base" HEAD -- 'src/**/*.ts' 'src/**/*.tsx' 'src/**/*.js' | \
             xargs -0 -r node --max-old-space-size=1024 node_modules/eslint/bin/eslint.js
+      - name: Website version numbering
+        # Ruling 10-25: patch stays below 100 (x.y.99 -> x.(y+1).0).
+        run: node_modules/.bin/tsx --test test/websiteVersionNumbering.test.ts
       - name: Focused behavior checks
         env:
           TEST_FILES: ${{ inputs.test_files || 'test/buildRewardsBridge.test.ts test/buildAiDecisionBridge.test.cjs test/buildAppReferences.test.ts test/buildCommentFeedback.test.cjs test/chatPins.test.ts test/userActivity.test.ts test/contentActionAvailability.test.js test/feedCardSizing.test.cjs' }}

@@ -331,7 +331,7 @@ export default function Home({
             display: block;
             height: 7rem;
             @media (max-width: ${mobileMaxWidth}) {
-              height: var(--mobile-nav-total-height);
+              height: calc(var(--mobile-nav-total-height) + 2.5rem);
             }
           `}
         />

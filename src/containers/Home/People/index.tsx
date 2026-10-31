@@ -212,7 +212,7 @@ function People() {
             height: 7rem;
             @media (max-width: ${mobileMaxWidth}) {
               display: block;
-              height: var(--mobile-nav-total-height);
+              height: calc(var(--mobile-nav-total-height) + 2.5rem);
             }
           `}
         />

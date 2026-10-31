@@ -107,7 +107,10 @@ export default function Main({
         )}
         <div
           className="mobile"
-          style={{ height: 'var(--mobile-nav-total-height)', width: '100%' }}
+          style={{
+            height: 'calc(var(--mobile-nav-total-height) + 2.5rem)',
+            width: '100%'
+          }}
         />
       </div>
     </div>
