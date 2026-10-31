@@ -137,6 +137,13 @@ export const BOSSES: Record<
     nameEn: 'The Speaking Examiner',
     color: '#2f5fd0'
   },
+  // TOEFL iBT®: the academy director with the study-abroad wall of
+  // acceptance letters (never the ETS name in Korean script)
+  'toefl-ibt': {
+    name: '어학원 원장',
+    nameEn: 'The Language Academy Director',
+    color: '#e07a1f'
+  },
   'sat-rw': {
     name: '입시 컨설턴트',
     nameEn: 'The Admissions Counselor',

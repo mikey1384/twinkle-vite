@@ -11,9 +11,17 @@ import type { ArenaItem } from './types';
 // time, then its response time, recorded in the browser and uploaded
 // privately (upload context 'arenaSpeech'). One take in a battle, as in the
 // real exam; Train's untimed retake may record again. A failed upload keeps
-// the take so it can be sent again.
+// the take so it can be sent again. A heard prompt (TOEFL iBT Listen and
+// Repeat, Take an Interview) plays once first, then the clock starts.
 
-type Phase = 'idle' | 'prep' | 'recording' | 'uploading' | 'done' | 'error';
+type Phase =
+  | 'idle'
+  | 'prompt'
+  | 'prep'
+  | 'recording'
+  | 'uploading'
+  | 'done'
+  | 'error';
 
 function recorderType() {
   if (typeof MediaRecorder === 'undefined') return null;
@@ -42,6 +50,8 @@ export default function SpokenAnswer({
   finished,
   retakeAllowed,
   korean,
+  promptSrc = null,
+  promptReplay = false,
   onSaved
 }: {
   battleId: number;
@@ -51,6 +61,9 @@ export default function SpokenAnswer({
   finished: boolean;
   retakeAllowed: boolean;
   korean: boolean;
+  // the heard prompt's recording, and whether it may be played again
+  promptSrc?: string | null;
+  promptReplay?: boolean;
   onSaved: (seconds: number) => void;
 }) {
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
@@ -73,6 +86,7 @@ export default function SpokenAnswer({
   const takeRef = useRef<{ blob: Blob; type: string; seconds: number } | null>(
     null
   );
+  const promptRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (recording && phase === 'idle') {
@@ -109,8 +123,21 @@ export default function SpokenAnswer({
       ) : phase === 'idle' && !finished ? (
         <ArenaButton tone="red" size="md" onClick={handleStart}>
           <Icon icon="microphone" />{' '}
-          {prepSeconds ? 'Start (preparation first)' : 'Start recording'}
+          {promptSrc
+            ? 'Start (listen first)'
+            : prepSeconds
+              ? 'Start (preparation first)'
+              : 'Start recording'}
         </ArenaButton>
+      ) : phase === 'prompt' ? (
+        <div className={liveCls}>
+          <span className={phaseLabelCls}>
+            <Icon icon="volume" /> Listen
+          </span>
+          <span className={noteCls}>
+            Recording starts by itself when the speaker stops.
+          </span>
+        </div>
       ) : phase === 'prep' ? (
         <div className={liveCls}>
           <span className={phaseLabelCls}>Prepare</span>
@@ -164,6 +191,12 @@ export default function SpokenAnswer({
           <p className={noteCls}>{korean ? '(녹음 없음)' : '(no recording)'}</p>
         )
       )}
+      {promptSrc && promptReplay && (
+        <div className={replayCls}>
+          <span className={noteCls}>Question audio</span>
+          <audio controls preload="none" src={promptSrc} className={audioCls} />
+        </div>
+      )}
     </div>
   );
 
@@ -179,12 +212,40 @@ export default function SpokenAnswer({
       setPhase('error');
       return;
     }
+    if (promptSrc) {
+      playPrompt(promptSrc, afterPrompt);
+    } else {
+      afterPrompt();
+    }
+  }
+
+  function afterPrompt() {
     if (prepSeconds > 0) {
       setPhase('prep');
       countdown(prepSeconds, startRecording);
     } else {
       startRecording();
     }
+  }
+
+  // the prompt once, as the real test plays it; recording follows at once
+  function playPrompt(src: string, onDone: () => void) {
+    setPhase('prompt');
+    const audio = new Audio(src);
+    promptRef.current = audio;
+    audio.onended = () => {
+      promptRef.current = null;
+      onDone();
+    };
+    audio.onerror = () => {
+      promptRef.current = null;
+      releaseStream();
+      setError(
+        "This question's recording did not load. Check your connection and start again."
+      );
+      setPhase('error');
+    };
+    audio.play().catch(() => audio.onerror?.(new Event('error')));
   }
 
   function startRecording() {
@@ -295,6 +356,12 @@ export default function SpokenAnswer({
 
   function stopEverything() {
     clearTimer();
+    if (promptRef.current) {
+      promptRef.current.onended = null;
+      promptRef.current.onerror = null;
+      promptRef.current.pause();
+      promptRef.current = null;
+    }
     if (recorderRef.current?.state === 'recording') {
       recorderRef.current.onstop = null;
       recorderRef.current.stop();
@@ -389,4 +456,12 @@ const errorCls = css`
 
 const audioCls = css`
   max-width: 100%;
+`;
+
+const replayCls = css`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
 `;

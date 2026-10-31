@@ -171,6 +171,28 @@ export default function CoverPage({
                 </li>
               </>
             )}
+            {exam.key === 'toefl-ibt' && (
+              <>
+                <li>
+                  Build a Sentence: tap the tiles in order to fill the blanks;
+                  tap a placed tile to take it back. A sentence counts only
+                  when every tile is in place.
+                </li>
+                <li>
+                  {length === 'full'
+                    ? 'Speaking needs a microphone. Each speaking prompt plays once, then your answer records. Writing and Speaking marks are AI estimates.'
+                    : length === 'medium'
+                      ? 'Writing marks are AI estimates. Speaking belongs to the Full test.'
+                      : 'This shortened selection has no Writing or Speaking tasks.'}
+                </li>
+                <li>
+                  This practice test uses the scored questions of the harder
+                  (upper) path at a fixed difficulty. Unscored questions are
+                  left out, and Reading and Listening keep the real time per
+                  question. Bands are estimates, not TOEFL scores.
+                </li>
+              </>
+            )}
           </ul>
           {exam.key === 'c1-advanced' && (
             <p>
@@ -181,6 +203,13 @@ export default function CoverPage({
             </p>
           )}
           {exam.key.startsWith('ssat-') && <p>SSAT is a registered trademark of its owner. Twinkle is independent and is not endorsed by the SSAT publisher. All questions are original.</p>}
+          {exam.key === 'toefl-ibt' && (
+            <p>
+              TOEFL and TOEFL iBT are registered trademarks of ETS. This
+              product is not endorsed or approved by ETS. All questions are
+              original.
+            </p>
+          )}
           {rewardSection}
           <div className={actionsCls}>
             <button type="button" className={cancelCls} onClick={onCancel}>
@@ -293,6 +322,10 @@ const backdropCls = css`
   padding: 1.6rem;
   background: rgba(29, 27, 24, 0.55);
   overflow-y: auto;
+  /* phones: keep Start above the fixed bottom nav */
+  @media (max-width: ${mobileMaxWidth}) {
+    padding-bottom: calc(var(--mobile-nav-total-height) + 1.6rem);
+  }
 `;
 
 const coverCls = css`

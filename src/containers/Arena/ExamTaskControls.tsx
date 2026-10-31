@@ -43,7 +43,7 @@ export function TaskAnswer({
   return (
     <span className={answerCls} id={`exam-question-${item.no}`}>
       <span className={numberCls}>{item.no}</span>
-      {item.typed ? (
+      {item.typed && item.typed !== 'order' ? (
         <TypedAnswer
           key={item.no}
           typed={item.typed}

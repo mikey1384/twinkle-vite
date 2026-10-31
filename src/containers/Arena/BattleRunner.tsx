@@ -16,6 +16,7 @@ import ListeningConsole, { type ListeningTrack } from './ListeningConsole';
 import PaperVisual, { tableMarksChoices, type Visual } from './PaperVisual';
 import MathText from './MathText';
 import TypedAnswer from './TypedAnswer';
+import OrderAnswer, { orderSentence } from './OrderAnswer';
 import EssayAnswer from './EssayAnswer';
 import SpokenAnswer from './SpokenAnswer';
 import MarkReview from './MarkReview';
@@ -575,6 +576,12 @@ export default function BattleRunner({
                       ? answers[item.no] != null
                       : recordings[item.no] != null) && <Icon icon="check" />}
                   </span>
+                ) : item.typed === 'order' ? (
+                  // Build a Sentence: built on the paper, ticked here
+                  <span className={omrMarkedCls}>
+                    Sentence{' '}
+                    {answers[item.no] != null && <Icon icon="check" />}
+                  </span>
                 ) : item.typed ? (
                   // 단답형: the answer sheet's own box, same value as the item's
                   <TypedAnswer
@@ -937,7 +944,7 @@ export function PaperItem({
           <div className={artPendingCls}>(그림 / 도표)</div>
         )
       )}
-      {passage && !listening && !problemLayout && (
+      {passage && !listening && !problemLayout && !(item.heard && !finished) && (
         <div className={passageCls}>
           {isDialogue(passage.body) ? (
             <DialogueText text={passage.body} />
@@ -946,7 +953,11 @@ export function PaperItem({
           )}
         </div>
       )}
-      {item.body && !bodyFirst && !problemLayout && !isArtBrief(item.body) && (
+      {item.body &&
+        !bodyFirst &&
+        !problemLayout &&
+        item.typed !== 'order' &&
+        !isArtBrief(item.body) && (
         <div className={boxCls}>
           <PaperText text={item.body} />
         </div>
@@ -969,6 +980,10 @@ export function PaperItem({
           recording={item.recording ?? null}
           finished={finished}
           retakeAllowed={untimed}
+          // a heard prompt plays once before the answer; replays only where
+          // the paper allows them (Train's retake, the review)
+          promptSrc={item.promptAudio ? arenaMediaURL(item.promptAudio) : null}
+          promptReplay={finished || untimed}
           korean={korean}
           onSaved={(seconds) => onRecorded?.(seconds)}
         />
@@ -991,7 +1006,21 @@ export function PaperItem({
       {finished && item.written && review?.explanation && <p className={strongAnswerCls}>
         <b>{ko ? '쓰기 연습 안내: ' : 'Writing practice notes: '}</b><MathText text={review.explanation} />
       </p>}
-      {item.typed && (
+      {item.typed === 'order' && (
+        <OrderAnswer
+          frame={item.body || ''}
+          tiles={item.choices}
+          value={marked}
+          finished={finished}
+          label={
+            letters
+              ? `Question ${item.display || item.no} sentence`
+              : `${item.display || item.no}번 문장`
+          }
+          onCommit={onMark}
+        />
+      )}
+      {item.typed && item.typed !== 'order' && (
         <div className={typedRowCls}>
           <TypedAnswer
             typed={item.typed}
@@ -1077,7 +1106,11 @@ export function PaperItem({
             ) : (
               <>
                 {ko ? '정답:' : 'Answer:'}{' '}
-                {item.typed ? (
+                {item.typed === 'order' ? (
+                  <span className={typedKeyCls}>
+                    {orderSentence(item.body, item.choices, item.key)}
+                  </span>
+                ) : item.typed ? (
                   <span className={typedKeyCls}>{String(item.key ?? '')}</span>
                 ) : (
                   <span className={glyphCls}>
@@ -1094,7 +1127,9 @@ export function PaperItem({
                 ? ko
                   ? '(빈칸)'
                   : '(blank)'
-                : String(marked)}
+                : item.typed === 'order'
+                  ? orderSentence(item.body, item.choices, marked)
+                  : String(marked)}
             </p>
           )}
           {item.partialCredit && <PartialCreditReview credit={item.partialCredit} ko={ko} />}

@@ -151,7 +151,9 @@ export interface ArenaState {
   examsPerDay?: number;
 }
 
-export type TypedFormat = 'integer' | 'number' | 'text' | 'transformation';
+// 'order': the choices are tiles placed into body's blanks (TOEFL iBT
+// Build a Sentence), the answer their indices in blank order
+export type TypedFormat = 'integer' | 'number' | 'text' | 'transformation' | 'order';
 
 export interface ArenaPartialCredit {
   earned: number;
@@ -202,6 +204,10 @@ export interface ArenaItem {
   spokenChoices?: boolean;
   // an essay or spoken answer, AI-marked after the battle
   marked?: 'essay' | 'spoken';
+  // a spoken prompt that is heard, not read (TOEFL iBT Speaking): its
+  // script stays hidden until the battle is over; promptAudio plays first
+  heard?: boolean;
+  promptAudio?: string;
   task?: {
     minWords?: number;
     maxWords?: number;
