@@ -36,6 +36,11 @@ import AiEnergySponsorButton, {
   shouldRenderAiEnergySponsorNotice
 } from '~/components/Comments/AiEnergySponsorButton';
 import { placeholderHeights } from '~/constants/state';
+import {
+  isMeasuredHeight,
+  lazyContentShown,
+  useLazyStandInReady
+} from '~/helpers/lazyPlaceholder';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from './Styles';
@@ -127,7 +132,8 @@ function Comment({
     placeholderHeights[
       `comment-${parent.contentType}-${parent.contentId}-${commentId}`
     ];
-  const [ComponentRef, inView] = useInView();
+  const [ComponentRef, inView, inViewEntry] = useInView();
+  const standInReady = useLazyStandInReady(inViewEntry);
   const PanelRef = useRef(null);
   subject = subject || comment.targetObj?.subject || {};
   const subjectUploaderId = subject.uploader?.id || subject.userId;
@@ -208,6 +214,7 @@ function Comment({
     PanelRef,
     inView,
     onSetPlaceholderHeight: (height: number) => {
+      if (!isMeasuredHeight(height)) return;
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
     }
@@ -516,19 +523,20 @@ function Comment({
     replies.length
   ]);
 
-  const commentHeight = useMemo(() => {
-    return placeholderHeight || '9rem';
-  }, [placeholderHeight]);
-
   const innerContainerHeight = useMemo(() => {
     return isDeleteNotification && !isCommentForASubjectWithSecretMessage
       ? '0.3rem'
       : 'auto';
   }, [isCommentForASubjectWithSecretMessage, isDeleteNotification]);
 
-  const contentShown = useMemo(() => {
-    return inView || visible;
-  }, [inView, visible]);
+  // The empty stand-in is only ever the comment's measured height.
+  const contentShown = lazyContentShown({
+    inView,
+    isVisible: visible,
+    measuredHeight: placeholderHeight,
+    standInReady,
+    heightCachedAtMount: previousPlaceholderHeight
+  });
 
   return isDisplayed ? (
     <ScopedTheme theme={themeName} roles={['link', 'reward']}>
@@ -1023,7 +1031,7 @@ function Comment({
               </div>
             </div>
           ) : (
-            <div style={{ width: '100%', height: commentHeight }} />
+            <div style={{ width: '100%', height: placeholderHeight }} />
           )}
           {userListModalShown && (
             <UserListModal

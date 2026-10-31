@@ -7,6 +7,10 @@ import { useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useInView } from 'react-intersection-observer';
 import { placeholderHeights } from '~/constants/state';
+import {
+  lazyContentShown,
+  useLazyStandInReady
+} from '~/helpers/lazyPlaceholder';
 import { cloudFrontURL, returnMissionThumb } from '~/constants/defaultValues';
 import { observeMountedSubject } from '~/helpers/subjectRewardLevelSync';
 import { getDisplayedSubjectRewardLevel } from '~/helpers/rewardLevelRevision';
@@ -38,7 +42,8 @@ function ContentListItem({
   hideSideBordersOnMobile?: boolean;
   noTopBorderRadius?: boolean;
 }) {
-  const [ComponentRef, inView] = useInView();
+  const [ComponentRef, inView, inViewEntry] = useInView();
+  const standInReady = useLazyStandInReady(inViewEntry);
   const navigate = useNavigate();
   const PanelRef = useRef(null);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -195,9 +200,18 @@ function ContentListItem({
     }
   });
 
-  const contentShown = useMemo(() => {
-    return isVisible || inView;
-  }, [inView, isVisible]);
+  // Non-build items are a fixed 17rem box, so their stand-in is exact. A build
+  // card is as tall as its content: its stand-in is only ever its measured
+  // height, and until it has one it renders the card.
+  const contentShown = isBuildItem
+    ? lazyContentShown({
+        inView,
+        isVisible,
+        measuredHeight: placeholderHeight,
+        standInReady,
+        heightCachedAtMount: previousPlaceholderHeight
+      })
+    : isVisible || inView;
 
   useEffect(() => {
     placeholderHeightRef.current = previousPlaceholderHeight;
@@ -299,12 +313,7 @@ function ContentListItem({
         <div
           style={{
             width: '100%',
-            height:
-              isBuildItem && placeholderHeight
-                ? placeholderHeight
-                : isBuildItem
-                  ? '17rem'
-                  : undefined
+            height: isBuildItem ? placeholderHeight : undefined
           }}
         />
       )}

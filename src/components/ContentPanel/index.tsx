@@ -20,6 +20,11 @@ import TargetDailyReflectionContent from './TargetDailyReflectionContent';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
+import {
+  isMeasuredHeight,
+  lazyContentShown,
+  useLazyStandInReady
+} from '~/helpers/lazyPlaceholder';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useRecordContentPageView } from '~/helpers/hooks/useRecordContentPageView';
 import { contentPageSeedCanRender } from '~/helpers/contentPageSeed';
@@ -111,7 +116,8 @@ export default function ContentPanel({
     () => placeholderHeights[`${contentType}-${contentId}`],
     [contentId, contentType]
   );
-  const [ComponentRef, inView] = useInView();
+  const [ComponentRef, inView, inViewEntry] = useInView();
+  const standInReady = useLazyStandInReady(inViewEntry);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
@@ -207,6 +213,7 @@ export default function ContentPanel({
     inView,
     PanelRef,
     onSetPlaceholderHeight: (height: number) => {
+      if (!isMeasuredHeight(height)) return;
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
     }
@@ -305,21 +312,33 @@ export default function ContentPanel({
 
   // A content page's panel is the page itself, always at the top of it: it
   // must not wait for the intersection observer (which reports only after the
-  // first paint) or the page paints empty on mount.
+  // first paint) or the page paints empty on mount. In a list, the empty
+  // stand-in is only ever the panel's measured height.
   const contentShown = useMemo(
     () =>
       alwaysShow ||
       isContentPage ||
-      inView ||
-      isVisible ||
       started ||
+      rootStarted ||
+      lazyContentShown({
+        inView,
+        isVisible,
+        measuredHeight: placeholderHeight,
+        standInReady,
+        heightCachedAtMount: previousPlaceholderHeight
+      }),
+    [
+      alwaysShow,
+      inView,
+      isContentPage,
+      isVisible,
+      placeholderHeight,
+      previousPlaceholderHeight,
       rootStarted,
-    [alwaysShow, inView, isContentPage, isVisible, rootStarted, started]
+      standInReady,
+      started
+    ]
   );
-
-  const componentHeight = useMemo(() => {
-    return placeholderHeight || '15rem';
-  }, [placeholderHeight]);
 
   const contentHeight = useMemo(() => {
     return !bodyShown ? '15rem' : '';
@@ -745,7 +764,7 @@ export default function ContentPanel({
               <div
                 style={{
                   width: '100%',
-                  height: componentHeight
+                  height: placeholderHeight
                 }}
               />
             )}

@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import CloneButtons from '~/components/Buttons/CloneButtons';
 import Icon from '~/components/Icon';
@@ -13,6 +13,11 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useLazyLoad } from '~/helpers/hooks';
+import {
+  isMeasuredHeight,
+  lazyContentShown,
+  useLazyStandInReady
+} from '~/helpers/lazyPlaceholder';
 import { useInView } from 'react-intersection-observer';
 import moment from 'moment';
 
@@ -72,20 +77,23 @@ function SharedPromptCard({
 }) {
   const navigate = useNavigate();
   const PanelRef = useRef<HTMLDivElement>(null);
-  const placeholderHeightRef = useRef(cardHeights[topic.id]);
+  const [heightCachedAtMount] = useState(() => cardHeights[topic.id]);
+  const placeholderHeightRef = useRef(heightCachedAtMount);
   const [placeholderHeight, setPlaceholderHeight] = useState(
-    cardHeights[topic.id]
+    heightCachedAtMount
   );
 
-  const [inViewRef, inView] = useInView({
+  const [inViewRef, inView, inViewEntry] = useInView({
     rootMargin: '200px 0px'
   });
+  const standInReady = useLazyStandInReady(inViewEntry);
 
   const isVisible = useLazyLoad({
     id: `shared-prompt-${topic.id}`,
     inView,
     PanelRef,
     onSetPlaceholderHeight: (height: number) => {
+      if (!isMeasuredHeight(height)) return;
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
     },
@@ -98,11 +106,14 @@ function SharedPromptCard({
     };
   }, [topic.id]);
 
-  const contentShown = useMemo(() => inView || isVisible, [inView, isVisible]);
-  const componentHeight = useMemo(
-    () => placeholderHeight || 200,
-    [placeholderHeight]
-  );
+  // The empty stand-in is only ever the card's measured height.
+  const contentShown = lazyContentShown({
+    inView,
+    isVisible,
+    measuredHeight: placeholderHeight,
+    standInReady,
+    heightCachedAtMount
+  });
 
   const instructions =
     topic.customInstructions || topic.settings?.customInstructions || '';
@@ -110,7 +121,7 @@ function SharedPromptCard({
   return (
     <article ref={inViewRef} className={cardClass}>
       {!contentShown ? (
-        <div style={{ width: '100%', height: componentHeight }} />
+        <div style={{ width: '100%', height: placeholderHeight }} />
       ) : (
         <div ref={PanelRef}>
           <SharedPromptBlock

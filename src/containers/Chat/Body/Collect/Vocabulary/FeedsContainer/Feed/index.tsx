@@ -5,6 +5,11 @@ import BreakLayout from './BreakLayout';
 import moment from 'moment';
 import { vocabFeedHeight } from '~/constants/state';
 import { useLazyLoad } from '~/helpers/hooks';
+import {
+  isMeasuredHeight,
+  lazyContentShown,
+  useLazyStandInReady
+} from '~/helpers/lazyPlaceholder';
 import { useInView } from 'react-intersection-observer';
 import DefaultLayout from './DefaultLayout';
 import {
@@ -38,19 +43,22 @@ function Feed({
     rewardType
   } = feed;
   const PanelRef = useRef<HTMLDivElement>(null);
-  const placeholderHeightRef = useRef(vocabFeedHeight[feed.id]);
+  const [heightCachedAtMount] = useState(() => vocabFeedHeight[feed.id]);
+  const placeholderHeightRef = useRef(heightCachedAtMount);
   const [placeholderHeight, setPlaceholderHeight] = useState(
-    vocabFeedHeight[feed.id]
+    heightCachedAtMount
   );
-  const [inViewRef, inView] = useInView({
+  const [inViewRef, inView, inViewEntry] = useInView({
     rootMargin: '200px 0px'
   });
+  const standInReady = useLazyStandInReady(inViewEntry);
 
   const isVisible = useLazyLoad({
     id: `vocab-feed-${feed.id}`,
     inView,
     PanelRef,
     onSetPlaceholderHeight: (height: number) => {
+      if (!isMeasuredHeight(height)) return;
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
     },
@@ -69,21 +77,23 @@ function Feed({
 
   // The newest cards are what's on screen when Word Master opens; they render
   // in full from the first frame instead of opening from a placeholder on
-  // screen (the iPhone drift, same as the 10-04 /users jank).
-  const feedShown = useMemo(
-    () => eager || inView || isVisible,
-    [eager, inView, isVisible]
-  );
-  const componentHeight = useMemo(
-    () => placeholderHeight || '60px',
-    [placeholderHeight]
-  );
+  // screen (the iPhone drift, same as the 10-04 /users jank). Older cards'
+  // empty stand-in is only ever their measured height.
+  const feedShown =
+    eager ||
+    lazyContentShown({
+      inView,
+      isVisible,
+      measuredHeight: placeholderHeight,
+      standInReady,
+      heightCachedAtMount
+    });
   const isBreakFeed = action === 'break_start' || action === 'break_clear';
 
   return (
     <div ref={inViewRef} style={{ marginBottom: '1.5rem' }}>
       {!feedShown ? (
-        <div style={{ width: '100%', height: componentHeight }} />
+        <div style={{ width: '100%', height: placeholderHeight }} />
       ) : (
         <div ref={PanelRef}>
           {isBreakFeed ? (
