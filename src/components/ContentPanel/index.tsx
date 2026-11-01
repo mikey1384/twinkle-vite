@@ -28,6 +28,7 @@ import {
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useRecordContentPageView } from '~/helpers/hooks/useRecordContentPageView';
 import { contentPageSeedCanRender } from '~/helpers/contentPageSeed';
+import { subjectBookAvailabilityUnknown } from '~/helpers/bookEmbedHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
@@ -219,18 +220,21 @@ export default function ContentPanel({
     }
   });
   const hydrationRequestKeyRef = useRef('');
-  const buildForkabilityHydrationKeyRef = useRef('');
+  const fieldHydrationKeyRef = useRef('');
   const inputAtBottom = contentType === 'comment';
   const { started: rootStarted } = useContentState({
     contentType: normalizedRootType,
     contentId: rootId
   });
-  const buildNeedsForkabilityHydration =
-    contentType === 'build' &&
-    loaded &&
-    !contentState.notFound &&
-    (typeof contentState.collaborationMode !== 'string' ||
-      typeof contentState.isPublic === 'undefined');
+  // A copy seeded from another query (a list row, a comment's root) can be
+  // `loaded` without the fields this page needs; fetch the full copy once.
+  const needsFieldHydration =
+    (contentType === 'build' &&
+      loaded &&
+      !contentState.notFound &&
+      (typeof contentState.collaborationMode !== 'string' ||
+        typeof contentState.isPublic === 'undefined')) ||
+    subjectBookAvailabilityUnknown(contentType, contentState);
 
   useEffect(() => {
     return function cleanUp() {
@@ -244,16 +248,15 @@ export default function ContentPanel({
     const hydrationKey = `${contentType}-${contentId}-${
       appliedRootType || ''
     }-${requestUserId || 0}`;
-    const shouldHydrateBuildForkability =
-      buildNeedsForkabilityHydration &&
-      buildForkabilityHydrationKeyRef.current !== hydrationKey;
+    const shouldHydrateFields =
+      needsFieldHydration && fieldHydrationKeyRef.current !== hydrationKey;
     if (
-      (!loaded || shouldHydrateBuildForkability) &&
+      (!loaded || shouldHydrateFields) &&
       hydrationRequestKeyRef.current !== hydrationKey &&
       contentId
     ) {
-      if (shouldHydrateBuildForkability) {
-        buildForkabilityHydrationKeyRef.current = hydrationKey;
+      if (shouldHydrateFields) {
+        fieldHydrationKeyRef.current = hydrationKey;
       }
       onMount(hydrationKey, requestUserId);
     }
@@ -290,10 +293,10 @@ export default function ContentPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     appliedRootType,
-    buildNeedsForkabilityHydration,
     contentId,
     contentType,
     loaded,
+    needsFieldHydration,
     userId
   ]);
 

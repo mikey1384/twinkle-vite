@@ -1,6 +1,7 @@
 import {
   getSubjectDisplayDescription,
-  parseBookLink
+  parseBookLink,
+  subjectBookAvailabilityUnknown
 } from '~/helpers/bookEmbedHelpers';
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
@@ -223,6 +224,10 @@ function HomeFeedWideSubjectEmbedPreview({
   const hasLoadedSubject = Boolean(
     contentState.loaded && !contentState.notFound
   );
+  const bookAvailabilityUnknown = subjectBookAvailabilityUnknown(
+    'subject',
+    contentState
+  );
   const subject = hasLoadedSubject
     ? contentState
     : {
@@ -267,7 +272,7 @@ function HomeFeedWideSubjectEmbedPreview({
     const requestKey = `${userId || 0}:${subjectId}:subject`;
     if (
       !subjectId ||
-      contentState.loaded ||
+      (contentState.loaded && !bookAvailabilityUnknown) ||
       loadingRef.current === requestKey
     ) {
       return;
@@ -296,7 +301,7 @@ function HomeFeedWideSubjectEmbedPreview({
       });
     // checkUserChange/loadContent/onInitContent are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentState.loaded, subjectId, userId]);
+  }, [bookAvailabilityUnknown, contentState.loaded, subjectId, userId]);
 
   return (
     <WideSubjectEmbedPreview

@@ -7,6 +7,7 @@ import {
 } from '~/components/Build/Cards';
 import { BUILD_STATUS_CARD_HEIGHT } from '~/components/Build/Cards/BuildStatusCard';
 import { useContentState } from '~/helpers/hooks';
+import { subjectBookAvailabilityUnknown } from '~/helpers/bookEmbedHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
@@ -104,6 +105,10 @@ export default function MainContentComponent({
     contentId: Number(contentId)
   });
   const { loaded, content, notFound, rewardLevel } = contentState;
+  const bookAvailabilityUnknown = subjectBookAvailabilityUnknown(
+    appliedContentType,
+    contentState
+  );
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -121,7 +126,11 @@ export default function MainContentComponent({
   }
 
   useEffect(() => {
-    if (!loaded && !loadingRef.current && !isNaN(Number(contentId))) {
+    if (
+      (!loaded || bookAvailabilityUnknown) &&
+      !loadingRef.current &&
+      !isNaN(Number(contentId))
+    ) {
       onMount();
     }
     async function onMount() {
@@ -161,7 +170,7 @@ export default function MainContentComponent({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, contentId, appliedContentType]);
+  }, [loaded, bookAvailabilityUnknown, contentId, appliedContentType]);
 
   // Read the unpublished flag from shared content state too (not just this
   // component's own request) so a cached unpublished placeholder never falls

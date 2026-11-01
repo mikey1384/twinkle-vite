@@ -6,12 +6,41 @@ export interface BookPreview {
   author: { id: number; username: string };
 }
 
+// `bookAvailable` is derived on the server, and only the full subject queries
+// (the subject page, feed previews and subject lists) return it. Copies that
+// arrive elsewhere - a comment's root subject, profile highlights, search rows,
+// notifications - still mark the shared state `loaded`. Loaders that show a
+// subject's description treat such a copy as incomplete and fetch the full
+// subject once, so the book card appears on every route, not only on a
+// direct visit. Missing, deleted and unloaded subjects are left to the normal
+// load path.
+export function subjectBookAvailabilityUnknown(
+  contentType: string | undefined,
+  state:
+    | {
+        loaded?: boolean;
+        notFound?: boolean;
+        isDeleted?: boolean | number;
+        bookAvailable?: boolean | number | string | null;
+      }
+    | null
+    | undefined
+) {
+  return Boolean(
+    contentType === 'subject' &&
+      state?.loaded &&
+      !state.notFound &&
+      !Number(state.isDeleted) &&
+      state.bookAvailable == null
+  );
+}
+
 // Website presentation only. The stored description stays clean for editing
 // and for Book Maker's cover. Existing explicit self-embeds are not doubled.
 export function getSubjectDisplayDescription(subject: {
   id?: number;
   contentId?: number;
-  bookAvailable?: boolean | number;
+  bookAvailable?: boolean | number | string | null;
   description?: string;
   content?: string;
 }) {
