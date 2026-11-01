@@ -34,12 +34,8 @@ import ScopedTheme from '~/theme/ScopedTheme';
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { getCanonicalProfilePictureUrl } from '~/helpers/profileCanonicalState';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
-import PlatinumSurface from '~/components/PlatinumSurface';
-import {
-  photoInkShadow,
-  platinumEmboss,
-  platinumInk
-} from '~/components/PlatinumSurface/styles';
+import ThemeCoverBackdrop from '~/components/ThemeCoverBackdrop';
+import { platinumCoverInk } from '~/components/PlatinumSurface/styles';
 import {
   PLATINUM_THEME,
   PROFILE_THEME_LADDER,
@@ -225,15 +221,14 @@ export default function Cover({
     !platinumSeen;
 
   const coverBackgroundVar = `var(--role-cover-color, ${coverBackground})`;
+  const platinumInk = platinumCoverInk(!!coverPhoto);
   const coverTextColorVar = cover.isPlatinum
-    ? coverPhoto
-      ? '#f7f8fa'
-      : platinumInk
+    ? platinumInk.color
     : `var(--role-coverText-color, ${coverTextColor})`;
   const coverTextShadowVar = coverTextShadowColor
     ? `var(--role-coverText-shadow, ${coverTextShadowColor})`
     : 'var(--role-coverText-shadow, transparent)';
-  const platinumShadow = coverPhoto ? photoInkShadow : platinumEmboss;
+  const platinumShadow = platinumInk.shadow;
   const coverShadowLarge = cover.isPlatinum
     ? platinumShadow
     : coverTextShadowColor
@@ -285,29 +280,11 @@ export default function Cover({
           onPointerUp={reposition ? handleDragEnd : undefined}
           onPointerCancel={reposition ? handleDragEnd : undefined}
         >
-          {cover.isPlatinum ? (
-            <PlatinumSurface
-              size="cover"
-              photoUrl={coverPhoto}
-              photoPosition={coverPosition}
-              shine={cover.shine && !reposition}
-              style={{ position: 'absolute', inset: 0, zIndex: 1 }}
-            />
-          ) : (
-            // every other theme: a soft light from above and a little depth below
-            <div
-              aria-hidden="true"
-              className={css`
-                position: absolute;
-                inset: 0;
-                z-index: 1;
-                pointer-events: none;
-                background:
-                  radial-gradient(120% 90% at 20% 0%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 60%),
-                  linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.14) 100%);
-              `}
-            />
-          )}
+          <ThemeCoverBackdrop
+            cover={cover}
+            photoPosition={coverPosition}
+            shine={cover.shine && !reposition}
+          />
           {reposition && (
             <div
               className={css`

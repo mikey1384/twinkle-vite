@@ -457,7 +457,8 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     cover: { color },
     coverText: {
       color: pickColor({ platinum: 'darkPlatinum' }, 'white'),
-      shadow: pickColor({ gold: 'darkBrownOrange' }, '')
+      // white on gold needs a deep outline to read; a light orange one didn't
+      shadow: pickColor({ gold: 'brown' }, '')
     },
     todayProgressText: {
       color,

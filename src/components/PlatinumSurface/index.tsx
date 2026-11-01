@@ -5,6 +5,7 @@ import {
   frameClass,
   leanClass,
   photoClass,
+  type PhotoFade,
   sheenClass,
   surfaceClass
 } from './styles';
@@ -18,6 +19,7 @@ export default function PlatinumSurface({
   children,
   className,
   photoUrl,
+  photoFade = 'bottom',
   photoPosition = '50,50',
   shine = true,
   size = 'cover',
@@ -27,6 +29,9 @@ export default function PlatinumSurface({
   children?: React.ReactNode;
   className?: string;
   photoUrl?: string | null;
+  // where the graphite fade over the photo sits: under bottom-aligned text,
+  // or evenly for text centred on a short cover
+  photoFade?: PhotoFade;
   photoPosition?: string;
   shine?: boolean;
   size?: 'cover' | 'card' | 'strip';
@@ -85,7 +90,7 @@ export default function PlatinumSurface({
     >
       {photoUrl && (
         <div
-          className={photoClass(size)}
+          className={photoClass(size, photoFade)}
           style={{
             backgroundImage: `url("${photoUrl.startsWith('http') ? photoUrl : `${cloudFrontURL}${photoUrl}`}")`,
             backgroundPosition: `${focalPoint(x)}% ${focalPoint(y)}%`

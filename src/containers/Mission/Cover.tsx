@@ -5,6 +5,9 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { checkMultiMissionPassStatus } from '~/helpers/userDataHelpers';
 import ProfilePic from '~/components/ProfilePic';
+import ThemeCoverBackdrop from '~/components/ThemeCoverBackdrop';
+import { platinumCoverInk } from '~/components/PlatinumSurface/styles';
+import { platinumCoverOf } from '~/constants/profileThemes';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
 
@@ -25,6 +28,11 @@ export default function Cover({
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const profileCoverUrl = useKeyContext((v) => v.myState.profileCoverUrl);
+  const profileCoverPosition = useKeyContext(
+    (v) => v.myState.profileCoverPosition
+  );
+  const profileCoverShine = useKeyContext((v) => v.myState.profileCoverShine);
   const {
     color: coverColorValue,
     colorKey: coverColorKey,
@@ -52,6 +60,19 @@ export default function Cover({
     '#fff';
   const coverTextShadowColor =
     coverTextShadowKey && (resolveColorValue(coverTextShadowKey) || undefined);
+  // the same cover as the profile page: platinum is the metal plate with the
+  // member's own photo and Shine setting, and its text is inked for that plate
+  const cover = platinumCoverOf(
+    { profileCoverUrl, profileCoverPosition, profileCoverShine },
+    coverThemeName
+  );
+  const platinumInk = platinumCoverInk(!!cover.photoUrl);
+  const coverInk = cover.isPlatinum ? platinumInk.color : coverTextColor;
+  const coverInkShadow = cover.isPlatinum
+    ? platinumInk.shadow
+    : coverTextShadowColor
+      ? `1px 1px ${coverTextShadowColor}`
+      : 'none';
   const loadMissionRankings = useAppContext(
     (v) => v.requestHelpers.loadMissionRankings
   );
@@ -96,9 +117,19 @@ export default function Cover({
     );
   }, [missionIds?.length, numComplete]);
 
+  // a first place shows in gold unless the cover itself is gold or bare
+  // platinum metal, where gold would not read
+  const rankColor =
+    myGrammarRank === 1 &&
+    coverThemeName !== 'gold' &&
+    !(cover.isPlatinum && !cover.photoUrl)
+      ? Color.gold()
+      : coverInk;
+
   return (
     <div
       className={css`
+        position: relative;
         width: 100%;
         height: 15vh;
         display: flex;
@@ -112,7 +143,16 @@ export default function Cover({
         }
       `}
     >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      {/* the text sits mid-strip, so the photo gets an even veil */}
+      <ThemeCoverBackdrop cover={cover} photoFade="even" size="card" />
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          display: 'flex',
+          alignItems: 'center'
+        }}
+      >
         <div>
           <ProfilePic
             className={css`
@@ -131,10 +171,8 @@ export default function Cover({
           className={css`
             margin-left: 3rem;
             font-size: 3rem;
-            color: ${coverTextColor};
-            ${coverTextShadowColor
-              ? `text-shadow: 1px 1px ${coverTextShadowColor};`
-              : ''}
+            color: ${coverInk};
+            text-shadow: ${coverInkShadow};
             font-weight: bold;
             @media (max-width: ${mobileMaxWidth}) {
               margin-left: 1.5rem;
@@ -147,13 +185,13 @@ export default function Cover({
       </div>
       <div
         className={css`
+          position: relative;
+          z-index: 2;
           height: 100%;
           display: flex;
           align-items: center;
-          color: ${coverTextColor};
-          ${coverTextShadowColor
-            ? `text-shadow: 1px 1px ${coverTextShadowColor};`
-            : ''}
+          color: ${coverInk};
+          text-shadow: ${coverInkShadow};
           justify-content: center;
           flex-direction: column;
           font-weight: bold;
@@ -186,12 +224,7 @@ export default function Cover({
               }
             `}
             onClick={() => navigate('/missions/grammar')}
-            style={{
-              color:
-                myGrammarRank === 1 && profileTheme !== 'gold'
-                  ? Color.gold()
-                  : '#fff'
-            }}
+            style={{ color: rankColor }}
           >
             <span>{`${grammarRankLabel} #${myGrammarRank}`}</span>
           </div>

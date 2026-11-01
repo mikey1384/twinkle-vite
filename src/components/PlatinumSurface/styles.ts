@@ -49,13 +49,20 @@ export const surfaceClass = css`
 
 const FRAME = { cover: 12, card: 6, strip: 3 };
 
+export type PhotoFade = 'bottom' | 'even';
+
 export const frameClass = (size: keyof typeof FRAME) => css`
   padding: ${FRAME[size]}px;
 `;
 
 // set into the plate: a dark lip top/left, a lit lip bottom/right, and a soft
-// graphite fade at the bottom so a name stays readable over any picture
-export const photoClass = (size: keyof typeof FRAME) => css`
+// graphite fade so a name stays readable over any picture. The fade sits at
+// the bottom, where the profile cover writes; a short strip whose text is
+// vertically centred (the Missions cover) asks for an even veil instead.
+export const photoClass = (
+  size: keyof typeof FRAME,
+  fade: PhotoFade = 'bottom'
+) => css`
   label: pt-layer-photo;
   position: absolute;
   inset: ${FRAME[size]}px;
@@ -74,12 +81,18 @@ export const photoClass = (size: keyof typeof FRAME) => css`
     inset: 0;
     border-radius: inherit;
     background:
-      linear-gradient(
+      ${fade === 'even'
+        ? `linear-gradient(
+        0deg,
+        rgba(20, 23, 28, 0.55) 0%,
+        rgba(20, 23, 28, 0.36) 100%
+      )`
+        : `linear-gradient(
         0deg,
         rgba(20, 23, 28, 0.62) 0%,
         rgba(20, 23, 28, 0.18) 34%,
         rgba(20, 23, 28, 0) 55%
-      ),
+      )`},
       radial-gradient(
         120% 140% at 50% 50%,
         rgba(0, 0, 0, 0) 62%,
@@ -146,3 +159,11 @@ export const platinumInkSoft = '#4a515c';
 export const platinumEmboss =
   '0 1px 0 rgba(255, 255, 255, 0.85), 0 -1px 0 rgba(40, 44, 52, 0.18)';
 export const photoInkShadow = '0 1px 2px rgba(0, 0, 0, 0.55)';
+export const photoInk = '#f7f8fa';
+
+// cover text on a platinum cover: graphite on the plate, near-white on a photo
+export function platinumCoverInk(hasPhoto: boolean) {
+  return hasPhoto
+    ? { color: photoInk, shadow: photoInkShadow }
+    : { color: platinumInk, shadow: platinumEmboss };
+}
