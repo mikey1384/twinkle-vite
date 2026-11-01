@@ -114,6 +114,21 @@ test('daily stories fit the actual Home preview slot, offer the exact question t
         await page.evaluate(() => window.storyState({ done: false, viewer: 2, kind: 'today', values: { xpEarned: 25000, coinsEarned: 0 } }));
         await button.waitFor(); // on one's own story, today's new challenge, never one's own question
         assert.equal(await tryIt.count(), 0);
+        // one's own post for today: straight to its explanation
+        const reviewIt = page.getByRole('button', { name: 'Review the explanation', exact: true });
+        await page.evaluate(() => window.storyState({ done: true, viewer: 2, kind: 'today', values: { dayKey: new Date().toISOString().slice(0, 10) } }));
+        await reviewIt.waitFor();
+        await checkFit();
+        await reviewIt.click();
+        await page.waitForFunction(() => window.route === '/arena?mode=today&review=1');
+        // an old post of one's own with today done: nothing to press, more of the question
+        await page.evaluate(() => window.storyState({ done: true, viewer: 2, kind: 'today', values: { dayKey: '2026-10-27' } }));
+        await reviewIt.waitFor({ state: 'detached' });
+        assert.equal(await page.locator('[data-slot] button').count(), 0);
+        assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('[data-slot] p')).webkitLineClamp), '5');
+        await checkFit();
+        await page.evaluate(() => window.storyState({ done: false, viewer: 2, kind: 'today', values: { xpEarned: 25000, coinsEarned: 0, dayKey: '2026-10-27' } }));
+        await button.waitFor();
         // a guided clear shows what it paid too
         assert.ok(await page.getByText('25,000', { exact: true }).isVisible());
         assert.ok(await page.getByText('0 Coins', { exact: true }).isVisible());

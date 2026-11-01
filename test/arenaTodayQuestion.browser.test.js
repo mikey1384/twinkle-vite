@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createRequire } from 'node:module';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
@@ -10,7 +10,10 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('/Users/mikey/.npm-packages/lib/node_modules/playwright');
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const artifacts = process.env.ARENA_TODAY_ARTIFACTS;
-const source = JSON.parse(readFileSync(path.join(repo, '../api/test/fixtures/arenaTodayQuestion.json'), 'utf8'));
+// the API repo's fixture: beside this checkout as api/ or twinkle-api/, or in its usual home
+const fixturePath = [path.join(repo, '../api'), path.join(repo, '../twinkle-api'), '/Users/mikey/Developer/twinkle/twinkle-api']
+  .map(dir => path.join(dir, 'test/fixtures/arenaTodayQuestion.json')).find(file => existsSync(file));
+const source = JSON.parse(readFileSync(fixturePath, 'utf8'));
 const fixture = `
 import React,{useState} from 'react';
 import {createRoot} from 'react-dom/client';
@@ -26,7 +29,7 @@ function App(){
   const r=await fetch('/today/'+action,{method:'POST',headers:{'content-type':'application/json','x-viewer':String(viewer)},body:JSON.stringify(body)});
   if(!r.ok) throw new Error('Please refresh and try again.');return r.json();
  }},user:{actions:{onSetUserState:value=>{window.balances=value;}}},state:{todayStats:{}},actions:{onApplyTodayStatsProgress:value=>{window.daily=value;}}};
- return <FixtureProvider value={context}><main>{view==='choose'?<ModeChooser onPick={setView}/>:<TodayQuestion/>}</main></FixtureProvider>;
+ return <FixtureProvider value={context}><main>{view==='choose'?<ModeChooser onPick={setView}/>:<TodayQuestion review={!!window.reviewOpen}/>}</main></FixtureProvider>;
 }createRoot(document.getElementById('root')).render(<App/>);`;
 let bundle;
 async function compile() {
@@ -124,14 +127,24 @@ test('Today’s Challenge automatic readiness, onboarding, guided learning and c
         await shot('waiting');
         const openCount = () => server.actions.filter(action => action.action === 'open').length;
         if (outcome === 'guided') {
+          // My focus opens on the current focus first (Mikey 11-01)
           await page.getByRole('button', { name: 'My focus', exact: true }).click();
+          await page.getByRole('heading', { name: 'Your questions are prepared for' }).waitFor();
+          assert.ok(await page.getByText('SAT', { exact: true }).isVisible());
+          assert.ok(await page.getByText('중등 2 · Grade 8', { exact: true }).isVisible());
+          await shot('focus');
+          await page.getByRole('button', { name: 'Change my focus', exact: true }).click();
+          assert.equal(await page.getByRole('button', { name: 'SAT', exact: true }).getAttribute('aria-pressed'), 'true', 'the current answer is marked');
           await page.getByRole('button', { name: 'SAT', exact: true }).click();
+          assert.equal(await page.getByRole('button', { name: 'Math', exact: true }).getAttribute('aria-pressed'), 'true');
           const beforeEditing = openCount();
           await page.clock.fastForward(60000);
           await page.evaluate(() => window.dispatchEvent(new Event('focus')));
           assert.equal(openCount(), beforeEditing, 'Do not refresh over preference edits');
           assert.equal(await page.getByRole('heading', { name: 'What should we focus on?' }).count(), 1);
           await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+          await page.getByRole('heading', { name: 'Your questions are prepared for' }).waitFor();
+          await page.getByRole('button', { name: 'Back to today’s question', exact: true }).click();
           await page.evaluate(() => Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' }));
           const beforeHidden = openCount();
           await page.clock.fastForward(60000);
@@ -191,16 +204,27 @@ test('Today’s Challenge automatic readiness, onboarding, guided learning and c
         assert.equal(await page.evaluate(() => window.daily.newStats.dailyTaskStatus.aiStory.isPassed), true);
         assert.equal(await page.locator('[data-twinkle-agent-off-limits]').count(), 0);
         await page.getByRole('button', { name: 'My focus', exact: true }).click();
-        await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+        await page.getByRole('button', { name: 'Back to today’s question', exact: true }).click();
         assert.equal(await page.getByText('A CLEARED ✓', { exact: true }).count(), 1);
+        // opened from one's own Home post: straight into the explanation
+        await page.goto('http://localhost:3000/'); await page.evaluate(() => { window.reviewOpen = true; }); await page.addScriptTag({ content: script });
+        await page.getByRole('button', { name: /Today’s Challenge/ }).click();
+        await page.getByRole('button', { name: 'Done reviewing', exact: true }).waitFor();
+        assert.equal(await page.getByText('EXPLANATION · 1 / 2', { exact: true }).count(), 1);
+        await shot('review');
         server.nextDay();
         await boot();
         await page.getByRole('heading', { name: 'We’re preparing your challenge' }).waitFor();
         await page.getByRole('button', { name: 'My focus', exact: true }).click();
+        await page.getByRole('button', { name: 'Change my focus', exact: true }).click();
         await page.getByRole('button', { name: 'SAT', exact: true }).click();
         await page.getByRole('button', { name: 'Reading and Writing', exact: true }).click();
         await page.getByRole('button', { name: '중등 2 · Grade 8', exact: true }).click();
         await page.getByRole('button', { name: 'I know the basics; help me improve', exact: true }).click();
+        // a saved edit lands back on the focus, showing the new choice
+        await page.getByText('Saved. Future questions follow this focus.').waitFor();
+        assert.ok(await page.getByText('Reading and Writing', { exact: true }).isVisible());
+        await page.getByRole('button', { name: 'Back to today’s question', exact: true }).click();
         await page.getByRole('heading', { name: 'We’re preparing your challenge' }).waitFor();
         assert.equal(await page.getByText('A cleared for today ✓', { exact: true }).count(), 0, 'Editing tomorrow cannot renew setup credit');
         assert.equal(await page.evaluate(() => window.daily.newStats.dailyTaskStatus.aiStory.isPassed), false);

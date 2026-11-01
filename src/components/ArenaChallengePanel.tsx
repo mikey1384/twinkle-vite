@@ -204,7 +204,11 @@ function DailyClearPanel({
   const counts = tried > 0
     ? `${tried} tried · ${Number(challenge.cleared) || 0} cleared`
     : canTry ? 'Be the first to try it' : '';
-  const hasFoot = canTry || ownDailyOpen || !!counts;
+  // one's own post for today: straight to its explanation (Mikey 11-01).
+  // The site day is UTC, so today's key is the UTC date.
+  const canReview = isMine && challenge.dayKey === new Date().toISOString().slice(0, 10);
+  const hasButtons = canTry || canReview || ownDailyOpen;
+  const hasFoot = hasButtons || !!counts;
   return (
     <div className={cx(resultCls, dailyCls)}>
       <div className={dailyTopCls}>
@@ -225,7 +229,8 @@ function DailyClearPanel({
               {challenge.questionTitle || 'Daily challenge'}
             </strong>
             {challenge.questionExcerpt && (
-              <p className={excerptCls}>{challenge.questionExcerpt}</p>
+              // with nothing to press, more of the question fills the card
+              <p className={cx(excerptCls, !hasButtons && excerptTallCls)}>{challenge.questionExcerpt}</p>
             )}
           </div>
         </div>
@@ -243,11 +248,13 @@ function DailyClearPanel({
       </div>
       {hasFoot && (
         <div className={dailyFootCls}>
-          {(canTry || ownDailyOpen) && (
+          {hasButtons && (
             <div className={dailyButtonsCls}>
               {/* two buttons: their question, and one's own daily while it is open */}
               {canTry && ownDailyOpen && <ChallengeButton daily secondary id={challenge.id} />}
-              {canTry ? <ChallengeButton shared id={challenge.id} /> : <ChallengeButton daily id={challenge.id} />}
+              {canTry ? <ChallengeButton shared id={challenge.id} />
+                : canReview ? <ChallengeButton review id={challenge.id} />
+                : <ChallengeButton daily id={challenge.id} />}
             </div>
           )}
           {counts && <span className={metaCls}>{counts}</span>}
@@ -263,11 +270,14 @@ export default memo(ArenaChallengePanel);
 function ChallengeButton({
   daily = false,
   shared = false,
+  review = false,
   secondary = false,
   id
 }: {
   daily?: boolean;
   shared?: boolean;
+  // one's own clear today: Today's Challenge opened on its explanation
+  review?: boolean;
   // beside "Try this question": one's own daily, as the quieter button
   secondary?: boolean;
   id: number;
@@ -278,11 +288,16 @@ function ChallengeButton({
       event.stopPropagation();
       navigate(
         shared ? `/arena?mode=today&shared=${id}`
+          : review ? '/arena?mode=today&review=1'
           : daily ? '/arena?mode=today'
           : `/arena?mode=arena&challenge=${id}`
       );
     }}>
-      {shared ? 'Try this question' : secondary ? 'Today’s challenge' : daily ? 'Try today’s challenge' : 'Challenge!'}
+      {shared ? 'Try this question'
+        : review ? 'Review the explanation'
+        : secondary ? 'Today’s challenge'
+        : daily ? 'Try today’s challenge'
+        : 'Challenge!'}
     </ArenaButton>
   );
 }
@@ -441,6 +456,10 @@ const questionCls = css`
   padding: 0.2rem 0 0.2rem 1.1rem;
   border-left: 4px solid ${ARENA.train};
   min-width: 0;
+`;
+
+const excerptTallCls = css`
+  -webkit-line-clamp: 5;
 `;
 
 // two lines at most

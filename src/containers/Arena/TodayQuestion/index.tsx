@@ -11,11 +11,14 @@ import LearningScene from './LearningScene';
 import type { Profile, Prompt, TodayState } from './types';
 
 const EMPTY_PROFILE: Profile = { goal: '', subject: '', grade: '', confidence: '' };
+const SETUP_FIELDS = ['goal', 'subject', 'grade', 'confidence'] as const;
 const NO_OPTIONS: NonNullable<TodayState['options']> = { goals: [], grades: [], confidence: [], exams: [] };
 // sharedId: another member's cleared question, opened from their Home story
 // (Mikey 11-01). Same question, explanation and check; no setup, its own
 // payout, and the daily paid limit in place of the one-a-day rule.
-export default function TodayQuestion({ sharedId = 0 }: { sharedId?: number }) {
+// review: opened from one's own Home post, straight to the explanation of a
+// cleared question (Mikey 11-01)
+export default function TodayQuestion({ sharedId = 0, review = false }: { sharedId?: number; review?: boolean }) {
   const shared = sharedId > 0;
   const requestToday = useAppContext(v => v.requestHelpers.arenaToday);
   const requestShared = useAppContext(v => v.requestHelpers.arenaShared);
@@ -29,12 +32,16 @@ export default function TodayQuestion({ sharedId = 0 }: { sharedId?: number }) {
   const mounted = useRef(true);
   const requestId = useRef(0);
   const [editing, setEditing] = useState(false);
+  // My focus opens on what the focus is now (Mikey 11-01), then edits it
+  const [viewingFocus, setViewingFocus] = useState(false);
+  const [focusSaved, setFocusSaved] = useState(false);
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
   const [setupStep, setSetupStep] = useState(0);
   const [answer, setAnswer] = useState<string | number | null>(null);
   const [checkAnswer, setCheckAnswer] = useState<string | number | null>(null);
   const [lessonIndex, setLessonIndex] = useState(0);
   const [exploring, setExploring] = useState(false);
+  const reviewPending = useRef(review);
   const assignmentId = useRef<number | null>(null);
   const hasProfile = !!data?.profile;
   const waitingForQuestion = hasProfile && !data?.assignment;
@@ -98,7 +105,7 @@ export default function TodayQuestion({ sharedId = 0 }: { sharedId?: number }) {
         {shared
           ? <div><span className={eyebrowCls}>{data.sharer?.username ? `${data.sharer.username.toUpperCase()} CLEARED THIS` : 'A CLEARED QUESTION'}</span><h1>Try this question</h1></div>
           : <div><span className={eyebrowCls}>ONE QUESTION, FOR YOU</span><h1>Today’s Challenge</h1></div>}
-        {!shared && data.profile && !setup && <button className={linkCls} disabled={busy} onClick={editPreferences}>My focus</button>}
+        {!shared && data.profile && !setup && !viewingFocus && <button className={linkCls} disabled={busy} onClick={() => { setFocusSaved(false); setViewingFocus(true); }}>My focus</button>}
       </header>
       {error && <div role="alert" className={errorCls}>{error}<button className={linkCls} disabled={busy} onClick={() => void run('open')}>Refresh</button></div>}
       {!shared && !setup && data.setupCompletedToday && !q?.completedVia && <div className={successCls} role="status">
@@ -112,13 +119,30 @@ export default function TodayQuestion({ sharedId = 0 }: { sharedId?: number }) {
           <h2>{setupTitles[setupStep]}</h2>
           <p>{setupStep === 0 ? 'We’ll prepare one useful question a day for your goal.' : setupStep === 1 ? profile.goal === 'ssat' ? 'Use your current US grade: Elementary 3 or 4, Middle 5–7, Upper 8–11. You can change this later.' : 'Pick one focus for now. You can change it later.' : setupStep === 2 ? 'This helps us choose the right starting point. Use the equivalent grade if you study outside Korea.' : 'Your answers will help us adjust future questions.'}</p>
           <div className={setupStep === 2 ? gradeChoicesCls : choicesCls}>
-            {choices.map(choice => <button key={choice.key} type="button" className={optionCls} disabled={busy} onClick={() => void choosePreference(choice.key)}>{choice.label}</button>)}
+            {choices.map(choice => <button key={choice.key} type="button" className={optionCls} aria-pressed={profile[SETUP_FIELDS[setupStep]] === choice.key} disabled={busy} onClick={() => void choosePreference(choice.key)}>{choice.label}</button>)}
           </div>
           <div className={actionsCls}>
             {setupStep > 0 && <button className={linkCls} disabled={busy} onClick={() => setSetupStep(s => s - 1)}>Back</button>}
-            {editing && <button className={linkCls} disabled={busy} onClick={() => setEditing(false)}>Cancel</button>}
+            {editing && <button className={linkCls} disabled={busy} onClick={() => { setEditing(false); setViewingFocus(true); }}>Cancel</button>}
           </div>
           <p className={mutedCls}>{editing ? 'Changes apply to future questions; today’s question stays the same.' : 'Finish this first-time setup to clear A for today. We’ll prepare a question for your focus.'}</p>
+        </div>
+      ) : viewingFocus && data.profile ? (
+        <div className={paperCls}>
+          <span className={eyebrowCls}>MY FOCUS</span>
+          <h2>Your questions are prepared for</h2>
+          {focusSaved && <p role="status" className={feedbackCls}>Saved. Future questions follow this focus.</p>}
+          <dl className={focusListCls}>
+            <div><dt>Working toward</dt><dd>{options.goals.find(g => g.key === data.profile?.goal)?.label || data.profile.goal}</dd></div>
+            <div><dt>Focus</dt><dd>{options.exams.find(e => e.key === data.profile?.subject)?.label || data.profile.subject}</dd></div>
+            <div><dt>School year</dt><dd>{options.grades.find(g => g.key === data.profile?.grade)?.label || data.profile.grade}</dd></div>
+            <div><dt>Starting point</dt><dd>{options.confidence.find(c => c.key === data.profile?.confidence)?.label || data.profile.confidence}</dd></div>
+          </dl>
+          <p className={mutedCls}>Changes apply to future questions; today’s question stays the same.</p>
+          <div className={actionsCls}>
+            <button className={linkCls} disabled={busy} onClick={() => setViewingFocus(false)}>Back to today’s question</button>
+            <button className={primaryCls} disabled={busy} onClick={editPreferences}>Change my focus</button>
+          </div>
         </div>
       ) : !q ? (
         <div className={paperCls}>
@@ -193,6 +217,10 @@ export default function TodayQuestion({ sharedId = 0 }: { sharedId?: number }) {
       setAnswer(null); setCheckAnswer(null); setExploring(false);
       setLessonIndex(next.assignment?.lesson?.completedSteps || 0);
     }
+    if (reviewPending.current && next.assignment) {
+      reviewPending.current = false;
+      if (next.assignment.completedVia) { setExploring(true); setLessonIndex(0); }
+    }
     setData(next);
     if (next.profile) setProfile(next.profile);
     if (next.balances) onSetUserState({ userId, newState: next.balances });
@@ -228,15 +256,19 @@ export default function TodayQuestion({ sharedId = 0 }: { sharedId?: number }) {
   }
 
   function editPreferences() {
-    setProfile(data?.profile || EMPTY_PROFILE); setSetupStep(0); setEditing(true); setError('');
+    setProfile(data?.profile || EMPTY_PROFILE); setSetupStep(0); setEditing(true); setViewingFocus(false); setFocusSaved(false); setError('');
   }
 
   async function choosePreference(value: string) {
-    const field = (['goal', 'subject', 'grade', 'confidence'] as const)[setupStep];
+    const field = SETUP_FIELDS[setupStep];
     const next = { ...profile, [field]: value, ...(field === 'goal' && value !== profile.goal ? { subject: '' } : {}) };
     setProfile(next);
     if (setupStep < 3) setSetupStep(s => s + 1);
-    else if (await run('profile', { goal: next.goal, subject: next.subject, grade: next.grade, confidence: next.confidence })) setEditing(false);
+    else if (await run('profile', { goal: next.goal, subject: next.subject, grade: next.grade, confidence: next.confidence })) {
+      // an edit lands back on the focus, now saved; first-time setup goes on to the question
+      if (editing) { setViewingFocus(true); setFocusSaved(true); }
+      setEditing(false);
+    }
   }
 }
 
@@ -283,4 +315,5 @@ const passageCls = css`padding: 1.2rem; background: #faf8f1; border-left: 3px so
 const inputCls = css`display: grid; gap: 0.5rem; input { font: inherit; width: 100%; padding: 0.9rem; border: 2px solid #adb7bb; border-radius: 6px; color: ${ARENA.ink}; }`;
 const feedbackCls = css`padding: 1.1rem; border-left: 4px solid #3b795b; background: #eef7f1; margin: 1rem 0; white-space: pre-wrap;`;
 const learningNoteCls = css`padding: 1rem; background: #fff5d7; border-radius: 8px; margin-bottom: 1.5rem;`;
+const focusListCls = css`display: grid; gap: 0.9rem; margin: 1.2rem 0; > div { display: grid; gap: 0.2rem; padding: 0.9rem 1rem; border: 2px solid #e1e4e7; border-radius: 8px; } dt { font-size: max(1.1rem, 13px); font-weight: 700; color: #556168; } dd { margin: 0; font-weight: 800; overflow-wrap: anywhere; }`;
 const summaryCls = css`white-space: pre-wrap;`;

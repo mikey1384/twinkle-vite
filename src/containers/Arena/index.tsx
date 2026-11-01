@@ -86,7 +86,13 @@ export default function ArenaPage() {
           )}
         >
           {view === 'choose' && <ModeChooser onPick={openView} />}
-          {view === 'today' && <TodayQuestion key={`${userId}:${sharedId}`} sharedId={sharedId} />}
+          {view === 'today' && (
+            <TodayQuestion
+              key={`${userId}:${sharedId}`}
+              sharedId={sharedId}
+              review={searchParams.get('review') === '1'}
+            />
+          )}
           {view === 'train' && activity === 'ai-story' && (
             <AIStory onHide={() => setSearchParams({ mode: 'train' })} />
           )}
