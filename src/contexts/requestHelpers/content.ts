@@ -1688,6 +1688,82 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // Train's taken papers (API helpers/arena/practice.ts, Mikey 11-01):
+    // trophies, misses-only re-sits and rematches. None of them pay or rank.
+    async loadArenaTrainPapers() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/arena/train/papers`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startArenaPractice({
+      battleId,
+      kind,
+      timed = false
+    }: {
+      battleId: number;
+      kind: 'resit' | 'rematch';
+      timed?: boolean;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/train/practice`,
+          { battleId, kind, timed },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadArenaPractice(runId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/arena/train/practice/${runId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveArenaPracticeAnswer({
+      runId,
+      no,
+      answer
+    }: {
+      runId: number;
+      no: number;
+      answer: number | string | null;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/train/practice/${runId}/answer`,
+          { no, answer },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitArenaPractice(runId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/arena/train/practice/${runId}/submit`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadArenaBattle(battleId: number) {
       try {
         const { data } = await request.get(

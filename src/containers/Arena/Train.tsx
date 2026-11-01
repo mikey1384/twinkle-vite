@@ -4,30 +4,44 @@ import Icon from '~/components/Icon';
 import { useAppContext, useNotiContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
-import type { ArenaBattleSummary, ArenaState } from './types';
+import type { ArenaBattleSummary, ArenaState, ArenaTrainPapers } from './types';
+import TrophyCard from './TrophyCard';
 import { TodayArenaGoals } from './AIStory/Game/ArenaGoals';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 
 // Train is AI Story and preparation for Arena: reviews and focused practice.
+// Finished papers sit on its shelf (Mikey 11-01): a cleared one is a trophy
+// with its re-sits and rematch; none of that pays twice (TrophyCard.tsx).
 export default function Train({
   onPlayAIStory,
   onOpenDeck,
   onOpenSkills,
   onOpenBattle,
-  onOpenPaper
+  onOpenPaper,
+  onOpenPractice,
+  onDrill,
+  onOpenChallenge
 }: {
   onPlayAIStory: () => void;
   onOpenDeck: () => void;
   onOpenSkills: () => void;
   onOpenBattle: (battleId: number) => void;
   onOpenPaper: () => void;
+  onOpenPractice: (runId: number) => void;
+  onDrill: (examKey: string, types: string[]) => void;
+  onOpenChallenge: (challengeId: number) => void;
 }) {
   const aiStoryTask = useNotiContext(
     (v) => v.state.todayStats?.dailyTaskStatus?.aiStory
   );
   const loadArenaState = useAppContext((v) => v.requestHelpers.loadArenaState);
   const loadArenaDeck = useAppContext((v) => v.requestHelpers.loadArenaDeck);
+  const loadArenaTrainPapers = useAppContext((v) => v.requestHelpers.loadArenaTrainPapers);
   const [state, setState] = useState<ArenaState | null>(null);
+  const [shelf, setShelf] = useState<ArenaTrainPapers | null>(null);
+  // the shelf could not load (an older API, or a hiccup): list the battles
+  // with Review as before, so no finished paper disappears
+  const [shelfFailed, setShelfFailed] = useState(false);
   const [deckCounts, setDeckCounts] = useState<{
     open: number;
     untagged: number;
@@ -43,15 +57,29 @@ export default function Train({
     loadArenaDeck()
       .then((deck: any) => !cancelled && setDeckCounts(deck?.counts || null))
       .catch(() => null);
+    loadArenaTrainPapers()
+      .then((data: ArenaTrainPapers) => {
+        if (cancelled) return;
+        if (Array.isArray(data?.papers)) setShelf(data);
+        else setShelfFailed(true);
+      })
+      .catch(() => !cancelled && setShelfFailed(true));
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const finishedBattles = (state?.recent || []).filter(
-    (battle) => battle.status === 'finished'
+  // older untimed retakes stay reviewable as they were; every timed paper
+  // comes from the shelf
+  const legacyRetakes = (state?.recent || []).filter(
+    (battle) =>
+      battle.status === 'finished' &&
+      (shelfFailed || battle.mode === 'untimed')
   );
+  const papers = shelf?.papers || [];
+  const shelfLoading = !shelf && !shelfFailed;
+  const hasPapers = papers.length + legacyRetakes.length > 0;
   const examName = (key: string) =>
     state?.exams.find((exam) => exam.key === key)?.name || key;
 
@@ -153,23 +181,38 @@ export default function Train({
 
       <div
         className={rowCls}
-        aria-disabled={finishedBattles.length ? undefined : 'true'}
+        aria-disabled={hasPapers ? undefined : 'true'}
       >
         <span className={badgeCls} style={{ background: ARENA.violet }}>
-          <Icon icon="redo" />
+          <Icon icon="trophy" />
         </span>
         <span className={textCls}>
-          <strong>Review your battles</strong>
+          <strong>Your papers</strong>
           <span>
-            Every battle you finish in the Arena shows up here, question by
-            question. Completed papers are for review; your next battle uses a different paper.
+            Every paper you finish shows up here. Review it, re-sit only the
+            questions you missed until they are all fixed, and rematch a
+            cleared paper {shelf?.rematchDays || 14} days later to see your
+            progress. Your next battle uses a different paper.
           </span>
         </span>
-        {!finishedBattles.length && (
-          <span className={mutedCls}>No battles yet</span>
+        {!hasPapers && (
+          <span className={mutedCls}>
+            {shelfLoading || (shelfFailed && !state) ? 'Loading…' : 'No battles yet'}
+          </span>
         )}
       </div>
-      {finishedBattles.map((battle) => (
+      {papers.map((paper) => (
+        <TrophyCard
+          key={paper.battleId}
+          paper={paper}
+          onReview={onOpenBattle}
+          onOpenDeck={onOpenDeck}
+          onDrill={onDrill}
+          onOpenPractice={onOpenPractice}
+          onOpenChallenge={onOpenChallenge}
+        />
+      ))}
+      {legacyRetakes.map((battle) => (
         <div key={battle.id} className={battleRowCls}>
           <span className={battleTextCls}>
             <strong>{examName(battle.examKey)}</strong>

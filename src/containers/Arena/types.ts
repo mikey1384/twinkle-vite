@@ -242,6 +242,8 @@ export interface ArenaItem {
   key?: number | string;
   correct?: boolean;
   partialCredit?: ArenaPartialCredit;
+  // a submitted re-sit or rematch: how this question went the first time
+  then?: { correct: boolean };
   // ko: the Korean review of an English exam
   review?: {
     explanation: string;
@@ -307,6 +309,68 @@ export interface ArenaBattle {
   items: ArenaItem[];
   // an untimed retake: when each question was answered last time (seconds)
   ghost?: { no: number; at: number }[] | null;
+  // Train's re-sit or rematch of a finished paper (practice.ts on the API);
+  // battle then describes the source paper and this run's status
+  practice?: ArenaPracticeRun;
+}
+
+// A misses-only re-sit or a rematch (Mikey 11-01): never paid or ranked.
+export interface ArenaPracticeRun {
+  id: number;
+  kind: 'resit' | 'rematch';
+  timed: boolean;
+  status: 'open' | 'grading' | 'finished' | 'abandoned';
+  sourceBattleId: number;
+  questions: number;
+  // the first sitting's points on these same questions, and this run's
+  then: { raw: number; max: number };
+  now: { raw: number; max: number } | null;
+  // the first sitting's whole score and when it finished
+  source: { raw: number; max: number; finishedAt: number };
+  // re-sits: the paper's misses and how many are fixed so far
+  misses?: number;
+  fixed?: number;
+  // re-sit answers that were due deck reviews (the A goal's only route)
+  deckReviews: number;
+  // essays, spoken answers and unscored writing a run leaves out
+  leftOut: number;
+}
+
+// One finished timed paper on Train's shelf (API loadTrainPapers)
+export interface ArenaTrainPaper {
+  battleId: number;
+  examKey: string;
+  examName: string;
+  code: string;
+  codeLabel: string | null;
+  length: 'short' | 'medium' | 'full';
+  difficulty: ArenaDifficulty;
+  raw: number;
+  max: number;
+  perfect: boolean;
+  // essay or spoken marks are AI estimates; markingPending: some still coming
+  aiMarked?: boolean;
+  markingPending?: boolean;
+  finishedAt: number;
+  cleared: boolean;
+  resit: { misses: number; fixed: number; open: { id: number; timed: boolean } | null } | null;
+  rematch: {
+    unlocksAt: number;
+    unlocked: boolean;
+    minutes: number | null;
+    open: { id: number; timed: boolean } | null;
+    played: number;
+    best: { runId: number; raw: number; max: number; then: number; timed: boolean; finishedAt: number } | null;
+  } | null;
+  deckOpen: number;
+  weakTypes: string[];
+  share: { challengeId: number | null } | null;
+}
+
+export interface ArenaTrainPapers {
+  now: number;
+  rematchDays: number;
+  papers: ArenaTrainPaper[];
 }
 
 // Arena's Weekly League board (api helpers/arena/league.ts loadLeague)

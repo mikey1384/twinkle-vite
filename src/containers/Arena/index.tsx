@@ -39,6 +39,8 @@ export default function ArenaPage() {
     rawView === 'train' || rawView === 'arena' || rawView === 'today' ? rawView : 'choose';
   const activity = view === 'train' ? searchParams.get('play') : null;
   const battleId = Number(searchParams.get('battle')) || 0;
+  // a Train re-sit or rematch of a finished paper (Mikey 11-01)
+  const practiceId = view === 'train' ? Number(searchParams.get('practice')) || 0 : 0;
   // a shared challenge opened from Home (Mikey 10-24)
   const challengeId = Number(searchParams.get('challenge')) || 0;
 
@@ -119,7 +121,7 @@ export default function ArenaPage() {
           {view === 'train' && activity === 'paper' && (
             <Reports onBack={() => setSearchParams({ mode: 'train' })} />
           )}
-          {view === 'train' &&
+          {view === 'train' && !practiceId &&
             ![
               'ai-story',
               'deck',
@@ -142,6 +144,20 @@ export default function ArenaPage() {
                 }
                 onOpenPaper={() =>
                   setSearchParams({ mode: 'train', play: 'paper' })
+                }
+                onOpenPractice={(id) =>
+                  setSearchParams({ mode: 'train', practice: String(id) })
+                }
+                onDrill={(examKey, types) =>
+                  setSearchParams({
+                    mode: 'train',
+                    play: 'drill',
+                    exam: examKey,
+                    types: types.join(',')
+                  })
+                }
+                onOpenChallenge={(id) =>
+                  setSearchParams({ mode: 'arena', challenge: String(id) })
                 }
               />
             )}
@@ -170,7 +186,18 @@ export default function ArenaPage() {
               }
             />
           )}
-          {battleId > 0 && (view === 'train' || view === 'arena') && (
+          {practiceId > 0 && (
+            <BattleRunner
+              key={`practice-${practiceId}`}
+              battleId={0}
+              practiceId={practiceId}
+              onExit={() => setSearchParams({ mode: 'train' })}
+              onOpenPractice={(id) =>
+                setSearchParams({ mode: 'train', practice: String(id) })
+              }
+            />
+          )}
+          {battleId > 0 && !practiceId && (view === 'train' || view === 'arena') && (
             <BattleRunner
               key={battleId}
               battleId={battleId}

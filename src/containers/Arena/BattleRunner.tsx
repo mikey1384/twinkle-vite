@@ -32,6 +32,7 @@ import ArenaRewards from './Rewards';
 import MasteryProgress from './MasteryProgress';
 import { ANSWER_FLUSH_EVENT } from './useAnswerFlush';
 import C1ReadingPaper from './C1ReadingPaper';
+import PracticeResult from './PracticeResult';
 import { isC1Reading } from './examTasks';
 import type { ArenaBattle, ArenaItem } from './types';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
@@ -48,9 +49,13 @@ import { arenaAssistLabel, arenaAssistNote } from '~/helpers/arenaChallengeCopy'
 // real paper (two serif columns, ①-⑤, [3점], <보기>), answers are marked on
 // an OMR sheet, the clock is the real time limit and runs out on its own.
 // Untimed retakes (Train) have no clock. After submitting, the same paper
-// shows the keys and why each answer is right or wrong.
+// shows the keys and why each answer is right or wrong. Train's re-sits and
+// rematches of a finished paper (practiceId, Mikey 11-01) print the same
+// paper through this runner; they never pay or rank.
 
 const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
+// polls of a Train run still grading, 1.5 s apart (about three minutes)
+const PRACTICE_GRADING_POLL_LIMIT = 120;
 // options heard, not printed (TOSEL): the paper shows bare letters
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
@@ -186,10 +191,15 @@ function stemText(stem: string) {
 
 export default function BattleRunner({
   battleId,
-  onExit
+  practiceId = 0,
+  onExit,
+  onOpenPractice
 }: {
   battleId: number;
+  // a Train re-sit or rematch run instead of a battle
+  practiceId?: number;
   onExit: () => void;
+  onOpenPractice?: (runId: number) => void;
 }) {
   const loadArenaBattle = useAppContext(
     (v) => v.requestHelpers.loadArenaBattle
@@ -201,6 +211,9 @@ export default function BattleRunner({
     (v) => v.requestHelpers.submitArenaBattle
   );
   const changeArenaComponent = useAppContext((v) => v.requestHelpers.changeArenaComponent);
+  const loadArenaPractice = useAppContext((v) => v.requestHelpers.loadArenaPractice);
+  const saveArenaPracticeAnswer = useAppContext((v) => v.requestHelpers.saveArenaPracticeAnswer);
+  const submitArenaPractice = useAppContext((v) => v.requestHelpers.submitArenaPractice);
   const requestArenaMarking = useAppContext(
     (v) => v.requestHelpers.requestArenaMarking
   );
@@ -225,6 +238,7 @@ export default function BattleRunner({
     {}
   );
   const markingPollsRef = useRef(0);
+  const gradingPollsRef = useRef(0);
   const markingTimerRef = useRef<number | null>(null);
   useEffect(
     () => () => {
@@ -249,9 +263,13 @@ export default function BattleRunner({
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [battleId]);
+  }, [battleId, practiceId]);
 
   const finished = data?.battle.status === 'finished';
+  const practice = data?.practice;
+  // a timed rematch is the member's own race on the clock: no companions
+  // until it is submitted (re-sits and untimed rematches welcome them)
+  const noHelp = !finished && (!!data?.battle.mastery?.solo || !!practice?.timed);
   useUserActivity(getArenaBattleActivity(loadError ? null : data?.battle, battleId));
   const component = data?.battle.component;
   const takingBreak = component?.kind === 'break' && !finished;
@@ -308,8 +326,11 @@ export default function BattleRunner({
       ? {
           live: true,
           exam: data.battle.exam.nameEn,
-          kind:
-            data.battle.mode === 'untimed'
+          kind: practice
+            ? practice.kind === 'resit'
+              ? 'misses-only re-sit (Train)'
+              : `${practice.timed ? 'timed' : 'untimed'} rematch (Train)`
+            : data.battle.mode === 'untimed'
               ? 'untimed retake'
               : `${data.battle.length} ${data.battle.difficulty} battle`,
           minutesLeft:
@@ -319,9 +340,13 @@ export default function BattleRunner({
           ).length,
           questions: data.items.length,
           soloMastery: !!data.battle.mastery?.solo,
+          ...(practice ? { practiceId: practice.id, timedRematch: practice.timed } : {}),
           battleId: data.battle.id,
-          visibleQuestions: data.items.map(item => item.no),
-          note: data.battle.mastery?.solo ? 'Solo mastery: review together after submission.' : 'Ordinary exam: teach concepts and steps first. Give an explained answer when asked or after repeated difficulty. The member enters every answer.'
+          visibleQuestions: noHelp ? [] : data.items.map(item => item.no),
+          note: data.battle.mastery?.solo ? 'Solo mastery: review together after submission.'
+            : practice?.timed ? 'Timed rematch: the member races their own first attempt. Go through it together after they submit.'
+              : practice ? 'Train practice on a paper they already sat (no rewards): teach first, give an explained answer when asked. The member enters every answer.'
+                : 'Ordinary exam: teach concepts and steps first. Give an explained answer when asked or after repeated difficulty. The member enters every answer.'
         }
       : null
   );
@@ -337,6 +362,19 @@ export default function BattleRunner({
     );
   }
   if (!data) return <div className={centerCls}>Opening the exam…</div>;
+  // a run left behind when another one started: nothing more to answer
+  if (practice?.status === 'abandoned') {
+    return (
+      <div className={shellCls}>
+        <div className={cx(centerCls, leftRunCls)}>
+          <p>You left this {practice.kind === 'resit' ? 're-sit' : 'rematch'} when you started another one. Start a new one from Train whenever you like.</p>
+          <ArenaButton tone="ink" size="md" onClick={onExit}>
+            Back to Train
+          </ArenaButton>
+        </div>
+      </div>
+    );
+  }
 
   const answeredCount = data.items.filter(
     (item) => answers[item.no] != null || recordings[item.no] != null
@@ -361,7 +399,8 @@ export default function BattleRunner({
         <div className={titleCls}>
           <strong>{data.battle.exam.name}</strong>
           <span>
-            {component && !finished ? `${component.name} · ${component.minutes} min` : data.battle.mode === 'untimed'
+            {practice ? practiceTitle(practice, data.battle.minutes)
+              : component && !finished ? `${component.name} · ${component.minutes} min` : data.battle.mode === 'untimed'
               ? 'Untimed retake'
               : `${lengthLabel(data.battle.length)}${
                   data.battle.difficulty !== 'normal'
@@ -391,7 +430,7 @@ export default function BattleRunner({
         )}
       </header>
 
-      {finished && <Result data={data} />}
+      {finished && (practice ? <PracticeResult data={data} onOpenPractice={onOpenPractice} onExit={onExit} /> : <Result data={data} />)}
       {!finished && !takingBreak && component?.allowEarlyFinish === false && remaining !== 0 && <p className={draftStatusCls}>You can review this section until its clock runs out. {component.index + 1 < component.count ? 'The next section or break opens automatically.' : 'Your saved answers are then submitted.'}</p>}
       {takingBreak && <section className={centerCls} role="status">
         <h2>{component.name}</h2>
@@ -434,7 +473,7 @@ export default function BattleRunner({
       <div
         className={bodyCls}
         {...(!finished
-          ? { [data.battle.mastery?.solo ? WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE : WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: 'arenaBattle' }
+          ? { [noHelp ? WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE : WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: noHelp && practice?.timed ? 'arenaRematch' : 'arenaBattle' }
           : {})}
       >
         <main className={cx(paperCls, readingItems.length > 0 && digitalPaperCls)}>
@@ -451,8 +490,8 @@ export default function BattleRunner({
           {readingItems.length > 0 && <C1ReadingPaper
             items={readingItems} passages={data.passages} answers={shownAnswers} finished={finished} disabled={finished || submitting || remaining === 0}
             onMark={handleMark}
-            renderHelp={!finished && !data.battle.mastery?.solo ? item => <AskAgentButton assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
-              context={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.display || item.no}`, path: `/arena?mode=arena&battle=${data.battle.id}` }} /> : undefined}
+            renderHelp={!finished && !noHelp ? item => <AskAgentButton assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
+              context={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.display || item.no}`, path: practice ? `/arena?mode=train&practice=${practice.id}` : `/arena?mode=arena&battle=${data.battle.id}` }} /> : undefined}
             renderReview={item => <PaperItem item={item} passage={null} marked={answers[item.no] ?? null} finished reviewOnly
               audioControls={false} allPointTags={false} letters reviewLang={reviewLang} onMark={() => {}}
               ask={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.no}`, path: `/arena?mode=train&battle=${data.battle.id}` }} />}
@@ -470,10 +509,11 @@ export default function BattleRunner({
                 </p>
               )}
               {section === 'listening' &&
-                data.battle.mode === 'battle' &&
+                (practice ? practice.timed : data.battle.mode === 'battle') &&
                 !finished && (
                   <ListeningConsole
                     battleId={data.battle.id}
+                    storageKey={practice ? `arena-listening-practice-${practice.id}` : undefined}
                     examKey={data.battle.exam.key}
                     tracks={listeningTracks(data)}
                     english={
@@ -501,10 +541,10 @@ export default function BattleRunner({
                     reviewLang={reviewLang}
                     // replay controls only where replays are allowed: Train's
                     // untimed retake and the review after a battle
-                    audioControls={finished || data.battle.mode === 'untimed'}
+                    audioControls={finished || (data.battle.mode === 'untimed' && !practice?.timed)}
                     onMark={(choice) => handleMark(item.no, choice)}
                     battleId={data.battle.id}
-                    untimed={data.battle.mode === 'untimed'}
+                    untimed={data.battle.mode === 'untimed' && !practice?.timed}
                     korean={data.battle.exam.language === 'ko'}
                     onRecorded={(seconds) =>
                       setRecordings((prev) => ({ ...prev, [item.no]: seconds }))
@@ -512,13 +552,15 @@ export default function BattleRunner({
                     onRequestMarking={handleRequestMarking}
                     assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
                     ask={
-                      (finished || !data.battle.mastery?.solo)
+                      (finished || !noHelp)
                         ? {
                             kind: 'arenaBattleItem',
                             id: data.battle.id,
                             no: item.no,
                             label: `question ${item.display || item.no}`,
-                            path: `/arena?mode=${finished ? 'train' : 'arena'}&battle=${data.battle.id}`
+                            // a run's question is read from its source paper,
+                            // but a companion stays on the run's own page
+                            path: practice ? `/arena?mode=train&practice=${practice.id}` : `/arena?mode=${finished ? 'train' : 'arena'}&battle=${data.battle.id}`
                           }
                         : null
                     }
@@ -687,7 +729,7 @@ export default function BattleRunner({
 
   async function load() {
     try {
-      const battle: ArenaBattle = await loadArenaBattle(battleId);
+      const battle: ArenaBattle = practiceId ? await loadArenaPractice(practiceId) : await loadArenaBattle(battleId);
       clockOffsetRef.current =
         battle.battle.serverNow - Math.floor(Date.now() / 1000);
       setData(battle);
@@ -703,7 +745,7 @@ export default function BattleRunner({
         )
       );
       if (battle.battle.status === 'grading') {
-        window.setTimeout(load, 1500);
+        scheduleGradingPoll();
       } else if (battle.battle.status === 'finished') {
         // essays are marked after the battle: look again until the marks are in
         scheduleMarkingPoll(battle);
@@ -728,7 +770,9 @@ export default function BattleRunner({
     setPendingAnswers(previous => ({ ...previous, [no]: value }));
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       try {
-        const saved = await saveArenaAnswer({ battleId, no, answer: value, responseMs: elapsed });
+        const saved = practiceId
+          ? await saveArenaPracticeAnswer({ runId: practiceId, no, answer: value })
+          : await saveArenaAnswer({ battleId, no, answer: value, responseMs: elapsed });
         if (!saved?.saved) throw new Error('Answer was not saved');
         setAnswers(previous => ({ ...previous, [no]: saved.answer }));
         if (unsavedRef.current.get(no) === value) {
@@ -756,7 +800,8 @@ export default function BattleRunner({
       await saveQueueRef.current;
       if (unsavedRef.current.size && !savedOnly) throw new Error('Unsaved answers');
       const result: ArenaBattle & { dailyTaskStatus?: any } =
-        component ? await changeArenaComponent(battleId, component.index, 'finish') : await submitArenaBattle(battleId);
+        practiceId ? await submitArenaPractice(practiceId)
+          : component ? await changeArenaComponent(battleId, component.index, 'finish') : await submitArenaBattle(battleId);
       setData(result);
       setAnswers(Object.fromEntries(result.items.map(item => [item.no, item.answer])));
       clockOffsetRef.current = result.battle.serverNow - Math.floor(Date.now() / 1000);
@@ -774,7 +819,7 @@ export default function BattleRunner({
           )
         });
       }
-      if (result.battle.status === 'grading') window.setTimeout(load, 1500);
+      if (result.battle.status === 'grading') scheduleGradingPoll();
       else scheduleMarkingPoll(result);
     } catch {
       submittedRef.current = false;
@@ -800,6 +845,17 @@ export default function BattleRunner({
     } catch {
       setSaveError('The next component could not be opened. Try again.');
     } finally { setSubmitting(false); }
+  }
+
+  // A Train run's grading that never finishes (a crash) is taken over by the
+  // server after about two minutes; stop looking after three and say so.
+  function scheduleGradingPoll() {
+    if (practiceId && gradingPollsRef.current >= PRACTICE_GRADING_POLL_LIMIT) {
+      setLoadError('Grading is taking longer than usual. Go back to Train and open this run again in a minute.');
+      return;
+    }
+    gradingPollsRef.current += 1;
+    window.setTimeout(load, 1500);
   }
 
   function scheduleMarkingPoll(battle: ArenaBattle) {
@@ -1432,6 +1488,13 @@ function gradeText(labels: string[] | null | undefined, grade: number) {
   return labels?.[grade - 1] || `${grade}등급`;
 }
 
+// the header: what kind of run, and its clock
+function practiceTitle(practice: NonNullable<ArenaBattle['practice']>, minutes: number | null) {
+  if (practice.kind === 'resit') return `Re-sit mistakes · ${practice.questions} question${practice.questions === 1 ? '' : 's'} · untimed`;
+  if (!practice.timed) return 'Rematch · untimed';
+  return minutes ? `Rematch · ${minutes} min` : 'Rematch · timed';
+}
+
 function lengthLabel(length: string) {
   return length === 'full'
     ? 'Full exam'
@@ -1462,6 +1525,18 @@ const shellCls = css`
   display: flex;
   flex-direction: column;
   background: #e9e5dc;
+`;
+
+// a Train run left behind: one short message in the middle of the screen
+const leftRunCls = css`
+  flex: 1;
+  padding: 1.6rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  p {
+    max-width: 42rem;
+  }
 `;
 
 const centerCls = css`
