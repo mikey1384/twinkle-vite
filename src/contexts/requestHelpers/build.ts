@@ -2603,19 +2603,22 @@ export default function buildRequestHelpers({
       buildId,
       state,
       questions,
+      images,
       runtimeRelease,
       appMcpInvocation
     }: {
       buildId: number;
       state: unknown;
       questions: Record<string, unknown>;
+      // Twinkle.ai.decide with images (preview): already serialized by the host
+      images?: Record<string, unknown>;
       runtimeRelease?: { source: 'published' | 'workspace'; artifactVersionId: number | null };
       appMcpInvocation?: BuildAppMcpInvocationContext;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/runtime-ai-decision`,
-          { state, questions, runtimeRelease, ...appMcpInvocation },
+          { state, questions, ...(images ? { images } : {}), runtimeRelease, ...appMcpInvocation },
           auth()
         );
         return data;
@@ -2630,6 +2633,10 @@ export default function buildRequestHelpers({
             ...(typeof response.data.requestId === 'string' &&
               /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(response.data.requestId)
               ? { requestId: response.data.requestId }
+              : {}),
+            ...(typeof response.data.reason === 'string' &&
+              /^[a-z_]{2,40}$/.test(response.data.reason)
+              ? { reason: response.data.reason }
               : {}),
             aiUsagePolicy: response.data.aiUsagePolicy
           });

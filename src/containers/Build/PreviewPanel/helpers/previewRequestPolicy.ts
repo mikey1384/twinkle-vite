@@ -36,6 +36,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:chat',
   'ai:generate-object',
   'ai:decide',
+  'ai:decide-images',
   'ai:generate-image',
   'ai:generate-music',
   'ai:generate-speech',

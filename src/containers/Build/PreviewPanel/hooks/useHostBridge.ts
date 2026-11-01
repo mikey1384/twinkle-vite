@@ -28,6 +28,10 @@ import {
 } from '../helpers/previewBridgeMessaging';
 import { buildRuntimeWorldAdmission } from '../helpers/buildRuntimeWorldAdmission';
 import {
+  assertDecisionSawImages,
+  serializeBuildDecisionImages
+} from '../helpers/buildRuntimeDecisionImages';
+import {
   handlePreviewHealthMessage,
   handleRuntimeObservationPreviewMessage
 } from '../helpers/runtimeObservationMessages';
@@ -2585,13 +2589,22 @@ export function useHostBridge({
             break;
 
           case 'ai:decide':
+          case 'ai:decide-images': {
             if (!previewAuth.userIdRef.current) {
               triggerGuestRestriction(previewAuth);
             }
+            // Preview: pictures arrive as upload URLs or Blob snapshots and
+            // leave as JSON. Only ai:decide-images carries them, and the
+            // answer must say the server looked at every one.
+            const decisionImages =
+              type === 'ai:decide-images'
+                ? await serializeBuildDecisionImages(payload?.images)
+                : undefined;
             response = await requestRefs.callBuildRuntimeAiDecisionRef.current({
               buildId: activeBuild.id,
               state: payload.state,
               questions: payload.questions,
+              ...(decisionImages ? { images: decisionImages } : {}),
               runtimeRelease: getAppInfoRelease({
                 runtimeOnly: runtimeOnlyRef.current,
                 previewSrcOverride: previewSrcOverrideRef.current,
@@ -2600,6 +2613,9 @@ export function useHostBridge({
               }),
               appMcpInvocation: getActiveAppMcpInvocation(sourceWindow)
             });
+            if (decisionImages) {
+              assertDecisionSawImages(response, Object.keys(decisionImages).length);
+            }
             if (
               response?.aiUsagePolicy &&
               typeof response.aiUsagePolicy === 'object'
@@ -2607,6 +2623,7 @@ export function useHostBridge({
               onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
             }
             break;
+          }
 
           case 'ai:generate-object':
             if (!previewAuth.userIdRef.current) {
@@ -5721,9 +5738,14 @@ export function useHostBridge({
                 ...(error.details && typeof error.details === 'object'
                   ? error.details
                   : {}),
-                ...(type === 'ai:decide' && typeof error.requestId === 'string' &&
+                ...((type === 'ai:decide' || type === 'ai:decide-images') &&
+                  typeof error.requestId === 'string' &&
                   /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(error.requestId)
                   ? { requestId: error.requestId }
+                  : {}),
+                ...(type === 'ai:decide-images' && typeof error.reason === 'string' &&
+                  /^[a-z_]{2,40}$/.test(error.reason)
+                  ? { reason: error.reason }
                   : {})
               }
             : null;
