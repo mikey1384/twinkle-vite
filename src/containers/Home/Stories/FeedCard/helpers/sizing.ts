@@ -35,6 +35,7 @@ export type FeedCardPreviewKind =
 export type FeedCardSize =
   | 'attachment-only'
   | 'arena-challenge'
+  | 'arena-daily'
   | 'ai-story-listening'
   | 'ai-story-reading'
   | 'bounty'
@@ -189,6 +190,9 @@ const PANEL_HEIGHT_REM: Record<
 > = {
   'attachment-only': { desktop: 12, mobile: 11 },
   'arena-challenge': { desktop: 32, mobile: 34 },
+  // a daily clear: the question's title (up to two lines) and opening line;
+  // phones draw at an 8px root against the 10px floor, hence the smaller value
+  'arena-daily': { desktop: 32, mobile: 27.5 },
   'ai-story-listening': { desktop: 18, mobile: 17 },
   'ai-story-reading': { desktop: 20, mobile: 19 },
   bounty: { desktop: 16, mobile: 18 },
@@ -757,7 +761,8 @@ function getMainPanelSize({
   }
 
   if (kind === 'pass') {
-    return content?.contentType === 'arenaChallenge' ? 'arena-challenge' : 'pass';
+    if (content?.contentType !== 'arenaChallenge') return 'pass';
+    return content?.kind === 'today' ? 'arena-daily' : 'arena-challenge';
   }
 
   if (
@@ -1266,6 +1271,7 @@ function getFeedCardFrameSize({
     mainSize === 'build' ||
     mainSize === 'pass' ||
     mainSize === 'arena-challenge' ||
+    mainSize === 'arena-daily' ||
     mainSize === 'subject-media' ||
     mainSize === 'subject-secret-media'
   ) {

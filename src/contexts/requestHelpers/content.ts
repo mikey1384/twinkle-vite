@@ -1647,6 +1647,21 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // another member's cleared question, from their Home story (Mikey 11-01)
+    async arenaShared(action: 'open' | 'action', body: Record<string, unknown> = {}) {
+      try {
+        const { data } = await request.post(
+          action === 'open'
+            ? `${URL}/content/arena/shared/${Number(body.challengeId)}/open`
+            : `${URL}/content/arena/shared/action`,
+          action === 'open' ? {} : body,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadArenaState() {
       try {
         const { data } = await request.get(

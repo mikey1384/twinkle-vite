@@ -163,6 +163,9 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-arena-challenge {
     height: max(32rem, 320px);
   }
+  .home-feed-card__panel-preview--size-arena-daily {
+    height: max(32rem, 320px);
+  }
   .home-feed-card__panel-preview--size-reflection {
     height: max(27rem, 270px);
   }

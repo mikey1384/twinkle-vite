@@ -11,8 +11,14 @@ import LearningScene from './LearningScene';
 import type { Profile, Prompt, TodayState } from './types';
 
 const EMPTY_PROFILE: Profile = { goal: '', subject: '', grade: '', confidence: '' };
-export default function TodayQuestion() {
-  const request = useAppContext(v => v.requestHelpers.arenaToday);
+const NO_OPTIONS: NonNullable<TodayState['options']> = { goals: [], grades: [], confidence: [], exams: [] };
+// sharedId: another member's cleared question, opened from their Home story
+// (Mikey 11-01). Same question, explanation and check; no setup, its own
+// payout, and the daily paid limit in place of the one-a-day rule.
+export default function TodayQuestion({ sharedId = 0 }: { sharedId?: number }) {
+  const shared = sharedId > 0;
+  const requestToday = useAppContext(v => v.requestHelpers.arenaToday);
+  const requestShared = useAppContext(v => v.requestHelpers.arenaShared);
   const userId = useKeyContext(v => v.myState.userId);
   const onSetUserState = useAppContext(v => v.user.actions.onSetUserState);
   const onApplyTodayStatsProgress = useNotiContext(v => v.actions.onApplyTodayStatsProgress);
@@ -32,6 +38,7 @@ export default function TodayQuestion() {
   const assignmentId = useRef<number | null>(null);
   const hasProfile = !!data?.profile;
   const waitingForQuestion = hasProfile && !data?.assignment;
+  const options = data?.options || NO_OPTIONS;
 
   useEffect(() => {
     mounted.current = true;
@@ -47,10 +54,10 @@ export default function TodayQuestion() {
     };
     // Request helpers are stable context actions, not dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, sharedId]);
 
   useEffect(() => {
-    if (!data || !hasProfile || editing) return;
+    if (shared || !data || !hasProfile || editing) return;
     const refresh = () => {
       if (
         document.visibilityState === 'visible' &&
@@ -71,13 +78,15 @@ export default function TodayQuestion() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.nextDay, hasProfile, waitingForQuestion, editing]);
 
-  if (!data) return <section className={wrapCls}>{error ? <><p role="alert">{error}</p><button className={primaryCls} onClick={() => void run('open')}>Try again</button></> : <ArenaLoader text="Opening your challenge…" />}</section>;
+  if (!data) return <section className={wrapCls}>{error ? <><p role="alert">{error}</p><button className={primaryCls} onClick={() => void run('open')}>Try again</button></> : <ArenaLoader text={shared ? 'Opening the question…' : 'Opening your challenge…'} />}</section>;
   const q = data.assignment;
   const rewards = q?.rewards || data.rewards;
-  const setup = !data.profile || editing;
-  const goal = data.options.goals.find(g => g.key === profile.goal);
+  const setup = !shared && (!data.profile || editing);
+  // a shared question once the day's paid ones are used up still plays
+  const unpaidToday = shared && !q?.completedVia && (data.paidToday ?? 0) >= (data.paidPerDay ?? 0);
+  const goal = options.goals.find(g => g.key === profile.goal);
   const setupTitles = ['What are you working toward?', profile.goal === 'ssat' ? 'Which SSAT level are you preparing for?' : 'What should we focus on?', 'Which school year are you in?', 'Where should we start?'];
-  const choices = setupStep === 0 ? data.options.goals : setupStep === 1 ? profile.goal === 'exam' ? data.options.exams : (goal?.subjects || []).map(s => ({ key: s, label: data.options.exams.find(exam => exam.key === s)?.label || s })) : setupStep === 2 ? data.options.grades : data.options.confidence;
+  const choices = setupStep === 0 ? options.goals : setupStep === 1 ? profile.goal === 'exam' ? options.exams : (goal?.subjects || []).map(s => ({ key: s, label: options.exams.find(exam => exam.key === s)?.label || s })) : setupStep === 2 ? options.grades : options.confidence;
   const lesson = q?.lesson;
   const step = lesson?.steps[lessonIndex];
   const showLesson = q?.attempted && (!q.completedVia || exploring);
@@ -86,11 +95,13 @@ export default function TodayQuestion() {
   return (
     <section className={wrapCls} aria-busy={busy} {...(!setup && q && !q.completedVia ? { [WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: 'arenaToday', [WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE]: 'arenaToday' } : {})}>
       <header className={headCls}>
-        <div><span className={eyebrowCls}>ONE QUESTION, FOR YOU</span><h1>Today’s Challenge</h1></div>
-        {data.profile && !setup && <button className={linkCls} disabled={busy} onClick={editPreferences}>My focus</button>}
+        {shared
+          ? <div><span className={eyebrowCls}>{data.sharer?.username ? `${data.sharer.username.toUpperCase()} CLEARED THIS` : 'A CLEARED QUESTION'}</span><h1>Try this question</h1></div>
+          : <div><span className={eyebrowCls}>ONE QUESTION, FOR YOU</span><h1>Today’s Challenge</h1></div>}
+        {!shared && data.profile && !setup && <button className={linkCls} disabled={busy} onClick={editPreferences}>My focus</button>}
       </header>
       {error && <div role="alert" className={errorCls}>{error}<button className={linkCls} disabled={busy} onClick={() => void run('open')}>Refresh</button></div>}
-      {!setup && data.setupCompletedToday && !q?.completedVia && <div className={successCls} role="status">
+      {!shared && !setup && data.setupCompletedToday && !q?.completedVia && <div className={successCls} role="status">
         <strong>A cleared for today ✓</strong>
         <p>Your first-time setup counts. You can still complete your challenge to earn its rewards.</p>
       </div>}
@@ -113,43 +124,53 @@ export default function TodayQuestion() {
         <div className={paperCls}>
           <span className={eyebrowCls}>YOUR FOCUS IS SAVED</span>
           <h2>We’re preparing your challenge</h2>
-          <p>{profileLabel(data)} · {data.options.grades.find(g => g.key === data.profile?.grade)?.label}</p>
+          <p>{profileLabel(data)} · {options.grades.find(g => g.key === data.profile?.grade)?.label}</p>
           <p>Your challenge will appear here when it’s ready, with an interactive explanation to help you learn.</p>
           <RewardOffer rewards={rewards} />
         </div>
       ) : (
         <>
           {q.completedVia && <div className={successCls} role="status">
-            <span className={eyebrowCls}>A CLEARED ✓</span>
+            <span className={eyebrowCls}>{q.unpaid ? 'CLEARED' : 'A CLEARED ✓'}</span>
             <h2>{q.completedVia === 'correct' ? 'Right first time!' : 'You worked it out.'}</h2>
-            <p>{q.completedVia === 'correct' ? 'Your daily reward is yours.' : 'You learned the idea and passed the understanding check.'}</p>
-            <div className={rewardRowCls}><RewardChips xp={q.reward.xp} coins={q.reward.coins} />{q.completedVia === 'guided' && <span>No Coins on the guided route</span>}</div>
-            <p className={mutedCls}>A new question unlocks at 9 AM Korea time, when one is ready.</p>
+            <p>{q.unpaid
+              ? `Today’s ${data.paidPerDay} paid questions were already used, so this one paid no reward.`
+              : shared
+                ? q.completedVia === 'correct' ? 'Its reward is yours.' : 'You learned the idea and passed the understanding check.'
+                : q.completedVia === 'correct' ? 'Your daily reward is yours.' : 'You learned the idea and passed the understanding check.'}</p>
+            {!q.unpaid && <div className={rewardRowCls}><RewardChips xp={q.reward.xp} coins={q.reward.coins} />{q.completedVia === 'guided' && <span>No Coins on the guided route</span>}</div>}
+            <p className={mutedCls}>{shared
+              ? `Try more from Home: the first ${data.paidPerDay} each day pay. Your own Today’s Challenge is separate.`
+              : 'A new question unlocks at 9 AM Korea time, when one is ready.'}</p>
             {!exploring && <button className={primaryCls} onClick={() => { setExploring(true); setLessonIndex(0); }}>{q.completedVia === 'correct' ? 'Explore the explanation' : 'Review what I learned'}</button>}
           </div>}
           {!q.attempted ? <div className={paperCls}>
             <span className={eyebrowCls}>{q.skill}</span><h2>{q.title}</h2>
-            <RewardOffer rewards={rewards} />
+            {unpaidToday
+              ? <p className={learningNoteCls}>Today’s {data.paidPerDay} paid questions are used up. You can still try this one, for no reward.</p>
+              : <RewardOffer rewards={rewards} />}
             <Question prompt={q.question} value={answer} onChange={setAnswer} disabled={busy} />
-            <p className={mutedCls}>Your first answer counts. If you miss it, the explanation and understanding check can still clear A.</p>
-            <button className={primaryCls} disabled={busy || !hasAnswer(answer)} onClick={() => void run('action', { assignmentId: q.id, action: 'answer', answer })}>Submit answer</button>
+            <p className={mutedCls}>{unpaidToday ? 'Your first answer counts. If you miss it, the explanation and understanding check are still there.' : 'Your first answer counts. If you miss it, the explanation and understanding check can still clear A.'}</p>
+            <button className={primaryCls} disabled={busy || !hasAnswer(answer)} onClick={() => void act({ action: 'answer', answer })}>Submit answer</button>
           </div> : <details className={originalCls}>
             <summary>Original question · {q.firstCorrect ? 'Correct' : 'Learning from a miss'}</summary>
             <Question prompt={q.question} value={q.firstAnswer} onChange={() => {}} disabled />
           </details>}
           {showLesson && lesson && <div className={paperCls}>
-            {!q.completedVia && <div className={learningNoteCls}><strong>Not quite — let’s work it out.</strong><p>Finish the explanation and get the understanding check right to clear A and earn <RewardChips xp={rewards.guidedXP} />. No Coins on this route.</p></div>}
+            {!q.completedVia && <div className={learningNoteCls}><strong>Not quite — let’s work it out.</strong>{unpaidToday
+              ? <p>Finish the explanation and get the understanding check right to clear it.</p>
+              : <p>Finish the explanation and get the understanding check right to clear A and earn <RewardChips xp={rewards.guidedXP} />. No Coins on this route.</p>}</div>}
             <span className={eyebrowCls}>{showCheck ? 'PUT THE IDEA TO WORK' : `EXPLANATION · ${lessonIndex + 1} / ${lesson.totalSteps}`}</span>
             <h2>{showCheck ? 'A quick understanding check' : step?.title}</h2>
             {showCheck && q.check ? <>
               <p className={summaryCls}><MathText text={lesson.summary || ''} /></p>
               <Question prompt={q.check} value={q.checkResult?.correct ? q.checkResult.answer : checkAnswer} onChange={setCheckAnswer} disabled={busy || q.checkResult?.correct === true} />
               {q.checkResult && <p role="status" className={q.checkResult.correct ? feedbackCls : learningNoteCls}>{q.checkResult.correct ? q.checkResult.explanation : 'Not yet. Revisit the explanation, then try applying the idea again.'}</p>}
-              {!q.checkResult?.correct && <button className={primaryCls} disabled={busy || !hasAnswer(checkAnswer)} onClick={() => void run('action', { assignmentId: q.id, action: 'check', answer: checkAnswer })}>Check my understanding</button>}
+              {!q.checkResult?.correct && <button className={primaryCls} disabled={busy || !hasAnswer(checkAnswer)} onClick={() => void act({ action: 'check', answer: checkAnswer })}>Check my understanding</button>}
             </> : step && <>
               <p><MathText text={step.prompt} /></p>
               <LearningScene scene={step.response?.scene || step.scene} />
-              <div className={choicesCls}>{step.options.map((option, i) => <button key={i} className={optionCls} aria-pressed={step.response?.option === i} disabled={busy || step.response?.correct === true} onClick={() => void run('action', { assignmentId: q.id, action: 'lesson', step: lessonIndex, option: i })}><MathText text={option.label} /></button>)}</div>
+              <div className={choicesCls}>{step.options.map((option, i) => <button key={i} className={optionCls} aria-pressed={step.response?.option === i} disabled={busy || step.response?.correct === true} onClick={() => void act({ action: 'lesson', step: lessonIndex, option: i })}><MathText text={option.label} /></button>)}</div>
               {step.response && <div className={feedbackCls} role="status"><MathText text={step.response.feedback} /></div>}
             </>}
             <div className={actionsCls}>
@@ -160,7 +181,9 @@ export default function TodayQuestion() {
           </div>}
         </>
       )}
-      <p className={footCls}>One reward per day. First try or guided learning both clear A. Basic and Excellence bonuses keep their own goals.</p>
+      <p className={footCls}>{shared
+        ? `The first ${data.paidPerDay} shared questions you clear each day pay, and a paid one clears A. One try per question.`
+        : 'One reward per day. First try or guided learning both clear A. Basic and Excellence bonuses keep their own goals.'}</p>
     </section>
   );
 
@@ -176,12 +199,20 @@ export default function TodayQuestion() {
     if (next.dailyTaskStatus) onApplyTodayStatsProgress({ newStats: buildTodayStatsPatchFromDailyTaskStatus(next.dailyTaskStatus) });
   }
 
+  // the same answer, lesson and check actions, on whichever question is open
+  function act(body: Record<string, unknown>) {
+    const id = data?.assignment?.id;
+    return run('action', shared ? { attemptId: id, ...body } : { assignmentId: id, ...body });
+  }
+
   async function run(action: 'open' | 'profile' | 'action', body: Record<string, unknown> = {}) {
     if (busyRef.current) return false;
     busyRef.current = true; setBusy(true); setError('');
     const id = ++requestId.current;
     try {
-      const next: TodayState = await request(action, body);
+      const next: TodayState = shared
+        ? await requestShared(action === 'open' ? 'open' : 'action', action === 'open' ? { challengeId: sharedId } : body)
+        : await requestToday(action, body);
       if (!mounted.current || id !== requestId.current) return false;
       apply(next);
       return true;
@@ -212,7 +243,8 @@ export default function TodayQuestion() {
 function hasAnswer(value: string | number | null) { return typeof value === 'number' || typeof value === 'string' && value.trim().length > 0; }
 function profileLabel(data: TodayState) {
   const profile = data.profile!;
-  return data.options.exams.find(e => e.key === profile.subject)?.label || `${data.options.goals.find(g => g.key === profile.goal)?.label} · ${profile.subject}`;
+  const options = data.options || NO_OPTIONS;
+  return options.exams.find(e => e.key === profile.subject)?.label || `${options.goals.find(g => g.key === profile.goal)?.label} · ${profile.subject}`;
 }
 function RewardOffer({ rewards }: { rewards: TodayState['rewards'] }) {
   return <div className={offerCls}>

@@ -41,6 +41,8 @@ export default function ArenaPage() {
   const battleId = Number(searchParams.get('battle')) || 0;
   // a shared challenge opened from Home (Mikey 10-24)
   const challengeId = Number(searchParams.get('challenge')) || 0;
+  // another member's cleared daily question, opened from Home (Mikey 11-01)
+  const sharedId = view === 'today' ? Number(searchParams.get('shared')) || 0 : 0;
 
   if (!userId) {
     return <LoggedOutPrompt title="Log in to enter the Arena" />;
@@ -62,7 +64,7 @@ export default function ArenaPage() {
             </button>
             {view !== 'choose' && (
               <div className={modeTagCls}>
-                {view === 'today' ? 'Today’s Challenge' : view === 'train' ? 'Train' : 'Arena'}
+                {view === 'today' ? sharedId ? 'Try this question' : 'Today’s Challenge' : view === 'train' ? 'Train' : 'Arena'}
               </div>
             )}
           </div>
@@ -82,7 +84,7 @@ export default function ArenaPage() {
           )}
         >
           {view === 'choose' && <ModeChooser onPick={openView} />}
-          {view === 'today' && <TodayQuestion key={userId} />}
+          {view === 'today' && <TodayQuestion key={`${userId}:${sharedId}`} sharedId={sharedId} />}
           {view === 'train' && activity === 'ai-story' && (
             <AIStory onHide={() => setSearchParams({ mode: 'train' })} />
           )}

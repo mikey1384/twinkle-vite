@@ -24,7 +24,10 @@ import {panelPreviewStyles} from './src/containers/Home/Stories/FeedCard/Body/st
 import {mobilePreviewStyles} from './src/containers/Home/Stories/FeedCard/Body/styles/mobilePreviewStyles';
 library.add(faCoins);
 const daily={id:101,kind:'today',dayIndex:1760,dayKey:'2026-10-27',createdAt:1793098800,
- sharer:{id:2,username:'Fixture member',profilePicUrl:null},xpEarned:50000,coinsEarned:5000};
+ sharer:{id:2,username:'Fixture member',profilePicUrl:null},xpEarned:50000,coinsEarned:5000,
+ questionTitle:'Reading a two-way table when the totals change between the first survey and the second one',
+ tried:4,cleared:2,
+ questionExcerpt:'한 도시의 전체 전력 사용량은 전년보다 크게 늘었다. 그중 재생에너지가 차지하는 비중은 20%에서 15%로 낮아졌다. 이를 보고 한 논자는 재생에너지로 생산한 전력량도 줄었다고 주장했다…'};
 const boss={id:102,examKey:'c1-advanced',examName:'C1 Advanced',code:'C1',codeLabel:null,
  gradeLabels:null,length:'full',difficulty:'normal',sharer:daily.sharer,raw:148,max:148,
  xpEarned:120000,coinsEarned:2400,scoreBonusXpEarned:40000,scoreBonusCoinsEarned:800,
@@ -38,7 +41,7 @@ function App(){
  <main><article onClick={()=>window.cardClicks=(window.cardClicks||0)+1}>
   <header><b>Fixture member</b> <span>{arenaChallengeHeadline(data)}</span><small>Local design preview · synthetic rewards</small></header>
   <div className={css(panelPreviewStyles+mobilePreviewStyles)}>
-   <div data-slot className={surface==='feed'?"home-feed-card__panel-preview home-feed-card__panel-preview--pass home-feed-card__panel-preview--size-arena-challenge":"content-page-panel"}>
+   <div data-slot className={surface==='feed'?"home-feed-card__panel-preview home-feed-card__panel-preview--pass home-feed-card__panel-preview--size-"+(data.kind==='today'?'arena-daily':'arena-challenge'):"content-page-panel"}>
     <ArenaChallengePanel challenge={data}/>
    </div>
   </div><footer>Like　Comment　Recommend</footer>
@@ -52,7 +55,7 @@ async function compile() {
   return `<!doctype html><html><meta name="viewport" content="width=device-width, initial-scale=1"><title>Arena daily challenge story preview</title><style>${style}</style><body><div id="root"></div><script>${result.outputFiles[0].text.replaceAll('</script', '<\\/script')}</script></body></html>`;
 }
 
-test('daily stories fit the actual Home preview slot and nudge only an unfinished viewer, preserving boss cards', { timeout: 90000 }, async () => {
+test('daily stories fit the actual Home preview slot, offer the exact question to others and nudge only an unfinished viewer, preserving boss cards', { timeout: 90000 }, async () => {
   const html = await compile();
   if (artifacts) { mkdirSync(artifacts, { recursive: true }); writeFileSync(path.join(artifacts, 'preview.html'), html); }
   for (const engine of [chromium, webkit]) {
@@ -66,19 +69,27 @@ test('daily stories fit the actual Home preview slot and nudge only an unfinishe
           ? route.fulfill({ contentType: 'text/html', body: html })
           : route.fulfill({ status: 204, body: '' }));
         await page.goto('http://localhost:3000/');
+        // someone else's clear: try this exact question, or one's own daily
+        const tryIt = page.getByRole('button', { name: 'Try this question', exact: true });
+        const ownLink = page.getByRole('button', { name: 'Today’s challenge', exact: true });
         const button = page.getByRole('button', { name: 'Try today’s challenge', exact: true });
-        await button.waitFor();
+        await tryIt.waitFor();
+        assert.ok(await ownLink.isVisible());
+        assert.equal(await button.count(), 0);
+        assert.ok(await page.getByText('4 tried · 2 cleared', { exact: true }).isVisible());
         // A daily clear shows exactly what it paid (Mikey 10-31: the amounts
         // are what make others want to try it).
         assert.ok(await page.getByText('50,000', { exact: true }).isVisible());
         assert.ok(await page.getByLabel('5,000 coins', { exact: true }).isVisible());
         assert.ok(await page.getByText('cleared Today’s Challenge', { exact: true }).isVisible());
-        assert.ok(await page.getByText('Challenge cleared', { exact: true }).isVisible());
+        // the question itself, one CLEARED stamp, the question's own date
+        assert.ok(await page.getByText('Reading a two-way table', { exact: false }).isVisible());
+        assert.ok(await page.getByLabel('Cleared', { exact: true }).isVisible());
         assert.ok(await page.getByText('Oct 27, 2026', { exact: true }).isVisible());
         const checkFit = async () => {
           const fits = await page.evaluate(() => {
             const slot = document.querySelector('[data-slot]').getBoundingClientRect();
-            return [...document.querySelectorAll('[data-slot] button,[data-slot] .reward-amount-chip')].every(el => {
+            return [...document.querySelectorAll('[data-slot] button,[data-slot] .reward-amount-chip,[data-slot] strong,[data-slot] p')].every(el => {
               const r = el.getBoundingClientRect(); return r.bottom <= slot.bottom + 1 && r.right <= slot.right + 1 && r.left >= slot.left - 1;
             }) && document.documentElement.scrollWidth <= innerWidth + 1;
           });
@@ -86,24 +97,27 @@ test('daily stories fit the actual Home preview slot and nudge only an unfinishe
         };
         await checkFit();
         if (artifacts) await page.screenshot({ path: path.join(artifacts, `${engine.name()}-${width}.png`), fullPage: true });
-        await button.click();
+        await tryIt.click();
+        await page.waitForFunction(() => window.route === '/arena?mode=today&shared=101');
+        await ownLink.click();
         await page.waitForFunction(() => window.route === '/arena?mode=today');
-        assert.equal(await page.evaluate(() => window.route), '/arena?mode=today');
-        assert.equal(await page.evaluate(() => window.cardClicks || 0), 0, 'The nudge must not also open the post');
+        assert.equal(await page.evaluate(() => window.cardClicks || 0), 0, 'Neither must also open the post');
         // A real completion response, another viewer, missing state and rollover.
         await page.evaluate(() => window.storyState({ done: true }));
-        await button.waitFor({ state: 'detached' });
-        assert.ok(await page.getByText('You’ve completed today’s challenge ✓').isVisible());
+        await ownLink.waitFor({ state: 'detached' });
+        assert.ok(await tryIt.isVisible(), 'their question stays open after one’s own daily');
         await page.evaluate(() => window.storyState({ done: undefined }));
-        assert.equal(await button.count(), 0, 'Unknown progress is not an unfinished challenge');
+        assert.equal(await ownLink.count(), 0, 'Unknown progress is not an unfinished challenge');
         await page.evaluate(() => window.storyState({ done: false, viewer: 0 }));
-        assert.equal(await button.count(), 0);
+        await tryIt.waitFor({ state: 'detached' });
+        assert.equal(await tryIt.count() + await ownLink.count() + await button.count(), 0, 'logged out: nothing to press');
         await page.evaluate(() => window.storyState({ done: false, viewer: 2, kind: 'today', values: { xpEarned: 25000, coinsEarned: 0 } }));
-        await button.waitFor(); // even on one's own old story, today's new challenge is available
+        await button.waitFor(); // on one's own story, today's new challenge, never one's own question
+        assert.equal(await tryIt.count(), 0);
         // a guided clear shows what it paid too
         assert.ok(await page.getByText('25,000', { exact: true }).isVisible());
         assert.ok(await page.getByText('0 Coins', { exact: true }).isVisible());
-        assert.ok(await page.getByText('Challenge cleared', { exact: true }).isVisible());
+        assert.ok(await page.getByLabel('Cleared', { exact: true }).isVisible());
         await checkFit();
         if (artifacts && width === 360) await page.screenshot({ path: path.join(artifacts, `${engine.name()}-guided-${width}.png`), fullPage: true });
         await page.evaluate(() => window.storyState({ kind: 'boss', viewer: 1 }));
@@ -140,7 +154,7 @@ test('million-XP awards are larger at the exact threshold and fit Home and conte
         await page.route('**/*', route => route.request().url() === 'http://localhost:3000/'
           ? route.fulfill({ contentType: 'text/html', body: html }) : route.fulfill({ status: 204, body: '' }));
         await page.goto('http://localhost:3000/');
-        await page.getByRole('button', { name: 'Try today’s challenge', exact: true }).waitFor();
+        await page.getByRole('button', { name: 'Try this question', exact: true }).waitFor();
         for (const surface of ['feed', 'content']) {
           let smallerFont;
           for (const xp of [999999, 1000000, 13500000]) {
