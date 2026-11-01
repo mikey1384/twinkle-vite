@@ -145,17 +145,20 @@ function buildSteps(examKey: string, tracks: ListeningTrack[]): Step[] {
 
 export default function ListeningConsole({
   battleId,
+  storageKey: storageKeyOverride,
   examKey,
   tracks,
   english
 }: {
   battleId: number;
+  // where the broadcast's place is kept (a Train rematch has its own run)
+  storageKey?: string;
   examKey: string;
   tracks: ListeningTrack[];
   // an English-language exam's broadcast reads in English
   english: boolean;
 }) {
-  const storageKey = `arena-listening-${battleId}`;
+  const storageKey = storageKeyOverride || `arena-listening-${battleId}`;
   const steps = useRef(buildSteps(examKey, tracks)).current;
   const [index, setIndex] = useState(() => {
     try {

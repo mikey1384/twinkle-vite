@@ -561,7 +561,11 @@ const OFF_LIMITS_REFUSAL: Record<string, string> = {
   arenaToday:
     'Today’s Challenge earns a personal daily learning reward. The user answers the question, lesson interactions and understanding check themselves. You can review it together once completed.',
   arenaBattle:
-    'This is a solo Arena mastery run. Offer to go through this paper together after the member submits it. Ordinary exams allow your help.'
+    'This is a solo Arena mastery run. Offer to go through this paper together after the member submits it. Ordinary exams allow your help.',
+  // a timed rematch in Train (Mikey 11-01): the member's own race against
+  // their first attempt on this paper
+  arenaRematch:
+    'This is a timed rematch: the member is racing their own first attempt on the clock. Offer to go through it together after they submit it. Re-sits and untimed rematches allow your help.'
 };
 
 function refusedInsideXpActivity(element: Element) {
