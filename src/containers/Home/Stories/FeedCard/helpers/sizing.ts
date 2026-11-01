@@ -78,6 +78,7 @@ export type FeedCardTargetSize =
   | 'media-comment'
   | 'shared-prompt'
   | 'standard'
+  | 'subject-book'
   | 'subject-embed';
 export type FeedCardLayoutAxis = 'desktop' | 'mobile';
 
@@ -244,6 +245,10 @@ const TARGET_HEIGHT_REM: Record<
   // needs more room than a plain standard target to show two lines of prompt.
   'shared-prompt': { desktop: 16, mobile: 15 },
   standard: { desktop: 13, mobile: 12 },
+  // Subject target whose description carries a Book Maker card. The card's
+  // height follows the column width (see BOOK_EMBED_PREVIEW_HEIGHT_REM), so
+  // the target hugs it like the AI card target; this is its smallest height.
+  'subject-book': { desktop: 21.5, mobile: 19.5 },
   // Subject target whose description embed got promoted into the embed slot
   // (profile card, image, YouTube). Like the comment embed allowance, the
   // embed's exact height is unknown at sizing time (profile data is
@@ -871,9 +876,12 @@ function getTargetPanelSizing({
 }
 
 function getSubjectTargetSize(subject: any): FeedCardTargetSize {
-  return getSubjectTargetDescriptionEmbeds(subject).contentEmbed
-    ? 'subject-embed'
-    : 'standard';
+  const { contentEmbed } = getSubjectTargetDescriptionEmbeds(subject);
+  if (!contentEmbed) return 'standard';
+  return contentEmbed.type === 'internal' &&
+    getInternalEmbedPreviewInfo(contentEmbed.src)?.kind === 'book'
+    ? 'subject-book'
+    : 'subject-embed';
 }
 
 function buildTargetSizing(
@@ -1098,6 +1106,18 @@ const SUBJECT_EMBED_PREVIEW_HEIGHT_REM = {
   mobile: 17.5
 };
 
+// Book Maker card (BookEmbed) in the subject description slot. Its cover is a
+// quarter of the card's width at 3:4, so the card's height follows the feed
+// column's width (about 12rem on a 320px phone, 22rem on a wide desktop
+// column) and the title/description lengths. A fixed worst-case reservation
+// left an empty band under the card at most widths, so the body hugs the card
+// instead (mainPreviewStyles) and this is the smallest card per axis: the
+// body's min-height, never a band.
+export const BOOK_EMBED_PREVIEW_HEIGHT_REM = {
+  desktop: 15.5,
+  mobile: 12
+};
+
 function estimateCommentEmbedBodyHeight(
   content: any,
   axis: FeedCardLayoutAxis,
@@ -1170,7 +1190,7 @@ function estimateCommentEmbedBodyHeight(
   const embedKind = getSubjectContentSizedEmbedKind(content);
   const embedHeight =
     embedKind === 'book'
-      ? (axis === 'desktop' ? 27 : 23)
+      ? BOOK_EMBED_PREVIEW_HEIGHT_REM[axis]
       : embedKind === 'aiStory'
       ? AI_STORY_EMBED_PREVIEW_HEIGHT_REM[axis]
       : embedKind === 'aiCard'

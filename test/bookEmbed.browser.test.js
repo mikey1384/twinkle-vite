@@ -17,7 +17,13 @@ const feedSource = readFileSync(
   'utf8'
 );
 const cardStyles = feedSource.match(/const cardClass = css`[\s\S]*?\n`;/)[0];
-const sizingStyle = feedSource.match(/const sizingStyle = \{[\s\S]*?\n  \}/)[0];
+// FeedCard memoizes its sizing style; the fixture needs the same object.
+const sizingStyle =
+  'const sizingStyle = {' +
+  feedSource.match(
+    /const sizingStyle = useMemo\(\(\) => \(\{([\s\S]*?)\n  \}\)/
+  )[1] +
+  '\n  }';
 const fixture = `
 import React,{useState} from 'react';
 import {createRoot} from 'react-dom/client';
@@ -57,7 +63,8 @@ async function compile() {
   if (bundle) return bundle;
   const stubs = {
     '~/contexts': `const state={myState:{userId:1},helpers:{checkUserChange:()=>false},requestHelpers:{},actions:{}};export const useAppContext=select=>select(state);export const useContentContext=select=>select(state);export const useKeyContext=select=>select(state);`,
-    '~/helpers': 'export const isMobile=()=>false;',
+    '~/helpers': 'export const isMobile=()=>false;export const isTablet=()=>false;',
+    'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url': 'export default "";',
     '~/helpers/hooks':
       'export const useLiveComment=value=>value;export const useContentState=({contentId})=>contentId===2?window.fixtureSubject:{};',
     '~/theme/hooks/useRoleColor':
@@ -103,8 +110,10 @@ async function compile() {
     '~/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent'
   ];
   delete stubs['./EmbeddedComponent'];
+  // BookEmbed caches previews by subject fields (previewCache.ts). Each
+  // configure() is a new scenario, so give it its own cache key.
   stubs['~/contexts'] =
-    `const state={myState:{userId:1},helpers:{checkUserChange:()=>false},requestHelpers:{loadBookPreview:id=>window.loadBook(id)},actions:{}};export const useAppContext=select=>select(state);export const useContentContext=select=>select(state);export const useKeyContext=select=>select(state);`;
+    `const state={myState:{userId:1},helpers:{checkUserChange:()=>false},requestHelpers:{loadBookPreview:id=>window.loadBook(id)},actions:{},state:new Proxy({},{get:(_,key)=>String(key).startsWith('subject')?{rootId:window.sequence||0}:undefined})};export const useAppContext=select=>select(state);export const useContentContext=select=>select(state);export const useKeyContext=select=>select(state);export const useNotiContext=select=>select(state);`;
   stubs['~/helpers/hooks/useScrollAnchorRestoration'] =
     'export const saveScrollAnchorForElement=()=>{};';
   stubs['./MainContentComponent'] =
@@ -302,6 +311,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit }))
               await page.waitForFunction(
                 () => !document.querySelector('.book-embed__cover img')
               );
+            let feedBand = 0;
             if (config.feed) {
               const visible = await card
                 .locator('.book-embed__read')
@@ -318,6 +328,26 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit }))
                 true,
                 'Read action must not be clipped by the feed panel'
               );
+              // 11-01: a fixed worst-case reservation left a ~130px empty
+              // band under the card on phones. The body hugs the card now.
+              // Empty space between the lowest visible content (the book
+              // card, or an attachment below it) and the end of the body.
+              feedBand = await card.evaluate((el) => {
+                const body = el.closest('.home-feed-card__body');
+                const contentBottom = Math.max(
+                  ...[el, ...body.querySelectorAll('*')]
+                    .filter(
+                      (node) =>
+                        node === el ||
+                        !node.children.length ||
+                        node.matches('[data-native-attachment], img, svg')
+                    )
+                    .map((node) => node.getBoundingClientRect())
+                    .filter((rect) => rect.height > 0)
+                    .map((rect) => rect.bottom)
+                );
+                return body.getBoundingClientRect().bottom - contentBottom;
+              });
             }
             if (artifacts && !config.broken) {
               mkdirSync(artifacts, { recursive: true });
@@ -347,6 +377,12 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit }))
                 )
               });
             }
+            if (config.feed)
+              assert.ok(
+                feedBand >= 0 && feedBand <= 24,
+                'empty band under the feed book card: ' +
+                  JSON.stringify({ width, config, band: feedBand })
+              );
           }
         }
         await configure(page, { delay: 200, id: 111 });

@@ -3,10 +3,17 @@ import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 export const mainPreviewStyles = `
   /* Card details and the subject title wrap independently in tablet columns.
      This preview already clamps its prompt, so let the bounded contents size
-     the body instead of clipping them against the estimated feed height. */
+     the body instead of clipping them against the estimated feed height.
+     A Book Maker card's height follows the column width (its cover is a
+     quarter of the card at 3:4), so it hugs the same way; its estimate is the
+     smallest card (BOOK_EMBED_PREVIEW_HEIGHT_REM), so no band is left below. */
   &.home-feed-card__body:has(
       > .home-feed-card__panel-preview--size-subject-comment-embed
       .home-feed-card__subject-embed-preview > .compact-ai-card-preview
+    ),
+  &.home-feed-card__body:has(
+      > .home-feed-card__panel-preview--size-subject-comment-embed
+      .home-feed-card__subject-embed-preview.home-feed-card__rich-embed-internal--book
     ) {
     flex-basis: auto;
     height: auto;

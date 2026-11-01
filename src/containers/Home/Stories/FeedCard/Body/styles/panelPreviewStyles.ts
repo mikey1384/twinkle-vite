@@ -8,7 +8,10 @@ import {
 export const panelPreviewStyles = `
   /* Targets use their compact natural height and may grow for wrapped names
      or a listing. Keep the surrounding body flexible so nothing is clipped. */
-  &.home-feed-card__body:has(> .home-feed-card__target-preview--size-ai-card) {
+  &.home-feed-card__body:has(> .home-feed-card__target-preview--size-ai-card),
+  &.home-feed-card__body:has(
+      > .home-feed-card__target-preview--size-subject-book
+    ) {
     flex-basis: auto;
     height: auto;
   }
@@ -237,7 +240,8 @@ export const panelPreviewStyles = `
   .home-feed-card__target-preview--size-build-comment {
     height: max(15.5rem, 155px);
   }
-  .home-feed-card__target-preview--size-ai-card {
+  .home-feed-card__target-preview--size-ai-card,
+  .home-feed-card__target-preview--size-subject-book {
     height: auto;
     flex: 0 0 auto;
   }
