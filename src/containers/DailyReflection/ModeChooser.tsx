@@ -30,13 +30,19 @@ const MODES = [
   }
 ];
 
-// On a Word Day or Picture Day the Classic card wears that day's cover, so
-// members who now head straight for Training still notice it (Mikey 10-24).
+// On a Word Day, Advice Day or Picture Day the Classic card wears that day's
+// cover, so members who now head straight for Training still notice it (Mikey
+// 10-24, 11-01).
 const CLASSIC_DAYS = {
   keyword: {
     cover: '/img/daily-reflection/cover-word-day.jpg',
     title: 'Word Day',
     line: 'Today is your Word Day: one word to start from, or write about anything.'
+  },
+  advice: {
+    cover: '/img/daily-reflection/cover-advice-day.jpg',
+    title: 'Advice Day',
+    line: 'Today is your Advice Day: give someone a piece of advice, or write about anything.'
   },
   picture: {
     cover: '/img/daily-reflection/cover-picture-day.jpg',

@@ -19,8 +19,13 @@ import { paperSecondaryButtonCls } from '~/components/Modals/DailyQuestionModal/
 // stat picked for today. One reflection per mode per day.
 
 export interface DailyReflectionModes {
-  // dayType: today's Word Day / Picture Day, so the Classic card can show it
-  classic: { started: boolean; answered: boolean; dayType?: 'keyword' | 'picture' | null };
+  // dayType: today's Word Day / Advice Day / Picture Day, so the Classic card
+  // can show it
+  classic: {
+    started: boolean;
+    answered: boolean;
+    dayType?: 'keyword' | 'advice' | 'picture' | null;
+  };
   training: { started: boolean; answered: boolean; axis: string | null };
 }
 

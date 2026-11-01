@@ -22,8 +22,10 @@ import {
 // 2026-10-12: no traces of the old modal look). Same behaviour as before.
 export default function StartScreen({
   currentStreak,
+  dayAdvicePrompt,
   dayKeyword,
   hasEnoughCoins,
+  isAdviceDay,
   isKeywordDay,
   isPictureDay,
   isSimplified,
@@ -46,8 +48,12 @@ export default function StartScreen({
   onStart
 }: {
   currentStreak: number;
+  // Advice Day's line, tailored to the member like Word Day's word
+  dayAdvicePrompt?: string;
   dayKeyword?: string;
   hasEnoughCoins: boolean;
+  // Advice Day keeps Word Day's start with an advice prompt instead of a word
+  isAdviceDay?: boolean;
   isKeywordDay?: boolean;
   // Picture Day keeps Word Day's start (streak, repair) with its own lead
   isPictureDay?: boolean;
@@ -188,6 +194,14 @@ export default function StartScreen({
               Describe a picture you have in mind and Twinkle paints it, or
               write about anything at all
             </p>
+          </div>
+        ) : isKeywordDay && isAdviceDay ? (
+          <div className={keywordCls}>
+            <span className={metaLabelCls}>Advice Day</span>
+            <p className={adviceLineCls}>
+              {dayAdvicePrompt || 'Give someone a piece of advice'}
+            </p>
+            <p className={keywordHintCls}>or write about anything else</p>
           </div>
         ) : isKeywordDay && dayKeyword ? (
           <div className={keywordCls}>
@@ -367,6 +381,19 @@ const keywordWordCls = css`
   font-size: 4rem;
   font-weight: 600;
   color: ${PAPER.ink};
+`;
+
+// Advice Day's prompt: Word Day's ink and serif, sized for a sentence
+const adviceLineCls = css`
+  margin: 0.6rem 0;
+  font-family: ${PAPER.serif};
+  font-size: 2.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: ${PAPER.ink};
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 2.2rem;
+  }
 `;
 
 const keywordHintCls = css`

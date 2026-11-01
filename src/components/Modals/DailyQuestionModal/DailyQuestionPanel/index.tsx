@@ -274,6 +274,9 @@ export default function DailyQuestionPanel({
   const [isAdultUser, setIsAdultUser] = useState<boolean>(false);
   const [isKeywordDay, setIsKeywordDay] = useState(false);
   const [dayKeyword, setDayKeyword] = useState('');
+  // Advice Day (11-01): a Word Day whose prompt asks for a piece of advice
+  const [isAdviceDay, setIsAdviceDay] = useState(false);
+  const [dayAdvicePrompt, setDayAdvicePrompt] = useState('');
   // Picture Day (10-24): Word Day's twin, its own screen instead of writing
   const [isPictureDay, setIsPictureDay] = useState(false);
   const [dayPicture, setDayPicture] = useState<PictureDayState | null>(null);
@@ -294,9 +297,12 @@ export default function DailyQuestionPanel({
   useAgentScreenState('dailyQuestion', {
     screen,
     question:
-      !isKeywordDay && !isPictureDay && question ? question.slice(0, 500) : null,
+      (!isKeywordDay || isAdviceDay) && !isPictureDay && question
+        ? question.slice(0, 500)
+        : null,
     isSimplified,
     isKeywordDay,
+    isAdviceDay,
     isPictureDay,
     keyword: isKeywordDay ? dayKeyword || null : null,
     responseLength: response.length,
@@ -846,6 +852,8 @@ export default function DailyQuestionPanel({
         isKeywordDayRef.current = !!data.isKeywordDay;
         setIsKeywordDay(isKeywordDayRef.current);
         setDayKeyword(data.keyword || '');
+        setIsAdviceDay(!!data.isKeywordDay && !!data.isAdviceDay);
+        setDayAdvicePrompt(data.advicePrompt || '');
         setIsPictureDay(!!data.isPictureDay);
         setDayPicture(data.isPictureDay ? normalizePictureDay(data.picture) : null);
         setPictureSubmitError(null);
@@ -1599,6 +1607,8 @@ export default function DailyQuestionPanel({
       <StartScreen
         currentStreak={currentStreak}
         dayKeyword={dayKeyword}
+        isAdviceDay={isAdviceDay}
+        dayAdvicePrompt={dayAdvicePrompt}
         hasEnoughCoins={hasEnoughCoins}
         isKeywordDay={isKeywordDay || isPictureDay}
         isPictureDay={isPictureDay}
