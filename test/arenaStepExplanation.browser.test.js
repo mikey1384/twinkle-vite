@@ -27,7 +27,7 @@ library.add(faArrowLeft,faClock,faCheck,faChevronUp,faChevronDown,faSpinner,faTr
 const PAPER=${JSON.stringify(paper)};
 window.mode='finished';window.startedAgo=0;
 function data(){const now=Math.floor(Date.now()/1000);const open=window.mode==='open';return {
- battle:{id:139,companion:'solo',exam:{key:'lt-math-e6',name:'수학학원 레벨테스트 (초5–6)',nameEn:'Academy Math Level Test (Grades 5–6)',language:'ko',code:'E6-2',codeLabel:'레벨테스트',pointTags:'all',layout:'problem',choices:5,gradeLabels:['Top class','Upper class','Middle class','Basic class','Not placed']},length:'short',difficulty:'easy',mode:'battle',status:window.mode,minutes:25,serverNow:now,startedAt:now-window.startedAgo,deadlineAt:open?now-window.startedAgo+1500:null,finishedAt:open?null:now,rawPoints:0,maxPoints:50,grade:5,estimate:null,won:false,winAt:35,rewardOffer:{target:35,max:50},reward:{xpEarned:0,coinsEarned:0,rewardStatus:'below_target'}},
+ battle:{id:139,companion:window.companion||'Zero',exam:{key:'lt-math-e6',name:'수학학원 레벨테스트 (초5–6)',nameEn:'Academy Math Level Test (Grades 5–6)',language:'ko',code:'E6-2',codeLabel:'레벨테스트',pointTags:'all',layout:'problem',choices:5,gradeLabels:['Top class','Upper class','Middle class','Basic class','Not placed']},length:'short',difficulty:'easy',mode:'battle',status:window.mode,minutes:25,serverNow:now,startedAt:now-window.startedAgo,deadlineAt:open?now-window.startedAgo+1500:null,finishedAt:open?null:now,rawPoints:0,maxPoints:50,grade:5,estimate:null,won:false,winAt:35,rewardOffer:{target:35,max:50},reward:{xpEarned:0,coinsEarned:0,rewardStatus:'below_target'}},
  passages:PAPER.passages,
  items:PAPER.items.map(item=>open?{...item,key:undefined,correct:undefined,review:undefined}:item)
 };}
@@ -88,7 +88,7 @@ for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
     const script = await compile();
     const browser = await engine.launch();
     try {
-      for (const [width, height] of [[360, 780], [390, 844], [1280, 800]]) {
+      for (const [width, height] of [[320, 780], [360, 780], [390, 844], [1280, 800]]) {
         const { page, errors } = await openPage(browser, width, height, script);
         const tag = `${engineName}-${width}x${height}`;
         const first = page.locator('article').first();
@@ -160,7 +160,7 @@ for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
     const script = await compile();
     const browser = await engine.launch();
     try {
-      for (const [width, height] of [[360, 780], [390, 844], [1280, 800]]) {
+      for (const [width, height] of [[320, 780], [360, 780], [390, 844], [1280, 800]]) {
         const { page, errors } = await openPage(browser, width, height, script);
         const tag = `${engineName}-${width}x${height}`;
         // just started: no offer
@@ -168,8 +168,13 @@ for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
         await page.evaluate(() => window.changeMode('open', 60));
         await page.locator('header').getByRole('button', { name: 'Leave' }).waitFor();
         assert.equal(await page.getByRole('status', { name: 'Help with this exam' }).count(), 0);
-        // five quiet minutes, nothing answered
-        await page.evaluate(() => window.changeMode('open', 300));
+        // they chose "I'll take it on alone": never the offer (Mikey 11-02)
+        await page.evaluate(() => { window.companion = 'solo'; window.changeMode('open', 900); });
+        await page.locator('header').getByRole('button', { name: 'Leave' }).waitFor();
+        await page.waitForTimeout(200);
+        assert.equal(await page.getByRole('status', { name: 'Help with this exam' }).count(), 0, 'no offer for an alone run');
+        // with a companion, five quiet minutes, nothing answered
+        await page.evaluate(() => { window.companion = 'Zero'; window.changeMode('open', 300); });
         const nudge = page.getByRole('status', { name: 'Help with this exam' });
         await nudge.waitFor();
         assert.match(await nudge.innerText(), /Stuck\?.*first step of question 1/s);

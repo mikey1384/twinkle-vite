@@ -439,7 +439,9 @@ export default function BattleRunner({
         )}
       </header>
 
-      {!finished && !noHelp && !practice && data.battle.mode === 'battle' && !takingBreak && component?.state !== 'ready' && (
+      {/* never when they chose "I'll take it on alone" (Mikey 11-02); their
+          Ask buttons stay */}
+      {!finished && !noHelp && !practice && data.battle.mode === 'battle' && data.battle.companion !== 'solo' && !takingBreak && component?.state !== 'ready' && (
         <HelpNudge
           battleId={data.battle.id}
           startedAt={data.battle.startedAt}
@@ -448,7 +450,7 @@ export default function BattleRunner({
           answered={answeredCount}
           total={data.items.length}
           question={firstBlankAsk(data, answers, recordings)}
-          assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
+          assistant={data.battle.companion}
         />
       )}
       {finished && (practice ? <PracticeResult data={data} onOpenPractice={onOpenPractice} onExit={onExit} /> : <Result data={data} />)}
@@ -511,7 +513,7 @@ export default function BattleRunner({
           {readingItems.length > 0 && <C1ReadingPaper
             items={readingItems} passages={data.passages} answers={shownAnswers} finished={finished} disabled={finished || submitting || remaining === 0}
             onMark={handleMark}
-            renderHelp={!finished && !noHelp ? item => <AskAgentButton assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
+            renderHelp={!finished && !noHelp ? item => <AskAgentButton showLabelOnMobile assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
               context={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.display || item.no}`, path: practice ? `/arena?mode=train&practice=${practice.id}` : `/arena?mode=arena&battle=${data.battle.id}` }} /> : undefined}
             renderReview={item => <PaperItem item={item} passage={null} marked={answers[item.no] ?? null} finished reviewOnly
               audioControls={false} allPointTags={false} letters reviewLang={reviewLang} onMark={() => {}}
@@ -1283,7 +1285,8 @@ export function PaperItem({
       )}
       {ask && !stepAsk && (
         <div className={askRowCls}>
-          <AskAgentButton context={ask} assistant={assistant} />
+          {/* words on phones too (Mikey 11-02): the face alone was easy to miss */}
+          <AskAgentButton context={ask} assistant={assistant} showLabelOnMobile />
         </div>
       )}
     </article>

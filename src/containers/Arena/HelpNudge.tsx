@@ -7,8 +7,9 @@ import { shouldNudge } from './helpNudgeRule';
 // A stuck member is told, once, that Zero and Ciel can teach the next step
 // (Mikey 11-02, after Acrux left two whole papers blank without asking: "if
 // we need to improve anything improve on how user is guided via ciel/zero").
-// Ordinary exams only (BattleRunner passes nothing for solo mastery or a
-// timed rematch). Annoyance audit: it appears at most once per paper, only
+// Ordinary exams only, and never when the member chose "I'll take it on
+// alone" on the cover (Mikey 11-02); none for solo mastery or a timed
+// rematch. Annoyance audit: it appears at most once per paper, only
 // after real thinking time with nothing (or almost nothing) answered, and
 // "Not now" turns it off on this device for good; the Ask buttons on every
 // question stay. Showing it is not help; pressing Ask is (assisted.ts).
