@@ -34,9 +34,10 @@ export const notiFilterBar = css`
 `;
 
 export const notiFeedListItem = css`
-  /* iOS otherwise inflates longer notifications independently of shorter rows. */
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+  /* Keep longer rows from inflating independently. WebKit's idempotent
+     autosizing can still boost 100%; none explicitly opts out of that path. */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
