@@ -17,6 +17,10 @@ import reportDomMutationEvent from '~/helpers/reportDomMutationEvent';
 import { trackEvent } from '~/helpers/analytics';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color } from '~/constants/css';
+import {
+  recordClientTrace,
+  reloadPageWithTrace
+} from '~/helpers/clientTraceBus';
 
 if (import.meta.env.SSR) {
   import('source-map-support').then(({ install }) => install()).catch(() => {});
@@ -126,6 +130,14 @@ export default class ErrorBoundary extends Component<
 
     const lazyImportLoadError = isLazyImportLoadError(error);
     const truncatedChunk = isTruncatedScriptError(error);
+    // the client traces: which error screen appeared (a member's error screen
+    // and its Reload button are part of a reload loop's story)
+    recordClientTrace('boundary-error', {
+      at: String(this.props.componentPath || '').slice(0, 60),
+      msg: String(error?.message || error || '').slice(0, 200),
+      ...(lazyImportLoadError ? { lazy: true } : {}),
+      ...(truncatedChunk ? { truncated: true } : {})
+    });
     if (!shouldSuppressErrorReport(error)) {
       reportError({
         componentPath: this.props.componentPath,
@@ -270,7 +282,11 @@ export default class ErrorBoundary extends Component<
               -webkit-tap-highlight-color: transparent;
               touch-action: manipulation;
             `}
-            onClick={() => window.location.reload()}
+            onClick={() =>
+              reloadPageWithTrace('error-boundary-button', {
+                at: String(componentPath || '').slice(0, 60)
+              })
+            }
           >
             Reload the page
           </button>

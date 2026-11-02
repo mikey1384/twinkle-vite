@@ -1,10 +1,13 @@
+import { noteClientReload } from './clientTraceBus';
+
 // history.replaceState can throw where path changes are restricted: sandboxed
 // embeds (e.g. a student's build iframing twin-kle.com inside the Build
 // preview) block path/fragment changes on iOS, and Safari rate-limits history
 // calls (>100 per 30s). React Router's push() already recovers from this by
-// falling back to window.location.assign (so pushState must NOT be wrapped —
-// swallowing the error there would defeat that recovery and stall
-// navigation), but its replace() has no such fallback and crashes to the
+// falling back to window.location.assign (so pushState errors must NOT be
+// swallowed — that would defeat that recovery and stall navigation; the
+// wrapper at the end only records the full page load for the client traces
+// and rethrows the same error), but its replace() has no such fallback and crashes to the
 // error boundary. Mirror the router's push recovery for cross-URL replaces,
 // and retry same-URL state writes (e.g. clearing one-time route state like
 // openPeoplePanel) after the rate-limit window relaxes so canonical history
@@ -44,6 +47,10 @@ export default function installSafeHistory() {
           'history.replaceState was blocked; falling back to a full-page replace.',
           error
         );
+        noteClientReload('history-replace-blocked', {
+          to: `${resolvedUrl.pathname}${resolvedUrl.search}`,
+          err: describeHistoryError(error)
+        });
         window.location.replace(resolvedUrl.href);
         return;
       }
@@ -72,4 +79,40 @@ export default function installSafeHistory() {
       ];
     }
   };
+
+  // React Router's push() turns a blocked pushState into
+  // window.location.assign, a full page load. Only RECORD that (for the client
+  // traces, before the router's fallback runs) and rethrow the very same
+  // error, so the router's recovery is untouched.
+  const originalPushState = window.history.pushState.bind(window.history);
+  window.history.pushState = (...args: Parameters<History['pushState']>) => {
+    try {
+      return originalPushState(...args);
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'DataCloneError')) {
+        let to = '';
+        try {
+          const url = args[2]
+            ? new URL(String(args[2]), window.location.href)
+            : null;
+          to = url ? `${url.pathname}${url.search}` : '';
+        } catch {
+          // keep it empty
+        }
+        noteClientReload('history-push-blocked', {
+          to,
+          err: describeHistoryError(error)
+        });
+      }
+      throw error;
+    }
+  };
+}
+
+function describeHistoryError(error: unknown) {
+  const value = error as { name?: unknown; message?: unknown } | null;
+  return `${String(value?.name || 'Error')}: ${String(value?.message || '')}`.slice(
+    0,
+    120
+  );
 }

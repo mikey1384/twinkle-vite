@@ -5,6 +5,7 @@ import useAPISocket from './Header/hooks/useAPISocket';
 import useIsAIChat from './hooks/useIsAIChat';
 
 import { userIdRef } from '~/constants/state';
+import { recordClientTrace } from '~/helpers/clientTraceBus';
 import { getSectionFromPathname } from '~/helpers';
 import { useChatContext, useKeyContext } from '~/contexts';
 
@@ -77,6 +78,22 @@ export default function SocketManager({
   useEffect(() => {
     userIdRef.current = userId;
   }, [userId]);
+
+  // The client traces (owner, or a member an admin is tracing): which chat
+  // channel and subchannel are selected, each time that changes. Ids and the
+  // subchannel's path name only. A no-op for everyone else.
+  useEffect(() => {
+    if (!usingChat) return;
+    recordClientTrace('chat-select', {
+      channelId: selectedChannelId,
+      pathId: String(currentPathId || '').slice(0, 40),
+      ...(subchannelPath
+        ? { subchannel: String(subchannelPath).slice(0, 40) }
+        : {}),
+      ...(subchannelId ? { subchannelId } : {}),
+      chatType: chatType || undefined
+    });
+  }, [usingChat, selectedChannelId, currentPathId, subchannelPath, subchannelId, chatType]);
 
   return null;
 }

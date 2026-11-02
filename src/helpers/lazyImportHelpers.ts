@@ -6,6 +6,7 @@ import {
   isTruncatedScriptError,
   LAZY_IMPORT_RELOAD_PARAM
 } from '~/helpers/lazyChunkErrors';
+import { noteClientReload } from '~/helpers/clientTraceBus';
 
 export { isTruncatedScriptError };
 
@@ -104,6 +105,10 @@ export async function recoverFromLazyImportLoadError(
     })
   ) {
     showLazyImportReloadOverlay(isTruncatedScriptError(error));
+    noteClientReload('lazy-chunk-recovery', {
+      truncated: isTruncatedScriptError(error),
+      msg: String((error as Error)?.message || error || '').slice(0, 160)
+    });
     reloadAfterLazyImportFailure();
     return true;
   }
@@ -111,6 +116,7 @@ export async function recoverFromLazyImportLoadError(
 }
 
 export function reloadForLazyImportRecovery() {
+  noteClientReload('lazy-chunk-recovery-button');
   try {
     clearLazyImportReloadGuards();
     const url = new URL(window.location.href);

@@ -1,4 +1,5 @@
 import { socket } from '~/constants/sockets/api';
+import { reloadPageWithTrace } from '~/helpers/clientTraceBus';
 
 export default function useGameMoveHandlers({
   clearBoardCountdown,
@@ -147,7 +148,7 @@ export default function useGameMoveHandlers({
           message:
             'handleConfirmChessMove: User is trying to send the first chess message to someone but recipient ID is missing'
         });
-        return window.location.reload();
+        return reloadPageWithTrace('chess-move-missing-partner');
       }
       const {
         alreadyExists,
@@ -165,7 +166,7 @@ export default function useGameMoveHandlers({
         recipientId: partner?.id
       });
       if (alreadyExists) {
-        return window.location.reload();
+        return reloadPageWithTrace('chess-move-dm-already-exists');
       }
       if (aiUsagePolicy) {
         handleAiUsagePolicyUpdate(aiUsagePolicy);
@@ -276,7 +277,7 @@ export default function useGameMoveHandlers({
           message:
             'handleConfirmOmokMove: User is trying to send the first omok message but recipient ID is missing'
         });
-        return window.location.reload();
+        return reloadPageWithTrace('omok-move-missing-partner');
       }
       const {
         alreadyExists,
@@ -294,7 +295,7 @@ export default function useGameMoveHandlers({
         recipientId: partner?.id
       });
       if (alreadyExists) {
-        return window.location.reload();
+        return reloadPageWithTrace('omok-move-dm-already-exists');
       }
       if (aiUsagePolicy) {
         handleAiUsagePolicyUpdate(aiUsagePolicy);

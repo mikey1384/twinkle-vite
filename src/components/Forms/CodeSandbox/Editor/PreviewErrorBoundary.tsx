@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Color } from '~/constants/css';
 import Button from '~/components/Button';
+import { reloadPageWithTrace } from '~/helpers/clientTraceBus';
 
 interface State {
   hasError: boolean;
@@ -97,7 +98,7 @@ export default class PreviewErrorBoundary extends Component<
               background: '#fff',
               color: Color.logoBlue()
             }}
-            onClick={() => window.location.reload()}
+            onClick={() => reloadPageWithTrace('code-preview-error-button')}
           >
             Reload Preview
           </Button>

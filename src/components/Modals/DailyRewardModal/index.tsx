@@ -26,6 +26,7 @@ import {
   getRewardFontSize,
   roundRewardAmount
 } from './helpers/utils';
+import { reloadPageWithTrace } from '~/helpers/clientTraceBus';
 
 export default function DailyRewardModal({
   onHide,
@@ -178,7 +179,7 @@ export default function DailyRewardModal({
           } = await loadDailyBonus();
           if (ignore) return;
           if (isUnavailable) {
-            return window.location.reload();
+            return reloadPageWithTrace('daily-reward-unavailable');
           }
           setChosenCardId(chosenCard?.id);
           onUpdateAICard({
@@ -707,7 +708,7 @@ export default function DailyRewardModal({
       const { isCorrect, isAlreadyAttempted, rewardAmount, dailyTaskReward } =
         await postDailyBonus(bonusSelectedChoiceIndex);
       if (isAlreadyAttempted) {
-        return window.location.reload();
+        return reloadPageWithTrace('daily-bonus-already-attempted');
       }
       if (dailyTaskReward) {
         setDailyTaskReward(dailyTaskReward);

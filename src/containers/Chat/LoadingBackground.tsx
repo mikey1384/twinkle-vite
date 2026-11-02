@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { recordMemberClientTrace } from '~/helpers/clientTraceBus';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import loading from './loading.jpeg';
 
 export default function LoadingBackground() {
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Member trace: the full "Loading Twinkle Chat..." screen, shown and gone
+  // with how long it stayed (a recovery that blanks the whole chat).
+  useEffect(() => {
+    const shownAt = Date.now();
+    recordMemberClientTrace('chat-loading', { e: 'shown' });
+    return () =>
+      recordMemberClientTrace('chat-loading', {
+        e: 'gone',
+        ms: Date.now() - shownAt
+      });
+  }, []);
 
   return (
     <div

@@ -4,6 +4,7 @@ import { css, cx } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { isLumineHost } from '~/constants/siteBrand';
 import { useRootTheme } from '~/theme/RootThemeProvider';
+import { noteClientReload } from '~/helpers/clientTraceBus';
 
 export default function TwinkleLogo({
   style
@@ -33,6 +34,7 @@ export default function TwinkleLogo({
         height: 2rem;
       `}`}
       onClick={() => {
+        noteClientReload('logo-full-load');
         window.location.href = '/';
       }}
     >

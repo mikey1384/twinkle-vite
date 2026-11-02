@@ -42,6 +42,7 @@ import {
 } from './skipShieldStatus';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import { fetchCanonicalWordleState } from './wordleCanonicalState';
+import { reloadPageWithTrace } from '~/helpers/clientTraceBus';
 
 const WORDLE_MODAL_BODY_MIN_HEIGHT =
   'clamp(18rem, calc(100dvh - 16rem), 55rem)';
@@ -605,7 +606,7 @@ export default function WordleModal({
       });
       if (requestSequence !== wordleStateRequestSequenceRef.current) return;
       if (canonicalState.needsReload) {
-        window.location.reload();
+        reloadPageWithTrace('wordle-needs-reload');
         return;
       }
       const {

@@ -17,6 +17,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary';
 import installSafeHistory from './helpers/installSafeHistory';
+import { startMemberTrace } from './helpers/memberTrace';
 import { installNavigationPopGuard } from './helpers/navigationPopGuard';
 import { markAppScrollOwnershipTaken } from './helpers/scrollAnchorRestorationCoordinator';
 import installDomMutationGuard from './helpers/installDomMutationGuard';
@@ -513,6 +514,10 @@ library.add(
   await loadPolyfills();
   installSafeHistory();
   installNavigationPopGuard();
+  // The member trace (memberTrace.ts): for an account an admin is tracing it
+  // starts here, before anything can reload the page. Also installs the
+  // reload hand-off both traces use. A no-op for everyone else.
+  startMemberTrace();
   // The app runs its own scroll restoration (useScrollAnchorRestoration), but
   // its anchor cache is in-memory, so it can only own scroll for
   // same-document navigation. Ownership hands over at the FIRST in-app

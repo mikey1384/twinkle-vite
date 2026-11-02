@@ -40,6 +40,7 @@ import { TWINKLE_CLIENT_REFRESH_REQUIRED_EVENT } from '~/constants/socketEvents'
 import URL from '~/constants/URL';
 import { createUnauthorizedSessionResolver } from '~/helpers/sessionUnauthorizedGuard';
 import { createSessionInterruption } from '~/helpers/sessionInterruption';
+import { noteClientReload } from '~/helpers/clientTraceBus';
 
 export const initialMyState = {
   achievementPoints: 0,
@@ -225,6 +226,12 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
         if (status === 301) {
           if (shouldReloadForRedirect()) {
+            noteClientReload('http-301', {
+              api: String(error?.config?.url || '')
+                .replace(/^https?:\/\/[^/]+/, '')
+                .split('?')[0]
+                .slice(0, 120)
+            });
             window.location.reload();
           } else {
             console.warn(

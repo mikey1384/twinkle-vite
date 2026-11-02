@@ -1,5 +1,6 @@
 import { inputStates, editFormTextStates } from '../constants/state';
 import { LOADED_BUILD_RUNTIME_SESSION_SELECTOR } from '../constants/appShell';
+import { noteClientReload } from './clientTraceBus';
 
 const UPDATE_RELOAD_PARAM = '_twinkleUpdate';
 const SILENT_ATTEMPT_KEY = 'twinkleSilentUpdateAttempt';
@@ -88,6 +89,9 @@ export function buildClientVersionCheckUrl({
 }
 
 export function performClientUpdateReload() {
+  // the silent paths note their own trigger (attemptSilentClientUpdate);
+  // otherwise this is the update popup's button
+  if (!reloadInitiated) noteClientReload('client-update-popup');
   reloadInitiated = true;
   try {
     const url = new URL(window.location.href);
@@ -109,12 +113,16 @@ export function attemptSilentClientUpdate({
   version,
   storage = getSessionStorage(),
   now = Date.now(),
-  reload = performClientUpdateReload
+  reload = performClientUpdateReload,
+  trigger = 'unknown'
 }: {
   version: string;
   storage?: AttemptStorage | null;
   now?: number;
   reload?: () => void;
+  // for the client traces: what found the update (version-check, navigation,
+  // stale-action, hidden-tab)
+  trigger?: string;
 }): boolean {
   if (reloadInitiated) return true;
   if (!storage || !hasSilentAttemptBudget({ storage, now, version })) {
@@ -129,6 +137,7 @@ export function attemptSilentClientUpdate({
     return false;
   }
   reloadInitiated = true;
+  noteClientReload('client-update-silent', { trigger, version });
   reload();
   return true;
 }
@@ -346,7 +355,8 @@ export async function applyClientUpdateAtSafeBoundary({
     version,
     storage,
     now,
-    reload
+    reload,
+    trigger: 'navigation'
   })
     ? 'reloading'
     : 'deferred';
@@ -455,7 +465,15 @@ export function noteStaleClientActionError({
   if (hasUnsavedWork()) {
     return allowPopup ? 'popup' : 'deferred';
   }
-  if (attemptSilentClientUpdate({ version, storage, now, reload })) {
+  if (
+    attemptSilentClientUpdate({
+      version,
+      storage,
+      now,
+      reload,
+      trigger: 'stale-action'
+    })
+  ) {
     return 'reloading';
   }
   return allowPopup ? 'popup' : 'deferred';
@@ -528,7 +546,15 @@ export function applyClientVersionResult({
       markClientUpdatePending();
       return 'deferred';
     }
-    if (attemptSilentClientUpdate({ version, storage, now, reload })) {
+    if (
+      attemptSilentClientUpdate({
+        version,
+        storage,
+        now,
+        reload,
+        trigger: 'version-check'
+      })
+    ) {
       return 'reloading';
     }
     onVersionStatus(confirmedStatus);

@@ -73,6 +73,7 @@ import {
   dropPrefetchedTopicMessages,
   takePrefetchedTopicMessages
 } from '../../topicPrefetch';
+import { reloadPageWithTrace } from '~/helpers/clientTraceBus';
 const deviceIsMobile = isMobile(navigator);
 const CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS = 750;
 
@@ -1262,7 +1263,7 @@ export default function MessagesContainer({
               componentPath: 'MessagesContainer/index',
               message: `handleInviteUsersDone: User is trying to invite people to their channel but at least one of their user ID is missing. Channel ID was: ${selectedChannelId}`
             });
-            return window.location.reload();
+            return reloadPageWithTrace('chat-invite-missing-user-id');
           }
           recipientIds.push(user.id);
         }
@@ -1429,7 +1430,7 @@ export default function MessagesContainer({
               currentPathId ? `"${currentPathId}"` : 'empty'
             }`
           });
-          return window.location.reload();
+          return reloadPageWithTrace('chat-dm-missing-recipient');
         }
         onSetCreatingNewDMChannel(true);
         try {
@@ -1446,7 +1447,7 @@ export default function MessagesContainer({
             recipientId: partner?.id
           });
           if (alreadyExists) {
-            return window.location.reload();
+            return reloadPageWithTrace('chat-dm-already-exists');
           }
           if (aiUsagePolicy) {
             handleAiUsagePolicyUpdate(aiUsagePolicy);

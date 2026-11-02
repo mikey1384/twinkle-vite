@@ -8,6 +8,7 @@ import {
   noteOwnerFeedCardRender,
   recordOwnerTrace
 } from '~/helpers/ownerTrace';
+import { isMemberTraceActive, recordMemberTrace } from '~/helpers/memberTrace';
 import { useAppNavigationType } from '~/helpers/hooks/useAppNavigationType';
 import {
   homeFeedActionIntentStateKey,
@@ -19,7 +20,9 @@ const CONTENT_SCROLL_FOLLOW_UPS_MS = [1000, 3000];
 // Owner trace: every route change with its navigation type
 // (useAppNavigationType: the real PUSH/POP/REPLACE) and the keys of
 // its location state (Home feed navigation/intent summarised by id and
-// action only). A no-op unless the owner is signed in. userId re-runs it on
+// action only). Also the member trace's routes (memberTrace.ts) for an
+// account an admin is tracing. A no-op unless the owner or that member is
+// signed in. userId re-runs it on
 // sign-in so the trace starts with the current page (INIT for the first page
 // the trace sees, CURRENT when only the signed-in user changed).
 export function useOwnerTraceRoute(userId: number) {
@@ -34,8 +37,9 @@ export function useOwnerTraceRoute(userId: number) {
     previousPathRef.current = path;
     const previousKey = previousKeyRef.current;
     previousKeyRef.current = location.key;
-    if (!isOwnerTraceActive()) return;
-    recordOwnerTrace(
+    const owner = isOwnerTraceActive();
+    if (!owner && !isMemberTraceActive()) return;
+    (owner ? recordOwnerTrace : recordMemberTrace)(
       'route',
       {
         nav: !previousKey

@@ -50,6 +50,12 @@ export function isOwnerTraceActive() {
   return recorder.isActive();
 }
 
+// The page is about to reload itself (clientTraceBus noteClientReload): send
+// what is buffered now, with keepalive.
+export function flushOwnerTraceNow() {
+  recorder.flush({ unloading: true });
+}
+
 export function recordOwnerTrace(
   type: string,
   data?: Record<string, unknown>,

@@ -2,6 +2,7 @@ import React, { Component, ReactNode } from 'react';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { reloadPageWithTrace } from '~/helpers/clientTraceBus';
 
 interface Props {
   children: ReactNode;
@@ -86,7 +87,7 @@ export default class ChessErrorBoundary extends Component<Props, State> {
               Try Again
             </Button>
             <Button
-              onClick={() => window.location.reload()}
+              onClick={() => reloadPageWithTrace('chess-puzzle-error-button')}
               variant="ghost"
             >
               Refresh Page

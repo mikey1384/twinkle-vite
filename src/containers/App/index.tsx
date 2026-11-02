@@ -118,6 +118,11 @@ import usePhoneLandscape from '~/helpers/hooks/usePhoneLandscape';
 import { useOwnerTraceRoute } from '~/helpers/hooks/useOwnerTrace';
 import { noteOwnerWakeWork } from '~/helpers/ownerTrace';
 import { NavigationRouteReadyObserver } from './navigationFeedback';
+import {
+  noteClientReload,
+  reloadPageWithTrace
+} from '~/helpers/clientTraceBus';
+import { noteMemberTraceSession } from '~/helpers/memberTrace';
 
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 // persists the build "super full screen" (nav-also-hidden) preference
@@ -303,6 +308,7 @@ function BuildPreviewPassthrough() {
       previewHostDestination !== previewPath &&
       previewHostDestination !== window.location.href
     ) {
+      noteClientReload('build-preview-host');
       window.location.replace(previewHostDestination);
       return;
     }
@@ -312,6 +318,7 @@ function BuildPreviewPassthrough() {
     try {
       const destination = new URL(previewPath, rawBackendUrl).toString();
       if (destination === window.location.href) return;
+      noteClientReload('build-preview-backend');
       window.location.replace(destination);
     } catch (error) {
       console.error('Failed to redirect build preview request:', error);
@@ -1998,7 +2005,7 @@ export default function App() {
         componentPath: 'App/index',
         message: `handleFileUploadOnChat: User is trying to send the first file message to someone but recipient ID is missing`
       });
-      return window.location.reload();
+      return reloadPageWithTrace('chat-file-missing-recipient');
     }
     onSetChessTarget({ channelId, target: null });
     onSetReplyTarget({ channelId, subchannelId, target: null });
@@ -2110,7 +2117,7 @@ export default function App() {
     }
 
     if (alreadyExists) {
-      return window.location.reload();
+      return reloadPageWithTrace('chat-file-dm-already-exists');
     }
     onRemoveFileUploadStatus({
       channelId,
@@ -2303,6 +2310,8 @@ export default function App() {
         newState: data
       });
       onInitMyState(data);
+      // the member trace: whether an admin is tracing this account
+      noteMemberTraceSession(Number(data.id), data.clientTrace);
       if (!socket.connected) {
         // This is the bounded stale-navigator recovery path above. The stored
         // identity is canonical at this point, so the socket can safely resume

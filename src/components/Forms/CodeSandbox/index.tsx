@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { parse } from '@babel/parser';
+import { reloadPageWithTrace } from '~/helpers/clientTraceBus';
 
 export default function CodeSandbox({
   code: globalCode,
@@ -42,7 +43,7 @@ export default function CodeSandbox({
 
   useEffect(() => {
     if (userId !== prevUserId) {
-      window.location.reload();
+      reloadPageWithTrace('code-sandbox-user-changed');
     }
   }, [prevUserId, userId]);
 

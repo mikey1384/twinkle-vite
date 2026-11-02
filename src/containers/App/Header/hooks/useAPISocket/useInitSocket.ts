@@ -76,6 +76,7 @@ import {
 import type { RequestAttemptTiming } from '~/contexts/requestHelpers/axiosInstance';
 import { shouldSkipChatWakeBarrier } from './chatWakeBarrierThrottle';
 import { noteOwnerSocket, noteOwnerWakeWork } from '~/helpers/ownerTrace';
+import { noteMemberSocket } from '~/helpers/memberTrace';
 import { createSocketReconnectEvidence } from '~/helpers/socketReconnectEvidence';
 
 const MAX_CANONICAL_CHAT_BOOTSTRAP_ATTEMPTS = 4;
@@ -798,7 +799,10 @@ export default function useInitSocket({
           isClientUpdatePending() &&
           !hasUnsavedUserWork({ inputState: getInputState?.() })
         ) {
-          attemptSilentClientUpdate({ version: clientVersion });
+          attemptSilentClientUpdate({
+            version: clientVersion,
+            trigger: 'hidden-tab'
+          });
         }
       }
     }
@@ -1119,11 +1123,13 @@ export default function useInitSocket({
 
     function handleReconnectAttempt() {
       noteOwnerSocket('reconnect-attempt');
+      noteMemberSocket('reconnect-attempt');
     }
 
     function handleConnect() {
       lastTransportSocketIdRef.current = socket.id || null;
       noteOwnerSocket('connect');
+      noteMemberSocket('connect');
       plannedServerHandoffAtRef.current = 0;
       if (terminalSocketAuthFailureRef.current) {
         stopSocketAuthRecovery();
@@ -1965,6 +1971,7 @@ export default function useInitSocket({
         online: !browserReportsOffline()
       });
       noteOwnerSocket('disconnect', reason);
+      noteMemberSocket('disconnect', reason);
       const plannedServerHandoff = Boolean(
         reason === 'io server disconnect' &&
         plannedServerHandoffAtRef.current > 0 &&
