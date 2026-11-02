@@ -1,4 +1,5 @@
 import { previousPageDeathPath } from '~/helpers/pageDeathTracker';
+import { APP_RETURN_WINDOW_MS } from '~/helpers/buildAppLifecycle';
 
 // After the browser kills or discards the tab on the home feed
 // (pageDeathTracker), the feed comes back where the viewer was instead of at
@@ -13,7 +14,10 @@ import { previousPageDeathPath } from '~/helpers/pageDeathTracker';
 
 const FEED_KEY = 'twinkle:home-feed-lifeline';
 const ANCHOR_KEY = 'twinkle:home-feed-lifeline-anchor';
-const MAX_AGE_MS = 3 * 60 * 60 * 1000;
+// The same rule as apps (11-02, Mikey: places should come back only when
+// the viewer is returning, not on a new visit later): back within 30 minutes
+// of the last save is a return; later, the feed starts at the top.
+const MAX_AGE_MS = APP_RETURN_WINDOW_MS;
 // sessionStorage holds about 5 MB per site, and WebKit may count two bytes a
 // character: keep well under half of it for everything else.
 const MAX_CHARS = 1_000_000;

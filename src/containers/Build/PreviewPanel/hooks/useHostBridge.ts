@@ -92,12 +92,15 @@ import {
   shouldRecoverAIImageUnknownOutcome
 } from '~/helpers/aiImageStatus';
 import { isPublicMinecraftRead } from '../helpers/publicMinecraftReads';
+import { recordOwnerTrace } from '~/helpers/ownerTrace';
 import {
   acceptAppLifecycleSnapshot,
   appLifecycleKey,
+  getAppVisitId,
   isAppClosed,
   loadAppLifecycleSnapshot,
   normalizeAppLifecycleState,
+  normalizeAppLifecycleWork,
   noteAppStarted,
   registerAppLifecycleFrame,
   setAppLifecycleStatus
@@ -2412,7 +2415,9 @@ export function useHostBridge({
               launchTarget: launchTargetRef.current,
               capabilities: capabilitySnapshotRef.current,
               explorationPlan: runtimeExplorationPlanRef.current,
-              // The viewer's saved place in this app (Twinkle.app.lifecycle).
+              // The viewer's saved place in this app (Twinkle.app.lifecycle):
+              // { kind: 'return' | 'new_visit', state, savedAt, ageMs, reason }
+              // or null; a new visit carries only the app's unfinished work.
               // Only the viewer's own /app run resumes (appLifecycleSourceRef.current);
               // the Build editor, reward proposal player and thumbnail
               // capture start fresh, so other code never meets this state.
@@ -2423,7 +2428,12 @@ export function useHostBridge({
                       buildId: activeBuild.id,
                       source: appLifecycleSourceRef.current,
                       mount: mountContextRef.current
-                    })
+                    }),
+                    (info) =>
+                      recordOwnerTrace('app-resume', {
+                        buildId: activeBuild.id,
+                        ...info
+                      })
                   )
                 : null
             };
@@ -2437,6 +2447,9 @@ export function useHostBridge({
               response = { success: false };
               break;
             }
+            // visit + work decide what a later start gets back: the whole
+            // snapshot on a return, only the work keys on a new visit.
+            const work = normalizeAppLifecycleWork(payload?.work);
             acceptAppLifecycleSnapshot(
               activeBuild.id,
               appLifecycleKey({
@@ -2448,7 +2461,9 @@ export function useHostBridge({
               {
                 state,
                 savedAt: Date.now(),
-                reason: String(payload?.reason || '').slice(0, 40)
+                reason: String(payload?.reason || '').slice(0, 40),
+                visit: getAppVisitId(),
+                ...(work ? { work } : {})
               }
             );
             response = { success: true };
@@ -2461,6 +2476,20 @@ export function useHostBridge({
                 suspend: payload?.suspend === true,
                 webgl: Number(payload?.webgl) || 0
               });
+              // The SDK's onResume verdict for an app kept loaded (or a
+              // thawed page), for the owner trace: numbers only.
+              const resumed = payload?.resumed;
+              if (
+                resumed &&
+                (resumed.kind === 'return' || resumed.kind === 'new_visit')
+              ) {
+                recordOwnerTrace('app-onresume', {
+                  buildId: activeBuild.id,
+                  kind: resumed.kind,
+                  awayMs: Math.max(0, Math.round(Number(resumed.awayMs) || 0)),
+                  listeners: Math.max(0, Math.min(99, Math.floor(Number(resumed.listeners) || 0)))
+                });
+              }
             }
             response = { success: true };
             break;

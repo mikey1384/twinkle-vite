@@ -3,6 +3,13 @@
 // unloading the app, a reload of the tab and iOS killing the tab, and hand the
 // latest one back when that app starts again (the SDK's init reply).
 //
+// Only a RETURN gets the whole snapshot back. A NEW VISIT (the app opened
+// again the next day, or after a long gap, or in a new tab) starts at the
+// app's start: where the viewer was looking (scroll, open tab, chosen
+// article) is dropped, and only what the app marked as unfinished work (a
+// game in play, a draft) comes back (11-02, Mikey: Newspaper opened the next
+// morning at yesterday's scroll). See resolveAppLifecycleResume.
+//
 // The registry also remembers, per running app, whether it saves its place
 // and whether it draws 3D (heavy), and lets KeepAliveHost ask an app for a
 // fresh snapshot right before unloading it.
@@ -28,11 +35,109 @@ const MAX_SNAPSHOT_CHARS = 1_100_000;
 // freeze it before a timer fires.
 const MIN_SNAPSHOT_GAP_MS = 1000;
 const MAX_SNAPSHOTS = 200;
+// A start is a return when the snapshot was taken in this browser tab's
+// session less than this long ago. 30 minutes: Mikey's own returns to a
+// backgrounded Twinkle tab (owner trace, late Oct) were 93% under 5 minutes
+// and 99% under 30, with the rest an hour or more; it is also the usual
+// "session" length (Android clears a task left this long, analytics sessions
+// end after it). Keep it in step with the SDK (lifecycleScript.ts).
+export const APP_RETURN_WINDOW_MS = 30 * 60 * 1000;
+// The tab's session: sessionStorage survives reloads and the phone killing
+// and reloading the tab, but not a new tab or a new browser session.
+const VISIT_KEY = 'twinkle:app-visit';
+const MAX_WORK_KEYS = 100;
 
 export interface AppLifecycleSnapshot {
   state: Record<string, unknown>;
   savedAt: number;
   reason: string;
+  /** The tab session it was taken in (missing on snapshots from before 11-02). */
+  visit?: string;
+  /** Top-level keys of state that are unfinished work, or true for all of it. */
+  work?: string[] | true;
+}
+
+/** What the app's getResumeState() gets. */
+export interface AppLifecycleResume {
+  kind: 'return' | 'new_visit';
+  state: Record<string, unknown>;
+  savedAt: number;
+  ageMs: number;
+  reason: string;
+}
+
+let fallbackVisitId: string | null = null;
+function newVisitId() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/** This tab session's id, made on first use. */
+export function getAppVisitId() {
+  try {
+    const stored = sessionStorage.getItem(VISIT_KEY);
+    if (stored) return stored;
+    const id = newVisitId();
+    sessionStorage.setItem(VISIT_KEY, id);
+    return id;
+  } catch {
+    // No sessionStorage: one id per page, so a reload counts as a new visit
+    // (a fresh start rather than a stale one).
+    return fallbackVisitId || (fallbackVisitId = newVisitId());
+  }
+}
+
+/** The app's "work" option: a list of top-level keys, true, or null (none). */
+export function normalizeAppLifecycleWork(value: unknown): string[] | true | null {
+  if (value === true) return true;
+  if (!Array.isArray(value)) return null;
+  const keys = Array.from(
+    new Set(
+      value.filter(
+        (key): key is string =>
+          typeof key === 'string' && key.length > 0 && key.length <= 64
+      )
+    )
+  ).slice(0, MAX_WORK_KEYS);
+  return keys.length ? keys : null;
+}
+
+/**
+ * A stored snapshot as the app should get it at this start, or null for a
+ * fresh start.
+ * - Return (taken in this tab session, less than APP_RETURN_WINDOW_MS ago):
+ *   the whole snapshot.
+ * - New visit: only the keys the app marked as work (all of it with
+ *   work: true); null when there are none, so apps that never mark work
+ *   start fresh with nothing to undo.
+ * Snapshots from before visits were recorded go by age alone.
+ */
+export function resolveAppLifecycleResume(
+  snapshot: AppLifecycleSnapshot | null | undefined,
+  { now, visit }: { now: number; visit: string }
+): AppLifecycleResume | null {
+  if (!snapshot || typeof snapshot !== 'object' || !snapshot.state) return null;
+  if (typeof snapshot.state !== 'object' || Array.isArray(snapshot.state)) return null;
+  const savedAt = Number(snapshot.savedAt);
+  const ageMs = now - savedAt;
+  if (!(ageMs >= 0 && ageMs < MAX_AGE_MS)) return null;
+  const reason = String(snapshot.reason || '');
+  const sameVisit =
+    typeof snapshot.visit === 'string' ? snapshot.visit === visit : true;
+  if (sameVisit && ageMs < APP_RETURN_WINDOW_MS) {
+    return { kind: 'return', state: snapshot.state, savedAt, ageMs, reason };
+  }
+  const work = normalizeAppLifecycleWork(snapshot.work);
+  if (!work) return null;
+  let state = snapshot.state;
+  if (work !== true) {
+    state = {};
+    for (const key of work) {
+      const value = snapshot.state[key];
+      if (value !== undefined && value !== null) state[key] = value;
+    }
+    if (!Object.keys(state).length) return null;
+  }
+  return { kind: 'new_visit', state, savedAt, ageMs, reason };
 }
 
 export interface AppLifecycleStatus {
@@ -153,9 +258,45 @@ function run<T>(
   );
 }
 
+/**
+ * What one app start got, for the owner trace (11-02: confirm the return /
+ * new-visit rule on Mikey's own phone). Numbers and flags only, never the
+ * snapshot's contents.
+ */
+export interface AppLifecycleStartInfo {
+  kind: 'return' | 'new_visit' | 'none';
+  /** A snapshot was stored for this app (none: a fresh start either way). */
+  stored: boolean;
+  ageMs: number | null;
+  /** Taken in this tab session; null for a snapshot from before 11-02. */
+  sameTab: boolean | null;
+  /** Keys the app marked as work (true: all of it). */
+  work: number | true | null;
+  keys: number;
+}
+
+export function describeAppLifecycleStart(
+  snapshot: AppLifecycleSnapshot | null | undefined,
+  resume: AppLifecycleResume | null,
+  { now, visit }: { now: number; visit: string }
+): AppLifecycleStartInfo {
+  const stored = Boolean(snapshot && typeof snapshot === 'object' && snapshot.state);
+  const work = stored ? normalizeAppLifecycleWork(snapshot?.work) : null;
+  return {
+    kind: resume ? resume.kind : 'none',
+    stored,
+    ageMs: stored ? Math.round(now - Number(snapshot?.savedAt)) || 0 : null,
+    sameTab:
+      stored && typeof snapshot?.visit === 'string' ? snapshot.visit === visit : null,
+    work: work === true ? true : work ? work.length : null,
+    keys: resume ? Object.keys(resume.state).length : 0
+  };
+}
+
 export async function loadAppLifecycleSnapshot(
-  key: string
-): Promise<AppLifecycleSnapshot | null> {
+  key: string,
+  onStart?: (info: AppLifecycleStartInfo) => void
+): Promise<AppLifecycleResume | null> {
   let timedOut = false;
   const value = await Promise.race([
     run<AppLifecycleSnapshot>('readonly', ({ snapshots }) => snapshots.get(key)),
@@ -169,12 +310,19 @@ export async function loadAppLifecycleSnapshot(
   // The store hung (WebKit's IndexedDB open that never settles): give up on
   // it for this page so later app starts don't each wait the full guard.
   if (timedOut) dbPromise = Promise.resolve(null);
-  if (!value || typeof value !== 'object' || !value.state) return null;
-  if (!(Date.now() - Number(value.savedAt) < MAX_AGE_MS)) {
-    void forgetAppLifecycleSnapshot(key);
-    return null;
+  const now = Date.now();
+  const visit = getAppVisitId();
+  const resume = value ? resolveAppLifecycleResume(value, { now, visit }) : null;
+  try {
+    onStart?.(describeAppLifecycleStart(value, resume, { now, visit }));
+  } catch {
+    // tracing never blocks a start
   }
-  return value;
+  if (!value) return null;
+  // Nothing in it is for this start (too old, or a new visit with no
+  // unfinished work): it would never be for a later one either.
+  if (!resume) void forgetAppLifecycleSnapshot(key);
+  return resume;
 }
 
 export async function saveAppLifecycleSnapshot(
