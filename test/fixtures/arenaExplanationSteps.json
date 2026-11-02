@@ -1,0 +1,78 @@
+[
+ {
+  "name": "lt-math-e6 Easy #1 (Acrux's paper)",
+  "text": "곱셈과 나눗셈을 뺄셈보다 먼저 한다. 앞부분은 \\( 2\\frac{1}{4}\\div\\frac{3}{8}=\\frac{9}{4}\\times\\frac{8}{3}=6 \\)이다. 뒷부분은 대분수를 가분수로 바꾸어 \\( \\frac{5}{3}\\times\\frac{6}{5}=2 \\)이다. 따라서 \\( 6-2=4 \\)이다.",
+  "steps": [
+   "곱셈과 나눗셈을 뺄셈보다 먼저 한다.",
+   "앞부분은 \\( 2\\frac{1}{4}\\div\\frac{3}{8}=\\frac{9}{4}\\times\\frac{8}{3}=6 \\)이다.",
+   "뒷부분은 대분수를 가분수로 바꾸어 \\( \\frac{5}{3}\\times\\frac{6}{5}=2 \\)이다.",
+   "따라서 \\( 6-2=4 \\)이다."
+  ]
+ },
+ {
+  "name": "lt-math-e6 Easy #6 (Acrux's paper)",
+  "text": "정사각형의 한 변은 \\( 72 \\)와 \\( 48 \\)을 모두 나누어떨어지게 해야 하고, 가장 크게 자르므로 두 수의 최대공약수 \\( 24 \\)cm이다. 가로로 \\( 72\\div 24=3 \\)장, 세로로 \\( 48\\div 24=2 \\)장씩 나오므로 모두 \\( 3\\times 2=6 \\)장이다. (\\( 24 \\)는 정사각형 한 변의 길이이고, 묻는 것은 장 수이다.)",
+  "steps": [
+   "정사각형의 한 변은 \\( 72 \\)와 \\( 48 \\)을 모두 나누어떨어지게 해야 하고, 가장 크게 자르므로 두 수의 최대공약수 \\( 24 \\)cm이다.",
+   "가로로 \\( 72\\div 24=3 \\)장, 세로로 \\( 48\\div 24=2 \\)장씩 나오므로 모두 \\( 3\\times 2=6 \\)장이다.",
+   "(\\( 24 \\)는 정사각형 한 변의 길이이고, 묻는 것은 장 수이다.)"
+  ]
+ },
+ {
+  "name": "lt-math-e6 Easy #12 (Acrux's paper)",
+  "text": "물을 넣어도 소금의 양 \\( 54 \\)g은 그대로이고, 소금물의 양은 \\( 300+60=360 \\)g이 된다. 진하기는 (소금의 양) \\( \\div \\) (소금물의 양) \\( \\times 100 \\)이므로 \\( 54\\div 360\\times 100=15 \\)(%)이다. (물을 넣기 전의 진하기는 \\( 54\\div 300\\times 100=18 \\)%이다.)",
+  "steps": [
+   "물을 넣어도 소금의 양 \\( 54 \\)g은 그대로이고, 소금물의 양은 \\( 300+60=360 \\)g이 된다.",
+   "진하기는 (소금의 양) \\( \\div \\) (소금물의 양) \\( \\times 100 \\)이므로 \\( 54\\div 360\\times 100=15 \\)(%)이다.",
+   "(물을 넣기 전의 진하기는 \\( 54\\div 300\\times 100=18 \\)%이다.)"
+  ]
+ },
+ {
+  "name": "lt-math-e6 Easy #19 (Acrux's paper)",
+  "text": "곱셈과 나눗셈을 앞에서부터 먼저 한다. \\( (+18)\\div(-3)=-6 \\)이고, \\( (-6)\\times(-5)=+30 \\)이다. (부호가 같은 두 수의 곱은 \\( + \\), 다른 두 수의 곱과 몫은 \\( - \\)이다.) \\( -(-7) \\)은 \\( +7 \\)을 더하는 것과 같으므로 \\( 30+7=37 \\)이다.",
+  "steps": [
+   "곱셈과 나눗셈을 앞에서부터 먼저 한다.",
+   "\\( (+18)\\div(-3)=-6 \\)이고, \\( (-6)\\times(-5)=+30 \\)이다.",
+   "(부호가 같은 두 수의 곱은 \\( + \\), 다른 두 수의 곱과 몫은 \\( - \\)이다.)",
+   "\\( -(-7) \\)은 \\( +7 \\)을 더하는 것과 같으므로 \\( 30+7=37 \\)이다."
+  ]
+ },
+ {
+  "name": "English with a decimal and an abbreviation-free list",
+  "text": "The price rose from 1.25 to 2.5 dollars. That is double the first price! So the answer is (B).",
+  "steps": [
+   "The price rose from 1.25 to 2.5 dollars.",
+   "That is double the first price!",
+   "So the answer is (B)."
+  ]
+ },
+ {
+  "name": "line breaks are step breaks",
+  "text": "Line one has no period\nLine two ends here.",
+  "steps": [
+   "Line one has no period",
+   "Line two ends here."
+  ]
+ },
+ {
+  "name": "one sentence",
+  "text": "\\( 4-3=1 \\)이다.",
+  "steps": [
+   "\\( 4-3=1 \\)이다."
+  ]
+ },
+ {
+  "name": "twelve sentences group into eight steps",
+  "text": "Sentence 1. Sentence 2. Sentence 3. Sentence 4. Sentence 5. Sentence 6. Sentence 7. Sentence 8. Sentence 9. Sentence 10. Sentence 11. Sentence 12.",
+  "steps": [
+   "Sentence 1. Sentence 2.",
+   "Sentence 3.",
+   "Sentence 4. Sentence 5.",
+   "Sentence 6.",
+   "Sentence 7. Sentence 8.",
+   "Sentence 9.",
+   "Sentence 10. Sentence 11.",
+   "Sentence 12."
+  ]
+ }
+]

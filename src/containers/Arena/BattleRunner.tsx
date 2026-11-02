@@ -1,5 +1,5 @@
 import { RewardRequirements } from './RewardOffer';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +27,9 @@ import SpokenAnswer from './SpokenAnswer';
 import MarkReview from './MarkReview';
 import PartialCreditReview from './PartialCreditReview';
 import C1ScoreReview from './C1ScoreReview';
+import StepExplanation from './StepExplanation';
+import HelpNudge from './HelpNudge';
+import { explanationSteps } from './explanationSteps';
 import ParentEmailOffer from './ParentEmailOffer';
 import ArenaRewards from './Rewards';
 import MasteryProgress from './MasteryProgress';
@@ -307,6 +310,12 @@ export default function BattleRunner({
     return () => window.clearInterval(timer);
   }, [data, finished]);
 
+  // the server's clock (HelpNudge)
+  const serverNow = useCallback(
+    () => Math.floor(Date.now() / 1000) + clockOffsetRef.current,
+    []
+  );
+
   const sections = useMemo(() => {
     if (!data) return [];
     const out: { section: string; items: ArenaItem[] }[] = [];
@@ -430,6 +439,18 @@ export default function BattleRunner({
         )}
       </header>
 
+      {!finished && !noHelp && !practice && data.battle.mode === 'battle' && !takingBreak && component?.state !== 'ready' && (
+        <HelpNudge
+          battleId={data.battle.id}
+          startedAt={data.battle.startedAt}
+          limitSeconds={data.battle.minutes ? data.battle.minutes * 60 : null}
+          serverNow={serverNow}
+          answered={answeredCount}
+          total={data.items.length}
+          question={firstBlankAsk(data, answers, recordings)}
+          assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
+        />
+      )}
       {finished && (practice ? <PracticeResult data={data} onOpenPractice={onOpenPractice} onExit={onExit} /> : <Result data={data} />)}
       {!finished && !takingBreak && component?.allowEarlyFinish === false && remaining !== 0 && <p className={draftStatusCls}>You can review this section until its clock runs out. {component.index + 1 < component.count ? 'The next section or break opens automatically.' : 'Your saved answers are then submitted.'}</p>}
       {takingBreak && <section className={centerCls} role="status">
@@ -906,7 +927,8 @@ export function PaperItem({
   onRequestMarking,
   ask = null,
   assistant,
-  reviewOnly = false
+  reviewOnly = false,
+  stepped = true
 }: {
   item: ArenaItem;
   allPointTags: boolean;
@@ -930,6 +952,9 @@ export function PaperItem({
   ask?: AssistantAskContext | null;
   assistant?: 'Zero' | 'Ciel';
   reviewOnly?: boolean;
+  // the explanation one step at a time (StepExplanation); a parent's copy
+  // of the paper shows it whole
+  stepped?: boolean;
 }) {
   const passage = item.passageFirst ? null : suppliedPassage;
   const listening = item.section === 'listening';
@@ -941,6 +966,16 @@ export function PaperItem({
   // the given text of an order or insertion item comes before the passage,
   // as on the real paper; a summary or <보기> box comes after it
   const bodyFirst = BODY_FIRST_TYPES.has(item.type);
+  // a missed question's stepped explanation carries its own "Ask about
+  // step N"
+  const stepAsk =
+    !!ask &&
+    stepped &&
+    finished &&
+    !item.correct &&
+    !item.marked &&
+    !item.written &&
+    explanationSteps(review?.explanation || '').length > 1;
   return (
     // an essay or recording takes the page's full width, as the answer
     // sheet's writing space does
@@ -1207,9 +1242,8 @@ export function PaperItem({
               “<PaperText text={review!.evidence} />”
             </p>
           )}
-          <p>
-            <MathText text={review!.explanation} />
-          </p>
+          {/* why their pick goes wrong comes first, then the solution one
+              step at a time */}
           {typeof marked === 'number' &&
             !item.correct &&
             review!.why?.[marked] && (
@@ -1232,9 +1266,22 @@ export function PaperItem({
                 <MathText text={review!.why[marked]} />
               </p>
             )}
+          {stepped ? (
+            <StepExplanation
+              text={review!.explanation}
+              ko={ko}
+              startOpen={!!item.correct}
+              ask={stepAsk ? ask : null}
+              assistant={assistant}
+            />
+          ) : (
+            <p>
+              <MathText text={review!.explanation} />
+            </p>
+          )}
         </div>
       )}
-      {ask && (
+      {ask && !stepAsk && (
         <div className={askRowCls}>
           <AskAgentButton context={ask} assistant={assistant} />
         </div>
@@ -1481,6 +1528,25 @@ function Result({ data }: { data: ArenaBattle }) {
       setSharing(false);
     }
   }
+}
+
+// The first question still blank, as an Ask attachment (HelpNudge).
+function firstBlankAsk(
+  data: ArenaBattle,
+  answers: Record<number, number | string | null>,
+  recordings: Record<number, number | null>
+) {
+  const item = data.items.find(
+    (i) => answers[i.no] == null && recordings[i.no] == null && !i.written
+  );
+  if (!item) return null;
+  return {
+    kind: 'arenaBattleItem',
+    id: data.battle.id,
+    no: item.no,
+    label: `question ${item.display || item.no}`,
+    path: `/arena?mode=arena&battle=${data.battle.id}`
+  };
 }
 
 // the exam's own grade name (1급, 불합격) or "N등급"

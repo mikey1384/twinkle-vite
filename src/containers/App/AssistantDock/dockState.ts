@@ -44,6 +44,9 @@ export interface AssistantAskContext {
   // server re-reads the question as the member)
   no?: number;
   version?: number;
+  // the step of an Arena question's step-by-step explanation the member is
+  // on (StepExplanation); the server re-reads the step itself
+  step?: number;
   // a short name for the chip ("this comment", "the Bridge Builder meetup quest")
   label: string;
   // where it lives, for the agent to open or link

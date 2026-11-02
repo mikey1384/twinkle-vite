@@ -24,6 +24,7 @@ export default function AskAgentButton({
   hideLabel,
   label,
   assistant: chosenAssistant,
+  showLabelOnMobile = false,
   onClick
 }: {
   context: AssistantAskContext;
@@ -32,6 +33,9 @@ export default function AskAgentButton({
   // overrides the default "Ask Zero" text (e.g. "Help me plan")
   label?: string;
   assistant?: 'Zero' | 'Ciel';
+  // keep the words on a phone too, where the face alone is easy to miss
+  // (an Arena question's "Ask about step 2")
+  showLabelOnMobile?: boolean;
   // runs first (e.g. closing the modal the button sits in, so the agent
   // window is not under it)
   onClick?: () => void;
@@ -82,13 +86,15 @@ export default function AskAgentButton({
               className={css`
                 font-weight: 700;
                 letter-spacing: 0.02em;
-                @media (max-width: ${mobileMaxWidth}) {
+                ${showLabelOnMobile
+                  ? ''
+                  : `@media (max-width: ${mobileMaxWidth}) {
                   display: none;
                 }
                 /* a narrow comment row, desktop too: the face alone */
                 @container (max-width: 560px) {
                   display: none;
-                }
+                }`}
               `}
             >
               {text}

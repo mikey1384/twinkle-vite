@@ -28,7 +28,7 @@ export default function ParentPaperReview({ paper }: { paper: ParentPaper }) {
       </label>
       {!!readingItems.length && <C1ReadingPaper items={readingItems} passages={paper.passages}
         answers={Object.fromEntries(readingItems.map(item => [item.no, item.answer]))} finished onMark={() => {}}
-        renderReview={item => <PaperItem item={item} passage={null} marked={item.answer} finished reviewOnly audioControls={false} allPointTags={false} letters reviewLang={language} onMark={() => {}} />} />}
+        renderReview={item => <PaperItem item={item} passage={null} marked={item.answer} finished reviewOnly stepped={false} audioControls={false} allPointTags={false} letters reviewLang={language} onMark={() => {}} />} />}
       {paper.items.filter(item => !readingItems.includes(item)).map((item) => {
         const passage = item.passageId != null && !shownPassages.has(item.passageId)
           ? paper.passages[String(item.passageId)] || null : null;
@@ -45,6 +45,7 @@ export default function ParentPaperReview({ paper }: { paper: ParentPaper }) {
           problemLayout={paper.exam.layout === 'problem'}
           reviewLang={language}
           korean
+          stepped={false}
           onMark={() => {}}
         />;
       })}
