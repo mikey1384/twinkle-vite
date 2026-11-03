@@ -1,3 +1,11 @@
+import type { Scene } from './TodayQuestion/types';
+import type { DiagramVisual } from './PaperDiagram';
+
+export interface ReviewStep { text: string; scene?: Scene | DiagramVisual }
+export function reviewSteps(text: string, steps?: ReviewStep[]): ReviewStep[] {
+  return steps?.length ? steps : explanationSteps(text).map(text => ({ text }));
+}
+
 // The step-by-step review (Mikey 11-02: "improve ... explanation afterwards -
 // like make it more intuitive and animated"). An authored explanation is one
 // paragraph; the review shows it one step at a time, and a chained

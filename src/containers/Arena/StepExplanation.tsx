@@ -4,7 +4,9 @@ import { css, cx, keyframes } from '@emotion/css';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import type { AssistantAskContext } from '~/containers/App/AssistantDock/dockState';
 import MathText from './MathText';
-import { equationPieces, explanationSteps, stepParts } from './explanationSteps';
+import LearningScene from './TodayQuestion/LearningScene';
+import PaperDiagram from './PaperDiagram';
+import { equationPieces, reviewSteps, stepParts, type ReviewStep } from './explanationSteps';
 
 // The review's explanation, one step at a time (Mikey 11-02: "make it more
 // intuitive and animated"). A missed or blank question opens on step 1; each
@@ -38,12 +40,16 @@ function rememberAllSteps(all: boolean) {
 
 export default function StepExplanation({
   text,
+  steps: authoredSteps,
+  staticView = false,
   ko,
   startOpen = false,
   ask = null,
   assistant
 }: {
   text: string;
+  steps?: ReviewStep[];
+  staticView?: boolean;
   ko: boolean;
   // every step shown from the start (a question they got right)
   startOpen?: boolean;
@@ -51,21 +57,21 @@ export default function StepExplanation({
   ask?: AssistantAskContext | null;
   assistant?: 'Zero' | 'Ciel';
 }) {
-  const steps = useMemo(() => explanationSteps(text), [text]);
+  const steps = useMemo(() => reviewSteps(text, authoredSteps), [text, authoredSteps]);
   const [shown, setShown] = useState(() =>
     startOpen || prefersAllSteps() ? steps.length : 1
   );
   // the step that just appeared animates; steps opened together do not
   const [fresh, setFresh] = useState(-1);
   if (!steps.length) return null;
-  if (steps.length === 1) {
+  if (steps.length === 1 && !steps[0].scene) {
     return (
       <p className={singleCls}>
-        <StepText text={steps[0]} animate={!startOpen} />
+        <StepText text={steps[0].text} animate={!startOpen} />
       </p>
     );
   }
-  const count = Math.min(shown, steps.length);
+  const count = staticView ? steps.length : Math.min(shown, steps.length);
   const allShown = count >= steps.length;
   return (
     <div className={wrapCls} data-arena-steps={steps.length}>
@@ -83,13 +89,18 @@ export default function StepExplanation({
         {steps.slice(0, count).map((step, i) => (
           <li key={i} className={cx(i === fresh && freshCls)} data-step={i + 1}>
             <b className={numCls}>{i + 1}</b>
-            <span>
-              <StepText text={step} animate={i === fresh} />
-            </span>
+            <div className={stepBodyCls}>
+              <StepText text={step.text} animate={i === fresh} />
+              {step.scene && <div data-step-scene={step.scene.kind}>
+                {step.scene.kind === 'diagram'
+                  ? <PaperDiagram visual={step.scene} />
+                  : <LearningScene scene={step.scene} />}
+              </div>}
+            </div>
           </li>
         ))}
       </ol>
-      <div className={controlsCls}>
+      {!staticView && <div className={controlsCls}>
         {!allShown && (
           <button
             type="button"
@@ -145,7 +156,7 @@ export default function StepExplanation({
             />
           </span>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
@@ -325,4 +336,13 @@ const linkCls = css`
 `;
 const askCls = css`
   margin-left: auto;
+`;
+
+const stepBodyCls = css`
+  flex: 1; min-width: 0;
+  [data-step-scene] { max-width: 100%; }
+  [data-step-scene='cards'] figure > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
 `;

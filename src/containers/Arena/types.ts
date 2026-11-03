@@ -1,3 +1,4 @@
+import type { ReviewStep } from './explanationSteps';
 export type ArenaDifficulty = 'easy' | 'normal' | 'hard';
 export type ArenaCompanion = 'Zero' | 'Ciel' | 'solo';
 export interface ArenaMasteryProgress {
@@ -249,7 +250,8 @@ export interface ArenaItem {
     explanation: string;
     evidence?: string;
     why?: string[];
-    ko?: { explanation: string; why?: string[] };
+    steps?: ReviewStep[];
+    ko?: { explanation: string; why?: string[]; steps?: ReviewStep[] };
   };
 }
 

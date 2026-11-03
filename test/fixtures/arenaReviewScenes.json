@@ -1,0 +1,2621 @@
+[
+  {
+    "exam": "lt-math-e6",
+    "number": 1,
+    "itemType": "ltm.calc",
+    "level": 4,
+    "difficulty": "hard",
+    "setKey": null,
+    "passage": "",
+    "stem": "\\( (\\frac{7}{12}+\\frac{5}{18})\\div(\\frac{7}{8}-\\frac{1}{3}) \\)을 계산한 값은?",
+    "choices": [
+      "\\(31/39\\)",
+      "\\(39/62\\)",
+      "\\(62/39\\)",
+      "\\(31/24\\)",
+      "\\(13/36\\)"
+    ],
+    "review": {
+      "explanation": "첫 괄호부터 통분한다. \\(7/12+5/18=21/36+10/36=31/36\\)이다.\n둘째 괄호도 먼저 계산한다. \\(7/8-1/3=21/24-8/24=13/24\\)이다.\n두 괄호를 완성한 뒤 나누는 분수를 뒤집어 곱한다. \\(31/36\\div13/24=31/36\\times24/13=62/39\\)이다. 각 항끼리 따로 나누지 않는다.",
+      "steps": [
+        {
+          "text": "첫 괄호부터 통분한다. \\(7/12+5/18=21/36+10/36=31/36\\)이다.",
+          "scene": {
+            "kind": "cards",
+            "caption": "괄호별로 통분",
+            "parts": [
+              {
+                "text": "7/12=21/36",
+                "emphasis": false
+              },
+              {
+                "text": "5/18=10/36",
+                "emphasis": false
+              },
+              {
+                "text": "합31/36",
+                "emphasis": true
+              }
+            ]
+          }
+        },
+        {
+          "text": "둘째 괄호도 먼저 계산한다. \\(7/8-1/3=21/24-8/24=13/24\\)이다.",
+          "scene": {
+            "kind": "cards",
+            "caption": "나누는 분수 먼저 완성",
+            "parts": [
+              {
+                "text": "7/8=21/24",
+                "emphasis": false
+              },
+              {
+                "text": "1/3=8/24",
+                "emphasis": false
+              },
+              {
+                "text": "차13/24",
+                "emphasis": true
+              }
+            ]
+          }
+        },
+        {
+          "text": "두 괄호를 완성한 뒤 나누는 분수를 뒤집어 곱한다. \\(31/36\\div13/24=31/36\\times24/13=62/39\\)이다. 각 항끼리 따로 나누지 않는다.",
+          "scene": {
+            "kind": "cards",
+            "caption": "분수 나눗셈의 방향",
+            "parts": [
+              {
+                "text": "31/36 ÷ 13/24",
+                "emphasis": false
+              },
+              {
+                "text": "31/36 × 24/13",
+                "emphasis": false
+              },
+              {
+                "text": "62/39",
+                "emphasis": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "notes": "Reviewed November 3 question; ordered explanation scenes prepared November 3. See accompanying acceptance and render evidence. Not published.",
+    "answer": 2
+  },
+  {
+    "exam": "lt-math-e6",
+    "number": 14,
+    "itemType": "ltm.geometry.short",
+    "level": 4,
+    "difficulty": "hard",
+    "setKey": null,
+    "passage": "그림의 사다리꼴 ABCD에서 AB와 CD는 평행하고, AB=12cm, CD=6cm, 높이는9cm이다. 대각선 AC와 BD의 교점을 O라 할 때 AO:OC=2:1이다.",
+    "stem": "삼각형 AOD와 삼각형 BOC의 넓이의 합은 몇 cm²인지 구하시오.",
+    "choices": [],
+    "review": {
+      "explanation": "삼각형 ABC의 넓이는12×9÷2=54cm²이다.\n삼각형 ABO와 BOC는 AC 위의 밑변 AO,OC에 대한 높이가 같으므로 넓이 비도2:1이다. 따라서 BOC는18, ABO는36cm²이다.\n삼각형 ABD도 넓이가54cm²이므로 AOD는54−36=18cm²이다.\n두 넓이의 합은18+18=36cm²이다.",
+      "steps": [
+        {
+          "text": "삼각형 ABC의 넓이는12×9÷2=54cm²이다.",
+          "scene": {
+            "kind": "diagram",
+            "width": 320,
+            "height": 260,
+            "view": {
+              "xMin": -2,
+              "xMax": 14,
+              "yMin": -2,
+              "yMax": 11
+            },
+            "alt": "삼각형 ABC를 음영으로 표시. 밑변 AB=12, 높이 9이므로 넓이는 54.",
+            "elements": [
+              {
+                "type": "point",
+                "id": "A",
+                "x": 0,
+                "y": 0,
+                "label": "A",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "B",
+                "x": 12,
+                "y": 0,
+                "label": "B",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "C",
+                "x": 9,
+                "y": 9,
+                "label": "C",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "D",
+                "x": 3,
+                "y": 9,
+                "label": "D",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "O",
+                "x": 6,
+                "y": 6,
+                "label": "O",
+                "labelPos": "ne"
+              },
+              {
+                "type": "polygon",
+                "points": [
+                  "A",
+                  "B",
+                  "C"
+                ],
+                "fill": "light"
+              },
+              {
+                "type": "segment",
+                "from": "A",
+                "to": "B"
+              },
+              {
+                "type": "segment",
+                "from": "B",
+                "to": "C"
+              },
+              {
+                "type": "segment",
+                "from": "C",
+                "to": "D"
+              },
+              {
+                "type": "segment",
+                "from": "D",
+                "to": "A"
+              },
+              {
+                "type": "segment",
+                "from": "A",
+                "to": "C"
+              },
+              {
+                "type": "segment",
+                "from": "B",
+                "to": "D"
+              },
+              {
+                "type": "text",
+                "x": 6,
+                "y": 2,
+                "text": "54",
+                "size": 15
+              }
+            ],
+            "title": "ABC의 넓이부터"
+          }
+        },
+        {
+          "text": "삼각형 ABO와 BOC는 AC 위의 밑변 AO,OC에 대한 높이가 같으므로 넓이 비도2:1이다. 따라서 BOC는18, ABO는36cm²이다.",
+          "scene": {
+            "kind": "diagram",
+            "width": 320,
+            "height": 260,
+            "view": {
+              "xMin": -2,
+              "xMax": 14,
+              "yMin": -2,
+              "yMax": 11
+            },
+            "alt": "ABO와 BOC의 공통 꼭짓점은 B. 밑변 AO와 OC가 같은 직선 위에 있어 넓이도 2:1. ABO=36, BOC=18.",
+            "elements": [
+              {
+                "type": "point",
+                "id": "A",
+                "x": 0,
+                "y": 0,
+                "label": "A",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "B",
+                "x": 12,
+                "y": 0,
+                "label": "B",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "C",
+                "x": 9,
+                "y": 9,
+                "label": "C",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "D",
+                "x": 3,
+                "y": 9,
+                "label": "D",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "O",
+                "x": 6,
+                "y": 6,
+                "label": "O",
+                "labelPos": "ne"
+              },
+              {
+                "type": "polygon",
+                "points": [
+                  "A",
+                  "B",
+                  "O"
+                ],
+                "fill": "light"
+              },
+              {
+                "type": "polygon",
+                "points": [
+                  "B",
+                  "O",
+                  "C"
+                ],
+                "fill": "hatch"
+              },
+              {
+                "type": "segment",
+                "from": "A",
+                "to": "B"
+              },
+              {
+                "type": "segment",
+                "from": "B",
+                "to": "C"
+              },
+              {
+                "type": "segment",
+                "from": "C",
+                "to": "D"
+              },
+              {
+                "type": "segment",
+                "from": "D",
+                "to": "A"
+              },
+              {
+                "type": "segment",
+                "from": "A",
+                "to": "C"
+              },
+              {
+                "type": "segment",
+                "from": "B",
+                "to": "D"
+              },
+              {
+                "type": "text",
+                "x": 6,
+                "y": 2,
+                "text": "36",
+                "size": 15
+              },
+              {
+                "type": "text",
+                "x": 9,
+                "y": 5,
+                "text": "18",
+                "size": 15
+              }
+            ],
+            "title": "같은 높이, 밑변 AO:OC=2:1"
+          }
+        },
+        {
+          "text": "삼각형 ABD도 넓이가54cm²이므로 AOD는54−36=18cm²이다.",
+          "scene": {
+            "kind": "diagram",
+            "width": 320,
+            "height": 260,
+            "view": {
+              "xMin": -2,
+              "xMax": 14,
+              "yMin": -2,
+              "yMax": 11
+            },
+            "alt": "ABD의 넓이 54에서 ABO의 36을 빼면 왼쪽 삼각형 AOD는 18.",
+            "elements": [
+              {
+                "type": "point",
+                "id": "A",
+                "x": 0,
+                "y": 0,
+                "label": "A",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "B",
+                "x": 12,
+                "y": 0,
+                "label": "B",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "C",
+                "x": 9,
+                "y": 9,
+                "label": "C",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "D",
+                "x": 3,
+                "y": 9,
+                "label": "D",
+                "labelPos": "ne"
+              },
+              {
+                "type": "point",
+                "id": "O",
+                "x": 6,
+                "y": 6,
+                "label": "O",
+                "labelPos": "ne"
+              },
+              {
+                "type": "polygon",
+                "points": [
+                  "A",
+                  "B",
+                  "D"
+                ],
+                "fill": "light"
+              },
+              {
+                "type": "polygon",
+                "points": [
+                  "A",
+                  "O",
+                  "D"
+                ],
+                "fill": "hatch"
+              },
+              {
+                "type": "segment",
+                "from": "A",
+                "to": "B"
+              },
+              {
+                "type": "segment",
+                "from": "B",
+                "to": "C"
+              },
+              {
+                "type": "segment",
+                "from": "C",
+                "to": "D"
+              },
+              {
+                "type": "segment",
+                "from": "D",
+                "to": "A"
+              },
+              {
+                "type": "segment",
+                "from": "A",
+                "to": "C"
+              },
+              {
+                "type": "segment",
+                "from": "B",
+                "to": "D"
+              },
+              {
+                "type": "text",
+                "x": 3.5,
+                "y": 5,
+                "text": "18",
+                "size": 15
+              },
+              {
+                "type": "text",
+                "x": 6,
+                "y": 2,
+                "text": "36",
+                "size": 15
+              }
+            ],
+            "title": "ABD에서 ABO를 빼기"
+          }
+        },
+        {
+          "text": "두 넓이의 합은18+18=36cm²이다.",
+          "scene": {
+            "kind": "bars",
+            "caption": "두 옆 삼각형 합",
+            "parts": [
+              {
+                "text": "AOD",
+                "value": 18
+              },
+              {
+                "text": "BOC",
+                "value": 18
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "notes": "Reviewed November 3 question; ordered explanation scenes prepared November 3. See accompanying acceptance and render evidence. Not published.",
+    "accepted": [
+      "36"
+    ],
+    "visual": {
+      "kind": "diagram",
+      "width": 320,
+      "height": 260,
+      "view": {
+        "xMin": -2,
+        "xMax": 14,
+        "yMin": -2,
+        "yMax": 11
+      },
+      "alt": "AB와 CD가 평행한 사다리꼴. AB12cm, CD6cm, 높이9cm. 대각선 교점O, AO:OC=2:1.",
+      "elements": [
+        {
+          "type": "point",
+          "id": "A",
+          "x": 0,
+          "y": 0,
+          "label": "A",
+          "labelPos": "ne"
+        },
+        {
+          "type": "point",
+          "id": "B",
+          "x": 12,
+          "y": 0,
+          "label": "B",
+          "labelPos": "ne"
+        },
+        {
+          "type": "point",
+          "id": "C",
+          "x": 9,
+          "y": 9,
+          "label": "C",
+          "labelPos": "ne"
+        },
+        {
+          "type": "point",
+          "id": "D",
+          "x": 3,
+          "y": 9,
+          "label": "D",
+          "labelPos": "ne"
+        },
+        {
+          "type": "point",
+          "id": "O",
+          "x": 6,
+          "y": 6,
+          "label": "O",
+          "labelPos": "ne"
+        },
+        {
+          "type": "segment",
+          "from": "A",
+          "to": "B"
+        },
+        {
+          "type": "segment",
+          "from": "B",
+          "to": "C"
+        },
+        {
+          "type": "segment",
+          "from": "C",
+          "to": "D"
+        },
+        {
+          "type": "segment",
+          "from": "D",
+          "to": "A"
+        },
+        {
+          "type": "segment",
+          "from": "A",
+          "to": "C"
+        },
+        {
+          "type": "segment",
+          "from": "B",
+          "to": "D"
+        }
+      ]
+    }
+  },
+  {
+    "exam": "lt-math-e6",
+    "number": 20,
+    "itemType": "ltm.challenge.short",
+    "level": 5,
+    "difficulty": "hard",
+    "setKey": null,
+    "passage": "그림은 가로7칸, 세로7칸의 정사각형 격자이다. A에서 B까지 격자선을 따라 오른쪽으로 한 칸 또는 위로 한 칸씩만 이동한다. 이동하는 동안 점선 대각선 AB의 위쪽으로는 갈 수 없다. A와 B를 제외하고 대각선 위의 격자점을 정확히 두 번 지나야 한다.",
+    "stem": "이 조건을 만족하는 서로 다른 경로는 모두 몇 개인지 구하시오.",
+    "choices": [],
+    "review": {
+      "explanation": "대각선의 중간 점을 정확히 두 번 지나므로 전체 경로는 대각선에서 출발해 중간에는 대각선을 만나지 않고 돌아오는 세 구간으로 나뉜다.\n세 구간의 크기 a,b,c는 양의 정수이고 합이 7이다. 크기 k 구간의 첫 오른쪽 이동과 마지막 위쪽 이동을 뗀 뒤 왼쪽으로 한 칸 옮기면, (k−1)×(k−1) 격자에서 대각선을 넘지 않는 경로와 일대일로 대응한다.\n원점은 1로 두고 각 점에 왼쪽과 아래 점의 수를 더한다. 금지 영역은 0이다. 작은 격자의 대각선 값이 1,1,2,5,14이므로 크기 1,2,3,4,5 구간의 경로 수가 각각 그 값이다.\n세 크기의 묶음은 (5,1,1),(4,2,1),(3,3,1),(3,2,2)뿐이다. 순서를 구분하면 각각3,6,3,3가지 순서이다.\n각 구간의 경로를 독립적으로 고를 수 있으므로 네 묶음의 경우의 수는3×14=42,6×5=30,3×2×2=12,3×2=6이다.\n따라서 전체는42+30+12+6=90가지이다.",
+      "steps": [
+        {
+          "text": "대각선의 중간 점을 정확히 두 번 지나므로 전체 경로는 대각선에서 출발해 중간에는 대각선을 만나지 않고 돌아오는 세 구간으로 나뉜다.",
+          "scene": {
+            "kind": "diagram",
+            "title": "중간 만남 두 번 → 세 구간",
+            "alt": "예시 경로는 (0,0)→(3,3)→(5,5)→(7,7)로 세 구간. 각 구간 내부는 대각선 아래에 있다.",
+            "width": 320,
+            "height": 320,
+            "view": {
+              "xMin": -0.65,
+              "xMax": 7.65,
+              "yMin": -0.65,
+              "yMax": 7.65
+            },
+            "elements": [
+              {
+                "type": "point",
+                "id": "p00",
+                "x": 0,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p01",
+                "x": 0,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p02",
+                "x": 0,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p03",
+                "x": 0,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p04",
+                "x": 0,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p05",
+                "x": 0,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p06",
+                "x": 0,
+                "y": 6,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p07",
+                "x": 0,
+                "y": 7,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p10",
+                "x": 1,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p11",
+                "x": 1,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p12",
+                "x": 1,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p13",
+                "x": 1,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p14",
+                "x": 1,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p15",
+                "x": 1,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p16",
+                "x": 1,
+                "y": 6,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p17",
+                "x": 1,
+                "y": 7,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p20",
+                "x": 2,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p21",
+                "x": 2,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p22",
+                "x": 2,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p23",
+                "x": 2,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p24",
+                "x": 2,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p25",
+                "x": 2,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p26",
+                "x": 2,
+                "y": 6,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p27",
+                "x": 2,
+                "y": 7,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p30",
+                "x": 3,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p31",
+                "x": 3,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p32",
+                "x": 3,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p33",
+                "x": 3,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p34",
+                "x": 3,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p35",
+                "x": 3,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p36",
+                "x": 3,
+                "y": 6,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p37",
+                "x": 3,
+                "y": 7,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p40",
+                "x": 4,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p41",
+                "x": 4,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p42",
+                "x": 4,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p43",
+                "x": 4,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p44",
+                "x": 4,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p45",
+                "x": 4,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p46",
+                "x": 4,
+                "y": 6,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p47",
+                "x": 4,
+                "y": 7,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p50",
+                "x": 5,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p51",
+                "x": 5,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p52",
+                "x": 5,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p53",
+                "x": 5,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p54",
+                "x": 5,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p55",
+                "x": 5,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p56",
+                "x": 5,
+                "y": 6,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p57",
+                "x": 5,
+                "y": 7,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p60",
+                "x": 6,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p61",
+                "x": 6,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p62",
+                "x": 6,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p63",
+                "x": 6,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p64",
+                "x": 6,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p65",
+                "x": 6,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p66",
+                "x": 6,
+                "y": 6,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p67",
+                "x": 6,
+                "y": 7,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p70",
+                "x": 7,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p71",
+                "x": 7,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p72",
+                "x": 7,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p73",
+                "x": 7,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p74",
+                "x": 7,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p75",
+                "x": 7,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p76",
+                "x": 7,
+                "y": 6,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p77",
+                "x": 7,
+                "y": 7,
+                "dot": false
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p07"
+              },
+              {
+                "type": "segment",
+                "from": "p10",
+                "to": "p17"
+              },
+              {
+                "type": "segment",
+                "from": "p20",
+                "to": "p27"
+              },
+              {
+                "type": "segment",
+                "from": "p30",
+                "to": "p37"
+              },
+              {
+                "type": "segment",
+                "from": "p40",
+                "to": "p47"
+              },
+              {
+                "type": "segment",
+                "from": "p50",
+                "to": "p57"
+              },
+              {
+                "type": "segment",
+                "from": "p60",
+                "to": "p67"
+              },
+              {
+                "type": "segment",
+                "from": "p70",
+                "to": "p77"
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p70"
+              },
+              {
+                "type": "segment",
+                "from": "p01",
+                "to": "p71"
+              },
+              {
+                "type": "segment",
+                "from": "p02",
+                "to": "p72"
+              },
+              {
+                "type": "segment",
+                "from": "p03",
+                "to": "p73"
+              },
+              {
+                "type": "segment",
+                "from": "p04",
+                "to": "p74"
+              },
+              {
+                "type": "segment",
+                "from": "p05",
+                "to": "p75"
+              },
+              {
+                "type": "segment",
+                "from": "p06",
+                "to": "p76"
+              },
+              {
+                "type": "segment",
+                "from": "p07",
+                "to": "p77"
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p77",
+                "dashed": true
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p30",
+                "thick": true,
+                "arrow": "end"
+              },
+              {
+                "type": "segment",
+                "from": "p30",
+                "to": "p33",
+                "thick": true,
+                "arrow": "end"
+              },
+              {
+                "type": "segment",
+                "from": "p33",
+                "to": "p53",
+                "thick": true,
+                "arrow": "end"
+              },
+              {
+                "type": "segment",
+                "from": "p53",
+                "to": "p55",
+                "thick": true,
+                "arrow": "end"
+              },
+              {
+                "type": "segment",
+                "from": "p55",
+                "to": "p75",
+                "thick": true,
+                "arrow": "end"
+              },
+              {
+                "type": "segment",
+                "from": "p75",
+                "to": "p77",
+                "thick": true,
+                "arrow": "end"
+              },
+              {
+                "type": "point",
+                "id": "m3",
+                "x": 3,
+                "y": 3,
+                "dot": true,
+                "label": "3",
+                "labelPos": "nw"
+              },
+              {
+                "type": "point",
+                "id": "m5",
+                "x": 5,
+                "y": 5,
+                "dot": true,
+                "label": "5",
+                "labelPos": "nw"
+              },
+              {
+                "type": "text",
+                "x": 1.6,
+                "y": 0.7,
+                "text": "a=3",
+                "size": 13
+              },
+              {
+                "type": "text",
+                "x": 4.1,
+                "y": 3.6,
+                "text": "b=2",
+                "size": 12
+              },
+              {
+                "type": "text",
+                "x": 6.2,
+                "y": 5.6,
+                "text": "c=2",
+                "size": 12
+              }
+            ]
+          }
+        },
+        {
+          "text": "세 구간의 크기 a,b,c는 양의 정수이고 합이 7이다. 크기 k 구간의 첫 오른쪽 이동과 마지막 위쪽 이동을 뗀 뒤 왼쪽으로 한 칸 옮기면, (k−1)×(k−1) 격자에서 대각선을 넘지 않는 경로와 일대일로 대응한다.",
+          "scene": {
+            "kind": "diagram",
+            "title": "첫 오른쪽·마지막 위쪽 떼기",
+            "alt": "크기 5 구간은 (0,0)에서 오른쪽, (5,4)에서 위쪽이 필수. 남은 (1,0)~(5,4)를 왼쪽 한 칸 옮기면 4×4 격자의 y≤x 경로이다.",
+            "width": 320,
+            "height": 320,
+            "view": {
+              "xMin": -0.65,
+              "xMax": 5.65,
+              "yMin": -0.65,
+              "yMax": 5.65
+            },
+            "elements": [
+              {
+                "type": "point",
+                "id": "p00",
+                "x": 0,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p01",
+                "x": 0,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p02",
+                "x": 0,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p03",
+                "x": 0,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p04",
+                "x": 0,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p05",
+                "x": 0,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p10",
+                "x": 1,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p11",
+                "x": 1,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p12",
+                "x": 1,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p13",
+                "x": 1,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p14",
+                "x": 1,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p15",
+                "x": 1,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p20",
+                "x": 2,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p21",
+                "x": 2,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p22",
+                "x": 2,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p23",
+                "x": 2,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p24",
+                "x": 2,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p25",
+                "x": 2,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p30",
+                "x": 3,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p31",
+                "x": 3,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p32",
+                "x": 3,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p33",
+                "x": 3,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p34",
+                "x": 3,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p35",
+                "x": 3,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p40",
+                "x": 4,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p41",
+                "x": 4,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p42",
+                "x": 4,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p43",
+                "x": 4,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p44",
+                "x": 4,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p45",
+                "x": 4,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p50",
+                "x": 5,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p51",
+                "x": 5,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p52",
+                "x": 5,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p53",
+                "x": 5,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p54",
+                "x": 5,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p55",
+                "x": 5,
+                "y": 5,
+                "dot": false
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p05"
+              },
+              {
+                "type": "segment",
+                "from": "p10",
+                "to": "p15"
+              },
+              {
+                "type": "segment",
+                "from": "p20",
+                "to": "p25"
+              },
+              {
+                "type": "segment",
+                "from": "p30",
+                "to": "p35"
+              },
+              {
+                "type": "segment",
+                "from": "p40",
+                "to": "p45"
+              },
+              {
+                "type": "segment",
+                "from": "p50",
+                "to": "p55"
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p50"
+              },
+              {
+                "type": "segment",
+                "from": "p01",
+                "to": "p51"
+              },
+              {
+                "type": "segment",
+                "from": "p02",
+                "to": "p52"
+              },
+              {
+                "type": "segment",
+                "from": "p03",
+                "to": "p53"
+              },
+              {
+                "type": "segment",
+                "from": "p04",
+                "to": "p54"
+              },
+              {
+                "type": "segment",
+                "from": "p05",
+                "to": "p55"
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p55",
+                "dashed": true
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p10",
+                "thick": true,
+                "arrow": "end",
+                "label": "첫 이동"
+              },
+              {
+                "type": "segment",
+                "from": "p54",
+                "to": "p55",
+                "thick": true,
+                "arrow": "end",
+                "label": "끝 이동"
+              },
+              {
+                "type": "polygon",
+                "points": [
+                  "p10",
+                  "p50",
+                  "p54"
+                ],
+                "fill": "light"
+              },
+              {
+                "type": "segment",
+                "from": "p10",
+                "to": "p54",
+                "dashed": true,
+                "thick": true
+              },
+              {
+                "type": "text",
+                "x": 3,
+                "y": 1.3,
+                "text": "남은 부분: 왼쪽 1칸 이동",
+                "size": 11
+              }
+            ]
+          }
+        },
+        {
+          "text": "원점은 1로 두고 각 점에 왼쪽과 아래 점의 수를 더한다. 금지 영역은 0이다. 작은 격자의 대각선 값이 1,1,2,5,14이므로 크기 1,2,3,4,5 구간의 경로 수가 각각 그 값이다.",
+          "scene": {
+            "kind": "diagram",
+            "title": "왼쪽 수 + 아래 수",
+            "alt": "대각선 위는 금지. 원점 1, 아랫변 1. 왼쪽과 아래를 더하면 대각선 값은 1,1,2,5,14. 크기 1~5 구간의 경로 수이다.",
+            "width": 320,
+            "height": 320,
+            "view": {
+              "xMin": -0.65,
+              "xMax": 4.65,
+              "yMin": -0.65,
+              "yMax": 4.65
+            },
+            "elements": [
+              {
+                "type": "point",
+                "id": "p00",
+                "x": 0,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p01",
+                "x": 0,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p02",
+                "x": 0,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p03",
+                "x": 0,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p04",
+                "x": 0,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p10",
+                "x": 1,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p11",
+                "x": 1,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p12",
+                "x": 1,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p13",
+                "x": 1,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p14",
+                "x": 1,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p20",
+                "x": 2,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p21",
+                "x": 2,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p22",
+                "x": 2,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p23",
+                "x": 2,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p24",
+                "x": 2,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p30",
+                "x": 3,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p31",
+                "x": 3,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p32",
+                "x": 3,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p33",
+                "x": 3,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p34",
+                "x": 3,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p40",
+                "x": 4,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p41",
+                "x": 4,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p42",
+                "x": 4,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p43",
+                "x": 4,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "point",
+                "id": "p44",
+                "x": 4,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p04"
+              },
+              {
+                "type": "segment",
+                "from": "p10",
+                "to": "p14"
+              },
+              {
+                "type": "segment",
+                "from": "p20",
+                "to": "p24"
+              },
+              {
+                "type": "segment",
+                "from": "p30",
+                "to": "p34"
+              },
+              {
+                "type": "segment",
+                "from": "p40",
+                "to": "p44"
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p40"
+              },
+              {
+                "type": "segment",
+                "from": "p01",
+                "to": "p41"
+              },
+              {
+                "type": "segment",
+                "from": "p02",
+                "to": "p42"
+              },
+              {
+                "type": "segment",
+                "from": "p03",
+                "to": "p43"
+              },
+              {
+                "type": "segment",
+                "from": "p04",
+                "to": "p44"
+              },
+              {
+                "type": "segment",
+                "from": "p00",
+                "to": "p44",
+                "dashed": true
+              },
+              {
+                "type": "point",
+                "id": "c0",
+                "x": 0,
+                "y": 0,
+                "dot": false
+              },
+              {
+                "type": "circle",
+                "center": "c0",
+                "r": 0.23,
+                "fill": "white"
+              },
+              {
+                "type": "text",
+                "x": 0,
+                "y": 0,
+                "text": "1",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 1,
+                "y": 0,
+                "text": "1",
+                "size": 14
+              },
+              {
+                "type": "point",
+                "id": "c1",
+                "x": 1,
+                "y": 1,
+                "dot": false
+              },
+              {
+                "type": "circle",
+                "center": "c1",
+                "r": 0.23,
+                "fill": "white"
+              },
+              {
+                "type": "text",
+                "x": 1,
+                "y": 1,
+                "text": "1",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 2,
+                "y": 0,
+                "text": "1",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 2,
+                "y": 1,
+                "text": "2",
+                "size": 14
+              },
+              {
+                "type": "point",
+                "id": "c2",
+                "x": 2,
+                "y": 2,
+                "dot": false
+              },
+              {
+                "type": "circle",
+                "center": "c2",
+                "r": 0.23,
+                "fill": "white"
+              },
+              {
+                "type": "text",
+                "x": 2,
+                "y": 2,
+                "text": "2",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 3,
+                "y": 0,
+                "text": "1",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 3,
+                "y": 1,
+                "text": "3",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 3,
+                "y": 2,
+                "text": "5",
+                "size": 14
+              },
+              {
+                "type": "point",
+                "id": "c3",
+                "x": 3,
+                "y": 3,
+                "dot": false
+              },
+              {
+                "type": "circle",
+                "center": "c3",
+                "r": 0.23,
+                "fill": "white"
+              },
+              {
+                "type": "text",
+                "x": 3,
+                "y": 3,
+                "text": "5",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 4,
+                "y": 0,
+                "text": "1",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 4,
+                "y": 1,
+                "text": "4",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 4,
+                "y": 2,
+                "text": "9",
+                "size": 14
+              },
+              {
+                "type": "text",
+                "x": 4,
+                "y": 3,
+                "text": "14",
+                "size": 14
+              },
+              {
+                "type": "point",
+                "id": "c4",
+                "x": 4,
+                "y": 4,
+                "dot": false
+              },
+              {
+                "type": "circle",
+                "center": "c4",
+                "r": 0.23,
+                "fill": "white"
+              },
+              {
+                "type": "text",
+                "x": 4,
+                "y": 4,
+                "text": "14",
+                "size": 14
+              }
+            ]
+          }
+        },
+        {
+          "text": "세 크기의 묶음은 (5,1,1),(4,2,1),(3,3,1),(3,2,2)뿐이다. 순서를 구분하면 각각3,6,3,3가지 순서이다.",
+          "scene": {
+            "kind": "cards",
+            "caption": "세 양의 크기의 합7:빠짐없는 네 묶음",
+            "parts": [
+              {
+                "text": "5+1+1:3순서"
+              },
+              {
+                "text": "4+2+1:6순서"
+              },
+              {
+                "text": "3+3+1:3순서"
+              },
+              {
+                "text": "3+2+2:3순서"
+              }
+            ]
+          }
+        },
+        {
+          "text": "각 구간의 경로를 독립적으로 고를 수 있으므로 네 묶음의 경우의 수는3×14=42,6×5=30,3×2×2=12,3×2=6이다.",
+          "scene": {
+            "kind": "cards",
+            "caption": "구간 선택은 곱하고 순서를 세기",
+            "parts": [
+              {
+                "text": "3×14×1×1=42"
+              },
+              {
+                "text": "6×5×1×1=30"
+              },
+              {
+                "text": "3×2×2×1=12"
+              },
+              {
+                "text": "3×2×1×1=6"
+              }
+            ]
+          }
+        },
+        {
+          "text": "따라서 전체는42+30+12+6=90가지이다.",
+          "scene": {
+            "kind": "bars",
+            "caption": "서로 겹치지 않는 네 경우",
+            "parts": [
+              {
+                "text": "5,1,1",
+                "value": 42
+              },
+              {
+                "text": "4,2,1",
+                "value": 30
+              },
+              {
+                "text": "3,3,1",
+                "value": 12
+              },
+              {
+                "text": "3,2,2",
+                "value": 6
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "notes": "Reviewed November 3 question; ordered explanation scenes prepared November 3. See accompanying acceptance and render evidence. Not published.",
+    "accepted": [
+      "90"
+    ],
+    "visual": {
+      "kind": "diagram",
+      "width": 320,
+      "height": 320,
+      "view": {
+        "xMin": -0.7,
+        "xMax": 7.7,
+        "yMin": -0.7,
+        "yMax": 7.7
+      },
+      "alt": "가로세로7칸 정사각형 격자. 왼쪽 아래A, 오른쪽 위B, 대각선AB점선.",
+      "elements": [
+        {
+          "type": "point",
+          "id": "p00",
+          "x": 0,
+          "y": 0,
+          "dot": false,
+          "label": "A",
+          "labelPos": "sw"
+        },
+        {
+          "type": "point",
+          "id": "p01",
+          "x": 0,
+          "y": 1,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p02",
+          "x": 0,
+          "y": 2,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p03",
+          "x": 0,
+          "y": 3,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p04",
+          "x": 0,
+          "y": 4,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p05",
+          "x": 0,
+          "y": 5,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p06",
+          "x": 0,
+          "y": 6,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p07",
+          "x": 0,
+          "y": 7,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p10",
+          "x": 1,
+          "y": 0,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p11",
+          "x": 1,
+          "y": 1,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p12",
+          "x": 1,
+          "y": 2,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p13",
+          "x": 1,
+          "y": 3,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p14",
+          "x": 1,
+          "y": 4,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p15",
+          "x": 1,
+          "y": 5,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p16",
+          "x": 1,
+          "y": 6,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p17",
+          "x": 1,
+          "y": 7,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p20",
+          "x": 2,
+          "y": 0,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p21",
+          "x": 2,
+          "y": 1,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p22",
+          "x": 2,
+          "y": 2,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p23",
+          "x": 2,
+          "y": 3,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p24",
+          "x": 2,
+          "y": 4,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p25",
+          "x": 2,
+          "y": 5,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p26",
+          "x": 2,
+          "y": 6,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p27",
+          "x": 2,
+          "y": 7,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p30",
+          "x": 3,
+          "y": 0,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p31",
+          "x": 3,
+          "y": 1,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p32",
+          "x": 3,
+          "y": 2,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p33",
+          "x": 3,
+          "y": 3,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p34",
+          "x": 3,
+          "y": 4,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p35",
+          "x": 3,
+          "y": 5,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p36",
+          "x": 3,
+          "y": 6,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p37",
+          "x": 3,
+          "y": 7,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p40",
+          "x": 4,
+          "y": 0,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p41",
+          "x": 4,
+          "y": 1,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p42",
+          "x": 4,
+          "y": 2,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p43",
+          "x": 4,
+          "y": 3,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p44",
+          "x": 4,
+          "y": 4,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p45",
+          "x": 4,
+          "y": 5,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p46",
+          "x": 4,
+          "y": 6,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p47",
+          "x": 4,
+          "y": 7,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p50",
+          "x": 5,
+          "y": 0,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p51",
+          "x": 5,
+          "y": 1,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p52",
+          "x": 5,
+          "y": 2,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p53",
+          "x": 5,
+          "y": 3,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p54",
+          "x": 5,
+          "y": 4,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p55",
+          "x": 5,
+          "y": 5,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p56",
+          "x": 5,
+          "y": 6,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p57",
+          "x": 5,
+          "y": 7,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p60",
+          "x": 6,
+          "y": 0,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p61",
+          "x": 6,
+          "y": 1,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p62",
+          "x": 6,
+          "y": 2,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p63",
+          "x": 6,
+          "y": 3,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p64",
+          "x": 6,
+          "y": 4,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p65",
+          "x": 6,
+          "y": 5,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p66",
+          "x": 6,
+          "y": 6,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p67",
+          "x": 6,
+          "y": 7,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p70",
+          "x": 7,
+          "y": 0,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p71",
+          "x": 7,
+          "y": 1,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p72",
+          "x": 7,
+          "y": 2,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p73",
+          "x": 7,
+          "y": 3,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p74",
+          "x": 7,
+          "y": 4,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p75",
+          "x": 7,
+          "y": 5,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p76",
+          "x": 7,
+          "y": 6,
+          "dot": false
+        },
+        {
+          "type": "point",
+          "id": "p77",
+          "x": 7,
+          "y": 7,
+          "dot": false,
+          "label": "B",
+          "labelPos": "ne"
+        },
+        {
+          "type": "segment",
+          "from": "p00",
+          "to": "p07"
+        },
+        {
+          "type": "segment",
+          "from": "p10",
+          "to": "p17"
+        },
+        {
+          "type": "segment",
+          "from": "p20",
+          "to": "p27"
+        },
+        {
+          "type": "segment",
+          "from": "p30",
+          "to": "p37"
+        },
+        {
+          "type": "segment",
+          "from": "p40",
+          "to": "p47"
+        },
+        {
+          "type": "segment",
+          "from": "p50",
+          "to": "p57"
+        },
+        {
+          "type": "segment",
+          "from": "p60",
+          "to": "p67"
+        },
+        {
+          "type": "segment",
+          "from": "p70",
+          "to": "p77"
+        },
+        {
+          "type": "segment",
+          "from": "p00",
+          "to": "p70"
+        },
+        {
+          "type": "segment",
+          "from": "p01",
+          "to": "p71"
+        },
+        {
+          "type": "segment",
+          "from": "p02",
+          "to": "p72"
+        },
+        {
+          "type": "segment",
+          "from": "p03",
+          "to": "p73"
+        },
+        {
+          "type": "segment",
+          "from": "p04",
+          "to": "p74"
+        },
+        {
+          "type": "segment",
+          "from": "p05",
+          "to": "p75"
+        },
+        {
+          "type": "segment",
+          "from": "p06",
+          "to": "p76"
+        },
+        {
+          "type": "segment",
+          "from": "p07",
+          "to": "p77"
+        },
+        {
+          "type": "segment",
+          "from": "p00",
+          "to": "p77",
+          "dashed": true,
+          "thick": true
+        }
+      ]
+    }
+  }
+]

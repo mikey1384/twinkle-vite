@@ -29,7 +29,7 @@ import PartialCreditReview from './PartialCreditReview';
 import C1ScoreReview from './C1ScoreReview';
 import StepExplanation from './StepExplanation';
 import HelpNudge from './HelpNudge';
-import { explanationSteps } from './explanationSteps';
+import { reviewSteps } from './explanationSteps';
 import ParentEmailOffer from './ParentEmailOffer';
 import ArenaRewards from './Rewards';
 import MasteryProgress from './MasteryProgress';
@@ -977,7 +977,7 @@ export function PaperItem({
   const ko = reviewLang === 'ko';
   const review =
     item.review && ko && item.review.ko
-      ? { ...item.review, ...item.review.ko }
+      ? { ...item.review, ...item.review.ko, steps: item.review.ko.steps }
       : item.review;
   // the given text of an order or insertion item comes before the passage,
   // as on the real paper; a summary or <보기> box comes after it
@@ -991,7 +991,7 @@ export function PaperItem({
     !item.correct &&
     !item.marked &&
     !item.written &&
-    explanationSteps(review?.explanation || '').length > 1;
+    reviewSteps(review?.explanation || '', review?.steps).length > 1;
   return (
     // an essay or recording takes the page's full width, as the answer
     // sheet's writing space does
@@ -1282,12 +1282,14 @@ export function PaperItem({
                 <MathText text={review!.why[marked]} />
               </p>
             )}
-          {stepped ? (
+          {stepped || review?.steps?.length ? (
             <StepExplanation
               text={review!.explanation}
+              steps={review?.steps}
               ko={ko}
-              startOpen={!!item.correct}
-              ask={stepAsk ? ask : null}
+              startOpen={!stepped || !!item.correct}
+              staticView={!stepped}
+              ask={stepAsk && ask ? { ...ask, ...(ko ? { reviewLang: 'ko' as const } : {}) } : null}
               assistant={assistant}
             />
           ) : (
@@ -1300,7 +1302,7 @@ export function PaperItem({
       {ask && !stepAsk && (
         <div className={askRowCls}>
           {/* words on phones too (Mikey 11-02): the face alone was easy to miss */}
-          <AskAgentButton context={ask} assistant={assistant} showLabelOnMobile />
+          <AskAgentButton context={ko ? { ...ask, reviewLang: 'ko' } : ask} assistant={assistant} showLabelOnMobile />
         </div>
       )}
     </article>
