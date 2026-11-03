@@ -2,6 +2,7 @@ import {
   type AiImageQuality,
   type OpenAiImageModel
 } from '~/helpers/aiImageModels';
+import type { AIImageHistoryItem } from '~/helpers/aiImageHistory';
 import request from './axiosInstance';
 import { type BookPreview } from '~/helpers/bookEmbedHelpers';
 import URL from '~/constants/URL';
@@ -3285,7 +3286,9 @@ export default function contentRequestHelpers({
       engine = 'openai',
       model,
       quality = 'high',
-      requestId
+      requestId,
+      displayPrompt,
+      historySource
     }: {
       prompt: string;
       previousResponseId?: string;
@@ -3295,6 +3298,10 @@ export default function contentRequestHelpers({
       model?: OpenAiImageModel;
       quality?: AiImageQuality;
       requestId?: string;
+      // what the member's image history shows, when prompt wraps their words
+      displayPrompt?: string;
+      // which screen asked, for the history label and resume
+      historySource?: 'generator' | 'edit' | 'thumbnail';
     }) {
       try {
         const { data } = await request.post(
@@ -3307,7 +3314,9 @@ export default function contentRequestHelpers({
             engine,
             model,
             quality,
-            requestId
+            requestId,
+            displayPrompt,
+            historySource
           },
           {
             ...auth(),
@@ -3435,6 +3444,55 @@ export default function contentRequestHelpers({
             normalizedError?.retryAfterSeconds,
           isTransportError: normalizedError?.isTransportError === true
         };
+      }
+    },
+    // The member's own image history, newest first (private)
+    async loadAIImageHistory({
+      before,
+      limit
+    }: { before?: number | null; limit?: number } = {}) {
+      try {
+        const params = new URLSearchParams();
+        if (before) params.set('before', String(before));
+        if (limit) params.set('limit', String(limit));
+        const { data } = await request.get(
+          `${URL}/content/image/ai/history?${params.toString()}`,
+          auth()
+        );
+        return data as {
+          images: AIImageHistoryItem[];
+          nextBefore: number | null;
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAIImageHistoryItem(id: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/image/ai/history/${id}`,
+          auth()
+        );
+        return data as { image: AIImageHistoryItem };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // The full image as a data URL, plus the ids that let a follow-up edit
+    // continue from it
+    async loadAIImageHistoryImage(id: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/image/ai/history/${id}/image`,
+          auth()
+        );
+        return data as {
+          imageUrl: string;
+          responseId: string | null;
+          imageId: string | null;
+        };
+      } catch (error) {
+        return handleError(error);
       }
     },
     async loadAIImageResult({

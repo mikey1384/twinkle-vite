@@ -27,6 +27,14 @@ import InputSection from './InputSection';
 import ErrorDisplay from './ErrorDisplay';
 import ImageArea from './ImageArea';
 import ImageEditor from './ImageEditor';
+import ImageHistory from './ImageHistory';
+import {
+  findResumableAIImage,
+  mergeAIImageHistoryPages,
+  replaceAIImageHistoryFirstPage,
+  resumableAIImageSources,
+  type AIImageHistoryItem
+} from '~/helpers/aiImageHistory';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
 import AiEnergyCard from '~/components/AiEnergyCard';
@@ -66,7 +74,12 @@ interface AiImageGenerationRequest {
   quality?: AiImageQuality;
   requestId: string;
   requestFingerprint?: string;
+  displayPrompt?: string;
+  historySource?: 'generator' | 'thumbnail';
 }
+
+const HISTORY_PAGE_SIZE = 18;
+const HISTORY_POLL_MS = 4_000;
 
 interface AiUsagePolicy {
   dayIndex?: number;
@@ -111,7 +124,23 @@ export default function ImageGenerator({
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(
     null
   );
-  const [mode, setMode] = useState<'text' | 'draw'>('text');
+  const [mode, setMode] = useState<'text' | 'draw' | 'history'>('text');
+  // The member's own image history (helpers/aiImageHistory.ts). A
+  // generation they left mid-way shows up here and resumes on screen.
+  const [historyImages, setHistoryImages] = useState<AIImageHistoryItem[]>([]);
+  const [historyNextBefore, setHistoryNextBefore] = useState<number | null>(
+    null
+  );
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyFailed, setHistoryFailed] = useState(false);
+  const [historySelectingId, setHistorySelectingId] = useState<number | null>(
+    null
+  );
+  const historyLoadingRef = useRef(false);
+  const historyImagesRef = useRef<AIImageHistoryItem[]>([]);
+  historyImagesRef.current = historyImages;
+  const resumingHistoryItemRef = useRef<AIImageHistoryItem | null>(null);
+  const generatedImageUrlRef = useRef<string | null>(null);
   const [model, setModel] = useState<OpenAiImageModel>(GPT_IMAGE_2_5_FLARE);
   const [followUpModel, setFollowUpModel] = useState<OpenAiImageModel>(
     GPT_IMAGE_2_5_SUNBURST
@@ -212,6 +241,12 @@ export default function ImageGenerator({
   );
   const loadAIImageResult = useAppContext(
     (v) => v.requestHelpers.loadAIImageResult
+  );
+  const loadAIImageHistory = useAppContext(
+    (v) => v.requestHelpers.loadAIImageHistory
+  );
+  const loadAIImageHistoryImage = useAppContext(
+    (v) => v.requestHelpers.loadAIImageHistoryImage
   );
 
   const updateImageGenerationSettings = useAppContext(
@@ -469,6 +504,42 @@ export default function ImageGenerator({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadAIImageResult]);
 
+  generatedImageUrlRef.current = generatedImageUrl;
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    void (async () => {
+      const images = await refreshImageHistory();
+      if (!cancelled && images) resumeLeftGeneration(images);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // While something is still being made, check on it. The server marks a
+  // row it gave up on as failed, so this stops on its own.
+  const historyHasProcessing = historyImages.some(
+    (image) => image.status === 'processing'
+  );
+  useEffect(() => {
+    if (!historyHasProcessing) return;
+    const timer = setTimeout(() => {
+      void refreshImageHistory();
+    }, HISTORY_POLL_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyHasProcessing, historyImages]);
+
+  // A newly made image appears at the top of My Images.
+  useEffect(() => {
+    if (!generatedImageUrl || !userId) return;
+    void refreshImageHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generatedImageUrl]);
+
   useEffect(() => {
     if (referenceImage) {
       const url = URL.createObjectURL(referenceImage);
@@ -659,11 +730,19 @@ export default function ImageGenerator({
       className={css`
         padding: 1rem;
         width: 100%;
-        height: ${hasImageAreaContent || mode === 'draw' ? '100%' : 'auto'};
+        height: ${
+          (hasImageAreaContent && mode !== 'history') || mode === 'draw'
+            ? '100%'
+            : 'auto'
+        };
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        min-height: ${hasImageAreaContent || mode === 'draw' ? '400px' : '0'};
+        min-height: ${
+          (hasImageAreaContent && mode !== 'history') || mode === 'draw'
+            ? '400px'
+            : '0'
+        };
       `}
     >
       <FilterBar>
@@ -679,8 +758,14 @@ export default function ImageGenerator({
         >
           Draw
         </nav>
+        <nav
+          className={mode === 'history' ? 'active' : ''}
+          onClick={() => handleModeChange('history')}
+        >
+          My Images
+        </nav>
       </FilterBar>
-      {aiUsagePolicy && (
+      {aiUsagePolicy && mode !== 'history' && (
         <AiEnergyCard
           variant="inline"
           className={css`
@@ -731,17 +816,19 @@ export default function ImageGenerator({
               padding: 0.8rem 1.4rem;
               background: transparent;
               border: 2px dashed
-                ${isShowingLoadingState
-                  ? '#ccc'
-                  : uploadThemeRole.getColor(0.58)};
+                ${
+                  isShowingLoadingState
+                    ? '#ccc'
+                    : uploadThemeRole.getColor(0.58)
+                };
               border-radius: 8px;
               cursor: ${isShowingLoadingState ? 'not-allowed' : 'pointer'};
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
               font-size: 1.1rem;
               font-weight: 800;
-              color: ${isShowingLoadingState
-                ? '#ccc'
-                : uploadThemeRole.getColor()};
+              color: ${
+                isShowingLoadingState ? '#ccc' : uploadThemeRole.getColor()
+              };
               position: relative;
               overflow: hidden;
               min-width: calc(200 * var(--px));
@@ -779,28 +866,67 @@ export default function ImageGenerator({
         />
       )}
 
-      {showSourceImagePanelAbovePrompt && imageArea}
+      {mode === 'history' && (
+        <ImageHistory
+          images={historyImages}
+          loading={historyLoading}
+          failed={historyFailed}
+          hasMore={!!historyNextBefore}
+          selectingId={historySelectingId}
+          selectDisabled={isShowingLoadingState}
+          themeColor={profileTheme}
+          onLoadMore={() => loadOlderImageHistory()}
+          onRetry={() =>
+            historyImages.length
+              ? loadOlderImageHistory()
+              : refreshImageHistory()
+          }
+          onSelect={handleSelectHistoryImage}
+          onLoadFullImage={loadHistoryImageUrl}
+        />
+      )}
 
-      <InputSection
-        prompt={prompt}
-        onPromptChange={setPrompt}
-        onGenerate={handleGenerate}
-        onKeyDown={handleKeyDown}
-        isGenerating={isGenerating}
-        canAffordGeneration={canAffordGeneration}
-        energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
-        engine={engine}
-        model={model}
-        onModelChange={handleModelChange}
-        onEngineChange={handleEngineChange}
-        quality={quality}
-        onQualityChange={handleQualityChange}
-        themeColor={profileTheme}
-      />
+      {mode !== 'history' && showSourceImagePanelAbovePrompt && imageArea}
+
+      {mode !== 'history' && (
+        <InputSection
+          prompt={prompt}
+          onPromptChange={setPrompt}
+          onGenerate={handleGenerate}
+          onKeyDown={handleKeyDown}
+          isGenerating={isGenerating}
+          canAffordGeneration={canAffordGeneration}
+          energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
+          engine={engine}
+          model={model}
+          onModelChange={handleModelChange}
+          onEngineChange={handleEngineChange}
+          quality={quality}
+          onQualityChange={handleQualityChange}
+          themeColor={profileTheme}
+        />
+      )}
+
+      {mode !== 'history' && isShowingLoadingState && (
+        <p
+          className={css`
+            margin: 0;
+            text-align: center;
+            font-size: calc(13 * var(--px));
+            color: var(--ui-text-muted, #666);
+            @media (max-width: 768px) {
+              font-size: 1.1rem;
+            }
+          `}
+        >
+          You can leave this screen. Your image keeps going and will be in My
+          Images.
+        </p>
+      )}
 
       {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
 
-      {!showSourceImagePanelAbovePrompt && imageArea}
+      {mode !== 'history' && !showSourceImagePanelAbovePrompt && imageArea}
     </div>
   );
 
@@ -1048,6 +1174,8 @@ export default function ImageGenerator({
 
       imageRequest = {
         prompt: buildGenerationPrompt(prompt.trim()),
+        displayPrompt: prompt.trim(),
+        historySource: thumbnailMode ? 'thumbnail' : 'generator',
         referenceImageB64: referenceB64,
         engine,
         model: engine === 'openai' ? model : undefined,
@@ -1168,6 +1296,8 @@ export default function ImageGenerator({
 
       imageRequest = {
         prompt: buildGenerationPrompt(followUpPrompt.trim()),
+        displayPrompt: followUpPrompt.trim(),
+        historySource: thumbnailMode ? 'thumbnail' : 'generator',
         previousResponseId: generatedResponseId, // Marks this as an edit of the prior turn
         previousImageId: generatedImageId ?? undefined, // Provider file handle, when we have one
         referenceImageB64: referenceB64, // The image itself; the only reference Gemini ever uses
@@ -1273,6 +1403,177 @@ export default function ImageGenerator({
     }
   }
 
+  async function refreshImageHistory() {
+    if (!userId) return null;
+    const firstLoad = !historyImagesRef.current.length;
+    if (firstLoad) setHistoryLoading(true);
+    try {
+      const data = await loadAIImageHistory({ limit: HISTORY_PAGE_SIZE });
+      const firstPage: AIImageHistoryItem[] = data?.images || [];
+      const olderPagesLoaded =
+        historyImagesRef.current.length > HISTORY_PAGE_SIZE;
+      setHistoryImages((current) =>
+        replaceAIImageHistoryFirstPage(current, firstPage)
+      );
+      if (!olderPagesLoaded) setHistoryNextBefore(data?.nextBefore || null);
+      setHistoryFailed(false);
+      void settleResumedGeneration(firstPage);
+      return firstPage;
+    } catch (err) {
+      console.error('Failed to load image history:', err);
+      if (firstLoad) setHistoryFailed(true);
+      return null;
+    } finally {
+      if (firstLoad) setHistoryLoading(false);
+    }
+  }
+
+  async function loadOlderImageHistory() {
+    if (historyLoadingRef.current) return;
+    const before = historyImagesRef.current.length ? historyNextBefore : null;
+    historyLoadingRef.current = true;
+    setHistoryLoading(true);
+    setHistoryFailed(false);
+    try {
+      const data = await loadAIImageHistory({
+        before,
+        limit: HISTORY_PAGE_SIZE
+      });
+      const page: AIImageHistoryItem[] = data?.images || [];
+      setHistoryImages((current) =>
+        before ? mergeAIImageHistoryPages(current, page) : page
+      );
+      setHistoryNextBefore(data?.nextBefore || null);
+    } catch (err) {
+      console.error('Failed to load older images:', err);
+      setHistoryFailed(true);
+    } finally {
+      historyLoadingRef.current = false;
+      setHistoryLoading(false);
+    }
+  }
+
+  // The member left while an image was being made (Back, closed the
+  // window, reloaded, another device). The server kept going; show it
+  // finishing here. Its live progress still arrives over the socket under
+  // its request id, and the history check covers a missed socket message.
+  function resumeLeftGeneration(images: AIImageHistoryItem[]) {
+    const item = findResumableAIImage(images, resumableAIImageSources(purpose));
+    if (
+      !item ||
+      activeImageRequestIdRef.current ||
+      generatedImageUrlRef.current ||
+      resumingHistoryItemRef.current
+    ) {
+      return;
+    }
+    resumingHistoryItemRef.current = item;
+    if (item.requestId) {
+      activeImageRequestIdRef.current = item.requestId;
+      activeImageRequestServerProgressRef.current = true;
+      activeImageRequestTransportFailedRef.current = false;
+      activeImageRecoveryInFlightRef.current = false;
+      activeImageRequestKindRef.current = item.isFollowUp
+        ? 'follow-up'
+        : 'initial';
+      activeImageRequestPayloadRef.current = null;
+      pendingImageCompletionStatusRef.current = null;
+    }
+    if (!item.isFollowUp && item.prompt) {
+      setPrompt((current) => current || item.prompt);
+    }
+    setError(null);
+    setIsGenerating(true);
+    setProgressStage('resuming');
+  }
+
+  async function settleResumedGeneration(images: AIImageHistoryItem[]) {
+    const resuming = resumingHistoryItemRef.current;
+    if (!resuming) return;
+    const item = images.find((image) => image.id === resuming.id);
+    if (item?.status === 'processing') return;
+    resumingHistoryItemRef.current = null;
+    const stillOnScreen = resuming.requestId
+      ? activeImageRequestIdRef.current === resuming.requestId
+      : !generatedImageUrlRef.current;
+    // The socket already put it on screen, or the member moved on.
+    if (!stillOnScreen) return;
+    let shown = false;
+    if (item?.status === 'completed') {
+      try {
+        const data = await loadAIImageHistoryImage(item.id);
+        const stillWaiting = resuming.requestId
+          ? activeImageRequestIdRef.current === resuming.requestId
+          : !generatedImageUrlRef.current;
+        if (!stillWaiting) return;
+        if (data?.imageUrl) {
+          showHistoryImage(item, data);
+          shown = true;
+        }
+      } catch (err) {
+        console.error('Failed to load the finished image:', err);
+      }
+    }
+    if (!shown) {
+      setError(
+        item?.status === 'completed'
+          ? 'Your image is ready. Open My Images to use it.'
+          : "Your last image didn't finish. No AI Energy was used for it."
+      );
+      setProgressStage('not_started');
+    }
+    setIsGenerating(false);
+    setIsFollowUpGenerating(false);
+    if (resuming.requestId) clearActiveImageRequest(resuming.requestId);
+  }
+
+  async function loadHistoryImageUrl(image: AIImageHistoryItem) {
+    try {
+      const data = await loadAIImageHistoryImage(image.id);
+      return data?.imageUrl || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function handleSelectHistoryImage(image: AIImageHistoryItem) {
+    if (image.status !== 'completed' || isShowingLoadingState) return;
+    setHistorySelectingId(image.id);
+    try {
+      const data = await loadAIImageHistoryImage(image.id);
+      if (!data?.imageUrl) throw new Error('Image unavailable');
+      showHistoryImage(image, data);
+      setMode('text');
+    } catch (err) {
+      console.error('Failed to open image from history:', err);
+      setError("Couldn't open that image. Please try again.");
+    } finally {
+      setHistorySelectingId(null);
+    }
+  }
+
+  // Exactly like a freshly made image: ready for Use This Image and for
+  // follow-up edits (the ids continue from the stored image).
+  function showHistoryImage(
+    image: AIImageHistoryItem,
+    data: {
+      imageUrl: string;
+      responseId: string | null;
+      imageId: string | null;
+    }
+  ) {
+    setError(null);
+    setPartialImageData(null);
+    setHasBeenEdited(false);
+    setFollowUpPrompt('');
+    setGeneratedImageUrl(data.imageUrl);
+    // A follow-up is marked by a previous response id; the image itself is
+    // always sent along as the reference.
+    setGeneratedResponseId(data.responseId || `history-${image.id}`);
+    setGeneratedImageId(data.imageId ?? null);
+    setProgressStage('completed');
+  }
+
   function handleKeyDown(event: React.KeyboardEvent) {
     if (
       event.key === 'Enter' &&
@@ -1286,6 +1587,8 @@ export default function ImageGenerator({
 
   function getProgressLabel() {
     switch (progressStage) {
+      case 'resuming':
+        return 'Finishing your image...';
       case 'prompt_ready':
         return 'Generating image...';
       case 'calling_openai':
@@ -1380,7 +1683,7 @@ export default function ImageGenerator({
     setDrawingCanvasUrl(null);
   }
 
-  function handleModeChange(newMode: 'text' | 'draw') {
+  function handleModeChange(newMode: 'text' | 'draw' | 'history') {
     if (mode === 'draw' && newMode === 'text') {
       // If we switch back to text without saving, we might want to clear canvas state
       // or keep it. Currently keeping it but if user cancels in Editor it handles resetting
@@ -1388,6 +1691,7 @@ export default function ImageGenerator({
         setCanvasHasContent(false);
       }
     }
+    if (newMode === 'history') void refreshImageHistory();
     setMode(newMode);
   }
 

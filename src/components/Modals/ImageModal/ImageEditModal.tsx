@@ -91,6 +91,8 @@ interface AiImageGenerationRequest {
   model?: OpenAiImageModel;
   requestId: string;
   requestFingerprint?: string;
+  // labelled "edit" in the member's image history (Make Images > My Images)
+  historySource?: 'edit';
 }
 
 export default function ImageEditModal({
@@ -1121,7 +1123,8 @@ export default function ImageEditModal({
         engine: 'openai',
         model: GPT_IMAGE_2_5_SUNBURST,
         quality: 'high',
-        requestId
+        requestId,
+        historySource: 'edit'
       };
       activeImageRequestPayloadRef.current = imageRequest;
       const result = await generateAIImage(imageRequest);
