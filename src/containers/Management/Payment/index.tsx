@@ -435,6 +435,11 @@ export default function Payment() {
   const paymentActive = Boolean(
     subscription?.active && !subscription.cancelAtPeriodEnd
   );
+  // A declined renewal leaves the subscription past_due: auto-renew is still
+  // on and Stripe keeps retrying, so the switch must not read "Inactive".
+  // Turning it on would start a second subscription, so it shows on and
+  // locked, and "Pay invoice" opens the open invoice instead.
+  const paymentDue = isPaymentDueSubscription(subscription);
   const latestPaidInvoice = invoices.find(
     (invoice) => invoice.paid || invoice.status === 'paid'
   );
@@ -488,15 +493,31 @@ export default function Payment() {
             <label className={toggleClass}>
               <input
                 type="checkbox"
-                checked={paymentActive}
-                disabled={toggleLoading}
+                checked={paymentActive || paymentDue}
+                disabled={toggleLoading || paymentDue}
                 onChange={(event) => handleTogglePayment(event.target.checked)}
               />
               <span className="track" aria-hidden="true">
                 <span className="thumb" />
               </span>
-              <span>{paymentActive ? 'Active' : 'Inactive'}</span>
+              <span>
+                {paymentDue
+                  ? 'Payment due'
+                  : paymentActive
+                    ? 'Active'
+                    : 'Inactive'}
+              </span>
             </label>
+            {paymentDue ? (
+              <Button
+                color="logoBlue"
+                variant="soft"
+                loading={toggleLoading}
+                onClick={() => handleTogglePayment(true)}
+              >
+                Pay invoice
+              </Button>
+            ) : null}
           </section>
 
           <section className={summaryClass}>
@@ -790,7 +811,18 @@ function formatStatus(value: unknown) {
   return formatInvoiceStatus(text);
 }
 
+function isPaymentDueSubscription(subscription: AiCostsSubscription | null) {
+  return Boolean(
+    subscription?.stripeSubscriptionId &&
+      !subscription.cancelAtPeriodEnd &&
+      (subscription.status === 'past_due' || subscription.status === 'unpaid')
+  );
+}
+
 function getSubscriptionSummary(subscription: AiCostsSubscription | null) {
+  if (isPaymentDueSubscription(subscription)) {
+    return 'The latest $500 renewal was declined. Auto-renew is still on and Stripe retries the saved card; Pay invoice pays it now.';
+  }
   if (subscription?.cancelAtPeriodEnd) {
     return 'The $500/month AI service subscription is active until the current billing period ends.';
   }
