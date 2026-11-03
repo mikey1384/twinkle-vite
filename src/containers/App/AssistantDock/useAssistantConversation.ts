@@ -129,6 +129,8 @@ export default function useAssistantConversation({
                       focus: askContext.focus,
                       no: askContext.no,
                       version: askContext.version,
+                      step: askContext.step,
+                      reviewLang: askContext.reviewLang,
                       label: askContext.label,
                       path: askContext.path,
                       excerpt: askContext.excerpt

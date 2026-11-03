@@ -205,3 +205,40 @@ test('a delayed send consumes only its original attachment after switching assis
   dock.openAssistantDock('Ciel', undefined, 7);
   assert.equal(dock.getAssistantAskContext(), null);
 });
+
+test('text sends preserve the Arena step and review language through the chat request boundary', async () => {
+  const { store } = fixture();
+  const sent = [];
+  const useConversation = compile(
+    'src/containers/App/AssistantDock/useAssistantConversation.ts',
+    {
+      react: {
+        useCallback: (fn) => fn,
+        useEffect: () => {},
+        useRef: (value) => ({ current: value }),
+        useState: (value) => [value, () => {}],
+        useSyncExternalStore: (_subscribe, snapshot) => snapshot()
+      },
+      '~/helpers/aiVoiceCall': {
+        aiVoiceSession: { getSnapshot: () => ({ phase: 'idle' }) },
+        getVoiceDelivery: () => null,
+        submitAiVoiceText: () => assert.fail('text mode must use the chat request')
+      },
+      '~/contexts': {
+        useAppContext: (select) => select({ requestHelpers: {
+          saveChatMessage: async (request) => sent.push(JSON.parse(JSON.stringify(request)))
+        } }),
+        useKeyContext: (select) => select({ myState: { userId: 101 } })
+      },
+      '../WebsiteAgentSpotlight': { dismissWebsiteAgentPrompts: () => {} },
+      './dockState': { getAssistantAccountEpoch: () => 0 },
+      './conversationStore': store
+    }
+  ).default;
+  const conversation = useConversation({ assistantName: 'Zero', channelId: 10 });
+  const question = { kind: 'arenaBattleItem', id: 11, no: 20, version: 1,
+    step: 3, reviewLang: 'ko', label: 'Question 20' };
+  assert.equal(await conversation.send('Explain this step', question), true);
+  assert.equal(sent.length, 1);
+  assert.deepEqual(sent[0].message.settings.askedAbout, question);
+});
