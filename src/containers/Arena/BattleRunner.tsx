@@ -371,14 +371,28 @@ export default function BattleRunner({
     );
   }
   if (!data) return <div className={centerCls}>Opening the exam…</div>;
-  // a run left behind when another one started: nothing more to answer
+  // A run or exam closed by the old one-at-a-time rule (removed 11-03): it
+  // takes no more answers and was never graded. Say so plainly instead of
+  // showing a dead paper whose Submit can only fail.
   if (practice?.status === 'abandoned') {
     return (
       <div className={shellCls}>
         <div className={cx(centerCls, leftRunCls)}>
-          <p>You left this {practice.kind === 'resit' ? 're-sit' : 'rematch'} when you started another one. Start a new one from Train whenever you like.</p>
+          <p>This {practice.kind === 'resit' ? 're-sit' : 'rematch'} was closed when you started another one, so it was never graded. Runs no longer close each other: start a new one from Train whenever you like.</p>
           <ArenaButton tone="ink" size="md" onClick={onExit}>
             Back to Train
+          </ArenaButton>
+        </div>
+      </div>
+    );
+  }
+  if (!practice && data.battle.status === 'abandoned') {
+    return (
+      <div className={shellCls}>
+        <div className={cx(centerCls, leftRunCls)}>
+          <p>This exam was closed when you started another one, so it was never graded and nothing on it counts. Exams no longer close each other: start this exam again from the Arena whenever you like.</p>
+          <ArenaButton tone="ink" size="md" onClick={onExit}>
+            Back to the Arena
           </ArenaButton>
         </div>
       </div>

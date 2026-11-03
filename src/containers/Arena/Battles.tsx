@@ -67,7 +67,8 @@ export default function Battles({
     : null;
   // each boss's chosen mode; Normal (the real exam) unless picked
   const [modes, setModes] = useState<Record<string, ArenaDifficulty>>({});
-  const openBattle = (state?.recent || []).find(
+  // Several exams may be in progress at once (11-03): each one resumes.
+  const openBattles = (state?.recent || []).filter(
     (battle) => battle.status === 'open' && battle.mode === 'battle'
   );
   const selectedExam = state?.exams.find((exam) => exam.key === examKey);
@@ -164,8 +165,9 @@ export default function Battles({
           </button>
         </p>
       )}
-      {openBattle && (
+      {openBattles.map((openBattle) => (
         <button
+          key={openBattle.id}
           type="button"
           className={resumeCls}
           onClick={() => onStart(openBattle.id)}
@@ -175,7 +177,7 @@ export default function Battles({
             openBattle.examKey}
           . Resume it
         </button>
-      )}
+      ))}
       {ladder(visibleExams).map((stage) => (
         <section key={stage.title} className={stageCls}>
           <h3 className={stageTitleCls}>{stage.title}</h3>
