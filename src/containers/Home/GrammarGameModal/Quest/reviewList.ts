@@ -9,7 +9,7 @@ export function reviewList(answers: QuestAnswer[]) {
   const list: QuestAnswer[] = [];
   const byQuestion = new Map<number, number>();
   const expanded = answers.flatMap((a) => a.sentences?.length
-    ? a.sentences.map((sentence) => ({ ...a, ...sentence, questionText: sentence.text }))
+    ? a.sentences.map((sentence) => ({ ...a, ...sentence, questionText: sentence.text, reviewSourceIndex: sentence.index }))
     : [a]);
   for (const a of expanded) {
     if (!a.questionText || (!a.challenge && !a.forgiven)) continue;

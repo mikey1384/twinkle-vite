@@ -10,7 +10,7 @@ import MultiTapQuestion from './MultiTapQuestion';
 export const FORMAT_INFO: Record<QuestFormat, { name: string; how: string }> = {
   blank: { name: 'Fill the gap', how: 'Pick the word that fits.' },
   which: { name: 'Which way?', how: 'Pick the sentence that is right.' },
-  crack: { name: 'Spot the crack', how: 'Tap any word you would change or remove to fix the sentence.' },
+  crack: { name: 'Spot the crack', how: 'Tap a word in the part you would change or remove to fix the sentence.' },
   fix: { name: 'Fix it', how: 'Pick what should replace the wrong part.' },
   stomp: { name: 'Stomp', how: 'Select every wrong sentence, then submit. The number of wrong sentences changes.' },
   momentum: {
@@ -163,7 +163,7 @@ export default function FormatQuestion({
         <div
           className={cx(cls.question, wallCls, answer && settledWallCls)}
           role="group"
-          aria-label="Tap any word you would change or remove to fix the sentence"
+          aria-label="Tap a word in the part you would change or remove to fix the sentence"
         >
           {(question.tokens || []).map((word, i) => (
             <button

@@ -2,6 +2,7 @@ export interface ChallengeResult {
   justified: boolean;
   explanation: string;
   newBalance?: number;
+  questMissForgiven?: boolean;
 }
 
 export interface SavedChallengeReview {

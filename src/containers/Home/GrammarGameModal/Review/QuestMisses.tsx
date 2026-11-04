@@ -11,6 +11,7 @@ import { FORMAT_INFO } from '../Quest/FormatQuestion';
 import type { QuestFormat } from '../Quest/types';
 import ChallengeModal from './ChallengeModal';
 import ReportQuestionButton from './ReportQuestionButton';
+import QuestQuestionReview, { type QuestPresentation } from './QuestQuestionReview';
 import {
   INK,
   PARCHMENT,
@@ -38,6 +39,8 @@ export interface QuestMiss {
   format: QuestFormat;
   counter?: boolean;
   questionText: string;
+  presentation?: QuestPresentation;
+  selectedTaps?: number[];
   answeredAt: number;
   forgiven?: boolean;
   // null: retired, or reviewed as another wording (a challenge says why)
@@ -106,7 +109,8 @@ export default function QuestMisses({
           >
             <div className={cx(metaCls, 'miss-meta')}>
               {[
-                it.counter ? 'Counter' : FORMAT_INFO[it.format]?.name,
+                FORMAT_INFO[it.format]?.name,
+                it.counter ? 'Counter' : null,
                 KIND_LABEL[it.kind],
                 world ? `World ${world}` : null,
                 timeSince(it.answeredAt)
@@ -115,7 +119,9 @@ export default function QuestMisses({
                 .join(' · ')}
             </div>
             <div className={cx(questionCls, 'miss-question')}>
-              {it.questionText}
+              {it.presentation ? (
+                <QuestQuestionReview question={it.presentation} selectedTaps={it.selectedTaps} sourceIndex={it.sourceIndex} />
+              ) : it.questionText}
             </div>
             {it.forgiven && (
               <div className={cx(forgivenCls, 'miss-forgiven')}>

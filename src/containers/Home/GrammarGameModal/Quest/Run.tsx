@@ -1,3 +1,4 @@
+import { questPresentationText } from '../Review/QuestQuestionReview';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { css, cx } from '@emotion/css';
@@ -174,7 +175,7 @@ export default function Run({ run, onFinished, onQuit }: {
         </div>
       </div>
       {challengeOpen && challenge && <ChallengeModal isOpen portalTarget={layerRef.current ?? undefined}
-        questionId={challenge.questionId} questionText={answer?.prompt ?? question.question}
+        questionId={challenge.questionId} questionText={questPresentationText(question)}
         savedReview={savedReview} questKind="nemesis" questRef={{ runId: run.runId, position: question.position }}
         returnLabel="Back to question" onClose={() => setChallengeOpen(false)} />}
     </div>, document.body
@@ -227,7 +228,7 @@ export default function Run({ run, onFinished, onQuit }: {
       const result = await finishRun(run.runId);
       if (!alive.current) return;
       onFinished(result, run.questions.filter((q) => answers[q.position]).map((q) => ({
-        ...answers[q.position], questionText: answers[q.position].prompt ?? q.question
+        ...answers[q.position], presentation: q, questionText: questPresentationText(q)
       })));
     } catch {
       if (alive.current) setError('Could not save the run. Try again.');

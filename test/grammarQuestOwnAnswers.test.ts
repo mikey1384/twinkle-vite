@@ -95,10 +95,12 @@ test('each misjudged Stomp sentence keeps its own challenge in the result', () =
     ruleCard: null, challenge: { questionId, checked: false }
   });
   const list = reviewList([
-    answer({ position: 4, sentences: [sentence(0, 11), sentence(2, 12)] }),
+    answer({ position: 4, presentation: { position: 4, format: 'stomp', question: '', choices: ['Sentence 1', 'Sentence 2', 'Sentence 3'], skill: 'agreement', skillName: 'Agreement', manualSubmit: true }, sentences: [sentence(0, 11), sentence(2, 12)] }),
     answer({ position: 5, forgiven: true, sentences: [sentence(1, 11)] })
   ]);
   assert.deepEqual(list.map((a) => [a.position, a.questionText, a.challenge?.questionId, !!a.forgiven]), [
     [4, 'Sentence 1', 11, true], [4, 'Sentence 3', 12, false]
   ]);
+  assert.deepEqual(list.map((a) => a.reviewSourceIndex), [0, 2]);
+  assert.ok(list.every((a) => a.presentation?.choices.length === 3), 'each source keeps the original complete Stomp presentation');
 });

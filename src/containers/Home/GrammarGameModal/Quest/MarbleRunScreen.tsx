@@ -1,3 +1,4 @@
+import { questPresentationText } from '../Review/QuestQuestionReview';
 import React, {
   useEffect,
   useMemo,
@@ -928,9 +929,7 @@ export default function MarbleRunScreen({
                                     run.rules.mode !== 'practice'
                                   ? 'Upheld! The answer key is fixed.'
                                   : feedback?.challenge?.upheld
-                                    ? answer.retry || answer.requeued
-                                      ? "Upheld! This miss doesn't count; the fixed question comes back later."
-                                      : "Upheld! This miss doesn't count."
+                                    ? 'Challenge accepted. The question has been corrected.'
                                     : answer.retry || answer.requeued
                                       ? 'It comes back later in this run.'
                                       : 'That was the last try in this run.'}
@@ -961,7 +960,7 @@ export default function MarbleRunScreen({
           questionId={challengeId}
           // a type that showed the sentence changed (cracked, jammed, in
           // chunks): the bank's own sentence, sent once answered
-          questionText={feedback?.prompt ?? question?.question}
+          questionText={question ? questPresentationText(question) : feedback?.prompt}
           savedReview={savedReview}
           questKind={run.kind}
           questRef={
@@ -1177,14 +1176,15 @@ export default function MarbleRunScreen({
       const byPosition = new Map(
         questions.map((q) => [
           q.position,
-          answersRef.current[q.position]?.prompt ?? q.question
+          questPresentationText(q)
         ])
       );
       onFinished(
         result,
         Object.values(answersRef.current).map((a) => ({
           ...a,
-          questionText: byPosition.get(a.position)
+          questionText: byPosition.get(a.position),
+          presentation: questions.find((q) => q.position === a.position)
         }))
       );
     } catch {

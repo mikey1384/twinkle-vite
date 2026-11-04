@@ -204,7 +204,9 @@ export default function ChallengeModal({
               </div>
               {completed?.justified && questKind && (
                 <p className={nextStepCls}>
-                  {questKind === 'stop'
+                  {completed.questMissForgiven !== true
+                    ? 'The question has been corrected. Check your saved Review for any changes to your result.'
+                    : questKind === 'stop'
                     ? 'In practice, an accepted challenge forgives the miss. Keep going with the corrected question.'
                     : questKind === 'fort' || questKind === 'castle'
                       ? 'An accepted boss challenge earns a free rematch with full rewards. Find it on the map.'
@@ -219,7 +221,7 @@ export default function ChallengeModal({
                 <div>
                   <b>Your review is in progress</b>
                   <p>
-                    The AI is checking the question and all four answers. This
+                    The AI is checking the original question format, its options and every valid answer. This
                     can take a few minutes.
                   </p>
                 </div>

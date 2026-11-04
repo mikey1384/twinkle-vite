@@ -12,9 +12,9 @@ const {
   webkit
 } = require('/Users/mikey/.npm-packages/lib/node_modules/playwright');
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const artifacts = path.resolve(repo, '../work/grammar-quest-review-20261026');
+const artifacts = path.resolve(repo, '../work/grammar-quest-original-review-20261104/browser');
 const base = './src/containers/Home/GrammarGameModal/';
-const fontPath = path.join(artifacts, 'pixel-font.woff2');
+const fontPath = path.resolve(repo, '../work/grammar-quest-review-20261026/pixel-font.woff2');
 const font = existsSync(fontPath) ? readFileSync(fontPath) : null;
 const contexts = `
 window.reportCalls=[];window.challengeCalls=[];window.missCalls=[];
@@ -34,14 +34,30 @@ const entry = `
 import React from 'react';import {createRoot} from 'react-dom/client';
 import Grammarbles from '${base}index';
 import ChallengeModal from '${base}Review/ChallengeModal';
+import Result from '${base}Quest/Result';
 window.misses=[
  {questionId:101,questionVersion:1,runId:80,position:0,kind:'stop',nodeId:'w4s1',format:'blank',questionText:'She ____ to school every day.',answeredAt:1792990000,challenge:{questionId:101,checked:false}},
  {questionId:202,questionVersion:2,runId:81,position:2,kind:'castle',nodeId:'w4c',format:'crack',questionText:'The sentence was already reviewed, but the marked word still seems wrong.',answeredAt:1792989000,challenge:{questionId:202,checked:true,review:{outcome:'rejected',explanation:'An earlier reviewer accepted this wording.'}}},
  {questionId:303,questionVersion:3,runId:82,position:4,sourceIndex:2,kind:'fort',nodeId:'w4f1',format:'stomp',questionText:'This retired sentence can still be reported with its own source question ID.',answeredAt:1792988000,challenge:null}
 ];
-window.extraMiss={...window.misses[0],questionId:404,runId:79,questionText:'An older question.',challenge:{questionId:404,checked:false}};
+window.misses[0].presentation={format:'blank',question:'She ____ to school every day.',choices:['go','goes','going','gone']};
+window.misses[0].selectedTaps=[0];
+const words="The students in Mr. Park's science class was planting a vegetable garden this spring.".split(' ');
+Object.assign(window.misses[1],{counter:true,presentation:{format:'crack',question:words.join(' '),tokens:words,choices:[]},selectedTaps:[8]});
+Object.assign(window.misses[2],{presentation:{format:'stomp',question:'',choices:['She walks home.','He go home.','This retired sentence can still be reported with its own source question ID.','They arrived.'],manualSubmit:true},selectedTaps:[4]});
+for(const [i,presentation,selectedTaps] of [
+ [0,{format:'which',question:'Hidden bank blank ____',choices:['They was playing.','They were playing.']},[0]],
+ [1,{format:'fix',question:'Today is the July fourth.',parts:{before:'Today is the ',wrong:'July fourth',after:'.'},choices:['fourth of July','July the fourth','the fourth of July']},[2]],
+ [2,{format:'momentum',question:'Hidden bank blank ____',choices:['We walked home.','She walk home.','They walks home.']},[5]],
+ [3,{format:'build',question:'home. They went',tokens:['home','They','went'],end:'.',choices:[],instruction:'Make a statement.'},[5]]
+]) window.misses.push({...window.misses[0],questionId:500+i,runId:100+i,format:presentation.format,presentation,selectedTaps,challenge:{questionId:500+i,checked:false}});
+window.extraMiss={...window.misses[0],presentation:undefined,questionId:404,runId:79,questionText:'An older question.',challenge:{questionId:404,checked:false}};
 localStorage.setItem('userId','7');localStorage.setItem('grammarQuestSound','0');localStorage.setItem('grammarQuestMusic','0');
 createRoot(document.getElementById('root')).render(<Grammarbles onHide={()=>{}}/>);
+window.openResult=()=>{
+ const layer=document.createElement('div');layer.id='result-fixture';Object.assign(layer.style,{position:'fixed',inset:0,zIndex:2147482000,overflow:'auto'});document.body.appendChild(layer);
+ createRoot(layer).render(<Result kind="castle" runId={81} onBackToMap={()=>{}} result={{runId:81,score:60,grade:'F',points:420,cleared:false,rights:5,size:7,perfect:false,xp:210,coins:0,rewarded:true}} answers={[{position:2,isCorrect:false,selectedIndex:8,correctIndex:7,questionText:window.misses[1].questionText,presentation:window.misses[1].presentation,challenge:{questionId:202,checked:false},counter:true}]}/>);
+};
 window.openRunChallenge=()=>{
  const layer=document.createElement('div');layer.id='quest-run-layer';
  Object.assign(layer.style,{position:'fixed',inset:'0',zIndex:'2147482000',background:'#123'});
@@ -177,7 +193,23 @@ for (const [name, engine] of [
             .getByRole('button', { name: 'Try again', exact: true })
             .click();
           await page.locator('article').first().waitFor();
-          assert.equal(await page.locator('article').count(), 3);
+          assert.equal(await page.locator('article').count(), 7);
+          for (const format of ['blank','crack','stomp','which','fix','momentum','build']) {
+            assert.equal(await page.locator('[data-question-format='+format+']').count(),1);
+          }
+          const crack = page.locator('[data-question-format=crack]');
+          assert.match(await crack.textContent(), /plantingYour tap/);
+          assert.match(await crack.locator('..').locator('..').textContent(), /Spot the crack · Counter/);
+          assert.equal(await crack.getByRole('button').count(),0,'review words are read-only');
+          assert.equal(await page.getByText('Hidden bank blank ____').count(),0);
+          assert.equal(await page.locator('[data-question-format=fix] mark').textContent(),'July fourth');
+          assert.match(await page.locator('[data-question-format=momentum]').textContent(),/You called this wrong/);
+          await page.screenshot({path:path.join(artifacts,`${name}-${width}-formats.png`),fullPage:true});
+          if (width === 360) {
+            for (const format of ['crack','fix','stomp','momentum','build']) {
+              await page.locator('[data-question-format='+format+']').screenshot({path:path.join(artifacts,`${name}-${width}-${format}.png`)});
+            }
+          }
           const retired = page
             .locator('article')
             .filter({ hasText: 'This retired sentence' });
@@ -261,7 +293,7 @@ for (const [name, engine] of [
           );
           const checked = page
             .locator('article')
-            .filter({ hasText: 'The sentence was already reviewed' });
+            .filter({ has: page.locator('[data-question-format=crack]') });
           await checked
             .getByRole('button', { name: 'Challenge rejected', exact: true })
             .click();
@@ -312,7 +344,7 @@ for (const [name, engine] of [
             .getByRole('button', { name: 'Load more', exact: true })
             .click();
           await page.getByText('An older question.', { exact: true }).waitFor();
-          assert.equal(await page.locator('article').count(), 4);
+          assert.equal(await page.locator('article').count(), 8);
           await page.screenshot({
             path: path.join(artifacts, `${name}-${width}-review.png`)
           });
@@ -353,6 +385,11 @@ for (const [name, engine] of [
             .getByRole('button', { name: 'Back to review', exact: true })
             .last()
             .click();
+          await page.evaluate(() => window.openResult());
+          await page.locator('#result-fixture').getByRole('button',{name:/View reviews|Review questions/}).click();
+          const resultCrack=page.locator('#result-fixture [data-question-format=crack]');
+          assert.match(await resultCrack.textContent(),/plantingYour tap/);
+          if(width===360) await resultCrack.screenshot({path:path.join(artifacts,`${name}-${width}-result-crack.png`)});
           assert.deepEqual(errors, []);
           await page.close();
         }

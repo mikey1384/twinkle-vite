@@ -1,3 +1,5 @@
+import QuestQuestionReview from '../Review/QuestQuestionReview';
+import { FORMAT_INFO } from './FormatQuestion';
 import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -274,7 +276,10 @@ export default function Result({
               <div key={`${a.position}:${a.challenge?.questionId ?? a.questionText}`} className={challengeItemCls}>
                 <div className={challengeTextCls}>
                   {a.counter && <span className={counterTagCls}>Counter</span>}
-                  {a.questionText}
+                  {a.presentation ? <>
+                    <div>{FORMAT_INFO[a.presentation.format || 'blank'].name}</div>
+                    <QuestQuestionReview question={a.presentation} selectedTaps={a.selectedIndex >= 0 ? [a.selectedIndex] : []} sourceIndex={a.reviewSourceIndex} />
+                  </> : a.questionText}
                   {a.forgiven && (
                     // ruled the question's fault after the miss (Mikey 10-11)
                     <div className={forgivenCls}>

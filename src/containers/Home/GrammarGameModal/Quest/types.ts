@@ -118,6 +118,8 @@ export interface QuestAnswer {
     review?: SavedChallengeReview | null;
     upheld?: boolean;
   } | null;
+  presentation?: QuestQuestion;
+  reviewSourceIndex?: number;
   questionText?: string; // added on the client for the result's challenge list
   // a miss (or a boss hit that took wrong clicks): how long its explanation
   // holds Continue before the run moves on
