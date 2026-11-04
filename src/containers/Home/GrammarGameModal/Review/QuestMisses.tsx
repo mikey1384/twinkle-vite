@@ -43,6 +43,7 @@ export interface QuestMiss {
   selectedTaps?: number[];
   answeredAt: number;
   forgiven?: boolean;
+  scheduleReviewPending?: boolean;
   // null: retired, or reviewed as another wording (a challenge says why)
   challenge: {
     questionId: number;
@@ -88,6 +89,18 @@ export default function QuestMisses({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!open?.challenge) return;
+    const review = reviews[open.challenge.questionId];
+    if (review?.status !== 'complete' || review.result.questMissForgiven !== true ||
+        review.result.questRunId !== open.runId || review.result.questPosition !== open.position) return;
+    setItems((previous) => previous.map((item) =>
+      item.runId === open.runId && item.position === open.position
+        ? { ...item, forgiven: true, scheduleReviewPending: review.result.questScheduleReviewPending ?? item.scheduleReviewPending }
+        : item
+    ));
+  }, [open, reviews]);
+
   if (loading) return <Loading />;
 
   return (
@@ -125,9 +138,11 @@ export default function QuestMisses({
             </div>
             {it.forgiven && (
               <div className={cx(forgivenCls, 'miss-forgiven')}>
-                {it.kind === 'fort' || it.kind === 'castle'
-                  ? 'Free rematch earned'
-                  : 'Doesn’t count — the question was at fault'}
+                {it.scheduleReviewPending
+                  ? 'Forgiven — the question was at fault. Its earlier Ghost review schedule still needs review.'
+                  : it.kind === 'fort' || it.kind === 'castle'
+                  ? 'Forgiven — the question was at fault. Free rematch earned.'
+                  : 'Forgiven — the question was at fault.'}
               </div>
             )}
             {id == null ? (
@@ -221,6 +236,7 @@ export default function QuestMisses({
             open.challenge.review
           )}
           questKind={open.kind}
+          questCounter={!!open.counter}
           questRef={{ runId: open.runId, position: open.position }}
         />
       )}

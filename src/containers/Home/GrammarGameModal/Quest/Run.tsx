@@ -38,6 +38,7 @@ export default function Run({ run, onFinished, onQuit }: {
 }) {
   const answerQuestion = useAppContext((v) => v.requestHelpers.answerGrammarQuestQuestion);
   const finishRun = useAppContext((v) => v.requestHelpers.finishGrammarQuestRun);
+  const loadRun = useAppContext((v) => v.requestHelpers.loadGrammarQuestRun);
   const practiceOnly = run.rules.mode === 'nemesis' && !!run.rules.practiceOnly;
   const [answers, setAnswers] = useState<Record<number, QuestAnswer>>(() =>
     Object.fromEntries((run.answers || []).map((a) => [a.position, a]))
@@ -51,6 +52,7 @@ export default function Run({ run, onFinished, onQuit }: {
   const [koreanShown, setKoreanShown] = useState(initialKoreanShown);
   const [challengeOpen, setChallengeOpen] = useState(false);
   const { reviews } = useChallengeReviews();
+  const appliedReviews = useRef(new Set<string>());
   const shownAt = useRef(Date.now());
   const inFlight = useRef(false);
   const alive = useRef(true);
@@ -61,7 +63,8 @@ export default function Run({ run, onFinished, onQuit }: {
       onReady: () => setReady(true),
       onReviewReady: () => setAnimating(false)
     }, { questions: run.questions.length });
-    fight.resumeAnswers(run.questions.flatMap((q) => answers[q.position] ? [answers[q.position].isCorrect] : []));
+    const answered = run.questions.flatMap((q) => answers[q.position] ? [answers[q.position]] : []);
+    fight.resumeAnswers(answered.map((a) => a.isCorrect), answered.flatMap((a, i) => a.forgiven ? [i] : []));
     if (run.questions.every((q) => !!answers[q.position])) fight.restoreReview();
     else fight.setQuestion(REVIEW_TURN);
     return fight;
@@ -72,10 +75,33 @@ export default function Run({ run, onFinished, onQuit }: {
   const answer = question ? answers[question.position] : undefined;
   const allAnswered = firstOpen === -1;
   const rightSoFar = Object.values(answers).filter((a) => a.isCorrect).length;
+  const forgivenSoFar = Object.values(answers).filter((a) => !a.isCorrect && a.forgiven).length;
   const answeredCount = Object.keys(answers).length;
   const challenge = answer && !answer.isCorrect ? answer.challenge : null;
   const challengeReview = challenge ? reviews[challenge.questionId] : undefined;
   const savedReview = getSavedChallengeReview(challenge?.checked, challenge?.review);
+  useEffect(() => {
+    for (const [id, review] of Object.entries(reviews)) {
+      if (review.status !== 'complete' || !review.result.justified || review.result.questRunId !== run.runId || appliedReviews.current.has(id)) continue;
+      appliedReviews.current.add(id);
+      const position = review.result.questPosition;
+      if (review.result.questMissForgiven && position != null) {
+        setAnswers((previous) => previous[position] ? { ...previous, [position]: { ...previous[position], forgiven: true } } : previous);
+        engine.forgiveReviewAnswer(run.questions.findIndex((q) => q.position === position));
+      }
+      if (typeof review.result.questCombo === 'number') setCombo(review.result.questCombo);
+      // Other showings of this version can be forgiven by the same ruling.
+      void loadRun(run.runId, { refresh: true }).then((fresh: QuestRun | null | undefined) => {
+        if (!alive.current || !fresh) return;
+        const forgiven = new Set((fresh.answers || []).filter((a: QuestAnswer) => a.forgiven).map((a: QuestAnswer) => a.position));
+        setAnswers((previous) => Object.fromEntries(Object.entries(previous).map(([key, value]) => [key,
+          forgiven.has(Number(key)) ? { ...value, forgiven: true } : value
+        ])));
+        for (const position of forgiven) engine.forgiveReviewAnswer(run.questions.findIndex((q) => q.position === position));
+        if (typeof fresh.combo === 'number') setCombo(fresh.combo);
+      }).catch(() => {});
+    }
+  }, [reviews, engine, loadRun, run.questions, run.runId]);
   const reviewed = isChallengeReviewSettled(challengeReview, savedReview);
   const { reading, secondsLeft } = useReadCooldown(
     answer && !answer.isCorrect ? `miss-${position}` : null, answer?.readMs
@@ -116,7 +142,7 @@ export default function Run({ run, onFinished, onQuit }: {
         <AudioToggles className={audioCls} />
       </div>
       <div className={bodyCls} ref={bodyRef}>
-        <div className={stageFitCls} style={{ width: stageWidth }} role="img" aria-label={`Ghost strength: ${run.questions.length - rightSoFar} of ${run.questions.length}. ${answeredCount} questions answered.`}>
+        <div className={stageFitCls} style={{ width: stageWidth }} role="img" aria-label={`Ghost strength: ${run.questions.length - rightSoFar - forgivenSoFar} of ${run.questions.length}. ${answeredCount} questions answered.`}>
           <Stage engine={engine} />
         </div>
         <div className={dockCls} ref={dockRef}>
@@ -124,8 +150,8 @@ export default function Run({ run, onFinished, onQuit }: {
           <div className={marbleRowCls} aria-label={`${rightSoFar} correct answers`}>
             {run.questions.map((q) => {
               const a = answers[q.position];
-              return <QuestMarble key={q.position} look={a ? answerLook(a.isCorrect, a.combo || 1) : 'empty'}
-                size={24} title={`Question ${q.position + 1}: ${a ? a.isCorrect ? 'correct' : 'missed' : 'unanswered'}`}
+              return <QuestMarble key={q.position} look={a?.forgiven ? 'clear' : a ? answerLook(a.isCorrect, a.combo || 1) : 'empty'}
+                label={a?.forgiven ? '✓' : undefined} size={24} title={`Question ${q.position + 1}: ${a ? a.forgiven ? 'forgiven' : a.isCorrect ? 'correct' : 'missed' : 'unanswered'}`}
                 className={q.position === question.position ? currentMarbleCls : undefined} />;
             })}
           </div>
@@ -143,9 +169,9 @@ export default function Run({ run, onFinished, onQuit }: {
           <div className={questionCls}>{question.question}</div>
           <div className={choicesCls}>
             {question.choices.map((choice, i) => {
-              const state = !answer ? '' : i === answer.correctIndex ? 'right' : i === answer.selectedIndex ? 'wrong' : 'dim';
+              const state = !answer ? '' : answer.forgiven && i === answer.selectedIndex ? 'forgiven' : i === answer.correctIndex ? 'right' : i === answer.selectedIndex ? 'wrong' : 'dim';
               return <button key={i}
-                className={cx(choiceCls, state === 'right' && rightCls, state === 'wrong' && wrongCls, state === 'dim' && dimCls)}
+                className={cx(choiceCls, state === 'right' && rightCls, state === 'wrong' && wrongCls, state === 'forgiven' && forgivenChoiceCls, state === 'dim' && dimCls)}
                 disabled={!!answer || sending || animating || !ready} onClick={() => handleAnswer(i)}>
                 <span className={letterCls}>{'ABCD'[i]}</span>{choice}
               </button>;
@@ -154,7 +180,7 @@ export default function Run({ run, onFinished, onQuit }: {
           </>}
           {error && <div className={errorCls} role="alert">{error}</div>}
           {answer && !answer.isCorrect && <div className={missCls}>
-            <div className={missNoteCls}>The ghost dodged. Read the explanation, then continue when you’re ready.</div>
+            <div className={missNoteCls}>{answer.forgiven ? 'Forgiven — the question was at fault.' : 'The ghost dodged. Read the explanation, then continue when you’re ready.'}</div>
             {answer.ruleCard && <div ref={ruleRef} className={cx(ruleScrollCls, ruleMore && ruleFadeCls)} data-fit-flex><RuleCard card={answer.ruleCard} look="quest"
               pickedChoice={question.choices[answer.selectedIndex] ?? null}
               koreanShown={koreanShown} onToggleKorean={handleToggleKorean} /></div>}
@@ -193,7 +219,7 @@ export default function Run({ run, onFinished, onQuit }: {
       setAnswers((prev) => ({ ...prev, [result.position]: result }));
       setCombo(result.combo || 0);
       setReady(false);
-      setAnimating(engine.answerReview(result.isCorrect));
+      setAnimating(engine.answerReview(result.isCorrect, !!result.forgiven));
     } catch {
       if (alive.current) setError('That answer did not reach the server. Try again.');
     } finally {
@@ -306,6 +332,7 @@ const letterCls = css`
 `;
 const rightCls = css`background: #278b4c; border-color: #197039; box-shadow: 0 4px 0 #176031;`;
 const wrongCls = css`background: #bc3154; border-color: #97273f; box-shadow: 0 4px 0 #7e2035;`;
+const forgivenChoiceCls = css`background: #356f99; border-color: #285777; box-shadow: 0 4px 0 #204963;`;
 const dimCls = css`opacity: 0.55;`;
 const errorCls = css`margin-top: 1rem; color: #ff9db0; font-size: 1.4rem;`;
 const missCls = css`margin-top: 1.5rem;`;

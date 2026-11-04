@@ -12,17 +12,20 @@ const {
   webkit
 } = require('/Users/mikey/.npm-packages/lib/node_modules/playwright');
 const repo = fileURLToPath(new URL('..', import.meta.url));
-const artifacts = path.resolve(repo, '../work/grammar-quest-original-review-20261104/browser');
+const artifacts = process.env.GRAMMAR_QUEST_REVIEW_ARTIFACTS || path.resolve(repo, '../work/grammar-quest-original-review-20261104/browser');
 const base = './src/containers/Home/GrammarGameModal/';
 const fontPath = path.resolve(repo, '../work/grammar-quest-review-20261026/pixel-font.woff2');
 const font = existsSync(fontPath) ? readFileSync(fontPath) : null;
 const contexts = `
-window.reportCalls=[];window.challengeCalls=[];window.missCalls=[];
+window.reportCalls=[];window.challengeCalls=[];window.missCalls=[];window.correctedResults=[];
 const app={user:{actions:{onSetUserState(){}}},requestHelpers:{
  loadGrammarQuestState:async()=>({worlds:[{id:1,name:'Village',unlocked:true,nodes:[]},{id:4,name:'Forest',unlocked:true,nodes:[]}],nemesis:[],rewardedRunsLeft:10}),
  loadGrammarQuestMisses:async p=>{window.missCalls.push(p);if(window.loadFailure){window.loadFailure=false;throw Error('offline')};return p.before?{items:[window.extraMiss],next:null}:{items:window.misses,next:'older'}},
  reportGrammarQuestion:async p=>{window.reportCalls.push(p);if(window.reportFailure){window.reportFailure=false;throw Error('Try again after reconnecting.')};if(window.holdReport)return new Promise(r=>window.finishReport=()=>r({reportId:91}));return {reportId:91}},
- challengeGrammarQuestion:async p=>{window.challengeCalls.push(p);return {justified:false,explanation:'The shared reviewer confirmed the answer.'}}
+ challengeGrammarQuestion:async p=>{window.challengeCalls.push(p);return window.acceptChallenge?{justified:true,questMissForgiven:true,questRunId:p.quest.runId,questPosition:p.quest.position,questCombo:2,questScheduleReviewPending:!!window.questScheduleReviewPending,explanation:'The answer was valid.'}:{justified:false,explanation:'The shared reviewer confirmed the answer.'}},
+ loadGrammarQuestRun:async()=>window.ghostFresh,
+ answerGrammarQuestQuestion:async()=>window.practiceAnswer,
+ finishGrammarQuestRun:async()=>new Promise(resolve=>{window.resolveCorrectedResult=()=>resolve(window.correctedPayload||{runId:81,score:70,grade:'B',points:490,passPoints:490,cleared:true,rights:5,size:7,forgivenHits:1,xp:200,coins:10,newXp:1200,newCoins:110,answers:[{position:2,forgiven:true}]})})
 }};
 export const useAppContext=s=>s(app);
 export const useKeyContext=s=>s({myState:{userId:7,settings:{grammarbles:{music:false,sound:false}}}});
@@ -35,6 +38,10 @@ import React from 'react';import {createRoot} from 'react-dom/client';
 import Grammarbles from '${base}index';
 import ChallengeModal from '${base}Review/ChallengeModal';
 import Result from '${base}Quest/Result';
+import GhostRun from '${base}Quest/Run';
+import PracticeScreen from '${base}Quest/MarbleRunScreen';
+import QuestMisses from '${base}Review/QuestMisses';
+import {GamePageContext} from '${base}gamePortal';
 window.misses=[
  {questionId:101,questionVersion:1,runId:80,position:0,kind:'stop',nodeId:'w4s1',format:'blank',questionText:'She ____ to school every day.',answeredAt:1792990000,challenge:{questionId:101,checked:false}},
  {questionId:202,questionVersion:2,runId:81,position:2,kind:'castle',nodeId:'w4c',format:'crack',questionText:'The sentence was already reviewed, but the marked word still seems wrong.',answeredAt:1792989000,challenge:{questionId:202,checked:true,review:{outcome:'rejected',explanation:'An earlier reviewer accepted this wording.'}}},
@@ -56,7 +63,40 @@ localStorage.setItem('userId','7');localStorage.setItem('grammarQuestSound','0')
 createRoot(document.getElementById('root')).render(<Grammarbles onHide={()=>{}}/>);
 window.openResult=()=>{
  const layer=document.createElement('div');layer.id='result-fixture';Object.assign(layer.style,{position:'fixed',inset:0,zIndex:2147482000,overflow:'auto'});document.body.appendChild(layer);
- createRoot(layer).render(<Result kind="castle" runId={81} onBackToMap={()=>{}} result={{runId:81,score:60,grade:'F',points:420,cleared:false,rights:5,size:7,perfect:false,xp:210,coins:0,rewarded:true}} answers={[{position:2,isCorrect:false,selectedIndex:8,correctIndex:7,questionText:window.misses[1].questionText,presentation:window.misses[1].presentation,challenge:{questionId:202,checked:false},counter:true}]}/>);
+ createRoot(layer).render(<Result kind="castle" runId={81} onBackToMap={()=>{}} onCorrected={()=>{}} result={{runId:81,score:60,grade:'F',points:420,cleared:false,rights:5,size:7,perfect:false,xp:210,coins:0,rewarded:true}} answers={[{position:2,isCorrect:false,selectedIndex:8,correctIndex:7,questionText:window.misses[1].questionText,presentation:window.misses[1].presentation,challenge:{questionId:202,checked:false},counter:true}]}/>);
+};
+window.openForgivenResult=()=>{
+ const layer=document.createElement('div');layer.id='forgiven-result-fixture';Object.assign(layer.style,{position:'fixed',inset:0,zIndex:2147482000,overflow:'auto'});document.body.appendChild(layer);
+ createRoot(layer).render(<GamePageContext.Provider value={layer}><Result kind="castle" runId={81} onBackToMap={()=>{}} onCorrected={r=>window.correctedResults.push(r)} result={{runId:81,score:60,grade:'F',points:420,cleared:false,rights:5,size:7,perfect:false,xp:210,coins:0}} answers={[{position:2,isCorrect:false,selectedIndex:8,correctIndex:7,grade:'F',questionText:window.misses[1].questionText,presentation:window.misses[1].presentation,challenge:{questionId:606,checked:false}}]}/></GamePageContext.Provider>);
+};
+window.openForgivenPractice=()=>{
+ const layer=document.createElement('div');layer.id='forgiven-practice-fixture';Object.assign(layer.style,{position:'fixed',inset:0,zIndex:2147482000,overflow:'auto'});document.body.appendChild(layer);
+ createRoot(layer).render(<GamePageContext.Provider value={layer}><Result kind="stop" runId={81} onBackToMap={()=>{}} onCorrected={r=>window.correctedResults.push(r)} result={{runId:81,score:83,grade:'A',cleared:true,rights:5,misses:1,size:6,perfect:false,xp:560,coins:50}} answers={[{position:2,isCorrect:false,selectedIndex:8,correctIndex:7,questionText:window.misses[1].questionText,presentation:window.misses[1].presentation,challenge:{questionId:606,checked:false}}]}/></GamePageContext.Provider>);
+};
+window.openUngradedBoss=()=>{
+ const layer=document.createElement('div');layer.id='ungraded-boss-fixture';Object.assign(layer.style,{position:'fixed',inset:0,zIndex:2147482000,overflow:'auto'});document.body.appendChild(layer);
+ createRoot(layer).render(<GamePageContext.Provider value={layer}><Result kind="castle" runId={81} onBackToMap={()=>{}} onCorrected={()=>{}} result={{runId:81,score:null,grade:null,cleared:false,rights:0,size:7,points:0,passPoints:490,forgivenHits:7,xp:70,coins:0,answers:[{position:2,forgiven:true}]}} answers={[{position:2,isCorrect:false,selectedIndex:8,correctIndex:7,grade:'F',questionText:window.misses[1].questionText,presentation:window.misses[1].presentation,challenge:{questionId:606,checked:false}}]}/></GamePageContext.Provider>);
+};
+window.openGhostRun=()=>{
+ const questions=[0,1,2].map(position=>({position,question:'The ghost question ____',choices:['right','also right','wrong','wrong'],skill:'grammar.test',skillName:'Test',format:'blank'}));
+ const answers=questions.map((q,i)=>({position:i,isCorrect:i!==2,selectedIndex:i===2?1:0,correctIndex:0,combo:i===2?0:i+1,...(i===2?{challenge:{questionId:606,checked:false}}:{})}));
+ window.ghostFresh={runId:83,combo:2,answers:answers.map((a,i)=>i===2?{...a,forgiven:true}:a),questions};
+ const layer=document.createElement('div');layer.id='ghost-fixture';document.body.appendChild(layer);
+ createRoot(layer).render(<GhostRun run={{runId:83,nodeId:'nemesis',kind:'nemesis',worldId:1,questions,answers,combo:0,rules:{mode:'nemesis'}}} onFinished={()=>{}} onQuit={()=>{}}/>);
+};
+window.openGhostMisses=()=>{
+ window.misses=[{...window.misses[0],questionId:707,runId:87,kind:'nemesis',nodeId:'nemesis',questionText:'The pending Ghost question ____',presentation:{format:'blank',question:'The pending Ghost question ____',choices:['right','also right','wrong','wrong']},forgiven:true,scheduleReviewPending:true,challenge:{questionId:707,checked:true}},
+ {...window.misses[0],questionId:708,runId:88,kind:'nemesis',nodeId:'nemesis',questionText:'The new Ghost question ____',presentation:{format:'blank',question:'The new Ghost question ____',choices:['right','also right','wrong','wrong']},challenge:{questionId:708,checked:false}}];
+ const layer=document.createElement('div');layer.id='ghost-misses-fixture';document.body.appendChild(layer);
+ createRoot(layer).render(<GamePageContext.Provider value={layer}><QuestMisses look="quest"/></GamePageContext.Provider>);
+};
+window.openPracticeChallenge=()=>{
+ const question={position:0,question:'The practice question ____',choices:['right','also right','wrong','wrong'],skill:'grammar.test',skillName:'Test',format:'blank'};
+ const next={...question,position:1,question:'The next practice question ____'};
+ window.practiceAnswer={position:0,isCorrect:false,selectedIndex:1,correctIndex:0,combo:0,caught:true,chaser:{gap:0,start:100},challenge:{questionId:606,checked:false}};
+ window.ghostFresh={runId:84,combo:2,rules:{mode:'practice',modifier:'chaser',chaser:{gap:10,start:100}},answers:[{...window.practiceAnswer,forgiven:true}],questions:[question,next]};
+ const layer=document.createElement('div');layer.id='practice-fixture';document.body.appendChild(layer);
+ createRoot(layer).render(<PracticeScreen run={{runId:84,nodeId:'w7s1',kind:'stop',worldId:7,questions:[question],answers:[],combo:0,rules:{mode:'practice',goal:5,slots:['blank'],modifier:'chaser',chaser:{gap:100,start:100}}}} onFinished={()=>{}} onQuit={()=>{}}/>);
 };
 window.openRunChallenge=()=>{
  const layer=document.createElement('div');layer.id='quest-run-layer';
@@ -96,7 +136,8 @@ async function compile() {
     './MusicChoice': 'export default function MusicChoice(){return null}',
     './Run': 'export default function Run(){return null}',
     './Result': 'export default function Result(){return null}',
-    './MarbleRunScreen': 'export default function Marble(){return null}'
+    './MarbleRunScreen': 'export default function Marble(){return null}',
+    './MarbleRun/level/runner': `export class PracticeRun {grade=null;busy=false;misses=0;constructor(theme,node,events){this.events=events;window.practiceEngine=this}resume(){}answer(ok,hint,forgiven){if(!ok&&!forgiven)this.misses++;setTimeout(()=>this.events.onReady(),0);return true}frame(g){g.fillStyle='#223a43';g.fillRect(0,0,960,380)}setChaser(){}}`
   };
   try {
     const result = await build({
@@ -139,6 +180,158 @@ for (const [name, engine] of [
   ['chromium', chromium],
   ['webkit', webkit]
 ]) {
+  test(`${name}: a Ghost schedule awaiting review stays visible after reload and a new challenge`, { timeout: 45000 }, async () => {
+    const script = await compile();
+    mkdirSync(artifacts, { recursive: true });
+    const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+    const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><div id="modal"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+    const browser = await engine.launch({ headless: true });
+    try {
+      const page = await browser.newPage({ viewport: { width: 360, height: 800 } });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.route('**/*', (r) => r.request().isNavigationRequest() ? r.fulfill({ contentType: 'text/html', body: html }) : r.abort());
+      await page.goto('http://localhost:3000/__quest-ghost-misses');
+      await page.evaluate(() => { window.acceptChallenge = true; window.questScheduleReviewPending = true; window.openGhostMisses(); });
+      const list = page.locator('#ghost-misses-fixture');
+      const pending = list.locator('article').filter({ hasText: 'The pending Ghost question' });
+      const fresh = list.locator('article').filter({ hasText: 'The new Ghost question' });
+      await pending.getByText('Forgiven — the question was at fault. Its earlier Ghost review schedule still needs review.').waitFor();
+      await fresh.getByRole('button', { name: 'Challenge', exact: true }).click();
+      await page.getByRole('button', { name: 'Start review', exact: true }).click();
+      await page.getByText('This Ghost question is forgiven. Its earlier review schedule still needs review.').waitFor();
+      await page.getByRole('button', { name: 'Back to review', exact: true }).last().click();
+      await fresh.getByText('Forgiven — the question was at fault. Its earlier Ghost review schedule still needs review.').waitFor();
+      await page.screenshot({ path: path.join(artifacts, `${name}-ghost-pending-review.png`), fullPage: true });
+      assert.deepEqual(errors, []);
+      await page.close();
+    } finally { await browser.close(); }
+  });
+  test(`${name}: a successful Quest challenge waits for the corrected server result`, { timeout: 45000 }, async () => {
+    const script = await compile();
+    mkdirSync(artifacts, { recursive: true });
+    const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+    const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><div id="modal"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+    const browser = await engine.launch({ headless: true });
+    try {
+      const page = await browser.newPage({ viewport: { width: 360, height: 800 } });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.route('**/*', (r) => r.request().isNavigationRequest() ? r.fulfill({ contentType: 'text/html', body: html }) : r.abort());
+      await page.goto('http://localhost:3000/__quest-forgiven');
+      await page.evaluate(() => { window.acceptChallenge = true; window.openForgivenResult(); });
+      const result = page.locator('#forgiven-result-fixture');
+      assert.equal(await result.locator('[title="F"]').count(), 1);
+      await result.getByRole('button', { name: /Review questions/ }).click();
+      await result.getByRole('button', { name: 'Challenge', exact: true }).click();
+      await page.getByRole('button', { name: 'Start review', exact: true }).click();
+      await page.getByText('Good catch!', { exact: true }).waitFor();
+      await page.waitForFunction(() => typeof window.resolveCorrectedResult === 'function');
+      assert.equal(await result.locator('[title="F"]').count(), 1, 'do not invent forgiveness before the canonical result arrives');
+      await page.evaluate(() => window.resolveCorrectedResult());
+      await page.getByText('Back to results', { exact: true }).click();
+      await result.getByLabel('Forgiven: the question was at fault').waitFor();
+      await result.getByText('Forgiven — the question was at fault. Free rematch earned.').waitFor({ state: 'visible' });
+      assert.equal(await result.locator('[title="F"]').count(), 0);
+      await result.getByText('1 question is forgiven and won’t count against your result.').waitFor();
+      assert.equal(await page.evaluate(() => window.correctedResults.length), 1);
+      await page.screenshot({ path: path.join(artifacts, `${name}-forgiven-result.png`), fullPage: true });
+      assert.deepEqual(errors, []);
+      await page.close();
+    } finally {
+      await browser.close();
+    }
+  });
+  test(`${name}: a successful Quest challenge refreshes practice and an entirely forgiven boss has no grade`, { timeout: 45000 }, async () => {
+    const script = await compile();
+    const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+    const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><div id="modal"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+    const browser = await engine.launch({ headless: true });
+    try {
+      const page = await browser.newPage({ viewport: { width: 360, height: 800 } });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.route('**/*', (r) => r.request().isNavigationRequest() ? r.fulfill({ contentType: 'text/html', body: html }) : r.abort());
+      await page.goto('http://localhost:3000/__quest-practice-forgiven');
+      await page.evaluate(() => {
+        window.acceptChallenge = true;
+        window.correctedPayload = { runId: 81, score: 100, grade: 'S', cleared: true, rights: 5, misses: 0, size: 6,
+          perfect: true, xp: 1800, coins: 150, newXp: 1800, newCoins: 150, answers: [{ position: 2, forgiven: true }] };
+        window.openForgivenPractice();
+      });
+      const practice = page.locator('#forgiven-practice-fixture');
+      await practice.getByRole('button', { name: /Review questions/ }).click();
+      await practice.getByRole('button', { name: 'Challenge', exact: true }).click();
+      await page.getByRole('button', { name: 'Start review', exact: true }).click();
+      await page.waitForFunction(() => typeof window.resolveCorrectedResult === 'function');
+      await page.evaluate(() => window.resolveCorrectedResult());
+      await page.getByText('Back to results', { exact: true }).click();
+      await practice.getByText('Flawless on every graded question.').waitFor();
+      await practice.getByText('Forgiven — the question was at fault.').waitFor({ state: 'visible' });
+      assert.equal(await page.evaluate(() => window.correctedResults.length), 1);
+      await page.evaluate(() => window.openUngradedBoss());
+      const ungraded = page.locator('#ungraded-boss-fixture');
+      await ungraded.getByText('NO GRADE', { exact: true }).waitFor();
+      await ungraded.getByText('Every hit was forgiven. Play again for a score.').waitFor();
+      assert.equal(await ungraded.getByText(/0 of 490 points/).count(), 0);
+      assert.equal(await ungraded.getByText(/Half XP while the boss stands/).count(), 0);
+      await page.screenshot({ path: path.join(artifacts, `${name}-ungraded-boss.png`), fullPage: true });
+      assert.deepEqual(errors, []);
+      await page.close();
+    } finally { await browser.close(); }
+  });
+  test(`${name}: a successful Quest challenge marks the Ghost answer forgiven`, { timeout: 45000 }, async () => {
+    const script = await compile();
+    const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+    const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><div id="modal"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+    const browser = await engine.launch({ headless: true });
+    try {
+      const page = await browser.newPage({ viewport: { width: 360, height: 800 } });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.route('**/*', (r) => r.request().isNavigationRequest() ? r.fulfill({ contentType: 'text/html', body: html }) : r.abort());
+      await page.goto('http://localhost:3000/__quest-ghost-forgiven');
+      await page.evaluate(() => { window.acceptChallenge = true; window.openGhostRun(); });
+      const ghost = page.getByRole('region', { name: 'Ghost review battle' });
+      await ghost.getByRole('button', { name: 'Challenge', exact: true }).click();
+      await page.getByRole('button', { name: 'Start review', exact: true }).click();
+      await page.getByText('Good catch!', { exact: true }).waitFor();
+      await page.getByText('Back to question', { exact: true }).click();
+      await ghost.getByText('Forgiven — the question was at fault.').waitFor();
+      assert.equal(await ghost.locator('[title="Question 3: forgiven"]').count(), 1);
+      assert.match(await ghost.locator('[role="img"]').getAttribute('aria-label'), /Ghost strength: 0 of 3/);
+      await page.screenshot({ path: path.join(artifacts, `${name}-ghost-forgiven.png`), fullPage: true });
+      assert.deepEqual(errors, []);
+      await page.close();
+    } finally { await browser.close(); }
+  });
+  test(`${name}: a successful Quest challenge refreshes a practice answer while playing`, { timeout: 45000 }, async () => {
+    const script = await compile();
+    const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+    const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><div id="modal"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+    const browser = await engine.launch({ headless: true });
+    try {
+      const page = await browser.newPage({ viewport: { width: 360, height: 800 } });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.route('**/*', (r) => r.request().isNavigationRequest() ? r.fulfill({ contentType: 'text/html', body: html }) : r.abort());
+      await page.goto('http://localhost:3000/__quest-practice-active');
+      await page.evaluate(() => { window.acceptChallenge = true; window.openPracticeChallenge(); });
+      await page.getByRole('button', { name: 'B also right', exact: true }).click();
+      await page.getByRole('button', { name: 'Challenge', exact: true }).click();
+      await page.getByRole('button', { name: 'Start review', exact: true }).click();
+      await page.getByText('Good catch!', { exact: true }).waitFor();
+      await page.getByText('Back to question', { exact: true }).click();
+      await page.getByText('Forgiven — the question was at fault.').waitFor();
+      assert.equal(await page.evaluate(() => window.practiceEngine.misses), 0);
+      assert.equal(await page.getByText('The chaser caught you! This stop ends here; try it again.').count(), 0);
+      await page.screenshot({ path: path.join(artifacts, `${name}-practice-forgiven.png`), fullPage: true });
+      await page.getByRole('button', { name: 'Continue (Enter)', exact: true }).click();
+      await page.getByText('The next practice question ____', { exact: true }).waitFor();
+      assert.deepEqual(errors, []);
+      await page.close();
+    } finally { await browser.close(); }
+  });
   test(
     `${name}: Quest navigation, challenges and canonical reports at desktop and phone widths`,
     { timeout: 90000 },

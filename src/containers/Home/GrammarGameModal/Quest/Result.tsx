@@ -1,8 +1,9 @@
 import QuestQuestionReview from '../Review/QuestQuestionReview';
 import { FORMAT_INFO } from './FormatQuestion';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { useAppContext } from '~/contexts';
 import type { QuestAnswer, QuestResult } from './types';
 import QuestMarble, { answerLook } from './QuestMarble';
 import { reviewList, withForgiven } from './reviewList';
@@ -33,11 +34,12 @@ import {
 } from './pixelUi';
 
 export default function Result({
-  result,
+  result: initialResult,
   answers,
   kind,
   runId,
   onBackToMap,
+  onCorrected,
   onPracticeAgain,
   startingPractice = false
 }: {
@@ -46,17 +48,24 @@ export default function Result({
   kind: string;
   runId: number;
   onBackToMap: () => void;
+  onCorrected: (result: QuestResult) => void;
   onPracticeAgain?: () => void;
   startingPractice?: boolean;
 }) {
   const boss = kind === 'fort' || kind === 'castle';
+  const [result, setResult] = useState(initialResult);
+  const [refreshError, setRefreshError] = useState(false);
+  const refreshed = useRef('');
+  const refreshSequence = useRef(0);
+  const finishRun = useAppContext((v) => v.requestHelpers.finishGrammarQuestRun);
   const goals = result.dailyTaskStatus?.grammarbles;
   // the run's missed questions, for Classic's Challenge (a boss's misses
   // can only be challenged here: its clock doesn't stop for one)
   const [listOpen, setListOpen] = useState(false);
   const [challengeId, setChallengeId] = useState<number | null>(null);
   const { reviews } = useChallengeReviews();
-  const listed = reviewList(withForgiven(answers, result.answers));
+  const displayAnswers = withForgiven(answers, result.answers);
+  const listed = reviewList(displayAnswers);
   const challengeable = listed.filter((a) => a.challenge);
   const allReviewed = challengeable.every(
     (a) =>
@@ -66,14 +75,46 @@ export default function Result({
   const selectedChallenge = challengeable.find(
     (a) => a.challenge?.questionId === challengeId
   );
+  const refreshKey = listed.flatMap((a) => {
+    const id = a.challenge?.questionId;
+    const review = id ? reviews[id] : undefined;
+    return review?.status === 'complete' && review.result.justified && review.result.questRunId === runId ? [id] : [];
+  }).sort((a, b) => Number(a) - Number(b)).join(',');
+  const refreshResult = useCallback(async () => {
+    const sequence = ++refreshSequence.current;
+    try {
+      const fresh = await finishRun(runId);
+      if (!fresh || Number(fresh.runId) !== runId) throw new Error('Result unavailable');
+      if (sequence === refreshSequence.current) {
+        setResult(fresh);
+        setRefreshError(false);
+        onCorrected(fresh);
+      }
+    } catch {
+      if (sequence === refreshSequence.current) setRefreshError(true);
+    }
+  }, [finishRun, onCorrected, runId]);
+  useEffect(() => {
+    setResult(initialResult);
+    refreshed.current = '';
+    const sequence = refreshSequence;
+    sequence.current++;
+    return () => { sequence.current++; };
+  }, [initialResult, runId]);
+  useEffect(() => {
+    if (!refreshKey || refreshed.current === refreshKey) return;
+    refreshed.current = refreshKey;
+    void refreshResult();
+  }, [refreshKey, refreshResult]);
   // never "perfect" while the boss (or the stop) still stands
   const perfect = !!result.perfect && (result.cleared || kind === 'nemesis');
+  const ungradedBoss = boss && result.score == null;
   const headline = perfect
     ? boss
-      ? 'Flawless! Every hit landed first try.'
+      ? result.forgivenHits ? 'Flawless on every graded hit.' : 'Flawless! Every hit landed first try.'
       : kind === 'nemesis'
-        ? `Perfect! All ${result.size} right on the first try.`
-        : 'Perfect! Five right answers, not a single miss.'
+        ? result.forgivenQuestions ? 'Flawless on every graded question.' : `Perfect! All ${result.size} right on the first try.`
+        : result.answers?.some((answer) => answer.forgiven) ? 'Flawless on every graded question.' : 'Perfect! Five right answers, not a single miss.'
     : result.cleared
       ? kind === 'castle'
         ? 'Castle cleared! The next world is open.'
@@ -83,7 +124,7 @@ export default function Result({
       : kind === 'nemesis'
         ? result.practiceOnly ? 'Ghost practice complete' : 'Ghost review complete'
         : boss
-          ? 'Not yet: the boss is still standing'
+          ? ungradedBoss ? 'Every hit was forgiven. Play again for a score.' : 'Not yet: the boss is still standing'
           : result.caught
             ? 'The chaser caught you! Try the stop again.'
             : 'Not cleared yet';
@@ -98,7 +139,7 @@ export default function Result({
           : boss
             ? 'BOSS DEFEATED!'
             : 'STOP CLEAR!'
-        : 'NOT YET';
+        : ungradedBoss ? 'NO GRADE' : 'NOT YET';
   const celebrate = !!result.cleared;
   const won = celebrate || kind === 'nemesis';
   // a cleared stop, fort or castle gets the victory song (Mikey 10-12): its
@@ -160,7 +201,7 @@ export default function Result({
       </div>
       <div className={marblesCls}>
         {/* counters are bonus, not hits: they show as a line below */}
-        {answers
+        {displayAnswers
           .filter((a) => !a.counter)
           .map((a, i) => (
             <span
@@ -168,7 +209,11 @@ export default function Result({
               className={popCls}
               style={{ animationDelay: `${300 + i * 60}ms` }}
             >
-              {a.grade ? (
+              {a.forgiven ? (
+                <span aria-label="Forgiven: the question was at fault">
+                  <QuestMarble look="clear" label="✓" size={24} title="Forgiven: the question was at fault" />
+                </span>
+              ) : a.grade ? (
                 <img
                   className={spriteCls}
                   src={spriteUri(a.grade, 'happy')}
@@ -187,10 +232,20 @@ export default function Result({
           ))}
       </div>
       <div className={cx(scoreCls, !won && scoreMissCls)}>
-        {boss ? `${result.points ?? 0}` : `${result.score}%`}
+        {result.score == null ? '—' : boss ? `${result.points ?? 0}` : `${result.score}%`}
       </div>
+      {!!result.forgivenHits && (
+        <div className={lineCls}>
+          {result.score == null
+            ? 'The questions were forgiven, so there is no graded score.'
+            : `${result.forgivenHits} ${result.forgivenHits === 1 ? 'question is' : 'questions are'} forgiven and won’t count against your result.`}
+        </div>
+      )}
+      {!!result.forgivenQuestions && (
+        <div className={lineCls}>{result.forgivenQuestions} {result.forgivenQuestions === 1 ? 'question is' : 'questions are'} forgiven and won’t count against your result.</div>
+      )}
       <div className={headCls}>{headline}</div>
-      <div className={lineCls}>
+      {!ungradedBoss && <div className={lineCls}>
         {boss
           ? result.counterHits
             ? // a counter's damage counts toward beating the boss, not
@@ -198,9 +253,9 @@ export default function Result({
               `${result.points ?? 0} points from hits + ${result.counterDamage} from ${result.counterHits === 1 ? 'a counter' : `${result.counterHits} counters`}, against ${result.passPoints ?? 490} health`
             : `${result.points ?? 0} of ${result.passPoints ?? 490} points needed to defeat the boss`
           : kind === 'nemesis'
-            ? `${result.firstTryCorrect} of ${result.size} right on the first try`
+            ? result.size ? `${result.firstTryCorrect} of ${result.size} right on the first try` : 'Every question was forgiven.'
             : `${result.rights ?? 0} right · ${result.misses ?? 0} missed${result.misses ? ' (they came back until you got them)' : ''}`}
-      </div>
+      </div>}
       {result.cleared &&
         kind !== 'nemesis' &&
         result.dailyTaskStatus &&
@@ -236,7 +291,7 @@ export default function Result({
               <span className={noRewardCls}>
                 Replay: half XP, no Coins until you beat the Logic Tower castle.
               </span>
-            ) : boss && !result.cleared ? (
+            ) : ungradedBoss ? null : boss && !result.cleared ? (
               <span className={noRewardCls}>
                 Half XP while the boss stands. Beat it to earn Coins.
               </span>
@@ -276,19 +331,19 @@ export default function Result({
               <div key={`${a.position}:${a.challenge?.questionId ?? a.questionText}`} className={challengeItemCls}>
                 <div className={challengeTextCls}>
                   {a.counter && <span className={counterTagCls}>Counter</span>}
-                  {a.presentation ? <>
-                    <div>{FORMAT_INFO[a.presentation.format || 'blank'].name}</div>
-                    <QuestQuestionReview question={a.presentation} selectedTaps={a.selectedIndex >= 0 ? [a.selectedIndex] : []} sourceIndex={a.reviewSourceIndex} />
-                  </> : a.questionText}
                   {a.forgiven && (
                     // ruled the question's fault after the miss (Mikey 10-11)
                     <div className={forgivenCls}>
                       <PixelIcon name="check" scale={2} />{' '}
                       {boss
-                        ? 'Free rematch earned'
-                        : 'Doesn’t count — the question was at fault'}
+                        ? 'Forgiven — the question was at fault. Free rematch earned.'
+                        : 'Forgiven — the question was at fault.'}
                     </div>
                   )}
+                  {a.presentation ? <>
+                    <div>{FORMAT_INFO[a.presentation.format || 'blank'].name}</div>
+                    <QuestQuestionReview question={a.presentation} selectedTaps={a.selectedIndex >= 0 ? [a.selectedIndex] : []} sourceIndex={a.reviewSourceIndex} />
+                  </> : a.questionText}
                   {review && (
                     <div className={checkedCls}>{reviewStatusLine(review)}</div>
                   )}
@@ -317,6 +372,11 @@ export default function Result({
         </div>
       )}
       <div className={buttonsCls}>
+        {refreshError && (
+          <button className={challengeOpenCls} onClick={() => void refreshResult()}>
+            Refresh corrected result
+          </button>
+        )}
         {onPracticeAgain && (
           <button className={practiceCls} onClick={onPracticeAgain}
             disabled={startingPractice} aria-busy={startingPractice}>
@@ -349,6 +409,7 @@ export default function Result({
             selectedChallenge?.challenge?.review
           )}
           questKind={kind as 'stop' | 'fort' | 'castle' | 'nemesis'}
+          questCounter={!!selectedChallenge?.counter}
           questRef={
             selectedChallenge
               ? { runId, position: selectedChallenge.position }
@@ -362,6 +423,7 @@ export default function Result({
       )}
     </div>
   );
+
 }
 
 // fixed, so every clear looks the same and nothing is random per render

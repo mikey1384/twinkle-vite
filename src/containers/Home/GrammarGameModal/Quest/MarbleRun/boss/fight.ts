@@ -126,6 +126,8 @@ export class BossFight {
   started = false;
   idx = 0;
   grades: Grade[] = [];
+  private forgivenGrades = new Set<number>();
+  private forgivenTurn = false;
   streak = 0;
   answered: Grade | null = null;
   baseMs: number;
@@ -198,18 +200,46 @@ export class BossFight {
     return this.phase === 'question' && this.t >= this.questionAt;
   }
   // pick up a fight reopened after a reload: the hits so far already landed
-  resume(grades: Grade[], hp?: number) {
+  resume(grades: Grade[], hp?: number, forgivenIndices: number[] = []) {
     this.grades = grades.slice(0, this.hitCount);
+    this.forgivenGrades = new Set(forgivenIndices.filter((i) => i >= 0 && i < this.grades.length));
     this.idx = this.grades.length;
     this.hp = hp ?? this.maxHp - this.points;
     this.shownHp = Math.max(0, this.hp);
     this.bossPhase = bossPhaseOf(this.hp, this.maxHp);
   }
 
-  resumeAnswers(correct: boolean[]) {
+  resumeAnswers(correct: boolean[], forgivenIndices: number[] = []) {
     if (!this.review) return;
-    this.resume(correct.map((right) => right ? 'S' : 'F'));
-    this.streak = correct.reduce((streak, right) => right ? streak + 1 : 0, 0);
+    const forgiven = new Set(forgivenIndices);
+    const progress = correct.filter((right, i) => right || forgiven.has(i)).length;
+    this.resume(correct.map((right) => right ? 'S' : 'F'), this.maxHp - progress, forgivenIndices);
+    this.streak = correct.reduce((streak, right, i) => forgiven.has(i) ? streak : right ? streak + 1 : 0, 0);
+  }
+
+  // A review may settle after this Ghost answer was animated. Its original
+  // miss stays in the list, while the ghost no longer keeps that strength.
+  forgiveReviewAnswer(index: number) {
+    if (!this.review || index < 0 || this.forgivenGrades.has(index)) return;
+    if (index < this.grades.length && this.grades[index] === 'F') {
+      this.forgivenGrades.add(index);
+      this.hp = Math.max(0, this.hp - 1);
+    } else if (index === this.grades.length && this.answered === 'F') {
+      this.forgivenTurn = true;
+      if (this.impacted) this.hp = Math.max(0, this.hp - 1);
+      else this.hpAfter = Math.max(0, (this.hpAfter ?? this.hp) - 1);
+    } else return;
+    this.streak = this.grades.reduce((streak, grade, i) => this.forgivenGrades.has(i) ? streak : grade === 'F' ? 0 : streak + 1, 0);
+  }
+
+  // A challenge can resolve while the fight is open. Health and the marked
+  // turns come from the freshly loaded run, never a guessed local score.
+  syncForgivenHits(indices: number[], hp: number) {
+    if (this.review) return;
+    this.forgivenGrades = new Set(indices.filter((i) => i >= 0 && i < this.grades.length));
+    if (indices.includes(this.grades.length) && this.answered === 'F') this.forgivenTurn = true;
+    if (this.phase === 'throw' && !this.impacted) this.hpAfter = hp;
+    else this.hp = hp;
   }
 
   // the turn on screen: its attack, whether it is a counter, its telegraph
@@ -241,13 +271,13 @@ export class BossFight {
 
   // Called only with a confirmed answer. S/F select the existing throw
   // animations internally; reviews never show or award a speed grade.
-  answerReview(correct: boolean) {
+  answerReview(correct: boolean, forgiven = false) {
     if (!this.review || !this.canAnswer || this.lockedAt != null) return false;
     this.lockIn();
     this.timers.push({
       at: this.t + 500,
       fn: () => this.answerRight(
-        correct ? 'S' : 'F', 0, this.hp - Number(correct), true
+        correct ? 'S' : 'F', 0, this.hp - Number(correct || forgiven), true, forgiven
       )
     });
     return true;
@@ -270,23 +300,26 @@ export class BossFight {
 
   // the server's word is final: a graded pick lands even if this frame's
   // own reading pause has not quite run out
-  answerRight(grade?: Grade, holdMs = 0, hpAfter?: number, reviewHeld = false) {
+  answerRight(grade?: Grade, holdMs = 0, hpAfter?: number, reviewHeld = false, forgiven = false) {
     if (this.phase !== 'question' || this.answered) return;
     this.holdMs = reviewHeld ? 0 : holdMs;
     this.reviewHeld = reviewHeld;
     this.hpAfter = hpAfter ?? null;
     this.countering = false;
+    this.forgivenTurn = forgiven;
     const g = grade || this.liveGrade(this.elapsedMs(this.lockedAt ?? this.t));
     this.answered = g;
-    if (g === 'F') {
-      missSound();
-      this.streak = 0;
-    } else if (this.idx === this.hitCount - 1 && this.streak === this.hitCount - 1) {
-      this.streak++;
-      perfectBonus();
-    } else {
-      bossChime(this.streak);
-      this.streak++;
+    if (!forgiven) {
+      if (g === 'F') {
+        missSound();
+        this.streak = 0;
+      } else if (this.idx === this.hitCount - 1 && this.streak === this.hitCount - 1) {
+        this.streak++;
+        perfectBonus();
+      } else {
+        bossChime(this.streak);
+        this.streak++;
+      }
     }
     this.phase = 'throw';
     this.phaseAt = this.t;
@@ -629,6 +662,7 @@ export class BossFight {
       this.turnAttack = turn.attack ? bossAttack(this.def, turn.attack) : null;
     }
     this.answered = null;
+    this.forgivenTurn = false;
     this.lockedAt = null;
     this.countering = false;
     this.impacted = false;
@@ -788,6 +822,7 @@ export class BossFight {
     if (since > (this.countering ? 1700 : 1500) + this.holdMs) {
       // a counter is no hit: it leaves no grade
       if (!this.countering) {
+        if (this.forgivenTurn) this.forgivenGrades.add(this.grades.length);
         this.grades.push(g);
         this.idx++;
       }
@@ -820,10 +855,10 @@ export class BossFight {
       this.fx.burst('star', 20, this.mx, this.my, { color: '#ffcb32' });
     }
     this.fx.text(
-      this.review && pts === 0 ? 'MISS' : `-${pts}`,
+      this.forgivenTurn ? 'FORGIVEN' : this.review && pts === 0 ? 'MISS' : `-${pts}`,
       this.mx,
       this.my - 40,
-      this.countering ? '#ffcb32' : GRADE[g][0],
+      this.forgivenTurn ? '#bcdcfa' : this.countering ? '#ffcb32' : GRADE[g][0],
       g === 'S' ? 22 : 16
     );
     this.fx.burst(
@@ -1224,7 +1259,7 @@ export class BossFight {
         (Math.round(this.turn / (Math.PI * 2)) * Math.PI * 2 - this.turn) *
         0.15;
     const sprite = marbleSprite(
-      filled && !this.review ? this.answered : null,
+      filled && !this.review && !this.forgivenTurn ? this.answered : null,
       face,
       this.turn + (struggling ? Math.sin(t / 90) * 0.12 : 0)
     );
@@ -1314,7 +1349,7 @@ export class BossFight {
       const cx = W - 30 - (this.hitCount - 1 - i) * 22;
       g.fillStyle = INK;
       g.fillRect(cx - 9, H - 30, 18, 18);
-      g.fillStyle = gr
+      g.fillStyle = this.forgivenGrades.has(i) ? '#bcdcfa' : gr
         ? this.review ? gr === 'F' ? '#ff4d6d' : '#42ce83' : GRADE[gr][0]
         : '#3a2a52';
       g.fillRect(cx - 6, H - 27, 12, 12);

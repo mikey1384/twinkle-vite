@@ -48,10 +48,13 @@ export default function useChallengeReviews() {
               newStats: { aiUsagePolicy: response.aiUsagePolicy }
             });
           }
-          if (typeof response.newBalance === 'number') {
+          if (typeof response.newBalance === 'number' || typeof response.newXp === 'number') {
             onSetUserState({
               userId,
-              newState: { twinkleCoins: response.newBalance }
+              newState: {
+                ...(typeof response.newBalance === 'number' ? { twinkleCoins: response.newBalance } : {}),
+                ...(typeof response.newXp === 'number' ? { twinkleXP: response.newXp } : {})
+              }
             });
           }
         }

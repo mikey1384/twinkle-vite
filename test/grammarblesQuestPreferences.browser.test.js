@@ -356,7 +356,7 @@ test('all-S world bonuses show progress and canonical collection, and replays st
 });
 
 test('ghost reviews reuse full boss battles, preserve manual explanations, and finish all assigned questions', { timeout: 240000 }, async () => {
-  const output = path.resolve(repo, '../work/grammar-quest-ghost-boss-reuse-20261028');
+  const output = process.env.GRAMMAR_QUEST_GHOST_ARTIFACTS || path.resolve(repo, '../work/grammar-quest-ghost-browser-current');
   mkdirSync(output, { recursive: true });
   const script = await compile({ realGhost: true });
   const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');

@@ -29,6 +29,7 @@ export default function ChallengeModal({
   questionText,
   savedReview,
   questKind,
+  questCounter = false,
   questRef,
   returnLabel = 'Back to review',
   continueLabel,
@@ -42,6 +43,7 @@ export default function ChallengeModal({
   questionText?: string;
   savedReview?: SavedChallengeReview | null;
   questKind?: 'stop' | 'fort' | 'castle' | 'nemesis';
+  questCounter?: boolean;
   // where Quest asked it, so the review sees the question as the learner did
   questRef?: { runId: number; position: number };
   returnLabel?: string;
@@ -209,8 +211,12 @@ export default function ChallengeModal({
                     : questKind === 'stop'
                     ? 'In practice, an accepted challenge forgives the miss. Keep going with the corrected question.'
                     : questKind === 'fort' || questKind === 'castle'
-                      ? 'An accepted boss challenge earns a free rematch with full rewards. Find it on the map.'
-                      : 'The question is fixed for future attempts. Your Nemesis result stays the same.'}
+                      ? questCounter
+                        ? 'This counter is forgiven. You also have a free rematch with full rewards.'
+                        : 'This hit is forgiven and no longer counts against your grade. You also have a free rematch with full rewards.'
+                      : completed.questScheduleReviewPending
+                        ? 'This Ghost question is forgiven. Its earlier review schedule still needs review.'
+                        : 'This Ghost question is forgiven and won’t count against your result.'}
                 </p>
               )}
             </>

@@ -169,6 +169,7 @@ export default function MarbleRunScreen({
   );
   const [fogShown, setFogShown] = useState(99);
   const [chaser, setChaser] = useState(rules?.chaser || null);
+  const [refreshedCombo, setRefreshedCombo] = useState<number | null>(null);
   // the question being challenged (Classic's Challenge, opened from a miss)
   const [challengeId, setChallengeId] = useState<number | null>(null);
   const { reviews } = useChallengeReviews();
@@ -287,11 +288,10 @@ export default function MarbleRunScreen({
           onFinish: () => finish()
         }
       );
-      const graded = (run.answers || [])
-        .filter((a) => !a.counter)
-        .map((a) => a.grade)
-        .filter(Boolean) as Grade[];
-      if (graded.length || run.hp != null) fight.resume(graded, run.hp);
+      const gradedAnswers = (run.answers || []).filter((a) => !a.counter && a.grade);
+      const graded = gradedAnswers.map((a) => a.grade) as Grade[];
+      const forgivenIndices = gradedAnswers.flatMap((a, index) => a.forgiven ? [index] : []);
+      if (graded.length || run.hp != null) fight.resume(graded, run.hp, forgivenIndices);
       if (savedReviewPosition != null) {
         fight.restoreReview();
         return fight;
@@ -496,7 +496,7 @@ export default function MarbleRunScreen({
   const lastAnswer = Object.values(answers).sort(
     (a, b) => b.position - a.position
   )[0];
-  const combo = Math.min(5, lastAnswer?.combo ?? run.combo ?? 0);
+  const combo = Math.min(5, refreshedCombo ?? lastAnswer?.combo ?? run.combo ?? 0);
   const grade = practice?.grade || null;
   const promotions = grade ? LADDER.indexOf(grade) + 1 : 0;
 
@@ -761,10 +761,10 @@ export default function MarbleRunScreen({
                         choice: choiceCls,
                         key: keyCls,
                         right: rightCls,
-                        wrong: wrongCls
+                        wrong: answer?.forgiven ? forgivenChoiceCls : wrongCls
                       }}
                       choiceExtra={boss ? bossChoiceCls : undefined}
-                      crossed={boss ? wrongPicks : undefined}
+                      crossed={boss && !answer?.forgiven ? wrongPicks : undefined}
                       revealed={fogShown}
                       onPick={handlePick}
                       onRepeat={() =>
@@ -787,9 +787,9 @@ export default function MarbleRunScreen({
                         const right =
                           answer?.correctIndex === i &&
                           (answer.isCorrect || !boss || !!answer.counter);
-                        const crossed =
+                        const crossed = !answer?.forgiven && (
                           wrongPicks.includes(i) ||
-                          (picked && (!boss || !!answer.counter));
+                          (picked && (!boss || !!answer.counter)));
                         return (
                           <button
                             key={i}
@@ -797,6 +797,7 @@ export default function MarbleRunScreen({
                               choiceCls,
                               boss && bossChoiceCls,
                               right && rightCls,
+                              picked && answer?.forgiven && forgivenChoiceCls,
                               crossed && wrongCls,
                               i >= fogShown && foggedCls
                             )}
@@ -872,7 +873,7 @@ export default function MarbleRunScreen({
                           <span className={cx(nextNoteCls, bossNoteCls)}>
                             {/* a wrong click its check already ruled the
                                 question's fault */}
-                            {answer.forgiven ? 'Free rematch earned. ' : ''}
+                            {answer.forgiven ? 'Forgiven. Free rematch earned. ' : ''}
                             {answer.reviewPending
                               ? 'Grade timer paused. Take your time.'
                               : reading ? `Next hit in ${secondsLeft}…` : 'Get ready…'}
@@ -918,13 +919,13 @@ export default function MarbleRunScreen({
                             </button>
                           )}
                           <span className={nextNoteCls}>
-                            {/* an upheld challenge forgives a practice miss (nemesis misses stay) */}
+                            {/* an upheld challenge forgives a practice miss */}
                             {answer.caught
                               ? 'The chaser caught you! This stop ends here; try it again.'
                               : answer.forgiven
                                 ? // its check already ruled the question
                                   // at fault: not counted, not asked again
-                                  'Doesn’t count — the question was at fault.'
+                                  'Forgiven — the question was at fault.'
                                 : feedback?.challenge?.upheld &&
                                     run.rules.mode !== 'practice'
                                   ? 'Upheld! The answer key is fixed.'
@@ -1001,6 +1002,7 @@ export default function MarbleRunScreen({
         choiceIndex,
         responseMs
       });
+      setRefreshedCombo(null);
       if (boss) {
         const fight = engine as BossFight;
         // the next turn comes with the answer
@@ -1016,7 +1018,7 @@ export default function MarbleRunScreen({
         if (question.counter) {
           setAnswers((prev) => ({ ...prev, [result.position]: result }));
           await feedbackBeat(fight);
-          fight.counterResult(result.isCorrect, result.damage || 0, result.hp);
+          fight.counterResult(result.isCorrect || !!result.counterCredited, result.damage || 0, result.hp);
           setReady(false);
           setPhase('waiting');
           return;
@@ -1044,7 +1046,7 @@ export default function MarbleRunScreen({
             ? result.selectedIndex
             : wrongPicks.length ? wrongPicks[wrongPicks.length - 1] : null
         );
-        if (!result.isCorrect) fight.answerWrong();
+        if (!result.isCorrect && !landed.forgiven) fight.answerWrong();
         // the crossed-out tries stay up through the review (cleared when
         // the next turn starts)
         await feedbackBeat(fight);
@@ -1055,7 +1057,8 @@ export default function MarbleRunScreen({
           (result.grade || 'F') as Grade,
           holdMs,
           result.hp,
-          !!result.reviewPending
+          !!result.reviewPending,
+          !!landed.forgiven
         );
         setReady(false);
         setPhase(result.reviewPending || holdMs ? 'bossReview' : 'waiting');
@@ -1082,7 +1085,7 @@ export default function MarbleRunScreen({
         question.format === 'stomp' && result.correctIndex != null
           ? Number(result.correctIndex)
           : null;
-      run_.answer(result.isCorrect, hint);
+      run_.answer(result.isCorrect, hint, !!result.forgiven);
       if (result.isCorrect && (result.rights || 0) >= (result.goal || 5))
         setToFlag(true);
       setPhase(result.isCorrect ? 'waiting' : 'review');
@@ -1196,14 +1199,27 @@ export default function MarbleRunScreen({
   async function refreshQueued() {
     try {
       const fresh = await loadRun(run.runId, { refresh: true });
+      const latestAnswers = (fresh?.answers || []) as QuestAnswer[];
+      const forgiven = new Set(latestAnswers.filter((a) => a.forgiven).map((a) => a.position));
+      const freshChaser = fresh?.rules?.mode === 'practice' ? fresh.rules.chaser : null;
+      setAnswers((previous) => Object.fromEntries(Object.entries(previous).map(([position, value]) => [position,
+        forgiven.has(Number(position)) ? { ...value, forgiven: true, ...(freshChaser && freshChaser.gap > 0 ? { caught: false } : {}) } : value
+      ])));
+      if (typeof fresh?.combo === 'number') setRefreshedCombo(fresh.combo);
+      if (engine instanceof PracticeRun) {
+        engine.misses = latestAnswers.filter((a) => !a.isCorrect && !a.forgiven).length;
+        if (freshChaser) { setChaser(freshChaser); engine.setChaser(freshChaser); }
+      } else if (engine instanceof BossFight && typeof fresh?.hp === 'number') {
+        const graded = latestAnswers.filter((a) => !a.counter && a.grade);
+        engine.syncForgivenHits(graded.flatMap((a, i) => a.forgiven ? [i] : []), fresh.hp);
+      }
       const byPosition = new Map<number, QuestQuestion>(
         (fresh?.questions || []).map((q: QuestQuestion) => [q.position, q])
       );
-      setQuestions((qs) =>
-        qs.map((q) =>
-          answersRef.current[q.position] ? q : byPosition.get(q.position) || q
-        )
-      );
+      setQuestions((qs) => [
+        ...qs.map((q) => answersRef.current[q.position] ? q : byPosition.get(q.position) || q),
+        ...(fresh?.questions || []).filter((q: QuestQuestion) => !qs.some((old) => old.position === q.position))
+      ]);
     } catch {
       // reopening the run shows the new wording
     }
@@ -1593,6 +1609,13 @@ const rightCls = css`
     border-color: #1f9a4c;
     background: linear-gradient(#4fd17c, #2fb862);
     box-shadow: 0 4px 0 #18803e;
+  }
+`;
+const forgivenChoiceCls = css`
+  && {
+    border-color: #285777;
+    background: #356f99;
+    box-shadow: 0 4px 0 #204963;
   }
 `;
 // a miss reads as red at a glance, with readable text (the old pale pink

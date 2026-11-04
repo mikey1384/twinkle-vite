@@ -144,6 +144,7 @@ export class PracticeRun implements RunView {
     if (!this.chaser) this.shownGap = chaser.gap;
     this.chaser = chaser;
     if (chaser.gap <= 0 && this.caughtAt < 0) this.caughtAt = this.t;
+    if (chaser.gap > 0) this.caughtAt = -1;
   }
   // px behind the marble for a gap (it starts off screen)
   private chaserBehind(gap: number) {
@@ -171,13 +172,13 @@ export class PracticeRun implements RunView {
   // The player answered the current question. Returns false while the
   // marble is busy (the caller keeps the buttons disabled anyway).
   // `hint`: Stomp's wrong-sentence mask; only those enemies are stomped.
-  answer(ok: boolean, hint: number | null = null) {
+  answer(ok: boolean, hint: number | null = null, forgiven = false) {
     if (this.busy) return false;
     this.hint = hint;
     if (ok) {
       if (this.grade === 'A' && this.misses === 0) perfectBonus();
       else practiceChime(this.grade ? LADDER.indexOf(this.grade) + 1 : 0);
-    } else {
+    } else if (!forgiven) {
       missSound();
       this.misses++;
     }

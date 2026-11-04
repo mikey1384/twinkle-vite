@@ -2,7 +2,12 @@ export interface ChallengeResult {
   justified: boolean;
   explanation: string;
   newBalance?: number;
+  newXp?: number;
   questMissForgiven?: boolean;
+  questCombo?: number;
+  questScheduleReviewPending?: boolean;
+  questRunId?: number;
+  questPosition?: number;
 }
 
 export interface SavedChallengeReview {

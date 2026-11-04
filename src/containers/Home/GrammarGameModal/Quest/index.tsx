@@ -115,6 +115,7 @@ export default function GrammarQuest({
             kind={run.kind}
             runId={run.runId}
             onBackToMap={handleBackToMap}
+            onCorrected={handleCorrectedResult}
             onPracticeAgain={run.kind === 'nemesis' ? () => handleStart({ nemesis: true, practiceOf: run.runId }) : undefined}
             startingPractice={starting || pendingAction !== null}
           />
@@ -257,6 +258,16 @@ export default function GrammarQuest({
         newStats: buildTodayStatsPatchFromDailyTaskStatus(
           finished.dailyTaskStatus
         )
+      });
+    }
+    refresh();
+  }
+
+  function handleCorrectedResult(corrected: QuestResult) {
+    applyBalances(corrected);
+    if (corrected.dailyTaskStatus) {
+      onApplyTodayStatsProgress({
+        newStats: buildTodayStatsPatchFromDailyTaskStatus(corrected.dailyTaskStatus)
       });
     }
     refresh();

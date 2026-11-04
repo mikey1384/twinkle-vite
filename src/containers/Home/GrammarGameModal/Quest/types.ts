@@ -153,6 +153,7 @@ export interface QuestAnswer {
   // boss: the health left after this answer; a counter's outcome
   hp?: number;
   counter?: boolean;
+  counterCredited?: boolean; // a forgiven, timely counter grants its bonus
   damage?: number;
   late?: boolean; // a counter answered right after its window closed
   // a miss later ruled the question's fault (a check or someone's upheld
@@ -239,13 +240,15 @@ export interface QuestRun {
 export interface QuestResult {
   runId: number;
   practiceOnly?: boolean;
-  score: number;
+  score: number | null;
   grade?: 'S' | 'A' | 'B' | 'C' | 'D' | 'F' | null;
   cleared: boolean;
   perfect?: boolean;
   rights?: number;
   misses?: number;
   points?: number;
+  forgivenHits?: number;
+  forgivenQuestions?: number;
   passPoints?: number;
   counterHits?: number; // boss: counters landed (bonus damage and XP)
   caught?: boolean; // a chaser stop: the chaser caught up
