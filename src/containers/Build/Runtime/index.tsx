@@ -827,6 +827,7 @@ const launchTargetLoadingOverlayClass = css`
 
 interface BuildRuntimeProps {
   buildIdOverride?: number | null;
+  initialLoadFromWriter?: boolean;
   locationOverride?: Location;
   onRuntimeBuildLoaded?: (
     build: RuntimeBuild,
@@ -837,6 +838,7 @@ interface BuildRuntimeProps {
 
 export default function BuildRuntime({
   buildIdOverride = null,
+  initialLoadFromWriter = false,
   locationOverride,
   onRuntimeBuildLoaded,
   runtimeIsActive = true
@@ -2011,6 +2013,7 @@ export default function BuildRuntime({
       try {
         const [data, appMcpPayload] = await Promise.all([
           loadRuntimeBuild(numericBuildId, {
+            fromWriter: initialLoadFromWriter,
             runtimeSource: requestedRuntimeSource,
             viewSource: runtimeViewSource
           }),
@@ -2038,6 +2041,7 @@ export default function BuildRuntime({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     appMcpSessionId,
+    initialLoadFromWriter,
     numericBuildId,
     requestedRuntimeSource,
     runtimeViewSource,

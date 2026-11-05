@@ -42,6 +42,8 @@ import {
   subscribeAppLifecycleStatus,
   warmAppLifecycleStore
 } from '~/helpers/buildAppLifecycle';
+import PublishedUpdateNotice from './PublishedUpdateNotice';
+import { usePublishedUpdate } from './hooks/usePublishedUpdate';
 
 // Phones run out of memory with several apps loaded at once (10-25: Safari
 // killed the whole tab with a 3D app kept in the background). On phones a
@@ -77,6 +79,7 @@ interface RuntimeSession {
   key: string;
   location: Location;
   loaded: boolean;
+  loadFromWriter: boolean;
   publishedVersionId: number | null;
   runtimeSource: BuildRuntimeSource;
   title: string;
@@ -124,12 +127,14 @@ function createRuntimeSession({
   buildId,
   location,
   runtimeSource,
-  userId
+  userId,
+  loadFromWriter = false
 }: {
   buildId: number;
   location: Location;
   runtimeSource: BuildRuntimeSource;
   userId: number | null;
+  loadFromWriter?: boolean;
 }): RuntimeSession {
   return {
     buildId,
@@ -138,6 +143,7 @@ function createRuntimeSession({
     key: createRuntimeSessionKey(buildId, runtimeSource),
     location,
     loaded: false,
+    loadFromWriter,
     publishedVersionId: null,
     runtimeSource,
     title: 'Build App',
@@ -269,71 +275,66 @@ export default function BuildRuntimeKeepAliveHost() {
     location
   ]);
 
-  // Publish freshness: a kept-alive published-app session can outlive a new
-  // publish (update in the workspace, come back to the app tab -> old build).
-  // Re-entering the app route is a natural reload boundary, so verify the
-  // published version there and discard the stale session when it moved on.
-  // The probe must be the dedicated published-version endpoint: the runtime
-  // endpoint records a view for published fetches, and the workspace loader
-  // returns no build (only an access redirect) for public non-owner visitors
-  // while running heavy owner-only side effects for owners.
+  // Use the dedicated published-version endpoint: unlike the runtime loader,
+  // it neither records another view nor loads the owner's workspace.
   const loadBuildPublishedVersion = useAppContext(
     (v) => v.requestHelpers.loadBuildPublishedVersion
   );
-  const loadBuildPublishedVersionRef = useRef(loadBuildPublishedVersion);
-  loadBuildPublishedVersionRef.current = loadBuildPublishedVersion;
-  useEffect(() => {
-    if (!isRuntimeRoute || !activeBuildId) return;
-    const session = sessionsRef.current.find(
-      (s) => s.buildId === activeBuildId
-    );
-    // A loaded published session with a null version is a legacy build served
-    // through the build.code fallback (no artifact snapshot). It must still
-    // be probed: when its owner later publishes a modern snapshot, the live
-    // version moves null -> id and the kept session below refreshes. A
-    // still-legacy build compares null === null and keeps its session.
-    if (!session || !session.loaded || session.runtimeSource !== 'published') {
-      return;
+  const isPinnedAppSession = Boolean(
+    new URLSearchParams(location.search).get('appMcpSession')
+  );
+  const publishedUpdate = usePublishedUpdate({
+    buildId: activeBuildId,
+    sessionKey: activeSession?.key || null,
+    loadedVersion: activeSession?.publishedVersionId ?? null,
+    enabled: Boolean(
+      isRuntimeRoute && activeSession?.loaded &&
+      activeSession.runtimeSource === 'published' && !isPinnedAppSession
+    ),
+    loadVersion: loadBuildPublishedVersion,
+    onUnpublished(sessionKey, loadedVersion) {
+      setSessions((current) => current.map((s) =>
+        s.key === sessionKey && s.publishedVersionId === loadedVersion
+          ? createRuntimeSession({
+              buildId: s.buildId,
+              location: s.location,
+              runtimeSource: s.runtimeSource,
+              userId: s.userId,
+              loadFromWriter: true
+            })
+          : s
+      ));
     }
-    let cancelled = false;
-    const staleKey = session.key;
-    const loadedVersion = session.publishedVersionId;
-    (async () => {
-      try {
-        const data = await loadBuildPublishedVersionRef.current(activeBuildId);
-        if (cancelled) return;
-        // Only a well-formed 2xx body is canonical; anything else (errors
-        // reject into the catch, malformed proxy bodies land here) keeps the
-        // session. A confirmed null is a real revocation: the owner
-        // unpublished, so the session must not keep serving the old app —
-        // replace it and let the fresh load surface the canonical runtime
-        // response (403 error for visitors, workspace fallback for the owner).
-        if (!data || typeof data !== 'object') return;
-        if (!('publishedArtifactVersionId' in data)) return;
-        const liveVersion =
-          Number(data.publishedArtifactVersionId) || null;
-        if (liveVersion === loadedVersion) return;
-        setSessions((current) =>
-          current.map((s) =>
-            s.key === staleKey && s.publishedVersionId === loadedVersion
-              ? createRuntimeSession({
-                  buildId: s.buildId,
-                  location: s.location,
-                  runtimeSource: s.runtimeSource,
-                  userId: s.userId
-                })
-              : s
-          )
-        );
-      } catch {
-        // Version check is best-effort; the kept session stays up on failure.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-     
-  }, [activeBuildId, isRuntimeRoute]);
+  });
+  const updatingSessionsRef = useRef(new Set<string>());
+  const [updatingSessionKey, setUpdatingSessionKey] = useState<string | null>(null);
+
+  async function updatePublishedApp(session: RuntimeSession) {
+    if (updatingSessionsRef.current.has(session.key)) return;
+    updatingSessionsRef.current.add(session.key);
+    setUpdatingSessionKey(session.key);
+    try {
+      // Apps that support lifecycle snapshots can restore their place after
+      // the deliberate update. The notice also asks players to save first.
+      await requestAppLifecycleSnapshot(session.buildId, 'unload');
+    } catch {
+      // A snapshot is best effort; the player explicitly chose to update.
+    } finally {
+      setSessions((current) => current.map((s) =>
+        s.key === session.key
+          ? createRuntimeSession({
+              buildId: s.buildId,
+              location: s.location,
+              runtimeSource: s.runtimeSource,
+              userId: s.userId,
+              loadFromWriter: true
+            })
+          : s
+      ));
+      updatingSessionsRef.current.delete(session.key);
+      setUpdatingSessionKey((current) => current === session.key ? null : current);
+    }
+  }
 
   // Auth reconciliation (mirrors the single-session version, applied per
   // session): adopt the current user for anon sessions; drop any background
@@ -567,12 +568,20 @@ export default function BuildRuntimeKeepAliveHost() {
             <BuildRuntime
               key={s.key}
               buildIdOverride={s.buildId}
+              initialLoadFromWriter={s.loadFromWriter}
               locationOverride={isActive ? location : s.location}
               onRuntimeBuildLoaded={(build, runtimeSource) =>
                 handleRuntimeBuildLoaded(s.key, build, runtimeSource)
               }
               runtimeIsActive={isActive}
             />
+            {isActive && publishedUpdate.available ? (
+              <PublishedUpdateNotice
+                updating={updatingSessionKey === s.key}
+                onUpdate={() => void updatePublishedApp(s)}
+                onLater={publishedUpdate.dismiss}
+              />
+            ) : null}
           </div>
         );
       })}
