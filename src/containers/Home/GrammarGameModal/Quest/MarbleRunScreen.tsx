@@ -739,7 +739,7 @@ export default function MarbleRunScreen({
                     </div>
                   )}
                   {question.instruction && (
-                    <div className={instructionCls}>
+                    <div className={cx(instructionCls, boss && bossInstructionCls)}>
                       {question.instruction}
                     </div>
                   )}
@@ -1444,6 +1444,9 @@ const instructionCls = css`
   font-size: max(1.4rem, calc(14 * var(--px)));
   line-height: 1.45;
   color: #373141;
+`;
+const bossInstructionCls = css`
+  color: #d9c8ff;
 `;
 
 const howCls = css`
