@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
+import ProfileCovers from './ProfileCovers';
+import { MIKEY_USER_ID } from '~/constants/defaultValues';
 import DeletedPost from '~/components/Deleted/Post';
 import DeletedMessage from '~/components/Deleted/Message';
 import Loading from '~/components/Loading';
@@ -17,6 +19,7 @@ interface PaginationCursor {
 const PAGE_SIZE = 20;
 
 export default function ModActivities() {
+  const userId = useKeyContext((v) => v.myState.userId);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [contentType, setContentType] = useState<ContentType>('post');
@@ -167,6 +170,7 @@ export default function ModActivities() {
         }
       `}
     >
+      {Number(userId) === MIKEY_USER_ID && <ProfileCovers />}
       <FilterBar>
         <nav
           className={contentType === 'post' ? 'active' : ''}

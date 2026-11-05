@@ -2253,12 +2253,12 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    // Staff (canDelete, higher level) take a member's cover photo down.
-    async removeMemberProfileCover(memberId: number) {
+    // Only Mikey can remove another member's cover; bind it to the image reviewed.
+    async removeMemberProfileCover(memberId: number, expectedCoverUrl: string) {
       try {
         const { data } = await request.delete(
           `${URL}/user/cover/member/${memberId}`,
-          auth()
+          { ...auth(), data: { expectedCoverUrl } }
         );
         return data;
       } catch (error) {
