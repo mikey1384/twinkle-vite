@@ -4,33 +4,33 @@ import { css } from '@emotion/css';
 const noticeClass = css`
   position: absolute;
   z-index: 200;
-  top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
   left: 50%;
   transform: translateX(-50%);
   box-sizing: border-box;
-  width: min(30rem, calc(100% - 1.5rem));
-  padding: 0.75rem;
+  width: min(480px, calc(100% - 24px));
+  padding: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: 10px;
   border: 1px solid #b8c8e2;
-  border-radius: 0.75rem;
+  border-radius: 12px;
   background: #fff;
   color: #14233d;
-  box-shadow: 0 0.35rem 1.2rem rgba(0, 0, 0, 0.2);
-  font-size: 1rem;
+  box-shadow: 0 6px 19px rgba(0, 0, 0, 0.2);
+  font-size: 16px;
   line-height: 1.35;
 
-  p { margin: 0; flex: 1 1 14rem; }
+  p { margin: 0; flex: 1 1 224px; }
   strong { display: block; }
-  .actions { display: flex; gap: 0.5rem; margin-left: auto; }
+  .actions { display: flex; gap: 8px; margin-left: auto; }
   button {
-    min-height: 2.75rem;
-    padding: 0.45rem 0.8rem;
+    min-height: 44px;
+    padding: 7px 13px;
     border: 1px solid #355985;
-    border-radius: 0.5rem;
+    border-radius: 8px;
     background: #fff;
     color: #18385d;
     font: inherit;

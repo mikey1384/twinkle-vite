@@ -72,7 +72,7 @@ for (const [engine, type] of Object.entries({chromium,webkit})) {
     try {
       const page=await browser.newPage({viewport:{width:390,height:844},hasTouch:true});
       const errors=[];page.on('pageerror',e=>errors.push(e.message));
-      await page.route('http://localhost:3000/**',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body,#root{margin:0;width:100%;height:100%;font:16px system-ui}</style></head><body><div id="root"></div></body></html>'}));
+      await page.route('http://localhost:3000/**',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body,#root{margin:0;width:100%;height:100%}html{font-size:8px}body{font:16px system-ui}</style></head><body><div id="root"></div></body></html>'}));
       await page.goto('http://localhost:3000/');
       await page.addScriptTag({content:await compile()});
       await page.waitForFunction(()=>window.calls?.length===1 && window.mounts?.[363]===1);
@@ -85,6 +85,7 @@ for (const [engine, type] of Object.entries({chromium,webkit})) {
       const updateStyle=await page.getByRole('button',{name:'Update',exact:true}).evaluate(el=>{const s=getComputedStyle(el);return [s.userSelect||s.webkitUserSelect,s.getPropertyValue('-webkit-tap-highlight-color')];});
       assert.equal(updateStyle[0],'none','notice controls do not select on a long touch');
       if(updateStyle[1])assert.match(updateStyle[1],/^(transparent|rgba\(0, 0, 0, 0\))$/);
+      assert.equal(await page.getByText('New update available',{exact:true}).evaluate(el=>parseFloat(getComputedStyle(el).fontSize)),16,'notice remains readable with the website root font size');
       for(const [width,height] of [[320,640],[360,780],[390,844],[667,375],[1024,768]]){
         await page.setViewportSize({width,height});
         const box=await page.getByRole('status').boundingBox();
