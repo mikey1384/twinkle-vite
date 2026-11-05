@@ -4,6 +4,7 @@ import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 import { browserReportsOffline } from '~/helpers/browserNetwork';
 import { clientVersion } from '~/constants/defaultValues';
 import { getPresenceContinuityBindMetadata } from '~/helpers/presenceContinuity';
+import { isLuminePreviewCaptureContext } from '~/helpers/luminePreviewCapture';
 
 function buildSocketAuthPayload() {
   const token = getStoredItem('token');
@@ -24,7 +25,12 @@ export const socket = io(URL as string, {
   // An offline browser cannot complete a transport handshake. Waiting for the
   // browser's `online` event avoids an otherwise-unbounded reconnect loop on a
   // mobile device without changing or discarding the authenticated session.
-  autoConnect: !browserReportsOffline(),
+  // A Lumine view_preview uses a read-only capture credential, which the
+  // member socket intentionally rejects. Do not start even a guest handshake.
+  autoConnect:
+    !browserReportsOffline() &&
+    (typeof window === 'undefined' ||
+      !isLuminePreviewCaptureContext(window.location, getStoredItem('token'))),
   transports: ['websocket'],
   // `navigator.onLine` is only a hint on iOS. When Safari reports online but
   // the route is actually unavailable, back off the Manager-owned handshake

@@ -8,8 +8,9 @@ import React, {
   useCallback
 } from 'react';
 import { buildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
+import { isLuminePreviewCaptureContext } from '~/helpers/luminePreviewCapture';
 import Header from './Header';
-import SocketManager from './SocketManager';
+import SocketManager, { CaptureSocketIdentity } from './SocketManager';
 import DailyPictureNotifications from './DailyPictureNotifications';
 import InvalidPage from '~/components/InvalidPage';
 import LazyModalFallback from '~/components/Modals/LazyModalFallback';
@@ -668,6 +669,35 @@ export default function App() {
       routeMatches('/app-capture/:buildId', location.pathname),
     [location.pathname, usingBuildAppRuntime]
   );
+  const socketCredential = readAuthToken().token;
+  const usingLuminePreviewCapture = useMemo(
+    () =>
+      isLuminePreviewCaptureContext(
+        { pathname: location.pathname, search: location.search },
+        socketCredential
+      ),
+    [location.pathname, location.search, socketCredential]
+  );
+  const wasLuminePreviewCaptureRef = useRef(usingLuminePreviewCapture);
+  useLayoutEffect(() => {
+    const wasCapture = wasLuminePreviewCaptureRef.current;
+    wasLuminePreviewCaptureRef.current = usingLuminePreviewCapture;
+    if (usingLuminePreviewCapture) {
+      // Also cancel a connection already in progress if a capture route is
+      // reached through client-side navigation from an interactive route.
+      socket.disconnect();
+    } else if (
+      wasCapture &&
+      !sessionInterruption &&
+      readAuthToken().token &&
+      !hasExplicitAuthLogoutMarker() &&
+      !hasRejectedAuthSessionMarker() &&
+      !browserReportsOffline() &&
+      !socket.connected
+    ) {
+      socket.connect();
+    }
+  }, [usingLuminePreviewCapture, sessionInterruption]);
   const [runtimeKeepAliveHostEnabled, setRuntimeKeepAliveHostEnabled] =
     useState(usingBuildAppRuntime);
   // Build apps use the global nav on every device (phones get it as the fixed
@@ -1217,7 +1247,11 @@ export default function App() {
       // Socket.IO is manually paused on a real offline event. If Safari later
       // updates navigator.onLine without delivering `online`, a focus or the
       // bounded fallback probe must explicitly restart its Manager.
-      if (!browserReportsOffline() && !socket.connected) {
+      if (
+        !isLuminePreviewCaptureContext(window.location, readAuthToken().token) &&
+        !browserReportsOffline() &&
+        !socket.connected
+      ) {
         socket.connect();
       }
       // A confirmed session normally needs no HTTP work on focus; Socket.IO's
@@ -1240,7 +1274,9 @@ export default function App() {
           !sessionCredentialUnavailable &&
           !canonicalSessionUserId &&
           !userId) ||
-        (socket.connected && canonicalSessionUserId) ||
+        ((socket.connected ||
+          isLuminePreviewCaptureContext(window.location, readAuthToken().token)) &&
+          canonicalSessionUserId) ||
         document.visibilityState !== 'visible'
       ) {
         return;
@@ -1328,7 +1364,9 @@ export default function App() {
 
   const handleVisibilityChange = useCallback(() => {
     const visible = !document[hiddenRef.current as keyof Document];
-    socket.emit('change_away_status', visible);
+    if (!isLuminePreviewCaptureContext(window.location, readAuthToken().token)) {
+      socket.emit('change_away_status', visible);
+    }
     onChangePageVisibility(visible);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1403,7 +1441,11 @@ export default function App() {
       `}
     >
       <KeyContext.Provider value={keyContextValue}>
-        <SocketManager onInit={handleSocketInit} />
+        {usingLuminePreviewCapture ? (
+          <CaptureSocketIdentity />
+        ) : (
+          <SocketManager onInit={handleSocketInit} />
+        )}
         <DailyPictureNotifications />
         {mobileMenuShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>
@@ -2312,7 +2354,10 @@ export default function App() {
       onInitMyState(data);
       // the member trace: whether an admin is tracing this account
       noteMemberTraceSession(Number(data.id), data.clientTrace);
-      if (!socket.connected) {
+      if (
+        !isLuminePreviewCaptureContext(window.location, readAuthToken().token) &&
+        !socket.connected
+      ) {
         // This is the bounded stale-navigator recovery path above. The stored
         // identity is canonical at this point, so the socket can safely resume
         // without waiting for a browser `online` event that Safari omitted.

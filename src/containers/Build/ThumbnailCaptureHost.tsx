@@ -6,6 +6,7 @@ import InvalidPage from '~/components/InvalidPage';
 import PreviewPanel from './PreviewPanel';
 import { useAppContext } from '~/contexts';
 import { normalizeAllowedBuildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
+import { normalizeLuminePreviewCaptureId } from '~/helpers/luminePreviewCapture';
 import { persistAuthToken } from '~/helpers/userDataHelpers';
 import type { BuildRuntimeObservationState } from './types/runtimeObservationTypes';
 
@@ -57,13 +58,6 @@ const phoneFrameClass = css`
 // PreviewPanel only mounts the frame when it has something to show, so a
 // capture passes this stand-in; the frame still loads previewPath.
 const LUMINE_CAPTURE_PLACEHOLDER_CODE = '<!-- lumine view_preview capture -->';
-
-function parseLumineCaptureId(value: string | null) {
-  const normalized = String(value || '')
-    .trim()
-    .toLowerCase();
-  return /^[0-9a-f]{32}$/.test(normalized) ? normalized : null;
-}
 
 function parseOptionalViewerId(value: string | null) {
   const parsed = Number(value);
@@ -120,7 +114,9 @@ export default function ThumbnailCaptureHost({
   }, [location.search]);
   const lumineCapture = useMemo(() => {
     const params = new URLSearchParams(location.search);
-    const captureId = parseLumineCaptureId(params.get('lumineCaptureId'));
+    const captureId = normalizeLuminePreviewCaptureId(
+      params.get('lumineCaptureId')
+    );
     if (!captureId) return null;
     const viewport: 'phone' | 'desktop' =
       params.get('captureViewport') === 'desktop' ? 'desktop' : 'phone';

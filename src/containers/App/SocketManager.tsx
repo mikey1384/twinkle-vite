@@ -13,7 +13,7 @@ import { useChatContext, useKeyContext } from '~/contexts';
 // <Header>, which is not rendered on build-runtime routes (/app/:buildId), so
 // the socket was never identity-bound or marked auth-ready there and Build apps
 // hung on "Connecting to the shared world...". Mounting it at the App shell,
-// unconditionally, keeps socket auth/reconnect alive on every route.
+// for interactive routes keeps socket auth/reconnect alive on Build apps too.
 export default function SocketManager({
   onInit
 }: {
@@ -95,5 +95,15 @@ export default function SocketManager({
     });
   }, [usingChat, selectedChannelId, currentPathId, subchannelPath, subchannelId, chatType]);
 
+  return null;
+}
+
+// Keep diagnostics' identity current without mounting socket reconnect hooks
+// for a read-only capture credential that the socket cannot accept.
+export function CaptureSocketIdentity() {
+  const userId = useKeyContext((v) => v.myState.userId);
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
   return null;
 }
