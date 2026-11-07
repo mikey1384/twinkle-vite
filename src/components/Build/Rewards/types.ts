@@ -26,7 +26,9 @@ export interface CoinPrice {
     maxRecipients?: number;
     maxCoinsPerPurchase?: number;
     unitName?: string;
-    topic: string;
+    // r2: the plot grid the purchase keys name; Twinkle pays from its own
+    // block record inside it (required for a builders price).
+    tally?: { plotSize: number; keyFormat: 'region:x:z' | 'region:cx:cz' };
   };
 }
 // Reviewer context for an app's Coin prices (coinPriceReview.ts).
@@ -37,6 +39,8 @@ export interface CoinPriceReviewContext {
   sales: Array<{ priceId: string; purchases: number; buyers: number; coins: number }>;
   ownerEarnings: { coins: number; purchases: number; buyers: number };
   builderPurchases: number;
+  // r2: blocks Twinkle has recorded in this app, and by how many players.
+  tally?: { cells: number; builders: number } | null;
   // Sales and takeovers so far: Coins paid to previous holders.
   resales?: { sales: number; sellers: number; coins: number };
   // The offer rule's days (30-day takeover, lapse day or null, re-offer wait).

@@ -5526,7 +5526,8 @@ export function useHostBridge({
           case 'coins:respond-offer':
           case 'coins:takeover':
           case 'coins:withdraw-offer':
-          case 'coins:offers': {
+          case 'coins:offers':
+          case 'coins:record-blocks': {
             // Never forward app-supplied grants, prices, recipients or
             // destinations: helpers/buildRuntimeCoins.ts quotes the server,
             // shows Twinkle's own confirmation and sends what was confirmed.

@@ -23,7 +23,9 @@ export type CoinConfirmRequest =
       priceCoins: number;
       destination: 'removed' | 'owner';
       ownerName?: string | null;
+      // From the server's tally (r2): who built in the plot and how many.
       builders: CoinQuoteBuilder[];
+      unitName?: string;
       balance: number;
       preview?: boolean;
     }
@@ -112,8 +114,21 @@ export function coinDestinationSentence(request: Extract<CoinConfirmRequest, { k
   return base ? `${base}.` : 'It is free.';
 }
 
+// Who built here, as Twinkle recorded it (r2): the split comes from Twinkle's
+// own record of who placed each block, never from the app.
+export function coinBuilderCountLine(request: Extract<CoinConfirmRequest, { kind: 'charge' }>) {
+  const builders = request.builders.filter((builder) => builder.units > 0);
+  if (!builders.length) return null;
+  const unit = request.unitName || 'block';
+  const plural = (count: number) => `${n(count)} ${unit}${count === 1 ? '' : 's'}`;
+  if (builders.length === 1)
+    return `Twinkle counted the ${unit}s other players placed here: ${builders[0].username || 'a player'} placed ${plural(builders[0].units)}.`;
+  return `Twinkle counted the ${unit}s other players placed here: ${nameList(builders.map((builder) => `${builder.username || 'a player'} ${plural(builder.units)}`))}.`;
+}
+
 export function coinConfirmText(request: CoinConfirmRequest) {
   if (request.kind === 'charge') {
+    const counted = coinBuilderCountLine(request);
     return {
       title: request.coins > 0 ? `Buy ${request.title}?` : `Get ${request.title}?`,
       lines: [
@@ -122,6 +137,7 @@ export function coinConfirmText(request: CoinConfirmRequest) {
           ? `Price: ${n(request.coins)} Coins. You have ${n(request.balance)}.`
           : 'Price: free.',
         coinDestinationSentence(request),
+        ...(counted ? [counted] : []),
         ...(request.preview ? ['Preview: nothing will be charged.'] : [])
       ],
       appNote: coinKeyNote(request.key),

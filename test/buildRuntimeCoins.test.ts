@@ -5,15 +5,17 @@ import {
   COIN_BOX_LIMITS,
   runBuildRuntimeCoinRequest
 } from '../src/containers/Build/PreviewPanel/helpers/buildRuntimeCoins';
-import { coinConfirmText } from '../src/components/Build/Coins/coinConfirmText';
+import { coinConfirmText, coinBuilderCountLine } from '../src/components/Build/Coins/coinConfirmText';
 import { isMutatingPreviewRequestType } from '../src/containers/Build/PreviewPanel/helpers/previewRequestPolicy';
 import {
   buildCoinPricePersonWarning,
+  COIN_TALLY_PLAIN_WORDS,
   formatBuildCoinPriceLine,
   initialReviewRulesText
 } from '../src/helpers/buildRewardReviewCard';
 import { createCoinConfirmArming } from '../src/components/Build/Coins/coinConfirmArming';
 import {
+  COIN_TALLY_REMAINING_RISK,
   coinPriceDestinationLine,
   coinPricePaysPerson
 } from '../src/components/Build/Rewards/CoinPricesSummary';
@@ -32,6 +34,7 @@ const quote = {
     { userId: 6, username: 'nayeayo007', units: 10, coins: 20 },
     { userId: 9, username: 'KenGo', units: 7, coins: 15 }
   ],
+  unitName: 'block',
   balance: 2000,
   canAfford: true,
   appTitle: 'Firestar World'
@@ -84,8 +87,13 @@ test('a charge shows Twinkle’s box built from the server quote, then sends wha
   assert.equal(chargeBody.requestId, 'host-request-1');
   assert.equal('coins' in chargeBody, false);
   assert.equal('recipientId' in chargeBody, false);
+  // r2: the app's builder list never leaves the host, in the quote or the charge.
+  assert.equal('builders' in calls.find(([op]) => op === 'quote')![1], false);
+  assert.equal('builders' in chargeBody, false);
   const text = coinConfirmText(asked[0]);
   assert.match(text.lines.join(' '), /500 Coins are removed, so nobody gets them, and 35 go to nayeayo007 \(20\) and KenGo \(15\), who built here/);
+  // The server's tally, in the box: who built here and how many.
+  assert.match(text.lines.join(' '), /Twinkle counted the blocks other players placed here: nayeayo007 10 blocks and KenGo 7 blocks\./);
   assert.equal(text.confirmLabel, 'Buy for 535 Coins');
 });
 
@@ -524,14 +532,54 @@ test('N3/N7/N12: the review screen and chat card name every person a price pays,
   assert.match(line, /the Coins go to the previous holder, another player: 100 to 5,000 Coins a sale/);
   assert.match(formatBuildCoinPriceLine(resale), /resales pay the previous holder, another player, up to 5,000 Coins/);
   assert.match(buildCoinPricePersonWarning([resale]) || '', /Coins go to another player when an item is resold/);
-  const thank = { id: 'thank', title: 'Thank builders', coins: 0, destination: 'removed' as const,
-    builders: { coinsPerUnit: 100000, maxUnitsPerRecipient: 1, topic: 'blocks' } };
+  const thank = { id: 'thank', title: 'Thank builders', coins: 0, destination: 'removed' as const, uniqueKey: true,
+    builders: { coinsPerUnit: 100000, maxUnitsPerRecipient: 1, tally: { plotSize: 16, keyFormat: 'region:x:z' as const } } };
   // N7: not a "free claim"; N12: the default ceilings are shown.
-  assert.match(coinPriceDestinationLine(thank), /^no Coins of its own, plus 100,000 Coins per unit/);
+  assert.match(coinPriceDestinationLine(thank), /^no Coins of its own, plus 100,000 Coins per block/);
   assert.match(coinPriceDestinationLine(thank), /64 builders, 100,000 Coins per purchase in all/);
   assert.doesNotMatch(formatBuildCoinPriceLine(thank), /free claim/);
   assert.match(formatBuildCoinPriceLine(thank), /up to 100,000 a purchase/);
   assert.equal(buildCoinPricePersonWarning([{ id: 'snack', title: 'Snack', coins: 10, destination: 'removed' }]), null);
+});
+
+test('r2: the review screen and chat card say builders are paid from Twinkle\'s own record, with the risk that remains', () => {
+  const claim = { id: 'claim', title: 'Land with builds', coins: 200, destination: 'removed' as const, uniqueKey: true,
+    builders: { coinsPerUnit: 50, maxUnitsPerRecipient: 4096, unitName: 'block', tally: { plotSize: 16, keyFormat: 'region:x:z' as const } } };
+  assert.equal(COIN_TALLY_PLAIN_WORDS, "Builders are paid for the blocks Twinkle itself recorded as theirs inside the plot; the app can't change who or how many.");
+  const line = coinPriceDestinationLine(claim);
+  assert.match(line, /50 Coins per block to every other player for the blocks Twinkle recorded as theirs inside the plot \(the 16×16 area whose lowest corner the purchase key names \("region:x:z"\), full height\); never the buyer or the owner/);
+  assert.match(line, /land over a limit cannot be bought/);
+  assert.doesNotMatch(line, /the app names|app alone decides/);
+  // Without a tally the screen says nobody can be paid.
+  assert.match(coinPriceDestinationLine({ ...claim, builders: { coinsPerUnit: 50, maxUnitsPerRecipient: 1 } }), /no tally declared, so nobody can be paid/);
+  const warning = buildCoinPricePersonWarning([claim]) || '';
+  assert.match(warning, /Coins go to the builders Twinkle recorded on the land\./);
+  assert.ok(warning.includes(COIN_TALLY_PLAIN_WORDS));
+  assert.match(formatBuildCoinPriceLine(claim), /plus 50 per block Twinkle recorded for other builders inside the 16×16 plot/);
+  assert.match(COIN_TALLY_REMAINING_RISK, /only as its own player, at most 5 a second and 20,000 a day/);
+  assert.match(COIN_TALLY_REMAINING_RISK, /cannot create Coins or pay anyone who did not record blocks/);
+  // The box counts only builders with blocks; none means no line.
+  assert.equal(coinBuilderCountLine({ kind: 'charge', appTitle: '', title: 'P', coins: 200, priceCoins: 200, destination: 'removed', builders: [], balance: 9 }), null);
+  assert.equal(
+    coinBuilderCountLine({ kind: 'charge', appTitle: '', title: 'P', coins: 250, priceCoins: 200, destination: 'removed', builders: [{ userId: 6, username: 'ana', units: 1, coins: 50 }], balance: 900 }),
+    'Twinkle counted the blocks other players placed here: ana placed 1 block.'
+  );
+});
+
+test('r2: recordBlocks goes straight to the server with only the player\'s blocks, no box', async () => {
+  const { calls, asked, deps: d } = deps();
+  await runBuildRuntimeCoinRequest(
+    'coins:record-blocks',
+    { region: 'main', placed: [[1, 2, 3]], removed: [[4, 5, 6]], userId: 99, builders: [{ userId: 99, units: 5 }] },
+    d
+  );
+  assert.equal(asked.length, 0);
+  assert.deepEqual(calls, [['record-blocks', { region: 'main', placed: [[1, 2, 3]], removed: [[4, 5, 6]] }]]);
+  // A preview frame records nothing on the live path (the preview request answers).
+  const preview = deps({ deps: { live: false } });
+  await runBuildRuntimeCoinRequest('coins:record-blocks', { region: 'main', placed: [[1, 2, 3]] }, preview.deps);
+  assert.deepEqual(preview.calls.map(([op]) => op), ['record-blocks']);
+  assert.equal(isMutatingPreviewRequestType('coins:record-blocks'), true);
 });
 
 test('H1/L5: the box makes the app frame inert, ends fullscreen and pointer lock, and never reuses an armed state', () => {

@@ -5,7 +5,10 @@ import type { CoinConfirmRequest } from '~/components/Build/Coins/coinConfirmTex
 // confirmation box and only then sends the purchase, carrying exactly what
 // the member saw. Nothing the app sends decides a price, a recipient or a
 // destination. Drafts and previews go to the owner's preview, which never
-// charges, and still show the box so the owner can try the flow.
+// charges, and still show the box so the owner can try the flow. Builders
+// (r2) come from Twinkle's own block record: the app's list is never sent,
+// and recordBlocks passes only the player's own blocks (no box: it moves no
+// Coins; the server takes the player from the session).
 
 export const COIN_REQUEST_TYPES = new Set([
   'coins:balance',
@@ -15,7 +18,8 @@ export const COIN_REQUEST_TYPES = new Set([
   'coins:respond-offer',
   'coins:takeover',
   'coins:withdraw-offer',
-  'coins:offers'
+  'coins:offers',
+  'coins:record-blocks'
 ]);
 
 type CoinRequest = (operation: string, payload: Record<string, unknown>) => Promise<any>;
@@ -99,6 +103,10 @@ export async function runBuildRuntimeCoinRequest(
   if (type === 'coins:receipts')
     return deps.request('receipts', pick(payload, ['priceId', 'key', 'mine', 'held', 'cursor', 'limit']));
   if (type === 'coins:offers') return deps.request('offers', pick(payload, ['priceId', 'key', 'mine', 'cursor']));
+  // The builder tally: no box (no Coins move). Live it goes to the published
+  // runtime with the player's session; a draft preview answers without writing.
+  if (type === 'coins:record-blocks')
+    return deps.request('record-blocks', pick(payload, ['region', 'placed', 'removed']));
   if (type === 'coins:charge') {
     const requestId =
       typeof payload?.requestId === 'string' && REQUEST_ID.test(payload.requestId)
@@ -106,7 +114,7 @@ export async function runBuildRuntimeCoinRequest(
         : deps.newRequestId();
     const ask = {
       priceId: payload?.priceId,
-      ...pick(payload, ['key', 'builders']),
+      ...pick(payload, ['key']),
       requestId
     };
     const quote = await deps.request('quote', ask);
@@ -141,6 +149,7 @@ export async function runBuildRuntimeCoinRequest(
       destination: quote.destination === 'owner' ? 'owner' : 'removed',
       ownerName: quote.recipient?.username ?? null,
       builders: Array.isArray(quote.builders) ? quote.builders : [],
+      unitName: typeof quote.unitName === 'string' ? quote.unitName : undefined,
       balance: Number(quote.balance || 0),
       preview: quote.mode === 'preview'
     });

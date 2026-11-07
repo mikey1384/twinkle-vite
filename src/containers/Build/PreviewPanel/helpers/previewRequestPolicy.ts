@@ -33,6 +33,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'coins:respond-offer',
   'coins:takeover',
   'coins:withdraw-offer',
+  'coins:record-blocks',
   'cardCraft:craft',
   'cardCraft:set-state',
   'craft:merge',

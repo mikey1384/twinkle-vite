@@ -1,11 +1,13 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { COIN_TALLY_PLAIN_WORDS } from '~/helpers/buildRewardReviewCard';
 import type { CoinPrice, CoinPriceReviewContext } from './types';
 
 // "Coin prices" in the reward review (RULING 11-07): every price with its
 // amount, limits and where its Coins go. Prices that pay a person (the owner,
-// builders the app names, or the previous holder when an item is resold)
+// the builders Twinkle recorded on the land (r2 tally), or the previous holder
+// when an item is resold)
 // carry a red banner naming each kind, what they have been paid from this app
 // so far, and approving them needs a note (round-2 review N3). Builder
 // ceilings the declaration leaves out are shown with the platform defaults
@@ -18,6 +20,17 @@ const DEFAULT_MAX_RECIPIENTS = 64;
 const DEFAULT_MAX_BUILDER_COINS = 100_000;
 // The offer rule's days (COIN_OFFER_RULE); the server's context carries them.
 const DEFAULT_OFFER_RULE = { takeoverAfterDays: 30, lapseAfterDays: 44 as number | null, reofferCooldownDays: 7 };
+// The recordBlocks limits (COIN_TALLY_LIMITS on the API).
+const TALLY_PER_SECOND = 5;
+const TALLY_PER_DAY = 20_000;
+// What a modified copy of the app can still do with the tally (r2).
+export const COIN_TALLY_REMAINING_RISK = `Remaining risk: a modified copy of the app can record blocks only as its own player, at most ${TALLY_PER_SECOND} a second and ${TALLY_PER_DAY.toLocaleString()} a day, and only where it says they are. So it can record blocks that are not really there, or clear blocks other players recorded, and that changes what a buyer of that land is asked to pay for that player's blocks. The buyer always sees the total and every builder's share before agreeing. It cannot create Coins or pay anyone who did not record blocks.`;
+function tallyAreaText(tally: NonNullable<NonNullable<CoinPrice['builders']>['tally']>) {
+  const size = `${tally.plotSize}×${tally.plotSize}`;
+  return tally.keyFormat === 'region:cx:cz'
+    ? `the ${size} grid square the purchase key names ("region:cx:cz"), full height`
+    : `the ${size} area whose lowest corner the purchase key names ("region:x:z"), full height`;
+}
 
 const ownerBannerClass = css`
   border: 2px solid ${Color.red()};
@@ -60,6 +73,7 @@ export function coinBuildersCeiling(price: CoinPrice) {
   );
 }
 
+const countOf = (count: number, noun: string) => `${count.toLocaleString()} ${noun}${count === 1 ? '' : 's'}`;
 export function coinPriceDestinationLine(price: CoinPrice, ownerName?: string | null) {
   const full = withCoinPriceDefaults(price);
   const base =
@@ -71,8 +85,9 @@ export function coinPriceDestinationLine(price: CoinPrice, ownerName?: string | 
         ? `Coins go to ${ownerName || 'the app owner'} (the owner)`
         : 'Coins removed (nobody gets them)';
   const b = full.builders;
+  const unit = b?.unitName || 'block';
   const builders = b
-    ? `, plus ${b.coinsPerUnit.toLocaleString()} Coins per ${b.unitName || 'unit'} to each builder the app names (up to ${b.maxUnitsPerRecipient.toLocaleString()} each, ${(b.maxRecipients ?? DEFAULT_MAX_RECIPIENTS).toLocaleString()} builders, ${coinBuildersCeiling(full).toLocaleString()} Coins per purchase in all${b.topic ? `; each must have saved at least one “${b.topic}” entry; the app alone decides the counts` : ''})`
+    ? `, plus ${b.coinsPerUnit.toLocaleString()} Coins per ${unit} to every other player for the ${unit}s Twinkle recorded as theirs inside the plot${b.tally ? ` (${tallyAreaText(b.tally)})` : ' (no tally declared, so nobody can be paid)'}; never the buyer or the owner; up to ${countOf(b.maxUnitsPerRecipient, unit)} each, ${countOf(b.maxRecipients ?? DEFAULT_MAX_RECIPIENTS, 'builder')}, ${coinBuildersCeiling(full).toLocaleString()} Coins per purchase in all; land over a limit cannot be bought`
     : '';
   // A resale pays a person, so the line never ends at "removed" (N3).
   const resale = full.offers
@@ -125,7 +140,7 @@ export default function CoinPricesSummary({
       {(toOwner || toBuilders || resold.length > 0) && (
         <div className={ownerBannerClass} role="alert">
           {toOwner ? <div>Coins go to {ownerName || 'the app owner'} (the owner)</div> : null}
-          {toBuilders ? <div>Coins go to players the app names (builders)</div> : null}
+          {toBuilders ? <div>Coins go to the builders Twinkle recorded on the land</div> : null}
           {resold.length ? <div>Coins go to another player when an item is resold</div> : null}
           {toOwner && context ? (
             <span>
@@ -137,11 +152,13 @@ export default function CoinPricesSummary({
           ) : null}
           {toBuilders ? (
             <span>
-              {context ? `${context.builderPurchases.toLocaleString()} purchases so far also paid builders. ` : ''}
-              The server checks each builder is a real player who saved at least one entry in the declared topic,
-              never the payer or the owner. It cannot check how many blocks they built: the app decides the counts,
-              up to the limits below. Read how the code chooses and counts them, and lower the limits if they are
-              more than the app needs.
+              {COIN_TALLY_PLAIN_WORDS} The buyer and the app owner are never paid, and land over a limit below
+              cannot be bought.
+              {context ? ` ${context.builderPurchases.toLocaleString()} purchases so far also paid builders.` : ''}
+              {context?.tally
+                ? ` Twinkle has recorded ${context.tally.cells.toLocaleString()} blocks in this app from ${context.tally.builders.toLocaleString()} ${context.tally.builders === 1 ? 'player' : 'players'}.`
+                : ''}{' '}
+              {COIN_TALLY_REMAINING_RISK}
             </span>
           ) : null}
           {resold.length ? (
