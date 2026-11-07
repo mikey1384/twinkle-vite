@@ -825,15 +825,8 @@ function Comment({
                                           : replyLabel}
                                       </span>
                                     )}
-                                    {loadingReplies ? (
-                                      <Icon
-                                        style={{
-                                          marginLeft: '0.7rem'
-                                        }}
-                                        icon="spinner"
-                                        pulse
-                                      />
-                                    ) : numReplies > 0 &&
+                                    {/* Button shows the spinner while loading */}
+                                    {loadingReplies ? null : numReplies > 0 &&
                                       parent.contentType === 'comment' ? (
                                       <span
                                         style={{

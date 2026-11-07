@@ -578,13 +578,9 @@ function Reply({
                                     : replyLabel}
                                 </span>
                               )}
-                              {loadingReplies ? (
-                                <Icon
-                                  style={{ marginLeft: '0.7rem' }}
-                                  icon="spinner"
-                                  pulse
-                                />
-                              ) : !isExpanded && reply.numReplies > 0 ? (
+                              {/* Button shows the spinner while loading */}
+                              {loadingReplies ? null : !isExpanded &&
+                                reply.numReplies > 0 ? (
                                 <span
                                   style={{
                                     marginLeft:

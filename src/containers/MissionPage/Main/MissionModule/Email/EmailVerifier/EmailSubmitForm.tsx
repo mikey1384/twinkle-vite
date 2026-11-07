@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isValidEmailAddress } from '~/helpers/stringHelpers';
@@ -61,11 +60,9 @@ export default function EmailSubmitForm({
           color={submitButtonColor}
           onClick={() => handleConfirmEmail(email)}
         >
+          {/* Button shows the spinner while loading */}
           {sendingEmail ? (
-            <>
-              <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
-              <span style={{ marginLeft: '0.7rem' }}>One moment...</span>
-            </>
+            'One moment...'
           ) : (
             'Submit'
           )}
