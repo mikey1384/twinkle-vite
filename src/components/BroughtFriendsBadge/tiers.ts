@@ -49,7 +49,8 @@ export interface Referrals {
     username: string;
     profilePicUrl: string | null;
     joinedAt: number;
-    source: 'guest' | 'minecraft';
+    // checkin: signed up with Join Twinkle on their Bridge Builder check-in code
+    source: 'guest' | 'minecraft' | 'checkin';
   }[];
 }
 

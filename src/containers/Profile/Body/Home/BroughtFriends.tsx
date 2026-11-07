@@ -17,6 +17,19 @@ import {
 } from '~/components/BroughtFriendsBadge/tiers';
 
 const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
+
+// How a friend joined: a Minecraft vouch, Join Twinkle on a Bridge Builder
+// check-in code, or (guest) a private Dark Citadel room.
+function referralSourceLabel(source: string) {
+  if (source === 'minecraft') return 'Minecraft';
+  if (source === 'checkin') return 'Bridge Builder';
+  return 'The Dark Citadel';
+}
+function referralSourceIcon(source: string) {
+  if (source === 'minecraft') return 'cubes';
+  if (source === 'checkin') return 'qrcode';
+  return 'fire';
+}
 const PLAQUE_BG = '#10142a';
 const PLAQUE_RAISED = '#1a2142';
 
@@ -310,12 +323,10 @@ export default function BroughtFriends({ profile }: { profile: any }) {
                       `}
                     >
                       <Icon
-                        icon={person.source === 'minecraft' ? 'cubes' : 'fire'}
+                        icon={referralSourceIcon(person.source)}
                         style={{ marginRight: '0.4rem' }}
                       />
-                      {person.source === 'minecraft'
-                        ? 'Minecraft'
-                        : 'The Dark Citadel'}
+                      {referralSourceLabel(person.source)}
                       {person.joinedAt ? ` · ${timeSince(person.joinedAt)}` : ''}
                     </span>
                   </span>
@@ -343,7 +354,8 @@ export default function BroughtFriends({ profile }: { profile: any }) {
           <Icon icon="user-plus" style={{ marginRight: '0.6rem' }} />
           Earned when friends join {SITE_NAME}: play{' '}
           <Link to={DARK_CITADEL_PRIVATE_ROOM_PATH}>The Dark Citadel</Link> with them
-          in a private room, or vouch for them on our Minecraft server (moderators).
+          in a private room, let them sign up from your Bridge Builder check-in
+          code, or vouch for them on our Minecraft server (moderators).
         </div>
       </section>
     </ErrorBoundary>
