@@ -47,7 +47,6 @@ interface ApplyGenerateCompleteOptions {
   followUpPrompt?: BuildFollowUpPrompt | null;
   deferredBuildRequest?: DeferredBuildRequest | null;
   runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
-  runtimePlanRefined?: boolean;
   billingState?: ChatMessage['billingState'];
   requestLimits?: BuildCopilotPolicy['requestLimits'] | null;
   message?: {
@@ -81,16 +80,6 @@ interface RunTerminalActionsOrchestration {
 
 interface RunTerminalActionsRuntimeFollowUp {
   bumpRuntimeFollowUpRevision(): void;
-  handleCompletedRunFollowUp(options: {
-    completedRunMode: BuildRunMode;
-    requestId: string | null;
-    artifactVersionId?: number | null;
-    generatedCodeSuccessfully: boolean;
-    pausedForToolLimit: boolean;
-    planWasRefined: boolean;
-  }): boolean;
-  processPendingRuntimeFollowUp(): boolean;
-  resetRuntimeHealthFollowUpState(): void;
 }
 
 interface AppendLocalRunEventOptions {
@@ -233,12 +222,10 @@ export default function useRunTerminalActions({
       code,
       projectFiles,
       projectFilesHash,
-      interruptionReason,
       executionPlan,
       followUpPrompt,
       deferredBuildRequest,
       runtimeExplorationPlan,
-      runtimePlanRefined,
       billingState,
       requestLimits,
       message
@@ -253,10 +240,6 @@ export default function useRunTerminalActions({
     markActiveBuildRunActivity();
     resetDedupedProcessingReconcileState();
     applyCopilotRequestLimitsSnapshot(requestLimits);
-    const completedRunMode = getCurrentRunMode(
-      requestId,
-      latestSharedRunIdentityState
-    );
     const userMessageTempId = getCurrentActiveUserMessageId(
       requestId,
       latestSharedRunIdentityState
@@ -310,7 +293,6 @@ export default function useRunTerminalActions({
         ? (followUpPrompt ?? null)
         : undefined,
       runtimeExplorationPlan,
-      runtimePlanRefined,
       billingState,
       artifactVersionId,
       persistedAssistantId,
@@ -447,29 +429,11 @@ export default function useRunTerminalActions({
     const generatedCodeSuccessfully =
       artifactCode !== null ||
       (Array.isArray(payloadProjectFiles) && payloadProjectFiles.length > 0);
-    // A run that stopped at its AI Energy budget must not trigger the
-    // automatic preview check either: that would spend the sliver the model
-    // was told to preserve, or fail immediately on an empty battery.
-    const pausedForToolLimit =
-      interruptionReason === 'tool_limit' ||
-      interruptionReason === 'energy_budget';
-    const planWasRefined = Boolean(
-      runtimePlanRefined && runtimeExplorationPlan
-    );
-    if (generatedCodeSuccessfully || planWasRefined) {
+    if (generatedCodeSuccessfully) {
       setMobilePanelTab('preview');
     } else {
       setMobilePanelTab('lumine');
     }
-    const shouldDelayQueuedRequestsForRuntimeFollowUp =
-      runtimeFollowUp.handleCompletedRunFollowUp({
-        completedRunMode,
-        requestId: requestId || null,
-        artifactVersionId,
-        generatedCodeSuccessfully,
-        pausedForToolLimit,
-        planWasRefined
-      });
 
     runIdentity.clearRunOwnership();
     runOrchestration.setUserRequestedStop(false);
@@ -503,9 +467,6 @@ export default function useRunTerminalActions({
       runOrchestration.setPostCompleteSyncInFlight(false);
       runtimeFollowUp.bumpRuntimeFollowUpRevision();
     }
-    if (runtimeFollowUp.processPendingRuntimeFollowUp()) {
-      return;
-    }
     let shouldHoldQueuedRequestForDeferredStop = false;
     if (deferredBuildRequest?.message?.trim()) {
       const deferredStopRequestId =
@@ -527,10 +488,7 @@ export default function useRunTerminalActions({
         shouldHoldQueuedRequestForDeferredStop = false;
       }
     }
-    if (
-      !shouldDelayQueuedRequestsForRuntimeFollowUp &&
-      !shouldHoldQueuedRequestForDeferredStop
-    ) {
+    if (!shouldHoldQueuedRequestForDeferredStop) {
       await maybeStartNextQueuedRequest();
     }
   }
@@ -553,7 +511,6 @@ export default function useRunTerminalActions({
     if (!requestId || requestId !== currentRequestId) return;
     markActiveBuildRunActivity();
     resetDedupedProcessingReconcileState();
-    runtimeFollowUp.resetRuntimeHealthFollowUpState();
     const assistantId = getCurrentActiveAssistantMessageId(
       requestId,
       latestSharedRunIdentityState
@@ -658,7 +615,6 @@ export default function useRunTerminalActions({
     const userRequestedStop = runOrchestration.didUserRequestStop();
     if (deduped) {
       resetDedupedProcessingReconcileState();
-      runtimeFollowUp.resetRuntimeHealthFollowUpState();
       let shouldStartQueuedRequest = true;
       if (guardStatus === 'completed') {
         runOrchestration.setUserRequestedStop(false);
@@ -731,7 +687,6 @@ export default function useRunTerminalActions({
     }
     runOrchestration.setUserRequestedStop(false);
     resetDedupedProcessingReconcileState();
-    runtimeFollowUp.resetRuntimeHealthFollowUpState();
     if (isReplacementStop) {
       const latestBuildRun = getLatestBuildRun(getActiveBuildId());
       const replacementAssistantMessage =

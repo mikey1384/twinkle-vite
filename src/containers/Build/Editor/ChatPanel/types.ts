@@ -10,7 +10,7 @@ import type { BranchMainUpdateNoticeControl } from '../BranchMainUpdateNotice';
 import type { BuildExecutionPlan, BuildPlanAction } from '../types';
 import type { RoadmapPublishControl } from './Roadmap/RoadmapCompleteCard';
 
-export type ChatPanelRunMode = 'user' | 'greeting' | 'runtime-autofix';
+export type ChatPanelRunMode = 'user' | 'greeting';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
   | 'auto'

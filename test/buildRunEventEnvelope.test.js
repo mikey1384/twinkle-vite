@@ -32,7 +32,6 @@ function createBuildState(createInitialBuildStudioState) {
     buildRunRequestMap: {},
     buildWorkspaces: {},
     buildWorkspaceUi: {},
-    runtimeVerifyResults: {},
     buildStudio: createInitialBuildStudioState()
   };
 }

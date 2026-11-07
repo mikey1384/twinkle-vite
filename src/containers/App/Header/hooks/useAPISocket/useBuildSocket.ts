@@ -91,9 +91,6 @@ export default function useBuildSocket() {
   const onUpdateBuildContributionInviteNotification = useNotiContext(
     (v) => v.actions.onUpdateBuildContributionInviteNotification
   );
-  const onPublishBuildRuntimeVerifyResult = useBuildContext(
-    (v) => v.actions.onPublishBuildRuntimeVerifyResult
-  );
   const buildRunsRef = useRef<Record<string, BuildLiveRunState>>(buildRuns);
   const buildRunRequestMapRef =
     useRef<Record<string, number>>(buildRunRequestMap);
@@ -203,7 +200,7 @@ export default function useBuildSocket() {
     }: {
       requestId?: string;
       buildId: number;
-      runMode?: 'user' | 'greeting' | 'runtime-autofix' | null;
+      runMode?: 'user' | 'greeting' | null;
       status?: string | null;
       userMessageContent?: string | null;
       userMessageId?: number | null;
@@ -282,10 +279,7 @@ export default function useBuildSocket() {
       onRegisterBuildRun({
         buildId,
         requestId: normalizedRequestId,
-        runMode:
-          runMode === 'greeting' || runMode === 'runtime-autofix'
-            ? runMode
-            : 'user',
+        runMode: runMode === 'greeting' ? 'greeting' : 'user',
         generating: true,
         status: typeof status === 'string' ? status : null,
         assistantStatusSteps:
@@ -415,16 +409,6 @@ export default function useBuildSocket() {
                     terminalPayload.runtimeExplorationPlan ?? null
                 }
               : {}),
-            ...(Object.prototype.hasOwnProperty.call(
-              terminalPayload || {},
-              'runtimePlanRefined'
-            )
-              ? {
-                  runtimePlanRefined: Boolean(
-                    terminalPayload.runtimePlanRefined
-                  )
-                }
-              : {}),
             billingState: terminalPayload.billingState ?? null,
             requestLimits: getBuildRequestLimitsFromPayload(terminalPayload),
             lifecycle: terminalPayload.lifecycle ?? null,
@@ -537,7 +521,7 @@ export default function useBuildSocket() {
     }: {
       requestId?: string;
       buildId?: number | null;
-      runMode?: 'user' | 'greeting' | 'runtime-autofix' | null;
+      runMode?: 'user' | 'greeting' | null;
       status?: string | null;
       assistantStatusSteps?: string[];
       reply?: string;
@@ -688,7 +672,6 @@ export default function useBuildSocket() {
       pendingToolApproval,
       thumbnailNudge,
       runtimeExplorationPlan,
-      runtimePlanRefined,
       workspaceChanged,
       billingState,
       requestLimits,
@@ -699,7 +682,7 @@ export default function useBuildSocket() {
     }: {
       requestId?: string;
       buildId?: number | null;
-      runMode?: 'user' | 'greeting' | 'runtime-autofix' | null;
+      runMode?: 'user' | 'greeting' | null;
       assistantText?: string;
       artifact?: {
         content?: string;
@@ -725,7 +708,6 @@ export default function useBuildSocket() {
       pendingToolApproval?: Record<string, any> | null;
       thumbnailNudge?: { sourceMessageId: number } | null;
       runtimeExplorationPlan?: any | null;
-      runtimePlanRefined?: boolean;
       workspaceChanged?: boolean;
       billingState?: 'charged' | 'not_charged' | 'pending' | null;
       requestLimits?: any | null;
@@ -828,14 +810,6 @@ export default function useBuildSocket() {
           : {}),
         ...(Object.prototype.hasOwnProperty.call(
           arguments[0] || {},
-          'runtimePlanRefined'
-        )
-          ? {
-              runtimePlanRefined: Boolean(runtimePlanRefined)
-            }
-          : {}),
-        ...(Object.prototype.hasOwnProperty.call(
-          arguments[0] || {},
           'workspaceChanged'
         )
           ? { workspaceChanged: workspaceChanged === true }
@@ -886,7 +860,7 @@ export default function useBuildSocket() {
     }: {
       requestId?: string;
       buildId?: number | null;
-      runMode?: 'user' | 'greeting' | 'runtime-autofix' | null;
+      runMode?: 'user' | 'greeting' | null;
       error?: string;
       requestLimits?: any | null;
       lifecycle?: Record<string, any> | null;
@@ -939,7 +913,7 @@ export default function useBuildSocket() {
     }: {
       requestId?: string;
       buildId?: number | null;
-      runMode?: 'user' | 'greeting' | 'runtime-autofix' | null;
+      runMode?: 'user' | 'greeting' | null;
       deduped?: boolean;
       guardStatus?: 'processing' | 'completed' | 'conflict';
       assistantText?: string;
@@ -988,7 +962,7 @@ export default function useBuildSocket() {
     }: {
       requestId?: string;
       buildId?: number | null;
-      runMode?: 'user' | 'greeting' | 'runtime-autofix' | null;
+      runMode?: 'user' | 'greeting' | null;
       event?: {
         buildId?: number | null;
       } & BuildRunEventEnvelopePayload;
@@ -1021,56 +995,6 @@ export default function useBuildSocket() {
         buildId: resolvedRun.buildId,
         requestId: normalizedRequestId,
         event: normalizedEvent
-      });
-    }
-
-    function handleRuntimeVerifyComplete({
-      buildId,
-      requestId,
-      improved,
-      reason,
-      shouldRepairAgain,
-      nextRemainingRepairs
-    }: {
-      buildId?: number | null;
-      requestId?: string;
-      improved?: boolean;
-      reason?: string;
-      shouldRepairAgain?: boolean;
-      nextRemainingRepairs?: number;
-    }) {
-      const normalizedRequestId = String(requestId || '').trim();
-      if (!normalizedRequestId) return;
-      onPublishBuildRuntimeVerifyResult({
-        buildId: Number(buildId || 0) > 0 ? Number(buildId) : null,
-        requestId: normalizedRequestId,
-        status: 'complete',
-        improved: improved === true,
-        reason: typeof reason === 'string' ? reason : null,
-        shouldRepairAgain: shouldRepairAgain === true,
-        nextRemainingRepairs
-      });
-    }
-
-    function handleRuntimeVerifyError({
-      buildId,
-      requestId,
-      error
-    }: {
-      buildId?: number | null;
-      requestId?: string;
-      error?: string;
-    }) {
-      const normalizedRequestId = String(requestId || '').trim();
-      if (!normalizedRequestId) return;
-      onPublishBuildRuntimeVerifyResult({
-        buildId: Number(buildId || 0) > 0 ? Number(buildId) : null,
-        requestId: normalizedRequestId,
-        status: 'error',
-        error:
-          typeof error === 'string' && error.trim().length > 0
-            ? error
-            : 'Runtime verification failed.'
       });
     }
 
@@ -1195,8 +1119,6 @@ export default function useBuildSocket() {
     socket.on('build_generate_stopped', handleGenerateStopped);
     socket.on('build_run_event', handleRunEvent);
     socket.on('build_resume_run_state', replayResumeRunState);
-    socket.on('build_runtime_verify_complete', handleRuntimeVerifyComplete);
-    socket.on('build_runtime_verify_error', handleRuntimeVerifyError);
     socket.on('build_activity_updated', handleBuildActivityUpdated);
     socket.on('build_collaboration_updated', handleBuildCollaborationUpdated);
     socket.on(
@@ -1215,8 +1137,6 @@ export default function useBuildSocket() {
       socket.off('build_generate_stopped', handleGenerateStopped);
       socket.off('build_run_event', handleRunEvent);
       socket.off('build_resume_run_state', replayResumeRunState);
-      socket.off('build_runtime_verify_complete', handleRuntimeVerifyComplete);
-      socket.off('build_runtime_verify_error', handleRuntimeVerifyError);
       socket.off('build_activity_updated', handleBuildActivityUpdated);
       socket.off(
         'build_collaboration_updated',

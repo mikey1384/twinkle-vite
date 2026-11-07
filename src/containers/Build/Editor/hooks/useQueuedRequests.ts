@@ -50,7 +50,6 @@ interface UseQueuedBuildRequestsOptions {
   hasCurrentPageRunActivity: (
     sharedRunState?: SharedBuildRunIdentityState | null
   ) => boolean;
-  hasPendingRuntimeFollowUp: () => boolean;
   isRunActivityInFlight: (options?: {
     includeBootstrap?: boolean;
     sharedRunState?: SharedBuildRunIdentityState | null;
@@ -86,7 +85,6 @@ export default function useQueuedRequests({
   getLatestChatMessages,
   handleStopGeneration,
   hasCurrentPageRunActivity,
-  hasPendingRuntimeFollowUp,
   isRunActivityInFlight,
   requestStopForRecoveredBuildRun,
   runIdentity,
@@ -243,9 +241,6 @@ export default function useQueuedRequests({
   }
 
   async function maybeStartNextQueuedRequest() {
-    if (hasPendingRuntimeFollowUp()) {
-      return;
-    }
     const latestSharedRunIdentityState = getBuildRunIdentity(
       getActiveBuildId()
     );

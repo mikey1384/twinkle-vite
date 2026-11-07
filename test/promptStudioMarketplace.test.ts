@@ -29,7 +29,6 @@ function createBuildState() {
     buildWorkspaces: {},
     buildWorkspaceUi: {},
     forumInvalidationVersions: {},
-    runtimeVerifyResults: {},
     buildStudio: createInitialBuildStudioState()
   };
 }

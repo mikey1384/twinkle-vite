@@ -95,7 +95,7 @@ export interface BuildLiveRunDeferredRequest {
 export interface BuildLiveRunState {
   buildId: number;
   requestId: string;
-  runMode: 'user' | 'greeting' | 'runtime-autofix';
+  runMode: 'user' | 'greeting';
   generating: boolean;
   terminalState?: 'complete' | 'error' | 'stopped' | null;
   stopReason?: 'user' | 'replacement' | null;
@@ -119,7 +119,6 @@ export interface BuildLiveRunState {
   thumbnailNudge?: { sourceMessageId: number } | null;
   deferredBuildRequest?: BuildLiveRunDeferredRequest | null;
   runtimeExplorationPlan?: any | null;
-  runtimePlanRefined?: boolean;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   requestLimits?: any | null;
   updatedAt: number;
@@ -277,7 +276,6 @@ export interface BuildLiveRunStreamUpdatePayload {
   thumbnailNudge?: { sourceMessageId: number } | null;
   deferredBuildRequest?: BuildLiveRunDeferredRequest | null;
   runtimeExplorationPlan?: any | null;
-  runtimePlanRefined?: boolean;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   requestLimits?: any | null;
 }
@@ -326,28 +324,6 @@ export interface BuildLiveRunActionPayload extends BuildLiveRunStreamUpdatePaylo
   preserveTransientUserMessage?: boolean;
   preserveTransientAssistantMessage?: boolean;
   updatedAt?: number;
-}
-
-export interface BuildRuntimeVerifyResultPayload {
-  buildId?: number | null;
-  requestId?: string;
-  status?: 'complete' | 'error' | null;
-  improved?: boolean;
-  reason?: string | null;
-  shouldRepairAgain?: boolean;
-  nextRemainingRepairs?: number | null;
-  error?: string | null;
-}
-
-export interface BuildRuntimeVerifyResult {
-  buildId: number | null;
-  requestId: string;
-  status: 'complete' | 'error';
-  improved: boolean;
-  reason: string | null;
-  shouldRepairAgain: boolean;
-  nextRemainingRepairs: number;
-  error: string | null;
 }
 
 export interface BuildStudioActionPayload {
@@ -412,7 +388,6 @@ export interface BuildState {
   buildWorkspaces: Record<string, BuildWorkspaceSnapshot>;
   buildWorkspaceUi: Record<string, BuildWorkspaceUiState>;
   forumInvalidationVersions: Record<string, number>;
-  runtimeVerifyResults: Record<string, BuildRuntimeVerifyResult>;
   buildStudio: BuildStudioState;
 }
 
@@ -465,13 +440,10 @@ export interface BuildAction {
     | 'UPSERT_BUILD_SUMMARIES'
     | 'PATCH_BUILD_SUMMARY'
     | 'REMOVE_BUILD_SUMMARY'
-    | 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT'
-    | 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUN'
     | 'RESET_BUILD_RUNS';
   buildId?: number;
   buildRun?: BuildLiveRunActionPayload;
-  runtimeVerifyResult?: BuildRuntimeVerifyResultPayload;
   buildStudio?: BuildStudioActionPayload;
   buildWorkspaceUi?: BuildWorkspaceUiActionPayload;
   buildWorkspaceForumCache?: BuildWorkspaceForumCacheActionPayload;
@@ -677,15 +649,6 @@ function normalizeBuildWorkspaceCommunicationMode(
   value?: string | null
 ): BuildWorkspaceCommunicationMode {
   return value === 'people' || value === 'versions' ? value : 'lumine';
-}
-
-function getBuildRuntimeVerifyResultKey(
-  runtimeVerifyResult?: BuildRuntimeVerifyResultPayload
-) {
-  const requestId = String(runtimeVerifyResult?.requestId || '').trim();
-  if (!requestId) return '';
-  const buildId = Number(runtimeVerifyResult?.buildId || 0);
-  return `${buildId > 0 ? buildId : 0}:${requestId}`;
 }
 
 function getBuildStudioState(state: BuildState) {
@@ -1758,10 +1721,6 @@ export function applyBuildRunStreamUpdate(
     )
       ? (buildRun?.runtimeExplorationPlan ?? null)
       : currentRun.runtimeExplorationPlan,
-    runtimePlanRefined:
-      typeof buildRun?.runtimePlanRefined === 'boolean'
-        ? buildRun.runtimePlanRefined
-        : currentRun.runtimePlanRefined,
     billingState: Object.prototype.hasOwnProperty.call(
       buildRun || {},
       'billingState'
@@ -1899,7 +1858,6 @@ export default function BuildReducer(
         thumbnailNudge: null,
         deferredBuildRequest: null,
         runtimeExplorationPlan: null,
-        runtimePlanRefined: false,
         billingState: null,
         updatedAt:
           Number(action.buildRun?.updatedAt || 0) > 0
@@ -2245,10 +2203,6 @@ export default function BuildReducer(
           )
             ? (action.buildRun.runtimeExplorationPlan ?? null)
             : currentRun.runtimeExplorationPlan,
-        runtimePlanRefined:
-          typeof action.buildRun?.runtimePlanRefined === 'boolean'
-            ? action.buildRun.runtimePlanRefined
-            : currentRun.runtimePlanRefined,
         billingState:
           action.buildRun &&
           Object.prototype.hasOwnProperty.call(action.buildRun, 'billingState')
@@ -3664,64 +3618,6 @@ export default function BuildReducer(
         }
       };
     }
-    case 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT': {
-      const resultKey = getBuildRuntimeVerifyResultKey(
-        action.runtimeVerifyResult
-      );
-      const requestId = String(
-        action.runtimeVerifyResult?.requestId || ''
-      ).trim();
-      const status =
-        action.runtimeVerifyResult?.status === 'error' ? 'error' : 'complete';
-      if (!resultKey || !requestId) return state;
-      const buildId = Number(action.runtimeVerifyResult?.buildId || 0);
-      return {
-        ...state,
-        runtimeVerifyResults: {
-          ...state.runtimeVerifyResults,
-          [resultKey]: {
-            buildId: buildId > 0 ? buildId : null,
-            requestId,
-            status,
-            improved: action.runtimeVerifyResult?.improved === true,
-            reason:
-              typeof action.runtimeVerifyResult?.reason === 'string' &&
-              action.runtimeVerifyResult.reason.trim().length > 0
-                ? action.runtimeVerifyResult.reason
-                : null,
-            shouldRepairAgain:
-              action.runtimeVerifyResult?.shouldRepairAgain === true,
-            nextRemainingRepairs: Number.isFinite(
-              Number(action.runtimeVerifyResult?.nextRemainingRepairs)
-            )
-              ? Math.max(
-                  0,
-                  Math.floor(
-                    Number(action.runtimeVerifyResult?.nextRemainingRepairs)
-                  )
-                )
-              : 0,
-            error:
-              typeof action.runtimeVerifyResult?.error === 'string' &&
-              action.runtimeVerifyResult.error.trim().length > 0
-                ? action.runtimeVerifyResult.error
-                : null
-          }
-        }
-      };
-    }
-    case 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT': {
-      const resultKey = getBuildRuntimeVerifyResultKey(
-        action.runtimeVerifyResult
-      );
-      if (!resultKey || !state.runtimeVerifyResults[resultKey]) return state;
-      const nextRuntimeVerifyResults = { ...state.runtimeVerifyResults };
-      delete nextRuntimeVerifyResults[resultKey];
-      return {
-        ...state,
-        runtimeVerifyResults: nextRuntimeVerifyResults
-      };
-    }
     case 'CLEAR_BUILD_RUN': {
       const buildId = Number(action.buildRun?.buildId || 0);
       if (!buildId) return state;
@@ -3744,8 +3640,7 @@ export default function BuildReducer(
         ...state,
         buildRuns: {},
         buildRunRequestMap: {},
-        buildWorkspaces: {},
-        runtimeVerifyResults: {}
+        buildWorkspaces: {}
       };
     default:
       return state;

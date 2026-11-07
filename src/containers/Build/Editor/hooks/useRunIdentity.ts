@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-export type BuildRunMode = 'user' | 'greeting' | 'runtime-autofix';
+export type BuildRunMode = 'user' | 'greeting';
 
 export interface SharedBuildRunIdentitySource {
   requestId?: string | null;

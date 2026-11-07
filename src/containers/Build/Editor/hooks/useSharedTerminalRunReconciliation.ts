@@ -45,7 +45,6 @@ interface ApplyGenerateCompleteOptions {
   followUpPrompt?: BuildFollowUpPrompt | null;
   deferredBuildRequest?: DeferredBuildRequest | null;
   runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
-  runtimePlanRefined?: boolean;
   billingState?: ChatMessage['billingState'];
   requestLimits?: BuildCopilotPolicy['requestLimits'] | null;
   message?: {
@@ -185,7 +184,6 @@ export default function useSharedTerminalRunReconciliation({
         followUpPrompt: sharedBuildRun.followUpPrompt ?? null,
         deferredBuildRequest: sharedBuildRun.deferredBuildRequest ?? null,
         runtimeExplorationPlan: sharedBuildRun.runtimeExplorationPlan ?? null,
-        runtimePlanRefined: Boolean(sharedBuildRun.runtimePlanRefined),
         billingState:
           sharedAssistantMessage?.billingState ??
           sharedBuildRun.billingState ??

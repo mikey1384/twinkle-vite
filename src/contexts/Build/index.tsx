@@ -44,7 +44,6 @@ const initialBuildState: BuildState = {
   buildWorkspaces: {},
   buildWorkspaceUi: {},
   forumInvalidationVersions: {},
-  runtimeVerifyResults: {},
   buildStudio: createInitialBuildStudioState()
 };
 

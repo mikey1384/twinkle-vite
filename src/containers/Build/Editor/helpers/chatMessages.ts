@@ -504,7 +504,7 @@ export function resolveStoppedRunAssistantMessage({
   runMode,
   userRequestedStop
 }: {
-  runMode: 'user' | 'greeting' | 'runtime-autofix';
+  runMode: 'user' | 'greeting';
   userRequestedStop: boolean;
 }) {
   if (userRequestedStop) {

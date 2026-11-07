@@ -3,7 +3,6 @@ import type { BuildRunEvent } from '../types';
 import type { SharedBuildRunIdentityState } from './useRunIdentity';
 
 interface RunFeedbackOrchestrationApi {
-  clearPendingRunStartEvents(): void;
   consumePendingRunStartEvents(): BuildRunEvent[];
   bufferPendingRunStartEvent(event: BuildRunEvent, limit?: number): void;
   isPostCompleteSyncInFlight(): boolean;
@@ -30,7 +29,6 @@ interface UseRunFeedbackEventsOptions {
     event: BuildRunEvent;
   }) => void;
   runOrchestration: RunFeedbackOrchestrationApi;
-  shouldHoldTerminalSharedBuildRun: (requestId: string) => boolean;
 }
 
 export default function useRunFeedbackEvents({
@@ -38,16 +36,11 @@ export default function useRunFeedbackEvents({
   getCurrentActiveRunRequestId,
   getCurrentSharedRunState,
   onAppendBuildRunEvent,
-  runOrchestration,
-  shouldHoldTerminalSharedBuildRun
+  runOrchestration
 }: UseRunFeedbackEventsOptions) {
   const [pageFeedbackEvents, setPageFeedbackEvents] = useState<BuildRunEvent[]>(
     []
   );
-
-  function clearBufferedRunStartEvents() {
-    runOrchestration.clearPendingRunStartEvents();
-  }
 
   function flushBufferedRunStartEvents(requestId: string) {
     const normalizedRequestId = String(requestId || '').trim();
@@ -102,8 +95,7 @@ export default function useRunFeedbackEvents({
     }
     if (
       sharedRunState?.generating ||
-      runOrchestration.isPostCompleteSyncInFlight() ||
-      shouldHoldTerminalSharedBuildRun(sharedRequestId)
+      runOrchestration.isPostCompleteSyncInFlight()
     ) {
       return sharedRequestId;
     }
@@ -173,7 +165,6 @@ export default function useRunFeedbackEvents({
 
   return {
     appendLocalRunEvent,
-    clearBufferedRunStartEvents,
     flushBufferedRunStartEvents,
     flushBufferedRunStartEventsToPageFeedback,
     pageFeedbackEvents,

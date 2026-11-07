@@ -25,11 +25,6 @@ interface SharedRunEventLike {
   createdAt?: number | null;
 }
 
-interface RuntimeVerifyResultLike {
-  requestId?: string | null;
-  status?: string | null;
-}
-
 interface SharedBuildRunReconciliationApi {
   reset(): void;
   recordSharedRunStreamSync(nextStreamSyncKey: string): SharedRunStreamSyncState;
@@ -40,7 +35,6 @@ interface SharedBuildRunReconciliationApi {
   }): T[];
   claimSharedRunReplicaCheck(options: SharedRunReplicaCheckOptions): boolean;
   resetSharedRunReplicaCheck(): void;
-  claimRuntimeVerifyResult(result: RuntimeVerifyResultLike): boolean;
 }
 
 function getSharedRunEventProcessingKey(event: SharedRunEventLike) {
@@ -54,22 +48,12 @@ function getSharedRunEventProcessingKey(event: SharedRunEventLike) {
   ].join(':');
 }
 
-function getRuntimeVerifyResultProcessingKey(
-  runtimeVerifyResult: RuntimeVerifyResultLike
-) {
-  return [
-    String(runtimeVerifyResult.requestId || '').trim(),
-    runtimeVerifyResult.status
-  ].join(':');
-}
-
 export default function useSharedRunReconciliation() {
   const sharedRunReplicaCheckKeyRef = useRef('');
   const sharedRunStatusSyncKeyRef = useRef('');
   const sharedRunStreamSyncKeyRef = useRef('');
   const sharedRunEventRequestIdRef = useRef('');
   const processedSharedRunEventIdsRef = useRef<Set<string>>(new Set());
-  const processedRuntimeVerifyResultKeysRef = useRef<Set<string>>(new Set());
   const apiRef = useRef<SharedBuildRunReconciliationApi | null>(null);
 
   if (!apiRef.current) {
@@ -80,7 +64,6 @@ export default function useSharedRunReconciliation() {
         sharedRunStreamSyncKeyRef.current = '';
         sharedRunEventRequestIdRef.current = '';
         processedSharedRunEventIdsRef.current = new Set();
-        processedRuntimeVerifyResultKeysRef.current = new Set();
       },
 
       recordSharedRunStreamSync(nextStreamSyncKey: string) {
@@ -151,16 +134,6 @@ export default function useSharedRunReconciliation() {
 
       resetSharedRunReplicaCheck() {
         sharedRunReplicaCheckKeyRef.current = '';
-      },
-
-      claimRuntimeVerifyResult(runtimeVerifyResult: RuntimeVerifyResultLike) {
-        const processingKey =
-          getRuntimeVerifyResultProcessingKey(runtimeVerifyResult);
-        if (processedRuntimeVerifyResultKeysRef.current.has(processingKey)) {
-          return false;
-        }
-        processedRuntimeVerifyResultKeysRef.current.add(processingKey);
-        return true;
       }
     };
   }

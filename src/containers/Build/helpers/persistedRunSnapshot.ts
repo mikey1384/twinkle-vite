@@ -845,11 +845,9 @@ export function hydrateBuildRunFromPersistedSnapshot({
   actions.onRegisterBuildRun({
     buildId,
     requestId,
-    runMode:
-      normalized.runMode === 'greeting' ||
-      normalized.runMode === 'runtime-autofix'
-        ? normalized.runMode
-        : 'user',
+    // Old runs from the removed automatic preview fix ('runtime-autofix')
+    // replay as ordinary runs.
+    runMode: normalized.runMode === 'greeting' ? 'greeting' : 'user',
     generating: normalized.terminal ? false : true,
     status: null,
     assistantStatusSteps: [],
@@ -910,14 +908,6 @@ export function hydrateBuildRunFromPersistedSnapshot({
           ? {
               runtimeExplorationPlan:
                 terminalPayload.runtimeExplorationPlan ?? null
-            }
-          : {}),
-        ...(Object.prototype.hasOwnProperty.call(
-          terminalPayload || {},
-          'runtimePlanRefined'
-        )
-          ? {
-              runtimePlanRefined: Boolean(terminalPayload.runtimePlanRefined)
             }
           : {}),
         billingState: terminalPayload.billingState ?? null,

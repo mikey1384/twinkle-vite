@@ -102,6 +102,7 @@ import useVersionHistory from './hooks/useVersionHistory';
 import { BUILD_WORKSPACE_COMPACT_MEDIA_QUERY } from '../Editor/constants';
 import { SITE_NAME } from '~/constants/siteBrand';
 import { getAppInfoRelease } from '~/helpers/buildAppInfo';
+import { getBuildPreviewCodeSignature } from '../helpers/previewVersion';
 const GUEST_RESTRICTION_BANNER_TEXT =
   'Some features were restricted because this app uses user-only data. Sign in to access those parts.';
 
@@ -1141,10 +1142,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       userId: resolvedUserId || null,
       previewAuth
     });
-    const previewCodeSignature =
-      Number(build.currentArtifactVersionId) > 0
-        ? `artifact:${build.currentArtifactVersionId}:${previewProjectFilesRevision}`
-        : `current:${build.id}:${Number(build.updatedAt) || 0}:${previewProjectFilesRevision}`;
+    const previewCodeSignature = getBuildPreviewCodeSignature(
+      build,
+      previewProjectFilesRevision
+    );
     const previewHostEnabled = runtimeHostVisible !== false;
     const previewHostVisible = previewHostEnabled;
     const previewAudioMuted = audioMuted;

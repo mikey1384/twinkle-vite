@@ -5,7 +5,6 @@ import {
   BuildAction,
   BuildForumInvalidationActionPayload,
   BuildLiveRunActionPayload,
-  BuildRuntimeVerifyResultPayload,
   BuildWorkspaceForumCacheActionPayload,
   BuildWorkspaceCommunicationMode,
   BuildWorkspaceUiActionPayload,
@@ -390,25 +389,6 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
       return dispatch({
         type: 'PATCH_PROMPT_STUDIO_CLONE',
         buildStudio: { prompt }
-      });
-    },
-    onPublishBuildRuntimeVerifyResult(
-      runtimeVerifyResult: BuildRuntimeVerifyResultPayload
-    ) {
-      return dispatch({
-        type: 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT',
-        runtimeVerifyResult
-      });
-    },
-    onClearBuildRuntimeVerifyResult(
-      runtimeVerifyResult: Pick<
-        BuildRuntimeVerifyResultPayload,
-        'buildId' | 'requestId'
-      >
-    ) {
-      return dispatch({
-        type: 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT',
-        runtimeVerifyResult
       });
     },
     onClearBuildRun(buildId: number) {

@@ -31,7 +31,6 @@ interface UseSharedRunCleanupOptions {
   runtimeFollowUpRevision: number;
   sharedBuildRun: BuildLiveRunState | null;
   sharedRunReconciliation: SharedRunCleanupReconciliation;
-  shouldHoldTerminalSharedBuildRun: (requestId: string) => boolean;
 }
 
 export default function useSharedRunCleanup({
@@ -42,16 +41,12 @@ export default function useSharedRunCleanup({
   onClearBuildRun,
   runtimeFollowUpRevision,
   sharedBuildRun,
-  sharedRunReconciliation,
-  shouldHoldTerminalSharedBuildRun
+  sharedRunReconciliation
 }: UseSharedRunCleanupOptions) {
   useEffect(() => {
     if (!sharedBuildRun || sharedBuildRun.generating) return;
     const terminalSharedBuildRun = sharedBuildRun;
     if (isPostCompleteSyncInFlight()) {
-      return;
-    }
-    if (shouldHoldTerminalSharedBuildRun(terminalSharedBuildRun.requestId)) {
       return;
     }
     const liveMessages = [

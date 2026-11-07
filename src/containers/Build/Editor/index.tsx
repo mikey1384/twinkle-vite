@@ -68,10 +68,7 @@ import type {
   PreviewPanelProps
 } from '../PreviewPanel/types';
 import type { BuildLiveRunState } from '~/contexts/Build/reducer';
-import type {
-  BuildRuntimeExplorationPlan,
-  BuildRuntimeObservationState
-} from '../types/runtimeObservationTypes';
+import type { BuildRuntimeExplorationPlan } from '../types/runtimeObservationTypes';
 import {
   useBuildContext,
   useKeyContext,
@@ -220,9 +217,6 @@ export default function BuildEditor({
   );
   const getLatestBuildRun: (buildId: number) => BuildLiveRunState | null =
     useBuildContext((v) => v.getLatestBuildRun);
-  const sharedRuntimeVerifyResults = useBuildContext(
-    (v) => v.state.runtimeVerifyResults
-  );
   const onRegisterBuildRun = useBuildContext(
     (v) => v.actions.onRegisterBuildRun
   );
@@ -249,9 +243,6 @@ export default function BuildEditor({
   );
   const onSetBuildWorkspaceForumThread = useBuildContext(
     (v) => v.actions.onSetBuildWorkspaceForumThread
-  );
-  const onClearBuildRuntimeVerifyResult = useBuildContext(
-    (v) => v.actions.onClearBuildRuntimeVerifyResult
   );
   const navigate = useNavigate();
   useEffect(() => {
@@ -435,14 +426,10 @@ export default function BuildEditor({
     runIdentity,
     runOrchestration
   });
-  const RUNTIME_AUTOFIX_ENABLED = false;
-  const RUNTIME_AUTO_FIX_WINDOW_MS = 12000;
-  const RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS = 18000;
   const STALLED_RUN_RESUME_AFTER_MS = 25000;
   const STALLED_RUN_RECOVER_AFTER_MS = 60000;
   const {
     appendLocalRunEvent,
-    clearBufferedRunStartEvents,
     flushBufferedRunStartEvents,
     flushBufferedRunStartEventsToPageFeedback,
     pageFeedbackEvents,
@@ -452,9 +439,7 @@ export default function BuildEditor({
     getCurrentActiveRunRequestId,
     getCurrentSharedRunState: getCurrentSharedRunStateForFeedback,
     onAppendBuildRunEvent,
-    runOrchestration,
-    shouldHoldTerminalSharedBuildRun:
-      shouldHoldTerminalSharedBuildRunForFeedback
+    runOrchestration
   });
   const {
     beginDedupedProcessingRecovery,
@@ -498,8 +483,6 @@ export default function BuildEditor({
     getLatestChatMessages: getLatestChatMessagesForQueue,
     handleStopGeneration: handleStopGenerationForQueue,
     hasCurrentPageRunActivity,
-    hasPendingRuntimeFollowUp: () =>
-      runtimeFollowUp.hasPendingRuntimeFollowUp(),
     isRunActivityInFlight,
     requestStopForRecoveredBuildRun,
     runIdentity,
@@ -507,19 +490,9 @@ export default function BuildEditor({
     startGeneration: startGenerationForQueue
   });
   const runtimeFollowUp = useRuntimeFollowUp({
-    buildId: build.id,
     isOwner,
-    runtimeAutoFixEnabled: RUNTIME_AUTOFIX_ENABLED,
-    runtimeAutoFixWindowMs: RUNTIME_AUTO_FIX_WINDOW_MS,
-    runtimePostFixVerificationWindowMs: RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS,
-    sharedRuntimeVerifyResults,
-    claimRuntimeVerifyResult: sharedRunReconciliation.claimRuntimeVerifyResult,
-    onClearBuildRuntimeVerifyResult,
     onAppendLocalRunEvent: appendLocalRunEvent,
-    onScrollChatToBottom: scrollChatToBottom,
-    onMaybeStartNextQueuedRequest: maybeStartNextQueuedRequest,
-    onStartRuntimeAutoFix: startRuntimeAutoFixForFollowUp,
-    isRunActivityInFlight
+    onScrollChatToBottom: scrollChatToBottom
   });
 
   useEffect(() => {
@@ -1137,42 +1110,37 @@ export default function BuildEditor({
     hasCurrentPageRunActivity: runOrchestration.hasCurrentPageRunActivity(),
     sharedBuildRun
   });
-  const { startGeneration, startGreetingGeneration, startRuntimeAutoFix } =
-    useRunStartActions({
-      aiFeaturesDisabled: AI_FEATURES_DISABLED,
-      appendLocalRunEvent,
-      clearBufferedRunStartEvents,
-      clearLocalFollowUpPrompt,
-      ensureProjectFilesPersistedBeforeRun,
-      flushBufferedRunStartEvents,
-      flushBufferedRunStartEventsToPageFeedback,
-      forceChatAutoScroll: () => {
-        shouldAutoScrollRef.current = true;
-        scrollChatToBottom('smooth', { force: true });
-      },
-      getLatestBuild,
-      getLatestChatMessages,
-      // The API policy owns the model default. If no canonical snapshot is
-      // available yet, omit the override and let the API resolve its current
-      // default instead of sending the client's fallback catalog.
-      getLumineModelSelection: () =>
-        getLatestCopilotPolicy() ? getCurrentLumineModelSelection() : null,
-      getRuntimeExplorationPlan: () =>
-        currentBuildRunView.runtimeExplorationPlan,
-      isOwner,
-      isRunActivityInFlight,
-      markActiveBuildRunActivity,
-      markCurrentPageRunActivityActive,
-      onRegisterBuildRun,
-      replaceChatMessages,
-      resetDedupedProcessingReconcileState,
-      runIdentity,
-      runOrchestration,
-      runtimeAutoFixEnabled: RUNTIME_AUTOFIX_ENABLED,
-      runtimeFollowUp,
-      setBuildRuntimeExplorationPlanValue,
-      setDismissedFollowUpPromptKey
-    });
+  const { startGeneration, startGreetingGeneration } = useRunStartActions({
+    aiFeaturesDisabled: AI_FEATURES_DISABLED,
+    appendLocalRunEvent,
+    clearLocalFollowUpPrompt,
+    ensureProjectFilesPersistedBeforeRun,
+    flushBufferedRunStartEvents,
+    flushBufferedRunStartEventsToPageFeedback,
+    forceChatAutoScroll: () => {
+      shouldAutoScrollRef.current = true;
+      scrollChatToBottom('smooth', { force: true });
+    },
+    getLatestBuild,
+    getLatestChatMessages,
+    // The API policy owns the model default. If no canonical snapshot is
+    // available yet, omit the override and let the API resolve its current
+    // default instead of sending the client's fallback catalog.
+    getLumineModelSelection: () =>
+      getLatestCopilotPolicy() ? getCurrentLumineModelSelection() : null,
+    isOwner,
+    isRunActivityInFlight,
+    markActiveBuildRunActivity,
+    markCurrentPageRunActivityActive,
+    onRegisterBuildRun,
+    replaceChatMessages,
+    resetDedupedProcessingReconcileState,
+    runIdentity,
+    runOrchestration,
+    runtimeFollowUp,
+    setBuildRuntimeExplorationPlanValue,
+    setDismissedFollowUpPromptKey
+  });
   const {
     handleAcceptFollowUpPrompt,
     handleApproveToolRequest,
@@ -1421,9 +1389,7 @@ export default function BuildEditor({
     onClearBuildRun,
     runtimeFollowUpRevision: runtimeFollowUp.runtimeFollowUpRevision,
     sharedBuildRun,
-    sharedRunReconciliation,
-    shouldHoldTerminalSharedBuildRun:
-      runtimeFollowUp.shouldHoldTerminalSharedBuildRun
+    sharedRunReconciliation
   });
 
   useEffect(() => {
@@ -1572,10 +1538,6 @@ export default function BuildEditor({
     return getBuildRunIdentity(getActiveBuildRunFeedbackBuildId());
   }
 
-  function shouldHoldTerminalSharedBuildRunForFeedback(requestId: string) {
-    return runtimeFollowUp.shouldHoldTerminalSharedBuildRun(requestId);
-  }
-
   function getLatestChatMessagesForQueue() {
     return getLatestChatMessages();
   }
@@ -1590,18 +1552,6 @@ export default function BuildEditor({
     }
   ) {
     return startGeneration(messageText, options);
-  }
-
-  function startRuntimeAutoFixForFollowUp(
-    observationState: BuildRuntimeObservationState,
-    options?: {
-      remainingRepairsAfterVerification?: number;
-      trigger?: 'initial' | 'verification';
-      sourceRequestId?: string | null;
-      sourceArtifactVersionId?: number | null;
-    }
-  ) {
-    return startRuntimeAutoFix(observationState, options);
   }
 
   function sendBuildMessageTextForUploads(

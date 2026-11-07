@@ -28,9 +28,7 @@ import type {
 import type { SharedBuildRunIdentityState } from './useRunIdentity';
 
 interface ChatCommandRuntimeFollowUp {
-  hasPendingRuntimeFollowUp(): boolean;
   removeRuntimeObservationChatNote(messageId: number): void;
-  resetRuntimeHealthFollowUpState(): void;
 }
 
 interface ChatCommandRunOrchestration {
@@ -414,10 +412,7 @@ export default function useChatCommandActions({
       return uploadClarificationHandled;
     }
 
-    if (
-      isRunActivityInFlight() ||
-      runtimeFollowUp.hasPendingRuntimeFollowUp()
-    ) {
+    if (isRunActivityInFlight()) {
       enqueueLatestBuildRequest(trimmedMessage, requestOptions);
       return true;
     }
@@ -455,7 +450,6 @@ export default function useChatCommandActions({
       if (stopReason === 'replacement') {
         runOrchestration.markReplacementStop(requestId);
       }
-      runtimeFollowUp.resetRuntimeHealthFollowUpState();
       onUpdateBuildRunStatus({
         requestId,
         status:

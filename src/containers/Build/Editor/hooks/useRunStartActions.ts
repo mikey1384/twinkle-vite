@@ -21,7 +21,7 @@ import type { BuildLumineModelPreference } from '../ChatPanel/types';
 interface RunStartIdentity {
   beginRun(options: {
     requestId: string;
-    runMode: 'user' | 'greeting' | 'runtime-autofix';
+    runMode: 'user' | 'greeting';
     userMessageId?: number | null;
     assistantMessageId?: number | null;
     messageContext?: string | null;
@@ -35,14 +35,11 @@ interface RunStartOrchestration {
 }
 
 interface RunStartRuntimeFollowUp {
-  getCurrentRuntimeObservationSummary(
-    observationState?: BuildRuntimeObservationState
+  captureRuntimeObservation(): BuildRuntimeObservationState | null;
+  getRuntimeObservationSummaryForBuild(
+    build: Build,
+    capturedBeforeSave?: BuildRuntimeObservationState | null
   ): string;
-  prepareRuntimeAutoFixRun(
-    observationState: BuildRuntimeObservationState,
-    options?: { remainingRepairsAfterVerification?: number }
-  ): void;
-  resetRuntimeHealthFollowUpState(): void;
 }
 
 interface AppendLocalRunEventOptions {
@@ -56,7 +53,6 @@ interface AppendLocalRunEventOptions {
 interface UseRunStartActionsOptions {
   aiFeaturesDisabled: boolean;
   appendLocalRunEvent: (event: AppendLocalRunEventOptions) => void;
-  clearBufferedRunStartEvents: () => void;
   clearLocalFollowUpPrompt: () => void;
   ensureProjectFilesPersistedBeforeRun: (options: {
     runType: 'copilot';
@@ -67,7 +63,6 @@ interface UseRunStartActionsOptions {
   getLatestBuild: () => Build;
   getLatestChatMessages: () => ChatMessage[];
   getLumineModelSelection: () => BuildLumineModelPreference | null;
-  getRuntimeExplorationPlan: () => BuildRuntimeExplorationPlan | null;
   isOwner: boolean;
   isRunActivityInFlight: () => boolean;
   markActiveBuildRunActivity: (activityAt?: number | null) => void;
@@ -77,7 +72,6 @@ interface UseRunStartActionsOptions {
   resetDedupedProcessingReconcileState: () => void;
   runIdentity: RunStartIdentity;
   runOrchestration: RunStartOrchestration;
-  runtimeAutoFixEnabled: boolean;
   runtimeFollowUp: RunStartRuntimeFollowUp;
   setBuildRuntimeExplorationPlanValue: (
     nextRuntimeExplorationPlan: BuildRuntimeExplorationPlan | null
@@ -88,7 +82,6 @@ interface UseRunStartActionsOptions {
 export default function useRunStartActions({
   aiFeaturesDisabled,
   appendLocalRunEvent,
-  clearBufferedRunStartEvents,
   clearLocalFollowUpPrompt,
   ensureProjectFilesPersistedBeforeRun,
   flushBufferedRunStartEvents,
@@ -97,7 +90,6 @@ export default function useRunStartActions({
   getLatestBuild,
   getLatestChatMessages,
   getLumineModelSelection,
-  getRuntimeExplorationPlan,
   isOwner,
   isRunActivityInFlight,
   markActiveBuildRunActivity,
@@ -107,125 +99,10 @@ export default function useRunStartActions({
   resetDedupedProcessingReconcileState,
   runIdentity,
   runOrchestration,
-  runtimeAutoFixEnabled,
   runtimeFollowUp,
   setBuildRuntimeExplorationPlanValue,
   setDismissedFollowUpPromptKey
 }: UseRunStartActionsOptions) {
-  async function startRuntimeAutoFix(
-    observationState: BuildRuntimeObservationState,
-    options?: {
-      remainingRepairsAfterVerification?: number;
-      trigger?: 'initial' | 'verification';
-      sourceRequestId?: string | null;
-      sourceArtifactVersionId?: number | null;
-    }
-  ): Promise<boolean> {
-    if (!runtimeAutoFixEnabled) {
-      return false;
-    }
-    if (!isOwner || isRunActivityInFlight()) {
-      return false;
-    }
-    const runtimeObservationSummary =
-      runtimeFollowUp.getCurrentRuntimeObservationSummary(observationState);
-    if (!runtimeObservationSummary) {
-      return false;
-    }
-    const activeBuild = getLatestBuild();
-    const requestedBuildId = Number(activeBuild?.id || 0);
-    if (!Number.isFinite(requestedBuildId) || requestedBuildId <= 0) {
-      return false;
-    }
-
-    resetDedupedProcessingReconcileState();
-    runOrchestration.setUserRequestedStop(false);
-    runtimeFollowUp.prepareRuntimeAutoFixRun(observationState, {
-      remainingRepairsAfterVerification:
-        options?.remainingRepairsAfterVerification
-    });
-    setBuildRuntimeExplorationPlanValue(null);
-    const now = Math.floor(Date.now() / 1000);
-    const assistantMessageId = Date.now();
-    const requestId = `${requestedBuildId}-runtime-fix-${assistantMessageId}`;
-    const assistantClientMessageId = createBuildChatClientMessageId({
-      buildId: requestedBuildId,
-      role: 'assistant'
-    });
-    const baseProjectFiles = normalizeProjectFilesForBuild(
-      activeBuild?.projectFiles || [],
-      activeBuild?.code || ''
-    );
-    const lumineModelSelection = getLumineModelSelection();
-    setDismissedFollowUpPromptKey('');
-    clearLocalFollowUpPrompt();
-
-    const assistantMessage: ChatMessage = {
-      id: assistantMessageId,
-      role: 'assistant',
-      content: '',
-      codeGenerated: null,
-      streamCodePreview: null,
-      clientMessageId: assistantClientMessageId,
-      createdAt: now,
-      persisted: false
-    };
-
-    const nextMessages = [...getLatestChatMessages(), assistantMessage];
-    replaceChatMessages(nextMessages);
-    runIdentity.beginRun({
-      requestId,
-      runMode: 'runtime-autofix',
-      assistantMessageId
-    });
-    markCurrentPageRunActivityActive();
-    clearBufferedRunStartEvents();
-    markActiveBuildRunActivity();
-    runOrchestration.resetStalledRunRecovery();
-    onRegisterBuildRun({
-      buildId: requestedBuildId,
-      requestId,
-      runMode: 'runtime-autofix',
-      assistantMessage,
-      baseProjectFiles
-    });
-    appendLocalRunEvent({
-      kind: 'action',
-      phase: 'implementing',
-      message:
-        options?.trigger === 'verification'
-          ? 'Lumine is taking one final repair pass after re-checking the preview.'
-          : `Preview explorer sent its findings to Lumine for automatic repair${
-              options?.sourceArtifactVersionId
-                ? ` after artifact v${options.sourceArtifactVersionId}`
-                : ''
-            }.`
-    });
-    forceChatAutoScroll();
-
-    socket.emit('build_generate', {
-      buildId: requestedBuildId,
-      requestId,
-      message: 'Investigate and fix the observed runtime issues.',
-      runtimeObservationSummary,
-      runtimeObservation: observationState,
-      runtimeExplorationPlan: getRuntimeExplorationPlan(),
-      autoFixRuntimeObservation: true,
-      runtimeAutoFixSourceRequestId: options?.sourceRequestId || null,
-      runtimeAutoFixSourceArtifactVersionId:
-        options?.sourceArtifactVersionId || null,
-      lumineModel: lumineModelSelection?.model || undefined,
-      lumineReasoningEffort:
-        lumineModelSelection?.reasoningEffort || undefined,
-      assistantClientMessageId,
-      expectedCurrentArtifactVersionId:
-        Number(getLatestBuild()?.currentArtifactVersionId || 0) > 0
-          ? Number(getLatestBuild()?.currentArtifactVersionId)
-          : undefined
-    });
-    return true;
-  }
-
   async function startGeneration(
     messageText: string,
     options?: {
@@ -248,6 +125,10 @@ export default function useRunStartActions({
       if (!Number.isFinite(requestedBuildId) || requestedBuildId <= 0) {
         return false;
       }
+      // Taken before the save: the saved files may be exactly the ones the
+      // preview showed, and the preview can reload while the save runs.
+      const runtimeObservationBeforeSave =
+        runtimeFollowUp.captureRuntimeObservation();
       const projectFilesReady = await ensureProjectFilesPersistedBeforeRun({
         runType: 'copilot'
       });
@@ -270,7 +151,10 @@ export default function useRunStartActions({
       const messageId = Date.now();
       const requestId = `${activeBuild.id}-${messageId}`;
       const runtimeObservationSummary =
-        runtimeFollowUp.getCurrentRuntimeObservationSummary();
+        runtimeFollowUp.getRuntimeObservationSummaryForBuild(
+          activeBuild,
+          runtimeObservationBeforeSave
+        );
       const trimmedMessageContext = String(
         options?.messageContext || ''
       ).trim();
@@ -288,7 +172,6 @@ export default function useRunStartActions({
         options?.lumineModelSelection || getLumineModelSelection();
       setDismissedFollowUpPromptKey('');
       clearLocalFollowUpPrompt();
-      runtimeFollowUp.resetRuntimeHealthFollowUpState();
       setBuildRuntimeExplorationPlanValue(null);
 
       const existingUserMessage =
@@ -435,7 +318,6 @@ export default function useRunStartActions({
       );
       setDismissedFollowUpPromptKey('');
       clearLocalFollowUpPrompt();
-      runtimeFollowUp.resetRuntimeHealthFollowUpState();
       setBuildRuntimeExplorationPlanValue(null);
 
       const assistantMessage: ChatMessage = {
@@ -486,7 +368,6 @@ export default function useRunStartActions({
 
   return {
     startGeneration,
-    startGreetingGeneration,
-    startRuntimeAutoFix
+    startGreetingGeneration
   };
 }
