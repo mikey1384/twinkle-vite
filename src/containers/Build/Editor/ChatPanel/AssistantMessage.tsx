@@ -288,14 +288,14 @@ export default function AssistantMessage({
             font-size: var(--build-workshop-meta-font-size);
           `}
         >
-          <span>Generating code draft...</span>
+          <span>Writing the code...</span>
           <span
             className={css`
               opacity: 0.7;
               font-family: 'SF Mono', monospace;
             `}
           >
-            {(message.streamCodePreview || '').length} chars
+            {(message.streamCodePreview || '').length} characters
           </span>
         </div>
       ) : null}
@@ -323,7 +323,7 @@ export default function AssistantMessage({
             `}
           >
             <Icon icon="exclamation-triangle" />
-            No code changes were applied
+            Nothing in your game changed
           </div>
           <div
             className={css`
@@ -334,10 +334,10 @@ export default function AssistantMessage({
             `}
           >
             {message.billingState === 'not_charged'
-              ? 'No workspace changes were saved, and this run was not charged.'
+              ? 'Nothing was saved, and this run didn’t use any of your Energy.'
               : message.billingState === 'pending'
-                ? 'No workspace changes were saved. Billing reconciliation is still pending.'
-                : 'Lumine replied like it made changes, but it did not return updated code. Your workspace stayed the same.'}
+                ? 'Nothing was saved. I’m still working out how much Energy this run used.'
+                : 'My reply sounded like I changed something, but no new code came back, so your game is the same as before.'}
           </div>
         </div>
       ) : null}

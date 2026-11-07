@@ -5,6 +5,7 @@ import type {
   BuildRuntimeObservationIssue,
   BuildRuntimeObservationState
 } from '../../types/runtimeObservationTypes';
+import { formatBuildRuntimeAppStartedLine } from '../../PreviewPanel/helpers/runtimeAppStarted';
 
 type BuildRunMode = 'user' | 'greeting' | 'runtime-autofix';
 
@@ -343,7 +344,7 @@ function formatRuntimeObservationSummary(
   const healthLines = health
     ? [
         'Preview health:',
-        `- booted: ${health.booted ? 'yes' : 'no'}`,
+        formatBuildRuntimeAppStartedLine(health, observationState.issues),
         `- meaningful UI: ${health.meaningfulRender ? 'yes' : 'no'}`,
         health.gameLike ? '- game-like preview: yes' : null,
         `- headings/buttons/forms: ${health.headingCount}/${health.buttonCount}/${health.formCount}`,
