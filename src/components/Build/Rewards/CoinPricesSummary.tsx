@@ -23,8 +23,9 @@ const DEFAULT_OFFER_RULE = { takeoverAfterDays: 30, lapseAfterDays: 44 as number
 // The recordBlocks limits (COIN_TALLY_LIMITS on the API).
 const TALLY_PER_SECOND = 5;
 const TALLY_PER_DAY = 20_000;
-// What a modified copy of the app can still do with the tally (r2).
-export const COIN_TALLY_REMAINING_RISK = `Remaining risk: a modified copy of the app can record blocks only as its own player, at most ${TALLY_PER_SECOND} a second and ${TALLY_PER_DAY.toLocaleString()} a day, and only where it says they are. So it can record blocks that are not really there, or clear blocks other players recorded, and that changes what a buyer of that land is asked to pay for that player's blocks. The buyer always sees the total and every builder's share before agreeing. It cannot create Coins or pay anyone who did not record blocks.`;
+// What can still go wrong with the tally (review-r2 M5; COIN_TALLY_REMAINING_RISK
+// on the API says the same).
+export const COIN_TALLY_REMAINING_RISK = `Remaining risk: a modified copy of the app can record blocks that are not really there, as its own player only (at most ${TALLY_PER_SECOND} a second and ${TALLY_PER_DAY.toLocaleString()} a day). A buyer of that land is then asked to pay that player for them (never more than the per-builder limit), or the land needs more than one purchase may pay and cannot be bought, until the admin clears that player's records (lumine admin coins tally-clear). By design no player can clear someone else's recorded blocks, so a player who sees fake blocks on land asks the admin (Mikey). A block another player broke stays paid until a plot containing it is sold, so a buyer may pay for a block that is gone. It cannot create Coins, pay anyone who recorded nothing, or move another player's credit to itself.`;
 function tallyAreaText(tally: NonNullable<NonNullable<CoinPrice['builders']>['tally']>) {
   const size = `${tally.plotSize}×${tally.plotSize}`;
   return tally.keyFormat === 'region:cx:cz'
@@ -87,7 +88,7 @@ export function coinPriceDestinationLine(price: CoinPrice, ownerName?: string | 
   const b = full.builders;
   const unit = b?.unitName || 'block';
   const builders = b
-    ? `, plus ${b.coinsPerUnit.toLocaleString()} Coins per ${unit} to every other player for the ${unit}s Twinkle recorded as theirs inside the plot${b.tally ? ` (${tallyAreaText(b.tally)})` : ' (no tally declared, so nobody can be paid)'}; never the buyer or the owner; up to ${countOf(b.maxUnitsPerRecipient, unit)} each, ${countOf(b.maxRecipients ?? DEFAULT_MAX_RECIPIENTS, 'builder')}, ${coinBuildersCeiling(full).toLocaleString()} Coins per purchase in all; land over a limit cannot be bought`
+    ? `, plus ${b.coinsPerUnit.toLocaleString()} Coins per ${unit} to every other player for the ${unit}s credited to them in Twinkle's record inside the plot${b.tally ? ` (${tallyAreaText(b.tally)})` : ' (no tally declared, so nobody can be paid)'}; never the buyer or the owner; each builder paid for at most ${countOf(b.maxUnitsPerRecipient, unit)}; land with more than ${countOf(b.maxRecipients ?? DEFAULT_MAX_RECIPIENTS, 'builder')}, or whose builders would get more than ${coinBuildersCeiling(full).toLocaleString()} Coins in all, cannot be bought`
     : '';
   // A resale pays a person, so the line never ends at "removed" (N3).
   const resale = full.offers
@@ -96,8 +97,23 @@ export function coinPriceDestinationLine(price: CoinPrice, ownerName?: string | 
   return `${base}${builders}${resale}`;
 }
 
-function limitsLine(price: CoinPrice) {
+// review-r2 H1: in a key group where a price pays builders with a tally,
+// every price reads its key as that plot. A price there that pays no
+// builders can buy only land without other players' recorded blocks.
+export function coinTallyGroupLine(price: CoinPrice, prices: CoinPrice[]) {
+  if (!price.uniqueKey) return '';
+  const group = price.keyGroup || price.id;
+  const payers = prices.filter(
+    (entry) => entry.uniqueKey && (entry.keyGroup || entry.id) === group && entry.builders?.tally
+  );
+  if (!payers.length) return '';
+  const plots = 'plots in this key group may not overlap, and each purchase uses up the recorded blocks inside its plot';
+  if (price.builders) return plots;
+  return `shares key group “${group}” with ${payers.map((entry) => `“${entry.title}”`).join(', ')}: it can buy only land with no other players' recorded blocks (Twinkle refuses it there); ${plots}`;
+}
+function limitsLine(price: CoinPrice, prices: CoinPrice[] = []) {
   return [
+    coinTallyGroupLine(price, prices),
     price.userDailyLimit ? `${price.userDailyLimit} a day per player` : '',
     price.maxLifetime ? `${price.maxLifetime} ever per player` : '',
     price.uniqueKey
@@ -140,7 +156,7 @@ export default function CoinPricesSummary({
       {(toOwner || toBuilders || resold.length > 0) && (
         <div className={ownerBannerClass} role="alert">
           {toOwner ? <div>Coins go to {ownerName || 'the app owner'} (the owner)</div> : null}
-          {toBuilders ? <div>Coins go to the builders Twinkle recorded on the land</div> : null}
+          {toBuilders ? <div>Coins go to the builders in Twinkle&apos;s block record for the land</div> : null}
           {resold.length ? <div>Coins go to another player when an item is resold</div> : null}
           {toOwner && context ? (
             <span>
@@ -152,8 +168,9 @@ export default function CoinPricesSummary({
           ) : null}
           {toBuilders ? (
             <span>
-              {COIN_TALLY_PLAIN_WORDS} The buyer and the app owner are never paid, and land over a limit below
-              cannot be bought.
+              {COIN_TALLY_PLAIN_WORDS} The buyer and the app owner are never paid. In a key group with such a
+              price, every price reads its key as the same plot: a price that pays no builders cannot buy land
+              with other players&apos; recorded blocks, and plots may not overlap.
               {context ? ` ${context.builderPurchases.toLocaleString()} purchases so far also paid builders.` : ''}
               {context?.tally
                 ? ` Twinkle has recorded ${context.tally.cells.toLocaleString()} blocks in this app from ${context.tally.builders.toLocaleString()} ${context.tally.builders === 1 ? 'player' : 'players'}.`
@@ -220,7 +237,7 @@ export default function CoinPricesSummary({
             ) : null}
             <p>
               Price ID: {price.id}
-              {limitsLine(price) ? ` · ${limitsLine(price)}` : ' · no per-player limit'}
+              {limitsLine(price, prices) ? ` · ${limitsLine(price, prices)}` : ' · no per-player limit'}
             </p>
             {sale ? (
               <p>

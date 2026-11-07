@@ -54,6 +54,30 @@ const appNoteClass = css`
   color: ${Color.gray()};
   overflow-wrap: anywhere;
 `;
+// The builders a purchase pays, one line each (review-r2 L6). A long list
+// scrolls inside its own short box, so the price and Buy stay in view and
+// the box opens at its top.
+const builderListClass = css`
+  display: grid;
+  gap: 0.5rem;
+  > p {
+    margin: 0;
+  }
+  ul {
+    margin: 0;
+    padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+    font-size: 1.4rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    border: 1px solid ${Color.borderGray()};
+    border-radius: 8px;
+  }
+  ul.long {
+    max-height: 12rem;
+    overflow-y: auto;
+  }
+`;
+const LONG_BUILDER_LIST = 5;
 // Every hint text sits in the same grid cell; the hidden ones only hold the
 // space, so the box keeps one height whatever the hint says (P3).
 const hintBoxClass = css`
@@ -291,6 +315,7 @@ export default function useCoinConfirm({
   }
 
   const text = session ? coinConfirmText(session.request) : null;
+  const builderList = text && 'builderList' in text ? text.builderList : null;
   const coinConfirmModal =
     session && text ? (
       <Modal
@@ -350,6 +375,21 @@ export default function useCoinConfirm({
                 ) : null}
               </React.Fragment>
             ))}
+            {builderList ? (
+              <div className={builderListClass}>
+                <p>{builderList.heading}</p>
+                <ul
+                  className={builderList.rows.length > LONG_BUILDER_LIST ? 'long' : undefined}
+                  tabIndex={builderList.rows.length > LONG_BUILDER_LIST ? 0 : undefined}
+                  aria-label={builderList.heading}
+                >
+                  {builderList.rows.map((row, index) => (
+                    <li key={index}>{row}</li>
+                  ))}
+                </ul>
+                <p className={appNoteClass}>{builderList.note}</p>
+              </div>
+            ) : null}
             <div className={hintBoxClass}>
               {(Object.keys(HINTS) as HintKey[]).map((key) => (
                 <span key={key} className={hintSizerClass} aria-hidden="true">

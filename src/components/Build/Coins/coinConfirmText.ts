@@ -10,8 +10,11 @@
 export interface CoinQuoteBuilder {
   userId: number;
   username?: string | null;
+  // Blocks paid for (at most the per-builder limit).
   units: number;
   coins: number;
+  // Blocks Twinkle holds for them here, sent only when more than were paid.
+  recorded?: number;
 }
 export type CoinConfirmRequest =
   | {
@@ -23,7 +26,7 @@ export type CoinConfirmRequest =
       priceCoins: number;
       destination: 'removed' | 'owner';
       ownerName?: string | null;
-      // From the server's tally (r2): who built in the plot and how many.
+      // From the server's tally (r2): who is credited in the plot and how many.
       builders: CoinQuoteBuilder[];
       unitName?: string;
       balance: number;
@@ -86,49 +89,53 @@ export function coinKeyNote(key?: string | null) {
   const shown = key.length > COIN_KEY_SHOWN_CHARS ? `${key.slice(0, COIN_KEY_SHOWN_CHARS)}…` : key;
   return `Item name from the app: ${shown}`;
 }
-function nameList(names: string[]) {
-  if (names.length <= 1) return names[0] || '';
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-}
 function inApp(appTitle: string) {
   return appTitle ? `in the app “${appTitle}”` : 'in this app';
 }
 
-// Where the Coins go, in one sentence.
+// Where the Coins go, in one sentence. Builders are named in the list under
+// it (review-r2 L6: one line per builder, never every name twice).
 export function coinDestinationSentence(request: Extract<CoinConfirmRequest, { kind: 'charge' }>) {
   const builders = request.builders.filter((builder) => builder.coins > 0);
-  const builderNames = nameList(
-    builders.length > 1
-      ? builders.map((builder) => `${builder.username || 'a player'} (${n(builder.coins)})`)
-      : builders.map((builder) => builder.username || 'a player')
-  );
   const builderTotal = builders.reduce((sum, builder) => sum + builder.coins, 0);
+  const who =
+    builders.length === 1 ? builders[0].username || 'a player' : `the ${n(builders.length)} builders listed below`;
   const base =
     request.priceCoins <= 0
       ? ''
       : request.destination === 'owner'
         ? `${builders.length ? `${n(request.priceCoins)} Coins go` : 'The Coins go'} to ${request.ownerName || 'the app owner'}, who made this app`
         : `${builders.length ? `${n(request.priceCoins)} Coins are` : 'The Coins are'} removed, so nobody gets them`;
-  if (base && builders.length) return `${base}, and ${n(builderTotal)} go to ${builderNames}, who built here.`;
-  if (builders.length) return `The Coins go to ${builderNames}, who built here.`;
+  if (base && builders.length) return `${base}, and ${n(builderTotal)} go to ${who}, for blocks they placed here.`;
+  if (builders.length) return `The Coins go to ${who}, for blocks they placed here.`;
   return base ? `${base}.` : 'It is free.';
 }
 
-// Who built here, as Twinkle recorded it (r2): the split comes from Twinkle's
-// own record of who placed each block, never from the app.
-export function coinBuilderCountLine(request: Extract<CoinConfirmRequest, { kind: 'charge' }>) {
+// Who is paid for which blocks (r2 tally, review-r2 M5/L6): one line per
+// builder from Twinkle's record, and what that record is. Twinkle never sees
+// the world; each builder's own game reported their blocks.
+export function coinBuilderList(request: Extract<CoinConfirmRequest, { kind: 'charge' }>) {
   const builders = request.builders.filter((builder) => builder.units > 0);
   if (!builders.length) return null;
   const unit = request.unitName || 'block';
   const plural = (count: number) => `${n(count)} ${unit}${count === 1 ? '' : 's'}`;
-  if (builders.length === 1)
-    return `Twinkle counted the ${unit}s other players placed here: ${builders[0].username || 'a player'} placed ${plural(builders[0].units)}.`;
-  return `Twinkle counted the ${unit}s other players placed here: ${nameList(builders.map((builder) => `${builder.username || 'a player'} ${plural(builder.units)}`))}.`;
+  return {
+    heading: `Twinkle's record of ${unit}s other players placed here:`,
+    rows: builders.map(
+      (builder) =>
+        `${builder.username || 'a player'}: ${plural(builder.units)}, ${n(builder.coins)} Coins${
+          builder.recorded && builder.recorded > builder.units
+            ? ` (${n(builder.recorded)} recorded; one purchase pays for at most ${n(builder.units)})`
+            : ''
+        }`
+    ),
+    note: `Each builder's own game reported these ${unit}s to Twinkle. A ${unit} still counts for the player who placed it if someone else broke it.`
+  };
 }
 
 export function coinConfirmText(request: CoinConfirmRequest) {
   if (request.kind === 'charge') {
-    const counted = coinBuilderCountLine(request);
+    const builderList = coinBuilderList(request);
     return {
       title: request.coins > 0 ? `Buy ${request.title}?` : `Get ${request.title}?`,
       lines: [
@@ -137,9 +144,9 @@ export function coinConfirmText(request: CoinConfirmRequest) {
           ? `Price: ${n(request.coins)} Coins. You have ${n(request.balance)}.`
           : 'Price: free.',
         coinDestinationSentence(request),
-        ...(counted ? [counted] : []),
         ...(request.preview ? ['Preview: nothing will be charged.'] : [])
       ],
+      builderList,
       appNote: coinKeyNote(request.key),
       confirmLabel: request.coins > 0 ? `Buy for ${n(request.coins)} Coins` : 'Get it'
     };

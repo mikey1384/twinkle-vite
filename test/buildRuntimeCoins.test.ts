@@ -5,7 +5,7 @@ import {
   COIN_BOX_LIMITS,
   runBuildRuntimeCoinRequest
 } from '../src/containers/Build/PreviewPanel/helpers/buildRuntimeCoins';
-import { coinConfirmText, coinBuilderCountLine } from '../src/components/Build/Coins/coinConfirmText';
+import { coinConfirmText, coinBuilderList } from '../src/components/Build/Coins/coinConfirmText';
 import { isMutatingPreviewRequestType } from '../src/containers/Build/PreviewPanel/helpers/previewRequestPolicy';
 import {
   buildCoinPricePersonWarning,
@@ -17,7 +17,8 @@ import { createCoinConfirmArming } from '../src/components/Build/Coins/coinConfi
 import {
   COIN_TALLY_REMAINING_RISK,
   coinPriceDestinationLine,
-  coinPricePaysPerson
+  coinPricePaysPerson,
+  coinTallyGroupLine
 } from '../src/components/Build/Rewards/CoinPricesSummary';
 
 const quote = {
@@ -91,9 +92,12 @@ test('a charge shows Twinkle’s box built from the server quote, then sends wha
   assert.equal('builders' in calls.find(([op]) => op === 'quote')![1], false);
   assert.equal('builders' in chargeBody, false);
   const text = coinConfirmText(asked[0]);
-  assert.match(text.lines.join(' '), /500 Coins are removed, so nobody gets them, and 35 go to nayeayo007 \(20\) and KenGo \(15\), who built here/);
-  // The server's tally, in the box: who built here and how many.
-  assert.match(text.lines.join(' '), /Twinkle counted the blocks other players placed here: nayeayo007 10 blocks and KenGo 7 blocks\./);
+  assert.match(text.lines.join(' '), /500 Coins are removed, so nobody gets them, and 35 go to the 2 builders listed below, for blocks they placed here\./);
+  // review-r2 L6/M5: the server's split once, one line per builder, and what the record is.
+  assert.equal('builderList' in text && text.builderList?.heading, "Twinkle's record of blocks other players placed here:");
+  assert.deepEqual('builderList' in text && text.builderList?.rows, ['nayeayo007: 10 blocks, 20 Coins', 'KenGo: 7 blocks, 15 Coins']);
+  assert.match(('builderList' in text && text.builderList?.note) || '', /own game reported these blocks to Twinkle\. A block still counts for the player who placed it if someone else broke it/);
+  assert.equal(text.lines.join(' ').split('nayeayo007').length - 1, 0, 'names are listed once, in the list');
   assert.equal(text.confirmLabel, 'Buy for 535 Coins');
 });
 
@@ -536,7 +540,7 @@ test('N3/N7/N12: the review screen and chat card name every person a price pays,
     builders: { coinsPerUnit: 100000, maxUnitsPerRecipient: 1, tally: { plotSize: 16, keyFormat: 'region:x:z' as const } } };
   // N7: not a "free claim"; N12: the default ceilings are shown.
   assert.match(coinPriceDestinationLine(thank), /^no Coins of its own, plus 100,000 Coins per block/);
-  assert.match(coinPriceDestinationLine(thank), /64 builders, 100,000 Coins per purchase in all/);
+  assert.match(coinPriceDestinationLine(thank), /more than 64 builders, or whose builders would get more than 100,000 Coins in all/);
   assert.doesNotMatch(formatBuildCoinPriceLine(thank), /free claim/);
   assert.match(formatBuildCoinPriceLine(thank), /up to 100,000 a purchase/);
   assert.equal(buildCoinPricePersonWarning([{ id: 'snack', title: 'Snack', coins: 10, destination: 'removed' }]), null);
@@ -545,25 +549,35 @@ test('N3/N7/N12: the review screen and chat card name every person a price pays,
 test('r2: the review screen and chat card say builders are paid from Twinkle\'s own record, with the risk that remains', () => {
   const claim = { id: 'claim', title: 'Land with builds', coins: 200, destination: 'removed' as const, uniqueKey: true,
     builders: { coinsPerUnit: 50, maxUnitsPerRecipient: 4096, unitName: 'block', tally: { plotSize: 16, keyFormat: 'region:x:z' as const } } };
-  assert.equal(COIN_TALLY_PLAIN_WORDS, "Builders are paid for the blocks Twinkle itself recorded as theirs inside the plot; the app can't change who or how many.");
+  // review-r2 M5: what Twinkle counts, what it cannot know, and Mikey's credit rule.
+  assert.match(COIN_TALLY_PLAIN_WORDS, /Builders are paid from Twinkle's record of who placed each block\./);
+  assert.match(COIN_TALLY_PLAIN_WORDS, /Twinkle does not see the world, so it cannot tell whether a recorded block is really there/);
+  assert.match(COIN_TALLY_PLAIN_WORDS, /stays credited to the player who placed it when someone else breaks or builds over it; the credit ends only when that player removes it, or when a plot containing it is sold/);
+  assert.doesNotMatch(COIN_TALLY_PLAIN_WORDS, /can't change who or how many|recorded as theirs/);
   const line = coinPriceDestinationLine(claim);
-  assert.match(line, /50 Coins per block to every other player for the blocks Twinkle recorded as theirs inside the plot \(the 16×16 area whose lowest corner the purchase key names \("region:x:z"\), full height\); never the buyer or the owner/);
-  assert.match(line, /land over a limit cannot be bought/);
+  assert.match(line, /50 Coins per block to every other player for the blocks credited to them in Twinkle's record inside the plot \(the 16×16 area whose lowest corner the purchase key names \("region:x:z"\), full height\); never the buyer or the owner/);
+  assert.match(line, /each builder paid for at most 4,096 blocks; land with more than 64 builders, or whose builders would get more than 100,000 Coins in all, cannot be bought/);
   assert.doesNotMatch(line, /the app names|app alone decides/);
   // Without a tally the screen says nobody can be paid.
   assert.match(coinPriceDestinationLine({ ...claim, builders: { coinsPerUnit: 50, maxUnitsPerRecipient: 1 } }), /no tally declared, so nobody can be paid/);
   const warning = buildCoinPricePersonWarning([claim]) || '';
-  assert.match(warning, /Coins go to the builders Twinkle recorded on the land\./);
+  assert.match(warning, /Coins go to the builders in Twinkle's block record for the land\./);
   assert.ok(warning.includes(COIN_TALLY_PLAIN_WORDS));
-  assert.match(formatBuildCoinPriceLine(claim), /plus 50 per block Twinkle recorded for other builders inside the 16×16 plot/);
-  assert.match(COIN_TALLY_REMAINING_RISK, /only as its own player, at most 5 a second and 20,000 a day/);
-  assert.match(COIN_TALLY_REMAINING_RISK, /cannot create Coins or pay anyone who did not record blocks/);
-  // The box counts only builders with blocks; none means no line.
-  assert.equal(coinBuilderCountLine({ kind: 'charge', appTitle: '', title: 'P', coins: 200, priceCoins: 200, destination: 'removed', builders: [], balance: 9 }), null);
-  assert.equal(
-    coinBuilderCountLine({ kind: 'charge', appTitle: '', title: 'P', coins: 250, priceCoins: 200, destination: 'removed', builders: [{ userId: 6, username: 'ana', units: 1, coins: 50 }], balance: 900 }),
-    'Twinkle counted the blocks other players placed here: ana placed 1 block.'
-  );
+  assert.match(warning, /A player can record blocks that aren't there \(only the admin can clear them, with lumine admin coins tally-clear\)/);
+  assert.match(formatBuildCoinPriceLine(claim), /plus 50 per block credited to other players in Twinkle's record inside the 16×16 plot/);
+  assert.match(COIN_TALLY_REMAINING_RISK, /record blocks that are not really there, as its own player only \(at most 5 a second and 20,000 a day\)/);
+  assert.match(COIN_TALLY_REMAINING_RISK, /until the admin clears that player's records \(lumine admin coins tally-clear\)/);
+  assert.match(COIN_TALLY_REMAINING_RISK, /By design no player can clear someone else's recorded blocks, so a player who sees fake blocks on land asks the admin \(Mikey\)/);
+  assert.match(COIN_TALLY_REMAINING_RISK, /a buyer may pay for a block that is gone/);
+  // The box lists only builders with blocks; none means no list.
+  assert.equal(coinBuilderList({ kind: 'charge', appTitle: '', title: 'P', coins: 200, priceCoins: 200, destination: 'removed', builders: [], balance: 9 }), null);
+  const one = coinBuilderList({ kind: 'charge', appTitle: '', title: 'P', coins: 250, priceCoins: 200, destination: 'removed', builders: [{ userId: 6, username: 'ana', units: 1, coins: 50 }], balance: 900 });
+  assert.deepEqual(one?.rows, ['ana: 1 block, 50 Coins']);
+  // review-r2 M2: a builder over the per-builder limit is paid the limit, and the box says so.
+  const capped = coinBuilderList({ kind: 'charge', appTitle: '', title: 'P', coins: 5200, priceCoins: 200, destination: 'removed', builders: [{ userId: 6, username: 'ana', units: 100, coins: 5000, recorded: 140 }], balance: 9000 });
+  assert.deepEqual(capped?.rows, ['ana: 100 blocks, 5,000 Coins (140 recorded; one purchase pays for at most 100)']);
+  const single = coinConfirmText({ kind: 'charge', appTitle: '', title: 'P', coins: 250, priceCoins: 200, destination: 'removed', builders: [{ userId: 6, username: 'ana', units: 1, coins: 50 }], balance: 900 });
+  assert.match(single.lines.join(' '), /200 Coins are removed, so nobody gets them, and 50 go to ana, for blocks they placed here\./);
 });
 
 test('r2: recordBlocks goes straight to the server with only the player\'s blocks, no box', async () => {
@@ -604,3 +618,19 @@ test('H1/L5: the box makes the app frame inert, ends fullscreen and pointer lock
   const panel = readFileSync(new URL('../src/containers/Build/PreviewPanel/index.tsx', import.meta.url), 'utf8');
   assert.match(panel, /useCoinConfirm\(\{\s*frameRootRef: previewRootRef\s*\}\)/);
 });
+
+test('review-r2 H1: the review screen says a plain price sharing a tally key group cannot buy built land', () => {
+  const claim = { id: 'claim', title: 'Land with builds', coins: 200, destination: 'removed' as const, uniqueKey: true, keyGroup: 'plots',
+    builders: { coinsPerUnit: 50, maxUnitsPerRecipient: 100, tally: { plotSize: 16, keyFormat: 'region:x:z' as const } } };
+  const land = { id: 'land-plot', title: 'Extra land plot', coins: 500, destination: 'removed' as const, uniqueKey: true, keyGroup: 'plots' };
+  const starter = { id: 'starter', title: 'Free starter plot', coins: 0, destination: 'removed' as const, uniqueKey: true, keyGroup: 'plots' };
+  const snack = { id: 'snack', title: 'Snack', coins: 10, destination: 'removed' as const };
+  const prices = [claim, land, starter, snack];
+  assert.match(coinTallyGroupLine(land, prices), /shares key group “plots” with “Land with builds”: it can buy only land with no other players' recorded blocks \(Twinkle refuses it there\); plots in this key group may not overlap, and each purchase uses up the recorded blocks inside its plot/);
+  assert.match(coinTallyGroupLine(starter, prices), /can buy only land with no other players' recorded blocks/);
+  assert.equal(coinTallyGroupLine(claim, prices), 'plots in this key group may not overlap, and each purchase uses up the recorded blocks inside its plot');
+  assert.equal(coinTallyGroupLine(snack, prices), '');
+  // A unique price in another key group is untouched.
+  assert.equal(coinTallyGroupLine({ ...land, keyGroup: 'hats' }, prices), '');
+});
+

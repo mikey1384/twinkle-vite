@@ -257,10 +257,12 @@ export interface BuildCoinPriceSummary {
     tally?: { plotSize: number; keyFormat: string };
   };
 }
-// r2: what every builders price guarantees, in the words the review screen,
-// the chat card and the CLI share (helpers/build/coinPrices.ts on the API).
+// r2: what Twinkle counts for a builders price and what it cannot know, in
+// the words the review screen, the chat card and the CLI share
+// (COIN_TALLY_PLAIN_WORDS in helpers/build/coinPrices.ts on the API;
+// review-r2 M5, with Mikey's 11-07 credit rule).
 export const COIN_TALLY_PLAIN_WORDS =
-  "Builders are paid for the blocks Twinkle itself recorded as theirs inside the plot; the app can't change who or how many.";
+  "Builders are paid from Twinkle's record of who placed each block. Each player's copy of the app reports only that player's own blocks, under their own sign-in, so the app can't name anyone else; but Twinkle does not see the world, so it cannot tell whether a recorded block is really there. A block stays credited to the player who placed it when someone else breaks or builds over it; the credit ends only when that player removes it, or when a plot containing it is sold (so the same builders are never paid twice).";
 // The builders' part of one purchase at most (platform ceilings when the
 // summary leaves them out: 64 builders, 100,000 Coins).
 function builderCeiling(builders: NonNullable<BuildCoinPriceSummary['builders']>) {
@@ -289,7 +291,7 @@ export function formatBuildCoinPriceLine(
         : 'removed';
   const extras = [
     price.builders
-      ? `plus ${formatAmount(price.builders.coinsPerUnit)} per ${price.builders.unitName || 'block'} Twinkle recorded for other builders inside the ${price.builders.tally ? `${price.builders.tally.plotSize}×${price.builders.tally.plotSize} ` : ''}plot, up to ${formatAmount(builderCeiling(price.builders))} a purchase`
+      ? `plus ${formatAmount(price.builders.coinsPerUnit)} per ${price.builders.unitName || 'block'} credited to other players in Twinkle's record inside the ${price.builders.tally ? `${price.builders.tally.plotSize}×${price.builders.tally.plotSize} ` : ''}plot, up to ${formatAmount(builderCeiling(price.builders))} a purchase`
       : '',
     price.offers
       ? `resales pay the previous holder, another player, up to ${price.offers.maxCoins !== undefined ? formatAmount(price.offers.maxCoins) : '?'} Coins`
@@ -306,11 +308,14 @@ export function buildCoinPricePersonWarning(
     prices.some((price) => price.destination === 'owner' && price.coins > 0)
       ? `${ownerUsername || 'the app owner'} (the owner)`
       : '',
-    prices.some((price) => price.builders) ? 'the builders Twinkle recorded on the land' : '',
+    prices.some((price) => price.builders) ? "the builders in Twinkle's block record for the land" : '',
     prices.some((price) => price.offers) ? 'another player when an item is resold' : ''
   ].filter(Boolean);
   if (!who.length) return null;
-  const tally = prices.some((price) => price.builders) ? ` ${COIN_TALLY_PLAIN_WORDS}` : '';
+  // review-r2 M5: the chat card also says what can go wrong and who fixes it.
+  const tally = prices.some((price) => price.builders)
+    ? ` ${COIN_TALLY_PLAIN_WORDS} A player can record blocks that aren't there (only the admin can clear them, with lumine admin coins tally-clear).`
+    : '';
   return `Coins go to ${who.length > 1 ? `${who.slice(0, -1).join(', ')} and ${who[who.length - 1]}` : who[0]}.${tally} Approving needs a review note.`;
 }
 
