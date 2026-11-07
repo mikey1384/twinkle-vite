@@ -10,6 +10,7 @@ export default function Game({
   questionIds,
   questionObjRef,
   onCheckAnswer,
+  onQuestionShown,
   onSessionLost,
   onGameFinish,
   onSetTriggerEffect,
@@ -22,6 +23,7 @@ export default function Game({
   questionIds: any[];
   questionObjRef: React.RefObject<any>;
   onCheckAnswer: GrammarAnswerCheck;
+  onQuestionShown?: (questionIndex: number) => void;
   onSessionLost: () => void;
   onGameFinish: any;
   onSetTriggerEffect: any;
@@ -50,6 +52,7 @@ export default function Game({
           questionObjRef={questionObjRef}
           isOnStreak={isOnStreak}
           onCheckAnswer={onCheckAnswer}
+          onQuestionShown={onQuestionShown}
           onSessionLost={onSessionLost}
           onGameFinish={onGameFinish}
           triggerEffect={triggerEffect}

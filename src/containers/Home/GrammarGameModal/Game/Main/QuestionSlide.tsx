@@ -11,6 +11,7 @@ export default function QuestionSlide({
   question,
   selectedChoiceIndex,
   pendingChoiceIndex,
+  revealDelayMs,
   choices,
   onSelect,
   gotWrong,
@@ -22,6 +23,9 @@ export default function QuestionSlide({
   question: string;
   selectedChoiceIndex: number;
   pendingChoiceIndex: number | null;
+  // A resumed question: when its choices appear (0 = they were already
+  // seen, so at once). Otherwise the usual reading pause.
+  revealDelayMs?: number;
   choices: any[];
   onSelect: (choiceIndex: number) => void;
   gotWrong: boolean;
@@ -131,6 +135,7 @@ export default function QuestionSlide({
             onSelect={onSelect}
             listItems={choices || []}
             questionLength={(question || '').length}
+            revealDelayMs={revealDelayMs}
             gotWrong={gotWrong}
             onShown={onCountdownStart}
           />

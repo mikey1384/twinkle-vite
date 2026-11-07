@@ -1227,11 +1227,33 @@ export default function contentRequestHelpers({
     },
     // Starts a server-graded round: the server keeps the answer key and
     // hands out the first question only.
+    // `resumable`: this page can show a resumed round, so reopening during an
+    // unfinished round continues it (same questions, picks kept).
     async startGrammarSession() {
       try {
         const { data } = await request.post(
           `${URL}/content/game/grammar/session`,
-          {},
+          { resumable: true },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Tells the server the current question is on screen, so a reopened
+    // round knows whether it was already seen. Best effort.
+    async markGrammarQuestionShown({
+      sessionId,
+      questionIndex
+    }: {
+      sessionId: number;
+      questionIndex: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/grammar/shown`,
+          { sessionId, questionIndex },
           auth()
         );
         return data;

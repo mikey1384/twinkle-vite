@@ -379,6 +379,7 @@ registerMethods('content', [
   'generateAIStoryImage',
   'loadAIStoryImageStatus',
   'startGrammarSession',
+  'markGrammarQuestionShown',
   'checkGrammarAnswer',
   'cancelGrammarGame',
   'loadGrammarRankings',

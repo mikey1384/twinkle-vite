@@ -46,6 +46,7 @@ import {
   checkGrammarAnswerWithRetry,
   type GrammarAnswerCheck
 } from './answerCheck';
+import { buildGrammarRoundStart } from './roundStart';
 
 // Quest (map, marble-run engine, bosses) loads only when Grammarbles opens
 // in Quest mode, not with every Home page visit.
@@ -67,6 +68,9 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
   );
   const startGrammarSession = useAppContext(
     (v) => v.requestHelpers.startGrammarSession
+  );
+  const markGrammarQuestionShown = useAppContext(
+    (v) => v.requestHelpers.markGrammarQuestionShown
   );
   const checkGrammarAnswer = useAppContext(
     (v) => v.requestHelpers.checkGrammarAnswer
@@ -378,6 +382,7 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
                   questionIds={questionIds}
                   questionObjRef={questionObjRef}
                   onCheckAnswer={handleCheckAnswer}
+                  onQuestionShown={handleQuestionShown}
                   onSessionLost={handleSessionLost}
                   onSetTriggerEffect={setTriggerEffect}
                   onSetCurrentIndex={setCurrentIndex}
@@ -522,14 +527,13 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
       setSaveFailed(false);
       onUpdateGrammarGenerationProgress(null);
       onUpdateGrammarLoadingStatus('loading...');
+      const session = (await startGrammarSession()) || ({} as any);
       const {
         sessionId,
         attemptNumber,
-        totalQuestions,
-        question,
         maxAttemptNumberReached,
         alreadyFailedToday
-      } = (await startGrammarSession()) || ({} as any);
+      } = session;
 
       if (maxAttemptNumberReached || alreadyFailedToday) {
         onUpdateGrammarLoadingStatus?.(
@@ -540,30 +544,24 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
         onUpdateGrammarGenerationProgress(null);
         return;
       }
-      const questionCount = Number(totalQuestions) || 0;
-      if (!sessionId || !question || !questionCount) {
+      // One slot per question; each is filled when the server hands it out
+      // (the first now, the next one with each right answer). A reopened
+      // round comes back where it was: its grades, and the question in play.
+      const round = buildGrammarRoundStart(session);
+      if (!round) {
         onUpdateGrammarLoadingStatus('');
         onUpdateGrammarGenerationProgress(null);
         return;
       }
       sessionIdRef.current = sessionId;
+      clickIdRef.current = round.lastClickId;
       attemptNumberRef.current = attemptNumber || timesPlayedToday + 1;
       if (attemptNumber) {
         startedAttemptNumberRef.current = attemptNumber;
       }
-      // One slot per question; each is filled when the server hands it out
-      // (the first now, the next one with each right answer).
-      const questionObj: Record<number, any> = {};
-      for (let index = 0; index < questionCount; index++) {
-        questionObj[index] = { selectedChoiceIndex: null };
-      }
-      questionObj[0] = {
-        question: question.question,
-        choices: question.choices,
-        selectedChoiceIndex: null
-      };
-      questionObjRef.current = questionObj;
-      setQuestionIds([...Array(questionCount).keys()]);
+      questionObjRef.current = round.questionObj;
+      setCurrentIndex(round.currentIndex);
+      setQuestionIds(round.questionIds);
       setGameState('started');
       onUpdateGrammarLoadingStatus('');
       onUpdateGrammarGenerationProgress(null);
@@ -605,6 +603,16 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
           elapsedMs
         })
     });
+  }
+
+  // Best effort: lets a reopened round tell a question already seen from
+  // one never shown. A lost report changes nothing for this page.
+  function handleQuestionShown(questionIndex: number) {
+    const sessionId = sessionIdRef.current;
+    if (!sessionId) return;
+    Promise.resolve(
+      markGrammarQuestionShown({ sessionId, questionIndex })
+    ).catch(() => {});
   }
 
   // The server closed this round (it was reopened elsewhere, or quit). Back

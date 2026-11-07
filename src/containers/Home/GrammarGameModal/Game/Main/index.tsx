@@ -17,6 +17,7 @@ export default function Main({
   currentIndex,
   isOnStreak,
   onCheckAnswer,
+  onQuestionShown,
   onSessionLost,
   onSetQuestionObj,
   onGameFinish,
@@ -29,6 +30,7 @@ export default function Main({
   currentIndex: number;
   isOnStreak: boolean;
   onCheckAnswer: GrammarAnswerCheck;
+  onQuestionShown?: (questionIndex: number) => void;
   onSessionLost: () => void;
   onSetQuestionObj: any;
   onSetTriggerEffect: React.Dispatch<React.SetStateAction<boolean>>;
@@ -38,7 +40,15 @@ export default function Main({
   questionObjRef: React.RefObject<any>;
   triggerEffect: boolean;
 }) {
-  const [isCompleted, setIsCompleted] = useState(false);
+  // A reopened round whose questions were all answered before the page
+  // closed only needs finishing: it opens on the usual end of a round.
+  const [answeredBeforeOpen] = useState(
+    () =>
+      questionIds.length > 0 &&
+      questionIds.every((id) => !!questionObjRef.current?.[id]?.score)
+  );
+  const [isCompleted, setIsCompleted] = useState(answeredBeforeOpen);
+  const finishRequestedRef = useRef(false);
   const [gotWrong, setGotWrong] = useState(false);
   // The pick being checked on the server; shown pressed until it answers.
   const [pendingChoiceIndex, setPendingChoiceIndex] = useState<number | null>(
@@ -49,7 +59,11 @@ export default function Main({
   const correctSoundRef = useRef<HTMLAudioElement>(null);
   const gotWrongRef = useRef(false);
   const loadingRef = useRef(false);
-  const numWrong = useRef(0);
+  // A resumed question's earlier wrong picks still count (the server applies
+  // their penalty); a new round starts at 0.
+  const numWrong = useRef<number>(
+    Number(questionObjRef.current?.[currentIndex]?.wrongPicks) || 0
+  );
   const elapsedTimeRef = useRef(0);
   const startTimeRef = useRef<number>(0);
   const gotWrongTimerRef = useRef<any>(null);
@@ -61,6 +75,10 @@ export default function Main({
     if (correctSoundRef.current) {
       correctSoundRef.current.volume = 1;
     }
+    if (answeredBeforeOpen && !finishRequestedRef.current) {
+      finishRequestedRef.current = true;
+      onGameFinish();
+    }
     return () => {
       isMountedRef.current = false;
       if (rafIdRef.current) {
@@ -71,7 +89,16 @@ export default function Main({
         clearTimeout(gotWrongTimerRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The question in play is on screen (its sentence; the choices follow the
+  // reading pause): tell the server, so a reopened round knows it was seen.
+  useEffect(() => {
+    const active = questionObjRef.current?.[currentIndex];
+    if (active?.question && !active.score) onQuestionShown?.(currentIndex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex]);
 
   const Slides = useMemo(() => {
     if (!questionIds || questionIds?.length === 0) return null;
@@ -84,6 +111,7 @@ export default function Main({
         selectedChoiceIndex={
           questionObjRef.current[questionId]?.selectedChoiceIndex
         }
+        revealDelayMs={questionObjRef.current[questionId]?.revealDelayMs}
         pendingChoiceIndex={pendingChoiceIndex}
         onSelect={handleSelectChoice}
         gotWrong={gotWrong}

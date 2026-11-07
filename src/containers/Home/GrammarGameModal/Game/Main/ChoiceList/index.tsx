@@ -13,6 +13,7 @@ export default function ChoiceList({
   onShown,
   pendingChoiceIndex,
   questionLength = 0,
+  revealDelayMs,
   selectedChoiceIndex,
   style
 }: {
@@ -24,6 +25,7 @@ export default function ChoiceList({
   onShown?: () => void;
   pendingChoiceIndex: number | null;
   questionLength: number;
+  revealDelayMs?: number;
   selectedChoiceIndex: number;
   style: React.CSSProperties;
 }) {
@@ -35,7 +37,9 @@ export default function ChoiceList({
         setShown(true);
         onShown?.();
       },
-      Math.max(1500, questionLength * 35)
+      typeof revealDelayMs === 'number' && revealDelayMs >= 0
+        ? revealDelayMs
+        : Math.max(1500, questionLength * 35)
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
