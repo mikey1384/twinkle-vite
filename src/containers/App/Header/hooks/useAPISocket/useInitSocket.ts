@@ -41,11 +41,12 @@ import {
   TWINKLE_SERVER_HANDOFF_EVENT
 } from '~/constants/socketEvents';
 import {
+  applyClientUpdateAtHiddenBoundary,
   applyClientVersionResult,
   armUpdateIfDeployedBundleNewer,
-  attemptSilentClientUpdate,
   hasUnsavedUserWork,
-  isClientUpdatePending
+  noteClientPageHide,
+  noteClientPageShow
 } from '~/helpers/clientUpdate';
 import { loadFreshCanonicalChatGlobalUnreadCount } from '~/helpers/chatGlobalUnreadReconciler';
 import {
@@ -794,20 +795,22 @@ export default function useInitSocket({
       } else {
         hiddenAtRef.current = Date.now();
         // A hidden tab is the one moment a reload is guaranteed invisible, so
-        // apply a deferred update here — unless typed text would be lost.
-        if (
-          isClientUpdatePending() &&
-          !hasUnsavedUserWork({ inputState: getInputState?.() })
-        ) {
-          attemptSilentClientUpdate({
-            version: clientVersion,
-            trigger: 'hidden-tab'
-          });
-        }
+        // apply a deferred update here — unless typed text would be lost or
+        // the page is already being unloaded/frozen.
+        applyClientUpdateAtHiddenBoundary({
+          version: clientVersion,
+          hasUnsavedWork: () =>
+            hasUnsavedUserWork({ inputState: getInputState?.() })
+        });
       }
     }
 
+    function onPageHide() {
+      noteClientPageHide();
+    }
+
     async function onPageShow(event: PageTransitionEvent) {
+      noteClientPageShow({ persisted: event.persisted });
       const resumedFromHidden = hiddenAtRef.current > 0;
       handleMarkArrivalIfCold();
       try {
@@ -879,6 +882,7 @@ export default function useInitSocket({
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
     window.addEventListener('pageshow', onPageShow);
+    window.addEventListener('pagehide', onPageHide);
     window.addEventListener('pointerdown', onUserInteraction, {
       capture: true,
       passive: true
@@ -900,6 +904,7 @@ export default function useInitSocket({
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
       window.removeEventListener('pageshow', onPageShow);
+      window.removeEventListener('pagehide', onPageHide);
       window.removeEventListener('pointerdown', onUserInteraction, {
         capture: true
       });

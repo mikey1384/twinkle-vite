@@ -13,6 +13,9 @@ interface AttemptStorage {
 
 let reloadInitiated = false;
 let updatePending = false;
+// Between pagehide and the next pageshow the browser is unloading this page
+// or freezing it into the back/forward cache (see noteClientPageHide).
+let pageDismissed = false;
 let lastStaleActionErrorAt = 0;
 let lastDeployFreshnessProbeAt = 0;
 let lastDeployFreshnessProbeFailedAt = 0;
@@ -153,6 +156,57 @@ export function markClientUpdatePending() {
 
 export function isClientUpdatePending() {
   return updatePending;
+}
+
+// pagehide: the browser is unloading this page, or freezing it into the
+// back/forward cache. WebKit then fires one more visibilitychange (hidden) as
+// part of the unload, but that is not a usable boundary: a navigation started
+// while a page is being dismissed is ignored, so a "reload" there never
+// happens. It would still record a reload, spend this version's silent
+// budget and leave reloadInitiated set (member trace 11-05 07:45 UTC: a
+// home-screen app being closed logged client-update-silent/hidden-tab 0.24 s
+// after its pagehide; its next load, 2 min later, was a fresh launch).
+export function noteClientPageHide() {
+  pageDismissed = true;
+}
+
+// pageshow: the page is live again. A back/forward-cache restore means no
+// reload this page initiated took place, so the reload flag must not keep
+// holding every later navigation (gateClientUpdateNavigation waits for
+// 'reloading'). A pending update stays pending for the next safe boundary.
+export function noteClientPageShow({ persisted }: { persisted: boolean }) {
+  pageDismissed = false;
+  if (persisted) reloadInitiated = false;
+}
+
+// A hidden tab is the one moment a reload is guaranteed invisible, so a
+// deferred update is applied here — unless typed text would be lost, or the
+// page is already being dismissed (noteClientPageHide).
+export function applyClientUpdateAtHiddenBoundary({
+  version,
+  hasUnsavedWork = () => hasUnsavedUserWork(),
+  storage = getSessionStorage(),
+  now = Date.now(),
+  reload = performClientUpdateReload
+}: {
+  version: string;
+  hasUnsavedWork?: () => boolean;
+  storage?: AttemptStorage | null;
+  now?: number;
+  reload?: () => void;
+}): 'current' | 'dismissed' | 'deferred' | 'reloading' {
+  if (!updatePending) return 'current';
+  if (pageDismissed) return 'dismissed';
+  if (hasUnsavedWork()) return 'deferred';
+  return attemptSilentClientUpdate({
+    version,
+    storage,
+    now,
+    reload,
+    trigger: 'hidden-tab'
+  })
+    ? 'reloading'
+    : 'deferred';
 }
 
 // A SUPPORTED bundle can still be outdated: the API's version check only
@@ -728,6 +782,7 @@ export function stripClientUpdateReloadParam() {
 export function clearSilentClientUpdateMemory() {
   reloadInitiated = false;
   updatePending = false;
+  pageDismissed = false;
   lastStaleActionErrorAt = 0;
   lastDeployFreshnessProbeAt = 0;
   lastDeployFreshnessProbeFailedAt = 0;
