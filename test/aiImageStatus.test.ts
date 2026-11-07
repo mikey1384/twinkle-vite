@@ -391,7 +391,7 @@ test('model-aware fingerprints retain the canonical server field order', async (
   const input = {
     prompt: 'A moon',
     engine: 'openai' as const,
-    model: 'gpt-image-2.5-flare' as const,
+    model: 'gpt-image-2.6-flare' as const,
     quality: 'max' as const
   };
   const expected = createHash('sha256')
@@ -405,7 +405,15 @@ test('model-aware fingerprints retain the canonical server field order', async (
   assert.notEqual(
     await createAIImageRequestFingerprint({
       ...input,
-      model: 'gpt-image-2.5-sunburst'
+      model: 'gpt-image-2.6-sunburst'
+    }),
+    expected
+  );
+  // A retired 2.5 id fingerprints as the 2.6 model the server will run.
+  assert.equal(
+    await createAIImageRequestFingerprint({
+      ...input,
+      model: 'gpt-image-2.5-flare' as any
     }),
     expected
   );

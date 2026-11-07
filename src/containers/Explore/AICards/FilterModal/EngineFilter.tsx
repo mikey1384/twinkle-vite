@@ -17,6 +17,7 @@ export default function EngineFilter({
     | 'image-1.5'
     | 'image-2'
     | 'image-2.5'
+    | 'image-2.6'
     | 'Nano Banana';
   onSelectEngine: (
     v:
@@ -27,6 +28,7 @@ export default function EngineFilter({
       | 'image-1.5'
       | 'image-2'
       | 'image-2.5'
+      | 'image-2.6'
       | 'Nano Banana'
   ) => void;
   onDropdownShown: (isShown: boolean) => void;
@@ -42,6 +44,7 @@ export default function EngineFilter({
       | 'image-1.5'
       | 'image-2'
       | 'image-2.5'
+      | 'image-2.6'
       | 'Nano Banana'
     > = [
       'any',
@@ -51,6 +54,7 @@ export default function EngineFilter({
       'image-1.5',
       'image-2',
       'image-2.5',
+      'image-2.6',
       'Nano Banana'
     ];
     const rearranged = engines.filter((e) => e !== selectedEngine);

@@ -114,8 +114,8 @@ export default function InputSection({
                   color: themeRole.getColor()
                 }}
               >
-                <option value="gpt-image-2.5-flare">Flare 2.5</option>
-                <option value="gpt-image-2.5-sunburst">Sunburst 2.5</option>
+                <option value="gpt-image-2.6-flare">Flare 2.6</option>
+                <option value="gpt-image-2.6-sunburst">Sunburst 2.6</option>
                 <option value="gemini">Nano Banana 2.1</option>
               </select>
               {engine === 'openai' && (

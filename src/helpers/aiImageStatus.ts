@@ -1,6 +1,7 @@
 import {
   type AiImageQuality,
-  type OpenAiImageModel
+  type OpenAiImageModel,
+  upgradeRetiredImageModel
 } from '~/helpers/aiImageModels';
 import {
   browserReportsOffline,
@@ -40,8 +41,10 @@ export async function createAIImageRequestFingerprint({
     if (!globalThis.crypto?.subtle || typeof TextEncoder === 'undefined') {
       return null;
     }
+    // The server fingerprints the current id of a retired model (2.5 -> 2.6).
+    const currentModel = upgradeRetiredImageModel(model);
     const canonicalInput = [
-      ...(model ? [model] : []),
+      ...(currentModel ? [currentModel] : []),
       engine,
       engine === 'openai' ? quality : 'stable',
       prompt || '',

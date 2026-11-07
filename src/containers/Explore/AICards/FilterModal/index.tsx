@@ -40,6 +40,7 @@ export default function FilterModal({
     | 'image-1.5'
     | 'image-2'
     | 'image-2.5'
+    | 'image-2.6'
     | 'Nano Banana'
   >(filters.engine || 'any');
   const filterComponents = useMemo(() => {
@@ -185,6 +186,7 @@ export default function FilterModal({
         | 'image-1.5'
         | 'image-2'
         | 'image-2.5'
+        | 'image-2.6'
         | 'Nano Banana';
     } = {};
     if (selectedOwner) {

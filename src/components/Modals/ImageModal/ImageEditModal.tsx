@@ -1,5 +1,5 @@
 import {
-  GPT_IMAGE_2_5_SUNBURST,
+  GPT_IMAGE_2_6_SUNBURST,
   type OpenAiImageModel
 } from '~/helpers/aiImageModels';
 import React, {
@@ -1121,7 +1121,7 @@ export default function ImageEditModal({
         prompt: prompt.trim(),
         referenceImageB64: referenceB64,
         engine: 'openai',
-        model: GPT_IMAGE_2_5_SUNBURST,
+        model: GPT_IMAGE_2_6_SUNBURST,
         quality: 'high',
         requestId,
         historySource: 'edit'

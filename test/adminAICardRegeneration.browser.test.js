@@ -22,7 +22,7 @@ test(
       import {ADMIN_USER_ID} from './src/constants/defaultValues';
       const state = {myState:{userId:ADMIN_USER_ID},requestHelpers:{
         loadAICardForImageRegeneration: async id => ({card:{id,word:'grape',prompt:'A sunlit grape on the vine.',imagePath:'',level:2,style:'pixel art',engine:'',isMystery:1,isBurned:0,ownerId:14940,ownerUsername:'OverClassified'},
-          generation:{model:'gpt-image-2.5-flare',engine:'image-2.5',quality:'xhigh',legacyFallback:false}}),
+          generation:{model:'gpt-image-2.6-flare',engine:'image-2.6',quality:'xhigh',legacyFallback:false}}),
         regenerateAICardImage: args => new Promise(resolve => {window.sent=args;window.complete=resolve;})
       }};
       export const useKeyContext=fn=>fn(state); export const useAppContext=fn=>fn(state);`,
@@ -83,7 +83,7 @@ test(
       await page.getByLabel('Card ID', { exact: true }).fill('77681');
       await page.getByRole('button', { name: 'Load', exact: true }).click();
       await page.getByText('Not recorded', { exact: false }).waitFor();
-      await page.getByText('gpt-image-2.5-flare', { exact: false }).waitFor();
+      await page.getByText('gpt-image-2.6-flare', { exact: false }).waitFor();
       assert.match(await page.locator('body').innerText(), /xhigh quality/);
       const prompt = page.getByLabel('Example sentence (image prompt)');
       await prompt.fill('The same grape catches the sunrise.');
@@ -120,10 +120,10 @@ test(
             'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="240" height="320"%3E%3Crect width="240" height="320" fill="%2384ab47"/%3E%3C/svg%3E',
           prompt: 'Canonical returned sentence.',
           promptWasEdited: true,
-          engine: 'image-2.5',
+          engine: 'image-2.6',
           generation: {
-            model: 'gpt-image-2.5-flare',
-            engine: 'image-2.5',
+            model: 'gpt-image-2.6-flare',
+            engine: 'image-2.6',
             quality: 'xhigh',
             legacyFallback: false
           }
@@ -133,7 +133,7 @@ test(
         .getByText('New image generated and the edited sentence saved.')
         .waitFor();
       assert.equal(await prompt.inputValue(), 'Canonical returned sentence.');
-      assert.match(await page.locator('body').innerText(), /Engine: image-2.5/);
+      assert.match(await page.locator('body').innerText(), /Engine: image-2.6/);
       assert.equal(
         await page.getByRole('img', { name: 'Card 77681' }).count(),
         1

@@ -34,7 +34,8 @@ import { containerCls, textareaCls } from './styles';
 // member's AI Battery, with no limit on tries.
 export type { PictureDayState } from '~/helpers/dailyPictureJobs';
 
-const PICTURE_MODEL = 'gpt-image-2.5-flare';
+// Mikey 11-07: Flare 2.6 medium replaced 2.5 medium as the site-paid default.
+const PICTURE_MODEL = 'gpt-image-2.6-flare';
 const DEFAULT_QUALITY: AiImageQuality = 'medium';
 // the site pays for its default settings or anything cheaper
 const FREE_QUALITIES: AiImageQuality[] = ['low', 'medium'];

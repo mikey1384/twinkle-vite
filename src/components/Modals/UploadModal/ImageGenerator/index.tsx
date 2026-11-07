@@ -1,7 +1,8 @@
 import {
-  GPT_IMAGE_2_5_FLARE,
-  GPT_IMAGE_2_5_SUNBURST,
-  isImage25Model,
+  GPT_IMAGE_2_6_FLARE,
+  GPT_IMAGE_2_6_SUNBURST,
+  isImage26Model,
+  upgradeRetiredImageModel,
   isAiImageQuality,
   type AiImageQuality,
   type OpenAiImageModel
@@ -141,9 +142,9 @@ export default function ImageGenerator({
   historyImagesRef.current = historyImages;
   const resumingHistoryItemRef = useRef<AIImageHistoryItem | null>(null);
   const generatedImageUrlRef = useRef<string | null>(null);
-  const [model, setModel] = useState<OpenAiImageModel>(GPT_IMAGE_2_5_FLARE);
+  const [model, setModel] = useState<OpenAiImageModel>(GPT_IMAGE_2_6_FLARE);
   const [followUpModel, setFollowUpModel] = useState<OpenAiImageModel>(
-    GPT_IMAGE_2_5_SUNBURST
+    GPT_IMAGE_2_6_SUNBURST
   );
   const [engine, setEngine] = useState<AiImageEngine>('openai');
   const [followUpEngine, setFollowUpEngine] = useState<AiImageEngine>('openai');
@@ -283,15 +284,15 @@ export default function ImageGenerator({
   globalAiUsagePolicyRef.current = globalAiUsagePolicy || null;
 
   useEffect(() => {
-    setModel(
-      isImage25Model(userSettings?.aiImage?.model)
-        ? userSettings.aiImage.model
-        : GPT_IMAGE_2_5_FLARE
+    const savedModel = upgradeRetiredImageModel(userSettings?.aiImage?.model);
+    const savedFollowUpModel = upgradeRetiredImageModel(
+      userSettings?.aiImage?.followUpModel
     );
+    setModel(isImage26Model(savedModel) ? savedModel : GPT_IMAGE_2_6_FLARE);
     setFollowUpModel(
-      isImage25Model(userSettings?.aiImage?.followUpModel)
-        ? userSettings.aiImage.followUpModel
-        : GPT_IMAGE_2_5_SUNBURST
+      isImage26Model(savedFollowUpModel)
+        ? savedFollowUpModel
+        : GPT_IMAGE_2_6_SUNBURST
     );
     setEngine(parseAiImageEngine(userSettings?.aiImage?.engine));
     setFollowUpEngine(
