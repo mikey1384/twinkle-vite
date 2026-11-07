@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
+import ArenaButton from '../../ArenaButton';
 import { ARENA } from '../../theme';
 
 // AI Story v2 (10-06): questions name the reading skill they test, Level 1–2
@@ -46,6 +47,43 @@ export function StoryQuestionNote({ question }: { question: any }) {
 }
 
 // Old stories have no bonus questions, so every question counts.
+// Reopening the clear screen fetches the story's rewards first: the button
+// spins until they arrive, and says so if they could not load. onOpen
+// resolves false on a failure (AIStory's handleOpenCurrentClearScreen).
+export function ReopenClearButton({
+  onOpen
+}: {
+  onOpen: () => void | Promise<boolean | void>;
+}) {
+  const [opening, setOpening] = useState(false);
+  const [failed, setFailed] = useState(false);
+  return (
+    <>
+      <ArenaButton tone="gold" loading={opening} onClick={handleClick}>
+        Reopen Clear Screen
+      </ArenaButton>
+      {failed && (
+        <p className={reopenErrorCls} role="alert">
+          The clear screen could not open. Please try again.
+        </p>
+      )}
+    </>
+  );
+
+  async function handleClick() {
+    if (opening) return;
+    setOpening(true);
+    setFailed(false);
+    try {
+      if ((await onOpen()) === false) setFailed(true);
+    } catch {
+      setFailed(true);
+    } finally {
+      setOpening(false);
+    }
+  }
+}
+
 export function storyScore(solveObj: any, questions: any[]) {
   const scored = questions.filter((q) => !q?.bonus).length;
   const total = Number(solveObj?.totalQuestions) || scored || questions.length;
@@ -146,4 +184,11 @@ const bonusLineCls = css`
   font-size: 1.3rem;
   font-weight: 700;
   color: ${ARENA.inkSoft};
+`;
+
+const reopenErrorCls = css`
+  margin: 0.8rem 0 0;
+  text-align: center;
+  color: ${ARENA.accent};
+  font-weight: 700;
 `;

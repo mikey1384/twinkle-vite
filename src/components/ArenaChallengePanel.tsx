@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
-import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useNotiContext } from '~/contexts';
 import ArenaButton from '~/containers/Arena/ArenaButton';
@@ -9,6 +8,11 @@ import type { ArenaRewardStatus } from '~/containers/Arena/types';
 import { arenaMediaURL } from '~/containers/Arena/media';
 import { ARENA } from '~/containers/Arena/theme';
 import { arenaAssistLabel } from '~/helpers/arenaChallengeCopy';
+import {
+  getNavigationLocationKey,
+  getNavigationTargetLocation,
+  useNavigationFeedback
+} from '~/containers/App/navigationFeedback';
 
 // A won Arena battle shared as a post (Mikey 10-24): the member showing off a
 // win ("im just showing off my achievement"). The post itself is a normal
@@ -282,22 +286,39 @@ function ChallengeButton({
   secondary?: boolean;
   id: number;
 }) {
-  const navigate = useNavigate();
+  // the site's navigation feedback (as the main navs use it): the button
+  // waits at once, and spins if Arena takes a moment to open
+  const { loadingTarget, pendingTarget, onNavigationStart } =
+    useNavigationFeedback();
+  const target = shared ? `/arena?mode=today&shared=${id}`
+    : review ? '/arena?mode=today&review=1'
+    : daily ? '/arena?mode=today'
+    : `/arena?mode=arena&challenge=${id}`;
+  const targetLocation = getNavigationTargetLocation(target);
+  const targetKey = getNavigationLocationKey(
+    targetLocation.pathname,
+    targetLocation.search
+  );
   return (
-    <ArenaButton tone={secondary ? 'paper' : 'red'} size="md" onClick={(event) => {
-      event.stopPropagation();
-      navigate(
-        shared ? `/arena?mode=today&shared=${id}`
-          : review ? '/arena?mode=today&review=1'
-          : daily ? '/arena?mode=today'
-          : `/arena?mode=arena&challenge=${id}`
-      );
-    }}>
-      {shared ? 'Try this question'
-        : review ? 'Review the explanation'
-        : secondary ? 'Today’s challenge'
-        : daily ? 'Try today’s challenge'
-        : 'Challenge!'}
+    <ArenaButton
+      tone={secondary ? 'paper' : 'red'}
+      size="md"
+      disabled={pendingTarget === targetKey}
+      loading={loadingTarget === targetKey}
+      onClick={(event) => {
+        event.stopPropagation();
+        onNavigationStart(target);
+      }}
+    >
+      {/* the label gives way (an ellipsis) to the spinner on a narrow
+          phone, so the button never spills out of the card */}
+      <span className={buttonLabelCls}>
+        {shared ? 'Try this question'
+          : review ? 'Review the explanation'
+          : secondary ? 'Today’s challenge'
+          : daily ? 'Try today’s challenge'
+          : 'Challenge!'}
+      </span>
     </ArenaButton>
   );
 }
@@ -498,6 +519,13 @@ const dailyFootCls = css`
   }
 `;
 
+const buttonLabelCls = css`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 const dailyButtonsCls = css`
   display: flex;
   gap: 1rem;
@@ -510,6 +538,9 @@ const dailyButtonsCls = css`
       padding-right: 0.6rem;
       letter-spacing: 0;
       white-space: nowrap;
+      > svg {
+        flex: none;
+      }
     }
   }
 `;

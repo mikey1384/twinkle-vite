@@ -171,12 +171,12 @@ export default function Challenge({
       {(notice || error || view.canTake) && <div className={rewardSectionCls}>
         {notice && <p role="status">{notice}</p>}
         {error && <p role="alert">{error} {!startLimited && <button type="button" onClick={() => { setError(''); setRefresh(value => value + 1); }}>Try again</button>}</p>}
-        {view.canTake && (preview ? <RewardOffer offer={preview} /> : !error && <p role="status">Checking available rewards…</p>)}
+        {view.canTake && (preview ? <RewardOffer offer={preview} /> : !error && <p role="status"><Icon icon="spinner" pulse /> Checking available rewards…</p>)}
       </div>}
       {view.canTake && preview && <div style={{ padding: '1.2rem' }}><ExamCompanionChoice value={companion} onChange={setCompanion} solo={!!preview.mastery?.solo} disabled={starting} /></div>}
       <div className={actionsCls}>
         {view.canTake ? (
-          <ArenaButton tone="red" loading={starting} disabled={starting || !preview} onClick={handleTake}>
+          <ArenaButton tone="red" loading={starting || (!preview && !error)} disabled={starting || !preview} onClick={handleTake}>
             Challenge!
           </ArenaButton>
         ) : view.myBattle ? (
@@ -235,7 +235,7 @@ export default function Challenge({
   );
 
   async function handleTake() {
-    if (!preview) return;
+    if (!preview || starting) return;
     setStarting(true);
     try {
       const data = await startArenaChallenge(challengeId, preview.token, preview.mastery?.solo ? 'solo' : companion);

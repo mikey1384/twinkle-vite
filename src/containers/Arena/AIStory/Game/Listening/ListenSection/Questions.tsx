@@ -9,6 +9,7 @@ import {
   StoryQuestionLabel,
   StoryQuestionNote,
   StoryScoreLine,
+  ReopenClearButton,
   storyScore
 } from '../../StoryQuestionExtras';
 
@@ -30,7 +31,7 @@ export default function Questions({
   isGrading: boolean;
   solveObj: any;
   onGrade: () => void;
-  onOpenClearScreen: () => void;
+  onOpenClearScreen: () => void | Promise<boolean | void>;
   questions: any[];
   questionsLoaded: boolean;
   storyId: number;
@@ -179,12 +180,7 @@ export default function Questions({
                   <StoryScoreLine solveObj={solveObj} questions={questions} />
                   {storyScore(solveObj, questions).isPassed ? (
                     <div style={{ marginTop: '2rem' }}>
-                      <ArenaButton
-                        tone="gold"
-                        onClick={() => onOpenClearScreen()}
-                      >
-                        Reopen Clear Screen
-                      </ArenaButton>
+                      <ReopenClearButton onOpen={onOpenClearScreen} />
                     </div>
                   ) : null}
                 </div>

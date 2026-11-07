@@ -7,6 +7,8 @@ import { ARENA } from './theme';
 import { arenaMediaURL } from './media';
 import { BOSSES } from './bosses';
 import Records from './Records';
+import ArenaLoader from './ArenaLoader';
+import ArenaButton from './ArenaButton';
 import CoverPage from './CoverPage';
 import { openArenaCompanion } from './ExamCompanionChoice';
 import ExamScope from './ExamScope';
@@ -55,6 +57,7 @@ export default function Battles({
   );
   const [state, setState] = useState<ArenaState | null>(null);
   const [error, setError] = useState('');
+  const [reload, setReload] = useState(0);
   const [reviewBattleId, setReviewBattleId] = useState(0);
   const [starting, setStarting] = useState('');
   // the booklet cover, read before the clock starts
@@ -85,6 +88,7 @@ export default function Battles({
 
   useEffect(() => {
     let cancelled = false;
+    setError('');
     (async () => {
       try {
         const data = await loadArenaState();
@@ -98,7 +102,7 @@ export default function Battles({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [reload]);
 
   const recordsExam = recordsKey
     ? state?.exams.find((exam) => exam.key === recordsKey)
@@ -147,11 +151,19 @@ export default function Battles({
         {examKey
           ? 'Choose a difficulty and length. The exam starts only after you confirm on its cover.'
           : 'Each boss is a real exam, with its real time limits and grading.'}
-        {state?.examsPerDay != null && state.examsToday != null
-          ? ` Exams started today: ${state.examsToday} of ${state.examsPerDay}. Resets at 9:00 AM Korea time (00:00 UTC).`
-          : ''}
       </p>
-      {error && <p className={errorCls}>{error}</p>}
+      {error && <p className={errorCls} role="alert">{error}</p>}
+      {/* the bosses (or Records) load first: say so, and offer a retry if
+          they could not */}
+      {!state && (error ? (
+        <div className={retryCls}>
+          <ArenaButton tone="ink" size="md" onClick={() => setReload((value) => value + 1)}>
+            Try again
+          </ArenaButton>
+        </div>
+      ) : (
+        <ArenaLoader text={recordsKey ? 'Loading records…' : 'Loading the bosses…'} />
+      ))}
       {state && examKey && !selectedExam && (
         <p className={errorCls}>
           This exam is not available. Choose All exams to find another.
@@ -357,6 +369,11 @@ export default function Battles({
 const wrapCls = css`
   max-width: 1100px;
   margin: 0 auto;
+`;
+
+const retryCls = css`
+  display: flex;
+  justify-content: center;
 `;
 
 const introCls = css`

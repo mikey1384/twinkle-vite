@@ -197,7 +197,7 @@ export default function Train({
         </span>
         {!hasPapers && (
           <span className={mutedCls}>
-            {shelfLoading || (shelfFailed && !state) ? 'Loading…' : 'No battles yet'}
+            {shelfLoading || (shelfFailed && !state) ? <><Icon icon="spinner" pulse /> Loading…</> : 'No battles yet'}
           </span>
         )}
       </div>

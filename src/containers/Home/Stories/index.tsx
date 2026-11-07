@@ -615,7 +615,6 @@ export default function Stories() {
           onInputModalButtonClick={(modalType) =>
             onSetInputModalShown({ shown: true, modalType })
           }
-          onPlayArena={() => navigate('/arena')}
           onPlayGrammarGame={() => navigate('/grammarbles')}
           onDailyQuestionClick={() => navigate('/daily-reflection')}
         />

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import Icon from '~/components/Icon';
 import ArenaButton from './ArenaButton';
 import RewardOffer from './RewardOffer';
 import ExamCompanionChoice from './ExamCompanionChoice';
@@ -114,7 +115,7 @@ export default function CoverPage({
   const suneung = /^수능 /.test(exam.name);
   const english = exam.language === 'en' && !suneung;
   const rewardSection = <div className={rewardSectionCls}>
-    {preparing && <p role="status">Checking available rewards…</p>}
+    {preparing && <p role="status"><Icon icon="spinner" pulse /> Checking available rewards…</p>}
     {preview && <><RewardOffer offer={preview} /><ExamCompanionChoice value={companion} onChange={setCompanion} solo={!!preview.mastery?.solo} disabled={starting} /></>}
     {existing && <p>{existing.status === 'finished' ? 'You have already taken this paper. Your result and review are ready.' : 'You already have a sitting of this paper.'}{existing.status !== 'finished' && length === 'full' && !!exam.components?.length && ' New sittings use the section clocks shown above; your saved sitting keeps its original timing.'}</p>}
     {notice && <p role="status">{notice}</p>}
@@ -310,7 +311,7 @@ export default function CoverPage({
 
   async function handleStart() {
     if (existing) { onOpenExisting(existing.battleId); return; }
-    if (!preview) return;
+    if (!preview || starting) return;
     try {
       const result = await onStart(preview.token, preview.mastery?.solo ? 'solo' : companion);
       if (result?.previewChanged) {

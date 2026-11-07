@@ -11,6 +11,7 @@ import { socket } from '~/constants/sockets/api';
 import { mobileMaxWidth } from '~/constants/css';
 import { ARENA } from './theme';
 import ArenaButton from './ArenaButton';
+import ArenaLoader from './ArenaLoader';
 import { arenaMediaURL } from './media';
 import ListeningConsole, { type ListeningTrack } from './ListeningConsole';
 import PaperVisual, {
@@ -57,8 +58,9 @@ import { arenaAssistLabel, arenaAssistNote } from '~/helpers/arenaChallengeCopy'
 // paper through this runner; they never pay or rank.
 
 const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
-// polls of a Train run still grading, 1.5 s apart (about three minutes)
-const PRACTICE_GRADING_POLL_LIMIT = 120;
+// polls of a paper still grading (a Train run or a battle), 1.5 s apart
+// (about three minutes)
+const GRADING_POLL_LIMIT = 120;
 // options heard, not printed (TOSEL): the paper shows bare letters
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
@@ -243,14 +245,19 @@ export default function BattleRunner({
   const markingPollsRef = useRef(0);
   const gradingPollsRef = useRef(0);
   const markingTimerRef = useRef<number | null>(null);
+  const gradingTimerRef = useRef<number | null>(null);
+  // Leave (or any unmount) stops both polls
   useEffect(
     () => () => {
       if (markingTimerRef.current) window.clearTimeout(markingTimerRef.current);
+      if (gradingTimerRef.current) window.clearTimeout(gradingTimerRef.current);
     },
     []
   );
   const [loadError, setLoadError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // Leave waits for the last answer saves before it exits
+  const [leaving, setLeaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [pendingAnswers, setPendingAnswers] = useState<Record<number, number | string | null>>({});
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -269,6 +276,9 @@ export default function BattleRunner({
   }, [battleId, practiceId]);
 
   const finished = data?.battle.status === 'finished';
+  // another submit of this paper is being graded (a second tab, or a reply
+  // that was lost): the paper waits for it instead of looking open
+  const grading = data?.battle.status === 'grading';
   const practice = data?.practice;
   // a timed rematch is the member's own race on the clock: no companions
   // until it is submitted (re-sits and untimed rematches welcome them)
@@ -370,7 +380,7 @@ export default function BattleRunner({
       </div>
     );
   }
-  if (!data) return <div className={centerCls}>Opening the exam…</div>;
+  if (!data) return <div className={centerCls}><ArenaLoader text="Opening the exam…" /></div>;
   // A run or exam closed by the old one-at-a-time rule (removed 11-03): it
   // takes no more answers and was never graded. Say so plainly instead of
   // showing a dead paper whose Submit can only fail.
@@ -416,8 +426,8 @@ export default function BattleRunner({
         className={barCls}
         {...(!finished ? { [WEBSITE_AGENT_NO_PLAY_ATTRIBUTE]: 'arenaBattle' } : {})}
       >
-        <button type="button" className={plainButtonCls} disabled={submitting} onClick={handleLeave}>
-          <Icon icon="arrow-left" /> {finished ? 'Done' : 'Leave'}
+        <button type="button" className={plainButtonCls} disabled={submitting} aria-busy={leaving || undefined} onClick={handleLeave}>
+          <Icon icon={leaving ? 'spinner' : 'arrow-left'} pulse={leaving} fixedWidth /> {finished ? 'Done' : 'Leave'}
         </button>
         <div className={titleCls}>
           <strong>{data.battle.exam.name}</strong>
@@ -444,8 +454,8 @@ export default function BattleRunner({
             tone="red"
             size="md"
             className={submitCls}
-            loading={submitting}
-            disabled={submitting || (component?.allowEarlyFinish === false && remaining !== 0)}
+            loading={(submitting && !leaving) || grading}
+            disabled={submitting || grading || (component?.allowEarlyFinish === false && remaining !== 0)}
             onClick={() => setConfirmShown(true)}
           >
             {component ? 'Submit section' : 'Submit'}
@@ -473,7 +483,8 @@ export default function BattleRunner({
         <h2>{component.name}</h2>
         <p>Take a break. Your previous answers are locked, and the next section opens when this clock reaches zero.</p>
       </section>}
-      {!!Object.keys(pendingAnswers).length && <p role="status" className={draftStatusCls}>Answers waiting to save: {Object.keys(pendingAnswers).join(', ')}</p>}
+      {grading && <p role="status" className={draftStatusCls}><Icon icon="spinner" pulse /> Grading your answers…</p>}
+      {!!Object.keys(pendingAnswers).length && <p role="status" className={draftStatusCls}>{!saveError && <><Icon icon="spinner" pulse />{' '}</>}Answers waiting to save: {Object.keys(pendingAnswers).join(', ')}</p>}
       {saveError && <div className={centerCls} role="alert">
         <p>{saveError}</p>
         <button type="button" className={plainButtonCls} disabled={submitting} onClick={retryAnswers}>Retry saves</button>
@@ -506,7 +517,7 @@ export default function BattleRunner({
 
       {/* Ordinary exams welcome tutoring. Solo mastery hides the paper;
           the member always enters and submits every answer. */}
-      {!takingBreak && <fieldset disabled={!finished && (submitting || remaining === 0)} className={answerFieldsetCls}>
+      {!takingBreak && <fieldset disabled={!finished && (submitting || grading || remaining === 0)} className={answerFieldsetCls}>
       <div
         className={bodyCls}
         {...(!finished
@@ -525,7 +536,7 @@ export default function BattleRunner({
             </span>
           </div>
           {readingItems.length > 0 && <C1ReadingPaper
-            items={readingItems} passages={data.passages} answers={shownAnswers} finished={finished} disabled={finished || submitting || remaining === 0}
+            items={readingItems} passages={data.passages} answers={shownAnswers} finished={finished} disabled={finished || submitting || grading || remaining === 0}
             onMark={handleMark}
             renderHelp={!finished && !noHelp ? item => <AskAgentButton showLabelOnMobile assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
               context={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.display || item.no}`, path: practice ? `/arena?mode=train&practice=${practice.id}` : `/arena?mode=arena&battle=${data.battle.id}` }} /> : undefined}
@@ -885,14 +896,18 @@ export default function BattleRunner({
   }
 
   // A Train run's grading that never finishes (a crash) is taken over by the
-  // server after about two minutes; stop looking after three and say so.
+  // server after about two minutes. Either kind of paper stops looking after
+  // about three and says so; the error screen's Back leads out.
   function scheduleGradingPoll() {
-    if (practiceId && gradingPollsRef.current >= PRACTICE_GRADING_POLL_LIMIT) {
-      setLoadError('Grading is taking longer than usual. Go back to Train and open this run again in a minute.');
+    if (gradingPollsRef.current >= GRADING_POLL_LIMIT) {
+      setLoadError(practiceId
+        ? 'Grading is taking longer than usual. Go back to Train and open this run again in a minute.'
+        : 'Grading is taking longer than usual. Go back to the Arena and open this exam again in a minute.');
       return;
     }
     gradingPollsRef.current += 1;
-    window.setTimeout(load, 1500);
+    if (gradingTimerRef.current) window.clearTimeout(gradingTimerRef.current);
+    gradingTimerRef.current = window.setTimeout(load, 1500);
   }
 
   function scheduleMarkingPoll(battle: ArenaBattle) {
@@ -916,10 +931,11 @@ export default function BattleRunner({
     window.dispatchEvent(new Event(ANSWER_FLUSH_EVENT));
     submittedRef.current = true;
     setSubmitting(true);
+    setLeaving(true);
     void saveQueueRef.current.then(() => {
       if (!unsavedRef.current.size) onExit();
       else setSaveError('Your latest answers have not saved yet. Retry saves before leaving.');
-    }).finally(() => { submittedRef.current = false; setSubmitting(false); });
+    }).finally(() => { submittedRef.current = false; setSubmitting(false); setLeaving(false); });
   }
 }
 
@@ -1370,6 +1386,7 @@ function Result({ data }: { data: ArenaBattle }) {
     (v) => v.requestHelpers.shareArenaBattle
   );
   const [sharing, setSharing] = useState(false);
+  const [shareError, setShareError] = useState('');
   const [sharedId, setSharedId] = useState(0);
   const shareArenaBattleWithAI = useAppContext(
     (v) => v.requestHelpers.shareArenaBattleWithAI
@@ -1487,6 +1504,7 @@ function Result({ data }: { data: ArenaBattle }) {
               Share as a challenge
             </ArenaButton>
           )}
+          {shareError && <span className={agentErrorCls} role="alert">{shareError}</span>}
           {battle.won && arenaAssistLabel(battle) && (
             <span className={winHintCls}>
               {arenaAssistNote(arenaAssistLabel(battle)!)}
@@ -1539,10 +1557,14 @@ function Result({ data }: { data: ArenaBattle }) {
   }
 
   async function handleShare() {
+    if (sharing) return;
     setSharing(true);
+    setShareError('');
     try {
       const { challengeId } = await shareArenaBattle(battle.id);
       setSharedId(challengeId);
+    } catch (error: any) {
+      setShareError(error?.message || 'Sharing did not work. Please try again.');
     } finally {
       setSharing(false);
     }

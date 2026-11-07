@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { ARENA } from './theme';
+import Icon from '~/components/Icon';
 import ArenaButton from './ArenaButton';
 import type { ArenaItem } from './types';
 
@@ -63,7 +64,8 @@ export default function MarkReview({
             {askError && <p className={errorCls}>{askError}</p>}
           </>
         ) : (
-          <p>
+          <p role="status">
+            <Icon icon="spinner" pulse />{' '}
             {ko
               ? '채점 중… 잠시 후 점수가 나옵니다.'
               : 'Marking… the score appears here in a moment.'}
@@ -122,6 +124,7 @@ export default function MarkReview({
   );
 
   async function handleAsk() {
+    if (asking) return;
     setAsking(true);
     setAskError('');
     try {

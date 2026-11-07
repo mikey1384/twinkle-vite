@@ -154,8 +154,6 @@ export interface ArenaState {
   recent: ArenaBattleSummary[];
   paidBattlesToday: number;
   paidBattlesPerDay: number;
-  examsToday?: number;
-  examsPerDay?: number;
 }
 
 // 'order': the choices are tiles placed into body's blanks (TOEFL iBT

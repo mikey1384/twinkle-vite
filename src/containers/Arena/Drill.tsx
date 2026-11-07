@@ -164,7 +164,7 @@ export default function Drill({
                 allPointTags={false}
                 letters={drill.exam.optionMarkers === 'letters'}
                 problemLayout={drill.exam.layout === 'problem'}
-                onMark={(value) => !result && setMarked(value)}
+                onMark={(value) => !result && !busy && setMarked(value)}
                 ask={
                   index === -1 || result
                     ? {
@@ -214,6 +214,8 @@ export default function Drill({
                 </span>
               )}
             </div>
+            {/* a check that did not go through says so beside its button */}
+            {error && <p className={errorCls} role="alert">{error}</p>}
           </section>
         )
       )}
@@ -221,8 +223,9 @@ export default function Drill({
   );
 
   async function handleCheck() {
-    if (!current || index < 0) return;
+    if (!current || index < 0 || busy) return;
     setBusy(true);
+    setError('');
     try {
       const data = await answerArenaDrill({
         itemId: current.itemId,
@@ -247,6 +250,7 @@ export default function Drill({
   }
 
   function handleNext() {
+    setError('');
     setResult(null);
     setMarked(null);
     setIndex((i) => i + 1);
@@ -283,6 +287,13 @@ function asPaperItem(
         : {})
   };
 }
+
+const errorCls = css`
+  margin: 0;
+  text-align: right;
+  color: ${ARENA.accent};
+  font-weight: 700;
+`;
 
 const wrapCls = css`
   width: 100%;

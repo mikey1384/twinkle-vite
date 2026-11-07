@@ -430,16 +430,20 @@ export default function AIStory({ onHide }: { onHide: () => void }) {
     };
   }
 
+  // false when the rewards could not load, so a Reopen tap can say so
   async function handleOpenCurrentClearScreen(targetStoryId = storyId) {
     if (!targetStoryId) return;
     const request = ++clearRequestRef.current;
     try {
       const story = await loadClearedStory(targetStoryId);
-      if (!story || request !== clearRequestRef.current) return;
+      if (request !== clearRequestRef.current) return;
+      if (!story) return false;
       setClearScreenStory(story);
       setClearScreenShown(true);
+      return true;
     } catch (error) {
       console.error('Failed to open AI Story rewards:', error);
+      return request === clearRequestRef.current ? false : undefined;
     }
   }
 
