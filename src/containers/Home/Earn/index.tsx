@@ -38,7 +38,6 @@ export default function Earn() {
       <TopMenu
         showDailyRewardBoostStrip={false}
         style={{ marginBottom: '3.5rem' }}
-        onPlayArena={() => navigate('/arena')}
         onPlayGrammarGame={() => navigate('/grammarbles')}
         onDailyQuestionClick={() => navigate('/daily-reflection')}
         onInputModalButtonClick={handleInputModalButtonClick}

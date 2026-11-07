@@ -34,19 +34,24 @@ import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModal
 import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
+import {
+  getNavigationLocationKey,
+  useNavigationFeedback
+} from '~/containers/App/navigationFeedback';
+
+const ARENA_PATH = '/arena';
+const ARENA_KEY = getNavigationLocationKey(ARENA_PATH);
 
 const NO_DAILY_GOALS: string[] = [];
 
 export default function TopMenu({
   onInputModalButtonClick,
-  onPlayArena,
   onPlayGrammarGame,
   onDailyQuestionClick,
   showDailyRewardBoostStrip = true,
   style
 }: {
   onInputModalButtonClick: (v?: string) => void;
-  onPlayArena: () => void;
   onPlayGrammarGame: () => void;
   onDailyQuestionClick: () => void;
   showDailyRewardBoostStrip?: boolean;
@@ -56,6 +61,13 @@ export default function TopMenu({
     (v) => v.state.aiFeaturesDisabled
   );
   const navigate = useNavigate();
+  // the site's navigation feedback (as the main navs use it): the Arena
+  // button waits at once, and spins if the page takes a moment to open
+  const {
+    loadingTarget: navLoadingTarget,
+    pendingTarget: navPendingTarget,
+    onNavigationStart
+  } = useNavigationFeedback();
   const wordleTimerIdRef = useRef<any>(null);
   const chessTimerIdRef = useRef<any>(null);
   const omokTimerIdRef = useRef<any>(null);
@@ -304,6 +316,8 @@ export default function TopMenu({
                 variant="logoBlue"
                 size="md"
                 shiny={false}
+                disabled={navPendingTarget === ARENA_KEY}
+                loading={navLoadingTarget === ARENA_KEY}
                 onClick={handleArenaClick}
               >
                 A{allGoalsAchieved ? '' : 'rena'}
@@ -478,7 +492,7 @@ export default function TopMenu({
       onOpenSigninModal();
       return;
     }
-    onPlayArena();
+    onNavigationStart(ARENA_PATH);
   }
 
   async function handleNavigateToChessMessage(): Promise<void> {

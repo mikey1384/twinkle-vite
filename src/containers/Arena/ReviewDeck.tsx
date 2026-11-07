@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useAppContext, useNotiContext } from '~/contexts';
@@ -106,7 +106,14 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
     partialCredit?: ArenaItem['partialCredit'];
     retired: boolean;
   } | null>(null);
-  const [busy, setBusy] = useState(false);
+  // the tap waiting on the server ('open:<itemId>', 'tag:<tag>', 'check',
+  // 'next'): its button spins, and every other deck button waits with it
+  const [pending, setPending] = useState<string | null>(null);
+  const pendingRef = useRef(false);
+  const requestIdRef = useRef(0);
+  // a card that would not open from the list: its row says so
+  const [openFailed, setOpenFailed] = useState(0);
+  const busy = !!pending;
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -118,7 +125,12 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
     return (
       <div className={wrapCls}>
         {error ? (
-          <p className={mutedCls}>{error}</p>
+          <>
+            <p className={mutedCls} role="alert">{error}</p>
+            <ArenaButton tone="ink" size="md" onClick={() => { setError(''); void refresh(); }}>
+              Try again
+            </ArenaButton>
+          </>
         ) : (
           <ArenaLoader text="Opening your deck…" />
         )}
@@ -141,6 +153,9 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
           </p>
         </div>
       </header>
+      {/* in the deck list, anything else that failed says so up here, not
+          below a long list (a card that would not open says so on its row) */}
+      {error && !card && <p className={errorCls} role="alert">{error}</p>}
 
       {!card && (
         <>
@@ -161,7 +176,7 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
                 Sort each miss before it joins your review. Naming the cause is
                 half of fixing it.
               </p>
-              <CardList cards={deck.untagged} onOpen={openCard} />
+              <CardList cards={deck.untagged} pending={pending} failedId={openFailed} onOpen={(itemId) => void openCard(itemId)} />
             </section>
           )}
           <section className={sectionCls}>
@@ -172,7 +187,7 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
                   Answer each one again. Right moves it further out; wrong
                   starts it over tomorrow.
                 </p>
-                <CardList cards={deck.due} onOpen={openCard} />
+                <CardList cards={deck.due} pending={pending} failedId={openFailed} onOpen={(itemId) => void openCard(itemId)} />
               </>
             ) : (
               <p className={mutedCls}>
@@ -205,7 +220,7 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
               allPointTags={false}
               letters={card.exam?.optionMarkers === 'letters'}
               problemLayout={card.exam?.layout === 'problem'}
-              onMark={(value) => !result && setMarked(value)}
+              onMark={(value) => !result && !busy && setMarked(value)}
               ask={{
                 kind: 'arenaCard',
                 id: card.card.itemId,
@@ -224,8 +239,12 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
                     type="button"
                     className={tagButtonCls}
                     disabled={busy}
+                    aria-busy={pending === `tag:${t.tag}` || undefined}
                     onClick={() => handleTag(t.tag)}
                   >
+                    {pending === `tag:${t.tag}` && (
+                      <Icon className={tagSpinnerCls} icon="spinner" pulse />
+                    )}
                     <b>{t.label}</b>
                     <span>{t.hint}</span>
                   </button>
@@ -239,7 +258,7 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
                 tone="ink"
                 size="md"
                 disabled={busy || marked == null || marked === ''}
-                loading={busy}
+                loading={pending === 'check'}
                 onClick={handleAnswer}
               >
                 Check
@@ -260,14 +279,20 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
                     ? 'Right. It comes back later.'
                     : 'Not yet. It comes back tomorrow.'}
               </span>
-              <ArenaButton tone="ink" size="md" onClick={handleNext}>
+              <ArenaButton
+                tone="ink"
+                size="md"
+                disabled={busy}
+                loading={pending === 'next'}
+                onClick={() => void goNext('next')}
+              >
                 Next
               </ArenaButton>
             </div>
           )}
         </section>
       )}
-      {error && card && <p className={mutedCls}>{error}</p>}
+      {error && card && <p className={errorCls} role="alert">{error}</p>}
     </div>
   );
 
@@ -279,34 +304,78 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
     }
   }
 
-  async function openCard(itemId: number) {
+  // one deck request at a time; a second tap while one waits does nothing.
+  // Back stays usable: it drops whatever is still waiting (its late reply is
+  // ignored by request id).
+  function begin(key: string) {
+    if (pendingRef.current) return 0;
+    pendingRef.current = true;
+    const id = ++requestIdRef.current;
+    setPending(key);
     setError('');
+    setOpenFailed(0);
+    return id;
+  }
+
+  function live(id: number) {
+    return id === requestIdRef.current;
+  }
+
+  function end(id: number) {
+    if (!live(id)) return;
+    pendingRef.current = false;
+    setPending(null);
+  }
+
+  function cancelPending() {
+    requestIdRef.current += 1;
+    pendingRef.current = false;
+    setPending(null);
+    setError('');
+    setOpenFailed(0);
+  }
+
+  async function openCard(itemId: number) {
+    const id = begin(`open:${itemId}`);
+    if (!id) return;
+    try {
+      await showCard(itemId, id);
+    } catch {
+      if (live(id)) setOpenFailed(itemId);
+    } finally {
+      end(id);
+    }
+  }
+
+  async function showCard(itemId: number, id: number) {
+    const next = await loadArenaCard(itemId);
+    if (!live(id)) return;
     setResult(null);
     setMarked(null);
-    try {
-      setCard(await loadArenaCard(itemId));
-      window.scrollTo({ top: 0 });
-    } catch {
-      setError('This card could not be opened.');
-    }
+    setCard(next);
+    window.scrollTo({ top: 0 });
   }
 
   async function handleTag(tag: string) {
     if (!card) return;
-    setBusy(true);
+    const id = begin(`tag:${tag}`);
+    if (!id) return;
     try {
       await tagArenaCard({ itemId: card.card.itemId, tag });
-      await handleNext();
     } catch {
-      setError('That did not save. Try again.');
-    } finally {
-      setBusy(false);
+      if (live(id)) setError('That did not save. Try again.');
+      end(id);
+      return;
     }
+    if (!live(id)) return;
+    end(id);
+    await goNext(`tag:${tag}`);
   }
 
   async function handleAnswer() {
     if (!card) return;
-    setBusy(true);
+    const id = begin('check');
+    if (!id) return;
     try {
       const data = await answerArenaCard({
         itemId: card.card.itemId,
@@ -320,6 +389,7 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
           )
         });
       }
+      if (!live(id)) return;
       setResult({
         correct: data.correct,
         key: data.key,
@@ -328,27 +398,43 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
         retired: !!data.card?.retired
       });
     } catch {
-      setError('That did not save. Try again.');
+      if (live(id)) setError('That did not save. Try again.');
     } finally {
-      setBusy(false);
+      end(id);
     }
   }
 
-  // the next card in the same pile, or back to the deck
-  async function handleNext() {
-    const fresh: Deck = await loadArenaDeck();
-    setDeck(fresh);
+  // the next card in the same pile, or back to the deck; the tapped button
+  // (Next, or the sorted tag) keeps spinning until it is open
+  async function goNext(key: string) {
+    const id = begin(key);
+    if (!id) return;
     const wasTagging = tagging;
-    const pile = wasTagging ? fresh.untagged : fresh.due;
-    if (pile.length) {
-      await openCard(pile[0].itemId);
-    } else {
-      setCard(null);
-      setResult(null);
+    try {
+      const fresh: Deck = await loadArenaDeck();
+      if (!live(id)) return;
+      setDeck(fresh);
+      const pile = wasTagging ? fresh.untagged : fresh.due;
+      if (pile.length) {
+        await showCard(pile[0].itemId, id);
+      } else {
+        setCard(null);
+        setResult(null);
+      }
+    } catch {
+      if (!live(id)) return;
+      setError(
+        wasTagging
+          ? 'Saved. The next card could not be opened. Go back to the deck and try again.'
+          : 'The next card could not be opened. Try again.'
+      );
+    } finally {
+      end(id);
     }
   }
 
   function handleBack() {
+    cancelPending();
     if (card) {
       setCard(null);
       setResult(null);
@@ -361,28 +447,43 @@ export default function ReviewDeck({ onBack }: { onBack: () => void }) {
 
 function CardList({
   cards,
+  pending,
+  failedId,
   onOpen
 }: {
   cards: CardSummary[];
+  pending: string | null;
+  failedId: number;
   onOpen: (itemId: number) => void;
 }) {
   return (
     <ul className={listCls}>
-      {cards.map((card) => (
+      {cards.map((card) => {
+        const opening = pending === `open:${card.itemId}`;
+        return (
         <li key={card.itemId}>
           <button
             type="button"
             className={listRowCls}
+            disabled={!!pending}
+            aria-busy={opening || undefined}
             onClick={() => onOpen(card.itemId)}
           >
             <span>
               <strong>{card.examName}</strong>
               <span className={mutedCls}> · {typeLabel(card.itemType)}</span>
             </span>
-            <Icon icon="chevron-right" />
+            {/* the spinner takes the chevron's place: nothing moves */}
+            <Icon icon={opening ? 'spinner' : 'chevron-right'} pulse={opening} fixedWidth />
           </button>
+          {failedId === card.itemId && (
+            <p className={errorCls} role="alert" style={{ marginTop: '0.4rem' }}>
+              This card could not be opened. Try again.
+            </p>
+          )}
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
@@ -504,6 +605,9 @@ const listCls = css`
 
 const listRowCls = css`
   width: 100%;
+  &:disabled {
+    cursor: default;
+  }
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -562,7 +666,21 @@ const tagGridCls = css`
   }
 `;
 
+// in the card's corner, so the label and hint never move
+const tagSpinnerCls = css`
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+`;
+
+const errorCls = css`
+  margin: 0;
+  color: ${ARENA.accent};
+  font-weight: 700;
+`;
+
 const tagButtonCls = css`
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;

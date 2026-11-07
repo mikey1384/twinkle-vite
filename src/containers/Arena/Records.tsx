@@ -64,19 +64,23 @@ export default function Records({ exam }: { exam: ArenaExamSummary }) {
   const [period, setPeriod] = useState('week');
   const [band, setBand] = useState('');
   const [view, setView] = useState<RecordsView | null>(null);
+  // a board that could not load says so, instead of looking empty
+  const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let alive = true;
     setView(null);
+    setFailed(false);
     loadArenaRecords({ examKey: exam.key, length, difficulty, period, band })
       .then((data: RecordsView) => alive && setView(data))
-      .catch(() => alive && setView({ total: 0, myRank: null, rows: [] }));
+      .catch(() => alive && setFailed(true));
     return () => {
       alive = false;
     };
     // Request helpers are provided by the application context.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exam.key, length, difficulty, period, band]);
+  }, [exam.key, length, difficulty, period, band, retry]);
 
   return (
     <section className={cardCls}>
@@ -109,7 +113,14 @@ export default function Records({ exam }: { exam: ArenaExamSummary }) {
         <Chips value={band} onChange={setBand} options={BANDS} />
       </div>
 
-      {!view ? (
+      {failed ? (
+        <p className={noteCls} role="alert">
+          These records could not be loaded.{' '}
+          <button type="button" className={retryCls} onClick={() => setRetry((value) => value + 1)}>
+            Try again
+          </button>
+        </p>
+      ) : !view ? (
         <p className={noteCls}>
           <Icon icon="spinner" pulse /> Loading records
         </p>
@@ -282,6 +293,17 @@ const chipCls = css`
 const chipOnCls = css`
   background: ${ARENA.ink};
   color: #fff;
+`;
+
+const retryCls = css`
+  border: 2px solid ${ARENA.line};
+  border-radius: 6px;
+  background: #fff;
+  color: ${ARENA.ink};
+  font: inherit;
+  font-weight: 800;
+  padding: 0.3rem 1rem;
+  cursor: pointer;
 `;
 
 const noteCls = css`

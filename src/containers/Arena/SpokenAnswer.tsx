@@ -157,7 +157,7 @@ export default function SpokenAnswer({
           </ArenaButton>
         </div>
       ) : phase === 'uploading' ? (
-        <p className={noteCls}>Saving your answer… {progress}%</p>
+        <p className={noteCls} role="status"><Icon icon="spinner" pulse /> Saving your answer… {progress}%</p>
       ) : phase === 'error' ? (
         <div className={liveCls}>
           <span className={errorCls}>{error}</span>

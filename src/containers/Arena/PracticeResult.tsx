@@ -61,7 +61,8 @@ export default function PracticeResult({
         <div className={actionsCls}>
           {left > 0 ? (
             <ArenaButton tone="paper" size="md" loading={starting} onClick={handleResitAgain}>
-              <Icon icon="redo" /> Re-sit the {left} left
+              {/* ArenaButton's spinner takes the redo icon's place */}
+              {!starting && <Icon icon="redo" />} Re-sit the {left} left
             </ArenaButton>
           ) : (
             <span className={doneCls}>

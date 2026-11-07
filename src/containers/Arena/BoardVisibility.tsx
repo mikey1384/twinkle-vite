@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
+import Icon from '~/components/Icon';
 import { ARENA } from './theme';
 
 // The preference also applies to Boss Records, so it stays accessible after
@@ -37,6 +38,7 @@ export default function BoardVisibility() {
     <div className={wrapCls}>
       {hidden === null ? (
         <p>
+          {!error && <><Icon icon="spinner" pulse />{' '}</>}
           {error || 'Loading your board visibility…'}
           {error && (
             <button type="button" onClick={() => setRetry((value) => value + 1)}>
@@ -54,6 +56,16 @@ export default function BoardVisibility() {
               onChange={(event) => handleHidden(event.target.checked)}
             />
             Hide me from other hunters&apos; boards (you still see your own rank)
+            {/* the box keeps the saved value until the server answers; the
+                spinner's slot is always there, so the text never reflows */}
+            <span className={savingSlotCls} role="status">
+              {saving && (
+                <>
+                  <Icon icon="spinner" pulse />
+                  <span className={hiddenTextCls}>Saving</span>
+                </>
+              )}
+            </span>
           </label>
           {error && <p role="alert">{error}</p>}
         </>
@@ -75,6 +87,22 @@ export default function BoardVisibility() {
     }
   }
 }
+
+const savingSlotCls = css`
+  flex: none;
+  width: 1.4em;
+  margin-top: 0.15rem;
+`;
+
+// read by screen readers, not shown
+const hiddenTextCls = css`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+`;
 
 const wrapCls = css`
   padding: 1.2rem 1.4rem;

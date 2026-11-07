@@ -90,7 +90,7 @@ test('covers and shared challenges explain admission limits, keep review and ret
           for (const phase of ['prepare', 'start']) for (const code of ['ARENA_DAILY_EXAM_LIMIT', 'ARENA_NEXT_PAPER_PENDING', 'ARENA_MASTERY_MARKING_PENDING', 'ARENA_PREREQUISITE_REQUIRED']) {
             await page.evaluate(c => window.showFixture(c), { surface, phase, code });
             if (phase === 'start') {
-              await page.getByText(/One new exam per day/).waitFor();
+              await page.getByText(/Start as many exams as you like/).waitFor();
               await startButton().click();
             }
             const alert = page.getByRole('alert');
@@ -109,7 +109,7 @@ test('covers and shared challenges explain admission limits, keep review and ret
           // A real network failure still has a working retry, then can start.
           await page.evaluate(c => window.showFixture(c), { surface, phase: 'retry', code: 'NETWORK_ERROR' });
           await page.getByRole('button', { name: 'Try again', exact: true }).click();
-          await page.getByText(/One new exam per day/).waitFor();
+          await page.getByText(/Start as many exams as you like/).waitFor();
           await startButton().click();
           await page.waitForFunction(() => window.opened === 42);
           for (const existing of ['open', 'finished']) {

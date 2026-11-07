@@ -139,6 +139,8 @@ export default function ParentEmailOffer({ battleId }: { battleId: number }) {
   );
 
   async function handleSend(body: { email?: string; useOnFile?: boolean }) {
+    // Enter in the email box while a send waits does nothing
+    if (busy) return;
     setBusy('send');
     setError('');
     try {
@@ -153,6 +155,7 @@ export default function ParentEmailOffer({ battleId }: { battleId: number }) {
   }
 
   async function handleDismiss() {
+    if (busy) return;
     setBusy('dismiss');
     setError('');
     try {

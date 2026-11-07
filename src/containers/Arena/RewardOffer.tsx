@@ -30,8 +30,8 @@ export default function RewardOffer({ offer, compact = false }: { offer: ArenaRe
       {reduced && <p>The amounts shown exclude questions you have already been rewarded for.</p>}
       {!!offer.pendingOverlapPoints && <p>Another exam containing some of these questions is awaiting its result. Each question can earn rewards once, so the final amounts may be lower.</p>}
       {offer.markingRequired && <p>Rewards arrive after the final Writing / Speaking marks.</p>}
-      <p>One new exam per day across all exams and lengths. Starting uses today’s attempt, even if you leave or do not reach the reward target. You can resume the same exam. Resets at 9:00 AM Korea time (00:00 UTC).</p>
-      <p>You can retry a failed paper within the daily limit. After passing it at this length and difficulty, your next attempt needs a different published paper. Previous results stay available for review. There is no weekly cooldown.</p>
+      <p>Start as many exams as you like. Up to 5 exams a day can earn rewards, counted by the day you start them; resets at 9:00 AM Korea time (00:00 UTC). You can resume an exam you started.</p>
+      <p>You can retry a failed paper. After passing it at this length and difficulty, your next attempt needs a different published paper. Previous results stay available for review. There is no weekly cooldown.</p>
       {!offer.mastery && <p>Only Full + Hard advances the 25-clear mastery track. All other lengths and difficulties earn ordinary rewards.</p>}
     </>}
   </div>;
