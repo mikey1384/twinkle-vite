@@ -1,3 +1,4 @@
+import { coinPriceDestinationLine } from './CoinPricesSummary';
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -305,6 +306,19 @@ export default function RewardSettingsModal({
                                   : rule.verifier === 'archive-rematch'
                                     ? 'for the daily rematch of a retired puzzle'
                                     : 'for a correct answer'}
+                            </small>
+                          </span>
+                        </li>
+                      ))}
+                      {(declaration.prices || []).map((price) => (
+                        <li key={`price-${price.id}`}>
+                          <span className={rewardAmountClass}>
+                            {price.coins.toLocaleString()} Coins
+                          </span>
+                          <span className={rewardTitleClass}>
+                            <strong>{price.title}</strong>
+                            <small>
+                              {coinPriceDestinationLine(price)}
                             </small>
                           </span>
                         </li>

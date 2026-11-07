@@ -52,6 +52,8 @@ export interface BuildRewardReviewCardPayload {
   declinedByCreator?: boolean;
   // The reviewer's proposed changes, while offered (and after, for history).
   proposal?: BuildRewardReviewProposalSummary | null;
+  // Coin prices with their destinations (present only when the app charges).
+  prices?: BuildCoinPriceSummary[];
   rules?: BuildRewardReviewRuleSummary[];
   budgets?: {
     userDailyXP?: number;
@@ -238,4 +240,85 @@ export function formatBuildRewardProposalSummary(
     ...identity
   ].filter(Boolean);
   return parts.join(' · ');
+}
+
+export interface BuildCoinPriceSummary {
+  id: string;
+  title: string;
+  coins: number;
+  destination: 'removed' | 'owner';
+  offers?: { minCoins: number; maxCoins?: number };
+  builders?: {
+    coinsPerUnit: number;
+    unitName?: string;
+    maxUnitsPerRecipient?: number;
+    maxRecipients?: number;
+    maxCoinsPerPurchase?: number;
+  };
+}
+// The builders' part of one purchase at most (platform ceilings when the
+// summary leaves them out: 64 builders, 100,000 Coins).
+function builderCeiling(builders: NonNullable<BuildCoinPriceSummary['builders']>) {
+  const perPurchase = Math.min(builders.maxCoinsPerPurchase ?? 100_000, 100_000);
+  if (!builders.maxUnitsPerRecipient) return perPurchase;
+  return Math.min(
+    perPurchase,
+    builders.coinsPerUnit * builders.maxUnitsPerRecipient * (builders.maxRecipients ?? 64)
+  );
+}
+// The approval message names where each price's Coins go (RULING 11-07):
+// "Extra land plot — 500 Coins, removed". A price whose Coins can reach a
+// person says so (round-2 review N3, N7): a 0-Coin builders price is not a
+// "free claim", and a resold item pays the previous holder.
+export function formatBuildCoinPriceLine(
+  price: BuildCoinPriceSummary,
+  ownerUsername?: string | null
+) {
+  const destination =
+    price.coins <= 0
+      ? price.builders
+        ? 'no Coins of its own'
+        : 'free claim'
+      : price.destination === 'owner'
+        ? `goes to ${ownerUsername || 'the app owner'}`
+        : 'removed';
+  const extras = [
+    price.builders
+      ? `plus ${formatAmount(price.builders.coinsPerUnit)} per ${price.builders.unitName || 'unit'} to builders, up to ${formatAmount(builderCeiling(price.builders))} a purchase`
+      : '',
+    price.offers
+      ? `resales pay the previous holder, another player, up to ${price.offers.maxCoins !== undefined ? formatAmount(price.offers.maxCoins) : '?'} Coins`
+      : ''
+  ].filter(Boolean);
+  return `${price.title} — ${formatAmount(price.coins)} Coins, ${destination}${extras.length ? ` (${extras.join('; ')})` : ''}`;
+}
+// The chat card's red line when any price pays a person: who, in plain words.
+export function buildCoinPricePersonWarning(
+  prices: BuildCoinPriceSummary[],
+  ownerUsername?: string | null
+) {
+  const who = [
+    prices.some((price) => price.destination === 'owner' && price.coins > 0)
+      ? `${ownerUsername || 'the app owner'} (the owner)`
+      : '',
+    prices.some((price) => price.builders) ? 'builders the app names' : '',
+    prices.some((price) => price.offers) ? 'another player when an item is resold' : ''
+  ].filter(Boolean);
+  if (!who.length) return null;
+  return `Coins go to ${who.length > 1 ? `${who.slice(0, -1).join(', ')} and ${who[who.length - 1]}` : who[0]}. Approving needs a review note.`;
+}
+
+// The rules JSON the reviewer's editor starts from (review M5, 11-07): the
+// request's config whenever it has earning rules or Coin prices (a
+// prices-only app starts with its declared prices, so approving never needs
+// them retyped), else the empty template.
+export function initialReviewRulesText(
+  config: { rules?: unknown[]; prices?: unknown[] } | null | undefined,
+  emptyConfig: unknown
+) {
+  return JSON.stringify(
+    config && (config.rules?.length || config.prices?.length) ? config : emptyConfig,
+    null,
+    2
+  );
 }

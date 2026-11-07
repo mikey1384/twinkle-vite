@@ -10,6 +10,8 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { ADMIN_USER_ID } from '~/constants/defaultValues';
 import { useAppContext } from '~/contexts';
 import {
+  buildCoinPricePersonWarning,
+  formatBuildCoinPriceLine,
   formatBuildRewardProposalSummary,
   formatBuildRewardRulesSummary,
   getBuildRewardOfferedIdentity,
@@ -17,6 +19,7 @@ import {
   getBuildRewardReviewManagementPath,
   getBuildRewardReviewStatusLabel,
   normalizeBuildRewardReviewStatus,
+  type BuildCoinPriceSummary,
   type BuildRewardReviewCardPayload
 } from '~/helpers/buildRewardReviewCard';
 import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
@@ -84,6 +87,9 @@ export default function BuildRewardReview({
   // Budgets exist only once the reviewer has written rules; a pending request
   // carries none, so showing zeros would read as a broken card.
   const hasRules = Array.isArray(review?.rules) && review.rules.length > 0;
+  const coinPrices: BuildCoinPriceSummary[] = Array.isArray(review?.prices)
+    ? review.prices
+    : [];
 
   if (!reviewId || !buildId) return null;
 
@@ -122,9 +128,16 @@ export default function BuildRewardReview({
               })}
             </BuildMessageCardChip>
           ) : null}
-          <BuildMessageCardChip icon="coins" themeName={sender.profileTheme}>
-            {rulesSummary}
-          </BuildMessageCardChip>
+          {hasRules || coinPrices.length === 0 ? (
+            <BuildMessageCardChip icon="coins" themeName={sender.profileTheme}>
+              {rulesSummary}
+            </BuildMessageCardChip>
+          ) : null}
+          {coinPrices.length > 0 ? (
+            <BuildMessageCardChip icon="coins" themeName={sender.profileTheme}>
+              {coinPrices.length} Coin {coinPrices.length === 1 ? 'price' : 'prices'}
+            </BuildMessageCardChip>
+          ) : null}
           {sourceVersionId > 0 ? (
             <BuildMessageCardChip
               icon="save"
@@ -402,6 +415,21 @@ export default function BuildRewardReview({
               <span>{answerError}</span>
             </div>
           ) : null}
+          {coinPrices.length > 0 &&
+          buildCoinPricePersonWarning(coinPrices, review?.ownerUsername) ? (
+            <div className={coinPersonClass} role="note">
+              {buildCoinPricePersonWarning(coinPrices, review?.ownerUsername)}
+            </div>
+          ) : null}
+          {coinPrices.length > 0 ? (
+            <div className={budgetClass}>
+              {coinPrices.map((price) => (
+                <span key={price.id}>
+                  {formatBuildCoinPriceLine(price, review?.ownerUsername)}
+                </span>
+              ))}
+            </div>
+          ) : null}
           {hasRules ? (
             <div className={budgetClass}>
               <span>
@@ -600,6 +628,17 @@ const compareEmptyClass = css`
   font-size: 0.95rem;
 `;
 
+// Prices whose Coins reach a person (owner, builders, previous holder).
+const coinPersonClass = css`
+  color: ${Color.red()};
+  border: 1px solid ${Color.red(0.5)};
+  background: ${Color.red(0.06)};
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.4;
+`;
 const budgetClass = css`
   display: flex;
   flex-wrap: wrap;

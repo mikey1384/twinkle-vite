@@ -83,6 +83,8 @@ registerMethods('build', [
   'requestBuildRewardProposalRewardPreview',
   'requestBuildRewards',
   'requestBuildRewardPreview',
+  'requestBuildCoins',
+  'requestBuildCoinPreview',
   'requestBuildCardCraft',
   'requestBuildCardCraftPreview',
   'requestBuildCraft',

@@ -14,6 +14,9 @@ interface ButtonProps {
   'aria-controls'?: string;
   'aria-describedby'?: string;
   'aria-busy'?: boolean;
+  // Announced as unavailable while staying focusable and clickable (the
+  // caller ignores the click); defaults to `disabled`.
+  'aria-disabled'?: boolean;
   buttonRef?: React.Ref<HTMLButtonElement>;
   className?: string;
   color?: string; // a key in `Color` (e.g. 'logoBlue'); defaults per variant
@@ -60,6 +63,7 @@ export default function Button(props: ButtonProps) {
     'aria-controls': ariaControls,
     'aria-describedby': ariaDescribedBy,
     'aria-busy': ariaBusy,
+    'aria-disabled': ariaDisabled,
     buttonRef,
     className = '',
     color,
@@ -201,7 +205,7 @@ export default function Button(props: ButtonProps) {
       aria-controls={ariaControls}
       aria-describedby={ariaDescribedBy}
       aria-busy={ariaBusy ?? loading}
-      aria-disabled={isDisabled}
+      aria-disabled={ariaDisabled ?? isDisabled}
       disabled={isDisabled}
       style={style}
       className={cx(cssClass, className, 'unselectable')}

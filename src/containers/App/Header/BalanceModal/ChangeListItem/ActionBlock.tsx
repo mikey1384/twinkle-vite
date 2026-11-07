@@ -20,6 +20,11 @@ export default function ActionBlock({
     if (action === 'buildReward') {
       return 'earned a verified app reward';
     }
+    // Twinkle.coins purchases (target buildCoinReceipt).
+    if (action === 'buildPurchase') return 'bought something in a Lumine app';
+    if (action === 'buildSale') return 'was paid for something in a Lumine app';
+    if (action === 'buildPurchaseRefund') return 'got a Lumine app purchase refunded';
+    if (action === 'buildSaleRefund') return 'returned Coins for a refunded Lumine app purchase';
     if (action === 'grammarChallenge' && target === 'grammarbles_question') {
       return 'challenged a Grammarbles question';
     }

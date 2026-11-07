@@ -34,6 +34,8 @@ export interface Build {
   id: number;
   title: string;
   username: string;
+  // the app owner's user id (Twinkle.app.getInfo ownerId)
+  userId?: number | null;
   primaryArtifactId?: number | null;
   currentArtifactVersionId?: number | null;
   // the build's published release (runtime payload; absent when none)

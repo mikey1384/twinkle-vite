@@ -938,6 +938,77 @@ export default function buildRequestHelpers({
         throw toCardCraftRequestError(error);
       }
     },
+    // Twinkle.coins runtime calls (balance, quote, charge, receipts, offers).
+    // The published-runtime grant is the rewards one and renews the same way.
+    // Errors keep the server's code and details so the app can tell "not
+    // enough Coins" from "someone already has it".
+    async requestBuildCoins({
+      buildId,
+      operation,
+      payload,
+      token,
+      runtimeGrant,
+      runtimeArtifactVersionId,
+      userId
+    }: {
+      buildId: number;
+      operation: string;
+      payload: unknown;
+      token: string;
+      runtimeGrant: string;
+      runtimeArtifactVersionId?: number | null;
+      userId?: number;
+    }) {
+      const sessionKey = String(auth().headers?.Authorization || auth().headers?.authorization || '');
+      const sessionIsCurrent = () => sessionKey === String(auth().headers?.Authorization || auth().headers?.authorization || '');
+      const headers = { ...auth().headers, 'x-build-api-token': token };
+      try {
+        return await withRewardRuntime({
+          sessionKey, isCurrentSession: sessionIsCurrent, userId: userId || 0,
+          buildId, artifactVersionId: runtimeArtifactVersionId, runtimeGrant,
+          isRuntimeRequired: (error) => axios.isAxiosError(error) && error.response?.status === 403 &&
+            error.response?.data?.code === 'build_reward_runtime_required',
+          send: async (grant) => {
+            const { data } = await request.post(
+              `${URL}/build/${buildId}/api/coins/${operation}`,
+              payload,
+              { ...getBuildRequestConfig({ maxRetries: 0 }), headers: { ...headers, 'x-build-reward-runtime': grant } }
+            );
+            return data;
+          },
+          renew: async (grant) => {
+            const { data } = await request.post(`${URL}/build/${buildId}/api/rewards/runtime-grant`,
+              { artifactVersionId: runtimeArtifactVersionId },
+              { ...getBuildRequestConfig({ maxRetries: 0, totalTimeoutMs: 10_000 }),
+                headers: { ...headers, 'x-build-reward-runtime': grant } });
+            return data;
+          }
+        });
+      } catch (error) {
+        throw toCardCraftRequestError(error, 'Could not complete the Coins request.');
+      }
+    },
+    // Owner draft preview: the draft's own prices, never charged.
+    async requestBuildCoinPreview({
+      buildId,
+      operation,
+      payload
+    }: {
+      buildId: number;
+      operation: string;
+      payload: unknown;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/coins/preview/${operation}`,
+          payload,
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
+        return data;
+      } catch (error) {
+        throw toCardCraftRequestError(error, 'Could not complete the Coins preview.');
+      }
+    },
     // Twinkle.craft runtime calls (state, list, merge, item, journey,
     // rankings). Errors keep the server's code so the app can tell "someone
     // is discovering this pair" from "out of Energy".

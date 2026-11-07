@@ -40,6 +40,14 @@ export default function useAppRequests({
     resolvedRequestBuildRewardPreview
   );
   requestBuildRewardPreviewRef.current = resolvedRequestBuildRewardPreview;
+  const requestBuildCoins = useAppContext((v) => v.requestHelpers.requestBuildCoins);
+  const requestBuildCoinsRef = useRef(requestBuildCoins);
+  requestBuildCoinsRef.current = requestBuildCoins;
+  const requestBuildCoinPreview = useAppContext(
+    (v) => v.requestHelpers.requestBuildCoinPreview
+  );
+  const requestBuildCoinPreviewRef = useRef(requestBuildCoinPreview);
+  requestBuildCoinPreviewRef.current = requestBuildCoinPreview;
   const requestBuildCardCraft = useAppContext(
     (v) => v.requestHelpers.requestBuildCardCraft
   );
@@ -567,6 +575,8 @@ export default function useAppRequests({
   const previewRequestRefs = useRef<PreviewHostBridgeRequestRefs>({
     requestBuildRewardsRef,
     requestBuildRewardPreviewRef,
+    requestBuildCoinsRef,
+    requestBuildCoinPreviewRef,
     requestBuildCardCraftRef,
     requestBuildCardCraftPreviewRef,
     requestBuildCraftRef,

@@ -1,3 +1,4 @@
+import type { CoinConfirmRequest } from '~/components/Build/Coins/coinConfirmText';
 import type {
   Dispatch,
   MutableRefObject,
@@ -131,6 +132,10 @@ export interface UsePreviewHostBridgeArgs {
   >;
   requestBuildMediaActionConfirmationRef: RefObject<
     ((request: BuildMediaActionConfirmationRequest) => Promise<boolean>) | null
+  >;
+  // Twinkle.coins: the website's own purchase / offer confirmation.
+  requestBuildCoinConfirmationRef: RefObject<
+    ((request: CoinConfirmRequest) => Promise<boolean>) | null
   >;
   requestCardCraftSelectionRef: RefObject<
     | ((request: BuildCardCraftSelectionRequest) => Promise<number | null>)

@@ -42,6 +42,7 @@ import type {
   UsePreviewHostBridgeArgs
 } from '../types/previewHostBridgeTypes';
 import { isMutatingPreviewRequestType } from '../helpers/previewRequestPolicy';
+import { runBuildRuntimeCoinRequest } from '../helpers/buildRuntimeCoins';
 import {
   authorizeTwinkleContentNavigation
 } from '../helpers/twinkleContentNavigation';
@@ -249,6 +250,7 @@ export function useHostBridge({
   requestBuildImageGenerationConfirmationRef,
   requestBuildMusicGenerationConfirmationRef,
   requestBuildMediaActionConfirmationRef,
+  requestBuildCoinConfirmationRef,
   requestCardCraftSelectionRef,
   onBuildLiveSafetyHostSessionsChange,
   requestBuildLiveSafetyStopRef,
@@ -3066,9 +3068,14 @@ export function useHostBridge({
             // artifactVersionId: the published release this frame is
             // running, so an app can attribute its own telemetry to an exact
             // version (null in the editor's workspace preview).
+            // ownerId/ownerUsername: who owns the app, the same for every
+            // viewer, so an app can honour owner-only (admin) records written
+            // by that account without hard-coding an id.
             response = {
               app: {
                 buildId: activeBuild.id,
+                ownerId: Number(activeBuild.userId) || null,
+                ownerUsername: activeBuild.username || null,
                 appUrl: `${window.location.origin}/app/${activeBuild.id}`,
                 ...getAppInfoRelease({
                   runtimeOnly: runtimeOnlyRef.current,
@@ -5512,6 +5519,65 @@ export function useHostBridge({
             break;
           }
 
+          case 'coins:balance':
+          case 'coins:charge':
+          case 'coins:receipts':
+          case 'coins:make-offer':
+          case 'coins:respond-offer':
+          case 'coins:takeover':
+          case 'coins:withdraw-offer':
+          case 'coins:offers': {
+            // Never forward app-supplied grants, prices, recipients or
+            // destinations: helpers/buildRuntimeCoins.ts quotes the server,
+            // shows Twinkle's own confirmation and sends what was confirmed.
+            const runtimeGrant = activeBuild.rewardRuntimeGrant;
+            const live = Boolean(runtimeOnly && runtimeGrant && !appMcpControlsThisTab());
+            const coinUserId = previewAuth.userIdRef.current;
+            const coinToken = live
+              ? await ensureBuildApiToken(['coins:charge', 'rewards:claim'], previewAuth)
+              : null;
+            response = await runBuildRuntimeCoinRequest(type, payload, {
+              live,
+              // Box limits are per app; the box's app name is the server's
+              // approved snapshot, never activeBuild.title.
+              appKey: String(activeBuild.id),
+              confirm: requestBuildCoinConfirmationRef.current,
+              newRequestId: () =>
+                globalThis.crypto?.randomUUID?.() ||
+                `coin-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`,
+              request: live
+                ? (operation, body) =>
+                    requestRefs.requestBuildCoinsRef.current({
+                      buildId: activeBuild.id,
+                      operation,
+                      payload: body,
+                      token: coinToken,
+                      runtimeGrant,
+                      runtimeArtifactVersionId: activeBuild.publishedArtifactVersionId,
+                      userId: coinUserId
+                    })
+                : (operation, body) =>
+                    requestRefs.requestBuildCoinPreviewRef.current({
+                      buildId: activeBuild.id,
+                      operation,
+                      payload: body
+                    })
+            });
+            // Canonical balance from the server's receipt response only.
+            if (
+              live &&
+              coinUserId &&
+              previewAuth.userIdRef.current === coinUserId &&
+              Number.isFinite(response?.balances?.coins)
+            ) {
+              onSetUserStateRef.current({
+                userId: coinUserId,
+                newState: { twinkleCoins: response.balances.coins }
+              });
+            }
+            break;
+          }
+
           case 'notifications:get-subject-update-subscription': {
             const notificationsReadToken = await ensureBuildApiToken(
               ['notifications:read'],
@@ -5898,6 +5964,7 @@ export function useHostBridge({
     requestBuildImageGenerationConfirmationRef,
     requestBuildMusicGenerationConfirmationRef,
     requestBuildMediaActionConfirmationRef,
+    requestBuildCoinConfirmationRef,
     requestBuildLiveSafetyStopRef,
     requestCardCraftSelectionRef,
     runtimeExplorationPlanRef,

@@ -1,7 +1,13 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import type { RewardConfig, RewardReview, RewardRule } from './types';
+import type {
+  CoinPriceReviewContext,
+  RewardConfig,
+  RewardReview,
+  RewardRule
+} from './types';
+import CoinPricesSummary from './CoinPricesSummary';
 
 // Reviewer-facing presentation of a reward review. Lives inside the
 // Management page's section panels, so it inherits their accent through
@@ -164,7 +170,14 @@ export const budgetFields = [
   ['userDailyCoins', 'Coins per learner per day']
 ] as const;
 
-export function RewardConfigSummary({ config }: { config: RewardConfig }) {
+export function RewardConfigSummary({
+  config,
+  coinContext
+}: {
+  config: RewardConfig;
+  coinContext?: CoinPriceReviewContext | null;
+}) {
+  const hasPrices = (config.prices?.length || 0) > 0;
   return (
     <div className={rewardPanelClass}>
       {/* A first request carries no economy at all; six zero tiles would
@@ -185,7 +198,7 @@ export function RewardConfigSummary({ config }: { config: RewardConfig }) {
           ) : null}
         </div>
       )}
-      {config.rules.length === 0 && (
+      {config.rules.length === 0 && !hasPrices && (
         <p>
           No earning rules yet. You write them while approving; a request cannot
           be approved without at least one rule.
@@ -203,6 +216,11 @@ export function RewardConfigSummary({ config }: { config: RewardConfig }) {
       ) : (
         config.rules.map((rule) => <RewardRuleCard key={rule.id} rule={rule} />)
       )}
+      <CoinPricesSummary
+        prices={config.prices || []}
+        spendBudget={config.spendBudget}
+        context={coinContext}
+      />
     </div>
   );
 }
@@ -392,7 +410,7 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
 export function RewardReviewDetails({ review }: { review: RewardReview }) {
   return (
     <div className={rewardPanelClass}>
-      <RewardConfigSummary config={review.config} />
+      <RewardConfigSummary config={review.config} coinContext={review.coinPrices} />
       {review.events?.length ? (
         <details>
           <summary>Approval history</summary>

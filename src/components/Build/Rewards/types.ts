@@ -4,6 +4,43 @@ export interface RewardConfig {
   // Receipts one learner may earn per Korean day across all rules.
   userDailyClaims?: number;
   rules: Array<RewardRule>;
+  // Twinkle.coins prices approved in the same review (RULING 11-07).
+  prices?: CoinPrice[];
+  spendBudget?: { userDailyCoins: number };
+}
+export interface CoinPrice {
+  id: string;
+  title: string;
+  howTo?: string;
+  coins: number;
+  destination: 'removed' | 'owner';
+  userDailyLimit?: number;
+  maxLifetime?: number;
+  uniqueKey?: boolean;
+  keyGroup?: string;
+  // maxCoins: the highest offer price (required with offers since 11-07).
+  offers?: { minCoins: number; maxCoins?: number; maxOpenPerPlayer?: number };
+  builders?: {
+    coinsPerUnit: number;
+    maxUnitsPerRecipient: number;
+    maxRecipients?: number;
+    maxCoinsPerPurchase?: number;
+    unitName?: string;
+    topic: string;
+  };
+}
+// Reviewer context for an app's Coin prices (coinPriceReview.ts).
+export interface CoinPriceReviewContext {
+  ownerUsername: string | null;
+  prices: CoinPrice[];
+  spendBudget: { userDailyCoins: number } | null;
+  sales: Array<{ priceId: string; purchases: number; buyers: number; coins: number }>;
+  ownerEarnings: { coins: number; purchases: number; buyers: number };
+  builderPurchases: number;
+  // Sales and takeovers so far: Coins paid to previous holders.
+  resales?: { sales: number; sellers: number; coins: number };
+  // The offer rule's days (30-day takeover, lapse day or null, re-offer wait).
+  offerRule?: { takeoverAfterDays: number; lapseAfterDays: number | null; reofferCooldownDays: number };
 }
 export interface RewardQuestion {
   prompt: string;
@@ -152,6 +189,9 @@ export interface RewardReview {
   detectedRuleIds?: string[];
   // rules only a timer checks (the warning the creator saw before sending)
   timerOnlyWarnings?: string[];
+  // Coin prices: shared warnings and who gets the Coins.
+  coinPriceWarnings?: string[];
+  coinPrices?: CoinPriceReviewContext | null;
   isLatest?: boolean;
   // 'superseded' because the creator saved past it (not because a newer
   // request replaced it). Nothing can be decided on such a review.
@@ -232,6 +272,9 @@ export interface RewardSettings {
       userDailyClaims: number | null;
     } | null;
     sheetRuleIds: string[];
+    // What the app asks to charge and where each price's Coins go.
+    prices?: CoinPrice[];
+    spendBudget?: { userDailyCoins: number } | null;
   } | null;
   approvalMatches: boolean;
   canPublish: boolean;

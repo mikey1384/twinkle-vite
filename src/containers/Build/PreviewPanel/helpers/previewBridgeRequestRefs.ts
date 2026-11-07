@@ -3,6 +3,8 @@ import type { AsyncRequestRef } from './previewBridgeAuth';
 export interface PreviewHostBridgeRequestRefs {
   requestBuildRewardsRef: AsyncRequestRef;
   requestBuildRewardPreviewRef: AsyncRequestRef;
+  requestBuildCoinsRef: AsyncRequestRef;
+  requestBuildCoinPreviewRef: AsyncRequestRef;
   requestBuildCardCraftRef: AsyncRequestRef;
   requestBuildCardCraftPreviewRef: AsyncRequestRef;
   requestBuildCraftRef: AsyncRequestRef;

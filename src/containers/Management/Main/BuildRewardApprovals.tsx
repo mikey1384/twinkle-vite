@@ -14,8 +14,12 @@ import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { formatBuildRewardProposalSummary } from '~/helpers/buildRewardReviewCard';
+import {
+  formatBuildRewardProposalSummary,
+  initialReviewRulesText
+} from '~/helpers/buildRewardReviewCard';
 import ProposalIdentityChange from '~/components/Build/Rewards/ProposalIdentityChange';
+import { coinPricePaysPerson } from '~/components/Build/Rewards/CoinPricesSummary';
 import {
   BUILD_REVIEW_REQUEST_TYPES,
   BUILD_REVIEW_TYPE_ICONS,
@@ -600,7 +604,9 @@ export default function BuildRewardApprovals() {
                   Review note
                   <span className={hintClass}>
                     The creator reads it. Required for rejection or
-                    revocation; with a proposal it explains your changes.
+                    revocation, and for approving prices whose Coins go to a
+                    person (the owner, builders, or the previous holder when an
+                    item is resold); with a proposal it explains your changes.
                   </span>
                   <textarea
                     maxLength={1000}
@@ -663,15 +669,12 @@ export default function BuildRewardApprovals() {
     setOfferThumbnail(null);
     setRulesError('');
     // Resume the reviewer's typed draft if there is one; otherwise start from
-    // the request's own rules (a code-only update carries the previous
-    // approval forward) or an empty template for a first request.
+    // the request's own rules and prices (a code-only update carries the
+    // previous approval forward; a prices-only app starts with its declared
+    // prices, so approving never needs them retyped) or an empty template for
+    // a first request.
     setRulesText(
-      rulesDrafts[review.id] ??
-        JSON.stringify(
-          review.config?.rules?.length ? review.config : EMPTY_CONFIG,
-          null,
-          2
-        )
+      rulesDrafts[review.id] ?? initialReviewRulesText(review.config, EMPTY_CONFIG)
     );
   }
 
@@ -908,9 +911,18 @@ export default function BuildRewardApprovals() {
         setRulesError('The earning rules must be valid JSON.');
         return;
       }
-      if (!Array.isArray(config?.rules) || config.rules.length === 0) {
+      if (
+        !Array.isArray(config?.rules) ||
+        (config.rules.length === 0 && !config.prices?.length)
+      ) {
         setRulesError(
-          'Write at least one earning rule before approving. The server refuses an approval with no rules.'
+          'Write at least one earning rule or Coin price before approving. The server refuses an approval with neither.'
+        );
+        return;
+      }
+      if (configPaysPerson(config) && !reason.trim()) {
+        setRulesError(
+          'Some prices pay a person (the owner, builders, or the previous holder when an item is resold). Write a review note saying why that is fair before approving.'
         );
         return;
       }
@@ -953,6 +965,11 @@ function ReviewerContext({ review }: { review: RewardReview }) {
       {(review.timerOnlyWarnings || []).map((warning, index) => (
         <p key={index}>
           <strong>Unchecked:</strong> {warning}
+        </p>
+      ))}
+      {(review.coinPriceWarnings || []).map((warning, index) => (
+        <p key={`coins-${index}`}>
+          <strong>Coin prices:</strong> {warning}
         </p>
       ))}
       {review.closedBySave && (
@@ -1248,3 +1265,8 @@ const emptyClass = css`
   color: ${Color.gray()};
 `;
 
+// Prices that pay a person need the reviewer's written note (RULING 11-07;
+// round-2 N3: a resale pays the previous holder, a person).
+function configPaysPerson(config: RewardConfig | undefined) {
+  return (config?.prices || []).some(coinPricePaysPerson);
+}

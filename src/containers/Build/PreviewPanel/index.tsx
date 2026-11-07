@@ -11,6 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
 import { css } from '@emotion/css';
 import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
+import useCoinConfirm from '~/components/Build/Coins/useCoinConfirm';
+import type { CoinConfirmRequest } from '~/components/Build/Coins/coinConfirmText';
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type {
   BuildRuntimeExplorationPlan,
@@ -859,6 +861,14 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         requestBuildMusicGenerationConfirmationRef.current = null;
       };
     }, [build.id, build.title, requestMusicGenerationConfirm]);
+    // The app frame is inert while Twinkle's Coins box is open.
+    const { coinConfirmModal, requestCoinConfirm } = useCoinConfirm({
+      frameRootRef: previewRootRef
+    });
+    const requestBuildCoinConfirmationRef = useRef<
+      ((request: CoinConfirmRequest) => Promise<boolean>) | null
+    >(null);
+    requestBuildCoinConfirmationRef.current = requestCoinConfirm;
     const requestBuildMediaActionConfirmationRef = useRef<
       | ((request: BuildMediaActionConfirmationRequest) => Promise<boolean>)
       | null
@@ -1419,6 +1429,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestBuildImageGenerationConfirmationRef,
       requestBuildMusicGenerationConfirmationRef,
       requestBuildMediaActionConfirmationRef,
+      requestBuildCoinConfirmationRef,
       requestCardCraftSelectionRef,
       onBuildLiveSafetyHostSessionsChange: setActiveBuildLiveSafetyHostSessions,
       requestBuildLiveSafetyStopRef
@@ -1836,6 +1847,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         {imageGenerationConfirmModal}
         {musicGenerationConfirmModal}
         {mediaActionConfirmModal}
+        {coinConfirmModal}
         {cardCraftSelection ? (
           <CardCraftModal
             key={`${cardCraftSelection.mode}:${cardCraftSelection.cardId || 'pick'}`}
