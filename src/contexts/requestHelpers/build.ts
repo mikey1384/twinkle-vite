@@ -1025,24 +1025,31 @@ export default function buildRequestHelpers({
       }
     },
     // Signed-out visitors of a public app read the world and its plots.
+    // Signed-out visitors of a public app: reads, and (as their server-issued
+    // land guest identity, header x-land-guest) edits and one cell's history.
     async requestBuildLandPublic({
       buildId,
       operation,
-      payload
+      payload,
+      guestToken
     }: {
       buildId: number;
-      operation: 'cells' | 'plots';
+      operation: 'cells' | 'plots' | 'edit' | 'history';
       payload: unknown;
+      guestToken?: string | null;
     }) {
       try {
+        const config = getBuildRequestConfig({ maxRetries: 0 });
         const { data } = await request.post(
           `${URL}/build/${buildId}/public-land/${operation}`,
           payload,
-          getBuildRequestConfig({ maxRetries: 0 })
+          guestToken
+            ? { ...config, headers: { ...(config as any)?.headers, 'x-land-guest': guestToken } }
+            : config
         );
         return data;
       } catch (error) {
-        throw toCardCraftRequestError(error, 'Could not read the land.');
+        throw toCardCraftRequestError(error, operation === 'edit' ? 'Could not save the blocks.' : 'Could not read the land.');
       }
     },
     // A fresh published-runtime grant for the same mounted version (it lives

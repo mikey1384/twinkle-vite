@@ -45,6 +45,9 @@ import { isMutatingPreviewRequestType } from '../helpers/previewRequestPolicy';
 import { runBuildRuntimeCoinRequest } from '../helpers/buildRuntimeCoins';
 import {
   createLandGrantKeeper,
+  attachWorldAckDetails,
+  createLandGuestTokens,
+  stripLandGuestToken,
   landEventTargetWindows,
   landRequestError,
   planLandRequest,
@@ -1458,6 +1461,16 @@ export function useHostBridge({
     >();
     // Twinkle.land: the published-runtime grant lives an hour; renew it for
     // long land sessions so hand edits keep earning builder credit.
+    // A guest's land identity per app (issued by the server at world join).
+    const landGuestTokens = createLandGuestTokens(
+      (() => {
+        try {
+          return window.localStorage;
+        } catch {
+          return null;
+        }
+      })()
+    );
     const landGrantKeeper = createLandGrantKeeper({
       renew: async (grant) => {
         const build = previewAuth.buildRef.current;
@@ -1649,6 +1662,10 @@ export function useHostBridge({
               response?.error || 'World request failed',
               response?.code || 'WORLD_REQUEST_FAILED'
             ) as Error & { reachedServer?: boolean };
+            // The server's details (land_throttled's retryAfterSeconds) go to
+            // the frame like the HTTP path's (review L1), so the app waits
+            // as long as Twinkle asked.
+            attachWorldAckDetails(serverError, response);
             // The backend acked with a failure (room full / validation / auth),
             // so it already recorded its own join telemetry row. Mark it so we
             // don't ALSO log a client-side "bridge" failure for the same event.
@@ -4773,7 +4790,11 @@ export function useHostBridge({
               !appMcpControlsThisTab()
                 ? await landGrantKeeper(activeBuild.rewardRuntimeGrant)
                 : null;
-            const joinLand = worldJoinLand(payload, joinLandGrant);
+            const joinLand = worldJoinLand(
+              payload,
+              joinLandGrant,
+              viewer.isLoggedIn ? null : landGuestTokens.get(activeBuild.id)
+            );
             response = await emitBuildRuntimeWorldRequest(
               'build_app_world_join',
               {
@@ -4798,6 +4819,8 @@ export function useHostBridge({
               sourceWindow,
               buildId: activeBuild.id
             });
+            if (response?.land?.guest) landGuestTokens.set(activeBuild.id, response.land.guest);
+            response = stripLandGuestToken(response);
             break;
           }
 
@@ -5644,13 +5667,15 @@ export function useHostBridge({
             const landViewer = getViewerInfo(previewAuth);
             const plan = planLandRequest(type, payload, {
               signedIn: landViewer.isLoggedIn,
-              publicApp: Boolean(activeBuild.isPublic)
+              publicApp: Boolean(activeBuild.isPublic),
+              guestToken: landViewer.isLoggedIn ? null : landGuestTokens.get(activeBuild.id)
             });
             if (plan.publicRead) {
               response = await requestRefs.requestBuildLandPublicRef.current({
                 buildId: activeBuild.id,
-                operation: plan.operation,
-                payload: plan.body
+                operation: plan.operation as 'cells' | 'plots' | 'edit' | 'history',
+                payload: plan.body,
+                guestToken: plan.guestToken
               });
               break;
             }

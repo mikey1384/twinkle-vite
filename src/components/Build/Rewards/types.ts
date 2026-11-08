@@ -16,6 +16,8 @@ export interface LandDeclaration {
   plotSize: number;
   keyFormat: 'region:x:z' | 'region:cx:cz';
   regions: string[];
+  // Worlds players change with no plots (Twinkle stores only declared worlds).
+  freeRegions?: string[];
   reserved?: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
   switches?: Record<string, { cause: string; values: number[] }>;
   empty?: number[];
@@ -27,6 +29,7 @@ export interface LandSummary {
   plotSize: number;
   keyFormat: string;
   regions: string[];
+  freeRegions?: string[];
   reserved: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
   switches: Array<{ name: string; cause: string; values: number[] }>;
   empty: number[];

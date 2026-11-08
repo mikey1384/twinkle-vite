@@ -155,22 +155,13 @@ export function LandSummarySection({
   land: LandSummary | (LandDeclaration & { text?: string });
   stats?: CoinPriceReviewContext['landStats'];
 }) {
-  const switches = Array.isArray(land.switches)
-    ? land.switches
-    : Object.entries(land.switches || {}).map(([name, entry]) => ({ name, ...entry }));
   return (
     <section className={landSectionClass} data-testid="land-summary">
       <h4>Land</h4>
-      {/* The heading already says "Land", so the sentence starts after it. */}
+      {/* The heading already says "Land", so the sentence starts after it. It
+          says what each holder switch lets anyone do (review L3), so there is
+          no second switch line. */}
       <p>{(land.text || landReviewText(land)).replace(/^Land\.\s*/, '')}</p>
-      {switches.length ? (
-        <p>
-          Holder switches:{' '}
-          {switches
-            .map((entry) => `${entry.name} (lets “${entry.cause}” changes to ${entry.values.join(', ')} into the plot)`)
-            .join(' · ')}
-        </p>
-      ) : null}
       {stats ? (
         <p>
           Now:{' '}

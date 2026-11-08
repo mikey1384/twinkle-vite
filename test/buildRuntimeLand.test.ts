@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  attachWorldAckDetails,
   createLandGrantKeeper,
+  createLandGuestTokens,
+  stripLandGuestToken,
   LAND_REQUEST_TYPES,
   landEventTargetWindows,
   landGrantExpiresAt,
@@ -45,7 +48,8 @@ test('land requests forward only documented fields, with the right scope', () =>
     operation: 'edit',
     scope: 'land:write',
     body: { region: 'fw3', cells: 'AgI=', format: 1, cause: 'tnt', at: 5 },
-    publicRead: false
+    publicRead: false,
+    guestToken: null
   });
   const rules = planLandRequest('land:set-rules', { key: 'fw3:0:0', build: 'friends', holderId: 2 }, { signedIn: true, publicApp: true });
   assert.equal(rules.operation, 'set-rules');
@@ -57,7 +61,8 @@ test('land requests forward only documented fields, with the right scope', () =>
     operation: 'mine',
     scope: 'land:read',
     body: { region: 'fw3', ignore: [8] },
-    publicRead: false
+    publicRead: false,
+    guestToken: null
   });
   assert.deepEqual(
     planLandRequest('land:history', { key: 'fw3:0:0', order: 'newest', sinceAt: 5, before: 9, viewerId: 2 }, { signedIn: true, publicApp: true }).body,
@@ -65,11 +70,21 @@ test('land requests forward only documented fields, with the right scope', () =>
   );
 });
 
-test('signed-out visitors read cells and plots of a public app through the public route only', () => {
-  const guest = { signedIn: false, publicApp: true };
+test('signed-out visitors use the public route: reads, and (as their land guest) edits and one cell\'s history (review L5)', () => {
+  const guest = { signedIn: false, publicApp: true, guestToken: 'gabc.123.sig' };
   assert.equal(planLandRequest('land:cells', { region: 'fw3' }, guest).publicRead, true);
   assert.equal(planLandRequest('land:plots', { region: 'fw3' }, guest).publicRead, true);
-  for (const type of ['land:edit', 'land:set-rules', 'land:check', 'land:history', 'land:mine'])
+  // A world switch's flush and "who changed this block?" never ask a guest to sign in.
+  const edit = planLandRequest('land:edit', { region: 'fw3', cells: 'AgI=', at: 5 }, guest);
+  assert.equal(edit.publicRead, true);
+  assert.equal(edit.guestToken, 'gabc.123.sig');
+  assert.deepEqual(edit.body, { region: 'fw3', cells: 'AgI=' }, 'a guest never sends a carried-over time');
+  const who = planLandRequest('land:history', { region: 'fw3', x: 1, y: 2, z: 3 }, guest);
+  assert.equal(who.publicRead, true);
+  assert.equal(who.guestToken, null);
+  // Plot history, rules, prices and "my blocks" stay members-only.
+  assert.equal(planLandRequest('land:history', { key: 'fw3:0:0', order: 'newest' }, guest).publicRead, false);
+  for (const type of ['land:set-rules', 'land:check', 'land:mine'])
     assert.equal(planLandRequest(type, { region: 'fw3' }, guest).publicRead, false, type);
   assert.equal(planLandRequest('land:cells', { region: 'fw3' }, { signedIn: false, publicApp: false }).publicRead, false);
   assert.equal(planLandRequest('land:cells', { region: 'fw3' }, { signedIn: true, publicApp: true }).publicRead, false);
@@ -84,8 +99,28 @@ test('world edits and joins carry only the session, cells, cause and the website
   assert.equal(worldJoinLand({}, 'g'), undefined);
   assert.deepEqual(worldJoinLand({ land: { region: 'fw3', grant: 'forged' } }, null), { region: 'fw3' });
   assert.deepEqual(worldJoinLand({ land: { region: 'fw3' } }, 'g'), { region: 'fw3', grant: 'g' });
+  // A guest's land token from the previous join goes back; the frame never sees it (review H1).
+  assert.deepEqual(worldJoinLand({ land: { region: 'fw3', guest: 'forged' } }, null, 'gtoken'), { region: 'fw3', guest: 'gtoken' });
+  assert.deepEqual(stripLandGuestToken({ ok: true, land: { region: 'fw3', credit: false, guest: 'gtoken' } }), { ok: true, land: { region: 'fw3', credit: false } });
+  const stored = new Map<string, string>();
+  const tokens = createLandGuestTokens({ getItem: (k) => stored.get(k) ?? null, setItem: (k, v) => void stored.set(k, v) });
+  assert.equal(tokens.get(363), null);
+  tokens.set(363, 'gtoken');
+  assert.equal(createLandGuestTokens({ getItem: (k) => stored.get(k) ?? null, setItem: () => {} }).get(363), 'gtoken', 'kept for the next visit');
+  const blocked = createLandGuestTokens({ getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); } });
+  blocked.set(363, 'gmem');
+  assert.equal(blocked.get(363), 'gmem', 'blocked storage keeps it for this page');
   for (const type of ['land:edit', 'land:set-rules', 'world:edit']) assert.equal(isMutatingPreviewRequestType(type), true, type);
   assert.equal(isMutatingPreviewRequestType('land:cells'), false);
+});
+
+test('review L1: a world socket refusal carries the server\'s retry time to the frame', () => {
+  const error = attachWorldAckDetails(new Error('Blocks are changing too fast.'), { ok: false, code: 'land_throttled', details: { retryAfterSeconds: 34 } }) as any;
+  assert.deepEqual(error.details, { retryAfterSeconds: 34 });
+  assert.equal(error.retryAfterSeconds, 34);
+  assert.equal((attachWorldAckDetails(new Error('x'), { ok: false }) as any).details, undefined);
+  const bridge = readFileSync(new URL('../src/containers/Build/PreviewPanel/hooks/useHostBridge.ts', import.meta.url), 'utf8');
+  assert.ok(bridge.includes('attachWorldAckDetails(serverError, response);'));
 });
 
 test('Twinkle land events go to each frame bound to that world once', () => {
@@ -156,14 +191,16 @@ test('review words: the land sentence matches the API and land changes the build
       { name: 'fluids', cause: 'fluid', values: [8, 2, 10, 32] }
     ]
   };
+  // Review L3: a switch lets anyone (guests too) set any block of the plot to its values; free worlds named.
   assert.equal(
-    landReviewText(land),
-    'Land. Twinkle holds the land in these worlds: mountains1, fw3. Inside a plot someone holds, Twinkle refuses block changes from anyone except its holder and the players they allow (only me / friends / everyone), plus tnt and fluids only when the holder switches them on. Plots are 16×16, full height, named by their corner (key group "plots"). No plots within 24 blocks of spawn (49, 57).'
+    landReviewText({ ...land, freeRegions: ['tnt-world-fw3'] }),
+    'Land. Twinkle holds the land in these worlds: mountains1, fw3; players also build in tnt-world-fw3 (no plots). Inside a plot someone holds, Twinkle refuses block changes from anyone except its holder and the players they allow (only me / friends / everyone). When the holder turns on tnt or fluids, anyone, guests too, may set any block in the plot to tnt 0, fluids 8/2/10/32. Plots are 16×16, full height, named by their corner (key group "plots"). No plots within 24 blocks of spawn (49, 57).'
   );
   assert.equal(
     formatBuildLandLine(land),
-    'Land in 2 worlds: inside a 16×16 plot someone holds, only they and the players they allow can change blocks; tnt and fluids only when the holder turns them on.'
+    'Land in 2 worlds: inside a 16×16 plot someone holds, only they and the players they allow can change blocks; turning on tnt or fluids lets anyone set blocks there to their values.'
   );
+  assert.match(LAND_TALLY_PLAIN_WORDS, /bought from Twinkle \(then those builders are paid, once\); a Sell, a takeover or a grant does not use it up\. A player earns credit for at most 20,000 new blocks a day\./);
   const prices = [{ id: 'plot', title: 'Plot', coins: 0, destination: 'removed' as const, builders: { coinsPerUnit: 50 } }];
   const withLand = buildCoinPricePersonWarning(prices, null, land) || '';
   assert.ok(withLand.includes(LAND_TALLY_PLAIN_WORDS));

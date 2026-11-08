@@ -18,14 +18,29 @@ export const LAND_REQUEST_TYPES = new Set([
 
 // land:<op> → the API's /build/:id/api/land/<op>, with the token scope it
 // needs and the fields the app may send (anything else is dropped).
+// publicRead: a signed-out visitor of a public app reads it through the
+// public route. publicGuest: a signed-out visitor uses the public route as
+// their server-issued land guest identity (the token a world join returned;
+// review L5): edits on a world switch, and "who changed this block?" on
+// free land (one cell's history; plot history stays the holder's).
 const LAND_OPERATIONS: Record<
   string,
-  { operation: string; scope: 'land:read' | 'land:write'; fields: string[]; publicRead?: boolean }
+  {
+    operation: string;
+    scope: 'land:read' | 'land:write';
+    fields: string[];
+    publicRead?: boolean;
+    publicGuest?: boolean;
+    // Fields a guest may not send (a carried-over time is a member's own).
+    guestDrops?: string[];
+  }
 > = {
   'land:edit': {
     operation: 'edit',
     scope: 'land:write',
-    fields: ['region', 'cells', 'format', 'cause', 'at']
+    fields: ['region', 'cells', 'format', 'cause', 'at'],
+    publicGuest: true,
+    guestDrops: ['at']
   },
   'land:cells': {
     operation: 'cells',
@@ -48,12 +63,25 @@ const LAND_OPERATIONS: Record<
   'land:history': {
     operation: 'history',
     scope: 'land:read',
-    fields: ['region', 'x', 'y', 'z', 'before', 'key', 'since', 'order', 'sinceAt']
+    fields: ['region', 'x', 'y', 'z', 'before', 'key', 'since', 'order', 'sinceAt'],
+    publicGuest: true
   },
   // The signed-in player's own blocks (who is decided by the server from the
   // token, never by the app).
   'land:mine': { operation: 'mine', scope: 'land:read', fields: ['region', 'ignore'] }
 };
+
+// A world socket ack that failed: its details (land_throttled's
+// retryAfterSeconds) go onto the frame's error like the HTTP path's
+// (review L1), so the app waits as long as Twinkle asked.
+export function attachWorldAckDetails<T extends Error>(error: T, response: any) {
+  if (response?.details === undefined) return error;
+  const target = error as T & { details?: unknown; retryAfterSeconds?: number };
+  target.details = response.details;
+  const retry = Number(response.details?.retryAfterSeconds);
+  if (Number.isFinite(retry) && retry > 0) target.retryAfterSeconds = retry;
+  return error;
+}
 
 export function landRequestError(message: string, code: string, details?: unknown) {
   const error = new Error(message) as Error & { code?: string; details?: unknown };
@@ -69,26 +97,71 @@ export interface LandRequestPlan {
   operation: string;
   scope: 'land:read' | 'land:write';
   body: Record<string, unknown>;
-  // A signed-out visitor of a public app reads through the public route.
+  // A signed-out visitor of a public app goes through the public route
+  // (reads, and a guest's edits / one cell's history).
   publicRead: boolean;
+  // The guest's land token goes with it (x-land-guest).
+  guestToken: string | null;
 }
 
 // What one land:<op> request becomes. Signed-out visitors (guests) of a
-// public app may read cells and plots; every other call needs sign-in (the
-// caller then asks for a token, which shows the sign-in banner to a guest).
+// public app read cells and plots, and edit or ask who changed a block as
+// their land guest identity, all through the public route (no sign-in
+// banner, review L5). Every other call needs sign-in (the caller then asks
+// for a token, which shows the sign-in banner to a guest).
 export function planLandRequest(
   type: string,
   payload: any,
-  { signedIn, publicApp }: { signedIn: boolean; publicApp: boolean }
+  { signedIn, publicApp, guestToken = null }: { signedIn: boolean; publicApp: boolean; guestToken?: string | null }
 ): LandRequestPlan {
   const entry = LAND_OPERATIONS[type];
   if (!entry) throw landRequestError('Unknown land request.', 'land_operation_unknown');
+  const guest = !signedIn && publicApp;
+  const body = pick(payload, entry.fields);
+  const publicGuest = Boolean(guest && entry.publicGuest && (entry.operation !== 'history' || body.key === undefined));
+  if (publicGuest) for (const field of entry.guestDrops || []) delete body[field];
   return {
     operation: entry.operation,
     scope: entry.scope,
-    body: pick(payload, entry.fields),
-    publicRead: Boolean(entry.publicRead && !signedIn && publicApp)
+    body,
+    publicRead: Boolean(guest && (entry.publicRead || publicGuest)),
+    guestToken: publicGuest && entry.operation === 'edit' ? guestToken || null : null
   };
+}
+
+// A guest's land identity token, per app (review H1): the server issues it
+// at the world join (ack land.guest); the host keeps it for the next join and
+// for the guest's public land calls, and never hands it to the app frame.
+const LAND_GUEST_STORAGE_PREFIX = 'twinkle-land-guest:';
+export function createLandGuestTokens(storage: Pick<Storage, 'getItem' | 'setItem'> | null = null) {
+  const memory = new Map<number, string>();
+  return {
+    get(buildId: number) {
+      if (memory.has(buildId)) return memory.get(buildId) || null;
+      try {
+        const stored = storage?.getItem(`${LAND_GUEST_STORAGE_PREFIX}${buildId}`);
+        if (stored) memory.set(buildId, stored);
+        return stored || null;
+      } catch {
+        return null;
+      }
+    },
+    set(buildId: number, token: unknown) {
+      if (typeof token !== 'string' || !token || token.length > 128) return;
+      memory.set(buildId, token);
+      try {
+        storage?.setItem(`${LAND_GUEST_STORAGE_PREFIX}${buildId}`, token);
+      } catch {
+        // private window or blocked storage: the token lives for this page
+      }
+    }
+  };
+}
+// The world join's answer for the frame: the guest's land token stays here.
+export function stripLandGuestToken(response: any) {
+  if (!response?.land || typeof response.land !== 'object' || !('guest' in response.land)) return response;
+  const { guest: _guest, ...land } = response.land;
+  return { ...response, land };
 }
 
 // The world socket's edit: only the session, the packed cells and the cause.
@@ -105,12 +178,14 @@ export function worldEditPayload(payload: any, grant: string | null) {
 }
 
 // world.join's land binding: the region the app asked for plus the grant
-// (only a valid published-runtime grant earns builder credit).
-export function worldJoinLand(payload: any, grant: string | null) {
+// (only a valid published-runtime grant earns builder credit), and for a
+// guest the land token a previous join returned.
+export function worldJoinLand(payload: any, grant: string | null, guestToken: string | null = null) {
   if (payload?.land === undefined || payload?.land === null) return undefined;
   return {
     region: payload.land?.region,
-    ...(grant ? { grant } : {})
+    ...(grant ? { grant } : {}),
+    ...(guestToken ? { guest: guestToken } : {})
   };
 }
 

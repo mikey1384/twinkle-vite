@@ -269,10 +269,12 @@ export const COIN_TALLY_PLAIN_WORDS =
 // accepted, so the words change when the app declares land
 // (LAND_TALLY_PLAIN_WORDS / LAND_TALLY_REMAINING_RISK in
 // helpers/build/landPolicy.ts on the API).
+// The API's words (helpers/build/landPolicy.ts), review L3: only a purchase
+// from Twinkle uses credit up; the daily cap is said once.
 export const LAND_TALLY_PLAIN_WORDS =
-  "Builders are paid from Twinkle's record of who placed each block, taken from the block changes Twinkle accepted in this app's world. A block stays credited to the player who placed it when someone else breaks or builds over it; the credit ends only when that player removes it, or when a plot containing it is sold (so the same builders are never paid twice).";
+  "Builders are paid from Twinkle's record of who placed each block in this app's world. A block stays credited to the player who placed it when someone else breaks or builds over it. The credit ends when that player removes it, or when a plot containing it is bought from Twinkle (then those builders are paid, once); a Sell, a takeover or a grant does not use it up. A player earns credit for at most 20,000 new blocks a day.";
 export const LAND_TALLY_REMAINING_RISK =
-  "Remaining risk: a block someone else broke stays paid until a plot containing it is sold, so a buyer may pay for a block that is gone (Mikey's rule).";
+  "Remaining risk: a block someone else broke stays paid until a plot containing it is bought from Twinkle, so a buyer may pay for a block that is gone (Mikey's rule).";
 
 // summarizeCoinPrices().land on the API.
 export interface BuildLandSummary {
@@ -280,17 +282,19 @@ export interface BuildLandSummary {
   plotSize: number;
   keyFormat: string;
   regions: string[];
+  freeRegions?: string[];
   reserved?: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
   switches?: Array<{ name: string; cause: string; values: number[] }>;
   empty?: number[];
   text?: string;
 }
 // The chat card's one land line: short; the review screen has the rest.
+// Review L3: a switch lets anyone set blocks in the plot to its values.
 export function formatBuildLandLine(land: BuildLandSummary) {
   const worlds = land.regions.length;
   const switches = (land.switches || []).map((entry) => entry.name);
   return `Land in ${worlds} ${worlds === 1 ? 'world' : 'worlds'}: inside a ${land.plotSize}×${land.plotSize} plot someone holds, only they and the players they allow can change blocks${
-    switches.length ? `; ${switches.join(' and ')} only when the holder turns ${switches.length === 1 ? 'it' : 'them'} on` : ''
+    switches.length ? `; turning on ${switches.join(' or ')} lets anyone set blocks there to ${switches.length === 1 ? 'its values' : 'their values'}` : ''
   }.`;
 }
 // The review sentence (landReviewText on the API), for a declaration the
@@ -300,24 +304,29 @@ export function landReviewText(land: {
   plotSize: number;
   keyFormat: string;
   regions: string[];
+  freeRegions?: string[];
   reserved?: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
-  switches?: Record<string, unknown> | Array<{ name: string }>;
+  switches?: Record<string, { values?: number[] }> | Array<{ name: string; values?: number[] }>;
 }) {
   const switches = Array.isArray(land.switches)
-    ? land.switches.map((entry) => entry.name)
-    : Object.keys(land.switches || {});
+    ? land.switches.map((entry) => ({ name: entry.name, values: entry.values || [] }))
+    : Object.entries(land.switches || {}).map(([name, entry]) => ({ name, values: entry?.values || [] }));
   const reserved = (land.reserved || []).map(
     (spot) =>
       `within ${spot.radius} blocks of ${spot.why ? `${spot.why} ` : ''}(${spot.x}, ${spot.z})${spot.region ? ` in ${spot.region}` : ''}`
   );
   const size = `${land.plotSize}×${land.plotSize}`;
-  return `Land. Twinkle holds the land in these worlds: ${land.regions.join(', ')}. Inside a plot someone holds, Twinkle refuses block changes from anyone except its holder and the players they allow (only me / friends / everyone)${
-    switches.length
-      ? `, plus ${switches.join(' and ')} only when the holder switches ${switches.length === 1 ? 'it' : 'them'} on`
-      : ''
-  }. Plots are ${size}, full height, named by their ${land.keyFormat === 'region:cx:cz' ? 'grid square' : 'corner'} (key group "${land.keyGroup}").${
-    reserved.length ? ` No plots ${reserved.join('; ')}.` : ''
-  }`;
+  const free = land.freeRegions || [];
+  const switchWords = switches.length
+    ? ` When the holder turns on ${switches.map((entry) => entry.name).join(' or ')}, anyone, guests too, may set any block in the plot to ${switches
+        .map((entry) => `${entry.name} ${entry.values.join('/')}`)
+        .join(', ')}.`
+    : '';
+  return `Land. Twinkle holds the land in these worlds: ${land.regions.join(', ')}${
+    free.length ? `; players also build in ${free.join(', ')} (no plots)` : ''
+  }. Inside a plot someone holds, Twinkle refuses block changes from anyone except its holder and the players they allow (only me / friends / everyone).${switchWords} Plots are ${size}, full height, named by their ${
+    land.keyFormat === 'region:cx:cz' ? 'grid square' : 'corner'
+  } (key group "${land.keyGroup}").${reserved.length ? ` No plots ${reserved.join('; ')}.` : ''}`;
 }
 // The builders' part of one purchase at most (platform ceilings when the
 // summary leaves them out: 64 builders, 100,000 Coins).
