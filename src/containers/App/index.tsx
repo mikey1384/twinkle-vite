@@ -110,6 +110,9 @@ import {
   useMissionContext,
   KeyContext
 } from '~/contexts';
+import { useToast } from '~/contexts/Toast';
+import { restoreFailedPost } from '~/containers/Home/TopMenu/InputPanel/restoreFailedPost';
+import { startNewPostDraft } from '~/containers/Home/TopMenu/InputPanel/InputModal/SubjectInput/usePostDrafts';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 import useOrientationReflow from './hooks/useOrientationReflow';
@@ -615,6 +618,19 @@ export default function App() {
   const onResetContentInput = useInputContext(
     (v) => v.actions.onResetContentInput
   );
+  const onSetSubjectTitle = useInputContext((v) => v.actions.onSetSubjectTitle);
+  const onSetSubjectDescription = useInputContext(
+    (v) => v.actions.onSetSubjectDescription
+  );
+  const onSetSubjectDescriptionFieldShown = useInputContext(
+    (v) => v.actions.onSetSubjectDescriptionFieldShown
+  );
+  const onSetHasSecretAnswer = useInputContext(
+    (v) => v.actions.onSetHasSecretAnswer
+  );
+  const onSetSecretAnswer = useInputContext((v) => v.actions.onSetSecretAnswer);
+  const onSetIsMadeByUser = useInputContext((v) => v.actions.onSetIsMadeByUser);
+  const showToast = useToast();
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
   const requiredUpdateNoticeShown = updateNoticeShown || !versionMatch;
   const visibilityChangeRef: React.RefObject<any> = useRef(null);
@@ -1248,7 +1264,10 @@ export default function App() {
       // updates navigator.onLine without delivering `online`, a focus or the
       // bounded fallback probe must explicitly restart its Manager.
       if (
-        !isLuminePreviewCaptureContext(window.location, readAuthToken().token) &&
+        !isLuminePreviewCaptureContext(
+          window.location,
+          readAuthToken().token
+        ) &&
         !browserReportsOffline() &&
         !socket.connected
       ) {
@@ -1275,7 +1294,10 @@ export default function App() {
           !canonicalSessionUserId &&
           !userId) ||
         ((socket.connected ||
-          isLuminePreviewCaptureContext(window.location, readAuthToken().token)) &&
+          isLuminePreviewCaptureContext(
+            window.location,
+            readAuthToken().token
+          )) &&
           canonicalSessionUserId) ||
         document.visibilityState !== 'visible'
       ) {
@@ -1364,7 +1386,9 @@ export default function App() {
 
   const handleVisibilityChange = useCallback(() => {
     const visible = !document[hiddenRef.current as keyof Document];
-    if (!isLuminePreviewCaptureContext(window.location, readAuthToken().token)) {
+    if (
+      !isLuminePreviewCaptureContext(window.location, readAuthToken().token)
+    ) {
       socket.emit('change_away_status', visible);
     }
     onChangePageVisibility(visible);
@@ -1948,6 +1972,10 @@ export default function App() {
 
       const userChanged = checkUserChange(userId);
       if (userChanged) {
+        // signed out or switched account meanwhile: nothing is posted, and
+        // the post isn't left in the next account's form
+        onResetSubjectInput();
+        finishUpload();
         return;
       }
 
@@ -1973,17 +2001,44 @@ export default function App() {
           ? { rootId: attachment.id, rootType: contentType }
           : {})
       });
-      if (data) {
-        onLoadNewFeeds([data]);
-      }
+      if (!data) throw new Error('The post was not saved');
+      onLoadNewFeeds([data]);
       onResetSubjectInput();
       onResetContentInput();
-      onSetSubmittingSubject(false);
-      onClearFileUploadProgress();
       onSetInputModalShown({ shown: false });
-      onSetUploadingFile(false);
+      finishUpload();
     } catch (error) {
       console.error(error);
+      if (checkUserChange(userId)) {
+        onResetSubjectInput();
+      } else {
+        // Nothing was posted: the post goes back in the form (its attachment
+        // is still there) to try again, and saves as a draft from there.
+        // back as a new draft, never into a draft the form opened meanwhile
+        startNewPostDraft();
+        restoreFailedPost({
+          post: { title, description, hasSecretAnswer, secretAnswer, byUser },
+          actions: {
+            onSetSubjectTitle,
+            onSetSubjectDescription,
+            onSetSubjectDescriptionFieldShown,
+            onSetHasSecretAnswer,
+            onSetSecretAnswer,
+            onSetIsMadeByUser
+          }
+        });
+        showToast({
+          message:
+            "Your post didn't go through. It's back in the post form, so you can try again.",
+          onClick: () => onSetInputModalShown({ shown: true })
+        });
+      }
+      finishUpload();
+    }
+    function finishUpload() {
+      onSetSubmittingSubject(false);
+      onClearFileUploadProgress();
+      onSetUploadingFile(false);
     }
     function handleSecretAttachmentUploadProgress({
       loaded,
@@ -2355,7 +2410,10 @@ export default function App() {
       // the member trace: whether an admin is tracing this account
       noteMemberTraceSession(Number(data.id), data.clientTrace);
       if (
-        !isLuminePreviewCaptureContext(window.location, readAuthToken().token) &&
+        !isLuminePreviewCaptureContext(
+          window.location,
+          readAuthToken().token
+        ) &&
         !socket.connected
       ) {
         // This is the bounded stale-navigator recovery path above. The stored

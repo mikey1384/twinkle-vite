@@ -8,6 +8,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
 import usePendingAction from '~/helpers/hooks/usePendingAction';
 import {
+  forgetActivePostDraft,
   forgetPostDraft,
   waitForPostDraftSaves
 } from './SubjectInput/usePostDrafts';
@@ -134,8 +135,10 @@ export default function InputModal({
         onSetSecretAnswer('');
         onSetHasSecretAnswer(false);
         const draftId = draftIdRef.current;
-        await deleteDraft(draftId);
+        // forgotten first, so a save still on its way can't recreate it
+        forgetActivePostDraft();
         forgetPostDraft(draftId);
+        await deleteDraft(draftId);
       } catch (error) {
         console.error('Failed to delete draft:', error);
       }

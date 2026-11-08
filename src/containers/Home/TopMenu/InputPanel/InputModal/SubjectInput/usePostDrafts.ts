@@ -61,8 +61,17 @@ const session = {
   extrasByKey: new Map<string, PostDraftExtras>(),
   // each draft's saves and deletes run one after another
   chain: new Map<string, Promise<SaveResult>>(),
-  removedKeys: new Set<string>()
+  removedKeys: new Set<string>(),
+  // plain posts still on their way (their text may still be in the form)
+  postsInFlight: 0,
+  lastPostAt: 0,
+  // post forms open right now
+  openForms: 0
 };
+
+// A post that hasn't settled after this long (a hung request) no longer
+// keeps the form from holding its own text.
+const POST_IN_FLIGHT_MAX_MS = 60_000;
 
 // Home's Post Something field fills the form with new text: that text is a
 // new draft, never a continuation of the newest saved one.
@@ -70,7 +79,18 @@ export function startNewPostDraft() {
   session.activeKey = '';
 }
 
-// A draft deleted outside the drafts row (closing the form with no title).
+// A draft deleted outside the drafts row (closing the form with no title):
+// call before deleting it, so a save still on its way can't bring it back.
+export function forgetActivePostDraft() {
+  const key = session.activeKey;
+  if (!key) return;
+  session.removedKeys.add(key);
+  session.idByKey.delete(key);
+  session.savedTextByKey.delete(key);
+  session.extrasByKey.delete(key);
+  session.activeKey = '';
+}
+
 export function forgetPostDraft(id: number) {
   for (const [key, knownId] of session.idByKey) {
     if (knownId !== id) continue;
@@ -90,6 +110,12 @@ export async function waitForPostDraftSaves() {
     Promise.all(Array.from(session.chain.values())).catch(() => {}),
     new Promise((resolve) => setTimeout(resolve, WAIT_FOR_SAVES_MS))
   ]);
+}
+
+// Whether a post form is open (a post finishing in a form that was closed
+// leaves a reopened form's text alone).
+export function isPostFormOpen() {
+  return session.openForms > 0;
 }
 
 export function isEmptyDraftText(text: PostDraftText) {
@@ -182,7 +208,9 @@ export default function usePostDrafts({
 
   useEffect(() => {
     mountedRef.current = true;
+    session.openForms += 1;
     return () => {
+      session.openForms = Math.max(0, session.openForms - 1);
       const key = activeKeyRef.current;
       if (initializedRef.current && key && !session.removedKeys.has(key)) {
         session.extrasByKey.set(key, getExtras());
@@ -238,8 +266,25 @@ export default function usePostDrafts({
       }
     };
 
-    // Text left in the form from another account is never kept.
-    if (!userChanged && hasLocalEdits()) {
+    // Text left in the form from another account is never kept, and
+    // neither is a post still on its way (the form was closed and reopened
+    // while it was sending): that text is the post, not a draft.
+    const postInFlight =
+      session.postsInFlight > 0 &&
+      Date.now() - session.lastPostAt < POST_IN_FLIGHT_MAX_MS;
+    // A file post is uploading (the form is hidden behind its progress):
+    // nothing is put in the form, so a failed upload comes back to the
+    // post's own text and attachment.
+    if (isPosting()) {
+      rememberLoaded();
+      const key = newKey();
+      freshKeysRef.current.add(key);
+      entriesRef.current = [{ key, ...emptyText() }, ...loaded];
+      setEntriesState(entriesRef.current);
+      setActiveKey(key);
+      return;
+    }
+    if (!userChanged && !postInFlight && hasLocalEdits()) {
       const localText = getText();
       let key = prevActive;
       if (!key) {
@@ -295,7 +340,7 @@ export default function usePostDrafts({
       setActiveKey(newest.key);
       applyDraft(
         newest,
-        userChanged ? null : session.extrasByKey.get(newest.key)
+        userChanged || postInFlight ? null : session.extrasByKey.get(newest.key)
       );
       return;
     }
@@ -305,7 +350,7 @@ export default function usePostDrafts({
     entriesRef.current = [{ key, ...emptyText() }];
     setEntriesState(entriesRef.current);
     setActiveKey(key);
-    if (userChanged) applyDraft(emptyText(), null);
+    if (userChanged || postInFlight) applyDraft(emptyText(), null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drafts]);
 
@@ -389,9 +434,12 @@ export default function usePostDrafts({
     try {
       await (session.chain.get(key) ?? Promise.resolve());
       const id = session.idByKey.get(key);
+      // marked first: a save landing after the delete can't recreate it
+      session.removedKeys.add(key);
       if (id) await deleteDraft(id);
     } catch (error) {
       // nothing changed: the draft stays, and its edits save as usual
+      session.removedKeys.delete(key);
       setError(DELETE_FAILED_MESSAGE);
       if (wasActive) scheduleSave();
       endBusy();
@@ -425,6 +473,8 @@ export default function usePostDrafts({
   // The draft being edited is being posted: only that draft goes. Typing
   // after this starts a new one.
   const markPosted = useCallback(async () => {
+    session.postsInFlight += 1;
+    session.lastPostAt = Date.now();
     const key = activeKeyRef.current;
     cancelPendingSave();
     setError('');
@@ -451,6 +501,45 @@ export default function usePostDrafts({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The post has gone, failed, or was handed to the file upload (which
+  // clears the form first).
+  const finishPost = useCallback(() => {
+    session.postsInFlight = Math.max(0, session.postsInFlight - 1);
+  }, []);
+
+  // A post that didn't go: its text saves again as a draft. It's passed in
+  // because a form reopened meanwhile may hold another draft's text.
+  const keepAsDraft = useCallback((text: PostDraftText) => {
+    if (isEmptyDraftText(text)) return;
+    const key = mountedRef.current ? activeKeyRef.current : newKey();
+    if (!key) return;
+    // the form (closed) reopens on this draft rather than saving it again
+    if (!mountedRef.current) session.activeKey = key;
+    void saveNow(key, text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A failed file post put back in the form: it saves as its own new
+  // draft, never into whichever draft the form had open.
+  const saveFormAsNewDraft = useCallback(() => {
+    if (!initializedRef.current || isPosting()) return;
+    let key = activeKeyRef.current;
+    const freshAndUnsaved =
+      !!key &&
+      freshKeysRef.current.has(key) &&
+      !session.idByKey.has(key) &&
+      !session.chain.has(key);
+    if (!freshAndUnsaved) {
+      key = newKey();
+      freshKeysRef.current.add(key);
+      const text = getText();
+      setEntries((prev) => [{ key, ...text }, ...prev]);
+      setActiveKey(key);
+    }
+    scheduleSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return {
     entries,
     activeKey,
@@ -462,7 +551,10 @@ export default function usePostDrafts({
     switchTo,
     startNew,
     remove,
-    markPosted
+    markPosted,
+    finishPost,
+    keepAsDraft,
+    saveFormAsNewDraft
   };
 
   function startBusy(key: string) {
@@ -536,7 +628,8 @@ export default function usePostDrafts({
         if (!savedId) return 'failed';
         if (session.removedKeys.has(key)) {
           // deleted or posted while its first save was on its way
-          if (!id) await deleteDraft(savedId).catch(() => {});
+          // (or recreated by the server after it was deleted)
+          if (savedId !== id) await deleteDraft(savedId).catch(() => {});
           return 'skipped';
         }
         session.idByKey.set(key, savedId);

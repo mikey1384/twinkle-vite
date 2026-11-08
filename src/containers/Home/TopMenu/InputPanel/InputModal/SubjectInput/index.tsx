@@ -45,7 +45,10 @@ import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 import DraftTabs from './DraftTabs';
+import { useToast } from '~/contexts/Toast';
 import usePostDrafts, {
+  isEmptyDraftText,
+  isPostFormOpen,
   type PostDraftExtras,
   type PostDraftText,
   type ServerPostDraft
@@ -190,6 +193,14 @@ function SubjectInput({
 
   // a post is on its way (set before the Home store catches up)
   const postingRef = useRef(false);
+  const unmountedRef = useRef(false);
+  useEffect(
+    () => () => {
+      unmountedRef.current = true;
+    },
+    []
+  );
+  const showToast = useToast();
   const {
     entries: draftEntries,
     activeKey: activeDraftKey,
@@ -201,7 +212,10 @@ function SubjectInput({
     switchTo: switchDraft,
     startNew: startNewDraft,
     remove: removeDraft,
-    markPosted: markDraftPosted
+    markPosted: markDraftPosted,
+    finishPost: finishDraftPost,
+    keepAsDraft: keepTextAsDraft,
+    saveFormAsNewDraft
   } = usePostDrafts({
     userId,
     drafts,
@@ -275,6 +289,21 @@ function SubjectInput({
       setAttachContentModalShown(true);
     }
   }, [inputModalType]);
+
+  // A file post that failed is put back in the form (by App): it saves
+  // again as a draft, as a failed plain post does.
+  const wasUploadingRef = useRef(!!uploadingFile);
+  useEffect(() => {
+    const wasUploading = wasUploadingRef.current;
+    wasUploadingRef.current = !!uploadingFile;
+    if (!wasUploading || uploadingFile || postingRef.current) return;
+    // after this render's effects (the title syncs in the parent's)
+    const timer = window.setTimeout(() => {
+      if (!isEmptyDraftText(getDraftText())) saveFormAsNewDraft();
+    });
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadingFile]);
 
   const titleExceedsCharLimit = useMemo(
     () =>
@@ -771,6 +800,8 @@ function SubjectInput({
       });
       handleSetIsMadeByUser(false);
       postingRef.current = false;
+      // the file upload has the post now (and puts it back if it fails)
+      finishDraftPost();
     } else {
       handleUploadSubject();
     }
@@ -909,6 +940,12 @@ function SubjectInput({
     if (banned?.posting) {
       return;
     }
+    // what is being posted, in case it doesn't go
+    const postedText: PostDraftText = {
+      title,
+      description,
+      secretAnswer: hasSecretAnswer ? secretAnswer : ''
+    };
     try {
       const data = await uploadContent({
         rootId: attachment?.id,
@@ -919,6 +956,20 @@ function SubjectInput({
         secretAnswer: hasSecretAnswer ? secretAnswer : '',
         rewardLevel
       });
+      if (data && unmountedRef.current) {
+        // The form was closed while this was sending. A form opened since
+        // holds another draft: leave it (and don't close it). With none
+        // open, the posted text is cleared so it doesn't come back.
+        onLoadNewFeeds([data]);
+        if (!isPostFormOpen()) {
+          onResetSubjectInput();
+          onResetContentInput();
+        }
+        postingRef.current = false;
+        finishDraftPost();
+        onSetSubmittingSubject(false);
+        return;
+      }
       if (data) {
         onLoadNewFeeds([data]);
         handleSetTitle('');
@@ -930,22 +981,31 @@ function SubjectInput({
         onResetSubjectInput();
         onResetContentInput();
         postingRef.current = false;
+        finishDraftPost();
       } else {
-        keepUnpostedTextAsDraft();
+        keepUnpostedTextAsDraft(postedText);
       }
       onSetSubmittingSubject(false);
       onModalHide();
     } catch (error) {
       console.error(error);
-      keepUnpostedTextAsDraft();
+      keepUnpostedTextAsDraft(postedText);
       onSetSubmittingSubject(false);
     }
   }
 
-  // The post didn't go: its text saves again, as a new draft.
-  function keepUnpostedTextAsDraft() {
+  // The post didn't go: its text saves again, as a new draft. If the form
+  // was closed meanwhile, a message says so (it's in their drafts).
+  function keepUnpostedTextAsDraft(postedText: PostDraftText) {
     postingRef.current = false;
-    scheduleSave();
+    finishDraftPost();
+    keepTextAsDraft(postedText);
+    if (unmountedRef.current) {
+      showToast({
+        message:
+          "Your post didn't go through. It's saved in your drafts in the post form."
+      });
+    }
   }
 }
 
