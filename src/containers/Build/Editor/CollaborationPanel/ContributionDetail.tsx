@@ -140,6 +140,7 @@ export default function ContributionDetail({
   canAskLumineToResolveConflicts,
   canCompleteConflictMerge,
   canUpdateFromMain,
+  lumineRunActive = false,
   changedFiles,
   contributionCanMerge,
   contributionCanReplaceMain,
@@ -166,6 +167,7 @@ export default function ContributionDetail({
   canAskLumineToResolveConflicts: boolean;
   canCompleteConflictMerge: boolean;
   canUpdateFromMain: boolean;
+  lumineRunActive?: boolean;
   changedFiles: BuildContributionFileDiff[];
   contributionCanMerge: boolean;
   contributionCanReplaceMain: boolean;
@@ -183,7 +185,7 @@ export default function ContributionDetail({
   onPreviewPathChange: (path: string) => void;
   onReplaceMain: () => void;
   onToggleSelectedPath: (path: string) => void;
-  onUpdateVersionFromMain: () => void;
+  onUpdateVersionFromMain: (options?: { stopActiveRun?: boolean }) => void;
 }) {
   const hasActiveConflictMarkers = activeConflictMarkerPaths.length > 0;
   const hasTrackedLumineFix = Boolean(
@@ -225,6 +227,7 @@ export default function ContributionDetail({
             actionLoading === 'update-from-main'
           }
           disabled={Boolean(actionLoading)}
+          lumineRunActive={mainUpdateNoticeControl?.lumineRunActive ?? lumineRunActive}
           error={mainUpdateNoticeControl?.error || ''}
           lumineFixBlocksBranchSync={
             mainUpdateNoticeControl?.lumineFixBlocksBranchSync

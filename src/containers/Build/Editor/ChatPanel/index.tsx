@@ -885,6 +885,7 @@ export default function ChatPanel({
                 branchLumineFixControl={
                   mainUpdateNoticeControl.branchLumineFixControl
                 }
+                lumineRunActive={mainUpdateNoticeControl.lumineRunActive}
                 onUpdate={mainUpdateNoticeControl.onUpdate}
               />
             ) : null}

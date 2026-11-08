@@ -181,6 +181,8 @@ export interface CollaborationPanelProps {
     paths: string[]
   ) => Promise<boolean> | boolean;
   mainUpdateNoticeControl?: BranchMainUpdateNoticeControl | null;
+  // A Lumine run is working on this build (the open branch).
+  lumineRunActive?: boolean;
   projectLumineFixControl?: BuildProjectLumineFixControl | null;
   onOpenCollaborationSettings?: () => void;
   initialScrollTop?: number;

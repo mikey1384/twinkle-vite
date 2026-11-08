@@ -3724,19 +3724,23 @@ export default function buildRequestHelpers({
       contributionBuildId,
       assetTransferOperationId,
       projectFiles,
-      baseFilesHash
+      baseFilesHash,
+      stopActiveRun
     }: {
       buildId: number;
       contributionBuildId: number;
       assetTransferOperationId?: string;
       projectFiles?: Array<{ path: string; content?: string }>;
       baseFilesHash?: string | null;
+      // The member chose "Stop Lumine and update now".
+      stopActiveRun?: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/contributions/${contributionBuildId}/update-from-main`,
           {
             ...(projectFiles ? { projectFiles, baseFilesHash } : {}),
+            ...(stopActiveRun ? { stopActiveRun: true } : {}),
             ...(assetTransferOperationId ? { assetTransferOperationId } : {})
           },
           getBuildRequestConfig({

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ContributionLumineFixPanel, {
@@ -76,6 +76,9 @@ export interface BranchMainUpdateNoticeControl {
   canUpdate: boolean;
   loading: boolean;
   error: string;
+  // A Lumine run is working on this build: updating needs the member's
+  // explicit "Stop Lumine and update now" (the server requires it too).
+  lumineRunActive?: boolean;
   lumineFixBlocksBranchSync?: boolean;
   lumineFixTargetsCurrentBranch?: boolean;
   lumineFixControl?: BranchMainLumineFixControl | null;
@@ -83,8 +86,12 @@ export interface BranchMainUpdateNoticeControl {
     loading: boolean;
     onFix: () => void;
   } | null;
-  onUpdate: () => Promise<void> | void;
+  onUpdate: BranchMainUpdateHandler;
 }
+
+export type BranchMainUpdateHandler = (options?: {
+  stopActiveRun?: boolean;
+}) => Promise<void> | void;
 
 export interface BranchMainUpdateNoticeProps {
   canUpdate: boolean;
@@ -99,8 +106,17 @@ export interface BranchMainUpdateNoticeProps {
     onFix: () => void;
   } | null;
   loading?: boolean;
-  onUpdate: () => Promise<void> | void;
+  lumineRunActive?: boolean;
+  onUpdate: BranchMainUpdateHandler;
 }
+
+export const BRANCH_MAIN_UPDATE_WAIT_FOR_LUMINE_TEXT =
+  'Wait for Lumine to finish first.';
+export const BRANCH_MAIN_UPDATE_STOP_LUMINE_LABEL = 'Stop Lumine and update now';
+export const BRANCH_MAIN_UPDATE_STOP_LUMINE_NOTE =
+  "Lumine is working on this branch. Wait for it to finish first, or stop it and update now: Lumine's unfinished changes will be dropped.";
+export const BRANCH_MAIN_UPDATE_STOP_LUMINE_CONFIRM =
+  'Stop Lumine now? Its unfinished changes will be dropped, then this branch updates from Main.';
 
 export default function BranchMainUpdateNotice({
   canUpdate,
@@ -112,8 +128,14 @@ export default function BranchMainUpdateNotice({
   lumineFixControl = null,
   branchLumineFixControl = null,
   loading = false,
+  lumineRunActive = false,
   onUpdate
 }: BranchMainUpdateNoticeProps) {
+  const waitForLumine =
+    lumineRunActive && canUpdate && !lumineFixBlocksBranchSync;
+  // Two steps: waiting stays the default unless the member confirms.
+  const [stopConfirmShown, setStopConfirmShown] = useState(false);
+  const stopConfirmVisible = waitForLumine && stopConfirmShown;
   const title = lumineFixControl
     ? lumineFixTargetsCurrentBranch
       ? 'This branch is waiting for Lumine'
@@ -133,9 +155,13 @@ export default function BranchMainUpdateNotice({
         : 'You can sponsor its fix without stopping this branch from updating.'
     : branchLumineFixControl
       ? 'Let Lumine safely combine the overlapping changes in this branch.'
-      : canUpdate
-        ? 'Update this branch with the latest main changes.'
-        : 'This branch cannot update from Main yet.';
+      : waitForLumine
+        ? stopConfirmVisible
+          ? BRANCH_MAIN_UPDATE_STOP_LUMINE_CONFIRM
+          : BRANCH_MAIN_UPDATE_STOP_LUMINE_NOTE
+        : canUpdate
+          ? 'Update this branch with the latest main changes.'
+          : 'This branch cannot update from Main yet.';
 
   return (
     <div
@@ -154,7 +180,7 @@ export default function BranchMainUpdateNotice({
             onClick={branchLumineFixControl.onFix}
           />
         ) : null}
-        {canUpdate && !lumineFixBlocksBranchSync ? (
+        {canUpdate && !lumineFixBlocksBranchSync && !waitForLumine ? (
           <GameCTAButton
             variant="magenta"
             size="sm"
@@ -166,6 +192,40 @@ export default function BranchMainUpdateNotice({
           >
             Update from Main
           </GameCTAButton>
+        ) : null}
+        {waitForLumine && !stopConfirmVisible ? (
+          <GameCTAButton
+            variant="orange"
+            size="sm"
+            icon="stop"
+            loading={loading}
+            disabled={loading || disabled}
+            onClick={() => setStopConfirmShown(true)}
+          >
+            {BRANCH_MAIN_UPDATE_STOP_LUMINE_LABEL}
+          </GameCTAButton>
+        ) : null}
+        {stopConfirmVisible ? (
+          <>
+            <GameCTAButton
+              variant="orange"
+              size="sm"
+              icon="stop"
+              loading={loading}
+              disabled={loading || disabled}
+              onClick={handleStopAndUpdateClick}
+            >
+              Stop and update
+            </GameCTAButton>
+            <GameCTAButton
+              variant="neutral"
+              size="sm"
+              disabled={loading}
+              onClick={() => setStopConfirmShown(false)}
+            >
+              Cancel
+            </GameCTAButton>
+          </>
         ) : null}
       </div>
       {lumineFixControl ? (
@@ -199,6 +259,11 @@ export default function BranchMainUpdateNotice({
 
   function handleUpdateClick() {
     void onUpdate();
+  }
+
+  function handleStopAndUpdateClick() {
+    setStopConfirmShown(false);
+    void onUpdate({ stopActiveRun: true });
   }
 
   function handleUnavailableApply() {

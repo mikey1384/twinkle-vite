@@ -106,6 +106,7 @@ export default function CollaborationPanel({
   onBeforeContributionAction,
   onAskLumineToResolveConflicts,
   mainUpdateNoticeControl,
+  lumineRunActive = false,
   projectLumineFixControl,
   onOpenCollaborationSettings,
   initialScrollTop = 0,
@@ -1091,6 +1092,7 @@ export default function CollaborationPanel({
         }
         lumineFixControl={mainUpdateNoticeControl.lumineFixControl}
         branchLumineFixControl={mainUpdateNoticeControl.branchLumineFixControl}
+        lumineRunActive={mainUpdateNoticeControl.lumineRunActive}
         onUpdate={mainUpdateNoticeControl.onUpdate}
       />
     );
@@ -1591,8 +1593,19 @@ export default function CollaborationPanel({
     }
   }
 
-  async function handleUpdateVersionFromMain() {
+  async function handleUpdateVersionFromMain(options?: {
+    stopActiveRun?: boolean;
+  }) {
     if (!rootBuildId || !contributionBuildId || actionLoading) return;
+    // While Lumine works on the branch, only an explicit "Stop Lumine and
+    // update now" goes ahead (checked before any draft is saved).
+    const stopActiveRun = Boolean(options?.stopActiveRun);
+    if (
+      (lumineRunActive || mainUpdateNoticeControl?.lumineRunActive) &&
+      !stopActiveRun
+    ) {
+      return;
+    }
     setActionLoading('update-from-main');
     setActionError('');
     const assetTransferOperationId = beginRuntimeAssetTransferProgress();
@@ -1604,7 +1617,8 @@ export default function CollaborationPanel({
       const result = await updateBuildContributionFromMain({
         buildId: rootBuildId,
         contributionBuildId,
-        assetTransferOperationId
+        assetTransferOperationId,
+        ...(stopActiveRun ? { stopActiveRun: true } : {})
       });
       if (result?.code === 'build_contribution_conflict_markers_remaining') {
         const markerPaths = Array.isArray(result.conflictMarkerPaths)
@@ -2339,6 +2353,7 @@ export default function CollaborationPanel({
           !hasSelectedTrackedLumineFix
         }
         canUpdateFromMain={canUpdateFromMain}
+        lumineRunActive={lumineRunActive}
         changedFiles={changedFiles}
         contributionCanMerge={contributionCanMerge}
         contributionCanReplaceMain={contributionCanReplaceMain}

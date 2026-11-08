@@ -1567,8 +1567,14 @@ export default function BuildEditor({
     return sendBuildMessageText(messageText, options);
   }
 
-  async function handleUpdateCurrentBranchFromMain() {
+  async function handleUpdateCurrentBranchFromMain(options?: {
+    stopActiveRun?: boolean;
+  }) {
     if (branchMainUpdateState.loading) return;
+    // While Lumine works on the branch, only the member's explicit "Stop
+    // Lumine and update now" goes ahead (checked before any draft is saved).
+    const stopActiveRun = Boolean(options?.stopActiveRun);
+    if (isRunActivityInFlight() && !stopActiveRun) return;
     const target = getBranchMainUpdateTarget({
       build: getLatestBuild(),
       userId
@@ -1586,7 +1592,8 @@ export default function BuildEditor({
       if (!preparedFiles.ready) return;
       const result = await updateBuildContributionFromMain({
         buildId: target.rootBuildId,
-        contributionBuildId: target.contributionBuildId
+        contributionBuildId: target.contributionBuildId,
+        ...(stopActiveRun ? { stopActiveRun: true } : {})
       });
       if (result?.code === 'build_contribution_conflict_markers_remaining') {
         await settleCurrentBranchMainUpdateFailure({
@@ -1853,6 +1860,7 @@ export default function BuildEditor({
         shown: branchMainUpdateNoticeState.shown,
         canUpdate: branchMainUpdateNoticeState.canUpdate,
         loading: branchMainUpdateState.loading,
+        lumineRunActive: currentBuildRunView.generating,
         error: branchMainUpdateNoticeState.error,
         lumineFixBlocksBranchSync:
           branchMainUpdateNoticeState.lumineFixBlocksBranchSync,
@@ -1972,6 +1980,7 @@ export default function BuildEditor({
         onBeforeContributionAction={handleBeforeContributionAction}
         onAskLumineToResolveConflicts={handleAskLumineToResolveMergeConflicts}
         mainUpdateNoticeControl={branchMainUpdateNoticeControl}
+        lumineRunActive={currentBuildRunView.generating}
         projectLumineFixControl={projectLumineFixControl}
         onAcceptedContributorCountChange={setAcceptedContributorCount}
         onOpenCollaborationSettings={handleOpenCollaborationSettingsModal}
@@ -2277,6 +2286,7 @@ export default function BuildEditor({
         replaceBranchButtonLabel={replaceBranchButtonLabel}
         replaceBranchTargetLabel={replaceBranchTargetLabel}
         resetBranchConfirmShown={resetBranchConfirmShown}
+        resetStopsLumineRun={currentBuildRunView.generating}
         onCloseDeleteBranch={handleCloseDeleteBranch}
         onCloseReplaceMainConfirm={handleCloseReplaceMainConfirm}
         onCloseResetBranchConfirm={handleCloseResetBranchConfirm}

@@ -4,6 +4,9 @@ import DeleteModal from '../DeleteModal';
 import type { BuildBranchDeleteTarget } from './types';
 import { SITE_NAME } from '~/constants/siteBrand';
 
+export const BRANCH_RESET_STOPS_LUMINE_TEXT =
+  'Lumine is working on this branch. Resetting will stop it and throw away its unsaved changes.';
+
 export default function BranchActionModals({
   activeBuildTitle,
   deletingBranch,
@@ -12,6 +15,7 @@ export default function BranchActionModals({
   replaceBranchTargetLabel,
   replaceMainConfirmShown,
   resetBranchConfirmShown,
+  resetStopsLumineRun = false,
   onCloseDeleteBranch,
   onCloseReplaceMainConfirm,
   onCloseResetBranchConfirm,
@@ -26,6 +30,8 @@ export default function BranchActionModals({
   replaceBranchTargetLabel: string;
   replaceMainConfirmShown: boolean;
   resetBranchConfirmShown: boolean;
+  // A Lumine run is working on this branch: resetting stops it first.
+  resetStopsLumineRun?: boolean;
   onCloseDeleteBranch: () => void;
   onCloseReplaceMainConfirm: () => void;
   onCloseResetBranchConfirm: () => void;
@@ -110,6 +116,11 @@ export default function BranchActionModals({
                 lineHeight: 1.5
               }}
             >
+              {resetStopsLumineRun ? (
+                <p>
+                  <b>{BRANCH_RESET_STOPS_LUMINE_TEXT}</b>
+                </p>
+              ) : null}
               <p>
                 This will make <b>{activeBuildTitle || 'this branch'}</b>{' '}
                 identical to Main.

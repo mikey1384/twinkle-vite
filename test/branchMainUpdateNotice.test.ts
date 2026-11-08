@@ -789,3 +789,74 @@ test('the originating branch keeps Sponsor Lumine and cannot update mid-merge', 
   assert.match(markup, /Sponsor Lumine Fix/);
   assert.doesNotMatch(markup, /Update from Main|fix Main/i);
 });
+
+// Mikey 11-07: the member's own action wins over a Lumine run. Update from
+// Main offers "Stop Lumine and update now" (waiting stays the default); Reset
+// to Main stops the run and says so in its confirm.
+test('while Lumine runs, Update from Main offers an explicit stop-and-update with a cancel', () => {
+  const calls: any[] = [];
+  const render = (lumineRunActive: boolean) =>
+    renderToStaticMarkup(
+      React.createElement(BranchMainUpdateNotice, {
+        canUpdate: true,
+        lumineRunActive,
+        onUpdate: (options?: any) => {
+          calls.push(options);
+        }
+      })
+    );
+  const idle = render(false);
+  assert.match(idle, /Update from Main/);
+  assert.doesNotMatch(idle, /Stop Lumine and update now/);
+  const busy = render(true);
+  assert.match(busy, /Stop Lumine and update now/);
+  assert.match(busy, /Lumine&#x27;s unfinished changes will be dropped/);
+  assert.doesNotMatch(busy, />Update from Main</, 'no plain update while a run is active');
+  const notice = readFileSync(
+    new URL('../src/containers/Build/Editor/BranchMainUpdateNotice.tsx', import.meta.url),
+    'utf8'
+  );
+  // The first click only asks; the confirm sends stopActiveRun, cancel waits.
+  assert.match(notice, /onClick=\{\(\) => setStopConfirmShown\(true\)\}/);
+  assert.match(notice, /function handleStopAndUpdateClick\(\) \{\s*setStopConfirmShown\(false\);\s*void onUpdate\(\{ stopActiveRun: true \}\);/);
+  assert.match(notice, /onClick=\{\(\) => setStopConfirmShown\(false\)\}\s*>\s*Cancel/);
+  assert.equal(calls.length, 0);
+  const editor = readFileSync(
+    new URL('../src/containers/Build/Editor/index.tsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(editor, /lumineRunActive: currentBuildRunView\.generating/);
+  const editorUpdate = editor.slice(editor.indexOf('async function handleUpdateCurrentBranchFromMain('));
+  assert.ok(
+    editorUpdate.indexOf('if (isRunActivityInFlight() && !stopActiveRun) return;') <
+      editorUpdate.indexOf('prepareProjectFilesForContributionAction('),
+    'a refused update never saves drafts first'
+  );
+  assert.match(editorUpdate, /updateBuildContributionFromMain\(\{[\s\S]*?\.\.\.\(stopActiveRun \? \{ stopActiveRun: true \} : \{\}\)/);
+  const panel = readFileSync(
+    new URL('../src/containers/Build/Editor/CollaborationPanel/index.tsx', import.meta.url),
+    'utf8'
+  );
+  const panelUpdate = panel.slice(panel.indexOf('async function handleUpdateVersionFromMain('));
+  assert.ok(panelUpdate.indexOf('!stopActiveRun') < panelUpdate.indexOf("onBeforeContributionAction('update-from-main')"));
+  assert.match(panelUpdate, /\.\.\.\(stopActiveRun \? \{ stopActiveRun: true \} : \{\}\)/);
+  const helpers = readFileSync(new URL('../src/contexts/requestHelpers/build.ts', import.meta.url), 'utf8');
+  assert.match(helpers, /\.\.\.\(stopActiveRun \? \{ stopActiveRun: true \} : \{\}\)/);
+});
+
+test('Reset to Main stays available during a run and its confirm says the run will be stopped', () => {
+  const read = (file: string) => readFileSync(new URL(file, import.meta.url), 'utf8');
+  assert.ok(
+    read('../src/containers/Build/Editor/BranchActionModals.tsx').includes(
+      "'Lumine is working on this branch. Resetting will stop it and throw away its unsaved changes.'"
+    )
+  );
+  const header = read('../src/containers/Build/Editor/Header.tsx');
+  assert.match(header, /const resetBranchToMainButtonDisabled = Boolean\(contributionActionLoading\);/);
+  const branches = read('../src/containers/Build/Editor/hooks/useBranches.ts');
+  assert.doesNotMatch(branches, /isRunActivityInFlight/);
+  const editor = read('../src/containers/Build/Editor/index.tsx');
+  assert.match(editor, /resetStopsLumineRun=\{currentBuildRunView\.generating\}/);
+  const modals = read('../src/containers/Build/Editor/BranchActionModals.tsx');
+  assert.match(modals, /\{resetStopsLumineRun \? \([\s\S]{0,80}BRANCH_RESET_STOPS_LUMINE_TEXT/);
+});

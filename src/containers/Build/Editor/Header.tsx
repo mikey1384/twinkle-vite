@@ -1033,6 +1033,7 @@ export default function Header({
             Reset to Main
           </GameCTAButton>
         ) : null}
+
       </span>
     );
   }
