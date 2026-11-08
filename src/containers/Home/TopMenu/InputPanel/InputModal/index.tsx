@@ -7,6 +7,10 @@ import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
 import usePendingAction from '~/helpers/hooks/usePendingAction';
+import {
+  forgetPostDraft,
+  waitForPostDraftSaves
+} from './SubjectInput/usePostDrafts';
 
 export default function InputModal({
   isOpen,
@@ -24,10 +28,16 @@ export default function InputModal({
   const onSetSubjectDescription = useInputContext(
     (v) => v.actions.onSetSubjectDescription
   );
+  const onSetSecretAnswer = useInputContext((v) => v.actions.onSetSecretAnswer);
+  const onSetHasSecretAnswer = useInputContext(
+    (v) => v.actions.onSetHasSecretAnswer
+  );
   const titleRef = useRef(subject.details.title || '');
   const descriptionRef = useRef(subject.details.description || '');
   const [title, setTitle] = useState(subject.details.title || '');
-  const [drafts, setDrafts] = useState([]);
+  // null until this opening's drafts have loaded
+  const [drafts, setDrafts] = useState<any[] | null>(null);
+  const [draftsLoadFailed, setDraftsLoadFailed] = useState(false);
   const draftIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -43,12 +53,31 @@ export default function InputModal({
   }, [subject?.details?.title, subject?.details?.description]);
 
   useEffect(() => {
-    if (!isOpen || !userId) return;
+    if (!isOpen || !userId) {
+      setDrafts(null);
+      setDraftsLoadFailed(false);
+      return;
+    }
+    let cancelled = false;
     fetchDrafts();
     async function fetchDrafts() {
-      const data = await checkDrafts({ contentType: 'subject' });
-      setDrafts(data);
+      try {
+        // a draft saved while the form was closing is listed once
+        await waitForPostDraftSaves();
+        const data = await checkDrafts({ contentType: 'subject' });
+        if (cancelled) return;
+        setDraftsLoadFailed(!Array.isArray(data));
+        setDrafts(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Failed to load drafts:', error);
+        if (cancelled) return;
+        setDraftsLoadFailed(true);
+        setDrafts([]);
+      }
     }
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, userId]);
 
@@ -64,7 +93,11 @@ export default function InputModal({
         closeOnBackdropClick={false}
         modalLevel={0}
         footer={
-          <Button loading={pendingAction === 'close'} variant="ghost" onClick={handleClose}>
+          <Button
+            loading={pendingAction === 'close'}
+            variant="ghost"
+            onClick={handleClose}
+          >
             Close
           </Button>
         }
@@ -77,6 +110,7 @@ export default function InputModal({
             onSetTitle={setTitle}
             subject={subject}
             drafts={drafts}
+            draftsLoadFailed={draftsLoadFailed}
             draftIdRef={draftIdRef}
             onModalHide={onHide}
           />
@@ -97,7 +131,11 @@ export default function InputModal({
         descriptionRef.current = '';
         onSetSubjectTitle('');
         onSetSubjectDescription('');
-        await deleteDraft(draftIdRef.current);
+        onSetSecretAnswer('');
+        onSetHasSecretAnswer(false);
+        const draftId = draftIdRef.current;
+        await deleteDraft(draftId);
+        forgetPostDraft(draftId);
       } catch (error) {
         console.error('Failed to delete draft:', error);
       }

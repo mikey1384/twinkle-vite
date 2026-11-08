@@ -4,8 +4,7 @@ import React, {
   useMemo,
   useRef,
   useState,
-  useEffect,
-  useCallback
+  useEffect
 } from 'react';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -45,6 +44,12 @@ import {
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
+import DraftTabs from './DraftTabs';
+import usePostDrafts, {
+  type PostDraftExtras,
+  type PostDraftText,
+  type ServerPostDraft
+} from './usePostDrafts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -62,6 +67,7 @@ function SubjectInput({
   descriptionRef,
   onSetTitle,
   drafts,
+  draftsLoadFailed,
   onModalHide
 }: {
   draftIdRef: React.RefObject<number | null>;
@@ -88,18 +94,9 @@ function SubjectInput({
   titleRef: React.RefObject<string>;
   descriptionRef: React.RefObject<string>;
   onSetTitle: (title: string) => void;
-  drafts: {
-    id: number;
-    type: string;
-    content: string;
-    lastUpdated: number;
-    title: string;
-    description: string;
-    secretAnswer: string;
-    hasSecretAnswer: boolean;
-    attachment: any;
-    rewardLevel: number;
-  }[];
+  // null until this opening's drafts have loaded
+  drafts: ServerPostDraft[] | null;
+  draftsLoadFailed: boolean;
   onModalHide: () => void;
 }) {
   const inputModalType = useHomeContext((v) => v.state.inputModalType);
@@ -117,6 +114,7 @@ function SubjectInput({
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
   const banned = useKeyContext((v) => v.myState.banned);
+  const userId = useKeyContext((v) => v.myState.userId);
   const successRole = useRoleColor('success', { fallback: 'green' });
   const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
   const buttonHoverRole = useRoleColor('buttonHovered', {
@@ -190,82 +188,34 @@ function SubjectInput({
       !!subject.hasSecretAnswer
   );
 
-  const [draftId, setDraftId] = useState<number | null>(null);
-  const [savingState, setSavingState] = useState<'idle' | 'saved'>('idle');
-  const saveTimeoutRef = useRef<number | null>(null);
-  const savedIndicatorTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    draftIdRef.current = draftId;
-  }, [draftId, draftIdRef]);
-
-  const saveDraftWithTimeout = useCallback(
-    (draftData: any) => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      if (savedIndicatorTimeoutRef.current) {
-        clearTimeout(savedIndicatorTimeoutRef.current);
-      }
-
-      setSavingState('idle');
-
-      saveTimeoutRef.current = window.setTimeout(async () => {
-        try {
-          const result = await saveDraft({
-            ...draftData,
-            contentType: 'subject',
-            draftId: draftIdRef.current
-          });
-          if (result?.draftId) {
-            setDraftId(result.draftId);
-            draftIdRef.current = result.draftId;
-          }
-          setSavingState('saved');
-          savedIndicatorTimeoutRef.current = window.setTimeout(() => {
-            setSavingState('idle');
-          }, 3000);
-        } catch (error) {
-          console.error('Failed to save draft:', error);
-          setSavingState('idle');
-        }
-      }, 3000);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [draftIdRef]
-  );
-
-  useEffect(() => {
-    const subjectDraft = drafts.find((draft) => draft.type === 'subject');
-    if (subjectDraft) {
-      const { id, title, description, secretAnswer, hasSecretAnswer } =
-        subjectDraft;
-      setDraftId(id);
-      if (preserveLocalDraftStateRef.current) {
-        return;
-      }
-      const nextTitle = title || '';
-      const nextDescription = normalizeDraftDescription({
-        description: description || '',
-        title: nextTitle
-      });
-      const nextSecretAnswer = secretAnswer || '';
-
-      const nextHasSecretAnswer =
-        typeof hasSecretAnswer === 'boolean' ? hasSecretAnswer : false;
-      const nextDescriptionFieldShown =
-        !stringIsEmpty(nextTitle) || !stringIsEmpty(nextDescription);
-
-      applySubjectDraftState({
-        description: nextDescription,
-        descriptionFieldShown: nextDescriptionFieldShown,
-        hasSecretAnswer: nextHasSecretAnswer,
-        secretAnswer: nextSecretAnswer,
-        title: nextTitle
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drafts]);
+  // a post is on its way (set before the Home store catches up)
+  const postingRef = useRef(false);
+  const {
+    entries: draftEntries,
+    activeKey: activeDraftKey,
+    activeIsFresh: activeDraftIsFresh,
+    busy: draftsBusy,
+    error: draftsError,
+    savingState,
+    scheduleSave,
+    switchTo: switchDraft,
+    startNew: startNewDraft,
+    remove: removeDraft,
+    markPosted: markDraftPosted
+  } = usePostDrafts({
+    userId,
+    drafts,
+    draftsLoadFailed,
+    draftIdRef,
+    hasLocalEdits: () => preserveLocalDraftStateRef.current,
+    // refs and the file upload only: Home's submitting flag lags a render
+    isPosting: () => postingRef.current || !!uploadingFile,
+    getText: getDraftText,
+    getExtras: getDraftExtras,
+    applyDraft: applyPostDraft,
+    saveDraft,
+    deleteDraft
+  });
 
   useEffect(() => {
     if (!subject?.details) return;
@@ -391,17 +341,6 @@ function SubjectInput({
     );
   }, [attachment?.contentType, description]);
 
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      if (savedIndicatorTimeoutRef.current) {
-        clearTimeout(savedIndicatorTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
     <ErrorBoundary
       className={PanelStyle}
@@ -409,6 +348,22 @@ function SubjectInput({
     >
       {!uploadingFile && (
         <>
+          <DraftTabs
+            entries={draftEntries}
+            activeKey={activeDraftKey}
+            activeText={{
+              title,
+              description,
+              secretAnswer: hasSecretAnswer ? secretAnswer : ''
+            }}
+            activeIsFresh={activeDraftIsFresh}
+            busy={draftsBusy}
+            locked={!!submittingSubject || !!uploadingFile}
+            error={draftsError}
+            onSelect={switchDraft}
+            onNew={startNewDraft}
+            onDelete={removeDraft}
+          />
           <div>
             <p
               className={css`
@@ -431,10 +386,13 @@ function SubjectInput({
               <div style={{ width: '100%' }}>
                 <Input
                   placeholder={postSubjectPlaceholder}
+                  readOnly={!!draftsBusy}
                   value={title}
                   onChange={handleTitleInputChange}
                   onDrop={(e: React.DragEvent) => e.preventDefault()}
                   onKeyUp={(event: any) => {
+                    // a key let go while a draft is switching isn't an edit
+                    if (draftsBusy) return;
                     handleSetTitle(addEmoji(event.target.value));
                   }}
                   style={titleExceedsCharLimit?.style}
@@ -512,6 +470,7 @@ function SubjectInput({
                   marginTop: '1rem'
                 }}
                 hasError={!!descriptionExceedsCharLimit}
+                readOnly={!!draftsBusy}
                 value={description}
                 minRows={4}
                 placeholder={enterDescriptionOptionalLabel}
@@ -519,6 +478,7 @@ function SubjectInput({
                   handleSetDescription(addEmoji(event.target.value))
                 }
                 onKeyUp={(event: any) => {
+                  if (draftsBusy) return;
                   if (event.key === ' ') {
                     handleSetDescription(addEmoji(event.target.value));
                   }
@@ -630,7 +590,7 @@ function SubjectInput({
                   variant="solid"
                   color={successColorKey}
                   loading={submittingSubject}
-                  disabled={buttonDisabled}
+                  disabled={buttonDisabled || !!draftsBusy}
                   onClick={handleSubmit}
                 >
                   {postLabel}
@@ -787,6 +747,9 @@ function SubjectInput({
       return;
     }
     onSetSubmittingSubject(true);
+    // Only the draft being posted goes; the others stay.
+    postingRef.current = true;
+    void markDraftPosted();
     if (
       attachment?.contentType === 'file' ||
       (hasSecretAnswer && secretAttachment)
@@ -807,22 +770,13 @@ function SubjectInput({
         title
       });
       handleSetIsMadeByUser(false);
+      postingRef.current = false;
     } else {
       handleUploadSubject();
     }
     const appElement = document.getElementById('App');
     if (appElement) appElement.scrollTop = 0;
     BodyRef.scrollTop = 0;
-
-    if (draftIdRef.current) {
-      try {
-        await deleteDraft(draftIdRef.current);
-        setDraftId(null);
-        draftIdRef.current = null;
-      } catch (error) {
-        console.error('Failed to delete draft:', error);
-      }
-    }
   }
 
   function handleSetTitle(text: string) {
@@ -863,14 +817,57 @@ function SubjectInput({
   }
 
   function saveCurrentDraft() {
-    saveDraftWithTimeout({
-      title: titleRef.current,
-      description: descriptionRef.current,
-      secretAnswer: hasSecretAnswerRef.current ? secretAnswerRef.current : '',
-      rootType: attachment?.contentType,
-      rootId: attachment?.id,
-      rewardLevel
+    scheduleSave();
+  }
+
+  function getDraftText(): PostDraftText {
+    return {
+      title: titleRef.current || '',
+      description: descriptionRef.current || '',
+      secretAnswer: hasSecretAnswerRef.current
+        ? secretAnswerRef.current || ''
+        : ''
+    };
+  }
+
+  function getDraftExtras(): PostDraftExtras {
+    return {
+      attachment,
+      secretAttachment,
+      hasSecretAnswer: !!hasSecretAnswerRef.current,
+      rewardLevel,
+      isMadeByUser: isMadeByUserRef.current
+    };
+  }
+
+  // Puts a draft in the form. extras: undefined leaves the attachment etc.
+  // as they are, null clears them.
+  function applyPostDraft(
+    text: PostDraftText,
+    extras: PostDraftExtras | null | undefined
+  ) {
+    const nextTitle = text.title || '';
+    const nextDescription = text.description || '';
+    const nextSecretAnswer = text.secretAnswer || '';
+    applySubjectDraftState({
+      title: nextTitle,
+      description: nextDescription,
+      secretAnswer: nextSecretAnswer,
+      hasSecretAnswer:
+        !stringIsEmpty(nextSecretAnswer) || !!extras?.hasSecretAnswer,
+      descriptionFieldShown:
+        !stringIsEmpty(nextTitle) || !stringIsEmpty(nextDescription)
     });
+    if (extras === undefined) return;
+    // cleared first: setting an attachment merges into the current one
+    onSetSubjectAttachment(null);
+    onSetSecretAttachment(null);
+    if (extras?.attachment) onSetSubjectAttachment(extras.attachment);
+    if (extras?.secretAttachment) {
+      onSetSecretAttachment(extras.secretAttachment);
+    }
+    onSetSubjectRewardLevel(extras?.rewardLevel || 0);
+    handleSetIsMadeByUser(!!extras?.isMadeByUser);
   }
 
   function applySubjectDraftState({
@@ -932,40 +929,24 @@ function SubjectInput({
         handleSetIsMadeByUser(false);
         onResetSubjectInput();
         onResetContentInput();
+        postingRef.current = false;
+      } else {
+        keepUnpostedTextAsDraft();
       }
       onSetSubmittingSubject(false);
       onModalHide();
     } catch (error) {
       console.error(error);
+      keepUnpostedTextAsDraft();
       onSetSubmittingSubject(false);
     }
+  }
+
+  // The post didn't go: its text saves again, as a new draft.
+  function keepUnpostedTextAsDraft() {
+    postingRef.current = false;
+    scheduleSave();
   }
 }
 
 export default memo(SubjectInput);
-
-function normalizeDraftDescription({
-  description,
-  title
-}: {
-  description: string;
-  title: string;
-}) {
-  const normalizedTitle = title.trim();
-  if (stringIsEmpty(description) || stringIsEmpty(normalizedTitle)) {
-    return description || '';
-  }
-
-  const normalizedDescription = description.replace(/\r\n/g, '\n');
-  if (!normalizedDescription.startsWith(normalizedTitle)) {
-    return description;
-  }
-
-  const remainder = normalizedDescription.slice(normalizedTitle.length);
-  if (!/^\n{3,}/.test(remainder)) {
-    return description;
-  }
-
-  const nextDescription = remainder.replace(/^\n+/, '');
-  return stringIsEmpty(nextDescription) ? description : nextDescription;
-}

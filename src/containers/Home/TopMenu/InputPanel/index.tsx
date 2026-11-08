@@ -16,6 +16,7 @@ import {
   prefillHomeAsk
 } from '~/containers/App/AssistantDock/dockState';
 import { setPendingPostLink } from './postFormPrefill';
+import { startNewPostDraft } from './InputModal/SubjectInput/usePostDrafts';
 import InputModal from './InputModal';
 import CielButton from './CielButton';
 import ZeroButton from './ZeroButton';
@@ -240,6 +241,8 @@ export default function InputPanel({
       // empty (anything left there from before is cleared).
       onResetSubjectInput();
       onResetContentInput();
+      // a new draft: it never takes over a saved one
+      startNewPostDraft();
       const { title, description } = splitPostText(value);
       onSetSubjectTitle(title);
       onSetSubjectDescription(description);
