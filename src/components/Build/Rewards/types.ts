@@ -7,6 +7,30 @@ export interface RewardConfig {
   // Twinkle.coins prices approved in the same review (RULING 11-07).
   prices?: CoinPrice[];
   spendBudget?: { userDailyCoins: number };
+  // Server-held land (Twinkle.land), reviewed with the prices.
+  land?: LandDeclaration;
+}
+// rewards.json "land" (helpers/build/landPolicy.ts on the API).
+export interface LandDeclaration {
+  keyGroup: string;
+  plotSize: number;
+  keyFormat: 'region:x:z' | 'region:cx:cz';
+  regions: string[];
+  reserved?: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
+  switches?: Record<string, { cause: string; values: number[] }>;
+  empty?: number[];
+}
+// summarizeCoinPrices().land: the declaration plus the sentence the review
+// screen, the chat card and the CLI share.
+export interface LandSummary {
+  keyGroup: string;
+  plotSize: number;
+  keyFormat: string;
+  regions: string[];
+  reserved: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
+  switches: Array<{ name: string; cause: string; values: number[] }>;
+  empty: number[];
+  text: string;
 }
 export interface CoinPrice {
   id: string;
@@ -18,6 +42,9 @@ export interface CoinPrice {
   maxLifetime?: number;
   uniqueKey?: boolean;
   keyGroup?: string;
+  // Land prices only: how many one player may get per world (purchases and
+  // admin grants, also after a sale; refunds do not count).
+  maxPerRegion?: number;
   // maxCoins: the highest offer price (required with offers since 11-07).
   offers?: { minCoins: number; maxCoins?: number; maxOpenPerPlayer?: number };
   builders?: {
@@ -43,6 +70,12 @@ export interface CoinPriceReviewContext {
   tally?: { cells: number; builders: number } | null;
   // Sales and takeovers so far: Coins paid to previous holders.
   resales?: { sales: number; sellers: number; coins: number };
+  // Twinkle.land: the declaration's summary, and the worlds and plots now.
+  land?: LandSummary | null;
+  landStats?: {
+    worlds: Array<{ region: string; cells: number; changes: number; plots: number; holders: number }>;
+    plots: number;
+  } | null;
   // The offer rule's days (30-day takeover, lapse day or null, re-offer wait).
   offerRule?: { takeoverAfterDays: number; lapseAfterDays: number | null; reofferCooldownDays: number };
 }

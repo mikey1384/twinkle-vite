@@ -34,6 +34,8 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'coins:takeover',
   'coins:withdraw-offer',
   'coins:record-blocks',
+  'land:edit',
+  'land:set-rules',
   'cardCraft:craft',
   'cardCraft:set-state',
   'craft:merge',
@@ -123,7 +125,8 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'world:join',
   'world:leave',
   'world:send',
-  'world:update-presence'
+  'world:update-presence',
+  'world:edit'
 ]);
 
 export function isMutatingPreviewRequestType(type: string) {

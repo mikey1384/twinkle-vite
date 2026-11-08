@@ -54,6 +54,8 @@ export interface BuildRewardReviewCardPayload {
   proposal?: BuildRewardReviewProposalSummary | null;
   // Coin prices with their destinations (present only when the app charges).
   prices?: BuildCoinPriceSummary[];
+  // Server-held land (Twinkle.land) approved with the prices.
+  land?: BuildLandSummary | null;
   rules?: BuildRewardReviewRuleSummary[];
   budgets?: {
     userDailyXP?: number;
@@ -263,6 +265,60 @@ export interface BuildCoinPriceSummary {
 // review-r2 M5, with Mikey's 11-07 credit rule).
 export const COIN_TALLY_PLAIN_WORDS =
   "Builders are paid from Twinkle's record of who placed each block. Each player's copy of the app reports only that player's own blocks, under their own sign-in, so the app can't name anyone else; but Twinkle does not see the world, so it cannot tell whether a recorded block is really there. A block stays credited to the player who placed it when someone else breaks or builds over it; the credit ends only when that player removes it, or when a plot containing it is sold (so the same builders are never paid twice).";
+// Twinkle.land (11-08): builders are paid from the block changes Twinkle
+// accepted, so the words change when the app declares land
+// (LAND_TALLY_PLAIN_WORDS / LAND_TALLY_REMAINING_RISK in
+// helpers/build/landPolicy.ts on the API).
+export const LAND_TALLY_PLAIN_WORDS =
+  "Builders are paid from Twinkle's record of who placed each block, taken from the block changes Twinkle accepted in this app's world. A block stays credited to the player who placed it when someone else breaks or builds over it; the credit ends only when that player removes it, or when a plot containing it is sold (so the same builders are never paid twice).";
+export const LAND_TALLY_REMAINING_RISK =
+  "Remaining risk: a block someone else broke stays paid until a plot containing it is sold, so a buyer may pay for a block that is gone (Mikey's rule).";
+
+// summarizeCoinPrices().land on the API.
+export interface BuildLandSummary {
+  keyGroup: string;
+  plotSize: number;
+  keyFormat: string;
+  regions: string[];
+  reserved?: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
+  switches?: Array<{ name: string; cause: string; values: number[] }>;
+  empty?: number[];
+  text?: string;
+}
+// The chat card's one land line: short; the review screen has the rest.
+export function formatBuildLandLine(land: BuildLandSummary) {
+  const worlds = land.regions.length;
+  const switches = (land.switches || []).map((entry) => entry.name);
+  return `Land in ${worlds} ${worlds === 1 ? 'world' : 'worlds'}: inside a ${land.plotSize}×${land.plotSize} plot someone holds, only they and the players they allow can change blocks${
+    switches.length ? `; ${switches.join(' and ')} only when the holder turns ${switches.length === 1 ? 'it' : 'them'} on` : ''
+  }.`;
+}
+// The review sentence (landReviewText on the API), for a declaration the
+// server has not summarized (the same words).
+export function landReviewText(land: {
+  keyGroup: string;
+  plotSize: number;
+  keyFormat: string;
+  regions: string[];
+  reserved?: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
+  switches?: Record<string, unknown> | Array<{ name: string }>;
+}) {
+  const switches = Array.isArray(land.switches)
+    ? land.switches.map((entry) => entry.name)
+    : Object.keys(land.switches || {});
+  const reserved = (land.reserved || []).map(
+    (spot) =>
+      `within ${spot.radius} blocks of ${spot.why ? `${spot.why} ` : ''}(${spot.x}, ${spot.z})${spot.region ? ` in ${spot.region}` : ''}`
+  );
+  const size = `${land.plotSize}×${land.plotSize}`;
+  return `Land. Twinkle holds the land in these worlds: ${land.regions.join(', ')}. Inside a plot someone holds, Twinkle refuses block changes from anyone except its holder and the players they allow (only me / friends / everyone)${
+    switches.length
+      ? `, plus ${switches.join(' and ')} only when the holder switches ${switches.length === 1 ? 'it' : 'them'} on`
+      : ''
+  }. Plots are ${size}, full height, named by their ${land.keyFormat === 'region:cx:cz' ? 'grid square' : 'corner'} (key group "${land.keyGroup}").${
+    reserved.length ? ` No plots ${reserved.join('; ')}.` : ''
+  }`;
+}
 // The builders' part of one purchase at most (platform ceilings when the
 // summary leaves them out: 64 builders, 100,000 Coins).
 function builderCeiling(builders: NonNullable<BuildCoinPriceSummary['builders']>) {
@@ -302,7 +358,8 @@ export function formatBuildCoinPriceLine(
 // The chat card's red line when any price pays a person: who, in plain words.
 export function buildCoinPricePersonWarning(
   prices: BuildCoinPriceSummary[],
-  ownerUsername?: string | null
+  ownerUsername?: string | null,
+  land?: BuildLandSummary | null
 ) {
   const who = [
     prices.some((price) => price.destination === 'owner' && price.coins > 0)
@@ -314,7 +371,9 @@ export function buildCoinPricePersonWarning(
   if (!who.length) return null;
   // review-r2 M5: the chat card also says what can go wrong and who fixes it.
   const tally = prices.some((price) => price.builders)
-    ? ` ${COIN_TALLY_PLAIN_WORDS} A player can record blocks that aren't there (only the admin can clear them, with lumine admin coins tally-clear).`
+    ? land
+      ? ` ${LAND_TALLY_PLAIN_WORDS} ${LAND_TALLY_REMAINING_RISK}`
+      : ` ${COIN_TALLY_PLAIN_WORDS} A player can record blocks that aren't there (only the admin can clear them, with lumine admin coins tally-clear).`
     : '';
   return `Coins go to ${who.length > 1 ? `${who.slice(0, -1).join(', ')} and ${who[who.length - 1]}` : who[0]}.${tally} Approving needs a review note.`;
 }

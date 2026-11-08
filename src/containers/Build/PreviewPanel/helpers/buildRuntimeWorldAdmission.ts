@@ -1,6 +1,8 @@
 const HIGH_FREQUENCY_WORLD_SOCKET_EVENTS = new Set([
   'build_app_world_send',
-  'build_app_world_update_presence'
+  'build_app_world_update_presence',
+  // Twinkle.land live edits share the same budget (apps coalesce to ~5/s).
+  'build_app_world_edit'
 ]);
 
 // The website socket admits 30 public events/second with a 60-event burst.

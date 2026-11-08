@@ -44,6 +44,14 @@ import type {
 import { isMutatingPreviewRequestType } from '../helpers/previewRequestPolicy';
 import { runBuildRuntimeCoinRequest } from '../helpers/buildRuntimeCoins';
 import {
+  createLandGrantKeeper,
+  landEventTargetWindows,
+  landRequestError,
+  planLandRequest,
+  worldEditPayload,
+  worldJoinLand
+} from '../helpers/buildRuntimeLand';
+import {
   authorizeTwinkleContentNavigation
 } from '../helpers/twinkleContentNavigation';
 import {
@@ -138,7 +146,9 @@ function getBuildRuntimeWorldViewerIdentityKey(
 function shouldUseReliableBuildRuntimeWorldEmit(eventName: string) {
   return (
     eventName === 'build_app_world_join' ||
-    eventName === 'build_app_world_leave'
+    eventName === 'build_app_world_leave' ||
+    // A dropped land edit would leave the editor's change unconfirmed.
+    eventName === 'build_app_world_edit'
   );
 }
 
@@ -1442,8 +1452,26 @@ export function useHostBridge({
         worldKey: string;
         roomKey: string;
         instanceId: string;
+        // Twinkle.land: the land world this session is bound to, if any.
+        landRegion?: string | null;
       }
     >();
+    // Twinkle.land: the published-runtime grant lives an hour; renew it for
+    // long land sessions so hand edits keep earning builder credit.
+    const landGrantKeeper = createLandGrantKeeper({
+      renew: async (grant) => {
+        const build = previewAuth.buildRef.current;
+        const artifactVersionId = Number(build?.publishedArtifactVersionId || 0);
+        if (!build?.id || !artifactVersionId) throw new Error('No published version');
+        const token = await ensureBuildApiToken(['rewards:claim'], previewAuth);
+        return requestRefs.renewBuildRuntimeGrantRef.current({
+          buildId: build.id,
+          artifactVersionId,
+          token,
+          runtimeGrant: grant
+        });
+      }
+    });
 
     function subscribeBuildRuntimeChatRoom(buildId: number, roomKey: string) {
       socket.emit('build_app_chat_subscribe', {
@@ -1473,6 +1501,30 @@ export function useHostBridge({
         payload,
         getTargetBridge: getMessageTargetBridgeForWindow
       });
+    }
+
+    // Server-made Twinkle.land events (cells.changed / land.changed) go to
+    // every frame with a world session bound to that land world, once each.
+    function handleBuildRuntimeLandEvent(payload: any) {
+      for (const targetWindow of landEventTargetWindows(
+        activeWorldSessions.values(),
+        payload
+      )) {
+        const targetBridge = getMessageTargetBridgeForWindow(targetWindow);
+        targetWindow.postMessage(
+          {
+            source: 'twinkle-parent',
+            type: 'land:event',
+            payload: {
+              buildId: payload.buildId,
+              region: payload.region,
+              event: payload.event
+            },
+            previewNonce: targetBridge.previewNonce
+          },
+          targetBridge.targetOrigin
+        );
+      }
     }
 
     function postBuildRuntimeWorldResetToFrame({
@@ -1637,7 +1689,11 @@ export function useHostBridge({
         buildId,
         worldKey,
         roomKey,
-        instanceId
+        instanceId,
+        landRegion:
+          typeof response?.land?.region === 'string'
+            ? response.land.region
+            : null
       });
     }
 
@@ -4709,6 +4765,15 @@ export function useHostBridge({
             if (viewer.isLoggedIn) {
               await waitForSocketAuthReady(Number(viewer.id || 0));
             }
+            // Twinkle.land: only the published app's grant earns credit.
+            const joinLandGrant =
+              payload?.land &&
+              runtimeOnly &&
+              activeBuild.rewardRuntimeGrant &&
+              !appMcpControlsThisTab()
+                ? await landGrantKeeper(activeBuild.rewardRuntimeGrant)
+                : null;
+            const joinLand = worldJoinLand(payload, joinLandGrant);
             response = await emitBuildRuntimeWorldRequest(
               'build_app_world_join',
               {
@@ -4724,7 +4789,8 @@ export function useHostBridge({
                     ? viewer.profilePicUrl
                     : payload?.player?.profilePicUrl
                 },
-                guestSessionId: viewer.isGuest ? viewer.id : null
+                guestSessionId: viewer.isGuest ? viewer.id : null,
+                ...(joinLand ? { land: joinLand } : {})
               }
             );
             trackWorldSession({
@@ -4754,6 +4820,35 @@ export function useHostBridge({
                 action: payload?.action
               }
             );
+            break;
+          }
+
+          case 'world:edit': {
+            // Twinkle.land live edit: packed cells from the frame, checked by
+            // Twinkle against held plots; the ack says what was refused.
+            const editGrant =
+              runtimeOnly &&
+              activeBuild.rewardRuntimeGrant &&
+              !appMcpControlsThisTab()
+                ? await landGrantKeeper(activeBuild.rewardRuntimeGrant)
+                : null;
+            try {
+              response = await emitBuildRuntimeWorldRequest(
+                'build_app_world_edit',
+                worldEditPayload(payload, editGrant)
+              );
+            } catch (error: any) {
+              // The website's own socket budget: same answer as the server's
+              // limit, so the app keeps the cells and sends them again.
+              if (error?.code === 'WORLD_EVENT_RATE_LIMITED') {
+                throw landRequestError(
+                  'Blocks are changing too fast. Try again in a moment.',
+                  'land_throttled',
+                  { retryAfterSeconds: 1 }
+                );
+              }
+              throw error;
+            }
             break;
           }
 
@@ -5536,6 +5631,45 @@ export function useHostBridge({
             break;
           }
 
+          case 'land:edit':
+          case 'land:cells':
+          case 'land:plots':
+          case 'land:set-rules':
+          case 'land:check':
+          case 'land:history': {
+            // Twinkle.land over HTTP. Signed-out visitors of a public app read
+            // cells and plots through the public route; everything else needs
+            // sign-in. Only the app's documented fields are forwarded.
+            const landViewer = getViewerInfo(previewAuth);
+            const plan = planLandRequest(type, payload, {
+              signedIn: landViewer.isLoggedIn,
+              publicApp: Boolean(activeBuild.isPublic)
+            });
+            if (plan.publicRead) {
+              response = await requestRefs.requestBuildLandPublicRef.current({
+                buildId: activeBuild.id,
+                operation: plan.operation,
+                payload: plan.body
+              });
+              break;
+            }
+            const landToken = await ensureBuildApiToken([plan.scope], previewAuth);
+            const landGrant =
+              runtimeOnly &&
+              activeBuild.rewardRuntimeGrant &&
+              !appMcpControlsThisTab()
+                ? await landGrantKeeper(activeBuild.rewardRuntimeGrant)
+                : null;
+            response = await requestRefs.requestBuildLandRef.current({
+              buildId: activeBuild.id,
+              operation: plan.operation,
+              payload: plan.body,
+              token: landToken,
+              runtimeGrant: landGrant
+            });
+            break;
+          }
+
           case 'coins:balance':
           case 'coins:charge':
           case 'coins:receipts':
@@ -5887,6 +6021,7 @@ export function useHostBridge({
     );
     socket.on('build_app_chat_event', handleBuildRuntimeChatEvent);
     socket.on('build_app_world_event', handleBuildRuntimeWorldEvent);
+    socket.on('build_app_land_event', handleBuildRuntimeLandEvent);
     socket.on('disconnect', handleBuildRuntimeWorldSocketDisconnect);
     socket.on(
       'image_generation_status_received',
@@ -5910,6 +6045,7 @@ export function useHostBridge({
       );
       socket.off('build_app_chat_event', handleBuildRuntimeChatEvent);
       socket.off('build_app_world_event', handleBuildRuntimeWorldEvent);
+      socket.off('build_app_land_event', handleBuildRuntimeLandEvent);
       socket.off('disconnect', handleBuildRuntimeWorldSocketDisconnect);
       socket.off(
         'image_generation_status_received',

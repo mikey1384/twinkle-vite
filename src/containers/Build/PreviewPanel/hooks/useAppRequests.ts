@@ -48,6 +48,19 @@ export default function useAppRequests({
   );
   const requestBuildCoinPreviewRef = useRef(requestBuildCoinPreview);
   requestBuildCoinPreviewRef.current = requestBuildCoinPreview;
+  const requestBuildLand = useAppContext((v) => v.requestHelpers.requestBuildLand);
+  const requestBuildLandRef = useRef(requestBuildLand);
+  requestBuildLandRef.current = requestBuildLand;
+  const requestBuildLandPublic = useAppContext(
+    (v) => v.requestHelpers.requestBuildLandPublic
+  );
+  const requestBuildLandPublicRef = useRef(requestBuildLandPublic);
+  requestBuildLandPublicRef.current = requestBuildLandPublic;
+  const renewBuildRuntimeGrant = useAppContext(
+    (v) => v.requestHelpers.renewBuildRuntimeGrant
+  );
+  const renewBuildRuntimeGrantRef = useRef(renewBuildRuntimeGrant);
+  renewBuildRuntimeGrantRef.current = renewBuildRuntimeGrant;
   const requestBuildCardCraft = useAppContext(
     (v) => v.requestHelpers.requestBuildCardCraft
   );
@@ -577,6 +590,9 @@ export default function useAppRequests({
     requestBuildRewardPreviewRef,
     requestBuildCoinsRef,
     requestBuildCoinPreviewRef,
+    requestBuildLandRef,
+    requestBuildLandPublicRef,
+    renewBuildRuntimeGrantRef,
     requestBuildCardCraftRef,
     requestBuildCardCraftPreviewRef,
     requestBuildCraftRef,

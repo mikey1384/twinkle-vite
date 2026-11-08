@@ -12,6 +12,7 @@ import { useAppContext } from '~/contexts';
 import {
   buildCoinPricePersonWarning,
   formatBuildCoinPriceLine,
+  formatBuildLandLine,
   formatBuildRewardProposalSummary,
   formatBuildRewardRulesSummary,
   getBuildRewardOfferedIdentity,
@@ -20,6 +21,7 @@ import {
   getBuildRewardReviewStatusLabel,
   normalizeBuildRewardReviewStatus,
   type BuildCoinPriceSummary,
+  type BuildLandSummary,
   type BuildRewardReviewCardPayload
 } from '~/helpers/buildRewardReviewCard';
 import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
@@ -90,6 +92,8 @@ export default function BuildRewardReview({
   const coinPrices: BuildCoinPriceSummary[] = Array.isArray(review?.prices)
     ? review.prices
     : [];
+  const land: BuildLandSummary | null =
+    review?.land && Array.isArray(review.land.regions) ? review.land : null;
 
   if (!reviewId || !buildId) return null;
 
@@ -136,6 +140,12 @@ export default function BuildRewardReview({
           {coinPrices.length > 0 ? (
             <BuildMessageCardChip icon="coins" themeName={sender.profileTheme}>
               {coinPrices.length} Coin {coinPrices.length === 1 ? 'price' : 'prices'}
+            </BuildMessageCardChip>
+          ) : null}
+          {land ? (
+            <BuildMessageCardChip icon="map-marker-alt" themeName={sender.profileTheme}>
+              Land in {land.regions.length}{' '}
+              {land.regions.length === 1 ? 'world' : 'worlds'}
             </BuildMessageCardChip>
           ) : null}
           {sourceVersionId > 0 ? (
@@ -416,9 +426,9 @@ export default function BuildRewardReview({
             </div>
           ) : null}
           {coinPrices.length > 0 &&
-          buildCoinPricePersonWarning(coinPrices, review?.ownerUsername) ? (
+          buildCoinPricePersonWarning(coinPrices, review?.ownerUsername, land) ? (
             <div className={coinPersonClass} role="note">
-              {buildCoinPricePersonWarning(coinPrices, review?.ownerUsername)}
+              {buildCoinPricePersonWarning(coinPrices, review?.ownerUsername, land)}
             </div>
           ) : null}
           {coinPrices.length > 0 ? (
@@ -428,6 +438,7 @@ export default function BuildRewardReview({
                   {formatBuildCoinPriceLine(price, review?.ownerUsername)}
                 </span>
               ))}
+              {land ? <span>{formatBuildLandLine(land)}</span> : null}
             </div>
           ) : null}
           {hasRules ? (

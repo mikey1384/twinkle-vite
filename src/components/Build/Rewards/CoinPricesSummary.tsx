@@ -1,8 +1,13 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { COIN_TALLY_PLAIN_WORDS } from '~/helpers/buildRewardReviewCard';
-import type { CoinPrice, CoinPriceReviewContext } from './types';
+import {
+  COIN_TALLY_PLAIN_WORDS,
+  LAND_TALLY_PLAIN_WORDS,
+  LAND_TALLY_REMAINING_RISK,
+  landReviewText
+} from '~/helpers/buildRewardReviewCard';
+import type { CoinPrice, CoinPriceReviewContext, LandDeclaration, LandSummary } from './types';
 
 // "Coin prices" in the reward review (RULING 11-07): every price with its
 // amount, limits and where its Coins go. Prices that pay a person (the owner,
@@ -114,6 +119,9 @@ export function coinTallyGroupLine(price: CoinPrice, prices: CoinPrice[]) {
 function limitsLine(price: CoinPrice, prices: CoinPrice[] = []) {
   return [
     coinTallyGroupLine(price, prices),
+    price.maxPerRegion
+      ? `${price.maxPerRegion} per world per player, counted by Twinkle (also after a sale; refunds do not count)`
+      : '',
     price.userDailyLimit ? `${price.userDailyLimit} a day per player` : '',
     price.maxLifetime ? `${price.maxLifetime} ever per player` : '',
     price.uniqueKey
@@ -129,16 +137,71 @@ function limitsLine(price: CoinPrice, prices: CoinPrice[] = []) {
     .join(' · ');
 }
 
+// "Land" (Twinkle.land, 11-08): the worlds Twinkle holds and what it
+// refuses there, in the server's sentence; for the reviewer, how much of the
+// world exists now. Short on purpose: the sentence says everything that
+// changes for players.
+const landSectionClass = css`
+  display: grid;
+  gap: 0.4rem;
+  > p {
+    margin: 0;
+  }
+`;
+export function LandSummarySection({
+  land,
+  stats
+}: {
+  land: LandSummary | (LandDeclaration & { text?: string });
+  stats?: CoinPriceReviewContext['landStats'];
+}) {
+  const switches = Array.isArray(land.switches)
+    ? land.switches
+    : Object.entries(land.switches || {}).map(([name, entry]) => ({ name, ...entry }));
+  return (
+    <section className={landSectionClass} data-testid="land-summary">
+      <h4>Land</h4>
+      <p>{land.text || landReviewText(land)}</p>
+      {switches.length ? (
+        <p>
+          Holder switches:{' '}
+          {switches
+            .map((entry) => `${entry.name} (lets “${entry.cause}” changes to ${entry.values.join(', ')} into the plot)`)
+            .join(' · ')}
+        </p>
+      ) : null}
+      {stats ? (
+        <p>
+          Now:{' '}
+          {stats.worlds.length
+            ? stats.worlds
+                .map(
+                  (world) =>
+                    `${world.region} ${world.cells.toLocaleString()} blocks, ${world.plots.toLocaleString()} ${world.plots === 1 ? 'plot' : 'plots'}`
+                )
+                .join(' · ')
+            : 'no blocks changed yet'}
+          {` · ${stats.plots.toLocaleString()} ${stats.plots === 1 ? 'plot' : 'plots'} held in all`}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 export default function CoinPricesSummary({
   prices: declared,
   spendBudget,
-  context
+  context,
+  land: declaredLand
 }: {
   prices: CoinPrice[];
   spendBudget?: { userDailyCoins: number } | null;
   context?: CoinPriceReviewContext | null;
+  // rewards.json "land", when the app declares it.
+  land?: LandDeclaration | null;
 }) {
   if (!declared.length) return null;
+  const land = context?.land || declaredLand || null;
   // The server's summary fills in defaults; the declaration keeps howTo.
   const summarized = new Map((context?.prices || []).map((price) => [price.id, price]));
   const prices = declared.map((price) =>
@@ -168,14 +231,14 @@ export default function CoinPricesSummary({
           ) : null}
           {toBuilders ? (
             <span>
-              {COIN_TALLY_PLAIN_WORDS} The buyer and the app owner are never paid. In a key group with such a
+              {land ? LAND_TALLY_PLAIN_WORDS : COIN_TALLY_PLAIN_WORDS} The buyer and the app owner are never paid. In a key group with such a
               price, every price reads its key as the same plot: a price that pays no builders cannot buy land
               with other players&apos; recorded blocks, and plots may not overlap.
               {context ? ` ${context.builderPurchases.toLocaleString()} purchases so far also paid builders.` : ''}
               {context?.tally
                 ? ` Twinkle has recorded ${context.tally.cells.toLocaleString()} blocks in this app from ${context.tally.builders.toLocaleString()} ${context.tally.builders === 1 ? 'player' : 'players'}.`
                 : ''}{' '}
-              {COIN_TALLY_REMAINING_RISK}
+              {land ? LAND_TALLY_REMAINING_RISK : COIN_TALLY_REMAINING_RISK}
             </span>
           ) : null}
           {resold.length ? (
@@ -207,6 +270,7 @@ export default function CoinPricesSummary({
           <span>Approving needs a review note saying why this is fair.</span>
         </div>
       )}
+      {land ? <LandSummarySection land={land} stats={context?.landStats} /> : null}
       <p>
         {spendBudget
           ? `At most ${spendBudget.userDailyCoins.toLocaleString()} Coins per player per day on purchases in this app (builder payments included). Offers, Sells and takeovers are not limited by it.`

@@ -988,6 +988,92 @@ export default function buildRequestHelpers({
         throw toCardCraftRequestError(error, 'Could not complete the Coins request.');
       }
     },
+    // Twinkle.land runtime calls (edit, cells, plots, set-rules, check,
+    // history). The grant header is the published-runtime one; without it
+    // (drafts, previews) edits are still checked and stored, never credited.
+    // Errors keep the server's code and details (land_throttled carries
+    // retryAfterSeconds).
+    async requestBuildLand({
+      buildId,
+      operation,
+      payload,
+      token,
+      runtimeGrant
+    }: {
+      buildId: number;
+      operation: string;
+      payload: unknown;
+      token: string;
+      runtimeGrant?: string | null;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/land/${operation}`,
+          payload,
+          {
+            ...getBuildRequestConfig({ maxRetries: 0 }),
+            headers: {
+              ...auth().headers,
+              'x-build-api-token': token,
+              ...(runtimeGrant ? { 'x-build-reward-runtime': runtimeGrant } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        throw toCardCraftRequestError(error, 'Could not complete the land request.');
+      }
+    },
+    // Signed-out visitors of a public app read the world and its plots.
+    async requestBuildLandPublic({
+      buildId,
+      operation,
+      payload
+    }: {
+      buildId: number;
+      operation: 'cells' | 'plots';
+      payload: unknown;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/public-land/${operation}`,
+          payload,
+          getBuildRequestConfig({ maxRetries: 0 })
+        );
+        return data;
+      } catch (error) {
+        throw toCardCraftRequestError(error, 'Could not read the land.');
+      }
+    },
+    // A fresh published-runtime grant for the same mounted version (it lives
+    // an hour; a land world can stay open longer).
+    async renewBuildRuntimeGrant({
+      buildId,
+      artifactVersionId,
+      token,
+      runtimeGrant
+    }: {
+      buildId: number;
+      artifactVersionId: number;
+      token: string;
+      runtimeGrant: string;
+    }) {
+      const { data } = await request.post(
+        `${URL}/build/${buildId}/api/rewards/runtime-grant`,
+        { artifactVersionId },
+        {
+          ...getBuildRequestConfig({ maxRetries: 0, totalTimeoutMs: 10_000 }),
+          headers: {
+            ...auth().headers,
+            'x-build-api-token': token,
+            'x-build-reward-runtime': runtimeGrant
+          }
+        }
+      );
+      if (data?.artifactVersionId !== artifactVersionId || typeof data?.runtimeGrant !== 'string')
+        throw new Error('This app version could not renew its grant.');
+      return data.runtimeGrant as string;
+    },
     // Owner draft preview: the draft's own prices, never charged.
     async requestBuildCoinPreview({
       buildId,

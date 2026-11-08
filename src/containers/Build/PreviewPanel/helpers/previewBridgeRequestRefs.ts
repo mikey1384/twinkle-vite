@@ -5,6 +5,9 @@ export interface PreviewHostBridgeRequestRefs {
   requestBuildRewardPreviewRef: AsyncRequestRef;
   requestBuildCoinsRef: AsyncRequestRef;
   requestBuildCoinPreviewRef: AsyncRequestRef;
+  requestBuildLandRef: AsyncRequestRef;
+  requestBuildLandPublicRef: AsyncRequestRef;
+  renewBuildRuntimeGrantRef: AsyncRequestRef;
   requestBuildCardCraftRef: AsyncRequestRef;
   requestBuildCardCraftPreviewRef: AsyncRequestRef;
   requestBuildCraftRef: AsyncRequestRef;

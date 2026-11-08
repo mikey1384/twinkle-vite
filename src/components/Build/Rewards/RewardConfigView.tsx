@@ -220,6 +220,7 @@ export function RewardConfigSummary({
         prices={config.prices || []}
         spendBudget={config.spendBudget}
         context={coinContext}
+        land={config.land}
       />
     </div>
   );
