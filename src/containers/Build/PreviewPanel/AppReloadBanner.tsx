@@ -33,7 +33,7 @@ const textClass = css`
   align-items: center;
   gap: 0.6rem;
   min-width: 0;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 700;
   line-height: 1.45;
 `;
@@ -50,10 +50,13 @@ const laterClass = css`
   border: none;
   background: transparent;
   color: inherit;
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 0;
+  /* a real tap target on phones (36px tall), not just the words */
+  min-height: 36px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
   &:hover {
     text-decoration: underline;
   }
@@ -78,7 +81,7 @@ export function AppReloadBannerView({
         <button type="button" className={laterClass} onClick={onLater} disabled={reloading}>
           Not now
         </button>
-        <GameCTAButton variant="primary" size="sm" onClick={onReload} disabled={reloading} loading={reloading}>
+        <GameCTAButton variant="primary" size="md" style={{ minHeight: 36 }} onClick={onReload} disabled={reloading} loading={reloading}>
           {reloading ? 'Reloading…' : 'Reload'}
         </GameCTAButton>
       </div>

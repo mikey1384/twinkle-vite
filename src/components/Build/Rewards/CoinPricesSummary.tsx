@@ -161,7 +161,8 @@ export function LandSummarySection({
   return (
     <section className={landSectionClass} data-testid="land-summary">
       <h4>Land</h4>
-      <p>{land.text || landReviewText(land)}</p>
+      {/* The heading already says "Land", so the sentence starts after it. */}
+      <p>{(land.text || landReviewText(land)).replace(/^Land\.\s*/, '')}</p>
       {switches.length ? (
         <p>
           Holder switches:{' '}
