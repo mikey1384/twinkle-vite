@@ -4820,6 +4820,23 @@ export function useHostBridge({
             break;
           }
 
+          case 'soundtracks:song': {
+            // Any app plays a published Groove Lab song (Groove Lab player).
+            // A signed-out visitor reads it through the public route.
+            const publicRead = isGuestViewerActive(previewAuth);
+            const token = publicRead
+              ? undefined
+              : await ensureBuildApiToken(['sharedDb:read'], previewAuth);
+            response = await requestRefs.requestBuildSoundtracksRef.current({
+              buildId: activeBuild.id,
+              action: 'song',
+              payload: payload || {},
+              token,
+              publicRead
+            });
+            break;
+          }
+
           case 'soundtracks:sources':
           case 'soundtracks:tags':
           case 'soundtracks:recommendations':

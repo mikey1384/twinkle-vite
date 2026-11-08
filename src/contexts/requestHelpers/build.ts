@@ -6659,18 +6659,22 @@ export default function buildRequestHelpers({
       }
     },
 
-    async requestBuildSoundtracks({ buildId, action, payload, token }: {
+    async requestBuildSoundtracks({ buildId, action, payload, token, publicRead = false }: {
       buildId: number;
-      action: 'sources' | 'tags' | 'recommendations' | 'request-tag' | 'remove-tag';
+      action: 'song' | 'sources' | 'tags' | 'recommendations' | 'request-tag' | 'remove-tag';
       payload: Record<string, unknown>;
       token?: string;
+      // a signed-out visitor's song read (public route, no sign-in)
+      publicRead?: boolean;
     }) {
       try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/soundtracks/${action}`,
-          payload,
-          getBuildApiConfig(token)
-        );
+        const { data } = publicRead && action === 'song'
+          ? await request.post(`${URL}/build/${buildId}/public-soundtracks/song`, payload)
+          : await request.post(
+              `${URL}/build/${buildId}/api/soundtracks/${action}`,
+              payload,
+              getBuildApiConfig(token)
+            );
         return data;
       } catch (error) {
         return handleContentWriteError(error);
