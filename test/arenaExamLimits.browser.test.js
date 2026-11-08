@@ -29,7 +29,7 @@ const exam={key:'c1-advanced',name:'C1 Advanced',nameEn:'C1 Advanced',code:'X1',
 const challenge={id:9,examKey:exam.key,examName:exam.name,examNameEn:exam.name,code:exam.code,codeLabel:null,
  length:'short',difficulty:'normal',sharer:{id:2,username:'Fixture member',profilePicUrl:null}};
 function App(){
- const [c,setCase]=useState({surface:'cover',phase:'prepare',code:'ARENA_DAILY_EXAM_LIMIT',sequence:0});
+ const [c,setCase]=useState({surface:'cover',phase:'prepare',code:'ARENA_NEXT_PAPER_PENDING',sequence:0});
  window.showFixture=next=>{window.calls={prepare:0,start:0};window.opened=null;window.chosen=null;closeAssistantDock();window.cancelled=false;flushSync(()=>setCase(prev=>({...next,sequence:prev.sequence+1})));};
  window.calls ||= {prepare:0,start:0};
  const error=()=>({code:c.code});
@@ -87,7 +87,7 @@ test('covers and shared challenges explain admission limits, keep review and ret
         await page.waitForFunction(() => !!window.showFixture);
         for (const surface of ['cover', 'challenge']) {
           const startButton = () => page.getByRole('button', { name: surface === 'cover' ? 'Start' : 'Challenge!', exact: true });
-          for (const phase of ['prepare', 'start']) for (const code of ['ARENA_DAILY_EXAM_LIMIT', 'ARENA_NEXT_PAPER_PENDING', 'ARENA_MASTERY_MARKING_PENDING', 'ARENA_PREREQUISITE_REQUIRED']) {
+          for (const phase of ['prepare', 'start']) for (const code of ['ARENA_NEXT_PAPER_PENDING', 'ARENA_MASTERY_MARKING_PENDING', 'ARENA_PREREQUISITE_REQUIRED']) {
             await page.evaluate(c => window.showFixture(c), { surface, phase, code });
             if (phase === 'start') {
               await page.getByText(/Start as many exams as you like/).waitFor();
@@ -95,7 +95,7 @@ test('covers and shared challenges explain admission limits, keep review and ret
             }
             const alert = page.getByRole('alert');
             await alert.waitFor();
-            assert.match(await alert.innerText(), ({ARENA_DAILY_EXAM_LIMIT:/already started today/,ARENA_NEXT_PAPER_PENDING:/next different paper/,ARENA_MASTERY_MARKING_PENDING:/still being marked/,ARENA_PREREQUISITE_REQUIRED:/prerequisite exam/})[code]);
+            assert.match(await alert.innerText(), ({ARENA_NEXT_PAPER_PENDING:/next different paper/,ARENA_MASTERY_MARKING_PENDING:/still being marked/,ARENA_PREREQUISITE_REQUIRED:/prerequisite exam/})[code]);
             assert.equal(await startButton().isEnabled(), false);
             assert.equal(await page.getByRole('button', { name: 'Try again', exact: true }).count(), 0);
             assert.equal(await page.getByText('Checking available rewards…', { exact: true }).count(), 0);
