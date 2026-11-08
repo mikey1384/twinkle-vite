@@ -503,9 +503,10 @@ export default function usePostDrafts({
     if (isEmptyDraftText(text)) return;
     const key = mountedRef.current ? activeKeyRef.current : newKey();
     if (!key) return;
-    // with no form open, the next one reopens on this draft rather than
-    // saving it again (an open form keeps its own draft)
-    if (!mountedRef.current && !isPostFormOpen()) session.activeKey = key;
+    // The next opening continues this draft rather than saving it again:
+    // this form's own (mounted), or with no form open; an open form that
+    // isn't this one keeps its own draft.
+    if (mountedRef.current || !isPostFormOpen()) session.activeKey = key;
     void saveNow(key, text);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
