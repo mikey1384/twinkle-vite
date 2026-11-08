@@ -29,7 +29,7 @@ export default function ModeChooser({
     arena?.excellenceVia === 'battle'
       ? 'Boss beaten today'
       : arena?.basicVia === 'battle'
-        ? 'Battle cleared today'
+        ? 'Full exam won today'
         : 'Bosses ready';
 
   const CARDS = [

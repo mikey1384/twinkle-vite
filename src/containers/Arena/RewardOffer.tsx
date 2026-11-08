@@ -4,13 +4,18 @@ import RewardChips from '~/components/RewardChips';
 import type { ArenaRewardOffer } from './types';
 import MasteryProgress from './MasteryProgress';
 
-export default function RewardOffer({ offer, compact = false }: { offer: ArenaRewardOffer; compact?: boolean }) {
+export default function RewardOffer({ offer, compact = false, length }: { offer: ArenaRewardOffer; compact?: boolean; length?: ArenaRewardOffer['length'] }) {
+  // Two different lines, both always visible (Mikey 11-08): the reward
+  // target pays XP and Coins; the Win score is what counts as beating the
+  // exam and, on a Full timed exam, for the daily Arena goals.
+  const full = (length || offer.length) === 'full';
   const available = offer.xp > 0 || offer.coins > 0;
   const reduced = offer.freshPoints != null && offer.totalPoints != null && offer.freshPoints < offer.totalPoints;
   return <div className={offerCls} aria-label="Exam reward target">
     {offer.mastery && <MasteryProgress progress={offer.mastery} />}
     {offer.nextPaperAvailable === false && <p role="status">Your next different paper is being prepared. Previous results stay available for review.</p>}
-    <strong>Reward target: {offer.target} / {offer.max}</strong>
+    <strong>Reward target: {offer.target} / {offer.max} <span className={lineNoteCls}>· earns XP and Coins</span></strong>
+    {offer.winAt != null && <strong>Win: {offer.winAt}+{full && <span className={lineNoteCls}> · counts for Arena Basic ({offer.mastery?.solo ? 'a solo mastery clear always earns Excellence' : 'Excellence at your age level or higher'})</span>}</strong>}
     {!!offer.requirements?.length && (compact
       ? <p>Also reach 50% in each required skill group.</p>
       : <RewardRequirements requirements={offer.requirements} />)}
@@ -72,4 +77,9 @@ const offerCls = css`
   > div { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
   > div > span:first-child { min-width: 6.2rem; font-weight: 600; }
   p { margin: 0.2rem 0; font-size: 1.1rem; }
+`;
+
+const lineNoteCls = css`
+  font-weight: 600;
+  opacity: 0.8;
 `;

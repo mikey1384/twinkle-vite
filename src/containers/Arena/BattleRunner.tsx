@@ -1368,6 +1368,10 @@ function Result({ data }: { data: ArenaBattle }) {
   const waiting = markedItems.filter(
     (item) => item.marking?.status !== 'marked'
   );
+  // marks still coming, or in but not yet settled into the score: the win
+  // (and the daily goal) is decided after marking
+  // (marks only add points, so a score already at the win line is final)
+  const markingOpen = !battle.won && (waiting.length > 0 || (!!battle.marking && !battle.marking.settled));
   const waitingPoints = waiting.reduce((sum, item) => sum + item.points, 0);
   const needsEnergy = waiting.some((item) =>
     ['awaiting', 'failed'].includes(item.marking?.status || '')
@@ -1410,6 +1414,23 @@ function Result({ data }: { data: ArenaBattle }) {
         <strong>
           {shownPoints} / {battle.maxPoints}
         </strong>
+        {/* win or not, in words (Mikey 11-08): the reward target pays XP,
+            but only a win counts as beating the exam and, on a Full timed
+            exam, for today's Arena goals */}
+        {battle.mode === 'battle' && battle.winAt != null && (
+          <>
+            <span className={winStatusCls} role="status">
+              {markingOpen
+                ? `Win: ${battle.winAt}+ · decided after marking`
+                : battle.won
+                  ? `Win! You reached ${battle.winAt}+`
+                  : `Not a win: ${battle.winAt}+ wins`}
+            </span>
+            {battle.length === 'full' && (
+              <span className={resultNoteCls}>{dailyGoalNote(battle, markingOpen)}</span>
+            )}
+          </>
+        )}
         {battle.exam.scoreRules && <span className={resultNoteCls}><ScoreRules rules={battle.exam.scoreRules} /> Writing and experimental questions are unscored.</span>}
         {aiMarked && (
           <span className={resultNoteCls}>
@@ -1481,7 +1502,7 @@ function Result({ data }: { data: ArenaBattle }) {
           {!battle.won ? (
             battle.winAt != null && (
               <span className={winHintCls}>
-                {battle.winAt}+ is a win you can share
+                Win with {battle.winAt}+ to share this paper as a challenge
               </span>
             )
           ) : sharedId ? (
@@ -2096,6 +2117,31 @@ const shareCls = css`
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.6rem;
+`;
+
+// What a finished Full timed result means for the daily Arena goal, in one
+// line (Mikey 11-08). A battle counts on the day it started; any win gives
+// Basic, a win at the member's age level or higher also gives Excellence.
+function dailyGoalNote(battle: ArenaBattle['battle'], markingOpen: boolean) {
+  const goal = battle.dailyGoal;
+  const ageText = (level: number) => (level >= 19 ? 'Adult' : String(level));
+  if (markingOpen) return 'Whether it counts for the daily Arena goal is decided after marking.';
+  if (goal?.masteryClearedToday) return "This solo mastery clear counts for today's Arena Basic and Excellence goals.";
+  if (!battle.won) {
+    return `Only a Full win counts for the daily Arena goal.${(battle.reward?.xpEarned || 0) > 0 ? ' This result still earned XP and Coins at the reward target.' : ''}`;
+  }
+  if (!goal) return 'A Full win counts for the daily Arena goal.';
+  if (!goal.startedToday) return 'Wins count for the Arena goal of the day the exam was started.';
+  if (goal.memberAgeLevel == null) return "This win counts for today's Arena Basic goal. Excellence by exam needs an approved birthday.";
+  return goal.examAgeLevel >= goal.memberAgeLevel
+    ? "This win counts for today's Arena Basic and Excellence goals."
+    : `This win counts for today's Arena Basic goal. Excellence needs an exam at age level ${ageText(goal.memberAgeLevel)} or higher (this one is ${ageText(goal.examAgeLevel)}).`;
+}
+
+const winStatusCls = css`
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.4;
 `;
 
 const winHintCls = css`

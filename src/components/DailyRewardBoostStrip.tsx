@@ -1147,9 +1147,43 @@ export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
   // existing requirements; the server owns every qualification flag.
   const arena = aiStory?.arena;
   const arenaAge = arena?.excellenceAgeLevel;
+  // A Full exam counts only when WON: its Win score (shown on each boss
+  // card and result), a separate line from the reward target (Mikey 11-08:
+  // a member paid at 56/60 on TOSEL Basic expected the goal; a win is 57+).
   const arenaGoal = arenaAge == null
-    ? 'clear a Full exam at your age level or higher (birthday approval needed), or complete solo mastery'
-    : `clear a Full exam at age level ${arenaAge >= 19 ? 'Adult' : arenaAge} or higher (any difficulty), or complete solo mastery`;
+    ? 'win a Full exam at your age level or higher (birthday approval needed), or complete solo mastery'
+    : `win a Full exam at age level ${arenaAge >= 19 ? 'Adult' : arenaAge} or higher (any difficulty), or complete solo mastery`;
+  const fullAttempts: {
+    examName: string;
+    points: number;
+    max: number;
+    winAt: number;
+    won: boolean;
+    pending?: boolean;
+    ageLevel: number;
+  }[] = Array.isArray(arena?.fullAttempts) ? arena.fullAttempts : [];
+  const ageText = (level: number) => (level >= 19 ? 'Adult' : String(level));
+  const fullWins = fullAttempts.filter((attempt) => attempt.won && !attempt.pending);
+  const pendingAttempt = fullAttempts.find((attempt) => attempt.pending);
+  // today's closest finished Full exam that wasn't a win
+  const closestMiss = fullAttempts
+    .filter((attempt) => !attempt.won && !attempt.pending && attempt.winAt > 0)
+    .sort((a, b) => b.points / b.winAt - a.points / a.winAt)[0];
+  const winBelowAge =
+    arenaAge != null &&
+    fullWins.length > 0 &&
+    !fullWins.some((attempt) => attempt.ageLevel >= arenaAge)
+      ? fullWins[fullWins.length - 1]
+      : null;
+  const examProgress = winBelowAge
+    ? ` Today's ${winBelowAge.examName} win counts for Basic; Excellence needs an exam at age level ${ageText(arenaAge)} or higher.`
+    : !fullWins.length && pendingAttempt
+      ? ` Today's ${pendingAttempt.examName} is still being marked; the win is decided after marking.`
+      : !fullWins.length && closestMiss
+        ? ` Today: ${closestMiss.examName} ${closestMiss.points}/${closestMiss.max}; a win needs ${closestMiss.winAt}+${
+            arenaAge != null && closestMiss.ageLevel < arenaAge ? ' (that exam counts for Basic only)' : ''
+          }.`
+        : ' A win is the Win score on each boss card.';
   const train = arena?.train;
   const trainBasic = train?.targets?.basic || { answers: 10, share: 0.8 };
   const trainExcellence = train?.targets?.excellence || {
@@ -1164,18 +1198,18 @@ export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
     train?.answered > 0
       ? ` Train today: ${train.right} of ${train.answered} right, ${train.weak} on weak spots.`
       : '';
-  let description = `Excellence: clear Read and Listen at ${excellenceTargetPhrase}, ${arenaGoal}, or ${trainExcellencePhrase}.${trainProgress}`;
+  let description = `Excellence: clear Read and Listen at ${excellenceTargetPhrase}, ${arenaGoal}, or ${trainExcellencePhrase}.${examProgress}${trainProgress}`;
   if (excellenceAchieved) {
     description =
       aiStory?.excellenceVia === 'arena'
         ? arena?.excellenceVia === 'train'
           ? 'Train Excellence reached.'
-          : arena?.masteryCleared ? 'Solo mastery cleared.' : 'Full exam cleared at your age level or higher.'
+          : arena?.masteryCleared ? 'Solo mastery cleared.' : 'Full exam won at your age level or higher.'
         : 'Read and Listen both cleared.';
   } else if (hasReading && !hasListening) {
-    description = `Read is done. Finish Listen at ${excellenceTargetPhrase}, ${arenaGoal}, or ${trainExcellencePhrase}.${trainProgress}`;
+    description = `Read is done. Finish Listen at ${excellenceTargetPhrase}, ${arenaGoal}, or ${trainExcellencePhrase}.${examProgress}${trainProgress}`;
   } else if (!hasReading && hasListening) {
-    description = `Listen is done. Finish Read at ${excellenceTargetPhrase}, ${arenaGoal}, or ${trainExcellencePhrase}.${trainProgress}`;
+    description = `Listen is done. Finish Read at ${excellenceTargetPhrase}, ${arenaGoal}, or ${trainExcellencePhrase}.${examProgress}${trainProgress}`;
   }
 
   return {
@@ -1184,9 +1218,9 @@ export function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
       ? aiStory?.basicVia === 'arena'
         ? arena?.basicVia === 'train'
           ? 'Train goal cleared'
-          : 'Full Arena exam cleared'
+          : 'Full Arena exam won'
         : `AI Story Lv${highestPassedLevel} cleared`
-      : `Clear AI Story ${basicTargetPhrase}, clear any Full exam (any difficulty), or get ${percent(trainBasic.share)} of ${trainBasic.answers}+ Train questions right`,
+      : `Clear AI Story ${basicTargetPhrase}, win any Full exam (any difficulty), or get ${percent(trainBasic.share)} of ${trainBasic.answers}+ Train questions right`,
     description,
     tone: 'logoBlue',
     basicAchieved,

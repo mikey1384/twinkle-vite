@@ -20,6 +20,10 @@ export interface ArenaRewardOffer {
   baseCoins: number;
   target: number;
   max: number;
+  // the score that wins this exam (and, on a Full timed exam, counts for
+  // the daily Arena goals); a separate line from the reward target
+  winAt?: number | null;
+  length?: 'short' | 'medium' | 'full';
   freshPoints?: number;
   totalPoints?: number;
   dailyRemaining?: number;
@@ -98,6 +102,8 @@ export interface ArenaBattleSummary {
   aiMarked?: boolean;
   // its essay or spoken answers' marking (lists and the result)
   marking?: ArenaMarkingSummary;
+  // a finished Full timed battle: what it means for the daily Arena goal
+  dailyGoal?: { startedToday: boolean; masteryClearedToday?: boolean; examAgeLevel: number; memberAgeLevel: number | null };
   mode: 'battle' | 'untimed';
   status: 'open' | 'grading' | 'finished' | 'abandoned';
   rawPoints: number | null;
