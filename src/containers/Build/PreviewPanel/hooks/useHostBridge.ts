@@ -5636,7 +5636,8 @@ export function useHostBridge({
           case 'land:plots':
           case 'land:set-rules':
           case 'land:check':
-          case 'land:history': {
+          case 'land:history':
+          case 'land:mine': {
             // Twinkle.land over HTTP. Signed-out visitors of a public app read
             // cells and plots through the public route; everything else needs
             // sign-in. Only the app's documented fields are forwarded.

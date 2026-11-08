@@ -32,6 +32,7 @@ test('land requests forward only documented fields, with the right scope', () =>
     'land:check',
     'land:edit',
     'land:history',
+    'land:mine',
     'land:plots',
     'land:set-rules'
   ]);
@@ -51,13 +52,24 @@ test('land requests forward only documented fields, with the right scope', () =>
   assert.deepEqual(rules.body, { key: 'fw3:0:0', build: 'friends' });
   assert.equal(planLandRequest('land:check', { key: 'k', priceId: 'p', coins: 0 }, { signedIn: true, publicApp: false }).scope, 'land:read');
   assert.throws(() => planLandRequest('land:grant', {}, { signedIn: true, publicApp: true }), /Unknown land request/);
+  // Phase 3b: the player's own blocks (identity from the token only) and a plot's history newest first.
+  assert.deepEqual(planLandRequest('land:mine', { region: 'fw3', ignore: [8], userId: 9 }, { signedIn: true, publicApp: true }), {
+    operation: 'mine',
+    scope: 'land:read',
+    body: { region: 'fw3', ignore: [8] },
+    publicRead: false
+  });
+  assert.deepEqual(
+    planLandRequest('land:history', { key: 'fw3:0:0', order: 'newest', sinceAt: 5, before: 9, viewerId: 2 }, { signedIn: true, publicApp: true }).body,
+    { key: 'fw3:0:0', order: 'newest', sinceAt: 5, before: 9 }
+  );
 });
 
 test('signed-out visitors read cells and plots of a public app through the public route only', () => {
   const guest = { signedIn: false, publicApp: true };
   assert.equal(planLandRequest('land:cells', { region: 'fw3' }, guest).publicRead, true);
   assert.equal(planLandRequest('land:plots', { region: 'fw3' }, guest).publicRead, true);
-  for (const type of ['land:edit', 'land:set-rules', 'land:check', 'land:history'])
+  for (const type of ['land:edit', 'land:set-rules', 'land:check', 'land:history', 'land:mine'])
     assert.equal(planLandRequest(type, { region: 'fw3' }, guest).publicRead, false, type);
   assert.equal(planLandRequest('land:cells', { region: 'fw3' }, { signedIn: false, publicApp: false }).publicRead, false);
   assert.equal(planLandRequest('land:cells', { region: 'fw3' }, { signedIn: true, publicApp: true }).publicRead, false);

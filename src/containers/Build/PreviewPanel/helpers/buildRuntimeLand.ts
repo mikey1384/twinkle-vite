@@ -12,7 +12,8 @@ export const LAND_REQUEST_TYPES = new Set([
   'land:plots',
   'land:set-rules',
   'land:check',
-  'land:history'
+  'land:history',
+  'land:mine'
 ]);
 
 // land:<op> → the API's /build/:id/api/land/<op>, with the token scope it
@@ -47,8 +48,11 @@ const LAND_OPERATIONS: Record<
   'land:history': {
     operation: 'history',
     scope: 'land:read',
-    fields: ['region', 'x', 'y', 'z', 'before', 'key', 'since']
-  }
+    fields: ['region', 'x', 'y', 'z', 'before', 'key', 'since', 'order', 'sinceAt']
+  },
+  // The signed-in player's own blocks (who is decided by the server from the
+  // token, never by the app).
+  'land:mine': { operation: 'mine', scope: 'land:read', fields: ['region', 'ignore'] }
 };
 
 export function landRequestError(message: string, code: string, details?: unknown) {
