@@ -19,7 +19,6 @@ import type {
   BuildRuntimeObservationState
 } from '../types/runtimeObservationTypes';
 import GuestRestrictionBanner from './GuestRestrictionBanner';
-import AppReloadBanner from './AppReloadBanner';
 import {
   buildEditableProjectFiles,
   buildProjectExplorerEntries,
@@ -1700,13 +1699,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             )
           : null}
         <AppHelperModal pairing={appHelper} />
-        {runtimeOnly ? (
-          <AppReloadBanner
-            buildId={Number(build.id)}
-            mountedArtifactVersionId={appHelperRelease.artifactVersionId}
-            frameKey={runtimePreviewFrameSrc}
-          />
-        ) : null}
 
         <div
           className={css`

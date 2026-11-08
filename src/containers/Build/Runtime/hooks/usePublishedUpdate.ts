@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { socket } from '~/constants/sockets/api';
+import { askReloadVersion } from '~/containers/Build/PreviewPanel/helpers/buildRuntimeLand';
 
 // Check only the visible app, with jitter so a release does not synchronize
 // every player's next request against the writer database.
@@ -116,6 +118,20 @@ export function usePublishedUpdate({
         : current);
       requestCheck();
     };
+    // The server says a new version went live (land and multiplayer apps): show
+    // the same notice now. Its version is authoritative, so no read is needed
+    // (a lagging replica could otherwise answer with the old version).
+    const onAppUpdated = (event: unknown) => {
+      if (stopped) return;
+      const latest = askReloadVersion({ event, buildId: activeBuildId, loadedVersion });
+      if (latest === null) return;
+      setNotice((current) =>
+        current?.sessionKey === activeSessionKey && current.versionId === latest
+          ? current
+          : { sessionKey: activeSessionKey, versionId: latest, dismissed: false }
+      );
+    };
+    socket.on('build_app_updated', onAppUpdated);
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('focus', requestCheck);
     window.addEventListener('pageshow', requestCheck);
@@ -127,6 +143,7 @@ export function usePublishedUpdate({
     requestCheck();
     return () => {
       stopped = true;
+      socket.off('build_app_updated', onAppUpdated);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', requestCheck);
       window.removeEventListener('pageshow', requestCheck);

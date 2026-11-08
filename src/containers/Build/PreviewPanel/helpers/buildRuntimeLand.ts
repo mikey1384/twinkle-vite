@@ -261,22 +261,24 @@ export function createLandGrantKeeper({
   };
 }
 
-// "This app was updated. Reload" (design section 6): the banner shows when
-// the server says a newer published version asks for a reload and this tab
-// runs another one (older, or newer after a rollback). A draft preview (no published version mounted) never
-// shows it.
-export function shouldShowAppReloadBanner({
+// The server's "this app was updated" ask (build_app_updated, sent on every
+// live-version change of a land or multiplayer app). It feeds the website's one
+// update notice (PublishedUpdateNotice via usePublishedUpdate) at once instead of
+// waiting for its next poll: one notice per update, never a second banner (Mikey,
+// 11-09). Returns the new live version when it differs from the one this tab
+// runs; null otherwise (other apps, drafts and previews never).
+export function askReloadVersion({
   event,
   buildId,
-  mountedArtifactVersionId
+  loadedVersion
 }: {
   event: any;
   buildId: number | null | undefined;
-  mountedArtifactVersionId: number | null | undefined;
-}) {
-  if (!event?.askReload) return false;
-  if (!buildId || Number(event.buildId) !== Number(buildId)) return false;
-  const mounted = Number(mountedArtifactVersionId || 0);
+  loadedVersion: number | null | undefined;
+}): number | null {
+  if (!event?.askReload) return null;
+  if (!buildId || Number(event.buildId) !== Number(buildId)) return null;
+  const mounted = Number(loadedVersion || 0);
   const latest = Number(event.artifactVersionId || 0);
-  return mounted > 0 && latest > 0 && latest !== mounted;
+  return mounted > 0 && Number.isSafeInteger(latest) && latest > 0 && latest !== mounted ? latest : null;
 }

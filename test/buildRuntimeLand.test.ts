@@ -10,7 +10,7 @@ import {
   landEventTargetWindows,
   landGrantExpiresAt,
   planLandRequest,
-  shouldShowAppReloadBanner,
+  askReloadVersion,
   worldEditPayload,
   worldJoinLand
 } from '../src/containers/Build/PreviewPanel/helpers/buildRuntimeLand';
@@ -168,15 +168,15 @@ test('the grant is renewed shortly before it ends, once, and kept when renewal f
   assert.equal(landGrantExpiresAt('not-a-jwt'), null);
 });
 
-test('the reload banner shows only on a published tab running another version', () => {
+test('the server update ask feeds the one update notice only on a published tab running another version', () => {
   const event = { buildId: 363, artifactVersionId: 9002, askReload: true };
-  assert.equal(shouldShowAppReloadBanner({ event, buildId: 363, mountedArtifactVersionId: 9001 }), true);
-  assert.equal(shouldShowAppReloadBanner({ event, buildId: 363, mountedArtifactVersionId: 9002 }), false);
-  assert.equal(shouldShowAppReloadBanner({ event, buildId: 364, mountedArtifactVersionId: 9001 }), false);
-  assert.equal(shouldShowAppReloadBanner({ event, buildId: 363, mountedArtifactVersionId: null }), false, 'drafts never');
-  assert.equal(shouldShowAppReloadBanner({ event: { ...event, askReload: false }, buildId: 363, mountedArtifactVersionId: 1 }), false);
+  assert.equal(askReloadVersion({ event, buildId: 363, loadedVersion: 9001 }), Number(event.artifactVersionId));
+  assert.equal(askReloadVersion({ event, buildId: 363, loadedVersion: 9002 }), null);
+  assert.equal(askReloadVersion({ event, buildId: 364, loadedVersion: 9001 }), null);
+  assert.equal(askReloadVersion({ event, buildId: 363, loadedVersion: null }), null, 'drafts never');
+  assert.equal(askReloadVersion({ event: { ...event, askReload: false }, buildId: 363, loadedVersion: 1 }), null);
   // A rollback asks newer tabs to reload too.
-  assert.equal(shouldShowAppReloadBanner({ event: { ...event, artifactVersionId: 9000 }, buildId: 363, mountedArtifactVersionId: 9001 }), true);
+  assert.equal(askReloadVersion({ event: { ...event, artifactVersionId: 9000 }, buildId: 363, loadedVersion: 9001 }), 9000);
 });
 
 test('review words: the land sentence matches the API and land changes the builder words', () => {
