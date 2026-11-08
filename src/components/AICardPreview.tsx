@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import AICardDetails from '~/components/AICardDetails';
 import AICardMarketDetails from '~/components/AICardMarketDetails';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { useChatContext } from '~/contexts';
 import { Card } from '~/types';
 
 export default function AICardPreview({
@@ -24,6 +25,16 @@ export default function AICardPreview({
   style?: React.CSSProperties;
   onClick?: () => void;
 }) {
+  // Callers can pass a partial card (a trade sends only { id } past its
+  // first five cards). The artwork loads the full card into cardObj, so the
+  // details and burn value read that live copy too instead of the stub.
+  const liveCard = useChatContext((v) =>
+    card.id ? v.state.cardObj[card.id] : undefined
+  );
+  const displayedCard = useMemo(
+    () => (liveCard ? { ...card, ...liveCard } : card),
+    [card, liveCard]
+  );
   return (
     <div
       role={onClick ? 'button' : undefined}
@@ -41,12 +52,12 @@ export default function AICardPreview({
       <div className="compact-ai-card-preview__card-stage">{artwork}</div>
       <AICardDetails
         className="compact-ai-card-preview__details"
-        card={card}
+        card={displayedCard}
         density={density}
         brief={brief}
         showIdentity
       />
-      <AICardMarketDetails card={card} />
+      <AICardMarketDetails card={displayedCard} />
     </div>
   );
 

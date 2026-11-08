@@ -105,13 +105,17 @@ export function CardOwner({
 export default function AICardMarketDetails({ card }: { card: Partial<Card> }) {
   const { colorKey } = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const xpNumberColor = colorKey && colorKey in Color ? colorKey : 'logoGreen';
+  // Never guess: a card still loading has no level or quality yet, and a
+  // level 1 common default showed a wrong burn value (356 XP) on trade cards.
   const burnXP =
     card.quality === '???'
       ? '???'
-      : returnCardBurnXP({
-          cardLevel: Number(card.level || 1),
-          cardQuality: card.quality || 'common'
-        });
+      : !card.level || !card.quality
+        ? '…'
+        : returnCardBurnXP({
+            cardLevel: Number(card.level),
+            cardQuality: card.quality
+          });
   return (
     <div
       className={`compact-ai-card-preview__market ${css`
