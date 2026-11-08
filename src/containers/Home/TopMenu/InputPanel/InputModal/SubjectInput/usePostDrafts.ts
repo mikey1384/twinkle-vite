@@ -81,16 +81,6 @@ export function startNewPostDraft() {
 
 // A draft deleted outside the drafts row (closing the form with no title):
 // call before deleting it, so a save still on its way can't bring it back.
-export function forgetActivePostDraft() {
-  const key = session.activeKey;
-  if (!key) return;
-  session.removedKeys.add(key);
-  session.idByKey.delete(key);
-  session.savedTextByKey.delete(key);
-  session.extrasByKey.delete(key);
-  session.activeKey = '';
-}
-
 export function forgetPostDraft(id: number) {
   for (const [key, knownId] of session.idByKey) {
     if (knownId !== id) continue;
@@ -513,8 +503,9 @@ export default function usePostDrafts({
     if (isEmptyDraftText(text)) return;
     const key = mountedRef.current ? activeKeyRef.current : newKey();
     if (!key) return;
-    // the form (closed) reopens on this draft rather than saving it again
-    if (!mountedRef.current) session.activeKey = key;
+    // with no form open, the next one reopens on this draft rather than
+    // saving it again (an open form keeps its own draft)
+    if (!mountedRef.current && !isPostFormOpen()) session.activeKey = key;
     void saveNow(key, text);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -534,8 +525,9 @@ export default function usePostDrafts({
       freshKeysRef.current.add(key);
       const text = getText();
       setEntries((prev) => [{ key, ...text }, ...prev]);
-      setActiveKey(key);
     }
+    // (also re-syncs the session's key, which App cleared)
+    setActiveKey(key);
     scheduleSave();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

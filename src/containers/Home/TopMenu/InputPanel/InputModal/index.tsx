@@ -8,7 +8,6 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
 import usePendingAction from '~/helpers/hooks/usePendingAction';
 import {
-  forgetActivePostDraft,
   forgetPostDraft,
   waitForPostDraftSaves
 } from './SubjectInput/usePostDrafts';
@@ -136,7 +135,6 @@ export default function InputModal({
         onSetHasSecretAnswer(false);
         const draftId = draftIdRef.current;
         // forgotten first, so a save still on its way can't recreate it
-        forgetActivePostDraft();
         forgetPostDraft(draftId);
         await deleteDraft(draftId);
       } catch (error) {

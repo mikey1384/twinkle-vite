@@ -145,6 +145,7 @@ function SubjectInput({
   const onResetSubjectInput = useInputContext(
     (v) => v.actions.onResetSubjectInput
   );
+  const getInputState = useInputContext((v) => v.getInputState);
   const onResetContentInput = useInputContext(
     (v) => v.actions.onResetContentInput
   );
@@ -299,7 +300,11 @@ function SubjectInput({
     if (!wasUploading || uploadingFile || postingRef.current) return;
     // after this render's effects (the title syncs in the parent's)
     const timer = window.setTimeout(() => {
-      if (!isEmptyDraftText(getDraftText())) saveFormAsNewDraft();
+      if (isEmptyDraftText(getDraftText())) return;
+      // it's the form's own text now (if the list is still loading, it's
+      // kept and saved when it arrives)
+      preserveLocalDraftStateRef.current = true;
+      saveFormAsNewDraft();
     });
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -961,7 +966,13 @@ function SubjectInput({
         // holds another draft: leave it (and don't close it). With none
         // open, the posted text is cleared so it doesn't come back.
         onLoadNewFeeds([data]);
-        if (!isPostFormOpen()) {
+        // the posted text is cleared unless a form opened since holds
+        // something else
+        const current = getInputState()?.subject?.details || {};
+        const stillPostedText =
+          (current.title || '') === postedText.title &&
+          (current.description || '') === postedText.description;
+        if (!isPostFormOpen() || stillPostedText) {
           onResetSubjectInput();
           onResetContentInput();
         }
