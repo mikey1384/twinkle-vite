@@ -208,7 +208,8 @@ export default function contentRequestHelpers({
       content,
       rootType,
       rootId,
-      secretAnswer
+      secretAnswer,
+      extras
     }: {
       contentType: string;
       draftId?: number;
@@ -218,6 +219,9 @@ export default function contentRequestHelpers({
       rootType?: string;
       rootId?: number;
       secretAnswer?: string;
+      // post drafts: attachment (link/video), secret switch, reward level,
+      // "I made this myself"; left out, the saved value stays as it is
+      extras?: Record<string, any> | null;
     }) {
       try {
         const { data } = await request.post(
@@ -230,7 +234,8 @@ export default function contentRequestHelpers({
             content,
             rootType,
             rootId,
-            secretAnswer
+            secretAnswer,
+            ...(extras !== undefined ? { extras } : {})
           },
           auth()
         );

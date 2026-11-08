@@ -216,7 +216,8 @@ function SubjectInput({
     markPosted: markDraftPosted,
     finishPost: finishDraftPost,
     keepAsDraft: keepTextAsDraft,
-    saveFormAsNewDraft
+    saveFormAsNewDraft,
+    saveIfExtrasChanged
   } = usePostDrafts({
     userId,
     drafts,
@@ -290,6 +291,20 @@ function SubjectInput({
       setAttachContentModalShown(true);
     }
   }, [inputModalType]);
+
+  // Attaching a link or video, or flipping the secret-message, reward or
+  // "I made this myself" setting, saves the draft too (they're kept with
+  // it). The first run is the form opening, not a change.
+  const extrasMountedRef = useRef(false);
+  useEffect(() => {
+    if (!extrasMountedRef.current) {
+      extrasMountedRef.current = true;
+      return;
+    }
+    if (isEmptyDraftText(getDraftText())) return;
+    saveIfExtrasChanged();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attachment, rewardLevel, isMadeByUser, hasSecretAnswer]);
 
   // A file post that failed is put back in the form (by App): it saves
   // again as a draft, as a failed plain post does.
@@ -867,11 +882,16 @@ function SubjectInput({
   }
 
   function getDraftExtras(): PostDraftExtras {
+    // the store's latest committed values (this render's props can lag a
+    // render behind a draft being applied), like the refs below
+    const details = getInputState?.()?.subject?.details;
     return {
-      attachment,
-      secretAttachment,
+      attachment: details ? (details.attachment ?? null) : attachment,
+      secretAttachment: details
+        ? (details.secretAttachment ?? null)
+        : secretAttachment,
       hasSecretAnswer: !!hasSecretAnswerRef.current,
-      rewardLevel,
+      rewardLevel: details ? Number(details.rewardLevel) || 0 : rewardLevel,
       isMadeByUser: isMadeByUserRef.current
     };
   }
@@ -951,6 +971,7 @@ function SubjectInput({
       description,
       secretAnswer: hasSecretAnswer ? secretAnswer : ''
     };
+    const postedExtras = getDraftExtras();
     try {
       const data = await uploadContent({
         rootId: attachment?.id,
@@ -994,23 +1015,26 @@ function SubjectInput({
         postingRef.current = false;
         finishDraftPost();
       } else {
-        keepUnpostedTextAsDraft(postedText);
+        keepUnpostedTextAsDraft(postedText, postedExtras);
       }
       onSetSubmittingSubject(false);
       onModalHide();
     } catch (error) {
       console.error(error);
-      keepUnpostedTextAsDraft(postedText);
+      keepUnpostedTextAsDraft(postedText, postedExtras);
       onSetSubmittingSubject(false);
     }
   }
 
   // The post didn't go: its text saves again, as a new draft. If the form
   // was closed meanwhile, a message says so (it's in their drafts).
-  function keepUnpostedTextAsDraft(postedText: PostDraftText) {
+  function keepUnpostedTextAsDraft(
+    postedText: PostDraftText,
+    postedExtras: PostDraftExtras
+  ) {
     postingRef.current = false;
     finishDraftPost();
-    keepTextAsDraft(postedText);
+    keepTextAsDraft(postedText, postedExtras);
     if (unmountedRef.current) {
       showToast({
         message:

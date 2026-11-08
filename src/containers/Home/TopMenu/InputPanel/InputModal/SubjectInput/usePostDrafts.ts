@@ -8,6 +8,15 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 // is ever written into a different draft. While a post is on its way, the
 // drafts can't be switched, started or deleted.
 
+// What the server keeps of a draft's extras (no files: they're only
+// uploaded when posting).
+export interface SavedDraftExtras {
+  attachment?: { contentType: 'video' | 'url'; id: number; title: string };
+  hasSecretAnswer?: boolean;
+  rewardLevel?: number;
+  isMadeByUser?: boolean;
+}
+
 export interface ServerPostDraft {
   id: number;
   type: string;
@@ -15,6 +24,7 @@ export interface ServerPostDraft {
   description: string;
   secretAnswer: string;
   lastUpdated: number;
+  extras?: SavedDraftExtras | null;
 }
 
 export interface PostDraftText {
@@ -59,6 +69,8 @@ const session = {
   // the text this page last saved or loaded for each draft
   savedTextByKey: new Map<string, PostDraftText>(),
   extrasByKey: new Map<string, PostDraftExtras>(),
+  // the extras this page last saved or loaded for each draft (as sent)
+  savedExtrasByKey: new Map<string, string>(),
   // each draft's saves and deletes run one after another
   chain: new Map<string, Promise<SaveResult>>(),
   removedKeys: new Set<string>(),
@@ -86,6 +98,7 @@ export function forgetPostDraft(id: number) {
     if (knownId !== id) continue;
     session.idByKey.delete(key);
     session.savedTextByKey.delete(key);
+    session.savedExtrasByKey.delete(key);
     session.extrasByKey.delete(key);
     session.removedKeys.add(key);
     if (session.activeKey === key) session.activeKey = '';
@@ -167,7 +180,15 @@ export default function usePostDrafts({
   const busyRef = useRef<string | null>(null);
   const [error, setError] = useState('');
   const [savingState, setSavingState] = useState<'idle' | 'saved'>('idle');
-  const pendingRef = useRef<{ key: string; text: PostDraftText } | null>(null);
+  // the waiting autosave; its extras are read when it runs (the attachment
+  // can arrive a render after the switches), and one queued only for an
+  // extras change is skipped if by then nothing differs from what's saved
+  const pendingRef = useRef<{
+    key: string;
+    text: PostDraftText;
+    extras?: PostDraftExtras;
+    extrasOnly?: boolean;
+  } | null>(null);
   const saveTimeoutRef = useRef<number | null>(null);
   const savedIndicatorTimeoutRef = useRef<number | null>(null);
   const initializedRef = useRef(false);
@@ -213,7 +234,7 @@ export default function usePostDrafts({
       // What was typed in the last few seconds before closing still saves.
       const pending = pendingRef.current;
       pendingRef.current = null;
-      if (pending) void saveNow(pending.key, pending.text);
+      if (pending) void runPending(pending);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -227,6 +248,7 @@ export default function usePostDrafts({
       session.activeKey = '';
       session.idByKey.clear();
       session.savedTextByKey.clear();
+      session.savedExtrasByKey.clear();
       session.extrasByKey.clear();
       session.chain.clear();
       session.removedKeys.clear();
@@ -253,6 +275,18 @@ export default function usePostDrafts({
     const rememberLoaded = () => {
       for (const entry of loaded) {
         session.savedTextByKey.set(entry.key, textOf(entry));
+      }
+      // saved extras come back with a draft, unless this page already
+      // holds its own (which may include a file)
+      for (const draft of fetched) {
+        const key = keyForId(draft.id);
+        session.savedExtrasByKey.set(
+          key,
+          JSON.stringify(extrasToSave(extrasFromSaved(draft.extras || {})))
+        );
+        if (draft.extras && !session.extrasByKey.has(key)) {
+          session.extrasByKey.set(key, extrasFromSaved(draft.extras));
+        }
       }
     };
 
@@ -291,6 +325,7 @@ export default function usePostDrafts({
         // deleted elsewhere: it saves as a new draft instead
         session.idByKey.delete(key);
         session.savedTextByKey.delete(key);
+        session.savedExtrasByKey.delete(key);
       }
       const serverEntry = loaded.find((entry) => entry.key === key);
       const unchangedHere = !!lastSaved && sameText(lastSaved, localText);
@@ -345,16 +380,23 @@ export default function usePostDrafts({
   }, [drafts]);
 
   // Called after every edit in the form.
-  const scheduleSave = useCallback(() => {
+  const scheduleSave = useCallback((extrasOnly = false) => {
     if (!initializedRef.current || isPosting()) return;
     const key = activeKeyRef.current;
     if (!key) return;
     const previous = pendingRef.current;
     if (previous && previous.key !== key) {
       // never dropped: a different draft's waiting save goes now
-      void saveNow(previous.key, previous.text);
+      void runPending(previous);
     }
-    pendingRef.current = { key, text: getText() };
+    pendingRef.current = {
+      key,
+      text: getText(),
+      extras: getExtras(),
+      extrasOnly:
+        extrasOnly &&
+        !(previous && previous.key === key && !previous.extrasOnly)
+    };
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     if (savedIndicatorTimeoutRef.current) {
       clearTimeout(savedIndicatorTimeoutRef.current);
@@ -365,7 +407,7 @@ export default function usePostDrafts({
       const pending = pendingRef.current;
       pendingRef.current = null;
       if (!pending) return;
-      const result = await saveNow(pending.key, pending.text);
+      const result = await runPending(pending);
       if (result !== 'saved' || !mountedRef.current) return;
       setError('');
       setSavingState('saved');
@@ -438,6 +480,7 @@ export default function usePostDrafts({
     session.removedKeys.add(key);
     session.idByKey.delete(key);
     session.savedTextByKey.delete(key);
+    session.savedExtrasByKey.delete(key);
     session.extrasByKey.delete(key);
     setEntries((prev) => prev.filter((entry) => entry.key !== key));
     if (wasActive) {
@@ -472,6 +515,7 @@ export default function usePostDrafts({
     session.removedKeys.add(key);
     session.idByKey.delete(key);
     session.savedTextByKey.delete(key);
+    session.savedExtrasByKey.delete(key);
     session.extrasByKey.delete(key);
     const fresh = newKey();
     freshKeysRef.current.add(fresh);
@@ -499,17 +543,21 @@ export default function usePostDrafts({
 
   // A post that didn't go: its text saves again as a draft. It's passed in
   // because a form reopened meanwhile may hold another draft's text.
-  const keepAsDraft = useCallback((text: PostDraftText) => {
-    if (isEmptyDraftText(text)) return;
-    const key = mountedRef.current ? activeKeyRef.current : newKey();
-    if (!key) return;
-    // The next opening continues this draft rather than saving it again:
-    // this form's own (mounted), or with no form open; an open form that
-    // isn't this one keeps its own draft.
-    if (mountedRef.current || !isPostFormOpen()) session.activeKey = key;
-    void saveNow(key, text);
+  const keepAsDraft = useCallback(
+    (text: PostDraftText, extras?: PostDraftExtras) => {
+      if (isEmptyDraftText(text)) return;
+      const key = mountedRef.current ? activeKeyRef.current : newKey();
+      if (!key) return;
+      // The next opening continues this draft rather than saving it again:
+      // this form's own (mounted), or with no form open; an open form that
+      // isn't this one keeps its own draft.
+      if (mountedRef.current || !isPostFormOpen()) session.activeKey = key;
+      if (extras) session.extrasByKey.set(key, extras);
+      void saveNow(key, text, extras);
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    []
+  );
 
   // A failed file post put back in the form: it saves as its own new
   // draft, never into whichever draft the form had open.
@@ -533,6 +581,16 @@ export default function usePostDrafts({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // After an attachment or setting change: saves only if the extras differ
+  // from what this draft last saved or loaded (opening or switching to a
+  // draft puts its own extras in the form, which isn't a change).
+  const saveIfExtrasChanged = useCallback(() => {
+    const key = activeKeyRef.current;
+    if (!key) return;
+    if (!extrasMatchSaved(key, getExtras())) scheduleSave(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return {
     entries,
     activeKey,
@@ -547,7 +605,8 @@ export default function usePostDrafts({
     markPosted,
     finishPost,
     keepAsDraft,
-    saveFormAsNewDraft
+    saveFormAsNewDraft,
+    saveIfExtrasChanged
   };
 
   function startBusy(key: string) {
@@ -558,6 +617,30 @@ export default function usePostDrafts({
   function endBusy() {
     busyRef.current = null;
     if (mountedRef.current) setBusy(null);
+  }
+
+  function extrasMatchSaved(key: string, extras: PostDraftExtras) {
+    const saved =
+      session.savedExtrasByKey.get(key) ??
+      JSON.stringify(extrasToSave(extrasFromSaved({})));
+    return JSON.stringify(extrasToSave(extras)) === saved;
+  }
+
+  // Runs a waiting autosave with the draft's extras as they are now.
+  async function runPending(pending: {
+    key: string;
+    text: PostDraftText;
+    extras?: PostDraftExtras;
+    extrasOnly?: boolean;
+  }): Promise<SaveResult> {
+    const extras =
+      pending.key === activeKeyRef.current
+        ? getExtras()
+        : (session.extrasByKey.get(pending.key) ?? pending.extras);
+    if (pending.extrasOnly && extras && extrasMatchSaved(pending.key, extras)) {
+      return 'skipped';
+    }
+    return saveNow(pending.key, pending.text, extras);
   }
 
   function cancelPendingSave() {
@@ -574,8 +657,9 @@ export default function usePostDrafts({
     const text = getText();
     cancelPendingSave();
     setError('');
-    session.extrasByKey.set(from, getExtras());
-    const result = await saveNow(from, text);
+    const extras = getExtras();
+    session.extrasByKey.set(from, extras);
+    const result = await saveNow(from, text, extras);
     if (result === 'failed') {
       if (mountedRef.current) setError(SAVE_FAILED_MESSAGE);
       if (activeKeyRef.current === from) scheduleSave();
@@ -588,7 +672,11 @@ export default function usePostDrafts({
     return true;
   }
 
-  function saveNow(key: string, text: PostDraftText): Promise<SaveResult> {
+  function saveNow(
+    key: string,
+    text: PostDraftText,
+    extras?: PostDraftExtras
+  ): Promise<SaveResult> {
     const run = async (): Promise<SaveResult> => {
       if (session.removedKeys.has(key)) return 'skipped';
       const id = session.idByKey.get(key);
@@ -600,6 +688,7 @@ export default function usePostDrafts({
         if (!id) return 'skipped';
         session.idByKey.delete(key);
         session.savedTextByKey.delete(key);
+        session.savedExtrasByKey.delete(key);
         if (key === activeKeyRef.current) syncDraftIdRef();
         try {
           await deleteDraft(id);
@@ -615,7 +704,8 @@ export default function usePostDrafts({
           title: text.title,
           description: text.description,
           content: '',
-          secretAnswer: text.secretAnswer
+          secretAnswer: text.secretAnswer,
+          ...(extras ? { extras: extrasToSave(extras) } : {})
         });
         const savedId = Number(result?.draftId) || 0;
         if (!savedId) return 'failed';
@@ -627,11 +717,18 @@ export default function usePostDrafts({
         }
         session.idByKey.set(key, savedId);
         session.savedTextByKey.set(key, text);
+        if (extras) {
+          session.savedExtrasByKey.set(
+            key,
+            JSON.stringify(extrasToSave(extras))
+          );
+        }
         // the list may already hold this draft under another key
         for (const [otherKey, otherId] of session.idByKey) {
           if (otherKey === key || otherId !== savedId) continue;
           session.idByKey.delete(otherKey);
           session.savedTextByKey.delete(otherKey);
+          session.savedExtrasByKey.delete(otherKey);
           setEntries((prev) => prev.filter((entry) => entry.key !== otherKey));
           if (pendingRef.current?.key === otherKey) {
             pendingRef.current.key = key;
@@ -653,6 +750,39 @@ export default function usePostDrafts({
     });
     return next;
   }
+}
+
+// What of a draft's extras the server keeps: a link or video attachment
+// (a file isn't uploaded until posting, so it stays in this page's memory),
+// the secret-message switch, the reward level and "I made this myself".
+function extrasToSave(extras: PostDraftExtras): SavedDraftExtras {
+  const attachment = extras.attachment;
+  const savedAttachment =
+    attachment &&
+    (attachment.contentType === 'video' || attachment.contentType === 'url') &&
+    Number(attachment.id) > 0
+      ? {
+          contentType: attachment.contentType,
+          id: Number(attachment.id),
+          title: String(attachment.title || '')
+        }
+      : undefined;
+  return {
+    ...(savedAttachment ? { attachment: savedAttachment } : {}),
+    hasSecretAnswer: !!extras.hasSecretAnswer,
+    rewardLevel: Number(extras.rewardLevel) || 0,
+    isMadeByUser: !!extras.isMadeByUser
+  };
+}
+
+function extrasFromSaved(saved: SavedDraftExtras): PostDraftExtras {
+  return {
+    attachment: saved.attachment ? { ...saved.attachment } : null,
+    secretAttachment: null,
+    hasSecretAnswer: !!saved.hasSecretAnswer,
+    rewardLevel: Number(saved.rewardLevel) || 0,
+    isMadeByUser: !!saved.isMadeByUser
+  };
 }
 
 function keyForId(id: number) {
