@@ -62,3 +62,18 @@ test('monthly bars include negative net XP and a stable zero baseline', () => {
     });
   }
 });
+
+test('Arena XP gets its own labelled source instead of Other', async () => {
+  const { getSourceBreakdown } = await import('../src/containers/Profile/Body/Home/Activities/XPAnalysis/helpers/data');
+  const sources = getSourceBreakdown([
+    { name: 'arena', value: 157000 },
+    { name: 'grammar', value: 2944 },
+    { name: 'brandNewThing', value: 10 }
+  ]);
+  assert.deepEqual(sources.map(({ name, label }) => [name, label]), [
+    ['arena', 'Arena'],
+    ['grammar', 'Grammar'],
+    ['other', 'Other']
+  ]);
+});
+

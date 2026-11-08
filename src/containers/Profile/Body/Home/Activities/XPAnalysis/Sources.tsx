@@ -19,7 +19,8 @@ const colors = new Map([
   ['ai story', Color.gold()],
   ['daily bonus', Color.skyBlue()],
   ['chess puzzles', Color.brown()],
-  ['lumine apps', Color.darkCyan()]
+  ['lumine apps', Color.darkCyan()],
+  ['arena', Color.darkBlueGray()] // Arena's navy; cranberry read as Watching's passion fruit
 ]);
 
 export default function Sources({ data }: { data: XPSource[] }) {

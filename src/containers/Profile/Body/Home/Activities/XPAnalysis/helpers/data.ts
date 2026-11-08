@@ -20,6 +20,7 @@ const sourceLabels = new Map([
   ['daily bonus', 'Daily bonus'],
   ['chess puzzles', 'Chess puzzles'],
   ['lumine apps', 'Lumine apps'],
+  ['arena', 'Arena'],
   ['other', 'Other']
 ]);
 
