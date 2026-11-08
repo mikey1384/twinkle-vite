@@ -400,6 +400,71 @@ const headerRevealHandleClass = css`
   }
 `;
 
+// Collapsed header: the main action (Fork on open-source apps) stays one tap
+// away beside the reveal handle, so hiding menus never hides how to fork.
+const headerRevealGroupClass = css`
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  pointer-events: none;
+`;
+
+const headerRevealRowClass = css`
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  /* Touch screens have no hover and need a finger-sized target: taller
+     tabs plus a little invisible padding, still only at the top edge. */
+  @media (pointer: coarse) {
+    gap: 0.8rem;
+    > button {
+      position: relative;
+      height: 2.6rem;
+      font-size: 1.3rem;
+    }
+    > button::after {
+      content: '';
+      position: absolute;
+      inset: -0.2rem -0.6rem -1rem;
+    }
+  }
+`;
+
+const headerRevealForkClass = css`
+  ${headerRevealHandleClass};
+  width: auto;
+  padding: 0 0.8rem;
+  gap: 0.35rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #6b21a8;
+  border-color: rgba(147, 51, 234, 0.34);
+  &:hover {
+    opacity: 1;
+    background: rgba(147, 51, 234, 0.12);
+    border-color: rgba(147, 51, 234, 0.5);
+  }
+  @media (pointer: coarse) {
+    opacity: 0.85;
+    width: auto;
+    padding: 0 1rem;
+  }
+`;
+
+const headerRevealErrorClass = css`
+  pointer-events: auto;
+  max-width: min(32rem, calc(100vw - 2rem));
+  padding: 0.3rem 0.8rem;
+  border-radius: 0.8rem;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.16);
+  color: #be123c;
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-align: center;
+`;
+
 const headerTopRowClass = css`
   position: relative;
   z-index: 1;
@@ -438,8 +503,9 @@ const headerTitleLineClass = css`
   gap: 0.5rem;
   min-width: 0;
   /* Shrink-only: the centre zone's auto margin owns the free space, and this
-     column is what gives way when the toolbar runs out of room. */
-  flex: 0 1 auto;
+     column is what gives way first when the toolbar runs out of room (the
+     action row only shrinks, and scrolls, once the title is gone). */
+  flex: 0 1000 auto;
   color: var(--chat-text);
 `;
 
@@ -523,8 +589,54 @@ const headerActionsRowClass = css`
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  flex-shrink: 0;
+  /* May shrink (after the title has given way): the buttons then scroll
+     sideways instead of running off the screen. */
+  flex: 0 1 auto;
+  min-width: 0;
   margin-left: auto;
+`;
+
+// Every action except Close lives here. When the row is too narrow (phones,
+// signed-in members with more buttons) it scrolls sideways, and a fade on the
+// cut-off side shows there is more. Close stays pinned outside it.
+const headerActionsScrollClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  /* room for the buttons' hover lift and shadows inside the scroll box; the
+     negative margin keeps the layout exactly as without the padding */
+  padding: 0.5rem;
+  margin: -0.5rem;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 0.5rem;
+  }
+  /* buttons keep their natural width and scroll; they never squash or wrap */
+  > * {
+    flex-shrink: 0;
+  }
+  &[data-fade='end'] {
+    mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+  }
+  &[data-fade='start'] {
+    mask-image: linear-gradient(to left, #000 calc(100% - 2rem), transparent);
+  }
+  &[data-fade='both'] {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 2rem,
+      #000 calc(100% - 2rem),
+      transparent
+    );
+  }
 `;
 
 const runtimeEnergyCardClass = css`
@@ -970,6 +1082,48 @@ export default function BuildRuntime({
   // alongside the global bottom nav.
   const { isTabletPortrait, isMobilePortrait } = useTabletOrientation();
   const compactActions = isTabletPortrait || isMobilePortrait;
+  const [headerActionsScrollEl, headerActionsScrollRef] =
+    useState<HTMLDivElement | null>(null);
+  const [headerActionsFade, setHeaderActionsFade] = useState<
+    'none' | 'start' | 'end' | 'both'
+  >('none');
+  function updateHeaderActionsFade() {
+    const el = headerActionsScrollEl;
+    if (!el) return;
+    const hidden = el.scrollWidth - el.clientWidth;
+    // a few px is sub-pixel rounding, not a hidden button
+    const atStart = el.scrollLeft <= 3;
+    const atEnd = el.scrollLeft >= hidden - 3;
+    const next =
+      hidden <= 3 ? 'none' : atStart ? 'end' : atEnd ? 'start' : 'both';
+    setHeaderActionsFade((current) => (current === next ? current : next));
+  }
+  useEffect(() => {
+    const el = headerActionsScrollEl;
+    if (!el) return;
+    updateHeaderActionsFade();
+    // Width changes (rotation, title) and button changes (sign-in, labels,
+    // notices) both change whether the row overflows.
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => updateHeaderActionsFade());
+    resizeObserver?.observe(el);
+    const mutationObserver = new MutationObserver(() =>
+      updateHeaderActionsFade()
+    );
+    mutationObserver.observe(el, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+    return () => {
+      resizeObserver?.disconnect();
+      mutationObserver.disconnect();
+    };
+    // updateHeaderActionsFade only reads the element passed here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headerActionsScrollEl]);
   const [runtimeHostVisible, setRuntimeHostVisible] = useState(true);
   const [buildLaunchTarget, setBuildLaunchTarget] =
     useState<PreviewLaunchTarget | null>(null);
@@ -2206,19 +2360,44 @@ export default function BuildRuntime({
         )}
         {!isEmbedded && headerCollapsed && !landscapeFullScreen && (
           <div className={headerRevealZoneClass}>
-            <button
-              type="button"
-              className={headerRevealHandleClass}
-              onClick={handleRestoreAll}
-              disabled={headerCollapsePending}
-              title="Show menus"
-              aria-label="Show menus"
-            >
-              <Icon
-                icon={headerCollapsePending ? 'spinner' : 'chevron-down'}
-                pulse={headerCollapsePending}
-              />
-            </button>
+            <div className={headerRevealGroupClass}>
+              <div className={headerRevealRowClass}>
+                <button
+                  type="button"
+                  className={headerRevealHandleClass}
+                  onClick={handleRestoreAll}
+                  disabled={headerCollapsePending}
+                  title="Show menus"
+                  aria-label="Show menus"
+                >
+                  <Icon
+                    icon={headerCollapsePending ? 'spinner' : 'chevron-down'}
+                    pulse={headerCollapsePending}
+                  />
+                </button>
+                {showStandaloneForkButton ? (
+                  <button
+                    type="button"
+                    className={headerRevealForkClass}
+                    onClick={handleCreateStandaloneFork}
+                    disabled={runtimeActionBusy}
+                    title="Fork this app"
+                    aria-label="Fork this app"
+                  >
+                    <Icon
+                      icon={forkingBuild ? 'spinner' : 'code-branch'}
+                      pulse={forkingBuild}
+                    />
+                    <span>{forkingBuild ? 'Forking...' : 'Fork'}</span>
+                  </button>
+                ) : null}
+              </div>
+              {showStandaloneForkButton && contributionForkError ? (
+                <span className={headerRevealErrorClass} role="alert">
+                  {contributionForkError}
+                </span>
+              ) : null}
+            </div>
           </div>
         )}
         {!isEmbedded && (
@@ -2314,243 +2493,256 @@ export default function BuildRuntime({
             </div>
             {/* right: all actions on one line */}
             <div className={headerActionsRowClass}>
-              {showRuntimeActions ? (
-                <>
-                  {!!userId &&
-                    !build.contributionRootBuildId &&
-                    (!build.contributionStatus ||
-                      build.contributionStatus === 'none') && (
+              <div
+                ref={headerActionsScrollRef}
+                className={headerActionsScrollClass}
+                data-fade={headerActionsFade}
+                onScroll={updateHeaderActionsFade}
+              >
+                {showRuntimeActions ? (
+                  <>
+                    {!!userId &&
+                      !build.contributionRootBuildId &&
+                      (!build.contributionStatus ||
+                        build.contributionStatus === 'none') && (
+                        <button
+                          type="button"
+                          className={runtimeActionButtonClass}
+                          onClick={() => setAppTransferShown(true)}
+                          title={
+                            isBuildOwner
+                              ? 'Sell or give app'
+                              : 'Offer a trade for this app'
+                          }
+                          aria-label={
+                            isBuildOwner
+                              ? 'Sell or give app'
+                              : 'Offer a trade for this app'
+                          }
+                        >
+                          <Icon icon="right-left" />
+                          {!compactActions && (
+                            <span>
+                              {isBuildOwner ? 'Sell / Give' : 'Trade'}
+                            </span>
+                          )}
+                        </button>
+                      )}
+                    {showWorkspaceButton ? (
                       <button
                         type="button"
-                        className={runtimeActionButtonClass}
-                        onClick={() => setAppTransferShown(true)}
-                        title={
-                          isBuildOwner
-                            ? 'Sell or give app'
-                            : 'Offer a trade for this app'
-                        }
-                        aria-label={
-                          isBuildOwner
-                            ? 'Sell or give app'
-                            : 'Offer a trade for this app'
-                        }
+                        className={runtimeActionBlueClass}
+                        onClick={handleGoToWorkspace}
+                        title={isMobilePortrait ? 'Open workspace' : undefined}
+                        aria-label="Open workspace"
                       >
-                        <Icon icon="right-left" />
-                        {!compactActions && (
-                          <span>{isBuildOwner ? 'Sell / Give' : 'Trade'}</span>
+                        <Icon icon="wrench" />
+                        {!isMobilePortrait && (
+                          <span>
+                            {isTabletPortrait ? 'Workspace' : 'Open workspace'}
+                          </span>
                         )}
                       </button>
-                    )}
-                  {showWorkspaceButton ? (
-                    <button
-                      type="button"
-                      className={runtimeActionBlueClass}
-                      onClick={handleGoToWorkspace}
-                      title={isMobilePortrait ? 'Open workspace' : undefined}
-                      aria-label="Open workspace"
-                    >
-                      <Icon icon="wrench" />
-                      {!isMobilePortrait && (
-                        <span>
-                          {isTabletPortrait ? 'Workspace' : 'Open workspace'}
-                        </span>
-                      )}
-                    </button>
-                  ) : null}
-                  {showRuntimeFavoriteButton ? (
-                    <FavoriteButton
-                      buildId={runtimeFavoriteBuildId}
-                      favorited={Boolean(build.isFavorited)}
-                      label={
-                        compactActions
-                          ? undefined
-                          : build.isFavorited
-                            ? 'Favorited'
-                            : 'Favorite'
-                      }
-                      size={compactActions ? 'md' : 'pill'}
-                      onChange={({ buildId, favoritedAt, isFavorited }) => {
-                        // On a branch this is the parent project's id, so match
-                        // on the favorite target rather than the loaded build.
-                        setBuild((current) =>
-                          current &&
-                          getBuildFavoriteTargetId(current) === buildId
-                            ? {
-                                ...current,
-                                favoritedAt,
-                                isFavorited
-                              }
-                            : current
-                        );
-                      }}
-                      onError={(error: any) =>
-                        setRuntimeFavoriteError(
-                          error?.response?.data?.error ||
-                            error?.message ||
-                            'Favorite could not be updated.'
-                        )
-                      }
-                      onStart={() => setRuntimeFavoriteError('')}
-                    />
-                  ) : null}
-                  {showRuntimePublishUpdateButton ? (
-                    <ReleaseButton
-                      release={release}
-                      className={runtimeActionButtonClass}
-                    />
-                  ) : null}
-                  {showCollaborationButton ? (
-                    <button
-                      type="button"
-                      className={
-                        collaborationStatus === 'accepted'
-                          ? runtimeActionBlueClass
-                          : collaborationStatus === 'invited'
-                            ? runtimeActionButtonClass
-                            : runtimeActionPinkClass
-                      }
-                      onClick={handleCollaborateClick}
-                      disabled={
-                        runtimeActionBusy || collaborationStatus === 'pending'
-                      }
-                      title={
-                        isMobilePortrait && collaborationStatus === 'accepted'
-                          ? collaborationButtonLabel
-                          : undefined
-                      }
-                      aria-label={collaborationButtonLabel}
-                    >
-                      <Icon
-                        icon={
-                          runtimeActionBusy
-                            ? 'spinner'
-                            : collaborationStatus === 'pending'
-                              ? 'clock'
-                              : collaborationStatus === 'accepted'
-                                ? 'wrench'
-                                : 'user-plus'
+                    ) : null}
+                    {showRuntimeFavoriteButton ? (
+                      <FavoriteButton
+                        buildId={runtimeFavoriteBuildId}
+                        favorited={Boolean(build.isFavorited)}
+                        label={
+                          compactActions
+                            ? undefined
+                            : build.isFavorited
+                              ? 'Favorited'
+                              : 'Favorite'
                         }
-                        pulse={runtimeActionBusy}
+                        size={compactActions ? 'md' : 'pill'}
+                        onChange={({ buildId, favoritedAt, isFavorited }) => {
+                          // On a branch this is the parent project's id, so match
+                          // on the favorite target rather than the loaded build.
+                          setBuild((current) =>
+                            current &&
+                            getBuildFavoriteTargetId(current) === buildId
+                              ? {
+                                  ...current,
+                                  favoritedAt,
+                                  isFavorited
+                                }
+                              : current
+                          );
+                        }}
+                        onError={(error: any) =>
+                          setRuntimeFavoriteError(
+                            error?.response?.data?.error ||
+                              error?.message ||
+                              'Favorite could not be updated.'
+                          )
+                        }
+                        onStart={() => setRuntimeFavoriteError('')}
                       />
-                      {/* phone portrait: accepted "workspace" button goes
+                    ) : null}
+                    {showRuntimePublishUpdateButton ? (
+                      <ReleaseButton
+                        release={release}
+                        className={runtimeActionButtonClass}
+                      />
+                    ) : null}
+                    {showCollaborationButton ? (
+                      <button
+                        type="button"
+                        className={
+                          collaborationStatus === 'accepted'
+                            ? runtimeActionBlueClass
+                            : collaborationStatus === 'invited'
+                              ? runtimeActionButtonClass
+                              : runtimeActionPinkClass
+                        }
+                        onClick={handleCollaborateClick}
+                        disabled={
+                          runtimeActionBusy || collaborationStatus === 'pending'
+                        }
+                        title={
+                          isMobilePortrait && collaborationStatus === 'accepted'
+                            ? collaborationButtonLabel
+                            : undefined
+                        }
+                        aria-label={collaborationButtonLabel}
+                      >
+                        <Icon
+                          icon={
+                            runtimeActionBusy
+                              ? 'spinner'
+                              : collaborationStatus === 'pending'
+                                ? 'clock'
+                                : collaborationStatus === 'accepted'
+                                  ? 'wrench'
+                                  : 'user-plus'
+                          }
+                          pulse={runtimeActionBusy}
+                        />
+                        {/* phone portrait: accepted "workspace" button goes
                           icon-only to fit alongside the bottom nav */}
-                      {isMobilePortrait &&
-                      collaborationStatus === 'accepted' ? null : (
-                        <span>{collaborationButtonLabel}</span>
-                      )}
-                    </button>
-                  ) : null}
-                  {showStandaloneForkButton ? (
-                    <button
-                      type="button"
-                      className={runtimeActionPurpleClass}
-                      onClick={handleCreateStandaloneFork}
-                      disabled={runtimeActionBusy}
-                    >
-                      <Icon
-                        icon={forkingBuild ? 'spinner' : 'code-branch'}
-                        pulse={forkingBuild}
-                      />
-                      <span>
-                        {forkingBuild ? 'Forking...' : userId ? 'Fork' : 'Fork'}
+                        {isMobilePortrait &&
+                        collaborationStatus === 'accepted' ? null : (
+                          <span>{collaborationButtonLabel}</span>
+                        )}
+                      </button>
+                    ) : null}
+                    {showStandaloneForkButton ? (
+                      <button
+                        type="button"
+                        className={runtimeActionPurpleClass}
+                        onClick={handleCreateStandaloneFork}
+                        disabled={runtimeActionBusy}
+                      >
+                        <Icon
+                          icon={forkingBuild ? 'spinner' : 'code-branch'}
+                          pulse={forkingBuild}
+                        />
+                        <span>
+                          {forkingBuild
+                            ? 'Forking...'
+                            : userId
+                              ? 'Fork'
+                              : 'Fork'}
+                        </span>
+                      </button>
+                    ) : null}
+                    {contributionForkError ? (
+                      <span className={contributionErrorClass}>
+                        {contributionForkError}
                       </span>
-                    </button>
-                  ) : null}
-                  {contributionForkError ? (
-                    <span className={contributionErrorClass}>
-                      {contributionForkError}
-                    </span>
-                  ) : null}
-                  {release.action.notice ? (
-                    <span className={releaseNoticeClass} role="status">
-                      {release.action.notice}
-                    </span>
-                  ) : null}
-                  {release.error ? (
-                    <span className={contributionErrorClass} role="alert">
-                      {release.error}
-                    </span>
-                  ) : null}
-                  {runtimeFavoriteError ? (
-                    <span className={contributionErrorClass}>
-                      {runtimeFavoriteError}
-                    </span>
-                  ) : null}
-                </>
-              ) : null}
-              {appHelperEnabled ? (
-                <span className={appHelperSlotClass} ref={setAppHelperSlot} />
-              ) : null}
-              {/* not in embeds or app-tool sessions (like the app helper),
+                    ) : null}
+                    {release.action.notice ? (
+                      <span className={releaseNoticeClass} role="status">
+                        {release.action.notice}
+                      </span>
+                    ) : null}
+                    {release.error ? (
+                      <span className={contributionErrorClass} role="alert">
+                        {release.error}
+                      </span>
+                    ) : null}
+                    {runtimeFavoriteError ? (
+                      <span className={contributionErrorClass}>
+                        {runtimeFavoriteError}
+                      </span>
+                    ) : null}
+                  </>
+                ) : null}
+                {appHelperEnabled ? (
+                  <span className={appHelperSlotClass} ref={setAppHelperSlot} />
+                ) : null}
+                {/* not in embeds or app-tool sessions (like the app helper),
                   and not on a phone held upright, where the action row
                   already fills the toolbar */}
-              {build.isPublic &&
-              !isEmbedded &&
-              !appMcpSessionId &&
-              !isMobilePortrait ? (
-                <AskAgentButton
-                  hideLabel
-                  context={{
-                    kind: 'build',
-                    id: Number(build.id),
-                    label: 'this app'
-                  }}
-                  style={{
+                {build.isPublic &&
+                !isEmbedded &&
+                !appMcpSessionId &&
+                !isMobilePortrait ? (
+                  <AskAgentButton
+                    hideLabel
+                    context={{
+                      kind: 'build',
+                      id: Number(build.id),
+                      label: 'this app'
+                    }}
+                    style={{
+                      borderRadius: '999px',
+                      height: '2.65rem',
+                      padding: '0 0.4rem'
+                    }}
+                  />
+                ) : null}
+                <ShareButton
+                  variant="compact"
+                  buttonVariant="ghost"
+                  icon="share"
+                  color="logoBlue"
+                  iconSize="1x"
+                  linkPath={`/app/${build.id}`}
+                  buttonStyle={{
                     borderRadius: '999px',
+                    width: '2.65rem',
                     height: '2.65rem',
-                    padding: '0 0.4rem'
+                    padding: 0,
+                    fontSize: '1.1rem',
+                    background: 'rgba(65, 140, 235, 0.08)',
+                    border: '1px solid var(--ui-border)',
+                    color: '#1d4ed8'
                   }}
                 />
-              ) : null}
-              <ShareButton
-                variant="compact"
-                buttonVariant="ghost"
-                icon="share"
-                color="logoBlue"
-                iconSize="1x"
-                linkPath={`/app/${build.id}`}
-                buttonStyle={{
-                  borderRadius: '999px',
-                  width: '2.65rem',
-                  height: '2.65rem',
-                  padding: 0,
-                  fontSize: '1.1rem',
-                  background: 'rgba(65, 140, 235, 0.08)',
-                  border: '1px solid var(--ui-border)',
-                  color: '#1d4ed8'
-                }}
-              />
-              <button
-                aria-label="Notification settings"
-                className={notificationSettingsButtonClass}
-                data-muted={
-                  buildNotificationPreferences?.mutedBuild ? 'true' : 'false'
-                }
-                onClick={handleOpenBuildNotificationSettings}
-                title="Notification settings"
-                type="button"
-              >
-                <Icon
-                  icon={
-                    buildNotificationPreferences?.mutedBuild
-                      ? 'bell-slash'
-                      : 'bell'
+                <button
+                  aria-label="Notification settings"
+                  className={notificationSettingsButtonClass}
+                  data-muted={
+                    buildNotificationPreferences?.mutedBuild ? 'true' : 'false'
                   }
-                />
-              </button>
-              {runtimeCommentsAvailable ? (
-                <GameCTAButton
-                  onClick={handleToggleCommentsDrawer}
-                  variant="neutral"
-                  size="sm"
-                  icon="comments"
-                  toggled={commentsDrawerShown}
+                  onClick={handleOpenBuildNotificationSettings}
+                  title="Notification settings"
+                  type="button"
                 >
-                  {isMobilePortrait
-                    ? runtimeCommentsCountLabel
-                    : runtimeCommentsButtonLabel}
-                </GameCTAButton>
-              ) : null}
+                  <Icon
+                    icon={
+                      buildNotificationPreferences?.mutedBuild
+                        ? 'bell-slash'
+                        : 'bell'
+                    }
+                  />
+                </button>
+                {runtimeCommentsAvailable ? (
+                  <GameCTAButton
+                    onClick={handleToggleCommentsDrawer}
+                    variant="neutral"
+                    size="sm"
+                    icon="comments"
+                    toggled={commentsDrawerShown}
+                  >
+                    {isMobilePortrait
+                      ? runtimeCommentsCountLabel
+                      : runtimeCommentsButtonLabel}
+                  </GameCTAButton>
+                ) : null}
+              </div>
               <button
                 type="button"
                 className={closeAppButtonClass}
