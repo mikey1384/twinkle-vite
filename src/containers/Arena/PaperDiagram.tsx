@@ -161,14 +161,47 @@ interface Pt {
   y: number;
 }
 
-export default function PaperDiagram({ visual }: { visual: DiagramVisual }) {
+// A picture's caption with its answer-choice label before it ((A), ①), in
+// the item's own numbering style; a picture with no caption gets the label
+// alone. Drawings, photos and titled photo panels all label their choices
+// this way (Mikey 11-09: a drawn option reads "(B)" like the (B) button, as
+// the real paper prints it). The label sits in the caption line above the
+// picture, so it never covers the drawing or numbers drawn inside it.
+export function OptionCaption({
+  title,
+  marker
+}: {
+  title?: string;
+  marker?: string;
+}) {
+  const text = (title || '').trim();
+  // a caption that is already just this label ("(A)" or "A") is not repeated
+  const repeated =
+    !!marker && !!text && text.replace(/[()]/g, '') === marker.replace(/[()]/g, '');
+  if (!text && !marker) return null;
+  return (
+    <figcaption>
+      {marker && <span className={optionNumberCls}>{marker}</span>}
+      {repeated ? '' : title}
+    </figcaption>
+  );
+}
+
+export default function PaperDiagram({
+  visual,
+  marker
+}: {
+  visual: DiagramVisual;
+  // this drawing is answer choice `marker` ((A), ① ...)
+  marker?: string;
+}) {
   const uid = useId().replace(/[^A-Za-z0-9_-]/g, '');
   const drawing = useMemo(() => buildDiagram(visual, uid), [visual, uid]);
   if (!drawing) return null;
   const { width, height } = visual;
   return (
     <figure className={figureCls}>
-      {visual.title && <figcaption>{visual.title}</figcaption>}
+      <OptionCaption title={visual.title} marker={marker} />
       <svg
         viewBox={`${-PAD} ${-PAD} ${width + PAD * 2} ${height + PAD * 2}`}
         className={svgCls}
@@ -969,6 +1002,12 @@ const svgCls = css`
   width: 100%;
   height: auto;
   margin: 0 auto;
+`;
+
+// the choice label before a picture's caption
+const optionNumberCls = css`
+  font-family: 'Noto Serif KR', 'Times New Roman', Tinos, serif;
+  margin-right: 0.4em;
 `;
 
 const labelCls = css`

@@ -1,7 +1,7 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { arenaMediaURL } from './media';
-import PaperDiagram, { type DiagramVisual } from './PaperDiagram';
+import PaperDiagram, { OptionCaption, type DiagramVisual } from './PaperDiagram';
 import PaperMap, { type MapVisual } from './PaperMap';
 
 // Tables, charts and pictures as the real booklet prints them (Mikey
@@ -99,18 +99,6 @@ export function picturesAreChoices(visual: Visual, choices: string[]) {
   );
 }
 
-// a picture's caption with its choice number before it, in the item's own
-// numbering style; a picture with no caption gets the number as its label
-function Caption({ title, marker }: { title?: string; marker?: string }) {
-  if (!title && !marker) return null;
-  return (
-    <figcaption>
-      {marker && <span className={optionNumberCls}>{marker}</span>}
-      {title}
-    </figcaption>
-  );
-}
-
 export default function PaperVisual({
   visual,
   writingPrompt = false,
@@ -134,7 +122,7 @@ export default function PaperVisual({
   if (visual.kind === 'image' && visual.src) {
     return (
       <figure className={cx(figureCls, writingPrompt && writingPictureCls)}>
-        <Caption marker={marker} />
+        <OptionCaption marker={marker} />
         <img
           src={arenaMediaURL(visual.src)}
           alt={visual.alt || visual.title || ''}
@@ -147,7 +135,12 @@ export default function PaperVisual({
   if (visual.kind === 'timeline') return <PaperTimeline visual={visual} />;
   // a 수학/과학/KMC figure drawn from the item's data (PaperDiagram.tsx)
   if (visual.kind === 'diagram') {
-    return <PaperDiagram visual={visual as unknown as DiagramVisual} />;
+    return (
+      <PaperDiagram
+        visual={visual as unknown as DiagramVisual}
+        marker={marker}
+      />
+    );
   }
   // a locator map from bundled outlines (PaperMap.tsx)
   if (visual.kind === 'map') {
@@ -158,11 +151,12 @@ export default function PaperVisual({
     const pictures = picturesSideBySide(visual);
     return (
       <figure className={cx(figureCls, pictures && picturesFigureCls)}>
-        <Caption title={visual.title} marker={marker} />
+        <OptionCaption title={visual.title} marker={marker} />
         <div
           className={cx(
             panelsCls,
             pictures && picturesCls,
+            pictures && panels.length === 3 && threePicturesCls,
             pictures && panels.length === 4 && fourPicturesCls,
             pictures && panels.length === 5 && fivePicturesCls
           )}
@@ -854,6 +848,26 @@ const picturesCls = css`
   );
 `;
 
+// three pictures (KET "which picture", a three-frame story): one row of three
+// once each keeps the side-by-side width (22rem), otherwise two on the first
+// row and the third centred under them, never left alone in its corner. The
+// pictures keep the size the two-per-row grid gave them.
+const threePicturesCls = css`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  > * {
+    flex: 0 0 calc((100% - 1rem) / 2);
+    min-width: 0;
+  }
+  @container arena-pictures (min-width: 68rem) {
+    > * {
+      flex-basis: calc((100% - 2rem) / 3);
+    }
+  }
+`;
+
 // four pictures: 2x2 (never 3+1), or one row of four when the paper is wide
 const fourPicturesCls = css`
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -884,12 +898,6 @@ const fivePicturesCls = css`
       flex-basis: calc((100% - 1rem) / 2);
     }
   }
-`;
-
-// the choice number before a picture's caption
-const optionNumberCls = css`
-  font-family: 'Noto Serif KR', 'Times New Roman', Tinos, serif;
-  margin-right: 0.4em;
 `;
 
 const markableRowCls = css`

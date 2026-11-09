@@ -2,94 +2,192 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runRewardBankGeneration } from '../src/helpers/buildRewardBankRecovery';
 
-test('lost reply recovers the original challenge without a second paid call', async () => {
-  let paidCalls = 0,
-    reads = 0,
-    time = 64_524;
+// A stand-in for the server's job table: bank-generate admits one job per
+// request ID (the paid work) and answers at once; the same ID again reads it.
+function fakeBankServer({ doneAfterReads = 3, fail = null as null | Error } = {}) {
+  const jobs = new Map<string, { reads: number }>();
+  let paid = 0;
+  return {
+    get paid() {
+      return paid;
+    },
+    submit(requestId: string) {
+      if (!jobs.has(requestId)) {
+        paid++;
+        jobs.set(requestId, { reads: 0 });
+      }
+      return { requestId, generationPending: true };
+    },
+    progress(requestId: string) {
+      const job = jobs.get(requestId);
+      if (!job) return { phase: 'pending' };
+      job.reads++;
+      if (job.reads < doneAfterReads) return { phase: 'write-thinking' };
+      return { phase: fail ? 'failed' : 'done' };
+    },
+    result(requestId: string) {
+      if (fail) throw fail;
+      return { generationPending: false, challengeId: `challenge-for-${requestId}` };
+    }
+  };
+}
+const clock = () => {
+  let time = 0;
+  return {
+    now: () => time,
+    sleep: async (ms: number) => {
+      time += ms;
+    },
+    get time() {
+      return time;
+    }
+  };
+};
+const httpError = (status: number, code?: string) =>
+  Object.assign(new Error(code || `HTTP ${status}`), {
+    response: { status, data: code ? { code } : {} }
+  });
+const isHttp = (e: unknown) => !!(e as any)?.response;
+const transient = (e: unknown) =>
+  (e as Error).message === 'network' || ((e as any)?.response?.status || 0) >= 500;
+const canonicalFailure = (e: unknown) =>
+  isHttp(e) && typeof (e as any).response.data?.code === 'string';
+
+test('a lost submit reply is sent again with the same ID and pays once', async () => {
+  const server = fakeBankServer();
+  const time = clock();
+  let submits = 0;
   const result = await runRewardBankGeneration({
     generate: async () => {
-      paidCalls++;
-      throw new Error('network');
+      submits++;
+      const answer = server.submit('req-1');
+      // The first reply is lost on the way back to the phone.
+      if (submits === 1) throw new Error('network');
+      return answer;
     },
-    readResult: async () =>
-      ++reads < 3
-        ? { generationPending: true }
-        : {
-            generationPending: false,
-            challengeId: 'original',
-            recovered: true
-          },
-    transient: () => true,
-    now: () => time,
-    sleep: async (ms) => {
-      time += ms;
-    }
+    readProgress: async () => server.progress('req-1'),
+    readResult: async () => server.result('req-1'),
+    transient,
+    canonicalFailure,
+    now: time.now,
+    sleep: time.sleep
   });
-  assert.equal(paidCalls, 1);
-  assert.equal(reads, 3);
-  assert.equal(result.challengeId, 'original');
+  assert.equal(server.paid, 1);
+  assert.equal(submits, 2);
+  assert.equal(result.challengeId, 'challenge-for-req-1');
 });
 
-test('normal response avoids recovery; denied generation never polls', async () => {
+test('waits past the old five-minute limit while the job runs', async () => {
+  // Observed generations took up to 467 s; the old SDK gave up at 300 s.
+  const server = fakeBankServer({ doneAfterReads: 240 });
+  const time = clock();
+  const result = await runRewardBankGeneration({
+    generate: async () => server.submit('req-long'),
+    readProgress: async () => server.progress('req-long'),
+    readResult: async () => server.result('req-long'),
+    transient,
+    canonicalFailure,
+    now: time.now,
+    sleep: time.sleep
+  });
+  assert.equal(result.challengeId, 'challenge-for-req-long');
+  assert.ok(time.time >= 467_000, `${time.time}`);
+  assert.equal(server.paid, 1);
+});
+
+test('an immediate answer needs no wait; a refused submit never polls', async () => {
   let reads = 0;
   const options = {
+    readProgress: async () => {
+      reads++;
+      return { phase: 'done' };
+    },
     readResult: async () => {
       reads++;
       return {};
     },
-    transient: () => false
+    transient,
+    canonicalFailure
   };
   assert.deepEqual(
     await runRewardBankGeneration({
       ...options,
-      generate: async () => ({ challengeId: 'ok' })
+      generate: async () => ({ needsQuestion: false })
     }),
-    { challengeId: 'ok' }
+    { needsQuestion: false }
   );
   await assert.rejects(
     runRewardBankGeneration({
       ...options,
       generate: async () => {
-        throw new Error('denied');
+        throw httpError(429, 'ai_energy_depleted');
       }
     }),
-    /denied/
+    /ai_energy_depleted/
   );
   assert.equal(reads, 0);
 });
 
-test('missing or failed job ends recovery without regenerating; unavailable network is bounded', async () => {
-  let time = 0,
-    calls = 0;
-  const generate = async () => {
-    calls++;
-    throw new Error('network');
-  };
+test("a failed job's own error ends the wait at once, even a 503", async () => {
+  const server = fakeBankServer({
+    fail: httpError(503, 'build_reward_bank_unverified')
+  });
+  const time = clock();
+  let resultReads = 0;
   await assert.rejects(
     runRewardBankGeneration({
-      generate,
+      generate: async () => server.submit('req-2'),
+      readProgress: async () => server.progress('req-2'),
       readResult: async () => {
-        throw new Error('not found');
+        resultReads++;
+        return server.result('req-2');
       },
-      transient: (e) => (e as Error).message === 'network'
+      transient,
+      canonicalFailure,
+      now: time.now,
+      sleep: time.sleep
     }),
-    /not found/
+    /build_reward_bank_unverified/
   );
+  assert.equal(resultReads, 1);
+  assert.equal(server.paid, 1);
+});
+
+test('lost progress and result reads are retried but bounded', async () => {
+  const time = clock();
   await assert.rejects(
     runRewardBankGeneration({
-      generate,
-      readResult: async () => {
+      generate: async () => ({ generationPending: true }),
+      readProgress: async () => {
         throw new Error('network');
       },
-      transient: () => true,
-      now: () => time,
-      sleep: async (ms) => {
-        time += ms;
-      },
-      timeoutMs: 5000
+      readResult: async () => ({ generationPending: false }),
+      transient,
+      canonicalFailure,
+      now: time.now,
+      sleep: time.sleep,
+      timeoutMs: 10_000
     }),
     /network/
   );
-  assert.equal(calls, 2);
-  assert.equal(time, 5000);
+  assert.equal(time.time, 10_000);
+
+  let resultReads = 0;
+  await assert.rejects(
+    runRewardBankGeneration({
+      generate: async () => ({ generationPending: true }),
+      readProgress: async () => ({ phase: 'done' }),
+      readResult: async () => {
+        resultReads++;
+        throw httpError(502);
+      },
+      transient,
+      canonicalFailure,
+      now: clock().now,
+      sleep: async () => {},
+      resultReads: 3
+    }),
+    /HTTP 502/
+  );
+  assert.equal(resultReads, 3);
 });
