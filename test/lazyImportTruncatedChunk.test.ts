@@ -97,11 +97,16 @@ const boundary = readFileSync(
 test('a truncated chunk reloads at once, capped, never twice in a minute', () => {
   assert.match(
     helpers,
-    /confirmedStaleOnly: !isFinalAttempt && !isTruncatedScriptError\(error\)/
+    /confirmedStaleOnly: canRetry && !truncated/
   );
   assert.match(
     helpers,
-    /if \(isTruncatedScriptError\(error\)\) \{[\s\S]*?if \(confirmedStaleOnly\) return false;\s*if \(hasRecentLazyImportReload\(window\.location\.href\)\) return false;\s*\} else if \(failedUrl\) \{/m
+    /if \(isTruncatedScriptError\(error\)\) \{\s*if \(confirmedStaleOnly\) return null;\s*reason = 'truncated';/m
+  );
+  // every reload kind, truncated included, is held off by the URL param
+  assert.match(
+    helpers,
+    /if \(hasRecentLazyImportReload\(window\.location\.href\)\) return null;/
   );
   assert.match(helpers, /LAZY_IMPORT_MAX_RELOADS_PER_PATH = 2/);
   assert.match(
@@ -117,4 +122,40 @@ test('still failing after its reload, the boundary reports past the suppression'
     /truncatedChunk &&\s*!isLocalDevelopmentRuntime\(\) &&\s*wasOpenedByLazyImportReload\(window\.location\.href\)[\s\S]*?\$\{LAZY_CHUNK_UNRECOVERABLE_MARKER\}/m
   );
   assert.match(boundary, /title="Didn't Finish Loading"/);
+  // a chunk the connection kept from loading gets the same notice, not
+  // "Update Available"
+  assert.match(
+    boundary,
+    /lastErrorDidNotFinishLoading:\s*truncatedChunk \|\| isLazyLoadConnectionError\(error\)/m
+  );
+});
+
+test('a new deploy is read from entry scripts, not runtime preload links', async () => {
+  const { extractEntryScriptPaths } = await import(
+    '../src/helpers/lazyChunkErrors'
+  );
+  const origin = 'https://twinkle-vite-lpsrq0dor-twinkle-747b4379.vercel.app';
+  const deployed = `<head><script defer src="/js/load-image.all.min.js"></script>
+<script type="module" crossorigin src="${origin}/assets/index--O4sFU0u.js"></script>
+<link rel="modulepreload" crossorigin href="${origin}/assets/index-BRarbbeP.js"></head>`;
+  // the running page: same entry, plus preload links Vite added at runtime
+  const running = deployed.replace(
+    '</head>',
+    `<link rel="modulepreload" href="${origin}/assets/content-CA8FY4Cc.js"></head>`
+  );
+  assert.deepEqual(extractEntryScriptPaths(deployed), [
+    '/assets/index--O4sFU0u.js'
+  ]);
+  assert.deepEqual(
+    extractEntryScriptPaths(running),
+    extractEntryScriptPaths(deployed)
+  );
+  // a redeploy: new entry hash on a new deployment origin
+  const next = deployed
+    .replace(origin, 'https://twinkle-vite-abc-twinkle.vercel.app')
+    .replace('index--O4sFU0u.js', 'index-Kji1Dzzc.js');
+  assert.notDeepEqual(
+    extractEntryScriptPaths(next),
+    extractEntryScriptPaths(running)
+  );
 });

@@ -1,5 +1,5 @@
 import { getStoredItem, getTwinkleDeviceId } from '~/helpers/userDataHelpers';
-import { recoverFromLazyImportLoadError } from '~/helpers/lazyImportHelpers';
+import { importWithRecovery } from '~/helpers/lazyImportHelpers';
 import { clientVersion } from '~/constants/defaultValues';
 
 type RequestHelperModuleName =
@@ -1056,6 +1056,13 @@ registerMethods('zero', [
   'textToSpeech'
 ]);
 
+// every helper module is a bare import() whose default is the factory, so a
+// fresh copy of its chunk is usable exactly when it has that default
+function isRequestHelperModule(loaded: unknown) {
+  const factory = (loaded as Partial<RequestHelperModule> | null)?.default;
+  return typeof factory === 'function';
+}
+
 export default function requestHelpers(
   handleError: (error: unknown) => Promise<never>
 ) {
@@ -1066,23 +1073,28 @@ export default function requestHelpers(
   const baseHelpers: Record<string, any> = { auth };
 
   function loadHelperModule(moduleName: RequestHelperModuleName) {
-    if (!loadedModules[moduleName]) {
-      loadedModules[moduleName] = helperModuleLoaders[moduleName]()
-        .then(({ default: factory }) =>
-          factory({
-            auth,
-            handleError,
-            token
-          })
-        )
-        .catch(async (error) => {
-          if (await recoverFromLazyImportLoadError(error)) {
-            return await new Promise<Record<string, any>>(() => {});
-          }
-          throw error;
-        });
-    }
-    return loadedModules[moduleName]!;
+    const loaded = loadedModules[moduleName];
+    if (loaded) return loaded;
+    const loading = importWithRecovery(helperModuleLoaders[moduleName], {
+      isUsable: isRequestHelperModule
+    }).then(
+      ({ default: factory }) =>
+        factory({
+          auth,
+          handleError,
+          token
+        })
+    );
+    loadedModules[moduleName] = loading;
+    // Never keep a failed load: the next request tries again instead of
+    // failing with the same error until the page reloads (11-09: one failed
+    // download blocked a member's uploads for the rest of the visit).
+    loading.catch(() => {
+      if (loadedModules[moduleName] === loading) {
+        delete loadedModules[moduleName];
+      }
+    });
+    return loading;
   }
 
   function getLazyHelper(methodName: string) {

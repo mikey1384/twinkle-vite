@@ -53,3 +53,24 @@ export function wasOpenedByLazyImportReload(href: string, now = Date.now()) {
   const age = now - at;
   return at > 0 && age >= 0 && age < RECOVERY_RELOAD_WINDOW_MS;
 }
+
+// The entry <script src> paths under /assets/ in an HTML document. Hashed
+// entry names change with every deploy (Vite's content hashing cascades up to
+// the entries). Only <script> tags count: at runtime Vite adds
+// <link rel="modulepreload"> tags for lazy chunks, which made the running page
+// always look different from the deployed index.html, so every URL-less
+// (Safari) chunk failure read as a new deploy and reloaded (11-09). Paths, not
+// origins: each deployment serves its assets from its own *.vercel.app origin.
+export function extractEntryScriptPaths(html: string) {
+  const paths = Array.from(
+    html.matchAll(/<script\b[^>]*?\bsrc=["']([^"']+\.js)["'][^>]*>/gi),
+    (match) => {
+      try {
+        return new URL(match[1], 'https://page.invalid/').pathname;
+      } catch {
+        return '';
+      }
+    }
+  ).filter((path) => path.startsWith('/assets/'));
+  return Array.from(new Set(paths)).sort();
+}

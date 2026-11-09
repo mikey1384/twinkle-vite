@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import API_URL from '~/constants/URL';
 import {
   isLazyImportLoadError,
+  isLazyLoadConnectionError,
   reloadForLazyImportRecovery
 } from '~/helpers/lazyImportHelpers';
 import {
@@ -44,7 +45,9 @@ const DOM_MUTATION_UNRECOVERABLE_MARKER = '[dom-mutation-unrecoverable]';
 interface State {
   hasError: boolean;
   lastErrorIsLazyImportLoadError: boolean;
-  lastErrorIsTruncatedChunk?: boolean;
+  // a cut-off chunk, or one the connection kept from loading after retries:
+  // both need a reload, and neither is an update
+  lastErrorDidNotFinishLoading?: boolean;
   recoveryKey: number;
 }
 export default class ErrorBoundary extends Component<
@@ -123,7 +126,7 @@ export default class ErrorBoundary extends Component<
       this.setState({
         hasError: true,
         lastErrorIsLazyImportLoadError: false,
-        lastErrorIsTruncatedChunk: false
+        lastErrorDidNotFinishLoading: false
       });
       return;
     }
@@ -167,7 +170,8 @@ export default class ErrorBoundary extends Component<
     this.setState({
       hasError: true,
       lastErrorIsLazyImportLoadError: lazyImportLoadError,
-      lastErrorIsTruncatedChunk: truncatedChunk
+      lastErrorDidNotFinishLoading:
+        truncatedChunk || isLazyLoadConnectionError(error)
     });
   }
 
@@ -176,11 +180,11 @@ export default class ErrorBoundary extends Component<
     const {
       hasError,
       lastErrorIsLazyImportLoadError,
-      lastErrorIsTruncatedChunk,
+      lastErrorDidNotFinishLoading,
       recoveryKey
     } = this.state;
     if (hasError) {
-      if (lastErrorIsTruncatedChunk) {
+      if (lastErrorDidNotFinishLoading) {
         return (
           <UpdateRecoveryNotice
             buttonLabel="Reload"
