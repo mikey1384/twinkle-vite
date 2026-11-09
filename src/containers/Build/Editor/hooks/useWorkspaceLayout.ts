@@ -105,8 +105,12 @@ export default function useWorkspaceLayout({
     : undefined;
 
   useEffect(() => {
-    function handleWindowResize() {
-      const isDesktopLayout = getIsDesktopBuildWorkspaceLayout();
+    const compactMediaQuery =
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia(BUILD_WORKSPACE_COMPACT_MEDIA_QUERY)
+        : null;
+    function updateWorkspaceLayout() {
+      const isDesktopLayout = !compactMediaQuery?.matches;
       setIsDesktopWorkspaceLayout(isDesktopLayout);
       if (!isDesktopLayout) return;
       const workspaceWidth =
@@ -116,10 +120,30 @@ export default function useWorkspaceLayout({
       );
     }
 
-    handleWindowResize();
-    window.addEventListener('resize', handleWindowResize);
+    // Keep the first clamp immediate. Subsequent shell measurements belong
+    // after layout: a window resize can otherwise force the entire editor's
+    // pending layout just to read this width. Retain the same viewport-space
+    // border box for zoom, pointer and keyboard clamping.
+    updateWorkspaceLayout();
+    const shell = workspaceShellRef.current;
+    const canWatchMedia =
+      typeof compactMediaQuery?.addEventListener === 'function';
+    const observer =
+      shell &&
+      typeof ResizeObserver !== 'undefined' &&
+      (!compactMediaQuery || canWatchMedia)
+        ? new ResizeObserver(updateWorkspaceLayout)
+        : null;
+    if (observer && shell) {
+      observer.observe(shell, { box: 'border-box' });
+    } else {
+      window.addEventListener('resize', updateWorkspaceLayout);
+    }
+    compactMediaQuery?.addEventListener?.('change', updateWorkspaceLayout);
     return () => {
-      window.removeEventListener('resize', handleWindowResize);
+      observer?.disconnect();
+      window.removeEventListener('resize', updateWorkspaceLayout);
+      compactMediaQuery?.removeEventListener?.('change', updateWorkspaceLayout);
     };
   }, []);
 
