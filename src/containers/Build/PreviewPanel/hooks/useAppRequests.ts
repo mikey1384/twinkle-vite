@@ -153,6 +153,7 @@ export default function useAppRequests({
   );
   const queryViewerDb = useAppContext((v) => v.requestHelpers.queryViewerDb);
   const execViewerDb = useAppContext((v) => v.requestHelpers.execViewerDb);
+  const exportViewerDb = useAppContext((v) => v.requestHelpers.exportViewerDb);
   const getBuildApiToken = useAppContext(
     (v) => v.requestHelpers.getBuildApiToken
   );
@@ -466,6 +467,7 @@ export default function useAppRequests({
   const restoreBuildArtifactVersionRef = useRef(restoreBuildArtifactVersion);
   const queryViewerDbRef = useRef(queryViewerDb);
   const execViewerDbRef = useRef(execViewerDb);
+  const exportViewerDbRef = useRef(exportViewerDb);
   const getBuildApiTokenRef = useRef(getBuildApiToken);
   const getBuildApiUserRef = useRef(getBuildApiUser);
   const getBuildApiUsersRef = useRef(getBuildApiUsers);
@@ -618,6 +620,7 @@ export default function useAppRequests({
     callBuildRuntimeCharacterChatStreamRef,
     queryViewerDbRef,
     execViewerDbRef,
+    exportViewerDbRef,
     getBuildApiUserRef,
     getBuildApiUsersRef,
     getBuildDailyReflectionsRef,

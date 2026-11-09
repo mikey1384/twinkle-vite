@@ -1,4 +1,5 @@
 import type { BuildCapabilitySnapshot } from '../../types/capabilityTypes';
+import type { PreviewCaptureScratch } from '../helpers/previewCaptureScratch';
 import type {
   BuildAgentAssetCreateOptions,
   BuildAgentAssetCreateResult
@@ -105,6 +106,10 @@ export interface PreviewPanelProps {
   // Other runtimeOnly hosts (reward proposal player, thumbnail capture) never
   // resume or save a place.
   appLifecycleSource?: string | null;
+  // Set only by ThumbnailCaptureHost for a Lumine capture: the session's
+  // throwaway store for SDK saves and lifecycle snapshots
+  // (helpers/previewCaptureScratch.ts). Never set anywhere else.
+  captureScratch?: PreviewCaptureScratch | null;
   requireSignedPreviewAccess?: boolean;
   runtimeHostVisible?: boolean;
   // Keep the preview frame MOUNTED even while host-hidden (the keep-alive

@@ -228,6 +228,7 @@ registerMethods('build', [
   'likeBuildContributionForumReply',
   'queryViewerDb',
   'execViewerDb',
+  'exportViewerDb',
   'getBuildApiToken',
   'uploadBuildRuntimeClip',
   'getBuildRuntimeClipStatus',

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
+import { PRESENCE_RESYNC_EVENT } from '~/helpers/presenceLive';
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
 import { shouldShowBackgroundAiReplyNotification } from '~/helpers/chatNotificationPolicy';
 import {
@@ -408,18 +409,26 @@ export default function useAISocket({
     function handleActiveTab({ tabId }: { tabId?: string }) {
       if (typeof tabId === 'string') activeAgentTabIdRef.current = tabId;
     }
+    // Owner changes are skipped while this tab is paused (hidden or frozen),
+    // so the last one it heard may be stale: fall back to "only a focused tab
+    // answers" until the next report.
+    function handleResync() {
+      activeAgentTabIdRef.current = null;
+    }
     // Switching to a tab counts too, so a hidden tab never keeps the role.
     window.addEventListener('pointerdown', reportActive, true);
     window.addEventListener('keydown', reportActive, true);
     window.addEventListener('focus', reportActive);
     document.addEventListener('visibilitychange', reportActive);
     socket.on('website_agent_active_tab', handleActiveTab);
+    socket.on(PRESENCE_RESYNC_EVENT, handleResync);
     return () => {
       window.removeEventListener('pointerdown', reportActive, true);
       window.removeEventListener('keydown', reportActive, true);
       window.removeEventListener('focus', reportActive);
       document.removeEventListener('visibilitychange', reportActive);
       socket.off('website_agent_active_tab', handleActiveTab);
+      socket.off(PRESENCE_RESYNC_EVENT, handleResync);
     };
   }, [userId]);
 

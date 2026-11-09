@@ -6,6 +6,13 @@ import {
 
 const HOST_SQL_JS_CDN_BASE =
   'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3';
+// Pinned bytes of that version (cdnjs's published SRI for the script; the
+// wasm hashed from the same release, equal to the npm package), so a changed
+// CDN file is refused instead of run, for guests and Lumine captures alike.
+const HOST_SQL_JS_SCRIPT_INTEGRITY =
+  'sha512-f4bgk3aqQ6nrGVs1Aw0R9kH598VsHnz+xXmRa3kv0wu+WhVp/58fExWhUnYyOyT9R1xA+ILShDUeMBg5hC7CmA==';
+const HOST_SQL_JS_WASM_INTEGRITY =
+  'sha512-CJH7qneqrGY0mG25MkTl5ngjoTBv3m1bJXG0OVXK/kAe2n+IZdDtdqfgbspy+ozOSjA9g8bzCkcwpcZE9jcTZA==';
 const GUEST_VIEWER_DB_STORAGE_KEY_PREFIX = 'twinkle_build_guest_viewer_db:';
 const GUEST_VIEWER_DB_SIZE_LIMIT_BYTES = 1 * 1024 * 1024;
 const GUEST_VIEWER_DB_MAX_ROWS = 1000;
@@ -17,6 +24,7 @@ declare global {
   interface Window {
     initSqlJs?: (options: {
       locateFile: (file: string) => string;
+      wasmBinary?: Uint8Array;
     }) => Promise<any>;
   }
 }
@@ -50,7 +58,7 @@ function getGuestViewerDbStorageKey(buildId: number, guestSessionId: string) {
   return `${GUEST_VIEWER_DB_STORAGE_KEY_PREFIX}${buildId}:${guestSessionId}`;
 }
 
-async function loadHostSqlJs() {
+export async function loadHostSqlJs() {
   if (hostSqlJsPromise) return hostSqlJsPromise;
 
   hostSqlJsPromise = new Promise((resolve, reject) => {
@@ -67,10 +75,21 @@ async function loadHostSqlJs() {
         return;
       }
 
-      window
-        .initSqlJs({
-          locateFile: (file) => `${HOST_SQL_JS_CDN_BASE}/${file}`
+      fetch(`${HOST_SQL_JS_CDN_BASE}/sql-wasm.wasm`, {
+        integrity: HOST_SQL_JS_WASM_INTEGRITY,
+        mode: 'cors',
+        credentials: 'omit'
+      })
+        .then((wasmResponse) => {
+          if (!wasmResponse.ok) throw new Error('Failed to load sql.js');
+          return wasmResponse.arrayBuffer();
         })
+        .then((wasmBinary) =>
+          window.initSqlJs!({
+            locateFile: (file) => `${HOST_SQL_JS_CDN_BASE}/${file}`,
+            wasmBinary: new Uint8Array(wasmBinary)
+          })
+        )
         .then(resolve)
         .catch((error) => {
           hostSqlJsPromise = null;
@@ -106,6 +125,8 @@ async function loadHostSqlJs() {
 
     if (!existingScript) {
       script.src = `${HOST_SQL_JS_CDN_BASE}/sql-wasm.min.js`;
+      script.integrity = HOST_SQL_JS_SCRIPT_INTEGRITY;
+      script.crossOrigin = 'anonymous';
       script.async = true;
       script.setAttribute('data-twinkle-host-sqljs', 'true');
       document.head.appendChild(script);

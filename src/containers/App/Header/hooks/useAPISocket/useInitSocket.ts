@@ -79,6 +79,14 @@ import { shouldSkipChatWakeBarrier } from './chatWakeBarrierThrottle';
 import { noteOwnerSocket, noteOwnerWakeWork } from '~/helpers/ownerTrace';
 import { noteMemberSocket } from '~/helpers/memberTrace';
 import { createSocketReconnectEvidence } from '~/helpers/socketReconnectEvidence';
+import {
+  bindSupportsPresenceLive,
+  isPresencePageLive,
+  planPresenceResyncSnapshot,
+  PRESENCE_LIVE_EVENT,
+  PRESENCE_RESYNC_EVENT,
+  PRESENCE_RESYNC_SNAPSHOT_EVENT
+} from '~/helpers/presenceLive';
 
 const MAX_CANONICAL_CHAT_BOOTSTRAP_ATTEMPTS = 4;
 
@@ -108,6 +116,7 @@ interface SocketBindResult {
   chatBindId?: string;
   chatRoomCount?: number;
   presenceQualified?: boolean;
+  presenceLive?: number;
 }
 
 function emitSocketBind({
@@ -215,6 +224,7 @@ export default function useInitSocket({
   const onSetOnlinePresenceSnapshot = useChatContext(
     (v) => v.actions.onSetOnlinePresenceSnapshot
   );
+  const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
   const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -276,6 +286,10 @@ export default function useInitSocket({
   const socketBindRetryTimerRef = useRef<number | null>(null);
   const socketBindRetryCountRef = useRef(0);
   const socketBindAttemptRef = useRef(0);
+  // Whether this socket's API advertised presence pausing at bind, and the
+  // latest resync notice it sent (answered by one batched snapshot).
+  const presenceLiveSupportedRef = useRef(false);
+  const presenceResyncRef = useRef<{ id: number; at: number } | null>(null);
   const socketAuthValidationInFlightRef = useRef(false);
   const terminalSocketAuthFailureRef = useRef(false);
   const wakeReconcileInFlightRef = useRef(false);
@@ -935,6 +949,8 @@ export default function useInitSocket({
     );
     socket.on('online_status_changed', handleSelfPresenceDemoted);
     socket.on('away_status_changed', handleSelfAwayDemoted);
+    socket.on(PRESENCE_RESYNC_EVENT, handlePresenceResync);
+    socket.on(PRESENCE_RESYNC_SNAPSHOT_EVENT, handlePresenceResyncSnapshot);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.io.on('reconnect_attempt', handleReconnectAttempt);
@@ -952,6 +968,8 @@ export default function useInitSocket({
       );
       socket.off('online_status_changed', handleSelfPresenceDemoted);
       socket.off('away_status_changed', handleSelfAwayDemoted);
+      socket.off(PRESENCE_RESYNC_EVENT, handlePresenceResync);
+      socket.off(PRESENCE_RESYNC_SNAPSHOT_EVENT, handlePresenceResyncSnapshot);
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.io.off('reconnect_attempt', handleReconnectAttempt);
@@ -1038,6 +1056,49 @@ export default function useInitSocket({
       if (!isAway) return;
       if (Number(userId) !== Number(userIdRef.current)) return;
       handleRearmUserActionCapture();
+    }
+
+    // The server skipped presence broadcasts while this page was hidden or
+    // frozen and has just resumed them. Its batched snapshot follows; note
+    // when the notice arrived, which is that snapshot's freshness stamp.
+    function handlePresenceResync(payload?: { resyncId?: number }) {
+      const resyncId = Number(payload?.resyncId || 0);
+      presenceResyncRef.current = resyncId
+        ? { id: resyncId, at: Date.now() }
+        : null;
+    }
+
+    // Replaces everything the paused page missed: who is online (complete
+    // snapshot, reconciling offline users) and, like the reconnect path's
+    // check_online_users for General, the recently-offline list with
+    // last-seen times. Call data is not paused, so it is already current.
+    function handlePresenceResyncSnapshot(payload?: any) {
+      const bindingUserId = Number(userIdRef.current || 0);
+      const plan = planPresenceResyncSnapshot({
+        payload,
+        pending: presenceResyncRef.current,
+        userId: bindingUserId,
+        socketBound: !!socket.id && boundSocketIdRef.current === socket.id
+      });
+      if (plan.action === 'ignore') return;
+      presenceResyncRef.current = null;
+      if (plan.action === 'read') {
+        hydrateOnlinePresence(bindingUserId);
+        return;
+      }
+      onSetOnlinePresenceSnapshot({
+        onlineUsers: plan.onlineUsers,
+        isComplete: plan.isComplete,
+        requestedAt: plan.requestedAt
+      });
+      if (plan.recentOfflineUsers) {
+        onSetOnlineUsers({
+          userId: bindingUserId,
+          onlineUsers: plan.onlineUsers,
+          recentOfflineUsers: plan.recentOfflineUsers,
+          requestedAt: plan.requestedAt
+        });
+      }
     }
 
     function handleRearmUserActionCapture() {
@@ -1997,6 +2058,9 @@ export default function useInitSocket({
       });
       clearSocketAuthReady();
       socketBindAttemptRef.current += 1;
+      // The next server is asked again at its bind.
+      presenceLiveSupportedRef.current = false;
+      presenceResyncRef.current = null;
       markSocketTransportGap(true);
       onSetAICallEnding(false);
       onChangeSocketStatus(false);
@@ -2084,7 +2148,11 @@ export default function useInitSocket({
   // Inform server of away/visible status and keep the application-level
   // presence heartbeat foreground-only. Socket.IO transport liveness remains
   // active independently; a hidden page does not need to wake the mobile radio
-  // every 15 seconds merely to refresh passive presence metadata.
+  // every 15 seconds merely to refresh passive presence metadata. "Foreground"
+  // means a visible page, not a focused window: blur still reports away, but a
+  // visible unfocused window keeps its heartbeat and its live presence, since
+  // the server pauses presence for a page that claims to be visible yet stays
+  // silent for a minute (helpers/presenceLive.ts).
   useEffect(() => {
     const emitVisible = () => {
       socket.emit('change_away_status', true);
@@ -2094,9 +2162,16 @@ export default function useInitSocket({
       stopUserHeartbeat();
       socket.emit('change_away_status', false);
     };
+    const emitBlurred = () => {
+      socket.emit('change_away_status', false);
+    };
 
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') emitVisible();
+      const live = isPresencePageLive();
+      if (presenceLiveSupportedRef.current) {
+        socket.emit(PRESENCE_LIVE_EVENT, live);
+      }
+      if (live) emitVisible();
       else emitHidden();
     };
 
@@ -2106,7 +2181,7 @@ export default function useInitSocket({
 
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('focus', emitVisible);
-    window.addEventListener('blur', emitHidden);
+    window.addEventListener('blur', emitBlurred);
     window.addEventListener('online', onOnline);
     // The socket singleton can already be connected if this hook remounts, so
     // establish the timer from current canonical browser state rather than
@@ -2118,7 +2193,7 @@ export default function useInitSocket({
       stopUserHeartbeat();
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', emitVisible);
-      window.removeEventListener('blur', emitHidden);
+      window.removeEventListener('blur', emitBlurred);
       window.removeEventListener('online', onOnline);
     };
     // The listeners intentionally own one mount-lifetime timer and read all
@@ -2404,6 +2479,14 @@ export default function useInitSocket({
         dispatchSocketAuthReady(bindingUserId);
         socket.emit('enter_my_notification_channel', bindingUserId);
         socket.emit('change_busy_status', chatBusyRef.current);
+        // Declared on every bind so a reconnect made while hidden is paused
+        // from the start - but only to an API that advertised the protocol,
+        // so the website may deploy before or after the API.
+        presenceLiveSupportedRef.current = bindSupportsPresenceLive(result);
+        if (presenceLiveSupportedRef.current) {
+          socket.emit(PRESENCE_LIVE_EVENT, isPresencePageLive());
+        }
+        startUserHeartbeat();
         userActionAckedRef.current = result?.presenceQualified === true;
         userActionAttemptsRef.current = 0;
         if (userActionAckedRef.current) {

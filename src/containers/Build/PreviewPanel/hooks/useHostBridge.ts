@@ -104,6 +104,10 @@ import {
   shouldRecoverAIImageUnknownOutcome
 } from '~/helpers/aiImageStatus';
 import { isPublicMinecraftRead } from '../helpers/publicMinecraftReads';
+import {
+  isPreviewCaptureScratchType,
+  type PreviewCaptureRealRead
+} from '../helpers/previewCaptureScratch';
 import { recordOwnerTrace } from '~/helpers/ownerTrace';
 import {
   acceptAppLifecycleSnapshot,
@@ -227,6 +231,7 @@ function emitWorldBridgeTelemetry(data: {
 export function useHostBridge({
   runtimeOnly,
   appLifecycleSource,
+  captureScratch = null,
   previewSrcOverride,
   appMcpSessionId,
   buildId,
@@ -281,6 +286,10 @@ export function useHostBridge({
   runtimeOnlyRef.current = runtimeOnly;
   const appLifecycleSourceRef = useRef(appLifecycleSource || null);
   appLifecycleSourceRef.current = appLifecycleSource || null;
+  // A Lumine capture only: saves and lifecycle snapshots stay in this
+  // session's memory (helpers/previewCaptureScratch.ts), never the real store.
+  const captureScratchRef = useRef(captureScratch || null);
+  captureScratchRef.current = captureScratch || null;
   const previewSrcOverrideRef = useRef(previewSrcOverride || null);
   previewSrcOverrideRef.current = previewSrcOverride || null;
   const launchTargetBroadcastReadyRef = useRef(false);
@@ -2364,8 +2373,81 @@ export function useHostBridge({
       try {
         let response: any = {};
         let pendingHostNavigationUrl = '';
+        const captureScratchStore = captureScratchRef.current;
 
-        switch (type) {
+        if (captureScratchStore && isPreviewCaptureScratchType(type)) {
+          // Reads of the real stores go through the capture's read-only pass;
+          // writes never leave the scratch store.
+          const readReal: PreviewCaptureRealRead = async (readType, readPayload) => {
+            if (readType === 'private-db:get' || readType === 'private-db:list') {
+              const token = await ensureBuildApiToken(['privateDb:read'], previewAuth);
+              return readType === 'private-db:get'
+                ? requestRefs.getPrivateDbItemRef.current({ buildId: activeBuild.id, key: readPayload.key, token })
+                : requestRefs.listPrivateDbItemsRef.current({
+                    buildId: activeBuild.id,
+                    prefix: readPayload.prefix,
+                    limit: readPayload.limit,
+                    cursor: readPayload.cursor,
+                    token
+                  });
+            }
+            if (readType === 'user-db:export') {
+              return requestRefs.exportViewerDbRef.current({ buildId: activeBuild.id });
+            }
+            if (readType === 'user-db:query') {
+              return requestRefs.queryViewerDbRef.current({
+                buildId: activeBuild.id,
+                sql: readPayload.sql,
+                params: readPayload.params
+              });
+            }
+            const token = await ensureBuildApiToken(['sharedDb:read'], previewAuth);
+            if (readType === 'shared-db:get-topics') {
+              return requestRefs.getSharedDbTopicsRef.current({ buildId: activeBuild.id, publicRead: false, token });
+            }
+            if (readType === 'shared-db:get-entries') {
+              return requestRefs.getSharedDbEntriesRef.current({
+                buildId: activeBuild.id,
+                topicId: readPayload.topicId,
+                query: readPayload.query,
+                limit: readPayload.limit,
+                cursor: readPayload.cursor,
+                order: readPayload.order,
+                publicRead: false,
+                token
+              });
+            }
+            if (readType === 'shared-db:get-entries-by-ids') {
+              return requestRefs.getSharedDbEntriesByIdsRef.current({
+                buildId: activeBuild.id,
+                entryIds: readPayload.entryIds,
+                publicRead: false,
+                token
+              });
+            }
+            return readType === 'shared-db:kv-get'
+              ? requestRefs.getSharedDbKvItemRef.current({
+                  buildId: activeBuild.id,
+                  namespace: readPayload.namespace,
+                  key: readPayload.key,
+                  token
+                })
+              : requestRefs.listSharedDbKvItemsRef.current({
+                  buildId: activeBuild.id,
+                  namespace: readPayload.namespace,
+                  limit: readPayload.limit,
+                  cursor: readPayload.cursor,
+                  since: readPayload.since,
+                  token
+                });
+          };
+          const scratchViewer = getViewerInfo(previewAuth);
+          response = await captureScratchStore.handle(type, payload, readReal, {
+            userId: Number(scratchViewer?.id) || null,
+            username: scratchViewer?.username ?? null,
+            profilePicUrl: scratchViewer?.profilePicUrl ?? null
+          });
+        } else switch (type) {
           case 'app-tools:register': {
             const handlerNames = Array.isArray(payload?.handlerNames)
               ? payload.handlerNames
@@ -2496,7 +2578,10 @@ export function useHostBridge({
               // Only the viewer's own /app run resumes (appLifecycleSourceRef.current);
               // the Build editor, reward proposal player and thumbnail
               // capture start fresh, so other code never meets this state.
-              lifecycleResume: appLifecycleSourceRef.current
+              // A Lumine capture resumes from its own session's snapshot.
+              lifecycleResume: captureScratchStore
+                ? captureScratchStore.lifecycleResume()
+                : appLifecycleSourceRef.current
                 ? await loadAppLifecycleSnapshot(
                     appLifecycleKey({
                       userId,
@@ -2515,6 +2600,16 @@ export function useHostBridge({
             break;
 
           case 'lifecycle:snapshot': {
+            if (captureScratchStore) {
+              response = {
+                success: captureScratchStore.saveLifecycle({
+                  state: payload?.state,
+                  reason: payload?.reason,
+                  work: payload?.work
+                })
+              };
+              break;
+            }
             const state = appLifecycleSourceRef.current
               ? normalizeAppLifecycleState(payload?.state)
               : null;

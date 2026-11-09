@@ -153,9 +153,10 @@ export default function CodeWorkspacePane({
     () =>
       buildProjectFileLineDiagnostics(
         displayedProjectFiles,
-        resolvedMaxProjectFileLines
+        resolvedMaxProjectFileLines,
+        persistedFileContentByPath
       ),
-    [displayedProjectFiles, resolvedMaxProjectFileLines]
+    [displayedProjectFiles, resolvedMaxProjectFileLines, persistedFileContentByPath]
   );
   const projectFileLineDiagnosticByPath = useMemo(() => {
     const diagnosticByPath = new Map<string, ProjectFileLineDiagnostic>();
@@ -1447,10 +1448,15 @@ export default function CodeWorkspacePane({
                           activeFileLineDiagnostic.effectiveLineCount,
                           activeFileLineDiagnostic.maxLines
                         )} effective lines. Split it before saving.`
-                      : `This file is near the save limit: ${formatProjectFileEffectiveLineCount(
-                          activeFileLineDiagnostic.effectiveLineCount,
-                          activeFileLineDiagnostic.maxLines
-                        )} effective lines.`}
+                      : activeFileLineDiagnostic.unchangedOverLimit
+                        ? `This file is over the save limit: ${formatProjectFileEffectiveLineCount(
+                            activeFileLineDiagnostic.effectiveLineCount,
+                            activeFileLineDiagnostic.maxLines
+                          )} effective lines. It still saves while you leave it unchanged. Split it before you change it.`
+                        : `This file is near the save limit: ${formatProjectFileEffectiveLineCount(
+                            activeFileLineDiagnostic.effectiveLineCount,
+                            activeFileLineDiagnostic.maxLines
+                          )} effective lines.`}
                   </span>
                 </div>
               )}

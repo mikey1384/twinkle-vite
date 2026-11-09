@@ -33,6 +33,8 @@ export interface PreviewHostBridgeRequestRefs {
   callBuildRuntimeCharacterChatStreamRef: AsyncRequestRef;
   queryViewerDbRef: AsyncRequestRef;
   execViewerDbRef: AsyncRequestRef;
+  // a Lumine capture's one-read copy of the viewer database (previewCaptureScratchViewerDb.ts)
+  exportViewerDbRef: AsyncRequestRef;
   getBuildApiUserRef: AsyncRequestRef;
   getBuildApiUsersRef: AsyncRequestRef;
   getBuildDailyReflectionsRef: AsyncRequestRef;

@@ -7,6 +7,8 @@ import PreviewPanel from './PreviewPanel';
 import { useAppContext } from '~/contexts';
 import { normalizeAllowedBuildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
 import { normalizeLuminePreviewCaptureId } from '~/helpers/luminePreviewCapture';
+import { createPreviewCaptureScratch } from './PreviewPanel/helpers/previewCaptureScratch';
+import { loadHostSqlJs } from './PreviewPanel/helpers/guestViewerDb';
 import { persistAuthToken } from '~/helpers/userDataHelpers';
 import type { BuildRuntimeObservationState } from './types/runtimeObservationTypes';
 
@@ -133,6 +135,20 @@ export default function ThumbnailCaptureHost({
           : Math.round(window.innerHeight || 0)
     };
   }, [location.search]);
+  // One throwaway SDK store per Lumine capture page (= per preview session:
+  // each session is its own browser). Saves and keep-place snapshots made
+  // while Lumine looks or tests are kept here, so "save, leave, come back"
+  // can be checked, and never reach the real store. Thumbnails get none.
+  const lumineCaptureId = lumineCapture?.captureId || null;
+  // Each capture page is its own browser, so the store (and its sql.js
+  // database) goes when the session ends.
+  const captureScratch = useMemo(
+    () =>
+      lumineCaptureId
+        ? createPreviewCaptureScratch({ loadSqlJs: loadHostSqlJs })
+        : null,
+    [lumineCaptureId]
+  );
   const reportEvidenceRef = useRef(reportLuminePreviewCaptureEvidence);
   const evidenceStateRef = useRef<{
     observation: Pick<BuildRuntimeObservationState, 'issues' | 'health'> | null;
@@ -362,6 +378,7 @@ export default function ThumbnailCaptureHost({
       runtimeOnly
       capabilitySnapshot={payload.capabilitySnapshot}
       previewSrcOverride={previewPath}
+      captureScratch={captureScratch}
       viewerOverride={captureBootstrap.viewerOverride}
       onCaptureReadyChange={setCaptureReady}
       onRuntimeObservationChange={handleRuntimeObservationChange}

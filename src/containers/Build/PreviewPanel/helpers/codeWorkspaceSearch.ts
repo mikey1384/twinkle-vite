@@ -14,6 +14,9 @@ export interface ProjectFileLineDiagnostic {
   effectiveLineCount: number;
   maxLines: number;
   severity: ProjectFileLineDiagnosticSeverity;
+  // Over the limit but unchanged from the saved version: the server still
+  // saves it (it cannot be made bigger), so it does not block saving.
+  unchangedOverLimit?: boolean;
 }
 
 export interface ProjectFileSearchResult {
@@ -26,23 +29,35 @@ export interface ProjectFileSearchResult {
 
 export function buildProjectFileLineDiagnostics(
   files: EditableProjectFile[],
-  maxLines: number
+  maxLines: number,
+  savedContentByPath?: Map<string, string>
 ): ProjectFileLineDiagnostic[] {
+  const savedContents = new Set(savedContentByPath?.values() || []);
   const warningThreshold = Math.max(
     1,
     Math.floor(maxLines * PROJECT_FILE_LINE_WARNING_RATIO)
   );
 
   return files
-    .map((file) => {
+    .map((file): ProjectFileLineDiagnostic | null => {
       const effectiveLineCount = countProjectFileEffectiveLines(file.content);
       if (effectiveLineCount > maxLines) {
-        return {
-          path: file.path,
-          effectiveLineCount,
-          maxLines,
-          severity: 'error' as const
-        };
+        // The server's rule: content that is already saved, at any path.
+        const unchanged = savedContents.has(file.content);
+        return unchanged
+          ? {
+              path: file.path,
+              effectiveLineCount,
+              maxLines,
+              severity: 'warning' as const,
+              unchangedOverLimit: true
+            }
+          : {
+              path: file.path,
+              effectiveLineCount,
+              maxLines,
+              severity: 'error' as const
+            };
       }
       if (effectiveLineCount >= warningThreshold) {
         return {

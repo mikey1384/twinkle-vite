@@ -41,6 +41,7 @@ function fixture() {
       },
       '~/constants/sockets/api': { socket },
       '~/helpers/userDataHelpers': { getStoredItem: () => String(currentUserId) },
+      '~/helpers/presenceLive': compile('src/helpers/presenceLive.ts', {}),
       './challengeReviews': compile(
         'src/containers/Home/GrammarGameModal/Review/challengeReviews.ts', {}
       )
@@ -105,4 +106,29 @@ test('a review completed elsewhere returns its saved explanation without allowin
   assert.deepEqual(f.balanceUpdates, []);
   assert.deepEqual(f.energyUpdates, []);
   assert.equal(f.socket.listenerCount('grammar_challenge_thought_streamed'), 0);
+});
+
+test('thoughts missed while the tab was paused are not glued onto later deltas', async () => {
+  const f = fixture();
+  const pending = f.useChallengeReviews().startReview(10);
+  assert.equal(f.socket.listenerCount('presence_resync_required'), 1);
+  const thought = (thoughtContent, isDelta) =>
+    f.socket.emit('grammar_challenge_thought_streamed', { questionId: 10, thoughtContent, isDelta });
+  const shown = () => f.useChallengeReviews().reviews[10].thought;
+  thought('First ', true);
+  thought('step. ', true);
+  assert.equal(shown(), 'First step. ');
+  // Paused for a while: the server skipped some deltas, then resumed.
+  f.socket.emit('presence_resync_required', { reason: 'visible' });
+  thought('later words', true);
+  assert.equal(shown(), 'First step. ', 'a delta after a gap is not appended');
+  thought('First step. Second step. Done.', false);
+  assert.equal(shown(), 'First step. Second step. Done.', 'the next full update repairs it');
+  thought(' More.', true);
+  assert.equal(shown(), 'First step. Second step. Done. More.');
+  f.response.resolve({ data: { justified: true, explanation: 'Fixed.' } });
+  await pending;
+  assert.equal(f.socket.listenerCount('presence_resync_required'), 0);
+  assert.equal(f.socket.listenerCount('grammar_challenge_thought_streamed'), 0);
+  assert.equal(f.useChallengeReviews().reviews[10].status, 'complete');
 });

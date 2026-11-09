@@ -2,6 +2,10 @@ import { useSyncExternalStore } from 'react';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { getStoredItem } from '~/helpers/userDataHelpers';
+import {
+  createResyncGapGuard,
+  PRESENCE_RESYNC_EVENT
+} from '~/helpers/presenceLive';
 import { createChallengeReviewStore } from './challengeReviews';
 
 const store = createChallengeReviewStore();
@@ -30,15 +34,24 @@ export default function useChallengeReviews() {
       // Keep its review in the right account, and never replace another
       // account's balance or Energy with this response.
       const isCurrentUser = () => Number(getStoredItem('userId')) === userId;
+      // The server skips this stream while the tab is paused (hidden or
+      // frozen for a minute); don't append deltas across that gap.
+      const gap = createResyncGapGuard();
+      const handleResync = () => gap.markResynced();
       const handleThought = (event: {
         questionId: number;
         thoughtContent: string;
         isDelta?: boolean;
       }) => {
-        if (event.questionId === questionId && isCurrentUser()) {
+        if (
+          event.questionId === questionId &&
+          isCurrentUser() &&
+          gap.accept(event.isDelta)
+        ) {
           onThought(event.thoughtContent, event.isDelta);
         }
       };
+      socket.on(PRESENCE_RESYNC_EVENT, handleResync);
       socket.on('grammar_challenge_thought_streamed', handleThought);
       try {
         const response = await challengeQuestion({ questionId, quest });
@@ -68,6 +81,7 @@ export default function useChallengeReviews() {
         throw error;
       } finally {
         socket.off('grammar_challenge_thought_streamed', handleThought);
+        socket.off(PRESENCE_RESYNC_EVENT, handleResync);
       }
     });
   }

@@ -4470,6 +4470,21 @@ export default function buildRequestHelpers({
       }
     },
 
+    // The viewer's own database as one SQLite image (base64), read-only. Only
+    // a Lumine capture uses it, to open its throwaway copy in sql.js.
+    async exportViewerDb({ buildId }: { buildId: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/viewer-db/file`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async execViewerDb({
       buildId,
       sql,
