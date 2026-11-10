@@ -297,7 +297,7 @@ interface LandZoneArea {
   x1: number;
   z1: number;
   why: string;
-  allowCauses?: string[];
+  allowCauses?: Array<{ cause: string; values: number[] }>;
 }
 // The chat card's one land line: short; the review screen has the rest.
 // Review L3: a switch lets anyone set blocks in the plot to its values.
@@ -323,7 +323,7 @@ export function landZoneText(land: { locked?: LandZoneArea[]; resettable?: Array
   const place = (area: LandZoneArea) => `${area.why} (${area.region}, ${rect(area)})`;
   const lockedWords = locked.length
     ? ` Locked: nobody can change blocks in ${locked
-        .map((area) => `${place(area)}${area.allowCauses?.length ? `, except ${area.allowCauses.join('/')}` : ''}`)
+        .map((area) => `${place(area)}${area.allowCauses?.length ? `, except ${area.allowCauses.map((entry) => `${entry.cause} setting ${entry.values.join('/')}`).join(', ')}` : ''}`)
         .join('; ')}.`
     : '';
   const cooldownOf = (area: { cooldownSeconds?: number }) => area.cooldownSeconds ?? LAND_RESET_COOLDOWN_SECONDS;

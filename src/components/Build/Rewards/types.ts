@@ -33,7 +33,8 @@ export interface LandLockedArea {
   x1: number;
   z1: number;
   why: string;
-  allowCauses?: string[];
+  // Game-made causes still allowed there, each only with its declared values.
+  allowCauses?: Array<{ cause: string; values: number[] }>;
 }
 export interface LandResettableArea {
   id: string;

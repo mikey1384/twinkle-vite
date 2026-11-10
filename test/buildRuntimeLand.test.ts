@@ -265,4 +265,9 @@ test('land zones: the review words match the API and the chat card counts the ar
     formatBuildLandLine({ ...land, switches: [] }).endsWith(' 1 locked area nobody can change; 2 resettable areas any player can put back.')
   );
   assert.ok(!formatBuildLandLine({ ...land, locked: [], resettable: [] }).includes('area'));
+  // zones review M1: an allowed cause is named with its values, as the server enforces it
+  assert.equal(
+    landZoneText({ locked: [{ region: 'main', x0: 0, z0: 0, x1: 3, z1: 3, why: 'fountain', allowCauses: [{ cause: 'fluid', values: [8, 2] }] }] }),
+    ' Locked: nobody can change blocks in fountain (main, x 0..3, z 0..3), except fluid setting 8/2.'
+  );
 });
