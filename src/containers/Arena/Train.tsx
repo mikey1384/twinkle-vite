@@ -192,7 +192,7 @@ export default function Train({
             Every paper you finish shows up here. Review it, re-sit only the
             questions you missed until they are all fixed, and rematch a
             cleared paper {shelf?.rematchDays || 14} days later to see your
-            progress. Your next battle uses a different paper.
+            progress. Your next battle brings different questions.
           </span>
         </span>
         {!hasPapers && (

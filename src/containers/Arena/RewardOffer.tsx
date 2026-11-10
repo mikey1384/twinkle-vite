@@ -32,11 +32,13 @@ export default function RewardOffer({ offer, compact = false, length }: { offer:
     {!compact && <>
       <p>Reach all reward targets to earn XP and Coins. Higher total scores earn a larger bonus.</p>
       {offer.masteryReward?.tiers && <p>One reserved mastery reward can be earned in this attempt. Full marks takes the full-marks reward first if it is available; otherwise a pass takes the pass reward. An unclaimed higher tier waits for another mastery attempt.</p>}
-      {reduced && <p>The amounts shown exclude questions you have already been rewarded for.</p>}
+      {reduced && <p>{offer.masteryReward
+        ? 'Questions you have already been rewarded for are not paid again. Rewards from Short or Medium exams never reduce a mastery reward.'
+        : 'The amounts shown exclude questions you have already been rewarded for.'}</p>}
       {!!offer.pendingOverlapPoints && <p>Another exam containing some of these questions is awaiting its result. Each question can earn rewards once, so the final amounts may be lower.</p>}
       {offer.markingRequired && <p>Rewards arrive after the final Writing / Speaking marks.</p>}
       <p>Start as many exams as you like. Up to 5 exams a day can earn rewards, counted by the day you start them; resets at 9:00 AM Korea time (00:00 UTC). You can resume an exam you started.</p>
-      <p>You can retry a failed paper. After passing it at this length and difficulty, your next attempt needs a different published paper. Previous results stay available for review. There is no weekly cooldown.</p>
+      <p>If you do not pass, new questions come first and the ones you missed come back later. After a pass at this length and difficulty, your next attempt brings different questions. Previous results stay available for review. There is no weekly cooldown.</p>
       {!offer.mastery && <p>Only Full + Hard advances the 25-clear mastery track. All other lengths and difficulties earn ordinary rewards.</p>}
     </>}
   </div>;
