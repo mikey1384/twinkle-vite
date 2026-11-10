@@ -12,7 +12,17 @@ import {
   useLocation,
   useNavigate
 } from 'react-router-dom';
-import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
+import {
+  useAppContext,
+  useInputContext,
+  useKeyContext,
+  useViewContext
+} from '~/contexts';
+import { clientVersion } from '~/constants/defaultValues';
+import {
+  applyClientUpdateAtSafeBoundary,
+  hasUnsavedUserWork
+} from '~/helpers/clientUpdate';
 import {
   BUILD_RUNTIME_KEEPALIVE_LAYER_ATTR,
   BUILD_RUNTIME_SESSION_LOADED_ATTR
@@ -51,6 +61,9 @@ import { usePublishedUpdate } from './hooks/usePublishedUpdate';
 // apps stay loaded. Apps using Twinkle.app.lifecycle get their place back
 // when they start again; the others are warned about once.
 const PHONE_HIDDEN_APP_LIMIT = 1;
+// How long the app's Update button waits to learn whether a newer website
+// build is deployed before it updates the app in place.
+const APP_UPDATE_FRESHNESS_WAIT_MS = 1500;
 const deviceIsPhoneOrTablet =
   typeof navigator !== 'undefined' && isMobile(navigator);
 
@@ -306,6 +319,7 @@ export default function BuildRuntimeKeepAliveHost() {
       ));
     }
   });
+  const getInputState = useInputContext((v) => v.getInputState);
   const updatingSessionsRef = useRef(new Set<string>());
   const [updatingSessionKey, setUpdatingSessionKey] = useState<string | null>(null);
 
@@ -319,7 +333,39 @@ export default function BuildRuntimeKeepAliveHost() {
       await requestAppLifecycleSnapshot(session.buildId, 'unload');
     } catch {
       // A snapshot is best effort; the player explicitly chose to update.
-    } finally {
+    }
+    try {
+      // The new app version may need a newer Twinkle page than this tab has
+      // (11-09: the new #363 ran inside pages from before its release, and
+      // every land call was refused). A page parked on an app never reloads
+      // silently, so this tap is its one moment: this session is leaving
+      // anyway. If a newer website build is deployed and nothing else would
+      // be lost, reload the whole page; it comes back on this app's newest
+      // version. Otherwise update the app in place, as before.
+      const outcome = await applyClientUpdateAtSafeBoundary({
+        version: clientVersion,
+        trigger: 'app-update',
+        fresh: true,
+        waitMs: APP_UPDATE_FRESHNESS_WAIT_MS,
+        hasUnsavedWork: () =>
+          hasUnsavedUserWork({
+            inputState: getInputState?.(),
+            replacedBuildRuntimeSessions: 1
+          })
+      });
+      // The page is reloading: keep "Updating…" on screen until it goes. If
+      // the browser did not go after all, give the button back.
+      if (outcome === 'reloading') {
+        window.setTimeout(() => {
+          updatingSessionsRef.current.delete(session.key);
+          setUpdatingSessionKey((current) => current === session.key ? null : current);
+        }, 10000);
+        return;
+      }
+    } catch {
+      // No answer about the website is not a reason to hold the app update.
+    }
+    try {
       setSessions((current) => current.map((s) =>
         s.key === session.key
           ? createRuntimeSession({
@@ -331,6 +377,7 @@ export default function BuildRuntimeKeepAliveHost() {
             })
           : s
       ));
+    } finally {
       updatingSessionsRef.current.delete(session.key);
       setUpdatingSessionKey((current) => current === session.key ? null : current);
     }

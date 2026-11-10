@@ -105,6 +105,15 @@ export function performClientUpdateReload() {
   }
 }
 
+// The player tapped Reload on the "Twinkle was updated" notice that an app
+// frame's SDK draws when this page is too old for it (the bridge's
+// host:reload). Their own choice, so it is not gated on unsaved work.
+export function performHostUpdateReload() {
+  if (!reloadInitiated) noteClientReload('app-host-update');
+  reloadInitiated = true;
+  performClientUpdateReload();
+}
+
 // A stale tab (typically one iOS Safari resumed from memory with an old bundle
 // still running) can bring itself current with a plain reload — production
 // always serves a matching bundle. Reload silently instead of interrupting
@@ -243,11 +252,16 @@ export async function armUpdateIfDeployedBundleNewer({
 function beginDeployFreshnessProbe({
   now,
   fetcher,
-  doc
+  doc,
+  fresh = false
 }: {
   now: number;
   fetcher?: DeployFreshnessFetcher;
   doc: { querySelectorAll(selector: string): ArrayLike<any> } | null;
+  // Ask the deployment again even if it answered "current" within the
+  // 10 min interval (a rare, player-chosen boundary; see
+  // applyClientUpdateAtSafeBoundary). The failure backoff still applies.
+  fresh?: boolean;
 }): InFlightDeployFreshnessProbe | DeployFreshnessProbeOutcome {
   if (updatePending || reloadInitiated) return 'pending';
   // A wake/reconnect probe and an immediate navigation commonly overlap on
@@ -261,7 +275,10 @@ function beginDeployFreshnessProbe({
   ) {
     return 'backoff';
   }
-  if (now - lastDeployFreshnessProbeAt < DEPLOY_FRESHNESS_PROBE_INTERVAL_MS) {
+  if (
+    !fresh &&
+    now - lastDeployFreshnessProbeAt < DEPLOY_FRESHNESS_PROBE_INTERVAL_MS
+  ) {
     return 'throttled';
   }
   const resolvedFetcher =
@@ -382,7 +399,9 @@ export async function applyClientUpdateAtSafeBoundary({
   reload = performClientUpdateReload,
   hasUnsavedWork = () => hasUnsavedUserWork(),
   waitMs = NAVIGATION_FRESHNESS_WAIT_MS,
-  onFreshnessReport
+  onFreshnessReport,
+  trigger = 'navigation',
+  fresh = false
 }: {
   version: string;
   now?: number;
@@ -396,8 +415,18 @@ export async function applyClientUpdateAtSafeBoundary({
   // Diagnostics only (the owner trace's nav-timing); never throws into the
   // navigation.
   onFreshnessReport?: (report: NavigationFreshnessReport) => void;
+  // For the client traces: which boundary applied the update.
+  trigger?: string;
+  // Probe the deployment even inside the 10 min interval.
+  fresh?: boolean;
 }): Promise<'current' | 'deferred' | 'reloading'> {
-  const report = await awaitNavigationFreshness({ now, fetcher, doc, waitMs });
+  const report = await awaitNavigationFreshness({
+    now,
+    fetcher,
+    doc,
+    waitMs,
+    fresh
+  });
   try {
     onFreshnessReport?.(report);
   } catch {
@@ -410,7 +439,7 @@ export async function applyClientUpdateAtSafeBoundary({
     storage,
     now,
     reload,
-    trigger: 'navigation'
+    trigger
   })
     ? 'reloading'
     : 'deferred';
@@ -425,14 +454,16 @@ async function awaitNavigationFreshness({
   now,
   fetcher,
   doc,
-  waitMs
+  waitMs,
+  fresh
 }: {
   now: number;
   fetcher?: DeployFreshnessFetcher;
   doc: { querySelectorAll(selector: string): ArrayLike<any> } | null;
   waitMs: number;
+  fresh: boolean;
 }): Promise<NavigationFreshnessReport> {
-  const probe = beginDeployFreshnessProbe({ now, fetcher, doc });
+  const probe = beginDeployFreshnessProbe({ now, fetcher, doc, fresh });
   if (typeof probe === 'string') return { outcome: probe, waitedMs: 0 };
   const remainingMs = Math.min(
     Math.max(waitMs - Math.max(now - probe.startedAt, 0), 0),
@@ -641,16 +672,21 @@ export function applyClientVersionResult({
 export function hasUnsavedUserWork({
   inputState,
   moduleStores = [inputStates, editFormTextStates],
-  root = typeof document === 'undefined' ? null : document
+  root = typeof document === 'undefined' ? null : document,
+  replacedBuildRuntimeSessions = 0
 }: {
   inputState?: Record<string, any> | null;
   moduleStores?: Array<Record<string, any>>;
   root?: ParentNode | null;
+  // Loaded app sessions the player has just chosen to replace (the app's own
+  // Update button): their state is leaving anyway, so they do not hold back
+  // a website update. Every other loaded session still does.
+  replacedBuildRuntimeSessions?: number;
 } = {}): boolean {
   return (
     hasUnsavedTypedInput(inputState) ||
     moduleStores.some(hasStoreDraft) ||
-    hasLiveBuildRuntimeSession(root) ||
+    hasLiveBuildRuntimeSession(root, replacedBuildRuntimeSessions) ||
     hasVisibleTypedContent(root)
   );
 }
@@ -665,10 +701,20 @@ export function hasUnsavedUserWork({
 // and a fresh arrival on an /app route is the one guaranteed-lossless moment
 // to take a silent reload. A runtime-dwelling user is not stranded on a stale
 // bundle without notice: a repeat stale-action error still surfaces the popup,
-// which leaves the app on screen and gives them the choice.
-export function hasLiveBuildRuntimeSession(root: ParentNode | null): boolean {
+// which leaves the app on screen and gives them the choice; an app call this
+// page is too old for draws the SDK's "Twinkle was updated" notice inside the
+// app, whose Reload button comes back here (performHostUpdateReload); and the
+// app's own Update button takes a deployed website update with it
+// (KeepAliveHost updatePublishedApp, replacedBuildRuntimeSessions).
+export function hasLiveBuildRuntimeSession(
+  root: ParentNode | null,
+  replaced = 0
+): boolean {
   if (!root) return false;
-  return root.querySelectorAll(LOADED_BUILD_RUNTIME_SESSION_SELECTOR).length > 0;
+  return (
+    root.querySelectorAll(LOADED_BUILD_RUNTIME_SESSION_SELECTOR).length >
+    Math.max(0, replaced)
+  );
 }
 
 // Inspects the Input context state. `subject` and `content` are the structured

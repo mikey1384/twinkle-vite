@@ -1,5 +1,14 @@
 import { getAppInfoRelease } from '~/helpers/buildAppInfo';
-import { armUpdateIfDeployedBundleNewer } from '~/helpers/clientUpdate';
+import {
+  armUpdateIfDeployedBundleNewer,
+  isClientUpdatePending,
+  performHostUpdateReload
+} from '~/helpers/clientUpdate';
+import {
+  decideHostReload,
+  noteHostUpdateRequired,
+  wasHostUpdateRequired
+} from '../helpers/hostReload';
 import { USER_ACTIVITY_INPUT_EVENT } from '~/helpers/userActivity';
 import {
   isAiImageQuality,
@@ -2374,6 +2383,7 @@ export function useHostBridge({
       try {
         let response: any = {};
         let pendingHostNavigationUrl = '';
+        let pendingHostReload = false;
         const captureScratchStore = captureScratchRef.current;
 
         if (captureScratchStore && isPreviewCaptureScratchType(type)) {
@@ -2711,6 +2721,26 @@ export function useHostBridge({
             // consent; no extra "Open content?" modal (Mikey 10-10).
             pendingHostNavigationUrl = navigationDecision.url;
             response = { success: true, url: navigationDecision.url };
+            break;
+          }
+
+          case 'host:reload': {
+            // The SDK's "Twinkle was updated" notice in the frame: its Reload
+            // button asks here, because the sandbox cannot navigate this page.
+            const reloadDecision = decideHostReload({
+              check: payload?.check === true,
+              hostUpdateRequired: wasHostUpdateRequired(),
+              updatePending: isClientUpdatePending(),
+              userActivation: navigator.userActivation
+            });
+            if (!reloadDecision.allowed) {
+              throw createPreviewBridgeError(
+                reloadDecision.message,
+                reloadDecision.code
+              );
+            }
+            pendingHostReload = reloadDecision.reload;
+            response = reloadDecision.response;
             break;
           }
 
@@ -6009,6 +6039,9 @@ export function useHostBridge({
               // it, with a code apps can check, and arm the update if a
               // newer build is deployed.
               void armUpdateIfDeployedBundleNewer();
+              // The frame's SDK now tells the player and may ask this page
+              // to reload (host:reload).
+              noteHostUpdateRequired();
               throw createPreviewBridgeError(
                 `This page needs to be reloaded to use this feature (${String(type)}). Refresh the page and try again.`,
                 'host_update_required'
@@ -6052,6 +6085,10 @@ export function useHostBridge({
           window.setTimeout(() => {
             navigateHostContentRef.current(pendingHostNavigationUrl);
           }, 0);
+        }
+        if (pendingHostReload) {
+          // After the answer is posted, so the frame hears "reloading".
+          window.setTimeout(performHostUpdateReload, 0);
         }
       } catch (error: any) {
         if (
