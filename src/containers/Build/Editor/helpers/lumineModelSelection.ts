@@ -12,33 +12,43 @@ export const DEFAULT_LUMINE_THINK_LEVEL: BuildLumineThinkLevel = 'medium';
 
 export const LUMINE_MODE_LABELS: Record<BuildLumineMode, string> = {
   auto: 'Auto',
+  superlight: 'Super Light',
   light: 'Light',
   medium: 'Medium',
-  heavy: 'Heavy'
+  heavy: 'Heavy',
+  superheavy: 'Super Heavy'
 };
 
+// Auto chooses among Light, Medium and Heavy; Super Light and Super Heavy
+// are manual picks.
 export const LUMINE_MODES: BuildLumineMode[] = [
   'auto',
+  'superlight',
   'light',
   'medium',
-  'heavy'
+  'heavy',
+  'superheavy'
 ];
 
 const DEFAULT_LUMINE_MODEL_BY_MODE: Record<BuildLumineMode, BuildLumineModel> =
   {
     auto: 'auto',
-    light: 'claude-haiku-5-5',
+    superlight: 'gpt-6-luna',
+    light: 'gpt-6.1-terra',
     medium: 'claude-sonnet-5-5',
-    heavy: 'claude-opus-5-5'
+    heavy: 'claude-opus-5-5',
+    superheavy: 'claude-fable-5-2'
   };
 
-// Retired models the server migrates (Super Heavy's Astra and Fable included).
+// Retired models the server migrates (the former Super Heavy's Astra and
+// older Fables included; they stay on Heavy).
 // A stored preference naming one resolves to its replacement here too, so the
 // picker never shows a mode that no longer exists.
 const RETIRED_LUMINE_MODEL_REPLACEMENTS: Partial<
   Record<BuildLumineModel, BuildLumineModel>
 > = {
-  'gpt-6-sol': 'gpt-6.1-sol',
+  'gpt-6.1-sol': 'claude-sonnet-5-5',
+  'gpt-6-sol': 'claude-sonnet-5-5',
   'gpt-5.6-luna': 'gpt-6-luna',
   'grok-4.6': 'gpt-6-luna',
   'grok-4.5': 'gpt-6-luna',
@@ -71,18 +81,28 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     supportedReasoningEfforts: ['medium']
   },
   {
-    model: 'claude-haiku-5-5',
-    mode: 'light',
-    label: 'Claude Haiku 5.5',
-    description: 'Light mode: quick, efficient reasoning for everyday builds.',
+    model: 'gpt-6-luna',
+    mode: 'superlight',
+    label: 'GPT-6 Luna',
+    description:
+      'Super Light mode: the least Energy, for small everyday changes.',
     defaultReasoningEffort: 'medium',
     supportedReasoningEfforts: ['medium']
   },
   {
-    model: 'gpt-6-luna',
+    // Super Light's second choice (Advanced); GPT-6 Luna is the default.
+    model: 'claude-haiku-5-5',
+    mode: 'superlight',
+    label: 'Claude Haiku 5.5',
+    description: 'Super Light mode, second choice: Claude Haiku 5.5.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
+  },
+  {
+    model: 'gpt-6.1-terra',
     mode: 'light',
-    label: 'GPT-6 Luna',
-    description: 'Light mode, second choice: GPT-6 Luna.',
+    label: 'GPT-6.1 Terra',
+    description: 'Light mode: quick, efficient reasoning for everyday builds.',
     defaultReasoningEffort: 'medium',
     supportedReasoningEfforts: ['medium']
   },
@@ -95,19 +115,19 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     supportedReasoningEfforts: ['medium']
   },
   {
-    // Medium's second choice (Advanced); Sonnet 5.5 is the default.
-    model: 'gpt-6.1-sol',
-    mode: 'medium',
-    label: 'GPT-6.1 Sol',
-    description: 'Medium mode, second choice: GPT-6.1 Sol.',
-    defaultReasoningEffort: 'low',
-    supportedReasoningEfforts: ['low']
-  },
-  {
     model: 'claude-opus-5-5',
     mode: 'heavy',
     label: 'Claude Opus 5.5',
     description: 'Heavy mode: deepest reasoning for the hardest builds.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
+  },
+  {
+    model: 'claude-fable-5-2',
+    mode: 'superheavy',
+    label: 'Claude Fable 5.2',
+    description:
+      'Super Heavy mode: the most capable model, for builds Heavy cannot finish.',
     defaultReasoningEffort: 'medium',
     supportedReasoningEfforts: ['medium']
   }
@@ -121,20 +141,23 @@ const DEFAULT_FALLBACK_LUMINE_MODEL_OPTION =
 function isCurrentLumineModel(value: unknown): value is BuildLumineModel {
   return (
     value === 'auto' ||
-    value === 'claude-haiku-5-5' ||
     value === 'gpt-6-luna' ||
+    value === 'claude-haiku-5-5' ||
+    value === 'gpt-6.1-terra' ||
     value === 'claude-sonnet-5-5' ||
-    value === 'gpt-6.1-sol' ||
-    value === 'claude-opus-5-5'
+    value === 'claude-opus-5-5' ||
+    value === 'claude-fable-5-2'
   );
 }
 
 function isLumineMode(value: unknown): value is BuildLumineMode {
   return (
     value === 'auto' ||
+    value === 'superlight' ||
     value === 'light' ||
     value === 'medium' ||
-    value === 'heavy'
+    value === 'heavy' ||
+    value === 'superheavy'
   );
 }
 
@@ -252,17 +275,14 @@ export function normalizeLumineModelSelection({
   const reasoningEffort = allowedEfforts.includes(requestedEffort)
     ? requestedEffort
     : fallbackEffort;
-  const selectionModelMatchesOption =
-    isCurrentLumineModel(migratedSelection?.model) &&
-    migratedSelection.model === option?.model;
-  const mode =
-    selectionModelMatchesOption && isLumineMode(migratedSelection?.mode)
-      ? migratedSelection.mode
-      : isLumineMode(option?.mode)
-        ? option.mode
-        : resolveLumineMode({
-            model: option?.model || DEFAULT_LUMINE_MODEL
-          });
+  // The mode is the chosen option's own: a selection saved while its model
+  // sat in another mode (Luna and Haiku were Light before the five-mode
+  // lineup) follows the model to its current mode.
+  const mode = isLumineMode(option?.mode)
+    ? option.mode
+    : resolveLumineMode({
+        model: option?.model || DEFAULT_LUMINE_MODEL
+      });
   return {
     model: option?.model || DEFAULT_LUMINE_MODEL,
     reasoningEffort,
@@ -279,12 +299,12 @@ export function resolveLumineMode({
   >): BuildLumineMode {
   if (model === 'auto') return 'auto';
   const currentModel = RETIRED_LUMINE_MODEL_REPLACEMENTS[model] || model;
-  if (currentModel === 'claude-haiku-5-5' || currentModel === 'gpt-6-luna') {
-    return 'light';
+  if (currentModel === 'gpt-6-luna' || currentModel === 'claude-haiku-5-5') {
+    return 'superlight';
   }
-  if (currentModel === 'claude-sonnet-5-5' || currentModel === 'gpt-6.1-sol') {
-    return 'medium';
-  }
+  if (currentModel === 'gpt-6.1-terra') return 'light';
+  if (currentModel === 'claude-sonnet-5-5') return 'medium';
+  if (currentModel === 'claude-fable-5-2') return 'superheavy';
   return 'heavy';
 }
 

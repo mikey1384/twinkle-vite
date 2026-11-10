@@ -24,7 +24,7 @@ import {faBolt, faRobot, faLock, faUsers, faGlobe, faChevronDown, faChevronRight
 import ChatPanel from './src/containers/Build/Editor/ChatPanel';
 library.add(faBolt, faRobot, faLock, faUsers, faGlobe, faChevronDown, faChevronRight, faArrowLeft, faSliders, faSparkles, faCheck, faFlag, faTimes, faWrench, faHourglassHalf, faWandMagicSparkles, faInfoCircle, faUpload, faPaperPlane, faLayerGroup, faGear, faCompress, faExpand, faSpinner);
 const noop = () => {};
-const options = ['auto', 'light', 'medium', 'heavy'].map((mode,i) => ({model:['auto','gpt-6-luna','gpt-6.1-sol','claude-opus-5-5'][i], mode, label:mode, description:mode, defaultReasoningEffort:'medium', supportedReasoningEfforts:['medium'], typicalCallEnergyUnits:1000, handoffReserveEnergyUnits:1000}));
+const options = ['auto', 'light', 'medium', 'heavy'].map((mode,i) => ({model:['auto','gpt-6.1-terra','claude-sonnet-5-5','claude-opus-5-5'][i], mode, label:mode, description:mode, defaultReasoningEffort:'medium', supportedReasoningEfforts:['medium'], typicalCallEnergyUnits:1000, handoffReserveEnergyUnits:1000}));
 const policy = {energyPercent:57, energySegments:5, energySegmentsRemaining:2.85, energyUnitsRemaining:684000, dailyEnergyUnits:1200000};
 const copilot = {limits:{maxProjectBytes:10000000,maxPublishedBuildStorageBytes:100000000,maxRuntimeFileStorageBytes:10000000,maxFilesPerProject:100,maxFileLines:2000,maxRuntimeFileBytes:1000000},usage:{currentProjectBytes:2000,projectBytesRemaining:9998000,publishedBuildStorageBytes:10000,publishedBuildStorageRemaining:99990000,publishedBuildCount:1,runtimeFileStorageBytes:1000,runtimeFileStorageRemaining:9999000,runtimeFileCount:2,projectFileCount:4}};
 function makePlan(config) {

@@ -28,7 +28,7 @@ const modelOptions = getSelectableLumineModelOptions(null).map(option => ({...op
 const initialPolicy = {
   limits: {}, usage: {},
   lumineModelOptions: modelOptions,
-  lumineModelPreference: getLumineSelectionForMode({mode:window.startMode || 'light',modelOptions})
+  lumineModelPreference: getLumineSelectionForMode({mode:window.startMode || 'superlight',modelOptions})
 };
 function Fixture() {
   const [minimized, setMinimized] = useState(window.startCompact);
@@ -157,7 +157,7 @@ test(
         });
         await toggle.click();
         assert.equal(await model.isVisible(), true);
-        for (const nextMode of ['medium', 'heavy', 'light']) {
+        for (const nextMode of ['medium', 'heavy', 'superheavy', 'light', 'superlight']) {
           const previousMode = await mode.inputValue();
           const previousModel = await model.inputValue();
           await mode.selectOption(nextMode);
@@ -193,16 +193,16 @@ test(
           true,
           'failed saves do not hide the picker'
         );
-        assert.equal(await mode.inputValue(), 'light');
+        assert.equal(await mode.inputValue(), 'superlight');
         const selectedModel = await model.inputValue();
-        assert.equal(selectedModel, 'claude-haiku-5-5');
+        assert.equal(selectedModel, 'gpt-6-luna');
         assert.deepEqual(await model.locator('option').evaluateAll(
           items => items.map(item => item.value)
-        ), ['claude-haiku-5-5', 'gpt-6-luna']);
+        ), ['gpt-6-luna', 'claude-haiku-5-5']);
         if (outputDirectory) await page.screenshot({
           path: path.join(outputDirectory, compact ? 'compact-light.png' : 'full-light.png')
         });
-        // Luna remains a manual second choice and waits for the server save.
+        // Haiku remains a manual second choice and waits for the server save.
         const alternative = await model
           .locator('option')
           .evaluateAll(
@@ -280,10 +280,10 @@ test(
         await page.evaluate(() => window.finishModelSave(false));
         await page.getByText('Fixture save failed', { exact: true }).waitFor();
         assert.equal(await mode.inputValue(), 'auto');
-        await mode.selectOption('light');
+        await mode.selectOption('superlight');
         await page.evaluate(() => window.finishModelSave(true));
         await model.waitFor();
-        assert.equal(await model.inputValue(), 'claude-haiku-5-5');
+        assert.equal(await model.inputValue(), 'gpt-6-luna');
         await page.evaluate(() => window.unmountFixture());
         await page.close();
       }

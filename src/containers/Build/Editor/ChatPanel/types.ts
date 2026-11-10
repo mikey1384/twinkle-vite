@@ -14,12 +14,14 @@ export type ChatPanelRunMode = 'user' | 'greeting';
 export type ChatPanelCommunicationMode = 'lumine' | 'versions' | 'people';
 export type BuildLumineModel =
   | 'auto'
-  | 'claude-haiku-5-5'
   | 'gpt-6-luna'
+  | 'claude-haiku-5-5'
+  | 'gpt-6.1-terra'
   | 'claude-sonnet-5-5'
-  | 'gpt-6.1-sol'
   | 'claude-opus-5-5'
+  | 'claude-fable-5-2'
   // Retired stored preferences; normalization maps each to its replacement.
+  | 'gpt-6.1-sol'
   | 'gpt-6-sol'
   | 'gpt-6-astra'
   | 'gpt-5.6-luna'
@@ -32,7 +34,8 @@ export type BuildLumineModel =
   | 'claude-fable-5-1'
   | 'claude-opus-4-8'
   | 'claude-fable-5';
-export type BuildLumineMode = 'auto' | 'light' | 'medium' | 'heavy';
+export type BuildLumineMode =
+  'auto' | 'superlight' | 'light' | 'medium' | 'heavy' | 'superheavy';
 export type BuildLumineThinkLevel =
   'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 

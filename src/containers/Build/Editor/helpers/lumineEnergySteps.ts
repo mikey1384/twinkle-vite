@@ -18,9 +18,11 @@ export const LUMINE_MIN_STEPS_FOR_PROJECT_EDIT = 2;
 
 const MODE_RANK: Record<BuildLumineMode, number> = {
   auto: -1,
-  light: 0,
-  medium: 1,
-  heavy: 2
+  superlight: 0,
+  light: 1,
+  medium: 2,
+  heavy: 3,
+  superheavy: 4
 };
 
 export function countLumineSteps(
