@@ -24,6 +24,7 @@ const app={user:{actions:{onSetUserState(){}}},requestHelpers:{
  reportGrammarQuestion:async p=>{window.reportCalls.push(p);if(window.reportFailure){window.reportFailure=false;throw Error('Try again after reconnecting.')};if(window.holdReport)return new Promise(r=>window.finishReport=()=>r({reportId:91}));return {reportId:91}},
  challengeGrammarQuestion:async p=>{window.challengeCalls.push(p);return window.acceptChallenge?{justified:true,questMissForgiven:true,questRunId:p.quest.runId,questPosition:p.quest.position,questCombo:2,questScheduleReviewPending:!!window.questScheduleReviewPending,explanation:'The answer was valid.'}:{justified:false,explanation:'The shared reviewer confirmed the answer.'}},
  loadGrammarQuestRun:async()=>window.ghostFresh,
+ resumeGrammarQuestRun:async(runId,position)=>{(window.resumeCalls=window.resumeCalls||[]).push([runId,position]);return {}},
  answerGrammarQuestQuestion:async()=>window.practiceAnswer,
  finishGrammarQuestRun:async()=>new Promise(resolve=>{window.resolveCorrectedResult=()=>resolve(window.correctedPayload||{runId:81,score:70,grade:'B',points:490,passPoints:490,cleared:true,rights:5,size:7,forgivenHits:1,xp:200,coins:10,newXp:1200,newCoins:110,answers:[{position:2,forgiven:true}]})})
 }};
@@ -97,6 +98,12 @@ window.openPracticeChallenge=()=>{
  window.ghostFresh={runId:84,combo:2,rules:{mode:'practice',modifier:'chaser',chaser:{gap:10,start:100}},answers:[{...window.practiceAnswer,forgiven:true}],questions:[question,next]};
  const layer=document.createElement('div');layer.id='practice-fixture';document.body.appendChild(layer);
  createRoot(layer).render(<PracticeScreen run={{runId:84,nodeId:'w7s1',kind:'stop',worldId:7,questions:[question],answers:[],combo:0,rules:{mode:'practice',goal:5,slots:['blank'],modifier:'chaser',chaser:{gap:100,start:100}}}} onFinished={()=>{}} onQuit={()=>{}}/>);
+};
+window.openBossMissChallenge=()=>{
+ const question={position:0,question:'The boss question ____',choices:['right','also right','wrong','wrong'],skill:'grammar.test',skillName:'Test',format:'blank',baseTimeMs:12000};
+ const miss={position:0,isCorrect:false,selectedIndex:1,correctIndex:0,grade:'F',gained:0,points:0,settled:true,reviewPending:true,readMs:0,ruleCard:null,challenge:{questionId:606,checked:false}};
+ const layer=document.createElement('div');layer.id='boss-fixture';document.body.appendChild(layer);
+ createRoot(layer).render(<PracticeScreen run={{runId:85,nodeId:'w4f1',kind:'fort',worldId:4,questions:[question],answers:[miss],reviewPosition:0,combo:0,rules:{mode:'boss'}}} onFinished={()=>{}} onQuit={()=>{}}/>);
 };
 window.openRunChallenge=()=>{
  const layer=document.createElement('div');layer.id='quest-run-layer';
@@ -305,6 +312,34 @@ for (const [name, engine] of [
       await page.close();
     } finally { await browser.close(); }
   });
+  test(`${name}: a boss miss can be challenged while its grade timer is paused`, { timeout: 45000 }, async () => {
+    const script = await compile();
+    const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
+    const html = `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><div id="modal"></div><script>${script.replaceAll('</script', '<\\/script')}</script>`;
+    const browser = await engine.launch({ headless: true });
+    try {
+      const page = await browser.newPage({ viewport: { width: 360, height: 800 } });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.route('**/*', (r) => r.request().isNavigationRequest() ? r.fulfill({ contentType: 'text/html', body: html }) : r.abort());
+      mkdirSync(artifacts, { recursive: true });
+      await page.goto('http://localhost:3000/__quest-boss-miss');
+      await page.evaluate(() => { window.acceptChallenge = false; window.openBossMissChallenge(); });
+      await page.getByText('Grade timer paused. Take your time.').waitFor();
+      await page.screenshot({ path: path.join(artifacts, `${name}-boss-miss-challenge.png`), fullPage: true });
+      await page.getByRole('button', { name: 'Challenge', exact: true }).click();
+      await page.getByRole('button', { name: 'Start review', exact: true }).click();
+      await page.getByText('The shared reviewer confirmed the answer.').waitFor();
+      assert.deepEqual(await page.evaluate(() => window.challengeCalls.at(-1).quest), { runId: 85, position: 0 });
+      // the fight stays paused until the learner resumes, from the modal too
+      assert.equal(await page.evaluate(() => (window.resumeCalls || []).length), 0);
+      await page.getByRole('dialog').getByRole('button', { name: 'Resume', exact: true }).click();
+      await page.waitForFunction(() => (window.resumeCalls || []).length === 1);
+      assert.deepEqual(await page.evaluate(() => window.resumeCalls), [[85, 0]]);
+      assert.deepEqual(errors, []);
+      await page.close();
+    } finally { await browser.close(); }
+  });
   test(`${name}: a successful Quest challenge refreshes a practice answer while playing`, { timeout: 45000 }, async () => {
     const script = await compile();
     const css = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
@@ -318,6 +353,9 @@ for (const [name, engine] of [
       await page.goto('http://localhost:3000/__quest-practice-active');
       await page.evaluate(() => { window.acceptChallenge = true; window.openPracticeChallenge(); });
       await page.getByRole('button', { name: 'B also right', exact: true }).click();
+      await page.getByRole('button', { name: 'Challenge', exact: true }).waitFor();
+      mkdirSync(artifacts, { recursive: true });
+      await page.screenshot({ path: path.join(artifacts, `${name}-practice-miss.png`), fullPage: true });
       await page.getByRole('button', { name: 'Challenge', exact: true }).click();
       await page.getByRole('button', { name: 'Start review', exact: true }).click();
       await page.getByText('Good catch!', { exact: true }).waitFor();

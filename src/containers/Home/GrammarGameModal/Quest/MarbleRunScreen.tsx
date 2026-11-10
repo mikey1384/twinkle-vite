@@ -223,6 +223,20 @@ export default function MarbleRunScreen({
     challengeReview,
     savedReview
   );
+  const challengeButton = feedback?.challenge ? (
+    <button
+      className={challengeSettled ? reviewedCls : challengeCls}
+      title={
+        challengeSettled
+          ? 'Read the reviewer’s explanation'
+          : 'Think the answer key is wrong? Challenge it'
+      }
+      onClick={() => setChallengeId(feedback.challenge!.questionId)}
+    >
+      <PixelIcon name={challengeSettled ? 'check' : 'flag'} scale={2} />{' '}
+      {challengeReviewLabel(challengeReview, savedReview)}
+    </button>
+  ) : null;
   // The minimum reading wait unlocks Continue/Resume; manual boss review
   // stays open without running the next grade clock until the player resumes.
   const { reading, secondsLeft } = useReadCooldown(
@@ -870,6 +884,11 @@ export default function MarbleRunScreen({
                       )}
                       {boss ? (
                         <div className={nextRowCls}>
+                          {/* Mikey 11-10: a boss miss is graded F at once
+                              and its grade timer pauses until Resume, so it
+                              can be challenged here too (an older API with
+                              no pause keeps it for the result screen). */}
+                          {answer.reviewPending && challengeButton}
                           <span className={cx(nextNoteCls, bossNoteCls)}>
                             {/* a wrong click its check already ruled the
                                 question's fault */}
@@ -892,32 +911,8 @@ export default function MarbleRunScreen({
                         <div className={nextRowCls}>
                           {/* Mikey 10-07: a learner who thinks the key is
                               wrong challenges it right here, by Continue (in
-                              this row so the card keeps its height). Bosses
-                              run on a clock, so theirs wait for the result. */}
-                          {feedback?.challenge && (
-                            <button
-                              className={
-                                challengeSettled ? reviewedCls : challengeCls
-                              }
-                              title={
-                                challengeSettled
-                                  ? 'Read the reviewer’s explanation'
-                                  : 'Think the answer key is wrong? Challenge it'
-                              }
-                              onClick={() =>
-                                setChallengeId(feedback.challenge!.questionId)
-                              }
-                            >
-                              <PixelIcon
-                                name={challengeSettled ? 'check' : 'flag'}
-                                scale={2}
-                              />{' '}
-                              {challengeReviewLabel(
-                                challengeReview,
-                                savedReview
-                              )}
-                            </button>
-                          )}
+                              this row so the card keeps its height). */}
+                          {challengeButton}
                           <span className={nextNoteCls}>
                             {/* an upheld challenge forgives a practice miss */}
                             {answer.caught
@@ -970,12 +965,15 @@ export default function MarbleRunScreen({
               : undefined
           }
           returnLabel="Back to question"
-          continueLabel={ready && !reading ? 'Continue' : undefined}
+          continueLabel={
+            ready && !reading ? (boss ? 'Resume' : 'Continue') : undefined
+          }
           onContinue={
             ready && !reading
               ? () => {
                   setChallengeId(null);
-                  handleContinue();
+                  if (boss) void handleResume();
+                  else handleContinue();
                 }
               : undefined
           }
