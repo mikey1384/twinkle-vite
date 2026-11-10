@@ -1525,7 +1525,8 @@ export function useHostBridge({
       });
     }
 
-    // Server-made Twinkle.land events (cells.changed / land.changed) go to
+    // Server-made Twinkle.land events (cells.changed / cells.reset /
+    // land.changed) go to
     // every frame with a world session bound to that land world, once each.
     function handleBuildRuntimeLandEvent(payload: any) {
       for (const targetWindow of landEventTargetWindows(
@@ -5755,7 +5756,8 @@ export function useHostBridge({
           case 'land:set-rules':
           case 'land:check':
           case 'land:history':
-          case 'land:mine': {
+          case 'land:mine':
+          case 'land:reset': {
             // Twinkle.land over HTTP. Signed-out visitors of a public app read
             // cells and plots through the public route; everything else needs
             // sign-in. Only the app's documented fields are forwarded.

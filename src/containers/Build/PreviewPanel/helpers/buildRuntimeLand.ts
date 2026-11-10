@@ -13,7 +13,10 @@ export const LAND_REQUEST_TYPES = new Set([
   'land:set-rules',
   'land:check',
   'land:history',
-  'land:mine'
+  'land:mine',
+  // Land zones (11-10): put a declared resettable area back to the generated
+  // world (signed-in players; the server decides who from the token).
+  'land:reset'
 ]);
 
 // land:<op> → the API's /build/:id/api/land/<op>, with the token scope it
@@ -68,7 +71,10 @@ const LAND_OPERATIONS: Record<
   },
   // The signed-in player's own blocks (who is decided by the server from the
   // token, never by the app).
-  'land:mine': { operation: 'mine', scope: 'land:read', fields: ['region', 'ignore'] }
+  'land:mine': { operation: 'mine', scope: 'land:read', fields: ['region', 'ignore'] },
+  // Twinkle.land.resetArea({ region, id }): a member's request; guests get
+  // the sign-in banner like every other non-public land call.
+  'land:reset': { operation: 'reset', scope: 'land:write', fields: ['region', 'id'] }
 };
 
 // A world socket ack that failed: its details (land_throttled's

@@ -21,6 +21,29 @@ export interface LandDeclaration {
   reserved?: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
   switches?: Record<string, { cause: string; values: number[] }>;
   empty?: number[];
+  // Land zones (11-10): areas nobody can change, and areas any signed-in
+  // player can put back to the generated world (free worlds only).
+  locked?: LandLockedArea[];
+  resettable?: LandResettableArea[];
+}
+export interface LandLockedArea {
+  region: string;
+  x0: number;
+  z0: number;
+  x1: number;
+  z1: number;
+  why: string;
+  allowCauses?: string[];
+}
+export interface LandResettableArea {
+  id: string;
+  region: string;
+  x0: number;
+  z0: number;
+  x1: number;
+  z1: number;
+  cooldownSeconds?: number;
+  why: string;
 }
 // summarizeCoinPrices().land: the declaration plus the sentence the review
 // screen, the chat card and the CLI share.
@@ -33,6 +56,8 @@ export interface LandSummary {
   reserved: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
   switches: Array<{ name: string; cause: string; values: number[] }>;
   empty: number[];
+  locked?: LandLockedArea[];
+  resettable?: LandResettableArea[];
   text: string;
 }
 export interface CoinPrice {

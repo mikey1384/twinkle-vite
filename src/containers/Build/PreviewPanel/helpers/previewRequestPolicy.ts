@@ -36,6 +36,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'coins:record-blocks',
   'land:edit',
   'land:set-rules',
+  'land:reset',
   'cardCraft:craft',
   'cardCraft:set-state',
   'craft:merge',

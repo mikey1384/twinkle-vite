@@ -19,7 +19,8 @@ import {
   buildCoinPricePersonWarning,
   formatBuildLandLine,
   LAND_TALLY_PLAIN_WORDS,
-  landReviewText
+  landReviewText,
+  landZoneText
 } from '../src/helpers/buildRewardReviewCard';
 
 // Twinkle.land, website side (phase 2, 11-08). The frame packs cells; the
@@ -37,6 +38,7 @@ test('land requests forward only documented fields, with the right scope', () =>
     'land:history',
     'land:mine',
     'land:plots',
+    'land:reset',
     'land:set-rules'
   ]);
   const edit = planLandRequest(
@@ -68,6 +70,20 @@ test('land requests forward only documented fields, with the right scope', () =>
     planLandRequest('land:history', { key: 'fw3:0:0', order: 'newest', sinceAt: 5, before: 9, viewerId: 2 }, { signedIn: true, publicApp: true }).body,
     { key: 'fw3:0:0', order: 'newest', sinceAt: 5, before: 9 }
   );
+});
+
+test('land zones (11-10): resetArea forwards only region and id, needs sign-in and counts as a write', () => {
+  assert.deepEqual(planLandRequest('land:reset', { region: 'tnt-world-v2', id: 'castle', userId: 9, area: { x0: 0 } }, { signedIn: true, publicApp: true }), {
+    operation: 'reset',
+    scope: 'land:write',
+    body: { region: 'tnt-world-v2', id: 'castle' },
+    publicRead: false,
+    guestToken: null
+  });
+  assert.equal(planLandRequest('land:reset', { region: 'tnt-world-v2', id: 'castle' }, { signedIn: false, publicApp: true, guestToken: 'g.t.s' }).publicRead, false);
+  assert.equal(isMutatingPreviewRequestType('land:reset'), true);
+  const bridge = readFileSync(new URL('../src/containers/Build/PreviewPanel/hooks/useHostBridge.ts', import.meta.url), 'utf8');
+  assert.ok(bridge.includes("case 'land:reset':"));
 });
 
 test('signed-out visitors use the public route: reads, and (as their land guest) edits and one cell\'s history (review L5)', () => {
@@ -223,4 +239,30 @@ test('the host bridge wires land through the documented pieces', () => {
   const helpers = readFileSync(new URL('../src/contexts/requestHelpers/index.ts', import.meta.url), 'utf8');
   for (const name of ['requestBuildLand', 'requestBuildLandPublic', 'renewBuildRuntimeGrant'])
     assert.ok(helpers.includes(`'${name}'`), name);
+});
+
+// Land zones (11-10): the same words as the API's landZoneText (its
+// buildLandZones test asserts this exact string), and one short chat line.
+test('land zones: the review words match the API and the chat card counts the areas', () => {
+  const land = {
+    keyGroup: 'plots',
+    plotSize: 16,
+    keyFormat: 'region:x:z',
+    regions: ['main'],
+    freeRegions: ['tnt-world-v2', 'maze-world-v2'],
+    locked: [{ region: 'maze-world-v2', x0: 10, z0: 20, x1: 85, z1: 95, why: 'the Star Maze' }],
+    resettable: [
+      { id: 'castle', region: 'tnt-world-v2', x0: 33, z0: 80, x1: 65, z1: 112, why: 'the Castle' },
+      { id: 'dam', region: 'tnt-world-v2', x0: 66, z0: 41, x1: 107, z1: 73, cooldownSeconds: 30, why: 'the Dam' }
+    ]
+  };
+  assert.equal(
+    landZoneText(land),
+    ' Locked: nobody can change blocks in the Star Maze (maze-world-v2, x 10..85, z 20..95). Resettable: any signed-in player can put the Castle (tnt-world-v2, x 33..65, z 80..112); the Dam (tnt-world-v2, x 66..107, z 41..73) back the way the world made them, at most once every 30 seconds each; anything built there is removed.'
+  );
+  assert.ok(landReviewText(land).endsWith(landZoneText(land)));
+  assert.ok(
+    formatBuildLandLine({ ...land, switches: [] }).endsWith(' 1 locked area nobody can change; 2 resettable areas any player can put back.')
+  );
+  assert.ok(!formatBuildLandLine({ ...land, locked: [], resettable: [] }).includes('area'));
 });

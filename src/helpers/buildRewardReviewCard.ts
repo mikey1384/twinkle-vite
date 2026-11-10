@@ -286,16 +286,57 @@ export interface BuildLandSummary {
   reserved?: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
   switches?: Array<{ name: string; cause: string; values: number[] }>;
   empty?: number[];
+  locked?: LandZoneArea[];
+  resettable?: Array<LandZoneArea & { id: string; cooldownSeconds?: number }>;
   text?: string;
+}
+interface LandZoneArea {
+  region: string;
+  x0: number;
+  z0: number;
+  x1: number;
+  z1: number;
+  why: string;
+  allowCauses?: string[];
 }
 // The chat card's one land line: short; the review screen has the rest.
 // Review L3: a switch lets anyone set blocks in the plot to its values.
+// Land zones (11-10): one short count of locked and resettable areas.
 export function formatBuildLandLine(land: BuildLandSummary) {
   const worlds = land.regions.length;
   const switches = (land.switches || []).map((entry) => entry.name);
+  const count = (n: number, word: string) => `${n} ${word} ${n === 1 ? 'area' : 'areas'}`;
+  const zones = [
+    land.locked?.length ? `${count(land.locked.length, 'locked')} nobody can change` : '',
+    land.resettable?.length ? `${count(land.resettable.length, 'resettable')} any player can put back` : ''
+  ].filter(Boolean);
   return `Land in ${worlds} ${worlds === 1 ? 'world' : 'worlds'}: inside a ${land.plotSize}×${land.plotSize} plot someone holds, only they and the players they allow can change blocks${
     switches.length ? `; turning on ${switches.join(' or ')} lets anyone set blocks there to ${switches.length === 1 ? 'its values' : 'their values'}` : ''
-  }.`;
+  }.${zones.length ? ` ${zones.join('; ')}.` : ''}`;
+}
+// Land zones in plain words (landZoneText on the API: the same words).
+const LAND_RESET_COOLDOWN_SECONDS = 30;
+export function landZoneText(land: { locked?: LandZoneArea[]; resettable?: Array<LandZoneArea & { id: string; cooldownSeconds?: number }> }) {
+  const locked = land.locked || [];
+  const resettable = land.resettable || [];
+  const rect = (area: LandZoneArea) => `x ${area.x0}..${area.x1}, z ${area.z0}..${area.z1}`;
+  const place = (area: LandZoneArea) => `${area.why} (${area.region}, ${rect(area)})`;
+  const lockedWords = locked.length
+    ? ` Locked: nobody can change blocks in ${locked
+        .map((area) => `${place(area)}${area.allowCauses?.length ? `, except ${area.allowCauses.join('/')}` : ''}`)
+        .join('; ')}.`
+    : '';
+  const cooldownOf = (area: { cooldownSeconds?: number }) => area.cooldownSeconds ?? LAND_RESET_COOLDOWN_SECONDS;
+  const cooldowns = Array.from(new Set(resettable.map(cooldownOf)));
+  const same = cooldowns.length === 1;
+  const resetWords = resettable.length
+    ? ` Resettable: any signed-in player can put ${resettable
+        .map((area) => `${place(area)}${same ? '' : `, at most once every ${cooldownOf(area)} seconds`}`)
+        .join('; ')} back the way the world made ${resettable.length === 1 ? 'it' : 'them'}${
+        same ? `, at most once every ${cooldowns[0]} seconds${resettable.length === 1 ? '' : ' each'}` : ''
+      }; anything built there is removed.`
+    : '';
+  return `${lockedWords}${resetWords}`;
 }
 // The review sentence (landReviewText on the API), for a declaration the
 // server has not summarized (the same words).
@@ -307,6 +348,8 @@ export function landReviewText(land: {
   freeRegions?: string[];
   reserved?: Array<{ x: number; z: number; radius: number; region?: string; why?: string }>;
   switches?: Record<string, { values?: number[] }> | Array<{ name: string; values?: number[] }>;
+  locked?: LandZoneArea[];
+  resettable?: Array<LandZoneArea & { id: string; cooldownSeconds?: number }>;
 }) {
   const switches = Array.isArray(land.switches)
     ? land.switches.map((entry) => ({ name: entry.name, values: entry.values || [] }))
@@ -326,7 +369,7 @@ export function landReviewText(land: {
     free.length ? `; players also build in ${free.join(', ')} (no plots)` : ''
   }. Inside a plot someone holds, Twinkle refuses block changes from anyone except its holder and the players they allow (only me / friends / everyone).${switchWords} Plots are ${size}, full height, named by their ${
     land.keyFormat === 'region:cx:cz' ? 'grid square' : 'corner'
-  } (key group "${land.keyGroup}").${reserved.length ? ` No plots ${reserved.join('; ')}.` : ''}`;
+  } (key group "${land.keyGroup}").${reserved.length ? ` No plots ${reserved.join('; ')}.` : ''}${landZoneText(land)}`;
 }
 // The builders' part of one purchase at most (platform ceilings when the
 // summary leaves them out: 64 builders, 100,000 Coins).
