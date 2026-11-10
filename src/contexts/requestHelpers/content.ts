@@ -1468,7 +1468,6 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    // Arena's Rising board (Mikey 10-24)
     // Train's exam-skill record and type drills (helpers/arena/drills.ts)
     async loadArenaSkills() {
       try {
@@ -1602,17 +1601,6 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadArenaRising() {
-      try {
-        const { data } = await request.get(
-          `${URL}/content/arena/rising`,
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     // Arena's Boss Records (Mikey 10-24)
     async loadArenaRecords(params: {
       examKey: string;
@@ -1631,11 +1619,11 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    // Arena's Weekly League (Mikey 10-24)
-    async loadArenaLeague() {
+    // "Hide me" on Arena's public boards (Boss Records, challenge boards)
+    async loadArenaBoardVisibility() {
       try {
         const { data } = await request.get(
-          `${URL}/content/arena/league`,
+          `${URL}/content/arena/board-visibility`,
           auth()
         );
         return data;
@@ -1643,23 +1631,11 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async setArenaLeagueHidden(hidden: boolean) {
+    async setArenaBoardHidden(hidden: boolean) {
       try {
         const { data } = await request.post(
-          `${URL}/content/arena/league/hidden`,
+          `${URL}/content/arena/board-visibility`,
           { hidden },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async markArenaLeagueResultSeen(week: number) {
-      try {
-        const { data } = await request.post(
-          `${URL}/content/arena/league/result-seen`,
-          { week },
           auth()
         );
         return data;

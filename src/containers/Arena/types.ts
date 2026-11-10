@@ -378,35 +378,3 @@ export interface ArenaTrainPapers {
   rematchDays: number;
   papers: ArenaTrainPaper[];
 }
-
-// Arena's Weekly League board (api helpers/arena/league.ts loadLeague)
-export interface ArenaLeague {
-  week: number;
-  endsAt: number;
-  tier: number;
-  tierName: string;
-  hidden: boolean;
-  shielded: boolean;
-  lastResult: {
-    week: number;
-    rank: number;
-    outcome: 'up' | 'stay' | 'down';
-    xp: number;
-    tierName: string;
-  } | null;
-  joined: boolean;
-  size: number;
-  myRank: number | null;
-  myLp: number;
-  // ranks 1..upTo go up; downFrom..size go down; 0 = no line
-  upTo: number;
-  downFrom: number;
-  rows: {
-    rank: number;
-    lp: number;
-    me: boolean;
-    // places moved since yesterday (+ up), or 'new' today
-    move: number | 'new';
-    user: { id: number; username: string; profilePicUrl: string | null } | null;
-  }[];
-}

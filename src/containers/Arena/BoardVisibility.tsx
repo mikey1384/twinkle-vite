@@ -4,12 +4,13 @@ import { useAppContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import { ARENA } from './theme';
 
-// The preference also applies to Boss Records, so it stays accessible after
-// the Weekly League and Rising panels were removed from the Arena entrance.
+// "Hide me" for Arena's public boards (Boss Records and challenge boards).
 export default function BoardVisibility() {
-  const loadArenaLeague = useAppContext((v) => v.requestHelpers.loadArenaLeague);
-  const setArenaLeagueHidden = useAppContext(
-    (v) => v.requestHelpers.setArenaLeagueHidden
+  const loadArenaBoardVisibility = useAppContext(
+    (v) => v.requestHelpers.loadArenaBoardVisibility
+  );
+  const setArenaBoardHidden = useAppContext(
+    (v) => v.requestHelpers.setArenaBoardHidden
   );
   const [hidden, setHidden] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
@@ -19,7 +20,7 @@ export default function BoardVisibility() {
   useEffect(() => {
     let alive = true;
     setError('');
-    loadArenaLeague()
+    loadArenaBoardVisibility()
       .then((data: { hidden: boolean }) => {
         if (typeof data?.hidden !== 'boolean') throw new Error('Missing preference');
         if (alive) setHidden(data.hidden);
@@ -77,7 +78,7 @@ export default function BoardVisibility() {
     setSaving(true);
     setError('');
     try {
-      const data = await setArenaLeagueHidden(nextHidden);
+      const data = await setArenaBoardHidden(nextHidden);
       if (typeof data?.hidden !== 'boolean') throw new Error('Missing preference');
       setHidden(data.hidden);
     } catch {

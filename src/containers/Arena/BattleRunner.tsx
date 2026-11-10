@@ -303,7 +303,7 @@ export default function BattleRunner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timed, data?.battle.deadlineAt]);
 
-  // the ghost (Rising, Mikey 10-24): in an untimed retake, how many you had
+  // the ghost (Mikey 10-24): in an untimed retake, how many you had
   // answered by this point last time
   const [ghostCount, setGhostCount] = useState<number | null>(null);
   useEffect(() => {
