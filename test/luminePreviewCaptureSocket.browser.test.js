@@ -29,7 +29,9 @@ async function until(predicate, message, timeoutMs = 20_000) {
   }
 }
 
-async function runCapture({ restricted, published = false }) {
+// thumbnailPass: a thumbnail capture (no Lumine capture id) under the
+// read-only capture pass.
+async function runCapture({ restricted, published = false, thumbnailPass = false }) {
   let connections = 0;
   const activeConnections = new Set();
   let rejectedHandshakes = 0;
@@ -40,9 +42,10 @@ async function runCapture({ restricted, published = false }) {
   let previewRequests = 0;
   let sdkTokenRequests = 0;
   let sdkUserRequests = 0;
+  let realPrivateDbWrites = 0;
   const errors = [];
   const fixtureUser = { id: 900001, userId: 900001, username: 'capture-fixture', state: {} };
-  const code = `<html><body><h1>Local capture fixture visible</h1><div id="sdk">waiting</div>
+  const code = `<html><body><h1>Local capture fixture visible</h1><div id="sdk">waiting</div><div id="write">waiting</div>
     <script>
       const bridgeLoadId = new URLSearchParams(location.search).get('twinkleBridgeLoadId');
       document.body.dataset.bridgeLoad = bridgeLoadId || 'none';
@@ -59,6 +62,11 @@ async function runCapture({ restricted, published = false }) {
         } else if (data.id === 'fixture-read') {
           completed = true;
           document.getElementById('sdk').textContent = JSON.stringify(data.payload || data.error);
+          // An app that saves something as it starts.
+          parent.postMessage({ source: 'twinkle-build', type: 'private-db:set',
+            id: 'fixture-write', previewNonce: nonce, payload: { key: 'started', value: { times: 1 } } }, '*');
+        } else if (data.id === 'fixture-write') {
+          document.getElementById('write').textContent = 'write:' + JSON.stringify(data.payload || data.error);
         }
       });
       const timer = setInterval(() => {
@@ -103,6 +111,15 @@ async function runCapture({ restricted, published = false }) {
         return;
       }
       body = { user: { id: 900001, username: 'read-only-fixture' } };
+    } else if (/^\/build\/900001\/api\/private-db\/(set|delete|compare-and-set)$/.test(pathname)) {
+      realPrivateDbWrites += 1;
+      // The real API refuses the read-only pass every write.
+      if (req.headers.authorization === restrictedToken) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'This is a preview check', code: 'preview_capture_read_only' }));
+        return;
+      }
+      body = { item: { key: 'started', value: { times: 1 } } };
     } else if (pathname.startsWith('/build/preview/')) {
       previewRequests += 1;
       res.setHeader('Content-Type', 'text/html');
@@ -185,7 +202,7 @@ async function runCapture({ restricted, published = false }) {
     }
     const captureUrl = new URL('/app-capture/900001', appOrigin);
     captureUrl.searchParams.set('previewPath', '/build/preview/build/900001/version/1/index.html');
-    if (restricted) {
+    if (restricted && !thumbnailPass) {
       captureUrl.searchParams.set('lumineCaptureId', '1234567890abcdef1234567890abcdef');
       captureUrl.searchParams.set('captureViewport', 'phone');
     }
@@ -212,6 +229,18 @@ async function runCapture({ restricted, published = false }) {
     assert.ok(sessionRequests > 0, 'canonical HTTP identity must initialize');
     assert.ok(buildRequests > 0 && previewRequests > 0, 'actual preview must load');
     assert.ok(sdkTokenRequests > 0 && sdkUserRequests > 0, 'SDK read must pass through the host bridge');
+    await page.frameLocator('iframe').locator('#write:has-text("write:")').waitFor({ timeout: 6_000 });
+    const writeResult = await page.frameLocator('iframe').locator('#write').textContent();
+    if (restricted) {
+      // Under the read-only pass the app's save succeeds in the capture
+      // page's throwaway store and never reaches the API, so the app draws
+      // normally instead of drawing an error.
+      assert.match(writeResult, /"key":"started"/, writeResult);
+      assert.equal(realPrivateDbWrites, 0, 'a read-only capture must not send the save to the API');
+    } else {
+      // Under a login the save goes to the real store, as before.
+      assert.ok(realPrivateDbWrites > 0, 'a login thumbnail still saves through the API');
+    }
     if (restricted && process.env.PREVIEW_SOCKET_BASELINE === '1') {
       await until(() => rejectedBinds >= 3, 'baseline did not reproduce repeated restricted-token bind rejections');
       assert.ok(rejectedHandshakes >= 1, 'reconnect handshake must carry the restricted credential');
@@ -270,6 +299,9 @@ async function runCapture({ restricted, published = false }) {
 
 test('Lumine restricted preview preserves HTTP rendering without socket retries',
   { timeout: 120_000 }, async () => runCapture({ restricted: true }));
+
+test('a thumbnail under the read-only pass renders, keeps saves in the throwaway store and opens no socket',
+  { timeout: 120_000 }, async () => runCapture({ restricted: true, thumbnailPass: true }));
 
 test('normal thumbnail still initializes and binds its interactive socket',
   { timeout: 120_000 }, async () => runCapture({ restricted: false }));

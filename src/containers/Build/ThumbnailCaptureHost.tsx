@@ -6,10 +6,13 @@ import InvalidPage from '~/components/InvalidPage';
 import PreviewPanel from './PreviewPanel';
 import { useAppContext } from '~/contexts';
 import { normalizeAllowedBuildPreviewFrameSrc } from '~/helpers/buildPreviewOriginHelpers';
-import { normalizeLuminePreviewCaptureId } from '~/helpers/luminePreviewCapture';
+import {
+  normalizeLuminePreviewCaptureId,
+  shouldUseCaptureScratch
+} from '~/helpers/luminePreviewCapture';
 import { createPreviewCaptureScratch } from './PreviewPanel/helpers/previewCaptureScratch';
 import { loadHostSqlJs } from './PreviewPanel/helpers/guestViewerDb';
-import { persistAuthToken } from '~/helpers/userDataHelpers';
+import { getStoredItem, persistAuthToken } from '~/helpers/userDataHelpers';
 import type { BuildRuntimeObservationState } from './types/runtimeObservationTypes';
 
 const shellClass = css`
@@ -135,19 +138,34 @@ export default function ThumbnailCaptureHost({
           : Math.round(window.innerHeight || 0)
     };
   }, [location.search]);
-  // One throwaway SDK store per Lumine capture page (= per preview session:
-  // each session is its own browser). Saves and keep-place snapshots made
-  // while Lumine looks or tests are kept here, so "save, leave, come back"
-  // can be checked, and never reach the real store. Thumbnails get none.
+  // One throwaway SDK store per read-only capture page (= per preview
+  // session: each session is its own browser). Saves and keep-place snapshots
+  // made while Lumine looks or tests are kept here, so "save, leave, come
+  // back" can be checked, and never reach the real store.
+  // A thumbnail taken under the read-only capture pass gets one too: the API
+  // refuses that pass every write, so without the store an app that saves
+  // something when it starts would draw an error into its own thumbnail. A
+  // thumbnail taken under a login (an older API) gets none, as before.
   const lumineCaptureId = lumineCapture?.captureId || null;
+  // The pass arrives in the address once and is removed from it; App's
+  // session gate can mount this page again afterwards, so the stored
+  // credential is read too (this page is the browser's only tab).
+  const [readOnlyCapture] = useState(() =>
+    shouldUseCaptureScratch({
+      lumineCaptureId: null,
+      authToken: captureBootstrap.authToken || getStoredItem('token') || null
+    })
+  );
+  // A new Lumine capture id is a new session and a new store.
+  const captureScratchKey = lumineCaptureId || (readOnlyCapture ? 'thumbnail' : null);
   // Each capture page is its own browser, so the store (and its sql.js
   // database) goes when the session ends.
   const captureScratch = useMemo(
     () =>
-      lumineCaptureId
+      captureScratchKey
         ? createPreviewCaptureScratch({ loadSqlJs: loadHostSqlJs })
         : null,
-    [lumineCaptureId]
+    [captureScratchKey]
   );
   const reportEvidenceRef = useRef(reportLuminePreviewCaptureEvidence);
   const evidenceStateRef = useRef<{

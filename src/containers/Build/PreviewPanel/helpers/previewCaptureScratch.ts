@@ -15,8 +15,9 @@ import {
   type PreviewCaptureViewerDbType
 } from './previewCaptureScratchViewerDb';
 
-// Throwaway storage for a Lumine preview capture (view_preview,
-// run_preview_test, lumine preview/test). A capture runs under a read-only
+// Throwaway storage for a read-only capture: a Lumine preview capture
+// (view_preview, run_preview_test, lumine preview/test) or a thumbnail
+// capture. Such a capture runs under a read-only
 // pass, so the API refuses every write. Without somewhere to keep them, an
 // app's "save, leave, come back" and keep-place could never be checked.
 //
@@ -33,8 +34,9 @@ import {
 // sharedDb.ts, viewerDatabase.ts, buildAppLifecycle.ts). Entry claims and
 // notifications stay with the real server.
 //
-// Only ThumbnailCaptureHost creates one, and only for a Lumine capture; every
-// other preview (the editor, published apps, the reward player) never has it.
+// Only ThumbnailCaptureHost creates one, and only for a capture that runs
+// under the read-only pass (a Lumine capture, or a thumbnail); every other
+// preview (the editor, published apps, the reward player) never has it.
 
 // twinkle-api controllers/build/routes/privateDb.ts
 const PRIVATE_KEY_MAX_LENGTH = 120;

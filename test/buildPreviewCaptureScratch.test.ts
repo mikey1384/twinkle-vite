@@ -115,9 +115,11 @@ test('every storage request is served from the store; everything else keeps its 
   for (const type of ['shared-db:claim-entry', 'rewards:claim', 'files:save-as', 'lifecycle:snapshot', 'notifications:subscribe']) assert.equal(isPreviewCaptureScratchType(type), false);
 });
 
-test('only the Lumine capture host creates a store, and the bridge consults it first', () => {
+test('only a read-only capture host creates a store, and the bridge consults it first', () => {
   const host = readFileSync(new URL('../src/containers/Build/ThumbnailCaptureHost.tsx', import.meta.url), 'utf8');
-  assert.match(host, /lumineCaptureId\s*\? createPreviewCaptureScratch\(\{ loadSqlJs: loadHostSqlJs \}\)\s*: null/);
+  // A Lumine capture, or a thumbnail whose credential is the read-only pass.
+  assert.match(host, /const captureScratchKey = lumineCaptureId \|\| \(readOnlyCapture \? 'thumbnail' : null\);/);
+  assert.match(host, /captureScratchKey\s*\? createPreviewCaptureScratch\(\{ loadSqlJs: loadHostSqlJs \}\)\s*: null/);
   assert.match(host, /captureScratch=\{captureScratch\}/);
   const bridge = readFileSync(new URL('../src/containers/Build/PreviewPanel/hooks/useHostBridge.ts', import.meta.url), 'utf8');
   assert.match(bridge, /if \(captureScratchStore && isPreviewCaptureScratchType\(type\)\) \{[\s\S]*?response = await captureScratchStore\.handle\(type, payload, readReal, \{[\s\S]*?\}\);\s*\} else switch \(type\) \{/);
