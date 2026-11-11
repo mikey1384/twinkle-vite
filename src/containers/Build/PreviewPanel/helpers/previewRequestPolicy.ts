@@ -21,6 +21,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'network:remove',
   'network:moderate',
   'rewards:start',
+  'rewards:start-run',
   'rewards:progress',
   'rewards:claim',
   'rewards:practice-check',

@@ -287,7 +287,9 @@ function RewardRuleCard({ rule }: { rule: RewardRule }) {
         <p>
           Rule ID: {rule.id} · completion · once per learner per day (UTC).
           Minimum time: {(rule.minSeconds || 0).toLocaleString()} seconds.
-          {rule.completionProof
+          {rule.completionProof === 'tetris-run-v1'
+            ? ` The server replays the assigned game and verifies ${rule.targetLines} cleared lines.`
+            : rule.completionProof
             ? ' The server simulates the climb and requires a verified summit finish.'
             : ' Only elapsed time is verified. Keep amounts small enough to tolerate automated claims.'}
         </p>

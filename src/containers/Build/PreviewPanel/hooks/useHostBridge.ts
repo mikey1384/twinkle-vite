@@ -5470,6 +5470,7 @@ export function useHostBridge({
           case 'rewards:status':
           case 'rewards:receipt':
           case 'rewards:start':
+          case 'rewards:start-run':
           case 'rewards:progress':
           case 'rewards:claim':
           case 'rewards:timeline':
@@ -5497,6 +5498,9 @@ export function useHostBridge({
             // Question-bank requests: which topic, the one answer, a report,
             // and the request ID the progress bar polls. Amounts and steps
             // always come from the server.
+            const runFields = type === 'rewards:start-run'
+              ? { proofGroup: payload?.proofGroup, requestId: payload?.requestId }
+              : {};
             const bankFields = type.startsWith('rewards:bank-')
               ? {
                   topicKey: payload?.topicKey,
@@ -5563,6 +5567,7 @@ export function useHostBridge({
                     payload: {
                       ruleId: payload?.ruleId,
                       ...bankFields,
+                      ...runFields,
                       ...vaultFields,
                       ...(type === 'rewards:start'
                         ? {
@@ -5725,6 +5730,7 @@ export function useHostBridge({
               payload: {
                 ruleId: payload?.ruleId,
                 ...bankFields,
+                ...runFields,
                 ...vaultFields,
                 ...(type === 'rewards:start'
                   ? {

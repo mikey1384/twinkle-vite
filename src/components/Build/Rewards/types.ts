@@ -148,7 +148,9 @@ export interface RewardRule {
   // completion only: seconds that must pass between start and claim.
   minSeconds?: number;
   maxLifetimeClaims?: number;
-  completionProof?: 'classic-tower-v1';
+  completionProof?: 'classic-tower-v1' | 'tetris-run-v1';
+  proofGroup?: string;
+  targetLines?: number;
   // numeric-quiz only: 'until-earned' plays sets in order and keeps a set up
   // until somebody has earned it; absent/'dated' serves by calendar day.
   progression?: 'dated' | 'until-earned';
@@ -172,7 +174,7 @@ export interface RewardProposalEarnings {
     xp: number;
     coins: number;
     maxLifetimeClaims?: number;
-    completionProof?: 'classic-tower-v1';
+    completionProof?: 'classic-tower-v1' | 'tetris-run-v1';
   }>;
   budgets: { userDailyXP: number; userDailyCoins: number };
 }
