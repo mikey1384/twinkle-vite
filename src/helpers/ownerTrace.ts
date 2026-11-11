@@ -142,14 +142,16 @@ let smoothScrollSamples = 0;
 
 // Slow-frame attribution only exists while a scroll sample is open, which
 // only happens for the owner.
-const frameAttribution = createFrameAttribution();
+const frameAttribution = createFrameAttribution({
+  canMeasureLayoutReads: () => recorder.isActive()
+});
 
 const scrollPerfMonitor = createScrollPerfMonitor({
   isActive: () => recorder.isActive(),
   isVisible: () =>
     typeof document !== 'undefined' && document.visibilityState === 'visible',
   getPath: getCurrentPath,
-  getContext: () => getScrollPerfContext(document, window),
+  getContext: () => frameAttribution.withoutLayoutReads(() => getScrollPerfContext(document, window)),
   // A smooth sample is routine (504 of 576 a day): keep only samples with a
   // dropped frame, carrying how many smooth ones came before (10-20 noise cut).
   record: (data, path) => {
@@ -165,7 +167,7 @@ const scrollPerfMonitor = createScrollPerfMonitor({
     smoothScrollSamples = 0;
   },
   attribution: frameAttribution,
-  recordFrame: (data, path) => recordOwnerTrace('scroll-frame', data, path)
+  recordFrame: (data, path) => recordOwnerTrace('scroll-frame', { ...data, version: clientVersion }, path)
 });
 
 // Feed cards call these on every render (see useOwnerFeedCardFrameCount).
@@ -477,6 +479,7 @@ function getSessionHeader(): Record<string, unknown> {
     return {
       version: clientVersion,
       scrollPerf: 1,
+      layoutReadAttribution: 1,
       viewportTrace: 1,
       viewportDetail: 2,
       requestTiming: 1,

@@ -1,5 +1,7 @@
+import { startOwnerLayoutReadCapture } from './ownerTraceLayoutReads';
+
 // Owner-only slow-frame attribution while a scroll sample is open (see
-// ownerTraceScrollPerf.ts). Two sources, both bounded and content-free:
+// ownerTraceScrollPerf.ts). Three bounded, content-free sources:
 //
 // - Long Animation Frames (Chrome/Edge): for frames over 50 ms, the frame's
 //   duration, blocking time, style/layout share and its top scripts (source
@@ -8,6 +10,8 @@
 // - Cheap counters (every browser, the only source on Safari/iPhone): which
 //   Home feed card types rendered or mounted, and how many images finished
 //   loading, between the previous animation frame and a slow one.
+// - Owner-gated DOM reads: slow calls and their exact bundle locations,
+//   joined to each frame's interval, with explicit capture coverage/cost.
 //
 // Nothing runs unless a sample is open: no observer, listener or counting.
 
@@ -205,6 +209,7 @@ export function summarizeLongFrame(
     renderMs: remaining(renderStart),
     styleLayoutMs: remaining(styleStart),
     reportedScriptMs: round((entry.scripts || []).reduce((sum, script) => sum + Math.max(0, Number(script.duration) || 0), 0)),
+    forcedLayoutMs: round((entry.scripts || []).reduce((sum, script) => sum + Math.max(0, Number(script.forcedStyleAndLayoutDuration) || 0), 0)),
     scriptCount: (entry.scripts || []).length,
     scripts
   };
@@ -248,6 +253,41 @@ export function boundFrameEvent(data: Record<string, any>) {
     delete data.mounts;
     delete data.layoutWork;
     delete data.updates;
+    data.countersOmitted = true;
+  }
+  if (!fits() && data.layoutReads) {
+    const detail = data.layoutReads = {
+      ...data.layoutReads,
+      sources: [...data.layoutReads.sources],
+      reads: data.layoutReads.reads.map((read: any) => ({ ...read, stack: read.stack.map((site: number[]) => [...site]) }))
+    };
+    const pruneSources = () => {
+      const sources: string[] = [];
+      for (const read of detail.reads) {
+        for (const site of read.stack) {
+          const url = detail.sources[site[0]];
+          let index = sources.indexOf(url);
+          if (index < 0) { index = sources.length; sources.push(url); }
+          site[0] = index;
+        }
+      }
+      detail.sources = sources;
+    };
+    while (!fits() && detail.reads.length > 1) {
+      detail.reads.pop();
+      detail.omitted++;
+      pruneSources();
+    }
+    while (!fits() && detail.reads[0]?.stack.length > 1) {
+      detail.reads[0].stack.pop();
+      detail.stackTruncated = true;
+      pruneSources();
+    }
+    if (!fits()) {
+      detail.omitted += detail.reads.length;
+      detail.reads = [];
+      detail.sources = [];
+    }
   }
   return data;
 }
@@ -255,11 +295,13 @@ export function boundFrameEvent(data: Record<string, any>) {
 export function createFrameAttribution({
   observeLongFrames = defaultObserveLongFrames,
   listenImageLoads = defaultListenImageLoads,
-  getOrigin = currentOrigin
+  getOrigin = currentOrigin,
+  canMeasureLayoutReads = () => false
 }: {
   observeLongFrames?: ObserveLongFrames;
   listenImageLoads?: ListenImageLoads;
   getOrigin?: () => string;
+  canMeasureLayoutReads?: () => boolean;
 } = {}) {
   let active = false;
   let observer: LongFrameObserver | null = null;
@@ -277,8 +319,11 @@ export function createFrameAttribution({
   let layoutWork: CounterFrame['layoutWork'] = {};
   let slowFrames: CounterFrame[] = [];
   let totals = { renders: 0, mounts: 0, imgLoads: 0 };
+  let layoutReads: ReturnType<typeof startOwnerLayoutReadCapture> = null;
 
-  return { begin, frame, end, noteRender, noteMount, noteTextMeasure, noteLayout, isActive: () => active };
+  return { begin, frame, end, noteRender, noteMount, noteTextMeasure, noteLayout,
+    withoutLayoutReads: <T>(run: () => T): T => layoutReads ? layoutReads.withoutRecording(run) : run(),
+    isActive: () => active };
 
   function noteLayout(name: OwnerMeasuredWork, ms: number, profile?: PreviewClampProfile) {
     if (!active || !Number.isFinite(ms) || ms < 0) return;
@@ -324,6 +369,11 @@ export function createFrameAttribution({
       });
     } catch {
       stopImages = null;
+    }
+    try {
+      layoutReads = startOwnerLayoutReadCapture(canMeasureLayoutReads);
+    } catch {
+      layoutReads = null;
     }
   }
 
@@ -391,6 +441,10 @@ export function createFrameAttribution({
   // summary for the scroll-perf event itself.
   function end(sampleStart: number) {
     if (!active) return null;
+    // Restore native descriptors before processing or recording diagnostics.
+    const readCapture = layoutReads;
+    layoutReads = null;
+    readCapture?.stop();
     try {
       keepEntries(observer?.takeRecords() || []);
     } catch {
@@ -438,7 +492,8 @@ export function createFrameAttribution({
                   layoutWork: overlap.layoutWork
                 }
               : {}),
-            loaf: summarizeLongFrame(entry, origin)
+            loaf: summarizeLongFrame(entry, origin),
+            ...(readCapture ? { layoutReads: readCapture.forFrame(entry.startTime, entryEnd, sampleStart) } : {})
           })
         );
       }
@@ -460,7 +515,8 @@ export function createFrameAttribution({
           ...(item.updates ? { updates: item.updates } : {}),
           imgLoads: item.imgLoads,
           textMeasure: item.textMeasure,
-          layoutWork: item.layoutWork
+          layoutWork: item.layoutWork,
+          ...(readCapture ? { layoutReads: readCapture.forFrame(item.startMs, item.endMs, sampleStart) } : {})
         })
       );
     }
@@ -476,7 +532,8 @@ export function createFrameAttribution({
         candidateFramesDropped: Math.max(0, frames.length - MAX_FRAMES_PER_SAMPLE),
         cardRenders: totals.renders,
         cardMounts: totals.mounts,
-        imgLoads: totals.imgLoads
+        imgLoads: totals.imgLoads,
+        ...(readCapture ? { layoutReadCapture: readCapture.coverage(sampleStart) } : {})
       },
       frames: frames.slice(0, MAX_FRAMES_PER_SAMPLE)
     };
