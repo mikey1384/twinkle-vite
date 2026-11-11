@@ -9,6 +9,7 @@ import ArenaLoader from '../ArenaLoader';
 import MathText from '../MathText';
 import { ARENA } from '../theme';
 import LearningScene from './LearningScene';
+import PromptMedia, { PromptPicture, type MediaStatus } from './PromptMedia';
 import type { Profile, Prompt, TodayState } from './types';
 
 const EMPTY_PROFILE: Profile = { goal: '', subject: '', grade: '', confidence: '' };
@@ -44,6 +45,8 @@ export default function TodayQuestion({ sharedId = 0, review = false }: { shared
   const [setupStep, setSetupStep] = useState(0);
   const [answer, setAnswer] = useState<string | number | null>(null);
   const [checkAnswer, setCheckAnswer] = useState<string | number | null>(null);
+  const [questionMediaReady, setQuestionMediaReady] = useState<number | null>(null);
+  const [checkMediaReady, setCheckMediaReady] = useState<number | null>(null);
   const [lessonIndex, setLessonIndex] = useState(0);
   const [exploring, setExploring] = useState(false);
   const reviewPending = useRef(review);
@@ -188,13 +191,13 @@ export default function TodayQuestion({ sharedId = 0, review = false }: { shared
             {unpaidToday
               ? <p className={learningNoteCls}>Today’s {data.paidPerDay} paid questions are used up. You can still try this one, for no reward.</p>
               : <RewardOffer rewards={rewards} />}
-            <Question prompt={q.question} value={answer} onChange={setAnswer} disabled={busy} />
+            <Question key={`${q.id}:question`} prompt={q.question} value={answer} onChange={setAnswer} disabled={busy} onMediaReady={ready => setQuestionMediaReady(ready ? q.id : null)} />
             <p className={mutedCls}>{unpaidToday ? 'Your first answer counts. If you miss it, the explanation and understanding check are still there.' : 'Your first answer counts. If you miss it, the explanation and understanding check can still clear A.'}</p>
-            <button className={primaryCls} disabled={busy || !hasAnswer(answer)} onClick={() => void act({ action: 'answer', answer }, 'answer')}>{pending === 'answer' && <Icon icon="spinner" pulse />}Submit answer</button>
+            <button className={primaryCls} disabled={busy || questionMediaReady !== q.id || !hasAnswer(answer)} onClick={() => void act({ action: 'answer', answer }, 'answer')}>{pending === 'answer' && <Icon icon="spinner" pulse />}Submit answer</button>
             {inlineError && errorAt === 'answer' && errorBanner(true)}
           </div> : <details className={originalCls}>
             <summary>Original question · {q.firstCorrect ? 'Correct' : 'Learning from a miss'}</summary>
-            <Question prompt={q.question} value={q.firstAnswer} onChange={() => {}} disabled />
+            <Question key={`${q.id}:answered`} prompt={q.question} value={q.firstAnswer} onChange={() => {}} disabled />
           </details>}
           {showLesson && lesson && <div className={paperCls}>
             {!q.completedVia && <div className={learningNoteCls}><strong>Not quite — let’s work it out.</strong>{unpaidToday
@@ -204,9 +207,9 @@ export default function TodayQuestion({ sharedId = 0, review = false }: { shared
             <h2>{showCheck ? 'A quick understanding check' : step?.title}</h2>
             {showCheck && q.check ? <>
               <p className={summaryCls}><MathText text={lesson.summary || ''} /></p>
-              <Question prompt={q.check} value={q.checkResult?.correct ? q.checkResult.answer : checkAnswer} onChange={setCheckAnswer} disabled={busy || q.checkResult?.correct === true} />
+              <Question key={`${q.id}:check`} prompt={q.check} value={q.checkResult?.correct ? q.checkResult.answer : checkAnswer} onChange={setCheckAnswer} disabled={busy || q.checkResult?.correct === true} onMediaReady={ready => setCheckMediaReady(ready ? q.id : null)} />
               {q.checkResult && <p role="status" className={q.checkResult.correct ? feedbackCls : learningNoteCls}>{q.checkResult.correct ? q.checkResult.explanation : 'Not yet. Revisit the explanation, then try applying the idea again.'}</p>}
-              {!q.checkResult?.correct && <button className={primaryCls} disabled={busy || !hasAnswer(checkAnswer)} onClick={() => void act({ action: 'check', answer: checkAnswer }, 'check')}>{pending === 'check' && <Icon icon="spinner" pulse />}Check my understanding</button>}
+              {!q.checkResult?.correct && <button className={primaryCls} disabled={busy || checkMediaReady !== q.id || !hasAnswer(checkAnswer)} onClick={() => void act({ action: 'check', answer: checkAnswer }, 'check')}>{pending === 'check' && <Icon icon="spinner" pulse />}Check my understanding</button>}
               {inlineError && errorAt === 'check' && errorBanner(true)}
             </> : step && <>
               <p><MathText text={step.prompt} /></p>
@@ -306,11 +309,28 @@ function RewardOffer({ rewards }: { rewards: TodayState['rewards'] }) {
     <div><span>Learn it, then pass the check</span><div className={rewardRowCls}><RewardChips xp={rewards.guidedXP} /><span>No Coins</span></div></div>
   </div>;
 }
-function Question({ prompt, value, onChange, disabled }: { prompt: Prompt; value: string | number | null; onChange: (value: string | number) => void; disabled: boolean }) {
+function Question({ prompt, value, onChange, disabled, onMediaReady }: { prompt: Prompt; value: string | number | null; onChange: (value: string | number) => void; disabled: boolean; onMediaReady?: (ready: boolean) => void }) {
+  const [mediaStatuses, setMediaStatuses] = useState<Record<string, MediaStatus>>({});
+  const [pictureRetry, setPictureRetry] = useState(0);
+  const required = [
+    ...(prompt.visual?.kind === 'image' ? ['picture'] : []),
+    ...(prompt.choiceVisuals || []).flatMap((picture, i) => picture?.kind === 'image' ? [`choice:${i}`] : []),
+    ...(prompt.audio ? ['audio'] : [])
+  ];
+  const ready = required.every(key => mediaStatuses[key] === 'ready');
+  const failedPictures = required.filter(key => key !== 'audio' && mediaStatuses[key] === 'failed');
+  useEffect(() => { onMediaReady?.(ready); }, [ready, onMediaReady]);
+  const status = (key: string, state: MediaStatus) => setMediaStatuses(prior => prior[key] === state ? prior : { ...prior, [key]: state });
   return <div className={questionCls}>
     {prompt.passage && <div className={passageCls}><MathText text={prompt.passage} /></div>}
+    {prompt.visual && <PromptPicture visual={prompt.visual} retry={pictureRetry} onStatus={state => status('picture', state)} />}
     <p><MathText text={prompt.prompt} /></p>
-    {prompt.choices ? <div className={choicesCls} role="group" aria-label="Answer choices">{prompt.choices.map((choice, i) => <button type="button" key={i} className={optionCls} aria-pressed={value === i} disabled={disabled} onClick={() => onChange(i)}><strong>{String.fromCharCode(65 + i)}.</strong> <MathText text={choice} /></button>)}</div> : <label className={inputCls}>Your answer<input value={value ?? ''} onChange={e => onChange(e.target.value)} disabled={disabled} maxLength={300} autoComplete="off" /></label>}
+    {prompt.audio && <PromptMedia audio={prompt.audio} onStatus={state => status('audio', state)} />}
+    {prompt.choices ? <div className={choicesCls} role="group" aria-label="Answer choices">{prompt.choices.map((choice, i) => <button type="button" key={i} className={optionCls} aria-pressed={value === i} disabled={disabled || !ready} onClick={() => onChange(i)}><strong>{String.fromCharCode(65 + i)}.</strong> <MathText text={choice} />{prompt.choiceVisuals?.[i] && <PromptPicture visual={prompt.choiceVisuals[i]!} retry={pictureRetry} onStatus={state => status(`choice:${i}`, state)} />}</button>)}</div> : <label className={inputCls}>Your answer<input value={value ?? ''} onChange={e => onChange(e.target.value)} disabled={disabled || !ready} maxLength={300} autoComplete="off" /></label>}
+    {failedPictures.length > 0 && <div role="alert">A picture could not load. <button type="button" onClick={() => {
+      setMediaStatuses(prior => Object.fromEntries(Object.entries(prior).filter(([key]) => key === 'audio')));
+      setPictureRetry(value => value + 1);
+    }}>Try pictures again</button></div>}
   </div>;
 }
 

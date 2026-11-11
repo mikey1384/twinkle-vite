@@ -1,6 +1,14 @@
+import type { DiagramVisual } from '../PaperDiagram';
+
 export interface Choice { key: string; label: string }
 export interface Profile { revision?: number; goal: string; subject: string; grade: string; confidence: string }
-export interface Prompt { prompt: string; passage?: string; choices?: string[] }
+export type PromptVisual = (DiagramVisual & { alt: string }) | { kind: 'image'; src: string; alt: string };
+export interface Prompt {
+  prompt: string; passage?: string; choices?: string[];
+  visual?: PromptVisual;
+  choiceVisuals?: (PromptVisual | null)[];
+  audio?: { src: string; label: string };
+}
 export interface Scene {
   kind: 'cards' | 'bars' | 'passage'; caption: string;
   parts: { text: string; emphasis?: boolean; value?: number }[];
