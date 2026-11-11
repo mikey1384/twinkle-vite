@@ -41,7 +41,9 @@ const LAND_OPERATIONS: Record<
   'land:edit': {
     operation: 'edit',
     scope: 'land:write',
-    fields: ['region', 'cells', 'format', 'cause', 'at'],
+    // terrain: the world's terrain version this app generates (11-10); the
+    // server refuses edits from a lower one than the approved declaration's.
+    fields: ['region', 'cells', 'format', 'cause', 'at', 'terrain'],
     publicGuest: true,
     guestDrops: ['at']
   },
@@ -183,13 +185,15 @@ export function worldEditPayload(payload: any, grant: string | null) {
   };
 }
 
-// world.join's land binding: the region the app asked for plus the grant
-// (only a valid published-runtime grant earns builder credit), and for a
-// guest the land token a previous join returned.
+// world.join's land binding: the region the app asked for and the terrain
+// version it states for that world (11-10), plus the grant (only a valid
+// published-runtime grant earns builder credit), and for a guest the land
+// token a previous join returned.
 export function worldJoinLand(payload: any, grant: string | null, guestToken: string | null = null) {
   if (payload?.land === undefined || payload?.land === null) return undefined;
   return {
     region: payload.land?.region,
+    ...(payload.land?.terrain !== undefined && payload.land?.terrain !== null ? { terrain: payload.land.terrain } : {}),
     ...(grant ? { grant } : {}),
     ...(guestToken ? { guest: guestToken } : {})
   };

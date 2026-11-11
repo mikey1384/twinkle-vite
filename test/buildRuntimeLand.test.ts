@@ -20,8 +20,10 @@ import {
   formatBuildLandLine,
   LAND_TALLY_PLAIN_WORDS,
   landReviewText,
+  landTerrainText,
   landZoneText
 } from '../src/helpers/buildRewardReviewCard';
+import { hostSupportsFeature } from '../src/containers/Build/PreviewPanel/helpers/hostReload';
 
 // Twinkle.land, website side (phase 2, 11-08). The frame packs cells; the
 // host only forwards documented fields, adds the token/grant, routes
@@ -270,4 +272,50 @@ test('land zones: the review words match the API and the chat card counts the ar
     landZoneText({ locked: [{ region: 'main', x0: 0, z0: 0, x1: 3, z1: 3, why: 'fountain', allowCauses: [{ cause: 'fluid', values: [8, 2] }] }] }),
     ' Locked: nobody can change blocks in fountain (main, x 0..3, z 0..3), except fluid setting 8/2.'
   );
+});
+
+// Terrain versions (11-10): the app states the terrain version it generates;
+// the server refuses edits from a lower one. An older page dropped the field
+// without a word, so the SDK asks host:supports first.
+test('terrain versions: the stated version reaches the server on joins and edits, for members and guests', () => {
+  assert.deepEqual(
+    planLandRequest('land:edit', { region: 'tnt-world-v2', cells: 'AgI=', terrain: 2, userId: 9 }, { signedIn: true, publicApp: true }).body,
+    { region: 'tnt-world-v2', cells: 'AgI=', terrain: 2 }
+  );
+  const guest = planLandRequest('land:edit', { region: 'tnt-world-v2', cells: 'AgI=', terrain: 2, at: 5 }, { signedIn: false, publicApp: true, guestToken: 'g.t.s' });
+  assert.deepEqual(guest.body, { region: 'tnt-world-v2', cells: 'AgI=', terrain: 2 });
+  assert.equal(guest.publicRead, true);
+  // reads never carry it (they are never refused)
+  assert.deepEqual(planLandRequest('land:cells', { region: 'tnt-world-v2', terrain: 2 }, { signedIn: true, publicApp: true }).body, { region: 'tnt-world-v2' });
+  assert.deepEqual(worldJoinLand({ land: { region: 'tnt-world-v2', terrain: 2, grant: 'forged' } }, 'g'), { region: 'tnt-world-v2', terrain: 2, grant: 'g' });
+  assert.deepEqual(worldJoinLand({ land: { region: 'tnt-world-v2', terrain: null } }, null), { region: 'tnt-world-v2' });
+  // the value is the server's to check: a wrong one is forwarded, never repaired here
+  assert.deepEqual(worldJoinLand({ land: { region: 'tnt-world-v2', terrain: '2' } }, null), { region: 'tnt-world-v2', terrain: '2' });
+  // the join's answer (land.terrain) passes through to the frame
+  assert.deepEqual(
+    stripLandGuestToken({ ok: true, land: { region: 'tnt-world-v2', credit: false, guest: 'gtoken', terrain: { required: 2, stated: 1, outdated: true } } }),
+    { ok: true, land: { region: 'tnt-world-v2', credit: false, terrain: { required: 2, stated: 1, outdated: true } } }
+  );
+});
+
+test('terrain versions: host:supports answers for known features only, and the bridge treats an unknown one as an old page', () => {
+  assert.equal(hostSupportsFeature('land-terrain'), true);
+  for (const feature of ['land-terrain-2', '', undefined, null, 7, ['land-terrain']]) assert.equal(hostSupportsFeature(feature), false, String(feature));
+  const bridge = readFileSync(new URL('../src/containers/Build/PreviewPanel/hooks/useHostBridge.ts', import.meta.url), 'utf8');
+  const at = bridge.indexOf("case 'host:supports':");
+  assert.ok(at > 0);
+  const branch = bridge.slice(at, bridge.indexOf("case 'mount:get':", at));
+  for (const piece of ['hostSupportsFeature(payload?.feature)', 'noteHostUpdateRequired()', "'host_update_required'", 'response = { supported: true }'])
+    assert.ok(branch.includes(piece), piece);
+});
+
+test('terrain versions: the review words match the API', () => {
+  const land = { keyGroup: 'plots', plotSize: 16, keyFormat: 'region:x:z', regions: ['main'], freeRegions: ['tnt-world-v2', 'maze-world-v2'] };
+  const words = ' Terrain versions: tnt-world-v2 2, maze-world-v2 3. A tab still running an older version of a world cannot change blocks there until it reloads.';
+  assert.equal(landTerrainText({ terrain: { 'tnt-world-v2': 2, 'maze-world-v2': 3 } }), words);
+  // the server's summary shape
+  assert.equal(landTerrainText({ terrain: [{ region: 'tnt-world-v2', version: 2 }, { region: 'maze-world-v2', version: 3 }] }), words);
+  assert.equal(landTerrainText({}), '');
+  assert.ok(landReviewText({ ...land, terrain: { 'tnt-world-v2': 2, 'maze-world-v2': 3 } }).endsWith(words));
+  assert.ok(!landReviewText(land).includes('Terrain'));
 });

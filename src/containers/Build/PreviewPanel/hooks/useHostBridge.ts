@@ -6,6 +6,7 @@ import {
 } from '~/helpers/clientUpdate';
 import {
   decideHostReload,
+  hostSupportsFeature,
   noteHostUpdateRequired,
   wasHostUpdateRequired
 } from '../helpers/hostReload';
@@ -2741,6 +2742,22 @@ export function useHostBridge({
             }
             pendingHostReload = reloadDecision.reload;
             response = reloadDecision.response;
+            break;
+          }
+
+          case 'host:supports': {
+            // The SDK asks before a call whose new field an older page would
+            // drop silently (Twinkle.land terrain versions). A feature this
+            // page does not know means the page is older than the SDK.
+            if (!hostSupportsFeature(payload?.feature)) {
+              void armUpdateIfDeployedBundleNewer();
+              noteHostUpdateRequired();
+              throw createPreviewBridgeError(
+                'Twinkle was updated. Reload this page to keep playing.',
+                'host_update_required'
+              );
+            }
+            response = { supported: true };
             break;
           }
 

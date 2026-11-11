@@ -25,6 +25,9 @@ export interface LandDeclaration {
   // player can put back to the generated world (free worlds only).
   locked?: LandLockedArea[];
   resettable?: LandResettableArea[];
+  // Terrain versions (11-10): { world: whole number from 1 }. Twinkle
+  // refuses block changes from a tab that states a lower one until it reloads.
+  terrain?: Record<string, number>;
 }
 export interface LandLockedArea {
   region: string;
@@ -59,6 +62,7 @@ export interface LandSummary {
   empty: number[];
   locked?: LandLockedArea[];
   resettable?: LandResettableArea[];
+  terrain?: Array<{ region: string; version: number }>;
   text: string;
 }
 export interface CoinPrice {

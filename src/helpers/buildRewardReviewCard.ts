@@ -288,6 +288,7 @@ export interface BuildLandSummary {
   empty?: number[];
   locked?: LandZoneArea[];
   resettable?: Array<LandZoneArea & { id: string; cooldownSeconds?: number }>;
+  terrain?: Array<{ region: string; version: number }>;
   text?: string;
 }
 interface LandZoneArea {
@@ -350,6 +351,7 @@ export function landReviewText(land: {
   switches?: Record<string, { values?: number[] }> | Array<{ name: string; values?: number[] }>;
   locked?: LandZoneArea[];
   resettable?: Array<LandZoneArea & { id: string; cooldownSeconds?: number }>;
+  terrain?: Record<string, number> | Array<{ region: string; version: number }>;
 }) {
   const switches = Array.isArray(land.switches)
     ? land.switches.map((entry) => ({ name: entry.name, values: entry.values || [] }))
@@ -369,7 +371,15 @@ export function landReviewText(land: {
     free.length ? `; players also build in ${free.join(', ')} (no plots)` : ''
   }. Inside a plot someone holds, Twinkle refuses block changes from anyone except its holder and the players they allow (only me / friends / everyone).${switchWords} Plots are ${size}, full height, named by their ${
     land.keyFormat === 'region:cx:cz' ? 'grid square' : 'corner'
-  } (key group "${land.keyGroup}").${reserved.length ? ` No plots ${reserved.join('; ')}.` : ''}${landZoneText(land)}`;
+  } (key group "${land.keyGroup}").${reserved.length ? ` No plots ${reserved.join('; ')}.` : ''}${landZoneText(land)}${landTerrainText(land)}`;
+}
+// Terrain versions in plain words (landTerrainText on the API: the same words).
+export function landTerrainText(land: { terrain?: Record<string, number> | Array<{ region: string; version: number }> }) {
+  const entries = Array.isArray(land.terrain)
+    ? land.terrain.map((entry) => [entry.region, entry.version] as const)
+    : Object.entries(land.terrain || {});
+  if (!entries.length) return '';
+  return ` Terrain versions: ${entries.map(([region, version]) => `${region} ${version}`).join(', ')}. A tab still running an older version of a world cannot change blocks there until it reloads.`;
 }
 // The builders' part of one purchase at most (platform ceilings when the
 // summary leaves them out: 64 builders, 100,000 Coins).

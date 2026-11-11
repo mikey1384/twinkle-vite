@@ -30,6 +30,18 @@ export function resetHostUpdateRequired() {
   hostUpdateRequired = false;
 }
 
+// `host:supports`: the SDK asks whether this page carries a feature that
+// rides on messages it already knows (a new field an older page would drop
+// without a word). A page that does not know the feature, or this message,
+// answers `host_update_required`, so the SDK tells the player to reload
+// instead of sending a call that would lose the field.
+//  - land-terrain (11-10): world.join's land.terrain and land:edit's terrain
+//    reach the server (buildRuntimeLand.ts).
+const HOST_FEATURES = new Set(['land-terrain']);
+export function hostSupportsFeature(feature: unknown) {
+  return typeof feature === 'string' && HOST_FEATURES.has(feature);
+}
+
 export type HostReloadDecision =
   | { allowed: true; reload: boolean; response: Record<string, boolean> }
   | { allowed: false; code: string; message: string };
