@@ -14,6 +14,7 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
 import {
   dailyPictureJobs,
+  getPictureDaySettings,
   isPending,
   type PictureDayState
 } from '~/helpers/dailyPictureJobs';
@@ -34,14 +35,9 @@ import { containerCls, textareaCls } from './styles';
 // member's AI Battery, with no limit on tries.
 export type { PictureDayState } from '~/helpers/dailyPictureJobs';
 
-// Mikey 11-07: Flare 2.6 medium replaced 2.5 medium as the site-paid default.
-const PICTURE_MODEL = 'gpt-image-2.6-flare';
-const DEFAULT_QUALITY: AiImageQuality = 'medium';
-// the site pays for its default settings or anything cheaper
-const FREE_QUALITIES: AiImageQuality[] = ['low', 'medium'];
 const QUALITY_OPTIONS: { value: AiImageQuality; label: string }[] = [
   { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium (default)' },
+  { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
   { value: 'xhigh', label: 'Extra high' },
   { value: 'max', label: 'Max' }
@@ -101,13 +97,14 @@ export default function PictureDayScreen({
     (v) => v.requestHelpers.loadDailyPicture
   );
   const [picture, setPicture] = useState<PictureDayState>(initialPicture);
+  const settings = getPictureDaySettings(picture.settings);
   const [prompt, setPrompt] = useState(initialPicture.prompt || '');
   const initialStyle = initialPicture.style || '';
   const [style, setStyle] = useState(initialStyle);
   const [customStyleOpen, setCustomStyleOpen] = useState(
     Boolean(initialStyle) && !STYLE_SUGGESTIONS.includes(initialStyle)
   );
-  const [quality, setQuality] = useState<AiImageQuality>(DEFAULT_QUALITY);
+  const [quality, setQuality] = useState<AiImageQuality>(settings.defaultQuality);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const generating = !!job && isPending(job) && !job.backgroundOnly;
   const error = job?.status === 'failed' ? job.error : null;
@@ -159,7 +156,7 @@ export default function PictureDayScreen({
   }, [requestedPath, picture.candidates]);
 
   const usesBattery =
-    !picture.freeAvailable || !FREE_QUALITIES.includes(quality);
+    !picture.freeAvailable || !settings.freeQualities.includes(quality);
   const hasPictures = picture.candidates.length > 0;
   const selected = picture.candidates.find((c) => c.path === selectedPath);
 
@@ -344,7 +341,10 @@ export default function PictureDayScreen({
                       {QUALITY_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
-                          {FREE_QUALITIES.includes(option.value)
+                          {option.value === settings.defaultQuality
+                            ? ' (default)'
+                            : ''}
+                          {settings.freeQualities.includes(option.value)
                             ? ''
                             : ' · uses AI Battery'}
                         </option>
@@ -367,7 +367,7 @@ export default function PictureDayScreen({
                 {usesBattery ? (
                   <>
                     <Icon icon="bolt" /> This picture uses your AI Battery.{' '}
-                    <AiImageEstimate model={PICTURE_MODEL} quality={quality} />
+                    <AiImageEstimate model={settings.model} quality={quality} />
                   </>
                 ) : (
                   <>

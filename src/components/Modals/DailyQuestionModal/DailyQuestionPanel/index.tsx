@@ -1733,6 +1733,7 @@ function normalizePictureDay(value: any): PictureDayState {
       )
     : [];
   return {
+    settings: value?.settings,
     prompt: typeof value?.prompt === 'string' ? value.prompt : '',
     style: typeof value?.style === 'string' ? value.style : '',
     chosenPath: typeof value?.chosenPath === 'string' ? value.chosenPath : '',

@@ -37,7 +37,7 @@ import PictureDayScreen from './src/components/Modals/DailyQuestionModal/DailyQu
 import {dailyPictureJobs} from './src/helpers/dailyPictureJobs';
 library.add(faPalette,faImage,faArrowRight,faTimes,faCheck,faRedo,faGift,faBolt,faPencilAlt,faChevronUp,faChevronDown,faSpinner);
 window.jobs=dailyPictureJobs;
-const empty={prompt:'',style:'',chosenPath:'',freeAvailable:true,candidates:[]};
+const empty={settings:{model:'gpt-image-2.6-sunburst',defaultQuality:'high',freeQualities:['low','medium','high']},prompt:'',style:'',chosenPath:'',freeAvailable:true,candidates:[]};
 window.server=JSON.parse(localStorage.getItem('fixtureServer')||'null')||{questionId:42,userId:1,isToday:true,picture:empty};
 window.reads=[];window.submits=[];
 window.generate=args=>{
@@ -78,7 +78,7 @@ async function compile() {
   const stubs = {
     '~/contexts': contexts,
     '~/components/ErrorBoundary': 'export default ({children})=>children;',
-    '~/components/AiImageEstimate': 'export default ()=>"Battery estimate";',
+    '~/components/AiImageEstimate': 'export default ({model})=>"Battery estimate for "+model;',
     '~/constants/sockets/api': `const listeners=new Map();export const socket={on:(name,fn)=>{if(!listeners.has(name))listeners.set(name,new Set());listeners.get(name).add(fn);},off:(name,fn)=>listeners.get(name)?.delete(fn)};window.socketFire=(name,value)=>listeners.get(name)?.forEach(fn=>fn(value));`
   };
   const bundle = await build({
@@ -128,12 +128,25 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
       const bundle = await compile();
       const browser = await engine.launch();
       try {
-        async function open(width = 360) {
+        async function open(width = 360, initialSettings) {
           const context = await browser.newContext({
             viewport: { width, height: 800 }
           });
           const page = await context.newPage();
           page.setDefaultTimeout(5000);
+          if (initialSettings !== undefined) {
+            await page.addInitScript((settings) => {
+              localStorage.setItem('fixtureServer', JSON.stringify({
+                questionId: 42,
+                userId: 1,
+                isToday: true,
+                picture: {
+                  ...(settings ? { settings } : {}),
+                  prompt: '', style: '', chosenPath: '', freeAvailable: true, candidates: []
+                }
+              }));
+            }, initialSettings);
+          }
           const errors = [];
           page.on('pageerror', (error) => errors.push(error.message));
           await context.route('**/*', (route) => {
@@ -184,10 +197,54 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
           );
         }
 
+        // The displayed default and free/paid boundary follow the server;
+        // an older server without settings keeps its previous medium rules.
+        for (const settings of [
+          { model: 'gpt-image-2.6-sunburst', defaultQuality: 'medium', freeQualities: ['low', 'medium'] },
+          null
+        ]) {
+          const { page, context } = await open(360, settings);
+          try {
+            await page.getByRole('button', { name: 'Picture settings' }).click();
+            const quality = page.getByLabel('Picture quality');
+            assert.equal(await quality.inputValue(), 'medium');
+            await quality.selectOption('high');
+            assert.match(await page.locator('main').innerText(), /This picture uses your AI Battery/);
+            assert.match(
+              await page.locator('main').innerText(),
+              settings ? /Battery estimate for gpt-image-2.6-sunburst/ : /Battery estimate for gpt-image-2.6-flare/
+            );
+          } finally {
+            await context.close();
+          }
+        }
+
         for (const width of [360, 1280]) {
           const { page, context, errors } = await open(width);
           try {
+            await page.getByRole('button', { name: 'Picture settings' }).click();
+            const quality = page.getByLabel('Picture quality');
+            assert.equal(await quality.inputValue(), 'high');
+            assert.equal(await quality.locator('option:checked').innerText(), 'High (default)');
+            assert.match(await page.locator('main').innerText(), /Today’s first picture is on Twinkle/);
+            await quality.selectOption('xhigh');
+            assert.match(await page.locator('main').innerText(), /This picture uses your AI Battery/);
+            assert.match(await page.locator('main').innerText(), /Battery estimate for gpt-image-2.6-sunburst/);
+            await quality.selectOption('high');
+            assert.match(await page.locator('main').innerText(), /Today’s first picture is on Twinkle/);
+            if (artifacts) {
+              mkdirSync(artifacts, { recursive: true });
+              await page.screenshot({
+                path: path.join(artifacts, `${name}-${width}-picture-settings.png`),
+                fullPage: true
+              });
+            }
+            await page.getByRole('button', { name: 'Picture settings' }).click();
             await start(page);
+            assert.equal(
+              await page.evaluate(() => JSON.parse(localStorage.getItem('fixtureRequest')).quality),
+              'high'
+            );
             assert.match(
               await page.locator('main').innerText(),
               /This can take a few minutes/

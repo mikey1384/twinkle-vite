@@ -1,4 +1,38 @@
 import { getLocalStorage } from './userDataHelpers';
+import {
+  GPT_IMAGE_2_6_FLARE,
+  isAiImageQuality,
+  isOpenAiImageModel,
+  type AiImageQuality,
+  type OpenAiImageModel
+} from './aiImageModels';
+
+export interface PictureDaySettings {
+  model: OpenAiImageModel;
+  defaultQuality: AiImageQuality;
+  freeQualities: AiImageQuality[];
+}
+
+// Servers predating the settings payload use the previous Picture Day rules.
+const LEGACY_SETTINGS: PictureDaySettings = {
+  model: GPT_IMAGE_2_6_FLARE,
+  defaultQuality: 'medium',
+  freeQualities: ['low', 'medium']
+};
+
+export function getPictureDaySettings(settings?: PictureDaySettings) {
+  if (
+    !settings ||
+    !isOpenAiImageModel(settings.model) ||
+    !isAiImageQuality(settings.defaultQuality) ||
+    !Array.isArray(settings.freeQualities) ||
+    !settings.freeQualities.every(isAiImageQuality) ||
+    !settings.freeQualities.includes(settings.defaultQuality)
+  ) {
+    return LEGACY_SETTINGS;
+  }
+  return settings;
+}
 
 export interface PictureDayCandidate {
   path: string;
@@ -10,6 +44,7 @@ export interface PictureDayCandidate {
 }
 
 export interface PictureDayState {
+  settings?: PictureDaySettings;
   prompt: string;
   style: string;
   chosenPath: string;
