@@ -621,6 +621,7 @@ export default function useChatUploads({
       }
       const decision = (await routeBuildChatUpload({
         buildId: build.id,
+        inputRequestId: uuidv1(),
         messageText: routingMessageText,
         files: files.map((file) => ({
           fileName: file.name,
@@ -831,7 +832,8 @@ export default function useChatUploads({
         try {
           result = await createBuildChatReferenceDocuments({
             buildId: uploadBuildId,
-            messageText: historyUserNoteText,
+            messageText: routingMessageText || historyUserNoteText,
+            inputRequestId: decision?.inputRequestId,
             uploads: references.map((reference, index) => ({
               url: reference.url,
               fileName: reference.fileName,
@@ -900,7 +902,7 @@ export default function useChatUploads({
           if (framesPerVideo === 0) {
             clearLocalProgressMessage();
             await persistBuildChatAssistantNote(
-              'I can look at up to 4 pictures at once, and each video needs at least one. Send the video with fewer images.',
+              'I can look at up to 8 pictures at once, and each video needs at least one. Send the video with fewer images.',
               { buildId: uploadBuildId }
             );
             return { handled: true };
@@ -908,7 +910,10 @@ export default function useChatUploads({
           try {
             for (const videoFile of videoFiles) {
               frameFiles.push(
-                ...(await extractVideoReferenceFrames(videoFile, framesPerVideo))
+                ...(await extractVideoReferenceFrames(
+                  videoFile,
+                  framesPerVideo
+                ))
               );
             }
           } catch {
@@ -924,6 +929,9 @@ export default function useChatUploads({
           }
         }
         const referenceFiles = [...imageFiles, ...frameFiles];
+        if (referenceFiles.length > 8) {
+          throw new Error('Send up to 8 images together. Your draft is kept.');
+        }
         if (referenceFiles.length === 0) {
           clearLocalProgressMessage();
           await persistBuildChatAssistantNote(
@@ -968,6 +976,7 @@ export default function useChatUploads({
             const result = await createBuildChatReferenceNote({
               buildId: uploadBuildId,
               messageText: routingMessageText,
+              inputRequestId: decision?.inputRequestId,
               references: references.map((reference) => ({
                 fileName: reference.fileName,
                 url: reference.url,
@@ -1020,6 +1029,7 @@ export default function useChatUploads({
           result = await createBuildChatReferenceNote({
             buildId: uploadBuildId,
             messageText: routingMessageText,
+            inputRequestId: decision?.inputRequestId,
             references: references.map((reference) => ({
               fileName: reference.fileName,
               url: reference.url,

@@ -1,3 +1,4 @@
+export const LUMINE_MESSAGE_MAX_CHARS = 50_000;
 import type {
   BuildChatUploadRoute,
   BuildHiddenMessageContextOptions
@@ -203,22 +204,22 @@ export function buildBuildChatHiddenMessageContext({
     'Do not repeat them back as filler, chat clutter, or product UI.'
   ];
   if (trimmedMessageText) {
-    lines.push(`User intent: ${trimmedMessageText}`);
+    lines.push(`User intent: ${trimmedMessageText.slice(0, 600)}`);
   }
   if (normalizedReferences.length > 0) {
     lines.push('Reference image URLs:');
-    for (const reference of normalizedReferences.slice(0, 4)) {
+    for (const reference of normalizedReferences.slice(0, 8)) {
       lines.push(`- ${reference.fileName}: ${reference.url}`);
     }
-    if (normalizedReferences.length > 4) {
+    if (normalizedReferences.length > 8) {
       lines.push(
-        `- plus ${normalizedReferences.length - 4} more reference image${
-          normalizedReferences.length - 4 === 1 ? '' : 's'
+        `- plus ${normalizedReferences.length - 8} more reference image${
+          normalizedReferences.length - 8 === 1 ? '' : 's'
         }`
       );
     }
   }
-  return lines.join('\n').slice(0, 1800);
+  return lines.join('\n');
 }
 
 function normalizeUploadFiles(files: File[]) {

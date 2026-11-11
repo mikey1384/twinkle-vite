@@ -1,4 +1,5 @@
 import { socket } from '~/constants/sockets/api';
+import { LUMINE_MESSAGE_MAX_CHARS } from '../helpers/chatUploads';
 import type {
   BuildRuntimeExplorationPlan,
   BuildRuntimeObservationState
@@ -114,6 +115,15 @@ export default function useRunStartActions({
       lumineModelOnce?: boolean;
     }
   ): Promise<boolean> {
+    if (messageText.trim().length > LUMINE_MESSAGE_MAX_CHARS) {
+      appendLocalRunEvent({
+        kind: 'lifecycle',
+        phase: 'error',
+        message:
+          'Attach this text as a document so Lumine can read it. Your draft is kept.'
+      });
+      return false;
+    }
     if (aiFeaturesDisabled) return false;
     if (!messageText.trim() || isRunActivityInFlight() || !isOwner) {
       return false;
@@ -256,7 +266,8 @@ export default function useRunStartActions({
         lumineReasoningEffort:
           lumineModelSelection?.reasoningEffort || undefined,
         lumineModelOnce:
-          (options?.lumineModelOnce && Boolean(options?.lumineModelSelection)) ||
+          (options?.lumineModelOnce &&
+            Boolean(options?.lumineModelSelection)) ||
           undefined,
         planAction: options?.planAction || undefined,
         promptBinding: options?.promptBinding || undefined,

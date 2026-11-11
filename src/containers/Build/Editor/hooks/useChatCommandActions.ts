@@ -1,4 +1,5 @@
 import { socket } from '~/constants/sockets/api';
+import { LUMINE_MESSAGE_MAX_CHARS } from '../helpers/chatUploads';
 import {
   CURRENT_THREE_VENDOR_PREFIX,
   LEGACY_THREE_VENDOR_PREFIX
@@ -386,6 +387,11 @@ export default function useChatCommandActions({
     }
   ) {
     const trimmedMessage = String(messageText || '').trim();
+    // Run the shared preflight before queueing or consuming an upload reply,
+    // so an oversized draft is never cleared merely because a run is active.
+    if (trimmedMessage.length > LUMINE_MESSAGE_MAX_CHARS) {
+      return startGeneration(trimmedMessage, options);
+    }
     if (
       !trimmedMessage ||
       !isOwner ||

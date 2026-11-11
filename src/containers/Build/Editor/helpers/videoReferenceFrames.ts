@@ -3,7 +3,7 @@
 // browser, and those frames travel the ordinary image chat-reference path.
 
 // Matches the API's BUILD_CHAT_REFERENCE_MAX_COUNT.
-export const BUILD_CHAT_REFERENCE_MAX_COUNT = 4;
+export const BUILD_CHAT_REFERENCE_MAX_COUNT = 8;
 const FRAME_MAX_EDGE = 1280;
 const LOAD_TIMEOUT_MS = 15_000;
 const SEEK_TIMEOUT_MS = 8_000;

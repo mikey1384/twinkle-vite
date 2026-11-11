@@ -1842,11 +1842,13 @@ export default function buildRequestHelpers({
 
     async routeBuildChatUpload({
       buildId,
+      inputRequestId,
       messageText,
       files,
       videoFrameReferences = false
     }: {
       buildId: number;
+      inputRequestId?: string;
       messageText?: string;
       files: Array<{
         fileName: string;
@@ -1860,6 +1862,7 @@ export default function buildRequestHelpers({
           `${URL}/build/${buildId}/chat/upload-route`,
           {
             messageText,
+            inputRequestId,
             files,
             videoFrameReferences
           },
@@ -1911,11 +1914,13 @@ export default function buildRequestHelpers({
 
     async createBuildChatReferenceNote({
       buildId,
+      inputRequestId,
       messageText,
       references,
       hidden
     }: {
       buildId: number;
+      inputRequestId?: string;
       messageText?: string;
       references: Array<{
         fileName: string;
@@ -1929,6 +1934,7 @@ export default function buildRequestHelpers({
           `${URL}/build/${buildId}/chat/reference-note`,
           {
             messageText,
+            inputRequestId,
             references,
             hidden: Boolean(hidden)
           },
@@ -1942,10 +1948,12 @@ export default function buildRequestHelpers({
 
     async createBuildChatReferenceDocuments({
       buildId,
+      inputRequestId,
       messageText,
       uploads
     }: {
       buildId: number;
+      inputRequestId?: string;
       messageText?: string;
       uploads: Array<{
         url: string;
@@ -1957,7 +1965,7 @@ export default function buildRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/chat/reference-documents`,
-          { messageText, uploads },
+          { messageText, uploads, inputRequestId },
           { ...auth(), timeout: 5 * 60 * 1000 }
         );
         return data;

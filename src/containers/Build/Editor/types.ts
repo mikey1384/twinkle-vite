@@ -42,6 +42,7 @@ export type BuildChatUploadRoute =
   | 'clarify';
 
 export interface BuildChatUploadDecision {
+  inputRequestId?: string;
   route?: BuildChatUploadRoute;
   confidence?: 'low' | 'medium' | 'high';
   reason?: string;
