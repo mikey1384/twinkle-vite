@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ensureBuildApiToken,
   type PreviewHostBridgeAuth
-} from './useHostBridge';
+} from '../helpers/previewBridgeAuth';
 import type { Build } from '../types';
 import type { WorkspaceViewMode } from '../constants/workspaceView';
 import {
@@ -10,37 +10,179 @@ import {
   canUseSameOriginBuildPreviewSandbox
 } from '~/helpers/buildPreviewOriginHelpers';
 
-interface RuntimePreviewSrcState {
+interface PreviewSrcState {
   key: string;
   src: string;
   expiresAt?: number;
 }
 
-// While the player is focused inside the preview frame, deferred token
-// refreshes re-check on this cadence instead of reloading the running app.
 const ACTIVE_FRAME_REFRESH_RETRY_MS = 60 * 1000;
-
-function toPreviewBaseSrc(build: Build) {
-  return Number(build.currentArtifactVersionId) > 0
-    ? `/build/preview/build/${build.id}/version/${build.currentArtifactVersionId}`
-    : `/build/preview/build/${build.id}/current?rev=${Number(build.updatedAt) || 0}`;
-}
+const ACCESS_RETRY_DELAYS_MS = [1000, 3000, 10_000];
 
 function appendPreviewQueryParam(
-  previewSrc: string,
+  src: string,
   key: string,
-  value: string | null | undefined
+  value?: string | null
 ) {
   const normalizedValue = String(value || '').trim();
-  if (!normalizedValue) return previewSrc;
-  const separator = previewSrc.includes('?') ? '&' : '?';
-  return `${previewSrc}${separator}${encodeURIComponent(key)}=${encodeURIComponent(
-    normalizedValue
-  )}`;
+  if (!normalizedValue) return src;
+  return `${src}${src.includes('?') ? '&' : '?'}${encodeURIComponent(key)}=${encodeURIComponent(normalizedValue)}`;
 }
 
 export function buildPreviewBaseSrc(build: Build) {
-  return buildPreviewFrameSrc(toPreviewBaseSrc(build));
+  return buildPreviewFrameSrc(
+    Number(build.currentArtifactVersionId) > 0
+      ? `/build/preview/build/${build.id}/version/${build.currentArtifactVersionId}`
+      : `/build/preview/build/${build.id}/current?rev=${Number(build.updatedAt) || 0}`
+  );
+}
+
+function usePreviewAccess({
+  baseSrc,
+  signed,
+  userId,
+  previewAuth,
+  resolveEnabled = true,
+  retryNonce = 0,
+  onAccessError
+}: {
+  baseSrc: string | null;
+  signed: boolean;
+  userId: number | null;
+  previewAuth: PreviewHostBridgeAuth;
+  resolveEnabled?: boolean;
+  retryNonce?: number;
+  onAccessError?: (message: string | null) => void;
+}) {
+  const key = baseSrc
+    ? `${baseSrc}|user:${Number(userId || 0)}|signed:${signed ? 1 : 0}`
+    : null;
+  const [state, setState] = useState<PreviewSrcState | null>(null);
+  const [refreshNonce, setRefreshNonce] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    let retryTimer = 0;
+    let retryIndex = 0;
+    let inFlight = false;
+    let failed = false;
+    onAccessError?.(null);
+
+    async function resolve() {
+      if (!resolveEnabled || !key || !baseSrc || cancelled || inFlight) return;
+      if (!signed) {
+        setState({ key, src: baseSrc });
+        return;
+      }
+      if (!userId) {
+        onAccessError?.('Sign in to open this preview.');
+        return;
+      }
+      inFlight = true;
+      try {
+        const token = await ensureBuildApiToken(['preview:read'], previewAuth);
+        if (cancelled) return;
+        const tokenState = previewAuth.buildApiTokenRef.current;
+        const expiresAt =
+          tokenState && tokenState.token === token
+            ? Number(tokenState.expiresAt || 0)
+            : 0;
+        setState({
+          key,
+          src: appendPreviewQueryParam(baseSrc, 'buildApiToken', token),
+          expiresAt: expiresAt || undefined
+        });
+        failed = false;
+        onAccessError?.(null);
+      } catch (error: any) {
+        if (cancelled) return;
+        failed = true;
+        const status = Number(error?.response?.status || error?.status || 0);
+        const transient =
+          !status || status === 408 || status === 429 || status >= 500;
+        if (transient && retryIndex < ACCESS_RETRY_DELAYS_MS.length) {
+          retryTimer = window.setTimeout(() => {
+            void resolve();
+          }, ACCESS_RETRY_DELAYS_MS[retryIndex++]);
+        } else {
+          onAccessError?.(
+            status === 401
+              ? 'Sign in again to open this preview.'
+              : status === 403
+                ? 'You no longer have access to this preview.'
+                : 'Couldn’t open the preview. Please try again.'
+          );
+        }
+        // Keep the same viewer's running frame. Never replace a protected
+        // document with an unsigned URL because its token request failed.
+      } finally {
+        inFlight = false;
+      }
+    }
+
+    function retryFailedAccess() {
+      if (!failed || inFlight) return;
+      window.clearTimeout(retryTimer);
+      retryIndex = 0;
+      onAccessError?.(null);
+      void resolve();
+    }
+
+    function retryWhenVisible() {
+      if (document.visibilityState === 'visible') retryFailedAccess();
+    }
+
+    void resolve();
+    window.addEventListener('online', retryFailedAccess);
+    window.addEventListener('focus', retryWhenVisible);
+    document.addEventListener('visibilitychange', retryWhenVisible);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(retryTimer);
+      window.removeEventListener('online', retryFailedAccess);
+      window.removeEventListener('focus', retryWhenVisible);
+      document.removeEventListener('visibilitychange', retryWhenVisible);
+    };
+  }, [
+    baseSrc,
+    key,
+    onAccessError,
+    previewAuth,
+    refreshNonce,
+    resolveEnabled,
+    retryNonce,
+    signed,
+    userId
+  ]);
+
+  useEffect(() => {
+    if (!signed || !key || state?.key !== key || !state.expiresAt) return;
+    const refreshWouldRemount = !canUseSameOriginBuildPreviewSandbox(state.src);
+    let timer = 0;
+    function schedule(delay: number) {
+      timer = window.setTimeout(() => {
+        // Preserve the existing no-reload behavior while a cross-origin game
+        // is focused. Same-origin token refresh travels over the bridge.
+        if (
+          refreshWouldRemount &&
+          document.activeElement instanceof HTMLIFrameElement
+        ) {
+          schedule(ACTIVE_FRAME_REFRESH_RETRY_MS);
+          return;
+        }
+        setRefreshNonce((nonce) => nonce + 1);
+      }, delay);
+    }
+    schedule(Math.max(0, state.expiresAt * 1000 - Date.now() - 25_000));
+    return () => window.clearTimeout(timer);
+  }, [key, signed, state?.expiresAt, state?.key, state?.src]);
+
+  return state?.key === key ? state.src : null;
+}
+
+interface AccessFeedback {
+  retryNonce?: number;
+  onAccessError?: (message: string | null) => void;
 }
 
 export function useRuntimePreviewSrc({
@@ -50,7 +192,8 @@ export function useRuntimePreviewSrc({
   appMcpSessionId,
   requireSignedAccess,
   userId,
-  previewAuth
+  previewAuth,
+  ...feedback
 }: {
   build: Build;
   enabled: boolean;
@@ -59,150 +202,30 @@ export function useRuntimePreviewSrc({
   requireSignedAccess: boolean;
   userId: number | null;
   previewAuth: PreviewHostBridgeAuth;
-}) {
-  const [runtimePreviewSrcState, setRuntimePreviewSrcState] =
-    useState<RuntimePreviewSrcState | null>(null);
-
-  const rawBasePreviewSrc = enabled ? buildPreviewBaseSrc(build) : null;
-  const basePreviewSrc = rawBasePreviewSrc
-    ? appendPreviewQueryParam(rawBasePreviewSrc, 'appMcpSession', appMcpSessionId)
-    : null;
-  const runtimePreviewSrcKey = basePreviewSrc
-    ? `${basePreviewSrc}|user:${Number(userId || 0)}|public:${
-        build.isPublic ? 1 : 0
-      }|signed:${requireSignedAccess ? 1 : 0}`
-    : null;
-  const canUseBasePreviewSrc = Boolean(
-    enabled && basePreviewSrc && build.isPublic && !requireSignedAccess
-  );
-  const needsSignedPreviewSrc = Boolean(
-    enabled &&
-    basePreviewSrc &&
-    (!build.isPublic || requireSignedAccess) &&
-    userId
-  );
-  const runtimePreviewRefreshLeadMs = 25 * 1000;
-  const [runtimePreviewRefreshNonce, setRuntimePreviewRefreshNonce] =
-    useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function resolveRuntimePreviewSrc() {
-      if (previewSrcOverride) {
-        setRuntimePreviewSrcState(null);
-        return;
-      }
-      if (!enabled || !basePreviewSrc || !runtimePreviewSrcKey) {
-        setRuntimePreviewSrcState(null);
-        return;
-      }
-      if (canUseBasePreviewSrc) {
-        setRuntimePreviewSrcState({
-          key: runtimePreviewSrcKey,
-          src: basePreviewSrc
-        });
-        return;
-      }
-      if (!needsSignedPreviewSrc) {
-        setRuntimePreviewSrcState(null);
-        return;
-      }
-
-      try {
-        const token = await ensureBuildApiToken(['preview:read'], previewAuth);
-        if (cancelled) return;
-        const tokenState = previewAuth.buildApiTokenRef.current;
-        const tokenExpiresAt =
-          tokenState && tokenState.token === token
-            ? Number(tokenState.expiresAt || 0)
-            : 0;
-        setRuntimePreviewSrcState({
-          key: runtimePreviewSrcKey,
-          src: appendPreviewQueryParam(basePreviewSrc, 'buildApiToken', token),
-          expiresAt: tokenExpiresAt || undefined
-        });
-      } catch (error) {
-        if (cancelled) return;
-        console.error('Failed to resolve runtime preview access token:', error);
-        setRuntimePreviewSrcState(null);
-      }
-    }
-
-    void resolveRuntimePreviewSrc();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    basePreviewSrc,
-    canUseBasePreviewSrc,
-    enabled,
-    needsSignedPreviewSrc,
+} & AccessFeedback) {
+  // Public iframe requests carry no website login. Preserve the canonical
+  // owner's/team member's access even if publication advances after loading
+  // the host payload; the server still rechecks membership on every request.
+  const hasWorkspaceAccess =
+    Number(userId) > 0 &&
+    (Number(build.userId) === Number(userId) ||
+      build.canOpenContributionWorkspace === true);
+  const signed = !build.isPublic || requireSignedAccess || hasWorkspaceAccess;
+  const src = usePreviewAccess({
+    baseSrc:
+      enabled && !previewSrcOverride
+        ? appendPreviewQueryParam(
+            buildPreviewBaseSrc(build),
+            'appMcpSession',
+            appMcpSessionId
+          )
+        : null,
+    signed,
+    userId,
     previewAuth,
-    appMcpSessionId,
-    previewSrcOverride,
-    runtimePreviewRefreshNonce,
-    runtimePreviewSrcKey
-  ]);
-
-  useEffect(() => {
-    if (
-      !needsSignedPreviewSrc ||
-      !runtimePreviewSrcKey ||
-      runtimePreviewSrcState?.key !== runtimePreviewSrcKey ||
-      !runtimePreviewSrcState.expiresAt
-    ) {
-      return;
-    }
-
-    const refreshDelayMs = Math.max(
-      0,
-      runtimePreviewSrcState.expiresAt * 1000 -
-        Date.now() -
-        runtimePreviewRefreshLeadMs
-    );
-    // Same-origin frames take token-only refreshes in place over the preview
-    // bridge (preview:token-refresh) with no reload, so deferring there would
-    // only strand the running app with an expired token. Cross-origin signed
-    // frames cannot be bridged — a refresh remounts them and resets a running
-    // app mid-session — so those defer while the player is focused inside the
-    // frame, accepting stale-token risk on late lazy fetches as the lesser harm.
-    const refreshWouldRemount = !canUseSameOriginBuildPreviewSandbox(
-      runtimePreviewSrcState.src
-    );
-    let refreshTimeout = 0;
-    const scheduleRefresh = (delayMs: number) => {
-      refreshTimeout = window.setTimeout(() => {
-        if (
-          refreshWouldRemount &&
-          document.activeElement instanceof HTMLIFrameElement
-        ) {
-          scheduleRefresh(ACTIVE_FRAME_REFRESH_RETRY_MS);
-          return;
-        }
-        setRuntimePreviewRefreshNonce((currentNonce) => currentNonce + 1);
-      }, delayMs);
-    };
-    scheduleRefresh(refreshDelayMs);
-
-    return () => {
-      window.clearTimeout(refreshTimeout);
-    };
-  }, [
-    needsSignedPreviewSrc,
-    runtimePreviewRefreshLeadMs,
-    runtimePreviewSrcKey,
-    runtimePreviewSrcState?.expiresAt,
-    runtimePreviewSrcState?.key,
-    runtimePreviewSrcState?.src
-  ]);
-
-  if (previewSrcOverride) return previewSrcOverride;
-  if (canUseBasePreviewSrc) return basePreviewSrc;
-  return runtimePreviewSrcState?.key === runtimePreviewSrcKey
-    ? runtimePreviewSrcState.src
-    : null;
+    ...feedback
+  });
+  return previewSrcOverride || src;
 }
 
 export function useWorkspacePreviewSrc({
@@ -211,7 +234,8 @@ export function useWorkspacePreviewSrc({
   previewRevision,
   viewMode,
   userId,
-  previewAuth
+  previewAuth,
+  ...feedback
 }: {
   build: Build;
   runtimeOnly: boolean;
@@ -219,136 +243,19 @@ export function useWorkspacePreviewSrc({
   viewMode: WorkspaceViewMode;
   userId: number | null;
   previewAuth: PreviewHostBridgeAuth;
-}) {
-  const [workspacePreviewSrcState, setWorkspacePreviewSrcState] = useState<{
-    src: string;
-    expiresAt?: number;
-  } | null>(null);
-  const workspacePreviewRefreshLeadMs = 25 * 1000;
-  const [workspacePreviewRefreshNonce, setWorkspacePreviewRefreshNonce] =
-    useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    function applyWorkspacePreviewSrcState(nextState: {
-      src: string;
-      expiresAt?: number;
-    }) {
-      setWorkspacePreviewSrcState((currentState) =>
-        currentState &&
-        currentState.src === nextState.src &&
-        currentState.expiresAt === nextState.expiresAt
-          ? currentState
-          : nextState
-      );
-    }
-
-    async function resolveWorkspacePreviewSrc() {
-      if (runtimeOnly) {
-        setWorkspacePreviewSrcState(null);
-        return;
-      }
-      if (viewMode !== 'preview') {
-        return;
-      }
-
-      const basePreviewSrc = buildPreviewBaseSrc(build);
-      const versionedPreviewSrc = appendPreviewQueryParam(
-        basePreviewSrc,
-        'previewRev',
-        previewRevision
-      );
-
-      if (!userId) {
-        applyWorkspacePreviewSrcState({ src: versionedPreviewSrc });
-        return;
-      }
-
-      try {
-        const token = await ensureBuildApiToken(['preview:read'], previewAuth);
-        if (cancelled) return;
-        const tokenState = previewAuth.buildApiTokenRef.current;
-        const tokenExpiresAt =
-          tokenState && tokenState.token === token
-            ? Number(tokenState.expiresAt || 0)
-            : 0;
-        applyWorkspacePreviewSrcState({
-          src: appendPreviewQueryParam(
-            versionedPreviewSrc,
-            'buildApiToken',
-            token
-          ),
-          expiresAt: tokenExpiresAt || undefined
-        });
-      } catch (error) {
-        if (cancelled) return;
-        console.error('Failed to resolve preview access token:', error);
-        applyWorkspacePreviewSrcState({ src: versionedPreviewSrc });
-      }
-    }
-
-    void resolveWorkspacePreviewSrc();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    build,
-    build.currentArtifactVersionId,
-    build.id,
-    build.isPublic,
-    build.updatedAt,
-    previewAuth,
-    previewRevision,
-    runtimeOnly,
+} & AccessFeedback) {
+  return usePreviewAccess({
+    baseSrc: !runtimeOnly
+      ? appendPreviewQueryParam(
+          buildPreviewBaseSrc(build),
+          'previewRev',
+          previewRevision
+        )
+      : null,
+    resolveEnabled: viewMode === 'preview',
+    signed: true,
     userId,
-    viewMode,
-    workspacePreviewRefreshNonce
-  ]);
-
-  useEffect(() => {
-    if (!workspacePreviewSrcState?.expiresAt) {
-      return;
-    }
-
-    const refreshDelayMs = Math.max(
-      0,
-      workspacePreviewSrcState.expiresAt * 1000 -
-        Date.now() -
-        workspacePreviewRefreshLeadMs
-    );
-    // Same-origin frames take token-only refreshes in place over the preview
-    // bridge (preview:token-refresh) with no reload; cross-origin signed
-    // frames cannot be bridged — a refresh remounts them and resets a running
-    // app mid-session — so those defer while the player is focused inside the
-    // frame, accepting stale-token risk on late lazy fetches as the lesser harm.
-    const refreshWouldRemount = !canUseSameOriginBuildPreviewSandbox(
-      workspacePreviewSrcState.src
-    );
-    let refreshTimeout = 0;
-    const scheduleRefresh = (delayMs: number) => {
-      refreshTimeout = window.setTimeout(() => {
-        if (
-          refreshWouldRemount &&
-          document.activeElement instanceof HTMLIFrameElement
-        ) {
-          scheduleRefresh(ACTIVE_FRAME_REFRESH_RETRY_MS);
-          return;
-        }
-        setWorkspacePreviewRefreshNonce((currentNonce) => currentNonce + 1);
-      }, delayMs);
-    };
-    scheduleRefresh(refreshDelayMs);
-
-    return () => {
-      window.clearTimeout(refreshTimeout);
-    };
-  }, [
-    workspacePreviewRefreshLeadMs,
-    workspacePreviewSrcState?.expiresAt,
-    workspacePreviewSrcState?.src
-  ]);
-
-  return workspacePreviewSrcState?.src ?? null;
+    previewAuth,
+    ...feedback
+  });
 }

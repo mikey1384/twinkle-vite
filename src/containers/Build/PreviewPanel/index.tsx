@@ -1135,17 +1135,28 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       );
     }, [code, previewProjectFiles, runtimeOnly]);
 
+    const [runtimeAccessError, setRuntimeAccessError] = useState<string | null>(
+      null
+    );
+    const [workspaceAccessError, setWorkspaceAccessError] = useState<
+      string | null
+    >(null);
+    const [previewAccessRetryNonce, setPreviewAccessRetryNonce] = useState(0);
     const runtimePreviewSrc = useRuntimePreviewSrc({
       build,
       enabled: runtimeOnly && hasRuntimePreview,
       previewSrcOverride: normalizedPreviewSrcOverride,
       appMcpSessionId,
       requireSignedAccess: requireSignedPreviewAccess,
+      onAccessError: setRuntimeAccessError,
+      retryNonce: previewAccessRetryNonce,
       userId: resolvedUserId || null,
       previewAuth
     });
 
     const workspacePreviewSrc = useWorkspacePreviewSrc({
+      onAccessError: setWorkspaceAccessError,
+      retryNonce: previewAccessRetryNonce,
       build,
       runtimeOnly,
       previewRevision: previewProjectFilesRevision,
@@ -1739,6 +1750,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               shouldMountRuntimePreviewFrame={shouldMountRuntimePreviewFrame}
               shouldShowRuntimePreviewStage={shouldShowRuntimePreviewStage}
               shouldShowWorkspacePreviewStage={shouldShowWorkspacePreviewStage}
+              accessError={!runtimePreviewSrc ? runtimeAccessError : null}
+              onRetryAccess={() =>
+                setPreviewAccessRetryNonce((nonce) => nonce + 1)
+              }
               variant="runtime"
               onOpenRuntimeIssueProjectFile={openRuntimeIssueProjectFile}
               onPreviewFrameLoad={handlePreviewFrameLoad}
@@ -1766,6 +1781,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               shouldMountRuntimePreviewFrame={shouldMountRuntimePreviewFrame}
               shouldShowRuntimePreviewStage={shouldShowRuntimePreviewStage}
               shouldShowWorkspacePreviewStage={shouldShowWorkspacePreviewStage}
+              accessError={!workspacePreviewSrc ? workspaceAccessError : null}
+              onRetryAccess={() =>
+                setPreviewAccessRetryNonce((nonce) => nonce + 1)
+              }
               variant="workspace"
               onOpenRuntimeIssueProjectFile={openRuntimeIssueProjectFile}
               onPreviewFrameLoad={handlePreviewFrameLoad}

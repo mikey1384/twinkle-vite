@@ -242,6 +242,8 @@ const emptyPreviewBodyStyle: React.CSSProperties = {
 };
 
 export default function PreviewStage({
+  accessError,
+  onRetryAccess,
   activePreviewFrame,
   codeWorkspaceAvailable,
   isOwner,
@@ -263,6 +265,8 @@ export default function PreviewStage({
   onOpenRuntimeIssueProjectFile,
   onPreviewFrameLoad
 }: {
+  accessError?: string | null;
+  onRetryAccess?: () => void;
   activePreviewFrame: PreviewFrameKey;
   codeWorkspaceAvailable: boolean;
   isOwner: boolean;
@@ -287,6 +291,38 @@ export default function PreviewStage({
   onOpenRuntimeIssueProjectFile: (path: string) => void;
   onPreviewFrameLoad: (frame: PreviewFrameKey, src: string) => void;
 }) {
+  if (accessError) {
+    return (
+      <div className={previewPreloadSurfaceClass} role="alert">
+        <p
+          className={css`
+            font-size: 1.1rem;
+            margin: 0;
+            padding: 0 1rem;
+            text-align: center;
+          `}
+        >
+          {accessError}
+        </p>
+        <button
+          type="button"
+          onClick={onRetryAccess}
+          className={css`
+            min-height: 44px;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--ui-border);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--chat-text);
+            font-size: 1.1rem;
+            cursor: pointer;
+          `}
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
   if (variant === 'runtime') {
     if (!shouldShowRuntimePreviewStage) {
       return <EmptyPreviewState body="This build has no code yet" />;

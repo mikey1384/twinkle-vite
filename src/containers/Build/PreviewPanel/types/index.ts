@@ -42,6 +42,7 @@ export interface Build {
   // the build's published release (runtime payload; absent when none)
   publishedArtifactVersionId?: number | null;
   isPublic?: boolean | number | null;
+  canOpenContributionWorkspace?: boolean;
   updatedAt?: number | null;
   // Server-issued hash of the canonical project files this client last
   // synced; the draft buffer captures it as its save base when reseeded.

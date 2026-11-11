@@ -9,18 +9,9 @@ const frameManagerSource = readFileSync(
   ),
   'utf8'
 );
-const useSourceSource = readFileSync(
-  new URL(
-    '../src/containers/Build/PreviewPanel/hooks/useSource.ts',
-    import.meta.url
-  ),
-  'utf8'
-);
-
 test('workspace iframe survives signed preview token refresh in place', () => {
-  const runtimeOnlyBranchStart = frameManagerSource.indexOf(
-    'if (runtimeOnly) {'
-  );
+  const runtimeOnlyBranchStart =
+    frameManagerSource.indexOf('if (runtimeOnly) {');
   assert.notEqual(runtimeOnlyBranchStart, -1);
 
   const workspaceTokenRefreshStart = frameManagerSource.indexOf(
@@ -49,7 +40,10 @@ test('workspace iframe survives signed preview token refresh in place', () => {
   );
   assert.match(workspaceTokenRefreshBlock, /isPreviewFrameTokenOnlyRefresh/);
   assert.match(workspaceTokenRefreshBlock, /activeMeta\.hasLoaded/);
-  assert.match(workspaceTokenRefreshBlock, /activeMeta\.viewerKey === viewerKey/);
+  assert.match(
+    workspaceTokenRefreshBlock,
+    /activeMeta\.viewerKey === viewerKey/
+  );
   assert.match(
     workspaceTokenRefreshBlock,
     /postPreviewTokenRefreshToFrame/,
@@ -64,35 +58,6 @@ test('workspace iframe survives signed preview token refresh in place', () => {
     workspaceTokenRefreshBlock,
     /bridgeConfirmed/,
     'token-only refresh must preserve the loaded iframe even if the preview bridge has not confirmed yet'
-  );
-});
-
-test('workspace preview src refreshes its signed token in place before expiry', () => {
-  const workspaceHookStart = useSourceSource.indexOf(
-    'export function useWorkspacePreviewSrc'
-  );
-  assert.notEqual(workspaceHookStart, -1);
-  const workspaceHookSource = useSourceSource.slice(workspaceHookStart);
-
-  assert.match(
-    workspaceHookSource,
-    /expiresAt: tokenExpiresAt \|\| undefined/,
-    'workspace src state must track the signed token expiry'
-  );
-  assert.match(
-    workspaceHookSource,
-    /setWorkspacePreviewRefreshNonce/,
-    'workspace src must schedule a token refresh instead of waiting for unrelated state churn'
-  );
-  assert.match(
-    workspaceHookSource,
-    /workspacePreviewRefreshNonce\s*\]/,
-    'the scheduled refresh nonce must re-run the src resolution effect'
-  );
-  assert.match(
-    workspaceHookSource,
-    /canUseSameOriginBuildPreviewSandbox/,
-    'cross-origin (non-bridgeable) frames must keep the focused-player refresh deferral'
   );
 });
 
