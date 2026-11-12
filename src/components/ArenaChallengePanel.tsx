@@ -18,8 +18,8 @@ import {
 // win ("im just showing off my achievement"). The post itself is a normal
 // one (score-aware achievement heading, likes, comments,
 // recommends); this is its body on Home and on /arena-challenges/:id, the
-// Arena look only inside the panel, with a Challenge! button for anyone who
-// wants to sit the same paper. Never any wrong answers (the own-misses ruling).
+// Arena look only inside the panel, with a Challenge! button for other
+// members. Never any wrong answers (the own-misses ruling).
 // A run Zero or Ciel helped with names them beside its score ("With Zero";
 // Mikey 10-31). A daily
 // clear shows exactly what it paid, guided or not: the amounts are what make
@@ -172,12 +172,12 @@ function ArenaChallengePanel({
       <div className={footCls}>
         <span className={metaCls}>
           {challenge.takers
-            ? `${challenge.takers} tried the same paper${
+            ? `${challenge.takers} took the challenge${
                 challenge.bestTaker != null
                   ? ` · best ${challenge.bestTaker}`
                   : ''
               }`
-            : 'Same paper, same clock'}
+            : 'Same exam, same clock'}
         </span>
         {!isMine && <ChallengeButton id={challenge.id} />}
       </div>

@@ -14,9 +14,9 @@ import type { ArenaCompanion, ArenaBattlePreview, ArenaRewardOffer } from './typ
 import { arenaMediaURL } from './media';
 import { ARENA } from './theme';
 
-// A shared challenge (Mikey 10-24): who shared it and how they did, "Take
-// this same test" (the exact frozen paper, once), and the board of everyone
-// who took it. Scores and times only; nobody's wrong answers. A run Zero or
+// A shared challenge: who shared it and how they did, a comparable exam,
+// and the board of everyone who took it. Scores and times only; nobody's
+// wrong answers. A run Zero or
 // Ciel helped with names them ("with Zero"; Mikey 10-31) in the header and
 // on its row.
 interface ChallengeView {
@@ -43,6 +43,7 @@ interface ChallengeView {
     max: number;
     seconds: number;
     sharer: boolean;
+    practiceReplacement?: boolean;
     assisted?: boolean;
     assistLabel?: string | null;
     me: boolean;
@@ -78,7 +79,7 @@ export default function Challenge({
     (v) => v.requestHelpers.startArenaChallenge
   );
   const prepareArenaBattle = useAppContext((v) => v.requestHelpers.prepareArenaBattle);
-  const [preview, setPreview] = useState<(ArenaRewardOffer & { token: string }) | null>(null);
+  const [preview, setPreview] = useState<(ArenaRewardOffer & { token: string; practiceReplacement?: boolean }) | null>(null);
   const [refresh, setRefresh] = useState(0);
   const [notice, setNotice] = useState('');
   const [view, setView] = useState<ChallengeView | null>(null);
@@ -190,13 +191,15 @@ export default function Challenge({
           </ArenaButton>
         ) : view.isSharer ? (
           <p className={noteCls}>
-            Others can sit the same paper once and land on this board.
+            Others can take this challenge once and join the board.
           </p>
         ) : null}
         {view.canTake && (
           <p className={noteCls}>
             {perfectScore ? 'Can you match it?' : 'Can you do better?'}{' '}
-            The exact same paper, timed like the real exam. One attempt counts.
+            {preview?.practiceReplacement
+              ? 'Questions you already practised are replaced with unseen ones. One attempt counts.'
+              : preview ? 'The same paper, timed like the real exam. One attempt counts.' : 'Timed like the real exam. One attempt counts.'}
           </p>
         )}
       </div>
@@ -218,9 +221,10 @@ export default function Challenge({
                 </span>
               )}
             </span>
-            <span className={nameCls}>
+            <span className={cx(nameCls, row.practiceReplacement && variantNameCls)}>
               {row.user ? row.user.username || 'Hunter' : 'Hidden hunter'}
               {row.sharer && <em className={tagCls}>sharer</em>}
+              {row.practiceReplacement && <em className={tagCls}>different questions</em>}
               {arenaAssistLabel(row) && <em className={tagCls}>{arenaAssistLabel(row)}</em>}
               {row.me && ' (you)'}
             </span>
@@ -413,6 +417,11 @@ const nameCls = css`
   white-space: nowrap;
 `;
 
+const variantNameCls = css`
+  white-space: normal;
+  overflow-wrap: anywhere;
+`;
+
 const tagCls = css`
   margin-left: 0.6rem;
   padding: 0 0.5rem;
@@ -422,6 +431,7 @@ const tagCls = css`
   font-style: normal;
   font-weight: 900;
   text-transform: uppercase;
+  white-space: nowrap;
 `;
 
 const pointsCls = css`

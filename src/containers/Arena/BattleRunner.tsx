@@ -1495,8 +1495,7 @@ function Result({ data }: { data: ArenaBattle }) {
         />
       </div>
       {battle.scaleReport && <C1ScoreReview report={battle.scaleReport} />}
-      {/* a timed battle can be shared as a challenge (Mikey 10-24): a Home
-          card where others take the exact same paper */}
+      {/* A timed battle can be shared as a challenge on Home. */}
       {battle.mode === 'battle' && (
         <div className={shareCls}>
           {!battle.won ? (

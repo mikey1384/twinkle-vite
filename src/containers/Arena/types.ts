@@ -40,7 +40,7 @@ export type ArenaRewardStatus = 'pending' | 'below_target' | 'below_skill_target
 
 export type ArenaBattlePreview =
   | { alreadyTaken: true; battleId: number; status: string; preview?: never }
-  | { alreadyTaken?: false; preview: ArenaRewardOffer & { token: string } };
+  | { alreadyTaken?: false; preview: ArenaRewardOffer & { token: string; practiceReplacement?: boolean } };
 
 export interface ArenaExamSummary {
   key: string;
