@@ -4,6 +4,7 @@ import ChessGameRecord from '../../Chess/GameRecord';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import { useReplyCardPresentation } from './ReplyCardPresentation';
 
 function GameOverMessage({
   channelId,
@@ -15,7 +16,8 @@ function GameOverMessage({
   isDraw,
   isResign,
   gameType = 'chess',
-  omokState
+  omokState,
+  quoteLabel
 }: {
   channelId?: number;
   messageId?: number;
@@ -27,7 +29,9 @@ function GameOverMessage({
   isResign: boolean;
   gameType?: 'chess' | 'omok';
   omokState?: any;
+  quoteLabel?: string;
 }) {
+  const inReply = useReplyCardPresentation();
   const abortColor = useKeyContext((v) => v.theme.abort.color);
   const drawColor = useKeyContext((v) => v.theme.draw.color);
   const victoryColor = useKeyContext((v) => v.theme.victory.color);
@@ -92,7 +96,7 @@ function GameOverMessage({
     <ErrorBoundary componentPath="GameOverMessage">
       <div
         style={{
-          paddingBottom: '1rem'
+          paddingBottom: inReply ? 0 : '1rem'
         }}
       >
         <div
@@ -104,18 +108,21 @@ function GameOverMessage({
               : isVictorious
               ? Color[victoryColor]()
               : Color[failColor]()};
-            font-size: 2.5rem;
+            font-size: ${inReply ? '1.5rem' : '2.5rem'};
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: ${isDraw || isAbort ? '2rem' : '1rem'};
+            padding: ${inReply ? '0.9rem 1rem' : isDraw || isAbort ? '2rem' : '1rem'};
+            border-radius: ${inReply ? '0.6rem' : '0'};
             color: #fff;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.7rem;
+              font-size: ${inReply ? '1.4rem' : '1.7rem'};
             }
           `}
         >
-          {isDraw ? (
+          {quoteLabel ? (
+            <div style={{ textAlign: 'center' }}>{quoteLabel}</div>
+          ) : isDraw ? (
             <div style={{ textAlign: 'center' }}>
               {`The ${gameDisplayEn} match ended in a draw`}
             </div>

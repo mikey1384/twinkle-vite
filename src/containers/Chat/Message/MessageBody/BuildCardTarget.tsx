@@ -80,6 +80,7 @@ export default function BuildCardTarget({
   if (rootType === 'buildThumbnailSuggestion') {
     return (
       <BuildThumbnailSuggestion
+        channelId={Number(channelId || message?.channelId || 0)}
         content={content}
         messageId={messageId}
         suggestion={settings?.buildThumbnailSuggestion}
@@ -91,6 +92,7 @@ export default function BuildCardTarget({
   if (rootType === 'buildTitleSuggestion') {
     return (
       <BuildTitleSuggestion
+        channelId={Number(channelId || message?.channelId || 0)}
         content={content}
         messageId={messageId}
         suggestion={settings?.buildTitleSuggestion}
@@ -102,6 +104,7 @@ export default function BuildCardTarget({
   if (rootType === 'buildContributionSubmission') {
     return (
       <BuildContributionSubmission
+        channelId={Number(channelId || message?.channelId || 0)}
         content={content}
         messageId={messageId}
         submission={settings?.buildContributionSubmission}

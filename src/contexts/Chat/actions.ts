@@ -2116,16 +2116,19 @@ export default function ChatActions(dispatch: Dispatch) {
     onSetChessTarget({
       channelId,
       messageId,
+      subchannelId,
       target
     }: {
       channelId: number;
-      messageId: number;
-      target: object;
+      messageId?: number;
+      subchannelId?: number;
+      target: object | null;
     }) {
       return dispatch({
         type: 'SET_CHESS_TARGET',
         channelId,
         messageId,
+        subchannelId,
         target
       });
     },

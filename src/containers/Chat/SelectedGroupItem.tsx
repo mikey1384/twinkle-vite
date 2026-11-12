@@ -87,6 +87,7 @@ export default function SelectedGroupItem({
         }
       `}
       style={style}
+      data-quote-own-click={isLink ? '' : undefined}
       onClick={isLink ? handleClick : undefined}
     >
       <div

@@ -7,8 +7,8 @@ import { Color } from '~/constants/css';
 import { OmokCell, OmokColor } from '~/containers/Chat/Omok/helpers';
 import {
   getActiveGameMessageId,
-  getLatestBoardMessageId,
-  getLatestGameBoundaryMessageId
+  getLatestGameBoundaryMessageId,
+  getLatestGameMessage
 } from '~/containers/Chat/helpers/gameMessageIds';
 
 export default function LeftButtons({
@@ -248,55 +248,6 @@ export default function LeftButtons({
       )}
     </div>
   );
-}
-
-function getLatestGameMessage(channelState: any, game: 'chess' | 'omok') {
-  if (!channelState) return null;
-  const messagesObj = channelState.messagesObj || {};
-  const lastId = getLatestBoardMessageId(channelState, game);
-  const getMessageById = (id: any) =>
-    messagesObj[id] ||
-    (typeof id === 'number' || typeof id === 'string'
-      ? messagesObj[String(id)] || messagesObj[Number(id)]
-      : null);
-
-  if (lastId !== null && lastId !== undefined) {
-    const direct = getMessageById(lastId);
-    if (direct) return direct;
-  }
-
-  const messageIds: any[] = channelState.messageIds || [];
-
-  for (let i = 0; i < messageIds.length; i++) {
-    const id = messageIds[i];
-    const message = getMessageById(id);
-    if (!message) continue;
-    if (
-      (game === 'chess' && message?.chessState) ||
-      (game === 'omok' && message?.omokState)
-    ) {
-      return message;
-    }
-  }
-
-  const recent =
-    game === 'chess'
-      ? channelState.recentChessMessage || null
-      : channelState.recentOmokMessage || null;
-  if (recent) return recent;
-
-  const messageList = Object.values(messagesObj);
-  for (let i = messageList.length - 1; i >= 0; i--) {
-    const message = messageList[i];
-    if (
-      (game === 'chess' && (message as any)?.chessState) ||
-      (game === 'omok' && (message as any)?.omokState)
-    ) {
-      return message;
-    }
-  }
-
-  return null;
 }
 
 function getLatestOmokGameOverMessage(channelState: any) {

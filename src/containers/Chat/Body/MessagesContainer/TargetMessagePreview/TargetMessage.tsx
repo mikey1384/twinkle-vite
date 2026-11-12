@@ -1,9 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import FileInfo from './FileInfo';
 import ReplyTargetSummaryView from '~/containers/Chat/Message/MessageBody/ReplyTargetSummaryView';
 import useReplyTargetSummary from '~/containers/Chat/Message/MessageBody/useReplyTargetSummary';
 import { getReplyTargetEntry } from '~/containers/Chat/Message/MessageBody/replyTargetSummary';
+import ReplyTargetCard, { hasReplyTargetCard } from '~/containers/Chat/Message/MessageBody/ReplyTargetCard';
+import { ReplyTargetEnvironmentContext } from '~/containers/Chat/Message/MessageBody/ReplyTargetEnvironment';
+import { buildCardRendersContent } from '~/containers/Chat/Message/MessageBody/BuildCardTarget';
+import ReplyWebsiteAgentCard from '~/containers/Chat/Message/MessageBody/ReplyWebsiteAgentCard';
+import ReplyChessPosition from '~/containers/Chat/Message/MessageBody/ReplyChessPosition';
+import ReplyNestedContext from '~/containers/Chat/Message/MessageBody/ReplyNestedContext';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -31,36 +37,45 @@ export default function TargetMessage({
   );
 
   const targetSummary = useReplyTargetSummary(replyTarget);
-  // A Build card's note is not part of its summary; other cards' summaries
-  // already carry what their text says.
   const showsOwnContent = getReplyTargetEntry(replyTarget) === 'buildCard';
+  const environment = useContext(ReplyTargetEnvironmentContext);
+  const showFullCard = hasReplyTargetCard(replyTarget, targetSummary, !!environment);
 
   return (
-    <div style={{ width: '100%', height: '100%' }}>
-      <Icon
-        icon="times"
-        size="lg"
+    <div style={{ width: '100%' }}>
+      <button
+        type="button"
+        aria-label="Cancel reply"
         style={{
           position: 'absolute',
-          right: '1.7rem',
-          top: '4rem',
-          cursor: 'pointer'
+          right: '0.6rem',
+          top: '0.6rem',
+          width: '3rem',
+          height: '3rem',
+          border: 0,
+          background: 'transparent',
+          color: Color.darkGray(),
+          cursor: 'pointer',
+          zIndex: 1
         }}
         onClick={onClose}
-      />
+      >
+        <Icon icon="times" size="lg" />
+      </button>
       <div
         style={{
-          padding: '1rem',
-          height: '100%',
+          padding: showFullCard ? '0 0 0 1rem' : '1rem',
           width: '100%',
-          background: Color.targetGray(),
+          maxHeight: 'min(28rem, 35vh)',
+          background: showFullCard ? 'transparent' : Color.targetGray(),
+          borderLeft: showFullCard ? `3px solid ${Color.lightGray()}` : undefined,
           borderRadius,
-          overflow: 'scroll',
+          overflow: 'auto',
           display: 'flex',
           justifyContent: 'space-between'
         }}
       >
-        <div style={targetSummary ? { width: '100%' } : undefined}>
+        <div style={targetSummary || showFullCard ? { width: '100%', minWidth: 0 } : undefined}>
           <div>
             <p
               style={{
@@ -83,8 +98,17 @@ export default function TargetMessage({
               {displayedTimeStamp}
             </span>
           </div>
-          <div style={{ marginTop: '0.5rem', paddingBottom: '1rem' }}>
-            {targetSummary ? (
+          <div style={{ marginTop: '0.5rem' }}>
+            {!showFullCard && <ReplyNestedContext message={replyTarget} displayedThemeColor={environment?.displayedThemeColor || 'logoBlue'} />}
+            {!showFullCard && <ReplyChessPosition message={replyTarget} />}
+            {showFullCard ? (
+              <>
+                <ReplyTargetCard message={replyTarget} summary={targetSummary} displayedThemeColor={environment?.displayedThemeColor || 'logoBlue'} />
+                {showsOwnContent && replyTarget.content && !buildCardRendersContent(replyTarget.rootType) ? (
+                  <div>{replyTarget.content}</div>
+                ) : null}
+              </>
+            ) : targetSummary ? (
               <ReplyTargetSummaryView summary={targetSummary}>
                 {showsOwnContent && replyTarget.content ? (
                   <div>{replyTarget.content}</div>
@@ -93,6 +117,7 @@ export default function TargetMessage({
             ) : (
               replyTarget.content || replyTarget.fileName
             )}
+            {!showFullCard && <ReplyWebsiteAgentCard key={replyTarget.id} message={replyTarget} />}
           </div>
         </div>
         {hasFileAttachment ? (

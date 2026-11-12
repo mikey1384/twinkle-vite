@@ -5,16 +5,16 @@ export function clearDeletedReplyTargets(
   deletedMessageId: number
 ) {
   for (const [key, message] of Object.entries(messagesObj)) {
-    if (
-      message?.targetMessage &&
-      Number(message.targetMessage.id) === Number(deletedMessageId)
-    ) {
-      messagesObj[key] = {
-        ...message,
-        targetMessage: null,
-        targetMessageId: Number(deletedMessageId)
-      };
-    }
+    messagesObj[key] = clearDeletedReplyTarget(message, deletedMessageId);
   }
   return messagesObj;
+}
+
+export function clearDeletedReplyTarget(message: any, deletedMessageId: number): any {
+  if (!message?.targetMessage) return message;
+  if (Number(message.targetMessage.id) === Number(deletedMessageId)) {
+    return { ...message, targetMessage: null, targetMessageId: Number(deletedMessageId) };
+  }
+  const target = clearDeletedReplyTarget(message.targetMessage, deletedMessageId);
+  return target === message.targetMessage ? message : { ...message, targetMessage: target };
 }

@@ -8,6 +8,8 @@ import { useChatContext } from '~/contexts';
 import { getAICardDisplayWord } from '~/helpers/aiCardDisplay';
 import { assetListClass } from './styles';
 import type { TradeBundle } from './types';
+import { css, cx } from '@emotion/css';
+import { useReplyCardPresentation } from '../Message/MessageBody/ReplyCardPresentation';
 
 export default function AssetList({
   bundle,
@@ -28,9 +30,10 @@ export default function AssetList({
   settled?: boolean;
   cancelled?: boolean;
 }) {
+  const inReply = useReplyCardPresentation();
   const cardObj = useChatContext((v) => v.state.cardObj);
   return (
-    <div className={assetListClass}>
+    <div className={cx(assetListClass, inReply && replyAssetListClass)}>
       {showCoins && bundle.coins > 0 && (
         <div className="asset coins">
           <Icon icon="coins" />
@@ -146,3 +149,13 @@ export default function AssetList({
     </div>
   );
 }
+
+const replyAssetListClass = css`
+  gap: 0.6rem;
+  .asset:not(.asset--card) {
+    padding: 0.7rem;
+  }
+  .coins {
+    font-size: 1.4rem;
+  }
+`;

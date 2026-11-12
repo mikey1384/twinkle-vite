@@ -1,31 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import Container from './Container';
 import Loading from '~/components/Loading';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
+import { useReplyCardPresentation } from '../ReplyCardPresentation';
 
 export default function ApprovalRequest({
+  channelId,
+  cardSettings,
   displayedThemeColor,
   messageId,
   requestId,
   userId,
   username
 }: {
+  channelId: number;
+  cardSettings?: Record<string, any>;
   displayedThemeColor: string;
   messageId: number;
   requestId: number;
   userId: number;
   username: string;
 }) {
+  const inReply = useReplyCardPresentation();
   const myId = useKeyContext((v) => v.myState.userId);
   const loadApprovalItemById = useAppContext(
     (v) => v.requestHelpers.loadApprovalItemById
+  );
+  const onUpdateMessageSettings = useChatContext(
+    (v) => v.actions.onUpdateMessageSettings
   );
   const [type, setType] = useState('');
   const [content, setContent] = useState(null);
   const [status, setStatus] = useState('');
   const [unavailable, setUnavailable] = useState(false);
+  const confirmedStatus = typeof cardSettings?.approvalCardStatus === 'string'
+    ? cardSettings.approvalCardStatus
+    : '';
+
+  useEffect(() => {
+    if (typeof confirmedStatus === 'string' && confirmedStatus) {
+      setStatus(confirmedStatus);
+    }
+  }, [confirmedStatus]);
 
   useEffect(() => {
     init();
@@ -49,14 +67,17 @@ export default function ApprovalRequest({
     socket.on('approval_result_received', handleApprovalResultReceived);
 
     function handleApprovalResultReceived({
-      type,
-      status
+      type: resultType,
+      status: resultStatus
     }: {
       type: string;
       status: string;
     }) {
-      if (type === 'dob' || type === 'mentor') {
-        setStatus(status);
+      // This notification is sent only to the requester. Another person's
+      // approval card can be visible in the same chat at the same time.
+      if (Number(userId) === Number(myId) &&
+          (resultType === 'dob' || resultType === 'mentor') && resultType === type) {
+        handleConfirmedStatus(resultStatus);
       }
     }
 
@@ -71,7 +92,7 @@ export default function ApprovalRequest({
     <div
       style={{
         width: '100%',
-        padding: '1rem',
+        padding: inReply ? 0 : '1rem',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center'
@@ -88,13 +109,24 @@ export default function ApprovalRequest({
           myId={myId}
           userId={userId}
           username={username}
-          status={status}
+          status={confirmedStatus || status}
           type={type}
-          onSetStatus={setStatus}
+          onSetStatus={handleConfirmedStatus}
         />
       ) : (
         <Loading />
       )}
     </div>
   );
+
+  function handleConfirmedStatus(nextStatus: string) {
+    setStatus(nextStatus);
+    if (channelId && messageId) {
+      onUpdateMessageSettings({
+        channelId,
+        messageId,
+        settings: { approvalCardStatus: nextStatus }
+      });
+    }
+  }
 }

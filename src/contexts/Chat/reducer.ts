@@ -3,7 +3,8 @@ import {
   invalidateSharedMediaCache,
   removeSharedMediaMessage
 } from '~/helpers/chatSharedMedia';
-import { clearDeletedReplyTargets } from '~/helpers/chatReplyTargetDeletion';
+import { clearDeletedReplyTarget, clearDeletedReplyTargets } from '~/helpers/chatReplyTargetDeletion';
+import { updateChannelMessageSettings } from '~/helpers/chatReplyTargetSettings';
 import { initialChatState } from '.';
 import {
   defaultChatSubject,
@@ -2676,31 +2677,17 @@ export default function ChatReducer(
     }
     case 'UPDATE_MESSAGE_SETTINGS': {
       const prevChannelObj = state.channelsObj[action.channelId];
-      const prevMessage = prevChannelObj?.messagesObj?.[action.messageId];
-      if (!prevMessage) return state;
-      let prevSettings: Record<string, unknown> = {};
-      try {
-        prevSettings =
-          typeof prevMessage.settings === 'string'
-            ? JSON.parse(prevMessage.settings)
-            : prevMessage.settings || {};
-      } catch {
-        prevSettings = {};
-      }
+      const nextChannel = updateChannelMessageSettings(
+        prevChannelObj,
+        action.messageId,
+        action.settings
+      );
+      if (nextChannel === prevChannelObj) return state;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...prevChannelObj,
-            messagesObj: {
-              ...prevChannelObj.messagesObj,
-              [action.messageId]: {
-                ...prevMessage,
-                settings: { ...prevSettings, ...action.settings }
-              }
-            }
-          }
+          [action.channelId]: nextChannel
         }
       };
     }
@@ -2720,29 +2707,22 @@ export default function ChatReducer(
         Number(action.subchannelId || deletedMessage?.subchannelId || 0) ||
         null;
       const realtimeEventKey = getRealtimeMessageEventKey(action.messageId);
-      const subchannelObj = action.subchannelId
-        ? {
-            ...prevChannelObj?.subchannelObj,
-            [action.subchannelId]: {
-              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
-              messageIds: prevChannelObj?.subchannelObj?.[
-                action.subchannelId
-              ]?.messageIds?.filter(
-                (messageId: number) => messageId !== action.messageId
-              ),
-              messagesObj: clearDeletedReplyTargets(
-                {
-                  ...prevChannelObj?.subchannelObj?.[action.subchannelId]
-                    ?.messagesObj
-                },
-                action.messageId
-              )
-            }
-          }
+      const clearSelection = (target: any) =>
+        Number(target?.id || 0) === Number(action.messageId)
+          ? null
+          : clearDeletedReplyTarget(target, action.messageId);
+      const subchannelObj = prevChannelObj?.subchannelObj
+        ? Object.fromEntries(Object.entries<any>(prevChannelObj.subchannelObj).map(([key, subchannel]) => {
+            const messagesObj = clearDeletedReplyTargets({ ...subchannel.messagesObj }, action.messageId);
+            delete messagesObj[action.messageId];
+            return [key, {
+              ...subchannel,
+              messageIds: subchannel.messageIds?.filter((id: number) => Number(id) !== Number(action.messageId)),
+              messagesObj,
+              replyTarget: clearSelection(subchannel.replyTarget)
+            }];
+          }))
         : prevChannelObj?.subchannelObj;
-      if (action.subchannelId) {
-        delete subchannelObj[action.subchannelId].messagesObj[action.messageId];
-      }
       const nextState = {
         ...state,
         confirmedRealtimeActivityByChannel: removeConfirmedRealtimeActivity({
@@ -2788,6 +2768,7 @@ export default function ChatReducer(
               (messageId: number) => messageId !== action.messageId
             ),
             messagesObj: nextMessagesObj,
+            replyTarget: clearSelection(prevChannelObj?.replyTarget),
             ...(subchannelObj ? { subchannelObj } : {})
           }
         }
@@ -6378,19 +6359,30 @@ export default function ChatReducer(
     }
     case 'SET_CHESS_TARGET': {
       const prevChannelObj = state.channelsObj[action.channelId];
+      const chessTarget = action.target
+        ? { ...action.target, messageId: action.messageId, isDiscussion: true }
+        : null;
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              ...(action.target ? { replyTarget: null, isRespondingToSubject: false } : {}),
+              chessTarget
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
-            chessTarget: action.target
-              ? {
-                  ...action.target,
-                  messageId: action.messageId,
-                  isDiscussion: true
-                }
-              : null
+            ...(action.target && !action.subchannelId
+              ? { replyTarget: null, isRespondingToSubject: false }
+              : {}),
+            subchannelObj,
+            ...(!action.subchannelId ? { chessTarget } : {})
           }
         }
       };
@@ -6604,7 +6596,7 @@ export default function ChatReducer(
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          ...(state.channelsObj[action.channelId]?.messagesObj
+          ...(state.channelsObj[action.channelId]?.messagesObj?.[action.messageId]
             ? {
                 [action.channelId]: {
                   ...state.channelsObj[action.channelId],
@@ -6814,6 +6806,7 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              ...(action.isResponding ? { chessTarget: null } : {}),
               replyTarget: null,
               isRespondingToSubject: action.isResponding
             }
@@ -6830,6 +6823,7 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
+                ...(action.isResponding ? { chessTarget: null } : {}),
                 replyTarget: null,
                 isRespondingToSubject: action.isResponding
               }
@@ -6986,6 +6980,7 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              ...(action.target ? { chessTarget: null } : {}),
               replyTarget: action.target,
               isRespondingToSubject: false
             }
@@ -7002,6 +6997,7 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
+                ...(action.target ? { chessTarget: null } : {}),
                 replyTarget: action.target,
                 isRespondingToSubject: false
               }

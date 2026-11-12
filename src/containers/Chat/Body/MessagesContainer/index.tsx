@@ -64,6 +64,7 @@ import useMessageSearch from './hooks/useMessageSearch';
 import useBoardTimers from './hooks/useBoardTimers';
 import useGameMoveHandlers from './hooks/useGameMoveHandlers';
 import LocalContext from '../../Context';
+import { ReplyTargetEnvironmentContext } from '../../Message/MessageBody/ReplyTargetEnvironment';
 import {
   getCanonicalAiGenerationStartedAt,
   isCanonicalAiGenerationConfirmed
@@ -290,6 +291,7 @@ export default function MessagesContainer({
   ]);
 
   const [textAreaHeight, setTextAreaHeight] = useState(0);
+  const [replyTargetHeight, setReplyTargetHeight] = useState(0);
   const [aiUsagePolicyHeight, setAiUsagePolicyHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
   const [selectVideoModalShown, setSelectVideoModalShown] = useState(false);
@@ -376,8 +378,8 @@ export default function MessagesContainer({
   }, [isRespondingToSubject, subchannel?.isRespondingToSubject, subchannelId]);
 
   const chessTarget = useMemo(
-    () => currentChannel?.chessTarget,
-    [currentChannel?.chessTarget]
+    () => subchannelId ? subchannel?.chessTarget : currentChannel?.chessTarget,
+    [currentChannel?.chessTarget, subchannel?.chessTarget, subchannelId]
   );
 
   const replyTarget = useMemo(() => {
@@ -633,7 +635,7 @@ export default function MessagesContainer({
     socketConnected && appliedIsRespondingToSubject
       ? ' - 8rem - 2px'
       : replyTarget
-        ? ' - 12rem - 2px'
+        ? ` - ${replyTargetHeight}px - 2px`
         : chessTarget
           ? ' - 24rem - 2px'
           : ''
@@ -1108,8 +1110,21 @@ export default function MessagesContainer({
   }, [navigate, selectedChannelId, userId]);
 
   const handleSubmitChessTargetMessage = useCallback(
-    async (message: any) => {
+    async ({
+      content,
+      selectedTab,
+      subchannelId,
+      topicId
+    }: {
+      content: string;
+      selectedTab: string;
+      subchannelId?: number;
+      topicId?: number;
+    }) => {
       const messageId = uuidv1();
+      const discussionTopicId = selectedTab === 'topic'
+        ? topicId || appliedTopicId
+        : null;
       onSubmitMessage({
         messageId,
         message: {
@@ -1117,15 +1132,19 @@ export default function MessagesContainer({
           chessState: chessTarget,
           profilePicUrl,
           username,
-          content: message,
-          channelId: selectedChannelId
-        }
+          content,
+          channelId: selectedChannelId,
+          subjectId: discussionTopicId
+        },
+        selectedTab,
+        subchannelId,
+        topicId: discussionTopicId
       });
       onScrollToBottom();
-      onSetChessTarget({ channelId: selectedChannelId, target: null });
+      onSetChessTarget({ channelId: selectedChannelId, subchannelId, target: null });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chessTarget, selectedChannelId]
+    [chessTarget, selectedChannelId, appliedTopicId, profilePicUrl, userId, username]
   );
 
   const { handleConfirmChessMove, handleConfirmOmokMove } = useGameMoveHandlers(
@@ -1417,8 +1436,8 @@ export default function MessagesContainer({
       subchannelId?: number;
     }) => {
       setTextAreaHeight(0);
-      if (chessTarget) {
-        return handleSubmitChessTargetMessage(content);
+      if (chessTarget && !target && !appliedIsRespondingToSubject) {
+        return handleSubmitChessTargetMessage({ content, selectedTab, subchannelId, topicId });
       }
       const isFirstDirectMessage = selectedChannelId === 0;
       if (isFirstDirectMessage) {
@@ -1531,6 +1550,8 @@ export default function MessagesContainer({
       chessTarget,
       creatingNewDMChannel,
       appliedIsRespondingToSubject,
+      appliedTopicId,
+      handleSubmitChessTargetMessage,
       profilePicUrl,
       partner?.id,
       selectedTab,
@@ -1781,6 +1802,7 @@ export default function MessagesContainer({
         setTextAreaHeight(height > 46 ? height : 0);
       }
     },
+    onReplyTargetHeightChange: setReplyTargetHeight,
     onAiUsagePolicyHeightChange: (height: number) => {
       setAiUsagePolicyHeight((currentHeight) =>
         currentHeight === height ? currentHeight : height
@@ -1802,8 +1824,67 @@ export default function MessagesContainer({
     legacyTopicObj: appliedLegacyTopicObj
   };
 
+  const replyTargetEnvironment = useMemo(
+    () => ({
+      channelId: selectedChannelId,
+      displayedThemeColor,
+      selectedTab,
+      currentTransactionId,
+      partner,
+      groupObjs,
+      onSetGroupObjs: setGroupObjs,
+      isAICardModalShown,
+      onSetAICardModalCardId,
+      onSetTransactionModalShown: setTransactionModalShown,
+      onChessBoardClick: handleChessModalShown,
+      chessGameState: currentChannel?.gameState?.chess || {},
+      latestChessBoardMessageId: currentChannel?.latestChessBoardMessageId,
+      onCancelRewindRequest: handleCancelRewindRequest,
+      onAcceptRewind: handleAcceptRewind,
+      onDeclineRewind: handleDeclineRewind,
+      onRequestRewind: (chessState: any) => {
+        onSubmitMessage({
+          messageId: uuidv1(),
+          message: {
+            userId,
+            chessState,
+            profilePicUrl,
+            username,
+            isNotification: true,
+            content: 'proposed a new game from this position',
+            channelId: selectedChannelId
+          }
+        });
+        onScrollToBottom();
+      }
+    }),
+    // Context action helpers are stable by contract and stay out of dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      selectedChannelId,
+      displayedThemeColor,
+      selectedTab,
+      currentTransactionId,
+      partner,
+      groupObjs,
+      isAICardModalShown,
+      onSetAICardModalCardId,
+      handleChessModalShown,
+      currentChannel?.gameState?.chess,
+      currentChannel?.latestChessBoardMessageId,
+      handleCancelRewindRequest,
+      handleAcceptRewind,
+      handleDeclineRewind,
+      userId,
+      profilePicUrl,
+      username,
+      onScrollToBottom
+    ]
+  );
+
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
+      <ReplyTargetEnvironmentContext.Provider value={replyTargetEnvironment}>
       <CallScreens
         partner={partner}
         selectedChannelIsOnAICall={selectedChannelIsOnAICall}
@@ -1908,6 +1989,7 @@ export default function MessagesContainer({
         }}
         onSettingsDone={handleEditSettings}
       />
+      </ReplyTargetEnvironmentContext.Provider>
     </ErrorBoundary>
   );
 

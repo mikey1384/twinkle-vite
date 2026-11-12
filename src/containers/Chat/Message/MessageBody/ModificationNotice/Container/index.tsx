@@ -4,6 +4,7 @@ import { Color, borderRadius } from '~/constants/css';
 import Details from './Details';
 import Link from '~/components/Link';
 import { useKeyContext } from '~/contexts';
+import { useReplyCardPresentation } from '../../ReplyCardPresentation';
 
 export default function Container({
   username,
@@ -12,6 +13,7 @@ export default function Container({
   username: string;
   data: Record<string, any> | null;
 }) {
+  const inReply = useReplyCardPresentation();
   const linkColor = useKeyContext((v) => v.theme.link.color);
   const { action, contentId, contentType, isRevoked } = data || {};
   return (
@@ -27,25 +29,25 @@ export default function Container({
       `}
       style={{
         width: '100%',
-        padding: '2rem 0',
+        padding: inReply ? '1rem' : '2rem 0',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        marginTop: '1.5rem',
-        marginBottom: '3rem'
+        marginTop: inReply ? 0 : '1.5rem',
+        marginBottom: inReply ? 0 : '3rem'
       }}
     >
       <div
         style={{
-          fontSize: '2rem',
+          fontSize: inReply ? '1.4rem' : '2rem',
           fontWeight: 'bold'
         }}
       >
-        <span style={{ color: Color[linkColor]() }}>{username}</span>{' '}
+        {!inReply && <><span style={{ color: Color[linkColor]() }}>{username}</span>{' '}</>}
         {action ? (
           <div style={{ color: Color.darkerGray(), display: 'inline' }}>
-            {action}
+            {inReply ? action.charAt(0).toUpperCase() + action.slice(1) : action}
             {action === 'delete' || action === 'close' ? 'd' : 'ed'} a{' '}
             {contentType === 'chat' ? (
               'chat message'

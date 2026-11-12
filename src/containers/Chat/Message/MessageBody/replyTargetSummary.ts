@@ -105,6 +105,12 @@ export const REPLY_TARGET_ENTRIES: Record<ChatMessageKind, ReplyTargetEntry> = {
 
 export function getReplyTargetEntry(message: any): ReplyTargetEntry {
   const kind = getChatMessageKind(message || {});
+  // These Bridge Builder messages are plain text in the message list; don't
+  // replace the member's original words with a synthetic card summary.
+  if (kind === 'meetupTeacherRequest' || (kind === 'meetupQuestCard' &&
+    !['meetupQuestInvite', 'meetupStory'].includes(message?.rootType))) {
+    return 'content';
+  }
   // A kind that cannot be quoted still renders as its text if an old reply
   // ever points at it.
   return CHAT_MESSAGE_KIND_RULES[kind].interactive
@@ -215,7 +221,9 @@ function summarizeGameResult(
   context: ReplyTargetSummaryContext
 ): ReplyTargetSummary {
   const game =
-    message.gameType === 'omok' || message.omokState ? 'omok' : 'chess';
+    message.gameType === 'omok' || message.omokState ||
+    (!message.gameType && String(message.content || '').toLowerCase().includes('omok'))
+      ? 'omok' : 'chess';
   // Names the winner only: a quote never spells out someone's loss or a
   // missed move (the Twinkle rule against showing a member's own misses).
   const winnerId = Number(message.gameWinnerId || 0);

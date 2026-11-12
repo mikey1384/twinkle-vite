@@ -11,7 +11,13 @@ import CrewAskButtons from './CrewAskButtons';
 // The message a crew's chat opens with (rootType 'meetupQuestCrew'): where
 // the crew is on its path, read live from the server. The full checklist sits
 // in the chat's right sidebar (CrewTrackerPanel); this card is what phones see.
-export default function CrewChatCard({ crewId }: { crewId: number }) {
+export default function CrewChatCard({
+  crewId,
+  inReply = false
+}: {
+  crewId: number;
+  inReply?: boolean;
+}) {
   const navigate = useNavigate();
   const trackMeetupQuestView = useAppContext(
     (v) => v.requestHelpers.trackMeetupQuestView
@@ -31,12 +37,12 @@ export default function CrewChatCard({ crewId }: { crewId: number }) {
         border: 1px solid ${Color.logoBlue(0.35)};
         background: ${Color.logoBlue(0.05)};
         border-radius: 8px;
-        padding: 1.2rem 1.4rem;
-        margin-top: 0.5rem;
+        padding: ${inReply ? '0.9rem 1rem' : '1.2rem 1.4rem'};
+        margin-top: ${inReply ? '0' : '0.5rem'};
         max-width: 46rem;
         /* from 768px the chat's right sidebar already shows this path */
         @media (min-width: 768px) {
-          display: none;
+          ${inReply ? '' : 'display: none;'}
         }
       `}
     >

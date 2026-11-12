@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import TargetMessage from './TargetMessage';
-import WordleResult from './WordleResult';
-import { getReplyTargetEntry } from '~/containers/Chat/Message/MessageBody/replyTargetSummary';
 
 export default function TargetMessagePreview({
   onClose,
+  onHeightChange,
   replyTarget
 }: {
   onClose: () => void;
+  onHeightChange?: (height: number) => void;
   replyTarget: {
     [key: string]: any;
     userId: number;
@@ -23,27 +23,34 @@ export default function TargetMessagePreview({
     };
   };
 }) {
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const preview = previewRef.current;
+    if (!preview || !onHeightChange) return;
+    const reportHeight = () => onHeightChange(preview.getBoundingClientRect().height);
+    reportHeight();
+    const observer = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(reportHeight);
+    observer?.observe(preview);
+    return () => {
+      observer?.disconnect();
+      onHeightChange(0);
+    };
+  }, [onHeightChange]);
+
   return (
     <div
+      ref={previewRef}
       style={{
-        height: '12rem',
         width: '100%',
         position: 'relative',
-        padding: '1rem 6rem 2rem 0.5rem',
+        padding: '0.5rem 4rem 1rem 0.5rem',
         marginBottom: '2px'
       }}
     >
-      {getReplyTargetEntry(replyTarget) === 'wordle' ? (
-        <WordleResult
-          userId={replyTarget.userId}
-          username={replyTarget.username}
-          timeStamp={replyTarget.timeStamp}
-          wordleResult={replyTarget.wordleResult}
-          onClose={onClose}
-        />
-      ) : (
-        <TargetMessage onClose={onClose} replyTarget={replyTarget} />
-      )}
+      <TargetMessage onClose={onClose} replyTarget={replyTarget} />
     </div>
   );
 }

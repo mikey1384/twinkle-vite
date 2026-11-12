@@ -5,6 +5,17 @@ import ProposeButton from './ProposeButton';
 import { useChatContext } from '~/contexts';
 import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 
+export function getRenderableChessPosition(chessState: any) {
+  if (!Array.isArray(chessState?.board) || chessState.board.length !== 64) {
+    return null;
+  }
+  // Chess uses white's side by default when the color map is absent. Supply an
+  // empty map so it can still render the saved position without changing it.
+  return chessState.playerColors && typeof chessState.playerColors === 'object'
+    ? chessState
+    : { ...chessState, playerColors: {} };
+}
+
 export default function TargetChessPosition({
   chessState,
   channelId,
@@ -37,6 +48,7 @@ export default function TargetChessPosition({
     void chessThemeVersion;
     return getUserChatSquareColors(myId);
   }, [myId, chessThemeVersion]);
+  const position = useMemo(() => getRenderableChessPosition(chessState), [chessState]);
 
   return (
     <div
@@ -56,23 +68,27 @@ export default function TargetChessPosition({
         borderRadius
       }}
     >
-      <Chess
-        key={chessThemeVersion}
-        loaded
-        myId={myId}
-        messageId={messageId}
-        channelId={channelId}
-        initialState={chessState}
-        displaySize="inline"
-        onCancelRewindRequest={onCancelRewindRequest}
-        onAcceptRewind={onAcceptRewind}
-        onDeclineRewind={onDeclineRewind}
-        rewindRequestId={gameState.rewindRequestId}
-        senderId={userId}
-        senderName={username}
-        style={{ width: '100%' }}
-        squareColors={squareColors}
-      />
+      {position ? (
+        <Chess
+          key={chessThemeVersion}
+          loaded
+          myId={myId}
+          messageId={messageId}
+          channelId={channelId}
+          initialState={position}
+          displaySize="inline"
+          onCancelRewindRequest={onCancelRewindRequest}
+          onAcceptRewind={onAcceptRewind}
+          onDeclineRewind={onDeclineRewind}
+          rewindRequestId={gameState.rewindRequestId}
+          senderId={userId}
+          senderName={username}
+          style={{ width: '100%' }}
+          squareColors={squareColors}
+        />
+      ) : (
+        <div>Chess position unavailable.</div>
+      )}
       <div
         style={{
           display: 'flex',

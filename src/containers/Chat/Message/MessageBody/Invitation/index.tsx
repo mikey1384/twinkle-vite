@@ -5,6 +5,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { parseChannelPath } from '~/helpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useReplyCardPresentation } from '../ReplyCardPresentation';
 const alreadyJoinedLabel = 'Already Joined';
 
 export default function Invitation({
@@ -26,7 +27,9 @@ export default function Invitation({
     profilePicUrl?: string;
   };
 }) {
+  const inReply = useReplyCardPresentation();
   const [accepting, setAccepting] = useState(false);
+  const [loadedChannelId, setLoadedChannelId] = useState(0);
   // The server's reason when it refuses the card (for example, its sender
   // has left the group); the button is usable again.
   const [acceptError, setAcceptError] = useState('');
@@ -66,6 +69,8 @@ export default function Invitation({
         invitationMessageId: messageId,
         skipUpdateChannelId: true
       });
+      if (!channel?.id) return;
+      setLoadedChannelId(Number(channel?.id || channelId));
       onSetChatInvitationDetail({
         channel,
         messageId,
@@ -75,13 +80,14 @@ export default function Invitation({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invitationChannelId]);
 
+  const resolvedChannelId = invitationChannelId || loadedChannelId;
   const invitationChannelMemberCount =
-    channelsObj[invitationChannelId]?.members?.length;
-  const invitationChannelName = channelsObj[invitationChannelId]?.channelName;
+    channelsObj[resolvedChannelId]?.members?.length;
+  const invitationChannelName = channelsObj[resolvedChannelId]?.channelName;
   const invitationChannel = useMemo(
-    () => channelsObj[invitationChannelId],
+    () => channelsObj[resolvedChannelId],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [invitationChannelId, invitationChannelMemberCount, invitationChannelName]
+    [resolvedChannelId, invitationChannelMemberCount, invitationChannelName]
   );
 
   const alreadyJoined = useMemo(() => {
@@ -147,11 +153,11 @@ export default function Invitation({
   return (
     <div
       className={css`
-        height: ${acceptError ? 'auto' : desktopHeight};
-        min-height: ${desktopHeight};
+        height: ${inReply || acceptError ? 'auto' : desktopHeight};
+        min-height: ${inReply ? '0' : desktopHeight};
         @media (max-width: ${mobileMaxWidth}) {
-          height: ${acceptError ? 'auto' : mobileHeight};
-          min-height: ${mobileHeight};
+          height: ${inReply || acceptError ? 'auto' : mobileHeight};
+          min-height: ${inReply ? '0' : mobileHeight};
         }
       `}
     >
@@ -163,13 +169,14 @@ export default function Invitation({
           members={invitationChannel.members}
           creatorId={invitationChannel.creatorId}
           allMemberIds={invitationChannel?.allMemberIds}
-          channelId={invitationChannelId}
+          channelId={resolvedChannelId}
           sourceChannelId={currentChannelId}
           invitationMessageId={messageId}
         />
       )}
       {userId !== sender.id && (
         <Button
+          size={inReply ? 'sm' : undefined}
           variant="soft"
           tone="raised"
           color={chatInvitationColor}

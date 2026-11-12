@@ -8,6 +8,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useChatContext } from '~/contexts';
 import { SITE_NAME } from '~/constants/siteBrand';
+import { useReplyCardPresentation } from './ReplyCardPresentation';
 
 export default function TransferMessage({
   myId,
@@ -25,6 +26,7 @@ export default function TransferMessage({
   transferDetails: any;
   onSetAICardModalCardId: (cardId: number) => void;
 }) {
+  const inReply = useReplyCardPresentation();
   const [usermenuShown, setUsermenuShown] = useState(false);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const transferData = useMemo(() => {
@@ -117,7 +119,7 @@ export default function TransferMessage({
             <div
               className={css`
                 font-size: 1.3rem;
-                margin-top: 1.7rem;
+                margin-top: ${inReply ? '0.5rem' : '1.7rem'};
                 font-family: Roboto, sans-serif;
                 color: ${Color.darkerGray()};
                 @media (max-width: ${mobileMaxWidth}) {
@@ -138,19 +140,22 @@ export default function TransferMessage({
     transferDetails.from,
     myId,
     myUsername,
-    partner
+    partner,
+    inReply
   ]);
 
   return (
     <div
+      data-quote-own-click
       style={{
         width: '100%',
-        padding: '2rem 1rem',
+        padding: inReply ? '1rem' : '2rem 1rem',
         display: 'flex',
         justifyContent: 'center',
         flexDirection: 'column',
-        marginTop: '3rem',
-        marginBottom: '3rem'
+        marginTop: inReply ? 0 : '3rem',
+        marginBottom: inReply ? 0 : '3rem',
+        borderRadius: inReply ? '0.8rem' : undefined
       }}
       className={css`
         cursor: pointer;
@@ -168,7 +173,7 @@ export default function TransferMessage({
           display: flex;
           width: 100%;
           height: 100%;
-          padding: 0 2rem 0 2rem;
+          padding: ${inReply ? '0' : '0 2rem'};
           @media (max-width: ${mobileMaxWidth}) {
             padding: 0 0.5rem 0 0.5rem;
           }
@@ -192,8 +197,10 @@ export default function TransferMessage({
         </div>
         <div
           className={css`
-            width: CALC(100% - 5rem);
-            margin-left: 3rem;
+            width: ${inReply ? 'auto' : 'calc(100% - 5rem)'};
+            flex: ${inReply ? '1 1 0' : 'initial'};
+            min-width: 0;
+            margin: ${inReply ? '0 0.8rem' : '0 0 0 3rem'};
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -205,7 +212,7 @@ export default function TransferMessage({
               flex-grow: 1;
               display: flex;
               justify-content: center;
-              font-size: 1.7rem;
+              font-size: ${inReply ? '1.3rem' : '1.7rem'};
               line-height: 1.5;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1.2rem;

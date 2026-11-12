@@ -182,6 +182,8 @@ export default function Content({
     <div>
       {isApprovalRequest ? (
         <ApprovalRequest
+          channelId={channelId}
+          cardSettings={parsedSettings}
           displayedThemeColor={displayedThemeColor}
           userId={userId}
           username={appliedUsername}

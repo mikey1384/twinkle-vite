@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { useReplyCardPresentation } from './ReplyCardPresentation';
 
 export default function DrawOffer({
   onClick,
@@ -13,6 +14,7 @@ export default function DrawOffer({
   userId: number;
   myId: number;
 }) {
+  const inReply = useReplyCardPresentation();
   const displayedUserLabel = useMemo(() => {
     if (userId === myId) {
       return 'You';
@@ -28,23 +30,24 @@ export default function DrawOffer({
     <div
       className={css`
         display: flex;
-        justify-content: center;
+        justify-content: ${inReply ? 'flex-start' : 'center'};
         width: 100%;
-        padding: 2.5rem 1rem 1.5rem 1rem;
+        padding: ${inReply ? '0.2rem 0' : '2.5rem 1rem 1.5rem 1rem'};
         position: relative;
       `}
     >
       <span
+        data-quote-own-click
         className={css`
           cursor: pointer;
-          font-size: 2rem;
+          font-size: ${inReply ? '1.4rem' : '2rem'};
           display: flex;
           font-weight: bold;
           color: ${Color.logoBlue()};
         `}
         onClick={onClick}
       >
-        {offeredDrawLabel}
+        {inReply ? 'Offered a draw' : offeredDrawLabel}
       </span>
     </div>
   );

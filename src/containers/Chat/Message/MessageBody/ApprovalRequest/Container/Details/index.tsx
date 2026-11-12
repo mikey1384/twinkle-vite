@@ -3,6 +3,7 @@ import Dob from './Dob';
 import Mentor from './Mentor';
 import RichText from '~/components/Texts/RichText';
 import { v1 as uuidv1 } from 'uuid';
+import { useReplyCardPresentation } from '../../../ReplyCardPresentation';
 
 export default function Details({
   content,
@@ -15,6 +16,7 @@ export default function Details({
   type: string;
   messageId: number;
 }) {
+  const inReply = useReplyCardPresentation();
   const richTextId = useMemo(() => {
     if (messageId) return messageId;
     return uuidv1();
@@ -24,7 +26,7 @@ export default function Details({
     <div
       style={{
         width: '100%',
-        marginTop: '1.5rem',
+        marginTop: inReply ? 0 : '1.5rem',
         lineHeight: 1.7,
         textAlign: 'center'
       }}

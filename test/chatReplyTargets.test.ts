@@ -10,6 +10,7 @@ import {
   getReplyTargetSummary
 } from '../src/containers/Chat/Message/MessageBody/replyTargetSummary';
 import { clearDeletedReplyTargets } from '../src/helpers/chatReplyTargetDeletion';
+import { updateChannelMessageSettings } from '../src/helpers/chatReplyTargetSettings';
 
 const context = {
   myId: 8,
@@ -163,8 +164,8 @@ test('quoted notices and cards each get a compact summary', () => {
         })
       },
       context
-    )?.label,
-    'Asked msKim to be the grown-up for Orbit'
+    ),
+    null
   );
   assert.equal(
     getReplyTargetSummary(
@@ -211,4 +212,31 @@ test('deleting a message clears the quotes of it in loaded replies', () => {
   assert.equal(messagesObj[11].targetMessage, null);
   assert.equal(messagesObj[11].targetMessageId, 10);
   assert.deepEqual(messagesObj[12].targetMessage, { id: 99 });
+});
+
+test('deleting a message clears a nested quoted copy without clearing its parent', () => {
+  const messages: Record<string, any> = {
+    20: { id: 20, targetMessage: { id: 19, targetMessageId: 10,
+      targetMessage: { id: 10, content: 'removed' } } }
+  };
+  clearDeletedReplyTargets(messages, 10);
+  assert.equal(messages[20].targetMessage.id, 19);
+  assert.equal(messages[20].targetMessage.targetMessage, null);
+  assert.equal(messages[20].targetMessage.targetMessageId, 10);
+});
+
+test('a confirmed card action updates original, quoted and selected copies across scopes', () => {
+  const card = { id: 10, settings: { existing: true, status: 'pending' } };
+  const channel = {
+    messagesObj: { 10: card, 20: { id: 20, targetMessage: card } },
+    replyTarget: { id: 30, targetMessage: { id: 20, targetMessage: card } },
+    subchannelObj: { 7: { messagesObj: { 40: { id: 40, targetMessage: card } } } }
+  };
+  const next = updateChannelMessageSettings(channel, 10, { status: 'approved' });
+  assert.equal(next.messagesObj[10].settings.status, 'approved');
+  assert.equal(next.messagesObj[20].targetMessage.settings.status, 'approved');
+  assert.equal(next.replyTarget.targetMessage.targetMessage.settings.status, 'approved');
+  assert.equal(next.subchannelObj[7].messagesObj[40].targetMessage.settings.status, 'approved');
+  assert.equal(next.messagesObj[10].settings.existing, true);
+  assert.equal(card.settings.status, 'pending');
 });

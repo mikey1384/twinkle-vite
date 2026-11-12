@@ -121,6 +121,7 @@ export default function MessageInput({
   onOmokButtonClick,
   onWordleButtonClick,
   onHeightChange,
+  onReplyTargetHeightChange,
   onMessageSubmit,
   onScrollToBottom,
   onSelectVideoButtonClick,
@@ -161,6 +162,7 @@ export default function MessageInput({
   onOmokButtonClick: () => any;
   onWordleButtonClick: () => any;
   onHeightChange: (v: number) => any;
+  onReplyTargetHeightChange: (height: number) => void;
   onMessageSubmit: (v: any) => any;
   onScrollToBottom: () => any;
   onSelectVideoButtonClick: () => any;
@@ -797,6 +799,7 @@ export default function MessageInput({
       ) : replyTarget ? (
         <TargetMessagePreview
           replyTarget={replyTarget}
+          onHeightChange={onReplyTargetHeightChange}
           onClose={() =>
             onSetReplyTarget({
               channelId: selectedChannelId,
@@ -813,6 +816,7 @@ export default function MessageInput({
           onClose={() =>
             onSetChessTarget({
               channelId: selectedChannelId,
+              subchannelId,
               target: null
             })
           }

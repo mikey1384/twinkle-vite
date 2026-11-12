@@ -5,6 +5,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useWordleLabels } from '~/helpers/hooks';
 import { getWordleBannerLevelColor } from '../../constants/wordlePresentation';
 import moment from 'moment';
+import { useReplyCardPresentation } from './ReplyCardPresentation';
 
 // Its Reply and reaction row come from the shared card frame in MessageBody.
 export default function WordleResult({
@@ -20,6 +21,7 @@ export default function WordleResult({
   timeStamp: number;
   wordleResult: any;
 }) {
+  const inReply = useReplyCardPresentation();
   const { isSolved, numGuesses } = wordleResult;
   const isQuickSolve = isSolved && (numGuesses === 1 || numGuesses === 2);
 
@@ -54,17 +56,17 @@ export default function WordleResult({
           display: inline-block;
           white-space: nowrap;
           color: ${isQuickSolve ? Color.gold() : 'inherit'};
-          font-size: ${isQuickSolve ? '2.6rem' : 'inherit'};
+          font-size: ${inReply ? '1.4rem' : isQuickSolve ? '2.6rem' : 'inherit'};
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: ${isQuickSolve ? 'max(22px, 2.3rem)' : 'inherit'};
+            font-size: ${inReply ? '1.4rem' : isQuickSolve ? 'max(22px, 2.3rem)' : 'inherit'};
           }
         }
       `}
       style={{
-        width: 'calc(100% - 2.4rem)',
+        width: inReply ? '100%' : 'calc(100% - 2.4rem)',
         background: Color.darkBlueGray(),
         color: '#fff',
-        margin: '0.6rem 1.2rem 1rem',
+        margin: inReply ? 0 : '0.6rem 1.2rem 1rem',
         position: 'relative'
       }}
     >
@@ -74,9 +76,9 @@ export default function WordleResult({
           color={Color.gold()}
           style={{
             position: 'absolute',
-            top: '1.3rem',
-            left: '1.2rem',
-            fontSize: '2.2rem'
+            top: inReply ? '0.8rem' : '1.3rem',
+            left: inReply ? '0.8rem' : '1.2rem',
+            fontSize: inReply ? '1.5rem' : '2.2rem'
           }}
         />
       )}
@@ -88,17 +90,17 @@ export default function WordleResult({
           justify-content: center;
           align-items: center;
           width: 100%;
-          padding: max(28px, 2.8rem) 56px;
-          font-size: 1.6rem;
+          padding: ${inReply ? '1rem 3rem' : 'max(28px, 2.8rem) 56px'};
+          font-size: ${inReply ? '1.3rem' : '1.6rem'};
           text-align: center;
           @media (max-width: 1512px) { @container (min-width: 720px) {
-            padding-block: 1.4rem;
+            padding-block: ${inReply ? '1rem' : '1.4rem'};
           } }
 @media (min-width: 1512.02px) { @container (min-width: 72rem) {
-            padding-block: 1.4rem;
+            padding-block: ${inReply ? '1rem' : '1.4rem'};
           } }
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: max(14px, 1.4rem);
+            font-size: ${inReply ? '1.3rem' : 'max(14px, 1.4rem)'};
           }
         `}
       >
@@ -110,7 +112,7 @@ export default function WordleResult({
               fontWeight: 'bold'
             }}
             className={css`
-              font-size: ${numGuesses === 1
+              font-size: ${inReply ? '1.5rem' : numGuesses === 1
                 ? '3rem'
                 : numGuesses === 2
                 ? '2.5rem'
@@ -118,7 +120,7 @@ export default function WordleResult({
                 ? '2.2rem'
                 : '2rem'};
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: ${numGuesses === 1
+                font-size: ${inReply ? '1.5rem' : numGuesses === 1
                   ? 'max(20px, 2.3rem)'
                   : numGuesses === 2
                   ? 'max(18px, 2rem)'
@@ -151,7 +153,7 @@ export default function WordleResult({
           </p>
         )}
       </div>
-      <div
+      {!inReply && <div
         className={css`
           grid-area: 1 / 1;
           align-self: end;
@@ -163,7 +165,7 @@ export default function WordleResult({
         `}
       >
         {displayedTimeStamp}
-      </div>
+      </div>}
     </div>
   );
 }

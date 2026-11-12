@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
 import VideoThumb from './VideoThumb';
@@ -7,10 +7,12 @@ import Spoiler from '../../Spoiler';
 import ReplyTargetSummaryView from '../../ReplyTargetSummaryView';
 import useReplyTargetSummary from '../../useReplyTargetSummary';
 import { getReplyTargetEntry } from '../../replyTargetSummary';
-import BuildCardTarget, {
-  buildCardRendersContent,
-  isBuildCardTargetMessage
-} from '../../BuildCardTarget';
+import { buildCardRendersContent } from '../../BuildCardTarget';
+import ReplyTargetCard, { hasReplyTargetCard } from '../../ReplyTargetCard';
+import { ReplyTargetEnvironmentContext } from '../../ReplyTargetEnvironment';
+import ReplyWebsiteAgentCard from '../../ReplyWebsiteAgentCard';
+import ReplyChessPosition from '../../ReplyChessPosition';
+import ReplyNestedContext from '../../ReplyNestedContext';
 import { css } from '@emotion/css';
 import moment from 'moment';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -24,10 +26,12 @@ import {
 
 export default function TextMessage({
   message,
-  displayedThemeColor
+  displayedThemeColor,
+  showNested = true
 }: {
   message: any;
   displayedThemeColor: string;
+  showNested?: boolean;
 }) {
   const fetchedUrl = useMemo(
     () => fetchURLFromText(message.content),
@@ -66,14 +70,8 @@ export default function TextMessage({
 
   const targetSummary = useReplyTargetSummary(message);
   const isBuildCard = getReplyTargetEntry(message) === 'buildCard';
-  // A quoted Build card is rendered whole (the same card as the original
-  // message, buttons included) so a reply can bump it; the compact summary
-  // stays as the fallback for a card the full component cannot render.
-  // Every other card is quoted by its compact summary.
-  const showFullBuildCard = useMemo(
-    () => isBuildCard && !!targetSummary && isBuildCardTargetMessage(message),
-    [isBuildCard, targetSummary, message]
-  );
+  const environment = useContext(ReplyTargetEnvironmentContext);
+  const showFullCard = hasReplyTargetCard(message, targetSummary, !!environment);
 
   return (
     <div
@@ -81,9 +79,11 @@ export default function TextMessage({
         width: '100%',
         marginTop: '0.5rem',
         marginBottom: '1rem',
-        padding: '1rem',
-        border: `1px solid ${Color.lightGray()}`,
-        background: Color.wellGray(),
+        padding: showFullCard ? '0 0 0 1rem' : '1rem',
+        borderStyle: 'solid',
+        borderColor: Color.lightGray(),
+        borderWidth: showFullCard ? '0 0 0 3px' : '1px',
+        background: showFullCard ? 'transparent' : Color.wellGray(),
         display: 'flex',
         justifyContent: 'space-between',
         borderRadius
@@ -105,10 +105,12 @@ export default function TextMessage({
             {displayedTime}
           </small>
         </section>
-        {showFullBuildCard ? (
+        {showNested && !showFullCard && <ReplyNestedContext message={message} displayedThemeColor={displayedThemeColor} />}
+        {!showFullCard && <ReplyChessPosition message={message} />}
+        {showFullCard ? (
           <div style={{ marginTop: '0.7rem' }}>
-            <BuildCardTarget message={message} />
-            {message.content && !buildCardRendersContent(message.rootType) ? (
+            <ReplyTargetCard message={message} summary={targetSummary} displayedThemeColor={displayedThemeColor} />
+            {isBuildCard && message.content && !buildCardRendersContent(message.rootType) ? (
               <RichText
                 contentId={message.id}
                 contentType="chat"
@@ -166,6 +168,7 @@ export default function TextMessage({
             {message.content || message.fileName}
           </RichText>
         )}
+        {!showFullCard && <ReplyWebsiteAgentCard key={message.id} message={message} />}
       </div>
       {showVideoThumb && (
         <div

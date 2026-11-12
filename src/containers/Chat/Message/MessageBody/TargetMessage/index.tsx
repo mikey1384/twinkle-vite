@@ -2,9 +2,7 @@ import React from 'react';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import TextMessage from './TextMessage';
-import WordleResult from './WordleResult';
 import useJumpToQuotedMessage from './useJumpToQuotedMessage';
-import { getReplyTargetEntry } from '../replyTargetSummary';
 
 // Buttons, links, names and media inside a quote keep their own clicks.
 const OWN_CLICK_SELECTOR =
@@ -12,10 +10,12 @@ const OWN_CLICK_SELECTOR =
 
 export default function TargetMessage({
   message,
-  displayedThemeColor
+  displayedThemeColor,
+  showNested = true
 }: {
   message: any;
   displayedThemeColor: string;
+  showNested?: boolean;
 }) {
   const jumpToQuotedMessage = useJumpToQuotedMessage();
   const messageId = Number(message?.id || 0);
@@ -31,7 +31,8 @@ export default function TargetMessage({
         // Clicks inside a modal the quote opened bubble here through the
         // React portal; they are not taps on the quote.
         if (!target || !event.currentTarget.contains(target)) return;
-        if (target.closest(OWN_CLICK_SELECTOR)) return;
+        const ownClick = target.closest(OWN_CLICK_SELECTOR);
+        if (ownClick && event.currentTarget.contains(ownClick)) return;
         jumpToQuotedMessage(messageId);
       }}
       onKeyDown={(event) => {
@@ -48,19 +49,7 @@ export default function TargetMessage({
         }
       `}
     >
-      {getReplyTargetEntry(message) === 'wordle' ? (
-        <WordleResult
-          username={message.username}
-          userId={message.userId}
-          timeStamp={message.timeStamp}
-          wordleResult={message.wordleResult}
-        />
-      ) : (
-        <TextMessage
-          displayedThemeColor={displayedThemeColor}
-          message={message}
-        />
-      )}
+      <TextMessage displayedThemeColor={displayedThemeColor} message={message} showNested={showNested} />
     </div>
   );
 }

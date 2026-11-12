@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useChatContext, useAppContext } from '~/contexts';
 import UserListModal from '~/components/Modals/UserListModal';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { useReplyCardPresentation } from '../ReplyCardPresentation';
 
 const membersLabel = 'Members';
 
@@ -33,6 +34,7 @@ export default function ChannelDetail({
   }[];
   sourceChannelId: number;
 }) {
+  const inReply = useReplyCardPresentation();
   const navigate = useNavigate();
   const chatInvitationRole = useRoleColor('chatInvitation', {
     fallback: 'logoBlue'
@@ -89,14 +91,15 @@ export default function ChannelDetail({
     <div
       style={{
         width: '100%',
-        marginBottom: '1rem',
-        padding: '1rem',
+        marginBottom: inReply ? '0.6rem' : '1rem',
+        padding: inReply ? '0.8rem 1rem' : '1rem',
         background: Color.highlightGray(),
         color: Color.black(),
         borderRadius
       }}
     >
       <p
+        data-quote-own-click={alreadyJoined ? '' : undefined}
         className={css`
           width: 100%;
           overflow: hidden;
@@ -104,7 +107,7 @@ export default function ChannelDetail({
           text-overflow: ellipsis;
           line-height: 1.3;
           font-weight: bold;
-          font-size: 2.2rem;
+          font-size: ${inReply ? '1.5rem' : '2.2rem'};
           color: ${chatInvitationColor};
           cursor: ${alreadyJoined ? 'pointer' : 'default'};
           @media (max-width: ${mobileMaxWidth}) {
@@ -118,7 +121,7 @@ export default function ChannelDetail({
       <div
         style={{ marginTop: '0.5rem' }}
         className={css`
-          font-size: 1.5rem;
+          font-size: ${inReply ? '1.2rem' : '1.5rem'};
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 1.1rem;
           }
@@ -133,6 +136,7 @@ export default function ChannelDetail({
         ))}
         {more && (
           <p
+            data-quote-own-click
             className={css`
               cursor: pointer;
               color: ${linkColor};

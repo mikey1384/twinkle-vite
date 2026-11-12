@@ -4,6 +4,8 @@ import AssetList from './AssetList';
 import { hasTradeAssets, summarizeBundle } from './helpers/terms';
 import { exchangeGrid, panelClass } from './styles';
 import type { TradeBundle, TradeTerms } from './types';
+import { css, cx } from '@emotion/css';
+import { useReplyCardPresentation } from '../Message/MessageBody/ReplyCardPresentation';
 
 export default function Exchange({
   terms,
@@ -26,6 +28,7 @@ export default function Exchange({
   settled?: boolean;
   cancelled?: boolean;
 }) {
+  const inReply = useReplyCardPresentation();
   const sides = interest
     ? (['interest'] as const)
     : showcase
@@ -33,7 +36,7 @@ export default function Exchange({
       : (['give', 'receive'] as const);
   return (
     <div
-      className={exchangeGrid}
+      className={cx(exchangeGrid, inReply && replyExchangeGrid)}
       style={
         showcase || interest
           ? { gridTemplateColumns: 'minmax(0, 1fr)' }
@@ -45,7 +48,7 @@ export default function Exchange({
         return (
           <section
             key={side}
-            className={panelClass}
+            className={cx(panelClass, inReply && replyPanelClass)}
             data-side={side}
             aria-label={
               interest
@@ -140,3 +143,30 @@ export default function Exchange({
     </div>
   );
 }
+
+const replyExchangeGrid = css`
+  gap: 0.8rem;
+`;
+
+const replyPanelClass = css`
+  border-radius: 0.9rem;
+  > header {
+    padding: 0.8rem 1rem;
+    gap: 0.7rem;
+  }
+  .direction {
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 0.6rem;
+    font-size: 1.3rem;
+  }
+  h3 {
+    font-size: 1.4rem;
+  }
+  .inventory {
+    padding: 0.8rem;
+  }
+  .empty {
+    padding: 0.8rem;
+  }
+`;

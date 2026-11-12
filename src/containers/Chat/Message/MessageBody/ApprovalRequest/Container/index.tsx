@@ -11,6 +11,7 @@ import ApprovalButtons from './ApprovalButtons';
 import ApprovalResult from './ApprovalResult';
 import ApprovalResultForRequester from './ApprovalResultForRequester';
 import Details from './Details';
+import { useReplyCardPresentation } from '../../ReplyCardPresentation';
 
 export default function Container({
   displayedThemeColor,
@@ -33,6 +34,7 @@ export default function Container({
   displayedThemeColor: string;
   messageId: number;
 }) {
+  const inReply = useReplyCardPresentation();
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const approveRequest = useAppContext((v) => v.requestHelpers.approveRequest);
@@ -53,16 +55,16 @@ export default function Container({
       `}
       style={{
         width: '100%',
-        padding: '2rem 0',
+        padding: inReply ? '1rem' : '2rem 0',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        marginTop: '1.5rem',
-        marginBottom: '3rem'
+        marginTop: inReply ? '0.5rem' : '1.5rem',
+        marginBottom: inReply ? 0 : '3rem'
       }}
     >
-      <div
+      {!inReply && <div
         style={{
           fontWeight: 'bold',
           fontSize: '2rem',
@@ -70,7 +72,7 @@ export default function Container({
         }}
       >
         {username}
-      </div>
+      </div>}
       <Details
         content={content}
         type={type}

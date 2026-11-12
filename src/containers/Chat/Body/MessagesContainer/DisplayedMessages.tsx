@@ -613,11 +613,16 @@ export default function DisplayedMessages({
       messageId: number;
       chessState: any;
     }) => {
-      onSetChessTarget({ channelId, messageId, target: chessState });
+      onSetChessTarget({
+        channelId,
+        messageId,
+        subchannelId: subchannel?.id,
+        target: chessState
+      });
       ChatInputRef.current?.focus();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [subchannel?.id]
   );
   const handleRequestChessRewind = useCallback(
     async (chessTarget: any) => {

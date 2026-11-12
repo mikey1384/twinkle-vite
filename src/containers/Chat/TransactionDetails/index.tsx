@@ -12,6 +12,7 @@ import { getTradeStatus } from '../Trade/helpers/status';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useReplyCardPresentation } from '../Message/MessageBody/ReplyCardPresentation';
 
 export default function TransactionDetails({
   channelId,
@@ -38,6 +39,7 @@ export default function TransactionDetails({
   partner: any;
   style?: React.CSSProperties;
 }) {
+  const inReply = useReplyCardPresentation();
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
@@ -142,6 +144,9 @@ export default function TransactionDetails({
     !isFromMe &&
     Number(transaction.to) === Number(userId);
   const statusColor = settled ? '#126b65' : cancelled ? '#5a677d' : '#315b91';
+  const transactionDate = new Date(Number(transaction.timeStamp) * 1000);
+  const hasTransactionDate = transaction.timeStamp != null &&
+    Number.isFinite(transactionDate.getTime());
   const statusIcon =
     type === 'send'
       ? 'gift'
@@ -168,7 +173,7 @@ export default function TransactionDetails({
         className={css`
           width: 100%;
           min-width: 0;
-          ${!isOnModal ? 'max-width: 72rem; margin: 1.4rem auto; padding: 1.6rem; border: 1px solid #dce4ee; border-radius: 1.6rem; background: #fff; box-shadow: 0 3px 12px #203c6008;' : ''}
+          ${!isOnModal ? `max-width: 72rem; margin: ${inReply ? '0' : '1.4rem auto'}; padding: ${inReply ? '1rem' : '1.6rem'}; border: 1px solid #dce4ee; border-radius: ${inReply ? '1rem' : '1.6rem'}; background: #fff; ${inReply ? '' : 'box-shadow: 0 3px 12px #203c6008;'}` : ''}
           @media (max-width: 450px) {
             ${!isOnModal ? 'padding: 1rem;' : ''}
           }
@@ -183,7 +188,7 @@ export default function TransactionDetails({
             justifyContent: 'space-between',
             gap: '1rem',
             flexWrap: 'wrap',
-            marginBottom: '1.4rem'
+            marginBottom: inReply ? '0.8rem' : '1.4rem'
           }}
         >
           <div>
@@ -232,19 +237,20 @@ export default function TransactionDetails({
             </div>
           </div>
           <time
-            dateTime={new Date(transaction.timeStamp * 1000).toISOString()}
+            dateTime={hasTransactionDate ? transactionDate.toISOString() : undefined}
             style={{ fontSize: '1.1rem', color: '#617087' }}
           >
-            #{transaction.id} ·{' '}
-            {new Date(transaction.timeStamp * 1000).toLocaleString([], {
+            #{transaction.id}
+            {hasTransactionDate && ` · ${transactionDate.toLocaleString([], {
               month: 'short',
               day: 'numeric',
               hour: 'numeric',
               minute: '2-digit'
-            })}
+            })}`}
           </time>
         </header>
         <div
+          data-quote-own-click={canOpen ? '' : undefined}
           onClick={canOpen ? onClick : undefined}
           style={{ cursor: canOpen ? 'pointer' : undefined }}
         >
@@ -267,8 +273,8 @@ export default function TransactionDetails({
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 1rem;
-            margin-top: 1.4rem;
-            padding: 1rem 1.2rem;
+            margin-top: ${inReply ? '0.8rem' : '1.4rem'};
+            padding: ${inReply ? '0.8rem 1rem' : '1rem 1.2rem'};
             border-radius: 1.2rem;
             background: ${resultBackground};
             color: ${statusColor};

@@ -2,6 +2,7 @@ import React from 'react';
 import DeletedMessage from '~/components/Deleted/Message';
 import DeletedPost from '~/components/Deleted/Post';
 import { Color } from '~/constants/css';
+import { useReplyCardPresentation } from '../../../ReplyCardPresentation';
 
 export default function Details({
   contentId,
@@ -13,11 +14,12 @@ export default function Details({
   contentType: string;
   isRevoked: boolean;
 }) {
+  const inReply = useReplyCardPresentation();
   return (
     <div
       style={{
         width: '100%',
-        marginTop: '1.5rem',
+        marginTop: inReply ? '0.7rem' : '1.5rem',
         lineHeight: 1.7,
         textAlign: 'center'
       }}

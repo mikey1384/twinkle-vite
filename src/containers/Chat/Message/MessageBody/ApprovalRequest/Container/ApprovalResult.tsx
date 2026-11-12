@@ -56,6 +56,7 @@ export default function ApprovalResult({
       >
         <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
         <span
+          data-quote-own-click
           onClick={handleRevert}
           className={css`
             cursor: ${reverting ? 'default' : 'pointer'};

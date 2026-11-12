@@ -3,6 +3,7 @@ import Loading from '~/components/Loading';
 import Container from './Container';
 import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
+import { useReplyCardPresentation } from '../ReplyCardPresentation';
 
 export default function ModificationNotice({
   modificationId,
@@ -11,6 +12,7 @@ export default function ModificationNotice({
   modificationId: number;
   username: string;
 }) {
+  const inReply = useReplyCardPresentation();
   const loadModificationItem = useAppContext(
     (v) => v.requestHelpers.loadModificationItem
   );
@@ -67,7 +69,7 @@ export default function ModificationNotice({
     <div
       style={{
         width: '100%',
-        padding: '1rem',
+        padding: inReply ? 0 : '1rem',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center'

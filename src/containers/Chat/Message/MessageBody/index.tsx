@@ -27,7 +27,8 @@ import {
 } from '~/constants/defaultValues';
 import {
   getLatestBoardMessageId,
-  getLatestGameBoundaryMessageId
+  getLatestGameBoundaryMessageId,
+  isChessDiscussionPosition
 } from '~/containers/Chat/helpers/gameMessageIds';
 import MessageRewardModal from '../../Modals/MessageRewardModal';
 import LocalContext from '../../Context';
@@ -336,7 +337,8 @@ function MessageBody({
   let appliedProfilePicUrl = memberProfilePicUrl || profilePicUrl;
 
   const hasOmokBoardState = useMemo(() => Boolean(omokState), [omokState]);
-  const hasChessBoardState = useMemo(() => Boolean(chessState), [chessState]);
+  const isChessDiscussion = isChessDiscussionPosition(chessState);
+  const hasChessBoardState = Boolean(chessState && !isChessDiscussion);
   const aiCardOfferDetails = useMemo(() => {
     if (message?.rootType !== 'aiCardOffer') return null;
     const payload = parseMessageSettings(message?.settings)?.aiCardOffer;
@@ -554,10 +556,6 @@ function MessageBody({
       messageId
     ]
   );
-
-  const isChessDiscussion = useMemo(() => {
-    return !!chessState?.isDiscussion;
-  }, [chessState?.isDiscussion]);
 
   const isTopicPostNotification = useMemo(() => {
     if (

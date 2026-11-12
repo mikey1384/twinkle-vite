@@ -1,8 +1,9 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { useReplyCardPresentation } from './ReplyCardPresentation';
 
 // The one card shell every Build chat message uses: contribution submissions,
 // team invites, and join requests. They are the same kind of object — something
@@ -29,19 +30,20 @@ export default function BuildMessageCard({
   actions?: React.ReactNode;
   themeName?: string | null;
 }) {
+  const inReply = useReplyCardPresentation();
   const { accentColor, borderColor } = useThemedCardVars({
     role: 'sharedPrompt',
     themeName: themeName || undefined
   });
 
   return (
-    <div className={cardClass} style={{ borderColor }}>
-      <div className={bannerClass} style={{ background: accentColor }}>
+    <div className={cx(cardClass, inReply && replyCardClass)} style={{ borderColor }}>
+      <div className={cx(bannerClass, inReply && replyBannerClass)} style={{ background: accentColor }}>
         <Icon icon={bannerIcon} />
         <span>{bannerText}</span>
       </div>
-      <div className={bodyClass}>
-        {title ? <h3 className={titleClass}>{title}</h3> : null}
+      <div className={cx(bodyClass, inReply && replyBodyClass)}>
+        {title ? <h3 className={cx(titleClass, inReply && replyTitleClass)}>{title}</h3> : null}
         {chips ? <div className={chipRowClass}>{chips}</div> : null}
         {children}
         {actions ? <div className={actionsClass}>{actions}</div> : null}
@@ -164,4 +166,26 @@ const actionsClass = css`
   gap: 0.6rem;
   flex-wrap: wrap;
   margin-top: 0.2rem;
+`;
+
+const replyCardClass = css`
+  width: 100%;
+  border-radius: 0.9rem;
+  box-shadow: none;
+`;
+
+const replyBannerClass = css`
+  padding: 0.5rem 0.8rem;
+`;
+
+const replyBodyClass = css`
+  padding: 0.8rem;
+  gap: 0.5rem;
+`;
+
+const replyTitleClass = css`
+  font-size: 1.5rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.4rem;
+  }
 `;

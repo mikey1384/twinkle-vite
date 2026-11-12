@@ -50,7 +50,8 @@ export default function WebsiteAgentCard({
   topicId,
   messageText = '',
   assistantName,
-  onAnswered
+  onAnswered,
+  onCardUpdated
 }: {
   card: WebsiteAgentCardData;
   channelId: number;
@@ -64,6 +65,7 @@ export default function WebsiteAgentCard({
   // Outside the chat page (Home's ask box) the answer is sent by the caller,
   // which then shows the next reply itself.
   onAnswered?: (reply: string) => void;
+  onCardUpdated?: (card: WebsiteAgentCardData) => void;
 }) {
   const decideWebsiteAgentCard = useAppContext(
     (v) => v.requestHelpers.decideWebsiteAgentCard
@@ -167,6 +169,7 @@ export default function WebsiteAgentCard({
       });
       const nextCard: WebsiteAgentCardData | undefined = data?.card;
       if (!nextCard) throw new Error('No card returned');
+      onCardUpdated?.(nextCard);
       onUpdateMessageSettings({
         channelId,
         messageId,
