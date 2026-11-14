@@ -5582,6 +5582,9 @@ export function useHostBridge({
                           }
                         : {}),
                       challengeId: payload?.challengeId,
+                      ...(type === 'rewards:receipt' && payload?.includeChallenge === true
+                        ? { includeChallenge: true }
+                        : {}),
                       answers: payload?.answers,
                       ...(type === 'rewards:interpret-answer'
                         ? { text: payload?.text }
@@ -5745,6 +5748,9 @@ export function useHostBridge({
                     }
                   : {}),
                 challengeId: payload?.challengeId,
+                ...(type === 'rewards:receipt' && payload?.includeChallenge === true
+                  ? { includeChallenge: true }
+                  : {}),
                 answers: payload?.answers,
                 ...(type === 'rewards:interpret-answer'
                   ? { text: payload?.text }
