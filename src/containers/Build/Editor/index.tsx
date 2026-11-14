@@ -2085,6 +2085,7 @@ export default function BuildEditor({
     streamingFocusFilePath: currentBuildRunView.streamingFocusFilePath,
     isOwner: canEditCurrentBuildProject,
     codeWorkspaceAvailable: canInspectCurrentBuildProject,
+    lumineRunActive: currentBuildRunView.generating,
     capabilitySnapshot: build.capabilitySnapshot || null,
     maxProjectFileLines: copilotPolicy?.limits?.maxFileLines ?? null,
     runtimeExplorationPlan: currentBuildRunView.runtimeExplorationPlan,

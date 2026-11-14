@@ -11,6 +11,7 @@ interface VersionHistoryModalProps {
   loadingVersions: boolean;
   versions: ArtifactVersion[];
   restoringVersionId: number | null;
+  restoreError?: string;
   onClose: () => void;
   onRestoreVersion: (versionId: number) => void;
 }
@@ -85,6 +86,15 @@ const historyModalContentClass = css`
   padding: 1rem 1.25rem 1.25rem;
 `;
 
+const restoreErrorClass = css`
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--ui-border);
+  color: #b3261e;
+  font-size: 1.1rem;
+  font-weight: 600;
+`;
+
 const centeredStateClass = css`
   padding: 1rem;
   text-align: center;
@@ -108,6 +118,7 @@ export default function VersionHistoryModal({
   loadingVersions,
   versions,
   restoringVersionId,
+  restoreError = '',
   onClose,
   onRestoreVersion
 }: VersionHistoryModalProps) {
@@ -140,6 +151,11 @@ export default function VersionHistoryModal({
           </button>
         </div>
         <div className={historyModalContentClass}>
+          {restoreError ? (
+            <div className={restoreErrorClass} role="alert">
+              {restoreError}
+            </div>
+          ) : null}
           {loadingVersions ? (
             <div className={centeredStateClass}>Loading versions...</div>
           ) : versions.length === 0 ? (

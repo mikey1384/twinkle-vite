@@ -7,6 +7,12 @@ import {
   buildEditableProjectFiles,
   getPreferredIndexPath
 } from '../helpers/projectFiles';
+import {
+  getRestoreErrorMessage,
+  RESTORE_STOPS_LUMINE_TEXT,
+  restoreWithStoppingRetry
+} from '../helpers/restoreVersion';
+import type { ConfirmModalOptions } from '~/components/Modals/hooks/useConfirmModal';
 import type {
   ArtifactVersion,
   Build,
@@ -19,8 +25,10 @@ export default function useVersionHistory({
   isOwnerRef,
   listBuildArtifactsRef,
   listBuildArtifactVersionsRef,
+  lumineRunActive,
   onApplyRestoredProjectFiles,
   onReplaceCode,
+  requestRestoreConfirm,
   restoreBuildArtifactVersionRef,
   setActiveFilePath,
   setEditableProjectFiles,
@@ -32,12 +40,15 @@ export default function useVersionHistory({
   isOwnerRef: RefObject<boolean>;
   listBuildArtifactsRef: RefObject<(...args: any[]) => Promise<any>>;
   listBuildArtifactVersionsRef: RefObject<(...args: any[]) => Promise<any>>;
+  // Canonical run state of this workspace (the Editor's current run view).
+  lumineRunActive: boolean;
   onApplyRestoredProjectFiles: (
     projectFiles: any[],
     code: string | null,
     options: Record<string, any>
   ) => void;
   onReplaceCode: (code: string) => void;
+  requestRestoreConfirm: (options: ConfirmModalOptions) => Promise<boolean>;
   restoreBuildArtifactVersionRef: RefObject<(...args: any[]) => Promise<any>>;
   setActiveFilePath: (path: string) => void;
   setEditableProjectFiles: (files: EditableProjectFile[]) => void;
@@ -50,6 +61,7 @@ export default function useVersionHistory({
   const [restoringVersionId, setRestoringVersionId] = useState<number | null>(
     null
   );
+  const [restoreError, setRestoreError] = useState('');
   const [artifactId, setArtifactId] = useState<number | null>(
     build.primaryArtifactId ?? null
   );
@@ -109,12 +121,29 @@ export default function useVersionHistory({
     const activeBuild = buildRef.current;
     if (!activeBuild?.id) return;
 
+    setRestoreError('');
+    if (lumineRunActive) {
+      const confirmed = await requestRestoreConfirm({
+        title: 'Restore this version?',
+        description: RESTORE_STOPS_LUMINE_TEXT,
+        descriptionFontSize: '1.1rem',
+        confirmButtonColor: 'orange',
+        confirmButtonLabel: 'Restore',
+        modalOverModal: true
+      });
+      if (!confirmed) return;
+    }
+
     setRestoringVersionId(versionId);
     try {
-      const result = await restoreBuildArtifactVersionRef.current({
-        buildId: activeBuild.id,
-        artifactId,
-        versionId
+      const result = await restoreWithStoppingRetry({
+        restore: () =>
+          restoreBuildArtifactVersionRef.current({
+            buildId: activeBuild.id,
+            artifactId,
+            versionId
+          }),
+        wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms))
       });
       const restoredProjectFiles = Array.isArray(result?.projectFiles)
         ? result.projectFiles
@@ -148,6 +177,7 @@ export default function useVersionHistory({
       }
     } catch (error) {
       console.error('Failed to restore version:', error);
+      setRestoreError(getRestoreErrorMessage(error));
     }
     setRestoringVersionId(null);
   }
@@ -155,6 +185,7 @@ export default function useVersionHistory({
   return {
     historyOpen,
     loadingVersions,
+    restoreError,
     restoringVersionId,
     setHistoryOpen,
     versions,

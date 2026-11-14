@@ -78,6 +78,9 @@ export interface PreviewPanelProps {
   streamingFocusFilePath?: string | null;
   isOwner: boolean;
   codeWorkspaceAvailable?: boolean;
+  // A Lumine run is working in this workspace (the Editor's run view).
+  // Restoring a version stops it, so Restore asks first.
+  lumineRunActive?: boolean;
   onReplaceCode: (code: string) => void;
   onApplyRestoredProjectFiles: (
     files: Array<{ path: string; content?: string }>,

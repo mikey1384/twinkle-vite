@@ -158,6 +158,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       streamingFocusFilePath = null,
       isOwner,
       codeWorkspaceAvailable = isOwner,
+      lumineRunActive = false,
       onReplaceCode,
       onApplyRestoredProjectFiles,
       onSaveProjectFiles,
@@ -724,6 +725,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       confirmModal: mediaActionConfirmModal,
       requestConfirm: requestMediaActionConfirm
     } = useConfirmModal();
+    const {
+      confirmModal: restoreVersionConfirmModal,
+      requestConfirm: requestRestoreVersionConfirm
+    } = useConfirmModal();
     const [
       activeBuildLiveSafetyHostSessions,
       setActiveBuildLiveSafetyHostSessions
@@ -1095,6 +1100,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const {
       historyOpen,
       loadingVersions,
+      restoreError,
       restoringVersionId,
       setHistoryOpen,
       versions,
@@ -1105,8 +1111,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       isOwnerRef,
       listBuildArtifactsRef,
       listBuildArtifactVersionsRef,
+      lumineRunActive: Boolean(lumineRunActive),
       onApplyRestoredProjectFiles,
       onReplaceCode,
+      requestRestoreConfirm: requestRestoreVersionConfirm,
       restoreBuildArtifactVersionRef,
       setActiveFilePath,
       setEditableProjectFiles,
@@ -1860,11 +1868,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             loadingVersions={loadingVersions}
             versions={versions}
             restoringVersionId={restoringVersionId}
+            restoreError={restoreError}
             onClose={() => setHistoryOpen(false)}
             onRestoreVersion={handleRestoreVersion}
           />
         )}
         {projectFileConfirmModal}
+        {restoreVersionConfirmModal}
         {imageGenerationConfirmModal}
         {musicGenerationConfirmModal}
         {mediaActionConfirmModal}
