@@ -97,6 +97,7 @@ import {
   type WorkspaceViewMode
 } from './constants/workspaceView';
 import useAppRequests from './hooks/useAppRequests';
+import useAppFrameKeyboard from './hooks/useAppFrameKeyboard';
 import useProjectFileActions from './hooks/useProjectFileActions';
 import useProjectFileUploads from './hooks/useProjectFileUploads';
 import useProjectAssets from './hooks/useProjectAssets';
@@ -1407,6 +1408,16 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       eventsRef: appHelperEventsRef
     });
 
+    const handleAppTextEntry = useAppFrameKeyboard({
+      activePreviewFrame,
+      previewFrameMetaRef,
+      previewFrameSources,
+      primaryIframeRef,
+      secondaryIframeRef
+    });
+    const onAppTextEntryRef = useRef(handleAppTextEntry);
+    onAppTextEntryRef.current = handleAppTextEntry;
+
     useHostBridge({
       runtimeOnly,
       appLifecycleSource,
@@ -1453,7 +1464,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestBuildCoinConfirmationRef,
       requestCardCraftSelectionRef,
       onBuildLiveSafetyHostSessionsChange: setActiveBuildLiveSafetyHostSessions,
-      requestBuildLiveSafetyStopRef
+      requestBuildLiveSafetyStopRef,
+      onAppTextEntryRef
     });
 
     useEffect(() => {

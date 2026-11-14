@@ -153,4 +153,9 @@ export interface UsePreviewHostBridgeArgs {
   appHelperRelayStateRef: MutableRefObject<AppHelperRelayState>;
   appHelperBridgeRef: MutableRefObject<AppHelperBridge | null>;
   appHelperEventsRef: RefObject<AppHelperEvents | null>;
+  // The app's SDK says a text field inside the frame gained or lost focus
+  // (keyboard:focus), handled by useAppFrameKeyboard.
+  onAppTextEntryRef: RefObject<
+    ((editing: boolean, sourceWindow: Window) => void) | null
+  >;
 }

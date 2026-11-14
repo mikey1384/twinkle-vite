@@ -284,7 +284,8 @@ export function useHostBridge({
   requestBuildLiveSafetyStopRef,
   appHelperRelayStateRef,
   appHelperBridgeRef,
-  appHelperEventsRef
+  appHelperEventsRef,
+  onAppTextEntryRef
 }: UsePreviewHostBridgeArgs) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetUserStateRef = useRef(onSetUserState);
@@ -2262,6 +2263,20 @@ export function useHostBridge({
             bridgeConfirmed: true
           }
         };
+        // This page measures the phone keyboard for the frame
+        // (useAppFrameKeyboard): say so, which also lets the frame's SDK
+        // start reporting its text-field focus (keyboard:focus). Older pages
+        // never send this, so the SDK never sends them a type they would
+        // answer with host_update_required.
+        sourceWindow.postMessage(
+          {
+            source: 'twinkle-parent',
+            type: 'keyboard:update',
+            previewNonce: previewMessageNonce,
+            payload: { open: false, height: 0, sync: true }
+          },
+          previewMessageTargetOrigin
+        );
         if (runtimeOnly) {
           sourceWindow.postMessage(
             {
@@ -2326,6 +2341,14 @@ export function useHostBridge({
               detail: { buildId: activeBuildId }
             })
           );
+        }
+        return;
+      }
+
+      if (type === 'keyboard:focus') {
+        // Source window, origin, nonce and current frame verified above.
+        if (fromTargetWindow) {
+          onAppTextEntryRef.current?.(payload?.editing === true, sourceWindow);
         }
         return;
       }
@@ -6293,6 +6316,7 @@ export function useHostBridge({
     messageTargetFrameRef,
     navigateHostContentRef,
     navigatePreviewFrameRef,
+    onAppTextEntryRef,
     onBuildLiveSafetyHostSessionsChange,
     previewAuth,
     previewCodeSignatureRef,
