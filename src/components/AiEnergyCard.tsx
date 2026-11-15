@@ -78,7 +78,8 @@ export default function AiEnergyCard({
   cardRef,
   themeColor,
   chargeCtaAttentionKey,
-  portaledUiActive = true
+  portaledUiActive = true,
+  wrapWhenNarrow = false
 }: {
   energyPercent: number;
   energyPolicy?: AiEnergyDisplayPolicy | null;
@@ -105,6 +106,9 @@ export default function AiEnergyCard({
   themeColor?: string;
   chargeCtaAttentionKey?: string;
   portaledUiActive?: boolean;
+  // Inline only, opt-in: in a narrow column the mode badge wraps under the
+  // bar (and the bar may shrink further) instead of overflowing the row.
+  wrapWhenNarrow?: boolean;
 }) {
   const [aiEnergyDashboardModalShown, setAiEnergyDashboardModalShown] =
     useState(false);
@@ -267,9 +271,17 @@ export default function AiEnergyCard({
         style={{ ...themedCardStyle, ...style }}
       >
         {isInline ? (
-          <div className={inlineRowCls}>
+          <div
+            className={`${inlineRowCls} ${
+              wrapWhenNarrow ? inlineRowWrapCls : ''
+            }`}
+          >
             {chargeCtaType ? (
-              <div className={inlineChargeSlotCls}>
+              <div
+                className={`${inlineChargeSlotCls} ${
+                  wrapWhenNarrow ? inlineChargeSlotInFlowCls : ''
+                }`}
+              >
                 <GameCTAButton
                   icon="bolt"
                   variant={chargeCtaType === 'free' ? 'gold' : 'orange'}
@@ -295,7 +307,13 @@ export default function AiEnergyCard({
             )}
             <div
               className={`${inlineMeterWrapCls} ${
-                chargeCtaType ? inlineMeterWrapWithChargeCls : ''
+                chargeCtaType
+                  ? wrapWhenNarrow
+                    ? inlineMeterWrapBesideChargeCls
+                    : inlineMeterWrapWithChargeCls
+                  : wrapWhenNarrow
+                    ? inlineMeterWrapNarrowCls
+                    : ''
               }`}
             >
               {meter}
@@ -507,6 +525,38 @@ const inlineRowCls = css`
   position: relative;
   width: 100%;
   min-height: 2rem;
+`;
+
+const inlineRowWrapCls = css`
+  flex-wrap: wrap;
+  row-gap: 0.4rem;
+  > span[aria-label] {
+    margin-left: auto;
+  }
+`;
+
+// wrapWhenNarrow: the Charge button is an ordinary flex item, so it stays on
+// the bar's line (an absolutely centred one would straddle two lines once
+// the mode badge wraps) and the bar beside it may shrink.
+// (&& doubles the class so these win over the base classes defined below.)
+const inlineChargeSlotInFlowCls = css`
+  && {
+    position: static;
+    transform: none;
+    flex: 0 0 auto;
+  }
+`;
+
+const inlineMeterWrapNarrowCls = css`
+  && {
+    min-width: 5rem;
+  }
+`;
+
+const inlineMeterWrapBesideChargeCls = css`
+  && {
+    min-width: 3rem;
+  }
 `;
 
 const inlineChargeSlotCls = css`

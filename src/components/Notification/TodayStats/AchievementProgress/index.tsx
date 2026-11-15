@@ -1,6 +1,31 @@
 import React, { useEffect } from 'react';
 import AchievementItem from './AchievementItem';
 import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
+import { css, cx } from '@emotion/css';
+
+// Compact (Live now showing): tighter thumbs; Today's Progress places the row.
+const compactRowCls = css`
+  display: flex;
+  align-items: center;
+  --achievement-thumb-gap: 0.15rem;
+  --achievement-thumb-size: 3.8rem;
+`;
+
+// The badges wrap instead of overflowing a narrow column; in the narrowest
+// cards they go 3 + 2 (not 4 + 1). Wide cards keep one row as before.
+const badgeRowCls = css`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  @container today-card (max-width: 25.9rem) {
+    --achievement-thumb-gap: 0.25rem;
+  }
+  @container today-card (max-width: 22.9rem) {
+    max-width: calc(
+      3 * (var(--achievement-thumb-size, 4rem) + 0.5rem) + 0.2rem
+    );
+  }
+`;
 
 const shownAchievements = [
   'mission',
@@ -11,9 +36,12 @@ const shownAchievements = [
 ];
 
 export default function AchievementProgress({
+  compact,
   myAchievementsObj,
   onSetMyAchievementsObj
 }: {
+  // Inline, smaller thumbs beside the daily goals while Live now shows.
+  compact?: boolean;
   myAchievementsObj: {
     [key: string]: {
       isUnlocked?: boolean;
@@ -90,9 +118,27 @@ export default function AchievementProgress({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, myAttempts]);
 
+  // Compact: nothing (not even the divider) when no badge would draw.
+  if (
+    compact &&
+    !shownAchievements.some((key) => achievementsObj?.[key]?.type)
+  ) {
+    return null;
+  }
+
   return isAchievementsLoaded ? (
-    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ display: 'flex', marginTop: '0.5rem' }}>
+    <div
+      className={compact ? cx(compactRowCls, 'today-badges') : undefined}
+      style={
+        compact
+          ? undefined
+          : { width: '100%', display: 'flex', justifyContent: 'center' }
+      }
+    >
+      <div
+        className={badgeRowCls}
+        style={{ marginTop: compact ? 0 : '0.5rem' }}
+      >
         {shownAchievements.map((key) => {
           const isUnlocked = myAchievementsObj[key]?.isUnlocked;
           const numCompletedMilestones = myAchievementsObj[
@@ -102,6 +148,7 @@ export default function AchievementProgress({
           return (
             <AchievementItem
               key={key}
+              thumbSize={compact ? '3.8rem' : undefined}
               isUnlocked={isUnlocked}
               achievement={{
                 ...achievementsObj[key],

@@ -12,7 +12,7 @@ import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
@@ -22,10 +22,14 @@ const funFont =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 export default function DailyGoals({
+  compact,
   isChecked,
   isDailyBonusButtonShown,
   achievedGoals
 }: {
+  // While Live now shows: smaller circles; Today's Progress lays the circle
+  // row (.today-goals-row) beside the achievement badges.
+  compact?: boolean;
   isChecked: boolean;
   isDailyBonusButtonShown: boolean;
   achievedGoals: string[];
@@ -173,18 +177,22 @@ export default function DailyGoals({
   }, [repairNoticeHidden, streakAtRisk]);
 
   return (
-    <div>
+    <div className={compact ? 'today-goals' : undefined}>
       <div
-        style={{ marginTop: '0.5rem' }}
-        className={css`
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        `}
+        style={{ marginTop: compact ? '0.6rem' : '0.5rem' }}
+        className={cx(
+          css`
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          `,
+          compact && 'today-goals-row'
+        )}
       >
         {badgeItems.map((item, index) => (
           <Badge
             key={item}
+            compact={compact}
             isAmped={
               !(isAchievementsLoaded && countdownCompleted) &&
               index === ampedBadgeIndex

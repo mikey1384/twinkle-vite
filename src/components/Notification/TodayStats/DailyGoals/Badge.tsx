@@ -31,10 +31,13 @@ const gradientMap: {
 
 export default function Badge({
   children,
+  compact,
   isAchieved,
   isAmped
 }: {
   children: string;
+  // Tighter size while Live now shares the card (Today's Progress).
+  compact?: boolean;
   isAchieved: boolean;
   isAmped: boolean;
 }) {
@@ -90,9 +93,10 @@ export default function Badge({
         display: inline-flex;
         justify-content: center;
         align-items: center;
-        width: 40px;
-        height: 40px;
-        margin: 0.5rem;
+        position: relative;
+        width: ${compact ? '38px' : '40px'};
+        height: ${compact ? '38px' : '40px'};
+        margin: ${compact ? '0.15rem' : '0.5rem'};
         border-radius: 50%;
         color: white;
         font-weight: bold;
@@ -112,6 +116,15 @@ export default function Badge({
         }
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
+        ${compact
+          ? `&::after {
+          /* Keep a 42px tap target around the smaller circle. */
+          content: '';
+          position: absolute;
+          inset: -2px;
+          border-radius: 50%;
+        }`
+          : ''}
       `}
     >
       {loadingWordle ? <Icon icon="spinner" pulse /> : children}

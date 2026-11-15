@@ -51,6 +51,10 @@ export type AnalyticsEventName =
   | 'feed_item_open'
   | 'notification_open'
   | 'earn_app_open'
+  // Today's Progress "Live now" row
+  | 'live_now_shown'
+  | 'live_now_tap'
+  | 'live_now_join'
   // Zero/Ciel voice
   | 'voice_call_start'
   // Reliability (GA4 standard name)

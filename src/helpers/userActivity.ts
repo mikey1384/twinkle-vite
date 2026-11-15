@@ -31,6 +31,8 @@ export type UserActivityIntent =
 export type UserActivity = UserActivityIntent & {
   title: string;
   thumbnailUrl: string | null;
+  // Apps only: the app carries the public Multiplayer tag (Live now row).
+  multiplayer?: boolean;
 };
 
 // A foreground modal takes precedence over the app beneath it. A null source

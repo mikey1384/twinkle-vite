@@ -87,8 +87,9 @@ export default function ItemThumb({
         setTitleContext(parentElementDimensions);
       }}
       onMouseLeave={() => setTitleContext(null)}
-      style={{ margin: '0.5rem' }}
       className={css`
+        /* The compact Today's Progress row narrows the gap through this var. */
+        margin: var(--achievement-thumb-gap, 0.5rem);
         width: ${thumbSize};
         height: ${thumbSize};
         display: flex;

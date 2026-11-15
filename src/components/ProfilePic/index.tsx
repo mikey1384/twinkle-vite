@@ -38,6 +38,7 @@ const containerBaseClass = css`
 `;
 
 export default function ProfilePic({
+  activityBadgeShown = true,
   className,
   isAway,
   isBusy,
@@ -53,6 +54,8 @@ export default function ProfilePic({
   statusSize = 'auto',
   size
 }: {
+  // Off where the surrounding UI already names the activity (Live now row).
+  activityBadgeShown?: boolean;
   className?: string;
   isAway?: boolean;
   isBusy?: boolean;
@@ -202,7 +205,9 @@ export default function ProfilePic({
           size={statusSize}
         />
       )}
-      {activity && activityShown ? <ActivityBadge activity={activity} /> : null}
+      {activity && activityShown && activityBadgeShown ? (
+        <ActivityBadge activity={activity} />
+      ) : null}
     </div>
   );
 
