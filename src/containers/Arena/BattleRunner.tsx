@@ -21,6 +21,7 @@ import PaperVisual, {
   type Visual
 } from './PaperVisual';
 import MathText from './MathText';
+import PaperText from './PaperText';
 import TypedAnswer from './TypedAnswer';
 import OrderAnswer, { orderSentence } from './OrderAnswer';
 import EssayAnswer from './EssayAnswer';
@@ -1326,38 +1327,6 @@ export function PaperItem({
   );
 }
 
-// The paper's text: <u>…</u> underlines (grammar, vocabulary, referents),
-// <b>…</b> bold (GMAT boldface reasoning) and '* word: 뜻' glosses set small and right-aligned below the passage,
-// as the real booklet prints them. Built as elements; never raw HTML.
-function PaperText({ text }: { text: string }) {
-  const lines = String(text || '').split('\n');
-  const body = lines.filter((line) => !line.startsWith('* '));
-  const glosses = lines.filter((line) => line.startsWith('* '));
-  return (
-    <>
-      {body
-        .join('\n')
-        .split(/(<u>[\s\S]*?<\/u>|<b>[\s\S]*?<\/b>)/g)
-        .map((part, i) =>
-          part.startsWith('<u>') && part.endsWith('</u>') ? (
-            <u key={i}>{part.slice(3, -4)}</u>
-          ) : part.startsWith('<b>') && part.endsWith('</b>') ? (
-            <b key={i}>{part.slice(3, -4)}</b>
-          ) : (
-            <MathText key={i} text={part} />
-          )
-        )}
-      {glosses.length > 0 && (
-        <span className={glossesCls}>
-          {glosses.map((gloss, i) => (
-            <span key={i}>{gloss}</span>
-          ))}
-        </span>
-      )}
-    </>
-  );
-}
-
 function Result({ data }: { data: ArenaBattle }) {
   const { battle } = data;
   const estimate = battle.estimate?.grade;
@@ -2251,15 +2220,6 @@ const confirmButtonsCls = css`
 // the circled numbers exist in the paper's serif, not in the UI sans
 const glyphCls = css`
   font-family: ${PAPER_SERIF};
-`;
-
-const glossesCls = css`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  margin-top: 0.6rem;
-  font-size: 1.2rem;
-  white-space: normal;
 `;
 
 // marker-only choices (① ② ③ ④ ⑤ of an underline item, the bare (A)-(D) of

@@ -6,7 +6,7 @@ import RewardChips from '~/components/RewardChips';
 import { WEBSITE_AGENT_NO_PLAY_ATTRIBUTE, WEBSITE_AGENT_OFF_LIMITS_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 import Icon from '~/components/Icon';
 import ArenaLoader from '../ArenaLoader';
-import MathText from '../MathText';
+import PaperText from '../PaperText';
 import { ARENA } from '../theme';
 import LearningScene from './LearningScene';
 import PromptMedia, { PromptPicture, type MediaStatus } from './PromptMedia';
@@ -206,17 +206,17 @@ export default function TodayQuestion({ sharedId = 0, review = false }: { shared
             <span className={eyebrowCls}>{showCheck ? 'PUT THE IDEA TO WORK' : `EXPLANATION · ${lessonIndex + 1} / ${lesson.totalSteps}`}</span>
             <h2>{showCheck ? 'A quick understanding check' : step?.title}</h2>
             {showCheck && q.check ? <>
-              <p className={summaryCls}><MathText text={lesson.summary || ''} /></p>
+              <p className={summaryCls}><PaperText text={lesson.summary || ''} /></p>
               <Question key={`${q.id}:check`} prompt={q.check} value={q.checkResult?.correct ? q.checkResult.answer : checkAnswer} onChange={setCheckAnswer} disabled={busy || q.checkResult?.correct === true} onMediaReady={ready => setCheckMediaReady(ready ? q.id : null)} />
               {q.checkResult && <p role="status" className={q.checkResult.correct ? feedbackCls : learningNoteCls}>{q.checkResult.correct ? q.checkResult.explanation : 'Not yet. Revisit the explanation, then try applying the idea again.'}</p>}
               {!q.checkResult?.correct && <button className={primaryCls} disabled={busy || checkMediaReady !== q.id || !hasAnswer(checkAnswer)} onClick={() => void act({ action: 'check', answer: checkAnswer }, 'check')}>{pending === 'check' && <Icon icon="spinner" pulse />}Check my understanding</button>}
               {inlineError && errorAt === 'check' && errorBanner(true)}
             </> : step && <>
-              <p><MathText text={step.prompt} /></p>
+              <p><PaperText text={step.prompt} /></p>
               <LearningScene scene={step.response?.scene || step.scene} />
-              <div className={choicesCls}>{step.options.map((option, i) => <button key={i} className={cx(optionCls, spinOptionCls)} aria-pressed={pending === `lesson:${i}` || (pending == null && step.response?.option === i)} disabled={busy || step.response?.correct === true} onClick={() => void act({ action: 'lesson', step: lessonIndex, option: i }, `lesson:${i}`)}><MathText text={option.label} />{pending === `lesson:${i}` && <Icon className={optionSpinnerCls} icon="spinner" pulse />}</button>)}</div>
+              <div className={choicesCls}>{step.options.map((option, i) => <button key={i} className={cx(optionCls, spinOptionCls)} aria-pressed={pending === `lesson:${i}` || (pending == null && step.response?.option === i)} disabled={busy || step.response?.correct === true} onClick={() => void act({ action: 'lesson', step: lessonIndex, option: i }, `lesson:${i}`)}><PaperText text={option.label} />{pending === `lesson:${i}` && <Icon className={optionSpinnerCls} icon="spinner" pulse />}</button>)}</div>
               {inlineError && errorAt === 'lesson' && errorBanner(true)}
-              {step.response && <div className={feedbackCls} role="status"><MathText text={step.response.feedback} /></div>}
+              {step.response && <div className={feedbackCls} role="status"><PaperText text={step.response.feedback} /></div>}
             </>}
             <div className={actionsCls}>
               {lessonIndex > 0 && <button className={linkCls} disabled={busy} onClick={() => setLessonIndex(i => i - 1)}>Back</button>}
@@ -322,11 +322,11 @@ function Question({ prompt, value, onChange, disabled, onMediaReady }: { prompt:
   useEffect(() => { onMediaReady?.(ready); }, [ready, onMediaReady]);
   const status = (key: string, state: MediaStatus) => setMediaStatuses(prior => prior[key] === state ? prior : { ...prior, [key]: state });
   return <div className={questionCls}>
-    {prompt.passage && <div className={passageCls}><MathText text={prompt.passage} /></div>}
+    {prompt.passage && <div className={passageCls}><PaperText text={prompt.passage} /></div>}
     {prompt.visual && <PromptPicture visual={prompt.visual} retry={pictureRetry} onStatus={state => status('picture', state)} />}
-    <p><MathText text={prompt.prompt} /></p>
+    <p><PaperText text={prompt.prompt} /></p>
     {prompt.audio && <PromptMedia audio={prompt.audio} onStatus={state => status('audio', state)} />}
-    {prompt.choices ? <div className={choicesCls} role="group" aria-label="Answer choices">{prompt.choices.map((choice, i) => <button type="button" key={i} className={optionCls} aria-pressed={value === i} disabled={disabled || !ready} onClick={() => onChange(i)}><strong>{String.fromCharCode(65 + i)}.</strong> <MathText text={choice} />{prompt.choiceVisuals?.[i] && <PromptPicture visual={prompt.choiceVisuals[i]!} retry={pictureRetry} onStatus={state => status(`choice:${i}`, state)} />}</button>)}</div> : <label className={inputCls}>Your answer<input value={value ?? ''} onChange={e => onChange(e.target.value)} disabled={disabled || !ready} maxLength={300} autoComplete="off" /></label>}
+    {prompt.choices ? <div className={choicesCls} role="group" aria-label="Answer choices">{prompt.choices.map((choice, i) => <button type="button" key={i} className={optionCls} aria-pressed={value === i} disabled={disabled || !ready} onClick={() => onChange(i)}><strong>{String.fromCharCode(65 + i)}.</strong> <PaperText text={choice} />{prompt.choiceVisuals?.[i] && <PromptPicture visual={prompt.choiceVisuals[i]!} retry={pictureRetry} onStatus={state => status(`choice:${i}`, state)} />}</button>)}</div> : <label className={inputCls}>Your answer<input value={value ?? ''} onChange={e => onChange(e.target.value)} disabled={disabled || !ready} maxLength={300} autoComplete="off" /></label>}
     {failedPictures.length > 0 && <div role="alert">A picture could not load. <button type="button" onClick={() => {
       setMediaStatuses(prior => Object.fromEntries(Object.entries(prior).filter(([key]) => key === 'audio')));
       setPictureRetry(value => value + 1);
