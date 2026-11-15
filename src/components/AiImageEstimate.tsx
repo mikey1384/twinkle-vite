@@ -4,11 +4,18 @@ import type {
   OpenAiImageModel
 } from '~/helpers/aiImageModels';
 import React, { useEffect, useRef, useState } from 'react';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 
 // Session cache so switching back to a model and quality already fetched is
-// instant. Keyed by user too, since the estimate is per account.
-const estimateCache = new Map<string, number>();
+// instant. Keyed by user too, since the estimate is per account. It keeps the
+// Energy cost, not a percent: the percent is worked out when shown, against
+// the member's battery size as it is then, so a battery that changes size
+// during the session never leaves a stale percent behind.
+interface CachedEstimate {
+  energyUnits: number;
+  fullBatteryUnits: number;
+}
+const estimateCache = new Map<string, CachedEstimate>();
 const cacheKey = (
   userId: unknown,
   model: string,
@@ -30,33 +37,47 @@ export default function AiImageEstimate({
 }) {
   const references = Math.max(0, Math.floor(referenceCount || 0));
   const userId = useKeyContext((v) => v.myState.userId);
+  // One full battery, from the live Energy policy; the estimate's own
+  // fullBatteryUnits is the fallback until the policy has loaded.
+  const liveBatteryUnits = useNotiContext(
+    (v) => v.state.todayStats?.aiUsagePolicy?.baseEnergyUnitsPerDay
+  ) as number | undefined;
   const loadEstimate = useAppContext(
     (v) => v.requestHelpers.loadAIImageGenerationEstimate
   );
   const loadEstimateRef = useRef(loadEstimate);
   loadEstimateRef.current = loadEstimate;
-  const [estimate, setEstimate] = useState<{
-    model: string;
-    quality: string;
-    referenceCount: number;
-    percent: number;
-  } | null>(null);
+  const [estimate, setEstimate] = useState<
+    | (CachedEstimate & {
+        model: string;
+        quality: string;
+        referenceCount: number;
+      })
+    | null
+  >(null);
   const [failed, setFailed] = useState(false);
-  const cachedPercent = estimateCache.get(
+  const cached = estimateCache.get(
     cacheKey(userId, model, quality, references)
   );
   const current =
-    cachedPercent !== undefined
-      ? { percent: cachedPercent }
-      : estimate?.model === model &&
-          estimate.quality === quality &&
-          estimate.referenceCount === references
-        ? estimate
-        : null;
+    cached ||
+    (estimate?.model === model &&
+    estimate.quality === quality &&
+    estimate.referenceCount === references
+      ? estimate
+      : null);
   // While a new model or quality loads, keep showing the previous estimate
   // (dimmed) so the line does not change length or flash "Checking...".
   const previous = !current && !failed ? estimate : null;
-  const shown = current || previous;
+  const shownEstimate = current || previous;
+  const batteryUnits =
+    typeof liveBatteryUnits === 'number' && liveBatteryUnits > 0
+      ? liveBatteryUnits
+      : shownEstimate?.fullBatteryUnits || 0;
+  const shown =
+    shownEstimate && batteryUnits > 0
+      ? { percent: (shownEstimate.energyUnits / batteryUnits) * 100 }
+      : null;
   useEffect(() => {
     let active = true;
     setFailed(false);
@@ -72,9 +93,12 @@ export default function AiImageEstimate({
         if (!active) return;
         if (!(result.fullBatteryUnits > 0) || !(result.energyUnits >= 0))
           throw new Error('Invalid estimate');
-        const percent = (result.energyUnits / result.fullBatteryUnits) * 100;
-        estimateCache.set(key, percent);
-        setEstimate({ model, quality, referenceCount: references, percent });
+        const cost = {
+          energyUnits: result.energyUnits,
+          fullBatteryUnits: result.fullBatteryUnits
+        };
+        estimateCache.set(key, cost);
+        setEstimate({ model, quality, referenceCount: references, ...cost });
       })
       .catch(() => {
         if (active) setFailed(true);
