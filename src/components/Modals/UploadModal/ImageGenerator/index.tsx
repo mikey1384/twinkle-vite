@@ -893,7 +893,9 @@ export default function ImageGenerator({
         </div>
       )}
 
-      {mode !== 'draw' && collectionBar}
+      {/* Shown in Draw too: a picked collection goes with a drawing as well,
+          so the member always sees it (review fix 11-15). */}
+      {collectionBar}
 
       {mode === 'draw' && (
         <ImageEditor

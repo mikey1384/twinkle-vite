@@ -70,6 +70,9 @@ interface ImageEditModalProps {
   editedImageAction?: {
     label: string;
     onUse: (requestId: string) => Promise<string | null>;
+    // the Picture Day picture this editor opened: sent with every edit so
+    // the server can record (and check) what the edit was made from
+    editSource?: { responseId: number; path: string };
   };
   onEditEvent?: (event: 'started' | 'completed' | 'failed') => void;
 }
@@ -101,6 +104,13 @@ interface AiImageGenerationRequest {
   requestFingerprint?: string;
   // labelled "edit" in the member's image history (Make Images > My Images)
   historySource?: 'edit';
+  // a Picture Day picture's edit: the picture opened, and the edit before
+  editSource?: {
+    kind: 'picture_day';
+    responseId: number;
+    path: string;
+    parentRequestId?: string;
+  };
 }
 
 export default function ImageEditModal({
@@ -1167,7 +1177,18 @@ export default function ImageEditModal({
         model: GPT_IMAGE_2_6_SUNBURST,
         quality: 'high',
         requestId,
-        historySource: 'edit'
+        historySource: 'edit',
+        ...(editedImageAction?.editSource
+          ? {
+              editSource: {
+                kind: 'picture_day' as const,
+                ...editedImageAction.editSource,
+                ...(lastEditRequestId
+                  ? { parentRequestId: lastEditRequestId }
+                  : {})
+              }
+            }
+          : {})
       };
       activeImageRequestPayloadRef.current = imageRequest;
       const result = await generateAIImage(imageRequest);

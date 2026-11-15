@@ -52,6 +52,7 @@ export default function ImageModal({
   editedImageAction?: {
     label: string;
     onUse: (requestId: string) => Promise<string | null>;
+    editSource?: { responseId: number; path: string };
   };
   onEditEvent?: (event: 'opened' | 'started' | 'completed' | 'failed') => void;
   className?: string;
@@ -282,6 +283,7 @@ export default function ImageModal({
           editedImageAction={
             editedImageAction && {
               label: editedImageAction.label,
+              editSource: editedImageAction.editSource,
               onUse: async (requestId) => {
                 const useError = await editedImageAction.onUse(requestId);
                 if (!useError) {

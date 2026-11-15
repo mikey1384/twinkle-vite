@@ -6,6 +6,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import FilterBar from '~/components/FilterBar';
 import SearchInput from '~/components/Texts/SearchInput';
+import Banner from '~/components/Banner';
 import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import {
@@ -15,6 +16,11 @@ import {
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
+import UnavailableFeaturedItem from './UnavailableFeaturedItem';
+import {
+  FEATURED_STALE_CODE,
+  useFeaturedManageList
+} from './useFeaturedManageList';
 
 type PickerKind = 'subject' | 'comment';
 type PickerTab = PickerKind | 'selected';
@@ -48,14 +54,14 @@ function withKeys(contentType: PickerKind, results: any[]) {
 // Pick what shows in the profile's Featured section: subjects, or the
 // member's own comments (Subjects | Comments | Selected tabs), up to the
 // combined limit. Both kinds are listed with ContentListItem, as subjects
-// always were. The saved list comes back from the server and replaces the
-// section.
+// always were. The selection starts from the owner's whole stored list
+// (useFeaturedManageList), so entries they can't open right now stay selected
+// (shown as unavailable, with Remove) instead of being dropped by a save. The
+// saved list comes back from the server and replaces the section.
 export default function SelectFeaturedSubjectsModal({
-  items,
   onHide,
   onSubmit
 }: {
-  items: any[];
   onHide: () => void;
   onSubmit: (saved: { items: any[]; refs?: any[] }) => void;
 }) {
@@ -75,15 +81,19 @@ export default function SelectFeaturedSubjectsModal({
   const [tab, setTab] = useState<PickerTab>('subject');
   const kind: PickerKind = tab === 'comment' ? 'comment' : 'subject';
   const selectTabActive = tab !== 'selected';
-  const [itemObj, setItemObj] = useState<Record<string, any>>(() => {
-    const obj: Record<string, any> = {};
-    for (const item of items) obj[profileFeaturedItemKey(item)] = item;
-    return obj;
-  });
-  const [selected, setSelected] = useState<string[]>(() =>
-    Array.from(new Set(items.map(profileFeaturedItemKey)))
-  );
+  const manage = useFeaturedManageList();
+  const [itemObj, setItemObj] = useState<Record<string, any>>({});
+  const [selected, setSelected] = useState<string[]>([]);
+  const [notice, setNotice] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // every (re)load of the stored list resets the selection to it
+  useEffect(() => {
+    if (!manage.loaded) return;
+    setItemObj((current) => ({ ...current, ...currentItems() }));
+    setSelected(manage.keys);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manage.loaded, manage.version]);
   const [loadingMore, setLoadingMore] = useState(false);
 
   // Subjects (as before this switch existed)
@@ -139,7 +149,7 @@ export default function SelectFeaturedSubjectsModal({
             includeRoot: true
           });
           const { obj, keys } = withKeys('subject', results);
-          setItemObj((current) => ({ ...current, ...obj, ...currentItems() }));
+          setItemObj((current) => ({ ...current, ...obj }));
           setAllSubjects(keys);
           setSubjectsLoadMore(loadMoreButton);
           setSubjectsLoaded(true);
@@ -218,7 +228,7 @@ export default function SelectFeaturedSubjectsModal({
             Cancel
           </Button>
           <Button
-            disabled={!subjectsLoaded || overLimit}
+            disabled={!subjectsLoaded || !manage.loaded || overLimit}
             loading={submitting}
             color={doneColor}
             onClick={handleSubmit}
@@ -231,6 +241,11 @@ export default function SelectFeaturedSubjectsModal({
       }
     >
       <div style={{ width: '100%' }}>
+        {(notice || manage.loadError) && (
+          <Banner style={{ marginBottom: '1.5rem', fontSize: '1.4rem' }}>
+            {notice || manage.loadError}
+          </Banner>
+        )}
         <FilterBar style={{ marginBottom: '1.5rem' }}>
           <nav
             className={tab === 'subject' ? 'active' : ''}
@@ -281,6 +296,8 @@ export default function SelectFeaturedSubjectsModal({
           ) : (
             displayedKeys.map((key) => renderPickable(key, false))
           )
+        ) : !manage.loaded ? (
+          <Loading />
         ) : selected.length === 0 ? (
           <p style={emptyMessageStyle}>Nothing Selected</p>
         ) : (
@@ -302,13 +319,25 @@ export default function SelectFeaturedSubjectsModal({
 
   function currentItems() {
     const obj: Record<string, any> = {};
-    for (const item of items) obj[profileFeaturedItemKey(item)] = item;
+    for (const item of manage.items) obj[profileFeaturedItemKey(item)] = item;
     return obj;
   }
 
   function renderPickable(key: string, isLast: boolean) {
     const item = itemObj[key];
     if (!item) return null;
+    if (item.unavailable) {
+      return (
+        <UnavailableFeaturedItem
+          key={key}
+          item={item}
+          style={{ marginBottom: isLast ? 0 : '1rem' }}
+          onRemove={() =>
+            setSelected((current) => current.filter((k) => k !== key))
+          }
+        />
+      );
+    }
     const contentType: PickerKind =
       item.contentType === 'comment' ? 'comment' : 'subject';
     return (
@@ -429,6 +458,7 @@ export default function SelectFeaturedSubjectsModal({
 
   async function handleSubmit() {
     setSubmitting(true);
+    setNotice('');
     try {
       const saved = await saveProfileFeaturedItems(
         selected.map((key) => {
@@ -437,11 +467,20 @@ export default function SelectFeaturedSubjectsModal({
             contentType: contentType as PickerKind,
             contentId: Number(contentId)
           };
-        })
+        }),
+        manage.revision
       );
       onSubmit({ items: saved?.items || [], refs: saved?.refs });
-    } catch (error) {
-      console.error('Error during handleSubmit:', error);
+    } catch (error: any) {
+      if (error?.code === FEATURED_STALE_CODE) {
+        // changed in another tab or from a comment's menu: start over from it
+        setNotice(error.message);
+        setTab('selected');
+        await manage.reload();
+      } else {
+        console.error('Error during handleSubmit:', error);
+        setNotice(error?.message || "Couldn't save. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }

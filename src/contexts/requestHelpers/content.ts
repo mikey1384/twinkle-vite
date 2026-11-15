@@ -3304,7 +3304,8 @@ export default function contentRequestHelpers({
       displayPrompt,
       historySource,
       collectionId,
-      collectionRevision
+      collectionRevision,
+      editSource
     }: {
       prompt: string;
       previousResponseId?: string;
@@ -3321,6 +3322,13 @@ export default function contentRequestHelpers({
       // a picked image collection: the server adds its pictures and note
       collectionId?: number;
       collectionRevision?: number;
+      // a Picture Day picture's edit (the image editor): what it was made from
+      editSource?: {
+        kind: 'picture_day';
+        responseId: number;
+        path: string;
+        parentRequestId?: string;
+      };
     }) {
       try {
         const { data } = await request.post(
@@ -3337,7 +3345,8 @@ export default function contentRequestHelpers({
             displayPrompt,
             historySource,
             collectionId,
-            collectionRevision
+            collectionRevision,
+            editSource
           },
           {
             ...auth(),

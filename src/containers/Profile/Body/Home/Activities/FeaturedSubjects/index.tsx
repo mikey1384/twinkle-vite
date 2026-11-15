@@ -110,14 +110,12 @@ export default function FeaturedSubjects({
       </SectionPanel>
       {selectModalShown && (
         <SelectFeaturedSubjects
-          items={items}
           onHide={() => setSelectModalShown(false)}
           onSubmit={handleSaved}
         />
       )}
       {reorderModalShown && (
         <ReorderFeaturedSubjects
-          items={items}
           onHide={() => setReorderModalShown(false)}
           onSubmit={handleSaved}
         />

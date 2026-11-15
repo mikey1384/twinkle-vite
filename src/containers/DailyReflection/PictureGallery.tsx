@@ -172,6 +172,7 @@ export default function PictureGallery() {
       {viewing && viewingDay?.responseId ? (
         <DailyPictureModal
           picturePath={viewing.path}
+          responseId={Number(viewingDay.responseId)}
           caption={viewing.prompt}
           isOwner
           isCurrent={viewing.path === viewingDay.chosenPath}

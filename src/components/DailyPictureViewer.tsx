@@ -115,6 +115,7 @@ export function useDailyPicture({
   const viewer = viewerOpen ? (
     <DailyPictureModal
       picturePath={shownPath}
+      responseId={responseId}
       isOwner={isOwner}
       onApply={apply}
       onTrack={(event) => void trackDailyPictureEdit({ surface, event })}
@@ -140,6 +141,7 @@ export function useDailyPicture({
 // private gallery's other pictures) adds a direct "Use for my reflection".
 export function DailyPictureModal({
   picturePath,
+  responseId,
   caption,
   isOwner,
   isCurrent = true,
@@ -148,6 +150,8 @@ export function DailyPictureModal({
   onHide
 }: {
   picturePath: string;
+  // the reflection, so an edit names the picture it was made from
+  responseId?: number | null;
   caption?: string;
   isOwner: boolean;
   isCurrent?: boolean;
@@ -169,7 +173,10 @@ export function DailyPictureModal({
         isOwner
           ? {
               label: USE_LABEL,
-              onUse: (requestId) => onApply({ editRequestId: requestId })
+              onUse: (requestId) => onApply({ editRequestId: requestId }),
+              ...(responseId
+                ? { editSource: { responseId, path: picturePath } }
+                : {})
             }
           : undefined
       }

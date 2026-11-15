@@ -179,7 +179,10 @@ test('Featured consumers apply confirmed responses and wait for Explore loads', 
     profileSelectSource,
     /const overLimit = selected\.length > MAX_PROFILE_FEATURED_ITEMS;/
   );
-  assert.match(profileSelectSource, /disabled=\{!subjectsLoaded \|\| overLimit\}/);
+  assert.match(
+    profileSelectSource,
+    /disabled=\{!subjectsLoaded \|\| !manage\.loaded \|\| overLimit\}/
+  );
   assert.match(
     profileSelectSource,
     /const saved = await saveProfileFeaturedItems[\s\S]*onSubmit\(\{ items: saved\?\.items \|\| \[\], refs: saved\?\.refs \}\)/
@@ -192,6 +195,23 @@ test('Featured consumers apply confirmed responses and wait for Explore loads', 
     source('../src/containers/Explore/Modals/ReorderFeaturedSubjects.tsx')
   ]) {
     assert.match(reorderSource, /finally \{[\s\S]*setIsReordering\(false\)/);
+  }
+  // Review fix 11-15: both profile windows edit the owner's whole stored list
+  // (unavailable entries included) and save with its revision; a stale save
+  // reloads the list instead of overwriting another tab's change.
+  for (const windowSource of [
+    profileSelectSource,
+    source(
+      '../src/containers/Profile/Body/Home/Activities/FeaturedSubjects/ReorderFeaturedSubjects.tsx'
+    )
+  ]) {
+    assert.match(windowSource, /const manage = useFeaturedManageList\(\);/);
+    assert.match(windowSource, /saveProfileFeaturedItems\([\s\S]{0,400}?manage\.revision\s*\)/);
+    assert.match(
+      windowSource,
+      /error\?\.code === FEATURED_STALE_CODE[\s\S]{0,200}?await manage\.reload\(\)/
+    );
+    assert.doesNotMatch(windowSource, /items: any\[\];\n\s*onHide/);
   }
   assert.match(profileHomeSource, /loaded=\{isSubjectsLoaded\}/);
   assert.doesNotMatch(profileHomeSource, /isSubjectsLoading/);

@@ -383,13 +383,29 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // The owner's Select/Reorder windows: the whole list (entries they
+    // can't open right now come back as unavailable) and its revision.
+    async loadMyProfileFeaturedManageList() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/featured/manage`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // expectedRevision: the list's revision when the window loaded it; a
+    // stale save is refused (409, code PROFILE_FEATURED_STALE).
     async saveProfileFeaturedItems(
-      items: Array<{ contentType: 'subject' | 'comment'; contentId: number }>
+      items: Array<{ contentType: 'subject' | 'comment'; contentId: number }>,
+      expectedRevision?: string
     ) {
       try {
         const { data } = await request.put(
           `${URL}/user/featured/items`,
-          { items },
+          { items, expectedRevision },
           auth()
         );
         return data;

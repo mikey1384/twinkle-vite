@@ -895,6 +895,7 @@ registerMethods('user', [
   'featureSubjectsOnProfile',
   'loadProfileFeaturedItems',
   'loadMyProfileFeaturedRefs',
+  'loadMyProfileFeaturedManageList',
   'loadMyCommentsForFeatured',
   'saveProfileFeaturedItems',
   'setCommentFeaturedOnProfile',
