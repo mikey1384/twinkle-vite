@@ -1,20 +1,18 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { discRows, pixelSvg, PIXEL_FONT } from './pixelUi';
+import type { MarbleLook } from './marbleLooks';
 
 // Quest's plain marbles (Mikey 10-07: Quest must be a Grammarbles game too).
-// In a run, each question is a marble slot: a right answer fills it, brighter
-// as the combo grows; a miss leaves a dull one. An unplayed map node shows the
-// empty one; played nodes show Classic's lettered marble (spriteUri).
+// In a run, each question is a marble slot (Mikey 11-15): a right answer is
+// a green marble with a check, a miss a gray one with a cross, and every
+// marble inside a run of GOLD_STREAK right answers in a row turns gold. The
+// streak itself shows beside the marbles (StreakBadge), never as a recolour
+// of a right answer: kids read red as "wrong". A forgiven miss is the clear
+// marble with a check. An unplayed slot shows the empty one; played map
+// nodes show Classic's lettered marble (spriteUri).
 
-export type MarbleLook =
-  'empty' | 'clear' | 'shiny' | 'hot' | 'gold' | 'dull' | 'locked';
-
-// A run's answer: right answers glow brighter with the combo.
-export function answerLook(isCorrect: boolean, combo: number): MarbleLook {
-  if (!isCorrect) return 'dull';
-  return combo >= 5 ? 'gold' : combo >= 3 ? 'hot' : 'shiny';
-}
+export type { MarbleLook };
 
 export default function QuestMarble({
   look,
@@ -37,7 +35,7 @@ export default function QuestMarble({
         width: size,
         height: size,
         fontSize: Math.max(10, size * 0.45),
-        backgroundImage: `url("${marbleUri(look, size)}")`,
+        backgroundImage: `url("${questMarbleUri(look, size)}")`,
         color: LABEL[look]
       }}
     >
@@ -49,6 +47,7 @@ export default function QuestMarble({
 // Pixel marbles to match the marble run (10-07): ink rim, banded light from
 // the top left and a white glint, like marbleSprite but without a letter.
 // Big marbles use 2x2 screen pixels per art pixel so they stay chunky.
+// m = the check or cross drawn on an answered marble.
 const PALETTES: Record<MarbleLook, Record<string, string>> = {
   empty: {
     k: '#9aa3b5',
@@ -71,23 +70,18 @@ const PALETTES: Record<MarbleLook, Record<string, string>> = {
     f: '#cfeafd',
     s: '#93c8ef',
     d: '#6fa9d8',
-    g: '#ffffff'
+    g: '#ffffff',
+    m: '#1f4e7a'
   },
+  // a right answer: green (Mikey 11-15), deep enough for the white check
   shiny: {
-    k: '#22314d',
-    l: '#a9d4ff',
-    f: '#418ceb',
-    s: '#2f6fd1',
-    d: '#244f9a',
-    g: '#ffffff'
-  },
-  hot: {
-    k: '#22314d',
-    l: '#ffa6d6',
-    f: '#df3296',
-    s: '#b0216f',
-    d: '#7f1650',
-    g: '#ffffff'
+    k: '#123a22',
+    l: '#8fe3a8',
+    f: '#279e50',
+    s: '#1f8443',
+    d: '#16612f',
+    g: '#ffffff',
+    m: '#ffffff'
   },
   gold: {
     k: '#4a2f00',
@@ -95,7 +89,8 @@ const PALETTES: Record<MarbleLook, Record<string, string>> = {
     f: '#ffcb32',
     s: '#e0a000',
     d: '#a87200',
-    g: '#ffffff'
+    g: '#ffffff',
+    m: '#5a3a00'
   },
   dull: {
     k: '#3a3f4d',
@@ -103,8 +98,32 @@ const PALETTES: Record<MarbleLook, Record<string, string>> = {
     f: '#a7adb6',
     s: '#8a909a',
     d: '#6f747d',
-    g: '#eef0f3'
+    g: '#eef0f3',
+    m: '#3a3f4d'
   }
+};
+
+const CHECK = [
+  '......m',
+  '.....mm',
+  'm...mm.',
+  'mm.mm..',
+  '.mmm...',
+  '..m....'
+];
+const CROSS = [
+  'mm..mm',
+  '.mmmm.',
+  '..mm..',
+  '..mm..',
+  '.mmmm.',
+  'mm..mm'
+];
+const MARK: Partial<Record<MarbleLook, string[]>> = {
+  clear: CHECK,
+  shiny: CHECK,
+  gold: CHECK,
+  dull: CROSS
 };
 
 const LABEL: Record<MarbleLook, string> = {
@@ -112,24 +131,34 @@ const LABEL: Record<MarbleLook, string> = {
   locked: '#5b6270',
   clear: '#1f4e7a',
   shiny: '#ffffff',
-  hot: '#ffffff',
   gold: '#5a3a00',
   dull: '#ffffff'
 };
 
 const uriCache = new Map<string, string>();
-function marbleUri(look: MarbleLook, size: number) {
+export function questMarbleUri(look: MarbleLook, size: number) {
   const art = Math.max(8, size >= 16 ? Math.round(size / 2) : Math.round(size));
   const key = `${look}|${art}`;
   let uri = uriCache.get(key);
   if (!uri) {
-    uri = pixelSvg(
-      discRows(art, { sphere: look !== 'empty', dotted: look === 'empty' }),
-      PALETTES[look]
-    );
+    const rows = discRows(art, { sphere: look !== 'empty', dotted: look === 'empty' });
+    const mark = MARK[look];
+    uri = pixelSvg(mark && art >= 10 ? withMark(rows, mark) : rows, PALETTES[look]);
     uriCache.set(key, uri);
   }
   return uri;
+}
+
+// the mark drawn over the middle of the disc (a pixel low when it can't
+// sit exactly, clear of the top-left glint)
+function withMark(rows: string[], mark: string[]) {
+  const top = Math.ceil((rows.length - mark.length) / 2);
+  const left = Math.floor((rows[0].length - mark[0].length) / 2);
+  return rows.map((row, y) => {
+    const line = mark[y - top];
+    if (!line) return row;
+    return row.split('').map((ch, x) => line[x - left] === 'm' ? 'm' : ch).join('');
+  });
 }
 
 const baseCls = css`

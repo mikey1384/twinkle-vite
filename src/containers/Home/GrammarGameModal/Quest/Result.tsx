@@ -5,7 +5,8 @@ import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import type { QuestAnswer, QuestResult } from './types';
-import QuestMarble, { answerLook } from './QuestMarble';
+import QuestMarble from './QuestMarble';
+import { GOLD_STREAK, answerLooks, bestStreak } from './marbleLooks';
 import { reviewList, withForgiven } from './reviewList';
 import PixelIcon from './PixelIcon';
 import { VICTORY_TRACK, playMusic, stopMusic } from './MarbleRun/music';
@@ -66,6 +67,16 @@ export default function Result({
   const { reviews } = useChallengeReviews();
   const displayAnswers = withForgiven(answers, result.answers);
   const listed = reviewList(displayAnswers);
+  // counters are bonus, not hits: they show as a line below
+  const marbleAnswers = displayAnswers.filter((a) => !a.counter);
+  const looks = answerLooks(marbleAnswers);
+  // a stop's and a ghost run's streak pays (bosses grade each hit instead):
+  // the server's best combo, or the same rule over the answers when an older
+  // server leaves it out; its XP only as the server counted it
+  const streak = kind === 'stop' || kind === 'nemesis'
+    ? typeof result.bestCombo === 'number' ? result.bestCombo : bestStreak(marbleAnswers)
+    : 0;
+  const streakXp = streak > 0 && typeof result.streakXp === 'number' && result.streakXp > 0 ? result.streakXp : 0;
   const challengeable = listed.filter((a) => a.challenge);
   const allReviewed = challengeable.every(
     (a) =>
@@ -200,10 +211,7 @@ export default function Result({
           ))}
       </div>
       <div className={marblesCls}>
-        {/* counters are bonus, not hits: they show as a line below */}
-        {displayAnswers
-          .filter((a) => !a.counter)
-          .map((a, i) => (
+        {marbleAnswers.map((a, i) => (
             <span
               key={a.position}
               className={popCls}
@@ -211,7 +219,7 @@ export default function Result({
             >
               {a.forgiven ? (
                 <span aria-label="Forgiven: the question was at fault">
-                  <QuestMarble look="clear" label="✓" size={24} title="Forgiven: the question was at fault" />
+                  <QuestMarble look="clear" size={24} title="Forgiven: the question was at fault" />
                 </span>
               ) : a.grade ? (
                 <img
@@ -224,8 +232,9 @@ export default function Result({
                 />
               ) : (
                 <QuestMarble
-                  look={answerLook(a.isCorrect, a.combo || 1)}
+                  look={looks[i]}
                   size={24}
+                  title={a.isCorrect ? 'Right' : 'Missed'}
                 />
               )}
             </span>
@@ -256,6 +265,13 @@ export default function Result({
             ? result.size ? `${result.firstTryCorrect} of ${result.size} right on the first try` : 'Every question was forgiven.'
             : `${result.rights ?? 0} right · ${result.misses ?? 0} missed${result.misses ? ' (they came back until you got them)' : ''}`}
       </div>}
+      {streak > 0 && (
+        <div className={cx(lineCls, dailyCls)}>
+          <PixelIcon name="flame" scale={2} /> Best streak: {streak} in a row
+          {streakXp > 0 && ` · +${streakXp.toLocaleString()} XP`}
+          {streak >= GOLD_STREAK && <span className={goldStreakCls}>GOLD</span>}
+        </div>
+      )}
       {result.cleared &&
         kind !== 'nemesis' &&
         result.dailyTaskStatus &&
@@ -705,6 +721,14 @@ const lineCls = css`
   font-size: 1.4rem;
   font-weight: 700;
   color: #5b4026;
+`;
+const goldStreakCls = css`
+  ${frame(GOLD, 1)}
+  padding: 0 0.4rem;
+  font-family: ${PIXEL_FONT};
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: #5a3a00;
 `;
 const dailyCls = css`
   display: flex;

@@ -36,7 +36,7 @@ export const MODIFIER_INFO: Record<
     how: 'A worked example shows the rule before the questions.'
   },
   combo: {
-    name: 'Combo',
+    name: 'Streak',
     how: 'Right answers in a row fill the meter: streak XP ×3.'
   },
   fog: { name: 'Fog', how: 'The choices come out of the fog one at a time.' },

@@ -418,6 +418,22 @@ const ICONS: Record<
     ],
     palette: { k: INK, g: '#4fd17c' }
   },
+  // a right-answer streak (Mikey 11-15: the streak shows beside the marbles)
+  flame: {
+    rows: [
+      '...k....',
+      '..kok...',
+      '..kook.k',
+      '.kooyokk',
+      '.koyyook',
+      'kooyyyok',
+      'koywwyok',
+      'koywwyok',
+      '.kyyyyk.',
+      '..kkkk..'
+    ],
+    palette: { k: INK, o: '#ff7a1a', y: '#ffcb32', w: '#fff6b0' }
+  },
   arrow: {
     rows: ['kkkkkkk', 'kyyyyyk', '.kyyyk.', '..kyk..', '...k...'],
     palette: { k: INK, y: '#ffd84a' }

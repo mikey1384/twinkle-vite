@@ -598,7 +598,7 @@ export default function MarbleRunScreen({
               className={meterRowCls}
               title="Right answers in a row pay triple streak XP"
             >
-              <span className={pipLabelCls}>Combo ×3 XP</span>
+              <span className={pipLabelCls}>Streak ×3 XP</span>
               {Array.from({ length: 5 }, (_, i) => (
                 <span
                   key={i}

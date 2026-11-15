@@ -139,10 +139,11 @@ export default function InputSection({
                   <option value="max">Max</option>
                 </select>
               )}
-              {engine === 'openai' && (
-                <AiImageEstimate model={model} quality={quality} />
-              )}
             </span>
+            {engine === 'openai' && (
+              // Own full-width line: its length can never move the dropdowns.
+              <AiImageEstimate model={model} quality={quality} />
+            )}
           </div>
           <textarea
             placeholder="A magical forest with glowing mushrooms and fireflies, Japanese anime style..."

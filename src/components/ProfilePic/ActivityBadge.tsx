@@ -191,7 +191,9 @@ export default function ActivityBadge({
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <span aria-hidden>{fallback}</span>
+          <span className="badge-fallback" aria-hidden>
+            {fallback}
+          </span>
         )}
       </button>
       {shown
@@ -328,9 +330,25 @@ const badgeClass = css`
   color: #355987;
   box-shadow: 0 1px 4px #17243d30;
   cursor: pointer;
-  font-size: 1.1rem;
   font-weight: 800;
   line-height: 1;
+  /* The fallback icon or letter is sized from the badge itself (cqw), so it
+     scales with the avatar like the image badges. No overflow:hidden here: it
+     would clip the enlarged tap area below. */
+  container-type: inline-size;
+  .badge-fallback {
+    width: 60%;
+    height: 60%;
+    display: grid;
+    place-items: center;
+    font-size: 50cqw;
+    line-height: 1;
+    overflow: visible;
+  }
+  .badge-fallback svg {
+    width: 100%;
+    height: 100%;
+  }
   &::after {
     /* Keep the small artwork, but give the entire badge a generous hit area. */
     content: '';

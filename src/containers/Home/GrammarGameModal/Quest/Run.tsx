@@ -12,7 +12,9 @@ import useChallengeReviews from '../Review/useChallengeReviews';
 import { challengeReviewLabel, getSavedChallengeReview, isChallengeReviewSettled } from '../Review/challengeReviews';
 import { initialKoreanShown, saveKoreanShown } from '~/helpers/grammarblesRuleCard';
 import type { QuestAnswer, QuestResult, QuestRun } from './types';
-import QuestMarble, { answerLook } from './QuestMarble';
+import QuestMarble from './QuestMarble';
+import { answerLooks } from './marbleLooks';
+import StreakBadge from './StreakBadge';
 import AudioToggles from './AudioToggles';
 import PixelIcon from './PixelIcon';
 import { GotchaText } from './FormatQuestion';
@@ -77,6 +79,13 @@ export default function Run({ run, onFinished, onQuit }: {
   const rightSoFar = Object.values(answers).filter((a) => a.isCorrect).length;
   const forgivenSoFar = Object.values(answers).filter((a) => !a.isCorrect && a.forgiven).length;
   const answeredCount = Object.keys(answers).length;
+  // one look per answered marble, from the whole run so far (a fifth right
+  // in a row turns its whole streak gold)
+  const looks = useMemo(() => {
+    const answered = run.questions.flatMap((q) => answers[q.position] ? [answers[q.position]] : []);
+    const list = answerLooks(answered);
+    return new Map(answered.map((a, i) => [a.position, list[i]]));
+  }, [run.questions, answers]);
   const challenge = answer && !answer.isCorrect ? answer.challenge : null;
   const challengeReview = challenge ? reviews[challenge.questionId] : undefined;
   const savedReview = getSavedChallengeReview(challenge?.checked, challenge?.review);
@@ -150,13 +159,13 @@ export default function Run({ run, onFinished, onQuit }: {
           <div className={marbleRowCls} aria-label={`${rightSoFar} correct answers`}>
             {run.questions.map((q) => {
               const a = answers[q.position];
-              return <QuestMarble key={q.position} look={a?.forgiven ? 'clear' : a ? answerLook(a.isCorrect, a.combo || 1) : 'empty'}
-                label={a?.forgiven ? '✓' : undefined} size={24} title={`Question ${q.position + 1}: ${a ? a.forgiven ? 'forgiven' : a.isCorrect ? 'correct' : 'missed' : 'unanswered'}`}
+              return <QuestMarble key={q.position} look={looks.get(q.position) || 'empty'}
+                size={24} title={`Question ${q.position + 1}: ${a ? a.forgiven ? 'forgiven' : a.isCorrect ? 'correct' : 'missed' : 'unanswered'}`}
                 className={q.position === question.position ? currentMarbleCls : undefined} />;
             })}
           </div>
           <span>{answeredCount}/{run.questions.length} answered</span>
-          <span className={cx(comboCls, combo >= 3 && comboHotCls)}>Combo ×{combo}</span>
+          <StreakBadge streak={combo} />
         </div>
         <div className={cx(cardCls, bossCardCls)} ref={cardRef}>
           <div className={cardInnerCls}>
@@ -302,8 +311,6 @@ const progressCls = css`
 `;
 const marbleRowCls = css`display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center;`;
 const currentMarbleCls = css`outline: 2px solid #e3c3ff; outline-offset: 3px;`;
-const comboCls = css`font-weight: 800;`;
-const comboHotCls = css`color: #ffdc73;`;
 const readyCls = css`padding: 2rem 1rem; font-family: ${PIXEL_FONT}; font-size: 1.2rem; text-align: center; color: #e3c3ff;`;
 const introCls = css`font-size: 1.2rem; color: #c4b3d6; margin-bottom: 0.7rem; line-height: 1.5;`;
 const metaCls = css`font-size: 1.3rem; line-height: 1.5; color: #d3c4e2;`;

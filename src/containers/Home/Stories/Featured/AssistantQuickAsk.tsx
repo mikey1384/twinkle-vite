@@ -7,6 +7,10 @@ import AssistantFace from '~/components/AssistantFace';
 import AgentSuggestions from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
 import useAssistantConversation from '~/containers/App/AssistantDock/useAssistantConversation';
 import {
+  readCachedStarters,
+  writeCachedStarters
+} from '~/containers/Chat/Body/MessagesContainer/MessageInput/agentStartersCache';
+import {
   getHomeAskPrefill,
   openAssistantDock,
   setHomeAskAssistant,
@@ -37,7 +41,12 @@ export default function AssistantQuickAsk({
     assistantName,
     channelId
   });
-  const [starterIdeas, setStarterIdeas] = useState<string[]>([]);
+  // Today's ideas kept on this device show at once; the server's copy then
+  // refreshes them in place.
+  const [starterIdeas, setStarterIdeas] = useState<string[]>(() =>
+    readCachedStarters(userId)
+  );
+  const [starterLoaded, setStarterLoaded] = useState(false);
   const [text, setText] = useState('');
   const [focused, setFocused] = useState(false);
   const engaged = focused || !!text.trim() || sending;
@@ -59,11 +68,23 @@ export default function AssistantQuickAsk({
   // find out what they can ask for.
   useEffect(() => {
     let cancelled = false;
+    setStarterIdeas(readCachedStarters(userId));
     Promise.resolve(loadWebsiteAgentStarters?.())
       .then((ideas) => {
-        if (!cancelled && Array.isArray(ideas)) setStarterIdeas(ideas);
+        if (cancelled) return;
+        setStarterLoaded(true);
+        if (!Array.isArray(ideas)) return;
+        writeCachedStarters(userId, ideas);
+        setStarterIdeas((current) =>
+          current.length === ideas.length &&
+          current.every((idea, index) => idea === ideas[index])
+            ? current
+            : ideas
+        );
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setStarterLoaded(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -162,18 +183,21 @@ export default function AssistantQuickAsk({
           )}
         </button>
       </form>
-      {!text.trim() && !sending && !replying ? (
-        <div
-          className={css`
-            margin-top: 0.4rem;
-          `}
-        >
-          <AgentSuggestions
-            ideas={starterIdeas}
-            onPick={(idea) => handleSend(idea)}
-          />
-        </div>
-      ) : null}
+      {/* The row keeps its height from the first paint (faint stand-ins until
+          the ideas arrive, hidden while typing or replying) so nothing below
+          moves under a finger. */}
+      <div
+        className={css`
+          margin-top: 0.4rem;
+        `}
+      >
+        <AgentSuggestions
+          ideas={starterIdeas}
+          loading={!starterLoaded}
+          hidden={!!text.trim() || sending || replying}
+          onPick={(idea) => handleSend(idea)}
+        />
+      </div>
     </div>
   );
 }

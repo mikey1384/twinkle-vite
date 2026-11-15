@@ -257,6 +257,10 @@ export interface QuestResult {
   size: number;
   xp: number;
   coins: number;
+  // a stop's or ghost run's best streak and the part of xp it earned (sent
+  // by newer servers; streakXp is left out when it can't be told)
+  bestCombo?: number;
+  streakXp?: number;
   newXp?: number;
   newCoins?: number;
   masteryBonus?: { worldId: number; xp: number; coins: number; awardedAt: number };

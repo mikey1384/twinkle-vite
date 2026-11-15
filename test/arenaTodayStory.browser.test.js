@@ -135,7 +135,8 @@ test('daily stories fit the actual Home preview slot, offer the exact question t
         await button.waitFor();
         // a guided clear shows what it paid too
         assert.ok(await page.getByText('25,000', { exact: true }).isVisible());
-        assert.ok(await page.getByText('0 Coins', { exact: true }).isVisible());
+        // zero amounts are left out, only what was earned shows
+        assert.equal(await page.getByText('0 Coins', { exact: true }).count(), 0);
         assert.ok(await page.getByLabel('Cleared', { exact: true }).isVisible());
         await checkFit();
         if (artifacts && width === 360) await page.screenshot({ path: path.join(artifacts, `${engine.name()}-guided-${width}.png`), fullPage: true });

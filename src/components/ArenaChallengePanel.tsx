@@ -248,7 +248,6 @@ function DailyClearPanel({
           label="Awarded"
           highlight
         />
-        {challenge.coinsEarned === 0 && <span className={modeCls}>0 Coins</span>}
       </div>
       {hasFoot && (
         <div className={dailyFootCls}>
