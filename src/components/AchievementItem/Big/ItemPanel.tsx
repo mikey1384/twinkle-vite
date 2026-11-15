@@ -278,43 +278,6 @@ export default function ItemPanel({
       )}
       style={panelStyle}
     >
-      {shareShown && (
-        <div
-          className={css`
-            position: absolute;
-            top: 1.2rem;
-            right: 1.2rem;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              top: 0.8rem;
-              right: 0.8rem;
-            }
-          `}
-        >
-          {/* help earning one you do not have yet */}
-          {!isUnlocked && (
-            <AskAgentButton
-              label="How do I earn this?"
-              style={{ padding: '0.4rem 0.9rem' }}
-              context={{
-                // the server reads the achievement and the member's own
-                // progress toward it
-                kind: 'achievement',
-                id: itemId,
-                label: `the "${itemName}" achievement`,
-                path: achievementPath
-              }}
-            />
-          )}
-          <ShareButton
-            linkPath={achievementPath}
-            buttonStyle={{ fontSize: '1.1rem' }}
-          />
-        </div>
-      )}
       {badgeSrc && (
         <img
           src={badgeSrc}
@@ -329,65 +292,112 @@ export default function ItemPanel({
         />
       )}
       {!isThumb && (
-        <h2
+        <div
           className={css`
             grid-area: title;
-            font-weight: bold;
-            font-size: 2rem;
-            ${shareShown ? `padding-right: ${isUnlocked ? 9 : 22}rem;` : ''}
-            @media (max-width: ${mobileMaxWidth}) {
-              padding-right: 0;
-            }
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 0.8rem 1.2rem;
+            min-width: 0;
           `}
-          style={{ color: Color.black() }}
         >
-          {shareShown ? (
-            <Link
-              to={achievementPath}
-              className={css`
-                color: ${Color.black()};
-                &:hover {
+          <h2
+            className={css`
+              font-weight: bold;
+              font-size: 2rem;
+              flex: 1 1 24rem;
+              min-width: 0;
+            `}
+            style={{ color: Color.black() }}
+          >
+            {shareShown ? (
+              <Link
+                to={achievementPath}
+                className={css`
                   color: ${Color.black()};
-                  text-decoration: underline;
-                }
-              `}
-            >
-              {itemName}
-            </Link>
-          ) : (
-            itemName
-          )}
-          {displayedAP && (
+                  &:hover {
+                    color: ${Color.black()};
+                    text-decoration: underline;
+                  }
+                `}
+              >
+                {itemName}
+              </Link>
+            ) : (
+              itemName
+            )}{' '}
             <span
               className={css`
-                margin-left: 0.5rem;
-                font-size: 1.6rem;
-                color: ${Color.darkGray()};
-                font-weight: normal;
+                white-space: nowrap;
               `}
             >
-              ({displayedAP} AP)
+              {displayedAP && (
+                <span
+                  className={css`
+                    margin-left: 0.5rem;
+                    font-size: 1.6rem;
+                    color: ${Color.darkGray()};
+                    font-weight: normal;
+                  `}
+                >
+                  ({displayedAP} AP)
+                </span>
+              )}
+              {!isNotification &&
+                (isUnlocked ? (
+                  <Icon
+                    color={Color.green()}
+                    className={css`
+                      margin-left: 1rem;
+                    `}
+                    icon="check"
+                  />
+                ) : (
+                  <Icon
+                    color={Color.darkGray()}
+                    className={css`
+                      margin-left: 1rem;
+                    `}
+                    icon="lock"
+                  />
+                ))}
             </span>
+          </h2>
+          {shareShown && (
+            <div
+              className={css`
+                display: flex;
+                flex: 0 0 auto;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 0.6rem;
+                max-width: 100%;
+                margin-left: auto;
+              `}
+            >
+              {/* help earning one you do not have yet */}
+              {!isUnlocked && (
+                <AskAgentButton
+                  label="How do I earn this?"
+                  style={{ padding: '0.4rem 0.9rem' }}
+                  context={{
+                    // the server reads the achievement and the member's own
+                    // progress toward it
+                    kind: 'achievement',
+                    id: itemId,
+                    label: `the "${itemName}" achievement`,
+                    path: achievementPath
+                  }}
+                />
+              )}
+              <ShareButton
+                linkPath={achievementPath}
+                buttonStyle={{ fontSize: '1.1rem' }}
+              />
+            </div>
           )}
-          {!isNotification &&
-            (isUnlocked ? (
-              <Icon
-                color={Color.green()}
-                className={css`
-                  margin-left: 1rem;
-                `}
-                icon="check"
-              />
-            ) : (
-              <Icon
-                color={Color.darkGray()}
-                className={css`
-                  margin-left: 1rem;
-                `}
-                icon="lock"
-              />
-            ))}
-        </h2>
+        </div>
       )}
       {!isThumb && (
         <div
@@ -478,13 +488,10 @@ export default function ItemPanel({
                       )
                     )
                   : phase.completed
-                  ? 100
-                  : 0;
+                    ? 100
+                    : 0;
               return (
-                <div
-                  key={index}
-                  style={{ width: '100%', marginTop: '1.5rem' }}
-                >
+                <div key={index} style={{ width: '100%', marginTop: '1.5rem' }}>
                   <h3
                     className={css`
                       margin-bottom: -0.5rem;

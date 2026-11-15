@@ -24,6 +24,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
+import ActionRow from '../ActionRow';
 import AiEnergySponsorButton, {
   shouldRenderAiEnergySponsorNotice
 } from '~/components/Comments/AiEnergySponsorButton';
@@ -533,12 +534,9 @@ function Reply({
                         height: 1em;
                       `}
                     />
-                    <div
+                    <ActionRow
                       className={css`
                         margin-top: 1rem;
-                        display: flex;
-                        justify-content: space-between;
-                        container-type: inline-size;
                       `}
                     >
                       <div>
@@ -631,11 +629,11 @@ function Reply({
                       </div>
                       {!compactMode && !isDeleteNotification ? (
                         <div
-                          className={css`
+                          className={`comment__action-group ${css`
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                          `}
+                          `}`}
                         >
                           <Button
                             color={rewardColor}
@@ -659,9 +657,7 @@ function Reply({
                                 label: 'this reply'
                               }}
                               style={{ marginLeft: '1rem' }}
-                              hideLabel={
-                                isMobile(navigator) || isTablet(navigator)
-                              }
+                              showLabelOnMobile
                             />
                           )}
                           <ShareButton
@@ -673,7 +669,7 @@ function Reply({
                           />
                         </div>
                       ) : null}
-                    </div>
+                    </ActionRow>
                   </div>
                 )}
               </div>

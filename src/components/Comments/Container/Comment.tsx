@@ -32,6 +32,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
+import ActionRow from './ActionRow';
 import AiEnergySponsorButton, {
   shouldRenderAiEnergySponsorNotice
 } from '~/components/Comments/AiEnergySponsorButton';
@@ -775,13 +776,7 @@ function Comment({
                           style={{ height: '1em' }}
                         />
                         {!isPreview && !isHidden && !isNotification && (
-                          <div
-                            className={`comment__actions ${css`
-                              display: flex;
-                              justify-content: space-between;
-                              container-type: inline-size;
-                            `}`}
-                          >
+                          <ActionRow className="comment__actions">
                             <div>
                               <div className="comment__buttons">
                                 {isDeleteNotification ? null : (
@@ -879,7 +874,7 @@ function Comment({
                             </div>
                             {!compactMode && !isDeleteNotification ? (
                               <div
-                                className={`comment__secondary-actions ${css`
+                                className={`comment__secondary-actions comment__action-group ${css`
                                   display: flex;
                                   justify-content: center;
                                   align-items: center;
@@ -906,7 +901,7 @@ function Comment({
                                       label: 'this comment'
                                     }}
                                     style={{ marginLeft: '1rem' }}
-                                    hideLabel={deviceIsMobile || deviceIsTablet}
+                                    showLabelOnMobile
                                   />
                                 )}
                                 <ShareButton
@@ -918,7 +913,7 @@ function Comment({
                                 />
                               </div>
                             ) : null}
-                          </div>
+                          </ActionRow>
                         )}
                       </div>
                     )}

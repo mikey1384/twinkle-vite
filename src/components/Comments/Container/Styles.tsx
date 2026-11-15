@@ -56,6 +56,19 @@ export const commentContainer = css`
     font-weight: bold;
     color: ${Color.darkerGray()};
   }
+  /* The action row (see ActionRow.tsx) never wraps to a second row: when the
+     buttons do not fit, the row scrolls sideways. Buttons keep their natural
+     size. */
+  .comment__action-row > div:first-of-type {
+    flex: 0 1 auto;
+  }
+  .comment__action-row .comment__buttons > * {
+    flex: 0 0 auto;
+  }
+  .comment__action-group {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
   .comment__buttons {
     display: flex;
     align-items: center;

@@ -1379,6 +1379,30 @@ const compactCommentEmbedPreviewClass = css`
        so the root can only be reached via inheritance from here. */
     font-size: max(1.78rem, 17.8px);
   }
+  /* A reference line (the type icon + the linked comment or subject) always
+     sits in its own row under the text. The copy column is vertically centred
+     in a fixed-height card, so when meta + text + reference are taller than the
+     card the overflow used to spill on both sides and squash the clamped text
+     into the line below it. Start at the top, never shrink a row, and let the
+     card clip at the bottom instead. */
+  &.compact-comment-embed--target-root.compact-comment-embed--with-reference
+    > .compact-comment-embed__copy {
+    align-self: stretch;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+  &.compact-comment-embed--target-root.compact-comment-embed--with-reference
+    > .compact-comment-embed__copy
+    > * {
+    flex-shrink: 0;
+  }
+  /* the copy column clips at the bottom, so a link's focus ring is drawn
+     inside its own box instead of being cut */
+  &.compact-comment-embed--target-root.compact-comment-embed--with-reference
+    > .compact-comment-embed__copy
+    .compact-comment-embed__reference--link:focus-visible {
+    outline-offset: -2px;
+  }
   &.compact-comment-embed--target-root.compact-comment-embed--has-media
     > .compact-comment-embed__copy,
   &.compact-comment-embed--target-root.compact-comment-embed--media-only
