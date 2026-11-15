@@ -1,6 +1,7 @@
 import React from 'react';
 import EmailExists from './EmailExists';
 import AskForHelp from '~/components/AskForHelp';
+import ClassResetWithCode from '~/containers/Classrooms/ResetWithCode';
 
 export default function EmailSection({
   account
@@ -9,6 +10,7 @@ export default function EmailSection({
     emailHint?: string;
     verifiedEmailHint?: string;
     id: number;
+    username?: string;
   };
 }) {
   return (
@@ -20,7 +22,11 @@ export default function EmailSection({
           userId={account.id}
         />
       ) : (
-        <AskForHelp />
+        <>
+          <AskForHelp />
+          {/* a class account with no email: its teacher's one-time code */}
+          <ClassResetWithCode username={account?.username || ''} />
+        </>
       )}
     </div>
   );

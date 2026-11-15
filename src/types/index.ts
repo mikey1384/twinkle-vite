@@ -192,6 +192,9 @@ export interface User {
   // decides it (approved teacher, staff account type or the admin), never
   // managementLevel, which 1000 AP alone grants
   canAccessSensitiveManagement?: boolean;
+  // own session only: an approved teacher, who may make classes (class
+  // codes); the API decides it and checks again on every class request
+  canMakeClasses?: boolean;
   canGenerateAICard?: boolean;
   // own session only: where the user stands on invitation rewards
   inviteRewardsStatus?:

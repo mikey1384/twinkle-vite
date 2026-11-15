@@ -192,6 +192,7 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // The member's own Zero or Ciel, kept on the account (every device).
     async updateHomeAssistant(assistant: 'Zero' | 'Ciel') {
       try {
         const { data } = await request.put(
@@ -2899,6 +2900,350 @@ export default function userRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    // ---- classroom sign-up (class codes): API routes/classrooms.ts ----
+    // The teacher's classes, each with its one code (QR, board code, link).
+    async loadMyClassrooms(askId?: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/classrooms${askId ? `?ask=${askId}` : ''}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async createClassroom(className: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/classrooms`,
+          { className },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadClassroom(classroomId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/classrooms/${classroomId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // extend: keep it 7 more days; off: stop it; new: a fresh code
+    async changeClassroomCode({
+      classroomId,
+      action
+    }: {
+      classroomId: number;
+      action: 'extend' | 'off' | 'new';
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/classrooms/${classroomId}/code`,
+          { action },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async removeClassroom(classroomId: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/user/classrooms/${classroomId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async markNotMyStudent({
+      classroomId,
+      userId
+    }: {
+      classroomId: number;
+      userId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/classrooms/${classroomId}/members/${userId}/remove`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // a one-time reset code for a student on the teacher's own roster
+    async issueClassroomReset({
+      classroomId,
+      userId
+    }: {
+      classroomId: number;
+      userId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/classrooms/${classroomId}/members/${userId}/reset`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // the one-time offer card for teachers; a failed check is "don't show"
+    async loadClassOffer(surface: 'home' | 'videos') {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/classrooms/offer?surface=${surface}`,
+          auth()
+        );
+        return { show: data?.show === true };
+      } catch {
+        return { show: false };
+      }
+    },
+    async answerClassOffer(how: 'dismiss' | 'try' | 'how') {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/classrooms/offer`,
+          { how },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // one quiet line for a mailbox that already carries several accounts;
+    // the emailed code's ticket (a) or the reset link (b) proves the mailbox
+    async claimClassHint({
+      kind,
+      email,
+      resetToken
+    }: {
+      kind: 'a' | 'b';
+      email?: string;
+      resetToken?: string;
+    }) {
+      try {
+        const { data } = await request.post(`${URL}/user/classrooms/hint`, {
+          kind,
+          email,
+          emailTicket: email ? getEmailTicket(email) : undefined,
+          resetToken
+        });
+        return data?.show === true;
+      } catch {
+        return false;
+      }
+    },
+    // funnel telemetry (counts only); never fails the page
+    async recordClassroomEvent({
+      kind,
+      detail,
+      joinKey,
+      classroomId
+    }: {
+      kind: string;
+      detail?: string;
+      joinKey?: string;
+      classroomId?: number;
+    }) {
+      try {
+        await request.post(
+          `${URL}/user/classrooms/event`,
+          { kind, detail, key: joinKey, classroomId },
+          token?.() ? auth() : undefined
+        );
+      } catch {
+        // telemetry only
+      }
+      return true;
+    },
+    // whose class a link or board code opens
+    async peekClassJoin({ joinKey, method }: { joinKey: string; method: string }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/classrooms/join?key=${encodeURIComponent(
+            joinKey
+          )}&m=${encodeURIComponent(method)}`,
+          token?.() ? auth() : undefined
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // a class-code sign-up: username, password and first name only
+    async signupWithClassCode({
+      joinKey,
+      method,
+      username,
+      firstname,
+      password
+    }: {
+      joinKey: string;
+      method: string;
+      username: string;
+      firstname: string;
+      password: string;
+    }) {
+      let data;
+      try {
+        ({ data } = await request.post(
+          `${URL}/user/signup/class`,
+          { key: joinKey, method, username, firstname, password },
+          {
+            headers: {
+              'x-twinkle-device-id': getTwinkleDeviceId()
+            }
+          }
+        ));
+      } catch (error) {
+        return handleError(error);
+      }
+      persistReturnedSessionToken(data.token);
+      return data;
+    },
+    // ---- "Ask my teacher for an account" (sign-up, no account yet) ----
+    // approved teachers by username or name; username and picture only
+    async searchTeachersForAsk(text: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/classrooms/ask/teachers?q=${encodeURIComponent(text)}`
+        );
+        return (data?.teachers || []) as {
+          userId: number;
+          username: string;
+          profilePicUrl: string | null;
+        }[];
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async sendClassAsk({
+      teacherId,
+      firstName,
+      note
+    }: {
+      teacherId: number;
+      firstName: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/classrooms/ask`,
+          { teacherId, firstName, note },
+          {
+            headers: {
+              'x-twinkle-device-id': getTwinkleDeviceId()
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // the asking browser reads its teacher's answer; a failed read is "waiting"
+    async loadClassAskStatus({
+      askId,
+      secret
+    }: {
+      askId: number;
+      secret: string;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/classrooms/ask/status?id=${askId}&secret=${encodeURIComponent(
+            secret
+          )}`
+        );
+        return data as {
+          state: 'waiting' | 'ready' | 'in_class' | 'gone';
+          teacherName?: string;
+          joinKey?: string;
+        };
+      } catch {
+        return { state: 'waiting' as const };
+      }
+    },
+    // the teacher's answer: a pass for one account in a class, or put aside
+    async answerClassAsk({
+      askId,
+      classroomId
+    }: {
+      askId: number;
+      classroomId?: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/classrooms/asks/${askId}/answer`,
+          { send: !!classroomId, classroomId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Today's Progress row for teachers; a failed read shows nothing
+    async loadClassSummary() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/classrooms/summary`,
+          auth()
+        );
+        return data as {
+          classes: number;
+          students: number;
+          joinedToday: number;
+          asking: number;
+        };
+      } catch {
+        return null;
+      }
+    },
+    // the student uses their teacher's reset code and picks a new password
+    async redeemClassReset({
+      username,
+      code,
+      password
+    }: {
+      username: string;
+      code: string;
+      password: string;
+    }) {
+      let data;
+      try {
+        ({ data } = await request.post(
+          `${URL}/user/classrooms/reset/redeem`,
+          { username, code, password },
+          {
+            headers: {
+              'x-twinkle-device-id': getTwinkleDeviceId()
+            }
+          }
+        ));
+      } catch (error) {
+        return handleError(error);
+      }
+      persistReturnedSessionToken(data.token);
+      return data;
     },
     async getSignupInvite(token: string) {
       try {

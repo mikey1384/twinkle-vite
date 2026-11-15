@@ -6,6 +6,7 @@ import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { getErrorMessage } from '~/helpers/errorMessageHelpers';
 import { useNavigate } from 'react-router-dom';
+import ClassHint from '~/containers/Classrooms/ClassHint';
 
 export default function PasswordForm({
   resetToken
@@ -66,6 +67,9 @@ export default function PasswordForm({
           Confirm
         </Button>
       </div>
+      {/* one quiet line, once, when this mailbox resets for several
+          accounts (Classrooms/ClassHint.tsx) */}
+      <ClassHint kind="b" resetToken={resetToken} />
     </div>
   );
 

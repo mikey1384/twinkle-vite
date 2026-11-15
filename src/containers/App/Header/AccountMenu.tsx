@@ -20,10 +20,12 @@ import { teardownChatPushOnLogout } from '~/helpers/desktopNotifications';
 import { trackEvent } from '~/helpers/analytics';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { MY_CLASSES_PATH } from '~/containers/Classrooms/shared';
 
 const logInLabel = 'Log In';
 const profileLabel = 'Profile';
 const managementLabel = 'Management';
+const myClassesLabel = 'My classes';
 const logOutLabel = 'Log out';
 
 export default function AccountMenu({
@@ -39,6 +41,8 @@ export default function AccountMenu({
   const userId = useKeyContext((v) => v.myState.userId);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  // approved teachers only: classroom sign-up (class codes)
+  const showMyClasses = useKeyContext((v) => !!v.myState.canMakeClasses);
   // iPad portrait is tight, so abbreviate the balance (1.2M / 12.3K) like the
   // mobile nav does; landscape/desktop keep the full comma-grouped number
   const { isTabletPortrait } = useTabletOrientation();
@@ -82,6 +86,24 @@ export default function AccountMenu({
         onClick: () => (isOnProfilePage ? null : navigate(`/users/${username}`))
       }
     ];
+    if (showMyClasses) {
+      result.push({
+        label: (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.8rem'
+            }}
+          >
+            <Icon icon="qrcode" />
+            <span>{myClassesLabel}</span>
+          </div>
+        ),
+        onClick: () => navigate(MY_CLASSES_PATH)
+      });
+    }
     if (managementLevel > 0) {
       result.push({
         label: (
@@ -118,7 +140,7 @@ export default function AccountMenu({
     });
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnProfilePage, managementLevel, username]);
+  }, [isOnProfilePage, managementLevel, showMyClasses, username]);
 
   return (
     <div

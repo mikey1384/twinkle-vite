@@ -187,10 +187,11 @@ export function createOwnerTraceRecorder({
 const SENSITIVE_QUERY_KEY = /token|code|key|secret|sig|auth|pass|session/i;
 
 // Routes whose path segment is a credential: /reset/password/:token
-// (ResetPassword), /verify/email/:token (Verify) and /bridge/c/:token (a
-// Bridge Builder invite), the token-like route params in the app.
+// (ResetPassword), /verify/email/:token (Verify), /bridge/c/:token (a
+// Bridge Builder invite) and /join/:token (a class code), the token-like
+// route params in the app.
 const TOKEN_PATH_SEGMENTS =
-  /^(\/(?:reset\/password|verify\/email|bridge\/c)\/)[^/]+/i;
+  /^(\/(?:reset\/password|verify\/email|bridge\/c|join)\/)[^/]+/i;
 
 function redactTokenSegments(pathname: string) {
   return pathname.replace(TOKEN_PATH_SEGMENTS, '$1***');

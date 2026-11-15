@@ -217,6 +217,8 @@ test('a payload that cannot serialize is dropped and never throws into the calle
 
 test('reset and verify token path segments are masked', () => {
   assert.equal(redactTracePath('/reset/password/abc.def'), '/reset/password/***');
+  // a class code's link (classroom sign-up)
+  assert.equal(redactTracePath('/join/Qx7_a-B3kLmN9pRsTuVw2Z?s=qr'), '/join/***?s=qr');
   assert.equal(
     redactTracePath('/verify/email/tok123?next=/home&code=9#x'),
     '/verify/email/***?next=/home&code=***#x'

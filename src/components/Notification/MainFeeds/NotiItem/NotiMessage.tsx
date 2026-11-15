@@ -648,6 +648,24 @@ function NotiMessage({
           />
         </>
       );
+    // Classroom sign-up: someone without an account asked this teacher for
+    // one (the line is from Ciel; My classes has the answer buttons)
+    case 'classAsk':
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            has a request for you:
+          </span>{' '}
+          {targetObj.content ? <b>{targetObj.content}</b> : 'someone'} is asking
+          you for a Twinkle account.{' '}
+          <Link
+            to={`/my-classes?ask=${targetObj.id}`}
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            Answer in My classes
+          </Link>
+        </>
+      );
     case 'buildCollaborationRequest':
       return (
         <>

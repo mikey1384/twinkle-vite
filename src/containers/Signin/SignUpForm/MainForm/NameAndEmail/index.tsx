@@ -5,6 +5,8 @@ import Verifier from './Verifier';import { stringIsEmpty, isValidEmailAddress } 
 import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { useAppContext } from '~/contexts';
+import ClassHint from '~/containers/Classrooms/ClassHint';
 
 const firstNameLabel = 'First Name';
 const lastNameLabel = 'Last Name';
@@ -48,6 +50,9 @@ export default function UsernamePassword({
   const linkColor = useMemo(
     () => linkRole.getColor() || Color.logoBlue(),
     [linkRole]
+  );
+  const onCloseSigninModal = useAppContext(
+    (v) => v.user.actions.onCloseSigninModal
   );
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
@@ -254,6 +259,13 @@ export default function UsernamePassword({
           >
             {`You're all set to create your account!`}
           </p>
+          {/* one quiet line, once, for a mailbox that already signed up
+              several accounts (Classrooms/ClassHint.tsx) */}
+          <ClassHint
+            kind="a"
+            email={verifiedEmail}
+            onNavigate={onCloseSigninModal}
+          />
           <div style={{ marginTop: '1.3rem' }}>
             <span
               onClick={() => {

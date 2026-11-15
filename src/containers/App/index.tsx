@@ -193,6 +193,15 @@ const BridgeStoryConsentPage = lazyWithRetry(
 const BridgeCheckinLinkPage = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/Checkin/CheckinLinkPage')
 );
+// Classroom sign-up (class codes): the teacher's My classes, the short help
+// page, and a class code's own link (a phone camera opened it)
+const Classrooms = lazyWithRetry(() => import('~/containers/Classrooms'));
+const ClassHelpPage = lazyWithRetry(
+  () => import('~/containers/Classrooms/HelpPage')
+);
+const ClassJoinPage = lazyWithRetry(
+  () => import('~/containers/Classrooms/JoinPage')
+);
 const BridgeGrownUpPage = lazyWithRetry(
   () => import('~/containers/BridgeBuilderQuest/Checkin/ParentWitnessPage')
 );
@@ -1667,6 +1676,9 @@ export default function App() {
                   path="/bridge/c/:token"
                   element={<BridgeCheckinLinkPage />}
                 />
+                <Route path="/my-classes" element={<Classrooms />} />
+                <Route path="/teachers/classes" element={<ClassHelpPage />} />
+                <Route path="/join/:token" element={<ClassJoinPage />} />
                 <Route
                   path="/achievements/:achievementType"
                   element={<AchievementPage />}

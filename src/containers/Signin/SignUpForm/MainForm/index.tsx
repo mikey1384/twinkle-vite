@@ -4,6 +4,7 @@ import Password from './Password';
 import NameAndEmail from './NameAndEmail';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import ModalFooter from '~/components/Modal/Footer';
 import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { setAnalyticsUser, trackEvent } from '~/helpers/analytics';
@@ -34,6 +35,7 @@ export default function MainForm({
   hasEmailError,
   hasNameError,
   onBackToSelection,
+  onShowLoginForm,
   onSetBranchName,
   onSetClassLabel,
   onSetFirstname,
@@ -66,6 +68,7 @@ export default function MainForm({
   hasEmailError: boolean;
   hasNameError: boolean;
   onBackToSelection: () => void;
+  onShowLoginForm: () => void;
   onSetBranchName: (branchName: string) => void;
   onSetClassLabel: (classLabel: string) => void;
   onSetEmail: (email: string) => void;
@@ -108,8 +111,7 @@ export default function MainForm({
 
   const isEmailAndNamePageIncomplete = useMemo(() => {
     const isTeacherRequirementMet =
-      !stringIsEmpty(branchName) &&
-      !stringIsEmpty(classLabel);
+      !stringIsEmpty(branchName) && !stringIsEmpty(classLabel);
     return (
       hasEmailError ||
       hasNameError ||
@@ -137,10 +139,11 @@ export default function MainForm({
         className={css`
           text-align: center;
           font-family: 'Roboto', sans-serif;
-          font-size: ${displayedPage === 'name_and_email' &&
-          userType === 'mentor'
-            ? '2.2rem'
-            : '2.5rem'};
+          font-size: ${
+            displayedPage === 'name_and_email' && userType === 'mentor'
+              ? '2.2rem'
+              : '2.5rem'
+          };
           margin-bottom: 20px;
           color: #333333;
           font-weight: 500;
@@ -187,59 +190,53 @@ export default function MainForm({
         />
       )}
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-      <div
-        style={{
-          marginTop: '3rem',
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'space-between'
-        }}
-      >
-        <div>
-          <Button
-            variant="soft"
-            tone="raised"
-            color="redOrange"
-            onClick={handlePrevious}
-          >
-            <Icon icon="chevron-left" />
-            <span style={{ marginLeft: '0.7rem' }}>Back</span>
-          </Button>
-          {displayedPage !== pages[0] && (
-            <a
-              style={{
-                display: 'inline-block',
-                cursor: 'pointer',
-                fontSize: '1.2rem',
-                marginTop: '0.7rem',
-                fontWeight: 'bold'
-              }}
-              onClick={onBackToSelection}
-            >{`Actually, I'm not a ${userType}`}</a>
-          )}
+      {displayedPage !== pages[0] && (
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <a
+            style={{
+              display: 'inline-block',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              fontWeight: 'bold'
+            }}
+            onClick={onBackToSelection}
+          >{`Actually, I'm not a ${userType}`}</a>
         </div>
-        <div>
-          <Button
-            variant="soft"
-            tone="raised"
-            disabled={
-              (displayedPage === 'username' && !isUsernameAvailable) ||
-              (displayedPage === 'password' &&
-                (stringIsEmpty(password) || password !== reenteredPassword)) ||
-              (displayedPage === 'name_and_email' &&
-                isEmailAndNamePageIncomplete)
-            }
-            loading={signingUp}
-            color={isOnFinalPage ? 'green' : 'logoBlue'}
-            onClick={handleNext}
-          >
-            <span style={{ marginRight: '0.7rem' }}>
-              {isOnFinalPage ? createMyAccountLabel : 'Next'}
-            </span>
-            <Icon icon="chevron-right" />
-          </Button>
-        </div>
-      </div>
+      )}
+      {/* the same Back and Next as before, in the window's footer */}
+      <ModalFooter>
+        <Button
+          variant="soft"
+          tone="raised"
+          color="redOrange"
+          style={{ marginRight: 'auto' }}
+          onClick={handlePrevious}
+        >
+          <Icon icon="chevron-left" />
+          <span style={{ marginLeft: '0.7rem' }}>Back</span>
+        </Button>
+        <Button variant="ghost" color="orange" onClick={onShowLoginForm}>
+          I already have an account
+        </Button>
+        <Button
+          variant="soft"
+          tone="raised"
+          disabled={
+            (displayedPage === 'username' && !isUsernameAvailable) ||
+            (displayedPage === 'password' &&
+              (stringIsEmpty(password) || password !== reenteredPassword)) ||
+            (displayedPage === 'name_and_email' && isEmailAndNamePageIncomplete)
+          }
+          loading={signingUp}
+          color={isOnFinalPage ? 'green' : 'logoBlue'}
+          onClick={handleNext}
+        >
+          <span style={{ marginRight: '0.7rem' }}>
+            {isOnFinalPage ? createMyAccountLabel : 'Next'}
+          </span>
+          <Icon icon="chevron-right" />
+        </Button>
+      </ModalFooter>
     </div>
   );
 

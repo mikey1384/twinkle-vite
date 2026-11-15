@@ -9,6 +9,7 @@ import DailyGoals from './DailyGoals';
 import AchievementProgress from './AchievementProgress';
 import TodayXPRankings from './TodayXPRankings';
 import LiveNow, { useHeldWhileInteracting, useLiveNowApps } from './LiveNow';
+import MyClassesRow from './MyClassesRow';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
@@ -520,6 +521,11 @@ export default function TodayStats({
                   onPopupOpenChange={setLiveNowPopupOpen}
                 />
               ) : null}
+              {/* approved teachers only: their classes (renders nothing otherwise) */}
+              <MyClassesRow
+                accentColor={todayProgressColor}
+                buttonColor={buttonColor}
+              />
               {!!aiUsagePolicy && (
                 <div className={aiEnergyPanelCls}>
                   <AiEnergyCard

@@ -3,6 +3,7 @@ import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import FeaturedPlaylistsPanel from './FeaturedPlaylistsPanel';
 import PlaylistsPanel from './PlaylistsPanel';
 import ContinueWatchingPanel from './ContinueWatchingPanel';
+import ClassOfferCard from '~/containers/Classrooms/OfferCard';
 import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -83,6 +84,9 @@ export default function Videos() {
   return (
     <ErrorBoundary componentPath="Explore/Videos">
       <div>
+        {/* the one-time class-code offer for teachers with no class yet;
+            renders nothing for everyone else */}
+        <ClassOfferCard surface="videos" />
         <ContinueWatchingPanel />
         <FeaturedPlaylistsPanel />
         <PlaylistsPanel

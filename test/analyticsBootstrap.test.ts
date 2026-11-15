@@ -269,6 +269,12 @@ test('URLs sent to GA never carry secrets from links', () => {
     analyticsUrl('/verify/email/abc.def.ghi'),
     `${origin}/verify/email/:token`
   );
+  // a class code's link or board code (classroom sign-up) is a credential
+  assert.equal(
+    analyticsUrl('/join/Qx7_a-B3kLmN9pRsTuVw2Z?s=qr'),
+    `${origin}/join/:token`
+  );
+  assert.equal(analyticsUrl('/join/TW4K7QXY'), `${origin}/join/:token`);
   assert.equal(
     analyticsUrl('/signup/guardian?token=secret123&choice=decline&lang=ko'),
     `${origin}/signup/guardian?choice=decline&lang=ko`

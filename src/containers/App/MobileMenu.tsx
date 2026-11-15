@@ -5,16 +5,18 @@ import Notification from '~/components/Notification';
 import AlertModal from '~/components/Modals/AlertModal';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSpring, animated } from '@react-spring/web';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { teardownChatPushOnLogout } from '~/helpers/desktopNotifications';
 import { trackEvent } from '~/helpers/analytics';
+import { MY_CLASSES_PATH } from '~/containers/Classrooms/shared';
 
 export default function MobileMenu({ onClose }: { onClose: () => void }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const styles = useSpring({
     to: { marginLeft: '0' },
     from: { marginLeft: '-100%' }
@@ -29,6 +31,10 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
   const username = useKeyContext((v) => v.myState.username);
   const userId = useKeyContext((v) => v.myState.userId);
+  // approved teachers only: classroom sign-up (class codes)
+  const showMyClasses = useKeyContext(
+    (v) => !!v.myState.userId && !!v.myState.canMakeClasses
+  );
   const [alertModalShown, setAlertModalShown] = useState(false);
 
   useEffect(() => {
@@ -69,6 +75,25 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
             <ProfileWidget />
             <HomeMenuItems style={{ marginTop: '1rem' }} onClose={onClose} />
             <Notification location="home" />
+            {showMyClasses && (
+              <div
+                className={css`
+                  font-weight: bold;
+                  border-top: 1px solid var(--ui-border);
+                  background: #fff;
+                  width: 100%;
+                  text-align: center;
+                  color: ${Color.darkerGray()};
+                  font-size: 2rem;
+                  padding: 1rem;
+                  margin-top: 1rem;
+                `}
+                onClick={() => navigate(MY_CLASSES_PATH)}
+              >
+                <Icon icon="qrcode" />
+                <span style={{ marginLeft: '0.7rem' }}>My classes</span>
+              </div>
+            )}
             {username && (
               <div
                 className={css`

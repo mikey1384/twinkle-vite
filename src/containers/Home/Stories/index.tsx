@@ -8,6 +8,7 @@ import HomeFilter from './HomeFilter';
 import TopMenu from '../TopMenu';
 import Featured from './Featured';
 import RewardDigestCard from './RewardDigestCard';
+import ClassOfferCard from '~/containers/Classrooms/OfferCard';
 import HomeFeedCard from './FeedCard';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
@@ -646,6 +647,9 @@ export default function Stories() {
           ) : null}
           {loaded && !loadingPosts && feeds?.length > 0 ? (
             <>
+              {/* the one-time class-code offer for teachers with no class
+                  yet; renders nothing for everyone else */}
+              <ClassOfferCard surface="home" />
               {displayOrder === 'desc' && numNewPosts > 0 ? (
                 <Banner
                   color={alertColorKey}

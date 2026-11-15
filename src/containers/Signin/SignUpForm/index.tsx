@@ -7,6 +7,12 @@ import SecretPassPhrase from './SecretPassPhrase';
 import InvitePass from './InvitePass';
 import AgeCheck from './AgeCheck';
 import GuardianConsent from './GuardianConsent';
+import ClassCodeEntry from '~/containers/Classrooms/ClassCodeEntry';
+import AskTeacher from '~/containers/Classrooms/AskTeacher';
+import { getClassAsk } from '~/containers/Classrooms/shared';
+import Icon from '~/components/Icon';
+import ModalFooter from '~/components/Modal/Footer';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import {
   clearSignupInvite,
@@ -16,9 +22,11 @@ import {
   type SignupInvite
 } from '~/helpers/signupPasses';
 import { css } from '@emotion/css';
-import { SITE_NAME } from '~/constants/siteBrand';
 const iAlreadyHaveAnAccountLabel = 'I already have an account';
-const letsSetUpYourAccountLabel = `Welcome to ${SITE_NAME}! Let's set up your account`;
+// The sign-up page of the sign-in window, in the standard Modal layout: the
+// window's title bar and footer belong to the Modal (Signin/index.tsx gives
+// the title; footer buttons arrive through ModalFooter), and this renders
+// the body. Every step and its rules are as before.
 
 export default function SignUpForm({
   branchName,
@@ -135,119 +143,200 @@ export default function SignUpForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPassphraseValid, passphrase]);
 
+  // the two other ways in (a teacher's class code, asking a teacher); a
+  // request already sent from this browser reopens on its waiting screen
+  const [otherWay, setOtherWay] = useState<'' | 'code' | 'ask'>(() =>
+    getClassAsk() ? 'ask' : ''
+  );
+  const onEntryScreen =
+    !otherWay && !userType && !isPassphraseValid && !inviteAccepted && !invite;
+
   return (
     <ErrorBoundary componentPath="Signin/SignupForm">
-      <header>{letsSetUpYourAccountLabel}</header>
-      <main
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '25vh'
-        }}
-      >
-        <div
-          className={css`
-            width: 100%;
-            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
-            section:first-of-type {
-              margin-top: 0;
-            }
-            input {
-              margin-top: 0.5rem;
-            }
-            label {
-              font-weight: bold;
-            }
-          `}
-        >
-          {userType ? (
-            <MainForm
-              branchName={branchName}
-              classLabel={classLabel}
-              firstname={firstname}
-              lastname={lastname}
-              username={username}
-              password={password}
-              email={email}
-              verifiedEmail={verifiedEmail}
-              reenteredPassword={reenteredPassword}
-              isUsernameAvailable={isUsernameAvailable}
-              hasEmailError={hasEmailError}
-              hasNameError={hasNameError}
-              onSetBranchName={onSetBranchName}
-              onSetClassLabel={onSetClassLabel}
-              onSetFirstname={onSetFirstname}
-              onSetLastname={onSetLastname}
-              onSetEmail={onSetEmail}
-              onSetVerifiedEmail={onSetVerifiedEmail}
-              onSetPassword={onSetPassword}
-              onSetReenteredPassword={onSetReenteredPassword}
-              onSetHasNameError={onSetHasNameError}
-              onSetHasEmailError={onSetHasEmailError}
-              onSetIsUsernameAvailable={onSetIsUsernameAvailable}
-              onSetUsername={onSetUsername}
-              onBackToSelection={() => setUsertype('')}
-              passphrase={passphrase}
-              invite={inviteAccepted ? invite?.token : undefined}
-              birthYear={birth?.birthYear}
-              birthMonth={birth?.birthMonth}
-              guardianConsent={guardianConsent || undefined}
-              userType={userType}
-            />
-          ) : isPassphraseValid ? (
-            <StudentOrTeacher onSelect={setUsertype} />
-          ) : inviteAccepted && invite && !birth ? (
-            <AgeCheck
-              onBack={() => setInviteAccepted(false)}
-              onContinue={setBirth}
-            />
-          ) : inviteAccepted && invite && birth && needsConsent && !guardianConsent ? (
-            <GuardianConsent
-              inviteToken={invite.token}
-              birthYear={birth.birthYear}
-              birthMonth={birth.birthMonth}
-              initialFirstName={firstname}
-              onChangeBirth={() => setBirth(null)}
-              onApproved={({ consentId, secret, childFirstName }) => {
-                if (!firstname.trim()) onSetFirstname(childFirstName);
-                setGuardianConsent({ consentId, secret });
-              }}
-            />
-          ) : inviteAccepted ? (
-            <StudentOrTeacher onSelect={setUsertype} />
-          ) : invite ? (
-            <InvitePass
-              inviterName={invite.inviterName || ''}
-              source={invite.source || 'guest'}
-              minecraftName={invite.minecraftName}
-              onContinue={() => setInviteAccepted(true)}
-              onUseQuestion={() => setInvite(null)}
-              onLogIn={onShowLoginForm}
-            />
-          ) : (
-            <SecretPassPhrase
-              onSetPassphrase={setPassphrase}
-              onSetIsPassphraseValid={onSetIsPassphraseValid}
-              passphrase={passphrase}
-            />
-          )}
-        </div>
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          color="orange"
-          style={{
-            fontSize: '1.5rem',
-            marginRight: '1rem'
-          }}
-          onClick={onShowLoginForm}
-        >
-          {iAlreadyHaveAnAccountLabel}
-        </Button>
-      </footer>
+      <div className={bodyClass}>
+        {otherWay === 'code' ? (
+          <ClassCodeEntry onBack={() => setOtherWay('')} />
+        ) : otherWay === 'ask' ? (
+          <AskTeacher
+            onBack={() => setOtherWay('')}
+            onUseClassCode={() => setOtherWay('code')}
+          />
+        ) : userType ? (
+          <MainForm
+            branchName={branchName}
+            classLabel={classLabel}
+            firstname={firstname}
+            lastname={lastname}
+            username={username}
+            password={password}
+            email={email}
+            verifiedEmail={verifiedEmail}
+            reenteredPassword={reenteredPassword}
+            isUsernameAvailable={isUsernameAvailable}
+            hasEmailError={hasEmailError}
+            hasNameError={hasNameError}
+            onSetBranchName={onSetBranchName}
+            onSetClassLabel={onSetClassLabel}
+            onSetFirstname={onSetFirstname}
+            onSetLastname={onSetLastname}
+            onSetEmail={onSetEmail}
+            onSetVerifiedEmail={onSetVerifiedEmail}
+            onSetPassword={onSetPassword}
+            onSetReenteredPassword={onSetReenteredPassword}
+            onSetHasNameError={onSetHasNameError}
+            onSetHasEmailError={onSetHasEmailError}
+            onSetIsUsernameAvailable={onSetIsUsernameAvailable}
+            onSetUsername={onSetUsername}
+            onBackToSelection={() => setUsertype('')}
+            onShowLoginForm={onShowLoginForm}
+            passphrase={passphrase}
+            invite={inviteAccepted ? invite?.token : undefined}
+            birthYear={birth?.birthYear}
+            birthMonth={birth?.birthMonth}
+            guardianConsent={guardianConsent || undefined}
+            userType={userType}
+          />
+        ) : isPassphraseValid ? (
+          <StudentOrTeacher onSelect={setUsertype} />
+        ) : inviteAccepted && invite && !birth ? (
+          <AgeCheck
+            onBack={() => setInviteAccepted(false)}
+            onContinue={setBirth}
+          />
+        ) : inviteAccepted &&
+          invite &&
+          birth &&
+          needsConsent &&
+          !guardianConsent ? (
+          <GuardianConsent
+            inviteToken={invite.token}
+            birthYear={birth.birthYear}
+            birthMonth={birth.birthMonth}
+            initialFirstName={firstname}
+            onChangeBirth={() => setBirth(null)}
+            onApproved={({ consentId, secret, childFirstName }) => {
+              if (!firstname.trim()) onSetFirstname(childFirstName);
+              setGuardianConsent({ consentId, secret });
+            }}
+          />
+        ) : inviteAccepted ? (
+          <StudentOrTeacher onSelect={setUsertype} />
+        ) : invite ? (
+          <InvitePass
+            inviterName={invite.inviterName || ''}
+            source={invite.source || 'guest'}
+            minecraftName={invite.minecraftName}
+            onContinue={() => setInviteAccepted(true)}
+            onUseQuestion={() => setInvite(null)}
+            onLogIn={onShowLoginForm}
+          />
+        ) : (
+          <SecretPassPhrase
+            onSetPassphrase={setPassphrase}
+            onSetIsPassphraseValid={onSetIsPassphraseValid}
+            passphrase={passphrase}
+          />
+        )}
+        {onEntryScreen && (
+          <section className={otherWaysClass}>
+            <div className={otherWaysLabelClass}>Other ways to join</div>
+            <div className={otherWaysRowClass}>
+              <Button
+                variant="soft"
+                color="logoBlue"
+                uppercase={false}
+                stretch
+                onClick={() => setOtherWay('code')}
+              >
+                <Icon icon="qrcode" />
+                <span className={otherWayTextClass}>
+                  <b>I have a class code</b>
+                  <small>From your teacher’s screen or board</small>
+                </span>
+              </Button>
+              <Button
+                variant="soft"
+                color="logoBlue"
+                uppercase={false}
+                stretch
+                onClick={() => setOtherWay('ask')}
+              >
+                <Icon icon="chalkboard-teacher" />
+                <span className={otherWayTextClass}>
+                  <b>Ask my teacher</b>
+                  <small>Find your teacher and ask for an account</small>
+                </span>
+              </Button>
+            </div>
+          </section>
+        )}
+      </div>
+      {/* MainForm, the class-code screen and Ask my teacher bring their own
+          footer buttons (ModalFooter) */}
+      {!otherWay && !userType && (
+        <ModalFooter>
+          <Button variant="ghost" color="orange" onClick={onShowLoginForm}>
+            {iAlreadyHaveAnAccountLabel}
+          </Button>
+        </ModalFooter>
+      )}
     </ErrorBoundary>
   );
 }
+
+// the steps' own spacing rules, as before the layout change
+const bodyClass = css`
+  width: 100%;
+  min-height: 22vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem 0.5rem 0.5rem;
+  section:first-of-type {
+    margin-top: 0;
+  }
+  input {
+    margin-top: 0.5rem;
+  }
+  label {
+    font-weight: bold;
+  }
+`;
+const otherWaysClass = css`
+  width: 100%;
+  max-width: 52rem;
+  margin: 3rem auto 0 !important;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--ui-border);
+`;
+const otherWaysLabelClass = css`
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: ${Color.darkGray()};
+`;
+const otherWaysRowClass = css`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+  }
+`;
+const otherWayTextClass = css`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 1rem;
+  text-align: left;
+  line-height: 1.3;
+  b {
+    font-size: 1.5rem;
+  }
+  small {
+    font-size: 1.2rem;
+    font-weight: 400;
+    opacity: 0.85;
+  }
+`;
