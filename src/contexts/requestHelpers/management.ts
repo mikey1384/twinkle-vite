@@ -1342,6 +1342,29 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    // Mikey's Apprentice applications (Mikey only; read-only)
+    async loadApprenticeApplications() {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/apprentice/applications`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadApprenticeApplicationDetail(userId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/apprentice/applications/${userId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async regenerateAICardImage({
       cardId,
       prompt

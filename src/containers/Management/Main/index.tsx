@@ -9,8 +9,12 @@ import Achievements from './Achievements';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import WealthData from './WealthData';
 import BuildRewardApprovals from './BuildRewardApprovals';
+import ApprenticeApplications from './ApprenticeApplications';
+import { MIKEY_USER_ID } from '~/constants/defaultValues';
 
 export default function Main() {
+  // Mikey's Apprentice applications are his alone (the API agrees)
+  const isMikey = useKeyContext((v) => v.myState.userId) === MIKEY_USER_ID;
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const canManage = useMemo(() => managementLevel > 2, [managementLevel]);
   // pending approvals hold children's birthdays and mentor applicants' real
@@ -109,6 +113,7 @@ export default function Main() {
       <BuildRewardApprovals />
       <WealthData />
       {canViewApprovals && <Approvals canManage={canManage} />}
+      {isMikey && <ApprenticeApplications />}
       {canManage && <Achievements />}
       <Supermods canManage={canManage} />
       {canManage && <Moderators canManage={canManage} />}

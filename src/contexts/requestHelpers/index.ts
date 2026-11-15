@@ -1066,6 +1066,20 @@ registerMethods('zero', [
   'textToSpeech'
 ]);
 
+// Mikey's Apprentice: the member's application, and Mikey's read-only review
+registerMethods('user', [
+  'loadApprenticeApplication',
+  'loadApprenticeChoices',
+  'saveApprenticeDraft',
+  'submitApprenticeApplication',
+  'loadApprenticeAdvisor',
+  'recordApprenticeEvent'
+]);
+registerMethods('management', [
+  'loadApprenticeApplications',
+  'loadApprenticeApplicationDetail'
+]);
+
 // every helper module is a bare import() whose default is the factory, so a
 // fresh copy of its chunk is usable exactly when it has that default
 function isRequestHelperModule(loaded: unknown) {

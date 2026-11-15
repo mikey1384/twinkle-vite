@@ -215,6 +215,8 @@ const LinkPage = lazyWithRetry(loadLinkPage);
 const PlaylistPage = lazyWithRetry(() => import('~/containers/PlaylistPage'));
 const Privacy = lazyWithRetry(() => import('~/containers/Privacy'));
 const SponsorGuide = lazyWithRetry(() => import('~/containers/SponsorGuide'));
+// Mikey's Apprentice: the role page and its private application
+const Apprentice = lazyWithRetry(() => import('~/containers/Apprentice'));
 const Redirect = lazyWithRetry(() => import('~/containers/Redirect'));
 const MissionPage = lazyWithRetry(() => import('~/containers/MissionPage'));
 const Mission = lazyWithRetry(() => import('~/containers/Mission'));
@@ -1598,6 +1600,7 @@ export default function App() {
                 />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/sponsor" element={<SponsorGuide />} />
+                <Route path="/apprentice" element={<Apprentice />} />
                 <Route path="/users" element={<Home section="people" />} />
                 <Route path="/groups" element={<Home section="group" />} />
                 <Route

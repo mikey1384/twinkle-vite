@@ -3008,6 +3008,79 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // Mikey's Apprentice application (/apprentice; twinkle-api
+    // controllers/user/routes/apprentice.ts). The server's answer is the
+    // canonical application every time.
+    async loadApprenticeApplication() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/apprentice/application`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadApprenticeChoices() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/apprentice/choices`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // basedOnRevision: the version this draft was written against; a save
+    // that arrives after a newer send is ignored by the server
+    async saveApprenticeDraft(
+      answers: Record<string, any>,
+      basedOnRevision?: number
+    ) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/apprentice/application/draft`,
+          { answers, basedOnRevision },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitApprenticeApplication(answers: Record<string, any>) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/apprentice/application/submit`,
+          { answers },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadApprenticeAdvisor() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/apprentice/advisor`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // counts only (page_view, form_opened); never blocks the page
+    async recordApprenticeEvent(kind: 'page_view' | 'form_opened') {
+      try {
+        await request.post(`${URL}/user/apprentice/events`, { kind }, auth());
+      } catch {
+        // telemetry
+      }
+    },
     async verifyPassphrase(passphrase: string) {
       try {
         const {

@@ -26,6 +26,7 @@ import { SITE_FULL_NAME } from '~/constants/siteBrand';
 const peopleLabel = 'People';
 const postsLabel = 'Posts';
 const achievementsLabel = 'Achievements';
+const apprenticeLabel = "Mikey's Apprentice";
 const deviceIsMobile = isMobile(navigator);
 
 export default function HomeMenuItems({
@@ -368,6 +369,22 @@ export default function HomeMenuItems({
                 <Icon icon="sliders-h" size="1x" />
               </div>
               <div className="label">Settings</div>
+            </div>
+          </a>
+        </nav>
+        {/* Mikey's Apprentice role page, open to everyone (Mikey 11-15): a
+            plain permanent item like its neighbours, no badge or banner */}
+        <nav
+          className={location.pathname === '/apprentice' ? 'active' : ''}
+          onClick={() => navigate('/apprentice')}
+        >
+          <a href="/apprentice" onClick={(e) => e.preventDefault()}>
+            <div className="homemenu__item">
+              <div className="selection" />
+              <div className="icon">
+                <Icon icon="user-graduate" size="1x" />
+              </div>
+              <div className="label">{apprenticeLabel}</div>
             </div>
           </a>
         </nav>
