@@ -46,6 +46,7 @@ import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
 import { useLumineCommentMenuItem } from '../../LumineCommentContext';
+import { useFeatureOnProfileMenuItem } from '~/components/Comments/useFeatureOnProfileMenuItem';
 
 const pinLabel = 'Pin';
 const unpinLabel = 'Unpin';
@@ -263,6 +264,10 @@ export default function SearchedComment({
     parentComment: comment.targetObj?.comment,
     rootContent: parent.contentType === 'build' ? parent : rootContent
   });
+  const featureMenuItem = useFeatureOnProfileMenuItem({
+    comment: { ...comment, isDeleted },
+    userIsUploader
+  });
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (lumineMenuItem) items.push(lumineMenuItem);
@@ -306,6 +311,7 @@ export default function SearchedComment({
           handlePinComment(pinnedCommentId === comment.id ? null : comment.id)
       });
     }
+    if (featureMenuItem) items.push(featureMenuItem);
     if (userCanDeleteThis) {
       items.push({
         label: (
@@ -320,6 +326,7 @@ export default function SearchedComment({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    featureMenuItem,
     lumineMenuItem,
     pinSupported,
     banned?.posting,

@@ -1,74 +1,76 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
-import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import SortableListGroup from '~/components/SortableListGroup';
-import { objectify } from '~/helpers';
 import { isEqual } from 'lodash';
-import { useAppContext, useProfileContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
+import { getPlainPreviewText } from '~/helpers/stringHelpers';
+import { profileFeaturedItemKey } from '~/helpers/profileFeatured';
 
+// Featured subjects and comments are ordered together. Keys are "type:id"
+// because a subject and a comment can share an id.
 export default function ReorderFeaturedSubjects({
+  items,
   onHide,
-  subjects: featuredSubjects,
-  subjectIds: initialSubjectIds,
-  username
+  onSubmit
 }: {
-  subjects: any[];
+  items: any[];
   onHide: () => void;
-  subjectIds: number[];
-  username: string;
+  onSubmit: (saved: { items: any[]; refs?: any[] }) => void;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColor = useMemo(
     () => doneRole.getColor() || Color.blue(),
     [doneRole]
   );
-  const reportError = useAppContext((v) => v.requestHelpers.reportError);
-  const featureSubjectsOnProfile = useAppContext(
-    (v) => v.requestHelpers.featureSubjectsOnProfile
+  const saveProfileFeaturedItems = useAppContext(
+    (v) => v.requestHelpers.saveProfileFeaturedItems
   );
-  const onLoadFeaturedSubjects = useProfileContext(
-    (v) => v.actions.onLoadFeaturedSubjects
-  );
-  const [subjectIds, setSubjectIds] = useState(initialSubjectIds);
+  const initialKeys = useMemo(() => items.map(profileFeaturedItemKey), [items]);
+  const itemObj = useMemo(() => {
+    const result: Record<string, any> = {};
+    for (const item of items) {
+      result[profileFeaturedItemKey(item)] = {
+        label:
+          item?.contentType === 'comment'
+            ? getCommentLabel(item)
+            : item?.title || ''
+      };
+    }
+    return result;
+  }, [items]);
+  const [itemKeys, setItemKeys] = useState<string[]>(initialKeys);
   const [isReordering, setIsReordering] = useState(false);
-  const listItemObj = objectify(featuredSubjects);
 
   return (
-    <Modal modalKey="ReorderFeaturedSubjects" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
-      <LegacyModalLayout>
-        <header>Reorder Featured Subjects</header>
-        <main>
-          <SortableListGroup
-            listItemLabel="title"
-            listItemObj={listItemObj}
-            onMove={handleMove}
-            itemIds={subjectIds}
-          />
-        </main>
-        <footer>
-          <Button
-            variant="ghost"
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
-          >
+    <Modal
+      modalKey="ReorderFeaturedSubjects"
+      isOpen
+      onClose={onHide}
+      title="Reorder Featured"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onHide}>
             Cancel
           </Button>
           <Button
-            disabled={isEqual(
-              subjectIds,
-              featuredSubjects.map((subject: { id: number }) => subject.id)
-            )}
+            disabled={isEqual(itemKeys, initialKeys)}
             loading={isReordering}
             color={doneColor}
             onClick={handleSubmit}
           >
             Done
           </Button>
-        </footer>
-      </LegacyModalLayout>
+        </>
+      }
+    >
+      <SortableListGroup<string>
+        listItemObj={itemObj}
+        itemIds={itemKeys}
+        onMove={handleMove}
+      />
     </Modal>
   );
 
@@ -76,41 +78,42 @@ export default function ReorderFeaturedSubjects({
     sourceId,
     targetId
   }: {
-    sourceId: number;
-    targetId: number;
+    sourceId: string;
+    targetId: string;
   }) {
-    const sourceIndex = subjectIds.indexOf(sourceId);
-    const targetIndex = subjectIds.indexOf(targetId);
-    const newSubjectIds = [...subjectIds];
-    newSubjectIds.splice(sourceIndex, 1);
-    newSubjectIds.splice(targetIndex, 0, sourceId);
-    setSubjectIds(newSubjectIds);
+    const sourceIndex = itemKeys.indexOf(sourceId);
+    const targetIndex = itemKeys.indexOf(targetId);
+    const nextKeys = [...itemKeys];
+    nextKeys.splice(sourceIndex, 1);
+    nextKeys.splice(targetIndex, 0, sourceId);
+    setItemKeys(nextKeys);
   }
 
   async function handleSubmit() {
-    for (const subjectId of subjectIds) {
-      if (!subjectId) {
-        return reportError({
-          componentPath:
-            'Profile/Body/Home/Activities/FeaturedSubjects/ReorderFeaturedSubjects',
-          message: `handleSubmit: one of the elements inside subjectIds array is null`
-        });
-      }
-    }
     setIsReordering(true);
     try {
-      const reorderedSubjects = await featureSubjectsOnProfile({
-        selected: subjectIds
-      });
-      onLoadFeaturedSubjects({
-        username,
-        subjects: reorderedSubjects
-      });
-      onHide();
+      const saved = await saveProfileFeaturedItems(
+        itemKeys.map((key) => {
+          const [contentType, contentId] = key.split(':');
+          return {
+            contentType: contentType as 'subject' | 'comment',
+            contentId: Number(contentId)
+          };
+        })
+      );
+      onSubmit({ items: saved?.items || [], refs: saved?.refs });
     } catch (error) {
-      console.error('Error while reordering profile subjects:', error);
+      console.error('Error while reordering featured profile items:', error);
     } finally {
       setIsReordering(false);
     }
   }
+}
+
+// Plain text like every other reorder list; "Comment:" tells the two apart.
+function getCommentLabel(comment: any) {
+  if (comment?.secretHidden) return 'Comment: secret';
+  const text = getPlainPreviewText(String(comment?.content || '')).trim();
+  if (!text) return 'Comment';
+  return `Comment: ${text.length > 80 ? `${text.slice(0, 80).trimEnd()}…` : text}`;
 }

@@ -341,6 +341,82 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // Profile "Featured": subjects and the member's own comments, in order.
+    async loadProfileFeaturedItems(userId: number) {
+      try {
+        const {
+          data: { items }
+        } = await request.get(
+          `${URL}/user/featured/items?userId=${userId}`,
+          auth()
+        );
+        return items;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMyProfileFeaturedRefs() {
+      try {
+        const { data } = await request.get(`${URL}/user/featured/mine`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMyCommentsForFeatured({
+      lastId,
+      searchText
+    }: {
+      lastId?: number;
+      searchText?: string;
+    } = {}) {
+      try {
+        const params = new URLSearchParams();
+        if (lastId) params.set('lastId', String(lastId));
+        if (searchText) params.set('searchText', searchText);
+        const { data } = await request.get(
+          `${URL}/user/featured/candidates/comments?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveProfileFeaturedItems(
+      items: Array<{ contentType: 'subject' | 'comment'; contentId: number }>
+    ) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/featured/items`,
+          { items },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setCommentFeaturedOnProfile({
+      commentId,
+      featured,
+      position
+    }: {
+      commentId: number;
+      featured: boolean;
+      position?: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/featured/comment`,
+          { commentId, featured, position },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadPinnedAICardsOnProfile(userId: number) {
       try {
         const config = token?.() ? auth() : undefined;

@@ -51,6 +51,7 @@ import ScopedTheme from '~/theme/ScopedTheme';
 import { getCommentActionPermissions } from '~/components/Comments/permissions';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
+import { useFeatureOnProfileMenuItem } from '~/components/Comments/useFeatureOnProfileMenuItem';
 import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
 
 function Comment({
@@ -233,6 +234,12 @@ function Comment({
       }
     : undefined;
 
+  const featureMenuItem = useFeatureOnProfileMenuItem({
+    comment,
+    userIsUploader,
+    labelMarginLeft: dropdownLabelMarginLeft,
+    style: compactDropdownMenuItemStyle
+  });
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (
@@ -273,6 +280,7 @@ function Comment({
         style: compactDropdownMenuItemStyle
       });
     }
+    if (featureMenuItem) items.push(featureMenuItem);
     if (userCanDeleteThis) {
       items.push({
         label: (
@@ -288,6 +296,7 @@ function Comment({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    featureMenuItem,
     banned?.posting,
     compactDropdownMenuItemStyle,
     comment.id,

@@ -69,8 +69,8 @@ export default function Home({
   const loadNotableContent = useAppContext(
     (v) => v.requestHelpers.loadNotableContent
   );
-  const loadFeaturedSubjectsOnProfile = useAppContext(
-    (v) => v.requestHelpers.loadFeaturedSubjectsOnProfile
+  const loadProfileFeaturedItems = useAppContext(
+    (v) => v.requestHelpers.loadProfileFeaturedItems
   );
   const onLoadNotables = useProfileContext((v) => v.actions.onLoadNotables);
   const onLoadFeaturedSubjects = useProfileContext(
@@ -109,12 +109,21 @@ export default function Home({
     () => normalizeSectionOrder(profile?.state?.profile?.sectionOrder),
     [profile?.state?.profile?.sectionOrder]
   );
+  // Featured holds subjects and comments; once the list has loaded it
+  // decides, and until then the subject mirror on the profile is the hint.
   const isSubjectSectionShown = useMemo(() => {
     if (profile.id === userId) {
       return true;
     }
+    if (isSubjectsLoaded) return featuredSubjects.length > 0;
     return profile?.state?.profile?.subjects?.length > 0;
-  }, [profile.id, profile?.state?.profile?.subjects?.length, userId]);
+  }, [
+    featuredSubjects.length,
+    isSubjectsLoaded,
+    profile.id,
+    profile?.state?.profile?.subjects?.length,
+    userId
+  ]);
   const sectionContentByKey: Record<string, React.ReactNode> = {
     reflectionStats: (
       <ReflectionStats
@@ -139,7 +148,7 @@ export default function Home({
       <FeaturedSubjects
         userId={id}
         username={username}
-        subjects={featuredSubjects}
+        items={featuredSubjects}
         selectedTheme={selectedTheme}
         loaded={isSubjectsLoaded}
       />
@@ -224,9 +233,9 @@ export default function Home({
     }
     async function initSubjects() {
       try {
-        const subjects = await loadFeaturedSubjectsOnProfile(id);
+        const items = await loadProfileFeaturedItems(id);
         if (checkUserChange(requestUserId)) return;
-        onLoadFeaturedSubjects({ username, subjects });
+        onLoadFeaturedSubjects({ username, subjects: items });
       } catch (error) {
         console.error(error);
       }

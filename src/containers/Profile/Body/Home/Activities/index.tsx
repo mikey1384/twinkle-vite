@@ -21,8 +21,8 @@ export default function Activities({
   const loadNotableContent = useAppContext(
     (v) => v.requestHelpers.loadNotableContent
   );
-  const loadFeaturedSubjectsOnProfile = useAppContext(
-    (v) => v.requestHelpers.loadFeaturedSubjectsOnProfile
+  const loadProfileFeaturedItems = useAppContext(
+    (v) => v.requestHelpers.loadProfileFeaturedItems
   );
   const onLoadNotables = useProfileContext((v) => v.actions.onLoadNotables);
   const onLoadFeaturedSubjects = useProfileContext(
@@ -60,9 +60,9 @@ export default function Activities({
     }
     async function initSubjects() {
       try {
-        const subjects = await loadFeaturedSubjectsOnProfile(id);
+        const items = await loadProfileFeaturedItems(id);
         if (checkUserChange(requestUserId)) return;
-        onLoadFeaturedSubjects({ username, subjects });
+        onLoadFeaturedSubjects({ username, subjects: items });
       } catch (error) {
         console.error(error);
       }
@@ -70,12 +70,21 @@ export default function Activities({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isNotablesLoaded, isSubjectsLoaded, username, userId]);
 
+  // Featured holds subjects and comments; once the list has loaded it
+  // decides, and until then the subject mirror on the profile is the hint.
   const isSubjectSectionShown = useMemo(() => {
     if (profile.id === userId) {
       return true;
     }
+    if (isSubjectsLoaded) return featuredSubjects.length > 0;
     return profile?.state?.profile?.subjects?.length > 0;
-  }, [profile.id, profile?.state?.profile?.subjects?.length, userId]);
+  }, [
+    featuredSubjects.length,
+    isSubjectsLoaded,
+    profile.id,
+    profile?.state?.profile?.subjects?.length,
+    userId
+  ]);
 
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Activities/index">
@@ -83,7 +92,7 @@ export default function Activities({
         <FeaturedSubjects
           userId={id}
           username={username}
-          subjects={featuredSubjects}
+          items={featuredSubjects}
           selectedTheme={selectedTheme}
           loaded={isSubjectsLoaded}
         />

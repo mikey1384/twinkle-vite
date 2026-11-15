@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import CommentContent from './CommentContent';
+import CommentContent, { getCommentContextTitle } from './CommentContent';
 import RootContent from './RootContent';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useInView } from 'react-intersection-observer';
 import { placeholderHeights } from '~/constants/state';
+import { Color } from '~/constants/css';
 import {
   lazyContentShown,
   useLazyStandInReady
@@ -25,6 +26,7 @@ function ContentListItem({
   onContentIsDeleted,
   selectable,
   selected,
+  showCommentContext,
   style,
   hideSideBordersOnMobile,
   noTopBorderRadius
@@ -38,6 +40,8 @@ function ContentListItem({
   onContentIsDeleted?: (contentId: number) => void;
   selectable?: boolean;
   selected?: boolean;
+  // a comment card also names what it was posted on (profile Featured)
+  showCommentContext?: boolean;
   style?: React.CSSProperties;
   hideSideBordersOnMobile?: boolean;
   noTopBorderRadius?: boolean;
@@ -56,6 +60,13 @@ function ContentListItem({
   });
   const itemSelectedColor = itemSelectedRole.colorKey || 'logoBlue';
   const itemSelectedOpacity = itemSelectedRole.defaultOpacity ?? 0.8;
+  // same selected outline the subject card draws (RootContent)
+  const selectedBorder = useMemo(() => {
+    const colorFn = (Color as any)[itemSelectedColor];
+    return typeof colorFn === 'function'
+      ? colorFn(Math.min(1, itemSelectedOpacity + 0.1))
+      : itemSelectedColor;
+  }, [itemSelectedColor, itemSelectedOpacity]);
 
   const [currentContent, setCurrentContent] = useState<any>(contentObj || {});
   const [rootContent, setRootContent] = useState<any>(
@@ -249,6 +260,13 @@ function ContentListItem({
             <CommentContent
               contentId={contentId}
               contentType={contentType}
+              context={
+                showCommentContext ? getCommentContextTitle(currentContent) : null
+              }
+              secretHidden={!!currentContent.secretHidden}
+              onClick={onClick}
+              selected={selected}
+              selectedBorder={selectedBorder}
               uploader={uploader}
               content={content}
               fileName={fileName}

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
-import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import ContentListItem from '~/components/ContentListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
@@ -9,54 +8,122 @@ import FilterBar from '~/components/FilterBar';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
-import { objectify } from '~/helpers';
-import { getFeaturedSubjectIds } from '~/helpers/featuredSubjects';
+import {
+  MAX_PROFILE_FEATURED_ITEMS,
+  profileFeaturedItemKey
+} from '~/helpers/profileFeatured';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { Color } from '~/constants/css';
 
+type PickerKind = 'subject' | 'comment';
+type PickerTab = PickerKind | 'selected';
+
+const emptyMessageStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  height: '10rem',
+  fontWeight: 'bold',
+  fontSize: '2.5rem',
+  justifyContent: 'center',
+  textAlign: 'center'
+};
+
+function keyOf(contentType: PickerKind, id: number) {
+  return `${contentType}:${id}`;
+}
+
+function withKeys(contentType: PickerKind, results: any[]) {
+  const obj: Record<string, any> = {};
+  const keys: string[] = [];
+  for (const result of results || []) {
+    if (!result?.id) continue;
+    const key = keyOf(contentType, Number(result.id));
+    obj[key] = { ...result, contentType };
+    keys.push(key);
+  }
+  return { obj, keys };
+}
+
+// Pick what shows in the profile's Featured section: subjects, or the
+// member's own comments (Subjects | Comments | Selected tabs), up to the
+// combined limit. Both kinds are listed with ContentListItem, as subjects
+// always were. The saved list comes back from the server and replaces the
+// section.
 export default function SelectFeaturedSubjectsModal({
-  subjects,
+  items,
   onHide,
   onSubmit
 }: {
-  subjects: any[];
+  items: any[];
   onHide: () => void;
-  onSubmit: (arg0: any[]) => void;
+  onSubmit: (saved: { items: any[]; refs?: any[] }) => void;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColor = useMemo(
     () => doneRole.getColor() || Color.blue(),
     [doneRole]
   );
-  const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
-  const featureSubjectsOnProfile = useAppContext(
-    (v) => v.requestHelpers.featureSubjectsOnProfile
+  const loadMyCommentsForFeatured = useAppContext(
+    (v) => v.requestHelpers.loadMyCommentsForFeatured
   );
-  const [loadMoreButton, setLoadMoreButton] = useState(false);
-  const [searchLoadMoreButton, setSearchLoadMoreButton] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [subjectObj, setSubjectObj] = useState<Record<string, any>>(() =>
-    objectify(subjects)
+  const saveProfileFeaturedItems = useAppContext(
+    (v) => v.requestHelpers.saveProfileFeaturedItems
   );
-  const [selected, setSelected] = useState<number[]>(() =>
-    getFeaturedSubjectIds(subjects)
+  const [tab, setTab] = useState<PickerTab>('subject');
+  const kind: PickerKind = tab === 'comment' ? 'comment' : 'subject';
+  const selectTabActive = tab !== 'selected';
+  const [itemObj, setItemObj] = useState<Record<string, any>>(() => {
+    const obj: Record<string, any> = {};
+    for (const item of items) obj[profileFeaturedItemKey(item)] = item;
+    return obj;
+  });
+  const [selected, setSelected] = useState<string[]>(() =>
+    Array.from(new Set(items.map(profileFeaturedItemKey)))
   );
-  const [loaded, setLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [selectTabActive, setSelectTabActive] = useState(true);
-  const [allSubjects, setAllSubjects] = useState([]);
-  const [searchedSubjects, setSearchedSubjects] = useState([]);
-  const [searchText, setSearchText] = useState('');
-  const searchGenerationRef = useRef(0);
-  const { handleSearch, searching } = useSearch({
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Subjects (as before this switch existed)
+  const [subjectsLoaded, setSubjectsLoaded] = useState(false);
+  const [allSubjects, setAllSubjects] = useState<string[]>([]);
+  const [subjectsLoadMore, setSubjectsLoadMore] = useState(false);
+  const [searchedSubjects, setSearchedSubjects] = useState<string[]>([]);
+  const [searchedSubjectsLoadMore, setSearchedSubjectsLoadMore] =
+    useState(false);
+  const [subjectSearchText, setSubjectSearchText] = useState('');
+  const subjectSearchGenerationRef = useRef(0);
+  const subjectSearch = useSearch({
     onSearch: handleSubjectSearch,
     onClear: () => setSearchedSubjects([]),
     onSetSearchText: (text) => {
-      searchGenerationRef.current += 1;
-      setSearchText(text);
+      subjectSearchGenerationRef.current += 1;
+      setSubjectSearchText(text);
+    }
+  });
+
+  // The member's own comments
+  const [commentsRequested, setCommentsRequested] = useState(false);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [allComments, setAllComments] = useState<string[]>([]);
+  const [commentsCursor, setCommentsCursor] = useState<number | null>(null);
+  const [commentsLoadMore, setCommentsLoadMore] = useState(false);
+  const [searchedComments, setSearchedComments] = useState<string[]>([]);
+  const [searchedCommentsCursor, setSearchedCommentsCursor] = useState<
+    number | null
+  >(null);
+  const [searchedCommentsLoadMore, setSearchedCommentsLoadMore] =
+    useState(false);
+  const [commentSearchText, setCommentSearchText] = useState('');
+  const commentSearchGenerationRef = useRef(0);
+  const commentSearch = useSearch({
+    onSearch: handleCommentSearch,
+    onClear: () => setSearchedComments([]),
+    onSetSearchText: (text) => {
+      commentSearchGenerationRef.current += 1;
+      setCommentSearchText(text);
     }
   });
 
@@ -64,37 +131,23 @@ export default function SelectFeaturedSubjectsModal({
     init();
     async function init() {
       const maxRetries = 3;
-      let attempts = 0;
-      let success = false;
-
-      while (attempts < maxRetries && !success) {
-        attempts++;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          const { results, loadMoreButton: loadMoreShown } = await loadUploads({
+          const { results, loadMoreButton } = await loadUploads({
             limit: 10,
             contentType: 'subject',
             includeRoot: true
           });
-
-          setSubjectObj((current) => ({
-            ...current,
-            ...objectify(results),
-            ...objectify(subjects)
-          }));
-          setAllSubjects(results.map((subject: { id: number }) => subject.id));
-          setLoadMoreButton(loadMoreShown);
-          success = true;
+          const { obj, keys } = withKeys('subject', results);
+          setItemObj((current) => ({ ...current, ...obj, ...currentItems() }));
+          setAllSubjects(keys);
+          setSubjectsLoadMore(loadMoreButton);
+          setSubjectsLoaded(true);
+          return;
         } catch (error) {
-          console.error(`Attempt ${attempts} failed:`, error);
-          if (attempts < maxRetries) {
+          console.error(`Attempt ${attempt} failed:`, error);
+          if (attempt < maxRetries) {
             await new Promise((resolve) => setTimeout(resolve, 3000));
-          }
-        } finally {
-          if (success) {
-            setLoaded(true);
-          } else if (attempts >= maxRetries) {
-            console.error('All attempts failed.');
-            setLoaded(false);
           }
         }
       }
@@ -102,14 +155,55 @@ export default function SelectFeaturedSubjectsModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const displayedSubjects = useMemo(
-    () => (stringIsEmpty(searchText) ? allSubjects : searchedSubjects),
-    [allSubjects, searchText, searchedSubjects]
-  );
-  const displayedLoadMoreButton = useMemo(
-    () => (stringIsEmpty(searchText) ? loadMoreButton : searchLoadMoreButton),
-    [loadMoreButton, searchLoadMoreButton, searchText]
-  );
+  useEffect(() => {
+    if (tab !== 'comment' || commentsRequested) return;
+    setCommentsRequested(true);
+    initComments();
+    async function initComments() {
+      try {
+        const data = await loadMyCommentsForFeatured();
+        const { obj, keys } = withKeys('comment', data?.comments);
+        setItemObj((current) => ({ ...current, ...obj }));
+        setAllComments(keys);
+        setCommentsCursor(Number(data?.lastId) || null);
+        setCommentsLoadMore(!!data?.loadMoreButton);
+      } catch (error) {
+        console.error('Failed to load your comments:', error);
+      } finally {
+        setCommentsLoaded(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
+  const isComments = kind === 'comment';
+  const searchText = isComments ? commentSearchText : subjectSearchText;
+  const searching = isComments
+    ? commentSearch.searching
+    : subjectSearch.searching;
+  const loaded = isComments ? commentsLoaded : subjectsLoaded;
+  const displayedKeys = useMemo(() => {
+    if (isComments) {
+      return stringIsEmpty(commentSearchText) ? allComments : searchedComments;
+    }
+    return stringIsEmpty(subjectSearchText) ? allSubjects : searchedSubjects;
+  }, [
+    allComments,
+    allSubjects,
+    commentSearchText,
+    isComments,
+    searchedComments,
+    searchedSubjects,
+    subjectSearchText
+  ]);
+  const displayedLoadMoreButton = isComments
+    ? stringIsEmpty(commentSearchText)
+      ? commentsLoadMore
+      : searchedCommentsLoadMore
+    : stringIsEmpty(subjectSearchText)
+      ? subjectsLoadMore
+      : searchedSubjectsLoadMore;
+  const overLimit = selected.length > MAX_PROFILE_FEATURED_ITEMS;
 
   return (
     <Modal
@@ -117,219 +211,235 @@ export default function SelectFeaturedSubjectsModal({
       isOpen
       size="xl"
       onClose={onHide}
-      hasHeader={false}
-      bodyPadding={0}
-      allowOverflow
-    >
-      <LegacyModalLayout wrapped>
-        <header>Select Featured Subjects</header>
-        <main>
-          <FilterBar style={{ marginBottom: '1.5rem' }}>
-            <nav
-              className={selectTabActive ? 'active' : ''}
-              onClick={() => setSelectTabActive(true)}
-            >
-              Select
-            </nav>
-            <nav
-              className={!selectTabActive ? 'active' : ''}
-              onClick={() => setSelectTabActive(false)}
-            >
-              Selected
-            </nav>
-          </FilterBar>
-          {selectTabActive && (
-            <SearchInput
-              autoFocus
-              placeholder="Search for subjects to feature..."
-              value={searchText}
-              onChange={handleSearch}
-              style={{ marginBottom: '1.5rem' }}
-            />
-          )}
-          {loaded ? (
-            <>
-              {selectTabActive &&
-                (searching ? (
-                  <Loading />
-                ) : displayedSubjects.length === 0 ? (
-                  <p
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      height: '10rem',
-                      fontWeight: 'bold',
-                      fontSize: '2.5rem',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    No Subjects{stringIsEmpty(searchText) ? '' : ' Found'}
-                  </p>
-                ) : (
-                  displayedSubjects.map((subjectId) => (
-                    <ContentListItem
-                      selectable
-                      modalOverModal
-                      selected={selected.includes(subjectId)}
-                      key={subjectId}
-                      style={{ width: '100%', marginBottom: '1rem' }}
-                      contentObj={subjectObj[subjectId]}
-                      onClick={() => handleSelect(subjectId)}
-                    />
-                  ))
-                ))}
-              {!selectTabActive &&
-                (selected.length === 0 ? (
-                  <p
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      height: '10rem',
-                      fontWeight: 'bold',
-                      fontSize: '2.5rem',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    No Subjects Selected
-                  </p>
-                ) : (
-                  selected.map((selectedId, index) => (
-                    <ContentListItem
-                      selectable
-                      modalOverModal
-                      selected={selected.includes(selectedId)}
-                      key={selectedId}
-                      style={{
-                        width: '100%',
-                        marginBottom: index !== selected.length - 1 ? '1rem' : 0
-                      }}
-                      contentObj={subjectObj[selectedId]}
-                      onContentIsDeleted={(id) =>
-                        setSelected((selected) => {
-                          return selected.filter(
-                            (selectedId) => selectedId !== id
-                          );
-                        })
-                      }
-                      onClick={() => handleSelect(selectedId)}
-                    />
-                  ))
-                ))}
-            </>
-          ) : (
-            <Loading />
-          )}
-          {!searching && displayedLoadMoreButton && selectTabActive && (
-            <LoadMoreButton
-              style={{ fontSize: '2rem' }}
-              variant="ghost"
-              loading={loadingMore}
-              onClick={handleLoadMore}
-            />
-          )}
-        </main>
-        <footer>
-          <Button
-            variant="ghost"
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
-          >
+      title="Select Featured"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onHide}>
             Cancel
           </Button>
           <Button
-            disabled={!loaded || selected.length > 10}
+            disabled={!subjectsLoaded || overLimit}
             loading={submitting}
             color={doneColor}
             onClick={handleSubmit}
           >
-            {selected.length > 10 ? 'Cannot select more than 10' : 'Done'}
+            {overLimit
+              ? `Cannot select more than ${MAX_PROFILE_FEATURED_ITEMS}`
+              : 'Done'}
           </Button>
-        </footer>
-      </LegacyModalLayout>
+        </>
+      }
+    >
+      <div style={{ width: '100%' }}>
+        <FilterBar style={{ marginBottom: '1.5rem' }}>
+          <nav
+            className={tab === 'subject' ? 'active' : ''}
+            onClick={() => setTab('subject')}
+          >
+            Subjects
+          </nav>
+          <nav
+            className={tab === 'comment' ? 'active' : ''}
+            onClick={() => setTab('comment')}
+          >
+            Comments
+          </nav>
+          <nav
+            className={tab === 'selected' ? 'active' : ''}
+            onClick={() => setTab('selected')}
+          >
+            Selected
+          </nav>
+        </FilterBar>
+        {selectTabActive && (
+          <SearchInput
+            key={kind}
+            autoFocus
+            placeholder={
+              isComments
+                ? 'Search your comments...'
+                : 'Search for subjects to feature...'
+            }
+            value={searchText}
+            onChange={
+              isComments ? commentSearch.handleSearch : subjectSearch.handleSearch
+            }
+            style={{ marginBottom: '1.5rem' }}
+          />
+        )}
+        {selectTabActive ? (
+          !loaded || searching ? (
+            <Loading />
+          ) : displayedKeys.length === 0 ? (
+            <p style={emptyMessageStyle}>
+              {isComments
+                ? stringIsEmpty(searchText)
+                  ? 'No Comments Yet'
+                  : 'No Comments Found'
+                : `No Subjects${stringIsEmpty(searchText) ? '' : ' Found'}`}
+            </p>
+          ) : (
+            displayedKeys.map((key) => renderPickable(key, false))
+          )
+        ) : selected.length === 0 ? (
+          <p style={emptyMessageStyle}>Nothing Selected</p>
+        ) : (
+          selected.map((key, index) =>
+            renderPickable(key, index === selected.length - 1)
+          )
+        )}
+        {selectTabActive && loaded && !searching && displayedLoadMoreButton && (
+          <LoadMoreButton
+            style={{ fontSize: '2rem' }}
+            variant="ghost"
+            loading={loadingMore}
+            onClick={handleLoadMore}
+          />
+        )}
+      </div>
     </Modal>
   );
 
+  function currentItems() {
+    const obj: Record<string, any> = {};
+    for (const item of items) obj[profileFeaturedItemKey(item)] = item;
+    return obj;
+  }
+
+  function renderPickable(key: string, isLast: boolean) {
+    const item = itemObj[key];
+    if (!item) return null;
+    const contentType: PickerKind =
+      item.contentType === 'comment' ? 'comment' : 'subject';
+    return (
+      <ContentListItem
+        selectable
+        modalOverModal
+        selected={selected.includes(key)}
+        key={key}
+        style={{ width: '100%', marginBottom: isLast ? 0 : '1rem' }}
+        contentObj={item}
+        showCommentContext
+        onContentIsDeleted={(id) =>
+          setSelected((current) =>
+            current.filter((selectedKey) => selectedKey !== keyOf(contentType, id))
+          )
+        }
+        onClick={() => handleSelect(key)}
+      />
+    );
+  }
+
   async function handleSubjectSearch(text: string) {
-    const searchGeneration = searchGenerationRef.current;
-    const { loadMoreButton: loadMoreShown, results } = await searchContent({
+    const searchGeneration = subjectSearchGenerationRef.current;
+    const { loadMoreButton, results } = await searchContent({
       limit: 10,
       filter: 'subject',
       searchText: text
     });
-    if (searchGeneration !== searchGenerationRef.current) return;
-    setSubjectObj((legacyTopicObj) => ({
-      ...legacyTopicObj,
-      ...objectify(results)
-    }));
-    setSearchedSubjects(results.map((result: { id: number }) => result.id));
-    setSearchLoadMoreButton(loadMoreShown);
+    if (searchGeneration !== subjectSearchGenerationRef.current) return;
+    const { obj, keys } = withKeys('subject', results);
+    setItemObj((current) => ({ ...current, ...obj }));
+    setSearchedSubjects(keys);
+    setSearchedSubjectsLoadMore(loadMoreButton);
+  }
+
+  async function handleCommentSearch(text: string) {
+    const searchGeneration = commentSearchGenerationRef.current;
+    const data = await loadMyCommentsForFeatured({ searchText: text });
+    if (searchGeneration !== commentSearchGenerationRef.current) return;
+    const { obj, keys } = withKeys('comment', data?.comments);
+    setItemObj((current) => ({ ...current, ...obj }));
+    setSearchedComments(keys);
+    setSearchedCommentsCursor(Number(data?.lastId) || null);
+    setSearchedCommentsLoadMore(!!data?.loadMoreButton);
   }
 
   async function handleLoadMore() {
-    const loadGeneration = searchGenerationRef.current;
     setLoadingMore(true);
     try {
-      const options = stringIsEmpty(searchText)
-        ? {
-            limit: 10,
-            contentType: 'subject',
-            includeRoot: true,
-            excludeContentIds: allSubjects
-          }
-        : {
-            limit: 10,
-            filter: 'subject',
-            searchText,
-            shownResults: searchedSubjects.map(
-              (subjectId) => subjectObj[subjectId]
-            )
-          };
-      const method = stringIsEmpty(searchText) ? loadUploads : searchContent;
-      const { results, loadMoreButton: loadMoreShown } = await method(options);
-      if (loadGeneration !== searchGenerationRef.current) return;
-      setSubjectObj((current) => ({
-        ...current,
-        ...objectify(results)
-      }));
-      const setSubjectsMethod = stringIsEmpty(searchText)
-        ? setAllSubjects
-        : setSearchedSubjects;
-      setSubjectsMethod((subjects) =>
-        subjects.concat(results.map((subject: { id: number }) => subject.id))
-      );
-      const setLoadMoreButtonMethod = stringIsEmpty(searchText)
-        ? setLoadMoreButton
-        : setSearchLoadMoreButton;
-      setLoadMoreButtonMethod(loadMoreShown);
+      if (isComments) {
+        await loadMoreComments();
+      } else {
+        await loadMoreSubjects();
+      }
     } catch (error) {
-      console.error('Failed to load more profile subjects:', error);
+      console.error('Failed to load more:', error);
     } finally {
       setLoadingMore(false);
     }
   }
 
-  function handleSelect(selectedId: number) {
-    if (selected.includes(selectedId)) {
-      setSelected((selected) => selected.filter((id) => id !== selectedId));
+  async function loadMoreSubjects() {
+    const loadGeneration = subjectSearchGenerationRef.current;
+    const isSearch = !stringIsEmpty(subjectSearchText);
+    const { results, loadMoreButton } = isSearch
+      ? await searchContent({
+          limit: 10,
+          filter: 'subject',
+          searchText: subjectSearchText,
+          shownResults: searchedSubjects.map((key) => itemObj[key])
+        })
+      : await loadUploads({
+          limit: 10,
+          contentType: 'subject',
+          includeRoot: true,
+          excludeContentIds: allSubjects.map((key) => Number(key.split(':')[1]))
+        });
+    if (loadGeneration !== subjectSearchGenerationRef.current) return;
+    const { obj, keys } = withKeys('subject', results);
+    setItemObj((current) => ({ ...current, ...obj }));
+    if (isSearch) {
+      setSearchedSubjects((current) => current.concat(keys));
+      setSearchedSubjectsLoadMore(loadMoreButton);
     } else {
-      setSelected((selected) => [selectedId].concat(selected));
+      setAllSubjects((current) => current.concat(keys));
+      setSubjectsLoadMore(loadMoreButton);
     }
   }
 
+  async function loadMoreComments() {
+    const loadGeneration = commentSearchGenerationRef.current;
+    const isSearch = !stringIsEmpty(commentSearchText);
+    const data = await loadMyCommentsForFeatured({
+      lastId: (isSearch ? searchedCommentsCursor : commentsCursor) || undefined,
+      searchText: isSearch ? commentSearchText : undefined
+    });
+    if (loadGeneration !== commentSearchGenerationRef.current) return;
+    const { obj, keys } = withKeys('comment', data?.comments);
+    setItemObj((current) => ({ ...current, ...obj }));
+    if (isSearch) {
+      setSearchedComments((current) => current.concat(keys));
+      setSearchedCommentsCursor(Number(data?.lastId) || null);
+      setSearchedCommentsLoadMore(!!data?.loadMoreButton);
+    } else {
+      setAllComments((current) => current.concat(keys));
+      setCommentsCursor(Number(data?.lastId) || null);
+      setCommentsLoadMore(!!data?.loadMoreButton);
+    }
+  }
+
+  function handleSelect(key: string) {
+    setSelected((current) =>
+      current.includes(key)
+        ? current.filter((selectedKey) => selectedKey !== key)
+        : [key].concat(current)
+    );
+  }
+
   async function handleSubmit() {
+    setSubmitting(true);
     try {
-      setSubmitting(true);
-      for (const selectedId of selected) {
-        if (!selectedId) {
-          return reportError({
-            componentPath:
-              'Profile/Body/Home/Activities/FeaturedSubjects/SelectFeaturedSubjects',
-            message: `handleSubmit: one of the elements inside selected array is null`
-          });
-        }
-      }
-      const subjects = await featureSubjectsOnProfile({ selected });
-      onSubmit(subjects);
+      const saved = await saveProfileFeaturedItems(
+        selected.map((key) => {
+          const [contentType, contentId] = key.split(':');
+          return {
+            contentType: contentType as PickerKind,
+            contentId: Number(contentId)
+          };
+        })
+      );
+      onSubmit({ items: saved?.items || [], refs: saved?.refs });
     } catch (error) {
       console.error('Error during handleSubmit:', error);
     } finally {

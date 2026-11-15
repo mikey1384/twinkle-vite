@@ -73,6 +73,7 @@ import { hasSubjectSecretSignal } from '~/helpers/subjectSecretHelpers';
 import { getCommentActionPermissions } from '~/components/Comments/permissions';
 import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
 import { useLumineCommentMenuItem } from '../LumineCommentContext';
+import { useFeatureOnProfileMenuItem } from '~/components/Comments/useFeatureOnProfileMenuItem';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';
@@ -342,6 +343,12 @@ function Comment({
     rootContent: parent.contentType === 'build' ? parent : rootContent,
     style: compactDropdownMenuItemStyle
   });
+  const featureMenuItem = useFeatureOnProfileMenuItem({
+    comment: { ...comment, isDeleted: isDeleted || comment.isDeleted },
+    userIsUploader,
+    labelMarginLeft: dropdownLabelMarginLeft,
+    style: compactDropdownMenuItemStyle
+  });
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (lumineMenuItem) items.push(lumineMenuItem);
@@ -387,6 +394,7 @@ function Comment({
         style: compactDropdownMenuItemStyle
       });
     }
+    if (featureMenuItem) items.push(featureMenuItem);
     if (userCanDeleteThis) {
       items.push({
         label: (
@@ -404,6 +412,7 @@ function Comment({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    featureMenuItem,
     lumineMenuItem,
     pinSupported,
     banned?.posting,

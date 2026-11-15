@@ -157,22 +157,32 @@ test('Featured consumers apply confirmed responses and wait for Explore loads', 
     Array.from(profileFeaturedSource.matchAll(/disabled=\{!loaded\}/g)).length,
     2
   );
-  assert.match(profileSelectSource, /getFeaturedSubjectIds\(subjects\)/);
+  // The profile picker holds subjects and the member's own comments
+  // (Featured, 11-15); both searches keep their stale-response guards.
   assert.match(
     profileSelectSource,
-    /const searchGeneration = searchGenerationRef\.current;[\s\S]*if \(searchGeneration !== searchGenerationRef\.current\) return;/
+    /const searchGeneration = subjectSearchGenerationRef\.current;[\s\S]*if \(searchGeneration !== subjectSearchGenerationRef\.current\) return;/
   );
   assert.match(
     profileSelectSource,
-    /const loadGeneration = searchGenerationRef\.current;[\s\S]*if \(loadGeneration !== searchGenerationRef\.current\) return;/
+    /const searchGeneration = commentSearchGenerationRef\.current;[\s\S]*if \(searchGeneration !== commentSearchGenerationRef\.current\) return;/
   );
   assert.match(
     profileSelectSource,
-    /disabled=\{!loaded \|\| selected\.length > 10\}/
+    /const loadGeneration = subjectSearchGenerationRef\.current;[\s\S]*if \(loadGeneration !== subjectSearchGenerationRef\.current\) return;/
   );
   assert.match(
     profileSelectSource,
-    /const subjects = await featureSubjectsOnProfile[\s\S]*onSubmit\(subjects\)/
+    /const loadGeneration = commentSearchGenerationRef\.current;[\s\S]*if \(loadGeneration !== commentSearchGenerationRef\.current\) return;/
+  );
+  assert.match(
+    profileSelectSource,
+    /const overLimit = selected\.length > MAX_PROFILE_FEATURED_ITEMS;/
+  );
+  assert.match(profileSelectSource, /disabled=\{!subjectsLoaded \|\| overLimit\}/);
+  assert.match(
+    profileSelectSource,
+    /const saved = await saveProfileFeaturedItems[\s\S]*onSubmit\(\{ items: saved\?\.items \|\| \[\], refs: saved\?\.refs \}\)/
   );
   assert.doesNotMatch(profileSelectSource, /onSubmit\(selected\.map/);
   for (const reorderSource of [

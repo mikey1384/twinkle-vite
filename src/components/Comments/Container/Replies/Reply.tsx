@@ -53,6 +53,7 @@ import { useThemeTokens } from '~/theme/hooks/useThemeTokens';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import { useLumineCommentMenuItem } from '../../LumineCommentContext';
+import { useFeatureOnProfileMenuItem } from '~/components/Comments/useFeatureOnProfileMenuItem';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';
@@ -273,6 +274,12 @@ function Reply({
     rootContent: parent.contentType === 'build' ? parent : rootContent,
     style: compactDropdownMenuItemStyle
   });
+  const featureMenuItem = useFeatureOnProfileMenuItem({
+    comment: reply,
+    userIsUploader: !!userId && userId === uploader?.id,
+    labelMarginLeft: dropdownLabelMarginLeft,
+    style: compactDropdownMenuItemStyle
+  });
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (lumineMenuItem) items.push(lumineMenuItem);
@@ -314,6 +321,7 @@ function Reply({
         style: compactDropdownMenuItemStyle
       });
     }
+    if (featureMenuItem) items.push(featureMenuItem);
     if (userCanDeleteThis) {
       items.push({
         label: (
@@ -331,6 +339,7 @@ function Reply({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    featureMenuItem,
     lumineMenuItem,
     pinSupported,
     compactDropdownMenuItemStyle,

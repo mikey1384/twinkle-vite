@@ -16,7 +16,7 @@ export const profileSectionLabels: Record<string, string> = {
   pictures: 'Pictures',
   builds: 'Builds',
   pinnedAICards: 'AI Cards',
-  featuredSubjects: 'Featured Subjects',
+  featuredSubjects: 'Featured',
   notableActivities: 'Notable Activities',
   xpAnalysis: 'XP Analysis',
   missionProgress: 'Mission Progress'

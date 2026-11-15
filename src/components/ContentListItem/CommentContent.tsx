@@ -3,6 +3,7 @@ import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import Thumbnail from '../Thumbnail';
+import SecretComment from '~/components/SecretComment';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
@@ -43,6 +44,34 @@ const commentContentCSS = css`
   .username {
     color: ${Color.darkGray()};
     font-weight: bold;
+  }
+  /* With context (a featured comment on a profile): the avatar sits beside
+     the author and a one-line "Reply on" naming what it was posted on. */
+  &.with-context .profile {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    min-width: 0;
+  }
+  &.with-context .profile-lines {
+    min-width: 0;
+  }
+  .context {
+    font-size: 1.2rem;
+    color: ${Color.gray()};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    > b {
+      color: ${Color.darkerGray()};
+    }
+  }
+  &.with-context {
+    grid-template-rows: auto 1fr;
+  }
+  &.with-context .content {
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
   }
   .content {
     grid-area: content;
@@ -89,6 +118,11 @@ const commentContentCSS = css`
 export default function CommentContent({
   contentId,
   contentType,
+  context,
+  onClick,
+  secretHidden,
+  selected,
+  selectedBorder,
   uploader,
   content,
   fileName = '',
@@ -98,6 +132,14 @@ export default function CommentContent({
 }: {
   contentId: number;
   contentType: string;
+  // what the comment was posted on (shown only where a list asks for it)
+  context?: string | null;
+  // a picker (selectable list) handles the tap instead of opening the page
+  onClick?: () => void;
+  // under a secret the viewer hasn't unlocked: the usual secret box instead
+  secretHidden?: boolean;
+  selected?: boolean;
+  selectedBorder?: string;
   uploader: {
     id: number;
     username: string;
@@ -120,24 +162,48 @@ export default function CommentContent({
 
   return (
     <div
-      className={`${commentContentCSS}${filePath ? '' : ' no-file'}`}
-      onClick={() => navigate(`/${contentType}s/${contentId}`)}
+      className={`${commentContentCSS}${filePath ? '' : ' no-file'}${
+        context ? ' with-context' : ''
+      }`}
+      style={
+        selected && selectedBorder
+          ? {
+              borderColor: selectedBorder,
+              borderWidth: 2,
+              borderStyle: 'solid',
+              boxShadow: `inset 0 0 0 2px ${selectedBorder}`
+            }
+          : undefined
+      }
+      onClick={onClick || (() => navigate(`/${contentType}s/${contentId}`))}
     >
       <div className="profile">
-        <div style={{ width: '5rem', height: '5rem' }}>
+        <div style={{ width: '5rem', height: '5rem', flexShrink: 0 }}>
           <ProfilePic
             style={{ width: '100%' }}
             userId={uploader.id}
             profilePicUrl={uploader.profilePicUrl}
           />
         </div>
-        {uploader.username && (
-          <div style={{ fontSize: '1.3rem' }} className="username">
-            by {uploader.username}
-          </div>
-        )}
+        <div className="profile-lines">
+          {uploader.username && (
+            <div style={{ fontSize: '1.3rem' }} className="username">
+              by {uploader.username}
+            </div>
+          )}
+          {context && (
+            <div className="context">
+              Reply on: <b>{context}</b>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="content">{content}</div>
+      {secretHidden ? (
+        // the card's tap opens the comment page, which leads to the subject
+        <SecretComment style={{ gridArea: 'content', fontSize: '1.4rem' }} />
+      ) : (
+        <div className="content">{content}</div>
+      )}
       {filePath && (
         <>
           {userId ? (
@@ -172,4 +238,17 @@ export default function CommentContent({
       )}
     </div>
   );
+}
+
+// What a comment was posted on, for its one-line context: the subject it
+// answers, else its root's title, or whose profile it was left on.
+export function getCommentContextTitle(comment: any): string | null {
+  const subjectTitle = String(comment?.targetObj?.subject?.title || '').trim();
+  if (subjectTitle) return subjectTitle;
+  const root = comment?.rootObj || {};
+  if (String(comment?.rootType || root?.contentType || '') === 'user') {
+    const username = String(root?.username || '').trim();
+    return username ? `${username}'s profile` : null;
+  }
+  return String(root?.title || root?.topic || '').trim() || null;
 }
