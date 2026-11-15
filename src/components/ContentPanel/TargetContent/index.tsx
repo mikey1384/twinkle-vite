@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useContext, useState } from 'react';
-import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
+import {
+  assistantVoiceForUserId,
+  userAssistant
+} from '~/helpers/assistantVoice';
 import LocalContext from '../Context';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
@@ -756,6 +759,7 @@ export default function TargetContent({
           return;
         }
         const data = await uploadComment({
+          aiAssistant: userAssistant(userId),
           content: text,
           parent: {
             contentType: rootType,
@@ -790,6 +794,7 @@ export default function TargetContent({
         });
       } else {
         const data = await uploadComment({
+          aiAssistant: userAssistant(userId),
           content: text,
           parent: {
             contentType: rootType,

@@ -118,6 +118,7 @@ import { useRootTheme } from '~/theme/RootThemeProvider';
 import useOrientationReflow from './hooks/useOrientationReflow';
 import useAppShellHeaderOffset from './hooks/useAppShellHeaderOffset';
 import useMobileKeyboardInset from './hooks/useMobileKeyboardInset';
+import useAccountAssistantSync from './hooks/useAccountAssistantSync';
 import usePhoneLandscape from '~/helpers/hooks/usePhoneLandscape';
 import { useOwnerTraceRoute } from '~/helpers/hooks/useOwnerTrace';
 import { noteOwnerWakeWork } from '~/helpers/ownerTrace';
@@ -452,6 +453,7 @@ export default function App() {
     username
   } = myState;
   useOwnerTraceRoute(Number(userId || 0));
+  useAccountAssistantSync();
   const [sessionCredentialUnavailable, setSessionCredentialUnavailable] =
     useState(() => Boolean(userId && !readAuthToken().token));
   const awaitingCanonicalSession = Boolean(

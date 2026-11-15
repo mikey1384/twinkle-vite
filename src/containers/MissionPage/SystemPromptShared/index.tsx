@@ -6,6 +6,7 @@ import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
 import SharedPromptCard from './SharedPromptCard';
 import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
+import { userAssistant } from '~/helpers/assistantVoice';
 import { useNavigate } from 'react-router-dom';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -476,6 +477,7 @@ export default function SystemPromptShared() {
     setCommentSubmitting((prev) => ({ ...prev, [topicId]: true }));
     try {
       await uploadComment({
+        aiAssistant: userAssistant(userId),
         content: text,
         parent: {
           contentType: 'sharedTopic',

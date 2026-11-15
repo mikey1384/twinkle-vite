@@ -2818,7 +2818,8 @@ export default function contentRequestHelpers({
       fileName,
       fileSize,
       isNotification,
-      thumbUrl
+      thumbUrl,
+      aiAssistant
     }: {
       content: string;
       parent: object;
@@ -2831,6 +2832,9 @@ export default function contentRequestHelpers({
       fileSize: number;
       isNotification: boolean;
       thumbUrl: string;
+      // The commenter's own Zero or Ciel (userAssistant): it answers their
+      // comments under an AI Prompt post, in that prompt's character.
+      aiAssistant?: 'Zero' | 'Ciel';
     }) {
       try {
         const { data } = await request.post(
@@ -2846,7 +2850,8 @@ export default function contentRequestHelpers({
             fileName,
             fileSize,
             isNotification,
-            thumbUrl
+            thumbUrl,
+            ...(aiAssistant ? { aiAssistant } : {})
           },
           auth()
         );

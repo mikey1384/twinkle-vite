@@ -866,6 +866,7 @@ registerMethods('user', [
   'changeUsername',
   'updateImageGenerationSettings',
   'updateGrammarblesSettings',
+  'updateHomeAssistant',
   'updateImageEditorSettings',
   'confirmPassword',
   'deletePreviousUsername',

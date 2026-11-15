@@ -192,6 +192,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async updateHomeAssistant(assistant: 'Zero' | 'Ciel') {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/settings/assistant`,
+          { assistant },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateImageEditorSettings({
       color,
       recentColors

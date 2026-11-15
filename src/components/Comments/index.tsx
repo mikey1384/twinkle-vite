@@ -23,6 +23,7 @@ import {
 } from '~/contexts';
 import { Comment, Content, Subject, type UploadCompletionMeta } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { userAssistant } from '~/helpers/assistantVoice';
 import { ThemeName } from '~/theme';
 
 function Comments({
@@ -121,7 +122,18 @@ function Comments({
   );
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
-  const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
+  const uploadCommentRequest = useAppContext(
+    (v) => v.requestHelpers.uploadComment
+  );
+  const myId = useKeyContext((v) => v.myState.userId);
+  // Every comment carries the commenter's own Zero or Ciel, read at send
+  // time: under an AI Prompt post that assistant answers in the prompt's
+  // character (the server ignores it everywhere else).
+  const uploadComment = useCallback(
+    (params: any) =>
+      uploadCommentRequest({ ...params, aiAssistant: userAssistant(myId) }),
+    [myId, uploadCommentRequest]
+  );
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);

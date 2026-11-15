@@ -25,6 +25,8 @@ export function assistantVoiceForUserId(userId: unknown) {
 // The assistant this user picked on Home beside the call button (or last
 // called); Zero until they pick. The one place that answers "which agent is
 // mine": the Ask buttons, the read-aloud voice and the dock all derive from it.
+// The pick is kept on the account and copied to this browser
+// (App/hooks/useAccountAssistantSync.ts), so every device agrees.
 export function userAssistant(
   userId: number | null | undefined
 ): 'Zero' | 'Ciel' {
