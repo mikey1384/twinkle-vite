@@ -450,12 +450,18 @@ export default function ChatActions(dispatch: Dispatch) {
       topicId,
       topicTitle,
       isOwnerPostingOnly,
+      postingMode,
+      postingSetBy,
+      posters,
       customInstructions
     }: {
       channelId: number;
       topicId: number;
-      topicTitle: string;
+      topicTitle?: string;
       isOwnerPostingOnly: boolean;
+      postingMode?: string;
+      postingSetBy?: string;
+      posters?: Array<{ id: number; username: string }>;
       customInstructions?: string;
     }) {
       return dispatch({
@@ -464,6 +470,9 @@ export default function ChatActions(dispatch: Dispatch) {
         topicId,
         topicTitle,
         isOwnerPostingOnly,
+        postingMode,
+        postingSetBy,
+        posters,
         customInstructions
       });
     },

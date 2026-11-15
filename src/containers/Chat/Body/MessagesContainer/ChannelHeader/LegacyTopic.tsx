@@ -14,6 +14,7 @@ import { useInterval } from '~/helpers/hooks';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { charLimit, defaultChatSubject } from '~/constants/defaultValues';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import { topicPostingAccess } from '../../../topicPosting';
 
 const deviceIsMobile = isMobile(navigator);
 const maxTextLength = 65;
@@ -58,6 +59,14 @@ export default function LegacyTopic({
     uploader = {}
   } = legacyTopicObj;
   const userId = useKeyContext((v) => v.myState.userId);
+  // Replying to the featured topic is posting in it.
+  const canReplyToTopic =
+    topicPostingAccess({
+      topic: legacyTopicObj,
+      userId: Number(userId),
+      channelOwnerId: Number(currentChannel?.creatorId),
+      isTwoPeople: false
+    }) !== 'blocked';
   const { colorKey: buttonColor } = useRoleColor('button', {
     themeName: displayedThemeColor,
     fallback: 'logoBlue'
@@ -210,7 +219,7 @@ export default function LegacyTopic({
           </div>
         )}
       </div>
-      {!isEditingTopic && (
+      {!isEditingTopic && canReplyToTopic && (
         <div
           style={{
             width: '5rem',

@@ -67,7 +67,9 @@ export default function chatRequestHelpers({
       typeof data === 'object' &&
       (data.aiUsagePolicy ||
         (data.card && typeof data.card === 'object') ||
-        errorCode.startsWith('zero_ciel_ai_'))
+        errorCode.startsWith('zero_ciel_ai_') ||
+        // who can post in this topic: the reply carries the topic's rule
+        errorCode === 'topic_posting_restricted')
     ) {
       return Promise.reject({
         status,
@@ -704,6 +706,8 @@ export default function chatRequestHelpers({
       topicId,
       topicText,
       isOwnerPostingOnly,
+      postingMode,
+      posterIds,
       isAIChat,
       customInstructions
     }: {
@@ -711,8 +715,10 @@ export default function chatRequestHelpers({
       topicId: number;
       topicText: string;
       isOwnerPostingOnly: boolean;
+      postingMode?: 'everyone' | 'owner' | 'chosen';
+      posterIds?: number[];
       isAIChat: boolean;
-      customInstructions: string;
+      customInstructions?: string;
     }) {
       try {
         const { data } = await request.put(
@@ -722,9 +728,28 @@ export default function chatRequestHelpers({
             topicId,
             topicText,
             isOwnerPostingOnly,
+            postingMode,
+            posterIds,
             isAIChat,
             customInstructions
           },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadTopicPosting({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/topic/posting?channelId=${channelId}&topicId=${topicId}`,
           auth()
         );
         return data;

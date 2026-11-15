@@ -52,6 +52,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import AgentSuggestions, { readAgentSuggestions } from './AgentSuggestions';
 import { dismissWebsiteAgentPrompts } from '~/containers/App/WebsiteAgentSpotlight';
+import { topicPostingAccess } from '../../../topicPosting';
 
 const deviceIsMobileOS = isMobile(navigator);
 
@@ -101,7 +102,6 @@ const STARTER_QUIET_SECONDS = 6 * 60 * 60;
 
 export default function MessageInput({
   currentTransactionId,
-  currentTopic,
   selectedChannelId = 0,
   innerRef,
   currentlyStreamingAIMsgId,
@@ -112,7 +112,9 @@ export default function MessageInput({
   isCrewChannel = false,
   isCielChannel,
   isZeroChannel,
-  isOnlyOwnerPostingTopic,
+  topicPostingNotice,
+  topicPostingChecking = false,
+  topicPostingCheckFailed = false,
   isOwnerPostingOnly,
   isOwner,
   topicId,
@@ -127,7 +129,6 @@ export default function MessageInput({
   onSelectVideoButtonClick,
   onSetTransactionModalShown,
   onSetTextAreaHeight,
-  partner,
   chessTarget,
   replyTarget,
   recipientId,
@@ -142,7 +143,6 @@ export default function MessageInput({
   onAiUsagePolicyHeightChange = () => null
 }: {
   currentTransactionId: number;
-  currentTopic: any;
   selectedChannelId: number;
   innerRef: any;
   currentlyStreamingAIMsgId: number;
@@ -155,7 +155,12 @@ export default function MessageInput({
   isTwoPeopleChannel: number | boolean;
   // a Bridge Builder crew chat, where members call Zero or Ciel by @mention
   isCrewChannel?: boolean;
-  isOnlyOwnerPostingTopic: boolean;
+  // who can post in this topic, when you can't ('' when you can)
+  topicPostingNotice: string;
+  // the rule is still being read (typed text is kept)
+  topicPostingChecking?: boolean;
+  // the rule couldn't be read; the member may type, the server decides
+  topicPostingCheckFailed?: boolean;
   isOwnerPostingOnly: boolean;
   loading: boolean;
   onChessButtonClick: () => any;
@@ -168,10 +173,6 @@ export default function MessageInput({
   onSelectVideoButtonClick: () => any;
   onSetTextAreaHeight: (v: number) => any;
   onSetTransactionModalShown: (v: boolean) => any;
-  partner?: {
-    id: number;
-    username: string;
-  };
   chessTarget: any;
   replyTarget: any;
   recipientId?: number;
@@ -748,18 +749,14 @@ export default function MessageInput({
     if (isAICallOngoing) {
       return false;
     }
+    if (topicPostingNotice) {
+      return false;
+    }
     if (isOwner) {
       return true;
     }
     if (selectedTab === 'all' && isOwnerPostingOnly) {
       return false;
-    }
-    if (isOnlyOwnerPostingTopic) {
-      if (isTwoPeopleChannel) {
-        return currentTopic?.userId === myId;
-      } else {
-        return false;
-      }
     }
     return true;
   }, [
@@ -767,15 +764,22 @@ export default function MessageInput({
     isOwner,
     selectedTab,
     isOwnerPostingOnly,
-    isOnlyOwnerPostingTopic,
-    isTwoPeopleChannel,
-    currentTopic?.userId,
-    myId
+    topicPostingNotice
   ]);
 
+  // Replying to the featured topic is posting in it: no button for members
+  // who can't post there.
   const legacyTopicButtonShown = useMemo(
-    () => selectedChannelId === GENERAL_CHAT_ID && !!legacyTopicObj?.id,
-    [selectedChannelId, legacyTopicObj]
+    () =>
+      selectedChannelId === GENERAL_CHAT_ID &&
+      !!legacyTopicObj?.id &&
+      topicPostingAccess({
+        topic: legacyTopicObj,
+        userId: Number(myId),
+        channelOwnerId: isOwner ? Number(myId) : 0,
+        isTwoPeople: false
+      }) !== 'blocked',
+    [selectedChannelId, legacyTopicObj, myId, isOwner]
   );
 
   return (
@@ -876,7 +880,6 @@ export default function MessageInput({
             />
           )}
         <InputArea
-          currentTopic={currentTopic}
           forcedDisabled={aiInputDisabled}
           forcedPlaceholder={
             aiInputDisabled
@@ -886,21 +889,22 @@ export default function MessageInput({
               : undefined
           }
           idlePlaceholder={
-            isCrewChannel && isWebsiteAgentEnabledFor(Number(myId))
-              ? 'Message your crew, or type @Ciel or @Zero for help...'
-              : undefined
+            topicPostingCheckFailed
+              ? "Enter a message (couldn't check who can post here)..."
+              : isCrewChannel && isWebsiteAgentEnabledFor(Number(myId))
+                ? 'Message your crew, or type @Ciel or @Zero for help...'
+                : undefined
           }
           isBanned={isBanned}
           isRestrictedChannel={isRestrictedChannel}
-          isTwoPeopleChannel={!!isTwoPeopleChannel}
-          isOnlyOwnerPostingTopic={isOnlyOwnerPostingTopic}
+          topicPostingNotice={topicPostingNotice}
+          topicPostingChecking={topicPostingChecking}
           isOwnerPostingOnly={isOwnerPostingOnly}
           isOwner={isOwner}
           innerRef={innerRef}
           inputText={inputText}
           isMain={selectedTab !== 'topic'}
           loading={loading}
-          partner={partner}
           onSendMsg={handleSendMsg}
           onHeightChange={onHeightChange}
           onSetText={handleSetText}

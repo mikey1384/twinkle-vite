@@ -5,6 +5,12 @@ const test = require('node:test');
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const { transformSync } = require('esbuild');
+// the real who-can-post helpers (a small TS module with no imports)
+const topicPosting = (() => {
+  const mod = { exports: {} };
+  new Function('module', 'exports', transformSync(readFileSync(path.resolve(__dirname, '../src/containers/Chat/topicPosting.ts'), 'utf8'), { loader: 'ts', format: 'cjs' }).code)(mod, mod.exports);
+  return mod.exports;
+})();
 
 function fixture(relative, initialProps = {}, options = {}) {
   const slots = [];
@@ -44,7 +50,8 @@ function fixture(relative, initialProps = {}, options = {}) {
     '../TopicSettingsModal': () => null,
     '~/components/Modals/ConfirmModal': () => null,
     '~/constants/css': { Color: new Proxy({}, {get:()=>()=>'#334155'}),borderRadius:'8px' },
-    '~/constants/defaultValues': {charLimit:{chat:{topic:200}}},
+    '~/constants/defaultValues': {charLimit:{chat:{topic:200}},MAX_PINNED_CHAT_TOPICS:5,GENERAL_CHAT_ID:2},
+    '../../topicPosting': topicPosting,
     '~/helpers': {isSupermod:level=>level>=200},
     '~/helpers/hooks': {useMyLevel:()=>({canDelete:!!options.canDelete})},
     '~/helpers/stringHelpers': {stringIsEmpty:value=>!value?.trim(),exceedsCharLimit:({text})=>text.length>200?{style:{color:'red'},message:'Over limit'}:null},
@@ -135,9 +142,22 @@ test('topic picker actions have explicit names and retain ownership/pin/featured
   const pinned=app.render({pinnedTopicIds:[1],isFeatured:true});
   assert.match(pinned,/aria-label="Unpin topic"/);
   assert.equal(app.buttons().find(node=>node.props['aria-label']==='Featured topic').props.disabled,true);
+  // The topic's own owner opens Topic settings (who can post, label, delete
+  // inside) but still can't pin or feature it.
   const ownNonOwner=fixture(picker,{...base,userId:5}).render();
-  assert.match(ownNonOwner,/aria-label="Delete topic"/);
-  assert.doesNotMatch(ownNonOwner,/Topic settings|Pin topic|Feature topic/);
+  assert.match(ownNonOwner,/aria-label="Topic settings"/);
+  assert.doesNotMatch(ownNonOwner,/Delete topic|Pin topic|Feature topic/);
+  const otherMember=fixture(picker,{...base,userId:6}).render();
+  assert.doesNotMatch(otherMember,/Topic settings|Delete topic|Pin topic|Feature topic/);
+  // a rule the chat owner set (every old switch in a group) and the General
+  // chat stay the chat owner's: the topic owner keeps only Delete
+  for (const props of [{settings:{isOwnerPostingOnly:true}},{settings:{postingMode:'chosen',postingSetBy:'chat_owner'}},{channelId:2}]) {
+    const locked=fixture(picker,{...base,userId:5,...props}).render();
+    assert.doesNotMatch(locked,/Topic settings/);
+    assert.match(locked,/aria-label="Delete topic"/);
+  }
+  const ownRule=fixture(picker,{...base,userId:5,settings:{postingMode:'owner',postingSetBy:'topic_owner'}}).render();
+  assert.match(ownRule,/aria-label="Topic settings"/);
 });
 
 test('the empty topic state does not offer creation to read-only members',()=>{

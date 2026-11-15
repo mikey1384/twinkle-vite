@@ -76,3 +76,48 @@ export const topicSettingsSwitchLabelStyle = {
   color: '#334155',
   margin: 0
 };
+
+// "Who can post in this topic": three plain choices and, for chosen
+// members, one compact row with an Edit button.
+export const topicPostingOptionsClass = css`
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  > legend { padding: 0; }
+  > label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    margin: 0;
+    color: #334155;
+    font-size: calc(15 * var(--px));
+    cursor: pointer;
+  }
+  > label > input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: #334155;
+  }
+  &:disabled > label { cursor: default; opacity: 0.7; }
+`;
+
+export const topicPostingChosenRowClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  margin: 4px 0 0 28px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 10px;
+  background: #f4f6f9;
+  color: #334155;
+  font-size: calc(14 * var(--px));
+  > span { min-width: 0; overflow-wrap: anywhere; }
+  > span b { font-weight: 600; }
+  > button { flex-shrink: 0; }
+`;

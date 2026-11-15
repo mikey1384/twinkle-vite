@@ -6,11 +6,11 @@ const React = require('react');
 const { transformSync } = require('esbuild');
 
 // Exercise the actual component handlers without app bootstrap, network or sends.
-function createInput({ mobile = false, overLimit = false, ...overrides } = {}) {
+function createInput({ mobile = false, overLimit = false, runEffects = false, ...overrides } = {}) {
   const source = readFileSync(path.resolve(__dirname,
     '../src/containers/Chat/Body/MessagesContainer/MessageInput/InputArea.tsx'), 'utf8');
   const dependencies = {
-    react: { ...React, useEffect: () => {}, useMemo: fn => fn(), useRef: value => ({ current: value }) },
+    react: { ...React, useEffect: runEffects ? fn => { fn(); } : () => {}, useMemo: fn => fn(), useRef: value => ({ current: value }) },
     '~/components/Texts/Textarea': () => null,
     '~/helpers/stringHelpers': {
       addEmoji: value => value.replace(':)', '🙂'),
@@ -18,7 +18,8 @@ function createInput({ mobile = false, overLimit = false, ...overrides } = {}) {
       stringIsEmpty: value => !value?.trim()
     },
     '~/helpers': { isMobile: () => mobile },
-    '~/contexts': { useKeyContext: selector => selector({ myState: { userId: 5 } }) },
+    '@emotion/css': { css: () => 'css' },
+    '~/constants/css': { Color: { red: () => 'red' }, borderRadius: '5px' },
     '../../../containers': { chatComposerInputClass: 'composer' }
   };
   const mod = { exports: {} };
@@ -29,14 +30,18 @@ function createInput({ mobile = false, overLimit = false, ...overrides } = {}) {
   }, mod, mod.exports);
   const calls = { sends: 0, text: [] };
   const tree = mod.exports.default({
-    currentTopic: null, innerRef: { current: null }, inputText: 'Hello',
-    isBanned: false, isRestrictedChannel: false, isOnlyOwnerPostingTopic: false,
-    isOwnerPostingOnly: false, isTwoPeopleChannel: false, isOwner: false,
+    innerRef: { current: null }, inputText: 'Hello',
+    isBanned: false, isRestrictedChannel: false, topicPostingNotice: '',
+    isOwnerPostingOnly: false, isOwner: false,
     isMain: true, loading: false,
     onSendMsg: () => { calls.sends++; }, onHeightChange: () => {},
-    onSetText: text => calls.text.push(text), ...overrides
+    onSetText: text => calls.text.push(text),
+    // the parent owns the length rule and passes its message down
+    lengthError: overLimit ? 'Keep it shorter' : null, ...overrides
   });
-  return { props: tree.props.children.props, calls };
+  // the textarea (an inline length notice may follow it)
+  const children = [].concat(tree.props.children);
+  return { props: children[0].props, notice: children.find(child => child?.props?.role === 'status') || null, calls };
 }
 
 function key(overrides = {}) {
@@ -89,9 +94,30 @@ test('composition Space does not rewrite text into emoji', () => {
   assert.deepEqual(calls.text, ['🙂 ']);
 });
 
-test('restricted DM topic with missing topic data stays disabled without crashing', () => {
-  const { props } = createInput({ isOnlyOwnerPostingTopic: true, isTwoPeopleChannel: true,
-    isMain: false, partner: { id: 9, username: 'Mina' } });
+test('a topic you cannot post in shows who can, in place of the message box', () => {
+  const { props, notice } = createInput({
+    topicPostingNotice: 'Only twosteps, Lucy and 3 others can post in this topic',
+    isMain: false
+  });
   assert.equal(props.disabled, true);
-  assert.match(props.placeholder, /Only Mina can post/);
+  assert.equal(props.style.display, 'none', 'the box gives way to the line');
+  assert.equal(notice.props.children, 'Only twosteps, Lucy and 3 others can post in this topic');
+  // the notice is about the topic only, never the main chat
+  const main = createInput({ topicPostingNotice: 'Only twosteps can post in this topic', isMain: true });
+  assert.equal(main.props.disabled, false);
+  assert.equal(main.notice, null);
+});
+
+test('while the topic rule is still being checked, what was typed is kept', () => {
+  const checking = createInput({
+    runEffects: true, isMain: false, inputText: 'half a message',
+    topicPostingNotice: 'Checking who can post in this topic…', topicPostingChecking: true
+  });
+  assert.equal(checking.props.disabled, true);
+  assert.deepEqual(checking.calls.text, [], 'not cleared');
+  const blocked = createInput({
+    runEffects: true, isMain: false, inputText: 'half a message',
+    topicPostingNotice: 'Only twosteps can post in this topic'
+  });
+  assert.deepEqual(blocked.calls.text, [''], 'a real block clears it, as before');
 });

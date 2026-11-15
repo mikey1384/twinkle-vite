@@ -6,8 +6,15 @@ const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const { transformSync } = require('esbuild');
 
+// the real who-can-post helpers (a small TS module with no imports)
+const topicPosting = (() => {
+  const mod = { exports: {} };
+  new Function('module', 'exports', transformSync(readFileSync(path.resolve(__dirname, '../src/containers/Chat/topicPosting.ts'), 'utf8'), { loader: 'ts', format: 'cjs' }).code)(mod, mod.exports);
+  return mod.exports;
+})();
+
 function fixture(kind = 'settings', overrides = {}, options = {}) {
-  const slots = [], effects = [], requests = [], events = [], edits = [], navigations = [], busyChanges = [], drafts = [];
+  const slots = [], effects = [], requests = [], events = [], edits = [], navigations = [], busyChanges = [], drafts = [], postingLoads = [];
   const listeners = new Map(), timers = new Map();
   let cursor = 0, dirty = false, tree, timerId = 0, hidden = 0, deleted = 0;
   let props = {
@@ -54,7 +61,14 @@ function fixture(kind = 'settings', overrides = {}, options = {}) {
   const Menu = () => null;
   const Textarea = ({ value, id, disabled, ...rest }) => React.createElement('textarea', { id, disabled, value, readOnly: true, 'aria-invalid': rest['aria-invalid'], 'aria-describedby': rest['aria-describedby'] });
   const canonical = args => ({ topicSettings: { topicTitle: args.topicText, isOwnerPostingOnly: args.isOwnerPostingOnly, customInstructions: args.customInstructions || '' } });
+  const Picker = () => null;
   const helpers = new Proxy({}, { get: (_, name) => async args => {
+    // Who can post is read when the window opens; kept apart from the writes.
+    if (name === 'loadTopicPosting') {
+      postingLoads.push(args);
+      if (options.posting) return options.posting(args);
+      return { postingMode: props.isOwnerPostingOnly ? 'owner' : 'everyone', posters: [], topicOwnerId: 5, channelOwnerId: 5 };
+    }
     requests.push({ name, args });
     if (options.request) return options.request(name, args, requests);
     return name === 'editTopic' ? canonical(args) : {};
@@ -64,6 +78,7 @@ function fixture(kind = 'settings', overrides = {}, options = {}) {
     react: hooks,
     '~/components/Modal': Modal, '~/components/Button': Button, '~/components/Texts/Input': Input,
     '~/components/Buttons/SwitchButton': Switch, './AIChatTopicMenu': Menu, '~/components/Texts/Textarea': Textarea,
+    './TopicPostersModal': Picker, '../../topicPosting': topicPosting,
     '~/components/Icon': () => null, '~/components/ErrorBoundary': ({ children }) => children,
     '~/components/AIDisabledNotice': ({ title }) => React.createElement('p', null, title),
     '~/components/DraftSaveIndicator': () => null,
@@ -98,7 +113,11 @@ function fixture(kind = 'settings', overrides = {}, options = {}) {
     return [node, ...React.Children.toArray(node.props.children).flatMap(child => nodes(child)), ...nodes(node.props.footer ?? null)];
   }
   return {
-    requests, events, edits, navigations, drafts, busyChanges,
+    requests, events, edits, navigations, drafts, busyChanges, postingLoads,
+    radio(value) { const found = nodes().find(node => node.type === 'input' && node.props.type === 'radio' && node.props.value === value); assert.ok(found, value); return found.props; },
+    postingFieldset() { const found = nodes().find(node => node.type === 'fieldset'); assert.ok(found, 'fieldset'); return found.props; },
+    radios() { return nodes().filter(node => node.type === 'input' && node.props.type === 'radio').map(node => node.props); },
+    picker() { return nodes().find(node => node.type === Picker)?.props || null; },
     render(next = {}) {
       props = { ...props, ...next };
       for (let pass = 0; pass < 20; pass++) {
@@ -141,7 +160,7 @@ test('save locks the form, rejects rapid duplicates, and keeps failed edits with
   app.render(); app.find(input).onChange('An edited label'); app.render();
   const save = app.button('Save'), first = save.onClick(); await save.onClick(); app.render();
   assert.equal(app.requests.length, 1); assert.equal(app.find(input).disabled, true);
-  assert.equal(app.switch('Only owner can post messages').disabled, true);
+  assert.equal(app.postingFieldset().disabled, true, 'who-can-post choices locked');
   app.find('~/components/Modal').onClose(); assert.equal(app.hidden, 0);
   reject(new Error('Isolated failure')); await first;
   assert.match(app.render(), /role="alert"/); assert.equal(app.find(input).value, 'An edited label');
@@ -290,4 +309,87 @@ test('failed improvements restore the original text and ignore late completion e
 test('disabled AI features never start generation', () => {
   const app = fixture('menu', {}, { aiDisabled: true });
   assert.match(app.render(), /Unavailable/); assert.deepEqual(app.events, []);
+});
+
+test('who can post: chosen members open the picker, save canonically, and wait for the saved rule', async () => {
+  const app = fixture('settings', { topicOwnerId: 5, topicOwnerName: 'twosteps' }, {
+    posting: () => ({ postingMode: 'owner', posters: [], topicOwnerId: 5, channelOwnerId: 1 })
+  });
+  app.render();
+  // until the saved rule loads the choices are locked; a title-only save
+  // then sends just the old switch, so the server keeps what is saved
+  assert.equal(app.postingLoads.length, 1);
+  await settled(); app.render();
+  assert.deepEqual(app.radios().map(radio => radio.value), ['everyone', 'owner', 'chosen']);
+  assert.equal(app.radio('owner').checked, true);
+  assert.match(app.render(), /Only me/);
+  // picking "Chosen members" with nobody chosen opens the picker; Cancel puts the choice back
+  app.radio('chosen').onChange(); app.render();
+  assert.ok(app.picker());
+  assert.deepEqual(app.picker().alwaysAllowedIds, [5, 1]);
+  app.picker().onHide(); app.render();
+  assert.equal(app.picker(), null);
+  assert.equal(app.radio('owner').checked, true);
+  assert.equal(app.button('Save').disabled, true, 'nothing changed');
+  // choose again and pick two members
+  app.radio('chosen').onChange(); app.render();
+  app.picker().onDone([{ id: 7, username: 'Lucy' }, { id: 8, username: 'Mina' }]); const html = app.render();
+  assert.match(html, /Chosen members: <b>Lucy, Mina<\/b>/);
+  assert.equal(app.button('Edit').disabled, false);
+  await app.button('Save').onClick(); await settled();
+  const save = app.requests.find(request => request.name === 'editTopic');
+  assert.equal(save.args.postingMode, 'chosen');
+  assert.deepEqual(save.args.posterIds, [7, 8]);
+  assert.equal(save.args.isOwnerPostingOnly, false);
+  assert.equal(app.hidden, 1);
+});
+
+test('who can post: a label save sends no posting fields unless the rule loaded and changed; a direct chat has no chosen members', async () => {
+  const app = fixture('settings', { isOwnerPostingOnly: true }, { posting: () => new Promise(() => {}) });
+  app.render();
+  assert.equal(app.radio('owner').checked, true);
+  app.find(input).onChange('Renamed'); app.render();
+  await app.button('Save').onClick(); await settled();
+  const save = app.requests.find(request => request.name === 'editTopic');
+  assert.equal('isOwnerPostingOnly' in save.args, false, 'a stale switch is never sent');
+  assert.equal('postingMode' in save.args, false);
+  assert.equal('posterIds' in save.args, false);
+
+  const dm = fixture('settings', { isTwoPeopleChat: true });
+  dm.render(); await settled(); dm.render();
+  assert.deepEqual(dm.radios().map(radio => radio.value), ['everyone', 'owner']);
+});
+
+test('who can post: a loaded but unchanged rule is not sent with a label edit', async () => {
+  const app = fixture('settings', { isOwnerPostingOnly: true });
+  app.render(); await settled(); app.render();
+  app.find(input).onChange('Renamed'); app.render();
+  await app.button('Save').onClick(); await settled();
+  const save = app.requests.find(request => request.name === 'editTopic');
+  assert.equal('isOwnerPostingOnly' in save.args, false);
+  assert.equal('postingMode' in save.args, false);
+});
+
+test('who can post: the chat owner changing a topic owner\'s rule pre-ticks them and says so; list-only edits keep it theirs', async () => {
+  // viewer 5 owns the chat; Lucy (9) owns the topic, which is open
+  const open = fixture('settings', {}, {
+    posting: () => ({ postingMode: 'everyone', postingSetBy: 'chat_owner', posters: [], topicOwnerId: 9, topicOwnerName: 'Lucy', channelOwnerId: 5 })
+  });
+  open.render(); await settled(); open.render();
+  open.radio('chosen').onChange(); let html = open.render();
+  assert.deepEqual(open.picker().selected.map(p => p.id), [9], 'Lucy starts ticked');
+  assert.deepEqual(open.picker().alwaysAllowedIds, [5]);
+  assert.match(html, /Lucy owns this topic; they stay able to post unless you untick them\./);
+  open.picker().onHide(); open.render();
+  open.radio('owner').onChange(); html = open.render();
+  assert.match(html, /Lucy owns this topic and won&#x27;t be able to post either\./);
+
+  // Lucy's own chosen rule: the chat owner editing only the list keeps it hers
+  const hers = fixture('settings', {}, {
+    posting: () => ({ postingMode: 'chosen', postingSetBy: 'topic_owner', posters: [{ id: 7, username: 'Mina' }], topicOwnerId: 9, topicOwnerName: 'Lucy', channelOwnerId: 5 })
+  });
+  hers.render(); await settled(); html = hers.render();
+  assert.doesNotMatch(html, /owns this topic/);
+  hers.button('Edit').onClick(); hers.render();
+  assert.deepEqual(hers.picker().alwaysAllowedIds, [9, 5], 'Lucy needs no tick under her own rule');
 });

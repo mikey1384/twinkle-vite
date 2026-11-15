@@ -511,7 +511,9 @@ export default function Content({
                 font-weight: bold;
               `}
             >
-              Message failed to send. Copy it and try again.
+              {parsedSettings?.saveFailedReason === 'topic_posting_restricted'
+                ? "Not sent: you can't post in this topic. Copy it if you want to keep it."
+                : 'Message failed to send. Copy it and try again.'}
             </div>
           )}
           {message.relayUndelivered && !parsedSettings?.saveFailed && (

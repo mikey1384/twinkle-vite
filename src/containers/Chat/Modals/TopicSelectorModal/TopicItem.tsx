@@ -8,7 +8,8 @@ import TopicSettingsModal from '../TopicSettingsModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
-import { MAX_PINNED_CHAT_TOPICS } from '~/constants/defaultValues';
+import { GENERAL_CHAT_ID, MAX_PINNED_CHAT_TOPICS } from '~/constants/defaultValues';
+import { topicOwnerMayChangePosting } from '../../topicPosting';
 import { useNavigate } from 'react-router-dom';
 import {
   chatTopicRowClass,
@@ -73,6 +74,9 @@ function TopicItem({
   settings: {
     customInstructions?: string;
     isOwnerPostingOnly?: boolean;
+    postingMode?: 'everyone' | 'owner' | 'chosen';
+    postingSetBy?: 'chat_owner' | 'topic_owner';
+    postingSetById?: number;
     isSharedWithOtherUsers?: boolean;
   };
   style?: React.CSSProperties;
@@ -122,10 +126,16 @@ function TopicItem({
     if (isBasicallyOwner) {
       return true;
     }
-    if (isTwoPeopleChat && Number(userId) === Number(myId)) {
-      return true;
-    }
-  }, [isBasicallyOwner, isTwoPeopleChat, myId, userId]);
+    if (Number(userId) !== Number(myId)) return false;
+    if (isTwoPeopleChat) return true;
+    // In a group the topic's owner can change it too (who can post, its
+    // label), except in the General chat and while a rule the chat owner set
+    // is in place. The server checks the same (and their membership).
+    return (
+      Number(channelId) !== Number(GENERAL_CHAT_ID) &&
+      topicOwnerMayChangePosting(settings, Number(userId))
+    );
+  }, [isBasicallyOwner, isTwoPeopleChat, myId, userId, channelId, settings]);
 
   const canDeleteHumanTopic = useMemo(() => {
     return !isAIChannel && (isOwner || Number(userId) === Number(myId));
@@ -268,6 +278,7 @@ function TopicItem({
           displayedThemeColor={displayedThemeColor}
           topicId={id}
           isOwnerPostingOnly={isOwnerPostingOnly}
+          postingMode={settings?.postingMode}
           customInstructions={customInstructions}
           isTwoPeopleChat={isTwoPeopleChat}
           isAIChannel={isAIChannel}

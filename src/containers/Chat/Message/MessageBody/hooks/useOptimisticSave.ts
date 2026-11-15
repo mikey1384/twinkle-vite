@@ -3,6 +3,7 @@ import { socket } from '~/constants/sockets/api';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { trackEvent } from '~/helpers/analytics';
 import { relayChatMessage } from '~/helpers/chatMessageSend';
+import { useChatContext } from '~/contexts';
 
 interface Props {
   channelId: number;
@@ -64,6 +65,9 @@ export default function useOptimisticSave({
   userIsUploader,
   userId
 }: Props) {
+  const onChangeTopicSettings = useChatContext(
+    (v) => v.actions.onChangeTopicSettings
+  );
   useEffect(() => {
     if (!message.id && hasChessBoardState) {
       onUpdateRecentChessMessage({ channelId, message });
@@ -156,6 +160,36 @@ export default function useOptimisticSave({
         const isAIChat = isCielChat || isZeroChat;
         if (error?.aiUsagePolicy) {
           onAiUsagePolicyUpdate?.(error.aiUsagePolicy);
+        }
+        // Not allowed to post in this topic (the rule changed, this tab was
+        // behind, or a reply to the featured topic from the main chat): show
+        // the topic's quiet line from the rule the server sent back, and keep
+        // the unsent message in place with a plain note so nothing typed is
+        // lost.
+        if (error?.code === 'topic_posting_restricted') {
+          const rule = error.topicPosting;
+          if (rule?.topicId && rule.postingMode) {
+            onChangeTopicSettings({
+              channelId,
+              topicId: Number(rule.topicId),
+              isOwnerPostingOnly: rule.postingMode === 'owner',
+              postingMode: rule.postingMode,
+              postingSetBy: rule.postingSetBy,
+              posters: Array.isArray(rule.posters) ? rule.posters : []
+            });
+          }
+          onSetMessageState({
+            channelId,
+            messageId: tempMessageId,
+            newState: {
+              settings: {
+                ...(message.settings || {}),
+                saveFailed: true,
+                saveFailedReason: 'topic_posting_restricted'
+              }
+            }
+          });
+          return;
         }
         if (isAIChat) {
           onOptimisticAiMessageSaveError?.({

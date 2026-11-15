@@ -95,6 +95,7 @@ function Message({
       hasError?: boolean;
       errorType?: 'moderation' | 'general';
       saveFailed?: boolean;
+      saveFailedReason?: string;
       aiGenerationStatus?: string;
       aiGenerationStartedAt?: number;
     };

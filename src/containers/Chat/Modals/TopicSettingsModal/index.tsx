@@ -5,6 +5,13 @@ import Input from '~/components/Texts/Input';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Icon from '~/components/Icon';
 import AIChatTopicMenu from './AIChatTopicMenu';
+import TopicPostersModal from './TopicPostersModal';
+import {
+  formatChosenSummary,
+  topicPostingModeOf,
+  type TopicPoster,
+  type TopicPostingMode
+} from '../../topicPosting';
 import { buildCanonicalChannelMessagesState } from '../helpers';
 import { charLimit } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -16,13 +23,29 @@ import {
   topicSettingsHelpClass,
   topicSettingsSectionClass,
   topicSettingsSwitchStyle,
-  topicSettingsSwitchLabelStyle
+  topicSettingsSwitchLabelStyle,
+  topicPostingOptionsClass,
+  topicPostingChosenRowClass
 } from './styles';
 
 interface CanonicalTopicSettings {
+  channelId?: number;
+  topicId?: number;
   topicTitle: string;
   isOwnerPostingOnly: boolean;
+  postingMode?: TopicPostingMode;
+  postingSetBy?: string;
+  posters?: Array<{ id: number; username: string }>;
   customInstructions: string;
+}
+
+interface SavedPosting {
+  mode: TopicPostingMode;
+  posters: TopicPoster[];
+  setBy: 'chat_owner' | 'topic_owner';
+  topicOwnerId: number;
+  topicOwnerName: string;
+  channelOwnerId: number;
 }
 
 export default function TopicSettingsModal({
@@ -30,6 +53,7 @@ export default function TopicSettingsModal({
   customInstructions,
   displayedThemeColor,
   isOwnerPostingOnly,
+  postingMode: initialPostingMode,
   isTwoPeopleChat,
   isAIChannel,
   canDeleteTopic = false,
@@ -46,6 +70,7 @@ export default function TopicSettingsModal({
   customInstructions: string;
   displayedThemeColor: string;
   isOwnerPostingOnly: boolean;
+  postingMode?: TopicPostingMode;
   isTwoPeopleChat: boolean;
   isAIChannel: boolean;
   canDeleteTopic?: boolean;
@@ -71,9 +96,16 @@ export default function TopicSettingsModal({
   const updateLastTopicId = useAppContext((v) => v.requestHelpers.updateLastTopicId);
   const onEnterChannelWithId = useChatContext((v) => v.actions.onEnterChannelWithId);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onChangeTopicSettings = useChatContext(
+    (v) => v.actions.onChangeTopicSettings
+  );
   const currentMessagesObj = useChatContext(
     (v) => v.state.channelsObj[channelId]?.messagesObj
   );
+  const channelMembers = useChatContext(
+    (v) => v.state.channelsObj[channelId]?.members
+  );
+  const loadTopicPosting = useAppContext((v) => v.requestHelpers.loadTopicPosting);
   const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
   const deleteTopic = useAppContext((v) => v.requestHelpers.deleteTopic);
   const updateTopicShareState = useAppContext(
@@ -81,7 +113,18 @@ export default function TopicSettingsModal({
   );
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [editedTopicText, setEditedTopicText] = useState(topicText || '');
-  const [ownerOnlyPosting, setOwnerOnlyPosting] = useState(!!isOwnerPostingOnly);
+  const startingPostingMode = topicPostingModeOf({
+    postingMode: initialPostingMode,
+    isOwnerPostingOnly
+  });
+  const [postingMode, setPostingMode] = useState<TopicPostingMode>(startingPostingMode);
+  const [posters, setPosters] = useState<TopicPoster[]>([]);
+  // The canonical rule, read when the window opens; editing waits for it.
+  const [savedPosting, setSavedPosting] = useState<SavedPosting | null>(null);
+  const [postingLoadFailed, setPostingLoadFailed] = useState(false);
+  const [postingAttempt, setPostingAttempt] = useState(0);
+  const [pickerShown, setPickerShown] = useState(false);
+  const modeBeforePickerRef = useRef<TopicPostingMode | null>(null);
   const [pendingAction, setPendingAction] = useState<'save' | 'delete' | null>(null);
   const [actionError, setActionError] = useState('');
   const [saveNeedsRetry, setSaveNeedsRetry] = useState(false);
@@ -112,6 +155,37 @@ export default function TopicSettingsModal({
     if (actionError) errorRef.current?.focus();
   }, [actionError]);
 
+  useEffect(() => {
+    if (isAIChannel) return;
+    let canceled = false;
+    setPostingLoadFailed(false);
+    (async () => {
+      try {
+        const data = await loadTopicPosting({ channelId, topicId });
+        if (canceled) return;
+        const mode = topicPostingModeOf({ postingMode: data?.postingMode });
+        const loaded: TopicPoster[] = Array.isArray(data?.posters) ? data.posters : [];
+        setSavedPosting({
+          mode,
+          posters: loaded,
+          setBy: data?.postingSetBy === 'topic_owner' ? 'topic_owner' : 'chat_owner',
+          topicOwnerId: Number(data?.topicOwnerId || 0),
+          topicOwnerName: String(data?.topicOwnerName || ''),
+          channelOwnerId: Number(data?.channelOwnerId || 0)
+        });
+        setPostingMode(mode);
+        setPosters(loaded);
+      } catch (error) {
+        console.error(error);
+        if (!canceled) setPostingLoadFailed(true);
+      }
+    })();
+    return () => {
+      canceled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, topicId, isAIChannel, postingAttempt]);
+
   const handleInstructionsBusy = useCallback((busy: boolean) => {
     instructionsBusyRef.current = busy;
     setInstructionsBusy(busy);
@@ -131,8 +205,47 @@ export default function TopicSettingsModal({
   const deleteButtonShown = isAIChannel || canDeleteTopic;
   const instructionsInvalid = isAIChannel && isCustomInstructionsOn &&
     (!trimmedInstructions || newCustomInstructions.length > charLimit.comment);
+  const postingReady = !isAIChannel && !!savedPosting;
+  // The chat owner editing someone else's topic. Changing the mode of a rule
+  // the topic owner could post under makes it the chat owner's rule; only the
+  // chosen list changing keeps it the topic owner's (as the server decides).
+  const editorIsChatOwnerOnly =
+    !!savedPosting &&
+    !isTwoPeopleChat &&
+    Number(userId) === savedPosting.channelOwnerId &&
+    Number(userId) !== savedPosting.topicOwnerId;
+  const topicOwnerCouldPost =
+    !!savedPosting &&
+    (savedPosting.mode === 'everyone' || savedPosting.setBy === 'topic_owner');
+  const becomesChatOwnerRule =
+    editorIsChatOwnerOnly &&
+    topicOwnerCouldPost &&
+    postingMode !== savedPosting?.mode &&
+    postingMode !== 'everyone';
+  const keepsTopicOwnerRule =
+    !editorIsChatOwnerOnly ||
+    (savedPosting?.setBy === 'topic_owner' && postingMode === savedPosting.mode);
+  const pickerAlwaysAllowedIds = (savedPosting
+    ? keepsTopicOwnerRule
+      ? [savedPosting.topicOwnerId, savedPosting.channelOwnerId]
+      : [savedPosting.channelOwnerId]
+    : []
+  ).filter((id) => id > 0);
+  const topicOwnerLabel = savedPosting?.topicOwnerName || 'The topic owner';
+  const topicOwnerNotice = !becomesChatOwnerRule
+    ? ''
+    : postingMode === 'chosen'
+      ? posters.some((poster) => poster.id === savedPosting?.topicOwnerId)
+        ? `${topicOwnerLabel} owns this topic; they stay able to post unless you untick them.`
+        : `${topicOwnerLabel} owns this topic and won't be able to post unless you tick them.`
+      : `${topicOwnerLabel} owns this topic and won't be able to post either.`;
+  const postingUnchanged = isAIChannel || !savedPosting || (
+    postingMode === savedPosting.mode &&
+    (postingMode !== 'chosen' ||
+      posterIdsKey(posters) === posterIdsKey(savedPosting.posters))
+  );
   const baseUnchanged = (topicText || '') === editedTopicText &&
-    !!isOwnerPostingOnly === ownerOnlyPosting &&
+    postingUnchanged &&
     (!isAIChannel || (
       !!customInstructions === isCustomInstructionsOn &&
       (!isCustomInstructionsOn || customInstructions === newCustomInstructions)
@@ -239,17 +352,63 @@ export default function TopicSettingsModal({
           </>
         ) : (
           <div className={topicSettingsSectionClass}>
-            <SwitchButton
-              checked={ownerOnlyPosting}
-              disabled={formDisabled}
-              onChange={() => setOwnerOnlyPosting((prev) => !prev)}
-              ariaLabel={`Only ${isTwoPeopleChat ? 'I' : 'owner'} can post messages`}
-              label={`Only ${isTwoPeopleChat ? 'I' : 'owner'} can post messages`}
-              small={false}
-              theme={displayedThemeColor}
-              style={topicSettingsSwitchStyle}
-              labelStyle={topicSettingsSwitchLabelStyle}
-            />
+            <fieldset
+              className={topicPostingOptionsClass}
+              disabled={formDisabled || !postingReady}
+            >
+              <legend className={topicSettingsLabelClass}>
+                Who can post in this topic
+              </legend>
+              {postingOptions().map((option) => (
+                <label key={option.value}>
+                  <input
+                    type="radio"
+                    name={`${inputId}-posting`}
+                    value={option.value}
+                    checked={postingMode === option.value}
+                    onChange={() => handlePostingModeChange(option.value)}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+              {topicOwnerNotice && (
+                <p className={topicSettingsHelpClass} role="status">
+                  {topicOwnerNotice}
+                </p>
+              )}
+              {postingMode === 'chosen' && (
+                <div className={topicPostingChosenRowClass}>
+                  <span>
+                    Chosen members: <b>{formatChosenSummary(posters)}</b>
+                  </span>
+                  <Button
+                    variant="ghost"
+                    uppercase={false}
+                    style={chatTopicActionStyle}
+                    disabled={formDisabled || !postingReady}
+                    onClick={() => {
+                      modeBeforePickerRef.current = null;
+                      setPickerShown(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                </div>
+              )}
+            </fieldset>
+            {postingLoadFailed && (
+              <p className={topicSettingsHelpClass} data-error="true" role="alert">
+                Couldn’t load who can post.{' '}
+                <Button
+                  variant="ghost"
+                  uppercase={false}
+                  style={chatTopicActionStyle}
+                  onClick={() => setPostingAttempt((value) => value + 1)}
+                >
+                  Try again
+                </Button>
+              </p>
+            )}
           </div>
         )}
         {instructionsBusy && (
@@ -271,6 +430,20 @@ export default function TopicSettingsModal({
           </div>
         )}
       </div>
+      {pickerShown && savedPosting && (
+        <TopicPostersModal
+          channelId={channelId}
+          members={Array.isArray(channelMembers) ? channelMembers : []}
+          selected={posters}
+          alwaysAllowedIds={pickerAlwaysAllowedIds}
+          onHide={handlePickerCancel}
+          onDone={(chosen) => {
+            setPosters(chosen);
+            modeBeforePickerRef.current = null;
+            setPickerShown(false);
+          }}
+        />
+      )}
       {confirmModalShown && (
         <Modal
           modalKey="DeleteChatTopic"
@@ -307,7 +480,55 @@ export default function TopicSettingsModal({
   );
 
   function handleClose() {
-    if (!operationRef.current) onHide();
+    if (!operationRef.current && !pickerShown) onHide();
+  }
+
+  function postingOptions(): Array<{ value: TopicPostingMode; label: string }> {
+    return [
+      { value: 'everyone', label: 'Everyone' },
+      {
+        value: 'owner',
+        label: 'Only me'
+      },
+      // a direct chat has nobody else to choose
+      ...(isTwoPeopleChat
+        ? []
+        : [{ value: 'chosen' as const, label: 'Chosen members' }])
+    ];
+  }
+
+  function handlePostingModeChange(mode: TopicPostingMode) {
+    // The chat owner turning someone's open (or own) topic into chosen
+    // members: the topic owner starts ticked, never silently dropped.
+    const owner = savedPosting;
+    if (
+      mode === 'chosen' &&
+      owner &&
+      editorIsChatOwnerOnly &&
+      topicOwnerCouldPost &&
+      mode !== owner.mode &&
+      !posters.some((poster) => poster.id === owner.topicOwnerId)
+    ) {
+      setPosters((prev) => [
+        { id: owner.topicOwnerId, username: owner.topicOwnerName || 'Topic owner' },
+        ...prev
+      ]);
+    }
+    if (mode === 'chosen' && !posters.length) {
+      // Choosing "Chosen members" with nobody picked opens the picker;
+      // cancelling it puts the choice back.
+      modeBeforePickerRef.current = postingMode;
+      setPickerShown(true);
+    }
+    setPostingMode(mode);
+  }
+
+  function handlePickerCancel() {
+    if (modeBeforePickerRef.current) {
+      setPostingMode(modeBeforePickerRef.current);
+      modeBeforePickerRef.current = null;
+    }
+    setPickerShown(false);
   }
 
   async function handleDeleteTopic() {
@@ -378,11 +599,20 @@ export default function TopicSettingsModal({
     operationRef.current = true;
     setPendingAction('save');
     setActionError('');
+    // Posting fields go only when the saved rule loaded and was changed;
+    // otherwise (a label edit, or the rule couldn't load) the server keeps
+    // the rule exactly as it is.
     const payload = {
       channelId,
       topicId,
       topicText: editedTopicText,
-      isOwnerPostingOnly: ownerOnlyPosting,
+      ...(postingReady && !postingUnchanged && {
+        isOwnerPostingOnly: postingMode === 'owner',
+        postingMode,
+        ...(postingMode === 'chosen' && {
+          posterIds: posters.map((poster) => poster.id)
+        })
+      }),
       isAIChat: isAIChannel,
       ...(isAIChannel && isCustomInstructionsOn && {
         customInstructions: newCustomInstructions
@@ -436,6 +666,32 @@ export default function TopicSettingsModal({
   }
 
   function publishCanonicalSettings(settings: CanonicalTopicSettings) {
+    // The saved rule, straight from the server's reply (the chat room also
+    // gets it by socket).
+    if (!isAIChannel) {
+      onChangeTopicSettings({
+        channelId,
+        topicId,
+        topicTitle: settings.topicTitle,
+        isOwnerPostingOnly: settings.isOwnerPostingOnly,
+        postingMode: settings.postingMode,
+        postingSetBy: settings.postingSetBy,
+        posters: settings.posters
+      });
+      if (settings.postingMode) {
+        const savedPosters: TopicPoster[] = settings.posters || [];
+        setSavedPosting((prev) =>
+          prev
+            ? {
+                ...prev,
+                mode: settings.postingMode!,
+                posters: savedPosters,
+                setBy: settings.postingSetBy === 'topic_owner' ? 'topic_owner' : 'chat_owner'
+              }
+            : prev
+        );
+      }
+    }
     onEditTopic({
       topicText: settings.topicTitle,
       isOwnerPostingOnly: settings.isOwnerPostingOnly,
@@ -443,4 +699,11 @@ export default function TopicSettingsModal({
       isSharedWithOtherUsers: savedShareRef.current
     });
   }
+}
+
+function posterIdsKey(posters: TopicPoster[]) {
+  return posters
+    .map((poster) => Number(poster.id))
+    .sort((a, b) => a - b)
+    .join(',');
 }

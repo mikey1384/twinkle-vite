@@ -748,6 +748,7 @@ registerMethods('chat', [
   'bookmarkChatMessage',
   'unbookmarkChatMessage',
   'editTopic',
+  'loadTopicPosting',
   'loadMyCustomInstructionTopics',
   'loadMySharedPrompts',
   'loadSharedPromptActivity',

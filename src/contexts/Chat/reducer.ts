@@ -2455,6 +2455,9 @@ export default function ChatReducer(
             topicId: action.topicId,
             topicTitle: action.topicTitle,
             isOwnerPostingOnly: action.isOwnerPostingOnly,
+            postingMode: action.postingMode,
+            postingSetBy: action.postingSetBy,
+            posters: action.posters,
             customInstructions: action.customInstructions
           })
         }

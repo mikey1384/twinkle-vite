@@ -75,6 +75,11 @@ import {
   takePrefetchedTopicMessages
 } from '../../topicPrefetch';
 import { reloadPageWithTrace } from '~/helpers/clientTraceBus';
+import {
+  formatTopicPostersLine,
+  loadTopicPostingWithRetry,
+  topicPostingAccess
+} from '../../topicPosting';
 const deviceIsMobile = isMobile(navigator);
 const CHAT_CATCH_UP_STATUS_GRACE_PERIOD_MS = 750;
 
@@ -120,6 +125,12 @@ export default function MessagesContainer({
   );
   const saveChatMessage = useAppContext(
     (v) => v.requestHelpers.saveChatMessage
+  );
+  const loadTopicPosting = useAppContext(
+    (v) => v.requestHelpers.loadTopicPosting
+  );
+  const onChangeTopicSettings = useChatContext(
+    (v) => v.actions.onChangeTopicSettings
   );
   const onLoadTopicMessages = useChatContext(
     (v) => v.actions.onLoadTopicMessages
@@ -473,12 +484,91 @@ export default function MessagesContainer({
     return null;
   }, [appliedTopicId, topicObj]);
 
-  const isOnlyOwnerPostingTopic = useMemo(() => {
-    if (currentlySelectedTopic && selectedTab === 'topic') {
-      return !!currentlySelectedTopic?.settings?.isOwnerPostingOnly;
+  // Who can post in this topic (Topic Settings); '' when you can.
+  const topicPostingState = useMemo(
+    () =>
+      currentlySelectedTopic && selectedTab === 'topic'
+        ? topicPostingAccess({
+            topic: currentlySelectedTopic,
+            userId,
+            channelOwnerId: Number(currentChannel.creatorId),
+            isTwoPeople: !!currentChannel.twoPeople
+          })
+        : 'allowed',
+    [
+      currentlySelectedTopic,
+      selectedTab,
+      userId,
+      currentChannel.creatorId,
+      currentChannel.twoPeople
+    ]
+  );
+  // A chosen-members topic that arrived without its list: read it from the
+  // server rather than guess, with retries; if it still can't be read, let
+  // the member type (the server still decides) with a small note.
+  const [postingCheckFailedKey, setPostingCheckFailedKey] = useState('');
+  const postingCheckKey = `${selectedChannelId}:${appliedTopicId}`;
+  const postingCheckFailed =
+    topicPostingState === 'unknown' && postingCheckFailedKey === postingCheckKey;
+  useEffect(() => {
+    if (topicPostingState !== 'unknown' || !appliedTopicId) return;
+    let canceled = false;
+    const key = postingCheckKey;
+    (async () => {
+      const data: any = await loadTopicPostingWithRetry({
+        load: () =>
+          loadTopicPosting({
+            channelId: selectedChannelId,
+            topicId: appliedTopicId
+          }),
+        isCanceled: () => canceled
+      });
+      if (canceled) return;
+      if (!data) {
+        setPostingCheckFailedKey(key);
+        return;
+      }
+      onChangeTopicSettings({
+        channelId: selectedChannelId,
+        topicId: appliedTopicId,
+        isOwnerPostingOnly: data.postingMode === 'owner',
+        postingMode: data.postingMode,
+        postingSetBy: data.postingSetBy,
+        posters: Array.isArray(data.posters)
+          ? data.posters.map(({ id, username }: any) => ({ id, username }))
+          : []
+      });
+    })();
+    return () => {
+      canceled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicPostingState, appliedTopicId, selectedChannelId]);
+  const topicPostingChecking =
+    topicPostingState === 'unknown' && !postingCheckFailed;
+  const topicPostingNotice = useMemo(() => {
+    if (topicPostingState === 'allowed' || postingCheckFailed) return '';
+    if (topicPostingState === 'unknown') {
+      return 'Checking who can post in this topic…';
     }
-    return false;
-  }, [currentlySelectedTopic, selectedTab]);
+    const isTwoPeople = !!currentChannel.twoPeople;
+    const channelOwnerName = (currentChannel.members || []).find(
+      (member: any) => Number(member?.id) === Number(currentChannel.creatorId)
+    )?.username;
+    return formatTopicPostersLine({
+      topic: currentlySelectedTopic,
+      channelOwnerId: Number(currentChannel.creatorId),
+      channelOwnerName,
+      isTwoPeople
+    });
+  }, [
+    topicPostingState,
+    postingCheckFailed,
+    currentlySelectedTopic,
+    currentChannel.creatorId,
+    currentChannel.twoPeople,
+    currentChannel.members
+  ]);
 
   // The tab and topic shown above this chat, for Zero and Ciel; never the
   // messages themselves or a game board.
@@ -1716,7 +1806,7 @@ export default function MessagesContainer({
     isAICardModalShown,
     isRestrictedChannel:
       !!isRestrictedChannel ||
-      (isOnlyOwnerPostingTopic && currentChannel.creatorId !== userId) ||
+      !!topicPostingNotice ||
       (currentChannel.isOwnerPostingOnly &&
         selectedTab !== 'topic' &&
         currentChannel.creatorId !== userId),
@@ -1752,8 +1842,6 @@ export default function MessagesContainer({
   };
 
   const messageInputProps = {
-    currentTopic: currentlySelectedTopic,
-    partner,
     currentTransactionId,
     selectedChannelId,
     isZeroChannel,
@@ -1762,7 +1850,9 @@ export default function MessagesContainer({
     isBanned:
       isZeroChannel || isCielChannel ? !!banned?.aiChat : !!banned?.chat,
     isOwner: Number(currentChannel.creatorId) === Number(userId),
-    isOnlyOwnerPostingTopic,
+    topicPostingNotice,
+    topicPostingChecking,
+    topicPostingCheckFailed: postingCheckFailed,
     isOwnerPostingOnly: currentChannel.isOwnerPostingOnly,
     innerRef: ChatInputRef,
     currentlyStreamingAIMsgId: currentChannel.currentlyStreamingAIMsgId,
