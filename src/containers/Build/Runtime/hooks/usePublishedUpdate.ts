@@ -155,6 +155,8 @@ export function usePublishedUpdate({
 
   return {
     available: Boolean(enabled && notice?.sessionKey === sessionKey && !notice.dismissed),
+    // The new live version the notice is about (its update note, if any).
+    versionId: enabled && notice?.sessionKey === sessionKey ? notice.versionId : null,
     dismiss() {
       setNotice((current) => current?.sessionKey === sessionKey
         ? { ...current, dismissed: true }

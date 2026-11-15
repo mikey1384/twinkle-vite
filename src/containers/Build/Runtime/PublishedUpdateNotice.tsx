@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
+import { Link } from 'react-router-dom';
+import { formatUpdateNoteLabel } from '~/helpers/buildUpdateNote';
+import type { BuildUpdateNote } from './hooks/useUpdateNote';
 
 const noticeClass = css`
   position: absolute;
@@ -44,20 +47,89 @@ const noticeClass = css`
   .update { background: #285d9e; border-color: #285d9e; color: #fff; }
   button:disabled { opacity: 0.65; cursor: default; }
   button:focus-visible { outline: 3px solid #f2b73a; outline-offset: 2px; }
+  .whats-new {
+    display: inline;
+    min-height: 0;
+    margin-left: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #285d9e;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .note {
+    flex: 1 1 100%;
+    box-sizing: border-box;
+    max-height: min(40vh, 260px);
+    overflow-y: auto;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f1f5fb;
+    font-size: 15px;
+  }
+  .note-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .note-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+    color: #4b5d78;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .note-meta a { color: #285d9e; }
 `;
 
 export default function PublishedUpdateNotice({
   updating,
   onUpdate,
-  onLater
+  onLater,
+  note = null,
+  onWhatsNew,
+  defaultNoteOpen = false
 }: {
   updating: boolean;
   onUpdate: () => void;
   onLater: () => void;
+  // The owner's update note for the new version; without one the notice is
+  // exactly as before.
+  note?: BuildUpdateNote | null;
+  onWhatsNew?: () => void;
+  defaultNoteOpen?: boolean;
 }) {
+  const [noteOpen, setNoteOpen] = useState(defaultNoteOpen);
   return (
     <div className={noticeClass} role="status" aria-live="polite">
-      <p><strong>New update available</strong> Save your work before updating.</p>
+      <p>
+        <strong>New update available</strong> Save your work before updating.
+        {note ? (
+          <button
+            type="button"
+            className="whats-new"
+            aria-expanded={noteOpen}
+            onClick={() => {
+              if (!noteOpen) onWhatsNew?.();
+              setNoteOpen((open) => !open);
+            }}
+          >
+            {noteOpen ? 'Hide' : "What's new"}
+          </button>
+        ) : null}
+      </p>
+      {note && noteOpen ? (
+        <div className="note">
+          <div className="note-meta">
+            <span>
+              {formatUpdateNoteLabel(note.updateNumber)}
+              {note.username ? ` · ${note.username}` : ''}
+            </span>
+            <Link to={`/comments/${note.commentId}`}>Comments</Link>
+          </div>
+          <p className="note-text">{note.content}</p>
+        </div>
+      ) : null}
       <div className="actions">
         <button type="button" onClick={onLater} disabled={updating}>Later</button>
         <button type="button" className="update" onClick={onUpdate} disabled={updating}>

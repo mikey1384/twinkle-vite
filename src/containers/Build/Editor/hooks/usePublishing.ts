@@ -93,6 +93,15 @@ export default function usePublishing({
       }
     },
     onReviewProposal: () => setRewardApprovalPrompt((value) => value + 1),
+    onUpdateNote: (outcome) => {
+      if (outcome.kind !== 'failed') return;
+      appendLocalRunEvent({
+        kind: 'lifecycle',
+        phase: 'publish',
+        message: `Your app updated, but the update note wasn't posted: ${outcome.message} You can ask Lumine to post an update note.`,
+        pageFeedbackOnMissingRequestId: true
+      });
+    },
     onError: (error) => {
       if (error?.response?.data?.releaseStatus) {
         applyBuildUpdate({

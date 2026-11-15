@@ -37,6 +37,9 @@ import useLumineSettings from './hooks/useLumineSettings';
 import useMutableState from './hooks/useMutableState';
 import useMetadata from './hooks/useMetadata';
 import usePublishing from './hooks/usePublishing';
+import UpdateNoteDialog from '~/components/Build/UpdateNoteDialog';
+import UpdateNoteChatCard from './ChatPanel/UpdateNoteChatCard';
+import useUpdateNoteChat from './hooks/useUpdateNoteChat';
 import useProjectFiles from './hooks/useProjectFiles';
 import useRequests from './hooks/useRequests';
 import useWorkspaceLayout from './hooks/useWorkspaceLayout';
@@ -1928,6 +1931,11 @@ export default function BuildEditor({
       : routeOpenVersionsPanel
         ? 'versions'
         : buildWorkspaceCommunicationMode;
+  const updateNoteChat = useUpdateNoteChat({
+    buildId: Number(build.id || 0),
+    enabled: Boolean(isOwner && !currentBuildIsContributionFork && build.isPublic),
+    messages: mergedChatMessages
+  });
   const chatPanelProps: Omit<ChatPanelProps, 'className' | 'workshopScale'> = {
     preferredCommunicationMode,
     onCommunicationModeChange: handleCommunicationPanelChange,
@@ -2046,6 +2054,17 @@ export default function BuildEditor({
             onPublish: handlePublish
           }
         : null,
+    updateNoteCard:
+      updateNoteChat.draft || updateNoteChat.posted ? (
+        <UpdateNoteChatCard
+          draft={updateNoteChat.draft}
+          posting={updateNoteChat.posting}
+          error={updateNoteChat.error}
+          posted={updateNoteChat.posted}
+          onPost={(content) => void updateNoteChat.handlePost(content)}
+          onDismiss={() => void updateNoteChat.handleDismiss()}
+        />
+      ) : null,
     onAcceptFollowUpPrompt: () => handleAcceptFollowUpPrompt(),
     onAcceptFollowUpPromptOnce: () =>
       handleAcceptFollowUpPrompt({ keepSavedModel: true }),
@@ -2163,6 +2182,9 @@ export default function BuildEditor({
         canLeaveTeam={teamLeave.canLeaveTeam}
         onLeaveTeam={teamLeave.openLeaveConfirm}
       />
+      {release.updateDialog ? (
+        <UpdateNoteDialog {...release.updateDialog} />
+      ) : null}
       {forkHistoryBuildId ? (
         <ForkHistoryModal
           buildId={forkHistoryBuildId}

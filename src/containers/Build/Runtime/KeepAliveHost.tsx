@@ -54,6 +54,7 @@ import {
 } from '~/helpers/buildAppLifecycle';
 import PublishedUpdateNotice from './PublishedUpdateNotice';
 import { usePublishedUpdate } from './hooks/usePublishedUpdate';
+import { useUpdateNote } from './hooks/useUpdateNote';
 
 // Phones run out of memory with several apps loaded at once (10-25: Safari
 // killed the whole tab with a 3D app kept in the background). On phones a
@@ -318,6 +319,19 @@ export default function BuildRuntimeKeepAliveHost() {
           : s
       ));
     }
+  });
+  const loadBuildUpdateNoteForVersion = useAppContext(
+    (v) => v.requestHelpers.loadBuildUpdateNoteForVersion
+  );
+  const recordBuildUpdateNoteWhatsNewTap = useAppContext(
+    (v) => v.requestHelpers.recordBuildUpdateNoteWhatsNewTap
+  );
+  // The owner's update note for the version the notice is about, if any.
+  const updateNote = useUpdateNote({
+    buildId: activeBuildId,
+    versionId: publishedUpdate.versionId,
+    active: publishedUpdate.available,
+    loadNote: loadBuildUpdateNoteForVersion
   });
   const getInputState = useInputContext((v) => v.getInputState);
   const updatingSessionsRef = useRef(new Set<string>());
@@ -627,6 +641,10 @@ export default function BuildRuntimeKeepAliveHost() {
                 updating={updatingSessionKey === s.key}
                 onUpdate={() => void updatePublishedApp(s)}
                 onLater={publishedUpdate.dismiss}
+                note={updateNote}
+                onWhatsNew={() =>
+                  void recordBuildUpdateNoteWhatsNewTap(s.buildId)
+                }
               />
             ) : null}
           </div>

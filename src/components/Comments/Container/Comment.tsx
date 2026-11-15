@@ -14,6 +14,7 @@ import Replies from './Replies';
 import ReplyInputArea from './Replies/ReplyInputArea';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import UsernameText from '~/components/Texts/UsernameText';
+import UpdateNoteTag from '~/components/Comments/UpdateNoteTag';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
 import LikeButton from '~/components/Buttons/LikeButton';
@@ -643,6 +644,9 @@ function Comment({
                         </a>
                       </small>
                     )}
+                    {!isDeleteNotification ? (
+                      <UpdateNoteTag comment={comment} />
+                    ) : null}
                   </div>
                   <div style={{ width: '100%' }}>
                     {comment.targetUserId &&

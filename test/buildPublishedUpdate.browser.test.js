@@ -26,7 +26,7 @@ Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>visi
 window.setVisible=value=>{visible=value?'visible':'hidden';document.dispatchEvent(new Event('visibilitychange'));};
 window.answers={363:100,999:200}; window.loadedVersions={363:100,999:200}; window.calls=[]; window.mounts={};window.writerLoads={};window.snapshots=[];
 window.loadVersion=async id=>{window.calls.push(id);if(window.deferredId===id){return await new Promise(resolve=>window.resolveFetch=resolve)}; const answer=window.answers[id];if(answer==='error')throw Error('offline');return answer==='bad'?{publishedArtifactVersionId:'bad'}:{publishedArtifactVersionId:answer};};
-window.hostContext={requestHelpers:{loadBuildPublishedVersion:id=>window.loadVersion(id)}};
+window.hostContext={requestHelpers:{loadBuildPublishedVersion:id=>window.loadVersion(id),loadBuildUpdateNoteForVersion:async()=>({note:null}),recordBuildUpdateNoteWhatsNewTap:async()=>{}}};
 window.snapshot=async(id,reason)=>{window.snapshots.push({id,reason});if(window.deferSnapshot)await new Promise(resolve=>window.resolveSnapshot=resolve);return true};
 function Navigation(){const navigate=useNavigate();useEffect(()=>{window.go=path=>navigate(path)},[navigate]);return null;}
 createRoot(document.getElementById('root')).render(<MemoryRouter initialEntries={[window.initialPath || '/app/363']}><Navigation/><Host/></MemoryRouter>);
@@ -35,7 +35,7 @@ createRoot(document.getElementById('root')).render(<MemoryRouter initialEntries=
 async function compile() {
   if (bundle) return bundle;
   const stubs = {
-    '~/contexts': `export const useAppContext=f=>f(window.hostContext); export const useKeyContext=f=>f({myState:{userId:1}}); export const useViewContext=f=>f({state:{killBuildAppSession:null,buildAppNavTabIds:null}});`,
+    '~/contexts': `export const useAppContext=f=>f(window.hostContext); export const useKeyContext=f=>f({myState:{userId:1}}); export const useInputContext=f=>f({getInputState:()=>null}); export const useViewContext=f=>f({state:{killBuildAppSession:null,buildAppNavTabIds:null}});`,
     '~/helpers': 'export const isMobile=()=>false;',
     '~/contexts/Toast': 'export const useToast=()=>()=>{};',
     '~/helpers/analytics': 'export const trackEvent=()=>{};',

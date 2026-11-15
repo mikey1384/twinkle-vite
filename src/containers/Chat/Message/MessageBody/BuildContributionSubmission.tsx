@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReleaseButton from '~/components/Build/ReleaseButton';
+import UpdateNoteDialog from '~/components/Build/UpdateNoteDialog';
 import ContributionLumineFixPanel, {
   type BuildContributionLumineFix,
   type BuildContributionLumineFixDetails
@@ -429,6 +430,9 @@ export default function BuildContributionSubmission({
                 void release.run();
               }}
             />
+          ) : null}
+          {release.updateDialog ? (
+            <UpdateNoteDialog {...release.updateDialog} />
           ) : null}
         </>
       }

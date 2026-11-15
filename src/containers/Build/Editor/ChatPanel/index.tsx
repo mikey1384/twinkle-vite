@@ -201,6 +201,7 @@ export default function ChatPanel({
   onRoadmapAction,
   onPlayPreview,
   roadmapPublishControl,
+  updateNoteCard,
   onAcceptFollowUpPrompt,
   onAcceptFollowUpPromptOnce,
   onDismissFollowUpPrompt,
@@ -991,7 +992,16 @@ export default function ChatPanel({
                   showThumbnailNudge ? thumbnailNudgePrompt : null
                 }
                 onThumbnailNudgeSelect={onThumbnailNudgeSelect}
-                roadmapCard={roadmap.transcriptNode}
+                roadmapCard={
+                  updateNoteCard ? (
+                    <>
+                      {roadmap.transcriptNode}
+                      {updateNoteCard}
+                    </>
+                  ) : (
+                    roadmap.transcriptNode
+                  )
+                }
                 onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
                 onDeleteMessage={onDeleteMessage}
               />

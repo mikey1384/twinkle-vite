@@ -5,6 +5,7 @@ import {
 import axios from 'axios';
 import request from './axiosInstance';
 import URL from '~/constants/URL';
+import { UPDATE_NOTE_RELEASE_STATE_TIMEOUT_MS } from '~/helpers/buildUpdateNote';
 import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
@@ -1362,6 +1363,139 @@ export default function buildRequestHelpers({
         return data;
       } catch (error) {
         return handleError(error);
+      }
+    },
+
+    // Lumine update notes (twinkle-api routes/updateNotes.ts).
+    async loadBuildUpdateNoteState(
+      buildId: number,
+      surface?: 'release' | 'link' | 'chat'
+    ) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/update-note${surface ? `?surface=${surface}` : ''}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    // The one-tap decision when Update is pressed: short, no retries, and it
+    // rejects (the caller then updates in one tap) instead of handleError.
+    async loadBuildUpdateNoteReleaseState(buildId: number) {
+      const { data } = await request.get(
+        `${URL}/build/${buildId}/update-note?surface=release`,
+        {
+          ...auth(),
+          meta: {
+            channel: 'ui' as const,
+            totalTimeoutMs: UPDATE_NOTE_RELEASE_STATE_TIMEOUT_MS,
+            maxRetries: 0
+          }
+        } as any
+      );
+      return data;
+    },
+
+    async saveBuildUpdateNotePreference({
+      buildId,
+      enabled,
+      onlyIfUnset
+    }: {
+      buildId: number;
+      enabled: boolean;
+      // store only when the owner has no choice yet (first-time default)
+      onlyIfUnset?: boolean;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/build/${buildId}/update-note/preference`,
+          { enabled, ...(onlyIfUnset ? { onlyIfUnset: true } : {}) },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    // Rejects instead of going through handleError: a failed draft is an
+    // ordinary outcome the dialog shows, never a site error.
+    async draftBuildUpdateNote(
+      buildId: number,
+      options?: { target?: 'live' }
+    ) {
+      const { data } = await request.post(
+        `${URL}/build/${buildId}/update-note/draft`,
+        options?.target ? { target: options.target } : {},
+        auth()
+      );
+      return data;
+    },
+
+    async postBuildUpdateNote({
+      buildId,
+      artifactVersionId,
+      content,
+      draftId,
+      source
+    }: {
+      buildId: number;
+      artifactVersionId: number;
+      content: string;
+      draftId?: number | null;
+      source: 'dialog' | 'link' | 'chat';
+    }) {
+      const { data } = await request.post(
+        `${URL}/build/${buildId}/update-note`,
+        { artifactVersionId, content, draftId, source },
+        auth()
+      );
+      return data;
+    },
+
+    async skipBuildUpdateNote({
+      buildId,
+      draftId,
+      dismissDialogDrafts
+    }: {
+      buildId: number;
+      draftId?: number | null;
+      // the dialog closed without a note: close its drafts, not a skip
+      dismissDialogDrafts?: boolean;
+    }) {
+      const { data } = await request.post(
+        `${URL}/build/${buildId}/update-note/skip`,
+        { draftId, ...(dismissDialogDrafts ? { dismissDialogDrafts: true } : {}) },
+        auth()
+      );
+      return data;
+    },
+
+    async loadBuildUpdateNoteForVersion({
+      buildId,
+      artifactVersionId
+    }: {
+      buildId: number;
+      artifactVersionId: number;
+    }) {
+      const { data } = await request.get(
+        `${URL}/build/${buildId}/update-note/version/${artifactVersionId}`
+      );
+      return data;
+    },
+
+    async recordBuildUpdateNoteWhatsNewTap(buildId: number) {
+      try {
+        await request.post(
+          `${URL}/build/${buildId}/update-note/whats-new-tap`,
+          {},
+          auth()
+        );
+      } catch {
+        // A counter only; never surfaces.
       }
     },
 

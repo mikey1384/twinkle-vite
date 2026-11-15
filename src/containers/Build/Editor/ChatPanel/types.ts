@@ -1,13 +1,16 @@
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react';
 import type { BuildAppReference } from '../helpers/appReferences';
-import type { BuildRuntimeUploadGroup } from '../types';
 import type { BuildCommentFeedback } from '~/helpers/buildCommentFeedback';
 import type {
   BuildAgentAssetCreateOptions,
   BuildAgentAssetCreateResult
 } from '~/containers/Build/helpers/agentWorkspaceAssets';
 import type { BranchMainUpdateNoticeControl } from '../BranchMainUpdateNotice';
-import type { BuildExecutionPlan, BuildPlanAction } from '../types';
+import type {
+  BuildExecutionPlan,
+  BuildPlanAction,
+  BuildRuntimeUploadGroup
+} from '../types';
 import type { RoadmapPublishControl } from './Roadmap/RoadmapCompleteCard';
 
 export type ChatPanelRunMode = 'user' | 'greeting';
@@ -421,6 +424,8 @@ export interface ChatPanelProps {
   // Shown on a finished roadmap when the app is not published (or has
   // unpublished changes).
   roadmapPublishControl?: RoadmapPublishControl | null;
+  // The "Post an update note" card under Lumine's reply (useUpdateNoteChat).
+  updateNoteCard?: ReactNode;
   onAcceptFollowUpPrompt: () => void;
   // A model-switch card's "Just this once": retry on the lighter model
   // without saving it as the build's Lumine mode.

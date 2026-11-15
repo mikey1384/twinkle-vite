@@ -21,6 +21,7 @@ import usePhoneLandscape from '~/helpers/hooks/usePhoneLandscape';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReleaseButton from '~/components/Build/ReleaseButton';
+import UpdateNoteDialog from '~/components/Build/UpdateNoteDialog';
 import ShareButton from '~/components/Buttons/ShareButton';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
@@ -2786,6 +2787,9 @@ export default function BuildRuntime({
                 onHide={() => setAppTransferShown(false)}
               />
             )}
+            {release.updateDialog ? (
+              <UpdateNoteDialog {...release.updateDialog} />
+            ) : null}
             {rewardsReviewOpen && build?.id ? (
               <RewardSettingsModal
                 buildId={Number(build.id)}

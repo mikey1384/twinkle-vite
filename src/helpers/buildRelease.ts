@@ -13,10 +13,14 @@ export async function releaseBuild({
   preparePublish,
   loadRewards,
   requestReview,
+  confirmUpdate,
   publish
 }: {
   buildId: number;
   save?: () => Promise<boolean>;
+  // Updating an app that is already live: the owner confirms in the Update
+  // dialog (and may switch on an update note). false cancels the release.
+  confirmUpdate?: () => Promise<boolean>;
   preparePublish?: () => Promise<{ thumbnailUrl?: string }>;
   loadRewards: (buildId: number) => Promise<RewardSettings>;
   requestReview: (buildId: number) => Promise<RewardSettings>;
@@ -28,6 +32,7 @@ export async function releaseBuild({
   if (save && !(await save())) return { kind: 'cancelled' };
   const settings = await loadRewards(buildId);
   if (needsReview(settings)) return submit(settings);
+  if (confirmUpdate && !(await confirmUpdate())) return { kind: 'cancelled' };
 
   const options = await preparePublish?.();
   try {
