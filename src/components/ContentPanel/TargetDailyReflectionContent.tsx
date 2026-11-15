@@ -109,6 +109,8 @@ export default function TargetDailyReflectionContent({
             maxWidth="48rem"
             picturePath={dailyReflectionContent.picturePath}
             pictureStyle={dailyReflectionContent.pictureStyle}
+            responseId={reflectionId}
+            ownerId={uploader?.id}
             style={{ marginBottom: '1rem' }}
           />
         ) : dailyReflectionContent.question && (

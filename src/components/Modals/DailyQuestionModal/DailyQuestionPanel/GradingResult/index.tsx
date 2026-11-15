@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { PAPER } from '../../paperTheme';
+import { PAPER, paperTextButtonCls } from '../../paperTheme';
 import { cloudFrontURL, priceTable } from '~/constants/defaultValues';
+import Icon from '~/components/Icon';
+import { useDailyPicture } from '~/components/DailyPictureViewer';
 import { socket } from '~/constants/sockets/api';
 import {
   useAppContext,
@@ -105,6 +107,14 @@ export default function GradingResult({
   const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const xpNumberColor = xpNumberRole.getColor() || DEFAULT_XP_NUMBER_COLOR;
   const rewardColor = DEFAULT_REWARD_COLOR;
+  // Picture Day: the picture opens in the standard image viewer, whose Edit
+  // Image can replace it (11-15); the server answer is what's shown
+  const picture = useDailyPicture({
+    picturePath,
+    responseId,
+    ownerId: Number(userId) || null,
+    surface: 'result'
+  });
 
   const [sharing, setSharing] = useState(false);
   const sharingRef = useRef(false);
@@ -496,20 +506,42 @@ export default function GradingResult({
         xpNumberColor={xpNumberColor}
       />
 
-      {picturePath && (
-        <img
-          src={`${cloudFrontURL}/${picturePath}`}
-          alt={originalResponse || response}
-          className={css`
-            display: block;
-            width: 100%;
-            max-width: calc(560 * var(--px));
-            margin: 0 auto 1.6rem;
-            border-radius: 14px;
-            border: 1px solid ${PAPER.line};
-            background: ${PAPER.paperDeep};
-          `}
-        />
+      {picture.shownPath && (
+        <div className={pictureWrapCls}>
+          <button
+            type="button"
+            className={pictureButtonCls}
+            aria-label="Open picture to view or edit"
+            onClick={picture.openViewer}
+          >
+            <img
+              src={`${cloudFrontURL}/${picture.shownPath}`}
+              alt={originalResponse || response}
+            />
+            <span className={pictureHintCls} aria-hidden="true">
+              <Icon icon="expand" />
+              View &amp; edit
+            </span>
+          </button>
+          {picture.canRestoreOriginal && (
+            <button
+              type="button"
+              className={paperTextButtonCls}
+              disabled={picture.restoring}
+              onClick={() => void picture.restoreOriginal()}
+            >
+              {picture.restoring
+                ? 'Switching back…'
+                : 'Use the original picture'}
+            </button>
+          )}
+          {picture.restoreError && (
+            <p role="alert" className={pictureErrorCls}>
+              {picture.restoreError}
+            </p>
+          )}
+          {picture.viewer}
+        </div>
       )}
 
       {grade !== 'Fail' && responseId > 0 && (
@@ -741,3 +773,60 @@ export default function GradingResult({
     setAiShareTarget(null);
   }
 }
+
+const pictureWrapCls = css`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto 1.6rem;
+  max-width: calc(560 * var(--px));
+`;
+
+const pictureButtonCls = css`
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+  img {
+    display: block;
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid ${PAPER.line};
+    background: ${PAPER.paperDeep};
+  }
+`;
+
+// A small corner pill, sized like My pictures' "Your pick" tag; the icon is
+// held to the text size so it can never grow over the picture.
+const pictureHintCls = css`
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: ${PAPER.paper};
+  border: 1px solid ${PAPER.lineStrong};
+  color: ${PAPER.ink};
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  svg {
+    flex: none;
+    width: 1em;
+    height: 1em;
+  }
+`;
+
+const pictureErrorCls = css`
+  margin: 0.4rem 0 0;
+  font-size: 1.2rem;
+  color: ${PAPER.warn};
+`;

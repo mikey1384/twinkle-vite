@@ -100,6 +100,8 @@ export default function ContentDisplay({
                 alt={description}
                 picturePath={contentObj.picturePath}
                 pictureStyle={contentObj.pictureStyle}
+                responseId={contentId}
+                ownerId={uploader?.id}
                 style={{ marginBottom: '1rem' }}
               />
             ) : null}

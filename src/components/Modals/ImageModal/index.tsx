@@ -30,6 +30,8 @@ export default function ImageModal({
   contentId,
   isReplaceable,
   extraActions,
+  editedImageAction,
+  onEditEvent,
   className
 }: {
   caption?: string;
@@ -45,6 +47,13 @@ export default function ImageModal({
   contentId?: number;
   isReplaceable?: boolean;
   extraActions?: React.ReactNode;
+  // Edit Image's result can replace the owner's picture (Picture Day); the
+  // viewer closes once it has
+  editedImageAction?: {
+    label: string;
+    onUse: (requestId: string) => Promise<string | null>;
+  };
+  onEditEvent?: (event: 'opened' | 'started' | 'completed' | 'failed') => void;
   className?: string;
 }) {
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
@@ -137,7 +146,13 @@ export default function ImageModal({
                 </Button>
               </>
             )}
-          <Button color="blue" onClick={() => setIsEditModalOpen(true)}>
+          <Button
+            color="blue"
+            onClick={() => {
+              setIsEditModalOpen(true);
+              onEditEvent?.('opened');
+            }}
+          >
             <Icon icon="pencil-alt" />
             <span style={{ marginLeft: '0.5rem' }}>Edit Image</span>
           </Button>
@@ -263,6 +278,20 @@ export default function ImageModal({
         <ImageEditModal
           imageUrl={src}
           onClose={() => setIsEditModalOpen(false)}
+          onEditEvent={onEditEvent}
+          editedImageAction={
+            editedImageAction && {
+              label: editedImageAction.label,
+              onUse: async (requestId) => {
+                const useError = await editedImageAction.onUse(requestId);
+                if (!useError) {
+                  setIsEditModalOpen(false);
+                  onHide();
+                }
+                return useError;
+              }
+            }
+          }
         />
       )}
     </Modal>

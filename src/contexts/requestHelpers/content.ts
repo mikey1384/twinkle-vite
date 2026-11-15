@@ -3877,6 +3877,49 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // Picture Day edits (11-15): the owner makes an edit from the image
+    // editor (already paid from their AI Battery), or one of that day's
+    // pictures, their reflection's picture. Returns the canonical picture.
+    async applyDailyPicture({
+      responseId,
+      editRequestId,
+      path,
+      surface
+    }: {
+      responseId: number;
+      editRequestId?: string;
+      path?: string;
+      surface: 'result' | 'post' | 'gallery';
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/picture/use`,
+          { responseId, editRequestId, path, surface },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Picture Day edit telemetry; fire-and-forget, never shown to anyone.
+    async trackDailyPictureEdit({
+      surface,
+      event
+    }: {
+      surface: 'result' | 'post' | 'gallery';
+      event: 'opened' | 'started' | 'completed' | 'failed';
+    }) {
+      try {
+        await request.post(
+          `${URL}/content/daily-question/picture/edit-event`,
+          { surface, event },
+          auth()
+        );
+      } catch (_error) {
+        // telemetry never interrupts the page
+      }
+    },
     async loadDailyReflectionModes() {
       try {
         const { data } = await request.get(

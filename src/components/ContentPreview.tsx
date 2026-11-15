@@ -342,6 +342,9 @@ export default function ContentPreview({
               maxWidth="48rem"
               picturePath={picturePath}
               pictureStyle={pictureStyle}
+              responseId={contentType === 'dailyReflection' ? contentId : null}
+              ownerId={uploader?.id}
+              viewable={!disableImageModal}
             />
           ) : question && (
             <div

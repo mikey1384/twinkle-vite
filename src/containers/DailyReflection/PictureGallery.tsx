@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { Link, useSearchParams } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import ImageModal from '~/components/Modals/ImageModal';
-import { useAppContext } from '~/contexts';
+import { DailyPictureModal } from '~/components/DailyPictureViewer';
+import { useAppContext, useContentContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import {
@@ -26,6 +27,8 @@ export interface GalleryDay {
   questionId: number;
   dayIndex: number;
   chosenPath: string;
+  // the finished reflection: any picture of the day can become its picture
+  responseId?: number | null;
   sharedResponseId: number | null;
   pictures: GalleryPicture[];
 }
@@ -37,11 +40,21 @@ export default function PictureGallery() {
   const requestedPath = searchParams.get('picture');
   const openedPathRef = useRef<string | null>(null);
   const loadMyPictures = useAppContext((v) => v.requestHelpers.loadMyPictures);
+  const applyDailyPicture = useAppContext(
+    (v) => v.requestHelpers.applyDailyPicture
+  );
+  const trackDailyPictureEdit = useAppContext(
+    (v) => v.requestHelpers.trackDailyPictureEdit
+  );
+  const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const [days, setDays] = useState<GalleryDay[]>([]);
   const [nextBefore, setNextBefore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [viewing, setViewing] = useState<GalleryPicture | null>(null);
+  const viewingDay = viewing
+    ? days.find((day) => day.pictures.some((p) => p.path === viewing.path))
+    : undefined;
   const loadingRef = useRef(false);
 
   useEffect(() => {
@@ -156,7 +169,19 @@ export default function PictureGallery() {
         </div>
       ) : null}
 
-      {viewing && (
+      {viewing && viewingDay?.responseId ? (
+        <DailyPictureModal
+          picturePath={viewing.path}
+          caption={viewing.prompt}
+          isOwner
+          isCurrent={viewing.path === viewingDay.chosenPath}
+          onApply={(args) => handleApply(Number(viewingDay.responseId), args)}
+          onTrack={(event) =>
+            void trackDailyPictureEdit({ surface: 'gallery', event })
+          }
+          onHide={() => setViewing(null)}
+        />
+      ) : viewing ? (
         <ImageModal
           onHide={() => setViewing(null)}
           src={`${cloudFrontURL}/${viewing.path}`}
@@ -164,9 +189,55 @@ export default function PictureGallery() {
           hasCaption={!!viewing.prompt}
           downloadable
         />
-      )}
+      ) : null}
     </div>
   );
+
+  // The day's picture changes on the server; the page shows the server's
+  // answer (an applied edit joins the day's pictures there).
+  async function handleApply(
+    responseId: number,
+    args: { editRequestId?: string; path?: string }
+  ): Promise<string | null> {
+    try {
+      const result = await applyDailyPicture({
+        responseId,
+        surface: 'gallery',
+        ...args
+      });
+      if (!result?.picturePath) {
+        return result?.error || "Couldn't change your picture. Please try again.";
+      }
+      onEditContent({
+        contentType: 'dailyReflection',
+        contentId: responseId,
+        data: {
+          picturePath: result.picturePath,
+          pictureStyle: result.pictureStyle || ''
+        }
+      });
+      const chosen: GalleryPicture | null = result.picture?.path
+        ? result.picture
+        : null;
+      setDays((current) =>
+        current.map((day) =>
+          day.responseId !== responseId
+            ? day
+            : {
+                ...day,
+                chosenPath: result.picturePath,
+                pictures:
+                  chosen && !day.pictures.some((p) => p.path === chosen.path)
+                    ? [chosen, ...day.pictures]
+                    : day.pictures
+              }
+        )
+      );
+      return null;
+    } catch (error: any) {
+      return error?.message || "Couldn't change your picture. Please try again.";
+    }
+  }
 
   async function loadPage(before: number | null) {
     if (loadingRef.current) return;

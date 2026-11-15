@@ -510,6 +510,8 @@ registerMethods('content', [
   'loadDailyPicture',
   'loadMyPictures',
   'submitDailyPicture',
+  'applyDailyPicture',
+  'trackDailyPictureEdit',
   'loadReflectionStats',
   'setReflectionStatsVisibility',
   'loadUserReflectionStats',

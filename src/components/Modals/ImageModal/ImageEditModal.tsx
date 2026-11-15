@@ -64,6 +64,14 @@ interface ImageEditModalProps {
   onRegisterUseImageHandler?: (
     handler: (() => void | Promise<void>) | null
   ) => void;
+  // The owner's own picture (Picture Day, 11-15): once an AI edit has
+  // finished, a footer button makes that saved edit the picture. onUse
+  // answers with an error to show, or null when it worked.
+  editedImageAction?: {
+    label: string;
+    onUse: (requestId: string) => Promise<string | null>;
+  };
+  onEditEvent?: (event: 'started' | 'completed' | 'failed') => void;
 }
 
 interface AiUsagePolicy {
@@ -101,7 +109,9 @@ export default function ImageEditModal({
   embedded = false,
   onConfirm,
   onUseImageAvailabilityChange,
-  onRegisterUseImageHandler
+  onRegisterUseImageHandler,
+  editedImageAction,
+  onEditEvent
 }: ImageEditModalProps) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
@@ -144,6 +154,13 @@ export default function ImageEditModal({
   const [error, setError] = useState<string | null>(null);
   const [progressStage, setProgressStage] = useState<string>('not_started');
   const [partialImageData, setPartialImageData] = useState<string | null>(null);
+  // the latest finished AI edit shown on the canvas (its server-side copy is
+  // what editedImageAction applies), and whether marks were drawn over it
+  const [lastEditRequestId, setLastEditRequestId] = useState<string | null>(
+    null
+  );
+  const [hasDrawingMarks, setHasDrawingMarks] = useState(false);
+  const [usingEditedImage, setUsingEditedImage] = useState(false);
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
@@ -276,6 +293,9 @@ export default function ImageEditModal({
       originalCanvasRef as React.RefObject<HTMLCanvasElement>,
     getCanvasCoordinates,
     disabled: isGenerating,
+    // only scanned when an edit can be applied: marks drawn after the edit
+    // are not in its saved copy
+    onHasContent: editedImageAction ? setHasDrawingMarks : undefined,
     initialColor: initialDrawingColor,
     initialRecentColors,
     onColorSettingsCommit: handlePersistDrawingColorSettings
@@ -498,6 +518,7 @@ export default function ImageEditModal({
           setIsGenerating(false);
           setPartialImageData(null);
           setPrompt('');
+          handleEditCompleted(status.requestId);
           clearActiveImageRequest(status.requestId);
         } else if (status.stage === 'error') {
           const errorMessage =
@@ -514,11 +535,13 @@ export default function ImageEditModal({
           setIsGenerating(false);
           setProgressStage('not_started');
           setPartialImageData(null);
+          onEditEvent?.('failed');
           clearActiveImageRequest(status.requestId);
         }
       } catch (err) {
         console.error('Error handling image generation status:', err);
         setError('Error processing image generation response');
+        onEditEvent?.('failed');
         isGeneratingRef.current = false;
         setIsGenerating(false);
         setProgressStage('not_started');
@@ -828,6 +851,9 @@ export default function ImageEditModal({
                 `}
               >
                 <span>Uses Energy</span>
+                {editedImageAction && lastEditRequestId && hasDrawingMarks && (
+                  <span>Generate to include your drawing</span>
+                )}
               </div>
             </div>
           </div>
@@ -861,6 +887,22 @@ export default function ImageEditModal({
             <Icon icon="download" />
             <span style={{ marginLeft: '0.5rem' }}>Download</span>
           </Button>
+          {editedImageAction && (
+            <Button
+              color="green"
+              style={{ marginLeft: '0.7rem' }}
+              loading={usingEditedImage}
+              disabled={
+                !lastEditRequestId || hasDrawingMarks || isGenerating
+              }
+              onClick={handleUseEditedImage}
+            >
+              <Icon icon="check" />
+              <span style={{ marginLeft: '0.5rem' }}>
+                {editedImageAction.label}
+              </span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             onClick={onClose}
@@ -1107,6 +1149,7 @@ export default function ImageEditModal({
     setPartialImageData(null);
     const requestId = startImageRequest();
     let imageRequest: AiImageGenerationRequest | null = null;
+    onEditEvent?.('started');
 
     try {
       const canvas = canvasRef.current;
@@ -1146,6 +1189,7 @@ export default function ImageEditModal({
         setPartialImageData(null);
         setPrompt('');
         setProgressStage('completed');
+        handleEditCompleted(requestId);
         clearActiveImageRequest(requestId);
         return;
       }
@@ -1163,6 +1207,7 @@ export default function ImageEditModal({
         } else {
           const errorMessage = result.error || 'Failed to generate image';
           setError(errorMessage);
+          onEditEvent?.('failed');
 
           isGeneratingRef.current = false;
           setIsGenerating(false);
@@ -1188,12 +1233,30 @@ export default function ImageEditModal({
         setError(
           'Network error: Unable to connect to image generation service'
         );
+        onEditEvent?.('failed');
         isGeneratingRef.current = false;
         setIsGenerating(false);
         setProgressStage('not_started');
         clearActiveImageRequest(requestId);
       }
       // Unknown transport outcomes reconcile through canonical status.
+    }
+  }
+
+  function handleEditCompleted(requestId?: string) {
+    if (requestId) setLastEditRequestId(requestId);
+    onEditEvent?.('completed');
+  }
+
+  async function handleUseEditedImage() {
+    if (!editedImageAction || !lastEditRequestId || usingEditedImage) return;
+    setUsingEditedImage(true);
+    setError(null);
+    try {
+      const useError = await editedImageAction.onUse(lastEditRequestId);
+      if (useError) setError(useError);
+    } finally {
+      setUsingEditedImage(false);
     }
   }
 
