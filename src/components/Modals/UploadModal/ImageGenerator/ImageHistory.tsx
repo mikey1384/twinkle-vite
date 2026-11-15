@@ -21,6 +21,11 @@ interface ImageHistoryProps {
   onRetry: () => void;
   onSelect: (image: AIImageHistoryItem) => void;
   onLoadFullImage: (image: AIImageHistoryItem) => Promise<string | null>;
+  // Choosing pictures for a collection: picked tiles show a check, and the
+  // intro line and empty message say what tapping does there.
+  pickedIds?: number[];
+  intro?: React.ReactNode;
+  emptyMessage?: React.ReactNode;
 }
 
 // Every image the member made, newest first. Only they can see it.
@@ -35,7 +40,10 @@ export default function ImageHistory({
   onLoadMore,
   onRetry,
   onSelect,
-  onLoadFullImage
+  onLoadFullImage,
+  pickedIds,
+  intro,
+  emptyMessage
 }: ImageHistoryProps) {
   const themeRole = useRoleColor('button', {
     themeName: themeColor,
@@ -48,8 +56,12 @@ export default function ImageHistory({
   return (
     <div className={wrapCls}>
       <p className={introCls}>
-        <Icon icon="lock" /> Every image you&apos;ve made. Only you can see
-        these. Tap one to use it or keep editing it.
+        {intro || (
+          <>
+            <Icon icon="lock" /> Every image you&apos;ve made. Only you can
+            see these. Tap one to use it or keep editing it.
+          </>
+        )}
       </p>
 
       {images.length > 0 && (
@@ -58,6 +70,7 @@ export default function ImageHistory({
             const source = describeAIImageSource(image);
             const finished = image.status === 'completed' && !!image.path;
             const isSelecting = selectingId === image.id;
+            const isPicked = !!pickedIds?.includes(image.id);
             const src =
               fallbackSrc[image.id] ||
               (image.path ? `${cloudFrontURL}/${image.path}` : '');
@@ -68,6 +81,15 @@ export default function ImageHistory({
                 className={tileCls}
                 disabled={!finished || selectDisabled || isSelecting}
                 onClick={() => onSelect(image)}
+                aria-pressed={pickedIds ? isPicked : undefined}
+                style={
+                  isPicked
+                    ? {
+                        borderColor: themeRole.getColor(),
+                        boxShadow: `0 0 0 2px ${themeRole.getColor()}`
+                      }
+                    : undefined
+                }
                 aria-label={
                   finished
                     ? `Use "${image.prompt || 'this image'}"`
@@ -98,6 +120,14 @@ export default function ImageHistory({
                       {finished
                         ? 'Couldn’t show this one'
                         : 'Didn’t finish. No AI Energy used.'}
+                    </span>
+                  )}
+                  {isPicked && (
+                    <span
+                      className={pickedCls}
+                      style={{ background: themeRole.getColor() }}
+                    >
+                      <Icon icon="check" />
                     </span>
                   )}
                   {isSelecting && (
@@ -135,8 +165,8 @@ export default function ImageHistory({
         </div>
       ) : images.length === 0 ? (
         <p className={noteCls}>
-          Images you make will be kept here, even if you leave before they
-          finish.
+          {emptyMessage ||
+            'Images you make will be kept here, even if you leave before they finish.'}
         </p>
       ) : hasMore ? (
         <div className={noteCls}>
@@ -296,6 +326,26 @@ const selectingCls = css`
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.6);
+`;
+
+const pickedCls = css`
+  position: absolute;
+  top: calc(8 * var(--px));
+  right: calc(8 * var(--px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(28 * var(--px));
+  height: calc(28 * var(--px));
+  border-radius: 50%;
+  color: #fff;
+  font-size: calc(14 * var(--px));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
 `;
 
 const captionCls = css`

@@ -37,6 +37,8 @@ interface GeneratedImageDisplayProps {
   onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
   followUpQuality?: AiImageQuality;
   onFollowUpQualityChange: (quality: AiImageQuality) => void;
+  // the picture being edited plus a picked collection's pictures
+  followUpReferenceCount?: number;
   themeColor?: string;
   energyPercent?: number;
   energyPolicy?: AiEnergyDisplayPolicy | null;
@@ -84,6 +86,7 @@ export default function GeneratedImageDisplay({
   onFollowUpEngineChange,
   followUpQuality = 'high',
   onFollowUpQualityChange,
+  followUpReferenceCount,
   themeColor,
   energyPercent,
   energyPolicy,
@@ -404,6 +407,7 @@ export default function GeneratedImageDisplay({
           onFollowUpEngineChange={onFollowUpEngineChange}
           followUpQuality={followUpQuality}
           onFollowUpQualityChange={onFollowUpQualityChange}
+          followUpReferenceCount={followUpReferenceCount}
           themeColor={themeColor}
           energyPercent={energyPercent}
           energyPolicy={energyPolicy}

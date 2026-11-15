@@ -9,16 +9,26 @@ import { useAppContext, useKeyContext } from '~/contexts';
 // Session cache so switching back to a model and quality already fetched is
 // instant. Keyed by user too, since the estimate is per account.
 const estimateCache = new Map<string, number>();
-const cacheKey = (userId: unknown, model: string, quality: string) =>
-  `${userId}|${model}|${quality}`;
+const cacheKey = (
+  userId: unknown,
+  model: string,
+  quality: string,
+  referenceCount: number
+) => `${userId}|${model}|${quality}|${referenceCount}`;
 
 export default function AiImageEstimate({
   model,
-  quality
+  quality,
+  referenceCount
 }: {
   model: OpenAiImageModel;
   quality: AiImageQuality;
+  // pictures sent along: an added image, the picture being edited and a
+  // picked collection's pictures; the estimate includes them. Left out, the
+  // estimate covers the image only and says references cost more.
+  referenceCount?: number;
 }) {
+  const references = Math.max(0, Math.floor(referenceCount || 0));
   const userId = useKeyContext((v) => v.myState.userId);
   const loadEstimate = useAppContext(
     (v) => v.requestHelpers.loadAIImageGenerationEstimate
@@ -28,14 +38,19 @@ export default function AiImageEstimate({
   const [estimate, setEstimate] = useState<{
     model: string;
     quality: string;
+    referenceCount: number;
     percent: number;
   } | null>(null);
   const [failed, setFailed] = useState(false);
-  const cachedPercent = estimateCache.get(cacheKey(userId, model, quality));
+  const cachedPercent = estimateCache.get(
+    cacheKey(userId, model, quality, references)
+  );
   const current =
     cachedPercent !== undefined
       ? { percent: cachedPercent }
-      : estimate?.model === model && estimate.quality === quality
+      : estimate?.model === model &&
+          estimate.quality === quality &&
+          estimate.referenceCount === references
         ? estimate
         : null;
   // While a new model or quality loads, keep showing the previous estimate
@@ -46,15 +61,20 @@ export default function AiImageEstimate({
     let active = true;
     setFailed(false);
     if (!userId) return;
-    if (estimateCache.has(cacheKey(userId, model, quality))) return;
-    loadEstimateRef.current({ model, quality })
+    const key = cacheKey(userId, model, quality, references);
+    if (estimateCache.has(key)) return;
+    loadEstimateRef.current({
+      model,
+      quality,
+      referenceImageCount: references
+    })
       .then((result: AiImageGenerationEstimate) => {
         if (!active) return;
         if (!(result.fullBatteryUnits > 0) || !(result.energyUnits >= 0))
           throw new Error('Invalid estimate');
         const percent = (result.energyUnits / result.fullBatteryUnits) * 100;
-        estimateCache.set(cacheKey(userId, model, quality), percent);
-        setEstimate({ model, quality, percent });
+        estimateCache.set(key, percent);
+        setEstimate({ model, quality, referenceCount: references, percent });
       })
       .catch(() => {
         if (active) setFailed(true);
@@ -62,7 +82,7 @@ export default function AiImageEstimate({
     return () => {
       active = false;
     };
-  }, [model, quality, userId]);
+  }, [model, quality, references, userId]);
 
   return (
     <span
@@ -80,7 +100,13 @@ export default function AiImageEstimate({
       {!userId
         ? 'Sign in to see the battery estimate.'
         : shown
-          ? `Image estimate: ${shown.percent < 1 ? '<1' : `~${Math.round(shown.percent)}`}% of a full battery. Your prompt and reference image use additional energy.`
+          ? `Image estimate: ${shown.percent < 1 ? '<1' : `~${Math.round(shown.percent)}`}% of a full battery${
+              referenceCount === undefined
+                ? '. Your prompt and reference image use additional energy.'
+                : references > 0
+                  ? `, including ${references} reference picture${references === 1 ? '' : 's'}. Your prompt uses a little more.`
+                  : '. Your prompt uses a little more.'
+            }`
           : failed
             ? 'Battery estimate unavailable. Final spending follows actual image usage.'
             : 'Checking battery estimate…'}

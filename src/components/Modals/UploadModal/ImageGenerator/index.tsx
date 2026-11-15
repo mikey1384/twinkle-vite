@@ -29,11 +29,15 @@ import ErrorDisplay from './ErrorDisplay';
 import ImageArea from './ImageArea';
 import ImageEditor from './ImageEditor';
 import ImageHistory from './ImageHistory';
+import CollectionBar from './Collections/CollectionBar';
+import CollectionsModal from './Collections/CollectionsModal';
+import useAIImageCollections from './Collections/useAIImageCollections';
 import {
   findResumableAIImage,
   mergeAIImageHistoryPages,
   replaceAIImageHistoryFirstPage,
   resumableAIImageSources,
+  type AIImageCollection,
   type AIImageHistoryItem
 } from '~/helpers/aiImageHistory';
 import FilterBar from '~/components/FilterBar';
@@ -77,6 +81,9 @@ interface AiImageGenerationRequest {
   requestFingerprint?: string;
   displayPrompt?: string;
   historySource?: 'generator' | 'thumbnail';
+  // a picked image collection; the server adds its pictures and note
+  collectionId?: number;
+  collectionRevision?: number;
 }
 
 const HISTORY_PAGE_SIZE = 18;
@@ -126,6 +133,11 @@ export default function ImageGenerator({
     null
   );
   const [mode, setMode] = useState<'text' | 'draw' | 'history'>('text');
+  // The picked image collection (like a Zero/Ciel topic): its pictures and
+  // note go with every new picture and edit until the member clears it.
+  const [activeCollection, setActiveCollection] =
+    useState<AIImageCollection | null>(null);
+  const [collectionsShown, setCollectionsShown] = useState(false);
   // The member's own image history (helpers/aiImageHistory.ts). A
   // generation they left mid-way shows up here and resumes on screen.
   const [historyImages, setHistoryImages] = useState<AIImageHistoryItem[]>([]);
@@ -262,6 +274,7 @@ export default function ImageGenerator({
   );
 
   const userId = useKeyContext((v) => v.myState.userId);
+  const { collections, setCollections } = useAIImageCollections(userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const communityFunds = useKeyContext((v) => v.myState.communityFunds);
@@ -666,6 +679,29 @@ export default function ImageGenerator({
     isGenerating
   );
 
+  const collectionRequest = activeCollection
+    ? {
+        collectionId: activeCollection.id,
+        collectionRevision: activeCollection.revision
+      }
+    : {};
+  const collectionPictureCount = activeCollection?.images.length || 0;
+  const collectionBar = (
+    <CollectionBar
+      activeCollection={activeCollection}
+      collections={collections}
+      invitePictures={historyImages
+        .filter((image) => image.status === 'completed' && image.path)
+        .slice(0, 3)
+        .map((image) => ({ id: image.id, path: image.path as string }))}
+      disabled={isShowingLoadingState}
+      themeColor={profileTheme}
+      onOpen={() => setCollectionsShown(true)}
+      onPick={handleUseCollection}
+      onClear={() => setActiveCollection(null)}
+    />
+  );
+
   const imageArea = (
     <ImageArea
       partialImageData={partialImageData}
@@ -694,6 +730,7 @@ export default function ImageGenerator({
       onFollowUpEngineChange={handleFollowUpEngineChange}
       followUpQuality={followUpQuality}
       onFollowUpQualityChange={handleFollowUpQualityChange}
+      followUpReferenceCount={1 + collectionPictureCount}
       themeColor={profileTheme}
       energyPercent={aiUsagePolicy?.energyPercent}
       energyPolicy={aiUsagePolicy}
@@ -856,6 +893,8 @@ export default function ImageGenerator({
         </div>
       )}
 
+      {mode !== 'draw' && collectionBar}
+
       {mode === 'draw' && (
         <ImageEditor
           imageUrl={referenceImageUrl || ''}
@@ -904,6 +943,10 @@ export default function ImageGenerator({
           onEngineChange={handleEngineChange}
           quality={quality}
           onQualityChange={handleQualityChange}
+          referenceCount={
+            (referenceImage || drawingCanvasUrl ? 1 : 0) +
+            collectionPictureCount
+          }
           themeColor={profileTheme}
         />
       )}
@@ -928,6 +971,29 @@ export default function ImageGenerator({
       {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
 
       {mode !== 'history' && !showSourceImagePanelAbovePrompt && imageArea}
+
+      {collectionsShown && (
+        <CollectionsModal
+          activeCollectionId={activeCollection?.id || null}
+          themeColor={profileTheme}
+          onHide={() => setCollectionsShown(false)}
+          onCollectionsChange={setCollections}
+          onUse={(collection) => {
+            handleUseCollection(collection);
+            setCollectionsShown(false);
+          }}
+          onCollectionChanged={(collection) =>
+            setActiveCollection((current) =>
+              current?.id === collection.id ? collection : current
+            )
+          }
+          onCollectionDeleted={(id) =>
+            setActiveCollection((current) =>
+              current?.id === id ? null : current
+            )
+          }
+        />
+      )}
     </div>
   );
 
@@ -1181,7 +1247,8 @@ export default function ImageGenerator({
         engine,
         model: engine === 'openai' ? model : undefined,
         quality: engine === 'openai' ? quality : undefined,
-        requestId
+        requestId,
+        ...collectionRequest
       };
       activeImageRequestPayloadRef.current = imageRequest;
       const result = await generateAIImage(imageRequest);
@@ -1220,6 +1287,9 @@ export default function ImageGenerator({
           activeImageRequestTransportFailedRef.current = true;
           await recoverCanonicalImageGeneration(imageRequest);
         } else {
+          if (result.code === 'ai_image_collection_not_found') {
+            setActiveCollection(null);
+          }
           const rawError = result.error || 'Failed to generate image';
           const errorMessage = safeErrorToString(rawError);
           setError(errorMessage);
@@ -1305,7 +1375,8 @@ export default function ImageGenerator({
         engine: followUpEngine,
         model: followUpEngine === 'openai' ? followUpModel : undefined,
         quality: followUpEngine === 'openai' ? followUpQuality : undefined,
-        requestId
+        requestId,
+        ...collectionRequest
       };
       activeImageRequestPayloadRef.current = imageRequest;
       const result = await generateAIImage(imageRequest);
@@ -1342,6 +1413,9 @@ export default function ImageGenerator({
           activeImageRequestTransportFailedRef.current = true;
           await recoverCanonicalImageGeneration(imageRequest);
         } else {
+          if (result.code === 'ai_image_collection_not_found') {
+            setActiveCollection(null);
+          }
           const rawError = result.error || 'Failed to generate follow-up image';
           const errorMessage = safeErrorToString(rawError);
           setError(errorMessage);
@@ -1573,6 +1647,11 @@ export default function ImageGenerator({
     setGeneratedResponseId(data.responseId || `history-${image.id}`);
     setGeneratedImageId(data.imageId ?? null);
     setProgressStage('completed');
+  }
+
+  function handleUseCollection(collection: AIImageCollection) {
+    setActiveCollection(collection);
+    if (mode === 'history') setMode('text');
   }
 
   function handleKeyDown(event: React.KeyboardEvent) {

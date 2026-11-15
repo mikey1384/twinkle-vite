@@ -22,6 +22,8 @@ interface InputSectionProps {
   onEngineChange: (engine: 'gemini' | 'openai') => void;
   quality: AiImageQuality;
   onQualityChange: (quality: AiImageQuality) => void;
+  // pictures sent along (added image, collection), counted in the estimate
+  referenceCount?: number;
   themeColor?: string;
 }
 
@@ -39,6 +41,7 @@ export default function InputSection({
   onEngineChange,
   quality,
   onQualityChange,
+  referenceCount = 0,
   themeColor
 }: InputSectionProps) {
   const themeRole = useRoleColor('button', {
@@ -142,7 +145,11 @@ export default function InputSection({
             </span>
             {engine === 'openai' && (
               // Own full-width line: its length can never move the dropdowns.
-              <AiImageEstimate model={model} quality={quality} />
+              <AiImageEstimate
+                model={model}
+                quality={quality}
+                referenceCount={referenceCount}
+              />
             )}
           </div>
           <textarea

@@ -84,6 +84,30 @@ test('AI image status fingerprint matches the server request identity without re
   assert.equal(await createAIImageRequestFingerprint(input), expected);
 });
 
+test('a picked image collection is part of the fingerprint, as on the server', async () => {
+  const input = {
+    prompt: 'Mina and Bolt find a cave',
+    engine: 'openai' as const,
+    quality: 'high' as const,
+    collectionId: 12,
+    collectionRevision: 3
+  };
+  const expected = createHash('sha256')
+    .update(
+      [input.engine, input.quality, input.prompt, '', '', '', 'collection:12:3'].join('\n')
+    )
+    .digest('hex');
+  assert.equal(await createAIImageRequestFingerprint(input), expected);
+  // no collection: the fingerprint is exactly the one before collections
+  const plain = createHash('sha256')
+    .update([input.engine, input.quality, input.prompt, '', '', ''].join('\n'))
+    .digest('hex');
+  assert.equal(
+    await createAIImageRequestFingerprint({ ...input, collectionId: undefined }),
+    plain
+  );
+});
+
 test('fingerprinted status recovery preserves the requested image engine and quality', () => {
   for (const relativePath of [
     '../src/contexts/requestHelpers/content.ts',

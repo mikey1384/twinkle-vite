@@ -33,6 +33,8 @@ interface FollowUpInputProps {
   onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
   followUpQuality?: AiImageQuality;
   onFollowUpQualityChange: (quality: AiImageQuality) => void;
+  // the picture being edited plus a picked collection's pictures
+  followUpReferenceCount?: number;
   themeColor?: string;
   energyPercent?: number;
   energyPolicy?: AiEnergyDisplayPolicy | null;
@@ -64,6 +66,7 @@ export default function FollowUpInput({
   onFollowUpEngineChange,
   followUpQuality = 'high',
   onFollowUpQualityChange,
+  followUpReferenceCount,
   themeColor,
   energyPercent,
   energyPolicy,
@@ -194,7 +197,11 @@ export default function FollowUpInput({
       </div>
       {followUpEngine === 'openai' && (
         <div style={{ marginBottom: '0.75rem' }}>
-          <AiImageEstimate model={followUpModel} quality={followUpQuality} />
+          <AiImageEstimate
+            model={followUpModel}
+            quality={followUpQuality}
+            referenceCount={followUpReferenceCount}
+          />
         </div>
       )}
       <div

@@ -2,7 +2,10 @@ import {
   type AiImageQuality,
   type OpenAiImageModel
 } from '~/helpers/aiImageModels';
-import type { AIImageHistoryItem } from '~/helpers/aiImageHistory';
+import type {
+  AIImageCollection,
+  AIImageHistoryItem
+} from '~/helpers/aiImageHistory';
 import request from './axiosInstance';
 import { type BookPreview } from '~/helpers/bookEmbedHelpers';
 import URL from '~/constants/URL';
@@ -3269,14 +3272,17 @@ export default function contentRequestHelpers({
     },
     async loadAIImageGenerationEstimate({
       model,
-      quality
+      quality,
+      referenceImageCount = 0
     }: {
       model: OpenAiImageModel;
       quality: AiImageQuality;
+      // pictures sent along (added image, picture being edited, collection)
+      referenceImageCount?: number;
     }) {
       const { data } = await request.post(
         `${URL}/content/image/ai/estimate`,
-        { model, quality },
+        { model, quality, referenceImageCount },
         auth()
       );
       return data as {
@@ -3296,7 +3302,9 @@ export default function contentRequestHelpers({
       quality = 'high',
       requestId,
       displayPrompt,
-      historySource
+      historySource,
+      collectionId,
+      collectionRevision
     }: {
       prompt: string;
       previousResponseId?: string;
@@ -3310,6 +3318,9 @@ export default function contentRequestHelpers({
       displayPrompt?: string;
       // which screen asked, for the history label and resume
       historySource?: 'generator' | 'edit' | 'thumbnail';
+      // a picked image collection: the server adds its pictures and note
+      collectionId?: number;
+      collectionRevision?: number;
     }) {
       try {
         const { data } = await request.post(
@@ -3324,7 +3335,9 @@ export default function contentRequestHelpers({
             quality,
             requestId,
             displayPrompt,
-            historySource
+            historySource,
+            collectionId,
+            collectionRevision
           },
           {
             ...auth(),
@@ -3398,7 +3411,9 @@ export default function contentRequestHelpers({
       model,
       quality = 'high',
       requestId,
-      requestFingerprint
+      requestFingerprint,
+      collectionId,
+      collectionRevision
     }: {
       prompt: string;
       previousResponseId?: string;
@@ -3409,6 +3424,8 @@ export default function contentRequestHelpers({
       quality?: AiImageQuality;
       requestId: string;
       requestFingerprint?: string;
+      collectionId?: number;
+      collectionRevision?: number;
     }) {
       try {
         const { data } = await request.post(
@@ -3423,7 +3440,9 @@ export default function contentRequestHelpers({
                 engine,
                 model,
                 quality,
-                requestId
+                requestId,
+                collectionId,
+                collectionRevision
               },
           auth()
         );
@@ -3499,6 +3518,72 @@ export default function contentRequestHelpers({
           responseId: string | null;
           imageId: string | null;
         };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // The member's own image collections (private), most recently used first
+    async loadAIImageCollections({ fresh = false }: { fresh?: boolean } = {}) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/image/ai/collections${fresh ? '?fresh=1' : ''}`,
+          auth()
+        );
+        return data as { collections: AIImageCollection[] };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async createAIImageCollection({
+      name,
+      note,
+      imageIds
+    }: {
+      name: string;
+      note?: string;
+      imageIds?: number[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/image/ai/collections`,
+          { name, note, imageIds },
+          auth()
+        );
+        return data as { collection: AIImageCollection };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Only the fields given change; imageIds replaces the set, in order
+    async updateAIImageCollection({
+      id,
+      name,
+      note,
+      imageIds
+    }: {
+      id: number;
+      name?: string;
+      note?: string;
+      imageIds?: number[];
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/content/image/ai/collections/${id}`,
+          { name, note, imageIds },
+          auth()
+        );
+        return data as { collection: AIImageCollection };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async deleteAIImageCollection(id: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/content/image/ai/collections/${id}`,
+          auth()
+        );
+        return data as { deleted: boolean };
       } catch (error) {
         return handleError(error);
       }

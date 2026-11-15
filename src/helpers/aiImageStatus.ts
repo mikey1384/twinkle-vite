@@ -3,6 +3,7 @@ import {
   type OpenAiImageModel,
   upgradeRetiredImageModel
 } from '~/helpers/aiImageModels';
+import { buildAIImageCollectionKey } from './aiImageHistory';
 import {
   browserReportsOffline,
   markBrowserNetworkReachable
@@ -21,6 +22,9 @@ export interface AiImageRequestFingerprintInput {
   engine?: 'gemini' | 'openai';
   model?: OpenAiImageModel;
   quality?: AiImageQuality;
+  // a picked image collection (helpers/aiImageHistory.ts)
+  collectionId?: number;
+  collectionRevision?: number;
 }
 
 const AI_IMAGE_CANONICAL_STATUS_TIMEOUT_MS = 6 * 60 * 1000;
@@ -35,7 +39,9 @@ export async function createAIImageRequestFingerprint({
   referenceImageB64,
   engine = 'openai',
   model,
-  quality = 'high'
+  quality = 'high',
+  collectionId,
+  collectionRevision
 }: AiImageRequestFingerprintInput): Promise<string | null> {
   try {
     if (!globalThis.crypto?.subtle || typeof TextEncoder === 'undefined') {
@@ -43,6 +49,10 @@ export async function createAIImageRequestFingerprint({
     }
     // The server fingerprints the current id of a retired model (2.5 -> 2.6).
     const currentModel = upgradeRetiredImageModel(model);
+    const collectionKey = buildAIImageCollectionKey({
+      collectionId,
+      collectionRevision
+    });
     const canonicalInput = [
       ...(currentModel ? [currentModel] : []),
       engine,
@@ -50,7 +60,8 @@ export async function createAIImageRequestFingerprint({
       prompt || '',
       previousResponseId || '',
       previousImageId || '',
-      referenceImageB64 || ''
+      referenceImageB64 || '',
+      ...(collectionKey ? [collectionKey] : [])
     ].join('\n');
     const digest = await globalThis.crypto.subtle.digest(
       'SHA-256',

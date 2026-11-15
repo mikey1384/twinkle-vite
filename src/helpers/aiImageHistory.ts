@@ -81,3 +81,37 @@ export function describeAIImageSource(image: AIImageHistoryItem) {
   if (image.source === 'thumbnail') return 'Thumbnail';
   return image.source === 'edit' || image.isFollowUp ? 'Edit' : '';
 }
+
+// Image collections (Cloudstar 10-27, Mikey 11-15; API helpers/ai/
+// imageCollections.ts): a member's named set of My Images pictures plus a
+// note, picked in the image maker like a Zero/Ciel topic. The server sends
+// the pictures as reference pictures and adds the note to the prompt.
+export const AI_IMAGE_COLLECTION_NAME_MAX = 60;
+export const AI_IMAGE_COLLECTION_NOTE_MAX = 1000;
+export const AI_IMAGE_COLLECTION_IMAGES_MAX = 6;
+
+export interface AIImageCollection {
+  id: number;
+  name: string;
+  note: string;
+  revision: number;
+  images: { id: number; path: string }[];
+  createdAt: number;
+  updatedAt: number;
+  lastUsedAt: number | null;
+}
+
+// Must match buildAiImageCollectionKey in the API: it is part of the image
+// request fingerprint both sides compute.
+export function buildAIImageCollectionKey({
+  collectionId,
+  collectionRevision
+}: {
+  collectionId?: number | null;
+  collectionRevision?: number | null;
+}) {
+  const id = Number(collectionId);
+  if (!Number.isSafeInteger(id) || id <= 0) return '';
+  const revision = Math.max(Math.floor(Number(collectionRevision) || 0), 0);
+  return `collection:${id}:${revision}`;
+}
