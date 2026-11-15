@@ -658,7 +658,9 @@ registerMethods('management', [
   'submitDobForApproval',
   'updateBanStatus',
   'loadAICardForImageRegeneration',
-  'regenerateAICardImage'
+  'regenerateAICardImage',
+  'loadApprenticeApplications',
+  'loadApprenticeApplicationDetail'
 ]);
 
 registerMethods('mission', [
@@ -1053,7 +1055,13 @@ registerMethods('user', [
   'loadGuardianConsentReview',
   'decideGuardianConsent',
   'loadUserReferrals',
-  'verifyPassphrase'
+  'verifyPassphrase',
+  'loadApprenticeApplication',
+  'loadApprenticeChoices',
+  'saveApprenticeDraft',
+  'submitApprenticeApplication',
+  'loadApprenticeAdvisor',
+  'recordApprenticeEvent'
 ]);
 
 registerMethods('zero', [
@@ -1064,20 +1072,6 @@ registerMethods('zero', [
   'mergeSubtitles',
   'mergeVideoWithSubtitles',
   'textToSpeech'
-]);
-
-// Mikey's Apprentice: the member's application, and Mikey's read-only review
-registerMethods('user', [
-  'loadApprenticeApplication',
-  'loadApprenticeChoices',
-  'saveApprenticeDraft',
-  'submitApprenticeApplication',
-  'loadApprenticeAdvisor',
-  'recordApprenticeEvent'
-]);
-registerMethods('management', [
-  'loadApprenticeApplications',
-  'loadApprenticeApplicationDetail'
 ]);
 
 // every helper module is a bare import() whose default is the factory, so a
