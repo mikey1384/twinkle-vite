@@ -26,6 +26,8 @@ export const Left = css`
 
   min-height: 0;
   overflow-y: auto;
+  /* hover nudge (translateX) must not make the column scroll sideways */
+  overflow-x: hidden;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: env(safe-area-inset-bottom, 0px);

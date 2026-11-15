@@ -132,7 +132,10 @@ export default function HomeMenuItems({
               text-decoration: none;
             }
             .homemenu__item {
-              width: 100%;
+              /* fill the row minus its side margins; width: 100% plus
+                 margins overflowed the column sideways */
+              flex: 1 1 auto;
+              width: auto;
               height: 100%;
               margin: 0.4rem 1rem;
               display: flex;
@@ -163,6 +166,11 @@ export default function HomeMenuItems({
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                /* longer labels (Mikey's Apprentice) step down a size so
+                   they fit beside the shorter ones */
+                &.label--long {
+                  font-size: 0.85em;
+                }
               }
             }
           }
@@ -384,7 +392,7 @@ export default function HomeMenuItems({
               <div className="icon">
                 <Icon icon="user-graduate" size="1x" />
               </div>
-              <div className="label">{apprenticeLabel}</div>
+              <div className="label label--long">{apprenticeLabel}</div>
             </div>
           </a>
         </nav>
