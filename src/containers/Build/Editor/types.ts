@@ -34,25 +34,22 @@ export interface BuildEditorRouteState {
   [key: string]: unknown;
 }
 
-export type BuildChatUploadRoute =
-  | 'project_files_import'
-  | 'runtime_asset_upload'
-  | 'chat_reference'
+// What the composer does with attached files. The server decides this from
+// file formats only; what the member wants done with a file is Lumine's call
+// in its own run.
+export type BuildChatUploadHandling =
+  | 'attachments'
   | 'reference_document'
-  | 'clarify';
+  | 'unsupported';
 
 export interface BuildChatUploadDecision {
   inputRequestId?: string;
-  route?: BuildChatUploadRoute;
-  confidence?: 'low' | 'medium' | 'high';
+  handling?: BuildChatUploadHandling;
+  // Older API responses only carry this.
+  route?: 'chat_reference' | 'reference_document' | 'clarify';
   reason?: string;
+  // The platform-limit refusal for `unsupported`.
   clarificationQuestion?: string | null;
-}
-
-export interface PendingBuildChatUploadClarification {
-  files: File[];
-  messageText: string;
-  intentPersisted: boolean;
 }
 
 export interface BuildChatFileSelectionResult {

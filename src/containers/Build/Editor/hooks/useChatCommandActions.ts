@@ -58,9 +58,6 @@ interface UseChatCommandActionsOptions {
     sharedRunState?: SharedBuildRunIdentityState | null
   ) => string;
   getLatestBuild: () => Build;
-  handlePendingBuildChatUploadMessage: (
-    trimmedMessage: string
-  ) => Promise<boolean | null>;
   isOwner: boolean;
   isRunActivityInFlight: (options?: {
     includeBootstrap?: boolean;
@@ -116,7 +113,6 @@ export default function useChatCommandActions({
   getBuildRunIdentity,
   getCurrentPageRunActivityRequestId,
   getLatestBuild,
-  handlePendingBuildChatUploadMessage,
   isOwner,
   isRunActivityInFlight,
   lumineModelSelectionControl,
@@ -412,12 +408,6 @@ export default function useChatCommandActions({
             messageContext: enrichedMessageContext || null
           }
         : undefined;
-    const uploadClarificationHandled =
-      await handlePendingBuildChatUploadMessage(trimmedMessage);
-    if (uploadClarificationHandled !== null) {
-      return uploadClarificationHandled;
-    }
-
     if (isRunActivityInFlight()) {
       enqueueLatestBuildRequest(trimmedMessage, requestOptions);
       return true;

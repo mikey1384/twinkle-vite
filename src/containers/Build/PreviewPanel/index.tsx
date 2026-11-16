@@ -64,11 +64,7 @@ import {
   PREVIEW_HIDDEN_SUSPEND_DELAY_MS,
   createPreviewRevision,
   getRuntimeIssueStackPreview,
-  hasPreservedUploadedProjectRelativePath,
-  listCaseInsensitiveFileNameCollisions,
-  normalizeUploadInputFiles,
   resolveRuntimeIssueProjectFilePath,
-  summarizeUploadedFileNames,
   type PreviewLifecycleState
 } from './helpers/previewHelpers';
 import { createIframeFocusController } from '~/helpers/iframeFocus';
@@ -545,66 +541,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       discardProjectFileDraft,
       rebaseProjectFileDraftBase: rebaseDraftBaseFilesHash,
       captureThumbnail,
-      async importProjectFilesFromChatUpload(files: File[]) {
-        const normalizedFiles = normalizeUploadInputFiles(files);
-        const filesWithPreservedPaths = normalizedFiles.filter(
-          hasPreservedUploadedProjectRelativePath
-        );
-        const requiresPreservedPaths = filesWithPreservedPaths.length > 0;
-        if (
-          requiresPreservedPaths &&
-          filesWithPreservedPaths.length !== normalizedFiles.length
-        ) {
-          const message =
-            'This upload mixes files with and without folder paths. Use the manual workspace import controls for project files instead.';
-          setProjectFileError(message);
-          return {
-            success: false,
-            importedCount: 0,
-            error: message
-          };
-        }
-        if (!requiresPreservedPaths && normalizedFiles.length > 1) {
-          const nameCollisions =
-            listCaseInsensitiveFileNameCollisions(normalizedFiles);
-          if (nameCollisions.length > 0) {
-            const message = `These files would collide at the project root: ${summarizeUploadedFileNames(
-              nameCollisions
-            )}. Use the manual workspace import controls instead.`;
-            setProjectFileError(message);
-            return {
-              success: false,
-              importedCount: 0,
-              error: message
-            };
-          }
-        }
-        const result = await handleUploadProjectFiles(normalizedFiles, {
-          requireRelativePaths: requiresPreservedPaths,
-          targetFolderPath: null
-        });
-        if (
-          result?.success &&
-          !requiresPreservedPaths &&
-          normalizedFiles.length > 1
-        ) {
-          const rootImportWarning =
-            'Imported these files at the project root because folder paths were not included.';
-          const nextWarningText = String(result.warningText || '').trim();
-          const combinedWarningText = nextWarningText
-            ? `${nextWarningText} ${rootImportWarning}`
-            : rootImportWarning;
-          setProjectFileError(combinedWarningText);
-          return {
-            ...result,
-            warningText: combinedWarningText
-          };
-        }
-        return result;
-      },
-      async uploadProjectAssetsFromChatUpload(files: File[]) {
-        return await handleUploadProjectAssets(files);
-      },
       async uploadGeneratedProjectAsset(options: BuildAgentAssetCreateOptions) {
         return await createAgentProjectAsset(options);
       }

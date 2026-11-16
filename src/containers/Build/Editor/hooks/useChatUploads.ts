@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import { formatBuildAppReferenceMessage } from '../helpers/appReferences';
 import { formatBuildCommentFeedbackMessage } from '~/helpers/buildCommentFeedback';
@@ -6,7 +6,6 @@ import useChatDraft from './useChatDraft';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { generateFileName } from '~/helpers/stringHelpers';
 import { v1 as uuidv1 } from 'uuid';
-import type { PreviewPanelHandle } from '../../PreviewPanel/types';
 import type { UploadCompletionMeta } from '~/types';
 import {
   BUILD_CHAT_HIDDEN_REFERENCE_CONTEXT_PREFIX,
@@ -15,9 +14,8 @@ import {
   buildBuildChatUploadRouteProgressMessage,
   buildBuildChatUploadRouteProgressPercent,
   buildBuildChatUploadRoutingMessage,
-  buildImportBlockedByLimitsNote,
-  buildImportedProjectFilesNote,
-  buildUploadedRuntimeAssetsNote,
+  getReferenceDocumentUploadMimeType,
+  isAudioChatAttachmentFile,
   isImageChatReferenceFile,
   isReferenceDocumentChatFile
 } from '../helpers/chatUploads';
@@ -30,11 +28,10 @@ import type {
   Build,
   BuildChatFileSelectionResult,
   BuildChatUploadDecision,
-  BuildChatUploadRoute,
+  BuildChatUploadHandling,
   BuildPlanAction,
   BuildPromptBinding,
-  ChatMessage,
-  PendingBuildChatUploadClarification
+  ChatMessage
 } from '../types';
 
 interface SendBuildMessageOptions {
@@ -56,17 +53,11 @@ interface UseBuildEditorChatUploadsOptions {
   createBuildChatReferenceDocuments: (
     options: Record<string, any>
   ) => Promise<any>;
-  createBuildChatUserNote: (options: Record<string, any>) => Promise<any>;
   getLatestBuild: () => Build;
   getLatestChatMessages: () => ChatMessage[];
   isOwner: boolean;
   isRunActivityInFlight: () => boolean;
   onForceChatAutoScroll: () => void;
-  persistImportedProjectFiles: () => Promise<{
-    success: boolean;
-    error: string;
-  }>;
-  previewPanelRef: RefObject<PreviewPanelHandle | null>;
   replaceChatMessages: (messages: ChatMessage[]) => void;
   routeBuildChatUpload: (options: Record<string, any>) => Promise<any>;
   saveFileData: (options: Record<string, any>) => Promise<any>;
@@ -85,14 +76,11 @@ export default function useChatUploads({
   createBuildChatAssistantNote,
   createBuildChatReferenceNote,
   createBuildChatReferenceDocuments,
-  createBuildChatUserNote,
   getLatestBuild,
   getLatestChatMessages,
   isOwner,
   isRunActivityInFlight,
   onForceChatAutoScroll,
-  persistImportedProjectFiles,
-  previewPanelRef,
   replaceChatMessages,
   routeBuildChatUpload,
   saveFileData,
@@ -117,43 +105,14 @@ export default function useChatUploads({
     File | File[] | null
   >(null);
   const [buildChatUploadInFlight, setBuildChatUploadInFlight] = useState(false);
-  const pendingBuildChatUploadClarificationRef = useRef<
-    PendingBuildChatUploadClarification[]
-  >([]);
   const buildChatUploadProgressMessageIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     setBuildChatUploadModalShown(false);
     setBuildChatUploadFileObj(null);
     setBuildChatUploadInFlight(false);
-    pendingBuildChatUploadClarificationRef.current = [];
     buildChatUploadProgressMessageIdRef.current = null;
   }, [build.id, userId]);
-
-  async function handlePendingBuildChatUploadMessage(trimmedMessage: string) {
-    const pendingBuildChatUploadClarification =
-      pendingBuildChatUploadClarificationRef.current[
-        pendingBuildChatUploadClarificationRef.current.length - 1
-      ] || null;
-    if (!pendingBuildChatUploadClarification) {
-      return null;
-    }
-    await persistBuildChatUserNote(trimmedMessage);
-    const result = await handleBuildChatFileSelection(
-      pendingBuildChatUploadClarification.files,
-      {
-        messageText: buildBuildChatUploadRoutingMessage(
-          pendingBuildChatUploadClarification.messageText,
-          trimmedMessage
-        ),
-        historyUserNoteText: pendingBuildChatUploadClarification.intentPersisted
-          ? null
-          : pendingBuildChatUploadClarification.messageText,
-        resolvingPendingClarification: true
-      }
-    );
-    return result.handled;
-  }
 
   function appendPersistedBuildChatMessage(
     message: any,
@@ -255,24 +214,6 @@ export default function useChatUploads({
     replaceChatMessages(nextMessages);
   }
 
-  async function maybeContinueBuildChatRequestAfterMutationUpload({
-    routingMessageText,
-    existingUserMessageId
-  }: {
-    routingMessageText: string;
-    existingUserMessageId?: number | null;
-  }) {
-    const trimmedMessage = String(routingMessageText || '').trim();
-    if (!trimmedMessage) {
-      return false;
-    }
-    setBuildChatUploadInFlight(false);
-    return await sendBuildMessageText(trimmedMessage, {
-      existingUserMessageId: Number(existingUserMessageId || 0) || null,
-      ignoreUploadInFlight: true
-    });
-  }
-
   async function persistBuildChatAssistantNote(
     text: string,
     options?: { buildId?: number | null }
@@ -293,39 +234,6 @@ export default function useChatUploads({
       return result.message;
     }
     return null;
-  }
-
-  async function persistBuildChatUserNote(
-    text: string,
-    options?: { buildId?: number | null }
-  ) {
-    const trimmedText = String(text || '').trim();
-    if (!trimmedText) {
-      return null;
-    }
-    const targetBuildId = Number(options?.buildId || build.id || 0);
-    const result = await createBuildChatUserNote({
-      buildId: targetBuildId,
-      text: trimmedText
-    });
-    if (result?.message) {
-      appendPersistedBuildChatMessage(result.message, {
-        buildId: targetBuildId
-      });
-      return result.message;
-    }
-    return null;
-  }
-
-  async function persistBuildChatUploadIntentNote(
-    text?: string | null,
-    options?: { buildId?: number | null }
-  ) {
-    const trimmedText = String(text || '').trim();
-    if (!trimmedText) {
-      return null;
-    }
-    return await persistBuildChatUserNote(trimmedText, options);
   }
 
   async function uploadBuildChatReferenceFiles(
@@ -460,7 +368,6 @@ export default function useChatUploads({
     options?: {
       messageText?: string;
       historyUserNoteText?: string | null;
-      resolvingPendingClarification?: boolean;
       localProgressMessageId?: number | null;
       consumeComposerDraft?: boolean;
     }
@@ -483,20 +390,8 @@ export default function useChatUploads({
       Object.prototype.hasOwnProperty.call(options, 'historyUserNoteText')
         ? options.historyUserNoteText
         : buildChatDraftMessage;
-    const resolvingPendingClarification = Boolean(
-      options?.resolvingPendingClarification
-    );
     const localProgressMessageId =
       Number(options?.localProgressMessageId || 0) || null;
-    const currentPendingBuildChatUploadClarification =
-      resolvingPendingClarification
-        ? pendingBuildChatUploadClarificationRef.current[
-            pendingBuildChatUploadClarificationRef.current.length - 1
-          ] || null
-        : null;
-    const pendingClarificationIntentAlreadyPersisted = Boolean(
-      currentPendingBuildChatUploadClarification?.intentPersisted
-    );
     const consumedComposerDraft =
       options?.consumeComposerDraft ||
       !options ||
@@ -532,52 +427,6 @@ export default function useChatUploads({
       ) {
         buildChatUploadProgressMessageIdRef.current = null;
       }
-    }
-
-    function pushPendingBuildChatUploadClarification(
-      pendingClarification: PendingBuildChatUploadClarification
-    ) {
-      pendingBuildChatUploadClarificationRef.current = [pendingClarification];
-    }
-
-    function replaceCurrentPendingBuildChatUploadClarification(
-      pendingClarification: PendingBuildChatUploadClarification
-    ) {
-      const pendingClarifications =
-        pendingBuildChatUploadClarificationRef.current;
-      if (pendingClarifications.length === 0) {
-        pendingBuildChatUploadClarificationRef.current = [pendingClarification];
-        return;
-      }
-      pendingBuildChatUploadClarificationRef.current = [
-        ...pendingClarifications.slice(0, -1),
-        pendingClarification
-      ];
-    }
-
-    function clearCurrentPendingBuildChatUploadClarification() {
-      if (!resolvingPendingClarification) return;
-      const pendingClarifications =
-        pendingBuildChatUploadClarificationRef.current;
-      if (pendingClarifications.length === 0) return;
-      pendingBuildChatUploadClarificationRef.current =
-        pendingClarifications.slice(0, -1);
-    }
-
-    async function persistClarificationIntentIfNeeded() {
-      if (pendingClarificationIntentAlreadyPersisted) {
-        return true;
-      }
-      const trimmedHistoryUserNoteText = String(
-        historyUserNoteText || ''
-      ).trim();
-      if (!trimmedHistoryUserNoteText) {
-        return false;
-      }
-      await persistBuildChatUploadIntentNote(trimmedHistoryUserNoteText, {
-        buildId: uploadBuildId
-      });
-      return true;
     }
 
     setBuildChatUploadInFlight(true);
@@ -619,6 +468,9 @@ export default function useChatUploads({
           );
         }
       }
+      // The server only checks file formats here (no model call, no
+      // question). What the member wants done with the files is Lumine's
+      // call in its own run, with the whole conversation.
       const decision = (await routeBuildChatUpload({
         buildId: build.id,
         inputRequestId: uuidv1(),
@@ -628,173 +480,46 @@ export default function useChatUploads({
           mimeType: file.type || null,
           sizeBytes: file.size
         })),
-        // This client turns videos into still frames for chat reference.
+        // This client turns videos into still frames for Lumine to look at.
         videoFrameReferences: true
       })) as BuildChatUploadDecision | null;
       if (didBuildChatUploadTargetChange()) {
         return { handled: true };
       }
-
-      const route = String(
-        decision?.route || ''
-      ).trim() as BuildChatUploadRoute;
-      if (!route) {
-        throw new Error('Failed to determine what to do with these files.');
+      const handling: BuildChatUploadHandling | null =
+        decision?.handling ||
+        (decision?.route === 'reference_document'
+          ? 'reference_document'
+          : decision?.route === 'chat_reference'
+            ? 'attachments'
+            : null);
+      if (!handling) {
+        throw new Error('Failed to check these files.');
       }
 
       updateLocalBuildChatMessage(localProgressMessageId, {
-        text: buildBuildChatUploadRouteProgressMessage(route, files),
-        uploadProgressPercent: buildBuildChatUploadRouteProgressPercent(route)
+        text: buildBuildChatUploadRouteProgressMessage(handling, files),
+        uploadProgressPercent: buildBuildChatUploadRouteProgressPercent(handling)
       });
 
-      if (route === 'clarify') {
+      if (handling === 'unsupported') {
+        // A format limit, not a question: the draft stays in the composer so
+        // the member can send the files again in a way that works.
         clearLocalProgressMessage();
-        const intentPersisted = await persistClarificationIntentIfNeeded();
-        const pendingClarification = {
-          files: [...files],
-          messageText: routingMessageText,
-          intentPersisted
-        };
-        if (resolvingPendingClarification) {
-          replaceCurrentPendingBuildChatUploadClarification(
-            pendingClarification
-          );
-        } else {
-          pushPendingBuildChatUploadClarification(pendingClarification);
-        }
         await persistBuildChatAssistantNote(
           decision?.clarificationQuestion ||
-            'Tell me whether you want these uploaded into the project, used as build assets, or kept as reference in chat.',
+            'I could not use those files. Try sending them again.',
           { buildId: uploadBuildId }
         );
-        clearConsumedBuildChatUploadDraft();
         return { handled: true };
       }
 
-      clearCurrentPendingBuildChatUploadClarification();
-
-      if (route === 'project_files_import') {
-        const previewPanel = previewPanelRef.current;
-        if (!previewPanel || didBuildChatUploadTargetChange()) {
-          return { handled: true };
-        }
-        const result =
-          await previewPanel.importProjectFilesFromChatUpload(files);
-        if (didBuildChatUploadTargetChange()) {
-          return { handled: true };
-        }
-        updateLocalBuildChatMessage(localProgressMessageId, {
-          uploadProgressPercent: 86
-        });
-        clearLocalProgressMessage();
-        if (!result?.success) {
-          await persistBuildChatAssistantNote(
-            result?.error || 'I could not import those project files.',
-            { buildId: uploadBuildId }
-          );
-          return { handled: true };
-        }
-        const persisted = await persistImportedProjectFiles();
-        if (didBuildChatUploadTargetChange()) {
-          return { handled: true };
-        }
-        if (!persisted.success) {
-          await persistBuildChatAssistantNote(
-            buildImportBlockedByLimitsNote({
-              fileCount: Number(result?.importedCount || files.length),
-              error: persisted.error
-            }),
-            { buildId: uploadBuildId }
-          );
-          return { handled: true };
-        }
-        const persistedUserNote = await persistBuildChatUploadIntentNote(
-          historyUserNoteText,
-          {
-            buildId: uploadBuildId
-          }
-        );
-        const continued =
-          await maybeContinueBuildChatRequestAfterMutationUpload({
-            routingMessageText,
-            existingUserMessageId: persistedUserNote?.id || null
-          });
-        if (continued) {
-          clearConsumedBuildChatUploadDraft();
-          return { handled: true };
-        }
-        await persistBuildChatAssistantNote(
-          buildImportedProjectFilesNote(result),
-          { buildId: uploadBuildId }
-        );
-        if (String(routingMessageText || '').trim()) {
-          await persistBuildChatAssistantNote(
-            'I imported the files, but the run did not start. Retry your message when ready.',
-            { buildId: uploadBuildId }
-          );
-          return { handled: true };
-        }
-        clearConsumedBuildChatUploadDraft();
-        return { handled: true };
-      }
-
-      if (route === 'runtime_asset_upload') {
-        const previewPanel = previewPanelRef.current;
-        if (!previewPanel || didBuildChatUploadTargetChange()) {
-          return { handled: true };
-        }
-        const result =
-          await previewPanel.uploadProjectAssetsFromChatUpload(files);
-        if (didBuildChatUploadTargetChange()) {
-          return { handled: true };
-        }
-        updateLocalBuildChatMessage(localProgressMessageId, {
-          uploadProgressPercent: 86
-        });
-        clearLocalProgressMessage();
-        if (!result?.success) {
-          await persistBuildChatAssistantNote(
-            result?.error || 'I could not upload those build assets.',
-            { buildId: uploadBuildId }
-          );
-          return { handled: true };
-        }
-        const persistedUserNote = await persistBuildChatUploadIntentNote(
-          historyUserNoteText,
-          {
-            buildId: uploadBuildId
-          }
-        );
-        const continued =
-          await maybeContinueBuildChatRequestAfterMutationUpload({
-            routingMessageText,
-            existingUserMessageId: persistedUserNote?.id || null
-          });
-        if (continued) {
-          clearConsumedBuildChatUploadDraft();
-          return { handled: true };
-        }
-        await persistBuildChatAssistantNote(
-          buildUploadedRuntimeAssetsNote(result),
-          { buildId: uploadBuildId }
-        );
-        if (String(routingMessageText || '').trim()) {
-          await persistBuildChatAssistantNote(
-            'I uploaded the asset, but the run did not start. Retry your message when ready.',
-            { buildId: uploadBuildId }
-          );
-          return { handled: true };
-        }
-        clearConsumedBuildChatUploadDraft();
-        return { handled: true };
-      }
-
-      if (route === 'reference_document') {
+      if (handling === 'reference_document') {
         const documentFiles = files.filter(isReferenceDocumentChatFile);
         if (documentFiles.length === 0) {
           clearLocalProgressMessage();
           await persistBuildChatAssistantNote(
-            'I can read PDF, Word (.docx), text, Markdown, CSV, JSON, and HTML files as reference documents. Attach one of those and I will read it.',
+            'I can read PDF, Word (.docx), text, Markdown, CSV, JSON, HTML and code files as reference documents. Attach one of those and I will read it.',
             { buildId: uploadBuildId }
           );
           return { handled: true };
@@ -837,7 +562,9 @@ export default function useChatUploads({
             uploads: references.map((reference, index) => ({
               url: reference.url,
               fileName: reference.fileName,
-              mimeType: reference.mimeType || null,
+              mimeType: getReferenceDocumentUploadMimeType(
+                documentFiles[index]
+              ),
               sizeBytes: Number(documentFiles[index]?.size || 0) || null
             }))
           });
@@ -888,207 +615,139 @@ export default function useChatUploads({
         return { handled: true };
       }
 
-      if (route === 'chat_reference') {
-        const imageFiles = files.filter(isImageChatReferenceFile);
-        const videoFiles = files.filter(isVideoChatReferenceFile);
-        const framesPerVideo = getVideoFrameCountPerFile({
-          imageCount: imageFiles.length,
-          videoCount: videoFiles.length
-        });
-        const frameFiles: File[] = [];
-        if (videoFiles.length > 0) {
-          // The typed draft stays in the composer on both notes below, so
-          // the user's bug description is never lost.
-          if (framesPerVideo === 0) {
-            clearLocalProgressMessage();
-            await persistBuildChatAssistantNote(
-              'I can look at up to 8 pictures at once, and each video needs at least one. Send the video with fewer images.',
-              { buildId: uploadBuildId }
-            );
-            return { handled: true };
-          }
-          try {
-            for (const videoFile of videoFiles) {
-              frameFiles.push(
-                ...(await extractVideoReferenceFrames(
-                  videoFile,
-                  framesPerVideo
-                ))
-              );
-            }
-          } catch {
-            clearLocalProgressMessage();
-            await persistBuildChatAssistantNote(
-              "I couldn't read frames from that video. Send a few screenshots of what happens, or describe it and I'll take a look.",
-              { buildId: uploadBuildId }
-            );
-            return { handled: true };
-          }
-          if (didBuildChatUploadTargetChange()) {
-            return { handled: true };
-          }
-        }
-        const referenceFiles = [...imageFiles, ...frameFiles];
-        if (referenceFiles.length > 8) {
-          throw new Error('Send up to 8 images together. Your draft is kept.');
-        }
-        if (referenceFiles.length === 0) {
+      // Attachments: pictures and sounds go to Lumine with the message.
+      // Videos travel as still frames Lumine can look at.
+      const imageFiles = files.filter(isImageChatReferenceFile);
+      const audioFiles = files.filter(isAudioChatAttachmentFile);
+      const videoFiles = files.filter(isVideoChatReferenceFile);
+      const framesPerVideo = getVideoFrameCountPerFile({
+        imageCount: imageFiles.length + audioFiles.length,
+        videoCount: videoFiles.length
+      });
+      const frameFiles: File[] = [];
+      if (videoFiles.length > 0) {
+        // The typed draft stays in the composer on both notes below, so
+        // the user's bug description is never lost.
+        if (framesPerVideo === 0) {
           clearLocalProgressMessage();
           await persistBuildChatAssistantNote(
-            'I can only use image uploads as chat reference right now.',
+            'I can take up to 8 files at once, and each video needs at least one picture from it. Send the video with fewer files.',
             { buildId: uploadBuildId }
           );
           return { handled: true };
         }
-        const references = await uploadBuildChatReferenceFiles(
-          referenceFiles,
-          uploadBuildId,
-          {
-            onProgress: (progressPercent) => {
-              updateLocalBuildChatMessage(localProgressMessageId, {
-                uploadProgressPercent: progressPercent
-              });
-            }
-          }
-        );
-        const cleanupUploads = references.map((reference) => ({
-          filePath: reference.filePath,
-          storedFileName: reference.storedFileName
-        }));
-        if (didBuildChatUploadTargetChange()) {
-          await cleanupBuildChatReferenceUploadsQuietly(
-            cleanupUploads,
-            uploadBuildId
-          );
-          return { handled: true };
-        }
-        const hiddenMessageContext = buildBuildChatHiddenMessageContext({
-          messageText: routingMessageText,
-          references: references.map((reference) => ({
-            fileName: reference.fileName,
-            url: reference.url
-          }))
-        });
-        if (!resolvingPendingClarification && routingMessageText.trim()) {
-          let hiddenReferenceContext = hiddenMessageContext;
-          let existingUserMessageId = null as number | null;
-          try {
-            const result = await createBuildChatReferenceNote({
-              buildId: uploadBuildId,
-              messageText: routingMessageText,
-              inputRequestId: decision?.inputRequestId,
-              references: references.map((reference) => ({
-                fileName: reference.fileName,
-                url: reference.url,
-                mimeType: reference.mimeType || null
-              })),
-              hidden: true
-            });
-            const resolvedMessageContext = String(
-              result?.messageContext || ''
-            ).trim();
-            if (resolvedMessageContext) {
-              hiddenReferenceContext = resolvedMessageContext;
-            }
-            if (result?.userMessage) {
-              appendPersistedBuildChatMessage(result.userMessage, {
-                buildId: uploadBuildId
-              });
-              existingUserMessageId =
-                Number(result.userMessage?.id || 0) || null;
-            }
-          } catch (error) {
-            await cleanupBuildChatReferenceUploadsQuietly(
-              cleanupUploads,
-              uploadBuildId
-            );
-            throw error;
-          }
-          updateLocalBuildChatMessage(localProgressMessageId, {
-            uploadProgressPercent: 92
-          });
-          clearLocalProgressMessage();
-          setBuildChatUploadInFlight(false);
-          const started = await sendBuildMessageText(routingMessageText, {
-            messageContext: hiddenReferenceContext,
-            existingUserMessageId,
-            ignoreUploadInFlight: true
-          });
-          if (started) {
-            clearConsumedBuildChatUploadDraft();
-            return { handled: true };
-          }
-          await persistBuildChatAssistantNote(
-            'I saved the image reference, but the run did not start. Retry your message when ready.',
-            { buildId: uploadBuildId }
-          );
-          return { handled: true };
-        }
-        let result;
         try {
-          result = await createBuildChatReferenceNote({
-            buildId: uploadBuildId,
-            messageText: routingMessageText,
-            inputRequestId: decision?.inputRequestId,
-            references: references.map((reference) => ({
-              fileName: reference.fileName,
-              url: reference.url,
-              mimeType: reference.mimeType || null
-            }))
-          });
-        } catch (error) {
-          await cleanupBuildChatReferenceUploadsQuietly(
-            cleanupUploads,
-            uploadBuildId
+          for (const videoFile of videoFiles) {
+            frameFiles.push(
+              ...(await extractVideoReferenceFrames(videoFile, framesPerVideo))
+            );
+          }
+        } catch {
+          clearLocalProgressMessage();
+          await persistBuildChatAssistantNote(
+            "I couldn't read frames from that video. Send a few screenshots of what happens, or describe it and I'll take a look.",
+            { buildId: uploadBuildId }
           );
-          throw error;
+          return { handled: true };
         }
-        updateLocalBuildChatMessage(localProgressMessageId, {
-          uploadProgressPercent: 92
+        if (didBuildChatUploadTargetChange()) {
+          return { handled: true };
+        }
+      }
+      const attachmentFiles = [...imageFiles, ...audioFiles, ...frameFiles];
+      if (attachmentFiles.length > 8) {
+        throw new Error('Send up to 8 files together. Your draft is kept.');
+      }
+      if (attachmentFiles.length === 0) {
+        throw new Error('I could not use those files. Your draft is kept.');
+      }
+      const attachments = await uploadBuildChatReferenceFiles(
+        attachmentFiles,
+        uploadBuildId,
+        {
+          onProgress: (progressPercent) => {
+            updateLocalBuildChatMessage(localProgressMessageId, {
+              uploadProgressPercent: progressPercent
+            });
+          }
+        }
+      );
+      const cleanupUploads = attachments.map((attachment) => ({
+        filePath: attachment.filePath,
+        storedFileName: attachment.storedFileName
+      }));
+      if (didBuildChatUploadTargetChange()) {
+        await cleanupBuildChatReferenceUploadsQuietly(
+          cleanupUploads,
+          uploadBuildId
+        );
+        return { handled: true };
+      }
+      let runMessageContext = buildBuildChatHiddenMessageContext({
+        messageText: routingMessageText,
+        references: attachments.map((attachment) => ({
+          fileName: attachment.fileName,
+          url: attachment.url
+        }))
+      });
+      let runMessageText = routingMessageText.trim();
+      let existingUserMessageId = null as number | null;
+      try {
+        const result = await createBuildChatReferenceNote({
+          buildId: uploadBuildId,
+          messageText: routingMessageText,
+          inputRequestId: decision?.inputRequestId,
+          references: attachments.map((attachment) => ({
+            fileName: attachment.fileName,
+            url: attachment.url,
+            mimeType: attachment.mimeType || null
+          })),
+          hidden: true
         });
-        clearLocalProgressMessage();
+        const resolvedMessageContext = String(
+          result?.messageContext || ''
+        ).trim();
+        if (resolvedMessageContext) {
+          runMessageContext = resolvedMessageContext;
+        }
         if (result?.userMessage) {
           appendPersistedBuildChatMessage(result.userMessage, {
             buildId: uploadBuildId
           });
+          existingUserMessageId = Number(result.userMessage?.id || 0) || null;
+          // Files sent without words still go to Lumine, under the note the
+          // server saved for them.
+          if (!runMessageText) {
+            runMessageText = String(result.userMessage?.content || '').trim();
+          }
         }
-        if (result?.assistantMessage) {
-          appendPersistedBuildChatMessage(result.assistantMessage, {
-            buildId: uploadBuildId
-          });
-        }
-        if (result?.userMessage || result?.assistantMessage) {
-          clearConsumedBuildChatUploadDraft();
-          return { handled: true };
-        }
-        await persistBuildChatAssistantNote(
-          `Using ${referenceFiles.length} reference image${
-            referenceFiles.length === 1 ? '' : 's'
-          } for your request.`,
-          { buildId: uploadBuildId }
+      } catch (error) {
+        await cleanupBuildChatReferenceUploadsQuietly(
+          cleanupUploads,
+          uploadBuildId
         );
+        throw error;
+      }
+      updateLocalBuildChatMessage(localProgressMessageId, {
+        uploadProgressPercent: 92
+      });
+      clearLocalProgressMessage();
+      setBuildChatUploadInFlight(false);
+      const started = runMessageText
+        ? await sendBuildMessageText(runMessageText, {
+            messageContext: runMessageContext,
+            existingUserMessageId,
+            ignoreUploadInFlight: true
+          })
+        : false;
+      if (started) {
         clearConsumedBuildChatUploadDraft();
         return { handled: true };
       }
-
-      const fallbackIntentPersisted =
-        await persistClarificationIntentIfNeeded();
-      const pendingClarification = {
-        files: [...files],
-        messageText: routingMessageText,
-        intentPersisted: fallbackIntentPersisted
-      };
-      clearLocalProgressMessage();
-      if (resolvingPendingClarification) {
-        replaceCurrentPendingBuildChatUploadClarification(pendingClarification);
-      } else {
-        pushPendingBuildChatUploadClarification(pendingClarification);
-      }
       await persistBuildChatAssistantNote(
-        'I was not confident enough to route those files automatically. Tell me whether they should be imported, uploaded as assets, or used as reference.',
+        'I saved your files, but the run did not start. Retry your message when ready.',
         { buildId: uploadBuildId }
       );
-      clearConsumedBuildChatUploadDraft();
       return { handled: true };
     } catch (error: any) {
       if (didBuildChatUploadTargetChange()) return { handled: true };
@@ -1110,7 +769,6 @@ export default function useChatUploads({
     options?: {
       messageText?: string;
       historyUserNoteText?: string | null;
-      resolvingPendingClarification?: boolean;
       consumeComposerDraft?: boolean;
     }
   ) {
@@ -1151,7 +809,6 @@ export default function useChatUploads({
     buildChatUploadFileObj,
     buildChatUploadInFlight,
     buildChatUploadModalShown,
-    handlePendingBuildChatUploadMessage,
     handleOpenBuildChatUpload,
     setBuildChatDraftMessage,
     setBuildChatUploadFileObj,

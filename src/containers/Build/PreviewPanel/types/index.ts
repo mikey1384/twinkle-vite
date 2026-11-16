@@ -179,19 +179,6 @@ export interface PreviewPanelHandle {
   // for "Play it now" after a roadmap milestone.
   showPreview: () => void;
   captureThumbnail: () => Promise<string>;
-  importProjectFilesFromChatUpload: (files: File[]) => Promise<{
-    success: boolean;
-    importedCount: number;
-    warningText?: string;
-    error?: string;
-  }>;
-  uploadProjectAssetsFromChatUpload: (files: File[]) => Promise<{
-    success: boolean;
-    uploadedCount: number;
-    assets?: PreviewRuntimeUploadAsset[];
-    warningText?: string;
-    error?: string;
-  }>;
   uploadGeneratedProjectAsset: (
     options: BuildAgentAssetCreateOptions
   ) => Promise<BuildAgentAssetCreateResult>;

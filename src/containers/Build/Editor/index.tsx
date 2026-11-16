@@ -300,7 +300,6 @@ export default function BuildEditor({
     createBuildChatAssistantNote,
     createBuildChatReferenceNote,
     createBuildChatReferenceDocuments,
-    createBuildChatUserNote,
     createBuildContributionFork,
     deleteBuild,
     deleteBuildChatMessage,
@@ -841,7 +840,6 @@ export default function BuildEditor({
   const {
     ensureProjectFilesPersistedBeforePublish,
     ensureProjectFilesPersistedBeforeRun,
-    ensureProjectFilesPersistedForChatImport,
     draftActionPrompt,
     handleApplyRestoredProjectFiles,
     handleProjectFilesDraftStateChange,
@@ -977,7 +975,6 @@ export default function BuildEditor({
     buildChatUploadInFlight,
     buildChatUploadModalShown,
     handleOpenBuildChatUpload,
-    handlePendingBuildChatUploadMessage,
     setBuildChatDraftMessage,
     setBuildChatUploadFileObj,
     setBuildChatUploadModalShown,
@@ -989,7 +986,6 @@ export default function BuildEditor({
     createBuildChatAssistantNote,
     createBuildChatReferenceNote,
     createBuildChatReferenceDocuments,
-    createBuildChatUserNote,
     getLatestBuild,
     getLatestChatMessages,
     isOwner,
@@ -998,8 +994,6 @@ export default function BuildEditor({
       shouldAutoScrollRef.current = true;
       scrollChatToBottom('smooth', { force: true });
     },
-    persistImportedProjectFiles: ensureProjectFilesPersistedForChatImport,
-    previewPanelRef,
     replaceChatMessages,
     routeBuildChatUpload,
     saveFileData,
@@ -1170,7 +1164,6 @@ export default function BuildEditor({
     getBuildRunIdentity,
     getCurrentPageRunActivityRequestId,
     getLatestBuild,
-    handlePendingBuildChatUploadMessage,
     isOwner,
     isRunActivityInFlight,
     mergedChatMessages,

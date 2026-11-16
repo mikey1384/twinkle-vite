@@ -1998,7 +1998,10 @@ export default function buildRequestHelpers({
             messageText,
             inputRequestId,
             files,
-            videoFrameReferences
+            videoFrameReferences,
+            // This client reads `handling`, so a format refusal comes back
+            // as data instead of an error.
+            uploadHandling: true
           },
           auth()
         );

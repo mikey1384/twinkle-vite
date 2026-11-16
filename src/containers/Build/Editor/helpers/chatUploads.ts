@@ -1,6 +1,6 @@
 export const LUMINE_MESSAGE_MAX_CHARS = 50_000;
 import type {
-  BuildChatUploadRoute,
+  BuildChatUploadHandling,
   BuildHiddenMessageContextOptions
 } from '../types';
 
@@ -23,58 +23,30 @@ export function buildBuildChatUploadPendingMessage(files: File[]) {
 }
 
 export function buildBuildChatUploadRouteProgressMessage(
-  route: BuildChatUploadRoute,
+  handling: BuildChatUploadHandling,
   files: File[]
 ) {
   const normalizedFiles = normalizeUploadFiles(files);
-  const imageFiles = normalizedFiles.filter(isImageChatReferenceFile);
-  if (route === 'project_files_import') {
-    return normalizedFiles.length > 1
-      ? 'Importing your files...'
-      : 'Importing your file...';
-  }
-  if (route === 'runtime_asset_upload') {
-    return imageFiles.length === normalizedFiles.length &&
-      normalizedFiles.length > 0
-      ? normalizedFiles.length === 1
-        ? 'Uploading your image asset...'
-        : 'Uploading your image assets...'
-      : normalizedFiles.length > 1
-        ? 'Uploading your assets...'
-        : 'Uploading your asset...';
-  }
-  if (route === 'reference_document') {
+  if (handling === 'reference_document') {
     return normalizedFiles.length === 1
       ? 'Reading your document...'
       : 'Reading your documents...';
   }
-  if (route === 'chat_reference') {
-    if (
-      imageFiles.length === normalizedFiles.length &&
-      normalizedFiles.length > 0
-    ) {
-      return normalizedFiles.length === 1
-        ? 'Using your image...'
-        : 'Using your images...';
-    }
-    return 'Using your upload as reference...';
+  if (handling === 'attachments') {
+    return normalizedFiles.length === 1
+      ? 'Sending your file to Lumine...'
+      : 'Sending your files to Lumine...';
   }
   return 'Checking your upload...';
 }
 
 export function buildBuildChatUploadRouteProgressPercent(
-  route: BuildChatUploadRoute
+  handling: BuildChatUploadHandling
 ) {
-  if (route === 'project_files_import') {
-    return 28;
-  }
-  if (route === 'runtime_asset_upload') {
-    return 26;
-  }
-  if (route === 'chat_reference') {
+  if (handling === 'attachments') {
     return 20;
   }
-  if (route === 'reference_document') {
+  if (handling === 'reference_document') {
     return 22;
   }
   return 14;
@@ -94,8 +66,65 @@ const REFERENCE_DOCUMENT_EXTENSIONS = [
   '.xml',
   '.yml',
   '.yaml',
-  '.rtf'
+  '.rtf',
+  // Code files are read as text; Lumine writes them into the project with
+  // its own edit tools when the member wants them there.
+  '.js',
+  '.mjs',
+  '.cjs',
+  '.jsx',
+  '.ts',
+  '.tsx',
+  '.css',
+  '.vue',
+  '.svelte'
 ];
+
+const CODE_FILE_EXTENSIONS = [
+  '.js',
+  '.mjs',
+  '.cjs',
+  '.jsx',
+  '.ts',
+  '.tsx',
+  '.css',
+  '.vue',
+  '.svelte'
+];
+
+// Code files often arrive with a non-text type (or none); reference documents
+// read them as plain text.
+export function getReferenceDocumentUploadMimeType(file?: File | null) {
+  const mimeType = String(file?.type || '').trim();
+  const normalizedName = String(file?.name || '').toLowerCase();
+  if (
+    CODE_FILE_EXTENSIONS.some((extension) => normalizedName.endsWith(extension))
+  ) {
+    return mimeType.startsWith('text/') ? mimeType : 'text/plain';
+  }
+  return mimeType || null;
+}
+
+const AUDIO_FILE_EXTENSIONS = [
+  '.mp3',
+  '.wav',
+  '.ogg',
+  '.m4a',
+  '.aac',
+  '.flac',
+  '.aif',
+  '.aiff'
+];
+
+export function isAudioChatAttachmentFile(file: File) {
+  const mimeType = String(file?.type || '').toLowerCase();
+  if (mimeType.startsWith('audio/')) return true;
+  if (mimeType) return false;
+  const normalizedName = String(file?.name || '').toLowerCase();
+  return AUDIO_FILE_EXTENSIONS.some((extension) =>
+    normalizedName.endsWith(extension)
+  );
+}
 
 export function isReferenceDocumentChatFile(file: File) {
   const mimeType = String(file?.type || '').toLowerCase();
@@ -111,22 +140,6 @@ export function isReferenceDocumentChatFile(file: File) {
   return REFERENCE_DOCUMENT_EXTENSIONS.some((extension) =>
     normalizedName.endsWith(extension)
   );
-}
-
-export function buildImportBlockedByLimitsNote({
-  fileCount,
-  error
-}: {
-  fileCount: number;
-  error?: string;
-}) {
-  const plural = fileCount === 1 ? 'file' : 'files';
-  const reason = String(error || '').trim() || 'the workspace save failed';
-  return `I could not keep the imported ${plural} in the workspace: ${reason} If ${
-    fileCount === 1 ? 'this is' : 'these are'
-  } a book, worksheet, or other source material rather than app code, attach ${
-    fileCount === 1 ? 'it' : 'them'
-  } again and say so — I can read PDF, Word, and long text files as reference documents without any size limit on the app.`;
 }
 
 export function isImageChatReferenceFile(file: File) {
@@ -147,32 +160,6 @@ export function isImageChatReferenceFile(file: File) {
     normalizedName.endsWith('.heic') ||
     normalizedName.endsWith('.heif')
   );
-}
-
-export function buildImportedProjectFilesNote({
-  importedCount,
-  warningText
-}: {
-  importedCount: number;
-  warningText?: string;
-}) {
-  const baseText = `Imported ${importedCount} project file${
-    importedCount === 1 ? '' : 's'
-  } into the workspace.`;
-  return warningText ? `${baseText} ${warningText}` : baseText;
-}
-
-export function buildUploadedRuntimeAssetsNote({
-  uploadedCount,
-  warningText
-}: {
-  uploadedCount: number;
-  warningText?: string;
-}) {
-  const baseText = `Uploaded ${uploadedCount} asset${
-    uploadedCount === 1 ? '' : 's'
-  } for this build.`;
-  return warningText ? `${baseText} ${warningText}` : baseText;
 }
 
 export function buildBuildChatUploadRoutingMessage(
@@ -199,21 +186,20 @@ export function buildBuildChatHiddenMessageContext({
     : [];
 
   const lines = [
-    'The user uploaded images or mockups for this request.',
-    'Treat them as visual evidence for what is wrong or what should change.',
-    'Do not repeat them back as filler, chat clutter, or product UI.'
+    'The creator attached files with this request.',
+    'Use their words and the conversation to decide whether a file belongs inside the app (add_attachment_to_app) or only shows what to build or fix (view_reference_image).'
   ];
   if (trimmedMessageText) {
     lines.push(`User intent: ${trimmedMessageText.slice(0, 600)}`);
   }
   if (normalizedReferences.length > 0) {
-    lines.push('Reference image URLs:');
+    lines.push('Attached files:');
     for (const reference of normalizedReferences.slice(0, 8)) {
       lines.push(`- ${reference.fileName}: ${reference.url}`);
     }
     if (normalizedReferences.length > 8) {
       lines.push(
-        `- plus ${normalizedReferences.length - 8} more reference image${
+        `- plus ${normalizedReferences.length - 8} more file${
           normalizedReferences.length - 8 === 1 ? '' : 's'
         }`
       );
