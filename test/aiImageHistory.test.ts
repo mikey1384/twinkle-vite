@@ -5,8 +5,10 @@ import {
   describeAIImageSource,
   findResumableAIImage,
   mergeAIImageHistoryPages,
+  normalizeAIImageCollection,
   replaceAIImageHistoryFirstPage,
   resumableAIImageSources,
+  type AIImageCollection,
   type AIImageHistoryItem
 } from '../src/helpers/aiImageHistory';
 
@@ -102,4 +104,104 @@ test('the source label names where an image was made', () => {
     'Thumbnail'
   );
   assert.equal(describeAIImageSource(item(1)), '');
+});
+
+test('a collection from an API before v2 becomes characters with empty names and notes', () => {
+  // An old API sends pictures with only id and path, and may send no note.
+  const fromOldApi = {
+    id: 7,
+    name: 'Cast',
+    note: null,
+    revision: 2,
+    images: [
+      { id: 11, path: 'ai-image-results/1/a.png' },
+      { id: 12, path: 'ai-image-results/1/b.png' }
+    ],
+    createdAt: 1,
+    updatedAt: 2,
+    lastUsedAt: null
+  } as unknown as AIImageCollection;
+
+  const normalized = normalizeAIImageCollection(fromOldApi);
+
+  assert.deepEqual(normalized, {
+    id: 7,
+    name: 'Cast',
+    note: '',
+    revision: 2,
+    images: [
+      {
+        id: 11,
+        path: 'ai-image-results/1/a.png',
+        role: 'character',
+        label: '',
+        note: ''
+      },
+      {
+        id: 12,
+        path: 'ai-image-results/1/b.png',
+        role: 'character',
+        label: '',
+        note: ''
+      }
+    ],
+    createdAt: 1,
+    updatedAt: 2,
+    lastUsedAt: null
+  });
+  // the old object is left as it was
+  assert.equal((fromOldApi.images[0] as any).role, undefined);
+});
+
+test('a modern collection comes through unchanged', () => {
+  const modern: AIImageCollection = {
+    id: 8,
+    name: 'My world',
+    note: 'Mina is 12.',
+    revision: 5,
+    images: [
+      {
+        id: 21,
+        path: 'ai-image-results/1/c.png',
+        role: 'character',
+        label: 'Mina',
+        note: 'red scarf'
+      },
+      {
+        id: 22,
+        path: 'ai-image-results/1/d.png',
+        role: 'style',
+        label: '',
+        note: ''
+      },
+      {
+        id: 23,
+        path: 'ai-image-results/1/e.png',
+        role: 'place',
+        label: 'Sky Town',
+        note: 'only the towers'
+      },
+      {
+        id: 24,
+        path: 'ai-image-results/1/f.png',
+        role: 'object',
+        label: 'Star Badge',
+        note: ''
+      },
+      {
+        id: 25,
+        path: 'ai-image-results/1/g.png',
+        role: 'other',
+        label: '',
+        note: 'only its sunset colors'
+      }
+    ],
+    createdAt: 10,
+    updatedAt: 20,
+    lastUsedAt: 30
+  };
+  const snapshot = structuredClone(modern);
+
+  assert.deepEqual(normalizeAIImageCollection(modern), snapshot);
+  assert.deepEqual(modern, snapshot);
 });
