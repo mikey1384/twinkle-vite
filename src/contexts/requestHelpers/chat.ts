@@ -18,6 +18,12 @@ import {
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import type { ChatPinScope } from '~/helpers/chatPins';
 import { getPresencePageSessionId } from '~/helpers/presenceContinuity';
+import type {
+  TopicBrain,
+  TopicBrainProposal,
+  TopicBrainVersion,
+  TopicBrainVersionSummary
+} from '~/helpers/topicBrain';
 
 export default function chatRequestHelpers({
   auth,
@@ -697,6 +703,213 @@ export default function chatRequestHelpers({
           auth()
         );
         return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // The topic brain (API helpers/topicBrain.ts): what Zero or Ciel keep in
+    // mind for one of the member's own topics. Every write answers with the
+    // canonical brain; the page shows only that.
+    async loadTopicBrain({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/topic/brain?channelId=${channelId}&topicId=${topicId}`,
+          auth()
+        );
+        return data as { brain: TopicBrain };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveTopicBrainNotes({
+      channelId,
+      topicId,
+      baseRevision,
+      notes,
+      fromFile = false
+    }: {
+      channelId: number;
+      topicId: number;
+      baseRevision: number;
+      notes: string;
+      fromFile?: boolean;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/topic/brain`,
+          { channelId, topicId, baseRevision, notes, fromFile },
+          auth()
+        );
+        return data as { brain: TopicBrain };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadTopicBrainVersions({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/topic/brain/versions?channelId=${channelId}&topicId=${topicId}`,
+          auth()
+        );
+        return data as { versions: TopicBrainVersionSummary[] };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadTopicBrainVersion({
+      channelId,
+      topicId,
+      versionId
+    }: {
+      channelId: number;
+      topicId: number;
+      versionId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/topic/brain/versions/${versionId}?channelId=${channelId}&topicId=${topicId}`,
+          auth()
+        );
+        return data as { version: TopicBrainVersion };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async restoreTopicBrainVersion({
+      channelId,
+      topicId,
+      versionId,
+      baseRevision
+    }: {
+      channelId: number;
+      topicId: number;
+      versionId: number;
+      baseRevision: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/topic/brain/restore`,
+          { channelId, topicId, versionId, baseRevision },
+          auth()
+        );
+        return data as { brain: TopicBrain };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Reads a file's words without keeping it (for notes or instructions)
+    async readTopicBrainFile({
+      channelId,
+      topicId,
+      fileName,
+      mimeType,
+      dataBase64
+    }: {
+      channelId: number;
+      topicId: number;
+      fileName: string;
+      mimeType: string;
+      dataBase64: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/topic/brain/files/read`,
+          { channelId, topicId, fileName, mimeType, dataBase64 },
+          auth()
+        );
+        return data as { fileName: string; text: string };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async addTopicBrainFile({
+      channelId,
+      topicId,
+      fileName,
+      mimeType,
+      dataBase64
+    }: {
+      channelId: number;
+      topicId: number;
+      fileName: string;
+      mimeType: string;
+      dataBase64: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/topic/brain/files`,
+          { channelId, topicId, fileName, mimeType, dataBase64 },
+          auth()
+        );
+        return data as { brain: TopicBrain };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async deleteTopicBrainFile({
+      channelId,
+      topicId,
+      fileId
+    }: {
+      channelId: number;
+      topicId: number;
+      fileId: number;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/chat/topic/brain/files/${fileId}?channelId=${channelId}&topicId=${topicId}`,
+          auth()
+        );
+        return data as { brain: TopicBrain };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async exportTopicBrain({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/topic/brain/export?channelId=${channelId}&topicId=${topicId}`,
+          auth()
+        );
+        return data as { fileName: string; markdown: string; empty: boolean };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // What Zero or Ciel proposed, for the approval card's "See what changes"
+    async loadTopicBrainProposal({
+      channelId,
+      topicId,
+      proposalId
+    }: {
+      channelId: number;
+      topicId: number;
+      proposalId: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/topic/brain/proposals/${proposalId}?channelId=${channelId}&topicId=${topicId}`,
+          auth()
+        );
+        return data as { proposal: TopicBrainProposal };
       } catch (error) {
         return handleError(error);
       }

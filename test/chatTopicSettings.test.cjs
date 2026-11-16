@@ -79,6 +79,8 @@ function fixture(kind = 'settings', overrides = {}, options = {}) {
     '~/components/Modal': Modal, '~/components/Button': Button, '~/components/Texts/Input': Input,
     '~/components/Buttons/SwitchButton': Switch, './AIChatTopicMenu': Menu, '~/components/Texts/Textarea': Textarea,
     './TopicPostersModal': Picker, '../../topicPosting': topicPosting,
+    // the Topic Brain section loads and saves on its own (test/topicBrainDiff.test.ts)
+    './TopicBrain': () => null,
     '~/components/Icon': () => null, '~/components/ErrorBoundary': ({ children }) => children,
     '~/components/AIDisabledNotice': ({ title }) => React.createElement('p', null, title),
     '~/components/DraftSaveIndicator': () => null,

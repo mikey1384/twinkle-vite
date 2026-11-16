@@ -3,6 +3,11 @@ import { css } from '@emotion/css';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import ChoicePromptBubble from '~/containers/Build/Editor/ChatPanel/ChoicePromptBubble';
+import {
+  isTopicBrainCardPreview,
+  type TopicBrainCardPreview
+} from '~/helpers/topicBrain';
+import TopicBrainProposalPreview from './TopicBrainProposalPreview';
 
 export interface WebsiteAgentCardData {
   // lumine: sending a request to Lumine on duty, or a project owner's
@@ -24,6 +29,9 @@ export interface WebsiteAgentCardData {
   requesterUserId?: number;
   requesterUsername?: string;
   crewId?: number;
+  // what kind of change an approval is, when the card can show it (a topic
+  // brain proposal: the words Zero or Ciel want to save)
+  preview?: TopicBrainCardPreview | { kind?: string };
 }
 
 // The Build chat's choice bubble reads these from its panel; the main chat
@@ -36,6 +44,12 @@ const bubbleVariables = css`
   --build-workshop-choice-font-size: 1.35rem;
   display: flex;
   margin-top: 0.8rem;
+`;
+
+// A card with something to show above its buttons (a topic brain change).
+const stackedCard = css`
+  flex-direction: column;
+  gap: 0.6rem;
 `;
 
 // A Zero/Ciel card: a question with tappable answers, or a change on Twinkle
@@ -119,8 +133,20 @@ export default function WebsiteAgentCard({
           }
         ];
 
+  const brainPreview =
+    card.type === 'approval' && isTopicBrainCardPreview(card.preview)
+      ? card.preview
+      : null;
+
   return (
-    <div className={bubbleVariables}>
+    <div
+      className={
+        brainPreview ? `${bubbleVariables} ${stackedCard}` : bubbleVariables
+      }
+    >
+      {brainPreview && !isSomeoneElses && (
+        <TopicBrainProposalPreview preview={brainPreview} decided={decided} />
+      )}
       <ChoicePromptBubble
         question={
           card.type === 'choice' || card.type === 'lumine'
@@ -139,7 +165,7 @@ export default function WebsiteAgentCard({
           (card.type === 'permission'
             ? describePermissionStatus(card)
             : card.type === 'approval'
-              ? describeApprovalStatus(card)
+              ? describeApprovalStatus(card, !!brainPreview)
               : card.type === 'lumine'
                 ? describeLumineStatus(card)
                 : card.answer
@@ -231,16 +257,30 @@ function sameWords(a = '', b = '') {
 }
 
 // Plain words only: many users are 8 to 13.
-function describeApprovalStatus(card: WebsiteAgentCardData) {
+function describeApprovalStatus(
+  card: WebsiteAgentCardData,
+  isTopicBrain = false
+) {
   if (card.status === 'processing')
     return 'Still working. You can tap again to check.';
-  if (card.status === 'approved') return 'Done!';
+  if (card.status === 'approved')
+    return isTopicBrain ? 'Saved. It’s in Topic Settings.' : 'Done!';
   if (card.status === 'declined') return 'Okay, I won’t.';
   if (card.status === 'failed')
-    return typeof card.result?.error === 'string'
-      ? card.result.error
-      : 'Oops, that didn’t work.';
+    return (
+      (typeof card.result?.error === 'string'
+        ? card.result.error
+        : isTopicBrain
+          ? websiteAnswerError(card.result)
+          : '') || 'Oops, that didn’t work.'
+    );
   return undefined;
+}
+
+// Why a topic brain change wasn't saved, in the website's own plain words
+// (kept on the card as the route's answer).
+function websiteAnswerError(result: any) {
+  return typeof result?.data?.error === 'string' ? result.data.error : '';
 }
 
 function describeLumineStatus(card: WebsiteAgentCardData) {

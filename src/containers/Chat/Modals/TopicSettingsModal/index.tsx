@@ -5,6 +5,7 @@ import Input from '~/components/Texts/Input';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Icon from '~/components/Icon';
 import AIChatTopicMenu from './AIChatTopicMenu';
+import TopicBrain from './TopicBrain';
 import TopicPostersModal from './TopicPostersModal';
 import {
   formatChosenSummary,
@@ -329,6 +330,15 @@ export default function TopicSettingsModal({
               onSetDeleteDraft={handleSetDeleteDraft}
               onBusyChange={handleInstructionsBusy}
             />
+            <TopicBrain
+              channelId={channelId}
+              topicId={topicId}
+              assistantName="Zero or Ciel"
+              themeColor={displayedThemeColor}
+              disabled={formDisabled || instructionsBusy}
+              onUseAsInstructions={handleUseFileAsInstructions}
+              onInstructionsChanged={handleInstructionsRestored}
+            />
             {canShareTopic && (
               <div className={topicSettingsSectionClass}>
                 <SwitchButton
@@ -481,6 +491,26 @@ export default function TopicSettingsModal({
 
   function handleClose() {
     if (!operationRef.current && !pickerShown) onHide();
+  }
+
+  // Topic Brain: a file's words go into the instructions box as a draft;
+  // the member reviews them and presses Save like any other edit.
+  function handleUseFileAsInstructions(text: string) {
+    setIsCustomInstructionsOn(true);
+    setNewCustomInstructions(text);
+  }
+
+  // Topic Brain: a restored version changed the saved instructions. The
+  // server's text becomes what this window and the topic list show.
+  function handleInstructionsRestored(instructions: string) {
+    setIsCustomInstructionsOn(!!instructions);
+    setNewCustomInstructions(instructions);
+    onEditTopic({
+      topicText: topicText || '',
+      isOwnerPostingOnly,
+      customInstructions: instructions,
+      isSharedWithOtherUsers: savedShareRef.current
+    });
   }
 
   function postingOptions(): Array<{ value: TopicPostingMode; label: string }> {
