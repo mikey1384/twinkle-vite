@@ -521,6 +521,7 @@ export function chatMessagesEqual(a: ChatMessage[], b: ChatMessage[]) {
     if (
       left.id !== right.id ||
       left.role !== right.role ||
+      (left.kind || 'message') !== (right.kind || 'message') ||
       left.content !== right.content ||
       left.codeGenerated !== right.codeGenerated ||
       left.streamCodePreview !== right.streamCodePreview ||

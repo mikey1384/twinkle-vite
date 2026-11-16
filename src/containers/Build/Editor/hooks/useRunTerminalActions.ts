@@ -54,6 +54,7 @@ interface ApplyGenerateCompleteOptions {
     userMessageId?: number | null;
     artifactVersionId?: number | null;
     createdAt?: number;
+    kind?: 'message' | 'notice';
   };
 }
 
@@ -276,6 +277,12 @@ export default function useRunTerminalActions({
     );
     const persistedAssistantId =
       typeof message?.id === 'number' && message.id > 0 ? message.id : null;
+    // The server says whether the finished row is Lumine's words or its own
+    // notice; an older API sends no kind (shown as Lumine's, as before).
+    const assistantMessageKind =
+      message?.kind === 'notice' || message?.kind === 'message'
+        ? message.kind
+        : undefined;
     const persistedUserId =
       typeof message?.userMessageId === 'number' && message.userMessageId > 0
         ? message.userMessageId
@@ -297,6 +304,7 @@ export default function useRunTerminalActions({
       artifactVersionId,
       persistedAssistantId,
       persistedUserId,
+      assistantMessageKind: assistantMessageKind ?? null,
       createdAt,
       workspaceChanged:
         artifactCode !== null ||
@@ -320,7 +328,8 @@ export default function useRunTerminalActions({
           billingState: billingState ?? null,
           streamCodePreview: null,
           artifactVersionId,
-          createdAt
+          createdAt,
+          ...(assistantMessageKind ? { kind: assistantMessageKind } : {})
         };
       }
       return entry;
@@ -338,6 +347,7 @@ export default function useRunTerminalActions({
           streamCodePreview: null,
           artifactVersionId,
           createdAt,
+          ...(assistantMessageKind ? { kind: assistantMessageKind } : {}),
           persisted: Boolean(persistedAssistantId)
         }
       ];

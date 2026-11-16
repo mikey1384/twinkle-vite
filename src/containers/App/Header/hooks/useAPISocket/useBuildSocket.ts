@@ -422,6 +422,11 @@ export default function useBuildSocket() {
               Number(terminalPayload?.message?.id || 0) > 0
                 ? Number(terminalPayload.message.id)
                 : null,
+            assistantMessageKind:
+              terminalPayload?.message?.kind === 'notice' ||
+              terminalPayload?.message?.kind === 'message'
+                ? terminalPayload.message.kind
+                : null,
             persistedUserId:
               Number(terminalPayload?.message?.userMessageId || 0) > 0
                 ? Number(terminalPayload.message.userMessageId)
@@ -739,6 +744,7 @@ export default function useBuildSocket() {
         assistantClientMessageId?: string | null;
         artifactVersionId?: number | null;
         createdAt?: number;
+        kind?: 'message' | 'notice';
       };
     }) {
       const resolvedRun = shouldHandleRun(requestId, buildId);
@@ -822,6 +828,10 @@ export default function useBuildSocket() {
           : {}),
         billingState: billingState ?? null,
         requestLimits: requestLimits || billing?.snapshot || null,
+        assistantMessageKind:
+          message?.kind === 'notice' || message?.kind === 'message'
+            ? message.kind
+            : null,
         artifactVersionId:
           Number(message?.artifactVersionId || 0) > 0
             ? Number(message?.artifactVersionId)

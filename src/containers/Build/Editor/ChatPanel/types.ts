@@ -69,6 +69,10 @@ export interface BuildLumineModelPreference {
 export interface ChatMessage {
   id: number;
   role: 'user' | 'assistant';
+  // build_chat_messages.kind: 'notice' is a status line the server wrote
+  // (Energy stop, forum notice, a button's outcome), shown as a notice row,
+  // never in Lumine's bubble. Absent (an older API) means Lumine's message.
+  kind?: 'message' | 'notice';
   content: string;
   codeGenerated: string | null;
   streamCodePreview?: string | null;

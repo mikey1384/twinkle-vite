@@ -146,7 +146,11 @@ const Transcript = React.memo(function Transcript({
   const lastAssistantIndex = findLastIndex(
     messages,
     (message) =>
-      message.role === 'assistant' && message.source !== 'runtime_observation'
+      message.role === 'assistant' &&
+      message.source !== 'runtime_observation' &&
+      // A finished notice row (forum notice, Energy stop) is never the row a
+      // new run streams into.
+      message.kind !== 'notice'
   );
 
   return (

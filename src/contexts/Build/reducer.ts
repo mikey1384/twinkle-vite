@@ -13,6 +13,8 @@ import { createFallbackBuildRunMessageId } from './messageIdentity';
 export interface BuildLiveRunMessage {
   id: number;
   role: 'user' | 'assistant';
+  // 'notice' when the server wrote the row (build_chat_messages.kind).
+  kind?: 'message' | 'notice';
   content: string;
   codeGenerated: string | null;
   streamCodePreview?: string | null;
@@ -317,6 +319,8 @@ export interface BuildLiveRunActionPayload extends BuildLiveRunStreamUpdatePaylo
   artifactVersionId?: number | null;
   persistedAssistantId?: number | null;
   persistedUserId?: number | null;
+  // The finished row's kind from the server (absent from an older API).
+  assistantMessageKind?: 'message' | 'notice' | null;
   createdAt?: number;
   interruptionReason?: 'tool_limit' | 'energy_depleted' | 'energy_budget' | null;
   error?: string;
@@ -2131,7 +2135,11 @@ export default function BuildReducer(
               createdAt:
                 Number(action.buildRun?.createdAt || 0) > 0
                   ? Number(action.buildRun?.createdAt)
-                  : currentRun.assistantMessage.createdAt
+                  : currentRun.assistantMessage.createdAt,
+              ...(action.buildRun?.assistantMessageKind === 'notice' ||
+              action.buildRun?.assistantMessageKind === 'message'
+                ? { kind: action.buildRun.assistantMessageKind }
+                : {})
             }
           : currentRun.assistantMessage,
         baseProjectFiles:
@@ -2289,7 +2297,12 @@ export default function BuildReducer(
                       artifactVersionId: preserveAssistantArtifactsOnError
                         ? (currentRun.assistantMessage.artifactVersionId ??
                           null)
-                        : null
+                        : null,
+                      // The failure text replaces the reply: the server
+                      // stores that row as a notice.
+                      kind: preserveAssistantArtifactsOnError
+                        ? currentRun.assistantMessage.kind
+                        : 'notice'
                     }
                   : null
                 : null,
@@ -2363,6 +2376,11 @@ export default function BuildReducer(
                         typeof action.buildRun?.assistantText === 'string'
                           ? action.buildRun.assistantText
                           : currentRun.assistantMessage.content,
+                      // "Stopped this run." replaces the reply: a notice.
+                      kind:
+                        typeof action.buildRun?.assistantText === 'string'
+                          ? 'notice'
+                          : currentRun.assistantMessage.kind,
                       codeGenerated: null,
                       streamCodePreview: null,
                       artifactVersionId: null

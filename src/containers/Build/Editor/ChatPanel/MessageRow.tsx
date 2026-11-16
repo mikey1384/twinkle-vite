@@ -6,6 +6,7 @@ import { Color } from '~/constants/css';
 import { useLazyLoad } from '~/helpers/hooks';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import AssistantMessage from './AssistantMessage';
+import NoticeRow from './NoticeRow';
 import useMessageInView from './hooks/useMessageInView';
 import {
   BuildCurrentActivity,
@@ -68,6 +69,12 @@ export default function MessageRow({
         message.role === 'assistant' &&
         isLastAssistant &&
         (runMode === 'greeting' || !hasMeaningfulAssistantContent)));
+  // The server's own status line: a notice row, not Lumine's bubble. A run's
+  // row streams as Lumine's until the server says what it finished as.
+  const isNotice =
+    message.role === 'assistant' &&
+    message.kind === 'notice' &&
+    !isStreamingTarget;
   const shouldLazyLoad =
     messages.length > 10 && index < messages.length - 8 && !isStreamingTarget;
   const isVisible = useLazyLoad({
@@ -140,6 +147,9 @@ export default function MessageRow({
               <Icon icon="times-circle" />
             </button>
           ) : null}
+          {isNotice ? (
+            <NoticeRow content={message.content} />
+          ) : (
           <div
             className={css`
               max-width: 85%;
@@ -191,6 +201,7 @@ export default function MessageRow({
               </>
             )}
           </div>
+          )}
           <span
             className={css`
               font-size: var(--build-workshop-message-meta-font-size);
