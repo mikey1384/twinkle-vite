@@ -108,6 +108,55 @@ test('a picked image collection is part of the fingerprint, as on the server', a
   );
 });
 
+// v2 (11-16): collections used together are keyed in order, joined with
+// commas (API normalizeRequestedAiImageCollections); `collections` wins over
+// the single fields that v2 websites also send for older APIs.
+test('collections used together are part of the fingerprint, in order, as on the server', async () => {
+  const input = {
+    prompt: 'Mina at the beach',
+    engine: 'openai' as const,
+    quality: 'high' as const,
+    collections: [
+      { id: 12, revision: 3 },
+      { id: 5, revision: 1 },
+      { id: 12, revision: 3 }
+    ],
+    collectionId: 12,
+    collectionRevision: 3
+  };
+  const expected = createHash('sha256')
+    .update(
+      [
+        input.engine,
+        input.quality,
+        input.prompt,
+        '',
+        '',
+        '',
+        'collection:12:3,collection:5:1'
+      ].join('\n')
+    )
+    .digest('hex');
+  assert.equal(await createAIImageRequestFingerprint(input), expected);
+  // one collection sent either way keeps the 11-15 fingerprint
+  const single = createHash('sha256')
+    .update(
+      [input.engine, input.quality, input.prompt, '', '', '', 'collection:12:3'].join('\n')
+    )
+    .digest('hex');
+  assert.equal(
+    await createAIImageRequestFingerprint({
+      ...input,
+      collections: [{ id: 12, revision: 3 }]
+    }),
+    single
+  );
+  assert.equal(
+    await createAIImageRequestFingerprint({ ...input, collections: undefined }),
+    single
+  );
+});
+
 test('fingerprinted status recovery preserves the requested image engine and quality', () => {
   for (const relativePath of [
     '../src/contexts/requestHelpers/content.ts',

@@ -29,10 +29,9 @@ import ErrorDisplay from './ErrorDisplay';
 import ImageArea from './ImageArea';
 import ImageEditor from './ImageEditor';
 import ImageHistory from './ImageHistory';
-import CollectionBar from './Collections/CollectionBar';
-import CollectionsModal from './Collections/CollectionsModal';
-import useAIImageCollections from './Collections/useAIImageCollections';
+import CollectionPicker from './Collections/CollectionPicker';
 import {
+  buildAIImageCollectionRequest,
   findResumableAIImage,
   mergeAIImageHistoryPages,
   replaceAIImageHistoryFirstPage,
@@ -81,7 +80,9 @@ interface AiImageGenerationRequest {
   requestFingerprint?: string;
   displayPrompt?: string;
   historySource?: 'generator' | 'thumbnail';
-  // a picked image collection; the server adds its pictures and note
+  // the picked image collections; the server adds their pictures and tells
+  // the model each one's job (buildAIImageCollectionRequest)
+  collections?: { id: number; revision: number }[];
   collectionId?: number;
   collectionRevision?: number;
 }
@@ -133,11 +134,12 @@ export default function ImageGenerator({
     null
   );
   const [mode, setMode] = useState<'text' | 'draw' | 'history'>('text');
-  // The picked image collection (like a Zero/Ciel topic): its pictures and
-  // note go with every new picture and edit until the member clears it.
-  const [activeCollection, setActiveCollection] =
-    useState<AIImageCollection | null>(null);
-  const [collectionsShown, setCollectionsShown] = useState(false);
+  // The picked image collections (like a Zero/Ciel topic; up to three used
+  // together, v2): their pictures and notes go with every new picture and
+  // edit until the member clears them.
+  const [activeCollections, setActiveCollections] = useState<
+    AIImageCollection[]
+  >([]);
   // The member's own image history (helpers/aiImageHistory.ts). A
   // generation they left mid-way shows up here and resumes on screen.
   const [historyImages, setHistoryImages] = useState<AIImageHistoryItem[]>([]);
@@ -274,7 +276,6 @@ export default function ImageGenerator({
   );
 
   const userId = useKeyContext((v) => v.myState.userId);
-  const { collections, setCollections } = useAIImageCollections(userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const communityFunds = useKeyContext((v) => v.myState.communityFunds);
@@ -679,26 +680,22 @@ export default function ImageGenerator({
     isGenerating
   );
 
-  const collectionRequest = activeCollection
-    ? {
-        collectionId: activeCollection.id,
-        collectionRevision: activeCollection.revision
-      }
-    : {};
-  const collectionPictureCount = activeCollection?.images.length || 0;
+  const collectionRequest = buildAIImageCollectionRequest(activeCollections);
+  const collectionPictureCount = activeCollections.reduce(
+    (sum, collection) => sum + collection.images.length,
+    0
+  );
   const collectionBar = (
-    <CollectionBar
-      activeCollection={activeCollection}
-      collections={collections}
+    <CollectionPicker
+      userId={userId}
+      active={activeCollections}
+      onChange={handleCollectionsChange}
       invitePictures={historyImages
         .filter((image) => image.status === 'completed' && image.path)
         .slice(0, 3)
         .map((image) => ({ id: image.id, path: image.path as string }))}
       disabled={isShowingLoadingState}
       themeColor={profileTheme}
-      onOpen={() => setCollectionsShown(true)}
-      onPick={handleUseCollection}
-      onClear={() => setActiveCollection(null)}
     />
   );
 
@@ -973,29 +970,6 @@ export default function ImageGenerator({
       {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
 
       {mode !== 'history' && !showSourceImagePanelAbovePrompt && imageArea}
-
-      {collectionsShown && (
-        <CollectionsModal
-          activeCollectionId={activeCollection?.id || null}
-          themeColor={profileTheme}
-          onHide={() => setCollectionsShown(false)}
-          onCollectionsChange={setCollections}
-          onUse={(collection) => {
-            handleUseCollection(collection);
-            setCollectionsShown(false);
-          }}
-          onCollectionChanged={(collection) =>
-            setActiveCollection((current) =>
-              current?.id === collection.id ? collection : current
-            )
-          }
-          onCollectionDeleted={(id) =>
-            setActiveCollection((current) =>
-              current?.id === id ? null : current
-            )
-          }
-        />
-      )}
     </div>
   );
 
@@ -1290,7 +1264,7 @@ export default function ImageGenerator({
           await recoverCanonicalImageGeneration(imageRequest);
         } else {
           if (result.code === 'ai_image_collection_not_found') {
-            setActiveCollection(null);
+            setActiveCollections([]);
           }
           const rawError = result.error || 'Failed to generate image';
           const errorMessage = safeErrorToString(rawError);
@@ -1416,7 +1390,7 @@ export default function ImageGenerator({
           await recoverCanonicalImageGeneration(imageRequest);
         } else {
           if (result.code === 'ai_image_collection_not_found') {
-            setActiveCollection(null);
+            setActiveCollections([]);
           }
           const rawError = result.error || 'Failed to generate follow-up image';
           const errorMessage = safeErrorToString(rawError);
@@ -1651,9 +1625,13 @@ export default function ImageGenerator({
     setProgressStage('completed');
   }
 
-  function handleUseCollection(collection: AIImageCollection) {
-    setActiveCollection(collection);
-    if (mode === 'history') setMode('text');
+  function handleCollectionsChange(next: AIImageCollection[]) {
+    // picking a collection from My Images goes back to making a picture
+    const picked = next.some(
+      (collection) => !activeCollections.some((item) => item.id === collection.id)
+    );
+    setActiveCollections(next);
+    if (picked && mode === 'history') setMode('text');
   }
 
   function handleKeyDown(event: React.KeyboardEvent) {

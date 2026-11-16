@@ -11,31 +11,45 @@ import {
 import { useAppContext } from '~/contexts';
 import {
   AI_IMAGE_COLLECTION_NAME_MAX,
-  type AIImageCollection
+  type AIImageCollection,
+  type AIImageCollectionRole
 } from '~/helpers/aiImageHistory';
 import CollectionRow from './CollectionRow';
 import CollectionSettingsModal from './CollectionSettingsModal';
+import CollectionStarterChips from './CollectionStarterChips';
 import NoCollectionYet from './NoCollectionYet';
 import StartCollectionForm from './StartCollectionForm';
+import {
+  COLLECTION_STARTERS,
+  canAddCollection,
+  type CollectionStarter
+} from './collectionStarters';
 
 // The Zero/Ciel "Topics" window (Chat Modals/TopicSelectorModal), for image
-// collections: start one by name, then each row has Settings and Use, and
-// the one in use says "Current:". Everything shown comes from the server.
+// collections: start one by name (example chips fill in a name and the job
+// new pictures start with), then each row has Settings and Use, the ones in
+// use say "Current:", and while one is in use another that fits can be
+// added with "Add". Everything shown comes from the server.
 export default function CollectionsModal({
-  activeCollectionId,
+  activeCollections,
   themeColor = 'logoBlue',
   modalLevel = 3,
   onHide,
   onUse,
+  onAdd,
   onCollectionChanged,
   onCollectionDeleted,
   onCollectionsChange
 }: {
-  activeCollectionId: number | null;
+  // the collections in use, in order
+  activeCollections: AIImageCollection[];
   themeColor?: string;
   modalLevel?: number;
   onHide: () => void;
+  // use only this one
   onUse: (collection: AIImageCollection) => void;
+  // use this one too, with the ones in use
+  onAdd: (collection: AIImageCollection) => void;
   onCollectionChanged: (collection: AIImageCollection) => void;
   onCollectionDeleted: (id: number) => void;
   // the canonical list, whenever it changes (the bar's chips follow it)
@@ -52,6 +66,10 @@ export default function CollectionsModal({
   const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [newName, setNewName] = useState('');
+  // the example chip picked, if any: its name fills the form and its job is
+  // where the new collection's pictures start
+  const [starter, setStarter] = useState<CollectionStarter | null>(null);
+  const [startRole, setStartRole] = useState<AIImageCollectionRole>('character');
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -86,16 +104,26 @@ export default function CollectionsModal({
   const empty = loaded && !collections.length;
   const editing = collections.find((c) => c.id === editingId) || null;
   const startForm = (
-    <StartCollectionForm
-      label={empty ? 'Collection name' : 'Start a Collection'}
-      value={newName}
-      onChange={setNewName}
-      starting={starting}
-      error={startError}
-      themeColor={themeColor}
-      onStart={handleStart}
-    />
+    <>
+      <CollectionStarterChips
+        selectedKey={starter?.key || null}
+        themeColor={themeColor}
+        disabled={starting}
+        onSelect={handleSelectStarter}
+      />
+      <StartCollectionForm
+        label={empty ? 'Collection name' : 'Start a Collection'}
+        value={newName}
+        onChange={setNewName}
+        starting={starting}
+        error={startError}
+        themeColor={themeColor}
+        placeholder={starter?.name || 'My collection'}
+        onStart={handleStart}
+      />
+    </>
   );
+  const activeIds = activeCollections.map((collection) => collection.id);
 
   return (
     <Modal
@@ -133,18 +161,25 @@ export default function CollectionsModal({
           <NoCollectionYet>{startForm}</NoCollectionYet>
         ) : (
           <>
-            {startForm}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {startForm}
+            </div>
             <h3 className={chatTopicSectionClass}>My Collections</h3>
             {collections.map((collection) => (
               <CollectionRow
                 key={collection.id}
                 collection={collection}
-                isCurrent={collection.id === activeCollectionId}
+                isCurrent={activeIds.includes(collection.id)}
                 onSettings={() => {
                   setPickOnOpen(false);
                   setEditingId(collection.id);
                 }}
                 onUse={() => onUse(collection)}
+                onAdd={
+                  canAddCollection(activeCollections, collection)
+                    ? () => onAdd(collection)
+                    : undefined
+                }
               />
             ))}
           </>
@@ -156,6 +191,7 @@ export default function CollectionsModal({
           themeColor={themeColor}
           modalLevel={modalLevel + 1}
           openPickerFirst={pickOnOpen}
+          newPictureRole={pickOnOpen ? startRole : undefined}
           onHide={() => setEditingId(null)}
           onSaved={handleSaved}
           onDeleted={handleDeleted}
@@ -163,6 +199,16 @@ export default function CollectionsModal({
       )}
     </Modal>
   );
+
+  function handleSelectStarter(next: CollectionStarter) {
+    const deselect = starter?.key === next.key;
+    // a name the member typed stays; a name a chip filled in follows the chip
+    const nameFromChip =
+      !newName.trim() ||
+      COLLECTION_STARTERS.some((item) => item.name === newName.trim());
+    setStarter(deselect ? null : next);
+    if (nameFromChip) setNewName(deselect ? '' : next.name);
+  }
 
   async function handleStart() {
     const name = newName.trim();
@@ -183,6 +229,8 @@ export default function CollectionsModal({
         ...current.filter((c) => c.id !== collection.id)
       ]);
       setNewName('');
+      setStartRole(starter?.role || 'character');
+      setStarter(null);
       setPickOnOpen(true);
       setEditingId(collection.id);
     } catch (error: any) {

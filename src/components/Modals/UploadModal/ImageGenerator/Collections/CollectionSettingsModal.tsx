@@ -5,8 +5,6 @@ import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '~/components/Icon';
-import { cloudFrontURL } from '~/constants/defaultValues';
-import { mobileMaxWidth } from '~/constants/css';
 import {
   chatTopicActionStyle,
   chatTopicButtonStyle,
@@ -22,21 +20,29 @@ import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import {
   AI_IMAGE_COLLECTION_IMAGES_MAX,
+  AI_IMAGE_COLLECTION_LABEL_MAX,
   AI_IMAGE_COLLECTION_NAME_MAX,
   AI_IMAGE_COLLECTION_NOTE_MAX,
-  type AIImageCollection
+  AI_IMAGE_COLLECTION_PICTURE_NOTE_MAX,
+  type AIImageCollection,
+  type AIImageCollectionImage,
+  type AIImageCollectionRole
 } from '~/helpers/aiImageHistory';
 import CollectionPicturePicker from './CollectionPicturePicker';
+import CollectionPictureList from './CollectionPictureList';
 
 // The Zero/Ciel "Topic Settings" window (Chat Modals/TopicSettingsModal) for
-// an image collection: its name, its pictures, and a note for the AI in place
-// of the topic's custom instructions. Save sends the whole draft; what comes
-// back from the server is what the list and the image maker show.
+// an image collection: its name, its pictures (each with its job, name and
+// what to keep the same; v2, Mikey 11-16), and "what to keep the same" for
+// the whole collection in place of the topic's custom instructions. Save
+// sends the whole draft; what comes back from the server is what the list
+// and the image maker show.
 export default function CollectionSettingsModal({
   collection,
   themeColor = 'logoBlue',
   modalLevel = 4,
   openPickerFirst = false,
+  newPictureRole,
   onHide,
   onSaved,
   onDeleted
@@ -45,6 +51,9 @@ export default function CollectionSettingsModal({
   themeColor?: string;
   modalLevel?: number;
   openPickerFirst?: boolean;
+  // the job newly added pictures start with (the example chip the
+  // collection was started from); otherwise the last picture's job
+  newPictureRole?: AIImageCollectionRole;
   onHide: () => void;
   onSaved: (collection: AIImageCollection) => void;
   onDeleted: (id: number) => void;
@@ -63,7 +72,9 @@ export default function CollectionSettingsModal({
   });
   const [name, setName] = useState(collection.name);
   const [note, setNote] = useState(collection.note);
-  const [images, setImages] = useState(collection.images);
+  const [images, setImages] = useState<AIImageCollectionImage[]>(
+    collection.images
+  );
   const [pickerShown, setPickerShown] = useState(openPickerFirst);
   const [confirmShown, setConfirmShown] = useState(false);
   const [pendingAction, setPendingAction] = useState<'save' | 'delete' | null>(
@@ -83,13 +94,21 @@ export default function CollectionSettingsModal({
       ? `Keep the name within ${AI_IMAGE_COLLECTION_NAME_MAX} characters.`
       : '';
   const noteTooLong = note.length > AI_IMAGE_COLLECTION_NOTE_MAX;
+  const pictureTextTooLong = images.some(
+    (image) =>
+      image.label.length > AI_IMAGE_COLLECTION_LABEL_MAX ||
+      image.note.length > AI_IMAGE_COLLECTION_PICTURE_NOTE_MAX
+  );
   const unchanged =
     name === collection.name &&
     note === collection.note &&
-    images.map((image) => image.id).join(',') ===
-      collection.images.map((image) => image.id).join(',');
+    picturesKey(images) === picturesKey(collection.images);
   const saveDisabled =
-    !!pendingAction || !!nameError || noteTooLong || unchanged;
+    !!pendingAction ||
+    !!nameError ||
+    noteTooLong ||
+    pictureTextTooLong ||
+    unchanged;
   const full = images.length >= AI_IMAGE_COLLECTION_IMAGES_MAX;
 
   return (
@@ -164,50 +183,36 @@ export default function CollectionSettingsModal({
 
         <div>
           <span className={topicSettingsLabelClass}>Pictures</span>
-          <div className={picturesCls}>
-            {images.map((image) => (
-              <div key={image.id} className={pictureCls}>
-                <img
-                  src={`${cloudFrontURL}/${image.path}`}
-                  alt="A picture in this collection"
-                  loading="lazy"
-                />
-                <button
-                  type="button"
-                  className={removeCls}
-                  disabled={!!pendingAction}
-                  onClick={() =>
-                    setImages((current) =>
-                      current.filter((item) => item.id !== image.id)
-                    )
-                  }
-                  aria-label="Take this picture out"
-                  title="Take this picture out"
-                >
-                  <Icon icon="times" />
-                </button>
-              </div>
-            ))}
-            {!full && (
-              <button
-                type="button"
-                className={addCls}
-                disabled={!!pendingAction}
-                onClick={() => setPickerShown(true)}
-                style={{
-                  borderColor: themeRole.getColor(0.58),
-                  color: themeRole.getColor()
-                }}
-              >
-                <Icon icon="plus" />
-                <span>Add pictures</span>
-              </button>
-            )}
-          </div>
+          {images.length > 0 && (
+            <p className={topicSettingsHelpClass} style={{ marginTop: 0 }}>
+              Tell the AI what each picture is.
+            </p>
+          )}
+          <CollectionPictureList
+            images={images}
+            disabled={!!pendingAction}
+            themeColor={themeColor}
+            onChange={setImages}
+          />
+          {!full && (
+            <button
+              type="button"
+              className={addCls}
+              disabled={!!pendingAction}
+              onClick={() => setPickerShown(true)}
+              style={{
+                borderColor: themeRole.getColor(0.58),
+                color: themeRole.getColor()
+              }}
+            >
+              <Icon icon="plus" />
+              <span>Add pictures</span>
+            </button>
+          )}
           <p className={topicSettingsHelpClass}>
             {images.length
               ? 'The AI looks at these pictures every time you use this collection.'
-              : 'Add pictures of your characters from My Images.'}
+              : 'Add pictures from My Images: characters, an art style, a place, a logo, anything you want to keep the same.'}
             {full &&
               ` ${AI_IMAGE_COLLECTION_IMAGES_MAX} pictures is the most a collection holds.`}
           </p>
@@ -215,11 +220,11 @@ export default function CollectionSettingsModal({
 
         <div className={topicSettingsSectionClass}>
           <label htmlFor={noteId} className={topicSettingsLabelClass}>
-            Note for the AI
+            What to keep the same
           </label>
           <Textarea
             id={noteId}
-            placeholder="Mina: a girl with a red scarf and short black hair. Bolt: a small round blue robot. Bright cartoon style."
+            placeholder="Like: Mina is 12 and always wears her red scarf. Bright cartoon colors with thick outlines."
             style={{ width: '100%', position: 'relative', minHeight: '5rem' }}
             hasError={noteTooLong}
             aria-invalid={noteTooLong}
@@ -237,8 +242,8 @@ export default function CollectionSettingsModal({
             className={topicSettingsHelpClass}
             data-error={noteTooLong}
           >
-            Who your characters are and how they look. It&apos;s added to
-            every picture you make with this collection. {note.length} /{' '}
+            Anything the pictures don&apos;t show. It&apos;s added to every
+            picture you make with this collection. {note.length} /{' '}
             {AI_IMAGE_COLLECTION_NOTE_MAX}
           </p>
         </div>
@@ -265,7 +270,22 @@ export default function CollectionSettingsModal({
           modalLevel={modalLevel + 1}
           onHide={() => setPickerShown(false)}
           onDone={(picked) => {
-            setImages(picked);
+            setImages((current) => {
+              const startRole =
+                newPictureRole ||
+                current[current.length - 1]?.role ||
+                'character';
+              // pictures already here keep their job, name and note
+              return picked.map(
+                (picture) =>
+                  current.find((image) => image.id === picture.id) || {
+                    ...picture,
+                    role: startRole,
+                    label: '',
+                    note: ''
+                  }
+              );
+            });
             setPickerShown(false);
           }}
         />
@@ -334,7 +354,12 @@ export default function CollectionSettingsModal({
         id: collection.id,
         name: name.trim(),
         note: note.trim(),
-        imageIds: images.map((image) => image.id)
+        images: images.map(({ id, role, label, note }) => ({
+          id,
+          role,
+          label: label.trim(),
+          note: note.trim()
+        }))
       });
       onSaved(saved);
       onHide();
@@ -375,62 +400,25 @@ export default function CollectionSettingsModal({
   }
 }
 
-const picturesCls = css`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(calc(96 * var(--px)), 1fr));
-  gap: 10px;
-  @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-`;
-
-const pictureCls = css`
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--ui-border);
-  background: #eef1f5;
-  img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const removeCls = css`
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(15, 23, 42, 0.7);
-  color: #fff;
-  cursor: pointer;
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-`;
+function picturesKey(images: AIImageCollectionImage[]) {
+  return JSON.stringify(
+    images.map(({ id, role, label, note }) => [id, role, label, note])
+  );
+}
 
 const addCls = css`
-  aspect-ratio: 1;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 10px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   border: 2px dashed;
   border-radius: 12px;
   background: transparent;
   font: inherit;
-  font-size: calc(14 * var(--px));
+  font-size: 1.4rem;
   font-weight: 800;
   cursor: pointer;
   &:hover:not(:disabled) {

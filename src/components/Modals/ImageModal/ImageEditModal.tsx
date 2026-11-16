@@ -32,6 +32,11 @@ import Textarea from '~/components/Texts/Textarea';
 import DrawingTools from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools';
 import { extractDrawingColorSettings } from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools/helpers/colorSettings';
 import AiEnergyCard from '~/components/AiEnergyCard';
+import CollectionPicker from '~/components/Modals/UploadModal/ImageGenerator/Collections/CollectionPicker';
+import {
+  buildAIImageCollectionRequest,
+  type AIImageCollection
+} from '~/helpers/aiImageHistory';
 import {
   errorHasActualCommunityFundsBalance,
   isCommunityFundRechargeAvailable
@@ -104,6 +109,11 @@ interface AiImageGenerationRequest {
   requestFingerprint?: string;
   // labelled "edit" in the member's image history (Make Images > My Images)
   historySource?: 'edit';
+  // the member's picked image collections (Make Images' collection bar):
+  // the server adds their pictures and tells the model each one's job
+  collections?: { id: number; revision: number }[];
+  collectionId?: number;
+  collectionRevision?: number;
   // a Picture Day picture's edit: the picture opened, and the edit before
   editSource?: {
     kind: 'picture_day';
@@ -127,6 +137,11 @@ export default function ImageEditModal({
     (v) => v.state.aiFeaturesDisabled
   );
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Image collections in the editor too (v2, Mikey 11-16): "keep Mina the
+  // same" or "in my art style" while editing, Picture Day edits included.
+  const [activeCollections, setActiveCollections] = useState<
+    AIImageCollection[]
+  >([]);
   const originalCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -803,6 +818,23 @@ export default function ImageEditModal({
               themeColor={profileTheme}
             />
           )}
+          {!aiModificationDisabled && (
+            <div
+              className={css`
+                display: flex;
+                justify-content: center;
+                margin-bottom: 0.85rem;
+              `}
+            >
+              <CollectionPicker
+                userId={userId}
+                active={activeCollections}
+                onChange={setActiveCollections}
+                disabled={isGenerating}
+                themeColor={profileTheme}
+              />
+            </div>
+          )}
           <div
             className={css`
               display: flex;
@@ -1178,6 +1210,7 @@ export default function ImageEditModal({
         quality: 'high',
         requestId,
         historySource: 'edit',
+        ...buildAIImageCollectionRequest(activeCollections),
         ...(editedImageAction?.editSource
           ? {
               editSource: {
@@ -1226,6 +1259,9 @@ export default function ImageEditModal({
           activeImageRequestTransportFailedRef.current = true;
           await recoverCanonicalImageGeneration(imageRequest);
         } else {
+          if (result.code === 'ai_image_collection_not_found') {
+            setActiveCollections([]);
+          }
           const errorMessage = result.error || 'Failed to generate image';
           setError(errorMessage);
           onEditEvent?.('failed');

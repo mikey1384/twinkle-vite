@@ -3,22 +3,26 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { borderRadius, innerBorderRadius, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
-import type { AIImageCollection } from '~/helpers/aiImageHistory';
+import {
+  AI_IMAGE_COLLECTIONS_COMBINE_MAX,
+  type AIImageCollection
+} from '~/helpers/aiImageHistory';
 import CollectionThumbs from './CollectionThumbs';
 
 const RECENT_SHOWN = 3;
 
 // The same control as the Zero/Ciel topic bar (Chat ChannelHeader/ChatFilter/
 // Bar.tsx), on one row:
-// - a picked collection is a highlighted segment in the chat-topic colour
-//   with its pictures and a ✕;
+// - each picked collection (up to three used together, v2) is a highlighted
+//   segment in the chat-topic colour with its pictures and a ✕, and the
+//   last button opens the Collections window (a plus while another fits);
 // - otherwise the member's most recent collections are chips (pictures and
 //   name; one tap picks it) and "▾ All" opens the Collections window;
 // - with none yet, one inviting tile opens the window's start form.
 // On a phone the chips scroll sideways, with a fade on the right edge while
 // more are hidden (the comment ActionRow pattern).
 export default function CollectionBar({
-  activeCollection,
+  activeCollections,
   collections,
   invitePictures = [],
   disabled,
@@ -27,16 +31,18 @@ export default function CollectionBar({
   onPick,
   onClear
 }: {
-  activeCollection: AIImageCollection | null;
+  // the picked collections, in order
+  activeCollections: AIImageCollection[];
   // the member's collections, most recent first; null until known
   collections: AIImageCollection[] | null;
   // a few of the member's own pictures for the "make one" tile
-  invitePictures?: AIImageCollection['images'];
+  invitePictures?: { id: number; path: string }[];
   disabled?: boolean;
   themeColor?: string;
   onOpen: () => void;
   onPick: (collection: AIImageCollection) => void;
-  onClear: () => void;
+  // stop using this one
+  onClear: (id: number) => void;
 }) {
   const normalizedTheme = themeColor || 'logoBlue';
   const { color: topicColor, themeName } = useRoleColor('chatTopic', {
@@ -69,36 +75,51 @@ export default function CollectionBar({
     observer.observe(row);
     Array.from(row.children).forEach((child) => observer.observe(child));
     return () => observer.disconnect();
-  }, [measure, recent.length, activeCollection]);
+  }, [measure, recent.length, activeCollections.length]);
 
-  if (activeCollection) {
+  if (activeCollections.length) {
+    const canAddMore =
+      activeCollections.length < AI_IMAGE_COLLECTIONS_COMBINE_MAX &&
+      (collections || []).length > activeCollections.length;
     return (
       <div className={barCls} aria-disabled={disabled || undefined}>
         <div
-          className={activeCls}
-          style={{ background: topicColor, color: topicTextColor }}
-          title={activeCollection.name}
+          ref={scrollerRef}
+          className={scrollerCls}
+          data-more-left={more.left}
+          data-more-right={more.right}
+          onScroll={measure}
         >
-          <button
-            type="button"
-            className={segmentCls}
-            disabled={disabled}
-            onClick={onOpen}
-            aria-label={`Using collection ${activeCollection.name}. Change collection`}
-          >
-            <CollectionThumbs images={activeCollection.images} size={30} />
-            <span className="name">{activeCollection.name}</span>
-          </button>
-          <button
-            type="button"
-            className={clearCls}
-            disabled={disabled}
-            onClick={onClear}
-            aria-label="Stop using this collection"
-            title="Stop using this collection"
-          >
-            <Icon icon="times" />
-          </button>
+          {activeCollections.map((collection) => (
+            <div
+              key={collection.id}
+              className={activeCls}
+              data-several={activeCollections.length > 1}
+              style={{ background: topicColor, color: topicTextColor }}
+              title={collection.name}
+            >
+              <button
+                type="button"
+                className={segmentCls}
+                disabled={disabled}
+                onClick={onOpen}
+                aria-label={`Using collection ${collection.name}. Change collections`}
+              >
+                <CollectionThumbs images={collection.images} size={30} />
+                <span className="name">{collection.name}</span>
+              </button>
+              <button
+                type="button"
+                className={clearCls}
+                disabled={disabled}
+                onClick={() => onClear(collection.id)}
+                aria-label={`Stop using ${collection.name}`}
+                title="Stop using this collection"
+              >
+                <Icon icon="times" />
+              </button>
+            </div>
+          ))}
         </div>
         <button
           type="button"
@@ -106,9 +127,10 @@ export default function CollectionBar({
           disabled={disabled}
           onClick={onOpen}
           aria-haspopup="dialog"
-          aria-label="All collections"
+          aria-label={canAddMore ? 'Add another collection' : 'All collections'}
+          title={canAddMore ? 'Add another collection' : 'All collections'}
         >
-          <Icon icon="caret-down" />
+          <Icon icon={canAddMore ? 'plus' : 'caret-down'} />
         </button>
       </div>
     );
@@ -128,7 +150,8 @@ export default function CollectionBar({
             <CollectionThumbs images={invitePictures} size={26} />
           </span>
           <span className="name">
-            <b>Make a collection:</b> keep the same characters and style
+            <b>Make a collection:</b> teach the AI your characters, style or
+            world once
           </span>
         </button>
       </div>
@@ -289,6 +312,24 @@ const activeCls = css`
   height: 100%;
   min-width: 0;
   flex: 1 1 auto;
+  animation: collectionSegmentIn 0.2s ease both;
+  @keyframes collectionSegmentIn {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  &[data-several='true'] {
+    flex: 0 0 auto;
+    max-width: 20rem;
+  }
+  & + & {
+    border-left: 1px solid rgba(255, 255, 255, 0.45);
+  }
 `;
 
 const clearCls = css`

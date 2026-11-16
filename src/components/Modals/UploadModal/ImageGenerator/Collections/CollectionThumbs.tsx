@@ -2,7 +2,6 @@ import React from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import type { AIImageCollection } from '~/helpers/aiImageHistory';
 
 // A collection's pictures as a small overlapping stack, so a collection is
 // recognised by its characters at a glance (the bar, the list, the picker).
@@ -11,7 +10,7 @@ export default function CollectionThumbs({
   size = 32,
   max = 3
 }: {
-  images: AIImageCollection['images'];
+  images: { id: number; path: string }[];
   size?: number;
   max?: number;
 }) {

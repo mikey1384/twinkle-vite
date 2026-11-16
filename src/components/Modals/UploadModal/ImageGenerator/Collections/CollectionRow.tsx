@@ -10,22 +10,27 @@ import {
 } from '~/containers/Chat/Modals/topicStyles';
 import type { AIImageCollection } from '~/helpers/aiImageHistory';
 import CollectionThumbs from './CollectionThumbs';
+import { describeCollectionRoles } from './collectionStarters';
 
 // One collection in the list, laid out like a Zero/Ciel topic row
-// (TopicSelectorModal/TopicItem): "Current:" on the one in use, Settings
-// (sliders) and Use (arrow) on the right.
+// (TopicSelectorModal/TopicItem): "Current:" on the ones in use, Settings
+// (sliders), Add (plus: use it too, when it fits with the ones in use) and
+// Use (arrow: use only this one) on the right.
 export default function CollectionRow({
   collection,
   isCurrent,
   onSettings,
-  onUse
+  onUse,
+  onAdd
 }: {
   collection: AIImageCollection;
   isCurrent: boolean;
   onSettings: () => void;
   onUse: () => void;
+  onAdd?: () => void;
 }) {
   const count = collection.images.length;
+  const roles = describeCollectionRoles(collection);
   return (
     <article data-current={isCurrent} className={chatTopicRowClass}>
       <div
@@ -41,7 +46,7 @@ export default function CollectionRow({
           <span className={chatTopicTitleClass}>{collection.name}</span>
           <div className={chatTopicMetadataClass}>
             <span>
-              {count} {count === 1 ? 'picture' : 'pictures'}
+              {roles || `${count} ${count === 1 ? 'picture' : 'pictures'}`}
             </span>
             {collection.note && (
               <small
@@ -69,6 +74,18 @@ export default function CollectionRow({
           <Icon icon="sliders-h" />
           {isCurrent && <span style={{ marginLeft: '0.7rem' }}>Settings</span>}
         </Button>
+        {!isCurrent && onAdd && (
+          <Button
+            aria-label={`Use ${collection.name} too`}
+            color="darkerGray"
+            style={chatTopicActionStyle}
+            variant="ghost"
+            onClick={onAdd}
+          >
+            <Icon icon="plus" />
+            <span style={{ marginLeft: '0.4rem' }}>Add</span>
+          </Button>
+        )}
         {!isCurrent && (
           <Button
             aria-label={`Use ${collection.name}`}

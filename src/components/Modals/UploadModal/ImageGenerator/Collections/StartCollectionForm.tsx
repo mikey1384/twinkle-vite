@@ -16,6 +16,7 @@ export default function StartCollectionForm({
   starting,
   error,
   themeColor = 'logoBlue',
+  placeholder = 'My collection',
   onStart
 }: {
   label: string;
@@ -24,6 +25,7 @@ export default function StartCollectionForm({
   starting: boolean;
   error: string;
   themeColor?: string;
+  placeholder?: string;
   onStart: () => void;
 }) {
   const inputId = useId();
@@ -43,7 +45,7 @@ export default function StartCollectionForm({
             id={inputId}
             aria-describedby={`${inputId}-count`}
             aria-invalid={tooLong}
-            placeholder="My comic's characters"
+            placeholder={placeholder}
             value={value}
             onChange={onChange}
             hasError={tooLong}

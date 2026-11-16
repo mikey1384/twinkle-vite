@@ -3,7 +3,7 @@ import {
   type OpenAiImageModel,
   upgradeRetiredImageModel
 } from '~/helpers/aiImageModels';
-import { buildAIImageCollectionKey } from './aiImageHistory';
+import { buildAIImageCollectionsKey } from './aiImageHistory';
 import {
   browserReportsOffline,
   markBrowserNetworkReachable
@@ -22,7 +22,9 @@ export interface AiImageRequestFingerprintInput {
   engine?: 'gemini' | 'openai';
   model?: OpenAiImageModel;
   quality?: AiImageQuality;
-  // a picked image collection (helpers/aiImageHistory.ts)
+  // the picked image collections, in order (helpers/aiImageHistory.ts);
+  // collectionId/collectionRevision alone is the single-collection form
+  collections?: { id: number; revision: number }[];
   collectionId?: number;
   collectionRevision?: number;
 }
@@ -40,6 +42,7 @@ export async function createAIImageRequestFingerprint({
   engine = 'openai',
   model,
   quality = 'high',
+  collections,
   collectionId,
   collectionRevision
 }: AiImageRequestFingerprintInput): Promise<string | null> {
@@ -49,7 +52,8 @@ export async function createAIImageRequestFingerprint({
     }
     // The server fingerprints the current id of a retired model (2.5 -> 2.6).
     const currentModel = upgradeRetiredImageModel(model);
-    const collectionKey = buildAIImageCollectionKey({
+    const collectionKey = buildAIImageCollectionsKey({
+      collections,
       collectionId,
       collectionRevision
     });

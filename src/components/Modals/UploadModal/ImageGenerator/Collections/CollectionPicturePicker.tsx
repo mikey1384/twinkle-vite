@@ -10,12 +10,16 @@ import { useAppContext } from '~/contexts';
 import {
   AI_IMAGE_COLLECTION_IMAGES_MAX,
   mergeAIImageHistoryPages,
-  type AIImageCollection,
   type AIImageHistoryItem
 } from '~/helpers/aiImageHistory';
 import ImageHistory from '../ImageHistory';
 
 const PAGE_SIZE = 18;
+
+interface PickedPicture {
+  id: number;
+  path: string;
+}
 
 // Choosing a collection's pictures from My Images: the same grid as the
 // My Images tab (ImageHistory), where a tap picks or unpicks a picture.
@@ -26,11 +30,12 @@ export default function CollectionPicturePicker({
   onHide,
   onDone
 }: {
-  initialImages: AIImageCollection['images'];
+  initialImages: PickedPicture[];
   themeColor?: string;
   modalLevel?: number;
   onHide: () => void;
-  onDone: (images: AIImageCollection['images']) => void;
+  // in the order picked; the settings window gives new ones their job
+  onDone: (images: PickedPicture[]) => void;
 }) {
   const loadAIImageHistory = useAppContext(
     (v) => v.requestHelpers.loadAIImageHistory
@@ -38,7 +43,9 @@ export default function CollectionPicturePicker({
   const loadAIImageHistoryImage = useAppContext(
     (v) => v.requestHelpers.loadAIImageHistoryImage
   );
-  const [picked, setPicked] = useState(initialImages);
+  const [picked, setPicked] = useState<PickedPicture[]>(() =>
+    initialImages.map(({ id, path }) => ({ id, path }))
+  );
   const [images, setImages] = useState<AIImageHistoryItem[]>([]);
   const [nextBefore, setNextBefore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,8 +101,8 @@ export default function CollectionPicturePicker({
             </>
           ) : (
             <>
-              <Icon icon="images" /> Tap pictures of your characters to add
-              them ({picked.length}/{AI_IMAGE_COLLECTION_IMAGES_MAX}).
+              <Icon icon="images" /> Tap the pictures you want the AI to
+              learn from ({picked.length}/{AI_IMAGE_COLLECTION_IMAGES_MAX}).
             </>
           )
         }
