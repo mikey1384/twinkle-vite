@@ -47,6 +47,7 @@ export default function MultiTapQuestion({
   choiceExtra,
   tried = [],
   revealed = 99,
+  describedBy,
   onPick,
   onRepeat
 }: {
@@ -61,6 +62,8 @@ export default function MultiTapQuestion({
   tried?: number[];
   // fog: stomp's sentences come out one at a time
   revealed?: number;
+  // the item's rule sign (QuestRule): read with every answer
+  describedBy?: string;
   onPick: (index: number) => void;
   onRepeat?: () => void;
 }) {
@@ -176,6 +179,7 @@ export default function MultiTapQuestion({
                 )}
                 disabled={disabled || settled || i >= revealed}
                 aria-pressed={settled ? undefined : marks.includes(i)}
+                aria-describedby={describedBy}
                 onClick={() => tap(i)}
               >
                 <span className={cls.key}>{i + 1}</span>
@@ -264,6 +268,7 @@ export default function MultiTapQuestion({
           <button
             className={cx(cls.choice, choiceExtra)}
             disabled={disabled}
+            aria-describedby={describedBy}
             onClick={() => tap(1)}
           >
             <span className={cls.key}>1</span>Right
@@ -271,6 +276,7 @@ export default function MultiTapQuestion({
           <button
             className={cx(cls.choice, choiceExtra)}
             disabled={disabled}
+            aria-describedby={describedBy}
             onClick={() => tap(0)}
           >
             <span className={cls.key}>2</span>Wrong
@@ -335,6 +341,7 @@ export default function MultiTapQuestion({
               key={i}
               className={cx(chunkCls, marks.includes(i) && usedCls)}
               disabled={disabled || marks.includes(i)}
+              aria-describedby={describedBy}
               onClick={() => tap(i)}
             >
               <span className={chunkKeyCls}>{i + 1}</span>

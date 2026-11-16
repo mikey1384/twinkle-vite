@@ -1,6 +1,7 @@
 import { questPresentationText } from '../Review/QuestQuestionReview';
 import React, {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState
@@ -50,6 +51,7 @@ import FormatQuestion, {
   GotchaText,
   foggedCls
 } from './FormatQuestion';
+import QuestRule from './QuestRule';
 import type {
   QuestAnswer,
   QuestQuestion,
@@ -123,6 +125,7 @@ export default function MarbleRunScreen({
     (v) => v.requestHelpers.resumeGrammarQuestRun
   );
   const boss = run.rules.mode === 'boss';
+  const ruleId = `quest-rule-${useId()}`;
   const savedReviewPosition = boss ? run.reviewPosition : undefined;
   const [questions, setQuestions] = useState<QuestQuestion[]>(run.questions);
   const [answers, setAnswers] = useState<Record<number, QuestAnswer>>(() =>
@@ -753,9 +756,10 @@ export default function MarbleRunScreen({
                     </div>
                   )}
                   {question.instruction && (
-                    <div className={cx(instructionCls, boss && bossInstructionCls)}>
-                      {question.instruction}
-                    </div>
+                    <QuestRule
+                      id={ruleId}
+                      instruction={question.instruction}
+                    />
                   )}
                   {boss &&
                   phase === 'reading' &&
@@ -780,6 +784,7 @@ export default function MarbleRunScreen({
                       choiceExtra={boss ? bossChoiceCls : undefined}
                       crossed={boss && !answer?.forgiven ? wrongPicks : undefined}
                       revealed={fogShown}
+                      describedBy={question.instruction ? ruleId : undefined}
                       onPick={handlePick}
                       onRepeat={() =>
                         setError('Already tried that one. Try another answer.')
@@ -819,6 +824,9 @@ export default function MarbleRunScreen({
                               phase !== 'asking' ||
                               wrongPicks.includes(i) ||
                               i >= fogShown
+                            }
+                            aria-describedby={
+                              question.instruction ? ruleId : undefined
                             }
                             onClick={() => handlePick(i)}
                           >
@@ -1436,17 +1444,6 @@ const readyCls = css`
     padding: 1.6rem 0;
   }
 `;
-// what to do at this obstacle, in one line
-const instructionCls = css`
-  margin: 0.6rem 0 0.8rem;
-  font-size: max(1.4rem, calc(14 * var(--px)));
-  line-height: 1.45;
-  color: #373141;
-`;
-const bossInstructionCls = css`
-  color: #d9c8ff;
-`;
-
 const howCls = css`
   margin-top: 0.2rem;
   font-size: 1.3rem;

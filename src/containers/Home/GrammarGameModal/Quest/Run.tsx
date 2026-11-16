@@ -1,5 +1,5 @@
 import { questPresentationText } from '../Review/QuestQuestionReview';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
@@ -17,7 +17,7 @@ import { answerLooks } from './marbleLooks';
 import StreakBadge from './StreakBadge';
 import AudioToggles from './AudioToggles';
 import PixelIcon from './PixelIcon';
-import { GotchaText } from './FormatQuestion';
+import QuestRule from './QuestRule';
 import { useReadCooldown } from './readCooldown';
 import { useMoreBelow } from './moreBelow';
 import Stage from './MarbleRun/Stage';
@@ -41,6 +41,7 @@ export default function Run({ run, onFinished, onQuit }: {
   const answerQuestion = useAppContext((v) => v.requestHelpers.answerGrammarQuestQuestion);
   const finishRun = useAppContext((v) => v.requestHelpers.finishGrammarQuestRun);
   const loadRun = useAppContext((v) => v.requestHelpers.loadGrammarQuestRun);
+  const ruleId = `quest-rule-${useId()}`;
   const practiceOnly = run.rules.mode === 'nemesis' && !!run.rules.practiceOnly;
   const [answers, setAnswers] = useState<Record<number, QuestAnswer>>(() =>
     Object.fromEntries((run.answers || []).map((a) => [a.position, a]))
@@ -173,15 +174,16 @@ export default function Run({ run, onFinished, onQuit }: {
             ? 'No timer · Practice only: no XP or Coins. Your next scheduled review stays the same.'
             : 'Land a hit with each right answer. No timer · Perfect reviews pay 3× XP and Coins while daily rewards remain.'}</div>
           {!ready && !answer ? <div className={readyCls} role="status">YOUR RIVAL RETURNS…</div> : <>
-          <div className={metaCls}>Question {position + 1} of {run.questions.length} · <b>{question.skillName}</b></div>
-          {question.instruction && <div className={instructionCls}><GotchaText text={question.instruction} /></div>}
+          {/* skillLabel: newer servers' skillName also carries the instruction, shown in its own sign */}
+          <div className={metaCls}>Question {position + 1} of {run.questions.length} · <b>{question.skillLabel || question.skillName}</b></div>
+          {question.instruction && <QuestRule id={ruleId} instruction={question.instruction} />}
           <div className={questionCls}>{question.question}</div>
           <div className={choicesCls}>
             {question.choices.map((choice, i) => {
               const state = !answer ? '' : answer.forgiven && i === answer.selectedIndex ? 'forgiven' : i === answer.correctIndex ? 'right' : i === answer.selectedIndex ? 'wrong' : 'dim';
               return <button key={i}
                 className={cx(choiceCls, state === 'right' && rightCls, state === 'wrong' && wrongCls, state === 'forgiven' && forgivenChoiceCls, state === 'dim' && dimCls)}
-                disabled={!!answer || sending || animating || !ready} onClick={() => handleAnswer(i)}>
+                disabled={!!answer || sending || animating || !ready} aria-describedby={question.instruction ? ruleId : undefined} onClick={() => handleAnswer(i)}>
                 <span className={letterCls}>{'ABCD'[i]}</span>{choice}
               </button>;
             })}
@@ -314,7 +316,6 @@ const currentMarbleCls = css`outline: 2px solid #e3c3ff; outline-offset: 3px;`;
 const readyCls = css`padding: 2rem 1rem; font-family: ${PIXEL_FONT}; font-size: 1.2rem; text-align: center; color: #e3c3ff;`;
 const introCls = css`font-size: 1.2rem; color: #c4b3d6; margin-bottom: 0.7rem; line-height: 1.5;`;
 const metaCls = css`font-size: 1.3rem; line-height: 1.5; color: #d3c4e2;`;
-const instructionCls = css`margin-top: 0.6rem; font-size: 1.4rem; font-weight: 700;`;
 const questionCls = css`
   margin: 0.7rem 0 1.3rem; font-size: 2rem; font-weight: 700;
   line-height: 1.4; overflow-wrap: anywhere;

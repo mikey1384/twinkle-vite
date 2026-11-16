@@ -114,6 +114,7 @@ export default function FormatQuestion({
   choiceExtra,
   crossed = [],
   revealed = 99,
+  describedBy,
   onPick,
   onRepeat
 }: {
@@ -127,6 +128,8 @@ export default function FormatQuestion({
   onRepeat?: () => void;
   // fog: only the first `revealed` choices are out of it yet
   revealed?: number;
+  // the item's rule sign (QuestRule): read with every answer
+  describedBy?: string;
   onPick: (index: number) => void;
 }) {
   const format = question.format || 'blank';
@@ -140,6 +143,7 @@ export default function FormatQuestion({
         choiceExtra={choiceExtra}
         tried={crossed}
         revealed={revealed}
+        describedBy={describedBy}
         onPick={onPick}
         onRepeat={onRepeat}
       />
@@ -174,6 +178,7 @@ export default function FormatQuestion({
                 isPickedWrong(i) && cls.wrong
               )}
               disabled={disabled || crossed.includes(i)}
+              aria-describedby={describedBy}
               onClick={() => onPick(i)}
             >
               {word}
@@ -217,6 +222,7 @@ export default function FormatQuestion({
               i >= revealed && foggedCls
             )}
             disabled={disabled || crossed.includes(i) || i >= revealed}
+            aria-describedby={describedBy}
             onClick={() => onPick(i)}
           >
             <span className={cls.key}>{'ABCD'[i]}</span>
