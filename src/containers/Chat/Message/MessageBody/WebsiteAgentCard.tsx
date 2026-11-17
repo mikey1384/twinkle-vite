@@ -39,7 +39,15 @@ export interface WebsiteAgentCardData {
   // brain proposal: the words Zero or Ciel want to save)
   preview?:
     | TopicBrainCardPreview
-    | { kind: 'asset_handoff'; proposalId: string }
+    | {
+        kind: 'asset_handoff';
+        proposalId: string;
+        destination?: {
+          kind: 'avatar' | 'cover' | 'profile_gallery' | 'subject' | 'comment';
+          caption?: string;
+          position?: string;
+        };
+      }
     | { kind?: string };
 }
 
@@ -173,6 +181,11 @@ export default function WebsiteAgentCard({
         <AssetHandoffPreview
           key={imageProposalId}
           proposalId={imageProposalId}
+          destination={
+            card.preview && 'destination' in card.preview
+              ? card.preview.destination
+              : undefined
+          }
           onReady={setLoadedProposalId}
         />
       )}

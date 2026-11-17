@@ -5,9 +5,15 @@ import { WEBSITE_AGENT_UI_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 
 export default function AssetHandoffPreview({
   proposalId,
+  destination,
   onReady
 }: {
   proposalId: string;
+  destination?: {
+    kind: 'avatar' | 'cover' | 'profile_gallery' | 'subject' | 'comment';
+    caption?: string;
+    position?: string;
+  };
   onReady: (proposalId: string) => void;
 }) {
   const loadPreview = useAppContext(
@@ -45,6 +51,13 @@ export default function AssetHandoffPreview({
         <img
           src={url}
           alt="The image to use"
+          style={
+            destination?.kind === 'avatar'
+              ? { width: '16rem', height: '16rem', objectFit: 'cover', borderRadius: '50%' }
+              : destination?.kind === 'cover'
+                ? { width: '100%', height: '13rem', objectFit: 'cover', objectPosition: (destination.position || '50,50').split(',').map((n) => `${n}%`).join(' ') }
+                : undefined
+          }
           onLoad={() => onReady(proposalId)}
           onError={() => {
             setFailed(true);
@@ -61,6 +74,10 @@ export default function AssetHandoffPreview({
       ) : (
         <p role="status">Loading image preview…</p>
       )}
+      {(destination?.kind === 'avatar' || destination?.kind === 'profile_gallery') &&
+        destination.caption && (
+          <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>Caption: {destination.caption}</p>
+        )}
     </div>
   );
 }
