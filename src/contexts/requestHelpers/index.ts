@@ -495,6 +495,7 @@ registerMethods('content', [
   'uploadSubject',
   'uploadThumb',
   'generateAIImage',
+  'loadAssetHandoffPreview',
   'loadAIImageGenerationEstimate',
   'loadAIImageGenerationStatus',
   'loadAIImageResult',
