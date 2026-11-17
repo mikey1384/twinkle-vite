@@ -10,6 +10,7 @@ export const AI_ENERGY_SPONSOR_REVALIDATE_DELAY_MS = 45 * 1000;
 // keep current.
 export const LIVE_COMMENT_FIELDS = [
   'content',
+  'secretHidden',
   'fileName',
   'filePath',
   'fileSize',

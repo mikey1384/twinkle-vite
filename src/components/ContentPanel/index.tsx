@@ -1,3 +1,4 @@
+import useRefreshUnlockedComment from '~/helpers/hooks/useRefreshUnlockedComment';
 import MeetupStepDisplay from './Body/MainContent/ContentDisplay/MeetupStepDisplay';
 import ArenaChallengePanel from '~/components/ArenaChallengePanel';
 import ContentLink from '~/components/ContentLink';
@@ -168,6 +169,7 @@ export default function ContentPanel({
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
   const contentState = useContentState({ contentType, contentId });
+  useRefreshUnlockedComment(contentType === 'comment' ? contentState : null);
   const {
     commentId,
     commentsShown,

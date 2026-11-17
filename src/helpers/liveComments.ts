@@ -29,6 +29,11 @@ export function extractLiveCommentFields(source: any) {
       fields[field] = source[field];
     }
   }
+  // A body-bearing server snapshot carries its redaction status as a pair:
+  // unredacted responses omit the flag, so absence must clear an older true.
+  if (typeof source.content === 'string') {
+    fields.secretHidden = Boolean(source.secretHidden);
+  }
   return fields;
 }
 

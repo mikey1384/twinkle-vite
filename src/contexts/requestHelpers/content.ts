@@ -756,13 +756,18 @@ export default function contentRequestHelpers({
       isPinnedComment?: boolean;
     }) {
       try {
+        // Comment bodies are viewer-scoped snapshots. Preserve request order
+        // across initial hydration, unlock recovery, and socket/thread updates.
+        const requestStartedAt = getLiveObservedAt();
         const { data } = await request.get(
           `${URL}/content?contentId=${contentId}&contentType=${contentType}${
             rootType ? `&rootType=${rootType}` : ''
           }${isPinnedComment ? '&isPinnedComment=1' : ''}`,
           auth()
         );
-        return data;
+        return contentType === 'comment' && data
+          ? { ...data, requestStartedAt }
+          : data;
       } catch (error) {
         return handleError(error);
       }

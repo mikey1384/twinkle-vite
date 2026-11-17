@@ -291,6 +291,8 @@ export default function Body({
   }, [commentsLoaded, previewLoaded]);
 
   const secretHidden = useMemo(() => {
+    // Visibility can unlock before the redacted body has been reloaded.
+    if (contentType === 'comment' && contentObj.secretHidden) return true;
     const contentSecretHidden = !(secretShown || uploader.id === userId);
     const targetSubjectSecretHidden = !(
       subjectSecretShown || subjectUploaderId === userId
@@ -305,6 +307,7 @@ export default function Body({
         : rootObjHasSecretMessage && rootObjSecretHidden;
   }, [
     contentHasSecretMessage,
+    contentObj.secretHidden,
     contentType,
     rootObjHasSecretMessage,
     rootObj?.uploader?.id,

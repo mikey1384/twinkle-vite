@@ -15,6 +15,7 @@ export const COMMENT_CONTENT_PAGE_SEED_FIELDS = [
   'id',
   'userId',
   'content',
+  'secretHidden',
   'timeStamp',
   'rootType',
   'rootId',
