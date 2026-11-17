@@ -49,6 +49,7 @@ export interface Card {
   engine?: string;
 }
 export interface Comment {
+  secretHidden?: boolean;
   id: number;
   comments: Comment[];
   commentId: number | null;

@@ -1,3 +1,4 @@
+import useRefreshUnlockedComment from './useRefreshUnlockedComment';
 import { useMemo } from 'react';
 import { useContentContext } from '~/contexts';
 import { mergeLiveCommentState } from '~/helpers/aiEnergySponsorship';
@@ -13,9 +14,11 @@ export default function useLiveComment(comment: any, commentId?: number) {
   const liveContentState = useContentContext(
     (v) => v.state[`comment${liveCommentId}`]
   );
-  return useMemo(
+  const liveComment = useMemo(
     () =>
       liveCommentId ? mergeLiveCommentState(comment, liveContentState) : comment,
     [comment, liveCommentId, liveContentState]
   );
+  useRefreshUnlockedComment(liveComment);
+  return liveComment;
 }

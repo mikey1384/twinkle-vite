@@ -1,3 +1,4 @@
+import useLiveComment from '~/helpers/hooks/useLiveComment';
 import React, { useEffect, useMemo, useRef, useContext, useState } from 'react';
 import {
   assistantVoiceForUserId,
@@ -170,6 +171,7 @@ export default function TargetContent({
     contentType: string;
   };
 }) {
+  comment = useLiveComment(comment);
   const comments = comment?.comments || [];
   const navigate = useNavigate();
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
@@ -346,8 +348,9 @@ export default function TargetContent({
   const contentHidden = useMemo(() => {
     const secretShown =
       subjectState.secretShown || subjectUploaderId === userId;
-    return subjectHasSecretMessage && !secretShown;
+    return Boolean(comment.secretHidden) || (subjectHasSecretMessage && !secretShown);
   }, [
+    comment.secretHidden,
     subjectHasSecretMessage,
     subjectState.secretShown,
     subjectUploaderId,

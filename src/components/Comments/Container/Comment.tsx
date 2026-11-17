@@ -1,3 +1,4 @@
+import useLiveComment from '~/helpers/hooks/useLiveComment';
 import React, {
   memo,
   useContext,
@@ -463,8 +464,9 @@ function Comment({
   const isHidden = useMemo(() => {
     const secretShown =
       subjectState.secretShown || subjectUploaderId === userId;
-    return subjectHasSecretMessage && !secretShown;
+    return Boolean(comment.secretHidden) || (subjectHasSecretMessage && !secretShown);
   }, [
+    comment.secretHidden,
     subjectUploaderId,
     subjectHasSecretMessage,
     subjectState.secretShown,
@@ -1181,4 +1183,9 @@ function Comment({
   }
 }
 
-export default memo(Comment);
+export default memo(function LiveComment(
+  props: React.ComponentProps<typeof Comment>
+) {
+  const comment = useLiveComment(props.comment);
+  return <Comment {...props} comment={comment} />;
+});

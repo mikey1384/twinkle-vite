@@ -382,6 +382,10 @@ export default function ContentReducer(
         [contentKey]: {
           ...prevContentState,
           ...action.data,
+          ...(action.contentType === 'comment' &&
+          typeof action.data.content === 'string'
+            ? { secretHidden: Boolean(action.data.secretHidden) }
+            : {}),
           loaded: true,
           contentId: action.contentId,
           contentType: action.contentType

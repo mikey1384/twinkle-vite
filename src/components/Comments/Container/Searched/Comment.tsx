@@ -1,3 +1,4 @@
+import useLiveComment from '~/helpers/hooks/useLiveComment';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { assistantVoiceForUserId } from '~/helpers/assistantVoice';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -51,7 +52,7 @@ import { useFeatureOnProfileMenuItem } from '~/components/Comments/useFeatureOnP
 const pinLabel = 'Pin';
 const unpinLabel = 'Unpin';
 
-export default function SearchedComment({
+function SearchedComment({
   comment,
   isSubjectPannelComment,
   parent,
@@ -71,6 +72,7 @@ export default function SearchedComment({
   }
 }: {
   comment: {
+    secretHidden?: boolean;
     commentId?: number;
     content: string;
     id: number;
@@ -362,8 +364,9 @@ export default function SearchedComment({
   const isHidden = useMemo(() => {
     const secretShown =
       subjectState.secretShown || subjectUploaderId === userId;
-    return subjectHasSecretMessage && !secretShown;
+    return Boolean(comment.secretHidden) || (subjectHasSecretMessage && !secretShown);
   }, [
+    comment.secretHidden,
     subjectUploaderId,
     subjectHasSecretMessage,
     subjectState.secretShown,
@@ -767,4 +770,11 @@ export default function SearchedComment({
       commentId
     });
   }
+}
+
+export default function LiveSearchedComment(
+  props: React.ComponentProps<typeof SearchedComment>
+) {
+  const comment = useLiveComment(props.comment);
+  return <SearchedComment {...props} comment={comment} />;
 }
