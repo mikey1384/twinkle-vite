@@ -46,7 +46,8 @@ test('page replacement returns fresh refs without clicking a same-named neighbou
       const first = agentPage.readWebsiteAgentPage();
       const button = document.querySelector('button');
       const oldRef = button.getAttribute('data-agent-ref');
-      button.outerHTML = '<button>Save</button>';
+      // A DOM replacement can copy attributes, including the old ref.
+      button.replaceWith(button.cloneNode(true));
       const stale = await agentPage.performWebsiteAgentClick({
         ref: oldRef,
         effect: 'change'

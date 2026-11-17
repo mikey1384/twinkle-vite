@@ -304,6 +304,7 @@ function describeNearbyText(element: Element, name: string) {
 // Identity at the last read. Replaced nodes receive new refs; stale actions
 // return a fresh page instead of guessing by label or screen position.
 interface RefFingerprint {
+  element: Element;
   tag: string;
   name: string;
   path: string;
@@ -376,6 +377,7 @@ export function readWebsiteAgentPage() {
       const old = previousRef ? refFingerprints.get(previousRef) : null;
       const same =
         old &&
+        old.element === element &&
         old.tag === tag &&
         old.name === name &&
         old.path === window.location.pathname + window.location.search &&
@@ -390,6 +392,7 @@ export function readWebsiteAgentPage() {
         refFingerprints.delete(refFingerprints.keys().next().value!);
       }
       refFingerprints.set(ref, {
+        element,
         tag,
         name,
         path: window.location.pathname + window.location.search,
@@ -519,7 +522,14 @@ export function findWebsiteAgentElement(ref: string) {
   const tagged = document.querySelector(`[${REF_ATTRIBUTE}="${ref}"]`);
   // Never guess by label/distance: repeated Save/Edit buttons can belong to
   // different posts. Re-read a replacement page and resolve its new refs.
-  if (!fingerprint || !tagged || !isRendered(tagged)) return null;
+  if (
+    !fingerprint ||
+    !tagged ||
+    fingerprint.element !== tagged ||
+    tagged.closest(`[${WEBSITE_AGENT_UI_ATTRIBUTE}]`) ||
+    !isRendered(tagged)
+  )
+    return null;
   if (
     fingerprint.path !== window.location.pathname + window.location.search ||
     fingerprint.tag !== tagged.tagName.toLowerCase() ||
