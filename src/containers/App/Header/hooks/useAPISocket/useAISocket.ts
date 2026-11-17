@@ -1,3 +1,8 @@
+import { WebsiteAgentDelivery } from '~/helpers/websiteAgentDelivery';
+import {
+  beginWebsiteAgentDelivery,
+  finishWebsiteAgentDelivery
+} from '~/helpers/websiteAgentAction';
 import React, { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
@@ -23,6 +28,7 @@ import {
 } from '~/constants/defaultValues';
 import { markChatUnreadActivity } from '~/helpers/chatUnreadActivity';
 import {
+  findWebsiteAgentElement,
   describeWebsiteAgentOverlays,
   performWebsiteAgentClick,
   performWebsiteAgentType,
@@ -49,6 +55,8 @@ import {
 import { seedAssistantTranscript } from '~/containers/App/AssistantDock/conversationStore';
 import { openAssistantDock } from '~/containers/App/AssistantDock/dockState';
 import { createAiVoiceCaptureSender } from '~/helpers/aiVoiceCaptureSender';
+
+const browserDelivery = new WebsiteAgentDelivery();
 
 // This tab, among the user's open tabs and devices (see the website agent's
 // active-tab handling below).
@@ -414,6 +422,8 @@ export default function useAISocket({
     // answers" until the next report.
     function handleResync() {
       activeAgentTabIdRef.current = null;
+      lastSentAt = 0;
+      reportActive();
     }
     // Switching to a tab counts too, so a hidden tab never keeps the role.
     window.addEventListener('pointerdown', reportActive, true);
@@ -422,6 +432,8 @@ export default function useAISocket({
     document.addEventListener('visibilitychange', reportActive);
     socket.on('website_agent_active_tab', handleActiveTab);
     socket.on(PRESENCE_RESYNC_EVENT, handleResync);
+    window.addEventListener(TWINKLE_SOCKET_AUTH_READY_EVENT, handleResync);
+    reportActive();
     return () => {
       window.removeEventListener('pointerdown', reportActive, true);
       window.removeEventListener('keydown', reportActive, true);
@@ -429,6 +441,7 @@ export default function useAISocket({
       document.removeEventListener('visibilitychange', reportActive);
       socket.off('website_agent_active_tab', handleActiveTab);
       socket.off(PRESENCE_RESYNC_EVENT, handleResync);
+      window.removeEventListener(TWINKLE_SOCKET_AUTH_READY_EVENT, handleResync);
     };
   }, [userId]);
 
@@ -439,12 +452,17 @@ export default function useAISocket({
     async function handleWebsiteAgentRequest({
       requestId,
       kind,
-      payload
+      payload,
+      expiresAt,
+      protocol
     }: {
       requestId?: string;
       kind?: string;
       payload?: any;
+      expiresAt?: number;
+      protocol?: number;
     }) {
+      if (protocol !== 2 || !expiresAt) return;
       if (!isWebsiteAgentEnabledFor(Number(userId))) return;
       if (!requestId || document.visibilityState !== 'visible') return;
       const activeTabId = activeAgentTabIdRef.current;
@@ -458,65 +476,108 @@ export default function useAISocket({
       if (import.meta.env.DEV) {
         console.info(`[WebsiteAgent] received ${kind}`);
       }
-      noteWebsiteAgentWorking(toAgentAssistant(payload?.assistant));
-      let result: unknown;
-      try {
-        if (kind === 'read_page') {
-          result = readWebsiteAgentPage();
-        } else if (kind === 'navigate') {
-          const path = String(payload?.path || '');
-          if (!path.startsWith('/') || path.startsWith('//')) {
-            result = { error: 'Not a page on this site.' };
-          } else {
-            navigate(path);
-            // Give the new page a moment to render before it is read.
-            await new Promise((resolve) => setTimeout(resolve, 900));
+      await browserDelivery.run({
+        id: requestId,
+        expiresAt,
+        claim: () =>
+          new Promise((resolve) => {
+            socket
+              .timeout(3_000)
+              .emit(
+                'website_agent_browser_claim',
+                { requestId, connectionId: WEBSITE_AGENT_TAB_ID },
+                (error: unknown, answer: { token?: string } | undefined) =>
+                  resolve(error ? null : answer?.token || null)
+              );
+          }),
+        execute: async (token) => {
+          if (document.visibilityState !== 'visible')
+            return {
+              ok: false,
+              code: 'browser_hidden',
+              error:
+                'Page became hidden before execution; no interaction performed.'
+            };
+          const tracksWrites = kind === 'click' || kind === 'type';
+          if (tracksWrites) beginWebsiteAgentDelivery(requestId, token);
+          noteWebsiteAgentWorking(toAgentAssistant(payload?.assistant));
+          let result: unknown;
+          try {
+            if (kind === 'read_page') {
+              result = readWebsiteAgentPage();
+            } else if (kind === 'navigate') {
+              const path = String(payload?.path || '');
+              if (!path.startsWith('/') || path.startsWith('//')) {
+                result = { error: 'Not a page on this site.' };
+              } else {
+                navigate(path);
+                // Give the new page a moment to render before it is read.
+                await new Promise((resolve) => setTimeout(resolve, 900));
+                result = {
+                  path: `${window.location.pathname}${window.location.search}`,
+                  title: document.title
+                };
+              }
+            } else if (kind === 'click') {
+              result = await performWebsiteAgentClick({
+                ref: String(payload?.ref || ''),
+                effect: payload?.effect === 'change' ? 'change' : 'view'
+              });
+            } else if (kind === 'type') {
+              result = await performWebsiteAgentType({
+                ref: String(payload?.ref || ''),
+                text: String(payload?.text ?? ''),
+                pressEnter: payload?.pressEnter === true
+              });
+            } else if (kind === 'permission') {
+              result = await askWebsiteAgentPermission({
+                summary: String(payload?.summary || ''),
+                details: String(payload?.details || ''),
+                confirmLabel: String(payload?.confirmLabel || '').slice(0, 60),
+                assistant: toAgentAssistant(payload?.assistant)
+              });
+            } else if (kind === 'highlight') {
+              result = !findWebsiteAgentElement(String(payload?.ref || ''))
+                ? {
+                    ok: false,
+                    code: 'stale_page',
+                    error: 'Page changed; select a current ref from pageNow.',
+                    pageNow: readWebsiteAgentPage()
+                  }
+                : await showWebsiteAgentSpotlight({
+                    ref: String(payload?.ref || ''),
+                    caption: String(payload?.caption || ''),
+                    waitForUser: payload?.waitForUser === true,
+                    assistant: toAgentAssistant(payload?.assistant)
+                  });
+            } else {
+              result = { error: `Unknown request ${kind}.` };
+            }
+          } catch (error: any) {
             result = {
-              path: `${window.location.pathname}${window.location.search}`,
-              title: document.title
+              error: String(error?.message || error),
+              ...(tracksWrites ? { code: 'outcome_unknown' } : {})
             };
           }
-        } else if (kind === 'click') {
-          result = await performWebsiteAgentClick({
-            ref: String(payload?.ref || ''),
-            effect: payload?.effect === 'change' ? 'change' : 'view'
-          });
-        } else if (kind === 'type') {
-          result = await performWebsiteAgentType({
-            ref: String(payload?.ref || ''),
-            text: String(payload?.text ?? ''),
-            pressEnter: payload?.pressEnter === true
-          });
-        } else if (kind === 'permission') {
-          result = await askWebsiteAgentPermission({
-            summary: String(payload?.summary || ''),
-            details: String(payload?.details || ''),
-            confirmLabel: String(payload?.confirmLabel || '').slice(0, 60),
-            assistant: toAgentAssistant(payload?.assistant)
-          });
-        } else if (kind === 'highlight') {
-          result = await showWebsiteAgentSpotlight({
-            ref: String(payload?.ref || ''),
-            caption: String(payload?.caption || ''),
-            waitForUser: payload?.waitForUser === true,
-            assistant: toAgentAssistant(payload?.assistant)
-          });
-        } else {
-          result = { error: `Unknown request ${kind}.` };
-        }
-      } catch (error: any) {
-        result = { error: String(error?.message || error) };
-      }
-      if (import.meta.env.DEV) {
-        console.info(
-          `[WebsiteAgent] ${kind} ${JSON.stringify(payload || {}).slice(0, 200)} -> ${JSON.stringify(result ?? null).slice(0, 300)}`
-        );
-      }
-      socket.emit('website_agent_browser_response', { requestId, result });
+          if (import.meta.env.DEV) {
+            console.info(
+              `[WebsiteAgent] ${kind} ${JSON.stringify(payload || {}).slice(0, 200)} -> ${JSON.stringify(result ?? null).slice(0, 300)}`
+            );
+          }
+          if (tracksWrites) await finishWebsiteAgentDelivery();
+          return result;
+        },
+        respond: (result, claimToken) =>
+          socket.emit('website_agent_browser_response', {
+            requestId,
+            result,
+            claimToken
+          })
+      });
     }
-    socket.on('website_agent_browser_request', handleWebsiteAgentRequest);
+    socket.on('website_agent_browser_request_v2', handleWebsiteAgentRequest);
     return function cleanUp() {
-      socket.off('website_agent_browser_request', handleWebsiteAgentRequest);
+      socket.off('website_agent_browser_request_v2', handleWebsiteAgentRequest);
     };
   }, [navigate, userId]);
 

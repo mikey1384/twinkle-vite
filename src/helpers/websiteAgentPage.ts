@@ -301,13 +301,15 @@ function describeNearbyText(element: Element, name: string) {
   return '';
 }
 
-// What each ref pointed at, so the same element can be found again after
-// the page redraws it (a new node with the same label in the same place).
+// Identity at the last read. Replaced nodes receive new refs; stale actions
+// return a fresh page instead of guessing by label or screen position.
 interface RefFingerprint {
+  element: Element;
   tag: string;
   name: string;
-  x: number;
-  y: number;
+  path: string;
+  nearby: string;
+  href: string | null;
 }
 const refFingerprints = new Map<string, RefFingerprint>();
 const MAX_FINGERPRINTS = 2000;
@@ -315,8 +317,9 @@ const MAX_FINGERPRINTS = 2000;
 // reused, so a ref from an earlier look either still means the same thing
 // or is reported gone (never silently another button).
 let lastRefNumber = 0;
-// How far a redrawn element may have moved and still count as the same one.
-const REDRAWN_MAX_DISTANCE = 160;
+export const WEBSITE_AGENT_PAGE_ID = crypto.randomUUID();
+let pageGeneration = 0;
+let lastPageIdentity = '';
 
 // The window the user sees on top: the last open dialog that is rendered.
 function topOpenWindow() {
@@ -370,19 +373,31 @@ export function readWebsiteAgentPage() {
         continue;
       }
       refCount += 1;
+      const previousRef = element.getAttribute(REF_ATTRIBUTE);
+      const old = previousRef ? refFingerprints.get(previousRef) : null;
+      const same =
+        old &&
+        old.element === element &&
+        old.tag === tag &&
+        old.name === name &&
+        old.path === window.location.pathname + window.location.search &&
+        old.nearby === describeNearbyText(element, name) &&
+        old.href === element.getAttribute('href');
       const ref =
-        element.getAttribute(REF_ATTRIBUTE) || `r${(lastRefNumber += 1)}`;
+        (same ? previousRef : null) ||
+        `r${WEBSITE_AGENT_PAGE_ID}_${(lastRefNumber += 1)}`;
       element.setAttribute(REF_ATTRIBUTE, ref);
-      const box = element.getBoundingClientRect();
       refFingerprints.delete(ref);
       if (refFingerprints.size >= MAX_FINGERPRINTS) {
         refFingerprints.delete(refFingerprints.keys().next().value!);
       }
       refFingerprints.set(ref, {
+        element,
         tag,
         name,
-        x: box.left + box.width / 2 + window.scrollX,
-        y: box.top + box.height / 2 + window.scrollY
+        path: window.location.pathname + window.location.search,
+        nearby: describeNearbyText(element, name),
+        href: element.getAttribute('href')
       });
       const href =
         tag === 'a' ? (element as HTMLAnchorElement).getAttribute('href') : '';
@@ -466,7 +481,18 @@ export function readWebsiteAgentPage() {
         .filter(Boolean)
     )
   ];
+  const pageIdentity = JSON.stringify([
+    window.location.pathname,
+    window.location.search,
+    lines
+  ]);
+  if (pageIdentity !== lastPageIdentity) {
+    pageGeneration++;
+    lastPageIdentity = pageIdentity;
+  }
   return {
+    pageId: WEBSITE_AGENT_PAGE_ID,
+    pageGeneration,
     // Exact state components on screen report (a Wordle's guesses and
     // colours), first: trust it over reading the page text.
     ...(screenState ? { screenState } : {}),
@@ -491,39 +517,28 @@ export function readWebsiteAgentPage() {
 }
 
 export function findWebsiteAgentElement(ref: string) {
-  if (!/^r\d+$/.test(ref)) return null;
+  if (!new RegExp(`^r${WEBSITE_AGENT_PAGE_ID}_\\d+$`).test(ref)) return null;
   const fingerprint = refFingerprints.get(ref);
   const tagged = document.querySelector(`[${REF_ATTRIBUTE}="${ref}"]`);
-  // React reuses nodes (a list slot now showing another post, Follow
-  // turning into Unfollow): the tag only counts while the label matches.
+  // Never guess by label/distance: repeated Save/Edit buttons can belong to
+  // different posts. Re-read a replacement page and resolve its new refs.
   if (
-    tagged &&
-    !tagged.closest(`[${WEBSITE_AGENT_UI_ATTRIBUTE}]`) &&
-    (!fingerprint || describeName(tagged) === fingerprint.name)
-  ) {
-    return tagged;
-  }
-  tagged?.removeAttribute(REF_ATTRIBUTE);
-  if (!fingerprint || !fingerprint.name) return null;
-  let best: Element | null = null;
-  let bestDistance = REDRAWN_MAX_DISTANCE;
-  for (const candidate of document.querySelectorAll(fingerprint.tag)) {
-    // Another listed element is not this one redrawn.
-    if (candidate.hasAttribute(REF_ATTRIBUTE)) continue;
-    if (!isRendered(candidate) || describeName(candidate) !== fingerprint.name)
-      continue;
-    const box = candidate.getBoundingClientRect();
-    const distance = Math.hypot(
-      box.left + box.width / 2 + window.scrollX - fingerprint.x,
-      box.top + box.height / 2 + window.scrollY - fingerprint.y
-    );
-    if (distance < bestDistance) {
-      best = candidate;
-      bestDistance = distance;
-    }
-  }
-  best?.setAttribute(REF_ATTRIBUTE, ref);
-  return best;
+    !fingerprint ||
+    !tagged ||
+    fingerprint.element !== tagged ||
+    tagged.closest(`[${WEBSITE_AGENT_UI_ATTRIBUTE}]`) ||
+    !isRendered(tagged)
+  )
+    return null;
+  if (
+    fingerprint.path !== window.location.pathname + window.location.search ||
+    fingerprint.tag !== tagged.tagName.toLowerCase() ||
+    fingerprint.name !== describeName(tagged) ||
+    fingerprint.nearby !== describeNearbyText(tagged, fingerprint.name) ||
+    fingerprint.href !== tagged.getAttribute('href')
+  )
+    return null;
+  return tagged;
 }
 
 const CONSEQUENTIAL_LABEL =
@@ -622,7 +637,12 @@ export async function performWebsiteAgentClick({
 }) {
   const element = findWebsiteAgentElement(ref);
   if (!element) {
-    return { ok: false, error: 'That element is gone. Read the page again.' };
+    return {
+      ok: false,
+      code: 'stale_page',
+      error: 'Page changed; select a current ref from pageNow.',
+      pageNow: readWebsiteAgentPage()
+    };
   }
   // Closing a window is never the user's work to protect, and a window
   // opened by mistake must not trap the agent.
@@ -674,7 +694,7 @@ export async function performWebsiteAgentClick({
   return {
     ok: true,
     path: `${window.location.pathname}${window.location.search}`,
-    note: 'Read the page to see what changed.'
+    note: 'Interaction delivered. Only server receipts confirm saved changes; page text is not save evidence.'
   };
 }
 
@@ -690,7 +710,12 @@ export async function performWebsiteAgentType({
 }) {
   const element = findWebsiteAgentElement(ref) as HTMLElement | null;
   if (!element) {
-    return { ok: false, error: 'That field is gone. Read the page again.' };
+    return {
+      ok: false,
+      code: 'stale_page',
+      error: 'Page changed; select a current ref from pageNow.',
+      pageNow: readWebsiteAgentPage()
+    };
   }
   const refused = refusedInsideXpActivity(element);
   if (refused) return refused;
