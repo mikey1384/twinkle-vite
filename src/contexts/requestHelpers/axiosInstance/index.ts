@@ -2,6 +2,8 @@ import { AxiosRequestConfig, AxiosResponse, Method } from 'axios';
 import scheduler, { ExtendedAxiosRequestConfig } from './requestScheduler';
 import {
   WEBSITE_AGENT_ACTION_HEADER,
+  websiteAgentRequestHeaders,
+  trackWebsiteAgentRequest,
   isWebsiteAgentActionActive
 } from '~/helpers/websiteAgentAction';
 import { isOwnerTraceActive, traceOwnerRequest } from '~/helpers/ownerTrace';
@@ -22,17 +24,22 @@ function request<T = any, R = AxiosResponse<T>>(
       ...config,
       headers: {
         ...(config.headers as Record<string, string> | undefined),
-        [WEBSITE_AGENT_ACTION_HEADER]: '1'
+        [WEBSITE_AGENT_ACTION_HEADER]: '1',
+        ...(!['get', 'head', 'options'].includes(
+          String(config.method || 'get').toLowerCase()
+        )
+          ? websiteAgentRequestHeaders()
+          : {})
       }
     };
   }
   // Owner trace only: slow requests (a no-op check for everyone else).
   if (isOwnerTraceActive()) {
-    return traceOwnerRequest(config, (traced) =>
-      scheduler.request<T, R>(traced)
+    return trackWebsiteAgentRequest(
+      traceOwnerRequest(config, (traced) => scheduler.request<T, R>(traced))
     );
   }
-  return scheduler.request<T, R>(config);
+  return trackWebsiteAgentRequest(scheduler.request<T, R>(config));
 }
 
 function buildConfig<T = any>(
