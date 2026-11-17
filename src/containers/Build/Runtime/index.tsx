@@ -1738,7 +1738,6 @@ export default function BuildRuntime({
       onOpenSigninModal();
       return;
     }
-    if (collaborationStatus === 'pending') return;
     if (collaborationStatus === 'accepted') {
       handleOpenCollaborationWorkspace();
       return;
@@ -2598,9 +2597,7 @@ export default function BuildRuntime({
                               : runtimeActionPinkClass
                         }
                         onClick={handleCollaborateClick}
-                        disabled={
-                          runtimeActionBusy || collaborationStatus === 'pending'
-                        }
+                        disabled={runtimeActionBusy}
                         title={
                           isMobilePortrait && collaborationStatus === 'accepted'
                             ? collaborationButtonLabel

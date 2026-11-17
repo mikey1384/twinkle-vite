@@ -1017,9 +1017,7 @@ export default function BuildWideCard({
                   actionButtonClass,
                   collaborationStatus === 'accepted' ? 'blue' : 'pink'
                 )}
-                disabled={
-                  Boolean(actionLoading) || collaborationStatus === 'pending'
-                }
+                disabled={Boolean(actionLoading)}
                 onClick={handleListCollaborationActionClick}
               >
                 <Icon
@@ -1272,7 +1270,6 @@ export default function BuildWideCard({
       onOpenSigninModal();
       return;
     }
-    if (collaborationStatus === 'pending') return;
     if (collaborationStatus === 'accepted') {
       handleOpenCollaborationWorkspace();
       return;

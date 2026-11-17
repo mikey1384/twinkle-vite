@@ -403,9 +403,7 @@ export default function BuildContent({
               size="sm"
               uppercase={false}
               loading={actionLoading === 'collaborationRequest'}
-              disabled={
-                Boolean(actionLoading) || collaborationStatus === 'pending'
-              }
+              disabled={Boolean(actionLoading)}
               onClick={handleCollaborationActionClick}
               style={{ whiteSpace: 'nowrap' }}
             >
@@ -677,7 +675,6 @@ export default function BuildContent({
       onOpenSigninModal();
       return;
     }
-    if (collaborationStatus === 'pending') return;
     if (collaborationStatus === 'accepted') {
       handleOpenCollaborationWorkspace();
       return;
