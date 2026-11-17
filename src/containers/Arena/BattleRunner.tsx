@@ -540,10 +540,10 @@ export default function BattleRunner({
             items={readingItems} passages={data.passages} answers={shownAnswers} finished={finished} disabled={finished || submitting || grading || remaining === 0}
             onMark={handleMark}
             renderHelp={!finished && !noHelp ? item => <AskAgentButton showLabelOnMobile assistant={data.battle.companion === 'solo' ? undefined : data.battle.companion}
-              context={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.display || item.no}`, path: practice ? `/arena?mode=train&practice=${practice.id}` : `/arena?mode=arena&battle=${data.battle.id}` }} /> : undefined}
+              context={{ kind: 'arenaBattleItem', id: data.battle.id, practiceId: practice?.id, no: item.no, label: `question ${item.display || item.no}`, path: practice ? `/arena?mode=train&practice=${practice.id}` : `/arena?mode=arena&battle=${data.battle.id}` }} /> : undefined}
             renderReview={item => <PaperItem item={item} passage={null} marked={answers[item.no] ?? null} finished reviewOnly
               audioControls={false} allPointTags={false} letters reviewLang={reviewLang} onMark={() => {}}
-              ask={{ kind: 'arenaBattleItem', id: data.battle.id, no: item.no, label: `question ${item.no}`, path: `/arena?mode=train&battle=${data.battle.id}` }} />}
+              ask={{ kind: 'arenaBattleItem', id: data.battle.id, practiceId: practice?.id, no: item.no, label: `question ${item.no}`, path: practice ? `/arena?mode=train&practice=${practice.id}` : `/arena?mode=train&battle=${data.battle.id}` }} />}
           />}
           {sections.map(({ section, items }) => (
             <section key={`${section}-${items[0]?.no}`} className={columnsCls}>
@@ -605,10 +605,11 @@ export default function BattleRunner({
                         ? {
                             kind: 'arenaBattleItem',
                             id: data.battle.id,
+                            practiceId: practice?.id,
                             no: item.no,
                             label: `question ${item.display || item.no}`,
-                            // a run's question is read from its source paper,
-                            // but a companion stays on the run's own page
+                            // Keep this attempt's answers and page, not the
+                            // original sitting's answers
                             path: practice ? `/arena?mode=train&practice=${practice.id}` : `/arena?mode=${finished ? 'train' : 'arena'}&battle=${data.battle.id}`
                           }
                         : null

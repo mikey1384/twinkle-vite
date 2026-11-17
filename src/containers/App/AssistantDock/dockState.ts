@@ -44,6 +44,7 @@ export interface AssistantAskContext {
   // server re-reads the question as the member)
   no?: number;
   version?: number;
+  practiceId?: number;
   // the step of an Arena question's step-by-step explanation the member is
   // on (StepExplanation); the server re-reads the step itself
   step?: number;
