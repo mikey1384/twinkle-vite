@@ -325,7 +325,6 @@ export function useHostBridge({
   audioMutedRef.current = audioMuted;
 
   useEffect(() => {
-    if (!runtimeOnly) return;
     postToPreviewFrames(
       primaryIframeRef,
       secondaryIframeRef,
@@ -2277,18 +2276,16 @@ export function useHostBridge({
           },
           previewMessageTargetOrigin
         );
-        if (runtimeOnly) {
-          sourceWindow.postMessage(
-            {
-              source: 'twinkle-parent',
-              type: 'audio:mute',
-              previewNonce: previewMessageNonce,
-              muted: audioMutedRef.current,
-              payload: { muted: audioMutedRef.current }
-            },
-            previewMessageTargetOrigin
-          );
-        }
+        sourceWindow.postMessage(
+          {
+            source: 'twinkle-parent',
+            type: 'audio:mute',
+            previewNonce: previewMessageNonce,
+            muted: audioMutedRef.current,
+            payload: { muted: audioMutedRef.current }
+          },
+          previewMessageTargetOrigin
+        );
       }
       const targetFrame = messageTargetFrameRef.current;
       const targetWindow =

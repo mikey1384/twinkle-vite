@@ -16,6 +16,7 @@ import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import ViewCount from '~/components/ViewCount';
 import FavoriteButton from '~/components/Build/FavoriteButton';
+import useBuildAudioMuted from '~/helpers/useBuildAudioMuted';
 import useTabletOrientation from '~/helpers/hooks/useTabletOrientation';
 import usePhoneLandscape from '~/helpers/hooks/usePhoneLandscape';
 import AiEnergyCard from '~/components/AiEnergyCard';
@@ -508,6 +509,10 @@ const headerTitleLineClass = css`
      action row only shrinks, and scrolls, once the title is gone). */
   flex: 0 1000 auto;
   color: var(--chat-text);
+  @media (max-width: ${mobileMaxWidth}) {
+    /* Keep the app name readable as header actions grow; actions scroll. */
+    min-width: min(10rem, 32vw);
+  }
 `;
 
 // Title and its meta share one line while there is room. On a phone they stack
@@ -1051,6 +1056,8 @@ export default function BuildRuntime({
   );
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const userId = useKeyContext((v) => v.myState.userId);
+  const [memberAudioMuted, setMemberAudioMuted] = useBuildAudioMuted(userId);
+  const onSetBuildAppMuted = useViewContext((v) => v.actions.onSetBuildAppMuted);
   const headerCollapsed = !!useAppContext(
     (v) => v.user.state.myState.buildHeaderCollapsed
   );
@@ -1427,7 +1434,8 @@ export default function BuildRuntime({
   const runtimeCommentsAvailable = buildRuntimeCommentsAreAvailable(build);
   const runtimeBuildId = Math.floor(Number(build?.id || 0));
   const runtimeAudioMuted =
-    runtimeBuildId > 0 && mutedBuildAppIds.includes(String(runtimeBuildId));
+    memberAudioMuted ||
+    (runtimeBuildId > 0 && mutedBuildAppIds.includes(String(runtimeBuildId)));
   // A backgrounded build tab (another build tab is on screen, or we're off
   // /app entirely) is treated as hidden AND muted so it pauses its loop and
   // goes silent instead of running/playing behind the active app. host-hidden
@@ -2691,6 +2699,27 @@ export default function BuildRuntime({
                     }}
                   />
                 ) : null}
+                <button
+                  type="button"
+                  className={notificationSettingsButtonClass}
+                  aria-label={
+                    runtimeAudioMuted ? 'Unmute app sound' : 'Mute app sound'
+                  }
+                  aria-pressed={runtimeAudioMuted}
+                  title={runtimeAudioMuted ? 'Unmute app sound' : 'Mute app sound'}
+                  data-muted={runtimeAudioMuted ? 'true' : 'false'}
+                  onClick={() => {
+                    setMemberAudioMuted(!runtimeAudioMuted);
+                    // Clear any older per-tab mute when explicitly unmuting.
+                    if (runtimeAudioMuted) {
+                      onSetBuildAppMuted(String(runtimeBuildId), false);
+                    }
+                  }}
+                >
+                  <Icon
+                    icon={runtimeAudioMuted ? 'volume-xmark' : 'volume-high'}
+                  />
+                </button>
                 <ShareButton
                   variant="compact"
                   buttonVariant="ghost"

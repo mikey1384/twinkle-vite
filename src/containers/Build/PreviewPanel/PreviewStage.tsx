@@ -242,6 +242,7 @@ const emptyPreviewBodyStyle: React.CSSProperties = {
 };
 
 export default function PreviewStage({
+  audioMuted,
   accessError,
   onRetryAccess,
   activePreviewFrame,
@@ -265,6 +266,7 @@ export default function PreviewStage({
   onOpenRuntimeIssueProjectFile,
   onPreviewFrameLoad
 }: {
+  audioMuted: boolean;
   accessError?: string | null;
   onRetryAccess?: () => void;
   activePreviewFrame: PreviewFrameKey;
@@ -338,7 +340,10 @@ export default function PreviewStage({
             ref={primaryIframeRef}
             src={runtimePreviewFrameSrc}
             title="App preview"
-            name={buildPreviewFrameWindowName(runtimePreviewFrameNonce)}
+            name={buildPreviewFrameWindowName(
+              runtimePreviewFrameNonce,
+              audioMuted
+            )}
             allow={BUILD_APP_IFRAME_ALLOW}
             allowFullScreen
             sandbox={getRuntimePreviewIframeSandbox(runtimePreviewFrameSrc)}
@@ -379,7 +384,8 @@ export default function PreviewStage({
           src={previewFrameSources.primary}
           title="Preview (primary)"
           name={buildPreviewFrameWindowName(
-            previewFrameMetaRef.current.primary.messageNonce
+            previewFrameMetaRef.current.primary.messageNonce,
+            audioMuted
           )}
           allow={BUILD_APP_IFRAME_ALLOW}
           allowFullScreen
@@ -411,7 +417,8 @@ export default function PreviewStage({
           src={previewFrameSources.secondary}
           title="Preview (secondary)"
           name={buildPreviewFrameWindowName(
-            previewFrameMetaRef.current.secondary.messageNonce
+            previewFrameMetaRef.current.secondary.messageNonce,
+            audioMuted
           )}
           allow={BUILD_APP_IFRAME_ALLOW}
           allowFullScreen

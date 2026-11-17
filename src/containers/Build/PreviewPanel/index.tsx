@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
+import useBuildAudioMuted from '~/helpers/useBuildAudioMuted';
 import { css } from '@emotion/css';
 import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
 import useCoinConfirm from '~/components/Build/Coins/useCoinConfirm';
@@ -569,6 +570,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     );
 
     const keyUserId = useKeyContext((v) => v.myState.userId);
+    const [memberAudioMuted] = useBuildAudioMuted(keyUserId);
     const keyUsername = useKeyContext((v) => v.myState.username);
     const keyProfilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
     const keyUnlockedAchievementIds = useKeyContext(
@@ -1115,7 +1117,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     );
     const previewHostEnabled = runtimeHostVisible !== false;
     const previewHostVisible = previewHostEnabled;
-    const previewAudioMuted = audioMuted;
+    const previewAudioMuted = audioMuted || memberAudioMuted;
     // Only Twinkle-owned visibility may pause, mute, or retire the iframe.
     // Browser tab and desktop switches leave the active app running and audible;
     // the browser remains responsible for native background throttling.
@@ -1685,6 +1687,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           <AppHelperBadge pairing={appHelper} />
           {runtimeOnly ? (
             <PreviewStage
+              audioMuted={previewAudioMuted}
               activePreviewFrame={activePreviewFrame}
               codeWorkspaceAvailable={codeWorkspaceAvailable}
               isOwner={isOwner}
@@ -1716,6 +1719,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
             />
           ) : viewMode === 'preview' ? (
             <PreviewStage
+              audioMuted={previewAudioMuted}
               activePreviewFrame={activePreviewFrame}
               codeWorkspaceAvailable={codeWorkspaceAvailable}
               isOwner={isOwner}
