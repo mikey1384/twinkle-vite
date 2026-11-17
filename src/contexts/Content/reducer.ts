@@ -4,6 +4,7 @@ import { Comment, Reward, RewardCaps, Subject } from '~/types';
 import { appendUniqueById, prependUniqueById } from './idListHelpers';
 import {
   buildLiveCommentEntries,
+  extractLiveCommentFields,
   upsertLiveComments
 } from '~/helpers/liveComments';
 import { mergeContentPageSeed } from '~/helpers/contentPageSeed';
@@ -385,6 +386,16 @@ export default function ContentReducer(
           ...(action.contentType === 'comment' &&
           typeof action.data.content === 'string'
             ? { secretHidden: Boolean(action.data.secretHidden) }
+            : {}),
+          // A reload can finish after a newer socket/thread snapshot. Hydrate
+          // its other fields without rolling back the live body or redaction.
+          ...(action.contentType === 'comment' &&
+          action.requestStartedAt &&
+          prevContentState.liveObservedAt > action.requestStartedAt
+            ? {
+                ...extractLiveCommentFields(prevContentState),
+                liveObservedAt: prevContentState.liveObservedAt
+              }
             : {}),
           loaded: true,
           contentId: action.contentId,

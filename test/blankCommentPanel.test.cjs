@@ -24,6 +24,50 @@ test('full unredacted comment renders the exact mixed-language body for Extremed
   }
 });
 
+test('a full cached body still stays hidden until the subject is canonically unlocked', () => {
+  const app = fixture();
+  app.receive(canonical);
+  assert.match(app.render(), /Submit your response/);
+  assert.ok(!app.render().includes(text));
+  app.unlock();
+  assert.ok(app.render().includes(text));
+});
+
+test('an unlock reload cannot overwrite a newer comment snapshot or its redaction status', () => {
+  const app = fixture({ base: process.env.BLANK_COMMENT_BASE });
+  app.unlock();
+  app.receive({ ...canonical, content: 'Newer edited body', secretHidden: false, liveObservedAt: 200 });
+  app.dispatch({
+    type: 'INIT_CONTENT', contentId: 350899, contentType: 'comment',
+    requestStartedAt: 100,
+    data: { ...canonical, content: '', secretHidden: true, liveObservedAt: 100 }
+  });
+  assert.equal(app.state.comment350899.content, 'Newer edited body');
+  assert.equal(app.state.comment350899.secretHidden, false);
+  assert.equal(app.state.comment350899.liveObservedAt, 200);
+  app.dispatch({
+    type: 'INIT_CONTENT', contentId: 350899, contentType: 'comment',
+    requestStartedAt: 300,
+    data: { ...canonical, liveObservedAt: 300 }
+  });
+  assert.equal(app.state.comment350899.content, text);
+  assert.equal(app.state.comment350899.secretHidden, false);
+});
+
+test('comment reads carry their request start through delayed responses', async () => {
+  let finish;
+  let clock = 100;
+  const helpers = compile('src/contexts/requestHelpers/content.ts', name => {
+    if (name === './axiosInstance') return { get: () => new Promise(resolve => { finish = resolve; }) };
+    if (name === '~/helpers/liveComments') return { getLiveObservedAt: () => clock };
+    return {};
+  }).default({ auth: () => ({}), handleError: error => { throw error; } });
+  const pending = helpers.loadContent({ contentId: 350899, contentType: 'comment' });
+  clock = 200;
+  finish({ data: canonical });
+  assert.deepEqual(await pending, { ...canonical, requestStartedAt: 100 });
+});
+
 test('comment page seeds and live thread snapshots retain redaction, then clear it on canonical refresh', () => {
   const modules = {};
   function load(file) {

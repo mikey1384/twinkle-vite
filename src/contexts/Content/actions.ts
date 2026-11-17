@@ -14,13 +14,15 @@ import {
 // entry, so they are the only one where two copies compete.
 function stampLiveComment({
   contentType,
-  data
+  data,
+  observedAt
 }: {
   contentType: string;
   data: object;
+  observedAt?: number;
 }) {
   if (contentType !== 'comment') return data;
-  return { ...data, liveObservedAt: getLiveObservedAt() };
+  return { ...data, liveObservedAt: observedAt || getLiveObservedAt() };
 }
 
 function getRewardLevelRevision(data: object) {
@@ -336,6 +338,7 @@ export default function ContentActions(
         requestStartedAt,
         data: stampLiveComment({
           contentType,
+          observedAt: requestStartedAt,
           data: reconcileHydratedRewardLevels({
             contentId: numericContentId,
             contentType,
