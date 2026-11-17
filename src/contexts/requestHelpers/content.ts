@@ -35,6 +35,13 @@ export default function contentRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
+    async loadAssetHandoffPreview(proposalId: string): Promise<Blob> {
+      const { data } = await request.get(
+        `${URL}/content/assets/proposals/${encodeURIComponent(proposalId)}/image`,
+        { ...auth(), responseType: 'blob' }
+      );
+      return data;
+    },
     async loadBookPreview(subjectId: number): Promise<{ book: BookPreview | null }> {
       const { data } = await request.get(`${URL}/content/books/${subjectId}/preview`);
       return data;

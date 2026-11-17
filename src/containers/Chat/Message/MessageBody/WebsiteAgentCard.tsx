@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { v1 as uuidv1 } from 'uuid';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useContentContext
+} from '~/contexts';
 import ChoicePromptBubble from '~/containers/Build/Editor/ChatPanel/ChoicePromptBubble';
 import {
   isTopicBrainCardPreview,
   type TopicBrainCardPreview
 } from '~/helpers/topicBrain';
 import TopicBrainProposalPreview from './TopicBrainProposalPreview';
+import AssetHandoffPreview from './AssetHandoffPreview';
 
 export interface WebsiteAgentCardData {
   // lumine: sending a request to Lumine on duty, or a project owner's
@@ -31,7 +37,10 @@ export interface WebsiteAgentCardData {
   crewId?: number;
   // what kind of change an approval is, when the card can show it (a topic
   // brain proposal: the words Zero or Ciel want to save)
-  preview?: TopicBrainCardPreview | { kind?: string };
+  preview?:
+    | TopicBrainCardPreview
+    | { kind: 'asset_handoff'; proposalId: string }
+    | { kind?: string };
 }
 
 // The Build chat's choice bubble reads these from its panel; the main chat
@@ -93,6 +102,17 @@ export default function WebsiteAgentCard({
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [loadedProposalId, setLoadedProposalId] = useState('');
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onEditContent = useContentContext((v) => v.actions.onEditContent);
+  const imageProposalId =
+    card.type === 'approval' &&
+    card.preview?.kind === 'asset_handoff' &&
+    'proposalId' in card.preview &&
+    typeof card.preview.proposalId === 'string'
+      ? card.preview.proposalId
+      : '';
+
   const requesterId = Number(card.requesterUserId || 0);
   const isSomeoneElses = !!requesterId && requesterId !== Number(userId);
   const requesterName = card.requesterUsername || 'the member who asked';
@@ -123,7 +143,10 @@ export default function WebsiteAgentCard({
             key: 'approve',
             label: 'Yes, go ahead!',
             tone: 'positive' as const,
-            disabled: decided || isSomeoneElses
+            disabled:
+              decided ||
+              isSomeoneElses ||
+              (!!imageProposalId && loadedProposalId !== imageProposalId)
           },
           {
             key: 'decline',
@@ -141,9 +164,18 @@ export default function WebsiteAgentCard({
   return (
     <div
       className={
-        brainPreview ? `${bubbleVariables} ${stackedCard}` : bubbleVariables
+        brainPreview || imageProposalId
+          ? `${bubbleVariables} ${stackedCard}`
+          : bubbleVariables
       }
     >
+      {imageProposalId && !isSomeoneElses && (
+        <AssetHandoffPreview
+          key={imageProposalId}
+          proposalId={imageProposalId}
+          onReady={setLoadedProposalId}
+        />
+      )}
       {brainPreview && !isSomeoneElses && (
         <TopicBrainProposalPreview preview={brainPreview} decided={decided} />
       )}
@@ -191,10 +223,49 @@ export default function WebsiteAgentCard({
       const data = await decideWebsiteAgentCard({
         messageId,
         cardId: card.id,
+        ...(imageProposalId ? { previewedAssetProposalId: loadedProposalId } : {}),
         ...decision
       });
       const nextCard: WebsiteAgentCardData | undefined = data?.card;
       if (!nextCard) throw new Error('No card returned');
+      if (
+        nextCard.status === 'approved' &&
+        nextCard.preview?.kind === 'asset_handoff'
+      ) {
+        const handoff = nextCard.result?.data;
+        const saved = handoff?.saved;
+        if (
+          (saved?.contentType === 'subject' ||
+            saved?.contentType === 'comment') &&
+          saved?.contentId
+        ) {
+          onEditContent({
+            contentType: saved.contentType,
+            contentId: saved.contentId,
+            data: {
+              filePath: saved.filePath,
+              fileName: saved.fileName,
+              fileSize: saved.fileSize,
+              thumbUrl: saved.thumbUrl
+            }
+          });
+        }
+        if (Number(saved?.userId) === Number(userId)) {
+          const kind = handoff?.destination?.kind;
+          const newState =
+            kind === 'avatar'
+              ? { profilePicUrl: saved.profilePicUrl }
+              : kind === 'cover'
+                ? {
+                    profileCoverUrl: saved.profileCoverUrl,
+                    profileCoverPosition: saved.profileCoverPosition
+                  }
+                : kind === 'profile_gallery'
+                  ? { pictures: saved.pictures }
+                  : null;
+          if (newState) onSetUserState({ userId, newState });
+        }
+      }
       onCardUpdated?.(nextCard);
       onUpdateMessageSettings({
         channelId,
