@@ -131,11 +131,12 @@ export function isAllowedBuildPreviewMessageOrigin({
 }
 
 export function buildPreviewFrameWindowName(
-  messageNonce: string | null | undefined
+  messageNonce: string | null | undefined,
+  audioMuted = false
 ) {
   const normalizedMessageNonce = String(messageNonce || '').trim();
   return normalizedMessageNonce
-    ? `twinkle-build-preview:${normalizedMessageNonce}`
+    ? `twinkle-build-preview:${normalizedMessageNonce}${audioMuted ? ':audio-muted' : ''}`
     : undefined;
 }
 

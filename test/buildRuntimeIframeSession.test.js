@@ -63,7 +63,7 @@ test('browser visibility does not pause, mute, or retire previews', () => {
 
   assert.match(
     previewPanelSource,
-    /const previewHostEnabled = runtimeHostVisible !== false;\s*const previewHostVisible = previewHostEnabled;\s*const previewAudioMuted = audioMuted;/m
+    /const previewHostEnabled = runtimeHostVisible !== false;\s*const previewHostVisible = previewHostEnabled;\s*const previewAudioMuted = audioMuted \|\| memberAudioMuted;/m
   );
   assert.doesNotMatch(
     previewPanelSource,
