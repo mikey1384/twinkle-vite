@@ -56,12 +56,16 @@ export interface TopicBrainVersion {
   createdAt: number;
 }
 
+// notes / instructions: new words for that section. file: keep a document
+// the member sent in the topic chat (or replace a kept copy with it).
+export type TopicBrainProposalSection = 'instructions' | 'notes' | 'file';
+
 export interface TopicBrainProposal {
   id: number;
   channelId: number;
   topicId: number;
   assistantName: 'Zero' | 'Ciel';
-  section: 'instructions' | 'notes';
+  section: TopicBrainProposalSection;
   summary: string;
   status: 'pending' | 'applied' | 'declined' | 'stale';
   before: string;
@@ -69,6 +73,15 @@ export interface TopicBrainProposal {
   outdated: boolean;
   // an instructions change on a topic shared as an AI Prompt
   updatesSharedPrompt?: boolean;
+  // the document sent in the chat these words come from (older APIs omit it)
+  fromFile?: { messageId: number; fileName: string; unavailable?: boolean } | null;
+  // section 'file': keep it as a new file, or replace a kept copy
+  file?: {
+    action: 'keep' | 'replace';
+    replacesFileName: string;
+    // the message with the document was deleted
+    unavailable: boolean;
+  } | null;
 }
 
 // On a Zero/Ciel approval card: which proposal the card is about.
@@ -77,7 +90,7 @@ export interface TopicBrainCardPreview {
   proposalId: number;
   channelId: number;
   topicId: number;
-  section: 'instructions' | 'notes';
+  section: TopicBrainProposalSection;
 }
 
 export function isTopicBrainCardPreview(

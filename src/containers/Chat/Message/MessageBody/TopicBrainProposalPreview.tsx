@@ -11,7 +11,9 @@ import BrainDiff from '~/containers/Chat/Modals/TopicSettingsModal/TopicBrain/Br
 
 // On a Zero/Ciel approval card for a topic brain change: the exact words
 // that would be saved, read from the server when the member opens it. What
-// they approve is this proposal, word for word.
+// they approve is this proposal, word for word. A document sent in the topic
+// chat shows its words (and, for a newer copy, what changed from the kept
+// one); the server reads them from the upload, never from the card.
 export default function TopicBrainProposalPreview({
   preview,
   decided
@@ -30,7 +32,9 @@ export default function TopicBrainProposalPreview({
   const where =
     preview.section === 'instructions'
       ? 'Custom Instructions'
-      : 'Notes for next time';
+      : preview.section === 'file'
+        ? 'kept files'
+        : 'Notes for next time';
 
   return (
     <div className={boxCls} {...{ [WEBSITE_AGENT_UI_ATTRIBUTE]: '' }}>
@@ -57,10 +61,33 @@ export default function TopicBrainProposalPreview({
             </span>
           ) : (
             <>
-              {proposal.outdated && !decided && (
+              {(proposal.file?.unavailable || proposal.fromFile?.unavailable) &&
+              !decided ? (
                 <p className="warn">
-                  This was changed after {proposal.assistantName} wrote the
-                  suggestion. Ask again to get a fresh one.
+                  The file you sent isn’t in the chat any more. Send it again
+                  and ask for a fresh suggestion.
+                </p>
+              ) : (
+                proposal.outdated &&
+                !decided && (
+                  <p className="warn">
+                    This was changed after {proposal.assistantName} wrote the
+                    suggestion. Ask again to get a fresh one.
+                  </p>
+                )
+              )}
+              {proposal.fromFile?.fileName && (
+                <p className="source">
+                  <Icon icon="file" />
+                  <span>
+                    {proposal.file?.action === 'replace'
+                      ? `${proposal.fromFile.fileName} replaces ${
+                          proposal.file.replacesFileName || 'the kept copy'
+                        }`
+                      : proposal.section === 'file'
+                        ? `Keep ${proposal.fromFile.fileName}`
+                        : `From ${proposal.fromFile.fileName}`}
+                  </span>
                 </p>
               )}
               <BrainDiff before={proposal.before} after={proposal.after} />
@@ -134,6 +161,16 @@ const bodyCls = css`
   .quiet {
     color: #526176;
     font-size: var(--build-workshop-choice-font-size);
+  }
+  .source {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 0.6rem;
+    color: var(--chat-text);
+    font-size: var(--build-workshop-choice-font-size);
+    font-weight: 600;
+    overflow-wrap: anywhere;
   }
   .note {
     margin: 0.6rem 0 0;
