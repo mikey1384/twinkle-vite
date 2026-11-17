@@ -399,6 +399,24 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // The live deliverability verdict of open trade cards on screen.
+    async loadTradeDeliverability(ids: number[]) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/trade/deliverability?ids=${ids
+            .map((id) => Number(id))
+            .filter((id) => id > 0)
+            .join(',')}`,
+          auth()
+        );
+        return (data?.deliverability || {}) as Record<
+          number,
+          { ok: boolean; reason: string | null; responsibleUserId: number | null }
+        >;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async checkChatAccessible(pathId: number) {
       try {
         const {

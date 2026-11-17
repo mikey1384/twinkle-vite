@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
@@ -9,6 +9,10 @@ import {
   normalizeBundle
 } from '../Trade/helpers/terms';
 import { getTradeStatus } from '../Trade/helpers/status';
+import {
+  registerOpenTrade,
+  requestTradeDeliverabilityRefresh
+} from '../Trade/helpers/openTrades';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -67,6 +71,18 @@ export default function TransactionDetails({
     !!cancelledTransactions[transaction.id] || !!transaction.isCancelled;
   const cancelReason =
     cancelledTransactions[transaction.id] || transaction.cancelReason;
+  // The server's latest verdict for this open offer, refreshed while the card
+  // is on screen; the page load's verdict until then.
+  const liveDeliverability = useChatContext(
+    (v) => v.state.tradeDeliverability?.[transaction.id]
+  );
+  const judgedTransaction = useMemo(
+    () =>
+      liveDeliverability
+        ? { ...transaction, deliverability: liveDeliverability }
+        : transaction,
+    [liveDeliverability, transaction]
+  );
   const { type, want = {}, offer = {} } = transaction;
   const { cards: wantCards = [], groups: wantGroups = [] } = want || {};
   const { cards: offerCards = [], groups: offerGroups = [] } = offer || {};
@@ -112,15 +128,47 @@ export default function TransactionDetails({
     label: status,
     settled,
     cancelled,
+    closed,
+    expired,
+    expiredReason,
     requestOnly
   } = getTradeStatus({
-    transaction,
+    transaction: judgedTransaction,
     viewerId: userId,
     isAccepted: !!isAccepted,
     isCancelled,
     cancelReason,
     isCurrent: transaction.id === currentTransactionId
   });
+  const isOpenTrade =
+    type === 'trade' && !isAccepted && !closed && !requestOnly;
+  useEffect(() => {
+    if (!isOpenTrade) return;
+    const unregister = registerOpenTrade(transaction.id);
+    requestTradeDeliverabilityRefresh();
+    return unregister;
+  }, [isOpenTrade, transaction.id]);
+  const responsibleName =
+    Number(judgedTransaction?.deliverability?.responsibleUserId) ===
+    Number(userId)
+      ? 'You'
+      : partner?.username || 'Your partner';
+  const missingThing: Record<string, string> = {
+    'not enough coins': 'the coins',
+    'not enough battery': 'the battery',
+    'changed card ownership': 'a card',
+    'card burned': 'a card',
+    'card unavailable': 'a card',
+    'changed group ownership': 'a group',
+    'classes not allowed': 'a group',
+    'changed app ownership': 'an app'
+  };
+  const expiredNote =
+    expiredReason === 'battery day passed'
+      ? 'The battery in this offer was for a day that has ended. Nothing moved.'
+      : `${responsibleName} no longer ${
+          responsibleName === 'You' ? 'have' : 'has'
+        } ${missingThing[expiredReason || ''] || 'everything'} in this offer. Nothing moved.`;
   const statusNote =
     type === 'show'
       ? 'Nothing changes owners.'
@@ -128,13 +176,17 @@ export default function TransactionDetails({
         ? 'A gift, with nothing in return.'
         : isAccepted
           ? 'All items have changed owners.'
-          : cancelled
+          : expired
+            ? expiredNote
+            : cancelled
             ? 'Nothing moved.'
             : requestOnly
               ? 'No offer has been made. Nothing changes owners.'
               : 'Nothing moves until this offer is accepted.';
+  // An expired offer is still open on the server: the receiver can decline it
+  // to clear the chat's current offer, and either side can open it.
   const canOpen =
-    !isOnModal && !!onClick && (!settled || type === 'send') && !cancelled;
+    !isOnModal && !!onClick && (!settled || type === 'send') && !closed;
   // The receiver can say no right on the card (Mikey 10-12): with only one
   // primary button, members took "Review offer" for "accept" and hesitated.
   const canDecline =
@@ -152,7 +204,9 @@ export default function TransactionDetails({
       ? 'gift'
       : isAccepted
         ? 'check'
-        : cancelled
+        : expired
+          ? 'hourglass-end'
+          : cancelled
           ? 'xmark'
           : type === 'show'
             ? 'eye'

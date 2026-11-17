@@ -7345,6 +7345,14 @@ export default function ChatReducer(
           [action.transactionId]: true
         }
       };
+    case 'SET_TRADE_DELIVERABILITY':
+      return {
+        ...state,
+        tradeDeliverability: {
+          ...state.tradeDeliverability,
+          ...action.deliverability
+        }
+      };
     case 'CANCEL_TRANSACTION':
       return {
         ...state,

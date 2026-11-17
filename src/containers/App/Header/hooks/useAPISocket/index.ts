@@ -23,6 +23,7 @@ import useCommunitySocket from './useCommunitySocket';
 import useInitSocket from './useInitSocket';
 import useNotiSocket from './useNotiSocket';
 import useSignupInviteSocket from './useSignupInviteSocket';
+import useTradeDeliverabilitySocket from './useTradeDeliverabilitySocket';
 import useUserSocket from './useUserSocket';
 
 export default function useAPISocket({
@@ -157,6 +158,7 @@ export default function useAPISocket({
     usingChatRef
   });
   useAICardSocket();
+  useTradeDeliverabilitySocket();
   useAISocket({
     activeChatChannelIdRef,
     aiCallChannelId,

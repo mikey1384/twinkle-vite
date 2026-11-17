@@ -2452,6 +2452,18 @@ export default function ChatActions(dispatch: Dispatch) {
         reason
       });
     },
+    // The server's live verdicts for open trade cards ({[id]: verdict}).
+    onSetTradeDeliverability(
+      deliverability: Record<
+        number,
+        { ok: boolean; reason: string | null; responsibleUserId: number | null }
+      >
+    ) {
+      return dispatch({
+        type: 'SET_TRADE_DELIVERABILITY',
+        deliverability
+      });
+    },
     onUpdateLastChessMessageId({
       channelId,
       messageId,

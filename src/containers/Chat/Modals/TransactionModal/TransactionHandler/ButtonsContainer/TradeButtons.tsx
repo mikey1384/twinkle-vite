@@ -10,6 +10,7 @@ import {
 import { errorClass } from '../../../../Trade/styles';
 import { useAppContext } from '~/contexts';
 import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
+import { requestTradeDeliverabilityRefresh } from '../../../../Trade/helpers/openTrades';
 
 export default function TradeButtons({
   channelId,
@@ -61,6 +62,8 @@ export default function TradeButtons({
     setChecking(true);
     setIsDisabled(true);
     setDisableReasonObj({});
+    // Opening the review re-asks the card's verdict too, so both agree.
+    requestTradeDeliverabilityRefresh();
     void checkTransactionPossible(transactionId)
       .then(({ disableReason, responsibleParty, isDisabled }: any) => {
         if (cancelled) return;
@@ -103,6 +106,9 @@ export default function TradeButtons({
       return `${responsiblePartyLabel} ${
         imResponsible ? `burned` : `burned`
       } one or more of the cards included in this proposal`;
+    }
+    if (disableReasonObj.reason === 'card unavailable') {
+      return 'A card in this proposal is no longer available. Start a new proposal.';
     }
     if (disableReasonObj.reason === 'changed app ownership')
       return 'An app in this proposal is no longer available from its owner. Start a new proposal.';

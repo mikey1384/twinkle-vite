@@ -229,6 +229,7 @@ import { faUserShield } from '@fortawesome/pro-solid-svg-icons/faUserShield';
 import { faEnvelope } from '@fortawesome/pro-solid-svg-icons/faEnvelope';
 import { faMapMarkerAlt } from '@fortawesome/pro-solid-svg-icons/faMapMarkerAlt';
 import { faHourglassHalf } from '@fortawesome/pro-solid-svg-icons/faHourglassHalf';
+import { faHourglassEnd } from '@fortawesome/pro-solid-svg-icons/faHourglassEnd';
 import { faAddressBook } from '@fortawesome/pro-solid-svg-icons/faAddressBook';
 import { faUserGroup } from '@fortawesome/pro-solid-svg-icons/faUserGroup';
 import { faUserEdit } from '@fortawesome/pro-solid-svg-icons/faUserEdit';
@@ -484,6 +485,7 @@ library.add(
   faEnvelope,
   faMapMarkerAlt,
   faHourglassHalf,
+  faHourglassEnd,
   faAddressBook,
   faUserGroup,
   faUserEdit,
