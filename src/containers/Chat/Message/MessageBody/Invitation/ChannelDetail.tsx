@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
-import { useChatContext, useAppContext } from '~/contexts';
+import { useChatContext, useAppContext, useKeyContext } from '~/contexts';
 import UserListModal from '~/components/Modals/UserListModal';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { useReplyCardPresentation } from '../ReplyCardPresentation';
@@ -14,7 +14,6 @@ export default function ChannelDetail({
   alreadyJoined,
   channelName,
   channelId,
-  creatorId,
   invitePath,
   invitationMessageId,
   members,
@@ -24,7 +23,6 @@ export default function ChannelDetail({
   alreadyJoined: boolean;
   channelName: string;
   channelId: number;
-  creatorId: number;
   invitePath: string;
   invitationMessageId: number;
   members: {
@@ -37,6 +35,7 @@ export default function ChannelDetail({
   const nextMemberCursor = useChatContext(
     (v) => v.state.channelsObj[channelId]?.nextMemberCursor
   );
+  const userId = useKeyContext((v) => v.myState.userId);
   const inReply = useReplyCardPresentation();
   const navigate = useNavigate();
   const chatInvitationRole = useRoleColor('chatInvitation', {
@@ -51,13 +50,13 @@ export default function ChannelDetail({
   const onLoadMoreChannelMembers = useChatContext(
     (v) => v.actions.onLoadMoreChannelMembers
   );
-  const [shownMembers, setShownMembers] = useState<
-    { id: number; username: string }[]
-  >([]);
   const [userListModalShown, setUserListModalShown] = useState(false);
-  const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [more, setMore] = useState<number | null>(null);
+  const more = Math.max(0, (allMemberIds?.length || 0) - 3);
+  const shownMembers = (members || []).slice(0, 3);
+  const loadMoreButtonShown = nextMemberCursor === undefined
+    ? (members?.length || 0) < (allMemberIds?.length || 0)
+    : nextMemberCursor !== null;
   const chatInvitationColor = useMemo(
     () => chatInvitationRole.getColor() || Color.logoBlue(),
     [chatInvitationRole]
@@ -66,20 +65,6 @@ export default function ChannelDetail({
     () => linkRole.getColor() || Color.logoBlue(),
     [linkRole]
   );
-  useEffect(() => {
-    if (allMemberIds?.length > 3) {
-      setShownMembers(members?.filter((member, index) => index < 3) || []);
-      setMore(allMemberIds.length - 3);
-    } else {
-      setShownMembers(members || []);
-    }
-  }, [allMemberIds?.length, members]);
-  useEffect(() => {
-    setLoadMoreButtonShown(
-      nextMemberCursor !== null &&
-        (members?.length || 0) < (allMemberIds?.length || 0)
-    );
-  }, [allMemberIds?.length, members?.length, nextMemberCursor]);
   const handleChannelEnter = useCallback(() => {
     if (alreadyJoined) {
       navigate(`/chat/${invitePath}`);
@@ -140,7 +125,7 @@ export default function ChannelDetail({
             {index === members.length - 1 ? '' : ', '}
           </span>
         ))}
-        {more && (
+        {more > 0 && (
           <p
             data-quote-own-click
             className={css`
@@ -173,22 +158,18 @@ export default function ChannelDetail({
     if (loadingMore || nextMemberCursor === null) return;
     setLoadingMore(true);
     try {
-      const { members: loadedMembers, loadMoreShown, nextMemberCursor: cursor } =
-        await loadMoreChannelMembers({
-          channelId,
-          memberCursor: nextMemberCursor ?? 0,
-          isForInvitation: true,
-          invitationSourceChannelId: sourceChannelId,
-          invitationMessageId
-        });
+      const page = await loadMoreChannelMembers({
+        channelId,
+        memberCursor: nextMemberCursor ?? 0,
+        isForInvitation: true,
+        invitationSourceChannelId: sourceChannelId,
+        invitationMessageId
+      });
       onLoadMoreChannelMembers({
         channelId,
-        members: loadedMembers.filter(
-          (member: { id: number }) => member.id !== creatorId
-        ),
-        loadMoreShown,
-        nextMemberCursor: cursor,
-        requestedMemberCursor: nextMemberCursor ?? 0
+        userId,
+        page,
+        requested: { nextMemberCursor, members, allMemberIds }
       });
     } catch (error) {
       console.error('Error loading invitation members:', error);

@@ -537,6 +537,7 @@ function ChatInfo({
 
       {!isAIChat && (
         <Members
+          key={selectedChannelId}
           channelId={selectedChannelId}
           creatorId={currentChannel.creatorId}
           isAIChat={isZeroChat || isCielChat}

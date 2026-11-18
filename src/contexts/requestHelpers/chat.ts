@@ -1,4 +1,5 @@
 import type { SharedMediaPage, SharedMediaQuery, SharedAttachment } from '~/helpers/chatSharedMedia';
+import { getMemberPageQuery, resolveMemberPage } from '../Chat/memberPage';
 import URL from '~/constants/URL';
 import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import { RequestHelpers } from '~/types';
@@ -2134,10 +2135,8 @@ export default function chatRequestHelpers({
       invitationMessageId?: number;
     }) {
       try {
-        const {
-          data: { members, loadMoreShown, nextMemberCursor }
-        } = await request.get(
-          `${URL}/chat/channel/members/more?channelId=${channelId}&memberCursor=${memberCursor}${
+        const { data } = await request.get(
+          `${URL}/chat/channel/members/more?channelId=${channelId}&${getMemberPageQuery(memberCursor)}${
             isForInvitation ? '&isForInvitation=1' : ''
           }${
             isForInvitation && invitationSourceChannelId
@@ -2150,7 +2149,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return { members, loadMoreShown, nextMemberCursor };
+        return resolveMemberPage(data);
       } catch (error) {
         return handleError(error);
       }

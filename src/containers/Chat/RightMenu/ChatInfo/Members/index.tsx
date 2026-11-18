@@ -40,6 +40,12 @@ export default function Members({
   const nextMemberCursor = useChatContext(
     (v) => v.state.channelsObj[channelId]?.nextMemberCursor
   );
+  const rosterMembers = useChatContext(
+    (v) => v.state.channelsObj[channelId]?.members
+  );
+  const allMemberIds = useChatContext(
+    (v) => v.state.channelsObj[channelId]?.allMemberIds
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showRemoveButtons, setShowRemoveButtons] = useState(false);
@@ -254,19 +260,15 @@ export default function Members({
     if (loadingMore || nextMemberCursor === null) return;
     setLoadingMore(true);
     try {
-      const { members, loadMoreShown, nextMemberCursor: cursor } =
-        await loadMoreChannelMembers({
-          channelId,
-          memberCursor: nextMemberCursor ?? 0
-        });
+      const page = await loadMoreChannelMembers({
+        channelId,
+        memberCursor: nextMemberCursor ?? 0
+      });
       onLoadMoreChannelMembers({
         channelId,
-        loadMoreShown,
-        nextMemberCursor: cursor,
-        requestedMemberCursor: nextMemberCursor ?? 0,
-        members: members.filter(
-          (member: { id: number }) => member.id !== creatorId
-        )
+        userId,
+        page,
+        requested: { nextMemberCursor, members: rosterMembers, allMemberIds }
       });
     } catch (error) {
       console.error('Error loading more channel members:', error);

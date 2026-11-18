@@ -41,7 +41,6 @@ export default function Invitation({
     (v) => v.requestHelpers.loadChatChannel
   );
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
-  const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onSetChatInvitationDetail = useChatContext(
     (v) => v.actions.onSetChatInvitationDetail
   );
@@ -50,8 +49,11 @@ export default function Invitation({
   );
 
   useEffect(() => {
+    let active = true;
     if (!invitationChannelId) {
-      init();
+      void init().catch((error) => {
+        if (active) console.error('Error loading invitation:', error);
+      });
     }
     async function init() {
       const channelId =
@@ -69,25 +71,22 @@ export default function Invitation({
         invitationMessageId: messageId,
         skipUpdateChannelId: true
       });
-      if (!channel?.id) return;
+      if (!active || !channel?.id) return;
       setLoadedChannelId(Number(channel?.id || channelId));
       onSetChatInvitationDetail({
         channel,
         messageId,
-        channelId: currentChannelId
+        channelId: currentChannelId,
+        userId
       });
     }
+    return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invitationChannelId]);
+  }, [invitationChannelId, invitePath, currentChannelId, messageId, userId]);
 
   const resolvedChannelId = invitationChannelId || loadedChannelId;
-  const invitationChannelMemberCount =
-    channelsObj[resolvedChannelId]?.members?.length;
-  const invitationChannelName = channelsObj[resolvedChannelId]?.channelName;
-  const invitationChannel = useMemo(
-    () => channelsObj[resolvedChannelId],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [resolvedChannelId, invitationChannelMemberCount, invitationChannelName]
+  const invitationChannel = useChatContext(
+    (v) => v.state.channelsObj[resolvedChannelId]
   );
 
   const alreadyJoined = useMemo(() => {
@@ -163,11 +162,11 @@ export default function Invitation({
     >
       {invitationChannel?.channelName && (
         <ChannelDetail
+          key={resolvedChannelId}
           invitePath={invitePath}
           alreadyJoined={alreadyJoined}
           channelName={invitationChannel.channelName}
           members={invitationChannel.members}
-          creatorId={invitationChannel.creatorId}
           allMemberIds={invitationChannel?.allMemberIds}
           channelId={resolvedChannelId}
           sourceChannelId={currentChannelId}

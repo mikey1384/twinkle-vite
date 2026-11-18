@@ -1,5 +1,6 @@
 import type { UserActivity } from '~/helpers/userActivity';
 import type { SharedMediaCacheEntry } from '~/helpers/chatSharedMedia';
+import type { MemberPage, MemberPageRequest } from './memberPage';
 import { Dispatch } from '~/types';
 import { getConfirmedAICardListingState } from '~/helpers/aiCardCanonicalUpdates';
 import type {
@@ -1109,26 +1110,18 @@ export default function ChatActions(dispatch: Dispatch) {
         loadMoreShownAtBottom
       });
     },
-    onLoadMoreChannelMembers({
-      channelId,
-      members,
-      loadMoreShown,
-      nextMemberCursor,
-      requestedMemberCursor
-    }: {
+    onLoadMoreChannelMembers({ channelId, userId, requested, page }: {
       channelId: number;
-      members: object[];
-      loadMoreShown: boolean;
-      nextMemberCursor: number | null;
-      requestedMemberCursor: number;
+      userId: number;
+      requested: MemberPageRequest;
+      page: MemberPage;
     }) {
       return dispatch({
         type: 'LOAD_MORE_CHANNEL_MEMBERS',
         channelId,
-        members,
-        loadMoreShown,
-        nextMemberCursor,
-        requestedMemberCursor
+        userId,
+        requested,
+        page
       });
     },
     onAddListedAICard(card: object) {
@@ -1986,17 +1979,20 @@ export default function ChatActions(dispatch: Dispatch) {
     onSetChatInvitationDetail({
       messageId,
       channelId,
-      channel
+      channel,
+      userId
     }: {
       messageId: number;
       channelId: number;
       channel: object;
+      userId: number;
     }) {
       return dispatch({
         type: 'SET_CHAT_INVITATION_DETAIL',
         messageId,
         channelId,
-        channel
+        channel,
+        userId
       });
     },
     onSetChatNotificationSettings(settings: ChatNotificationSettings | null) {

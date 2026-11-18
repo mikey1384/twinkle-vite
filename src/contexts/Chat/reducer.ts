@@ -3246,7 +3246,6 @@ export default function ChatReducer(
             settings: mergedChannelSettings,
             messagesLoadMoreButton,
             loadMoreMembersShown: action.data.channel?.loadMoreMembersShown,
-            nextMemberCursor: action.data.channel?.nextMemberCursor ?? 0,
             subchannelIds: action.data.channel?.subchannelIds,
             subchannelObj: action.data.channel?.subchannelObj,
             messageIds: action.data.messages.map((message: any) => message.id),
@@ -4489,19 +4488,17 @@ export default function ChatReducer(
       };
     }
     case 'LOAD_MORE_CHANNEL_MEMBERS': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
+      const channel = state.channelsObj[action.channelId];
+      const nextChannel = applyMemberPage(channel, action.requested, action.page);
+      if (nextChannel === channel) return state;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: applyMemberPage(
-            state.channelsObj[action.channelId] || {},
-            {
-              members: action.members,
-              requestedMemberCursor: action.requestedMemberCursor,
-              loadMoreShown: action.loadMoreShown,
-              nextMemberCursor: action.nextMemberCursor
-            }
-          )
+          [action.channelId]: nextChannel
         }
       };
     }
@@ -6592,7 +6589,11 @@ export default function ChatReducer(
           }
         }
       };
-    case 'SET_CHAT_INVITATION_DETAIL':
+    case 'SET_CHAT_INVITATION_DETAIL': {
+      if (!canonicalApplyOwnerMatchesBoundUser(state, action.userId)) {
+        return state;
+      }
+      const currentChannel = state.channelsObj[action.channel.id];
       return {
         ...state,
         channelsObj: {
@@ -6614,12 +6615,23 @@ export default function ChatReducer(
               }
             : {}),
           [action.channel.id]: {
-            ...state.channelsObj[action.channel.id],
+            ...currentChannel,
             ...action.channel,
-            loaded: state.channelsObj[action.channel.id]?.loaded || false
+            // A preview from another card can finish after a full channel
+            // load. Keep the current roster and its matching cursor together.
+            ...(currentChannel?.loaded
+              ? {
+                  members: currentChannel.members,
+                  allMemberIds: currentChannel.allMemberIds,
+                  nextMemberCursor: currentChannel.nextMemberCursor,
+                  loadMoreMembersShown: currentChannel.loadMoreMembersShown
+                }
+              : {}),
+            loaded: currentChannel?.loaded || false
           }
         }
       };
+    }
     case 'SET_CHAT_NOTIFICATION_SETTINGS':
       if (
         !shouldApplyChatNotificationSettings({

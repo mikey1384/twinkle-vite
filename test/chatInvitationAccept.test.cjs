@@ -69,6 +69,7 @@ function mount(onAcceptGroupInvitation) {
   const deps = {
     react: d.hooks,
     './ChannelDetail': ChannelDetail,
+    '../ReplyCardPresentation': { useReplyCardPresentation: () => false },
     '~/components/Button': Button,
     '~/constants/css': { Color: { rose: () => 'rose' }, mobileMaxWidth: '1px' },
     '@emotion/css': { css },
