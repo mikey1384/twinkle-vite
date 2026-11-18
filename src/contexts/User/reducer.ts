@@ -3,7 +3,10 @@ import {
   achievementTypeToId,
   achievementIdToType
 } from '~/constants/defaultValues';
-import { applyCanonicalUserProfileStatePatch } from './profileState';
+import {
+  applyCanonicalUserProfileStatePatch,
+  applyCanonicalUserSettingsPatch
+} from './profileState';
 import { reconcileProfileAppearancePatch } from '~/helpers/profileAppearance';
 
 function normalizeCommunityFundsState(data: { [key: string]: any } | null) {
@@ -284,6 +287,19 @@ export default function UserReducer(
           isAchievementsLoaded: action.isAchievementsLoaded
         }
       };
+    case 'APPLY_CANONICAL_USER_SETTINGS': {
+      const userId = Number(action.userId);
+      const apply = (user: any) =>
+        applyCanonicalUserSettingsPatch(user, action.settingsPatch);
+      return {
+        ...state,
+        userObj: { ...state.userObj, [userId]: apply(state.userObj[userId]) },
+        myState:
+          userId === Number(state.myState.userId)
+            ? apply(state.myState)
+            : state.myState
+      };
+    }
     case 'SET_USER_STATE': {
       const prevUser = state.userObj[action.userId] || {};
       const normalizedNewState = reconcileProfileAppearancePatch(

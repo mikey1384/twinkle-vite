@@ -1,3 +1,7 @@
+import ProfileActionPreview, {
+  isProfileActionPreview,
+  type ProfileActionPreviewData
+} from './ProfileActionPreview';
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { v1 as uuidv1 } from 'uuid';
@@ -39,6 +43,7 @@ export interface WebsiteAgentCardData {
   // brain proposal: the words Zero or Ciel want to save)
   preview?:
     | TopicBrainCardPreview
+    | ProfileActionPreviewData
     | {
         kind: 'asset_handoff';
         proposalId: string;
@@ -112,6 +117,15 @@ export default function WebsiteAgentCard({
   const [error, setError] = useState('');
   const [loadedProposalId, setLoadedProposalId] = useState('');
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onApplyCanonicalUserSettings = useAppContext(
+    (v) => v.user.actions.onApplyCanonicalUserSettings
+  );
+  const onUpdateNavTabsState = useAppContext(
+    (v) => v.user.actions.onUpdateNavTabsState
+  );
+  const onApplyCanonicalUserProfileState = useAppContext(
+    (v) => v.user.actions.onApplyCanonicalUserProfileState
+  );
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const imageProposalId =
     card.type === 'approval' &&
@@ -164,6 +178,7 @@ export default function WebsiteAgentCard({
           }
         ];
 
+  const profilePreview = isProfileActionPreview(card.preview) ? card.preview : null;
   const brainPreview =
     card.type === 'approval' && isTopicBrainCardPreview(card.preview)
       ? card.preview
@@ -172,7 +187,7 @@ export default function WebsiteAgentCard({
   return (
     <div
       className={
-        brainPreview || imageProposalId
+        brainPreview || imageProposalId || profilePreview
           ? `${bubbleVariables} ${stackedCard}`
           : bubbleVariables
       }
@@ -192,6 +207,7 @@ export default function WebsiteAgentCard({
       {brainPreview && !isSomeoneElses && (
         <TopicBrainProposalPreview preview={brainPreview} decided={decided} />
       )}
+      {profilePreview && !isSomeoneElses && <ProfileActionPreview preview={profilePreview} />}
       <ChoicePromptBubble
         question={
           card.type === 'choice' || card.type === 'lumine'
@@ -279,6 +295,15 @@ export default function WebsiteAgentCard({
           if (newState) onSetUserState({ userId, newState });
         }
       }
+      if (nextCard.status === 'approved' && nextCard.preview?.kind === 'profile_action') {
+        const saved = nextCard.result?.data;
+        if (saved && Number(saved.userId) === Number(userId)) {
+          if (saved.userPatch) onSetUserState({ userId, newState: saved.userPatch });
+          if (saved.settingsPatch) onApplyCanonicalUserSettings({ userId, settingsPatch: saved.settingsPatch });
+          if (saved.navTabs) onUpdateNavTabsState(saved.navTabs);
+          if (saved.profileState) onApplyCanonicalUserProfileState({ userId, profileState: saved.profileState });
+        }
+      }
       onCardUpdated?.(nextCard);
       onUpdateMessageSettings({
         channelId,
@@ -348,13 +373,13 @@ function describeApprovalStatus(
   if (card.status === 'processing')
     return 'Still working. You can tap again to check.';
   if (card.status === 'approved')
-    return isTopicBrain ? 'Saved. It’s in Topic Settings.' : 'Done!';
+    return isTopicBrain ? 'Saved. It’s in Topic Settings.' : card.preview?.kind === 'profile_action' ? 'Saved.' : 'Done!';
   if (card.status === 'declined') return 'Okay, I won’t.';
   if (card.status === 'failed')
     return (
       (typeof card.result?.error === 'string'
         ? card.result.error
-        : isTopicBrain
+        : isTopicBrain || card.preview?.kind === 'profile_action'
           ? websiteAnswerError(card.result)
           : '') || 'Oops, that didn’t work.'
     );

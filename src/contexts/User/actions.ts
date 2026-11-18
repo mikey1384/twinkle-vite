@@ -164,6 +164,19 @@ export default function UserActions(dispatch: Dispatch) {
         type: 'SET_SESSION_LOADED'
       });
     },
+    onApplyCanonicalUserSettings({
+      userId,
+      settingsPatch
+    }: {
+      userId: number;
+      settingsPatch: Record<string, unknown>;
+    }) {
+      return dispatch({
+        type: 'APPLY_CANONICAL_USER_SETTINGS',
+        userId,
+        settingsPatch
+      });
+    },
     onSetUserState({ userId, newState }: { userId: number; newState: object }) {
       return dispatch({
         type: 'SET_USER_STATE',
