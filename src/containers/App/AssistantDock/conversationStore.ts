@@ -1,3 +1,4 @@
+import { newestAsyncTaskCard } from '~/helpers/asyncTaskCard';
 import { socket } from '~/constants/sockets/api';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { applyCanonicalTextStreamUpdate } from '~/helpers/canonicalTextStream';
@@ -274,7 +275,7 @@ function handleEdit({ channelId, messageId, editedMessage, settings }: any) {
           text: editedMessage,
           suggestions: readAgentSuggestions(settings),
           card: isWebsiteAgentCardData(settings?.websiteAgentCard)
-            ? settings.websiteAgentCard
+            ? newestAsyncTaskCard(current.card, settings.websiteAgentCard)
             : null
         }
       : current

@@ -1,3 +1,4 @@
+import { newestAsyncTaskCard } from './asyncTaskCard';
 function mergeSettings(message: any, settings: Record<string, unknown>) {
   let previous: Record<string, unknown> = {};
   try {
@@ -8,7 +9,13 @@ function mergeSettings(message: any, settings: Record<string, unknown>) {
   } catch {
     previous = {};
   }
-  return { ...message, settings: { ...previous, ...settings } };
+  const nextSettings = { ...previous, ...settings };
+  if (settings.websiteAgentCard)
+    nextSettings.websiteAgentCard = newestAsyncTaskCard(
+      previous.websiteAgentCard as any,
+      settings.websiteAgentCard as any
+    );
+  return { ...message, settings: nextSettings };
 }
 
 // A card may be visible as the original, in several replies, or as the

@@ -1,4 +1,5 @@
 import { applyMemberPage } from './memberPage';
+import { newestAsyncTaskCard } from '~/helpers/asyncTaskCard';
 import { applyUserActivityEvent } from '~/helpers/userActivity';
 import {
   invalidateSharedMediaCache,
@@ -2966,6 +2967,30 @@ export default function ChatReducer(
     }
     case 'EDIT_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
+      if (action.settings?.websiteAgentCard?.asyncTask) {
+        const previousSettings =
+          prevChannelObj?.messagesObj?.[action.messageId]?.settings;
+        let previousCard;
+        try {
+          previousCard = (
+            typeof previousSettings === 'string'
+              ? JSON.parse(previousSettings)
+              : previousSettings
+          )?.websiteAgentCard;
+        } catch {
+          /* no prior snapshot */
+        }
+        action = {
+          ...action,
+          settings: {
+            ...action.settings,
+            websiteAgentCard: newestAsyncTaskCard(
+              previousCard,
+              action.settings.websiteAgentCard
+            )
+          }
+        };
+      }
       // Canonical persisted edits must always reconcile. Temporary stream
       // snapshots belong only to the generation that still owns this channel.
       if (

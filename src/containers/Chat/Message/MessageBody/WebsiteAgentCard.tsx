@@ -2,7 +2,11 @@ import ProfileActionPreview, {
   isProfileActionPreview,
   type ProfileActionPreviewData
 } from './ProfileActionPreview';
-import React, { useState } from 'react';
+import {
+  describeAsyncTaskCard,
+  newestAsyncTaskCard
+} from '~/helpers/asyncTaskCard';
+import React, { useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { v1 as uuidv1 } from 'uuid';
 import {
@@ -20,6 +24,14 @@ import TopicBrainProposalPreview from './TopicBrainProposalPreview';
 import AssetHandoffPreview from './AssetHandoffPreview';
 
 export interface WebsiteAgentCardData {
+  asyncTask?: {
+    id: string;
+    revision: number;
+    operation: string;
+    issuedAt: number;
+    state?: string;
+    stateRevision?: number;
+  };
   // lumine: sending a request to Lumine on duty, or a project owner's
   // choice of sponsor access; decided on the server like the others.
   type: 'choice' | 'approval' | 'permission' | 'lumine';
@@ -113,6 +125,8 @@ export default function WebsiteAgentCard({
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const latestCard = useRef(card);
+  latestCard.current = newestAsyncTaskCard(latestCard.current, card);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loadedProposalId, setLoadedProposalId] = useState('');
@@ -256,8 +270,11 @@ export default function WebsiteAgentCard({
         ...(profilePreview ? { previewedProfileActionId: card.id } : {}),
         ...decision
       });
-      const nextCard: WebsiteAgentCardData | undefined = data?.card;
-      if (!nextCard) throw new Error('No card returned');
+      if (!data?.card) throw new Error('No card returned');
+      const nextCard = newestAsyncTaskCard(
+        latestCard.current,
+        data.card as WebsiteAgentCardData
+      );
       if (
         nextCard.status === 'approved' &&
         nextCard.preview?.kind === 'asset_handoff'
@@ -371,6 +388,8 @@ function describeApprovalStatus(
   card: WebsiteAgentCardData,
   isTopicBrain = false
 ) {
+  const taskStatus = describeAsyncTaskCard(card);
+  if (taskStatus) return taskStatus;
   if (card.status === 'processing')
     return 'Still working. You can tap again to check.';
   if (card.status === 'approved')
