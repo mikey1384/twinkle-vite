@@ -37,6 +37,9 @@ export default function Members({
   onlineMemberObj: any;
   theme: string;
 }) {
+  const nextMemberCursor = useChatContext(
+    (v) => v.state.channelsObj[channelId]?.nextMemberCursor
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showRemoveButtons, setShowRemoveButtons] = useState(false);
@@ -248,15 +251,19 @@ export default function Members({
   }
 
   async function handleLoadMore() {
+    if (loadingMore || nextMemberCursor === null) return;
     setLoadingMore(true);
     try {
-      const { members, loadMoreShown } = await loadMoreChannelMembers({
-        channelId,
-        lastId: membersNotOnCall[membersNotOnCall.length - 1].id
-      });
+      const { members, loadMoreShown, nextMemberCursor: cursor } =
+        await loadMoreChannelMembers({
+          channelId,
+          memberCursor: nextMemberCursor ?? 0
+        });
       onLoadMoreChannelMembers({
         channelId,
         loadMoreShown,
+        nextMemberCursor: cursor,
+        requestedMemberCursor: nextMemberCursor ?? 0,
         members: members.filter(
           (member: { id: number }) => member.id !== creatorId
         )

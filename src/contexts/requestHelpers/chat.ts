@@ -2122,22 +2122,22 @@ export default function chatRequestHelpers({
     },
     async loadMoreChannelMembers({
       channelId,
-      lastId,
+      memberCursor,
       isForInvitation = false,
       invitationSourceChannelId,
       invitationMessageId
     }: {
       channelId: number;
-      lastId: number;
+      memberCursor: number;
       isForInvitation?: boolean;
       invitationSourceChannelId?: number;
       invitationMessageId?: number;
     }) {
       try {
         const {
-          data: { members, loadMoreShown }
+          data: { members, loadMoreShown, nextMemberCursor }
         } = await request.get(
-          `${URL}/chat/channel/members/more?channelId=${channelId}&lastId=${lastId}${
+          `${URL}/chat/channel/members/more?channelId=${channelId}&memberCursor=${memberCursor}${
             isForInvitation ? '&isForInvitation=1' : ''
           }${
             isForInvitation && invitationSourceChannelId
@@ -2150,7 +2150,7 @@ export default function chatRequestHelpers({
           }`,
           auth()
         );
-        return { members, loadMoreShown };
+        return { members, loadMoreShown, nextMemberCursor };
       } catch (error) {
         return handleError(error);
       }

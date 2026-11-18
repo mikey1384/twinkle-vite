@@ -1,3 +1,4 @@
+import { applyMemberPage } from './memberPage';
 import { applyUserActivityEvent } from '~/helpers/userActivity';
 import {
   invalidateSharedMediaCache,
@@ -3245,6 +3246,7 @@ export default function ChatReducer(
             settings: mergedChannelSettings,
             messagesLoadMoreButton,
             loadMoreMembersShown: action.data.channel?.loadMoreMembersShown,
+            nextMemberCursor: action.data.channel?.nextMemberCursor ?? 0,
             subchannelIds: action.data.channel?.subchannelIds,
             subchannelObj: action.data.channel?.subchannelObj,
             messageIds: action.data.messages.map((message: any) => message.id),
@@ -4491,19 +4493,15 @@ export default function ChatReducer(
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            loadMoreMembersShown: action.loadMoreShown,
-            members: [
-              ...state.channelsObj[action.channelId].members,
-              ...action.members.filter(
-                (newMember: any) =>
-                  !state.channelsObj[action.channelId].members.some(
-                    (existingMember: any) => existingMember.id === newMember.id
-                  )
-              )
-            ]
-          }
+          [action.channelId]: applyMemberPage(
+            state.channelsObj[action.channelId] || {},
+            {
+              members: action.members,
+              requestedMemberCursor: action.requestedMemberCursor,
+              loadMoreShown: action.loadMoreShown,
+              nextMemberCursor: action.nextMemberCursor
+            }
+          )
         }
       };
     }

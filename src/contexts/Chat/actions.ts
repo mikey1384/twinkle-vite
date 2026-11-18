@@ -1112,17 +1112,23 @@ export default function ChatActions(dispatch: Dispatch) {
     onLoadMoreChannelMembers({
       channelId,
       members,
-      loadMoreShown
+      loadMoreShown,
+      nextMemberCursor,
+      requestedMemberCursor
     }: {
       channelId: number;
       members: object[];
       loadMoreShown: boolean;
+      nextMemberCursor: number | null;
+      requestedMemberCursor: number;
     }) {
       return dispatch({
         type: 'LOAD_MORE_CHANNEL_MEMBERS',
         channelId,
         members,
-        loadMoreShown
+        loadMoreShown,
+        nextMemberCursor,
+        requestedMemberCursor
       });
     },
     onAddListedAICard(card: object) {

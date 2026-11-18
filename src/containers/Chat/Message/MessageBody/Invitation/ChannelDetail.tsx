@@ -34,6 +34,9 @@ export default function ChannelDetail({
   }[];
   sourceChannelId: number;
 }) {
+  const nextMemberCursor = useChatContext(
+    (v) => v.state.channelsObj[channelId]?.nextMemberCursor
+  );
   const inReply = useReplyCardPresentation();
   const navigate = useNavigate();
   const chatInvitationRole = useRoleColor('chatInvitation', {
@@ -72,8 +75,11 @@ export default function ChannelDetail({
     }
   }, [allMemberIds?.length, members]);
   useEffect(() => {
-    setLoadMoreButtonShown((members?.length || 0) < (allMemberIds?.length || 0));
-  }, [allMemberIds?.length, members?.length]);
+    setLoadMoreButtonShown(
+      nextMemberCursor !== null &&
+        (members?.length || 0) < (allMemberIds?.length || 0)
+    );
+  }, [allMemberIds?.length, members?.length, nextMemberCursor]);
   const handleChannelEnter = useCallback(() => {
     if (alreadyJoined) {
       navigate(`/chat/${invitePath}`);
@@ -164,22 +170,30 @@ export default function ChannelDetail({
   );
 
   async function handleLoadMore() {
-    if (!members?.length) return;
+    if (loadingMore || nextMemberCursor === null) return;
     setLoadingMore(true);
-    const lastId = members[members.length - 1].id;
-    const { members: loadedMembers } = await loadMoreChannelMembers({
-      channelId,
-      lastId,
-      isForInvitation: true,
-      invitationSourceChannelId: sourceChannelId,
-      invitationMessageId
-    });
-    onLoadMoreChannelMembers({
-      channelId,
-      members: loadedMembers.filter(
-        (member: { id: number }) => member.id !== creatorId
-      )
-    });
-    setLoadingMore(false);
+    try {
+      const { members: loadedMembers, loadMoreShown, nextMemberCursor: cursor } =
+        await loadMoreChannelMembers({
+          channelId,
+          memberCursor: nextMemberCursor ?? 0,
+          isForInvitation: true,
+          invitationSourceChannelId: sourceChannelId,
+          invitationMessageId
+        });
+      onLoadMoreChannelMembers({
+        channelId,
+        members: loadedMembers.filter(
+          (member: { id: number }) => member.id !== creatorId
+        ),
+        loadMoreShown,
+        nextMemberCursor: cursor,
+        requestedMemberCursor: nextMemberCursor ?? 0
+      });
+    } catch (error) {
+      console.error('Error loading invitation members:', error);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 }
