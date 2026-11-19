@@ -118,6 +118,7 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     model: 'gpt-6.2-sol',
     mode: 'medium',
     label: 'GPT-6.2 Sol',
+    manualSelectionOnly: true,
     description: 'Try another approach to a tricky feature or bug.',
     defaultReasoningEffort: 'medium',
     supportedReasoningEfforts: ['medium']
@@ -330,7 +331,10 @@ export function getLumineSelectionForMode({
   const preferredOption =
     modelOptions.find(
       (option) => option.model === preferredModel && option.mode === mode
-    ) || modelOptions.find((option) => option.mode === mode);
+    ) ||
+    modelOptions.find(
+      (option) => option.mode === mode && !option.manualSelectionOnly
+    );
   if (!preferredOption) return null;
 
   return normalizeLumineModelSelection({
@@ -347,7 +351,9 @@ export function getAvailableLumineModes(
   modelOptions: BuildLumineModelOption[]
 ) {
   return LUMINE_MODES.filter((mode) =>
-    modelOptions.some((option) => option.mode === mode)
+    modelOptions.some(
+      (option) => option.mode === mode && !option.manualSelectionOnly
+    )
   );
 }
 

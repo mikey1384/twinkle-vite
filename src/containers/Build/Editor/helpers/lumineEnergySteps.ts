@@ -80,6 +80,7 @@ export function resolveLumineEnergyPreflight({
   const lighter = priced
     .filter(
       (option) =>
+        !option.manualSelectionOnly &&
         MODE_RANK[option.mode] < MODE_RANK[current.mode] &&
         countLumineSteps(option, energyRemaining) >=
           LUMINE_MIN_STEPS_FOR_PROJECT_EDIT

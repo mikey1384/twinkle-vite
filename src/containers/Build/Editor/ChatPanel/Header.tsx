@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import Button from '~/components/Button';
@@ -770,6 +770,7 @@ function LumineModelSelectionSettings({
   compact?: boolean;
   showModeLabel?: boolean;
 }) {
+  const modelDescriptionId = useId();
   const availableModes = getAvailableLumineModes(control.modelOptions);
   const selectedOption = getLumineModelOption(
     control.modelOptions,
@@ -781,6 +782,11 @@ function LumineModelSelectionSettings({
     modelOptions: control.modelOptions
   });
   const hasAdvancedModelOptions = advancedModelOptions.length > 0;
+  const showModelDescription =
+    advancedShown &&
+    hasAdvancedModelOptions &&
+    control.value.mode === 'medium' &&
+    Boolean(selectedOption.description);
 
   return (
     <div
@@ -851,6 +857,7 @@ function LumineModelSelectionSettings({
           disabled={control.loading}
           compact={compact}
           icon="bolt"
+          descriptionId={showModelDescription ? modelDescriptionId : undefined}
           onChange={handleModelChange}
         >
           {advancedModelOptions.map((option) => (
@@ -860,10 +867,9 @@ function LumineModelSelectionSettings({
           ))}
         </LumineSelect>
       ) : null}
-      {advancedShown &&
-      selectedOption.mode === 'medium' &&
-      selectedOption.description ? (
+      {showModelDescription ? (
         <span
+          id={modelDescriptionId}
           className={css`
             flex-basis: 100%;
             text-align: right;
@@ -929,6 +935,7 @@ function LumineSelect({
   disabled,
   compact = false,
   icon,
+  descriptionId,
   children,
   onChange
 }: {
@@ -937,6 +944,7 @@ function LumineSelect({
   disabled?: boolean;
   compact?: boolean;
   icon?: string;
+  descriptionId?: string;
   children: React.ReactNode;
   onChange: (value: string) => void;
 }) {
@@ -962,6 +970,10 @@ function LumineSelect({
             border-color 0.15s ease,
             background-color 0.15s ease,
             transform 0.15s ease;
+          &:focus-within {
+            outline: 2px solid currentColor;
+            outline-offset: 2px;
+          }
           &:hover,
           &:focus-within {
             border-color: var(--theme-border);
@@ -975,6 +987,7 @@ function LumineSelect({
           value={value}
           disabled={disabled}
           aria-label={label}
+          aria-describedby={descriptionId}
           onChange={(event) => onChange(event.target.value)}
           className={css`
             position: absolute;
@@ -1026,6 +1039,7 @@ function LumineSelect({
       <select
         value={value}
         disabled={disabled}
+        aria-describedby={descriptionId}
         onChange={(event) => onChange(event.target.value)}
         className={css`
           min-width: 6rem;
@@ -1037,10 +1051,9 @@ function LumineSelect({
           font-size: 1rem;
           font-weight: 900;
           cursor: ${disabled ? 'not-allowed' : 'pointer'};
-          &:focus,
           &:focus-visible {
-            outline: none;
-            box-shadow: none;
+            outline: 2px solid currentColor;
+            outline-offset: 2px;
           }
         `}
       >

@@ -48,6 +48,7 @@ export interface BuildLumineModelOption {
   mode: BuildLumineMode;
   label: string;
   description: string;
+  manualSelectionOnly?: boolean;
   apiContextWindowTokens?: number;
   apiMaxOutputTokens?: number;
   operatingContextWindowTokens?: number;

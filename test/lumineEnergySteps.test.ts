@@ -53,6 +53,20 @@ test('a model that cannot read and then edit is offered the heaviest lighter mod
   assert.equal(preflight.tightSelection?.lighterSteps, 4);
 });
 
+test('Energy preflight only suggests models eligible for automatic selection', () => {
+  const sol = {
+    ...option('gpt-6.2-sol', 'medium', 20_000, 3_000),
+    manualSelectionOnly: true
+  };
+  const preflight = resolveLumineEnergyPreflight({
+    modelOptions: [...OPTIONS, sol],
+    selection: heavy,
+    energyRemaining: 80_000
+  });
+  assert.ok(countLumineSteps(sol, 80_000) >= 2);
+  assert.equal(preflight.tightSelection?.lighter.model, 'gpt-6-luna');
+});
+
 test('enough steps, Auto, or no number to go on: nothing to say', () => {
   for (const [selection, energyRemaining] of [
     [heavy, 600_000],
