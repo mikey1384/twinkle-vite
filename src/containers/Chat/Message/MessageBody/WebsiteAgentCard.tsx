@@ -328,6 +328,9 @@ export default function WebsiteAgentCard({
         messageId,
         settings: { websiteAgentCard: nextCard }
       });
+      // A saved task advances from its persisted card. Sending a chat reply
+      // for each tap would start an unrelated assistant turn and use Energy.
+      if (nextCard.asyncTask) return;
       // A failed or still-running operation is not the user's completed
       // answer. Keep its canonical state visible and let them retry here.
       if (
