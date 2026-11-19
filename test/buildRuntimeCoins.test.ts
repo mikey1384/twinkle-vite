@@ -634,3 +634,15 @@ test('review-r2 H1: the review screen says a plain price sharing a tally key gro
   assert.equal(coinTallyGroupLine({ ...land, keyGroup: 'hats' }, prices), '');
 });
 
+
+test('reward review card chip names who receives shop Coins in a few words', async () => {
+  const { buildCoinPricePayeeChip } = await import('../src/helpers/buildRewardReviewCard.ts');
+  assert.equal(
+    buildCoinPricePayeeChip([{ id: 'pass', title: 'Pass', coins: 5000, destination: 'owner' }] as any, 'Lemon78717'),
+    'Shop Coins → Lemon78717'
+  );
+  assert.equal(
+    buildCoinPricePayeeChip([{ id: 'snack', title: 'Snack', coins: 10, destination: 'removed' }] as any, 'Lemon78717'),
+    null
+  );
+});

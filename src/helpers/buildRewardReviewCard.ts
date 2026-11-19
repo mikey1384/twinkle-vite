@@ -417,6 +417,23 @@ export function formatBuildCoinPriceLine(
   ].filter(Boolean);
   return `${price.title} — ${formatAmount(price.coins)} Coins, ${destination}${extras.length ? ` (${extras.join('; ')})` : ''}`;
 }
+// The chat card's short chip when any price pays a person (Mikey 11-19:
+// no red sentence on the card; the review-note rule lives in the approve
+// dialog). Returns null when every price removes its Coins.
+export function buildCoinPricePayeeChip(
+  prices: BuildCoinPriceSummary[],
+  ownerUsername?: string | null
+) {
+  const parts = [
+    prices.some((price) => price.destination === 'owner' && price.coins > 0)
+      ? `Shop Coins → ${ownerUsername || 'owner'}`
+      : '',
+    prices.some((price) => price.builders) ? 'Shop Coins → land builders' : '',
+    prices.some((price) => price.offers) ? 'Resales pay players' : ''
+  ].filter(Boolean);
+  return parts.length ? parts.join(' · ') : null;
+}
+
 // The chat card's red line when any price pays a person: who, in plain words.
 export function buildCoinPricePersonWarning(
   prices: BuildCoinPriceSummary[],

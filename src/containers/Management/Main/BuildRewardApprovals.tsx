@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import usePendingAction from '~/helpers/hooks/usePendingAction';
 import { releaseScrollAnchorTopPin } from '~/helpers/scrollAnchorRestorationCoordinator';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -146,6 +146,13 @@ export default function BuildRewardApprovals() {
   >({});
   const [reason, setReason] = useState('');
   const [rulesText, setRulesText] = useState('');
+  const noteRequiredForShop = useMemo(() => {
+    try {
+      return configPaysPerson(JSON.parse(rulesText));
+    } catch {
+      return false;
+    }
+  }, [rulesText]);
   const [rulesError, setRulesError] = useState('');
   const [proposalError, setProposalError] = useState('');
   // A new app name, and whether to offer the copy's thumbnail (null: offer it
@@ -601,12 +608,11 @@ export default function BuildRewardApprovals() {
                   </label>
                 )}
                 <label>
-                  Review note
+                  {noteRequiredForShop
+                    ? 'Note (required: app has a shop)'
+                    : 'Review note'}
                   <span className={hintClass}>
-                    The creator reads it. Required for rejection or
-                    revocation, and for approving prices whose Coins go to a
-                    person (the owner, builders, or the previous holder when an
-                    item is resold); with a proposal it explains your changes.
+                    The creator reads it. Required to reject or revoke.
                   </span>
                   <textarea
                     maxLength={1000}
@@ -922,7 +928,7 @@ export default function BuildRewardApprovals() {
       }
       if (configPaysPerson(config) && !reason.trim()) {
         setRulesError(
-          'Some prices pay a person (the owner, builders, or the previous holder when an item is resold). Write a review note saying why that is fair before approving.'
+          'This app has a shop that pays a person. Add a short note before approving.'
         );
         return;
       }

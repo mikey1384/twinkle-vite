@@ -10,7 +10,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { ADMIN_USER_ID } from '~/constants/defaultValues';
 import { useAppContext } from '~/contexts';
 import {
-  buildCoinPricePersonWarning,
+  buildCoinPricePayeeChip,
   formatBuildCoinPriceLine,
   formatBuildLandLine,
   formatBuildRewardProposalSummary,
@@ -140,6 +140,12 @@ export default function BuildRewardReview({
           {coinPrices.length > 0 ? (
             <BuildMessageCardChip icon="coins" themeName={sender.profileTheme}>
               {coinPrices.length} Coin {coinPrices.length === 1 ? 'price' : 'prices'}
+            </BuildMessageCardChip>
+          ) : null}
+          {(status === 'pending' || status === 'changes_offered') &&
+          buildCoinPricePayeeChip(coinPrices, review?.ownerUsername) ? (
+            <BuildMessageCardChip icon="coins" themeName={sender.profileTheme}>
+              {buildCoinPricePayeeChip(coinPrices, review?.ownerUsername)}
             </BuildMessageCardChip>
           ) : null}
           {land ? (
@@ -425,12 +431,6 @@ export default function BuildRewardReview({
               <span>{answerError}</span>
             </div>
           ) : null}
-          {coinPrices.length > 0 &&
-          buildCoinPricePersonWarning(coinPrices, review?.ownerUsername, land) ? (
-            <div className={coinPersonClass} role="note">
-              {buildCoinPricePersonWarning(coinPrices, review?.ownerUsername, land)}
-            </div>
-          ) : null}
           {coinPrices.length > 0 ? (
             <div className={budgetClass}>
               {coinPrices.map((price) => (
@@ -639,17 +639,6 @@ const compareEmptyClass = css`
   font-size: 0.95rem;
 `;
 
-// Prices whose Coins reach a person (owner, builders, previous holder).
-const coinPersonClass = css`
-  color: ${Color.red()};
-  border: 1px solid ${Color.red(0.5)};
-  background: ${Color.red(0.06)};
-  border-radius: 8px;
-  padding: 0.4rem 0.7rem;
-  font-size: 1.1rem;
-  font-weight: 700;
-  line-height: 1.4;
-`;
 const budgetClass = css`
   display: flex;
   flex-wrap: wrap;
