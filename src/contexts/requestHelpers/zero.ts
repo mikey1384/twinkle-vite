@@ -24,18 +24,20 @@ export default function zeroRequestHelpers({
       cardId,
       approved,
       choice,
-      previewedAssetProposalId
+      previewedAssetProposalId,
+      previewedProfileActionId
     }: {
       messageId: number;
       cardId: string;
       approved?: boolean;
       choice?: string;
       previewedAssetProposalId?: string;
+      previewedProfileActionId?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/zero/website-agent/cards/decide`,
-          { messageId, cardId, approved, choice, previewedAssetProposalId },
+          { messageId, cardId, approved, choice, previewedAssetProposalId, previewedProfileActionId },
           auth()
         );
         return data;

@@ -253,6 +253,7 @@ export default function WebsiteAgentCard({
         messageId,
         cardId: card.id,
         ...(imageProposalId ? { previewedAssetProposalId: loadedProposalId } : {}),
+        ...(profilePreview ? { previewedProfileActionId: card.id } : {}),
         ...decision
       });
       const nextCard: WebsiteAgentCardData | undefined = data?.card;
