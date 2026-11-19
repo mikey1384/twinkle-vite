@@ -76,10 +76,6 @@ test('lumine workspace header exposes simple modes with advanced model choices',
   );
   assert.match(
     selectionHelperSource,
-    /export function getAvailableLumineModes\([\s\S]*?LUMINE_MODES\.filter\([\s\S]*?modelOptions\.some\(\(option\) => option\.mode === mode\)/m
-  );
-  assert.match(
-    selectionHelperSource,
     /DEFAULT_LUMINE_MODEL[^=]*= 'auto'[\s\S]*?DEFAULT_LUMINE_THINK_LEVEL[^=]*= 'medium'/
   );
   assert.match(
@@ -101,6 +97,7 @@ test('lumine fallback lineup lists the five modes and preserves each mode defaul
   const {
     DEFAULT_LUMINE_MODEL,
     DEFAULT_LUMINE_THINK_LEVEL,
+    getAvailableLumineModes,
     getLumineSelectionForMode,
     getSelectableLumineModelOptions,
     resolveLumineModelSelectionFromPolicy
@@ -119,6 +116,17 @@ test('lumine fallback lineup lists the five modes and preserves each mode defaul
   );
 
   const fallbackOptions = getSelectableLumineModelOptions(null);
+  assert.deepEqual(getAvailableLumineModes(fallbackOptions), [
+    'auto', 'superlight', 'light', 'medium', 'heavy', 'superheavy'
+  ]);
+  const withoutSonnet = fallbackOptions.filter(
+    (option) => option.model !== 'claude-sonnet-5-5'
+  );
+  assert.ok(!getAvailableLumineModes(withoutSonnet).includes('medium'));
+  assert.equal(
+    getLumineSelectionForMode({ mode: 'medium', modelOptions: withoutSonnet }),
+    null
+  );
   assert.deepEqual(
     fallbackOptions.map((option) => [
       option.model,
