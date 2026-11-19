@@ -238,11 +238,19 @@ test('a cached export mismatch on a relative JS chunk reloads once even with a h
     assert.equal(helpers.isLazyImportLoadError(error), true);
   }
   const error = new SyntaxError(`The requested module '${chunk}' does not provide an export named 'u'`);
+  browser.setVisibility('hidden');
+  assert.equal(await helpers.recoverFromLazyImportLoadError(error), false);
+  browser.setVisibility('visible');
   assert.equal(await helpers.recoverFromLazyImportLoadError(error), true);
+  assert.equal(await helpers.recoverFromLazyImportLoadError(error), false);
   window.sessionStorage.removeItem('twinkleLazyImportReloadAt');
   assert.equal(await helpers.recoverFromLazyImportLoadError(error), false);
   assert.equal(browser.replaced.length, 1);
   assert.match(browser.replaced[0], /_twinkleLazyImportReload=/);
+  const reloaded = installBrowserStubs();
+  window.location.href = browser.replaced[0];
+  assert.equal(await helpers.recoverFromLazyImportLoadError(error), false);
+  assert.deepEqual(reloaded.replaced, []);
   for (const message of ["Importing binding name 'u' is not found.", "import 'u' not found"]) {
     assert.equal(helpers.isLazyImportLoadError(Object.assign(new SyntaxError(message), { sourceURL: CHUNK })), true);
     assert.equal(helpers.isLazyImportLoadError(new SyntaxError(message)), false);
@@ -251,4 +259,22 @@ test('a cached export mismatch on a relative JS chunk reloads once even with a h
   for (const specifier of ['react-spring', './module.ts', 'https://other.test/file.js']) {
     assert.equal(helpers.isLazyImportLoadError(new SyntaxError(error.message.replace(chunk, specifier))), false);
   }
+});
+
+test('app syntax errors pass through unchanged and never enter export recovery', async () => {
+  const browser = installBrowserStubs();
+  for (const message of [
+    "Unexpected token '}'",
+    "Export 'u' is not defined in module",
+    "Invalid fixture: The requested module './chunk-BPkQjtQ_.js' does not provide an export named 'u'",
+    "The requested module './chunk-BPkQjtQ_.js' does not provide an export named 'u' in this test fixture"
+  ]) {
+    const error = Object.assign(new SyntaxError(message), { sourceURL: CHUNK });
+    assert.equal(helpers.isLazyImportLoadError(error), false);
+    await assert.rejects(helpers.importWithRecovery(async () => {
+      throw error;
+    }), cause => cause === error);
+    assert.equal(await helpers.recoverFromLazyImportLoadError(error), false);
+  }
+  assert.deepEqual(browser.replaced, []);
 });

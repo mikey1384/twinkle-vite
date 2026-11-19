@@ -107,16 +107,19 @@ export async function importWithRecovery<T>(
         throw error;
       }
       const truncated = isTruncatedScriptError(error);
+      const exportMismatch = isChunkExportError(error);
       // Chromium names the failed file; Safari does not, so read the chunk
       // file name the build wrote into the importer itself.
-      if (freshCopy && !truncated && !isChunkExportError(error)) {
+      if (freshCopy && !truncated && !exportMismatch) {
         freshCopyUrl =
           getFreshCopyChunkUrl(error) ||
           freshCopyUrl ||
           getImporterChunkUrl(importer);
       }
       const canRetry =
-        attempt < lazyImportRetryDelays.length && freshCopyUrl !== null;
+        !exportMismatch &&
+        attempt < lazyImportRetryDelays.length &&
+        freshCopyUrl !== null;
       // a truncated chunk (failed to parse) goes straight to the capped
       // reload; a stale one (a deploy replaced it) reloads as soon as the
       // probe confirms it, instead of burning the retry delays
@@ -183,9 +186,11 @@ export function isLazyLoadConnectionError(error: unknown) {
 // deployed file still answers HEAD with valid JavaScript.
 function isChunkExportError(error: unknown) {
   const failure = error as SyntaxError & { sourceURL?: string; fileName?: string };
-  if (failure?.name !== 'SyntaxError' || typeof failure.message !== 'string') return false;
+  if (failure?.name !== 'SyntaxError' || typeof failure.message !== 'string') {
+    return false;
+  }
   const named = failure.message.match(
-    /module ['"]([^'"]+)['"] (?:does not|doesn't) provide an export named:? ['"][^'"]+['"]/
+    /^The requested module ['"]([^'"]+)['"] (?:does not|doesn't) provide an export named:? ['"][^'"]+['"]$/
   );
   // WebKit (and older Gecko) reports the importing file separately.
   const missingBinding = /^(?:Importing binding name ['"][^'"]+['"] is not found|import ['"][^'"]+['"] not found)\.?$/i;
@@ -274,6 +279,7 @@ async function getLazyImportReloadReason(
     if (confirmedStaleOnly) return null;
     reason = 'truncated';
   } else if (isChunkExportError(error)) {
+    if (!isPageUsable()) return null;
     reason = 'export';
   } else if (failedUrl && (await isLikelyStaleLazyImportAsset(failedUrl))) {
     reason = 'update';
