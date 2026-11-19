@@ -109,7 +109,7 @@ export async function importWithRecovery<T>(
       const truncated = isTruncatedScriptError(error);
       // Chromium names the failed file; Safari does not, so read the chunk
       // file name the build wrote into the importer itself.
-      if (freshCopy && !truncated) {
+      if (freshCopy && !truncated && !isChunkExportError(error)) {
         freshCopyUrl =
           getFreshCopyChunkUrl(error) ||
           freshCopyUrl ||
@@ -179,11 +179,34 @@ export function isLazyLoadConnectionError(error: unknown) {
   return (error as Error | null)?.name === 'LazyLoadConnectionError';
 }
 
+// A cached dependency can link against the wrong exports even while the
+// deployed file still answers HEAD with valid JavaScript.
+function isChunkExportError(error: unknown) {
+  const failure = error as SyntaxError & { sourceURL?: string; fileName?: string };
+  if (failure?.name !== 'SyntaxError' || typeof failure.message !== 'string') return false;
+  const named = failure.message.match(
+    /module ['"]([^'"]+)['"] (?:does not|doesn't) provide an export named:? ['"][^'"]+['"]/
+  );
+  // WebKit (and older Gecko) reports the importing file separately.
+  const missingBinding = /^(?:Importing binding name ['"][^'"]+['"] is not found|import ['"][^'"]+['"] not found)\.?$/i;
+  const source = named?.[1] || (missingBinding.test(failure.message) &&
+    (failure.sourceURL || failure.fileName));
+  if (!source) return false;
+  if (/^\.\/[\w.-]+\.js$/.test(source)) return true;
+  try {
+    const url = new URL(source);
+    return isOwnAssetOrigin(url.origin) && /^\/assets\/[\w.-]+\.js$/.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export function isLazyImportLoadError(error: unknown) {
   const message = String((error as Error)?.message || error || '');
   return (
     isLazyLoadConnectionError(error) ||
     isTruncatedScriptError(error) ||
+    isChunkExportError(error) ||
     message.includes('Failed to fetch dynamically imported module') ||
     message.includes('error loading dynamically imported module') ||
     message.includes('Importing a module script failed') ||
@@ -231,7 +254,7 @@ export function reloadForLazyImportRecovery() {
   }
 }
 
-type LazyImportReloadReason = 'update' | 'truncated';
+type LazyImportReloadReason = 'update' | 'truncated' | 'export';
 
 // Why a reload can fix this failure, or null when it can't or isn't allowed.
 // - truncated: the chunk arrived cut off; the browser keeps it broken.
@@ -250,6 +273,8 @@ async function getLazyImportReloadReason(
   if (isTruncatedScriptError(error)) {
     if (confirmedStaleOnly) return null;
     reason = 'truncated';
+  } else if (isChunkExportError(error)) {
+    reason = 'export';
   } else if (failedUrl && (await isLikelyStaleLazyImportAsset(failedUrl))) {
     reason = 'update';
   } else if (confirmedStaleOnly) {
@@ -273,7 +298,8 @@ async function getLazyImportReloadReason(
     }
     const reloadCounts = readLazyImportReloadCounts();
     const pathname = window.location.pathname;
-    if ((reloadCounts[pathname] || 0) >= LAZY_IMPORT_MAX_RELOADS_PER_PATH) {
+    const limit = reason === 'export' ? 1 : LAZY_IMPORT_MAX_RELOADS_PER_PATH;
+    if ((reloadCounts[pathname] || 0) >= limit) {
       return null;
     }
     reloadCounts[pathname] = (reloadCounts[pathname] || 0) + 1;

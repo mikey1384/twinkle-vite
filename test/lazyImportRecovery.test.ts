@@ -229,3 +229,26 @@ test('request helpers check the fresh copy and never keep a failure', () => {
     /loading\.catch\(\(\) => \{\s*if \(loadedModules\[moduleName\] === loading\) \{\s*delete loadedModules\[moduleName\];/m
   );
 });
+
+test('a cached export mismatch on a relative JS chunk reloads once even with a healthy deployed file', async () => {
+  const browser = installBrowserStubs();
+  const chunk = './react-spring_web.modern-BPkQjtQ_.js';
+  for (const [specifier, wording] of [[chunk, 'does not provide an export named'], [CHUNK, "doesn't provide an export named:"]]) {
+    const error = new SyntaxError(`The requested module '${specifier}' ${wording} 'u'`);
+    assert.equal(helpers.isLazyImportLoadError(error), true);
+  }
+  const error = new SyntaxError(`The requested module '${chunk}' does not provide an export named 'u'`);
+  assert.equal(await helpers.recoverFromLazyImportLoadError(error), true);
+  window.sessionStorage.removeItem('twinkleLazyImportReloadAt');
+  assert.equal(await helpers.recoverFromLazyImportLoadError(error), false);
+  assert.equal(browser.replaced.length, 1);
+  assert.match(browser.replaced[0], /_twinkleLazyImportReload=/);
+  for (const message of ["Importing binding name 'u' is not found.", "import 'u' not found"]) {
+    assert.equal(helpers.isLazyImportLoadError(Object.assign(new SyntaxError(message), { sourceURL: CHUNK })), true);
+    assert.equal(helpers.isLazyImportLoadError(new SyntaxError(message)), false);
+  }
+  assert.equal(helpers.isLazyImportLoadError(new TypeError(error.message)), false);
+  for (const specifier of ['react-spring', './module.ts', 'https://other.test/file.js']) {
+    assert.equal(helpers.isLazyImportLoadError(new SyntaxError(error.message.replace(chunk, specifier))), false);
+  }
+});
