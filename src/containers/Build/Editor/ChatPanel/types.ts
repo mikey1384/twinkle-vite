@@ -20,6 +20,7 @@ export type BuildLumineModel =
   | 'gpt-6-luna'
   | 'claude-haiku-5-5'
   | 'gpt-6.1-terra'
+  | 'gpt-6.2-sol'
   | 'claude-sonnet-5-5'
   | 'claude-opus-5-5'
   | 'claude-fable-5-2'

@@ -860,6 +860,20 @@ function LumineModelSelectionSettings({
           ))}
         </LumineSelect>
       ) : null}
+      {advancedShown &&
+      selectedOption.mode === 'medium' &&
+      selectedOption.description ? (
+        <span
+          className={css`
+            flex-basis: 100%;
+            text-align: right;
+            font-size: 1rem;
+            color: #475569;
+          `}
+        >
+          {selectedOption.description}
+        </span>
+      ) : null}
       {control.error ? (
         <span
           className={css`

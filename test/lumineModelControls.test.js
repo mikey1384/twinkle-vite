@@ -132,6 +132,7 @@ test('lumine fallback lineup lists the five modes and preserves each mode defaul
       ['claude-haiku-5-5', 'superlight', 'medium'],
       ['gpt-6.1-terra', 'light', 'medium'],
       ['claude-sonnet-5-5', 'medium', 'medium'],
+      ['gpt-6.2-sol', 'medium', 'medium'],
       ['claude-opus-5-5', 'heavy', 'medium'],
       ['claude-fable-5-2', 'superheavy', 'medium']
     ]
@@ -255,6 +256,7 @@ test('an older API catalog of retired models and Super Heavy falls back to the c
       'superlight',
       'superlight',
       'light',
+      'medium',
       'medium',
       'heavy',
       'superheavy'

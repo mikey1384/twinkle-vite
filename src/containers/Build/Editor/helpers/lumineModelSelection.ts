@@ -110,7 +110,15 @@ const FALLBACK_LUMINE_MODEL_OPTIONS: BuildLumineModelOption[] = [
     model: 'claude-sonnet-5-5',
     mode: 'medium',
     label: 'Claude Sonnet 5.5',
-    description: 'Medium mode: strong reasoning for complex builds.',
+    description: 'The default for building features with several parts.',
+    defaultReasoningEffort: 'medium',
+    supportedReasoningEfforts: ['medium']
+  },
+  {
+    model: 'gpt-6.2-sol',
+    mode: 'medium',
+    label: 'GPT-6.2 Sol',
+    description: 'Try another approach to a tricky feature or bug.',
     defaultReasoningEffort: 'medium',
     supportedReasoningEfforts: ['medium']
   },
@@ -144,6 +152,7 @@ function isCurrentLumineModel(value: unknown): value is BuildLumineModel {
     value === 'gpt-6-luna' ||
     value === 'claude-haiku-5-5' ||
     value === 'gpt-6.1-terra' ||
+    value === 'gpt-6.2-sol' ||
     value === 'claude-sonnet-5-5' ||
     value === 'claude-opus-5-5' ||
     value === 'claude-fable-5-2'
@@ -303,7 +312,9 @@ export function resolveLumineMode({
     return 'superlight';
   }
   if (currentModel === 'gpt-6.1-terra') return 'light';
-  if (currentModel === 'claude-sonnet-5-5') return 'medium';
+  if (currentModel === 'claude-sonnet-5-5' || currentModel === 'gpt-6.2-sol') {
+    return 'medium';
+  }
   if (currentModel === 'claude-fable-5-2') return 'superheavy';
   return 'heavy';
 }

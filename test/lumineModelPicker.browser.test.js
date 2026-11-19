@@ -245,6 +245,16 @@ test(
         );
         await toggle.click();
         assert.equal(await model.isVisible(), true);
+        assert.deepEqual(await model.locator('option').evaluateAll(
+          items => items.map(item => item.value)
+        ), ['claude-sonnet-5-5', 'gpt-6.2-sol']);
+        assert.equal(await model.inputValue(), 'claude-sonnet-5-5');
+        await page.getByText('The default for building features with several parts.').waitFor();
+        await model.selectOption('gpt-6.2-sol');
+        assert.equal(await model.inputValue(), 'claude-sonnet-5-5');
+        await page.evaluate(() => window.finishModelSave(true));
+        await page.getByText('Try another approach to a tricky feature or bug.').waitFor();
+        assert.equal(await model.inputValue(), 'gpt-6.2-sol');
         await page.evaluate((value) => window.setFixtureLayout(value), compact);
         await page.evaluate(() => new Promise(requestAnimationFrame));
         assert.equal(
