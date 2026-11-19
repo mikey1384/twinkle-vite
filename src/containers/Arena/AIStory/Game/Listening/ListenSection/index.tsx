@@ -16,6 +16,10 @@ const SCRIPT_WRITTEN_PROGRESS = 45;
 const WRITING_STEP_EASE_MS = 15000;
 const VOICE_LINE_EASE_MS = 6000;
 
+type PlaybackState =
+  | { status: 'loading' | 'ready' | 'starting' | 'playing' }
+  | { status: 'error'; message: string; retryPlayback?: boolean };
+
 export default function ListenSection({
   difficulty,
   isDisabled,
@@ -60,10 +64,8 @@ export default function ListenSection({
   const loadAIStoryListeningAudio = useAppContext(
     (v) => v.requestHelpers.loadAIStoryListeningAudio
   );
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioError, setAudioError] = useState<string | null>(null);
+  const playAudioRef = useRef<(() => Promise<void>) | null>(null);
+  const [playback, setPlayback] = useState<PlaybackState>({ status: 'loading' });
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isFinished, setIsFinished] = useState(false);
   useAIStoryViewScroll(isFinished);
@@ -82,20 +84,23 @@ export default function ListenSection({
     if (isDisabled) return;
     let cancelled = false;
     let audioUrl = '';
+    let audio: HTMLAudioElement | undefined;
 
+    setPlayback({ status: 'loading' });
+    setCountdown(null);
     setProgressReported(false);
     resetLoadingProgress();
     loadAudio();
 
     return () => {
       cancelled = true;
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.onended = null;
-        audioRef.current.onerror = null;
-        audioRef.current.removeAttribute('src');
-        audioRef.current.load();
-        audioRef.current = null;
+      playAudioRef.current = null;
+      if (audio) {
+        audio.onended = null;
+        audio.onerror = null;
+        audio.pause();
+        audio.removeAttribute('src');
+        audio.load();
       }
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
@@ -117,18 +122,37 @@ export default function ListenSection({
         onSetAttemptId(newAttemptId);
         onLoadQuestions(storyId);
         audioUrl = URL.createObjectURL(audioBlob);
-        audioRef.current = new Audio(audioUrl);
-        setIsLoaded(true);
+        const storyAudio = new Audio(audioUrl);
+        audio = storyAudio;
+        let playPending = false;
 
-        audioRef.current.onended = () => {
-          setIsPlaying(false);
+        storyAudio.onended = () => {
+          setPlayback({ status: 'ready' });
           setIsFinished(true);
         };
-
-        audioRef.current.onerror = (e) => {
-          console.error('Error playing audio:', e);
-          setIsPlaying(false);
+        storyAudio.onerror = (error) => handlePlaybackError(error);
+        playAudioRef.current = async () => {
+          if (cancelled || playPending) return;
+          playPending = true;
+          setPlayback({ status: 'starting' });
+          try {
+            await storyAudio.play();
+            if (cancelled) return;
+            setPlayback((current) =>
+              current.status === 'starting' ? { status: 'playing' } : current
+            );
+          } catch (error) {
+            handlePlaybackError(
+              error,
+              !storyAudio.error &&
+                !(error instanceof DOMException && error.name === 'NotSupportedError')
+            );
+          } finally {
+            playPending = false;
+          }
         };
+
+        setPlayback({ status: 'ready' });
       } catch (error) {
         if (cancelled) return;
         console.error('Error loading audio:', error);
@@ -136,8 +160,21 @@ export default function ListenSection({
           (error as any)?.response?.data?.error ||
           (error as Error)?.message ||
           'Failed to load audio...';
-        setAudioError(errorMessage);
+        setPlayback({ status: 'error', message: errorMessage });
       }
+    }
+
+    function handlePlaybackError(error: unknown, retryPlayback = false) {
+      if (cancelled) return;
+      console.error('Error playing audio:', error);
+      setCountdown(null);
+      setPlayback({
+        status: 'error',
+        message: retryPlayback
+          ? 'Press Play audio to hear the story.'
+          : 'Could not play the story audio.',
+        retryPlayback
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty, isDisabled]);
@@ -177,19 +214,16 @@ export default function ListenSection({
   }, []);
 
   useEffect(() => {
-    if (countdown === null) return;
+    if (countdown === null || playback.status !== 'ready' || isDisabled) return;
 
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     }
 
-    if (countdown === 0 && audioRef.current) {
-      audioRef.current.play();
-      setIsPlaying(true);
-      setCountdown(null);
-    }
-  }, [countdown]);
+    void playAudioRef.current?.();
+    setCountdown(null);
+  }, [countdown, playback.status, isDisabled]);
 
   if (isFinished) {
     return (
@@ -265,7 +299,7 @@ export default function ListenSection({
 
   return (
     <div style={{ width: '100%' }}>
-      {audioError ? (
+      {playback.status === 'error' ? (
         <div
           className={css`
             display: flex;
@@ -277,14 +311,30 @@ export default function ListenSection({
             font-weight: bold;
           `}
         >
-          <p
-            className={css`
-              margin-bottom: 2rem;
-            `}
-          >
-            {audioError}
+          <p role="alert" style={{ marginBottom: '2rem', textAlign: 'center' }}>
+            {playback.message}
           </p>
-          <ArenaButton onClick={onReset}>Try again</ArenaButton>
+          {playback.retryPlayback ? (
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                gap: '1rem'
+              }}
+            >
+              <ArenaButton
+                onClick={() => {
+                  void playAudioRef.current?.();
+                }}
+              >
+                Play audio
+              </ArenaButton>
+              <ArenaButton tone="paper" onClick={onReset}>Back</ArenaButton>
+            </div>
+          ) : (
+            <ArenaButton onClick={onReset}>Try again</ArenaButton>
+          )}
         </div>
       ) : (
         <div
@@ -299,22 +349,22 @@ export default function ListenSection({
             justify-content: center;
           `}
         >
-          {isPlaying ? (
+          {playback.status === 'playing' ? (
             <div className={onAirCls} role="status">
               <span className={onAirDotCls} />
               Listen
             </div>
-          ) : isLoaded ? (
+          ) : playback.status === 'starting' ? (
+            <div role="status">Starting audio…</div>
+          ) : playback.status === 'ready' ? (
             countdown !== null ? (
               <div className={countdownCls}>Playing in {countdown}</div>
             ) : (
               <ArenaButton
                 tone="blue"
-                disabled={!isLoaded}
                 onClick={() => {
                   if (deviceIsMobile) {
-                    audioRef.current?.play();
-                    setIsPlaying(true);
+                    void playAudioRef.current?.();
                   } else {
                     setCountdown(3);
                   }
