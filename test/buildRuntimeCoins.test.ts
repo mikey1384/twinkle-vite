@@ -8,7 +8,7 @@ import {
 import { coinConfirmText, coinBuilderList } from '../src/components/Build/Coins/coinConfirmText';
 import { isMutatingPreviewRequestType } from '../src/containers/Build/PreviewPanel/helpers/previewRequestPolicy';
 import {
-  buildCoinPricePersonWarning,
+  buildCoinPricePayeeChip,
   COIN_TALLY_PLAIN_WORDS,
   formatBuildCoinPriceLine,
   initialReviewRulesText
@@ -535,7 +535,7 @@ test('N3/N7/N12: the review screen and chat card name every person a price pays,
   const line = coinPriceDestinationLine(resale);
   assert.match(line, /the Coins go to the previous holder, another player: 100 to 5,000 Coins a sale/);
   assert.match(formatBuildCoinPriceLine(resale), /resales pay the previous holder, another player, up to 5,000 Coins/);
-  assert.match(buildCoinPricePersonWarning([resale]) || '', /Coins go to another player when an item is resold/);
+  assert.equal(buildCoinPricePayeeChip('changes_offered', [resale]), 'Resales pay players');
   const thank = { id: 'thank', title: 'Thank builders', coins: 0, destination: 'removed' as const, uniqueKey: true,
     builders: { coinsPerUnit: 100000, maxUnitsPerRecipient: 1, tally: { plotSize: 16, keyFormat: 'region:x:z' as const } } };
   // N7: not a "free claim"; N12: the default ceilings are shown.
@@ -543,7 +543,7 @@ test('N3/N7/N12: the review screen and chat card name every person a price pays,
   assert.match(coinPriceDestinationLine(thank), /more than 64 builders, or whose builders would get more than 100,000 Coins in all/);
   assert.doesNotMatch(formatBuildCoinPriceLine(thank), /free claim/);
   assert.match(formatBuildCoinPriceLine(thank), /up to 100,000 a purchase/);
-  assert.equal(buildCoinPricePersonWarning([{ id: 'snack', title: 'Snack', coins: 10, destination: 'removed' }]), null);
+  assert.equal(buildCoinPricePayeeChip('pending', [thank]), 'Shop Coins → land builders');
 });
 
 test('r2: the review screen and chat card say builders are paid from Twinkle\'s own record, with the risk that remains', () => {
@@ -560,10 +560,6 @@ test('r2: the review screen and chat card say builders are paid from Twinkle\'s 
   assert.doesNotMatch(line, /the app names|app alone decides/);
   // Without a tally the screen says nobody can be paid.
   assert.match(coinPriceDestinationLine({ ...claim, builders: { coinsPerUnit: 50, maxUnitsPerRecipient: 1 } }), /no tally declared, so nobody can be paid/);
-  const warning = buildCoinPricePersonWarning([claim]) || '';
-  assert.match(warning, /Coins go to the builders in Twinkle's block record for the land\./);
-  assert.ok(warning.includes(COIN_TALLY_PLAIN_WORDS));
-  assert.match(warning, /A player can record blocks that aren't there \(only the admin can clear them, with lumine admin coins tally-clear\)/);
   assert.match(formatBuildCoinPriceLine(claim), /plus 50 per block credited to other players in Twinkle's record inside the 16×16 plot/);
   assert.match(COIN_TALLY_REMAINING_RISK, /record blocks that are not really there, as its own player only \(at most 5 a second and 20,000 a day\)/);
   assert.match(COIN_TALLY_REMAINING_RISK, /until the admin clears that player's records \(lumine admin coins tally-clear\)/);
@@ -634,15 +630,21 @@ test('review-r2 H1: the review screen says a plain price sharing a tally key gro
   assert.equal(coinTallyGroupLine({ ...land, keyGroup: 'hats' }, prices), '');
 });
 
-
-test('reward review card chip names who receives shop Coins in a few words', async () => {
-  const { buildCoinPricePayeeChip } = await import('../src/helpers/buildRewardReviewCard.ts');
+test('reward review card chip names payees only on open requests', () => {
+  const ownerPrice = { id: 'pass', title: 'Pass', coins: 5000, destination: 'owner' as const };
+  const removedPrice = { id: 'snack', title: 'Snack', coins: 10, destination: 'removed' as const };
+  for (const status of ['pending', 'changes_offered'] as const) {
+    assert.equal(buildCoinPricePayeeChip(status, [ownerPrice], 'shopkeeper'), 'Shop Coins → shopkeeper');
+  }
+  for (const status of ['approved', 'rejected', 'superseded', 'revoked'] as const) {
+    assert.equal(buildCoinPricePayeeChip(status, [ownerPrice]), null);
+  }
   assert.equal(
-    buildCoinPricePayeeChip([{ id: 'pass', title: 'Pass', coins: 5000, destination: 'owner' }] as any, 'Lemon78717'),
-    'Shop Coins → Lemon78717'
-  );
-  assert.equal(
-    buildCoinPricePayeeChip([{ id: 'snack', title: 'Snack', coins: 10, destination: 'removed' }] as any, 'Lemon78717'),
+    buildCoinPricePayeeChip('pending', [
+      removedPrice,
+      { ...ownerPrice, coins: 0 },
+      { ...removedPrice, builders: { coinsPerUnit: 50 } }
+    ]),
     null
   );
 });

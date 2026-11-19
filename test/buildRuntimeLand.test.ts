@@ -16,9 +16,9 @@ import {
 } from '../src/containers/Build/PreviewPanel/helpers/buildRuntimeLand';
 import { isMutatingPreviewRequestType } from '../src/containers/Build/PreviewPanel/helpers/previewRequestPolicy';
 import {
-  buildCoinPricePersonWarning,
   formatBuildLandLine,
   LAND_TALLY_PLAIN_WORDS,
+  LAND_TALLY_REMAINING_RISK,
   landReviewText,
   landTerrainText,
   landZoneText
@@ -197,7 +197,7 @@ test('the server update ask feeds the one update notice only on a published tab 
   assert.equal(askReloadVersion({ event: { ...event, artifactVersionId: 9000 }, buildId: 363, loadedVersion: 9001 }), 9000);
 });
 
-test('review words: the land sentence matches the API and land changes the builder words', () => {
+test('review words: the land sentence and builder copy match the API', () => {
   const land = {
     keyGroup: 'plots',
     plotSize: 16,
@@ -219,11 +219,8 @@ test('review words: the land sentence matches the API and land changes the build
     'Land in 2 worlds: inside a 16×16 plot someone holds, only they and the players they allow can change blocks; turning on tnt or fluids lets anyone set blocks there to their values.'
   );
   assert.match(LAND_TALLY_PLAIN_WORDS, /bought from Twinkle \(then those builders are paid, once\); a Sell, a takeover or a grant does not use it up\. A player earns credit for at most 20,000 new blocks a day\./);
-  const prices = [{ id: 'plot', title: 'Plot', coins: 0, destination: 'removed' as const, builders: { coinsPerUnit: 50 } }];
-  const withLand = buildCoinPricePersonWarning(prices, null, land) || '';
-  assert.ok(withLand.includes(LAND_TALLY_PLAIN_WORDS));
-  assert.doesNotMatch(withLand, /tally-clear/);
-  assert.match(buildCoinPricePersonWarning(prices, null) || '', /tally-clear/);
+  assert.match(LAND_TALLY_REMAINING_RISK, /a buyer may pay for a block that is gone/);
+  assert.doesNotMatch(LAND_TALLY_REMAINING_RISK, /tally-clear/);
 });
 
 test('the host bridge wires land through the documented pieces', () => {

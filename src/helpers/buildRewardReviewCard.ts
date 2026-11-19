@@ -260,7 +260,7 @@ export interface BuildCoinPriceSummary {
   };
 }
 // r2: what Twinkle counts for a builders price and what it cannot know, in
-// the words the review screen, the chat card and the CLI share
+// the words the review screen and the CLI share
 // (COIN_TALLY_PLAIN_WORDS in helpers/build/coinPrices.ts on the API;
 // review-r2 M5, with Mikey's 11-07 credit rule).
 export const COIN_TALLY_PLAIN_WORDS =
@@ -419,42 +419,24 @@ export function formatBuildCoinPriceLine(
 }
 // The chat card's short chip when any price pays a person (Mikey 11-19:
 // no red sentence on the card; the review-note rule lives in the approve
-// dialog). Returns null when every price removes its Coins.
+// dialog).
 export function buildCoinPricePayeeChip(
+  status: BuildRewardReviewStatus,
   prices: BuildCoinPriceSummary[],
   ownerUsername?: string | null
 ) {
+  if (status !== 'pending' && status !== 'changes_offered') return null;
+
   const parts = [
     prices.some((price) => price.destination === 'owner' && price.coins > 0)
       ? `Shop Coins → ${ownerUsername || 'owner'}`
       : '',
-    prices.some((price) => price.builders) ? 'Shop Coins → land builders' : '',
+    prices.some((price) => price.builders?.tally && price.builders.coinsPerUnit > 0)
+      ? 'Shop Coins → land builders'
+      : '',
     prices.some((price) => price.offers) ? 'Resales pay players' : ''
   ].filter(Boolean);
   return parts.length ? parts.join(' · ') : null;
-}
-
-// The chat card's red line when any price pays a person: who, in plain words.
-export function buildCoinPricePersonWarning(
-  prices: BuildCoinPriceSummary[],
-  ownerUsername?: string | null,
-  land?: BuildLandSummary | null
-) {
-  const who = [
-    prices.some((price) => price.destination === 'owner' && price.coins > 0)
-      ? `${ownerUsername || 'the app owner'} (the owner)`
-      : '',
-    prices.some((price) => price.builders) ? "the builders in Twinkle's block record for the land" : '',
-    prices.some((price) => price.offers) ? 'another player when an item is resold' : ''
-  ].filter(Boolean);
-  if (!who.length) return null;
-  // review-r2 M5: the chat card also says what can go wrong and who fixes it.
-  const tally = prices.some((price) => price.builders)
-    ? land
-      ? ` ${LAND_TALLY_PLAIN_WORDS} ${LAND_TALLY_REMAINING_RISK}`
-      : ` ${COIN_TALLY_PLAIN_WORDS} A player can record blocks that aren't there (only the admin can clear them, with lumine admin coins tally-clear).`
-    : '';
-  return `Coins go to ${who.length > 1 ? `${who.slice(0, -1).join(', ')} and ${who[who.length - 1]}` : who[0]}.${tally} Approving needs a review note.`;
 }
 
 // The rules JSON the reviewer's editor starts from (review M5, 11-07): the

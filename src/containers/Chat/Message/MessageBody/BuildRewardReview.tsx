@@ -92,6 +92,11 @@ export default function BuildRewardReview({
   const coinPrices: BuildCoinPriceSummary[] = Array.isArray(review?.prices)
     ? review.prices
     : [];
+  const shopPayeeChip = buildCoinPricePayeeChip(
+    status,
+    coinPrices,
+    review?.ownerUsername
+  );
   const land: BuildLandSummary | null =
     review?.land && Array.isArray(review.land.regions) ? review.land : null;
 
@@ -142,10 +147,9 @@ export default function BuildRewardReview({
               {coinPrices.length} Coin {coinPrices.length === 1 ? 'price' : 'prices'}
             </BuildMessageCardChip>
           ) : null}
-          {(status === 'pending' || status === 'changes_offered') &&
-          buildCoinPricePayeeChip(coinPrices, review?.ownerUsername) ? (
-            <BuildMessageCardChip icon="coins" themeName={sender.profileTheme}>
-              {buildCoinPricePayeeChip(coinPrices, review?.ownerUsername)}
+          {shopPayeeChip ? (
+            <BuildMessageCardChip icon="coins" muted>
+              {shopPayeeChip}
             </BuildMessageCardChip>
           ) : null}
           {land ? (

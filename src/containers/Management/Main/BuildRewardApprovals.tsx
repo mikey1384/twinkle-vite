@@ -608,7 +608,7 @@ export default function BuildRewardApprovals() {
                   </label>
                 )}
                 <label>
-                  {noteRequiredForShop
+                  {isOpenRequest(selected.status) && noteRequiredForShop
                     ? 'Note (required: app has a shop)'
                     : 'Review note'}
                   <span className={hintClass}>
@@ -1274,5 +1274,8 @@ const emptyClass = css`
 // Prices that pay a person need the reviewer's written note (RULING 11-07;
 // round-2 N3: a resale pays the previous holder, a person).
 function configPaysPerson(config: RewardConfig | undefined) {
-  return (config?.prices || []).some(coinPricePaysPerson);
+  return (
+    Array.isArray(config?.prices) &&
+    config.prices.some((price) => price && coinPricePaysPerson(price))
+  );
 }
