@@ -2,7 +2,7 @@
 // display getters. The website presents all hidden fields as ???.
 export const TOTAL_MYSTERY_HIDDEN_WORD = '•••';
 
-function isUnrevealedTotalMystery(card: any) {
+export function isUnrevealedTotalMystery(card: any) {
   if (!card || Number(card.isBurned) === 1) return false;
   const imagePath =
     typeof card.imagePath === 'string' ? card.imagePath.trim() : '';

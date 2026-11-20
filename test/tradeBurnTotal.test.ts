@@ -106,6 +106,30 @@ test('hidden card quality never contributes XP to the total', () => {
   );
 });
 
+test('legacy and edited bundles exclude unavailable, unscorable and unrevealed cards', () => {
+  const cards = [
+    { id: 1, level: 1, quality: 'common', isLive: 1, isBurned: 0 },
+    { id: 2, level: 1, quality: 'legendary', isBurned: '1' },
+    { id: 3, level: 1, quality: 'legendary', isLive: 0 },
+    { id: 4, level: 9, quality: 'legendary' },
+    { id: 5, level: 1, quality: 'other' },
+    {
+      id: 6,
+      level: 1,
+      quality: 'legendary',
+      isTotalMystery: true,
+      imagePath: ' Generating... '
+    }
+  ];
+  const legacy = { ...bundle(cards), cardIds: ['1', 2, 3, 4, 5, 6] };
+  assert.equal(bundleBurnValueLabel(legacy), '356 XP + ???');
+  const edited = {
+    ...legacy,
+    cards: [...cards.slice(0, -1), { ...cards[5], imagePath: 'revealed.png' }]
+  };
+  assert.equal(bundleBurnValueLabel(edited), '52,623 XP + ???');
+});
+
 test('both viewers see the server total for all 15 IDs and the public subtotal on the other side', () => {
   const cards = Array.from({ length: 15 }, (_, i) =>
     i < 5 ? { id: i + 1, level: 1, quality: 'common' } : { id: i + 1 }
@@ -146,4 +170,5 @@ test('counteroffer totals belong to the exact selection, including after reorder
   assert.deepEqual(matchingBurnSummary(original, [2, 1]), original.burnSummary);
   assert.equal(matchingBurnSummary(original, [1]), undefined);
   assert.equal(matchingBurnSummary(original, [2, 3]), undefined);
+  assert.equal(matchingBurnSummary({ ...original, cardIds: [1, 1] }, [1, 2]), undefined);
 });

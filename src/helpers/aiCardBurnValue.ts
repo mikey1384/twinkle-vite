@@ -39,10 +39,12 @@ export function calculateCardBurnSummary(
       if (includeIncomplete) numUnknownCards++;
       continue;
     }
-    totalBv += returnCardBurnXP({
+    const xp = returnCardBurnXP({
       cardLevel: card.level,
       cardQuality: card.quality
     });
+    if (Number.isFinite(xp)) totalBv += xp;
+    else if (includeIncomplete) numUnknownCards++;
   }
   return { xp: totalBv, unknownCount: numUnknownCards };
 }

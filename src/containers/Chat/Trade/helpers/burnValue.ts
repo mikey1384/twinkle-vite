@@ -1,4 +1,5 @@
 import { calculateCardBurnSummary } from '~/helpers/aiCardBurnValue';
+import { isUnrevealedTotalMystery } from '~/helpers/aiCardDisplay';
 import type { TradeBundle } from '../types';
 import { summarizeBundle } from './terms';
 
@@ -9,7 +10,19 @@ export function bundleBurnValueLabel(
   const { xp, unknownCount } =
     bundle.burnSummary ??
     calculateCardBurnSummary(
-      bundle.cardIds.map((id) => bundle.cards?.find((card) => card?.id === id)),
+      bundle.cardIds.map((id) => {
+        const card = bundle.cards?.find((card) => Number(card?.id) === Number(id));
+        if (
+          !card ||
+          (card.isBurned !== undefined &&
+            (card.isBurned === null || Number(card.isBurned) !== 0)) ||
+          (card.isLive !== undefined && Number(card.isLive) !== 1) ||
+          isUnrevealedTotalMystery(card)
+        ) {
+          return undefined;
+        }
+        return card;
+      }),
       { includeIncomplete: true }
     );
   return `${xp.toLocaleString('en-US')} XP${unknownCount > 0 ? ' + ???' : ''}`;
@@ -27,6 +40,9 @@ export function matchingBurnSummary(
   ids: number[]
 ) {
   if (!bundle?.burnSummary || bundle.cardIds.length !== ids.length) return;
-  const selected = new Set(ids);
-  if (bundle.cardIds.every((id) => selected.has(id))) return bundle.burnSummary;
+  const original = bundle.cardIds.map(Number).sort((a, b) => a - b);
+  const selected = ids.map(Number).sort((a, b) => a - b);
+  if (original.every((id, index) => id === selected[index])) {
+    return bundle.burnSummary;
+  }
 }

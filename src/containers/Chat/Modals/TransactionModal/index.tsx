@@ -439,7 +439,11 @@ export default function TransactionModal({
     const original = side === 'offer' ? counterTerms?.give : counterTerms?.receive;
     return {
       cardIds: ids,
-      cards: ids.map((id) => ({ ...cardObj[id], id })),
+      cards: ids.map((id) => ({
+        ...original?.cards?.find((card) => Number(card?.id) === Number(id)),
+        ...cardObj[id],
+        id
+      })),
       burnSummary: matchingBurnSummary(original, ids)
     };
   }
