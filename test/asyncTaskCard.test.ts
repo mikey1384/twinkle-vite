@@ -113,6 +113,16 @@ test('step previews show bound picture settings, replacement pictures and the ex
     'gpt-image-2'
   ])
     assert.ok(image.includes(word));
+  const reference = render(
+    '/content/image/ai',
+    { prompt: 'Make it blue', referenceHistoryId: 31, expectedReferenceObjectKey: 'moon.png' },
+    'POST',
+    { ...ref, pictures: [{ id: 31, path: 'moon.png' }] }
+  );
+  for (const word of ['Make it blue', 'Reference picture from My Images', 'Picture #31', 'moon.png']) {
+    assert.ok(reference.includes(word));
+  }
+  assert.ok(!reference.includes('expectedReferenceObjectKey'));
   const collection = render(
     '/content/image/ai/collections/41',
     { images: [{ id: 31, role: 'place', label: 'Moon' }] },
@@ -134,11 +144,11 @@ test('step previews show bound picture settings, replacement pictures and the ex
     assert.ok(collection.includes(word));
   const publish = render(
     '/build/8/publish',
-    { expectedFilesHash: '123abc' },
+    { expectedFilesHash: '123abc', thumbnailUrl: 'https://images.example/cover.png' },
     'POST',
     { ...ref, workshop: { jobId: 2, versionId: 9 } }
   );
-  for (const word of ['Publish app #8', 'app version #9', '123abc'])
+  for (const word of ['Publish app #8', 'app version #9', '123abc', 'App cover', 'cover.png'])
     assert.ok(publish.includes(word));
   assert.equal(
     render('/build/8/publish', {}, 'POST', { ...ref, payloadHash: '' }),

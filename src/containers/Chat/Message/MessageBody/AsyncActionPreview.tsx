@@ -54,8 +54,7 @@ const labels: Record<string, string> = {
   engine: 'Picture maker',
   model: 'Model',
   quality: 'Picture quality',
-  previousResponseId: 'Earlier response',
-  previousImageId: 'Earlier picture',
+  referenceHistoryId: 'Reference picture from My Images',
   requestId: 'Request number',
   historySource: 'Save in history as',
   displayPrompt: 'Caption in My Images',
@@ -114,7 +113,10 @@ function Picture({
   src: string;
   onLoad?: (id: number) => void;
 }) {
-  const label = id === 0 ? 'Reference picture' : `Picture #${id}`;
+  const label =
+    id === -1 ? 'App cover'
+    : id === 0 ? 'Reference picture'
+    : `Picture #${id}`;
   const [failed, setFailed] = useState(false);
   return (
     <figure>
@@ -176,9 +178,12 @@ export default function AsyncActionPreview({
       {typeof body.referenceImageB64 === 'string' && body.referenceImageB64 && (
         <Picture
           id={0}
-          src={`data:image/png;base64,${body.referenceImageB64}`}
+          src={body.referenceImageB64}
           onLoad={onImageLoad}
         />
+      )}
+      {typeof body.thumbnailUrl === 'string' && body.thumbnailUrl && (
+        <Picture id={-1} src={body.thumbnailUrl} onLoad={onImageLoad} />
       )}
       {card.asyncTask?.pictures?.map(({ id, path }) => (
         <Picture
@@ -193,6 +198,8 @@ export default function AsyncActionPreview({
           .filter(
             ([key]) =>
               key !== 'expectedCollectionKey' &&
+              key !== 'expectedReferenceObjectKey' &&
+              key !== 'thumbnailUrl' &&
               key !== 'requestId' &&
               key !== 'referenceImageB64'
           )

@@ -180,21 +180,20 @@ export default function WebsiteAgentCard({
   const asyncStep = card.asyncTask?.operation === 'step';
   const showAsyncPreview = Boolean(asyncActionTitle(card));
   const [loadedPictures, setLoadedPictures] = useState<{
-    cardId: string;
+    payloadHash: string;
     ids: number[];
-  }>({ cardId: '', ids: [] });
+  }>({ payloadHash: '', ids: [] });
   const pictureIds =
     card.asyncTask?.pictures?.map((picture) => picture.id) || [];
-  if (
-    asyncStep &&
-    card.body &&
-    typeof card.body === 'object' &&
-    'referenceImageB64' in card.body &&
-    card.body.referenceImageB64
-  )
-    pictureIds.push(0);
+  if (asyncStep && card.body && typeof card.body === 'object') {
+    if ('referenceImageB64' in card.body && card.body.referenceImageB64)
+      pictureIds.push(0);
+    if ('thumbnailUrl' in card.body && card.body.thumbnailUrl)
+      pictureIds.push(-1);
+  }
   const picturesReady = pictureIds.every(
-    (id) => loadedPictures.cardId === card.id && loadedPictures.ids.includes(id)
+    (id) => loadedPictures.payloadHash === card.asyncTask?.payloadHash &&
+      loadedPictures.ids.includes(id)
   );
   const options =
     card.type === 'choice' || card.type === 'lumine'
@@ -244,13 +243,16 @@ export default function WebsiteAgentCard({
     >
       {showAsyncPreview && !isSomeoneElses && (
         <AsyncActionPreview
-          key={card.id}
+          key={card.asyncTask?.payloadHash}
           card={card}
           imageBase={cloudFrontURL}
           onImageLoad={(id) =>
             setLoadedPictures((old) => ({
-              cardId: card.id,
-              ids: [...(old.cardId === card.id ? old.ids : []), id]
+              payloadHash: card.asyncTask?.payloadHash || '',
+              ids: [
+                ...(old.payloadHash === card.asyncTask?.payloadHash ? old.ids : []),
+                id
+              ]
             }))
           }
         />
