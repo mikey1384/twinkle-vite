@@ -48,3 +48,39 @@ test('no cards means no burn value line', () => {
     ''
   );
 });
+
+test('trade bundle marks missing and incomplete cards as unknown', () => {
+  const known = { id: 1, level: 1, quality: 'common' };
+  const expected = returnCardBurnXP({
+    cardLevel: known.level,
+    cardQuality: known.quality
+  }).toLocaleString('en-US');
+  const extra = { id: 5, level: 6, quality: 'rare' };
+  for (const incomplete of [
+    [],
+    [{ id: 2, level: 1 }],
+    [{ id: 2, quality: 'rare' }]
+  ]) {
+    assert.equal(
+      bundleBurnValueLabel({
+        ...bundle([known, ...incomplete, extra]),
+        cardIds: [1, 2]
+      }),
+      `${expected} + ???`
+    );
+  }
+  assert.equal(
+    bundleBurnValueLabel({ ...bundle([]), cardIds: [4], cards: undefined }),
+    '???'
+  );
+});
+
+test('hidden card quality never contributes XP to the total', () => {
+  const hidden = { id: 2, level: 6, quality: '???' };
+  const known = { id: 1, level: 1, quality: 'common' };
+  assert.equal(bundleBurnValueLabel(bundle([hidden])), '???');
+  assert.equal(
+    bundleBurnValueLabel(bundle([known, hidden])),
+    `${bundleBurnValueLabel(bundle([known]))} + ???`
+  );
+});

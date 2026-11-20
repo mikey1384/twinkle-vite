@@ -1,4 +1,3 @@
-import type { Card } from '~/types';
 import { returnTotalBurnValueLabel } from '~/helpers/aiCardBurnValue';
 import type { TradeBundle, TradeTerms } from '../types';
 
@@ -44,15 +43,17 @@ export function summarizeBundle(bundle: TradeBundle) {
   return parts.join(' + ') || 'Nothing';
 }
 
-// Total burn value of the bundle's cards, so a member can weigh the cards
-// against the coins on the other side (Mikey 11-20: restored after the
-// transaction-modal redesign dropped it). Hidden-quality cards add "???".
 export function bundleBurnValueLabel(bundle: TradeBundle) {
-  if (!bundle.cardIds.length) return '';
-  const cards = bundle.cardIds
-    .map((id) => bundle.cards?.find((card) => card.id === id))
-    .filter(Boolean) as Card[];
-  return returnTotalBurnValueLabel(cards);
+  const cards = bundle.cardIds.map((id) =>
+    bundle.cards?.find((card) => card?.id === id)
+  );
+  return returnTotalBurnValueLabel(cards, { includeIncomplete: true });
+}
+
+export function summarizeBundleWithBurnValue(bundle: TradeBundle) {
+  const summary = summarizeBundle(bundle);
+  const burnValue = bundleBurnValueLabel(bundle);
+  return burnValue ? `${summary} (burn value ${burnValue} XP)` : summary;
 }
 
 export function normalizeBundle(bundle: any): TradeBundle {

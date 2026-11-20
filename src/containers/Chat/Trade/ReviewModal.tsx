@@ -3,7 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { AppOwnershipNotice } from '~/components/Build/TradeBuilds';
 import Exchange from './Exchange';
-import { bundleBurnValueLabel, summarizeBundle } from './helpers/terms';
+import { summarizeBundleWithBurnValue } from './helpers/terms';
 import { errorClass, noticeClass, footerActionsClass } from './styles';
 import type { TradeReview } from './types';
 
@@ -81,23 +81,19 @@ export default function ReviewModal({
           >
             {mode === 'request' ? (
               <span>
-                <b>Interested in:</b> {summarizeBundle(terms.receive)}
+                <b>Interested in:</b>{' '}
+                {summarizeBundleWithBurnValue(terms.receive)}
               </span>
             ) : (
               <>
                 <span>
                   <b>{mode === 'show' ? 'You show' : 'You give'}:</b>{' '}
-                  {summarizeBundle(terms.give)}
-                  {bundleBurnValueLabel(terms.give)
-                    ? ` (burn value ${bundleBurnValueLabel(terms.give)} XP)`
-                    : ''}
+                  {summarizeBundleWithBurnValue(terms.give)}
                 </span>
                 {mode !== 'show' && (
                   <span>
-                    <b>You receive:</b> {summarizeBundle(terms.receive)}
-                    {bundleBurnValueLabel(terms.receive)
-                      ? ` (burn value ${bundleBurnValueLabel(terms.receive)} XP)`
-                      : ''}
+                    <b>You receive:</b>{' '}
+                    {summarizeBundleWithBurnValue(terms.receive)}
                   </span>
                 )}
               </>

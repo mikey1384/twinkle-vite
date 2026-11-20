@@ -1,4 +1,4 @@
-import { Card } from '~/types';
+import type { Card } from '~/types';
 import { isTotalMysteryQuality } from '~/components/AICard/totalMysteryGlow';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { returnCardBurnXP } from '~/constants/defaultValues';
@@ -22,13 +22,19 @@ export function returnBurnValueLabel({
     : addCommasToNumber(totalBv);
 }
 
-export function returnTotalBurnValueLabel(cards: Card[]) {
+export function returnTotalBurnValueLabel(
+  cards: (Partial<Pick<Card, 'level' | 'quality'>> | undefined)[],
+  { includeIncomplete = false } = {}
+) {
   let totalBv = 0;
-  let numHiddenCards = 0;
+  let numUnknownCards = 0;
   for (const card of cards) {
-    if (!card?.level || !card?.quality) continue;
-    if (isTotalMysteryQuality(card.quality)) {
-      numHiddenCards++;
+    if (isTotalMysteryQuality(card?.quality)) {
+      numUnknownCards++;
+      continue;
+    }
+    if (!card?.level || !card.quality) {
+      if (includeIncomplete) numUnknownCards++;
       continue;
     }
     totalBv += returnCardBurnXP({
@@ -36,5 +42,5 @@ export function returnTotalBurnValueLabel(cards: Card[]) {
       cardQuality: card.quality
     });
   }
-  return returnBurnValueLabel({ totalBv, numHiddenCards });
+  return returnBurnValueLabel({ totalBv, numHiddenCards: numUnknownCards });
 }

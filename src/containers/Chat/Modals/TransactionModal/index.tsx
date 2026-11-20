@@ -17,7 +17,7 @@ import {
   hasTradeAssets,
   isInterestOnlyTrade,
   parseTradeCoins,
-  summarizeBundle
+  summarizeBundleWithBurnValue
 } from '../../Trade/helpers/terms';
 import type { TradeReview, TradeTerms } from '../../Trade/types';
 import { errorClass, footerActionsClass } from '../../Trade/styles';
@@ -168,6 +168,7 @@ export default function TransactionModal({
     give: {
       coins: netGiveCoins,
       cardIds: selectedCardIdsObj.offer,
+      cards: selectedCardIdsObj.offer.map((id) => ({ ...cardObj[id], id })),
       groupIds: selectedGroupIdsObj.offer,
       builds: selectedBuilds.offer
     },
@@ -175,6 +176,7 @@ export default function TransactionModal({
       ? {
           coins: netReceiveCoins,
           cardIds: selectedCardIdsObj.want,
+          cards: selectedCardIdsObj.want.map((id) => ({ ...cardObj[id], id })),
           groupIds: selectedGroupIdsObj.want,
           builds: selectedBuilds.want
         }
@@ -257,7 +259,8 @@ export default function TransactionModal({
               >
                 {mode === 'request' ? (
                   <span>
-                    <b>Interested in:</b> {summarizeBundle(terms.receive)}
+                    <b>Interested in:</b>{' '}
+                    {summarizeBundleWithBurnValue(terms.receive)}
                   </span>
                 ) : (
                   <>
@@ -265,11 +268,12 @@ export default function TransactionModal({
                       <b>
                         {selectedOption === 'offer' ? 'You show' : 'You give'}:
                       </b>{' '}
-                      {summarizeBundle(terms.give)}
+                      {summarizeBundleWithBurnValue(terms.give)}
                     </span>
                     {selectedOption !== 'offer' && (
                       <span>
-                        <b>You receive:</b> {summarizeBundle(terms.receive)}
+                        <b>You receive:</b>{' '}
+                        {summarizeBundleWithBurnValue(terms.receive)}
                       </span>
                     )}
                   </>
@@ -431,7 +435,6 @@ export default function TransactionModal({
     setOfferUpdateNotice('');
     const frozenTerms = structuredClone(terms);
     for (const bundle of [frozenTerms.give, frozenTerms.receive]) {
-      bundle.cards = bundle.cardIds.map((id) => ({ ...cardObj[id], id }));
       bundle.groups = bundle.groupIds.map((id) => ({ ...groupObjs[id], id }));
     }
     setReview({ terms: frozenTerms, mode, coinExplanation });

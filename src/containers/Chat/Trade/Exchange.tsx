@@ -49,6 +49,7 @@ export default function Exchange({
     >
       {sides.map((side) => {
         const bundle = side === 'interest' ? interest! : terms[side];
+        const burnValue = bundleBurnValueLabel(bundle);
         return (
           <section
             key={side}
@@ -122,10 +123,10 @@ export default function Exchange({
                     }}
                   >
                     {summarizeBundle(bundle)}
-                    {bundleBurnValueLabel(bundle) ? (
+                    {burnValue ? (
                       <span style={{ fontWeight: 400 }}>
                         {' · total burn value '}
-                        <b>{bundleBurnValueLabel(bundle)} XP</b>
+                        <b>{burnValue} XP</b>
                       </span>
                     ) : null}
                   </p>
