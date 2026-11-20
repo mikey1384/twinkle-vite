@@ -30,3 +30,10 @@ export function applyCanonicalUserProfileStatePatch({
     contentId: userId
   };
 }
+
+export function applyCanonicalUserSettingsPatch(
+  user: { [key: string]: any } | null | undefined,
+  patch: Record<string, unknown>
+) {
+  return { ...user, settings: { ...user?.settings, ...patch } };
+}
