@@ -1,11 +1,8 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import AssetList from './AssetList';
-import {
-  bundleBurnValueLabel,
-  hasTradeAssets,
-  summarizeBundle
-} from './helpers/terms';
+import { bundleBurnValueLabel } from './helpers/burnValue';
+import { hasTradeAssets, summarizeBundle } from './helpers/terms';
 import { exchangeGrid, panelClass } from './styles';
 import type { TradeBundle, TradeTerms } from './types';
 import { css, cx } from '@emotion/css';
@@ -126,7 +123,7 @@ export default function Exchange({
                     {burnValue ? (
                       <span style={{ fontWeight: 400 }}>
                         {' · total burn value '}
-                        <b>{burnValue} XP</b>
+                        <b>{burnValue}</b>
                       </span>
                     ) : null}
                   </p>

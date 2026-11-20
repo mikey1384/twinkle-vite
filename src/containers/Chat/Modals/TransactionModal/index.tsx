@@ -16,9 +16,13 @@ import {
   getViewerTradeTerms,
   hasTradeAssets,
   isInterestOnlyTrade,
-  parseTradeCoins,
-  summarizeBundleWithBurnValue
+  parseTradeCoins
 } from '../../Trade/helpers/terms';
+import {
+  bundleBurnValueLabel,
+  matchingBurnSummary,
+  summarizeBundleWithBurnValue
+} from '../../Trade/helpers/burnValue';
 import type { TradeReview, TradeTerms } from '../../Trade/types';
 import { errorClass, footerActionsClass } from '../../Trade/styles';
 import { useNavigate } from 'react-router-dom';
@@ -58,7 +62,7 @@ export default function TransactionModal({
   const [loadError, setLoadError] = useState('');
   const [offerUpdateNotice, setOfferUpdateNotice] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
-  const [isCounterPropose, setIsCounterPropose] = useState(false);
+  const [counterTerms, setCounterTerms] = useState<TradeTerms | null>(null);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
   const myId = useKeyContext((v) => v.myState.userId);
   const balance = useKeyContext((v) => v.myState.twinkleCoins);
@@ -167,16 +171,14 @@ export default function TransactionModal({
   const terms: TradeTerms = {
     give: {
       coins: netGiveCoins,
-      cardIds: selectedCardIdsObj.offer,
-      cards: selectedCardIdsObj.offer.map((id) => ({ ...cardObj[id], id })),
+      ...selectedCards('offer', selectedCardIdsObj.offer),
       groupIds: selectedGroupIdsObj.offer,
       builds: selectedBuilds.offer
     },
     receive: isTrade
       ? {
           coins: netReceiveCoins,
-          cardIds: selectedCardIdsObj.want,
-          cards: selectedCardIdsObj.want.map((id) => ({ ...cardObj[id], id })),
+          ...selectedCards('want', selectedCardIdsObj.want),
           groupIds: selectedGroupIdsObj.want,
           builds: selectedBuilds.want
         }
@@ -346,7 +348,7 @@ export default function TransactionModal({
                 coinInputs={coinInputs}
                 coinErrors={coinErrors}
                 balance={balance}
-                isCounterPropose={isCounterPropose}
+                isCounterPropose={!!counterTerms}
                 selectedOption={selectedOption}
                 partner={partner}
                 groupObjs={groupObjs}
@@ -378,6 +380,9 @@ export default function TransactionModal({
               aiCardModalType={aiCardModalType}
               partner={partner}
               currentlySelectedCardIds={selectedCardIdsObj[aiCardModalType]}
+              getSelectionBurnLabel={(ids) =>
+                bundleBurnValueLabel(selectedCards(aiCardModalType, ids))
+              }
               onDropdownShown={setDropdownShown}
               onSetAICardModalCardId={onSetAICardModalCardId}
               onSelectDone={handleCardSelection}
@@ -429,6 +434,15 @@ export default function TransactionModal({
       </Modal>
     </ErrorBoundary>
   );
+
+  function selectedCards(side: 'offer' | 'want', ids: number[]) {
+    const original = side === 'offer' ? counterTerms?.give : counterTerms?.receive;
+    return {
+      cardIds: ids,
+      cards: ids.map((id) => ({ ...cardObj[id], id })),
+      burnSummary: matchingBurnSummary(original, ids)
+    };
+  }
 
   function handleReview() {
     if (!canReview) return;
@@ -483,7 +497,7 @@ export default function TransactionModal({
     setSelectedBuilds({ offer: give.builds, want: receive.builds });
     setPendingTransaction(null);
     setReview(null);
-    setIsCounterPropose(true);
+    setCounterTerms({ give, receive });
     setSelectedOption('want');
   }
 

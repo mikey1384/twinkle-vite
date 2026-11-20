@@ -22,8 +22,10 @@ export function returnBurnValueLabel({
     : addCommasToNumber(totalBv);
 }
 
-export function returnTotalBurnValueLabel(
-  cards: (Partial<Pick<Card, 'level' | 'quality'>> | undefined)[],
+type BurnCard = Partial<Pick<Card, 'level' | 'quality'>> | undefined;
+
+export function calculateCardBurnSummary(
+  cards: BurnCard[],
   { includeIncomplete = false } = {}
 ) {
   let totalBv = 0;
@@ -42,5 +44,13 @@ export function returnTotalBurnValueLabel(
       cardQuality: card.quality
     });
   }
-  return returnBurnValueLabel({ totalBv, numHiddenCards: numUnknownCards });
+  return { xp: totalBv, unknownCount: numUnknownCards };
+}
+
+export function returnTotalBurnValueLabel(
+  cards: BurnCard[],
+  options?: { includeIncomplete?: boolean }
+) {
+  const { xp, unknownCount } = calculateCardBurnSummary(cards, options);
+  return returnBurnValueLabel({ totalBv: xp, numHiddenCards: unknownCount });
 }

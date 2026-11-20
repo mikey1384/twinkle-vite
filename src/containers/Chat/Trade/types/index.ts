@@ -5,6 +5,7 @@ export interface TradeBundle {
   cardIds: number[];
   groupIds: number[];
   builds: TradeBuild[];
+  burnSummary?: { xp: number; unknownCount: number };
   cards?: any[];
   groups?: any[];
 }

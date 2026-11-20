@@ -3,7 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { AppOwnershipNotice } from '~/components/Build/TradeBuilds';
 import Exchange from './Exchange';
-import { summarizeBundleWithBurnValue } from './helpers/terms';
+import { summarizeBundleWithBurnValue } from './helpers/burnValue';
 import { errorClass, noticeClass, footerActionsClass } from './styles';
 import type { TradeReview } from './types';
 

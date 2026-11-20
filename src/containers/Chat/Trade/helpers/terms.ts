@@ -1,4 +1,3 @@
-import { returnTotalBurnValueLabel } from '~/helpers/aiCardBurnValue';
 import type { TradeBundle, TradeTerms } from '../types';
 
 export function emptyBundle(): TradeBundle {
@@ -43,19 +42,6 @@ export function summarizeBundle(bundle: TradeBundle) {
   return parts.join(' + ') || 'Nothing';
 }
 
-export function bundleBurnValueLabel(bundle: TradeBundle) {
-  const cards = bundle.cardIds.map((id) =>
-    bundle.cards?.find((card) => card?.id === id)
-  );
-  return returnTotalBurnValueLabel(cards, { includeIncomplete: true });
-}
-
-export function summarizeBundleWithBurnValue(bundle: TradeBundle) {
-  const summary = summarizeBundle(bundle);
-  const burnValue = bundleBurnValueLabel(bundle);
-  return burnValue ? `${summary} (burn value ${burnValue} XP)` : summary;
-}
-
 export function normalizeBundle(bundle: any): TradeBundle {
   return {
     coins: Number(bundle?.coins) || 0,
@@ -75,6 +61,7 @@ export function normalizeBundle(bundle: any): TradeBundle {
             ) || { id, title: `App #${id}`, unavailable: true }
         )
       : [...(bundle?.builds || [])],
+    burnSummary: bundle?.burnSummary,
     cards: bundle?.cards || [],
     groups: bundle?.groups || []
   };

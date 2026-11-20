@@ -12,6 +12,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 export default function SelectAICardModal({
   aiCardModalType,
   currentlySelectedCardIds,
+  getSelectionBurnLabel,
   maxSelectedCards,
   allowEmptySelection = false,
   submitting = false,
@@ -23,6 +24,7 @@ export default function SelectAICardModal({
 }: {
   aiCardModalType: string;
   currentlySelectedCardIds: any[];
+  getSelectionBurnLabel?: (ids: number[]) => string;
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
@@ -123,11 +125,12 @@ export default function SelectAICardModal({
     );
 
   const totalBvOfSelectedCards = useMemo(() => {
+    if (getSelectionBurnLabel) return getSelectionBurnLabel(selectedCardIds);
     const totalBvLabel = returnTotalBurnValueLabel(
       selectedCardIds.map((cardId) => cardObj[cardId])
     );
     return totalBvLabel ? `${totalBvLabel} XP` : '';
-  }, [cardObj, selectedCardIds]);
+  }, [cardObj, selectedCardIds, getSelectionBurnLabel]);
   const maxCards = Number.isFinite(maxSelectedCards)
     ? maxSelectedCards
     : Infinity;
