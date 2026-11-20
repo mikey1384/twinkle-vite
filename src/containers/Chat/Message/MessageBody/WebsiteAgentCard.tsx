@@ -1,3 +1,5 @@
+import { cloudFrontURL } from '~/constants/defaultValues';
+import AsyncActionPreview, { asyncActionTitle } from './AsyncActionPreview';
 import ProfileActionPreview, {
   isProfileActionPreview,
   type ProfileActionPreviewData
@@ -29,6 +31,17 @@ export interface WebsiteAgentCardData {
     revision: number;
     operation: string;
     issuedAt: number;
+    payloadHash?: string;
+    pictures?: { id: number; path: string }[];
+    appName?: string;
+    referenceCollections?: {
+      id: number;
+      name: string;
+      note: string;
+      pictures: { id: number; label: string; note: string; role: string }[];
+    }[];
+    collectionName?: string;
+    workshop?: { jobId: number; versionId: number; versionNumber?: number };
     state?: string;
     stateRevision?: number;
   };
@@ -42,6 +55,7 @@ export interface WebsiteAgentCardData {
   summary?: string;
   method?: string;
   path?: string;
+  body?: unknown;
   status?:
     'pending' | 'processing' | 'approved' | 'declined' | 'failed' | 'closed';
   result?: any;
@@ -163,6 +177,25 @@ export default function WebsiteAgentCard({
           card.status === 'closed'
         : card.status !== 'pending' && card.status !== 'processing';
 
+  const asyncStep = card.asyncTask?.operation === 'step';
+  const showAsyncPreview = Boolean(asyncActionTitle(card));
+  const [loadedPictures, setLoadedPictures] = useState<{
+    cardId: string;
+    ids: number[];
+  }>({ cardId: '', ids: [] });
+  const pictureIds =
+    card.asyncTask?.pictures?.map((picture) => picture.id) || [];
+  if (
+    asyncStep &&
+    card.body &&
+    typeof card.body === 'object' &&
+    'referenceImageB64' in card.body &&
+    card.body.referenceImageB64
+  )
+    pictureIds.push(0);
+  const picturesReady = pictureIds.every(
+    (id) => loadedPictures.cardId === card.id && loadedPictures.ids.includes(id)
+  );
   const options =
     card.type === 'choice' || card.type === 'lumine'
       ? (card.options || []).map((option) => ({
@@ -182,6 +215,7 @@ export default function WebsiteAgentCard({
             disabled:
               decided ||
               isSomeoneElses ||
+              (asyncStep && (!showAsyncPreview || !picturesReady)) ||
               (!!imageProposalId && loadedProposalId !== imageProposalId)
           },
           {
@@ -192,7 +226,9 @@ export default function WebsiteAgentCard({
           }
         ];
 
-  const profilePreview = isProfileActionPreview(card.preview) ? card.preview : null;
+  const profilePreview = isProfileActionPreview(card.preview)
+    ? card.preview
+    : null;
   const brainPreview =
     card.type === 'approval' && isTopicBrainCardPreview(card.preview)
       ? card.preview
@@ -201,11 +237,24 @@ export default function WebsiteAgentCard({
   return (
     <div
       className={
-        brainPreview || imageProposalId || profilePreview
+        asyncStep || brainPreview || imageProposalId || profilePreview
           ? `${bubbleVariables} ${stackedCard}`
           : bubbleVariables
       }
     >
+      {showAsyncPreview && !isSomeoneElses && (
+        <AsyncActionPreview
+          key={card.id}
+          card={card}
+          imageBase={cloudFrontURL}
+          onImageLoad={(id) =>
+            setLoadedPictures((old) => ({
+              cardId: card.id,
+              ids: [...(old.cardId === card.id ? old.ids : []), id]
+            }))
+          }
+        />
+      )}
       {imageProposalId && !isSomeoneElses && (
         <AssetHandoffPreview
           key={imageProposalId}
@@ -221,14 +270,20 @@ export default function WebsiteAgentCard({
       {brainPreview && !isSomeoneElses && (
         <TopicBrainProposalPreview preview={brainPreview} decided={decided} />
       )}
-      {profilePreview && !isSomeoneElses && <ProfileActionPreview preview={profilePreview} />}
+      {profilePreview && !isSomeoneElses && (
+        <ProfileActionPreview preview={profilePreview} />
+      )}
       <ChoicePromptBubble
         question={
           card.type === 'choice' || card.type === 'lumine'
             ? sameWords(card.question, messageText)
               ? ''
               : card.question || ''
-            : card.summary || ''
+            : asyncStep
+              ? showAsyncPreview
+                ? ''
+                : 'Open the updated card to review this step.'
+              : card.summary || ''
         }
         options={options}
         busyLabel={busyLabel}
@@ -253,7 +308,13 @@ export default function WebsiteAgentCard({
   );
 
   async function handleSelect(key: string) {
-    if (busyLabel || decided || isSomeoneElses) return;
+    if (
+      busyLabel ||
+      decided ||
+      isSomeoneElses ||
+      (key === 'approve' && asyncStep && (!showAsyncPreview || !picturesReady))
+    )
+      return;
     setError('');
     const decision =
       card.type === 'choice' || card.type === 'lumine'
@@ -266,8 +327,13 @@ export default function WebsiteAgentCard({
       const data = await decideWebsiteAgentCard({
         messageId,
         cardId: card.id,
-        ...(imageProposalId ? { previewedAssetProposalId: loadedProposalId } : {}),
+        ...(imageProposalId
+          ? { previewedAssetProposalId: loadedProposalId }
+          : {}),
         ...(profilePreview ? { previewedProfileActionId: card.id } : {}),
+        ...(showAsyncPreview
+          ? { previewedPayloadHash: card.asyncTask?.payloadHash }
+          : {}),
         ...decision
       });
       if (!data?.card) throw new Error('No card returned');
@@ -313,13 +379,25 @@ export default function WebsiteAgentCard({
           if (newState) onSetUserState({ userId, newState });
         }
       }
-      if (nextCard.status === 'approved' && nextCard.preview?.kind === 'profile_action') {
+      if (
+        nextCard.status === 'approved' &&
+        nextCard.preview?.kind === 'profile_action'
+      ) {
         const saved = nextCard.result?.data;
         if (saved && Number(saved.userId) === Number(userId)) {
-          if (saved.userPatch) onSetUserState({ userId, newState: saved.userPatch });
-          if (saved.settingsPatch) onApplyCanonicalUserSettings({ userId, settingsPatch: saved.settingsPatch });
+          if (saved.userPatch)
+            onSetUserState({ userId, newState: saved.userPatch });
+          if (saved.settingsPatch)
+            onApplyCanonicalUserSettings({
+              userId,
+              settingsPatch: saved.settingsPatch
+            });
           if (saved.navTabs) onUpdateNavTabsState(saved.navTabs);
-          if (saved.profileState) onApplyCanonicalUserProfileState({ userId, profileState: saved.profileState });
+          if (saved.profileState)
+            onApplyCanonicalUserProfileState({
+              userId,
+              profileState: saved.profileState
+            });
         }
       }
       onCardUpdated?.(nextCard);
@@ -396,7 +474,11 @@ function describeApprovalStatus(
   if (card.status === 'processing')
     return 'Still working. You can tap again to check.';
   if (card.status === 'approved')
-    return isTopicBrain ? 'Saved. It’s in Topic Settings.' : card.preview?.kind === 'profile_action' ? 'Saved.' : 'Done!';
+    return isTopicBrain
+      ? 'Saved. It’s in Topic Settings.'
+      : card.preview?.kind === 'profile_action'
+        ? 'Saved.'
+        : 'Done!';
   if (card.status === 'declined') return 'Okay, I won’t.';
   if (card.status === 'failed')
     return (

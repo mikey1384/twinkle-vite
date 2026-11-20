@@ -82,3 +82,66 @@ test('late HTTP and socket results do not replace a newer canonical card revisio
     current
   );
 });
+
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import AsyncActionPreview from '../src/containers/Chat/Message/MessageBody/AsyncActionPreview';
+
+test('step previews show bound picture settings, replacement pictures and the exact app version', () => {
+  const ref = { operation: 'step', payloadHash: 'hash' };
+  const render = (
+    path: string,
+    body: object,
+    method = 'POST',
+    asyncTask: typeof ref & Record<string, unknown> = ref
+  ) =>
+    renderToStaticMarkup(
+      React.createElement(AsyncActionPreview, {
+        card: { path, method, body, asyncTask },
+        imageBase: 'https://images.example'
+      })
+    );
+  const image = render('/content/image/ai', {
+    prompt: 'Two blue moons',
+    quality: 'high',
+    model: 'gpt-image-2'
+  });
+  for (const word of [
+    'Make this picture',
+    'Two blue moons',
+    'high',
+    'gpt-image-2'
+  ])
+    assert.ok(image.includes(word));
+  const collection = render(
+    '/content/image/ai/collections/41',
+    { images: [{ id: 31, role: 'place', label: 'Moon' }] },
+    'PUT',
+    {
+      ...ref,
+      collectionName: 'Skies',
+      pictures: [{ id: 31, path: 'moon.png' }]
+    }
+  );
+  for (const word of [
+    'Skies (#41)',
+    'replace',
+    'moon.png',
+    'Picture #31',
+    'place',
+    'Moon'
+  ])
+    assert.ok(collection.includes(word));
+  const publish = render(
+    '/build/8/publish',
+    { expectedFilesHash: '123abc' },
+    'POST',
+    { ...ref, workshop: { jobId: 2, versionId: 9 } }
+  );
+  for (const word of ['Publish app #8', 'app version #9', '123abc'])
+    assert.ok(publish.includes(word));
+  assert.equal(
+    render('/build/8/publish', {}, 'POST', { ...ref, payloadHash: '' }),
+    ''
+  );
+});
