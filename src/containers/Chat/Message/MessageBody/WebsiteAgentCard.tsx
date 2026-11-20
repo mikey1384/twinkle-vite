@@ -333,8 +333,8 @@ export default function WebsiteAgentCard({
           ? { previewedAssetProposalId: loadedProposalId }
           : {}),
         ...(profilePreview ? { previewedProfileActionId: card.id } : {}),
-        ...(showAsyncPreview
-          ? { previewedPayloadHash: card.asyncTask?.payloadHash }
+        ...(card.asyncTask?.payloadHash
+          ? { previewedPayloadHash: card.asyncTask.payloadHash }
           : {}),
         ...decision
       });
