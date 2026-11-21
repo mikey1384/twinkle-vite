@@ -1,7 +1,8 @@
+import { batteryPercent } from '~/helpers/battery';
 import type { TradeBundle, TradeTerms } from '../types';
 
 export function emptyBundle(): TradeBundle {
-  return { coins: 0, cardIds: [], groupIds: [], builds: [] };
+  return { coins: 0, battery: 0, cardIds: [], groupIds: [], builds: [] };
 }
 
 export function parseTradeCoins(input: string) {
@@ -23,6 +24,7 @@ export function parseTradeCoins(input: string) {
 export function hasTradeAssets(bundle: TradeBundle) {
   return Boolean(
     bundle.coins ||
+    bundle.battery ||
     bundle.cardIds.length ||
     bundle.groupIds.length ||
     bundle.builds.length
@@ -32,6 +34,7 @@ export function hasTradeAssets(bundle: TradeBundle) {
 export function summarizeBundle(bundle: TradeBundle) {
   const parts: string[] = [];
   if (bundle.coins) parts.push(`${bundle.coins.toLocaleString('en-US')} coins`);
+  if (bundle.battery) parts.push(`${batteryPercent(bundle.battery)}% battery`);
   for (const [count, label] of [
     [bundle.cardIds.length, 'card'],
     [bundle.groupIds.length, 'group'],
@@ -45,6 +48,7 @@ export function summarizeBundle(bundle: TradeBundle) {
 export function normalizeBundle(bundle: any): TradeBundle {
   return {
     coins: Number(bundle?.coins) || 0,
+    battery: Number(bundle?.battery) || 0,
     cardIds: [
       ...(bundle?.cardIds || bundle?.cards?.map((card: any) => card.id) || [])
     ],
@@ -90,6 +94,7 @@ export function tradeTermsKey(transaction: any) {
     const normalized = normalizeBundle(bundle);
     return [
       normalized.coins,
+      normalized.battery,
       [...normalized.cardIds].sort((a, b) => a - b),
       [...normalized.groupIds].sort((a, b) => a - b),
       normalized.builds.map((build) => Number(build.id)).sort((a, b) => a - b)

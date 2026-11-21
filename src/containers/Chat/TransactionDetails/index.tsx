@@ -17,6 +17,10 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useReplyCardPresentation } from '../Message/MessageBody/ReplyCardPresentation';
+import {
+  batteryExpiresAtForOffer,
+  formatBatteryExpiry
+} from '~/helpers/battery';
 
 export default function TransactionDetails({
   channelId,
@@ -76,6 +80,29 @@ export default function TransactionDetails({
   const liveDeliverability = useChatContext(
     (v) => v.state.tradeDeliverability?.[transaction.id]
   );
+  // An offer's battery belongs to the site day it was made on. One timer for
+  // that day's end re-renders the card, so it reads "Offer expired" at the
+  // boundary without a request.
+  const offerHasBattery =
+    Number(transaction?.offer?.battery) > 0 ||
+    Number(transaction?.want?.battery) > 0;
+  const batteryExpiresAt = offerHasBattery
+    ? batteryExpiresAtForOffer(Number(transaction.timeStamp))
+    : 0;
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!batteryExpiresAt) return;
+    // A card React reuses for another offer (or one remounted long after it
+    // first rendered) must never judge its date with the previous clock:
+    // take the time now whenever the offer's day changes, then wake once at
+    // that day's end.
+    setNowMs(Date.now());
+    const wait = batteryExpiresAt * 1000 - Date.now();
+    if (wait <= 0) return;
+    // setTimeout holds at most ~24.8 days; a site day is shorter
+    const timer = setTimeout(() => setNowMs(Date.now()), wait + 500);
+    return () => clearTimeout(timer);
+  }, [batteryExpiresAt]);
   const judgedTransaction = useMemo(
     () =>
       liveDeliverability
@@ -138,7 +165,8 @@ export default function TransactionDetails({
     isAccepted: !!isAccepted,
     isCancelled,
     cancelReason,
-    isCurrent: transaction.id === currentTransactionId
+    isCurrent: transaction.id === currentTransactionId,
+    nowMs
   });
   const isOpenTrade =
     type === 'trade' && !isAccepted && !closed && !requestOnly;
@@ -290,6 +318,26 @@ export default function TransactionDetails({
               )}
             </div>
           </div>
+          {!settled && !cancelled && batteryExpiresAt > 0 && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '99rem',
+                background: '#fff8ed',
+                border: '1px solid #ebc896',
+                color: '#80501c',
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Icon icon="hourglass-half" />
+              Expires {formatBatteryExpiry(batteryExpiresAt, nowMs)}
+            </span>
+          )}
           <time
             dateTime={hasTransactionDate ? transactionDate.toISOString() : undefined}
             style={{ fontSize: '1.1rem', color: '#617087' }}
@@ -318,6 +366,17 @@ export default function TransactionDetails({
             gift={type === 'send'}
             settled={settled}
             cancelled={cancelled}
+            batteryExpiresAt={batteryExpiresAt}
+            batteryState={
+              expired
+                ? 'expired'
+                : cancelled
+                  ? 'cancelled'
+                  : settled
+                    ? 'received'
+                    : 'listed'
+            }
+            nowMs={nowMs}
           />
         </div>
         <div

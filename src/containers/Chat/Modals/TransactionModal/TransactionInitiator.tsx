@@ -4,6 +4,14 @@ import OfferEditor from './OfferEditor';
 import { exchangeGrid, noticeClass, panelClass } from '../../Trade/styles';
 import type { TradeTerms } from '../../Trade/types';
 import { hasTradeAssets } from '../../Trade/helpers/terms';
+import { batteryPercent } from '~/helpers/battery';
+
+export interface TradeBatteryInput {
+  units: { offer: number; want: number };
+  giveableUnits: number;
+  expiresAt: number;
+  unavailableMessage: string;
+}
 
 const modesClass = css`
   display: grid;
@@ -63,7 +71,10 @@ export default function TransactionInitiator({
   onChoose,
   onRemove,
   onSetAICardModalCardId,
-  coinExplanation
+  coinExplanation,
+  battery,
+  onChooseBattery,
+  onRemoveBattery
 }: {
   terms: TradeTerms;
   coinInputs: { offer: string; want: string };
@@ -83,7 +94,22 @@ export default function TransactionInitiator({
   ) => void;
   onSetAICardModalCardId: (id: number) => void;
   coinExplanation: string;
+  // null while battery trading is off (or not loaded): no battery UI at all
+  battery: TradeBatteryInput | null;
+  onChooseBattery: (type: 'offer' | 'want') => void;
+  onRemoveBattery: (type: 'offer' | 'want') => void;
 }) {
+  const batteryExplanation =
+    battery &&
+    selectedOption === 'want' &&
+    battery.units.offer > 0 &&
+    battery.units.want > 0
+      ? terms.give.battery
+        ? `Battery is entered on both sides. Only the difference moves: you give ${batteryPercent(terms.give.battery)}%.`
+        : terms.receive.battery
+          ? `Battery is entered on both sides. Only the difference moves: you receive ${batteryPercent(terms.receive.battery)}%.`
+          : 'The battery amounts cancel each other out. No battery will move.'
+      : '';
   return (
     <div>
       <div className={modesClass} aria-label="Transaction type">
@@ -129,6 +155,18 @@ export default function TransactionInitiator({
           onChoose={(kind) => onChoose('offer', kind)}
           onRemove={(kind, id) => onRemove('offer', kind, id)}
           onInspectCard={onSetAICardModalCardId}
+          battery={
+            battery
+              ? {
+                  units: battery.units.offer,
+                  giveableUnits: battery.giveableUnits,
+                  expiresAt: battery.expiresAt,
+                  unavailableMessage: battery.unavailableMessage
+                }
+              : null
+          }
+          onChooseBattery={() => onChooseBattery('offer')}
+          onRemoveBattery={() => onRemoveBattery('offer')}
         />
         {selectedOption === 'want' && (
           <OfferEditor
@@ -143,6 +181,17 @@ export default function TransactionInitiator({
             onChoose={(kind) => onChoose('want', kind)}
             onRemove={(kind, id) => onRemove('want', kind, id)}
             onInspectCard={onSetAICardModalCardId}
+            battery={
+              battery
+                ? {
+                    units: battery.units.want,
+                    expiresAt: battery.expiresAt,
+                    unavailableMessage: battery.unavailableMessage
+                  }
+                : null
+            }
+            onChooseBattery={() => onChooseBattery('want')}
+            onRemoveBattery={() => onRemoveBattery('want')}
           />
         )}
         {selectedOption === 'send' && (
@@ -170,6 +219,9 @@ export default function TransactionInitiator({
       {coinExplanation && selectedOption === 'want' && (
         <p className={noticeClass}>{coinExplanation}</p>
       )}
+      {batteryExplanation && (
+        <p className={noticeClass}>{batteryExplanation}</p>
+      )}
       <p className={noticeClass}>
         {selectedOption === 'send'
           ? 'You will review your gift before sending. Gifts transfer immediately after you confirm.'
@@ -177,7 +229,7 @@ export default function TransactionInitiator({
             ? 'Share a showcase to start a conversation. Nothing changes owners.'
             : !hasTradeAssets(terms.give)
               ? 'Choose what interests you to start a conversation. Add something on your side to propose a trade.'
-              : 'Build an offer with any mix of coins, cards, groups and apps. Nothing moves until your partner accepts.'}
+              : `Build an offer with any mix of coins, ${battery ? 'battery, ' : ''}cards, groups and apps. Nothing moves until your partner accepts.`}
       </p>
     </div>
   );

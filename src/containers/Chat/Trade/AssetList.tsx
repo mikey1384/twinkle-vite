@@ -8,6 +8,7 @@ import { useChatContext } from '~/contexts';
 import { getAICardDisplayWord } from '~/helpers/aiCardDisplay';
 import { assetListClass } from './styles';
 import type { TradeBundle } from './types';
+import BatteryAsset from './BatteryAsset';
 import { css, cx } from '@emotion/css';
 import { useReplyCardPresentation } from '../Message/MessageBody/ReplyCardPresentation';
 
@@ -17,6 +18,11 @@ export default function AssetList({
   onInspectCard,
   onRemove,
   showCoins = true,
+  showBattery = true,
+  batteryExpiresAt = 0,
+  batteryState = 'pending',
+  nowMs = Date.now(),
+  timeZone,
   showOwnership = true,
   settled = false,
   cancelled = false
@@ -26,6 +32,11 @@ export default function AssetList({
   onInspectCard: (id: number) => void;
   onRemove?: (kind: 'card' | 'group' | 'app', id: number) => void;
   showCoins?: boolean;
+  showBattery?: boolean;
+  batteryExpiresAt?: number;
+  batteryState?: 'pending' | 'listed' | 'received' | 'sent' | 'expired' | 'cancelled';
+  nowMs?: number;
+  timeZone?: string;
   showOwnership?: boolean;
   settled?: boolean;
   cancelled?: boolean;
@@ -41,6 +52,15 @@ export default function AssetList({
             {bundle.coins.toLocaleString('en-US')} <small>coins</small>
           </span>
         </div>
+      )}
+      {showBattery && !!bundle.battery && (
+        <BatteryAsset
+          units={bundle.battery}
+          expiresAt={batteryExpiresAt}
+          nowMs={nowMs}
+          timeZone={timeZone}
+          state={batteryState}
+        />
       )}
       {bundle.cardIds.map((id) => {
         const card = bundle.cards?.find((card) => card.id === id) ||

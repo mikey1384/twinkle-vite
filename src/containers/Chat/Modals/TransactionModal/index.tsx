@@ -11,6 +11,8 @@ import TransactionInitiator from './TransactionInitiator';
 import Loading from '~/components/Loading';
 import TransactionHandler from './TransactionHandler';
 import ReviewModal from '../../Trade/ReviewModal';
+import BatteryAmountPicker from './BatteryAmountPicker';
+import { FULL_BATTERY_UNITS } from '~/helpers/battery';
 import {
   emptyBundle,
   getViewerTradeTerms,
@@ -97,6 +99,25 @@ export default function TransactionModal({
       initialBuild && Number(initialBuild.userId) !== myId ? [initialBuild] : []
   });
   const [coinInputs, setCoinInputs] = useState({ offer: '', want: '' });
+  const [batteryUnits, setBatteryUnits] = useState({ offer: 0, want: 0 });
+  const [batteryPickerSide, setBatteryPickerSide] = useState<
+    'offer' | 'want' | null
+  >(null);
+  // GET /chat/trade/battery: today's giveable battery, the receive room left,
+  // the site-day end and whether battery may move between this pair at all.
+  // Canonical server values only; the battery UI stays hidden until they load
+  // (and while the API switch is off).
+  const [batteryInfo, setBatteryInfo] = useState<{
+    enabled: boolean;
+    giveableUnits?: number;
+    receiveRoomUnits?: number;
+    dayEndsAt?: number;
+    allowed?: boolean;
+    message?: string | null;
+  } | null>(null);
+  const loadBatteryTradeInfo = useAppContext(
+    (v) => v.requestHelpers.loadBatteryTradeInfo
+  );
   const [review, setReview] = useState<TradeReview | null>(null);
   const [selectedCardIdsObj, setSelectedCardIdsObj] = useState<
     Record<'offer' | 'want', number[]>
@@ -143,6 +164,23 @@ export default function TransactionModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId, currentTransactionId, reloadKey]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setBatteryInfo(null);
+    loadBatteryTradeInfo(partner.id)
+      .then((info: any) => {
+        if (!cancelled) setBatteryInfo(info || { enabled: false });
+      })
+      .catch(() => {
+        if (!cancelled) setBatteryInfo({ enabled: false });
+      });
+    return () => {
+      cancelled = true;
+    };
+    // a new offer or a refreshed modal reads fresh balances
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partner.id, reloadKey]);
+
   const offerCoins = parseTradeCoins(coinInputs.offer);
   const wantCoins = parseTradeCoins(coinInputs.want);
   const isTrade = selectedOption === 'want';
@@ -168,9 +206,27 @@ export default function TransactionModal({
           ? `Coins are entered on both sides. Only the difference moves: you receive ${netReceiveCoins.toLocaleString('en-US')} coins.`
           : 'The coin amounts cancel each other out. No coins will move.'
       : '';
+  // Battery entered on both sides is netted like coins: only the difference
+  // moves (the server accepts battery going one way only).
+  const showcaseOnly = selectedOption === 'offer';
+  const offerBattery = showcaseOnly ? 0 : batteryUnits.offer;
+  const netGiveBattery = isTrade
+    ? Math.max(offerBattery - batteryUnits.want, 0)
+    : offerBattery;
+  const netReceiveBattery = isTrade
+    ? Math.max(batteryUnits.want - offerBattery, 0)
+    : 0;
+  const batteryEnabled = !!batteryInfo?.enabled;
+  const batteryError =
+    batteryEnabled &&
+    netGiveBattery > Number(batteryInfo?.giveableUnits || 0) &&
+    netGiveBattery > 0
+      ? "You don't have that much battery left to give today."
+      : '';
   const terms: TradeTerms = {
     give: {
       coins: netGiveCoins,
+      battery: netGiveBattery,
       ...selectedCards('offer', selectedCardIdsObj.offer),
       groupIds: selectedGroupIdsObj.offer,
       builds: selectedBuilds.offer
@@ -178,6 +234,7 @@ export default function TransactionModal({
     receive: isTrade
       ? {
           coins: netReceiveCoins,
+          battery: netReceiveBattery,
           ...selectedCards('want', selectedCardIdsObj.want),
           groupIds: selectedGroupIdsObj.want,
           builds: selectedBuilds.want
@@ -201,7 +258,8 @@ export default function TransactionModal({
     unavailableCard || unavailableApp
       ? 'An item is no longer available. Remove it or choose it again; it will not be silently left out.'
       : '';
-  const validationError = coinErrors.offer || coinErrors.want || selectionError;
+  const validationError =
+    coinErrors.offer || coinErrors.want || selectionError || batteryError;
   const hasGive = hasTradeAssets(terms.give);
   const hasReceive = hasTradeAssets(terms.receive);
   const canReview = !validationError && (isTrade ? hasReceive : hasGive);
@@ -217,6 +275,7 @@ export default function TransactionModal({
     !!aiCardModalType ||
     !!groupModalType ||
     !!buildModalType ||
+    !!batteryPickerSide ||
     !!review;
   const mode =
     selectedOption === 'send'
@@ -360,10 +419,28 @@ export default function TransactionModal({
                 onRemove={handleRemove}
                 onSetAICardModalCardId={onSetAICardModalCardId}
                 coinExplanation={coinExplanation}
+                battery={
+                  batteryEnabled
+                    ? {
+                        units: batteryUnits,
+                        giveableUnits: Number(batteryInfo?.giveableUnits || 0),
+                        expiresAt: Number(batteryInfo?.dayEndsAt || 0),
+                        unavailableMessage:
+                          batteryInfo?.allowed === false
+                            ? batteryInfo?.message ||
+                              "Battery can't be sent between these accounts."
+                            : ''
+                      }
+                    : null
+                }
+                onChooseBattery={setBatteryPickerSide}
+                onRemoveBattery={(side) =>
+                  setBatteryUnits((current) => ({ ...current, [side]: 0 }))
+                }
               />
-              {selectionError && (
+              {(selectionError || batteryError) && (
                 <p role="alert" className={errorClass}>
-                  {selectionError}
+                  {selectionError || batteryError}
                 </p>
               )}
               {isTrade && !hasReceive && hasGive && (
@@ -405,6 +482,31 @@ export default function TransactionModal({
                   [buildModalType]: builds
                 }));
                 setBuildModalType(null);
+              }}
+            />
+          )}
+          {batteryPickerSide && batteryEnabled && (
+            <BatteryAmountPicker
+              side={batteryPickerSide === 'offer' ? 'give' : 'receive'}
+              partnerName={partner.username}
+              maxUnits={
+                batteryPickerSide === 'offer'
+                  ? Number(batteryInfo?.giveableUnits || 0)
+                  : Math.min(
+                      Number(batteryInfo?.receiveRoomUnits || 0),
+                      FULL_BATTERY_UNITS
+                    )
+              }
+              initialUnits={batteryUnits[batteryPickerSide] || undefined}
+              expiresAt={Number(batteryInfo?.dayEndsAt || 0)}
+              nowMs={Date.now()}
+              onHide={() => setBatteryPickerSide(null)}
+              onDone={(units) => {
+                setBatteryUnits((current) => ({
+                  ...current,
+                  [batteryPickerSide]: units
+                }));
+                setBatteryPickerSide(null);
               }}
             />
           )}
@@ -499,6 +601,8 @@ export default function TransactionModal({
     setSelectedCardIdsObj({ offer: give.cardIds, want: receive.cardIds });
     setSelectedGroupIdsObj({ offer: give.groupIds, want: receive.groupIds });
     setSelectedBuilds({ offer: give.builds, want: receive.builds });
+    // the counteroffer belongs to the day it is made (its battery too)
+    setBatteryUnits({ offer: give.battery || 0, want: receive.battery || 0 });
     setPendingTransaction(null);
     setReview(null);
     setCounterTerms({ give, receive });
@@ -517,12 +621,14 @@ export default function TransactionModal({
       type,
       offered: {
         coins: give.coins,
+        ...(give.battery ? { battery: give.battery } : {}),
         cardIds: give.cardIds,
         groupIds: give.groupIds,
         buildIds: give.builds.map((app) => app.id)
       },
       wanted: {
         coins: receive.coins,
+        ...(receive.battery ? { battery: receive.battery } : {}),
         cardIds: receive.cardIds,
         groupIds: receive.groupIds,
         buildIds: receive.builds.map((app) => app.id)

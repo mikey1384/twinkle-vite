@@ -736,6 +736,7 @@ registerMethods('chat', [
   'changeChannelOwner',
   'checkTransactionPossible',
   'loadTradeDeliverability',
+  'loadBatteryTradeInfo',
   'checkChatAccessible',
   'createNewChat',
   'cancelChessRewind',

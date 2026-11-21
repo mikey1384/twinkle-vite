@@ -4,6 +4,8 @@ import Icon from '~/components/Icon';
 import AssetList from '../../Trade/AssetList';
 import { panelClass } from '../../Trade/styles';
 import type { TradeBundle } from '../../Trade/types';
+import BatteryAsset from '../../Trade/BatteryAsset';
+import { batteryPercent } from '~/helpers/battery';
 
 const editorClass = css`
   .coin-label {
@@ -14,6 +16,44 @@ const editorClass = css`
     margin-bottom: 0.7rem;
     font-size: 1.2rem;
     font-weight: 700;
+  }
+  .battery-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    min-height: 4.4rem;
+    border: 1px dashed #7fc8a4;
+    border-radius: 0.8rem;
+    background: #fff;
+    color: #126b65;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .battery-chosen .asset {
+    padding: 1rem;
+    border: 1px solid #e0e6ee;
+    border-radius: 1rem;
+  }
+  .battery-chosen .asset-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.7rem;
+    font-size: 1.1rem;
+    color: #617087;
+  }
+  .battery-chosen .remove {
+    border: 0;
+    background: #f1f4f8;
+    color: #536178;
+    border-radius: 0.5rem;
+    padding: 0.35rem 0.7rem;
+    font-size: 1.1rem;
+    cursor: pointer;
   }
   .balance {
     color: #67758a;
@@ -102,7 +142,10 @@ export default function OfferEditor({
   onCoinChange,
   onChoose,
   onRemove,
-  onInspectCard
+  onInspectCard,
+  battery,
+  onChooseBattery,
+  onRemoveBattery
 }: {
   side: 'give' | 'receive';
   partnerName: string;
@@ -117,6 +160,15 @@ export default function OfferEditor({
   onChoose: (kind: 'card' | 'group' | 'app') => void;
   onRemove: (kind: 'card' | 'group' | 'app', id: number) => void;
   onInspectCard: (id: number) => void;
+  // null while battery trading is off: the editor shows no battery row
+  battery?: {
+    units: number;
+    giveableUnits?: number;
+    expiresAt: number;
+    unavailableMessage?: string;
+  } | null;
+  onChooseBattery?: () => void;
+  onRemoveBattery?: () => void;
 }) {
   const fieldId = useId();
   const title = showcase
@@ -176,6 +228,36 @@ export default function OfferEditor({
             {coinError}
           </p>
         )}
+        {!showcase && battery && (
+          <>
+            <div className="coin-label" style={{ marginTop: '1.6rem' }}>
+              <span>Battery {title.toLowerCase()}</span>
+              {side === 'give' && battery.giveableUnits !== undefined && (
+                <span className="balance">
+                  You can give {batteryPercent(battery.giveableUnits)}% today
+                </span>
+              )}
+            </div>
+            {battery.units ? (
+              <div className="battery-chosen">
+                <BatteryAsset
+                  units={battery.units}
+                  expiresAt={battery.expiresAt}
+                  nowMs={Date.now()}
+                  onEdit={battery.unavailableMessage ? undefined : onChooseBattery}
+                  onRemove={onRemoveBattery}
+                />
+              </div>
+            ) : battery.unavailableMessage ? (
+              <p className="coin-error">{battery.unavailableMessage}</p>
+            ) : (
+              <button className="battery-add" onClick={onChooseBattery}>
+                <Icon icon="bolt" />
+                Add battery <span aria-hidden="true">+</span>
+              </button>
+            )}
+          </>
+        )}
         <p className="add-label">Items {count > 0 && `(${count})`}</p>
         <div className="add-buttons">
           <button onClick={() => onChoose('card')}>
@@ -198,6 +280,7 @@ export default function OfferEditor({
             onInspectCard={onInspectCard}
             onRemove={onRemove}
             showCoins={false}
+            showBattery={false}
             showOwnership={!showcase && showOwnership}
           />
         ) : (
