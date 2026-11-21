@@ -693,7 +693,13 @@ function PersonRow({ person }: { person: CheckinPerson }) {
         />
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontWeight: 'bold', fontSize: '1.4rem' }}>
+        <div
+          style={{
+            fontWeight: 'bold',
+            fontSize: '1.4rem',
+            overflowWrap: 'anywhere'
+          }}
+        >
           {person.username}
         </div>
         <div
