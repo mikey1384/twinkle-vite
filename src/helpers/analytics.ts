@@ -58,8 +58,7 @@ export type AnalyticsEventName =
   // Meet people in apps: walking up, and the shared-moment DM card
   | 'social_walkup'
   | 'social_card_shown'
-  | 'social_card_chip'
-  | 'social_card_rematch'
+  | 'social_card_again'
   // Zero/Ciel voice
   | 'voice_call_start'
   // Reliability (GA4 standard name)

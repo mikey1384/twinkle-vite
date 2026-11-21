@@ -1,185 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { Link, useNavigate } from 'react-router-dom';
-import Button from '~/components/Button';
-import Icon from '~/components/Icon';
+import { Link } from 'react-router-dom';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ProfilePic from '~/components/ProfilePic';
+import ReportMessageModal from '~/components/ChatSafety/ReportMessageModal';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { trackEvent } from '~/helpers/analytics';
 import { useWalkUp } from '~/helpers/hooks/useSocialWalkups';
-import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import {
   FIRST_CHAT_NOTE,
-  socialCardButtonLabel,
-  socialCardChipsShown,
-  socialCardChipsToShow,
-  socialCardCount,
-  socialCardHeadline,
+  socialCardActionLabel,
+  socialCardBanner,
+  socialCardLines,
   type SocialTogetherCardData
 } from '~/helpers/socialTogetherCard';
-import { useChatQuickSend } from './ChatQuickSend';
+import BuildMessageCard, { BuildMessageCardChip } from './BuildMessageCard';
 
-// The shared-moment card (twinkle-api controllers/build/services/
+// The shared-moment notice (twinkle-api controllers/build/services/
 // socialMoments.ts): two members did something together in an app, and
-// Twinkle put this in their chat. It is nobody's message. For many kids it
-// opens their first DM ever, so it reads as an introduction, not a receipt,
-// and the hardest part (the first word) is one tap.
-const cardCls = css`
-  box-sizing: border-box;
-  width: min(44rem, calc(100% - 2rem));
-  margin: 1.2rem auto;
-  padding: 1.6rem 1.6rem 1.4rem;
-  border-radius: 1.8rem;
-  border: 1px solid rgba(65, 140, 235, 0.28);
-  background: #f5f9ff;
-  text-align: center;
-  color: #1c2b44;
-  .together-faces {
-    display: flex;
-    justify-content: center;
-  }
-  .together-face {
-    width: 5rem;
-    height: 5rem;
-    border-radius: 50%;
-    box-shadow: 0 0 0 3px #f5f9ff;
-    background: #fff;
-  }
-  .together-face + .together-face {
-    margin-left: -1.2rem;
-  }
-  .together-headline {
-    margin: 1rem 0 0;
-    font-size: 1.7rem;
-    line-height: 1.3;
-    font-weight: 700;
-    overflow-wrap: anywhere;
-  }
-  .together-result {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin: 0.9rem 0 0;
-  }
-  .together-thumb {
-    flex: 0 0 auto;
-    width: 4.8rem;
-    height: 4.8rem;
-    border-radius: 1rem;
-    object-fit: cover;
-    background: #e3ecfa;
-  }
-  .together-text {
-    min-width: 0;
-    text-align: center;
-    font-size: 1.4rem;
-    line-height: 1.4;
-    color: #33435d;
-    overflow-wrap: anywhere;
-  }
-  .together-meta {
-    display: block;
-    margin-top: 0.2rem;
-    font-size: 1.15rem;
-    color: #62718a;
-  }
-  .together-chips {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.7rem;
-    margin-top: 1.3rem;
-  }
-  .together-chip {
-    /* a thumb-sized target at every root font size (phones use a smaller rem) */
-    min-height: max(4.4rem, 38px);
-    max-width: 100%;
-    padding: 0.5rem 1.6rem;
-    border: 1px solid rgba(65, 140, 235, 0.45);
-    border-radius: 999px;
-    background: #fff;
-    color: #1f5fae;
-    font: inherit;
-    font-size: 1.35rem;
-    font-weight: 700;
-    cursor: pointer;
-    overflow-wrap: anywhere;
-    transition:
-      background-color 0.15s ease,
-      transform 0.1s ease;
-  }
-  .together-chip:hover:not(:disabled) {
-    background: #e8f1fe;
-  }
-  .together-chip:active:not(:disabled) {
-    transform: scale(0.97);
-  }
-  .together-chip:disabled {
-    opacity: 0.55;
-    cursor: default;
-  }
-  .together-hint {
-    margin: 0.7rem 0 0;
-    font-size: 1.1rem;
-    color: #62718a;
-  }
-  .together-actions {
-    display: flex;
-    justify-content: center;
-    margin-top: 1.3rem;
-  }
-  .together-actions > button {
-    min-height: max(4.4rem, 38px);
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
-  .together-result-link {
-    display: inline-block;
-    margin-top: 0.9rem;
-  }
-  .together-note {
-    margin: 1.3rem 0 0;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(65, 140, 235, 0.2);
-    font-size: 1.15rem;
-    line-height: 1.4;
-    color: #4b5d78;
-  }
-`;
-
+// Twinkle put this in their chat. It is nobody's message, and every word on
+// it is Twinkle's (the server's fixed templates); no app text reaches it.
+// It shares the Build message card's frame (the branch-suggestion card),
+// in Twinkle's own blue rather than either member's color, because neither
+// of them sent it.
 export default function SocialTogetherCard({
-  card,
-  channelId,
-  canReply
+  card
 }: {
   card: SocialTogetherCardData;
-  channelId: number;
-  // false when the viewer cannot post here right now
-  canReply: boolean;
 }) {
-  const myId = useKeyContext((v) => v.myState.userId);
-  const buttonColor = useRoleColor('button', { fallback: 'logoBlue' }).colorKey;
+  const myId = Number(useKeyContext((v) => v.myState.userId) || 0);
   const markSocialMomentSeen = useAppContext(
     (v) => v.requestHelpers.markSocialMomentSeen
   );
-  const markSocialMomentChip = useAppContext(
-    (v) => v.requestHelpers.markSocialMomentChip
-  );
-  const quickSend = useChatQuickSend();
   const walkUp = useWalkUp();
-  const navigate = useNavigate();
   const [firstChatNote, setFirstChatNote] = useState(false);
-  const [sendingChip, setSendingChip] = useState('');
-  const [chipUsed, setChipUsed] = useState(false);
   const [opening, setOpening] = useState(false);
+  const [reporting, setReporting] = useState<number | null>(null);
 
   const me = card.users.find((user) => user.id === myId);
   const other = card.users.find((user) => user.id !== myId);
   const alreadySeen = card.seenBy.includes(myId);
 
-  // "Card shown": once per member per card, recorded by the server. Its
-  // answer says whether this is the card that opened the member's first DM
+  // "Notice shown": once per member per notice, recorded by the server. Its
+  // answer says whether this is the notice that opened the member's first DM
   // thread ever; only then, and only this once, the one-line note shows.
   useEffect(() => {
     if (!me || alreadySeen) return;
@@ -199,126 +63,119 @@ export default function SocialTogetherCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alreadySeen, card.id, me?.id]);
 
-  if (!me || !other) return null;
+  const lines = socialCardLines(card, myId);
+  if (!me || !other || !lines) return null;
 
-  const countLabel = socialCardCount(card);
   const dateLabel = new Date(card.createdAt * 1000).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric'
   });
   const picture = card.thumbnailUrl || card.appThumbnailUrl;
-  const buttonLabel = socialCardButtonLabel(card);
-  const resultPath =
-    card.appAvailable && card.linkPath && /^[A-Za-z0-9][A-Za-z0-9-]*$/.test(card.linkPath)
+  const actionLabel = socialCardActionLabel(card);
+  const appPath = card.appAvailable
+    ? card.linkPath && /^[A-Za-z0-9][A-Za-z0-9-]*$/.test(card.linkPath)
       ? `/app/${card.buildId}/${card.linkPath}`
-      : null;
-  const chips = socialCardChipsToShow(card.chips, buttonLabel);
-  const chipsShown = socialCardChipsShown({
-    card: { ...card, chips },
-    myId,
-    canReply: canReply && !!quickSend,
-    chipUsed,
-    nowSeconds: Date.now() / 1000
-  });
+      : `/app/${card.buildId}`
+    : null;
+  const appTitle = (
+    <span className={appTitleClass}>
+      {picture ? (
+        <img className={thumbClass} src={picture} alt="" loading="lazy" />
+      ) : null}
+      <span className={appNameClass}>{card.appTitle}</span>
+    </span>
+  );
 
   return (
-    <div className={cardCls} data-social-together>
-      <div className="together-faces" aria-hidden>
-        {[me, other].map((user) => (
-          <span key={user.id} className="together-face">
-            <ProfilePic
-              userId={user.id}
-              profilePicUrl={user.profilePicUrl}
-              activityBadgeShown={false}
-              style={{ width: '100%', height: '100%' }}
-            />
-          </span>
-        ))}
-      </div>
-      <p className="together-headline">
-        {socialCardHeadline({ card, otherName: other.username })}
-      </p>
-      <div className="together-result">
-        {picture ? <img className="together-thumb" src={picture} alt="" loading="lazy" /> : null}
-        <span className="together-text">
-          {card.text}
-          <span className="together-meta">
-            {[countLabel, dateLabel].filter(Boolean).join(' · ')}
-          </span>
-        </span>
-      </div>
-      {card.isGame && resultPath ? (
-        <Link className="together-result-link" to={resultPath}>
-          Open shared result
-        </Link>
-      ) : null}
-      {chipsShown ? (
-        <>
-          <div className="together-chips">
-            {chips.map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                className="together-chip"
-                disabled={!!sendingChip}
-                onClick={() => handleChip(chip)}
+    <div className={wrapClass} data-social-together>
+      <BuildMessageCard
+        themeName="logoBlue"
+        bannerIcon="user-group"
+        bannerText={socialCardBanner(card.activity)}
+        title={
+          appPath ? (
+            <Link className={appLinkClass} to={appPath}>
+              {appTitle}
+            </Link>
+          ) : (
+            appTitle
+          )
+        }
+        chips={
+          <>
+            <BuildMessageCardChip muted>{dateLabel}</BuildMessageCardChip>
+            {card.count > 1 ? (
+              <BuildMessageCardChip themeName="logoBlue">
+                {card.count} today
+              </BuildMessageCardChip>
+            ) : null}
+          </>
+        }
+        actions={
+          <>
+            {actionLabel ? (
+              <GameCTAButton
+                variant="logoBlue"
+                size="md"
+                icon={card.action === 'play' ? 'play' : 'user-group'}
+                loading={opening}
+                onClick={handleAgain}
               >
-                {chip}
-              </button>
+                {actionLabel}
+              </GameCTAButton>
+            ) : null}
+            <GameCTAButton
+              variant="neutral"
+              size="md"
+              icon="flag"
+              onClick={() => setReporting(card.revision)}
+            >
+              Report
+            </GameCTAButton>
+          </>
+        }
+      >
+        <div className={peopleClass}>
+          <span className={facesClass} aria-hidden>
+            {[me, other].map((user) => (
+              <span key={user.id} className={faceClass}>
+                <ProfilePic
+                  userId={user.id}
+                  profilePicUrl={user.profilePicUrl}
+                  activityBadgeShown={false}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </span>
             ))}
-          </div>
-          <p className="together-hint">Tap one to say it</p>
-        </>
-      ) : null}
-      {buttonLabel ? (
-        <div className="together-actions">
-          <Button
-            color={buttonColor}
-            variant="soft"
-            tone="raised"
-            size="md"
-            uppercase={false}
-            loading={opening}
-            onClick={handlePlayAgain}
-          >
-            <Icon icon="play" />
-            <span style={{ marginLeft: '0.7rem' }}>
-              {buttonLabel}
-            </span>
-          </Button>
+          </span>
+          <span className={sentenceClass}>
+            <span className={headlineClass}>{lines.headline}</span>
+            {lines.detail ? (
+              <span className={detailClass}>{lines.detail}</span>
+            ) : null}
+          </span>
         </div>
+        {firstChatNote ? <div className={noteClass}>{FIRST_CHAT_NOTE}</div> : null}
+      </BuildMessageCard>
+      {reporting ? (
+        <ReportMessageModal
+          subject="notice"
+          momentId={card.id}
+          revision={reporting}
+          reportedUser={{ id: other.id, username: other.username }}
+          onHide={() => setReporting(null)}
+        />
       ) : null}
-      {firstChatNote ? <p className="together-note">{FIRST_CHAT_NOTE}</p> : null}
     </div>
   );
 
-  async function handleChip(chip: string) {
-    if (sendingChip || !quickSend) return;
-    setSendingChip(chip);
-    try {
-      // The viewer's own ordinary message, through the normal send path.
-      await quickSend(chip, channelId);
-      setChipUsed(true);
-      trackEvent('social_card_chip', {
-        app_id: card.buildId,
-        platform_chip: card.chips.indexOf(chip) < 3
-      });
-      void markSocialMomentChip({ momentId: card.id, chip });
-    } catch {
-      // the chips stay, so it can be tapped again
-    } finally {
-      setSendingChip('');
-    }
-  }
-
-  async function handlePlayAgain() {
+  async function handleAgain() {
     if (opening || !other) return;
-    if (!card.isGame && resultPath) {
-      navigate(resultPath);
-      return;
-    }
     setOpening(true);
-    trackEvent('social_card_rematch', { app_id: card.buildId });
+    trackEvent('social_card_again', {
+      app_id: card.buildId,
+      action: card.action
+    });
     try {
       // Walks up to them if they are in the app right now; otherwise this
       // simply opens the app ("<name> isn't here right now").
@@ -337,3 +194,103 @@ export default function SocialTogetherCard({
     }
   }
 }
+
+// A notice in the middle of the thread, like the other system cards, at the
+// Build card's width (it narrows on its own on phones).
+const wrapClass = css`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem 1rem;
+  > div {
+    width: 56rem;
+  }
+  /* thumb-sized at every root font size (phones use a smaller rem) */
+  button {
+    min-height: max(3.8rem, 38px);
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.6rem 0.8rem;
+  }
+`;
+
+const appLinkClass = css`
+  color: inherit;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const appTitleClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+`;
+
+const thumbClass = css`
+  flex: 0 0 auto;
+  width: 4.4rem;
+  height: 4.4rem;
+  border-radius: 0.9rem;
+  object-fit: cover;
+  background: ${Color.highlightGray()};
+`;
+
+const appNameClass = css`
+  min-width: 0;
+  overflow-wrap: anywhere;
+`;
+
+const peopleClass = css`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const facesClass = css`
+  display: flex;
+  flex: 0 0 auto;
+`;
+
+const faceClass = css`
+  width: 3.8rem;
+  height: 3.8rem;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #fff;
+  background: #fff;
+  & + & {
+    margin-left: -1rem;
+  }
+`;
+
+const sentenceClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+`;
+
+const headlineClass = css`
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: ${Color.black()};
+  overflow-wrap: anywhere;
+`;
+
+const detailClass = css`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${Color.darkerGray()};
+`;
+
+const noteClass = css`
+  border-left: 4px solid ${Color.logoBlue(0.55)};
+  padding: 0.1rem 0 0.1rem 0.75rem;
+  color: ${Color.darkerGray()};
+  line-height: 1.45;
+  font-size: 1.2rem;
+`;

@@ -17,9 +17,10 @@ import {
 import { groupLiveNowApps } from '../src/helpers/liveNow';
 import {
   FIRST_CHAT_NOTE,
-  socialCardChipsShown,
-  socialCardCount,
-  socialCardHeadline
+  socialCardActionLabel,
+  socialCardBanner,
+  socialCardLines,
+  socialCardPreview
 } from '../src/helpers/socialTogetherCard';
 
 // "Meet people in apps" on the website: what Live now and the profile popup
@@ -261,47 +262,29 @@ test('the page store keeps each app apart and passes "Play now" on to the app', 
   assert.equal(store.get(9), EMPTY_SOCIAL_STATE);
 });
 
-test('the chat card reads as an introduction in a new thread and a memory in an old one', () => {
-  const card = { appTitle: 'Baduk', isGame: true, isNewThread: true };
-  assert.equal(
-    socialCardHeadline({ card, otherName: 'KenGo' }),
-    'You and KenGo met over a game of Baduk'
-  );
-  assert.equal(
-    socialCardHeadline({ card: { ...card, isNewThread: false }, otherName: 'KenGo' }),
-    'You and KenGo played Baduk'
-  );
-  assert.equal(
-    socialCardHeadline({
-      card: { appTitle: 'Sketch Town', isGame: false, isNewThread: true },
-      otherName: 'ana'
-    }),
-    'You and ana met in Sketch Town'
-  );
-  assert.equal(
-    socialCardHeadline({
-      card: { appTitle: 'Sketch Town', isGame: false, isNewThread: false },
-      otherName: 'ana'
-    }),
-    'You and ana were in Sketch Town together'
-  );
-  assert.equal(socialCardCount({ count: 1, isGame: true }), '');
-  assert.equal(socialCardCount({ count: 3, isGame: true }), '3 games today');
-  assert.equal(socialCardCount({ count: 2, isGame: false }), '2 times today');
+test('the notice shows only Twinkle\'s words, from each member\'s side, and no reply chips', () => {
+  const card: any = {
+    lines: {
+      7: { headline: 'You and KenGo played Baduk together', detail: 'KenGo won' },
+      10: { headline: 'You and viewer played Baduk together', detail: 'You won' }
+    },
+    appAvailable: true,
+    action: 'play'
+  };
+  assert.deepEqual(socialCardLines(card, 7), card.lines[7]);
+  assert.equal(socialCardLines(card, 99), null);
+  // an old-shaped card (with app text) renders nothing rather than app words
+  assert.equal(socialCardLines({ text: 'add me on discord' } as any, 7), null);
+  assert.equal(socialCardActionLabel(card), 'Play again');
+  assert.equal(socialCardActionLabel({ ...card, action: 'join' }), 'Join again');
+  assert.equal(socialCardActionLabel({ ...card, appAvailable: false }), null);
+  assert.equal(socialCardBanner('played'), 'Played together');
+  assert.equal(socialCardBanner('made'), 'Made something together');
+  // the chat list line, from Twinkle's stored plain line
+  assert.equal(socialCardPreview('and KenGo played Baduk together'), 'You played Baduk together');
+  assert.equal(socialCardPreview('and ana drew together in Sketch Town'), 'You drew together in Sketch Town');
+  assert.equal(socialCardPreview('and ana met in Sketch Town'), 'You did something together in an app');
   // one line, not a wall of rules
   assert.ok(FIRST_CHAT_NOTE.length < 80);
   assert.doesNotMatch(FIRST_CHAT_NOTE, /\n/);
-});
-
-test('reply chips show while they can break the ice, once per member', () => {
-  const card = { chips: ['GG!'], chipBy: [] as number[], updatedAt: 1000 };
-  const shown = (extra: any = {}) =>
-    socialCardChipsShown({ card, myId: 7, canReply: true, chipUsed: false, nowSeconds: 2000, ...extra });
-  assert.equal(shown(), true);
-  assert.equal(shown({ canReply: false }), false);
-  assert.equal(shown({ chipUsed: true }), false);
-  assert.equal(shown({ card: { ...card, chipBy: [7] } }), false);
-  assert.equal(shown({ card: { ...card, chipBy: [8] } }), true);
-  assert.equal(shown({ nowSeconds: 1000 + 24 * 60 * 60 + 1 }), false);
-  assert.equal(shown({ card: { ...card, chips: [] } }), false);
 });

@@ -43,19 +43,25 @@ export const CHAT_REPORT_REASON_OPTIONS = [
 const NOTE_MAX_LENGTH = 500;
 const RECEIVED_MESSAGE = 'Thanks. Our team will look at this.';
 
-// Reports one chat message, or (subject "cover") a member's platinum cover
-// photo; both go through the same report pipeline.
+// Reports one chat message, (subject "cover") a member's platinum cover
+// photo, or (subject "notice") a shared-moment notice in a DM; all go through
+// the same report pipeline.
 export default function ReportMessageModal({
   messageId = 0,
   subject = 'message',
   coverKey = '',
+  momentId = 0,
+  revision = 0,
   reportedUser,
   onHide
 }: {
   messageId?: number;
-  subject?: 'message' | 'cover';
+  subject?: 'message' | 'cover' | 'notice';
   // the cover photo on screen when the form opened
   coverKey?: string;
+  // the notice and the revision on screen when the form opened
+  momentId?: number;
+  revision?: number;
   reportedUser: { id: number; username: string };
   onHide: () => void;
 }) {
@@ -65,7 +71,11 @@ export default function ReportMessageModal({
   const reportProfileCover = useAppContext(
     (v) => v.requestHelpers.reportProfileCover
   );
-  const subjectLabel = subject === 'cover' ? 'cover photo' : 'message';
+  const reportSocialMoment = useAppContext(
+    (v) => v.requestHelpers.reportSocialMoment
+  );
+  const subjectLabel =
+    subject === 'cover' ? 'cover photo' : subject === 'notice' ? 'notice' : 'message';
   const myId = Number(useKeyContext((v) => v.myState.userId) || 0);
   const blockList = useBlockedUsers();
   const groupName = useId();
@@ -212,7 +222,14 @@ export default function ReportMessageModal({
     setSubmitting(true);
     setError('');
     try {
-      if (subject === 'cover') {
+      if (subject === 'notice') {
+        await reportSocialMoment({
+          momentId,
+          revision,
+          reason,
+          note: note.trim() || undefined
+        });
+      } else if (subject === 'cover') {
         await reportProfileCover({
           userId: reportedUser.id,
           coverKey,

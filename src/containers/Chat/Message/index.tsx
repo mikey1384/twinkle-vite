@@ -252,8 +252,9 @@ function Message({
   }, [currentChannel?.twoPeople, partner?.id]);
 
   let renderedContent: React.ReactNode = null;
-  // The shared-moment card ("You and KenGo met over a game of Baduk") is a
-  // system card: it stands on its own, with no sender, name or actions.
+  // The shared-moment notice ("You and KenGo played Baduk together") is a
+  // Twinkle notice: it stands on its own, with no sender or name; its only
+  // actions (Play again, Report) are its own.
   const socialTogetherCard =
     rootType === 'socialTogether' && rootId
       ? message?.settings?.socialTogether
@@ -276,11 +277,7 @@ function Message({
             `}
             ref={PanelRef}
           >
-            <SocialTogetherCard
-              card={socialTogetherCard}
-              channelId={channelId}
-              canReply={!isRestricted && !isBanned}
-            />
+            <SocialTogetherCard card={socialTogetherCard} />
           </div>
         </div>
       </ErrorBoundary>

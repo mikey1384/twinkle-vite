@@ -6993,19 +6993,6 @@ export default function buildRequestHelpers({
       }
     },
 
-    async markSocialMomentChip({ momentId, chip }: { momentId: number; chip: string }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/social-moments/${momentId}/chip`,
-          { chip },
-          auth()
-        );
-        return data;
-      } catch {
-        return { recorded: false };
-      }
-    },
-
     async requestBuildSocial({ buildId, action, payload, token }: {
       buildId: number;
       action: 'queue' | 'accept' | 'joined' | 'together';

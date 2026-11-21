@@ -66,10 +66,6 @@ import useGameMoveHandlers from './hooks/useGameMoveHandlers';
 import LocalContext from '../../Context';
 import { ReplyTargetEnvironmentContext } from '../../Message/MessageBody/ReplyTargetEnvironment';
 import {
-  ChatQuickSendContext,
-  type ChatQuickSend
-} from '../../Message/MessageBody/ChatQuickSend';
-import {
   getCanonicalAiGenerationStartedAt,
   isCanonicalAiGenerationConfirmed
 } from '~/contexts/Chat/aiGenerationState';
@@ -1511,14 +1507,6 @@ export default function MessagesContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId, userId]);
 
-  const quickSendRef = useRef<ChatQuickSend | null>(null);
-  const [quickSend] = useState<ChatQuickSend>(
-    () => async (content: string, channelId: number) => {
-      const send = quickSendRef.current;
-      if (!send) throw new Error('Chat unavailable');
-      await send(content, channelId);
-    }
-  );
   const handleMessageSubmit = useCallback(
     async ({
       content,
@@ -1527,20 +1515,18 @@ export default function MessagesContainer({
       target,
       topicId,
       selectedTab,
-      subchannelId,
-      quickReply = false
+      subchannelId
     }: {
       content: string;
       rewardAmount?: number;
       rewardReason?: string;
-      target: string | null;
+      target: string;
       topicId?: number;
       selectedTab: string;
       subchannelId?: number;
-      quickReply?: boolean;
     }) => {
-      if (!quickReply) setTextAreaHeight(0);
-      if (!quickReply && chessTarget && !target && !appliedIsRespondingToSubject) {
+      setTextAreaHeight(0);
+      if (chessTarget && !target && !appliedIsRespondingToSubject) {
         return handleSubmitChessTargetMessage({ content, selectedTab, subchannelId, topicId });
       }
       const isFirstDirectMessage = selectedChannelId === 0;
@@ -1612,9 +1598,9 @@ export default function MessagesContainer({
         }
       }
       const isTopicMessage =
-        !quickReply && (selectedTab === 'topic' || appliedIsRespondingToSubject);
-      const crewAskFill = quickReply ? null : crewAskFillRef.current;
-      if (!quickReply) crewAskFillRef.current = null;
+        selectedTab === 'topic' || appliedIsRespondingToSubject;
+      const crewAskFill = crewAskFillRef.current;
+      crewAskFillRef.current = null;
       const crewAsk =
         !!crewAskFill &&
         crewAskFill.channelId === Number(selectedChannelId) &&
@@ -1631,7 +1617,7 @@ export default function MessagesContainer({
       const messageId = uuidv1();
 
       onSubmitMessage({
-        isRespondingToSubject: !quickReply && appliedIsRespondingToSubject,
+        isRespondingToSubject: appliedIsRespondingToSubject,
         messageId,
         message,
         replyTarget: target,
@@ -1641,13 +1627,11 @@ export default function MessagesContainer({
         topicId: isTopicMessage ? topicId : null,
         subchannelId
       });
-      if (!quickReply) {
-        onSetReplyTarget({
-          channelId: selectedChannelId,
-          subchannelId,
-          target: null
-        });
-      }
+      onSetReplyTarget({
+        channelId: selectedChannelId,
+        subchannelId,
+        target: null
+      });
       onScrollToBottom();
       return Promise.resolve();
     },
@@ -1988,31 +1972,9 @@ export default function MessagesContainer({
     ]
   );
 
-  // One-tap replies from a card in this chat (the shared-moment card's
-  // chips): the viewer's own message, sent through handleMessageSubmit.
-  quickSendRef.current = async (content, channelId) => {
-    if (
-      !selectedChannelId ||
-      selectedChannelId !== channelId ||
-      !currentChannel.twoPeople ||
-      isRestrictedChannel ||
-      banned?.chat ||
-      chatRecoveryBlocksInteraction
-    ) {
-      throw new Error('Chat unavailable');
-    }
-    await handleMessageSubmit({
-      content,
-      target: null,
-      selectedTab: 'all',
-      quickReply: true
-    });
-  };
-
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
       <ReplyTargetEnvironmentContext.Provider value={replyTargetEnvironment}>
-      <ChatQuickSendContext.Provider value={quickSend}>
       <CallScreens
         partner={partner}
         selectedChannelIsOnAICall={selectedChannelIsOnAICall}
@@ -2117,7 +2079,6 @@ export default function MessagesContainer({
         }}
         onSettingsDone={handleEditSettings}
       />
-      </ChatQuickSendContext.Provider>
       </ReplyTargetEnvironmentContext.Provider>
     </ErrorBoundary>
   );

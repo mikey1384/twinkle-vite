@@ -14,8 +14,9 @@ import { build } from 'esbuild';
 // - the runtime overlay: the host's banner and queue chip never cover the
 //   app, "Play now" reaches the app, the opt-out is one tap; the visitor is
 //   told where they stand;
-// - the chat card: a warm first-thread introduction, one-tap chips sent as
-//   the member's own message, the first-chat note shown once.
+// - the chat notice: Twinkle's words from each member's side, in the Build
+//   card's frame, with Play again (or Join again) and Report, and the
+//   first-chat note shown once.
 // Set SOCIAL_SHOTS_DIR to also save screenshots there.
 const require = createRequire(import.meta.url);
 const {
@@ -31,17 +32,19 @@ import {createRoot} from 'react-dom/client';
 import {MemoryRouter,useLocation} from 'react-router-dom';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {faPlay} from '@fortawesome/pro-solid-svg-icons/faPlay';
+import {faFlag} from '@fortawesome/pro-solid-svg-icons/faFlag';
+import {faUserGroup} from '@fortawesome/pro-solid-svg-icons/faUserGroup';
+import {faBan} from '@fortawesome/pro-solid-svg-icons/faBan';
 import {FixtureProvider} from '~/contexts';
-library.add(faPlay);
+library.add(faPlay,faFlag,faUserGroup,faBan);
 import TodayStats from './src/components/Notification/TodayStats';
 import {container as notificationContainer} from './src/components/Notification/Styles';
 import SocialWalkupOverlay from './src/containers/Build/Runtime/SocialWalkupOverlay';
 import WalkupsItem from './src/containers/Home/Store/WalkupsItem';
 import SocialTogetherCard from './src/containers/Chat/Message/MessageBody/SocialTogetherCard';
-import {ChatQuickSendContext} from './src/containers/Chat/Message/MessageBody/ChatQuickSend';
 import {socialWalkupStore,socialJoinableStore} from './src/helpers/socialWalkups';
 window.socialWalkupStore=socialWalkupStore;window.socialJoinableStore=socialJoinableStore;
-window.walkups=[];window.sent=[];window.seen=[];window.chipMarks=[];window.settingsCalls=[];window.leaves=[];window.walkAways=[];
+window.walkups=[];window.seen=[];window.reports=[];window.settingsCalls=[];window.leaves=[];window.walkAways=[];
 window.walkupAnswer={status:'waiting',walkup:{id:'w21',queuePosition:1,expiresAt:Date.now()+9e5},host:{id:11,username:'KenGo',profilePicUrl:'/pictures/11.jpg'},joinable:{state:'open',label:'Looking for a game',mode:'1v1'}};
 const achievements={mission:{type:'mission',title:'Mission'},gold:{type:'gold',title:'Gold'},grammar:{type:'grammar',title:'Grammar'},donor:{type:'donor',title:'Donor'},chess_legend:{type:'chess_legend',title:'Chess'}};
 const requestHelpers={
@@ -55,7 +58,7 @@ const requestHelpers={
   leaveSocialHost:async args=>{window.leaves.push(args);},
   updateSocialSettings:async args=>{window.settingsCalls.push(args);return {success:true,settings:{social:{walkups:args.walkups}}};},
   markSocialMomentSeen:async args=>{window.seen.push(args.momentId);return {firstView:true,firstChat:window.firstChat===true};},
-  markSocialMomentChip:async args=>{window.chipMarks.push(args);return {recorded:true};}
+  reportSocialMoment:async args=>{window.reports.push(args);return {reportId:1,alreadyReported:false,message:'Thanks. Our team will look at this.'};}
 };
 window.names={11:'KenGo',12:'ana',13:'dodo',14:'mina'};
 const baduk=(joinable)=>({kind:'app',id:5,title:'Baduk',thumbnailUrl:null,multiplayer:true,...(joinable?{joinable}:{})});
@@ -84,18 +87,18 @@ function AppScene(){
     <SocialWalkupOverlay buildId={5} active/>
   </div>;
 }
-const cardBase={id:31,buildId:5,appTitle:'Baduk',appThumbnailUrl:null,appAvailable:true,mode:'1v1',isGame:true,text:'KenGo won by resignation',thumbnailUrl:null,linkPath:null,chips:['GG!','Rematch?','That was close!','How did you learn Go?'],count:1,isNewThread:true,users:[{id:7,username:'viewer',profilePicUrl:'/pictures/7.jpg'},{id:11,username:'KenGo',profilePicUrl:'/pictures/11.jpg'}],seenBy:[],chipBy:[],createdAt:Math.floor(Date.now()/1000)-60,updatedAt:Math.floor(Date.now()/1000)-60};
+const now=Math.floor(Date.now()/1000);
+const cardBase={id:31,buildId:5,revision:1,appTitle:'Baduk',appThumbnailUrl:'/thumbs/baduk.png',appAvailable:true,activity:'played',action:'play',
+  lines:{7:{headline:'You and KenGo played Baduk together',detail:'KenGo won'},11:{headline:'You and viewer played Baduk together',detail:'You won'}},
+  thumbnailUrl:null,linkPath:null,count:1,isNewThread:true,users:[{id:7,username:'viewer',profilePicUrl:'/pictures/7.jpg'},{id:11,username:'KenGo',profilePicUrl:'/pictures/11.jpg'}],seenBy:[],createdAt:now-60,updatedAt:now-60};
 window.cards={
   first:cardBase,
-  again:{...cardBase,id:32,isNewThread:false,count:3,text:'3 games · KenGo leads 2–1',seenBy:[7]},
-  coop:{...cardBase,id:33,buildId:8,appTitle:'Sketch Town',mode:'coop',isGame:false,isNewThread:false,text:"You and KenGo drew 'Rainy Seoul'",chips:['That was fun!','Again sometime?','Hi!'],seenBy:[7]}
+  again:{...cardBase,id:32,revision:3,isNewThread:false,count:3,lines:{7:{headline:'You and KenGo played Baduk together',detail:'3 games today · You 1, KenGo 2'},11:{headline:'You and viewer played Baduk together',detail:'3 games today · You 2, viewer 1'}},seenBy:[7]},
+  coop:{...cardBase,id:33,buildId:8,appTitle:'Sketch Town',appThumbnailUrl:'/thumbs/sketch.png',activity:'drew',action:'join',isNewThread:false,lines:{7:{headline:'You and KenGo drew together in Sketch Town',detail:''},11:{headline:'You and viewer drew together in Sketch Town',detail:''}},seenBy:[7]}
 };
 function ChatScene({card}){
-  const quickSend=async content=>{window.sent.push(content);};
   return <div style={{background:'#fff',padding:'1rem 0',minHeight:300}}>
-    <ChatQuickSendContext.Provider value={quickSend}>
-      <SocialTogetherCard card={window.cards[card]} channelId={31} canReply/>
-    </ChatQuickSendContext.Provider>
+    <SocialTogetherCard card={window.cards[card]}/>
   </div>;
 }
 function Root(){
@@ -219,6 +222,16 @@ async function openPage(browser, viewport) {
     }
     // Profile pictures: a drawn face per member, so screenshots read like
     // the real thing.
+    const thumb = /\/thumbs\/(\w+)\.png/.exec(route.request().url());
+    if (thumb) {
+      const board = thumb[1] === 'baduk';
+      return route.fulfill({
+        contentType: 'image/svg+xml',
+        body: board
+          ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#d8b56a"/>${[16, 32, 48, 64].map((p) => `<path d="M${p} 8v64M8 ${p}h64" stroke="#5b4320" stroke-width="1.5"/>`).join('')}<circle cx="32" cy="32" r="6" fill="#111"/><circle cx="48" cy="48" r="6" fill="#fff" stroke="#333"/><circle cx="48" cy="32" r="6" fill="#111"/></svg>`
+          : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#fde8d0"/><path d="M10 60c14-30 26-30 34-12s18 10 26-14" stroke="#e0567a" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="58" cy="20" r="8" fill="#5aa0e6"/></svg>`
+      });
+    }
     const picture = /\/pictures\/(\d+)\.jpg/.exec(route.request().url());
     if (picture) {
       const hue = (Number(picture[1]) * 67) % 360;
@@ -361,7 +374,9 @@ test(
       });
       await hostPreference.waitFor();
       assert.equal(await hostPreference.getAttribute('aria-checked'), 'true');
-      await hostPreference.click();
+      // SwitchButton's styled track (its label) sits over the input, as on
+      // every switch on the site: a tap lands on the label, which toggles it.
+      await hostPreference.click({ force: true });
       await page.waitForFunction(() => window.settings?.social?.walkups === false);
       assert.equal(await hostPreference.getAttribute('aria-checked'), 'false');
       assert.deepEqual(errors, []);
@@ -548,7 +563,7 @@ test(
 );
 
 test(
-  'chat card: a warm first-thread introduction, one-tap chips sent as your own message, the first-chat note shown once',
+  'chat notice: Twinkle\'s words in the Build card frame, Play again walks up, Report snapshots the revision on screen, the first-chat note shown once',
   { timeout: 120000 },
   async () => {
     const browser = await chromium.launch();
@@ -560,22 +575,23 @@ test(
       });
       const card = page.locator('[data-social-together]');
       await card.waitFor();
-      await page.getByText('You and KenGo met over a game of Baduk').waitFor();
-      await page.getByText('KenGo won by resignation').waitFor();
+      await card.getByText('Played together', { exact: true }).waitFor();
+      await card.getByText('You and KenGo played Baduk together', { exact: true }).waitFor();
+      await card.getByText('KenGo won', { exact: true }).waitFor();
+      await card.getByText('Baduk', { exact: true }).waitFor();
       // shown once: recorded by the server, which says this is a first chat
       await page.getByText('Be kind, and you can always block or report').waitFor();
       assert.deepEqual(await page.evaluate(() => window.seen), [31]);
-      // both faces, no sender line, nothing that reads like a log
-      assert.equal(await card.locator('.together-face').count(), 2);
-      // the Rematch button is the rematch offer: no "Rematch?" chip above it
-      assert.equal(await card.getByRole('button', { name: 'Rematch?' }).count(), 0);
-      await card.getByRole('button', { name: 'Rematch' }).waitFor();
-      assert.equal(await card.locator('.together-actions svg').count(), 1);
+      // both faces and the app's picture; two actions and no reply chips
+      assert.equal(await card.locator('img[src="/thumbs/baduk.png"]').count(), 1);
+      const buttons = (await card.getByRole('button').allInnerTexts()).map((t) => t.trim());
+      assert.deepEqual(buttons, ['Play again', 'Report']);
+      assert.equal(await card.locator('button svg').count(), 2);
       await page.waitForTimeout(300);
       await shot(page, 'chat-card-first-dm-phone.png');
       // every button stays inside the card and is big enough for a thumb
       const misfits = await page.evaluate(() => {
-        const c = document.querySelector('[data-social-together]').getBoundingClientRect();
+        const c = document.querySelector('[data-social-together] > div').getBoundingClientRect();
         return [...document.querySelectorAll('[data-social-together] button')]
           .map((b) => ({ text: b.innerText, rect: b.getBoundingClientRect() }))
           .filter(({ rect }) => rect.right > c.right + 0.5 || rect.left < c.left - 0.5 || rect.height < 32)
@@ -583,22 +599,11 @@ test(
       });
       assert.deepEqual(misfits, []);
 
-      // one tap sends it as the member's own ordinary message
-      await card.getByRole('button', { name: 'GG!' }).click();
-      await page.waitForFunction(() => window.sent.length === 1);
-      assert.deepEqual(await page.evaluate(() => window.sent), ['GG!']);
-      await page.waitForFunction(() => window.chipMarks.length === 1);
-      assert.deepEqual(await page.evaluate(() => window.chipMarks[0]), {
-        momentId: 31,
-        chip: 'GG!'
-      });
-      await card.locator('.together-chip').first().waitFor({ state: 'detached' });
-
-      // Rematch walks up to the other member (or just opens the app).
+      // Play again walks up to the other member (or just opens the app).
       await page.evaluate(() => {
         window.walkupAnswer = { status: 'unavailable' };
       });
-      await card.getByRole('button', { name: 'Rematch' }).click();
+      await card.getByRole('button', { name: 'Play again' }).click();
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/5');
       assert.deepEqual(await page.evaluate(() => window.walkups), [
         { buildId: 5, hostUserId: 11, intent: 'play' }
@@ -609,25 +614,38 @@ test(
         'unavailable'
       );
 
-      // An existing thread, later the same day: a memory, a count, no note,
+      // An existing thread, later the same day: the day's score, no note,
       // and the server is not told "seen" again.
       await page.evaluate(() => {
         window.firstChat = false;
         window.setScene({ name: 'chat', card: 'again' });
       });
-      await page.getByText('You and KenGo played Baduk', { exact: true }).waitFor();
-      await page.getByText('3 games today', { exact: false }).waitFor();
+      await page.getByText('3 games today · You 1, KenGo 2', { exact: true }).waitFor();
+      await page.getByText('3 today', { exact: true }).waitFor();
       assert.equal(await page.getByText('Be kind').count(), 0);
       assert.deepEqual(await page.evaluate(() => window.seen), [31]);
       await page.waitForTimeout(200);
       await shot(page, 'chat-card-again-phone.png');
 
-      // Not a game: other words, other chips.
+      // Report: the revision the member is looking at, reporting the other member.
+      await page.getByRole('button', { name: 'Report' }).click();
+      await page.getByText('Report this notice').waitFor();
+      await page.getByText('Bullying or harassment').click();
+      await page.waitForTimeout(200);
+      await shot(page, 'chat-card-report-phone.png');
+      await page.getByRole('button', { name: 'Send report' }).click();
+      await page.getByText('Report sent').waitFor();
+      assert.deepEqual(await page.evaluate(() => window.reports), [
+        { momentId: 32, revision: 3, reason: 'harassment', note: undefined }
+      ]);
+      await page.getByRole('button', { name: 'Done' }).click();
+
+      // Not a game: its own template, Join again, no result line.
       await page.evaluate(() => window.setScene({ name: 'chat', card: 'coop' }));
-      await page.getByText('You and KenGo were in Sketch Town together').waitFor();
-      await page.getByRole('button', { name: 'That was fun!' }).waitFor();
-      await page.getByRole('button', { name: 'Open Sketch Town' }).waitFor();
-      assert.equal(await page.getByRole('button', { name: 'GG!' }).count(), 0);
+      await page.getByText('You and KenGo drew together in Sketch Town', { exact: true }).waitFor();
+      await page.getByText('Drew together', { exact: true }).waitFor();
+      await page.getByRole('button', { name: 'Join again' }).waitFor();
+      assert.equal(await page.getByRole('button', { name: 'Play again' }).count(), 0);
       await page.waitForTimeout(200);
       await shot(page, 'chat-card-coop-phone.png');
       assert.deepEqual(errors, []);
