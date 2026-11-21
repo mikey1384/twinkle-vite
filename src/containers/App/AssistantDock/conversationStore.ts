@@ -31,6 +31,8 @@ export interface AssistantReply {
   // message brings it back.
   timedOut?: boolean;
   error: string;
+  // Every model declined the reply: a site note shows instead of words.
+  declined?: boolean;
 }
 
 export const EMPTY_ASSISTANT_REPLY: AssistantReply = {
@@ -273,6 +275,8 @@ function handleEdit({ channelId, messageId, editedMessage, settings }: any) {
       ? {
           ...current,
           text: editedMessage,
+          declined:
+            settings?.hasError === true && settings?.errorType === 'declined',
           suggestions: readAgentSuggestions(settings),
           card: isWebsiteAgentCardData(settings?.websiteAgentCard)
             ? newestAsyncTaskCard(current.card, settings.websiteAgentCard)

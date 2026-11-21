@@ -1034,7 +1034,7 @@ export default function useAISocket({
       messageId: number;
       content?: string;
       error?: string;
-      errorType?: 'moderation' | 'general';
+      errorType?: 'moderation' | 'general' | 'declined';
       settings?: Record<string, unknown>;
     }) {
       handleAIMessageDiscardedForNotify({ channelId, messageId });

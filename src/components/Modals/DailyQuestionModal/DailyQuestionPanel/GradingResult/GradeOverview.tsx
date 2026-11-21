@@ -178,7 +178,23 @@ export default function GradeOverview({
             }
           `}
         >
-          {feedback}
+          {String(feedback || '').trim() ? (
+            feedback
+          ) : (
+            // Grading could not write feedback this time; the site says so
+            // instead of filling in words for the grader.
+            <span
+              role="note"
+              style={{
+                fontFamily: 'inherit',
+                fontStyle: 'italic',
+                fontSize: '0.85em',
+                color: PAPER.inkFaint
+              }}
+            >
+              Feedback couldn&rsquo;t be written this time.
+            </span>
+          )}
         </p>
       </div>
     </>

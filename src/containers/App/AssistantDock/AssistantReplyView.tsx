@@ -37,6 +37,17 @@ export default function AssistantReplyView({
     <>
       {reply.error ? (
         <div style={{ color: Color.red() }}>{reply.error}</div>
+      ) : reply.declined ? (
+        // A site note, never words in the assistant's voice.
+        <div
+          role="note"
+          className={css`
+            color: ${Color.darkGray()};
+            font-size: 1.25rem;
+          `}
+        >
+          {assistant} couldn&rsquo;t answer this one. Try asking another way.
+        </div>
       ) : reply.text ? (
         <RichText
           isAIMessage

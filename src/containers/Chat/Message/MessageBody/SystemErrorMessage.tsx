@@ -2,6 +2,7 @@ import React from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
 
 export default function SystemErrorMessage({
   error: _error,
@@ -11,11 +12,19 @@ export default function SystemErrorMessage({
   aiName = 'the AI assistant'
 }: {
   error?: string;
-  errorType?: 'moderation' | 'general';
+  errorType?: 'moderation' | 'general' | 'declined';
   canDelete?: boolean;
   onDelete?: () => void;
   aiName?: string;
 } = {}) {
+  if (errorType === 'declined') {
+    return (
+      <DeclinedNotice
+        aiName={aiName}
+        onDelete={canDelete ? onDelete : undefined}
+      />
+    );
+  }
   const isModeration = errorType === 'moderation';
   const getColors = () => {
     // Moderation errors use neutral gray - not associated with any AI
@@ -115,6 +124,54 @@ export default function SystemErrorMessage({
           ? 'Please try rephrasing your question differently'
           : `Try sending ${aiName === 'Zero' ? 'him' : aiName === 'Ciel' ? 'her' : 'them'} another message and if this keeps happening tell mikey`}
       </div>
+    </div>
+  );
+}
+
+// Every model declined the reply, the final backup included. A small system
+// note in the site's voice, never words from Zero or Ciel.
+function DeclinedNotice({
+  aiName,
+  onDelete
+}: {
+  aiName: string;
+  onDelete?: () => void;
+}) {
+  return (
+    <div
+      className={css`
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        margin: 0.6rem 0;
+        padding: 0 1rem;
+        color: var(--chat-muted-text, #64748b);
+        font-size: 1.25rem;
+        line-height: 1.4;
+        text-align: center;
+      `}
+      role="note"
+    >
+      <Icon icon="info-circle" style={{ opacity: 0.7, flexShrink: 0 }} />
+      <span>
+        {aiName} couldn&rsquo;t answer this one. Try asking another way.
+      </span>
+      {onDelete && (
+        <Button
+          variant="ghost"
+          onClick={onDelete}
+          aria-label="Remove this note"
+          style={{
+            fontSize: '1.1rem',
+            padding: '0.2rem 0.4rem',
+            color: 'var(--chat-muted-text, #64748b)',
+            opacity: 0.7
+          }}
+        >
+          <Icon icon="times" />
+        </Button>
+      )}
     </div>
   );
 }

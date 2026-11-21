@@ -502,6 +502,25 @@ export default function Content({
                 assistantName={isCielMessage ? 'Ciel' : 'Zero'}
               />
             )}
+          {isAIMessage &&
+            !isCurrentlyStreaming &&
+            ['incomplete', 'empty'].includes(
+              String(parsedSettings?.websiteAgentOutcome || '')
+            ) && (
+              // The server's record that the reply stopped early, shown as
+              // a site note instead of words in Zero's or Ciel's voice.
+              <div
+                role="note"
+                className={css`
+                  margin-top: 0.75rem;
+                  color: var(--chat-muted-text, #64748b);
+                  font-size: 1.2rem;
+                `}
+              >
+                {isCielMessage ? 'Ciel' : 'Zero'} couldn&rsquo;t finish this
+                reply.
+              </div>
+            )}
           {parsedSettings?.saveFailed && (
             <div
               className={css`
