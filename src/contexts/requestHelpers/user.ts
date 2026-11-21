@@ -205,6 +205,19 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // "Don't let people walk up while I play" (meet people in apps).
+    async updateSocialSettings({ walkups }: { walkups: boolean }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/settings/social`,
+          { walkups },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateImageEditorSettings({
       color,
       recentColors

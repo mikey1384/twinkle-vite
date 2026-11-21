@@ -56,6 +56,7 @@ import type {
 } from '../PreviewPanel/types';
 import { normalizeBuildRuntimeViewSource } from '../constants/runtimeViewSources';
 import CommentsDrawer from './CommentsDrawer';
+import SocialWalkupOverlay from './SocialWalkupOverlay';
 import CommentLumineProvider from './CommentLumineProvider';
 import CollaborationRequestModal from '~/components/Modals/BuildCollaborationRequestModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -2902,6 +2903,12 @@ export default function BuildRuntime({
                   />
                   {!buildLaunchTargetReady ? (
                     <Loading className={launchTargetLoadingOverlayClass} />
+                  ) : null}
+                  {loadedRuntimeSource === 'published' && !isEmbedded ? (
+                    <SocialWalkupOverlay
+                      buildId={numericBuildId}
+                      active={runtimeEffectiveHostVisible}
+                    />
                   ) : null}
                 </>
               ) : (

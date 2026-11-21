@@ -377,6 +377,9 @@ export default function useAppRequests({
   const requestBuildSoundtracks = useAppContext(
     (v) => v.requestHelpers.requestBuildSoundtracks
   );
+  const requestBuildSocial = useAppContext(
+    (v) => v.requestHelpers.requestBuildSocial
+  );
   const requestBuildArena = useAppContext(
     (v) => v.requestHelpers.requestBuildArena
   );
@@ -551,6 +554,7 @@ export default function useAppRequests({
   const setPrivateDbItemRef = useRef(setPrivateDbItem);
   const comparePrivateDbItemRef = useRef(comparePrivateDbItem);
   const requestBuildSoundtracksRef = useRef(requestBuildSoundtracks);
+  const requestBuildSocialRef = useRef(requestBuildSocial);
   const requestBuildArenaRef = useRef(requestBuildArena);
   const requestBuildTownRef = useRef(requestBuildTown);
   const requestBuildNetworkRef = useRef(requestBuildNetwork);
@@ -696,6 +700,7 @@ export default function useAppRequests({
     setPrivateDbItemRef,
     comparePrivateDbItemRef,
     requestBuildSoundtracksRef,
+    requestBuildSocialRef,
     requestBuildArenaRef,
     requestBuildTownRef,
     requestBuildNetworkRef,

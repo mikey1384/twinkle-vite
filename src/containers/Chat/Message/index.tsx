@@ -10,6 +10,8 @@ import MessageBody from './MessageBody';
 import LoadingPlaceholder from '~/components/LoadingPlaceholder';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SystemErrorMessage from './MessageBody/SystemErrorMessage';
+import SocialTogetherCard from './MessageBody/SocialTogetherCard';
+import type { SocialTogetherCardData } from '~/helpers/socialTogetherCard';
 import LocalContext from '../Context';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
@@ -97,6 +99,8 @@ function Message({
       saveFailed?: boolean;
       saveFailedReason?: string;
       aiGenerationStatus?: string;
+      // the shared-moment card (rootType 'socialTogether')
+      socialTogether?: SocialTogetherCardData;
       aiGenerationStartedAt?: number;
     };
   };
@@ -248,9 +252,38 @@ function Message({
   }, [currentChannel?.twoPeople, partner?.id]);
 
   let renderedContent: React.ReactNode = null;
+  // The shared-moment card ("You and KenGo met over a game of Baduk") is a
+  // system card: it stands on its own, with no sender, name or actions.
+  const socialTogetherCard =
+    rootType === 'socialTogether' && rootId
+      ? message?.settings?.socialTogether
+      : null;
 
   if (loadFailed) {
     renderedContent = null;
+  } else if (socialTogetherCard) {
+    renderedContent = (
+      <ErrorBoundary componentPath="Chat/Message/index">
+        <div
+          className={css`
+            width: 100%;
+          `}
+          ref={ComponentRef}
+        >
+          <div
+            className={css`
+              width: 100%;
+            `}
+            ref={PanelRef}
+          >
+            <SocialTogetherCard
+              card={socialTogetherCard}
+              canReply={!isRestricted && !isBanned}
+            />
+          </div>
+        </div>
+      </ErrorBoundary>
+    );
   } else if (aiMessageHasError) {
     renderedContent = (
       <ErrorBoundary componentPath="Chat/Message/index">

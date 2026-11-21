@@ -19,7 +19,12 @@ import {
   type AiImageQuality
 } from '~/helpers/aiImageModels';
 import { useEffect, useRef } from 'react';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
+import {
+  readJoinable,
+  socialJoinableStore,
+  socialWalkupStore
+} from '~/helpers/socialWalkups';
 import {
   ensureBuildApiToken,
   ensureGuestSessionId,
@@ -297,6 +302,44 @@ export function useHostBridge({
   runtimeOnlyRef.current = runtimeOnly;
   const appLifecycleSourceRef = useRef(appLifecycleSource || null);
   appLifecycleSourceRef.current = appLifecycleSource || null;
+  // Meet people in apps (Twinkle.social): only the viewer's own run of a
+  // published app, signed in. Elsewhere (the Build editor, a draft preview,
+  // a signed-out visitor) the SDK is told social is off and stays quiet.
+  const socialWalkupsAllowed = useKeyContext(
+    (v) => v.myState.settings?.social?.walkups !== false
+  );
+  const socialWalkupsAllowedRef = useRef(socialWalkupsAllowed);
+  socialWalkupsAllowedRef.current = socialWalkupsAllowed;
+  const socialBuildId = appLifecycleSource === 'published' ? Number(buildId) || 0 : 0;
+  useEffect(() => {
+    if (!socialBuildId || !userId) return;
+    function forwardSocialEvent(event: any) {
+      if (Number(event?.buildId) !== socialBuildId) return;
+      postToPreviewFrames(primaryIframeRef, secondaryIframeRef, previewFrameMetaRef, {
+        source: 'twinkle-parent',
+        type: 'social:event',
+        payload: event
+      });
+    }
+    socket.on('social_walkup_event', forwardSocialEvent);
+    // "Play now" on Twinkle's banner or queue chip: tell the app which
+    // visitor the viewer picked. The app starts when it can.
+    const stopPlayNow = socialWalkupStore.onPlayNow((chosenBuildId, visitor) => {
+      if (chosenBuildId !== socialBuildId) return;
+      forwardSocialEvent({
+        type: 'queue',
+        buildId: socialBuildId,
+        waiting: socialWalkupStore.get(socialBuildId).waiting,
+        arrived: { ...visitor, wantsNow: true }
+      });
+    });
+    return () => {
+      stopPlayNow();
+      socket.off('social_walkup_event', forwardSocialEvent);
+      // Leaving the app: it no longer says anything about being joinable.
+      socialJoinableStore.set(socialBuildId, null);
+    };
+  }, [previewFrameMetaRef, primaryIframeRef, secondaryIframeRef, socialBuildId, userId]);
   // A Lumine capture only: saves and lifecycle snapshots stay in this
   // session's memory (helpers/previewCaptureScratch.ts), never the real store.
   const captureScratchRef = useRef(captureScratch || null);
@@ -1505,6 +1548,14 @@ export function useHostBridge({
       }
     });
 
+    function isSocialAvailable() {
+      return (
+        appLifecycleSourceRef.current === 'published' &&
+        Number(userId) > 0 &&
+        !isGuestViewerActive(previewAuth)
+      );
+    }
+
     function subscribeBuildRuntimeChatRoom(buildId: number, roomKey: string) {
       socket.emit('build_app_chat_subscribe', {
         buildId,
@@ -2604,6 +2655,9 @@ export function useHostBridge({
               launchTarget: launchTargetRef.current,
               capabilities: capabilitySnapshotRef.current,
               explorationPlan: runtimeExplorationPlanRef.current,
+              // What this page can do beyond the messages every page knows.
+              // The SDK keeps Twinkle.social quietly off without 'social'.
+              hostFeatures: isSocialAvailable() ? ['social'] : [],
               // The viewer's saved place in this app (Twinkle.app.lifecycle):
               // { kind: 'return' | 'new_visit', state, savedAt, ageMs, reason }
               // or null; a new visit carries only the app's unfinished work.
@@ -5115,6 +5169,82 @@ export function useHostBridge({
               token,
               publicRead
             });
+            break;
+          }
+
+          case 'social:set-joinable': {
+            if (!isSocialAvailable()) {
+              response = { state: 'closed' };
+              break;
+            }
+            // Stored for the page's activity report (the joinable state
+            // rides on the app's presence; useUserActivityReporting.ts),
+            // which leaves it out while the viewer has walk-ups turned off.
+            const joinable = readJoinable({ kind: 'app', joinable: payload });
+            socialJoinableStore.set(activeBuild.id, joinable);
+            response = {
+              state:
+                joinable && socialWalkupsAllowedRef.current
+                  ? joinable.state
+                  : 'closed'
+            };
+            break;
+          }
+
+          case 'social:state':
+          case 'social:queue': {
+            if (!isSocialAvailable()) {
+              response = { waiting: [], match: null };
+              break;
+            }
+            const token = await ensureBuildApiToken(['social:read'], previewAuth);
+            const queue = await requestRefs.requestBuildSocialRef.current({
+              buildId: activeBuild.id, action: 'queue', payload: {}, token
+            });
+            const waiting = Array.isArray(queue?.waiting) ? queue.waiting : [];
+            socialWalkupStore.setWaiting(activeBuild.id, waiting);
+            const match = socialWalkupStore.get(activeBuild.id).match;
+            response = {
+              waiting,
+              // a match that became ready while the app was still loading
+              match: match && Date.now() - match.at < 120_000 ? match : null
+            };
+            break;
+          }
+
+          case 'social:accept':
+          case 'social:joined':
+          case 'social:together': {
+            if (!isSocialAvailable()) {
+              throw createPreviewBridgeError(
+                'Meeting other members is not available here.',
+                'social_unavailable'
+              );
+            }
+            const action = type.slice('social:'.length) as 'accept' | 'joined' | 'together';
+            const token = await ensureBuildApiToken(['social:write'], previewAuth);
+            try {
+              response = await requestRefs.requestBuildSocialRef.current({
+                buildId: activeBuild.id, action, payload: payload || {}, token
+              });
+            } catch (error: any) {
+              // The visitor left meanwhile: bring the page's queue up to date.
+              if (action === 'accept' && error?.code === 'social_visitor_gone') {
+                void requestRefs.requestBuildSocialRef
+                  .current({ buildId: activeBuild.id, action: 'queue', payload: {}, token })
+                  .then((queue: any) =>
+                    socialWalkupStore.setWaiting(
+                      activeBuild.id,
+                      Array.isArray(queue?.waiting) ? queue.waiting : []
+                    )
+                  )
+                  .catch(() => {});
+              }
+              throw error;
+            }
+            if (action === 'accept' && Array.isArray(response?.waiting)) {
+              socialWalkupStore.setWaiting(activeBuild.id, response.waiting);
+            }
             break;
           }
 

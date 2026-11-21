@@ -66,6 +66,10 @@ import useGameMoveHandlers from './hooks/useGameMoveHandlers';
 import LocalContext from '../../Context';
 import { ReplyTargetEnvironmentContext } from '../../Message/MessageBody/ReplyTargetEnvironment';
 import {
+  ChatQuickSendContext,
+  type ChatQuickSend
+} from '../../Message/MessageBody/ChatQuickSend';
+import {
   getCanonicalAiGenerationStartedAt,
   isCanonicalAiGenerationConfirmed
 } from '~/contexts/Chat/aiGenerationState';
@@ -1507,6 +1511,12 @@ export default function MessagesContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId, userId]);
 
+  const quickSendRef = useRef<(params: any) => Promise<any>>(async () => {});
+  const [quickSend] = useState<ChatQuickSend>(
+    () => async (content: string) => {
+      await quickSendRef.current({ content, target: null, selectedTab: 'all' });
+    }
+  );
   const handleMessageSubmit = useCallback(
     async ({
       content,
@@ -1972,9 +1982,14 @@ export default function MessagesContainer({
     ]
   );
 
+  // One-tap replies from a card in this chat (the shared-moment card's
+  // chips): the viewer's own message, sent through handleMessageSubmit.
+  quickSendRef.current = handleMessageSubmit;
+
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
       <ReplyTargetEnvironmentContext.Provider value={replyTargetEnvironment}>
+      <ChatQuickSendContext.Provider value={quickSend}>
       <CallScreens
         partner={partner}
         selectedChannelIsOnAICall={selectedChannelIsOnAICall}
@@ -2079,6 +2094,7 @@ export default function MessagesContainer({
         }}
         onSettingsDone={handleEditSettings}
       />
+      </ChatQuickSendContext.Provider>
       </ReplyTargetEnvironmentContext.Provider>
     </ErrorBoundary>
   );

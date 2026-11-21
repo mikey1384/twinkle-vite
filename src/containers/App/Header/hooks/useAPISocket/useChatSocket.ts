@@ -499,6 +499,7 @@ export default function useChatSocket({
     socket.on('chat_message_edited', onEditMessage);
     socket.on('build_reward_review_updated', handleBuildRewardReviewUpdated);
     socket.on('build_review_request_updated', handleBuildReviewRequestUpdated);
+    socket.on('social_together_updated', handleSocialTogetherUpdated);
     socket.on('meetup_teacher_request_updated', handleMeetupTeacherRequestUpdated);
     socket.on('chat_attachment_thumbnail_updated', onSetChatAttachmentThumbUrl);
     socket.on('ai_message_delta_streamed', onAppendAIMessageDelta);
@@ -557,6 +558,7 @@ export default function useChatSocket({
         'build_review_request_updated',
         handleBuildReviewRequestUpdated
       );
+      socket.off('social_together_updated', handleSocialTogetherUpdated);
       socket.off(
         'meetup_teacher_request_updated',
         handleMeetupTeacherRequestUpdated
@@ -629,6 +631,19 @@ export default function useChatSocket({
         channelId,
         messageId,
         settings: { buildReviewRequest: payload.request }
+      });
+    }
+
+    // The pair did something together again today: their shared-moment card
+    // is updated in place ("3 games today").
+    function handleSocialTogetherUpdated(payload: any) {
+      const channelId = Number(payload?.channelId || 0);
+      const messageId = Number(payload?.messageId || 0);
+      if (!channelId || !messageId || !payload?.card) return;
+      onUpdateMessageSettings({
+        channelId,
+        messageId,
+        settings: { socialTogether: payload.card }
       });
     }
 

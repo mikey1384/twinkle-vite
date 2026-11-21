@@ -55,6 +55,11 @@ export type AnalyticsEventName =
   | 'live_now_shown'
   | 'live_now_tap'
   | 'live_now_join'
+  // Meet people in apps: walking up, and the shared-moment DM card
+  | 'social_walkup'
+  | 'social_card_shown'
+  | 'social_card_chip'
+  | 'social_card_rematch'
   // Zero/Ciel voice
   | 'voice_call_start'
   // Reliability (GA4 standard name)

@@ -2,8 +2,9 @@ import {
   USER_ACTIVITY_INPUT_EVENT,
   userActivityReportDelayMs
 } from '~/helpers/userActivity';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useKeyContext } from '~/contexts';
+import { socialJoinableStore, withJoinable } from '~/helpers/socialWalkups';
 import { socket } from '~/constants/sockets/api';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import { isSocketAuthReadyForUser } from '~/helpers/socketAuthReady';
@@ -12,6 +13,17 @@ import { userActivityRegistry } from '~/helpers/hooks/useUserActivity';
 
 export default function useUserActivityReporting() {
   const userId = useKeyContext((v) => v.myState.userId);
+  // "Don't let people walk up while I play": then this member's apps do not
+  // advertise that they can be joined (the server refuses walk-ups too).
+  const walkupsAllowed = useKeyContext(
+    (v) => v.myState.settings?.social?.walkups !== false
+  );
+  const walkupsAllowedRef = useRef(walkupsAllowed);
+  const reportChangeRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    walkupsAllowedRef.current = walkupsAllowed;
+    reportChangeRef.current();
+  }, [walkupsAllowed]);
   useEffect(() => {
     if (!userId) return;
     let stopped = false;
@@ -23,9 +35,13 @@ export default function useUserActivityReporting() {
 
     function report(force = false) {
       if (stopped || !isSocketAuthReadyForUser(userId)) return;
+      // The app's joinable state (Twinkle.social.setJoinable) rides on the
+      // same report, so it needs no socket event or lease of its own.
       const activity =
         document.visibilityState === 'visible' && document.hasFocus()
-          ? userActivityRegistry.get(userId)
+          ? withJoinable(userActivityRegistry.get(userId), {
+              walkupsAllowed: walkupsAllowedRef.current
+            })
           : null;
       const key = JSON.stringify(activity);
       if (!force && key === lastKey) return;
@@ -99,6 +115,8 @@ export default function useUserActivityReporting() {
       lastKey = '';
     }
     const unsubscribe = userActivityRegistry.subscribe(changed);
+    const unsubscribeJoinable = socialJoinableStore.subscribe(changed);
+    reportChangeRef.current = changed;
     const heartbeat = setInterval(() => {
       if (userActivityRegistry.get(userId)) report(true);
     }, 25_000);
@@ -121,6 +139,8 @@ export default function useUserActivityReporting() {
       pageHidden();
       stopped = true;
       unsubscribe();
+      unsubscribeJoinable();
+      reportChangeRef.current = () => {};
       clearInterval(heartbeat);
       clearTimeout(retry);
       clearTimeout(changeTimer);

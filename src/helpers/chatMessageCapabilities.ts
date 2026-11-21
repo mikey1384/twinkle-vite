@@ -23,7 +23,9 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   // A crew's Bridge Builder story sent to the admins for approval.
   'meetupStory',
   // A crew member's request to a Twinkle teacher to be the crew's grown-up.
-  'meetupTeacherRequest'
+  'meetupTeacherRequest',
+  // The pair's shared-moment card after doing something together in an app.
+  'socialTogether'
 ]);
 
 const SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES: ReadonlySet<string> =

@@ -19,6 +19,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import RankBadge from '~/components/RankBadge';
 import PlatinumSurface from '~/components/PlatinumSurface';
+import SocialJoinActions from '~/components/SocialJoinActions';
 import { platinumCoverOf } from '~/constants/profileThemes';
 import { resolveProfileAppearance } from '~/helpers/profileAppearance';
 
@@ -462,6 +463,15 @@ export default function UserPopup({
               >
                 {bio}
               </RichText>
+            )}
+            {user.id !== myId && (
+              <SocialJoinActions
+                member={user}
+                activity={chatStatus[user.id]?.activity}
+                presence={chatStatus[user.id]}
+                source="profile"
+                onDone={onHide}
+              />
             )}
             <div className={actionRowClass}>
               <Link
