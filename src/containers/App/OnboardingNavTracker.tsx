@@ -51,7 +51,7 @@ export default function OnboardingNavTracker() {
     } catch (_error) {
       // The server also deduplicates session starts.
     }
-    void trackOnboardingNav({ route, sessionStart }).then((recorded) => {
+    void trackOnboardingNav({ route, sessionStart }).then((recorded: boolean) => {
       if (!recorded) {
         current.routes.delete(route);
         return;
