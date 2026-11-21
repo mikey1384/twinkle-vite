@@ -733,6 +733,7 @@ export default function buildRequestHelpers({
             })
           : await send(operation);
       } catch (error) {
+        if (operation.startsWith('once-')) throw toBuildRewardRequestError(error);
         throw new Error(
           axios.isAxiosError(error)
             ? error.response?.data?.error || error.message
@@ -791,6 +792,7 @@ export default function buildRequestHelpers({
             })
           : await send(operation);
       } catch (error) {
+        if (operation.startsWith('once-')) throw toBuildRewardRequestError(error);
         throw new Error(
           axios.isAxiosError(error)
             ? error.response?.data?.error || error.message
@@ -815,7 +817,7 @@ export default function buildRequestHelpers({
       runtimeArtifactVersionId?: number | null;
       diagnosticUserId?: number;
     }) {
-      const requestId = REWARD_TRACE_OPERATIONS.has(operation)
+      const requestId = REWARD_TRACE_OPERATIONS.has(operation.replace(/^once-/, ''))
         ? rewardTraceId()
         : null;
       const beganAt = Date.now();
@@ -848,7 +850,7 @@ export default function buildRequestHelpers({
       };
       const report = (result?: unknown, error?: unknown, op = operation, traceId = requestId, started = beganAt) => {
         if (!traceId) return;
-        reportEvent(rewardClientDiagnostic({ requestId: traceId, operation: op, payload, result,
+        reportEvent(rewardClientDiagnostic({ requestId: traceId, operation: op.replace(/^once-/, ''), payload, result,
           error: axios.isAxiosError(error) ? error : error ? {} : undefined, durationMs: Date.now() - started }));
       };
       let sentOriginalRequest = false;

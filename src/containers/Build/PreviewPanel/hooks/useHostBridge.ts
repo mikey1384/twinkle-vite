@@ -5489,10 +5489,13 @@ export function useHostBridge({
 
           case 'rewards:status':
           case 'rewards:receipt':
+          case 'rewards:once-receipt':
           case 'rewards:start':
+          case 'rewards:once-start':
           case 'rewards:start-run':
           case 'rewards:progress':
           case 'rewards:claim':
+          case 'rewards:once-claim':
           case 'rewards:timeline':
           case 'rewards:archived-problem':
           case 'rewards:leaderboard':
@@ -5518,18 +5521,14 @@ export function useHostBridge({
             // Question-bank requests: which topic, the one answer, a report,
             // and the request ID the progress bar polls. Amounts and steps
             // always come from the server.
+            // Keep the keyed HTTP operation so an older API cannot award
+            // it as an unkeyed claim during a rollback.
+            const keyedReward = type.startsWith('rewards:once-');
+            const rewardType = type.replace('rewards:once-', 'rewards:');
+            const onceKeyFields = keyedReward ? { onceKey: payload?.onceKey } : {};
             const runFields = type === 'rewards:start-run'
               ? { proofGroup: payload?.proofGroup, requestId: payload?.requestId }
               : {};
-            // One-time prize key: the server pays each (rule, key) once ever
-            // and validates the key; sent only when the app gave one.
-            const onceKeyFields =
-              (type === 'rewards:start' ||
-                type === 'rewards:claim' ||
-                type === 'rewards:receipt') &&
-              payload?.onceKey !== undefined
-                ? { onceKey: payload.onceKey }
-                : {};
             const bankFields = type.startsWith('rewards:bank-')
               ? {
                   topicKey: payload?.topicKey,
@@ -5599,7 +5598,7 @@ export function useHostBridge({
                       ...runFields,
                       ...vaultFields,
                       ...onceKeyFields,
-                      ...(type === 'rewards:start'
+                      ...(rewardType === 'rewards:start'
                         ? {
                             levelIndex: payload?.levelIndex,
                             ...(payload?.setKey !== undefined
@@ -5612,7 +5611,7 @@ export function useHostBridge({
                           }
                         : {}),
                       challengeId: payload?.challengeId,
-                      ...(type === 'rewards:receipt' && payload?.includeChallenge === true
+                      ...(rewardType === 'rewards:receipt' && payload?.includeChallenge === true
                         ? { includeChallenge: true }
                         : {}),
                       answers: payload?.answers,
@@ -5626,12 +5625,12 @@ export function useHostBridge({
                             requestId: payload?.requestId,
                             completionToken: payload?.completionToken
                           }
-                        : type === 'rewards:claim' &&
+                        : rewardType === 'rewards:claim' &&
                             payload?.completionToken !== undefined
                           ? { completionToken: payload.completionToken }
                           : {}),
                       // What the reward was for; the server validates it.
-                      ...(type === 'rewards:claim' &&
+                      ...(rewardType === 'rewards:claim' &&
                       payload?.subject !== undefined
                         ? { subject: payload.subject }
                         : {}),
@@ -5657,6 +5656,7 @@ export function useHostBridge({
                   }
                   break;
                 } catch (previewError) {
+                  if (keyedReward) throw previewError;
                   previewFailure =
                     previewError instanceof Error ? previewError.message : '';
                 }
@@ -5665,7 +5665,7 @@ export function useHostBridge({
                 response = stub;
                 break;
               }
-              if (type === 'rewards:receipt') {
+              if (rewardType === 'rewards:receipt') {
                 response = {
                   mode: 'preview',
                   status: 'not_found',
@@ -5766,7 +5766,7 @@ export function useHostBridge({
                 ...runFields,
                 ...vaultFields,
                 ...onceKeyFields,
-                ...(type === 'rewards:start'
+                ...(rewardType === 'rewards:start'
                   ? {
                       levelIndex: payload?.levelIndex,
                       ...(payload?.setKey !== undefined
@@ -5779,7 +5779,7 @@ export function useHostBridge({
                     }
                   : {}),
                 challengeId: payload?.challengeId,
-                ...(type === 'rewards:receipt' && payload?.includeChallenge === true
+                ...(rewardType === 'rewards:receipt' && payload?.includeChallenge === true
                   ? { includeChallenge: true }
                   : {}),
                 answers: payload?.answers,
@@ -5793,12 +5793,12 @@ export function useHostBridge({
                       requestId: payload?.requestId,
                       completionToken: payload?.completionToken
                     }
-                  : type === 'rewards:claim' &&
+                  : rewardType === 'rewards:claim' &&
                       payload?.completionToken !== undefined
                     ? { completionToken: payload.completionToken }
                     : {}),
                 // What the reward was for; the server validates it.
-                ...(type === 'rewards:claim' && payload?.subject !== undefined
+                ...(rewardType === 'rewards:claim' && payload?.subject !== undefined
                   ? { subject: payload.subject }
                   : {}),
                 metric: payload?.metric,
