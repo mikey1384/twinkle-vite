@@ -5521,6 +5521,15 @@ export function useHostBridge({
             const runFields = type === 'rewards:start-run'
               ? { proofGroup: payload?.proofGroup, requestId: payload?.requestId }
               : {};
+            // One-time prize key: the server pays each (rule, key) once ever
+            // and validates the key; sent only when the app gave one.
+            const onceKeyFields =
+              (type === 'rewards:start' ||
+                type === 'rewards:claim' ||
+                type === 'rewards:receipt') &&
+              payload?.onceKey !== undefined
+                ? { onceKey: payload.onceKey }
+                : {};
             const bankFields = type.startsWith('rewards:bank-')
               ? {
                   topicKey: payload?.topicKey,
@@ -5589,6 +5598,7 @@ export function useHostBridge({
                       ...bankFields,
                       ...runFields,
                       ...vaultFields,
+                      ...onceKeyFields,
                       ...(type === 'rewards:start'
                         ? {
                             levelIndex: payload?.levelIndex,
@@ -5755,6 +5765,7 @@ export function useHostBridge({
                 ...bankFields,
                 ...runFields,
                 ...vaultFields,
+                ...onceKeyFields,
                 ...(type === 'rewards:start'
                   ? {
                       levelIndex: payload?.levelIndex,

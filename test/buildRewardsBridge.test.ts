@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { transformSync } from 'esbuild';
 import { isMutatingPreviewRequestType } from '../src/containers/Build/PreviewPanel/helpers/previewRequestPolicy';
 import { rewardApprovalPresentation } from '../src/components/Build/Rewards/approvalPresentation';
 
@@ -106,10 +107,17 @@ const execute = new AsyncFunction(
   'requestRefs',
   'onSetUserStateRef',
   // A paired "Connect AI helper" session counts like a dedicated app-mcp tab.
+  // The block is TypeScript (it has type casts), so strip types first.
   `function appMcpControlsThisTab() {
      return Boolean(appMcpSessionId) || Boolean(appHelperAttached);
    }
-   let response; switch(type) { ${source.slice(start, end)} } return response;`
+   ${
+     transformSync(
+       `async function bridgeCase() { let response; switch(type) { ${source.slice(start, end)} } return response; }`,
+       { loader: 'ts' }
+     ).code
+   }
+   return bridgeCase();`
 );
 function harness({
   runtimeOnly = true,
@@ -196,7 +204,9 @@ test('published bridge uses only the host grant, strips award controls and appli
         limit: undefined
       },
       token: 'scoped-token',
-      runtimeGrant: 'server-published-grant'
+      runtimeGrant: 'server-published-grant',
+      // the harness build has no published version to renew against
+      runtimeArtifactVersionId: undefined
     }
   ]);
   assert.deepEqual(h.balances, [
@@ -261,6 +271,20 @@ test('listening starts forward the song, and claims forward the subject for the 
   await h.invoke('rewards:claim', { challengeId: 'c2' });
   assert.equal('completionToken' in h.calls[2].payload, false);
   assert.equal('subject' in h.calls[3].payload, false);
+});
+test('onceKey reaches the server on start, claim and getReceipt, and nowhere else', async () => {
+  const h = harness({ result: { mode: 'live' } });
+  await h.invoke('rewards:start', { ruleId: 'prize', onceKey: 'contest-42:1st' });
+  await h.invoke('rewards:claim', { challengeId: 'c', onceKey: 'contest-42:1st' });
+  await h.invoke('rewards:receipt', { ruleId: 'prize', onceKey: 'contest-42:1st' });
+  await h.invoke('rewards:progress', { challengeId: 'c', onceKey: 'contest-42:1st' });
+  await h.invoke('rewards:start', { ruleId: 'prize' });
+  assert.equal(h.calls[0].payload.onceKey, 'contest-42:1st');
+  assert.equal(h.calls[1].payload.onceKey, 'contest-42:1st');
+  assert.equal(h.calls[2].payload.onceKey, 'contest-42:1st');
+  assert.equal(h.calls[2].payload.ruleId, 'prize');
+  assert.equal('onceKey' in h.calls[3].payload, false);
+  assert.equal('onceKey' in h.calls[4].payload, false);
 });
 test('receipt recovery forwards the exact challenge and only applies canonical balances', async () => {
   const result = {
