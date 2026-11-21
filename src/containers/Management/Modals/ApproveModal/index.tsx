@@ -22,11 +22,13 @@ export default function ApproveModal({
     content: string;
     status: string;
     type: string;
+    ownAltIds?: number[];
   };
   onSetApprovalModalTarget: (target: any) => void;
   onHide: () => void;
 }) {
   const [fingerprint, setFingerprint] = useState('');
+  const revocation = target.type === 'meetupRevocation';
   const [error, setError] = useState('');
   const [reverting, setReverting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -46,7 +48,7 @@ export default function ApproveModal({
       bodyPadding={0}
     >
       <LegacyModalLayout>
-        <header>Approve Request</header>
+        <header>{revocation ? 'Review Bridge Builder unlock' : 'Approve Request'}</header>
         <main>
           <div
             style={{
@@ -60,7 +62,15 @@ export default function ApproveModal({
               <Dob username={target.username} content={target.content} />
             )}
             {target.type === 'mentor' && <Mentor content={target.content} />}
-            {target.type === 'meetup' && (
+            {revocation && (
+              <p>
+                {target.username}&apos;s unlock depended on{' '}
+                {target.ownAltIds?.map((id) => `#${id}`).join(', ')}, now
+                recognized as the same person. Review the original decision and
+                the check-in evidence before revoking the achievement.
+              </p>
+            )}
+            {(target.type === 'meetup' || revocation) && (
               <>
                 <Meetup username={target.username} content={target.content} />
                 <MeetupReview
@@ -71,7 +81,19 @@ export default function ApproveModal({
             )}
           </div>
           {error && <p role="alert">{error}</p>}
-          {target.status === 'pending' ? (
+          {revocation ? (
+            target.status === 'pending' ? (
+              <Button
+                color="rose"
+                variant="solid"
+                disabled={!fingerprint || reverting}
+                loading={reverting}
+                onClick={handleMeetupRevocation}
+              >
+                Revoke Bridge Builder
+              </Button>
+            ) : <p>Bridge Builder was revoked.</p>
+          ) : target.status === 'pending' ? (
             <div
               style={{
                 marginTop: '3rem',
@@ -186,6 +208,24 @@ export default function ApproveModal({
       </LegacyModalLayout>
     </Modal>
   );
+
+  async function handleMeetupRevocation() {
+    setReverting(true);
+    setError('');
+    try {
+      const status = await revertApproval({
+        userId: target.userId,
+        type: 'meetup',
+        fingerprint
+      });
+      onSetApprovalModalTarget({ ...target, status });
+    } catch {
+      setError('Could not revoke Bridge Builder. Reopen the review to check the current evidence.');
+      setFingerprint('');
+    } finally {
+      setReverting(false);
+    }
+  }
 
   async function handleRevert() {
     setReverting(true);

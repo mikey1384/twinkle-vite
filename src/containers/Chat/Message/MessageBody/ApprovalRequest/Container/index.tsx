@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MIKEY_USER_ID } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import {
   Color,
@@ -86,7 +87,7 @@ export default function Container({
           type={type}
         />
       )}
-      {userId !== myId && (
+      {userId !== myId && (type !== 'dob' || myId === MIKEY_USER_ID) && (
         <>
           {status === 'pending' ? (
             <ApprovalButtons

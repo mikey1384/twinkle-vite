@@ -88,6 +88,7 @@ function NotiMessage({
     userId: number;
   };
   targetObj: {
+    reviewStatus?: string;
     content: string;
     contentType: string;
     id: number;
@@ -671,27 +672,30 @@ function NotiMessage({
     // a crew meetup on the Bridge Builder staff desk
     // (twinkle-api helpers/ownerReviewNotice.ts)
     case 'ownerReview': {
-      const decided = /\((approved|rejected|settled)\)$/.test(
-        targetObj.content || ''
-      );
-      const reviewPath =
-        targetObj.contentType === 'meetupCrew'
-          ? `/achievements/bridge-builder?crew=${targetObj.id}#review`
-          : `/management?approval=${targetObj.id}`;
+      const crewReview = targetObj.contentType === 'meetupCrew';
+      const revocation = targetObj.contentType === 'meetupRevocation';
+      const pending = targetObj.reviewStatus === 'pending';
+      const reviewPath = crewReview
+        ? `/achievements/bridge-builder/staff?crew=${targetObj.id}#review`
+        : `/management?${revocation ? 'bridgeRevocation' : 'approval'}=${targetObj.id}`;
       return (
         <>
           <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
-            {decided ? 'had a request for you:' : 'needs your OK:'}
+            {pending ? 'needs your review:' : 'had a request for you:'}
           </span>{' '}
-          {targetObj.content ? <b>{targetObj.content}</b> : 'a request'}.{' '}
-          <Link
-            to={reviewPath}
-            style={{ color: targetLinkColor, fontWeight: 'bold' }}
-          >
-            {targetObj.contentType === 'meetupCrew'
-              ? 'Review the meetup'
-              : 'Review on the management page'}
-          </Link>
+          <b>{targetObj.content || 'a request'}</b>
+          {targetObj.reviewStatus && !pending && ` (${targetObj.reviewStatus})`}.
+          {pending && (
+            <>
+              {' '}
+              <Link
+                to={reviewPath}
+                style={{ color: targetLinkColor, fontWeight: 'bold' }}
+              >
+                {crewReview ? 'Review the meetup' : 'Review on the management page'}
+              </Link>
+            </>
+          )}
         </>
       );
     }

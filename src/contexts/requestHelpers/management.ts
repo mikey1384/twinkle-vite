@@ -1107,9 +1107,19 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async loadMeetupReviewEvidence({ userId, crewId }: { userId?: number; crewId?: number }) {
+    async loadMeetupReviewEvidence({
+      userId,
+      crewId,
+      revocation = false
+    }: {
+      userId?: number;
+      crewId?: number;
+      revocation?: boolean;
+    }) {
       try {
-        const path = crewId ? `/user/meetup-quest/crews/${crewId}/checkin-review` : `/management/approval/meetup/evidence?userId=${userId}`;
+        const path = crewId
+          ? `/user/meetup-quest/crews/${crewId}/checkin-review`
+          : `/management/approval/meetup/${revocation ? 'revocation' : 'evidence'}?userId=${userId}`;
         const { data } = await request.get(`${URL}${path}`, auth());
         return data;
       } catch (error) { return handleError(error); }
@@ -1287,13 +1297,21 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async revertApproval({ userId, type }: { userId: number; type: string }) {
+    async revertApproval({
+      userId,
+      type,
+      fingerprint
+    }: {
+      userId: number;
+      type: string;
+      fingerprint?: string;
+    }) {
       try {
         const {
           data: { status }
         } = await request.put(
           `${URL}/management/approval/revert`,
-          { userId, approvalType: type },
+          { userId, approvalType: type, fingerprint },
           auth()
         );
         return status;

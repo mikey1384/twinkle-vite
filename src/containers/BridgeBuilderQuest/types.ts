@@ -278,8 +278,8 @@ export interface CheckinPerson {
   // the check-in showed two phones in one place (same network, same academy
   // branch, or the sound check); never says which
   together?: boolean;
-  // toward the quality bar (clamped to it) and when their window closes
-  progress?: { days: number; xp: number; endsAt: number };
+  // deadline for an eligible person who is still getting started
+  endsAt?: number;
   // the window closed before the bar: the one not-counted reason shown
   timedOut?: boolean;
 }

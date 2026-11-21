@@ -17,6 +17,7 @@ export const FACE_TO_FACE_RECRUIT_TARGET = 7;
 // constants/meetupQuest.ts and BAR_DAYS_AFTER in meetupCheckinRules.ts.
 export const BRIDGE_BUILDER_BAR_LEARNING_DAYS = 3;
 export const BRIDGE_BUILDER_BAR_LEARNING_XP = 10_000;
+export const BRIDGE_BUILDER_BAR_DAYS_BEFORE = 30;
 export const BRIDGE_BUILDER_BAR_DAYS_AFTER = 14;
 // The Dark Citadel private-room invite: minutes of play together while the
 // friend is a guest (twinkle-api helpers/build/completion/worldCoplay.ts)

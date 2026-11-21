@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
 import {
   BRIDGE_BUILDER_BAR_DAYS_AFTER,
+  BRIDGE_BUILDER_BAR_DAYS_BEFORE,
   BRIDGE_BUILDER_BAR_LEARNING_DAYS,
   BRIDGE_BUILDER_BAR_LEARNING_XP,
   BRIDGE_BUILDER_INVITE_APP_PATH,
@@ -70,6 +71,7 @@ export default function CheckinCard({
   if (!progress) {
     return error ? <QuestNote tone="warning">{error}</QuestNote> : null;
   }
+  const canCheckIn = progress.myAge !== 'adult';
   const counted = progress.people.filter((p) => p.state === 'counted');
   const pending = progress.people.filter(
     (p) => p.state === 'getting_started' || p.state === 'waiting_birthdate'
@@ -176,7 +178,7 @@ export default function CheckinCard({
         <div style={{ marginTop: '1.2rem' }}>
           <QuestNote tone="warning">
             <div className={rowClass}>
-              <span>Add your birthdate so your check-ins count.</span>
+              <span>Add your birthdate for review so your check-ins can count.</span>
               <Button
                 size="sm"
                 color="orange"
@@ -272,8 +274,10 @@ export default function CheckinCard({
                 <ol className={stepsClass}>
                   <li>
                     In Twinkle Minecraft World, go to{' '}
-                    <b>Play › The Dark Citadel › Private room</b>. Send your
-                    friend the invite link and play{' '}
+                    <b>Play › The Dark Citadel</b>, pick an area and choose{' '}
+                    <b>Private room › Create a room</b>. In the pause menu, tap{' '}
+                    <b>Private room · invite › Copy link</b>. Send the link to
+                    your friend and play{' '}
                     {BRIDGE_BUILDER_INVITE_COPLAY_MINUTES} minutes together
                     while they&apos;re a guest.
                   </li>
@@ -304,7 +308,7 @@ export default function CheckinCard({
                     }}
                   >
                     <Icon icon="cubes" style={{ marginRight: '0.5rem' }} />
-                    Open The Dark Citadel
+                    Open Twinkle Minecraft World
                   </Button>
                 </div>
               </div>
@@ -317,8 +321,13 @@ export default function CheckinCard({
                   When you&apos;re together, both tap <b>Check in</b> below and
                   scan each other&apos;s codes. A friend without an account can
                   scan your code with their phone camera and tap Join Twinkle.
-                  Check in with people you already see in real life: at school,
-                  your hagwon or a Twinkle class.
+                  Both friends must be under 18 and have a checked birthdate.
+                  Your
+                  friend needs {BRIDGE_BUILDER_BAR_LEARNING_DAYS} different
+                  learning days and{' '}
+                  {BRIDGE_BUILDER_BAR_LEARNING_XP.toLocaleString('en-US')} learning
+                  XP from the {BRIDGE_BUILDER_BAR_DAYS_BEFORE} days before the check-in through{' '}
+                  {BRIDGE_BUILDER_BAR_DAYS_AFTER} days after it.
                 </div>
               </div>
             </div>
@@ -326,7 +335,7 @@ export default function CheckinCard({
         </div>
       )}
 
-      <div style={{ marginTop: '1.6rem' }}>
+      {canCheckIn && <div style={{ marginTop: '1.6rem' }}>
         <GameCTAButton
           variant="success"
           size="xl"
@@ -340,7 +349,7 @@ export default function CheckinCard({
         >
           {progress.unlocked ? 'Check in with a friend' : 'Check in'}
         </GameCTAButton>
-      </div>
+      </div>}
 
       {!progress.unlocked && progress.myAge !== 'adult' && (
         <div
@@ -405,7 +414,7 @@ export default function CheckinCard({
           </Button>
         </div>
       )}
-      {progress.unlocked && (
+      {progress.unlocked && canCheckIn && (
         <div
           className={css`
             ${smallLineClass};
@@ -458,7 +467,7 @@ export default function CheckinCard({
   // The one "do this next" line (the server picks it: nextStep).
   function renderNextStep() {
     if (!progress) return null;
-    const step = progress.nextStep || 'invite';
+    const step = progress.nextStep ?? (progress.unlocked ? 'unlocked' : 'invite');
     if (step === 'unlocked') return null;
     const box = (
       tone: 'info' | 'warning' | 'success',
@@ -497,7 +506,7 @@ export default function CheckinCard({
     if (step === 'add_birthdate') {
       return box(
         'warning',
-        <>Add your birthdate so your check-ins count.</>,
+        <>Add your birthdate for review so your check-ins can count.</>,
         <Button
           size="sm"
           color="orange"
@@ -514,9 +523,7 @@ export default function CheckinCard({
     if (step === 'friend_learning') {
       const friend = [...progress.people]
         .filter((p) => p.state === 'getting_started')
-        .sort(
-          (a, b) => (a.progress?.endsAt || 0) - (b.progress?.endsAt || 0)
-        )[0];
+        .sort((a, b) => (a.endsAt || 0) - (b.endsAt || 0))[0];
       return box(
         'info',
         <>
@@ -527,8 +534,8 @@ export default function CheckinCard({
           They count once they learn on Twinkle on{' '}
           {BRIDGE_BUILDER_BAR_LEARNING_DAYS} different days and earn{' '}
           {BRIDGE_BUILDER_BAR_LEARNING_XP.toLocaleString('en-US')} learning XP
-          {friend?.progress?.endsAt
-            ? ` by ${shortDate(friend.progress.endsAt)}`
+          {friend?.endsAt
+            ? ` by ${shortDate(friend.endsAt)}`
             : ''}
           . Puzzles, videos, the Daily Question and Grammarbles all help.
         </>
@@ -540,10 +547,10 @@ export default function CheckinCard({
       return box(
         'info',
         <>
-          {n === 1 ? 'A friend has' : `${n} friends have`} your Join Twinkle
-          invite. They count only after they sign up on Twinkle
-          {until ? ` (the invite works until ${shortDate(until)})` : ''} and
-          then learn on Twinkle.
+          {n === 1 ? 'One Join Twinkle invite is' : `${n} Join Twinkle invites are`}{' '}
+          waiting to be used.
+          {!!until && <> {n === 1 ? 'It expires' : 'The next one expires'} on {shortDate(until)}.</>}{' '}
+          Your friends need to sign up with their invite and start learning on Twinkle.
         </>
       );
     }
@@ -577,8 +584,8 @@ export default function CheckinCard({
     return box(
       'info',
       <>
-        Invite a friend who’s new to Twinkle, or check in with a Twinkle friend
-        you meet. See the two ways below.
+        Invite a friend who’s new to Twinkle{canCheckIn && ', or check in with a Twinkle friend you meet'}.
+        {' '}See how below.
       </>
     );
   }
@@ -676,10 +683,8 @@ function PersonRow({ person }: { person: CheckinPerson }) {
   } else if (person.state === 'waiting_birthdate') {
     status = 'Checked in · waiting for a birthdate check';
   } else if (person.state === 'getting_started') {
-    const p = person.progress;
-    status = p
-      ? `${how} ${shortDate(person.at)} · ${p.days} of ${BRIDGE_BUILDER_BAR_LEARNING_DAYS} days · ${p.xp.toLocaleString('en-US')} of ${BRIDGE_BUILDER_BAR_LEARNING_XP.toLocaleString('en-US')} XP · until ${shortDate(p.endsAt)}`
-      : `${how} ${shortDate(person.at)} · still learning`;
+    const deadline = person.endsAt ? ` · until ${shortDate(person.endsAt)}` : '';
+    status = `${how} ${shortDate(person.at)} · still learning${deadline}`;
   } else {
     status = `Time ran out: ${BRIDGE_BUILDER_BAR_LEARNING_DAYS} days and ${BRIDGE_BUILDER_BAR_LEARNING_XP.toLocaleString('en-US')} XP weren’t reached in time`;
   }

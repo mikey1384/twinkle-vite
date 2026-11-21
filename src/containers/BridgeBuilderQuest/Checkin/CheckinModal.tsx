@@ -650,11 +650,11 @@ function ResultView({
       {person?.state === 'waiting_birthdate' &&
         (person.waitingOn === 'them' ? (
           <p className={leadClass}>
-            This counts once {partner.username}’s birthdate is checked.
+            Waiting for {partner.username}’s birthdate check.
           </p>
         ) : (
           <>
-            <p className={leadClass}>Add your birthdate so this counts.</p>
+            <p className={leadClass}>Add your birthdate for review.</p>
             <Button color="orange" variant="soft" onClick={onAddBirthdate}>
               Add my birthdate
             </Button>

@@ -28,7 +28,12 @@ test('the card numbers match the quest rules: Bronze 2+, Silver 2+ from 2+ branc
 });
 
 test('the mirrored numbers equal the API when it is checked out next to this repo', () => {
-  const apiRoot = fileURLToPath(new URL('../../twinkle-api/', import.meta.url));
+  const worktreeApi = new URL('../../api/', import.meta.url);
+  const apiRoot = fileURLToPath(
+    existsSync(new URL('constants/meetupQuest.ts', worktreeApi))
+      ? worktreeApi
+      : new URL('../../twinkle-api/', import.meta.url)
+  );
   const questPath = `${apiRoot}constants/meetupQuest.ts`;
   const userHelpersPath = `${apiRoot}helpers/user/index.ts`;
   if (!existsSync(questPath) || !existsSync(userHelpersPath)) return;
@@ -60,10 +65,9 @@ test('the mirrored numbers equal the API when it is checked out next to this rep
   );
   const rulesPath = `${apiRoot}controllers/user/services/meetupCheckinRules.ts`;
   if (existsSync(rulesPath)) {
-    assert.equal(
-      num(readFileSync(rulesPath, 'utf8'), 'BAR_DAYS_AFTER'),
-      meetup.BRIDGE_BUILDER_BAR_DAYS_AFTER
-    );
+    const rules = readFileSync(rulesPath, 'utf8');
+    assert.equal(num(rules, 'BAR_DAYS_AFTER'), meetup.BRIDGE_BUILDER_BAR_DAYS_AFTER);
+    assert.equal(num(rules, 'BAR_DAYS_BEFORE'), meetup.BRIDGE_BUILDER_BAR_DAYS_BEFORE);
   }
   // the API's one count (check-ins and invited friends alike)
   assert.equal(

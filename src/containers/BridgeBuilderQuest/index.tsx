@@ -122,6 +122,8 @@ export default function BridgeBuilderQuest({
   const memberBrowse = view === 'member' && !data?.hasActiveCrew;
   // admins only: the crew board, members' answers and the story queue
   const staffDeskShown = !!(data?.reviewQueue || stories?.reviewQueue);
+  const requestedCrew = data?.requestedCrew ||
+    (requestedCrewId && data?.myCrew?.crewId === requestedCrewId ? data.myCrew : null);
   const staffWaiting =
     (data?.reviewQueue?.length || 0) + (stories?.reviewQueue?.length || 0);
 
@@ -164,7 +166,7 @@ export default function BridgeBuilderQuest({
             <CheckinCard achievementTitle={achievementTitle} />
           )}
 
-          {view === 'member' && data?.myCrew && (
+          {view === 'member' && data?.myCrew && data.myCrew.crewId !== requestedCrewId && (
             <>
               <h2 className={compactTitleClass}>Your crew</h2>
               <div ref={myCrewRef} style={{ marginTop: '1rem' }}>
@@ -377,7 +379,7 @@ export default function BridgeBuilderQuest({
             </section>
           )}
 
-          {data?.requestedCrew && (
+          {requestedCrew && (
             <div style={{ marginTop: '2rem' }}>
               <div
                 className={css`
@@ -393,11 +395,11 @@ export default function BridgeBuilderQuest({
                   onClick={() => setSearchParams({})}
                 >
                   <Icon icon="times" style={{ marginRight: '0.4rem' }} />
-                  Close crew #{data.requestedCrew.crewId}
+                  Close crew #{requestedCrew.crewId}
                 </Button>
               </div>
               <CrewPanel
-                crew={data.requestedCrew}
+                crew={requestedCrew}
                 achievementTitle={achievementName}
                 myId={userId}
                 onChanged={reload}

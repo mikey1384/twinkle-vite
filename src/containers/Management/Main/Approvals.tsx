@@ -4,7 +4,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Table from '../Table';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useManagementContext } from '~/contexts';
+import { useAppContext, useKeyContext, useManagementContext } from '~/contexts';
+import { MIKEY_USER_ID } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -27,45 +28,78 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
   const onLoadMoreApprovalItems = useManagementContext(
     (v) => v.actions.onLoadMoreApprovalItems
   );
+  const myId = useKeyContext((v) => v.myState.userId);
+  const isOwner = myId === MIKEY_USER_ID;
+  const loadApprovalItemById = useAppContext(
+    (v) => v.requestHelpers.loadApprovalItemById
+  );
+  const loadMeetupReviewEvidence = useAppContext(
+    (v) => v.requestHelpers.loadMeetupReviewEvidence
+  );
   const [approvalModalTarget, setApprovalModalTarget] = useState<any>(null);
-  // ?approval=<id>: the owner's Notifications line for a request opens it here
-  // (twinkle-api helpers/ownerReviewNotice.ts)
   const [searchParams, setSearchParams] = useSearchParams();
-  const requestedApprovalId = Number(searchParams.get('approval') || 0);
-  const [requestedDecided, setRequestedDecided] = useState(false);
+  const revocationRequested = searchParams.has('bridgeRevocation');
+  const requestedApprovalId = Number(
+    searchParams.get(revocationRequested ? 'bridgeRevocation' : 'approval')
+  );
+  const [requestMessage, setRequestMessage] = useState('');
+
   useEffect(() => {
-    if (!requestedApprovalId || !approvalItemsLoaded) return;
-    const item = approvalItems.find(
-      (candidate: any) => Number(candidate.id) === requestedApprovalId
-    );
-    if (item && canManage) {
-      setApprovalModalTarget(item);
-      setRequestedDecided(false);
-    } else {
-      // only pending requests are listed: this one was decided already
-      setRequestedDecided(!item);
+    if (!isOwner || !Number.isSafeInteger(requestedApprovalId) || requestedApprovalId <= 0) return;
+    let active = true;
+    setApprovalModalTarget(null);
+    setRequestMessage('Opening approval…');
+    void openRequestedApproval();
+
+    return () => { active = false; };
+
+    async function openRequestedApproval() {
+      try {
+        const item = revocationRequested
+          ? {
+              ...(await loadMeetupReviewEvidence({
+                userId: requestedApprovalId,
+                revocation: true
+              })),
+              id: `revocation-${requestedApprovalId}`,
+              type: 'meetupRevocation',
+              status: 'pending'
+            }
+          : await loadApprovalItemById(requestedApprovalId);
+        if (!active) return;
+        if (item.status === 'pending' && ['dob', 'meetup', 'meetupRevocation'].includes(item.type)) {
+          setApprovalModalTarget(item);
+          setRequestMessage('');
+        } else {
+          setRequestMessage('This request is no longer waiting for a decision.');
+        }
+      } catch (error) {
+        if (!active) return;
+        setRequestMessage(
+          (error as { status?: number })?.status === 404
+            ? 'This request is no longer available.'
+            : 'Could not open the request. Reload this page to try again.'
+        );
+      }
     }
-    const next = new URLSearchParams(searchParams);
-    next.delete('approval');
-    setSearchParams(next, { replace: true });
+    // The request helper is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestedApprovalId, approvalItemsLoaded, approvalItems, canManage]);
+  }, [isOwner, requestedApprovalId, revocationRequested]);
 
   return (
     <ErrorBoundary componentPath="Management/Main/Approvals">
-      {requestedDecided && (
-        <p
+      {isOwner && requestedApprovalId > 0 && requestMessage && (
+        <p role="status"
           className={css`
             margin: 0 0 1rem;
             font-size: 1.4rem;
             color: ${Color.darkerGray()};
           `}
         >
-          That request was already decided, so it isn&apos;t waiting here
-          anymore.
+          {requestMessage}
         </p>
       )}
-      {canManage && (
+      {isOwner && (
         <p
           className={css`
             margin: 0 0 1rem;
@@ -97,7 +131,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
             minmax(10rem, 1fr)
             minmax(10rem, 1fr)
             minmax(15rem, 1.2fr)
-            ${canManage ? 'minmax(13rem, 1.2fr)' : ''}
+            ${canManage || isOwner ? 'minmax(13rem, 1.2fr)' : ''}
           `}
         >
           <thead>
@@ -106,13 +140,16 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
               <th>Type</th>
               <th>Value</th>
               <th>Submitted at</th>
-              {canManage && <th></th>}
+              {(canManage || isOwner) && <th></th>}
             </tr>
           </thead>
           <tbody>
             {approvalItems
               .filter((_: any, index: number) => index < numApprovalItemsShown)
               .map((item: any) => {
+                const canDecide = ['dob', 'meetup'].includes(item.type)
+                  ? isOwner
+                  : canManage;
                 let displayedItemContent = item.content;
                 if (item.type === 'mentor') {
                   const itemData = JSON.parse(item.content);
@@ -123,10 +160,10 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                   <tr
                     key={item.id}
                     onClick={() =>
-                      canManage ? setApprovalModalTarget(item) : null
+                      canDecide ? openApproval(item) : null
                     }
                     className={css`
-                      cursor: ${canManage ? 'pointer' : ''};
+                      cursor: ${canDecide ? 'pointer' : ''};
                       td {
                         display: flex;
                         align-items: center;
@@ -144,7 +181,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                     <td>{item.type}</td>
                     <td>{displayedItemContent}</td>
                     <td>{timeSince(item.timeStamp)}</td>
-                    {canManage && (
+                    {(canManage || isOwner) && (
                       <td
                         className={css`
                           display: flex;
@@ -195,11 +232,22 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
       </SectionPanel>
       {approvalModalTarget && (
         <ApproveModal
+          key={approvalModalTarget.id}
           target={approvalModalTarget}
           onSetApprovalModalTarget={setApprovalModalTarget}
-          onHide={() => setApprovalModalTarget(null)}
+          onHide={() => openApproval(null)}
         />
       )}
     </ErrorBoundary>
   );
+
+  function openApproval(item: any) {
+    setApprovalModalTarget(item);
+    if (searchParams.has('approval') || searchParams.has('bridgeRevocation')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('approval');
+      next.delete('bridgeRevocation');
+      setSearchParams(next, { replace: true });
+    }
+  }
 }
