@@ -265,10 +265,7 @@ export interface AdminCrewRow {
 
 // Bridge Builder check-ins (twinkle-api services/meetupCheckins.ts)
 export type CheckinPersonState =
-  | 'counted'
-  | 'waiting_birthdate'
-  | 'getting_started'
-  | 'not_counted';
+  'counted' | 'waiting_birthdate' | 'getting_started' | 'not_counted';
 
 export interface CheckinPerson {
   userId: number;
@@ -281,7 +278,24 @@ export interface CheckinPerson {
   // the check-in showed two phones in one place (same network, same academy
   // branch, or the sound check); never says which
   together?: boolean;
+  // toward the quality bar (clamped to it) and when their window closes
+  progress?: { days: number; xp: number; endsAt: number };
+  // the window closed before the bar: the one not-counted reason shown
+  timedOut?: boolean;
 }
+
+// The checkpoint's one "do this next" line, chosen by the server
+// (twinkle-api meetupCheckinRules.ts bridgeBuilderNextStep)
+export type CheckinNextStep =
+  | 'unlocked'
+  | 'wait_review'
+  | 'rejected'
+  | 'add_birthdate'
+  | 'friend_learning'
+  | 'friend_signup'
+  | 'wait_birthdate'
+  | 'together'
+  | 'invite';
 
 export interface CheckinProgress {
   target: number;
@@ -319,6 +333,9 @@ export interface CheckinProgress {
   // met people, but no check-in showed one place yet: offer the "show you're
   // together" guide (TogetherGuide.tsx)
   needsTogether?: boolean;
+  // Join Twinkle invites this member handed out that nobody has used yet
+  pendingInvites?: { count: number; nextExpiresAt: number };
+  nextStep?: CheckinNextStep;
 }
 
 export type CheckinScanResult =

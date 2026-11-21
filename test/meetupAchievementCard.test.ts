@@ -42,8 +42,34 @@ test('the mirrored numbers equal the API when it is checked out next to this rep
   ] as const) {
     assert.equal(readConst(questSource, name), meetup[name], name);
   }
+  // the quality bar the check-in card states (10_000 is written with a
+  // separator in both repos)
+  const num = (source: string, name: string) =>
+    Number(
+      source
+        .match(new RegExp(`${name}\\s*=\\s*([\\d_]+)`))?.[1]
+        ?.replace(/_/g, '')
+    );
+  assert.equal(
+    num(questSource, 'BRIDGE_BUILDER_BAR_LEARNING_DAYS'),
+    meetup.BRIDGE_BUILDER_BAR_LEARNING_DAYS
+  );
+  assert.equal(
+    num(questSource, 'BRIDGE_BUILDER_BAR_LEARNING_XP'),
+    meetup.BRIDGE_BUILDER_BAR_LEARNING_XP
+  );
+  const rulesPath = `${apiRoot}controllers/user/services/meetupCheckinRules.ts`;
+  if (existsSync(rulesPath)) {
+    assert.equal(
+      num(readFileSync(rulesPath, 'utf8'), 'BAR_DAYS_AFTER'),
+      meetup.BRIDGE_BUILDER_BAR_DAYS_AFTER
+    );
+  }
   // the API's one count (check-ins and invited friends alike)
-  assert.equal(readConst(questSource, 'BRIDGE_BUILDER_PEOPLE_TARGET'), meetup.FACE_TO_FACE_RECRUIT_TARGET);
+  assert.equal(
+    readConst(questSource, 'BRIDGE_BUILDER_PEOPLE_TARGET'),
+    meetup.FACE_TO_FACE_RECRUIT_TARGET
+  );
   assert.match(
     readFileSync(userHelpersPath, 'utf8'),
     /FACE_TO_FACE_RECRUIT_TARGET = BRIDGE_BUILDER_PEOPLE_TARGET/
@@ -52,9 +78,18 @@ test('the mirrored numbers equal the API when it is checked out next to this rep
 
 test('the card states the people count from the constant and both ways to unlock', () => {
   const text = cardSource.replace(/\s+/g, ' ');
-  assert.doesNotMatch(text, /Meet \d+ different people/);
-  assert.match(text, /Meet \{FACE_TO_FACE_RECRUIT_TARGET\} different people in real life/);
-  assert.match(text, /Friends you bring to Twinkle count too/);
+  assert.doesNotMatch(text, /(Meet|Bring) \d+ different people/);
+  // 11-21: the card says what counts, invite route first (Mikey: the point is
+  // bringing people onto the Twinkle website)
+  assert.match(
+    text,
+    /Bring \{FACE_TO_FACE_RECRUIT_TARGET\} different people to Twinkle/
+  );
+  assert.match(
+    text,
+    /friends new to Twinkle who join from your invite and then learn on Twinkle/
+  );
+  assert.match(text, /Twinkle friends you meet in real life and check in with/);
   assert.match(text, /a Twinkle teacher or your parent there/);
   // the retired steps are gone from the card
   assert.doesNotMatch(text, /film it|Dark Citadel|step \$\{/);

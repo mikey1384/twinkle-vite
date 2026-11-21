@@ -666,6 +666,35 @@ function NotiMessage({
           </Link>
         </>
       );
+    // A decision only the owner makes waits for him (Zero is the sender): a
+    // birthdate check or Bridge Builder unlock opens on the management page,
+    // a crew meetup on the Bridge Builder staff desk
+    // (twinkle-api helpers/ownerReviewNotice.ts)
+    case 'ownerReview': {
+      const decided = /\((approved|rejected|settled)\)$/.test(
+        targetObj.content || ''
+      );
+      const reviewPath =
+        targetObj.contentType === 'meetupCrew'
+          ? `/achievements/bridge-builder?crew=${targetObj.id}#review`
+          : `/management?approval=${targetObj.id}`;
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            {decided ? 'had a request for you:' : 'needs your OK:'}
+          </span>{' '}
+          {targetObj.content ? <b>{targetObj.content}</b> : 'a request'}.{' '}
+          <Link
+            to={reviewPath}
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            {targetObj.contentType === 'meetupCrew'
+              ? 'Review the meetup'
+              : 'Review on the management page'}
+          </Link>
+        </>
+      );
+    }
     case 'buildCollaborationRequest':
       return (
         <>
@@ -882,10 +911,7 @@ function NotiMessage({
               (declined)
             </span>
           ) : inviteStatus === 'left' ? (
-            <span style={{ color: infoColor, fontWeight: 800 }}>
-              {' '}
-              (left)
-            </span>
+            <span style={{ color: infoColor, fontWeight: 800 }}> (left)</span>
           ) : null}
           {buildInviteActionError ? (
             <span style={{ color: Color.red(), fontWeight: 800 }}>

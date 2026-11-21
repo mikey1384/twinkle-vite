@@ -8,8 +8,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { FACE_TO_FACE_RECRUIT_TARGET } from '~/constants/meetupQuest';
 
-// Bridge Builder (containers/BridgeBuilderQuest): check-ins with people met
-// in person, or one meetup with a grown-up there. Items sent through the old
+// Bridge Builder (containers/BridgeBuilderQuest): people brought onto Twinkle
+// (invited friends who join and learn) or met in person (check-ins), or one
+// meetup with a grown-up there. Items sent through the old
 // free-text form stay reviewable in Management.
 export const BRIDGE_BUILDER_QUEST_PATH = '/achievements/bridge-builder';
 
@@ -66,7 +67,6 @@ export default function Meetup({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questShown, userId]);
 
-
   return (
     <ErrorBoundary componentPath="AchievementItems/Big/Meetup">
       <ItemPanel
@@ -82,21 +82,36 @@ export default function Meetup({
         anyOf
         requirements={[
           <>
-            Meet {FACE_TO_FACE_RECRUIT_TARGET} different people in real life
-            and scan each other&apos;s check-in codes. Friends you bring to
-            Twinkle count too.
+            Bring {FACE_TO_FACE_RECRUIT_TARGET} different people to Twinkle:
+            friends new to Twinkle who join from your invite and then learn on
+            Twinkle, or Twinkle friends you meet in real life and check in with.
             {questShown && (
-              <div style={{ marginTop: '0.8rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-                <Button size="sm" color="green" onClick={() => navigate(BRIDGE_BUILDER_QUEST_PATH)}>
+              <div
+                style={{
+                  marginTop: '0.8rem',
+                  display: 'flex',
+                  gap: '0.6rem',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <Button
+                  size="sm"
+                  color="green"
+                  onClick={() => navigate(BRIDGE_BUILDER_QUEST_PATH)}
+                >
                   <Icon icon="qrcode" style={{ marginRight: '0.5rem' }} />
-                  Check in
+                  See how and check in
                 </Button>
                 {!!quest?.crewId && (
                   <Button
                     size="sm"
                     variant="soft"
                     color="logoBlue"
-                    onClick={() => navigate(`${BRIDGE_BUILDER_QUEST_PATH}/crew/${quest.crewId}`)}
+                    onClick={() =>
+                      navigate(
+                        `${BRIDGE_BUILDER_QUEST_PATH}/crew/${quest.crewId}`
+                      )
+                    }
                   >
                     <Icon icon="users" style={{ marginRight: '0.5rem' }} />
                     Open your crew

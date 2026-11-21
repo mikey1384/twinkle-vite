@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Table from '../Table';
@@ -26,10 +27,62 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
   const onLoadMoreApprovalItems = useManagementContext(
     (v) => v.actions.onLoadMoreApprovalItems
   );
-  const [approvalModalTarget, setApprovalModalTarget] = useState(null);
+  const [approvalModalTarget, setApprovalModalTarget] = useState<any>(null);
+  // ?approval=<id>: the owner's Notifications line for a request opens it here
+  // (twinkle-api helpers/ownerReviewNotice.ts)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedApprovalId = Number(searchParams.get('approval') || 0);
+  const [requestedDecided, setRequestedDecided] = useState(false);
+  useEffect(() => {
+    if (!requestedApprovalId || !approvalItemsLoaded) return;
+    const item = approvalItems.find(
+      (candidate: any) => Number(candidate.id) === requestedApprovalId
+    );
+    if (item && canManage) {
+      setApprovalModalTarget(item);
+      setRequestedDecided(false);
+    } else {
+      // only pending requests are listed: this one was decided already
+      setRequestedDecided(!item);
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete('approval');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedApprovalId, approvalItemsLoaded, approvalItems, canManage]);
 
   return (
     <ErrorBoundary componentPath="Management/Main/Approvals">
+      {requestedDecided && (
+        <p
+          className={css`
+            margin: 0 0 1rem;
+            font-size: 1.4rem;
+            color: ${Color.darkerGray()};
+          `}
+        >
+          That request was already decided, so it isn&apos;t waiting here
+          anymore.
+        </p>
+      )}
+      {canManage && (
+        <p
+          className={css`
+            margin: 0 0 1rem;
+            font-size: 1.3rem;
+            color: ${Color.darkerGray()};
+          `}
+        >
+          Bridge Builder crew meetups and parent emails are decided on the{' '}
+          <Link
+            to="/achievements/bridge-builder/staff"
+            style={{ fontWeight: 'bold' }}
+          >
+            Bridge Builder staff desk
+          </Link>
+          .
+        </p>
+      )}
       <SectionPanel
         title="Pending Approvals"
         isEmpty={approvalItems.length === 0}
@@ -105,8 +158,8 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                               item.status === 'approved'
                                 ? 'limeGreen'
                                 : item.status === 'rejected'
-                                ? 'redOrange'
-                                : 'logoBlue'
+                                  ? 'redOrange'
+                                  : 'logoBlue'
                             ]()};
                             &:hover {
                               text-decoration: underline;
