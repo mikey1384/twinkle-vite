@@ -278,6 +278,7 @@ function Message({
           >
             <SocialTogetherCard
               card={socialTogetherCard}
+              channelId={channelId}
               canReply={!isRestricted && !isBanned}
             />
           </div>

@@ -36,6 +36,7 @@ library.add(faPlay);
 import TodayStats from './src/components/Notification/TodayStats';
 import {container as notificationContainer} from './src/components/Notification/Styles';
 import SocialWalkupOverlay from './src/containers/Build/Runtime/SocialWalkupOverlay';
+import WalkupsItem from './src/containers/Home/Store/WalkupsItem';
 import SocialTogetherCard from './src/containers/Chat/Message/MessageBody/SocialTogetherCard';
 import {ChatQuickSendContext} from './src/containers/Chat/Message/MessageBody/ChatQuickSend';
 import {socialWalkupStore,socialJoinableStore} from './src/helpers/socialWalkups';
@@ -93,7 +94,7 @@ function ChatScene({card}){
   const quickSend=async content=>{window.sent.push(content);};
   return <div style={{background:'#fff',padding:'1rem 0',minHeight:300}}>
     <ChatQuickSendContext.Provider value={quickSend}>
-      <SocialTogetherCard card={window.cards[card]} canReply/>
+      <SocialTogetherCard card={window.cards[card]} channelId={31} canReply/>
     </ChatQuickSendContext.Provider>
   </div>;
 }
@@ -105,6 +106,7 @@ function Root(){
     <LocationProbe/>
     {scene.name==='live'?<LiveScene width={scene.width}/>:null}
     {scene.name==='app'?<AppScene/>:null}
+    {scene.name==='settings'?<WalkupsItem loading={false}/>:null}
     {scene.name==='chat'?<ChatScene key={scene.card} card={scene.card}/>:null}
   </FixtureProvider>;
 }
@@ -284,7 +286,7 @@ test(
       await play.click();
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/5');
       assert.deepEqual(await page.evaluate(() => window.walkups), [
-        { buildId: 5, hostUserId: 11 }
+        { buildId: 5, hostUserId: 11, intent: 'play' }
       ]);
       const target = await page.evaluate(() => window.lastLocation.state.buildLaunchTarget);
       assert.equal(target.source, 'social');
@@ -302,6 +304,8 @@ test(
 
       // Someone busy: Watch (no queue) or Play next.
       await page.evaluate(() => {
+        window.originalWalkupAnswer = window.walkupAnswer;
+        window.walkupAnswer = { status: 'watch', host: { id: 12, username: 'ana' }, joinable: { state: 'busy-watchable', label: '', mode: '1v1' } };
         window.walkups.length = 0;
         window.socialWalkupStore.clear(5);
       });
@@ -315,22 +319,34 @@ test(
       await page.waitForFunction(
         () => window.lastLocation?.state?.buildLaunchTarget?.target?.hostUserId === 12
       );
-      assert.deepEqual(await page.evaluate(() => window.walkups), []);
+      assert.deepEqual(await page.evaluate(() => window.walkups), [
+        { buildId: 5, hostUserId: 12, intent: 'watch' }
+      ]);
       assert.equal(
         await page.evaluate(() => window.lastLocation.state.buildLaunchTarget.target.status),
         'watch'
       );
 
+      // A stale target that has become ineligible opens the app without
+      // passing that member's identity to the frame.
+      await page.evaluate(() => { window.walkupAnswer = { status: 'unavailable' }; });
+      await page.locator('.live-join', { hasText: 'ana' }).click();
+      await page.getByRole('button', { name: 'Watch', exact: true }).click();
+      await page.waitForFunction(() => window.lastLocation?.state === null);
+      assert.equal(await page.evaluate(() => window.socialWalkupStore.get(5).visit), null);
+
       // Join on the row walks up to whoever is ready; with nobody ready it
       // just opens the app (today's behavior).
       await page.evaluate(() => {
+        window.walkupAnswer = window.originalWalkupAnswer;
         window.walkups.length = 0;
       });
       await page.getByRole('button', { name: 'Join Baduk' }).click();
       await page.waitForFunction(() => window.walkups.length === 1);
       assert.deepEqual(await page.evaluate(() => window.walkups[0]), {
         buildId: 5,
-        hostUserId: 11
+        hostUserId: 11,
+        intent: 'play'
       });
       await page.evaluate(() => {
         window.walkups.length = 0;
@@ -339,6 +355,15 @@ test(
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/8');
       assert.deepEqual(await page.evaluate(() => window.walkups), []);
       assert.equal(await page.evaluate(() => window.lastLocation.state), null);
+      await page.evaluate(() => window.setScene({ name: 'settings' }));
+      const hostPreference = page.getByRole('switch', {
+        name: 'Let people walk up while I play'
+      });
+      await hostPreference.waitFor();
+      assert.equal(await hostPreference.getAttribute('aria-checked'), 'true');
+      await hostPreference.click();
+      await page.waitForFunction(() => window.settings?.social?.walkups === false);
+      assert.equal(await hostPreference.getAttribute('aria-checked'), 'false');
       assert.deepEqual(errors, []);
 
       // A wide column (desktop side panel).
@@ -576,10 +601,11 @@ test(
       await card.getByRole('button', { name: 'Rematch' }).click();
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/5');
       assert.deepEqual(await page.evaluate(() => window.walkups), [
-        { buildId: 5, hostUserId: 11 }
+        { buildId: 5, hostUserId: 11, intent: 'play' }
       ]);
+      assert.equal(await page.evaluate(() => window.lastLocation.state), null);
       assert.equal(
-        await page.evaluate(() => window.lastLocation.state.buildLaunchTarget.target.status),
+        await page.evaluate(() => window.socialWalkupStore.get(5).visit.status),
         'unavailable'
       );
 

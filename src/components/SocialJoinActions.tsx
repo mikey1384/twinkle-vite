@@ -147,7 +147,6 @@ export default function SocialJoinActions({
           username: member.username,
           profilePicUrl: member.profilePicUrl || null
         },
-        joinable,
         intent,
         source
       });

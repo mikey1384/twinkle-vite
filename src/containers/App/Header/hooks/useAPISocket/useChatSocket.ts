@@ -1318,7 +1318,9 @@ export default function useChatSocket({
       // Transfer notices are canonical unread activity for both parties, even
       // though the initiating user's ID is stored as the message author.
       const isMyMessage =
-        Number(message.userId) === Number(userId) && !message.transferId;
+        Number(message.userId) === Number(userId) &&
+        !message.transferId &&
+        message.rootType !== 'socialTogether';
       const messageSubchannelId = Number(message.subchannelId || 0);
       const channelSummaryIsNeeded = canonicalUnreadSummaryIsNeeded(
         Number(message.channelId)

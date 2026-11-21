@@ -6,7 +6,6 @@ import {
   socialJoinableStore,
   socialWalkupStore,
   type JoinIntent,
-  type Joinable,
   type SocialPerson,
   type SocialVisit
 } from '~/helpers/socialWalkups';
@@ -49,45 +48,48 @@ export function socialLaunchTarget(buildId: number, visit: SocialVisit) {
 export function useWalkUp() {
   const navigate = useNavigate();
   const walkUpToMember = useAppContext((v) => v.requestHelpers.walkUpToMember);
+  const walkAwayFromMember = useAppContext((v) => v.requestHelpers.walkAwayFromMember);
   return async function walkUp({
     buildId,
     host,
-    joinable,
     intent,
     source
   }: {
     buildId: number;
     host: SocialPerson;
-    joinable: Joinable | null;
     intent: JoinIntent;
     source: 'live_now' | 'profile' | 'card';
   }) {
-    let visit: SocialVisit = {
-      host,
-      status: 'watch',
-      walkupId: null,
-      joinable
-    };
-    if (intent !== 'watch') {
-      const outcome = await walkUpToMember({ buildId, hostUserId: host.id });
-      visit =
-        outcome?.status === 'waiting'
-          ? {
-              host: outcome.host || host,
-              status: 'waiting',
-              walkupId: String(outcome.walkup?.id || ''),
-              joinable: outcome.joinable || joinable
-            }
-          : outcome?.status === 'later'
-            ? {
-                host: outcome.host || host,
-                status: 'later',
-                walkupId: null,
-                joinable: outcome.joinable || joinable
-              }
-            : { host, status: 'unavailable', walkupId: null, joinable: null };
+    const outcome = await walkUpToMember({
+      buildId,
+      hostUserId: host.id,
+      intent
+    });
+    const hasVisit =
+      (outcome?.status === 'waiting' ||
+        outcome?.status === 'later' ||
+        outcome?.status === 'watch') &&
+      outcome.host?.id === host.id;
+    const canTarget =
+      hasVisit &&
+      (outcome.status !== 'later' || outcome.joinable?.state === 'busy-watchable');
+    const visit: SocialVisit = hasVisit
+      ? {
+          host: outcome.host,
+          status: outcome.status,
+          walkupId: outcome.walkup?.id || null,
+          expiresAt: outcome.walkup?.expiresAt,
+          joinable: outcome.joinable
+        }
+      : { host, status: 'unavailable', walkupId: null, joinable: null };
+    const previous = socialWalkupStore.get(buildId).visit;
+    if (intent === 'watch' && previous?.status === 'waiting' && previous.walkupId) {
+      void walkAwayFromMember({ buildId, walkupId: previous.walkupId });
     }
-    socialWalkupStore.setVisit(buildId, visit);
+    socialWalkupStore.setVisit(
+      buildId,
+      hasVisit || source === 'card' ? visit : null
+    );
     trackEvent('social_walkup', {
       app_id: buildId,
       intent,
@@ -95,7 +97,7 @@ export function useWalkUp() {
       source
     });
     navigate(`/app/${buildId}`, {
-      state: { buildLaunchTarget: socialLaunchTarget(buildId, visit) }
+      state: canTarget ? { buildLaunchTarget: socialLaunchTarget(buildId, visit) } : null
     });
   };
 }

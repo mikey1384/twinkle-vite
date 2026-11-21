@@ -630,7 +630,6 @@ export default function LiveNow({
       void walkUp({
         buildId: app.appId,
         host: ready,
-        joinable: ready.joinable!,
         intent: 'play',
         source: 'live_now'
       });

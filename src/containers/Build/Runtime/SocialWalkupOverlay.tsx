@@ -255,12 +255,25 @@ export default function SocialWalkupOverlay({
     return () => clearTimeout(timer);
   }, [visitKey, visitStatus]);
 
+  useEffect(() => {
+    if (visit?.status !== 'waiting' || !visit.expiresAt) return;
+    const timer = setTimeout(() => {
+      const current = socialWalkupStore.get(buildId).visit;
+      if (current?.status === 'waiting' && current.walkupId === visit.walkupId) {
+        socialWalkupStore.setVisit(buildId, { ...current, status: 'later' });
+      }
+    }, Math.max(0, visit.expiresAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [buildId, visit]);
+
   // Leaving the app page ends this member's part: a visitor walks away, and
   // a host's waiting visitors are released (they are told, with no cooldown).
   const leaveRef = useRef<() => void>(() => {});
   leaveRef.current = () => {
     const current = socialWalkupStore.get(buildId);
-    if (current.visit?.status === 'waiting') void walkAwayFromMember({ buildId });
+    if (current.visit?.status === 'waiting' && current.visit.walkupId) {
+      void walkAwayFromMember({ buildId, walkupId: current.visit.walkupId });
+    }
     if (current.waiting.length > 0) void leaveSocialHost({ buildId });
     socialWalkupStore.clear(buildId);
   };
@@ -396,8 +409,8 @@ export default function SocialWalkupOverlay({
 
   function handleHideNote() {
     // "You're next" has a way out: hiding it walks away.
-    if (visit?.status === 'waiting') {
-      void walkAwayFromMember({ buildId });
+    if (visit?.status === 'waiting' && visit.walkupId) {
+      void walkAwayFromMember({ buildId, walkupId: visit.walkupId });
       socialWalkupStore.setVisit(buildId, null);
       return;
     }

@@ -1511,10 +1511,12 @@ export default function MessagesContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId, userId]);
 
-  const quickSendRef = useRef<(params: any) => Promise<any>>(async () => {});
+  const quickSendRef = useRef<ChatQuickSend | null>(null);
   const [quickSend] = useState<ChatQuickSend>(
-    () => async (content: string) => {
-      await quickSendRef.current({ content, target: null, selectedTab: 'all' });
+    () => async (content: string, channelId: number) => {
+      const send = quickSendRef.current;
+      if (!send) throw new Error('Chat unavailable');
+      await send(content, channelId);
     }
   );
   const handleMessageSubmit = useCallback(
@@ -1525,18 +1527,20 @@ export default function MessagesContainer({
       target,
       topicId,
       selectedTab,
-      subchannelId
+      subchannelId,
+      quickReply = false
     }: {
       content: string;
       rewardAmount?: number;
       rewardReason?: string;
-      target: string;
+      target: string | null;
       topicId?: number;
       selectedTab: string;
       subchannelId?: number;
+      quickReply?: boolean;
     }) => {
-      setTextAreaHeight(0);
-      if (chessTarget && !target && !appliedIsRespondingToSubject) {
+      if (!quickReply) setTextAreaHeight(0);
+      if (!quickReply && chessTarget && !target && !appliedIsRespondingToSubject) {
         return handleSubmitChessTargetMessage({ content, selectedTab, subchannelId, topicId });
       }
       const isFirstDirectMessage = selectedChannelId === 0;
@@ -1608,9 +1612,9 @@ export default function MessagesContainer({
         }
       }
       const isTopicMessage =
-        selectedTab === 'topic' || appliedIsRespondingToSubject;
-      const crewAskFill = crewAskFillRef.current;
-      crewAskFillRef.current = null;
+        !quickReply && (selectedTab === 'topic' || appliedIsRespondingToSubject);
+      const crewAskFill = quickReply ? null : crewAskFillRef.current;
+      if (!quickReply) crewAskFillRef.current = null;
       const crewAsk =
         !!crewAskFill &&
         crewAskFill.channelId === Number(selectedChannelId) &&
@@ -1627,7 +1631,7 @@ export default function MessagesContainer({
       const messageId = uuidv1();
 
       onSubmitMessage({
-        isRespondingToSubject: appliedIsRespondingToSubject,
+        isRespondingToSubject: !quickReply && appliedIsRespondingToSubject,
         messageId,
         message,
         replyTarget: target,
@@ -1637,11 +1641,13 @@ export default function MessagesContainer({
         topicId: isTopicMessage ? topicId : null,
         subchannelId
       });
-      onSetReplyTarget({
-        channelId: selectedChannelId,
-        subchannelId,
-        target: null
-      });
+      if (!quickReply) {
+        onSetReplyTarget({
+          channelId: selectedChannelId,
+          subchannelId,
+          target: null
+        });
+      }
       onScrollToBottom();
       return Promise.resolve();
     },
@@ -1984,7 +1990,24 @@ export default function MessagesContainer({
 
   // One-tap replies from a card in this chat (the shared-moment card's
   // chips): the viewer's own message, sent through handleMessageSubmit.
-  quickSendRef.current = handleMessageSubmit;
+  quickSendRef.current = async (content, channelId) => {
+    if (
+      !selectedChannelId ||
+      selectedChannelId !== channelId ||
+      !currentChannel.twoPeople ||
+      isRestrictedChannel ||
+      banned?.chat ||
+      chatRecoveryBlocksInteraction
+    ) {
+      throw new Error('Chat unavailable');
+    }
+    await handleMessageSubmit({
+      content,
+      target: null,
+      selectedTab: 'all',
+      quickReply: true
+    });
+  };
 
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">

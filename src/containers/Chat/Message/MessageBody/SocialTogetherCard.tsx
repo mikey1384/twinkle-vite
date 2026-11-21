@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
@@ -133,6 +134,10 @@ const cardCls = css`
     padding-left: 2rem;
     padding-right: 2rem;
   }
+  .together-result-link {
+    display: inline-block;
+    margin-top: 0.9rem;
+  }
   .together-note {
     margin: 1.3rem 0 0;
     padding-top: 1rem;
@@ -145,9 +150,11 @@ const cardCls = css`
 
 export default function SocialTogetherCard({
   card,
+  channelId,
   canReply
 }: {
   card: SocialTogetherCardData;
+  channelId: number;
   // false when the viewer cannot post here right now
   canReply: boolean;
 }) {
@@ -161,6 +168,7 @@ export default function SocialTogetherCard({
   );
   const quickSend = useChatQuickSend();
   const walkUp = useWalkUp();
+  const navigate = useNavigate();
   const [firstChatNote, setFirstChatNote] = useState(false);
   const [sendingChip, setSendingChip] = useState('');
   const [chipUsed, setChipUsed] = useState(false);
@@ -200,6 +208,10 @@ export default function SocialTogetherCard({
   });
   const picture = card.thumbnailUrl || card.appThumbnailUrl;
   const buttonLabel = socialCardButtonLabel(card);
+  const resultPath =
+    card.appAvailable && card.linkPath && /^[A-Za-z0-9][A-Za-z0-9-]*$/.test(card.linkPath)
+      ? `/app/${card.buildId}/${card.linkPath}`
+      : null;
   const chips = socialCardChipsToShow(card.chips, buttonLabel);
   const chipsShown = socialCardChipsShown({
     card: { ...card, chips },
@@ -235,6 +247,11 @@ export default function SocialTogetherCard({
           </span>
         </span>
       </div>
+      {card.isGame && resultPath ? (
+        <Link className="together-result-link" to={resultPath}>
+          Open shared result
+        </Link>
+      ) : null}
       {chipsShown ? (
         <>
           <div className="together-chips">
@@ -280,7 +297,7 @@ export default function SocialTogetherCard({
     setSendingChip(chip);
     try {
       // The viewer's own ordinary message, through the normal send path.
-      await quickSend(chip);
+      await quickSend(chip, channelId);
       setChipUsed(true);
       trackEvent('social_card_chip', {
         app_id: card.buildId,
@@ -296,6 +313,10 @@ export default function SocialTogetherCard({
 
   async function handlePlayAgain() {
     if (opening || !other) return;
+    if (!card.isGame && resultPath) {
+      navigate(resultPath);
+      return;
+    }
     setOpening(true);
     trackEvent('social_card_rematch', { app_id: card.buildId });
     try {
@@ -308,7 +329,6 @@ export default function SocialTogetherCard({
           username: other.username,
           profilePicUrl: other.profilePicUrl || null
         },
-        joinable: null,
         intent: 'play',
         source: 'card'
       });

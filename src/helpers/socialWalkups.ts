@@ -163,6 +163,7 @@ export interface SocialVisit {
   status:
     'waiting' | 'later' | 'watch' | 'unavailable' | 'matched' | 'released';
   walkupId: string | null;
+  expiresAt?: number;
   joinable: Joinable | null;
 }
 

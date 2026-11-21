@@ -6940,11 +6940,19 @@ export default function buildRequestHelpers({
     // Meet people in apps (twinkle-api controllers/build/routes/social.ts).
     // Walking up never fails loudly: anything but "you're next" just opens
     // the app.
-    async walkUpToMember({ buildId, hostUserId }: { buildId: number; hostUserId: number }) {
+    async walkUpToMember({
+      buildId,
+      hostUserId,
+      intent
+    }: {
+      buildId: number;
+      hostUserId: number;
+      intent: 'play' | 'next' | 'watch';
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/social/walkups`,
-          { hostUserId },
+          { hostUserId, intent },
           auth()
         );
         return data;
@@ -6953,9 +6961,12 @@ export default function buildRequestHelpers({
       }
     },
 
-    async walkAwayFromMember({ buildId }: { buildId: number }) {
+    async walkAwayFromMember({ buildId, walkupId }: { buildId: number; walkupId: string }) {
       try {
-        await request.delete(`${URL}/build/${buildId}/social/walkups/mine`, auth());
+        await request.delete(
+          `${URL}/build/${buildId}/social/walkups/mine?walkupId=${encodeURIComponent(walkupId)}`,
+          auth()
+        );
       } catch {
         // the walk-up expires on its own
       }
