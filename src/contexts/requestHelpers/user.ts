@@ -714,6 +714,69 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // Bridge Builder path 3: my show-around tours and the next step
+    async loadBridgeTour() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/tour`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Bridge Builder path 3: start a tour with a named friend, or answer one
+    async startBridgeTour(username: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/tour/invite`,
+          { username },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async respondBridgeTour({
+      sessionId,
+      action
+    }: {
+      sessionId: string;
+      action: 'accept' | 'decline' | 'end';
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/tour/${action}`,
+          { sessionId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // where a brought-in friend goes in their first two weeks (route pattern
+    // only; the server decides whether to record it)
+    async trackOnboardingNav({
+      route,
+      sessionStart
+    }: {
+      route: string;
+      sessionStart?: boolean;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/meetup-quest/onboard-nav`,
+          { route, sessionStart: !!sessionStart },
+          auth()
+        );
+        return data?.recorded === true;
+      } catch (_error) {
+        return false;
+      }
+    },
     async loadLatestMeetupCheckin() {
       try {
         const { data } = await request.get(
@@ -3075,7 +3138,13 @@ export default function userRequestHelpers({
       return true;
     },
     // whose class a link or board code opens
-    async peekClassJoin({ joinKey, method }: { joinKey: string; method: string }) {
+    async peekClassJoin({
+      joinKey,
+      method
+    }: {
+      joinKey: string;
+      method: string;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/user/classrooms/join?key=${encodeURIComponent(

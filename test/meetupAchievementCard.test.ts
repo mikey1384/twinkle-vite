@@ -28,7 +28,12 @@ test('the card numbers match the quest rules: Bronze 2+, Silver 2+ from 2+ branc
 });
 
 test('the mirrored numbers equal the API when it is checked out next to this repo', () => {
-  const apiRoot = fileURLToPath(new URL('../../twinkle-api/', import.meta.url));
+  const worktreeApi = new URL('../../api/', import.meta.url);
+  const apiRoot = fileURLToPath(
+    existsSync(new URL('constants/meetupQuest.ts', worktreeApi))
+      ? worktreeApi
+      : new URL('../../twinkle-api/', import.meta.url)
+  );
   const questPath = `${apiRoot}constants/meetupQuest.ts`;
   const userHelpersPath = `${apiRoot}helpers/user/index.ts`;
   if (!existsSync(questPath) || !existsSync(userHelpersPath)) return;
@@ -42,8 +47,39 @@ test('the mirrored numbers equal the API when it is checked out next to this rep
   ] as const) {
     assert.equal(readConst(questSource, name), meetup[name], name);
   }
+  // the quality bar the check-in card states (10_000 is written with a
+  // separator in both repos)
+  const num = (source: string, name: string) =>
+    Number(
+      source
+        .match(new RegExp(`${name}\\s*=\\s*([\\d_]+)`))?.[1]
+        ?.replace(/_/g, '')
+    );
+  assert.equal(
+    num(questSource, 'BRIDGE_BUILDER_BAR_LEARNING_DAYS'),
+    meetup.BRIDGE_BUILDER_BAR_LEARNING_DAYS
+  );
+  assert.equal(
+    num(questSource, 'BRIDGE_BUILDER_BAR_LEARNING_XP'),
+    meetup.BRIDGE_BUILDER_BAR_LEARNING_XP
+  );
+  const rulesPath = `${apiRoot}controllers/user/services/meetupCheckinRules.ts`;
+  if (existsSync(rulesPath)) {
+    const rules = readFileSync(rulesPath, 'utf8');
+    assert.equal(
+      num(rules, 'BAR_DAYS_AFTER'),
+      meetup.BRIDGE_BUILDER_BAR_DAYS_AFTER
+    );
+    assert.equal(
+      num(rules, 'BAR_DAYS_BEFORE'),
+      meetup.BRIDGE_BUILDER_BAR_DAYS_BEFORE
+    );
+  }
   // the API's one count (check-ins and invited friends alike)
-  assert.equal(readConst(questSource, 'BRIDGE_BUILDER_PEOPLE_TARGET'), meetup.FACE_TO_FACE_RECRUIT_TARGET);
+  assert.equal(
+    readConst(questSource, 'BRIDGE_BUILDER_PEOPLE_TARGET'),
+    meetup.FACE_TO_FACE_RECRUIT_TARGET
+  );
   assert.match(
     readFileSync(userHelpersPath, 'utf8'),
     /FACE_TO_FACE_RECRUIT_TARGET = BRIDGE_BUILDER_PEOPLE_TARGET/
@@ -52,10 +88,21 @@ test('the mirrored numbers equal the API when it is checked out next to this rep
 
 test('the card states the people count from the constant and both ways to unlock', () => {
   const text = cardSource.replace(/\s+/g, ' ');
-  assert.doesNotMatch(text, /Meet \d+ different people/);
-  assert.match(text, /Meet \{FACE_TO_FACE_RECRUIT_TARGET\} different people in real life/);
-  assert.match(text, /Friends you bring to Twinkle count too/);
+  assert.doesNotMatch(text, /(Meet|Bring|check in with) \d+ different people/);
+  // 11-21: three independent paths, any one earns it
+  assert.match(
+    text,
+    /check in with \{FACE_TO_FACE_RECRUIT_TARGET\} different people you meet in real life/
+  );
   assert.match(text, /a Twinkle teacher or your parent there/);
+  assert.match(
+    text,
+    /Crew: make a crew with Twinkle friends and meet up together/
+  );
+  assert.match(
+    text,
+    /take \{FACE_TO_FACE_RECRUIT_TARGET\} different Twinkle friends on the tour of Twinkle Minecraft World/
+  );
   // the retired steps are gone from the card
   assert.doesNotMatch(text, /film it|Dark Citadel|step \$\{/);
 });

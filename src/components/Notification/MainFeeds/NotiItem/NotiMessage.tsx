@@ -88,6 +88,7 @@ function NotiMessage({
     userId: number;
   };
   targetObj: {
+    reviewStatus?: string;
     content: string;
     contentType: string;
     id: number;
@@ -666,6 +667,73 @@ function NotiMessage({
           </Link>
         </>
       );
+    // A decision only the owner makes waits for him (Zero is the sender): a
+    // birthdate check or Bridge Builder unlock opens on the management page,
+    // a crew meetup on the Bridge Builder staff desk
+    // (twinkle-api helpers/ownerReviewNotice.ts)
+    case 'ownerReview': {
+      const crewReview = targetObj.contentType === 'meetupCrew';
+      const revocation = targetObj.contentType === 'meetupRevocation';
+      const pending = targetObj.reviewStatus === 'pending';
+      const reviewPath = crewReview
+        ? `/achievements/bridge-builder/staff?crew=${targetObj.id}#review`
+        : `/management?${revocation ? 'bridgeRevocation' : 'approval'}=${targetObj.id}`;
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            {pending ? 'needs your review:' : 'had a request for you:'}
+          </span>{' '}
+          <b>{targetObj.content || 'a request'}</b>
+          {targetObj.reviewStatus && !pending && ` (${targetObj.reviewStatus})`}
+          .
+          {pending && (
+            <>
+              {' '}
+              <Link
+                to={reviewPath}
+                style={{ color: targetLinkColor, fontWeight: 'bold' }}
+              >
+                {crewReview
+                  ? 'Review the meetup'
+                  : 'Review on the management page'}
+              </Link>
+            </>
+          )}
+        </>
+      );
+    }
+    // Bridge Builder's show-around tour: you and this friend reached a spot
+    // together (twinkle-api controllers/user/services/bridgeTour.ts)
+    // a member started a show-around tour with you (they are the sender)
+    case 'bridgeTourInvite':
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            wants to show you around Twinkle Minecraft World.
+          </span>{' '}
+          <Link
+            to="/achievements/bridge-builder"
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            Accept the tour
+          </Link>
+        </>
+      );
+    case 'bridgeTourSpot':
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            reached a tour spot with you:
+          </span>{' '}
+          {targetObj.content ? <b>{targetObj.content}</b> : 'a landmark'}.{' '}
+          <Link
+            to="/achievements/bridge-builder"
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            See your tour
+          </Link>
+        </>
+      );
     case 'buildCollaborationRequest':
       return (
         <>
@@ -882,10 +950,7 @@ function NotiMessage({
               (declined)
             </span>
           ) : inviteStatus === 'left' ? (
-            <span style={{ color: infoColor, fontWeight: 800 }}>
-              {' '}
-              (left)
-            </span>
+            <span style={{ color: infoColor, fontWeight: 800 }}> (left)</span>
           ) : null}
           {buildInviteActionError ? (
             <span style={{ color: Color.red(), fontWeight: 800 }}>

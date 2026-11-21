@@ -6,6 +6,10 @@ import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
+import {
+  BRIDGE_BUILDER_BAR_LEARNING_DAYS,
+  BRIDGE_BUILDER_BAR_LEARNING_XP
+} from '~/constants/meetupQuest';
 import LiveCode from './LiveCode';
 import QrScanner from './QrScanner';
 import TogetherGuide from './TogetherGuide';
@@ -638,17 +642,19 @@ function ResultView({
       )}
       {person?.state === 'getting_started' && (
         <p className={leadClass}>
-          {partner.username} counts once they’ve played on Twinkle a few days.
+          {partner.username} counts once they learn on Twinkle on{' '}
+          {BRIDGE_BUILDER_BAR_LEARNING_DAYS} different days and earn{' '}
+          {BRIDGE_BUILDER_BAR_LEARNING_XP.toLocaleString('en-US')} learning XP.
         </p>
       )}
       {person?.state === 'waiting_birthdate' &&
         (person.waitingOn === 'them' ? (
           <p className={leadClass}>
-            This counts once {partner.username}’s birthdate is checked.
+            Waiting for {partner.username}’s birthdate check.
           </p>
         ) : (
           <>
-            <p className={leadClass}>Add your birthdate so this counts.</p>
+            <p className={leadClass}>Add your birthdate for review.</p>
             <Button color="orange" variant="soft" onClick={onAddBirthdate}>
               Add my birthdate
             </Button>

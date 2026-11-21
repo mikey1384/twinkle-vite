@@ -22,11 +22,16 @@ export default function ApproveModal({
     content: string;
     status: string;
     type: string;
+    ownAltIds?: number[];
+    timeStamp?: number;
+    reviewEvidence?: string;
+    reviewFingerprint?: string;
   };
   onSetApprovalModalTarget: (target: any) => void;
   onHide: () => void;
 }) {
   const [fingerprint, setFingerprint] = useState('');
+  const revocation = target.type === 'meetupRevocation';
   const [error, setError] = useState('');
   const [reverting, setReverting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -46,7 +51,9 @@ export default function ApproveModal({
       bodyPadding={0}
     >
       <LegacyModalLayout>
-        <header>Approve Request</header>
+        <header>
+          {revocation ? 'Review Bridge Builder unlock' : 'Approve Request'}
+        </header>
         <main>
           <div
             style={{
@@ -60,7 +67,34 @@ export default function ApproveModal({
               <Dob username={target.username} content={target.content} />
             )}
             {target.type === 'mentor' && <Mentor content={target.content} />}
-            {target.type === 'meetup' && (
+            {revocation && (
+              <p>
+                {target.username}&apos;s unlock depended on{' '}
+                {target.ownAltIds?.map((id) => `#${id}`).join(', ')}, now
+                recognized as the same person. Review the original decision and
+                the check-in evidence before revoking the achievement.
+              </p>
+            )}
+            {target.type === 'bridgeTour' && (
+              <div style={{ textAlign: 'left' }}>
+                <p>
+                  Review the tour evidence for <b>{target.username}</b>.
+                </p>
+                <pre
+                  className={css`
+                    white-space: pre-wrap;
+                    font-size: 1.3rem;
+                    line-height: 1.5;
+                    background: ${Color.wellGray()};
+                    padding: 1rem;
+                    border-radius: ${borderRadius};
+                  `}
+                >
+                  {target.reviewEvidence || target.content}
+                </pre>
+              </div>
+            )}
+            {(target.type === 'meetup' || revocation) && (
               <>
                 <Meetup username={target.username} content={target.content} />
                 <MeetupReview
@@ -71,7 +105,21 @@ export default function ApproveModal({
             )}
           </div>
           {error && <p role="alert">{error}</p>}
-          {target.status === 'pending' ? (
+          {revocation ? (
+            target.status === 'pending' ? (
+              <Button
+                color="rose"
+                variant="solid"
+                disabled={!fingerprint || reverting}
+                loading={reverting}
+                onClick={handleMeetupRevocation}
+              >
+                Revoke Bridge Builder
+              </Button>
+            ) : (
+              <p>Bridge Builder was revoked.</p>
+            )
+          ) : target.status === 'pending' ? (
             <div
               style={{
                 marginTop: '3rem',
@@ -84,7 +132,9 @@ export default function ApproveModal({
                 color="rose"
                 variant="solid"
                 disabled={
-                  submitting || (target.type === 'meetup' && !fingerprint)
+                  submitting ||
+                  (target.type === 'meetup' && !fingerprint) ||
+                  (target.type === 'bridgeTour' && !target.reviewFingerprint)
                 }
                 loading={submitting && !isApproved}
                 onClick={() =>
@@ -101,7 +151,9 @@ export default function ApproveModal({
                 variant="solid"
                 color="green"
                 disabled={
-                  submitting || (target.type === 'meetup' && !fingerprint)
+                  submitting ||
+                  (target.type === 'meetup' && !fingerprint) ||
+                  (target.type === 'bridgeTour' && !target.reviewFingerprint)
                 }
                 loading={submitting && isApproved}
                 onClick={() =>
@@ -144,14 +196,14 @@ export default function ApproveModal({
                 />
                 {target.status.toUpperCase()}
               </div>
-              {target.type !== 'meetup' && (
+              {target.type !== 'meetup' && target.type !== 'bridgeTour' && (
                 <div
                   className={css`
                     margin-top: 1rem;
                     font-size: 1.3rem;
-                    color: ${reverting
-                      ? Color.lightGray()
-                      : Color.darkerGray()};
+                    color: ${
+                      reverting ? Color.lightGray() : Color.darkerGray()
+                    };
                     display: flex;
                     justify-content: center;
                     align-items: center;
@@ -162,9 +214,11 @@ export default function ApproveModal({
                     onClick={handleRevert}
                     className={css`
                       cursor: ${reverting ? 'default' : 'pointer'};
-                      ${reverting
-                        ? ''
-                        : '&:hover { text-decoration: underline; }'}
+                      ${
+                        reverting
+                          ? ''
+                          : '&:hover { text-decoration: underline; }'
+                      }
                     `}
                   >
                     revert
@@ -186,6 +240,26 @@ export default function ApproveModal({
       </LegacyModalLayout>
     </Modal>
   );
+
+  async function handleMeetupRevocation() {
+    setReverting(true);
+    setError('');
+    try {
+      const status = await revertApproval({
+        userId: target.userId,
+        type: 'meetup',
+        fingerprint
+      });
+      onSetApprovalModalTarget({ ...target, status });
+    } catch {
+      setError(
+        'Could not revoke Bridge Builder. Reopen the review to check the current evidence.'
+      );
+      setFingerprint('');
+    } finally {
+      setReverting(false);
+    }
+  }
 
   async function handleRevert() {
     setReverting(true);
@@ -221,6 +295,8 @@ export default function ApproveModal({
     } = {};
     if (target.type === 'dob') data.dob = target.content;
     if (target.type === 'meetup') data.fingerprint = fingerprint;
+    if (target.type === 'bridgeTour')
+      data.fingerprint = target.reviewFingerprint;
     try {
       const status = await approveRequest({
         isApproved,

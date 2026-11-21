@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Table from '../Table';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useManagementContext } from '~/contexts';
+import { useAppContext, useKeyContext, useManagementContext } from '~/contexts';
+import { MIKEY_USER_ID } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -26,10 +28,110 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
   const onLoadMoreApprovalItems = useManagementContext(
     (v) => v.actions.onLoadMoreApprovalItems
   );
-  const [approvalModalTarget, setApprovalModalTarget] = useState(null);
+  const myId = useKeyContext((v) => v.myState.userId);
+  const isOwner = myId === MIKEY_USER_ID;
+  const loadApprovalItemById = useAppContext(
+    (v) => v.requestHelpers.loadApprovalItemById
+  );
+  const loadMeetupReviewEvidence = useAppContext(
+    (v) => v.requestHelpers.loadMeetupReviewEvidence
+  );
+  const [approvalModalTarget, setApprovalModalTarget] = useState<any>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const revocationRequested = searchParams.has('bridgeRevocation');
+  const requestedApprovalId = Number(
+    searchParams.get(revocationRequested ? 'bridgeRevocation' : 'approval')
+  );
+  const [requestMessage, setRequestMessage] = useState('');
+
+  useEffect(() => {
+    if (
+      !isOwner ||
+      !Number.isSafeInteger(requestedApprovalId) ||
+      requestedApprovalId <= 0
+    )
+      return;
+    let active = true;
+    setApprovalModalTarget(null);
+    setRequestMessage('Opening approval…');
+    void openRequestedApproval();
+
+    return () => {
+      active = false;
+    };
+
+    async function openRequestedApproval() {
+      try {
+        const item = revocationRequested
+          ? {
+              ...(await loadMeetupReviewEvidence({
+                userId: requestedApprovalId,
+                revocation: true
+              })),
+              id: `revocation-${requestedApprovalId}`,
+              type: 'meetupRevocation',
+              status: 'pending'
+            }
+          : await loadApprovalItemById(requestedApprovalId);
+        if (!active) return;
+        if (
+          item.status === 'pending' &&
+          ['dob', 'meetup', 'meetupRevocation', 'bridgeTour'].includes(
+            item.type
+          )
+        ) {
+          setApprovalModalTarget(item);
+          setRequestMessage('');
+        } else {
+          setRequestMessage(
+            'This request is no longer waiting for a decision.'
+          );
+        }
+      } catch (error) {
+        if (!active) return;
+        setRequestMessage(
+          (error as { status?: number })?.status === 404
+            ? 'This request is no longer available.'
+            : 'Could not open the request. Reload this page to try again.'
+        );
+      }
+    }
+    // The request helper is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOwner, requestedApprovalId, revocationRequested]);
 
   return (
     <ErrorBoundary componentPath="Management/Main/Approvals">
+      {isOwner && requestedApprovalId > 0 && requestMessage && (
+        <p
+          role="status"
+          className={css`
+            margin: 0 0 1rem;
+            font-size: 1.4rem;
+            color: ${Color.darkerGray()};
+          `}
+        >
+          {requestMessage}
+        </p>
+      )}
+      {isOwner && (
+        <p
+          className={css`
+            margin: 0 0 1rem;
+            font-size: 1.3rem;
+            color: ${Color.darkerGray()};
+          `}
+        >
+          Bridge Builder crew meetups and parent emails are decided on the{' '}
+          <Link
+            to="/achievements/bridge-builder/staff"
+            style={{ fontWeight: 'bold' }}
+          >
+            Bridge Builder staff desk
+          </Link>
+          .
+        </p>
+      )}
       <SectionPanel
         title="Pending Approvals"
         isEmpty={approvalItems.length === 0}
@@ -44,7 +146,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
             minmax(10rem, 1fr)
             minmax(10rem, 1fr)
             minmax(15rem, 1.2fr)
-            ${canManage ? 'minmax(13rem, 1.2fr)' : ''}
+            ${canManage || isOwner ? 'minmax(13rem, 1.2fr)' : ''}
           `}
         >
           <thead>
@@ -53,27 +155,31 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
               <th>Type</th>
               <th>Value</th>
               <th>Submitted at</th>
-              {canManage && <th></th>}
+              {(canManage || isOwner) && <th></th>}
             </tr>
           </thead>
           <tbody>
             {approvalItems
               .filter((_: any, index: number) => index < numApprovalItemsShown)
               .map((item: any) => {
+                const canDecide = ['dob', 'meetup', 'bridgeTour'].includes(
+                  item.type
+                )
+                  ? isOwner
+                  : canManage;
                 let displayedItemContent = item.content;
                 if (item.type === 'mentor') {
                   const itemData = JSON.parse(item.content);
                   displayedItemContent = `${itemData.className}, ${itemData.branchName}`;
                 }
 
+
                 return (
                   <tr
                     key={item.id}
-                    onClick={() =>
-                      canManage ? setApprovalModalTarget(item) : null
-                    }
+                    onClick={() => (canDecide ? openApproval(item) : null)}
                     className={css`
-                      cursor: ${canManage ? 'pointer' : ''};
+                      cursor: ${canDecide ? 'pointer' : ''};
                       td {
                         display: flex;
                         align-items: center;
@@ -91,7 +197,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                     <td>{item.type}</td>
                     <td>{displayedItemContent}</td>
                     <td>{timeSince(item.timeStamp)}</td>
-                    {canManage && (
+                    {(canManage || isOwner) && (
                       <td
                         className={css`
                           display: flex;
@@ -105,8 +211,8 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                               item.status === 'approved'
                                 ? 'limeGreen'
                                 : item.status === 'rejected'
-                                ? 'redOrange'
-                                : 'logoBlue'
+                                  ? 'redOrange'
+                                  : 'logoBlue'
                             ]()};
                             &:hover {
                               text-decoration: underline;
@@ -142,11 +248,29 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
       </SectionPanel>
       {approvalModalTarget && (
         <ApproveModal
+          key={approvalModalTarget.id}
           target={approvalModalTarget}
           onSetApprovalModalTarget={setApprovalModalTarget}
-          onHide={() => setApprovalModalTarget(null)}
+          onHide={() => openApproval(null)}
         />
       )}
     </ErrorBoundary>
   );
+
+  function openApproval(item: any) {
+    if (item.type === 'bridgeTour') {
+      const next = new URLSearchParams(searchParams);
+      next.delete('bridgeRevocation');
+      next.set('approval', String(item.id));
+      setSearchParams(next, { replace: true });
+      return;
+    }
+    setApprovalModalTarget(item);
+    if (searchParams.has('approval') || searchParams.has('bridgeRevocation')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('approval');
+      next.delete('bridgeRevocation');
+      setSearchParams(next, { replace: true });
+    }
+  }
 }
