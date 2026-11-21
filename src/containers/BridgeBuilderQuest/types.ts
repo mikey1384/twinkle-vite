@@ -360,6 +360,7 @@ export type TourFriendState =
   | 'counted'
   | 'not_counted'
   | 'needs_account'
+  | 'needs_age'
   | 'shown_me';
 
 export type TourNextStep =
@@ -368,7 +369,9 @@ export type TourNextStep =
   | 'rejected'
   | 'friend_learning'
   | 'keep_touring'
-  | 'start_tour';
+  | 'start_tour'
+  | 'friend_age'
+  | 'friend_account';
 
 export interface TourFriend {
   userId: number;
@@ -376,10 +379,6 @@ export interface TourFriend {
   minecraftName: string;
   role: 'guide' | 'visitor';
   spots: string[];
-  firstAt: number;
-  lastAt: number;
-  complete: boolean;
-  completedAt: number;
   state: TourFriendState;
   timedOut?: boolean;
   deadline?: number;

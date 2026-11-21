@@ -52,7 +52,7 @@ export default function TourCard() {
           : `Show ${tour.target} Twinkle friends around Twinkle Minecraft World`}
       </h2>
       <div className={countClass}>
-        {Math.min(tour.counted, tour.target)} of {tour.target} friends counted
+        {Math.min(tour.counted, tour.target)} of {tour.target} friends ready
       </div>
 
       {renderNextStep()}
@@ -66,9 +66,9 @@ export default function TourCard() {
             ))}
           </ol>
           <div className={smallClass}>
-            Go to each spot together with your friend. Every spot you both reach
-            counts for both of you, and you each get a notification. The list
-            also shows in the game.
+            Go to each spot together with your friend. When you reach a spot
+            together, it goes in both tour logs. The list also shows in the
+            game.
           </div>
         </div>
       )}
@@ -89,9 +89,8 @@ export default function TourCard() {
       )}
       {shownMe.length > 0 && (
         <div className={smallClass} style={{ marginTop: '1rem' }}>
-          Shown around by{' '}
-          {shownMe.map((f) => f.username || f.minecraftName).join(', ')}: that
-          counts for them, since they joined Twinkle first.
+          Tour spots reached with{' '}
+          {shownMe.map((f) => f.username || f.minecraftName).join(', ')}. Twinkle lists the person who joined first as the guide for review.
         </div>
       )}
 
@@ -125,8 +124,7 @@ export default function TourCard() {
       return line(
         'info',
         <>
-          Your tours are saved. Mikey is checking them before the achievement
-          unlocks. You don’t need to do anything else.
+          Your tours are saved. Mikey will check them. You don’t need to do anything else.
         </>
       );
     }
@@ -138,6 +136,12 @@ export default function TourCard() {
           different friends ask Mikey again.
         </>
       );
+    }
+    if (tour.nextStep === 'friend_age') {
+      return line('info', 'Both people need an approved birthdate before a tour can count. Use the birthdate check on this page.');
+    }
+    if (tour.nextStep === 'friend_account') {
+      return line('info', 'Your friend can link their Minecraft account to Twinkle so their tour can be checked.');
     }
     if (tour.nextStep === 'friend_learning') {
       const friend = tour.friends
@@ -193,7 +197,7 @@ function FriendRow({ friend, total }: { friend: TourFriend; total: number }) {
   if (friend.state === 'counted') {
     status = (
       <span style={{ color: Color.green(), fontWeight: 'bold' }}>
-        <Icon icon="check" /> Counts
+        <Icon icon="check" /> Ready for review
       </span>
     );
   } else if (friend.state === 'touring') {
@@ -201,7 +205,9 @@ function FriendRow({ friend, total }: { friend: TourFriend; total: number }) {
   } else if (friend.state === 'getting_started') {
     status = `Tour done · counts after ${BRIDGE_BUILDER_BAR_LEARNING_DAYS} learning days and ${BRIDGE_BUILDER_BAR_LEARNING_XP.toLocaleString('en-US')} XP${friend.deadline ? ` (by ${shortDate(friend.deadline)})` : ''}`;
   } else if (friend.state === 'needs_account') {
-    status = `${friend.spots.length} of ${total} spots · counts once they link a Twinkle account`;
+    status = `${friend.spots.length} of ${total} spots · waiting for them to link a Twinkle account`;
+  } else if (friend.state === 'needs_age') {
+    status = 'Tour done · waiting for birthdate approval';
   } else if (friend.timedOut) {
     status = 'Time ran out before they reached the learning goal';
   } else {

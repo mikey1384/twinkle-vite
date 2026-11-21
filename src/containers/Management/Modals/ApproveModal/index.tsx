@@ -76,8 +76,7 @@ export default function ApproveModal({
             {target.type === 'bridgeTour' && (
               <div style={{ textAlign: 'left' }}>
                 <p>
-                  <b>{target.username}</b> showed 7 people around Twinkle
-                  Minecraft World. A review signal needs your OK:
+                  Review the tour evidence for <b>{target.username}</b>.
                 </p>
                 <pre
                   className={css`
@@ -89,7 +88,7 @@ export default function ApproveModal({
                     border-radius: ${borderRadius};
                   `}
                 >
-                  {target.content}
+                  {target.reviewEvidence || target.content}
                 </pre>
               </div>
             )}
@@ -131,7 +130,9 @@ export default function ApproveModal({
                 color="rose"
                 variant="solid"
                 disabled={
-                  submitting || (target.type === 'meetup' && !fingerprint)
+                  submitting ||
+                  (target.type === 'meetup' && !fingerprint) ||
+                  (target.type === 'bridgeTour' && !target.reviewFingerprint)
                 }
                 loading={submitting && !isApproved}
                 onClick={() =>
@@ -148,7 +149,9 @@ export default function ApproveModal({
                 variant="solid"
                 color="green"
                 disabled={
-                  submitting || (target.type === 'meetup' && !fingerprint)
+                  submitting ||
+                  (target.type === 'meetup' && !fingerprint) ||
+                  (target.type === 'bridgeTour' && !target.reviewFingerprint)
                 }
                 loading={submitting && isApproved}
                 onClick={() =>
@@ -290,9 +293,8 @@ export default function ApproveModal({
     } = {};
     if (target.type === 'dob') data.dob = target.content;
     if (target.type === 'meetup') data.fingerprint = fingerprint;
-    // a tour review is decided on the row shown: its timeStamp changes with the evidence
     if (target.type === 'bridgeTour')
-      data.fingerprint = String(target.timeStamp || '');
+      data.fingerprint = target.reviewFingerprint;
     try {
       const status = await approveRequest({
         isApproved,

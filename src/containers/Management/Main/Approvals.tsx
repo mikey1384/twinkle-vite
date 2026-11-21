@@ -172,12 +172,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                   const itemData = JSON.parse(item.content);
                   displayedItemContent = `${itemData.className}, ${itemData.branchName}`;
                 }
-                if (item.type === 'bridgeTour') {
-                  // the first line; the modal shows the whole evidence
-                  displayedItemContent = String(item.content || '').split(
-                    '\n'
-                  )[0];
-                }
+
 
                 return (
                   <tr
@@ -263,6 +258,13 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
   );
 
   function openApproval(item: any) {
+    if (item.type === 'bridgeTour') {
+      const next = new URLSearchParams(searchParams);
+      next.delete('bridgeRevocation');
+      next.set('approval', String(item.id));
+      setSearchParams(next, { replace: true });
+      return;
+    }
     setApprovalModalTarget(item);
     if (searchParams.has('approval') || searchParams.has('bridgeRevocation')) {
       const next = new URLSearchParams(searchParams);
