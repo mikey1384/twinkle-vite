@@ -90,7 +90,7 @@ function AppScene(){
 const now=Math.floor(Date.now()/1000);
 const cardBase={id:31,buildId:5,revision:1,appTitle:'Baduk',appThumbnailUrl:'/thumbs/baduk.png',appAvailable:true,activity:'played',action:'play',
   lines:{7:{headline:'You and KenGo played Baduk together',detail:'KenGo won'},11:{headline:'You and viewer played Baduk together',detail:'You won'}},
-  thumbnailUrl:null,linkPath:null,count:1,isNewThread:true,users:[{id:7,username:'viewer',profilePicUrl:'/pictures/7.jpg'},{id:11,username:'KenGo',profilePicUrl:'/pictures/11.jpg'}],seenBy:[],createdAt:now-60,updatedAt:now-60};
+  count:1,isNewThread:true,users:[{id:7,username:'viewer',profilePicUrl:'/pictures/7.jpg'},{id:11,username:'KenGo',profilePicUrl:'/pictures/11.jpg'}],seenBy:[],createdAt:now-60,updatedAt:now-60};
 window.cards={
   first:cardBase,
   again:{...cardBase,id:32,revision:3,isNewThread:false,count:3,lines:{7:{headline:'You and KenGo played Baduk together',detail:'3 games today · You 1, KenGo 2'},11:{headline:'You and viewer played Baduk together',detail:'3 games today · You 2, viewer 1'}},seenBy:[7]},

@@ -17,11 +17,17 @@ import {
 import { groupLiveNowApps } from '../src/helpers/liveNow';
 import {
   FIRST_CHAT_NOTE,
+  forgetSocialTogetherCards,
+  newestKnownSocialTogetherCard,
+  newestSocialTogetherCard,
+  rememberSocialTogetherCard,
   socialCardActionLabel,
   socialCardBanner,
   socialCardLines,
-  socialCardPreview
+  socialCardPreview,
+  withNewestSocialTogetherCard
 } from '../src/helpers/socialTogetherCard';
+import { updateChannelMessageSettings } from '../src/helpers/chatReplyTargetSettings';
 
 // "Meet people in apps" on the website: what Live now and the profile popup
 // offer, what the page shows the host and the visitor, and the card's words.
@@ -287,4 +293,60 @@ test('the notice shows only Twinkle\'s words, from each member\'s side, and no r
   // one line, not a wall of rules
   assert.ok(FIRST_CHAT_NOTE.length < 80);
   assert.doesNotMatch(FIRST_CHAT_NOTE, /\n/);
+});
+
+test('notice updates merge by revision: an older one never replaces a newer one', () => {
+  const rev = (revision: number, detail: string, id = 31): any => ({
+    id,
+    revision,
+    lines: { 7: { headline: 'You and KenGo played Baduk together', detail } }
+  });
+  assert.equal(newestSocialTogetherCard(rev(2, ''), rev(1, 'KenGo won')).revision, 2);
+  assert.equal(newestSocialTogetherCard(rev(1, 'KenGo won'), rev(2, '')).revision, 2);
+  // another notice is never compared
+  assert.equal(newestSocialTogetherCard(rev(5, '', 99), rev(1, 'x')).id, 31);
+
+  // a loaded row: revision 2 applies, a late revision 1 is ignored
+  const channel = {
+    messageIds: [500],
+    messagesObj: {
+      500: { id: 500, rootType: 'socialTogether', settings: { socialTogether: rev(1, 'KenGo won') } }
+    }
+  };
+  const updated = updateChannelMessageSettings(channel, 500, { socialTogether: rev(2, '') });
+  assert.equal(updated.messagesObj[500].settings.socialTogether.revision, 2);
+  const stale = updateChannelMessageSettings(updated, 500, { socialTogether: rev(1, 'KenGo won') });
+  assert.equal(stale.messagesObj[500].settings.socialTogether.revision, 2);
+  assert.equal(stale.messagesObj[500].settings.socialTogether.lines[7].detail, '');
+});
+
+test('an update that arrives before its notice row is kept, so the newest revision wins', () => {
+  forgetSocialTogetherCards();
+  const rev = (revision: number, detail: string): any => ({
+    id: 41,
+    revision,
+    lines: { 7: { headline: 'You and KenGo played Baduk together', detail } }
+  });
+  // revision 2 (the two apps disagreed, so the result was removed) arrives
+  // while the creation relay still holds revision 1
+  rememberSocialTogetherCard(rev(2, ''));
+  const row = {
+    id: 600,
+    rootType: 'socialTogether',
+    settings: JSON.stringify({ socialTogether: rev(1, 'KenGo won'), other: 1 })
+  };
+  const arrived: any = withNewestSocialTogetherCard(row);
+  assert.equal(arrived.settings.socialTogether.revision, 2);
+  assert.equal(arrived.settings.socialTogether.lines[7].detail, '');
+  assert.equal(arrived.settings.other, 1);
+  // a page loaded later with an older copy (a lagging read) renders the newest
+  assert.equal(newestKnownSocialTogetherCard(rev(1, 'KenGo won')).revision, 2);
+  // a newer row than anything buffered is left as it is, and remembered
+  const newer = { id: 601, rootType: 'socialTogether', settings: { socialTogether: rev(3, 'x') } };
+  assert.equal(withNewestSocialTogetherCard(newer), newer);
+  assert.equal(newestKnownSocialTogetherCard(rev(2, '')).revision, 3);
+  // other messages pass through untouched
+  const plain = { id: 602, rootType: 'chat', settings: null };
+  assert.equal(withNewestSocialTogetherCard(plain), plain);
+  forgetSocialTogetherCards();
 });

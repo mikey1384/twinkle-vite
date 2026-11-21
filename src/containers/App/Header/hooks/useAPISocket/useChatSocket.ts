@@ -33,6 +33,10 @@ import {
   mergeChatUnreadResyncRequirement
 } from '~/helpers/chatUnreadProjection';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
+import {
+  rememberSocialTogetherCard,
+  withNewestSocialTogetherCard
+} from '~/helpers/socialTogetherCard';
 import { buildCanonicalChatMessagePageState } from '~/contexts/Chat/messagePageState';
 import type {
   CanonicalChatChannelUnreadState,
@@ -635,11 +639,13 @@ export default function useChatSocket({
     }
 
     // The pair did something together again today: their shared-moment card
-    // is updated in place ("3 games today").
+    // is updated in place ("3 games today"). Merged by revision; kept until
+    // the notice row arrives if this update came first.
     function handleSocialTogetherUpdated(payload: any) {
       const channelId = Number(payload?.channelId || 0);
       const messageId = Number(payload?.messageId || 0);
       if (!channelId || !messageId || !payload?.card) return;
+      rememberSocialTogetherCard(payload.card);
       onUpdateMessageSettings({
         channelId,
         messageId,
@@ -1311,6 +1317,8 @@ export default function useChatSocket({
       newMembers: any[];
     }) {
       if (shouldSkipRealtimeMessage(message)) return;
+      // A newer revision of a shared-moment notice may have arrived first.
+      message = withNewestSocialTogetherCard(message);
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = subchannelIdRef.current;
       const messageIsForCurrentChannel =

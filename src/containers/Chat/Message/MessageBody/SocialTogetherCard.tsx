@@ -70,13 +70,12 @@ export default function SocialTogetherCard({
     month: 'short',
     day: 'numeric'
   });
-  const picture = card.thumbnailUrl || card.appThumbnailUrl;
+  // The app's published cover and title as this revision showed them (app
+  // metadata stored with the revision, never chosen by the app's report),
+  // and the title opens the app itself.
+  const picture = card.appThumbnailUrl;
   const actionLabel = socialCardActionLabel(card);
-  const appPath = card.appAvailable
-    ? card.linkPath && /^[A-Za-z0-9][A-Za-z0-9-]*$/.test(card.linkPath)
-      ? `/app/${card.buildId}/${card.linkPath}`
-      : `/app/${card.buildId}`
-    : null;
+  const appPath = card.appAvailable ? `/app/${card.buildId}` : null;
   const appTitle = (
     <span className={appTitleClass}>
       {picture ? (

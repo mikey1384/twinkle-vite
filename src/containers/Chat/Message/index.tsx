@@ -11,7 +11,10 @@ import LoadingPlaceholder from '~/components/LoadingPlaceholder';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SystemErrorMessage from './MessageBody/SystemErrorMessage';
 import SocialTogetherCard from './MessageBody/SocialTogetherCard';
-import type { SocialTogetherCardData } from '~/helpers/socialTogetherCard';
+import {
+  newestKnownSocialTogetherCard,
+  type SocialTogetherCardData
+} from '~/helpers/socialTogetherCard';
 import LocalContext from '../Context';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
@@ -255,9 +258,11 @@ function Message({
   // The shared-moment notice ("You and KenGo played Baduk together") is a
   // Twinkle notice: it stands on its own, with no sender or name; its only
   // actions (Play again, Report) are its own.
+  // A page loaded over HTTP can carry an older revision than a live update
+  // that already arrived; the newest revision wins.
   const socialTogetherCard =
     rootType === 'socialTogether' && rootId
-      ? message?.settings?.socialTogether
+      ? newestKnownSocialTogetherCard(message?.settings?.socialTogether)
       : null;
 
   if (loadFailed) {

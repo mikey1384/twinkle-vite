@@ -1,4 +1,5 @@
 import { newestAsyncTaskCard } from './asyncTaskCard';
+import { newestSocialTogetherCard } from './socialTogetherCard';
 function mergeSettings(message: any, settings: Record<string, unknown>) {
   let previous: Record<string, unknown> = {};
   try {
@@ -14,6 +15,12 @@ function mergeSettings(message: any, settings: Record<string, unknown>) {
     nextSettings.websiteAgentCard = newestAsyncTaskCard(
       previous.websiteAgentCard as any,
       settings.websiteAgentCard as any
+    );
+  // A shared-moment notice update never replaces a newer revision.
+  if (settings.socialTogether)
+    nextSettings.socialTogether = newestSocialTogetherCard(
+      previous.socialTogether as any,
+      settings.socialTogether as any
     );
   return { ...message, settings: nextSettings };
 }
