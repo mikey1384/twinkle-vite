@@ -82,9 +82,9 @@ export default function Meetup({
         anyOf
         requirements={[
           <>
-            Bring {FACE_TO_FACE_RECRUIT_TARGET} different people to Twinkle:
-            friends new to Twinkle who join from your invite and then learn on
-            Twinkle, or Twinkle friends you meet in real life and check in with.
+            Meet up: check in with {FACE_TO_FACE_RECRUIT_TARGET} different
+            people you meet in real life (friends you bring to Twinkle count
+            too), or meet up once with a Twinkle teacher or your parent there.
             {questShown && (
               <div
                 style={{
@@ -100,7 +100,7 @@ export default function Meetup({
                   onClick={() => navigate(BRIDGE_BUILDER_QUEST_PATH)}
                 >
                   <Icon icon="qrcode" style={{ marginRight: '0.5rem' }} />
-                  See how and check in
+                  See all three ways
                 </Button>
                 {!!quest?.crewId && (
                   <Button
@@ -120,9 +120,10 @@ export default function Meetup({
               </div>
             )}
           </>,
+          <>Crew: make a crew with Twinkle friends and meet up together.</>,
           <>
-            Or meet up once with a Twinkle teacher or your parent there: every
-            kid who scans their code unlocks it.{' '}
+            Show friends around: take {FACE_TO_FACE_RECRUIT_TARGET} different
+            Twinkle friends on the tour of Twinkle Minecraft World.{' '}
             <Link to={BRIDGE_BUILDER_QUEST_PATH} style={{ fontWeight: 'bold' }}>
               How it works
             </Link>

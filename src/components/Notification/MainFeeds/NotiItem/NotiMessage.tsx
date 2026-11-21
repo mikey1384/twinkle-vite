@@ -684,7 +684,8 @@ function NotiMessage({
             {pending ? 'needs your review:' : 'had a request for you:'}
           </span>{' '}
           <b>{targetObj.content || 'a request'}</b>
-          {targetObj.reviewStatus && !pending && ` (${targetObj.reviewStatus})`}.
+          {targetObj.reviewStatus && !pending && ` (${targetObj.reviewStatus})`}
+          .
           {pending && (
             <>
               {' '}
@@ -692,13 +693,32 @@ function NotiMessage({
                 to={reviewPath}
                 style={{ color: targetLinkColor, fontWeight: 'bold' }}
               >
-                {crewReview ? 'Review the meetup' : 'Review on the management page'}
+                {crewReview
+                  ? 'Review the meetup'
+                  : 'Review on the management page'}
               </Link>
             </>
           )}
         </>
       );
     }
+    // Bridge Builder's show-around tour: you and this friend reached a spot
+    // together (twinkle-api controllers/user/services/bridgeTour.ts)
+    case 'bridgeTourSpot':
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            reached a tour spot with you:
+          </span>{' '}
+          {targetObj.content ? <b>{targetObj.content}</b> : 'a landmark'}.{' '}
+          <Link
+            to="/achievements/bridge-builder"
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            See your tour
+          </Link>
+        </>
+      );
     case 'buildCollaborationRequest':
       return (
         <>

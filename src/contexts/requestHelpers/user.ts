@@ -714,6 +714,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // Bridge Builder path 3: my show-around tours and the next step
+    async loadBridgeTour() {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/meetup-quest/tour`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadLatestMeetupCheckin() {
       try {
         const { data } = await request.get(
@@ -3075,7 +3087,13 @@ export default function userRequestHelpers({
       return true;
     },
     // whose class a link or board code opens
-    async peekClassJoin({ joinKey, method }: { joinKey: string; method: string }) {
+    async peekClassJoin({
+      joinKey,
+      method
+    }: {
+      joinKey: string;
+      method: string;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/user/classrooms/join?key=${encodeURIComponent(

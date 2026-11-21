@@ -66,8 +66,14 @@ test('the mirrored numbers equal the API when it is checked out next to this rep
   const rulesPath = `${apiRoot}controllers/user/services/meetupCheckinRules.ts`;
   if (existsSync(rulesPath)) {
     const rules = readFileSync(rulesPath, 'utf8');
-    assert.equal(num(rules, 'BAR_DAYS_AFTER'), meetup.BRIDGE_BUILDER_BAR_DAYS_AFTER);
-    assert.equal(num(rules, 'BAR_DAYS_BEFORE'), meetup.BRIDGE_BUILDER_BAR_DAYS_BEFORE);
+    assert.equal(
+      num(rules, 'BAR_DAYS_AFTER'),
+      meetup.BRIDGE_BUILDER_BAR_DAYS_AFTER
+    );
+    assert.equal(
+      num(rules, 'BAR_DAYS_BEFORE'),
+      meetup.BRIDGE_BUILDER_BAR_DAYS_BEFORE
+    );
   }
   // the API's one count (check-ins and invited friends alike)
   assert.equal(
@@ -82,19 +88,21 @@ test('the mirrored numbers equal the API when it is checked out next to this rep
 
 test('the card states the people count from the constant and both ways to unlock', () => {
   const text = cardSource.replace(/\s+/g, ' ');
-  assert.doesNotMatch(text, /(Meet|Bring) \d+ different people/);
-  // 11-21: the card says what counts, invite route first (Mikey: the point is
-  // bringing people onto the Twinkle website)
+  assert.doesNotMatch(text, /(Meet|Bring|check in with) \d+ different people/);
+  // 11-21: three independent paths, any one earns it
   assert.match(
     text,
-    /Bring \{FACE_TO_FACE_RECRUIT_TARGET\} different people to Twinkle/
+    /check in with \{FACE_TO_FACE_RECRUIT_TARGET\} different people you meet in real life/
   );
-  assert.match(
-    text,
-    /friends new to Twinkle who join from your invite and then learn on Twinkle/
-  );
-  assert.match(text, /Twinkle friends you meet in real life and check in with/);
   assert.match(text, /a Twinkle teacher or your parent there/);
+  assert.match(
+    text,
+    /Crew: make a crew with Twinkle friends and meet up together/
+  );
+  assert.match(
+    text,
+    /take \{FACE_TO_FACE_RECRUIT_TARGET\} different Twinkle friends on the tour of Twinkle Minecraft World/
+  );
   // the retired steps are gone from the card
   assert.doesNotMatch(text, /film it|Dark Citadel|step \$\{/);
 });

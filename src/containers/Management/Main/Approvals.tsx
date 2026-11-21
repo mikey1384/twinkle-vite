@@ -45,13 +45,20 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
   const [requestMessage, setRequestMessage] = useState('');
 
   useEffect(() => {
-    if (!isOwner || !Number.isSafeInteger(requestedApprovalId) || requestedApprovalId <= 0) return;
+    if (
+      !isOwner ||
+      !Number.isSafeInteger(requestedApprovalId) ||
+      requestedApprovalId <= 0
+    )
+      return;
     let active = true;
     setApprovalModalTarget(null);
     setRequestMessage('Opening approval…');
     void openRequestedApproval();
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
 
     async function openRequestedApproval() {
       try {
@@ -67,11 +74,18 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
             }
           : await loadApprovalItemById(requestedApprovalId);
         if (!active) return;
-        if (item.status === 'pending' && ['dob', 'meetup', 'meetupRevocation'].includes(item.type)) {
+        if (
+          item.status === 'pending' &&
+          ['dob', 'meetup', 'meetupRevocation', 'bridgeTour'].includes(
+            item.type
+          )
+        ) {
           setApprovalModalTarget(item);
           setRequestMessage('');
         } else {
-          setRequestMessage('This request is no longer waiting for a decision.');
+          setRequestMessage(
+            'This request is no longer waiting for a decision.'
+          );
         }
       } catch (error) {
         if (!active) return;
@@ -89,7 +103,8 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
   return (
     <ErrorBoundary componentPath="Management/Main/Approvals">
       {isOwner && requestedApprovalId > 0 && requestMessage && (
-        <p role="status"
+        <p
+          role="status"
           className={css`
             margin: 0 0 1rem;
             font-size: 1.4rem;
@@ -147,7 +162,9 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
             {approvalItems
               .filter((_: any, index: number) => index < numApprovalItemsShown)
               .map((item: any) => {
-                const canDecide = ['dob', 'meetup'].includes(item.type)
+                const canDecide = ['dob', 'meetup', 'bridgeTour'].includes(
+                  item.type
+                )
                   ? isOwner
                   : canManage;
                 let displayedItemContent = item.content;
@@ -155,13 +172,17 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                   const itemData = JSON.parse(item.content);
                   displayedItemContent = `${itemData.className}, ${itemData.branchName}`;
                 }
+                if (item.type === 'bridgeTour') {
+                  // the first line; the modal shows the whole evidence
+                  displayedItemContent = String(item.content || '').split(
+                    '\n'
+                  )[0];
+                }
 
                 return (
                   <tr
                     key={item.id}
-                    onClick={() =>
-                      canDecide ? openApproval(item) : null
-                    }
+                    onClick={() => (canDecide ? openApproval(item) : null)}
                     className={css`
                       cursor: ${canDecide ? 'pointer' : ''};
                       td {

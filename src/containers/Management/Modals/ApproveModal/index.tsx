@@ -23,6 +23,7 @@ export default function ApproveModal({
     status: string;
     type: string;
     ownAltIds?: number[];
+    timeStamp?: number;
   };
   onSetApprovalModalTarget: (target: any) => void;
   onHide: () => void;
@@ -48,7 +49,9 @@ export default function ApproveModal({
       bodyPadding={0}
     >
       <LegacyModalLayout>
-        <header>{revocation ? 'Review Bridge Builder unlock' : 'Approve Request'}</header>
+        <header>
+          {revocation ? 'Review Bridge Builder unlock' : 'Approve Request'}
+        </header>
         <main>
           <div
             style={{
@@ -69,6 +72,26 @@ export default function ApproveModal({
                 recognized as the same person. Review the original decision and
                 the check-in evidence before revoking the achievement.
               </p>
+            )}
+            {target.type === 'bridgeTour' && (
+              <div style={{ textAlign: 'left' }}>
+                <p>
+                  <b>{target.username}</b> showed 7 people around Twinkle
+                  Minecraft World. A review signal needs your OK:
+                </p>
+                <pre
+                  className={css`
+                    white-space: pre-wrap;
+                    font-size: 1.3rem;
+                    line-height: 1.5;
+                    background: ${Color.wellGray()};
+                    padding: 1rem;
+                    border-radius: ${borderRadius};
+                  `}
+                >
+                  {target.content}
+                </pre>
+              </div>
             )}
             {(target.type === 'meetup' || revocation) && (
               <>
@@ -92,7 +115,9 @@ export default function ApproveModal({
               >
                 Revoke Bridge Builder
               </Button>
-            ) : <p>Bridge Builder was revoked.</p>
+            ) : (
+              <p>Bridge Builder was revoked.</p>
+            )
           ) : target.status === 'pending' ? (
             <div
               style={{
@@ -166,14 +191,14 @@ export default function ApproveModal({
                 />
                 {target.status.toUpperCase()}
               </div>
-              {target.type !== 'meetup' && (
+              {target.type !== 'meetup' && target.type !== 'bridgeTour' && (
                 <div
                   className={css`
                     margin-top: 1rem;
                     font-size: 1.3rem;
-                    color: ${reverting
-                      ? Color.lightGray()
-                      : Color.darkerGray()};
+                    color: ${
+                      reverting ? Color.lightGray() : Color.darkerGray()
+                    };
                     display: flex;
                     justify-content: center;
                     align-items: center;
@@ -184,9 +209,11 @@ export default function ApproveModal({
                     onClick={handleRevert}
                     className={css`
                       cursor: ${reverting ? 'default' : 'pointer'};
-                      ${reverting
-                        ? ''
-                        : '&:hover { text-decoration: underline; }'}
+                      ${
+                        reverting
+                          ? ''
+                          : '&:hover { text-decoration: underline; }'
+                      }
                     `}
                   >
                     revert
@@ -220,7 +247,9 @@ export default function ApproveModal({
       });
       onSetApprovalModalTarget({ ...target, status });
     } catch {
-      setError('Could not revoke Bridge Builder. Reopen the review to check the current evidence.');
+      setError(
+        'Could not revoke Bridge Builder. Reopen the review to check the current evidence.'
+      );
       setFingerprint('');
     } finally {
       setReverting(false);
@@ -261,6 +290,9 @@ export default function ApproveModal({
     } = {};
     if (target.type === 'dob') data.dob = target.content;
     if (target.type === 'meetup') data.fingerprint = fingerprint;
+    // a tour review is decided on the row shown: its timeStamp changes with the evidence
+    if (target.type === 'bridgeTour')
+      data.fingerprint = String(target.timeStamp || '');
     try {
       const status = await approveRequest({
         isApproved,

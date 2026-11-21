@@ -351,3 +351,47 @@ export type CheckinScanResult =
     }
   | { state: 'witnessed'; sessionId: number; inPlace?: boolean }
   | { state: 'refused'; partnerId: number; line: string };
+
+// Bridge Builder path 3 (twinkle-api controllers/user/services/bridgeTour.ts):
+// the Twinkle Minecraft World show-around tour
+export type TourFriendState =
+  | 'touring'
+  | 'getting_started'
+  | 'counted'
+  | 'not_counted'
+  | 'needs_account'
+  | 'shown_me';
+
+export type TourNextStep =
+  | 'unlocked'
+  | 'wait_review'
+  | 'rejected'
+  | 'friend_learning'
+  | 'keep_touring'
+  | 'start_tour';
+
+export interface TourFriend {
+  userId: number;
+  username: string;
+  minecraftName: string;
+  role: 'guide' | 'visitor';
+  spots: string[];
+  firstAt: number;
+  lastAt: number;
+  complete: boolean;
+  completedAt: number;
+  state: TourFriendState;
+  timedOut?: boolean;
+  deadline?: number;
+}
+
+export interface TourScreen {
+  target: number;
+  counted: number;
+  landmarks: { id: string; name: string }[];
+  friends: TourFriend[];
+  unlocked: boolean;
+  review: boolean;
+  rejected: boolean;
+  nextStep: TourNextStep;
+}

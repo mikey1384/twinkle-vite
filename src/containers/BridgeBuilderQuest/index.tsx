@@ -21,6 +21,8 @@ import JoinCrewModal from './JoinCrewModal';
 import { QuestNote } from './StepCard';
 import { backLinkClass, pageWidthClass, sectionClass } from './pageStyles';
 import CheckinCard from './Checkin/CheckinCard';
+import TourCard from './TourCard';
+import { CrewPathCard, PathsIntro } from './Paths';
 import type { CrewInvitation, DirectoryCrew, MeetupQuestData } from './types';
 import {
   AdminStoryQueue,
@@ -86,6 +88,7 @@ export default function BridgeBuilderQuest({
   const [inviteError, setInviteError] = useState('');
   const directoryRef = useRef<HTMLDivElement>(null);
   const myCrewRef = useRef<HTMLDivElement>(null);
+  const crewBrowseRef = useRef<HTMLElement>(null);
   const requestIdRef = useRef(0);
   useMeetupRefresh({
     enabled: !!userId,
@@ -107,7 +110,9 @@ export default function BridgeBuilderQuest({
     loadMeetupStoriesOverview()
       .then((overview: StoriesOverview) => setStories(overview))
       .catch(() => setStories(null));
-    return () => { requestIdRef.current += 1; };
+    return () => {
+      requestIdRef.current += 1;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, requestedCrewId]);
 
@@ -122,8 +127,11 @@ export default function BridgeBuilderQuest({
   const memberBrowse = view === 'member' && !data?.hasActiveCrew;
   // admins only: the crew board, members' answers and the story queue
   const staffDeskShown = !!(data?.reviewQueue || stories?.reviewQueue);
-  const requestedCrew = data?.requestedCrew ||
-    (requestedCrewId && data?.myCrew?.crewId === requestedCrewId ? data.myCrew : null);
+  const requestedCrew =
+    data?.requestedCrew ||
+    (requestedCrewId && data?.myCrew?.crewId === requestedCrewId
+      ? data.myCrew
+      : null);
   const staffWaiting =
     (data?.reviewQueue?.length || 0) + (stories?.reviewQueue?.length || 0);
 
@@ -163,25 +171,49 @@ export default function BridgeBuilderQuest({
           {view === 'staff' ? (
             <h1 className={compactTitleClass}>Bridge Builder staff desk</h1>
           ) : (
-            <CheckinCard achievementTitle={achievementTitle} />
-          )}
-
-          {view === 'member' && data?.myCrew && data.myCrew.crewId !== requestedCrewId && (
             <>
-              <h2 className={compactTitleClass}>Your crew</h2>
-              <div ref={myCrewRef} style={{ marginTop: '1rem' }}>
-                <CrewPanel
-                  crew={data.myCrew}
-                  achievementTitle={achievementName}
-                  myId={userId}
-                  onChanged={reload}
-                />
-              </div>
+              <PathsIntro title={achievementTitle || 'Bridge Builder'} />
+              <CheckinCard achievementTitle={achievementTitle} />
+              <CrewPathCard
+                crew={data?.myCrew}
+                onOpen={() => {
+                  trackMeetupQuestView('path_open_crew');
+                  myCrewRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                  });
+                }}
+                onStart={() => {
+                  trackMeetupQuestView('path_open_crew');
+                  crewBrowseRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                  });
+                }}
+              />
+              <TourCard />
             </>
           )}
 
+          {view === 'member' &&
+            data?.myCrew &&
+            data.myCrew.crewId !== requestedCrewId && (
+              <>
+                <h2 className={compactTitleClass}>Your crew</h2>
+                <div ref={myCrewRef} style={{ marginTop: '1rem' }}>
+                  <CrewPanel
+                    crew={data.myCrew}
+                    achievementTitle={achievementName}
+                    myId={userId}
+                    onChanged={reload}
+                  />
+                </div>
+              </>
+            )}
+
           {memberBrowse && (
             <section
+              ref={crewBrowseRef}
               className={sectionClass}
               style={{ padding: 0, overflow: 'hidden' }}
             >
@@ -198,8 +230,9 @@ export default function BridgeBuilderQuest({
                   Meet up with a crew
                 </h2>
                 <p className={bodyTextClass}>
-                  Team up with friends you know on Twinkle: your crew gets a group
-                  chat, and when you check in together it gets its own story page.
+                  Team up with friends you know on Twinkle: your crew gets a
+                  group chat, and when you check in together it gets its own
+                  story page.
                 </p>
                 <div
                   className={css`
@@ -262,10 +295,15 @@ export default function BridgeBuilderQuest({
                 }
               `}
             >
-              <Icon icon="clipboard-check" style={{ color: Color.logoBlue() }} />
+              <Icon
+                icon="clipboard-check"
+                style={{ color: Color.logoBlue() }}
+              />
               Staff desk
               {staffWaiting > 0 && (
-                <span style={{ color: Color.orange() }}>· {staffWaiting} waiting</span>
+                <span style={{ color: Color.orange() }}>
+                  · {staffWaiting} waiting
+                </span>
               )}
               <Icon icon="arrow-right" style={{ marginLeft: 'auto' }} />
             </Link>
@@ -309,38 +347,39 @@ export default function BridgeBuilderQuest({
             </div>
           )}
 
-          {view === 'member' && data?.notices?.map((notice) => (
-            <div
-              key={`notice-${notice.crewId}`}
-              style={{ marginTop: '1.6rem' }}
-            >
-              <QuestNote tone="info">
-                <div
-                  className={css`
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 1rem;
-                  `}
-                >
-                  <span>
-                    {notice.kind === 'removed'
-                      ? `You were removed from crew "${notice.crewName}". You can join or start another crew any time.`
-                      : `Your crew "${notice.crewName}" was disbanded by its founder. You can join or start another crew any time.`}
-                  </span>
-                  <Button
-                    loading={pendingAction === 'dismiss:' + notice.crewId}
-                    size="sm"
-                    variant="ghost"
-                    color="darkGray"
-                    onClick={() => handleDismissNotice(notice.crewId)}
+          {view === 'member' &&
+            data?.notices?.map((notice) => (
+              <div
+                key={`notice-${notice.crewId}`}
+                style={{ marginTop: '1.6rem' }}
+              >
+                <QuestNote tone="info">
+                  <div
+                    className={css`
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      gap: 1rem;
+                    `}
                   >
-                    OK
-                  </Button>
-                </div>
-              </QuestNote>
-            </div>
-          ))}
+                    <span>
+                      {notice.kind === 'removed'
+                        ? `You were removed from crew "${notice.crewName}". You can join or start another crew any time.`
+                        : `Your crew "${notice.crewName}" was disbanded by its founder. You can join or start another crew any time.`}
+                    </span>
+                    <Button
+                      loading={pendingAction === 'dismiss:' + notice.crewId}
+                      size="sm"
+                      variant="ghost"
+                      color="darkGray"
+                      onClick={() => handleDismissNotice(notice.crewId)}
+                    >
+                      OK
+                    </Button>
+                  </div>
+                </QuestNote>
+              </div>
+            ))}
 
           {view === 'member' && !!data?.invites?.length && (
             <section className={sectionClass}>
@@ -406,7 +445,6 @@ export default function BridgeBuilderQuest({
               />
             </div>
           )}
-
 
           {memberBrowse && !!stories?.samples?.length && (
             <ExampleStoriesRow samples={stories.samples} />
@@ -477,7 +515,9 @@ export default function BridgeBuilderQuest({
             <div style={{ marginTop: '1.6rem' }}>
               <QuestNote tone="info">
                 This page is for Twinkle admins.{' '}
-                <Link to="/achievements/bridge-builder">Back to Bridge Builder</Link>
+                <Link to="/achievements/bridge-builder">
+                  Back to Bridge Builder
+                </Link>
               </QuestNote>
             </div>
           )}
@@ -485,11 +525,24 @@ export default function BridgeBuilderQuest({
             <>
               {data?.allCrews && <AdminCrewBoard crews={data.allCrews} />}
               {data?.allCrews && (
-                <div style={{ display: 'flex', gap: '1.6rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-                  <Link to="/achievements/bridge-builder/org-asks" style={{ fontWeight: 700 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '1.6rem',
+                    flexWrap: 'wrap',
+                    marginTop: '1rem'
+                  }}
+                >
+                  <Link
+                    to="/achievements/bridge-builder/org-asks"
+                    style={{ fontWeight: 700 }}
+                  >
                     Org asks: decisions only Twinkle can make →
                   </Link>
-                  <Link to="/achievements/bridge-builder/emails" style={{ fontWeight: 700 }}>
+                  <Link
+                    to="/achievements/bridge-builder/emails"
+                    style={{ fontWeight: 700 }}
+                  >
                     Parent emails to review →
                   </Link>
                 </div>
@@ -546,7 +599,9 @@ export default function BridgeBuilderQuest({
                               setSearchParams({ crew: String(item.crewId) })
                             }
                           >
-                            {item.waitingFor === 'meetup' ? 'Review meetup' : 'Read the answer'}
+                            {item.waitingFor === 'meetup'
+                              ? 'Review meetup'
+                              : 'Read the answer'}
                           </Button>
                         </li>
                       ))}
@@ -622,11 +677,11 @@ export default function BridgeBuilderQuest({
   }
 
   function handleDismissNotice(
-
     ...args: Parameters<typeof handleDismissNoticeRequest>
-
   ) {
-    return runAction('dismiss:' + args[0], () => handleDismissNoticeRequest(...args));
+    return runAction('dismiss:' + args[0], () =>
+      handleDismissNoticeRequest(...args)
+    );
   }
 
   async function handleDismissNoticeRequest(crewId: number) {
