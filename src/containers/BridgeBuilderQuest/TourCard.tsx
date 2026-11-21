@@ -15,12 +15,23 @@ import { QuestNote } from './StepCard';
 import type { TourFriend, TourScreen } from './types';
 
 // Bridge Builder path 3 (Mikey 2026-11-21): show 7 different Twinkle users
-// around Twinkle Minecraft World. An MMO-style quest log: the landmarks, each
-// friend's ticks, one next step. The server sees each spot (both people there
-// together, really moving) and notifies both; this card only shows it.
+// around Twinkle Minecraft World. An MMO-style quest log: start a tour with a
+// named friend (here or /showaround in the game), the landmarks, each friend's
+// ticks, one next step. The server owns the tour session and sees each spot
+// (both people there together, really moving) and notifies both; this card
+// only shows it and passes Start / Accept / End to the server.
 export default function TourCard() {
   const navigate = useNavigate();
   const loadBridgeTour = useAppContext((v) => v.requestHelpers.loadBridgeTour);
+  const startBridgeTour = useAppContext(
+    (v) => v.requestHelpers.startBridgeTour
+  );
+  const respondBridgeTour = useAppContext(
+    (v) => v.requestHelpers.respondBridgeTour
+  );
+  const [friendName, setFriendName] = useState('');
+  const [busy, setBusy] = useState('');
+  const [actionError, setActionError] = useState('');
   const trackMeetupQuestView = useAppContext(
     (v) => v.requestHelpers.trackMeetupQuestView
   );
@@ -40,6 +51,15 @@ export default function TourCard() {
   const guided = tour.friends.filter((f) => f.role === 'guide');
   const shownMe = tour.friends.filter((f) => f.state === 'shown_me');
   const total = tour.landmarks.length;
+  const sessions = tour.sessions || [];
+  const invitesToMe = sessions.filter(
+    (s) => s.status === 'invited' && s.role === 'partner'
+  );
+  const myInvite = sessions.find(
+    (s) => s.status === 'invited' && s.role === 'guide'
+  );
+  const activeTour = sessions.find((s) => s.status === 'active');
+  const earlier = sessions.filter((s) => s.status === 'history');
 
   return (
     <section className={cardClass}>
@@ -56,6 +76,105 @@ export default function TourCard() {
       </div>
 
       {renderNextStep()}
+
+      {invitesToMe.map((s) => (
+        <div key={s.sessionId} style={{ marginTop: '1.2rem' }}>
+          <QuestNote tone="success">
+            <div className={actionRowClass}>
+              <span>
+                <b>{s.friendName}</b> wants to show you around Twinkle Minecraft
+                World.
+              </span>
+              <span style={{ display: 'flex', gap: '0.6rem' }}>
+                <Button
+                  size="sm"
+                  color="green"
+                  loading={busy === `accept-${s.sessionId}`}
+                  onClick={() => respond(s.sessionId, 'accept')}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="soft"
+                  color="darkGray"
+                  loading={busy === `decline-${s.sessionId}`}
+                  onClick={() => respond(s.sessionId, 'decline')}
+                >
+                  Not now
+                </Button>
+              </span>
+            </div>
+          </QuestNote>
+        </div>
+      ))}
+      {activeTour && (
+        <div style={{ marginTop: '1.2rem' }}>
+          <QuestNote tone="info">
+            <div className={actionRowClass}>
+              <span>
+                Tour with <b>{activeTour.friendName}</b> is on
+                {activeTour.role === 'guide'
+                  ? ': lead the way to each spot.'
+                  : ': follow them to each spot.'}{' '}
+                {activeTour.spots} of {total} spots so far
+                {activeTour.endsAt
+                  ? `, until ${shortTime(activeTour.endsAt)}`
+                  : ''}
+                .
+              </span>
+              <Button
+                size="sm"
+                variant="soft"
+                color="darkGray"
+                loading={busy === `end-${activeTour.sessionId}`}
+                onClick={() => respond(activeTour.sessionId, 'end')}
+              >
+                End tour
+              </Button>
+            </div>
+          </QuestNote>
+        </div>
+      )}
+      {myInvite && !activeTour && (
+        <div className={smallClass} style={{ marginTop: '1rem' }}>
+          Waiting for {myInvite.friendName} to accept your tour (the invite
+          lasts 10 minutes).
+        </div>
+      )}
+
+      {!tour.unlocked && !activeTour && !myInvite && (
+        <div style={{ marginTop: '1.4rem' }}>
+          <div className={sectionLabelClass}>Start a tour</div>
+          <div className={smallClass}>
+            In the game, type <b>/showaround &lt;name&gt;</b>. Or type your
+            friend&apos;s Twinkle username here. Spots only count during a tour
+            you started.
+          </div>
+          <div className={startRowClass}>
+            <input
+              className={inputClass}
+              value={friendName}
+              placeholder="Friend's username"
+              maxLength={40}
+              onChange={(e) => setFriendName(e.target.value)}
+            />
+            <Button
+              color="green"
+              disabled={!friendName.trim()}
+              loading={busy === 'start'}
+              onClick={start}
+            >
+              Start a tour
+            </Button>
+          </div>
+        </div>
+      )}
+      {actionError && (
+        <div style={{ marginTop: '0.8rem' }}>
+          <QuestNote tone="warning">{actionError}</QuestNote>
+        </div>
+      )}
 
       {total > 0 && !tour.unlocked && (
         <div style={{ marginTop: '1.4rem' }}>
@@ -89,8 +208,16 @@ export default function TourCard() {
       )}
       {shownMe.length > 0 && (
         <div className={smallClass} style={{ marginTop: '1rem' }}>
-          Tour spots reached with{' '}
-          {shownMe.map((f) => f.username || f.minecraftName).join(', ')}. Twinkle lists the person who joined first as the guide for review.
+          Shown around by{' '}
+          {shownMe.map((f) => f.username || f.minecraftName).join(', ')}: that
+          tour counts for them, since they guided it.
+        </div>
+      )}
+      {earlier.length > 0 && (
+        <div className={smallClass} style={{ marginTop: '1rem' }}>
+          Earlier tours with {earlier.map((s) => s.friendName).join(' and ')}{' '}
+          are saved for Mikey to check. They can count after your friends have
+          Twinkle accounts.
         </div>
       )}
 
@@ -124,7 +251,8 @@ export default function TourCard() {
       return line(
         'info',
         <>
-          Your tours are saved. Mikey will check them. You don’t need to do anything else.
+          Your tours are saved. Mikey will check them. You don’t need to do
+          anything else.
         </>
       );
     }
@@ -138,10 +266,16 @@ export default function TourCard() {
       );
     }
     if (tour.nextStep === 'friend_age') {
-      return line('info', 'Both people need an approved birthdate before a tour can count. Use the birthdate check on this page.');
+      return line(
+        'info',
+        'Both people need an approved birthdate before a tour can count. Use the birthdate check on this page.'
+      );
     }
     if (tour.nextStep === 'friend_account') {
-      return line('info', 'Your friend can link their Minecraft account to Twinkle so their tour can be checked.');
+      return line(
+        'info',
+        'Your friend can link their Minecraft account to Twinkle so their tour can be checked.'
+      );
     }
     if (tour.nextStep === 'friend_learning') {
       const friend = tour.friends
@@ -176,10 +310,41 @@ export default function TourCard() {
     return line(
       'info',
       <>
-        Invite a Twinkle friend (new or not) to Twinkle Minecraft World and walk
-        to each spot on the tour together.
+        Start a tour with a Twinkle friend (new or not), then walk to each spot
+        on the list together.
       </>
     );
+  }
+
+  async function start() {
+    setBusy('start');
+    setActionError('');
+    try {
+      await startBridgeTour(friendName.trim());
+      trackMeetupQuestView('tour_start_web');
+      setFriendName('');
+      await reload();
+    } catch (err: any) {
+      setActionError(err?.message || 'The tour couldn’t start. Try again.');
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function respond(
+    sessionId: string,
+    action: 'accept' | 'decline' | 'end'
+  ) {
+    setBusy(`${action}-${sessionId}`);
+    setActionError('');
+    try {
+      await respondBridgeTour({ sessionId, action });
+      await reload();
+    } catch (err: any) {
+      setActionError(err?.message || 'That didn’t work. Try again.');
+    } finally {
+      setBusy('');
+    }
   }
 
   async function reload() {
@@ -197,11 +362,13 @@ function FriendRow({ friend, total }: { friend: TourFriend; total: number }) {
   if (friend.state === 'counted') {
     status = (
       <span style={{ color: Color.green(), fontWeight: 'bold' }}>
-        <Icon icon="check" /> Ready for review
+        <Icon icon="check" /> Counts
       </span>
     );
   } else if (friend.state === 'touring') {
     status = `${friend.spots.length} of ${total} spots together`;
+  } else if (friend.state === 'getting_started' && friend.kind === 'existing') {
+    status = 'Tour done · counts as a Twinkle member';
   } else if (friend.state === 'getting_started') {
     status = `Tour done · counts after ${BRIDGE_BUILDER_BAR_LEARNING_DAYS} learning days and ${BRIDGE_BUILDER_BAR_LEARNING_XP.toLocaleString('en-US')} XP${friend.deadline ? ` (by ${shortDate(friend.deadline)})` : ''}`;
   } else if (friend.state === 'needs_account') {
@@ -230,6 +397,13 @@ function FriendRow({ friend, total }: { friend: TourFriend; total: number }) {
       </div>
     </li>
   );
+}
+
+function shortTime(atSeconds: number) {
+  return new Date(atSeconds * 1000).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit'
+  });
 }
 
 function shortDate(atSeconds: number) {
@@ -336,4 +510,28 @@ const statusClass = css`
   font-size: 1.25rem;
   line-height: 1.4;
   color: ${Color.darkGray()};
+`;
+
+const actionRowClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+const startRowClass = css`
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+`;
+
+const inputClass = css`
+  flex: 1;
+  min-width: 14rem;
+  font-size: 1.5rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--ui-border-strong);
 `;

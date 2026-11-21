@@ -382,9 +382,25 @@ export interface TourFriend {
   state: TourFriendState;
   timedOut?: boolean;
   deadline?: number;
+  // existing members count on real history; new friends need the bar
+  kind?: 'existing' | 'new';
+}
+
+// A server-owned tour session (twinkle-api bridgeTour.ts loadMyTourSessions)
+export interface TourSession {
+  sessionId: string;
+  role: 'guide' | 'partner';
+  friendUserId: number;
+  friendName: string;
+  status: 'invited' | 'active' | 'history' | string;
+  invitedAt: number;
+  acceptedAt: number;
+  endsAt: number;
+  spots: number;
 }
 
 export interface TourScreen {
+  sessions?: TourSession[];
   target: number;
   counted: number;
   landmarks: { id: string; name: string }[];

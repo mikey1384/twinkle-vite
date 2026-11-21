@@ -704,6 +704,21 @@ function NotiMessage({
     }
     // Bridge Builder's show-around tour: you and this friend reached a spot
     // together (twinkle-api controllers/user/services/bridgeTour.ts)
+    // a member started a show-around tour with you (they are the sender)
+    case 'bridgeTourInvite':
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            wants to show you around Twinkle Minecraft World.
+          </span>{' '}
+          <Link
+            to="/achievements/bridge-builder"
+            style={{ color: targetLinkColor, fontWeight: 'bold' }}
+          >
+            Accept the tour
+          </Link>
+        </>
+      );
     case 'bridgeTourSpot':
       return (
         <>
