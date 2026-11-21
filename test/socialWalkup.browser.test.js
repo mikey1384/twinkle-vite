@@ -29,7 +29,10 @@ const fixture = `
 import React,{useState,useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
 import {MemoryRouter,useLocation} from 'react-router-dom';
+import {library} from '@fortawesome/fontawesome-svg-core';
+import {faPlay} from '@fortawesome/pro-solid-svg-icons/faPlay';
 import {FixtureProvider} from '~/contexts';
+library.add(faPlay);
 import TodayStats from './src/components/Notification/TodayStats';
 import {container as notificationContainer} from './src/components/Notification/Styles';
 import SocialWalkupOverlay from './src/containers/Build/Runtime/SocialWalkupOverlay';
@@ -539,6 +542,10 @@ test(
       assert.deepEqual(await page.evaluate(() => window.seen), [31]);
       // both faces, no sender line, nothing that reads like a log
       assert.equal(await card.locator('.together-face').count(), 2);
+      // the Rematch button is the rematch offer: no "Rematch?" chip above it
+      assert.equal(await card.getByRole('button', { name: 'Rematch?' }).count(), 0);
+      await card.getByRole('button', { name: 'Rematch' }).waitFor();
+      assert.equal(await card.locator('.together-actions svg').count(), 1);
       await page.waitForTimeout(300);
       await shot(page, 'chat-card-first-dm-phone.png');
       // every button stays inside the card and is big enough for a thumb

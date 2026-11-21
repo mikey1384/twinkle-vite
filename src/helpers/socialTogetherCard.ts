@@ -76,3 +76,24 @@ export function socialCardChipsShown({
     nowSeconds - card.updatedAt < SOCIAL_CHIPS_SHOWN_FOR_SECONDS
   );
 }
+
+const chipKey = (text: string) =>
+  text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+
+/** Chips to show: the card's own, minus any that repeat the button's label
+ * ("Rematch?" above a "Rematch" button). */
+export function socialCardChipsToShow(
+  chips: string[],
+  buttonLabel: string | null
+) {
+  if (!buttonLabel) return chips;
+  const label = chipKey(buttonLabel);
+  return chips.filter((chip) => chipKey(chip) !== label);
+}
+
+export function socialCardButtonLabel(
+  card: Pick<SocialTogetherCardData, 'appAvailable' | 'isGame' | 'appTitle'>
+) {
+  if (!card.appAvailable) return null;
+  return card.isGame ? 'Rematch' : `Open ${card.appTitle}`;
+}

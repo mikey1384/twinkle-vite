@@ -9,7 +9,9 @@ import { useWalkUp } from '~/helpers/hooks/useSocialWalkups';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import {
   FIRST_CHAT_NOTE,
+  socialCardButtonLabel,
   socialCardChipsShown,
+  socialCardChipsToShow,
   socialCardCount,
   socialCardHeadline,
   type SocialTogetherCardData
@@ -69,11 +71,11 @@ const cardCls = css`
   }
   .together-text {
     min-width: 0;
+    text-align: center;
     font-size: 1.4rem;
     line-height: 1.4;
     color: #33435d;
     overflow-wrap: anywhere;
-    text-align: left;
   }
   .together-meta {
     display: block;
@@ -197,8 +199,10 @@ export default function SocialTogetherCard({
     day: 'numeric'
   });
   const picture = card.thumbnailUrl || card.appThumbnailUrl;
+  const buttonLabel = socialCardButtonLabel(card);
+  const chips = socialCardChipsToShow(card.chips, buttonLabel);
   const chipsShown = socialCardChipsShown({
-    card,
+    card: { ...card, chips },
     myId,
     canReply: canReply && !!quickSend,
     chipUsed,
@@ -234,7 +238,7 @@ export default function SocialTogetherCard({
       {chipsShown ? (
         <>
           <div className="together-chips">
-            {card.chips.map((chip) => (
+            {chips.map((chip) => (
               <button
                 key={chip}
                 type="button"
@@ -249,7 +253,7 @@ export default function SocialTogetherCard({
           <p className="together-hint">Tap one to say it</p>
         </>
       ) : null}
-      {card.appAvailable ? (
+      {buttonLabel ? (
         <div className="together-actions">
           <Button
             color={buttonColor}
@@ -262,7 +266,7 @@ export default function SocialTogetherCard({
           >
             <Icon icon="play" />
             <span style={{ marginLeft: '0.7rem' }}>
-              {card.isGame ? 'Rematch' : `Open ${card.appTitle}`}
+              {buttonLabel}
             </span>
           </Button>
         </div>
