@@ -41,7 +41,13 @@ export default function TourCard() {
   useEffect(() => {
     reload();
     window.addEventListener('focus', reload);
-    return () => window.removeEventListener('focus', reload);
+    const refresh = window.setInterval(() => {
+      if (!document.hidden) void reload();
+    }, 30_000);
+    return () => {
+      window.removeEventListener('focus', reload);
+      window.clearInterval(refresh);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -60,6 +66,8 @@ export default function TourCard() {
   );
   const activeTour = sessions.find((s) => s.status === 'active');
   const earlier = sessions.filter((s) => s.status === 'history');
+  const pendingHistory = earlier.filter((s) => !s.friendUserId);
+  const grantedHistory = earlier.filter((s) => s.friendUserId);
 
   return (
     <section className={cardClass}>
@@ -209,15 +217,20 @@ export default function TourCard() {
       {shownMe.length > 0 && (
         <div className={smallClass} style={{ marginTop: '1rem' }}>
           Shown around by{' '}
-          {shownMe.map((f) => f.username || f.minecraftName).join(', ')}: that
-          tour counts for them, since they guided it.
+          {shownMe.map((f) => f.username || f.minecraftName).join(', ')}.
         </div>
       )}
-      {earlier.length > 0 && (
+      {pendingHistory.length > 0 && (
         <div className={smallClass} style={{ marginTop: '1rem' }}>
-          Earlier tours with {earlier.map((s) => s.friendName).join(' and ')}{' '}
-          are saved for Mikey to check. They can count after your friends have
-          Twinkle accounts.
+          Earlier tours with{' '}
+          {pendingHistory.map((s) => s.friendName).join(' and ')} are saved for
+          Mikey to check once your friends have Twinkle accounts.
+        </div>
+      )}
+      {grantedHistory.length > 0 && (
+        <div className={smallClass} style={{ marginTop: '1rem' }}>
+          Mikey added your earlier tours with{' '}
+          {grantedHistory.map((s) => s.friendName).join(' and ')} to your progress.
         </div>
       )}
 
