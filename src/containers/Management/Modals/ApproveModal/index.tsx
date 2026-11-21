@@ -24,6 +24,8 @@ export default function ApproveModal({
     type: string;
     ownAltIds?: number[];
     timeStamp?: number;
+    reviewEvidence?: string;
+    reviewFingerprint?: string;
   };
   onSetApprovalModalTarget: (target: any) => void;
   onHide: () => void;
