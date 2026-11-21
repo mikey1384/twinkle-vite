@@ -767,13 +767,14 @@ export default function userRequestHelpers({
       sessionStart?: boolean;
     }) {
       try {
-        await request.post(
+        const { data } = await request.post(
           `${URL}/user/meetup-quest/onboard-nav`,
           { route, sessionStart: !!sessionStart },
           auth()
         );
+        return data?.recorded === true;
       } catch (_error) {
-        // telemetry never interrupts the page
+        return false;
       }
     },
     async loadLatestMeetupCheckin() {

@@ -43,16 +43,27 @@ export default function OnboardingNavTracker() {
     }
     if (!route || sent.current.routes.has(route)) return;
     sent.current.routes.add(route);
-    let sessionStart = false;
+    const key = `${SESSION_KEY}:${userId}`;
+    const current = sent.current;
+    let sessionStart = true;
     try {
-      if (!sessionStorage.getItem(`${SESSION_KEY}:${userId}`)) {
-        sessionStorage.setItem(`${SESSION_KEY}:${userId}`, '1');
-        sessionStart = true;
-      }
+      sessionStart = sessionStorage.getItem(key) !== '1';
     } catch (_error) {
-      // storage can be blocked; the route still counts
+      // The server also deduplicates session starts.
     }
-    void trackOnboardingNav({ route, sessionStart });
+    void trackOnboardingNav({ route, sessionStart }).then((recorded) => {
+      if (!recorded) {
+        current.routes.delete(route);
+        return;
+      }
+      if (sessionStart) {
+        try {
+          sessionStorage.setItem(key, '1');
+        } catch (_error) {
+          // The route was recorded even if this browser blocks storage.
+        }
+      }
+    });
     // the request helper is stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, userId, joinDate]);
