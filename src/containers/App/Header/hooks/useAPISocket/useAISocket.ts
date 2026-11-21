@@ -595,6 +595,7 @@ export default function useAISocket({
 
     socket.on('ai_message_done', handleAIMessageDone);
     socket.on('chat_message_deleted', handleAIMessageDiscardedForNotify);
+    socket.on('chat_message_edited', handleUnfinishedReplyForNotify);
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('ai_message_error', handleAIMessageError);
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
@@ -625,6 +626,7 @@ export default function useAISocket({
       socket.off('ai_realtime_input_received', sendAIUIInformation);
       socket.off('ai_message_done', handleAIMessageDone);
       socket.off('chat_message_deleted', handleAIMessageDiscardedForNotify);
+      socket.off('chat_message_edited', handleUnfinishedReplyForNotify);
       for (const scheduled of Object.values(
         scheduledAIReplyNotifyRef.current
       )) {
@@ -890,6 +892,26 @@ export default function useAISocket({
       if (messageId && scheduled.messageId !== messageId) return;
       clearTimeout(scheduled.timer);
       delete scheduledAIReplyNotifyRef.current[channelId];
+    }
+
+    function handleUnfinishedReplyForNotify({
+      channelId,
+      messageId,
+      editedMessage,
+      settings
+    }: {
+      channelId: number;
+      messageId: number;
+      editedMessage?: string;
+      settings?: Record<string, unknown>;
+    }) {
+      if (
+        !editedMessage?.trim() &&
+        (settings?.websiteAgentOutcome === 'empty' ||
+          settings?.websiteAgentOutcome === 'incomplete')
+      ) {
+        handleAIMessageDiscardedForNotify({ channelId, messageId });
+      }
     }
 
     function handleAIMessageDiscardedForNotify({

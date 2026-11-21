@@ -19,6 +19,8 @@ import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 import {
   DAILY_QUESTION_DRAFT_RESTORED_NOTICE,
   DAILY_QUESTION_DRAFT_SAVED_NOTICE,
+  DAILY_QUESTION_GRADING_UNAVAILABLE_CODE,
+  DAILY_QUESTION_GRADING_UNAVAILABLE_NOTICE,
   DAILY_QUESTION_POLISH_UNAVAILABLE_CODE,
   DAILY_QUESTION_POLISH_UNAVAILABLE_NOTICE,
   DAILY_QUESTION_RECOVERY_MAX_ATTEMPTS,
@@ -1471,7 +1473,8 @@ export default function DailyQuestionPanel({
     } catch (err: any) {
       console.error('Failed to submit response:', err);
       // Nothing was saved, so there is nothing to recover: back to the draft.
-      if (err?.code === DAILY_QUESTION_POLISH_UNAVAILABLE_CODE) {
+      const gradingUnavailable = err?.code === DAILY_QUESTION_GRADING_UNAVAILABLE_CODE;
+      if (gradingUnavailable || err?.code === DAILY_QUESTION_POLISH_UNAVAILABLE_CODE) {
         persistDraftRecovery({
           questionId,
           clientRequestId,
@@ -1480,7 +1483,9 @@ export default function DailyQuestionPanel({
         });
         returnToDraftStartScreen({
           responseText: trimmedResponse,
-          notice: DAILY_QUESTION_POLISH_UNAVAILABLE_NOTICE,
+          notice: gradingUnavailable
+            ? DAILY_QUESTION_GRADING_UNAVAILABLE_NOTICE
+            : DAILY_QUESTION_POLISH_UNAVAILABLE_NOTICE,
           typingMetadata: typingMetadataRef.current
         });
         return;

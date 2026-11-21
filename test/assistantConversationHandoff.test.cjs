@@ -24,6 +24,7 @@ function fixture() {
   const store = compile(
     'src/containers/App/AssistantDock/conversationStore.ts',
     {
+      '~/helpers/asyncTaskCard': compile('src/helpers/asyncTaskCard.ts', {}),
       '~/constants/sockets/api': {
         socket: {
           on(name, fn) {
@@ -241,4 +242,26 @@ test('text sends preserve the Arena step and review language through the chat re
   assert.equal(await conversation.send('Explain this step', question), true);
   assert.equal(sent.length, 1);
   assert.deepEqual(sent[0].message.settings.askedAbout, question);
+});
+
+test('empty assistant notices survive the next message and a history reload', () => {
+  const { store, emit } = fixture();
+  const settings = { hasError: true, errorType: 'declined' };
+  const assistantMessage = { id: 1, channelId: 10, userId: 2, content: '' };
+  store.startAssistantReply(10);
+  emit('new_ai_message_received', { channelId: 10, message: assistantMessage });
+  emit('chat_message_edited', { channelId: 10, messageId: 1, editedMessage: '', settings });
+  emit('ai_message_done', 10, 1);
+  assert.equal(store.getAssistantReply(10).notice, 'declined');
+  emit('new_message_received', { message: { id: 2, channelId: 10, userId: 1, content: 'Next' } });
+  assert.equal(store.getAssistantReply(10), null);
+  assert.equal(store.getAssistantTranscript(10)[0].notice, 'declined');
+  store.resetAssistantConversations();
+  store.seedAssistantTranscript([
+    { ...assistantMessage, settings },
+    { ...assistantMessage, id: 2, settings: { websiteAgentOutcome: 'empty' } }
+  ], 10);
+  assert.deepEqual(store.getAssistantTranscript(10).map(({ notice }) => notice), [
+    'declined', 'unfinished'
+  ]);
 });

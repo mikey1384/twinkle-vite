@@ -32,7 +32,7 @@ export interface AssistantReply {
   timedOut?: boolean;
   error: string;
   // Every model declined the reply: a site note shows instead of words.
-  declined?: boolean;
+  notice?: AssistantNotice;
 }
 
 export const EMPTY_ASSISTANT_REPLY: AssistantReply = {
@@ -51,10 +51,25 @@ const replies = new Map<string, AssistantReply>();
 const messageTopics = new Map<number, number>();
 const conversationKey = (channelId: number, topicId = 0) =>
   `${channelId}:${topicId}`;
+export type AssistantNotice = 'declined' | 'unfinished';
+
+function readAssistantNotice(settings: any): AssistantNotice | undefined {
+  if (settings?.hasError === true && settings.errorType === 'declined') {
+    return 'declined';
+  }
+  if (
+    settings?.websiteAgentOutcome === 'incomplete' ||
+    settings?.websiteAgentOutcome === 'empty'
+  ) {
+    return 'unfinished';
+  }
+}
+
 export interface ConversationLine {
   id: number;
   userId: number;
   content: string;
+  notice?: AssistantNotice;
 }
 const transcripts = new Map<string, ConversationLine[]>();
 const EMPTY_TRANSCRIPT: ConversationLine[] = [];
@@ -93,10 +108,12 @@ export function receiveAssistantMessage(message: any) {
   if (reply?.done && reply.messageId != null && id > reply.messageId)
     replies.delete(key);
   const previous = transcripts.get(key) || [];
-  const line = {
+  const notice = readAssistantNotice(message.settings) || message.notice;
+  const line: ConversationLine = {
     id,
     userId: Number(message.userId),
-    content: String(message.content || '')
+    content: String(message.content || ''),
+    ...(notice ? { notice } : {})
   };
   transcripts.set(
     key,
@@ -225,6 +242,7 @@ function handleNewMessage({ message, channelId }: any) {
         ...EMPTY_ASSISTANT_REPLY,
         messageId: id,
         text,
+        notice: readAssistantNotice(message.settings),
         suggestions: readAgentSuggestions(message?.settings),
         card: isWebsiteAgentCardData(message?.settings?.websiteAgentCard)
           ? message.settings.websiteAgentCard
@@ -261,7 +279,11 @@ function handleEdit({ channelId, messageId, editedMessage, settings }: any) {
       key,
       lines.map((line) =>
         line.id === Number(messageId)
-          ? { ...line, content: editedMessage }
+          ? {
+              ...line,
+              content: editedMessage,
+              ...(settings ? { notice: readAssistantNotice(settings) } : {})
+            }
           : line
       )
     );
@@ -275,8 +297,7 @@ function handleEdit({ channelId, messageId, editedMessage, settings }: any) {
       ? {
           ...current,
           text: editedMessage,
-          declined:
-            settings?.hasError === true && settings?.errorType === 'declined',
+          notice: settings ? readAssistantNotice(settings) : current.notice,
           suggestions: readAgentSuggestions(settings),
           card: isWebsiteAgentCardData(settings?.websiteAgentCard)
             ? newestAsyncTaskCard(current.card, settings.websiteAgentCard)

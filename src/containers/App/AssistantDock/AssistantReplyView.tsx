@@ -7,7 +7,7 @@ import ThinkingIndicator, {
   latestThoughtLine
 } from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import WebsiteAgentCard from '~/containers/Chat/Message/MessageBody/WebsiteAgentCard';
-import type { AssistantReply } from './conversationStore';
+import type { AssistantNotice, AssistantReply } from './conversationStore';
 import ChatReactionEmoji from '~/components/ChatReactionEmoji';
 import { assistantVoice } from '~/helpers/assistantVoice';
 
@@ -37,17 +37,8 @@ export default function AssistantReplyView({
     <>
       {reply.error ? (
         <div style={{ color: Color.red() }}>{reply.error}</div>
-      ) : reply.declined ? (
-        // A site note, never words in the assistant's voice.
-        <div
-          role="note"
-          className={css`
-            color: ${Color.darkGray()};
-            font-size: 1.25rem;
-          `}
-        >
-          {assistant} couldn&rsquo;t answer this one. Try asking another way.
-        </div>
+      ) : reply.notice === 'declined' ? (
+        <AssistantReplyNotice assistant={assistant} notice={reply.notice} />
       ) : reply.text ? (
         <RichText
           isAIMessage
@@ -71,7 +62,7 @@ export default function AssistantReplyView({
           <ChatReactionEmoji reaction={reply.reaction} size={30} />
           <span>{assistant} reacted to your message</span>
         </div>
-      ) : reply.done ? null : compactThinking ? (
+      ) : reply.done || reply.notice ? null : compactThinking ? (
         <ThinkingIndicator
           status={reply.status || 'thinking'}
           activity={latestThoughtLine(reply.thoughts)}
@@ -84,6 +75,9 @@ export default function AssistantReplyView({
           isStreamingThoughts={!!reply.thoughts || reply.thinkingHard}
           isThinkingHard={reply.thinkingHard}
         />
+      )}
+      {reply.notice === 'unfinished' && (
+        <AssistantReplyNotice assistant={assistant} notice={reply.notice} />
       )}
       {reply.text &&
       !reply.done &&
@@ -110,5 +104,28 @@ export default function AssistantReplyView({
         </div>
       ) : null}
     </>
+  );
+}
+
+
+export function AssistantReplyNotice({
+  assistant,
+  notice
+}: {
+  assistant: 'Zero' | 'Ciel';
+  notice: AssistantNotice;
+}) {
+  return (
+    <div
+      role="note"
+      className={css`
+        color: ${Color.darkGray()};
+        font-size: 1.25rem;
+      `}
+    >
+      {notice === 'declined'
+        ? `${assistant} couldn’t answer this one. Try asking another way.`
+        : `${assistant} couldn’t finish this reply.`}
+    </div>
   );
 }

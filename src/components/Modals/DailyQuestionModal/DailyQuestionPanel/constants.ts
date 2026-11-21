@@ -18,6 +18,10 @@ export const DAILY_QUESTION_RECOVERY_MAX_ATTEMPTS = 30;
 export const DAILY_QUESTION_RECOVERY_NOT_FOUND_RETRY_LIMIT = 3;
 // The server couldn't polish the answer, so nothing was saved; the draft
 // stays and sending it again shortly is the fix.
+export const DAILY_QUESTION_GRADING_UNAVAILABLE_CODE =
+  'daily_question_grading_unavailable';
+export const DAILY_QUESTION_GRADING_UNAVAILABLE_NOTICE =
+  'Grading is temporarily unavailable. Your draft is still here. Try again in a minute.';
 export const DAILY_QUESTION_POLISH_UNAVAILABLE_CODE =
   'daily_question_polish_unavailable';
 export const DAILY_QUESTION_POLISH_UNAVAILABLE_NOTICE =

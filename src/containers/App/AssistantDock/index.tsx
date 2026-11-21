@@ -33,7 +33,9 @@ import {
 } from '~/helpers/aiVoiceCall';
 import { useWebsiteAgentOverlayActive } from '../WebsiteAgentSpotlight';
 import { EnergyBattery, useDraggableWindow } from './frame';
-import AssistantReplyView from './AssistantReplyView';
+import AssistantReplyView, {
+  AssistantReplyNotice
+} from './AssistantReplyView';
 import { askIdeasFor } from './askIdeas';
 import {
   attachAssistantConversationListeners,
@@ -584,7 +586,7 @@ export function DockWindow({
             overflow-y: auto;
           `}
         >
-          {(reply || transcript.some((line) => line.content)) && (
+          {(reply || transcript.some((line) => line.content || line.notice)) && (
             <div
               ref={scrollRef}
               onScroll={(event) => {
@@ -610,7 +612,9 @@ export function DockWindow({
               `}
             >
               {transcript
-                .filter((line) => line.content && line.id !== reply?.messageId)
+                .filter(
+                  (line) => (line.content || line.notice) && line.id !== reply?.messageId
+                )
                 .map((line) => (
                   <div
                     key={line.id}
@@ -618,27 +622,37 @@ export function DockWindow({
                       margin-bottom: 1rem;
                     `}
                   >
-                    <div
-                      className={css`
-                        font-size: 1.1rem;
-                        color: ${Color.darkGray()};
-                        font-weight: 600;
-                        margin-bottom: 0.3rem;
-                      `}
-                    >
-                      {[ZERO_TWINKLE_ID, CIEL_TWINKLE_ID]
-                        .map(Number)
-                        .includes(line.userId)
-                        ? assistant
-                        : 'You'}
-                    </div>
-                    <RichText
-                      contentType="chat"
-                      contentId={`assistant-transcript-${line.id}`}
-                      maxLines={12}
-                    >
-                      {line.content}
-                    </RichText>
+                    {line.content && line.notice !== 'declined' && (
+                      <>
+                        <div
+                          className={css`
+                            font-size: 1.1rem;
+                            color: ${Color.darkGray()};
+                            font-weight: 600;
+                            margin-bottom: 0.3rem;
+                          `}
+                        >
+                          {[ZERO_TWINKLE_ID, CIEL_TWINKLE_ID]
+                            .map(Number)
+                            .includes(line.userId)
+                            ? assistant
+                            : 'You'}
+                        </div>
+                        <RichText
+                          contentType="chat"
+                          contentId={`assistant-transcript-${line.id}`}
+                          maxLines={12}
+                        >
+                          {line.content}
+                        </RichText>
+                      </>
+                    )}
+                    {line.notice && (
+                      <AssistantReplyNotice
+                        assistant={assistant}
+                        notice={line.notice}
+                      />
+                    )}
                   </div>
                 ))}
               {reply && (
