@@ -2149,10 +2149,13 @@ export default function useInitSocket({
   // presence heartbeat foreground-only. Socket.IO transport liveness remains
   // active independently; a hidden page does not need to wake the mobile radio
   // every 15 seconds merely to refresh passive presence metadata. "Foreground"
-  // means a visible page, not a focused window: blur still reports away, but a
-  // visible unfocused window keeps its heartbeat and its live presence, since
-  // the server pauses presence for a page that claims to be visible yet stays
-  // silent for a minute (helpers/presenceLive.ts).
+  // means a visible page, not a focused window. Blur is not away (Mikey,
+  // 11-22: members multitask in another window): a visible unfocused window
+  // keeps its heartbeat, its live presence (the server pauses presence for a
+  // page that claims to be visible yet stays silent for a minute,
+  // helpers/presenceLive.ts) and its app activity. Focus still reports
+  // visible, which also clears an idle away. Away comes from a hidden page
+  // or the server's 10-minute idle sweep.
   useEffect(() => {
     const emitVisible = () => {
       socket.emit('change_away_status', true);
@@ -2162,10 +2165,6 @@ export default function useInitSocket({
       stopUserHeartbeat();
       socket.emit('change_away_status', false);
     };
-    const emitBlurred = () => {
-      socket.emit('change_away_status', false);
-    };
-
     const onVisibility = () => {
       const live = isPresencePageLive();
       if (presenceLiveSupportedRef.current) {
@@ -2181,7 +2180,6 @@ export default function useInitSocket({
 
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('focus', emitVisible);
-    window.addEventListener('blur', emitBlurred);
     window.addEventListener('online', onOnline);
     // The socket singleton can already be connected if this hook remounts, so
     // establish the timer from current canonical browser state rather than
@@ -2193,7 +2191,6 @@ export default function useInitSocket({
       stopUserHeartbeat();
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', emitVisible);
-      window.removeEventListener('blur', emitBlurred);
       window.removeEventListener('online', onOnline);
     };
     // The listeners intentionally own one mount-lifetime timer and read all

@@ -39,21 +39,20 @@ export function getDisplayedPresence(
 }
 
 /**
- * Whether the "playing <app>" badge shows. Normally only while online and not
- * away; for hidden accounts whenever they're online, since away isn't shown.
+ * Whether the "playing <app>" badge shows: whenever the member is online and
+ * the server reports an activity. Away does not hide it. The server decides
+ * which activity counts (twinkle-api socket/userActivity.ts): a hidden page
+ * keeps its app through a short grace (Mikey, 11-22), and an idle-away or
+ * long-hidden member reports none. `hiddenUserIds` is kept for callers.
  */
 export function isActivityShown({
-  userId,
   activity,
-  presence,
-  hiddenUserIds
+  presence
 }: {
   userId: number | string | null | undefined;
   activity: unknown;
   presence: PresenceFlags | null | undefined;
   hiddenUserIds: readonly number[];
 }) {
-  if (!activity || presence?.isOnline !== true) return false;
-  if (isPresenceHidden(userId, hiddenUserIds)) return true;
-  return presence?.isAway !== true;
+  return Boolean(activity) && presence?.isOnline === true;
 }

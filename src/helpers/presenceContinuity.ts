@@ -103,8 +103,8 @@ function createPageSessionId() {
   return `web-page:${randomId}`;
 }
 
+// A visible page, focused or not: blur is not away (Mikey, 11-22).
 function currentPageIsVisible() {
   if (typeof document === 'undefined') return false;
-  if (document.visibilityState !== 'visible') return false;
-  return typeof document.hasFocus !== 'function' || document.hasFocus();
+  return document.visibilityState === 'visible';
 }

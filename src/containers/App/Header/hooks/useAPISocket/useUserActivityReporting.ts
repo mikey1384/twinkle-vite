@@ -37,12 +37,13 @@ export default function useUserActivityReporting() {
       if (stopped || !isSocketAuthReadyForUser(userId)) return;
       // The app's joinable state (Twinkle.social.setJoinable) rides on the
       // same report, so it needs no socket event or lease of its own.
-      const activity =
-        document.visibilityState === 'visible' && document.hasFocus()
-          ? withJoinable(userActivityRegistry.get(userId), {
-              walkupsAllowed: walkupsAllowedRef.current
-            })
-          : null;
+      // Neither window focus nor a hidden page withdraws it (Mikey, 11-22:
+      // members multitask). The server keeps a hidden page's activity for
+      // its grace (twinkle-api socket/userActivity.ts) and ends it there;
+      // only a real page close or an account switch clears it at once.
+      const activity = withJoinable(userActivityRegistry.get(userId), {
+        walkupsAllowed: walkupsAllowedRef.current
+      });
       const key = JSON.stringify(activity);
       if (!force && key === lastKey) return;
       lastKey = key;
@@ -70,8 +71,8 @@ export default function useUserActivityReporting() {
       clearTimeout(changeTimer);
       // Route changes can unmount one app and mount the next in one commit;
       // an ending activity waits a few seconds (userActivityReportDelayMs), so
-      // a round's gap never blinks the badge. Leaving the page or the window
-      // still clears it at once (pageHidden, foregroundChanged).
+      // a round's gap never blinks the badge. Closing the page still clears
+      // it at once (pageHidden).
       changeTimer = setTimeout(
         () => report(),
         userActivityReportDelayMs({
@@ -82,10 +83,11 @@ export default function useUserActivityReporting() {
     }
     function userInput(event: Event) {
       const activity = userActivityRegistry.get(userId);
+      // A visible window counts even unfocused (macOS scrolls a background
+      // window, and a game can report input from a side-by-side window).
       if (
         !activity ||
         document.visibilityState !== 'visible' ||
-        !document.hasFocus() ||
         !isSocketAuthReadyForUser(userId)
       )
         return;
@@ -103,6 +105,16 @@ export default function useUserActivityReporting() {
     function foregroundChanged() {
       report(true);
     }
+    // Back on the page: renew at once (the server's hidden grace held the
+    // activity meanwhile). Going hidden sends nothing; the server starts the
+    // grace from the page's change_away_status.
+    function visibilityChanged() {
+      if (document.visibilityState === 'visible') report(true);
+    }
+    // A page restored from the back-forward cache after pagehide cleared it.
+    function pageShown(event: PageTransitionEvent) {
+      if (event.persisted) report(true);
+    }
     function disconnected() {
       revision++;
       lastKey = '';
@@ -117,8 +129,14 @@ export default function useUserActivityReporting() {
     const unsubscribe = userActivityRegistry.subscribe(changed);
     const unsubscribeJoinable = socialJoinableStore.subscribe(changed);
     reportChangeRef.current = changed;
+    // A hidden page does not heartbeat: its timers are throttled or
+    // suspended anyway, and the server holds the lease through the grace.
     const heartbeat = setInterval(() => {
-      if (userActivityRegistry.get(userId)) report(true);
+      if (
+        userActivityRegistry.get(userId) &&
+        document.visibilityState === 'visible'
+      )
+        report(true);
     }, 25_000);
     window.addEventListener('pointerdown', userInput, true);
     window.addEventListener('keydown', userInput, true);
@@ -127,11 +145,10 @@ export default function useUserActivityReporting() {
       passive: true
     });
     window.addEventListener(USER_ACTIVITY_INPUT_EVENT, userInput);
-    window.addEventListener('focus', foregroundChanged);
-    window.addEventListener('blur', foregroundChanged);
     window.addEventListener('pagehide', pageHidden);
+    window.addEventListener('pageshow', pageShown);
     window.addEventListener(TWINKLE_SOCKET_AUTH_READY_EVENT, foregroundChanged);
-    document.addEventListener('visibilitychange', foregroundChanged);
+    document.addEventListener('visibilitychange', visibilityChanged);
     socket.on('online_acknowledged', foregroundChanged);
     socket.on('disconnect', disconnected);
     report(true);
@@ -148,14 +165,13 @@ export default function useUserActivityReporting() {
       window.removeEventListener('keydown', userInput, true);
       window.removeEventListener('wheel', userInput, true);
       window.removeEventListener(USER_ACTIVITY_INPUT_EVENT, userInput);
-      window.removeEventListener('focus', foregroundChanged);
-      window.removeEventListener('blur', foregroundChanged);
       window.removeEventListener('pagehide', pageHidden);
+      window.removeEventListener('pageshow', pageShown);
       window.removeEventListener(
         TWINKLE_SOCKET_AUTH_READY_EVENT,
         foregroundChanged
       );
-      document.removeEventListener('visibilitychange', foregroundChanged);
+      document.removeEventListener('visibilitychange', visibilityChanged);
       socket.off('online_acknowledged', foregroundChanged);
       socket.off('disconnect', disconnected);
     };
