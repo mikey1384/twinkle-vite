@@ -1,84 +1,62 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Modal from '~/components/Modal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSprite';
 import { useAppContext, useChatContext } from '~/contexts';
 import BattleScreen, { BattleApi, BattleState } from './BattleScreen';
+import { nextWakeStage, readingMs, WAKE_JOLT_MS, WakeStage, wakeLine } from './wake';
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
 
 // The monster wakes up while its questions are fetched (Mikey 11-22: "keep
-// 'A wild X appears!' out until it actually wakes up"). While the server
-// prepares the battle (at most about 2 s) the stages move on a timer but never
-// past one cracked eye; once the battle is ready the rest plays quickly. The
-// word's name is only shown once it is awake.
-type WakeStage = 'sleep' | 'stir' | 'peek' | 'yawn' | 'wake' | 'awake';
-// While waiting: when each stage starts (ms after the gate opens); past the
-// last, a long wait (an older API) loops stir and peek.
-const WAITING_STAGES: Array<[WakeStage, number]> = [
-  ['sleep', 0],
-  ['stir', 700],
-  ['peek', 1500]
-];
-const LONG_WAIT_LOOP: Array<[WakeStage, number]> = [
-  ['stir', 1800],
-  ['peek', 1400]
-];
-// Once ready: the rest of the wake-up, quickly (ms each). Deep sleep shows at
-// least MIN_SLEEP_MS first, so even an instant battle starts asleep.
-const MIN_SLEEP_MS = 350;
-const QUICK_WAKE: Array<[WakeStage, number]> = [
-  ['stir', 200],
-  ['peek', 260],
-  ['yawn', 480],
-  ['wake', 480]
-];
-const STAGE_ORDER: WakeStage[] = ['sleep', 'stir', 'peek', 'yawn', 'wake', 'awake'];
+// 'A wild X appears!' out until it actually wakes up"), one line at a time at
+// reading pace (Mikey 11-23: "give it more time before they go away and make
+// it skippable"). Each line holds for readingMs of its text; a tap on the gate
+// or Space/Enter moves to the next line at once, and "Wake it!" jumps straight
+// into the battle once it is ready. Until the battle is ready the lines never
+// go past one cracked eye (a long wait loops stir and peek). The word's name
+// is only shown once it is awake.
+function holdMs(stage: WakeStage, word: string) {
+  return stage === 'wake' ? WAKE_JOLT_MS : readingMs(wakeLine(stage, word));
+}
 
-function useWakeStage(ready: boolean, skip: boolean) {
+function useWakeStage({ ready, skip, word }: { ready: boolean; skip: boolean; word: string }) {
   const [stage, setStage] = useState<WakeStage>(skip ? 'awake' : 'sleep');
   const stageRef = useRef(stage);
   stageRef.current = stage;
-  const openedAt = useRef(Date.now());
+  const readyRef = useRef(ready);
+  readyRef.current = ready;
+  // When the current line appeared, so a battle becoming ready mid-line
+  // keeps that line's remaining time instead of restarting it.
+  const shownAt = useRef(Date.now());
 
-  // Waiting: sleep, stir, one eye; then stir and peek in turn.
   useEffect(() => {
-    if (ready || skip) return;
-    const timers: number[] = [];
-    for (const [next, at] of WAITING_STAGES) {
-      if (at > 0) timers.push(window.setTimeout(() => setStage(next), at));
-    }
-    let loopAt = WAITING_STAGES[WAITING_STAGES.length - 1][1];
-    for (let round = 0; round < 40; round++) {
-      for (const [next, length] of LONG_WAIT_LOOP) {
-        loopAt += length;
-        timers.push(window.setTimeout(() => setStage(next), loopAt));
-      }
-    }
-    return () => timers.forEach((id) => window.clearTimeout(id));
-  }, [ready, skip]);
+    shownAt.current = Date.now();
+  }, [stage]);
 
-  // Ready: play what is left of the wake-up, quickly.
   useEffect(() => {
     if (skip) {
       setStage('awake');
       return;
     }
-    if (!ready) return;
-    const timers: number[] = [];
-    const from = STAGE_ORDER.indexOf(stageRef.current);
-    let at = Math.max(0, MIN_SLEEP_MS - (Date.now() - openedAt.current));
-    for (const [next, length] of QUICK_WAKE) {
-      if (STAGE_ORDER.indexOf(next) <= from && next !== 'yawn' && next !== 'wake') continue;
-      timers.push(window.setTimeout(() => setStage(next), at));
-      at += length;
-    }
-    timers.push(window.setTimeout(() => setStage('awake'), at));
-    return () => timers.forEach((id) => window.clearTimeout(id));
-  }, [ready, skip]);
+    const next = nextWakeStage(stage, ready);
+    if (!next) return;
+    const left = Math.max(0, holdMs(stage, word) - (Date.now() - shownAt.current));
+    const timer = window.setTimeout(() => setStage(next), left);
+    return () => window.clearTimeout(timer);
+  }, [stage, ready, skip, word]);
 
-  return [stage, setStage] as const;
+  // The member's skip: the next line now, but never past a cracked eye
+  // before the battle is ready.
+  const advance = useCallback(() => {
+    const current = stageRef.current;
+    if (!readyRef.current && current === 'peek') return;
+    const next = nextWakeStage(current, readyRef.current);
+    if (next) setStage(next);
+  }, []);
+
+  return { stage, setStage, advance };
 }
 
 const POSE_FOR: Record<WakeStage, MonsterPose> = {
@@ -175,13 +153,37 @@ export default function WordBattleGate({
   const level = Math.max(1, Math.min(5, Number(state?.wordLevel || wordObj?.wordLevel || wordObj?.battle?.wordLevel) || 3));
   const ready = !!state && (state.status === 'ready' || state.status === 'active');
   // A battle already under way skips the wake-up: it is awake and waiting.
-  const [stage, setStage] = useWakeStage(ready, state?.status === 'active');
+  const active = state?.status === 'active';
+  const { stage, setStage, advance } = useWakeStage({ ready, skip: active, word });
   const awake = stage === 'wake' || stage === 'awake';
   const asleep = stage === 'sleep' || stage === 'stir';
+  const skippable = !awake && !failed;
+
+  function openBattle() {
+    // Ready while still waking: skip the rest of it.
+    setStage('awake');
+    setOpen(true);
+  }
 
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordBattle">
-      <div className={gateCls} style={compact ? { padding: '1rem' } : undefined}>
+      <div
+        className={cx(gateCls, skippable && gateSkippableCls)}
+        style={compact ? { padding: '1rem' } : undefined}
+        tabIndex={skippable ? 0 : undefined}
+        onClick={skippable ? advance : undefined}
+        onKeyDown={
+          skippable
+            ? (event) => {
+                if (event.target !== event.currentTarget) return;
+                if (event.key === ' ' || event.key === 'Enter') {
+                  event.preventDefault();
+                  advance();
+                }
+              }
+            : undefined
+        }
+      >
         <div className={cx(gateMonsterCls, awake && gateMonsterAwakeCls)}>
           <MonsterSprite
             word={word}
@@ -200,17 +202,7 @@ export default function WordBattleGate({
         </div>
         <div className={gateTextCls} aria-live="polite">
           <div className={gateTitleCls}>
-            {state?.status === 'active'
-              ? `${word.toUpperCase()} is waiting!`
-              : awake
-                ? `A wild ${word.toUpperCase()} appears!`
-                : stage === 'sleep'
-                  ? 'Shh... a wild word is dozing.'
-                  : stage === 'stir'
-                    ? 'Something stirs...'
-                    : stage === 'peek'
-                      ? 'One eye cracks open...'
-                      : '*Yaaawn*'}
+            {active ? `${word.toUpperCase()} is waiting!` : wakeLine(stage, word)}
           </div>
           <div className={gateSubCls}>
             {failed
@@ -219,18 +211,24 @@ export default function WordBattleGate({
                 ? 'Beat it to see what it means. Two questions, two hearts.'
                 : 'Something is sleeping here...'}
           </div>
-          <button
-            type="button"
-            className={gateButtonCls}
-            disabled={!ready}
-            onClick={() => {
-              // Ready while still waking: a tap skips the rest of it.
-              setStage('awake');
-              setOpen(true);
-            }}
-          >
-            {state?.status === 'active' ? 'Back to battle ▶' : awake ? 'Battle! ▶' : ready ? 'Wake it! ▶' : 'Shh...'}
-          </button>
+          <div className={gateActionsCls}>
+            <button
+              type="button"
+              className={gateButtonCls}
+              disabled={!ready}
+              onClick={(event) => {
+                event.stopPropagation();
+                openBattle();
+              }}
+            >
+              {active ? 'Back to battle ▶' : awake ? 'Battle! ▶' : ready ? 'Wake it! ▶' : 'Shh...'}
+            </button>
+            {skippable && (
+              <span className={skipHintCls} aria-hidden="true">
+                <span className={skipArrowCls}>▼</span> tap to skip
+              </span>
+            )}
+          </div>
         </div>
       </div>
       {open && state && (
@@ -308,6 +306,46 @@ const gateCls = css`
     flex-direction: column;
     text-align: center;
     gap: 0.8rem;
+  }
+`;
+
+const gateSkippableCls = css`
+  cursor: pointer;
+  &:focus-visible {
+    outline: 3px solid #ffd34d;
+    outline-offset: 2px;
+  }
+`;
+
+const gateActionsCls = css`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  @media (max-width: 480px) {
+    justify-content: center;
+  }
+`;
+
+// The Dragon Quest "more text" arrow.
+const skipHintCls = css`
+  font-family: ${PIXEL_FONT};
+  font-size: 9px;
+  color: #a99fc4;
+  white-space: nowrap;
+`;
+
+const skipArrowCls = css`
+  display: inline-block;
+  color: #ffffff;
+  animation: gate-skip-arrow 0.8s steps(2) infinite;
+  @keyframes gate-skip-arrow {
+    50% {
+      transform: translateY(3px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 `;
 
@@ -436,7 +474,6 @@ const gateSubCls = css`
 `;
 
 const gateButtonCls = css`
-  align-self: flex-start;
   font-family: ${PIXEL_FONT};
   font-size: 12px;
   padding: 12px 16px;
@@ -452,9 +489,6 @@ const gateButtonCls = css`
   &:disabled {
     opacity: 0.6;
     cursor: default;
-  }
-  @media (max-width: 480px) {
-    align-self: center;
   }
 `;
 

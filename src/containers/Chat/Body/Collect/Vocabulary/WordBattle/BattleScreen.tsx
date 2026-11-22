@@ -4,6 +4,9 @@ import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSpri
 import { backdropUri, HEART, HEART_EMPTY, SCROLL, SPEAKER } from './art';
 import { playBattleSound } from './battleSfx';
 import LootReel from './LootReel';
+import Icon from '~/components/Icon';
+import { badgeStyle } from '~/components/WordMasterBadges';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import {
   COMMAND_NAMES,
@@ -38,7 +41,8 @@ export interface BattleLoot {
   amount?: number;
   quality?: string;
   // What the win paid, and the member's totals after it (from the server).
-  reward?: { xp: number; coins: number };
+  // points: the Word Master points the win added to the boards.
+  reward?: { xp: number; coins: number; points?: number };
   xp?: number;
   coins?: number;
 }
@@ -552,6 +556,9 @@ export default function BattleScreen({
         <div className={lootCls}>
           <LootReel kind={finished.loot?.kind || 'none'} onLanded={handleLanded} />
           {dropText && <div className={dropTextCls}>{dropText}</div>}
+          {dropText && finished.loot?.reward && (
+            <RewardChips reward={finished.loot.reward} />
+          )}
         </div>
       )}
 
@@ -567,6 +574,35 @@ export default function BattleScreen({
           <button type="button" className={doneButtonCls} onClick={onClose}>
             Close
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// What every win pays, in the Word Master feed's chips: pink pts, green XP,
+// gold Coins.
+function RewardChips({ reward }: { reward: NonNullable<BattleLoot['reward']> }) {
+  const points = Number(reward.points || 0);
+  return (
+    <div className={rewardChipsCls} data-testid="battle-reward-chips">
+      {points > 0 && (
+        <div className={badgeStyle('passionFruit', 0.85)}>
+          <span className="label">
+            {addCommasToNumber(points)} {points === 1 ? 'pt' : 'pts'}
+          </span>
+        </div>
+      )}
+      {reward.xp > 0 && (
+        <div className={badgeStyle('limeGreen', 0.85)}>
+          <Icon icon={['far', 'star']} />
+          <span className="label">{addCommasToNumber(reward.xp)} XP</span>
+        </div>
+      )}
+      {reward.coins > 0 && (
+        <div className={badgeStyle('gold', 0.85)}>
+          <Icon icon="coins" />
+          <span className="label">{addCommasToNumber(reward.coins)}</span>
         </div>
       )}
     </div>
@@ -1054,6 +1090,13 @@ const dropTextCls = css`
   @media (max-width: 480px) {
     font-size: 10px;
   }
+`;
+
+const rewardChipsCls = css`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
 `;
 
 const doneRowCls = css`
