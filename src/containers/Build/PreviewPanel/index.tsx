@@ -73,9 +73,9 @@ import {
   type BuildViewerAgeTier,
   resolveViewerAgeTier
 } from './helpers/previewBridgeAuth';
-import AgentManualPane from './AgentManualPane';
 import PreviewStage, { BuildLiveHostSafetyControls } from './PreviewStage';
 import ProjectFileInputs from './ProjectFileInputs';
+import AgentManualPaneLoader from './AgentManualPaneLoader';
 import { createPortal } from 'react-dom';
 import WorkspaceToolbar from './WorkspaceToolbar';
 import {
@@ -1750,7 +1750,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               onPreviewFrameLoad={handlePreviewFrameLoad}
             />
           ) : viewMode === 'manual' ? (
-            <AgentManualPane capabilitySnapshot={resolvedCapabilitySnapshot} />
+            <AgentManualPaneLoader
+              capabilitySnapshot={resolvedCapabilitySnapshot}
+            />
           ) : (
             <CodeWorkspacePane
               displayedProjectFiles={displayedProjectFiles}
