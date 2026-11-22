@@ -1,4 +1,5 @@
 import { applyMemberPage } from './memberPage';
+import { applyAIGeneratedDefinitions } from './aiGeneratedDefinitions';
 import { newestAsyncTaskCard } from '~/helpers/asyncTaskCard';
 import { applyUserActivityEvent } from '~/helpers/userActivity';
 import {
@@ -3083,23 +3084,15 @@ export default function ChatReducer(
       };
     }
     case 'APPLY_AI_GENERATED_DEFINITIONS': {
-      const definitionOrder: Record<string, string[]> = {};
-      for (const key in action.partOfSpeeches) {
-        definitionOrder[key] = action.partOfSpeeches[key].map(
-          (def: { id: number }) => def.id
-        );
-      }
-
       return {
         ...state,
         wordsObj: {
           ...state.wordsObj,
-          [action.word]: {
-            ...state.wordsObj[action.word],
-            ...action.partOfSpeeches,
-            definitionOrder,
+          [action.word]: applyAIGeneratedDefinitions({
+            wordObj: state.wordsObj[action.word],
+            partOfSpeeches: action.partOfSpeeches,
             partOfSpeechOrder: action.partOfSpeechOrder
-          }
+          })
         }
       };
     }

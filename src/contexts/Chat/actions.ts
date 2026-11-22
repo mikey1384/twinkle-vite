@@ -56,7 +56,7 @@ export default function ChatActions(dispatch: Dispatch) {
     }: {
       word: string;
       partOfSpeechOrder: string[];
-      partOfSpeeches: string[];
+      partOfSpeeches: Record<string, unknown>;
     }) {
       return dispatch({
         type: 'APPLY_AI_GENERATED_DEFINITIONS',
