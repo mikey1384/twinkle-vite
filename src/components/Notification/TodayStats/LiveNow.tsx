@@ -1,10 +1,16 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import ProfilePic from '~/components/ProfilePic';
-import UserPopup from '~/components/UserPopup';
-import { useAppContext, useChatContext } from '~/contexts';
+import useUserPopupTrigger from '~/components/UserPopup/useUserPopupTrigger';
+import { useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { PRESENCE_HIDDEN_USER_IDS } from '~/helpers/hiddenPresence';
 import { trackEvent } from '~/helpers/analytics';
@@ -12,6 +18,7 @@ import useBlockedUsers from '~/helpers/hooks/useBlockedUsers';
 import { abbreviateNumber, addCommasToNumber } from '~/helpers/stringHelpers';
 import { useWalkUp } from '~/helpers/hooks/useSocialWalkups';
 import { joinableBadge } from '~/helpers/socialWalkups';
+import type { User } from '~/types';
 import {
   createLiveNowShownTracker,
   createLiveNowSignatureReader,
@@ -405,13 +412,11 @@ const shouldTrackLiveNowShown = createLiveNowShownTracker();
 
 export default function LiveNow({
   apps,
-  myId,
   accentColor,
   buttonColor,
   onPopupOpenChange
 }: {
   apps: LiveNowApp[];
-  myId: number;
   accentColor: string;
   buttonColor: string;
   // Lets Today's Progress hold the list while a face's profile popup is open.
@@ -419,15 +424,15 @@ export default function LiveNow({
 }) {
   const navigate = useNavigate();
   const walkUp = useWalkUp();
-  const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [expanded, setExpanded] = useState(false);
-  const [popup, setPopup] = useState<{
-    member: LiveNowMember;
-    context: { x: number; y: number; width: number; height: number };
-  } | null>(null);
-  const [popupLoading, setPopupLoading] = useState(false);
-  const popupTriggerRef = useRef<HTMLElement | null>(null);
+  // Which faces / join lines have their profile card open right now.
+  const [openPopupKeys, setOpenPopupKeys] = useState<string[]>([]);
+  const handlePopupShown = useCallback((key: string, shown: boolean) => {
+    setOpenPopupKeys((keys) => {
+      if (shown) return keys.includes(key) ? keys : [...keys, key];
+      return keys.includes(key) ? keys.filter((k) => k !== key) : keys;
+    });
+  }, []);
 
   // Count an impression only when the row is actually on screen: Home also
   // mounts a hidden copy of this card (its right column is display: none on
@@ -457,7 +462,7 @@ export default function LiveNow({
     if (apps.length <= LIVE_NOW_COLLAPSED_APPS) setExpanded(false);
   }, [apps.length]);
 
-  const popupOpen = !!popup;
+  const popupOpen = openPopupKeys.length > 0;
   useEffect(() => {
     onPopupOpenChange?.(popupOpen);
   }, [onPopupOpenChange, popupOpen]);
@@ -507,28 +512,12 @@ export default function LiveNow({
               >
                 <span className="live-faces">
                   {app.members.map((member) => (
-                    <span
+                    <LiveNowFace
                       key={member.id}
-                      className="live-face"
-                      data-joinable={member.joinable?.state}
-                      title={
-                        member.joinable
-                          ? `${member.username} · ${joinableBadge(member.joinable)}`
-                          : member.username
-                      }
-                      onClick={(event) => openMember(event, member, app)}
-                    >
-                      <ProfilePic
-                        userId={member.id}
-                        profilePicUrl={member.profilePicUrl}
-                        activityBadgeShown={false}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          cursor: 'pointer'
-                        }}
-                      />
-                    </span>
+                      member={member}
+                      app={app}
+                      onPopupShown={handlePopupShown}
+                    />
                   ))}
                 </span>
                 <span
@@ -546,18 +535,12 @@ export default function LiveNow({
                     .filter((member) => member.joinable)
                     .slice(0, LIVE_NOW_JOIN_LINES)
                     .map((member) => (
-                      <button
+                      <LiveNowJoinLine
                         key={member.id}
-                        type="button"
-                        className="live-join"
-                        data-state={member.joinable!.state}
-                        onClick={(event) => openMember(event, member, app)}
-                      >
-                        <span className="live-join-dot" aria-hidden />
-                        <span className="live-join-text">
-                          {member.username} · {joinableBadge(member.joinable!)}
-                        </span>
-                      </button>
+                        member={member}
+                        app={app}
+                        onPopupShown={handlePopupShown}
+                      />
                     ))}
                 </span>
               ) : null}
@@ -592,23 +575,6 @@ export default function LiveNow({
           {expanded ? 'Show less' : `+${hiddenCount} more`}
         </button>
       ) : null}
-      {popup ? (
-        <UserPopup
-          isLoading={popupLoading}
-          popupContext={popup.context}
-          triggerRef={popupTriggerRef}
-          myId={myId}
-          user={popup.member as any}
-          onHide={() => setPopup(null)}
-          onSetPopupContext={(context: any) =>
-            setPopup((current) =>
-              current && context ? { ...current, context } : null
-            )
-          }
-          onMouseEnter={() => {}}
-          onMouseLeave={() => {}}
-        />
-      ) : null}
     </section>
   );
 
@@ -637,44 +603,115 @@ export default function LiveNow({
     }
     navigate(`/app/${app.appId}`);
   }
+}
 
-  async function openMember(
-    event: React.MouseEvent<HTMLElement>,
-    member: LiveNowMember,
-    app: LiveNowApp
-  ) {
-    event.stopPropagation();
-    if (popup?.member.id === member.id) {
-      setPopup(null);
-      return;
+// A member's face or join line opens the site's standard profile card, the same
+// as their name anywhere else: hover on desktop, tap on phones. Tapping it
+// never walks up; the card's own Play / Watch does.
+function useLiveNowMemberPopup<T extends HTMLElement>({
+  member,
+  app,
+  popupKey,
+  onPopupShown
+}: {
+  member: LiveNowMember;
+  app: LiveNowApp;
+  popupKey: string;
+  onPopupShown: (key: string, shown: boolean) => void;
+}) {
+  const trigger = useUserPopupTrigger<T>({ user: member as unknown as User });
+  const { shown } = trigger;
+  useEffect(() => {
+    onPopupShown(popupKey, shown);
+  }, [onPopupShown, popupKey, shown]);
+  useEffect(
+    () => () => onPopupShown(popupKey, false),
+    [onPopupShown, popupKey]
+  );
+  return {
+    ...trigger,
+    onClick(event: React.MouseEvent<HTMLElement>) {
+      if (!shown) {
+        trackEvent('live_now_tap', { target: 'avatar', app_id: app.appId });
+      }
+      void trigger.onClick(event);
     }
-    trackEvent('live_now_tap', { target: 'avatar', app_id: app.appId });
-    popupTriggerRef.current = event.currentTarget;
-    const rect = event.currentTarget.getBoundingClientRect();
-    setPopup({
+  };
+}
+
+function LiveNowFace({
+  member,
+  app,
+  onPopupShown
+}: {
+  member: LiveNowMember;
+  app: LiveNowApp;
+  onPopupShown: (key: string, shown: boolean) => void;
+}) {
+  const { triggerRef, popup, onMouseEnter, onMouseLeave, onClick } =
+    useLiveNowMemberPopup<HTMLSpanElement>({
       member,
-      context: {
-        x: rect.left,
-        y: rect.top,
-        width: rect.width,
-        height: rect.height
-      }
+      app,
+      popupKey: `face:${app.appId}:${member.id}`,
+      onPopupShown
     });
-    setPopupLoading(true);
-    try {
-      const data = await loadProfile(member.id);
-      if (data?.id === member.id) {
-        onSetUserState({
-          userId: member.id,
-          newState: { ...data, loaded: true }
-        });
-      }
-    } catch {
-      // The request helper reports it; the popup keeps the known identity.
-    } finally {
-      setPopupLoading(false);
-    }
-  }
+  return (
+    <span
+      ref={triggerRef}
+      className="live-face"
+      data-joinable={member.joinable?.state}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+    >
+      <ProfilePic
+        userId={member.id}
+        profilePicUrl={member.profilePicUrl}
+        activityBadgeShown={false}
+        style={{
+          width: '100%',
+          height: '100%',
+          cursor: 'pointer'
+        }}
+      />
+      {popup}
+    </span>
+  );
+}
+
+function LiveNowJoinLine({
+  member,
+  app,
+  onPopupShown
+}: {
+  member: LiveNowMember;
+  app: LiveNowApp;
+  onPopupShown: (key: string, shown: boolean) => void;
+}) {
+  const { triggerRef, popup, onMouseEnter, onMouseLeave, onClick } =
+    useLiveNowMemberPopup<HTMLButtonElement>({
+      member,
+      app,
+      popupKey: `line:${app.appId}:${member.id}`,
+      onPopupShown
+    });
+  return (
+    <button
+      ref={triggerRef}
+      type="button"
+      className="live-join"
+      data-state={member.joinable!.state}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+    >
+      <span className="live-join-dot" aria-hidden />
+      <span className="live-join-text">
+        {member.username} · {joinableBadge(member.joinable!)}
+      </span>
+      {popup}
+    </button>
+  );
 }
 
 function AppThumb({ app }: { app: LiveNowApp }) {

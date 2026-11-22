@@ -515,7 +515,6 @@ export default function TodayStats({
               {compact ? (
                 <LiveNow
                   apps={liveApps}
-                  myId={myId}
                   accentColor={todayProgressColor}
                   buttonColor={buttonColor}
                   onPopupOpenChange={setLiveNowPopupOpen}

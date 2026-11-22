@@ -168,7 +168,7 @@ async function compileFixture() {
 }
 
 test(
-  'switching Live now on and off never remounts or refetches achievements; a face popup holds the row',
+  'switching Live now on and off never remounts or refetches achievements; a face opens the profile card and holds the row',
   { timeout: 90000 },
   async () => {
     const script = await compileFixture();
@@ -239,8 +239,16 @@ test(
       // app empties; the update lands when the popup closes.
       await page.evaluate(() => window.setChatStatus(window.live));
       await page.getByText('Live now', { exact: true }).waitFor();
-      await page.locator('[title="member11"]').click();
-      await page.waitForFunction(() => window.profileLoads === 1);
+      const face = page.locator('.live-face').first();
+      const popup = page.locator('[data-portal="user-popup"]');
+      // On a phone a tap opens the site's profile card (and never joins).
+      await face.tap();
+      await popup.getByText('member11').first().waitFor();
+      assert.equal(
+        await page.evaluate(() => window.profileLoads >= 1),
+        true,
+        'opening the card loads the profile'
+      );
       // Move the mouse off the card so only the open popup is holding.
       await page.mouse.move(380, 880);
       await page.evaluate(() => window.setChatStatus({}));
@@ -268,6 +276,49 @@ test(
         : null;
       error.message += `\nfixture state: ${JSON.stringify(state)}\npage errors: ${JSON.stringify(errors)}`;
       throw error;
+    } finally {
+      await browser.close();
+    }
+  }
+);
+
+test(
+  'on desktop, hovering a Live now face shows the profile card, like a username',
+  { timeout: 60000 },
+  async () => {
+    const script = await compileFixture();
+    const browser = await chromium.launch();
+    const errors = [];
+    try {
+      const page = await browser.newPage({
+        viewport: { width: 1280, height: 900 }
+      });
+      page.setDefaultTimeout(8000);
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.route('**/*', (route) => {
+        if (route.request().url() === 'http://localhost:3000/') {
+          return route.fulfill({
+            contentType: 'text/html',
+            body: `<style>${readFileSync(path.join(repo, 'src/styles.css'), 'utf8')}</style><div id="root"></div><div id="outer-layer"></div>`
+          });
+        }
+        return route.abort();
+      });
+      await page.goto('http://localhost:3000/');
+      await page.addScriptTag({ content: script });
+      await page.evaluate(() => window.setChatStatus(window.live));
+      await page.getByText('Live now', { exact: true }).waitFor();
+      assert.equal(
+        await page.locator('.live-face[title]').count(),
+        0,
+        'no username-only tooltip on faces'
+      );
+      const popup = page.locator('[data-portal="user-popup"]');
+      await page.locator('.live-face').first().hover();
+      await popup.getByText('member11').first().waitFor();
+      await page.mouse.move(1270, 890);
+      await popup.getByText('member11').first().waitFor({ state: 'detached' });
+      assert.deepEqual(errors, []);
     } finally {
       await browser.close();
     }

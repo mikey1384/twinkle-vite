@@ -1,11 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
-import { isMobile } from '~/helpers';
 import { User } from '~/types';
-import UserPopup from '~/components/UserPopup';
-import { isProfileAppearanceFresh } from '~/helpers/profileAppearance';
-const deviceIsMobile = isMobile(navigator);
+import useUserPopupTrigger from '~/components/UserPopup/useUserPopupTrigger';
 const deletedLabel = 'Deleted';
 
 export default function UsernameText({
@@ -46,46 +42,24 @@ export default function UsernameText({
   activityContext?: string;
   activityPoints?: number;
 }) {
-  const [loading, setLoading] = useState(false);
-  const cachedLoaded = useAppContext(
-    (v) => v.user.state.userObj[user.id]?.loaded
-  );
-  const cachedAppearanceLoadedAt = useAppContext(
-    (v) => v.user.state.userObj[user.id]?.profileAppearanceLoadedAt
-  );
-  const cachedLevel = useAppContext(
-    (v) => v.user.state.userObj[user.id]?.level
-  );
-  const cachedTwinkleXP = useAppContext(
-    (v) => v.user.state.userObj[user.id]?.twinkleXP
-  );
-  const cachedUnlockedAchievementIds = useAppContext(
-    (v) => v.user.state.userObj[user.id]?.unlockedAchievementIds
-  );
-  const cachedChessMaxLevelUnlocked = useAppContext(
-    (v) => v.user.state.userObj[user.id]?.chessMaxLevelUnlocked
-  );
-  const showTimerRef: React.RefObject<any> = useRef(0);
-  const hideTimerRef: React.RefObject<any> = useRef(0);
-  const hideTimerRef2: React.RefObject<any> = useRef(0);
-  const UsernameTextRef = useRef<HTMLDivElement | null>(null);
-  const mouseEntered = useRef(false);
-  const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-
-  const userId = useKeyContext((v) => v.myState.userId);
-  const [dropdownContext, setDropdownContext] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
-  const menuShownRef = useRef(false);
-
-  useEffect(() => {
-    menuShownRef.current = !!dropdownContext;
-    onMenuShownChange?.(!!dropdownContext);
-  }, [dropdownContext, onMenuShownChange]);
+  const {
+    triggerRef: UsernameTextRef,
+    shown,
+    popup,
+    onMouseEnter,
+    onMouseLeave,
+    onClick
+  } = useUserPopupTrigger<HTMLDivElement>({
+    user,
+    onShownChange: onMenuShownChange,
+    popupProps: {
+      wordMasterContext,
+      wordMasterPoints,
+      wordMasterLabel,
+      activityContext,
+      activityPoints
+    }
+  });
 
   return (
     <div
@@ -93,14 +67,12 @@ export default function UsernameText({
       data-feed-card-interactive="true"
       style={{
         display: 'inline',
-        ...(dropdownContext
-          ? {}
-          : { overflow: 'hidden', textOverflow: 'ellipsis' }),
+        ...(shown ? {} : { overflow: 'hidden', textOverflow: 'ellipsis' }),
         position: 'relative',
         ...style
       }}
       className={className}
-      onMouseLeave={deviceIsMobile ? undefined : handleMouseLeave}
+      onMouseLeave={onMouseLeave}
     >
       <div
         style={{
@@ -122,123 +94,13 @@ export default function UsernameText({
               : Color.lighterGray(),
             ...textStyle
           }}
-          onClick={onUsernameClick}
+          onClick={onClick}
           onMouseEnter={onMouseEnter}
         >
           {displayedName || user.username || `(${deletedLabel})`}
         </div>
       </div>
-      {dropdownContext && (
-        <UserPopup
-          isLoading={loading}
-          triggerRef={UsernameTextRef}
-          popupContext={dropdownContext}
-          onMouseEnter={() => {
-            clearTimeout(hideTimerRef.current);
-            clearTimeout(hideTimerRef2.current);
-          }}
-          onMouseLeave={() => {
-            hideTimerRef2.current = setTimeout(() => {
-              setDropdownContext(null);
-            }, 500);
-          }}
-          myId={userId}
-          user={user}
-          onHide={() => setDropdownContext(null)}
-          onSetPopupContext={setDropdownContext}
-          wordMasterContext={wordMasterContext}
-          wordMasterPoints={wordMasterPoints}
-          wordMasterLabel={wordMasterLabel}
-          activityContext={activityContext}
-          activityPoints={activityPoints}
-        />
-      )}
+      {popup}
     </div>
   );
-
-  function shouldLoadProfile() {
-    return (
-      !isProfileAppearanceFresh(cachedAppearanceLoadedAt) ||
-      (cachedTwinkleXP == null && user.twinkleXP == null) ||
-      cachedLevel == null ||
-      (!cachedUnlockedAchievementIds && !user.unlockedAchievementIds) ||
-      (!cachedLoaded &&
-        cachedChessMaxLevelUnlocked == null &&
-        user.chessMaxLevelUnlocked == null)
-    );
-  }
-
-  async function onMouseEnter() {
-    mouseEntered.current = true;
-    const parentElementDimensions =
-      UsernameTextRef.current?.getBoundingClientRect?.() || {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0
-      };
-    if (user.username && !deviceIsMobile) {
-      clearTimeout(hideTimerRef.current);
-      clearTimeout(hideTimerRef2.current);
-      clearTimeout(showTimerRef.current);
-      if (shouldLoadProfile()) {
-        setLoading(!cachedLoaded);
-        showTimerRef.current = setTimeout(async () => {
-          if (mouseEntered.current) {
-            setDropdownContext(parentElementDimensions);
-          }
-        }, 500);
-        await refreshProfile();
-      } else {
-        showTimerRef.current = setTimeout(
-          () => setDropdownContext(parentElementDimensions),
-          500
-        );
-      }
-    }
-  }
-
-  async function onUsernameClick(event: React.MouseEvent<HTMLDivElement>) {
-    event.stopPropagation();
-    const elementContext = {
-      x: UsernameTextRef.current?.getBoundingClientRect?.()?.left || 0,
-      y: UsernameTextRef.current?.getBoundingClientRect?.()?.top || 0,
-      width: UsernameTextRef.current?.getBoundingClientRect?.()?.width || 0,
-      height: UsernameTextRef.current?.getBoundingClientRect?.()?.height || 0
-    };
-    if (user.username) {
-      if (shouldLoadProfile() && !menuShownRef.current) {
-        setLoading(!cachedLoaded);
-        setDropdownContext(elementContext);
-        await refreshProfile();
-      } else {
-        setDropdownContext(menuShownRef.current ? null : elementContext);
-      }
-    }
-  }
-
-  async function refreshProfile() {
-    try {
-      const data = await loadProfile(user.id);
-      if (data?.id === user.id) {
-        onSetUserState({
-          userId: user.id,
-          newState: { ...data, loaded: true }
-        });
-      }
-    } catch {
-      // The request helper reports the error. Keep the available identity
-      // usable, clear the spinner, and let the next interaction retry.
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function handleMouseLeave() {
-    mouseEntered.current = false;
-    clearTimeout(showTimerRef.current);
-    hideTimerRef.current = setTimeout(() => {
-      setDropdownContext(null);
-    }, 500);
-  }
 }
