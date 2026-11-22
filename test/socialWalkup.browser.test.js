@@ -72,11 +72,13 @@ window.live={
   15:person(15,{kind:'app',id:9,title:'Word Search Adventure',thumbnailUrl:null})
 };
 // Drop-in rooms: an open lobby (Join puts you straight in) and one in a match.
+// The busy room is what presence carries when the app goes busy without
+// repeating its roomKey: mode 'room', no dropIn flag, no key.
 const amongUs=(joinable)=>({kind:'app',id:2809,title:'Among Us',thumbnailUrl:'/thumbs/amongus.png',multiplayer:true,...(joinable?{joinable}:{})});
 window.names[16]='dew';window.names[17]='Cloudstar';window.names[18]='mina2';
 window.rooms={
   16:person(16,amongUs({state:'open',label:'Waiting for crews',mode:'room',dropIn:true})),
-  17:person(17,amongUs({state:'busy',label:'In a match',mode:'room',dropIn:true})),
+  17:person(17,amongUs({state:'busy',label:'In a match',mode:'room'})),
   18:person(18,amongUs())
 };
 function LocationProbe(){const location=useLocation();useEffect(()=>{window.lastLocation={pathname:location.pathname,state:location.state};},[location]);return null;}
@@ -721,6 +723,7 @@ test(
       const busyPanel = page.locator('[data-social-join]');
       await busyPanel.waitFor();
       assert.match(await busyPanel.innerText(), /In a match/);
+      assert.doesNotMatch(await busyPanel.innerText(), /next/i);
       assert.equal(await busyPanel.locator('button').count(), 0);
       await page.waitForTimeout(350);
       await shot(page, 'dropin-popup-busy-phone.png');
@@ -778,6 +781,32 @@ test(
       await page.getByRole('button', { name: 'Join Among Us' }).click();
       await page.waitForFunction(() => window.lastLocation?.state === null);
       assert.equal(await page.evaluate(() => window.socialWalkupStore.get(2809).match), null);
+
+      // Only a busy room in Among Us: Live now shows it busy, and the row's
+      // Join just opens the app. Nobody is walked up to or queued.
+      // (a fresh card: Live now holds what it showed while the pointer is on it)
+      await page.mouse.move(380, 890);
+      await page.evaluate(() => {
+        window.walkups.length = 0;
+        window.lastLocation = null;
+        window.setScene({ name: 'none' });
+        window.setChatStatus({ ...window.live, 17: window.rooms[17] });
+      });
+      await page.evaluate(() => window.setScene({ name: 'live' }));
+      const busyRow = page.locator('li', { hasText: 'Among Us' });
+      await page.waitForFunction(() => {
+        const row = [...document.querySelectorAll('li')].find((li) => li.textContent.includes('Among Us'));
+        return row && row.querySelectorAll('.live-join').length === 1;
+      });
+      assert.deepEqual(
+        (await busyRow.locator('.live-join').allInnerTexts()).map((line) => line.trim()),
+        ['Cloudstar · In a match']
+      );
+      assert.equal(await busyRow.locator('.live-join').first().getAttribute('data-state'), 'busy');
+      await page.getByRole('button', { name: 'Join Among Us' }).click();
+      await page.waitForFunction(() => window.lastLocation?.pathname === '/app/2809');
+      assert.deepEqual(await page.evaluate(() => window.walkups), []);
+      assert.equal(await page.evaluate(() => window.lastLocation.state), null);
       assert.deepEqual(errors, []);
 
       // The host's side: a tiny toast that takes no taps and goes by itself.

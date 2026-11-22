@@ -397,11 +397,23 @@ test('drop-in: Join while the room is open; no "Join next" for a room in a match
     joinActions({ joinable: { ...room, state: 'busy-watchable' }, appTitle: 'Among Us', username: 'dew' }),
     [{ intent: 'watch', label: 'Watch' }]
   );
-  // a room without drop-in (an app that set no roomKey) keeps the queue
+  // rooms never use the queue: a busy room as presence carries it with no
+  // key and no dropIn flag (the app went busy without repeating its key)
+  // shows busy with nothing to tap, never "Join next"
+  for (const state of ['busy', 'busy-watchable'] as const) {
+    const joinable = readJoinable({ kind: 'app', joinable: { state, label: 'In a round', mode: 'room' } })!;
+    const actions = joinActions({ joinable, appTitle: 'Among Us', username: 'dew' });
+    assert.equal(actions.some((action) => action.intent === 'next' || action.intent === 'play'), false);
+    assert.equal(actions.some((action) => /next/i.test(action.label)), false);
+  }
   assert.deepEqual(
-    joinActions({ joinable: { state: 'busy', label: '', mode: 'room' }, appTitle: 'Among Us', username: 'dew' })
-      .map((action) => action.intent),
-    ['next']
+    joinActions({ joinable: { state: 'busy', label: '', mode: 'room' }, appTitle: 'Among Us', username: 'dew' }),
+    []
+  );
+  // an open room without a held key: Join (the server then just opens the app)
+  assert.deepEqual(
+    joinActions({ joinable: { state: 'open', label: '', mode: 'room' }, appTitle: 'Among Us', username: 'dew' }),
+    [{ intent: 'play', label: 'Join dew in Among Us' }]
   );
 });
 

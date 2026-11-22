@@ -23,6 +23,7 @@ export interface Joinable {
   roomKey?: string;
 }
 
+export const DROP_IN_MODE = 'room';
 export const DROP_IN_ROOM_KEY_MAX = 64;
 const ROOM_KEY_PATTERN = /^[A-Za-z0-9._:-]+$/;
 
@@ -33,7 +34,7 @@ export function readOwnJoinable(payload: any): Joinable | null {
   delete joinable.dropIn;
   const roomKey = payload?.roomKey;
   if (
-    joinable.mode === 'room' &&
+    joinable.mode === DROP_IN_MODE &&
     typeof roomKey === 'string' &&
     roomKey.length > 0 &&
     roomKey.length <= DROP_IN_ROOM_KEY_MAX &&
@@ -96,9 +97,11 @@ export function joinActions({
   username: string;
 }): JoinAction[] {
   const game = isGameMode(joinable.mode);
-  // A drop-in room: Join puts the visitor straight in while it is open. In a
-  // match or full, nobody is queued for it; at most they can watch.
-  if (joinable.dropIn) {
+  // A room (mode 'room') never uses the queue, in any state. Open: Join
+  // drops the visitor straight in (or, with no held key, just opens the app).
+  // In a match or full: shown busy, no Join and no "Join next"; at most they
+  // can watch.
+  if (joinable.dropIn || joinable.mode === DROP_IN_MODE) {
     if (joinable.state === 'open')
       return [{ intent: 'play', label: `Join ${username} in ${appTitle}` }];
     return joinable.state === 'busy-watchable'
