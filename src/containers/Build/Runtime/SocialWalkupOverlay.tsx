@@ -7,6 +7,7 @@ import {
   useSocialBuildState
 } from '~/helpers/hooks/useSocialWalkups';
 import {
+  arrivalText,
   queueChipText,
   socialWalkupStore,
   visitLine,
@@ -22,8 +23,12 @@ import {
 //   chip while people wait. Ignoring is a soft no; nothing is ever "declined".
 // - for the member who walked up: one line saying where things stand
 //   ("You're next", "KenGo's still in a game...", "KenGo isn't here right now").
+// - for the member whose open room someone dropped into from Live now: a
+//   tiny passing toast ("mikey joined from Live now") that takes no taps.
+//   They are already in; the app's own "joined" is the real news.
 // The app decides when anything starts (Twinkle.social.accept).
 export const SOCIAL_BANNER_MS = 12_000;
+export const SOCIAL_ARRIVAL_MS = 4_000;
 const VISIT_NOTE_MS = 9_000;
 // A member who turned walk-ups off sees a quiet reminder for a moment when
 // an app could have made them joinable, never a permanent fixture.
@@ -203,6 +208,53 @@ const layerClass = css`
   .social-note {
     align-self: center;
   }
+  .social-arrival {
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: min(320px, 100%);
+    min-height: 34px;
+    padding: 4px 14px 4px 5px;
+    border: 1px solid #cfd9ea;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 3px 10px rgba(20, 35, 61, 0.16);
+    color: #14233d;
+    font-size: 14px;
+    font-weight: 600;
+    pointer-events: none;
+    animation: socialArrival ${SOCIAL_ARRIVAL_MS}ms ease-in-out forwards;
+  }
+  .social-arrival .social-face {
+    width: 26px;
+    height: 26px;
+  }
+  .social-arrival span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  @keyframes socialArrival {
+    0% {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    8%,
+    80% {
+      opacity: 1;
+      transform: none;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .social-arrival {
+      animation: none;
+    }
+  }
   .social-note .social-line {
     font-weight: 600;
   }
@@ -247,6 +299,15 @@ export default function SocialWalkupOverlay({
     );
     return () => clearTimeout(timer);
   }, [bannerShownAt, buildId]);
+  const arrivalShownAt = state.arrival?.shownAt || 0;
+  useEffect(() => {
+    if (!arrivalShownAt) return;
+    const timer = setTimeout(
+      () => socialWalkupStore.dismissArrival(buildId),
+      Math.max(0, arrivalShownAt + SOCIAL_ARRIVAL_MS - Date.now())
+    );
+    return () => clearTimeout(timer);
+  }, [arrivalShownAt, buildId]);
   // "You're next" stays while it is true; every other note is a passing word.
   const visitStatus = visit?.status;
   useEffect(() => {
@@ -307,10 +368,30 @@ export default function SocialWalkupOverlay({
   // The app wants to be joinable but the viewer turned walk-ups off: one
   // quiet chip for a few seconds, so the choice can be found and undone.
   const offChip = offChipWanted && !offChipExpired;
-  if (!banner && waiting.length === 0 && !note && !offChip) return null;
+  const arrival = state.arrival;
+  if (!banner && waiting.length === 0 && !note && !offChip && !arrival)
+    return null;
 
   return (
     <div className={layerClass} data-social-overlay>
+      {arrival ? (
+        <div
+          key={arrival.matchKey}
+          className="social-arrival"
+          role="status"
+          data-social-arrival
+        >
+          <span className="social-face">
+            <ProfilePic
+              userId={arrival.user.id}
+              profilePicUrl={arrival.user.profilePicUrl || ''}
+              activityBadgeShown={false}
+              style={{ width: '100%', height: '100%' }}
+            />
+          </span>
+          <span>{arrivalText(arrival.user.username)}</span>
+        </div>
+      ) : null}
       {note ? <VisitNote visit={note} onHide={handleHideNote} /> : null}
       {banner ? (
         <div className="social-card" role="status" data-social-banner>

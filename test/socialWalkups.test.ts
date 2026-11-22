@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   applySocialWalkupEvent,
+  arrivalText,
   createSocialJoinableStore,
   createSocialWalkupStore,
   EMPTY_SOCIAL_STATE,
@@ -9,6 +10,7 @@ import {
   joinableBadge,
   queueChipText,
   readJoinable,
+  readOwnJoinable,
   visitLine,
   visitorBannerText,
   withJoinable,
@@ -349,4 +351,87 @@ test('an update that arrives before its notice row is kept, so the newest revisi
   const plain = { id: 602, rootType: 'chat', settings: null };
   assert.equal(withNewestSocialTogetherCard(plain), plain);
   forgetSocialTogetherCards();
+});
+
+// ---- drop-in rooms (projects/drop-in/BRIEF.md) ------------------------------
+
+const room = { state: 'open', label: 'Waiting for crews', mode: 'room', dropIn: true } as const;
+
+test('drop-in: presence says only dropIn; the page keeps its own roomKey for the report', () => {
+  assert.deepEqual(readJoinable({ kind: 'app', id: 2809, joinable: room }), room);
+  // a key in someone else's presence is never read
+  assert.equal(
+    'roomKey' in (readJoinable({ kind: 'app', id: 2809, joinable: { ...room, roomKey: 'room-X' } }) as any),
+    false
+  );
+  // the page's own app: the key, checked, only with mode room; never dropIn
+  assert.deepEqual(
+    readOwnJoinable({ state: 'open', label: 'Waiting for crews', mode: 'room', roomKey: 'room-ABCD', dropIn: true }),
+    { state: 'open', label: 'Waiting for crews', mode: 'room', roomKey: 'room-ABCD' }
+  );
+  assert.equal(readOwnJoinable({ state: 'open', mode: '1v1', roomKey: 'room-ABCD' })?.roomKey, undefined);
+  assert.equal(readOwnJoinable({ state: 'open', mode: 'room', roomKey: 'a b' })?.roomKey, undefined);
+  // a new room key alone is a change the activity report must send
+  const store = createSocialJoinableStore();
+  let changes = 0;
+  store.subscribe(() => (changes += 1));
+  store.set(2809, readOwnJoinable({ state: 'open', mode: 'room', roomKey: 'room-A' }));
+  store.set(2809, readOwnJoinable({ state: 'open', mode: 'room', roomKey: 'room-B' }));
+  assert.equal(changes, 2);
+  assert.equal(
+    (withJoinable({ kind: 'app', id: 2809 }, { walkupsAllowed: true, store }) as any).joinable.roomKey,
+    'room-B'
+  );
+});
+
+test('drop-in: Join while the room is open; no "Join next" for a room in a match or full', () => {
+  assert.deepEqual(
+    joinActions({ joinable: room, appTitle: 'Among Us', username: 'dew' }),
+    [{ intent: 'play', label: 'Join dew in Among Us' }]
+  );
+  assert.deepEqual(
+    joinActions({ joinable: { ...room, state: 'busy', label: 'In a match' }, appTitle: 'Among Us', username: 'dew' }),
+    []
+  );
+  assert.deepEqual(
+    joinActions({ joinable: { ...room, state: 'busy-watchable' }, appTitle: 'Among Us', username: 'dew' }),
+    [{ intent: 'watch', label: 'Watch' }]
+  );
+  // a room without drop-in (an app that set no roomKey) keeps the queue
+  assert.deepEqual(
+    joinActions({ joinable: { state: 'busy', label: '', mode: 'room' }, appTitle: 'Among Us', username: 'dew' })
+      .map((action) => action.intent),
+    ['next']
+  );
+});
+
+test('drop-in: the visitor lands with no note; the host gets a passing toast and no banner', () => {
+  const visitorSide = applySocialWalkupEvent(
+    { ...EMPTY_SOCIAL_STATE, visit: { host: kengo, status: 'waiting', walkupId: 'w1', joinable: open } },
+    { type: 'matchReady', matchKey: 'meet-1', mode: 'room', host: kengo, dropIn: true, roomKey: 'room-A' },
+    100
+  );
+  assert.equal(visitorSide.visit, null);
+  assert.deepEqual(visitorSide.match, {
+    matchKey: 'meet-1', mode: 'room', host: kengo, at: 100, dropIn: true, roomKey: 'room-A'
+  });
+  const hostSide = applySocialWalkupEvent(
+    EMPTY_SOCIAL_STATE,
+    { type: 'dropIn', matchKey: 'meet-1', mode: 'room', visitor: { id: 21, username: 'mikey' } },
+    200
+  );
+  assert.equal(hostSide.banner, null);
+  assert.deepEqual(hostSide.waiting, []);
+  assert.deepEqual(hostSide.arrival, {
+    matchKey: 'meet-1', user: { id: 21, username: 'mikey', profilePicUrl: null }, shownAt: 200
+  });
+  assert.equal(arrivalText('mikey'), 'mikey joined from Live now');
+  // a page-learned drop-in is applied and handed to a running app frame
+  const store = createSocialWalkupStore({ now: () => 300 });
+  const forwarded: any[] = [];
+  store.onEvent((event) => forwarded.push(event));
+  store.deliver({ type: 'matchReady', buildId: 2809, matchKey: 'meet-2', mode: 'room', host: kengo, dropIn: true, roomKey: 'room-B' });
+  assert.equal(store.get(2809).match?.roomKey, 'room-B');
+  assert.equal(forwarded.length, 1);
+  store.dismissArrival(2809);
 });

@@ -21,7 +21,7 @@ import {
 import { useEffect, useRef } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import {
-  readJoinable,
+  readOwnJoinable,
   socialJoinableStore,
   socialWalkupStore
 } from '~/helpers/socialWalkups';
@@ -322,6 +322,9 @@ export function useHostBridge({
       });
     }
     socket.on('social_walkup_event', forwardSocialEvent);
+    // A drop-in this page joined itself: an app that is already running (kept
+    // alive behind Home) hears it at once; a fresh one asks social:state.
+    const stopLocalEvents = socialWalkupStore.onEvent(forwardSocialEvent);
     // "Play now" on Twinkle's banner or queue chip: tell the app which
     // visitor the viewer picked. The app starts when it can.
     const stopPlayNow = socialWalkupStore.onPlayNow((chosenBuildId, visitor) => {
@@ -335,6 +338,7 @@ export function useHostBridge({
     });
     return () => {
       stopPlayNow();
+      stopLocalEvents();
       socket.off('social_walkup_event', forwardSocialEvent);
       // Leaving the app: it no longer says anything about being joinable.
       socialJoinableStore.set(socialBuildId, null);
@@ -5180,7 +5184,8 @@ export function useHostBridge({
             // Stored for the page's activity report (the joinable state
             // rides on the app's presence; useUserActivityReporting.ts),
             // which leaves it out while the viewer has walk-ups turned off.
-            const joinable = readJoinable({ kind: 'app', joinable: payload });
+            // With a drop-in room's roomKey, which only the server sees.
+            const joinable = readOwnJoinable(payload);
             socialJoinableStore.set(activeBuild.id, joinable);
             response = {
               state:

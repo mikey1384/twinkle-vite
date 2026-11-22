@@ -6945,16 +6945,19 @@ export default function buildRequestHelpers({
     async walkUpToMember({
       buildId,
       hostUserId,
-      intent
+      intent,
+      dropIn = false
     }: {
       buildId: number;
       hostUserId: number;
       intent: 'play' | 'next' | 'watch';
+      // this page can take a drop-in into an open room
+      dropIn?: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/social/walkups`,
-          { hostUserId, intent },
+          { hostUserId, intent, ...(dropIn ? { dropIn: true } : {}) },
           auth()
         );
         return data;

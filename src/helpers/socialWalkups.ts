@@ -14,6 +14,33 @@ export interface Joinable {
   state: JoinableState;
   label: string;
   mode: string;
+  // From the server's presence: this member is in a drop-in room (mode
+  // 'room' with a roomKey). Join then puts a visitor straight in while the
+  // state is 'open'. The roomKey itself never reaches other members.
+  dropIn?: boolean;
+  // Only on this page's OWN joinable (what its app set): sent with the
+  // activity report and kept private by the server.
+  roomKey?: string;
+}
+
+export const DROP_IN_ROOM_KEY_MAX = 64;
+const ROOM_KEY_PATTERN = /^[A-Za-z0-9._:-]+$/;
+
+/** What this page's app asked for (social:set-joinable), with its roomKey. */
+export function readOwnJoinable(payload: any): Joinable | null {
+  const joinable = readJoinable({ kind: 'app', joinable: payload });
+  if (!joinable) return null;
+  delete joinable.dropIn;
+  const roomKey = payload?.roomKey;
+  if (
+    joinable.mode === 'room' &&
+    typeof roomKey === 'string' &&
+    roomKey.length > 0 &&
+    roomKey.length <= DROP_IN_ROOM_KEY_MAX &&
+    ROOM_KEY_PATTERN.test(roomKey)
+  )
+    joinable.roomKey = roomKey;
+  return joinable;
 }
 
 export function readJoinable(activity: any): Joinable | null {
@@ -28,7 +55,8 @@ export function readJoinable(activity: any): Joinable | null {
   return {
     state: joinable.state,
     label: typeof joinable.label === 'string' ? joinable.label : '',
-    mode: typeof joinable.mode === 'string' ? joinable.mode : ''
+    mode: typeof joinable.mode === 'string' ? joinable.mode : '',
+    ...(joinable.dropIn === true ? { dropIn: true } : {})
   };
 }
 
@@ -68,6 +96,15 @@ export function joinActions({
   username: string;
 }): JoinAction[] {
   const game = isGameMode(joinable.mode);
+  // A drop-in room: Join puts the visitor straight in while it is open. In a
+  // match or full, nobody is queued for it; at most they can watch.
+  if (joinable.dropIn) {
+    if (joinable.state === 'open')
+      return [{ intent: 'play', label: `Join ${username} in ${appTitle}` }];
+    return joinable.state === 'busy-watchable'
+      ? [{ intent: 'watch', label: 'Watch' }]
+      : [];
+  }
   if (joinable.state === 'open') {
     return [
       {
@@ -102,7 +139,8 @@ export function createSocialJoinableStore() {
           joinable &&
           previous.state === joinable.state &&
           previous.label === joinable.label &&
-          previous.mode === joinable.mode)
+          previous.mode === joinable.mode &&
+          previous.roomKey === joinable.roomKey)
       )
         return;
       if (joinable) byBuild.set(buildId, joinable);
@@ -172,6 +210,16 @@ export interface SocialMatchReady {
   mode: string;
   host: SocialPerson;
   at: number;
+  // a drop-in: the visitor's app joins the host's roomKey
+  dropIn?: boolean;
+  roomKey?: string;
+}
+
+// Someone walked straight into this member's open room from Live now.
+export interface SocialArrival {
+  matchKey: string;
+  user: SocialPerson;
+  shownAt: number;
 }
 
 export interface SocialBuildState {
@@ -181,13 +229,16 @@ export interface SocialBuildState {
   // for the member who walked up
   visit: SocialVisit | null;
   match: SocialMatchReady | null;
+  // for the member whose open room someone dropped into: a passing toast
+  arrival: SocialArrival | null;
 }
 
 export const EMPTY_SOCIAL_STATE: SocialBuildState = Object.freeze({
   waiting: [],
   banner: null,
   visit: null,
-  match: null
+  match: null,
+  arrival: null
 }) as SocialBuildState;
 
 function isVisitor(value: any): value is WaitingVisitor {
@@ -220,20 +271,41 @@ export function applySocialWalkupEvent(
         : null;
     return { ...state, waiting, banner };
   }
+  if (event.type === 'dropIn' && typeof event.matchKey === 'string') {
+    const user = event.visitor;
+    if (!(Number(user?.id) > 0) || typeof user.username !== 'string') return state;
+    return {
+      ...state,
+      arrival: {
+        matchKey: event.matchKey,
+        user: {
+          id: Number(user.id),
+          username: user.username,
+          profilePicUrl: user.profilePicUrl || null
+        },
+        shownAt: now
+      }
+    };
+  }
   if (event.type === 'matchReady' && typeof event.matchKey === 'string') {
     const host: SocialPerson = {
       id: Number(event.host?.id) || 0,
       username: String(event.host?.username || ''),
       profilePicUrl: event.host?.profilePicUrl || null
     };
+    const dropIn = event.dropIn === true && typeof event.roomKey === 'string';
+    const match: SocialMatchReady = {
+      matchKey: event.matchKey,
+      mode: typeof event.mode === 'string' ? event.mode : '',
+      host,
+      at: now,
+      ...(dropIn ? { dropIn: true, roomKey: event.roomKey } : {})
+    };
+    // A drop-in needs no word over the app: the visitor is simply in.
+    if (dropIn) return { ...state, match, visit: null };
     return {
       ...state,
-      match: {
-        matchKey: event.matchKey,
-        mode: typeof event.mode === 'string' ? event.mode : '',
-        host,
-        at: now
-      },
+      match,
       visit: state.visit
         ? { ...state.visit, status: 'matched' }
         : { host, status: 'matched', walkupId: null, joinable: null }
@@ -255,6 +327,7 @@ export function createSocialWalkupStore({
   const playNowListeners = new Set<
     (buildId: number, visitor: WaitingVisitor) => void
   >();
+  const eventListeners = new Set<(event: any) => void>();
   function write(buildId: number, next: SocialBuildState) {
     if (next === (byBuild.get(buildId) || EMPTY_SOCIAL_STATE)) return;
     byBuild.set(buildId, next);
@@ -273,6 +346,25 @@ export function createSocialWalkupStore({
       const buildId = Number(event?.buildId || 0);
       if (!buildId) return;
       write(buildId, applySocialWalkupEvent(read(buildId), event, now()));
+    },
+    // An event this page learned itself (a drop-in answer) rather than over
+    // the socket: applied like one and handed to an app frame that is
+    // already running (a kept-alive app), as social_walkup_event would be.
+    deliver(event: any) {
+      const buildId = Number(event?.buildId || 0);
+      if (!buildId) return;
+      write(buildId, applySocialWalkupEvent(read(buildId), event, now()));
+      for (const listener of eventListeners) listener(event);
+    },
+    onEvent(listener: (event: any) => void) {
+      eventListeners.add(listener);
+      return () => {
+        eventListeners.delete(listener);
+      };
+    },
+    dismissArrival(buildId: number) {
+      if (read(buildId).arrival)
+        write(buildId, { ...read(buildId), arrival: null });
     },
     setWaiting(buildId: number, waiting: WaitingVisitor[]) {
       write(
@@ -355,6 +447,11 @@ export function visitLine(visit: SocialVisit) {
     case 'matched':
       return game ? `You're playing with ${name}` : `You're with ${name}`;
   }
+}
+
+/** The host's passing toast when someone dropped into their room. */
+export function arrivalText(username: string) {
+  return `${username} joined from Live now`;
 }
 
 export function queueChipText(count: number) {
