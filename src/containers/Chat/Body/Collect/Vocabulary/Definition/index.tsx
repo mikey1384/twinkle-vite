@@ -3,11 +3,16 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import WordModal from '../WordModal';
 import PosBlock from './PosBlock';
+import WordBattleGate, {
+  BattleExamples,
+  BattleTrophy,
+  isBattleLocked
+} from '../WordBattle';
 import { css } from '@emotion/css';
 
 export default function Definition({
   style,
-  wordObj,
+  wordObj: givenWordObj,
   isNewWord,
   canHit,
   onWordMasterBreak
@@ -19,9 +24,19 @@ export default function Definition({
   onWordMasterBreak?: (status: any) => void;
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
+  // A word battle hands its definitions over here when it ends.
+  const [unlocked, setUnlocked] = useState<Record<string, any> | null>(null);
+  const wordObj = useMemo(
+    () =>
+      unlocked && unlocked.content === givenWordObj?.content
+        ? { ...givenWordObj, ...unlocked, id: givenWordObj.id ?? unlocked.id }
+        : givenWordObj,
+    [givenWordObj, unlocked]
+  );
+  const battleLocked = isBattleLocked(wordObj);
   const editButtonShown = useMemo(
-    () => Boolean(wordObj.id) && !isNewWord && !canHit,
-    [wordObj.id, isNewWord, canHit]
+    () => Boolean(wordObj.id) && !isNewWord && !canHit && !battleLocked,
+    [wordObj.id, isNewWord, canHit, battleLocked]
   );
   const {
     partOfSpeechOrder = [
@@ -44,6 +59,14 @@ export default function Definition({
     [partOfSpeechOrder, wordObj]
   );
 
+  if (battleLocked) {
+    return (
+      <div style={{ padding: '1rem', position: 'relative', ...style }}>
+        <WordBattleGate wordObj={wordObj} onUnlocked={setUnlocked} />
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -52,6 +75,7 @@ export default function Definition({
         ...style
       }}
     >
+      <BattleTrophy wordObj={wordObj} />
       {editButtonShown && (
         <div style={{ position: 'absolute', top: 0, right: 0 }}>
           <Button
@@ -155,6 +179,7 @@ export default function Definition({
           return <PosBlock key={pos} wordObj={wordObj} pos={pos} />;
         })
       )}
+      <BattleExamples examples={wordObj.examples} />
       {wordModalShown && (
         <WordModal
           key={wordObj.content}

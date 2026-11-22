@@ -46,6 +46,9 @@ export default function ChatActions(dispatch: Dispatch) {
         view
       });
     },
+    onUnlockWordDefinitions(unlocked: Record<string, any>) {
+      return dispatch({ type: 'UNLOCK_WORD_DEFINITIONS', unlocked });
+    },
     onApplyAIGeneratedDefinitions({
       word,
       partOfSpeechOrder,

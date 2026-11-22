@@ -4,6 +4,12 @@ import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import FilterBar from '~/components/FilterBar';
 import DictionaryTab from './DictionaryTab';
 import EditTab from './EditTab';
+import Button from '~/components/Button';
+import WordBattleGate, {
+  BattleExamples,
+  BattleTrophy,
+  isBattleLocked
+} from '../WordBattle';
 import { useChatContext } from '~/contexts';
 
 export default function WordModal({
@@ -137,8 +143,24 @@ export default function WordModal({
             </nav>
           </FilterBar>
         )}
-        {selectedTab === 'dictionary' && (
+        {selectedTab === 'dictionary' && isBattleLocked(wordObj) && (
+          <>
+            <main>
+              <div style={{ width: '100%', padding: '2rem' }}>
+                <WordBattleGate wordObj={{ ...wordObj, content: word }} onUnlocked={() => {}} />
+              </div>
+            </main>
+            <footer>
+              <Button variant="ghost" onClick={onHide}>
+                Close
+              </Button>
+            </footer>
+          </>
+        )}
+        {selectedTab === 'dictionary' && !isBattleLocked(wordObj) && (
           <DictionaryTab
+            header={<BattleTrophy wordObj={{ ...wordObj, content: word }} />}
+            footerNote={<BattleExamples examples={wordObj.examples} />}
             deletedDefIds={deletedDefIds}
             definitionOrder={editedDefinitionOrder}
             onHide={onHide}

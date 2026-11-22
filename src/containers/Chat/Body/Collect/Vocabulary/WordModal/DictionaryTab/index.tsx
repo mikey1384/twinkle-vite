@@ -15,8 +15,12 @@ export default function DictionaryTab({
   posOrder,
   bonusRouletteOpen,
   word,
-  onWordMasterBreak
+  onWordMasterBreak,
+  header,
+  footerNote
 }: {
+  header?: React.ReactNode;
+  footerNote?: React.ReactNode;
   deletedDefIds: number[];
   definitionOrder: { [key: string]: number[] };
   onHide: () => void;
@@ -54,6 +58,7 @@ export default function DictionaryTab({
             }
           `}
         >
+          {header}
           {posOrder.map((pos, index) => {
             return (
               <PosBlock
@@ -75,6 +80,7 @@ export default function DictionaryTab({
               />
             </div>
           )}
+          {footerNote}
         </div>
       </main>
       <footer>
