@@ -125,7 +125,9 @@ export default function QuickAskWindow() {
       aria-label="Quick Ask Zero"
       onPointerDown={phone ? undefined : handleStart}
       onKeyDown={(event) => {
-        if (event.key === 'Escape') {
+        // Escape closes only an idle, empty window, so a stray key never
+        // throws away a reply or a half-typed question.
+        if (event.key === 'Escape' && !replying && !text.trim()) {
           event.stopPropagation();
           closeQuickAsk();
         }

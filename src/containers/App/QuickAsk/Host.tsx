@@ -30,6 +30,10 @@ export default function QuickAskHost() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.repeat || !isQuickAskShortcut(event))
         return;
+      // Leave Ctrl+K to rich editors and to whatever dialog is open.
+      const target = event.target as HTMLElement | null;
+      if (target?.isContentEditable) return;
+      if (document.querySelector('[aria-modal="true"]')) return;
       event.preventDefault();
       openQuickAsk();
     }
