@@ -11,6 +11,9 @@ export interface MessageCleanupPreviewData {
   messageIds: number[];
   count: number;
   samples: { id: number; text: string; mine: boolean }[];
+  chatName?: string;
+  topicTitle?: string;
+  othersCount?: number;
 }
 
 export function isMessageCleanupPreview(
@@ -34,7 +37,7 @@ export default function MessageCleanupPreview({
   preview: MessageCleanupPreviewData;
 }) {
   const restoring = preview.action === 'restore';
-  const others = preview.samples.some((sample) => !sample.mine);
+  const others = Number(preview.othersCount || 0);
   return (
     <div className={previewClass} {...{ [WEBSITE_AGENT_UI_ATTRIBUTE]: '' }}>
       <div className={headingClass}>
@@ -44,6 +47,15 @@ export default function MessageCleanupPreview({
           {preview.count === 1 ? 'message' : 'messages'}
         </span>
       </div>
+      {preview.chatName && (
+        <p className={placeClass}>
+          In {preview.chatName}
+          {preview.topicTitle ? `, topic “${preview.topicTitle}”` : ''}
+          {others > 0
+            ? ` · ${others} ${others === 1 ? 'is' : 'are'} other people’s`
+            : ''}
+        </p>
+      )}
       <ul>
         {preview.samples.map((sample) => (
           <li key={sample.id}>{sample.text || '(attachment)'}</li>
@@ -56,7 +68,7 @@ export default function MessageCleanupPreview({
       </ul>
       {!restoring && (
         <p className={noteClass}>
-          {others
+          {others > 0
             ? 'Messages you aren’t allowed to remove are skipped. '
             : ''}
           You can bring them back afterwards.
@@ -89,6 +101,11 @@ const headingClass = css`
   align-items: center;
   gap: 0.6rem;
   font-weight: 700;
+`;
+const placeClass = css`
+  margin: 0.3rem 0 0;
+  color: #4c5767;
+  overflow-wrap: anywhere;
 `;
 const moreClass = css`
   list-style: none;
