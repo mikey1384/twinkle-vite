@@ -5,14 +5,32 @@
 // about 16,000.
 import { siteDayEndSec } from './siteDay';
 
-export const FULL_BATTERY_UNITS = 1_200_000;
-export const BATTERY_STEP_UNITS = FULL_BATTERY_UNITS / 100; // 1% steps
-export const BATTERY_MIN_UNITS = BATTERY_STEP_UNITS; // smallest amount: 1%
+// The size of a full daily battery is one API setting (Mikey 11-18). The
+// website never keeps its own copy: it arrives with every AI Energy snapshot
+// (baseEnergyUnitsPerDay) and with the battery picker data, and is remembered
+// here. Until one of them has loaded it is unknown (0) and amounts are shown
+// without a percentage.
+let fullBatteryUnitsFromApi = 0;
+export function setFullBatteryUnits(units: unknown) {
+  const value = Math.floor(Number(units));
+  if (Number.isFinite(value) && value > 0) fullBatteryUnitsFromApi = value;
+}
+export const fullBatteryUnits = () => fullBatteryUnitsFromApi;
+// Amounts move in 1% steps; the smallest amount is 1%.
+export const batteryStepUnits = () => fullBatteryUnitsFromApi / 100;
 export const LUMINE_RUN_UNITS = 95_000;
 export const ZERO_CHAT_UNITS = 16_000;
 
 export function batteryPercent(units: number) {
-  return Math.round((Number(units) / FULL_BATTERY_UNITS) * 100);
+  if (!fullBatteryUnitsFromApi) return 0;
+  return Math.round((Number(units) / fullBatteryUnitsFromApi) * 100);
+}
+
+// "40% battery" on trade cards and summaries.
+export function batteryAmountText(units: number) {
+  return fullBatteryUnitsFromApi
+    ? `${batteryPercent(units)}% battery`
+    : 'battery';
 }
 
 export function describeBatteryUse(units: number) {

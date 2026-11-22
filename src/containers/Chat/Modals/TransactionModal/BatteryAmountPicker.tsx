@@ -5,9 +5,8 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import BatteryGauge from '~/components/BatteryGauge';
 import {
-  BATTERY_STEP_UNITS,
-  BATTERY_MIN_UNITS,
-  FULL_BATTERY_UNITS,
+  batteryStepUnits,
+  fullBatteryUnits,
   batteryPercent,
   describeBatteryUse,
   formatBatteryExpiry
@@ -157,6 +156,10 @@ export default function BatteryAmountPicker({
   onDone: (units: number) => void;
 }) {
   const sliderId = useId();
+  // From the API (the picker data was loaded before this opens).
+  const FULL_BATTERY_UNITS = fullBatteryUnits();
+  const BATTERY_STEP_UNITS = batteryStepUnits() || 1;
+  const BATTERY_MIN_UNITS = BATTERY_STEP_UNITS;
   const max =
     Math.floor(Math.min(FULL_BATTERY_UNITS, maxUnits) / BATTERY_STEP_UNITS) *
     BATTERY_STEP_UNITS;

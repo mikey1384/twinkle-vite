@@ -5,7 +5,7 @@ import {
 } from '~/helpers/chatMessageCapabilities';
 import { normalizeAICardOfferMessagePayload } from '~/helpers/aiCardOfferNotice';
 import { normalizeBundle } from '~/containers/Chat/Trade/helpers/terms';
-import { batteryPercent } from '~/helpers/battery';
+import { batteryAmountText } from '~/helpers/battery';
 import { getTradeStatus } from '~/containers/Chat/Trade/helpers/status';
 import { getBuildCardTargetSummary } from './BuildCardTargetSummary';
 import { parseMessageSettings } from './messageSettings';
@@ -270,7 +270,7 @@ function countBundle(bundle: any) {
     parts.push(`${normalized.coins.toLocaleString('en-US')} coins`);
   }
   if (normalized.battery) {
-    parts.push(`${batteryPercent(normalized.battery)}% battery`);
+    parts.push(batteryAmountText(normalized.battery));
   }
   for (const [count, label] of [
     [normalized.cardIds.length, 'card'],

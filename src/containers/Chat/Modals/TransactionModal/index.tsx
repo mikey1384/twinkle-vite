@@ -12,7 +12,7 @@ import Loading from '~/components/Loading';
 import TransactionHandler from './TransactionHandler';
 import ReviewModal from '../../Trade/ReviewModal';
 import BatteryAmountPicker from './BatteryAmountPicker';
-import { FULL_BATTERY_UNITS } from '~/helpers/battery';
+import { fullBatteryUnits } from '~/helpers/battery';
 import {
   emptyBundle,
   getViewerTradeTerms,
@@ -494,7 +494,7 @@ export default function TransactionModal({
                   ? Number(batteryInfo?.giveableUnits || 0)
                   : Math.min(
                       Number(batteryInfo?.receiveRoomUnits || 0),
-                      FULL_BATTERY_UNITS
+                      fullBatteryUnits()
                     )
               }
               initialUnits={batteryUnits[batteryPickerSide] || undefined}

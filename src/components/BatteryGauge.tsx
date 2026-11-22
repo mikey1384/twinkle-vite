@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { FULL_BATTERY_UNITS } from '~/helpers/battery';
+import { fullBatteryUnits } from '~/helpers/battery';
 
 // A battery amount drawn as the AI Energy card's five cells, in the card's
 // flat green tones (no gradients). Used by the trade battery row and picker.
@@ -54,7 +54,7 @@ export default function BatteryGauge({
   size?: 'sm' | 'md' | 'lg';
   muted?: boolean;
 }) {
-  const ratio = Math.max(0, Math.min(1, units / FULL_BATTERY_UNITS)) * 5;
+  const ratio = Math.max(0, Math.min(1, units / (fullBatteryUnits() || Infinity))) * 5;
   const dims =
     size === 'lg'
       ? { w: '4.2rem', h: '5.6rem', nub: '2.2rem' }

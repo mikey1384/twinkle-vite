@@ -1,3 +1,4 @@
+import { setFullBatteryUnits } from '~/helpers/battery';
 import type { SharedMediaPage, SharedMediaQuery, SharedAttachment } from '~/helpers/chatSharedMedia';
 import { getMemberPageQuery, resolveMemberPage } from '../Chat/memberPage';
 import URL from '~/constants/URL';
@@ -409,6 +410,7 @@ export default function chatRequestHelpers({
           `${URL}/chat/trade/battery?partnerId=${Number(partnerId)}`,
           auth()
         );
+        setFullBatteryUnits(data?.fullBatteryUnits);
         return data;
       } catch (error) {
         return handleError(error);

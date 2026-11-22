@@ -1,4 +1,4 @@
-import { batteryPercent } from '~/helpers/battery';
+import { batteryAmountText } from '~/helpers/battery';
 import type { TradeBundle, TradeTerms } from '../types';
 
 export function emptyBundle(): TradeBundle {
@@ -34,7 +34,7 @@ export function hasTradeAssets(bundle: TradeBundle) {
 export function summarizeBundle(bundle: TradeBundle) {
   const parts: string[] = [];
   if (bundle.coins) parts.push(`${bundle.coins.toLocaleString('en-US')} coins`);
-  if (bundle.battery) parts.push(`${batteryPercent(bundle.battery)}% battery`);
+  if (bundle.battery) parts.push(batteryAmountText(bundle.battery));
   for (const [count, label] of [
     [bundle.cardIds.length, 'card'],
     [bundle.groupIds.length, 'group'],

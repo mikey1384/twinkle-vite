@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import BatteryGauge from '~/components/BatteryGauge';
 import {
-  batteryPercent,
+  batteryAmountText,
   describeBatteryUse,
   formatBatteryExpiry
 } from '~/helpers/battery';
@@ -97,7 +97,7 @@ export default function BatteryAsset({
           muted={state === 'expired' || state === 'cancelled'}
         />
         <div style={{ minWidth: 0 }}>
-          <div className="battery-amount">{batteryPercent(units)}% battery</div>
+          <div className="battery-amount">{batteryAmountText(units)}</div>
           <div className="battery-use">{describeBatteryUse(units)}</div>
         </div>
       </div>

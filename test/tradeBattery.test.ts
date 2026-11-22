@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  BATTERY_STEP_UNITS,
+  batteryStepUnits,
+  batteryAmountText,
+  setFullBatteryUnits,
   batteryExpiresAtForOffer,
   batteryPercent,
   describeBatteryUse,
@@ -23,7 +25,11 @@ const NOW = Date.UTC(2026, 10, 17, 11, 30);
 const DAY_END = Date.UTC(2026, 10, 18, 0, 0) / 1000;
 
 test('members see % of a battery and a plain equivalent, never units', () => {
-  assert.equal(BATTERY_STEP_UNITS, 12_000);
+  // unknown until the API says how big a battery is
+  assert.equal(batteryAmountText(FULL * 0.4), 'battery');
+  setFullBatteryUnits(FULL);
+  assert.equal(batteryStepUnits(), 12_000);
+  assert.equal(batteryAmountText(FULL * 0.4), '40% battery');
   assert.equal(batteryPercent(FULL * 0.4), 40);
   assert.equal(describeBatteryUse(FULL * 0.4), 'about 5 Lumine runs');
   assert.equal(describeBatteryUse(95_000), 'about 1 Lumine run');
