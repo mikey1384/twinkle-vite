@@ -375,13 +375,15 @@ export default function RobotWorkshop({
         <rect x={160} y={77} width={5} height={2} fill={GOLD_DARK} />
         <rect x={196} y={77} width={5} height={2} fill={GOLD_DARK} />
       </g>
-      <Robot color="orange" x={214} y={70} rightArm={<g />} leftArm={<g />} />
+      {/* The stamper holds the stamp up in its raised arm. The arm is drawn
+          behind the robot so its lower end stays hidden behind the head and
+          body at every point of the press. */}
       <g
         className={css`
           animation: ${stampPress} 1.3s cubic-bezier(0.6, 0, 0.9, 0.5) infinite;
         `}
       >
-        {/* arm reaching from the robot to the stamp's handle */}
+        <rect x={214} y={62} width={6} height={44} rx={2} fill={ORANGE} />
         <rect x={186} y={62} width={34} height={5} rx={2} fill={ORANGE} />
         <rect x={178} y={58} width={8} height={12} rx={2} fill={INK} />
         <rect
@@ -393,6 +395,7 @@ export default function RobotWorkshop({
           fill={Color.rose()}
         />
       </g>
+      <Robot color="orange" x={214} y={70} rightArm={<g />} leftArm={<g />} />
 
       {/* 3. filing it into Twinkle's word vault */}
       <rect
