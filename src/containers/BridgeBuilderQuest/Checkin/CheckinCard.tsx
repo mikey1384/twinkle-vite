@@ -4,6 +4,8 @@ import Button from '~/components/Button';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
+import useUserPopupTrigger from '~/components/UserPopup/useUserPopupTrigger';
+import type { User } from '~/types';
 import FormModal from '~/components/AchievementItem/FormModal';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
@@ -627,11 +629,25 @@ export default function CheckinCard({
 
 function Slot({ person }: { person: CheckinPerson }) {
   const counted = person.state === 'counted';
+  // Counted: the site's profile card on hover/tap, like a name (Mikey 11-22).
+  // Pending: the tooltip saying why they don't count yet, and no card.
+  const { triggerRef, popup, onMouseEnter, onMouseLeave, onClick } =
+    useUserPopupTrigger<HTMLDivElement>({
+      user: {
+        id: person.userId,
+        username: person.username,
+        profilePicUrl: person.profilePicUrl || ''
+      } as User
+    });
   return (
     <div
+      ref={counted ? triggerRef : undefined}
+      onMouseEnter={counted ? onMouseEnter : undefined}
+      onMouseLeave={counted ? onMouseLeave : undefined}
+      onClick={counted ? onClick : undefined}
       title={
         counted
-          ? person.username
+          ? undefined
           : person.state === 'waiting_birthdate'
             ? `${person.username}: waiting for a birthdate check`
             : `${person.username}: counts after ${BRIDGE_BUILDER_BAR_LEARNING_DAYS} learning days and ${BRIDGE_BUILDER_BAR_LEARNING_XP.toLocaleString('en-US')} XP`
@@ -650,6 +666,7 @@ function Slot({ person }: { person: CheckinPerson }) {
         background: ${counted ? Color.green() : Color.lightGray()};
         animation: ${pop} 0.4s ease-out both;
         opacity: ${counted ? 1 : 0.7};
+        cursor: ${counted ? 'pointer' : 'default'};
       `}
     >
       <ProfilePic
@@ -678,6 +695,7 @@ function Slot({ person }: { person: CheckinPerson }) {
           <Icon icon="hourglass-half" />
         </span>
       )}
+      {counted ? popup : null}
     </div>
   );
 }
