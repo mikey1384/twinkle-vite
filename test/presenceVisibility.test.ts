@@ -63,9 +63,12 @@ test('the app a hidden account is playing still shows while it is online', () =>
     }),
     false
   );
-  // everyone else keeps the old rule: online and not away
   assert.equal(shown(PERSON, { isOnline: true }), true);
-  assert.equal(shown(PERSON, { isOnline: true, isAway: true }), false);
+  // Away no longer hides anyone's app (Mikey, 11-22): the server reports an
+  // activity only while it counts (a hidden page within its grace), and
+  // none for an idle-away or long-hidden member.
+  assert.equal(shown(PERSON, { isOnline: true, isAway: true }), true);
+  assert.equal(shown(PERSON, { isOnline: false, isAway: true }), false);
 });
 
 test('every presence display goes through the hidden-presence helpers', () => {

@@ -64,10 +64,12 @@ test('groups people by app, multiplayer first, then by head count', () => {
   );
 });
 
-test('shows only what avatar badges show: online, not away, apps only, never the viewer', () => {
+test('shows only what avatar badges show: online, apps only, never the viewer', () => {
   const apps = group(
     statusOf(
       member(ME, app(1)),
+      // Away (a hidden page within its grace) still shows: the server sends
+      // an activity only while it counts.
       member(11, app(1), { isAway: true }),
       member(12, app(1), { isOnline: false }),
       member(13, {
@@ -91,7 +93,10 @@ test('shows only what avatar badges show: online, not away, apps only, never the
   );
   assert.deepEqual(
     apps.map((entry) => [entry.appId, entry.members.map((m) => m.id)]),
-    [[2, [ZERO]]]
+    [
+      [1, [11]],
+      [2, [ZERO]]
+    ]
   );
   // Only the viewer in an app: nothing to join, so the row stays absent.
   assert.deepEqual(group(statusOf(member(ME, app(1)))), []);

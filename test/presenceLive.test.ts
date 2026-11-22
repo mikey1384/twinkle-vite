@@ -88,17 +88,10 @@ test('the page reports visibility on every change and on every bind, if supporte
     visibilitySource,
     /const live = isPresencePageLive\(\);\s*if \(presenceLiveSupportedRef\.current\) \{\s*socket\.emit\(PRESENCE_LIVE_EVENT, live\);/
   );
-  // Blur still reports away but no longer stops the heartbeat: a visible,
-  // unfocused window must not look frozen to the server.
-  const blurred = visibilitySource.match(
-    /const emitBlurred = \(\) => \{[\s\S]*?\};/
-  )?.[0];
-  assert.ok(blurred);
-  assert.match(blurred, /change_away_status', false/);
-  assert.doesNotMatch(blurred, /stopUserHeartbeat|PRESENCE_LIVE_EVENT/);
-  assert.match(visibilitySource, /addEventListener\('blur', emitBlurred\)/);
-  assert.match(visibilitySource, /removeEventListener\('blur', emitBlurred\)/);
-  assert.doesNotMatch(visibilitySource, /'blur', emitHidden/);
+  // Blur is not away (Mikey, 11-22): a visible, unfocused window keeps its
+  // heartbeat and is never reported away; only a hidden page is.
+  assert.doesNotMatch(visibilitySource, /addEventListener\('blur'/);
+  assert.doesNotMatch(visibilitySource, /emitBlurred/);
 
   const bindSource = slice(
     'function bindSocketToUser',
