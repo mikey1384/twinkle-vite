@@ -21,6 +21,8 @@ interface VocabularyWidgetProps {
   onOpenBreaks?: () => void;
   strikeAnimationKey?: number;
   maskWordMasterStatus?: boolean;
+  // A word discovery in progress or just finished takes the prompt's place.
+  discoveryMoment?: React.ReactNode;
 }
 
 export default function VocabularyWidget({
@@ -40,7 +42,8 @@ export default function VocabularyWidget({
   wordMasterBreakLoading,
   onOpenBreaks,
   strikeAnimationKey,
-  maskWordMasterStatus
+  maskWordMasterStatus,
+  discoveryMoment
 }: VocabularyWidgetProps) {
   const hasWordRegisterStatus = Boolean(wordRegisterStatus);
   const isSearching = !inputTextIsEmpty;
@@ -60,21 +63,23 @@ export default function VocabularyWidget({
         breakLoading={wordMasterBreakLoading}
         onOpenBreaks={onOpenBreaks}
       />
-      <PromptMessage
-        isSearching={isSearching}
-        searchedWord={searchedWord}
-        socketConnected={socketConnected}
-        vocabErrorMessage={vocabErrorMessage}
-        isSubmitting={isSubmitting}
-        isNewWord={isNewWord}
-        isCensored={isCensored}
-        wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
-        statusMessage={statusMessage}
-        canHit={canHit}
-        onWordMasterBreak={onWordMasterBreak}
-        strikeAnimationKey={strikeAnimationKey}
-        maskWordMasterStatus={maskWordMasterStatus}
-      />
+      {discoveryMoment || (
+        <PromptMessage
+          isSearching={isSearching}
+          searchedWord={searchedWord}
+          socketConnected={socketConnected}
+          vocabErrorMessage={vocabErrorMessage}
+          isSubmitting={isSubmitting}
+          isNewWord={isNewWord}
+          isCensored={isCensored}
+          wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
+          statusMessage={statusMessage}
+          canHit={canHit}
+          onWordMasterBreak={onWordMasterBreak}
+          strikeAnimationKey={strikeAnimationKey}
+          maskWordMasterStatus={maskWordMasterStatus}
+        />
+      )}
     </div>
   );
 }
