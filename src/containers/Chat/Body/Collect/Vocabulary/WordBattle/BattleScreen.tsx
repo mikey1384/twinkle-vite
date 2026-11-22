@@ -40,7 +40,16 @@ export interface BattleLoot {
 }
 
 export interface BattleState {
-  status: 'ready' | 'active' | 'won' | 'lost' | 'discovered' | 'off' | 'unavailable';
+  status:
+    | 'ready'
+    | 'preparing'
+    | 'active'
+    | 'won'
+    | 'lost'
+    | 'discovered'
+    | 'quizzed'
+    | 'off'
+    | 'unavailable';
   playId?: number;
   wordId: number;
   word: string;
@@ -139,7 +148,6 @@ export default function BattleScreen({
   const submittingRef = useRef(false);
   const questionRef = useRef<BattleQuestion | null>(null);
   const audioUrls = useRef<Record<string, string>>({});
-  const nameHidden = question?.type === 'name' || question?.type === 'bee';
 
   useEffect(() => {
     mounted.current = true;
@@ -394,7 +402,7 @@ export default function BattleScreen({
             ))}
           </div>
           <div className={plateCls}>
-            <span className={plateNameCls}>{nameHidden ? '???' : word.toUpperCase()}</span>
+            <span className={plateNameCls}>{word.toUpperCase()}</span>
             <span className={plateLevelCls}>{level >= 5 ? 'BOSS' : `Lv${level}`}</span>
           </div>
           {onClose && (
@@ -521,7 +529,7 @@ export default function BattleScreen({
                 </button>
               </div>
               {answerReveal?.spelling && !answerReveal.correct && (
-                <div className={hintCls}>Its true name: {answerReveal.spelling}</div>
+                <div className={hintCls}>The right spelling: {answerReveal.spelling}</div>
               )}
             </form>
           )}

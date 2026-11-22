@@ -18,7 +18,7 @@ export function isBattleLocked(wordObj: any) {
 
 // The gate in front of an unplayed word's definition (design §1): the word's
 // monster blocks the way until the member battles it. The battle opens over
-// everything (so the word's own heading can't help with NAME IT or the bee),
+// everything, like the definition sheet it guards,
 // and when it ends the definitions it guarded are handed to `onUnlocked`.
 export default function WordBattleGate({
   wordObj,
@@ -54,20 +54,29 @@ export default function WordBattleGate({
   useEffect(() => {
     if (!wordId) return;
     let cancelled = false;
-    (async () => {
+    let timer: number | undefined;
+    let tries = 0;
+    async function load() {
       try {
         const next: BattleState = await loadWordBattle(wordId);
         if (cancelled) return;
         // Already played (another tab, or earlier): straight to the meaning.
         if (next?.unlocked) return handleUnlocked(next.unlocked);
         setState(next);
+        // The monster's questions are being written the first time anyone
+        // opens this word: check again shortly.
+        if (next?.status === 'preparing' && tries++ < 30) {
+          timer = window.setTimeout(load, 3000);
+        }
       } catch (error) {
         console.error(error);
         if (!cancelled) setFailed(true);
       }
-    })();
+    }
+    void load();
     return () => {
       cancelled = true;
+      if (timer) window.clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wordId]);
@@ -93,7 +102,9 @@ export default function WordBattleGate({
           <div className={gateSubCls}>
             {failed
               ? 'The monster is hiding right now. Try again soon.'
-              : 'Beat it to see what it means. Two questions, two hearts.'}
+              : state?.status === 'preparing'
+                ? 'It is still waking up. One moment...'
+                : 'Beat it to see what it means. Two questions, two hearts.'}
           </div>
           <button
             type="button"
@@ -101,7 +112,11 @@ export default function WordBattleGate({
             disabled={!ready}
             onClick={() => setOpen(true)}
           >
-            {state?.status === 'active' ? 'Back to battle ▶' : 'Battle! ▶'}
+            {state?.status === 'active'
+              ? 'Back to battle ▶'
+              : state?.status === 'preparing'
+                ? 'Waking up...'
+                : 'Battle! ▶'}
           </button>
         </div>
       </div>

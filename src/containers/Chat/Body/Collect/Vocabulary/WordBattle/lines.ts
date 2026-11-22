@@ -4,7 +4,6 @@
 
 export type QuestionType =
   | 'meaning'
-  | 'name'
   | 'gap'
   | 'use'
   | 'truefalse'
@@ -13,7 +12,6 @@ export type QuestionType =
 
 export const COMMAND_NAMES: Record<QuestionType, string> = {
   meaning: 'FIGHT',
-  name: 'NAME IT',
   gap: 'SPELL SLOT',
   use: 'CHARM',
   truefalse: 'COMBO',
@@ -45,8 +43,6 @@ export function commandLine(type: QuestionType, word: string) {
   switch (type) {
     case 'meaning':
       return `Command: FIGHT! Show ${W} you know what it means.`;
-    case 'name':
-      return 'Command: NAME IT! Its true name is hidden...';
     case 'gap':
       return 'Command: SPELL SLOT! Power the spell.';
     case 'use':
@@ -54,7 +50,7 @@ export function commandLine(type: QuestionType, word: string) {
     case 'truefalse':
       return 'Command: COMBO! Three strikes, all must land.';
     case 'bee':
-      return 'Command: INCANTATION! Listen closely...';
+      return `Command: INCANTATION! ${W} chants a word of its kin. Listen closely...`;
     case 'mirror':
       return 'Command: MIRROR! Find its reflection.';
   }
@@ -64,7 +60,6 @@ export function hitLine(type: QuestionType, word: string, final: boolean) {
   const W = word.toUpperCase();
   const base: Record<QuestionType, string[]> = {
     meaning: ['A clean hit! You clearly know your stuff.', 'Direct hit! Meaning: understood.'],
-    name: ['You call its true name. It flinches!', 'Spelled right. It hates that.'],
     gap: ['The spell ignites! Perfect fit.', 'Click. The spell slot locks in.'],
     use: [`${W} is charmed by your fine usage.`, 'Smooth. It did not see that coming.'],
     truefalse: ['Three for three. COMBO!', 'Hit, hit, hit! Combo lands!'],
