@@ -45,14 +45,18 @@ test('User popup portal stops events before feed-card navigation can intercept a
     /onMouseLeave=\{deviceIsMobile \? undefined : onMouseLeave\}/,
     'Touch devices must not use hover timers to dismiss an actionable popup'
   );
-  const usernameTextSource = readFileSync(
-    new URL('../src/components/Texts/UsernameText.tsx', import.meta.url),
+  // Username text and member faces share one trigger hook.
+  const triggerSource = readFileSync(
+    new URL(
+      '../src/components/UserPopup/useUserPopupTrigger.tsx',
+      import.meta.url
+    ),
     'utf8'
   );
   assert.match(
-    usernameTextSource,
-    /onMouseLeave=\{deviceIsMobile \? undefined : handleMouseLeave\}/,
-    'Username triggers must not schedule mouse-leave dismissal on touch devices'
+    triggerSource,
+    /onMouseLeave: deviceIsMobile \? undefined : handleMouseLeave/,
+    'Profile-card triggers must not schedule mouse-leave dismissal on touch devices'
   );
   assert.match(
     popupSource,

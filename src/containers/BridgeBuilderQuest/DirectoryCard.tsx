@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import { Color } from '~/constants/css';
+import useUserPopupTrigger from '~/components/UserPopup/useUserPopupTrigger';
+import type { User } from '~/types';
 import CrewCover from './CrewCover';
 import type { DirectoryCrew } from './types';
 
@@ -51,26 +53,12 @@ export function MemberAvatars({
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       {shown.map((member, index) => (
-        <span
+        <MemberAvatar
           key={member.userId}
-          title={member.username}
-          className={css`
-            width: ${size};
-            height: ${size};
-            border-radius: 50%;
-            border: 2px solid #fff;
-            margin-left: ${index ? '-0.8rem' : '0'};
-            background: #fff;
-            overflow: hidden;
-            display: inline-flex;
-          `}
-        >
-          <ProfilePic
-            userId={member.userId}
-            profilePicUrl={member.profilePicUrl}
-            style={{ width: '100%', height: '100%' }}
-          />
-        </span>
+          member={member}
+          size={size}
+          overlap={index > 0}
+        />
       ))}
       {members.length > shown.length && (
         <span
@@ -84,6 +72,57 @@ export function MemberAvatars({
         </span>
       )}
     </div>
+  );
+}
+
+// The site's profile card on hover (desktop) or tap, like a username. A tap
+// stops there, so it never opens the crew or feed card around it.
+function MemberAvatar({
+  member,
+  size,
+  overlap
+}: {
+  member: { userId: number; profilePicUrl?: string; username: string };
+  size: string;
+  overlap: boolean;
+}) {
+  const user = useMemo(
+    () =>
+      ({
+        id: member.userId,
+        username: member.username,
+        profilePicUrl: member.profilePicUrl || ''
+      }) as User,
+    [member.userId, member.username, member.profilePicUrl]
+  );
+  const { triggerRef, popup, onMouseEnter, onMouseLeave, onClick } =
+    useUserPopupTrigger<HTMLSpanElement>({ user });
+  return (
+    <span
+      ref={triggerRef}
+      data-feed-card-interactive="true"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+      className={css`
+        width: ${size};
+        height: ${size};
+        border-radius: 50%;
+        border: 2px solid #fff;
+        margin-left: ${overlap ? '-0.8rem' : '0'};
+        background: #fff;
+        overflow: hidden;
+        display: inline-flex;
+        cursor: pointer;
+      `}
+    >
+      <ProfilePic
+        userId={member.userId}
+        profilePicUrl={member.profilePicUrl}
+        style={{ width: '100%', height: '100%', cursor: 'pointer' }}
+      />
+      {popup}
+    </span>
   );
 }
 

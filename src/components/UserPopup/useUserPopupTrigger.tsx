@@ -30,7 +30,8 @@ type ExtraPopupProps = Pick<
 //
 // Wiring: put `triggerRef` and `onMouseLeave` on the element the card anchors
 // to, `onMouseEnter` and `onClick` on the clickable part (often the same
-// element), and render `popup` inside the anchor.
+// element), and render `popup` inside the anchor. A trigger whose tap must keep
+// its own action (switching chats) wires hover only and calls `hide` on tap.
 export default function useUserPopupTrigger<T extends HTMLElement>({
   user,
   onShownChange,
@@ -119,8 +120,17 @@ export default function useUserPopupTrigger<T extends HTMLElement>({
     popup,
     onMouseEnter: handleMouseEnter,
     onMouseLeave: deviceIsMobile ? undefined : handleMouseLeave,
-    onClick: handleClick
+    onClick: handleClick,
+    hide
   };
+
+  // Closes the card and cancels a pending hover, for triggers whose tap does
+  // something else (a chat-switch portrait).
+  function hide() {
+    mouseEntered.current = false;
+    clearTimeout(showTimerRef.current);
+    setPopupContext(null);
+  }
 
   function anchorRect(): PopupContext {
     const rect = triggerRef.current?.getBoundingClientRect?.();

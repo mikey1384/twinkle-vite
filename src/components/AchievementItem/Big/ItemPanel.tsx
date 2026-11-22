@@ -1,39 +1,23 @@
-import React, {
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-  useCallback
-} from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import Icon from '~/components/Icon';
 import ProgressBar from '~/components/ProgressBar';
 import ProfilePic from '~/components/ProfilePic';
-import UserPopup from '~/components/UserPopup';
+import useUserPopupTrigger from '~/components/UserPopup/useUserPopupTrigger';
 import UserListModal from '~/components/Modals/UserListModal';
 import ShareButton from '~/components/Buttons/ShareButton';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import { Link } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { useKeyContext, useAppContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import type { User as SiteUser } from '~/types';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { isMobile } from '~/helpers';
 import { homePanelClass } from '~/theme/homePanels';
 import { useHomePanelVars } from '~/theme/hooks/useHomePanelVars';
-
-const deviceIsMobile = isMobile(navigator);
 
 interface Achiever {
   id: number;
   profilePicUrl: string;
-}
-
-interface DropdownContext {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  userId: number;
 }
 
 interface User extends Achiever {
@@ -84,7 +68,6 @@ export default function ItemPanel({
   phases?: AchievementPhase[];
   style?: React.CSSProperties;
 }) {
-  const myId = useKeyContext((v) => v.myState.userId);
   const loadUsersByAchievementId = useAppContext(
     (v) => v.requestHelpers.loadUsersByAchievementId
   );
@@ -93,9 +76,6 @@ export default function ItemPanel({
   const onSetAchievers = useAppContext((v) => v.user.actions.onSetAchievers);
 
   const [userListModalShown, setUserListModalShown] = useState(false);
-  const [dropdownContext, setDropdownContext] =
-    useState<DropdownContext | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const achievementType = useMemo(() => {
@@ -109,12 +89,6 @@ export default function ItemPanel({
     ? `/achievements/${achievementType}`
     : '';
   const shareShown = !isThumb && !isNotification && !!achievementType;
-  const ProfilePicRef = useRef(null);
-  const showTimerRef: React.RefObject<any> = useRef(0);
-  const hideTimerRef: React.RefObject<any> = useRef(0);
-  const mouseEntered = useRef(false);
-  const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
   const anyMilestoneCompleted =
@@ -159,68 +133,6 @@ export default function ItemPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [achievers?.length]
   );
-
-  const handleProfileInteraction = useCallback(
-    async (user: any, event: React.MouseEvent | React.TouchEvent) => {
-      if (!user?.id) return;
-
-      // Keep avatar profile-popup interactions self-contained so they never
-      // trigger ancestor navigation (e.g. the full achievement embed wrapper,
-      // whose avatars are clickable divs not caught by its anchor/button guard).
-      event.stopPropagation();
-
-      const target = event.currentTarget;
-      mouseEntered.current = true;
-      const elementContext = {
-        x: target.getBoundingClientRect().left,
-        y: target.getBoundingClientRect().top,
-        width: target.getBoundingClientRect().width,
-        height: target.getBoundingClientRect().height,
-        userId: user.id
-      };
-
-      clearTimeout(hideTimerRef.current);
-      clearTimeout(showTimerRef.current);
-
-      if (deviceIsMobile) {
-        setLoading(true);
-        setDropdownContext(elementContext);
-        const data = await loadProfile(user.id);
-        onSetUserState({
-          userId: user.id,
-          newState: { ...data, loaded: true }
-        });
-        setLoading(false);
-      } else {
-        showTimerRef.current = setTimeout(async () => {
-          if (mouseEntered.current) {
-            setLoading(true);
-            setDropdownContext(elementContext);
-            const data = await loadProfile(user.id);
-            onSetUserState({
-              userId: user.id,
-              newState: { ...data, loaded: true }
-            });
-            setLoading(false);
-          }
-        }, 500);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const handleProfilePicMouseLeave = useCallback(() => {
-    mouseEntered.current = false;
-    clearTimeout(showTimerRef.current);
-    hideTimerRef.current = setTimeout(() => {
-      setDropdownContext(null);
-    }, 500);
-  }, []);
-
-  const handleHideMenu = useCallback(() => {
-    setDropdownContext(null);
-  }, []);
 
   const fetchAccomplishers = useCallback(async () => {
     try {
@@ -652,48 +564,7 @@ export default function ItemPanel({
             `}
           >
             {displayedAccomplishers.map((achiever: Achiever) => (
-              <div
-                key={achiever.id}
-                className={css`
-                  width: 4rem;
-                  height: 4rem;
-                  border-radius: 50%;
-                  overflow: hidden;
-                  transition: all 0.2s ease-in-out;
-                  &:hover {
-                    transform: scale(1.1);
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                  }
-                  @media (max-width: ${mobileMaxWidth}) {
-                    width: 3rem;
-                    height: 3rem;
-                  }
-                `}
-                onMouseEnter={
-                  deviceIsMobile
-                    ? undefined
-                    : (e) => handleProfileInteraction(achiever, e)
-                }
-                onMouseLeave={
-                  deviceIsMobile ? undefined : handleProfilePicMouseLeave
-                }
-                onClick={
-                  deviceIsMobile
-                    ? (e) => handleProfileInteraction(achiever, e)
-                    : undefined
-                }
-                ref={ProfilePicRef}
-              >
-                <ProfilePic
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    cursor: 'pointer'
-                  }}
-                  userId={achiever?.id}
-                  profilePicUrl={achiever?.profilePicUrl}
-                />
-              </div>
+              <AchieverFace key={achiever.id} achiever={achiever as User} />
             ))}
           </div>
           {achievers.length > 10 && (
@@ -726,28 +597,6 @@ export default function ItemPanel({
           )}
         </div>
       )}
-      {dropdownContext && (
-        <UserPopup
-          isLoading={loading}
-          popupContext={dropdownContext}
-          onHide={handleHideMenu}
-          myId={myId}
-          user={
-            achievers.find(
-              (user: Achiever) => user.id === dropdownContext.userId
-            ) as User
-          }
-          onMouseEnter={() => {
-            clearTimeout(hideTimerRef.current!);
-          }}
-          onMouseLeave={() => {
-            hideTimerRef.current = window.setTimeout(() => {
-              setDropdownContext(null);
-            }, 500);
-          }}
-          onSetPopupContext={setDropdownContext}
-        />
-      )}
       {userListModalShown && (
         <UserListModal
           onHide={() => setUserListModalShown(false)}
@@ -755,6 +604,51 @@ export default function ItemPanel({
           users={achievers as User[]}
         />
       )}
+    </div>
+  );
+}
+
+const achieverFaceClass = css`
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 3rem;
+    height: 3rem;
+  }
+`;
+
+// The site's profile card on hover (desktop) or tap, like a username. A tap
+// stops there, so it never opens the achievement embed around it.
+function AchieverFace({ achiever }: { achiever: User }) {
+  const { triggerRef, popup, onMouseEnter, onMouseLeave, onClick } =
+    useUserPopupTrigger<HTMLDivElement>({
+      user: achiever as unknown as SiteUser
+    });
+  return (
+    <div
+      ref={triggerRef}
+      className={achieverFaceClass}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+    >
+      <ProfilePic
+        style={{
+          width: '100%',
+          height: '100%',
+          cursor: 'pointer'
+        }}
+        userId={achiever.id}
+        profilePicUrl={achiever.profilePicUrl}
+      />
+      {popup}
     </div>
   );
 }

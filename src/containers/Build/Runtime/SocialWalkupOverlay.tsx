@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import ProfilePic from '~/components/ProfilePic';
+import useUserPopupTrigger from '~/components/UserPopup/useUserPopupTrigger';
 import { useAppContext, useKeyContext } from '~/contexts';
+import type { User } from '~/types';
 import {
   useOwnJoinable,
   useSocialBuildState
@@ -11,6 +13,7 @@ import {
   socialWalkupStore,
   visitLine,
   visitorBannerText,
+  type SocialPerson,
   type SocialVisit,
   type WaitingVisitor
 } from '~/helpers/socialWalkups';
@@ -314,14 +317,7 @@ export default function SocialWalkupOverlay({
       {note ? <VisitNote visit={note} onHide={handleHideNote} /> : null}
       {banner ? (
         <div className="social-card" role="status" data-social-banner>
-          <span className="social-face">
-            <ProfilePic
-              userId={banner.user.id}
-              profilePicUrl={banner.user.profilePicUrl || ''}
-              activityBadgeShown={false}
-              style={{ width: '100%', height: '100%' }}
-            />
-          </span>
+          <WalkupFace person={banner.user} />
           <span className="social-line">
             {visitorBannerText({
               username: banner.user.username,
@@ -448,14 +444,7 @@ function WaitingRow({
 }) {
   return (
     <div className="social-list-row">
-      <span className="social-face">
-        <ProfilePic
-          userId={entry.user.id}
-          profilePicUrl={entry.user.profilePicUrl || ''}
-          activityBadgeShown={false}
-          style={{ width: '100%', height: '100%' }}
-        />
-      </span>
+      <WalkupFace person={entry.user} />
       <span className="social-line">{entry.user.username}</span>
       <button type="button" className="social-primary" onClick={onPlayNow}>
         Play now
@@ -473,14 +462,7 @@ function VisitNote({
 }) {
   return (
     <div className="social-card social-note" role="status" data-social-note>
-      <span className="social-face">
-        <ProfilePic
-          userId={visit.host.id}
-          profilePicUrl={visit.host.profilePicUrl || ''}
-          activityBadgeShown={false}
-          style={{ width: '100%', height: '100%' }}
-        />
-      </span>
+      <WalkupFace person={visit.host} />
       <span className="social-line">{visitLine(visit)}</span>
       <button
         type="button"
@@ -492,5 +474,31 @@ function VisitNote({
         ×
       </button>
     </div>
+  );
+}
+
+// A face here opens the site's profile card like a name anywhere else: hover
+// on desktop, tap on phones. Play now and the chip keep their own taps.
+function WalkupFace({ person }: { person: SocialPerson }) {
+  const { triggerRef, popup, onMouseEnter, onMouseLeave, onClick } =
+    useUserPopupTrigger<HTMLSpanElement>({
+      user: person as unknown as User
+    });
+  return (
+    <span
+      ref={triggerRef}
+      className="social-face"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+    >
+      <ProfilePic
+        userId={person.id}
+        profilePicUrl={person.profilePicUrl || ''}
+        activityBadgeShown={false}
+        style={{ width: '100%', height: '100%', cursor: 'pointer' }}
+      />
+      {popup}
+    </span>
   );
 }

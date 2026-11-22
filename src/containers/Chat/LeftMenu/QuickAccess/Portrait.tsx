@@ -2,6 +2,8 @@ import React from 'react';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import useUserPopupTrigger from '~/components/UserPopup/useUserPopupTrigger';
+import type { User } from '~/types';
 import QuickAccessAvatar from './Avatar';
 import type { ChatQuickAccessPartner } from './types';
 import useQuickAccessPartnerIdentity from './usePartnerIdentity';
@@ -21,14 +23,24 @@ export default function QuickAccessPortrait({
 }) {
   const isDisabled = loading || disabled;
   const displayedPartner = useQuickAccessPartnerIdentity(partner);
+  // Hover shows the profile card (desktop); a tap still switches chats.
+  const { triggerRef, popup, onMouseEnter, onMouseLeave, hide } =
+    useUserPopupTrigger<HTMLButtonElement>({
+      user: displayedPartner as unknown as User
+    });
 
   return (
     <button
+      ref={triggerRef}
       type="button"
       aria-label={`Open chat with ${displayedPartner.username}`}
-      title={displayedPartner.username}
       disabled={isDisabled}
-      onClick={() => onClick(displayedPartner)}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={() => {
+        hide();
+        onClick(displayedPartner);
+      }}
       className={css`
         position: relative;
         flex: 0 0 auto;
@@ -75,6 +87,7 @@ export default function QuickAccessPortrait({
           <Icon icon="spinner" pulse />
         </span>
       ) : null}
+      {popup}
     </button>
   );
 }

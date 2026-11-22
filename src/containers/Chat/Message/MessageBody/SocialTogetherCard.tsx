@@ -3,8 +3,10 @@ import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ProfilePic from '~/components/ProfilePic';
+import useUserPopupTrigger from '~/components/UserPopup/useUserPopupTrigger';
 import ReportMessageModal from '~/components/ChatSafety/ReportMessageModal';
 import { useAppContext, useKeyContext } from '~/contexts';
+import type { User } from '~/types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { trackEvent } from '~/helpers/analytics';
 import { useWalkUp } from '~/helpers/hooks/useSocialWalkups';
@@ -135,16 +137,9 @@ export default function SocialTogetherCard({
         }
       >
         <div className={peopleClass}>
-          <span className={facesClass} aria-hidden>
+          <span className={facesClass}>
             {[me, other].map((user) => (
-              <span key={user.id} className={faceClass}>
-                <ProfilePic
-                  userId={user.id}
-                  profilePicUrl={user.profilePicUrl}
-                  activityBadgeShown={false}
-                  style={{ width: '100%', height: '100%' }}
-                />
-              </span>
+              <TogetherFace key={user.id} user={user} />
             ))}
           </span>
           <span className={sentenceClass}>
@@ -253,6 +248,36 @@ const facesClass = css`
   display: flex;
   flex: 0 0 auto;
 `;
+
+// Each face opens the site's profile card like a name anywhere else: hover on
+// desktop, tap on phones.
+function TogetherFace({
+  user
+}: {
+  user: SocialTogetherCardData['users'][number];
+}) {
+  const { triggerRef, popup, onMouseEnter, onMouseLeave, onClick } =
+    useUserPopupTrigger<HTMLSpanElement>({
+      user: user as unknown as User
+    });
+  return (
+    <span
+      ref={triggerRef}
+      className={faceClass}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+    >
+      <ProfilePic
+        userId={user.id}
+        profilePicUrl={user.profilePicUrl}
+        activityBadgeShown={false}
+        style={{ width: '100%', height: '100%', cursor: 'pointer' }}
+      />
+      {popup}
+    </span>
+  );
+}
 
 const faceClass = css`
   width: 3.8rem;
