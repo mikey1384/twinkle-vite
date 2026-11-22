@@ -4,6 +4,7 @@ import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSpri
 import { backdropUri, HEART, HEART_EMPTY, SCROLL, SPEAKER } from './art';
 import { playBattleSound } from './battleSfx';
 import LootReel from './LootReel';
+import { useAppContext, useKeyContext } from '~/contexts';
 import {
   COMMAND_NAMES,
   QuestionType,
@@ -36,7 +37,10 @@ export interface BattleLoot {
   kind: 'none' | 'xp' | 'energy_recharge' | 'black_ai_card';
   amount?: number;
   quality?: string;
+  // What the win paid, and the member's totals after it (from the server).
+  reward?: { xp: number; coins: number };
   xp?: number;
+  coins?: number;
 }
 
 export interface BattleState {
@@ -119,6 +123,8 @@ export default function BattleScreen({
   // tests and previews run the typed lines faster
   speed?: number;
 }) {
+  const userId = useKeyContext((v) => v.myState.userId);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const word = initial.word;
   const level = Math.max(1, Math.min(5, Number(initial.wordLevel) || 1));
   const monsterScale = useMonsterScale(level);
@@ -379,9 +385,15 @@ export default function BattleScreen({
 
   const handleLanded = useCallback(() => {
     if (!finished) return;
-    setDropText(dropLine(finished.loot || { kind: 'none' }));
+    const loot = finished.loot || { kind: 'none' };
+    setDropText(dropLine(loot));
+    // The member's XP and Coins after the win, as the server counted them.
+    const newState: Record<string, number> = {};
+    if (typeof loot.xp === 'number') newState.twinkleXP = loot.xp;
+    if (typeof loot.coins === 'number') newState.twinkleCoins = loot.coins;
+    if (userId && Object.keys(newState).length) onSetUserState({ userId, newState });
     setPhase('done');
-  }, [finished]);
+  }, [finished, onSetUserState, userId]);
 
   const shortChoices =
     question?.choices && question.choices.every((c) => c.length <= 18) && question.type !== 'meaning';

@@ -288,7 +288,21 @@ function eyeCells(cells: Cell[], x0: number, y0: number, w: number, h: number, r
   }
 }
 
-export interface ComposeOptions { bob?: boolean; blink?: boolean; flicker?: number }
+/**
+ * face: the waking-up faces (11-22). closed = asleep or blinking; peek = one
+ * eye cracked half open; yawn = eyes shut and the mouth wide in a yawn.
+ */
+export type MonsterFace = 'open' | 'closed' | 'peek' | 'yawn';
+export interface ComposeOptions { bob?: boolean; blink?: boolean; flicker?: number; face?: MonsterFace }
+
+/** The yawn's mouth: a tall round "O" (original, 11-22). */
+const YAWN_MOUTH: Sprite = { name: 'Yawn', ax: 3, ay: 0, rows: [
+  '.kkkk.',
+  'kmmmmk',
+  'kmmmmk',
+  'kmmmmk',
+  'kmttmk',
+  '.kkkk.'] };
 
 /** Compose one frame as SIZE*SIZE palette indices. */
 export function compose(r: MonsterRecipe, opt: ComposeOptions = {}): Uint8Array {
@@ -406,8 +420,19 @@ export function compose(r: MonsterRecipe, opt: ComposeOptions = {}): Uint8Array 
   const fy = headTop + (head.faceY ?? 4);
   {
     const cells: Cell[] = [];
-    if (r.eyes === 0 || opt.blink) {
+    const face: MonsterFace = opt.face ?? (opt.blink ? 'closed' : 'open');
+    if (r.eyes === 0 || face === 'closed' || face === 'yawn') {
       cells.push(...spriteCells(CLOSED_EYES, CX, fy));
+    } else if (face === 'peek') {
+      // The biggest eye cracks half open under a lid line; the rest stay shut.
+      const eyes = EYES[r.eyes].eyes;
+      const e = eyes.reduce((a, b) => (b.w * b.h > a.w * a.h ? b : a));
+      if (eyes.length > 1) cells.push(...spriteCells(CLOSED_EYES, CX, fy));
+      const open: Cell[] = [];
+      eyeCells(open, CX + e.x, fy + e.y, e.w, e.h, r, e.x + e.w / 2 === 0, e.x < 0);
+      const lid = fy + e.y + Math.floor(e.h / 2);
+      cells.push(...open.filter((c) => c.y > lid));
+      for (let x = -1; x <= e.w; x++) cells.push({ x: CX + e.x + x, y: lid, k: 'k' });
     } else {
       for (const e of EYES[r.eyes].eyes) {
         const centre = e.x + e.w / 2 === 0;
@@ -417,7 +442,7 @@ export function compose(r: MonsterRecipe, opt: ComposeOptions = {}): Uint8Array 
     if (r.level <= 2) { // rosy cheeks on the gentle levels
       for (const x of [CX - 12, CX - 11, CX + 10, CX + 11]) cells.push({ x, y: fy + 9, k: 'b' });
     }
-    const m = MOUTHS[r.mouth];
+    const m = opt.face === 'yawn' ? YAWN_MOUTH : MOUTHS[r.mouth];
     cells.push(...spriteCells(m, CX, fy + MOUTH_Y));
     stamp(cv, cells);
   }
@@ -487,6 +512,10 @@ export interface MonsterSprite {
     idle: [Uint8Array, Uint8Array];
     /** idle[0] with the eyes shut */
     blink: Uint8Array;
+    /** waking up (11-22): asleep (two-frame breathing), one eye half open, a yawn */
+    sleep: [Uint8Array, Uint8Array];
+    peek: Uint8Array;
+    yawn: Uint8Array;
     /** flash, then dissolve and sink; play once at about 90 ms a frame */
     defeat: Uint8Array[];
   };
@@ -525,6 +554,9 @@ export function generateMonster(word: string, level: number): MonsterSprite {
     frames: {
       idle: [idle0, compose(recipe, { bob: true })],
       blink: compose(recipe, { blink: true }),
+      sleep: [compose(recipe, { face: 'closed' }), compose(recipe, { face: 'closed', bob: true })],
+      peek: compose(recipe, { face: 'peek' }),
+      yawn: compose(recipe, { face: 'yawn', bob: true }),
       defeat: defeatFrames(idle0)
     },
     suggestedScale: recipe.level >= 5 ? 5 : recipe.level >= 3 ? 4 : 3
