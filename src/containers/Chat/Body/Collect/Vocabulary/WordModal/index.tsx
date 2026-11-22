@@ -36,6 +36,7 @@ export default function WordModal({
     other = [],
     deletedDefIds = [],
     definitionOrder,
+    bonusRouletteOpen = false,
     partOfSpeechOrder = [
       'noun',
       'verb',
@@ -143,6 +144,7 @@ export default function WordModal({
             onHide={onHide}
             posObj={posObj}
             posOrder={posOrder}
+            bonusRouletteOpen={!!bonusRouletteOpen}
             word={word}
             onWordMasterBreak={onWordMasterBreak}
           />

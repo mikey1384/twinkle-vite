@@ -13,6 +13,7 @@ export default function DictionaryTab({
   onHide,
   posObj,
   posOrder,
+  bonusRouletteOpen,
   word,
   onWordMasterBreak
 }: {
@@ -21,6 +22,9 @@ export default function DictionaryTab({
   onHide: () => void;
   posObj: { [key: string]: { [key: number]: { title: string } } };
   posOrder: string[];
+  // The word's first Bonus Chance spin is unused although it has definitions
+  // (they came free at discovery): the roulette stays on offer.
+  bonusRouletteOpen: boolean;
   word: string;
   onWordMasterBreak?: (status: any) => void;
 }) {
@@ -32,6 +36,9 @@ export default function DictionaryTab({
   const onApplyAIGeneratedDefinitions = useChatContext(
     (v) => v.actions.onApplyAIGeneratedDefinitions
   );
+  const onSetWordsObj = useChatContext((v) => v.actions.onSetWordsObj);
+  // Its own spin changes neither until the modal closes (handleClose).
+  const bonusChanceShown = posOrder.length === 0 || bonusRouletteOpen;
 
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordModal/DictionaryTab">
@@ -47,25 +54,26 @@ export default function DictionaryTab({
             }
           `}
         >
-          {posOrder.length === 0 ? (
-            <EmptyDictionary
-              word={word}
-              onAIDefinitionsGenerated={setPendingAIDefinitions}
-              onWordMasterBreak={onWordMasterBreak}
-            />
-          ) : (
-            posOrder.map((pos, index) => {
-              return (
-                <PosBlock
-                  key={pos}
-                  partOfSpeech={pos}
-                  contentObj={posObj[pos]}
-                  deletedDefIds={deletedDefIds}
-                  definitionIds={definitionOrder[pos]}
-                  style={{ marginTop: index > 0 ? '1.5rem' : 0 }}
-                />
-              );
-            })
+          {posOrder.map((pos, index) => {
+            return (
+              <PosBlock
+                key={pos}
+                partOfSpeech={pos}
+                contentObj={posObj[pos]}
+                deletedDefIds={deletedDefIds}
+                definitionIds={definitionOrder[pos]}
+                style={{ marginTop: index > 0 ? '1.5rem' : 0 }}
+              />
+            );
+          })}
+          {bonusChanceShown && (
+            <div style={{ marginTop: posOrder.length > 0 ? '2rem' : 0 }}>
+              <EmptyDictionary
+                word={word}
+                onAIDefinitionsGenerated={setPendingAIDefinitions}
+                onWordMasterBreak={onWordMasterBreak}
+              />
+            </div>
           )}
         </div>
       </main>
@@ -79,10 +87,16 @@ export default function DictionaryTab({
 
   function handleClose() {
     if (pendingAIDefinitions) {
-      onApplyAIGeneratedDefinitions({
-        word,
-        ...pendingAIDefinitions
-      });
+      // The wheel only writes definitions for a word that had none; one that
+      // already had them keeps its own (and any order edits).
+      if (posOrder.length === 0) {
+        onApplyAIGeneratedDefinitions({
+          word,
+          ...pendingAIDefinitions
+        });
+      }
+      // Spun (or found already spun): the first spin is used either way.
+      onSetWordsObj({ content: word, bonusRouletteOpen: false });
     }
     onHide();
   }
