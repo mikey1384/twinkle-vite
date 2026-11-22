@@ -452,6 +452,31 @@ export function visitLine(visit: SocialVisit) {
   }
 }
 
+/**
+ * What the joiner is told when a Join tap could not put them in the host's
+ * room (INCIDENT 2026-11-22). 'retry' is a technical failure on Twinkle's
+ * side; 'gone' means the host is not in the app right now. Both are said
+ * plainly instead of opening the app into a solo or saved game. Anything
+ * else (including the neutral 'unavailable' of a policy refusal) is null:
+ * the app opens as before.
+ */
+export function joinNotice(
+  status: unknown,
+  hostName: string
+): { kind: 'retry' | 'gone'; message: string } | null {
+  if (status === 'retry')
+    return {
+      kind: 'retry',
+      message: `Couldn't join ${hostName} right now. Tap to try again.`
+    };
+  if (status === 'gone')
+    return {
+      kind: 'gone',
+      message: `${hostName} isn't in there anymore. Tap to open the app anyway.`
+    };
+  return null;
+}
+
 /** The host's passing toast when someone dropped into their room. */
 export function arrivalText(username: string) {
   return `${username} joined from Live now`;

@@ -1,8 +1,10 @@
 import { useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
+import { useToast } from '~/contexts/Toast';
 import { trackEvent } from '~/helpers/analytics';
 import {
+  joinNotice,
   socialJoinableStore,
   socialWalkupStore,
   type JoinIntent,
@@ -66,25 +68,25 @@ export function dropInLaunchTarget(
 }
 
 /**
- * Walk up to a member in an app, then open the app aimed at them. Whatever
- * the server answers, the member ends up in the app: next in line, watching,
- * or simply playing on their own.
+ * Walk up to a member in an app, then open the app aimed at them: next in
+ * line, watching, dropped into their room, or (after a neutral refusal)
+ * simply playing on their own. Two answers do not open the app
+ * (INCIDENT 2026-11-22): 'retry' (Twinkle could not check or join just now)
+ * and 'gone' (the host is not in the app any more). The member is told so,
+ * with a tap to try again or to open the app anyway.
  */
 export function useWalkUp() {
   const navigate = useNavigate();
+  const showToast = useToast();
   const walkUpToMember = useAppContext((v) => v.requestHelpers.walkUpToMember);
   const walkAwayFromMember = useAppContext((v) => v.requestHelpers.walkAwayFromMember);
-  return async function walkUp({
-    buildId,
-    host,
-    intent,
-    source
-  }: {
+  return async function walkUp(args: {
     buildId: number;
     host: SocialPerson;
     intent: JoinIntent;
     source: 'live_now' | 'profile' | 'card';
-  }) {
+  }): Promise<void> {
+    const { buildId, host, intent, source } = args;
     const outcome = await walkUpToMember({
       buildId,
       hostUserId: host.id,
@@ -92,6 +94,40 @@ export function useWalkUp() {
       // this page can take a drop-in (the host is in an open room)
       dropIn: true
     });
+    const notice = joinNotice(outcome?.status, host.username);
+    if (notice) {
+      trackEvent('social_walkup', {
+        app_id: buildId,
+        intent,
+        outcome: notice.kind,
+        source
+      });
+      showToast({
+        message: notice.message,
+        duration: 8000,
+        onClick:
+          notice.kind === 'retry'
+            ? () => void walkUp(args)
+            : () => navigate(`/app/${buildId}`)
+      });
+      return;
+    }
+    return land({ buildId, host, intent, source, outcome });
+  };
+
+  function land({
+    buildId,
+    host,
+    intent,
+    source,
+    outcome
+  }: {
+    buildId: number;
+    host: SocialPerson;
+    intent: JoinIntent;
+    source: 'live_now' | 'profile' | 'card';
+    outcome: any;
+  }) {
     if (
       outcome?.status === 'drop-in' &&
       outcome.host?.id === host.id &&
@@ -159,5 +195,5 @@ export function useWalkUp() {
     navigate(`/app/${buildId}`, {
       state: canTarget ? { buildLaunchTarget: socialLaunchTarget(buildId, visit) } : null
     });
-  };
+  }
 }

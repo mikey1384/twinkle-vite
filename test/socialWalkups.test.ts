@@ -7,6 +7,7 @@ import {
   createSocialWalkupStore,
   EMPTY_SOCIAL_STATE,
   joinActions,
+  joinNotice,
   joinableBadge,
   queueChipText,
   readJoinable,
@@ -446,4 +447,20 @@ test('drop-in: the visitor lands with no note; the host gets a passing toast and
   assert.equal(store.get(2809).match?.roomKey, 'room-B');
   assert.equal(forwarded.length, 1);
   store.dismissArrival(2809);
+});
+
+// INCIDENT 2026-11-22: a Join that cannot put the member in the room says so
+// instead of opening the app into a solo or saved game.
+test('join notice: retry and gone are said plainly; everything else opens the app as before', () => {
+  assert.deepEqual(joinNotice('retry', 'dew'), {
+    kind: 'retry',
+    message: "Couldn't join dew right now. Tap to try again."
+  });
+  assert.deepEqual(joinNotice('gone', 'dew'), {
+    kind: 'gone',
+    message: "dew isn't in there anymore. Tap to open the app anyway."
+  });
+  // neutral refusals, outcomes that land in the app, and unknown statuses
+  for (const status of ['unavailable', 'drop-in', 'waiting', 'later', 'watch', 'not-room', undefined, 'something-new'])
+    assert.equal(joinNotice(status, 'dew'), null);
 });
