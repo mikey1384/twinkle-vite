@@ -166,7 +166,18 @@ export default function WordBattleGate({
   const ready = !!state && (state.status === 'ready' || state.status === 'active');
   // A battle already under way skips the wake-up: it is awake and waiting.
   const active = state?.status === 'active';
-  const { stage, setStage, advance } = useWakeStage({ ready, skip: active, stopped: failed, word });
+  // Already awake when the gate first loads (its battle was written before):
+  // no sleep-to-wake lines, straight to "A wild X appears!" (Mikey 11-23).
+  // The wake-up plays only while the battle is really still being written.
+  const awakeAtOpen = useRef<boolean | null>(null);
+  if (state && awakeAtOpen.current === null) awakeAtOpen.current = ready;
+  const { stage, setStage, advance } = useWakeStage({
+    ready,
+    skip: active || awakeAtOpen.current === true,
+    // Nothing advances before the first state arrives.
+    stopped: failed || !state,
+    word
+  });
   const awake = stage === 'wake' || stage === 'awake';
   const asleep = stage === 'sleep' || stage === 'stir';
   const skippable = !awake && !failed;
@@ -191,7 +202,12 @@ export default function WordBattleGate({
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordBattle">
       <div
         className={cx(gateCls, skippable && gateSkippableCls)}
-        style={compact ? { padding: '1rem' } : undefined}
+        // Hidden (space kept) until the first state says asleep or awake, so
+        // an awake monster never flashes its sleeping frame first.
+        style={{
+          ...(compact ? { padding: '1rem' } : null),
+          ...(!state && !failed ? { visibility: 'hidden' as const } : null)
+        }}
         ref={gateRef}
         tabIndex={skippable ? 0 : undefined}
         role={skippable ? 'button' : undefined}
@@ -227,7 +243,7 @@ export default function WordBattleGate({
         </div>
         <div className={gateTextCls} aria-live="polite">
           <div className={gateTitleCls}>
-            {active ? `${word.toUpperCase()} is waiting!` : wakeLine(stage, word)}
+            {!state && !failed ? '\u00a0' : active ? `${word.toUpperCase()} is waiting!` : wakeLine(stage, word)}
           </div>
           <div className={gateSubCls}>
             {failed
