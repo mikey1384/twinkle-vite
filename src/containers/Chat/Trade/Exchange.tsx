@@ -17,7 +17,11 @@ export default function Exchange({
   showcase = false,
   gift = false,
   settled = false,
-  cancelled = false
+  cancelled = false,
+  batteryExpiresAt = 0,
+  batteryState = 'pending',
+  nowMs = Date.now(),
+  timeZone
 }: {
   terms: TradeTerms;
   partnerName: string;
@@ -28,6 +32,10 @@ export default function Exchange({
   gift?: boolean;
   settled?: boolean;
   cancelled?: boolean;
+  batteryExpiresAt?: number;
+  batteryState?: 'pending' | 'listed' | 'received' | 'sent' | 'expired' | 'cancelled';
+  nowMs?: number;
+  timeZone?: string;
 }) {
   const inReply = useReplyCardPresentation();
   const sides = interest
@@ -134,6 +142,14 @@ export default function Exchange({
                     showOwnership={!showcase && !interest}
                     settled={settled}
                     cancelled={cancelled}
+                    batteryExpiresAt={batteryExpiresAt}
+                    batteryState={
+                      batteryState === 'received' && side === 'give'
+                        ? 'sent'
+                        : batteryState
+                    }
+                    nowMs={nowMs}
+                    timeZone={timeZone}
                   />
                 </>
               ) : (

@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { AppOwnershipNotice } from '~/components/Build/TradeBuilds';
 import Exchange from './Exchange';
+import { batteryExpiresAtForOffer } from '~/helpers/battery';
 import { summarizeBundleWithBurnValue } from './helpers/burnValue';
 import { errorClass, noticeClass, footerActionsClass } from './styles';
 import type { TradeReview } from './types';
@@ -135,6 +136,10 @@ export default function ReviewModal({
           interest={mode === 'request' ? terms.receive : undefined}
           showcase={mode === 'show'}
           gift={mode === 'send'}
+          batteryExpiresAt={
+            review.batteryExpiresAt ||
+            batteryExpiresAtForOffer(Math.floor(Date.now() / 1000))
+          }
         />
         {review.coinExplanation && (
           <p className={noticeClass}>{review.coinExplanation}</p>

@@ -11,6 +11,7 @@ import { errorClass } from '../../../../Trade/styles';
 import { useAppContext } from '~/contexts';
 import { applyCanonicalCoinsAndReconcile } from '~/helpers/canonicalUserCoins';
 import { requestTradeDeliverabilityRefresh } from '../../../../Trade/helpers/openTrades';
+import { batteryExpiresAtForOffer } from '~/helpers/battery';
 
 export default function TradeButtons({
   channelId,
@@ -107,6 +108,11 @@ export default function TradeButtons({
         imResponsible ? `burned` : `burned`
       } one or more of the cards included in this proposal`;
     }
+    if (disableReasonObj.reason === 'not enough battery') {
+      return `${responsiblePartyLabel} no longer ${
+        imResponsible ? `have` : `has`
+      } the battery included in this proposal`;
+    }
     if (disableReasonObj.reason === 'card unavailable') {
       return 'A card in this proposal is no longer available. Start a new proposal.';
     }
@@ -190,7 +196,10 @@ export default function TradeButtons({
         <ReviewModal
           review={{
             mode: 'accept',
-            terms: getViewerTradeTerms(reviewSnapshot, myId)
+            terms: getViewerTradeTerms(reviewSnapshot, myId),
+            batteryExpiresAt: batteryExpiresAtForOffer(
+              Number(reviewSnapshot.timeStamp)
+            )
           }}
           partnerName={partnerName}
           groupObjs={groupObjs}
@@ -244,7 +253,11 @@ export default function TradeButtons({
           transactionId: reviewSnapshot.id,
           reviewedBuildIds: [...give.builds, ...receive.builds].map(
             (build) => build.id
-          )
+          ),
+          // the battery amount this screen showed (one side only)
+          ...(give.battery || receive.battery
+            ? { reviewedBatteryUnits: give.battery || receive.battery }
+            : {})
         });
       if (isDisabled) {
         setDisableReasonObj({ reason: disableReason, responsibleParty });

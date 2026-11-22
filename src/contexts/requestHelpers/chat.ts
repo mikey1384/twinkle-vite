@@ -1,3 +1,4 @@
+import { setFullBatteryUnits } from '~/helpers/battery';
 import type { SharedMediaPage, SharedMediaQuery, SharedAttachment } from '~/helpers/chatSharedMedia';
 import { getMemberPageQuery, resolveMemberPage } from '../Chat/memberPage';
 import URL from '~/constants/URL';
@@ -249,16 +250,18 @@ export default function chatRequestHelpers({
     async acceptTrade({
       channelId,
       transactionId,
-      reviewedBuildIds
+      reviewedBuildIds,
+      reviewedBatteryUnits
     }: {
       channelId: number;
       transactionId: number;
       reviewedBuildIds?: number[];
+      reviewedBatteryUnits?: number;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/chat/trade/accept`,
-          { channelId, transactionId, reviewedBuildIds },
+          { channelId, transactionId, reviewedBuildIds, reviewedBatteryUnits },
           auth()
         );
         return data;
@@ -396,6 +399,19 @@ export default function chatRequestHelpers({
           auth()
         );
         return { disableReason, responsibleParty, isDisabled };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Battery picker data for a trade with this partner (canonical values).
+    async loadBatteryTradeInfo(partnerId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/trade/battery?partnerId=${Number(partnerId)}`,
+          auth()
+        );
+        setFullBatteryUnits(data?.fullBatteryUnits);
+        return data;
       } catch (error) {
         return handleError(error);
       }

@@ -4,6 +4,8 @@ export interface AiEnergyDisplayPolicy {
   baseEnergyUnitsPerDay?: number;
   dayKey?: string;
   dayIndex?: number | string;
+  // battery received from other members today (tradable battery)
+  batteryReceivedUnits?: number;
 }
 
 const DAY_MS = 86_400_000;
@@ -33,13 +35,25 @@ export function getAiEnergyDisplay(
     percent !== null &&
     ((percent > 0 && percent < 1) ||
       (percent === 0 && hasRemaining && remaining > 0));
+  // Battery received from another member can take today's battery past one
+  // full battery: the bars stay full and the label says how far (e.g. 140%).
+  // Recharges never do this (they are bought only when the battery is empty).
+  const beyondFull =
+    percent === 100 &&
+    hasRemaining &&
+    typeof base === 'number' &&
+    base > 0 &&
+    Number(policy?.batteryReceivedUnits) > 0 &&
+    remaining > base
+      ? Math.floor((remaining / base) * 100)
+      : null;
   return {
     percent,
     label: lessThanOne
       ? 'Less than 1%'
       : percent === null
         ? '—'
-        : `${Math.floor(percent)}%`
+        : `${beyondFull ?? Math.floor(percent)}%`
   };
 }
 

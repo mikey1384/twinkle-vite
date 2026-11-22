@@ -1,3 +1,4 @@
+import { setFullBatteryUnits } from '~/helpers/battery';
 import { mergeAiUsagePolicyWithCurrent } from '~/helpers/aiUsagePolicy';
 
 function mergeTodayStats(
@@ -18,6 +19,9 @@ function mergeTodayStats(
           newStats.aiUsagePolicy
         )
       : state.todayStats.aiUsagePolicy;
+  // The daily battery size is the API's setting; battery amounts are shown
+  // against whatever the latest snapshot says.
+  setFullBatteryUnits(nextAiUsagePolicy?.baseEnergyUnitsPerDay);
   const nextTodayStats = {
     ...state.todayStats,
     ...newStats,
