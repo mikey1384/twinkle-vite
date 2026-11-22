@@ -42,6 +42,20 @@ export default function contentRequestHelpers({
       );
       return data;
     },
+    // One of the member's own pictures as a file (a Zero/Ciel download card).
+    async loadOwnedAssetFile(source: {
+      kind: string;
+      id: string;
+    }): Promise<{ bytes: ArrayBuffer; type: string }> {
+      const response = await request.get(
+        `${URL}/content/assets/file?kind=${encodeURIComponent(source.kind)}&id=${encodeURIComponent(source.id)}`,
+        { ...auth(), responseType: 'arraybuffer' }
+      );
+      return {
+        bytes: response.data,
+        type: String(response.headers?.['content-type'] || 'image/png')
+      };
+    },
     async loadBookPreview(subjectId: number): Promise<{ book: BookPreview | null }> {
       const { data } = await request.get(`${URL}/content/books/${subjectId}/preview`);
       return data;

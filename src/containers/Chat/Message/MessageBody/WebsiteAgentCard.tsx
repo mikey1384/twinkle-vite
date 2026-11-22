@@ -23,7 +23,18 @@ import {
   type TopicBrainCardPreview
 } from '~/helpers/topicBrain';
 import TopicBrainProposalPreview from './TopicBrainProposalPreview';
-import AssetHandoffPreview from './AssetHandoffPreview';
+import AssetHandoffPreview, {
+  type AssetHandoffDestination
+} from './AssetHandoffPreview';
+import MessageCleanupPreview, {
+  isMessageCleanupPreview,
+  type MessageCleanupPreviewData
+} from './MessageCleanupPreview';
+import WebsiteAgentDownloadCard, {
+  type WebsiteAgentDownloadItem
+} from './WebsiteAgentDownloadCard';
+import { socket } from '~/constants/sockets/api';
+import { relayChatMessage } from '~/helpers/chatMessageSend';
 
 export interface WebsiteAgentCardData {
   asyncTask?: {
@@ -47,7 +58,10 @@ export interface WebsiteAgentCardData {
   };
   // lumine: sending a request to Lumine on duty, or a project owner's
   // choice of sponsor access; decided on the server like the others.
-  type: 'choice' | 'approval' | 'permission' | 'lumine';
+  type: 'choice' | 'approval' | 'permission' | 'lumine' | 'download';
+  // a download card's button text and what it saves
+  label?: string;
+  item?: WebsiteAgentDownloadItem;
   id: string;
   question?: string;
   options?: string[];
@@ -73,12 +87,9 @@ export interface WebsiteAgentCardData {
     | {
         kind: 'asset_handoff';
         proposalId: string;
-        destination?: {
-          kind: 'avatar' | 'cover' | 'profile_gallery' | 'subject' | 'comment';
-          caption?: string;
-          position?: string;
-        };
+        destination?: AssetHandoffDestination;
       }
+    | MessageCleanupPreviewData
     | { kind?: string };
 }
 
@@ -166,6 +177,10 @@ export default function WebsiteAgentCard({
   const requesterId = Number(card.requesterUserId || 0);
   const isSomeoneElses = !!requesterId && requesterId !== Number(userId);
   const requesterName = card.requesterUsername || 'the member who asked';
+  const cleanupPreview =
+    card.type === 'approval' && isMessageCleanupPreview(card.preview)
+      ? card.preview
+      : null;
 
   const decided =
     card.type === 'choice'
@@ -178,7 +193,9 @@ export default function WebsiteAgentCard({
         : card.status !== 'pending' && card.status !== 'processing';
 
   const asyncStep = card.asyncTask?.operation === 'step';
-  const showAsyncPreview = Boolean(asyncActionTitle(card));
+  // A saved task's last step can be an image handoff: its own preview card.
+  const asyncHandoffStep = asyncStep && !!imageProposalId;
+  const showAsyncPreview = !asyncHandoffStep && Boolean(asyncActionTitle(card));
   const [loadedPictures, setLoadedPictures] = useState<{
     payloadHash: string;
     ids: number[];
@@ -214,7 +231,9 @@ export default function WebsiteAgentCard({
             disabled:
               decided ||
               isSomeoneElses ||
-              (asyncStep && (!showAsyncPreview || !picturesReady)) ||
+              (asyncStep &&
+                !asyncHandoffStep &&
+                (!showAsyncPreview || !picturesReady)) ||
               (!!imageProposalId && loadedProposalId !== imageProposalId)
           },
           {
@@ -233,10 +252,24 @@ export default function WebsiteAgentCard({
       ? card.preview
       : null;
 
+  if (card.type === 'download') {
+    return card.item ? (
+      <WebsiteAgentDownloadCard
+        label={card.label || 'Download'}
+        item={card.item}
+        isSomeoneElses={isSomeoneElses}
+      />
+    ) : null;
+  }
+
   return (
     <div
       className={
-        asyncStep || brainPreview || imageProposalId || profilePreview
+        asyncStep ||
+        brainPreview ||
+        imageProposalId ||
+        profilePreview ||
+        cleanupPreview
           ? `${bubbleVariables} ${stackedCard}`
           : bubbleVariables
       }
@@ -275,13 +308,16 @@ export default function WebsiteAgentCard({
       {profilePreview && !isSomeoneElses && (
         <ProfileActionPreview preview={profilePreview} />
       )}
+      {cleanupPreview && !isSomeoneElses && (
+        <MessageCleanupPreview preview={cleanupPreview} />
+      )}
       <ChoicePromptBubble
         question={
           card.type === 'choice' || card.type === 'lumine'
             ? sameWords(card.question, messageText)
               ? ''
               : card.question || ''
-            : asyncStep
+            : asyncStep && !asyncHandoffStep
               ? showAsyncPreview
                 ? ''
                 : 'Open the updated card to review this step.'
@@ -314,7 +350,10 @@ export default function WebsiteAgentCard({
       busyLabel ||
       decided ||
       isSomeoneElses ||
-      (key === 'approve' && asyncStep && (!showAsyncPreview || !picturesReady))
+      (key === 'approve' &&
+        asyncStep &&
+        !asyncHandoffStep &&
+        (!showAsyncPreview || !picturesReady))
     )
       return;
     setError('');
@@ -349,6 +388,29 @@ export default function WebsiteAgentCard({
       ) {
         const handoff = nextCard.result?.data;
         const saved = handoff?.saved;
+        const destination = handoff?.destination;
+        // A picture sent into a chat: relay it live like the chat page does
+        // after its own upload (the server reloads the canonical row).
+        if (
+          destination?.kind === 'chat_message' &&
+          Number(saved?.message?.id) > 0
+        ) {
+          relayChatMessage({
+            socket,
+            messageId: Number(saved.message.id),
+            channelId: Number(saved.message.channelId || destination.id)
+          });
+        }
+        if (
+          destination?.kind === 'content_thumbnail' &&
+          typeof saved?.thumbUrl === 'string'
+        ) {
+          onEditContent({
+            contentType: destination.contentType,
+            contentId: destination.id,
+            data: { thumbUrl: saved.thumbUrl }
+          });
+        }
         if (
           (saved?.contentType === 'subject' ||
             saved?.contentType === 'comment') &&
@@ -564,7 +626,10 @@ export function isWebsiteAgentCardData(
     (card.type === 'choice' ||
       card.type === 'approval' ||
       card.type === 'permission' ||
-      card.type === 'lumine') &&
+      card.type === 'lumine' ||
+      (card.type === 'download' &&
+        !!card.item &&
+        typeof card.item === 'object')) &&
     typeof card.id === 'string' &&
     // Cards with answers to pick must carry them as a list of words.
     ((card.type !== 'choice' && card.type !== 'lumine') ||

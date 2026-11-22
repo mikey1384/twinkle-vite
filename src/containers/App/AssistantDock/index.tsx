@@ -12,10 +12,12 @@ import { Color } from '~/constants/css';
 import {
   CHAT_ID_BASE_NUMBER,
   ZERO_TWINKLE_ID,
-  CIEL_TWINKLE_ID
+  CIEL_TWINKLE_ID,
+  mb,
+  returnMaxUploadSize
 } from '~/constants/defaultValues';
 import { getChatReaction } from '~/constants/chatReactions';
-import { useChatContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { uiScale } from '~/helpers/uiScale';
 import Icon from '~/components/Icon';
@@ -170,9 +172,18 @@ export function DockWindow({
   const transcript = useSyncExternalStore(subscribeAssistantReplies, () =>
     getAssistantTranscript(channelId, topicId)
   );
-  const { reply, replying, sending, send, sendError } =
+  const { reply, replying, sending, send, sendPhoto, sendError } =
     useAssistantConversation({ assistantName: assistant, channelId, topicId });
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const inputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  // A photo to send with the next message (the window's photo button).
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoError, setPhotoError] = useState('');
+  useEffect(() => {
+    setPhoto(null);
+    setPhotoError('');
+  }, [assistant, topicId]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const followBottom = useRef(true);
   const [voiceQueued, setVoiceQueued] = useState(false);
@@ -720,6 +731,73 @@ export function DockWindow({
               </button>
             </div>
           )}
+          {(photo || photoError) && (
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                flex-shrink: 0;
+                padding: 0.5rem 0.7rem;
+                border-radius: 8px;
+                background: ${Color.logoBlue(0.08)};
+                font-size: 1.25rem;
+                color: ${photoError ? Color.rose() : Color.darkerGray()};
+              `}
+            >
+              <Icon icon={photoError ? 'exclamation-triangle' : 'image'} />
+              <span
+                className={css`
+                  flex: 1;
+                  min-width: 0;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                `}
+              >
+                {photoError || photo?.name}
+              </span>
+              <button
+                type="button"
+                aria-label={photoError ? 'Dismiss' : 'Don’t send this photo'}
+                className={windowButtonClass}
+                style={{ flex: '0 0 auto', padding: '.3rem' }}
+                onClick={() => {
+                  setPhoto(null);
+                  setPhotoError('');
+                }}
+              >
+                <Icon icon="times" />
+              </button>
+            </div>
+          )}
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0] || null;
+              event.target.value = '';
+              if (!file) return;
+              if (!file.type.startsWith('image/')) {
+                setPhoto(null);
+                setPhotoError('Choose a photo or picture.');
+                return;
+              }
+              const maxSize = returnMaxUploadSize(fileUploadLvl);
+              if (file.size > maxSize) {
+                setPhoto(null);
+                setPhotoError(
+                  `This photo is bigger than ${Math.floor(maxSize / mb)} MB.`
+                );
+                return;
+              }
+              setPhotoError('');
+              setPhoto(file);
+              inputRef.current?.focus();
+            }}
+          />
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -731,6 +809,31 @@ export function DockWindow({
               flex-shrink: 0;
             `}
           >
+            {!connected && !askContext && (
+              <button
+                type="button"
+                aria-label={`Send ${assistant} a photo`}
+                title="Send a photo"
+                disabled={sending || replying || transitioning || active}
+                onClick={() => photoInputRef.current?.click()}
+                className={css`
+                  flex: 0 0 auto;
+                  border: 1px solid ${Color.logoBlue(0.3)};
+                  border-radius: 9px;
+                  background: #fff;
+                  color: ${Color.logoBlue()};
+                  padding: 0 0.9rem;
+                  font-size: 1.4rem;
+                  cursor: pointer;
+                  &:disabled {
+                    opacity: 0.45;
+                    cursor: default;
+                  }
+                `}
+              >
+                <Icon icon="image" />
+              </button>
+            )}
             <input
               ref={inputRef}
               value={text}
@@ -772,7 +875,7 @@ export function DockWindow({
               aria-busy={sending}
               type="submit"
               disabled={
-                (!text.trim() && !askContext) ||
+                (!text.trim() && !askContext && !photo) ||
                 sending ||
                 replying ||
                 transitioning ||
@@ -807,6 +910,16 @@ export function DockWindow({
     const epoch = getAssistantAccountEpoch();
     const sentContext = askContext;
     const sentText = content ?? text;
+    if (photo && content === undefined && !sentContext) {
+      const sentPhoto = photo;
+      if (await sendPhoto(sentPhoto, sentText)) {
+        if (epoch !== getAssistantAccountEpoch()) return;
+        setPhoto((current) => (current === sentPhoto ? null : current));
+        if (getAssistantDraft(assistant, topicId) === text)
+          setAssistantDraft(assistant, topicId, '');
+      }
+      return;
+    }
     if (await send(sentText, sentContext)) {
       if (epoch !== getAssistantAccountEpoch()) return;
       if (getAssistantDraft(assistant, topicId) === text)
