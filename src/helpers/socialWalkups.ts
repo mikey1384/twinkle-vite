@@ -201,8 +201,17 @@ export interface SocialVisit {
   // waiting: you're next. later: not right now (watch or play meanwhile).
   // watch: came to watch, not queued. unavailable: they are not here.
   // matched: playing together. released: the host left while you waited.
+  // missed: the host's accept ended your walk-up without letting you in
+  // (you weren't in the app in time, or a refusal whose reason is never
+  // shown).
   status:
-    'waiting' | 'later' | 'watch' | 'unavailable' | 'matched' | 'released';
+    | 'waiting'
+    | 'later'
+    | 'watch'
+    | 'unavailable'
+    | 'matched'
+    | 'released'
+    | 'missed';
   walkupId: string | null;
   expiresAt?: number;
   joinable: Joinable | null;
@@ -316,7 +325,13 @@ export function applySocialWalkupEvent(
   }
   if (event.type === 'released') {
     if (!state.visit || state.visit.walkupId !== event.walkupId) return state;
-    return { ...state, visit: { ...state.visit, status: 'released' } };
+    return {
+      ...state,
+      visit: {
+        ...state.visit,
+        status: event.missed === true ? 'missed' : 'released'
+      }
+    };
   }
   return state;
 }
@@ -447,9 +462,37 @@ export function visitLine(visit: SocialVisit) {
     case 'released':
     case 'unavailable':
       return `${name} isn't here right now`;
+    case 'missed':
+      return `${name} couldn't let you in this time. Try again later.`;
     case 'matched':
       return game ? `You're playing with ${name}` : `You're with ${name}`;
   }
+}
+
+/**
+ * The launch target the app sees (Twinkle.notifications.getLaunchTarget and
+ * its listener) once the walk-up it was opened for has ended: a 'waiting'
+ * social target becomes 'unavailable', so the app stops showing a wait
+ * nobody can end. Anything else comes back unchanged (the same object).
+ */
+export function settledSocialLaunchTarget<T extends Record<string, any> | null>(
+  launchTarget: T,
+  visit: SocialVisit | null
+): T {
+  const target = launchTarget?.target;
+  if (
+    launchTarget?.source !== 'social' ||
+    target?.kind !== 'social' ||
+    target.status !== 'waiting' ||
+    !visit ||
+    Number(target.hostUserId) !== visit.host.id ||
+    (visit.status !== 'released' && visit.status !== 'missed')
+  )
+    return launchTarget;
+  return {
+    ...launchTarget,
+    target: { ...target, status: 'unavailable' }
+  };
 }
 
 /**
