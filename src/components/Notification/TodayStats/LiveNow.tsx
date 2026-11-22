@@ -10,6 +10,8 @@ import { PRESENCE_HIDDEN_USER_IDS } from '~/helpers/hiddenPresence';
 import { trackEvent } from '~/helpers/analytics';
 import useBlockedUsers from '~/helpers/hooks/useBlockedUsers';
 import { abbreviateNumber, addCommasToNumber } from '~/helpers/stringHelpers';
+import { useWalkUp } from '~/helpers/hooks/useSocialWalkups';
+import { joinableBadge } from '~/helpers/socialWalkups';
 import {
   createLiveNowShownTracker,
   createLiveNowSignatureReader,
@@ -178,6 +180,79 @@ const entryCls = css`
   .live-face + .live-face {
     margin-left: -0.8rem;
   }
+  /* Someone you can join: a small dot on their face (green = ready now,
+     amber = busy, you can be next). */
+  .live-face {
+    position: relative;
+  }
+  .live-face[data-joinable]::after {
+    content: '';
+    position: absolute;
+    right: -0.1rem;
+    bottom: -0.1rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 50%;
+    background: #2fbf71;
+    box-shadow: 0 0 0 2px #fff;
+  }
+  .live-face[data-joinable='busy-watchable']::after,
+  .live-face[data-joinable='busy']::after {
+    background: #e8a33d;
+  }
+  /* What each joinable person is up to, in the app's own words. One line
+     per person; tapping it opens them (Play / Watch). */
+  .live-joins {
+    flex: 1 0 100%;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.5rem;
+    margin-top: 0.1rem;
+  }
+  .live-join {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 100%;
+    min-height: 2.8rem;
+    padding: 0.2rem 0.9rem 0.2rem 0.7rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(47, 191, 113, 0.12);
+    color: #1f6a44;
+    font: inherit;
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.3;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .live-join:hover {
+    background: rgba(47, 191, 113, 0.2);
+  }
+  .live-join[data-state='busy-watchable'],
+  .live-join[data-state='busy'] {
+    background: rgba(232, 163, 61, 0.14);
+    color: #7a5312;
+  }
+  .live-join[data-state='busy-watchable']:hover,
+  .live-join[data-state='busy']:hover {
+    background: rgba(232, 163, 61, 0.24);
+  }
+  .live-join-dot {
+    flex: 0 0 auto;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .live-join-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .live-count {
     min-width: 1.2rem;
     font-size: 1.3rem;
@@ -237,6 +312,10 @@ const entryCls = css`
       grid-column: 2;
       grid-row: 1 / span 2;
     }
+    .live-joins {
+      grid-column: 1 / -1;
+      grid-row: 3;
+    }
   }
 `;
 
@@ -255,6 +334,9 @@ const moreCls = css`
     text-decoration: underline;
   }
 `;
+
+// At most this many "who you can join" lines per app.
+const LIVE_NOW_JOIN_LINES = 2;
 
 // Today's Progress reads this too: while anything is live the card compacts
 // its header so the whole card keeps about the same height.
@@ -336,6 +418,7 @@ export default function LiveNow({
   onPopupOpenChange?: (open: boolean) => void;
 }) {
   const navigate = useNavigate();
+  const walkUp = useWalkUp();
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [expanded, setExpanded] = useState(false);
@@ -427,7 +510,12 @@ export default function LiveNow({
                     <span
                       key={member.id}
                       className="live-face"
-                      title={member.username}
+                      data-joinable={member.joinable?.state}
+                      title={
+                        member.joinable
+                          ? `${member.username} · ${joinableBadge(member.joinable)}`
+                          : member.username
+                      }
                       onClick={(event) => openMember(event, member, app)}
                     >
                       <ProfilePic
@@ -452,6 +540,27 @@ export default function LiveNow({
                   {app.count >= 1000 ? abbreviateNumber(app.count) : app.count}
                 </span>
               </span>
+              {app.joinable > 0 ? (
+                <span className="live-joins">
+                  {app.members
+                    .filter((member) => member.joinable)
+                    .slice(0, LIVE_NOW_JOIN_LINES)
+                    .map((member) => (
+                      <button
+                        key={member.id}
+                        type="button"
+                        className="live-join"
+                        data-state={member.joinable!.state}
+                        onClick={(event) => openMember(event, member, app)}
+                      >
+                        <span className="live-join-dot" aria-hidden />
+                        <span className="live-join-text">
+                          {member.username} · {joinableBadge(member.joinable!)}
+                        </span>
+                      </button>
+                    ))}
+                </span>
+              ) : null}
             </span>
             <Button
               color={buttonColor}
@@ -511,11 +620,26 @@ export default function LiveNow({
       multiplayer: app.multiplayer,
       position: index + 1
     });
+    // Join = walking up: when someone here is ready for company right now,
+    // Join opens the app next to them. Otherwise it opens the app, as always
+    // (nobody busy is queued on without the member choosing them).
+    const ready = app.members.find(
+      (member) => member.joinable?.state === 'open'
+    );
+    if (ready) {
+      void walkUp({
+        buildId: app.appId,
+        host: ready,
+        intent: 'play',
+        source: 'live_now'
+      });
+      return;
+    }
     navigate(`/app/${app.appId}`);
   }
 
   async function openMember(
-    event: React.MouseEvent<HTMLSpanElement>,
+    event: React.MouseEvent<HTMLElement>,
     member: LiveNowMember,
     app: LiveNowApp
   ) {

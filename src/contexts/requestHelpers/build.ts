@@ -6939,6 +6939,80 @@ export default function buildRequestHelpers({
       }
     },
 
+    // Meet people in apps (twinkle-api controllers/build/routes/social.ts).
+    // Walking up never fails loudly: anything but "you're next" just opens
+    // the app.
+    async walkUpToMember({
+      buildId,
+      hostUserId,
+      intent
+    }: {
+      buildId: number;
+      hostUserId: number;
+      intent: 'play' | 'next' | 'watch';
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/social/walkups`,
+          { hostUserId, intent },
+          auth()
+        );
+        return data;
+      } catch {
+        return { status: 'unavailable' };
+      }
+    },
+
+    async walkAwayFromMember({ buildId, walkupId }: { buildId: number; walkupId: string }) {
+      try {
+        await request.delete(
+          `${URL}/build/${buildId}/social/walkups/mine?walkupId=${encodeURIComponent(walkupId)}`,
+          auth()
+        );
+      } catch {
+        // the walk-up expires on its own
+      }
+    },
+
+    async leaveSocialHost({ buildId }: { buildId: number }) {
+      try {
+        await request.post(`${URL}/build/${buildId}/social/leave`, {}, auth());
+      } catch {
+        // people waiting are released when their walk-ups expire
+      }
+    },
+
+    async markSocialMomentSeen({ momentId }: { momentId: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/social-moments/${momentId}/seen`,
+          {},
+          auth()
+        );
+        return data;
+      } catch {
+        return { firstView: false, firstChat: false };
+      }
+    },
+
+    async requestBuildSocial({ buildId, action, payload, token }: {
+      buildId: number;
+      action: 'queue' | 'accept' | 'joined' | 'together';
+      payload: Record<string, unknown>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/social/${action}`,
+          payload,
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleContentWriteError(error);
+      }
+    },
+
     async requestBuildSoundtracks({ buildId, action, payload, token, publicRead = false }: {
       buildId: number;
       action: 'song' | 'sources' | 'tags' | 'recommendations' | 'request-tag' | 'remove-tag';

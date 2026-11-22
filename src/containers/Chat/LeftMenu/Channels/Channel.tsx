@@ -14,6 +14,7 @@ import LocalContext from '../../Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { canonicalUnreadBadgeIsShown } from '~/helpers/chatUnreadProjection';
+import { socialCardPreview } from '~/helpers/socialTogetherCard';
 import { chatChannelRowClass } from '../../containers';
 
 const deletedLabel = 'Deleted';
@@ -315,6 +316,10 @@ export default function Channel({
       }
       if (rootType === 'meetupQuestInvite') {
         return <span>{messageSender}: invited you to a meetup crew</span>;
+      }
+      // The shared-moment notice is nobody's message: no sender in front.
+      if (rootType === 'socialTogether') {
+        return <span>{socialCardPreview(String(content || ''))}</span>;
       }
       if (transactionId) {
         return (

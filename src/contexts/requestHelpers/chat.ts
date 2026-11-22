@@ -634,6 +634,29 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // A shared-moment notice, from its Report button: the revision on screen.
+    async reportSocialMoment({
+      momentId,
+      revision,
+      reason,
+      note
+    }: {
+      momentId: number;
+      revision: number;
+      reason: string;
+      note?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/social-moment/report`,
+          { momentId, revision, reason, note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async reportGrammarQuestion(params: {
       questionId: number;
       questionVersion?: number;

@@ -9,6 +9,7 @@
 //
 // Kept free of app imports so node tests can load it.
 import { isActivityShown, type PresenceFlags } from './presenceVisibility';
+import { readJoinable, type Joinable } from './socialWalkups';
 
 export const LIVE_NOW_COLLAPSED_APPS = 2;
 // Hard bound for the expanded list and for the faces per app.
@@ -19,6 +20,9 @@ export interface LiveNowMember {
   id: number;
   username: string;
   profilePicUrl: string;
+  // What the app said this member is up to and whether they can be joined
+  // (Twinkle.social.setJoinable). Absent for apps that have not adopted it.
+  joinable?: Joinable;
 }
 
 export interface LiveNowApp {
@@ -28,6 +32,8 @@ export interface LiveNowApp {
   multiplayer: boolean;
   count: number;
   members: LiveNowMember[];
+  // Members shown here that someone can join right now or next.
+  joinable: number;
 }
 
 export function groupLiveNowApps({
@@ -81,22 +87,32 @@ export function groupLiveNowApps({
         thumbnailUrl: activity.thumbnailUrl || null,
         multiplayer: activity.multiplayer === true,
         count: 0,
-        members: []
+        members: [],
+        joinable: 0
       };
       byApp.set(activity.id, app);
     }
     app.count++;
+    // Hidden-presence accounts (Zero and Ciel) are never walked up to.
+    const joinable = hiddenUserIds.includes(userId)
+      ? null
+      : readJoinable(activity);
     app.members.push({
       id: userId,
       username,
-      profilePicUrl: String(entry.profilePicUrl || '')
+      profilePicUrl: String(entry.profilePicUrl || ''),
+      ...(joinable ? { joinable } : {})
     });
   }
   const apps = [...byApp.values()];
   for (const app of apps) {
-    // Stable faces: the same people keep their places as others come and go.
-    app.members.sort((a, b) => a.id - b.id);
+    // People you can join come first (ready now, then busy); within each
+    // group faces are stable: the same people keep their places.
+    app.members.sort(
+      (a, b) => joinableRank(a.joinable) - joinableRank(b.joinable) || a.id - b.id
+    );
     app.members = app.members.slice(0, LIVE_NOW_MAX_FACES);
+    app.joinable = app.members.filter((member) => member.joinable).length;
   }
   apps.sort(
     (a, b) =>
@@ -106,6 +122,11 @@ export function groupLiveNowApps({
       a.appId - b.appId
   );
   return apps.slice(0, LIVE_NOW_MAX_APPS);
+}
+
+function joinableRank(joinable: Joinable | undefined) {
+  if (!joinable) return 3;
+  return joinable.state === 'open' ? 0 : joinable.state === 'busy-watchable' ? 1 : 2;
 }
 
 // "Live now shown": the first time the row appears in a tab, then at most once

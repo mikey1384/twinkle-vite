@@ -1,4 +1,5 @@
 import useUserActivityReporting from './useUserActivityReporting';
+import useSocialWalkupSocket from './useSocialWalkupSocket';
 import useUserActivityRefresh from './useUserActivityRefresh';
 import { useEffect, useMemo, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
@@ -48,6 +49,7 @@ export default function useAPISocket({
   subchannelPath: string | null;
 }) {
   useUserActivityReporting();
+  useSocialWalkupSocket();
   useUserActivityRefresh();
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);

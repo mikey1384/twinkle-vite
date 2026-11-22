@@ -33,6 +33,10 @@ import {
   mergeChatUnreadResyncRequirement
 } from '~/helpers/chatUnreadProjection';
 import useChatQuickAccessRefresh from '~/helpers/hooks/useChatQuickAccessRefresh';
+import {
+  rememberSocialTogetherCard,
+  withNewestSocialTogetherCard
+} from '~/helpers/socialTogetherCard';
 import { buildCanonicalChatMessagePageState } from '~/contexts/Chat/messagePageState';
 import type {
   CanonicalChatChannelUnreadState,
@@ -499,6 +503,7 @@ export default function useChatSocket({
     socket.on('chat_message_edited', onEditMessage);
     socket.on('build_reward_review_updated', handleBuildRewardReviewUpdated);
     socket.on('build_review_request_updated', handleBuildReviewRequestUpdated);
+    socket.on('social_together_updated', handleSocialTogetherUpdated);
     socket.on('meetup_teacher_request_updated', handleMeetupTeacherRequestUpdated);
     socket.on('chat_attachment_thumbnail_updated', onSetChatAttachmentThumbUrl);
     socket.on('ai_message_delta_streamed', onAppendAIMessageDelta);
@@ -557,6 +562,7 @@ export default function useChatSocket({
         'build_review_request_updated',
         handleBuildReviewRequestUpdated
       );
+      socket.off('social_together_updated', handleSocialTogetherUpdated);
       socket.off(
         'meetup_teacher_request_updated',
         handleMeetupTeacherRequestUpdated
@@ -629,6 +635,21 @@ export default function useChatSocket({
         channelId,
         messageId,
         settings: { buildReviewRequest: payload.request }
+      });
+    }
+
+    // The pair did something together again today: their shared-moment card
+    // is updated in place ("3 games today"). Merged by revision; kept until
+    // the notice row arrives if this update came first.
+    function handleSocialTogetherUpdated(payload: any) {
+      const channelId = Number(payload?.channelId || 0);
+      const messageId = Number(payload?.messageId || 0);
+      if (!channelId || !messageId || !payload?.card) return;
+      rememberSocialTogetherCard(payload.card);
+      onUpdateMessageSettings({
+        channelId,
+        messageId,
+        settings: { socialTogether: payload.card }
       });
     }
 
@@ -1296,6 +1317,8 @@ export default function useChatSocket({
       newMembers: any[];
     }) {
       if (shouldSkipRealtimeMessage(message)) return;
+      // A newer revision of a shared-moment notice may have arrived first.
+      message = withNewestSocialTogetherCard(message);
       const currentPageVisible = pageVisibleRef.current;
       const currentSubchannelId = subchannelIdRef.current;
       const messageIsForCurrentChannel =
@@ -1303,7 +1326,9 @@ export default function useChatSocket({
       // Transfer notices are canonical unread activity for both parties, even
       // though the initiating user's ID is stored as the message author.
       const isMyMessage =
-        Number(message.userId) === Number(userId) && !message.transferId;
+        Number(message.userId) === Number(userId) &&
+        !message.transferId &&
+        message.rootType !== 'socialTogether';
       const messageSubchannelId = Number(message.subchannelId || 0);
       const channelSummaryIsNeeded = canonicalUnreadSummaryIsNeeded(
         Number(message.channelId)
