@@ -85,26 +85,23 @@ export function ranAwayLines(word: string) {
   return [`${W} ran away...`, pick(['...but it left its meaning behind.', '...dropping its meaning on the way out.'], word)];
 }
 
-// Every win pays XP and Coins (Mikey 11-22); a rare drop comes on top.
+// Every win pays XP, Coins and Word Master points (Mikey 11-22, 11-23); a
+// rare drop comes on top. When the win reward is known the amounts show as
+// chips under this line (BattleScreen), so the line only names the drop.
 export function dropLine(loot: {
   kind: string;
   amount?: number;
   quality?: string;
-  reward?: { xp: number; coins: number };
+  reward?: { xp: number; coins: number; points?: number };
 }) {
   const n = (value: number) => Number(value || 0).toLocaleString('en-US');
-  const reward = loot.reward
-    ? `${n(loot.reward.xp)} XP and ${n(loot.reward.coins)} Coins`
-    : loot.amount
-      ? `${n(loot.amount)} XP`
-      : '';
   switch (loot.kind) {
     case 'xp':
-      return `Got ${reward}!`;
+      return loot.reward ? 'Victory! Your loot:' : `Got ${n(loot.amount || 0)} XP!`;
     case 'energy_recharge':
-      return `A BATTERY RECHARGE! Your AI battery is full again!${reward ? ` Plus ${reward}.` : ''}`;
+      return `A BATTERY RECHARGE! Your AI battery is full again!${loot.reward ? ' Plus:' : ''}`;
     case 'black_ai_card':
-      return `A BLACK AI CARD! Quality: ${String(loot.quality || '').toUpperCase()}!${reward ? ` Plus ${reward}.` : ''}`;
+      return `A BLACK AI CARD! Quality: ${String(loot.quality || '').toUpperCase()}!${loot.reward ? ' Plus:' : ''}`;
     default:
       return 'Nothing but dust. Monsters are terrible at saving.';
   }
