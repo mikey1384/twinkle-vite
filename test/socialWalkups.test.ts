@@ -12,6 +12,7 @@ import {
   queueChipText,
   readJoinable,
   readOwnJoinable,
+  settledSocialLaunchTarget,
   visitLine,
   visitorBannerText,
   withJoinable,
@@ -202,6 +203,9 @@ test('visitor side: match ready and "they left" update the visit; nothing is eve
   assert.equal(applySocialWalkupEvent(state, { type: 'released', walkupId: 'w99' }), state);
   const released = applySocialWalkupEvent(state, { type: 'released', walkupId: 'w21' });
   assert.equal(released.visit?.status, 'released');
+  // the host's accept ended the walk-up without letting them in
+  const missed = applySocialWalkupEvent(state, { type: 'released', walkupId: 'w21', missed: true });
+  assert.equal(missed.visit?.status, 'missed');
   state = applySocialWalkupEvent(
     state,
     { type: 'matchReady', matchKey: 'meet-aa', mode: '1v1', host: kengo },
@@ -222,10 +226,40 @@ test('visitor side: match ready and "they left" update the visit; nothing is eve
   assert.equal(line('watch'), 'Watching KenGo');
   assert.equal(line('unavailable', null), "KenGo isn't here right now");
   assert.equal(line('released'), "KenGo isn't here right now");
+  assert.equal(line('missed'), "KenGo couldn't let you in this time. Try again later.");
   assert.equal(line('matched'), "You're playing with KenGo");
-  for (const status of ['waiting', 'later', 'watch', 'unavailable', 'released', 'matched'] as const) {
-    assert.doesNotMatch(line(status), /declin|reject|refus|denied/i);
+  for (const status of ['waiting', 'later', 'watch', 'unavailable', 'released', 'missed', 'matched'] as const) {
+    assert.doesNotMatch(line(status), /declin|reject|refus|denied|block/i);
   }
+});
+
+test('a walk-up that ended stops the app\'s launch target saying waiting', () => {
+  const launch = {
+    source: 'social',
+    buildId: 5,
+    target: { kind: 'social', hostUserId: kengo.id, hostUsername: 'KenGo', status: 'waiting', hostJoinable: watchable }
+  };
+  const visit = (status: SocialVisit['status'], host = kengo): SocialVisit =>
+    ({ host, status, walkupId: 'w21', joinable: watchable });
+  // still waiting, matched, or no visit: the same object back
+  for (const current of [visit('waiting'), visit('matched'), visit('later'), null])
+    assert.equal(settledSocialLaunchTarget(launch, current), launch);
+  // the host left, or their accept could not let the visitor in
+  for (const status of ['released', 'missed'] as const) {
+    const settled = settledSocialLaunchTarget(launch, visit(status));
+    assert.deepEqual(settled, { ...launch, target: { ...launch.target, status: 'unavailable' } });
+    assert.equal(launch.target.status, 'waiting');
+  }
+  // another host's visit, a non-social target, a target already settled
+  assert.equal(
+    settledSocialLaunchTarget(launch, visit('missed', { ...kengo, id: kengo.id + 1 })),
+    launch
+  );
+  const deepLink = { source: 'deepLink', target: { path: 'x' } };
+  assert.equal(settledSocialLaunchTarget(deepLink, visit('missed')), deepLink);
+  assert.equal(settledSocialLaunchTarget(null, visit('missed')), null);
+  const watching = { ...launch, target: { ...launch.target, status: 'watch' } };
+  assert.equal(settledSocialLaunchTarget(watching, visit('missed')), watching);
 });
 
 test('the banner and the queue chip say it the arcade way', () => {

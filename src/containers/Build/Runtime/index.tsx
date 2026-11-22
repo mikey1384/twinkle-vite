@@ -48,6 +48,8 @@ import {
   focusHomeFeedCommentIntentTarget,
   getMatchingHomeFeedActionIntent
 } from '~/helpers/homeFeedActionIntent';
+import { useSocialBuildState } from '~/helpers/hooks/useSocialWalkups';
+import { settledSocialLaunchTarget } from '~/helpers/socialWalkups';
 import type { Content } from '~/types';
 import PreviewPanel from '../PreviewPanel';
 import type {
@@ -1336,6 +1338,54 @@ export default function BuildRuntime({
   const buildLaunchTargetReady =
     !buildLaunchTargetLookupKey ||
     resolvedBuildLaunchTargetKey === buildLaunchTargetLookupKey;
+  // Opened from a walk-up: once it ends without a match (the host left, or
+  // their accept could not let the visitor in), the app's launch target
+  // stops saying 'waiting'. Kept for that target even after the walk-up
+  // store is cleared (leaving the app page), so it never reverts.
+  const socialVisit = useSocialBuildState(numericBuildId || 0).visit;
+  const [endedLaunchTarget, setEndedLaunchTarget] = useState<{
+    from: PreviewLaunchTarget;
+    to: PreviewLaunchTarget;
+  } | null>(null);
+  useEffect(() => {
+    if (!buildLaunchTarget) return;
+    const settled = settledSocialLaunchTarget(buildLaunchTarget, socialVisit);
+    if (settled !== buildLaunchTarget)
+      setEndedLaunchTarget({ from: buildLaunchTarget, to: settled });
+  }, [buildLaunchTarget, socialVisit]);
+  const runtimeLaunchTarget =
+    endedLaunchTarget && endedLaunchTarget.from === buildLaunchTarget
+      ? endedLaunchTarget.to
+      : buildLaunchTarget;
+  // The route state too, so a reload does not bring the wait back (the
+  // walk-up store is page memory). Only for the target this route gave.
+  useEffect(() => {
+    const routeState = routeLocation.state as any;
+    if (
+      locationOverride ||
+      runtimeLaunchTarget === buildLaunchTarget ||
+      !buildLaunchTarget ||
+      routeState?.buildLaunchTarget !== buildLaunchTarget
+    )
+      return;
+    navigate(
+      {
+        pathname: routeLocation.pathname,
+        search: routeLocation.search,
+        hash: routeLocation.hash
+      },
+      {
+        replace: true,
+        state: { ...routeState, buildLaunchTarget: runtimeLaunchTarget }
+      }
+    );
+  }, [
+    buildLaunchTarget,
+    locationOverride,
+    navigate,
+    routeLocation,
+    runtimeLaunchTarget
+  ]);
   const explicitBackTo =
     typeof location.state?.runtimeBackTo === 'string'
       ? normalizeRuntimeBackTo(location.state.runtimeBackTo)
@@ -2887,7 +2937,7 @@ export default function BuildRuntime({
                     preventFrameSuspend={!isEmbedded}
                     audioMuted={runtimeEffectiveAudioMuted}
                     mountContext={runtimeMountContext}
-                    launchTarget={buildLaunchTarget}
+                    launchTarget={runtimeLaunchTarget}
                     capabilitySnapshot={build.capabilitySnapshot || null}
                     appMcpSessionId={appMcpSessionId || null}
                     appHelperEnabled={appHelperEnabled}
