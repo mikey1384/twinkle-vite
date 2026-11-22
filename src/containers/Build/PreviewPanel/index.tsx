@@ -1,6 +1,5 @@
 import { getImageModelLabel } from '~/helpers/aiImageModels';
 import React, {
-  Suspense,
   useDeferredValue,
   useEffect,
   useImperativeHandle,
@@ -75,9 +74,8 @@ import {
   resolveViewerAgeTier
 } from './helpers/previewBridgeAuth';
 import PreviewStage, { BuildLiveHostSafetyControls } from './PreviewStage';
-import Loading from '~/components/Loading';
-import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import ProjectFileInputs from './ProjectFileInputs';
+import AgentManualPaneLoader from './AgentManualPaneLoader';
 import { createPortal } from 'react-dom';
 import WorkspaceToolbar from './WorkspaceToolbar';
 import {
@@ -146,11 +144,6 @@ const imageGenerationPromptClass = css`
   background: #f8fafc;
   font-size: 1.1rem;
 `;
-
-// The manual carries the whole Build SDK reference, and only a builder who
-// opens the Manual tab reads it: keep it out of the chunk every app viewer
-// loads.
-const AgentManualPane = lazyWithRetry(() => import('./AgentManualPane'));
 
 const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
   function PreviewPanel(
@@ -1757,11 +1750,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               onPreviewFrameLoad={handlePreviewFrameLoad}
             />
           ) : viewMode === 'manual' ? (
-            <Suspense fallback={<Loading />}>
-              <AgentManualPane
-                capabilitySnapshot={resolvedCapabilitySnapshot}
-              />
-            </Suspense>
+            <AgentManualPaneLoader
+              capabilitySnapshot={resolvedCapabilitySnapshot}
+            />
           ) : (
             <CodeWorkspacePane
               displayedProjectFiles={displayedProjectFiles}

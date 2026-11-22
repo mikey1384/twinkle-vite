@@ -55,9 +55,18 @@ test('the copied manual lists every SDK namespace and method', () => {
         manual.includes(`- ${method.call}`),
         `${method.call} is missing from the manual`
       );
+      // A computer-use agent here has no TWINKLE_BUILD_SDK.md: the copied
+      // text carries every method note.
+      for (const note of method.notes) {
+        assert.ok(
+          manual.includes(`\n  - ${note}`),
+          `a ${method.call} note is missing from the manual`
+        );
+      }
     }
   }
   assert.ok(manual.includes(`Build SDK ${AGENT_MANUAL_SDK.version}`));
+  assert.match(manual, /Guests must pass displayName/);
 });
 
 test('the manual carries the namespaces the hand-written copy had lost', () => {

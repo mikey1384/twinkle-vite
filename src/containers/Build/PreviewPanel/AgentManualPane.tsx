@@ -54,7 +54,7 @@ const SDK_METHOD_COUNT = AGENT_MANUAL_SDK.namespaces.reduce(
   (count, namespace) => count + namespace.methods.length,
   0
 );
-const SDK_REFERENCE_INTRO = `Build SDK ${AGENT_MANUAL_SDK.version} (updated ${AGENT_MANUAL_SDK.updatedAt}): every namespace and method that exists, ${AGENT_MANUAL_SDK.namespaces.length} namespaces and ${SDK_METHOD_COUNT} methods. A Twinkle.* name that is not listed here does not exist. Each entry is the call, what it returns and one line on what it does; the complete notes, limits, error codes and examples for every method are in TWINKLE_BUILD_SDK.md, which the Lumine CLI writes into a pulled workspace (see External CLI launch).`;
+const SDK_REFERENCE_INTRO = `Build SDK ${AGENT_MANUAL_SDK.version} (updated ${AGENT_MANUAL_SDK.updatedAt}): every namespace and method that exists, ${AGENT_MANUAL_SDK.namespaces.length} namespaces and ${SDK_METHOD_COUNT} methods. A Twinkle.* name that is not listed here does not exist. Each entry is the call, what it returns, one line on what it does, and that method's notes: its limits, error codes and the rules for using it. Read a method's notes before you use it.`;
 
 interface AgentManualPaneProps {
   capabilitySnapshot: BuildCapabilitySnapshot | null;
@@ -357,6 +357,19 @@ function NamespaceBlock({
             <li key={method.call}>
               <code>{method.call}</code>
               {method.summary ? ` ${method.summary}` : ''}
+              {method.notes.length > 0 ? (
+                <details className={methodNotesClass}>
+                  <summary>
+                    {method.notes.length}{' '}
+                    {method.notes.length === 1 ? 'note' : 'notes'}
+                  </summary>
+                  <ul>
+                    {method.notes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -479,7 +492,8 @@ function formatSdkNamespaces() {
     namespace.description,
     ...namespace.methods.flatMap((method) => [
       `- ${method.call}${method.returns ? ` → ${method.returns}` : ''}`,
-      ...(method.summary ? [`  ${method.summary}`] : [])
+      ...(method.summary ? [`  ${method.summary}`] : []),
+      ...method.notes.map((note) => `  - ${note}`)
     ])
   ]);
 }
@@ -708,6 +722,24 @@ const guideBlockClass = css`
     background: #eef2f7;
     border-radius: 4px;
     padding: 0.05rem 0.25rem;
+  }
+`;
+
+// A method's notes stay folded under it; the card's own method list is the
+// outer <details>.
+const methodNotesClass = css`
+  margin-top: 0.25rem;
+  > summary {
+    color: #475569;
+    font-weight: 700;
+  }
+  &[open] > summary {
+    margin-bottom: 0.3rem;
+  }
+  ul {
+    border-left: 2px solid #d8e0ea;
+    padding-left: 1.2rem;
+    margin-left: 0.15rem;
   }
 `;
 
