@@ -11,6 +11,10 @@ import {
   getVoiceDelivery
 } from '~/helpers/aiVoiceCall';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { v1 as uuidv1 } from 'uuid';
+import { generateFileName } from '~/helpers/stringHelpers';
+import { socket } from '~/constants/sockets/api';
+import { relayChatMessage } from '~/helpers/chatMessageSend';
 import { dismissWebsiteAgentPrompts } from '../WebsiteAgentSpotlight';
 import {
   getAssistantAccountEpoch,
@@ -23,6 +27,7 @@ import {
   setAssistantReply,
   startAssistantReply,
   followAssistantConversation,
+  receiveAssistantMessage,
   subscribeAssistantReplies
 } from './conversationStore';
 
@@ -40,6 +45,16 @@ export default function useAssistantConversation({
 }) {
   const saveChatMessage = useAppContext(
     (v) => v.requestHelpers.saveChatMessage
+  );
+  const checkIfAIFileSupported = useAppContext(
+    (v) => v.requestHelpers.checkIfAIFileSupported
+  );
+  const uploadFileOnChat = useAppContext(
+    (v) => v.requestHelpers.uploadFileOnChat
+  );
+  const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
+  const saveChatMessageWithFileAttachment = useAppContext(
+    (v) => v.requestHelpers.saveChatMessageWithFileAttachment
   );
   const userId = useKeyContext((v) => v.myState.userId);
   const sendLock = useRef(false);
@@ -168,10 +183,108 @@ export default function useAssistantConversation({
     [assistantName, channelId, topicId, userId]
   );
 
+  // A photo from the window's photo button: the same three steps as the
+  // chat page's upload (signed upload, file record, file message), so the
+  // assistant gets it exactly as if it were sent from Chat.
+  const sendPhoto = useCallback(
+    async (file: File, caption: string) => {
+      const epoch = getAssistantAccountEpoch();
+      const current = getAssistantReply(channelId, topicId);
+      if (!channelId || sendLock.current || (current && !current.done))
+        return false;
+      if (aiVoiceSession.getSnapshot().phase !== 'text') {
+        setSendError('End the voice call to send a photo.');
+        return false;
+      }
+      sendLock.current = true;
+      setSending(true);
+      setSendError('');
+      try {
+        const { isSupported } = await checkIfAIFileSupported({
+          fileName: file.name
+        });
+        if (!isSupported) {
+          setSendError(`${assistantName} can’t read this kind of file.`);
+          return false;
+        }
+        dismissWebsiteAgentPrompts();
+        const filePath = uuidv1();
+        const fileName = generateFileName(file.name);
+        const content = caption.trim();
+        startAssistantReply(channelId, topicId);
+        const meta = await uploadFileOnChat({
+          fileName,
+          selectedFile: file,
+          onUploadProgress: () => {},
+          isAIChat: true,
+          path: filePath
+        });
+        if (epoch !== getAssistantAccountEpoch()) return false;
+        await saveFileData({
+          fileName,
+          filePath,
+          actualFileName: file.name,
+          rootType: 'chat',
+          uploadId: meta.uploadId,
+          uploadToken: meta.uploadToken
+        });
+        const saved = await saveChatMessageWithFileAttachment({
+          channelId,
+          content,
+          fileName,
+          actualFileName: file.name,
+          fileSize: file.size,
+          path: filePath,
+          recipientId: 0,
+          targetMessageId: 0,
+          chessState: null as any,
+          thumbUrl: '',
+          subchannelId: 0,
+          topicId,
+          isCielChat: assistantName === 'Ciel',
+          isZeroChat: assistantName === 'Zero',
+          thinkHard: false
+        });
+        const message = saved?.message;
+        if (message?.id) {
+          receiveAssistantMessage({
+            ...message,
+            content: content ? `Sent a photo: ${content}` : 'Sent a photo'
+          });
+          // The chat page and other tabs hear it the way Chat relays.
+          relayChatMessage({
+            socket,
+            messageId: Number(message.id),
+            channelId: Number(message.channelId || channelId)
+          });
+        }
+        return true;
+      } catch (error: any) {
+        if (epoch !== getAssistantAccountEpoch()) return false;
+        setAssistantReply(
+          channelId,
+          {
+            ...EMPTY_ASSISTANT_REPLY,
+            done: true,
+            error: error?.message || 'The photo didn’t send. Try again?'
+          },
+          topicId
+        );
+        return false;
+      } finally {
+        sendLock.current = false;
+        setSending(false);
+      }
+    },
+    // Request helpers are stable context actions, not reactive dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [assistantName, channelId, topicId]
+  );
+
   const clear = useCallback(() => {
     const current = getAssistantReply(channelId, topicId);
     if (!current || current.done) setAssistantReply(channelId, null, topicId);
   }, [channelId, topicId]);
 
-  return { reply, replying, sending, send, clear, sendError };
+  return { reply, replying, sending, send, sendPhoto, clear, sendError };
 }

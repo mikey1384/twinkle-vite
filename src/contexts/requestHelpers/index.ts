@@ -501,6 +501,7 @@ registerMethods('content', [
   'uploadThumb',
   'generateAIImage',
   'loadAssetHandoffPreview',
+  'loadOwnedAssetFile',
   'loadAIImageGenerationEstimate',
   'loadAIImageGenerationStatus',
   'loadAIImageResult',

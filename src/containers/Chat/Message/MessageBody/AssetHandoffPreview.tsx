@@ -3,17 +3,32 @@ import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import { WEBSITE_AGENT_UI_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 
+export interface AssetHandoffDestination {
+  kind:
+    | 'avatar'
+    | 'cover'
+    | 'profile_gallery'
+    | 'subject'
+    | 'comment'
+    | 'content_thumbnail'
+    | 'chat_thumbnail'
+    | 'slide_thumbnail'
+    | 'build_thumbnail'
+    | 'chat_message';
+  id?: number;
+  contentType?: 'subject' | 'url';
+  topicId?: number;
+  caption?: string;
+  position?: string;
+}
+
 export default function AssetHandoffPreview({
   proposalId,
   destination,
   onReady
 }: {
   proposalId: string;
-  destination?: {
-    kind: 'avatar' | 'cover' | 'profile_gallery' | 'subject' | 'comment';
-    caption?: string;
-    position?: string;
-  };
+  destination?: AssetHandoffDestination;
   onReady: (proposalId: string) => void;
 }) {
   const loadPreview = useAppContext(
@@ -52,7 +67,8 @@ export default function AssetHandoffPreview({
           src={url}
           alt="The image to use"
           style={
-            destination?.kind === 'avatar'
+            destination?.kind === 'avatar' ||
+            destination?.kind === 'chat_thumbnail'
               ? { width: '16rem', height: '16rem', objectFit: 'cover', borderRadius: '50%' }
               : destination?.kind === 'cover'
                 ? { width: '100%', height: '13rem', objectFit: 'cover', objectPosition: (destination.position || '50,50').split(',').map((n) => `${n}%`).join(' ') }
@@ -74,7 +90,9 @@ export default function AssetHandoffPreview({
       ) : (
         <p role="status">Loading image preview…</p>
       )}
-      {(destination?.kind === 'avatar' || destination?.kind === 'profile_gallery') &&
+      {(destination?.kind === 'avatar' ||
+        destination?.kind === 'profile_gallery' ||
+        destination?.kind === 'chat_message') &&
         destination.caption && (
           <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>Caption: {destination.caption}</p>
         )}
