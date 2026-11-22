@@ -297,6 +297,7 @@ export function BattleExamples({ examples }: { examples?: string[] }) {
 const gateCls = css`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1.4rem;
   padding: 1.4rem;
   background: #0f0b1a;
