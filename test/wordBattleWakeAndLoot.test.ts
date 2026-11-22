@@ -7,11 +7,11 @@ import {
 } from '../src/containers/Chat/Body/Collect/Vocabulary/WordBattle/wake';
 import { dropLine } from '../src/containers/Chat/Body/Collect/Vocabulary/WordBattle/lines';
 
-test('wake-up lines hold at reading pace: 1.6 to 2.2 s, longer for longer lines', () => {
+test('wake-up lines hold at reading pace: 1.6 to 2 s, longer for longer lines', () => {
   const holds = (['sleep', 'stir', 'peek', 'yawn'] as const).map((stage) =>
     readingMs(wakeLine(stage, 'ubiquitous'))
   );
-  for (const ms of holds) assert.ok(ms >= 1600 && ms <= 2200, `${ms}`);
+  for (const ms of holds) assert.ok(ms >= 1600 && ms <= 2000, `${ms}`);
   assert.ok(holds[0] > holds[1], 'the six-word line holds longer than the two-word one');
   const total = holds.reduce((sum, ms) => sum + ms, 0);
   assert.ok(total >= 6400, `the intro takes ${total} ms unskipped, not ~1.3 s`);

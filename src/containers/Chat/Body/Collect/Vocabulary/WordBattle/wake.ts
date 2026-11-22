@@ -5,10 +5,10 @@ export const STAGE_ORDER: WakeStage[] = ['sleep', 'stir', 'peek', 'yawn', 'wake'
 // The jolt of the eyes opening, before the awake idle pose.
 export const WAKE_JOLT_MS = 480;
 
-// About 200 ms a word on top of a base, never under 1.6 s or over 2.2 s.
+// About 200 ms a word on top of a base, never under 1.6 s or over 2 s.
 export function readingMs(text: string) {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
-  return Math.min(2200, Math.max(1600, 900 + 200 * words));
+  return Math.min(2000, Math.max(1600, 900 + 200 * words));
 }
 
 export function wakeLine(stage: WakeStage, word: string) {

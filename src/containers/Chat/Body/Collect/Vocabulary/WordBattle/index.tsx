@@ -21,7 +21,18 @@ function holdMs(stage: WakeStage, word: string) {
   return stage === 'wake' ? WAKE_JOLT_MS : readingMs(wakeLine(stage, word));
 }
 
-function useWakeStage({ ready, skip, word }: { ready: boolean; skip: boolean; word: string }) {
+function useWakeStage({
+  ready,
+  skip,
+  stopped,
+  word
+}: {
+  ready: boolean;
+  skip: boolean;
+  // A failed load: the lines stop where they are.
+  stopped: boolean;
+  word: string;
+}) {
   const [stage, setStage] = useState<WakeStage>(skip ? 'awake' : 'sleep');
   const stageRef = useRef(stage);
   stageRef.current = stage;
@@ -40,12 +51,13 @@ function useWakeStage({ ready, skip, word }: { ready: boolean; skip: boolean; wo
       setStage('awake');
       return;
     }
+    if (stopped) return;
     const next = nextWakeStage(stage, ready);
     if (!next) return;
     const left = Math.max(0, holdMs(stage, word) - (Date.now() - shownAt.current));
     const timer = window.setTimeout(() => setStage(next), left);
     return () => window.clearTimeout(timer);
-  }, [stage, ready, skip, word]);
+  }, [stage, ready, skip, stopped, word]);
 
   // The member's skip: the next line now, but never past a cracked eye
   // before the battle is ready.
@@ -154,10 +166,20 @@ export default function WordBattleGate({
   const ready = !!state && (state.status === 'ready' || state.status === 'active');
   // A battle already under way skips the wake-up: it is awake and waiting.
   const active = state?.status === 'active';
-  const { stage, setStage, advance } = useWakeStage({ ready, skip: active, word });
+  const { stage, setStage, advance } = useWakeStage({ ready, skip: active, stopped: failed, word });
   const awake = stage === 'wake' || stage === 'awake';
   const asleep = stage === 'sleep' || stage === 'stir';
   const skippable = !awake && !failed;
+  const gateRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // The gate stops being focusable once the monster is awake: a focused gate
+  // hands its focus to the battle button.
+  useEffect(() => {
+    if (!skippable && document.activeElement === gateRef.current) {
+      buttonRef.current?.focus();
+    }
+  }, [skippable]);
 
   function openBattle() {
     // Ready while still waking: skip the rest of it.
@@ -170,7 +192,10 @@ export default function WordBattleGate({
       <div
         className={cx(gateCls, skippable && gateSkippableCls)}
         style={compact ? { padding: '1rem' } : undefined}
+        ref={gateRef}
         tabIndex={skippable ? 0 : undefined}
+        role={skippable ? 'button' : undefined}
+        aria-label={skippable ? 'Skip to the next line' : undefined}
         onClick={skippable ? advance : undefined}
         onKeyDown={
           skippable
@@ -213,6 +238,7 @@ export default function WordBattleGate({
           </div>
           <div className={gateActionsCls}>
             <button
+              ref={buttonRef}
               type="button"
               className={gateButtonCls}
               disabled={!ready}
