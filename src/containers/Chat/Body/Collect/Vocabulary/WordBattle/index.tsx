@@ -35,7 +35,10 @@ export default function WordBattleGate({
   const loadWordBattleAudio = useAppContext((v) => v.requestHelpers.loadWordBattleAudio);
   const onUnlockWordDefinitions = useChatContext((v) => v.actions.onUnlockWordDefinitions);
   const wordId = wordIdOf(wordObj);
-  const word = String(wordObj?.content || '');
+  // A form-of word (running) battles its lemma (run), as it collects.
+  const typed = String(wordObj?.content || '');
+  const word = String(wordObj?.battle?.word || typed);
+  const seenForm = typed && typed !== word ? typed : undefined;
   const [state, setState] = useState<BattleState | null>(null);
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -44,11 +47,11 @@ export default function WordBattleGate({
 
   const api: BattleApi = useMemo(
     () => ({
-      start: (id) => startWordBattle(id),
+      start: (id) => startWordBattle(id, seenForm),
       answer: (args) => answerWordBattle(args),
       loadAudio: (args) => loadWordBattleAudio(args)
     }),
-    [answerWordBattle, loadWordBattleAudio, startWordBattle]
+    [answerWordBattle, loadWordBattleAudio, startWordBattle, seenForm]
   );
 
   useEffect(() => {
@@ -153,7 +156,7 @@ export default function WordBattleGate({
 export function BattleTrophy({ wordObj }: { wordObj: any }) {
   const status = wordObj?.battle?.status;
   if (status !== 'won' && status !== 'lost') return null;
-  const word = String(wordObj?.content || '');
+  const word = String(wordObj?.battle?.word || wordObj?.content || '');
   const level = Math.max(1, Math.min(5, Number(wordObj?.battle?.wordLevel || wordObj?.wordLevel) || 3));
   const won = status === 'won';
   return (

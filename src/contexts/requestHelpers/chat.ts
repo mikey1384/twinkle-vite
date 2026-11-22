@@ -2935,11 +2935,11 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async startWordBattle(wordId: number) {
+    async startWordBattle(wordId: number, seenForm?: string) {
       try {
         const { data } = await request.post(
           `${URL}/chat/vocabulary/battle/start`,
-          { wordId },
+          { wordId, ...(seenForm ? { seenForm } : {}) },
           auth()
         );
         return data;

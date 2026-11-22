@@ -6,7 +6,8 @@ import PosBlock from './PosBlock';
 import WordBattleGate, {
   BattleExamples,
   BattleTrophy,
-  isBattleLocked
+  isBattleLocked,
+  wordIdOf
 } from '../WordBattle';
 import { css } from '@emotion/css';
 
@@ -28,8 +29,14 @@ export default function Definition({
   const [unlocked, setUnlocked] = useState<Record<string, any> | null>(null);
   const wordObj = useMemo(
     () =>
-      unlocked && unlocked.content === givenWordObj?.content
-        ? { ...givenWordObj, ...unlocked, id: givenWordObj.id ?? unlocked.id }
+      // A form-of word (running) unlocks its lemma's (run) definitions.
+      unlocked && Number(unlocked.id) === wordIdOf(givenWordObj)
+        ? {
+            ...givenWordObj,
+            ...unlocked,
+            content: givenWordObj.content,
+            id: givenWordObj.id ?? unlocked.id
+          }
         : givenWordObj,
     [givenWordObj, unlocked]
   );
