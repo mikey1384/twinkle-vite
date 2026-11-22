@@ -608,7 +608,9 @@ export function returnWordLevel({
   const advancedWordFrequency = 2.5;
   const epicWordFrequency = 1.6;
 
-  if (!frequency) return 3;
+  // Same as the API's returnWordLevel: an unknown frequency is stored as 1
+  // and scores as level 3, not as a rare word (Mikey 10-17).
+  if (!frequency || frequency === 1) return 3;
   if (frequency > intermediateWordFrequency) {
     if (word.length < 7) return 1;
     return 2;

@@ -3131,9 +3131,19 @@ export default function chatRequestHelpers({
           }
         );
         return data;
-      } catch (error) {
+      } catch (error: any) {
         const wordMasterBreakPayload = getWordMasterBreakPayload(error);
         if (wordMasterBreakPayload) return wordMasterBreakPayload;
+        // Two members discovering the same new word at once: the caller
+        // settles it quietly (the other discovery wins), never as an error.
+        const raceCode = error?.response?.data?.error;
+        if (
+          error?.response?.status === 409 &&
+          (raceCode === 'word_registration_in_progress' ||
+            raceCode === 'word_already_discovered')
+        ) {
+          return { discoveryRace: raceCode };
+        }
         return handleError(error);
       }
     },

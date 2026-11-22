@@ -4,6 +4,10 @@ import Loading from '~/components/Loading';
 import FeedsContainer from './FeedsContainer';
 import VocabularyWidget from './VocabularyWidget';
 import WordMasterBreakModal from './WordMasterBreakModal';
+import DiscoveryMoment, {
+  DISCOVERY_MIN_WORKING_MS,
+  WordDiscovery
+} from './DiscoveryMoment';
 import FilterBar from '~/components/FilterBar';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
@@ -21,8 +25,10 @@ import {
   CHAT_ID_BASE_NUMBER,
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
-  LAST_ONLINE_FILTER_LABEL
+  LAST_ONLINE_FILTER_LABEL,
+  returnWordLevel
 } from '~/constants/defaultValues';
+import { socket } from '~/constants/sockets/api';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { trackEvent } from '~/helpers/analytics';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
@@ -101,6 +107,15 @@ export default function Vocabulary({
   const [wordMasterBreakModalShown, setWordMasterBreakModalShown] =
     useState(false);
   const [strikeAnimationKey, setStrikeAnimationKey] = useState(0);
+  const [discovery, setDiscovery] = useState<WordDiscovery | null>(null);
+  const discoveryWord = discovery?.word || '';
+  // Word Master's state for the word being discovered: the registration feed
+  // lands here with the stored definitions, level, rewards and discoverer.
+  const discoveryWordObj = useChatContext((v) =>
+    discoveryWord ? v.state.wordsObj?.[discoveryWord] : null
+  );
+  const discoveryWordObjRef = useRef<any>(null);
+  discoveryWordObjRef.current = discoveryWordObj;
   const feedsContentRef = useRef<any>(null);
   const text = useRef<string>('');
   const inputRef = useRef(null);
@@ -209,6 +224,9 @@ export default function Vocabulary({
       statusMessage: statusMessage || null,
       errorMessage: vocabErrorMessage || null,
       isSubmitting,
+      discovery: discovery
+        ? { word: discovery.word, phase: discovery.phase }
+        : null,
       breakBlocked: wordMasterBlocked,
       breakModalShown: wordMasterBreakModalShown
     },
@@ -231,6 +249,33 @@ export default function Vocabulary({
       setKbInset(inset);
     }
   });
+
+  // The AI's definition lines as it writes them, sent only to this member's
+  // tabs while their discovery registers. A view only: the reveal uses the
+  // stored definitions from the registration feed.
+  useEffect(() => {
+    if (!discoveryWord) return;
+    function handleDiscoveryThought(event: {
+      word?: string;
+      thoughtContent?: string;
+      isComplete?: boolean;
+    }) {
+      if (String(event?.word || '').toLowerCase() !== discoveryWord) return;
+      setDiscovery((prev) =>
+        prev?.word === discoveryWord
+          ? {
+              ...prev,
+              streamText: String(event.thoughtContent || ''),
+              streamComplete: !!event.isComplete
+            }
+          : prev
+      );
+    }
+    socket.on('word_discovery_thought_streamed', handleDiscoveryThought);
+    return () => {
+      socket.off('word_discovery_thought_streamed', handleDiscoveryThought);
+    };
+  }, [discoveryWord]);
 
   useEffect(() => {
     if (breakStatusLoadedRef.current) return;
@@ -299,6 +344,16 @@ export default function Vocabulary({
         onOpenBreaks={() => setWordMasterBreakModalShown(true)}
         strikeAnimationKey={strikeAnimationKey}
         maskWordMasterStatus={maskWordMasterStatus}
+        discoveryMoment={
+          discovery ? (
+            <DiscoveryMoment
+              discovery={discovery}
+              wordObj={discoveryWordObj}
+              myUserId={userId}
+              onDone={() => setDiscovery(null)}
+            />
+          ) : null
+        }
       />
       <div
         style={{
@@ -311,8 +366,12 @@ export default function Vocabulary({
       >
         <Input
           onInput={() => {
-            if (isSubmitting) {
+            if (isSubmitting && discovery?.phase !== 'working') {
               setIsSubmitting(false);
+            }
+            // Typing the next word puts a finished discovery away.
+            if (discovery && discovery.phase !== 'working') {
+              setDiscovery(null);
             }
           }}
           onSubmit={handleSubmit}
@@ -435,6 +494,10 @@ export default function Vocabulary({
       return;
     }
 
+    if (discovery?.phase === 'working') return;
+    if (isNewWord && !isSubmitting && searchedWord.content) {
+      return handleDiscover();
+    }
     if ((isNewWord || canHit) && !isSubmitting) {
       setIsSubmitting(true);
       try {
@@ -468,6 +531,112 @@ export default function Vocabulary({
         setIsSubmitting(false);
       }
     }
+  }
+
+  // Discovering a new word: the robots work while POST /word registers it and
+  // writes its definitions, then the reveal. If another member discovers the
+  // same word at the same moment, theirs wins and this one settles quietly
+  // as "so close" (never an error, and never a second POST that could count
+  // as collecting an already-collected word).
+  async function handleDiscover() {
+    const word = String(searchedWord.content).toLowerCase();
+    const wordForStatus = searchedWord;
+    const startedAt = Date.now();
+    setIsSubmitting(true);
+    setDiscovery({
+      word,
+      wordLevel: returnWordLevel({ frequency: searchedWord.frequency, word }),
+      phase: 'working',
+      startedAt,
+      streamText: '',
+      streamComplete: false,
+      racing: false
+    });
+    try {
+      // discoverOnly: if the word turns out to be registered already, the
+      // server answers "already discovered" instead of treating this as a
+      // collect attempt (which would count a strike).
+      const vocabPayload = {
+        ...buildVocabularyPayload(searchedWord),
+        discoverOnly: true
+      };
+      let result = await collectVocabulary(vocabPayload);
+      if (result?.discoveryRace === 'word_registration_in_progress') {
+        setDiscovery((prev) =>
+          prev?.word === word ? { ...prev, racing: true } : prev
+        );
+        // The other discovery normally lands within its definition time
+        // limit (20 s). Only if it never does (it failed) is the word still
+        // free, and one quiet retry discovers it.
+        const settled = await waitForRegistration(25000);
+        result = settled
+          ? { discoveryRace: 'word_already_discovered' }
+          : await collectVocabulary(vocabPayload);
+      }
+      if (result?.wordMasterBreak) {
+        setDiscovery(null);
+        handleWordMasterBreakUpdate(result.wordMasterBreak);
+        setIsSubmitting(false);
+        return;
+      }
+      const registered =
+        !result?.discoveryRace && typeof result?.coins === 'number';
+      if (registered) {
+        trackEvent('vocab_word_collect', { word, is_new_word: true });
+        onSetUserState({
+          userId,
+          newState: {
+            twinkleXP: result.xp,
+            twinkleCoins: result.coins,
+            rank: result.rank
+          }
+        });
+        onSetWordRegisterStatus(wordForStatus);
+      }
+      const shownFor = Date.now() - startedAt;
+      if (shownFor < DISCOVERY_MIN_WORKING_MS) {
+        await wait(DISCOVERY_MIN_WORKING_MS - shownFor);
+      }
+      // The registration feed carries the stored definitions; give it a
+      // moment so they arrive with the reveal (it also fills in later).
+      await waitForRegistration(1500);
+      // A second tab of the same member losing the race to the first one
+      // is still this member's discovery.
+      const registerFeed =
+        discoveryWordObjRef.current?.action === 'register'
+          ? discoveryWordObjRef.current
+          : null;
+      const discovered =
+        registered || (!!registerFeed && registerFeed.userId === userId);
+      setDiscovery((prev) =>
+        prev?.word === word
+          ? {
+              ...prev,
+              phase: discovered ? 'discovered' : 'beaten',
+              racing: false
+            }
+          : prev
+      );
+      setSearchedWord(null);
+      onEnterComment({ contentType: VOCAB_CHAT_TYPE, text: '' });
+    } catch (error) {
+      console.error(error);
+      setDiscovery(null);
+    }
+    setIsSubmitting(false);
+
+    async function waitForRegistration(timeoutMs: number) {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        if (discoveryWordObjRef.current?.action === 'register') return true;
+        await wait(250);
+      }
+      return discoveryWordObjRef.current?.action === 'register';
+    }
+  }
+
+  function wait(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async function refreshWordMasterBreakStatus() {
@@ -599,8 +768,12 @@ export default function Vocabulary({
       'other'
     ];
 
-    const { content, frequency = 1, validationReceipt, ...rest } =
-      searchedWord || {};
+    const {
+      content,
+      frequency = 1,
+      validationReceipt,
+      ...rest
+    } = searchedWord || {};
 
     const payload: Record<string, any> = {
       content: content?.toLowerCase?.() || '',
