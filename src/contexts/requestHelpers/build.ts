@@ -6962,7 +6962,9 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch {
-        return { status: 'unavailable' };
+        // A page that can drop in says "try again" on a network failure
+        // instead of opening the app as if nobody were there.
+        return { status: dropIn ? 'retry' : 'unavailable' };
       }
     },
 

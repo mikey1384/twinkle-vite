@@ -90,10 +90,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   function renderCurrent() {
     if (!current) return null;
-    const goLink =
-      current.kind !== 'achievement' && current.onClick
-        ? current.onClick
-        : current.linkTo
+    const onTap = current.kind !== 'achievement' ? current.onClick : undefined;
+    // A tap acts on the toast, so it closes first: a retry that succeeds must
+    // not leave "try again" over the app, and repeated taps never stack toasts.
+    const goLink = onTap
+      ? () => {
+          closeCurrent();
+          return onTap();
+        }
+      : current.linkTo
           ? () => navigate(current.linkTo as string)
           : undefined;
 
