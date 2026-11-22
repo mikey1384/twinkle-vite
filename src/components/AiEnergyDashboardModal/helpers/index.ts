@@ -108,7 +108,8 @@ const AI_USAGE_TARGET_LABELS: Record<string, string> = {
   daily_reflection_share: 'reflection',
   arena_battle_share: 'arena',
   arena_answer_marking: 'arena marking',
-  chat_topic: 'topic'
+  chat_topic: 'topic',
+  quick_ask: 'Quick Ask'
 };
 
 export function getAiUsageTargetLabel(targetType: string) {

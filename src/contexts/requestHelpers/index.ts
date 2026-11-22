@@ -1129,6 +1129,9 @@ registerMethods('zero', [
   'splitSubtitles',
   'mergeSubtitles',
   'mergeVideoWithSubtitles',
+  'streamQuickAsk',
+  'recordQuickAskOpen',
+  'saveQuickAskTurn',
   'textToSpeech'
 ]);
 

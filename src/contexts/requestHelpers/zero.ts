@@ -2,6 +2,10 @@ import request from './axiosInstance';
 import axios from 'axios';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
+import {
+  readBuildRuntimeAiStream,
+  type BuildRuntimeAiStreamEvent
+} from './buildRuntimeAiStream';
 
 export default function zeroRequestHelpers({
   auth,
@@ -182,6 +186,65 @@ export default function zeroRequestHelpers({
         return response.data;
       } catch (error) {
         return handleError(error); // Assuming handleError is defined elsewhere
+      }
+    },
+    // Quick Ask: a temporary chat with Zero that is not saved to the
+    // member's chat history (twinkle-api helpers/ai/quickAsk.ts). The reply
+    // streams as NDJSON in the Build runtime AI stream's frames.
+    async streamQuickAsk({
+      sessionKey,
+      message,
+      signal,
+      onEvent
+    }: {
+      sessionKey?: string;
+      message: string;
+      signal?: AbortSignal;
+      onEvent?: (event: BuildRuntimeAiStreamEvent & Record<string, any>) => void;
+    }) {
+      const headers = new Headers();
+      Object.entries(auth()?.headers || {}).forEach(([key, value]) => {
+        if (value != null) headers.set(key, String(value));
+      });
+      headers.set('Accept', 'application/x-ndjson');
+      headers.set('Content-Type', 'application/json');
+      const response = await fetch(`${URL}/zero/quick-ask/stream`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ sessionKey: sessionKey || undefined, message }),
+        signal
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        const error: any = new Error(
+          payload?.error || 'Zero couldn’t answer just now. Try again.'
+        );
+        error.status = response.status;
+        if (payload?.code) error.code = payload.code;
+        throw error;
+      }
+      return readBuildRuntimeAiStream({ response, onEvent });
+    },
+    // Save to chat: copies one Quick Ask answer (the server reads it from its
+    // own record) into the member's chat with Zero. No AI Energy.
+    async saveQuickAskTurn(turnId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/zero/quick-ask/save`,
+          { turnId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // A day counter for opening Quick Ask; nothing else is stored.
+    async recordQuickAskOpen() {
+      try {
+        await request.post(`${URL}/zero/quick-ask/open`, {}, auth());
+      } catch {
+        // telemetry only
       }
     },
     async textToSpeech(text: string, voice: string) {

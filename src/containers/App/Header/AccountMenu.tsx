@@ -21,6 +21,7 @@ import { trackEvent } from '~/helpers/analytics';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { MY_CLASSES_PATH } from '~/containers/Classrooms/shared';
+import { QuickAskHeaderButton } from '../QuickAsk/QuickAskButton';
 
 const logInLabel = 'Log In';
 const profileLabel = 'Profile';
@@ -147,6 +148,7 @@ export default function AccountMenu({
       className="desktop"
       style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
     >
+      <QuickAskHeaderButton />
       {userId &&
         (typeof twinkleCoins === 'number' ? (
           <div

@@ -13,6 +13,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { teardownChatPushOnLogout } from '~/helpers/desktopNotifications';
 import { trackEvent } from '~/helpers/analytics';
 import { MY_CLASSES_PATH } from '~/containers/Classrooms/shared';
+import { QuickAskMenuRow } from './QuickAsk/QuickAskButton';
 
 export default function MobileMenu({ onClose }: { onClose: () => void }) {
   const location = useLocation();
@@ -73,6 +74,7 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
             `}`}
           >
             <ProfileWidget />
+            <QuickAskMenuRow onOpen={onClose} />
             <HomeMenuItems style={{ marginTop: '1rem' }} onClose={onClose} />
             <Notification location="home" />
             {showMyClasses && (
