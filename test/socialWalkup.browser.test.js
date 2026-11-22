@@ -71,6 +71,16 @@ window.live={
   14:person(14,sketch({state:'busy-watchable',label:'Drawing, come watch',mode:'watch'})),
   15:person(15,{kind:'app',id:9,title:'Word Search Adventure',thumbnailUrl:null})
 };
+// Drop-in rooms: an open lobby (Join puts you straight in) and one in a match.
+// The busy room is what presence carries when the app goes busy without
+// repeating its roomKey: mode 'room', no dropIn flag, no key.
+const amongUs=(joinable)=>({kind:'app',id:2809,title:'Among Us',thumbnailUrl:'/thumbs/amongus.png',multiplayer:true,...(joinable?{joinable}:{})});
+window.names[16]='dew';window.names[17]='Cloudstar';window.names[18]='mina2';
+window.rooms={
+  16:person(16,amongUs({state:'open',label:'Waiting for crews',mode:'room',dropIn:true})),
+  17:person(17,amongUs({state:'busy',label:'In a match',mode:'room'})),
+  18:person(18,amongUs())
+};
 function LocationProbe(){const location=useLocation();useEffect(()=>{window.lastLocation={pathname:location.pathname,state:location.state};},[location]);return null;}
 function LiveScene({width}){
   const [myAchievementsObj,setMyAchievementsObj]=useState({});
@@ -81,6 +91,12 @@ function LiveScene({width}){
   </div>;
 }
 // A stand-in for an app frame: the overlay must sit over it without covering it.
+function AmongScene(){
+  return <div data-app-shell style={{position:'relative',width:'100%',height:560,background:'#0b1020',overflow:'hidden',display:'grid',placeItems:'center'}}>
+    <div data-app-board style={{width:280,padding:18,borderRadius:14,background:'#1b2440',color:'#e8eefc',fontSize:15,fontWeight:700,textAlign:'center'}}>App frame (stand-in)<div style={{fontWeight:400,marginTop:8,color:'#a9b6d6'}}>Lobby ROOM-ABCD · 3/12</div></div>
+    <SocialWalkupOverlay buildId={2809} active/>
+  </div>;
+}
 function AppScene(){
   return <div data-app-shell style={{position:'relative',width:'100%',height:560,background:'#22324a',overflow:'hidden',display:'grid',placeItems:'center'}}>
     <div data-app-board style={{width:260,height:260,borderRadius:12,background:'#d8b56a',display:'grid',placeItems:'center',color:'#3b2a10',fontSize:18,fontWeight:700}}>Baduk board</div>
@@ -109,6 +125,7 @@ function Root(){
     <LocationProbe/>
     {scene.name==='live'?<LiveScene width={scene.width}/>:null}
     {scene.name==='app'?<AppScene/>:null}
+    {scene.name==='among'?<AmongScene/>:null}
     {scene.name==='settings'?<WalkupsItem loading={false}/>:null}
     {scene.name==='chat'?<ChatScene key={scene.card} card={scene.card}/>:null}
   </FixtureProvider>;
@@ -224,6 +241,12 @@ async function openPage(browser, viewport) {
     // the real thing.
     const thumb = /\/thumbs\/(\w+)\.png/.exec(route.request().url());
     if (thumb) {
+      if (thumb[1] === 'amongus') {
+        return route.fulfill({
+          contentType: 'image/svg+xml',
+          body: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#14213d"/><circle cx="12" cy="14" r="1.5" fill="#fff"/><circle cx="66" cy="10" r="1.2" fill="#fff"/><circle cx="58" cy="66" r="1.4" fill="#fff"/><rect x="24" y="22" width="32" height="42" rx="16" fill="#e04848"/><rect x="18" y="34" width="8" height="18" rx="4" fill="#b83232"/><rect x="34" y="28" width="22" height="12" rx="6" fill="#9ed8f0"/><rect x="28" y="58" width="9" height="12" rx="3" fill="#e04848"/><rect x="43" y="58" width="9" height="12" rx="3" fill="#e04848"/></svg>`
+        });
+      }
       const board = thumb[1] === 'baduk';
       return route.fulfill({
         contentType: 'image/svg+xml',
@@ -299,7 +322,7 @@ test(
       await play.click();
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/5');
       assert.deepEqual(await page.evaluate(() => window.walkups), [
-        { buildId: 5, hostUserId: 11, intent: 'play' }
+        { buildId: 5, hostUserId: 11, intent: 'play', dropIn: true }
       ]);
       const target = await page.evaluate(() => window.lastLocation.state.buildLaunchTarget);
       assert.equal(target.source, 'social');
@@ -333,7 +356,7 @@ test(
         () => window.lastLocation?.state?.buildLaunchTarget?.target?.hostUserId === 12
       );
       assert.deepEqual(await page.evaluate(() => window.walkups), [
-        { buildId: 5, hostUserId: 12, intent: 'watch' }
+        { buildId: 5, hostUserId: 12, intent: 'watch', dropIn: true }
       ]);
       assert.equal(
         await page.evaluate(() => window.lastLocation.state.buildLaunchTarget.target.status),
@@ -359,7 +382,8 @@ test(
       assert.deepEqual(await page.evaluate(() => window.walkups[0]), {
         buildId: 5,
         hostUserId: 11,
-        intent: 'play'
+        intent: 'play',
+        dropIn: true
       });
       await page.evaluate(() => {
         window.walkups.length = 0;
@@ -606,7 +630,7 @@ test(
       await card.getByRole('button', { name: 'Play again' }).click();
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/5');
       assert.deepEqual(await page.evaluate(() => window.walkups), [
-        { buildId: 5, hostUserId: 11, intent: 'play' }
+        { buildId: 5, hostUserId: 11, intent: 'play', dropIn: true }
       ]);
       assert.equal(await page.evaluate(() => window.lastLocation.state), null);
       assert.equal(
@@ -659,6 +683,155 @@ test(
       await wide.page.waitForTimeout(200);
       await shot(wide.page, 'chat-card-first-dm-desktop.png');
       assert.deepEqual(wide.errors, []);
+    } finally {
+      await browser.close();
+    }
+  }
+);
+
+test(
+  'drop-in rooms: one tap on Join lands the visitor in the host\'s room; a room in a match offers no Join; the host sees a passing toast',
+  { timeout: 120000 },
+  async () => {
+    const browser = await chromium.launch();
+    try {
+      const { page, errors } = await openPage(browser, { width: 390, height: 900 });
+      await page.evaluate(() => {
+        window.walkups.length = 0;
+        window.walkupAnswer = {
+          status: 'drop-in',
+          host: { id: 16, username: 'dew', profilePicUrl: '/pictures/16.jpg' },
+          joinable: { state: 'open', label: 'Waiting for crews', mode: 'room', dropIn: true },
+          matchKey: 'meet-0123456789abcdef01234567',
+          roomKey: 'room-ABCD',
+          mode: 'room'
+        };
+        window.setScene({ name: 'live' });
+        window.setChatStatus({ ...window.live, ...window.rooms });
+      });
+      const row = page.locator('li', { hasText: 'Among Us' });
+      await row.locator('.live-join').first().waitFor();
+      assert.deepEqual(
+        (await row.locator('.live-join').allInnerTexts()).map((line) => line.trim()),
+        ['dew · Waiting for crews', 'Cloudstar · In a match']
+      );
+      await page.waitForTimeout(500);
+      await shot(page.locator('[data-column]'), 'dropin-live-now-phone.png');
+
+      // A room in a match: its popup says so and offers nothing to tap.
+      await row.locator('.live-join', { hasText: 'Cloudstar' }).click();
+      const busyPanel = page.locator('[data-social-join]');
+      await busyPanel.waitFor();
+      assert.match(await busyPanel.innerText(), /In a match/);
+      assert.doesNotMatch(await busyPanel.innerText(), /next/i);
+      assert.equal(await busyPanel.locator('button').count(), 0);
+      await page.waitForTimeout(350);
+      await shot(page, 'dropin-popup-busy-phone.png');
+      await page.keyboard.press('Escape');
+      await row.locator('.live-join', { hasText: 'Cloudstar' }).click();
+      await page.waitForFunction(() => !document.querySelector('[data-social-join]'));
+
+      // The open room's popup: one Join.
+      await row.locator('.live-join', { hasText: 'dew' }).click();
+      const joinDew = page.getByRole('button', { name: 'Join dew in Among Us' });
+      await joinDew.waitFor();
+      await page.waitForTimeout(350);
+      await shot(page, 'dropin-popup-open-phone.png');
+      await row.locator('.live-join', { hasText: 'dew' }).click();
+      await page.waitForFunction(() => !document.querySelector('[data-social-join]'));
+
+      // One tap on the row's Join: straight into dew's room.
+      await page.getByRole('button', { name: 'Join Among Us' }).click();
+      await page.waitForFunction(() => window.lastLocation?.pathname === '/app/2809');
+      assert.deepEqual(await page.evaluate(() => window.walkups), [
+        { buildId: 2809, hostUserId: 16, intent: 'play', dropIn: true }
+      ]);
+      const target = await page.evaluate(() => window.lastLocation.state.buildLaunchTarget);
+      assert.deepEqual(target, {
+        source: 'social',
+        buildId: 2809,
+        target: {
+          kind: 'social',
+          hostUserId: 16,
+          hostUsername: 'dew',
+          status: 'drop-in',
+          hostJoinable: { state: 'open', label: 'Waiting for crews', mode: 'room', dropIn: true },
+          roomKey: 'room-ABCD',
+          matchKey: 'meet-0123456789abcdef01234567'
+        }
+      });
+      const state = await page.evaluate(() => window.socialWalkupStore.get(2809));
+      assert.equal(state.visit, null);
+      assert.equal(state.match.dropIn, true);
+      assert.equal(state.match.roomKey, 'room-ABCD');
+
+      // The visitor's app page: nothing drawn over the app (no note, no banner).
+      await page.evaluate(() => window.setScene({ name: 'among' }));
+      await page.locator('[data-app-board]').waitFor();
+      await page.waitForTimeout(300);
+      assert.equal(await page.locator('[data-social-overlay]').count(), 0);
+      await shot(page.locator('[data-app-shell]'), 'dropin-visitor-lands-phone.png');
+
+      // A refusal is the neutral walk-up answer: the app opens as always.
+      await page.evaluate(() => {
+        window.socialWalkupStore.clear(2809);
+        window.walkupAnswer = { status: 'unavailable' };
+        window.setScene({ name: 'live' });
+      });
+      await page.getByRole('button', { name: 'Join Among Us' }).click();
+      await page.waitForFunction(() => window.lastLocation?.state === null);
+      assert.equal(await page.evaluate(() => window.socialWalkupStore.get(2809).match), null);
+
+      // Only a busy room in Among Us: Live now shows it busy, and the row's
+      // Join just opens the app. Nobody is walked up to or queued.
+      // (a fresh card: Live now holds what it showed while the pointer is on it)
+      await page.mouse.move(380, 890);
+      await page.evaluate(() => {
+        window.walkups.length = 0;
+        window.lastLocation = null;
+        window.setScene({ name: 'none' });
+        window.setChatStatus({ ...window.live, 17: window.rooms[17] });
+      });
+      await page.evaluate(() => window.setScene({ name: 'live' }));
+      const busyRow = page.locator('li', { hasText: 'Among Us' });
+      await page.waitForFunction(() => {
+        const row = [...document.querySelectorAll('li')].find((li) => li.textContent.includes('Among Us'));
+        return row && row.querySelectorAll('.live-join').length === 1;
+      });
+      assert.deepEqual(
+        (await busyRow.locator('.live-join').allInnerTexts()).map((line) => line.trim()),
+        ['Cloudstar · In a match']
+      );
+      assert.equal(await busyRow.locator('.live-join').first().getAttribute('data-state'), 'busy');
+      await page.getByRole('button', { name: 'Join Among Us' }).click();
+      await page.waitForFunction(() => window.lastLocation?.pathname === '/app/2809');
+      assert.deepEqual(await page.evaluate(() => window.walkups), []);
+      assert.equal(await page.evaluate(() => window.lastLocation.state), null);
+      assert.deepEqual(errors, []);
+
+      // The host's side: a tiny toast that takes no taps and goes by itself.
+      const host = await openPage(browser, { width: 390, height: 640 });
+      await host.page.evaluate(() => window.setScene({ name: 'among' }));
+      await host.page.locator('[data-app-board]').waitFor();
+      await host.page.evaluate(() =>
+        window.socialWalkupStore.apply({
+          type: 'dropIn',
+          buildId: 2809,
+          matchKey: 'meet-0123456789abcdef01234567',
+          mode: 'room',
+          visitor: { id: 7, username: 'viewer', profilePicUrl: '/pictures/7.jpg' }
+        })
+      );
+      const toast = host.page.locator('[data-social-arrival]');
+      await toast.waitFor();
+      assert.equal((await toast.innerText()).trim(), 'viewer joined from Live now');
+      assert.equal(await host.page.locator('[data-social-banner]').count(), 0);
+      assert.equal(await toast.locator('button').count(), 0);
+      assert.equal(await toast.evaluate((node) => getComputedStyle(node).pointerEvents), 'none');
+      await host.page.waitForTimeout(700);
+      await shot(host.page.locator('[data-app-shell]'), 'dropin-host-toast-phone.png');
+      await host.page.waitForFunction(() => !document.querySelector('[data-social-arrival]'), null, { timeout: 6000 });
+      assert.deepEqual(host.errors, []);
     } finally {
       await browser.close();
     }

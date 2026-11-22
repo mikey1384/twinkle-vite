@@ -116,23 +116,25 @@ export default function SocialJoinActions({
           In <b>{appTitle}</b> · {joinableBadge(joinable)}
         </span>
       </div>
-      <div className="social-buttons">
-        {actions.map((action) => (
-          <Button
-            key={action.intent}
-            color={buttonColor}
-            variant={action.intent === 'watch' ? 'soft' : 'solid'}
-            tone="raised"
-            size="sm"
-            uppercase={false}
-            loading={pending === action.intent}
-            disabled={!!pending}
-            onClick={() => handleJoin(action.intent)}
-          >
-            {action.label}
-          </Button>
-        ))}
-      </div>
+      {actions.length > 0 ? (
+        <div className="social-buttons">
+          {actions.map((action) => (
+            <Button
+              key={action.intent}
+              color={buttonColor}
+              variant={action.intent === 'watch' ? 'soft' : 'solid'}
+              tone="raised"
+              size="sm"
+              uppercase={false}
+              loading={pending === action.intent}
+              disabled={!!pending}
+              onClick={() => handleJoin(action.intent)}
+            >
+              {action.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 
