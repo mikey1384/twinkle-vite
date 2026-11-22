@@ -3103,6 +3103,24 @@ export default function ChatReducer(
         }
       };
     }
+    case 'UNLOCK_WORD_DEFINITIONS': {
+      // A finished word battle hands over the definitions it guarded.
+      const word = action.unlocked?.content;
+      if (!word) return state;
+      const existing = state.wordsObj[word];
+      return {
+        ...state,
+        wordsObj: {
+          ...state.wordsObj,
+          [word]: {
+            ...(existing || {}),
+            ...action.unlocked,
+            // A feed entry's own ids stay (id there is the feed's id).
+            ...(existing ? { id: existing.id, wordId: existing.wordId ?? action.unlocked.id } : { wordId: action.unlocked.id })
+          }
+        }
+      };
+    }
     case 'EDIT_WORD':
       return {
         ...state,
@@ -6130,10 +6148,10 @@ export default function ChatReducer(
         wordsObj: action.feed.content
           ? {
               ...state.wordsObj,
-              [action.feed.content]: {
-                ...state.wordsObj[action.feed.content],
-                ...action.feed
-              }
+              [action.feed.content]: mergeLiveVocabWord(
+                state.wordsObj[action.feed.content],
+                action.feed
+              )
             }
           : state.wordsObj,
         wordLogs: newWordLog ? [newWordLog, ...state.wordLogs] : state.wordLogs,
@@ -7724,4 +7742,35 @@ function resolveLatestBoardMessageState({
     [terminalMessageKey]: appliedTerminalId || null,
     [pendingTerminalTokenKey]: appliedPendingTerminalToken
   };
+}
+
+// The live feed carries no definitions for a word with a battle (twinkle-api
+// helpers/wordBattle/locks.ts). A word this member already unlocked keeps
+// its definitions when someone else's feed for it arrives.
+const VOCAB_POS_KEYS = [
+  'noun',
+  'verb',
+  'adjective',
+  'preposition',
+  'adverb',
+  'pronoun',
+  'conjunction',
+  'interjection',
+  'phrase',
+  'determiner',
+  'other'
+];
+function mergeLiveVocabWord(existing: any, feed: any) {
+  const merged = { ...existing, ...feed };
+  if (feed?.battle?.locked && existing && !existing.battle?.locked) {
+    const hasDefinitions = VOCAB_POS_KEYS.some(
+      (key) => Array.isArray(existing[key]) && existing[key].length > 0
+    );
+    if (hasDefinitions) {
+      for (const key of VOCAB_POS_KEYS) merged[key] = existing[key];
+      merged.deletedDefIds = existing.deletedDefIds;
+      merged.battle = existing.battle;
+    }
+  }
+  return merged;
 }

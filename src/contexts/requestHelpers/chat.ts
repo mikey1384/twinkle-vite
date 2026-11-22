@@ -2922,6 +2922,70 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // Word battles (twinkle-api helpers/wordBattle): the gate in front of an
+    // unplayed word's definition. The server keeps the answer key.
+    async loadWordBattle(wordId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/vocabulary/battle?wordId=${wordId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startWordBattle(wordId: number, seenForm?: string) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/battle/start`,
+          { wordId, ...(seenForm ? { seenForm } : {}) },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async answerWordBattle({
+      playId,
+      questionIndex,
+      answer,
+      elapsedMs
+    }: {
+      playId: number;
+      questionIndex: number;
+      answer: number | boolean[] | string;
+      elapsedMs?: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/battle/answer`,
+          { playId, questionIndex, answer, elapsedMs },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadWordBattleAudio({
+      playId,
+      kind
+    }: {
+      playId: number;
+      kind: 'word' | 'sentence';
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/vocabulary/battle/${playId}/audio?kind=${kind}`,
+          { ...auth(), responseType: 'blob' }
+        );
+        return data as Blob;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async lookUpWord(word: string) {
       try {
         const { data } = await request.get(
