@@ -85,14 +85,26 @@ export function ranAwayLines(word: string) {
   return [`${W} ran away...`, pick(['...but it left its meaning behind.', '...dropping its meaning on the way out.'], word)];
 }
 
-export function dropLine(loot: { kind: string; amount?: number; quality?: string }) {
+// Every win pays XP and Coins (Mikey 11-22); a rare drop comes on top.
+export function dropLine(loot: {
+  kind: string;
+  amount?: number;
+  quality?: string;
+  reward?: { xp: number; coins: number };
+}) {
+  const n = (value: number) => Number(value || 0).toLocaleString('en-US');
+  const reward = loot.reward
+    ? `${n(loot.reward.xp)} XP and ${n(loot.reward.coins)} Coins`
+    : loot.amount
+      ? `${n(loot.amount)} XP`
+      : '';
   switch (loot.kind) {
     case 'xp':
-      return `Got ${loot.amount} XP!`;
+      return `Got ${reward}!`;
     case 'energy_recharge':
-      return 'A BATTERY RECHARGE! Your AI battery is full again!';
+      return `A BATTERY RECHARGE! Your AI battery is full again!${reward ? ` Plus ${reward}.` : ''}`;
     case 'black_ai_card':
-      return `A BLACK AI CARD! Quality: ${String(loot.quality || '').toUpperCase()}!`;
+      return `A BLACK AI CARD! Quality: ${String(loot.quality || '').toUpperCase()}!${reward ? ` Plus ${reward}.` : ''}`;
     default:
       return 'Nothing but dust. Monsters are terrible at saving.';
   }
