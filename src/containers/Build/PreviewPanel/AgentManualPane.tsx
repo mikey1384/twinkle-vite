@@ -12,6 +12,14 @@ import {
   DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT,
   PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS
 } from './helpers/projectFileEffectiveLines';
+// The platform rules, essential SDK features and the SDK reference below come
+// from twinkle-api's buildSdkManifest.json through its generator, the same
+// source Lumine's prompt and the Lumine CLI guide read. Never restate SDK
+// methods or platform rules by hand in this file: they went stale that way.
+import {
+  AGENT_MANUAL_SDK,
+  type AgentManualSdkNamespace
+} from './agentManualSdk.generated';
 
 const previewLayoutBoilerplate = [
   'function subscribePreviewStage(onSize) {',
@@ -42,6 +50,12 @@ const previewLayoutBoilerplate = [
   '// });'
 ].join('\n');
 
+const SDK_METHOD_COUNT = AGENT_MANUAL_SDK.namespaces.reduce(
+  (count, namespace) => count + namespace.methods.length,
+  0
+);
+const SDK_REFERENCE_INTRO = `Build SDK ${AGENT_MANUAL_SDK.version} (updated ${AGENT_MANUAL_SDK.updatedAt}): every namespace and method that exists, ${AGENT_MANUAL_SDK.namespaces.length} namespaces and ${SDK_METHOD_COUNT} methods. A Twinkle.* name that is not listed here does not exist. Each entry is the call, what it returns and one line on what it does; the complete notes, limits, error codes and examples for every method are in TWINKLE_BUILD_SDK.md, which the Lumine CLI writes into a pulled workspace (see External CLI launch).`;
+
 interface AgentManualPaneProps {
   capabilitySnapshot: BuildCapabilitySnapshot | null;
 }
@@ -51,6 +65,8 @@ interface GuideSection {
   items: string[];
 }
 
+// Website-editor guidance only. What an app may call and the rules it must
+// follow inside Twinkle's frame are in the generated sections.
 const guideSections: GuideSection[] = [
   {
     title: 'Workspace workflow',
@@ -58,9 +74,7 @@ const guideSections: GuideSection[] = [
       'Use the Code tab to edit project files directly. The app preview runs from the saved project files.',
       'Keep /index.html or /index.htm as the entry file. Split CSS and JavaScript into supporting files before a file approaches the server effective-line limit.',
       `The current project-file limit is ${DEFAULT_PROJECT_FILE_EFFECTIVE_LINE_LIMIT} effective lines per file. Long physical lines count as additional effective lines every ${PROJECT_FILE_EFFECTIVE_LINE_MAX_COLUMNS} characters. If save fails for size, split the file and save again.`,
-      'Build apps run in sandboxed iframes without form-submit permission. Do not use <form> or native form submission; use JavaScript-handled inputs and buttons.',
-      'Mobile long-press must not select game UI or open browser menus. The SDK protects standard buttons, button-like ARIA controls, and canvases. Mark the whole gameplay wrapper data-twinkle-no-select, including HUD, labels, scores, menus, controls, and empty play space; add user-select: none, -webkit-user-select: none, and -webkit-touch-callout: none for local previews. Protecting only one button is insufficient.',
-      'Keep inputs/contenteditable usable. Mark copyable story/chat/user text data-twinkle-selectable and style it with user-select: text, -webkit-user-select: text, and -webkit-touch-callout: default. Preserve document selection and scrolling; do not block document-wide touch/pointer events. Test mobile Safari and Chromium long presses, release/cancel, typing, and copying: a passing static check does not prove coverage.',
+      'Follow the Platform Rules below in every change, and add the Essential SDK Features that apply without being asked.',
       'Use workspace project assets for bundled runtime media. Use Twinkle.files only for viewer-created runtime uploads after the app is running.',
       'Save files before relying on Preview, Publish, or Download zip.'
     ]
@@ -82,7 +96,7 @@ const guideSections: GuideSection[] = [
       'Run npx @stage5/lumine@latest for the guided flow. It logs in when needed, lets the user choose an owned or team project, saves that selection, and pulls the saved project files locally.',
       'Run npx @stage5/lumine@latest login once for explicit login. It opens the Twinkle approval page automatically and stores only a scoped CLI token locally. Use --no-open for SSH, CI, or agent-only terminals.',
       'Run npx @stage5/lumine@latest projects, select, or pull to list accessible projects, change the selected project, or refresh local project files.',
-      'Pulled workspaces include AGENTS.md with Twinkle Build constraints for local coding agents.',
+      'Pulled workspaces include AGENTS.md with Twinkle Build constraints for local coding agents and TWINKLE_BUILD_SDK.md, the complete SDK reference.',
       'After editing pulled files, run npx @stage5/lumine@latest save from the local project folder. CLI saves use the same /build/:id/project-files route as the Code tab, create a project artifact version, and mark public builds as having unpublished changes.',
       'Run npx @stage5/lumine@latest check, launch, launch --save, or save --publish after selecting a project. You can still pass a Twinkle app, build, preview, or Lumine preview URL explicitly.',
       'Saving and publishing require scoped owner permission; team projects can be selected and pulled for code access.',
@@ -102,18 +116,18 @@ const guideSections: GuideSection[] = [
       'This vendor surface covers supported official Three.js modules, not arbitrary third-party Three.js packages. Do not paste library source into project files.',
       `Keep one Three.js version throughout a project. Projects saved with the older ${LEGACY_THREE_VENDOR_VERSION} core path keep working, but a project that needs current addons must migrate every Three.js import to ${CURRENT_THREE_VENDOR_VERSION} in one coherent change; never mix the legacy core with current addons.`,
       'Size both WebGLRenderer and EffectComposer from Twinkle.preview layout dimensions, coalesce resize work, and render with composer.render() when a composer owns the pass chain.',
-      'The versioned Three.js vendor paths are stable for preview and published builds.'
+      'The versioned Three.js vendor paths are stable for preview and published builds.',
+      'Sound effects and music (the Groove Lab player) and math formulas (KaTeX) are served by Twinkle too: their import paths and usage are in SDK notes.'
     ]
   },
   {
-    title: 'Viewport and game layout',
+    title: 'Game layout and realtime updates',
     items: [
-      'Canvas, WebGL, Three.js, and fullscreen game apps must use Twinkle.preview as the layout source of truth.',
-      'Do not size game roots from 100vh, 100vw, window.innerWidth, or window.innerHeight. These can fight the host preview and cause blank, cropped, or scrolled previews.',
-      'Use Twinkle.preview.getLayout() or Twinkle.preview.subscribe(listener, { immediate: true }), then size the canvas or renderer from layout.stage or layout.viewport.',
       'Only call renderer.setSize() or canvas width/height assignment when the width or height actually changed. Use requestAnimationFrame to coalesce resize work.',
-      'Call Twinkle.preview.setPlayfield(...) after measuring the intended game area. Use reportGameplayState(...) for important gameplay bounds and state.',
-      'The plain text manual includes a copyable subscribePreviewStage helper for canvas and Three.js apps.'
+      'The plain text manual includes a copyable subscribePreviewStage helper for canvas and Three.js apps.',
+      'For Twinkle.world presence, keep render/input loops local: queue only changed presence, replace an older queued snapshot with the newest one, and flush on a fixed 5–15 updates-per-second schedule with at most one request in flight.',
+      'Never call or await updatePresence every animation frame, resend an unchanged snapshot, overlap requests, or build a backlog. session.send("emote", { emote: "wave" }) is for discrete actions when they happen, not polling, and actions must not be automatically retried.',
+      'WORLD_EVENT_RATE_LIMITED is recoverable: drop that attempted presence/action update without an immediate retry and keep the session. Reconnect with backoff only after session.ended or Twinkle.world.isSessionEndedError(error).'
     ]
   },
   {
@@ -121,7 +135,8 @@ const guideSections: GuideSection[] = [
     items: [
       'Do not use Lumine when the user asked for manual/external-agent work.',
       'Use the labeled file controls and code editor; they are exposed for browser automation.',
-      'Read Twinkle.capabilities.get() in app code before using gated SDK calls.',
+      'Call only Twinkle.* methods listed in the SDK Reference. Before relying on a call that needs sign-in, ownership or a permission, read Twinkle.capabilities.get() in app code.',
+      'The Capabilities list on this page covers permission-gated namespaces only. A namespace missing from it (Twinkle.app, Twinkle.social, Twinkle.coins, Twinkle.land and others) is not unavailable: the SDK Reference is the list of what exists.',
       'Treat uploaded user images and generated outputs as sensitive user data.',
       'Do not store raw file bytes in DB records. Store asset references or small app data.'
     ]
@@ -130,7 +145,6 @@ const guideSections: GuideSection[] = [
     title: 'Runtime model',
     items: [
       'Build apps run in a sandboxed iframe with window.Twinkle injected.',
-      'Build apps do not have app-local backend routes. Do not create or fetch /api/* endpoints from the iframe.',
       'Local project paths should be relative, such as ./src/app.js or /src/app.js from /index.html.',
       'The SDK methods proxy through the parent app and backend. Signed-in and owner-only checks are enforced outside the iframe.',
       'Do not use sessionStorage. Use Twinkle.privateDb for default private persistence, Twinkle.sharedDb for shared data, Twinkle.userDb only for advanced private SQLite needs, or plain in-memory state for temporary UI state.',
@@ -139,207 +153,11 @@ const guideSections: GuideSection[] = [
   }
 ];
 
-const sdkSections: GuideSection[] = [
-  {
-    title: 'Twinkle.capabilities',
-    items: [
-      'await Twinkle.capabilities.get() returns the live capability snapshot.',
-      'await Twinkle.capabilities.can("Twinkle.ai.generateImage") checks a specific SDK action or Lumine action.',
-      'await Twinkle.capabilities.listActions() returns Lumine action permissions: available, blocked, and details.',
-      'await Twinkle.capabilities.refresh() clears the cache and fetches a fresh snapshot.'
-    ]
-  },
-  {
-    title: 'Twinkle.notifications',
-    items: [
-      'Twinkle.notifications.getLaunchTarget() returns the Build app notification target that opened this app, or null.',
-      'Twinkle.notifications.onLaunchTarget(listener) receives future notification launch targets while the app stays mounted.',
-      'await Twinkle.notifications.getSubscription(channelKey, { targetKey }), subscribe(channelKey, { targetKey, launchTarget }), subscribeMany(subscriptions), unsubscribe(channelKey, { targetKey }), and unsubscribeMany(subscriptions) manage app-defined notification subscriptions.',
-      'await Twinkle.notifications.notifySubscribers(channelKey, { targetKey, eventKey, label, summary, launchTarget, payload }) notifies opted-in subscribers without requiring a sharedDb write.',
-      'await Twinkle.notifications.getSubjectUpdateSubscription(subjectId) returns the current viewer subscription for new subject pages.',
-      'await Twinkle.notifications.subscribeToSubjectUpdates(subjectId, { target }) subscribes the viewer to new pages on that subject and stores a notification launch target.',
-      'await Twinkle.notifications.unsubscribeFromSubjectUpdates(subjectId) turns off that subject update subscription for the viewer.',
-      'Notification preferences and type-level mutes are enforced by Twinkle; app code should create canonical writes with notify payloads and let the server deliver notifications.'
-    ]
-  },
-  {
-    title: 'Twinkle.ai',
-    items: [
-      'Do not build prompt-preset selection UIs from Twinkle.ai.listPrompts(); runtime chat uses message, history, and systemPrompt.',
-      'await Twinkle.ai.generateImage({ prompt, referenceImageB64, engine: "openai", model: "gpt-image-2.6-flare", quality: "high", requestId, onStatus }) generates or edits an image (engine: "gemini" is Nano Banana 2.1).',
-      'await Twinkle.ai.chat({ message, history, systemPrompt, webSearch, onText, onStatus }) generates text with the default Lumine text model and streams accumulated text through onText when provided. Live web search is enabled by default; pass webSearch: false to disable it for the app.',
-      'Twinkle.ai.chat history entries must be shaped as { role: "user" | "assistant", content: string }. Do not pass saved message objects shaped as { text } unless you map text to content first.',
-      'await Twinkle.ai.generateObject({ prompt, expectedStructure, thinkingMode: "low" | "medium" | "high", model, webSearch }) returns a validated structured JSON object for app decisions. Live web search is enabled by default in Medium and High modes; pass webSearch: false to disable it. Lite Mode remains tool-free.',
-      'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
-      'Use Twinkle.ai.generateObject for classification, routing, grading, and game-state decisions instead of asking chat to return JSON.',
-      'generateObject accepts mode as an alias for thinkingMode, and mid as an alias for medium.',
-      'generateObject low uses GPT-6 Luna with low reasoning and billable Lite Mode; medium uses GPT-6 Luna with medium reasoning and normal AI Energy; high uses Claude Sonnet 5.5 with high AI Energy. Pair high with model: "claude-sonnet-5-5", "gpt-6.1-sol" (Sol/xhigh) or "claude-opus-5-5" (Claude Opus 5.5) to name a High model. Explicit gpt-6-luna accepts every thinking mode; existing claude-haiku-5-5 requests run on Luna at the requested thinking level. Retired names (gpt-6-sol, gpt-5.6-sol, claude-sonnet-5, gpt-6-astra, claude-opus-5, claude-fable-5-1) run on their replacements.',
-      'Use systemPrompt to define the app AI personality, tone, role, or response rules.',
-      'Image onStatus receives stages such as prompt_ready, in_progress, generating, partial_image, completed, and error; text onStatus receives thinking, completed, or error.',
-      'Use status.partialImageB64 for progressive preview UI while the final imageUrl is still generating.',
-      'For text chat UIs, use onText to render the assistant response as it arrives, then use the resolved result for the final text and aiUsagePolicy.',
-      'Twinkle.ai.onChatStatus(listener) returns an unsubscribe function for shared text-generation status UI.',
-      'Twinkle.ai.onImageGenerationStatus(listener) returns an unsubscribe function for shared streaming UI.',
-      'Pass a unique requestId to correlate iframe logs, parent bridge logs, and backend stream logs for one generation.',
-      'Signed-in viewers only. Each successful image, text, or object generation consumes AI Energy from the signed-in viewer, including generateObject Low/Lite Mode. When Energy is empty, all modes reject before provider work.',
-      'The prompt, message, optional history, and optional reference image are sent to the configured AI provider.'
-    ]
-  },
-  {
-    title: 'Twinkle.news',
-    items: [
-      'await Twinkle.news.getCurrentEdition() reads the globally shared Twinkle Daily edition.',
-      "await Twinkle.news.generateCurrentEdition() lets a signed-in viewer queue today's edition. The server creates at most one ready edition per Twinkle day. In the canonical Twinkle Newspaper app, its current owner may call generateCurrentEdition({ refresh: true }) to revise today's ready edition with newer events. A model-backed job consumes AI Energy from the viewer whose request creates, retries, or refreshes it; deduplicated callers and quiet editions with no model call are not charged.",
-      'When generationStatus is pending or generating, keep showing response.edition (the latest ready edition) and poll gently for the new one.'
-    ]
-  },
-  {
-    title: 'Twinkle.minecraft',
-    items: [
-      'Read-only view of the Twinkle Minecraft server. getWorlds() returns worlds with squaremap tile info (fill {z}, {x}, {y} in map.tileUrlTemplate); getOnlinePlayers() returns players with coordinates; getZero() shows where Zero is and his build in progress; getZeroBuilds({ limit, kind }) lists his recent builds with bounds.',
-      'Limited rollout: apps that are not enabled get 403 with code minecraft_sdk_not_enabled. Poll players and Zero no faster than every 5 seconds; stale: true means a recent cached copy.',
-      'Roles (server owner only): getPeople() lists everyone who has joined with their role (visitor, member, builder, moderator), or { canManage: false, people: [] } for other viewers, so hide the feature then; setPlayerRole({ uuid, role }) changes a role in game immediately.',
-      'Chat: getChat({ since }) returns live server chat after latestSeq (poll every 2-3 s while visible); getChatHistory({ before, limit, query }) pages older chat; sendChat({ text }) posts into the game as [Web] <username> (signed in, rate-limited); the owner can muteChatUser({ userId, muted }).',
-      "Account links: createLinkCode() gives the viewer a one-time code to type in game as /link CODE; getMyLink() lists their linked Minecraft accounts; unlinkMinecraft({ uuid }) removes one. getPeople() shows each linked player's Twinkle user.",
-      'Design studio: getDesigns({ query }) and getDesign({ id }) (3D preview cells) for everyone; the server owner can saveDesign({ ..., parts }), updateDesign, deleteDesign, checkPlacement({ designId, world, x, z, facing }) and buildDesign(...) to have Zero build it, plus stopZero() and undoBuild({ jobId }).'
-    ]
-  },
-  {
-    title: 'Twinkle.characters',
-    items: [
-      'await Twinkle.characters.chat({ character: "zero" | "ciel", thinkingMode: "low" | "medium" | "high", message, history, roomContext, scene, instructions, includeWebsiteContext, webSearch, onText, onStatus }) talks to the real Zero or Ciel runtime bridge. Live web search is enabled by default in Medium and High modes; pass webSearch: false to disable it. Lite Mode remains tool-free.',
-      'Use character history entries shaped as { role: "user" | "assistant", content: string, speaker?: string }. content is the canonical text field; roomContext is for the shared scene transcript both characters should know.',
-      'Pass onText/onStatus for streaming dialogue; omit callbacks when the app only needs the final response.',
-      'Use roomContext for shared scene transcript so Zero and Ciel can know what happened in the same room when the player switches speakers.',
-      'includeWebsiteContext defaults to true. Set includeWebsiteContext: false for in-world NPC dialogue that should only use Zero/Ciel basic character identity plus the app scene/instructions.',
-      'thinkingMode low is billable Lite Mode and usually costs less because it uses a smaller model or lower reasoning; medium is normal battery use; high is high battery use.',
-      'Inside Build character chat, low and medium run Zero on GPT-6 Luna with reasoning disabled and Ciel on GPT-6 Luna with reasoning disabled. In high mode, Zero uses Grok 4.7 with high reasoning and Ciel uses Claude Opus 5.5 with high thinking.',
-      'When AI Energy is empty, Low, Medium, and High all reject before new provider work; there is no free fallback mode.',
-      'Use Twinkle.characters.chat for Zero/Ciel NPCs instead of pretending with Twinkle.ai.chat systemPrompt.'
-    ]
-  },
-  {
-    title: 'Twinkle.chess',
-    items: [
-      'await Twinkle.chess.bestMove({ fen, skillLevel: 0-20, maxTimeMs: 500-60000 }) returns a Stockfish move for computer-opponent chess apps.',
-      'await Twinkle.chess.evaluate({ fen, depth: 12 }) returns the bestMove plus evaluation, depth, and mate when available.',
-      'Use skillLevel: 20 with maxTimeMs: 60000 for the strongest bounded computer opponent; lower skill levels default to shorter searches.',
-      'Returned moves include move/bestMove in UCI form plus from, to, and promotion fields for applying to app board state.',
-      'Twinkle.chess runs a bounded parent-managed Stockfish worker. Do not call it from render loops, animation loops, or high-frequency polling.',
-      'Twinkle.chess does not manage chess rules, legal moves, game-over state, or board UI. App code still owns those pieces.'
-    ]
-  },
-  {
-    title: 'Twinkle.files',
-    items: [
-      'For simple same-origin downloads, a normal <a href={imageUrl} download="file.png"> is fine.',
-      'await Twinkle.files.saveAs({ fileName, url, dataUrl, blob, bytes, text, json, mimeType }) downloads generated or remote files through the parent frame without opening a popup.',
-      'await Twinkle.files.uploadGenerated({ fileName, dataUrl, mimeType }) uploads a viewer/runtime-generated image or file after the app is running. Use window.TwinkleBuildAgent.assets from the workspace for bundled project media.',
-      'await Twinkle.files.pickAndUpload({ accept: "image/*", multiple: true }) opens a viewer file picker and uploads to Twinkle-hosted file storage through Twinkle.files.',
-      'Store returned asset references in Twinkle.privateDb for private refs, Twinkle.sharedDb for shared refs, or Twinkle.userDb only when the app already needs advanced private SQLite.',
-      "await Twinkle.files.list({ limit: 20 }) lists this viewer's runtime uploads for the build.",
-      "await Twinkle.files.delete(assetId) deletes one of the viewer's uploaded runtime files."
-    ]
-  },
-  {
-    title: 'Twinkle.world',
-    items: [
-      'await Twinkle.world.join({ worldKey: "town", roomKey: "square", presence: { x, y, z, facing }, player: { name } }) joins a realtime multiplayer room and returns a session handle.',
-      'world.subscribe(listener) receives snapshot, player.joined, player.left, presence.updated, and action.received events with serverTime, seq, eventId, room, player, and players.',
-      'world.updatePresence({ x, y, z, facing, animation }) updates the current avatar snapshot. Keep render/input loops local: queue only changed presence, replace an older queued snapshot with the newest one, and flush on a fixed 5–15 updates-per-second schedule with at most one request in flight.',
-      'Never call or await updatePresence every animation frame, resend an unchanged snapshot, overlap requests, or build a backlog. world.send("emote", { emote: "wave" }) is for discrete actions when they happen—not polling—and actions must not be automatically retried.',
-      'The parent limits updatePresence and send together to protect the website connection. WORLD_EVENT_RATE_LIMITED is recoverable: drop that attempted presence/action update without an immediate retry and keep the session.',
-      'World sessions are disposable. On session.ended or Twinkle.world.isSessionEndedError(error), stop using that handle and reconnect with backoff. If Twinkle.world.isRecoverableSessionError(error) is true but the session did not end, drop that transient presence/action and keep the handle.',
-      'world.leave() leaves the room; Twinkle.world.leaveAll() leaves all active sessions in the iframe.',
-      'Twinkle.world is ephemeral heartbeat/TTL state. Use Twinkle.sharedDb/privateDb for durable inventory, XP, quests, ownership, and saved progress.'
-    ]
-  },
-  {
-    title: 'Databases',
-    items: [
-      'Twinkle.privateDb is the default private per-user store for preferences, drafts, settings, and small JSON state.',
-      'Twinkle.privateDb.get(key) returns { item: { id, key, value, updatedAt } | null }.',
-      'Twinkle.privateDb.list({ prefix, limit, cursor }) returns { items: [{ id, key, value, updatedAt }], cursor? }.',
-      'Twinkle.privateDb.set(key, value) returns { item: { id, key, value, updatedAt } }.',
-      'Twinkle.privateDb.remove(key) returns { success: true, deleted: boolean }.',
-      'Twinkle.userDb is advanced private per-user SQLite for tables, indexes, many rows, filtered queries, or aggregates.',
-      'Twinkle.userDb.query(sql, params) returns { rows, rowCount, truncated }; Twinkle.userDb.exec(sql, params) returns { changes, lastInsertRowid }.',
-      'Twinkle.sharedDb stores shared build data when the capability allows it.',
-      'Twinkle.sharedDb.getTopics() returns { topics: [{ id, name, createdBy, createdAt }] }.',
-      'Twinkle.sharedDb.createTopic(name) creates or returns a topic; topic names max at 100 characters.',
-      'Twinkle.sharedDb.getEntries(topic, { limit }) returns newest entries first by default and includes cursor and hasMore for pagination.',
-      'Twinkle.sharedDb.getEntries(topic, { limit, pageSize, cursor, order, sort, direction }) and loadMoreEntries(...) return { entries, cursor, hasMore }.',
-      'Twinkle.sharedDb.getEntriesByIds(entryIds) reads up to 100 app-scoped shared rows in requested order.',
-      'Shared entries are shaped like { id, topicId, userId, username, profilePicUrl, data, createdAt, updatedAt }. data is the JSON object you stored.',
-      'Twinkle.sharedDb.addEntry(topic, data) writes a JSON object and returns { entry }. It auto-creates the topic if needed. data max is 10 KB.',
-      'Twinkle.sharedDb.addEntries(topic, items) atomically appends up to 100 owner-controlled rows for one low-frequency action; every item remains capped at 10 KB.',
-      'Twinkle.sharedDb.updateEntry(entryId, data) returns { entry }. Only the entry creator or build owner can update.',
-      'Twinkle.sharedDb.deleteEntry(entryId) returns { success: true }. Only the entry creator or build owner can delete.',
-      'Twinkle.sharedDb.deleteEntries(entryIds) atomically removes up to 100 authorized rows and reports deletedEntryIds plus missingEntryIds.',
-      'Use limit or pageSize to choose how many entries appear per page. Default is 20, max is 100.',
-      'Use Twinkle.sharedDb.loadMoreEntries(topic, { limit, cursor }) for Load more buttons.',
-      "Pass order: 'asc' or order: 'oldest' for oldest-first chronological reads. sort and direction are accepted aliases.",
-      'There is no sharedDb setEntry/saveEntry/upsertEntry method. Use Twinkle.leaderboards for standard top-score rankings; use sharedDb only for custom shared JSON or append-only run history.',
-      'Do not use sessionStorage for runtime state or persistence.'
-    ]
-  },
-  {
-    title: 'Build leaderboards',
-    items: [
-      'Use Twinkle.leaderboards for game scoreboards and top-score rankings.',
-      'Twinkle.leaderboards.submit({ boardKey, score, displayName, meta }) records one personal-best row per viewer. Signed-in viewers use their Twinkle username automatically.',
-      'Submit only after computing the final score when a run, shift, match, or level attempt ends; do not submit every frame or every tick.',
-      'Guests can submit to the same public leaderboard by entering displayName once; keep that name in app state for later submits.',
-      'Sign-in can be shown as optional, but public Build leaderboards must not require sign-in before a guest can submit.',
-      'Twinkle.leaderboards.get({ boardKey, limit, cursor }) returns score-sorted entries with cursor pagination, hasMore, and the current viewer personalBest when available.',
-      'Leaderboard entries are sorted by score descending, then earliest achieved time. Use sharedDb only for custom shared JSON or append-only run history.'
-    ]
-  },
-  {
-    title: 'Preview and viewer',
-    items: [
-      'Twinkle.viewer.get() returns { id, username, profilePicUrl, isLoggedIn, isOwner, isGuest, ageTier } for the current viewer. ageTier is kid, teen or adult, from the viewer\'s Teenager and Adult achievements; guests and unverified viewers are kid.',
-      'Twinkle.viewer.refresh() clears the cache and re-fetches viewer identity.',
-      'Every Twinkle-owned profilePicUrl returned by the SDK is an absolute HTTPS URL ready for img src, or null. App-owned JSON fields are not rewritten.',
-      'Twinkle.preview.getLayout() returns { mode, viewport, stage, safeInsets, playfield }.',
-      'Canvas, WebGL, Three.js, and fullscreen game apps must use Twinkle.preview as their layout source of truth.',
-      'Do not use 100vh, 100vw, window.innerWidth, or window.innerHeight as the source of truth for game/canvas sizing.',
-      'Subscribe with Twinkle.preview.subscribe(listener, { immediate: true }) and resize only when stage or viewport dimensions actually changed.',
-      'Twinkle.preview.reserveInsets(...) reserves host UI space for games and fixed controls.',
-      'Twinkle.preview.setPlayfield(...) and reportGameplayState(...) expose game bounds for preview diagnostics.',
-      'Twinkle.preview.getGameplayTelemetry(), clearGameplayState(), and clearReservedInsets() manage preview diagnostics and reserved host space.',
-      'Twinkle.preview.wrapResult(result) is an internal compatibility helper used by preview methods; app code should not call it directly.',
-      'Twinkle.preview.subscribe(listener, { immediate: true }) reacts to host layout changes.'
-    ]
-  },
-  {
-    title: 'Content and social reads',
-    items: [
-      'For subject book, scrapbook, or gallery apps, ask the viewer which Twinkle subject they want to use. Build text pickers with Twinkle.subjects.search({ query, limit, cursor }), then use the selected subject.id.',
-      'Twinkle.mount.get() returns optional host-provided content context such as { type: "subject", id }; use it as a preselection when present, not as the only way to choose a subject.',
-      'Twinkle.subjects.getMySubjects({ limit, cursor }), search({ query, limit, cursor }), and getSubject(subjectId) are read-only subject metadata APIs. getSubjectComments(subjectId, { limit, cursor }) is the legacy viewer-own-comments helper.',
-      'Twinkle.subjectComments.list(subjectId, { sortBy, author, authorUserId, includeReplies, replyScope, limit, cursor }) reads subject-wide comment streams. Use sortBy: "oldest", author: "subjectPoster", includeReplies: true, and replyScope: "ownThread" when subject-poster replies should appear only inside the poster\'s own thread.',
-      'Twinkle.aiCards.list/search/get reads existing public AI Cards with word, exampleText, level, quality, imageUrl, owner username, and pagination. Use card.word for word typing games and card.exampleText for sentence typing games.',
-      'Twinkle.aiStories.search/list/get reads existing user-generated AI Stories, including story text, explanations, imageUrl, audioUrl, and normalized questions. It is read-only and does not generate new AI Stories.',
-      'For typing games, use mode-specific leaderboard keys such as words, sentences, and passages. AI Card level maps to word/sentence difficulty; AI Story difficulty maps to passage difficulty.',
-      "Twinkle.grammarbles.listQuestions({ level, limit, cursor }) reads public Grammarbles questions and answers by level. getMyQuestionHistory({ level, limit, cursor }) reads the signed-in viewer's real attempt rows for trainer filtering.",
-      'Twinkle.profileComments.getProfileComments(...), getProfileCommentIds(...), getCommentsByIds(idsOrOpts), and getProfileCommentCounts(idsOrOpts) are focused profile-comment reads.',
-      'Twinkle.users.getUser(userId) returns { id, username, profilePicUrl, realName } or null; getUsers({ search, userIds, cursor, limit }) returns { users, cursor }.',
-      'Twinkle.reflections.getDailyReflections(...) and getDailyReflectionsByUser(userId, ...) return daily reflection feed rows.',
-      'Twinkle.chat.listRooms(), createRoom({ roomKey, name }), listMessages(roomKey, ...), deleteMessage(messageId), and subscribe(roomKey, listener) support app-scoped chat.',
-      'Twinkle.chat.sendMessage(roomKey, "hi") or Twinkle.chat.sendMessage(roomKey, { text, metadata, clientMessageId }) posts app-scoped chat messages.',
-      'Twinkle.chat.subscribe(roomKey, listener) receives realtime events like { type: "message.created", roomKey, message } and returns unsubscribe.',
-      'Twinkle.reminders.list(...), create(...), update(reminderId, patch), remove(reminderId), and getDue(...) support per-viewer reminder rules.',
-      'These namespaces are available only when capabilities permit them.',
-      'Prefer capability checks and small, explicit SDK calls over guessing method names.'
-    ]
-  }
-];
-
 export default function AgentManualPane({
   capabilitySnapshot
 }: AgentManualPaneProps) {
   const [copied, setCopied] = useState(false);
+  const [allMethodsOpen, setAllMethodsOpen] = useState(false);
   const manualText = useMemo(
     () => buildAgentManualText(capabilitySnapshot),
     [capabilitySnapshot]
@@ -365,8 +183,9 @@ export default function AgentManualPane({
           <div>
             <h2 className={manualTitleClass}>Agent manual</h2>
             <div className={manualSubtitleClass}>
-              Workspace instructions and SDK reference for browser-based coding
-              agents.
+              Workspace instructions and Build SDK {AGENT_MANUAL_SDK.version}{' '}
+              reference for browser-based coding agents. Copy manual has all of
+              it as text.
             </div>
           </div>
         </div>
@@ -395,12 +214,71 @@ export default function AgentManualPane({
           </section>
 
           <section className={manualSectionClass}>
-            <h3 className={manualSectionTitleClass}>SDK Quick Reference</h3>
+            <h3 className={manualSectionTitleClass}>Platform Rules</h3>
+            <div className={guideBlockClass}>
+              <p>{AGENT_MANUAL_SDK.platformRules.summary}</p>
+              <ol>
+                {AGENT_MANUAL_SDK.platformRules.rules.map((rule) => (
+                  <li key={rule}>{rule}</li>
+                ))}
+              </ol>
+            </div>
+          </section>
+
+          <section className={manualSectionClass}>
+            <h3 className={manualSectionTitleClass}>Essential SDK Features</h3>
+            <div className={guideBlockClass}>
+              <p>{AGENT_MANUAL_SDK.essentialSdk.summary}</p>
+              <ol>
+                {AGENT_MANUAL_SDK.essentialSdk.items.map((item) => (
+                  <li key={item.when}>
+                    <strong>When:</strong> {item.when} <strong>Use:</strong>{' '}
+                    {item.use}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </section>
+
+          <section className={manualSectionClass}>
+            <div className={sectionHeadingRowClass}>
+              <h3 className={manualSectionTitleClass}>SDK Reference</h3>
+              <button
+                type="button"
+                className={textButtonClass}
+                onClick={() => setAllMethodsOpen((open) => !open)}
+                data-testid="build-agent-manual-toggle-methods"
+              >
+                {allMethodsOpen ? 'Hide all methods' : 'Show all methods'}
+              </button>
+            </div>
+            <p className={sectionIntroClass}>{SDK_REFERENCE_INTRO}</p>
             <div className={sectionGridClass}>
-              {sdkSections.map((section) => (
+              {AGENT_MANUAL_SDK.namespaces.map((namespace) => (
+                <NamespaceBlock
+                  key={namespace.name}
+                  namespace={namespace}
+                  open={allMethodsOpen}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className={manualSectionClass}>
+            <h3 className={manualSectionTitleClass}>SDK Guidance</h3>
+            <div className={sectionGridClass}>
+              {AGENT_MANUAL_SDK.guidance.map((section) => (
                 <GuideBlock key={section.title} section={section} />
               ))}
             </div>
+            <details className={guideBlockClass}>
+              <summary>SDK notes ({AGENT_MANUAL_SDK.notes.length})</summary>
+              <ul>
+                {AGENT_MANUAL_SDK.notes.map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            </details>
           </section>
         </div>
 
@@ -458,6 +336,35 @@ function GuideBlock({ section }: { section: GuideSection }) {
   );
 }
 
+function NamespaceBlock({
+  namespace,
+  open
+}: {
+  namespace: AgentManualSdkNamespace;
+  open: boolean;
+}) {
+  const methodCount = namespace.methods.length;
+  return (
+    <div className={guideBlockClass}>
+      <h4>{namespace.name}</h4>
+      <p>{namespace.description}</p>
+      <details key={open ? 'open' : 'closed'} open={open}>
+        <summary>
+          {methodCount} {methodCount === 1 ? 'method' : 'methods'}
+        </summary>
+        <ul>
+          {namespace.methods.map((method) => (
+            <li key={method.call}>
+              <code>{method.call}</code>
+              {method.summary ? ` ${method.summary}` : ''}
+            </li>
+          ))}
+        </ul>
+      </details>
+    </div>
+  );
+}
+
 function buildViewerRows(capabilitySnapshot: BuildCapabilitySnapshot | null) {
   if (!capabilitySnapshot) {
     return [{ label: 'Snapshot', value: 'Not loaded' }];
@@ -504,11 +411,35 @@ export function buildAgentManualText(
     '',
     'Use this manual when editing a Build project through the browser workspace without repository source access.',
     '',
+    '## Platform Rules',
+    '',
+    AGENT_MANUAL_SDK.platformRules.summary,
+    '',
+    ...AGENT_MANUAL_SDK.platformRules.rules.map(
+      (rule, index) => `${index + 1}. ${rule}`
+    ),
+    '',
+    '## Essential SDK Features (add without being asked)',
+    '',
+    AGENT_MANUAL_SDK.essentialSdk.summary,
+    '',
+    ...AGENT_MANUAL_SDK.essentialSdk.items.map(
+      (item, index) => `${index + 1}. When: ${item.when} Use: ${item.use}`
+    ),
+    '',
     '## Workspace Workflow',
     ...formatSections(guideSections),
     '',
-    '## SDK Quick Reference',
-    ...formatSections(sdkSections),
+    '## SDK Reference',
+    '',
+    SDK_REFERENCE_INTRO,
+    ...formatSdkNamespaces(),
+    '',
+    '## SDK Guidance',
+    ...formatSections(AGENT_MANUAL_SDK.guidance),
+    '',
+    '### SDK notes',
+    ...AGENT_MANUAL_SDK.notes.map((note) => `- ${note}`),
     '',
     '## Preview Layout Boilerplate',
     '',
@@ -526,7 +457,8 @@ export function buildAgentManualText(
     '- New file path input: data-testid="build-new-project-file-path".',
     '- Active file path input: data-testid="build-active-file-path".',
     '- Manual text: data-testid="build-agent-manual".',
-    '- Copy manual button: data-testid="build-agent-manual-copy".'
+    '- Copy manual button: data-testid="build-agent-manual-copy".',
+    '- Show or hide every method list: data-testid="build-agent-manual-toggle-methods".'
   ];
 
   return lines.join('\n');
@@ -537,6 +469,18 @@ function formatSections(sections: GuideSection[]) {
     '',
     `### ${section.title}`,
     ...section.items.map((item) => `- ${item}`)
+  ]);
+}
+
+function formatSdkNamespaces() {
+  return AGENT_MANUAL_SDK.namespaces.flatMap((namespace) => [
+    '',
+    `### ${namespace.name}`,
+    namespace.description,
+    ...namespace.methods.flatMap((method) => [
+      `- ${method.call}${method.returns ? ` → ${method.returns}` : ''}`,
+      ...(method.summary ? [`  ${method.summary}`] : [])
+    ])
   ]);
 }
 
@@ -570,7 +514,7 @@ function formatCapabilitySnapshot(
     `- Public build: ${capabilitySnapshot.build.isPublic ? 'yes' : 'no'}`,
     `- Blocked write actions: ${blockedWriteActions.join(', ')}`,
     '',
-    '### Namespaces',
+    '### Namespaces (permission-gated ones only; the SDK Reference lists everything that exists)',
     ...namespaceDetails
   ];
 }
@@ -659,7 +603,9 @@ const manualBodyClass = css`
   overflow: hidden;
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) auto;
+    /* The plain text manual carries the whole SDK reference: cap its column
+       so it scrolls inside itself instead of pushing the manual off screen. */
+    grid-template-rows: minmax(0, 1fr) minmax(0, 40%);
   }
 `;
 
@@ -728,6 +674,69 @@ const guideBlockClass = css`
   }
   li + li {
     margin-top: 0.32rem;
+  }
+  ol {
+    margin: 0;
+    padding-left: 1.4rem;
+    color: #334155;
+    font-size: 1.1rem;
+    line-height: 1.48;
+  }
+  p {
+    margin: 0 0 0.55rem;
+    color: #334155;
+    font-size: 1.1rem;
+    line-height: 1.48;
+    overflow-wrap: anywhere;
+  }
+  li {
+    overflow-wrap: anywhere;
+  }
+  summary {
+    cursor: pointer;
+    color: #1d4ed8;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+  details[open] > summary {
+    margin-bottom: 0.45rem;
+  }
+  code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 1rem;
+    color: #0f172a;
+    background: #eef2f7;
+    border-radius: 4px;
+    padding: 0.05rem 0.25rem;
+  }
+`;
+
+const sectionHeadingRowClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+`;
+
+const sectionIntroClass = css`
+  margin: 0;
+  color: #334155;
+  font-size: 1.1rem;
+  line-height: 1.48;
+`;
+
+const textButtonClass = css`
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1d4ed8;
+  padding: 0.35rem 0.65rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  &:hover {
+    background: #eff6ff;
   }
 `;
 
