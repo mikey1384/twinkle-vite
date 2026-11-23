@@ -18,6 +18,7 @@ export type BattleSound =
   | 'reelTick'
   | 'drop'
   | 'rareDrop'
+  | 'massiveDrop'
   | 'nothing';
 
 export function playBattleSound(sound: BattleSound) {
@@ -62,6 +63,14 @@ export function playBattleSound(sound: BattleSound) {
       return;
     case 'rareDrop':
       playQuestSound('fanfare');
+      return;
+    case 'massiveDrop':
+      // the rare fanfare, scaled up: a boom and a rising glock run on top
+      playThump(1.6);
+      playQuestSound('fanfare');
+      [72, 76, 79, 84, 88, 91, 96].forEach((midi, i) =>
+        playNote(midi, { at: 0.35 + 0.07 * i, instrument: 'glock', level: 0.14, hold: 0.18 })
+      );
       return;
     case 'nothing':
       playNote(60, { instrument: 'marimba', level: 0.12, hold: 0.2 });
