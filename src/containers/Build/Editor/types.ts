@@ -585,6 +585,7 @@ export interface CurrentBuildRunView {
   generating: boolean;
   status: string | null;
   assistantStatusSteps: string[];
+  queue: BuildLiveRunState['queue'] | null;
   agentContext: BuildLiveRunState['agentContext'] | null;
   lifecycle: BuildLiveRunState['lifecycle'] | null;
   usageMetrics: BuildLiveRunState['usageMetrics'];

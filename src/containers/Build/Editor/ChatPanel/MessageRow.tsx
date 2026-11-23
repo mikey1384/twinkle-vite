@@ -10,6 +10,7 @@ import NoticeRow from './NoticeRow';
 import useMessageInView from './hooks/useMessageInView';
 import {
   BuildCurrentActivity,
+  BuildRunQueue,
   BuildStatusStepEntry,
   ChatMessage,
   ChatPanelRunMode
@@ -27,6 +28,8 @@ interface MessageRowProps {
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
+  runQueue?: BuildRunQueue | null;
+  onStopGeneration?: () => void;
   currentActivity: BuildCurrentActivity | null;
   statusStepEntries: BuildStatusStepEntry[];
   activeStreamMessageIds: number[];
@@ -46,6 +49,8 @@ export default function MessageRow({
   generating,
   generatingStatus,
   assistantStatusSteps,
+  runQueue = null,
+  onStopGeneration,
   currentActivity,
   statusStepEntries,
   activeStreamMessageIds,
@@ -183,6 +188,8 @@ export default function MessageRow({
                 generating={generating}
                 generatingStatus={generatingStatus}
                 statusSteps={isStreamingTarget ? assistantStatusSteps : []}
+                runQueue={isStreamingTarget ? runQueue : null}
+                onStopGeneration={onStopGeneration}
                 currentActivity={isStreamingTarget ? currentActivity : null}
                 statusStepEntries={isStreamingTarget ? statusStepEntries : []}
                 isOwner={isOwner}

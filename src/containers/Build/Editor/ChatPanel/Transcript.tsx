@@ -10,6 +10,7 @@ import {
   BuildCurrentActivity,
   BuildPendingToolApproval,
   BuildRuntimeDebugSnapshot,
+  BuildRunQueue,
   BuildStatusStepEntry,
   BuildThumbnailNudgePrompt,
   ChatMessage,
@@ -23,6 +24,8 @@ interface TranscriptProps {
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
+  runQueue?: BuildRunQueue | null;
+  onStopGeneration?: () => void;
   currentActivity: BuildCurrentActivity | null;
   statusStepEntries: BuildStatusStepEntry[];
   runtimeDebugSnapshot: BuildRuntimeDebugSnapshot | null;
@@ -61,6 +64,8 @@ const Transcript = React.memo(function Transcript({
   generating,
   generatingStatus,
   assistantStatusSteps,
+  runQueue = null,
+  onStopGeneration,
   currentActivity,
   statusStepEntries,
   runtimeDebugSnapshot,
@@ -175,6 +180,8 @@ const Transcript = React.memo(function Transcript({
           generating={generating}
           generatingStatus={generatingStatus}
           assistantStatusSteps={assistantStatusSteps}
+          runQueue={runQueue}
+          onStopGeneration={onStopGeneration}
           currentActivity={currentActivity}
           statusStepEntries={statusStepEntries}
           activeStreamMessageIds={activeStreamMessageIds}

@@ -10,10 +10,11 @@ import {
   useKeyContext,
   useNotiContext
 } from '~/contexts';
-import type {
-  BuildLiveRunUsageMetric,
-  BuildLiveRunState,
-  BuildWorkspaceSnapshot
+import {
+  normalizeBuildRunQueueState,
+  type BuildLiveRunUsageMetric,
+  type BuildLiveRunState,
+  type BuildWorkspaceSnapshot
 } from '~/contexts/Build/reducer';
 import {
   getBuildResumeRunStateReplayKey,
@@ -475,6 +476,7 @@ export default function useBuildSocket() {
             runningSnapshot: {
               status: runningSnapshot.status,
               assistantStatusSteps: runningSnapshot.assistantStatusSteps,
+              queue: runningSnapshot.queue,
               agentContext: runningSnapshot.agentContext,
               lifecycle: runningSnapshot.lifecycle,
               usageMetrics: runningSnapshot.usageMetrics,
@@ -586,6 +588,9 @@ export default function useBuildSocket() {
             )
           : [];
       }
+      // A queue update carries the member's place in line; any other update
+      // (the run started, a restart notice) ends the queued state.
+      buildRun.queue = normalizeBuildRunQueueState(payload.queue);
       if (typeof reply === 'string') {
         buildRun.reply = reply;
       }

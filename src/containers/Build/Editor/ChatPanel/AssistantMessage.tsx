@@ -6,7 +6,13 @@ import Icon from '~/components/Icon';
 import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
 import { computeLineDiff } from '~/components/CodeDiff/diffUtils';
-import { BuildCurrentActivity, BuildStatusStepEntry, ChatMessage } from './types';
+import {
+  BuildCurrentActivity,
+  BuildRunQueue,
+  BuildStatusStepEntry,
+  ChatMessage
+} from './types';
+import QueueCard from './QueueCard';
 import {
   formatStepLabel,
   isBuildAssistantPlaceholderContent,
@@ -19,6 +25,8 @@ interface AssistantMessageProps {
   generating: boolean;
   generatingStatus: string | null;
   statusSteps: string[];
+  runQueue?: BuildRunQueue | null;
+  onStopGeneration?: () => void;
   currentActivity: BuildCurrentActivity | null;
   statusStepEntries: BuildStatusStepEntry[];
   isOwner: boolean;
@@ -41,12 +49,33 @@ const dotAnimation = css`
   }
 `;
 
+// One short fade when the working view appears (also right after a queue
+// wait ends); no looping animation.
+const workingFadeIn = `
+  @keyframes buildWorkingIn {
+    from {
+      opacity: 0;
+      transform: translateY(2px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  animation: buildWorkingIn 220ms ease-out 1;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
 export default function AssistantMessage({
   message,
   messages,
   generating,
   generatingStatus,
   statusSteps,
+  runQueue = null,
+  onStopGeneration,
   currentActivity,
   statusStepEntries,
   isOwner,
@@ -97,13 +126,19 @@ export default function AssistantMessage({
   );
   const displayedCurrentActivityMessage =
     normalizedCurrentActivityMessage || fallbackActivityMessage;
-  const showCurrentActivity = generating && isStreamingTarget;
+  // Waiting behind someone else's build: a calm queue card stands in for the
+  // working view, which takes over the moment the run starts.
+  const showQueue = Boolean(runQueue) && generating && isStreamingTarget;
+  const showCurrentActivity = generating && isStreamingTarget && !showQueue;
   const shouldShowFallbackStep =
+    !showQueue &&
     generating &&
     isStreamingTarget &&
     statusSteps.length === 0 &&
     !rawVisibleMessageContent;
-  const displayedStatusStepEntries = shouldShowFallbackStep
+  const displayedStatusStepEntries = showQueue
+    ? []
+    : shouldShowFallbackStep
     ? [
         {
           status: String(generatingStatus || 'thinking').trim() || 'thinking',
@@ -390,9 +425,17 @@ export default function AssistantMessage({
           </GameCTAButton>
         </div>
       ) : null}
+      {showQueue && runQueue ? (
+        <QueueCard
+          queue={runQueue}
+          onCancel={isOwner ? onStopGeneration : undefined}
+          spaced={Boolean(visibleMessageContent)}
+        />
+      ) : null}
       {showCurrentActivity ? (
         <div
           className={css`
+            ${workingFadeIn}
             margin-top: ${visibleMessageContent ? '0.55rem' : '0'};
             padding: 0.55rem 0.7rem;
             border-radius: 8px;

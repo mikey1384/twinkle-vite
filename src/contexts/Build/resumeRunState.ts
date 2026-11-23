@@ -1,7 +1,9 @@
-import type {
-  BuildLiveRunEvent,
-  BuildLiveRunState,
-  BuildLiveRunUsageMetric
+import {
+  normalizeBuildRunQueueState,
+  type BuildLiveRunEvent,
+  type BuildLiveRunQueueState,
+  type BuildLiveRunState,
+  type BuildLiveRunUsageMetric
 } from './reducer';
 import {
   buildFallbackBuildRunEventId,
@@ -73,6 +75,7 @@ export interface BuildResumeRunStatePayload {
   streamUpdate?: BuildResumeRunStateStreamUpdatePayload | null;
   terminal?: BuildResumeRunStateTerminalPayload | null;
   lastActivityAt?: number | null;
+  queue?: unknown;
 }
 
 export interface BuildResumeRunStateNormalizedStreamUpdate {
@@ -94,6 +97,7 @@ export interface BuildResumeRunStateNormalizedStreamUpdate {
 export interface BuildResumeRunStateNormalizedRunningSnapshot {
   status: string | null;
   assistantStatusSteps: string[];
+  queue: BuildLiveRunQueueState | null;
   agentContext: Record<string, any> | null;
   lifecycle: Record<string, any> | null;
   usageMetrics: Record<string, BuildLiveRunUsageMetric>;
@@ -113,6 +117,7 @@ export interface NormalizedBuildResumeRunState {
   streamUpdate: BuildResumeRunStateNormalizedStreamUpdate | null;
   terminal: BuildResumeRunStateTerminalPayload | null;
   lastActivityAt: number | null;
+  queue: BuildLiveRunQueueState | null;
 }
 
 interface ReplayBuildResumeRunStateOptions {
@@ -441,7 +446,8 @@ export function normalizeBuildResumeRunState(
     terminal: normalizeBuildResumeRunTerminal(payload.terminal),
     lastActivityAt: normalizeBuildResumeRunLastActivityAt(
       payload.lastActivityAt
-    )
+    ),
+    queue: normalizeBuildRunQueueState(payload.queue)
   };
 }
 
@@ -539,7 +545,8 @@ export function getBuildResumeRunStateReplayKey(
         }
       : null,
     terminal: normalizedResumeRunState.terminal || null,
-    lastActivityAt: normalizedResumeRunState.lastActivityAt
+    lastActivityAt: normalizedResumeRunState.lastActivityAt,
+    queue: normalizedResumeRunState.queue
   });
 }
 
@@ -559,7 +566,8 @@ export function replayBuildResumeRunState({
       agentContext: normalized.agentContext,
       lifecycle: normalized.lifecycle,
       usageMetrics: normalized.usageMetrics,
-      lastActivityAt: normalized.lastActivityAt
+      lastActivityAt: normalized.lastActivityAt,
+      queue: null
     });
     for (const runEvent of normalized.runEvents) {
       onRunEvent?.(runEvent);
@@ -597,7 +605,8 @@ export function replayBuildResumeRunState({
     agentContext: normalized.agentContext,
     lifecycle: normalized.lifecycle,
     usageMetrics: normalized.usageMetrics,
-    lastActivityAt: normalized.lastActivityAt
+    lastActivityAt: normalized.lastActivityAt,
+    queue: normalized.queue
   });
   if (normalized.streamUpdate) {
     onStreamUpdate?.(normalized.streamUpdate);

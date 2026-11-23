@@ -117,6 +117,7 @@ export default function resolveCurrentBuildRunView({
     generating: Boolean(sharedGeneratingRun) || hasLocalGeneratingRun,
     status: sharedBuildRun?.status ?? null,
     assistantStatusSteps: sharedBuildRun?.assistantStatusSteps || [],
+    queue: sharedGeneratingRun?.queue ?? null,
     agentContext: sharedBuildRun?.agentContext ?? null,
     lifecycle: sharedBuildRun?.lifecycle ?? null,
     usageMetrics: sharedBuildRun?.usageMetrics || {},
