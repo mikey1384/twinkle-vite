@@ -27,6 +27,10 @@ import {
   withFeedRowsObservedAt
 } from '~/helpers/liveComments';
 import { invalidateFeaturedSubjectsRequests } from '~/helpers/featuredSubjects';
+import {
+  createContentBatcher,
+  type ContentBatchItem
+} from '~/helpers/contentBatch';
 
 const HOME_FEED_LOAD_MORE_TOTAL_TIMEOUT_MS = 60000;
 
@@ -34,7 +38,68 @@ export default function contentRequestHelpers({
   auth,
   handleError
 }: RequestHelpers) {
+  async function loadContentRequest({
+    contentId,
+    contentType,
+    rootType,
+    isPinnedComment
+  }: {
+    contentId: number;
+    contentType: string;
+    rootType?: string;
+    isPinnedComment?: boolean;
+  }) {
+    try {
+      // Comment bodies are viewer-scoped snapshots. Preserve request order
+      // across initial hydration, unlock recovery, and socket/thread updates.
+      const requestStartedAt = getLiveObservedAt();
+      const { data } = await request.get(
+        `${URL}/content?contentId=${contentId}&contentType=${contentType}${
+          rootType ? `&rootType=${rootType}` : ''
+        }${isPinnedComment ? '&isPinnedComment=1' : ''}`,
+        auth()
+      );
+      return contentType === 'comment' && data
+        ? { ...data, requestStartedAt }
+        : data;
+    } catch (error) {
+      return handleError(error);
+    }
+  }
+
+  // Home feed cards that ask within one short window share a single request
+  // (helpers/contentBatch.ts). Each answer is what loadContent would return.
+  const feedContentBatcher = createContentBatcher<any>({
+    loadSingle: (item: ContentBatchItem) => loadContentRequest(item),
+    sendBatch: async (items: ContentBatchItem[]) => {
+      const requestStartedAt = getLiveObservedAt();
+      const { data } = await request.post(
+        `${URL}/content/batch`,
+        { items },
+        // No retry here: a batch that fails falls back to the per-card
+        // requests, which carry their own.
+        { ...auth(), meta: { maxRetries: 0 } }
+      );
+      if (!Array.isArray(data?.results)) return [];
+      return data.results.map((result: any, index: number) =>
+        items[index]?.contentType === 'comment' &&
+        result &&
+        result.error !== true
+          ? { ...result, requestStartedAt }
+          : result
+      );
+    },
+    isRouteMissing: (error: any) => Number(error?.response?.status) === 404
+  });
+
   return {
+    async loadFeedContent(item: ContentBatchItem) {
+      return feedContentBatcher.load({
+        contentId: item.contentId,
+        contentType: item.contentType,
+        ...(item.rootType ? { rootType: item.rootType } : {})
+      });
+    },
     async loadAssetHandoffPreview(proposalId: string): Promise<Blob> {
       const { data } = await request.get(
         `${URL}/content/assets/proposals/${encodeURIComponent(proposalId)}/image`,
@@ -758,33 +823,13 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async loadContent({
-      contentId,
-      contentType,
-      rootType,
-      isPinnedComment
-    }: {
+    async loadContent(params: {
       contentId: number;
       contentType: string;
       rootType?: string;
       isPinnedComment?: boolean;
     }) {
-      try {
-        // Comment bodies are viewer-scoped snapshots. Preserve request order
-        // across initial hydration, unlock recovery, and socket/thread updates.
-        const requestStartedAt = getLiveObservedAt();
-        const { data } = await request.get(
-          `${URL}/content?contentId=${contentId}&contentType=${contentType}${
-            rootType ? `&rootType=${rootType}` : ''
-          }${isPinnedComment ? '&isPinnedComment=1' : ''}`,
-          auth()
-        );
-        return contentType === 'comment' && data
-          ? { ...data, requestStartedAt }
-          : data;
-      } catch (error) {
-        return handleError(error);
-      }
+      return loadContentRequest(params);
     },
     async recordContentView({
       contentId,

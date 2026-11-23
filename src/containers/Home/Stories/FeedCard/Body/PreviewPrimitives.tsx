@@ -217,7 +217,9 @@ function HomeFeedWideSubjectEmbedPreview({
     contentId: subjectId,
     contentType: 'subject'
   });
-  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const loadContent = useAppContext(
+    (v) => v.requestHelpers.loadFeedContent
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);

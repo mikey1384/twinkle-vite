@@ -167,7 +167,9 @@ function HomeFeedCard({
   const userId = useKeyContext((v) => v.myState.userId);
   const { canReward } = useMyLevel();
   const likeContent = useAppContext((v) => v.requestHelpers.likeContent);
-  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const loadFeedContent = useAppContext(
+    (v) => v.requestHelpers.loadFeedContent
+  );
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
@@ -419,7 +421,7 @@ function HomeFeedCard({
     async function hydrateContent() {
       let data: any = null;
       try {
-        data = await loadContent({
+        data = await loadFeedContent({
           contentId,
           contentType,
           rootType: feed?.rootType
@@ -456,7 +458,7 @@ function HomeFeedCard({
       }
       homeFeedContentHydrationRequests.delete(hydrationRequestKey);
     }
-    // checkUserChange/loadContent/onInitContent are stable context helpers.
+    // checkUserChange/loadFeedContent/onInitContent are stable context helpers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     shouldHydrate,
