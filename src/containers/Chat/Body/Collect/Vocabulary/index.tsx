@@ -204,11 +204,23 @@ export default function Vocabulary({
     if (searchedWord?.notFound) return `No results for "${inputText}"`;
     if (isCensored)
       return 'This word has already been discovered and it is a type of word that cannot be collected';
-    if (isNewWord) return 'New word discovered';
+    // A form counts as its base word (Mikey, 11-22): name the word that
+    // submitting actually discovers or collects.
+    const baseWord =
+      typeof searchedWord?.formOf?.lemma === 'string'
+        ? searchedWord.formOf.lemma
+        : '';
+    if (isNewWord) {
+      return baseWord ? `You'll discover: ${baseWord}` : 'New word discovered';
+    }
     if (isCollectOnlyPhrase) return 'You can collect this phrase';
-    if (canHit) return 'You can collect this word';
+    if (canHit) {
+      return baseWord ? `You'll collect: ${baseWord}` : 'You can collect this word';
+    }
     if (wordIsAlreadyDiscovered)
-      return 'Already discovered and already collected this year';
+      return baseWord
+        ? `Counts as "${baseWord}", already collected this year`
+        : 'Already discovered and already collected this year';
     return '';
   }, [
     searchedWord,
